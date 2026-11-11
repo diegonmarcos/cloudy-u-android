@@ -25,6 +25,19 @@ object LastMediaSession {
         val fraction: Float get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
     }
 
+    /** #1648: the ONLY packages whose media session the held now-playing card may bind to. Telegram, browsers and every
+     *  other app are excluded; the open-all-players shortcut icons are a separate list and are unaffected. */
+    val HELD_SOURCES: Set<String> = setOf("com.aspiro.tidal", "com.spotify.music")
+
+    fun isHeldSource(pkg: String?): Boolean = pkg != null && pkg in HELD_SOURCES
+
+    /** Pure: the controller the held card binds to, from [sessions] as (package, playing): the playing allowlisted one,
+     *  else the first allowlisted one, else null (the card then shows empty / the last Tidal-Spotify session). */
+    fun <T> pickHeld(sessions: List<T>, pkg: (T) -> String, playing: (T) -> Boolean): T? {
+        val ok = sessions.filter { isHeldSource(pkg(it)) }
+        return ok.firstOrNull(playing) ?: ok.firstOrNull()
+    }
+
     private fun p(ctx: Context) = ctx.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /** Pure: the position a PlaybackState-like (state position, last update, speed, playing) reads at [nowElapsed]. */
@@ -32,6 +45,7 @@ object LastMediaSession {
         if (playing) position + ((nowElapsed - updatedAt) * speed).toLong() else position
 
     fun save(ctx: Context, c: MediaController) = runCatching {
+        if (!isHeldSource(c.packageName)) return@runCatching
         val md = c.metadata ?: return@runCatching
         val title = (md.getString(MediaMetadata.METADATA_KEY_TITLE) ?: md.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE))
             ?.takeIf { it.isNotBlank() } ?: return@runCatching

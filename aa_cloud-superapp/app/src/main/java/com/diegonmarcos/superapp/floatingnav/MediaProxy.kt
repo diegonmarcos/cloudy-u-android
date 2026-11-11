@@ -61,6 +61,7 @@ class MediaProxy(private val ctx: Context) {
         val gone = watched.keys.filter { k -> list.none { it.sessionToken == k.sessionToken } }
         gone.forEach { k -> watched.remove(k)?.let { runCatching { k.unregisterCallback(it) } } }
         for (c in list) {
+            if (!LastMediaSession.isHeldSource(c.packageName)) continue
             if (watched.keys.any { it.sessionToken == c.sessionToken }) continue
             val cb = object : MediaController.Callback() {
                 override fun onPlaybackStateChanged(state: PlaybackState?) { LastMediaSession.save(ctx, c); refresh() }
@@ -95,7 +96,8 @@ class MediaProxy(private val ctx: Context) {
             val msm = ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
             val comp = ComponentName(ctx, PhoneNotificationListenerService::class.java)
             val list = msm.getActiveSessions(comp)
-            list.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING } ?: list.firstOrNull()
+            // #1648: only Tidal / Spotify may drive the held card (never Telegram, a browser or any other app).
+            LastMediaSession.pickHeld(list, { it.packageName }, { it.playbackState?.state == PlaybackState.STATE_PLAYING })
         }.getOrNull()
     }
 
