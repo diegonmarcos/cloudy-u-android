@@ -98,7 +98,7 @@
         {
           "tab": "eq",
           "entries": [
-            "World Equity Indices"
+            "World Indices Equity"
           ]
         },
         {
@@ -249,7 +249,7 @@
         {
           "tab": "eq",
           "entries": [
-            "World Equity Indices"
+            "World Indices Equity"
           ]
         },
         {
@@ -406,7 +406,7 @@
         {
           "tab": "eq",
           "entries": [
-            "World Equity Indices"
+            "World Indices Equity"
           ]
         },
         {
@@ -818,7 +818,7 @@
         {
           "tab": "eq",
           "entries": [
-            "Watchlist & Alerts"
+            "Watchlist"
           ]
         }
       ],
@@ -862,7 +862,7 @@
         {
           "tab": "eq",
           "entries": [
-            "Watchlist & Alerts"
+            "Watchlist"
           ]
         }
       ],
@@ -1035,11 +1035,9 @@
         {
           "tab": "eq",
           "entries": [
-            "World Equity Indices",
-            "Quotes & Charts",
-            "Watchlist & Alerts",
-            "DM Equity (US)",
-            "EM Equity"
+            "World Indices Equity",
+            "Quotes",
+            "Watchlist"
           ]
         },
         {
@@ -1203,7 +1201,7 @@
         {
           "tab": "eq",
           "entries": [
-            "Quotes & Charts"
+            "Quotes"
           ]
         }
       ],
@@ -1262,7 +1260,7 @@
           "tab": "eq",
           "entries": [
             "Earnings Calendar",
-            "Quotes & Charts"
+            "Quotes"
           ]
         }
       ],
