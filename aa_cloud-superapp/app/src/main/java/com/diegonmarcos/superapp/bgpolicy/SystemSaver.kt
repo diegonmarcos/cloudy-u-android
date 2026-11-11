@@ -12,7 +12,7 @@ import android.provider.Settings
  */
 object SystemSaver {
     /** Samsung / OEM switches that mean the extreme saver is on (Settings.System int 1). */
-    internal val EXTREME_KEYS = listOf("ultra_powersaving_mode", "emergency_mode", "psm_extreme", "max_power_saving_mode")
+    internal val EXTREME_KEYS = listOf("ultra_powersaving_mode", "emergency_mode", "psm_extreme", "psm_max_mode")
 
     /** Pure: [flags] = the value of each key (null = unset); [powerSave] = PowerManager.isPowerSaveMode. The plain saver alone is NOT extreme. */
     internal fun isExtreme(flags: Map<String, Int?>, powerSave: Boolean): Boolean =
