@@ -19,6 +19,9 @@ data class TorrentEntry(
     val seed: Boolean,
     /** Set once the torrent has finished; a finished torrent that is not seeding stays paused. */
     val completed: Boolean,
+    /** The biggest size the session has reported (0 = not yet): a finished torrent that was added by magnet is re-added paused on the next
+     *  launch, without its metadata, so the size must come from here. */
+    val totalBytes: Long = 0L,
 )
 
 interface TorrentStore {
@@ -40,7 +43,7 @@ class FileTorrentStore(private val file: File) : TorrentStore {
             val o = a.optJSONObject(i) ?: return@mapNotNull null
             val id = o.optString("id").takeIf { it.isNotEmpty() } ?: return@mapNotNull null
             TorrentEntry(id, o.optString("name"), o.optString("magnet").takeIf { it.isNotEmpty() }, o.optString("file").takeIf { it.isNotEmpty() },
-                o.optString("save"), o.optLong("added"), o.optBoolean("paused"), o.optBoolean("seed", true), o.optBoolean("completed"))
+                o.optString("save"), o.optLong("added"), o.optBoolean("paused"), o.optBoolean("seed", true), o.optBoolean("completed"), o.optLong("size", 0L))
         }
     }.getOrDefault(emptyList())
 
@@ -48,7 +51,7 @@ class FileTorrentStore(private val file: File) : TorrentStore {
         val a = JSONArray()
         entries.forEach { e ->
             a.put(JSONObject().put("id", e.id).put("name", e.name).put("magnet", e.magnet ?: "").put("file", e.torrentFile ?: "")
-                .put("save", e.savePath).put("added", e.addedAt).put("paused", e.paused).put("seed", e.seed).put("completed", e.completed))
+                .put("save", e.savePath).put("added", e.addedAt).put("paused", e.paused).put("seed", e.seed).put("completed", e.completed).put("size", e.totalBytes))
         }
         file.parentFile?.mkdirs()
         val tmp = File(file.path + ".tmp")

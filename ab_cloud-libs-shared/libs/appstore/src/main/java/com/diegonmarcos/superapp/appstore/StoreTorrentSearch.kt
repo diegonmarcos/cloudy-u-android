@@ -79,7 +79,10 @@ object StoreTorrentSearch {
                 modifier = Modifier.testTag(TAG_NO_HOST))
             return
         }
-        val sources = remember(host) { host.sources() }
+        // The host's list moves when the user adds / removes / switches a source in Configs > Torrent: read it again on every pass.
+        val rev = host.revision()
+        val sources = remember(host, rev) { host.sources() }
+        val srcKey = sources.joinToString(",") { it.id }
         val off = remember { mutableStateListOf<String>() }
         val states = remember { mutableStateMapOf<String, St>() }
         val scope = rememberCoroutineScope()
@@ -89,7 +92,7 @@ object StoreTorrentSearch {
         val buckets = remember { mutableStateListOf<StoreTorrentHost.Bucket>() }
         var notes by remember { mutableStateOf<String?>(null) }
         val offKey = off.sorted().joinToString(",")
-        LaunchedEffect(asked, offKey, host, retry) {
+        LaunchedEffect(asked, offKey, host, retry, srcKey) {
             states.clear()
             if (asked.isEmpty()) return@LaunchedEffect
             coroutineScope {
@@ -106,13 +109,14 @@ object StoreTorrentSearch {
         Column(Modifier.fillMaxWidth().testTag(TAG_PAGE), verticalArrangement = Arrangement.spacedBy(KitDensity.small)) {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                 sources.forEach { s ->
-                    StoreSearchPage.SourcePill(s.label, s.id !in off, sourceTag(s.id)) { if (s.id in off) off.remove(s.id) else off.add(s.id) }
+                    StoreSearchPage.SourcePill(s.label + if (s.builtIn) "" else " ★", s.id !in off, sourceTag(s.id)) { if (s.id in off) off.remove(s.id) else off.add(s.id) }
                 }
             }
             if (asked.isEmpty()) {
                 Text("Search ${sources.size} torrent sources: " + sources.joinToString(", ") { it.label } + ". A result downloads with the Torrent engine into " + host.folderNote() + ".",
                     color = p.textSecondary, fontSize = KitDensity.caption)
-                sources.forEach { Text("${it.label}: ${it.blurb}", color = p.textSecondary, fontSize = KitDensity.caption) }
+                sources.forEach { Text("${it.label}${if (it.builtIn) "" else " (yours)"}: ${it.blurb}", color = p.textSecondary, fontSize = KitDensity.caption) }
+                Text("★ marks a source you added. Add, edit or remove sources in Configs > Torrent.", color = p.textSecondary, fontSize = KitDensity.caption)
                 return@Column
             }
             val busy = states.values.count { it is St.Busy }

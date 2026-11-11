@@ -36,8 +36,9 @@ class TorrentHit(
 
 /**
  * A torrent search source, declared as data: its id and name, how a query becomes a URL, and how the body that comes back
- * becomes hits ([parse] is a pure function, tested against recorded bodies). Adding an indexer is one more entry in
- * [TorrentIndexers.all] and nothing else; the Search page lists whatever that list holds.
+ * becomes hits ([parse] is a pure function, tested against recorded bodies). Adding a built-in indexer is one more entry in
+ * [TorrentIndexers.all]; a user adds their own at runtime ([TorrentSources], persisted in the app's preferences). The Search page
+ * lists the built-ins plus every enabled user source.
  */
 interface TorrentIndexer {
     val id: String
@@ -64,15 +65,17 @@ object TorrentIndexers {
         override val blurb = "apibay.org public search API: all categories, seeders and leechers."
         override val homepage = "https://thepiratebay.org"
         override fun searchUrl(query: String) = "https://apibay.org/q.php?q=${enc(query)}&cat=0"
-        override fun parse(body: String): List<TorrentHit> {
+        override fun parse(body: String): List<TorrentHit> = parseAs(id, body)
+        /** The parse, tagged with [indexerId]: a user source of the same shape reuses it under its own id. */
+        fun parseAs(indexerId: String, body: String): List<TorrentHit> {
             val a = JSONArray(body)
             return (0 until a.length()).mapNotNull { i ->
                 val o = a.optJSONObject(i) ?: return@mapNotNull null
                 val hash = o.optString("info_hash").lowercase()
                 // The API answers "No results returned" with an all-zero hash: that is an empty list, not a hit.
                 if (hash.length != 40 || hash.all { it == '0' }) return@mapNotNull null
-                TorrentHit(id, o.optString("name"), hash, null, null, num(o, "seeders").toInt(), num(o, "leechers").toInt(),
-                    num(o, "size"), num(o, "added"), "https://thepiratebay.org/description.php?id=${o.optString("id")}",
+                TorrentHit(indexerId, o.optString("name"), hash, null, null, num(o, "seeders").toInt(), num(o, "leechers").toInt(),
+                    num(o, "size"), num(o, "added"), "https://thepiratebay.org/description.php?id=${o.optString("id")}".takeIf { indexerId == id },
                     category = tpbCategory(o.optString("category")), files = num(o, "num_files").toInt().takeIf { it > 0 } ?: -1)
             }
         }
@@ -85,7 +88,8 @@ object TorrentIndexers {
         override val blurb = "yts.mx movies: one result per quality (720p, 1080p, 2160p)."
         override val homepage = "https://yts.mx"
         override fun searchUrl(query: String) = "https://yts.mx/api/v2/list_movies.json?query_term=${enc(query)}&limit=30"
-        override fun parse(body: String): List<TorrentHit> {
+        override fun parse(body: String): List<TorrentHit> = parseAs(id, body)
+        fun parseAs(indexerId: String, body: String): List<TorrentHit> {
             val movies = JSONObject(body).optJSONObject("data")?.optJSONArray("movies") ?: return emptyList()
             val out = ArrayList<TorrentHit>()
             for (i in 0 until movies.length()) {
@@ -94,7 +98,7 @@ object TorrentIndexers {
                 for (j in 0 until ts.length()) {
                     val t = ts.optJSONObject(j) ?: continue
                     val hash = t.optString("hash").lowercase().takeIf { it.length == 40 } ?: continue
-                    out += TorrentHit(id, "${m.optString("title_long")} [${t.optString("quality")} ${t.optString("type")}]".trim(), hash, null, null,
+                    out += TorrentHit(indexerId, "${m.optString("title_long")} [${t.optString("quality")} ${t.optString("type")}]".trim(), hash, null, null,
                         num(t, "seeds").toInt(), num(t, "peers").toInt(), num(t, "size_bytes"), num(t, "date_uploaded_unix"), m.optString("url").takeIf { it.isNotEmpty() },
                         category = "Movies", files = 1)
                 }
@@ -112,14 +116,15 @@ object TorrentIndexers {
         override fun searchUrl(query: String) =
             "https://archive.org/advancedsearch.php?q=${enc("(" + query.trim() + ") AND format:(Archive BitTorrent)")}" +
                 "&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=item_size&fl%5B%5D=publicdate&fl%5B%5D=mediatype&fl%5B%5D=files_count&sort%5B%5D=downloads+desc&rows=30&output=json"
-        override fun parse(body: String): List<TorrentHit> {
+        override fun parse(body: String): List<TorrentHit> = parseAs(id, body)
+        fun parseAs(indexerId: String, body: String): List<TorrentHit> {
             val docs = JSONObject(body).optJSONObject("response")?.optJSONArray("docs") ?: return emptyList()
             return (0 until docs.length()).mapNotNull { i ->
                 val d = docs.optJSONObject(i) ?: return@mapNotNull null
                 val ident = d.optString("identifier").takeIf { it.isNotEmpty() } ?: return@mapNotNull null
-                TorrentHit(id, d.optString("title").ifEmpty { ident }, null, null, "https://archive.org/download/$ident/${ident}_archive.torrent",
+                TorrentHit(indexerId, d.optString("title").ifEmpty { ident }, null, null, "https://archive.org/download/$ident/${ident}_archive.torrent",
                     -1, -1, num(d, "item_size"),
-                    runCatching { java.time.Instant.parse(d.optString("publicdate")).epochSecond }.getOrDefault(0L), "https://archive.org/details/$ident",
+                    runCatching { java.time.Instant.parse(d.optString("publicdate")).epochSecond }.getOrDefault(0L), "https://archive.org/details/$ident".takeIf { indexerId == id },
                     category = d.optString("mediatype").takeIf { it.isNotEmpty() }?.replaceFirstChar { it.uppercase() },
                     files = num(d, "files_count").toInt().takeIf { it > 0 } ?: -1)
             }
@@ -129,6 +134,7 @@ object TorrentIndexers {
     /** Every torrent search source, in the order the page lists them. ADD A SOURCE HERE. */
     val all: List<TorrentIndexer> = listOf(ApiBay, Yts, InternetArchive)
 
+    /** Built-in sources only; a user's own sources are looked up through [TorrentSources.byId]. */
     fun byId(id: String): TorrentIndexer? = all.firstOrNull { it.id == id }
 }
 

@@ -10,11 +10,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.fragment.app.FragmentActivity
 import com.diegonmarcos.superapp.appstore.StoreFeedPanels
+import com.diegonmarcos.superapp.torrent.ParseKind
+import com.diegonmarcos.superapp.torrent.TorrentEngines
+import com.diegonmarcos.superapp.torrent.TorrentIndexers
 import com.diegonmarcos.superapp.uikit.KitDenseMaterial
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -81,6 +86,60 @@ class TorrentPagesTest {
             compose.onNodeWithTag(tag, useUnmergedTree = true).assertExists()
         compose.onNodeWithTag(TorrentConfigTags.DEFAULT_NOTE, useUnmergedTree = true).assertTextContains("Downloads/Cloudy-store/Torrent", substring = true)
         compose.onNodeWithTag(TorrentConfigTags.PATH, useUnmergedTree = true).assertTextContains("Cloudy-store/Torrent", substring = true)
+    }
+
+    private fun showConfigs() {
+        compose.setContent { KitDenseMaterial(darkColorScheme()) { Surface(Modifier.fillMaxSize()) { ConfigsPage(ConfigsPages.TORRENT) } } }
+        compose.waitForIdle()
+    }
+
+    private fun tagged(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true)
+
+    /** Rule 16: the restyle drew every field the page had before (folder, drive, import, seeding switch + ratio limit, engine) and added the sources manager. */
+    @Test fun `Configs Torrent keeps every previous field and adds the sources manager`() {
+        showConfigs()
+        // what the page had before the Kit restyle, field by field
+        for (tag in listOf(TorrentConfigTags.PATH, TorrentConfigTags.DEFAULT_NOTE, TorrentConfigTags.USE_DEFAULT, TorrentConfigTags.CHOOSE, TorrentConfigTags.DRIVES,
+            TorrentConfigTags.IMPORT, TorrentConfigTags.SEED, TorrentConfigTags.ENGINE) + listOf(0, 1, 2, 5).map { TorrentConfigTags.ratio(it) }) tagged(tag).assertExists()
+        // new: the declared built-in sources and the user's own
+        for (tag in listOf(TorrentConfigTags.SOURCES, TorrentConfigTags.BUILTIN_LIST, TorrentConfigTags.USER_LIST, TorrentConfigTags.SOURCE_ADD)) tagged(tag).assertExists()
+        TorrentIndexers.all.forEach { tagged(TorrentConfigTags.builtin(it.id)).assertExists() }
+    }
+
+    @Test fun `a user source is added from Configs Torrent and Search then lists it next to the built-ins`() {
+        showConfigs()
+        tagged(TorrentConfigTags.SOURCE_ADD).performScrollTo().performClick()
+        compose.waitForIdle()
+        tagged(TorrentConfigTags.FORM).assertExists()
+        // a search address with no placeholder is refused in words and nothing is saved
+        tagged(TorrentConfigTags.FIELD_LABEL).performScrollTo().performTextInput("Pages Test Idx")
+        tagged(TorrentConfigTags.FIELD_URL).performScrollTo().performTextInput("https://idx.example/rss")
+        tagged(TorrentConfigTags.SOURCE_SAVE).performScrollTo().performClick()
+        compose.waitForIdle()
+        tagged(TorrentConfigTags.SOURCE_ERROR).assertExists()
+        tagged(TorrentConfigTags.user("pages-test-idx")).assertDoesNotExist()
+        // fix it: the id followed the name, the format is picked, it saves
+        tagged(TorrentConfigTags.FIELD_URL).performScrollTo().performTextInput("?q={q}")
+        tagged(TorrentConfigTags.kind(ParseKind.HTML_MAGNETS)).performScrollTo().performClick()
+        tagged(TorrentConfigTags.SOURCE_SAVE).performScrollTo().performClick()
+        compose.waitForIdle()
+        tagged(TorrentConfigTags.user("pages-test-idx")).assertExists()
+        tagged(TorrentConfigTags.FORM).assertDoesNotExist()
+        val saved = TorrentEngines.sources(RuntimeEnvironment.getApplication()).user().single { it.id == "pages-test-idx" }
+        assertEquals(ParseKind.HTML_MAGNETS, saved.kind); assertEquals("https://idx.example/rss?q={q}", saved.searchUrl); assertEquals("Pages Test Idx", saved.label)
+        // Search > Torrent's host now offers the three built-ins and the user's source, flagged as theirs
+        val host = TorrentHost(RuntimeEnvironment.getApplication())
+        val listed = host.sources()
+        assertEquals(TorrentIndexers.all.map { it.id } + "pages-test-idx", listed.filter { it.builtIn || it.id == "pages-test-idx" }.map { it.id })
+        assertFalse(listed.single { it.id == "pages-test-idx" }.builtIn)
+        // switching it off in Configs takes it out of the search set but keeps it listed
+        val rev = host.revision()
+        tagged(TorrentConfigTags.userSwitch("pages-test-idx")).performScrollTo().performClick()
+        compose.waitForIdle()
+        assertTrue(host.revision() > rev)
+        assertTrue(host.sources().none { it.id == "pages-test-idx" })
+        tagged(TorrentConfigTags.user("pages-test-idx")).assertExists()
+        TorrentEngines.sources(RuntimeEnvironment.getApplication()).remove("pages-test-idx")
     }
 
     @Test fun `the Cloud page's Commits and CI-CD are buttons that open a page each`() {

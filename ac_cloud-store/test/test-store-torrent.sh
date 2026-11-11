@@ -17,6 +17,11 @@
 #      engine; the torrent indexers are a declared list with at least two public sources
 #   C1 Configs > Torrent: download folder default Downloads/Cloudy-store/Torrent (created if missing), external drive volumes,
 #      folder picker, .torrent import into the engine, seeding policy, all-files grant through libs:perms
+#   C2 Configs > Torrent is drawn with the Store's Kit components (StoreKit.Themed + KitCard / KitSectionHeader / KitStatusBanner / KitListRow /
+#      KitActionBar), still carries every field it had (folder, default note, drive choice, import, grant, seeding switch, ratio limit,
+#      fallback note, engine state: rule 16) and has a SOURCES manager: the built-in indexers listed, the user's own added / edited / removed /
+#      switched and kept in SharedPreferences libs_torrent; Search > Torrent reads the host's sources again when they change and the host adds
+#      the user's enabled sources to the declared built-ins
 #   P1 permissions: MANAGE_EXTERNAL_STORAGE in the manifest and all_files in build.json::perms.needs; no permission API called outside libs:perms
 # Then each planted defect must turn it red.
 set -u
@@ -159,6 +164,21 @@ ok("OpenMultipleDocuments" in cp and "importUris(" in cp and "addTorrentBytes(" 
 ok('PermsLink.open(ctx, "app", listOf("all_files"))' in cp and "requestPermissions" not in cp and "MANAGE_APP_ALL_FILES" not in cp,
    "C1 the all-files grant goes through libs:perms (no permission API of the Store's own)", "C1 the Store asks for the grant itself")
 
+# C2
+srcs = strip(rd(TLK + "/TorrentSources.kt") or ""); eng = strip(rd(TLK + "/TorrentEngines.kt") or "")
+ok(all(x in cp for x in ("StoreKit.Themed", "KitCard(", "KitSectionHeader(", "KitStatusBanner(", "KitListRow(", "KitActionBar(", "KitSwitchRow(", "KitSegmented(")),
+   "C2 Configs > Torrent is drawn with the Store's Kit components", "C2 Configs > Torrent left the Kit components")
+ok(all(x in cp for x in ("settings.resetSaveDir()", "settings.usingFallback", "settings.fallbackDir()", "settings.seedAfterComplete", "settings.seedRatioLimit = ratio", "TorrentPaths.DEFAULT_RELATIVE",
+                         "TorrentConfigTags.PATH", "TorrentConfigTags.DRIVES", "TorrentConfigTags.IMPORT", "TorrentConfigTags.ENGINE", "TorrentConfigTags.GRANT", "TorrentConfigTags.NO_ACCESS", "EngineState.Unavailable -> KitState.BAD")),
+   "C2 every field of the old Configs > Torrent page is still drawn (rule 16)", "C2 a Configs > Torrent field was dropped")
+ok(all(x in cp for x in ('KitSectionHeader("Torrent sources"', "TorrentIndexers.all", "sources.add(", "sources.update(", "sources.remove(", "sources.setEnabled(", "ParseKind.values()", "FIELD_URL", "FIELD_LABEL", "FIELD_ID", "FIELD_HOME")),
+   "C2 Configs > Torrent lists the built-in sources and adds / edits / removes / switches the user's own", "C2 the torrent sources manager is missing or incomplete")
+ok("class TorrentSources" in srcs and "class PrefsSourceStore" in srcs and '"libs_torrent"' in srcs and "enum class ParseKind" in srcs and "fun searchSet()" in srcs and "TorrentIndexers.all" in srcs
+   and "fun sources(ctx: Context)" in eng,
+   "C2 user sources persist in SharedPreferences libs_torrent and are searched with the built-ins", "C2 the user-source registry lost its persistence or the built-ins")
+ok("registry.user()" in th and "it.enabled" in th and "override fun revision()" in th and "host.revision()" in ts and "builtIn" in ts,
+   "C2 Search > Torrent lists the built-ins plus the user's enabled sources and re-reads them when they change", "C2 Search > Torrent ignores the user's sources")
+
 # P1
 mf = rd("ac_cloud-store/app/src/main/AndroidManifest.xml") or ""
 ok("android.permission.MANAGE_EXTERNAL_STORAGE" in mf and "all_files" in bj["perms"]["needs"] and "android.permission.INTERNET" in mf + (rd(TL + "/src/main/AndroidManifest.xml") or ""),
@@ -212,6 +232,12 @@ mutate "lib bakes a BuildConfig field" "$TL/build.gradle" "namespace 'com.diegon
 mutate "engine loses seed control" "$TLK/TorrentEngine.kt" 'fun setSeeding(' 'fun setSeedingX('
 mutate "Search loses the Torrent subpage" "$AS/StoreSearchPage.kt" 'PAGE_TORRENT = "search-torrent"' 'PAGE_TORRENT = "search-torrentx"'
 mutate "torrent results install as APKs" "$AS/StoreSearchPage.kt" 'if (page == PAGE_TORRENT) "torrent-download" else "install"' '"install"'
+mutate "Configs > Torrent leaves the Kit" "$CS/TorrentConfigPage.kt" 'StoreKit.Themed {' 'run {'
+mutate "Configs > Torrent loses the sources manager" "$CS/TorrentConfigPage.kt" 'KitSectionHeader("Torrent sources"' 'KitSectionHeader("Torrent sourcez"'
+mutate "Configs > Torrent drops the ratio limit" "$CS/TorrentConfigPage.kt" 'settings.seedRatioLimit = ratio' 'Unit'
+mutate "Configs > Torrent drops the engine state" "$CS/TorrentConfigPage.kt" 'EngineState.Unavailable -> KitState.BAD' 'EngineState.Unavailable -> KitState.OK'
+mutate "Search ignores the user's sources" "$CS/TorrentHost.kt" 'registry.user().filter { it.enabled }' 'emptyList<com.diegonmarcos.superapp.torrent.UserSource>()'
+mutate "sources are no longer persisted" "$TLK/TorrentSources.kt" 'getSharedPreferences("libs_torrent"' 'getSharedPreferences("libs_torrentx"'
 mutate "download does not reach the engine" "$CS/TorrentHost.kt" 'engine.addMagnet(magnet)' 'Unit'
 mutate "one indexer left" "$TLK/TorrentSearch.kt" 'val all: List<TorrentIndexer> = listOf(ApiBay, Yts, InternetArchive)' 'val all: List<TorrentIndexer> = listOf(ApiBay)'
 mutate "default folder renamed" "$TLK/TorrentPaths.kt" 'DEFAULT_RELATIVE = "Cloudy-store/Torrent"' 'DEFAULT_RELATIVE = "Torrent"'

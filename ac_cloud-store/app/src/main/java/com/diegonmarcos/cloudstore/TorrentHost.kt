@@ -8,18 +8,26 @@ import com.diegonmarcos.superapp.torrent.TorrentEngines
 import com.diegonmarcos.superapp.torrent.TorrentHit
 import com.diegonmarcos.superapp.torrent.TorrentIndexers
 import com.diegonmarcos.superapp.torrent.TorrentSearch
+import com.diegonmarcos.superapp.torrent.UserIndexer
 import com.diegonmarcos.superapp.torrent.sentence
 
 /**
  * The glue between libs:appstore's Search > Torrent page and libs:torrent: the sources are libs:torrent's declared indexers
- * ([TorrentIndexers.all]; a new indexer there is a new source pill with no change here), a search is [TorrentSearch.search],
- * and a result goes to the TORRENT handler - the engine - never to the APK install path.
+ * ([TorrentIndexers.all]; a new built-in there is a new source pill with no change here) plus the user's own enabled sources
+ * ([TorrentSources], managed in Configs > Torrent), a search is [TorrentSearch.search], and a result goes to the TORRENT handler -
+ * the engine - never to the APK install path.
  */
 class TorrentHost(private val app: Context) : StoreTorrentHost.Host {
-    override fun sources(): List<StoreTorrentHost.Source> = TorrentIndexers.all.map { StoreTorrentHost.Source(it.id, it.label, it.blurb) }
+    private val registry get() = TorrentEngines.sources(app)
+
+    override fun sources(): List<StoreTorrentHost.Source> =
+        TorrentIndexers.all.map { StoreTorrentHost.Source(it.id, it.label, it.blurb, it.homepage, builtIn = true) } +
+            registry.user().filter { it.enabled }.map { UserIndexer(it) }.map { StoreTorrentHost.Source(it.id, it.label, it.blurb, it.homepage, builtIn = false) }
+
+    override fun revision(): Long = registry.revision
 
     override fun search(sourceId: String, query: String): List<StoreTorrentHost.Hit> {
-        val ix = TorrentIndexers.byId(sourceId) ?: error("unknown torrent source '$sourceId'")
+        val ix = registry.byId(sourceId) ?: error("unknown torrent source '$sourceId'")
         return TorrentSearch.search(ix, query).map { StoreTorrentHost.Hit(ix.id, it.title, it.seeders, it.leechers, it.sizeBytes, it.addedAt, it.page, it, ix.label, it.category, it.files) }
     }
 

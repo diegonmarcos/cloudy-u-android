@@ -40,7 +40,7 @@ class TorrentEngine(
     /** What the downloads are doing right now, for the background service ([TorrentActivity.keepAlive] is its run condition). */
     @Synchronized fun activity(): TorrentActivity = TorrentActivity.of(refresh())
 
-    private fun loadOnce() { if (!loaded) { loaded = true; store.load().forEach { entries[it.id] = it } } }
+    private fun loadOnce() { if (!loaded) { loaded = true; store.load().forEach { entries[it.id] = it; if (it.totalBytes > 0) totals[it.id] = it.totalBytes } } }
 
     private fun persist() { runCatching { store.save(entries.values.toList()) } }
 
@@ -153,6 +153,8 @@ class TorrentEngine(
             val r = raw[id] ?: continue
             if (r.totalBytes > 0) totals[id] = maxOf(totals[id] ?: 0L, r.totalBytes)
             var cur = entries.getValue(id)
+            // The size is remembered across launches (a finished magnet torrent is re-added paused, with no metadata, and would show 0 B).
+            totals[id]?.let { if (it != cur.totalBytes) { cur = cur.copy(totalBytes = it); changed = true } }
             if (r.name.isNotEmpty() && r.name != cur.name) { cur = cur.copy(name = r.name); changed = true }
             if (!cur.completed && done(r)) { cur = cur.copy(completed = true); changed = true }
             if (cur.completed && cur.seed && ratioReached(r)) { cur = cur.copy(seed = false); changed = true }

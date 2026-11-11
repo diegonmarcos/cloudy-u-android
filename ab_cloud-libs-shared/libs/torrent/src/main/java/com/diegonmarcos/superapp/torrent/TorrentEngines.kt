@@ -17,6 +17,13 @@ object TorrentEngines {
         return TorrentEngine(JlibtorrentBackend(), FileTorrentStore(File(dir, "torrents.json")), PrefsSettings(app), File(dir, "files"))
     }
 
+    @Volatile private var sources: TorrentSources? = null
+
+    /** The torrent search sources: the declared built-ins plus the user's own (SharedPreferences `libs_torrent`). One per process; touches no native code. */
+    fun sources(ctx: Context): TorrentSources = sources ?: synchronized(this) {
+        sources ?: TorrentSources(PrefsSourceStore(ctx.applicationContext)).also { sources = it }
+    }
+
     /** Settings with their Android extras (fallback state, volumes), for the config page. */
     fun settings(ctx: Context): PrefsSettings = get(ctx).settings as PrefsSettings
 

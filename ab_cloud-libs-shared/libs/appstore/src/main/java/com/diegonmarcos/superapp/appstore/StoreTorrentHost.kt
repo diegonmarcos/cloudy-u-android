@@ -8,7 +8,13 @@ package com.diegonmarcos.superapp.appstore
  */
 object StoreTorrentHost {
     /** One torrent search source (an indexer). The list is the host's and is declarative: a new indexer needs no change here. */
-    class Source(val id: String, val label: String, val blurb: String)
+    class Source(
+        val id: String, val label: String, val blurb: String,
+        /** the indexer's site, "" when unknown */
+        val homepage: String = "",
+        /** false = a source the user added in Configs > Torrent */
+        val builtIn: Boolean = true,
+    )
 
     /** One result, already rendered to plain fields. [key] is the host's own handle for [Host.download]. */
     class Hit(
@@ -30,7 +36,10 @@ object StoreTorrentHost {
     )
 
     interface Host {
+        /** The sources Search queries: the declared built-ins and the user's enabled ones. */
         fun sources(): List<Source>
+        /** Moves on every change of the source list (a source added, removed, switched), so the page can tell its list is stale. */
+        fun revision(): Long = 0L
         /** Blocking, off the main thread. Throws with the reason (offline, refused, unreadable): never an empty list for a failure. */
         fun search(sourceId: String, query: String): List<Hit>
         /** Hands the result to the engine (magnet, or fetch the .torrent then add). Blocking. Returns one sentence saying what happened. */
