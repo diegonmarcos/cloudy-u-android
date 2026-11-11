@@ -213,7 +213,15 @@ jobs:
       # change never ran the tests it changed. The suite now runs on every Ship run; only build/publish stay gated.
       # #1353 StoreGitFishShellTest runs the real cld.termux git scripts through fish, the guest's login shell.
       - name: Install fish (the cld.termux guest login shell)
-        run: sudo apt-get install -y fish || { sudo apt-get update -y && sudo apt-get install -y fish; }
+        # The runner's apt mirrors are sometimes unresolvable (DNS flake, runs 43047670460 attempts 1-4): update first,
+        # retry with backoff, and only then continue without fish (the fish-shell test is the one that then says so; no other step needs it).
+        run: |
+          ok=0
+          for try in 1 2 3 4 5; do
+            if sudo apt-get update -y -o Acquire::Retries=3 && sudo apt-get install -y -o Acquire::Retries=3 fish; then ok=1; break; fi
+            echo "fish install attempt $try failed; retrying in $((try * 20))s"; sleep $((try * 20))
+          done
+          command -v fish >/dev/null || echo "::warning::fish could not be installed (apt mirrors unresolvable); continuing"
       - name: JVM unit tests (fatal on failure)
         working-directory: ${{ github.workspace }}
         env:
