@@ -71,7 +71,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 23,
+      "unit_test_sources": 24,
       "workflow": "ship-cloud-account.yml"
     },
     "ac_cloud-account/web": {
