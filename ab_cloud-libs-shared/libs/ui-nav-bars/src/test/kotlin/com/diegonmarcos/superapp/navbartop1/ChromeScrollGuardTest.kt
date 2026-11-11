@@ -32,7 +32,14 @@ class ChromeScrollGuardTest {
         while (dir != null) {
             // Cloud Notes is a Capacitor project: its Android app sits under the vendored tree.
             val root = listOf("$app/app/src/main", "$app/packages/frontend/apps/android/App/app/src/main").map { File(dir, it) }.firstOrNull { it.isDirectory }
-            if (root != null) return root.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
+            if (root != null) {
+                // #1652 an app whose UI lives in a shared lib names it in build.json android.ui_module_dirs (Cloud Writer: libs:writer-ui).
+                val extra = File(dir, "$app/build.json").takeIf { it.isFile }?.readText()
+                    ?.let { Regex(""""ui_module_dirs"\s*:\s*\[([^\]]*)]""").find(it)?.groupValues?.get(1) }
+                    ?.let { Regex(""""([^"]+)"""").findAll(it).map { m -> File(File(dir, app), m.groupValues[1] + "/src/main").canonicalFile }.filter { d -> d.isDirectory }.toList() }
+                    .orEmpty()
+                return (listOf(root) + extra).flatMap { r -> r.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList() }
+            }
             dir = dir.parentFile
         }
         throw AssertionError("$app/app/src/main not found above ${File("").absolutePath}")
