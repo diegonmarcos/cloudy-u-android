@@ -2,12 +2,11 @@ package app.sterna.ui.rss
 
 import app.sterna.core.data.rss.AlertRssAccount
 import app.sterna.core.data.rss.AlertRssChannel
+import com.diegonmarcos.superapp.fleetendpoints.FleetHttp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
  * The default Alert (RSS) Account (#1624): the c3-notify RSS system. It ships with the app — present
@@ -83,20 +82,14 @@ object DefaultAlertRssAccount {
         return out.distinct()
     }
 
+    /** Read the registry through the fleet transport (#1093): [FleetHttp] carries the same routing and
+     *  bearer interceptors the mail client wears, and a host that is not a registered fleet endpoint —
+     *  as this public anonymous RSS edge is — passes through untouched as a plain request. */
     private fun fetch(url: String): String {
-        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = 8_000
-            readTimeout = 15_000
-            instanceFollowRedirects = true
-            setRequestProperty("Accept", "application/json")
-        }
-        try {
-            val code = conn.responseCode
-            if (code !in 200..299) throw RuntimeException("HTTP $code")
-            return conn.inputStream.bufferedReader().use { it.readText() }
-        } finally {
-            conn.disconnect()
-        }
+        val (code, body) = FleetHttp.call(
+            FleetHttp.shared, "GET", url, mapOf("Accept" to "application/json"), null,
+        )
+        if (code !in 200..299) throw RuntimeException("HTTP $code")
+        return body
     }
 }
