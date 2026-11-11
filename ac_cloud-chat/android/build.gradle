@@ -49,6 +49,18 @@ allprojects {
     }
 }
 
+// #1630 Kotlin 2.3 turned the reified-intersection-type warning of upstream's own Kotlin (the helpers/database_extension files) into an error.
+// Upstream's code and the npm modules' stay on language/API 2.2 (it compiles there as upstream wrote it); the fleet libs (:libs:*) are built
+// at the toolchain's own level.
+allprojects { p ->
+    if (!p.path.startsWith(':libs:')) {
+        p.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { t ->
+            t.compilerOptions.languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
+            t.compilerOptions.apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"
 
 dependencyLocking {
