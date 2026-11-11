@@ -42,6 +42,8 @@ import org.robolectric.annotation.Config
  *   P2 a sandbox pick writes the store AND moves the selection in place: same fragment, no
  *      rebuild (#349), the tapped tile selected and the previous one not
  *   P3 every tile is announced as a selectable choice, not a bare label
+ *   S1 (#1591) the status checker under a command-bearing preset says "runnable" only while the adb-shell broker is
+ *      really armed, "will not run" (with the broker's reason) while it is not, and a preset with no command has no checker
  *   K1 a kit switch row toggles from a tap anywhere on the row, and reports the new value
  *   K2 dismissing a kit confirm dialog never confirms
  *
@@ -120,6 +122,42 @@ class LauncherPresetsComposeTest : KitPageHarness() {
         for ((group, tiles) in page.page) for (t in tiles) {
             compose.onNodeWithTag(KitTags.tile("${group.id}:${t.id}")).assertIsSelectable()
         }
+    }
+
+    @Test
+    fun `S1 a command-bearing preset shows runnable only while the broker is really armed`() {
+        fun st(armed: Boolean) = com.diegonmarcos.superapp.shellclient.ShellStatus(true, armed, if (armed) "embedded-adb" else "",
+            if (armed) "ok" else "down", 1_000L, if (armed) "" else "no channel answered")
+        // the rule, pure: the broker's live verdict and nothing else
+        assertEquals(PresetCmdCheck.State.NONE, PresetCmdCheck.of(false, st(true)).state)
+        assertEquals(PresetCmdCheck.State.CHECKING, PresetCmdCheck.of(true, null).state)
+        assertEquals(PresetCmdCheck.State.RUNNABLE, PresetCmdCheck.of(true, st(true)).state)
+        assertTrue(PresetCmdCheck.of(true, st(true)).line.contains("runnable") && PresetCmdCheck.of(true, st(true)).line.contains("embedded-adb"))
+        val down = PresetCmdCheck.of(true, st(false))
+        assertEquals(PresetCmdCheck.State.NOT_ARMED, down.state)
+        assertTrue(down.line, down.line.contains("will not run") && down.line.contains("no channel answered") && !down.line.contains("runnable"))
+        // an installed broker that is not armed is not runnable: installed is not a round trip
+        assertEquals(PresetCmdCheck.State.NOT_ARMED, PresetCmdCheck.of(true, st(false).copy(brokerInstalled = true)).state)
+
+        // the page, on the app's real declaration: every preset with a cmd wears the checker, the others do not
+        val modes = LauncherModes.load()
+        val withCmd = modes.filter { it.cmd.isNotBlank() && it.engine.isBlank() }
+        assertTrue("ui.launcher_modes declares no preset with a cmd; the checker has nothing to check", withCmd.isNotEmpty())
+        var armed = false
+        var reads = 0
+        val page = LauncherPresetsFragment.newInstance().also { it.readShell = { reads++; st(armed) } }
+        show(page)
+        fun settle() { Thread.sleep(300); org.robolectric.shadows.ShadowLooper.idleMainLooper(); compose.waitForIdle() }
+        fun line(id: String) = compose.onNodeWithTag("preset-cmd:$id").performScrollTo().fetchSemanticsNode().config.toString()
+        settle()
+        assertTrue("the checker did not read the broker", reads >= 1)
+        for (m in withCmd) assertTrue(m.id, line(m.id).contains("will not run") && !line(m.id).contains("runnable"))
+        for (m in modes.filter { it.cmd.isBlank() }) compose.onNodeWithTag("preset-cmd:${m.id}").assertDoesNotExist()
+        // the broker arms: the same checker turns runnable on the next read, and back when it drops
+        armed = true; page.checkShell(); settle()
+        for (m in withCmd) assertTrue(m.id, line(m.id).contains("runnable") && line(m.id).contains("embedded-adb"))
+        armed = false; page.checkShell(); settle()
+        for (m in withCmd) assertTrue(m.id, line(m.id).contains("will not run"))
     }
 
     @Test

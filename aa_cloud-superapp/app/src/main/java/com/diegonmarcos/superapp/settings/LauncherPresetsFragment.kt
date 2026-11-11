@@ -4,7 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -20,12 +23,14 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.superapp.ShellActivity
+import com.diegonmarcos.superapp.shellclient.ShellStatus
 import com.diegonmarcos.superapp.ui.Haptics
 import com.diegonmarcos.superapp.ui.LauncherPalette
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.KitSectionHeader
 import com.diegonmarcos.superapp.uikit.KitSelectableTile
 import com.diegonmarcos.superapp.uikit.KitTags
+import com.diegonmarcos.superapp.uikit.LocalKitPalette
 
 /**
  * Configs → Launcher → Presets (#574; the tab was Profiles).
@@ -53,9 +58,36 @@ import com.diegonmarcos.superapp.uikit.KitTags
  */
 class LauncherPresetsFragment : KitComposeFragment() {
 
-    /** One pickable row: what the tile says, and what a tap on it does. */
+    /** One pickable row: what the tile says, and what a tap on it does. [cmd] = the preset declares a shell command (#1591). */
     internal class Tile(val id: String, val label: String, val subtitle: String,
-                        val selected: Boolean, val pick: () -> Unit)
+                        val selected: Boolean, val cmd: Boolean = false, val pick: () -> Unit)
+
+    /**
+     * #1591 The status checker of the presets' shell commands: the adb-shell broker's LIVE status ([ShellStatus.armed] is a real
+     * `id -u` round trip, the same one the ADB Shell page shows), read on resume and after a preset ran its command. null = not
+     * read yet. A command-bearing preset is "runnable" only while this says armed.
+     */
+    internal var shell by mutableStateOf<ShellStatus?>(null)
+        private set
+
+    /** Where the broker status is read; a test stands a fake here. */
+    internal var readShell: (android.content.Context) -> ShellStatus = { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(it) }
+
+    /** Re-read the broker (off the UI thread) when a preset carries a command; nothing is read on a page with none. */
+    internal fun checkShell() {
+        if (!isAdded || LauncherModes.load().none { it.cmd.isNotBlank() }) return
+        val app = requireContext().applicationContext
+        val act = requireActivity()
+        Thread({
+            val st = runCatching { readShell(app) }.getOrNull() ?: return@Thread
+            act.runOnUiThread { shell = st }
+        }, "preset-cmd-check").apply { isDaemon = true }.start()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkShell()
+    }
 
     /** The page: each declared group with its tiles, as last read from the store. */
     internal var page by mutableStateOf<List<Pair<LauncherPresets.Group, List<Tile>>>>(emptyList())
@@ -85,6 +117,9 @@ class LauncherPresetsFragment : KitComposeFragment() {
                         onClick = { Haptics.tap(view); t.pick() },
                         modifier = Modifier.testTag(KitTags.tile("${group.id}:${t.id}")),
                     )
+                    if (t.cmd) PresetCmdLine(PresetCmdCheck.of(true, shell), Modifier.testTag("preset-cmd:${t.id}")) {
+                        (activity as? ShellActivity)?.openAdbShellInFrame()
+                    }
                     Spacer(Modifier.height(8.dp))
                 }
             }
@@ -164,6 +199,7 @@ class LauncherPresetsFragment : KitComposeFragment() {
                         "${mode.label}. Tap to re-apply it."
                 else mode.subtitle,
                 selected = isCurrent,
+                cmd = mode.cmd.isNotBlank(),
             ) {
                 LauncherModes.apply(ctx, mode)
                 // The switches moved under the shell's chrome — same follow-up a
@@ -193,6 +229,9 @@ class LauncherPresetsFragment : KitComposeFragment() {
                 act,
                 if (out != null) "${mode.label}: ran its action" else "${mode.label}: shell not ready",
             )
+            // The checker under the tile says what the broker says now, after this run.
+            runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.invalidate(app) }
+            act.runOnUiThread { checkShell() }
         }, "preset-cmd").start()
     }
 
@@ -219,4 +258,36 @@ class LauncherPresetsFragment : KitComposeFragment() {
     }
 
     companion object { fun newInstance() = LauncherPresetsFragment() }
+}
+
+/**
+ * #1591 Whether a preset's shell command would be carried right now, from the adb-shell broker's live status and nothing else:
+ * RUNNABLE only when a privileged channel answered its round trip ([ShellStatus.armed]); NOT_ARMED says why it would be a no-op.
+ */
+internal object PresetCmdCheck {
+    enum class State { NONE, CHECKING, RUNNABLE, NOT_ARMED }
+    data class Verdict(val state: State, val line: String)
+
+    fun of(hasCmd: Boolean, status: ShellStatus?): Verdict = when {
+        !hasCmd -> Verdict(State.NONE, "")
+        status == null -> Verdict(State.CHECKING, "Shell action: checking the ADB shell...")
+        status.armed -> Verdict(State.RUNNABLE, "Shell action: runnable · ADB shell up via ${status.channel}")
+        else -> Verdict(State.NOT_ARMED, "Shell action: will not run · ADB shell down - " +
+            status.reason.ifBlank { status.detail }.ifBlank { "unknown" } + " · tap to open ADB Shell")
+    }
+}
+
+/** The checker's line under a command-bearing preset: a light and the verdict; while not armed, a tap opens the ADB Shell page. */
+@Composable
+private fun PresetCmdLine(v: PresetCmdCheck.Verdict, modifier: Modifier = Modifier, openAdbShell: () -> Unit) {
+    val p = LocalKitPalette.current
+    val ink = when (v.state) {
+        PresetCmdCheck.State.RUNNABLE -> p.ok
+        PresetCmdCheck.State.NOT_ARMED -> p.warn
+        else -> p.textSecondary
+    }
+    Text("● " + v.line, color = ink, style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+        modifier = modifier.fillMaxWidth()
+            .clickable(enabled = v.state == PresetCmdCheck.State.NOT_ARMED, onClick = openAdbShell)
+            .padding(horizontal = 16.dp, vertical = 4.dp))
 }
