@@ -23,7 +23,7 @@ class RepoLightStatsTest {
 
     @Test fun theColumnsLeadWithTheSixLightStatsInOrder() {
         val c = RepoTable.COLUMNS
-        assertEquals(listOf(RepoColumn.CLONED, RepoColumn.AHEAD_BEHIND, RepoColumn.DIRTY, RepoColumn.DETACHED, RepoColumn.UNPUSHED, RepoColumn.CURRENT_BRANCH), c.subList(c.indexOf(RepoColumn.NAME) + 1, c.indexOf(RepoColumn.NAME) + 7))
+        assertEquals(listOf(RepoColumn.CLONED, RepoColumn.AHEAD_BEHIND, RepoColumn.DIRTY, RepoColumn.DETACHED, RepoColumn.UNPUSHED, RepoColumn.CURRENT_BRANCH), c.subList(c.indexOf(RepoColumn.MESSAGE) + 1, c.indexOf(RepoColumn.MESSAGE) + 7))
         assertEquals(RepoColumn.LAST_COMMIT, c.last())
     }
 

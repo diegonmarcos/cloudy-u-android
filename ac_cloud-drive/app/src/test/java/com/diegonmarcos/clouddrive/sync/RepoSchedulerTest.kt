@@ -149,7 +149,7 @@ class RepoSchedulerTest {
         File(d, ".git/HEAD").writeText("ref: refs/heads/new\n")
         assertEquals("no upstream configured", RepoCheap.Head("new", null), RepoCheap.head(d))
         File(d, ".git/HEAD").writeText("0123456789abcdef0123456789abcdef01234567\n")
-        assertEquals("detached", RepoCheap.Head(null, null), RepoCheap.head(d))
+        assertEquals("detached", RepoCheap.Head(null, null, detached = true), RepoCheap.head(d))
         assertNull(RepoCheap.upstreamOf("", "main"))
         assertTrue(File(d, ".git").exists()); assertFalse(File(File(tmp, "nope"), ".git").exists())
     }

@@ -32,10 +32,10 @@ import com.diegonmarcos.superapp.uikit.KitStoreRow
 
 /** #1138 the repo table's columns, in display order. #1238: STATUS is the leftmost and LFS follows Pvt/Pub. #1452: MESSAGE (Status Message) follows the name, so the status text has a cell of its own. */
 /**
- * #1645 the light git stats LEAD (after the status lights and the name): Cloned, Divergence (AHEAD_BEHIND), Dirty/Stashed (DIRTY),
+ * #1645 the light git stats LEAD (right after the name and its Status Message): Cloned, Divergence (AHEAD_BEHIND), Dirty/Stashed (DIRTY),
  * Detached HEAD, Unpushed, checked-out Branch (CURRENT_BRANCH); every one is a sortable column read from real git state.
  */
-enum class RepoColumn { STATUS, NAME, CLONED, AHEAD_BEHIND, DIRTY, DETACHED, UNPUSHED, CURRENT_BRANCH, MESSAGE, PROVIDER, VISIBILITY, LFS, SIZE_MAIN, SIZE_TOTAL, SIZE_DISK, BRANCHES, LAST_COMMIT }
+enum class RepoColumn { STATUS, NAME, MESSAGE, CLONED, AHEAD_BEHIND, DIRTY, DETACHED, UNPUSHED, CURRENT_BRANCH, PROVIDER, VISIBILITY, LFS, SIZE_MAIN, SIZE_TOTAL, SIZE_DISK, BRANCHES, LAST_COMMIT }
 
 /** The string resource that labels [c] (a column without one is a programming error caught by RepoColumnTest). */
 fun columnLabelRes(c: RepoColumn): Int = when (c) {
@@ -186,8 +186,8 @@ fun RepoCells(r: GitTableRow<*>) {
         RepoColumn.BRANCHES to GitTable.count(r.branches),
         RepoColumn.LAST_COMMIT to GitTable.age(r.lastCommitMs, System.currentTimeMillis()),
     )
-    lead.forEach { (c, t) -> KitStoreCaption(t, repoCellModifier(c), mono = true, align = if (c == RepoColumn.CURRENT_BRANCH) TextAlign.Start else TextAlign.End) }
     RepoMessageCell(r.message, r.messageProblem)
+    lead.forEach { (c, t) -> KitStoreCaption(t, repoCellModifier(c), mono = true, align = if (c == RepoColumn.CURRENT_BRANCH) TextAlign.Start else TextAlign.End) }
     texts.forEach { (c, t) ->
         KitStoreCaption(t, repoCellModifier(c), mono = true, align = TextAlign.End)
     }
