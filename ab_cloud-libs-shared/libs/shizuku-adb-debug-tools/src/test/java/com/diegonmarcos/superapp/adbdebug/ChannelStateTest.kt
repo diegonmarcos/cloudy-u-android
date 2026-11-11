@@ -192,4 +192,15 @@ class ChannelStateTest {
         assertEquals("ADB Shell: connecting...", ChannelState.chip(healthy.copy(connecting = true)))
         assertEquals("ADB Shell: degraded (local-server)", ChannelState.chip(healthy.copy(adbConnected = false, shizukuRunning = false)))
     }
+
+    /** #1647: Shizuku running and permitted is not a route once a round trip over its binder was asked and went unanswered. */
+    @Test fun shizukuIsARouteOnlyWhileItsRoundTripAnswers() {
+        val up = facts(SHIZUKU) { copy(shizukuInstalled = true, shizukuRunning = true, shizukuGranted = true) }
+        assertEquals("shizuku", ChannelState.route(up.copy(shizukuAnswers = true)))
+        assertEquals(ConnState.UP, ChannelState.connState(up.copy(shizukuAnswers = true)))
+        assertNull(ChannelState.route(up.copy(shizukuAnswers = false)))
+        assertEquals(ConnState.DOWN, ChannelState.connState(up.copy(shizukuAnswers = false)))
+        // not asked (another mode's read): the binder's word stands, as before
+        assertEquals("shizuku", ChannelState.route(up))
+    }
 }

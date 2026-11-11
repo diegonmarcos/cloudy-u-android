@@ -15,14 +15,14 @@ import org.junit.Test
 /**
  * The ADB Shell Status cockpit's pure rules.
  *   C1 four tabs, Status first: Status, Shell, Perms, All
- *   C2 the chain is Perms, Setup, Shizuku, Local Server, Embedded, Connection, in dependency order
+ *   C2 the chain is Perms, Setup, Embedded, Local Server, Shizuku, Connection (the page's order, #1647)
  *   C3 Perms is a light only (one action: jump to the Perms tab)
  *   C4 Setup has two sub-lights (Developer Options, Wireless Debugging) and one deep-link action each
  *   C5 the active mode row is highlighted, the other two dim to "switch mode to use"
  *   C6 Local Server owns all its actions, enabled only when they apply
  *   C7 Connection waits in GREY (never red) while Setup or the active mode is not ready
  *   C8 the master pill: green connected / amber ready / red blocked / grey idle
- *   C9 Auto-fix order and its consent gates
+ *   C9 the order Connect walks (Connect is the auto-fix) and its consent gates
  *   C10 log severity and filter
  *   C11 the modes are independent channels: Local Server never reads, lists or walks into Shizuku, and Shizuku never into adb
  *   C12 a mode row is green only on a real shell round trip over its own channel
@@ -32,7 +32,9 @@ class AdbCockpitModelTest {
                       server: Boolean = false, shz: Triple<Boolean, Boolean, Boolean> = Triple(false, false, false), wifi: Boolean? = true) =
         ChannelFacts(mode = mode, probedAt = 1L, devOptions = dev, wirelessDebug = wd, onWifi = wifi, adbPaired = paired || connected, adbConnected = connected,
             serverPort = 38099, serverRunning = server, serverUid = if (server) "uid 2000" else null,
-            shizukuInstalled = shz.first, shizukuRunning = shz.second, shizukuGranted = shz.third)
+            shizukuInstalled = shz.first, shizukuRunning = shz.second, shizukuGranted = shz.third,
+            // the reader asks Shizuku for a round trip once it is running and permitted; these fixtures answer it
+            shizukuAnswers = if (shz.second && shz.third) true else null)
 
     private fun inputs(f: ChannelFacts, perms: AdbCockpitModel.PermsDigest? = AdbCockpitModel.PermsDigest(2, emptyList()), fail: String? = null) =
         AdbCockpitModel.Inputs(f, perms, LaunchVia.ADB, fail)
@@ -47,9 +49,9 @@ class AdbCockpitModelTest {
     }
 
     @Test fun `C2 the chain order`() {
-        assertEquals(listOf("perms", "setup", "shizuku", "local", "embedded", "connection"), AdbCockpitModel.steps(inputs(facts())).map { it.id })
+        assertEquals(listOf("perms", "setup", "embedded", "local", "shizuku", "connection"), AdbCockpitModel.steps(inputs(facts())).map { it.id })
         assertEquals(AdbCockpitModel.STEP_ORDER, AdbCockpitModel.steps(inputs(facts())).map { it.id })
-        assertEquals(listOf("Perms", "Setup", "Shizuku", "Local Server", "Embedded", "Connection"), AdbCockpitModel.steps(inputs(facts())).map { it.name })
+        assertEquals(listOf("Perms", "Setup", "Embedded", "Local Server", "Shizuku", "Connection"), AdbCockpitModel.steps(inputs(facts())).map { it.name })
     }
 
     @Test fun `C3 perms is a light only`() {

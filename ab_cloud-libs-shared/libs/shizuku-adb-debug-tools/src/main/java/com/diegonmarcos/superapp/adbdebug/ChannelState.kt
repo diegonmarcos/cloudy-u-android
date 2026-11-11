@@ -38,6 +38,8 @@ data class ChannelFacts(
     /** The SuperApp bridge is a declared provider of this app (a terminal), and whether it answers. */
     val bridgeDeclared: Boolean = false,
     val bridgeUp: Boolean = false,
+    /** An `echo` round trip over the Shizuku binder just now. null = not asked (Shizuku is not up, or the mode is not Shizuku). */
+    val shizukuAnswers: Boolean? = null,
 ) {
     val shizuku: ShizukuState get() = ShizukuState.of(shizukuInstalled, shizukuRunning, shizukuGranted)
 }
@@ -64,7 +66,8 @@ object ChannelState {
     private fun ready(name: String, f: ChannelFacts): Boolean = when (name) {
         ChannelSelector.EMBEDDED -> f.adbConnected
         ChannelSelector.LOCAL -> f.serverRunning
-        ChannelSelector.SHIZUKU -> f.shizuku == ShizukuState.UP
+        // Running and permitted is the binder's word; a round trip that was asked and got no answer is not a route.
+        ChannelSelector.SHIZUKU -> f.shizuku == ShizukuState.UP && f.shizukuAnswers != false
         ChannelSelector.BRIDGE -> f.bridgeDeclared && f.bridgeUp
         else -> false
     }

@@ -50,8 +50,10 @@ object ChannelReader {
         }
         val installed = ShizukuStatus.installed(app)
         val running = ShizukuAdb.isAvailable()
+        val granted = ShizukuAdb.isGranted()
+        val mode = ChannelModePrefs.current(app)
         return ChannelFacts(
-            mode = ChannelModePrefs.current(app),
+            mode = mode,
             probedAt = now,
             devOptions = devOptions(app),
             wirelessDebug = WirelessDebugging.isOn(app),
@@ -68,7 +70,9 @@ object ChannelReader {
             serverPid = pid,
             shizukuInstalled = installed,
             shizukuRunning = running,
-            shizukuGranted = ShizukuAdb.isGranted(),
+            shizukuGranted = granted,
+            // Asked only in Shizuku mode (no other mode touches Shizuku), and only once it is running and permitted.
+            shizukuAnswers = if (mode == ChannelMode.SHIZUKU && running && granted) ShizukuShellChannel.probe(app) else null,
             shizukuVersion = if (running) ShizukuAdb.version() else null,
             connecting = connecting,
             ownsServer = owns,

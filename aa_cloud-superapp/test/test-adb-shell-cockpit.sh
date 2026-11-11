@@ -3,11 +3,15 @@
 #  1. build.json: adb-shell declares tabs [adb-status, adb-term, adb-perms, adb-all] (Status, Shell, Perms, All, in that order),
 #     each declared once as a HIDDEN page, each in exactly one group, the label ADB Shell unchanged, and the page still after Apps Access.
 #  2. SectionPages routes every tab to AdbShellFragment; the fragment hosts the cockpit, the terminal, the perms checker and (All) AdbShellBrokerPage.
-#  3. AdbCockpitModel holds the chain in dependency order: perms, setup, shizuku, local, embedded, connection; the Setup sub-lights;
-#     the mode selector (Shizuku, Local Server, Embedded); Auto-fix walks ConnectPlan and stops at the consent gates.
-#  4. the cockpit is drawn from the model with Kit primitives (no sp literal, no bare MaterialTheme / Scaffold / Typography()), binds to the
-#     real state (ChannelReader, ChannelLog.shared, ChannelModePrefs, readPermRows) and has Logs filter / copy / clear.
-#  5. the JVM tests exist.
+#  3. AdbCockpitModel holds the chain in the page's order (#1647): perms, setup, embedded, local, shizuku, connection, and the page's
+#     cards (GROUP_ORDER: perms, setup, embedded, local, shizuku) as rows of light / step name / message / action icons; the Setup
+#     flips; the mode selector (Shizuku, Local Server, Embedded).
+#  4. the Status page is drawn from the model with the Kit palette at its own roomy measures (CockpitRoom; no sp literal, no bare
+#     MaterialTheme / Scaffold / Typography()), binds to the real state (ChannelReader, ChannelLog.shared, ChannelModePrefs,
+#     readPermRows) and has Logs filter / copy / clear.
+#  5. #1647 Connect IS the auto-fix: the one Connect verb walks ConnectPlan with the consent gates opened for the person, there is
+#     no plain single-step connect and no separate Auto-fix control; a run that stopped for the person resumes from the page.
+#  6. the JVM tests exist.
 # Usage: ./test-adb-shell-cockpit.sh
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$HERE/.." && pwd)"
@@ -41,22 +45,30 @@ done
 F="$(code "$C/AdbShellFragment.kt")"
 for w in 'AdbStatusTab()' 'AdbTermTab()' 'AdbPermsTab()' 'AdbShellBrokerPage()'; do echo "$F" | grep -qF "$w" && ok "the fragment hosts $w" || bad "the fragment does not host $w"; done
 M="$(code "$C/AdbCockpitModel.kt")"
-python3 - "$C/AdbCockpitModel.kt" <<'PY' && ok "the chain is perms, setup, shizuku, local, embedded, connection" || bad "the chain is missing or out of order"
+python3 - "$C/AdbCockpitModel.kt" <<'PY' && ok "the chain is perms, setup, embedded, local, shizuku, connection; the cards are the first five" || bad "the chain or the cards are missing or out of order"
 import re, sys
 s = open(sys.argv[1], encoding='utf-8').read()
-m = re.search(r'val STEP_ORDER = listOf\(([^)]*)\)', s)
-sys.exit(0 if m and [x.strip() for x in m.group(1).split(',')] == ['PERMS', 'SETUP', 'SHIZUKU', 'LOCAL', 'EMBEDDED', 'CONNECTION'] else 1)
+def lst(name):
+    m = re.search(r'val %s = listOf\(([^)]*)\)' % name, s)
+    return [x.strip() for x in m.group(1).split(',')] if m else None
+want = ['PERMS', 'SETUP', 'EMBEDDED', 'LOCAL', 'SHIZUKU']
+sys.exit(0 if lst('STEP_ORDER') == want + ['CONNECTION'] and lst('GROUP_ORDER') == want else 1)
 PY
-for w in '"Developer Options"' '"Wireless Debugging"' 'ChannelMode.SHIZUKU, ChannelMode.LOCAL_SERVER, ChannelMode.EMBEDDED_ONLY' 'ConnectPlan.steps' 'USER_GATES' 'switch mode to use' 'waiting on '; do
+for w in '"Developer Options"' '"Wireless Debugging"' '"Developer Options Flipped"' '"Wireless Debugging Flipped"' 'ChannelMode.SHIZUKU, ChannelMode.LOCAL_SERVER, ChannelMode.EMBEDDED_ONLY' 'ConnectPlan.steps' 'USER_GATES' 'switch mode to use' 'waiting on ' 'fun groups(' 'fun resumes('; do
   echo "$M" | grep -qF "$w" && ok "model: $w" || bad "model is missing: $w"
 done
 P="$(code "$C/AdbCockpit.kt")"; O="$(code "$C/AdbCockpitOps.kt")"; S="$(code "$C/AdbShellTabs.kt")"
 echo "$P$O$S" | grep -E '[0-9]\.sp\b|[0-9]sp\b' >/dev/null && bad "an sp literal in the cockpit" || ok "no sp literal"
 echo "$P$S" | grep -E 'MaterialTheme\(|\bScaffold\(|Typography\(\)|Button\(|minHeight|defaultMinSize' >/dev/null && bad "bare MaterialTheme / Scaffold / Typography / Button in the cockpit" || ok "no bare MaterialTheme, Scaffold, Typography or Button"
-echo "$P" | grep -q 'KitStoreRow' && echo "$P" | grep -q 'LocalKitPalette' && ok "drawn from the Kit primitives and the palette" || bad "not drawn from the Kit"
+echo "$P" | grep -q 'KitStoreRow' && echo "$P" | grep -q 'LocalKitPalette' && echo "$P" | grep -q 'object CockpitRoom' && ok "drawn from the Kit palette at the page's own roomy measures (CockpitRoom)" || bad "not drawn from the Kit, or the roomy measures are gone"
 echo "$P" | grep -q 'ChannelReader.read' && echo "$P" | grep -q 'ChannelLog.shared' && echo "$P" | grep -q 'ChannelModePrefs.set' && echo "$P$O" | grep -q 'readPermRows' && ok "bound to the real state: ChannelReader, ChannelLog.shared, ChannelModePrefs, the perms catalogue" || bad "not bound to the real state"
 echo "$P" | grep -q 'ON_RESUME' && ! echo "$P$S" | grep -Eq 'while \(true\)|delay\(' && ok "loads on open and resume, no polling" || bad "polls, or does not reload on resume"
-for w in '"filter' '"copy"' '"clear"' 'Auto-fix' 'adbc:mode' 'adbc:toggle' 'adbc:reconnect' 'adbc:master'; do echo "$P" | grep -qF "$w" && ok "cockpit: $w" || bad "cockpit is missing: $w"; done
-echo "$O" | grep -q 'ConnectPlan.run' && echo "$O" | grep -q 'needsUser = true' && ok "Auto-fix walks ConnectPlan and hands over at the consent gates" || bad "Auto-fix does not stop for the person"
-for f in configs/AdbCockpitModelTest configs/AdbCockpitPageTest configs/AdbShellInFrameTest; do [ -f "$T/$f.kt" ] && ok "tests: $f" || bad "missing tests: $f"; done
+for w in '"filter' '"copy"' '"clear"' 'adbc:control' 'adbc:mode' 'adbc:toggle' 'adbc:reconnect' 'adbc:master' 'adbc:step:' 'adbc:row:' 'adbc:light:' 'adbc:name:' 'adbc:msg:' 'adbc:acts:' 'adbc:logs' 'adbc:keepalive' 'AdbCockpitModel.groups('; do echo "$P" | grep -qF "$w" && ok "status page: $w" || bad "status page is missing: $w"; done
+echo "$O" | grep -q 'ConnectPlan.run' && echo "$O" | grep -q 'needsUser = true' && ok "Connect walks ConnectPlan and hands over at the consent gates" || bad "Connect does not stop for the person"
+# 5. Connect IS the auto-fix.
+[ "$(echo "$O" | grep -c 'ConnectPlan.run(')" = 1 ] && echo "$O" | grep -q 'AutoFixExecutor(app)) { grantPerms(app) }' && echo "$O" | grep -q 'Do.CONNECT -> connect(app)' \
+  && ok "one Connect path: perms, then the whole plan with the gates opened (no plain single-step connect)" || bad "Connect is not the one full chain"
+echo "$P" | grep -Eq 'adbc:autofix|autoFix' && bad "a separate Auto-fix control is back on the Status page" || ok "no separate Auto-fix control"
+echo "$P" | grep -q 'Do.CONNECT -> connect()' && echo "$P" | grep -q 'AdbCockpitModel.resumes(waiting, r.facts)' && ok "the top Connect runs the chain, and a run that stopped for the person resumes" || bad "the top Connect does not run / resume the chain"
+for f in configs/AdbCockpitModelTest configs/AdbCockpitPageTest configs/AdbStatusPageTest configs/AdbShellInFrameTest; do [ -f "$T/$f.kt" ] && ok "tests: $f" || bad "missing tests: $f"; done
 echo "== RESULT: $PASS passed, $FAIL failed =="; [ "$FAIL" -eq 0 ]

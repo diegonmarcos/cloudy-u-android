@@ -2,6 +2,8 @@ package com.diegonmarcos.superapp.configs
 
 import android.content.Context
 import com.diegonmarcos.superapp.adbdebug.ChannelLog
+import com.diegonmarcos.superapp.adbdebug.ChannelMode
+import com.diegonmarcos.superapp.adbdebug.LaunchVia
 import com.diegonmarcos.superapp.adbdebug.ChannelModePrefs
 import com.diegonmarcos.superapp.adbdebug.ChannelOps
 import com.diegonmarcos.superapp.adbdebug.ChannelFacts
@@ -18,8 +20,11 @@ import com.diegonmarcos.superapp.adbdebug.StepResult
 import com.diegonmarcos.superapp.perms.PermState
 import com.diegonmarcos.superapp.perms.PermsLink
 
-/** What a cockpit run ended as: [failure] = a FAILED step's sentence (the Connection light goes red on it), [note] = the line the page shows. */
-internal data class CockpitResult(val note: String, val failure: String? = null)
+/**
+ * What a cockpit run ended as: [failure] = a FAILED step's sentence (the Connection light goes red on it), [note] = the line the
+ * page shows, [waiting] = the step a Connect run stopped at for the person (the page goes on from it by itself once it is done).
+ */
+internal data class CockpitResult(val note: String, val failure: String? = null, val waiting: StepId? = null)
 
 /**
  * The cockpit's verbs on a real device. Every one is blocking (call off the main thread), logs to [ChannelLog.shared] (the stream the
@@ -40,7 +45,7 @@ internal object AdbCockpitOps {
         AdbCockpitModel.PermsDigest(req.size, miss.map { it.entry.label }, miss.any { it.entry.permission == "android.permission.POST_NOTIFICATIONS" })
     }.getOrNull()
 
-    /** Auto-fix step 0: grant what is missing, over a channel that is ALREADY up. No channel yet: say so and go on (the later steps build it). */
+    /** Connect step 0: grant what is missing, over a channel that is ALREADY up. No channel yet: say so and go on (the later steps build it). */
     fun grantPerms(ctx: Context): String {
         val miss = runCatching { readPermRows(ctx, null).filter { required(it) && it.status.missing } }.getOrDefault(emptyList())
         if (miss.isEmpty()) { log.add("autofix", "perms: all required granted"); return "perms ok" }
@@ -56,7 +61,7 @@ internal object AdbCockpitOps {
     }
 
     /**
-     * The Connect plan with the two consent gates opened for the person. Developer Options off -> About phone (it only appears after seven
+     * The Connect plan with the consent gates opened for the person. Developer Options off -> About phone (it only appears after seven
      * Build-number taps); Wireless debugging: try the silent switch (needs WRITE_SECURE_SETTINGS), else open its Settings screen; Shizuku
      * not running -> open Shizuku. Each returns needsUser, so [ConnectPlan.run] stops there and a second tap resumes from fresh facts.
      */
@@ -76,30 +81,32 @@ internal object AdbCockpitOps {
         }
     }
 
-    private fun result(o: ConnectOutcome): CockpitResult = when (o.status) {
+    internal fun result(o: ConnectOutcome): CockpitResult = when (o.status) {
         ConnectStatus.SUCCESS -> CockpitResult("Connected.")
-        ConnectStatus.WAITING_FOR_USER -> CockpitResult(o.explanation ?: "Waiting for you.")
+        ConnectStatus.WAITING_FOR_USER -> CockpitResult(o.explanation ?: "Waiting for you.", waiting = o.failedStep)
         ConnectStatus.FAILED -> CockpitResult(o.explanation ?: "Failed.", o.explanation)
     }
 
-    /** The plain Connect button: the mode's plan, nothing opened for the person. */
+    /**
+     * Connect, the page's ONE connect and its auto-fix: grant the perms, then walk the selected mode's whole plan in dependency order
+     * to a real shell round trip, opening each consent gate for the person. It stops at the first step only the person can finish;
+     * the page goes on from there by itself once that step is done ([AdbCockpitModel.resumes]), and a tap resumes it too.
+     */
     fun connect(ctx: Context): CockpitResult {
         val app = ctx.applicationContext
-        return result(ConnectPlan.run(ChannelModePrefs.current(app), LaunchViaPrefs.current(app), DeviceConnectExecutor(app), log, ChannelModePrefs.ownsServer()))
+        return connect(ChannelModePrefs.current(app), LaunchViaPrefs.current(app), ChannelModePrefs.ownsServer(), AutoFixExecutor(app)) { grantPerms(app) }
     }
 
-    /** Auto-fix: grant perms, then walk the plan in dependency order; stops at the first step that needs the person. Resumable: tap again. */
-    fun autoFix(ctx: Context): CockpitResult {
-        val app = ctx.applicationContext
-        val mode = ChannelModePrefs.current(app)
+    /** [connect] over [exec] (a fake in tests): perms first, then every step of [mode]'s plan, none skipped unless it is already true. */
+    internal fun connect(mode: ChannelMode, via: LaunchVia, ownsServer: Boolean, exec: ConnectExecutor, grant: () -> String): CockpitResult {
         // Only the selected mode's own prerequisites are walked; no step of another mode, and no server start.
-        log.add("autofix", "start, ${AdbCockpitModel.modeName(mode)} mode (" + AdbCockpitModel.autoFixOrder(mode, LaunchViaPrefs.current(app), ChannelModePrefs.ownsServer()).joinToString(", ") + ")")
-        val perms = grantPerms(app)
-        val o = ConnectPlan.run(mode, LaunchViaPrefs.current(app), AutoFixExecutor(app), log, ChannelModePrefs.ownsServer())
+        log.add("autofix", "start, ${AdbCockpitModel.modeName(mode)} mode (" + AdbCockpitModel.autoFixOrder(mode, via, ownsServer).joinToString(", ") + ")")
+        val perms = grant()
+        val o = ConnectPlan.run(mode, via, exec, log, ownsServer)
         val r = result(o)
         log.add("autofix", when (o.status) {
             ConnectStatus.SUCCESS -> "done: connected"
-            ConnectStatus.WAITING_FOR_USER -> "paused at ${o.failedStep?.label}: your turn, then tap Auto-fix again"
+            ConnectStatus.WAITING_FOR_USER -> "paused at ${o.failedStep?.label}: your turn, Connect goes on once it is done"
             ConnectStatus.FAILED -> "FAILED at ${o.failedStep?.label}"
         })
         return r.copy(note = r.note + if (perms.contains("missing")) " ($perms)" else "")
