@@ -5,7 +5,8 @@
 #   1. guard: no unlicensed streaming embed or public piracy index anywhere in
 #      this repo's tracked files (denylist: test/legal-denylist.json, copied by
 #      data/regen.py from the web repo at build.json::data.shared.commit; only
-#      that file and this guard may name them)
+#      that file, this guard and the owner-declared torrent indexers of #1633
+#      (two literal paths in ab_cloud-libs-shared/libs/torrent) may name them)
 #   2. the shared core (web/assets/sources-core.js) under node: source list
 #      parsing, IMDb<->TMDB conversion, provider mapping, buffering, torrents
 #   3. wiring: the copies carry the pin; the Movies and Docs pages load the player
@@ -22,10 +23,18 @@ guard() {  # $1 = git root, $2 = denylist json
 import json, subprocess, sys
 root, deny_file = sys.argv[1:3]
 deny = json.load(open(deny_file))["denylist"]
+T = "ab_cloud-libs-shared/libs/torrent/src/%s/java/com/diegonmarcos/superapp/torrent/%s"
+TORRENT_INDEXERS_1633 = [T % ("main", "TorrentSearch.kt"), T % ("test", "TorrentSearchTest.kt")]
 assert len(deny) >= 10, "denylist is suspiciously short"
 args = ["git", "-C", root, "grep", "-I", "-i", "-n", "-F"]
 for d in deny: args += ["-e", d]
 args += ["--", ".", ":(exclude,glob)**/legal-denylist.json", ":(exclude,glob)**/test-media-center-legal.sh", ":(exclude,glob)**/legal-guard.sh"]
+# #1633: the owner ordered torrent search with built-in declared indexers plus
+# user-managed sources. Those indexer declarations, and the unit test that
+# parses their replies, are the ONLY other files allowed to name a denied
+# domain: two literal paths from the repo root, nothing else in libs/torrent
+# and no same-named file anywhere else.
+args += [":(exclude,top,literal)" + p for p in TORRENT_INDEXERS_1633]
 r = subprocess.run(args, capture_output=True, text=True)
 hits = [l for l in r.stdout.splitlines() if l.strip()]
 for l in hits[:40]: print("  DENIED " + l[:200])
@@ -124,6 +133,22 @@ git -C "$WORK" init -q; mkdir -p "$WORK/g"
 printf '<iframe src="https://vid%s.cc/embed/movie/tt1"></iframe>\n' src > "$WORK/g/planted.html"
 git -C "$WORK" add -A
 if guard "$WORK" "$APP/test/legal-denylist.json" >/dev/null 2>&1; then echo "  FAIL mutation embed-planted: still green"; fails=$((fails + 1)); else echo "  ok   mutation embed-planted: red"; fi
+# #1633 exemption is path-scoped: the same line is green only at the declared
+# indexer path, and red in the same lib, in a same-named file elsewhere, and in
+# this app's own source.
+TS="src/main/java/com/diegonmarcos/superapp/torrent/TorrentSearch.kt"
+plant() {  # $1 = name, $2 = path in a fresh repo, $3 = red|green
+  rm -rf "$WORK/p"; mkdir -p "$WORK/p/$(dirname "$2")"; git -C "$WORK/p" init -q
+  printf 'val homepage = "https://the%sbay.org"\n' pirate > "$WORK/p/$2"
+  git -C "$WORK/p" add -A
+  if guard "$WORK/p" "$APP/test/legal-denylist.json" >/dev/null 2>&1; then got=green; else got=red; fi
+  if [ "$got" = "$3" ]; then echo "  ok   mutation $1: $got"; else echo "  FAIL mutation $1: $got, expected $3"; fails=$((fails + 1)); fi
+}
+plant indexer-declared-1633 "ab_cloud-libs-shared/libs/torrent/$TS" green
+plant indexer-elsewhere-in-torrent-lib "ab_cloud-libs-shared/libs/torrent/src/main/java/com/diegonmarcos/superapp/torrent/TorrentSources.kt" red
+plant indexer-in-other-lib "ab_cloud-libs-shared/libs/other/$TS" red
+plant indexer-in-media-center "ac_cloud-media-center/web/assets/player.js" red
+plant indexer-same-name-in-media-center "ac_cloud-media-center/ab_cloud-libs-shared/libs/torrent/$TS" red
 mutate() {
   rm -rf "$WORK/app"; mkdir -p "$WORK/app"
   cp -R "$APP/build.json" "$APP/web" "$APP/test" "$WORK/app/"

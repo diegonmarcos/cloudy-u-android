@@ -123,7 +123,10 @@ const raw = fs.readFileSync(path.join(web, 'data/media-sources.json'), 'utf8');
   /* 8. Configs: order, subsections, Apify backend, token flow */
   const C = require(path.join(web, 'assets/configs.js'));
   const ids = C.TABS.map((t) => t.id);
-  ok(JSON.stringify(ids) === '["music","videos","gallery","books","feed","movies","apify","general","perms","about"]', 'configs: media areas, then Apify, then General | Perms | About (' + ids.join(' | ') + ')');
+  ok(JSON.stringify(ids) === '["music","videos","gallery","books","feed","movies","apify","general","agents","perms","logcat","xray","about"]'
+    && JSON.stringify(C.TABS.filter((t) => t.sep).map((t) => t.id)) === '["agents"]'
+    && C.TABS.filter((t) => t.id === 'xray')[0].label === 'X-Ray App',
+    'configs: media areas, then Apify, then General, then | Agents, Perms, Logcat, X-Ray App, About (#1630; ' + C.TABS.map((t) => (t.sep ? '| ' : '') + t.id).join(', ') + ')');
   const ctx = { msrc: d, srcCfg: { spotify: { enabled: true } }, has: (n) => n === 'apify.token', backend: 'cloud', sync: { schedule: 'off' }, sub: 'apify' };
   const music = C.renderConfigs('music', C.normalizeTab('music', {}), null, [], ctx);
   ok(/data-sub="apify"/.test(music) && /data-sub="direct"/.test(music) && /data-subsec="apify"/.test(music) && /data-src="soundcloud"/.test(music) && /data-src="spotify"/.test(music), 'configs: Music has Apify | Direct subsections with its sources');
