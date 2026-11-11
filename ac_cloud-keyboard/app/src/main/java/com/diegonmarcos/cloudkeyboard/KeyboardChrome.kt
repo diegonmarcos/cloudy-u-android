@@ -15,6 +15,10 @@ import androidx.compose.material3.Text
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -24,24 +28,49 @@ import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsEntries
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottom
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
-import helium314.keyboard.settings.BottomNavTab
+import helium314.keyboard.settings.KbTab
+import helium314.keyboard.settings.NavPageDecl
 import helium314.keyboard.settings.SettingsActivity
 
 /**
  * #1651 the keyboard's settings chrome: the fleet DEFAULT top bar (NavBarTopFirstRowScaffold) and the fleet default bottom bar
  * (NavBarBottom) from libs:ui-nav-bars, around the existing settings pages. Registered in App.kt as KeyboardSettingsExtras.chrome.
- * The bottom tabs are [BottomNavTab], in order; the top bar's Configs icon opens the standard Configs page (default tail + the
+ * #1653 the four bottom tabs are [KbTab] (Keyboard, Writer, Mediaboards, Textboards), their sub-pages the top bar dropdown; the top bar's Configs icon opens the standard Configs page (default tail + the
  * keyboard's own tab, see KeyboardConfigsTab), which reaches the grouped All settings (#1650).
  */
 object KeyboardChrome {
+    /**
+     * #1653 the top bar's dropdown for [tab]: the tab (depth 0) then its sub-pages depth-first, [selectedId] on the path. Pure, so the
+     * structure is testable without drawing.
+     */
+    fun hierarchy(tab: KbTab, selectedId: String?): List<HierarchyEntry> {
+        val out = ArrayList<HierarchyEntry>()
+        out += HierarchyEntry(tab.id, tab.label, 0, tab.id, selected = selectedId == null)
+        fun walk(pages: List<NavPageDecl>, depth: Int) {
+            for (p in pages) {
+                out += HierarchyEntry(p.id, p.label, depth, tab.id, selected = p.flatten().any { it.id == selectedId })
+                walk(p.children, depth + 1)
+            }
+        }
+        walk(tab.pages, 1)
+        return out
+    }
+
     @Composable
     fun Draw(route: String?, open: (String) -> Unit, content: @Composable () -> Unit) {
         val ctx = LocalContext.current
-        val tab = BottomNavTab.forRoute(route)
+        val tab = KbTab.forRoute(route)
+        // the page the top bar shows: the one last picked while it still points at this route, else the first page of the route
+        var picked by remember { mutableStateOf<String?>(null) }
+        val pageId = tab?.allPages?.let { all -> all.firstOrNull { it.id == picked && it.route == route } ?: all.firstOrNull { it.route == route } }?.id
         NavBarTopFirstRowScaffold(
             title = tab?.label ?: "Cloud Keyboard",
-            hierarchy = emptyList<HierarchyEntry>(),
-            onNavigate = { },
+            hierarchy = tab?.let { hierarchy(it, pageId) }.orEmpty(),
+            onNavigate = { e ->
+                val t = KbTab.byId(e.sectionId)
+                if (e.depth == 0) t?.let { picked = null; open(it.route) }
+                else t?.allPages?.firstOrNull { it.id == e.id }?.let { picked = it.id; open(it.route) }
+            },
             onAccount = { },
             onConfigs = { openConfigs(ctx) },
             // #1652 the settings window is edge-to-edge: the status bar is cleared HERE, once (statusBarsPadding also consumes the
@@ -52,9 +81,9 @@ object KeyboardChrome {
                 // the bottom bar owns the navigation-bar inset, so the pages above it do not pad for it a second time
                 Box(Modifier.weight(1f).fillMaxWidth().consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))) { content() }
                 NavBarBottom(
-                    entries = BottomNavTab.entries.map { navEntry(it.id, it.label, it.icon) },
+                    entries = KbTab.entries.map { navEntry(it.id, it.label, it.icon) },
                     selectedId = tab?.id,
-                    onSelect = { e -> BottomNavTab.entries.firstOrNull { it.id == e.id }?.let { open(it.route) } },
+                    onSelect = { e -> KbTab.byId(e.id)?.let { picked = null; open(it.route) } },
                     dark = true,
                 )
             }

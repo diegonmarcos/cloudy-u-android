@@ -32,19 +32,60 @@ enum class AllSettingsPage(val section: HomeGroup) {
     }
 }
 
+/** #1653 one page of the settings nav: [route] is an existing settings screen; [children] are its sub-pages (the top bar's dropdown). */
+class NavPageDecl(val id: String, val label: String, val route: String, val children: List<NavPageDecl> = emptyList()) {
+    fun flatten(): List<NavPageDecl> = listOf(this) + children.flatMap { it.flatten() }
+}
+
 /**
- * #1651 the settings' BOTTOM NAV, declared once, in order: Toolbar, Themes, Writer, Autocomplete, Clipboard. The host's chrome draws the
- * fleet default bottom bar (libs:ui-nav-bars NavBarBottom) from this list; each tab opens an existing page ([route]), so no
- * surface is removed. Writer is the Text Enhancements page (rewrite / draft with AI). [icon] is a libs:ui-icons catalog key.
+ * #1653 the settings' nav, declared once: FOUR bottom tabs in order, Keyboard / Writer / Mediaboards / Textboards (supersedes the
+ * #1651 five). Each tab's [pages] are its sub-pages, reached from the fleet top bar; every page opens an existing screen, so
+ * nothing is removed, only re-homed. [icon] is a libs:ui-icons catalog key. The Writer tab holds the keyboard's own writing tools
+ * until cloud-writer's pages arrive from libs:writer-ui (#1652), plus Voice Transcription and Dictionary.
  */
-enum class BottomNavTab(val id: String, val label: String, val icon: String, val route: String) {
-    TOOLBAR("toolbar", "Toolbar", "apps", SettingsDestination.Toolbar),
-    THEMES("themes", "Themes", "palette", SettingsDestination.Themes),
-    WRITER("writer", "Writer", "edit", SettingsDestination.TextEnhance),
-    AUTOCOMPLETE("autocomplete", "Autocomplete", "auto_fix_high", SettingsDestination.Autocomplete),
-    CLIPBOARD("clipboard", "Clipboard", "content_paste", SettingsDestination.Clipboard);
+enum class KbTab(val id: String, val label: String, val icon: String, val pages: List<NavPageDecl>) {
+    KEYBOARD("keyboard", "Keyboard", "apps", listOf(
+        NavPageDecl("themes", "Themes", SettingsDestination.Themes, listOf(
+            NavPageDecl("themes_default", "Default", SettingsDestination.Themes),
+            NavPageDecl("themes_dev", "Dev", SettingsDestination.Themes))),
+        // Settings = the grouped All settings (#1650), where every theme / keyboard configuration lives; Appearance and Advanced fold under it
+        NavPageDecl("settings", "Settings", SettingsDestination.Settings, listOf(
+            NavPageDecl("appearance", "Appearance", SettingsDestination.Appearance),
+            NavPageDecl("advanced", "Advanced", SettingsDestination.Advanced),
+            NavPageDecl("preferences", "Preferences", SettingsDestination.Preferences),
+            NavPageDecl("gesture_typing", "Gesture typing", SettingsDestination.GestureTyping))),
+        NavPageDecl("languages", "Languages", SettingsDestination.Languages, listOf(
+            NavPageDecl("secondary_layouts", "Secondary layouts", SettingsDestination.Layouts))),
+        NavPageDecl("toolbar", "Toolbar", SettingsDestination.Toolbar),
+    )),
+    WRITER("writer", "Writer", "edit", listOf(
+        NavPageDecl("enhancer", "Enhancer", SettingsDestination.TextEnhance),
+        NavPageDecl("drafter", "Drafter", SettingsDestination.DraftAnswer),
+        NavPageDecl("translator", "Translator", SettingsDestination.Translation),
+        NavPageDecl("grammar", "Grammar", SettingsDestination.GrammarCheck),
+        NavPageDecl("summarise", "Summarise", SettingsDestination.TextResume),
+        NavPageDecl("ai_routing", "AI routing", SettingsDestination.AiRouting),
+        NavPageDecl("voice_transcription", "Voice Transcription", SettingsDestination.VoiceTranscript),
+        NavPageDecl("dictionary", "Dictionary", SettingsDestination.Dictionaries, listOf(
+            NavPageDecl("personal_dictionary", "Personal dictionary", SettingsDestination.PersonalDictionaries))),
+    )),
+    MEDIABOARDS("mediaboards", "Mediaboards", "layers", listOf(
+        // one page covers the three panels today (EmojiInfoScreen: Emoji, Stickers, GIFs)
+        NavPageDecl("emojis", "Emojis", SettingsDestination.Emoji),
+        NavPageDecl("gif", "GIF", SettingsDestination.Emoji),
+        NavPageDecl("stickers", "Stickers", SettingsDestination.Emoji),
+    )),
+    TEXTBOARDS("textboards", "Textboards", "content_paste", listOf(
+        NavPageDecl("autocomplete", "Autocomplete", SettingsDestination.Autocomplete),
+        NavPageDecl("clipboard", "Clipboard", SettingsDestination.Clipboard),
+    ));
+
+    val allPages: List<NavPageDecl> get() = pages.flatMap { it.flatten() }
+    /** The tab's landing route: its first page. */
+    val route: String get() = pages.first().route
 
     companion object {
-        fun forRoute(route: String?): BottomNavTab? = entries.firstOrNull { it.route == route }
+        fun forRoute(route: String?): KbTab? = entries.firstOrNull { t -> t.allPages.any { it.route == route } }
+        fun byId(id: String): KbTab? = entries.firstOrNull { it.id == id }
     }
 }
