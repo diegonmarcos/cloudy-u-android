@@ -95,10 +95,10 @@ if g:
     check('importObsidianVault' in else_body,
           'non-html files still reach the Obsidian importer (else branch)')
     # every markdown wrapper in the opener must sit in that else branch
-    o = re.search(r'const\s+openExternalFile\s*=\s*async\s*\([^)]*\)\s*=>', app)
+    o = re.search(r'const\s+importExternalFile\s*=\s*async\s*\([^)]*\)\s*=>', app)
     opener = braced(app, o.end())[0] if o else ''
     check(bool(opener) and opener.count('text/markdown') == else_body.count('text/markdown'),
-          'no text/markdown File is built in openExternalFile outside the non-html branch')
+          'no text/markdown File is built in importExternalFile (#1642: the shared import of openExternalFile and Open-with) outside the non-html branch')
     if call:
         args = braced(then_body, call.end() - 1)[0]
         passed = set(re.findall(r'^\s*(\w+)\s*:', args, re.M))

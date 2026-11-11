@@ -5,6 +5,7 @@ import app.cloudnotes.pro.theme.ObsidianTokens
 import com.diegonmarcos.cloudlib.web.CloudWeb
 import com.diegonmarcos.cloudlib.web.WebProfile
 import android.content.ComponentCallbacks2
+import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -85,6 +86,29 @@ class MainActivity : BridgeActivity(), CloudNotesThemePlugin.Callback {
         }
         setupOpenFileFab()
         setupNativeNav()
+        // #1642 a text file opened with this app from a file manager; a recreation does not read it twice
+        if (savedInstanceState == null) captureViewIntent(intent)
+    }
+
+    // #1642 singleTask: a second "Open with" arrives here; the editor is told to take the file.
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        captureViewIntent(intent)
+    }
+
+    private fun captureViewIntent(intent: Intent?) {
+        try {
+            if (ExternalFilePlugin.capture(this, intent)) {
+                bridge.webView.post {
+                    bridge.webView.evaluateJavascript(
+                        "window.dispatchEvent(new Event('cloud-notes:view-intent'))",
+                        null,
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "view intent capture failed")
+        }
     }
 
     // #1164: the shared nav scaffold (first row, second row, bottom nav, page background, scroll-collapse) is the activity's

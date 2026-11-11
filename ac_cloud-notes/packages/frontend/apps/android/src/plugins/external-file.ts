@@ -34,7 +34,17 @@ export interface ExternalBinaryReadResult {
   path: string;
 }
 
+/** #1642 the text file another app opened with this app (Android VIEW/EDIT), taken once. */
+export interface ExternalPendingOpen {
+  present: boolean;
+  name?: string;
+  size?: number;
+  content?: string;
+  error?: string;
+}
+
 export type ExternalFilePluginType = {
+  takePendingOpen(): Promise<ExternalPendingOpen>;
   readFile(options: { path: string }): Promise<ExternalFileReadResult>;
   listDir(options: { path: string }): Promise<ExternalDirListing>;
   /** every non-hidden entry of one folder level, any file type (vault attachments) */

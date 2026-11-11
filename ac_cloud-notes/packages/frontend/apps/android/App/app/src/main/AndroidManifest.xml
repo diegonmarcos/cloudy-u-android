@@ -37,6 +37,66 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- #1642 text files from other apps (Open with): opened as a note (MainActivity captures the intent, the editor imports it). Text types only, never binary. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="text/*" />
+                <data android:mimeType="text/markdown" />
+                <data android:mimeType="text/x-markdown" />
+                <data android:mimeType="text/csv" />
+                <data android:mimeType="text/xml" />
+                <data android:mimeType="text/html" />
+                <data android:mimeType="text/x-log" />
+                <data android:mimeType="text/yaml" />
+                <data android:mimeType="text/x-yaml" />
+                <data android:mimeType="application/json" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="application/x-yaml" />
+                <data android:mimeType="application/yaml" />
+            </intent-filter>
+            <!-- #1642 text files a file manager reports with a generic type (octet-stream or empty): matched by extension, one .* per extra dot in the name (the matcher does not backtrack). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.txt" />
+                <data android:pathPattern=".*\\..*\\.txt" />
+                <data android:pathPattern=".*\\..*\\..*\\.txt" />
+                <data android:pathPattern=".*\\.md" />
+                <data android:pathPattern=".*\\..*\\.md" />
+                <data android:pathPattern=".*\\..*\\..*\\.md" />
+                <data android:pathPattern=".*\\.log" />
+                <data android:pathPattern=".*\\..*\\.log" />
+                <data android:pathPattern=".*\\..*\\..*\\.log" />
+                <data android:pathPattern=".*\\.json" />
+                <data android:pathPattern=".*\\..*\\.json" />
+                <data android:pathPattern=".*\\..*\\..*\\.json" />
+                <data android:pathPattern=".*\\.csv" />
+                <data android:pathPattern=".*\\..*\\.csv" />
+                <data android:pathPattern=".*\\..*\\..*\\.csv" />
+                <data android:pathPattern=".*\\.conf" />
+                <data android:pathPattern=".*\\..*\\.conf" />
+                <data android:pathPattern=".*\\..*\\..*\\.conf" />
+                <data android:pathPattern=".*\\.yml" />
+                <data android:pathPattern=".*\\..*\\.yml" />
+                <data android:pathPattern=".*\\..*\\..*\\.yml" />
+                <data android:pathPattern=".*\\.yaml" />
+                <data android:pathPattern=".*\\..*\\.yaml" />
+                <data android:pathPattern=".*\\..*\\..*\\.yaml" />
+                <data android:pathPattern=".*\\.xml" />
+                <data android:pathPattern=".*\\..*\\.xml" />
+                <data android:pathPattern=".*\\..*\\..*\\.xml" />
+            </intent-filter>
+
             <!-- DE-CLOUDED (#469): the cloud-notes://authentication deep link reached
                  the Cloud Notes auth flow, which does not exist here. -->
         </activity>

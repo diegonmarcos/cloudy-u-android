@@ -1,7 +1,11 @@
 package app.cloudnotes.pro.plugin
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.OpenableColumns
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
@@ -43,6 +47,72 @@ class ExternalFilePlugin : Plugin() {
         private val SUPPORTED = setOf(
             "md", "markdown", "txt", "text", "json", "yaml", "yml", "html", "htm", "csv"
         )
+
+        /** #1642 text types / names the manifest's VIEW+EDIT filters admit; binary types are never taken. */
+        private val OPEN_EXT = SUPPORTED + setOf("log", "conf", "cfg", "ini", "xml", "tsv", "toml", "properties")
+        private val OPEN_MIME = setOf(
+            "application/json", "application/xml", "application/x-yaml", "application/yaml"
+        )
+
+        /** True for a type or file name that is text (never octet-stream, images, archives, pdf). */
+        fun isTextOpen(mime: String?, name: String?): Boolean {
+            val m = mime?.substringBefore(';')?.trim()?.lowercase().orEmpty()
+            if (m.startsWith("text/") || m in OPEN_MIME || m.endsWith("+json") || m.endsWith("+xml")) return true
+            if (m.isNotEmpty() && m != "application/octet-stream" && m != "*/*") return false
+            return name?.substringAfterLast('.', "")?.lowercase().orEmpty() in OPEN_EXT
+        }
+
+        /** The text file another app handed this app (VIEW/EDIT), read once, taken by [takePendingOpen]. */
+        class PendingOpen(val name: String, val content: String?, val size: Int, val error: String?)
+
+        @Volatile private var pending: PendingOpen? = null
+
+        /**
+         * #1642 reads the content:// / file:// text file of a VIEW/EDIT [intent] into [pending]. True when the
+         * intent was a text file open (read or failed with a message); false when it is not ours. Never throws.
+         */
+        fun capture(ctx: Context, intent: Intent?): Boolean {
+            val i = intent ?: return false
+            if (i.action != Intent.ACTION_VIEW && i.action != Intent.ACTION_EDIT) return false
+            val uri: Uri = i.data ?: return false
+            if (uri.scheme != "content" && uri.scheme != "file") return false
+            return try {
+                var name: String? = null
+                if (uri.scheme == "content") {
+                    try {
+                        ctx.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                            if (c.moveToFirst()) name = c.getString(0)?.takeIf { it.isNotBlank() }
+                        }
+                    } catch (_: Exception) {}
+                }
+                val shown = name ?: uri.lastPathSegment?.substringAfterLast('/') ?: "note.txt"
+                val mime = i.type ?: if (uri.scheme == "content") ctx.contentResolver.getType(uri) else null
+                if (!isTextOpen(mime, shown)) return false
+                val buf = java.io.ByteArrayOutputStream()
+                val stream = ctx.contentResolver.openInputStream(uri)
+                if (stream == null) {
+                    pending = PendingOpen(shown, null, 0, "Cannot read $shown.")
+                    return true
+                }
+                stream.use { inp ->
+                    val b = ByteArray(8192)
+                    while (buf.size() <= MAX_BYTES) {
+                        val n = inp.read(b)
+                        if (n < 0) break
+                        buf.write(b, 0, n)
+                    }
+                }
+                pending = if (buf.size() > MAX_BYTES) {
+                    PendingOpen(shown, null, buf.size(), "File is larger than the 10 MiB import limit.")
+                } else {
+                    PendingOpen(shown, buf.toByteArray().toString(Charsets.UTF_8), buf.size(), null)
+                }
+                true
+            } catch (e: Exception) {
+                pending = PendingOpen("file", null, 0, "Cannot read the file (${e.message ?: "unknown error"}).")
+                true
+            }
+        }
     }
 
     private fun hasExternalStorageAccess(): Boolean =
@@ -262,6 +332,20 @@ class ExternalFilePlugin : Plugin() {
         } catch (e: Exception) {
             call.reject("Cannot read $path (${e.message ?: "unknown error"})", "READ_ERROR")
         }
+    }
+
+    /** #1642 the text file another app opened with this app, once; present=false when there is none. */
+    @PluginMethod
+    fun takePendingOpen(call: PluginCall) {
+        val p = pending
+        pending = null
+        if (p == null) {
+            call.resolve(JSObject().put("present", false))
+            return
+        }
+        val r = JSObject().put("present", true).put("name", p.name).put("size", p.size)
+        if (p.error != null) r.put("error", p.error) else r.put("content", p.content)
+        call.resolve(r)
     }
 
     /** #1515 All files access is granted in Configs > Perms (libs:perms): the page opens on that row. */

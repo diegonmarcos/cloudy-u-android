@@ -549,7 +549,36 @@ const openExternalFile = async (path: string) => {
     reportExternalFileError(err, 'Cannot open file');
     return;
   }
+  await importExternalFile(file);
+};
 
+// #1642 a text file another app opened with this app (the manifest's VIEW/EDIT filters): the native side read it
+// (ExternalFilePlugin.takePendingOpen) and it lands as a note exactly like a file picked in the explorer.
+const openPendingFile = async () => {
+  let pending: Awaited<ReturnType<typeof ExternalFile.takePendingOpen>>;
+  try {
+    pending = await ExternalFile.takePendingOpen();
+  } catch (err: unknown) {
+    console.error(err);
+    return;
+  }
+  if (!pending.present) return;
+  if (pending.error || pending.content === undefined) {
+    notify.error({
+      title: 'Cannot open file',
+      message: pending.error ?? 'The file could not be read.',
+    });
+    return;
+  }
+  await importExternalFile({
+    content: pending.content,
+    name: pending.name ?? 'note.txt',
+    size: pending.size ?? pending.content.length,
+    path: '',
+  });
+};
+
+const importExternalFile = async (file: ExternalFileReadResult) => {
   const workspaceId = frameworkProvider
     .get(GlobalContextService)
     .globalContext.workspaceId.get();
@@ -579,7 +608,9 @@ const openExternalFile = async (path: string) => {
       await workspace.scope
         .get(ImportService)
         .importObsidianVault([
-          new File([file.content], file.name, { type: 'text/markdown' }),
+          new File([file.content], /\.(md|markdown)$/i.test(file.name) ? file.name : `${file.name}.md`, {
+            type: 'text/markdown',
+          }),
         ]);
     }
     notify.success({
@@ -675,8 +706,15 @@ const ExternalFileOpener = () => {
   useEffect(() => {
     const listener = () => browse(EXTERNAL_FILE_ROOT);
     window.addEventListener('cloud-notes:open-file', listener);
+    // #1642 "Open with": native dispatches this when a text file arrives; one that arrived before the page loaded is taken now.
+    const viewListener = () => {
+      openPendingFile().catch(console.error);
+    };
+    window.addEventListener('cloud-notes:view-intent', viewListener);
+    viewListener();
     return () => {
       window.removeEventListener('cloud-notes:open-file', listener);
+      window.removeEventListener('cloud-notes:view-intent', viewListener);
     };
   }, []);
 
