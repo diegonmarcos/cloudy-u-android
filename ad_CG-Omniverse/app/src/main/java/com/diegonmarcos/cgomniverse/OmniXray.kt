@@ -43,6 +43,8 @@ object OmniXray {
     data class WorldRec(
         val id: String, val url: String, val started: Long, val finished: Long, val progress: Int,
         val mainError: String, val httpErrors: List<String>, val subErrors: List<String>, val renderGone: Int, val diag: String,
+        /** #1657 the render check's verdict ([RenderProbe.Verdict.text]): what the page drew and what the screen shows. */
+        val render: String = "",
     )
 
     /** What the Avatar WebView's callbacks and the cgc bridge saw (the page's own snapshot is [page]). */
@@ -150,6 +152,8 @@ object OmniXray {
     }
 
     fun worldDiag(id: String, text: String) = synchronized(lock) { world(id) { it.copy(diag = text) } }
+
+    fun worldRender(id: String, text: String) = synchronized(lock) { world(id) { it.copy(render = text) } }
 
     fun avatar(): Avatar = synchronized(lock) {
         Avatar(aStarted, aFinished, aMainError, aSub.toList(), aHttp.toList(), aRenderGone, aCgc.toList(), aCgcError, aCgcLoaded, aCgcReady, aPage, aPageAt)
@@ -377,6 +381,7 @@ object OmniXray {
                 Row("world " + r.id + " main-frame error", r.mainError.ifEmpty { "none" }),
                 Row("world " + r.id + " render process gone", r.renderGone.toString()),
                 Row("world " + r.id + " page diagnostics", r.diag.ifEmpty { "not measured" }),
+                Row("world " + r.id + " render check", r.render.ifEmpty { "not measured" }),
             ) + r.httpErrors.map { Row("world " + r.id + " http error", it) } + r.subErrors.map { Row("world " + r.id + " subresource error", it) }
         }
         s += Section("worlds", "Galaxy worlds (WebView callbacks)", wRows.ifEmpty { listOf(Row("worlds", "no world opened in this process yet")) })

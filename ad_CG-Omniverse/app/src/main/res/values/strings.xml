@@ -35,6 +35,11 @@
     <string name="world_gpu_missing">No WebGPU in this in-app view (%1$s). %2$s</string>
     <string name="world_reload">Reload</string>
     <string name="world_crashed">The world stopped rendering. Reload it, or open it in the browser.</string>
+    <string name="world_render_loading">Loading %1$s: %2$s</string>
+    <string name="world_render_none">%1$s is not rendering</string>
+    <string name="world_render_diag">Diagnostics</string>
+    <string name="world_render_hide">Hide</string>
+    <string name="world_render_gpu">Use the GPU layers again</string>
     <string name="world_xr_ready">WebXR available</string>
     <string name="world_xr_browser">Open in the browser for VR</string>
     <string name="world_xr_note">This world supports VR. The in-app view has no WebXR here: tap the headset icon to open it in the browser for VR.</string>

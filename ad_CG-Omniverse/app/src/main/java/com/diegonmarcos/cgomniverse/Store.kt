@@ -20,6 +20,8 @@ data class World(
     val wayback: String = "",
     /** A query string Galaxy appends to [url] (data/world-rules.json via gen-store.py), e.g. a lighter render path; empty for most worlds. */
     val launchQuery: String = "",
+    /** The query of the CPU presentation (#1657, world-rules.json cpu_query): null = the same as [launchQuery]. */
+    val launchQueryCpu: String? = null,
 )
 
 /** What the link probe found: ONLINE answered, OFFLINE is gone (404/410, timeout, no host), UNVERIFIED the probe could not tell. */
@@ -78,13 +80,14 @@ object Store {
     const val FLAT = "Flat Screen"
     const val VR_GLASS = "VR Glass"
 
-    /** The address Galaxy loads for [w]: its url plus its declared launch query (joined with `?` or `&`, before any `#`). */
-    fun launchUrl(w: World): String {
-        if (w.launchQuery.isEmpty()) return w.url
+    /** The address Galaxy loads for [w]: its url plus its declared launch query (joined with `?` or `&`, before any `#`); [cpu] = the CPU presentation's query. */
+    fun launchUrl(w: World, cpu: Boolean = false): String {
+        val query = if (cpu) w.launchQueryCpu ?: w.launchQuery else w.launchQuery
+        if (query.isEmpty()) return w.url
         val hash = w.url.indexOf('#')
         val base = if (hash >= 0) w.url.substring(0, hash) else w.url
         val frag = if (hash >= 0) w.url.substring(hash) else ""
-        return base + (if ('?' in base) "&" else "?") + w.launchQuery + frag
+        return base + (if ('?' in base) "&" else "?") + query + frag
     }
 
     fun parse(json: String): List<World> {
@@ -100,6 +103,7 @@ object Store {
                 vr = o.optBoolean("vr", false), description = o.optString("description"),
                 status = LinkStatus.parse(o.optString("status")), checked = o.optString("checked"), wayback = o.optString("wayback"),
                 launchQuery = o.optString("launch_query"),
+                launchQueryCpu = if (o.has("launch_query_cpu")) o.optString("launch_query_cpu") else null,
             )
         }
     }

@@ -82,6 +82,7 @@ def generate(text, links=None, rules=None):
     if not entries: raise SystemExit("fwa.md: no rows")
     for e in entries:
         if e["id"] in rules: e["launch_query"] = rules[e["id"]]["query"]
+        if "cpu_query" in rules.get(e["id"], {}): e["launch_query_cpu"] = rules[e["id"]]["cpu_query"]
     unknown = sorted(set(rules) - seen)
     if unknown: raise SystemExit("world-rules.json: unknown world id(s) %s" % unknown)
     return {

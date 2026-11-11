@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -65,12 +66,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -79,6 +83,7 @@ import com.diegonmarcos.cgomniverse.GraphicsStats
 import com.diegonmarcos.cgomniverse.OmniXray
 import com.diegonmarcos.cgomniverse.Offline
 import com.diegonmarcos.cgomniverse.R
+import com.diegonmarcos.cgomniverse.RenderProbe
 import com.diegonmarcos.cgomniverse.Store
 import com.diegonmarcos.cgomniverse.Tabs
 import com.diegonmarcos.cgomniverse.World
@@ -91,7 +96,10 @@ import com.diegonmarcos.superapp.uikit.KitButton
 import com.diegonmarcos.superapp.uikit.KitCard
 import com.diegonmarcos.superapp.uikit.KitOutlinedButton
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
+import kotlin.coroutines.resume
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Galaxy: a browser-style world viewer. The tab strip holds the worlds open now ([Tabs]; a close button per tab, "+" opens the
@@ -212,6 +220,45 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
         }
     }
 
+    // Render check (#1657): what the page drew (RenderProbe.READ, in the page) against what the screen shows (the pixels of this
+    // world's area), so a world that stays grey names the stage that failed instead of showing nothing
+    var viewSize by remember(w.id) { mutableStateOf(IntSize.Zero) }
+    var finishedAt by remember(w.id) { mutableStateOf(0L) }
+    var render by remember(w.id) { mutableStateOf<RenderProbe.Verdict?>(null) }
+    var renderPage by remember(w.id) { mutableStateOf<RenderProbe.Page?>(null) }
+    var renderHidden by remember(w.id) { mutableStateOf(false) }
+    // the presentation ladder: as the page draws (GPU layers), then CPU-backed canvases; remembered per world once seen on the screen
+    var cpu by remember(w.id) { mutableStateOf(Web.cpuPresent(ctx, w.id)) }
+    LaunchedEffect(w.id, generation, desktop, attempt, cpu) {
+        render = null; renderPage = null; renderHidden = false
+        while (true) {
+            delay(if (render?.state == RenderProbe.State.RENDERED) RenderProbe.POLL_RENDERED_MS else RenderProbe.POLL_MS)
+            val wv = web
+            // only while this world is what the user looks at: a background app or an open sheet is not a blank render
+            if (wv == null || offline || error != null || !wv.isShown || !wv.hasWindowFocus()) continue
+            runCatching { wv.evaluateJavascript(RenderProbe.SCRIPT, null) }
+            delay(RenderProbe.COUNT_MS)
+            val pg = withTimeoutOrNull(3_000) {
+                suspendCancellableCoroutine<RenderProbe.Page?> { c ->
+                    runCatching { wv.evaluateJavascript(RenderProbe.READ) { raw -> if (c.isActive) c.resume(RenderProbe.parse(raw)) } }
+                        .onFailure { if (c.isActive) c.resume(null) }
+                }
+            }
+            val screen = Web.screenSample(ctx as? android.app.Activity, wv)
+            val rec = OmniXray.worlds().firstOrNull { it.id == w.id }
+            val v = RenderProbe.verdict(viewSize.width, viewSize.height, pg, screen, if (finishedAt == 0L) -1L else System.currentTimeMillis() - finishedAt,
+                PageConsole.errors().map { PageConsole.format(it) }, (rec?.subErrors?.size ?: 0) + (rec?.httpErrors?.size ?: 0))
+            renderPage = pg; render = v; OmniXray.worldRender(w.id, RenderProbe.presentation(cpu) + "; " + v.text())
+            if (v.state == RenderProbe.State.RENDERED && cpu && !Web.cpuPresent(ctx, w.id)) Web.setCpuPresent(ctx, w.id, true)
+            if (RenderProbe.stepToCpu(v, cpu, viewSize.width, viewSize.height)) {
+                OmniXray.event("world:" + w.id, "not on the screen (" + v.reason + "): loading the CPU presentation")
+                // the replaced view must not keep decoding behind the new one: destroyed once the new presentation's view has taken its place
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ if (web !== wv) runCatching { wv.destroy() } }, 1_000)
+                finishedAt = 0L; finished = false; cpu = true; attempt++
+            }
+        }
+    }
+
     BackHandler(enabled = canBack) { web?.goBack() }
 
     Column(modifier.background(Color.Black).testTag(Tags.WORLD)) {
@@ -258,10 +305,12 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                 }
             }
         }
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            key(w.id, generation, desktop) {
+        // the world's content area: the rest of the tab below the bars, its measured size fed to the render check (#1657)
+        Box(Modifier.weight(1f).fillMaxWidth().onSizeChanged { viewSize = it }) {
+            key(w.id, generation, desktop, cpu) {
                 AndroidView(factory = { c ->
                     CloudWeb.create(c, WebProfile.WEB_WORLD, desktop).also { wv ->
+                        if (cpu) Web.cpuCanvas(wv)
                         wv.webChromeClient = object : CloudChromeClient(ctx as? android.app.Activity) {
                             override fun onProgressChanged(view: WebView, newProgress: Int) { progress = newProgress; OmniXray.worldProgress(w.id, newProgress) }
                             // protected media (some worlds stream DRM video) is the one resource granted; nothing else is asked of the user
@@ -278,10 +327,11 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                             }
                             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
                                 (if (pinned) Pinned.intercept(c, host, request, refreshing) else null) ?: super.shouldInterceptRequest(view, request)
-                            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) { error = null; OmniXray.worldStarted(w.id, url) }
+                            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) { error = null; finishedAt = 0L; OmniXray.worldStarted(w.id, url) }
                             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) { canBack = view.canGoBack() }
                             override fun onPageFinished(view: WebView, url: String) {
                                 OmniXray.worldFinished(w.id, url)
+                                finishedAt = System.currentTimeMillis()
                                 // #1631 what this world's page can draw with, measured in the page (no bridge is added to a foreign page)
                                 view.evaluateJavascript(PageDiag.SCRIPT, null)
                                 view.postDelayed({
@@ -308,7 +358,7 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                                 view.destroy(); error = crashed; return true
                             }
                         }
-                        wv.loadUrl(Store.launchUrl(w))
+                        wv.loadUrl(Store.launchUrl(w, cpu))
                         web = wv
                     }
                 }, modifier = Modifier.fillMaxSize().testTag(Tags.WORLD_WEB))
@@ -319,6 +369,33 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
             ) {
                 GraphicsStats.lines(stats).forEach {
                     Text(it, color = Color(0xFFB6FFB6), fontSize = 10.sp, fontFamily = FontFamily.Monospace, maxLines = 1)
+                }
+            }
+            // #1657 the visible load / no-render state, never a silent grey area; both stay in the top of the area, above the screen sample
+            val rv = render
+            if (!offline && error == null && (rv == null || rv.state == RenderProbe.State.LOADING)) Text(
+                stringResource(R.string.world_render_loading, w.name, rv?.reason ?: "$progress%"),
+                color = Color.White, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.align(Alignment.TopCenter).padding(8.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xB3000000))
+                    .padding(horizontal = 10.dp, vertical = 4.dp).testTag(Tags.WORLD_RENDER_LOADING),
+            )
+            if (!offline && error == null && rv != null && rv.state == RenderProbe.State.NOT_RENDERED && !renderHidden) Column(
+                Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(8.dp)
+                    .heightIn(max = with(LocalDensity.current) { (viewSize.height * RenderProbe.BANNER_MAX).toDp() })
+                    .clip(RoundedCornerShape(10.dp)).background(Color(0xF20B0D16)).border(1.dp, p.accent, RoundedCornerShape(10.dp)).padding(10.dp)
+                    .testTag(Tags.WORLD_RENDER_NONE),
+            ) {
+                Text(stringResource(R.string.world_render_none, w.name), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = p.textPrimary)
+                Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                    Text(rv.reason, style = MaterialTheme.typography.bodySmall, color = p.textPrimary, modifier = Modifier.padding(top = 4.dp))
+                    Text(RenderProbe.presentation(cpu), style = MaterialTheme.typography.labelSmall, color = p.textSecondary)
+                    rv.details.forEach { Text(it, style = MaterialTheme.typography.labelSmall, color = p.textSecondary) }
+                }
+                Row(Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    KitButton(onClick = { showDiag = true }, modifier = Modifier.testTag(Tags.WORLD_RENDER_DIAG)) { Text(stringResource(R.string.world_render_diag)) }
+                    KitOutlinedButton(onClick = reload) { Text(stringResource(R.string.world_reload)) }
+                    KitOutlinedButton(onClick = { Web.openInBrowser(ctx, w.url) }) { Text(stringResource(R.string.open_cloud_browser)) }
+                    KitOutlinedButton(onClick = { renderHidden = true }) { Text(stringResource(R.string.world_render_hide)) }
                 }
             }
             // a world that cannot load here gets a clear card, never the WebView's raw error page
@@ -379,6 +456,20 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                         Text(r.value, style = MaterialTheme.typography.bodySmall, color = p.textPrimary, modifier = Modifier.weight(0.55f))
                     }
                 }
+                // #1657 the render check: the verdict, then what the page drew
+                Text("Render check", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
+                    color = p.textPrimary, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
+                val rc = render
+                if (rc == null) Text("not measured yet", style = MaterialTheme.typography.bodySmall, color = p.textSecondary)
+                else (listOf(rc.state.name.lowercase().replace('_', ' ') to rc.reason, "Presentation" to RenderProbe.presentation(cpu)) + rc.details.map { "" to it } +
+                    renderPage?.rows().orEmpty()).forEach { (k, v) ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+                        Text(k, style = MaterialTheme.typography.bodySmall, color = p.textSecondary, modifier = Modifier.weight(0.45f))
+                        Text(v, style = MaterialTheme.typography.bodySmall, color = p.textPrimary, modifier = Modifier.weight(0.55f))
+                    }
+                }
+                if (cpu) KitOutlinedButton(onClick = { Web.setCpuPresent(ctx, w.id, false); cpu = false; finishedAt = 0L; finished = false; attempt++; showDiag = false },
+                    modifier = Modifier.padding(top = 6.dp).testTag(Tags.WORLD_RENDER_GPU)) { Text(stringResource(R.string.world_render_gpu)) }
                 val errors = PageConsole.errors().takeLast(30)
                 Text("Console errors (${errors.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
                     color = p.textPrimary, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))

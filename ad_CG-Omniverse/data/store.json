@@ -199,7 +199,8 @@
       "status": "unverified",
       "checked": "",
       "wayback": "https://web.archive.org/web/2020/https://floor796.com",
-      "launch_query": "old-render"
+      "launch_query": "old-render",
+      "launch_query_cpu": ""
     },
     {
       "id": "food-for-fish",
