@@ -123,6 +123,10 @@
     <string name="files_compress_downloads">Downloads</string>
     <string name="files_compress_action">Compress</string>
     <string name="files_job_compress">Compressing %1$s</string>
+    <string name="files_git_rename">Git Rename (git mv)</string>
+    <string name="files_git_move">Git Move (git mv)…</string>
+    <string name="files_git_move_all">Git Move All (git mv)…</string>
+    <string name="files_move_all">Move All…</string>
     <string name="files_git_open">Open in Git (status · log · versions · restore)</string>
     <string name="files_select_all">Select all</string>
     <string name="files_invert">Invert selection</string>

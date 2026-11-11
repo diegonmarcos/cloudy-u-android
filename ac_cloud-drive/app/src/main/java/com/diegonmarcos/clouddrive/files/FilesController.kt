@@ -323,6 +323,31 @@ class FilesController(
         }
     }
 
+    /** #1644 `git mv` a single item to [newName] in its folder; staged. */
+    fun gitRename(entry: FileOps.Entry, newName: String) {
+        val f = entry.localFile ?: return
+        gitMv(listOf(f), f.parentFile?.let { Location.Local(it.absolutePath) } ?: return) { GitMv.planRename(f, newName) }
+    }
+
+    /** #1644 `git mv` the entries into [destination]; staged. */
+    fun gitMoveEntries(entries: List<FileOps.Entry>, destination: Location.Local) {
+        val files = entries.mapNotNull { it.localFile }
+        if (files.isEmpty()) return
+        val dest = File(destination.path)
+        gitMvMany(files, destination, files.map { f -> { GitMv.planMove(f, dest) } })
+    }
+
+    private fun gitMv(files: List<File>, refresh: Location.Local, plan: () -> GitMv.Step) = gitMvMany(files, refresh, listOf(plan))
+
+    private fun gitMvMany(files: List<File>, refresh: Location.Local, plans: List<() -> GitMv.Step>) {
+        scope.launch {
+            val r = withContext(Dispatchers.IO) { runCatching { GitMv.apply(ctx, plans.map { it() }) } }
+            r.onFailure { _messages.tryEmit(it.message ?: it.toString()) }
+            refreshShowing(refresh)
+            files.firstOrNull()?.parentFile?.let { refreshShowing(Location.Local(it.absolutePath)) }
+        }
+    }
+
     /**
      * #1607 Compress one entry into a .zip or .tar.gz (when [tarGz]) archive, beside the item or
      * into [downloadsDir] (Download) when given, as a cancellable job with byte progress. The real

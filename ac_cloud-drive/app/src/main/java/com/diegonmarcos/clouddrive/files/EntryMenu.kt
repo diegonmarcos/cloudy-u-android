@@ -25,7 +25,7 @@ object EntryMenu {
         // META
         RENAME, DELETE, PROPERTIES, BOOKMARK,
         // GIT
-        GIT_OPEN,
+        GIT_OPEN, GIT_RENAME, GIT_MOVE,
     }
 
     data class Section(val group: Group, val actions: List<Action>)
@@ -66,7 +66,7 @@ object EntryMenu {
             if (isLocal) add(Action.DELETE)
             if (isLocal && isDirectory) add(Action.BOOKMARK)
         }
-        val git = buildList { if (isLocal && underGit) add(Action.GIT_OPEN) }
+        val git = buildList { if (isLocal && underGit) { add(Action.GIT_OPEN); add(Action.GIT_RENAME); add(Action.GIT_MOVE) } }
         return buildList {
             if (open.isNotEmpty()) add(Section(Group.OPEN, open))
             if (share.isNotEmpty()) add(Section(Group.SHARE, share))
@@ -74,4 +74,20 @@ object EntryMenu {
             if (git.isNotEmpty()) add(Section(Group.GIT, git))
         }
     }
+}
+
+/**
+ * #1644 the multi-select dropdown as DATA. Actions: Delete All, Move All, Clear, Invert, Zip All
+ * (all but the two selection ops need a writable, non-archive pane); Git: Move All via `git mv`,
+ * only when every selected item is under one git working tree.
+ */
+object SelectionMenu {
+    enum class Action { DELETE_ALL, MOVE_ALL, CLEAR_SELECTION, INVERT_SELECTION, ZIP_ALL, GIT_MOVE_ALL }
+
+    fun actionsFor(inArchive: Boolean): List<Action> =
+        if (inArchive) listOf(Action.INVERT_SELECTION, Action.CLEAR_SELECTION)
+        else listOf(Action.DELETE_ALL, Action.MOVE_ALL, Action.CLEAR_SELECTION, Action.INVERT_SELECTION, Action.ZIP_ALL)
+
+    fun gitActionsFor(inArchive: Boolean, allUnderGit: Boolean): List<Action> =
+        if (!inArchive && allUnderGit) listOf(Action.GIT_MOVE_ALL) else emptyList()
 }

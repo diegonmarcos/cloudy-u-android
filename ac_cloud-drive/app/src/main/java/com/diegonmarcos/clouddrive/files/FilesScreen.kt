@@ -145,7 +145,9 @@ private sealed class FilesDialog {
     /** #1607 Row menu ▸ Compress: pick .zip or .tar.gz and whether it lands beside the item or in Downloads. */
     data class Compress(val entry: FileOps.Entry) : FilesDialog()
     /** The Places sheet: open in [pane], or pick a destination for the active selection. */
-    data class Places(val pane: PaneId, val pickDestination: Boolean, val move: Boolean) : FilesDialog()
+    data class Places(val pane: PaneId, val pickDestination: Boolean, val move: Boolean, val gitMove: List<FileOps.Entry> = emptyList()) : FilesDialog()
+    /** #1644 git mv rename of one entry. */
+    data class GitRename(val entry: FileOps.Entry) : FilesDialog()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -273,6 +275,8 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
                                 EntryAction.COPY_TO_DOWNLOADS -> { (e.location as? Location.Local)?.let { actions.copyToDownload(listOf(it.path)) }; null }
                                 EntryAction.COPY_TO_CLIPBOARD -> { (e.location as? Location.Local)?.let { loc -> scope.launch { val text = withContext(Dispatchers.IO) { runCatching { File(loc.path).readText() }.getOrNull() }; if (text != null) { actions.copyText(text); snackbar.showSnackbar(ctx.getString(R.string.files_copied_to_clipboard, e.name)) } } }; null }
                                 EntryAction.COMPRESS -> FilesDialog.Compress(e)
+                                EntryAction.GIT_RENAME -> FilesDialog.GitRename(e)
+                                EntryAction.GIT_MOVE -> FilesDialog.Places(id, pickDestination = true, move = true, gitMove = listOf(e))
                                 EntryAction.GIT_OPEN -> { (e.location as? Location.Local)?.let { loc -> scope.launch { val root = withContext(Dispatchers.IO) { GitWorkTree.rootOf(loc.path) }; root?.let { actions.openEngine("git", it.absolutePath) } } }; null }
                             } })
                     }
@@ -299,7 +303,8 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
                 onShare = { paths -> actions.share(paths) },
                 onProperties = { e -> controller.openProperties(e) },
                 onCopyPath = { entries -> copyPath(entries.map { it.location }) },
-                onPickDestination = { move -> dialog = FilesDialog.Places(ui.active, pickDestination = true, move = move) })
+                onPickDestination = { move -> dialog = FilesDialog.Places(ui.active, pickDestination = true, move = move) },
+                onGitMoveAll = { entries -> dialog = FilesDialog.Places(ui.active, pickDestination = true, move = true, gitMove = entries) })
         }
         jobs.forEach { job ->
             ProgressCard(job.title, job.detail, if (job.done) 1f else job.fraction, onCancel = if (job.done) null else ({ controller.cancel(job.id) }))
@@ -313,6 +318,7 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
         is FilesDialog.NewFolder -> TextFieldDialog(stringResource(R.string.files_new_folder), stringResource(R.string.files_name), "", stringResource(R.string.files_create), { dialog = null }) { controller.createFolder(d.pane, it); dialog = null }
         is FilesDialog.NewFile -> TextFieldDialog(stringResource(R.string.files_new_file), stringResource(R.string.files_name), "", stringResource(R.string.files_create), { dialog = null }) { controller.createFile(d.pane, it); dialog = null }
         is FilesDialog.Rename -> TextFieldDialog(stringResource(R.string.files_rename), stringResource(R.string.files_name), d.entry.name, stringResource(R.string.files_rename), { dialog = null }) { controller.rename(d.entry, it); dialog = null }
+        is FilesDialog.GitRename -> TextFieldDialog(stringResource(R.string.files_git_rename), stringResource(R.string.files_name), d.entry.name, stringResource(R.string.files_rename), { dialog = null }) { controller.gitRename(d.entry, it); dialog = null }
         is FilesDialog.DeleteConfirm -> ConfirmDialog(stringResource(R.string.files_delete_title, d.count), stringResource(R.string.files_delete_body), stringResource(R.string.chrome_delete), { dialog = null }) { controller.deleteSelection(d.pane); dialog = null }
         is FilesDialog.ZipName -> TextFieldDialog(stringResource(R.string.files_zip), stringResource(R.string.files_zip_name), "archive.zip", stringResource(R.string.files_zip), { dialog = null }) { controller.zipSelection(d.pane, it); dialog = null }
         is FilesDialog.BulkRename -> BulkRenameDialog(d.files, { dialog = null }) { plan -> controller.applyRenamePlan(plan, d.location); dialog = null }
@@ -331,7 +337,7 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
 
 // ── one pane ─────────────────────────────────────────────────────────────
 
-private enum class EntryAction { RENAME, PROPERTIES, DELETE, SHARE, OPEN_WITH, EDIT, EDITOR, EXTRACT_HERE, UNZIP, CONVERT, OPEN_OTHER_PANE, BOOKMARK, CONVERT_PDF, COPY_PATH, COPY_TO_DOWNLOADS, COPY_TO_CLIPBOARD, COMPRESS, GIT_OPEN }
+private enum class EntryAction { RENAME, PROPERTIES, DELETE, SHARE, OPEN_WITH, EDIT, EDITOR, EXTRACT_HERE, UNZIP, CONVERT, OPEN_OTHER_PANE, BOOKMARK, CONVERT_PDF, COPY_PATH, COPY_TO_DOWNLOADS, COPY_TO_CLIPBOARD, COMPRESS, GIT_OPEN, GIT_RENAME, GIT_MOVE }
 
 /** #1607 map the grouped data model's action onto the screen's dispatch enum (1:1 by name for the shared ones). */
 private fun EntryMenu.Action.toEntryAction(): EntryAction = when (this) {
@@ -352,6 +358,8 @@ private fun EntryMenu.Action.toEntryAction(): EntryAction = when (this) {
     EntryMenu.Action.PROPERTIES -> EntryAction.PROPERTIES
     EntryMenu.Action.BOOKMARK -> EntryAction.BOOKMARK
     EntryMenu.Action.GIT_OPEN -> EntryAction.GIT_OPEN
+    EntryMenu.Action.GIT_RENAME -> EntryAction.GIT_RENAME
+    EntryMenu.Action.GIT_MOVE -> EntryAction.GIT_MOVE
 }
 
 /** The dropdown's group-header label; COPY_PATH keeps its declared label, the rest are string resources. */
@@ -380,6 +388,8 @@ private fun EntryMenu.Action.labelRes(): Int = when (this) {
     EntryMenu.Action.PROPERTIES -> R.string.files_properties
     EntryMenu.Action.BOOKMARK -> R.string.files_bookmark_add
     EntryMenu.Action.GIT_OPEN -> R.string.files_git_open
+    EntryMenu.Action.GIT_RENAME -> R.string.files_git_rename
+    EntryMenu.Action.GIT_MOVE -> R.string.files_git_move
 }
 
 private const val COPY_PATH = "copy_path"
@@ -708,7 +718,7 @@ private fun EntryRow(
 private fun SelectionBar(
     ui: FilesUiState, controller: FilesController,
     onDelete: () -> Unit, onZip: () -> Unit, onRename: (List<FileOps.Entry>) -> Unit, onShare: (List<String>) -> Unit,
-    onProperties: (FileOps.Entry) -> Unit, onCopyPath: (List<FileOps.Entry>) -> Unit, onPickDestination: (Boolean) -> Unit,
+    onProperties: (FileOps.Entry) -> Unit, onCopyPath: (List<FileOps.Entry>) -> Unit, onPickDestination: (Boolean) -> Unit, onGitMoveAll: (List<FileOps.Entry>) -> Unit,
 ) {
     val pane = ui.activePane
     val inArchive = pane.location.isArchive
@@ -736,11 +746,18 @@ private fun SelectionBar(
             IconButton(onClick = { more = true }, Modifier.size(DriveMetrics.tap)) { Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.chrome_more)) }
             DropdownMenu(expanded = more, onDismissRequest = { more = false }) {
                 val selected = controller.selectedEntries(ui.active)
+                val allUnderGit by produceState(false, selected) { value = withContext(Dispatchers.IO) { selected.isNotEmpty() && selected.all { e -> (e.location as? Location.Local)?.let { GitWorkTree.isUnderGit(it.path) } == true } } }
                 if (!inArchive) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.chrome_delete)) }, onClick = { more = false; onDelete() })
                     DropdownMenuItem(text = { Text(stringResource(if (selected.size == 1) R.string.files_rename else R.string.files_rename_pattern)) }, onClick = { more = false; onRename(selected) })
                     DropdownMenuItem(text = { Text(stringResource(R.string.files_zip)) }, onClick = { more = false; onZip() })
                     DropdownMenuItem(text = { Text(stringResource(R.string.files_share)) }, enabled = selected.any { !it.isDirectory }, onClick = { more = false; onShare(selected.filter { !it.isDirectory }.mapNotNull { (it.location as? Location.Local)?.path }) })
+                }
+                if (SelectionMenu.Action.MOVE_ALL in SelectionMenu.actionsFor(inArchive)) DropdownMenuItem(text = { Text(stringResource(R.string.files_move_all)) }, onClick = { more = false; onPickDestination(true) })
+                if (SelectionMenu.gitActionsFor(inArchive, allUnderGit).isNotEmpty()) {
+                    HorizontalDivider()
+                    DropdownMenuItem(enabled = false, text = { Text(stringResource(R.string.files_menu_group_git), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }, onClick = {})
+                    DropdownMenuItem(text = { Text(stringResource(R.string.files_git_move_all)) }, onClick = { more = false; onGitMoveAll(selected) })
                 }
                 DropdownMenuItem(text = { Text(stringResource(R.string.files_properties)) }, enabled = selected.size == 1, onClick = { more = false; selected.firstOrNull()?.let(onProperties) })
                 Declarations.files.rowAction(COPY_PATH)?.let { a -> DropdownMenuItem(text = { Text(a.label) }, leadingIcon = { Icon(IconCatalog.vectorOrDefault(a.icon), null, Modifier.size(DriveMetrics.icon)) }, onClick = { more = false; onCopyPath(selected) }) }
@@ -772,7 +789,7 @@ private fun PlacesSheet(d: FilesDialog.Places, ui: FilesUiState, controller: Fil
             Places.Kind.TREE -> actions.requestTreeGrant()
             Places.Kind.CONNECT -> actions.requestTreeGrant()
             else -> place.location?.let { loc ->
-                if (d.pickDestination) controller.transferSelection(d.pane, loc, d.move) else controller.openTab(d.pane, loc)
+                if (d.pickDestination && d.gitMove.isNotEmpty()) controller.gitMoveEntries(d.gitMove, loc) else if (d.pickDestination) controller.transferSelection(d.pane, loc, d.move) else controller.openTab(d.pane, loc)
             }
         }
         onDismiss()
