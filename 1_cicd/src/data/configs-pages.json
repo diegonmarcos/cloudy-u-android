@@ -303,8 +303,7 @@
       "ac_ANDROID_______________________________": "A docs marker folder holding one empty a.md, no app and no build.json."
     },
     "pending": {
-      "_doc": "Apps whose Configs does not start General | Perms | About yet, each with its reason. Delete an entry in the commit that fixes the app (the guard fails a stale one).",
-      "ac_cloud-office": "Collabora patch series that does not reach the shared Configs screen yet (configs_pages.pending)."
+      "_doc": "Apps whose Configs does not start General | Perms | About yet, each with its reason. Delete an entry in the commit that fixes the app (the guard fails a stale one)."
     },
     "app_order": {
       "_doc": "#1470 apps whose OWNER chose another Configs order. Per app and explicit, never a pattern: the app's declarations must equal `order` exactly (instead of starting with `first`), every id of `first` must be in it, and `reason` (30+ chars) says why. Every other app keeps the General | Perms | About first rule.",
@@ -407,10 +406,10 @@
     "ac_cloud-c3-webserver": "Tauri 2 host: the whole UI is the Rust web server's page in one WebView; the Android side is a generated shell with no menu of its own.",
     "ac_cloud-media-center": "Tauri 2 host: seven static web pages in one WebView; the generated Android shell draws nothing of its own to hang an entry on.",
     "ac_cloud-chat": "#1630 React Native host (Mattermost fork): the whole UI is React Native, the Android side has no Compose menu of its own; android/ builds on Kotlin 2.3.20 with the Compose compiler plugin and links libs:ui-nav-bars plus the three fleetconfigs libs, so the shared Configs screen (the five-tab tail) is reached through the launcher shortcuts.",
+    "ac_cloud-office": "#1630 Collabora Online host (Java, patch series): the editor is the engine's web UI in one WebView and the Android side has no Compose menu of its own; patch 0009 adds the Compose compiler plugin and links libs:ui-nav-bars plus the three fleetconfigs libs, so the shared Configs screen (the five-tab tail) is reached through the launcher shortcuts.",
     "ac_cloud-code": "Cordova host (Acode): the editor's menus are web code in a WebView and the Android project is generated at build time, so no native menu exists to extend."
   },
   "pending": {
-    "_doc": "Apps that declare configs_pages (held by G1-G3) but do not reach the pages yet. Wiring means linking libs:ui-nav-bars (with bottomnav, ui-icons, theme-background, perms) and calling FleetConfigsMenu( (Compose) or FleetConfigsEntries.addTo( / FleetConfigsActivity.intent( (Views, forks) from the app's own menu. Delete an entry in the commit that wires the app (the guard fails a stale one).",
-    "ac_cloud-office": "Collabora Online patch series over a Java host: a new patch must add the Kotlin Compose plugin and libs:ui-nav-bars to upstream's android/ build; then shortcut_reach."
+    "_doc": "Apps that declare configs_pages (held by G1-G3) but do not reach the pages yet. Wiring means linking libs:ui-nav-bars (with bottomnav, ui-icons, theme-background, perms) and calling FleetConfigsMenu( (Compose) or FleetConfigsEntries.addTo( / FleetConfigsActivity.intent( (Views, forks) from the app's own menu. Delete an entry in the commit that wires the app (the guard fails a stale one)."
   }
 }

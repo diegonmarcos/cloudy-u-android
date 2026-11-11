@@ -103,6 +103,7 @@ a loud failure into a quiet one.
 | 0002 | `--with-prebuilt-engine`: configure, Gradle and the asset tasks take the engine from the unpacked released APK | upstream only builds the Android app against an engine BUILD tree, i.e. an NDK megabuild whose output is identical to the libraries already in the released APK |
 | 0003 | `android.builtInKotlin=false`, `android.newDsl=false` | the shared `text-tools` module applies `org.jetbrains.kotlin.android`, which AGP 9.3.0 refuses under built-in Kotlin |
 | 0004 | `generateCoolDebugAssets` / `generateCoolReleaseAssets` print `make`'s captured output before failing | `providers.exec` captures the subprocess's stdout and stderr and forwards neither to the logger, so run 35038703895 failed with a Gradle stack trace and not one line of make's error — and `--info` cannot print them either |
+| 0009 | `libs:ui-nav-bars` + the three `fleetconfigs-*` libs linked in android/app, their closure included in settings.gradle, the Compose compiler plugin on the root buildscript | the fleet Configs page (Agents, Perms, Logcat, X-Ray App, About after the app's own tabs) is a Compose screen of libs:ui-nav-bars; the host reaches it through the launcher shortcuts the lib publishes (#1630) |
 
 0001 touches Writer's Edit menu only. Calc's is deliberately left alone: a
 spreadsheet selection can span cells, and one plain-text rewrite pasted back over

@@ -1,0 +1,78 @@
+From 70daffb94d5e7a03fa4905e467a56164fff457e9 Mon Sep 17 00:00:00 2001
+From: Cloud Office <me@diegonmarcos.com>
+Date: Wed, 11 Nov 2026 21:36:54 +0000
+Subject: [PATCH] cloud-office: link the shared fleet Configs screen and its
+ five-tab tail
+
+The fleet's Configs page (libs:ui-nav-bars: FleetConfigsActivity, the shared
+Compose screen) ends every app's strip with Agents | Perms | Logcat | X-Ray
+App | About (#1630). Cloud Office is a Collabora host with no Compose, so it
+never reached the page. It reaches it now through the launcher shortcuts
+ui-nav-bars publishes for every app that links it, like Cloud Code.
+
+Linked BY REFERENCE, like core: libs:ui-nav-bars plus the three opt-in
+libs (fleetconfigs-agents, -logcat, -xray) in android/app, and the closure
+they need (bottomnav, ui-icons, theme-background, perms, fleet-data-client;
+devtools is already there) included in android/settings.gradle under the
+paths the libs name. ui-nav-bars is Compose: its libs apply the bare id
+org.jetbrains.kotlin.plugin.compose, so the root buildscript carries the
+compose compiler plugin at 2.2.10, the Kotlin AGP 9.3.0 already brings.
+---
+ android/app/build.gradle |  7 +++++++
+ android/build.gradle     |  3 +++
+ android/settings.gradle  | 10 ++++++++++
+ 3 files changed, 20 insertions(+)
+
+diff --git a/android/app/build.gradle b/android/app/build.gradle
+index 8eac33c..09b2f20 100644
+--- a/android/app/build.gradle
++++ b/android/app/build.gradle
+@@ -89,6 +89,13 @@ dependencies {
+     // receiver, <queries> and the signature permission into this APK; nothing here calls it.
+     implementation project(':libs:core')
+ 
++    // #1630 fleet Configs: the shared screen and the five-tab tail (Agents, Perms, Logcat, X-Ray App, About);
++    // the three fleetconfigs libs register their tabs on it, no Kotlin here.
++    implementation project(':libs:ui-nav-bars')
++    implementation project(':libs:fleetconfigs-agents')
++    implementation project(':libs:fleetconfigs-logcat')
++    implementation project(':libs:fleetconfigs-xray')
++
+     // https://stackoverflow.com/questions/75263047/duplicate-class-in-kotlin-android
+     constraints {
+         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {
+diff --git a/android/build.gradle b/android/build.gradle
+index e25c583..6308439 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -10,6 +10,9 @@ buildscript {
+     }
+     dependencies {
+         classpath 'com.android.tools.build:gradle:9.3.0'
++        // #1630: libs:ui-nav-bars and its libs apply the bare id org.jetbrains.kotlin.plugin.compose, resolved
++        // from this classpath; same Kotlin as the 2.2.10 plugin AGP 9.3.0 already brings.
++        classpath 'org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.2.10'
+ 
+         // NOTE: Do not place your application dependencies here; they belong
+         // in the individual module build.gradle files
+diff --git a/android/settings.gradle b/android/settings.gradle
+index 626497e..429eb9a 100644
+--- a/android/settings.gradle
++++ b/android/settings.gradle
+@@ -38,3 +38,13 @@ project(':libs:fleetconfig-model').projectDir = new File(settingsDir, 'libs/flee
+ // materialize places it at android/libs/crash.
+ include ':libs:crash'
+ project(':libs:crash').projectDir = new File(settingsDir, 'libs/crash')
++
++// #1630 the fleet Configs tail (Agents, Perms, Logcat, X-Ray App, About): libs:ui-nav-bars draws the shared
++// Configs screen and the three opt-in libs register their tabs on it. Same BY-REFERENCE rule as core above:
++// materialize places each at android/libs/<name>. Closure: ui-nav-bars -> bottomnav, ui-icons,
++// theme-background, perms -> fleet-data-client; logcat -> devtools (already included).
++['ui-nav-bars', 'bottomnav', 'ui-icons', 'theme-background', 'perms', 'fleet-data-client',
++ 'fleetconfigs-agents', 'fleetconfigs-logcat', 'fleetconfigs-xray'].each { n ->
++    include ":libs:${n}"
++    project(":libs:${n}").projectDir = new File(settingsDir, "libs/${n}")
++}
+-- 
+2.43.0
+

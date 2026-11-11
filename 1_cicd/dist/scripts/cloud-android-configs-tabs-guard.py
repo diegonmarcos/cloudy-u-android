@@ -83,7 +83,7 @@ def gradle_libs(root, app):
     for dp, dn, fn in os.walk(os.path.join(root, app)):
         dn[:] = [x for x in dn if x not in ("build", "node_modules", "src", "test", "androidTest")]
         for f in fn:
-            if f.startswith(("build", "settings")) and f.endswith((".gradle", ".gradle.kts")):
+            if (f.startswith(("build", "settings")) and f.endswith((".gradle", ".gradle.kts"))) or f.endswith(".patch"):   # a patch series (Cloud Office) links its libs in a patch
                 try:
                     t = open(os.path.join(dp, f), encoding="utf-8", errors="replace").read()
                 except OSError:

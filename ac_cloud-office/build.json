@@ -270,7 +270,16 @@
         "_doc": "#1122 — pulled in by core's `api project(':libs:crash')` (the default crash handler, the phone's local crash sink and the generic crash screen); android/app does not link it directly. Linked because that project path resolves against android/settings.gradle, which patch 0008 makes include it, and listed so a change to it re-ships this app.",
         "dir": "../ab_cloud-libs-shared/libs/crash",
         "materialize_to": "android/libs/crash"
-      }
+      },
+      "ui-nav-bars": { "_doc": "#1630 the fleet Configs tail (Agents, Perms, Logcat, X-Ray App, About): android/app links this module and the three fleetconfigs libs (patch 0009); the others are their dependencies. Linked because the project paths resolve against android/settings.gradle, which patch 0009 makes include them, and listed so a change re-ships this app.", "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars", "materialize_to": "android/libs/ui-nav-bars"},
+      "bottomnav": { "dir": "../ab_cloud-libs-shared/libs/bottomnav", "materialize_to": "android/libs/bottomnav"},
+      "ui-icons": { "dir": "../ab_cloud-libs-shared/libs/ui-icons", "materialize_to": "android/libs/ui-icons"},
+      "theme-background": { "dir": "../ab_cloud-libs-shared/libs/theme-background", "materialize_to": "android/libs/theme-background"},
+      "perms": { "dir": "../ab_cloud-libs-shared/libs/perms", "materialize_to": "android/libs/perms"},
+      "fleet-data-client": { "dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "materialize_to": "android/libs/fleet-data-client"},
+      "fleetconfigs-agents": { "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents", "materialize_to": "android/libs/fleetconfigs-agents"},
+      "fleetconfigs-logcat": { "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat", "materialize_to": "android/libs/fleetconfigs-logcat"},
+      "fleetconfigs-xray": { "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray", "materialize_to": "android/libs/fleetconfigs-xray"}
     },
     "build_json_to": "android/build.json",
     "_doc_build_json_to": "#743 — where materialize LINKS this file inside the fetched online tree. libs:devtools reads the CONSUMING app's build.json by walking up from the gradle root (android/), and that root sits in a scratch tree outside the repository, so without the link no walk ever meets this file and the build stops at configuration time. Linked, never copied: a copy would be a second declaration of this app.",

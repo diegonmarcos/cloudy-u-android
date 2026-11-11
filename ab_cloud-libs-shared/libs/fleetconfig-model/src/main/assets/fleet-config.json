@@ -4190,12 +4190,21 @@
       "module": "ac_cloud-office",
       "schema_version": 1,
       "libs": [
+        "lib-bottomnav",
         "lib-core",
         "lib-crash",
         "lib-devtools",
+        "lib-fleet-data-client",
         "lib-fleetconfig-model",
+        "lib-fleetconfigs-agents",
+        "lib-fleetconfigs-logcat",
+        "lib-fleetconfigs-xray",
         "lib-ml-l-image",
-        "lib-text-tools"
+        "lib-perms",
+        "lib-text-tools",
+        "lib-theme-background",
+        "lib-ui-icons",
+        "lib-ui-nav-bars"
       ],
       "items": [
         {
