@@ -57,6 +57,7 @@ on:
       - "ab_cloud-libs-shared/libs/bottomnav/**"
       - "ab_cloud-libs-shared/libs/core/**"
       - "ab_cloud-libs-shared/libs/crash/**"
+      - "ab_cloud-libs-shared/libs/decisions/**"
       - "ab_cloud-libs-shared/libs/decisions-link/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
       - "ab_cloud-libs-shared/libs/fleet-data-client/**"
@@ -66,6 +67,7 @@ on:
       - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**"
       - "ab_cloud-libs-shared/libs/keyboard/**"
       - "ab_cloud-libs-shared/libs/media/**"
+      - "ab_cloud-libs-shared/libs/ml-l-image-ocr/**"
       - "ab_cloud-libs-shared/libs/perms/**"
       - "ab_cloud-libs-shared/libs/text-tools/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"
@@ -74,6 +76,8 @@ on:
       - "ab_cloud-libs-shared/libs/ui-kit/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ab_cloud-libs-shared/libs/voice/**"
+      - "ab_cloud-libs-shared/libs/writer-core/**"
+      - "ab_cloud-libs-shared/libs/writer-ui/**"
       - "ac_cloud-keyboard/**"
 permissions:
   contents: write

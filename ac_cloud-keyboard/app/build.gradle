@@ -132,6 +132,8 @@ dependencies {
     // #1352 Configs ▸ General / ▸ About, registered in App.kt as KeyboardSettingsExtras (libs:ui-nav-bars)
     implementation project(':libs:ui-nav-bars')
     // #1651 the default Configs tail: Agents, Logcat, X-Ray App (Perms and About come with ui-nav-bars)
+    // #1652 the Writer tab: cloud-writer's UI (WriterSurface.Page) as top-nav sub-pages
+    implementation project(':libs:writer-ui')
     implementation project(':libs:fleetconfigs-agents')
     implementation project(':libs:fleetconfigs-logcat')
     implementation project(':libs:fleetconfigs-xray')

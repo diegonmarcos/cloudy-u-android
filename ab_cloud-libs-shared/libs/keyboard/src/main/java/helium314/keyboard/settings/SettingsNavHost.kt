@@ -87,6 +87,9 @@ fun SettingsNavHost(
                 onClickBack = ::goBack,
             )
         }
+        composable(SettingsDestination.HostPage) { entry -> // #1652 a page the host app draws (libs:writer-ui's Writer pages)
+            KeyboardSettingsExtras.hostPage?.invoke(entry.arguments?.getString("id") ?: "")
+        }
         composable(SettingsDestination.Themes) { // #1622: Themes picker (Default | Unexpected)
             ThemesScreen(onClickBack = ::goBack)
         }
@@ -223,6 +226,8 @@ object SettingsDestination {
     const val Home = "home" // #1622: icon-grid Home Page (the Config icon opens this)
     const val Themes = "themes" // #1622: Themes picker
     const val Settings = "settings"
+    const val HostPage = "host/{id}" // #1652 the host's own pages
+    fun hostRoute(id: String) = "host/$id"
     const val About = "about"
     const val TextCorrection = "text_correction"
     const val GrammarCheck = "grammar_check" // SuperApp addition (patch 0002)

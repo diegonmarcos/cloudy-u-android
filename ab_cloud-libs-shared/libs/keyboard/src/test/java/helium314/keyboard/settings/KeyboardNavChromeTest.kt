@@ -33,6 +33,22 @@ class KeyboardNavChromeTest {
         assertTrue(tab(KbTab.WRITER).containsAll(listOf("Voice Transcription", "Dictionary", "Enhancer", "Drafter", "Translator", "Grammar")))
     }
 
+    /** #1652 every cloud-writer page (libs:writer-ui WriterSurface ids) is a top-nav sub-page of the Writer tab, drawn by the host page route. */
+    @Test fun writerTabExposesEveryCloudWriterPageAsATopNavSubpage() {
+        val routes = KbTab.WRITER.allPages.map { it.route }.toSet()
+        listOf(
+            "enhancer", "drafter", "home", "translator", "grammar", // its former bottom nav
+            "tools", "tools.enhance", "tools.translation", "tools.grammar", "tools.ai_routing", "tools.routes", // Tools
+            "dictation", "settings", // Listen and its configs
+        ).forEach { assertTrue(it, SettingsDestination.hostRoute(it) in routes) }
+        assertTrue(nav.contains("composable(SettingsDestination.HostPage)"))
+        assertTrue(nav.contains("KeyboardSettingsExtras.hostPage"))
+        // the app draws them with the shared lib, not a copy
+        assertTrue(appFile("app/src/main/java/com/diegonmarcos/cloudkeyboard/WriterHost.kt").contains("WriterSurface(activity"))
+        assertTrue(appFile("app/build.gradle").contains("implementation project(':libs:writer-ui')"))
+        assertTrue(appFile("build.json").contains("\"libs:writer-ui\""))
+    }
+
     @Test fun mediaboardsAndTextboardsSubpages() {
         assertEquals(listOf("Emojis", "GIF", "Stickers"), KbTab.MEDIABOARDS.pages.map { it.label })
         assertEquals(listOf("Autocomplete", "Clipboard"), KbTab.TEXTBOARDS.pages.map { it.label })
@@ -51,7 +67,7 @@ class KeyboardNavChromeTest {
         val after = KbTab.entries.flatMap { it.allPages }.map { it.route }.toSet()
         assertEquals(emptySet<String>(), before - after)
         // each declared route is an existing screen, and no page id repeats
-        after.forEach { r -> assertTrue(r, nav.contains("composable(SettingsDestination.${Regex("""const val (\w+) = "$r"""").find(nav)!!.groupValues[1]})")) }
+        after.filterNot { it.startsWith("host/") }.forEach { r -> assertTrue(r, nav.contains("composable(SettingsDestination.${Regex("""const val (\w+) = "$r"""").find(nav)!!.groupValues[1]})")) }
         val ids = KbTab.entries.flatMap { it.allPages }.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
     }

@@ -38,6 +38,7 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // #1651 the fleet default top + bottom nav bars around the settings pages, and the keyboard's own tab of the standard
         // Configs strip ({app tabs} | Agents, Perms, Logcat, X-Ray App, About; the tail tabs register from the linked fleetconfigs libs).
         helium314.keyboard.settings.KeyboardSettingsExtras.chrome = { route, open, content -> KeyboardChrome.Draw(route, open, content) }
+        helium314.keyboard.settings.KeyboardSettingsExtras.hostPage = { id -> WriterHost.Page(id) }
         com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.register(
             com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab("keyboard", "Keyboard", "settings") { dark -> KeyboardConfigsTabBody(dark) }
         )

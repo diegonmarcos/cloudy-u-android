@@ -34,6 +34,13 @@
          from Clipboard settings, never on launch. -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
 
+    <!-- #1652 Writer tab > Voice Transcription (libs:writer-ui Listen): records the microphone, kept running by a microphone foreground
+         service; POST_NOTIFICATIONS shows its notice on 13+. The on-device speech engine is the companion package queried below. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- Android 11+ package visibility: declare the companion libs package so
          PackageManager resolves it and bindService() succeeds. -->
     <queries>
@@ -50,6 +57,11 @@
         android:defaultToDeviceProtectedStorage="false"
         android:directBootAware="false"
         tools:replace="android:name,android:label,android:allowBackup,android:defaultToDeviceProtectedStorage,android:directBootAware">
+
+        <!-- #1652 Listen with the screen off (libs:writer-ui). Not exported: only this app starts or stops it. -->
+        <service android:name="com.diegonmarcos.cloudwriter.ListenService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

@@ -41,7 +41,7 @@ class NavPageDecl(val id: String, val label: String, val route: String, val chil
  * #1653 the settings' nav, declared once: FOUR bottom tabs in order, Keyboard / Writer / Mediaboards / Textboards (supersedes the
  * #1651 five). Each tab's [pages] are its sub-pages, reached from the fleet top bar; every page opens an existing screen, so
  * nothing is removed, only re-homed. [icon] is a libs:ui-icons catalog key. The Writer tab holds the keyboard's own writing tools
- * until cloud-writer's pages arrive from libs:writer-ui (#1652), plus Voice Transcription and Dictionary.
+ * from libs:writer-ui (cloud-writer's pages, #1652), plus Voice Transcription and Dictionary.
  */
 enum class KbTab(val id: String, val label: String, val icon: String, val pages: List<NavPageDecl>) {
     KEYBOARD("keyboard", "Keyboard", "apps", listOf(
@@ -59,15 +59,30 @@ enum class KbTab(val id: String, val label: String, val icon: String, val pages:
         NavPageDecl("toolbar", "Toolbar", SettingsDestination.Toolbar),
     )),
     WRITER("writer", "Writer", "edit", listOf(
-        NavPageDecl("enhancer", "Enhancer", SettingsDestination.TextEnhance),
-        NavPageDecl("drafter", "Drafter", SettingsDestination.DraftAnswer),
-        NavPageDecl("translator", "Translator", SettingsDestination.Translation),
-        NavPageDecl("grammar", "Grammar", SettingsDestination.GrammarCheck),
-        NavPageDecl("summarise", "Summarise", SettingsDestination.TextResume),
-        NavPageDecl("ai_routing", "AI routing", SettingsDestination.AiRouting),
-        NavPageDecl("voice_transcription", "Voice Transcription", SettingsDestination.VoiceTranscript),
+        // #1652 cloud-writer's own pages (libs:writer-ui WriterSurface.Page): its former bottom nav, then Tools, dictation and configs
+        NavPageDecl("writer_home", "Documents", SettingsDestination.hostRoute("home")),
+        NavPageDecl("writer_enhancer", "Enhancer", SettingsDestination.hostRoute("enhancer")),
+        NavPageDecl("writer_drafter", "Drafter", SettingsDestination.hostRoute("drafter")),
+        NavPageDecl("writer_translator", "Translator", SettingsDestination.hostRoute("translator")),
+        NavPageDecl("writer_grammar", "Grammar", SettingsDestination.hostRoute("grammar")),
+        NavPageDecl("writer_tools", "Tools", SettingsDestination.hostRoute("tools"), listOf(
+            NavPageDecl("writer_tools_enhance", "Text Enhancements", SettingsDestination.hostRoute("tools.enhance")),
+            NavPageDecl("writer_tools_translation", "Translation", SettingsDestination.hostRoute("tools.translation")),
+            NavPageDecl("writer_tools_grammar", "Grammar check", SettingsDestination.hostRoute("tools.grammar")),
+            NavPageDecl("writer_tools_ai_routing", "AI routing", SettingsDestination.hostRoute("tools.ai_routing")),
+            NavPageDecl("writer_tools_routes", "Routes", SettingsDestination.hostRoute("tools.routes")))),
+        NavPageDecl("voice_transcription", "Voice Transcription", SettingsDestination.hostRoute("dictation"), listOf(
+            NavPageDecl("voice_transcription_settings", "Voice transcription settings", SettingsDestination.VoiceTranscript))),
         NavPageDecl("dictionary", "Dictionary", SettingsDestination.Dictionaries, listOf(
             NavPageDecl("personal_dictionary", "Personal dictionary", SettingsDestination.PersonalDictionaries))),
+        NavPageDecl("writer_configs", "Writer configs", SettingsDestination.hostRoute("settings")),
+        // the keyboard's own writing-tool pages (Enhancer etc. as keyboard settings) stay reachable
+        NavPageDecl("kb_writing_tools", "Keyboard writing tools", SettingsDestination.TextEnhance, listOf(
+            NavPageDecl("kb_drafter", "Draft Answer", SettingsDestination.DraftAnswer),
+            NavPageDecl("kb_translator", "Translation", SettingsDestination.Translation),
+            NavPageDecl("kb_grammar", "Grammar Check", SettingsDestination.GrammarCheck),
+            NavPageDecl("kb_summarise", "Summarise", SettingsDestination.TextResume),
+            NavPageDecl("kb_ai_routing", "AI routing", SettingsDestination.AiRouting))),
     )),
     MEDIABOARDS("mediaboards", "Mediaboards", "layers", listOf(
         // one page covers the three panels today (EmojiInfoScreen: Emoji, Stickers, GIFs)

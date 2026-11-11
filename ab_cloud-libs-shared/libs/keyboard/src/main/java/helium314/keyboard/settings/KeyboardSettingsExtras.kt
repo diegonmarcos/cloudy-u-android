@@ -21,5 +21,8 @@ object KeyboardSettingsExtras {
     /** #1652 true when [chrome] draws the one top bar: pages then draw no title bar of their own (back = system back, search stays). */
     val chromeActive: Boolean get() = chrome != null
 
+    /** #1652 pages the host draws itself (the Writer tab's cloud-writer pages, libs:writer-ui): called with the page id of a `host/<id>` route. */
+    @Volatile var hostPage: (@Composable (id: String) -> Unit)? = null
+
     @Volatile var chrome: (@Composable (route: String?, open: (String) -> Unit, content: @Composable () -> Unit) -> Unit)? = null
 }

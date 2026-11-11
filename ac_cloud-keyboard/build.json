@@ -89,6 +89,10 @@
     "libs:fleetconfigs-agents": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents", "type": "library", "_doc": "#1651 the Configs tail Agents tab (#1630 default: {app tabs} | Agents, Perms, Logcat, X-Ray App, About); registers itself from a provider."},
     "libs:fleetconfigs-logcat": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat", "type": "library", "_doc": "#1651 the Configs tail Logcat tab."},
     "libs:fleetconfigs-xray": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray", "type": "library", "_doc": "#1651 the Configs tail X-Ray App tab."},
+    "libs:writer-ui": {"type": "library", "dir": "../ab_cloud-libs-shared/libs/writer-ui", "_doc": "#1652 Writer tab: cloud-writer's UI as a shared lib (WriterSurface.Page per top-nav sub-page). Shared BY REFERENCE."},
+    "libs:writer-core": {"type": "library", "dir": "../ab_cloud-libs-shared/libs/writer-core", "_doc": "#1652 Writer tab: cloud-writer's UI as a shared lib (WriterSurface.Page per top-nav sub-page). Shared BY REFERENCE."},
+    "libs:decisions": {"type": "library", "_doc": "#1652 Writer tab: cloud-writer's UI as a shared lib (WriterSurface.Page per top-nav sub-page). Shared BY REFERENCE.", "dir": "../ab_cloud-libs-shared/libs/decisions"},
+    "libs:ml-l-image-ocr": {"type": "library", "_doc": "#1652 Writer tab: cloud-writer's UI as a shared lib (WriterSurface.Page per top-nav sub-page). Shared BY REFERENCE.", "dir": "../ab_cloud-libs-shared/libs/ml-l-image-ocr"},
     "libs:bottomnav": {"dir": "../ab_cloud-libs-shared/libs/bottomnav", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency; listed so settings.gradle resolves the path."},
     "libs:ui-icons": {"dir": "../ab_cloud-libs-shared/libs/ui-icons", "type": "library", "_doc": "libs:bottomnav's dependency; listed so settings.gradle resolves the path."},
     "libs:theme-background": {"dir": "../ab_cloud-libs-shared/libs/theme-background", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency (the page background); listed so settings.gradle resolves the path."}
