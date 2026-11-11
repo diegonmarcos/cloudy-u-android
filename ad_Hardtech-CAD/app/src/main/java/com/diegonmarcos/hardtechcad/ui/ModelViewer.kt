@@ -1,8 +1,18 @@
 package com.diegonmarcos.hardtechcad.ui
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Rect
+import android.os.Handler
+import android.os.Looper
+import android.view.PixelCopy
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +38,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -39,19 +52,63 @@ import com.diegonmarcos.cloudlib.web.WebProfile
 import com.diegonmarcos.hardtechcad.BuildConfig
 import com.diegonmarcos.hardtechcad.CadDiag
 import com.diegonmarcos.hardtechcad.R
+import com.diegonmarcos.hardtechcad.ViewerHealth
 import com.diegonmarcos.superapp.cad.CadFormats
 import com.diegonmarcos.superapp.cad.Model
 import com.diegonmarcos.superapp.cad.ModelCache
 import com.diegonmarcos.superapp.uikit.KitStoreRow
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 import org.json.JSONObject
 import java.io.File
 
 private val VIEWER_URL = CloudWeb.assetUrl("cad/viewer.html")
 private const val MODELS_PATH = "/models/"
 private const val ASSETS_PATH = "/assets/"
+/** #1658 the viewer's fixed height: the WebView fills it, so its surface is never a collapsed (zero-height) one. */
+private const val VIEWER_HEIGHT_DP = 300
+/** #1658 the on-screen measurement leaves out the page's own status line (bottom) and the frame's border (edges). */
+private const val SCREEN_STRIP_DP = 28
+private const val SCREEN_INSET_DP = 4
+/** #1658 a model that neither shows nor fails within this long after cadOpen is reported, with the page's stage. */
+private const val LOAD_TIMEOUT_S = 30
+
+/** #1658 what the page's 'painted' event read back from the WebGL framebuffer; [seq] makes every event a new value. */
+private data class Paint(val pct: Double, val w: Int, val h: Int, val gl: String, val seq: Long)
+
+private fun activityOf(c: Context): Activity? {
+    var x = c
+    while (x is ContextWrapper) { if (x is Activity) return x; x = x.baseContext }
+    return null
+}
+
+/**
+ * #1658 the share of the viewer's rectangle ON THE SCREEN that is not background: a PixelCopy of the window, which holds what the compositor
+ * really presented (the WebView's GL layer included). -1 when it cannot be measured (no window, the viewer not fully visible, the copy failed).
+ */
+private suspend fun screenPct(wv: WebView): Double {
+    val window = activityOf(wv.context)?.window ?: return -1.0
+    val vis = Rect()
+    if (!wv.isShown || !ViewerHealth.sized(wv.width, wv.height) || !wv.getGlobalVisibleRect(vis) || vis.width() != wv.width || vis.height() != wv.height) return -1.0
+    val loc = IntArray(2).also { wv.getLocationInWindow(it) }
+    val d = wv.resources.displayMetrics.density
+    val inset = (SCREEN_INSET_DP * d).toInt()
+    val src = Rect(loc[0] + inset, loc[1] + inset, loc[0] + wv.width - inset, loc[1] + wv.height - (SCREEN_STRIP_DP * d).toInt())
+    if (!ViewerHealth.sized(src.width() / 4, src.height() / 4)) return -1.0
+    val bmp = Bitmap.createBitmap(src.width() / 4, src.height() / 4, Bitmap.Config.ARGB_8888)
+    return suspendCancellableCoroutine { k ->
+        runCatching {
+            PixelCopy.request(window, src, bmp, { r ->
+                val pct = if (r == PixelCopy.SUCCESS) ViewerHealth.coverage(IntArray(bmp.width * bmp.height).also { bmp.getPixels(it, 0, bmp.width, 0, 0, bmp.width, bmp.height) }) else -1.0
+                bmp.recycle()
+                if (k.isActive) k.resume(Math.round(pct * 10) / 10.0)
+            }, Handler(Looper.getMainLooper()))
+        }.onFailure { if (k.isActive) k.resume(-1.0) }
+    }
+}
 
 private sealed class ViewState {
     data object Fetching : ViewState()
@@ -71,21 +128,34 @@ internal fun ModelViewer(m: Model, dir: File) {
     var ready by remember { mutableStateOf(false) }
     var web by remember { mutableStateOf<WebView?>(null) }
     var file by remember(m) { mutableStateOf<File?>(null) }
-    val curId by rememberUpdatedState(m.id)
+    // #1658 what the page reported for THIS model and what the screen really shows of it; the presentation belongs to the page (the WebView), not the model
+    var triangles by remember(m) { mutableStateOf(-1L) }
+    var paint by remember(m) { mutableStateOf<Paint?>(null) }
+    var screen by remember(m) { mutableStateOf(-1.0) }
+    var stage by remember(m) { mutableStateOf("") }
+    var present by remember { mutableStateOf(ViewerHealth.Present.WEBGL) }
+    var hostFrame by remember { mutableStateOf<ImageBitmap?>(null) }
+    // #1631 every event of the real viewer page is recorded for the X-Ray App page. #1658 the handler is the CURRENT composition's: the bridge object
+    // lives as long as the WebView, and one that wrote the first model's state left every later model without its shown / error state.
+    val onEvent by rememberUpdatedState { e: JSONObject, json: String ->
+        when (e.optString("type")) {
+            "ready" -> { ready = true; CadDiag.event(m.id, "viewer ready") }
+            "shown" -> { state = ViewState.Shown; triangles = e.optLong("triangles", -1); CadDiag.shown(m.id, e.optLong("triangles", -1)) }
+            "painted" -> {
+                paint = Paint(e.optDouble("pct", -1.0), e.optInt("w"), e.optInt("h"), e.optString("gl"), System.nanoTime())
+                CadDiag.painted(m.id, e.optDouble("pct", -1.0), e.optInt("w"), e.optInt("h"), e.optString("gl"))
+            }
+            "error" -> { state = ViewState.Failed(e.optString("message")); CadDiag.failed(m.id, e.optString("message")) }
+            else -> CadDiag.event(m.id, json)
+        }
+    }
     val bridge = remember {
         object {
             @JavascriptInterface
             fun post(json: String) {
                 android.util.Log.i("CadHost", json)
                 val e = runCatching { JSONObject(json) }.getOrNull() ?: return
-                // #1631 every event of the real viewer page is recorded for the X-Ray App page
-                when (e.optString("type")) {
-                    "ready" -> { ready = true; CadDiag.event(curId, "viewer ready") }
-                    "shown" -> { state = ViewState.Shown; CadDiag.shown(curId, e.optLong("triangles", -1)) }
-                    "painted" -> CadDiag.painted(curId, e.optDouble("pct", -1.0), e.optInt("w"), e.optInt("h"), e.optString("gl"))
-                    "error" -> { state = ViewState.Failed(e.optString("message")); CadDiag.failed(curId, e.optString("message")) }
-                    else -> CadDiag.event(curId, json)
-                }
+                onEvent(e, json)
             }
         }
     }
@@ -93,7 +163,9 @@ internal fun ModelViewer(m: Model, dir: File) {
     fun pollDiag(id: String) {
         val w = web ?: return
         CadDiag.view(id, w.width, w.height, w.isShown, w.isHardwareAccelerated)
-        w.evaluateJavascript("JSON.stringify(window.cadDiag&&window.cadDiag())") { v -> decodeJs(v)?.let { CadDiag.js(id, it) } }
+        w.evaluateJavascript("JSON.stringify(window.cadDiag&&window.cadDiag())") { v ->
+            decodeJs(v)?.let { CadDiag.js(id, it); stage = runCatching { JSONObject(it).optString("stage") }.getOrDefault("") }
+        }
     }
     // #1542 a view bundled in the APK (Plan.Show.asset) is drawn from the app's own assets: no download, no LFS, nothing to fail on the network
     val bundled = (plan as? CadFormats.Plan.Show)?.asset.orEmpty()
@@ -124,6 +196,53 @@ internal fun ModelViewer(m: Model, dir: File) {
                 if (b64.isNotEmpty()) File(dir.parentFile, "cad-snapshot-" + m.id + ".png").writeBytes(android.util.Base64.decode(b64, android.util.Base64.DEFAULT))
             }
         }
+        // #1658 a load that neither shows nor fails is not left as a silent empty stage: it is reported with the stage the page stopped at
+        kotlinx.coroutines.delay((LOAD_TIMEOUT_S - 20) * 1000L)
+        if (state == ViewState.Loading) {
+            val msg = "still loading after $LOAD_TIMEOUT_S s" + (if (stage.isNotBlank()) " (viewer stage: $stage)" else "")
+            CadDiag.failed(m.id, msg); state = ViewState.Failed(msg)
+        }
+    }
+    // #1658 while a model loads, the page's own stage is read every second: the line under the viewer says where the load is
+    LaunchedEffect(m, state) { while (state == ViewState.Loading) { kotlinx.coroutines.delay(1000); pollDiag(m.id) } }
+    // #1658 the page painted the model into its framebuffer: now measure what the SCREEN shows of it. A model that is painted and not on the screen
+    // is a WebView presentation failure the page cannot see; the viewer steps to the next presentation (2D canvas, then an image the app draws)
+    // and measures again. A model no presentation brings to the screen is reported, never left as a silent empty stage.
+    LaunchedEffect(m, paint) {
+        val pt = paint ?: return@LaunchedEffect
+        var p = present
+        while (true) {
+            kotlinx.coroutines.delay(450)
+            val w = web ?: return@LaunchedEffect
+            var s = screenPct(w)
+            if (ViewerHealth.lost(pt.pct, s)) { kotlinx.coroutines.delay(700); s = screenPct(w) }
+            screen = s; CadDiag.screen(m.id, s, p.js)
+            val n = ViewerHealth.next(p, pt.pct, s)
+            if (n == null) {
+                if (ViewerHealth.lost(pt.pct, s)) {
+                    val msg = "the model is rendered (${pt.pct}% of the ${pt.w}x${pt.h} canvas) but nothing of it reaches the screen, through any presentation"
+                    CadDiag.failed(m.id, msg); state = ViewState.Failed(msg)
+                }
+                break
+            }
+            p = n; present = n
+            w.evaluateJavascript("window.cadPresent&&window.cadPresent('${n.js}')", null)
+        }
+    }
+    // #1658 the last presentation: the app pulls each new frame of the page (a JPEG of the WebGL framebuffer) and draws it over the WebView itself
+    LaunchedEffect(present, web) {
+        if (present != ViewerHealth.Present.HOST) { hostFrame = null; return@LaunchedEffect }
+        var last = -1
+        while (true) {
+            web?.evaluateJavascript("window.cadFrameShot&&window.cadFrameShot($last)") { v ->
+                val shot = decodeJs(v) ?: return@evaluateJavascript
+                runCatching {
+                    val bytes = android.util.Base64.decode(shot.substringAfter("base64,"), android.util.Base64.DEFAULT)
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { hostFrame = it.asImageBitmap(); last = shot.substringBefore('|').toInt() }
+                }
+            }
+            kotlinx.coroutines.delay(200)
+        }
     }
     // #1631 a viewer page that never becomes ready (its module died: three.js missing, no WebGL context) used to leave a silent spinner; say so, with the page's own error
     LaunchedEffect(m) {
@@ -142,7 +261,7 @@ internal fun ModelViewer(m: Model, dir: File) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         // #1560 no rounded clip around the WebView: the page's GL surface is drawn by the WebView's hardware functor, which a non-rectangular
         // Compose clip layer can drop (the only fleet WebGL world inside one; CG-Omniverse and Cloud Nav draw it unclipped). Rounded border only.
-        Box(Modifier.fillMaxWidth().height(300.dp).background(Color(0xFF0E1116)).border(1.dp, p.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(12.dp)).testTag("viewer")) {
+        Box(Modifier.fillMaxWidth().height(VIEWER_HEIGHT_DP.dp).background(Color(0xFF0E1116)).border(1.dp, p.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(12.dp)).testTag("viewer")) {
             if (plan is CadFormats.Plan.Show) AndroidView(
                 factory = { c ->
                     val loader = WebViewAssetLoader.Builder()
@@ -153,7 +272,7 @@ internal fun ModelViewer(m: Model, dir: File) {
                         wv.addJavascriptInterface(bridge, "CadHost")
                         wv.webViewClient = object : CloudWebClient(WebProfile.WEB_WORLD, loader) {
                             override fun onRecovered(dead: WebView, fresh: WebView?) {
-                                fresh?.addJavascriptInterface(bridge, "CadHost"); web = fresh; ready = false
+                                fresh?.addJavascriptInterface(bridge, "CadHost"); web = fresh; ready = false; present = ViewerHealth.Present.WEBGL
                             }
                         }
                         wv.loadUrl(VIEWER_URL)
@@ -162,13 +281,16 @@ internal fun ModelViewer(m: Model, dir: File) {
                 },
                 modifier = Modifier.fillMaxSize(),
             )
+            hostFrame?.let { Image(it, contentDescription = null, contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize().testTag("viewer_host_frame")) }
             val overlay = when (val s = state) {
                 ViewState.Fetching -> stringResource(R.string.viewer_fetching, m.name)
-                ViewState.Loading, ViewState.Shown -> null
+                // #1658 a visible loading state: an empty stage with no word on it read as a broken viewer
+                ViewState.Loading -> stringResource(R.string.viewer_loading, m.name)
+                ViewState.Shown -> null
                 is ViewState.Failed -> stringResource(R.string.viewer_failed, s.why)
                 is ViewState.StoreOnly -> s.reason
             }
-            if (overlay != null) Text(overlay, color = if (state is ViewState.Fetching) p.textSecondary else p.warn, fontSize = KitStoreRow.body,
+            if (overlay != null) Text(overlay, color = if (state is ViewState.Fetching || state is ViewState.Loading) p.textSecondary else p.warn, fontSize = KitStoreRow.body,
                 modifier = Modifier.align(Alignment.Center).padding(20.dp).testTag("viewer_status"))
         }
         if (plan is CadFormats.Plan.Show) ViewerControls(
@@ -178,6 +300,10 @@ internal fun ModelViewer(m: Model, dir: File) {
         Text(stringResource(R.string.viewer_model, m.name, m.format.uppercase(), m.licence), color = p.textPrimary, fontSize = KitStoreRow.body)
         if (plan is CadFormats.Plan.Show && plan.derived)
             Text(stringResource(R.string.viewer_derived, plan.format.uppercase(), m.format.uppercase()), color = p.textSecondary, fontSize = KitStoreRow.meta)
+        // #1658 the render state in words, always on the page: what was rendered, how it is presented and what the screen shows, or where it stopped
+        val name = when (state) { ViewState.Shown -> "shown"; is ViewState.Failed -> "failed"; is ViewState.StoreOnly -> "store-only"; else -> "loading" }
+        Text(ViewerHealth.line(name, stage, present, triangles, paint?.w ?: 0, paint?.h ?: 0, paint?.pct ?: -1.0, screen, paint?.gl.orEmpty(), (state as? ViewState.Failed)?.why.orEmpty()),
+            color = if (state is ViewState.Failed) p.warn else p.textSecondary, fontSize = KitStoreRow.caption, modifier = Modifier.testTag("viewer_render"))
     }
 }
 

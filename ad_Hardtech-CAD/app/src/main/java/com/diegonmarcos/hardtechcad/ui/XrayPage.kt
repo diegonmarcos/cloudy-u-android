@@ -393,7 +393,7 @@ fun CadXrayPage(dark: Boolean = true) {
             if (live.isEmpty()) Text("none yet", color = dim, fontSize = KitStoreRow.caption)
             live.forEach { r ->
                 Text("${r.id}: ${r.state}${if (r.error.isNotEmpty()) "  ERROR: " + r.error else ""}", color = if (r.error.isNotEmpty()) statusColor("FAIL") else ink, fontSize = KitStoreRow.caption, fontWeight = FontWeight.Medium)
-                Text("WebView ${r.viewW}x${r.viewH}, shown ${r.viewShown}, hardware accelerated ${r.viewHwAccel}, shown after ${r.shownMs} ms, ${r.triangles} triangles, painted ${r.paintedPct}%", color = dim, fontSize = KitStoreRow.caption)
+                Text("WebView ${r.viewW}x${r.viewH}, shown ${r.viewShown}, hardware accelerated ${r.viewHwAccel}, shown after ${r.shownMs} ms, ${r.triangles} triangles, painted ${r.paintedPct}%, on screen ${if (r.screenPct < 0) "not measured" else "${r.screenPct}%"} through ${r.present}", color = dim, fontSize = KitStoreRow.caption)
                 r.events.takeLast(12).forEach { Text(it, color = dim, fontSize = KitStoreRow.caption, fontFamily = FontFamily.Monospace) }
             }
         }

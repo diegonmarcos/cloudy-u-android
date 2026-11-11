@@ -176,6 +176,10 @@ data class LiveRec(
     val js: String = "",
     val jsAt: Long = 0,
     val beganAt: Long = 0,
+    /** #1658 the share of the viewer's rectangle on the SCREEN that is not background (PixelCopy of the window); -1 = not measured. */
+    val screenPct: Double = -1.0,
+    /** #1658 how the frame is presented: webgl, 2d or host (ViewerHealth.Present). */
+    val present: String = "webgl",
 )
 
 /** The process-wide record of the viewer sessions. Written by ui/ModelViewer.kt, read by the X-Ray App page. */
@@ -210,6 +214,8 @@ object CadDiag {
         edit(id) { it.copy(paintedPct = pct, paintedGl = gl).log("painted $pct% of ${w}x$h ($gl)") }
     @Synchronized fun failed(id: String, why: String) = edit(id) { it.copy(state = "failed", error = why).log("error: $why") }
     @Synchronized fun view(id: String, w: Int, h: Int, shown: Boolean, hw: Boolean) = edit(id) { it.copy(viewW = w, viewH = h, viewShown = shown, viewHwAccel = hw) }
+    @Synchronized fun screen(id: String, pct: Double, present: String) =
+        edit(id) { it.copy(screenPct = pct, present = present).log("on screen ${if (pct < 0) "not measured" else "$pct%"} through $present") }
     @Synchronized fun js(id: String, json: String) = edit(id) { it.copy(js = json, jsAt = clock()) }
 
     @Synchronized fun snapshot(): List<LiveRec> = recs.values.toList()
@@ -282,7 +288,9 @@ object XrayReport {
             out += if (r.error.isNotEmpty()) Stage("6 ${r.id} load and draw", "FAIL", "state ${r.state}: ${r.error}")
             else if (r.state != "shown") Stage("6 ${r.id} load and draw", "FAIL", "stuck in state '${r.state}' (${r.events.lastOrNull().orEmpty()})")
             else if (painted in 0.0..0.1) Stage("6 ${r.id} load and draw", "FAIL", "loaded ${r.triangles} triangles but the canvas painted ${painted}% (nothing visible), GL ${r.paintedGl}")
-            else Stage("6 ${r.id} load and draw", "OK", "shown in ${r.shownMs} ms, ${r.triangles} triangles" + (if (painted >= 0) ", ${painted}% of the canvas painted" else ""))
+            else if (ViewerHealth.lost(painted, r.screenPct)) Stage("6 ${r.id} load and draw", "FAIL", "the canvas painted ${painted}% but the screen shows ${r.screenPct}% of it through ${r.present}: the WebView does not present the frame")
+            else Stage("6 ${r.id} load and draw", "OK", "shown in ${r.shownMs} ms, ${r.triangles} triangles" + (if (painted >= 0) ", ${painted}% of the canvas painted" else "") +
+                (if (r.screenPct >= 0) ", ${r.screenPct}% on the screen through ${r.present}" else ""))
             if (r.viewW == 0 || r.viewH == 0) out += Stage("6 ${r.id} surface", "FAIL", "the WebView is ${r.viewW}x${r.viewH}: a zero-sized surface draws nothing")
             if (r.viewShown == false) out += Stage("6 ${r.id} surface", "FAIL", "the WebView is not shown (invisible or detached)")
             if (r.viewHwAccel == false) out += Stage("6 ${r.id} surface", "FAIL", "the WebView is not hardware accelerated")
@@ -341,7 +349,7 @@ object XrayReport {
         b.append("\n## Viewer sessions in this process\n\n")
         if (s.live.isEmpty()) b.append("None.\n")
         s.live.forEach { r ->
-            b.append("### ${r.id}\n\n- state ${r.state}, shown after ${r.shownMs} ms, ${r.triangles} triangles, painted ${r.paintedPct}% (${r.paintedGl})\n")
+            b.append("### ${r.id}\n\n- state ${r.state}, shown after ${r.shownMs} ms, ${r.triangles} triangles, painted ${r.paintedPct}% (${r.paintedGl}), on screen ${r.screenPct}% through ${r.present}\n")
             b.append("- WebView ${r.viewW}x${r.viewH}, shown ${r.viewShown}, hardware accelerated ${r.viewHwAccel}\n- error: ${r.error.ifEmpty { "none" }}\n")
             r.events.forEach { b.append("  - $it\n") }
         }
@@ -372,7 +380,7 @@ object XrayReport {
             s.live.forEach { r ->
                 a.put(JSONObject().put("id", r.id).put("state", r.state).put("lib", r.lib).put("format", r.format).put("url", r.url).put("shownMs", r.shownMs).put("triangles", r.triangles)
                     .put("paintedPct", r.paintedPct).put("paintedGl", r.paintedGl).put("error", r.error).put("viewW", r.viewW).put("viewH", r.viewH)
-                    .put("viewShown", r.viewShown ?: JSONObject.NULL).put("viewHwAccel", r.viewHwAccel ?: JSONObject.NULL).put("events", JSONArray(r.events)))
+                    .put("screenPct", r.screenPct).put("present", r.present).put("viewShown", r.viewShown ?: JSONObject.NULL).put("viewHwAccel", r.viewHwAccel ?: JSONObject.NULL).put("events", JSONArray(r.events)))
             }
         })
         return o.toString(2)

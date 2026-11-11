@@ -1,7 +1,8 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>html,body{margin:0;height:100%;background:#0e1116;overflow:hidden}canvas{display:block;width:100%;height:100%}
-#s{position:absolute;left:8px;bottom:6px;color:#8a93a3;font:12px sans-serif}</style>
+#stage{position:absolute;left:0;top:0;width:100%;height:100%}
+#s{position:absolute;left:8px;bottom:6px;color:#8a93a3;font:12px sans-serif;z-index:1;pointer-events:none}</style>
 <script type="importmap">{ "imports": { "three": "../space/three.module.min.js" } }</script>
 <script>
 // #1631 render diagnostics, collected BEFORE the module script runs so a failure of the module itself (a missing three.js, a WebGL context that cannot be
@@ -49,11 +50,11 @@
     var c = document.querySelector('canvas');
     var i = null; try { i = d.infoFn ? d.infoFn() : null; } catch (e) {}
     return { stage: d.stage, stageMs: d.stageMs, ageMs: now(), moduleLoaded: d.moduleLoaded, rendererCreated: d.rendererCreated, ready: d.ready, contextLost: d.contextLost, restored: d.restored,
-      frames: d.frames, firstFrameMs: d.firstFrameMs, lastFrameMs: d.lastFrameMs, lastError: d.lastError, errors: d.errors, opened: d.opened, loadMs: d.loadMs, shownMs: d.shownMs,
+      frames: d.frames, firstFrameMs: d.firstFrameMs, lastFrameMs: d.lastFrameMs, lastError: d.lastError, errors: d.errors, opened: d.opened, present: d.present || 'webgl', loadMs: d.loadMs, shownMs: d.shownMs,
       triangles: d.triangles, render: i, probe: d.probe,
       canvas: c ? { width: c.width, height: c.height, clientWidth: c.clientWidth, clientHeight: c.clientHeight } : null,
       window: { innerWidth: innerWidth, innerHeight: innerHeight, dpr: devicePixelRatio, visibility: document.visibilityState }, ua: navigator.userAgent };
   };
 })();
 </script>
-</head><body><div id="s"></div><script type="module" src="viewer.js" onerror="__cad.err('viewer.js (or a module it imports) failed to load'); __cad.stageTo('module load failed')"></script></body></html>
+</head><body><div id="stage"></div><div id="s"></div><script type="module" src="viewer.js" onerror="__cad.err('viewer.js (or a module it imports) failed to load'); __cad.stageTo('module load failed')"></script></body></html>
