@@ -44,7 +44,7 @@ class RepoLightStatsTest {
         assertEquals("ahead", order(RepoColumn.UNPUSHED, false).first())
         assertEquals("ahead", order(RepoColumn.AHEAD_BEHIND, false).first())
         assertEquals("det", order(RepoColumn.DETACHED, false).first())
-        assertEquals("none", order(RepoColumn.CLONED, true).first().let { "none" })
+        assertEquals("none", order(RepoColumn.CLONED, true).first())
         assertEquals(listOf("ahead", "clean", "dirty"), order(RepoColumn.CURRENT_BRANCH, true).take(3).sorted())
         for (c in RepoColumn.entries) assertEquals(5, order(c, true).size)
         assertEquals("none", order(RepoColumn.UNPUSHED, true).last())
