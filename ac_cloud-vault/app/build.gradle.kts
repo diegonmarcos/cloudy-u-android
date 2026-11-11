@@ -287,6 +287,10 @@ dependencies {
     implementation(project(":libs:bottomnav"))
     // #1352 Configs ▸ General / ▸ About under the Settings rows (FleetConfigsButtons, libs:ui-nav-bars)
     implementation(project(":libs:ui-nav-bars"))
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation(project(":libs:fleetconfigs-agents"))
+    implementation(project(":libs:fleetconfigs-logcat"))
+    implementation(project(":libs:fleetconfigs-xray"))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

@@ -120,7 +120,7 @@
         "libs:decisions",
         "libs:text-tools",
         "tools-core",
-        "libs:ui-nav-bars",
+        "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray",
         "libs:theme-background",
         "libs:ui-kit"
       ]
@@ -178,6 +178,18 @@
     "libs:text-tools": {
       "_doc": "The ITextTools binder (a `contract` lib): Settings asks the fleet Account, key-free, through aiRoutingSnapshot whether it answers and whether it holds an OpenRouter key (key_present, key_hint). The key itself is never read here (decisions-use guard D5); every call is paid with the token pasted in Settings.",
       "dir": "../ab_cloud-libs-shared/libs/text-tools",
+      "type": "library"
+    },
+    "libs:fleetconfigs-agents": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents",
+      "type": "library"
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library"
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
       "type": "library"
     },
     "libs:ui-nav-bars": {

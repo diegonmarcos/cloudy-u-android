@@ -169,6 +169,18 @@
         "libs:shell-client"
       ]
     },
+    "libs:fleetconfigs-agents": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents",
+      "type": "library"
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library"
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
+      "type": "library"
+    },
     "libs:ui-nav-bars": {
       "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars",
       "type": "library",

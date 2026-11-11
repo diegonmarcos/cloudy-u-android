@@ -54,6 +54,12 @@ project(":libs:ui-icons").projectDir = file("../ab_cloud-libs-shared/libs/ui-ico
 // #1352 Configs ▸ General / ▸ About (libs:ui-nav-bars, opened from More settings); its `api` deps theme-background and perms.
 include(":libs:ui-nav-bars")
 project(":libs:ui-nav-bars").projectDir = file("../ab_cloud-libs-shared/libs/ui-nav-bars")
+include(":libs:fleetconfigs-agents")
+project(":libs:fleetconfigs-agents").projectDir = file("../ab_cloud-libs-shared/libs/fleetconfigs-agents")
+include(":libs:fleetconfigs-logcat")
+project(":libs:fleetconfigs-logcat").projectDir = file("../ab_cloud-libs-shared/libs/fleetconfigs-logcat")
+include(":libs:fleetconfigs-xray")
+project(":libs:fleetconfigs-xray").projectDir = file("../ab_cloud-libs-shared/libs/fleetconfigs-xray")
 include(":libs:perms")
 project(":libs:perms").projectDir = file("../ab_cloud-libs-shared/libs/perms")
 include(":libs:fleet-data-client")

@@ -115,7 +115,7 @@
         "libs:core",
         "libs:bottomnav",
         "libs:ui-icons",
-        "libs:ui-nav-bars",
+        "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray",
         "libs:theme-background",
         "libs:model-catalogue",
         "libs:ai",
@@ -161,6 +161,18 @@
     "libs:model-catalogue": {
       "_doc": "libs:ai's `api` dependency: the shared agent descriptor (assets/agents/agents.json) its Agent picker lists, and the model catalogue. Listed so settings.gradle resolves the path.",
       "dir": "../ab_cloud-libs-shared/libs/model-catalogue",
+      "type": "library"
+    },
+    "libs:fleetconfigs-agents": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents",
+      "type": "library"
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library"
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
       "type": "library"
     },
     "libs:ui-nav-bars": {

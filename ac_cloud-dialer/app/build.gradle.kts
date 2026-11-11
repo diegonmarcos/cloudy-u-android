@@ -208,6 +208,10 @@ dependencies {
     implementation(project(":libs:bottomnav"))
     // #1164 the shared navigation: first row (Profile -> Cloud Account), second row, bottom nav, page background.
     implementation(project(":libs:ui-nav-bars"))
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation(project(":libs:fleetconfigs-agents"))
+    implementation(project(":libs:fleetconfigs-logcat"))
+    implementation(project(":libs:fleetconfigs-xray"))
     implementation(project(":libs:theme-background"))
     implementation(platform("androidx.compose:compose-bom:2025.11.01"))
     implementation("androidx.compose.ui:ui")

@@ -256,6 +256,10 @@ dependencies {
     implementation project(':libs:ui-kit')   // CloudKitTheme + KitPalette: Ui.kt's theme
     // #1352 Configs ▸ General / ▸ About (libs:ui-nav-bars; brings libs:perms for every settings screen)
     implementation project(':libs:ui-nav-bars')
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'

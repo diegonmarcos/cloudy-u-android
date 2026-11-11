@@ -57,6 +57,12 @@ project(":libs:ui-icons").projectDir = file("../ab_cloud-libs-shared/libs/ui-ico
 // #1164 the shared navigation: first row (Profile -> Cloud Account), second row, bottom nav, page background.
 include(":libs:ui-nav-bars")
 project(":libs:ui-nav-bars").projectDir = file("../ab_cloud-libs-shared/libs/ui-nav-bars")
+include(":libs:fleetconfigs-agents")
+project(":libs:fleetconfigs-agents").projectDir = file("../ab_cloud-libs-shared/libs/fleetconfigs-agents")
+include(":libs:fleetconfigs-logcat")
+project(":libs:fleetconfigs-logcat").projectDir = file("../ab_cloud-libs-shared/libs/fleetconfigs-logcat")
+include(":libs:fleetconfigs-xray")
+project(":libs:fleetconfigs-xray").projectDir = file("../ab_cloud-libs-shared/libs/fleetconfigs-xray")
 include(":libs:theme-background")
 project(":libs:theme-background").projectDir = file("../ab_cloud-libs-shared/libs/theme-background")
 // #1360 libs:ui-nav-bars draws Configs > General > Perms with libs:perms (api dependency).

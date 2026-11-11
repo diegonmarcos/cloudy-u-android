@@ -249,6 +249,10 @@ dependencies {
     implementation project(':libs:bottomnav')
     // The shared bars (#1154, #1157): first row, second row, bottom nav, page gradient; icons from the catalog (#1160).
     implementation project(':libs:ui-nav-bars')
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
     // #1406 Configs ▸ Permissions (AppPermsSection) and MainActivity as the PermsHost.
     implementation project(':libs:perms')

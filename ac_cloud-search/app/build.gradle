@@ -198,6 +198,10 @@ dependencies {
     // are the fleet's: libs:bottomnav (BottomNavIsland, PageTabs), declared by build.json::ui.
     implementation project(':libs:bottomnav')
     implementation project(':libs:ui-nav-bars')
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
     // The fleet Account's OpenRouter token, read over the ITextTools binder (a contract lib).
     implementation project(':libs:text-tools')

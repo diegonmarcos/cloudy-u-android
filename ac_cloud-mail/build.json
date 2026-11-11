@@ -217,6 +217,18 @@
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE from ab_cloud-libs-shared/libs/.",
       "dir": "../ab_cloud-libs-shared/libs/theme-background"
     },
+    "libs:fleetconfigs-agents": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents",
+      "type": "library"
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library"
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
+      "type": "library"
+    },
     "libs:ui-nav-bars": {
       "type": "library",
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE from ab_cloud-libs-shared/libs/.",

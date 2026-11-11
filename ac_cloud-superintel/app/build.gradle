@@ -145,6 +145,10 @@ dependencies {
     // Profile at the top right, the second row with icons, the bottom nav, the page gradient (#1154).
     implementation project(':libs:bottomnav')
     implementation project(':libs:ui-nav-bars')
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
     // The fleet's AI chat: the page, sessions drawer, Markdown and streaming are the lib's.
     implementation project(':libs:ai')

@@ -172,6 +172,10 @@ dependencies {
     // The nav icon catalog (name to ImageVector) every nav glyph is drawn from (#1160); libs:bottomnav depends on it too.
     implementation project(':libs:ui-icons')
     implementation project(':libs:ui-nav-bars')
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
     // The fleet's tokens and kit: CloudKitTheme, KitPalette, KitCard, KitSettingsRow, KitButton (libs:ui-kit).
     implementation project(':libs:ui-kit')

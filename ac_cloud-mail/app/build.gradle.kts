@@ -427,6 +427,10 @@ dependencies {
     // #1154 the shared navigation + theme design (one lib per bar and the page background); Mail adopts them stage by stage.
     implementation(project(":libs:theme-background"))
     implementation(project(":libs:ui-nav-bars"))
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation(project(":libs:fleetconfigs-agents"))
+    implementation(project(":libs:fleetconfigs-logcat"))
+    implementation(project(":libs:fleetconfigs-xray"))
 
     // #825 DataBackendClient: Assigned binds the fleet's cal engine (its task store) instead of
     // compiling one, exactly as Cloud Tasks does.

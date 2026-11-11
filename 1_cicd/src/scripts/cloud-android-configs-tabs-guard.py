@@ -64,6 +64,21 @@ def app_sources(root, app):
     return "\n".join(out)
 
 
+def gradle_libs(root, app):
+    """Libs an app links in its own gradle/settings text (an app whose build.json carries no module map): {"libs:x"}."""
+    out = set()
+    for dp, dn, fn in os.walk(os.path.join(root, app)):
+        dn[:] = [x for x in dn if x not in ("build", "node_modules", "src", "test", "androidTest")]
+        for f in fn:
+            if f.startswith(("build", "settings")) and f.endswith((".gradle", ".gradle.kts")):
+                try:
+                    t = open(os.path.join(dp, f), encoding="utf-8", errors="replace").read()
+                except OSError:
+                    continue
+                out.update("libs:" + m for m in re.findall(r"libs:(fleetconfigs-[a-z]+)", t))
+    return out
+
+
 def main(argv):
     root = os.path.abspath(argv[0] if argv else ".")
     rule_all = json.load(open(os.path.join(root, "1_cicd/src/data/configs-pages.json")))
@@ -184,7 +199,7 @@ def main(argv):
         for app, d in apps.items():
             if app in exempt or app in unreached:
                 continue
-            mods = set((d.get("modules") or {}).keys())
+            mods = set((d.get("modules") or {}).keys()) | gradle_libs(root, app)
             missing = [l for l in tail["libs"] if l not in mods]
             if missing and app not in tpend:
                 bad.append("T7 %s: Configs lacks the fleet-default tail (link %s) or name it in tabs.tail.pending" % (app, ", ".join(missing)))

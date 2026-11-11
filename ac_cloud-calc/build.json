@@ -111,7 +111,7 @@
         "libs:core",
         "libs:bottomnav",
         "libs:ui-icons",
-        "libs:ui-nav-bars",
+        "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray",
         "libs:theme-background",
         "libs:perms",
         "clock",
@@ -245,6 +245,18 @@
       "dir": "../ab_cloud-libs-shared/libs/ui-icons",
       "type": "library",
       "_doc": "#1160 the nav icon catalog (name to ImageVector, tinted or brand): every nav glyph of every app, shared BY REFERENCE; libs:bottomnav depends on it."
+    },
+    "libs:fleetconfigs-agents": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents",
+      "type": "library"
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library"
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
+      "type": "library"
     },
     "libs:ui-nav-bars": {
       "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars",

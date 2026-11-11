@@ -431,6 +431,10 @@ dependencies {
     implementation(project(":libs:ui-icons"))
     implementation(project(":libs:theme-background"))
     implementation(project(":libs:ui-nav-bars"))
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation(project(":libs:fleetconfigs-agents"))
+    implementation(project(":libs:fleetconfigs-logcat"))
+    implementation(project(":libs:fleetconfigs-xray"))
     implementation(project(":libs:fleet-data-client"))   // #1547 the release notes are read at RUNTIME from Cloud Store, never baked into the APK
     implementation(project(":libs:perms"))   // #1515 every grant opens its Configs > Perms row (PermsLink)
     coreLibraryDesugaring(libs.desugar.jdk.libs)

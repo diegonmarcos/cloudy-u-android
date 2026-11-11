@@ -113,6 +113,18 @@
       "_doc": "2026-10-15 owner decision: all apps must be Compose. Shared BY REFERENCE: the fleet's Compose kit (CloudKitTheme + KitPalette + KitComposeFragment) that libs:maps' pages, and then the app's own, are built on. libs:maps `api`s it.",
       "dir": "../ab_cloud-libs-shared/libs/ui-kit"
     },
+    "libs:fleetconfigs-agents": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents",
+      "type": "library"
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library"
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
+      "type": "library"
+    },
     "libs:ui-nav-bars": {
       "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars",
       "type": "library",

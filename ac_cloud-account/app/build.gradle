@@ -250,6 +250,10 @@ dependencies {
     // #868 the bottom island + NavDecl: the four account tabs are ui.sections.
     implementation project(':libs:bottomnav')
     implementation project(':libs:ui-nav-bars')
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
     implementation project(':libs:shell-client')   // #1512 the SuperApp's shell broker (thin client; installs over its stdin door)
     implementation project(':libs:updater')

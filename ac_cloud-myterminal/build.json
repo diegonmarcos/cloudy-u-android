@@ -62,7 +62,7 @@
       "depends_on": [
         "libs:web-core",
         "libs:core",
-        "libs:ui-kit", "libs:ui-nav-bars"
+        "libs:ui-kit", "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray"
       ],
       "comment": "Thin switcher + IPC broker. Original code (no upstream). Declares the signature permission, the unified IdeProvider (reads), the IIdeService AIDL (actions + push callbacks), the launcher switcher UI, and owns the shared workspace root (data/ide-endpoints.json::workspace.root_path). HUB-SHARING: the broker + updater are structurally identical to cloud-comms-hub \u2014 once both exist, extract them into a shared gradle module (see forks/../README) rather than maintaining two copies. cloud-comms scaffolded first, so cloud-myterminal consumes the extracted core; until that extraction lands, this hub mirrors the comms hub deliberately."
     },
@@ -99,6 +99,9 @@
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
     },
+    "libs:fleetconfigs-agents": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents", "type": "library"},
+    "libs:fleetconfigs-logcat": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat", "type": "library"},
+    "libs:fleetconfigs-xray": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray", "type": "library"},
     "libs:ui-nav-bars": {"dir": "../ab_cloud-libs-shared/libs/ui-nav-bars", "type": "library", "_doc": "#1352 Configs ▸ General and ▸ About (fleetconfigs): FleetConfigsActivity, started from this app's own menu. Shared BY REFERENCE."},
     "libs:bottomnav": {"dir": "../ab_cloud-libs-shared/libs/bottomnav", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency; listed so settings.gradle resolves the path."},
     "libs:ui-icons": {"dir": "../ab_cloud-libs-shared/libs/ui-icons", "type": "library", "_doc": "libs:bottomnav's dependency; listed so settings.gradle resolves the path."},

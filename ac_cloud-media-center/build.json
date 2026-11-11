@@ -92,6 +92,9 @@
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
     },
+    "libs:fleetconfigs-agents": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents", "type": "library"},
+    "libs:fleetconfigs-logcat": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat", "type": "library"},
+    "libs:fleetconfigs-xray": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray", "type": "library"},
     "libs:ui-nav-bars": {"dir": "../ab_cloud-libs-shared/libs/ui-nav-bars", "type": "library", "_doc": "#1352 Configs ▸ General and ▸ About (fleetconfigs): FleetConfigsActivity, started from this app's own menu. Shared BY REFERENCE."},
     "libs:bottomnav": {"dir": "../ab_cloud-libs-shared/libs/bottomnav", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency; listed so settings.gradle resolves the path."},
     "libs:ui-icons": {"dir": "../ab_cloud-libs-shared/libs/ui-icons", "type": "library", "_doc": "libs:bottomnav's dependency; listed so settings.gradle resolves the path."},

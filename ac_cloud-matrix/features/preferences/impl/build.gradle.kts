@@ -56,6 +56,10 @@ dependencies {
     implementation(projects.libraries.designsystem)
     // #1352 Cloud Matrix: Configs ▸ General / ▸ About, the fleet's shared pages (libs:ui-nav-bars)
     implementation(project(":libs:ui-nav-bars"))
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation(project(":libs:fleetconfigs-agents"))
+    implementation(project(":libs:fleetconfigs-logcat"))
+    implementation(project(":libs:fleetconfigs-xray"))
     implementation(projects.libraries.featureflag.api)
     implementation(projects.libraries.featureflag.ui)
     implementation(projects.libraries.network)

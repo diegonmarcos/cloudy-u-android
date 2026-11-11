@@ -51,7 +51,7 @@
         "libs:updater",
         "libs:bottomnav",
         "libs:ui-icons",
-        "libs:ui-kit", "libs:ui-nav-bars"
+        "libs:ui-kit", "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray"
       ]
     },
     "libs:core": {
@@ -101,6 +101,9 @@
     "libs:analytics": {
       "dir": "../ab_cloud-libs-shared/libs/analytics"
     },
+    "libs:fleetconfigs-agents": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents", "type": "library"},
+    "libs:fleetconfigs-logcat": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat", "type": "library"},
+    "libs:fleetconfigs-xray": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray", "type": "library"},
     "libs:ui-nav-bars": {"dir": "../ab_cloud-libs-shared/libs/ui-nav-bars", "type": "library", "_doc": "#1352 Configs ▸ General and ▸ About (fleetconfigs): FleetConfigsActivity, started from this app's own menu. Shared BY REFERENCE."},
     "libs:theme-background": {"dir": "../ab_cloud-libs-shared/libs/theme-background", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency (the page background); listed so settings.gradle resolves the path."},
     "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},

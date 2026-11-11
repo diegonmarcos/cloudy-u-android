@@ -76,7 +76,7 @@ project(":libs").projectDir = file("../ab_cloud-libs-shared/libs")
 // other shared lib. libs:ui-nav-bars declares `api project(":libs:bottomnav")`, `:libs:ui-icons` and `:libs:theme-background`, so
 // each of these includes is required, not optional.
 // perms (#1360): libs:ui-nav-bars draws Configs > General > Perms with it (`api project(":libs:perms")`).
-for (name in listOf("bottomnav", "ui-icons", "theme-background", "ui-nav-bars", "perms", "fleet-data-client")) {
+for (name in listOf("bottomnav", "ui-icons", "theme-background", "ui-nav-bars", "perms", "fleet-data-client", "fleetconfigs-agents", "fleetconfigs-logcat", "fleetconfigs-xray")) {
     include(":libs:$name")
     project(":libs:$name").projectDir = file("../ab_cloud-libs-shared/libs/$name")
 }

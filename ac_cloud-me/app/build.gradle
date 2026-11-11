@@ -337,6 +337,10 @@ dependencies {
     // libs:cal is NOT linked: Agenda binds Cloud-Lib-Cal.apk (CalEngineClient, build.json::engines.cal).
     implementation project(':libs:bottomnav') // #531 the fleet's one bottom nav (Compose island)
     implementation project(':libs:ui-nav-bars')
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:account-ui')   // #1439 the profile page (Personal Info + Configs), shared with Cloud Account
     implementation project(':libs:theme-background')
     implementation project(':libs:fleet-endpoints-android')   // CloudMeApiData: cloud-me-api first, baked assets as the fallback
