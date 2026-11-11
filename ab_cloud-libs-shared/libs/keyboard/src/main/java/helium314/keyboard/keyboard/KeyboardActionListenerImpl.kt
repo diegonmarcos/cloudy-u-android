@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.keyboard
 
+import android.os.SystemClock
 import android.text.InputType
 import android.util.SparseArray
 import android.view.KeyEvent
@@ -438,10 +439,30 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
     /** keeps track of the state of meta keys by (HeliBoard) KeyCodes */
     private val metaPressStates = SparseArray<MetaPressState>(4)
 
+    /** uptime of the last fn press, 0 when none pending (#1606 double-click detection) */
+    private var lastFnPressTime = 0L
+
     // todo: lock and non-lock versions interact badly: when any of them is released, the meta state is removed
     //  this is not wanted, especially because the state of the other key is not affected (still looks pressed)
     private fun metaOnPressKey(primaryCode: Int) {
         val metaCode = primaryCode.toMetaState() ?: return
+        if (primaryCode == KeyCode.FN) {
+            // #1606 fn key: double-click holds (locks) fn, a tap while locked disables it; a single tap stays one-shot
+            val now = SystemClock.uptimeMillis()
+            if (metaPressStates[primaryCode] == MetaPressState.LOCKED) {
+                metaPressStates[primaryCode] = MetaPressState.UNSET_ON_RELEASE
+                lastFnPressTime = 0L
+                return
+            }
+            val doubleTap = isFnDoubleTap(lastFnPressTime, now)
+            lastFnPressTime = if (doubleTap) 0L else now
+            if (doubleTap) {
+                metaPressStates[primaryCode] = MetaPressState.LOCKED
+                keyboardSwitcher.mainKeyboardView?.updateLockState(primaryCode, true)
+                metaState = metaState or metaCode
+                return
+            }
+        }
         if (primaryCode.isMetaLock()) {
             // if unset -> lock, otherwise set to UNSET_ON_RELEASE so it's unset on release
             if (metaPressStates[primaryCode] != MetaPressState.LOCKED) {
@@ -517,6 +538,12 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
     }
 
     companion object {
+        /** #1606: max gap between two fn presses to count as a double-click */
+        const val FN_DOUBLE_TAP_MS = 400L
+
+        @JvmStatic
+        fun isFnDoubleTap(last: Long, now: Long) = last > 0L && now - last <= FN_DOUBLE_TAP_MS
+
         private enum class MetaPressState {
             UNSET, // default state, not active
             SET, // enabled without onPressKey (e.g. in popup)

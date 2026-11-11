@@ -46,6 +46,9 @@ object LayoutParser {
             CornerSwipe.refresh(context)
             if (CornerSwipe.enabled && params.mId.isAlphabetKeyboard) CornerSwipe.LAYOUT
             else params.mId.mSubtype.mainLayoutName
+        } else if (layoutType == LayoutType.FUNCTIONAL && CornerSwipe.refreshed(context) && params.mId.isAlphabetKeyboard) {
+            // #1606 Dev Keyboard: functional keys plus an fn key (double-click holds fn, tap disables it)
+            CornerSwipe.FUNCTIONAL_LAYOUT
         } else params.mId.mSubtype.layouts[layoutType] ?: Settings.readDefaultLayoutName(layoutType, context.prefs())
         return layoutCache.getOrPut(layoutType.name + layoutName) {
             createCacheLambda(layoutType, layoutName, context)

@@ -21,6 +21,12 @@ object CornerSwipe {
     const val DEFAULT = false
     @JvmField var enabled = DEFAULT
 
+    /** #1606: functional-keys layout with an fn key, used while Dev Keyboard is on */
+    const val FUNCTIONAL_LAYOUT = "functional_keys_dev"
+
+    @JvmStatic
+    fun refreshed(context: Context): Boolean { refresh(context); return enabled }
+
     @JvmStatic
     fun refresh(context: Context) { enabled = context.prefs().getBoolean(PREF, DEFAULT) }
 
