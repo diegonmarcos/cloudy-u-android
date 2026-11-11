@@ -59,10 +59,14 @@ class RssViewModel(application: Application) : AndroidViewModel(application) {
     /** Everything each subscription currently shows: a loaded feed, or the honest reason not. */
     val feeds: StateFlow<List<RssFeedUi>> = _feeds.asStateFlow()
 
-    /** Start (or re-start) loading every subscribed feed, off the main thread, in sentinel order. */
+    /** Start (or re-start) loading every subscribed feed, off the main thread, in sentinel order.
+     *  The default c3-notify account's channels are SYNCED from the fleet first (not baked), then
+     *  unioned with the user's accounts and the legacy subscriptions, so the Alerts view shows every
+     *  channel the fleet publishes beside anything the user added. */
     fun refresh() {
         viewModelScope.launch {
-            val urls = subscriptions.value.toList().sorted()
+            val defaults = DefaultAlertRssAccount.syncChannels().map { it.url }
+            val urls = (defaults.toSet() + subscriptions.value).toList().sorted()
             if (urls.isEmpty()) {
                 _feeds.value = emptyList()
                 return@launch

@@ -1,58 +1,102 @@
 package app.sterna.ui.rss
 
-import android.util.Base64
-import app.sterna.BuildConfig
 import app.sterna.core.data.rss.AlertRssAccount
 import app.sterna.core.data.rss.AlertRssChannel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
- * The default Alert (RSS) Account (#1624): the c3-notify RSS system, declared in
- * build.json::alerts_rss and baked as [BuildConfig.ALERTS_RSS_B64]. It ships with the app — present
- * out of the box, not stored, not removable — and its channels MIRROR the fleet's c3 notify registry
- * (aa_cloud-superapp/build.json::ui.ntfy). The per-channel feed is the rss-gateway's anonymous Atom
- * route, so every device can read it without the mesh.
+ * The default Alert (RSS) Account (#1624): the c3-notify RSS system. It ships with the app — present
+ * out of the box, not removable — but, unlike mail accounts, its channels are NOT baked into the APK
+ * (the runtime-data guard forbids new baked JSON / BuildConfig data: an APK is an engine). Instead the
+ * channel list is SYNCED from the fleet at runtime, the same shape as Cloud-chat's fleet-provided
+ * account: the account is declared in code (its endpoints), its channels come from the server.
  *
- * A channel marked `anon:false` in the declaration is listed for completeness in the registry but is
- * NOT reachable by the anonymous route (the gateway answers 404), so it is left out of the feed set
- * the Alerts reader fetches. Adding or renaming a channel is a data edit in build.json, never a code
- * change (the same rule the fleet's NtfyCatalog follows).
+ * The source is the rss-gateway's anonymous channel registry ([CHANNELS_URL]); each channel is read
+ * through its anonymous per-channel Atom route ([CHANNEL_TEMPLATE]), reachable from any device without
+ * the mesh. When the registry cannot be reached, the account degrades to the single "all" fan-out feed
+ * ([ALL_FEED], every channel merged) so the Alerts view is never empty — never a silent stub.
  */
 object DefaultAlertRssAccount {
 
-    @Volatile private var cached: AlertRssAccount? = null
+    const val ID = "c3-notify"
+    const val NAME = "Fleet Alerts (c3)"
 
-    /** The default account, parsed once from the baked declaration. Degrades to an empty account
-     *  (same id and name) rather than throwing, so a malformed bake never crashes the Alerts view. */
-    fun account(): AlertRssAccount {
-        cached?.let { return it }
-        val built = parse().also { cached = it }
-        return built
+    private const val BASE = "https://rss.diegonmarcos.com"
+    private const val CHANNELS_URL = "$BASE/feed/channels.json"
+    private const val CHANNEL_TEMPLATE = "$BASE/feed/c/{topic}.atom"
+    /** The fan-out of every channel — the honest fallback when the registry cannot be listed. */
+    private const val ALL_FEED = "$BASE/feed/c/all.atom"
+
+    @Volatile private var cached: List<AlertRssChannel>? = null
+
+    /** The default account with its channels as last synced (empty until [syncChannels] has run). */
+    fun account(): AlertRssAccount =
+        AlertRssAccount(id = ID, name = NAME, channels = cached ?: emptyList(), builtIn = true)
+
+    /** The feed addresses the default account contributes, as last synced; the "all" feed before a
+     *  first successful sync so the Alerts view has the fleet's alerts out of the box. */
+    fun feedUrls(): List<String> =
+        (cached?.map { it.url }).orEmpty().ifEmpty { listOf(ALL_FEED) }
+
+    /**
+     * Fetch the channel registry and build one feed per channel, off the main thread. Falls back to
+     * the "all" fan-out feed when the registry is unreachable or lists nothing. The result is cached
+     * so [account] and [feedUrls] can answer synchronously afterwards.
+     */
+    suspend fun syncChannels(): List<AlertRssChannel> = withContext(Dispatchers.IO) {
+        val topics = runCatching { topicsFrom(fetch(CHANNELS_URL)) }.getOrDefault(emptyList())
+        val channels = topics.map { AlertRssChannel(it, CHANNEL_TEMPLATE.replace("{topic}", it)) }
+            .ifEmpty { listOf(AlertRssChannel("Everything", ALL_FEED)) }
+        cached = channels
+        channels
     }
 
-    /** Just the feed addresses the default account contributes to the Alerts reader. */
-    fun feedUrls(): List<String> = account().channels.map { it.url }
-
-    private fun parse(): AlertRssAccount {
-        val root = runCatching {
-            JSONObject(String(Base64.decode(BuildConfig.ALERTS_RSS_B64, Base64.NO_WRAP)))
-        }.getOrDefault(JSONObject())
-        val acc = root.optJSONObject("default_account") ?: JSONObject()
-        val id = acc.optString("id").ifBlank { "c3-notify" }
-        val name = acc.optString("name").ifBlank { "Fleet Alerts" }
-        val template = acc.optString("channel_feed_template")
-        val arr = acc.optJSONArray("channels")
-        val channels = ArrayList<AlertRssChannel>()
-        if (arr != null && template.contains("{topic}")) {
-            for (i in 0 until arr.length()) {
-                val c = arr.optJSONObject(i) ?: continue
-                if (!c.optBoolean("anon", true)) continue
-                val topic = c.optString("topic").trim()
-                if (topic.isEmpty()) continue
-                val label = c.optString("label").ifBlank { topic }
-                channels.add(AlertRssChannel(label, template.replace("{topic}", topic)))
+    /** Pull channel topics out of the registry body, defensively: the gateway may answer a bare
+     *  array of topic strings, or an object keyed "topics"/"channels" over strings or objects that
+     *  carry the topic under "topic"/"id"/"name". Anything else yields nothing (and the fallback). */
+    private fun topicsFrom(body: String): List<String> {
+        val trimmed = body.trim()
+        val arr: JSONArray = when {
+            trimmed.startsWith("[") -> JSONArray(trimmed)
+            trimmed.startsWith("{") -> {
+                val o = JSONObject(trimmed)
+                o.optJSONArray("topics") ?: o.optJSONArray("channels") ?: JSONArray()
             }
+            else -> JSONArray()
         }
-        return AlertRssAccount(id = id, name = name, channels = channels, builtIn = true)
+        val out = ArrayList<String>(arr.length())
+        for (i in 0 until arr.length()) {
+            val topic = when (val item = arr.opt(i)) {
+                is String -> item
+                is JSONObject -> item.optString("topic")
+                    .ifBlank { item.optString("id") }
+                    .ifBlank { item.optString("name") }
+                else -> ""
+            }.trim()
+            if (topic.isNotEmpty()) out.add(topic)
+        }
+        return out.distinct()
+    }
+
+    private fun fetch(url: String): String {
+        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 8_000
+            readTimeout = 15_000
+            instanceFollowRedirects = true
+            setRequestProperty("Accept", "application/json")
+        }
+        try {
+            val code = conn.responseCode
+            if (code !in 200..299) throw RuntimeException("HTTP $code")
+            return conn.inputStream.bufferedReader().use { it.readText() }
+        } finally {
+            conn.disconnect()
+        }
     }
 }

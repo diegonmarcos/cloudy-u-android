@@ -49,6 +49,7 @@ fun AlertAccountsScreen(
     viewModel: AlertAccountsViewModel = viewModel(),
 ) {
     val userAccounts by viewModel.userAccounts.collectAsStateWithLifecycle()
+    val defaultChannelCount by viewModel.defaultChannelCount.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val invalidUrlMessage = stringResource(R.string.rss_invalid_url)
     val addedMessage = stringResource(R.string.rss_subscribed)
@@ -107,8 +108,8 @@ fun AlertAccountsScreen(
             // The default account — the c3-notify system, built in and not removable.
             SectionLabel(stringResource(R.string.alert_accounts_default_section))
             DefaultAccountRow(
-                name = viewModel.defaultAccount.name,
-                channelCount = viewModel.defaultAccount.channels.size,
+                name = viewModel.defaultAccountName,
+                channelCount = defaultChannelCount,
             )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -151,9 +152,14 @@ private fun DefaultAccountRow(name: String, channelCount: Int) {
         Spacer(Modifier.width(MailMetrics.s12))
         Column(Modifier.weight(1f)) {
             Text(name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
+            val subtitle = if (channelCount > 0) {
                 stringResource(R.string.alert_accounts_builtin) + " · " +
-                    stringResource(R.string.alert_accounts_channels_count, channelCount),
+                    stringResource(R.string.alert_accounts_channels_count, channelCount)
+            } else {
+                stringResource(R.string.alert_accounts_builtin)
+            }
+            Text(
+                subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
