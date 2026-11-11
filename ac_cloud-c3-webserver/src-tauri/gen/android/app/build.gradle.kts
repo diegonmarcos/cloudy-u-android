@@ -139,6 +139,10 @@ dependencies {
     implementation(project(":libs:core"))
     // #1352 Configs ▸ General / ▸ About, reached through the launcher shortcuts the lib publishes (no native menu here)
     implementation(project(":libs:ui-nav-bars"))
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip (the web Configs strip opens them natively).
+    implementation(project(":libs:fleetconfigs-agents"))
+    implementation(project(":libs:fleetconfigs-logcat"))
+    implementation(project(":libs:fleetconfigs-xray"))
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")

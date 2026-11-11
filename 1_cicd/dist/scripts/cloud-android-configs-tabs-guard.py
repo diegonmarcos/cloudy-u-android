@@ -1,4 +1,3 @@
-# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-configs-tabs-guard.py ───
 #!/usr/bin/env python3
 """
 cloud-android-configs-tabs-guard — every app's Configs starts General | Perms | About on the top nav (#1439).
@@ -23,7 +22,7 @@ DECLARATION  1_cicd/src/data/configs-pages.json::tabs (the required first ids, t
       reason; a pending entry for an app that links all three is stale (delete it in the commit that wires the app)
   T8  (#1630) FLEET CONFORMANCE, the anti-drift guard: EVERY app is checked and listed. An app whose Configs strip is drawn by its own host
       (it declares Configs tabs of its own, or its sources draw the shared page bodies) must pass its declared pages through
-      FleetConfigsExtensions.withTail (the one place that appends the five and draws the `|`) -- or, for Cloud Calc whose strip is its
+      FleetConfigsExtensions.withTail (the one place that appends the five and draws the `|`) -- or, for a WebView host (Cloud Media Center, Cloud C3 Webserver: Tauri, no Kotlin), a web page that draws the five after the `|` with the three native ones opening FleetConfigsActivity through the intent bridge (tail.web_hosts); or, for Cloud Calc whose strip is its
       modes, through ConfigsTail whose KINDS are the five in order and whose build.json declares all five kinds; an app on the shared
       screen gets the strip from the lib (T0 / T7). Missing one of the five (a lib not linked, a kind not declared), the five out of
       order, or no `|` (the lib's separatorBefore) is a violation, named per app; the only way out is tabs.tail.pending with a reason
@@ -209,6 +208,7 @@ def main(argv):
         host_needles = tail.get("host_tail", [])
         draw_needles = tail.get("host_draws", [])
         mode_hosts = {k: v for k, v in tail.get("mode_hosts", {}).items() if not k.startswith("_")}
+        web_hosts = {k: v for k, v in tail.get("web_hosts", {}).items() if not k.startswith("_")}
         for app, d in sorted(apps.items()):
             if app in exempt:
                 report.append((app, "exempt", "-", "EXEMPT  " + rule_all["exempt"][app][:70]))
@@ -221,7 +221,7 @@ def main(argv):
             srcs = app_sources(root, app)
             ui = d.get("ui") or {}
             own_strip = bool(own_tabs(d)) or any(isinstance(x, dict) and x.get("id") in ("configs", "settings", "config") and x.get("pages") for x in ui.get("sections") or [])
-            host = own_strip or any(n in srcs for n in draw_needles)
+            host = own_strip or any(n in srcs for n in draw_needles) or app in web_hosts
             lacks = ["not linked: " + ", ".join(m.split("-")[-1] for m in missing)] if missing else []
             if host and app in mode_hosts:
                 mh = mode_hosts[app]
@@ -239,9 +239,18 @@ def main(argv):
                     lacks.append("build.json ui.modes[tab=configs] declares no " + ", ".join(gone))
                 if mh["needle"] not in srcs:
                     lacks.append("the strip no longer orders its modes (%r missing)" % mh["needle"])
+            elif app in web_hosts:
+                wh = web_hosts[app]
+                try:
+                    wtext = open(os.path.join(root, wh["source"]), encoding="utf-8").read()
+                except OSError:
+                    wtext = ""
+                    lacks.append("its web Configs source %s is missing" % wh["source"])
+                lacks += ["its web Configs page does not draw %r" % n for n in wh["needles"] if wtext and n not in wtext]
+                lacks += ["%s ends %s, not the tail %s" % (w, "|".join(map(str, ids[-len(tail["ids"]):])), "|".join(tail["ids"])) for w, ids in own_tabs(d) if ids[-len(tail["ids"]):] != tail["ids"]]
             elif host and host_needles and not any(n in srcs for n in host_needles):
                 lacks.append("its own Configs strip does not end with the tail (no %s in its sources)" % " / ".join(host_needles))
-            how = "own-host strip, tail via " + ("ConfigsTail" if app in mode_hosts else "withTail") if host else "shared screen (FleetConfigsScreen)"
+            how = "own-host strip, tail via " + ("ConfigsTail" if app in mode_hosts else "native bridge (web page)" if app in web_hosts else "withTail") if host else "shared screen (FleetConfigsScreen)"
             if app in tpend and lacks:
                 how = "NOT DRAWN (pending): " + how.split(",")[0]
             if lacks and app not in tpend:

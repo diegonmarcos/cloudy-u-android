@@ -54,6 +54,7 @@
   .seg { display:flex; gap:6px; padding:6px 10px; border-bottom:1px solid var(--line); }
   .seg button { flex:1; background:var(--bg); color:var(--dim); border:1px solid var(--line); border-radius:8px; padding:7px 0; font:600 13px system-ui; }
   .seg button.on { color:var(--acc); border-color:var(--acc); }
+  .cfgseg { overflow-x:auto; scrollbar-width:none; } .cfgseg button { flex:none; padding:7px 10px; } .cfgseg .sepbar { flex:none; align-self:center; color:var(--dim); font-weight:700; }
   /* Pages: ONE list of served pages. Each row: header (dot, name, badges, Start/Stop) and four stacked detail rows. */
   .served .pg { padding:8px 10px; border-bottom:1px solid var(--line); }
   .served .pg:last-child { border-bottom:0; }
@@ -368,9 +369,14 @@ function renderPages(pg) {
     '<div class="note">Names resolve through this app\'s private DNS (udp ' + esc(pg.dns.host) + ':' + esc(pg.dns.port) + '), only inside our apps. Termux and Nix pages are served by each terminal\'s own my-webserver: if the app is not open its page cannot answer, so Start app wakes it.</div></section>' +
     renderForm(pg.form) + renderUndeclared(pg.undeclared) + '</div>';
 }
+// #1630 the fleet tail after the `|`: Agents, Perms, Logcat, X-Ray App, About. They are the shared native pages of libs:ui-nav-bars (the same
+// strip carries them), opened through the Android bridge: POST /__app__/api/configs-open {page}. The page's own tabs stay before the `|`.
+var CFG_TAIL = [['agents', 'Agents'], ['perms', 'Perms'], ['logcat', 'Logcat'], ['xray', 'X-Ray App'], ['about', 'About']];
 function renderCfgTabs(current) {
-  return '<div class="seg" role="tablist">' + [['about', 'About'], ['engines', 'Engines'], ['links', 'Links']].map(function (t) {
+  return '<div class="seg cfgseg" role="tablist">' + [['about', 'About'], ['engines', 'Engines'], ['links', 'Links']].map(function (t) {
     return '<button role="tab" data-cfg="' + t[0] + '"' + (t[0] === current ? ' class="on" aria-selected="true"' : '') + '>' + t[1] + '</button>';
+  }).join('') + '<span class="sepbar" aria-hidden="true">|</span>' + CFG_TAIL.map(function (t) {
+    return '<button role="tab" data-native="' + t[0] + '">' + t[1] + '</button>';
   }).join('') + '</div>';
 }
 function renderServing(sv, cfg) {
@@ -986,6 +992,8 @@ if (typeof module !== 'undefined') {
       post(box.getAttribute('data-post'), formBody(box)).then(function () { toast('Added'); refreshTab(); }).catch(function (e) { toast(e.message, true); });
       return;
     }
+    var nat = ev.target.closest('[data-native]');
+    if (nat) { post('/__app__/api/configs-open', { page: nat.getAttribute('data-native') }).catch(function (e) { toast(e.message, true); }); return; }
     var cfg = ev.target.closest('[data-cfg]');
     if (cfg) { cfgPage = cfg.getAttribute('data-cfg'); try { history.replaceState(null, '', '#' + cfgPage); } catch (x) {} show('configs', false); return; }
     var jump = ev.target.closest('[data-jump]'); var copy = ev.target.closest('[data-copy-about]');

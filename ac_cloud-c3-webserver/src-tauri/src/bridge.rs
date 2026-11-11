@@ -53,6 +53,8 @@ pub fn install(window: &tauri::WebviewWindow) {
                     c3_webserver::diag::set_opener(Box::new(open_in_browser));
                     // Pages > Start app: launch a terminal app whose own my-webserver serves its page.
                     c3_webserver::served::set_launcher(Box::new(launch_app));
+                    // #1630 the Configs strip's native tail (Agents, Perms, Logcat, X-Ray App, About): one tab of the shared FleetConfigsActivity.
+                    c3_webserver::served::set_configs_opener(Box::new(open_configs));
                     // #1502 the keep-alive service and the boot receiver follow the Server / Keep alive switches.
                     c3_webserver::power::set_sync_hook(Box::new(sync_keep_alive));
                     // The SSH door the keep-alive supervisor keeps up (door.rs): the signal to the nix-on-droid app.
@@ -227,6 +229,25 @@ fn launch_app(package: &str) -> Result<(), String> {
         Ok(())
     })
     .map_err(|e| if e.contains("ActivityNotFoundException") { format!("{} is not installed", package) } else { e })
+}
+
+/// #1630 the shared native Configs screen (libs:ui-nav-bars FleetConfigsActivity, not exported) at one tab: the implicit
+/// com.diegonmarcos.fleetconfigs.OPEN action addressed to THIS app's own package, the tab id in the fleet_configs_page extra.
+fn open_configs(page: &str) -> Result<(), String> {
+    let page = page.to_string();
+    with_env(|env, activity| {
+        let action = env.new_string("com.diegonmarcos.fleetconfigs.OPEN")?;
+        let intent = env.new_object("android/content/Intent", "(Ljava/lang/String;)V", &[JValue::Object(&action)])?;
+        let own = env.call_method(activity, "getPackageName", "()Ljava/lang/String;", &[])?.l()?;
+        env.call_method(&intent, "setPackage", "(Ljava/lang/String;)Landroid/content/Intent;", &[JValue::Object(&own)])?;
+        let key = env.new_string("fleet_configs_page")?;
+        let val = env.new_string(&page)?;
+        env.call_method(&intent, "putExtra", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;", &[JValue::Object(&key), JValue::Object(&val)])?;
+        let dkey = env.new_string("fleet_configs_dark")?;
+        env.call_method(&intent, "putExtra", "(Ljava/lang/String;Z)Landroid/content/Intent;", &[JValue::Object(&dkey), JValue::Bool(1)])?;
+        env.call_method(activity, "startActivity", "(Landroid/content/Intent;)V", &[JValue::Object(&intent)])?;
+        Ok(())
+    })
 }
 
 /// #1502 MainActivity.syncKeepAlive(): start the foreground service and enable the boot receiver only when Server and Keep alive

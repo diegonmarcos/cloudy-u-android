@@ -331,10 +331,13 @@
           "movies",
           "apify",
           "general",
+          "agents",
           "perms",
+          "logcat",
+          "xray",
           "about"
         ],
-        "reason": "The owner chose the media areas first, then Apify, then General | Perms | About for Cloud Media Center (#1469), mirroring Cloud News (#1470); its Configs is a web page.",
+        "reason": "The owner chose the media areas first, then Apify, then General for Cloud Media Center (#1469), mirroring Cloud News (#1470), and #1630 appends the fleet tail after a `|`: Agents | Perms | Logcat | X-Ray App | About; its Configs is a web page.",
         "source": "ac_cloud-media-center/web/assets/configs.js"
       }
     },
@@ -373,10 +376,27 @@
           "needle": "ConfigsTail.order("
         }
       },
+      "web_hosts": {
+        "_doc": "#1630 a WebView host (Tauri, no Kotlin): its Configs strip is a web page that draws the five tail tabs after a `|`; Agents, Logcat and X-Ray App (and, in Cloud C3 Webserver, Perms and About) are native pages of libs:ui-nav-bars that the page opens through FleetConfigsActivity (an intent: URI in the media center, POST /__app__/api/configs-open and a JNI startActivity in the c3 webserver). `source` is the page, `needles` the strings it must hold (the separator, the native bridge); build.json::configs_pages.top_nav, when declared, must end with the five ids.",
+        "ac_cloud-media-center": {
+          "source": "ac_cloud-media-center/web/assets/configs.js",
+          "needles": [
+            "sep: true",
+            "native: true",
+            "action=com.diegonmarcos.fleetconfigs.OPEN",
+            "fleet_configs_page"
+          ]
+        },
+        "ac_cloud-c3-webserver": {
+          "source": "ac_cloud-c3-webserver/server/ui/shell.html",
+          "needles": [
+            "var CFG_TAIL = [['agents', 'Agents'], ['perms', 'Perms'], ['logcat', 'Logcat'], ['xray', 'X-Ray App'], ['about', 'About']];",
+            "/__app__/api/configs-open"
+          ]
+        }
+      },
       "pending": {
-        "_doc": "Apps whose Configs does not carry the fleet-default tail yet, each with its reason (T7 / T8 fail a stale entry).",
-        "ac_cloud-c3-webserver": "Tauri 2 host: the whole UI is the Rust web server's page in one WebView and the Android side is a generated shell with no Configs menu or strip of its own to hang the tail on.",
-        "ac_cloud-media-center": "Tauri WebView host: its Configs strip is the web page web/assets/configs.js (media areas | General | Perms | About drawn as HTML); Agents, Logcat and X-Ray App are Compose pages that need a native bridge into the WebView, not written yet."
+        "_doc": "Apps whose Configs does not carry the fleet-default tail yet, each with its reason (T7 / T8 fail a stale entry)."
       }
     }
   },

@@ -1,9 +1,13 @@
 {
   "identifier": "default",
-  "description": "The one window may ask the system to open https links (opener:default) and nothing else.",
+  "description": "The one window may ask the system to open https links (opener:default) and, #1630, the intent: URIs that open cloud-account and this app's own native Configs tail pages, nothing else.",
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "opener:default"
+    "opener:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "intent:*" }]
+    }
   ]
 }

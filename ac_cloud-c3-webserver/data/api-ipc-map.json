@@ -266,6 +266,14 @@
    "via": "api_open -> diag::open -> the installed opener (Intent to cloud-browser)"
   },
   {
+   "path": "/__app__/api/configs-open",
+   "surface": "app",
+   "ipc": [
+    "app-launch"
+   ],
+   "via": "api_configs_open -> served::open_configs -> served CONFIGS_OPENER (an Intent to this app's own FleetConfigsActivity: the Configs strip's native tail Agents, Perms, Logcat, X-Ray App, About)"
+  },
+  {
    "path": "/__app__/api/launch",
    "surface": "app",
    "ipc": [

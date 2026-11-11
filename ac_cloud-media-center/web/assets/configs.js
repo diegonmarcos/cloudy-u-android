@@ -16,11 +16,18 @@
   var S = root.MediaSync || (typeof require === 'function' ? require('./media-sync.js') : null);
   var MOVIE_KEY = 'cmc_sources_v1', USER_KEY = 'cmc_user_sources_v1';
   var ACCOUNT_INTENT = 'intent:#Intent;action=com.diegonmarcos.cloudaccount.OPEN;package=com.diegonmarcos.cloudaccount;end';
+  // #1630 the fleet tail after the `|`: Agents, Perms, Logcat, X-Ray App, About. Agents, Logcat and X-Ray App are the shared native pages of
+  // libs:ui-nav-bars (FleetConfigsActivity, whose own strip carries the same tail): a tap here fires an intent: URI addressed to this app's own
+  // package (no Kotlin in this app), the tab id travels as the fleet_configs_page extra. Perms and About stay this page's own HTML pages.
+  var NATIVE_PACKAGE = 'com.diegonmarcos.cloudmediacenter';
+  function nativeIntent(id) {
+    return 'intent:#Intent;action=com.diegonmarcos.fleetconfigs.OPEN;package=' + NATIVE_PACKAGE + ';S.fleet_configs_page=' + id + ';B.fleet_configs_dark=true;end';
+  }
   var SIZE = { type: 'select', key: 'size', label: 'Card size', options: [['small', 'Small'], ['normal', 'Normal'], ['large', 'Large']], def: 'normal' };
   var START = { type: 'text', key: 'start', label: 'Open on filter (chip name, empty = All)', def: '' };
 
   // THE order of this app's Configs (#1469, allowed for this app only by 1_cicd/src/data/configs-pages.json::tabs.app_order):
-  // the media areas first, then Apify, then General | Perms | About. `area` = a source tab (Apify | Direct subsections,
+  // the media areas first, then Apify, then General, then (#1630) `|` and the fleet tail Agents, Perms, Logcat, X-Ray App, About. `area` = a source tab (Apify | Direct subsections,
   // rows from data/media-sources.json); `special` = drawn by renderSpecial. Movies draws from the shared MOVIE_CONFIG instead.
   var TABS = [
     { id: 'music', label: 'Music', icon: '♪', area: 'music', fields: [
@@ -36,7 +43,10 @@
     { id: 'movies', label: 'Movies', icon: '◉', movies: true },
     { id: 'apify', label: 'Apify', icon: '⚡', special: true },
     { id: 'general', label: 'General', icon: '⚙', special: true },
+    { id: 'agents', label: 'Agents', icon: '✦', special: true, native: true, sep: true },
     { id: 'perms', label: 'Perms', icon: '🛡', special: true },
+    { id: 'logcat', label: 'Logcat', icon: '▤', special: true, native: true },
+    { id: 'xray', label: 'X-Ray App', icon: '◎', special: true, native: true },
     { id: 'about', label: 'About', icon: 'ⓘ', special: true }
   ];
 
@@ -197,17 +207,27 @@
     btn.addEventListener('click', function (e) { e.stopPropagation(); set(menu.hidden); });
     doc.addEventListener('click', function (e) { if (!box.contains(e.target)) set(false); });
   }
+  // the strip: one chip per tab, the `|` separator before the first tail tab (a span, not a chip), a native chip opens the shared page.
+  function chipsHtml(tab) {
+    return TABS.map(function (t) {
+      return (t.sep ? '<span class="chipsep" aria-hidden="true">|</span>' : '') + '<button class="chip" data-chip="' + t.id + '"' + (t.native ? ' data-native' : '') + ' aria-pressed="' + (t.id === tab) + '">' + t.icon + ' ' + esc(t.label) + '</button>';
+    }).join('');
+  }
+  function openNative(id) {
+    var t = root.__TAURI__, url = nativeIntent(id);
+    if (t && t.opener && t.opener.openUrl) t.opener.openUrl(url).catch(function () { root.location.href = url; }); else root.location.href = url;
+  }
   function bootConfigs(doc) {
     var main = doc.querySelector('main'), chips = doc.querySelector('.chips');
     var hash = (root.location.hash || '').slice(1), tab = tabSpec(hash) ? hash : 'music', decl = null, users = loadUsers();
     var msrc = null, sub = 'apify', secrets = S.SecretStore(store()), BK = 'cmc_apify.backend', UK = 'cmc_apify.self.url', CM = 'cmc_cloudflare.mode', CW = 'cmc_cloudflare.worker_url';
     function ctx() { return msrc && { msrc: msrc, srcCfg: S.loadSourceCfg(), has: function (n) { return secrets.has(n); }, backend: getItem(BK) || msrc.default_backend, selfUrl: getItem(UK) || '', cfMode: getItem(CM) === 'rest' ? 'rest' : 'worker', workerUrl: getItem(CW) || '', sync: S.loadSync(), sub: sub }; }
-    chips.innerHTML = TABS.map(function (t) { return '<button class="chip" data-chip="' + t.id + '" aria-pressed="' + (t.id === tab) + '">' + t.icon + ' ' + esc(t.label) + '</button>'; }).join('');
+    chips.innerHTML = chipsHtml(tab);
     function draw() {
       main.innerHTML = renderConfigs(tab, loadTab(tab), decl, users, ctx());
       [].forEach.call(chips.children, function (c) { c.setAttribute('aria-pressed', String(c.getAttribute('data-chip') === tab)); });
     }
-    chips.addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (!b) return; tab = b.getAttribute('data-chip'); history.replaceState(null, '', '#' + tab); draw(); });
+    chips.addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (!b) return; if (b.hasAttribute('data-native')) { openNative(b.getAttribute('data-chip')); return; } tab = b.getAttribute('data-chip'); history.replaceState(null, '', '#' + tab); draw(); });
     function umsg(t) { var m = main.querySelector('.cfg__umsg'); if (m) m.textContent = t || ''; }
     function storeU(r) { if (r.error) { umsg(r.error); return false; } users = r.list; saveUsers(users); main.querySelector('.cfg__ulist').innerHTML = userRows(users); umsg(''); return true; }
     function note(t) { var m = main.querySelector('.cfg__umsg'); if (m) m.textContent = t || ''; }
@@ -270,7 +290,7 @@
   }
 
   var api = { TABS: TABS, ACCOUNT_INTENT: ACCOUNT_INTENT, MOVIE_KEY: MOVIE_KEY, USER_KEY: USER_KEY, normalizeTab: normalizeTab, loadTab: loadTab, saveTab: saveTab,
-    loadUsers: loadUsers, saveUsers: saveUsers, menuHtml: menuHtml, renderConfigs: renderConfigs, renderProfile: renderProfile, boot: boot };
+    loadUsers: loadUsers, saveUsers: saveUsers, menuHtml: menuHtml, chipsHtml: chipsHtml, nativeIntent: nativeIntent, renderConfigs: renderConfigs, renderProfile: renderProfile, boot: boot };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else { root.CmcConfig = api; if (root.document) root.document.addEventListener('DOMContentLoaded', boot); }
 })(typeof window !== 'undefined' ? window : this);

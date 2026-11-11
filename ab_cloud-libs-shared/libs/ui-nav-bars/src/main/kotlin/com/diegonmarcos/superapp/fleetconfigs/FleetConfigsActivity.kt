@@ -22,14 +22,17 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 public class FleetConfigsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val page = FleetConfigsPage.entries.firstOrNull { it.id == intent.getStringExtra(EXTRA_PAGE) } ?: FleetConfigsPage.General
+        val startId = intent.getStringExtra(EXTRA_PAGE)
+        val page = FleetConfigsPage.entries.firstOrNull { it.id == startId } ?: FleetConfigsPage.General
         val dark = intent.getBooleanExtra(EXTRA_DARK, true)
-        setContent { FleetConfigsScreen(page, dark, onDismiss = { finish() }, onAppConfigs = { finish() }) }
+        setContent { FleetConfigsScreen(page, dark, onDismiss = { finish() }, onAppConfigs = { finish() }, startId = startId) }
     }
 
     public companion object {
         public const val EXTRA_PAGE: String = "fleet_configs_page"
         public const val EXTRA_DARK: String = "fleet_configs_dark"
+        /** #1630 the implicit action a WebView host (Tauri: no Kotlin) fires with `intent:#Intent;action=...;package=<own id>;S.fleet_configs_page=<tab id>;end`. */
+        public const val ACTION_OPEN: String = "com.diegonmarcos.fleetconfigs.OPEN"
 
         public fun intent(context: Context, page: FleetConfigsPage, dark: Boolean = true): Intent =
             Intent(context, FleetConfigsActivity::class.java).putExtra(EXTRA_PAGE, page.id).putExtra(EXTRA_DARK, dark)

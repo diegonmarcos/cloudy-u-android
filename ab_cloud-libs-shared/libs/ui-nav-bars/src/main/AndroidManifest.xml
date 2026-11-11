@@ -6,7 +6,14 @@
         <activity
             android:name="com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity"
             android:exported="false"
-            android:theme="@android:style/Theme.Material.NoActionBar" />
+            android:theme="@android:style/Theme.Material.NoActionBar">
+            <!-- #1630 a WebView host with no Kotlin (Tauri) opens the native Agents / Logcat / X-Ray App / Perms / About tail through this
+                 action, addressed to its own package (intent: URI, extra fleet_configs_page). Still not exported: the app's own package only. -->
+            <intent-filter>
+                <action android:name="com.diegonmarcos.fleetconfigs.OPEN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <!-- #1352 publishes Configs ▸ General / ▸ About as launcher shortcuts at process start (FleetConfigsShortcuts): the way
              an app with no native menu (React Native, Tauri, Cordova, the office host) reaches them, and a shortcut for every
              other app too. Not exported, answers no query. -->

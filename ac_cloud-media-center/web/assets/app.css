@@ -32,6 +32,7 @@ button { font: inherit; color: inherit; }
 .chip { flex: none; padding: 7px 14px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line);
   color: var(--muted); font-size: 13px; white-space: nowrap; cursor: pointer; }
 .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #12141a; font-weight: 600; }
+.chipsep { flex: none; align-self: center; opacity: .55; font-weight: 700; }
 
 main { padding: 12px 16px calc(84px + var(--safe-bottom)); }
 .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 18px 2px 10px; }

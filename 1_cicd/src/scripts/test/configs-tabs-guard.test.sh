@@ -22,7 +22,7 @@ out="$(cd "$ROOT" && python3 "$GUARD" .)"; rc=$?
 if [ "$rc" -eq 0 ]; then ok "the real tree passes ($(tail -1 <<<"$out"))"; else fail "the real tree is red"; printf '%s\n' "$out"; fi
 
 mkdir -p "$BASE"
-( cd "$ROOT" && for f in $(for d in a[acd]_*/; do [ -L "${d%/}" ] || [ ! -f "${d}build.json" ] || echo "${d}build.json"; done) $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(|withTail\(|ConfigsTail' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
+( cd "$ROOT" && for f in $(for d in a[acd]_*/; do [ -L "${d%/}" ] || [ ! -f "${d}build.json" ] || echo "${d}build.json"; done) $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js ac_cloud-c3-webserver/server/ui/shell.html $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(|withTail\(|ConfigsTail' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
 python3 "$GUARD" "$BASE" >/dev/null || fail "the fixture is red before any mutation"
 
 # mutant NAME RULE PYTHON — PYTHON edits the fixture (cwd = fixture) and must change a file; the guard must go red naming RULE.
@@ -81,10 +81,10 @@ d = load('ac_cloud-news/build.json'); s = [x for x in d['ui']['sections'] if x['
 s['pages'] = s['pages'][3:]; save('ac_cloud-news/build.json', d)"
 mutant "an app folder without a build.json escapes" T5 "
 import os; os.makedirs('ac_cloud-ghost'); open('ac_cloud-ghost/readme.md', 'w').write('x')"
-mutant "Media Center draws Perms before General" T4 "
+mutant "Media Center draws General before Apify" T4 "
 p = 'ac_cloud-media-center/web/assets/configs.js'; s = open(p).read()
-a = \"    { id: 'general', label: 'General'\"; assert a in s
-b = \"    { id: 'perms', label: 'Perms'\"; assert b in s
+a = \"    { id: 'apify', label: 'Apify'\"; assert a in s
+b = \"    { id: 'general', label: 'General'\"; assert b in s
 i, j = s.index(a), s.index(b); l1 = s[i:s.index('\\n', i) + 1]; l2 = s[j:s.index('\\n', j) + 1]
 open(p, 'w').write(s.replace(l1 + l2, l2 + l1))"
 mutant "Media Center build.json declares another order" T1 "$J
@@ -109,7 +109,22 @@ d = load('$DATA'); d['tabs']['tail']['pending']['ad_Capital-Stack-FinTerminal'] 
 mutant "tail.pending names no app" T7 "$J
 d = load('$DATA'); d['tabs']['tail']['pending']['ac_cloud-nope'] = 'x' * 40; save('$DATA', d)"
 mutant "tail.pending reason too short" T7 "$J
-d = load('$DATA'); k = [a for a in d['tabs']['tail']['pending'] if not a.startswith('_')][0]; d['tabs']['tail']['pending'][k] = 'later'; save('$DATA', d)"
+d = load('$DATA'); d['tabs']['tail']['pending']['ac_cloud-calc'] = 'later'; save('$DATA', d)"
+
+# #1630 the WebView hosts (Tauri, no Kotlin): the web strip draws the | and the three native pages, or the guard names the app
+mutant "Media Center's web strip loses the | before the tail" T7 "
+p = 'ac_cloud-media-center/web/assets/configs.js'; s = open(p).read(); assert 'sep: true' in s
+open(p, 'w').write(s.replace('sep: true', 'sep: false'))"
+mutant "Media Center's web strip stops opening the native pages" T7 "
+p = 'ac_cloud-media-center/web/assets/configs.js'; s = open(p).read(); a = 'action=com.diegonmarcos.fleetconfigs.OPEN'; assert a in s
+open(p, 'w').write(s.replace(a, 'action=x'))"
+mutant "C3 Webserver's Configs strip drops the tail" T7 "
+p = 'ac_cloud-c3-webserver/server/ui/shell.html'; s = open(p).read(); a = \"['logcat', 'Logcat'], ['xray', 'X-Ray App'], \"; assert a in s
+open(p, 'w').write(s.replace(a, ''))"
+mutant "C3 Webserver's tail ends with Logcat after X-Ray App" T7 "
+p = 'ac_cloud-c3-webserver/server/ui/shell.html'; s = open(p).read(); a = \"['logcat', 'Logcat'], ['xray', 'X-Ray App']\"; assert a in s
+open(p, 'w').write(s.replace(a, \"['xray', 'X-Ray App'], ['logcat', 'Logcat']\"))"
+
 
 # #1630 T8 the fleet conformance: every host that draws its own strip ends it with the five, in order, after the |
 mutant "Cloud Drive draws its own Configs strip without the tail" T7 "

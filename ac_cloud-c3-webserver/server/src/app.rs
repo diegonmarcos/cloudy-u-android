@@ -64,6 +64,7 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Api, path: "/__app__/api/sshd", tab: None, post: true, summary: "GET every SSH door, probed live (declared in build.json::ssh_doors); POST {door, op: start|stop|follow} starts or stops the supervised door (the nix-on-droid mesh sshd) or this app's own hosted sshd (webserver, :8025, ON by default) or hands it back to its default; POST {door?, mesh_only: true|false|null} sets that port's SSH reachable over the mesh VPN only (default ON, one switch per port) and re-applies it to a running door", handler: api_sshd },
     Route { kind: Kind::Api, path: "/__app__/api/open", tab: None, post: true, summary: "POST {url} or {id,via:name|ip}: hand an http(s) link to cloud-browser", handler: api_open },
     Route { kind: Kind::Api, path: "/__app__/api/launch", tab: None, post: true, summary: "POST {target: superapp|browser}: launch a declared fleet app's MAIN/LAUNCHER activity through the Android bridge (the X-Ray Device page's Start Superapp). Only the packages declared in build.json (the SuperApp bridge package, the browser opener package) may be launched", handler: api_launch },
+    Route { kind: Kind::Api, path: "/__app__/api/configs-open", tab: None, post: true, summary: "POST {page: agents|perms|logcat|xray|about}: open that tab of the shared native Configs screen (the fleet tail after the | of the Configs strip) through the Android bridge", handler: api_configs_open },
 ];
 
 /// Exact match over the table (a trailing slash is noise).
@@ -382,6 +383,23 @@ fn api_launch(_ctx: &Ctx, req: &Req) -> Resp {
     }
     match crate::served::launch(&pkg) {
         Ok(()) => Resp::json(200, format!("{{\"ok\":true,\"package\":{}}}", jstr(&pkg))),
+        Err(e) => jerr(502, &e),
+    }
+}
+
+/// #1630 POST {page}: open one tab of the fleet tail (Agents, Perms, Logcat, X-Ray App, About) of the shared native Configs screen.
+/// `page` must be one of the five ids; nothing else reaches the bridge.
+fn api_configs_open(_ctx: &Ctx, req: &Req) -> Resp {
+    let body: serde_json::Value = match serde_json::from_slice(&req.body) {
+        Ok(v) => v,
+        Err(_) => return jerr(400, "body must be JSON {page}"),
+    };
+    let page = match body["page"].as_str() {
+        Some(p @ ("agents" | "perms" | "logcat" | "xray" | "about")) => p,
+        _ => return jerr(400, "page must be agents, perms, logcat, xray or about"),
+    };
+    match crate::served::open_configs(page) {
+        Ok(()) => Resp::json(200, format!("{{\"ok\":true,\"page\":{}}}", jstr(page))),
         Err(e) => jerr(502, &e),
     }
 }

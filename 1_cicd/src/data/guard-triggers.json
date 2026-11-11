@@ -144,7 +144,9 @@
         "a[acd]_*/**/build.gradle",
         "a[acd]_*/**/build.gradle.kts",
         "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsExtensions.kt",
-        "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt"
+        "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt",
+        "ac_cloud-c3-webserver/server/ui/shell.html",
+        "ac_cloud-media-center/web/assets/configs.js"
       ]
     },
     "phone-apps-page-guard.yml": {

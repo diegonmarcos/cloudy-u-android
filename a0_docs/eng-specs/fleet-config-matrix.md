@@ -399,7 +399,7 @@ Coverage: 18 covered, 0 gaps.
 
 ## cloud-c3-webserver — `com.diegonmarcos.cloudwebserver`
 
-Module `ac_cloud-c3-webserver`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-c3-webserver`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

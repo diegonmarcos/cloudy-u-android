@@ -158,6 +158,8 @@ public fun FleetConfigsScreen(
     onDismiss: () -> Unit,
     onAppConfigs: () -> Unit,
     decl: FleetConfigsDecl = FleetConfigs.current,
+    /** #1630 an opt-in tail tab (agents / logcat / xray) or any strip id to open first, for a Views / WebView host that starts [FleetConfigsActivity]. */
+    startId: String? = null,
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         val c = ThemeBackground.colors(dark)
@@ -165,7 +167,9 @@ public fun FleetConfigsScreen(
         // #1439 the three shared pages are tabs of the top nav (General | Perms | About); [page] is the one opened first.
         // #1443 an app may opt extra tabs (Logcat, X-Ray) in through FleetConfigsExtensions; they draw between Perms and About,
         // so the selected tab is tracked by id, not only by FleetConfigsPage.
-        var shown by remember(page) { mutableStateOf(page.id) }
+        var shown by remember(page, startId) {
+            mutableStateOf(startId?.takeIf { id -> FleetConfigsPage.entries.any { it.id == id } || FleetConfigsExtensions.byId(id) != null } ?: page.id)
+        }
         val shownBase = FleetConfigsPage.entries.firstOrNull { it.id == shown }
         val shownExtra = if (shownBase == null) FleetConfigsExtensions.byId(shown) else null
         val titleScope = rememberCoroutineScope()
