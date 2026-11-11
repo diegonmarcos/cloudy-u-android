@@ -89,6 +89,32 @@ public object FleetConfigsExtensions {
         return head + tail.mapIndexed { i, p -> if (i == 0) p.copy(separatorBefore = true) else p }
     }
 
+    /**
+     * #1630 The same order for a HOST that draws its own Configs strip (Dialer, Drive, News, ...): [host] is the strip the app declares
+     * (its own tabs, plus General / Perms / About wherever it put them). Returns [the host's own tabs and General] | Agents, Perms, Logcat,
+     * X-Ray App, About: the five tail ids leave their declared place and are re-appended in [TAIL_IDS] order, Agents / Logcat / X-Ray App
+     * only when their lib registered them, Perms and About always (the host's own page entry when it has one). The `|` marks the first tail tab.
+     * A host passes its declared pages through this and draws any tail id with [FleetConfigsPageBody].
+     */
+    public fun withTail(
+        host: List<com.diegonmarcos.superapp.bottomnav.NavPage>,
+        extras: List<FleetConfigsTab> = all(),
+    ): List<com.diegonmarcos.superapp.bottomnav.NavPage> {
+        fun page(id: String, label: String, icon: String) = com.diegonmarcos.superapp.bottomnav.NavPage(id, label, icon)
+        val own = host.filter { it.id !in TAIL_IDS }.map { it.copy(separatorBefore = false) }
+        val tail = TAIL_IDS.mapNotNull { id ->
+            host.firstOrNull { it.id == id }?.copy(separatorBefore = false) ?: when (id) {
+                "perms" -> page(FleetConfigsPage.Perms.id, FleetConfigsPage.Perms.label, FleetConfigsPage.Perms.icon)
+                "about" -> page(FleetConfigsPage.About.id, FleetConfigsPage.About.label, FleetConfigsPage.About.icon)
+                else -> extras.firstOrNull { it.id == id }?.let { page(it.id, it.label, it.icon) }
+            }
+        }
+        return own + tail.mapIndexed { i, p -> if (i == 0) p.copy(separatorBefore = true) else p }
+    }
+
+    /** #1630 True for a tail tab a host never declares (Agents, Logcat, X-Ray App) that is registered: the host keeps it as the selected id and draws [FleetConfigsPageBody]. */
+    public fun isOptInTail(id: String?): Boolean = id != null && id in TAIL_IDS && FleetConfigsPage.entries.none { it.id == id } && byId(id) != null
+
     /** Test seam only: drop every registration. */
     public fun clearForTest() {
         tabs.clear()

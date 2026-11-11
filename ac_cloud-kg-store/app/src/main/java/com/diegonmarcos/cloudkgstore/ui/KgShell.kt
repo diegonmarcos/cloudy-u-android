@@ -76,7 +76,10 @@ fun KgShell() {
     val nav = Decl.nav
     var section by rememberSaveable { mutableStateOf(nav.default()?.id ?: Decl.SECTION_HOME) }
     var page by rememberSaveable { mutableStateOf<String?>(null) }
-    val sec = nav.section(section)
+    // #1630 Settings (the app's Configs) ends with the fleet-default tail: {own tabs} | Agents, Perms, Logcat, X-Ray App, About.
+    val sec = nav.section(section)?.let { s ->
+        if (s.id == Decl.SECTION_SETTINGS) s.copy(pages = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(s.pages)) else s
+    }
     val pageId = page?.takeIf { p -> sec?.pages?.any { it.id == p } == true } ?: sec?.pages?.firstOrNull()?.id
     val theme = kgAiTheme()
     // #1547 the page declaration is served by Cloud Store: retry (off the main thread) until it arrives, then rebuild what depends on it.
@@ -119,6 +122,7 @@ fun KgShell() {
                                 else -> CloudPage(kg, svc)
                             }
                             else -> when (pageId) {
+                                "perms", "agents", "logcat", "xray" -> com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(pageId.orEmpty())
                                 Decl.PAGE_MODELS -> TextPage(R.string.models_title, stringResource(R.string.models_body)) { AiSettingsPickers(chat, theme) }
                                 Decl.PAGE_BACKEND -> TextPage(R.string.backend_title, stringResource(R.string.backend_body) + "\n\n" + stringResource(R.string.backend_gateway, BuildConfig.AI_GATEWAY_URL))
                                 Decl.PAGE_ABOUT -> TextPage(R.string.about_title, stringResource(R.string.about_body, BuildConfig.VERSION_NAME, BuildConfig.GIT_SHORT_SHA))

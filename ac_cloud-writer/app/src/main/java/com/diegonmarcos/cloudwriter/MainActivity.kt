@@ -1440,7 +1440,9 @@ class MainActivity : AppCompatActivity() {
     @Composable
     private fun ConfigsScreen() {
         val dark = WriterTheme.isDark()
-        val declared: List<NavPage> = WriterNav.decl.section(WriterNav.SETTINGS)?.pages.orEmpty().map { it.copy(label = configsLabel(it.id, it.label)) }
+        // #1630 {own tabs} | Agents, Perms, Logcat, X-Ray App, About
+        val declared: List<NavPage> = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(
+            WriterNav.decl.section(WriterNav.SETTINGS)?.pages.orEmpty().map { it.copy(label = configsLabel(it.id, it.label)) })
         val selected = declared.firstOrNull { it.id == configsPage.value } ?: declared.firstOrNull()
         Column(Modifier.fillMaxSize()) {
             NavBarTopSecondRow(
@@ -1452,7 +1454,7 @@ class MainActivity : AppCompatActivity() {
                 surface = WriterNav.decl.stripSurface(WriterNav.SETTINGS, dark),
             )
             val id = selected?.id.orEmpty()
-            if (id == "general" || id == "perms" || id == "about") {
+            if (id == "general" || id == "perms" || id == "about" || com.diegonmarcos.superapp.fleetconfigs.isFleetConfigsPage(id)) {
                 // The shared pages draw their own scroll and colours.
                 FleetConfigsPageBody(id, dark, onAppConfigs = { configsPage.value = "appearance" })
             } else {

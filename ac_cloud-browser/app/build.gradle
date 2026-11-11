@@ -429,6 +429,10 @@ dependencies {
     // #868 the fleet's bottom island + NavDecl: MainActivity's Browser | Search | Configs bar.
     implementation project(':libs:bottomnav')
     implementation project(':libs:ui-nav-bars')
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
     // #823 Summarize the page, on-device route: ML Kit's GenAI summarizer (runs on AICore / Gemini
     // Nano where the phone ships it; elsewhere it reports UNAVAILABLE and the extractive summary answers).

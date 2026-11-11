@@ -312,6 +312,10 @@ dependencies {
     // from ui.bottom_nav and does not use the module's cloud-mail item table.
     implementation project(':libs:bottomnav')
     implementation project(':libs:ui-nav-bars')
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
     // #648 the SuperApp's page:c3/dagu is libs:ops' DaguFragment, and DaguPrefs is the ONE
     // store of the Authelia bearer the feed cards' Re-run buttons and the container sheet's

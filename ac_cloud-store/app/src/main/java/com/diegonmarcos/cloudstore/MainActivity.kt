@@ -110,7 +110,10 @@ class MainActivity : AppCompatActivity() {
                 selectedId = selected,
                 onSelect = { selected = it.id },
             ) {
-            val section = NAV.section(selected)
+            // #1630 Settings > Configs ends with the fleet-default tail: {own tabs} | Agents, Perms, Logcat, X-Ray App, About.
+            val section = NAV.section(selected)?.let { s ->
+                if (s.id == TAB_SETTINGS) s.copy(pages = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(s.pages)) else s
+            }
             // The drawer is the page's: the Store's sections, and the open section's own pages.
             TopBarDrawer { close ->
                 StoreDrawer(NAV, selected, section?.takeIf { it.pages.size > 1 }?.let { pageOf(it) }, onSection = { selected = it }, onPage = { s, p -> selected = s; choose(s, p) }, close = close)

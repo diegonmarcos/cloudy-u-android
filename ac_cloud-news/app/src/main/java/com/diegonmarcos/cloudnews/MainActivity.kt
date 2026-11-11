@@ -145,7 +145,8 @@ class MainActivity : AppCompatActivity() {
                 Column(Modifier.fillMaxSize()) {
                     if (configsOpen) {
                         NavBarTopSecondRow(
-                            pages = current?.pages.orEmpty(), selectedId = configsPage,
+                            // #1630 {own tabs} | Agents, Perms, Logcat, X-Ray App, About
+                            pages = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(current?.pages.orEmpty()), selectedId = configsPage,
                             onSelect = { pickConfigs(it.id) }, dark = true, underTopChrome = false,
                         )
                     }

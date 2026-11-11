@@ -1,4 +1,4 @@
-name: "Configs tabs guard — every app's Configs starts General | Perms | About on the top nav"
+name: "Configs tabs guard — every app's Configs starts General | Perms | About and ends {own tabs} | Agents, Perms, Logcat, X-Ray App, About"
 
 # WHY THIS EXISTS (#1439).
 # Configs grew a different shape per app: one page in one app, About last in the next, a private Perms list in a
@@ -16,7 +16,10 @@ on:
       - "1_cicd/src/scripts/test/configs-tabs-guard.test.sh"
       - "a[acd]_*/**/*.java"
       - "a[acd]_*/**/*.kt"
+      - "a[acd]_*/**/build.gradle"
+      - "a[acd]_*/**/build.gradle.kts"
       - "a[acd]_*/build.json"
+      - "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsExtensions.kt"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt"
     # ── end MANAGED-GUARD-TRIGGERS ──
     branches: [main]
@@ -35,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Every app's Configs starts General | Perms | About
+      - name: Every app's Configs starts General | Perms | About and ends {own tabs} | Agents, Perms, Logcat, X-Ray App, About (lists every app)
         run: python3 1_cicd/src/scripts/cloud-android-configs-tabs-guard.py
       - name: The configs-tabs guard still fails on each way an app can break the order
         run: bash 1_cicd/src/scripts/test/configs-tabs-guard.test.sh

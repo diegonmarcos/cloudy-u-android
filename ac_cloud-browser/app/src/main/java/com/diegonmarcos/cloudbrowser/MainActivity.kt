@@ -246,7 +246,8 @@ class MainActivity : AppCompatActivity() {
             Column(Modifier.fillMaxSize()) {
                 // #900 Configs is a section of top tabs (one per config category), sideways-scrolling when they do not fit.
                 if (selectedId == "configs") {
-                    val tabs = remember { decl.section("configs")?.pages.orEmpty() }
+                    // #1630 {own tabs} | Agents, Perms, Logcat, X-Ray App, About
+                    val tabs = remember { com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(decl.section("configs")?.pages.orEmpty()) }
                     NavBarTopSecondRow(tabs, configsPage, onSelect = { pg -> openConfigsPage(pg.id) }, dark = true, underTopChrome = false)
                 }
                 // #1493 Cloudy and Domains: their sub-pages as top tabs (ui.sections[<id>].pages).

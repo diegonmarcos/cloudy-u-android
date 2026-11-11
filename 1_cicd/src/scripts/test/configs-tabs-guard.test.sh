@@ -22,7 +22,7 @@ out="$(cd "$ROOT" && python3 "$GUARD" .)"; rc=$?
 if [ "$rc" -eq 0 ]; then ok "the real tree passes ($(tail -1 <<<"$out"))"; else fail "the real tree is red"; printf '%s\n' "$out"; fi
 
 mkdir -p "$BASE"
-( cd "$ROOT" && for f in a[acd]_*/build.json $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
+( cd "$ROOT" && for f in a[acd]_*/build.json $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(|withTail\(|ConfigsTail' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
 python3 "$GUARD" "$BASE" >/dev/null || fail "the fixture is red before any mutation"
 
 # mutant NAME RULE PYTHON — PYTHON edits the fixture (cwd = fixture) and must change a file; the guard must go red naming RULE.
@@ -110,6 +110,29 @@ mutant "tail.pending names no app" T7 "$J
 d = load('$DATA'); d['tabs']['tail']['pending']['ac_cloud-nope'] = 'x' * 40; save('$DATA', d)"
 mutant "tail.pending reason too short" T7 "$J
 d = load('$DATA'); k = [a for a in d['tabs']['tail']['pending'] if not a.startswith('_')][0]; d['tabs']['tail']['pending'][k] = 'later'; save('$DATA', d)"
+
+# #1630 T8 the fleet conformance: every host that draws its own strip ends it with the five, in order, after the |
+mutant "Cloud Drive draws its own Configs strip without the tail" T7 "
+p = 'ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/configs/ConfigsScreen.kt'; s = open(p).read()
+a = 'FleetConfigsExtensions.withTail('; assert a in s; open(p, 'w').write(s.replace(a, 'listOf<Any>('))"
+mutant "Cloud Dialer draws its own Configs strip without the tail" T7 "
+p = 'ac_cloud-dialer/app/src/main/kotlin/org/fossify/phone/configs/DialerConfigsActivity.kt'; s = open(p).read()
+a = 'FleetConfigsExtensions.withTail('; assert a in s; open(p, 'w').write(s.replace(a, 'listOf<Any>('))"
+mutant "Cloud Calc orders its Configs modes with Logcat before Perms" T7 "
+p = 'ac_cloud-calc/app/src/main/java/com/diegonmarcos/cloudcalc/ui/CalcShell.kt'; s = open(p).read()
+a = '\"fleet_agents\", \"fleet_perms\", \"fleet_logcat\"'; assert a in s
+open(p, 'w').write(s.replace(a, '\"fleet_agents\", \"fleet_logcat\", \"fleet_perms\"'))"
+mutant "Cloud Calc stops declaring its X-Ray App mode" T7 "$J
+d = load('ac_cloud-calc/build.json'); d['ui']['modes'] = [m for m in d['ui']['modes'] if m.get('kind') != 'fleet_xray']; save('ac_cloud-calc/build.json', d)"
+mutant "the lib loses withTail (no | for the own hosts)" T7 "
+p = '$EXT'; s = open(p).read(); a = 'public fun withTail('; assert a in s
+open(p, 'w').write(s.replace(a, 'public fun withTailGone('))"
+mutant "the lib stops drawing the | before the tail" T7 "
+p = '$EXT'; s = open(p).read(); a = 'separatorBefore = true'; assert a in s
+open(p, 'w').write(s.replace(a, 'separatorBefore = false'))"
+mutant "Cloud Store (own settings host) drops the tail" T7 "
+p = 'ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt'; s = open(p).read()
+a = 'FleetConfigsExtensions.withTail('; assert a in s; open(p, 'w').write(s.replace(a, 'listOf<Any>('))"
 
 echo "configs-tabs-guard.test: $PROVEN mutation(s) proven red, $FAILURES failure(s)"
 [ "$FAILURES" -eq 0 ]

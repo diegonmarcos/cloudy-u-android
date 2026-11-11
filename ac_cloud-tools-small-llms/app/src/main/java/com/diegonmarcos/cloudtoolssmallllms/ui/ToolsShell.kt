@@ -56,7 +56,12 @@ import androidx.compose.foundation.layout.width
 @Composable
 fun ToolsShell(model: ToolsModel) {
     val nav = Decl.nav
-    val sec = nav.section(model.section)
+    // #1630 Settings (the app's Configs) is one page of its own, then the fleet-default tail: Settings | Agents, Perms, Logcat, X-Ray App, About.
+    val sec = nav.section(model.section)?.let { s ->
+        if (s.id != Decl.SECTION_SETTINGS) s
+        else s.copy(pages = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(
+            s.pages.ifEmpty { listOf(com.diegonmarcos.superapp.bottomnav.NavPage("settings", "Settings", "settings")) }))
+    }
     val pageId = model.page?.takeIf { p -> sec?.pages?.any { it.id == p } == true } ?: sec?.pages?.firstOrNull()?.id
     val entries = nav.islandEntries()
     val theme = toolsAiTheme()
@@ -100,7 +105,10 @@ fun ToolsShell(model: ToolsModel) {
                             Decl.SECTION_STORE -> StorePage(model, pageId ?: Decl.PAGE_INSTALLED)
                             Decl.SECTION_MLS -> MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE, model.mlsNote)
                             Decl.SECTION_SENSORS -> SensorsPage(pageId ?: Decl.PAGE_SENSORS_INBUILT, model.sensorsJson)
-                            Decl.SECTION_SETTINGS -> SettingsPage(model)
+                            Decl.SECTION_SETTINGS -> when (pageId) {
+                                "perms", "about", "agents", "logcat", "xray" -> com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(pageId)
+                                else -> SettingsPage(model)
+                            }
                             else -> {}
                         }
                     }

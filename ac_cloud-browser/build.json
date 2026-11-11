@@ -65,7 +65,7 @@
         "search-core",
         "libs:bottomnav",
         "libs:ui-icons",
-        "libs:ui-nav-bars",
+        "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray",
         "libs:theme-background",
         "libs:headless-browser"
       ]
@@ -134,6 +134,9 @@
       "dir": "../ac_cloud-search/core",
       "type": "library"
     },
+    "libs:fleetconfigs-agents": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents", "type": "library"},
+    "libs:fleetconfigs-logcat": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat", "type": "library"},
+    "libs:fleetconfigs-xray": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray", "type": "library"},
     "libs:ui-nav-bars": {
       "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars",
       "type": "library",

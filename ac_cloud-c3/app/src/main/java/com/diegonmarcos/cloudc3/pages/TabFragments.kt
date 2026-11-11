@@ -138,14 +138,16 @@ class OpsFragment : PagedFragment() {
  * Its own build-info card is [AboutFragment], real because everything it shows is baked.
  */
 class ConfigsFragment : PagedFragment() {
-    override fun pages(): List<NavPage> = Declarations.configsPages
+    // #1630 {own tabs} | Agents, Perms, Logcat, X-Ray App, About: the declared pages through the fleet tail (the tail pages are libs:ui-nav-bars').
+    override fun pages(): List<NavPage> = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(Declarations.configsPages)
     override fun pageFragment(pageId: String): Fragment? = when (pageId) {
         "general" -> FleetConfigsPageFragment.newInstance(pageId)
         "perms" -> FleetConfigsPageFragment.newInstance(pageId)
         "about" -> FleetConfigsPageFragment.newInstance(pageId)
         "build" -> AboutFragment()
         "plugins" -> OpsMapFragment.newInstance("hier_plugins")
-        else -> null
+        // #1630 Agents / Logcat / X-Ray App are the opt-in libs' tail tabs (withTail above), not declared pages
+        else -> if (com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.isOptInTail(pageId)) FleetConfigsPageFragment.newInstance(pageId) else null
     }
 }
 

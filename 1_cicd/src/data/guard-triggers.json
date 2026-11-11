@@ -141,6 +141,9 @@
         "a[acd]_*/build.json",
         "a[acd]_*/**/*.kt",
         "a[acd]_*/**/*.java",
+        "a[acd]_*/**/build.gradle",
+        "a[acd]_*/**/build.gradle.kts",
+        "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsExtensions.kt",
         "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt"
       ]
     },

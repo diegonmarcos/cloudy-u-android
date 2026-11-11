@@ -350,6 +350,7 @@
       ],
       "needles": [
         "public fun stripOrder(",
+        "public fun withTail(",
         "separatorBefore = true",
         "public fun registerXrayPage("
       ],
@@ -358,11 +359,25 @@
         "libs:fleetconfigs-logcat",
         "libs:fleetconfigs-xray"
       ],
+      "host_draws": [
+        "FleetConfigsPageBody(",
+        "FleetGeneralPage("
+      ],
+      "host_tail": [
+        "FleetConfigsExtensions.withTail("
+      ],
+      "mode_hosts": {
+        "_doc": "T8 an app whose strip is its declared modes (Cloud Calc): `file` holds ConfigsTail.KINDS (the five fleet_<id> kinds in tail order), `needle` is the call that orders the strip, and build.json::ui.modes[tab=configs] declares all five kinds.",
+        "ac_cloud-calc": {
+          "file": "ac_cloud-calc/app/src/main/java/com/diegonmarcos/cloudcalc/ui/CalcShell.kt",
+          "needle": "ConfigsTail.order("
+        }
+      },
       "pending": {
-        "_doc": "Apps whose Configs does not carry the fleet-default tail yet.",
-        "ac_cloud-browser": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
-        "ac_cloud-c3": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
-        "ac_cloud-c3-webserver": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry."
+        "_doc": "Apps whose Configs does not carry the fleet-default tail yet, each with its reason (T7 / T8 fail a stale entry).",
+        "aa_cloud-superapp-web": "Vanilla web portal built by esbuild (a PWA, no Android module): it has no native Configs strip to carry the tail, so the five tabs cannot be drawn there.",
+        "ac_cloud-c3-webserver": "Tauri 2 host: the whole UI is the Rust web server's page in one WebView and the Android side is a generated shell with no Configs menu or strip of its own to hang the tail on.",
+        "ac_cloud-media-center": "Tauri WebView host: its Configs strip is the web page web/assets/configs.js (media areas | General | Perms | About drawn as HTML); Agents, Logcat and X-Ray App are Compose pages that need a native bridge into the WebView, not written yet."
       }
     }
   },

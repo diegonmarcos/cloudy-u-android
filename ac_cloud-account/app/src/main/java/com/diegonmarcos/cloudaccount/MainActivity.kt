@@ -171,8 +171,10 @@ class MainActivity : AppCompatActivity() {
                 Column(Modifier.fillMaxSize()) {
                     val section = NAV.section(selected)
                     val path = if (section == null) emptyList() else section.path(section.page(selectedPage)?.id)
-                    val leaf = path.lastOrNull()?.leaf()?.id.orEmpty()
-                    if (section != null) Strips(section, path) { selectedPage = it }
+                    // #1630 Agents / Logcat / X-Ray App are not declared pages: the selected id is kept as it is.
+                    val tailTab = section?.id == "configs" && com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.isOptInTail(selectedPage)
+                    val leaf = if (tailTab) selectedPage.orEmpty() else path.lastOrNull()?.leaf()?.id.orEmpty()
+                    if (section != null) Strips(section, path, if (tailTab) selectedPage else null) { selectedPage = it }
                     Page(selected.orEmpty(), leaf, go)
                 }
             }
@@ -185,11 +187,12 @@ class MainActivity : AppCompatActivity() {
      * through NavDecl.stripSurface, never a colour of this app's.
      */
     @Composable
-    private fun Strips(section: NavSection, path: List<NavPage>, select: (String) -> Unit) {
+    private fun Strips(section: NavSection, path: List<NavPage>, tailSelected: String?, select: (String) -> Unit) {
         if (section.pages.size > 1) {
             NavBarTopSecondRow(
-                pages = section.pages,
-                selectedId = path.firstOrNull()?.id,
+                // #1630 Configs ends with the fleet-default tail: {own tabs} | Agents, Perms, Logcat, X-Ray App, About.
+                pages = if (section.id == "configs") com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(section.pages) else section.pages,
+                selectedId = tailSelected ?: path.firstOrNull()?.id,
                 onSelect = { p -> select(p.leaf().id) },
                 underTopChrome = false,
                 surface = NAV.stripSurface(section.id, darkTheme = true),

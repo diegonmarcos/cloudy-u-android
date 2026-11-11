@@ -45,6 +45,7 @@ import com.diegonmarcos.superapp.ai.AiChatState
 import com.diegonmarcos.superapp.ai.AiModel
 import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.cloudagenda.R
+import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody
 import com.diegonmarcos.superapp.themebg.ThemeBackground
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottomHost
@@ -131,8 +132,10 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
     val pageOf = rememberSaveable(saver = PageMapSaver) { mutableStateMapOf<String, String>() }
 
     val current = nav.section(section)
-    val pages = current?.pages.orEmpty()
-    val page = current?.page(pageOf[section])?.id.orEmpty()
+    // #1630 Settings (the app's Configs) ends with the fleet-default tail: {own tabs} | Agents, Perms, Logcat, X-Ray App, About.
+    val pages = current?.pages.orEmpty().let { if (section == Ids.SETTINGS) FleetConfigsExtensions.withTail(it) else it }
+    val tailTab = section == Ids.SETTINGS && FleetConfigsExtensions.isOptInTail(pageOf[section])
+    val page = if (tailTab) pageOf[section].orEmpty() else current?.page(pageOf[section])?.id.orEmpty()
     val onIsland = section in nav.bottomNav
     val today = remember { java.time.LocalDate.now() }
 
@@ -223,7 +226,7 @@ private fun SettingsContent(env: TasksEnv, page: String, themeMode: ThemeMode, o
     val dark = LocalDarkTheme.current
     when (page) {
         // #1443 the fleet's shared Configs pages (libs:ui-nav-bars) come first: General | Perms | About.
-        Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT -> Box(Modifier.fillMaxSize().background(ThemeBackground.colors(dark).top).testTag("tasks:configs:page:" + page)) {
+        Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT, "agents", "logcat", "xray" -> Box(Modifier.fillMaxSize().background(ThemeBackground.colors(dark).top).testTag("tasks:configs:page:" + page)) {
             FleetConfigsPageBody(page, dark, onAppConfigs)
         }
         Ids.PAGE_APPEARANCE -> AppearancePage(themeMode, onThemeMode)

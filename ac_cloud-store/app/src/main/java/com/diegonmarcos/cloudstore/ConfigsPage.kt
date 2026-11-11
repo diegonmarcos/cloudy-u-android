@@ -66,6 +66,13 @@ object ConfigsPages {
 
 @Composable
 fun ConfigsPage(page: String) {
+    // #1630 the fleet-default tail pages (Agents, Perms, Logcat, X-Ray App) are libs:ui-nav-bars' and scroll themselves; About stays the Store's own.
+    if (page == "perms" || com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.isOptInTail(page)) {
+        androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().testTag(ConfigsPages.body(page))) {
+            com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(page)
+        }
+        return
+    }
     val pad = StoreDensity.dpValue(StoreDensity.S12).dp
     // #1512 every page (the shell-broker page included) is a column this host scrolls.
     Column(

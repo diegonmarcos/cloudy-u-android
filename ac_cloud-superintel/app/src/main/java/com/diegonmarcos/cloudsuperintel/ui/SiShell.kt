@@ -123,7 +123,10 @@ fun SiShell() {
     val aiPages = remember { AiData.pages(AiData.asset(ctx, AiData.PAGES)) }
     var section by rememberSaveable { mutableStateOf(nav.default()?.id ?: Decl.SECTION_SI) }
     var page by rememberSaveable { mutableStateOf<String?>(null) }
-    val sec = nav.section(section)
+    // #1630 Settings (the app's Configs) ends with the fleet-default tail: {own tabs} | Agents, Perms, Logcat, X-Ray App, About.
+    val sec = nav.section(section)?.let { s ->
+        if (s.id == Decl.SECTION_SETTINGS) s.copy(pages = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(s.pages)) else s
+    }
     val pageId = page?.takeIf { p -> sec?.pages?.any { it.id == p } == true } ?: sec?.pages?.firstOrNull()?.id
     val theme = siAiTheme()
     // The chat the drawer, the Models page and the sessions follow: the open persona's, else the router's.
@@ -194,6 +197,7 @@ fun SiShell() {
                                 Decl.PAGE_TOOLS_PICKERS -> TextPage(R.string.tools_pickers_title, stringResource(R.string.tools_pickers_body)) { AiSettingsPickers(chat, theme) }
                                 Decl.PAGE_TOOLS_TASKS -> AiTaskCatalogue(chat, theme, composerDecl, Modifier.fillMaxSize())
                                 Decl.PAGE_TOOLS_MCP -> aiPages["mcp"]?.let { AiPage(it) }
+                                "perms", "agents", "logcat", "xray" -> com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(pageId.orEmpty())
                                 Decl.PAGE_MODELS -> TextPage(R.string.models_title, stringResource(R.string.models_body)) { AiSettingsPickers(chat, theme) }
                                 Decl.PAGE_BACKEND -> TextPage(R.string.backend_title, stringResource(R.string.backend_body) + "\n\n" + stringResource(R.string.backend_gateway, BuildConfig.AI_GATEWAY_URL))
                                 Decl.PAGE_ABOUT -> TextPage(R.string.about_title, stringResource(R.string.about_body, BuildConfig.VERSION_NAME, BuildConfig.GIT_SHORT_SHA))

@@ -118,7 +118,7 @@ private fun TopRow(state: CalcState) {
 @Composable
 private fun TabContent(tabId: String) {
     val state = LocalCalcState.current
-    val modes = Declarations.modesOf(tabId)
+    val modes = ConfigsTail.order(tabId, Declarations.modesOf(tabId))
     if (modes.isEmpty()) {
         Text(stringResource(R.string.no_modes, tabId), Modifier.padding(CalcMetrics.gutter))
         return
@@ -129,7 +129,7 @@ private fun TabContent(tabId: String) {
         if (modes.any { it.kind in ConvertSearch.KINDS }) ConvertSearchBox(modes)
         if (modes.size > 1) {
             // The page's modes are a dense icon row: icon over a short label, no minimum height.
-            ModeIcons(modes, selected, Declarations.tabs.firstOrNull { it.id == tabId }?.icon.orEmpty()) { state.modeByTab[tabId] = it }
+            ModeIcons(modes, selected, Declarations.tabs.firstOrNull { it.id == tabId }?.icon.orEmpty(), ConfigsTail.separatorBefore(tabId, modes)) { state.modeByTab[tabId] = it }
         }
         val mode = modes.first { it.id == selected }
         key(mode.id) { ModeScreen(mode) }
@@ -138,7 +138,7 @@ private fun TabContent(tabId: String) {
 
 /** One mode per cell: [Declarations.Mode.icon] (else the page's [pageIcon]) over its short label; scrolls when it must. */
 @Composable
-private fun ModeIcons(modes: List<Declarations.Mode>, selectedId: String, pageIcon: String, onSelect: (String) -> Unit) {
+private fun ModeIcons(modes: List<Declarations.Mode>, selectedId: String, pageIcon: String, separatorBefore: String?, onSelect: (String) -> Unit) {
     val listState = rememberLazyListState()
     // A mode picked elsewhere (a search hit) is scrolled into the row.
     LaunchedEffect(selectedId) { modes.indexOfFirst { it.id == selectedId }.takeIf { it >= 0 }?.let { listState.scrollToItem(it) } }
@@ -147,10 +147,13 @@ private fun ModeIcons(modes: List<Declarations.Mode>, selectedId: String, pageIc
         modifier = Modifier.fillMaxWidth().testTag(CalcTags.STRIP),
         contentPadding = PaddingValues(horizontal = CalcMetrics.small),
         horizontalArrangement = Arrangement.spacedBy(CalcMetrics.hairline),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         items(modes, key = { it.id }) { m ->
+            // #1630 the "|" between the app's own Configs modes and the fleet-default tail
             val on = m.id == selectedId
             val tint = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            if (m.id == separatorBefore) Text("|", Modifier.padding(horizontal = CalcMetrics.hairline).testTag("calc_configs_sep"), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Column(
                 Modifier.clip(RoundedCornerShape(CalcMetrics.small))
                     .background(if (on) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
@@ -215,4 +218,24 @@ object CalcTags {
     fun jevModel(slug: String) = "jev_model_$slug"
     fun jevPicker(use: String) = "jev_picker_$use"
     fun jevTestColumn(model: String) = "jev_test_column_$model"
+}
+
+/**
+ * #1630 The Configs strip is [General + the app's own modes] | Agents, Perms, Logcat, X-Ray App, About. build.json declares the modes
+ * (General | Permissions | About first, then the own pages and the three opt-in tail pages); this puts the five tail kinds last, in
+ * the fleet order, with the "|" before the first. Every other tab is returned as declared.
+ */
+object ConfigsTail {
+    /** The tail's mode kinds, in the order they are drawn after the "|". */
+    val KINDS: List<String> = listOf("fleet_agents", "fleet_perms", "fleet_logcat", "fleet_xray", "fleet_about")
+
+    fun order(tabId: String, modes: List<Declarations.Mode>): List<Declarations.Mode> {
+        if (tabId != "configs") return modes
+        val own = modes.filter { it.kind !in KINDS }
+        return own + KINDS.mapNotNull { k -> modes.firstOrNull { it.kind == k } }
+    }
+
+    /** The id of the first tail mode (the "|" is drawn before it), or null when the tab is not Configs. */
+    fun separatorBefore(tabId: String, ordered: List<Declarations.Mode>): String? =
+        if (tabId == "configs") ordered.firstOrNull { it.kind in KINDS }?.id else null
 }

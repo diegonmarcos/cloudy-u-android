@@ -78,13 +78,15 @@ fun ConfigsScreen(
     Column(modifier.fillMaxSize()) {
         // #1356 no title row (the terminal shortcut is the Termux tile of Home ▸ Apps): the content starts under the top bar.
         // #868 the strip is libs:bottomnav's PageTabs over ui.sections[configs].pages.
-        NavBarTopSecondRow(pages = Declarations.navPages("configs"), selectedId = current, onSelect = { current = it.id }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag(DriveTags.CONFIGS_STRIP), underTopChrome = false)
+        NavBarTopSecondRow(pages = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(Declarations.navPages("configs")), selectedId = current, onSelect = { current = it.id }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag(DriveTags.CONFIGS_STRIP), underTopChrome = false)
         AnimatedContent(targetState = current, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "configs_page", modifier = Modifier.weight(1f)) { id ->
             when (id) {
                 // #1443 General | Perms | About are the fleet's shared pages (libs:ui-nav-bars); Drive is this app's own former General.
                 "general" -> FleetConfigsPageBody(id, onAppConfigs = { current = "drive" })
                 "perms" -> FleetConfigsPageBody(id)
                 "about" -> FleetConfigsPageBody(id)
+                // #1630 the fleet-default tail: {own tabs} | Agents, Perms, Logcat, X-Ray App, About
+                "agents", "logcat", "xray" -> FleetConfigsPageBody(id)
                 "drive" -> GeneralPage(prefs, actions, hasAccess, rcloneVersion)
                 "webserver" -> WebserverPage(actions)
                 "fsync" -> ConfigsFsyncPage(storage, actions)

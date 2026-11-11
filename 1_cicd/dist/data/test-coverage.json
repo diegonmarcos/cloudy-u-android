@@ -13,11 +13,11 @@
     },
     "aa_cloud-superapp": {
       "first_test": "Has 91 shell testers. tests.unit.enabled=false, so its step named 'JVM unit tests (fatal on failure)' executes nothing and goes green \u2014 its own task, not this one.",
-      "shell_testers": 180,
+      "shell_testers": 181,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 268,
+      "unit_test_sources": 271,
       "workflow": "ship-cloud-superapp.yml"
     },
     "ab_cloud-libs-shared/keyboard-engines": {
@@ -85,11 +85,11 @@
     },
     "ac_cloud-browser": {
       "first_test": "COVERED NOW: app/src/test/BrowserFeaturesTest.kt asserts the behaviour of the seven tab features against the SHIPPED build.json::ui.browser - the four first-run tabs arrive pinned and in order, a second launch re-seeds nothing, a pinned tab REFUSES to close, a drag stamps an order that outlives recency, and a non-URL entry resolves to Qwant. test/test-browser-config-boundary.sh holds the #209 line: the shared libs:browser carries none of his URLs and its own default pins nothing, so no other consumer can inherit them. test/test-browser-features-wired.sh proves each feature is reachable from the UI rather than merely modelled. NOT COVERED: nothing instruments the WebView itself. No test loads a page, so a URL that 404s, a viewport that renders blank, or a drag that never fires on real hardware would all still ship green - those need the androidTest source set and a device, and this app has neither.",
-      "shell_testers": 42,
+      "shell_testers": 43,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 65,
+      "unit_test_sources": 66,
       "workflow": "ship-cloud-browser.yml"
     },
     "ac_cloud-browser/web": {
@@ -206,7 +206,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 113,
+      "unit_test_sources": 116,
       "workflow": "ship-cloud-drive.yml"
     },
     "ac_cloud-drive/web": {
@@ -242,7 +242,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 6,
+      "unit_test_sources": 7,
       "workflow": "ship-cloud-kg-store.yml"
     },
     "ac_cloud-mail": {
@@ -355,7 +355,7 @@
     },
     "ac_cloud-notes": {
       "first_test": "Has 7 shell testers, executed. test-file-explorer.sh (#547, NEW): the FAB opens a file EXPLORER, not a typed-path prompt \u2014 app.tsx has no window.prompt and lists folders through ExternalFile.listDir; every method the web plugin type declares is a native @PluginMethod (derived from both files); the event the explorer listens for is one MainActivity dispatches; native readFile AND listDir both go through one guardedFile() gate that canonicalises path and root (a prefix test alone lets '/storage/emulated/0/../' escape) and checks storage access; listDir offers only the SUPPORTED extensions readFile accepts. MUTATION-PROVED 9 ways, each restored. test-html-import-route.sh (#547, NEW): an HTML file opened from device storage is CONVERTED by upstream's HtmlTransformer.importHTMLToDoc, never wrapped as text/markdown for the Obsidian importer (which rendered the literal markup). Derives the extensions the device reads from ExternalFilePlugin.kt's SUPPORTED set, which of them are HTML from Python's built-in MIME table, and the converter's options from its own ImportHTMLToDocOptions type; asserts app.tsx routes exactly those to the converter branch and that no markdown wrapper is reachable from it. MUTATION-PROVED 9 ways, incl. the unmodified pre-#547 app.tsx going RED. test-licence-clean.sh (EE dirs absent, no cloud_notes_common in Cargo.lock/APK-crate manifests, licence guard green on the tree AND red against a copy with packages/common/native restored). test-identity.sh (applicationId com.diegonmarcos.cloudnotes is declared ONCE in build.json and DERIVED by app/build.gradle via JsonSlurper and by capacitor.config.ts via readFileSync \u2014 neither may restate it; no upstream app.cloudnotes.pro applicationId, no Firebase/google-services, no :service Apollo module, resConfigs \"en\"). test-root-scope-services.sh (#513: nothing rendered on the ROOT framework provider resolves a service registered under a .scope(...), which is the one line that painted a white page). test-launch-payload.sh (#522, NEW): it asserts against THE APK THAT SHIPPED \u2014 the rolling-release Cloud-Notes.apk, the same bytes the fleet updater puts on the phone \u2014 not against dist/ (testers run before the toolchain is provisioned) and not against a fixture. Beyond the #513 payload floors it requires the two files the FIRST LAUNCH cannot proceed without, declared in build.json::release.artifact_assert.required_globs: the nbstore worker app.tsx opens the local document store through, and the onboarding template buildShowcaseWorkspace fetches to create the first workspace. Either one absent and createFirstAppData() rejects, the rejection is swallowed in core/src/desktop/pages/index/index.tsx and the owner reads \"An internal error occurred.\" behind a green run. MUTATION-PROVED on real bytes: an APK identical to the published one except the nbstore worker was removed is called \"payload OK\" by the #513 engine gate (exit 0) and RED by this tester. It also parses the .dynsym of the .so inside that APK and requires the committed UniFFI Kotlin binding to agree with it in both directions \u2014 every symbol declared is exported, every symbol called is declared. That second direction is not academic: #469 hand-edited the binding to drop hashcash_mint, cut two lines too many, and left uniffi_cloud_notes_mobile_native_fn_func_new_doc_storage_pool CALLED but never DECLARED plus an orphan \"): Pointer\" inside the interface body \u2014 committed Kotlin that does not parse. It shipped for three tickets because Gradle regenerates that file from the built .so before javaCompile, so the committed source is never the source that builds. #522 repaired it and this tester is what keeps it repaired; re-introducing the exact #469 cut turns it red. THE GAP, NAMED, AND IT IS THE IMPORTANT HALF: NOTHING HERE LAUNCHES THE APP. Every tester is static or reads an archive. The owner's \"An internal error occurred.\" is a RUNTIME failure of the first-workspace bootstrap, and no check in this repository can see it \u2014 that needs the phone, which was unreachable from the agent container on 2026-09-19 (the superapp MCP's ssh hops phone/phone-v6/phone-pub all failed DNS). What #522 shipped instead is the ability to READ it next time: MainActivity now forwards WebView console ERRORs to Timber, so FileTree persists them to filesDir/logs/<date>.log where logcat's ring buffer used to lose them, and the mobile fallback panel prints the real exception under the generic line rather than only the false error.INTERNAL_SERVER_ERROR string. test-capacitor-plugin-surface.sh (#543, NEW): every Capacitor plugin NAME the web bundle registers \u2014 derived by walking apps/android/src for registerPlugin<T>('name') \u2014 must have a native class in MainActivity's registerPlugins(listOf(...)) whose @CapacitorPlugin(name = \"...\") is that name, derived from the Kotlin sources. Neither compiler can see this gap: TypeScript type-checks registerPlugin against a hand-written interface, Gradle compiles an activity that is free to register nothing, and the bridge is resolved only at runtime on first use. #469's de-clouding deleted AuthPlugin.kt and left plugins/auth calling registerPlugin('Auth'), so the missing plugin threw '\"Auth\" plugin is not implemented on android' \u2014 and because proxy.ts hands Auth to installAuthRequestProxy(), which wraps globalThis.fetch and treats the app's own https://localhost origin as an auth endpoint, the throw landed on LOCAL workspace creation, the one flow that needs no auth at all. No plugin name is written in the tester (a list there would have been authored by whoever forgot the native class, and would have passed on the broken tree) and it fails closed on a thin derivation. MUTATION-PROVED three ways, each restored: drop LocalAuthPlugin from registerPlugins \u2014 RED; rename its @CapacitorPlugin name \u2014 RED (registered but unroutable); revert createAuthFetch's degrade-to-no-token \u2014 RED. PHASE 0 STORAGE (cloud-notes-hybrid, NEW): the ship workflow's storage_tests job (needs: of the build) runs ac_cloud-notes/test/run-phase0-storage.sh with the pinned node 22.23.2 + rust 1.97.1: the Rust test doc_persists_across_reopen_byte_identical (mobile-native/src/tests.rs; a doc pushed through the pool API survives disconnect + a new pool on the same .db file byte-identical) and the JS nbstore adapter spec (apps/android/src/plugins/nbstore/index.spec.ts, run under vitest.phase0.config.mts, 3 tests). The script greps its own output for the named test passing, so a filter that matches nothing cannot go green. Not named test-*.sh because the shell phase runs those before any toolchain exists. TOP BAR (NEW): test-notes-topbar.sh asserts Cloud Notes adopts libs:bottomnav's AppTopBar (ui.top_bar declared, UI_TOP_BAR_B64 / AI_GATEWAY_URL baked, libs:ai linked, AppTopBarScaffold + Account launcher + AiFleetChatPanel + a Configs handler wired), that the Kotlin and TypeScript halves share the event names and the CloudNotesHost.setDocs bridge, and that the top inset has ONE source: a single Kotlin writer of the WebView's top margin (bar height + strip height) and the web half's --safe-area-inset-top zeroed once native owns the bar. Mutation-proved: removing the web zeroing turns it RED. The web specs native-nav-routes.spec.ts (incl. the drawer page list) run in the storage_tests job beside the Phase 0 specs.",
-      "shell_testers": 15,
+      "shell_testers": 16,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,

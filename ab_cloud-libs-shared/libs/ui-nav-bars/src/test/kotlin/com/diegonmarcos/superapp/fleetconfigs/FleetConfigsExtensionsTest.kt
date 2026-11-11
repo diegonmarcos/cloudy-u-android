@@ -77,4 +77,28 @@ class FleetConfigsExtensionsTest {
         assertEquals("X-Ray App", FleetConfigsExtensions.byId("xray")?.label)
         assertEquals(listOf("general", "perms", "xray", "about"), FleetConfigsExtensions.stripOrder().map { it.id })
     }
+    // #1630 a host that draws its own strip (Dialer, Drive, News, ...) runs its declared pages through withTail: same order, same `|`.
+    private fun np(id: String) = com.diegonmarcos.superapp.bottomnav.NavPage(id, id.replaceFirstChar { it.uppercase() }, "code")
+
+    @Test fun host_strip_gets_the_tail_in_exact_order_and_keeps_every_own_tab() {
+        reg("xray", "X-Ray App"); reg("logcat"); reg("agents")
+        val host = listOf("general", "perms", "about", "sim", "status", "usage").map { np(it) }   // Dialer's declared order
+        val s = FleetConfigsExtensions.withTail(host)
+        assertEquals(listOf("general", "sim", "status", "usage", "agents", "perms", "logcat", "xray", "about"), s.map { it.id })
+        assertEquals(listOf("agents"), s.filter { it.separatorBefore }.map { it.id })
+        assertTrue(s.map { it.id }.containsAll(host.map { it.id }))
+    }
+
+    @Test fun host_strip_with_the_shared_pages_after_its_own_tabs_still_ends_with_the_tail() {
+        reg("logcat")
+        val host = listOf("media", "events", "news", "apify", "general", "perms", "about").map { np(it) }   // News's declared order
+        val s = FleetConfigsExtensions.withTail(host)
+        assertEquals(listOf("media", "events", "news", "apify", "general", "perms", "logcat", "about"), s.map { it.id })
+        assertEquals("perms", s.first { it.separatorBefore }.id)
+    }
+
+    @Test fun host_strip_without_perms_or_about_gets_them_added() {
+        val s = FleetConfigsExtensions.withTail(listOf(np("general"), np("own")))
+        assertEquals(listOf("general", "own", "perms", "about"), s.map { it.id })
+    }
 }

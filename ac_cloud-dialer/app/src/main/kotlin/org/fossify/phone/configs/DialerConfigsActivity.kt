@@ -105,7 +105,8 @@ object DialerConfigsPages {
         if (p.size == 3 && p[0].isNotBlank()) NavPage(p[0], p[1], p[2]) else null
     }
 
-    val pages: List<NavPage> by lazy { parse(BuildConfig.CONFIGS_TOP_NAV) }
+    /** #1630 the strip: build.json's top_nav through the fleet tail, [General, SIM, Status, Usage] | Agents, Perms, Logcat, X-Ray App, About. */
+    val pages: List<NavPage> by lazy { com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(parse(BuildConfig.CONFIGS_TOP_NAV)) }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -150,6 +151,8 @@ private fun DialerConfigsScreen(dark: Boolean, start: String?, onBack: () -> Uni
                 "usage" -> SimUsagePage(c)
                 // About scrolls itself.
                 "about" -> FleetAboutPage(FleetConfigs.current, c)
+                // #1630 the opt-in tail tabs (libs:fleetconfigs-agents / -logcat / -xray)
+                "agents", "logcat", "xray" -> com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(selected, dark)
             }
         }
     }

@@ -5167,6 +5167,30 @@
         "_doc": "#772 Configs > Image recognition route: On-device ML (the default, offline) or an OpenRouter decision model, and that model, picked from the live decision catalogue the image engine reads. The choice is this app's (RecognitionPrefs); the routes, thresholds and the default model are libs:ml-l-image/recognition.json, shared with Cloud Camera."
       },
       {
+        "id": "configs_agents",
+        "label": "Agents",
+        "icon": "psychology",
+        "tab": "configs",
+        "kind": "fleet_agents",
+        "_doc": "#1630 the fleet-default Configs tail: the strip draws General, own tabs, | , Agents, Perms, Logcat, X-Ray App, About (ConfigsTail in ui/CalcShell.kt reorders these modes). Agents is the opt-in libs:fleetconfigs-agents page."
+      },
+      {
+        "id": "configs_logcat",
+        "label": "Logcat",
+        "icon": "timeline",
+        "tab": "configs",
+        "kind": "fleet_logcat",
+        "_doc": "#1630 the fleet-default Configs tail: the opt-in libs:fleetconfigs-logcat page."
+      },
+      {
+        "id": "configs_xray",
+        "label": "X-Ray App",
+        "icon": "sensors",
+        "tab": "configs",
+        "kind": "fleet_xray",
+        "_doc": "#1630 the fleet-default Configs tail: the opt-in libs:fleetconfigs-xray page."
+      },
+      {
         "id": "history",
         "label": "History",
         "tab": "history",

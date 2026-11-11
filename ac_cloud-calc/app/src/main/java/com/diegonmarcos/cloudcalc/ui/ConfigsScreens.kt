@@ -49,3 +49,9 @@ fun FleetPermsMode() {
 fun FleetAboutMode() {
     FleetAboutPage(FleetConfigs.current, ThemeBackground.colors(true))
 }
+
+/** #1630 the opt-in tail pages of the fleet Configs (Agents, Logcat, X-Ray App: libs:fleetconfigs-*), drawn by the shared page body. */
+@Composable
+fun FleetTailMode(id: String) {
+    com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(id)
+}

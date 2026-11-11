@@ -55,7 +55,12 @@ class DeclarationsTest {
         val configs = Declarations.configsTab
         assertEquals("configs", configs?.id)
         assertTrue("Configs is not on the bar", Declarations.sections.none { it.id == configs?.section })
-        assertEquals(listOf("configs_general", "configs_permissions", "configs_about", "jev_token", "jev_routing", "jev_models", "jev_test", "image_route"), Declarations.modesOf("configs").map { it.id })
+        assertEquals(listOf("configs_general", "configs_permissions", "configs_about", "jev_token", "jev_routing", "jev_models", "jev_test", "image_route", "configs_agents", "configs_logcat", "configs_xray"), Declarations.modesOf("configs").map { it.id })
+        // #1630 the strip ends with the fleet-default tail, in the exact owner order, the "|" before the first of the five
+        val strip = com.diegonmarcos.cloudcalc.ui.ConfigsTail.order("configs", Declarations.modesOf("configs"))
+        assertEquals(listOf("fleet_agents", "fleet_perms", "fleet_logcat", "fleet_xray", "fleet_about"), strip.takeLast(5).map { it.kind })
+        assertEquals("configs_agents", com.diegonmarcos.cloudcalc.ui.ConfigsTail.separatorBefore("configs", strip))
+        assertTrue("no tab was lost", Declarations.modesOf("configs").all { m -> strip.any { it.id == m.id } })
     }
 
     @Test fun `the jev block parses, validates, and is what gradle baked`() {

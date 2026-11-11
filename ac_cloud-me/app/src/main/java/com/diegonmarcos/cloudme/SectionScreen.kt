@@ -60,6 +60,10 @@ fun SectionScreen(sectionId: String, requestedPage: String?, modifier: Modifier 
         mutableStateOf(section.page(requestedPage)?.leaf()?.id)
     }
     val page = section.page(pageId)?.leaf() ?: return
+    // #1630 Configs ends with the fleet-default tail: {own tabs} | Agents, Perms, Logcat, X-Ray App, About. Agents / Logcat / X-Ray App are the
+    // opt-in libs' tabs (libs:fleetconfigs-*), not declared pages: they are kept by id and drawn by FleetConfigsPageBody.
+    val isConfigs = sectionId == "configs"
+    val tailTab = isConfigs && com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.isOptInTail(pageId)
     val chain = section.path(page.id)
     val ctx = LocalContext.current
     val onTarget = LocalMeTarget.current
@@ -76,7 +80,8 @@ fun SectionScreen(sectionId: String, requestedPage: String?, modifier: Modifier 
             // you were last on — which is what staying on the chain means — or its
             // first child. Tapping a leaf opens the leaf.
             val stillBelow = section.path(pageId).any { it.id == tab.id }
-            pageId = if (stillBelow) pageId else section.page(tab.id)?.leaf()?.id
+            pageId = if (isConfigs && com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.isOptInTail(tab.id)) tab.id
+            else if (stillBelow) pageId else section.page(tab.id)?.leaf()?.id
         }
     }
     // The Samsung Health strip (#1144): icon-only pills, the selected one also shows its name.
@@ -85,7 +90,7 @@ fun SectionScreen(sectionId: String, requestedPage: String?, modifier: Modifier 
     // tabs, level n the children of the tab chosen at level n-1, and the
     // chain says which tab is selected at each. Strips past the chain are
     // dropped, so stepping out of a container takes its strip with it.
-    val levels = listOf(section.pages) + chain.dropLast(1).map { it.pages }
+    val levels = listOf(if (isConfigs) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(section.pages) else section.pages) + chain.dropLast(1).map { it.pages }
     val sideMenu = nav.rows == SecondRowMode.SideMenu && section.pages.size > 1
     // #1298 the group build.json::ui.repo_tree.group names (Lnktree's Proj): its label opens the WHOLE repo outline.
     var fullTree by rememberSaveable(sectionId) { mutableStateOf(false) }
@@ -108,7 +113,7 @@ fun SectionScreen(sectionId: String, requestedPage: String?, modifier: Modifier 
                     } else {
                         NavBarTopSecondRow(
                             pages = siblings,
-                            selectedId = chain.getOrNull(level)?.id,
+                            selectedId = if (tailTab && level == 0) pageId else chain.getOrNull(level)?.id,
                             onSelect = onSelect,
                             dark = true,
                             underTopChrome = false,
@@ -117,7 +122,8 @@ fun SectionScreen(sectionId: String, requestedPage: String?, modifier: Modifier 
                     }
                 }
             }
-            PageContent(section, page, Modifier.weight(1f).fillMaxWidth())
+            if (tailTab) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(pageId.orEmpty(), modifier = Modifier.weight(1f).fillMaxWidth())
+            else PageContent(section, page, Modifier.weight(1f).fillMaxWidth())
         }
     }
     if (sideMenu) {
