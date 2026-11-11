@@ -75,7 +75,7 @@ check('P0a', JSON.stringify(d.tabs) === JSON.stringify(['Pages', 'API', 'Home', 
 check('P0b', d.on === 'Home', `the app opens on Home (selected: ${d.on})`);
 
 const tabs = [['Pages', 'pages', `document.querySelector('.served')`], ['API', 'api', `document.querySelector('main section .row')`],
-  ['Home', 'home', `document.querySelector('#home-status')`], ['Configs', 'configs-about', `document.querySelector('.seg')`]];
+  ['Home', 'home', `document.querySelector('#home-status')`], ['Configs', 'configs-about', `document.querySelector('[data-cfg]')`]];
 for (const [label, name, ready] of tabs) {
   await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === ${JSON.stringify(label)}).click()`);
   await until(`document.querySelector('nav button.on') && document.querySelector('nav button.on').innerText.trim() === ${JSON.stringify(label)} && ${ready}`);
@@ -111,7 +111,7 @@ const sg = await shot('shell-pages-single-list');
 check('G9', A37(sg), `Pages single list, shot ${sg.w}x${sg.h}`);
 // back to Configs, where the Engines and Links checks below start
 await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'Configs').click()`);
-await until(`document.querySelector('.seg')`);
+await until(`document.querySelector('[data-cfg]')`);
 
 // Configs > Engines and Links
 for (const [seg, name, ready] of [['engines', 'configs-engines', `document.querySelector('.eng')`], ['links', 'configs-links', `document.querySelector('select[data-remember]')`]]) {

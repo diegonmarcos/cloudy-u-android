@@ -29,7 +29,7 @@ bad = []
 def rd(p): return open(app + "/" + p).read()
 html, rs, sub, served, bridge = rd("server/ui/shell.html"), rd("server/src/app.rs"), rd("server/src/sub.rs"), rd("server/src/served.rs"), rd("src-tauri/src/bridge.rs")
 b = json.loads(rd("build.json"))
-m = re.search(r"pages: function \(\) \{(.*?)\},\n", html)
+m = re.search(r"pages: function \(\) \{(.*?)\n    \},\n", html, re.S)
 view = m.group(1) if m else ""
 if "/__app__/api/served" not in view or "withSubs" in view or "renderRoutes" in view:
     bad.append("V1 the Pages view is not the single served list")
@@ -120,7 +120,7 @@ s = open(p).read(); n = s.replace(a, b, 1); assert n != s; open(p, "w").write(n)
 PY
   if run "$d" >/dev/null 2>&1; then fail "M: '$title' stayed GREEN"; else pass "M: '$title' goes red"; fi
 }
-mutate "the sub-nav back on Pages"       server/ui/shell.html "pages: function () { return j('/__app__/api/served')" "pages: function () { return withSubs('pages', 'drive', function () { return j('/__app__/api/served')"
+mutate "the Drive/Terminals/Repos sub-nav back on Pages" server/ui/shell.html "var served = function () {" "var served = function () { withSubs('pages', 'drive', null);"
 mutate "no Start app button"             server/ui/shell.html "data-start-app" "data-x"
 mutate "no undeclared checker"           server/ui/shell.html "renderForm(pg.form) + renderUndeclared(pg.undeclared)" "renderForm(pg.form)"
 mutate "no Rescan"                       server/ui/shell.html "data-rescan>Rescan" "data-x>Rescan"
