@@ -34,4 +34,10 @@ class HeldMediaSourceTest {
         assertTrue(pk.containsAll(listOf("com.aspiro.tidal", "com.spotify.music", "com.google.android.apps.youtube.music",
             "com.google.android.youtube", "com.vimeo.android.videoapp")))
     }
+
+    @Test fun `a stored session from a non-held app is dropped on load`() {
+        val src = java.io.File("src/main/java/com/diegonmarcos/superapp/media/LastMediaSession.kt").readText()
+        val load = src.substringAfter("fun load(ctx: Context)").substringBefore("fun resume(")
+        assertTrue(load.contains("if (!isHeldSource(pkg))") && load.contains("return null"))
+    }
 }

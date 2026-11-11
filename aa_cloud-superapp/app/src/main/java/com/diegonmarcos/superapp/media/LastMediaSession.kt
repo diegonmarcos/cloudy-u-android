@@ -65,6 +65,8 @@ object LastMediaSession {
     fun load(ctx: Context): Last? {
         val sp = p(ctx)
         val pkg = sp.getString("pkg", null) ?: return null
+        // #1648: a session persisted by an older build from Telegram / a browser is dropped, never shown.
+        if (!isHeldSource(pkg)) { runCatching { sp.edit().clear().apply(); artFile(ctx).delete() }; return null }
         val title = sp.getString("title", null) ?: return null
         val art = runCatching { artFile(ctx).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.path) } }.getOrNull()
         return Last(pkg, title, sp.getString("artist", "").orEmpty(), sp.getLong("pos", 0), sp.getLong("dur", 0), art)
