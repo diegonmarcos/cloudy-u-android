@@ -10,10 +10,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+private const val GPS = "gps"
+private const val PASSIVE = "passive"
+
 /** Coarse-only, one-fix-per-4h rule, persistence rule and fallback of the Weather badge's position (#1654). Pure JVM. */
 class WeatherLocationTest {
-    private val GPS = "gps"
-    private val PASSIVE = "passive"
     private val now = 10_000_000_000L
     private val min = 60_000L
     private val all = Env(coarse = true, fine = true, background = true, anyProviderOn = true)
