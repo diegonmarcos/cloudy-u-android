@@ -50,7 +50,7 @@ object QuickDisplay {
         val ps = o.optJSONArray("presets")
         val center = o.optInt("center", 411)
         return ScaleSpec(
-            o.optString("label", "Cloud-superapp Scale"), o.optString("subtitle"), o.optString("unit", "dp"),
+            o.optString("label", "Display Scale"), o.optString("subtitle"), o.optString("unit", "dp"),
             center, o.optInt("min", center - 150), o.optInt("max", center + 150),
             o.optInt("tick_minor", 10), o.optInt("tick_major", 50),
             (0 until (ps?.length() ?: 0)).map { ps!!.getJSONObject(it).let { p -> Preset(p.optString("label"), p.optInt("value")) } },

@@ -66,7 +66,7 @@ class LauncherControlsComposeTest : KitPageHarness() {
             compose.onNodeWithTag("display:$id:header", useUnmergedTree = true).assertExists()
             compose.onNodeWithTag("display:$id:status", useUnmergedTree = true).assertExists()
         }
-        assertText("Cloud-superapp Scale", true)
+        assertText("Display Scale", true)
         assertText("Font Size", true)
         assertText("Zoom Size", true)
         compose.onNodeWithTag("display:scale:preset:500", useUnmergedTree = true).assertExists()
@@ -94,7 +94,7 @@ class LauncherControlsComposeTest : KitPageHarness() {
     fun `L7 All is the union of UI, Battery Hungers and Tools`() {
         show(LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_ALL))
         assertText("Screensaver", true)
-        assertText("Cloud-superapp Scale", true)
+        assertText("Display Scale", true)
         assertText("Launcher Battery Hungers", true)
         assertText("Battery use per app", true)
         for (g in LauncherSettingsPrefs.Config.groups) assertText(g.label, true)

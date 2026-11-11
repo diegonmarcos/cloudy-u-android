@@ -18,7 +18,7 @@ class QuickDisplayTest {
     @Test
     fun `Q1 Cloud-superapp Scale is a ruler centred on 411 with a Set 500 preset`() {
         val s = QuickDisplay.scaleSpec
-        assertEquals("Cloud-superapp Scale", s.label)
+        assertEquals("Display Scale", s.label)
         assertEquals(411, s.center)
         assertEquals("symmetric around the centre", s.center - s.min, s.max - s.center)
         assertTrue(500 in s.min..s.max)
