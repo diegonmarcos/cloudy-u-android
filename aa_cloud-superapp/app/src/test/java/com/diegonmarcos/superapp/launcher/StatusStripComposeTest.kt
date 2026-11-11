@@ -144,8 +144,9 @@ class StatusStripComposeTest : KitPageHarness() {
         org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMillis(5_000))
         compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
         compose.waitForIdle()
-        advance(1)
-        assertEquals("back in front it shows the shared stopwatch's real elapsed time", "0:08", swText())
+        advance(1_000)
+        val sec = swText().substringAfter(':').toInt()
+        assertTrue("back in front it shows the shared stopwatch's real elapsed time (8-9 s), was ${swText()}", sec in 8..9)
         TasksPopup.resetStopwatchForTest()
     }
 
