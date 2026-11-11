@@ -1422,7 +1422,7 @@
     <string name="settings_offline_never">jamais</string>
     <string name="message_sign_in_required">Votre connexion a expiré. Reconnectez-vous pour charger ce message.</string>
     <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
-    <string name="settings_alert_accounts_title">Comptes d'alertes (RSS)</string>
+    <string name="settings_alert_accounts_title">Comptes d\'alertes (RSS)</string>
     <string name="settings_alert_accounts_summary">Les sources des alertes : la flotte et les vôtres</string>
     <string name="alert_accounts_name_hint">Nom (facultatif)</string>
     <string name="alert_accounts_url_hint">Adresse du flux</string>
