@@ -161,6 +161,8 @@ public fun NavBarBottom(
         val shape = RoundedCornerShape(BottomSpec.RADIUS)
         BoxWithConstraints(Modifier.widthIn(max = BottomSpec.MAX_WIDTH).fillMaxWidth()) {
             val cell = BottomSpec.cellWidth(maxWidth, entries.size)
+            // #1698 each label's room: its share of the bar (at least the cell)
+            val labelRoom = maxOf(cell, maxWidth / maxOf(1, entries.size))
             val barHeight by animateDpAsState(
                 if (clean) tokens.cleanBarHeight else if (collapsed) BottomSpec.COLLAPSED_HEIGHT else BottomSpec.HEIGHT, label = "navbottom_height",
             )
@@ -199,7 +201,7 @@ public fun NavBarBottom(
                         // The label fades with the state and leaves the tree once faded out (a hidden label is not a node).
                         if (show > 0f) Text(
                             // #1698 a long label shrinks to fit (BottomSpec.labelSize) and is never cut: unbounded width, no ellipsis.
-                            e.label, color = ink, fontSize = BottomSpec.labelSize(e.label, maxOf(cell, maxWidth / maxOf(1, entries.size))), fontWeight = FontWeight.Medium,
+                            e.label, color = ink, fontSize = BottomSpec.labelSize(e.label, labelRoom), fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center, maxLines = 1, softWrap = false, overflow = TextOverflow.Visible,
                             modifier = Modifier.align(Alignment.BottomCenter).wrapContentWidth(unbounded = true).padding(bottom = BottomSpec.LABEL_BOTTOM)
                                 .testTag(BottomTags.label(e.id))
