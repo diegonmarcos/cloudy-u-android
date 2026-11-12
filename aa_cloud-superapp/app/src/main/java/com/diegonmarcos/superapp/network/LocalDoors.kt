@@ -13,7 +13,7 @@ import java.net.Socket
  *   SSHd = a TCP connect to a door's port over loopback and an `SSH-2.0-` banner read back.
  * The ports, the route and the binds are not written here: app/build.gradle resolves build.json::home_status_bar.local_doors
  * (which points into ac_cloud-c3-webserver/build.json and, through its ssh_doors, ac_cloud-nix-on-droid/build.json) into
- * BuildConfig.LOCAL_DOORS_B64. A door the build could not resolve has port null and reads UNKNOWN with that reason.
+ * home_status_bar.local_doors.resolved, baked inside BuildConfig.STATUS_BAR_B64 (no field of its own). A door the build could not resolve has port null and reads UNKNOWN with that reason.
  * Probes run when the strip becomes visible and on change events only (StatusStripModel.refreshDoors); nothing here
  * schedules itself. Every path returns a reading, never throws.
  */
@@ -44,7 +44,8 @@ object LocalDoors {
     /** The baked declaration; an empty one (no doors, every state UNKNOWN) if the build carried none. */
     val declared: Decl by lazy {
         runCatching {
-            parse(String(android.util.Base64.decode(com.diegonmarcos.superapp.BuildConfig.LOCAL_DOORS_B64, android.util.Base64.DEFAULT), Charsets.UTF_8))
+            val bar = JSONObject(String(android.util.Base64.decode(com.diegonmarcos.superapp.BuildConfig.STATUS_BAR_B64, android.util.Base64.DEFAULT), Charsets.UTF_8))
+            parse(bar.getJSONObject("local_doors").getJSONObject("resolved").toString())
         }.getOrDefault(Decl(null, emptyList()))
     }
 

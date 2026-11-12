@@ -169,12 +169,11 @@ def declaredB64 = { String key ->
     if (v == null) throw new GradleException("build.json::${key} is not declared — the launcher reads it at runtime")
     groovy.json.JsonOutput.toJson(v).bytes.encodeBase64().toString()
 }
-def statusBarB64     = declaredB64('home_status_bar')
 def tasksPopupB64    = declaredB64('tasks_popup')
 def onehandPageB64   = declaredB64('onehand_page')
-// #1684 home_status_bar.local_doors -> LOCAL_DOORS_B64: every `*_from` ("<app>/build.json#a.b.c", from the monorepo root)
+// #1684 home_status_bar.local_doors.resolved (inside STATUS_BAR_B64, no field of its own): every `*_from` ("<app>/build.json#a.b.c", from the monorepo root)
 // resolved here so no port is written twice. An unresolvable reference bakes null (the strip says "not declared"), never a guess.
-def localDoorsB64 = {
+def localDoorsResolved = {
     def monorepo = rootDir.parentFile
     def slurp = new groovy.json.JsonSlurper()
     def resolveRef = { String ref ->
@@ -202,8 +201,11 @@ def localDoorsB64 = {
         [id: id, title: d.title ?: id, port: d.port_from ? toPort(resolveRef(d.port_from)) : toPort(d.port),
          bind: d.bind ?: toBind(resolveRef(d.bind_from))]
     }
-    groovy.json.JsonOutput.toJson(out).bytes.encodeBase64().toString()
+    out
 }()
+// The resolved doors travel inside the status bar's own declaration: they ARE that declaration's references, resolved.
+if (buildJson.home_status_bar?.local_doors instanceof Map) buildJson.home_status_bar.local_doors.resolved = localDoorsResolved
+def statusBarB64     = declaredB64('home_status_bar')
 // Keyboard subtypes enabled on first run (App.initVendoredKeyboard). CSV of
 // BCP-47 language tags from build.json::keyboard_dicts.default_languages.
 def keyboardDefaultLangs = (buildJson.keyboard_dicts?.default_languages ?: []).join(',')
@@ -890,7 +892,6 @@ android {
         buildConfigField "String", "UI_HOME_GROUPS_B64",    "\"${uiGroupsB64}\""
         buildConfigField "String", "STATUS_PETS_B64",        "\"${statusPetsB64}\""
         buildConfigField "String", "STATUS_BAR_B64",         "\"${statusBarB64}\""
-        buildConfigField "String", "LOCAL_DOORS_B64",        "\"${localDoorsB64}\""
         buildConfigField "String", "TASKS_POPUP_B64",        "\"${tasksPopupB64}\""
         buildConfigField "String", "ONEHAND_PAGE_B64",       "\"${onehandPageB64}\""
         buildConfigField "String", "KEYBOARD_DEFAULT_LANGS", "\"${keyboardDefaultLangs}\""

@@ -6,7 +6,7 @@
 #       group divider (dropdown order = strip order: both from ORDER / the declaration)
 #   G3  parity (rule 16): every pre-#1684 element id is still declared, Data renamed TypC (same id `data`), its pet kept
 #   G4  WebS / SSHd are real round trips: HEAD on a declared route, TCP + SSH banner; no port literal in the code; the
-#       ports come from other apps' build.json through app/build.gradle (LOCAL_DOORS_B64), and resolve when they are present
+#       ports come from other apps' build.json through app/build.gradle (into STATUS_BAR_B64), and resolve when they are present
 #   G5  no polling: the door checks run from start / resume / network change only (no timer, no postDelayed, no loop)
 #   G6  TypC from the USB_STATE and battery broadcasts (no polling): UsbDataModel.cable, re-derived in refreshBattery
 #
@@ -53,11 +53,11 @@ ids = {e["id"]: e for e in els}
 ok(all(i in ids for i in before), "G3 every pre-#1684 element is still declared")
 ok(ids["data"]["short"] == "TypC" and ids["data"]["pet"] == "usb" and '"Data"' in ns, "G3 Data renamed TypC: same id, same pet, former label kept")
 ld = read(SRC + "network/LocalDoors.kt"); ldc = code(ld)
-ok('"HEAD $route HTTP/1.1' in ldc and 'startsWith("SSH-")' in ldc and "LOCAL_DOORS_B64" in ldc, "G4 HEAD on the route, SSH banner, ports from LOCAL_DOORS_B64")
+ok('"HEAD $route HTTP/1.1' in ldc and 'startsWith("SSH-")' in ldc and "STATUS_BAR_B64" in ldc and '"resolved"' in ldc, "G4 HEAD on the route, SSH banner, ports from the resolved status-bar declaration")
 lit = [p for p in ("8002", "8003", "8004", "8022", "8024", "8025") if p in ldc or p in code(read(SRC + "launcher/StripDoors.kt"))]
 ok(not lit, f"G4 no port literal in the door code {lit}")
 g = read("app/build.gradle")
-ok("LOCAL_DOORS_B64" in g and "local_doors" in g, "G4 app/build.gradle bakes local_doors")
+ok("local_doors.resolved = localDoorsResolved" in g and "LOCAL_DOORS_B64" not in g, "G4 app/build.gradle resolves local_doors into the status bar declaration (no extra BuildConfig field)")
 d = sb["local_doors"]
 ok(all(not k.endswith("port") for k in d.get("webs", {})) and "port_from" in d["webs"], "G4 the declaration carries references, not ports")
 mono = os.path.dirname(app)
