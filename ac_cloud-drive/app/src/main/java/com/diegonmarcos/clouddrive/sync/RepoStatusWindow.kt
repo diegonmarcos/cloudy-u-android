@@ -123,8 +123,8 @@ internal fun RepoStatusWindow(
 /** #1670 the window's five light sections, the same five lights as the row (the same row model): title = the column, text = its cell. */
 @Composable
 private fun fiveSections(row: RepoTableRow, name: String): List<GitStatusSection> {
-    val yes = stringResource(R.string.repo_dirty_yes)
-    val no = stringResource(R.string.repo_dirty_no)
+    val yes = stringResource(com.diegonmarcos.cloudlib.gitui.R.string.repo_dirty_yes)
+    val no = stringResource(com.diegonmarcos.cloudlib.gitui.R.string.repo_dirty_no)
     val yn: (Boolean?) -> String = { b -> if (b == null) RepoTable.DASH else if (b) yes else no }
     return GitLights.of(row).map { (c, l) ->
         val text = when (c) {
