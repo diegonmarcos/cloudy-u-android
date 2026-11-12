@@ -13,7 +13,7 @@
     },
     "aa_cloud-superapp": {
       "first_test": "Has 91 shell testers. tests.unit.enabled=false, so its step named 'JVM unit tests (fatal on failure)' executes nothing and goes green \u2014 its own task, not this one.",
-      "shell_testers": 183,
+      "shell_testers": 184,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -121,11 +121,11 @@
     },
     "ac_cloud-calc": {
       "first_test": "Has 1 shell tester (test-calc-shell.sh: the tab/mode declaration against the renderer dispatch both ways, the icon vocabulary, RECORD_AUDIO asked in one file, the engine never compiled in, no network in app code, the debug routes, and #768's Clock contract \u2014 exact-alarm permissions, the non-exported wakeup receiver, boot/update/time/zone re-planning, the specialUse foreground service, the lock-screen ring, POST_NOTIFICATIONS asked in one file, one AlarmManager scheduler setting user alarms as alarm clocks, /api/clock/*, and #770's sections and Jev layer \u2014 every section has a tab, the network confined to jev/Decisions.kt with no URL spelled in it, every routing tool naming a declared mode/form, the token kept and read in decide/JevStore.kt alone, no logging where the token lives, /api/jev/* \u2014 36 planted mutations each go red), 6 JVM suites in app/, 1 in clock/ and 1 in jev/: DeclarationsTest (this build.json through the phone's parser, every Clock kind's data), LogicTest, DspTest, CalcShellTest (Robolectric: every declared mode, Clock included, reached through the nav and composed; 2+2 kept with =; a history tap; the Alarms screen shows a stored alarm and its switch cancels the AlarmManager wakeup), ClockEngineTest (Robolectric AlarmManager/receivers/service: alarms are alarm clocks at their local time, timers exact while-idle wakeups moved by pause/resume, a running timer survives process death and rings from the system's wakeup with a full-screen notification, early/stale wakeups ring nothing, a reboot or zone change re-plans, snooze, per-timer notification buttons, /api/clock/* create/report/cancel), JevAppTest (Robolectric, a fake Decisions transport: a confident route runs the tool on the app's own engine and lands in history; low confidence offers candidates; no token and an HTTP error both still answer offline as typed; a timer request starts a real Clock timer; a form's numbers are assigned by per-field questions; the routing table and the manual token round-trip through their stores and a broken edit is refused; Test never shows the key; a follow-up question is scored and kept), clock/ClockLogicTest (recurrence across repeat days and DST, timers, stopwatch laps, interval phases, fire/dismiss/snooze/auto-silence, the stored JSON) which PIT mutation-tests on every `gradle test` with an 85% kill threshold, and jev/JevTest (#770: the build.json::jev parser and every refusal, the router against a real local HTTP server as the mock Decisions API \u2014 request shape, bearer token, inclusive thresholds, candidates, HTTP/malformed/out-of-range/out-of-set/timeout/no-token fallbacks \u2014 numbers, durations, slot questions, follow-up questions, the live-catalogue parser and model resolution) which PIT mutation-tests with an 80% kill threshold. The calculations themselves are proven where they are made: Cloud-Lib-Calc's golden table in ab_cloud-libs-shared/libs/calc/native/golden.tsv. The gaps: no instrumentation test binds the real engine APK, so the cross-process call is first exercised on a phone (/api/calc/eval); a real ring, Doze and a real reboot are first exercised on a phone (/api/clock/status); the real OpenRouter Decisions API and the fleet Account's token binder are first exercised on a phone (/api/jev/route, /api/jev/config).",
-      "shell_testers": 9,
+      "shell_testers": 10,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 41,
+      "unit_test_sources": 40,
       "workflow": "ship-cloud-calc.yml"
     },
     "ac_cloud-camera": {
@@ -445,7 +445,7 @@
     },
     "ac_cloud-tasks": {
       "first_test": "COVERED NOW: app/src/test holds the JVM suite - the tasks database (ordered additive migrations, a v1 file with data upgrading intact, first-run seed and its idempotency, tags many-to-many, subtasks with every task field), the filter logic (status and tags, persisted, pruned), the mail agent (extraction wire, one pass of the runner, backend probe, scheduler floor) and Robolectric Compose layout-tree tests of the chrome (top row, page-managed drawer, island, filter bar, task editor fields, Settings > Appearance / Agent, AI panel). test/test-tasks-nav.sh diffs build.json::ui against the Kotlin ids both ways and holds the shell to the fleet's pieces; test-agents-parser.sh runs the screenshot parser. NOT COVERED: the legacy tasks.html pages (Events, Calendar, Invites, Feeds) beyond the parser; nothing drives a real WebView, Cloud Mail's provider, the system document picker or the live AI gateway, so the agent's extraction against a real model and the Cloud Drive / Cloud Mail hand-offs are unverified on hardware.",
-      "shell_testers": 2,
+      "shell_testers": 3,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -539,7 +539,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 13,
+      "unit_test_sources": 14,
       "workflow": "ship-cg-omniverse.yml"
     },
     "ad_Capital-Stack-FinTerminal": {
@@ -548,7 +548,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 32,
+      "unit_test_sources": 34,
       "workflow": "ship-capital-stack-finterminal.yml"
     },
     "ad_Hardtech-CAD": {

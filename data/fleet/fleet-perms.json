@@ -414,7 +414,8 @@
    "label": "cloud-tasks",
    "needs": [
     "notifications",
-    "install_unknown"
+    "install_unknown",
+    "exact_alarm"
    ],
    "helpers": []
   },

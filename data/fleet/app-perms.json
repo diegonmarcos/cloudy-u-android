@@ -50,7 +50,8 @@
   "com.diegonmarcos.cloudagenda": {
    "needs": [
     "notifications",
-    "install_unknown"
+    "install_unknown",
+    "exact_alarm"
    ],
    "first_run": "libs:perms",
    "helpers": []
