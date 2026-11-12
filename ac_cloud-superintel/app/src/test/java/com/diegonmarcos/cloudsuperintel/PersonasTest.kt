@@ -58,7 +58,7 @@ class PersonasTest {
 
     @Test fun theComposerDeclarationHoldsToTheSharedDesign() {
         val design = com.diegonmarcos.superapp.ai.AiDesign.parse(java.io.File("../../ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai-design.json").readText())
-        val decl = com.diegonmarcos.superapp.ai.AiComposerDecl.parse(Data.asset("../ai/composer.json"), design)
+        val decl = com.diegonmarcos.superapp.ai.AiComposerDecl.parse(java.io.File("../../data/fleet/app/com.diegonmarcos.cloudsuperintel/composer.json").readText(), design)
         assertEquals("cloud-superintel", decl.app)
         assertEquals(
             listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"),

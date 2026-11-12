@@ -3,7 +3,7 @@
  "seed_allowlist": {
   "_doc": "Tier-4 STATIC reference data that may stay bundled as a SEED the runtime provider overrides: path or dir/ prefix -> reason (at least 20 characters). Empty in phase 1: the tier-4 files are baselined below and move to Cloud Store packs in phase 2."
  },
- "json_max": 98,
+ "json_max": 94,
  "gradle_max": 22,
  "b64_max": 302,
  "mock_files": [
@@ -327,14 +327,6 @@
    "tier": 1,
    "target": "account personal/favourites_catalog"
   },
-  "ac_cloud-kg-store/app/src/main/assets/ai/composer.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/composer"
-  },
-  "ac_cloud-search/app/src/main/assets/ai/composer.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/composer"
-  },
   "ac_cloud-shopping/app/src/debug/assets/shop/shop.json": {
    "tier": "mock",
    "target": "remove from release builds (phase 1)"
@@ -342,10 +334,6 @@
   "ac_cloud-superintel/app/src/main/assets/ai/apis.json": {
    "tier": 2,
    "target": "account fleet/apis"
-  },
-  "ac_cloud-superintel/app/src/main/assets/ai/composer.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/composer"
   },
   "ac_cloud-superintel/app/src/main/assets/ai/cost.json": {
    "tier": 2,
@@ -378,10 +366,6 @@
   "ac_cloud-tasks/app/src/debug/assets/mock-tasks.json": {
    "tier": "mock",
    "target": "remove from release builds (phase 1)"
-  },
-  "ac_cloud-tools-small-llms/app/src/main/assets/ai/composer.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/composer"
   },
   "ac_cloud-vault/app/src/main/assets/fido2_privileged_community.json": {
    "tier": 4,

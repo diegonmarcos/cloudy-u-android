@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 1,
   "_doc": "Which of the shared AI composer's controls Cloud Tools Small LLMs enables (libs:ai assets/ai/ai-design.json defines them and their order). A TASK, never a model, picks the model here (task_required: the chat is always on a task), so Agent and Model are always the greyed chips of the task's mapping; no Mode, MCP or Effort because the app's router calls the model itself. More carries Usage & Cost from the Costs ledger. ToolsComposerTest holds this to the design.",
   "app": "cloud-tools-small-llms",
   "controls": ["plus", "task", "agent", "model", "more"],

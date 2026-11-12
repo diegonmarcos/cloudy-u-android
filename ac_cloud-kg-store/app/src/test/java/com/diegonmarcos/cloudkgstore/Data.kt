@@ -16,7 +16,7 @@ object Data {
     val searchJson: JSONObject get() = json(File(repo, "ac_cloud-search/build.json")).getJSONObject("search")
     val browserJson: JSONObject get() = json(File(repo, "ac_cloud-browser/build.json"))
     val accountJson: JSONObject get() = json(File(repo, "ac_cloud-account/build.json"))
-    val composer: JSONObject get() = json(File(app, "src/main/assets/ai/composer.json"))
+    val composer: JSONObject get() = json(File(repo, "data/fleet/app/com.diegonmarcos.cloudkgstore/composer.json"))
     val fleetManifest: JSONObject get() = json(File(repo, "aa_cloud-superapp/data/constellation-fleet.json"))
     val debugPorts: JSONObject get() = json(File(repo, "1_cicd/src/data/debug-ports.json")).getJSONObject("ports")
 

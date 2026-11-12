@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 1,
   "_doc": "Which of the shared AI composer's controls Cloud SuperIntel enables (libs:ai assets/ai/ai-design.json defines them, their rows and their order). Input row: (+). Toolbar row 1: Task, Specialist | Agent, Model, Effort, Mode. Toolbar row 2: Plugins-Skills | KG-Store, KG-Cloud-apps | KG-Repos, KG-Cloud-infra, Plugins-Perf | More. Usage & Cost lives in the top bar. The persona chats (SI and the CGC experts) open on their declared agent, model and MCPs (assets/si/personas.json); the user can change them here. PersonasTest holds this file to the design. `repos` are the repositories the Repos picker offers the model (the owner confirms the list).",
   "app": "cloud-superintel",
   "controls": [

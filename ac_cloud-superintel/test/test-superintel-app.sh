@@ -83,7 +83,7 @@ if "tools" not in bj["ui"]["bottom_nav"]: bad.append("B8 the AI Tools section le
 if [p["id"] for s in bj["ui"]["sections"] if s["id"] == "tools" for p in s["pages"]] != ["tools_models", "tools_pickers", "tools_tasks", "tools_mcp"]: bad.append("B8 Tools must have Models, Agent & Model, Tasks, MCP")
 for need in ("AiModelCatalogue(", "AiTaskCatalogue(", "AiSettingsPickers(", "AiAttachHost(", "ForumSessions(", "ForumTools(", "sessions = ForumSessions", "tools = ForumTools"):
     if need not in shell: bad.append("B8 SiShell lacks %s (the SI tab lost its sessions rail or AI tooling)" % need)
-comp = json.loads(read(os.path.join(app, "app/src/main/assets/ai/composer.json")))["controls"]
+comp = json.loads(read(os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudsuperintel/composer.json")))["controls"]
 # Chat UI restructure: every prior control (plus, task, agent, model, effort, mode, mcp, more) keeps a home; mcp is now KG-Store, KG-Cloud-apps and KG-Cloud-infra.
 want = ["plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"]
 for need in want:
@@ -164,6 +164,7 @@ SCRIPT="app/build.gra""dle"
 mutant() {   # mutant <name> <shell edit run in the copy> <needle expected in the output>
   rm -rf "$W/app" "$W/ab_cloud-libs-shared"; cp -r "$APP" "$W/app"
   mkdir -p "$W/ab_cloud-libs-shared/libs"; cp -r "$APP/../ab_cloud-libs-shared/libs/ai" "$W/ab_cloud-libs-shared/libs/ai"   # B9 reads the shared chat's sources next to the app
+  rm -rf "$W/data"; mkdir -p "$W/data/fleet/app"; cp -r "$APP/../data/fleet/app/com.diegonmarcos.cloudsuperintel" "$W/data/fleet/app/"   # #1547 the composer declaration is the served dataset beside the app
   ( cd "$W/app" && eval "$2" )
   if out="$(check "$W/app" 2>&1)"; then bad "mutant '$1' stayed green"; elif grep -q -- "$3" <<<"$out"; then ok "mutant '$1' is red ($3)"; else bad "mutant '$1' is red for the wrong reason: $out"; fi
 }
@@ -189,7 +190,7 @@ mutant "account not visible"           "sed -i 's/com.diegonmarcos.cloudaccount/
 mutant "Tools leaves the bottom nav"    "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav'].remove('tools');json.dump(d,open(p,'w'))\"" "B8 the AI Tools section left the bottom nav"
 mutant "the sessions rail is dropped"  "sed -i 's/sessions = ForumSessions/sessions = null \/\/ ForumSessions/' $KT/ui/SiShell.kt" "B8 SiShell lacks sessions = ForumSessions"
 mutant "the composer tooling is dropped" "sed -i 's/tools = ForumTools/tools = null \/\/ ForumTools/' $KT/ui/SiShell.kt" "B8 SiShell lacks tools = ForumTools"
-mutant "the composer loses MCP"        "sed -i 's/\"kg_store\",//' app/src/main/assets/ai/composer.json" "B8 composer.json lost the kg_store control"
+mutant "the composer loses MCP"        "sed -i 's/\"kg_store\",//' ../data/fleet/app/com.diegonmarcos.cloudsuperintel/composer.json" "B8 composer.json lost the kg_store control"
 mutant "Principles is not renamed"     "sed -i 's/Cloudy Principals/Principles/' ../ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai-design.json" "B9 Principles must be"
 mutant "the rail climbs to the top"    "sed -i 's/SessionTopBar(topic, sessions/SessionTopBarX(topic, sessions/' ../ab_cloud-libs-shared/libs/ai/src/main/kotlin/com/diegonmarcos/superapp/ai/AiForumChat.kt" "B9 order must be top bar"
 

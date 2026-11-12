@@ -244,7 +244,7 @@ for need in ("task.small", "task.medium", "models.judgeMinScore", "flagged(quest
     if need not in tm: bad.append("A9 ToolsModel lacks %s (task routing, guard in and out, escalation, model label)" % need)
 if "STRONGER" not in shell or "showModel" in shell: bad.append("A9 the AI page does not keep Stronger, or still toggles a model picker of its own")
 if "chat.tasks = models.chatTasks" not in tm or "chat.onTask" not in tm: bad.append("A9 the composer's Task control is not fed by chat_tasks (the task, not the user, picks the model)")
-cd = json.loads(read(os.path.join(app, "app/src/main/assets/ai/composer.json")))
+cd = json.loads(read(os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/composer.json")))
 if not cd.get("task_required") or not {"task", "agent", "model"} <= set(cd["controls"]) or {"mode", "mcp", "effort"} & set(cd["controls"]): bad.append("A9 composer.json must enable Task (required), Agent and Model, and not Mode, MCP or Effort (the router calls the model)")
 shared = os.path.join(app, "../ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai-tasks.json")
 if os.path.exists(shared):

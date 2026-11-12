@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -135,8 +136,8 @@ fun SiShell() {
     var forumPersona by rememberSaveable { mutableStateOf(siDefault) }
     val chatPersona = if (sec?.id == Decl.SECTION_SI) forumPersona else persona?.id
     val chat = remember(chatPersona) { SiAi.chat(ctx, chatPersona) }
-    // The composer's declaration (assets/ai/composer.json): (+) attach, Task, Specialist, Agent, Model, Effort, Mode, Plugins-Skills, KG-Store, KG-Cloud-apps, KG-Repos, KG-Cloud-infra, Plugins-Perf, More.
-    val composerDecl = remember { runCatching { AiComposerDecl.load(ctx) }.getOrDefault(AiComposerDecl("cloud-superintel", listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"))) }
+    // The composer's declaration (the served dataset `composer`, #1547; this default shows while it loads): (+) attach, Task, Specialist, Agent, Model, Effort, Mode, Plugins-Skills, KG-Store, KG-Cloud-apps, KG-Repos, KG-Cloud-infra, Plugins-Perf, More.
+    val composerDecl by produceState(AiComposerDecl("cloud-superintel", listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more")), ctx) { AiComposerDecl.observe(ctx).collect { if (it != null) value = it } }
     // The AI Tools pages need the model list and the task list the chat page would have loaded.
     if (sec?.id == Decl.SECTION_TOOLS) LaunchedEffect(chat) {
         if (chat.models.isEmpty()) chat.models = withContext(Dispatchers.IO) { runCatching { chat.host().models() }.getOrDefault(emptyList()) }

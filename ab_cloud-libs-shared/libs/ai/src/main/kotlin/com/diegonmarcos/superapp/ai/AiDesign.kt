@@ -1,6 +1,9 @@
 package com.diegonmarcos.superapp.ai
 
 import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -174,12 +177,13 @@ class AiDesign private constructor(private val root: JSONObject) {
 }
 
 /**
- * An app's composer declaration (assets/ai/composer.json): WHICH of the shared controls it enables, the task it opens on
+ * An app's composer declaration (the runtime dataset `composer`, #1547: served by Cloud Store from data/fleet/app/<pkg>/composer.json, never an APK asset): WHICH of the shared controls it enables, the task it opens on
  * and whether a task is always set (Cloud Tools: a task, never a model, picks the model).
  */
 data class AiComposerDecl(val app: String, val controls: List<String>, val defaultTask: String = "", val taskRequired: Boolean = false, val repos: List<String> = emptyList()) {
     companion object {
-        const val ASSET = "ai/composer.json"
+        /** The app's own served dataset (`app/<pkg>/composer`). */
+        const val DATASET = "composer"
 
         /** Throws on an id the design does not have, so a typo in an app's file fails its test. */
         fun parse(text: String, design: AiDesign): AiComposerDecl {
@@ -192,8 +196,14 @@ data class AiComposerDecl(val app: String, val controls: List<String>, val defau
                 o.optJSONArray("repos")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty())
         }
 
-        fun load(ctx: Context): AiComposerDecl =
-            parse(ctx.assets.open(ASSET).bufferedReader().use { it.readText() }, AiDesign.load(ctx))
+        /**
+         * The served declaration, now and after every update Cloud Store announces. null while nothing is served (first run, provider absent,
+         * nothing synced yet) or the served text is refused: the caller shows its fallback declaration meanwhile and never crashes.
+         */
+        fun observe(ctx: Context): Flow<AiComposerDecl?> {
+            val design = runCatching { AiDesign.load(ctx) }.getOrNull() ?: return flowOf(null)
+            return FleetData.observe(ctx, DATASET, own = true) { text -> runCatching { parse(text, design) }.getOrNull() }
+        }
     }
 }
 

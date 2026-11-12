@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 1,
   "_doc": "Which of the shared AI composer's controls Cloud Search enables (libs:ai assets/ai/ai-design.json defines them and their order: Task, Agent, Model, Mode, MCPs). AiComposerDecl parses this; SearchComposerTest holds it to the design.",
   "app": "cloud-search",
   "controls": [

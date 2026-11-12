@@ -97,7 +97,14 @@
     }
   },
   "apps": {
+    "com.diegonmarcos.cloudsuperintel": [
+      "composer"
+    ],
+    "com.diegonmarcos.cloudsearch": [
+      "composer"
+    ],
     "com.diegonmarcos.cloudtoolssmallllms": [
+      "composer",
       "tools-models",
       "tools/sensors"
     ],
@@ -115,6 +122,7 @@
       "voip_providers"
     ],
     "com.diegonmarcos.cloudkgstore": [
+      "composer",
       "kg"
     ],
     "cld.termux": [

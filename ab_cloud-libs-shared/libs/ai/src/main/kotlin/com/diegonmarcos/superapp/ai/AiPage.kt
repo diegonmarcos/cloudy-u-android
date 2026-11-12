@@ -42,6 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -271,7 +272,7 @@ fun AiChatPage(
     sessionsList: Boolean = false,
     /** Suggested prompts under the greeting (a persona chat's): a tap fills the input, nothing is sent until the user does. */
     suggestions: List<String> = emptyList(),
-    /** The app's composer declaration; null = the app's assets/ai/composer.json, else Agent and Model. */
+    /** The app's composer declaration; null = the served composer dataset (#1547), else Agent and Model. */
     composer: AiComposerDecl? = null,
     /** Answers the (+) menu's Attach items by id (files, images, notes, drive); null hides Attach. */
     onAttach: ((String) -> Unit)? = null,
@@ -284,10 +285,13 @@ fun AiChatPage(
 ) {
     val ctx = LocalContext.current
     val design = remember { AiDesign.load(ctx) }
-    val decl = remember(composer) { composer ?: runCatching { AiComposerDecl.load(ctx) }.getOrDefault(AiComposerDecl("", listOf("agent", "model"))) }
+    // #1547 the app's composer declaration is a served dataset: the default (Agent, Model) shows while it loads and whenever it is not served.
+    val decl by produceState(composer ?: AiComposerDecl("", listOf("agent", "model")), composer, ctx) {
+        if (composer != null) value = composer else AiComposerDecl.observe(ctx).collect { if (it != null) value = it }
+    }
     val m = theme.metrics
     val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
+    LaunchedEffect(decl) {
         if (chat.models.isEmpty()) chat.models = withContext(Dispatchers.IO) { runCatching { chat.host().models() }.getOrDefault(emptyList()) }
         if ("task" in decl.controls && chat.tasks.isEmpty()) chat.tasks = runCatching { AiCatalogue.load(ctx).tasks }.getOrDefault(emptyList()).ifEmpty { AiDesign.loadTasks(ctx) }
         if ("task" in decl.controls && chat.task.isEmpty() && decl.defaultTask.isNotEmpty()) chat.chooseTask(decl.defaultTask)
