@@ -2612,6 +2612,14 @@
       "used_by": [
         "aa_cloud-superapp"
       ]
+    },
+    "cad_viewer": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1664 Hardtech-CAD's MCAD viewer: the presentation the viewer had to fall back to on this phone (webgl | 2d | host) and the build it was measured on, so the next model opens straight in it; a new build retries the GPU path. A measurement of this device's WebView: never migrates.",
+      "used_by": [
+        "ad_Hardtech-CAD"
+      ]
     }
   },
   "bundle": {

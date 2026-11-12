@@ -1455,6 +1455,7 @@ Module `ad_Hardtech-CAD`; libs: lib-bottomnav, lib-cad-3dm, lib-cad-brep, lib-ca
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
+| `cad_viewer` | prefs | device | no | #1664 Hardtech-CAD's MCAD viewer: the presentation the viewer had to fall back to on this phone (webgl \| 2d \| host) and the build it was measured on, so the next model opens straight in it; a new build retries the GPU path. A measurement of this device's WebView: never migrates. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
