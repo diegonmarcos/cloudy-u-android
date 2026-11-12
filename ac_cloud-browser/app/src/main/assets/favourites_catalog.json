@@ -130,6 +130,11 @@
       "group": "Cloudy Public/Observability"
     },
     {
+      "name": "c3bot-relay",
+      "url": "https://mcp.diegonmarcos.com",
+      "group": "Cloudy Public/Other"
+    },
+    {
       "name": "capital-stack-finterm-api",
       "url": "https://api.diegonmarcos.com/capital-stack-finterm-api",
       "group": "Cloudy Public/Other"
@@ -165,11 +170,6 @@
       "group": "Cloudy Public/Other"
     },
     {
-      "name": "cloudy-ai-api",
-      "url": "https://api.diegonmarcos.com/ai",
-      "group": "Cloudy Public/Other"
-    },
-    {
       "name": "cloudy-all-api",
       "url": "https://api.diegonmarcos.com/cloudy-all-api",
       "group": "Cloudy Public/Other"
@@ -187,11 +187,6 @@
     {
       "name": "cloudy-apps-drive-mcp",
       "url": "https://mcp.diegonmarcos.com/cloudy-apps-drive-mcp",
-      "group": "Cloudy Public/Other"
-    },
-    {
-      "name": "cloudy-browser-headless",
-      "url": "https://mcp.diegonmarcos.com",
       "group": "Cloudy Public/Other"
     },
     {
@@ -362,6 +357,11 @@
     {
       "name": "cloud-webmail",
       "url": "http://webmail.mesh.diegonmarcos.com:3000",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloudy-ai-api",
+      "url": "http://cloudy-ai-api.mesh.diegonmarcos.com:4185",
       "group": "Cloudy Private/Other"
     },
     {
