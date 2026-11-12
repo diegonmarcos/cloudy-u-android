@@ -11,6 +11,9 @@
 #   B4  the broker and the client have no sticky service, no boot receiver, no foreground service, no alarm or WorkManager loop
 #   B5  the allowlist is default-deny: no caller has a catch-all rule, and the broker lib declares no unguarded component
 #   B6  libs:shell-client links nothing (no libs:core, no shizuku lib): linking it adds no fan-out edge
+#   B9  #1682 ONE ADB owner: the owner is the app named by ab_cloud-libs-shared/libs/shell-client/adb-owner.json::adb_owner (B1/B2 read it,
+#       not a hard-coded SuperApp); exactly that app compiles libs:shizuku-adb-debug-tools and libs:shell-broker (the exported provider), its
+#       application id is the declared `package`, and libs:shell-client's ShellWire.BROKER_PKG and <queries> name that same package
 # Then each violation is planted in the collected facts and must turn a check red.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$HERE/../.." && pwd)"
@@ -20,6 +23,9 @@ import json, os, re, sys
 R = sys.argv[1]; fails = 0
 LIB = "ab_cloud-libs-shared/libs/"
 SA = "aa_cloud-superapp"
+OWNER_DECL = json.load(open(os.path.join(R, "ab_cloud-libs-shared/libs/shell-client/adb-owner.json")))
+OWNER = OWNER_DECL["adb_owner"]; OWNER_PKG = OWNER_DECL["package"]
+BROKER = "libs:shell-broker"
 def ok(c, good, bad):
     global fails
     print(("  PASS: " if c else "  FAIL: ") + (good if c else bad)); fails += 0 if c else 1
@@ -37,10 +43,11 @@ def collect():
     apps = {}
     for d in sorted(os.listdir(R)):
         if not re.match(r"a[a-d]_", d) or not os.path.isfile(f"{R}/{d}/build.json"): continue
-        if not os.path.isdir(f"{R}/{d}/app") and d != SA: continue
+        gen = f"{d}/src-tauri/gen/android"   # #1682 the webserver's gradle root (native app, gradle dir kept from Tauri)
+        if not os.path.isdir(f"{R}/{d}/app") and not os.path.isdir(f"{R}/{gen}/app") and d != SA: continue
         try: bj = json.load(open(f"{R}/{d}/build.json"))
         except ValueError: continue
-        gradle = rd(f"{d}/app/build.gradle") + rd(f"{d}/settings.gradle")
+        gradle = rd(f"{d}/app/build.gradle") + rd(f"{d}/settings.gradle") + rd(f"{gen}/app/build.gradle.kts")
         mods = set((bj.get("modules") or {}).keys())
         aid = ((bj.get("android") or {}).get("application_id")) or ""
         if not aid:
@@ -48,20 +55,31 @@ def collect():
             aid = (m.group(1) + (s.group(1) if s else "")) if m else ""
         deps = lambda mod: (mod in mods and mod in (bj.get("modules") or {}) and d != "") and True
         shiz = (SHIZ in mods) or ("project(':%s')" % SHIZ in gradle) or ('project(":%s")' % SHIZ in gradle)
-        client = (CLIENT in mods) or ("project(':%s')" % CLIENT in gradle)
+        client = (CLIENT in mods) or ("project(':%s')" % CLIENT in gradle) or ('project(":%s")' % CLIENT in gradle)
+        broker = (BROKER in mods) or ("project(':%s')" % BROKER in gradle) or ('project(":%s")' % BROKER in gradle)
         toks = set()
         for base, dirs, files in os.walk(f"{R}/{d}/app/src/main") if os.path.isdir(f"{R}/{d}/app/src/main") else []:
             for f in files:
                 if f.endswith((".kt", ".java")):
                     toks |= set(ADB_TOKENS.findall(strip(open(os.path.join(base, f), encoding="utf-8", errors="replace").read())))
-        apps[d] = {"aid": aid, "shiz": shiz, "client": client, "toks": toks}
+        if not aid:
+            m = re.search(r'applicationId\s*=\s*"([^"]+)"', rd(f"{gen}/app/build.gradle.kts")); aid = m.group(1) if m else ""
+        apps[d] = {"aid": aid, "shiz": shiz, "client": client, "toks": toks, "broker": broker}
     return apps
 
 def verdicts(apps, pending, allow, libs, shared):
     global fails
-    others = {d: a for d, a in apps.items() if d != SA}
+    others = {d: a for d, a in apps.items() if d != OWNER}
     bad = sorted(d for d, a in others.items() if a["shiz"])
-    ok(not bad, "B1 no app but the SuperApp compiles libs:shizuku-adb-debug-tools", "B1 compiles libs:shizuku-adb-debug-tools: " + ", ".join(bad))
+    ok(not bad, "B1 no app but the ADB owner (%s) compiles libs:shizuku-adb-debug-tools" % OWNER, "B1 compiles libs:shizuku-adb-debug-tools: " + ", ".join(bad))
+    own = apps.get(OWNER, {})
+    ok(own.get("shiz") and own.get("broker"), "B9 the declared owner compiles the channel and the broker", "B9 the declared owner %s does not compile both libs" % OWNER)
+    badb = sorted(d for d, a in others.items() if a.get("broker"))
+    ok(not badb, "B9 no app but the owner exports the broker provider", "B9 compiles libs:shell-broker besides the owner: " + ", ".join(badb))
+    ok(own.get("aid") == OWNER_PKG, "B9 the owner's application id is the declared package", "B9 owner application id %r is not the declared %r" % (own.get("aid"), OWNER_PKG))
+    wire = libs["shell-client"]["src"]; m = re.search(r'BROKER_PKG\s*=\s*"([^"]+)"', wire)
+    ok(m is not None and m.group(1) == OWNER_PKG and ('<package android:name="%s"' % OWNER_PKG) in libs["shell-client"]["manifest"],
+       "B9 shell-client targets the declared owner package", "B9 ShellWire.BROKER_PKG / <queries> do not name the declared owner %r" % OWNER_PKG)
     ok(not pending, "B1 shell-migration.json pending is empty", "B1 pending is not empty (the migration is finished): " + ", ".join(sorted(pending)))
     badt = sorted(d for d, a in others.items() if a["toks"])
     ok(not badt, "B2 no app but the SuperApp starts an ADB connection", "B2 ADB connection classes in an app other than the SuperApp: " + ", ".join(badt))
@@ -119,7 +137,7 @@ def libsrc(n):
             if f.endswith((".kt", ".java")): s += open(os.path.join(base, f), encoding="utf-8").read() + "\n"
     return {"src": s, "manifest": re.sub(r"<!--.*?-->", "", rd(f"{LIB}{n}/src/main/AndroidManifest.xml"), flags=re.S), "gradle": rd(f"{LIB}{n}/build.gradle")}
 libs = {"shell-broker": libsrc("shell-broker"), "shell-client": libsrc("shell-client")}
-ok(SA in apps and apps[SA]["shiz"], "SuperApp owns the channel", "SuperApp must compile libs:shizuku-adb-debug-tools")
+ok(OWNER in apps and apps[OWNER]["shiz"], "the declared owner (%s) owns the channel" % OWNER, "the declared owner %s must compile libs:shizuku-adb-debug-tools" % OWNER)
 shared = shared_libs()
 verdicts(apps, pending, allow, libs, shared)
 print("== planted violations must turn red")
@@ -151,6 +169,10 @@ planted("a stdin rule with no cap", lambda a, p, al, l, sh: al["callers"]["com.d
 planted("a stdin rule above the hard limit", lambda a, p, al, l, sh: al["callers"]["com.diegonmarcos.cloudaccount"]["stdin"][0].__setitem__("maxBytes", HARD_CAP + 1))
 planted("the mesh door allowed to stream", lambda a, p, al, l, sh: al["callers"]["mesh"].__setitem__("stdin", [{"id": "x", "re": "^pm install -S [0-9]+$", "maxBytes": 10}]))
 planted("a terminal allowed to stream", lambda a, p, al, l, sh: al["callers"]["cld.termux"].__setitem__("stdin", [{"id": "x", "re": "^pm install -S [0-9]+$", "maxBytes": 10}]))
+planted("a second app exporting the broker (two owners)", lambda a, p, al, l, sh: a.__setitem__("ac_cloud-c3-webserver", dict(a.get("ac_cloud-c3-webserver", {"aid": "com.diegonmarcos.cloudwebserver", "shiz": False, "client": False, "toks": set()}), broker=True)))
+planted("the webserver compiling the shizuku lib while not the owner", lambda a, p, al, l, sh: a.__setitem__("ac_cloud-c3-webserver", dict(a.get("ac_cloud-c3-webserver", {"aid": "com.diegonmarcos.cloudwebserver", "client": False, "toks": set(), "broker": False}), shiz=True)))
+planted("the owner dropping the broker", lambda a, p, al, l, sh: a[OWNER].__setitem__("broker", False))
+planted("shell-client targeting another package than the declaration", lambda a, p, al, l, sh: l["shell-client"].__setitem__("src", l["shell-client"]["src"].replace('BROKER_PKG = "%s"' % OWNER_PKG, 'BROKER_PKG = "x.other"')))
 planted("shell-client linking a project", lambda a, p, al, l, sh: l["shell-client"].__setitem__("gradle", "implementation project(':libs:core')"))
 print("FAILS=%d" % fails); sys.exit(1 if fails else 0)
 PY
