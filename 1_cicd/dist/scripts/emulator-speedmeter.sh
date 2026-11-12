@@ -33,6 +33,19 @@ PY
 )"
     [ -n "$b" ] && $T adb shell input tap $b; sleep 4
 done
+# the SuperApp's first-run install-source ask ("Install unknown apps": Skip | Allow) can sit over the home: Skip it
+for _ in 1 2; do
+    dump cur
+    grep -q 'text="Install unknown apps"' "$OUT/cur.xml" || break
+    b="$(python3 - "$OUT/cur.xml" <<'PY'
+import re, sys
+x = open(sys.argv[1], errors="ignore").read()
+m = re.search(r'text="Skip"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)
+if m: l, t, r, d = map(int, m.groups()); print((l + r) // 2, (t + d) // 2)
+PY
+)"
+    [ -n "$b" ] && $T adb shell input tap $b; sleep 4
+done
 shot home 3
 grep -o 'content-desc="Speed test[^"]*"' "$OUT/speed-home.xml" | head -1 || true
 p="$(python3 - "$OUT/speed-home.xml" <<'PY'
