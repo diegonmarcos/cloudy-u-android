@@ -144,6 +144,12 @@
     <string name="files_duplicates_none">No duplicate files under this folder</string>
     <string name="files_duplicates_group">%1$d copies · %2$s each</string>
     <string name="files_up">Up</string>
+    <string name="files_home">Home</string>
+    <string name="files_back">Back</string>
+    <string name="files_up_stop_top">Already at the top: there is no folder above this one.</string>
+    <string name="files_up_stop_unreadable">Up stopped: the parent folder cannot be read by this app.</string>
+    <string name="files_up_stop_root">Up stopped: the parent is outside what Android lets this app read. Use Home or Places.</string>
+    <string name="files_restored_home">The last folder is no longer readable: opened Home instead.</string>
     <string name="files_pane_activate">Switch to this pane</string>
     <string name="files_job_copy">Copying %1$d item(s)</string>
     <string name="files_job_move">Moving %1$d item(s)</string>

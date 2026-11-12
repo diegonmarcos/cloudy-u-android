@@ -146,6 +146,7 @@ object DriveTags {
     const val FILES_TAB_STRIP = "files_tab_strip"
     const val FILES_BREADCRUMBS = "files_breadcrumbs"
     const val FILES_TOOLBAR = "files_toolbar"
+    const val FILES_HOME = "files_home"
     const val FILES_STORAGE_BAR = "files_storage_bar"
     const val FILES_LIST = "files_list"
     const val FILES_REFRESH = "files_refresh"

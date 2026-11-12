@@ -78,7 +78,71 @@ class FilesController(
 
     fun open(id: PaneId, target: Location) { update { FilesReducer.open(it, id, target) }; ensureLoaded(target) }
     fun openTab(id: PaneId, target: Location) { update { FilesReducer.openTab(it, id, target, Declarations.files.tabsPerPaneMax) }; ensureLoaded(target) }
-    fun up(id: PaneId): Boolean { val next = FilesReducer.up(s, id) ?: return false; state.value = next; ensureLoaded(next.pane(id).location); return true }
+    /**
+     * #1696 Up, checked off the main thread: the parent must be a folder this app can list (or reach through the
+     * terminal), and a root's parent only when it sits in another root; otherwise Up stops and the snackbar says why.
+     * Returns whether there is a parent at all (the same contract as before).
+     */
+    fun up(id: PaneId): Boolean {
+        val from = s.pane(id).location
+        if (from.parentOrNull() == null) { _messages.tryEmit(ctx.getString(R.string.files_up_stop_top)); return false }
+        scope.launch {
+            val decision = withContext(Dispatchers.IO) { FilesNav.up(from, accessibleRoots(), ::canList) }
+            when (decision) {
+                is FilesNav.UpDecision.Go -> if (s.pane(id).location == from) { update { FilesReducer.open(it, id, decision.target) }; ensureLoaded(decision.target) }
+                is FilesNav.UpDecision.Stop -> _messages.tryEmit(ctx.getString(when (decision.reason) {
+                    FilesNav.StopReason.TOP -> R.string.files_up_stop_top
+                    FilesNav.StopReason.UNREADABLE -> R.string.files_up_stop_unreadable
+                    FilesNav.StopReason.ROOT_BOUNDARY -> R.string.files_up_stop_root
+                }))
+            }
+        }
+        return true
+    }
+
+    /** #1696 the declared storage home (Environment.getExternalStorageDirectory, /storage/emulated/0). */
+    val homeLocation: Location.Local get() = Location.Local(runCatching { android.os.Environment.getExternalStorageDirectory().absolutePath }.getOrDefault("/storage/emulated/0"))
+
+    /** #1696 Home from any state: the pane's tab opens the storage home. */
+    fun home(id: PaneId) { val h = homeLocation; update { FilesNav.home(it, id, h) }; ensureLoaded(h) }
+
+    /** #1696 the accessible roots (volumes, app dirs, declared places); the breadcrumb and Up read them. */
+    val roots = MutableStateFlow<List<String>>(emptyList())
+
+    /** Disk + StorageManager: call on IO only. */
+    fun accessibleRoots(): List<String> {
+        val out = linkedSetOf<String>()
+        runCatching { out += homeLocation.path }
+        runCatching { Places.declared(ctx).mapNotNullTo(out) { it.location?.path } }
+        runCatching { ctx.getExternalFilesDirs(null).filterNotNull().mapTo(out) { it.absolutePath } }
+        runCatching { ctx.filesDir.absolutePath.let { out += it } }
+        runCatching { Places.discovered(ctx, prefs.snapshot.value, Places.hasAllFilesAccess(ctx)).mapNotNullTo(out) { it.location?.path } }
+        runCatching { prefs.snapshot.value.bookmarks.forEach { out += it } }
+        return out.toList().also { roots.value = it }
+    }
+
+    /** #1696 a real list attempt: a readable folder whose listing returns, or one the terminal lists for us. Disk: IO only. */
+    fun canList(path: String): Boolean = runCatching {
+        val dir = File(path)
+        (dir.isDirectory && dir.canRead() && dir.list() != null) ||
+            com.diegonmarcos.cloudlib.sharedstore.StorePaths.listViaOwner(com.diegonmarcos.cloudlib.sharedstore.StoreAccess.paths, dir.absolutePath, com.diegonmarcos.cloudlib.sharedstore.StoreAccess.userId(), dir.isDirectory, com.diegonmarcos.cloudlib.sharedstore.StoreAccess.mode(ctx))
+    }.getOrDefault(false)
+
+    /** #1696 a restored (or stuck) location this app cannot list goes Home on launch, with the reason. */
+    fun recoverRestored() {
+        scope.launch {
+            val home = homeLocation
+            val moved = withContext(Dispatchers.IO) {
+                accessibleRoots()
+                val (fixed, n) = FilesNav.recover(s, home, ::canList)
+                if (n > 0) state.value = fixed
+                n
+            }
+            if (moved > 0) { ensureLoaded(home); _messages.tryEmit(ctx.getString(R.string.files_restored_home)) }
+        }
+    }
+
+    init { recoverRestored() }
     /** True when the pane consumed the back press. */
     fun back(id: PaneId): Boolean { val next = FilesReducer.back(s, id) ?: return false; state.value = next; ensureLoaded(next.pane(id).location); return true }
     fun activate(id: PaneId) = update { FilesReducer.activate(it, id) }

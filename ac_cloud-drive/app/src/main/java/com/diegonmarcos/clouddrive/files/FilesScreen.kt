@@ -38,6 +38,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Check
@@ -474,7 +476,14 @@ private fun Pane(
         ) {
             when {
                 listing == null || (listing.loading && listing.entries.isEmpty() && listing.error == null) -> LoadingState()
-                listing.error != null -> ErrorState(listing.error, Modifier.fillMaxSize().verticalScroll(rememberScrollState()), onRetry = { controller.reload(loc) })
+                listing.error != null -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    ErrorState(listing.error, onRetry = { controller.reload(loc) })
+                    // #1696 an error view always offers Home and Back.
+                    Row(Modifier.fillMaxWidth().padding(DriveMetrics.pad), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide, Alignment.CenterHorizontally)) {
+                        Pill(stringResource(R.string.files_home), { controller.home(id) }, icon = Icons.Filled.Home)
+                        Pill(stringResource(R.string.files_back), { if (!controller.back(id)) controller.home(id) }, icon = Icons.AutoMirrored.Filled.ArrowBack)
+                    }
+                }
                 rows.isEmpty() -> EmptyState(
                     if (loc.isArchive) Icons.Filled.Archive else Icons.Filled.FolderOpen,
                     stringResource(if (loc.isArchive) R.string.files_empty_archive_title else R.string.files_empty_title),
@@ -551,7 +560,9 @@ private fun TabStrip(id: PaneId, pane: PaneState, controller: FilesController, o
 @Composable
 private fun Breadcrumbs(id: PaneId, loc: Location, controller: FilesController, onCopyPath: (Location) -> Unit) {
     val ctx = LocalContext.current
-    val crumbs = remember(loc) { loc.crumbs() }
+    // #1696 the breadcrumb starts at the root the location sits in (its label), not at '/'.
+    val roots by controller.roots.collectAsState()
+    val crumbs = remember(loc, roots) { FilesNav.crumbs(loc, roots) }
     val copyDeclared = remember { Declarations.files.rowAction(COPY_PATH) != null }
     // Places.rootLabel stats declared folders: read once per path, off the main thread, never per crumb per recomposition.
     val rootLabels by produceState(emptyMap<String, String?>(), crumbs) { value = withContext(Dispatchers.IO) { crumbs.filterIsInstance<Location.Local>().associate { it.path to Places.rootLabel(ctx, it.path) } } }
@@ -604,6 +615,8 @@ private fun PaneToolbar(id: PaneId, pane: PaneState, controller: FilesController
         IconButton(onClick = { controller.update { FilesReducer.toggleHidden(it, id) } }, Modifier.size(DriveMetrics.tap)) { Icon(if (pane.showHidden) Icons.Filled.Visibility else Icons.Filled.VisibilityOff, contentDescription = stringResource(if (pane.showHidden) R.string.files_hidden_hide else R.string.files_hidden_show), Modifier.size(DriveMetrics.icon)) }
         IconButton(enabled = localPath != null, onClick = { localPath?.let { controller.prefs.toggleBookmark(it) } }, modifier = Modifier.size(DriveMetrics.tap)) { Icon(if (bookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder, contentDescription = stringResource(if (bookmarked) R.string.files_bookmark_remove else R.string.files_bookmark_add), Modifier.size(DriveMetrics.icon)) }
         IconButton(onClick = { controller.update { FilesReducer.setViewMode(it, id, if (pane.viewMode == ViewMode.LIST) ViewMode.TREE else ViewMode.LIST) } }, Modifier.size(DriveMetrics.tap)) { Icon(if (pane.viewMode == ViewMode.LIST) Icons.Filled.AccountTree else Icons.Filled.ViewList, contentDescription = stringResource(if (pane.viewMode == ViewMode.LIST) R.string.files_view_tree else R.string.files_view_list), Modifier.size(DriveMetrics.icon)) }
+        // #1696 Home: always there, back to the storage home from any state (an unreadable folder included).
+        IconButton(onClick = { controller.home(id) }, modifier = Modifier.size(DriveMetrics.tap).testTag(DriveTags.FILES_HOME)) { Icon(Icons.Filled.Home, contentDescription = stringResource(R.string.files_home), Modifier.size(DriveMetrics.icon)) }
         IconButton(enabled = pane.location.parentOrNull() != null, onClick = { controller.up(id) }, modifier = Modifier.size(DriveMetrics.tap)) { Icon(Icons.Filled.ArrowUpward, contentDescription = stringResource(R.string.files_up), Modifier.size(DriveMetrics.icon)) }
     }
 }
