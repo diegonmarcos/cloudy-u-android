@@ -55,14 +55,15 @@
     },
     {
       "id": "libs/bottomnav (39 consumers via libs:ui-nav-bars, #1360)",
+      "_doc": "#1630 40 -> 42 apps (ship ceiling 41 -> 43): Cloud Chat and Cloud Office link libs:ui-nav-bars for the fleet Configs tail (24e8e5a92, 1bb3090a8), and libs:ui-nav-bars compiles libs:bottomnav, so a bottom-nav edit now rebuilds those two as well. A static lib edit starts every app that compiles it: the count follows the consumers, it is not a widened trigger.",
       "files": [
         "ab_cloud-libs-shared/libs/bottomnav/src/main/java/com/diegonmarcos/superapp/bottomnav/BottomNav.kt"
       ],
       "expect": {
-        "apps": 40,
+        "apps": 42,
         "libs": 0,
         "rootfs": 0,
-        "ship": 41,
+        "ship": 43,
         "refresh": 0
       }
     },
@@ -705,14 +706,15 @@
     },
     {
       "id": "libs/ui-kit commonMain (#876: the two wasm pages + the static-lib consumers)",
+      "_doc": "#1652 44 -> 45 apps (ship ceiling 45 -> 46): Cloud Keyboard's Writer tab is libs:writer-ui (7f0fa60c9), which compiles libs:ui-kit, so a kit edit now rebuilds the keyboard too. The count follows the consumers.",
       "files": [
         "ab_cloud-libs-shared/libs/ui-kit/src/commonMain/kotlin/com/diegonmarcos/superapp/uikit/CloudKit.kt"
       ],
       "expect": {
-        "apps": 44,
+        "apps": 45,
         "libs": 0,
         "rootfs": 0,
-        "ship": 45,
+        "ship": 46,
         "refresh": 0
       }
     }

@@ -26,8 +26,8 @@
     ".kt",
     ".java"
   ],
-  "notify_call": "\\.notify\\(\\s*[^)\\s]",
-  "_doc_notify_call": "A NotificationManager/NotificationManagerCompat post. Object.notify() (no arguments) is excluded by requiring an argument; comments are stripped before matching, so a note that names notify() is not a call.",
+  "notify_call": "(?:\\.notify|\\bNotifyGate\\.post(?:Ctx)?)\\(\\s*[^)\\s]",
+  "_doc_notify_call": "A NotificationManager/NotificationManagerCompat post, or a post handed to the SuperApp's NotifyGate (NotifyGate.post / NotifyGate.postCtx: the dedupe and debounce door every repeating SuperApp notification goes through since #1629). Counting the door's CALLERS keeps each poster classified by its own file; the door's single notify() is classified once as notify_gate. Object.notify() (no arguments) is excluded by requiring an argument; comments are stripped before matching, so a note that names notify() is not a call.",
   "kinds": {
     "badge": "a persistent badge of one of the four shade groups, re-posted by its owner",
     "media": "a media transport mirroring a playback session",
@@ -40,7 +40,8 @@
     "domain_messages": "the app's own content (mail, chat, vault requests) — the user's messages, not alerts about the fleet",
     "domain_calls": "an incoming/ongoing call",
     "upstream_fork": "an alert in vendored upstream code that cannot be expressed as a FleetAlert today; the reason says why",
-    "not_a_notification": "a method named notify() that is not an Android notification"
+    "not_a_notification": "a method named notify() that is not an Android notification",
+    "notify_gate": "the SuperApp's NotifyGate itself: the one notify() behind posts that are each counted and classified at their caller"
   },
   "posters": [
     {
@@ -240,6 +241,54 @@
       "kind": "badge",
       "notify_calls": 1,
       "why": "The shared builder of the fleet's two persistent notification kinds: FleetNotify.post is the one notify() behind a keep-alive badge refresh (the foreground-service notification of an app that is kept alive) and behind the data-widget cards (Weather, MyHealth, Battery: ongoing info posted without a foreground service). Standing status the owner re-posts, never an alert about the fleet."
+    },
+    {
+      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/NotifyGate.kt",
+      "kind": "notify_gate",
+      "notify_calls": 1,
+      "why": "#1629 The dedupe and debounce door of the SuperApp's repeating notifications: NotifyGate.send holds the one notify() behind NotifyGate.post / postCtx. It decides nothing about what is posted; every caller of post / postCtx is matched by notify_call and classified by its own entry here."
+    },
+    {
+      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/WeatherBadgeService.kt",
+      "kind": "badge",
+      "notify_calls": 2,
+      "why": "The Weather data-widget card of the Resources group (ongoing, posted without a foreground service): the cached face, then the fetched one, both through NotifyGate.postCtx. Standing status its owner re-posts, not an alert about the fleet."
+    },
+    {
+      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/BatteryBadgeService.kt",
+      "kind": "badge",
+      "notify_calls": 1,
+      "why": "The Battery data-widget card (time to full / to empty and the battery report), re-posted through NotifyGate.postCtx when its content changes. Standing status, not an alert about the fleet."
+    },
+    {
+      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/AiBadgeService.kt",
+      "kind": "badge",
+      "notify_calls": 1,
+      "why": "#1151 The AI usage data-widget card of the Resources group, re-posted through NotifyGate.postCtx. Standing status, not an alert about the fleet."
+    },
+    {
+      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/DataBadgeService.kt",
+      "kind": "badge",
+      "notify_calls": 1,
+      "why": "The Data usage data-widget card (today / month, mobile vs Wi-Fi, top apps), re-posted through NotifyGate.postCtx. Standing status, not an alert about the fleet."
+    },
+    {
+      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/MarketsBadgeService.kt",
+      "kind": "badge",
+      "notify_calls": 1,
+      "why": "#517 The Markets data-widget card (USD/BRL, EUR/USD, WTI, gold), re-posted through NotifyGate.postCtx. Standing status, not an alert about the fleet."
+    },
+    {
+      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/HealthBadgeService.kt",
+      "kind": "badge",
+      "notify_calls": 1,
+      "why": "#517 The MyHealth data-widget card (steps, resting heart rate, sleep), re-posted through NotifyGate.postCtx. Standing status, not an alert about the fleet."
+    },
+    {
+      "path": "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/TorrentService.kt",
+      "kind": "foreground_service",
+      "notify_calls": 1,
+      "why": "The torrent download foreground service (type dataSync, active-download-scoped): after startForeground it updates its own ongoing silent line (N downloading, %, rate, peers; Pause all / Stop) on each tick and stops when nothing is downloading. The ongoing line a foreground service must hold, not an alert about the fleet."
     }
   ]
 }

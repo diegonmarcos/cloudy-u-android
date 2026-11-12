@@ -41,6 +41,16 @@ mkdir -p "$BASE"
         git ls-files -- 'a[acd]_*/build.json' 'a[acd]_*/debug-api.json'
         git grep -l -E 'NavBarTopFirstRowScaffold\(|FleetConfigsActivity\.intent\(|FleetConfigsMenu\(|FleetConfigsButtons\(|FleetConfigsEntries\.(addTo|addButtons|open)\(' -- 'a[acd]_*' ':!*/test/*' ':!*/androidTest/*'
         printf '%s\n' "$DATA" ac_cloud-account/build.json ac_cloud-c3-webserver/build.json licenses/curated.json
+        # the files G4 reads to see that a shortcut_reach app links libs:ui-nav-bars: its settings / build scripts or a patch of its series (Cloud Office, #1630)
+        git grep -l -F ':libs:ui-nav-bars' -- 'a[acd]_*' | grep -E '(settings|build)(-extras)?\.gradle(\.kts)?$|\.patch$'
+        # #1652 an app whose UI lives in a shared lib module (build.json::android.ui_module_dirs): that module's sources are the app's
+        python3 - <<'PY'
+import glob, json, os, subprocess
+for b in sorted(glob.glob("a[acd]_*/build.json")):
+    for d in (json.load(open(b)).get("android") or {}).get("ui_module_dirs") or []:
+        top = os.path.normpath(os.path.join(os.path.dirname(b), d))
+        print(subprocess.run(["git", "ls-files", "--", top + "/*.kt", top + "/*.java"], capture_output=True, text=True).stdout, end="")
+PY
         find "$UIBARS" ab_cloud-libs-shared/libs/perms -type f -not -path "*/build/*"
     } | sort -u | while IFS= read -r f; do [ -f "$f" ] && cp --parents "$f" "$BASE"; done
 )
@@ -125,6 +135,17 @@ mutate "an app without a debug API port"        "$APP/debug-api.json" "$(J "d['p
 mutate "an app without a name"                  "$APP/build.json" "$(J "d.pop('display_name',None); d.pop('name',None)")" "G3 $APP: About field 'name' does not resolve"
 # G4 the app reaches the pages
 mutate "an app whose sources stop drawing the scaffold" "$APPKT" "s=s.replace('NavBarTopFirstRowScaffold(','OwnScaffold(')" "G4 $APP: no source reaches Configs"
+# #1652 an app whose UI is a shared lib module: G4 reads the declared module, so the lib losing the scaffold is that app's finding
+UIAPP=ac_cloud-writer
+UIKT="$(cd "$BASE" && python3 -c "import json,os,sys; b=json.load(open('$UIAPP/build.json')); print('\n'.join(os.path.normpath(os.path.join('$UIAPP',d)) for d in b['android']['ui_module_dirs']))" | while IFS= read -r d; do grep -rl 'NavBarTopFirstRowScaffold(' "$d"; done)"
+if [ -z "$UIKT" ]; then fail "no scaffold call under $UIAPP's android.ui_module_dirs — the fixture moved"; else
+    stage
+    for f in $UIKT; do sed -i 's/NavBarTopFirstRowScaffold(/OwnScaffold(/g' "$T/$f"; done
+    out="$(python3 "$GUARD" "$T")"; rc=$?
+    if [ "$rc" -eq 1 ] && grep -qF -- "G4 $UIAPP: no source reaches Configs" <<<"$out"; then ok "an app whose UI lib stops drawing the scaffold goes red (G4 $UIAPP)"
+    else fail "an app whose UI lib stops drawing the scaffold stayed green or named the wrong thing (rc=$rc)"; printf '%s\n' "$out" | tail -4; fi
+    green "the UI lib still draws it while the app's own shell names no scaffold" "$UIAPP/build.json" "s=s"
+fi
 mutate "a pending entry for an app that is wired" "$DATA" "$(J "d['pending']['$APP']='a reason that is long enough to pass'")" "G4 $APP: reaches Configs ▸ General / ▸ About now"
 PENDKT="$(cd "$BASE" && grep -rlE 'FleetConfigsMenu\(|FleetConfigsEntries\.|FleetConfigsActivity\.intent\(' "$PEND" | head -1)"
 if [ -n "$PENDKT" ]; then

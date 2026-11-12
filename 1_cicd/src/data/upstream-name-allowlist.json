@@ -192,12 +192,12 @@
       "id": "ieee-oui-vendor",
       "category": "external-identifier",
       "paths": [
-        "ab_cloud-libs-shared/libs/wifi/src/main/assets/wifi/oui.tsv"
+        "data/fleet/packs/wifi-oui.tsv"
       ],
       "patterns": [
         "(?<=\\t)Affinegy$"
       ],
-      "reason": "IEEE OUI registry row: the vendor name registered for 58:1C:BD is the company's own name, copied verbatim from the IEEE MA-L list (#1263)."
+      "reason": "IEEE OUI registry row: the vendor name registered for 58:1C:BD is the company's own name, copied verbatim from the IEEE MA-L list (#1263). The table is served as the wifi-oui runtime data pack (data/fleet/packs), no longer a baked libs:wifi asset."
     }
   ]
 }

@@ -58,11 +58,20 @@ def apps_of(root):
 
 
 def app_sources(root, app):
-    for base, dirs, files in os.walk(os.path.join(root, app)):
-        dirs[:] = [d for d in dirs if d not in SKIP_DIRS and not d.startswith(".")]
-        for f in files:
-            if f.endswith((".kt", ".java")):
-                yield os.path.join(base, f)
+    tops = [os.path.join(root, app)]
+    # #1652 android.ui_module_dirs: shared lib modules that hold the app's UI (Cloud Writer's whole UI is libs:writer-ui, its
+    # MainActivity a thin shell). The same declaration the nav-shape and configs-tabs guards read, so G4 judges the code that draws the app.
+    try:
+        for extra in (load(os.path.join(root, app, "build.json")).get("android") or {}).get("ui_module_dirs") or []:
+            tops.append(os.path.normpath(os.path.join(root, app, extra)))
+    except (OSError, ValueError):
+        pass
+    for top in tops:
+        for base, dirs, files in os.walk(top):
+            dirs[:] = [d for d in dirs if d not in SKIP_DIRS and not d.startswith(".")]
+            for f in files:
+                if f.endswith((".kt", ".java")):
+                    yield os.path.join(base, f)
 
 
 def reaches(root, app, needles):
