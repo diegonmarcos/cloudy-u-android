@@ -8,8 +8,8 @@ import android.content.pm.PackageManager
 import android.provider.Settings
 import android.provider.Telephony
 import android.telecom.TelecomManager
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
-import com.diegonmarcos.superapp.shellbroker.ShellBroker
+import com.diegonmarcos.superapp.shellclient.ShellClient
+import com.diegonmarcos.superapp.shellclient.ShellResult
 import java.io.File
 
 /**
@@ -55,11 +55,12 @@ object BgHost {
 
     fun shell(ctx: Context): BgShell? {
         val app = ctx.applicationContext
-        val ch = runCatching { ShellChannels.active(app) }.getOrNull() ?: return null
+        // #1682 the ONE ADB owner's broker through libs:shell-client: live status, then the output door (dumps over 256 KB).
+        val st = runCatching { ShellClient.status(app) }.getOrNull()?.takeIf { it.armed } ?: return null
         return object : BgShell {
-            override val channel = ch.name()
-            // #1510 through the SuperApp's one shell broker: allowlist (SuperApp entry), timeout, concurrency cap, audit.
-            override fun exec(cmd: String): String? = ShellBroker.execText(app, cmd)
+            override val channel = st.channel
+            // #1510 through the one shell broker: allowlist (SuperApp entry), timeout, concurrency cap, audit.
+            override fun exec(cmd: String): String? = (ShellClient.execOut(app, cmd, 60_000L) as? ShellResult.Ok)?.stdout
         }
     }
 

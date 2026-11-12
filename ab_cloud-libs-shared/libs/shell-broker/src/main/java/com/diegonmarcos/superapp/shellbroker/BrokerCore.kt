@@ -154,6 +154,21 @@ class BrokerCore(
     }
 
     /**
+     * #1682 The output door: [exec] under the same allowlist decision, with the caller's own output cap ([Allowlist.outCap]) instead
+     * of the provider's binder-sized one. A caller without `outMaxBytes` is refused (audited) before anything runs.
+     */
+    fun execOut(caller: String, cmd: String, timeoutMs: Long): ShellResult {
+        val cap = allowlist().outCap(caller)
+        if (cap <= 0) {
+            val key = allowlist().callerKey(caller)
+            return finish(key, cmd, ShellResult.Denied("$key has no output door (no outMaxBytes)"), "denied", -1, clock())
+        }
+        return exec(caller, cmd, timeoutMs, cap)
+    }
+
+    fun mayAudit(caller: String): Boolean = allowlist().mayAudit(caller)
+
+    /**
      * #1512 The stdin door: stream [declaredSize] bytes of [input] to [cmd]'s stdin (`pm install -S <size>`). Default deny: the caller's
      * `stdin` rules decide ([Allowlist.decideStdin]); at most [declaredSize] bytes are read (one more would be an over-run) into a temp
      * file under [spool], which is deleted afterwards; one stdin call at a time (a transfer holds an APK's worth of disk); its own

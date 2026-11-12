@@ -1,0 +1,29 @@
+package com.diegonmarcos.superapp.shellbroker
+
+import com.diegonmarcos.superapp.battery.BatteryPrivileged
+import com.diegonmarcos.superapp.launcher.PermAccess
+import com.diegonmarcos.superapp.xray.LocationUseView
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.io.File
+
+/**
+ * #1682 P3 step 3: the SuperApp's allowlist entry against the call sites that moved from the in-process broker to libs:shell-client.
+ * Every literal command those sites run is allowed under the entry (a refusal would be a silently empty answer), and the entry
+ * declares the output door at the 8 MB the in-process calls had, plus the audit grant the X-Ray shell counters read.
+ */
+class ClientCallSitesAllowlistTest {
+    private val list = Allowlist.parse(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
+    private val self = "com.diegonmarcos.superapp"
+    private fun allowed(cmd: String) = assertTrue("refused: $cmd -> ${list.decide(self, cmd)}", list.decide(self, cmd) is Allowlist.Decision.Allow)
+
+    @Test fun batteryLibCommandsAreAllowed() { allowed(BatteryPrivileged.COMMAND); allowed("dumpsys battery") }
+    @Test fun permAccessDashboardIsAllowed() = allowed(PermAccess.DASHBOARD_CMD)
+    @Test fun locationAppopsIsAllowed() = allowed(LocationUseView.APPOPS_CMD)
+    @Test fun outputDoorKeepsTheInProcessBudget() = assertEquals(8 * 1024 * 1024, list.outCap(self))
+    @Test fun auditGrantIsTheOwnerHostsOnly() {
+        assertTrue(list.mayAudit(self))
+        assertEquals(listOf(self), list.callers().filter { list.mayAudit(it) })
+    }
+}

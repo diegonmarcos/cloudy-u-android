@@ -78,6 +78,12 @@ object ShellBroker {
              maxBytes: Int = ShellWire.EXEC_MAX_BYTES, stdin: File? = null): ShellResult =
         core(ctx).also { it.reapIfIdle() }.exec(caller, cmd, timeoutMs, maxBytes, stdin)
 
+    /** #1682 The output door ([BrokerCore.execOut]): the caller's own cap; the provider writes the stdout to the client's pipe. */
+    fun execOut(ctx: Context, caller: String, cmd: String, timeoutMs: Long = ShellWire.DEFAULT_TIMEOUT_MS): ShellResult =
+        core(ctx).also { it.reapIfIdle() }.execOut(caller, cmd, timeoutMs)
+
+    fun mayAudit(ctx: Context, caller: String): Boolean = core(ctx).mayAudit(caller)
+
     /** #1512 The stdin door ([BrokerCore.execStdin]): [input] is the client's descriptor, read for at most [size] bytes into the cache spool. */
     fun execStdin(ctx: Context, caller: String, cmd: String, input: java.io.InputStream, size: Long,
                   timeoutMs: Long = ShellWire.STDIN_DEFAULT_TIMEOUT_MS): ShellResult =

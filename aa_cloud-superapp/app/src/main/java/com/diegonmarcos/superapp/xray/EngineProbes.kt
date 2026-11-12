@@ -7,7 +7,7 @@ import android.os.Build
 import com.diegonmarcos.superapp.battery.BatteryRepository
 import com.diegonmarcos.superapp.battery.EnergyLedger
 import com.diegonmarcos.superapp.crash.CrashReports
-import com.diegonmarcos.superapp.shellbroker.ShellBroker
+import com.diegonmarcos.superapp.shellclient.ShellClient
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
@@ -92,7 +92,7 @@ object EngineProbes {
         put("bgpolicy.app_mah") { appMah.also { if (it == null) missing["bgpolicy.app_mah"] = "no per-app batterystats reading yet (needs the ADB shell)" } }
 
         // Shell / ADB broker: the broker's own audit ring is the measurement (every call, its real duration and outcome).
-        val audit = runCatching { ShellBroker.auditEntries(app) }
+        val audit = runCatching { ShellClient.audit(app) ?: throw IllegalStateException("the ADB owner refused the audit read") }
         put("shell.failed") { audit.getOrThrow().count { it.outcome == "timeout" || it.outcome == "legacy-fail" } }
         put("shell.nonzero") { audit.getOrThrow().count { it.outcome == "exit" } }
         put("shell.denied") { audit.getOrThrow().count { it.outcome == "denied" } }

@@ -3,7 +3,6 @@
  "files": [
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/App.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/ShellActivity.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/bgpolicy/BgHost.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/bgpolicy/BgUi.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbCockpit.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbCockpitOps.kt",
@@ -22,18 +21,14 @@
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/FleetLogcatFragment.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/XrayExport.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/LauncherStatusStrip.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/PermAccessRow.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/AlwaysOnVpn.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/FleetDns.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkPopupSections.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/settings/LauncherPresetsFragment.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneBootReceiver.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneWorker.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/QuickDisplay.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/SystemDisplay.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/SystemGroups.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/xray/EngineProbes.kt"
+  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt"
  ],
  "gradle": [
   "ab_cloud-libs-shared/libs/updater/build.gradle",

@@ -85,8 +85,7 @@ object PermAccessUi {
     /** The broker's reading, or null when no ADB shell is armed / it refused (then the dashboard says why). Blocking. */
     fun brokerRead(ctx: Context): (String) -> String? = { cmd ->
         runCatching {
-            val b = com.diegonmarcos.superapp.shellbroker.ShellBroker
-            if (!com.diegonmarcos.superapp.system.AdbReadiness.check(ctx).usable) null else b.execText(ctx, cmd)
+            if (!com.diegonmarcos.superapp.system.AdbReadiness.check(ctx).usable) null else (com.diegonmarcos.superapp.shellclient.ShellClient.execOut(ctx, cmd, 60_000L) as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.stdout
         }.getOrNull()
     }
 

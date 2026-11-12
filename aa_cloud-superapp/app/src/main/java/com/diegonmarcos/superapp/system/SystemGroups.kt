@@ -14,7 +14,6 @@ import android.os.Process
 import android.os.StatFs
 import android.os.storage.StorageManager
 import com.diegonmarcos.superapp.battery.SysfsProc
-import com.diegonmarcos.superapp.shellbroker.ShellBroker
 import com.diegonmarcos.superapp.xray.XrayProbes
 import java.io.File
 import java.util.Locale
@@ -51,7 +50,7 @@ object SystemGroups {
         return synchronized(probeLock) {
             probeCache[probeId]?.takeIf { System.currentTimeMillis() - it.first < PROBE_TTL_MS }?.let { return@synchronized it.second }
             if (!AdbReadiness.check(ctx).usable) { probeError.remove(probeId); return@synchronized null }
-            val r = runCatching { ShellBroker.exec(ctx, ShellBroker.SELF, cmd, PROBE_TIMEOUT_MS, PROBE_MAX_BYTES) }.getOrNull()
+            val r = runCatching { com.diegonmarcos.superapp.shellclient.ShellClient.execOut(ctx, cmd, PROBE_TIMEOUT_MS) }.getOrNull()
             val out = (r as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.stdout?.takeIf { it.isNotBlank() }
             if (out != null) { probeCache[probeId] = System.currentTimeMillis() to out; probeError.remove(probeId) }
             else probeError[probeId] = when (r) {
@@ -71,7 +70,7 @@ object SystemGroups {
     private val probeLock = Any()
     private val probeError = java.util.concurrent.ConcurrentHashMap<String, String>()
     private const val PROBE_TIMEOUT_MS = 60_000L
-    private const val PROBE_MAX_BYTES = 8 * 1024 * 1024
+    // #1682 the 8 MB budget is the SuperApp entry's outMaxBytes in shell-allowlist.json (the output door), no longer a call argument.
 
     /** Several groups share one probe (batterystats, gfxinfo): one read serves them all while the dropdown is open. */
     private const val PROBE_TTL_MS = 10_000L

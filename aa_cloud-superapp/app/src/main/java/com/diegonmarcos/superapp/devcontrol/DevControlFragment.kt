@@ -326,7 +326,7 @@ class DevControlFragment : KitComposeFragment() {
             val sys = row("System app-ops", "reading…")
             launch {
                 val text = withContext(Dispatchers.IO) {
-                    runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.execText(appCtx, com.diegonmarcos.superapp.xray.LocationUseView.APPOPS_CMD) }.getOrNull()
+                    runCatching { (com.diegonmarcos.superapp.shellclient.ShellClient.execOut(appCtx, com.diegonmarcos.superapp.xray.LocationUseView.APPOPS_CMD, 60_000L) as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.stdout }.getOrNull()
                 }
                 val ops = com.diegonmarcos.superapp.xray.LocationUseView.opsLines(text)
                 sys.text = when {

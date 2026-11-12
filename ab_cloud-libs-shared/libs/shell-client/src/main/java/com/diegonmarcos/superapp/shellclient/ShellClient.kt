@@ -25,6 +25,8 @@ class ShellClient(private val transport: Transport) {
         fun call(method: String, cmd: String, extras: Map<String, String>): String?
         /** #1512 The stdin door: [stdin] is handed over as a file descriptor. Default = no such door. */
         fun callStdin(cmd: String, extras: Map<String, String>, stdin: java.io.File): String? = null
+        /** #1682 The output door: the reply JSON and the bytes read from the pipe (at most [ShellWire.OUT_MAX_BYTES]). Default = no door. */
+        fun callOut(cmd: String, extras: Map<String, String>): Pair<String?, ByteArray>? = null
     }
 
     /** `{exitCode, stdout, stderr, source}` or NeedsArm / Denied / Failed. */
@@ -54,6 +56,28 @@ class ShellClient(private val transport: Transport) {
             ShellWire.K_STDIN_SIZE to size.toString())
         return bounded(t) { transport.callStdin(cmd, extras, stdin) }
     }
+
+    /**
+     * #1682 `exec` whose stdout comes back through the output door, for answers over the provider's [ShellWire.EXEC_MAX_BYTES]
+     * (X-Ray dumps, batterystats, package dumps). The broker caps it at the caller's `outMaxBytes`; a caller without one is Denied.
+     */
+    fun execOut(cmd: String, timeoutMs: Long = ShellWire.DEFAULT_TIMEOUT_MS): ShellResult {
+        if (cmd.isBlank()) return ShellResult.Denied("empty command")
+        val t = ShellWire.clampTimeout(timeoutMs)
+        val extras = mapOf(ShellWire.K_TIMEOUT to t.toString())
+        var bytes = ByteArray(0)
+        val r = bounded(t) { transport.callOut(cmd, extras)?.let { (json, out) -> bytes = out; json } }
+        return if (r is ShellResult.Ok) r.copy(stdout = String(bytes, Charsets.UTF_8)) else r
+    }
+
+    /** #1682 Ask the owner to drop its cached status (a page resumed, a setting changed); false = the owner did not answer. */
+    fun invalidate(): Boolean = runCatching { transport.call(ShellWire.M_INVALIDATE, "", emptyMap()) != null }.getOrDefault(false)
+
+    /** #1682 The owner's audit ring, or null when it refused (no `audit` grant) or did not answer. */
+    fun audit(): List<ShellWire.AuditRow>? = runCatching { ShellWire.decodeAudit(transport.call(ShellWire.M_AUDIT, "", emptyMap())) }.getOrNull()
+
+    /** #1682 (caller, rule summary) of every allowlist entry, or null when refused / unreachable. */
+    fun callers(): List<Pair<String, String>>? = runCatching { ShellWire.decodeCallers(transport.call(ShellWire.M_CALLERS, "", emptyMap())) }.getOrNull()
 
     /** The broker's LIVE status: it runs a round trip through the real channel on every call (a few seconds of cache at most, broker side). */
     fun status(): ShellStatus {
@@ -86,6 +110,7 @@ class ShellClient(private val transport: Transport) {
 
     companion object {
         private const val GRACE_MS = 3_000L
+        private const val OUT_DRAIN_MS = 10_000L
 
         /** The client over the real provider of the SuperApp. */
         fun over(ctx: Context): ShellClient {
@@ -110,10 +135,38 @@ class ShellClient(private val transport: Transport) {
                         client.call(ShellWire.M_EXEC_STDIN, cmd, b)?.getString(ShellWire.K_JSON)
                     } finally { runCatching { pfd.close() }; client.close() }
                 }
+
+                // #1682 The output door: the read end is drained on its own thread WHILE the owner writes (a pipe holds ~64 KB),
+                // bounded at OUT_MAX_BYTES; our copy of the write end is closed after the call so the reader sees EOF.
+                override fun callOut(cmd: String, extras: Map<String, String>): Pair<String?, ByteArray>? {
+                    val client = app.contentResolver.acquireUnstableContentProviderClient(ShellWire.AUTHORITY) ?: return null
+                    val (rd, wr) = ParcelFileDescriptor.createPipe().let { it[0] to it[1] }
+                    val sink = java.io.ByteArrayOutputStream()
+                    val reader = Thread({
+                        runCatching { ParcelFileDescriptor.AutoCloseInputStream(rd).use { input ->
+                            val buf = ByteArray(64 * 1024)
+                            while (true) {
+                                val n = input.read(buf); if (n < 0) break
+                                val room = ShellWire.OUT_MAX_BYTES - sink.size(); if (room > 0) sink.write(buf, 0, minOf(n, room))
+                            }
+                        } }
+                    }, "shell-client-out").apply { isDaemon = true; start() }
+                    return try {
+                        val b = Bundle().apply { extras.forEach { (k, v) -> putString(k, v) }; putParcelable(ShellWire.K_OUT_FD, wr) }
+                        val json = client.call(ShellWire.M_EXEC_OUT, cmd, b)?.getString(ShellWire.K_JSON)
+                        runCatching { wr.close() }
+                        reader.join(OUT_DRAIN_MS)
+                        json to sink.toByteArray()
+                    } finally { runCatching { wr.close() }; client.close() }
+                }
             })
         }
 
         fun exec(ctx: Context, cmd: String, timeoutMs: Long = ShellWire.DEFAULT_TIMEOUT_MS): ShellResult = over(ctx).exec(cmd, timeoutMs)
+        fun execOut(ctx: Context, cmd: String, timeoutMs: Long = ShellWire.DEFAULT_TIMEOUT_MS): ShellResult = over(ctx).execOut(cmd, timeoutMs)
+        fun invalidate(ctx: Context): Boolean = over(ctx).invalidate()
+        fun audit(ctx: Context): List<ShellWire.AuditRow>? = over(ctx).audit()
+        fun callers(ctx: Context): List<Pair<String, String>>? = over(ctx).callers()
         fun status(ctx: Context): ShellStatus {
             if (!superAppInstalled(ctx)) return ShellStatus(false, false, "none", "SuperApp missing", System.currentTimeMillis(),
                 "SuperApp is not installed")

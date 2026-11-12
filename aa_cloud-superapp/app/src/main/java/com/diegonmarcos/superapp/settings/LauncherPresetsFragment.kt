@@ -71,7 +71,7 @@ class LauncherPresetsFragment : KitComposeFragment() {
         private set
 
     /** Where the broker status is read; a test stands a fake here. */
-    internal var readShell: (android.content.Context) -> ShellStatus = { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(it) }
+    internal var readShell: (android.content.Context) -> ShellStatus = { com.diegonmarcos.superapp.shellclient.ShellClient.status(it) }
 
     /** Re-read the broker (off the UI thread) when a preset carries a command; nothing is read on a page with none. */
     internal fun checkShell() {
@@ -216,7 +216,7 @@ class LauncherPresetsFragment : KitComposeFragment() {
 
     /**
      * #1591 A preset that declares a `cmd` runs it through the adb-shell broker
-     * (ShellBroker.execText — the same privileged channel X-Ray and Super Saving
+     * (ShellClient.execOut — the same privileged channel X-Ray and Super Saving
      * use), off the UI thread, and toasts whether the shell carried it. No engine
      * of its own: the broker is the one door, a no-op when no channel is armed.
      */
@@ -224,13 +224,13 @@ class LauncherPresetsFragment : KitComposeFragment() {
         val app = requireContext().applicationContext
         val act = requireActivity()
         Thread({
-            val out = com.diegonmarcos.superapp.shellbroker.ShellBroker.execText(app, mode.cmd)
+            val out = (com.diegonmarcos.superapp.shellclient.ShellClient.execOut(app, mode.cmd, 60_000L) as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.stdout
             com.diegonmarcos.superapp.bgpolicy.BgUi.toast(
                 act,
                 if (out != null) "${mode.label}: ran its action" else "${mode.label}: shell not ready",
             )
             // The checker under the tile says what the broker says now, after this run.
-            runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.invalidate(app) }
+            runCatching { com.diegonmarcos.superapp.shellclient.ShellClient.invalidate(app) }
             act.runOnUiThread { checkShell() }
         }, "preset-cmd").start()
     }

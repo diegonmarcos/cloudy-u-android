@@ -1,10 +1,12 @@
 {
- "_doc": "#1510 THE per-caller command allowlist of the SuperApp's shell broker (libs:shell-broker). Default deny: a caller with no entry, or a command no rule of that caller matches, is refused. `re` is a full-match regex over the trimmed command; a shell metacharacter (; & | ` $ < > ( ) { } \\ #) is refused unless the rule lists it in `meta`. Key = the caller package resolved from the binder uid (cld.termux and cld.termux.nix share a uid), or an alias below. An app that links libs:shell-client MUST have an entry here (guard test-shell-broker-guards.sh). `stdin` (#1512) = the rules of the stdin door (`pm install -S <size>`, `pm install-write -S <size> ... -`), each with a `maxBytes` cap; a caller without them may stream nothing. A trailing ` 2>&1` is the one redirect a command may end with. `exact` = literal command lines (the SuperApp's X-Ray probes), `segments` = `;`/newline separate commands and each must match (the Background policy chains); both are per-caller data, never a client choice.",
+ "_doc": "#1510 THE per-caller command allowlist of the SuperApp's shell broker (libs:shell-broker). Default deny: a caller with no entry, or a command no rule of that caller matches, is refused. `re` is a full-match regex over the trimmed command; a shell metacharacter (; & | ` $ < > ( ) { } \\ #) is refused unless the rule lists it in `meta`. Key = the caller package resolved from the binder uid (cld.termux and cld.termux.nix share a uid), or an alias below. An app that links libs:shell-client MUST have an entry here (guard test-shell-broker-guards.sh). `stdin` (#1512) = the rules of the stdin door (`pm install -S <size>`, `pm install-write -S <size> ... -`), each with a `maxBytes` cap; a caller without them may stream nothing. A trailing ` 2>&1` is the one redirect a command may end with. `exact` = literal command lines (the SuperApp's X-Ray probes), `segments` = `;`/newline separate commands and each must match (the Background policy chains); both are per-caller data, never a client choice. #1682 `outMaxBytes` = the caller may use the output door (exec_out: stdout through a pipe, for answers over the 256 KB provider cap), up to that many bytes (never above 16 MiB); `audit` = the caller may read the audit ring and the caller summaries (the owner's ADB Shell page). Both default off.",
  "aliases": {
   "com.diegonmarcos.cloudwebserver": "mesh"
  },
  "callers": {
   "com.diegonmarcos.superapp": {
+   "outMaxBytes": 8388608,
+   "audit": true,
    "why": "The broker's own host: X-Ray, Background policy, Super Saving, device tuning, perms, installs, diagnostics (internal callers).",
    "segments": true,
    "allow": [

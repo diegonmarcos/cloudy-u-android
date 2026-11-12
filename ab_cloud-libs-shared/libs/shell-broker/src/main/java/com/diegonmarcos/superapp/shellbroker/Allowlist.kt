@@ -19,7 +19,9 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
     data class Rule(val id: String, val pattern: Regex, val meta: String = "", val maxBytes: Long = 0L)
     /** [stdin] = the caller's #1512 stdin rules (`pm install -S <size>`); empty = this caller may stream nothing. */
     data class Entry(val rules: List<Rule>, val exact: Map<String, Rule> = emptyMap(), val segments: Boolean = false,
-                     val stdin: List<Rule> = emptyList())
+                     val stdin: List<Rule> = emptyList(),
+                     /** #1682 the output door's cap for this caller (0 = no door); [audit] = may read the audit ring and summaries. */
+                     val outMaxBytes: Int = 0, val audit: Boolean = false)
 
     sealed class Decision {
         data class Allow(val rule: Rule) : Decision()
@@ -30,6 +32,12 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
     fun callerKey(pkg: String): String = aliases[pkg] ?: pkg
 
     fun callers(): Set<String> = callers.keys
+
+    /** #1682 The most stdout one `exec_out` of [pkg] may return: its `outMaxBytes`, never above [ShellWire.OUT_MAX_BYTES]; 0 = no door. */
+    fun outCap(pkg: String): Int = (callers[callerKey(pkg)]?.outMaxBytes ?: 0).coerceIn(0, ShellWire.OUT_MAX_BYTES)
+
+    /** #1682 May [pkg] read the audit ring and the caller summaries? Default no. */
+    fun mayAudit(pkg: String): Boolean = callers[callerKey(pkg)]?.audit == true
 
     /** One short line of what [key] may do (the ADB Shell page's Callers rows): rule count, exact lines, stdin, chaining. */
     fun summary(key: String): String {
@@ -127,7 +135,7 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
                         Rule(r.getString("id"), Regex(r.getString("re")), r.optString("meta", ""), r.getLong("maxBytes"))
                     }
                 } ?: emptyList()
-                callers[k] = Entry(rules, ex, c.optBoolean("segments", false), sin)
+                callers[k] = Entry(rules, ex, c.optBoolean("segments", false), sin, c.optInt("outMaxBytes", 0), c.optBoolean("audit", false))
             }
             val al = LinkedHashMap<String, String>()
             o.optJSONObject("aliases")?.let { a -> for (k in a.keys()) al[k] = a.getString(k) }

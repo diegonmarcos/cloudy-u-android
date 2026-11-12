@@ -29,6 +29,19 @@ object ShellWire {
     const val K_TIMEOUT = "timeoutMs"
     const val K_MAX_BYTES = "maxBytes"
     const val K_JSON = "json"
+    /**
+     * #1682 The output door: `exec_out` runs the command like `exec`, but its stdout goes back through a pipe whose WRITE end is the
+     * [K_OUT_FD] extra (the #1512 stdin door in reverse), so an answer may exceed the binder transaction limit. Only a caller whose
+     * allowlist entry declares `outMaxBytes` may use it, capped at that and at [OUT_MAX_BYTES]; the JSON reply carries an empty stdout.
+     */
+    const val M_EXEC_OUT = "exec_out"
+    const val K_OUT_FD = "outFd"
+    const val OUT_MAX_BYTES = 16 * 1024 * 1024
+    /** #1682 Drop the broker's cached status so the next `status` is a live check (any permitted caller). */
+    const val M_INVALIDATE = "invalidate"
+    /** #1682 The audit ring and the per-caller rule summaries: only for a caller whose entry declares `"audit": true` (the owner page). */
+    const val M_AUDIT = "audit"
+    const val M_CALLERS = "callers"
 
     const val DEFAULT_TIMEOUT_MS = 15_000L
     const val MAX_TIMEOUT_MS = 120_000L
@@ -83,6 +96,30 @@ object ShellWire {
             o.optString("reason").takeUnless { armed }.orEmpty(),
             // #1550 a broker that sends no adb state predates it: UNKNOWN, never green.
             AdbLink.of(o.optString("adb", "")), o.optString("adbDetail"))
+    }
+
+    /** #1682 One audited broker call as the client sees it (never the output; the command is already redacted broker side). */
+    data class AuditRow(val ts: Long, val caller: String, val cmd: String, val outcome: String, val exit: Int, val ms: Long, val source: String)
+
+    fun encodeAudit(rows: List<AuditRow>): String = org.json.JSONArray().apply {
+        rows.forEach { r -> put(JSONObject().put("ts", r.ts).put("caller", r.caller).put("cmd", r.cmd).put("outcome", r.outcome)
+            .put("exit", r.exit).put("ms", r.ms).put("source", r.source)) }
+    }.toString()
+
+    /** null = not an audit answer (refused, outdated owner, unreadable). */
+    fun decodeAudit(json: String?): List<AuditRow>? {
+        val a = runCatching { org.json.JSONArray(json.orEmpty()) }.getOrNull() ?: return null
+        return (0 until a.length()).mapNotNull { i -> a.optJSONObject(i)?.let { o ->
+            AuditRow(o.optLong("ts"), o.optString("caller"), o.optString("cmd"), o.optString("outcome"), o.optInt("exit", -1),
+                o.optLong("ms"), o.optString("source")) } }
+    }
+
+    fun encodeCallers(rows: List<Pair<String, String>>): String =
+        org.json.JSONArray().apply { rows.forEach { (k, v) -> put(JSONObject().put("caller", k).put("summary", v)) } }.toString()
+
+    fun decodeCallers(json: String?): List<Pair<String, String>>? {
+        val a = runCatching { org.json.JSONArray(json.orEmpty()) }.getOrNull() ?: return null
+        return (0 until a.length()).mapNotNull { i -> a.optJSONObject(i)?.let { it.optString("caller") to it.optString("summary") } }
     }
 
     /** Clamp a caller's timeout into 1 s .. [MAX_TIMEOUT_MS]; every call has one. */

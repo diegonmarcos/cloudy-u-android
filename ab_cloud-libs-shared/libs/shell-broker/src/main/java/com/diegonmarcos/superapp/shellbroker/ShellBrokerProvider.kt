@@ -24,6 +24,15 @@ class ShellBrokerProvider : ContentProvider() {
         if (!CallerId.permitted(ctx, uid)) return reply(ShellWire.encode(ShellResult.Denied("signature permission missing")))
         if (method == ShellWire.M_STATUS) return reply(ShellWire.encodeStatus(ShellBroker.status(ctx)))
         if (method == ShellWire.M_EXEC_STDIN) return execStdin(ctx, uid, arg.orEmpty(), extras)
+        if (method == ShellWire.M_EXEC_OUT) return execOut(ctx, uid, arg.orEmpty(), extras)
+        if (method == ShellWire.M_INVALIDATE) { ShellBroker.invalidate(ctx); return reply("{}") }
+        if (method == ShellWire.M_AUDIT || method == ShellWire.M_CALLERS) {
+            val who = CallerId.of(ctx, uid, callingPackage) ?: return reply(ShellWire.encode(ShellResult.Denied("unknown caller")))
+            if (!ShellBroker.mayAudit(ctx, who)) return reply(ShellWire.encode(ShellResult.Denied("no audit grant")))
+            return reply(if (method == ShellWire.M_AUDIT)
+                ShellWire.encodeAudit(ShellBroker.auditEntries(ctx).map { ShellWire.AuditRow(it.ts, it.caller, it.cmd, it.outcome, it.exit, it.ms, it.source) })
+            else ShellWire.encodeCallers(ShellBroker.callerSummaries(ctx)))
+        }
         val viaJson = method == ShellWire.M_EXEC_JSON || method == ShellWire.M_STREAM_JSON
         if (method != ShellWire.M_EXEC && method != ShellWire.M_STREAM && !viaJson) return null
         val caller = CallerId.of(ctx, uid, callingPackage) ?: return reply(ShellWire.encode(ShellResult.Denied("unknown caller")))
@@ -51,6 +60,21 @@ class ShellBrokerProvider : ContentProvider() {
         val timeout = extras?.getString(ShellWire.K_TIMEOUT)?.toLongOrNull() ?: ShellWire.STDIN_DEFAULT_TIMEOUT_MS
         val r = ParcelFileDescriptor.AutoCloseInputStream(pfd).use { ShellBroker.execStdin(ctx, caller, cmd, it, size, timeout) }
         return reply(ShellWire.encode(r))
+    }
+
+    /** #1682 The output door: the stdout goes to the client's pipe (write end = [ShellWire.K_OUT_FD]), the reply carries an empty stdout. */
+    private fun execOut(ctx: android.content.Context, uid: Int, cmd: String, extras: Bundle?): Bundle {
+        @Suppress("DEPRECATION")
+        val pfd = runCatching { extras?.getParcelable<ParcelFileDescriptor>(ShellWire.K_OUT_FD) }.getOrNull()
+            ?: return reply(ShellWire.encode(ShellResult.Denied("no output descriptor")))
+        ParcelFileDescriptor.AutoCloseOutputStream(pfd).use { out ->
+            val caller = CallerId.of(ctx, uid, callingPackage) ?: return reply(ShellWire.encode(ShellResult.Denied("unknown caller")))
+            val timeout = extras?.getString(ShellWire.K_TIMEOUT)?.toLongOrNull() ?: ShellWire.DEFAULT_TIMEOUT_MS
+            val r = ShellBroker.execOut(ctx, caller, cmd, timeout)
+            if (r !is ShellResult.Ok) return reply(ShellWire.encode(r))
+            runCatching { out.write(r.stdout.toByteArray(Charsets.UTF_8)) }
+            return reply(ShellWire.encode(r.copy(stdout = "")))
+        }
     }
 
     /** The client reads `json`; the Cloud-Webserver bridge reads `ok` / `mime` / `payload` (the same shape every fleet provider answers). */
