@@ -1,6 +1,6 @@
 package com.diegonmarcos.superapp.settings
-import com.diegonmarcos.superapp.BuildConfig
-import com.diegonmarcos.superapp.R
+import com.diegonmarcos.superapp.account.BuildConfig
+import com.diegonmarcos.superapp.account.R
 
 import android.content.Context
 import android.net.Uri
@@ -42,13 +42,16 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.cloudlib.auth.VaultConnect
 import com.diegonmarcos.cloudlib.auth.VaultFile
-import com.diegonmarcos.superapp.ui.LauncherPalette
+import com.diegonmarcos.superapp.profile.AccountHost
 import com.diegonmarcos.superapp.uikit.KitCard
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 
 /**
- * Configs ▸ Profile ▸ "Import from a file instead" (the last line of journey
+ * #1693 Cloud Account ▸ Connect ▸ Import (moved here from the SuperApp, which no longer links libs:account;
+ * the SuperApp's Import configs shortcut opens this page in Cloud Account).
+ *
+ * Was: Configs ▸ Profile ▸ "Import from a file instead" (the last line of journey
  * step 4, #573) and the paste box behind it.
  *
  * TWO SHAPES, ONE DOOR, NO SILENCE (#585). What comes in is classified by
@@ -95,7 +98,7 @@ class ImportConfigsFragment : KitComposeFragment() {
         if (uri != null) loadFromUri(uri)
     }
 
-    override fun palette() = LauncherPalette.kit(requireContext())
+    override fun palette() = AccountHost.palette(requireContext())
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         input = readBlob(requireContext())
@@ -131,7 +134,7 @@ class ImportConfigsFragment : KitComposeFragment() {
                 onClick = { pickFile.launch(arrayOf("application/json", "text/*", "*/*")) },
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag(TAG_OPEN_FILE),
             ) {
-                Icon(painterResource(R.drawable.ic_p_import), contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(painterResource(R.drawable.ic_account_import), contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.import_from_file))
             }

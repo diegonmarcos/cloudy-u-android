@@ -25,6 +25,7 @@ cat > "$POL" <<'JSON'
   "oauth-browser": {"pattern": "CustomTabsIntent|net\\.openid\\.appauth", "why": "oauth browser"},
   "signin-ui": {"pattern": "(?<!fun )\\bSignInWays\\(", "why": "sign-in surface"},
   "credential-prompt": {"pattern": "PasswordVisualTransformation\\(", "file_context": "\\b(sign[ _-]?in|log[ _-]?in)\\b", "why": "password"}},
+ "owner_only_libs": ["libs:account"],
  "exempt": [{"path": "ac_cloud-fork/", "rules": ["oauth-browser"], "why": "upstream", "until": "permanent"}]}
 JSON
 
@@ -51,6 +52,10 @@ for bad in 'listOf("auth", "login")' 'ghEngine.login(host) { _, _ -> }' 'SignInW
 done
 fixture "$F"; echo '{"engines": {"gh": {"login_poll_ms": 1000}}}' > "$F/ac_cloud-demo/build.json"
 [ "$(run "$F")" = 1 ] && ok "RED: an app declares engines.gh login timings" || fail "engines.gh decl stayed green"
+fixture "$F"; echo "dependencies { implementation project(':libs:account') }" > "$F/ac_cloud-demo/app/build.gradle"
+[ "$(run "$F")" = 1 ] && grep -q 'only ac_cloud-account' "$WORK/out" && ok "RED: an app other than Cloud Account links libs:account" || fail "a second libs:account consumer stayed green"
+fixture "$F"; printf "dependencies {\n    // implementation project(':libs:account')\n}\n" > "$F/ac_cloud-demo/app/build.gradle"
+[ "$(run "$F")" = 0 ] && ok "a commented-out link is not a link" || fail "a comment turned the guard red"
 fixture "$F"; echo 'class Auth {}' > "$F/ac_cloud-fork/src/Auth.java"
 [ "$(run "$F")" = 1 ] && grep -q 'matches nothing' "$WORK/out" && ok "RED: a stale exemption (the list only shrinks)" || fail "stale exemption stayed green"
 fixture "$F"; echo 'nothing' > "$F/ac_cloud-account/app/build.gradle"

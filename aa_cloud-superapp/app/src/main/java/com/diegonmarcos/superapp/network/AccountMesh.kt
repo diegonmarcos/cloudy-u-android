@@ -1,8 +1,6 @@
 package com.diegonmarcos.superapp.network
 
 import android.content.Context
-import com.diegonmarcos.superapp.profile.AccountHost
-import com.diegonmarcos.superapp.profile.VaultCockpit
 import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.Config
 import com.wireguard.crypto.Key
@@ -10,19 +8,15 @@ import java.io.BufferedReader
 import java.io.StringReader
 
 /**
- * #867 The mesh tunnel as libs:account sees it: this app's WireGuard prefs behind [AccountHost.Mesh].
- * Account compares a vault device's declared profiles against [state] and lands one through [apply].
+ * #867 The mesh tunnel's apply path: this app's WireGuard prefs, fed a vault profile.
+ * #1693 libs:account is Cloud Account's now, so this is no longer its AccountHost.Mesh: the Mesh
+ * page (AndroidMeshPort) calls it directly.
  */
-object AccountMesh : AccountHost.Mesh {
+object AccountMesh {
 
-    override fun interfaceAddress(ctx: Context): String = WgState.prefs(ctx).interfaceAddress
+    fun interfaceAddress(ctx: Context): String = WgState.prefs(ctx).interfaceAddress
 
-    override fun state(ctx: Context): VaultCockpit.TunnelState = tunnelState(WgState.prefs(ctx))
-
-    override fun apply(ctx: Context, name: String, conf: String): String = applyMesh(WgState.prefs(ctx), name, conf)
-
-    fun tunnelState(prefs: WireGuardPrefs) = VaultCockpit.TunnelState(
-        prefs.tunnelName, prefs.interfaceAddress, prefs.peers().map { it.publicKey }.toSet())
+    fun apply(ctx: Context, name: String, conf: String): String = applyMesh(WgState.prefs(ctx), name, conf)
 
     /** The vault's conf goes through the SAME parser the .conf import uses; a
      *  text the WireGuard parser rejects writes nothing. Returns the report line. */
@@ -38,7 +32,7 @@ object AccountMesh : AccountHost.Mesh {
         return "✓ $name applied: ${cfg.peers.size} peers, key from the vault"
     }
 
-    override fun publicKey(ctx: Context): String = WgState.prefs(ctx).derivedInterfacePublicKey()
+    fun publicKey(ctx: Context): String = WgState.prefs(ctx).derivedInterfacePublicKey()
 
     /**
      * #573 The four profiles stored as the selectable set (keys stripped), [privateKey] into the
@@ -47,7 +41,7 @@ object AccountMesh : AccountHost.Mesh {
      * then the handshake read for the report. Every text goes through the upstream parser first;
      * one rejected text writes nothing.
      */
-    override fun applyAll(ctx: Context, profiles: Map<String, String>, active: String, privateKey: String?): String {
+    fun applyAll(ctx: Context, profiles: Map<String, String>, active: String, privateKey: String?): String {
         val prefs = WgState.prefs(ctx)
         val key = privateKey ?: prefs.interfacePrivateKey
         if (key.isBlank()) return "✗ no private key on this device; nothing written"
@@ -73,7 +67,7 @@ object AccountMesh : AccountHost.Mesh {
         return (lines + status(ctx, waitMs = 6000)).joinToString("\n")
     }
 
-    override fun status(ctx: Context): String = status(ctx, waitMs = 0)
+    fun status(ctx: Context): String = status(ctx, waitMs = 0)
 
     /** up/down · active profile · newest peer handshake; waits up to [waitMs] for a first handshake. Never a key. */
     fun status(ctx: Context, waitMs: Long): String {

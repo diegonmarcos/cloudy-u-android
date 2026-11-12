@@ -253,7 +253,6 @@
         "libs:ui-icons",
         "libs:auth",
         "libs:ui-kit",
-        "libs:account",
         "libs:sysdns"
       ],
       "comment": "Launcher / shell. Hosts navigation to each feature module."
@@ -306,7 +305,7 @@
       "type": "library"
     },
     "libs:fleet-endpoints": {
-      "_doc_dir": "#1093 the fleet endpoint fallback (plain JVM), shared with Cloud Mail and Cloud Account: libs:account links it (`api`), and this app hosts libs:account, so the graph must include it. The SuperApp declares no fleet_endpoints, so nothing is routed here.",
+      "_doc_dir": "#1093 the fleet endpoint fallback (plain JVM), shared with Cloud Mail and Cloud Account: libs:account links it (`api`) in Cloud Account; this app links the Android half directly (#1693 AccountClient), so the graph must include it. The SuperApp declares no fleet_endpoints, so nothing is routed here.",
       "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints",
       "type": "library"
     },
@@ -316,7 +315,7 @@
       "type": "library"
     },
     "libs:fleet-endpoints-android": {
-      "_doc_dir": "#1093 the Android halves of the fleet endpoint design; libs:account links it (`api`) and this app hosts libs:account.",
+      "_doc_dir": "#1093 the Android halves of the fleet endpoint design; #1693 this app links it directly for AccountClient (Cloud Account's client half) and StatusLight; libs:account is Cloud Account's alone.",
       "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints-android",
       "type": "library"
     },
@@ -361,10 +360,6 @@
       "_doc": "The Store (#563; formerly the Constellation store): fleet list, install/update actions, background pass. Split from the app so store, launcher and updater are separable - libs:updater is the engine, this is the storefront. UI, so it cannot go out-of-process like libs:net; the win is the boundary."
     },
     "libs:shared-store": {"_doc_dir": "cloud-shared-store's store-access layer (contract). libs:appstore compiles it for the generated ICloudExec client: SharedUidMigration asks the OLD terminal build to back its home up over CLOUD_EXEC. Shared BY REFERENCE; reads ac_cloud-termux/build.json::shared_store.", "dir": "../ab_cloud-libs-shared/libs/shared-store", "type": "library"},
-    "libs:account": {
-      "dir": "../ab_cloud-libs-shared/libs/account",
-      "_doc": "#867 Account (the Profile page: Connect, Fleet cockpit, Infos, Drift, business card) as a library, so SuperApp and the Cloud Account app host one code path. The host supplies its palette, tab chrome, icons, router, haptics and mesh tunnel through AccountHost."
-    },
     "libs:mail": {
       "dir": "../ab_cloud-libs-shared/libs/mail",
       "type": "library",

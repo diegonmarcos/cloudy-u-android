@@ -17,7 +17,8 @@ python3 - "$1" "$A" <<'PY'
 import json, os, re, sys
 root, A = sys.argv[1], sys.argv[2]
 # build.json::ui of cc0fc6d7d^ (the last commit before #1625), as an id tree: [id, [children]] or a leaf id.
-WANT = json.loads('''{"bottom_nav": ["vault", "config", "connect", "devices", "activity"], "default": "vault", "sections": [["vault", ["ids", "cards", ["secrets", ["providers", "keys", "tokens", "grants", "import", "entries"]], ["autocomplete", ["personal", "sites", "snippets"]]]], ["config", [["android", ["cloud-apps", "phone-apps", "runbook"]], "desktop", ["c3", ["infra", "containers"]], "repos"]], ["connect", [["status", ["connections", "apps", "endpoints"]], ["auth", ["hub", "signin", "settings"]], ["fleetsetup", ["services", "drive", "push", "perms", "adb-shell"]]]], ["devices", ["mesh", "peer-control", ["backup", ["databases", "bundle", "me"]], "files", "working", "diff"]], ["activity", ["activity", "fleetdata"]], ["configs", ["general", "perms", "about"]]]}''')
+# #1693 one page ADDED (connect > auth > import-configs, Import configs moved here from the SuperApp); nothing removed.
+WANT = json.loads('''{"bottom_nav": ["vault", "config", "connect", "devices", "activity"], "default": "vault", "sections": [["vault", ["ids", "cards", ["secrets", ["providers", "keys", "tokens", "grants", "import", "entries"]], ["autocomplete", ["personal", "sites", "snippets"]]]], ["config", [["android", ["cloud-apps", "phone-apps", "runbook"]], "desktop", ["c3", ["infra", "containers"]], "repos"]], ["connect", [["status", ["connections", "apps", "endpoints"]], ["auth", ["hub", "signin", "import-configs", "settings"]], ["fleetsetup", ["services", "drive", "push", "perms", "adb-shell"]]]], ["devices", ["mesh", "peer-control", ["backup", ["databases", "bundle", "me"]], "files", "working", "diff"]], ["activity", ["activity", "fleetdata"]], ["configs", ["general", "perms", "about"]]]}''')
 fails = 0
 def ok(c, good, bad):
     global fails

@@ -130,14 +130,16 @@ grep -q 'radiusFor(inner.size)' "$ARCMENU" && grep -q '(k + 0.5) / idx.size' "$A
 echo "── 4. Shared machinery kept because it is used elsewhere ──"
 
 # ic_p_import was the removed entry's icon but is NOT its icon alone. Deleting
-# the drawable would break a launcher shortcut and the Import Configs screen.
-# #773: Import Configs is Compose now; its button paints the icon from
-# ImportConfigsFragment.kt (R.drawable.ic_p_import), so that is the second user.
+# the drawable would break a launcher shortcut. #1693: the Import Configs page
+# moved to Cloud Account (libs:account, its own ic_account_import), and the
+# shortcut (action:import_configs) now opens it there; the shortcut keeps this icon.
 grep -q 'ic_p_import' "$APP/app/src/main/res/xml/shortcuts.xml" \
-  && grep -q 'R.drawable.ic_p_import' "$APP/app/src/main/java/com/diegonmarcos/superapp/settings/ImportConfigsFragment.kt" \
-  && check OK "ic_p_import kept — still used by shortcuts.xml and Import Configs" \
-  || check "ic_p_import no longer referenced by its other users" \
-           "ic_p_import kept — still used by shortcuts.xml and Import Configs"
+  && grep -q 'action:import_configs' "$APP/app/src/main/res/xml/shortcuts.xml" \
+  && grep -q 'AccountHandoff.openAt(this, "connect", "import-configs")' "$APP/app/src/main/java/com/diegonmarcos/superapp/ShellActivity.kt" \
+  && grep -q 'R.drawable.ic_account_import' "$APP/../ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/settings/ImportConfigsFragment.kt" \
+  && check OK "ic_p_import kept — still used by shortcuts.xml, whose Import configs opens Cloud Account's page" \
+  || check "ic_p_import or its shortcut no longer reaches Import Configs" \
+           "ic_p_import kept — still used by shortcuts.xml, whose Import configs opens Cloud Account's page"
 
 # The clipboard snapshot itself was never the star's — the About page has its
 # own button for it. Only the shortcut was removed, not the capability.

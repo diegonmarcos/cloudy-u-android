@@ -477,8 +477,6 @@ def logIngestUrl       = (buildJson.diagnostics?.log_ingest_url ?: '').toString(
 // the Fleet tab's cockpit layout (sections, labels, vault-section mapping, ai token targets).
 def c3Ops              = buildJson.ui.c3_ops ?: [:]
 def c3OpsBaseUrl       = (c3Ops.base_url ?: '').toString()
-def importSchemaJson = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(buildJson.ui.import_schema ?: [:]))
-def importSchemaB64  = importSchemaJson.bytes.encodeBase64().toString()
 // Linktree snapshot — drives Tools aggregator (Apps + Admin modes).
 // Source: front/a-Portals/linktree/src/data/projects.json (snapshot
 // committed in data/linktree.json via data/regen.sh).
@@ -937,7 +935,6 @@ android {
         buildConfigField "String", "SERVICES_PUBLIC_B64",   "\"${svcPubB64}\""
         buildConfigField "String", "SERVICES_PRIVATE_B64",  "\"${svcPrivB64}\""
         buildConfigField "String", "CLOUD_SERVICES_B64",    "\"${cloudSvcB64}\""
-        buildConfigField "String", "UI_IMPORT_SCHEMA_B64",  "\"${importSchemaB64}\""
         buildConfigField "String", "LOG_INGEST_URL",  "\"${logIngestUrl}\""
         buildConfigField "String", "UI_C3_OPS_BASE_URL", "\"${c3OpsBaseUrl}\""
         buildConfigField "String", "LINKTREE_JSON_B64",     "\"${linktreeB64}\""
@@ -1209,10 +1206,7 @@ dependencies {
     // #587 THE sign-in of the fleet: Configs ▸ Profile ▸ Connect's step 1 hosts the
     // shared Compose surface; providers, endpoints and the artifact fetches live there.
     implementation project(':libs:auth')
-    // #867 Account (Configs ▸ Profile): the page lives in a library now; App.kt hands it the launcher's palette,
-    // tab chrome, icons, router, haptics and the mesh tunnel through AccountHost. It owns ConfigsPrefs, the
-    // StatusLight and the snack helper the pages here share, and the JGit/jsch/zxing stack behind it.
-    implementation project(':libs:account')
+    // #1693 no libs:account here: the Account pages, their stores and sign-ins are Cloud Account's; this app reads them over its provider.
     // #1693 Cloud Account's client half (AccountClient: granted secrets, the profile, sign-in state, the picked mesh device).
     implementation project(':libs:fleet-endpoints-android')
     // #877 Cloud Mesh ▸ Profiles ▸ Show as QR: the same encoder libs:account draws its cards with.

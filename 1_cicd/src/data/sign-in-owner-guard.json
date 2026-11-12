@@ -244,5 +244,9 @@
       "needle": "SignInOwner.isOwner(",
       "why": "libs:account's Connect and Providers pages are drawn by Cloud Account and could be by any host"
     }
-  }
+  },
+  "_doc_owner_only_libs": "#1693 libs only the owner may link: libs:account is Cloud Account's alone (its Connect / Providers pages, its stores and the sign-in code behind them). Another app reads what it needs over Cloud Account's provider (libs:fleet-endpoints-android AccountClient).",
+  "owner_only_libs": [
+    "libs:account"
+  ]
 }

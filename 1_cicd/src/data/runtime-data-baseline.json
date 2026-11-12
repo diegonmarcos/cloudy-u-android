@@ -426,7 +426,7 @@
   "aa_cloud-superapp/app/build.gradle": 60,
   "ab_cloud-libs-shared/keyboard-engines/app/build.gradle": 1,
   "ab_cloud-libs-shared/libs/account-ui/build.gradle": 2,
-  "ab_cloud-libs-shared/libs/account/build.gradle": 6,
+  "ab_cloud-libs-shared/libs/account/build.gradle": 7,
   "ab_cloud-libs-shared/libs/appstore/build.gradle": 7,
   "ab_cloud-libs-shared/libs/auth/build.gradle": 1,
   "ab_cloud-libs-shared/libs/cal/build.gradle": 1,

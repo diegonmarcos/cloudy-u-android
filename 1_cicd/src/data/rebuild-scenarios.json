@@ -415,15 +415,15 @@
       "expect": { "apps": 0, "libs": 1, "rootfs": 0, "ship": 1, "refresh": 0 }
     },
     {
-      "id": "#870 static lib: libs/account (f89b4e580's lib)",
+      "id": "#870 static lib: libs/account (f89b4e580's lib; #1693 Cloud Account is its only app)",
       "files": [
         "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountData.kt"
       ],
       "expect": {
-        "apps": 2,
+        "apps": 1,
         "libs": 0,
         "rootfs": 0,
-        "ship": 3,
+        "ship": 2,
         "refresh": 0
       }
     },

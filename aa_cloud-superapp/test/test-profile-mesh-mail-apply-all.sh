@@ -95,7 +95,7 @@ codehasnt "$RT" 'deviceFor(VaultCockpit.devices(server), VaultCockpit.selectedDe
 has "$RT" 'VaultCockpit.meshKey(d, profiles, host.publicKey(ctx), ::derivePublicKey)' "the apply asks the rule before the host"
 has "$RT" 'is VaultCockpit.MeshKey.Refused -> k.why' "a refusal is the report, nothing written"
 has "$RT" '· key ${d.publicKey.take(8)}…' "the card names the device with its declared key"
-has "$MESH" 'override fun publicKey(ctx: Context): String = WgState.prefs(ctx).derivedInterfacePublicKey()' "the host answers the phone's PUBLIC half only"
+has "$MESH" 'fun publicKey(ctx: Context): String = WgState.prefs(ctx).derivedInterfacePublicKey()' "the host answers the phone's PUBLIC half only"
 has "$MESH" 'if (privateKey != null) prefs.interfacePrivateKey = privateKey' "the vault's key lands in the one slot only when the rule allowed it"
 has "$MESH" 'backend.setState(WgState.tunnel, Tunnel.State.UP, prefs.toTunnelConfig())' "Apply all connects through the same engine call as Mesh ▸ Connect"
 has "$MESH" 'latestHandshakeEpochMillis()' "...and reports the handshake"

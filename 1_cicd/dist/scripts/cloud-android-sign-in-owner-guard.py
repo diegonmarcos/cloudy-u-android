@@ -1,4 +1,3 @@
-# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-sign-in-owner-guard.py ───
 #!/usr/bin/env python3
 """#1693 sign-in owner guard: Cloud Account is the only fleet app that STARTS a sign-in.
 
@@ -108,6 +107,16 @@ def main(argv):
 
     if not scanned or owner.split("/")[0] not in apps:
         print(f"sign-in owner guard: nothing to scan or the owner {owner} is missing; refusing to answer"); return 2
+
+    # #1693 owner-only libs: only the owner's gradle files may link them (a project(':libs:x') line outside comments).
+    for lib in cfg.get("owner_only_libs", []):
+        if not isinstance(lib, str): continue
+        needle = "project(':%s')" % lib
+        for rel, text in (files_git(root, rev, dict(cfg, extensions=[".gradle", ".kts"])) if rev else files_worktree(root, dict(cfg, extensions=[".gradle", ".kts"]))):
+            if rel.startswith(owner) or rel.startswith("ab_cloud-libs-shared/libs/%s/" % lib.split(":")[-1]): continue
+            code = "\n".join(l for l in text.split("\n") if not l.strip().startswith("//"))
+            if needle in code or ('"%s"' % lib) in code:
+                bad.append(f"{rel}: links {lib}, which only {owner} may link (#1693)")
 
     for need in cfg.get("owner_must_hold", []):
         text = read_file(root, rev, need["file"])

@@ -54,6 +54,13 @@ object AccountHandoff {
         true
     }.getOrDefault(false)   // not installed / refused
 
+    /** #1693 Opens Cloud Account at [section] / [page] (its OPEN extras); null when it opened, else the line to show (install offered). */
+    fun openAt(ctx: Context, section: String, page: String): String? = runCatching {
+        ctx.startActivity(Intent(ACTION_OPEN).setPackage(PKG).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .putExtra("section", section).putExtra("page", page))
+        null
+    }.getOrElse { com.diegonmarcos.superapp.launcher.AppInstall.start(ctx, PKG, LABEL).message }
+
     /** Opens Cloud Account, or starts its fleet install when it is absent. Returns the line to show. */
     fun openOrInstall(ctx: Context): String? =
         if (open(ctx)) null

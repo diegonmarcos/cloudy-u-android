@@ -10,8 +10,8 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import com.diegonmarcos.cloudlib.auth.VaultConnect
 import com.diegonmarcos.cloudlib.auth.VaultFile
-import com.diegonmarcos.superapp.BuildConfig
-import com.diegonmarcos.superapp.R
+import com.diegonmarcos.superapp.account.BuildConfig
+import com.diegonmarcos.superapp.account.R
 import com.diegonmarcos.superapp.settings.ImportConfigsFragment
 import com.diegonmarcos.superapp.ui.KitPageHarness
 import org.json.JSONArray

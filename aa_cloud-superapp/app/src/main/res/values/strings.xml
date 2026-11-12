@@ -82,26 +82,10 @@
     <string name="drive_section_configs">Configs</string>
 
     <!-- Import configs -->
-    <string name="import_title">Import configs</string>
-    <string name="import_subtitle">Paste the JSON blob below — keys + URLs are stored encrypted at rest. Or open the DECRYPTED vault export: it goes to Configs ▸ Account, never into this store.</string>
-    <string name="import_input_hint">{ "wg": …, "mail": …, "ssh": …, "auth": … }</string>
-    <string name="import_save">Save</string>
-    <string name="import_clear">Clear</string>
-    <string name="import_from_file">Open file…</string>
     <string name="import_file_error">Could not read file: %1$s. Nothing stored.</string>
     <string name="import_file_no_stream">Could not open %1$s: the picker returned no stream. Nothing read, nothing stored.</string>
     <string name="import_file_empty">Read 0 bytes from %1$s — the picker handed over an empty file. Nothing stored. Pick it from local storage (Files ▸ Downloads), not from a cloud folder that has not synced.</string>
-    <string name="import_nothing">Nothing to save: the box is empty. Paste a JSON blob or open a file.</string>
-    <string name="import_invalid">Not JSON (%1$d chars, starts with “%2$s”): %3$s. Nothing stored.</string>
     <!-- #585 The loud refusal of the sops-encrypted vault file. Says what was read, why it cannot be used, and both ways out. -->
-    <string name="import_encrypted">✗ This file is still sops-encrypted: %1$d values read as ENC[…] for %2$d age recipients (sections: %3$s). This phone holds no age key, so it can read none of them. Nothing stored. Either decrypt it where the key is — sops -d profile-secrets.json &gt; profile.json — and open THAT file, or use Connect ▸ Vault export: the server decrypts for you.</string>
-    <string name="import_unrecognised">✗ Nothing stored: this JSON has sections %1$s and this app knows none of them. It takes the decrypted vault export (root schema_version plus its sections) or the paste shape above (%2$s).</string>
-    <string name="import_bundle_read">Read the decrypted vault export: %1$d values in %2$d sections. Save puts it on Configs ▸ Account (read on Infos, applied per item on its Setup tab).</string>
-    <string name="import_bundle_landed">✓ Vault export loaded: %1$d values in %2$d sections. Nothing is applied yet — read it on Configs ▸ Account ▸ Infos and apply it item by item on its Setup tab, exactly as after a server fetch.</string>
-    <string name="import_blob_read">Read a paste-shape blob: sections %1$s (ignored: %2$s). Save stores them and keeps what is already here.</string>
-    <string name="import_blob_stored">✓ Stored %1$d keys in sections %2$s (ignored: %3$s). Sections already stored were kept.</string>
-    <string name="import_blob_no_keys">✗ Sections %1$s are present but carry no keys — nothing stored.</string>
-    <string name="import_cleared">Cleared all imported configs</string>
 
     <!-- C3 / Health (two tables — public + private) -->
     <string name="c3_health_title">C3 / Health</string>
@@ -386,7 +370,6 @@
     <string name="vault_tab_imported">Fleet</string>
     <string name="vault_cockpit_device_identity">%1$s · mesh %2$s · %3$s — derived from the vault declaration, nothing typed here.</string>
     <string name="vault_connect_schema_unknown">This vault export is schema %1$d; this build knows %2$s. Update the app before applying anything.</string>
-    <string name="connect_file_blob">✗ This is the paste-shape credentials blob (sections %1$s), not the vault export: it fills no Infos and nothing was stored. Store it through Configs ▸ Import instead, or pick the decrypted vault export here.</string>
 
     <!-- #877 Cloud Mesh page -->
     <string name="mesh_page_status">Status</string>

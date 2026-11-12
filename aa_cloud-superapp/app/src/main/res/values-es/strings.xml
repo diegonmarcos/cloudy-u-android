@@ -100,25 +100,9 @@
     <string name="drive_section_configs">Configuración</string>
 
     <!-- Import configs -->
-    <string name="import_title">Importar configuración</string>
-    <string name="import_subtitle">Pega abajo el JSON — las claves y las URL se guardan cifradas en reposo. O abre la exportación DESCIFRADA de la bóveda: va a Configuración ▸ Cuenta, nunca a este almacén.</string>
-    <string name="import_input_hint">{ \"wg\": …, \"mail\": …, \"ssh\": …, \"auth\": … }</string>
-    <string name="import_save">Guardar</string>
-    <string name="import_clear">Borrar</string>
-    <string name="import_from_file">Abrir archivo…</string>
     <string name="import_file_error">No se pudo leer el archivo: %1$s. No se guardó nada.</string>
     <string name="import_file_no_stream">No se pudo abrir %1$s: el selector no devolvió ningún flujo. Nada leído, nada guardado.</string>
     <string name="import_file_empty">Se leyeron 0 bytes de %1$s — el selector entregó un archivo vacío. No se guardó nada. Elígelo desde el almacenamiento local (Archivos ▸ Descargas), no desde una carpeta en la nube sin sincronizar.</string>
-    <string name="import_nothing">Nada que guardar: el cuadro está vacío. Pega un JSON o abre un archivo.</string>
-    <string name="import_invalid">No es JSON (%1$d caracteres, empieza por “%2$s”): %3$s. No se guardó nada.</string>
-    <string name="import_encrypted">✗ Este archivo sigue cifrado con sops: %1$d valores leídos como ENC[…] para %2$d destinatarios age (secciones: %3$s). Este teléfono no tiene clave age, así que no puede leer ninguno. No se guardó nada. O lo descifras donde está la clave — sops -d profile-secrets.json &gt; profile.json — y abres ESE archivo, o usas Conectar ▸ Exportación de la bóveda: el servidor descifra por ti.</string>
-    <string name="import_unrecognised">✗ No se guardó nada: este JSON tiene las secciones %1$s y esta app no conoce ninguna. Acepta la exportación descifrada de la bóveda (schema_version en la raíz más sus secciones) o la forma de pegado de arriba (%2$s).</string>
-    <string name="import_bundle_read">Leída la exportación descifrada de la bóveda: %1$d valores en %2$d secciones. Guardar la coloca en Configuración ▸ Cuenta (se lee en Infos y se aplica elemento a elemento en su pestaña de Setup).</string>
-    <string name="import_bundle_landed">✓ Exportación de la bóveda cargada: %1$d valores en %2$d secciones. Aún no se aplicó nada — léela en Configuración ▸ Cuenta ▸ Infos y aplícala elemento a elemento en su pestaña de Setup, igual que tras una descarga del servidor.</string>
-    <string name="import_blob_read">Leído un JSON con forma de pegado: secciones %1$s (ignoradas: %2$s). Guardar las almacena y conserva lo que ya hay.</string>
-    <string name="import_blob_stored">✓ Se guardaron %1$d claves en las secciones %2$s (ignoradas: %3$s). Las secciones ya guardadas se conservaron.</string>
-    <string name="import_blob_no_keys">✗ Las secciones %1$s están presentes pero no traen claves — no se guardó nada.</string>
-    <string name="import_cleared">Se borró toda la configuración importada</string>
 
     <!-- C3 / Health (two tables — public + private) -->
     <string name="c3_health_title">C3 / Estado</string>
@@ -287,7 +271,6 @@
     <string name="vault_tab_imported">Flota</string>
     <string name="vault_cockpit_device_identity">%1$s · malla %2$s · %3$s — derivado de la declaración de la bóveda, nada escrito aquí.</string>
     <string name="vault_connect_schema_unknown">Esta exportación de la bóveda es el esquema %1$d; esta versión conoce %2$s. Actualiza la app antes de aplicar nada.</string>
-    <string name="connect_file_blob">✗ Esto es el blob de credenciales en formato de pegado (secciones %1$s), no la exportación del vault: no llena Infos y no se guardó nada. Guárdalo desde Configs ▸ Importar, o elige aquí la exportación descifrada del vault.</string>
 
     <!-- #877 Cloud Mesh page -->
     <string name="mesh_page_status">Estado</string>

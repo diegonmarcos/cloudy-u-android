@@ -788,6 +788,12 @@
                 "icon": "login"
               },
               {
+                "_doc": "#1693 Import configs: the paste-shape credentials blob or the decrypted vault export, classified before anything is written (ImportConfigsFragment, moved here from the SuperApp with libs:account; the SuperApp's Import configs shortcut opens this page).",
+                "id": "import-configs",
+                "label": "Import configs",
+                "icon": "download"
+              },
+              {
                 "_doc": "This app's own settings: device id, default forge, auto-backup, fleet token, debug API, version. Fits no section of its own; filed here for the forge and token.",
                 "id": "settings",
                 "label": "Settings",

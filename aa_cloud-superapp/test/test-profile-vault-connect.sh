@@ -252,7 +252,8 @@ jq -e '[.ui.vault_connect.cockpit.sections[] | select(.runtime.reports == false)
     && ok "T8: every app that reports nothing is declared unobservable as data (its light is Not verifiable, not a guessed colour)" \
     || bad "T8: an app that reports nothing is not declared observed:false - its light would be a guess"
 # The Compose tests that draw these pages exist, and the debug API tags are the ones they read.
-CT="$APP/app/src/test/java/com/diegonmarcos/superapp/profile/AccountTabsComposeTest.kt"
+# #1693 the libs:account suites run in Cloud Account now (libs:account is its own).
+CT="$APP/../ac_cloud-account/app/src/test/java/com/diegonmarcos/superapp/profile/AccountTabsComposeTest.kt"
 [ -f "$CT" ] && grep -qF 'AccountTags.' "$CT" && ok "T8: AccountTabsComposeTest draws the Account composables and reads their tags" || bad "T8: no Compose test for the Account composables"
 grep -q 'FleetCockpitViewTest\|VaultCockpitTest' "$GR" && bad "T8: a test class is named in gradle (should be found by the unit task, not listed)" || ok "T8: tests are discovered, not listed"
 

@@ -30,7 +30,6 @@ import com.diegonmarcos.superapp.settings.LauncherThemePrefs
 import com.diegonmarcos.superapp.ui.LauncherPalette
 import com.diegonmarcos.superapp.settings.LauncherProfilePrefs
 import com.diegonmarcos.superapp.settings.LauncherConfigFragment
-import com.diegonmarcos.superapp.settings.ImportConfigsFragment
 import com.diegonmarcos.superapp.apps.PhoneAppsFragment
 import com.diegonmarcos.superapp.launcher.RecentCloudTiles
 import com.diegonmarcos.superapp.battery.EnergyWatchdog
@@ -1925,13 +1924,10 @@ open class ShellActivity : AppCompatActivity(),
                 // install it). SuperApp checks nothing and notifies nothing about updates itself.
                 routeTarget("page:config/store-cloud")
             actionType == "import_configs" -> {
-                val frag = ImportConfigsFragment.newInstance()
-                applyChrome(frag)
-                supportFragmentManager.beginTransaction()
-                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                    .replace(R.id.fragment_container, frag)
-                    .addToBackStack(null)
-                    .commit()
+                // #1693 Import configs lives in Cloud Account now (libs:account is Cloud Account's): the shortcut opens it there,
+                // or offers to install Cloud Account, and says so instead of failing silently.
+                com.diegonmarcos.superapp.apps.AccountHandoff.openAt(this, "connect", "import-configs")
+                    ?.let { android.widget.Toast.makeText(this, it, android.widget.Toast.LENGTH_LONG).show() }
             }
             // Config → Update tile: update EVERY constellation app. Opens
             // Store ▸ Cloud Constellation (per-app progress) and kicks

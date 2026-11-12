@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.diegonmarcos.cloudlib.auth.VaultConnect
-import com.diegonmarcos.superapp.network.WireGuardPrefs
 import com.diegonmarcos.superapp.profile.VaultCockpit.State as S
 import com.diegonmarcos.superapp.ui.StatusLight.State as L
 import org.json.JSONObject
@@ -71,40 +70,9 @@ class VaultCockpitTest {
             !galaxy.getValue("config-v6-full").lineSequence().first { it.startsWith("Address") }.contains(g.wgIp))
     }
 
-    @Test fun `applying a profile writes the tunnel through the WireGuard parser, and then it matches`() {
-        val b = bundle()
-        val galaxy = VaultCockpit.devices(b).first { it.id == "galaxy" }
-        val prefs = WireGuardPrefs(ctx)
-        val before = VaultCockpit.meshRows(b, galaxy, com.diegonmarcos.superapp.network.AccountMesh.tunnelState(prefs))
-        assertTrue(before.isNotEmpty())
-        assertTrue("nothing applied yet", before.all { it.state == VaultCockpit.State.DIFFERS })
-
-        val (name, conf) = VaultCockpit.meshProfiles(b, galaxy).entries.first()
-        val line = com.diegonmarcos.superapp.network.AccountMesh.applyMesh(prefs, name, conf)
-        assertTrue(line, line.startsWith("✓"))
-
-        // Read back from the store, compare with what the parser derives from the
-        // conf's own Address line (the JVM spells IPv6 long-form; both sides go
-        // through the same parser, so the comparison is about the value, not spelling).
-        val parsed = com.wireguard.config.Config.parse(java.io.BufferedReader(java.io.StringReader(conf)))
-        assertEquals(parsed.getInterface().addresses.joinToString(", "), prefs.interfaceAddress)
-        assertTrue(prefs.interfaceAddress.contains("10.0.0.9/24"))
-        val wantKeys = conf.lineSequence().filter { it.startsWith("PublicKey") }.map { it.substringAfter("=").trim() }.toSet()
-        assertEquals(wantKeys, prefs.peers().map { it.publicKey }.toSet())
-        assertEquals(WireGuardPrefs.PROVIDER_CUSTOM, prefs.configProvider)
-
-        val after = VaultCockpit.meshRows(b, galaxy, com.diegonmarcos.superapp.network.AccountMesh.tunnelState(prefs))
-        assertEquals(VaultCockpit.State.MATCH, after.first { it.label == name }.state)
-        assertTrue(after.filter { it.label != name }.all { it.state == VaultCockpit.State.DIFFERS })
-    }
-
-    @Test fun `a conf the parser rejects writes nothing`() {
-        val prefs = WireGuardPrefs(ctx)
-        val addressBefore = prefs.interfaceAddress
-        val line = com.diegonmarcos.superapp.network.AccountMesh.applyMesh(prefs, "broken", "[Interface]\nAddress = not-an-address\n")
-        assertTrue(line, line.startsWith("✗"))
-        assertEquals(addressBefore, prefs.interfaceAddress)
-    }
+    // #1693 the two mesh-apply tests (applying a profile writes the tunnel through the WireGuard parser; a conf
+    // the parser rejects writes nothing) moved to the SuperApp's network/AccountMeshApplyTest: the apply path is
+    // the SuperApp's own WireGuard prefs, and this suite runs in Cloud Account, which has none.
 
     @Test fun `the mail account is found by the local part and its password by pass_env`() {
         val b = bundle()

@@ -255,6 +255,8 @@ class MainActivity : AppCompatActivity() {
                 "drive" -> DriveSetupPage()
                 "hub" -> AuthProvidersPage()
                 "signin" -> AccountConnectPage()
+                // #1693 Import configs, moved here from the SuperApp with libs:account (its launcher shortcut opens this page).
+                "import-configs" -> androidx.fragment.compose.AndroidFragment<com.diegonmarcos.superapp.settings.ImportConfigsFragment>(Modifier.fillMaxSize())
                 "settings" -> AccountSettingsPage("${BuildConfig.VERSION_NAME} · ${BuildConfig.GIT_SHORT_SHA} · built ${BuildConfig.BUILD_TIMESTAMP}")
                 else -> ConnectionsPage(go)
             }

@@ -39,19 +39,20 @@ object AccountHost {
     @Volatile var tap: (View) -> Unit = {}
 
     /**
-     * THE classifier for a picked or pasted config (SuperApp: ImportConfigsFragment.classify,
+     * THE classifier for a picked or pasted config (ImportConfigsFragment.classify, in this lib since #1693;
      * which reads the import schema it bakes). The default knows the declared sign-in schema
      * versions and no paste-shape blob sections.
      */
+    // #1693 Connect ▸ Import moved into this lib: its classifier (the paste schema's sections) is the default.
     @Volatile var classify: (String) -> VaultFile.Verdict =
-        { text -> VaultFile.classify(text, VaultConnect.knownSchemaVersions, emptySet()) }
+        { text -> com.diegonmarcos.superapp.settings.ImportConfigsFragment.classify(text) }
 
     /**
      * Why a file is NOT the decrypted vault export, in the host's own sentences; null for the
-     * export itself (SuperApp: ImportConfigsFragment.refusal). The default is the verdict's name.
+     * export itself (ImportConfigsFragment.refusal, in this lib since #1693).
      */
     @Volatile var refusal: (Context, VaultFile.Verdict) -> String? =
-        { _, v -> if (v is VaultFile.Verdict.Bundle) null else "Not a vault export: ${v::class.java.simpleName}" }
+        { c, v -> com.diegonmarcos.superapp.settings.ImportConfigsFragment.refusal(c, v) }
 
     /**
      * The mesh tunnel the Fleet tab reads and configures. It lives in the SuperApp

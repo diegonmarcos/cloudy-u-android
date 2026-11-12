@@ -104,11 +104,8 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // #1120 The mesh is connected by default and reconnects until the owner taps Disconnect.
         runCatching { com.diegonmarcos.superapp.network.MeshSupervisorRunner.start(this) }
 
-        // Retry any profile edit that never reached the server. The profile is
-        // the out-of-band contact channel for exactly the situations where the
-        // update chain is broken, so "it failed once and was never sent again"
-        // is the one outcome it must not have. No-op when nothing is queued.
-        runCatching { com.diegonmarcos.superapp.profile.ProfileSync.flush(this) }
+        // #1693 the profile and its server sync are Cloud Account's (libs:account is its own now); Cloud Account
+        // retries a profile edit that never reached the server, so this app queues and flushes nothing.
 
         // #751 The DNS choice holds without the mesh: the WireGuard engine carries
         // it in the VPN slot, but nothing starts the engine after a reboot or a
@@ -164,27 +161,8 @@ class App : Application(), WorkManagerConfiguration.Provider {
             // where a notification would be posted).
             runsFleetPass = { false }
         }
-        // #867 Account is a library now (libs:account); what it cannot reach in the launcher is supplied here.
-        com.diegonmarcos.superapp.profile.AccountHost.apply {
-            palette = { ctx -> com.diegonmarcos.superapp.ui.LauncherPalette.kit(ctx) }
-            iconFor = { ctx, name -> com.diegonmarcos.superapp.launcher.Sections.iconResFor(ctx, name) }
-            route = { activity, route ->
-                (activity as? com.diegonmarcos.superapp.launcher.TileGridFragment.TileClickListener)
-                    ?.also { it.onTileClicked(route) } != null
-            }
-            tap = { view -> com.diegonmarcos.superapp.ui.Haptics.tap(view) }
-            mesh = com.diegonmarcos.superapp.network.AccountMesh
-            classify = com.diegonmarcos.superapp.settings.ImportConfigsFragment::classify
-            refusal = com.diegonmarcos.superapp.settings.ImportConfigsFragment::refusal
-            // #867 Cloud Account owns the imported configs once installed; an empty blob here reads through to it.
-            readThrough = true
-        }
-        // #867 first run with Cloud Account installed: copy its configs, profile and S/R/L files over once
-        // (never over anything this app already holds). Off the main thread: it is a provider call.
-        Thread({
-            runCatching { com.diegonmarcos.superapp.profile.AccountData.migrate(applicationContext) }
-                .onFailure { android.util.Log.w("App", "account copy failed", it) }
-        }, "account-migrate").start()
+        // #1693 libs:account (the Account pages, their host hooks and the one-shot copy of Cloud Account's stores) is
+        // Cloud Account's alone: this app links none of it and reads what it needs over Cloud Account's provider (AccountClient).
         // #874 ONE resolver for this process: the fleet DNS bridge (libs:sysdns),
         // whose routes are the DNS page's preset read by FleetDns. The Store's
         // downloads and check (libs:appstore StoreDns, shared with Cloud Store),
@@ -267,8 +245,7 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // Cloud Store is the only app that posts them. What an older build left (queued update
         // work, its notifications and channels, collected Store alerts) is retired here.
         runCatching { com.diegonmarcos.superapp.notificationcenter.StoreRetirement.run(this) }
-        // #778: /api/account/* — Account's tabs, profiles, runtime, drift and their actions.
-        runCatching { com.diegonmarcos.superapp.profile.AccountDebugApi.register(this) }
+        // #1693 /api/account/* is served by Cloud Account's own debug API (libs:account), not here.
         // #794: /api/net/dns/overview — the DNS page as JSON: preset in effect or not, every app's path, every server.
         runCatching { com.diegonmarcos.superapp.network.DnsOverview.register(this) }
         // #ipc the SuperApp bridge (adb/exec) over the fleet IPC layer: terminals and Drive call it.
