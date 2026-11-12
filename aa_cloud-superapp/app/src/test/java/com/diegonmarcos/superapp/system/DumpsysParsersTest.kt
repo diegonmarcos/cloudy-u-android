@@ -63,6 +63,16 @@ AGGREGATED OVER LAST 3 HOURS:
         assertEquals("com.example.big", l[1].label)
         assertTrue(l[1].value, l[1].value.startsWith("avg 512.0 MB"))
         assertEquals(3, l.size)
+        // #1638 the graph: header lines have no bar, the heaviest process is the full bar, the others scale to it
+        val all = DumpsysParsers.memory3h("  Total RAM: 7.5GB (status normal)\n$procstats", 3)
+        val bars = DumpsysParsers.memory3hBars(all)
+        assertEquals(all.size, bars.size)
+        assertEquals(null, bars[0])
+        assertEquals(1f, bars[1]!!, 0.001f)
+        assertEquals(96f / 512f, bars[2]!!, 0.001f)
+        assertEquals(41f / 512f, bars[3]!!, 0.001f)
+        assertEquals(listOf<Float?>(null), DumpsysParsers.memory3hBars(listOf(DdLine("Status", "needs ADB"))))
+        assertTrue(DumpsysParsers.memory3hBars(emptyList()).isEmpty())
     }
 
     private val batterystats = """

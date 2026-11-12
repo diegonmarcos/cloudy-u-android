@@ -118,10 +118,19 @@ object StatusDropdowns {
             val ls = lines
             if (g.source == HEADER) Unit
             else if (ls == null) Cap("reading...", color = DIM)
-            else ls.forEachIndexed { i, l ->
-                Row(Modifier.fillMaxWidth().padding(vertical = KitStoreRow.step(1)).testTag("$tagPrefix:row:${g.id}:$i")) {
-                    Cap(l.label, Modifier.width(LABEL_W), DIM)
-                    Cap(l.value, Modifier.weight(1f), if (l.value.startsWith("needs ADB")) ACCENT else INK)
+            else {
+                // #1638 Last 3h Memory Usage is drawn as a graph: one bar per process, scaled to the heaviest 3 h average PSS
+                val bars = if (g.id == "memory_3h") DumpsysParsers.memory3hBars(ls) else emptyList()
+                ls.forEachIndexed { i, l ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = KitStoreRow.step(1)).testTag("$tagPrefix:row:${g.id}:$i")) {
+                        Cap(l.label, Modifier.width(LABEL_W), DIM)
+                        Cap(l.value, Modifier.weight(1f), if (l.value.startsWith("needs ADB")) ACCENT else INK)
+                    }
+                    bars.getOrNull(i)?.let { f ->
+                        Box(Modifier.fillMaxWidth().height(KitStoreRow.step(4)).background(KitStoreRow.RULE).testTag("$tagPrefix:bar:${g.id}:$i")) {
+                            Box(Modifier.fillMaxWidth(f.coerceAtLeast(0.01f)).height(KitStoreRow.step(4)).background(ACCENT))
+                        }
+                    }
                 }
             }
         }

@@ -96,6 +96,18 @@ object DumpsysParsers {
         return head + procs
     }
 
+    private val AVG_MB = Regex("""^avg ([0-9]+(?:\.[0-9]+)?) MB""")
+
+    /**
+     * #1638 the Last 3h Memory Usage GRAPH: for each [memory3h] line, its bar as a fraction of the heaviest process's 3 h average
+     * PSS (0..1), or null for a header line (Total / Free / Used / Lost RAM) or a value that is not a process average. Never throws.
+     */
+    fun memory3hBars(lines: List<DdLine>): List<Float?> {
+        val mb = lines.map { AVG_MB.find(it.value)?.groupValues?.get(1)?.toDoubleOrNull() }
+        val max = mb.filterNotNull().maxOrNull()?.takeIf { it > 0.0 } ?: return lines.map { null }
+        return mb.map { v -> v?.let { (it / max).toFloat().coerceIn(0f, 1f) } }
+    }
+
     // ── dumpsys batterystats --charged ──
 
     data class Drain(val name: String, val mah: Double, val detail: String)
