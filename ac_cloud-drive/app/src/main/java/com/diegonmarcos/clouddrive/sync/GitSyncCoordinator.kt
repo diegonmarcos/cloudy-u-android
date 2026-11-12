@@ -383,6 +383,18 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
 
     /** Fetch every clone (the declared fetch op, one running op per repository). */
     /** Fetch every clone of [only] (default: every registered clone): ONE bounded job, one op per repository. */
+    /**
+     * #1679 Refresh ▸ Fetch status: per clone, the READ-ONLY pass (FetchStatus.COMMANDS) through the store's git; the verdict lands in
+     * opResults like any op (the sheet and the job line show it). A clone the store's git cannot reach says so instead of guessing.
+     */
+    private fun fetchStatusOf(repo: ManagedRepo): GitOpResult {
+        val dir = File(repo.path)
+        return if (execGuest(dir) != null) StoreGit.fetchStatus(ctx, dir, declaredToken())
+        else GitOpResult(false, "fetch status needs the store's git (cld.termux): use Fetch or Check full", "")
+    }
+    fun fetchStatusAll(only: List<ManagedRepo>? = null) { bulkOps(OP_FETCH_STATUS, only ?: repos.value) { repo -> fetchStatusOf(repo) } }
+    fun fetchStatus(repo: ManagedRepo) = single(repo, OP_FETCH_STATUS, Step.PULLING) { fetchStatusOf(repo) }
+
     fun fetchAll(only: List<ManagedRepo>? = null) { bulkOps(OP_FETCH, only ?: repos.value) { repo -> perform(repo, OP_FETCH, "", { declaredToken() }, SyncHistory.TRIGGER_MANUAL) } }
 
     // ── #1195 size on disk: walked in the background, cached by fingerprint, shown from the cache ──
@@ -1484,6 +1496,8 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         const val AUTH_SESSION = "session"
         /** The declared op ids this coordinator performs; the page's own dispatch covers the read-only rest. */
         const val OP_FETCH = "fetch"
+        /** #1679 the read-only fetch --dry-run + remote show origin pass. */
+        const val OP_FETCH_STATUS = "fetch_status"
         const val OP_PULL = "pull"
         const val OP_COMMIT = "commit"
         const val OP_PUSH = "push"

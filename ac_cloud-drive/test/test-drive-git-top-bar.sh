@@ -118,7 +118,7 @@ sed 's|        Pill(decl.label("filters") + (if (active|        GitSearchField(q
 grep -q 'GitSearchField(query, onQuery, ""' "$tmp/B.kt" || fail "T3 mutation anchor gone"
 t3 "$SYNC/SyncScreen.kt" "$tmp/B.kt" >/dev/null 2>&1 && fail "T3 passed a search field back on the Git page (vacuous)" || pass "a search field back on the Git page → T3 RED"
 
-# T4 #1356 the top nav is Check | Sync | Clone | Logs | More ..... Settings: those five groups in that order, the first four ONE
+# T4 #1356 (#1679: Check is labelled Refresh) the top nav is Check | Sync | Clone | Logs | More ..... Settings: those five groups in that order, the first four ONE
 #    item each (check_full, sync_all, the open_logs item; Clone is a dropdown of the five clone modes) run on tap, More keeps every other action of the bar
 #    (none lost), Settings sits after the groups' weighted row; Logs declares the tabs repos, app and App is Activity Logs.
 KEEP="check_light check_remote check_sizes scan_inventory cancel_checks pull_all force_pull_all stash_push_all fetch_all shrink_all last_report show_archived legend"
@@ -131,7 +131,10 @@ else:
     want = [None, None, ("logs", "open_logs")]   # #1491 Clone is a dropdown of the five declared clone modes
     got = [(x["items"][0]["id"], x["items"][0]["kind"]) if len(x["items"]) == 1 else None for x in (groups[0], groups[2], groups[3])]
     if got != want: bad.append("the three buttons are %s, want %s" % (got, want))
-    if [(i["id"], i["kind"]) for i in groups[0]["items"]] != [("check_lite", "check_light"), ("check_full", "check_full")]: bad.append("the Check dropdown is not Check lite, Check full")
+    # #1679 Check is Refresh: Refresh repo list | Fetch status | Fetch | Check lite | Check full (Check lite / Check full kept, rule 16).
+    if [(i["id"], i["kind"]) for i in groups[0]["items"]] != [("refresh_list", "refresh_list"), ("fetch_status", "fetch_status"), ("fetch_now", "op"), ("check_lite", "check_light"), ("check_full", "check_full")]: bad.append("the Refresh dropdown is not Refresh repo list, Fetch status, Fetch, Check lite, Check full")
+    if groups[0]["label"] != "Refresh": bad.append("the first group is labelled %r, not Refresh" % groups[0]["label"])
+    if [i.get("op") for i in groups[0]["items"] if i["kind"] == "op"] != ["fetch"]: bad.append("the Refresh menu's Fetch is not the fetch op")
     if [(i["id"], i["kind"], i["action"]) for i in groups[2]["items"]] != [("clone_all_" + m, "depth", "clone_all_" + m) for m in ("full", "depth3", "bare_main", "bare_blobless", "bare_treeless")]: bad.append("the Clone dropdown is not the five clone modes (Full, Full Depth 3, Bare Main Only, Bare Blobless, Bare Treeless)")
     # #1356 Sync is a dropdown: Sync All (Server Wins | Local Wins | No Winner) then Manual Sync (Stash All, Pull (Rebase), Stash Pop All, Conflicts All)
     sy = [(i["section"], i["kind"], i.get("op", "")) for i in groups[1]["items"]]

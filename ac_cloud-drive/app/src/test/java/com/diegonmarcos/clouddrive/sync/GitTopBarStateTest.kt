@@ -26,8 +26,10 @@ class GitTopBarStateTest {
         assertEquals(listOf("check", "sync", "clone", "logs", "more"), bar.groups.map { it.id })
         // #1356 Logs is a one-item button; More holds the rest. #1452 Check and Clone are dropdowns like Sync.
         assertEquals("logs", bar.groups[3].items.single().id)
-        assertEquals(listOf("check_lite", "check_full"), bar.groups[0].items.map { it.id })
-        assertEquals(listOf("check_light", "check_full"), bar.groups[0].items.map { it.kind })
+        // #1679 Check is Refresh: Refresh repo list | Fetch status | Fetch, then Check lite | Check full kept (rule 16).
+        assertEquals("Refresh", bar.groups[0].label)
+        assertEquals(listOf("refresh_list", "fetch_status", "fetch_now", "check_lite", "check_full"), bar.groups[0].items.map { it.id })
+        assertEquals(listOf("refresh_list", "fetch_status", "op", "check_light", "check_full"), bar.groups[0].items.map { it.kind })
         assertEquals(listOf("clone_all_full", "clone_all_depth3", "clone_all_bare_main", "clone_all_bare_blobless", "clone_all_bare_treeless"), bar.groups[2].items.map { it.id })
         // #1356 Sync is a dropdown: Sync All then Manual Sync
         assertEquals(listOf("Sync All", "Sync All", "Sync All", "Manual Sync", "Manual Sync", "Manual Sync", "Manual Sync", "Manual Sync"), bar.groups[1].items.map { it.section })

@@ -824,4 +824,10 @@
     <!-- #1358 the git engine's own All files access (EngineGrant): banner, first-run prompt and the row reason. -->
     <string name="engine_grant_title">Grant All files access to %1$s</string>
     <string name="repo_err_files_access">Grant All files access to %1$s (banner above, or Configs ▸ Perms). %2$s</string>
+    <!-- #1679 the cached repo list -->
+    <string name="git_list_as_of">List as of %1$s</string>
+    <string name="git_list_never">List not read yet: pull down or Refresh</string>
+    <string name="git_list_refreshing">refreshing</string>
+    <string name="git_list_refresh">Refresh repo list</string>
+    <string name="git_sheet_refresh_title">Refresh</string>
 </resources>

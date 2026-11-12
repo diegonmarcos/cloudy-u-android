@@ -224,6 +224,12 @@ object DriveTags {
     const val SYNC_GIT_AUTO_PULL = "sync_git_auto_pull"
     /** #683 the first-run seed's last verdict — shown only when the store is NOT cleanly complete. */
     const val SYNC_GIT_SEED = "sync_git_seed"
+    /** #1679 the Remove auto-cloned copies dialog, its confirm, the "list as of" line, the empty-list Refresh and the sheet's Refresh row. */
+    const val SYNC_GIT_AUTO_CLONED = "sync_git_auto_cloned"
+    const val SYNC_GIT_AUTO_CLONED_CONFIRM = "sync_git_auto_cloned_confirm"
+    const val SYNC_GIT_LIST_AS_OF = "sync_git_list_as_of"
+    const val SYNC_GIT_EMPTY_REFRESH = "sync_git_empty_refresh"
+    const val SYNC_GIT_SHEET_REFRESH = "sync_git_sheet_refresh"
     /** #629 the line that says where the git credential came from: the vault, or nowhere yet. */
     const val SYNC_GIT_VAULT_NOTE = "sync_git_vault_note"
     /**

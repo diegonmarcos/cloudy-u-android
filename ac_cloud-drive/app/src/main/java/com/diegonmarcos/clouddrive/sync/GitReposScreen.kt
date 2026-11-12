@@ -180,13 +180,26 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     val page = Declarations.sync.git
     // #1149 Cloud: the live PUBLIC cloud* list (no sign-in); the declared set stands in when the network refuses.
     var cloudPublic by remember { mutableStateOf(CloudPublic()) }
-    LaunchedEffect(view) {
-        if (view == GitView.CLOUD) {
-            cloudPublic = CloudPublic(loading = true)
-            val r = withContext(Dispatchers.IO) { CloudRepos.fetch(page.api.baseUrl, Declarations.cloudList) }
+    // #1679 THE LIST IS CACHED: every listing is drawn back from the cache at once, with NO network on page open or tab change.
+    val listingCache = remember { GitListingCache(File(ctx.applicationContext.filesDir, GitListingCache.FILE)) }
+    var listingSlots by remember { mutableStateOf<Map<String, GitListingCache.Slot>>(emptyMap()) }
+    LaunchedEffect(Unit) { listingSlots = withContext(Dispatchers.IO) { listingCache.load() } }
+    LaunchedEffect(view, listingSlots) {
+        if (view == GitView.CLOUD && !cloudPublic.loading && !cloudPublic.loaded) listingSlots[GitListingCache.SLOT_CLOUD_PUBLIC]?.let { cloudPublic = CloudPublic(loaded = true, repos = it.repos) }
+    }
+    /** #1679 Cloud's public list, re-read ONLY on an explicit refresh (pull-to-refresh, Refresh ▸ Refresh repo list); the cache is written on success. */
+    fun refreshCloudPublic() {
+        cloudPublic = cloudPublic.copy(loading = true, error = "")
+        scope.launch {
+            val r = withContext(Dispatchers.IO) { runCatching { CloudRepos.fetch(page.api.baseUrl, Declarations.cloudList).getOrThrow() } }
             cloudPublic = r.fold(
-                onSuccess = { CloudPublic(loaded = true, repos = it.repos) },
-                onFailure = { CloudPublic(loaded = true, error = it.message ?: it.javaClass.simpleName) },
+                onSuccess = { list ->
+                    val slot = GitListingCache.Slot(list.repos, System.currentTimeMillis())
+                    withContext(Dispatchers.IO) { listingCache.put(GitListingCache.SLOT_CLOUD_PUBLIC, slot) }
+                    listingSlots = listingSlots + (GitListingCache.SLOT_CLOUD_PUBLIC to slot)
+                    CloudPublic(loaded = true, repos = list.repos)
+                },
+                onFailure = { cloudPublic.copy(loading = false, loaded = true, error = it.message ?: it.javaClass.simpleName) },
             )
         }
     }
@@ -196,7 +209,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     val registryRows = remember(sotRev) {
         Declarations.repoSot.repos.filter { !it.private && !it.pending && page.inNameFamilies(it.github) }.map { Declarations.GitPublicRepoDecl(it.github, it.github) }.sortedBy { it.name }
     }
-    val publicRows = if (cloudPublic.repos.isNotEmpty()) cloudPublic.repos.map { Declarations.GitPublicRepoDecl(it.name, it.name) } else registryRows.ifEmpty { page.publicRepos }
+    // #1679 NO BUILT-IN DEFAULT LIST: the rows are the cached (or just refreshed) listing only; registryRows stays for the renamed / retired lookups.
+    val publicRows = cloudPublic.repos.map { Declarations.GitPublicRepoDecl(it.name, it.name) }
     // #1149 Me: the declared hosts beyond GitHub and Cloud git (token sign-in, their own listings).
     val hostsState = remember { GitHostsState(ctx.applicationContext, scope) }
     LaunchedEffect(view) { if (view == GitView.ME) hostsState.restore() }
@@ -252,6 +266,9 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     LaunchedEffect(expanded) { if (expanded.isEmpty()) { panelRepo = ""; panel = "" } }
     var login by remember { mutableStateOf(GitLogin()) }
     var listing by remember { mutableStateOf(GitListing()) }
+    LaunchedEffect(listingSlots) {
+        if (!listing.loaded && !listing.loading) listingSlots[GitListingCache.SLOT_OWN]?.let { listing = GitListing(loaded = true, repos = it.repos, complete = it.complete, viaGh = it.viaGh) }
+    }
     // #646 what the DECLARED credential chain is about to do, and afterwards what it did.
     // The declared order is read once, off the declaration, so this page describes the
     // ranking it will actually follow rather than a ranking somebody typed here.
@@ -260,6 +277,16 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     // GitHub card fills [listing] (gh repo list, or the #629 vault token), the Cloud git card
     // fills this one off the Authelia session. Neither card touches the other's.
     var cloudListing by remember { mutableStateOf(GitListing()) }
+    LaunchedEffect(listingSlots) {
+        if (!cloudListing.loaded && !cloudListing.loading) listingSlots[GitListingCache.SLOT_FLEET]?.let { cloudListing = GitListing(loaded = true, repos = it.repos, complete = true, rungId = it.rungId) }
+    }
+    /** #1679 a listing read on an explicit refresh lands in the cache (shown at once on the next open). */
+    fun cacheListing(slot: String, l: GitListing) {
+        if (!l.loaded || l.error.isNotBlank()) return
+        val v = GitListingCache.Slot(l.repos, System.currentTimeMillis(), l.complete, l.viaGh, l.rungId)
+        listingSlots = listingSlots + (slot to v)
+        scope.launch(Dispatchers.IO) { listingCache.put(slot, v) }
+    }
     // Which way's sign-in is in flight, and the declared fallback a phone without the fleet
     // browser shows for the Cloud sign-in (it SAYS it is the fallback).
     var signingInWay by remember { mutableStateOf("") }
@@ -332,6 +359,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         }.collect { memoryStore.put(memoryKey, it) }
     }
     var showLegend by remember { mutableStateOf(false) }
+    // #1679 More ▸ Remove auto-cloned copies: its dialog is open.
+    var autoClonedAsk by remember { mutableStateOf(false) }
     var topConfirm by remember { mutableStateOf<Declarations.GitTopItemDecl?>(null) }
     val jobsState by coordinator.jobs.jobs.collectAsState()
     val fmt = remember { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT) }
@@ -502,6 +531,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 )
                 is FleetGit.Outcome.Unreachable -> GitListing(loaded = true, error = outcome.why)
             }
+            cacheListing(GitListingCache.SLOT_FLEET, cloudListing)
         }
     }
 
@@ -514,6 +544,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 onSuccess = { GitListing(loaded = true, repos = it.repos, complete = it.complete) },
                 onFailure = { GitListing(loaded = true, error = it.message ?: it.javaClass.simpleName) },
             )
+            cacheListing(GitListingCache.SLOT_OWN, listing)
         }
     }
 
@@ -635,11 +666,12 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 repos == null -> GitListing(loaded = true, error = ctx.getString(R.string.git_gh_list_unreadable))
                 else -> GitListing(loaded = true, repos = repos, complete = repos.size < ghLimit, viaGh = true)
             }
+            cacheListing(GitListingCache.SLOT_OWN, listing)
         }
     }
 
     /** #689 who gh is signed in as, and its listing when it is; true when signed in. */
-    suspend fun ghCheck(): Boolean {
+    suspend fun ghCheck(list: Boolean = true): Boolean {
         val why = ghUnavailable()
         if (why.isNotBlank()) { ghAuth = ghAuth.copy(checked = true, signedIn = false, error = why); return false }
         val r = withContext(Dispatchers.IO) { ghEngine.status(ghHost) }
@@ -653,7 +685,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             else -> ghAuth.copy(checked = true, signedIn = false, login = "")
         }
         ghLog(if (st.signedIn) "gh is signed in as ${st.login}" else "gh is not signed in" + ghAuth.error.let { if (it.isBlank()) "" else ": $it" })
-        if (st.signedIn) fetchGhListing()
+        // #1679 the page open only learns WHO gh is (for the clone credential); the listing is re-read on an explicit refresh only.
+        if (st.signedIn && list) fetchGhListing()
         return st.signedIn
     }
 
@@ -771,19 +804,36 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     // whose Device Flow the provider ships OFF, so it could never start.
     LaunchedEffect(Unit) {
         // #689 gh first: when gh itself is signed in, the GitHub card is gh's and lists through gh.
-        if (ghCheck()) return@LaunchedEffect
+        // #1679 NO LISTING ON OPEN: the cached list is already drawn; only the credential is learned here (no network listing).
+        if (ghCheck(list = false)) return@LaunchedEffect
         val vault = withContext(Dispatchers.IO) { DriveAuthApply.vaultGitToken(ctx.applicationContext) }
         if (vault.isNotBlank() && login.token.isBlank()) {
             login = login.copy(identity = page.owner, token = vault, fromVault = true)
-            fetchListing(vault)
         }
     }
 
     // A fleet session earned on Configs ▸ Git (FleetSession is process-wide) lists on the table too, with no second sign-in.
-    LaunchedEffect(view, setup) {
-        if (view == GitView.ME && !setup && FleetSession.present) {
-            page.ways.firstOrNull { DriveGitChain.rung(it.rung)?.kind == DriveGitChain.RUNG_FLEET }?.let { fetchFleetListing(it.rung) }
+    // #1679 it lists on an explicit refresh only (refreshListings), never on page open: the cached fleet listing is drawn instead.
+
+    /**
+     * #1679 Refresh ▸ Refresh repo list (and pull-to-refresh): re-read the LISTINGS only (GitHub / gh, the fleet's git, Cloud's public list)
+     * and the local clones (registry + unlisted scan). No git operation runs on any repository; every success is cached with its time.
+     */
+    fun refreshListings(registry: Boolean = true) {
+        if (registry) coordinator.refresh(force = true)
+        if (view == GitView.CLOUD) { refreshCloudPublic(); return }
+        scope.launch {
+            when {
+                ghAuth.signedIn -> fetchGhListing()
+                login.token.isNotBlank() -> fetchListing(login.token)
+                ghCheck(list = true) -> Unit
+                else -> {
+                    val vault = withContext(Dispatchers.IO) { DriveAuthApply.vaultGitToken(ctx.applicationContext) }
+                    if (vault.isNotBlank()) { login = login.copy(identity = page.owner, token = vault, fromVault = true); fetchListing(vault) }
+                }
+            }
         }
+        if (FleetSession.present) page.ways.firstOrNull { DriveGitChain.rung(it.rung)?.kind == DriveGitChain.RUNG_FLEET }?.let { fetchFleetListing(it.rung) }
     }
 
     /**
@@ -881,6 +931,12 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     fun runTopItem(item: Declarations.GitTopItemDecl) {
         expanded = ""
         when (item.kind) {
+            // #1679 Refresh ▸ Refresh repo list: the listings and the local clones only, no git on any repository.
+            "refresh_list" -> { refreshListings(); coordinator.scanUnlisted() }
+            // #1679 Refresh ▸ Fetch status: read-only fetch --dry-run + remote show origin on every shown clone (progress on the job line).
+            "fetch_status" -> coordinator.fetchStatusAll(scopeTargets)
+            // #1679 More ▸ Remove auto-cloned copies: the folders the old first-run seed cloned, each read for dirty / unpushed first.
+            "remove_auto_cloned" -> autoClonedAsk = true
             "check_light" -> if (storageRepos != null) coordinator.checkRepos(storageRepos, full = false) else coordinator.lightCheckAll()
             "check_full" -> if (storageRepos != null) coordinator.checkRepos(storageRepos, full = true) else coordinator.fullCheckAll()
             "check_remote" -> coordinator.refreshRemoteStats(refreshTargets(), login.token)
@@ -935,6 +991,14 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                     Modifier.fillMaxWidth().testTag(DriveTags.SYNC_GIT_HANDOFF).padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                // #1679 the cache's age is visible: "List as of <time>" (or never read yet); a refresh in flight says so.
+                val listAt = GitListingCache.newest(if (view == GitView.CLOUD) listOf(listingSlots[GitListingCache.SLOT_CLOUD_PUBLIC]) else listOf(listingSlots[GitListingCache.SLOT_OWN], listingSlots[GitListingCache.SLOT_FLEET]))
+                val listLoading = if (view == GitView.CLOUD) cloudPublic.loading else listing.loading || cloudListing.loading
+                Text(
+                    (if (listAt > 0) stringResource(R.string.git_list_as_of, fmt.format(Date(listAt))) else stringResource(R.string.git_list_never)) + (if (listLoading) " · " + stringResource(R.string.git_list_refreshing) else ""),
+                    Modifier.fillMaxWidth().testTag(DriveTags.SYNC_GIT_LIST_AS_OF).padding(horizontal = DriveMetrics.sectionInset),
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 RepoTableHeader(sortColumn, sortAscending, tableScroll) { c ->
                     val next = RepoTable.tap(c, sortColumn, sortAscending)
                     coordinator.setSort(next.first, next.second)
@@ -960,7 +1024,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     GitPageFrame(
         state = listState,
         refreshing = refreshingRemote,
-        onRefresh = { coordinator.refresh(force = true); coordinator.refreshRemoteStats(refreshTargets(), login.token); coordinator.scanUnlisted(); coordinator.refreshLastCommits() },
+        onRefresh = { coordinator.refresh(force = true); refreshListings(registry = false); coordinator.refreshRemoteStats(refreshTargets(), login.token); coordinator.scanUnlisted(); coordinator.refreshLastCommits() },
         modifier = modifier,
     ) {
         // #642 WHAT THE HANDOFF DID, at the top of the page, above every row that could have
@@ -1128,10 +1192,25 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         }
 
         if (view == GitView.ME && !setup && repos.isEmpty()) item { EmptyState(Icons.Filled.Commit, stringResource(R.string.sync_empty_title), stringResource(R.string.sync_empty_hint)) }
+        // #1679 no built-in default list: an empty cache is an empty table with ONE Refresh button (the listing re-read, no git).
+        if (!setup && allEntries.isEmpty()) item(key = "empty-refresh") {
+            TextButton(onClick = { refreshListings() }, modifier = Modifier.padding(horizontal = DriveMetrics.sectionInset).testTag(DriveTags.SYNC_GIT_EMPTY_REFRESH)) {
+                Text(stringResource(R.string.git_list_refresh))
+            }
+        }
 
     }
 
     // #1238 the full-screen status window of the tapped row: what the app already knows, no mock data; Clone repo is its last section.
+    // #1679 ONE ROW, ONE SHEET in every state: a listing that arrives (or is refreshed) re-keys a clone's row ("other-<id>" →
+    // the listing's key); the open sheet / status window follows the SAME clone instead of closing or switching to another layout.
+    val rowKeys = allEntries.map { it.key to it.cloned?.id }
+    var rowKeysBefore by remember { mutableStateOf(rowKeys) }
+    LaunchedEffect(rowKeys) {
+        GitSheetKeys.follow(expanded, rowKeysBefore, rowKeys)?.let { expanded = it }
+        GitSheetKeys.follow(statusFor, rowKeysBefore, rowKeys)?.let { statusFor = it }
+        rowKeysBefore = rowKeys
+    }
     entries.firstOrNull { it.key == statusFor }?.let { e ->
         RepoStatusWindow(
             name = e.name, owner = e.owner, row = e.row, repo = e.cloned, glance = e.cloned?.let { GitSyncCoordinator.glanceFor(it, glances) },
@@ -1144,6 +1223,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     sortedEntries.firstOrNull { it.key == expanded }?.let { e ->
         ModalBottomSheet(onDismissRequest = { expanded = "" }, modifier = Modifier.testTag(DriveTags.SYNC_GIT_DETAIL_SHEET)) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = DriveMetrics.padWide)) {
+            // #1679 the sheet's Refresh row: the toolbar's Refresh items (Fetch status, Fetch, Check full) on THIS repository, in every state.
+            GitSheetRefreshRow(page, e.cloned, running = e.cloned?.let { running[it.id] } != null, result = e.cloned?.let { opResults[it.id] }, coordinator = coordinator)
             if (e.cloned == null) {
                 GitRepoNotClonedBox(
                     page = page, repoName = e.name, owner = e.owner, row = e.row, isPrivate = e.isPrivate,
@@ -1168,6 +1249,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         }
     }
     repos.firstOrNull { settingsFor.isNotEmpty() && it.id == settingsFor }?.let { repo -> RepoSettingsSheet(repo, coordinator, onDismiss = { settingsFor = "" }) }
+    if (autoClonedAsk) AutoClonedCleanupDialog(repos, coordinator, onDone = { autoClonedAsk = false })
     // #1258 ACTIVITY LOGS: the one sync / operation history, opened from the top button, full screen.
     // #1356 LOGS (Repos | App): App is the Activity Logs view that used to open from More.
     if (showActivity) GitLogsWindow(page.topBar.logs, logsTab, coordinator, events, fmt, onClose = { showActivity = false })
@@ -1883,6 +1965,8 @@ private fun GitRepoNotClonedBox(
         if (panel == RepoActions.RUNS && runs == null) runs = coordinator.runFeed(owner, repoName).getOrElse { listOf(ctx.getString(R.string.repo_runs_failed, it.message.orEmpty())) }
     }
     DriveCard(repoName, light = StatusLight.State.UNKNOWN, tag = DriveTags.SYNC_GIT_NOT_CLONED_PANEL) {
+        // #1679 ONE SHEET: the same STATUS block heads the sheet of a not-cloned row (Cloned: no, the rest unknown), as on a clone's.
+        RepoStatusBlock(RepoStatus.block(false, null), remember { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT) })
         PillRow {
             Pill(stringResource(R.string.repo_act_open_web), { openWeb(page.webUrl(repoName)) })
             Pill(stringResource(R.string.sync_clone_into_store), onClone, filled = true, enabled = !cloning)
@@ -2091,4 +2175,56 @@ private fun FlowPills(options: List<Pair<Long, String>>, selected: Long, onPick:
 private val WORKFLOW_PANELS = setOf(RepoActions.LIST_DIRTY, RepoActions.LIST_CONFLICTS, RepoActions.SOLVE_CONFLICTS)
 
 /** #1315 the job kinds that read only (a check never counts as "a command is running" for the menus). */
-private val CHECK_KINDS = setOf("check_light", "check_full", "check_remote", "check_sizes", "scan_inventory", GitSyncCoordinator.CLEANUP_DEBRIS)
+private val CHECK_KINDS = setOf("check_light", "check_full", "check_remote", "check_sizes", "scan_inventory", GitSyncCoordinator.CLEANUP_DEBRIS, GitSyncCoordinator.OP_FETCH_STATUS)
+
+/** #1679 the sheet / status window follows a clone across a listing change: the key it was opened on is re-pointed at the row that now holds the same clone. Pure. */
+internal object GitSheetKeys {
+    /**
+     * The new key for [open] after the rows changed from [before] to [after] (key to clone id), or null when [open] is still there,
+     * nothing is open, or the row was not a clone (a not-cloned listing row has no identity beyond its key).
+     */
+    fun follow(open: String, before: List<Pair<String, String?>>, after: List<Pair<String, String?>>): String? {
+        if (open.isEmpty() || after.any { it.first == open }) return null
+        val clone = before.firstOrNull { it.first == open }?.second ?: open.removePrefix(OTHER).takeIf { open.startsWith(OTHER) } ?: return null
+        return after.firstOrNull { it.second == clone }?.first
+    }
+    const val OTHER = "other-"
+}
+
+/** #1679 the toolbar's Refresh items run on ONE repository from its sheet (rule 16 parity: the same declared items, the same labels). */
+@Composable
+private fun GitSheetRefreshRow(page: Declarations.GitPageDecl, repo: ManagedRepo?, running: Boolean, result: com.diegonmarcos.cloudlib.gitsync.GitOpResult?, coordinator: GitSyncCoordinator) {
+    val items = page.topBar.groups.firstOrNull { it.id == "check" }?.items.orEmpty().filter { it.kind in GitSheetRefresh.KINDS || (it.kind == "op" && it.op == GitSyncCoordinator.OP_FETCH) }
+    if (items.isEmpty()) return
+    Column(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset).testTag(DriveTags.SYNC_GIT_SHEET_REFRESH)) {
+        Text(stringResource(R.string.git_sheet_refresh_title), style = MaterialTheme.typography.labelMedium)
+        PillRow {
+            items.forEach { item ->
+                Pill(item.label, {
+                    when (GitSheetRefresh.route(item.kind, item.op)) {
+                        GitSheetRefresh.Route.FETCH_STATUS -> repo?.let { coordinator.fetchStatus(it) }
+                        GitSheetRefresh.Route.FETCH -> repo?.let { coordinator.runOp(it, GitSyncCoordinator.OP_FETCH) }
+                        GitSheetRefresh.Route.CHECK_FULL -> repo?.let { coordinator.checkRepos(listOf(it), full = true) }
+                        GitSheetRefresh.Route.CHECK_LIGHT -> repo?.let { coordinator.checkRepos(listOf(it), full = false) }
+                        GitSheetRefresh.Route.REFRESH_LIST, null -> coordinator.refresh(force = true)
+                    }
+                }, enabled = !running && (repo != null || GitSheetRefresh.route(item.kind, item.op) == GitSheetRefresh.Route.REFRESH_LIST))
+            }
+        }
+        result?.takeIf { it.summary.isNotBlank() }?.let { r -> Text(r.summary, style = MaterialTheme.typography.labelSmall, color = if (r.ok) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error, maxLines = 3, overflow = TextOverflow.Ellipsis) }
+    }
+}
+
+/** #1679 the Refresh menu's routing, one place for the toolbar and the sheet (pure, unit-tested). */
+internal object GitSheetRefresh {
+    enum class Route { REFRESH_LIST, FETCH_STATUS, FETCH, CHECK_LIGHT, CHECK_FULL }
+    val KINDS = setOf("refresh_list", "fetch_status", "check_light", "check_full")
+    fun route(kind: String, op: String = ""): Route? = when (kind) {
+        "refresh_list" -> Route.REFRESH_LIST
+        "fetch_status" -> Route.FETCH_STATUS
+        "op" -> if (op == GitSyncCoordinator.OP_FETCH) Route.FETCH else null
+        "check_light" -> Route.CHECK_LIGHT
+        "check_full" -> Route.CHECK_FULL
+        else -> null
+    }
+}

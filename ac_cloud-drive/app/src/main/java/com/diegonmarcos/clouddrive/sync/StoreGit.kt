@@ -78,6 +78,23 @@ object StoreGit {
         return GitOpResult(r.ok, if (r.ok) "synced (in cld.termux)" else failed("sync in cld.termux", r), (r.out + "\n" + r.err).trim().takeLast(4000))
     }
 
+    /**
+     * #1679 FETCH STATUS, read-only: what a fetch WOULD bring (`git fetch --dry-run -v`) and the remote / branch tracking
+     * (`git remote show origin`). Nothing is written to the clone: no ref moves, no FETCH_HEAD (dry-run), no object kept.
+     */
+    fun fetchStatusScript(guestDir: String): String =
+        "cd ${q(guestDir)} || exit 2; T=\"\$(cat)\"; " +
+            "if [ -n \"\$T\" ]; then H=\"Authorization: Basic \$(printf '${com.diegonmarcos.cloudlib.gitui.GitConnectRules.USER}:%s' \"\$T\" | base64 | tr -d '\\n')\"; set -- -c \"http.extraHeader=\$H\"; else set --; fi; " +
+            "echo '$ git fetch --dry-run -v'; git \"\$@\" fetch --dry-run -v 2>&1; A=\$?; " +
+            "echo '$ git remote show origin'; git \"\$@\" remote show origin 2>&1; B=\$?; " +
+            "[ \$A -eq 0 ] && [ \$B -eq 0 ]"
+
+    fun fetchStatus(ctx: Context, dir: File, token: String): GitOpResult {
+        val r = shell(ctx).job(fetchStatusScript(guest(ctx, dir)), stdin = token)
+        val text = (r.out + "\n" + r.err).trim()
+        return GitOpResult(r.ok, if (r.ok) FetchStatus.summary(text) else failed("fetch status in cld.termux", r), text.takeLast(4000))
+    }
+
     /** #1282 a bare mirror at [guestDir] (BareClones.path in guest form); [depth] 0 = full history. Never touches a working clone. */
     fun bareClone(ctx: Context, url: String, guestDir: String, token: String, depth: Int): GitOpResult {
         val r = shell(ctx).job("set -e; mkdir -p \"\$(dirname ${q(guestDir)})\"; " + authed(BareClones.cloneArgs(url, guestDir, depth) { q(it) }), stdin = token)
