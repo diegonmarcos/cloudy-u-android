@@ -67,7 +67,17 @@ object Web {
     fun setDesktop(ctx: Context, worldId: String, on: Boolean) = prefs(ctx).edit().putBoolean("desktop.$worldId", on).apply()
 
     /** #1657 per-world presentation, remembered once the CPU presentation is seen on the screen: true = CPU-backed canvases and the world's CPU launch query. */
-    fun cpuPresent(ctx: Context, worldId: String): Boolean = prefs(ctx).getBoolean("cpu.$worldId", false)
+    fun cpuPresent(ctx: Context, worldId: String): Boolean { resetCpuOnce(ctx); return prefs(ctx).getBoolean("cpu.$worldId", false) }
+
+    /** #1662 once after the update: a world remembered in the CPU presentation by the #1657 build goes back to the default path. */
+    const val CPU_RESET_KEY = "cpu.reset.1662"
+    fun resetCpuOnce(ctx: Context) {
+        val p = prefs(ctx)
+        if (p.getBoolean(CPU_RESET_KEY, false)) return
+        val e = p.edit()
+        p.all.keys.filter { it.startsWith("cpu.") && it != CPU_RESET_KEY }.forEach { e.remove(it) }
+        e.putBoolean(CPU_RESET_KEY, true).apply()
+    }
     fun setCpuPresent(ctx: Context, worldId: String, on: Boolean) = prefs(ctx).edit().putBoolean("cpu.$worldId", on).apply()
 
     /** Installs [RenderProbe.CPU_CANVAS_JS] at document start of every frame of [wv] (before any page script); false when this WebView cannot. */

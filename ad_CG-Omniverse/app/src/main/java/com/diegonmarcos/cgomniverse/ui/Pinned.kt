@@ -13,6 +13,12 @@ import com.diegonmarcos.cloudlib.web.SiteMirrorStore
  * ignored) and every miss is fetched, stored and served, so the whole site accrues as it loads and runs (lazy chunks included).
  * Only an explicit refresh ([refresh] true) refetches; a failed refetch keeps the old copy. The default pins are declared in
  * build.json::pin_offline (floor796); the per-world toggle is remembered on the device.
+ *
+ * #1662 a document (main frame, or any request that accepts text/html) is network-first: the live copy is fetched and stored,
+ * and the pinned copy is served only when the network fails. A never-expiring document named a JS bundle the site had since
+ * replaced (front.<hash>.js), so its 4 fetches failed (static / cdn / cdn3 / origin) and the scene never started: flat #444,
+ * 0 images, 0 videos. Hashed assets stay cache-first. Every URL the intercept answered is recorded, so diagnostics can say
+ * whether a failed request was served by the pinned copy.
  */
 object Pinned {
     fun cache(ctx: Context): SiteCache = SiteMirrorStore.cache(ctx)
@@ -22,6 +28,20 @@ object Pinned {
     fun setPinned(ctx: Context, worldId: String, on: Boolean) = prefs(ctx).edit().putBoolean("pin.$worldId", on).apply()
 
     /** The shared web-core intercept (one implementation for Galaxy and Cloud-Browser: headers, charset, COOP/COEP/CORS kept, WebView UA). */
-    fun intercept(ctx: Context, host: String, req: WebResourceRequest, refresh: Boolean): WebResourceResponse? =
-        if (req.url.host != host) null else SiteMirrorStore.intercept(ctx, listOf(PinnedSites.keyOf(host)), req, refresh)
+    fun intercept(ctx: Context, host: String, req: WebResourceRequest, refresh: Boolean): WebResourceResponse? {
+        if (req.url.host != host) return null
+        val live = refresh || networkFirst(req.isForMainFrame, req.requestHeaders?.entries?.firstOrNull { it.key.equals("Accept", true) }?.value)
+        // a miss or a failure returns null: the WebView fetches it from the network itself, never an error or an empty body
+        val r = runCatching { SiteMirrorStore.intercept(ctx, listOf(PinnedSites.keyOf(host)), req, live) }.getOrNull() ?: return null
+        if (r.data == null) return null
+        served(req.url.toString())
+        return r
+    }
+
+    /** #1662 documents are network-first (pinned copy only offline); everything else is cache-first. */
+    fun networkFirst(mainFrame: Boolean, accept: String?): Boolean = mainFrame || accept.orEmpty().contains("text/html", true)
+
+    private val servedUrls = java.util.Collections.synchronizedSet(LinkedHashSet<String>())
+    fun served(url: String) { if (servedUrls.size > 2000) servedUrls.clear(); servedUrls += url }
+    fun wasServed(url: String): Boolean = url in servedUrls
 }

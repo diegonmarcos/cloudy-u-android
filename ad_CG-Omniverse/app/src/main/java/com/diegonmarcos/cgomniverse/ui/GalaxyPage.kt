@@ -344,12 +344,13 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                                 if (w.vr) view.evaluateJavascript("(function(){return !!(navigator.xr&&navigator.xr.isSessionSupported)})()") { xr = it == "true" }
                             }
                             override fun onReceivedError(view: WebView, request: WebResourceRequest, err: WebResourceError) {
-                                OmniXray.worldError(w.id, request.url.toString(), request.isForMainFrame, err.errorCode, err.description?.toString().orEmpty())
+                                OmniXray.worldError(w.id, request.url.toString(), request.isForMainFrame, err.errorCode,
+                                    err.description?.toString().orEmpty() + (if (Pinned.wasServed(request.url.toString())) " [pinned copy]" else " [network]"))
                                 if (!request.isForMainFrame) return
                                 if (Offline.isOfflineError(err.errorCode)) offline = true else error = err.description?.toString()
                             }
                             override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, response: WebResourceResponse) {
-                                if (response.statusCode >= 400) OmniXray.worldHttp(w.id, request.url.toString(), request.isForMainFrame, response.statusCode)
+                                if (response.statusCode >= 400) OmniXray.worldHttp(w.id, request.url.toString() + (if (Pinned.wasServed(request.url.toString())) " [pinned copy]" else " [network]"), request.isForMainFrame, response.statusCode)
                                 if (request.isForMainFrame && Offline.isOfflineHttp(response.statusCode)) offline = true
                             }
                             override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
@@ -470,6 +471,15 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                 }
                 if (cpu) KitOutlinedButton(onClick = { Web.setCpuPresent(ctx, w.id, false); cpu = false; finishedAt = 0L; finished = false; attempt++; showDiag = false },
                     modifier = Modifier.padding(top = 6.dp).testTag(Tags.WORLD_RENDER_GPU)) { Text(stringResource(R.string.world_render_gpu)) }
+                // #1662 every failed request of this world: URL, error / status, and whether the pinned copy served it
+                val rec = OmniXray.worlds().firstOrNull { it.id == w.id }
+                val failedReq = rec?.let { listOfNotNull(it.mainError.ifEmpty { null }) + it.subErrors + it.httpErrors }.orEmpty()
+                Text("Failed requests (${failedReq.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
+                    color = p.textPrimary, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp).testTag(Tags.WORLD_DIAG_FAILED))
+                if (failedReq.isEmpty()) Text("none", style = MaterialTheme.typography.bodySmall, color = p.textSecondary)
+                failedReq.forEach { Text(it, style = MaterialTheme.typography.labelSmall, color = p.textSecondary, modifier = Modifier.padding(vertical = 1.dp)) }
+                Text("Pin offline: " + (if (pinned) "on (documents network-first, assets from the pinned copy)" else "off"),
+                    style = MaterialTheme.typography.labelSmall, color = p.textSecondary, modifier = Modifier.padding(top = 4.dp))
                 val errors = PageConsole.errors().takeLast(30)
                 Text("Console errors (${errors.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
                     color = p.textPrimary, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
