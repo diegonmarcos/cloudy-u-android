@@ -4,7 +4,6 @@ import com.diegonmarcos.superapp.settings.LauncherThemes
 import com.diegonmarcos.superapp.apps.PhoneAppsFragment
 
 import android.content.Context
-import android.content.Intent
 import androidx.work.WorkManager
 
 /**
@@ -35,7 +34,7 @@ object BackgroundOrchestrator {
 
     /** Pause everything battery-hungry. WG explicitly excluded. */
     private fun pauseAll(context: Context) {
-        stopMapsTracker(context)
+        // #1690 no tracker to stop here: the SuperApp runs no location tracker (Cloud Nav owns it).
         cancelPeriodicWork(context)
         // Phone-tab warm-up is a one-shot thread fired from
         // MainActivity.onCreate — nothing to stop after it completes,
@@ -49,23 +48,6 @@ object BackgroundOrchestrator {
         // don't have to explicitly start anything here. Keeping the
         // hook so future producers (e.g. an analytics ping batcher)
         // have somewhere to land their resume logic.
-    }
-
-    /** Issue a stop intent to libs:maps's LocationTrackerService.
-     *  Resolved by string class-name so app/ doesn't need a hard
-     *  compile dep on libs:maps's service class. */
-    private fun stopMapsTracker(context: Context) = runCatching {
-        val ctx = context.applicationContext
-        val intent = Intent().apply {
-            setClassName(
-                ctx.packageName,
-                "com.diegonmarcos.superapp.maps.LocationTrackerService",
-            )
-            action = "com.diegonmarcos.superapp.maps.ACTION_STOP"
-        }
-        // stopService is the safe form — no-op if the service isn't
-        // running, no crash if the class doesn't exist on this build.
-        try { ctx.stopService(intent) } catch (_: Throwable) { /* ignore */ }
     }
 
     /** Cancel every WorkManager periodic / one-shot job we've enqueued

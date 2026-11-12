@@ -5,7 +5,8 @@
 # resort, the status strip kept a passive requestLocationUpdates listener and the popup's GPS section asked
 # GPS + network every second. Closed here, statically (no device, no build):
 #   T1 Weather requests only the NETWORK (coarse) provider: no GPS provider, no fine-only gate, no PASSIVE
-#   T2 the single fix is getCurrentLocation (one-shot, cancelled on timeout), never requestLocationUpdates
+#   T2 (#1690) no location-class call at all in WeatherLocation: the one fix per 4 h is Cloud Nav's (NavLocation over
+#      the fleet IPC door, WeatherLocation.resolveFromNav), never requestLocationUpdates
 #   T3 location + weather are gated to >= 4 h: FRESH_MS = REFRESH_MS = 4 h, the service floors its alarm at
 #      4 h and skips location AND fetch while the cached forecast is inside the window (not on every open)
 #   T4 the declared "Refresh every" option is 240 min only
@@ -29,7 +30,9 @@ if code "$WL" | grep -Eq 'REQUEST_ORDER = listOf\(NETWORK\)$' && code "$WL" | gr
 if code "$WL" | grep -Eq 'GPS -> env\.fine'; then bad "a fine-permission gate for GPS remains"; else ok "no fine-only gate"; fi
 
 echo "== T2: one single-shot fix, no updates =="
-if code "$WL" | grep -q 'getCurrentLocation' && code "$WL" | grep -q 'cancel.cancel()'; then ok "getCurrentLocation with cancel on timeout"; else bad "single-shot request missing"; fi
+# #1690 stronger than the old one-shot rule: Weather makes NO location-class call; its one fix per 4 h is Cloud Nav's.
+if code "$WL" | grep -Eq 'LocationManager|getLastKnownLocation|getCurrentLocation'; then bad "WeatherLocation still reads location itself"; else ok "WeatherLocation makes no location-class call"; fi
+if code "$WS" | grep -q 'WeatherLocation.resolveFromNav' && code "$WS" | grep -q 'NavLocation.ask'; then ok "the fix is asked from Cloud Nav (NavLocation over the fleet IPC door)"; else bad "Weather does not read Cloud Nav's fix"; fi
 if code "$WL" | grep -Eq 'requestLocationUpdates|LocationListener|requestSingleUpdate'; then bad "WeatherLocation subscribes to updates"; else ok "no updates subscription in WeatherLocation"; fi
 
 echo "== T3: gated to >= 4 h =="

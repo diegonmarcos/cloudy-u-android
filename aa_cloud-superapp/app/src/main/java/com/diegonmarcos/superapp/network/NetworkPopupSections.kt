@@ -226,10 +226,21 @@ internal object GpsSection {
             if (visible) session?.start() else session?.stop()
             onDispose { session?.stop() }
         }
+        // #1690 the position is Cloud Nav's: subscribed (fleet IPC) only while the section is on screen.
+        DisposableEffect(visible) {
+            val sub = if (visible) runCatching {
+                com.diegonmarcos.superapp.location.NavLocation.subscribe(app) { a -> GpsProbe.accept(a); tick++ }
+            }.getOrNull() else null
+            onDispose { runCatching { sub?.close() } }
+        }
         tick.let {
             val s = session
-            // #1666 the last-known read is a location access: only while the section is on screen, else this app's cached fix.
+            // #1690 Cloud Nav's newest answer (no location-class call here), else this app's cached fix.
             val loc = s?.fix ?: if (visible) GpsProbe.lastKnown(app) else GpsProbe.cached
+            (com.diegonmarcos.superapp.location.NavLocation.last as? com.diegonmarcos.superapp.location.NavLocation.Answer.Unavailable)?.let { u ->
+                PopValue("Position: ${u.detail}")
+                PopLink("Open Cloud Nav ›") { com.diegonmarcos.superapp.location.NavLocation.openOrInstall(ctx) }
+            }
             val f = loc?.let { GpsProbe.fixOf(it, usedSats = if (it.provider == "gps") s?.usedSats() else null) }
             val sats = s?.sats.orEmpty()
             PopGroup {

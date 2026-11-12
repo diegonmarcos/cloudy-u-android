@@ -90,12 +90,9 @@
          precise location is requestable on API 31+ (owner SM-A376B / API 36 was stuck on Approximate). -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:remove="android:maxSdkVersion" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!-- ACCESS_BACKGROUND_LOCATION + FOREGROUND_SERVICE +
-         FOREGROUND_SERVICE_LOCATION + WAKE_LOCK + the
-         LocationTrackerService declaration live in
-         libs/maps/src/main/AndroidManifest.xml. Manifest-merger folds
-         them into the final APK manifest at assembly time; app/ stays
-         free of Maps-specific entries. -->
+    <!-- #1690 no location tracker in this app: Cloud Nav is the fleet's one tracker owner (only its manifest declares
+         the tracker service) and this app asks it for location over the fleet IPC door (location/NavLocation.kt).
+         FINE / COARSE stay for Wi-Fi SSID, BLE scans and the GNSS status (test/test-location-from-nav.sh N5). -->
 
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />

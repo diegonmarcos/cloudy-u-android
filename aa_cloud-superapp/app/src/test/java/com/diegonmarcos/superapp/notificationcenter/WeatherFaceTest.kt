@@ -52,6 +52,15 @@ class WeatherFaceTest {
         }
     }
 
+    @Test fun cloudNavMissingNamesItAndOffersToOpenOrInstallIt() {
+        // #1690 the position is Cloud Nav's: when it is missing the card says so and its button opens / installs Cloud Nav.
+        val f = WeatherFace.of(ctx, State.NoLocation(Reason.NAV_UNAVAILABLE))
+        assertTrue(f.text.contains("Cloud Nav")); assertEquals(Action.OPEN_NAV, f.action)
+        val i = WeatherFace.intentFor(ctx, Action.OPEN_NAV)   // not installed under Robolectric: the install path
+        assertEquals(WeatherBadgeService::class.java.name, i.component?.className)
+        assertEquals(WeatherBadgeService.ACTION_INSTALL_NAV, i.action)
+    }
+
     @Test fun eachButtonOpensTheRightScreen() {
         val app = WeatherFace.intentFor(ctx, Action.APP_SETTINGS)
         // #1515 the location grants live in Configs > Perms: the button opens the Perms page on the location rows.

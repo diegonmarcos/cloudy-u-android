@@ -1,17 +1,6 @@
 package com.diegonmarcos.superapp.notificationcenter
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationManager
-import android.os.Build
-import android.os.CancellationSignal
-import androidx.core.content.ContextCompat
-import androidx.core.location.LocationManagerCompat
-import androidx.core.util.Consumer
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 /**
  * Where the Weather badge is, found the cheapest way and never lost (#1654).
@@ -28,6 +17,10 @@ import java.util.concurrent.TimeUnit
  * NEVER LOST: every fix found is written to [FixStore] and only a NEWER fix
  * replaces it; a failed refresh writes nothing. When there is truly no fix, the
  * [Result.None] carries the actual [Reason].
+ *
+ * #1690 SOURCE: Cloud Nav, the fleet's one location owner, over the fleet IPC door ([resolveFromNav], [NavProbe]).
+ * The SuperApp itself makes NO location-class call here any more; the provider order above is the rule the
+ * Cloud Nav answer goes through (one ask per 4 h, persisted, newest stale fix kept).
  *
  * Pure: the platform sits behind [Probe], the storage behind [FixStore], so the
  * order, the persistence rule and the fallback are plain JVM tests.
@@ -56,7 +49,8 @@ object WeatherLocation {
                 !(lat == 0.0 && lon == 0.0) && timeMs > 0
     }
 
-    enum class Reason { PERMISSION, LOCATION_OFF, BACKGROUND, NO_FIX, SEARCHING }
+    /** NAV_UNAVAILABLE (#1690): Cloud Nav, the fleet's location owner, is not installed, did not answer or refused. */
+    enum class Reason { PERMISSION, LOCATION_OFF, BACKGROUND, NO_FIX, SEARCHING, NAV_UNAVAILABLE }
 
     sealed interface Result {
         /** [fresh] false = the newest fix we have is older than [FRESH_MS]. */
@@ -121,53 +115,47 @@ object WeatherLocation {
         return Result.Found(store.load() ?: fix, fresh)
     }
 
+    /** Every source of a fix Cloud Nav hands over is tagged with this prefix ("cloud-nav · gps"). */
+    const val NAV = "cloud-nav"
+
+    /**
+     * #1690 the position comes from Cloud Nav (fleet IPC `tracker/location`), never from this app's own location
+     * access. Same order and persistence rule as [resolve] (the persisted fix while fresh, else Cloud Nav's fix, else
+     * the newest stale one); [ask] runs at most once and only when the persisted fix is not fresh. When there is no
+     * fix at all and Cloud Nav is missing / silent / refusing, the reason is [Reason.NAV_UNAVAILABLE] - never a
+     * fallback that tracks inside the SuperApp.
+     */
+    fun resolveFromNav(now: Long, store: FixStore, ask: () -> com.diegonmarcos.superapp.location.NavLocation.Answer): Result {
+        val probe = NavProbe(ask)
+        val r = resolve(now, Env(coarse = true, fine = false, background = true, anyProviderOn = true), probe, store)
+        val a = probe.answer
+        if (r is Result.None && a is com.diegonmarcos.superapp.location.NavLocation.Answer.Unavailable &&
+            a.why != com.diegonmarcos.superapp.location.NavLocation.Why.NO_FIX) return Result.None(Reason.NAV_UNAVAILABLE)
+        return r
+    }
+
+    /** Pure [Probe] over Cloud Nav's answer: asked lazily, once. */
+    class NavProbe(private val ask: () -> com.diegonmarcos.superapp.location.NavLocation.Answer) : Probe {
+        var answer: com.diegonmarcos.superapp.location.NavLocation.Answer? = null
+            private set
+        private fun fix(): Fix? {
+            val a = answer ?: runCatching(ask).getOrElse {
+                com.diegonmarcos.superapp.location.NavLocation.Answer.Unavailable(
+                    com.diegonmarcos.superapp.location.NavLocation.Why.NOT_RUNNING, it.message ?: "Cloud Nav did not answer")
+            }.also { answer = it }
+            val f = (a as? com.diegonmarcos.superapp.location.NavLocation.Answer.Ok)?.fix ?: return null
+            return Fix(f.lat, f.lon, f.accuracyM ?: -1f, f.timeMs, "$NAV · ${f.source}")
+        }
+        override fun enabled(provider: String): Boolean = fix() != null
+        override fun lastKnown(provider: String): Fix? = fix()
+        override fun request(provider: String, timeoutMs: Long): Fix? = fix()
+    }
+
     /** [com.diegonmarcos.superapp.perms.LocationUse] call-site id of the Weather card. */
     const val SITE = "notificationcenter.WeatherLocation (Weather card, 4 h)"
 
-    /** Platform side of [Probe]. */
-    class AndroidProbe(private val ctx: Context) : Probe {
-        private val lm get() = ctx.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
-        override fun enabled(provider: String): Boolean =
-            runCatching { lm.isProviderEnabled(provider) }.getOrDefault(false)
-
-        @SuppressLint("MissingPermission")
-        override fun lastKnown(provider: String): Fix? {
-            // #1666 noted in the app's location-use ledger (X-Ray App ▸ Location use); runs on the 4 h cadence only (#1654).
-            com.diegonmarcos.superapp.perms.LocationUse.note(ctx, SITE, "LocationManager.getLastKnownLocation ($provider)", com.diegonmarcos.superapp.perms.LocationUse.Trigger.WEATHER)
-            return runCatching { lm.getLastKnownLocation(provider) }.getOrNull()?.toFix(provider)
-        }
-
-        @SuppressLint("MissingPermission")
-        override fun request(provider: String, timeoutMs: Long): Fix? = runCatching {
-            com.diegonmarcos.superapp.perms.LocationUse.note(ctx, SITE, "LocationManagerCompat.getCurrentLocation ($provider, one shot)", com.diegonmarcos.superapp.perms.LocationUse.Trigger.WEATHER)
-            val got = arrayOfNulls<Location>(1)
-            val latch = CountDownLatch(1)
-            val cancel = CancellationSignal()
-            LocationManagerCompat.getCurrentLocation(lm, provider, cancel, { it.run() }, Consumer<Location?> {
-                got[0] = it; latch.countDown()
-            })
-            if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) cancel.cancel()
-            got[0]?.toFix(provider)
-        }.getOrNull()
-
-        private fun Location.toFix(provider: String) = Fix(
-            latitude, longitude, if (hasAccuracy()) accuracy else -1f,
-            if (time > 0) time else System.currentTimeMillis(), provider)
-    }
-
-    fun env(ctx: Context): Env {
-        fun granted(p: String) = ContextCompat.checkSelfPermission(ctx, p) == PackageManager.PERMISSION_GRANTED
-        val lm = ctx.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val on = runCatching { LocationManagerCompat.isLocationEnabled(lm) }.getOrDefault(true)
-        return Env(
-            coarse = granted(android.Manifest.permission.ACCESS_COARSE_LOCATION),
-            fine = granted(android.Manifest.permission.ACCESS_FINE_LOCATION),
-            background = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
-                granted(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-            anyProviderOn = on,
-        )
-    }
+    // #1690 the platform probe (LocationManager getLastKnownLocation + getCurrentLocation) and env() are gone: the
+    // SuperApp makes no location-class call for Weather; [NavProbe] reads Cloud Nav's fix over the fleet IPC door.
 }
 
 /**

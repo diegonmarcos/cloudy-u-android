@@ -12,13 +12,11 @@
 #   Nothing else is allowed: no timer, no service, no strip / widget refresh, no app start.
 #
 aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlFragment.kt | wifi-info | 1 | screen | X-Ray page Wi-Fi section (SSID/BSSID rows): read when the user scrolls to it; one read, nothing held
-aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/GpsProbe.kt | fix | 1 | screen | lastKnown(): the popup GPS section only while visible (NetworkPopupSections visible gate); one read, the strip reads GpsProbe.cached
 aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/GpsProbe.kt | gnss | 2 | screen | LiveSession: popup GPS section, DisposableEffect(visible) start/stop + onDispose stop, capped at MAX_MS = 3 min; stop() unregisters
 aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/MobileProbe.kt | service-state | 3 | legacy-sdk | serviceStateOf: API 33+ INCLUDE_LOCATION_DATA_NONE; below 31 plain getter + LISTEN_SERVICE_STATE (no indicator there); 31-32 only with screen=true (popup), ServiceCb31 not registered on 31-32
 aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetTableReader.kt | wifi-info | 1 | screen | network popup table (SSID/BSSID rows): produceState while the popup is open; one read
 aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkInfoPopup.kt | wifi-info | 1 | screen | network popup Wi-Fi section: remember{} while the section is shown; one read
 aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkSignal.kt | wifi-info | 1 | legacy-sdk | wifiRssi(): below API 29 only (no capability signal strength there); 29+ reads NetworkCapabilities.signalStrength
-aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/WeatherLocation.kt | fix | 2 | weather | AndroidProbe: network provider getLastKnownLocation peek + one getCurrentLocation, cancelled on timeout, at most once per 4 h (#1654)
 ab_cloud-libs-shared/libs/battery/src/main/java/com/diegonmarcos/superapp/battery/EnergyWatchdog.kt | wifi-info | 1 | legacy-sdk | sample(): below API 29 only; 29+ reads the Wi-Fi network's NetworkCapabilities.signalStrength
 ab_cloud-libs-shared/libs/bluetooth/src/main/java/com/diegonmarcos/superapp/bluetooth/AndroidBleAdapter.kt | ble-scan | 2 | screen | startScan / startDiscovery: Bluetooth page (BtLifecycle.Scope stops both on leave and ON_STOP) or a web page's Web Bluetooth chooser; BLUETOOTH_SCAN is neverForLocation
 ab_cloud-libs-shared/libs/bluetooth/src/main/java/com/diegonmarcos/superapp/bluetooth/BluetoothAnalyze.kt | ble-scan | 1 | button | Analyze tab "Classic discovery" button; stops itself (~12 s), on Stop, and on leave (BtLifecycle)

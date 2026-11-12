@@ -239,6 +239,8 @@
     <string name="badge_weather_act_permission">Allow location</string>
     <string name="badge_weather_act_location">Location settings</string>
     <string name="badge_weather_act_retry">Try again</string>
+    <string name="badge_weather_why_nav">Location comes from Cloud Nav, which is not installed, not answering or refused. Open Cloud Nav and turn its Tracker on.</string>
+    <string name="badge_weather_act_nav">Open Cloud Nav</string>
     <string name="badge_weather_pos_fmt">Position: %1$s, %2$s</string>
 
     <!-- #517 Markets badge. The instrument captions are NOT here: they are

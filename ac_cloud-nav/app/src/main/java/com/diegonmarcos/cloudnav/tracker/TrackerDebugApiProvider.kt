@@ -35,11 +35,13 @@ class TrackerDebugApiProvider : ContentProvider() {
                 AppDebugServer.Op("daily", "days=<1..31, default 7>", "contract v1: per day sleep hours and city, walking / running distance, distance per vehicle, per-mode summary"),
                 AppDebugServer.Op("trips", "days=<30..365, default 90>", "contract v1: consecutive nights away from the home city (most frequent sleep city of the last 90 days, owner-overridable) grouped into trips: cities, dates, nights, distance per vehicle, route"),
                 AppDebugServer.Op("places", "days=<1..31, default 7>", "the places the tracker recorded, per day: stays (centroid, time span, label)"),
+                AppDebugServer.Op("location", "", "#1690 the fleet's current / last location: the newest measured fix the tracker holds (lat, lon, accuracy, time, source); the SuperApp's location views read this instead of tracking"),
             )) { op, q ->
                 val days = (q["days"]?.toIntOrNull() ?: 7).coerceIn(1, 31)
                 when (op) {
                     "steps" -> steps(app, days).toString()
                     "places" -> places(app, days).toString()
+                    "location" -> location(app).toString()
                     "segments" -> segments(app, q["date"]).toString()
                     "daily" -> daily(app, days).toString()
                     "trips" -> trips(app, (q["days"]?.toIntOrNull() ?: 90).coerceIn(30, 365)).toString()
@@ -103,6 +105,10 @@ class TrackerDebugApiProvider : ContentProvider() {
             val store = TimelineSync.view(ctx, DayTimeline.dayStart(dates.first(), zone) - 12 * 3_600_000L, nowMs)
             return TripsJson.toJson(Trips.group(Aggregates.perDay(store, dates, nowMs, zone, cs.all(), cs.memory()), HomeStore(ctx).get()))
         }
+
+        /** #1690 `tracker/location`: the newest measured fix of the last [NavLocationWire.WINDOW_MS] (predicted only when nothing measured). */
+        fun location(ctx: Context, nowMs: Long = System.currentTimeMillis()): JSONObject =
+            NavLocationWire.toJson(runCatching { StepsRepository(ctx).fixes(nowMs - NavLocationWire.WINDOW_MS, nowMs) }.getOrDefault(emptyList()), nowMs)
 
         fun places(ctx: Context, days: Int, zone: ZoneId = ZoneId.systemDefault()): JSONObject {
             val repo = StepsRepository(ctx)

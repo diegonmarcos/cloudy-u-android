@@ -14,6 +14,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
+import com.diegonmarcos.superapp.location.NavLocation
 import com.diegonmarcos.superapp.perms.LocationUse
 
 /**
@@ -78,17 +79,34 @@ object GpsProbe {
         private set
 
     /**
-     * The freshest last-known fix any provider holds. No location is requested, but getLastKnownLocation IS a location access
-     * (#1666): only a screen the user opened calls it, it is noted in [LocationUse] under [site], and the answer is [cached].
+     * #1690 the current / last fix is Cloud Nav's (fleet IPC `tracker/location`, [NavLocation]); this app no longer
+     * calls getLastKnownLocation. Reads only the newest answer a view already got ([NavLocation.last]): no IPC, no
+     * location-class call, safe on the main thread. The answer becomes [cached], which the strip's dots read.
      */
-    fun lastKnown(ctx: Context, site: String = SITE_POPUP): Location? {
-        if (!fineGranted(ctx) && !coarseGranted(ctx)) return null
-        val m = lm(ctx) ?: return null
-        LocationUse.note(ctx, site, "LocationManager.getLastKnownLocation", LocationUse.Trigger.SCREEN)
-        return PROVIDERS.mapNotNull { p -> runCatching { @Suppress("MissingPermission") m.getLastKnownLocation(p) }.getOrNull() }
-            .maxByOrNull { it.elapsedRealtimeNanos }
-            ?.also { cached = it }
+    @Suppress("UNUSED_PARAMETER")
+    fun lastKnown(ctx: Context, site: String = SITE_POPUP): Location? =
+        NavLocation.lastFix()?.let { locationOf(it) }?.also { cached = it }
+
+    /** Feeds [cached] from a Cloud Nav answer (a subscription tick). */
+    fun accept(a: NavLocation.Answer) { (a as? NavLocation.Answer.Ok)?.fix?.let { cached = locationOf(it) } }
+
+    /** Cloud Nav's source tag to the provider name [GpsFix.source] reads: gps stays gps, net / cell / wifi are network. */
+    fun providerOf(source: String): String = when (source.lowercase()) {
+        "gps", "gnss" -> LocationManager.GPS_PROVIDER
+        "net", "network", "cell", "wifi" -> LocationManager.NETWORK_PROVIDER
+        "fused" -> "fused"
+        else -> source.ifBlank { "unknown" }
     }
+
+    fun locationOf(f: NavLocation.Fix, nowElapsedNs: Long = SystemClock.elapsedRealtimeNanos()): Location =
+        Location(providerOf(f.source)).apply {
+            latitude = f.lat; longitude = f.lon; time = f.timeMs
+            f.accuracyM?.let { accuracy = it }
+            elapsedRealtimeNanos = (nowElapsedNs - f.ageMs * 1_000_000L).coerceAtLeast(0L)
+        }
+
+    /** The strip's Cloud Nav ask cadence (its dots age on the minute tick anyway). */
+    const val NAV_PERIOD_MS = 60_000L
 
     /** [LocationUse] call-site ids of this file. */
     const val SITE_POPUP = "network.GpsProbe.lastKnown (popup GPS section)"
@@ -133,10 +151,14 @@ object GpsProbe {
             override fun onReceive(c: Context, i: Intent) { last = cached ?: last; onChange() }
         }
 
+        /** #1690 the strip's position comes from Cloud Nav: an IPC ask per [NAV_PERIOD_MS] while the strip runs (no location-class call). */
+        private var nav: AutoCloseable? = null
+
         fun start() {
             if (started) return
             started = true
             last = cached
+            nav = runCatching { NavLocation.subscribe(app, NAV_PERIOD_MS) { a -> accept(a); last = cached ?: last } }.getOrNull()
             runCatching {
                 androidx.core.content.ContextCompat.registerReceiver(app, receiver, broadcastFilter(),
                     androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
@@ -146,6 +168,7 @@ object GpsProbe {
         fun stop() {
             if (!started) return
             started = false
+            runCatching { nav?.close() }; nav = null
             runCatching { app.unregisterReceiver(receiver) }
         }
 

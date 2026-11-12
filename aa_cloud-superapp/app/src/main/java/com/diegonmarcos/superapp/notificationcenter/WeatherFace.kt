@@ -18,7 +18,7 @@ object WeatherFace {
         data class NoLocation(val reason: WeatherLocation.Reason) : State
     }
 
-    enum class Action { APP_SETTINGS, LOCATION_SETTINGS, RETRY }
+    enum class Action { APP_SETTINGS, LOCATION_SETTINGS, RETRY, OPEN_NAV }
 
     data class Face(val title: String, val text: String, val action: Action?, val actionLabel: String?)
 
@@ -44,6 +44,8 @@ object WeatherFace {
                     Action.RETRY, R.string.badge_weather_act_retry)
                 WeatherLocation.Reason.SEARCHING -> Triple(R.string.badge_weather_searching,
                     Action.RETRY, R.string.badge_weather_act_retry)
+                WeatherLocation.Reason.NAV_UNAVAILABLE -> Triple(R.string.badge_weather_why_nav,
+                    Action.OPEN_NAV, R.string.badge_weather_act_nav)
             }
             Face(ctx.getString(R.string.badge_weather_title), ctx.getString(msg), act, ctx.getString(label))
         }
@@ -57,6 +59,9 @@ object WeatherFace {
             listOf("fine_location", "coarse_location", "background_location"))
         Action.LOCATION_SETTINGS -> android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
         Action.RETRY -> android.content.Intent(ctx, WeatherBadgeService::class.java)
+        // #1690 Cloud Nav owns the location: open it, or (not installed) start its fleet install from the service.
+        Action.OPEN_NAV -> runCatching { ctx.packageManager.getLaunchIntentForPackage(com.diegonmarcos.superapp.location.NavLocation.PKG) }.getOrNull()
+            ?: android.content.Intent(ctx, WeatherBadgeService::class.java).setAction(WeatherBadgeService.ACTION_INSTALL_NAV)
     }
 
     /** The thin-line icon of each button, on the notification and on the card. */
@@ -64,6 +69,7 @@ object WeatherFace {
         Action.APP_SETTINGS -> R.drawable.ic_act_settings
         Action.LOCATION_SETTINGS -> R.drawable.ic_act_location
         Action.RETRY -> R.drawable.ic_act_refresh
+        Action.OPEN_NAV -> R.drawable.ic_act_location
     }
 
     /** "network · 12 min ago" - where the position came from and how old it is. */

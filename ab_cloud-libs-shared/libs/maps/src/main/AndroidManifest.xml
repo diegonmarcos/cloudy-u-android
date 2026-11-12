@@ -14,10 +14,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <application>
-        <service
-            android:name="com.diegonmarcos.cloudnav.maps.LocationTrackerService"
-            android:foregroundServiceType="location"
-            android:exported="false" />
-    </application>
+    <!-- #1690 the LocationTrackerService <service> is NOT declared here: the fleet has ONE tracker owner, Cloud Nav,
+         and only its app manifest (ac_cloud-nav/app/src/main/AndroidManifest.xml) declares it. A lib manifest would
+         merge the foreground service into every app that links libs:maps. Guard: ac_cloud-nav/test/test-tracker-owner.sh. -->
 </manifest>

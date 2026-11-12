@@ -69,6 +69,11 @@ class WeatherBadgeService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Switched off: no fetch, no card, no next alarm.
         if (DataWidgetRuntime.retiredIfOff(this, WeatherBadgeService::class.java)) { stopSelf(startId); return START_NOT_STICKY }
+        // #1690 the card's "Install Cloud Nav" button: the fleet install starts here (no activity to open yet).
+        if (intent?.action == ACTION_INSTALL_NAV) {
+            runCatching { com.diegonmarcos.superapp.launcher.AppInstall.start(this, com.diegonmarcos.superapp.location.NavLocation.PKG,
+                com.diegonmarcos.superapp.location.NavLocation.LABEL) }
+        }
         // The cached face at once (also what a restart or a reboot shows), then the fetch fills it in.
         runCatching { NotifyGate.postCtx(this, NOTIF_ID, build(initialState())) }
         refresh(startId)
@@ -113,9 +118,10 @@ class WeatherBadgeService : Service() {
     private fun initialState(): WeatherFace.State {
         val fix = store.load()
         if (fix == null) {
-            val env = WeatherLocation.env(this)
-            val r = if (!env.coarse && !env.fine) WeatherLocation.Reason.PERMISSION
-            else if (!env.anyProviderOn) WeatherLocation.Reason.LOCATION_OFF else WeatherLocation.Reason.SEARCHING
+            // #1690 the position is Cloud Nav's (asked in compute()); before that answer the card says it is looking,
+            // or, when Cloud Nav is not even installed, names that at once.
+            val r = if (!com.diegonmarcos.superapp.devtools.FleetIpc.hasDoor(this, com.diegonmarcos.superapp.location.NavLocation.PKG))
+                WeatherLocation.Reason.NAV_UNAVAILABLE else WeatherLocation.Reason.SEARCHING
             return WeatherFace.State.NoLocation(r)
         }
         return cachedState(fix) ?: WeatherFace.State.Loading(coords(fix.lat, fix.lon), fix)
@@ -133,8 +139,10 @@ class WeatherBadgeService : Service() {
         val last = store.load()
         if (saved != null && last != null && System.currentTimeMillis() - saved.savedMs in 0 until WeatherLocation.REFRESH_MS)
             cachedState(last)?.let { return it }
-        val res = WeatherLocation.resolve(System.currentTimeMillis(), WeatherLocation.env(this),
-            WeatherLocation.AndroidProbe(this), store)
+        // #1690 the fix is Cloud Nav's, over the fleet IPC door: this app makes no location request of its own.
+        val res = WeatherLocation.resolveFromNav(System.currentTimeMillis(), store) {
+            com.diegonmarcos.superapp.location.NavLocation.ask(this)
+        }
         val fix = (res as? WeatherLocation.Result.Found)?.fix
             ?: return WeatherFace.State.NoLocation((res as WeatherLocation.Result.None).reason)
         val today = runCatching { fetchToday(fix) }.getOrNull()
@@ -215,6 +223,7 @@ class WeatherBadgeService : Service() {
         val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         val i = WeatherFace.intentFor(this, a ?: return null)
         return if (a == WeatherFace.Action.RETRY) PendingIntent.getService(this, 3, i, flags)
+        else if (i.component?.className == WeatherBadgeService::class.java.name) PendingIntent.getService(this, 4, i, flags)
         else PendingIntent.getActivity(this, a.ordinal + 1, i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), flags)
     }
 
@@ -234,6 +243,8 @@ class WeatherBadgeService : Service() {
         // 7714 is Markets'. Sharing it meant each badge's post REPLACED the
         // other one in the shade (#535).
         const val NOTIF_ID = 7715
+        /** #1690 starts the fleet install of Cloud Nav (the card's button when it is not installed). */
+        const val ACTION_INSTALL_NAV = "com.diegonmarcos.superapp.weather.INSTALL_NAV"
         private const val CHANNEL_ID = "weather_today"
         private const val DEFAULT_REFRESH_MIN = 240L
 

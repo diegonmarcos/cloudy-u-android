@@ -110,6 +110,12 @@
         <receiver
             android:name=".tracker.WakeReceiver"
             android:exported="false" />
+        <!-- #1690 THE fleet location tracker, declared ONCE, here: Cloud Nav is its only owner (libs:maps no longer
+             declares it). Other apps ask for location over the fleet IPC door (tracker/location below). -->
+        <service
+            android:name="com.diegonmarcos.cloudnav.maps.LocationTrackerService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
         <!-- tracker/steps + tracker/places + tracker/timeline on the fleet IPC door, for the SuperApp's Boards ▸ ME (registers before Application.onCreate). -->
         <provider
             android:name=".tracker.TrackerDebugApiProvider"
