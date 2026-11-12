@@ -155,7 +155,7 @@ internal fun PagePanel(
         // #1068: the badges are One UI live cards straight on the page, not a titled, foldable card of controls.
         // `key` on the epoch: a return to the page re-reads every provider.
         Column(Modifier.fillMaxWidth().anchorTarget(anchors, panel.anchor).testTag(AggTags.panel(index))) {
-            androidx.compose.runtime.key(state.badgeEpoch) { BadgeCards() }
+            androidx.compose.runtime.key(state.badgeEpoch) { BadgeCards(summary = panel.summary) }
         }
         return
     }
@@ -595,28 +595,76 @@ internal fun FilterRow(state: AggregatorState) {
 @Composable
 internal fun ConfigSection(
     state: AggregatorState, hasFilters: Boolean, bottom: List<IndexedValue<Sections.StackPanel>>,
-    anchors: PageAnchors, actions: PageActions,
+    anchors: PageAnchors, actions: PageActions, flat: Boolean = false,
 ) {
     if (!hasFilters && bottom.isEmpty()) return
+    // #1672 the Notify configs (the page carrying the badge list) also lists its app sections and notification access here.
+    val notifyPage = remember(state.panels) { state.panels.any { it.kind == "notification_badge_configs" } }
     val p = LocalKitPalette.current
     val hostView = LocalView.current
-    val open = state.configOpen
+    // #1672 the Configs sub-page IS the configuration: always open, no fold to tap through.
+    val open = flat || state.configOpen
     val turn by animateFloatAsState(if (open) 90f else 0f, tween(180), label = "config-chevron")
     Column(Modifier.fillMaxWidth().padding(top = 8.dp).testTag(AggTags.CONFIG_SECTION)) {
         Row(
             Modifier.fillMaxWidth().clip(NotifCard.shape).background(NotifCard.surface)
-                .clickable { Haptics.tap(hostView); state.toggleConfigOpen() }
+                .clickable { if (!flat) { Haptics.tap(hostView); state.toggleConfigOpen() } }
                 .padding(horizontal = NotifCard.pad, vertical = 14.dp).testTag(AggTags.CONFIG_HEADER),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Settings", color = NotifCard.title, fontSize = NotifCard.titleSp, fontWeight = FontWeight.Medium,
+            // #1672 ONE level: the section IS "Configs" and opens the configs directly (it read "Settings" and held a
+            // second foldable "Configs" card inside it).
+            Text(com.diegonmarcos.superapp.notificationcenter.NotifySections.blockLabel("configs", "Configs"),
+                color = NotifCard.title, fontSize = NotifCard.titleSp, fontWeight = FontWeight.Medium,
                 fontFamily = NotifCard.font, modifier = Modifier.weight(1f))
-            Icon(painterResource(R.drawable.ic_chevron_right), null, tint = NotifCard.title,
+            if (!flat) Icon(painterResource(R.drawable.ic_chevron_right), null, tint = NotifCard.title,
                 modifier = Modifier.size(20.dp).rotate(turn))
         }
         if (open) Column(Modifier.fillMaxWidth().padding(top = 8.dp).testTag(AggTags.CONFIG_BODY)) {
             if (hasFilters) FilterRow(state)
-            for ((i, panel) in bottom) if (state.visible(panel)) PagePanel(state, i, panel, anchors, actions)
+            for ((i, panel) in bottom) if (state.visible(panel)) {
+                // The badge list is drawn straight into Configs under a plain label: no card, no second fold.
+                if (panel.kind == "notification_badge_configs") Column(Modifier.fillMaxWidth().anchorTarget(anchors, panel.anchor)
+                    .testTag(AggTags.panel(i))) {
+                    ConfigLabel(panelTitle(LocalContext.current, panel).let { if (it.equals("Configs", true)) "Badges" else it })
+                    BadgePane(state) { redraw -> BadgePanes.badges(redraw) }
+                }
+                else PagePanel(state, i, panel, anchors, actions)
+            }
+            if (notifyPage) {
+                // #1672 what used to be page sections and is configuration: the app lists of Cloud / Phone Publisher
+                // and the keep-alive list (read-only; their switches are the badge list above), and notification access.
+                Column(Modifier.fillMaxWidth().testTag(AggTags.CONFIG_APPS)) {
+                    for (sec in com.diegonmarcos.superapp.notificationcenter.NotifySections.appSections)
+                        androidx.compose.runtime.key(sec.id) { AppSectionBlock(sec) }
+                }
+                NotificationAccessRow(actions.open)
+            }
         }
+    }
+}
+
+@Composable
+private fun ConfigLabel(text: String) =
+    Text(text, color = NotifCard.meta, fontSize = NotifCard.nameSp, fontWeight = FontWeight.Medium,
+        fontFamily = NotifCard.font, maxLines = 1, modifier = Modifier.padding(start = 4.dp, top = 10.dp, bottom = 4.dp))
+
+/** #1672 Configs > notification access: granted or not, and the way to Configs > Perms. Never throws. */
+@Composable
+private fun NotificationAccessRow(onOpen: (String) -> Unit) {
+    val ctx = LocalContext.current
+    val granted = remember { runCatching { AggregatorModel.isNotificationAccessGranted(ctx) }.getOrDefault(false) }
+    Row(Modifier.fillMaxWidth().padding(top = 8.dp).clip(NotifCard.shape).background(NotifCard.surface)
+        .clickable { runCatching { onOpen(AggregatorModel.PERMS_TARGET) } }
+        .padding(horizontal = NotifCard.pad, vertical = 12.dp).testTag(AggTags.CONFIG_ACCESS),
+        verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text("Notification access", color = NotifCard.title, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font)
+            Text(if (granted) "granted · the Cloud and Phone blocks read the phone's notifications"
+                else "not granted · the Phone block cannot read notifications", color = NotifCard.meta,
+                fontSize = NotifCard.metaSp, fontFamily = NotifCard.font)
+        }
+        Text("Perms", color = NotifCard.title, fontSize = NotifCard.metaSp, fontFamily = NotifCard.font)
+        Icon(painterResource(R.drawable.ic_chevron_right), null, tint = NotifCard.title, modifier = Modifier.size(16.dp))
     }
 }

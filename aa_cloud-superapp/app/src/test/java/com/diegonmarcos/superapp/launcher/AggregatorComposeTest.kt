@@ -270,7 +270,9 @@ class AggregatorComposeTest : KitPageHarness() {
     fun `T1 the top filter row is unchanged - same tabs, same toggle row, actions sit below it`() {
         val sec = Sections.byId("communication")!!
         // The page tabs across the top of Notify.
-        assertEquals(listOf("All", "Inboxes"), sec.pages.take(2).map { it.label })
+        // #1672 (owner 2026-11-12): the Notify sub-pages; the old presets (Inboxes ...) are hidden pages, still routable.
+        assertEquals(listOf("All", "Persistent Badges", "Cloudy Apps", "Phone Apps", "Configs"), sec.pages.map { it.label })
+        assertTrue(sec.allPages.any { it.id == "rss-inboxes" })
         val filters = filtersOf("communication", "my-rss")
         assumeTrue("the All tab declares no filter row in this build", filters.isNotEmpty())
         val st = AggregatorState(ctx, "t1-filters", emptyList(), filters)

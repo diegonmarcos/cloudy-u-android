@@ -14,11 +14,18 @@ class NotifySectionsTest {
 
     private val nc: String = JSONObject(File("../build.json").readText()).getJSONObject("ui").getJSONObject("notification_center").toString()
 
-    @Test fun `the page order is the six categories then keep-alive below and Alerts is gone`() {
+    @Test fun `the badge sections are Media, Me Infos, Device Infos, Actions, the app sections live in Configs, Alerts is gone`() {
         val groups = BadgeDeclaration.groups(nc)
         val apps = NotifySections.appSections(nc)
-        val order = NotifySections.layout(NotifySections.pageOrder(nc), groups.map { it.id }, apps.map { it.id })
-        assertEquals(listOf("live", "media", "network", "actions", "cloud_publisher", "phone_publisher", "apps_keepalive"), order)
+        // #1672 supersedes the #1603 order: Media first, then the notification blocks, Archived and Configs.
+        assertEquals(listOf("media", "live", "network", "actions"), NotifySections.pageOrder(nc))
+        assertEquals(listOf("media", "live", "network", "actions"),
+            NotifySections.pageGroupOrder(NotifySections.pageOrder(nc), groups.map { it.id }))
+        // an owner-moved shade order does not move the page
+        assertEquals(listOf("media", "live", "network", "actions"),
+            NotifySections.pageGroupOrder(NotifySections.pageOrder(nc), listOf("actions", "network", "media", "live")))
+        // the Notify sub-pages themselves are sections[communication] pages (NotifyPage1672Test); no page block is declared
+        assertTrue(NotifySections.pageBlocks(nc).isEmpty())
         assertEquals(listOf("Me Infos", "Media", "Device Infos", "Actions"), groups.map { it.label })
         assertEquals(listOf("Cloud Publisher", "Phone Publisher", "Apps Keep Alive Badges"), apps.map { it.label })
         assertTrue(groups.none { it.alerts || it.id == "alerts" })

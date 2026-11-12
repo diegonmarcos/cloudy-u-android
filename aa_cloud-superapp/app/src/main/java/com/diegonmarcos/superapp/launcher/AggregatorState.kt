@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import com.diegonmarcos.superapp.apps.InboxClasses
 import com.diegonmarcos.superapp.apps.PhoneTaxonomy
 import com.diegonmarcos.superapp.core.NotificationStore
+import com.diegonmarcos.superapp.notificationcenter.AppSplit
 import com.diegonmarcos.superapp.notificationcenter.PhoneNotificationStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,6 +60,25 @@ internal class AggregatorState(
     fun toggleConfigOpen() {
         configOpen = !configOpen
         StackFilters.select(ctx, page, AggregatorModel.FILTER_CONFIG_OPEN, if (configOpen) "yes" else "no")
+    }
+
+    // ── #1672 grouped by app / by time, per notification block ─────────
+
+    private fun groupFilter(feed: String) = Sections.StackFilter(
+        id = AggregatorModel.FILTER_GROUP_PREFIX + feed, label = "", default = AggregatorModel.GROUP_APP,
+        options = listOf(Sections.FilterOption(AggregatorModel.GROUP_APP, "By app"),
+            Sections.FilterOption(AggregatorModel.GROUP_TIME, "By time")),
+    )
+
+    /** What the user picked this visit; a feed not in here reads its stored choice (default: by app). */
+    private val groupModes = mutableStateMapOf<String, String>()
+
+    fun groupMode(feed: String): String =
+        groupModes[feed] ?: runCatching { StackFilters.selected(ctx, page, groupFilter(feed)) }.getOrDefault(AggregatorModel.GROUP_APP)
+
+    fun setGroupMode(feed: String, mode: String) {
+        runCatching { StackFilters.select(ctx, page, AggregatorModel.FILTER_GROUP_PREFIX + feed, mode) }
+        groupModes[feed] = mode
     }
 
     var archiveOpen by mutableStateOf(
@@ -223,6 +243,37 @@ internal class AggregatorState(
         return AggregatorModel.visibleGroups(groups, sortMode, showMode, readIds, visitSeenAt, now())
     }
 
+    /**
+     * #1672 a `split` panel's REAL notifications: Cloud (cloudy) = the in-app feed plus every captured notification of a
+     * fleet app; Phone = every captured notification of any other app. One list, re-ordered as one.
+     */
+    fun splitViews(panel: Sections.StackPanel): List<GroupView> {
+        epoch
+        // "all" (the All page): both sides together, one box per app, as Android's own notification centre.
+        val phoneSide = phoneViews().filter {
+            panel.split == AggregatorModel.SPLIT_ALL || AppSplit.of(it.group.launchPackage.ifBlank { it.group.key }) == panel.split
+        }
+        val all = if (panel.split != AppSplit.PHONE) localFeedViews() + phoneSide else phoneSide
+        return AggregatorModel.visibleGroups(all.map { it.group }, sortMode, showMode, readIds, visitSeenAt, now())
+    }
+
+    /** How many notifications a `split` panel has at all, before Show / taxonomy filtering. */
+    fun splitTotal(panel: Sections.StackPanel): Int {
+        val phone = if (AggregatorModel.isNotificationAccessGranted(ctx))
+            PhoneNotificationStore.all(ctx).count {
+                panel.split == AggregatorModel.SPLIT_ALL || AppSplit.of(it.packageName.ifBlank { it.appLabel }) == panel.split
+            } else 0
+        return phone + if (panel.split != AppSplit.PHONE) NotificationStore.all(ctx).size else 0
+    }
+
+    /** #1672 the app category a box belongs to (its launcher folder's name; the in-app feed is the SuperApp's). */
+    fun categoryOf(g: NotifGroup): String {
+        if (g.launchPackage.isBlank()) return AggregatorModel.INAPP_CATEGORY
+        return runCatching {
+            PhoneTaxonomy.folderLabelOf(PhoneTaxonomy.folderIdOf(g.launchPackage, g.label, ctx))
+        }.getOrDefault("").ifBlank { AggregatorModel.OTHER_CATEGORY }
+    }
+
     fun ntfyTopics(panel: Sections.StackPanel): List<String> {
         val want = want()
         return AggregatorModel.ntfyTopicsOf(panel.scopes) { AggregatorModel.cloudTaxonomyKeeps(want, it) }
@@ -281,14 +332,16 @@ internal class AggregatorState(
 
     /** Whether a panel polls ntfy at all (so a pull has something to wait for). */
     fun pollsNtfy(panel: Sections.StackPanel): Boolean = when (panel.kind) {
-        "notification_center" -> (panel.stream == "cloud" || panel.stream == "channels") && ntfyTopics(panel).isNotEmpty()
+        // #1672 a split panel carries no ntfy channels, so it never polls.
+        "notification_center" -> panel.split.isBlank() &&
+            (panel.stream == "cloud" || panel.stream == "channels") && ntfyTopics(panel).isNotEmpty()
         "class_inbox" -> InboxClasses.byId(panel.classId)?.source == AggregatorModel.C3NTFY_SOURCE && ntfyTopics(panel).isNotEmpty()
         else -> false
     }
 
     /** Every group a panel draws, in draw order — what the Archive collects from and what a pull diffs. */
     fun allViews(panel: Sections.StackPanel): List<GroupView> = when (panel.kind) {
-        "notification_center" -> when (panel.stream) {
+        "notification_center" -> if (panel.split.isNotBlank()) splitViews(panel) else when (panel.stream) {
             "phone" -> phoneViews()
             "cloud" -> localFeedViews() + ntfyViews(panel)
             "channels" -> ntfyViews(panel)

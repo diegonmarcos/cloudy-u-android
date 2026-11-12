@@ -60,6 +60,28 @@ internal object AggregatorModel {
     const val ARCHIVED_PREFIX = "__archived/"
     const val FILTER_ARCHIVE_OPEN = "__archive_open"
     const val FILTER_CONFIG_OPEN = "__config_open"
+    /** #1672 per-feed layout of a Notify notification block (Cloud Apps, Phone Apps, Archived): grouped by app, or one
+     *  timeline by time. A "__" setting, so the Filters row never draws it; remembered per page and feed. */
+    const val FILTER_GROUP_PREFIX = "__group_"
+    const val GROUP_APP = "app"
+    const val GROUP_TIME = "time"
+    const val FEED_ARCHIVED = "archived"
+    /** #1672 the app pages' View switch: one section per app category, or one timeline. */
+    const val VIEW_CATEGORIES = "categories"
+    /** #1672 the All page's split: every notification, both sides. */
+    const val SPLIT_ALL = "all"
+    const val INAPP_CATEGORY = "Cloud SuperApp"
+    const val OTHER_CATEGORY = "Other"
+
+    /** #1672 By Categories: one section per category, sections A-Z by name, each section's notifications newest first. */
+    fun byCategory(groups: List<NotifGroup>, categoryOf: (NotifGroup) -> String): List<Pair<String, List<NotifGroup>>> =
+        groups.groupBy(categoryOf).toList().sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.first })
+    /** Configs > Perms, where notification access is granted (#1672: the prompt a missing grant shows opens it). */
+    const val PERMS_TARGET = "page:config/perms"
+
+    /** #1672 the by-time layout: every notification of [groups] in ONE list, newest first, each with its app. */
+    fun timeline(groups: List<NotifGroup>): List<Pair<NotifGroup, NotifRow>> =
+        groups.flatMap { g -> g.rows.map { g to it } }.sortedByDescending { it.second.ts }
     const val ARCHIVE_LABEL = "Archive"
     const val ARCHIVE_RESTORE_LABEL = "Restore"
     const val MARK_READ_LABEL = "Mark read"

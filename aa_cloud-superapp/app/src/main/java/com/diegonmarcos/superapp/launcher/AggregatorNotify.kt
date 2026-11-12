@@ -90,6 +90,19 @@ private const val TAG = "AggregatorStack"
 @Composable
 internal fun AggregatorEffects(state: AggregatorState) {
     LaunchedEffect(state.epoch) { state.housekeeping() }
+    // #1672 no polling: a notification the listener records re-reads the page through the store's change callback.
+    if (state.panels.any { it.kind == "notification_center" }) {
+        androidx.compose.runtime.DisposableEffect(state) {
+            val main = android.os.Handler(android.os.Looper.getMainLooper())
+            val bump = Runnable { state.epoch++ }
+            val l: () -> Unit = { main.removeCallbacks(bump); main.post(bump) }
+            com.diegonmarcos.superapp.notificationcenter.PhoneNotificationStore.addListener(l)
+            onDispose {
+                com.diegonmarcos.superapp.notificationcenter.PhoneNotificationStore.removeListener(l)
+                main.removeCallbacks(bump)
+            }
+        }
+    }
     for ((i, panel) in state.panels.withIndex()) {
         if (!state.pollsNtfy(panel)) continue
         // Keyed on the taxonomy rows too: narrowing a row can bring channels into view that nothing has polled yet.
@@ -101,6 +114,8 @@ internal fun AggregatorEffects(state: AggregatorState) {
 
 @Composable
 internal fun NotificationCenterBody(state: AggregatorState, panel: Sections.StackPanel, onOpen: (String) -> Unit) {
+    // #1672 Cloud Apps / Phone Apps Notifications: the real notifications of one AppSplit side, no ntfy channels.
+    if (panel.split.isNotBlank()) { SplitCenter(state, panel, onOpen); return }
     when (panel.stream) {
         "phone" -> PhoneCenter(state, onOpen)
         "cloud" -> CloudCenter(state, panel, onOpen)
@@ -118,16 +133,144 @@ internal fun NotificationCenterBody(state: AggregatorState, panel: Sections.Stac
 }
 
 @Composable
-private fun NotificationAccessOff(extra: String? = null) {
+private fun NotificationAccessOff(extra: String? = null, onOpen: ((String) -> Unit)? = null) {
     val ctx = LocalContext.current
     AggStateLine("unavailable · permission not granted", Tone.UNKNOWN)
     if (extra != null) AggCaption(extra)
-    else com.diegonmarcos.superapp.uikit.KitTextButton(modifier = Modifier.testTag(TAG_GRANT), onClick = {
-        runCatching {
-            ctx.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    else {
+        // #1672 the clear way to fix it: Configs > Perms, where every grant of this app lives.
+        if (onOpen != null) com.diegonmarcos.superapp.uikit.KitTextButton(modifier = Modifier.testTag(AggTags.OPEN_PERMS),
+            onClick = { runCatching { onOpen(AggregatorModel.PERMS_TARGET) } }) {
+            Text("Open Configs ▸ Perms", color = LocalKitPalette.current.accent)
         }
-    }) { Text("Grant Notification Access", color = LocalKitPalette.current.accent) }
+        com.diegonmarcos.superapp.uikit.KitTextButton(modifier = Modifier.testTag(TAG_GRANT), onClick = {
+            runCatching {
+                ctx.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+        }) { Text("Grant Notification Access", color = LocalKitPalette.current.accent) }
+    }
+}
+
+/**
+ * #1672 the notification blocks of the Notify sub-pages: the POSTED notifications (title, text, app icon, time, actions),
+ * never a list of apps. `split` "all" (the All page) = every notification, cloudy and phone together, one expandable box
+ * per app, newest first - Android's own notification centre. "cloudy" (Cloudy Apps) = the fleet's own apps plus the
+ * in-app feed; "phone" (Phone Apps) = every other app; both carry the View switch By Categories (one section per app
+ * category, A-Z, notifications by time) / By Time (one timeline). Without notification access the phone part cannot be
+ * read: the block says so and opens Configs > Perms; the in-app feed still shows, it needs no grant.
+ */
+@Composable
+private fun SplitCenter(state: AggregatorState, panel: Sections.StackPanel, onOpen: (String) -> Unit) {
+    val ctx = LocalContext.current
+    val feed = panel.split
+    val all = feed == AggregatorModel.SPLIT_ALL
+    Column(Modifier.fillMaxWidth().testTag(AggTags.feed(feed))) {
+        if (!all) GroupModeSwitch(state, feed, VIEW_OPTIONS)
+        val granted = remember(state.epoch) { runCatching { AggregatorModel.isNotificationAccessGranted(ctx) }.getOrDefault(false) }
+        if (!granted) Column(Modifier.fillMaxWidth().testTag(AggTags.ACCESS_PROMPT)) { NotificationAccessOff(onOpen = onOpen) }
+        if (!granted && feed == com.diegonmarcos.superapp.notificationcenter.AppSplit.PHONE) return@Column
+        val views by remember(panel) { derivedStateOf { runCatching { state.splitViews(panel) }.getOrDefault(emptyList()) } }
+        if (views.isEmpty()) {
+            val total = remember(state.epoch) { runCatching { state.splitTotal(panel) }.getOrDefault(0) }
+            if (total == 0) AggStateLine("silent · nothing captured", Tone.WARN) else AggCaption(AggregatorModel.filteredAwayNote(total))
+            return@Column
+        }
+        when {
+            all -> GroupList(state, views, onOpen)
+            state.groupMode(feed) == AggregatorModel.GROUP_TIME -> Timeline(state, feed, views.map { it.group }, null, onOpen)
+            else -> Categories(state, feed, views.map { it.group }, onOpen)
+        }
+    }
+}
+
+private val VIEW_OPTIONS = listOf(AggregatorModel.VIEW_CATEGORIES to "By Categories", AggregatorModel.GROUP_TIME to "By Time")
+private val ARCHIVE_OPTIONS = listOf(AggregatorModel.GROUP_APP to "By app", AggregatorModel.GROUP_TIME to "By time")
+
+/** #1672 By Categories: a header per app category (A-Z), then that category's notifications as one timeline. */
+@Composable
+private fun Categories(state: AggregatorState, feed: String, groups: List<NotifGroup>, onOpen: (String) -> Unit) {
+    // archived boxes and swiped rows are in Archived, so a category left empty by them draws no header
+    val live = groups.filterNot { state.isArchived(it.key) }
+        .map { g -> g.copy(rows = g.rows.filterNot { state.isRowArchived(it) }) }.filter { it.rows.isNotEmpty() }
+    val sections = AggregatorModel.byCategory(live) { state.categoryOf(it) }
+    for ((cat, gs) in sections) androidx.compose.runtime.key(cat) {
+        Text(cat, color = NotifCard.meta, fontSize = NotifCard.nameSp, fontWeight = FontWeight.Medium, fontFamily = NotifCard.font,
+            maxLines = 1, modifier = Modifier.padding(start = 6.dp, top = 6.dp, bottom = 4.dp).testTag(AggTags.category(feed, cat)))
+        Timeline(state, "$feed:$cat", gs, null, onOpen)
+    }
+}
+
+/** #1672 a View switch: one segmented control per notification block, remembered per page and block. The first option
+ *  is what a stored "app" (the old default) shows. */
+@Composable
+internal fun GroupModeSwitch(state: AggregatorState, feed: String, options: List<Pair<String, String>> = ARCHIVE_OPTIONS) {
+    val hostView = LocalView.current
+    val stored = state.groupMode(feed)
+    val mode = if (options.any { it.first == stored }) stored else options.first().first
+    Row(Modifier.fillMaxWidth().padding(bottom = 8.dp).clip(NotifCard.pillShape).background(NotifCard.pill.copy(alpha = 0.6f))
+        .padding(3.dp)) {
+        for ((id, label) in options) {
+            val on = id == mode
+            Text(label, color = if (on) Color.Black else NotifCard.title, fontSize = 12.sp,
+                fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, textAlign = TextAlign.Center, maxLines = 1,
+                modifier = Modifier.weight(1f).clip(NotifCard.pillShape).background(if (on) NotifCard.title else Color.Transparent)
+                    .semantics { contentDescription = "$label${if (on) ", selected" else ""}" }
+                    .clickable { Haptics.tap(hostView); state.setGroupMode(feed, id) }
+                    .padding(vertical = 6.dp).testTag(AggTags.groupMode(feed, id)))
+        }
+    }
+}
+
+/**
+ * #1672 the by-time layout: every notification of [groups] in ONE One UI container, newest first, each item headed by
+ * its app (glyph, name, time). The rows are the same rows the boxes draw (swipe, long-press sheet, avatar). Outside the
+ * Archive, archived boxes and swiped rows are left out. In the Archive ([archivedRowsOnly] != null) each item carries a
+ * Restore: rows swiped off a live box go back to it, an archived box comes back whole.
+ */
+@Composable
+internal fun Timeline(
+    state: AggregatorState, feed: String, groups: List<NotifGroup>, archivedRowsOnly: Set<String>?, onOpen: (String) -> Unit,
+) {
+    val hostView = LocalView.current
+    val inArchive = archivedRowsOnly != null
+    val shown = if (inArchive) groups else groups.filterNot { state.isArchived(it.key) }
+        .map { g -> g.copy(rows = g.rows.filterNot { state.isRowArchived(it) }) }
+    val items = AggregatorModel.timeline(shown)
+    if (items.isEmpty()) return
+    Column(Modifier.fillMaxWidth().padding(bottom = NotifCard.gap).clip(NotifCard.shape).background(NotifCard.surface)
+        .testTag(AggTags.timeline(feed))) {
+        for ((i, pair) in items.withIndex()) {
+            val (g, r) = pair
+            val rid = r.id.ifBlank { "${g.key}/${r.ts}/${r.title}" }
+            androidx.compose.runtime.key(rid) {
+                if (i > 0) Box(Modifier.padding(horizontal = NotifCard.pad).fillMaxWidth().height(0.7.dp).background(NotifCard.divider))
+                val tint = appTint(g.key, g.label)
+                Column(Modifier.fillMaxWidth().testTag(AggTags.timelineRow(rid))) {
+                    Row(Modifier.fillMaxWidth().padding(start = NotifCard.pad, end = 12.dp, top = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        GroupGlyph(g, tint)
+                        Text(g.label, color = NotifCard.title, fontSize = NotifCard.nameSp, fontWeight = FontWeight.Medium,
+                            fontFamily = NotifCard.font, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 8.dp).widthIn(max = 200.dp))
+                        Text(" • " + AggregatorModel.shortAgo(System.currentTimeMillis() - r.ts), color = NotifCard.meta,
+                            fontSize = NotifCard.metaSp, fontFamily = NotifCard.font, maxLines = 1)
+                        Box(Modifier.weight(1f))
+                        if (inArchive) Text(AggregatorModel.ARCHIVE_RESTORE_LABEL, color = NotifCard.title, fontSize = 12.sp,
+                            fontFamily = NotifCard.font,
+                            modifier = Modifier.clip(NotifCard.pillShape).background(NotifCard.pill)
+                                .clickable {
+                                    Haptics.tap(hostView)
+                                    if (r.id in archivedRowsOnly.orEmpty()) state.archiveRow(r.id, false) else state.setArchived(g.key, false)
+                                }
+                                .padding(horizontal = 10.dp, vertical = 3.dp).testTag(AggTags.timelineRestore(rid)))
+                    }
+                    NotifRowItem(state, r, g.launchPackage, tint, expanded = false, ownTime = false,
+                        inArchive = inArchive && r.id in archivedRowsOnly.orEmpty())
+                }
+            }
+        }
+    }
 }
 
 /** Phone stream: one group per POSTING APP, keyed on `packageName` and labelled with `appLabel`. There is no package
@@ -655,15 +798,24 @@ internal fun ArchiveSection(state: AggregatorState, onOpen: (String) -> Unit) {
             }
         }
     }
-    if (archived.isEmpty()) return
+    // #1672 on the Notify page Archived is a fixed section (it is in the declared order), so it is drawn even empty.
+    val fixed = state.panels.any { it.kind == "notification_center" && it.split.isNotBlank() }
+    if (archived.isEmpty() && !fixed) return
+    val label = if (fixed) com.diegonmarcos.superapp.notificationcenter.NotifySections.blockLabel("archived", "Archived") else "Archive"
     Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-        Text("Archive  ${if (state.archiveOpen) "▾" else "▸"}  ${archived.size}", color = p.textPrimary,
+        Text("$label  ${if (state.archiveOpen) "▾" else "▸"}  ${archived.size}", color = p.textPrimary,
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.fillMaxWidth().alpha(0.55f)
                 .clickable { Haptics.tap(hostView); state.toggleArchiveOpen() }
                 .padding(start = 14.dp, top = 4.dp, end = 14.dp, bottom = 6.dp).testTag(AggTags.ARCHIVE_HEADER))
         if (state.archiveOpen) Column(Modifier.fillMaxWidth().testTag(AggTags.ARCHIVE_BODY)) {
-            for ((i, v, rowsOnly) in archived) androidx.compose.runtime.key("$i/${v.group.key}/$rowsOnly") {
+            if (archived.isEmpty()) { AggCaption("Nothing archived", Modifier.testTag(AggTags.ARCHIVE_EMPTY)); return@Column }
+            // #1672 the same layout as the two notification blocks: one box per app, or one timeline by time.
+            if (fixed) GroupModeSwitch(state, AggregatorModel.FEED_ARCHIVED)
+            if (fixed && state.groupMode(AggregatorModel.FEED_ARCHIVED) == AggregatorModel.GROUP_TIME) {
+                val rowsOnly = archived.filter { it.third }.flatMap { t -> t.second.group.rows.map { it.id } }.toSet()
+                Timeline(state, AggregatorModel.FEED_ARCHIVED, archived.map { it.second.group }, rowsOnly, onOpen)
+            } else for ((i, v, rowsOnly) in archived) androidx.compose.runtime.key("$i/${v.group.key}/$rowsOnly") {
                 GroupBlock(state, v, archived = true, rowArchive = rowsOnly, onOpen = onOpen)
             }
         }

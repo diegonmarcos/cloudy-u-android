@@ -1,0 +1,28 @@
+{
+  "_doc": "#1672 TEST DATA, not shipped. What the Notify page (communication / my-rss) drew BEFORE #1672 (origin/main 2026-11-12), item by item, and the Notify sub-page (`page`) that draws it AFTER. Only two items may be `removed`, the two the owner named: the C3 Ntfy table and the Channels block. Every other item is `kept` and NotifyPage1672Test finds its test tag (or text) on that sub-page. Entries are only ever added.",
+  "items": [
+    {"id": "title", "before": "title line City · date · time above the badges", "status": "kept", "page": "notify-badges", "tag": "badge-title"},
+    {"id": "badge.cards", "before": "one card per declared badge (headline, sub, progress, lines, sub text, actions)", "status": "kept", "page": "notify-badges", "tag": "badge-card:*"},
+    {"id": "badge.summary", "before": "the badges at the top of the page", "status": "kept", "page": "my-rss", "tag": "badge-summary:*"},
+    {"id": "section.live", "before": "section Me Infos (Weather, Health, Fin Terminal Markets)", "status": "kept", "page": "notify-badges", "tag": "badge-section:live"},
+    {"id": "section.media", "before": "section Media (Media Player)", "status": "kept", "page": "notify-badges", "tag": "badge-section:media"},
+    {"id": "section.network", "before": "section Device Infos (Mesh, Data, Battery, AI)", "status": "kept", "page": "notify-badges", "tag": "badge-section:network"},
+    {"id": "section.actions", "before": "section Actions (Quick Actions, KDE Connect)", "status": "kept", "page": "notify-badges", "tag": "badge-section:actions"},
+    {"id": "apps.cloud_publisher", "before": "section Cloud Publisher: the fleet apps list", "status": "kept", "page": "notify-configs", "tag": "badge-sub:cloud_publisher:cloudy"},
+    {"id": "apps.phone_publisher", "before": "section Phone Publisher: the other apps list", "status": "kept", "page": "notify-configs", "tag": "badge-sub:phone_publisher:phone"},
+    {"id": "apps.keepalive.cloudy", "before": "Apps Keep Alive Badges · Cloudy", "status": "kept", "page": "notify-configs", "tag": "badge-sub:apps_keepalive:cloudy"},
+    {"id": "apps.keepalive.phone", "before": "Apps Keep Alive Badges · Phone", "status": "kept", "page": "notify-configs", "tag": "badge-sub:apps_keepalive:phone"},
+    {"id": "feed.inapp", "before": "Cloud publishers panel · IN-APP FEED groups (one box per in-app producer)", "status": "kept", "page": "my-rss", "tag": "agg:group:Backups"},
+    {"id": "feed.inapp.cloudy", "before": "the in-app feed under the cloud side", "status": "kept", "page": "notify-cloudy", "tag": "agg:feed:cloudy"},
+    {"id": "feed.channels", "before": "Cloud publishers panel · CHANNELS: one box per ntfy topic of the advisory / user scopes", "status": "removed", "absent_text": "CHANNELS"},
+    {"id": "feed.phone", "before": "Phone apps panel: one box per posting app", "status": "kept", "page": "notify-phone", "tag": "agg:feed:phone"},
+    {"id": "feed.c3ntfy", "before": "C3 Ntfy panel: the ntfy channel table", "status": "removed", "absent_text": "C3 Ntfy"},
+    {"id": "access.prompt", "before": "no notification access: 'unavailable · permission not granted' + Grant Notification Access", "status": "kept", "page": "notify-phone", "text": "unavailable · permission not granted"},
+    {"id": "actions.list", "before": "Mark all read / Archive all pills", "status": "kept", "page": "my-rss", "tag": "agg:list-actions"},
+    {"id": "archive", "before": "Archive section (boxes and swiped rows, Restore)", "status": "kept", "page": "my-rss", "tag": "agg:archive-header"},
+    {"id": "config.section", "before": "Settings section (folded) at the bottom", "status": "kept", "page": "notify-configs", "tag": "agg:config-section"},
+    {"id": "config.filters", "before": "Filters row (By, Source, Tools, Services, Show)", "status": "kept", "page": "notify-configs", "tag": "agg:filters-toggle"},
+    {"id": "config.badges", "before": "Configs card inside Settings: the declared-badge list (turn all, enabled, persistent, Launch)", "status": "kept", "page": "notify-configs", "tag": "badge-setting:*"},
+    {"id": "presets", "before": "the tabs Inboxes, Data Apps, Tools, Services, Sys (filter presets)", "status": "kept", "page": "rss-inboxes", "tag": "agg:page"}
+  ]
+}

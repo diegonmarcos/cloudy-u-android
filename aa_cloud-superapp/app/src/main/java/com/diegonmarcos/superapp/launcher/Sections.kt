@@ -104,6 +104,9 @@ object Sections {
         /** EVERY `filters_<page>` toggle row, keyed by the suffix. Same
          *  page-id-is-the-data-key contract as [stackByPage]. */
         val filtersByPage: Map<String, List<StackFilter>> = emptyMap(),
+        /** #1672 page id -> the page whose filters and per-page state (read marks, archive, layout) it shares
+         *  (build.json `state_pages`): the Notify sub-pages are one notification centre, configured on one Configs page. */
+        val statePages: Map<String, String> = emptyMap(),
         /** Old ids this section still answers to (build.json::sections[*].aliases): Boards was `infos`, and other apps
          *  deep-link `section:infos` / `page:infos/<p>`. [byId] and [canonicalPage] resolve them; nothing else does. */
         val aliases: List<String> = emptyList(),
@@ -192,6 +195,11 @@ object Sections {
          *  as [origin] rather than a second classifier: the card renders the
          *  stream the Source toggle would hide, so the two cannot disagree. */
         val stream: String = "",
+        /** #1672 notification_center only: "cloudy" | "phone" renders that AppSplit side as a real notification feed
+         *  (Cloud Apps / Phone Apps Notifications on Notify), with no ntfy channels; blank keeps the stream as it was. */
+        val split: String = "",
+        /** #1672 notification_badges only: draw the badges as one-line ongoing items (the All page's summary). */
+        val summary: Boolean = false,
         /** Id this panel answers to as an in-page anchor target. A tile
          *  declaring `target: "anchor:<this>"` scrolls here instead of
          *  navigating — see [StackAnchors]. Blank means the panel is not
@@ -947,6 +955,8 @@ object Sections {
                         scopes          = scopeIds,
                         origin          = p.optString("origin", ""),
                         stream          = p.optString("stream", ""),
+                        split           = p.optString("split", ""),
+                        summary         = p.optBoolean("summary", false),
                         anchor          = p.optString("anchor", ""),
                         anchors         = panelAnchors,
                         aliases         = p.optJSONArray("aliases")?.let { aa -> (0 until aa.length()).map { aa.optString(it) }.filter { it.isNotBlank() } } ?: emptyList(),
@@ -1023,6 +1033,7 @@ object Sections {
                     stackAdmin      = parseStack("stack_admin"),
                     stackByPage     = parseByPage("stack_") { parseStack(it) },
                     filtersByPage   = parseByPage("filters_") { parseFilters(it) },
+                    statePages      = o.optJSONObject("state_pages")?.let { m -> m.keys().asSequence().associateWith { m.optString(it) } }.orEmpty(),
                     aliases         = o.optJSONArray("aliases")?.let { arr -> (0 until arr.length()).map { arr.getString(it) } }.orEmpty(),
                     pageAliases     = o.optJSONObject("page_aliases")?.let { m -> m.keys().asSequence().associateWith { m.getString(it) } }.orEmpty(),
                 )
@@ -1302,8 +1313,12 @@ object Sections {
      *  a page that declares no filters must show no filter row. Falling back
      *  would hand Apps RSS's Cloud/Phone toggle to Infra RSS, where every panel
      *  is cloud and the Phone option would empty the screen for no reason. */
+    /** #1672 the page whose state [mode] shares (itself unless `state_pages` says otherwise). */
+    fun statePageFor(sec: Section, mode: String): String = sec.statePages[mode]?.takeIf { it.isNotBlank() } ?: mode
+
     fun stackFiltersFor(sec: Section, mode: String): List<StackFilter> =
         sec.filtersByPage[mode]
+            ?: sec.statePages[mode]?.let { sec.filtersByPage[it] }
             ?: sec.pages.firstOrNull { it.mode == mode }?.let { sec.filtersByPage[it.id] }
             ?: emptyList()
 

@@ -145,8 +145,8 @@ class NotifyScreenTest : KitPageHarness() {
         compose.onNodeWithTag(AggTags.group("Backups")).performScrollTo()
         compose.waitForIdle()
         snap("notify1068-2-notifications.png")
-        compose.onNodeWithTag(AggTags.CONFIG_HEADER).performScrollTo()
-        compose.onNodeWithTag(AggTags.CONFIG_HEADER).performClick()
+        // #1672 the configuration is the Configs sub-page, open on one level
+        show(AggregatorStackFragment.newInstance("communication", "", "notify-configs"))
         compose.waitForIdle()
         compose.onNodeWithTag(AggTags.CONFIG_BODY).performScrollTo()
         compose.waitForIdle()

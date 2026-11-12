@@ -59,6 +59,18 @@ object PhoneNotificationStore {
     @Volatile internal var diskWrites = 0
     @Volatile internal var diskReads = 0
 
+    /**
+     * #1672 change listeners: the Notify page re-reads when the listener records a post, instead of polling. Called
+     * after the in-memory list changed, on the caller's thread (the listener service's main thread); a listener that
+     * throws is dropped from that call only.
+     */
+    private val listeners = java.util.concurrent.CopyOnWriteArraySet<() -> Unit>()
+
+    fun addListener(l: () -> Unit) { listeners += l }
+    fun removeListener(l: () -> Unit) { listeners -= l }
+    internal fun listenerCount(): Int = listeners.size
+    private fun changed() { for (l in listeners) runCatching { l() } }
+
     @Synchronized
     fun all(ctx: Context): List<Entry> = mem ?: load(ctx).also { mem = it }
 
@@ -96,6 +108,7 @@ object PhoneNotificationStore {
     fun push(ctx: Context, e: Entry) {
         mem = (listOf(e) + all(ctx).filter { it.key != e.key }).take(MAX)
         scheduleWrite(ctx, WRITE_GAP_MS)
+        changed()
     }
 
     /**
@@ -109,6 +122,7 @@ object PhoneNotificationStore {
         val e = cur.firstOrNull { it.key == key } ?: return false
         mem = listOf(e.copy(ts = ts)) + cur.filter { it.key != key }
         scheduleWrite(ctx, LAZY_GAP_MS)
+        changed()
         return true
     }
 
@@ -147,6 +161,7 @@ object PhoneNotificationStore {
     fun clear(ctx: Context) {
         mem = emptyList(); dirty = false
         ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().clear().apply()
+        changed()
     }
 
     /** Forget the in-memory copy (the next read parses the prefs again). For tests. */

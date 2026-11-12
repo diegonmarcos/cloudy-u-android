@@ -106,7 +106,9 @@ class AggregatorStackFragment : KitComposeFragment(),
         // notification cards and declares no filters, and its swipes must not land in a blank-keyed bucket shared with
         // every other stackless page. The watermark moves on EVERY visit (it is read before it is advanced, in the state).
         val filters = remember { Sections.stackFiltersFor(sec, mode) }
-        val st = remember { AggregatorState(ctx, mode, panels, filters) }
+        // #1672 the Notify sub-pages share ONE state key (state_pages), so Configs, read marks and the Archive agree.
+        val stateKey = remember { Sections.statePageFor(sec, mode) }
+        val st = remember { AggregatorState(ctx, stateKey, panels, filters) }
         state = st
         val scroll = rememberScrollState()
         val scope = rememberCoroutineScope()
@@ -143,7 +145,8 @@ class AggregatorStackFragment : KitComposeFragment(),
         }
 
         // A page that carries notification containers sits on One UI's dark, blurred panel shade.
-        val shade = remember(panels) { panels.any { it.kind == "notification_center" || it.kind == "class_inbox" } }
+        val shade = remember(panels) { panels.any { it.kind == "notification_center" || it.kind == "class_inbox" ||
+            it.kind == "notification_badges" || it.kind == "notification_badge_configs" } }
         val page: @Composable () -> Unit = {
             Column(
                 Modifier.fillMaxSize()
@@ -170,7 +173,11 @@ class AggregatorStackFragment : KitComposeFragment(),
                     }
                     // #1068: every control of the page (the Filters, badge settings) is ONE folded section at the very bottom,
                     // below all the cards, the Archive and the page actions.
-                    ConfigSection(st, filters.isNotEmpty(), bottom, anchors, actions)
+                    // #1672 a page that shares its state with a Configs sub-page leaves the configuration to that page;
+                    // the Configs sub-page itself (it declares the badge-configs panel) draws it open, on one level.
+                    val configsPage = bottom.any { it.value.kind == "notification_badge_configs" }
+                    val shared = sec.statePages.containsKey(mode)
+                    if (!shared || configsPage) ConfigSection(st, filters.isNotEmpty(), bottom, anchors, actions, flat = shared && configsPage)
                 }
             }
         }

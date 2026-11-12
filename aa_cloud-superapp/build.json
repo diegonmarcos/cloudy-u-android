@@ -1680,37 +1680,68 @@
             "facet": true
           },
           {
+            "id": "notify-badges",
+            "label": "Persistent Badges",
+            "icon": "ic_rss",
+            "facet": true
+          },
+          {
+            "id": "notify-cloudy",
+            "label": "Cloudy Apps",
+            "icon": "ic_p_sol_cloud",
+            "facet": true
+          },
+          {
+            "id": "notify-phone",
+            "label": "Phone Apps",
+            "icon": "ic_p_inbox",
+            "facet": true
+          },
+          {
+            "id": "notify-configs",
+            "label": "Configs",
+            "icon": "ic_settings",
+            "facet": true
+          },
+          {
             "id": "rss-inboxes",
             "label": "Inboxes",
             "icon": "ic_p_inbox",
-            "facet": true
+            "facet": true,
+            "hidden": true
           },
           {
             "id": "rss-data",
             "label": "Data Apps",
             "icon": "ic_p_sol_cloud",
-            "facet": true
+            "facet": true,
+            "hidden": true
           },
           {
             "id": "rss-tools",
             "label": "Tools",
             "icon": "ic_p_sol_tools",
-            "facet": true
+            "facet": true,
+            "hidden": true
           },
           {
             "id": "rss-services",
             "label": "Services",
             "icon": "ic_p_folder",
-            "facet": true
+            "facet": true,
+            "hidden": true
           },
           {
             "id": "rss-sys",
             "label": "Sys",
             "icon": "ic_settings",
-            "facet": true
+            "facet": true,
+            "hidden": true
           }
         ],
         "tabs": true,
+        "_doc_pages_1672": "#1672 (owner 2026-11-12, supersedes the six presets): Notify is FIVE top-nav sub-pages, in this order: All | Persistent Badges | Cloudy Apps | Phone Apps | Configs. All = the Android-style notification centre (every notification, cloudy and phone together, one expandable box per app, newest first, actions, swipe to dismiss / archive, the persistent badges summarised on top as ongoing one-liners). Persistent Badges = the Media, Me Infos, Device Infos, Actions cards, each collapsible. Cloudy Apps / Phone Apps = the real notifications of that side with a View switch By Categories (one section per app category, sections A-Z, items by time) or By Time (one timeline). Configs = the whole notify configuration on ONE level (Filters, the badge list, the app lists, notification access). Archived is an entry at the bottom of All and of both app pages. `state_pages` maps every sub-page to ONE state key (my-rss), so the Filters set on Configs, read marks and the Archive are the same on every sub-page. The five old presets (rss-inboxes ... rss-sys) are kept as hidden pages so their links still resolve. Removed, and only these: the C3 Ntfy table and the Channels block.",
+        "state_pages": {"my-rss": "my-rss", "notify-badges": "my-rss", "notify-cloudy": "my-rss", "notify-phone": "my-rss", "notify-configs": "my-rss"},
         "_doc_pages": "Notify — one Apps RSS stack, six PRESETS of it. Every tab renders the SAME three panels (Cloud publishers, Phone apps, C3 Ntfy) and differs only in the `default` of its taxonomy rows, so a preset is data, not a second implementation: All shows everything, and the other five open pre-narrowed to one phone-taxonomy section. C3 Ntfy stopped being its own tab and became the third panel plus a Source option, because it was never a different KIND of page — only a different origin, which Source already models. Filter choices are remembered per PAGE ID, so narrowing one preset never disturbs another. Msgs moved out to Projects (page id kept, relabelled Inboxes): it is a mail/chat console, not a notification stack, and it never belonged on a page whose every sibling reads a notification store.",
         "_doc_stack_my-rss": "Apps RSS is a NOTIFICATION CENTRE divided per app, not a stack of feeds. It declares one card per STREAM and each card renders one group per PUBLISHER. Phone stream: the group key is the notification's own `packageName`, labelled with its `appLabel` — carried by the notification itself, so an app installed tomorrow groups correctly with no edit here and no package list to rot. Cloud stream: the group key is the ntfy TOPIC (and the `source` field for the in-app feed), because a cloud message has no package and the address it was published to is the closest thing it carries to one — a topic has exactly one publisher the way a package has exactly one app. Grouping by SCOPE was the alternative and is wrong: advisory/user/cloud is a routing category shared by many publishers, so it would collapse every unrelated channel into one bucket, which is the undivided list this page replaced. Scope still selects WHICH topics the cloud card carries, via `scopes` below, over the same ui.ntfy catalog Infra RSS browses — there is still no second topic list anywhere. The old rss / notifications / phone_notifications / news_feeds panels are gone: three of the four were child fragments embedded through the fixed host-id pool, which is exactly what cannot survive a card that re-renders on every toggle tap. EVERY panel here must declare \"stream\": \"phone\", \"cloud\" or \"channels\" — a panel that declares none renders a bare `no stream declared` line and logs the panel title to logcat, because the grammar for fixing it is addressed to whoever opens THIS file and is useless to the person holding the phone. THE TWO BADGE PANELS (#580) belong to THIS page only (stack_my-rss, the All tab — the other five do not declare them) and are not notification streams: `notification_badges` is the persistent-badge boxes (BadgePanes.badges, live state from BadgeServices) and carries `above_filters: true`, which draws it ABOVE the Filters row instead of below it; `notification_badge_configs` is the customization menus that used to be the Push tab (BadgePanes.configs), declared `collapsed` so it starts folded under the Filters. Both are VIEWS onto the badges that already live in the one notification centre and read ui.notification_center — neither posts, clears or stores anything, so the #497/#515 single-centre guards (test-notification-centre-is-singular T2/T4-T7) are untouched. Configs ▸ Launcher ▸ Notify mirrors this page, so it shows them too; they carry no `origin`, so the Source filter never hides them.",
         "_doc_filters_my-rss": "The five toggles above the Apps RSS stack. Declared here, not in Kotlin: the OPTION SET and the LABELS are data, only the five filter IDS (sort|source|tools|services|show) are a contract the fragment implements. `default` is what a phone shows before the user has ever touched the row; the choice is then remembered per page in SharedPreferences (committed, not applied — this app is the launcher and Android restarts it many times an hour, so a queued write is a setting that silently reverts), and a stored id this file no longer declares falls back to the default rather than stranding the row on an invisible choice. SORT now chooses the ORDER OF THE APP GROUPS — App = alphabetical, Time = most recently active app first — never whether grouping happens, because the division per app IS this page; inside a group the order is always newest-first, so flipping Sort can never bury something fresh. TIME IS THE DEFAULT ON ALL SIX TABS and it is declared HERE, never in Kotlin, so what a phone shows before anyone has touched the row is a build.json edit; test/test-notify-sort-default.sh asserts every generated tab carries the same one, because a default fixed on the tab you happened to open and missing from the other five is exactly the failure this page is shaped to produce. Sort reaches the ntfy CHANNEL boxes too: those were ordered alphabetically under BOTH modes, which made them the one construction site where Time did nothing, and since every tab draws its channels through that same code the page read as name-ordered on all six while this file said time on all six. A channel is ordered on its LAST MEASUREMENT, and one that has never been polled — or whose poll failed — sorts last rather than claiming a freshness nobody measured; the order is fixed at draw time so a poll landing can never reshuffle boxes under the reader's thumb. SOURCE works off each panel's `origin` below rather than any package list: a stream is Phone or Cloud by WHERE IT COMES FROM, which cannot go stale. SHOW is All vs Unread and NOT All vs Dismissed: neither NotificationStore nor PhoneNotificationStore records a dismissed flag — PhoneNotificationStore deliberately keeps entries the system already dismissed, and opening the cloud card calls cancelAll(), which destroys dismissal state rather than recording it, so a Dismissed filter would read a field nothing writes and render an eternally empty list. Unread needs no new field at all: it is `ts > last visit`, read before the watermark is advanced so toggling within one visit keeps answering the same question, and both stores already carry ts. TOOLS and SERVICES filter by the PHONE-APPS TAXONOMY: each option id IS the section prefix character declared in ui.phone_sections, so a section added there becomes filterable with no Kotlin change, and PhoneTaxonomy resolves a package to its prefix through the same PhoneAppClassifier + phone_folders the launcher uses. They are ONE choice spread over two rows — an app is a Tool or a Service, never both, so narrowing one row returns the other to All rather than AND-ing to a permanently empty page. They prune the phone groups before rendering, not after, so an empty result still lands on the filtered-away note. AN OPTION ID IS A SET OF PREFIXES, not one prefix: \"-+\" (Services) matches both Services · Buro (-) and Services · Others (+), and \"=>*\" (Tools) matches Primary (=), Media (>) and Health (*). AggregatorStackFragment.taxonomyKeeps tests membership, so single-character ids keep working unchanged and every phone_sections prefix stays reachable from some tab. THE SIX NOTIFY TABS are one page cloned six times: they all share stack_* (cloud + phone + C3-ntfy) and differ only in their filters_<pageid> defaults — my-rss all/all, rss-inboxes @, rss-data ., rss-tools =>*, rss-services -+, rss-sys _. Selections persist per PAGE ID, so a tab the user retunes keeps its own bucket and the others stay on their preset.",
@@ -1746,10 +1777,6 @@
               {
                 "id": "phone",
                 "label": "Phone"
-              },
-              {
-                "id": "c3ntfy",
-                "label": "C3 Ntfy"
               }
             ]
           },
@@ -1841,155 +1868,128 @@
             "kind": "notification_badges",
             "title": "Persistent badges",
             "title_res": "notify_badges_title",
-            "above_filters": true
+            "above_filters": true,
+            "summary": true
           },
+          {
+            "kind": "notification_center",
+            "stream": "cloud",
+            "split": "all",
+            "title": "Notifications"
+          }
+        ],
+        "stack_notify-badges": [
+          {
+            "kind": "notification_badges",
+            "title": "Persistent badges",
+            "title_res": "notify_badges_title",
+            "above_filters": true
+          }
+        ],
+        "stack_notify-cloudy": [
+          {
+            "kind": "notification_center",
+            "stream": "cloud",
+            "split": "cloudy",
+            "title": "Cloudy Apps",
+            "origin": "cloud"
+          }
+        ],
+        "stack_notify-phone": [
+          {
+            "kind": "notification_center",
+            "stream": "phone",
+            "split": "phone",
+            "title": "Phone Apps",
+            "origin": "phone"
+          }
+        ],
+        "stack_notify-configs": [
           {
             "kind": "notification_badge_configs",
             "title": "Configs",
             "title_res": "notify_configs_title",
             "bottom": true
-          },
-          {
-            "kind": "notification_center",
-            "stream": "cloud",
-            "title": "Cloud publishers",
-            "origin": "cloud",
-            "scopes": [
-              "advisory",
-              "user"
-            ]
-          },
-          {
-            "kind": "notification_center",
-            "stream": "phone",
-            "title": "Phone apps",
-            "origin": "phone"
-          },
-          {
-            "kind": "notification_center",
-            "stream": "channels",
-            "title": "C3 Ntfy",
-            "origin": "c3ntfy"
           }
         ],
         "stack_rss-inboxes": [
           {
             "kind": "notification_center",
             "stream": "cloud",
-            "title": "Cloud publishers",
-            "origin": "cloud",
-            "scopes": [
-              "advisory",
-              "user"
-            ]
+            "split": "cloudy",
+            "title": "Cloud Apps Notifications",
+            "origin": "cloud"
           },
           {
             "kind": "notification_center",
             "stream": "phone",
-            "title": "Phone apps",
+            "split": "phone",
+            "title": "Phone Apps Notifications",
             "origin": "phone"
-          },
-          {
-            "kind": "notification_center",
-            "stream": "channels",
-            "title": "C3 Ntfy",
-            "origin": "c3ntfy"
           }
         ],
         "stack_rss-data": [
           {
             "kind": "notification_center",
             "stream": "cloud",
-            "title": "Cloud publishers",
-            "origin": "cloud",
-            "scopes": [
-              "advisory",
-              "user"
-            ]
+            "split": "cloudy",
+            "title": "Cloud Apps Notifications",
+            "origin": "cloud"
           },
           {
             "kind": "notification_center",
             "stream": "phone",
-            "title": "Phone apps",
+            "split": "phone",
+            "title": "Phone Apps Notifications",
             "origin": "phone"
-          },
-          {
-            "kind": "notification_center",
-            "stream": "channels",
-            "title": "C3 Ntfy",
-            "origin": "c3ntfy"
           }
         ],
         "stack_rss-tools": [
           {
             "kind": "notification_center",
             "stream": "cloud",
-            "title": "Cloud publishers",
-            "origin": "cloud",
-            "scopes": [
-              "advisory",
-              "user"
-            ]
+            "split": "cloudy",
+            "title": "Cloud Apps Notifications",
+            "origin": "cloud"
           },
           {
             "kind": "notification_center",
             "stream": "phone",
-            "title": "Phone apps",
+            "split": "phone",
+            "title": "Phone Apps Notifications",
             "origin": "phone"
-          },
-          {
-            "kind": "notification_center",
-            "stream": "channels",
-            "title": "C3 Ntfy",
-            "origin": "c3ntfy"
           }
         ],
         "stack_rss-services": [
           {
             "kind": "notification_center",
             "stream": "cloud",
-            "title": "Cloud publishers",
-            "origin": "cloud",
-            "scopes": [
-              "advisory",
-              "user"
-            ]
+            "split": "cloudy",
+            "title": "Cloud Apps Notifications",
+            "origin": "cloud"
           },
           {
             "kind": "notification_center",
             "stream": "phone",
-            "title": "Phone apps",
+            "split": "phone",
+            "title": "Phone Apps Notifications",
             "origin": "phone"
-          },
-          {
-            "kind": "notification_center",
-            "stream": "channels",
-            "title": "C3 Ntfy",
-            "origin": "c3ntfy"
           }
         ],
         "stack_rss-sys": [
           {
             "kind": "notification_center",
             "stream": "cloud",
-            "title": "Cloud publishers",
-            "origin": "cloud",
-            "scopes": [
-              "advisory",
-              "user"
-            ]
+            "split": "cloudy",
+            "title": "Cloud Apps Notifications",
+            "origin": "cloud"
           },
           {
             "kind": "notification_center",
             "stream": "phone",
-            "title": "Phone apps",
+            "split": "phone",
+            "title": "Phone Apps Notifications",
             "origin": "phone"
-          },
-          {
-            "kind": "notification_center",
-            "stream": "channels",
-            "title": "C3 Ntfy",
-            "origin": "c3ntfy"
           }
         ],
         "filters_rss-inboxes": [
@@ -2024,10 +2024,6 @@
               {
                 "id": "phone",
                 "label": "Phone"
-              },
-              {
-                "id": "c3ntfy",
-                "label": "C3 Ntfy"
               }
             ]
           },
@@ -2144,10 +2140,6 @@
               {
                 "id": "phone",
                 "label": "Phone"
-              },
-              {
-                "id": "c3ntfy",
-                "label": "C3 Ntfy"
               }
             ]
           },
@@ -2264,10 +2256,6 @@
               {
                 "id": "phone",
                 "label": "Phone"
-              },
-              {
-                "id": "c3ntfy",
-                "label": "C3 Ntfy"
               }
             ]
           },
@@ -2384,10 +2372,6 @@
               {
                 "id": "phone",
                 "label": "Phone"
-              },
-              {
-                "id": "c3ntfy",
-                "label": "C3 Ntfy"
               }
             ]
           },
@@ -2504,10 +2488,6 @@
               {
                 "id": "phone",
                 "label": "Phone"
-              },
-              {
-                "id": "c3ntfy",
-                "label": "C3 Ntfy"
               }
             ]
           },
@@ -10116,7 +10096,8 @@
         }
       ],
       "_doc_sections": "NOTIFY-CENTER REDESIGN (#1603, owner 2026-11-10, supersedes the 2026-11-08 order): SIX categories, then the keep-alive block below. `page_order` top to bottom: Me Infos (live: Weather, Health, Fin Terminal), Media, Device Infos (network: Mesh, Data, Battery, AI), Actions (Quick Actions, KDE Connect), Cloud Publisher, Phone Publisher, then Apps Keep Alive BELOW the six. Alerts is REMOVED as a section and a badge (redundant: the fleet collector still stores, nothing posts a shade group for it). Ids in page_order are either a shade group above or an `app_sections` id. An app section has no producer: its rows are APPS. A push section carries a `filter` (cloudy | phone) and renders the one matching split as a flat list - Cloud Publisher is the fleet's own apps (AppSplit: com.diegonmarcos.* / cloud-*), Phone Publisher every other app. The keep-alive section has no filter and keeps its two labelled sub-groups (Cloudy, Phone). push = the owner's per-app allow switch for the phone-notification history (PhoneNotificationListenerService skips a muted app); keepalive = the owner's per-app keep-alive list (KeepAliveStore). Pinned by NotifySectionsTest and test-notify-sections.sh.",
-      "page_order": ["live", "media", "network", "actions", "cloud_publisher", "phone_publisher", "apps_keepalive"],
+      "_doc_page_order_1672": "#1672: `page_order` is the order of the badge sections on the Persistent Badges sub-page (Media, Me Infos, Device Infos, Actions), whatever order the owner gave the shade bundles. The Notify sub-pages themselves are declared in sections[communication] (`_doc_pages_1672`). `app_sections` are drawn inside the Configs sub-page.",
+      "page_order": ["media", "live", "network", "actions"],
       "app_sections": [
         {
           "id": "cloud_publisher",

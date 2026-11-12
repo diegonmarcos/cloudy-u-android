@@ -1309,24 +1309,29 @@ python3 - "$BJ" <<'PY' || nb_fail="$nb_fail declaration"
 import json, sys
 ui = json.load(open(sys.argv[1]))['ui']
 comm = next(s for s in ui['sections'] if s['id'] == 'communication')
-stack = comm['stack_my-rss']
-kinds = [p['kind'] for p in stack]
-badges  = next((p for p in stack if p['kind'] == 'notification_badges'), None)
-configs = next((p for p in stack if p['kind'] == 'notification_badge_configs'), None)
+# #1672 (owner 2026-11-12): Notify is sub-pages. The full badge cards are the Persistent Badges page
+# (stack_notify-badges, above_filters), All shows them as a one-line summary (stack_my-rss, summary), and the
+# badge Configs are the Configs page (stack_notify-configs, bottom) - on no other page.
+stacks = {k: v for k, v in comm.items() if k.startswith('stack_') and isinstance(v, list)}
+def first(k, kind): return next((p for p in stacks.get(k, []) if p['kind'] == kind), None)
+badges  = first('stack_notify-badges', 'notification_badges')
+summary = first('stack_my-rss', 'notification_badges')
+configs = first('stack_notify-configs', 'notification_badge_configs')
 bad = []
-if badges is None:  bad.append('no notification_badges panel in stack_my-rss')
+if badges is None:  bad.append('no notification_badges panel in stack_notify-badges')
 elif not badges.get('above_filters'): bad.append('the badges panel is not above_filters, so it would sit under the Filters')
-if configs is None: bad.append('no notification_badge_configs panel in stack_my-rss')
-elif not configs.get('bottom'):        bad.append('the Configs panel is not flagged bottom, so it would sit among the cards')
-elif configs.get('above_filters'):     bad.append('the Configs panel is above the cards; it belongs at the very bottom')
-if badges and configs and kinds.index('notification_badges') > kinds.index('notification_badge_configs'):
-    bad.append('badges are declared after Configs')
-# Only THIS page: the other five clones must not grow a second copy of the badges.
-for k, v in comm.items():
-    if k.startswith('stack_') and k != 'stack_my-rss' and isinstance(v, list) \
-       and any(p.get('kind', '').startswith('notification_badge') for p in v):
+if summary is None or not summary.get('summary'): bad.append('All (stack_my-rss) does not summarise the badges on top')
+if configs is None: bad.append('no notification_badge_configs panel in stack_notify-configs')
+elif not configs.get('bottom'):        bad.append('the Configs panel is not flagged bottom')
+elif configs.get('above_filters'):     bad.append('the Configs panel is above the cards')
+for k, v in stacks.items():
+    if k not in ('stack_my-rss', 'stack_notify-badges') and any(p.get('kind') == 'notification_badges' for p in v):
         bad.append('%s also declares a badge panel' % k)
-# Titles are wording, not identity: a resource, resolvable.
+    if k != 'stack_notify-configs' and any(p.get('kind') == 'notification_badge_configs' for p in v):
+        bad.append('%s also declares the badge Configs' % k)
+order = [p['id'] for p in comm['pages'] if not p.get('hidden')]
+if order != ['my-rss', 'notify-badges', 'notify-cloudy', 'notify-phone', 'notify-configs']:
+    bad.append('Notify sub-pages are %s' % order)
 for p in (badges, configs):
     if p and not p.get('title_res'): bad.append('%s has no title_res' % p['kind'])
 for msg in bad: print('  ' + msg)
@@ -1355,7 +1360,7 @@ for kind, r in (('notification_badges', r'BadgeCards\(\)'), ('notification_badge
         print('  panel kind %s has no renderer' % kind); sys.exit(1)
 PY
 [ -z "$nb_fail" ] \
-  && ok "stack_my-rss: badge cards lead, Configs + Filters are the folded Settings section last, only on this page" \
+  && ok "#1672 Notify sub-pages: badge cards on Persistent Badges, a summary on All, Configs only on the Configs page" \
   || bad "Notify's badge/Configs layout is not what #580 declared:$nb_fail"
 
 echo "== T32: the badge panes are VIEWS — they post, clear and store nothing (#497/#515 single centre) =="

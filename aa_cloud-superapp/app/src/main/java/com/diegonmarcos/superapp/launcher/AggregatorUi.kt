@@ -56,6 +56,19 @@ internal object AggTags {
     const val LIST_ACTIONS = "agg:list-actions"
     const val MARK_ALL_READ = "agg:mark-all-read"
     const val ARCHIVE_ALL = "agg:archive-all"
+    // #1672 the Notify page blocks: the grouped-by-app / by-time switch of a feed, its one-timeline body, and the
+    // notification-access prompt that opens Configs > Perms.
+    fun groupMode(feed: String, mode: String) = "agg:group-mode:$feed:$mode"
+    fun timeline(feed: String) = "agg:timeline:$feed"
+    fun timelineRow(id: String) = "agg:timeline-row:$id"
+    fun timelineRestore(id: String) = "agg:timeline-restore:$id"
+    fun feed(feed: String) = "agg:feed:$feed"
+    fun category(feed: String, cat: String) = "agg:category:$feed:$cat"
+    const val ACCESS_PROMPT = "agg:access-prompt"
+    const val OPEN_PERMS = "agg:open-perms"
+    const val ARCHIVE_EMPTY = "agg:archive-empty"
+    const val CONFIG_APPS = "agg:config-apps"
+    const val CONFIG_ACCESS = "agg:config-access"
 }
 
 /** The state chip / verdict line colour of a [Tone]: grey means "we did not measure", never red. */

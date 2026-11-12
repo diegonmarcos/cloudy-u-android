@@ -87,15 +87,22 @@ class NotifyCardsShotTest : KitPageHarness() {
     fun `the Notify page draws the six section subtitles`() {
         BadgeCardData.override = null
         val sections = badgeSections(ctx).filter { it.title.isNotBlank() }
-        assertEquals(listOf("Me Infos", "Media", "Device Infos", "Actions"), sections.map { it.title })
+        // #1672: Media leads, then Me Infos, Device Infos, Actions.
+        assertEquals(listOf("Media", "Me Infos", "Device Infos", "Actions"), sections.map { it.title })
         showKit { Column(Modifier.fillMaxSize().background(NotifCard.panel).padding(12.dp)) { BadgeCards() } }
         for (s in sections) compose.onNodeWithTag(BadgeCardTags.section(s.id), useUnmergedTree = true).assertExists().assertTextEquals(s.title)
-        // #1603: the two push publishers (after Actions) each render ONE flat side; the keep-alive block below keeps both.
+        // #1672: the app lists are no longer page sections (the notification blocks show the real notifications); they
+        // are drawn inside Configs, pinned by NotifyPage1672Test.
         for (id in listOf("cloud_publisher", "phone_publisher", "apps_keepalive"))
-            compose.onNodeWithTag(BadgeCardTags.section(id), useUnmergedTree = true).assertExists()
+            compose.onNodeWithTag(BadgeCardTags.section(id), useUnmergedTree = true).assertDoesNotExist()
+        // the AppSectionBlock itself still draws both sides
+        showKit { Column(Modifier.fillMaxSize().background(NotifCard.panel).padding(12.dp)) {
+            for (sec in com.diegonmarcos.superapp.notificationcenter.NotifySections.appSections) AppSectionBlock(sec)
+        } }
         compose.onNodeWithTag(BadgeCardTags.sub("cloud_publisher", "cloudy"), useUnmergedTree = true).assertExists()
         compose.onNodeWithTag(BadgeCardTags.sub("phone_publisher", "phone"), useUnmergedTree = true).assertExists()
         for (sub in listOf("cloudy", "phone")) compose.onNodeWithTag(BadgeCardTags.sub("apps_keepalive", sub), useUnmergedTree = true).assertExists()
+        showKit { Column(Modifier.fillMaxSize().background(NotifCard.panel).padding(12.dp)) { BadgeCards() } }
         compose.onNodeWithTag(BadgeCardTags.TITLE, useUnmergedTree = true).assertExists()
         snap("notify-page-sections.png")
     }

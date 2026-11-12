@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -21,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -67,6 +69,29 @@ internal object BadgeCardTags {
     fun actions(id: String) = "badge-card-actions:$id"
     /** The sub-text line (the notification's sub text). */
     fun subText(id: String) = "badge-card-subtext:$id"
+    /** #1672 the collapse / expand control of a card, and the one-line collapsed body. */
+    fun toggle(id: String) = "badge-card-toggle:$id"
+    fun collapsed(id: String) = "badge-card-collapsed:$id"
+    fun expanded(id: String) = "badge-card-expanded:$id"
+    /** #1672 one ongoing line of a badge in the All page's summary. */
+    fun summary(id: String) = "badge-summary:$id"
+    const val SUMMARY = "badge-summary"
+}
+
+/**
+ * #1672 every badge card has a COLLAPSED view (one line: icon, name, key value) and an EXPANDED one (everything). The
+ * choice is the owner's, per badge, and survives the launcher restarts (committed, not applied). Default: expanded,
+ * which is what the page drew before #1672.
+ */
+internal object BadgeCollapse {
+    private const val PREFS = "notify_badge_collapse"
+    private fun p(ctx: android.content.Context) =
+        ctx.applicationContext.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE)
+    fun isCollapsed(ctx: android.content.Context, id: String): Boolean =
+        runCatching { p(ctx).getBoolean(id, false) }.getOrDefault(false)
+    fun set(ctx: android.content.Context, id: String, collapsed: Boolean) {
+        runCatching { p(ctx).edit().putBoolean(id, collapsed).commit() }
+    }
 }
 
 /** One section of the Notify page: a shade group (build.json `groups`) and its badges, in the group's member order. */
@@ -82,7 +107,12 @@ internal fun badgeSections(ctx: android.content.Context): List<BadgeSection> {
     val byId = all.associateBy { it.id }
     val seen = mutableSetOf<String>()
     val out = mutableListOf<BadgeSection>()
-    for (g in NotifyGroups.ordered(ctx)) {
+    // #1672 the PAGE order (Media, Me Infos, Device Infos, Actions) is build.json's page_order, not the shade order the
+    // owner may have moved: the page must read the same on every phone. A group page_order omits still comes, after.
+    val shade = NotifyGroups.ordered(ctx)
+    val groups = NotifySections.pageGroupOrder(NotifySections.pageOrder, shade.map { it.id })
+        .mapNotNull { id -> shade.firstOrNull { it.id == id } }
+    for (g in groups) {
         val m = BadgeDeclaration.rankOrder(all, g.members.mapNotNull { byId[it] }).filter { seen.add(it.id) }
         if (m.isNotEmpty()) out += BadgeSection(g.id, g.label, m)
     }
@@ -96,13 +126,9 @@ internal fun orderedBadges(ctx: android.content.Context): List<BadgeDeclaration.
     badgeSections(ctx).flatMap { it.badges }
 
 @Composable
-internal fun BadgeCards() {
+internal fun BadgeCards(summary: Boolean = false) {
     val ctx = LocalContext.current
     val sections = remember { badgeSections(ctx).map { s -> s to s.badges.map { BadgeCardData.read(ctx, it) } } }
-    val apps = remember { NotifySections.appSections }
-    val layout = remember {
-        NotifySections.layout(NotifySections.pageOrder, sections.map { it.first.id }, apps.map { it.id })
-    }
     val city = remember { NotifyTitle.cityOf(ctx) }
     val title by androidx.compose.runtime.produceState(NotifyTitle.format(city, System.currentTimeMillis())) {
         while (true) {
@@ -115,16 +141,24 @@ internal fun BadgeCards() {
         Text(title, color = NotifCard.title, fontSize = NotifCard.titleSp, fontWeight = FontWeight.SemiBold,
             fontFamily = NotifCard.font, maxLines = 1, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = 4.dp, top = 2.dp).testTag(BadgeCardTags.TITLE))
-        for (id in layout) androidx.compose.runtime.key(id) {
-            val app = apps.firstOrNull { it.id == id }
-            val sec = sections.firstOrNull { it.first.id == id }
-            if (app != null) AppSectionBlock(app)
-            else if (sec != null) {
-                val (s, cards) = sec
-                // A plain subtitle, not a control: sections do not collapse.
-                if (s.title.isNotBlank()) SectionHeader(s.title, BadgeCardTags.section(s.id))
-                for (d in cards) androidx.compose.runtime.key(d.badge.id) { BadgeCard(d) }
+        if (summary) {
+            // #1672 the All page: the persistent badges as Android shows ongoing items - one line each, on top, in
+            // section order; the full cards are the Persistent Badges sub-page.
+            Column(Modifier.fillMaxWidth().clip(NotifCard.shape).background(NotifCard.surface).testTag(BadgeCardTags.SUMMARY)) {
+                for ((i, d) in sections.flatMap { it.second }.withIndex()) androidx.compose.runtime.key(d.badge.id) {
+                    if (i > 0) Box(Modifier.padding(horizontal = NotifCard.pad).fillMaxWidth().height(0.7.dp).background(NotifCard.divider))
+                    SummaryBadgeLine(d)
+                }
             }
+            Box(Modifier.height(NotifCard.gap))
+            return@Column
+        }
+        // #1672 only the four badge sections are drawn here; the app lists of `app_sections` (Cloud / Phone Publisher,
+        // Apps Keep Alive) moved into the page's Configs, and the notifications themselves follow as page blocks.
+        for ((s, cards) in sections) androidx.compose.runtime.key(s.id) {
+            // A plain subtitle, not a control: sections do not collapse; each CARD does (#1672).
+            if (s.title.isNotBlank()) SectionHeader(s.title, BadgeCardTags.section(s.id))
+            for (d in cards) androidx.compose.runtime.key(d.badge.id) { BadgeCard(d) }
         }
         Box(Modifier.height(NotifCard.gap))
     }
@@ -181,6 +215,13 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
     val accent = accentOf(d)
     val icon = remember(d.badge.icon) { Sections.iconResFor(ctx, d.badge.icon) }
     val tap = d.open
+    var collapsed by androidx.compose.runtime.remember(d.badge.id) {
+        androidx.compose.runtime.mutableStateOf(BadgeCollapse.isCollapsed(ctx, d.badge.id))
+    }
+    val flip: () -> Unit = {
+        Haptics.tap(hostView); collapsed = !collapsed; BadgeCollapse.set(ctx, d.badge.id, collapsed)
+    }
+    if (collapsed) { CollapsedBadgeCard(d, accent, icon, flip); return }
     // #1603 Samsung-UI media card: the album art, dimmed, fills the card behind the transport; a scrim keeps the text
     // readable. Only for the media kind, and only when the posted notification carried art — otherwise a plain surface.
     val art = if (d.badge.card.kind == "media") d.albumArt?.asImageBitmap() else null
@@ -196,7 +237,8 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
                 contentScale = androidx.compose.ui.layout.ContentScale.Crop, alpha = 0.45f)
             Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.38f)))
         }
-        Column(Modifier.fillMaxWidth().padding(start = NotifCard.pad, end = NotifCard.pad, top = 12.dp, bottom = 14.dp)) {
+        Column(Modifier.fillMaxWidth().padding(start = NotifCard.pad, end = NotifCard.pad, top = 12.dp, bottom = 14.dp)
+            .testTag(BadgeCardTags.expanded(d.badge.id))) {
         // The app-name row of a One UI notification: small tinted icon, name, state, no controls.
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(painterResource(icon), null, tint = accent, modifier = Modifier.size(NotifCard.headerIcon))
@@ -207,6 +249,7 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
                 fontFamily = NotifCard.font, maxLines = 1)
             Box(Modifier.weight(1f))
             Box(Modifier.size(8.dp).clip(CircleShape).background(if (d.live) accent else NotifCard.pill))
+            CollapseChevron(d.badge.id, expanded = true, onClick = flip)
         }
         // The live value, large; the supporting line under it.
         Text(d.headline, color = NotifCard.title, fontSize = 26.sp, fontWeight = FontWeight.SemiBold,
@@ -251,6 +294,68 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
         }
         ActionRow(d, accent, hostView)
         }
+    }
+}
+
+/** #1672 one ongoing line: tinted icon, name, key value, live dot. Tapping it does what the badge's notification does. */
+@Composable
+private fun SummaryBadgeLine(d: BadgeCardData.Data) {
+    val ctx = LocalContext.current
+    val hostView = androidx.compose.ui.platform.LocalView.current
+    val accent = accentOf(d)
+    val icon = remember(d.badge.icon) { Sections.iconResFor(ctx, d.badge.icon) }
+    val tap = d.open
+    Row(
+        Modifier.fillMaxWidth().then(if (tap != null) Modifier.clickable { Haptics.tap(hostView); runCatching { tap.send() } } else Modifier)
+            .padding(start = NotifCard.pad, end = NotifCard.pad, top = 9.dp, bottom = 9.dp).testTag(BadgeCardTags.summary(d.badge.id)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(painterResource(icon), null, tint = accent, modifier = Modifier.size(NotifCard.headerIcon))
+        Text(d.appName, color = NotifCard.meta, fontSize = NotifCard.nameSp, fontFamily = NotifCard.font, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp).widthIn(max = 120.dp))
+        Text(d.headline.ifBlank { if (d.live) "live" else "not posted" }, color = NotifCard.title, fontSize = NotifCard.bodySp,
+            fontWeight = FontWeight.Medium, fontFamily = NotifCard.font, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).padding(start = 10.dp))
+        Box(Modifier.padding(start = 6.dp).size(8.dp).clip(CircleShape).background(if (d.live) accent else NotifCard.pill))
+    }
+}
+
+/** #1672 the fold control at the end of a card's header: a chevron in a circle, like the notification groups'. */
+@Composable
+private fun CollapseChevron(id: String, expanded: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier.padding(start = 8.dp).size(28.dp).clip(CircleShape).background(NotifCard.pill)
+            .semantics { role = Role.Button; contentDescription = if (expanded) "Collapse" else "Expand" }
+            .clickable(onClick = onClick).testTag(BadgeCardTags.toggle(id)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(painterResource(com.diegonmarcos.superapp.R.drawable.ic_chevron_right), null, tint = NotifCard.title,
+            modifier = Modifier.size(14.dp).rotate(if (expanded) 270f else 90f))
+    }
+}
+
+/**
+ * #1672 the COLLAPSED card: one compact line - the badge's tinted icon, its name, its key value (the headline), the live
+ * dot and the expand chevron. A tap anywhere on the line expands it; nothing the expanded card shows is lost, it is
+ * one tap away.
+ */
+@Composable
+private fun CollapsedBadgeCard(d: BadgeCardData.Data, accent: Color, icon: Int, flip: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(NotifCard.shape).background(NotifCard.surface).clickable(onClick = flip)
+            .padding(start = NotifCard.pad, end = 12.dp, top = 10.dp, bottom = 10.dp)
+            .testTag(BadgeCardTags.card(d.badge.id)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(painterResource(icon), null, tint = accent, modifier = Modifier.size(NotifCard.headerIcon))
+        Text(d.appName, color = NotifCard.meta, fontSize = NotifCard.nameSp, fontWeight = FontWeight.Medium,
+            fontFamily = NotifCard.font, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 8.dp).widthIn(max = 120.dp))
+        Text(d.headline.ifBlank { if (d.live) "live" else "not posted" }, color = NotifCard.title, fontSize = NotifCard.bodySp,
+            fontWeight = FontWeight.SemiBold, fontFamily = NotifCard.font, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).padding(start = 10.dp).testTag(BadgeCardTags.collapsed(d.badge.id)))
+        Box(Modifier.padding(start = 6.dp).size(8.dp).clip(CircleShape).background(if (d.live) accent else NotifCard.pill))
+        CollapseChevron(d.badge.id, expanded = false, onClick = flip)
     }
 }
 

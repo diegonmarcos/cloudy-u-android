@@ -51,7 +51,30 @@ object NotifySections {
         return out
     }
 
+    /** #1672 a page block that is not a shade group: the two notification feeds, Archived and Configs. */
+    data class Block(val id: String, val label: String, val split: String = "")
+
+    fun pageBlocks(json: String): List<Block> {
+        val a = runCatching { JSONObject(json) }.getOrNull()?.optJSONArray("page_blocks") ?: return emptyList()
+        return (0 until a.length()).mapNotNull { i ->
+            val o = a.optJSONObject(i) ?: return@mapNotNull null
+            val id = o.optString("id"); if (id.isBlank()) return@mapNotNull null
+            Block(id, o.optString("label", id), o.optString("split"))
+        }
+    }
+
+    /**
+     * #1672 the badge sections in PAGE order: the group ids [pageOrder] names, in that order, then any group it does not
+     * name in [groupOrder] (the owner's shade order), so a group added later is still drawn, last.
+     */
+    fun pageGroupOrder(pageOrder: List<String>, groupOrder: List<String>): List<String> =
+        pageOrder.filter { it in groupOrder } + groupOrder.filter { it !in pageOrder }
+
+    /** The declared label of page block [id], or [fallback]. */
+    fun blockLabel(id: String, fallback: String): String = pageBlocks.firstOrNull { it.id == id }?.label ?: fallback
+
     val pageOrder: List<String> by lazy { pageOrder(BadgeServices.declaredJson) }
+    val pageBlocks: List<Block> by lazy { pageBlocks(BadgeServices.declaredJson) }
     val appSections: List<AppSection> by lazy { appSections(BadgeServices.declaredJson) }
 }
 

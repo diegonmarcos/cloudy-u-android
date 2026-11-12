@@ -60,7 +60,8 @@ class NotifyPageGuardTest : KitPageHarness() {
         val declared = BadgeDeclaration.badges(BadgeServices.declared).map { it.id }
         assertTrue("build.json declares no badge", declared.isNotEmpty())
         assertEquals("the page must draw exactly the declared badges", declared.toSet(), orderedBadges(ctx).map { it.id }.toSet())
-        show(AggregatorStackFragment.newInstance("communication", "", "my-rss"))
+        // #1672 the full cards are the Persistent Badges sub-page
+        show(AggregatorStackFragment.newInstance("communication", "", "notify-badges"))
         compose.waitForIdle()
         for (id in declared) compose.onNodeWithTag(BadgeCardTags.card(id)).assertExists()
         // the named ones the owner listed are among them
@@ -73,30 +74,20 @@ class NotifyPageGuardTest : KitPageHarness() {
         assertEquals("cards are not drawn in declared order", tops.sorted(), tops)
     }
 
+    /** #1672: the configuration left the notification pages - it is the Configs sub-page, open on one level. */
     @Test
-    fun `the configs render below all cards, notifications, archive and page actions`() {
+    fun `the configs are their own sub-page, not on the notifications`() {
         show(AggregatorStackFragment.newInstance("communication", "", "my-rss"))
         compose.waitForIdle()
-        val cards = orderedBadges(ctx).map { BadgeCardTags.card(it.id) }
-        val lastCardBottom = cards.maxOf { bottom(it).value }
-        val cfgTop = top(AggTags.CONFIG_SECTION).value
-        assertTrue("settings ($cfgTop) must sit under every badge card ($lastCardBottom)", cfgTop >= lastCardBottom)
-        // under the notification groups too
-        for (n in compose.onAllNodesWithTag(AggTags.group("Chat")).fetchSemanticsNodes()) {
-            assertTrue(cfgTop >= n.boundsInRoot.bottom / ctx.resources.displayMetrics.density)
-        }
-        // folded: no control is on the page until the section is opened
-        compose.onNodeWithTag(AggTags.CONFIG_BODY).assertDoesNotExist()
+        compose.onNodeWithTag(AggTags.CONFIG_SECTION).assertDoesNotExist()
         assertEquals(0, compose.onAllNodesWithTag(AggTags.FILTERS_TOGGLE).fetchSemanticsNodes().size)
-        compose.onNodeWithTag(AggTags.CONFIG_HEADER).performScrollTo()
-        compose.onNodeWithTag(AggTags.CONFIG_HEADER).performClick()
+        show(AggregatorStackFragment.newInstance("communication", "", "notify-configs"))
         compose.waitForIdle()
         compose.onNodeWithTag(AggTags.CONFIG_BODY).assertExists()
-        // everything the section holds sits under its header, which sits under all the cards
         assertTrue(top(AggTags.CONFIG_BODY).value >= bottom(AggTags.CONFIG_HEADER).value)
-        if (Sections.stackFiltersFor(Sections.byId("communication")!!, "my-rss").isNotEmpty()) {
+        if (Sections.stackFiltersFor(Sections.byId("communication")!!, "notify-configs").isNotEmpty()) {
             compose.onNodeWithTag(AggTags.FILTERS_TOGGLE).assertExists()
-            assertTrue("the Filters must be inside the Settings section",
+            assertTrue("the Filters must be inside Configs",
                 top(AggTags.FILTERS_TOGGLE).value >= top(AggTags.CONFIG_BODY).value)
         }
     }

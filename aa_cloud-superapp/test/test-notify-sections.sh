@@ -16,9 +16,10 @@ nc = json.load(open(sys.argv[1]))['ui']['notification_center']
 gl = {g['id']: g for g in nc['groups']}
 apps = {a['id']: a for a in nc['app_sections']}
 order = nc['page_order']
-labels = [gl[i]['label'] if i in gl else apps[i]['label'] for i in order]
-# #1603: the six categories in order, then the keep-alive block below them.
-want = ['Me Infos', 'Media', 'Device Infos', 'Actions', 'Cloud Publisher', 'Phone Publisher', 'Apps Keep Alive Badges']
+blocks = {b['id']: b for b in nc.get('page_blocks', [])}
+labels = [gl[i]['label'] if i in gl else blocks[i]['label'] if i in blocks else apps[i]['label'] for i in order]
+# #1672 (supersedes the #1603 order): the badge sections of Persistent Badges, top to bottom.
+want = ['Media', 'Me Infos', 'Device Infos', 'Actions']
 prod = {p['id']: p for p in nc['producers']}
 push = [a for a in nc['app_sections'] if a.get('kind') == 'push']
 keep = [a for a in nc['app_sections'] if a.get('kind') == 'keepalive']
@@ -33,7 +34,7 @@ else:
     badges = {p['id'] for p in nc['producers'] if p.get('badge')}
     print('OK' if placed == badges else 'badge(s) in no section: %s / unplaced %s' % (sorted(badges - placed), sorted(placed - badges)))
 PY
-)" "page_order (six categories + keep-alive below), Alerts removed, Cloud/Phone Publisher split, every badge placed"
+)" "page_order (#1672 Media, Me Infos, Device Infos, Actions), Alerts removed, Cloud/Phone Publisher split kept in Configs, every badge placed"
 
 grep -q 'EEE d MMM yyyy · HH:mm' "$SRC/notificationcenter/NotifyTitle.kt" && grep -q 'Locale.US' "$SRC/notificationcenter/NotifyTitle.kt" \
   && ok "title format is {City} · {EEE d MMM yyyy} · HH:mm (24h, Locale.US)" || bad "title format"

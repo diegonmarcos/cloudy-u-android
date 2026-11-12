@@ -134,7 +134,12 @@ has "$FIL" 'HashSet(prefs(ctx).getStringSet' \
 # The page key is the page's mode, handed to the state BEFORE any filter-row
 # branch: a page with no toggle row (Inboxes, C3 Observability) still carries
 # notification boxes, and their swipes must not land in a blank shared bucket.
+# #1672: the key may be the page's SHARED state page (state_pages), which is derived from the mode alone and is
+# never blank - still set before, and independent of, any filter-row branch.
 st=$(grep -n 'AggregatorState(ctx, mode, panels, filters)' "$FRAG" | head -1 | cut -d: -f1)
+if [ -z "$st" ] && grep -q 'val stateKey = remember { Sections.statePageFor(sec, mode) }' "$FRAG"; then
+  st=$(grep -n 'AggregatorState(ctx, stateKey, panels, filters)' "$FRAG" | head -1 | cut -d: -f1)
+fi
 fr=$(grep -n 'filters.isNotEmpty()' "$FRAG" | head -1 | cut -d: -f1)
 if [ -n "$st" ] && [ -n "$fr" ] && [ "$st" -lt "$fr" ]; then
   ok "T7: the page key is set even on a page with no filter row"
