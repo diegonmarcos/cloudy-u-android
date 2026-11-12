@@ -167,7 +167,7 @@ object EngineProfiles {
                 state(Kind.DEBUG, "app_mah", "App mAh, cycle", " mAh", source = "this app's uid in the open battery cycle (batterystats)"),
             )),
         engine("shell", "Shell / ADB broker", "the privileged shell: the broker and its allowlist, the client, the self-contained ADB channel, runtime grants",
-            appDirs = emptyList(), libs = listOf("libs:shell-broker", "libs:shell-client", "libs:shizuku-adb-debug-tools", "libs:perms"),
+            appDirs = emptyList(), libs = listOf("libs:shell-broker", "libs:shell-client", "libs:shizuku-adb-debug-tools", "libs:adb-shell-core", "libs:perms"),
             libPackages = listOf("$APP.shellbroker", "$APP.shellclient", "$APP.adbdebug", "$APP.perms"),
             hotPaths = listOf(
                 HotPath("exec", "Broker exec", 3_000.0, "ShellBroker audit ring (every call, its real duration)"),
