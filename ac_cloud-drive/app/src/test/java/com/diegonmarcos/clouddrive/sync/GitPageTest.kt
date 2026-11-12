@@ -124,7 +124,7 @@ class GitPageTest {
         // The seeded set of the shared store is a SUBSET of the page's public set: a repository
         // the store clones on first run must be one the page can show.
         val seeded = Declarations.parseGitFamily(File(root, "data/drive-git-repos.json").readText()).repos.filter { it.seed }
-        assertTrue(seeded.isNotEmpty())
+        assertTrue("#1679 no repository is marked for an automatic clone", seeded.isEmpty())
         assertTrue("seeded repositories absent from the public set: " + seeded.map { it.name }.filterNot { it in names },
             seeded.all { it.name in names })
         // #641 the ONLY declared way in is the user's own SSH key, and it cannot list an account:

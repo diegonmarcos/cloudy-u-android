@@ -27,7 +27,7 @@
   {
    "name": "cloudy-___",
    "label": "cloudy-___",
-   "seed": true,
+   
    "notes": "The fleet hub repository (repos.json, clone.sh)"
   },
   {
@@ -38,56 +38,56 @@
   {
    "name": "cloudy-t-infra",
    "label": "cloudy-t-infra",
-   "seed": true,
+   
    "notes": "Infrastructure declarations, keys, CI"
   },
   {
    "name": "cloudy-u-desktop",
    "label": "cloudy-u-desktop",
-   "seed": true,
+   
    "notes": "Desktop-NixOS twin of the cloud"
   },
   {
    "name": "cloudy-u-android",
    "label": "cloudy-u-android",
-   "seed": true,
+   
    "notes": "This app's own repository"
   },
   {
    "name": "cloudy-u-containers",
    "label": "cloudy-u-containers",
-   "seed": true,
+   
    "notes": "Container compose declarations"
   },
   {
    "name": "cloudy-u-linux",
    "label": "cloudy-u-linux",
-   "seed": true,
+   
    "notes": "Linux fleet configs"
   },
   {
    "name": "diegonmarcos.github.io",
    "label": "front · site",
-   "seed": true,
-   "notes": "The public site. #629 CORRECTED: the prose here contradicted the flag beside it, and a reader trusted the prose — it IS seeded. #821: `front-diegonmarcos` is NOT a repository (GitHub 404 to the owner's own token, 81249a55) but the fleet's LOCAL directory name for this one (the front symlink farm, libs/repos/repos.json). The seed declared it until 81249a55, so a device holds git/front-diegonmarcos — the failed seed's leftover, or this site cloned under its farm name — and `renamed_from` settles it into git/diegonmarcos.github.io under the completeness rule instead of leaving an undeclared directory in the store."
+   
+   "notes": "The public site. #629 CORRECTED: the prose here contradicted the flag beside it, and a reader trusted the prose — #1679: nothing is seeded any more; it is cloned only from a user tap. #821: `front-diegonmarcos` is NOT a repository (GitHub 404 to the owner's own token, 81249a55) but the fleet's LOCAL directory name for this one (the front symlink farm, libs/repos/repos.json). The seed declared it until 81249a55, so a device holds git/front-diegonmarcos — the failed seed's leftover, or this site cloned under its farm name — and `renamed_from` settles it into git/diegonmarcos.github.io under the completeness rule instead of leaving an undeclared directory in the store."
   },
   {
    "name": "Projects-___",
    "label": "Projects-___",
-   "seed": true,
+   
    "notes": "The fleet's front-end tree. #731 renamed upstream from `ffront` (2026-10-01): `renamed_from` makes the seed worker MOVE a device's git/ffront clone to git/front and repoint its origin, instead of cloning a second copy beside it."
   },
   {
    "name": "cloudy_db_assets-cdn",
    "label": "cloudy_db_assets-cdn",
-   "seed": true,
-   "notes": "Static assets. #629 CORRECTED: the prose here contradicted the flag beside it — it IS seeded."
+   
+   "notes": "Static assets. #629 CORRECTED: the prose here contradicted the flag beside it — #1679: nothing is seeded any more; it is cloned only from a user tap."
   },
   {
    "name": "z-archived_front-data",
    "label": "z-archived_front-data",
-   "seed": true,
-   "notes": "Front-end data feeds. #608 CORRECTED: this file said private: true and the live API says private=false (an unauthenticated GET of the repository answers 200), so it is public and belongs to the Git page's declared public set. #629 CORRECTED the trailing claim that it was not seeded: it carries the seed flag and IS seeded."
+   
+   "notes": "Front-end data feeds. #608 CORRECTED: this file said private: true and the live API says private=false (an unauthenticated GET of the repository answers 200), so it is public and belongs to the Git page's declared public set. #629 CORRECTED the trailing claim that it was not seeded: #1679: no seed flag any more; cloned only from a user tap."
   }
  ],
  "_doc_clone": "#575/#606 Every repository here is cloned INTO THE ONE SHARED STORE (ac_cloud-drive/build.json::storage.shared_root) as <root>/<git_subdir>/<name>, by the page's Clone/Open button: the target folder and the upstream URL (https://<github host>/<github_owner>/<name>.git, composed from the github instance above) are handed to the native git manager (libs:git-sync), which asks only for a token when the repository is private. A folder that already holds the clone opens instead of cloning. Nothing here is a path: the root lives in build.json and the page reads it through FilesBridge.sharedRoot().",

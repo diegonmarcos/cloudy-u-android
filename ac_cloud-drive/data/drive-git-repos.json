@@ -30,7 +30,6 @@
    "github_owner": "diegonmarcos",
    "gitea_owner": "diego",
    "public": true,
-   "seed": true,
    "notes": "The fleet hub repository (repos.json, clone.sh)",
    "renamed_from": ["cloud", "cloud___", "cloud-___"]
   },
@@ -49,7 +48,6 @@
    "github_owner": "diegonmarcos",
    "gitea_owner": "diego",
    "public": true,
-   "seed": true,
    "notes": "Infrastructure declarations, keys, CI",
    "renamed_from": ["cloud-infra", "cloud-t-infra"]
   },
@@ -59,7 +57,6 @@
    "github_owner": "diegonmarcos",
    "gitea_owner": "diego",
    "public": true,
-   "seed": true,
    "notes": "Desktop-NixOS twin of the cloud",
    "renamed_from": ["cloud-infra-desktop", "cloud-u-desktop"]
   },
@@ -69,7 +66,6 @@
    "github_owner": "diegonmarcos",
    "gitea_owner": "diego",
    "public": true,
-   "seed": true,
    "notes": "This app's own repository",
    "renamed_from": ["cloud-u-android"]
   },
@@ -79,7 +75,6 @@
    "github_owner": "diegonmarcos",
    "gitea_owner": "diego",
    "public": true,
-   "seed": true,
    "notes": "Container compose declarations",
    "renamed_from": ["cloud-u-containers"]
   },
@@ -89,7 +84,6 @@
    "github_owner": "diegonmarcos",
    "gitea_owner": "diego",
    "public": true,
-   "seed": true,
    "notes": "Linux fleet configs",
    "renamed_from": ["cloud-u-linux"]
   },
@@ -99,8 +93,7 @@
    "github_owner": "diegonmarcos",
    "gitea_owner": "diego",
    "public": true,
-   "seed": true,
-   "notes": "The public site. #629 CORRECTED: the prose here contradicted the flag beside it, and a reader trusted the prose — it IS seeded. #821: `front-diegonmarcos` is NOT a repository (GitHub 404 to the owner's own token, 81249a55) but the fleet's LOCAL directory name for this one (the front symlink farm, libs/repos/repos.json). The seed declared it until 81249a55, so a device holds git/front-diegonmarcos — the failed seed's leftover, or this site cloned under its farm name — and `renamed_from` settles it into git/diegonmarcos.github.io under the completeness rule instead of leaving an undeclared directory in the store.",
+   "notes": "The public site. #629 CORRECTED: the prose here contradicted the flag beside it, and a reader trusted the prose — #1679: nothing is seeded any more; it is cloned only from a user tap. #821: `front-diegonmarcos` is NOT a repository (GitHub 404 to the owner's own token, 81249a55) but the fleet's LOCAL directory name for this one (the front symlink farm, libs/repos/repos.json). The seed declared it until 81249a55, so a device holds git/front-diegonmarcos — the failed seed's leftover, or this site cloned under its farm name — and `renamed_from` settles it into git/diegonmarcos.github.io under the completeness rule instead of leaving an undeclared directory in the store.",
    "renamed_from": ["front-diegonmarcos"]
   },
   {
@@ -109,7 +102,6 @@
    "github_owner": "diegonmarcos",
    "gitea_owner": "diego",
    "public": true,
-   "seed": true,
    "notes": "The fleet's front-end tree. #731 renamed upstream from `ffront` (2026-10-01): `renamed_from` makes the seed worker MOVE a device's git/ffront clone to git/front and repoint its origin, instead of cloning a second copy beside it.",
    "renamed_from": ["ffront", "front", "Projects", "Projects___"]
   },
@@ -119,8 +111,7 @@
    "github_owner": "diegonmarcos",
    "gitea_owner": "diego",
    "public": true,
-   "seed": true,
-   "notes": "Static assets. #629 CORRECTED: the prose here contradicted the flag beside it — it IS seeded.",
+   "notes": "Static assets. #629 CORRECTED: the prose here contradicted the flag beside it — #1679: nothing is seeded any more; it is cloned only from a user tap.",
    "renamed_from": ["front-assets-cdn", "cloud_db_assets-cdn"]
   },
   {
@@ -129,8 +120,7 @@
    "github_owner": "diegonmarcos",
    "gitea_owner": "diego",
    "public": true,
-   "seed": true,
-   "notes": "Front-end data feeds. #608 CORRECTED: this file said private: true and the live API says private=false (an unauthenticated GET of the repository answers 200), so it is public and belongs to the Git page's declared public set. #629 CORRECTED the trailing claim that it was not seeded: it carries the seed flag and IS seeded.",
+   "notes": "Front-end data feeds. #608 CORRECTED: this file said private: true and the live API says private=false (an unauthenticated GET of the repository answers 200), so it is public and belongs to the Git page's declared public set. #629 CORRECTED the trailing claim that it was not seeded: #1679: no seed flag any more; cloned only from a user tap.",
    "renamed_from": ["front-data"]
   }
  ],

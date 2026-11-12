@@ -320,7 +320,7 @@ d11_seed() {
 import json, sys
 repos = json.load(open(sys.argv[1]))["repos"]
 seeded = [r for r in repos if r.get("seed")]
-if not seeded: print("    no repository is marked seed: the store would start empty"); sys.exit(1)
+if seeded: print("    #1679 repositories marked seed: %s (nothing is cloned without a user tap)" % [r["name"] for r in seeded]); sys.exit(1)
 private = [r["name"] for r in seeded if r.get("private")]
 if private: print("    PRIVATE repositories marked for seeding: %s (an anonymous clone of one fails every time)" % private); sys.exit(1)
 if any(not r.get("public") for r in seeded): print("    a seeded repository does not state public: true"); sys.exit(1)
@@ -328,8 +328,8 @@ sys.exit(0)
 PYTHON
 }
 d11_structure "$BJ" && pass "six tabs in the #1484 order; Configs sub-pages in order; Git has Me and Cloud; two Files sections with the store in its own" || fail "the #603/#609 structure is not what build.json declares"
-d11_seed "$REPOS" && pass "the store's seed set is public repositories only" || fail "the seed set is not public-only"
-if grep -qE 'buildConfigField "boolean", "SEED_ENABLED"' "$GRADLE" && grep -qE 'buildConfigField "int", +"SEED_DEPTH"' "$GRADLE" && grep -qE 'GitEngine\.clone\(applicationContext, url, dir, auth = auth, depth = BuildConfig\.SEED_DEPTH\)' "$SEED"; then pass "the seed is declared (storage.seed -> SEED_ENABLED/SEED_DEPTH) and cloned SHALLOW through the engine"; else fail "the first-run seed is not wired to the declaration"; fi
+d11_seed "$REPOS" && pass "#1679 no repository is marked seed" || fail "a repository is marked for an automatic clone"
+if grep -qE 'buildConfigField "boolean", "SEED_ENABLED"' "$GRADLE" && grep -qE 'buildConfigField "int", +"SEED_DEPTH"' "$GRADLE" && python3 -c 'import json,sys; sys.exit(1 if json.load(open(sys.argv[1]))["storage"]["seed"]["enabled"] else 0)' "$BJ"; then pass "#1679 storage.seed.enabled is false (SEED_ENABLED=false: the worker returns early)"; else fail "storage.seed.enabled is true: the first run would clone without a user tap"; fi
 if grep -qE 'GitEngine\.isRepository\(dir\)' "$SEED" && grep -qE 'RepoRegistry\(File\(applicationContext\.filesDir, GitSyncWorker\.REGISTRY_FILE\)\)' "$SEED"; then pass "seeding skips a clone that exists and registers into the SAME registry the Git page reads"; else fail "the seed does not reuse the one registry"; fi
 if grep -qE 'org\.eclipse\.jgit' "$SEED"; then fail "the seed talks to JGit directly - libs:git-sync is the engine"; else pass "the seed goes through libs:git-sync, never a second git"; fi
 python3 - "$APPS_JSON" "$BJ" <<'PYTHON' && pass "the Apps grid carries GitSync and Fsync as in-app routes into the Git and Fsync pages" || fail "the Apps grid does not route GitSync / Fsync into the Git / Fsync pages"

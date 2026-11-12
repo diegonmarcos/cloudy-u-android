@@ -43,4 +43,12 @@ class NoAutoCloneTest {
         assertFalse("app start / resume never request an explicit clone", activity.contains("cloneMissing"))
         assertTrue(main("sync/GitReposScreen.kt").contains("StoreSeedWorker.cloneMissing("))
     }
+
+    /** #1679 the seed is OFF in the declaration and the manifest marks nothing: app start, first run and workers clone zero repositories. */
+    @Test fun theSeedIsOffAndNoRepositoryIsMarkedSeed() {
+        assertFalse("BuildConfig.SEED_ENABLED must be false", BuildConfig.SEED_ENABLED)
+        assertTrue("no repository is marked seed", Declarations.seedRepos.isEmpty())
+        val seedSrc = main("StoreSeed.kt")
+        assertTrue("doWork returns early when the seed is off", seedSrc.contains("if (!BuildConfig.SEED_ENABLED) return Result.success()"))
+    }
 }

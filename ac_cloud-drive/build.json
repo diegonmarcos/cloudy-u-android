@@ -55,7 +55,8 @@
     },
     "seed": {
       "_doc": "#603 THE ONE seed declaration of the shared store. An APK cannot carry a working clone (a .git of the fleet's repositories is hundreds of megabytes and would be stale the day it shipped), so the store is seeded on FIRST RUN instead: when <shared storage>/<shared_root>/<name> does not exist for a repository data/drive-git-repos.json marks `seed: true`, StoreSeed registers it in libs:git-sync's own RepoRegistry and clones it SHALLOW (depth below) through the engine's GitEngine.clone — the same mechanism the Git sub-page's Clone button uses, never a second git. PUBLIC REPOSITORIES ONLY: a private repository needs a token this APK does not hold, so seeding one would be a clone that always fails; those stay declared-not-cloned on the Git sub-page, where the user can type a token. The manifest is the file below and nothing here restates a repository name.",
-      "enabled": true,
+      "_doc_enabled_1679": "#1679 owner rule: NOTHING is cloned without a user tap. The seed is OFF and no repository carries seed: true; StoreSeedWorker returns early on SEED_ENABLED=false and only the Git page Clone action (CloneTrigger.mayClone(explicit=true)) clones.",
+      "enabled": false,
       "manifest": "data/drive-git-repos.json",
       "depth": 1,
       "public_only": true,

@@ -321,7 +321,8 @@ class DeclarationsTest {
         // #603 the store's first-run seed set: marked, public, and never a private repository —
         // an anonymous clone of one fails every time, so seeding it would bake a permanent red.
         val seeded = family.repos.filter { it.seed }
-        assertTrue("the store would start empty", seeded.isNotEmpty())
+        // #1679 nothing is cloned without a user tap: no repository is marked seed.
+        assertEquals("#1679 repositories marked for an automatic clone", emptyList<String>(), seeded.map { it.name })
         assertEquals("private repositories must never be seeded", emptyList<String>(), seeded.filter { it.private }.map { it.name })
         assertTrue(family.repos.filter { it.private }.none { it.seed })
         assertEquals("https://github.com/diegonmarcos/cloudy-t-infra.git", family.cloneUrl(family.repos.first { it.name == "cloudy-t-infra" }))

@@ -184,15 +184,15 @@ else
     fail "the migration can act on a directory that is not a clone"
 fi
 
-echo "── D the declared seed set is the whole set ──"
+echo "── D #1679 nothing is seeded: no repository is cloned without a user tap ──"
 python3 - "$MANIFEST" <<'PYTHON'
 import json, sys
 d = json.load(open(sys.argv[1], encoding="utf-8"))
 repos = d["repos"]
 seed = [r["name"] for r in repos if r.get("seed") and not r.get("private")]
 bad = 0
-if len(seed) < 2:
-    print("    the manifest declares almost nothing to seed — the set is derived, so this is a defect"); bad += 1
+if seed:
+    print("    #1679 repositories marked seed: %s (nothing may be cloned without a user tap)" % ", ".join(seed)); bad += 1
 for r in repos:
     if r.get("seed") and r.get("private"):
         print("    %s is marked seed AND private — an anonymous clone of it always fails" % r["name"]); bad += 1
@@ -205,7 +205,7 @@ for r in repos:
 print("    declared seed set (%d): %s" % (len(seed), ", ".join(sorted(seed))))
 sys.exit(1 if bad else 0)
 PYTHON
-if [ $? -eq 0 ]; then pass "every declared seed repository is public and its prose agrees with its flag"; else fail "the seed manifest contradicts itself"; fi
+if [ $? -eq 0 ]; then pass "#1679 no repository is marked seed (no automatic clone)"; else fail "the manifest marks repositories for an automatic clone"; fi
 
 # r1 <manifest> <StoreMigration.kt> <StoreSeed.kt> : #821 store dirs == declared repos.
 # The names a device's git/ is known to hold beyond today's manifest (code history:
