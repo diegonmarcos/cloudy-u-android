@@ -66,6 +66,18 @@ object AdbReadiness {
     }
 
     /**
+     * Non-blocking answer for main-thread callers (a Compose label, a toast gate): the last live verdict when it is under
+     * [FRESH_MS] old, else the channel lookup the broker itself runs on (a pure read, no round trip). Never throws.
+     */
+    fun usableNow(ctx: Context): Boolean {
+        val s = flow.value
+        if (s.checkedAt > 0 && System.currentTimeMillis() - s.checkedAt in 0 until FRESH_MS) return s.usable
+        return runCatching { com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx) != null }.getOrDefault(false)
+    }
+
+    private const val FRESH_MS = 10_000L
+
+    /**
      * The needs-ADB link: open the SuperApp's ADB Shell page and start Connect (auto-fix, the #1647 default) in the background, then
      * re-check so every consumer refreshes. [open] opens the page (the caller knows its host); never throws.
      */
