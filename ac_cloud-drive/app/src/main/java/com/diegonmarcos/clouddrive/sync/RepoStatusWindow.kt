@@ -79,55 +79,75 @@ internal fun RepoStatusWindow(
     val kind = RepoStatus.kindOf(repo != null, glance)
     val block = RepoStatus.block(repo != null, glance)
     val unknown = stringResource(R.string.repo_unknown)
+    // #1670 what the three old LOCAL | SERVER | SYNC lights said, as words of the ONE metadata group (nothing lost).
+    val facts = statusFacts(block).copy(
+        workingCopy = RepoStatus.kindWord(icons.local), remoteState = RepoStatus.kindWord(icons.server),
+        syncJob = RepoStatus.kindWord(icons.sync) + ": " + syncDetail(icons), large = if (repo != null && glance != null && glance.read) glance.large else null,
+    )
+    val now = System.currentTimeMillis()
+    val metaFields: List<Pair<RepoStatus.MetaField, Pair<String, String>>> = listOf(
+        RepoStatus.MetaField.NAME to (stringResource(R.string.repo_meta_k_name) to name),
+        RepoStatus.MetaField.OWNER to (stringResource(R.string.repo_meta_k_owner) to owner),
+        RepoStatus.MetaField.PATH to (stringResource(R.string.repo_meta_k_path) to (repo?.path ?: RepoTable.DASH)),
+        RepoStatus.MetaField.BRANCH to (stringResource(R.string.repo_meta_k_branch) to (block.branch ?: RepoTable.DASH)),
+        RepoStatus.MetaField.UPSTREAM to (stringResource(R.string.repo_meta_k_upstream) to (block.upstream ?: RepoTable.DASH)),
+        RepoStatus.MetaField.LAST_SYNC to (stringResource(R.string.repo_meta_k_last_sync) to
+            if (repo != null && repo.lastSyncEpochSeconds > 0) fmt.format(Date(repo.lastSyncEpochSeconds * 1000)) + " · " + repo.lastSyncSummary else stringResource(R.string.sync_never)),
+        RepoStatus.MetaField.LFS to (stringResource(R.string.repo_meta_k_lfs) to repoLfsWord(row.lfs)),
+        RepoStatus.MetaField.VISIBILITY to (stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(row.isPrivate)),
+        RepoStatus.MetaField.PROVIDER to (stringResource(R.string.repo_meta_k_provider) to (row.provider ?: RepoTable.DASH)),
+        RepoStatus.MetaField.REMOTE_URL to (stringResource(R.string.repo_meta_k_remote) to (repo?.remoteUrl?.takeIf { it.isNotBlank() } ?: cloneUrl).ifBlank { stringResource(R.string.git_meta_no_remote) }),
+        RepoStatus.MetaField.DEFAULT_BRANCH to (stringResource(R.string.repo_meta_k_default_branch) to (remote?.defaultBranch ?: unknown)),
+        RepoStatus.MetaField.SIZE to (stringResource(R.string.repo_meta_k_size) to (RepoTable.size(row.sizeMainBytes) + " / " + RepoTable.size(row.sizeTotalBytes))),
+        RepoStatus.MetaField.SIZE_DISK to (stringResource(R.string.repo_meta_k_size_disk) to RepoTable.size(row.sizeDiskBytes)),
+        RepoStatus.MetaField.BRANCHES to (stringResource(R.string.repo_meta_k_branches) to RepoTable.count(row.branches)),
+        RepoStatus.MetaField.LAST_COMMIT to (stringResource(R.string.repo_meta_k_last_commit) to (row.lastCommitMs?.let { fmt.format(Date(it)) + " (" + RepoTable.age(it, now) + ")" } ?: RepoTable.DASH)),
+    )
+    val words = gitStatusWords()
+    val statusFields = gitStatusFields(facts, words) { fmt.format(Date(it)) }.map { (f, v) -> f to (stringResource(gitStatusFieldLabelRes(f)) to v) }
+    val merged = RepoStatus.mergeFields(statusFields, metaFields).map { it.second }
     // #1408 the window's layout is libs:git-ui's; Drive resolves its status model, strings and clone/check actions into it.
     GitStatusWindow(
         insets = Modifier.statusBarsPadding().navigationBarsPadding(),
         name = name, headerDot = { StatusDot(RepoStatus.light(kind), name) }, stateText = stringResource(R.string.repo_status_window_state, kindText(kind)),
-        sections = threeSections(icons, name), debugLine = RepoStatus.debugLine(repo?.path.orEmpty(), glance),
-        facts = statusFacts(block), fmt = fmt, depthOutcome = depthOutcome,
-        meta = listOf(
-            stringResource(R.string.repo_meta_k_name) to name,
-            stringResource(R.string.repo_meta_k_owner) to owner,
-            stringResource(R.string.repo_meta_k_path) to (repo?.path ?: RepoTable.DASH),
-            stringResource(R.string.repo_meta_k_branch) to (block.branch ?: RepoTable.DASH),
-            stringResource(R.string.repo_meta_k_upstream) to (block.upstream ?: RepoTable.DASH),
-            stringResource(R.string.repo_meta_k_last_sync) to
-                if (repo != null && repo.lastSyncEpochSeconds > 0) fmt.format(Date(repo.lastSyncEpochSeconds * 1000)) + " · " + repo.lastSyncSummary else stringResource(R.string.sync_never),
-            stringResource(R.string.repo_meta_k_lfs) to repoLfsWord(row.lfs),
-            stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(row.isPrivate),
-            stringResource(R.string.repo_meta_k_provider) to (row.provider ?: RepoTable.DASH),
-            stringResource(R.string.repo_meta_k_remote) to (repo?.remoteUrl?.takeIf { it.isNotBlank() } ?: cloneUrl).ifBlank { stringResource(R.string.git_meta_no_remote) },
-            stringResource(R.string.repo_meta_k_default_branch) to (remote?.defaultBranch ?: unknown),
-            stringResource(R.string.repo_meta_k_size) to (RepoTable.size(row.sizeMainBytes) + " / " + RepoTable.size(row.sizeTotalBytes)),
-            stringResource(R.string.repo_meta_k_size_disk) to RepoTable.size(row.sizeDiskBytes),
-            stringResource(R.string.repo_meta_k_branches) to RepoTable.count(row.branches),
-            stringResource(R.string.repo_meta_k_last_commit) to (row.lastCommitMs?.let { fmt.format(Date(it)) + " (" + RepoTable.age(it, System.currentTimeMillis()) + ")" } ?: RepoTable.DASH),
-        ),
+        sections = fiveSections(row, name), debugLine = RepoStatus.debugLine(repo?.path.orEmpty(), glance),
+        facts = facts, fmt = fmt, depthOutcome = depthOutcome,
+        meta = metaFields.map { it.second },
+        fields = merged,
         cloneAction = when (RepoStatus.cloneAction(repo != null, cloning)) { RepoStatus.CloneAction.CLONE -> GitCloneAction.CLONE; RepoStatus.CloneAction.CLONING -> GitCloneAction.CLONING; RepoStatus.CloneAction.NONE -> GitCloneAction.NONE },
         cloneLabel = stringResource(R.string.sync_clone_into_store), onClone = onClone,
         showCheckWorktree = kind == RepoStatus.Kind.LARGE, onCheckWorktree = onCheckWorktree, onClose = onClose,
     )
 }
 
-/** The status window's three sections, matching the three row icons: LOCAL (working copy), SERVER (against the remote), SYNC (last job). */
+/** #1670 the window's five light sections, the same five lights as the row (the same row model): title = the column, text = its cell. */
 @Composable
-private fun threeSections(icons: RepoStatus.Icons, name: String): List<GitStatusSection> {
-    val decl = com.diegonmarcos.clouddrive.Declarations.sync.git.status.icons
-    fun word(k: Enum<*>) = k.name.lowercase().replace('_', ' ')
+private fun fiveSections(row: RepoTableRow, name: String): List<GitStatusSection> {
+    val yes = stringResource(R.string.repo_dirty_yes)
+    val no = stringResource(R.string.repo_dirty_no)
+    val yn: (Boolean?) -> String = { b -> if (b == null) RepoTable.DASH else if (b) yes else no }
+    return GitLights.of(row).map { (c, l) ->
+        val text = when (c) {
+            RepoColumn.CLONED -> yn(row.cloned)
+            RepoColumn.AHEAD_BEHIND -> GitTable.aheadBehind(row.ahead, row.behind)
+            RepoColumn.DIRTY -> GitTable.dirtyStashed(row.dirtyFiles, row.stashed, yes, no)
+            RepoColumn.DETACHED -> yn(row.detached)
+            else -> GitTable.count(row.unpushed)
+        }
+        val t = stringResource(columnLabelRes(c))
+        GitStatusSection(t, text) { GitLightDot(c, l, name, yes, no, com.diegonmarcos.clouddrive.ui.DriveTags.STATUS_LIGHT) }
+    }
+}
+
+/** The old SYNC light's sentence: the last sync / fetch / push / pull job (running, never, ok or failed, with its age and summary). */
+@Composable
+private fun syncDetail(icons: RepoStatus.Icons): String {
     val now = System.currentTimeMillis()
     val last = icons.lastSync
-    val syncDetail = when (icons.sync) {
+    return when (icons.sync) {
         RepoStatus.SyncKind.RUNNING -> stringResource(R.string.repo_sync_running)
         RepoStatus.SyncKind.NEVER -> stringResource(R.string.repo_sync_never_ran)
         RepoStatus.SyncKind.OK -> stringResource(R.string.repo_sync_ok_at, RepoStatus.ageWord(now - (last?.epochSeconds ?: 0) * 1000), last?.summary.orEmpty())
         RepoStatus.SyncKind.ERROR -> stringResource(R.string.repo_sync_failed, RepoStatus.ageWord(now - (last?.epochSeconds ?: 0) * 1000), last?.summary.orEmpty())
-    }
-    return listOf(
-        Triple(R.string.repo_section_local, RepoStatus.lightOf("local", icons.local, decl), word(icons.local)),
-        Triple(R.string.repo_section_server, RepoStatus.lightOf("server", icons.server, decl), word(icons.server)),
-        Triple(R.string.repo_section_sync, RepoStatus.lightOf("sync", icons.sync, decl), word(icons.sync) + ": " + syncDetail),
-    ).map { (title, light, text) ->
-        val t = stringResource(title)
-        GitStatusSection(t, text) { StatusDot(light, name + " " + t) }
     }
 }

@@ -139,7 +139,7 @@ class GitPageLayoutTest {
     private val rowFn = src.substring(src.indexOf("private fun GitRepoRow("), src.indexOf("private fun lightOf("))
 
     @Test fun `#1238 the row has the status icon cell first, no GitHub or Not Cloned text and no Clone button`() {
-        assertTrue("the status cell comes before the name column", rowFn.indexOf("RepoStatusCell(icons, name, onOpenStatus)") in 0 until rowFn.indexOf("RepoNameCell(name)"))
+        assertTrue("the status cell comes before the name column", rowFn.indexOf("RepoLightsCell(cells, name, onOpenStatus") in 0 until rowFn.indexOf("RepoNameCell(name)"))
         assertFalse("no Not cloned text under the row", rowFn.contains("git_not_cloned"))
         assertFalse("the listing label (GitHub) is not drawn under the row", rowFn.contains("source: String") || rowFn.contains("Text(source"))
         assertFalse("the Clone button left the row", rowFn.contains("sync_clone_into_store") || rowFn.contains("onClone"))

@@ -116,7 +116,7 @@ internal fun FolderRepoTable(
                 RepoTableLine(scroll, Modifier.testTag(DriveTags.parentlessRow(tableId + "_" + t.name)), onClick = toggle) {
                     if (bare) com.diegonmarcos.cloudlib.gitui.RepoStatusCell(toggle, "", dots = {
                         KitStoreDot("\u25EF", KitStoreRow.MISSING, Modifier.testTag(DriveTags.STATUS_LIGHT).semantics { contentDescription = t.name + " " + bareWord })
-                    }) else RepoStatusCell(RepoStatus.icons(true, g, false, emptyList(), ""), t.name, toggle)
+                    }) else RepoLightsCell(row, t.name, toggle, lightTag = DriveTags.STATUS_LIGHT)
                     RepoNameCell(t.name)
                     RepoCells(row)
                     // the Store's quick verb (a small filled box) for each command

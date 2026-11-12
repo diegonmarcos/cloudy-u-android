@@ -1459,7 +1459,10 @@ private fun GitRepoRow(
 ) {
     RepoTableLine(scroll, Modifier.testTag(DriveTags.SYNC_GIT_ROW), onClick = onToggle) {
         // #1238 the leftmost column is the status icon on its own: a tap opens the full-screen status window.
-        RepoStatusCell(icons, name, onOpenStatus)
+        // #1670 the FIVE lights (Cloned, Divergence, Dirty/Stashed, Detached HEAD, Unpushed) from the SAME row model the stat columns
+        // print, before / during / after any sync: only the values change. The old LOCAL | SERVER | SYNC words ([icons]) are fields of
+        // the status window's one metadata group now.
+        RepoLightsCell(cells, name, onOpenStatus, lightTag = DriveTags.STATUS_LIGHT)
         RepoNameCell(name) {
             if (fork) CapsuleBadge(stringResource(R.string.git_fork))
             // #1315 ONE CLONE PER REPOSITORY: a second folder holding it is a DUPLICATE (the Duplicate clones section offers Archive / Delete on the extra copies only).

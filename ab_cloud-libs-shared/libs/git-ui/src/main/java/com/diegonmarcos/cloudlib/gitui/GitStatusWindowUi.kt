@@ -41,6 +41,12 @@ fun GitStatusWindow(
     facts: GitStatusFacts, fmt: DateFormat, depthOutcome: String?, meta: List<Pair<String, String>>,
     cloneAction: GitCloneAction, cloneLabel: String, onClone: () -> Unit, showCheckWorktree: Boolean, onCheckWorktree: () -> Unit, onClose: () -> Unit,
     insets: Modifier = Modifier,   // the host applies the system-bar insets (the shell owns the top row; shared libs never name insets)
+    /**
+     * #1670 THE ONE STATUS METADATA GROUP, already merged by the host (the status facts and [meta], each field once): when given,
+     * the window draws it as ONE table in ONE text style ([GitStatusTable]) at the top, in place of the STATUS block + metadata table.
+     * null keeps the older two-group layout for hosts that have not moved yet.
+     */
+    fields: List<Pair<String, String>>? = null,
 ) {
     val k = LocalGitUiKit.current
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
@@ -67,11 +73,17 @@ fun GitStatusWindow(
                             }
                         }
                     }
+                    if (fields != null) {
+                        GitStatusTable(fields)
+                        depthOutcome?.let { Text(stringResource(R.string.repo_depth_outcome, it), style = GitStatusStyle.value()) }
+                        Text(debugLine, Modifier.testTag(k.tagDebugLine), style = GitStatusStyle.value(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
                     // Debug line: the exact path read and the reader's outcome, so a "?" can never be silent again.
                     Text(debugLine, Modifier.testTag(k.tagDebugLine), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     GitStatusBlockView(facts, fmt)
                     depthOutcome?.let { Text(stringResource(R.string.repo_depth_outcome, it), style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace) }
                     RepoMetaTable(meta)
+                    }
                     // LAST SECTION: the actions. Clone repo lives here, not in the table row (#1238).
                     Text(stringResource(R.string.repo_status_window_actions), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = k.pad))
                     when (cloneAction) {

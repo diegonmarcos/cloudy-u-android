@@ -4,6 +4,7 @@ import com.diegonmarcos.cloudlib.gitrepos.*
 
 import com.diegonmarcos.clouddrive.ui.StatusLight
 import com.diegonmarcos.cloudlib.gitsync.GitCommitInfo
+import com.diegonmarcos.cloudlib.gitui.GitStatusField
 
 /**
  * The repository row's status, as pure rules (JVM-tested): what the leading light means, why it can be "?", the
@@ -231,4 +232,19 @@ object RepoStatus {
         "path=" + path.ifBlank { "-" } + " read=" + (g?.path?.takeIf { it.isNotBlank() } ?: "-") +
             " via=" + (g?.via?.ifBlank { "-" } ?: "-") + " outcome=" + (if (g == null) "not requested" else if (!g.read) "reading" else g.state.ifBlank { "?" }) +
             (g?.error?.let { " error=$it" } ?: "") + (if (g != null && g.read) " took=${g.tookMs}ms" else "")
+
+    // ── #1670 THE ONE STATUS METADATA GROUP of the status window: the merged status fields plus the repository metadata, each once ──
+
+    /** The word a kind of the old LOCAL / SERVER / SYNC lights printed ("not fetched"); it is a field of the merged group now. */
+    fun kindWord(k: Enum<*>): String = k.name.lowercase().replace('_', ' ')
+
+    /** The repository metadata fields the window printed in its second (older) table, in their order. */
+    enum class MetaField { NAME, OWNER, PATH, BRANCH, UPSTREAM, LAST_SYNC, LFS, VISIBILITY, PROVIDER, REMOTE_URL, DEFAULT_BRANCH, SIZE, SIZE_DISK, BRANCHES, LAST_COMMIT }
+
+    /** Metadata fields the status fields already carry from the same read (printed once, in the status part). */
+    val META_IN_STATUS: Map<MetaField, GitStatusField> = mapOf(MetaField.BRANCH to GitStatusField.BRANCH, MetaField.UPSTREAM to GitStatusField.UPSTREAM)
+
+    /** The merged group: every status field, then every metadata field the status part does not already print. No field twice. */
+    fun <V> mergeFields(status: List<Pair<GitStatusField, V>>, meta: List<Pair<MetaField, V>>): List<Pair<Enum<*>, V>> =
+        status.map { (f, v) -> (f as Enum<*>) to v } + meta.filter { it.first !in META_IN_STATUS }.map { (f, v) -> (f as Enum<*>) to v }
 }
