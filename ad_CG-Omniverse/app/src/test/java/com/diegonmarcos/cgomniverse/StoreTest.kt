@@ -92,7 +92,7 @@ class StoreTest {
     @Test fun toggleFlipsOneChipOnly() {
         var sel = Store.allSelected()
         sel = Store.toggle(sel, FilterGroup.TYPE, Store.OTHERS)
-        assertEquals(setOf(Store.GAMES, Store.WEBSITES), sel[FilterGroup.TYPE])
+        assertEquals(setOf(Store.GAMES, Store.WEBSITES, Store.MODELS), sel[FilterGroup.TYPE])
         assertFalse(Store.isAll(sel, FilterGroup.TYPE))
         assertTrue(Store.isAll(sel, FilterGroup.DIMENSION))
         sel = Store.toggle(sel, FilterGroup.TYPE, Store.OTHERS)
