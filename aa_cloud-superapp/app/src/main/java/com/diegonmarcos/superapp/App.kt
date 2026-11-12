@@ -61,6 +61,11 @@ class App : Application(), WorkManagerConfiguration.Provider {
         }
         // #1682 P2a: AdbReadiness lives in libs:adb-shell-core; the SuperApp hands it its Connect chain and its in-shell page opener
         // (the same two calls the readiness object made itself before the move).
+        // #1682 P3 step 4b: the owner-side page's host hooks (keep-alive switch) -> the SuperApp's WirelessDebugKeeper.
+        com.diegonmarcos.superapp.configs.AdbOwnerHost.keeper = object : com.diegonmarcos.superapp.configs.AdbOwnerHost.Keeper {
+            override fun enabled(ctx: android.content.Context) = com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.enabled(ctx)
+            override fun setEnabled(ctx: android.content.Context, on: Boolean) = com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.setEnabled(ctx, on)
+        }
         com.diegonmarcos.superapp.system.AdbReadiness.connector = { c -> com.diegonmarcos.superapp.configs.AdbCockpitOps.connect(c) }
         com.diegonmarcos.superapp.system.AdbReadiness.hostOpener = { c ->
             val shell = generateSequence(c) { (it as? android.content.ContextWrapper)?.baseContext }

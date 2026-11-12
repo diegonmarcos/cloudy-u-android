@@ -363,12 +363,12 @@ internal fun AdbStatusTab() {
             note = "Log copied."
         },
         clearLog = { ChannelLog.shared.clear() },
-        setKeepAlive = { on -> com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.setEnabled(ctx, on); tick++ },
+        setKeepAlive = { on -> AdbOwnerHost.setKeeperEnabled(ctx, on); tick++ },
     )
     val log = remember(logTick, tick) { ChannelLog.shared.entries() }
     val keepAlive = remember(tick) {
         runCatching {
-            val on = com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.enabled(ctx)
+            val on = AdbOwnerHost.keeperEnabled(ctx)
             val s = com.diegonmarcos.superapp.adbdebug.WdKeeper.snapshot(ctx)
             AdbCockpitModel.keepAlive(on, s.armed, s.serviceRunning, s.canWrite, s.batteryExempt,
                 s.lastRearmAt?.let { com.diegonmarcos.superapp.adbdebug.WdKeeper.ago(it) })

@@ -41,7 +41,6 @@ import com.diegonmarcos.superapp.adbdebug.WirelessDebugging
 import com.diegonmarcos.superapp.shellbroker.AuditLog
 import com.diegonmarcos.superapp.shellbroker.ShellBroker
 import com.diegonmarcos.superapp.shellclient.ShellStatus
-import com.diegonmarcos.superapp.system.WirelessDebugKeeper
 import com.diegonmarcos.superapp.uikit.KitStoreCaption
 import com.diegonmarcos.superapp.uikit.KitStoreDot
 import com.diegonmarcos.superapp.uikit.KitStoreName
@@ -85,7 +84,7 @@ internal fun loadAdbPage(ctx: Context): AdbPageState {
         status = runCatching { ShellBroker.status(ctx) }.getOrNull(),
         wireless = runCatching { WirelessDebugging.isOn(ctx) }.getOrNull(),
         paired = facts?.adbPaired == true, port = AdbShellModel.port(facts?.adbEndpoint),
-        keeperOn = runCatching { WirelessDebugKeeper.Prefs.enabled(ctx) }.getOrDefault(false), keeper = keeper,
+        keeperOn = AdbOwnerHost.keeperEnabled(ctx), keeper = keeper,
         callers = runCatching { AdbShellModel.callers(ShellBroker.callerSummaries(ctx), ShellBroker.auditEntries(ctx)) }.getOrDefault(emptyList()),
         audit = runCatching { ShellBroker.auditEntries(ctx) }.getOrDefault(emptyList()),
         keeperLog = runCatching { WdKeeper.audit(ctx).entries() }.getOrDefault(emptyList()),
@@ -118,7 +117,7 @@ internal fun AdbShellBrokerPage() {
         primary = { if (it == AdbShellModel.Primary.PAIR) pair() else rearm() }, rearm = rearm, pair = pair,
         openSettings = { AdbShellLink.open(ctx, ControlStatus.Action.OPEN_SETTINGS) },
         testNow = { run("Testing") { ShellBroker.invalidate(ctx); ShellBroker.status(ctx).let { it.adbLine() + "\n" + it.line() } } },
-        toggleKeeper = { WirelessDebugKeeper.Prefs.setEnabled(ctx, !state.keeperOn); tick++ },
+        toggleKeeper = { AdbOwnerHost.setKeeperEnabled(ctx, !state.keeperOn); tick++ },
         fixPerms = { WdKeeper.openPermsFix(ctx) },
     )
     AdbShellLayout(
