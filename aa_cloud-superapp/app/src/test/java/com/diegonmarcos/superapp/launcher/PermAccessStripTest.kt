@@ -60,7 +60,7 @@ class PermAccessStripTest : KitPageHarness() {
         val rightEdge = maxOf(res.maxOf { it.right }, b("strip:battery").right)
         assertEquals("row is right-aligned with the status block", rightEdge, row.right, 3f * compose.activity.resources.displayMetrics.density)
         for (s in Sensor.values()) assertTrue(compose.onAllNodes(androidx.compose.ui.test.SemanticsMatcher("icon ${s.name}") { n ->
-            n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.TestTag)?.startsWith("permaccess:${s.name.lowercase()}:") == true
+            n.config.getOrElseNullable(androidx.compose.ui.semantics.SemanticsProperties.TestTag) { null }?.startsWith("permaccess:${s.name.lowercase()}:") == true
         }, useUnmergedTree = true).fetchSemanticsNodes().size == 1)
     }
 

@@ -58,7 +58,7 @@ class AdbPermsChainTest : KitPageHarness() {
         for (no in listOf("location", "nearby", "camera", "contacts", "sms")) assertFalse(no, all.contains(no))
     }
 
-    @Test fun `P2 owner, action and why on every row; human rows deep-link to Settings`() {
+    @Test fun `P2 owner, action and why on every row, human rows deep-link to Settings`() {
         val r = AdbPrereqs.rows(facts(dev = false), allOn, pkg)
         for (x in r) { assertTrue(x.id, x.actions.isNotEmpty()); assertTrue(x.id, x.why.isNotBlank()) }
         fun open(id: String) = (r.first { it.id == id }.actions.first() as Action.Open).setup
