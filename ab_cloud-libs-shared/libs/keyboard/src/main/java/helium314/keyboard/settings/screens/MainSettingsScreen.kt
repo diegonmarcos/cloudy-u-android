@@ -138,9 +138,7 @@ fun MainSettingsScreen(
                                 description = stringResource(R.string.dev_keyboard_summary),
                                 onClick = {
                                     on = !on
-                                    ctx.prefs().edit().putBoolean(helium314.keyboard.keyboard.CornerSwipe.PREF, on).apply()
-                                    helium314.keyboard.keyboard.CornerSwipe.enabled = on
-                                    helium314.keyboard.keyboard.KeyboardSwitcher.getInstance().setThemeNeedsReload()
+                                    helium314.keyboard.settings.KbThemePreset.setDev(ctx, on) // #1665 the Dev theme
                                 },
                                 icon = R.drawable.ic_settings_appearance
                             ) { androidx.compose.material3.Switch(checked = on, onCheckedChange = null) }

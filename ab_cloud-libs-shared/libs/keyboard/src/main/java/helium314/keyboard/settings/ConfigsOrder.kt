@@ -30,7 +30,47 @@ enum class AllSettingsPage(val section: HomeGroup) {
     companion object {
         fun of(section: HomeGroup): List<AllSettingsPage> = entries.filter { it.section == section }
     }
+
+    /**
+     * #1665 where this former All settings page lives in the app's nav: exactly one home (a bottom tab, or Configs) and the id of
+     * the page there (a [NavPageDecl.id] of that [KbTab], or a row of the Configs page's keyboard tab, [KbHome.CONFIGS]).
+     */
+    val home: Pair<KbHome, String> get() = when (this) {
+        TOOLBAR -> KbHome.KEYBOARD to "toolbar"
+        DEV_KEYBOARD -> KbHome.KEYBOARD to "themes_dev"
+        LANGUAGES -> KbHome.KEYBOARD to "languages"
+        SECONDARY_LAYOUTS -> KbHome.KEYBOARD to "secondary_layouts"
+        APPEARANCE -> KbHome.KEYBOARD to "appearance"
+        PREFERENCES -> KbHome.KEYBOARD to "preferences"
+        GESTURE_TYPING -> KbHome.KEYBOARD to "gesture_typing"
+        DATA_GATHERING -> KbHome.KEYBOARD to "data_gathering"
+        ADVANCED -> KbHome.KEYBOARD to "advanced"
+        EMOJI -> KbHome.MEDIABOARDS to "emojis"
+        CLIPBOARD -> KbHome.TEXTBOARDS to "clipboard"
+        AUTOCOMPLETE -> KbHome.TEXTBOARDS to "autocomplete"
+        TEXT_CORRECTION -> KbHome.TEXTBOARDS to "text_correction"
+        DICTIONARIES -> KbHome.WRITER to "dictionary"
+        TRANSLATION -> KbHome.WRITER to "kb_translator"
+        TEXT_ENHANCE -> KbHome.WRITER to "kb_writing_tools"
+        DRAFT_ANSWER -> KbHome.WRITER to "kb_drafter"
+        GRAMMAR_CHECK -> KbHome.WRITER to "kb_grammar"
+        VOICE_TRANSCRIPT -> KbHome.WRITER to "voice_transcription_settings"
+        AI_ROUTING -> KbHome.WRITER to "kb_ai_routing"
+        ANDROID_SETTINGS -> KbHome.CONFIGS to "android_settings"
+        UPDATE -> KbHome.CONFIGS to "update"
+        HOST_EXTRAS -> KbHome.CONFIGS to "host_extras"
+        ABOUT -> KbHome.CONFIGS to "about"
+    }
 }
+
+/** #1665 the homes of the app's nav: the four bottom tabs plus Configs (the top bar's Configs icon, fleet default page). */
+enum class KbHome { KEYBOARD, WRITER, MEDIABOARDS, TEXTBOARDS, CONFIGS;
+    /** The bottom tab of this home; null for Configs. */
+    val tab: KbTab? get() = KbTab.entries.firstOrNull { it.name == name }
+}
+
+/** #1665 the rows of the Configs page's keyboard tab (KeyboardConfigsTabBody): the Configs-homed pages, then the grouped All settings. */
+val keyboardConfigsRows: List<String> = listOf("android_settings", "update", "about", "host_extras", "all_settings")
 
 /** #1653 one page of the settings nav: [route] is an existing settings screen; [children] are its sub-pages (the top bar's dropdown). */
 class NavPageDecl(val id: String, val label: String, val route: String, val children: List<NavPageDecl> = emptyList()) {
@@ -45,15 +85,17 @@ class NavPageDecl(val id: String, val label: String, val route: String, val chil
  */
 enum class KbTab(val id: String, val label: String, val icon: String, val pages: List<NavPageDecl>) {
     KEYBOARD("keyboard", "Keyboard", "apps", listOf(
+        // #1665 the picker, then each theme's own page (preview, use it, what it sets)
         NavPageDecl("themes", "Themes", SettingsDestination.Themes, listOf(
-            NavPageDecl("themes_default", "Default", SettingsDestination.Themes),
-            NavPageDecl("themes_dev", "Dev", SettingsDestination.Themes))),
-        // Settings = the grouped All settings (#1650), where every theme / keyboard configuration lives; Appearance and Advanced fold under it
-        NavPageDecl("settings", "Settings", SettingsDestination.Settings, listOf(
+            NavPageDecl(KbThemePreset.DEFAULT.pageId, "Default", KbThemePreset.DEFAULT.route),
+            NavPageDecl(KbThemePreset.DEV.pageId, "Dev", KbThemePreset.DEV.route))),
+        // #1665 Settings = every keyboard / theme setting on one page (KeyboardSettingsScreen); the full pages fold under it
+        NavPageDecl("settings", "Settings", SettingsDestination.KeyboardSettings, listOf(
             NavPageDecl("appearance", "Appearance", SettingsDestination.Appearance),
             NavPageDecl("advanced", "Advanced", SettingsDestination.Advanced),
             NavPageDecl("preferences", "Preferences", SettingsDestination.Preferences),
-            NavPageDecl("gesture_typing", "Gesture typing", SettingsDestination.GestureTyping))),
+            NavPageDecl("gesture_typing", "Gesture typing", SettingsDestination.GestureTyping),
+            NavPageDecl("data_gathering", "Gesture data", SettingsDestination.DataGathering))),
         NavPageDecl("languages", "Languages", SettingsDestination.Languages, listOf(
             NavPageDecl("secondary_layouts", "Secondary layouts", SettingsDestination.Layouts))),
         NavPageDecl("toolbar", "Toolbar", SettingsDestination.Toolbar),
@@ -85,13 +127,14 @@ enum class KbTab(val id: String, val label: String, val icon: String, val pages:
             NavPageDecl("kb_ai_routing", "AI routing", SettingsDestination.AiRouting))),
     )),
     MEDIABOARDS("mediaboards", "Mediaboards", "layers", listOf(
-        // one page covers the three panels today (EmojiInfoScreen: Emoji, Stickers, GIFs)
+        // #1665 three pages of their own: emoji settings, the GIF source + live search, the sticker packs
         NavPageDecl("emojis", "Emojis", SettingsDestination.Emoji),
-        NavPageDecl("gif", "GIF", SettingsDestination.Emoji),
-        NavPageDecl("stickers", "Stickers", SettingsDestination.Emoji),
+        NavPageDecl("gif", "GIF", SettingsDestination.Gif),
+        NavPageDecl("stickers", "Stickers", SettingsDestination.Stickers),
     )),
     TEXTBOARDS("textboards", "Textboards", "content_paste", listOf(
-        NavPageDecl("autocomplete", "Autocomplete", SettingsDestination.Autocomplete),
+        NavPageDecl("autocomplete", "Autocomplete", SettingsDestination.Autocomplete, listOf(
+            NavPageDecl("text_correction", "Text correction", SettingsDestination.TextCorrection))),
         NavPageDecl("clipboard", "Clipboard", SettingsDestination.Clipboard),
     ));
 

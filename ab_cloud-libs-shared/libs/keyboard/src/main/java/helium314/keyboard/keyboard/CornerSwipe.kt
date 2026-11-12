@@ -41,6 +41,10 @@ object CornerSwipe {
         return if (end < 0) base else base.substring(0, end + 1) + FN_KEY + base.substring(end + 1)
     }
 
+    /** #1665 the alphabet MAIN layout to load: the Dev layout while the Dev theme is on, else the subtype's [own] (pure, testable). */
+    @JvmStatic
+    fun mainLayoutFor(devOn: Boolean, alphabet: Boolean, own: String): String = if (devOn && alphabet) LAYOUT else own
+
     @JvmStatic
     fun refreshed(context: Context): Boolean { refresh(context); return enabled }
 
@@ -50,9 +54,9 @@ object CornerSwipe {
     /** #1413: the DEV_KEYBOARD toolbar key: flip the pref and redraw the keyboard. */
     @JvmStatic
     fun toggle(context: Context) {
-        enabled = !enabled
-        context.prefs().edit().putBoolean(PREF, enabled).apply()
-        KeyboardSwitcher.getInstance().setThemeNeedsReload()
+        // #1665 Dev Keyboard IS the Dev theme: the toolbar key switches the whole theme (colours + layout + fn key), the same as
+        // picking Dev / Default in Keyboard > Themes, so the two can never disagree.
+        helium314.keyboard.settings.KbThemePreset.setDev(context, !enabled)
     }
 
     /**

@@ -31,6 +31,8 @@ import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
 import helium314.keyboard.settings.KbTab
 import helium314.keyboard.settings.NavPageDecl
 import helium314.keyboard.settings.SettingsActivity
+import helium314.keyboard.settings.keyboardConfigsRows
+import helium314.keyboard.latin.utils.AndroidKeyboardSettings
 
 /**
  * #1651 the keyboard's settings chrome: the fleet DEFAULT top bar (NavBarTopFirstRowScaffold) and the fleet default bottom bar
@@ -95,16 +97,27 @@ object KeyboardChrome {
     }
 }
 
-/** #1651 the keyboard's own tab of the standard Configs strip (before the `|`): a door to the grouped All settings. */
+/**
+ * #1651 the keyboard's own tab of the standard Configs strip (before the `|`). #1665 it lists the former All settings pages whose
+ * home is Configs ([keyboardConfigsRows]: Android keyboard settings, Update, About, this Configs page itself) and then the
+ * grouped All settings, so every Configs-homed page is one tap away and nothing is reached only through the old list.
+ */
 @Composable
 fun KeyboardConfigsTabBody(@Suppress("UNUSED_PARAMETER") dark: Boolean) {
     val ctx = LocalContext.current
+    fun openAt(name: String) = runCatching {
+        ctx.startActivity(Intent(ctx, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_OPEN_AT, name))
+    }
     Column {
-        Text(
-            "All settings (Keyboard / Text / Configs)",
-            Modifier.fillMaxWidth().clickable {
-                ctx.startActivity(Intent(ctx, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_OPEN_AT, "all_settings"))
-            }.padding(16.dp),
-        )
+        keyboardConfigsRows.forEach { row ->
+            val (label, action) = when (row) {
+                "android_settings" -> "Android keyboard settings" to { runCatching { AndroidKeyboardSettings.launch(ctx) }; Unit }
+                "update" -> "Update" to { openAt("update"); Unit }
+                "about" -> "About Cloud Keyboard" to { openAt("about"); Unit }
+                "host_extras" -> "General and About: the tabs of this Configs page" to { }
+                else -> "All settings (Keyboard / Text / Configs)" to { openAt("all_settings"); Unit }
+            }
+            Text(label, Modifier.fillMaxWidth().clickable { action() }.padding(16.dp))
+        }
     }
 }

@@ -148,6 +148,13 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
             return getThemeColors(themeName!!, themeStyle!!, context, prefs, isNight)
         }
 
+        /** #1665 the colours of the colour theme [themeName] in the current style, for a settings preview; null if it cannot be built. */
+        @JvmStatic
+        fun previewColors(context: Context, themeName: String): Colors? = runCatching {
+            val prefs = context.prefs()
+            getThemeColors(themeName, prefs.getString(Settings.PREF_THEME_STYLE, Defaults.PREF_THEME_STYLE) ?: Defaults.PREF_THEME_STYLE, context, prefs, false)
+        }.getOrNull()
+
         private fun getThemeColors(themeName: String, themeStyle: String, context: Context, prefs: SharedPreferences, isNight: Boolean): Colors {
             val hasBorders = prefs.getBoolean(Settings.PREF_THEME_KEY_BORDERS, Defaults.PREF_THEME_KEY_BORDERS)
             val backgroundImage = Settings.readUserBackgroundImage(context, isNight)

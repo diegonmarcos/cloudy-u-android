@@ -44,8 +44,7 @@ object LayoutParser {
             // own layout is — enabling Dev Keyboard is what actually loads it. refresh() syncs the
             // in-memory flag from the pref so a freshly built keyboard loads it before the first draw.
             CornerSwipe.refresh(context)
-            if (CornerSwipe.enabled && params.mId.isAlphabetKeyboard) CornerSwipe.LAYOUT
-            else params.mId.mSubtype.mainLayoutName
+            CornerSwipe.mainLayoutFor(CornerSwipe.enabled, params.mId.isAlphabetKeyboard, params.mId.mSubtype.mainLayoutName)
         } else if (layoutType == LayoutType.FUNCTIONAL && CornerSwipe.refreshed(context) && params.mId.isAlphabetKeyboard) {
             // #1606 Dev Keyboard: functional keys plus an fn key (double-click holds fn, tap disables it)
             CornerSwipe.FUNCTIONAL_LAYOUT

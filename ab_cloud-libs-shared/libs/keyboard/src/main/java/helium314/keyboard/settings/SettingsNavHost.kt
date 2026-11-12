@@ -29,6 +29,10 @@ import helium314.keyboard.settings.screens.HomeScreen
 import helium314.keyboard.settings.screens.LanguageScreen
 import helium314.keyboard.settings.screens.MainSettingsScreen
 import helium314.keyboard.settings.screens.ThemesScreen
+import helium314.keyboard.settings.screens.ThemePageScreen
+import helium314.keyboard.settings.screens.KeyboardSettingsScreen
+import helium314.keyboard.settings.screens.GifScreen
+import helium314.keyboard.settings.screens.StickersScreen
 import helium314.keyboard.settings.screens.PersonalDictionariesScreen
 import helium314.keyboard.settings.screens.PersonalDictionaryScreen
 import helium314.keyboard.settings.screens.PreferencesScreen
@@ -90,8 +94,23 @@ fun SettingsNavHost(
         composable(SettingsDestination.HostPage) { entry -> // #1652 a page the host app draws (libs:writer-ui's Writer pages)
             KeyboardSettingsExtras.hostPage?.invoke(entry.arguments?.getString("id") ?: "")
         }
-        composable(SettingsDestination.Themes) { // #1622: Themes picker (Default | Unexpected)
-            ThemesScreen(onClickBack = ::goBack)
+        composable(SettingsDestination.Themes) { // #1622 / #1665: Themes picker (Default | Dev)
+            ThemesScreen(onClickBack = ::goBack, onOpenTheme = { navController.navigate(it.route) })
+        }
+        composable(SettingsDestination.ThemeDefault) { // #1665 Keyboard > Themes > Default
+            ThemePageScreen(KbThemePreset.DEFAULT, onClickBack = ::goBack, onOpenAppearance = { navController.navigate(SettingsDestination.Appearance) })
+        }
+        composable(SettingsDestination.ThemeDev) { // #1665 Keyboard > Themes > Dev
+            ThemePageScreen(KbThemePreset.DEV, onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.KeyboardSettings) { // #1665 Keyboard > Settings
+            KeyboardSettingsScreen(onClickBack = ::goBack, onOpen = { navController.navigate(it) })
+        }
+        composable(SettingsDestination.Gif) { // #1665 Mediaboards > GIF
+            GifScreen(onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.Stickers) { // #1665 Mediaboards > Stickers
+            StickersScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.Settings) {
             MainSettingsScreen(
@@ -225,6 +244,11 @@ fun SettingsNavHost(
 object SettingsDestination {
     const val Home = "home" // #1622: icon-grid Home Page (the Config icon opens this)
     const val Themes = "themes" // #1622: Themes picker
+    const val ThemeDefault = "themes/default" // #1665 the Default theme's page
+    const val ThemeDev = "themes/dev" // #1665 the Dev theme's page
+    const val KeyboardSettings = "kb_settings" // #1665 Keyboard > Settings
+    const val Gif = "gif_info" // #1665 Mediaboards > GIF
+    const val Stickers = "stickers_info" // #1665 Mediaboards > Stickers
     const val Settings = "settings"
     const val HostPage = "host/{id}" // #1652 the host's own pages
     fun hostRoute(id: String) = "host/$id"
@@ -258,6 +282,8 @@ object SettingsDestination {
     const val Subtype = "subtype/"
     const val Layouts = "layouts"
     const val Dictionaries = "dictionaries"
+    /** #1665 the route of [preset]'s own page. */
+    fun themeRoute(preset: KbThemePreset): String = if (preset == KbThemePreset.DEV) ThemeDev else ThemeDefault
     val navTarget = MutableStateFlow(Settings)
 
     /**
@@ -283,6 +309,8 @@ object SettingsDestination {
         "translation" to Translation,
         "grammar_check" to GrammarCheck,
         "draft_answer" to DraftAnswer,
+        "about" to About, // #1665 the Configs page's keyboard tab rows
+        "update" to Update,
         "all_settings" to Settings, // #1651 the Config page's keyboard tab opens the grouped All settings (#1650)
     )
 

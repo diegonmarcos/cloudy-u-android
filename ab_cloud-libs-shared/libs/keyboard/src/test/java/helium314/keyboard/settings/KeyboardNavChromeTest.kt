@@ -64,10 +64,12 @@ class KeyboardNavChromeTest {
             SettingsDestination.AiRouting, SettingsDestination.VoiceTranscript, SettingsDestination.TextResume, SettingsDestination.Dictionaries,
             SettingsDestination.PersonalDictionaries,
         )
-        val after = KbTab.entries.flatMap { it.allPages }.map { it.route }.toSet()
+        val tabs = KbTab.entries.flatMap { it.allPages }.map { it.route }.toSet()
+        // #1665 the grouped All settings (and About / Update) are reached from the Configs page's keyboard tab
+        val after = tabs + keyboardConfigsRows.mapNotNull { SettingsDestination.externalRoute(it) }
         assertEquals(emptySet<String>(), before - after)
         // each declared route is an existing screen, and no page id repeats
-        after.filterNot { it.startsWith("host/") }.forEach { r -> assertTrue(r, nav.contains("composable(SettingsDestination.${Regex("""const val (\w+) = "$r"""").find(nav)!!.groupValues[1]})")) }
+        tabs.filterNot { it.startsWith("host/") }.forEach { r -> assertTrue(r, nav.contains("composable(SettingsDestination.${Regex("""const val (\w+) = "$r"""").find(nav)!!.groupValues[1]})")) }
         val ids = KbTab.entries.flatMap { it.allPages }.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
     }
