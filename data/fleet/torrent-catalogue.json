@@ -1,0 +1,200 @@
+{
+ "schemaVersion": 1,
+ "_doc": "Cloud Store > Torrent catalogue (#1681), served at runtime as shared/torrent-catalogue (never baked into an APK). ONLY legitimately distributable items: each entry's info_hash was computed from the publisher's own official .torrent at torrent_url, and its magnet carries that hash plus the publisher's trackers. Categories keep the owner's structure so more legitimate entries can be added; a category with no entry is drawn as empty. Copyrighted or cracked content is never listed here. Users add their own entries in Configs > Torrent (kept on the device).",
+ "categories": [
+  {
+   "id": "movies",
+   "label": "Movies"
+  },
+  {
+   "id": "tv",
+   "label": "TV Shows"
+  },
+  {
+   "id": "games",
+   "label": "PC Games"
+  },
+  {
+   "id": "anime",
+   "label": "Anime"
+  },
+  {
+   "id": "software",
+   "label": "Software & Applications"
+  },
+  {
+   "id": "ebooks",
+   "label": "E-Books"
+  },
+  {
+   "id": "audiobooks",
+   "label": "Audiobooks"
+  },
+  {
+   "id": "music",
+   "label": "Music"
+  },
+  {
+   "id": "os",
+   "label": "Operating Systems"
+  },
+  {
+   "id": "comics",
+   "label": "Comics & Graphic Novels"
+  },
+  {
+   "id": "courses",
+   "label": "E-Learning & Video Courses"
+  },
+  {
+   "id": "android",
+   "label": "Android"
+  }
+ ],
+ "entries": [
+  {
+   "id": "ubuntu-26.04.1-desktop-amd64",
+   "name": "Ubuntu 26.04.1 LTS Desktop (amd64)",
+   "category": "os",
+   "publisher": "Canonical",
+   "licence": "GPL and other free licences",
+   "size_bytes": 6482409472,
+   "info_hash": "5b1e0d988fc7a0c9e99bd852071681a59974b39f",
+   "magnet": "magnet:?xt=urn:btih:5b1e0d988fc7a0c9e99bd852071681a59974b39f&dn=ubuntu-26.04.1-desktop-amd64.iso&tr=https%3A%2F%2Ftorrent.ubuntu.com%2Fannounce&tr=https%3A%2F%2Fipv6.torrent.ubuntu.com%2Fannounce",
+   "torrent_url": "https://releases.ubuntu.com/26.04.1/ubuntu-26.04.1-desktop-amd64.iso.torrent",
+   "source_page": "https://releases.ubuntu.com/26.04.1/"
+  },
+  {
+   "id": "ubuntu-26.04.1-server-amd64",
+   "name": "Ubuntu 26.04.1 LTS Server (amd64)",
+   "category": "os",
+   "publisher": "Canonical",
+   "licence": "GPL and other free licences",
+   "size_bytes": 2927861760,
+   "info_hash": "e4f19cf636409b72571766c2ae89c98fc21a109d",
+   "magnet": "magnet:?xt=urn:btih:e4f19cf636409b72571766c2ae89c98fc21a109d&dn=ubuntu-26.04.1-live-server-amd64.iso&tr=https%3A%2F%2Ftorrent.ubuntu.com%2Fannounce&tr=https%3A%2F%2Fipv6.torrent.ubuntu.com%2Fannounce",
+   "torrent_url": "https://releases.ubuntu.com/26.04.1/ubuntu-26.04.1-live-server-amd64.iso.torrent",
+   "source_page": "https://releases.ubuntu.com/26.04.1/"
+  },
+  {
+   "id": "debian-13.7.0-amd64-dvd1",
+   "name": "Debian 13.7.0 DVD-1 (amd64)",
+   "category": "os",
+   "publisher": "Debian Project",
+   "licence": "DFSG free software",
+   "size_bytes": 3992977408,
+   "info_hash": "793a0e3d7ac28fa964512bca6954f459538629cd",
+   "magnet": "magnet:?xt=urn:btih:793a0e3d7ac28fa964512bca6954f459538629cd&dn=debian-13.7.0-amd64-DVD-1.iso&tr=http%3A%2F%2Fbttracker.debian.org%3A6969%2Fannounce",
+   "torrent_url": "https://cdimage.debian.org/debian-cd/current/amd64/bt-dvd/debian-13.7.0-amd64-DVD-1.iso.torrent",
+   "source_page": "https://cdimage.debian.org/debian-cd/current/amd64/bt-dvd/"
+  },
+  {
+   "id": "debian-13.7.0-amd64-netinst",
+   "name": "Debian 13.7.0 netinst (amd64)",
+   "category": "os",
+   "publisher": "Debian Project",
+   "licence": "DFSG free software",
+   "size_bytes": 792723456,
+   "info_hash": "7acf8fb590b2060dd9c3146ef770169d593433b0",
+   "magnet": "magnet:?xt=urn:btih:7acf8fb590b2060dd9c3146ef770169d593433b0&dn=debian-13.7.0-amd64-netinst.iso&tr=http%3A%2F%2Fbttracker.debian.org%3A6969%2Fannounce",
+   "torrent_url": "https://cdimage.debian.org/debian-cd/current/amd64/bt-cd/debian-13.7.0-amd64-netinst.iso.torrent",
+   "source_page": "https://cdimage.debian.org/debian-cd/current/amd64/bt-cd/"
+  },
+  {
+   "id": "fedora-workstation-45-x86_64",
+   "name": "Fedora Workstation 45 Live (x86_64)",
+   "category": "os",
+   "publisher": "Fedora Project",
+   "licence": "Free and open source licences",
+   "size_bytes": 2925093926,
+   "info_hash": "a59398317beeeae3ab57039338a8811c86b892c7",
+   "magnet": "magnet:?xt=urn:btih:a59398317beeeae3ab57039338a8811c86b892c7&dn=Fedora-Workstation-Live-x86_64-45&tr=http%3A%2F%2Ftorrent.fedoraproject.org%3A6969%2Fannounce",
+   "torrent_url": "https://torrent.fedoraproject.org/torrents/Fedora-Workstation-Live-x86_64-45.torrent",
+   "source_page": "https://torrent.fedoraproject.org/"
+  },
+  {
+   "id": "linuxmint-22.3-cinnamon-64bit",
+   "name": "Linux Mint 22.3 Cinnamon (64-bit)",
+   "category": "os",
+   "publisher": "Linux Mint",
+   "licence": "GPL and other free licences",
+   "size_bytes": 3091660800,
+   "info_hash": "2fee37827d0b6dc81372a7affcd1e3dcb4110e64",
+   "magnet": "magnet:?xt=urn:btih:2fee37827d0b6dc81372a7affcd1e3dcb4110e64&dn=linuxmint-22.3-cinnamon-64bit.iso&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce",
+   "torrent_url": "https://www.linuxmint.com/torrents/linuxmint-22.3-cinnamon-64bit.iso.torrent",
+   "source_page": "https://linuxmint.com/download.php"
+  },
+  {
+   "id": "linuxmint-22.3-xfce-64bit",
+   "name": "Linux Mint 22.3 Xfce (64-bit)",
+   "category": "os",
+   "publisher": "Linux Mint",
+   "licence": "GPL and other free licences",
+   "size_bytes": 3033710592,
+   "info_hash": "feb1bcec2a7c7ea288d0d8542796261cdd13cb61",
+   "magnet": "magnet:?xt=urn:btih:feb1bcec2a7c7ea288d0d8542796261cdd13cb61&dn=linuxmint-22.3-xfce-64bit.iso&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce",
+   "torrent_url": "https://www.linuxmint.com/torrents/linuxmint-22.3-xfce-64bit.iso.torrent",
+   "source_page": "https://linuxmint.com/download.php"
+  },
+  {
+   "id": "archlinux-2026.11.01-x86_64",
+   "name": "Arch Linux 2026.11.01 (x86_64)",
+   "category": "os",
+   "publisher": "Arch Linux",
+   "licence": "GPL and other free licences",
+   "size_bytes": 1317568512,
+   "info_hash": "ed0f013475535f19b5410d68fd20f627e4950b1f",
+   "magnet": "magnet:?xt=urn:btih:ed0f013475535f19b5410d68fd20f627e4950b1f&dn=archlinux-2026.11.01-x86_64.iso",
+   "torrent_url": "https://archlinux.org/releng/releases/2026.11.01/torrent/",
+   "source_page": "https://archlinux.org/releng/releases/"
+  },
+  {
+   "id": "kali-linux-2026.3-installer-amd64",
+   "name": "Kali Linux 2026.3 Installer (amd64)",
+   "category": "os",
+   "publisher": "OffSec (Kali Linux)",
+   "licence": "Free and open source licences",
+   "size_bytes": 5047031808,
+   "info_hash": "cc15c0be1a8732fedcc0c1ccd42e27246a14854b",
+   "magnet": "magnet:?xt=urn:btih:cc15c0be1a8732fedcc0c1ccd42e27246a14854b&dn=kali-linux-2026.3-installer-amd64.iso&tr=http%3A%2F%2Fbittorrent.kali.org%2Fannounce&tr=http%3A%2F%2Fbittorrent.kali.org%3A6969%2Fannounce",
+   "torrent_url": "https://cdimage.kali.org/kali-2026.3/kali-linux-2026.3-installer-amd64.iso.torrent",
+   "source_page": "https://www.kali.org/get-kali/"
+  },
+  {
+   "id": "kali-linux-2026.3-live-amd64",
+   "name": "Kali Linux 2026.3 Live (amd64)",
+   "category": "os",
+   "publisher": "OffSec (Kali Linux)",
+   "licence": "Free and open source licences",
+   "size_bytes": 5938610176,
+   "info_hash": "32765844ad2436f2ad5574f2a36885489d35a983",
+   "magnet": "magnet:?xt=urn:btih:32765844ad2436f2ad5574f2a36885489d35a983&dn=kali-linux-2026.3-live-amd64.iso&tr=http%3A%2F%2Fbittorrent.kali.org%2Fannounce&tr=http%3A%2F%2Fbittorrent.kali.org%3A6969%2Fannounce",
+   "torrent_url": "https://cdimage.kali.org/kali-2026.3/kali-linux-2026.3-live-amd64.iso.torrent",
+   "source_page": "https://www.kali.org/get-kali/"
+  },
+  {
+   "id": "big-buck-bunny",
+   "name": "Big Buck Bunny (Blender open movie, 2008)",
+   "category": "movies",
+   "publisher": "Blender Foundation (Internet Archive copy)",
+   "licence": "CC BY 3.0",
+   "size_bytes": 441396871,
+   "info_hash": "b63eaa9720ee797667ef58ea35ef7d81ab5d1c16",
+   "magnet": "magnet:?xt=urn:btih:b63eaa9720ee797667ef58ea35ef7d81ab5d1c16&dn=BigBuckBunny_124&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
+   "torrent_url": "https://archive.org/download/BigBuckBunny_124/BigBuckBunny_124_archive.torrent",
+   "source_page": "https://archive.org/details/BigBuckBunny_124"
+  },
+  {
+   "id": "sintel",
+   "name": "Sintel (Blender open movie, 2010)",
+   "category": "movies",
+   "publisher": "Blender Foundation (Internet Archive copy)",
+   "licence": "CC BY 3.0",
+   "size_bytes": 1808420870,
+   "info_hash": "5301d943b64fa79bc6e1ab36fae18dec67995bfb",
+   "magnet": "magnet:?xt=urn:btih:5301d943b64fa79bc6e1ab36fae18dec67995bfb&dn=Sintel&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
+   "torrent_url": "https://archive.org/download/Sintel/Sintel_archive.torrent",
+   "source_page": "https://archive.org/details/Sintel"
+  }
+ ]
+}

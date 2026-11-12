@@ -88,6 +88,12 @@
         "com.diegonmarcos.cloudnav"
       ],
       "source": "data/fleet/packs/hyg-stars.json"
+    },
+    "torrent-catalogue": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ]
     }
   },
   "apps": {

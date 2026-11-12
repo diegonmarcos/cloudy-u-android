@@ -628,9 +628,11 @@ class StorePhoneFragment : KitComposeFragment() {
         // The Phone page is the FOREIGN apps' page: a fleet app — installed or not — is the Cloud
         // page's (constellation install / update all), never declared, listed or installed here.
         val declared = LinkedHashMap<String, String>()
-        declared.putAll(AppInventory.launchable(ctx).filterKeys { it !in fleet })
-        resolver.apps.values.filter { it.pkg !in fleet }.forEach { declared.putIfAbsent(it.pkg, it.label) }
-        DeclaredEdits.addedPackages(ctx).filterKeys { it !in fleet }.forEach { (p, l) -> declared.putIfAbsent(p, l) }
+        // #1681 the ONE classifier both tabs ask (StoreMembership): Phone holds exactly what it files on Phone.
+        val fleetPkgs = StoreMembership.fleetPackages(fleetList)
+        declared.putAll(StoreMembership.phoneOnly(AppInventory.launchable(ctx), fleetPkgs))
+        resolver.apps.values.filter { StoreMembership.isPhone(it.pkg, fleetPkgs) }.forEach { declared.putIfAbsent(it.pkg, it.label) }
+        StoreMembership.phoneOnly(DeclaredEdits.addedPackages(ctx), fleetPkgs).forEach { (p, l) -> declared.putIfAbsent(p, l) }
         val shelves = AppStoreHost.classify(ctx, declared)
         val states = HashMap<String, SourceResolver.Check>()
         val cached = HashMap<String, ApkCache.Entry>()

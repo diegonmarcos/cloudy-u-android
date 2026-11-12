@@ -201,7 +201,8 @@ class StoreCloudFragment : KitComposeFragment() {
     // then display name (#334), so each heading is one contiguous run and
     // the list can head it with a single pass and no regrouping.
     private val tabs by lazy {
-        val everyRow = (fleet + references).associateBy { it.id }
+        // #1681 the ONE classifier both tabs ask (StoreMembership): Cloud holds exactly what it files on Cloud.
+        val everyRow = StoreMembership.cloudRows(fleet + references, StoreMembership.fleetPackages(fleet)).associateBy { it.id }
         fleetObjects("groups").map { group ->
             val members = group.optJSONArray("members")
             val rows = (0 until (members?.length() ?: 0))

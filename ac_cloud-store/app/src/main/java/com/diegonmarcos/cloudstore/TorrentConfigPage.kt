@@ -102,6 +102,16 @@ object TorrentConfigTags {
     const val SOURCE_CANCEL = "torrent_cfg:source-cancel"
     const val SOURCE_REMOVE = "torrent_cfg:source-remove"
     const val SOURCE_ERROR = "torrent_cfg:source-error"
+    // #1681 the catalogue entries of the user's own (kept on the device)
+    const val CATALOGUE = "torrent_cfg:catalogue"
+    const val CAT_NAME = "torrent_cfg:catalogue:name"
+    const val CAT_CATEGORY = "torrent_cfg:catalogue:category"
+    const val CAT_MAGNET = "torrent_cfg:catalogue:magnet"
+    const val CAT_URL = "torrent_cfg:catalogue:url"
+    const val CAT_ADD = "torrent_cfg:catalogue:add"
+    const val CAT_ERROR = "torrent_cfg:catalogue:error"
+    fun catEntry(id: String) = "torrent_cfg:catalogue:entry:$id"
+    fun catRemove(id: String) = "torrent_cfg:catalogue:remove:$id"
 }
 
 /** The source form's state: [editing] is the id of the source being edited, null for a new one. */
@@ -122,6 +132,7 @@ private data class Draft(val editing: String?, val id: String, val label: String
  *  - SEEDING: keep seeding, and the ratio limit.
  *  - SOURCES: the built-in indexers (declared in libs:torrent, read-only) and the user's own (add / edit / remove / switch, kept in
  *    SharedPreferences libs_torrent); Search > Torrent searches the built-ins and every enabled source of the user.
+ *  - CATALOGUE ENTRIES (#1681): the user's own Torrent catalogue entries (name, category, magnet or https .torrent), kept on the device.
  *  - ENGINE: whether the BitTorrent session is usable, with the reason when not.
  */
 @Composable
@@ -141,6 +152,12 @@ private fun TorrentConfigBody() {
     var draft by remember { mutableStateOf<Draft?>(null) }
     var formError by remember { mutableStateOf<String?>(null) }
     var confirmRemove by remember { mutableStateOf<String?>(null) }
+    var catRev by remember { mutableStateOf(0) }
+    var catName by remember { mutableStateOf("") }
+    var catCategory by remember { mutableStateOf("os") }
+    var catMagnet by remember { mutableStateOf("") }
+    var catUrl by remember { mutableStateOf("") }
+    var catError by remember { mutableStateOf<String?>(null) }
     val resumes = rememberPermsResumes()
     val granted = remember(rev, resumes) { PermsChip.missing(ctx, listOf("all_files")).isEmpty() }
 
@@ -282,6 +299,27 @@ private fun TorrentConfigBody() {
         confirmRemove?.let { id ->
             KitConfirmDialog("Remove this source?", "'$id' stops being searched. Torrents already downloaded from it are not touched.", "Remove", "Keep",
                 onConfirm = { sources.remove(id); confirmRemove = null; draft = null; srcRev++ }, onDismiss = { confirmRemove = null })
+        }
+
+        // ── Catalogue: the user's own entries (#1681) ──
+        KitSectionHeader("Catalogue entries", "Your own entries in the Torrent catalogue, kept on this phone. A magnet link or an https .torrent address.",
+            Modifier.testTag(TorrentConfigTags.CATALOGUE))
+        val mine = remember(catRev) { TorrentCatalogue.userEntries(ctx) }
+        KitCard {
+            if (mine.isEmpty()) Text("No entry of your own yet.", color = p.textSecondary, fontSize = KitDensity.caption)
+            mine.forEach { e ->
+                KitListRow(e.name, secondary = e.category + " · " + (e.magnet ?: e.torrentUrl ?: ""), tag = TorrentConfigTags.catEntry(e.id),
+                    trailing = { KitTextButton({ TorrentCatalogue.removeUser(ctx, e.id); catRev++ }, Modifier.testTag(TorrentConfigTags.catRemove(e.id))) { Text("Remove") } })
+            }
+            SourceField("Name", catName, TorrentConfigTags.CAT_NAME, hint = "My distro ISO") { catName = it }
+            SourceField("Category id", catCategory, TorrentConfigTags.CAT_CATEGORY, hint = "os, movies, software, …") { catCategory = it }
+            SourceField("Magnet link", catMagnet, TorrentConfigTags.CAT_MAGNET, hint = "magnet:?xt=urn:btih:…") { catMagnet = it }
+            SourceField(".torrent address (optional)", catUrl, TorrentConfigTags.CAT_URL, hint = "https://example.org/file.torrent") { catUrl = it }
+            catError?.let { Box(Modifier.testTag(TorrentConfigTags.CAT_ERROR)) { KitStatusBanner(it, KitState.BAD, tag = "torrent-catalogue-error") } }
+            KitActionBar(listOf(KitAction("Add to catalogue", TorrentConfigTags.CAT_ADD) {
+                catError = TorrentCatalogue.addUser(ctx, catName, catCategory.trim().lowercase(), catMagnet, catUrl)
+                if (catError == null) { catName = ""; catMagnet = ""; catUrl = ""; catRev++ }
+            }))
         }
 
         // ── Engine ──

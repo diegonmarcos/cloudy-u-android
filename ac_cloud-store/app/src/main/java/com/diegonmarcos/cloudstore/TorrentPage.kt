@@ -82,6 +82,8 @@ internal fun online(ctx: Context): Boolean = runCatching {
  * fetching metadata, checking, queued, paused, errors) and Completed (finished: seeding or done). The BitTorrent engine is libs:torrent; this
  * page only polls [TorrentEngine.refresh] about once a second while it is shown (the engine's own ticker applies the seeding policy
  * while it is not). The engine being unavailable, no network and an unusable folder are each said in words.
+ * Between the status and the lists: the CATALOGUE (#1681, [catalogueItems]): the declared torrent-catalogue dataset by category, plus
+ * the user's own entries, each handed to the engine or to the user's torrent app.
  */
 @Composable
 fun TorrentPage() {
@@ -94,6 +96,12 @@ fun TorrentPage() {
     var magnet by remember { mutableStateOf("") }
     var note by remember { mutableStateOf<String?>(null) }
     var armed by remember { mutableStateOf<String?>(null) }
+    // #1681 the declared catalogue (runtime dataset shared/torrent-catalogue) + the user's own entries from Configs > Torrent.
+    var catalogue by remember { mutableStateOf(CatalogueView()) }
+    LaunchedEffect(Unit) {
+        val (c, served) = withContext(Dispatchers.IO) { runCatching { TorrentCatalogue.load(ctx) }.getOrDefault(TorrentCatalogue.EMPTY to false) }
+        catalogue = catalogue.copy(catalogue = c, served = served, loaded = true)
+    }
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) { torrents.start() }
         while (true) {
@@ -133,6 +141,7 @@ fun TorrentPage() {
                 StatusLine(ctx, torrents, engineState, net, list)
             }
         }
+        catalogueItems(ctx, torrents, catalogue, { catalogue = it }, { note = it }, scope)
         item { Heading("Active (${active.size})", TorrentTags.ACTIVE) }
         if (active.isEmpty()) item { Dim("Nothing downloading. Paste a magnet link, import a .torrent, or search the Torrent sources in Search.") }
         items(active, key = { it.id }) { t -> TorrentRow(torrents, t, armed, { armed = it }, scope) }

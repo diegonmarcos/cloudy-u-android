@@ -44,7 +44,7 @@ object AppInventory {
 
     /** Every package id the fleet manifest names, alt ids included. */
     fun fleetPackages(): Set<String> =
-        PhoneAppActions.fleetByPackage(Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64)).keys
+        StoreMembership.fleetPackages(Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64))
 
     /** One [Entry] per installed package in [labels], sorted by package id. */
     fun entriesFor(ctx: Context, labels: Map<String, String>): List<Entry> {
