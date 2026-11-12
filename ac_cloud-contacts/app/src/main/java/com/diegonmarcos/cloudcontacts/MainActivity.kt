@@ -119,12 +119,15 @@ class MainActivity : AppCompatActivity() {
             if (id == "configs") goConfigs(configsPage) else { section = id; showWeb(id) }
         }
         val current = NAV.section(section)
+        val configs = if (section == "configs") NAV.section("configs") else null
+        // Configs ends with the fleet-default tail: {General + own tabs} | Agents, Perms, Logcat, X-Ray App, About (strip and dropdown).
+        val configsPages = if (configs != null) FleetConfigsExtensions.withTail(configs.pages) else emptyList()
         NavBarTopFirstRowScaffold(
             title = current?.label ?: getString(R.string.app_name),
             // #1483 every section, and under the open one its own pages (Configs: the declared pages + the fleet tail), so the title
             // dropdown lists the page a pick lands on and the title path ends in it
             hierarchy = NAV.bottomSections().flatMap { s ->
-                if (s.id == section && s.id == "configs") titleHierarchy(s.copy(pages = FleetConfigsExtensions.withTail(s.pages)), configsLeaf(s, configsPage))
+                if (configs != null && s.id == configs.id) titleHierarchy(configs.copy(pages = configsPages), configsLeaf(configs, configsPage))
                 else listOf(HierarchyEntry(s.id, s.label, 0, s.id, selected = s.id == section))
             },
             onNavigate = { e -> if (e.depth > 0 && e.sectionId == "configs") goConfigs(e.id) else go(e.sectionId) },
@@ -147,12 +150,10 @@ class MainActivity : AppCompatActivity() {
                 onSelect = { go(it.id) },
             ) {
                 Column(Modifier.fillMaxSize()) {
-                    val configs = if (section == "configs") NAV.section("configs") else null
                     val page = configsLeaf(configs, configsPage)
                     if (configs != null) {
                         NavBarTopSecondRow(
-                            // Configs ends with the fleet-default tail: {General + own tabs} | Agents, Perms, Logcat, X-Ray App, About.
-                            pages = FleetConfigsExtensions.withTail(configs.pages),
+                            pages = configsPages,
                             selectedId = page,
                             onSelect = { p -> goConfigs(p.leaf().id) },
                             underTopChrome = false,
