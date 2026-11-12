@@ -53,7 +53,11 @@ else
     READELF="$TC/bin/llvm-readelf"
     HOST_ARGS=(--host="$TRIPLE")
 fi
-export CFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC" CPPFLAGS="-I$PREFIX/include" LDFLAGS="-L$PREFIX/lib"
+# The host gcc (15+ on ubuntu-26.04) defaults to C23, where gmp 6.3.0's configure probe
+# ("long long reliability test 1": an empty-parens declaration called with arguments)
+# fails and gmp reports "no working compiler". Pin the C dialect gmp 6.3.0 was written for.
+CSTD=""; [ "$KIND" = host ] && CSTD=" -std=gnu17"
+export CFLAGS="-O2 -fPIC$CSTD" CXXFLAGS="-O2 -fPIC" CPPFLAGS="-I$PREFIX/include" LDFLAGS="-L$PREFIX/lib"
 # Only this prefix's .pc files: a host libxml2 must never satisfy a cross build.
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig" PKG_CONFIG_LIBDIR="$PREFIX/lib/pkgconfig"
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # emulator-configs-tabs — #1443 screenshots on a booted emulator of one app's Configs screen: open Configs from the app's
-# own entry (the first row's three dots; Cloud C3's top bar menu), then each of the tabs General | Perms | About, taken
-# from the APK a Ship run built. Exit 1 when a tab is not on the screen (the strip must read General, Perms, About).
+# own entry (the first row's three dots; Cloud C3's top bar menu), then each tail tab (#1630: {own tabs} | Agents, Perms,
+# Logcat, X-Ray App, About; the strip scrolls), taken from the APK a Ship run built. Exit 1 when a tail tab cannot be
+# reached or the strip is not {own tabs} then the five tail tabs in that order.
 # Usage: emulator-configs-tabs.sh APK PACKAGE NAME OUT_DIR
 set -uo pipefail
 APK="$1"; PKG="$2"; NAME="$3"; OUT="$4"; mkdir -p "$OUT"
@@ -39,6 +40,9 @@ dismiss() {
         dump cur
         # Cloud Drive's start gate (no terminal installed): continue with local files
         if grep -q 'Continue with local files' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^Continue with local files$'; sleep 6; continue; fi
+        # the fleet's own install-source ask (Skip), or Android's "not allowed to install unknown apps" (Cancel)
+        if grep -q 'text="Install unknown apps"' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^Skip$'; then sleep 3; continue; fi
+        if grep -qiE 'allowed to install unknown apps' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^cancel$' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; continue; fi
         if grep -qiE 'wireless debugging|Allow .* on this network' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^cancel$|^don.t allow$' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; else break; fi
     done
 }
@@ -57,24 +61,71 @@ shot start 2
 dump cur
 if tap_node "$OUT/cur.xml" 'configs'; then :; elif tap_node "$OUT/cur.xml" 'more options|settings'; then sleep 2; dump cur; tap_node "$OUT/cur.xml" '^configs$' || true; fi
 dismiss
-shot configs-open 6
-for tab in General Perms About; do
+dump cur
+if ! grep -qE 'text="(Agents|Perms|Logcat|X-Ray App|About)"' "$OUT/cur.xml"; then
+    if tap_node "$OUT/cur.xml" 'configs'; then :; elif tap_node "$OUT/cur.xml" 'more options|settings'; then sleep 2; dump cur; tap_node "$OUT/cur.xml" '^configs$' || true; fi
     dismiss
-    if tap_node "$OUT/cur.xml" "^$tab\$"; then shot "tab-$tab" 5; else echo "FAIL $NAME: no $tab tab on screen"; rc=1; fi
-done
-# the strip must read General, Perms, About in that order (first x of each label on the Configs screen)
-python3 - "$OUT/$NAME-configs-open.xml" <<'PY' || rc=1
+fi
+shot configs-open 6
+# #1630: every strip is {own tabs} | Agents, Perms, Logcat, X-Ray App, About. The strip scrolls, so the tail can sit
+# off screen: walk it right to left with swipes on the strip row, collecting the labels in on-screen order.
+strip_labels() { # XML -> "y label x" per tab of the strip row (the row that holds a tail label)
+    python3 - "$1" <<'PY'
 import re, sys
 x = open(sys.argv[1], errors="ignore").read()
-pos = {}
-for lab in ("General", "Perms", "About"):
-    m = re.search(r'text="%s"[^>]*bounds="\[(\d+),' % lab, x)
-    pos[lab] = int(m.group(1)) if m else None
-print("tab x positions:", pos)
-v = [pos[k] for k in ("General", "Perms", "About")]
-sys.exit(0 if None not in v and v == sorted(v) else 1)
+tail = ("Agents", "Perms", "Logcat", "X-Ray App", "About")
+nodes = []
+for m in re.finditer(r'<node ([^>]*)>', x):
+    a = m.group(1)
+    t = (re.search(r'text="([^"]*)"', a) or [None, ""])[1]
+    b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', a)
+    if t and b: l, tp, r, d = map(int, b.groups()); nodes.append((t, l, (tp + d) // 2))
+rows = [y for t, _, y in nodes if t in tail]
+if not rows: sys.exit(0)
+y0 = min(rows)  # the strip sits above the page body
+for t, l, y in sorted(nodes, key=lambda n: n[1]):
+    if abs(y - y0) <= 24 and len(t) <= 24: print(y, t, l, sep="\t")
 PY
-[ $? -eq 0 ] || { echo "FAIL $NAME: General | Perms | About not in that order on the Configs strip"; rc=1; }
+}
+order=()
+merge() { # append labels not seen yet, in on-screen order
+    local y lab x seen o
+    while IFS=$'\t' read -r y lab x; do
+        [ -n "$lab" ] || continue; seen=0
+        for o in "${order[@]}"; do [ "$o" = "$lab" ] && seen=1; done
+        [ $seen = 1 ] || order+=("$lab"); ROW_Y="$y"
+    done < <(strip_labels "$1")
+}
+ROW_Y=""
+merge "$OUT/$NAME-configs-open.xml"
+W="$($T adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | cut -dx -f1)"; W="${W:-1080}"
+for i in 1 2 3 4 5 6; do
+    [ -n "$ROW_Y" ] || break
+    $T adb shell input swipe $((W * 8 / 10)) "$ROW_Y" $((W * 2 / 10)) "$ROW_Y" 400; sleep 1; dump "strip-$i"; merge "$OUT/strip-$i.xml"
+done
+echo "strip order: ${order[*]}"
+# tap every tail tab: from the strip's right end, swipe back left until the label is on screen
+for tab in Agents Perms Logcat "X-Ray App" About; do
+    dismiss; found=0
+    for i in 0 1 2 3 4 5 6; do
+        dump cur
+        if tap_node "$OUT/cur.xml" "^$tab\$"; then found=1; break; fi
+        [ -n "$ROW_Y" ] && $T adb shell input swipe $((W * 2 / 10)) "$ROW_Y" $((W * 8 / 10)) "$ROW_Y" 400; sleep 1
+    done
+    if [ $found = 1 ]; then shot "tab-${tab// /-}" 5; else echo "FAIL $NAME: no $tab tab on the Configs strip"; rc=1; fi
+    # back to the strip's right end for the next one
+    [ -n "$ROW_Y" ] && for i in 1 2 3; do $T adb shell input swipe $((W * 8 / 10)) "$ROW_Y" $((W * 2 / 10)) "$ROW_Y" 300; done
+done
+# the strip must end with the five tail tabs in that order, after at least one of the app's own tabs
+python3 - "${order[@]}" <<'PY' || rc=1
+import sys
+o = sys.argv[1:]; tail = ["Agents", "Perms", "Logcat", "X-Ray App", "About"]
+pos = [o.index(t) if t in o else None for t in tail]
+print("tail positions in the strip:", dict(zip(tail, pos)))
+ok = None not in pos and pos == sorted(pos) and any(t != "|" for t in o[:pos[0]]) and pos[-1] == len(o) - 1
+sys.exit(0 if ok else 1)
+PY
+[ $? -eq 0 ] || { echo "FAIL $NAME: the Configs strip is not {own tabs} | Agents, Perms, Logcat, X-Ray App, About"; rc=1; }
 $T adb logcat -d -t 3000 > "$OUT/$NAME-logcat.txt"
 grep -E "FATAL EXCEPTION" -A12 "$OUT/$NAME-logcat.txt" | grep -B2 -A12 "$PKG" | head -40 > "$OUT/$NAME-crash.txt" || true
 [ -s "$OUT/$NAME-crash.txt" ] && { echo "FAIL $NAME: crash in logcat"; rc=1; }
