@@ -33,6 +33,9 @@ pitest {
     pitestVersion = '1.22.1'
     targetClasses = ['com.diegonmarcos.clocktools.ClockLogic*', 'com.diegonmarcos.clocktools.ClockCodec*',
                      'com.diegonmarcos.clocktools.Sun*', 'com.diegonmarcos.clocktools.WorldTable*']
+    // Every suite of the module (WorldClockTest holds Sun / WorldTable / ClockConfig); by default PIT would only run the
+    // tests whose names match targetClasses.
+    targetTests = ['com.diegonmarcos.clocktools.*Test']
     excludedMethods = ['equals', 'hashCode', 'toString', 'copy', 'copy$default', 'component*']
     avoidCallsTo = ['kotlin.jvm.internal']
     threads = 2
