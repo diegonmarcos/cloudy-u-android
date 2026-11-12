@@ -14,7 +14,6 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -69,11 +68,14 @@ class IdentifyActivity : AppCompatActivity() {
     @Volatile private var listening = false
     private var capture: ImageCapture? = null
 
-    private val cameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
-        if (ok) startCamera() else { status.setText(R.string.identify_camera_denied) }
-    }
-    private val micPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
-        if (ok) startListening() else status.setText(R.string.identify_mic_denied)
+    /** #1515 the camera / microphone grants live in Configs > Perms: a missing one opens the page on its row once, and
+     *  [onResume] starts what was waiting when the grant came back (or says it is still missing). */
+    private var askedCamera = false
+    private var cameraStarted = false
+    private var askedMic = false
+
+    private fun openPerms(feature: String, id: String) {
+        runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(this, feature, listOf(id)) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,13 +110,16 @@ class IdentifyActivity : AppCompatActivity() {
         setContentView(root)
         select(mode)
 
-        if (granted(Manifest.permission.CAMERA)) startCamera() else cameraPermission.launch(Manifest.permission.CAMERA)
+        if (granted(Manifest.permission.CAMERA)) { cameraStarted = true; startCamera() }
+        else { askedCamera = true; status.setText(R.string.identify_camera_denied); openPerms("Identify: camera", "camera") }
         // The handshake costs a package lookup and a bind; say what is missing before the first frame does.
         io.execute { val why = scanner.detectStatus(); if (why != null) runOnUiThread { status.text = why } }
     }
 
     override fun onResume() {
         super.onResume()
+        if (askedCamera && !cameraStarted && granted(Manifest.permission.CAMERA)) { cameraStarted = true; startCamera() }
+        if (askedMic && !granted(Manifest.permission.RECORD_AUDIO)) { askedMic = false; status.setText(R.string.identify_mic_denied); return }
         if (mode == SOUND) startListening()
     }
 
@@ -199,7 +204,11 @@ class IdentifyActivity : AppCompatActivity() {
 
     /** Sound mode: listen for the declared capture length, name what was heard, again, until the mode changes. */
     private fun startListening() {
-        if (!granted(Manifest.permission.RECORD_AUDIO)) { micPermission.launch(Manifest.permission.RECORD_AUDIO); return }
+        if (!granted(Manifest.permission.RECORD_AUDIO)) {
+            if (!askedMic) { askedMic = true; openPerms("Identify: sound", "microphone") } else status.setText(R.string.identify_mic_denied)
+            return
+        }
+        askedMic = false
         if (listening) return
         listening = true
         status.setText(R.string.identify_listening)

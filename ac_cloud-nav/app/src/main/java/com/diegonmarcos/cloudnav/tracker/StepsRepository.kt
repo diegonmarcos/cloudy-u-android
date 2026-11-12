@@ -30,7 +30,6 @@ import java.util.Locale
 class StepsRepository(private val ctx: Context) {
     companion object {
         val READ_STEPS: Set<String> = setOf(HealthPermission.getReadPermission(StepsRecord::class))
-        fun permissionContract() = PermissionController.createRequestPermissionResultContract()
         private const val HISTORY_DAYS = 400L
     }
 

@@ -7,6 +7,8 @@
     <!-- #1360 EnergyWatchdog reads per-app foreground time with UsageStatsManager: without this (and the Usage access
          toggle it unlocks, granted from Configs > General > Perms) every query came back empty, silently. -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+    <!-- #1515 Configs > Perms row battery_opt: its Grant opens the one-tap "stop optimising" dialog (the tracker must survive Doze). -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- About page Wi-Fi section: SSID/BSSID need this AND ACCESS_FINE_LOCATION
          (Android 10+ scoped Wi-Fi info). -->

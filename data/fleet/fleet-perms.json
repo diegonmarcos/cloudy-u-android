@@ -342,7 +342,9 @@
     "activity_recognition",
     "health_connect",
     "install_unknown",
-    "usage_access"
+    "usage_access",
+    "battery_opt",
+    "samsung_never_sleeping"
    ],
    "helpers": []
   },

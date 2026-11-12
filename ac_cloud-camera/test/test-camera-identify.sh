@@ -102,7 +102,7 @@ def checks(s):
     need("I5 the shutter saves through IdentifySnapshot", "IdentifySnapshot.save(this@IdentifyActivity, tmp, atShot, ambient, scanner)" in a)
     # I6
     need("I6 Sound mode listens through SoundIdentifier", "sound.listen()" in a)
-    need("I6 the microphone is asked for", "micPermission.launch(Manifest.permission.RECORD_AUDIO)" in a)
+    need("I6 the microphone is asked for in Configs > Perms (#1515)", 'openPerms("Identify: sound", "microphone")' in a and "RequestPermission" not in a)
     need("I6 a failure stops the loop", "if (!r.ok) break" in a)
     # I7
     need("I7 /api/<image_group>/detect is served", '"detect" -> detect(app, q)' in pr and "scanner.detect(f, mode)" in pr)

@@ -88,12 +88,9 @@ class UpdateConfigFragment : KitComposeFragment() {
     }
 
     private fun openUnknownSourcesSettings() {
+        // #1515 the install grant lives in Configs > Perms: open it on the install_unknown row.
         val ctx = context ?: return
-        runCatching {
-            startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${ctx.packageName}")))
-        }.onFailure {
-            runCatching { startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)) }
-        }
+        runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "Auto-update", listOf("install_unknown")) }
     }
 }
 

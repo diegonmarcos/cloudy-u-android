@@ -47,7 +47,6 @@ import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
@@ -307,44 +306,40 @@ open class MainActivity : AppCompatActivity(),
         handler.removeCallbacks(runnable)
     }
 
-    private val restartRecordingWithAudioPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            shouldRestartRecording = true
-            camConfig.startCamera(true)
-            return@registerForActivityResult
-        }
-        showAudioPermissionDeniedDialog {
-            videoCapturer.startRecording()
-        }
+    /**
+     * #1515 every grant of this screen (camera, microphone, location) is asked in Configs > Perms (libs:perms): a missing
+     * one opens the page on its rows ONCE per screen; [onResume] re-checks it when the user comes back ([checkPermissions],
+     * [resumeAfterPerms]). Never throws.
+     */
+    private var askedPerms = emptySet<String>()
+    private var pendingMicRestart = false
+
+    private fun openPerms(feature: String, ids: List<String>): Boolean {
+        if (askedPerms.containsAll(ids)) return false
+        askedPerms = askedPerms + ids
+        runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(this, feature, ids) }
+        return true
     }
 
-    // Used to request permission from the user
-    private val requestPermissionLauncher = registerForActivityResult(
-        RequestMultiplePermissions()
-    ) { permissions: Map<String, Boolean> ->
-        if (permissions.containsKey(Manifest.permission.RECORD_AUDIO)) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED
-            ) {
-                Log.i(TAG, "Permission granted for recording audio.")
-            } else {
-                Log.i(TAG, "Permission denied for recording audio.")
-                showAudioPermissionDeniedDialog()
-            }
-        }
-        if (permissions.containsKey(Manifest.permission.CAMERA)) {
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.CAMERA
-                ) ==
-                PackageManager.PERMISSION_GRANTED
-            ) {
-                Log.i(TAG, "Permission granted for camera.")
-            } else {
-                Log.i(TAG, "Permission denied for camera.")
-            }
+    /** #1515 "denied once, Android would ask again" for every one of [ids], read by libs:perms (Perms.status), the same
+     *  state Configs > Perms shows. False when unknown. */
+    private fun deniedOnce(vararg ids: String): Boolean = ids.all { id ->
+        runCatching {
+            val e = com.diegonmarcos.superapp.perms.Perms.catalogue(this).entries.firstOrNull { it.id == id } ?: return@runCatching false
+            val st = com.diegonmarcos.superapp.perms.Perms.status(this, e, this)
+            st.state == com.diegonmarcos.superapp.perms.PermState.DENIED && st.reason.contains("denied once")
+        }.getOrDefault(false)
+    }
+
+    /** Back from Configs > Perms: the recording that waited for the microphone restarts, or keeps going without audio. */
+    private fun resumeAfterPerms() {
+        if (!pendingMicRestart) return
+        pendingMicRestart = false
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            shouldRestartRecording = true
+            camConfig.startCamera(true)
+        } else {
+            showAudioPermissionDeniedDialog { videoCapturer.startRecording() }
         }
     }
 
@@ -371,15 +366,9 @@ open class MainActivity : AppCompatActivity(),
             .setTitle(R.string.audio_permission_dialog_title)
             .setMessage(R.string.audio_permission_dialog_message)
 
-        // Open the settings menu for the current app
+        // #1515 the microphone grant lives in Configs > Perms: open it on that row
         builder.setPositiveButton(R.string.settings) { _: DialogInterface?, _: Int ->
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-            val uri = Uri.fromParts(
-                "package",
-                packageName, null
-            )
-            intent.data = uri
-            startActivity(intent)
+            runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(this, "Camera: video audio", listOf("microphone")) }
         }
         builder.setNegativeButton(R.string.cancel, null)
 
@@ -576,7 +565,7 @@ open class MainActivity : AppCompatActivity(),
                 // Setup the camera since the permission is available
                 camConfig.initializeCamera()
             }
-            shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) -> {
+            deniedOnce("camera") -> {
 
                 Log.i(TAG, "The user has default denied camera permission.")
 
@@ -588,15 +577,10 @@ open class MainActivity : AppCompatActivity(),
                 val positiveClicked = AtomicBoolean(false)
 
                 // Open the settings menu for the current app
+                // #1515 the camera grant lives in Configs > Perms: open it on that row
                 builder.setPositiveButton(R.string.settings) { _: DialogInterface?, _: Int ->
                     positiveClicked.set(true)
-                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    val uri = Uri.fromParts(
-                        "package",
-                        packageName, null
-                    )
-                    intent.data = uri
-                    startActivity(intent)
+                    runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(this, "Camera", listOf("camera")) }
                 }
                 builder.setNegativeButton(R.string.cancel, null)
                 builder.setOnDismissListener {
@@ -616,7 +600,12 @@ open class MainActivity : AppCompatActivity(),
             else -> {
                 Log.i(TAG, "Requesting permission from user...")
 
-                requestPermissionLauncher.launch(cameraPermission)
+                // #1515 asked in Configs > Perms (once per screen); back here without it, the screen closes as it
+                // always did when the camera grant is refused (the app cannot work without it).
+                if (!openPerms("Camera", listOf("camera"))) {
+                    Log.i(TAG, "Permission denied for camera.")
+                    finish()
+                }
             }
         }
 
@@ -675,6 +664,7 @@ open class MainActivity : AppCompatActivity(),
         // after enabling/disabling the camera permission in Settings)
         // Will also be called by Android Lifecycle when the app starts up
         checkPermissions()
+        resumeAfterPerms()
 
         if (camConfig.isQRMode) {
             startFocusTimer()
@@ -1163,7 +1153,8 @@ open class MainActivity : AppCompatActivity(),
     }
 
     fun restartRecordingWithMicPermission() {
-        restartRecordingWithAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        pendingMicRestart = true
+        if (!openPerms("Camera: video audio", listOf("microphone"))) resumeAfterPerms()
     }
 
     private fun shareLatestMedia() {
@@ -1938,12 +1929,11 @@ open class MainActivity : AppCompatActivity(),
         }
     }
 
-    // Used to request permission from the user
-    private val locationPermissionLauncher = registerForActivityResult(
-        RequestMultiplePermissions()
-    ) {
+    /** #1515 back from Configs > Perms without the location grant (or asked already): geotagging goes off, as when the
+     *  system dialog was refused; with it, location updates start. */
+    private fun onLocationPermsResult() {
         if (!application.shouldAskForLocationPermission()) {
-            requestLocation()
+            application.requestLocationUpdates(false)
         } else {
             camConfig.requireLocation = false
         }
@@ -1952,20 +1942,15 @@ open class MainActivity : AppCompatActivity(),
     private fun requestLocation(reAttach: Boolean = false) {
 
         when {
-            ActivityCompat.shouldShowRequestPermissionRationale(
-                this, Manifest.permission.ACCESS_FINE_LOCATION
-            ) && ActivityCompat.shouldShowRequestPermissionRationale(
-                this, Manifest.permission.ACCESS_COARSE_LOCATION
-            ) -> {
+            deniedOnce("fine_location", "coarse_location") -> {
                 MaterialAlertDialogBuilder(this).let {
                     it.setTitle(R.string.location_permission_dialog_title)
                     it.setMessage(R.string.location_permission_dialog_message)
 
                     if (this !is SecureActivity) {
+                        // #1515 the location grants live in Configs > Perms: open it on those rows
                         it.setPositiveButton(R.string.settings) { _, _ ->
-                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                            intent.data = Uri.fromParts("package", packageName, null)
-                            this.startActivity(intent)
+                            runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(this, "Camera: geotag", listOf("fine_location", "coarse_location")) }
                         }
                     }
 
@@ -1990,12 +1975,10 @@ open class MainActivity : AppCompatActivity(),
                 application.requestLocationUpdates(reAttach)
             }
             else -> {
-                locationPermissionLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    )
-                )
+                // #1515 asked in Configs > Perms (once per screen); back here without it, geotagging stays off.
+                // The camera grant goes first: location is asked on the resume after it is held.
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) return
+                if (!openPerms("Camera: geotag", listOf("coarse_location", "fine_location"))) onLocationPermsResult()
             }
         }
     }

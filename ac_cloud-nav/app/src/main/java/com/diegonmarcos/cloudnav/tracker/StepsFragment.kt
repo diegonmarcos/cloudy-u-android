@@ -16,7 +16,8 @@ class StepsFragment : KitComposeFragment() {
     private var ui by mutableStateOf(StepsUi(loading = true))
     private var period by mutableStateOf(Period.DAY)
 
-    private val askHealth = registerForActivityResult(StepsRepository.permissionContract()) { load() }
+    /** #1515 the Health Connect read grant lives in Configs > Perms (row health_connect); [onResume] reloads on return. */
+    private fun askHealth() { runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(requireContext(), "Steps", listOf("health_connect")) } }
 
     override fun palette(): KitPalette = TrackerInk.palette()
 
@@ -25,7 +26,7 @@ class StepsFragment : KitComposeFragment() {
     @Composable
     override fun Content() {
         StepsScreen(ui, period, { period = it },
-            onGrant = { askHealth.launch(StepsRepository.READ_STEPS) },
+            onGrant = { askHealth() },
             onInstall = {
                 runCatching {
                     startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.healthdata&url=healthconnect%3A%2F%2Fonboarding"))

@@ -26,7 +26,8 @@ import java.util.Date
 class TrackerEngineFragment : KitComposeFragment() {
     private var ui by mutableStateOf(EngineUi())
 
-    private val askPerms = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { refresh() }
+    /** #1515 location / activity grants live in Configs > Perms: open it on those rows; [onResume] refreshes on return. */
+    private fun askPerms(feature: String, ids: List<String>) { runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(requireContext(), feature, ids) } }
 
     override fun palette(): KitPalette = TrackerInk.palette()
 
@@ -58,11 +59,11 @@ class TrackerEngineFragment : KitComposeFragment() {
     private fun request(p: Perm) {
         val g = granted()
         when (p) {
-            Perm.LOCATION -> askPerms.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+            Perm.LOCATION -> askPerms("Tracker: location", listOf("fine_location", "coarse_location"))
             // Android only offers "all the time" after the foreground grant, as its own step
             Perm.BACKGROUND -> if (Perm.LOCATION !in g) request(Perm.LOCATION)
-                else if (Build.VERSION.SDK_INT >= 29) askPerms.launch(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
-            Perm.ACTIVITY -> if (Build.VERSION.SDK_INT >= 29) askPerms.launch(arrayOf(Manifest.permission.ACTIVITY_RECOGNITION))
+                else if (Build.VERSION.SDK_INT >= 29) askPerms("Tracker: background location", listOf("background_location"))
+            Perm.ACTIVITY -> if (Build.VERSION.SDK_INT >= 29) askPerms("Tracker: activity", listOf("activity_recognition"))
         }
     }
 

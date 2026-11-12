@@ -47,14 +47,15 @@ class TrackerStepsFragment : KitComposeFragment() {
     private var needsPermission by mutableStateOf(false)
     private var loading by mutableStateOf(true)
 
-    private val askHealth = registerForActivityResult(StepsRepository.permissionContract()) { load() }
+    /** #1515 the Health Connect read grant lives in Configs > Perms (row health_connect); [onResume] reloads on return. */
+    private fun askHealth() { runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(requireContext(), "Tracker steps", listOf("health_connect")) } }
 
     override fun palette(): KitPalette = TrackerInk.palette()
     override fun onResume() { super.onResume(); load() }
 
     @Composable
     override fun Content() {
-        TrackerStepsScreen(rows, status, hint, needsPermission, loading) { askHealth.launch(StepsRepository.READ_STEPS) }
+        TrackerStepsScreen(rows, status, hint, needsPermission, loading) { askHealth() }
     }
 
     private fun load() {

@@ -49,26 +49,12 @@ class DevControlFragment : KitComposeFragment() {
      *  every [buildAbout] so it stays in sync after a reattach. */
     private var infoBuf = StringBuilder()
 
-    /** Standard permission request — wired to the Notifications button
-     *  in the Permissions section. Re-renders the fragment on result so
-     *  the row's ✓ / ✗ updates without a manual refresh. */
-    private val notifPermLauncher =
-        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {
-            Toast.makeText(requireContext(),
-                if (it) "Notifications: granted" else "Notifications: denied",
-                Toast.LENGTH_SHORT).show()
-            rebuildFragment()
-        }
-
-    /** Bulk request — wired to the "Request All Permissions" button. */
-    private val allPermsLauncher =
-        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) { result ->
-            val granted = result.count { it.value }
-            val denied  = result.size - granted
-            Toast.makeText(requireContext(),
-                "Permissions: $granted granted, $denied denied", Toast.LENGTH_SHORT).show()
-            rebuildFragment()
-        }
+    /** #1515 every grant of this page is asked, checked and granted in Configs > Perms: open it on [ids] (highlighted).
+     *  The rows here re-read their state when the page resumes. Never throws. */
+    private fun perms(feature: String, ids: List<String>) {
+        val ctx = context ?: return
+        runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, feature, ids) }
+    }
 
     /** Rebuilds this fragment in place so every Permission row re-reads
      *  its current grant state. Cheaper than rendering a full diff. */
@@ -82,20 +68,13 @@ class DevControlFragment : KitComposeFragment() {
     private fun ctxAny(): Context = requireContext()
 
     private fun requestNotificationsPermission() {
-        if (android.os.Build.VERSION.SDK_INT >= 33) {
-            // Track that we asked so the "Denied (don't ask)" vs "Not
-            // requested" disambiguation works on future renders.
-            PermAskTracker(requireContext()).markAsked("android.permission.POST_NOTIFICATIONS")
-            notifPermLauncher.launch("android.permission.POST_NOTIFICATIONS")
-        } else {
-            Toast.makeText(requireContext(),
-                "Pre-API 33 — notifications granted by default", Toast.LENGTH_SHORT).show()
-        }
+        perms("Notifications", listOf("notifications"))
     }
 
     private fun requestAllPermissions(perms: Array<String>) {
-        PermAskTracker(requireContext()).markAskedAll(perms.toList())
-        allPermsLauncher.launch(perms)
+        // #1515 the runtime grants are asked by Configs > Perms (its Ask walks every missing row).
+        val ids = runCatching { com.diegonmarcos.superapp.perms.PermsNeeds.idsFor(requireContext(), perms.toList()) }.getOrDefault(emptyList())
+        perms("Request all", ids)
     }
 
     /**
@@ -114,10 +93,14 @@ class DevControlFragment : KitComposeFragment() {
             android.content.pm.PackageManager.PERMISSION_GRANTED
         if (granted) return "✓ Granted"
         val act = activity ?: return "✗ Denied"
-        val rationale = runCatching {
-            androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(act, perm)
-        }.getOrDefault(false)
-        if (rationale) return "⏳ Ask each time"
+        // #1515 the rationale / permanent-denial reading is libs:perms' own (Perms.status), the same the Perms page shows.
+        val entry = runCatching { com.diegonmarcos.superapp.perms.Perms.catalogue(ctx).entries.firstOrNull { it.permission == perm } }.getOrNull()
+        val st = entry?.let { e -> runCatching { com.diegonmarcos.superapp.perms.Perms.status(ctx, e, act) }.getOrNull() }
+        if (st != null) when {
+            st.state == com.diegonmarcos.superapp.perms.PermState.GRANTED -> return "✓ Granted"
+            st.state == com.diegonmarcos.superapp.perms.PermState.PERMANENTLY_DENIED -> return "✗ Denied (don't ask)"
+            st.reason.contains("denied once") -> return "⏳ Ask each time"
+        }
         val askedBefore = PermAskTracker(ctx).hasBeenRequested(perm)
         return if (askedBefore) "✗ Denied (don't ask)" else "◯ Not requested"
     }
@@ -127,35 +110,14 @@ class DevControlFragment : KitComposeFragment() {
      *  Background rows in the Battery & Usage section start reading
      *  real numbers instead of "Needs Usage Access". */
     private fun openUsageAccessSettings() {
-        runCatching {
-            startActivity(android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))
-        }
+        perms("Usage access", listOf("usage_access"))
     }
 
     /** Open Settings → "Display over other apps" scoped to this app, so the
      *  user grants SYSTEM_ALERT_WINDOW. Falls back to the global list, then
      *  this app's details screen. */
     private fun openOverlaySettings() {
-        val ctx = requireContext()
-        val scoped = android.content.Intent(
-            android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            android.net.Uri.fromParts("package", ctx.packageName, null),
-        )
-        if (scoped.resolveActivity(ctx.packageManager) != null) {
-            runCatching { startActivity(scoped) }
-            return
-        }
-        val list = android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-        if (list.resolveActivity(ctx.packageManager) != null) {
-            runCatching { startActivity(list) }
-            return
-        }
-        runCatching {
-            startActivity(android.content.Intent(
-                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                android.net.Uri.fromParts("package", ctx.packageName, null),
-            ))
-        }
+        perms("Display over apps", listOf("overlay"))
     }
 
     /** Open Settings → "Install unknown apps" scoped to this app so the user
@@ -163,26 +125,7 @@ class DevControlFragment : KitComposeFragment() {
      *  (USER_ACTION_NOT_REQUIRED) from a still-prompting session into a real
      *  no-tap install. Falls back to the global list, then app details. */
     private fun openUnknownAppSourcesSettings() {
-        val ctx = requireContext()
-        val scoped = android.content.Intent(
-            android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-            android.net.Uri.fromParts("package", ctx.packageName, null),
-        )
-        if (scoped.resolveActivity(ctx.packageManager) != null) {
-            runCatching { startActivity(scoped) }
-            return
-        }
-        val list = android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
-        if (list.resolveActivity(ctx.packageManager) != null) {
-            runCatching { startActivity(list) }
-            return
-        }
-        runCatching {
-            startActivity(android.content.Intent(
-                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                android.net.Uri.fromParts("package", ctx.packageName, null),
-            ))
-        }
+        perms("Auto-update", listOf("install_unknown"))
     }
 
     /** Jump to the system "Default apps" picker (Phone app · Caller ID &
@@ -217,21 +160,7 @@ class DevControlFragment : KitComposeFragment() {
      *       stripped AOSP forks). From the app-details page the user
      *       still reaches Battery → Optimisation. */
     private fun openBatteryOptimizationSettings() {
-        val primary = android.content.Intent(
-            android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS,
-        )
-        if (primary.resolveActivity(requireContext().packageManager) != null) {
-            runCatching { startActivity(primary) }
-            return
-        }
-        runCatching {
-            startActivity(
-                android.content.Intent(
-                    android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    android.net.Uri.fromParts("package", requireContext().packageName, null),
-                )
-            )
-        }
+        perms("Battery optimisation", listOf("battery_opt"))
     }
 
     /** Open Settings → Special access → All files access → this app, so
@@ -242,33 +171,7 @@ class DevControlFragment : KitComposeFragment() {
      *  after the bulk-grant. Pre-API-30 falls back to the
      *  generic app details screen. */
     private fun openManageAllFilesSettings() {
-        val ctx = requireContext()
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            val primary = android.content.Intent(
-                android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                android.net.Uri.fromParts("package", ctx.packageName, null),
-            )
-            if (primary.resolveActivity(ctx.packageManager) != null) {
-                runCatching { startActivity(primary) }
-                return
-            }
-            // Some OEMs ship without the scoped picker — jump to the
-            // global list of all-files-access apps so the user can scroll
-            // to ours.
-            val list = android.content.Intent(
-                android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION,
-            )
-            if (list.resolveActivity(ctx.packageManager) != null) {
-                runCatching { startActivity(list) }
-                return
-            }
-        }
-        runCatching {
-            startActivity(android.content.Intent(
-                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                android.net.Uri.fromParts("package", ctx.packageName, null),
-            ))
-        }
+        perms("All files access", listOf("all_files"))
     }
 
     /** Open Samsung's "Background usage limits → Never sleeping apps"
@@ -295,30 +198,7 @@ class DevControlFragment : KitComposeFragment() {
      *  Samsung renames an activity the tier just doesn't resolve and
      *  the chain falls through to the next. */
     private fun openSamsungNeverSleepingSettings() {
-        val ctx = requireContext()
-        val pkg = ctx.packageName
-        val attempts = listOf<android.content.Intent>(
-            android.content.Intent("com.samsung.android.sm.ACTION_BACKGROUND_USAGE_LIMITS"),
-            android.content.Intent().setComponent(android.content.ComponentName(
-                "com.samsung.android.lool",
-                "com.samsung.android.sm.battery.ui.BatteryActivity",
-            )),
-            android.content.Intent().setComponent(android.content.ComponentName(
-                "com.samsung.android.lool",
-                "com.samsung.android.sm.ui.battery.BatteryActivity",
-            )),
-            android.content.Intent(android.provider.Settings.ACTION_BATTERY_SAVER_SETTINGS),
-            android.content.Intent(
-                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                android.net.Uri.fromParts("package", pkg, null),
-            ),
-        )
-        for (intent in attempts) {
-            if (intent.resolveActivity(ctx.packageManager) != null) {
-                runCatching { startActivity(intent) }
-                return
-            }
-        }
+        perms("Samsung never-sleeping apps", listOf("samsung_never_sleeping"))
     }
 
     /** Read per-app foreground + background time from UsageStatsManager.
@@ -363,11 +243,7 @@ class DevControlFragment : KitComposeFragment() {
     }
 
     private fun openAppSettings() {
-        val intent = android.content.Intent(
-            android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            android.net.Uri.fromParts("package", requireContext().packageName, null),
-        )
-        startActivity(intent)
+        runCatching { com.diegonmarcos.superapp.perms.PermsPages.openAppInfo(requireContext(), requireContext().packageName) }
     }
 
     override fun palette(): KitPalette = TrackerInk.palette()
@@ -595,7 +471,7 @@ class DevControlFragment : KitComposeFragment() {
             if (specialAccessDumpGranted(ctxAny()).not()) {
                 it.add(actionButton(ctx, "Copy DUMP grant command for adb") {
                     val pkg = ctxAny().packageName
-                    val cmd = "adb shell pm grant $pkg android.permission.DUMP"
+                    val cmd = "adb shell " + com.diegonmarcos.superapp.perms.PermsShell.grant(pkg, "android.permission.DUMP")
                     copy(ctxAny(), cmd)
                     Toast.makeText(ctxAny(),
                         "Copied — paste into a shell with adb access", Toast.LENGTH_LONG).show()
@@ -1787,7 +1663,7 @@ class DevControlFragment : KitComposeFragment() {
 
     private fun specialAccessDump(ctx: Context): String =
         if (specialAccessDumpGranted(ctx)) "✓ Granted (adb)"
-        else "◯ Not granted — needs one-time adb pm grant"
+        else "◯ Not granted — needs a one-time adb grant (Configs ▸ Perms)"
 
     private fun specialAccessManageStorage(): String = try {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
