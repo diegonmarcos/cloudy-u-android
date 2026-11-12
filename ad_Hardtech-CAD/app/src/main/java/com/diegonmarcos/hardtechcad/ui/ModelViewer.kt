@@ -348,7 +348,7 @@ internal fun ModelViewer(m: Model, dir: File, height: Dp = VIEWER_HEIGHT_DP.dp, 
             val overlay = when (val s = state) {
                 ViewState.Fetching -> stringResource(R.string.viewer_fetching, m.name)
                 // #1658 a visible loading state: an empty stage with no word on it read as a broken viewer
-                ViewState.Loading -> if (progress.isNotBlank()) progress else stringResource(R.string.viewer_loading, m.name)
+                ViewState.Loading -> stringResource(R.string.viewer_loading, m.name).let { if (progress.isNotBlank()) progress else it }
                 ViewState.Shown -> null
                 is ViewState.Failed -> stringResource(R.string.viewer_failed, s.why)
                 is ViewState.StoreOnly -> s.reason
