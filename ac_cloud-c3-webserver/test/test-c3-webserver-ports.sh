@@ -33,7 +33,7 @@
 #       server compiles the same file in; the SuperApp provider's authority is
 #       the declared bridge authority.
 #   Q4  NOTHING ELSE TYPES IT. Outside tests and comments, no Rust source of
-#       the app, no page and no Tauri glue spells a name or a port.
+#       the app, no page and no Rust core JNI layer spells a name or a port.
 #   Q5  A PRIVATE DNS, NOT A RESOLVER. The browser client asks only a loopback
 #       server, accepts only a loopback answer and never falls back to the
 #       system (the pins the DNS resolver guard also holds); the server crate
@@ -163,7 +163,7 @@ if "q3" in which:
 if "q4" in which:
     names = [e.get("name") for e in eps] + ["termux.app", "nix.app", "emulated.app", "cloud.app"]
     nums = [str(PORTS[e.get("id")]) for e in eps] + [str(dns.get("port"))]
-    files = sorted(glob.glob(os.path.join(app, "server/src/*.rs")) + glob.glob(os.path.join(app, "src-tauri/src/*.rs")))
+    files = sorted(glob.glob(os.path.join(app, "server/src/*.rs")) + glob.glob(os.path.join(app, "core/src/*.rs")))
     files += [os.path.join(app, "server/ui/diag.html")]
     for f in files:
         text = read(f)
@@ -200,7 +200,7 @@ echo "── cloud-c3-webserver ports / DNS map ──"
 check "$APP" "$REPO" q1 && pass "Q1 the declaration: four unique lowercase .app names, unique resolved ports, one drive, one diag, DNS on loopback and not :53" || fail "Q1 the declaration is malformed"
 check "$APP" "$REPO" q2 && pass "Q2 no second literal: serving writes no port, each endpoint resolves it from its owner's build.json (port_from) and the readers refuse a literal" || fail "Q2 a port is written twice, or an owner does not declare it"
 check "$APP" "$REPO" q3 && pass "Q3 the browser pins the names with their titles and bakes the one declaration; the server compiles it in; the provider authority matches" || fail "Q3 a reader of the map drifted"
-check "$APP" "$REPO" q4 && pass "Q4 no Rust source, shell page or Tauri glue of the app spells a name or a port" || fail "Q4 a name or a port is typed outside build.json"
+check "$APP" "$REPO" q4 && pass "Q4 no Rust source (server, core) or shell page of the app spells a name or a port" || fail "Q4 a name or a port is typed outside build.json"
 check "$APP" "$REPO" q5 && pass "Q5 the browser client is loopback-only and never falls back to the system; the server refuses names it does not own" || fail "Q5 the private DNS grew into a resolver"
 
 # ── M: mutation-proof ──────────────────────────────────────────────────────
@@ -214,7 +214,7 @@ mutate() {
     mkdir -p "$copy/$(dirname "$d")"
     case "$d" in
       ac_cloud-termux|ac_cloud-nix-on-droid) mkdir -p "$copy/$d"; cp "$REPO/$d/build.json" "$copy/$d/" ;;
-      ac_cloud-c3-webserver) mkdir -p "$copy/$d"; cp -R "$REPO/$d/build.json" "$REPO/$d/server" "$REPO/$d/src-tauri" "$copy/$d/"; rm -rf "$copy/$d/server/target" "$copy/$d/src-tauri/target" "$copy/$d/src-tauri/gen" ;;
+      ac_cloud-c3-webserver) mkdir -p "$copy/$d"; cp -R "$REPO/$d/build.json" "$REPO/$d/server" "$REPO/$d/core" "$copy/$d/"; rm -rf "$copy/$d/server/target" "$copy/$d/core/target" ;;
       ac_cloud-browser) mkdir -p "$copy/$d/app"; cp "$REPO/$d/build.json" "$copy/$d/"; cp "$REPO/$d/app/build.gradle" "$copy/$d/app/" ;;
       *) cp -R "$REPO/$d" "$copy/$(dirname "$d")/" ;;
     esac
@@ -280,7 +280,7 @@ n = s.replace("buildJson.ui.browser.private_names = [", "buildJson.ui.browser.no
 assert n != s; open(p, "w").write(n)
 PY
 }
-m_typed_name()    { python3 - "$1/ac_cloud-c3-webserver/src-tauri/src/lib.rs" <<'PY'
+m_typed_name()    { python3 - "$1/ac_cloud-c3-webserver/core/src/lib.rs" <<'PY'
 import sys; p = sys.argv[1]; s = open(p).read()
 n = s.replace("let port: u16", 'let _opens = "http://emulated.app/";\n            let port: u16', 1)
 assert n != s; open(p, "w").write(n)
@@ -355,7 +355,7 @@ mutate "a browser pin loses its title"                     q3 m_pin_title
 mutate "a second copy of the map in the browser"           q3 m_second_copy
 mutate "the browser gradle stops baking the map"           q3 m_gradle_nobake
 mutate "the provider authority drifts from the declaration" q3 m_provider_authority
-mutate "a name typed in the Tauri glue"                    q4 m_typed_name
+mutate "a name typed in the Rust core (JNI layer)"                    q4 m_typed_name
 mutate "a port typed in the server"                        q4 m_typed_port
 mutate "the browser client accepts a non-loopback server"  q5 m_client_not_loopback
 mutate "the browser client accepts any answer"             q5 m_client_any_answer

@@ -1,12 +1,11 @@
 name: "Ship → Cloud-C3-WebServer APK (build + push to GHCR via ORAS + attach to GH Release)"
 
-# The phone's local web server, as a Tauri 2 Android app: Rust plus the
-# app shell (five tabs around the shared Linux file view), no hand-written Kotlin. `cargo tauri android build`
-# cross-compiles ac_cloud-c3-webserver/src-tauri (which links server/) with the
-# NDK for the variant's ABI and runs the committed Tauri gradle project
-# (src-tauri/gen/android). Every tool is pinned in build.json::toolchain: the
-# tauri CLI is the prebuilt x86_64 binary tauri publishes, fetched by URL and
-# refused on any other sha256, which is why both ABIs build on ubuntu-latest.
+# The phone's local web server (#1682 P1): a native Kotlin / Compose app over the
+# Rust core. build.sh cross-compiles ac_cloud-c3-webserver/core (a cdylib that
+# links server/) with cargo and the NDK clang for the variant's ABI
+# (build.json::native.targets), then runs the committed gradle project
+# (src-tauri/gen/android, its Tauri-era path). Every tool is pinned in
+# build.json::toolchain; no Tauri CLI any more. Both ABIs build on ubuntu-latest.
 #
 # Same data-driven publish path as every other app: the engine reads
 # ac_cloud-c3-webserver/build.json::release, so no registry, tag or artifact
@@ -80,6 +79,7 @@ on:
       - "ab_cloud-libs-shared/libs/theme-background/**"
       - "ab_cloud-libs-shared/libs/ui-icons/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
+      - "ab_cloud-libs-shared/libs/web-core/**"
       - "ac_cloud-c3-webserver/**"
 permissions:
   contents: write   # for gh release create + tag push reads
@@ -163,15 +163,16 @@ jobs:
         working-directory: ${{ env.WORK_DIR }}
         run: |
           set -eu
-          rust="$(jq -r --arg abi "${{ matrix.android_abi }}" '.tauri.targets[$abi].rust // empty' build.json)"
-          [ -n "$rust" ] || { echo "::error::build.json::tauri.targets has no Rust triple for ${{ matrix.android_abi }}"; exit 1; }
+          rust="$(jq -r --arg abi "${{ matrix.android_abi }}" '.native.targets[$abi].rust // empty' build.json)"
+          [ -n "$rust" ] || { echo "::error::build.json::native.targets has no Rust triple for ${{ matrix.android_abi }}"; exit 1; }
           ndk="$(jq -r '.toolchain.ndk' build.json)"
           sdk="$(jq -r '.android.compile_sdk' build.json)"
           {
             echo "rust_target=$rust"
             echo "ndk=$ndk"
             echo "sdk_packages=platforms;android-$sdk build-tools;$sdk.0.0 platform-tools ndk;$ndk"
-            echo "server_crate=$(jq -r '.tauri.server_crate' build.json)"
+            echo "server_crate=$(jq -r '.native.server_crate' build.json)"
+            echo "core_crate=$(jq -r '.native.crate_dir' build.json)"
           } >> "$GITHUB_OUTPUT"
 
       - uses: dtolnay/rust-toolchain@stable
@@ -191,6 +192,10 @@ jobs:
       # packaged. Like the testers above, not gated on the publish gate.
       - name: "Test → the server crate (cargo test)"
         working-directory: ${{ env.WORK_DIR }}/${{ steps.tc.outputs.server_crate }}
+        run: cargo test
+
+      - name: "Test → the Rust core, the JNI layer of the native app (cargo test)"
+        working-directory: ${{ env.WORK_DIR }}/${{ steps.tc.outputs.core_crate }}
         run: cargo test
 
       # Publish-if-changed gate. Android builds are not byte-reproducible, so a
@@ -220,7 +225,7 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           # compile_sdk and the NDK come from build.json; the NDK is what
-          # cargo-mobile2 links the Rust library with for the Android target.
+          # build.sh links the Rust core with for the Android target.
           packages: ${{ steps.tc.outputs.sdk_packages }}
 
       # Gradle itself comes from the committed wrapper (src-tauri/gen/android);
@@ -235,28 +240,6 @@ jobs:
         uses: ./.github/actions/gradle-cache-hygiene
       # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
 
-      - name: Install the pinned tauri CLI (sha256-checked)
-        if: steps.gate.outputs.skip != 'true'
-        working-directory: ${{ env.WORK_DIR }}
-        run: |
-          set -eu
-          v="$(jq -r '.toolchain.tauri_cli.version' build.json)"
-          asset="$(jq -r '.toolchain.tauri_cli.asset' build.json)"
-          want="$(jq -r '.toolchain.tauri_cli.sha256' build.json)"
-          url="$(jq -r '.toolchain.tauri_cli.url' build.json | sed "s|{version}|$v|; s|{asset}|$asset|")"
-          curl -fsSL -o "$RUNNER_TEMP/$asset" "$url"
-          echo "$want  $RUNNER_TEMP/$asset" | sha256sum -c -
-          tar -C "$HOME/.cargo/bin" -xzf "$RUNNER_TEMP/$asset" cargo-tauri
-          cargo tauri --version
-
-      # ── ONE shared Cloud-constellation signing key (vault) ──────────────
-      # ALL constellation apps sign with the SAME key so cross-app
-      # signature-IPC + the in-app fleet updater never hit a signature
-      # mismatch. The raw keystore + its sops-encrypted passwords live ONLY in
-      # the private vault repo (Shared/Providers/D_TOOLS-DEVICES/d2-android/release.jks +
-      # signing.secrets.yaml). build.sh::_resolve_signing reads $VAULT_DIR +
-      # sops-decrypts (SOPS_AGE_KEY) and exports ANDROID_KEYSTORE_* for gradle.
-      # NO fallback: if the key is unavailable build.sh exits 1 (desired).
       - name: Checkout vault (shared Android signing key)
         if: steps.gate.outputs.skip != 'true'
         uses: actions/checkout@v4
@@ -306,7 +289,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x build.sh
-          # The tauri CLI requires NDK_HOME; the version is build.json::toolchain.ndk.
+          # build.sh links the Rust core with the NDK clang under NDK_HOME; the version is build.json::toolchain.ndk.
           export NDK_HOME="$ANDROID_HOME/ndk/${{ steps.tc.outputs.ndk }}"
           [ -d "$NDK_HOME" ] || { echo "::error::NDK $NDK_HOME was not installed"; exit 1; }
           if [ "${{ steps.variant.outputs.variant }}" = "release" ]; then
@@ -333,7 +316,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: c3-webserver-cargo-lock-${{ matrix.abi }}-${{ github.sha }}
-          path: ${{ env.WORK_DIR }}/src-tauri/Cargo.lock
+          path: ${{ env.WORK_DIR }}/core/Cargo.lock
           if-no-files-found: warn
           retention-days: 30
 

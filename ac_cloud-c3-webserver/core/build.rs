@@ -1,6 +1,6 @@
 // build.json::runtime is THE declaration of the ports the server binds and the
 // root it serves; it reaches the app as compile-time env vars, so lib.rs
-// carries no number and no path of its own. (build.json::serving, the name ->
+// carries no number and no path of its own. (#1682: no tauri-build any more; the core is a plain cdylib.) (build.json::serving, the name ->
 // port map, is compiled into the server crate itself and validated there.)
 fn main() {
     println!("cargo:rerun-if-changed=../build.json");
@@ -14,5 +14,9 @@ fn main() {
     println!("cargo:rustc-env=C3_WEBSERVER_DIAG_PORT={}", diag_port);
     println!("cargo:rustc-env=C3_WEBSERVER_SERVE_ROOT={}", root);
     println!("cargo:rustc-env=C3_WEBSERVER_APP_ID={}", app_id);
-    tauri_build::build()
+    // #1682 the native app's nav declaration (build.json::ui.sections), handed to the Compose UI by the core at runtime
+    // (MainActivity / Core.nativeUiSections) instead of a BuildConfig base64 field (runtime-data D3 forbids a new one).
+    let ui = serde_json::to_string(&json["ui"]["sections"]).expect("build.json::ui.sections");
+    assert!(json["ui"]["sections"].is_array(), "build.json::ui.sections must be an array");
+    println!("cargo:rustc-env=C3_WEBSERVER_UI_SECTIONS={}", ui);
 }

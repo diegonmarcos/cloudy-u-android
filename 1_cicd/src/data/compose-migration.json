@@ -126,7 +126,7 @@
       "wave": 0,
       "ui": "compose",
       "size": "-",
-      "notes": "Rust server + web shell: five tabs in server/ui/shell.html (Tauri, no Kotlin since #712). Nothing counted.",
+      "notes": "#1682 P1: native Compose (libs:ui-nav-bars, libs:bottomnav, libs:web-core) over the Rust core (core/, JNI); the web shell server/ui/shell.html is still served on /__app__/. No View screen, no layout XML.",
       "baseline": {
         "view_screens": 0,
         "layout_xml": 0,

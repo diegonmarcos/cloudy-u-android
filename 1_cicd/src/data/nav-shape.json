@@ -381,7 +381,7 @@
     "ac_c3-morpheus": "Single screen (#868 nav plan, Batch D): nothing to navigate between.",
     "ac_c3-watchdog": "Single screen (#868 nav plan, Batch D): nothing to navigate between.",
     "ac_c3-watchtower": "Single screen (#868 nav plan, Batch D): nothing to navigate between.",
-    "ac_cloud-c3-webserver": "Exempt by class: Tauri app with no native screens (owner decision #816: Rust and web, not Kotlin); its five pages (Pages, API, Home, Files, Configs) are web pages of server/ui/shell.html that draw their own bottom tabs from the app route table, like Cloud Media Center's; test-c3-webserver.sh T7 guards the structure.",
+    "ac_cloud-c3-webserver": "#1682 P1 native Compose app over the Rust core: it draws the fleet bars (NavBarTopFirstRowScaffold, NavBarBottomHost, NavSectionLayout, FleetChrome) from build.json::ui, but the sections reach it from the Rust core at runtime (Core.nativeUiSections) instead of a baked UI_SECTIONS_B64, because runtime-data D3 forbids a new BuildConfig base64 field (ceiling b64_max); test-c3-webserver-native.sh holds the native nav equal to build.json::ui and the web shell's tabs.",
     "ac_cloud-media-center": "Exempt by class: Tauri app with no native screens; its seven pages are static web/ pages that draw their own bottom tabs, like Cloud Code's web nav.",
     "ac_cloud-chat": "Exempt by class (#868 nav plan): fork of an upstream chat client; navigation is the upstream's.",
     "ac_cloud-keyboard": "Exempt by class (#868 nav plan): input method; the typing surface is the keyboard. Its settings app (#1651) draws the fleet default bars (NavBarTopFirstRowScaffold + NavBarBottom: Toolbar, Themes, Writer, Autocomplete, Clipboard) from libs:keyboard BottomNavTab, not a build.json::ui declaration.",

@@ -10,7 +10,7 @@
     "ac_cloud-termux": "execs its tools (libtermux*.so) out of nativeLibraryDir, which must exist on disk (app/build.gradle packagingOptions)",
     "ac_cloud-nix-on-droid": "same exec-from-nativeLibraryDir model as cloud-termux (app/build.gradle packagingOptions)",
     "ab_cloud-libs-shared/lib-apks": "the exec flavors (rclone, unison, gh) set useLegacyPackaging in androidComponents so the engine binaries are on disk to exec",
-    "ac_cloud-c3-webserver": "Tauri gen/android sets useLegacyPackaging to keep the APK at its compressed size",
+    "ac_cloud-c3-webserver": "the native app (src-tauri/gen/android, #1682) sets useLegacyPackaging to keep the APK at its compressed size",
     "ac_cloud-media-center": "Tauri gen/android sets useLegacyPackaging to keep the APK at its compressed size",
     "ac_cloud-code": "the Cordova hook hooks/post-process.js enableLegacyJni() writes useLegacyPackaging = true"
   },
@@ -42,8 +42,8 @@
       "lib/x86_64/libunison.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
     },
     "ac_cloud-c3-webserver": {
-      "lib/arm64-v8a/libcloud_c3_webserver_lib.so": "Rust/Tauri cdylib built without -C link-arg=-Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
-      "lib/x86_64/libcloud_c3_webserver_lib.so": "Rust/Tauri cdylib built without -C link-arg=-Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
+      "lib/arm64-v8a/libcloud_c3_webserver_lib.so": "Rust core cdylib (Tauri-era measurement; build.sh now links it with -Wl,-z,max-page-size=16384, #1682) built without -C link-arg=-Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libcloud_c3_webserver_lib.so": "Rust core cdylib (Tauri-era measurement; build.sh now links it with -Wl,-z,max-page-size=16384, #1682) built without -C link-arg=-Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
     },
     "ac_cloud-media-center": {
       "lib/arm64-v8a/libcloud_media_center_lib.so": "Rust/Tauri cdylib built without -C link-arg=-Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",

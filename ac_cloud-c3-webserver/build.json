@@ -7,61 +7,187 @@
   },
   "name": "cloud-c3-webserver",
   "display_name": "Cloud C3 Webserver",
-  "description": "The phone's local web server, as an APK, in Rust and web only: a Tauri 2 app whose Rust library starts the shared fleet web server (ab_cloud-libs-shared/libs/fleet-webserver, the Linux my-webserver UI bundled verbatim) in-process on 8002, rooted at /storage/emulated/0 and nothing else, and opens its one webview on the app shell: five bottom tabs Pages, API, Home, Files and Configs, whose Files tab is that unchanged file view. A tapped link offers Open in browser or Open embedded (build.json::links). The SuperApp's About, Logcat and Diagnose are served on 8003, and a private DNS (udp 5354) answers termux.app, nix.app, emulated.app and cloud.app.",
+  "description": "The phone's local web server, as an APK, a native Kotlin / Compose app (#1682) whose Rust core starts the shared fleet web server (ab_cloud-libs-shared/libs/fleet-webserver, the Linux my-webserver UI bundled verbatim) in-process on 8002, rooted at /storage/emulated/0 and nothing else, and draws the app shell natively: five bottom tabs Pages, API, Home, SSHd and ADB Shell, Configs behind the top bar's gear (the same pages the server's own web shell serves on /__app__/). A tapped link offers Open in browser or Open embedded (build.json::links). The SuperApp's About, Logcat and Diagnose are served on 8003, and a private DNS (udp 5354) answers termux.app, nix.app, emulated.app and cloud.app.",
   "category": "android",
   "fleet_webserver_src": "../ab_cloud-libs-shared/libs/fleet-webserver",
   "build": {
     "type": "gradle",
     "entry": "build.sh"
   },
-  "_doc": "WHY TAURI, AND WHAT IS LEFT OF KOTLIN. The app used to be a hand-written Kotlin shell (an Activity holding a WebView, a foreground Service, a class that exec'd the server binary from nativeLibraryDir). It is now a Tauri 2 Android app: src-tauri/ is a Rust library that calls server/'s start() on a thread of its own process and then opens the window on http://127.0.0.1:<runtime.port>/. The only Kotlin in the tree is the glue Tauri's Android template generates (tauri.glue below, every file pinned by sha256), plus the classes Tauri and wry write into the build at compile time (tauri.generated_kotlin, never committed); test/test-c3-webserver-no-kotlin.sh fails the CI run and build.sh fails the build on anything else. The file view at / is NOT written here: it is the Linux my-webserver frontend, bundled at build time by ab_cloud-libs-shared/libs/fleet-webserver from a hash-checked mirror of cloud-u-linux/da_my-webserver/src (one source of truth, no copy in this app); this app adds only its own pages under /__app__/.",
-  "tauri": {
-    "_doc": "THE ONE declaration of how the APK is built. crate_dir is the Tauri app crate (its [lib] is lib_name, the .so Tauri's generated activity loads); server_crate is the library it links and starts; android_project is the Tauri-generated gradle project, committed as Tauri recommends; targets maps each Android ABI a release variant names to the key `cargo tauri android build --target` takes (tauri) and the Rust triple the workflow installs for it (rust). The APK is always built in Tauri's release profile (R8 + an optimised, stripped Rust library): the debug profile carries an unoptimised library with symbols that is two orders of magnitude larger, and build.sh re-signs every APK with the shared key either way.",
-    "crate_dir": "src-tauri",
+  "_doc": "WHY NATIVE, AND WHERE THE KOTLIN IS (#1682 P1). The app was a hand-written Kotlin shell (#712 replaced it by a Tauri 2 webview app), then the owner moved it to a native Kotlin / Compose app over the Rust core: core/ is a Rust cdylib (four JNI entry points plus the nav declaration, core/src/lib.rs; the Android calls the server crate needs, core/src/bridge.rs) that calls server/'s start() on threads of the app's own process, exactly as before; the Compose UI (src-tauri/gen/android/app/src/main/java/.../cloudwebserver, build.json::native.kotlin) draws the fleet bars and reads the server's own loopback admin API (/__app__/api/...). The web shell server/ui/shell.html is still served on /__app__/ (cloud-browser can open it), and test/test-c3-webserver-native.sh holds the native pages equal to it (routes, pages, actions, statuses) and refuses Tauri coming back. The file view at / is NOT written here: it is the Linux my-webserver frontend, bundled at build time by ab_cloud-libs-shared/libs/fleet-webserver from a hash-checked mirror of cloud-u-linux/da_my-webserver/src (one source of truth, no copy in this app); this app adds only its own pages under /__app__/.",
+  "native": {
+    "_doc": "#1682 P1 THE one declaration of how the APK is built, now that the UI is native Kotlin / Compose and Tauri is gone. crate_dir is the Rust core (a cdylib named lib_name, which the Kotlin app loads with System.loadLibrary; four JNI entry points in core/src/lib.rs, the Android calls in core/src/bridge.rs); server_crate is the library it links and starts, unchanged; android_project is the gradle project (its path is the Tauri-era one because other apps read its AndroidManifest.xml there); targets maps each Android ABI to the Rust triple build.sh cross-compiles with the NDK clang (rust) and the clang target prefix (clang). build.sh builds the core in cargo's release profile, copies the .so into android_project/app/src/main/jniLibs/<abi>/ (gitignored) and runs gradle assembleRelease; the APK is re-signed with the shared key either way. The Compose UI reads the server's own loopback admin API (/__app__/api/..., runtime.port): the same routes the web shell (server/ui/shell.html, still served) reads, so the HTTP surface and every bind are exactly as before.",
+    "crate_dir": "core",
     "lib_name": "cloud_c3_webserver_lib",
     "server_crate": "server",
     "android_project": "src-tauri/gen/android",
+    "min_api": 26,
     "targets": {
       "arm64-v8a": {
-        "tauri": "aarch64",
-        "rust": "aarch64-linux-android"
+        "rust": "aarch64-linux-android",
+        "clang": "aarch64-linux-android"
       },
       "x86_64": {
-        "tauri": "x86_64",
-        "rust": "x86_64-linux-android"
+        "rust": "x86_64-linux-android",
+        "clang": "x86_64-linux-android"
       }
     },
-    "glue": {
-      "_doc": "The ONLY Kotlin/Java files the app may commit: Tauri 2.12.1's Android template (MainActivity.kt additionally promotes the servers to the keep-alive service) plus the two declared keep-alive files KeepAliveService.kt and BootReceiver.kt (serving.keepalive: a persistent foreground service has no Rust-only form, so they are the one declared exception, pinned like the template) (templates/mobile/android in the tauri-cli crate) rendered for this identifier, byte for byte. A file here whose bytes change, a .kt/.java/standalone .kts anywhere else in the app, or a file listed here that is missing fails test/test-c3-webserver-no-kotlin.sh. Regenerating the template on a tauri-cli bump is the one legitimate reason to update a hash.",
-      "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/MainActivity.kt": "98764d1d6f1e4d880bf8a823517921d3b7b604b2b0bf985a0e854a04fe618514",
-    "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/KeepAliveService.kt": "a4df370bde5394d4d48e4b5b09c59397d6b9073a6216c79a73d88133634aafe2",
-    "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/BootReceiver.kt": "846c61f2e2c272a395b97500a57cd790826a2f48d3afef5a202655c2a915fda6",
-   "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/PowerState.kt": "26a315a1b917c8d40a6addafb51c393a9bc5d298c6ad69df89040654ee64483e",
-      "src-tauri/gen/android/buildSrc/src/main/java/com/diegonmarcos/cloudwebserver/kotlin/BuildTask.kt": "a23fc50bb35704302240dcfc02d30b972ec67aee59eaf14b23443e7fb4a02236",
-      "src-tauri/gen/android/buildSrc/src/main/java/com/diegonmarcos/cloudwebserver/kotlin/RustPlugin.kt": "ba97577f2cf2b123eddd332662844d2b93a2ee589be65f3843bc7de4ea5b7ba7"
+    "kotlin": {
+      "_doc": "The app's own Kotlin (test/test-c3-webserver-native.sh holds it): the four Android components the manifest declares plus the Compose UI. Every .kt/.java of the app lives under dir; a Kotlin/Java file anywhere else in the app, a Tauri file coming back (tauri.conf.json, a tauri dependency, a WryActivity/TauriActivity reference) or a *.gradle.kts not in build_scripts fails.",
+      "dir": "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver",
+      "test_dir": "src-tauri/gen/android/app/src/test/java/com/diegonmarcos/cloudwebserver"
     },
-    "generated_kotlin": {
-      "_doc": "Written at BUILD time into android_project/app/src/main/java/<identifier>/generated/ by tauri's and wry's build scripts (TAURI_ANDROID_PROJECT_PATH / WRY_ANDROID_KOTLIN_FILES_OUT_DIR, set by the tauri CLI), gitignored by the template. The guard accepts exactly these names there and only while git does not track them, and build.sh re-runs it after gradle so a build that grew a file the pin does not name fails.",
-      "dir": "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/generated",
-      "files": [
-        "Ipc.kt",
-        "Logger.kt",
-        "PermissionHelper.kt",
-        "Rust.kt",
-        "RustWebChromeClient.kt",
-        "RustWebView.kt",
-        "RustWebViewClient.kt",
-        "TauriActivity.kt",
-        "WryActivity.kt",
-        "proguard-wry.pro"
-      ]
-    },
-    "_doc_build_scripts": "The only *.gradle.kts files allowed: the template's three, plus app/tauri.build.gradle.kts, which tauri-build writes at build time (gitignored by the template).",
     "build_scripts": [
       "src-tauri/gen/android/build.gradle.kts",
-      "src-tauri/gen/android/app/build.gradle.kts",
-      "src-tauri/gen/android/buildSrc/build.gradle.kts",
-      "src-tauri/gen/android/app/tauri.build.gradle.kts"
+      "src-tauri/gen/android/app/build.gradle.kts"
+    ]
+  },
+  "ui": {
+    "_doc": "#1682 P1 THE nav declaration (libs:bottomnav NavDecl) of the native app, the same five bottom tabs the web shell (server/ui/shell.html, app.rs ROUTES) draws: Pages, API, Home, SSHd, ADB Shell; Configs is behind the top bar's gear (the fleet-default entry, #1677). Pages has the #1677 sub-pages All | File Explorer | Pages (id browser: a page id is unique, N12) over build.json::roots; API has Topology then the declared api sub-pages of build.json::subpages (same ids and labels, test-c3-webserver-native.sh holds them equal); Configs starts General | Perms | About (configs-tabs T1) and carries the web shell's own Configs pages (Server: the switches, serving and config; Device: the device report the web Configs > About showed; Engines; Links), then libs:ui-nav-bars FleetConfigsExtensions.withTail appends the fleet tail | Agents, Perms, Logcat, X-Ray App, About. Every icon is a libs:ui-icons name.",
+    "bottom_nav": [
+      "pages",
+      "api",
+      "home",
+      "sshd",
+      "adb_shell"
+    ],
+    "default_section": "home",
+    "configs_ui": [
+      "nav_ui"
+    ],
+    "sections": [
+      {
+        "id": "pages",
+        "label": "Pages",
+        "icon": "description",
+        "pages": [
+          {
+            "id": "all",
+            "label": "All",
+            "icon": "apps",
+            "pages": []
+          },
+          {
+            "id": "explorer",
+            "label": "File Explorer",
+            "icon": "folder",
+            "pages": []
+          },
+          {
+            "id": "browser",
+            "label": "Pages",
+            "icon": "language",
+            "pages": []
+          }
+        ]
+      },
+      {
+        "id": "api",
+        "label": "API",
+        "icon": "api",
+        "pages": [
+          {
+            "id": "topology",
+            "label": "Topology",
+            "icon": "account_tree",
+            "pages": []
+          },
+          {
+            "id": "mcp",
+            "label": "MCP",
+            "icon": "hub",
+            "pages": []
+          },
+          {
+            "id": "public",
+            "label": "Public Endpoints",
+            "icon": "public",
+            "pages": []
+          },
+          {
+            "id": "mesh",
+            "label": "Mesh Endpoints",
+            "icon": "lan",
+            "pages": []
+          },
+          {
+            "id": "apps",
+            "label": "Apps Endpoints",
+            "icon": "apps",
+            "pages": []
+          },
+          {
+            "id": "ipc",
+            "label": "Apps IPC",
+            "icon": "swap_horiz",
+            "pages": []
+          }
+        ]
+      },
+      {
+        "id": "home",
+        "label": "Home",
+        "icon": "home"
+      },
+      {
+        "id": "sshd",
+        "label": "SSHd",
+        "icon": "terminal"
+      },
+      {
+        "id": "adb_shell",
+        "label": "ADB Shell",
+        "icon": "android"
+      },
+      {
+        "id": "configs",
+        "label": "Configs",
+        "icon": "settings",
+        "pages": [
+          {
+            "id": "general",
+            "label": "General",
+            "icon": "settings",
+            "pages": []
+          },
+          {
+            "id": "perms",
+            "label": "Perms",
+            "icon": "verified_user",
+            "pages": []
+          },
+          {
+            "id": "about",
+            "label": "About",
+            "icon": "info",
+            "pages": []
+          },
+          {
+            "id": "server",
+            "label": "Server",
+            "icon": "dns",
+            "pages": []
+          },
+          {
+            "id": "device",
+            "label": "Device",
+            "icon": "smartphone",
+            "pages": []
+          },
+          {
+            "id": "engines",
+            "label": "Engines",
+            "icon": "memory",
+            "pages": []
+          },
+          {
+            "id": "links",
+            "label": "Links",
+            "icon": "link",
+            "pages": []
+          }
+        ]
+      }
     ]
   },
   "power": {
@@ -669,17 +795,17 @@
     "compile_sdk": 36,
     "min_sdk": 26,
     "target_sdk": 28,
-    "_doc_target_sdk": "28 for the STORAGE model: at 28 one READ_EXTERNAL_STORAGE grant (asked at launch from src-tauri/src/lib.rs through the activity's JNI handle) covers the whole of runtime.serve_root; from 29 scoped storage would need MANAGE_EXTERNAL_STORAGE or per-tree grants to serve shared storage. compile_sdk is what the Tauri Android library itself compiles against.",
+    "_doc_target_sdk": "28 for the STORAGE model: at 28 one READ_EXTERNAL_STORAGE grant (asked by libs:perms' first run and Configs > Perms, #1682; the Tauri host asked it from Rust) covers the whole of runtime.serve_root; from 29 scoped storage would need MANAGE_EXTERNAL_STORAGE or per-tree grants to serve shared storage. compile_sdk is what the app and the shared libs compile against.",
     "version_code": 3,
     "version_name": "0.3.0-dev",
     "abi_filters": [
       "arm64-v8a"
     ],
     "gradle_module": "src-tauri/gen/android/app",
-    "_doc_gradle_module": "The Tauri project's app module; aa_cloud-superapp/test/test-app-names-pattern.sh T6 reads it to check the launcher label is build.json::name."
+    "_doc_gradle_module": "The native app's module (its Tauri-era path, kept because other apps read its AndroidManifest.xml there); aa_cloud-superapp/test/test-app-names-pattern.sh T6 reads it to check the launcher label is build.json::name."
   },
   "modules": {
-    "_doc": "Shared modules the Tauri gradle project (tauri.android_project) includes BY REFERENCE beside the template's :app. Its settings.gradle iterates this map and, like every other reader of it (the ship workflow's trigger derivation, the publish gate, ab_cloud-libs-shared/libs/shared-modules.test.sh), resolves each dir against THIS directory, not against the gradle root three levels down. They are compiled Kotlin libraries, not source in this app's tree, so test/test-c3-webserver-no-kotlin.sh does not see them. libs:devtools finds this file by walking up from the gradle root (src-tauri/gen/android), as libs:analytics does, so there is one declaration and no copy.",
+    "_doc": "Shared modules the gradle project (native.android_project) includes BY REFERENCE beside :app. Its settings.gradle iterates this map and, like every other reader of it (the ship workflow's trigger derivation, the publish gate, ab_cloud-libs-shared/libs/shared-modules.test.sh), resolves each dir against THIS directory, not against the gradle root three levels down. They are compiled Kotlin libraries, not source in this app's tree, so test/test-c3-webserver-native.sh (K2) does not see them. libs:devtools finds this file by walking up from the gradle root (src-tauri/gen/android), as libs:analytics does, so there is one declaration and no copy.",
     "libs:fleet-notify": {"dir": "../ab_cloud-libs-shared/libs/fleet-notify", "type": "library", "comment": "#1660 FleetNotify + KeepAliveStatus (the keep-alive and data-widget notifications), out of libs:core; linked by the app (the servers keep-alive notification)."},
     "libs:core": {
       "_doc_dir": "Fleet mesh membership: core manifest-merges the CONSTELLATION_DATA signature permission (defined and requested). Declared so a core change rebuilds this app instead of shipping a stale mesh member.",
@@ -709,25 +835,22 @@
     "libs:ui-icons": {"dir": "../ab_cloud-libs-shared/libs/ui-icons", "type": "library", "_doc": "libs:bottomnav's dependency; listed so settings.gradle resolves the path."},
     "libs:theme-background": {"dir": "../ab_cloud-libs-shared/libs/theme-background", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency (the page background); listed so settings.gradle resolves the path."},
     "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
-    "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "_doc": "#1360/#1352 libs:ui-nav-bars' `api` dependency: Configs ▸ General ▸ Perms is libs:perms' AppPermsSection, first run asks every never-asked grant."}
+    "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "_doc": "#1360/#1352 libs:ui-nav-bars' `api` dependency: Configs ▸ General ▸ Perms is libs:perms' AppPermsSection, first run asks every never-asked grant."},
+    "libs:web-core": {
+      "dir": "../ab_cloud-libs-shared/libs/web-core",
+      "type": "library",
+      "comment": "#1682 P1 the fleet's one web view (CloudWeb, WebProfile): the Pages browser frame and the File Explorer preview of the native UI."
+    }
   },
   "toolchain": {
-    "_doc": "Pinned here, read by the ship workflow and mirrored in flake.nix. agp/gradle/kotlin are the versions the pinned tauri-cli's Android template generates (src-tauri/gen/android/build.gradle.kts, gradle/wrapper/gradle-wrapper.properties); gradle itself comes from the committed wrapper.",
-    "tauri_cli": {
-      "version": "2.12.1",
-      "asset": "cargo-tauri-x86_64-unknown-linux-gnu.tgz",
-      "url": "https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v{version}/{asset}",
-      "sha256": "04ef3a9a2ed7b7dc479bef08ab40deee80065c99fc778f79ebce775eb72bbeff",
-      "_doc": "The prebuilt CLI tauri publishes for cargo-binstall (tauri-cli Cargo.toml [package.metadata.binstall]); the workflow downloads exactly this file and refuses any other sha256. The x86_64 build is the only Linux one published, so the APK is built on ubuntu-latest for every ABI (NDK cross-compile)."
-    },
-    "tauri": "2.12.1",
+    "_doc": "Pinned here, read by the ship workflow and mirrored in flake.nix. agp/gradle/kotlin are the gradle project's (src-tauri/gen/android/build.gradle.kts, gradle/wrapper/gradle-wrapper.properties); gradle itself comes from the committed wrapper. #1682: no tauri CLI any more; the Rust core is a plain cargo build with the NDK clang as linker.",
     "ndk": "27.2.12479018",
     "agp": "9.3.1",
     "gradle": "9.6.1",
     "kotlin": "2.2.10",
     "jdk": "17",
     "rust": "stable",
-    "_doc_rust": "Stable channel, no nightly feature; tauri 2.12 needs rustc >= 1.90. The ship workflow installs it through dtolnay/rust-toolchain@stable with the Android targets tauri.targets names."
+    "_doc_rust": "Stable channel, no nightly feature. The ship workflow installs it through dtolnay/rust-toolchain@stable with the Android targets native.targets names."
   },
   "signing": {
     "_doc": "ONE shared Cloud-constellation signing key for ALL Android apps, resolved by build.sh::_resolve_signing from the vault. No fallback key.",
@@ -828,7 +951,7 @@
     },
     "about": {
       "tagline": "The phone's own web server and crash sink",
-      "description": "Cloud C3 WebServer runs the fleet's shared web server on the phone, in Rust and web only (a Tauri 2 app). It serves the fleet web UI on port 8002, browses shared storage under /storage/emulated/0 and nothing else, and is the local crash sink every other fleet app posts its crash reports to over loopback. It exists so crash reports never leave the phone unless the owner shares them, and so the desktop's web UI is also available on the phone, offline.",
+      "description": "Cloud C3 WebServer runs the fleet's shared web server on the phone, as a native Kotlin / Compose app over a Rust core (#1682). It serves the fleet web UI on port 8002, browses shared storage under /storage/emulated/0 and nothing else, and is the local crash sink every other fleet app posts its crash reports to over loopback. It exists so crash reports never leave the phone unless the owner shares them, and so the desktop's web UI is also available on the phone, offline.",
       "features": [
         "Fleet web UI served on the phone (port 8002)",
         "Browses /storage/emulated/0 and nothing else",
@@ -917,7 +1040,7 @@
       "storage_write",
       "keep_unused"
     ],
-    "_doc_parity": "PERMISSIONS PARITY with aa_cloud-superapp (owner decision): needs is the SuperApp's perms.needs plus this app's own storage_read. Not carried, because each is bound to a Kotlin service class the SuperApp owns and this Rust-only app may not add (test-c3-webserver-no-kotlin.sh): notification_listener, accessibility, device_admin, vpn. write_secure_settings supersedes #1515, which kept it on the SuperApp alone; it is pm-granted per app, and the SuperApp keeps its grant. test/test-c3-webserver-perms-parity.sh holds the manifest and this list to the SuperApp's.",
+    "_doc_parity": "PERMISSIONS PARITY with aa_cloud-superapp (owner decision): needs is the SuperApp's perms.needs plus this app's own storage_read. Not carried, because each is bound to a Kotlin service class the SuperApp owns and this app does not carry (#1682 made it native Kotlin; adding such a service is its own decision): notification_listener, accessibility, device_admin, vpn. write_secure_settings supersedes #1515, which kept it on the SuperApp alone; it is pm-granted per app, and the SuperApp keeps its grant. test/test-c3-webserver-perms-parity.sh holds the manifest and this list to the SuperApp's.",
     "parity": {
       "source": "aa_cloud-superapp",
       "service_bound_not_carried": ["notification_listener", "accessibility", "device_admin", "vpn"]

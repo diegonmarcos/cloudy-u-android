@@ -27,7 +27,7 @@ import json, re, sys
 app = sys.argv[1]
 bad = []
 def rd(p): return open(app + "/" + p).read()
-html, rs, sub, served, bridge = rd("server/ui/shell.html"), rd("server/src/app.rs"), rd("server/src/sub.rs"), rd("server/src/served.rs"), rd("src-tauri/src/bridge.rs")
+html, rs, sub, served, bridge = rd("server/ui/shell.html"), rd("server/src/app.rs"), rd("server/src/sub.rs"), rd("server/src/served.rs"), rd("core/src/bridge.rs")
 b = json.loads(rd("build.json"))
 m = re.search(r"pages: function \(\) \{(.*?)\n    \},\n", html, re.S)
 view = m.group(1) if m else ""
@@ -113,7 +113,7 @@ fi
 
 mutate() { # title file from to
   local title="$1" file="$2" from="$3" to="$4" d="$WORK/m$RANDOM"
-  mkdir -p "$d/server/src" "$d/server/ui" "$d/src-tauri/src"; cp "$APP/build.json" "$d/"; cp "$APP/server/ui/shell.html" "$d/server/ui/"; cp "$APP/server/src/app.rs" "$APP/server/src/sub.rs" "$APP/server/src/served.rs" "$d/server/src/"; cp "$APP/src-tauri/src/bridge.rs" "$d/src-tauri/src/"
+  mkdir -p "$d/server/src" "$d/server/ui" "$d/core/src"; cp "$APP/build.json" "$d/"; cp "$APP/server/ui/shell.html" "$d/server/ui/"; cp "$APP/server/src/app.rs" "$APP/server/src/sub.rs" "$APP/server/src/served.rs" "$d/server/src/"; cp "$APP/core/src/bridge.rs" "$d/core/src/"
   python3 - "$d/$file" "$from" "$to" <<'PY' || { fail "M: '$title' did not apply"; return; }
 import sys
 p, a, b = sys.argv[1:4]

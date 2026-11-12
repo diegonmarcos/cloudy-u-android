@@ -22,7 +22,7 @@ out="$(cd "$ROOT" && python3 "$GUARD" .)"; rc=$?
 if [ "$rc" -eq 0 ]; then ok "the real tree passes ($(tail -1 <<<"$out"))"; else fail "the real tree is red"; printf '%s\n' "$out"; fi
 
 mkdir -p "$BASE"
-( cd "$ROOT" && for f in $(for d in a[acd]_*/; do [ -L "${d%/}" ] || [ ! -f "${d}build.json" ] || echo "${d}build.json"; done) $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "*.patch" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js ac_cloud-c3-webserver/server/ui/shell.html $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(|withTail\(|ConfigsTail' --include=*.kt --include=*.java a[acd]_* ab_cloud-libs-shared/libs/writer-ui 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
+( cd "$ROOT" && for f in $(for d in a[acd]_*/; do [ -L "${d%/}" ] || [ ! -f "${d}build.json" ] || echo "${d}build.json"; done) $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "*.patch" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(|withTail\(|ConfigsTail' --include=*.kt --include=*.java a[acd]_* ab_cloud-libs-shared/libs/writer-ui 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
 python3 "$GUARD" "$BASE" >/dev/null || fail "the fixture is red before any mutation"
 
 # mutant NAME RULE PYTHON — PYTHON edits the fixture (cwd = fixture) and must change a file; the guard must go red naming RULE.
@@ -116,12 +116,13 @@ open(p, 'w').write(s.replace('sep: true', 'sep: false'))"
 mutant "Media Center's web strip stops opening the native pages" T7 "
 p = 'ac_cloud-media-center/web/assets/configs.js'; s = open(p).read(); a = 'action=com.diegonmarcos.fleetconfigs.OPEN'; assert a in s
 open(p, 'w').write(s.replace(a, 'action=x'))"
+# #1682 C3 Webserver is native now: its Compose Configs strip goes through withTail and links the three opt-in libs
 mutant "C3 Webserver's Configs strip drops the tail" T7 "
-p = 'ac_cloud-c3-webserver/server/ui/shell.html'; s = open(p).read(); a = \"['logcat', 'Logcat'], ['xray', 'X-Ray App'], \"; assert a in s
-open(p, 'w').write(s.replace(a, ''))"
-mutant "C3 Webserver's tail ends with Logcat after X-Ray App" T7 "
-p = 'ac_cloud-c3-webserver/server/ui/shell.html'; s = open(p).read(); a = \"['logcat', 'Logcat'], ['xray', 'X-Ray App']\"; assert a in s
-open(p, 'w').write(s.replace(a, \"['xray', 'X-Ray App'], ['logcat', 'Logcat']\"))"
+p = 'ac_cloud-c3-webserver/src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/ui/Shell.kt'; s = open(p).read()
+a = 'FleetConfigsExtensions.withTail(s.pages)'; assert a in s; open(p, 'w').write(s.replace(a, 's.pages'))"
+mutant "C3 Webserver no longer links the Logcat tail lib" T7 "$J
+d = load('ac_cloud-c3-webserver/build.json'); assert 'libs:fleetconfigs-logcat' in d['modules']; del d['modules']['libs:fleetconfigs-logcat']; save('ac_cloud-c3-webserver/build.json', d)
+import re; p = 'ac_cloud-c3-webserver/src-tauri/gen/android/app/build.gradle.kts'; s = open(p).read(); n = re.sub(r'implementation[(]project[(].:libs:fleetconfigs-logcat.[)][)]', '', s); assert n != s; open(p, 'w').write(n)"
 
 
 # #1630 T8 the fleet conformance: every host that draws its own strip ends it with the five, in order, after the |

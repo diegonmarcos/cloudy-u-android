@@ -4,7 +4,7 @@
 #   D  declaration: build.json::ssh_doors names the three doors that may host an sshd (nix supervised, the webserver hosted on 8025 and ON by default, Termux; no SuperApp row; terminals OFF by default; per-port mesh-only default ON), no literal
 #      port or package (each is a `_from` the build resolves from the owner's own declaration), the nix hook exists in its owner
 #   S  supervisor wiring: KeepAliveService's nativeStart (the service that starts at boot with Keep alive) asks for the door,
-#      power apply and the Stop path run the same pass; the Kotlin glue is untouched (no-kotlin pin) and nothing polls or schedules
+#      power apply and the Stop path run the same pass; the Kotlin service is the declared one (test-c3-webserver-native.sh) and nothing polls or schedules
 #   U  UI: the SSHd tab replaces Files (route kept as a client redirect; the stale Files table is gone; Keep alive toggle and status on the page), the Server card shows the door
 #   H  jump-host helpers: the four scripts exist, fleet-nix / fleet-termux exec the right onward ssh, nothing switches uid
 #   R  render (node, the shell's pure block): three doors drawn with state, Start/Stop only where a hook exists, Copy All
@@ -45,14 +45,14 @@ if nix["start_on_boot"] is not False: bad.append("D nix start_on_boot must stay 
 if "control" not in nix: bad.append("D the nix hook (mesh_sshd.control) is missing")
 if "mesh_sshd.control" not in doors["nix"]["control_from"] or "mesh_sshd.port" not in doors["nix"]["port_from"]: bad.append("D the nix door does not read its owner's declaration")
 # S
-ts = rd("src-tauri/src/lib.rs")
+ts = rd("core/src/lib.rs")
 start = ts.split("nativeStart(")[1].split("pub extern")[0]
 if "door::sync(false, false)" not in start or "note_service" not in start: bad.append("S nativeStart does not run the door supervisor")
 stop = ts.split("nativeStop(")[1]
 if "power::apply" not in stop or "note_service" not in stop: bad.append("S the Stop path does not run the supervisor with the service context")
 pw = rd("server/src/power.rs")
 if "door::sync(false, false)" not in pw.split("pub fn apply")[1].split("pub fn status_json")[0]: bad.append("S power::apply does not run the door pass")
-br = rd("src-tauri/src/bridge.rs")
+br = rd("core/src/bridge.rs")
 if "startForegroundService" not in br or "c.service" not in br or re.search(r'"(cld|com)\.termux', br): bad.append("S the signal must start the declared service and name no package of its own")
 for f in ("server/src/door.rs", "server/src/jump.rs"):
     if re.search(r"thread::spawn|thread::sleep|loop \{|AlarmManager|JobScheduler|WorkManager|WakeLock", rd(f).split("#[cfg(test)]")[0]): bad.append("S %s polls, sleeps or schedules" % f)

@@ -1,8 +1,10 @@
 # cloud-c3-webserver
 
-The phone's local web server, as an APK, in the cloud-c3 family: Rust and web only. It is a Tauri 2
-Android app: the Rust library in `src-tauri/` starts the web servers on threads of the app's own
-process, waits for the bind, and opens the app's one webview on its shell, `http://127.0.0.1:8002/__app__/`.
+The phone's local web server, as an APK, in the cloud-c3 family. Since #1682 (P1) it is a native Kotlin / Compose
+Android app over a Rust core: `core/` (a cdylib, JNI) starts the web servers on threads of the app's own process
+exactly as the Tauri host did, and the Compose UI (the fleet's nav bars, web view and perms libs) reads the
+server's own loopback admin API, `http://127.0.0.1:8002/__app__/api/...`. The web shell `server/ui/shell.html`
+is still served on `/__app__/`; `test/test-c3-webserver-native.sh` holds the native pages equal to it.
 
 **The app is five tabs around the file view.** Pages, API, Home, SSHd, Configs (`server/ui/shell.html`, served
 under `/__app__/` only). The file view at `/` is the shared server's, unchanged and shell-free (no longer embedded in a tab). The tabs are the
@@ -56,32 +58,31 @@ no custom page, route or script of the file view in this directory; the app's ow
 | The app shell: route table, tabs, link chooser, open endpoint | `server/src/app.rs`, `server/ui/shell.html` |
 | Home (About this phone) and Configs > Engines | `server/src/about.rs`, `server/src/engines.rs` |
 | Start-up, :8003 listener, host allow-list, drive = shell + shared server | `server/src/lib.rs` |
-| 8003 `cloud.app`: the SuperApp's About, Logcat, Diagnose | `server/src/diag.rs` + `server/ui/diag.html`, read through the SuperApp's `<pkg>.fleetdiag` provider (`src-tauri/src/bridge.rs`, JNI) |
+| 8003 `cloud.app`: the SuperApp's About, Logcat, Diagnose | `server/src/diag.rs` + `server/ui/diag.html`, read through the SuperApp's `<pkg>.fleetdiag` provider (`core/src/bridge.rs`, JNI) |
 | Private DNS, udp 127.0.0.1:5354, four exact names, refuses the rest | `server/src/dns.rs`; asked by cloud-browser (`libs:browser PrivateNames`) only |
 | The name -> port map, ONE declaration | `build.json::serving` (+ `runtime.port`, `runtime.diag.port`) |
-| The app: bind, then the window; storage permission over JNI | `src-tauri/src/lib.rs` |
-| Port and served root (baked by `src-tauri/build.rs`) | `build.json::runtime` |
-| Tauri's Android project (template, committed) | `src-tauri/gen/android` |
-| Toolchain pins: tauri CLI + sha256, NDK, AGP, gradle | `build.json::toolchain` |
+| The Rust core: bind, the JNI binding, the nav declaration | `core/src/lib.rs` (+ `core/src/bridge.rs`) |
+| Port and served root (baked by `core/build.rs`) | `build.json::runtime` |
+| The native app (Compose UI, keep-alive service; Tauri-era path) | `src-tauri/gen/android` (`build.json::native`, `build.json::ui`) |
+| Toolchain pins: NDK, AGP, gradle, Rust | `build.json::toolchain` |
 
-**Kotlin.** The app has none of its own. Tauri's Android template commits a
-three-line `MainActivity` and two gradle plugin classes, and its build writes
-the webview classes into `generated/`; `build.json::tauri.glue` pins the first
-three by sha256 and `tauri.generated_kotlin` names the rest.
-`test/test-c3-webserver-no-kotlin.sh` fails CI, and `build.sh` fails the
-build, on any other `.kt`/`.java`.
+**Kotlin (#1682).** The app's Kotlin lives in one package (`build.json::native.kotlin.dir`): MainActivity, the
+keep-alive service and boot receiver, the core binding (`Core.kt`), the loopback API client (`Api.kt`) and the
+Compose pages (`ui/`). `test/test-c3-webserver-native.sh` fails CI, and `build.sh` fails the build, on Tauri
+coming back, Kotlin elsewhere, a JNI name without its other half, a new socket, or a web-shell route, page,
+action or status the native app does not have.
 
 Build: the ship workflow checks out cloud-u-linux, verifies the vendored UI against it
-(`sync.sh --check --from`), runs the shared server's `cargo test` and this crate's, installs the pinned
-tauri CLI, the NDK and the Rust Android target, then `./build.sh build`
-(`cargo tauri android build --apk --target <abi>`, release profile) and re-signs the APK with the
-shared key.
+(`sync.sh --check --from`), runs the shared server's `cargo test`, this crate's and the core's, installs
+the NDK and the Rust Android target, then `./build.sh build` (`cargo build --release --target <triple>`
+of `core/` with the NDK clang, the `.so` into `jniLibs/<abi>/`, `gradlew assembleRelease`) and re-signs
+the APK with the shared key.
 
 Testers: `test/test-c3-webserver.sh` (the file view is the shared server's, the navigation structure, Tauri shape,
 rename ledger), `test/test-c3-webserver-shell.sh` (tabs and link chooser under node), `test/test-c3-webserver-pages.sh`
 (every page and the chooser in headless Chrome at A37 density, screenshots uploaded by the ship job), `test/test-c3-webserver-render.sh` (the real server in headless Chrome at
 Galaxy A37 density: tree left, viewer right, toolbar on top), `test/test-c3-webserver-ports.sh` (map,
-owners, readers, loopback-only DNS), `test/test-c3-webserver-no-kotlin.sh`, plus `cargo test` here and
+owners, readers, loopback-only DNS), `test/test-c3-webserver-native.sh` (#1682 parity), plus `cargo test` here and
 in the shared server (vendor hash == the Linux copy, every endpoint's contract, parity with the real
 Linux server).
 

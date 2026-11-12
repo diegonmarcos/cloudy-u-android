@@ -32,7 +32,7 @@ for r in m:
 if pw["default"]["keep_alive"] is not False:
     bad.append("P1 Keep alive must default to OFF")
 banned = re.compile(r"AlarmManager|setExactAndAllowWhileIdle|setRepeating|JobScheduler|JobService|WorkManager|PeriodicWorkRequest|WakeLock|newWakeLock")
-for root in (os.path.join(app, "src-tauri"), os.path.join(app, "server/src")):
+for root in (os.path.join(app, "src-tauri"), os.path.join(app, "core"), os.path.join(app, "server/src")):
     for d, dirs, files in os.walk(root):
         dirs[:] = [x for x in dirs if x not in ("target", "build", ".gradle")]
         for f in files:

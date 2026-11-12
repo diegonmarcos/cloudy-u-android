@@ -1,85 +1,95 @@
 //! The two Android calls the server crate cannot make itself, installed into it
 //! at startup: (1) read the SuperApp's About / Logcat / Diagnose through its
 //! exported, CONSTELLATION_DATA signature-permission ContentProvider, and
-//! (2) hand a served page to cloud-browser. Both are JNI on the activity Tauri
-//! gives us; the server threads that call them attach themselves per call.
+//! (2) hand a served page to cloud-browser (and the other intents below). Both are
+//! JNI on the activity the native MainActivity hands over (#1682, formerly the one
+//! Tauri gave us); the server threads that call them attach themselves per call.
 //!
 //! Nothing here names a package, an authority or a port: they come from
 //! build.json::serving through c3_webserver::serving.
 
 use jni::objects::{GlobalRef, JObject, JString, JValue};
 use jni::{JNIEnv, JavaVM};
-use std::sync::OnceLock;
+use std::sync::{Mutex, Once, OnceLock};
 
-struct Handle {
-    vm: JavaVM,
-    activity: GlobalRef,
-}
-
-static HANDLE: OnceLock<Handle> = OnceLock::new();
+/// The VM, kept once (one per process).
+static VM: OnceLock<JavaVM> = OnceLock::new();
+/// The activity as a Context while it lives (#1682: the native MainActivity hands itself over on create and is forgotten on destroy,
+/// so a recreated activity replaces the old one instead of the first one being kept for ever).
+static ACTIVITY: Mutex<Option<GlobalRef>> = Mutex::new(None);
 /// The keep-alive service as a Context, while it runs: the SSH door's start/stop signal must work at boot, when no activity exists.
-static SERVICE: std::sync::Mutex<Option<Handle>> = std::sync::Mutex::new(None);
+static SERVICE: Mutex<Option<GlobalRef>> = Mutex::new(None);
+static HOOKS: Once = Once::new();
 
 /// KeepAliveService.nativeStart: remember the service Context (None on nativeStop) and install the SSH door's sender.
 pub fn note_service(env: &mut JNIEnv, service: Option<&JObject>) {
-    let h = service.and_then(|svc| {
-        let vm = env.get_java_vm().ok()?;
-        let activity = env.new_global_ref(svc).ok()?;
-        Some(Handle { vm, activity })
-    });
+    if let Ok(vm) = env.get_java_vm() {
+        let _ = VM.set(vm);
+    }
+    let h = service.and_then(|svc| env.new_global_ref(svc).ok());
     if let Ok(mut g) = SERVICE.lock() {
         *g = h;
     }
     c3_webserver::door::set_sender(Box::new(send_door));
 }
 
-/// Keep the VM and the activity, and wire the server crate's two hooks to them.
-pub fn install(window: &tauri::WebviewWindow) {
-    let _ = window.with_webview(|webview| {
-        webview.jni_handle().exec(|env, activity, _webview| {
-            let made = (|| -> jni::errors::Result<()> {
-                let vm = env.get_java_vm()?;
-                let activity = env.new_global_ref(activity)?;
-                let _ = HANDLE.set(Handle { vm, activity });
-                Ok(())
-            })();
-            match made {
-                Ok(()) => {
-                    c3_webserver::diag::set_source(Box::new(read_bridge));
-                    // #1490 the mesh listener's two reads: an app's log export (any fleet authority the server crate names)
-                    // and the fleet bearer token the SuperApp mints.
-                    c3_webserver::meshlogs::set_log_source(Box::new(call_provider));
-                    c3_webserver::meshlogs::set_token_source(Box::new(read_token));
-                    c3_webserver::diag::set_opener(Box::new(open_in_browser));
-                    // Pages > Start app: launch a terminal app whose own my-webserver serves its page.
-                    c3_webserver::served::set_launcher(Box::new(launch_app));
-                    // #1677 the ADB Shell tab: the SuperApp's launcher intent carrying its page extra (build.json::adb_shell).
-                    c3_webserver::served::set_extra_launcher(Box::new(launch_app_with));
-                    // #1630 the Configs strip's native tail (Agents, Perms, Logcat, X-Ray App, About): one tab of the shared FleetConfigsActivity.
-                    c3_webserver::served::set_configs_opener(Box::new(open_configs));
-                    // #1502 the keep-alive service and the boot receiver follow the Server / Keep alive switches.
-                    c3_webserver::power::set_sync_hook(Box::new(sync_keep_alive));
-                    // The SSH door the keep-alive supervisor keeps up (door.rs): the signal to the nix-on-droid app.
-                    c3_webserver::door::set_sender(Box::new(send_door));
-                }
-                Err(e) => {
-                    let _ = env.exception_clear();
-                    eprintln!("cloud-c3-webserver: bridge not installed: {}", e);
-                }
-            }
-        });
+/// MainActivity.nativeDetach: the activity is destroyed; calls that need it answer "the app's window is not open".
+pub fn forget_activity() {
+    if let Ok(mut g) = ACTIVITY.lock() {
+        *g = None;
+    }
+}
+
+/// Keep the VM and the activity, and wire the server crate's hooks to them (once; a recreated activity only replaces the Context).
+pub fn install(env: &mut JNIEnv, activity: &JObject) {
+    let made = (|| -> jni::errors::Result<()> {
+        let vm = env.get_java_vm()?;
+        let _ = VM.set(vm);
+        let act = env.new_global_ref(activity)?;
+        if let Ok(mut g) = ACTIVITY.lock() {
+            *g = Some(act);
+        }
+        Ok(())
+    })();
+    if let Err(e) = made {
+        let _ = env.exception_clear();
+        eprintln!("cloud-c3-webserver: bridge not installed: {}", e);
+        return;
+    }
+    HOOKS.call_once(|| {
+        c3_webserver::diag::set_source(Box::new(read_bridge));
+        // #1490 the mesh listener's two reads: an app's log export (any fleet authority the server crate names)
+        // and the fleet bearer token the SuperApp mints.
+        c3_webserver::meshlogs::set_log_source(Box::new(call_provider));
+        c3_webserver::meshlogs::set_token_source(Box::new(read_token));
+        c3_webserver::diag::set_opener(Box::new(open_in_browser));
+        // Pages > Start app: launch a terminal app whose own my-webserver serves its page.
+        c3_webserver::served::set_launcher(Box::new(launch_app));
+        // #1677 the ADB Shell tab: the SuperApp's launcher intent carrying its page extra (build.json::adb_shell).
+        c3_webserver::served::set_extra_launcher(Box::new(launch_app_with));
+        // #1630 the Configs strip's native tail (Agents, Perms, Logcat, X-Ray App, About): one tab of the shared FleetConfigsActivity.
+        c3_webserver::served::set_configs_opener(Box::new(open_configs));
+        // #1502 the keep-alive service and the boot receiver follow the Server / Keep alive switches.
+        c3_webserver::power::set_sync_hook(Box::new(sync_keep_alive));
+        // The SSH door the keep-alive supervisor keeps up (door.rs): the signal to the nix-on-droid app.
+        c3_webserver::door::set_sender(Box::new(send_door));
     });
+}
+
+fn current(slot: &Mutex<Option<GlobalRef>>) -> Option<GlobalRef> {
+    slot.lock().ok().and_then(|g| g.clone())
 }
 
 /// Run `f` on this thread attached to the VM; a pending Java exception becomes the Err text.
 fn with_env<T>(f: impl FnOnce(&mut JNIEnv, &JObject) -> jni::errors::Result<T>) -> Result<T, String> {
-    let h = HANDLE.get().ok_or_else(|| "the Android bridge is not installed yet (the window is still opening)".to_string())?;
-    run_on(h, f)
+    let ctx = current(&ACTIVITY).ok_or_else(|| "the Android bridge is not installed yet (the app's window is not open)".to_string())?;
+    run_on(&ctx, f)
 }
 
-fn run_on<T>(h: &Handle, f: impl FnOnce(&mut JNIEnv, &JObject) -> jni::errors::Result<T>) -> Result<T, String> {
-    let mut env = h.vm.attach_current_thread().map_err(|e| e.to_string())?;
-    let out = f(&mut env, h.activity.as_obj());
+fn run_on<T>(ctx: &GlobalRef, f: impl FnOnce(&mut JNIEnv, &JObject) -> jni::errors::Result<T>) -> Result<T, String> {
+    let vm = VM.get().ok_or_else(|| "no Java VM yet".to_string())?;
+    let mut env = vm.attach_current_thread().map_err(|e| e.to_string())?;
+    let out = f(&mut env, ctx.as_obj());
     if let Some(msg) = take_exception(&mut env) {
         return Err(msg);
     }
@@ -305,13 +315,9 @@ fn send_door(cmd: c3_webserver::door::Cmd) -> Result<(), String> {
         env.call_method(ctx, "startForegroundService", "(Landroid/content/Intent;)Landroid/content/ComponentName;", &[JValue::Object(&intent)])?;
         Ok(())
     };
-    let r = match HANDLE.get() {
-        Some(h) => run_on(h, call),
-        None => {
-            let g = SERVICE.lock().map_err(|_| "poisoned".to_string())?;
-            let h = g.as_ref().ok_or_else(|| "no Android context yet (neither the window nor the keep-alive service is up)".to_string())?;
-            run_on(h, call)
-        }
-    };
+    let ctx = current(&ACTIVITY)
+        .or_else(|| current(&SERVICE))
+        .ok_or_else(|| "no Android context yet (neither the window nor the keep-alive service is up)".to_string())?;
+    let r = run_on(&ctx, call);
     r.map_err(|e| if e.contains("SecurityException") { format!("{} refused the call: both apps must carry the fleet key and its CONSTELLATION_DATA permission", c.package) } else { e })
 }

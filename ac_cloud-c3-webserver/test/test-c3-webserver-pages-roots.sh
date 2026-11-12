@@ -32,7 +32,7 @@ import json, re, sys
 app = sys.argv[1]
 bad = []
 def rd(p): return open(app + "/" + p).read()
-html, rs, roots, bridge, served = rd("server/ui/shell.html"), rd("server/src/app.rs"), rd("server/src/roots.rs"), rd("src-tauri/src/bridge.rs"), rd("server/src/served.rs")
+html, rs, roots, bridge, served = rd("server/ui/shell.html"), rd("server/src/app.rs"), rd("server/src/roots.rs"), rd("core/src/bridge.rs"), rd("server/src/served.rs")
 b = json.loads(rd("build.json"))
 body = rs.split("#[cfg(test)]")[0]
 r = b.get("roots", {})
@@ -160,8 +160,8 @@ fi
 
 mutate() { # title file from to
   local title="$1" file="$2" from="$3" to="$4" d="$WORK/m$RANDOM"
-  mkdir -p "$d/server/src" "$d/server/ui" "$d/src-tauri/src"; cp "$APP/build.json" "$d/"; cp "$APP/server/ui/shell.html" "$d/server/ui/"
-  cp "$APP/server/src/app.rs" "$APP/server/src/roots.rs" "$APP/server/src/served.rs" "$d/server/src/"; cp "$APP/src-tauri/src/bridge.rs" "$d/src-tauri/src/"
+  mkdir -p "$d/server/src" "$d/server/ui" "$d/core/src"; cp "$APP/build.json" "$d/"; cp "$APP/server/ui/shell.html" "$d/server/ui/"
+  cp "$APP/server/src/app.rs" "$APP/server/src/roots.rs" "$APP/server/src/served.rs" "$d/server/src/"; cp "$APP/core/src/bridge.rs" "$d/core/src/"
   python3 - "$d/$file" "$from" "$to" <<'PY' || { fail "M: '$title' did not apply"; return; }
 import sys
 p, a, b = sys.argv[1:4]
@@ -178,7 +178,7 @@ mutate "no clone command"                    server/ui/shell.html "data-copy-clo
 mutate "a root dropped"                      build.json '"id": "cloud-me-pvt-notes"' '"id": "notes"'
 mutate "a root on an undeclared source"      build.json '"id": "nix", "label": "Cloud Nix (Nix-on-Droid)", "source": "nix"' '"id": "nix", "label": "Cloud Nix (Nix-on-Droid)", "source": "nowhere"'
 mutate "the ADB Shell link changed"          build.json '"value": "page:config/adb-shell"' '"value": "page:config/perms"'
-mutate "ADB Shell not launched with extra"   src-tauri/src/bridge.rs "set_extra_launcher(Box::new(launch_app_with))" "set_extra_launcher(Box::new(launch_app_plain))"
+mutate "ADB Shell not launched with extra"   core/src/bridge.rs "set_extra_launcher(Box::new(launch_app_with))" "set_extra_launcher(Box::new(launch_app_plain))"
 mutate "Configs back in the bottom nav"      server/src/app.rs 'pub const TOP_BAR: &[&str] = &["/__app__/tab/configs"];' 'pub const TOP_BAR: &[&str] = &[];'
 mutate "an old route removed (parity)"       server/src/app.rs 'path: "/__app__/api/sub/pages-git"' 'path: "/__app__/api/sub/pages-gone"'
 mutate "an old action removed (parity)"      server/ui/shell.html "data-rescan" "data-x-rescan"

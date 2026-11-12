@@ -2,4 +2,4 @@ build/
 dist/
 .gradle/
 server/target/
-src-tauri/target/
+core/target/

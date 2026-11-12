@@ -2,18 +2,18 @@
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║ cloud-c3-webserver — Universal Build Dispatcher                   ║
 # ║                                                                  ║
-# ║ A Tauri 2 Android app: src-tauri/ (Rust) starts the server/      ║
-# ║ library in-process and opens a webview on it. No hand-written    ║
-# ║ Kotlin. Toolchain (cargo-tauri, NDK, SDK, JDK, cargo) comes from  ║
-# ║ flake.nix — never assume host has them.                          ║
+# ║ #1682 a native Kotlin / Compose app over the Rust core: core/    ║
+# ║ (a cdylib, JNI) starts the server/ library in-process; the UI    ║
+# ║ reads its loopback admin API. Toolchain (NDK, SDK, JDK, cargo)   ║
+# ║ comes from flake.nix — never assume host has them.               ║
 # ║                                                                  ║
 # ║ Commands:                                                        ║
-# ║   build       cargo tauri android build → dist/<variant artifact> ║
+# ║   build       cargo (core, NDK) + gradle → dist/<variant artifact>║
 # ║   release     same build → dist/<release artifact>                ║
 # ║   dev         build + install + launch on connected device (adb)  ║
 # ║   test        cargo test (the server crate, end to end)           ║
 # ║   clean       rm -rf dist/ + cargo targets + gradle build dirs    ║
-# ║   shell       enter Nix devShell (cargo-tauri + ndk + sdk + jdk)  ║
+# ║   shell       enter Nix devShell (cargo + ndk + sdk + jdk)        ║
 # ║   ship        build + side-load via adb (USB-connected device)    ║
 # ║   oras-push   push APK as OCI artifact → ghcr (release.ghcr block)║
 # ║   oras-pull   pull APK from ghcr → dist/  [tag=latest]            ║
@@ -249,43 +249,66 @@ _enforce_signature() {
   log "sign-enforce: OK $(basename "$apk") signed by the ONE shared constellation key"
 }
 
-# ── the app (build.json::tauri) ──────────────────────────────────────
-# `cargo tauri android build` compiles src-tauri (which links server/) for the
-# active variant's ABI — build.json::tauri.targets maps it — then runs the
-# committed Tauri gradle project, which leaves an unsigned universal APK that
-# _enforce_signature signs with the ONE shared key. Always Tauri's release
-# profile, for the reason build.json::tauri._doc gives.
+# ── the app (build.json::native, #1682 P1) ───────────────────────────
+# The Rust core (native.crate_dir, a cdylib that links server/) is cross-compiled
+# with cargo for the active variant's ABI (native.targets maps it to the Rust
+# triple and the NDK clang prefix), its .so copied into the gradle project's
+# jniLibs/<abi>/ (gitignored), then the native Kotlin / Compose app is built by
+# the committed gradle wrapper (assembleRelease: R8 + the optimised, stripped
+# core) and _enforce_signature signs the APK with the ONE shared key. No Tauri.
 #
-# The no-hand-written-Kotlin guard runs on both sides of it: before, so a
-# stray .kt is never compiled; after, so a build that generated a Kotlin file
-# build.json::tauri.generated_kotlin does not name fails here, not on a phone.
-TAURI_APK=""
-_tauri_build() {
-  local abi target crate project apks
+# The native-app guard (test/test-c3-webserver-native.sh check) runs first: no
+# Tauri file or dependency may come back and every Kotlin file lives where
+# build.json::native.kotlin says.
+NATIVE_APK=""
+_native_build() {
+  local abi triple clang api crate project lib ndk bin so out apks
   abi="$(_variant_field '.abis[0]')"
   [ -n "$abi" ] || abi="$(_release_var '.android.abi_filters[0]')"
-  target="$(_release_var ".tauri.targets[\"$abi\"].tauri")"
-  crate="$(_release_var '.tauri.crate_dir')"
-  project="$(_release_var '.tauri.android_project')"
-  [ -n "$target" ] || { errlog "build.json::tauri.targets has no tauri target for ABI $abi"; exit 1; }
-  sh "$SCRIPT_DIR/test/test-c3-webserver-no-kotlin.sh" check
-  log "tauri: cargo tauri android build --apk --ci --target $target (ABI $abi, in $crate/)"
-  (cd "$SCRIPT_DIR/$crate" && in_nix cargo tauri android build --apk --ci --target "$target")
-  sh "$SCRIPT_DIR/test/test-c3-webserver-no-kotlin.sh" check
-  apks="$(ls "$SCRIPT_DIR/$project"/app/build/outputs/apk/universal/release/*.apk 2>/dev/null || true)"
+  triple="$(_release_var ".native.targets[\"$abi\"].rust")"
+  clang="$(_release_var ".native.targets[\"$abi\"].clang")"
+  api="$(_release_var '.native.min_api')"
+  crate="$(_release_var '.native.crate_dir')"
+  project="$(_release_var '.native.android_project')"
+  lib="$(_release_var '.native.lib_name')"
+  [ -n "$triple" ] && [ -n "$clang" ] || { errlog "build.json::native.targets has no Rust triple / clang prefix for ABI $abi"; exit 1; }
+  sh "$SCRIPT_DIR/test/test-c3-webserver-native.sh" check
+  ndk="${NDK_HOME:-${ANDROID_NDK_HOME:-}}"
+  [ -n "$ndk" ] && [ -d "$ndk" ] || { errlog "NDK_HOME is not set to an installed NDK (build.json::toolchain.ndk)"; exit 1; }
+  bin="$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin"
+  [ -x "$bin/${clang}${api}-clang" ] || { errlog "no NDK clang $bin/${clang}${api}-clang"; exit 1; }
+  local tvar cvar
+  tvar="$(printf '%s' "$triple" | tr 'a-z-' 'A-Z_')"
+  cvar="$(printf '%s' "$triple" | tr '-' '_')"
+  log "native: cargo build --release --target $triple (ABI $abi, in $crate/)"
+  (cd "$SCRIPT_DIR/$crate" && env \
+     "CARGO_TARGET_${tvar}_LINKER=$bin/${clang}${api}-clang" \
+     "CC_${cvar}=$bin/${clang}${api}-clang" \
+     "AR_${cvar}=$bin/llvm-ar" \
+     "CARGO_TARGET_${tvar}_RUSTFLAGS=-C link-arg=-Wl,-z,max-page-size=16384" \
+     cargo build --release --target "$triple")
+  so="$SCRIPT_DIR/$crate/target/$triple/release/lib${lib}.so"
+  [ -f "$so" ] || { errlog "native: $so was not built"; exit 1; }
+  out="$SCRIPT_DIR/$project/app/src/main/jniLibs/$abi"
+  rm -rf "$SCRIPT_DIR/$project/app/src/main/jniLibs"
+  mkdir -p "$out"
+  cp "$so" "$out/"
+  log "native: gradle assembleRelease ($project, ABI $abi)"
+  (cd "$SCRIPT_DIR/$project" && chmod +x gradlew && C3_WEBSERVER_ABIS="$abi" in_nix ./gradlew --no-daemon --stacktrace assembleRelease)
+  apks="$(ls "$SCRIPT_DIR/$project"/app/build/outputs/apk/release/*.apk 2>/dev/null || true)"
   [ "$(printf '%s\n' "$apks" | grep -c . || true)" = "1" ] \
-    || { errlog "tauri: expected exactly one APK under $project/app/build/outputs/apk/universal/release, found: ${apks:-none}"; exit 1; }
-  TAURI_APK="$apks"
+    || { errlog "native: expected exactly one APK under $project/app/build/outputs/apk/release, found: ${apks:-none}"; exit 1; }
+  NATIVE_APK="$apks"
 }
 
 step_build() {
-  log "Build: $(_release_var '.name') (Tauri, release profile)"
+  log "Build: $(_release_var '.name') (native Kotlin / Compose over the Rust core, release profile)"
   _resolve_signing
   _resolve_ssh_key
-  _tauri_build
+  _native_build
   mkdir -p "$DIST_DIR"
   local out="$DIST_DIR/$(_variant_artifact)"
-  cp "$TAURI_APK" "$out"
+  cp "$NATIVE_APK" "$out"
   _enforce_signature "$out"
   log "→ $out ($(wc -c < "$out") B)"
 }
@@ -294,10 +317,10 @@ step_release() {
   log "Build: $(_release_var '.name') (release APK)"
   _resolve_signing
   _resolve_ssh_key
-  _tauri_build
+  _native_build
   mkdir -p "$DIST_DIR"
   local out="$DIST_DIR/$(_release_var '.release.artifact.release')"
-  cp "$TAURI_APK" "$out"
+  cp "$NATIVE_APK" "$out"
   _enforce_signature "$out"
   log "→ $out ($(wc -c < "$out") B)"
 }
@@ -311,11 +334,11 @@ step_dev() {
 
 # The server crate's own suite: the route table, the About sections and the
 # real server end to end over a socket. Host-native, no Android needed.
-step_test()  { log "Test: cargo test (server crate)"; (cd "$SCRIPT_DIR/$(_release_var '.tauri.server_crate')" && in_nix cargo test); }
+step_test()  { log "Test: cargo test (server crate)"; (cd "$SCRIPT_DIR/$(_release_var '.native.server_crate')" && in_nix cargo test); }
 step_clean() {
   log "Clean"
-  rm -rf "$DIST_DIR" "$SCRIPT_DIR/$(_release_var '.tauri.crate_dir')/target" "$SCRIPT_DIR/$(_release_var '.tauri.server_crate')/target"
-  rm -rf "$SCRIPT_DIR/$(_release_var '.tauri.android_project')"/{build,app/build,buildSrc/build,.gradle}
+  rm -rf "$DIST_DIR" "$SCRIPT_DIR/$(_release_var '.native.crate_dir')/target" "$SCRIPT_DIR/$(_release_var '.native.server_crate')/target"
+  rm -rf "$SCRIPT_DIR/$(_release_var '.native.android_project')"/{build,app/build,buildSrc/build,.gradle}
 }
 step_shell() { log "Entering Nix devShell"; exec nix develop "$SCRIPT_DIR"; }
 

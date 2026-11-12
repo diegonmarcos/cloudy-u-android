@@ -455,6 +455,14 @@
         "lib-cal"
       ]
     },
+    "c3_links": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1682 Cloud C3 Webserver's remembered link choice per link type (build.json::links: Open in browser / Open embedded); a per-device convenience the web shell kept in its WebView localStorage, reset in Configs > Links.",
+      "used_by": [
+        "ac_cloud-c3-webserver"
+      ]
+    },
     "camera_modes": {
       "kind": "prefs",
       "class": "config",
@@ -3266,14 +3274,16 @@
         "lib-perms",
         "lib-theme-background",
         "lib-ui-icons",
-        "lib-ui-nav-bars"
+        "lib-ui-nav-bars",
+        "lib-web-core"
       ],
       "items": [
         {
-          "id": "none",
-          "path": "-",
+          "id": "link-choices",
+          "path": "shared_prefs/c3_links.xml",
           "class": "device",
-          "doc": "keeps no configuration of its own on device; Tauri/server tree configured by build.json."
+          "doc": "The remembered link choice per declared link type (Configs > Links); never migrates.",
+          "store": "c3_links"
         }
       ]
     },

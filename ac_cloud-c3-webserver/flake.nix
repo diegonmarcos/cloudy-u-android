@@ -1,5 +1,5 @@
 {
-  description = "cloud-c3-webserver — Nix devShell for the Tauri 2 Android build: cargo-tauri, rustup (Android std targets), the Android SDK + NDK and JDK 17. The CI pins live in build.json::toolchain.";
+  description = "cloud-c3-webserver — Nix devShell for the native Android build (#1682: Kotlin / Compose over the Rust core): rustup (Android std targets), the Android SDK + NDK and JDK 17. The CI pins live in build.json::toolchain.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
@@ -19,7 +19,7 @@
 
         # ── Pin SDK/build-tools/NDK in one place. Mirrored in
         #    build.json::android.compile_sdk and ::toolchain.ndk. The NDK is
-        #    needed now: `cargo tauri android build` links the Rust library
+        #    needed now: build.sh links the Rust core with the NDK clang
         #    for the Android target with the NDK's clang.
         baseAndroidArgs = {
           toolsVersion        = "26.1.1";
@@ -48,8 +48,7 @@
           name = "cloud-c3-webserver-devshell";
           buildInputs = with pkgs; [
             jdk17
-            rustup            # the Android std targets build.json::tauri.targets names (rustup target add)
-            cargo-tauri       # `cargo tauri android build`; CI pins the exact release in build.json::toolchain.tauri_cli
+            rustup            # the Android std targets build.json::native.targets names (rustup target add)
             androidSdk
             adb-sync
             android-tools     # adb, fastboot
@@ -68,7 +67,6 @@
           shellHook = ''
             echo "cloud-c3-webserver devShell"
             echo "  java=$(java -version 2>&1 | head -1)"
-            echo "  cargo-tauri=$(cargo-tauri --version 2>/dev/null || true)"
             echo "  android-sdk=$ANDROID_HOME ndk=$NDK_HOME"
             echo "Commands: ./build.sh {build|release|dev|test|clean|shell|ship|emulator}"
           '';

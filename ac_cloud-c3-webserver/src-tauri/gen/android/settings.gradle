@@ -19,4 +19,4 @@ buildJson.modules.each { name, _spec ->
 // not have. Point it at the shared root core lives in, as media-center does.
 project(':libs').projectDir = project(':libs:core').projectDir.parentFile
 
-apply from: 'tauri.settings.gradle'
+// #1682 P1: no Tauri settings (the Tauri plugin projects are gone); the app module and the shared libs above are the whole build.

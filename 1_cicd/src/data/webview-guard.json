@@ -12,6 +12,12 @@
   ],
   "pending": [],
   "usages": [
+  {
+   "app": "Cloud C3 Webserver",
+   "usage": "Pages browser frame, File Explorer preview and Open embedded over the core's loopback /__app__/ (#1682)",
+   "profile": "APP_PAGE",
+   "file": "ac_cloud-c3-webserver/src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/ui/WebFrame.kt"
+  },
     {"app": "Cloud Mail", "usage": "message body", "profile": "UNTRUSTED_HTML", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/message/MessageScreen.kt"},
     {"app": "Cloud Mail", "usage": "html fragment (quoted part)", "profile": "UNTRUSTED_HTML", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/message/HtmlFragmentView.kt"},
     {"app": "Cloud Mail", "usage": "compose editor (sandboxed JS)", "profile": "UNTRUSTED_HTML", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/compose/HtmlBodyEditor.kt"},

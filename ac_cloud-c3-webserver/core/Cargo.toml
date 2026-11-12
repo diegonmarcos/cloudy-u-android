@@ -1,0 +1,33 @@
+[package]
+name = "cloud-c3-webserver"
+version = "0.4.0"
+edition = "2021"
+description = "The cloud-c3-webserver app's native core (#1682 P1): the c3-webserver library started in-process and the thin JNI layer the native Kotlin / Compose app (src-tauri/gen/android) calls. No Tauri, no webview host: the Compose UI reads the server's own loopback admin API."
+
+[lib]
+# The library the Kotlin app loads (System.loadLibrary) and build.json::native.lib_name declares; the name is kept from the
+# Tauri build so the keep-alive service and the 16 KB page-size ledger see the same .so.
+name = "cloud_c3_webserver_lib"
+crate-type = ["cdylib", "rlib"]
+
+[build-dependencies]
+# Reads build.json::runtime once at build time.
+serde_json = "1"
+
+[dependencies]
+c3-webserver = { path = "../server" }
+
+[target.'cfg(target_os = "android")'.dependencies]
+# The JNI layer (src/lib.rs exports, src/bridge.rs Android calls on the activity / service Context).
+jni = "0.21"
+
+[profile.release]
+# The library is the bulk of the APK: size, not speed, is what a phone downloads.
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[dev-dependencies]
+serde_json = "1"
