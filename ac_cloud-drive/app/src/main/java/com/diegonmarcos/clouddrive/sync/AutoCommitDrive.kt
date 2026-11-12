@@ -58,7 +58,7 @@ object AutoCommitDrive {
         e.stageAll()
         if (e.status().files.none { it.hasStaged }) return@use GitOpResult(true, "auto commit: nothing to commit")
         val diff = e.diff(staged = true)
-        val files = AutoCommit.stats(diff) { p -> File(dir, p).let { if (it.isFile) it.length() else 0L } }
+        val files = AutoCommit.stats(diff, sizeOf = { p -> File(dir, p).let { if (it.isFile) it.length() else 0L } })
         val w = AutoCommit.write(files, diff, writer(ctx), model(ctx), online(ctx), ask(ctx))
         val c = e.commit(w.message, name, email)
         GitOpResult(true, "auto commit: ${c.shortSha} " + w.message.lineSequence().first(), "written by ${w.by}\n\n${w.message}")
