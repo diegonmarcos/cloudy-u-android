@@ -86,7 +86,11 @@ jobs:
   build_and_publish:
     name: "Build APK + Push (${{ matrix.abi }})"
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 45, not 30: this job runs the app's testers (8 to 13 min, each mutation replays the whole check) and the JVM
+    # unit tests with their PIT mutation run (12 to 15 min) before the build. On a slow runner that is past 28 minutes
+    # before Gradle starts the APK, and the x86_64 leg was cut off mid-build at the 30 minute mark five runs in a row
+    # (43142268730, 43132715501, ...) while the arm64 leg of the same run published in 22.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
