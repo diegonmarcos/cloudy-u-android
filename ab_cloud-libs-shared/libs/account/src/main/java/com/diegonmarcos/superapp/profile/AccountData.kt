@@ -274,6 +274,15 @@ object AccountData {
                     if (who != ctx.packageName && !vault.grants.allow(who, com.diegonmarcos.superapp.fleetendpoints.FleetEndpointsContract.GRANT_ENDPOINTS)) error("no grant for $who")
                     else runCatching { FleetEndpointsPublisher.publish(ctx, who, vault) }.getOrElse { error(it.javaClass.simpleName) }
                 }
+                // #1693 sign-in STATE only (no token, no identity secret): every fleet app's sign-in row reads it
+                com.diegonmarcos.superapp.fleetendpoints.SignInContract.METHOD -> {
+                    val provider = arg?.trim().orEmpty()
+                    if (!Regex("[a-z0-9_-]{1,40}").matches(provider)) error("bad provider")
+                    else Bundle().apply {
+                        putBoolean(KEY_OK, true)
+                        putString(com.diegonmarcos.superapp.fleetendpoints.SignInContract.KEY_JSON, SignInOwner.local(ctx, provider).json().toString())
+                    }
+                }
                 else -> error("unknown method $method")
             }
         }

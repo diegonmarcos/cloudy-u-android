@@ -62,28 +62,37 @@ def accountDeclB64 = b64(hostJson.ui?.account ?: [:])
 // #713 THE gh ENGINE the Account page's GitHub ▸ WebAuth binds (build.json::engines.gh): its package
 // comes from the constellation manifest; an id the manifest lacks is a hard error, because the way
 // would bind a package no Store row installs.
-def ghEngineDecl = buildJson.engines?.gh
-if (ghEngineDecl == null) {
-    throw new GradleException("build.json::engines.gh is not declared — GitHub ▸ WebAuth would bind nothing (#713)")
-}
+// #1693 only Cloud Account signs in, so the binding is declared in the HOST's own build.json (Cloud
+// Account's) and nowhere else. A host that declares none is not the sign-in owner: it bakes an empty
+// binding, GhEngine reads it as "not installed", and every sign-in tile there links to Cloud Account.
+def ghEngineDecl = hostJson.engines?.gh
 def fleetFile = [
     file("${rootDir}/data/constellation-fleet.json"),
     file("${projectDir}/../../../aa_cloud-superapp/data/constellation-fleet.json"),
 ].find { it.exists() }
 if (fleetFile == null) throw new GradleException("libs:account: no constellation-fleet.json under ${rootDir}/data or aa_cloud-superapp/data")
-def ghEngineFleet = (new groovy.json.JsonSlurper().parse(fleetFile).apps ?: []).find { it.id == ghEngineDecl.fleet }
-if (ghEngineFleet == null) {
-    throw new GradleException(
-        "build.json::engines.gh.fleet '${ghEngineDecl.fleet}' is not in data/constellation-fleet.json — " +
-        "GitHub ▸ WebAuth would bind a package no Store row installs (#713)")
-}
-def ghEnginePackage = ghEngineFleet.package.toString()
-def ghEngineAction  = ghEngineDecl.action.toString().replace('{package}', ghEnginePackage)
-def ghEngineMinContract = ghEngineDecl.min_contract as int
-def ghEnginePollMs  = ghEngineDecl.login_poll_ms as long
-def ghEngineMaxMs   = ghEngineDecl.login_max_ms as long
-if (ghEngineMinContract < 1 || ghEnginePollMs <= 0 || ghEngineMaxMs < ghEnginePollMs) {
-    throw new GradleException("build.json::engines.gh needs min_contract >= 1 and 0 < login_poll_ms <= login_max_ms (#713)")
+def ghEnginePackage = ""
+def ghEngineAction  = ""
+def ghEngineMinContract = 1
+def ghEnginePollMs  = 1000L
+def ghEngineMaxMs   = 1000L
+def ghEngineRung    = ""
+if (ghEngineDecl != null) {
+    def ghEngineFleet = (new groovy.json.JsonSlurper().parse(fleetFile).apps ?: []).find { it.id == ghEngineDecl.fleet }
+    if (ghEngineFleet == null) {
+        throw new GradleException(
+            "build.json::engines.gh.fleet '${ghEngineDecl.fleet}' is not in data/constellation-fleet.json — " +
+            "GitHub ▸ WebAuth would bind a package no Store row installs (#713)")
+    }
+    ghEnginePackage = ghEngineFleet.package.toString()
+    ghEngineAction  = ghEngineDecl.action.toString().replace('{package}', ghEnginePackage)
+    ghEngineMinContract = ghEngineDecl.min_contract as int
+    ghEnginePollMs  = ghEngineDecl.login_poll_ms as long
+    ghEngineMaxMs   = ghEngineDecl.login_max_ms as long
+    ghEngineRung    = (ghEngineDecl.rung ?: '').toString()
+    if (ghEngineMinContract < 1 || ghEnginePollMs <= 0 || ghEngineMaxMs < ghEnginePollMs) {
+        throw new GradleException("build.json::engines.gh needs min_contract >= 1 and 0 < login_poll_ms <= login_max_ms (#713)")
+    }
 }
 
 android {
@@ -112,6 +121,7 @@ android {
         buildConfigField "int",    "GH_ENGINE_MIN_CONTRACT", "${ghEngineMinContract}"
         buildConfigField "long",   "GH_ENGINE_POLL_MS",      "${ghEnginePollMs}L"
         buildConfigField "long",   "GH_ENGINE_LOGIN_MAX_MS", "${ghEngineMaxMs}L"
+        buildConfigField "String", "GH_ENGINE_RUNG",         "\"${ghEngineRung}\""
     }
 
     buildFeatures {

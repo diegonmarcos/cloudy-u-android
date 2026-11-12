@@ -231,8 +231,8 @@ oauth_free() {   # $1 = ac_cloud-account build.json, $2 = SuperApp build.json, $
 }
 echo "== B: the Account surface declares and names no GitHub OAuth app =="
 msg=$(oauth_free "$ACCJ" "$BJ" "$CW" "$AP" "$PP" "$IM" "$CP" "$GS" "$GE") && ok "B: no client id, client secret, OAuth landing or web client on the Account surface" || bad "B: $msg"
-jq -e '.ui.profile.connect.lines[].ways[] | select(.kind == "gh_auth_login") | .note | test("gh")' "$BJ" >/dev/null \
-    && ok "B: GitHub WebAuth is declared as gh's own sign-in, not an app of the fleet's" || bad "B: the GitHub WebAuth way does not say it is gh's own sign-in"
+jq -e '.ui.profile.connect.lines[].ways[] | select(.kind == "cloud_account" and .provider == "github") | .note | test("gh")' "$BJ" >/dev/null \
+    && ok "B: GitHub WebAuth is declared as gh's own sign-in (run in Cloud Account, #1693), not an app of the fleet's" || bad "B: the GitHub WebAuth way does not say it is gh's own sign-in"
 echo "-- B-mutation: a client id declared, a landing declared, a web client named in Kotlin --"
 jq '.ui.account.forges[0].client_id = "Iv1.planted"' "$ACCJ" > "$TMP/b1.json"
 oauth_free "$TMP/b1.json" "$BJ" "$CW" >/dev/null && bad "B-mutation: a declared client_id was NOT caught" || ok "B-mutation: a declared client_id is caught"
@@ -509,11 +509,17 @@ tiles_ok() {   # $1 = AccountPages.kt; every handler branch draws the one KitSel
     return 0
 }
 msg=$(tiles_ok "$AP") && ok "G: gh, PAT/SSH/token, Authelia, file and unwired ways all draw the one KitSelectableTile" || bad "G: $msg"
-gh_ok() {   # $1 = ConnectWays.kt, $2 = GhEngine.kt, $3 = SuperApp build.json, $4 = AccountPages.kt; prints the first broken rule
+gh_ok() {   # $1 = ConnectWays.kt, $2 = GhEngine.kt, $3 = SuperApp build.json, $4 = AccountPages.kt, $5 = Cloud Account build.json; prints the first broken rule
+    # #1693 only Cloud Account signs in: the SuperApp's GitHub line keeps its WebAuth row as a LINK to Cloud Account
+    # (kind cloud_account) and binds no gh engine; Cloud Account declares engines.gh and runs gh's own sign-in.
+    local acc="${5:-$ACCJ}"
     local gl gp; gl=$(memof "$1" ghLogin | codeof /dev/stdin); gp=$(memof "$1" ghPrompt | codeof /dev/stdin)
-    jq -e '.ui.profile.connect.lines[] | select(.id == "github") | .ways[] | select(.kind == "gh_auth_login" and (.rung | length > 0))' "$3" >/dev/null \
-        || { echo "the GitHub line declares no WebAuth way naming its git-chain rung (AccountModel.ghHost reads it)"; return 1; }
-    jq -e '.engines.gh | .fleet == "lib-gh" and .min_contract >= 1' "$3" >/dev/null || { echo "engines.gh is not declared against the lib-gh row"; return 1; }
+    jq -e '.ui.profile.connect.lines[] | select(.id == "github") | .ways[] | select(.id == "webauth" and .kind == "cloud_account" and .provider == "github")' "$3" >/dev/null \
+        || { echo "the GitHub line's WebAuth row is not a link to Cloud Account's GitHub sign-in"; return 1; }
+    jq -e '.engines.gh == null' "$3" >/dev/null || { echo "the SuperApp still declares engines.gh: only Cloud Account binds the gh sign-in"; return 1; }
+    jq -e '.engines.gh | .fleet == "lib-gh" and .min_contract >= 1 and (.rung | length > 0)' "$acc" >/dev/null || { echo "Cloud Account's engines.gh is not declared against the lib-gh row with its git-chain rung (AccountModel.ghHost reads it)"; return 1; }
+    grep -qF 'if (!SignInOwner.isOwner(ctx)) return Outcome(false' <<<"$gl" || { echo "ghLogin starts gh's sign-in in a host that is not Cloud Account"; return 1; }
+    grep -qF 'if (!owner) {' <<<"$(codeof "$4")" && grep -qF 'SignInOwner.open(ctx, provider)' <<<"$(codeof "$4")" || { echo "a non-owner host's Connect tiles do not link to Cloud Account"; return 1; }
     grep -qF 'ConnectWays.Handler.GhLogin -> KitSelectableTile(' <<<"$(codeof "$4")" && grep -qF 'ConnectWays.ghLogin(ctx) { code, page ->' <<<"$(codeof "$4")" || { echo "the WebAuth tile does not start ghLogin"; return 1; }
     grep -qF 'GhEngine(ctx)' <<<"$gl" && grep -qF 'engine.login(host)' <<<"$gl" && grep -qF 'engine.token(host)' <<<"$gl" || { echo "ghLogin does not run gh's own login through the engine"; return 1; }
     grep -qF 'is GhEngine.Check.NotInstalled -> return record(ctx, fail(ctx.getString(R.string.connect_gh_missing' <<<"$gl" && grep -qF 'is GhEngine.Check.TooOld -> return record(ctx, fail(ctx.getString(R.string.connect_gh_old' <<<"$gl" \
@@ -525,7 +531,7 @@ gh_ok() {   # $1 = ConnectWays.kt, $2 = GhEngine.kt, $3 = SuperApp build.json, $
     grep -qF 'BuildConfig.GH_ENGINE_ACTION' "$2" || { echo "GhEngine does not find the engine by its declared action"; return 1; }
     return 0
 }
-msg=$(gh_ok "$CW" "$GE" "$BJ" "$AP") && ok "G: GitHub WebAuth = gh auth login in the gh engine, page in the fleet browser, code copied as sensitive, token read once and never filed" || bad "G: $msg"
+msg=$(gh_ok "$CW" "$GE" "$BJ" "$AP") && ok "G: GitHub WebAuth = gh auth login in the gh engine, run only in Cloud Account (other hosts link there), page in the fleet browser, code copied as sensitive, token read once and never filed" || bad "G: $msg"
 for loc in values values-es; do
     for s in connect_gh_missing connect_gh_old connect_gh_failed connect_gh_no_token connect_gh_prompt connect_gh_no_browser connect_gh_code_clip connect_pat_empty; do
         grep -q "name=\"$s\"" "$RES/$loc/strings.xml" || bad "G: $s missing from $loc"
@@ -543,14 +549,23 @@ for m in 'gh|cw|s/\.setPackage(browser)//' \
          'gh|cw|s/fetchWith(ctx, "github", token, GH_AUTH_LOGIN, file = false)/fetchWith(ctx, "github", token, GH_AUTH_LOGIN, file = true)/' \
          'gh|cw|s/        if (code.isNotBlank()) copySensitive(ctx, ctx.getString(R.string.connect_gh_code_clip), code)//' \
          'gh|ap|s/ConnectWays.ghLogin(ctx) { code, page ->/ConnectWays.fetchNow(ctx) { code, page ->/' \
+         'gh|cw|s/if (!SignInOwner.isOwner(ctx)) return Outcome(false/if (false) return Outcome(false/' \
+         'gh|ap|s/if (!owner) {/if (false) {/' \
          'tiles|ap|s/ConnectWays.Handler.File -> KitSelectableTile(way.label, way.note, false, {/ConnectWays.Handler.File -> androidx.compose.material3.Button(onClick = {/'; do
     w="${m%%|*}"; r="${m#*|}"; fl="${r%%|*}"; e="${r#*|}"
     gmut "$w" "$fl" "$e"; rc=$?
     case $rc in 0) ok "G-mutation: caught - $w/$fl: ${e:0:80}";; 2) bad "G-mutation: did not apply - $w/$fl: ${e:0:80}";; *) bad "G-mutation: NOT caught - $w/$fl: ${e:0:80}";; esac
 done
-jq '(.ui.profile.connect.lines[] | select(.id == "github") | .ways) |= map(select(.kind != "gh_auth_login"))' "$BJ" > "$TMP/g1.json"
+jq '(.ui.profile.connect.lines[] | select(.id == "github") | .ways) |= map(select(.kind != "cloud_account"))' "$BJ" > "$TMP/g1.json"
 cmp -s "$BJ" "$TMP/g1.json" && bad "G-mutation: dropping GitHub WebAuth did not apply" \
     || { gh_ok "$CW" "$GE" "$TMP/g1.json" "$AP" >/dev/null && bad "G-mutation: GitHub WebAuth dropped was NOT caught" || ok "G-mutation: GitHub WebAuth dropped from the declaration -> RED"; }
+# #1693 field parity: the SuperApp's GitHub line keeps every row it had (WebAuth + SSH / PAT), only WebAuth's kind changed.
+jq -e '[.ui.profile.connect.lines[] | select(.id == "github") | .ways[].id] == ["webauth", "ssh_pat"]' "$BJ" >/dev/null \
+    && ok "G: field parity - the GitHub line still has its WebAuth and SSH / PAT rows" || bad "G: the GitHub line lost a row (rule 16)"
+jq '.engines.gh = {"fleet": "lib-gh", "action": "{package}.ENGINE", "min_contract": 1, "login_poll_ms": 1000, "login_max_ms": 960000}' "$BJ" > "$TMP/g2.json"
+gh_ok "$CW" "$GE" "$TMP/g2.json" "$AP" >/dev/null && bad "G-mutation: engines.gh back in the SuperApp was NOT caught" || ok "G-mutation: engines.gh back in the SuperApp -> RED"
+jq 'del(.engines.gh)' "$ACCJ" > "$TMP/g3.json"
+gh_ok "$CW" "$GE" "$BJ" "$AP" "$TMP/g3.json" >/dev/null && bad "G-mutation: Cloud Account without engines.gh was NOT caught" || ok "G-mutation: Cloud Account without engines.gh -> RED"
 
 # --- V - every sign-in lands the same way ---------------------------------------------------------------------
 echo "== V: every way lands through one function: the schema gate, the vault's registry, S, and the way that fetched it =="

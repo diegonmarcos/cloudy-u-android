@@ -132,6 +132,8 @@ fun AuthProvidersPage() {
         }
     }
     val rows = ProviderStatus.rows(providers, signals)
+    // #1693 only Cloud Account starts a sign-in: any other host draws the same rows as links to Cloud Account's page.
+    if (!SignInOwner.isOwner(ctx)) { SignInLinkRows(rows.map { it.family to it.label }); return }
     val signedCount = rows.count { it.state == State.SIGNED_IN }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp).testTag(AuthProvidersTags.PAGE),
         verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -171,6 +173,34 @@ fun AuthProvidersPage() {
             if (ids.isNotEmpty()) SignInWays(host = host, policy = ids, pill = { label, tag, onClick ->
                 FilledTonalButton(onClick = onClick, modifier = Modifier.testTag(tag)) { Text(label) }
             })
+        }
+    }
+}
+
+
+/** #1693 a non-owner host's provider rows: each one the same Tile, its state from Cloud Account, a tap opening Cloud Account there. */
+@Composable
+private fun SignInLinkRows(families: List<Pair<String, String>>) {
+    val ctx = LocalContext.current
+    var said by remember { mutableStateOf("") }
+    var tick by remember { mutableIntStateOf(0) }
+    val status = remember { mutableStateMapOf<String, com.diegonmarcos.superapp.fleetendpoints.SignInContract.Status>() }
+    LaunchedEffect(tick) {
+        status.putAll(withContext(Dispatchers.IO) { families.associate { (f, _) -> f to SignInOwner.status(ctx, f) } })
+    }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp).testTag(AuthProvidersTags.PAGE),
+        verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        KitStatusBanner("Sign-ins happen in Cloud Account; this app reads their state from it", KitState.IDLE, tag = "auth:providers:hub")
+        KitActionBar(listOf(KitAction("Refresh", AuthProvidersTags.REFRESH) { tick++ }), filledFirst = false)
+        if (said.isNotBlank()) KitStatusBanner(said, KitState.WARN, tag = "auth:providers:said")
+        GroupTitle("Providers · ${families.size}")
+        for ((family, label) in families) {
+            val s = status[family]
+            Tile(label, tag = AuthProvidersTags.row(family), pill = if (s?.signedIn == true) stateOf(State.SIGNED_IN) else null,
+                secondary = s?.line ?: "reading Cloud Account…")
+            KitActionBar(listOf(KitAction("Open in Cloud Account", AuthProvidersTags.action(family, "cloud-account")) {
+                said = SignInOwner.open(ctx, family).orEmpty()
+            }), filledFirst = false)
         }
     }
 }

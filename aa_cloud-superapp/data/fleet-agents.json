@@ -144,8 +144,8 @@
       "app_label": "Cloud SuperApp",
       "package": "com.diegonmarcos.superapp",
       "kind": "bound engine",
-      "trigger": "on demand (Account ▸ GitHub, the Store's Commits feeds)",
-      "summary": "Cloud-Lib-Gh.apk, bound by handshake (build.json engines.gh).",
+      "trigger": "on demand (the Store's Commits feeds); GitHub sign-in is Cloud Account's (#1693)",
+      "summary": "Cloud-Lib-Gh.apk; Cloud Account binds it for gh auth login (ac_cloud-account build.json engines.gh), this row shows it is installed.",
       "open": "page:config/profile",
       "status": {
         "source": "installed",

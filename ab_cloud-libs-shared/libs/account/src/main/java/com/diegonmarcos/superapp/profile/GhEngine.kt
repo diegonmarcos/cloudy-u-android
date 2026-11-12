@@ -44,6 +44,8 @@ class GhEngine(context: Context) {
         val pm = ctx.packageManager
         val pkg = BuildConfig.GH_ENGINE_PACKAGE
         val needed = BuildConfig.GH_ENGINE_MIN_CONTRACT
+        // #1693 a host that declares no engines.gh (every app but Cloud Account) binds no engine: it reads as not installed.
+        if (pkg.isBlank() || BuildConfig.GH_ENGINE_ACTION.isBlank()) return Check.NotInstalled("Cloud Account (this app does not sign in to GitHub)")
         val service = pm.resolveService(Intent(BuildConfig.GH_ENGINE_ACTION).setPackage(pkg), PackageManager.GET_META_DATA)
             ?.serviceInfo
         if (service == null) {

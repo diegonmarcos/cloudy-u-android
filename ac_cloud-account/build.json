@@ -314,6 +314,17 @@
     "tester": "test-account-web.sh",
     "size_budget_mb": 20
   },
+  "engines": {
+    "_doc": "#1693 THE ONE gh SIGN-IN BINDING of the fleet (moved here from aa_cloud-superapp/build.json, same values): only Cloud Account starts a sign-in, so only it binds the gh engine for `gh auth login`. Same contract as #713: `fleet` is the Store row in data/constellation-fleet.json whose package libs:account's build.gradle resolves (an unknown id fails the build), `action` finds the engine service, `min_contract` is the lowest engine CONTRACT that answers every method profile/GhEngine.kt calls, `login_poll_ms` / `login_max_ms` pace gh's device-flow sign-in, `rung` is the git_chain rung whose host gh signs in to. 1_cicd engine-contract-guard holds the client to the engine; sign-in-owner-guard holds every other app to linking here.",
+    "gh": {
+      "fleet": "lib-gh",
+      "action": "{package}.ENGINE",
+      "min_contract": 1,
+      "login_poll_ms": 1000,
+      "login_max_ms": 960000,
+      "rung": "github"
+    }
+  },
   "tests": {
     "_doc": "Read by 1_cicd/dist/scripts/cloud-android-test-engine.sh, which the ship workflow runs before it builds.",
     "shell": {

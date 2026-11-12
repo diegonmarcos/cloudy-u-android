@@ -316,7 +316,8 @@ class AccountModel(private val ctx: Context, val store: AccountStore) {
         /** The host gh signs in to for the Connect ▸ GitHub ▸ WebAuth way (its declared git_chain rung). */
         fun ghHost(): String? = runCatching {
             val lines = JSONObject(decoded(BuildConfig.UI_PROFILE_CONNECT_B64)).getJSONArray("lines")
-            val rung = (0 until lines.length()).flatMap { i ->
+            // #1693 the owner's engines.gh names its rung; the connect lines' old gh_auth_login way is the fallback.
+            val rung = BuildConfig.GH_ENGINE_RUNG.ifBlank { null } ?: (0 until lines.length()).flatMap { i ->
                 val w = lines.getJSONObject(i).optJSONArray("ways") ?: JSONArray()
                 (0 until w.length()).map { w.getJSONObject(it) }
             }.firstOrNull { it.optString("kind") == "gh_auth_login" }?.optString("rung")

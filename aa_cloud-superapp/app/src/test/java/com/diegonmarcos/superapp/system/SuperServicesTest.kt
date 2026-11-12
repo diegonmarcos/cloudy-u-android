@@ -19,7 +19,7 @@ class SuperServicesTest {
     @Test fun `every requested service is declared and exists`() {
         val names = decl.map { it.cls.substringAfterLast('.') }
         for (n in listOf("FloatingNavService", "ScreensaverService", "KdeStatusService", "NetworkBadgeService", "HostShellService", "WdKeeperService",
-                "AdbPairingService", "ClockService", "LocationTrackerService", "GhLoginKeeper", "LightService", "DlService", "BatchForegroundService", "FirewallVpnService"))
+                "AdbPairingService", "ClockService", "LocationTrackerService", "LightService", "DlService", "BatchForegroundService", "FirewallVpnService"))
             assertTrue(n, n in names)
         assertTrue(decl.filter { it.keep }.all { it.cls.contains("firewall") })
     }

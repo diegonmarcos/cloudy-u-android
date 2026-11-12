@@ -142,6 +142,8 @@ object ConnectWays {
 
     /** GitHub ▸ gh WebAuth: gh's own `auth login` in the gh engine, then one read with the token gh holds. */
     fun ghLogin(ctx: Context, onPrompt: (code: String, page: String?) -> Unit): Outcome {
+        // #1693 only Cloud Account starts a sign-in; any other host is sent there instead.
+        if (!SignInOwner.isOwner(ctx)) return Outcome(false, "✗ " + (SignInOwner.open(ctx, "github") ?: "opened Cloud Account to sign in to GitHub"))
         val engine = GhEngine(ctx)
         val host = AccountModel.ghHost().orEmpty()
         when (val c = engine.check()) {

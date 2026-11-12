@@ -82,6 +82,7 @@ def main(argv):
              for k, v in cfg["rules"].items()}
     owner = cfg["owner"].rstrip("/") + "/"
     owner_impl = [p.rstrip("/") + "/" for p in cfg.get("owner_impl", {})]
+    gated = {k.rstrip("/") + "/": v for k, v in cfg.get("owner_gated", {}).items() if not k.startswith("_")}
     exempt = cfg.get("exempt", [])
     used = [0] * len(exempt)
     bad, scanned, apps = [], 0, set()
@@ -90,16 +91,19 @@ def main(argv):
     for rel, text in src:
         scanned += 1; apps.add(rel.split("/")[0])
         if rel.startswith(owner) or any(rel.startswith(p) for p in owner_impl): continue
+        gate = next((v for k, v in gated.items() if rel.startswith(k)), None)
         for rid, (pat, ctx) in rules.items():
             m = pat.search(text)
             if not m or (ctx and not ctx.search(text)): continue
+            if gate and gate["needle"] in text: continue
             hit = False
             for i, e in enumerate(exempt):
                 if rel.startswith(e["path"]) and (e["rules"] == "*" or rid in e["rules"]):
                     used[i] += 1; hit = True
             if not hit:
                 line = text.count("\n", 0, m.start()) + 1
-                bad.append(f"{rel}:{line}: [{rid}] {cfg['rules'][rid]['why']}")
+                extra = f" outside the owner gate ({gate['needle']})" if gate else ""
+                bad.append(f"{rel}:{line}: [{rid}] {cfg['rules'][rid]['why']}{extra}")
 
     if not scanned or owner.split("/")[0] not in apps:
         print(f"sign-in owner guard: nothing to scan or the owner {owner} is missing; refusing to answer"); return 2

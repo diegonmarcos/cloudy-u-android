@@ -13,6 +13,22 @@
         "project(':libs:account')"
       ],
       "why": "Cloud Account hosts the Account page whose Connect lines are the fleet's one sign-in"
+    },
+    {
+      "file": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/SignInOwner.kt",
+      "needles": [
+        "fun isOwner(ctx: Context): Boolean = ctx.packageName == SignInContract.ACCOUNT_PACKAGE",
+        "fun open(ctx: Context, provider: String)",
+        "fun status(ctx: Context, provider: String)"
+      ],
+      "why": "the owner check, the link and the IPC status every other app's sign-in row relies on"
+    },
+    {
+      "file": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountData.kt",
+      "needles": [
+        "SignInContract.METHOD ->"
+      ],
+      "why": "Cloud Account answers the sign-in status over the accountdata provider"
     }
   ],
   "scan_prefixes": [
@@ -79,39 +95,6 @@
     }
   },
   "exempt": [
-    {
-      "path": "aa_cloud-superapp/build.json",
-      "rules": [
-        "engine-login-decl"
-      ],
-      "why": "SuperApp's engines.gh binding drives Account > GitHub > WebAuth",
-      "until": "step 2"
-    },
-    {
-      "path": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountPages.kt",
-      "rules": [
-        "signin-ui",
-        "credential-prompt"
-      ],
-      "why": "the Account page Connect lines, shared by SuperApp and Cloud Account; gated to the owner in step 2",
-      "until": "step 2"
-    },
-    {
-      "path": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AuthProvidersPage.kt",
-      "rules": [
-        "signin-ui"
-      ],
-      "why": "Account > Sign-in providers page, shared; gated to the owner in step 2",
-      "until": "step 2"
-    },
-    {
-      "path": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/ConnectWays.kt",
-      "rules": [
-        "engine-login-call"
-      ],
-      "why": "GitHub WebAuth via the gh engine, shared; gated to the owner in step 2",
-      "until": "step 2"
-    },
     {
       "path": "ac_cloud-drive/build.json",
       "rules": [
@@ -254,5 +237,12 @@
       "until": "pending: not in steps 1-5"
     }
   ],
-  "_doc_exempt": "Each entry: a path prefix, the rules it may still trip, why, and `until` (the #1693 migration step that removes it, or `permanent` with the reason). An entry that matches nothing fails the guard, so a migrated app must drop its entry in the same commit: the list only shrinks."
+  "_doc_exempt": "Each entry: a path prefix, the rules it may still trip, why, and `until` (the #1693 migration step that removes it, or `permanent` with the reason). An entry that matches nothing fails the guard, so a migrated app must drop its entry in the same commit: the list only shrinks.",
+  "owner_gated": {
+    "_doc": "A shared lib whose pages every host draws: a file here may hold a sign-in starter only when it also asks the owner check (the needle), so in any host but Cloud Account the same row opens Cloud Account instead.",
+    "ab_cloud-libs-shared/libs/account": {
+      "needle": "SignInOwner.isOwner(",
+      "why": "libs:account's Connect and Providers pages are drawn by Cloud Account and could be by any host"
+    }
+  }
 }

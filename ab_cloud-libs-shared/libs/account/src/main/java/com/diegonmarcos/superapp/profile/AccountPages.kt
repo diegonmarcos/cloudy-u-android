@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -471,6 +472,15 @@ fun AccountConnectPage() {
             override fun onSignedIn(result: SignInResult) { status = said(ConnectWays.signedIn(ctx, result).line); tick++ }
         }
     }
+    // #1693 only Cloud Account starts a sign-in: in any other host every way below is the same tile, opening Cloud
+    // Account at that provider's page, its line the state Cloud Account reports over the accountdata provider.
+    val owner = remember { SignInOwner.isOwner(ctx) }
+    val linked = remember { mutableStateMapOf<String, com.diegonmarcos.superapp.fleetendpoints.SignInContract.Status>() }
+    LaunchedEffect(owner, tick) {
+        if (!owner) linked.putAll(withContext(Dispatchers.IO) {
+            ways.map { SignInOwner.providerOf(it) }.distinct().associateWith { SignInOwner.status(ctx, it) }
+        })
+    }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).testTag(AccountPageTags.CONNECT),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -499,7 +509,12 @@ fun AccountConnectPage() {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     for (way in group) {
                         val tile = Modifier.widthIn(max = 220.dp).testTag(AccountPageTags.way(way.kind))
-                        when (val h = ConnectWays.handler(way.kind)) {
+                        if (!owner) {
+                            val provider = SignInOwner.providerOf(way)
+                            KitSelectableTile(way.label, linked[provider]?.line ?: "opens Cloud Account to sign in", linked[provider]?.signedIn == true, {
+                                SignInOwner.open(ctx, provider)?.let { status = Said(KitState.BAD, it) }
+                            }, tile)
+                        } else when (val h = ConnectWays.handler(way.kind)) {
                             ConnectWays.Handler.GhLogin -> KitSelectableTile(way.label, way.note, false, {
                                 launchWay { ConnectWays.ghLogin(ctx) { code, page -> main.post { status = said(ConnectWays.ghPrompt(ctx, code, page)) } } }
                             }, tile)

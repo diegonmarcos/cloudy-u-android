@@ -1524,8 +1524,8 @@
       "open": "page:config/kde",
       "status": { "source": "service", "class": "com.diegonmarcos.superapp.notificationcenter.KdeStatusService" } },
     { "id": "engine-gh", "name": "GitHub engine", "kind": "bound engine",
-      "trigger": "on demand (Account ▸ GitHub, the Store's Commits feeds)",
-      "summary": "Cloud-Lib-Gh.apk, bound by handshake (build.json engines.gh).",
+      "trigger": "on demand (the Store's Commits feeds); GitHub sign-in is Cloud Account's (#1693)",
+      "summary": "Cloud-Lib-Gh.apk; Cloud Account binds it for gh auth login (ac_cloud-account build.json engines.gh), this row shows it is installed.",
       "open": "page:config/profile",
       "status": { "source": "installed", "fleet": "lib-gh" } },
     { "id": "engine-feed", "name": "Feed engine", "kind": "bound engine",
@@ -1536,13 +1536,7 @@
   ],
   "engines": {
     "_doc": "#713 ENGINES THIS APP BINDS INSTEAD OF COMPILING — same contract as ac_cloud-drive/build.json::engines (#705): `fleet` is the Store row in data/constellation-fleet.json whose package app/build.gradle resolves (an unknown id fails the build), `action` finds the engine service in it, `min_contract` is the lowest engine CONTRACT that answers every method profile/GhEngine.kt calls (read through PackageManager before any bind), `login_poll_ms` / `login_max_ms` pace gh's device-flow sign-in, which the engine runs on its own thread and the client polls. The Account page's GitHub ▸ WebAuth is this engine's `gh auth login` — GitHub CLI's own public client inside gh, never an OAuth app of the fleet's. 1_cicd engine-contract-guard holds every app's client to the engine it binds.",
-    "gh": {
-      "fleet": "lib-gh",
-      "action": "{package}.ENGINE",
-      "min_contract": 1,
-      "login_poll_ms": 1000,
-      "login_max_ms": 960000
-    },
+    "_doc_gh": "#1693 no gh binding here: only Cloud Account signs in, so engines.gh (gh auth login and its timings) is declared in ac_cloud-account/build.json. This app reads GitHub's state and credential from Cloud Account over the accountdata provider.",
     "feed": {
       "_doc": "engine-apk-split move 4: the RSS pane (rss/RemoteFeed.kt) binds Cloud-Lib-Feed.apk; libs:feed is in no module map here, so a feed change republishes that APK and not this app.",
       "fleet": "lib-feed",
@@ -7252,8 +7246,8 @@
             ] },
           { "id": "github", "label": "GitHub",
             "ways": [
-              { "id": "webauth", "label": "WebAuth", "kind": "gh_auth_login", "rung": "github",
-                "note": "GitHub CLI's own sign-in (gh auth login, GitHub's public client inside gh), run by the gh engine (Cloud-Lib-Gh.apk, engines.gh). The page to enter the code opens in cloud-browser. The token gh then holds reads the vault export once, exactly as a pasted PAT does, and is never stored by this app." },
+              { "id": "webauth", "label": "WebAuth", "kind": "cloud_account", "provider": "github",
+                "note": "#1693 opens Cloud Account at its GitHub sign-in (gh's own auth login runs there, in the gh engine Cloud Account binds); this row shows the state Cloud Account reports over the fleet IPC and starts nothing here." },
               { "id": "ssh_pat", "label": "SSH / PAT", "kind": "github_ssh_pat" }
             ] },
           { "id": "file", "label": "Import File",
@@ -10028,7 +10022,6 @@
                 {"class": "com.diegonmarcos.superapp.notificationcenter.NetworkBadgeService", "label": "Network badge"},
                 {"class": "com.diegonmarcos.clocktools.ClockService", "label": "Clock / stopwatch"},
                 {"class": "com.diegonmarcos.cloudnav.maps.LocationTrackerService", "label": "Location tracker"},
-                {"class": "com.diegonmarcos.cloudlib.gh.GhLoginKeeper", "label": "GitHub login keeper"},
                 {"class": "com.diegonmarcos.superapp.light.LightService", "label": "Light"},
                 {"class": "com.diegonmarcos.superapp.browser.download.DlService", "label": "Downloads"},
                 {"class": "com.diegonmarcos.superapp.updater.BatchForegroundService", "label": "Fleet updates (keep-alive)"},
