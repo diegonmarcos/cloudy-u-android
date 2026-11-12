@@ -114,7 +114,8 @@ import kotlin.math.roundToInt
  *          MobileLink's: the network type with data on, "Call" with data off, "SOS", grey with no service.
  *   CENTRE date + time, monospace, at the true screen centre (aligned with the island below), ticking on ACTION_TIME_TICK.
  *   RIGHT  RAM% . Storage% (/data) . CPU load . the battery icon, re-read on the minute tick and on a 10 s ticker while
- *          Configs > Launcher > "Live system stats" is on.
+ *          Configs > Launcher > "Live system stats" is on. Under it (#1673) the Permission Access Status row: Mic / Camera /
+ *          Location, coloured while any app uses them (PermAccessWatch callbacks), a tap opens the 24 h privacy dashboard.
  *
  * It was LauncherStatusStripView, a 935-line LinearLayout that built every TextView, dot and column by hand. Now
  * [StatusStripModel] owns the receivers and the readings as Compose state, and [LauncherStatusStrip] only draws them.
@@ -205,6 +206,8 @@ class StatusStripModel(private val context: Context) {
     private val mobileWatch = MobileProbe.Watch(context) { signalOnly -> refreshMobile(signalOnly) }
     private var mobileInputs: MobileLink.Inputs? = null
     private val gpsWatch = GpsProbe.StripWatch(context) { applyIconTints() }
+    /** #1673 the Permission Access Status row's live Mic / Camera / Location states: callbacks between [start] and [stop] only. */
+    val permAccess = PermAccessWatch(context, PermAccessUi.brokerRead(context))
     private var wgLink = WgLink.Reading(WgLink.State.OFF, SignalLevels.NONE, "")
     private var tetherIfaces: List<String> = emptyList()
     private var apState: Int? = null
@@ -418,6 +421,7 @@ class StatusStripModel(private val context: Context) {
         }
         mobileWatch.start()
         gpsWatch.start()
+        permAccess.start()
         (context as? android.app.Activity)?.window?.let { com.diegonmarcos.superapp.system.FpsMeter.attach(it, mainHandler) }
         refreshAdb()
         com.diegonmarcos.superapp.shellbroker.ShellBroker.onStatusChange = { st -> mainHandler.post { noteBroker(st) } }
@@ -447,6 +451,7 @@ class StatusStripModel(private val context: Context) {
         runCatching { context.contentResolver.unregisterContentObserver(adbObserver) }
         mobileWatch.stop()
         gpsWatch.stop()
+        permAccess.stop()
         com.diegonmarcos.superapp.system.FpsMeter.detach()
         runCatching {
             (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.unregisterNetworkCallback(networkCallback)
@@ -815,7 +820,13 @@ internal fun StatusStripBody(model: StatusStripModel, ctx: Context) {
             reserve = { h -> Spacer(Modifier.testTag("strip:reserve").height(with(density) { h.toDp() })) },
             // CENTRE: the clock, below the camera punch-hole / pet row.
             clock = { StripCluster(layout.getValue(StatusBarDecl.CENTRE), model, ctx, host) },
-            right = { StripCluster(layout.getValue(StatusBarDecl.RIGHT), model, ctx, host) },
+            // #1673 the resources line, and directly under it the Permission Access Status row (Mic / Camera / Location).
+            right = {
+                Column(horizontalAlignment = Alignment.End) {
+                    StripCluster(layout.getValue(StatusBarDecl.RIGHT), model, ctx, host)
+                    PermAccessStatusRow(model.permAccess) { r -> PermAccessUi.show(ctx, host, r) }
+                }
+            },
             stopwatch = { StopwatchReadout(host) },
         )
         // ── Bottom hairline: faint white separator. ShellActivity nudges the toolbar island 6 dp below it. ──
