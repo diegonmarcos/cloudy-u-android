@@ -211,6 +211,23 @@ object DeviceControls {
             open = { ctx -> runCatching { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctx) } },
         ),
 
+        // #1689 Super power saving. NOT OBSERVED: the mode is this app's own
+        // preference; each grant it moves is shown with its REAL state on
+        // Configs > Perms (SuperPowerSaving.steps). A failed restore opens the
+        // system fallback (activation dialog / Notification access page).
+        "super_power_saving" to Control(  // = SuperPowerSaving.CONTROL_ID
+            observed = false,
+            read = { ctx -> com.diegonmarcos.superapp.system.SuperPowerSaving.isOn(ctx) },
+            set = { ctx, on ->
+                val S = com.diegonmarcos.superapp.system.SuperPowerSaving
+                val r = runCatching { if (on) S.turnOn(ctx) else S.turnOff(ctx) }
+                    .getOrElse { S.Report(false, listOf(it.message ?: "failed")) }
+                if (r.needs.isNotEmpty()) Handler(Looper.getMainLooper()).post { S.openFallbacks(ctx.applicationContext, r) }
+                Verdict(S.isOn(ctx) == on, r.lines.joinToString("; "))
+            },
+            open = { ctx -> perms(ctx, "Super power saving", "device_admin") },
+        ),
+
         // CATEGORY 2, and the one control whose whole ladder was already
         // written: WirelessDebugging tries WRITE_SECURE_SETTINGS first, then a
         // live shell channel, and its Result is a re-read either way. Blocked

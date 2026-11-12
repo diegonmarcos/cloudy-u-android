@@ -1043,6 +1043,17 @@
         ]
       },
       {
+        "id": "super-power-saving",
+        "label": "Super power saving",
+        "why": "#1689 releases and restores this app's own Device admin and Notification access.",
+        "commands": [
+          "dpm set-active-admin",
+          "dpm remove-active-admin",
+          "cmd notification allow_listener",
+          "cmd notification disallow_listener"
+        ]
+      },
+      {
         "id": "diagnostics",
         "label": "Shell-domain diagnostics",
         "why": "Runs the shizuku_diagnostics bundles: dumpsys battery and usb, sysfs power-supply reads.",
@@ -10002,6 +10013,14 @@
                 "poll_multiplier": 4,
                 "slows": ["3D/4D auto-rotate (paused)", "network badge", "floating nav poll", "resources panel", "notify badges", "control panel lights", "energy sampler", "status dropdowns"]
               }
+            },
+            {
+              "id": "super_power_saving",
+              "icon": "ic_nav_powersave",
+              "label": "Super power saving",
+              "perms_surface": true,
+              "subtitle": "Power saving + SuperApp low-power mode, and releases this app's own Device admin and Notification access (only those on, restored on exit) so Maximum power saving stops listing it as essential. Accessibility untouched.",
+              "_doc": "#1689 ONE declaration: this tile (Quick actions, next to Power saving) and the Super power saving card on Configs > Perms. Steps and their exact adb lines (own components only, broker rule superpower-self): dpm remove-active-admin / set-active-admin for LockScreenAdminReceiver, cmd notification disallow_listener / allow_listener for PhoneNotificationListenerService. Remembered in super_power_prefs (fleet-config.json)."
             },
             {
               "id": "rotation_lock",

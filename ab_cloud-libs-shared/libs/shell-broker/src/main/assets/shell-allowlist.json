@@ -24,6 +24,11 @@
      "re": "^(cmd role remove-role-holder android\\.app\\.role\\.[A-Z_]+ com\\.diegonmarcos\\.superapp( [0-9]+)?|dpm remove-active-admin --user 0 com\\.diegonmarcos\\.superapp/[\\w.$]+)$"
     },
     {
+     "id": "superpower-self",
+     "why": "#1689 Super power saving restores / releases the SuperApp's OWN device admin and notification listener; no other component.",
+     "re": "^(dpm set-active-admin --user 0 com\\.diegonmarcos\\.superapp/[\\w.$]+|cmd notification (allow|disallow)_listener com\\.diegonmarcos\\.superapp/[\\w.$]+)$"
+    },
+    {
      "id": "reads-1",
      "re": "^dumpsys [\\w.:/=,@+*?-]+( [\\w.:/=,@+*?-]+)*$"
     },
@@ -114,7 +119,7 @@
     {
      "id": "selfdiag-1",
      "_doc_1688": "#1688 role writes are never a diagnostic: remove-role-holder is only roles-release-self (own package).",
-     "re": "^(?!cmd role (add|remove)-role-holder )(logcat|uptime|id|df|netstat|ip|ss|cmd)( [\\w.:/=,@+*?-]+)*$"
+     "re": "^(?!cmd role (add|remove)-role-holder |cmd notification disallow_listener )(logcat|uptime|id|df|netstat|ip|ss|cmd)( [\\w.:/=,@+*?-]+)*$"
     },
     {
      "id": "bg-echo",

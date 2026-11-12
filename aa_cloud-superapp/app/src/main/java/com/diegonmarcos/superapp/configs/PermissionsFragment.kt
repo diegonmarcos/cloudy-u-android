@@ -365,6 +365,48 @@ class PermissionsFragment : KitComposeFragment() {
         )
     }
 
+    // ── #1689 Super power saving: same declared control as the Quick actions tile (ui.control_panel super_power_saving) ──
+    private var superEpoch by mutableIntStateOf(0)
+    private var superReport by mutableStateOf<List<String>>(emptyList())
+
+    @Composable
+    private fun SuperPowerCard() {
+        val ctx = requireContext()
+        val S = com.diegonmarcos.superapp.system.SuperPowerSaving
+        val decl = remember { DeviceControls.groups.flatMap { it.rows }.firstOrNull { it.id == S.CONTROL_ID } }
+        if (decl == null || DeviceControls.declared(decl.id)?.optBoolean("perms_surface") != true) return
+        val on = remember(superEpoch, powerEpoch) { S.isOn(ctx) }
+        val steps = remember(superEpoch, powerEpoch) { S.steps(ctx) }
+        Column(Modifier.fillMaxWidth().testTag("perms:superpower")) {
+            SectionHead("SUPER POWER SAVING — power saving + releases this app's own Device admin and Notification access")
+            KvRow(decl.label, if (on) "✓ on" else "◯ off")
+            Small(decl.subtitle)
+            for (t in steps) {
+                KvRow(t.label, (if (t.on == true) "✓ on" else "◯ off") + (if (on) " · remembered: " + (if (t.id == "spm_admin") S.releasedAdmin(ctx) else S.releasedListener(ctx)).let { if (it) "restore on exit" else "was off" } else ""))
+                androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth()) {
+                    AdbToggleActions(t, ctx, "perms-spm") { runAdbToggle(t) { if (t.id == "spm_admin") S.adminActive(ctx) else S.listenerEnabled(ctx) } }
+                }
+            }
+            KvRow("Accessibility", "untouched")
+            if (on) Small("Paused: double-tap lock falls back to Accessibility (or shows 'paused by Super power saving'); Phone Notifications cannot read notifications.")
+            PermButtonRow {
+                PermButton(if (on) "Turn Super power saving off" else "Turn Super power saving on", null) {
+                    val app = ctx.applicationContext
+                    shellNote = "Super power saving: switching ${if (on) "off" else "on"}…"
+                    Thread {
+                        val r = runCatching { if (on) S.turnOff(app) else S.turnOn(app) }.getOrElse { S.Report(false, listOf(it.message ?: "failed")) }
+                        view?.post {
+                            superReport = r.lines; shellNote = "Super power saving: " + (if (r.ok) "done" else "see the steps below")
+                            activity?.let { a -> S.openFallbacks(a, r) }
+                            superEpoch++; powerEpoch++; rolesEpoch++
+                        }
+                    }.start()
+                }
+            }
+            for (l in superReport) Small(l)
+        }
+    }
+
     // ── #1687 Power saving: the same declared control as Launcher Quick actions (ui.control_panel power_saving) ──
     private var powerEpoch by mutableIntStateOf(0)
 
@@ -479,6 +521,7 @@ class PermissionsFragment : KitComposeFragment() {
         SummaryBar()
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 16.dp)) {
         PowerSavingCard()
+        SuperPowerCard()
         CatalogueHead()
         RolesHeldSection()
         // #1546 the device tools (the libs:perms section with its filter chips and actions, grant here, system pages, per-fleet

@@ -196,6 +196,14 @@
         "ac_cloud-code"
       ]
     },
+    "super_power_prefs": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1689 Super power saving: enabled, and which of this app's own grants it released (released_admin, released_listener) so turning it off restores exactly those. State of this install's grants, so it never migrates.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
     "low_power_prefs": {
       "kind": "prefs",
       "class": "config",

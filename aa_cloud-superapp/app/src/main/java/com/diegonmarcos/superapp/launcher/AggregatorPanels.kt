@@ -660,7 +660,9 @@ private fun NotificationAccessRow(onOpen: (String) -> Unit) {
         verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text("Notification access", color = NotifCard.title, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font)
+            val paused = remember { runCatching { com.diegonmarcos.superapp.system.SuperPowerSaving.pausedReason(ctx) }.getOrNull() }
             Text(if (granted) "granted · the Cloud and Phone blocks read the phone's notifications"
+                else if (paused != null) "not granted · $paused (turn it off to restore notification access)"
                 else "not granted · the Phone block cannot read notifications", color = NotifCard.meta,
                 fontSize = NotifCard.metaSp, fontFamily = NotifCard.font)
         }

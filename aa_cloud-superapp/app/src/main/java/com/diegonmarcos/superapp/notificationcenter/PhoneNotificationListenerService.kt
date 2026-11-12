@@ -36,6 +36,7 @@ class PhoneNotificationListenerService : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        connected = this // #1689 Super power saving unbinds through it
         runCatching {
             for (sbn in activeNotifications.orEmpty()) record(sbn)
         }
@@ -46,11 +47,22 @@ class PhoneNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onListenerDisconnected() {
+        if (connected === this) connected = null
         flushHeld()
         super.onListenerDisconnected()
     }
 
+    /** #1689 the bound instance, for Super power saving's requestUnbind. */
+    companion object {
+        @Volatile private var connected: PhoneNotificationListenerService? = null
+        fun unbindSelf(): Boolean = runCatching {
+            val c = connected ?: return@runCatching false
+            if (android.os.Build.VERSION.SDK_INT >= 24) { c.requestUnbind(); true } else false
+        }.getOrDefault(false)
+    }
+
     override fun onDestroy() {
+        if (connected === this) connected = null
         flushHeld()
         super.onDestroy()
     }

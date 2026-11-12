@@ -171,6 +171,11 @@ object ScreenLocker {
      *  otherwise feel broken. */
     fun lockOrExplain(ctx: Context) {
         if (!lock(ctx)) {
+            // #1689 Super power saving released the Device admin fallback: say so instead of the generic hint.
+            SuperPowerSaving.pausedReason(ctx)?.let { why ->
+                Toast.makeText(ctx, "Double-tap lock $why (Device admin released; enable Accessibility to lock meanwhile)", Toast.LENGTH_LONG).show()
+                return
+            }
             Toast.makeText(
                 ctx,
                 "Enable Accessibility (preferred) or Device Admin in " +
