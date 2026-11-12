@@ -280,7 +280,7 @@ for t in $TABS; do
 done
 for e in $NP; do
     t="${e%%/*}"; rest="${e#*/}"; id="${rest%%=*}"; route="${rest#*=}"
-    kb nav "$id"; R="$(last "nav ")"
+    kb nav "$id"; R="$(last nav)"
     grep -q "route=$route" <<<"$R" || { bad "nav $id: $R"; continue; }
     sleep 3
     if ! dumpui "$OUT/nav-$id.xml"; then bad "no screen dump for $t/$id"; continue; fi

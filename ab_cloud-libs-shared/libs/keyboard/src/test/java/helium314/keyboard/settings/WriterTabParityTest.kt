@@ -26,4 +26,15 @@ class WriterTabParityTest {
         val labels = KbTab.WRITER.pages.map { it.label }
         assert(labels.indexOf("Voice Transcription") > 4 && labels.indexOf("Dictionary") > 4)
     }
+
+    /** #1698 Writer > Tools opens cloud-writer's tool activities by class name: the keyboard declares and ships every one (it crashed without). */
+    @Test fun keyboardHostsEveryCloudWriterToolActivity() {
+        val root = generateSequence(File("").absoluteFile) { it.parentFile }.firstOrNull { File(it, "ac_cloud-keyboard/app").isDirectory } ?: return
+        val manifest = File(root, "ac_cloud-keyboard/app/src/main/AndroidManifest.xml").readText()
+        val shells = File(root, "ac_cloud-keyboard/app/src/main/java/com/diegonmarcos/cloudwriter/WriterToolShells.kt").readText()
+        for (a in listOf("TextEnhanceActivity", "TranslationActivity", "GrammarCheckActivity", "AiRoutingActivity", "RoutesActivity")) {
+            assert(manifest.contains("com.diegonmarcos.cloudwriter.$a")) { "manifest lacks $a" }
+            assert(shells.contains("class $a ")) { "no shell $a" }
+        }
+    }
 }

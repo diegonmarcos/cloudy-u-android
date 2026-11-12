@@ -95,5 +95,31 @@
             android:exported="false"
             android:grantUriPermissions="true" />
 
+        <!-- #1698 cloud-writer's Tools pages (libs:writer-ui), opened from the Writer tab > Tools; same shells as ac_cloud-writer. -->
+        <activity android:name="com.diegonmarcos.cloudwriter.TextEnhanceActivity"
+            android:exported="false"
+            android:label="@string/settings_screen_enhance"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name="com.diegonmarcos.cloudwriter.TranslationActivity"
+            android:exported="false"
+            android:label="@string/settings_screen_translation"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name="com.diegonmarcos.cloudwriter.GrammarCheckActivity"
+            android:exported="false"
+            android:label="@string/settings_screen_grammar"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name="com.diegonmarcos.cloudwriter.AiRoutingActivity"
+            android:exported="false"
+            android:label="@string/settings_screen_ai_routing"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name="com.diegonmarcos.cloudwriter.RoutesActivity"
+            android:exported="false"
+            android:label="@string/settings_screen_routes"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 </manifest>
