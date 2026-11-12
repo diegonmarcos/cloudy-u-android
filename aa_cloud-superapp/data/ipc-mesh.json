@@ -2878,11 +2878,21 @@
      ],
      "callers": [
       "aa_cloud-superapp",
+      "account",
       "browser",
+      "c3",
+      "contacts",
+      "drive",
       "lib-rootfs-nixdroid",
       "lib-rootfs-termux",
+      "mail",
+      "me",
+      "nav",
+      "news",
       "nix-on-droid",
-      "termux"
+      "tasks",
+      "termux",
+      "wallet"
      ]
     }
    ]
