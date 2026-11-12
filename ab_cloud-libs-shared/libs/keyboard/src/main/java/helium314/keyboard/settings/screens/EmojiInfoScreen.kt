@@ -1,7 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.settings.screens
 
-import android.widget.ImageView
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import java.net.HttpURLConnection
+import java.net.URL
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -29,7 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.diegonmarcos.superapp.media.GifProvider
 import com.diegonmarcos.superapp.media.MediaItem
 import com.diegonmarcos.superapp.media.MediaRuntime
@@ -184,7 +193,7 @@ fun StickersScreen(onClickBack: () -> Unit) {
                 list.isEmpty() -> Text(stringResource(R.string.mediaboards_sticker_none), style = MaterialTheme.typography.bodyMedium)
                 else -> list.forEach { (p, s) ->
                     Fact(p.name, ctx.getString(R.string.mediaboards_sticker_count, s.size))
-                    MediaStrip(s.take(12))
+                    MediaStrip(s)
                 }
             }
         }
@@ -199,21 +208,32 @@ private fun Fact(k: String, v: String) {
     }
 }
 
-/** A row of thumbnails, loaded by libs:media's own image loader (the one the panel uses). */
+/**
+ * A row of thumbnails, decoded in Compose (first frame of a GIF / WebP): a content:// sticker through the resolver, a GIF preview
+ * over https with a short timeout. A thumbnail that cannot load is a grey tile, never a crash.
+ */
 @Composable
 private fun MediaStrip(items: List<MediaItem>) {
     if (items.isEmpty()) return
     val ctx = LocalContext.current
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        items.forEach { item ->
-            AndroidView(
-                factory = { ImageView(it).apply { scaleType = ImageView.ScaleType.CENTER_CROP } },
-                update = { v -> runCatching { MediaRuntime.load(ctx, v, item.previewUrl) } },
-                modifier = Modifier.size(64.dp),
-            )
+        items.take(12).forEach { item ->
+            val bmp by produceState<ImageBitmap?>(null, item.previewUrl) {
+                value = withContext(Dispatchers.IO) { loadThumb(ctx, item.previewUrl) }
+            }
+            val b = bmp
+            if (b != null) Image(b, item.description, Modifier.size(64.dp), contentScale = ContentScale.Crop)
+            else Box(Modifier.size(64.dp).background(MaterialTheme.colorScheme.surfaceVariant))
         }
     }
 }
+
+private fun loadThumb(ctx: android.content.Context, url: String): ImageBitmap? = runCatching {
+    val opts = BitmapFactory.Options().apply { inSampleSize = 2 }
+    val stream = if (url.startsWith("content://")) ctx.contentResolver.openInputStream(Uri.parse(url))
+    else (URL(url).openConnection() as HttpURLConnection).apply { connectTimeout = 5000; readTimeout = 8000 }.inputStream
+    stream?.use { BitmapFactory.decodeStream(it, null, opts) }?.asImageBitmap()
+}.getOrNull()
 
 @Preview
 @Composable
