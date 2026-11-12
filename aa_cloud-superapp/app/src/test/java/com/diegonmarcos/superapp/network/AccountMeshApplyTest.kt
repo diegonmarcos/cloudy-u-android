@@ -22,8 +22,9 @@ class AccountMeshApplyTest {
     private val ctx: Context = ApplicationProvider.getApplicationContext()
 
     private val zeroKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-    private val peerA = "vV/phXUwnCjxACQ5Df11Uw47BzJaK4r85jPYMu2HmDc="
-    private val peerB = "Bnyf83VpvGY4BjcjQEXgutNEzx9OXMltHIcKNh7cKkc="
+    // two keys that are NOT the default peers' (the fixture must differ from what a fresh phone already holds)
+    private val peerA = "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI="
+    private val peerB = "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM="
 
     private fun conf(address: String, vararg peers: String) = buildString {
         appendLine("# fixture"); appendLine("[Interface]")
