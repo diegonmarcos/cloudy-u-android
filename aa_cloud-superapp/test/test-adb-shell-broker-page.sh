@@ -14,7 +14,7 @@ PASS=0; FAIL=0; ok(){ PASS=$((PASS+1)); echo "  PASS: $1"; }; bad(){ FAIL=$((FAI
 code(){ python3 -c 'import re,sys;print(re.sub(r"/\*.*?\*/|//[^\n]*","",open(sys.argv[1],encoding="utf-8").read(),flags=re.S))' "$1"; }
 # #1682 P3 step 4a: the model (and its JVM test) live in the owner-side lib libs:adb-shell-core, same package.
 LD="$ROOT/../ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/configs"; LT="$ROOT/../ab_cloud-libs-shared/libs/adb-shell-core/src/test/java/com/diegonmarcos/superapp"
-M="$(code "$LD/AdbShellModel.kt")"; P="$(code "$D/AdbShellBrokerPage.kt")"
+M="$(code "$LD/AdbShellModel.kt")"; P="$(code "$LD/AdbShellBrokerPage.kt")"
 python3 - "$LD/AdbShellModel.kt" <<'PY' && ok "seven sections in order" || bad "sections missing or out of order"
 import re, sys
 s = open(sys.argv[1], encoding='utf-8').read()

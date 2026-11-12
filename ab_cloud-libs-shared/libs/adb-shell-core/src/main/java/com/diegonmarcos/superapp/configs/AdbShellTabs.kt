@@ -54,7 +54,7 @@ private fun resumeTick(): Int {
 
 /** Shell tab: the terminal (input, output, tabs) and the command bookmarks (the snippet palette with its starred favourites) from [AdbTerminal]. */
 @Composable
-internal fun AdbTermTab() {
+fun AdbTermTab() {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var status by remember { mutableStateOf<ShellStatus?>(null) }
@@ -73,7 +73,7 @@ internal fun AdbTermTab() {
  * (one tap away at the bottom). Reads run only while this tab is composed (on open, on resume, after an action), off the main thread.
  */
 @Composable
-internal fun AdbPermsTab() {
+fun AdbPermsTab() {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var rows by remember { mutableStateOf<List<AdbPrereqs.Row>?>(null) }
@@ -86,7 +86,7 @@ internal fun AdbPermsTab() {
 }
 
 /** Real reads only: the channel facts (adb echo round trip, server probe) plus this app's own grants. Blocking. */
-internal fun readAdbPrereqs(ctx: Context): List<AdbPrereqs.Row> {
+fun readAdbPrereqs(ctx: Context): List<AdbPrereqs.Row> {
     val app = ctx.applicationContext
     val f = ChannelReader.read(app)
     fun held(p: String): Boolean? = runCatching { app.checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED }.getOrNull()
@@ -100,7 +100,7 @@ internal fun readAdbPrereqs(ctx: Context): List<AdbPrereqs.Row> {
 }
 
 /** One row's button. Settings pages are deep links; grants are the Perms catalogue's own lines over the armed broker; never a prompt. */
-internal fun runPrereqAction(ctx: Context, a: AdbPrereqs.Action): String = when (a) {
+fun runPrereqAction(ctx: Context, a: AdbPrereqs.Action): String = when (a) {
     is AdbPrereqs.Action.Open -> ChannelOps.setup(ctx, a.setup)
     is AdbPrereqs.Action.Grant -> {
         val ch = BrokerGrantChannel(ctx)
@@ -124,7 +124,7 @@ internal fun runPrereqAction(ctx: Context, a: AdbPrereqs.Action): String = when 
 
 /** The chain as drawn (stateless: the test drives it with fixed rows). */
 @Composable
-internal fun AdbPermsChain(rows: List<AdbPrereqs.Row>?, note: String?, onAction: (AdbPrereqs.Action) -> Unit, onOpenAll: () -> Unit) {
+fun AdbPermsChain(rows: List<AdbPrereqs.Row>?, note: String?, onAction: (AdbPrereqs.Action) -> Unit, onOpenAll: () -> Unit) {
     val p = LocalKitPalette.current
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("adb:tab:perms")) {
         if (rows == null) { KitStoreRowLine { KitStoreCaption("Checking ADB Shell prerequisites...", color = p.textSecondary) } }

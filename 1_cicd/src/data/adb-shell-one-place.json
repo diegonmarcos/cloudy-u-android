@@ -30,8 +30,8 @@
    "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlServer.kt": "the loopback HTTP debug API (/api/adb/pair, /connect, ...) driven by curl; it is not a screen",
    "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt": "background keeper that re-arms adb_wifi_enabled and raises one fleet alert whose deep link is the system screen only the person can use",
    "ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/WifiUi.kt": "#1263 WiFi page: one button opens Developer options so the person can switch Wi-Fi scan throttling off; no pairing, connecting, server or adb state",
-   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbCockpit.kt": "the ADB Shell page's own Status tab (AdbShellFragment, tab adb-status): its Mode selector is the page's mode switch, not a second surface",
-   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbCockpitOps.kt": "the verbs of that same Status tab (embedded adb Init / Reset, the Shizuku authorize prompt, Auto-fix); reached only from the ADB Shell page",
+   "ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/configs/AdbCockpit.kt": "the ADB Shell page's own Status tab (AdbShellFragment, tab adb-status): its Mode selector is the page's mode switch, not a second surface",
+   "ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/configs/AdbCockpitOps.kt": "the verbs of that same Status tab (embedded adb Init / Reset, the Shizuku authorize prompt, Auto-fix); reached only from the ADB Shell page",
    "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/DeviceControls.kt": "Launcher > Controls system-switch tile for the Wireless debugging setting itself, beside Wi-Fi and Bluetooth; no pairing, connecting or server"
   }
  },

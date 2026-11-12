@@ -26,7 +26,7 @@ SAT = "aa_cloud-superapp/app/src/test/java/com/diegonmarcos/superapp/configs/"
 CORE = "ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/"
 CORET = "ab_cloud-libs-shared/libs/adb-shell-core/src/test/java/com/diegonmarcos/superapp/configs/"
 NEED = [LIB + f for f in ("ConnectPlan.kt", "ChannelMode.kt", "ShellChannel.kt", "ShellAccess.kt", "ChannelDevice.kt", "AdbShellBootstrap.kt",
-                          "AdbPairingService.kt", "EmbeddedAdbChannel.kt")] + [CORE + "configs/AdbCockpitModel.kt", SA + "configs/AdbCockpitOps.kt"]
+                          "AdbPairingService.kt", "EmbeddedAdbChannel.kt")] + [CORE + "configs/AdbCockpitModel.kt", CORE + "configs/AdbCockpitOps.kt"]
 missing = [p for p in NEED if not os.path.isfile(os.path.join(R, p))]
 if missing:
     print("  FAIL: missing file(s), the tree is not what this tester was written against: " + ", ".join(missing))

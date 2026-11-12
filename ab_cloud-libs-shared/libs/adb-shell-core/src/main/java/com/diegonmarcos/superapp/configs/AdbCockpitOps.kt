@@ -24,18 +24,18 @@ import com.diegonmarcos.superapp.perms.PermsLink
  * What a cockpit run ended as: [failure] = a FAILED step's sentence (the Connection light goes red on it), [note] = the line the
  * page shows, [waiting] = the step a Connect run stopped at for the person (the page goes on from it by itself once it is done).
  */
-internal data class CockpitResult(val note: String, val failure: String? = null, val waiting: StepId? = null)
+data class CockpitResult(val note: String, val failure: String? = null, val waiting: StepId? = null)
 
 /**
  * The cockpit's verbs on a real device. Every one is blocking (call off the main thread), logs to [ChannelLog.shared] (the stream the
  * Logs panel tails) and returns the line the page shows. Nothing here forces past a consent gate: pairing code, Shizuku's authorize
  * prompt, Developer Options and the Wireless debugging switch are opened for the person and the run stops there.
  */
-internal object AdbCockpitOps {
+object AdbCockpitOps {
     private val log get() = ChannelLog.shared
 
     /** The permissions the channel itself needs: WRITE_SECURE_SETTINGS (keeper) and POST_NOTIFICATIONS (the pairing code is typed into one). */
-    internal fun required(r: PermRowState) = r.status.state != PermState.NOT_APPLICABLE &&
+    fun required(r: PermRowState) = r.status.state != PermState.NOT_APPLICABLE &&
         (r.entry.id == "write_secure_settings" || r.entry.permission == "android.permission.POST_NOTIFICATIONS")
 
     /** The Permissions catalogue, read for the cockpit's Perms light. */
@@ -81,7 +81,7 @@ internal object AdbCockpitOps {
         }
     }
 
-    internal fun result(o: ConnectOutcome): CockpitResult = when (o.status) {
+    fun result(o: ConnectOutcome): CockpitResult = when (o.status) {
         ConnectStatus.SUCCESS -> CockpitResult("Connected.")
         ConnectStatus.WAITING_FOR_USER -> CockpitResult(o.explanation ?: "Waiting for you.", waiting = o.failedStep)
         ConnectStatus.FAILED -> CockpitResult(o.explanation ?: "Failed.", o.explanation)
@@ -98,7 +98,7 @@ internal object AdbCockpitOps {
     }
 
     /** [connect] over [exec] (a fake in tests): perms first, then every step of [mode]'s plan, none skipped unless it is already true. */
-    internal fun connect(mode: ChannelMode, via: LaunchVia, ownsServer: Boolean, exec: ConnectExecutor, grant: () -> String): CockpitResult {
+    fun connect(mode: ChannelMode, via: LaunchVia, ownsServer: Boolean, exec: ConnectExecutor, grant: () -> String): CockpitResult {
         // Only the selected mode's own prerequisites are walked; no step of another mode, and no server start.
         log.add("autofix", "start, ${AdbCockpitModel.modeName(mode)} mode (" + AdbCockpitModel.autoFixOrder(mode, via, ownsServer).joinToString(", ") + ")")
         val perms = grant()

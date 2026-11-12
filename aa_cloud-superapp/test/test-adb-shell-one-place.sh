@@ -161,7 +161,7 @@ ok("AdbPeerDots.tints(" in st and "PeerDots(" in st and "ShellBroker.status(" in
 
 # G8: ONE page, no copy
 # #1522 the SuperApp's own broker page (declarative KitStoreRow rows over the broker) is the one page the SuperApp hosts; the lib page stays for AdbShellActivity
-SELF_PAGE = ("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbShellBrokerPage.kt", "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbShellModel.kt")
+SELF_PAGE = ("ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/configs/AdbShellBrokerPage.kt", "ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/configs/AdbShellModel.kt")
 copies = [p for p in sources if not p.startswith(LIB + "/") and p not in SELF_PAGE and re.search(r"\bfun\s+AdbShell\w*\s*\(|\bAdbShellScreen\(", code(p))]
 ok(not copies, "no first-party code outside the lib draws an ADB Shell page of its own", "an ADB Shell page outside the lib: " + ", ".join(copies))
 both = [a for a in ("aa_cloud-superapp",) if "AdbShellBrokerPage(" not in code(hosts[a]["file"])]

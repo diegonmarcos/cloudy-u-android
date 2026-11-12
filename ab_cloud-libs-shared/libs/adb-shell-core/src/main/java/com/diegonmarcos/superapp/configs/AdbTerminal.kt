@@ -73,10 +73,10 @@ import java.util.Date
 import java.util.Locale
 
 /** #1550 One terminal tab. */
-internal data class TermTab(val id: Int, val title: String, val entries: List<TerminalModel.Entry> = emptyList(), val history: TerminalModel.History = TerminalModel.History())
+data class TermTab(val id: Int, val title: String, val entries: List<TerminalModel.Entry> = emptyList(), val history: TerminalModel.History = TerminalModel.History())
 
 /** #1550 Everything the terminal draws; [AdbTerminalContent] is stateless over it (screenshots and behaviour tests pass a fixture). */
-internal data class TermUi(
+data class TermUi(
     val status: ShellStatus? = null,
     val device: String = android.os.Build.MODEL ?: "device",
     val uid: String? = null,
@@ -94,7 +94,7 @@ internal data class TermUi(
 }
 
 /** #1550 The terminal's verbs; the stateful wrapper wires them, a test passes no-ops. */
-internal class TermActions(
+class TermActions(
     val input: (String) -> Unit = {}, val run: (String) -> Unit = {}, val stop: () -> Unit = {}, val historyUp: () -> Unit = {},
     val historyDown: () -> Unit = {}, val search: (String) -> Unit = {}, val toggleWrap: () -> Unit = {}, val clear: () -> Unit = {},
     val export: () -> Unit = {}, val togglePalette: () -> Unit = {}, val favourite: (String) -> Unit = {}, val newTab: () -> Unit = {},
@@ -106,7 +106,7 @@ private fun hms(ms: Long): String = SimpleDateFormat("HH:mm:ss", Locale.US).form
 
 /** The terminal, stateless. [decl] = the declared palette. */
 @Composable
-internal fun AdbTerminalContent(ui: TermUi, decl: TerminalModel.Decl, a: TermActions, modifier: Modifier = Modifier, outputHeight: androidx.compose.ui.unit.Dp = KitStoreRow.step(520)) {
+fun AdbTerminalContent(ui: TermUi, decl: TerminalModel.Decl, a: TermActions, modifier: Modifier = Modifier, outputHeight: androidx.compose.ui.unit.Dp = KitStoreRow.step(520)) {
     val p = LocalKitPalette.current
     // Dark theme = light ink on the page; the ANSI table and the terminal well follow it (dark first, light correct).
     val dark = p.textPrimary.luminance() > 0.5f
@@ -261,7 +261,7 @@ private fun EntryBlock(e: TerminalModel.Entry, mono: TextStyle, dark: Boolean, w
 }
 
 /** ANSI SGR spans to an AnnotatedString; [q] matches are highlighted. */
-internal fun ansi(s: String, dark: Boolean, base: Color, q: String = "", hl: Color = Color.Yellow): AnnotatedString = buildAnnotatedString {
+fun ansi(s: String, dark: Boolean, base: Color, q: String = "", hl: Color = Color.Yellow): AnnotatedString = buildAnnotatedString {
     for (sp in TerminalModel.spans(s)) withStyle(SpanStyle(
         color = sp.fg?.let { Color(TerminalModel.ansiArgb(it, dark)) } ?: if (sp.dim) base.copy(alpha = 0.6f) else base,
         background = sp.bg?.let { Color(TerminalModel.ansiArgb(it, dark)).copy(alpha = 0.35f) } ?: Color.Unspecified,
@@ -276,7 +276,7 @@ internal fun ansi(s: String, dark: Boolean, base: Color, q: String = "", hl: Col
 
 /** #1550 The stateful terminal: runs each command through the shell broker as the SuperApp (allowlisted, audited, timed out). */
 @Composable
-internal fun AdbTerminal(status: ShellStatus?, onReconnect: () -> Unit, modifier: Modifier = Modifier, outputHeight: androidx.compose.ui.unit.Dp = KitStoreRow.step(520)) {
+fun AdbTerminal(status: ShellStatus?, onReconnect: () -> Unit, modifier: Modifier = Modifier, outputHeight: androidx.compose.ui.unit.Dp = KitStoreRow.step(520)) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val decl = remember { runCatching { TerminalModel.parse(ctx.assets.open(ALLOWLIST).bufferedReader().use { it.readText() }) }.getOrDefault(TerminalModel.Decl(emptyList(), emptyList(), emptyList(), emptyList())) }

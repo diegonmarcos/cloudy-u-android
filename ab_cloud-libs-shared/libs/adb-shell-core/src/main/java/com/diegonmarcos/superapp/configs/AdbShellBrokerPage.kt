@@ -55,7 +55,7 @@ import java.util.Date
 import java.util.Locale
 
 /** What the page shows, read off the device and the broker (see [loadAdbPage]). */
-internal data class AdbPageState(
+data class AdbPageState(
     val status: ShellStatus? = null,
     val wireless: Boolean? = null,
     val paired: Boolean = false,
@@ -69,7 +69,7 @@ internal data class AdbPageState(
 )
 
 /** The page's verbs; the stateful wrapper wires them, a test passes no-ops. */
-internal class AdbPageActions(
+class AdbPageActions(
     val primary: (AdbShellModel.Primary) -> Unit = {}, val rearm: () -> Unit = {}, val pair: () -> Unit = {},
     val openSettings: () -> Unit = {}, val testNow: () -> Unit = {}, val toggleKeeper: () -> Unit = {}, val fixPerms: () -> Unit = {},
 )
@@ -77,7 +77,7 @@ internal class AdbPageActions(
 private fun stamp(ms: Long): String = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date(ms))
 
 /** Read everything the page shows. Blocking: call off the main thread. The status is the broker's real `id -u` round trip. */
-internal fun loadAdbPage(ctx: Context): AdbPageState {
+fun loadAdbPage(ctx: Context): AdbPageState {
     val facts = runCatching { ChannelReader.read(ctx) }.getOrNull()
     val keeper = runCatching { WdKeeper.snapshot(ctx) }.getOrNull()
     return AdbPageState(
@@ -93,7 +93,7 @@ internal fun loadAdbPage(ctx: Context): AdbPageState {
 
 /** Configs > ADB Shell in the SuperApp: loads on open and on resume (no polling), then draws [AdbShellContent]. */
 @Composable
-internal fun AdbShellBrokerPage() {
+fun AdbShellBrokerPage() {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var state by remember { mutableStateOf(AdbPageState()) }
@@ -128,7 +128,7 @@ internal fun AdbShellBrokerPage() {
 
 /** #1550 phone: the terminal on top, then every section, one scroll. Tablet / landscape (>= 840 dp): two panes, terminal | sections. */
 @Composable
-internal fun AdbShellLayout(terminal: @Composable (androidx.compose.ui.unit.Dp) -> Unit, sections: @Composable () -> Unit, wide: Boolean? = null) {
+fun AdbShellLayout(terminal: @Composable (androidx.compose.ui.unit.Dp) -> Unit, sections: @Composable () -> Unit, wide: Boolean? = null) {
     // #1550 width from the configuration, NOT BoxWithConstraints (a SubcomposeLayout breaks performScrollTo/performClick in tests).
     val twoPane = wide ?: (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 840)
     if (twoPane) androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().testTag("adb:two-pane")) {
@@ -172,7 +172,7 @@ private fun tick(ok: Boolean?): String = when (ok) { true -> "âœ“"; false -> "âœ
 
 /** The page, stateless: the sections of [AdbShellModel.ORDER], each drawn from [s]. */
 @Composable
-internal fun AdbShellContent(
+fun AdbShellContent(
     s: AdbPageState, a: AdbPageActions, openIds: Set<String> = AdbShellModel.initiallyOpen(),
     console: @Composable () -> Unit = {},
 ) {

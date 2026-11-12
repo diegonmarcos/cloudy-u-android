@@ -3,6 +3,8 @@
 // and AdbPrereqs (the #1676 Perms chain). Packages are kept (com.diegonmarcos.superapp.system / .configs) so no consumer changes.
 // No UI, no service, no receiver: the host installs AdbReadiness.connector / hostOpener at process start.
 apply plugin: 'com.android.library'
+// #1682 P3 step 4c: the cockpit / terminal / broker-page Compose UI lives here too (the compiler is resolved from each consuming root).
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 if (project.extensions.findByName('kotlin') == null) {
     apply plugin: 'org.jetbrains.kotlin.android'
 }
@@ -11,6 +13,7 @@ android {
     namespace 'com.diegonmarcos.superapp.adbshellcore'
     compileSdk 36
     defaultConfig { minSdk 26 }
+    buildFeatures { compose = true }
     testOptions { unitTests.includeAndroidResources = true }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -29,6 +32,8 @@ dependencies {
     api project(':libs:shell-broker')
     // #1682 P3 BrokerGrantChannel implements libs:perms PermsGrant.GrantChannel
     implementation project(':libs:perms')
+    // #1682 P3 step 4c: the cockpit pages draw with the fleet UI kit (KitStoreRow, LocalKitPalette); it brings compose + fragment-ktx
+    api project(':libs:ui-kit')
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 
     testImplementation 'junit:junit:4.13.2'

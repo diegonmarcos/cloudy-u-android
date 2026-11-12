@@ -58,7 +58,7 @@ PY
 for w in '"Developer Options"' '"Wireless Debugging"' '"Developer Options Flipped"' '"Wireless Debugging Flipped"' 'ChannelMode.SHIZUKU, ChannelMode.LOCAL_SERVER, ChannelMode.EMBEDDED_ONLY' 'ConnectPlan.steps' 'USER_GATES' 'switch mode to use' 'waiting on ' 'fun groups(' 'fun resumes('; do
   echo "$M" | grep -qF "$w" && ok "model: $w" || bad "model is missing: $w"
 done
-P="$(code "$C/AdbCockpit.kt")"; O="$(code "$C/AdbCockpitOps.kt")"; S="$(code "$C/AdbShellTabs.kt")"
+P="$(code "$LC/AdbCockpit.kt")"; O="$(code "$LC/AdbCockpitOps.kt")"; S="$(code "$LC/AdbShellTabs.kt")"  # #1682 P3 step 4c moved to libs:adb-shell-core
 echo "$P$O$S" | grep -E '[0-9]\.sp\b|[0-9]sp\b' >/dev/null && bad "an sp literal in the cockpit" || ok "no sp literal"
 echo "$P$S" | grep -E 'MaterialTheme\(|\bScaffold\(|Typography\(\)|Button\(|minHeight|defaultMinSize' >/dev/null && bad "bare MaterialTheme / Scaffold / Typography / Button in the cockpit" || ok "no bare MaterialTheme, Scaffold, Typography or Button"
 echo "$P" | grep -q 'KitStoreRow' && echo "$P" | grep -q 'LocalKitPalette' && echo "$P" | grep -q 'object CockpitRoom' && ok "drawn from the Kit palette at the page's own roomy measures (CockpitRoom)" || bad "not drawn from the Kit, or the roomy measures are gone"

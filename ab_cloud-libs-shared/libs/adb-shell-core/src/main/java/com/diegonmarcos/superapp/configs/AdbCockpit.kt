@@ -69,7 +69,7 @@ import java.util.Date
 import java.util.Locale
 
 /** The page's verbs; the stateful wrapper wires them, a test passes no-ops. Connect is [act] with [AdbCockpitModel.Do.CONNECT]: there is no other fix. */
-internal class CockpitActions(
+class CockpitActions(
     val act: (AdbCockpitModel.Do) -> Unit = {}, val pickMode: (ChannelMode) -> Unit = {},
     val copyLog: () -> Unit = {}, val clearLog: () -> Unit = {}, val setKeepAlive: (Boolean) -> Unit = {},
 )
@@ -78,7 +78,7 @@ internal class CockpitActions(
  * The Status page's measures. This ONE page is roomy on purpose (#1647): wide margins, large lights, readable type, one card per
  * group. Every size the page draws comes from here, so the test can hold the page to them.
  */
-internal object CockpitRoom {
+object CockpitRoom {
     /** Page margin, and the space between two cards. */
     val page = 16.dp
     /** Padding inside a card. */
@@ -167,7 +167,7 @@ private fun hms(ms: Long): String = SimpleDateFormat("HH:mm:ss", Locale.US).form
  * Drawn from [AdbCockpitModel] only, at [CockpitRoom]'s measures.
  */
 @Composable
-internal fun AdbCockpitContent(
+fun AdbCockpitContent(
     inputs: AdbCockpitModel.Inputs?, busy: String, note: String, log: List<ChannelLog.Entry>, a: CockpitActions,
     filterOpen: Boolean = false, query: String = "", keepAlive: AdbCockpitModel.KeepAlive? = null,
     tail: (@Composable () -> Unit)? = null,
@@ -310,7 +310,7 @@ private fun KeepAliveCard(ka: AdbCockpitModel.KeepAlive, set: (Boolean) -> Unit)
  * Connect runs the whole chain; when it stopped for the person at a step and a fresh reading shows that step done, it goes on by itself.
  */
 @Composable
-internal fun AdbStatusTab() {
+fun AdbStatusTab() {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var inputs by remember { mutableStateOf<AdbCockpitModel.Inputs?>(null) }
@@ -379,7 +379,7 @@ internal fun AdbStatusTab() {
 
 /** #1678 The Tester card: one button runs [AdbTester] over the broker; per command its channel, exit, time and output; Connect on failure. */
 @Composable
-internal fun AdbTesterCard(onConnect: () -> Unit) {
+fun AdbTesterCard(onConnect: () -> Unit) {
     val ctx = LocalContext.current
     val p = LocalKitPalette.current
     val scope = rememberCoroutineScope()
