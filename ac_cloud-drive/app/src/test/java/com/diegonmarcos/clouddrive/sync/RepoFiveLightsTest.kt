@@ -100,7 +100,8 @@ class RepoFiveLightsTest {
         val merged = RepoStatus.mergeFields(status, meta)
         assertEquals(merged.size, merged.map { it.first }.toSet().size)
         assertEquals(GitStatusField.entries.size + RepoStatus.MetaField.entries.size - RepoStatus.META_IN_STATUS.size, merged.size)
-        RepoStatus.MetaField.entries.forEach { m -> assertTrue(m.name, m in merged.map { it.first } || RepoStatus.META_IN_STATUS[m] in merged.map { it.first }) }
+        val keys: List<Any> = merged.map { it.first }
+        RepoStatus.MetaField.entries.forEach { m -> assertTrue(m.name, keys.contains(m) || keys.contains(RepoStatus.META_IN_STATUS[m] as Any?)) }
         // unknown facts print the dash or their word, never crash
         val none = gitStatusFields(GitStatusFacts(false, null, null, null, null, null, null, null, null, null, null, null, null, null), w) { "" }.toMap()
         assertEquals(GitTable.DASH, none[GitStatusField.REMOTE]); assertEquals("never", none[GitStatusField.LAST_FETCH]); assertEquals("unknown", none[GitStatusField.FILES])
