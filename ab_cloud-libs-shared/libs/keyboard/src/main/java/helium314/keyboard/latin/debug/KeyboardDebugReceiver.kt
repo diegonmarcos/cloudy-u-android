@@ -47,6 +47,8 @@ import helium314.keyboard.latin.utils.prefs
  *   layout <name> switch to the main layout <name> (#1413: unexpected) for the current language
  *   devkb         log whether Dev Keyboard (corner swipes) is on and the main layout in use
  *   state         log the panel, the grammar mode, the Autocomplete page and the emoji search box height
+ *   navpages      #1698 log every declared nav page as tab/id=route (KbTab, the walk's list: a page declared is a page walked)
+ *   nav <id>      #1698 open the declared nav page (or bottom tab) <id> in the running settings window
  */
 class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
 
@@ -126,6 +128,14 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
             "clip" -> {
                 val cm = ime.getSystemService(android.content.ClipboardManager::class.java)
                 cm.setPrimaryClip(android.content.ClipData.newPlainText("ci", arg)); "ok"
+            }
+            "navpages" -> helium314.keyboard.settings.KbTab.entries.flatMap { t -> t.allPages.map { "${t.id}/${it.id}=${it.route}" } }
+                .joinToString(" ")
+            "nav" -> {
+                val tab = helium314.keyboard.settings.KbTab.byId(arg)
+                val route = tab?.route ?: helium314.keyboard.settings.KbTab.entries.flatMap { it.allPages }.firstOrNull { it.id == arg }?.route
+                    ?: return "unknown page $arg"
+                helium314.keyboard.settings.SettingsDestination.navigateTo(route); "route=$route"
             }
             "answer-pick" -> { ime.enhanceBar?.showSourcePicker() ?: return "no panel"; "ok" }
             "answer-draft" -> { ime.enhanceBar?.showAnswer(arg) ?: return "no panel"; "ok" }

@@ -21,6 +21,9 @@
 #   23..25 highlight-*     Grammar Check Highlight: the popup on a tapped mark, after Ignore, and a re-check after it
 #   26..28 answer-*        Draft Answer: the panel on the newest clipboard item, the clipboard source picker, a draft
 #   29..30 configs-answer  Configs with Draft Answer after Text Enhancement, and the Draft Answer page
+#   31..35 dev-keyboard-*  Dev Keyboard off/on from the toolbar, the Unexpected layout's corner labels
+#   nav-*                  #1698 the settings nav walk: each bottom tab (tapped on the real bar) and EVERY declared page
+#                          (KbTab, read from the APK: navpages), each checked for content of its own (ci/nav-walk-check.py)
 #
 # Made-up rows only. Nothing here is a credential.
 set -uo pipefail
@@ -226,6 +229,53 @@ grep -q "on=false" <<<"$D" && ok "the toolbar key turned Dev Keyboard off again"
 shot 34-unexpected-layout-dev-off
 kb code DEV_KEYBOARD
 openat "" 4; up; shot 35-configs-dev-keyboard-on
+
+# ── #1698 the settings nav walk: every bottom tab tapped on the real bar, then EVERY page the APK declares (navpages), each
+# screenshotted and checked for content of its own: not empty, no placeholder, not the same screen as another route ─
+CHK="$(dirname "$0")/nav-walk-check.py"
+SIGS="$OUT/nav-signatures.txt"; : > "$SIGS"
+dumpui() {   # $1 = local file; Compose may need a few tries before the hierarchy is idle
+    for _ in 1 2 3 4 5; do
+        adb shell uiautomator dump /sdcard/kbnav.xml >/dev/null 2>&1 && adb pull /sdcard/kbnav.xml "$1" >/dev/null 2>&1 && grep -q "<node" "$1" && return 0
+        sleep 2
+    done; return 1
+}
+# the centre of the first node whose text or content-desc is $2 (exact), in dump $1
+centre() { python3 - "$1" "$2" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+for n in ET.parse(sys.argv[1]).getroot().iter("node"):
+    if sys.argv[2] in ((n.get("text") or "").strip(), (n.get("content-desc") or "").strip()):
+        a = list(map(int, re.findall(r"\d+", n.get("bounds", ""))))
+        if len(a) == 4: print((a[0] + a[2]) // 2, (a[1] + a[3]) // 2); break
+PY
+}
+openat "" 5
+kb navpages; NP="$(last navpages | sed 's/.*navpages -> //')"
+NPAGES=$(wc -w <<<"$NP"); echo "declared nav pages: $NPAGES"
+[ "$NPAGES" -ge 20 ] && ok "the APK declares $NPAGES nav pages" || bad "navpages: $(last navpages)"
+TABS="$(for e in $NP; do echo "${e%%/*}"; done | awk '!s[$0]++')"
+LABELS="Keyboard|Writer|Mediaboards|Textboards|Cloud Keyboard|Configs|Account|Search|More options|Back|Navigate up"
+n=0
+for t in $TABS; do
+    lbl="$(tr '[:lower:]' '[:upper:]' <<<"${t:0:1}")${t:1}"
+    dumpui "$OUT/nav-tabbar.xml" || true
+    read -r TX TY < <(centre "$OUT/nav-tabbar.xml" "$lbl")
+    if [ -n "${TX:-}" ]; then adb shell input tap "$TX" "$TY"; sleep 3; ok "tapped the $lbl bottom tab"
+    else bad "no $lbl bottom tab on the bar"; kb nav "$t"; sleep 3; fi
+    TX=""; TY=""
+    dumpui "$OUT/nav-$t.xml"; shot "nav-$(printf '%02d' $n)-tab-$t"; n=$((n + 1))
+    python3 "$CHK" "$OUT/nav-$t.xml" "tab:$t" "tab:$t" "$OUT/nav-tab-signatures.txt" "$LABELS" || FAILS=$((FAILS + 1))
+done
+for e in $NP; do
+    t="${e%%/*}"; rest="${e#*/}"; id="${rest%%=*}"; route="${rest#*=}"
+    kb nav "$id"; R="$(last "nav ")"
+    grep -q "route=$route" <<<"$R" || { bad "nav $id: $R"; continue; }
+    sleep 3
+    if ! dumpui "$OUT/nav-$id.xml"; then bad "no screen dump for $t/$id"; continue; fi
+    shot "nav-$(printf '%02d' $n)-$t-$id"; n=$((n + 1))
+    python3 "$CHK" "$OUT/nav-$id.xml" "$t/$id" "$route" "$SIGS" "$LABELS" || FAILS=$((FAILS + 1))
+    if adb logcat -d | grep -q "FATAL EXCEPTION"; then bad "a crash after opening $t/$id"; break; fi
+done
 
 if adb logcat -d | grep -q "FATAL EXCEPTION.*"; then bad "a crash is in the log"; adb logcat -d | grep -A12 "FATAL EXCEPTION" | head -40; else ok "no crash in the log"; fi
 adb logcat -d > "$OUT/logcat.txt" 2>/dev/null
