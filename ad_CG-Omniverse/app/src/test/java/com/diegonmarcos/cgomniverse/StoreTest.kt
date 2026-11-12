@@ -35,11 +35,14 @@ class StoreTest {
         assertEquals("https://x.example/f?a=1&old-render#h", Store.launchUrl(base.copy(url = "https://x.example/f?a=1#h", launchQuery = "old-render")))
     }
 
-    @Test fun floor796DeclaresTheLighterRenderPath() {
+    /** #1694 floor796 loads exactly the address Cloud-Browser loads; the old-render rule stays declared, switched off. */
+    @Test fun floor796LoadsTheSameAddressAsCloudBrowser() {
         val json = listOf(File("../data/store.json"), File("data/store.json")).first { it.exists() }.readText()
         val f = Store.parse(json).first { it.id == "floor796" }
-        assertEquals("old-render", f.launchQuery)
-        assertTrue(Store.launchUrl(f).endsWith("?old-render"))
+        assertEquals("", f.launchQuery)
+        assertEquals(f.url, Store.launchUrl(f)); assertEquals(f.url, Store.launchUrl(f, cpu = true))
+        val rules = listOf(File("../data/world-rules.json"), File("data/world-rules.json")).first { it.exists() }.readText()
+        listOf("\"off\": true", "\"query\": \"old-render\"", "\"cpu_query\": \"\"", "#1694").forEach { assertTrue(it, rules.contains(it)) }
     }
 
     @Test fun everythingIsSelectedByDefault() {

@@ -22,6 +22,19 @@ class PinnedDocumentTest {
         assertFalse(Pinned.networkFirst(false, null))
     }
 
+    /** #1694 floor796's MP4 tiles: a CDN host and media Range requests always pass through to the network, never the pinned copy. */
+    @Test fun mediaAndOtherHostsPassThroughToTheNetwork() {
+        val mp4 = "identity;q=1, *;q=0"
+        assertFalse(Pinned.handles("static.floor796.com", "floor796.com", "bytes=0-", mp4))
+        assertFalse(Pinned.handles("static.floor796.com", "floor796.com", null, null))
+        assertFalse(Pinned.handles("floor796.com", "floor796.com", "bytes=4292608-", mp4))
+        assertFalse(Pinned.handles("floor796.com", "floor796.com", null, mp4))
+        assertFalse(Pinned.handles(null, "floor796.com", null, null))
+        assertTrue(Pinned.handles("floor796.com", "floor796.com", null, "gzip, deflate, br"))
+        assertTrue(Pinned.handles("floor796.com", "floor796.com", null, null))
+        assertTrue(src("ui/Pinned.kt").contains("if (!handles(req.url.host, host,"))
+    }
+
     @Test fun servedUrlsAreRecorded() {
         Pinned.served("https://floor796.com/front.x.js")
         assertTrue(Pinned.wasServed("https://floor796.com/front.x.js"))

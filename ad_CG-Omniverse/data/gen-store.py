@@ -49,6 +49,7 @@ def load_rules(path=RULES):
     for sid, r in rules.items():
         q = r.get("query", "")
         if not re.fullmatch(r"[A-Za-z0-9_.=&-]+", q): raise SystemExit("world-rules.json: %s query %r is not a plain query string" % (sid, q))
+        if not isinstance(r.get("off", False), bool): raise SystemExit("world-rules.json: %s off %r is not true/false" % (sid, r.get("off")))
     return rules
 
 
@@ -81,8 +82,10 @@ def generate(text, links=None, rules=None):
         })
     if not entries: raise SystemExit("fwa.md: no rows")
     for e in entries:
-        if e["id"] in rules: e["launch_query"] = rules[e["id"]]["query"]
-        if "cpu_query" in rules.get(e["id"], {}): e["launch_query_cpu"] = rules[e["id"]]["cpu_query"]
+        r = rules.get(e["id"])
+        if r is None or r.get("off"): continue   # an "off" rule stays declared (with its why) but the world loads its plain address
+        e["launch_query"] = r["query"]
+        if "cpu_query" in r: e["launch_query_cpu"] = r["cpu_query"]
     unknown = sorted(set(rules) - seen)
     if unknown: raise SystemExit("world-rules.json: unknown world id(s) %s" % unknown)
     return {

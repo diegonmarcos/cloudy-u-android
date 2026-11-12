@@ -109,12 +109,14 @@ class RenderProbeTest {
         assertTrue(source("app/src/main/java/com/diegonmarcos/cgomniverse/ui/Web.kt").contains("addDocumentStartJavaScript(wv, RenderProbe.CPU_CANVAS_JS"))
     }
 
-    /** floor796: video tiles as declared; in the CPU presentation the page's canvas engine (no query), which a CPU-backed canvas can show. */
+    /** floor796 (#1694): its canvas engine (the plain address, as in Cloud-Browser) in both presentations; a declared cpu query still wins. */
     @Test fun theCpuPresentationLoadsItsDeclaredAddress() {
         val f = Store.parse(source("data/store.json")).first { it.id == "floor796" }
-        assertEquals("old-render", f.launchQuery); assertEquals("", f.launchQueryCpu)
-        assertTrue(Store.launchUrl(f).endsWith("?old-render"))
+        assertEquals("", f.launchQuery); assertNull(f.launchQueryCpu)
+        assertEquals(f.url, Store.launchUrl(f))
         assertEquals(f.url, Store.launchUrl(f, cpu = true))
+        val tiles = f.copy(launchQuery = "old-render", launchQueryCpu = "")
+        assertTrue(Store.launchUrl(tiles).endsWith("?old-render")); assertEquals(f.url, Store.launchUrl(tiles, cpu = true))
         val other = f.copy(launchQueryCpu = null)
         assertEquals(Store.launchUrl(other), Store.launchUrl(other, cpu = true))
         assertEquals(f.url + "?soft", Store.launchUrl(f.copy(launchQueryCpu = "soft"), cpu = true))

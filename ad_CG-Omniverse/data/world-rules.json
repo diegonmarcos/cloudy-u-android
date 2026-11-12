@@ -1,7 +1,9 @@
 {
-  "_doc": "Per-world launch rules, keyed by Store id (data/fwa.md slug). gen-store.py copies each rule into store.json as launch_query; Galaxy appends it to the world's address (Store.launchUrl). Declared here, never spelled in Kotlin. An optional cpu_query (launch_query_cpu) replaces it when Galaxy falls back to the CPU presentation (#1657: the WebView did not bring the world to the screen).",
+  "_doc": "Per-world launch rules, keyed by Store id (data/fwa.md slug). gen-store.py copies each rule into store.json as launch_query; Galaxy appends it to the world's address (Store.launchUrl). Declared here, never spelled in Kotlin. An optional cpu_query (launch_query_cpu) replaces it when Galaxy falls back to the CPU presentation (#1657: the WebView did not bring the world to the screen). A rule with \"off\": true stays declared with its why but is not applied: the world loads its plain address.",
   "rules": {
     "floor796": {
+      "off": true,
+      "off_why": "#1694 off: Cloud-Browser loads the plain address (the default canvas engine) and renders floor796 on the same phone; ?old-render made Galaxy load a different engine whose MP4 tiles the WebView aborts and re-requests with new Range offsets (reported as net::ERR_FAILED, not served by the pinned copy: static.floor796.com is not the pinned host) and the scene stayed empty. Galaxy now loads exactly what Cloud-Browser loads. Set off to false to bring the video-tile engine back.",
       "query": "old-render",
       "why": "The default engine downloads a 175 MB F796 file into a worker (held twice in memory, plus a Cache API write) and stays blank when the WebView renderer cannot hold it. ?old-render selects the legacy engine, which streams the 127 MB MP4 tiles for the viewport only. Remove this rule to get the best-quality engine back.",
       "cpu_query": "",

@@ -29,7 +29,9 @@ object Pinned {
 
     /** The shared web-core intercept (one implementation for Galaxy and Cloud-Browser: headers, charset, COOP/COEP/CORS kept, WebView UA). */
     fun intercept(ctx: Context, host: String, req: WebResourceRequest, refresh: Boolean): WebResourceResponse? {
-        if (req.url.host != host) return null
+        val hdr = req.requestHeaders.orEmpty()
+        if (!handles(req.url.host, host, hdr.entries.firstOrNull { it.key.equals("Range", true) }?.value,
+                hdr.entries.firstOrNull { it.key.equals("Accept-Encoding", true) }?.value)) return null
         val live = refresh || networkFirst(req.isForMainFrame, req.requestHeaders?.entries?.firstOrNull { it.key.equals("Accept", true) }?.value)
         // a miss or a failure returns null: the WebView fetches it from the network itself, never an error or an empty body
         val r = runCatching { SiteMirrorStore.intercept(ctx, listOf(PinnedSites.keyOf(host)), req, live) }.getOrNull() ?: return null
@@ -37,6 +39,14 @@ object Pinned {
         served(req.url.toString())
         return r
     }
+
+    /**
+     * #1694 what the pinned copy may answer: only the pinned host itself (a CDN host such as static.floor796.com always goes to
+     * the network), and never a media stream. A media element asks with Range (bytes=N-) and Accept-Encoding identity, aborts and
+     * re-asks at new offsets as it seeks; the network answers those with 206 itself, so the intercept never stands in the way.
+     */
+    fun handles(reqHost: String?, host: String, range: String?, acceptEncoding: String?): Boolean =
+        reqHost != null && reqHost == host && range == null && !acceptEncoding.orEmpty().trim().startsWith("identity", true)
 
     /** #1662 documents are network-first (pinned copy only offline); everything else is cache-first. */
     fun networkFirst(mainFrame: Boolean, accept: String?): Boolean = mainFrame || accept.orEmpty().contains("text/html", true)
