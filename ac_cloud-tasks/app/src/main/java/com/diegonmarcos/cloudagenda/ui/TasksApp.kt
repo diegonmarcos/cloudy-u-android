@@ -195,6 +195,8 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
             if (topBar == null) content() else NavBarTopFirstRowScaffold(
                 title = stringResource(R.string.app_name),
                 hierarchy = current?.let { titleHierarchy(it, page) }.orEmpty(),
+                // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+                sections = nav.sections,
                 onNavigate = { e -> go(e.sectionId); if (e.depth > 0) pageOf[e.sectionId] = e.id },
                 onAccount = rememberAccountLauncher(),
                 onConfigs = { if (section != Ids.SETTINGS) returnTo = section; go(Ids.SETTINGS) },

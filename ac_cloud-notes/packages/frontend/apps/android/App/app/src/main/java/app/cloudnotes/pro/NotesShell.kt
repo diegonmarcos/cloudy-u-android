@@ -123,7 +123,7 @@ internal class NotesShell(
                 onAccount = rememberAccountLauncher(),
                 onConfigs = { fleetConfigsOpen = true },
                 aiPanel = { AiFleetChatPanel(gatewayUrl) },
-                sections = nav.decl.bottomSections(),
+                sections = nav.decl.sections,  // #1483 every declared section, bar and off-bar
                 configsUi = false, // Configs opens Configs > UI itself (ConfigsUi below)
                 modifier = Modifier.fillMaxSize().statusBarsPadding(),
                 dark = dark,

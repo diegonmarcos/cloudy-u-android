@@ -94,6 +94,8 @@ object KeyboardChrome {
         NavBarTopFirstRowScaffold(
             title = tab?.label ?: "Cloud Keyboard",
             hierarchy = tab?.let { hierarchy(it, pageId) }.orEmpty(),
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = decl.sections,
             onNavigate = { e ->
                 val t = KbTab.byId(e.sectionId)
                 if (e.depth == 0) t?.let { picked = null; open(it.route) }

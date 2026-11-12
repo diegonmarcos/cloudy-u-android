@@ -127,6 +127,8 @@ class MainActivity : AppCompatActivity() {
                     titleHierarchy(s.copy(pages = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(s.pages)), configsPage)
                 else listOf(HierarchyEntry(s.id, s.label, 0, s.id, selected = s.id == section))
             },
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = NAV.sections,
             onNavigate = { e -> if (e.depth > 0 && e.sectionId == "configs") pickConfigs(e.id) else go(e.sectionId) },
             onAccount = rememberAccountLauncher(),
             onConfigs = { go("configs") },

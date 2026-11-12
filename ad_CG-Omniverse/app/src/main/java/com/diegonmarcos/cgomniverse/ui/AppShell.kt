@@ -133,6 +133,8 @@ fun AppShell(startSection: String? = null, startWorld: String? = null, incoming:
         NavBarTopFirstRowScaffold(
             title = sec?.label ?: stringResource(R.string.app_name),
             hierarchy = sec?.let { titleHierarchy(it, null) }.orEmpty(),
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = nav.sections,
             onNavigate = { e -> section = e.sectionId },
             onAccount = rememberAccountLauncher(),
             onConfigs = { fleetConfigsOpen = true },

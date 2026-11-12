@@ -38,6 +38,8 @@ fun MeShell(
     NavBarTopFirstRowScaffold(
         title = title,
         hierarchy = hierarchy,
+        // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+        sections = Sections.all().map { it.nav },
         onNavigate = { e -> if (e.depth == 0) onOpen(e.sectionId) else onOpenPage(e.sectionId, e.id) },
         onAccount = { settings.firstOrNull()?.let { onOpen(it.id) } },
         onConfigs = { settings.lastOrNull()?.let { onOpen(it.id) } },

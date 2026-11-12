@@ -103,6 +103,8 @@ fun DriveShell(select: String? = null, onSelected: () -> Unit = {}, content: @Co
             NavBarTopFirstRowScaffold(
                 title = section?.label ?: stringResource(R.string.app_name),
                 hierarchy = section?.let { titleHierarchy(it, null) }.orEmpty(),
+                // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+                sections = Declarations.nav.sections,
                 onNavigate = { e -> if (Declarations.routable(e.sectionId)) selected = e.sectionId },
                 onAccount = rememberAccountLauncher(),
                 onConfigs = { if (Declarations.routable(CONFIGS_TAB)) selected = CONFIGS_TAB },

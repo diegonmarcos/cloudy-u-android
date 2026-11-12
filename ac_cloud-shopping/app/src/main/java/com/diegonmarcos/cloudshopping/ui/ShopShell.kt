@@ -67,6 +67,8 @@ fun ShopShell() {
         NavBarTopFirstRowScaffold(
             title = (if (searching) nav.section(Decl.SECTION_SEARCH)?.label else shop.pages.firstOrNull { it.id == pageId }?.label) ?: stringResource(R.string.app_name),
             hierarchy = titleHierarchy(shop, if (searching) null else pageId),
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = nav.sections,
             onNavigate = { e -> section = Decl.SECTION_SHOP; if (e.depth > 0) page = e.id },
             onAccount = rememberAccountLauncher(),
             onConfigs = { FleetConfigsEntries.open(ctx, FleetConfigsPage.General) },

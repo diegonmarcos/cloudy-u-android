@@ -68,6 +68,8 @@ fun CalcShell(api: CalcApi, state: CalcState) {
             NavBarTopFirstRowScaffold(
                 title = sec?.label ?: stringResource(R.string.app_name),
                 hierarchy = sec?.let { titleHierarchy(it, state.tab) }.orEmpty(),
+                // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+                sections = nav.sections,
                 onNavigate = { e -> state.showSection(e.sectionId); if (e.depth > 0) state.tab = e.id },
                 onAccount = rememberAccountLauncher(),
                 onConfigs = { state.openConfigs() },

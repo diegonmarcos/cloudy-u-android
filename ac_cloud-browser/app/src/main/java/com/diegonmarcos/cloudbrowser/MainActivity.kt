@@ -225,6 +225,8 @@ class MainActivity : AppCompatActivity() {
                 "cloudy", "domains" -> section?.let { titleHierarchy(it, sitesPage) }.orEmpty()
                 else -> emptyList()
             },
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = decl.sections,
             onNavigate = { e -> if (e.depth == 0) openSection(e.sectionId) else if (selectedId == "cloudy" || selectedId == "domains") sitesPage = e.id else openConfigsPage(e.id) },
             onAccount = rememberAccountLauncher(),
             // #1401 the app bar's ⋮ opens the app's Configs, like every fleet app; Browsing Tools is the tab row's icon.

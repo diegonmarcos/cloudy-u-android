@@ -298,6 +298,8 @@ private fun Chrome(state: SearchState, v: SearchConfig.Vertical) {
     NavBarTopFirstRowScaffold(
         title = text,
         hierarchy = if (state.saved) emptyList() else section?.let { titleHierarchy(it, pageId) }.orEmpty(),
+        // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+        sections = NAV.sections,
         onNavigate = { e -> navigateTo(state, e) },
         onAccount = rememberAccountLauncher(),
         // Configs (the vertical dots) opens what the old Profile popover held: the AI token, theme, city.

@@ -63,7 +63,7 @@ fun BottomNavBar(nav: NavController, currentRoute: String, content: @Composable 
     NavBarTopFirstRowScaffold(
         title = stringResource(itemDescription(selected ?: "home")),
         hierarchy = openSection?.let { sec -> titleHierarchy(sec, sec.pages.firstOrNull { it.id == currentRoute }?.id) }.orEmpty(),
-        sections = mailNav.bottomSections(),
+        sections = mailNav.sections,  // #1483 every declared section, bar and off-bar
         onNavigate = { e -> entries.firstOrNull { it.id == e.sectionId }?.let(tap) },
         onAccount = account,
         onConfigs = { fleetConfigsOpen = true },

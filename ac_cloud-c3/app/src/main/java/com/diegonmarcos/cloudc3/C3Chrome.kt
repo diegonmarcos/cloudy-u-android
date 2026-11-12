@@ -69,6 +69,8 @@ fun C3Chrome(
         NavBarTopFirstRowScaffold(
             title = section?.label ?: stringResource(R.string.app_name),
             hierarchy = section?.let { titleHierarchy(it, selectedPage) }.orEmpty(),
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = Declarations.nav.sections,
             onNavigate = { e -> onOpen(C3Nav.Target(e.sectionId, e.id.takeIf { e.depth > 0 })) },
             onAccount = onAccount,
             onConfigs = { onConfigs() },

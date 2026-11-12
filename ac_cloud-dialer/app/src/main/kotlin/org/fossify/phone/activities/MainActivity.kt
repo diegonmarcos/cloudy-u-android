@@ -444,7 +444,8 @@ class MainActivity : SimpleActivity() {
             // #1415 the title follows the active tab: the scaffold reads the FIRST depth-0 entry as the section, so only
             // the selected one goes here and the island's sections are its peers (the dropdown still lists them all).
             hierarchy = shown.filter { it.id == sectionId }.map { HierarchyEntry(it.id, it.label, 0, it.id, selected = true) },
-            sections = shown,
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = DialerNav.decl.sections,
             onNavigate = { e -> selectSection(e.sectionId) },
             onAccount = rememberAccountLauncher(),
             onConfigs = { openConfigs() },

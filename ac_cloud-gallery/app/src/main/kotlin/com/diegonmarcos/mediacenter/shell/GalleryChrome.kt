@@ -97,7 +97,7 @@ fun GalleryChrome(
                 onAccount = rememberAccountLauncher(),
                 onConfigs = { fleetConfigsOpen = true },
                 onAi = onSearch,
-                sections = nav.bottomSections(),
+                sections = nav.sections,  // #1483 every declared section, bar and off-bar
                 dark = dark,
             ) {
                 NavBarBottomHost(

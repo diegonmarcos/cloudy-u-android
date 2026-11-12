@@ -159,6 +159,8 @@ fun SiShell() {
         NavBarTopFirstRowScaffold(
             title = sec?.label ?: stringResource(R.string.app_name),
             hierarchy = sec?.let { titleHierarchy(it, pageId) }.orEmpty(),
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = nav.sections,
             onNavigate = { e -> open(e.sectionId, if (e.depth == 0) null else e.id) },
             onAccount = rememberAccountLauncher(),
             onConfigs = { open(Decl.SECTION_SETTINGS, null) },

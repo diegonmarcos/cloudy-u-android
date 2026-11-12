@@ -15,6 +15,8 @@ for each, checks what the owner keeps finding by hand:
      it drives the pages through the Classic title dropdown, which Clean mode (Cloud Notes' default) replaces by the drawer.
   P5 a section declared vertical_side_menu shows the side menu and its toggle flips expanded <-> rail.
   P4 the pick landed: after choosing the page in the dropdown the title path ends in its label.
+  P6 (#1483) the title dropdown's section list holds EVERY section ui.sections declares (on the bar and off it), and an off-bar
+     section is walked by opening it from there (after the gear), as a user reaches it.
 
   SCENES (#1369, nav-walk-apps.json `scenes`): after the walk, an app may declare named scenes (a fresh launch, then steps:
      tap a resource id, tap a text or content description, type, a key, an edge swipe, a wait; `scene_setup` pushes repo
@@ -438,6 +440,64 @@ class Walk:
                 break  # the list did not move: that is all of it
             nodes = again
         return False
+
+    def section_root(self):
+        """Open the dropdown at the current section's root (its crumb), where the dropdown lists the app's sections as peers.
+        Returns the open dropdown's nodes, or None when it did not open."""
+        if self.open_dropdown() is None:
+            return None
+        nodes = dump() or []
+        crumb = find(nodes, "navtop1_crumb_1")
+        if crumb is not None:
+            tap(crumb)
+            settle(1.6)
+            if self.open_dropdown() is None:
+                return None
+            nodes = dump() or []
+        return nodes
+
+    def enter_section(self, sid):
+        """#1483 Open section [sid] from the dropdown's section list; an error string when it is not listed there."""
+        if self.section_root() is None:
+            return "the title dropdown did not open (to reach section %s)" % sid
+        if self.pick(sid):
+            return None
+        self.back_if_dropdown()
+        return "P6 the title dropdown's section list has no entry for section %s (every declared section must be reachable from it)" % sid
+
+    def listed_entries(self):
+        """Every entry id of the open dropdown, scrolling it to its end."""
+        nodes = dump() or []
+        seen = set()
+        for _ in range(8):
+            entries = findall(nodes, ENTRY)
+            before = len(seen)
+            seen |= {n.rid[len(ENTRY):] for n in entries}
+            if not entries or (len(seen) == before and _ > 0):
+                break
+            top, bottom = min(n.t for n in entries), max(n.b for n in entries)
+            swipe(entries[0].cx, bottom - 20, max(top + 20, bottom - 500), 300)
+            settle(0.6)
+            nodes = dump() or nodes
+        return seen
+
+    def check_section_list(self):
+        """#1483 P6 every section ui.sections declares (on the bar and off it) is listed in the title dropdown's section list."""
+        t0 = time.time()
+        fails = []
+        if self.section_root() is None:
+            fails.append("P6 the title dropdown did not open")
+            listed = set()
+        else:
+            listed = self.listed_entries()
+            missing = [sid for sid in self.sections if sid not in listed]
+            if missing:
+                self.evidence("section_list")
+                fails.append("P6 the title dropdown's section list lacks %s (every declared section must be reachable from it)" % ", ".join(missing))
+            self.back_if_dropdown()
+        self.results.append({"section": "-", "page": "sections", "label": "Section list", "status": "FAIL" if fails else "PASS",
+                             "checks": {"listed": "%d/%d" % (len([s for s in self.sections if s in listed]), len(self.sections))},
+                             "failures": fails, "seconds": int(time.time() - t0)})
 
     def back_if_dropdown(self):
         """Close the title dropdown with Back only while it is open: a Back on the page itself leaves the app."""
@@ -1005,6 +1065,15 @@ class Walk:
             return
         tap(opener)
         settle(1.6)
+        if not on_bar:
+            # #1483 an off-bar section is reached the way a user reaches it: the gear opens the app, then the title dropdown's section
+            # list (every declared section is a peer there, P6) opens the section itself; its pages are then walked from its own root
+            err = self.enter_section(sid)
+            if err:
+                self.results.append({"section": sid, "page": "-", "label": sec.get("label", sid), "status": "FAIL", "checks": {},
+                                     "failures": [err], "seconds": 0})
+                self.evidence("%s_no_section_entry" % sid)
+                return
         pages = [p for p in pages_of(sec)]
         # the section itself (its first page is what it opens on)
         self.run_page(sid, sid, sec.get("label", sid), False)
@@ -1037,6 +1106,14 @@ class Walk:
                 raise SectionTimeout("section exceeded its time budget")
 
             signal.signal(signal.SIGALRM, _alarm)
+            signal.alarm(SECTION_BUDGET)
+            try:
+                self.check_section_list()
+            except Exception as ex:  # a driver fault must show as a failed check, never as silence
+                self.results.append({"section": "-", "page": "sections", "label": "Section list", "status": "FAIL", "checks": {},
+                                     "failures": ["driver error: %r" % ex], "seconds": 0})
+            finally:
+                signal.alarm(0)
             for sid in self.bottom + [s for s in self.sections if s not in self.bottom]:
                 if not emulator_alive():
                     self.results.append({"section": sid, "page": "-", "label": sid, "status": "FAIL", "checks": {},

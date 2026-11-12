@@ -92,11 +92,9 @@ fun KgShell() {
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
         NavBarTopFirstRowScaffold(
             title = sec?.label ?: stringResource(R.string.app_name),
-            // #1483 the open section first (the title), then the other off-bar sections with pages (Phone > Apps), so the dropdown
-            // reaches every declared page wherever the user is; the gear's Settings stays the gear's
-            hierarchy = sec?.let { titleHierarchy(it, pageId) }.orEmpty() +
-                nav.sections.filter { s -> s.id != section && s.id != Decl.SECTION_SETTINGS && s.pages.isNotEmpty() && s.id !in nav.bottomNav }
-                    .flatMap { s -> titleHierarchy(s, null).map { it.copy(selected = false) } },
+            hierarchy = sec?.let { titleHierarchy(it, pageId) }.orEmpty(),
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = nav.sections,
             onNavigate = { e -> open(e.sectionId, if (e.depth == 0) null else e.id) },
             onAccount = rememberAccountLauncher(),
             onConfigs = { open(Decl.SECTION_SETTINGS, null) },

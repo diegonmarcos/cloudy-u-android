@@ -148,6 +148,8 @@ class MainActivity : AppCompatActivity() {
         NavBarTopFirstRowScaffold(
             title = openSection?.label ?: getString(R.string.app_name),
             hierarchy = openSection?.let { titleHierarchy(it, selectedPage) }.orEmpty(),
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = NAV.sections,
             onNavigate = { e -> selected = e.sectionId; selectedPage = e.id.takeIf { e.depth > 0 } },
             onAccount = { selected = "devices"; selectedPage = "me" },
             onConfigs = { selected = "configs"; selectedPage = null },

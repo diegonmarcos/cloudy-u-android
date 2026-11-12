@@ -364,7 +364,9 @@ abstract class WriterSettingsActivity : AppCompatActivity() {
                 NavBarTopFirstRowScaffold(
                     title = page.pageTitle(),
                     hierarchy = emptyList(),
-                    onNavigate = {},
+                    // #1483 every declared section is a peer in the title dropdown; a pick opens it like the bottom nav does
+                    sections = WriterNav.decl.sections,
+                    onNavigate = { e -> if (e.depth == 0) openSection(e.sectionId) },
                     onAccount = rememberAccountLauncher(),
                     onConfigs = { openSection(WriterNav.SETTINGS) },
                     onAi = rememberSuperAppAiLauncher(),

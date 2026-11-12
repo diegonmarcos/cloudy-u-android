@@ -647,12 +647,9 @@ class WriterSurface(
         }
         NavBarTopFirstRowScaffold(
             title = title,
-            // #1483 the open section first (the scaffold reads the FIRST depth-0 entry as the title), then every other section that is
-            // off the bottom bar and has pages of its own (Tools: Enhance, Translation, Grammar, AI Routing, Routes), so the dropdown
-            // reaches each declared page from anywhere, not only through the drawer
-            hierarchy = section?.let { titleHierarchy(it, if (current == Screen.TOOLS) toolsPage.value.ifBlank { null } else if (current == Screen.CONFIGS) configsPage.value else null) }.orEmpty() +
-                WriterNav.decl.sections.filter { s -> s.id != sectionId && s.pages.isNotEmpty() && WriterNav.decl.bottomSections().none { it.id == s.id } && s.id != WriterNav.SETTINGS }
-                    .flatMap { s -> titleHierarchy(s, null).map { it.copy(selected = false) } },
+            hierarchy = section?.let { titleHierarchy(it, if (current == Screen.TOOLS) toolsPage.value.ifBlank { null } else if (current == Screen.CONFIGS) configsPage.value else null) }.orEmpty(),
+            // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
+            sections = WriterNav.decl.sections,
             onNavigate = { e -> goSection(e.sectionId); if (e.depth > 0 && e.sectionId == WriterNav.TOOLS) toolsPage.value = e.id; if (e.depth > 0 && e.sectionId == WriterNav.SETTINGS) configsPage.value = e.id },
             onAccount = rememberAccountLauncher(),
             onConfigs = { if (screen.value != Screen.CONFIGS) { saveNow(); openConfigs() } },
