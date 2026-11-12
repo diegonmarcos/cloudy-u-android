@@ -19,7 +19,7 @@ import com.diegonmarcos.superapp.adbdebug.StepId
  * device, `ChannelReader.read`) or a [PermsDigest] (the real Permissions catalogue); nothing here is a mock. [AdbCockpit] draws
  * exactly this.
  */
-internal object AdbCockpitModel {
+object AdbCockpitModel {
     /** The page's tabs, declared in build.json (`adb-shell.tabs`, hidden pages); Status is the first and the landing tab. */
     enum class Tab(val pageId: String, val label: String) {
         STATUS("adb-status", "Status"), SHELL("adb-term", "Shell"), PERMS("adb-perms", "Perms"), ALL("adb-all", "All");

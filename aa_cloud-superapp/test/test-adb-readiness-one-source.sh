@@ -6,6 +6,8 @@
 #   R3  the status dropdown draws a needs-ADB row as an AdbReadiness link (testTag adblink, AdbReadiness.connect) and re-reads on its flow
 #   R4  the dropdown's probes queue (synchronized) and check AdbReadiness before running; the old "arm the channel" text is gone
 #   R5  the ADB Shell Status tab ends with the Tester card, which runs over ShellBroker.exec
+#   R6  #1682 P2a the owner lives in libs:adb-shell-core (one copy, shared with the ADB owner app), never again in the SuperApp's app/,
+#       and the SuperApp installs its Connect chain / page opener there (AdbReadiness.connector / hostOpener in App.kt)
 # Then each violation is planted and must turn a check red.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"; APP="$(cd "$HERE/.." && pwd)"
@@ -13,15 +15,19 @@ command -v python3 >/dev/null || { echo "python3 required"; exit 1; }
 python3 - "$APP" <<'PY'
 import os, re, sys
 APP = sys.argv[1]; SRC = os.path.join(APP, "app/src/main/java/com/diegonmarcos/superapp")
+LIBSRC = os.path.join(APP, "../ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp")
 OWN = "system/AdbReadiness.kt"
 EXEC_GATES = {"system/QuickDisplay.kt", "system/PrivilegedPlaneWorker.kt"}
 def strip(s): return re.sub(r"//[^\n]*|/\*.*?\*/", "", s, flags=re.S)
 def load():
     files = {}
-    for d, _, fs in os.walk(SRC):
-        for f in fs:
-            if f.endswith(".kt"):
-                p = os.path.join(d, f); files[os.path.relpath(p, SRC)] = strip(open(p, encoding="utf-8").read())
+    for root, tag in ((SRC, ""), (LIBSRC, "lib:")):
+        for d, _, fs in os.walk(root):
+            for f in fs:
+                if f.endswith(".kt"):
+                    p = os.path.join(d, f); rel = os.path.relpath(p, root)
+                    files[rel] = strip(open(p, encoding="utf-8").read())
+                    if tag: files[tag + rel] = ""
     return files
 CB = re.compile(r"onStatusChange\s*=(?!=)")
 VERDICT = re.compile(r"ShellBroker\.status\([^)]*\)\.armed|ShellChannels\.active\([^)]*\)\s*[!=]=\s*null")
@@ -39,9 +45,13 @@ def checks(F):
     ck = F.get("configs/AdbCockpit.kt", ""); te = F.get("configs/AdbTester.kt", "")
     out.append(("R5 Status ends with the Tester over ShellBroker.exec",
                 [] if ("AdbTesterCard" in ck and "tail?.invoke()" in ck and "ShellBroker.exec(" in te and "AdbReadiness.check(" in te) else ["configs/AdbCockpit.kt"]))
+    out.append(("R6 AdbReadiness lives in libs:adb-shell-core only, the SuperApp installs its hooks",
+                [] if ("lib:" + OWN in F and not F.get("app:" + OWN) and "AdbReadiness.connector =" in F.get("App.kt", "")
+                       and "AdbReadiness.hostOpener =" in F.get("App.kt", "")) else [OWN]))
     return out
 fails = 0
 F = load()
+if os.path.exists(os.path.join(SRC, OWN)): F["app:" + OWN] = "present"
 for name, bad in checks(F):
     print(("  PASS: " if not bad else "  FAIL: ") + name + ("" if not bad else " -> " + ", ".join(sorted(bad)))); fails += 1 if bad else 0
 # mutation: every plant must turn its check red
@@ -51,6 +61,7 @@ plants = {
     "R3": ("system/StatusDropdowns.kt", ""),
     "R4": ("system/X.kt", "val s = \"needs ADB: arm the channel on Configs > Network > ADB Shell\""),
     "R5": ("configs/AdbTester.kt", ""),
+    "R6": ("app:" + OWN, "object AdbReadiness {}"),
 }
 for rid, (path, body) in plants.items():
     G = dict(F); G[path] = body

@@ -22,8 +22,11 @@ LIB = "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diego
 LIBT = "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/test/java/com/diegonmarcos/superapp/adbdebug/"
 SA = "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/"
 SAT = "aa_cloud-superapp/app/src/test/java/com/diegonmarcos/superapp/configs/"
+# #1682 P2a the cockpit model and its test moved to libs:adb-shell-core (same package)
+CORE = "ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/"
+CORET = "ab_cloud-libs-shared/libs/adb-shell-core/src/test/java/com/diegonmarcos/superapp/configs/"
 NEED = [LIB + f for f in ("ConnectPlan.kt", "ChannelMode.kt", "ShellChannel.kt", "ShellAccess.kt", "ChannelDevice.kt", "AdbShellBootstrap.kt",
-                          "AdbPairingService.kt", "EmbeddedAdbChannel.kt")] + [SA + "configs/AdbCockpitModel.kt", SA + "configs/AdbCockpitOps.kt"]
+                          "AdbPairingService.kt", "EmbeddedAdbChannel.kt")] + [CORE + "configs/AdbCockpitModel.kt", SA + "configs/AdbCockpitOps.kt"]
 missing = [p for p in NEED if not os.path.isfile(os.path.join(R, p))]
 if missing:
     print("  FAIL: missing file(s), the tree is not what this tester was written against: " + ", ".join(missing))
@@ -32,7 +35,7 @@ if missing:
 def strip(t): return re.sub(r"/\*.*?\*/|//[^\n]*", "", t, flags=re.S)
 def load():
     out = {}
-    for base in ("ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main", "aa_cloud-superapp/app/src/main"):
+    for base in ("ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main", "ab_cloud-libs-shared/libs/adb-shell-core/src/main", "aa_cloud-superapp/app/src/main"):
         for d, _, fs in os.walk(os.path.join(R, base)):
             for f in fs:
                 if f.endswith((".kt", ".java")):
@@ -96,7 +99,7 @@ def check(S):
     live = body(S[LIB + "EmbeddedAdbChannel.kt"], "fun connectLive(")
     r.append(("M6b", "probe(ctx)" in live and "disconnect(ctx)" in live and "EmbeddedAdbChannel.connectLive(" in body(dev, "class DeviceConnectExecutor") and
               "EmbeddedAdbChannel.connectLive(" in ens, "Connect and Reconnect count the adb session only when it answers a round trip"))
-    cm = S[SA + "configs/AdbCockpitModel.kt"]
+    cm = S[CORE + "configs/AdbCockpitModel.kt"]
     r.append(("M6c", "ChannelMode.LOCAL_SERVER -> setOf(LOCAL)" in body(cm, "fun active(") and "SHIZUKU" not in body(cm, "fun local(") and
               "shizuku" not in body(cm, "fun local(").lower() and re.search(r"LOCAL\s*->\s*f\.serverRunning \|\| f\.adbPaired[ \t]*$", body(cm, "fun modeReady("), re.M) is not None,
               "the cockpit's Local Server row reads its own channel only"))
@@ -114,7 +117,7 @@ def tests_exist():
     want = {LIBT + "ConnectPlanTest.kt": ["modesAreIndependentChains", "noStepStartsAServer", "localServerModeConnectsOnTheAdbSessionAlone"],
             LIBT + "ChannelModeTest.kt": ["modesNeverCrossCall", "localServerModeRunsOverTheAdbSessionWhenNoServerWasStarted", "reconnectRungsPerMode"],
             LIBT + "ChannelStateTest.kt": ["launchSourceRules"], LIBT + "ChannelActionsTest.kt": ["noServerIsStillUpOverAdbAndDownOnlyWhenNothingAnswers"],
-            SAT + "AdbCockpitModelTest.kt": ["C11 the modes are independent channels", "C12 a mode row is green only on a real round trip"],
+            CORET + "AdbCockpitModelTest.kt": ["C11 the modes are independent channels", "C12 a mode row is green only on a real round trip"],
             SAT + "AdbShellParityTest.kt": ["every field of the richest ADB Shell page is present"]}
     bad = []
     for p, names in want.items():
@@ -141,7 +144,7 @@ MUT = [
     ("Local server mode runs commands on the server only", LIB + "ChannelMode.kt", "ChannelMode.LOCAL_SERVER -> listOf(LOCAL, EMBEDDED)", "ChannelMode.LOCAL_SERVER -> listOf(LOCAL)", "M5c"),
     ("the pm grant falls back to Shizuku in any mode", LIB + "ShizukuAdb.kt", "(if (ShellChannels.modeUses(ctx, ChannelSelector.SHIZUKU)) exec(ctx, cmd) else null)", "exec(ctx, cmd)", "M4e"),
     ("the adb connect trusts the socket flag", LIB + "ChannelDevice.kt", "EmbeddedAdbChannel.connectLive(app)", "EmbeddedAdbChannel.autoConnect(app)", "M6b"),
-    ("the Local Server row reads Shizuku", SA + "configs/AdbCockpitModel.kt", "LOCAL -> f.serverRunning || f.adbPaired", "LOCAL -> f.serverRunning || f.adbPaired || f.shizuku == ShizukuState.UP", "M6c"),
+    ("the Local Server row reads Shizuku", CORE + "configs/AdbCockpitModel.kt", "LOCAL -> f.serverRunning || f.adbPaired", "LOCAL -> f.serverRunning || f.adbPaired || f.shizuku == ShizukuState.UP", "M6c"),
 ]
 print("== planted violations must turn red")
 for name, path, a, b, rule in MUT:

@@ -2939,6 +2939,7 @@
       "schema_version": 1,
       "libs": [
         "lib-account",
+        "lib-adb-shell-core",
         "lib-ai-usage",
         "lib-analytics",
         "lib-appstore",

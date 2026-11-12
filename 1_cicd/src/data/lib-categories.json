@@ -139,6 +139,7 @@
     "kde-connect",
     "health",
     "autofill",
+    "adb-shell-core",
     "shell-broker",
     "shell-client",
     "shell-rish"

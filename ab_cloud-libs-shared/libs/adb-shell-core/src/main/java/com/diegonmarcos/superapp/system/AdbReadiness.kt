@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * #1678 THE one answer to "is ADB usable now?" inside the SuperApp. Every needs-ADB place (status dropdown rows, X-Ray, Location use,
+ * #1678 THE one answer to "is ADB usable now?" inside the SuperApp (#1682 P2a: lives in libs:adb-shell-core, the host installs [connector] / [hostOpener]). Every needs-ADB place (status dropdown rows, X-Ray, Location use,
  * the permission row / dashboard, Configs pages, badges) reads [state] / [check] here, never a channel class or a flag of its own
  * (guard test/test-adb-readiness-one-source.sh).
  *
@@ -52,7 +52,7 @@ object AdbReadiness {
     /** A screen that shows ADB state (the status strip) listens here instead of taking the broker callback. */
     fun addListener(l: (ShellStatus) -> Unit) { install(); listeners.addIfAbsent(l) }
     /** Tests: register a listener without touching the broker (no Context). */
-    internal fun listeners_forTest(l: (ShellStatus) -> Unit) { listeners.addIfAbsent(l) }
+    fun listeners_forTest(l: (ShellStatus) -> Unit) { listeners.addIfAbsent(l) }
     fun removeListener(l: (ShellStatus) -> Unit) { listeners.remove(l) }
 
     /** Blocking (a round trip, at most a few seconds): call off the main thread. [fresh] drops the 3 s cache first. Never throws. */
@@ -85,16 +85,23 @@ object AdbReadiness {
         runCatching(open)
         val app = ctx.applicationContext
         Thread({
-            runCatching { com.diegonmarcos.superapp.configs.AdbCockpitOps.connect(app) }
+            runCatching { connector?.invoke(app) }
             check(app, fresh = true)
         }, "adb-readiness-connect").apply { isDaemon = true }.start()
     }
 
-    /** Open the ADB Shell page from any context: inside the shell its Configs page, anywhere else the lib's own activity. */
+    /**
+     * #1682 P2a: the host app's Connect chain (the SuperApp's AdbCockpitOps.connect today, the webserver's owner from P2b). Installed
+     * once by the host at process start ([App.onCreate]); unset = Connect only re-checks (never throws).
+     */
+    @Volatile var connector: ((Context) -> Unit)? = null
+
+    /** #1682 P2a: the host's in-app page opener (inside the SuperApp shell: its Configs page); returns false when [ctx] is not its host. */
+    @Volatile var hostOpener: ((Context) -> Boolean)? = null
+
+    /** Open the ADB Shell page from any context: inside the host its own page, anywhere else the lib's own activity. Never throws. */
     fun openAdbShell(ctx: Context) {
-        val shell = generateSequence(ctx) { (it as? android.content.ContextWrapper)?.baseContext }
-            .firstOrNull { it is com.diegonmarcos.superapp.ShellActivity } as? com.diegonmarcos.superapp.ShellActivity
-        if (shell != null) shell.openSectionPage("config", "adb-shell")
-        else com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctx)
+        val inHost = runCatching { hostOpener?.invoke(ctx) == true }.getOrDefault(false)
+        if (!inHost) runCatching { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctx) }
     }
 }

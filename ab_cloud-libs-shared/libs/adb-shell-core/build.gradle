@@ -1,0 +1,34 @@
+// #1682 P2a libs:adb-shell-core: the ADB Shell's pure core moved out of the SuperApp so the owner (Cloud Webserver, P2b) and the
+// SuperApp share ONE copy: AdbReadiness (the #1678 single "ADB usable now" source), AdbCockpitModel (the #1647 Status cockpit model)
+// and AdbPrereqs (the #1676 Perms chain). Packages are kept (com.diegonmarcos.superapp.system / .configs) so no consumer changes.
+// No UI, no service, no receiver: the host installs AdbReadiness.connector / hostOpener at process start.
+apply plugin: 'com.android.library'
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.adbshellcore'
+    compileSdk 36
+    defaultConfig { minSdk 26 }
+    testOptions { unitTests.includeAndroidResources = true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:shizuku-adb-debug-tools')
+    api project(':libs:shell-broker')
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20250107'
+}

@@ -44,8 +44,9 @@ for t in adb-status:STATUS adb-term:SHELL adb-perms:PERMS adb-all:ALL; do
 done
 F="$(code "$C/AdbShellFragment.kt")"
 for w in 'AdbStatusTab()' 'AdbTermTab()' 'AdbPermsTab()' 'AdbShellBrokerPage()'; do echo "$F" | grep -qF "$w" && ok "the fragment hosts $w" || bad "the fragment does not host $w"; done
-M="$(code "$C/AdbCockpitModel.kt")"
-python3 - "$C/AdbCockpitModel.kt" <<'PY' && ok "the chain is perms, setup, embedded, local, shizuku, connection; the cards are the first five" || bad "the chain or the cards are missing or out of order"
+LC="$ROOT/../ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/configs"; LT="$ROOT/../ab_cloud-libs-shared/libs/adb-shell-core/src/test/java/com/diegonmarcos/superapp"  # #1682 P2a the model moved to libs:adb-shell-core
+M="$(code "$LC/AdbCockpitModel.kt")"
+python3 - "$LC/AdbCockpitModel.kt" <<'PY' && ok "the chain is perms, setup, embedded, local, shizuku, connection; the cards are the first five" || bad "the chain or the cards are missing or out of order"
 import re, sys
 s = open(sys.argv[1], encoding='utf-8').read()
 def lst(name):
@@ -70,5 +71,6 @@ echo "$O" | grep -q 'ConnectPlan.run' && echo "$O" | grep -q 'needsUser = true' 
   && ok "one Connect path: perms, then the whole plan with the gates opened (no plain single-step connect)" || bad "Connect is not the one full chain"
 echo "$P" | grep -Eq 'adbc:autofix|autoFix' && bad "a separate Auto-fix control is back on the Status page" || ok "no separate Auto-fix control"
 echo "$P" | grep -q 'Do.CONNECT -> connect()' && echo "$P" | grep -q 'AdbCockpitModel.resumes(waiting, r.facts)' && ok "the top Connect runs the chain, and a run that stopped for the person resumes" || bad "the top Connect does not run / resume the chain"
-for f in configs/AdbCockpitModelTest configs/AdbCockpitPageTest configs/AdbStatusPageTest configs/AdbShellInFrameTest; do [ -f "$T/$f.kt" ] && ok "tests: $f" || bad "missing tests: $f"; done
+[ -f "$LT/configs/AdbCockpitModelTest.kt" ] && ok "tests: configs/AdbCockpitModelTest (libs:adb-shell-core)" || bad "missing tests: configs/AdbCockpitModelTest in libs:adb-shell-core"
+for f in configs/AdbCockpitPageTest configs/AdbStatusPageTest configs/AdbShellInFrameTest; do [ -f "$T/$f.kt" ] && ok "tests: $f" || bad "missing tests: $f"; done
 echo "== RESULT: $PASS passed, $FAIL failed =="; [ "$FAIL" -eq 0 ]

@@ -15,7 +15,7 @@ import com.diegonmarcos.superapp.adbdebug.ShizukuState
  *  - NOT needed: NEARBY_WIFI_DEVICES / location (adb mDNS discovery is NsdManager, INTERNET only); those stay in Configs > Perms.
  * Shizuku mode swaps the adb steps for Shizuku's own two. Pure: the page feeds it real reads ([Live]) and draws exactly this.
  */
-internal object AdbPrereqs {
+object AdbPrereqs {
 
     enum class Owner(val word: String) { HUMAN("Human"), AUTO("Automatic") }
     enum class Status(val word: String) { ON("on"), OFF("off"), UNKNOWN("unknown") }

@@ -59,6 +59,14 @@ class App : Application(), WorkManagerConfiguration.Provider {
         com.diegonmarcos.superapp.adbdebug.HostShell.channelReady = { c ->
             com.diegonmarcos.superapp.system.AdbReadiness.check(c).usable
         }
+        // #1682 P2a: AdbReadiness lives in libs:adb-shell-core; the SuperApp hands it its Connect chain and its in-shell page opener
+        // (the same two calls the readiness object made itself before the move).
+        com.diegonmarcos.superapp.system.AdbReadiness.connector = { c -> com.diegonmarcos.superapp.configs.AdbCockpitOps.connect(c) }
+        com.diegonmarcos.superapp.system.AdbReadiness.hostOpener = { c ->
+            val shell = generateSequence(c) { (it as? android.content.ContextWrapper)?.baseContext }
+                .firstOrNull { it is ShellActivity } as? ShellActivity
+            if (shell != null) { shell.openSectionPage("config", "adb-shell"); true } else false
+        }
         // extapp: install progress — listening before any resumed install worker publishes.
         com.diegonmarcos.superapp.extinstall.ExtAppInstalls.init(this)
         // The island's haptics are the lib's; "Vibration on tap" (Configs -> Launcher -> Others) still gates them.

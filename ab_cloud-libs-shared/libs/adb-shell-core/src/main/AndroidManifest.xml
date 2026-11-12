@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #1682 P2a libs:adb-shell-core: no component (no service, no receiver, no permission); pure ADB Shell model + readiness. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
