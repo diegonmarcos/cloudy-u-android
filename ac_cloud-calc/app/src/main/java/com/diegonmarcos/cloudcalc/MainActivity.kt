@@ -7,7 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
 import com.diegonmarcos.superapp.perms.PermsHost
-import com.diegonmarcos.cloudcalc.clock.ClockEngine
+import com.diegonmarcos.clocktools.ClockEngine
 import com.diegonmarcos.cloudcalc.engine.CalcClient
 import com.diegonmarcos.cloudcalc.ui.CalcShell
 import com.diegonmarcos.cloudcalc.ui.CalcState

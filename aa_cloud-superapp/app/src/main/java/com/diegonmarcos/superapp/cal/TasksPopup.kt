@@ -2,7 +2,6 @@ package com.diegonmarcos.superapp.cal
 
 import android.content.Context
 import android.content.Intent
-import android.os.SystemClock
 import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,6 +41,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diegonmarcos.clocktools.ClockEngine
+import com.diegonmarcos.clocktools.ClockLogic
+import com.diegonmarcos.clocktools.ui.rememberStopwatch
 import com.diegonmarcos.superapp.R
 import com.diegonmarcos.superapp.ui.KitBubble
 import com.diegonmarcos.superapp.ui.KitPopup
@@ -71,36 +73,15 @@ import java.util.Locale
  */
 object TasksPopup {
 
-    // Stopwatch state — kept in static fields so the timer keeps
-    // running while the popup is closed. SystemClock.elapsedRealtime
-    // is monotonic across sleeps so the elapsed value is accurate
-    // even if the user dismisses the popup, locks the screen, and
-    // re-opens it minutes later.
-    // #1646 snapshot-backed so the launcher bar's readout recomposes the moment the dropdown starts/stops it (one shared state).
-    private val stopwatchRunningState = mutableStateOf(false)
-    private var stopwatchRunning: Boolean
-        get() = stopwatchRunningState.value
-        set(v) { stopwatchRunningState.value = v }
-    @Volatile private var stopwatchStartElapsedMs: Long = 0L
-    @Volatile private var stopwatchAccumulatedMs: Long = 0L
+    // #1668 the stopwatch is libs:clock-tools' ONE stopwatch (ClockEngine's store): this dropdown starts, stops and resets
+    // it, the launcher bar's readout (#1646) reads the same state, and it keeps running while the popup is closed (and now
+    // across a process restart too). No second timer lives in this app.
 
-    private fun stopwatchCurrentMs(): Long =
-        if (stopwatchRunning)
-            stopwatchAccumulatedMs + (SystemClock.elapsedRealtime() - stopwatchStartElapsedMs)
-        else
-            stopwatchAccumulatedMs
+    /** #1646 the SHARED stopwatch's elapsed time now, ms (the lib's last-read state, no Context needed). */
+    internal fun stopwatchElapsedMs(): Long = ClockLogic.elapsed(ClockEngine.last.stopwatch, ClockEngine.now())
 
-    /** #1646 whether the SHARED stopwatch runs (observable from composition). */
-    internal fun isStopwatchRunning(): Boolean = stopwatchRunning
-
-    /** #1646 the SHARED stopwatch's elapsed time now, ms. */
-    internal fun stopwatchElapsedMs(): Long = stopwatchCurrentMs()
-
-    /** #1646 the bar readout: m:ss, or h:mm:ss from an hour on. */
-    internal fun formatStopwatchBar(ms: Long): String {
-        val t = ms / 1000L
-        return if (t >= 3600L) "%d:%02d:%02d".format(t / 3600L, (t / 60L) % 60L, t % 60L) else "%d:%02d".format(t / 60L, t % 60L)
-    }
+    /** #1646 the bar readout: m:ss, or h:mm:ss from an hour on (the lib's text). */
+    internal fun formatStopwatchBar(ms: Long): String = ClockLogic.stopwatchBarText(ms)
 
     /** Under a Compose anchor whose window bounds are [rect], horizontally SCREEN-centered (the drop matches Battery/SysInfo). */
     fun show(host: View, rect: androidx.compose.ui.unit.IntRect) {
@@ -282,54 +263,34 @@ object TasksPopup {
         }
     }
 
-    /** Top-right stopwatch: elapsed m:ss.t (20 sp bold) and a 22 dp play/stop disc beside it. Wired to the module-level state
-     *  above, so the timer keeps running while the popup is closed; long-press the time to reset. */
+    /** Top-right stopwatch: elapsed m:ss.t (20 sp bold) and a 22 dp play/stop disc beside it. Wired to libs:clock-tools'
+     *  stopwatch, so it keeps running while the popup is closed; long-press the time to reset. */
     @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
     @Composable
     private fun Stopwatch() {
-        var ms by remember { mutableLongStateOf(stopwatchCurrentMs()) }
-        var running by remember { mutableStateOf(stopwatchRunning) }
+        val ctx = LocalContext.current
+        val sw = rememberStopwatch()
+        var ms by remember { mutableLongStateOf(ClockLogic.elapsed(sw, ClockEngine.now())) }
         // 100 ms tick while the bubble is composed; it ends with it.
-        LaunchedEffect(Unit) { while (true) { ms = stopwatchCurrentMs(); delay(100L) } }
+        LaunchedEffect(sw) { while (true) { ms = ClockLogic.elapsed(sw, ClockEngine.now()); delay(100L) } }
         Row(Modifier.padding(start = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(formatStopwatch(ms), color = LILAC, fontSize = 20.sp, fontFamily = MONO, fontWeight = FontWeight.Bold,
                 modifier = Modifier.combinedClickable(onClick = {}, onLongClick = {
                     // Long-press the time → reset to 0, so the user can start fresh without a third button.
-                    stopwatchRunning = false
-                    stopwatchAccumulatedMs = 0L
-                    stopwatchStartElapsedMs = 0L
-                    running = false; ms = 0L
+                    ClockEngine.stopwatch(ctx, "reset")
+                    ms = 0L
                 }).testTag("cal:stopwatch:time"))
             Box(Modifier.padding(start = 8.dp).size(22.dp).clip(CircleShape)
-                .background(if (running) Color(0xFFB91C1C) else Color(0xFF16A34A))
-                .clickable {
-                    if (stopwatchRunning) {
-                        stopwatchAccumulatedMs += SystemClock.elapsedRealtime() - stopwatchStartElapsedMs
-                        stopwatchRunning = false
-                    } else {
-                        stopwatchStartElapsedMs = SystemClock.elapsedRealtime()
-                        stopwatchRunning = true
-                    }
-                    running = stopwatchRunning
-                    ms = stopwatchCurrentMs()
-                }.testTag("cal:stopwatch:toggle"), contentAlignment = Alignment.Center) {
-                Text(if (running) "■" else "▶", color = Color.White, fontSize = 10.sp)
+                .background(if (sw.running) Color(0xFFB91C1C) else Color(0xFF16A34A))
+                .clickable { ClockEngine.stopwatch(ctx, "toggle") }.testTag("cal:stopwatch:toggle"), contentAlignment = Alignment.Center) {
+                Text(if (sw.running) "■" else "▶", color = Color.White, fontSize = 10.sp)
             }
         }
     }
 
-    internal fun formatStopwatch(ms: Long): String {
-        val totalSec = ms / 1000L
-        val m = totalSec / 60L
-        val s = totalSec % 60L
-        val tenths = (ms % 1000L) / 100L
-        return "%d:%02d.%d".format(m, s, tenths)
-    }
+    internal fun formatStopwatch(ms: Long): String = ClockLogic.stopwatchTenthsText(ms)
 
-    internal fun toggleStopwatchForTest() {
-        if (stopwatchRunning) { stopwatchAccumulatedMs += SystemClock.elapsedRealtime() - stopwatchStartElapsedMs; stopwatchRunning = false }
-        else { stopwatchStartElapsedMs = SystemClock.elapsedRealtime(); stopwatchRunning = true }
-    }
+    internal fun toggleStopwatchForTest(ctx: Context) { ClockEngine.stopwatch(ctx, "toggle") }
 
-    internal fun resetStopwatchForTest() { stopwatchRunning = false; stopwatchAccumulatedMs = 0L; stopwatchStartElapsedMs = 0L }
+    internal fun resetStopwatchForTest(ctx: Context) { ClockEngine.stopwatch(ctx, "reset") }
 }

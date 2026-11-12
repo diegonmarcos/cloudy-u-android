@@ -1,0 +1,58 @@
+// libs:clock-tools (#1668): THE clock of the fleet, shared BY REFERENCE. Cloud Calc (Toolkit > Clock, its first home, #768),
+// Cloud Tasks (Tasks > Clock) and the SuperApp (the Home bar stopwatch, #1646, and its date dropdown) compile this one lib;
+// no consumer keeps a clock of its own (clock-tools/test/clock-one-lib.py, run by each consumer's shell tester).
+//
+//   core/            libs:clock-tools-core, plain JVM: alarms with repeat days and DST, timers, stopwatch laps, interval
+//                    phases, what each wakeup does, the stored JSON, the declaration, and #1667's converter, default
+//                    city table and day bars with sunrise / sunset computed on device (Sun). PIT mutation-tested.
+//   src/main/        the Android half: ClockEngine (the one way the clock changes: store, AlarmManager plan, service),
+//                    ClockService (foreground service + notifications), ClockReceiver / ClockBootReceiver, RingActivity,
+//                    and the Compose screens (World clock, Alarms, Timers, Stopwatch, Interval, Bedtime, FullClock).
+//
+// ALARM OWNERSHIP (never double ringing): ONE store per app process. Each consumer keeps its OWN clock store (its private
+// SharedPreferences `cloud_clock`), its own non-exported receivers and its own PendingIntents (explicit component, the
+// app's own uid), so an alarm exists in exactly one app - the one it was set in - and only that app rings it. Two apps
+// carrying the lib share code, never alarms; nothing is broadcast or exported between them.
+//
+// A host tells the lib what differs per app (declared numbers, the activity a notification opens, a city catalogue with
+// coordinates, a theme, a world map) with a ClockHost subclass named in its manifest meta-data
+// `com.diegonmarcos.clocktools.HOST`; with none the lib uses ClockConfig.DEFAULT and the app's launch activity.
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    // The compiler is resolved from each consuming root build (declared `apply false` there).
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.diegonmarcos.clocktools'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+        consumerProguardFiles 'consumer-rules.pro'
+    }
+
+    buildFeatures { compose = true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    // The rules (plain JVM, its own module so PIT can mutate them): `api`, the screens' types are the model's.
+    api project(':libs:clock-tools-core')
+    // #1515 the permission contract (PermsFixChip): notifications and exact alarms are granted in Configs > Perms only.
+    implementation project(':libs:perms')
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.activity:activity-compose:1.9.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation 'androidx.core:core-ktx:1.13.1'
+}

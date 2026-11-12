@@ -4,8 +4,8 @@ import android.content.Context
 import com.diegonmarcos.cloudcalc.DateForms
 import com.diegonmarcos.cloudcalc.Declarations
 import com.diegonmarcos.cloudcalc.Logic
-import com.diegonmarcos.cloudcalc.clock.ClockEngine
-import com.diegonmarcos.cloudcalc.clock.ClockLogic
+import com.diegonmarcos.clocktools.ClockEngine
+import com.diegonmarcos.clocktools.ClockLogic
 import com.diegonmarcos.cloudcalc.engine.CalcApi
 import com.diegonmarcos.superapp.decisions.Decision
 import com.diegonmarcos.superapp.decisions.Decisions

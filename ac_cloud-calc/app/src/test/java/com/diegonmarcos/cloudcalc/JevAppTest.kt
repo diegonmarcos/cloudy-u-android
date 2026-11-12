@@ -9,7 +9,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.diegonmarcos.cloudcalc.clock.ClockEngine
+import com.diegonmarcos.clocktools.ClockEngine
 import com.diegonmarcos.cloudcalc.decide.JevFlow
 import com.diegonmarcos.cloudcalc.decide.JevStore
 import com.diegonmarcos.cloudcalc.engine.CalcApi

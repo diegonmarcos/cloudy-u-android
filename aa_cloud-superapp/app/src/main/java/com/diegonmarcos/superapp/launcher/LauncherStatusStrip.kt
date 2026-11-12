@@ -833,13 +833,15 @@ internal fun stopwatchShouldTick(running: Boolean, started: Boolean): Boolean = 
 
 @Composable
 internal fun StopwatchReadout(host: View) {
-    val running = TasksPopup.isStopwatchRunning()
-    if (!running) return
+    // #1668 the lib's one stopwatch (libs:clock-tools), the same state the date dropdown drives.
+    val sw = com.diegonmarcos.clocktools.ui.rememberStopwatch()
+    if (!sw.running) return
     val started = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
         .currentStateAsState().value.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
-    var ms by remember { mutableStateOf(TasksPopup.stopwatchElapsedMs()) }
-    LaunchedEffect(started) {
-        while (stopwatchShouldTick(running = true, started = started)) { ms = TasksPopup.stopwatchElapsedMs(); kotlinx.coroutines.delay(1000L - ms % 1000L) }
+    fun elapsed() = com.diegonmarcos.clocktools.ClockLogic.elapsed(sw, com.diegonmarcos.clocktools.ClockEngine.now())
+    var ms by remember(sw) { mutableStateOf(elapsed()) }
+    LaunchedEffect(started, sw) {
+        while (stopwatchShouldTick(running = true, started = started)) { ms = elapsed(); kotlinx.coroutines.delay(1000L - ms % 1000L) }
     }
     Tappable("strip:stopwatch", onTap = { r -> TasksPopup.show(host, r) }) {
         Text(

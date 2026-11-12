@@ -26,6 +26,8 @@ object Ids {
     const val PAGE_GANTT = "gantt"
     const val PAGE_KANBAN = "kanban"
     const val PAGE_MINDMAP = "mindmap"
+    /** #1668 the full clock of libs:clock-tools (shared with Cloud Calc and the SuperApp). */
+    const val PAGE_CLOCK = "clock"
     const val PAGE_GENERAL = "general"
     const val PAGE_PERMS = "perms"
     const val PAGE_ABOUT = "about"

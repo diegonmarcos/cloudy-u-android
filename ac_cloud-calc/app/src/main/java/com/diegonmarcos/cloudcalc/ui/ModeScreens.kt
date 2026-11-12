@@ -3,6 +3,12 @@
 package com.diegonmarcos.cloudcalc.ui
 
 import androidx.compose.foundation.Canvas
+import com.diegonmarcos.clocktools.ui.AlarmsScreen
+import com.diegonmarcos.clocktools.ui.BedtimeScreen
+import com.diegonmarcos.clocktools.ui.IntervalScreen
+import com.diegonmarcos.clocktools.ui.StopwatchScreen
+import com.diegonmarcos.clocktools.ui.TimersScreen
+import com.diegonmarcos.clocktools.ui.WorldClockScreen
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -118,12 +124,12 @@ fun ModeScreen(mode: Declarations.Mode) {
             "latex_library" -> LatexLibraryMode(mode)
             "latex_editor" -> LatexEditorMode(mode)
             "latex_graph" -> LatexGraphMode(mode)
-            "worldclock" -> WorldClockMode(mode)
-            "alarms" -> AlarmsMode(mode)
-            "timers" -> TimersMode(mode)
-            "stopwatch" -> StopwatchMode(mode)
-            "interval" -> IntervalMode(mode)
-            "bedtime" -> BedtimeMode(mode)
+            "worldclock" -> WorldClockScreen()
+            "alarms" -> AlarmsScreen()
+            "timers" -> TimersScreen()
+            "stopwatch" -> StopwatchScreen()
+            "interval" -> IntervalScreen()
+            "bedtime" -> BedtimeScreen()
             "sheet" -> SheetMode(mode)
             "ai" -> AiMode(mode)
             "jev" -> JevMode(mode)

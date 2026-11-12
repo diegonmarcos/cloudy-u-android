@@ -54,7 +54,8 @@
         "libs:wysiwyg",
         "libs:ai",
         "libs:fleetconfigs-logcat",
-        "libs:fleetconfigs-xray"
+        "libs:fleetconfigs-xray",
+        "libs:clock-tools"
       ]
     },
     "libs:core": {
@@ -126,6 +127,8 @@
       "_doc": "#1443 pilot opt-in: the Configs ▸ X-Ray tab (app profiler: 13 trackers + Device Profile Scan, HTML/Markdown export, deep link to the adb-shell cockpit). Depends on libs:ui-nav-bars; registers its tab from its own init provider."
     },
     "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
+    "libs:clock-tools": {"dir": "../ab_cloud-libs-shared/libs/clock-tools", "type": "library", "_doc": "#1668 Tasks > Clock: the fleet's one clock, shared BY REFERENCE with Cloud Calc and the SuperApp (FullClock: World clock, Alarms, Timers, Stopwatch, Interval, Bedtime). Its manifest merges the clock's service, receivers, ring screen and permissions (notifications and exact_alarm are in perms.needs). Alarms set here live in THIS app's own store and ring from this app only. No host meta-data: the lib's ClockConfig.DEFAULT (Cloud Calc's declared numbers) and this app's launch activity. A `gui` lib."},
+    "libs:clock-tools-core": {"dir": "../ab_cloud-libs-shared/libs/clock-tools/core", "type": "library", "_doc": "#1668 the clock's rules (plain JVM), the api of libs:clock-tools; its suite runs in this app's `gradle test` (mutation-tested in Cloud Calc's)."},
     "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."},
     "libs:theme-background": {
       "dir": "../ab_cloud-libs-shared/libs/theme-background",
@@ -241,7 +244,7 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's ids, ui.sections the section each one opens, ui.default_section where the app opens. #1456 the island is Inboxes | Backlogs | Tasks | Library | Projects. The four collection sections list their items in the Cloud Me Tasks row layout from the mock fixture (assets/mock-tasks.json, FAKE data); Tasks has the sub-pages Calendar, List (the native database list with the projects drawer), Gantt, Kanban and Mindmap. Settings is NOT on the island: it opens from the top bar's Settings > Configs and follows the fleet Configs pattern, General | Perms | About (libs:ui-nav-bars fleetconfigs) first, then the app's own Appearance, Agent, Proposals (mail-agent review) and Feeds. Every section's `background` is `theme`.",
+    "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's ids, ui.sections the section each one opens, ui.default_section where the app opens. #1456 the island is Inboxes | Backlogs | Tasks | Library | Projects. The four collection sections list their items in the Cloud Me Tasks row layout from the mock fixture (assets/mock-tasks.json, FAKE data); Tasks has the sub-pages Calendar, List (the native database list with the projects drawer), Gantt, Kanban, Mindmap and (#1668) Clock: the full clock of libs:clock-tools (World clock with the #1667 converter and day bars, Alarms, Timers, Stopwatch, Interval, Bedtime), the same lib Cloud Calc and the SuperApp carry. Settings is NOT on the island: it opens from the top bar's Settings > Configs and follows the fleet Configs pattern, General | Perms | About (libs:ui-nav-bars fleetconfigs) first, then the app's own Appearance, Agent, Proposals (mail-agent review) and Feeds. Every section's `background` is `theme`.",
     "calendar_views": [
       {"id": "month", "label": "Month"},
       {"id": "year", "label": "Year"}
@@ -320,6 +323,11 @@
             "id": "mindmap",
             "label": "Mindmap",
             "icon": "account_tree"
+          },
+          {
+            "id": "clock",
+            "label": "Clock",
+            "icon": "clock"
           }
         ]
       },
@@ -489,7 +497,8 @@
     "_doc": "#1360 every grant this app needs, by libs:perms catalogue id (needs), and the fleet apps that do work for it with the grants THEY must hold (helpers). The ONE declaration: generated into assets/app-perms.json (cloud-android-perms-guard.py --write), drawn by Configs > General > Perms (libs:perms AppPermsSection) with live state, Grant / Open and Grant all, asked at first run (first_run), and reported as 'Missing permission X - Grant' when an operation fails (PermsGate). perms-guard fails when code uses a gated API or another app's engine that is not declared here, or when the manifest and this list disagree.",
     "needs": [
       "notifications",
-      "install_unknown"
+      "install_unknown",
+      "exact_alarm"
     ],
     "helpers": [],
     "first_run": "libs:perms"

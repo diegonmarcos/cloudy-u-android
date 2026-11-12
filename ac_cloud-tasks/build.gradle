@@ -7,4 +7,7 @@ plugins {
     // 2026-10-15 owner decision: all apps must be Compose. libs:updater's overlay is a ComposeView, so the
     // compose compiler must be resolvable from this root (it ships at Kotlin's version).
     id 'org.jetbrains.kotlin.plugin.compose'       version '2.3.20' apply false
+    // #1668 libs:clock-tools-core is a plain-JVM module with a PIT block (its mutation pass runs in Cloud Calc only).
+    id 'org.jetbrains.kotlin.jvm'                  version '2.3.20' apply false
+    id 'info.solidsoft.pitest'                     version '1.19.0' apply false
 }

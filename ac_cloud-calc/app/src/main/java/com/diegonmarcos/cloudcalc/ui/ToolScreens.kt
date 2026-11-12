@@ -58,7 +58,7 @@ import kotlin.math.ln
 @Composable
 fun ToolView(mode: Declarations.Mode, view: String) {
     when (view) {
-        "world_clock" -> WorldClockMode(mode)
+        "world_clock" -> com.diegonmarcos.clocktools.ui.WorldClockScreen()
         "calendars" -> CalendarsView()
         "cycles" -> CyclesView()
         "fft" -> FftView()

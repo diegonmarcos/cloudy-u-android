@@ -1,0 +1,49 @@
+// libs:clock-tools-core (#1668, was Cloud Calc's :clock, #768) - the clock's rules as a plain-JVM module, shared BY REFERENCE
+// with libs:clock-tools (the Android half and the screens): alarm recurrence across repeat days and DST, timers, stopwatch
+// laps, interval phases, what each AlarmManager wakeup does, the stored JSON, the clock declaration, and #1667's world
+// clock: the reference time converter, the default city's table and the 00-24 h day bars with sunrise / sunset computed
+// on device. No Android here, so the suite runs in milliseconds and PIT can mutate it.
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'info.solidsoft.pitest'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    // Android's own org.json at runtime; the real library for the JVM suite and PIT.
+    compileOnly 'org.json:json:20240303'
+    testImplementation 'org.json:json:20240303'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+// MUTATION TESTING. PIT plants mutants (flipped comparisons, removed calls, swapped returns) in the rules and runs the
+// suite against each; a mutant the suite does not kill is a rule nothing checks. Below mutationThreshold the build fails.
+// Kotlin's generated data-class members are excluded: equality is the language's, not ours.
+pitest {
+    pitestVersion = '1.22.1'
+    targetClasses = ['com.diegonmarcos.clocktools.ClockLogic*', 'com.diegonmarcos.clocktools.ClockCodec*',
+                     'com.diegonmarcos.clocktools.Sun*', 'com.diegonmarcos.clocktools.WorldTable*']
+    excludedMethods = ['equals', 'hashCode', 'toString', 'copy', 'copy$default', 'component*']
+    avoidCallsTo = ['kotlin.jvm.internal']
+    threads = 2
+    outputFormats = ['XML', 'HTML']
+    timestampedReports = false
+    mutationThreshold = 85
+}
+
+// `gradle test` is what CI runs (build.json::tests.unit.task): the mutation run rides on it. The lib is mutation-run ONCE,
+// in the consumer that sets clockToolsMutation=true in its gradle.properties (Cloud Calc, the clock's first home); the
+// other consumers run the same suite without repeating the mutation pass on every ship.
+tasks.named('test') {
+    if ((findProperty('clockToolsMutation') ?: 'false').toString() == 'true') finalizedBy 'pitest'
+}

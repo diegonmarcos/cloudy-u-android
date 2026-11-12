@@ -27,8 +27,11 @@
 #       for its own wakeups, an exported one re-planning on BOOT_COMPLETED, MY_PACKAGE_REPLACED,
 #       TIME_SET and TIMEZONE_CHANGED, a specialUse foreground service with its permission, and
 #       a full-screen ring; POST_NOTIFICATIONS asked in Configs > Perms alone (#1515).
-#   C9  one scheduler: only clock/ClockEngine.kt calls AlarmManager's set*, and a user's alarm
-#       is set as an alarm CLOCK (setAlarmClock), the one kind Doze never defers.
+#       #1668 the Clock's components are libs:clock-tools' (its manifest merges them): the checks
+#       read the lib's manifest, and the app's names CalcClockHost as the lib's host.
+#   C9  one scheduler: only libs:clock-tools' ClockEngine.kt calls AlarmManager's set* (nothing in
+#       the app does), and a user's alarm is set as an alarm CLOCK (setAlarmClock), the one kind
+#       Doze never defers.
 #   C10 /api/<clock_group>/ documents and answers status, timer_start and timer_cancel, under
 #       build.json::ui.debug_api.clock_group, and never names an op `state` (GET /api/state's key).
 #   C11 #770 the Jev section: every routing tool in build.json::jev names a declared mode (and a
@@ -205,21 +208,36 @@ for perm in ("android.permission.USE_EXACT_ALARM", "android.permission.RECEIVE_B
         bad.append("C8 the manifest does not declare %s" % perm)
 if not re.search(r'android\.permission\.SCHEDULE_EXACT_ALARM"\s+android:maxSdkVersion="32"', manifest):
     bad.append("C8 SCHEDULE_EXACT_ALARM must be capped at maxSdkVersion 32 (USE_EXACT_ALARM covers 33+)")
-def element(tag, name):
-    m = re.search(r'<%s\s[^>]*android:name="%s"[^>]*?(/>|>.*?</%s>)' % (tag, re.escape(name), tag), manifest, re.S)
+# #1668 the clock lib's tree: a mutation copy carries it as _clocklib, the real run reads the shared libs dir.
+clib = os.path.join(app, "_clocklib")
+if not os.path.isdir(clib):
+    clib = os.path.join(os.environ.get("CALC_SHARED_LIBS") or os.path.join(app, "..", "ab_cloud-libs-shared", "libs"), "clock-tools")
+lman_path = os.path.join(clib, "src", "main", "AndroidManifest.xml")
+lman = open(lman_path, encoding="utf-8").read() if os.path.isfile(lman_path) else ""
+if not lman:
+    bad.append("C8 libs:clock-tools has no manifest at %s — the Clock's components would not merge" % lman_path)
+def element(tag, name, text=None):
+    m = re.search(r'<%s\s[^>]*android:name="%s"[^>]*?(/>|>.*?</%s>)' % (tag, re.escape(name), tag), lman if text is None else text, re.S)
     return m.group(0) if m else ""
-rx = element("receiver", ".clock.ClockReceiver")
+CT = "com.diegonmarcos.clocktools."
+rx = element("receiver", CT + "ClockReceiver")
 if 'android:exported="false"' not in rx:
-    bad.append("C8 .clock.ClockReceiver must exist and not be exported — another app could dismiss an alarm")
-boot = element("receiver", ".clock.ClockBootReceiver")
+    bad.append("C8 ClockReceiver must exist and not be exported — another app could dismiss an alarm")
+boot = element("receiver", CT + "ClockBootReceiver")
 for action in ("BOOT_COMPLETED", "MY_PACKAGE_REPLACED", "TIME_SET", "TIMEZONE_CHANGED"):
     if 'android.intent.action.%s"' % action not in boot:
-        bad.append("C8 .clock.ClockBootReceiver does not re-plan on %s — alarms would be lost or shifted" % action)
-svc = element("service", ".clock.ClockService")
+        bad.append("C8 ClockBootReceiver does not re-plan on %s — alarms would be lost or shifted" % action)
+svc = element("service", CT + "ClockService")
 if 'android:foregroundServiceType="specialUse"' not in svc or "PROPERTY_SPECIAL_USE_FGS_SUBTYPE" not in svc:
-    bad.append("C8 .clock.ClockService must be a specialUse foreground service with its subtype property")
-if 'android:showWhenLocked="true"' not in element("activity", ".clock.RingActivity"):
-    bad.append("C8 .clock.RingActivity must show over the lock screen")
+    bad.append("C8 ClockService must be a specialUse foreground service with its subtype property")
+if 'android:showWhenLocked="true"' not in element("activity", CT + "RingActivity"):
+    bad.append("C8 RingActivity must show over the lock screen")
+host = re.search(r'android:name="com\.diegonmarcos\.clocktools\.HOST"\s+android:value="com\.diegonmarcos\.cloudcalc\.(\w+)"', manifest)
+if not host or not os.path.isfile(os.path.join(src, host.group(1) + ".kt")):
+    bad.append("C8 the app manifest must name its clock host (meta-data com.diegonmarcos.clocktools.HOST = CalcClockHost) — without it the Clock forgets this app's declarations")
+for comp in ("ClockReceiver", "ClockBootReceiver", "ClockService", "RingActivity"):
+    if re.search(r'android:name="\.clock\.%s"' % comp, manifest):
+        bad.append("C8 the app manifest declares its own .clock.%s — the Clock is libs:clock-tools' (#1668)" % comp)
 if 'android.permission.INTERNET' in manifest:
     bad.append("C8 the app manifest asks for INTERNET — Calc and Clock are offline (libs:devtools merges the INTERNET its loopback server and the Jev section's one network file need)")
 asked = sorted(os.path.relpath(p, src) for p in kts if "POST_NOTIFICATIONS" in code(p))
@@ -228,10 +246,12 @@ if asked:
 
 # C9
 setters = re.compile(r"\b(setAlarmClock|setExactAndAllowWhileIdle|setAndAllowWhileIdle|setExact|setInexactRepeating|setRepeating|setWindow)\(")
-callers = sorted(os.path.relpath(p, src) for p in kts if setters.search(code(p)))
-if callers != ["clock/ClockEngine.kt"]:
-    bad.append("C9 AlarmManager must be set by clock/ClockEngine.kt alone, found in %s" % callers)
-engine = os.path.join(src, "clock", "ClockEngine.kt")
+lkts = sorted(glob.glob(os.path.join(clib, "src", "main", "java", "**", "*.kt"), recursive=True))
+callers = sorted(os.path.relpath(p, src) for p in kts if setters.search(code(p))) + \
+          sorted("lib:" + os.path.basename(p) for p in lkts if setters.search(code(p)))
+if callers != ["lib:ClockEngine.kt"]:
+    bad.append("C9 AlarmManager must be set by libs:clock-tools' ClockEngine.kt alone, found in %s" % callers)
+engine = os.path.join(clib, "src", "main", "java", "com", "diegonmarcos", "clocktools", "ClockEngine.kt")
 if os.path.isfile(engine) and not re.search(r"w\.clock && exact -> AlarmManagerCompat\.setAlarmClock\(", code(engine)):
     bad.append("C9 a user's alarm is not set with setAlarmClock — Doze could defer it")
 
@@ -545,6 +565,7 @@ mutate() {  # name, file (relative to the app), python expression over s, expect
     local name="$1" rel="$2" expr="$3" want="$4" copy="$WORK/$1"
     mkdir -p "$copy"
     cp -r "$APP/build.json" "$APP/app" "$APP/jev" "$APP/measure" "$copy/"
+    mkdir -p "$copy/_clocklib/src" && cp -r "$CALC_SHARED_LIBS/clock-tools/src/main" "$copy/_clocklib/src/"
     for f in settings.gradle build.gradle; do [ -f "$APP/$f" ] && cp "$APP/$f" "$copy/"; done
     if ! python3 - "$copy/$rel" "$expr" <<'PY'
 import sys
@@ -597,14 +618,16 @@ mutate jev-op-dropped "$J/debugapi/JevDebugApi.kt" 's.replace("\"config\" -> con
 mutate debug-op-dropped "$J/debugapi/CalcDebugApi.kt" 's.replace("\"modes\" -> modesJson()", "")' "C7 /api/<group>/modes"
 mutate no-use-exact-alarm app/src/main/AndroidManifest.xml 's.replace("<uses-permission android:name=\"android.permission.USE_EXACT_ALARM\" />", "")' "C8 the manifest does not declare android.permission.USE_EXACT_ALARM"
 mutate exact-uncapped app/src/main/AndroidManifest.xml 's.replace(" android:maxSdkVersion=\"32\"", "")' "C8 SCHEDULE_EXACT_ALARM must be capped"
-mutate fire-exported app/src/main/AndroidManifest.xml 's.replace("android:name=\".clock.ClockReceiver\"\n            android:exported=\"false\"", "android:name=\".clock.ClockReceiver\"\n            android:exported=\"true\"")' "C8 .clock.ClockReceiver must exist and not be exported"
-mutate no-boot-replan app/src/main/AndroidManifest.xml 's.replace("<action android:name=\"android.intent.action.BOOT_COMPLETED\" />", "")' "C8 .clock.ClockBootReceiver does not re-plan on BOOT_COMPLETED"
-mutate no-zone-replan app/src/main/AndroidManifest.xml 's.replace("<action android:name=\"android.intent.action.TIMEZONE_CHANGED\" />", "")' "does not re-plan on TIMEZONE_CHANGED"
-mutate fgs-untyped app/src/main/AndroidManifest.xml 's.replace("android:foregroundServiceType=\"specialUse\"", "")' "C8 .clock.ClockService must be a specialUse"
+mutate fire-exported _clocklib/src/main/AndroidManifest.xml 's.replace("android:name=\"com.diegonmarcos.clocktools.ClockReceiver\"\n            android:exported=\"false\"", "android:name=\"com.diegonmarcos.clocktools.ClockReceiver\"\n            android:exported=\"true\"")' "C8 ClockReceiver must exist and not be exported"
+mutate no-boot-replan _clocklib/src/main/AndroidManifest.xml 's.replace("<action android:name=\"android.intent.action.BOOT_COMPLETED\" />", "")' "C8 ClockBootReceiver does not re-plan on BOOT_COMPLETED"
+mutate no-zone-replan _clocklib/src/main/AndroidManifest.xml 's.replace("<action android:name=\"android.intent.action.TIMEZONE_CHANGED\" />", "")' "does not re-plan on TIMEZONE_CHANGED"
+mutate fgs-untyped _clocklib/src/main/AndroidManifest.xml 's.replace("android:foregroundServiceType=\"specialUse\"", "")' "C8 ClockService must be a specialUse"
+mutate no-clock-host app/src/main/AndroidManifest.xml 's.replace("com.diegonmarcos.cloudcalc.CalcClockHost", "com.diegonmarcos.cloudcalc.NoSuchHost")' "C8 the app manifest must name its clock host"
+mutate own-clock-receiver app/src/main/AndroidManifest.xml 's.replace("<meta-data\n            android:name=\"com.diegonmarcos.clocktools.HOST\"", "<receiver android:name=\".clock.ClockReceiver\" android:exported=\"false\" />\n        <meta-data\n            android:name=\"com.diegonmarcos.clocktools.HOST\"")' "C8 the app manifest declares its own .clock.ClockReceiver"
 mutate app-internet app/src/main/AndroidManifest.xml 's.replace("<uses-permission android:name=\"android.permission.WAKE_LOCK\" />", "<uses-permission android:name=\"android.permission.WAKE_LOCK\" />\n    <uses-permission android:name=\"android.permission.INTERNET\" />")' "C8 the app manifest asks for INTERNET"
 mutate notify-elsewhere "$J/ui/ModeScreens.kt" 's + "\nprivate val nag = android.Manifest.permission.POST_NOTIFICATIONS\n"' "C8 POST_NOTIFICATIONS must be asked for"
-mutate second-scheduler "$J/Logic.kt" 's + "\nprivate fun x(am: android.app.AlarmManager, p: android.app.PendingIntent) = am.setExact(0, 0L, p)\n"' "C9 AlarmManager must be set by clock/ClockEngine.kt alone"
-mutate alarm-not-clock "$J/clock/ClockEngine.kt" 's.replace("w.clock && exact -> AlarmManagerCompat.setAlarmClock(am, w.at, openIntent(ctx, ClockDecl.modeId(\"alarms\")), pi)", "w.clock && exact -> AlarmManagerCompat.setExactAndAllowWhileIdle(am, AlarmManager.RTC_WAKEUP, w.at, pi)")' "alarm is not set with setAlarmClock"
+mutate second-scheduler "$J/Logic.kt" 's + "\nprivate fun x(am: android.app.AlarmManager, p: android.app.PendingIntent) = am.setExact(0, 0L, p)\n"' "C9 AlarmManager must be set by libs:clock-tools"
+mutate alarm-not-clock _clocklib/src/main/java/com/diegonmarcos/clocktools/ClockEngine.kt 's.replace("w.clock && exact -> AlarmManagerCompat.setAlarmClock(am, w.at, openIntent(ctx, ClockTools.host(ctx).modeId(\"alarms\")), pi)", "w.clock && exact -> AlarmManagerCompat.setExactAndAllowWhileIdle(am, AlarmManager.RTC_WAKEUP, w.at, pi)")' "alarm is not set with setAlarmClock"
 mutate clock-op-dropped "$J/debugapi/ClockDebugApi.kt" 's.replace("\"timer_cancel\" -> {", "\"timer_kill\" -> {")' "C10 /api/<clock_group>/timer_cancel"
 mutate clock-op-state "$J/debugapi/ClockDebugApi.kt" 's.replace("\"status\" -> status(ctx).toString()", "\"status\", \"state\" -> status(ctx).toString()\n        \"state\" -> status(ctx).toString()")' "C10 ClockDebugApi answers an op named state"
 

@@ -122,6 +122,7 @@
       "watchdog": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "webserver": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "wifi": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
+      "clock-tools": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "writer-core": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "writer-ui": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK."
     },
@@ -146,6 +147,7 @@
       "bluetooth": "Android Bluetooth: LE scan with filters, connect, bond, GATT read / write / notify, known-service decoding from a declared UUID catalog, and the Bluetooth page, shared by the SuperApp, Cloud Calc and the Web Bluetooth bridge of Cloud Browser.",
       "nfc": "The NFC tag analyzer: reader mode for NfcA / B / F / V, IsoDep, NDEF, NdefFormatable and MIFARE Ultralight page read, tag info, the NDEF parser (Text, URI, Smart Poster, MIME, External, AAR, Wi-Fi and Bluetooth handover) with hex / ASCII dump, NDEF write / format, scan history export, and the NFC page, used by Cloud Calc.",
       "perms": "The permission contract: the catalogue of every runtime, special-access, app-op and adb-only grant, live status, exact settings pages, the ADB grant block and the deep link to the host's Permissions page.",
+      "clock-tools": "The fleet's one clock: world clock and time converter (a reference time, the default city first, 00-24 h day bars with on-device sunrise / sunset), alarms with repeat days and DST, timers, stopwatch with laps, interval / Pomodoro and bedtime, with its foreground service, receivers and ring screen; drawn by Cloud Calc, Cloud Tasks and the SuperApp.",
       "wifi": "The Wi-Fi analyzer: scans within the throttle, AP list with vendor / security / standard / RTT / MLO, channel graph and rating per regulatory plan, the connected link, network tools (ping, traceroute, DNS, port scan, LAN discovery, throughput, RTT, locator), heatmap and exports, and the WiFi page, shared by the SuperApp and Cloud Calc.",
       "light": "The Light tool: flashlight and screen light with strobe, timer and an Off-action service, as one Compose page shared by the SuperApp and Cloud Calc.",
       "bottomnav": "The fleet's bottom navigation island, in Compose.",

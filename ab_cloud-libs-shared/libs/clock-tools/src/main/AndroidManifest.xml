@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- #768 / #1668 the clock, merged into every app that carries libs:clock-tools (Cloud Calc, Cloud Tasks, the SuperApp).
+         Alarms are AlarmManager alarm CLOCKS and every other wakeup is exact: SCHEDULE_EXACT_ALARM is the user-granted path
+         on API 31/32 (an app may cap it at 32 in its own manifest, as Cloud Calc does; it is not capped here, a lib cap
+         would win over an app that needs it uncapped), USE_EXACT_ALARM the alarm-clock app's own on 33+. Boot re-plans them;
+         the foreground service keeps running timers, the stopwatch and rings alive with the app closed; the full-screen
+         intent puts a ring over the lock screen. Notifications and exact alarms are granted in Configs > Perms alone (each
+         consumer declares notifications and exact_alarm in build.json::perms.needs). No network: tzdata and on-device sun. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <application>
+        <!-- A ring, over the lock screen (the ring notification's full-screen intent). -->
+        <activity
+            android:name="com.diegonmarcos.clocktools.RingActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Material.NoActionBar"
+            android:turnScreenOn="true" />
+
+        <!-- specialUse is Fossify Clock's type for the same job: no standard type covers "an alarm clock's timers and
+             stopwatch keep counting with the app closed". -->
+        <service
+            android:name="com.diegonmarcos.clocktools.ClockService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Alarm clock: running countdown timers, stopwatch, interval and sleep timers, and ringing alarms, kept alive and controllable while the app is closed" />
+        </service>
+
+        <!-- The app's own wakeups and notification buttons: never exported, so no other app (another carrier of this lib
+             included) can fire or dismiss this app's alarms. -->
+        <receiver
+            android:name="com.diegonmarcos.clocktools.ClockReceiver"
+            android:exported="false" />
+
+        <!-- Everything that clears or shifts AlarmManager alarms re-plans them from the store. -->
+        <receiver
+            android:name="com.diegonmarcos.clocktools.ClockBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

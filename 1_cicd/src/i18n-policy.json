@@ -96,6 +96,9 @@
     "ab_cloud-libs-shared/libs/wifi": {
       "base_language": "host"
     },
+    "ab_cloud-libs-shared/libs/clock-tools": {
+      "base_language": "host"
+    },
     "ab_cloud-libs-shared/libs/mail": {
       "base_language": "host"
     },

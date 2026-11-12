@@ -3,11 +3,11 @@ package com.diegonmarcos.cloudcalc.debugapi
 import android.app.AlarmManager
 import android.content.Context
 import com.diegonmarcos.cloudcalc.BuildConfig
-import com.diegonmarcos.cloudcalc.clock.Alarm
-import com.diegonmarcos.cloudcalc.clock.ClockDecl
-import com.diegonmarcos.cloudcalc.clock.ClockEngine
-import com.diegonmarcos.cloudcalc.clock.ClockLogic
-import com.diegonmarcos.cloudcalc.clock.ClockService
+import com.diegonmarcos.clocktools.Alarm
+import com.diegonmarcos.clocktools.ClockTools
+import com.diegonmarcos.clocktools.ClockEngine
+import com.diegonmarcos.clocktools.ClockLogic
+import com.diegonmarcos.clocktools.ClockService
 import com.diegonmarcos.superapp.devtools.AppDebugServer
 import org.json.JSONArray
 import org.json.JSONObject
@@ -67,7 +67,7 @@ object ClockDebugApi {
             if (minute == null) error("time must be HH:MM (24-hour)")
             else after(ctx, "id", ClockEngine.saveAlarm(ctx, Alarm(
                 0, minute, days = (q["days"]?.toIntOrNull() ?: 0) and ClockLogic.ALL_DAYS, label = q["label"].orEmpty(),
-                vibrate = ClockDecl.vibrateDefault, snoozeMinutes = ClockDecl.snoozeDefault,
+                vibrate = ClockTools.config(ctx).vibrateDefault, snoozeMinutes = ClockTools.config(ctx).snoozeDefault,
             )))
         }
         "alarm_delete" -> {
@@ -94,7 +94,7 @@ object ClockDebugApi {
         val d = ClockEngine.load(ctx)
         val now = ClockEngine.now()
         val zone = ClockEngine.zone()
-        val plan = ClockLogic.plan(d, now, zone, ClockDecl.ringMs)
+        val plan = ClockLogic.plan(d, now, zone, ClockTools.config(ctx).ringMs)
         val planned = plan.associateBy { it.key }
         fun wake(key: String): JSONObject? = planned[key]?.let {
             JSONObject().put("at", it.at).put("at_local", iso(it.at)).put("alarm_clock", it.clock).put("pending", ClockEngine.isScheduled(ctx, key))
@@ -134,6 +134,6 @@ object ClockDebugApi {
             .put("plan", JSONArray(plan.map { w ->
                 JSONObject().put("key", w.key).put("at_local", iso(w.at)).put("alarm_clock", w.clock).put("pending", ClockEngine.isScheduled(ctx, w.key))
             }))
-            .put("zones", JSONArray(d.zones ?: ClockDecl.zones))
+            .put("zones", JSONArray(d.zones ?: ClockTools.config(ctx).zones))
     }
 }

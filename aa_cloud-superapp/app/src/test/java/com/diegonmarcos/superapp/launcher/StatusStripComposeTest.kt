@@ -33,6 +33,11 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34], application = Application::class)
 class StatusStripComposeTest : KitPageHarness() {
 
+    // #1668 the stopwatch is libs:clock-tools' store: on Robolectric's clock (moved by ShadowSystemClock.advanceBy) for these tests.
+    private val swApp: Application get() = ApplicationProvider.getApplicationContext()
+    @Before fun clockOnShadowTime() { com.diegonmarcos.clocktools.ClockEngine.now = { android.os.SystemClock.elapsedRealtime() } }
+    @org.junit.After fun clockBack() { com.diegonmarcos.clocktools.ClockEngine.now = { System.currentTimeMillis() } }
+
     @Before fun petsOff() {
         // A pet is a GIF on a frame clock; Compose's idle wait never returns while one plays.
         val app = ApplicationProvider.getApplicationContext<Application>()
@@ -109,33 +114,33 @@ class StatusStripComposeTest : KitPageHarness() {
 
     @Test
     fun `W1 no readout while the stopwatch is idle`() {
-        TasksPopup.resetStopwatchForTest()
+        TasksPopup.resetStopwatchForTest(swApp)
         showStrip()
         compose.onNodeWithTag("strip:stopwatch").assertDoesNotExist()
     }
 
     @Test
     fun `W2 the readout shows from the shared stopwatch, left of the date, and goes away when it stops`() {
-        TasksPopup.resetStopwatchForTest()
+        TasksPopup.resetStopwatchForTest(swApp)
         val model = showStrip()
-        compose.runOnUiThread { model.refreshTime(); TasksPopup.toggleStopwatchForTest() }  // the dropdown's own state, no second timer
+        compose.runOnUiThread { model.refreshTime(); TasksPopup.toggleStopwatchForTest(swApp) }  // the dropdown's own state, no second timer
         compose.waitForIdle()
         val sw = compose.onNodeWithTag("strip:stopwatch").fetchSemanticsNode().boundsInRoot
         val date = compose.onNodeWithTag("strip:clock").fetchSemanticsNode().boundsInRoot
         assertTrue("readout $sw is left of the date $date", sw.right <= date.left)
         assertTrue("readout reads m:ss: ${swText()}", Regex("""\d+:\d\d""").matches(swText()))
         assertEquals("date stays centred", compose.onRoot().fetchSemanticsNode().size.width / 2f, (date.left + date.right) / 2f, 2f)
-        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest() }
+        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest(swApp) }
         compose.waitForIdle()
         compose.onNodeWithTag("strip:stopwatch").assertDoesNotExist()
-        TasksPopup.resetStopwatchForTest()
+        TasksPopup.resetStopwatchForTest(swApp)
     }
 
     @Test
     fun `W3 it advances while started and running, reads the shared state, and is frozen once stopped`() {
-        TasksPopup.resetStopwatchForTest()
+        TasksPopup.resetStopwatchForTest(swApp)
         showStrip()
-        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest() }
+        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest(swApp) }
         compose.waitForIdle()
         fun secs(t: String) = t.split(':').map { it.toInt() }.fold(0) { acc, n -> acc * 60 + n }
         val before = secs(swText())
@@ -146,13 +151,13 @@ class StatusStripComposeTest : KitPageHarness() {
         val shared = secs(TasksPopup.formatStopwatchBar(TasksPopup.stopwatchElapsedMs()))
         assertTrue("readout $after tracks the shared state $shared", shared - after in 0..1)
         // Stopped: the readout is gone and the shared elapsed time does not move.
-        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest() }
+        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest(swApp) }
         compose.waitForIdle()
         val frozen = TasksPopup.stopwatchElapsedMs()
         advance(5_000)
         compose.onNodeWithTag("strip:stopwatch").assertDoesNotExist()
         assertEquals("no tick while stopped", frozen, TasksPopup.stopwatchElapsedMs())
-        TasksPopup.resetStopwatchForTest()
+        TasksPopup.resetStopwatchForTest(swApp)
     }
 
     @Test

@@ -22,8 +22,8 @@
          alarm-clock app's own on 33+ (granted at install). Boot re-plans them (a reboot clears
          them all); the foreground service keeps running timers, the stopwatch and rings alive with
          the app closed; full-screen intent puts a ring over the lock screen. POST_NOTIFICATIONS is
-         asked for in ui/ClockScreens.kt alone, when something that needs it is started. No
-         network: time zones are the device's tzdata. -->
+         granted in Configs > Perms alone (#1515). No network: time zones are the device's tzdata.
+         #1668 libs:clock-tools declares the same set; this app keeps them to cap SCHEDULE_EXACT_ALARM at 32. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -100,46 +100,12 @@
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.CloudCalc" />
 
-        <!-- #768 a ring, over the lock screen (the ring notification's full-screen intent). -->
-        <activity
-            android:name=".clock.RingActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:launchMode="singleTask"
-            android:showWhenLocked="true"
-            android:taskAffinity=""
-            android:theme="@style/Theme.CloudCalc"
-            android:turnScreenOn="true"
-            tools:targetApi="27" />
-
-        <!-- specialUse is Fossify Clock's type for the same job: no standard type covers "an alarm
-             clock's timers and stopwatch keep counting with the app closed". -->
-        <service
-            android:name=".clock.ClockService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Alarm clock: running countdown timers, stopwatch, interval and sleep timers, and ringing alarms, kept alive and controllable while the app is closed" />
-        </service>
-
-        <!-- The app's own wakeups and notification buttons: never exported. -->
-        <receiver
-            android:name=".clock.ClockReceiver"
-            android:exported="false" />
-
-        <!-- Everything that clears or shifts AlarmManager alarms re-plans them from the store. -->
-        <receiver
-            android:name=".clock.ClockBootReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="android.intent.action.TIME_SET" />
-                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
-            </intent-filter>
-        </receiver>
+        <!-- #1668 the Clock is libs:clock-tools: its manifest merges RingActivity, ClockService, ClockReceiver (never exported)
+             and ClockBootReceiver (boot, update, time and zone changes, exact-alarm grant). This app's host hands the lib its
+             declarations, the activity a notification opens, the city catalogue and the world map. -->
+        <meta-data
+            android:name="com.diegonmarcos.clocktools.HOST"
+            android:value="com.diegonmarcos.cloudcalc.CalcClockHost" />
 
         <!-- Toolkit > Voice Recorder: Share hands a recording to another app (Cloud Drive, Mail, Chat) as a content URI. -->
         <provider

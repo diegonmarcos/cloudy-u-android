@@ -257,8 +257,9 @@ dependencies {
     // #1406 Configs ▸ Permissions (AppPermsSection) and MainActivity as the PermsHost.
     implementation project(':libs:perms')
     implementation project(':libs:ui-icons')
-    // The Clock section's rules (#768): plain JVM, mutation-tested on its own (clock/build.gradle).
-    implementation project(':clock')
+    // #1668 the Clock (#768) is libs:clock-tools, shared BY REFERENCE with Cloud Tasks and the SuperApp: its screens, engine,
+    // service and receivers, over libs:clock-tools-core (the plain-JVM rules, mutation-tested here: gradle.properties).
+    implementation project(':libs:clock-tools')
     // The Jev section's logic (#770): plain JVM, mutation-tested on its own (jev/build.gradle).
     implementation project(':jev')
     // The Sheet page's engine and workbook (plain JVM, its own suite).

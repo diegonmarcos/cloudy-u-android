@@ -84,7 +84,7 @@ object Declarations {
         val plot: Plot?,
         val meter: Meter?,
         val historyMax: Int,
-        /** A Clock mode's `clock` object as JSON (#768); ClockDecl reads it, nothing else does. */
+        /** A Clock mode's `clock` object as JSON (#768); CalcClockHost hands it to libs:clock-tools (ClockConfig.parse), nothing else reads it. */
         val clock: String,
         /** The mode-row icon name (IconCatalog) and its short label; blank = the page's icon and the label. */
         val icon: String = "",

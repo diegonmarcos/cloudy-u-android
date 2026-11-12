@@ -28,6 +28,7 @@ import com.diegonmarcos.cloudagenda.ui.TasksApp
 import com.diegonmarcos.cloudagenda.ui.TasksTags
 import com.diegonmarcos.superapp.bottomnav.BottomNavTags
 import com.diegonmarcos.superapp.bottomnav.PageTabsTags
+import com.diegonmarcos.clocktools.ui.ClockTags
 import com.diegonmarcos.superapp.uikit.KitPartTags
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -82,8 +83,36 @@ class TasksPageTest {
         compose.onNodeWithTag(TopBarTags.CONFIGS).assertIsDisplayed()
         for (id in listOf("inboxes", "backlogs", "tasks", "library", "projects")) compose.onNodeWithTag(BottomNavTags.item(id)).assertIsDisplayed()
         compose.onNodeWithTag(BottomNavTags.item("settings")).assertDoesNotExist()
-        for (id in listOf("calendar", "list", "gantt", "kanban", "mindmap")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
+        for (id in listOf("calendar", "list", "gantt", "kanban", "mindmap", "clock")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
         compose.onNodeWithTag(MockTags.page("calendar")).assertIsDisplayed()
+    }
+
+    @Test fun `#1668 Tasks Clock is the shared clock - world clock first, every clock page one tap away, one store`() {
+        launch(list = false)
+        compose.onNodeWithTag(PageTabsTags.tab("clock")).performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("tasks:clock").assertExists()
+        compose.onNodeWithTag(ClockTags.WORLD).assertExists()
+        // #1667 the default city (the device zone) is the first row and carries its day bar; the converter starts live.
+        val home = com.diegonmarcos.clocktools.ClockEngine.zone().id
+        compose.onNodeWithTag(ClockTags.row(home)).assertExists()
+        compose.onNodeWithTag(ClockTags.bar(home)).assertExists()
+        compose.onNodeWithTag(ClockTags.REF_NOW).assertIsNotEnabled()
+        for ((tab, page) in listOf("alarms" to ClockTags.ALARMS, "timers" to ClockTags.TIMERS, "stopwatch" to ClockTags.STOPWATCH,
+                "interval" to ClockTags.INTERVAL, "bedtime" to ClockTags.BEDTIME, "world" to ClockTags.WORLD)) {
+            compose.onNodeWithTag(ClockTags.tab(tab)).performScrollTo().performClick()
+            compose.waitForIdle()
+            compose.onNodeWithTag(page).assertExists()
+        }
+        // The stopwatch writes the lib's one store (this app's own: an alarm or a stopwatch here is this app's alone).
+        compose.onNodeWithTag(ClockTags.tab("stopwatch")).performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Start").performClick()
+        compose.waitForIdle()
+        assertTrue(com.diegonmarcos.clocktools.ClockEngine.load(RuntimeEnvironment.getApplication()).stopwatch.running)
+        compose.onNodeWithText("Pause").performClick()
+        compose.waitForIdle()
+        assertTrue(!com.diegonmarcos.clocktools.ClockEngine.load(RuntimeEnvironment.getApplication()).stopwatch.running)
     }
 
     @Test fun `every task view renders the mock fixture`() {

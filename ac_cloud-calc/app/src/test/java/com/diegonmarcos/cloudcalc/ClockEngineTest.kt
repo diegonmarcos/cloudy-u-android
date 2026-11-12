@@ -5,16 +5,16 @@ import android.app.Application
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Intent
-import com.diegonmarcos.cloudcalc.clock.Alarm
-import com.diegonmarcos.cloudcalc.clock.ClockBootReceiver
-import com.diegonmarcos.cloudcalc.clock.ClockCodec
-import com.diegonmarcos.cloudcalc.clock.ClockDecl
-import com.diegonmarcos.cloudcalc.clock.ClockEngine
-import com.diegonmarcos.cloudcalc.clock.ClockLogic
-import com.diegonmarcos.cloudcalc.clock.ClockLogic.MINUTE_MS
-import com.diegonmarcos.cloudcalc.clock.ClockReceiver
-import com.diegonmarcos.cloudcalc.clock.ClockService
-import com.diegonmarcos.cloudcalc.clock.TimerState
+import com.diegonmarcos.clocktools.Alarm
+import com.diegonmarcos.clocktools.ClockBootReceiver
+import com.diegonmarcos.clocktools.ClockCodec
+import com.diegonmarcos.clocktools.ClockTools
+import com.diegonmarcos.clocktools.ClockEngine
+import com.diegonmarcos.clocktools.ClockLogic
+import com.diegonmarcos.clocktools.ClockLogic.MINUTE_MS
+import com.diegonmarcos.clocktools.ClockReceiver
+import com.diegonmarcos.clocktools.ClockService
+import com.diegonmarcos.clocktools.TimerState
 import com.diegonmarcos.cloudcalc.debugapi.ClockDebugApi
 import org.json.JSONObject
 import org.junit.After
@@ -143,7 +143,7 @@ class ClockEngineTest {
         assertEquals(listOf("timer:$id"), d.ringing.map { it.key })
         assertTrue("the ring starts the service", ClockService::class.java.name in startedServices())
         // The ring silences itself after the declared ring minutes.
-        assertEquals(t + ClockDecl.ringMs, wakeup(ClockLogic.SILENCE).getTriggerAtMs())
+        assertEquals(t + ClockTools.config(app).ringMs, wakeup(ClockLogic.SILENCE).getTriggerAtMs())
 
         // START_STICKY's restart: a service with no memory reads the store and rings, full-screen.
         val service = Robolectric.buildService(ClockService::class.java).create().startCommand(0, 1)

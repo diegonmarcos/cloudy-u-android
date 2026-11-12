@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- libs:clock-tools (#1668): every string the shared clock draws, moved here from Cloud Calc (#768) so Calc, Cloud Tasks and the SuperApp read one copy. -->
+<resources>
+    <string name="clock_channel_ring">Ringing alarms and timers</string>
+    <string name="clock_channel_running">Running timers and stopwatch</string>
+    <string name="clock_channel_reminder">Bedtime reminder</string>
+    <string name="clock_alarm">Alarm</string>
+    <string name="clock_timer">Timer</string>
+    <string name="clock_times_up">Time\'s up</string>
+    <string name="clock_ringing">Ringing</string>
+    <string name="clock_dismiss">Dismiss</string>
+    <string name="clock_snooze">Snooze</string>
+    <string name="clock_plus_minute">+1:00</string>
+    <string name="clock_pause">Pause</string>
+    <string name="clock_resume">Resume</string>
+    <string name="clock_start">Start</string>
+    <string name="clock_stop">Stop</string>
+    <string name="clock_reset">Reset</string>
+    <string name="clock_lap">Lap</string>
+    <string name="clock_lap_n">Lap %1$d</string>
+    <string name="clock_cancel">Cancel</string>
+    <string name="clock_save">Save</string>
+    <string name="clock_delete">Delete</string>
+    <string name="clock_allow">Allow</string>
+    <string name="clock_label">Label</string>
+    <string name="clock_vibrate">Vibrate</string>
+    <string name="clock_sound">Sound: %1$s</string>
+    <string name="clock_silent">Silent</string>
+    <string name="clock_default_sound">Default alarm sound</string>
+    <string name="clock_snooze_minutes">Snooze</string>
+    <string name="clock_snoozed_until">snoozed until %1$s</string>
+    <string name="clock_add_alarm">Add alarm</string>
+    <string name="clock_no_alarm">No alarm set</string>
+    <string name="clock_next_alarm">Next alarm in %1$s</string>
+    <string name="clock_exact_off">Exact alarms are not allowed for this app, so alarms may ring late.</string>
+    <string name="clock_full_screen_off">Alarms cannot show over the lock screen: allow full-screen notifications.</string>
+    <string name="clock_paused_left">Paused · %1$s left</string>
+    <string name="clock_add_city">Add city</string>
+    <string name="clock_search_city">Search city or time zone</string>
+    <string name="clock_tomorrow">Tomorrow</string>
+    <string name="clock_yesterday">Yesterday</string>
+    <string name="clock_stopwatch">Stopwatch</string>
+    <string name="clock_interval_phase">%1$s · round %2$d of %3$d</string>
+    <string name="clock_round">Round %1$d of %2$d</string>
+    <string name="clock_session_left">%1$s left in the session</string>
+    <string name="clock_phase_work">Work</string>
+    <string name="clock_phase_rest">Rest</string>
+    <string name="clock_phase_long_rest">Long rest</string>
+    <string name="clock_work_min">Work (min)</string>
+    <string name="clock_rest_min">Rest (min)</string>
+    <string name="clock_rounds">Rounds</string>
+    <string name="clock_custom">Custom</string>
+    <string name="clock_sleep_timer">Sleep timer</string>
+    <string name="clock_sleep_timer_doc">Stops music and podcasts when it runs out.</string>
+    <string name="clock_bedtime">Bedtime</string>
+    <string name="clock_bedtime_at">Remind me at (HH:MM)</string>
+    <string name="clock_bedtime_text">Time to wind down.</string>
+    <string name="clock_sleep_window">In bed at %1$s, next alarm %2$s: %3$s of sleep</string>
+    <plurals name="clock_timers_running">
+        <item quantity="one">%1$d timer</item>
+        <item quantity="other">%1$d timers</item>
+    </plurals>
+    <!-- #1667 the world clock's converter, default city and day bars -->
+    <string name="clock_now">Now</string>
+    <string name="clock_live">Live</string>
+    <string name="clock_reference">Reference time</string>
+    <string name="clock_pick_date">Date</string>
+    <string name="clock_pick_time">Time</string>
+    <string name="clock_ok">OK</string>
+    <string name="clock_default_city">Default city</string>
+    <string name="clock_set_default">Set as default city</string>
+    <string name="clock_change_default">Change the default city</string>
+    <string name="clock_sun">Sunrise %1$s · sunset %2$s</string>
+    <string name="clock_polar_day">Polar day: the sun does not set</string>
+    <string name="clock_polar_night">Polar night: the sun does not rise</string>
+    <string name="clock_sun_estimated">Daylight estimated (06–18 h): no coordinates for this zone</string>
+    <string name="clock_day_bar">Day bar</string>
+    <!-- #1668 the full clock as one page (Cloud Tasks > Tasks > Clock) -->
+    <string name="clock_tab_world">World clock</string>
+    <string name="clock_tab_alarms">Alarms</string>
+    <string name="clock_tab_timers">Timers</string>
+    <string name="clock_tab_stopwatch">Stopwatch</string>
+    <string name="clock_tab_interval">Interval</string>
+    <string name="clock_tab_bedtime">Bedtime</string>
+</resources>

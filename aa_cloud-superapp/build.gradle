@@ -11,6 +11,8 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.compose' version '2.3.20' apply false
     // #1093 libs:fleet-endpoints (linked by libs:account) is plain JVM Kotlin.
     id 'org.jetbrains.kotlin.jvm' version '2.3.20' apply false
+    // #1668 libs:clock-tools-core (plain JVM) carries a PIT block; its mutation pass runs in Cloud Calc only.
+    id 'info.solidsoft.pitest' version '1.19.0' apply false
 }
 
 // build.json::tests.unit.task. The test engine takes ONE task name, so the suites this app owns hang off one (#1510):

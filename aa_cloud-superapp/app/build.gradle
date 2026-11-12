@@ -1116,6 +1116,8 @@ dependencies {
     implementation project(':libs:bluetooth')
     // libs:wifi (#1263) - the WiFi analyzer page (Configs > Setup > Network > WiFi): scans, channels, link, tools, logs.
     implementation project(':libs:wifi')
+    // #1668 libs:clock-tools - the fleet's one clock; the date dropdown's stopwatch and the Home bar readout (#1646) are its.
+    implementation project(':libs:clock-tools')
     // libs:perms (#1274) - the permission contract the Permissions page draws and every feature banner links through.
     implementation project(':libs:perms')
     // libs:datamanager — per-app usage + network DATA providers (feeds the

@@ -186,8 +186,8 @@ class CalcShellTest {
 
     @Test fun `the Alarms screen shows the stored alarm and its switch cancels the wakeup`() {
         val app = RuntimeEnvironment.getApplication()
-        val id = com.diegonmarcos.cloudcalc.clock.ClockEngine.saveAlarm(app, com.diegonmarcos.cloudcalc.clock.Alarm(0, 6 * 60 + 45))
-        assertTrue(com.diegonmarcos.cloudcalc.clock.ClockEngine.isScheduled(app, "alarm:$id"))
+        val id = com.diegonmarcos.clocktools.ClockEngine.saveAlarm(app, com.diegonmarcos.clocktools.Alarm(0, 6 * 60 + 45))
+        assertTrue(com.diegonmarcos.clocktools.ClockEngine.isScheduled(app, "alarm:$id"))
         launch()
         val alarms = Declarations.modes.first { it.kind == "alarms" }
         compose.runOnIdle { state.tab = alarms.tab; state.modeByTab[alarms.tab] = alarms.id }
@@ -196,8 +196,8 @@ class CalcShellTest {
         // Switching it off is the screen's own write: store, then AlarmManager.
         compose.onNode(isToggleable()).performClick()
         compose.waitForIdle()
-        assertFalse(com.diegonmarcos.cloudcalc.clock.ClockEngine.load(app).alarms.single().enabled)
-        assertFalse(com.diegonmarcos.cloudcalc.clock.ClockEngine.isScheduled(app, "alarm:$id"))
+        assertFalse(com.diegonmarcos.clocktools.ClockEngine.load(app).alarms.single().enabled)
+        assertFalse(com.diegonmarcos.clocktools.ClockEngine.isScheduled(app, "alarm:$id"))
     }
 
     private fun typeKeys(vararg keys: String) = keys.forEach { compose.onNodeWithTag(CalcTags.key(it)).performClick(); compose.waitForIdle() }

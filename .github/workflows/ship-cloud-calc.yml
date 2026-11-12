@@ -47,6 +47,7 @@ on:
       - "ab_cloud-libs-shared/libs/ai/**"
       - "ab_cloud-libs-shared/libs/bluetooth/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
+      - "ab_cloud-libs-shared/libs/clock-tools/**"
       - "ab_cloud-libs-shared/libs/core/**"
       - "ab_cloud-libs-shared/libs/crash/**"
       - "ab_cloud-libs-shared/libs/databackend/**"

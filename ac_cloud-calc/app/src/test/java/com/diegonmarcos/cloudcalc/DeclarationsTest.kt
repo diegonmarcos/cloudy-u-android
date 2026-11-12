@@ -113,7 +113,7 @@ class DeclarationsTest {
                 "plot" -> assertTrue("${m.id}: bad range", m.plot != null && m.plot!!.xmax > m.plot!!.xmin && m.plot!!.steps > 0)
                 "meter" -> m.meter!!.let { assertTrue("${m.id}: fft ${it.fftSize}", it.fftSize > 0 && (it.fftSize and (it.fftSize - 1)) == 0) }
                 "history" -> assertTrue(m.historyMax > 0)
-                // #768 the Clock kinds: what ClockDecl reads must be there and make sense.
+                // #768 the Clock kinds: what CalcClockHost hands libs:clock-tools must be there and make sense.
                 "worldclock" -> JSONObject(m.clock).getJSONArray("zones").let { z ->
                     assertTrue("${m.id}: no zones", z.length() > 0)
                     (0 until z.length()).forEach { java.time.ZoneId.of(z.getString(it)) }
@@ -133,7 +133,7 @@ class DeclarationsTest {
                 }
                 "bedtime" -> JSONObject(m.clock).let { c ->
                     assertTrue(c.getJSONArray("sleep_choices").length() > 0)
-                    assertTrue("${m.id}: bedtime_default", com.diegonmarcos.cloudcalc.clock.ClockLogic.parseTime(c.getString("bedtime_default")) != null)
+                    assertTrue("${m.id}: bedtime_default", com.diegonmarcos.clocktools.ClockLogic.parseTime(c.getString("bedtime_default")) != null)
                 }
             }
         }

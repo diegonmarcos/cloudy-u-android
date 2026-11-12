@@ -243,6 +243,7 @@
         "libs:light",
         "libs:bluetooth",
         "libs:wifi",
+        "libs:clock-tools",
         "libs:perms",
         "libs:datamanager",
         "libs:launcher-onehand",
@@ -495,6 +496,20 @@
         "libs:perms"
       ],
       "comment": "#1263 the Wi-Fi analyzer as one shared lib, app-agnostic (the host injects WifiHostConfig; this app passes build.json wifi_analyzer): WifiManager scans within the throttle, ScanResult parsing (channel math, width, standard, security / PMF / WPS, 802.11mc / az, MLO), the IEEE OUI vendor table and regulatory channel plans as assets, channel rating, the connected link (ConnectivityManager / LinkProperties / WifiInfo), RTT ranging, network tools (ping, traceroute, DNS, port scan, NSD / SSDP / sweep / NetBIOS discovery, throughput), heatmap, roaming log, CSV / JSON / PCAP export, and the five-tab Compose page (WifiPanel). The SuperApp draws it in Configs > Setup > Network > WiFi (WifiFragment); Cloud Calc embeds the same panel. Its rules are tested in app/src/test/.../wifi/."
+    },
+    "libs:clock-tools": {
+      "dir": "../ab_cloud-libs-shared/libs/clock-tools",
+      "type": "library",
+      "depends_on": [
+        "libs:clock-tools-core",
+        "libs:perms"
+      ],
+      "comment": "#1668 the fleet's one clock, shared BY REFERENCE with Cloud Calc and Cloud Tasks. The SuperApp's stopwatch IS the lib's: the date dropdown (TasksPopup) starts, stops and resets it through ClockEngine and the Home bar readout (#1646, LauncherStatusStrip) reads it (rememberStopwatch), so there is one stopwatch state in this process and it survives a process restart. Its manifest merges the clock's service, receivers, ring screen and permissions (notifications and exact_alarm are already in perms.needs). Any alarm set here lives in THIS app's own store and rings from this app only. A `gui` lib."
+    },
+    "libs:clock-tools-core": {
+      "dir": "../ab_cloud-libs-shared/libs/clock-tools/core",
+      "type": "library",
+      "comment": "#1668 the clock's rules (plain JVM), the api of libs:clock-tools; mutation-tested in Cloud Calc's ship."
     },
     "libs:datamanager": {
       "dir": "../ab_cloud-libs-shared/libs/datamanager",

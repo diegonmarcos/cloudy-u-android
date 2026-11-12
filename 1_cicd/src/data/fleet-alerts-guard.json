@@ -123,10 +123,10 @@
       "why": "GPS tracking foreground service updating its own ongoing status line."
     },
     {
-      "path": "ac_cloud-calc/app/src/main/java/com/diegonmarcos/cloudcalc/clock/ClockService.kt",
+      "path": "ab_cloud-libs-shared/libs/clock-tools/src/main/java/com/diegonmarcos/clocktools/ClockService.kt",
       "kind": "ongoing_controls",
       "notify_calls": 2,
-      "why": "Running timers with pause/+1 min/reset controls, and the bedtime reminder the user set — the clock app's own product, like a ringing alarm, not a fleet alert."
+      "why": "#1668 libs:clock-tools (Cloud Calc, Cloud Tasks, the SuperApp): running timers with pause/+1 min/reset controls, and the bedtime reminder the user set — the clock's own product, like a ringing alarm, not a fleet alert."
     },
     {
       "path": "ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/cloud/sync/CloudIndexProgressManager.kt",

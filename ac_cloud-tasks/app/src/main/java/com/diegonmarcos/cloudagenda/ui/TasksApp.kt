@@ -170,6 +170,8 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
                                 Ids.PAGE_GANTT -> GanttView(env.mock, today)
                                 Ids.PAGE_KANBAN -> KanbanView(env.mock, today)
                                 Ids.PAGE_MINDMAP -> MindmapView(env.mock)
+                                // #1668 the fleet's one clock, shared BY REFERENCE: World clock, Alarms, Timers, Stopwatch, Interval, Bedtime.
+                                Ids.PAGE_CLOCK -> com.diegonmarcos.clocktools.ui.FullClock(Modifier.testTag("tasks:clock"))
                             }
                         }
                     }

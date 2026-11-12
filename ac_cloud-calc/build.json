@@ -114,7 +114,7 @@
         "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray",
         "libs:theme-background",
         "libs:perms",
-        "clock",
+        "libs:clock-tools",
         "jev",
         "sound",
         "tools",
@@ -135,8 +135,14 @@
       "_doc": "The Sheet page's logic as a plain-JVM Kotlin module (sheet/): the formula engine (parser, evaluator, SUM/AVERAGE/MIN/MAX/COUNT/COUNTA/IF/AND/OR/NOT/ROUND/ABS/SQRT/POWER/MOD/CONCAT/CONCATENATE/LEN/UPPER/LOWER/TODAY/NOW, #DIV/0! #REF! #NAME? #VALUE! #CIRC!), the workbook (sheets, dependency recalculation, insert/delete with reference adjustment, formats, clipboard, undo/redo), CSV and the workbook JSON file. No Android in it. The grid, files and the AI tools are app/.../ui/SheetScreens.kt and sheet/.",
       "type": "library"
     },
-    "clock": {
-      "_doc": "#768 the Clock section's rules as a plain-JVM Kotlin module (clock/): alarm recurrence across repeat days and DST, timers, stopwatch laps, interval phases, what each AlarmManager wakeup does, and the stored JSON. No Android in it, so its suite runs without Robolectric and PIT mutation-tests it on every `gradle test` (clock/build.gradle). The Android half (AlarmManager, the foreground service, receivers, screens) is app/…/clock and ui/ClockScreens.kt.",
+    "libs:clock-tools": {
+      "_doc": "#1668 THE clock, shared BY REFERENCE with Cloud Tasks (Tasks > Clock) and the SuperApp (the Home bar stopwatch): the Android half (ClockEngine, the foreground service, receivers, RingActivity) and every Clock screen (World clock with #1667's converter, default city and day bars, Alarms, Timers, Stopwatch, Interval, Bedtime). Its manifest merges the clock's components and permissions; this app's own manifest only caps SCHEDULE_EXACT_ALARM at 32 and names CalcClockHost (meta-data com.diegonmarcos.clocktools.HOST), which hands the lib this file's ui.modes[].clock declarations, the mode ids a notification opens, the worldmap/cities catalogue (coordinates for the day bars) and the #1423 map. Alarms: this app's own store and its own non-exported receivers, so an alarm set here rings here only. A `gui` lib.",
+      "dir": "../ab_cloud-libs-shared/libs/clock-tools",
+      "type": "library"
+    },
+    "libs:clock-tools-core": {
+      "_doc": "#768 -> #1668 the clock's rules as a plain-JVM module, moved from this app's clock/ into the lib (clock-tools/core): alarm recurrence across repeat days and DST, timers, stopwatch laps, interval phases, what each AlarmManager wakeup does, the stored JSON, the declaration parser and #1667's WorldTable / Sun. No Android in it, so its suite runs without Robolectric; PIT mutation-tests it in THIS app's `gradle test` (gradle.properties clockToolsMutation=true).",
+      "dir": "../ab_cloud-libs-shared/libs/clock-tools/core",
       "type": "library"
     },
     "jev": {
@@ -5421,7 +5427,7 @@
       ]
     },
     "unit": {
-      "_doc": "Every project's `test`: the JVM suites in app/src/test (the declaration parser against this build.json, every pure per-mode function, Robolectric suites per section incl. #772 SoundAppTest and CameraAppTest) plus the plain-JVM modules clock, jev, sound and measure and the shared libs:decisions / libs:ml-l-image, each JVM module followed by its PIT mutation gate.",
+      "_doc": "Every project's `test`: the JVM suites in app/src/test (the declaration parser against this build.json, every pure per-mode function, Robolectric suites per section incl. #772 SoundAppTest and CameraAppTest) plus the plain-JVM modules jev, sound and measure, the shared libs:clock-tools-core (the clock rules, #1668) / libs:ml-l-image, each JVM module followed by its PIT mutation gate.",
       "task": "test",
       "enabled": true
     }

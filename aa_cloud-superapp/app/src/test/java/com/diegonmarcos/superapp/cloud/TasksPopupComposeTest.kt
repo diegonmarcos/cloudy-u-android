@@ -47,7 +47,7 @@ class TasksPopupComposeTest : KitPageHarness() {
         override fun todos() = listOf(TaskTodo("Buy milk", "NEEDS-ACTION", null), TaskTodo("Done thing", "COMPLETED", null))
     }
 
-    @Before fun fresh() = TasksPopup.resetStopwatchForTest()
+    @Before fun fresh() = TasksPopup.resetStopwatchForTest(androidx.test.core.app.ApplicationProvider.getApplicationContext())
 
     private fun show() = showKit { TasksPopup.TasksBubble(fake, today) }
 
