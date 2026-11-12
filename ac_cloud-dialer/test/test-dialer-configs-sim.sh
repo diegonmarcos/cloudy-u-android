@@ -22,7 +22,9 @@ grep -q 'SafeEncryptedPrefs.prefs' $S/SimManualStore.kt && ok "manual SIM data e
 if grep -rnE 'getSharedPreferences|PreferenceManager|EncryptedSharedPreferences\.create' $S; then bad "plain prefs in sim/"; else ok "no plain prefs in sim/"; fi
 if grep -rnE 'Log\.[dviwe]\(|println\(' $S; then bad "logging in sim/ (never log PIN/PUK)"; else ok "no logging in sim/"; fi
 # #1528 PIN / PUK: declared secret, written only to the Cloud Account vault (never to this app's prefs), provider side present.
-A=app/src/main/assets/sim-fields.json
+A=../data/fleet/app/com.diegonmarcos.comms.dialer/sim-fields.json   # #1547 the SIM field schema is the runtime dataset sim-fields (Cloud Store), no asset
+[ -f "$A" ] && ok "sim-fields dataset present" || bad "sim-fields dataset missing at $A"
+[ ! -e app/src/main/assets/sim-fields.json ] && ok "sim-fields is not baked into the APK" || bad "sim-fields.json is baked into the APK again"
 [ "$(jq -c '[.fields[] | select(.secret == true) | .id]' $A)" = '["pin","puk"]' ] && ok "only pin and puk are secret fields" || bad "secret fields are not exactly pin,puk"
 grep -q 'if (f.secret) return vault.put' $S/SimManualStore.kt && ok "secret fields go to the vault" || bad "secret fields not routed to the vault"
 if grep -nE 'putString\("\$key\.(pin|puk)|"pin"|"puk"' $S/SimManualStore.kt $S/SimSubPages.kt; then bad "pin/puk literal in the store or pages (schema-driven only)"; else ok "no pin/puk literal outside the schema"; fi

@@ -15,7 +15,7 @@ DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP="$DIR/app/src/main/java/com/termux/app"
 API="$APP/TerminalDebugApi.java"
 SELFTEST="$DIR/app/src/main/assets/terminal-selftest.json"
-SIBLING="$DIR/../ac_cloud-nix-on-droid/app/src/main/assets/terminal-selftest.json"
+SIBLING="$DIR/../data/fleet/app/cld.termux.nix/terminal-selftest.json"   # #1547 the sibling terminal reads its list at runtime (Cloud Store dataset), no asset
 
 fails=0
 ok()  { echo "  ok   — $1"; }

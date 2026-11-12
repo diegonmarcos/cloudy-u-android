@@ -613,6 +613,7 @@ dependencies {
 
     // Tests
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20240303")   // ChangelogDatasetTest parses the served dataset on the JVM: android.jar's org.json is a stub there
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.mockwebserver)

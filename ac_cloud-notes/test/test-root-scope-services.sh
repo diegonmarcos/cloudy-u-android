@@ -112,18 +112,22 @@ fi
 # reaches the web layer through exactly one string. A rename on either side is
 # silent: the button still draws, still animates, and does nothing — which is
 # indistinguishable from the boot failure above and was misread as one.
-fab_event="$(grep -oE "new Event\('[^']+'\)" \
+# MainActivity dispatches more than one event now (view-intent, open-file, memory-pressure), so "the first one on each side"
+# no longer compares like with like. Every event the native side dispatches must have a listener in the web layer.
+native_events="$(grep -oE "new Event\('[^']+'\)" \
   "$ROOT/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt" \
-  | head -1 | sed "s/new Event('//;s/')//")"
-web_event="$(grep -oE "addEventListener\('[^']+'" \
-  "$ROOT/packages/frontend/apps/android/src/app.tsx" \
-  | sed "s/addEventListener('//;s/'//" | grep -F 'cloud-notes' | head -1)"
-
-if [ -n "$fab_event" ] && [ "$fab_event" = "$web_event" ]; then
-  ok "FAB dispatches '$fab_event' and app.tsx listens for the same event"
-else
-  fail "FAB/listener event mismatch: MainActivity.kt='$fab_event' app.tsx='$web_event'"
+  | sed "s/new Event('//;s/')//" | sort -u)"
+if [ -z "$native_events" ]; then
+  fail "MainActivity.kt dispatches no event: the FAB has no way into the web layer"
 fi
+case "$native_events" in *cloud-notes:open-file*) ok "the FAB's event cloud-notes:open-file is dispatched" ;; *) fail "MainActivity.kt no longer dispatches cloud-notes:open-file (the FAB's event)" ;; esac
+for ev in $native_events; do
+  if grep -rqF "addEventListener('$ev'" "$ROOT/packages/frontend/apps/android/src" "$ROOT/packages/frontend/core/src/mobile"; then
+    ok "native event '$ev' has a listener in the web layer"
+  else
+    fail "FAB/listener event mismatch: MainActivity.kt dispatches '$ev' and nothing in the web layer listens for it"
+  fi
+done
 
 if [ "$FAIL" -eq 0 ]; then
   printf '  cloud-notes root-scope tester: ALL PASS\n'
