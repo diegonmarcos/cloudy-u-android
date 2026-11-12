@@ -78,9 +78,9 @@ import com.diegonmarcos.superapp.uikit.LocalKitPalette
 class ImportConfigsFragment : KitComposeFragment() {
 
     /** The paste box's text. */
-    internal var input by mutableStateOf("")
+    var input by mutableStateOf("")
     /** The last sentence [report] said. */
-    internal var status by mutableStateOf("")
+    var status by mutableStateOf("")
 
     /**
      * The encrypted store, behind three seams. [ConfigsPrefs] needs the Android
@@ -88,10 +88,10 @@ class ImportConfigsFragment : KitComposeFragment() {
      * swaps these for a map and drives the whole route on the real bytes.
      * ponytail: three lambdas, not an interface with one implementation.
      */
-    internal var readBlob: (Context) -> String = { ConfigsPrefs(it).json }
-    internal var putSecret: (Context, String, String, String) -> Unit =
+    var readBlob: (Context) -> String = { ConfigsPrefs(it).json }
+    var putSecret: (Context, String, String, String) -> Unit =
         { c, section, key, value -> ConfigsPrefs(c).putSecret(section, key, value) }
-    internal var clearBlob: (Context) -> Unit = { ConfigsPrefs(it).clear() }
+    var clearBlob: (Context) -> Unit = { ConfigsPrefs(it).clear() }
 
     private val pickFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         // A dismissed picker is the owner's choice, not a failure: nothing to report.
@@ -161,7 +161,7 @@ class ImportConfigsFragment : KitComposeFragment() {
      * as zero bytes (a cloud folder that has not synced, a provider that
      * streams lazily) is reported as such, not as an empty import.
      */
-    internal fun loadFromUri(uri: Uri) {
+    fun loadFromUri(uri: Uri) {
         val name = uri.lastPathSegment ?: uri.toString()
         val text = try {
             requireContext().contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
@@ -177,7 +177,7 @@ class ImportConfigsFragment : KitComposeFragment() {
      * encrypted file, an unknown schema and an unrecognised shape write
      * NOTHING and say so — with the counts, the sections and the way out.
      */
-    internal fun describe(v: VaultFile.Verdict, store: Boolean) {
+    fun describe(v: VaultFile.Verdict, store: Boolean) {
         val ctx = requireContext()
         when (v) {
             VaultFile.Verdict.Empty -> report(R.string.import_nothing)

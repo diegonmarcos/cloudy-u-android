@@ -64,14 +64,14 @@ check() {
   strip "$MA" | grep -q 'ProfileFragment' && bad "Cloud Account still names ProfileFragment (deleted by redesign task 3)" || ok "no ProfileFragment host left"
   [ ! -e "$L/profile/ProfileFragment.kt" ] && ok "ProfileFragment is deleted from libs:account" || bad "ProfileFragment.kt still exists"
   grep -q "project(':libs:account')" "$A/app/build.gradle" && ok "app links :libs:account" || bad "app does not link :libs:account"
-  if find "$A/app/src" -name '*.kt' | xargs grep -l "^package com.diegonmarcos.superapp.profile" 2>/dev/null | grep -q .; then
+  if find "$A/app/src/main" -name '*.kt' | xargs grep -l "^package com.diegonmarcos.superapp.profile" 2>/dev/null | grep -q .; then
     bad "a copy of libs:account code lives in ac_cloud-account"; else ok "no copy of the account code in this app"; fi
   strip "$AP" | grep -Eq 'readThrough *= *false' && ok "Cloud Account owns the data (read-through off)" || bad "Cloud Account reads through to another host"
   python3 - "$MF" <<'PY' && ok "provider AccountData\$Provider: exported, authority \${applicationId}.accountdata, behind CONSTELLATION_DATA" || bad "provider missing, wrongly named, or not behind the signature permission"
 import re, sys
 m = open(sys.argv[1], encoding='utf-8').read()
 for p in re.findall(r'<provider\b.*?/>', m, flags=re.S):
-    if 'AccountData$Provider' in p:
+    if 'AccountData$Provider' in p or 'AccountFleetDataProvider' in p:
         ok = ('android:exported="true"' in p and 'android:authorities="${applicationId}.accountdata"' in p
               and 'android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"' in p)
         sys.exit(0 if ok else 1)
@@ -114,15 +114,15 @@ PY
   strip "$SP" | grep -q 'pageId == "profile" *-> *com.diegonmarcos.superapp.apps.AccountHandoff.page()' && ok "SuperApp's Account page goes through the hand-off" || bad "SuperApp's Account page bypasses the hand-off"
   strip "$HO" | grep -q 'if (installed) OpenCloudAccount() else InstallCloudAccount()' && strip "$HO" | grep -q 'AppInstall.start(ctx, PKG, LABEL)' && ! strip "$HO" | grep -q 'ProfileFragment' && ok "hand-off opens Cloud Account, else offers its install (no embedded page)" || bad "hand-off does not open-or-install Cloud Account"
   local sa; sa="$(strip "$SA")"
-  printf '%s' "$sa" | grep -q 'readThrough *= *true' && ok "SuperApp reads through to Cloud Account" || bad "SuperApp does not read through"
-  printf '%s' "$sa" | grep -q 'AccountData.migrate(applicationContext)' && ok "SuperApp runs the one-shot copy at start" || bad "SuperApp never runs the copy"
+  # #1693 the SuperApp holds no account store: no read-through switch, no copy, no libs:account class
+  ! printf '%s' "$sa" | grep -Eq 'readThrough|AccountData\.migrate|AccountHost\.|ProfileSync' && ok "SuperApp holds no account store (no read-through, no one-shot copy: it asks Cloud Account's provider)" || bad "SuperApp still runs an account store (readThrough / AccountData.migrate / AccountHost / ProfileSync)"
 
   # 4. one package name, one OPEN action
   local appid pkg libpkg action
   appid="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['android']['application_id'])" "$A/build.json")"
-  libpkg="$(printf '%s' "$ad" | sed -n 's/.*const val PKG = "\([^"]*\)".*/\1/p')"
+  libpkg="$(sed -n 's/.*const val ACCOUNT_PACKAGE = "\([^"]*\)".*/\1/p' "$ROOT/ab_cloud-libs-shared/libs/fleet-endpoints/src/main/kotlin/com/diegonmarcos/superapp/fleetendpoints/FleetEndpointsContract.kt")"
   [ -n "$appid" ] && [ "$appid" = "$libpkg" ] && ok "library package = build.json application_id ($appid)" || bad "library package '$libpkg' != application_id '$appid'"
-  strip "$HO" | grep -q 'const val PKG = AccountData.PKG' && ok "hand-off uses the library's package" || bad "hand-off names its own package"
+  strip "$HO" | grep -q 'const val PKG = AccountClient.PKG' && ok "hand-off uses the client library's package" || bad "hand-off names its own package"
   grep -q "\"package\":\"$appid\"" "$F" && ok "fleet manifest lists $appid (installable and updated by the Store)" || bad "fleet manifest has no row for $appid"
   action="$(strip "$HO" | sed -n 's/.*ACTION_OPEN = "\([^"]*\)".*/\1/p')"
   [ "$action" = '$PKG.OPEN' ] && action="$appid.OPEN"
@@ -141,7 +141,7 @@ want = {'vault': ['ids', 'cards', 'secrets', 'autocomplete'],
         'configs': ['general', 'perms', 'about']}
 strips = {'autocomplete': ['personal', 'sites', 'snippets'], 'android': ['cloud-apps', 'phone-apps', 'runbook'], 'c3': ['infra', 'containers'],
           'secrets': ['providers', 'keys', 'tokens', 'grants', 'import', 'entries'], 'backup': ['databases', 'bundle', 'me'],
-          'status': ['connections', 'apps', 'endpoints'], 'auth': ['hub', 'signin', 'settings'], 'fleetsetup': ['services', 'drive', 'push', 'perms', 'adb-shell']}
+          'status': ['connections', 'apps', 'endpoints'], 'auth': ['hub', 'signin', 'import-configs', 'settings'], 'fleetsetup': ['services', 'drive', 'push', 'perms', 'adb-shell']}
 got = {s.get('id'): [p.get('id') for p in s.get('pages') or []] for s in ui.get('sections') or []}
 gotstrips = {p.get('id'): [q.get('id') for q in p.get('pages')] for s in ui.get('sections') or [] for p in s.get('pages') or [] if p.get('pages')}
 ok = (ui.get('bottom_nav') == ['vault', 'config', 'connect', 'devices', 'activity'] and got == want and gotstrips == strips and ui.get('default_section') == 'vault'
@@ -197,7 +197,7 @@ PY
   if grep -En 'Log\.[a-z]\(|println\(|printStackTrace' "$VT" "$PL" "$FS" "$MG" "$L/profile/AccountVaultTabs.kt" "$L/profile/FleetSetupTab.kt" >/dev/null 2>&1; then bad "a vault or setup file logs (values must never be logged)"; else ok "no vault or setup file logs"; fi
   strip "$AP" | grep -q 'AccountVault.install(this)' && strip "$AP" | grep -q 'AccountMigrate.run(this)' && ok "App installs the grant-aware authorizer and takes in what SuperApp kept" || bad "App.kt does not install the vault authorizer or run the migration"
   local FB="$P/cloud/FleetBearerProvider.kt"
-  [ -f "$FB" ] && strip "$FB" | grep -q 'AccountData.secret(ctx, "fleet.bearer")' && ok "SuperApp's fleet bearer reads through Cloud Account first" || bad "SuperApp's FleetBearerProvider does not read the fleet bearer through Cloud Account"
+  [ -f "$FB" ] && strip "$FB" | grep -q 'AccountClient.secret(ctx, "fleet.bearer")' && ok "SuperApp's fleet bearer reads through Cloud Account first" || bad "SuperApp's FleetBearerProvider does not read the fleet bearer through Cloud Account"
 
   # 7. redesign task 4: Data > Devices files/working/diff
   local PP="$L/profile/ProfilesPages.kt"
@@ -244,16 +244,16 @@ mutate "bundle loses its version gate" lib/settings/AccountVault.kt 'if (v > Acc
 mutate "bundle loses its authenticated header" lib/settings/AccountVault.kt 'updateAAD(aad(AccountVault.VERSION))' '' || M=$((M+1))
 mutate "a vault file logs a value" lib/settings/AccountVault.kt 'fun connections(): JSONObject = parse(prefs.json)' 'fun connections(): JSONObject = parse(prefs.json).also { android.util.Log.d("x", it.toString()) }' || M=$((M+1))
 mutate "App stops installing the authorizer" acc/app/src/main/java/com/diegonmarcos/cloudaccount/App.kt 'AccountVault.install(this)' 'Unit' || M=$((M+1))
-mutate "FleetBearerProvider stops reading through" super/cloud/FleetBearerProvider.kt 'AccountData.secret(ctx, "fleet.bearer")' '""' || M=$((M+1))
+mutate "FleetBearerProvider stops reading through" super/cloud/FleetBearerProvider.kt 'AccountClient.secret(ctx, "fleet.bearer")' '""' || M=$((M+1))
 mutate "configs copy overwrites" "$D" 'if (prefs.localJson.isBlank())' 'if (true)' || M=$((M+1))
 mutate "slot copy overwrites" "$D" 'if (model.store.read(s) != null) continue' '' || M=$((M+1))
 mutate "profile copy overwrites" "$D" 'if (sp.all.keys.any { it !in generated }) return false' '' || M=$((M+1))
 mutate "done set before the answer" "$D" 'val b = fetch(ctx) ?: return emptyList()' 'ctx.getSharedPreferences(MIGRATION_FILE, Context.MODE_PRIVATE).edit().putBoolean(K_DONE, true).apply(); val b = fetch(ctx) ?: return emptyList()' || M=$((M+1))
 mutate "Cloud Account reads through" acc/app/src/main/java/com/diegonmarcos/cloudaccount/App.kt 'readThrough = false' 'readThrough = true' || M=$((M+1))
 mutate "Account page bypasses hand-off" super/launcher/SectionPages.kt 'AccountHandoff.page()' 'ProfileFragment.newInstance()' || M=$((M+1))
-mutate "SuperApp never copies" super/App.kt 'AccountData.migrate(applicationContext)' 'Unit' || M=$((M+1))
+mutate "SuperApp runs an account store again" super/App.kt 'override fun onCreate() {' 'override fun onCreate() { AccountData.migrate(applicationContext)' || M=$((M+1))
 mutate "Account entry loses its action" build.json '"action": "extapp:cloud-account",' '' || M=$((M+1))
-mutate "package name drifts" lib/profile/AccountData.kt 'const val PKG = "com.diegonmarcos.cloudaccount"' 'const val PKG = "com.diegonmarcos.account"' || M=$((M+1))
+mutate "package name drifts" acc/build.json '"application_id": "com.diegonmarcos.cloudaccount"' '"application_id": "com.diegonmarcos.account"' || M=$((M+1))
 mutate "OPEN action dropped" acc/app/src/main/AndroidManifest.xml '<action android:name="com.diegonmarcos.cloudaccount.OPEN" />' '' || M=$((M+1))
 mutate "island replaced by a plain box" acc/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt 'NavBarBottomHost(' 'Box(' || M=$((M+1))
 mutate "island no longer fed by NavDecl" acc/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt 'NavDecl.fromBuildConfig(' 'NavDeclx.fromBuildConfig(' || M=$((M+1))
@@ -276,6 +276,7 @@ mutate "Drift tile says n/a again" lib/profile/AccountPages.kt 'runCatching { pr
 mutate "tabs op stops answering the islands" lib/profile/AccountDebugApi.kt 'AccountHost.nav?.invoke()?.let { o.put("islands", it) }' 'Unit' || M=$((M+1))
 mutate "token filed before the read" lib/profile/ConnectWays.kt 'if (o.ok && file)' 'if (file)' || M=$((M+1))
 mutate "the strip is dropped" acc/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt 'NavBarTopSecondRow(' 'Column(' || M=$((M+1))
+mutate "hand-off names its own package" super/apps/AccountHandoff.kt 'const val PKG = AccountClient.PKG' 'const val PKG = "com.diegonmarcos.cloudaccount"' || M=$((M+1))
 mutate "hand-off embeds a page again" super/apps/AccountHandoff.kt 'if (installed) OpenCloudAccount() else InstallCloudAccount()' 'OpenCloudAccount()' || M=$((M+1))
 mutate "gradle stops baking the sections" acc/app/build.gradle '"UI_SECTIONS_B64"' '"UI_SECTIONS"' || M=$((M+1))
 
