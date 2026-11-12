@@ -76,10 +76,10 @@ class ClockService : Service() {
         val alarm = d.alarms.firstOrNull { ClockLogic.alarmKey(it.id) == top.key }
         // Bounded: a ring the user never answers is silenced by the SILENCE wakeup at ringMs.
         wake = getSystemService(PowerManager::class.java)?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "clocktools:ring")
-            ?.apply { acquire(ClockTools.config(this).ringMs + ClockLogic.MINUTE_MS) }
+            ?.apply { acquire(ClockTools.config(this@ClockService).ringMs + ClockLogic.MINUTE_MS) }
         val sound = alarm?.sound.orEmpty()
         if (sound != Alarm.SILENT) player = play(sound) ?: play("")
-        if (alarm?.vibrate ?: ClockTools.config(this).vibrateDefault) {
+        if (alarm?.vibrate ?: ClockTools.config(this@ClockService).vibrateDefault) {
             vibrator(this)?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 800, 600), 0), ClockEngine.alarmAudio)
         }
     }
