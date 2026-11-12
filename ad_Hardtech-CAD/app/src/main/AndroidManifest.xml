@@ -26,6 +26,31 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- #1695 open a STEP / STP file from Drive, Files or any app: shown with the B-rep viewer (OpenedFile.kt), nothing is uploaded -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="model/step" />
+                <data android:mimeType="model/x-step" />
+                <data android:mimeType="application/step" />
+                <data android:mimeType="application/x-step" />
+                <data android:mimeType="application/stp" />
+                <data android:mimeType="model/stp" />
+            </intent-filter>
+            <!-- #1695 providers that type a .step / .stp as generic binary: matched by the file name -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:pathPattern=".*\\.step" />
+                <data android:pathPattern=".*\\.stp" />
+                <data android:pathPattern=".*\\.STEP" />
+                <data android:pathPattern=".*\\.STP" />
+            </intent-filter>
         </activity>
     </application>
 </manifest>

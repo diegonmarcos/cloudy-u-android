@@ -243,6 +243,120 @@
         "original: the generator ad_Hardtech-CAD/tools/make_drone.py (X frame, four motors with two-blade propellers, camera gimbal, landing skids), metres, Y up",
         "view: the same script writes the GLB (plain glTF 2.0 binary, no Draco or meshopt, no required extension), about 100 KB bundled in the APK"
       ]
+    },
+    {
+      "id": "house-boat",
+      "name": "House Boat, two-deck pontoon houseboat",
+      "category": "boats",
+      "library": "boats",
+      "software": "assimp 5.2 (OBJ export)",
+      "format": "obj",
+      "path": "boats/obj/house-boat.obj",
+      "source": "Owner's own file (archive boat-house-3.zip, member House Boat.obj, written by assimp 5.2; no .mtl shipped, colours from the material names in boats/obj/house-boat.colours.json)",
+      "licence": "Owner's own; all rights reserved",
+      "size": 1506644,
+      "sha256": "ad1d531b637a9ecfb25532441a786966620798c707952285954b61041412e381",
+      "updated": "2026-11-12",
+      "units": "m",
+      "stats": {
+        "vertices": 70956,
+        "triangles": 23652
+      },
+      "bbox": {
+        "min": [
+          -0.075,
+          -0.0,
+          -0.0
+        ],
+        "max": [
+          9.075,
+          5.65,
+          5
+        ]
+      },
+      "material_count": 5,
+      "layer_count": 5,
+      "component_count": 5,
+      "view": {
+        "path": "boats/glb/house-boat.view.glb",
+        "format": "glb",
+        "size": 1706760,
+        "sha256": "aaca12482970b43b3bc15f15e65aaede23b7648fb873b9fbf3a876f5f158cd23",
+        "tool": "tools/obj2glb.mjs (pure Node), scale 0.001 (millimetres to metres), one primitive per material; mirrored from the originals repo, hash-checked by ad_Hardtech-CAD/tools/derive_models.py",
+        "vertices": 70956,
+        "triangles": 23652,
+        "asset": "cad/models/house-boat.view.glb",
+        "thumb": "cad/models/house-boat.thumb.jpg",
+        "thumb_source": "photo"
+      },
+      "photos": [
+        "boats/photos/house-boat-1.jpg",
+        "boats/photos/house-boat-2.jpg",
+        "boats/photos/house-boat-3.jpg",
+        "boats/photos/house-boat-4.jpg",
+        "boats/photos/house-boat-5.jpg",
+        "boats/photos/house-boat-6.jpg",
+        "boats/photos/house-boat-7.jpg"
+      ],
+      "conversion_log": [
+        "original: Wavefront OBJ written by assimp 5.2, 12044 vertices, 23652 triangles, 5 materials (usemtl, Russian names), millimetres, Y-up; the .mtl was not in the archive",
+        "view: tools/obj2glb.mjs (pure Node) in the originals repo, scale 0.001 to metres, one primitive per material, colours from boats/obj/house-boat.colours.json (vanilla plastic, oak chipboard, aluminium, blue plastic, steel)",
+        "thumbnail: the owner's reference photo (boats/photos/house-boat-7.jpg in the originals repo), cover-cropped to 480x360 JPEG"
+      ]
+    },
+    {
+      "id": "dji-s900",
+      "name": "DJI S900, hex-rotor camera drone",
+      "category": "mechanics",
+      "library": "",
+      "software": "SolidWorks 2015",
+      "format": "step",
+      "path": "mechanics/step/dji-s900-hex-rotor-drone.step",
+      "source": "Owner's own file (archive dji-s900-hex-rotor-drone.zip, member DJI S900 STEP File.STEP, STEP AP214 written by SolidWorks 2015)",
+      "licence": "Owner's own; all rights reserved",
+      "size": 22288885,
+      "sha256": "c426eddb0fa298c92ddb567afa8bc6c8e5c5e5ddcb39837efda9f0520f7c209f",
+      "updated": "2026-11-12",
+      "units": "m",
+      "stats": {
+        "vertices": 181109,
+        "triangles": 166007
+      },
+      "bbox": {
+        "min": [
+          -0.4359,
+          -0.4146,
+          -0.4547
+        ],
+        "max": [
+          0.436,
+          0.1786,
+          0.4565
+        ]
+      },
+      "material_count": 15,
+      "layer_count": 1,
+      "component_count": 237,
+      "view": {
+        "path": "mechanics/glb/dji-s900-hex-rotor-drone.view.glb",
+        "format": "glb",
+        "size": 6350940,
+        "sha256": "bf3ccccfe0f6e270a2568f948b0d4722f9fed38b3697b179c4ec9d667ef38d60",
+        "tool": "tools/brep2glb.mjs with occt-import-js 0.0.23 (LGPL-2.1), linear deflection 0.02 of the bounding box (166k triangles), Y-up kept, merged by colour; mirrored from the originals repo, hash-checked by ad_Hardtech-CAD/tools/derive_models.py",
+        "vertices": 181109,
+        "triangles": 166007,
+        "asset": "cad/models/dji-s900.view.glb",
+        "thumb": "cad/models/dji-s900.thumb.jpg",
+        "thumb_source": "photo"
+      },
+      "photos": [
+        "mechanics/photos/dji-s900-hex-rotor-drone.jpg"
+      ],
+      "conversion_log": [
+        "original: STEP AP214 (AUTOMOTIVE_DESIGN) written by SolidWorks 2015 (SwSTEP 2.0), 22.3 MB, 237 solids in 15 colours, metres, Y-up",
+        "view: tools/brep2glb.mjs with occt-import-js 0.0.23 (LGPL-2.1), linear deflection 0.02 of the bounding box, up-axis y (no rotation), triangles merged by colour (15 primitives)",
+        "thumbnail: the owner's reference photo (mechanics/photos/dji-s900-hex-rotor-drone.jpg in the originals repo), cover-cropped to 480x360 JPEG"
+      ]
     }
   ]
 }

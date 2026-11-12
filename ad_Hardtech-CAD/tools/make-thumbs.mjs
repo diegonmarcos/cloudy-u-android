@@ -54,6 +54,9 @@ for (const m of doc.models) {
     const sz = jpegSize(readFileSync(file));
     if (!sz || sz[0] !== W || sz[1] !== H) bad.push(`${m.id}: ${thumb} is not a ${W}x${H} JPEG (${sz})`);
     console.log(`ok ${m.id}: ${thumb} (${statSync(file).size} bytes), fresh render ${r.p.pct}% painted`);
+  } else if (m.view.thumb_source === 'photo' && existsSync(file)) {
+    // #1695 the owner's own photo of the model is its preview (view.thumb_source: photo): keep it, never overwrite it with a render
+    console.log(`kept ${thumb} (the owner's photo, ${statSync(file).size} bytes); fresh render ${r.p.pct}% painted`);
   } else {
     writeFileSync(file, Buffer.from(r.url.split(',')[1], 'base64'));
     if (m.view.thumb !== thumb) { m.view.thumb = thumb; changed = true; }

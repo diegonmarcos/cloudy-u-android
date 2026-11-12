@@ -45,6 +45,8 @@
     <string name="models_col_geometry">Vert / Tri</string>
     <string name="models_col_updated">Updated</string>
     <string name="model_back">‹ Back to the models</string>
+    <string name="opened_loading">Reading the opened file…</string>
+    <string name="opened_failed">This file cannot be shown: %1$s</string>
     <string name="model_data_title">Model data</string>
     <string name="viewer_fit">Fit</string>
     <string name="viewer_wire">Wireframe</string>

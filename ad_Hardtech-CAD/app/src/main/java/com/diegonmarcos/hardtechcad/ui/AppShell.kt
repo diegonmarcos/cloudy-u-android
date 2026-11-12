@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.hardtechcad.Decl
+import com.diegonmarcos.hardtechcad.OpenedFile
 import com.diegonmarcos.hardtechcad.R
 import com.diegonmarcos.superapp.bottomnav.islandEntries
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
@@ -59,7 +60,9 @@ fun AppShell() {
                 onSelect = { section = it.id },
                 modifier = Modifier.testTag(Tags.SHELL),
             ) {
-                SectionPage(section)
+                // #1695 a STEP / STP opened from another app is drawn over the section until it is closed
+                val opened = OpenedFile.pending.value
+                if (opened != null) OpenedModel(opened) { OpenedFile.pending.value = null } else SectionPage(section)
             }
         }
     }
