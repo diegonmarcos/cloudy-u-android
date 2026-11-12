@@ -85,6 +85,8 @@ private const val VIEWER_HEIGHT_DP = 300
 /** #1658 the on-screen measurement leaves out the page's own status line (bottom) and the frame's border (edges). */
 private const val SCREEN_STRIP_DP = 28
 private const val SCREEN_INSET_DP = 4
+/** #1695 the page's Parts button sits in the stage's top-right corner: its pixels are not the model, so the measurement starts below it (an empty stage must read ~0%, not 1.4%). */
+private const val SCREEN_TOP_DP = 56
 /** #1658 a model that neither shows nor fails within this long after cadOpen is reported, with the page's stage. */
 private const val LOAD_TIMEOUT_S = 30
 /** #1664 where the presentation the viewer had to step to is remembered, with the build it was measured on. */
@@ -112,7 +114,7 @@ private suspend fun screenPct(wv: WebView): Double {
     val loc = IntArray(2).also { wv.getLocationInWindow(it) }
     val d = wv.resources.displayMetrics.density
     val inset = (SCREEN_INSET_DP * d).toInt()
-    val src = Rect(loc[0] + inset, loc[1] + inset, loc[0] + wv.width - inset, loc[1] + wv.height - (SCREEN_STRIP_DP * d).toInt())
+    val src = Rect(loc[0] + inset, loc[1] + inset + (SCREEN_TOP_DP * d).toInt(), loc[0] + wv.width - inset, loc[1] + wv.height - (SCREEN_STRIP_DP * d).toInt())
     if (!ViewerHealth.sized(src.width() / 4, src.height() / 4)) return -1.0
     val bmp = Bitmap.createBitmap(src.width() / 4, src.height() / 4, Bitmap.Config.ARGB_8888)
     return suspendCancellableCoroutine { k ->

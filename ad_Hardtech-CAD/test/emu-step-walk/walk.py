@@ -82,7 +82,9 @@ def pinch(cx, cy, d0, d1, steps=12):
     print("pinch", r.returncode, r.stderr[:200]); time.sleep(2); return r.returncode == 0
 
 def open_model(label, key):
-    home_models(); shot("%s-00-home" % key)
+    if find("Back to the models"):
+        h = find("Back to the models")[0]; tap_xy((h[0] + h[2]) // 2, (h[1] + h[3]) // 2); time.sleep(3)
+    else: home_models(); shot("%s-00-home" % key)
     h = scroll_to(label)
     if not h: return False
     x1, y1, x2, y2 = h[0]; tap_xy((x1 + x2) // 2, (y1 + y2) // 2); time.sleep(5)
