@@ -1906,6 +1906,43 @@
         ],
         "stack_notify-configs": [
           {
+            "kind": "tile_row",
+            "title": "Filter presets",
+            "subtitle": "The notification centre pre-narrowed to one app section",
+            "tiles": [
+              {
+                "id": "rss-inboxes",
+                "label": "Inboxes",
+                "icon": "ic_p_inbox",
+                "target": "page:communication/rss-inboxes"
+              },
+              {
+                "id": "rss-data",
+                "label": "Data Apps",
+                "icon": "ic_p_sol_cloud",
+                "target": "page:communication/rss-data"
+              },
+              {
+                "id": "rss-tools",
+                "label": "Tools",
+                "icon": "ic_p_sol_tools",
+                "target": "page:communication/rss-tools"
+              },
+              {
+                "id": "rss-services",
+                "label": "Services",
+                "icon": "ic_p_folder",
+                "target": "page:communication/rss-services"
+              },
+              {
+                "id": "rss-sys",
+                "label": "Sys",
+                "icon": "ic_settings",
+                "target": "page:communication/rss-sys"
+              }
+            ]
+          },
+          {
             "kind": "notification_badge_configs",
             "title": "Configs",
             "title_res": "notify_configs_title",

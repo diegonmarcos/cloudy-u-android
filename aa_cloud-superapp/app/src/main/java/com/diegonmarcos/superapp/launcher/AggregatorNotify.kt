@@ -92,15 +92,12 @@ internal fun AggregatorEffects(state: AggregatorState) {
     LaunchedEffect(state.epoch) { state.housekeeping() }
     // #1672 no polling: a notification the listener records re-reads the page through the store's change callback.
     if (state.panels.any { it.kind == "notification_center" }) {
+        // The bump runs on the composition's own scope, so it is cancelled with the page.
+        val scope = rememberCoroutineScope()
         androidx.compose.runtime.DisposableEffect(state) {
-            val main = android.os.Handler(android.os.Looper.getMainLooper())
-            val bump = Runnable { state.epoch++ }
-            val l: () -> Unit = { main.removeCallbacks(bump); main.post(bump) }
+            val l: () -> Unit = { scope.launch(Dispatchers.Main) { state.epoch++ } }
             com.diegonmarcos.superapp.notificationcenter.PhoneNotificationStore.addListener(l)
-            onDispose {
-                com.diegonmarcos.superapp.notificationcenter.PhoneNotificationStore.removeListener(l)
-                main.removeCallbacks(bump)
-            }
+            onDispose { com.diegonmarcos.superapp.notificationcenter.PhoneNotificationStore.removeListener(l) }
         }
     }
     for ((i, panel) in state.panels.withIndex()) {
@@ -798,9 +795,9 @@ internal fun ArchiveSection(state: AggregatorState, onOpen: (String) -> Unit) {
             }
         }
     }
-    // #1672 on the Notify page Archived is a fixed section (it is in the declared order), so it is drawn even empty.
+    if (archived.isEmpty()) return
+    // #1672 on the Notify sub-pages Archived is an entry with the same two layouts as the feeds.
     val fixed = state.panels.any { it.kind == "notification_center" && it.split.isNotBlank() }
-    if (archived.isEmpty() && !fixed) return
     val label = if (fixed) com.diegonmarcos.superapp.notificationcenter.NotifySections.blockLabel("archived", "Archived") else "Archive"
     Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Text("$label  ${if (state.archiveOpen) "▾" else "▸"}  ${archived.size}", color = p.textPrimary,
@@ -809,7 +806,6 @@ internal fun ArchiveSection(state: AggregatorState, onOpen: (String) -> Unit) {
                 .clickable { Haptics.tap(hostView); state.toggleArchiveOpen() }
                 .padding(start = 14.dp, top = 4.dp, end = 14.dp, bottom = 6.dp).testTag(AggTags.ARCHIVE_HEADER))
         if (state.archiveOpen) Column(Modifier.fillMaxWidth().testTag(AggTags.ARCHIVE_BODY)) {
-            if (archived.isEmpty()) { AggCaption("Nothing archived", Modifier.testTag(AggTags.ARCHIVE_EMPTY)); return@Column }
             // #1672 the same layout as the two notification blocks: one box per app, or one timeline by time.
             if (fixed) GroupModeSwitch(state, AggregatorModel.FEED_ARCHIVED)
             if (fixed && state.groupMode(AggregatorModel.FEED_ARCHIVED) == AggregatorModel.GROUP_TIME) {

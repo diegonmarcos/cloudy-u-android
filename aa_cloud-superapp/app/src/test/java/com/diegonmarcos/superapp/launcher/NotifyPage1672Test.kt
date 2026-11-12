@@ -252,6 +252,8 @@ class NotifyPage1672Test : KitPageHarness() {
         assertEquals("only the C3 Ntfy table and the Channels block may go", setOf("feed.c3ntfy", "feed.channels"),
             all.filter { it.getString("status") == "removed" }.map { it.getString("id") }.toSet())
         grant(false)
+        // Archived is drawn only while it holds something: file one box away so it is on the page.
+        StackFilters.select(ctx, "my-rss", AggregatorModel.ARCHIVED_PREFIX + "Backups", "yes")
         val badges = BadgeDeclaration.badges(BadgeServices.declared).map { it.id }
         val missing = mutableListOf<String>()
         for ((pageId, its) in all.filter { it.getString("status") == "kept" }.groupBy { it.getString("page") }) {
