@@ -2636,6 +2636,22 @@
       "used_by": [
         "ad_Hardtech-CAD"
       ]
+    },
+    "install_sessions_prompted": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1675 Install sessions the updater already raised a confirm prompt for, so one session asks once: per-device session state, never a setting.",
+      "used_by": [
+        "lib-updater"
+      ]
+    },
+    "silent_readiness": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1675 Whether this phone can update fleet apps silently (installer of record, target SDK) and the per-app will-prompt reason last computed: device state, never a setting.",
+      "used_by": [
+        "lib-updater"
+      ]
     }
   },
   "bundle": {
