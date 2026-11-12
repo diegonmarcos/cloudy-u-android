@@ -57,7 +57,6 @@ class KgConfigTest {
         val me = MeRepo.parse(ui.getJSONObject("me").toString())
         assertTrue(me.owner.isNotBlank() && me.repo.isNotBlank())
         assertFalse("no credential in the declaration", ui.getJSONObject("me").has("token"))
-        assertEquals("the runtime dataset carries the same declaration (#1547)", me, KgConfig.parse(Data.kgText).me)
     }
 
     /** #1656 Me sources from the library repo cloned at runtime (HardTech-Chronos today, Projects-Library-KG after #1609), never from baked stub collections. */

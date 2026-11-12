@@ -52,7 +52,10 @@ object NativeTags {
 /** Scrapped: one card per service of the shared Headless Browsers declaration (title, tagline, stack, note, API/MCP link). */
 @Composable
 fun ScrappedPage(svc: KgServices) {
-    val rows = svc.kg.headless
+    // The list is the kg dataset's (#1547). A phone still holding the copy from before the list was added gets it at Cloud
+    // Store's next sync: keep asking (off the main thread) until it is there, so the page fills in without a restart.
+    var rows by remember { mutableStateOf(svc.kg.headless) }
+    LaunchedEffect(Unit) { while (rows.isEmpty()) { kotlinx.coroutines.delay(3_000); rows = withContext(Dispatchers.IO) { svc.reload().headless } } }
     if (rows.isEmpty()) { KgNote(stringResource(R.string.scrapped_none)); return }
     LazyColumn(Modifier.fillMaxSize().testTag(NativeTags.SCRAPPED)) {
         item { KgHeading(stringResource(R.string.scrapped_heading)) }
@@ -92,8 +95,8 @@ fun meEntry(dir: File, entry: String): File? {
  * asks once for a GitHub token, which GitConnect keeps encrypted; nothing is typed in the declaration.
  */
 @Composable
-fun MePage(svc: KgServices) {
-    val decl = svc.kg.me
+fun MePage() {
+    val decl = MeRepo.declared
     if (decl == null) { KgNote(stringResource(R.string.me_undeclared), error = true); return }
     val ctx = LocalContext.current
     val gc = remember(decl) { GitConnect(ctx, GitConnectSpec("me", "Me", decl.owner, decl.repo, decl.ref, emptyList())) }

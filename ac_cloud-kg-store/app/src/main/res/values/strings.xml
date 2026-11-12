@@ -19,7 +19,7 @@
     <string name="scrapped_service">Service: %1$s</string>
     <string name="scrapped_link">Link: %1$s</string>
     <string name="home_heading">Cloud KG Store</string>
-    <string name="me_undeclared">The Me repository declaration has not been served yet. Cloud Store provides it with the data of this app.</string>
+    <string name="me_undeclared">The Me repository is not declared in this build.</string>
     <string name="me_cloning">Cloning the repository…</string>
     <string name="me_no_html">The repository was cloned but holds no html file to show.</string>
     <string name="me_failed">Could not clone: %1$s</string>

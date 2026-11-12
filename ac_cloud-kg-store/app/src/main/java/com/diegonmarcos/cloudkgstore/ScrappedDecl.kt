@@ -29,9 +29,13 @@ class HeadlessService(o: JSONObject) {
     }
 }
 
-/** #1640 the repository the Me tab clones at runtime, as build.json::ui.me declares it (owner, repo, ref, entry), read from the kg dataset ([KgConfig.me]); no credential. */
+/** #1640 the repository the Me tab clones at runtime, as build.json::ui.me declares it (owner, repo, ref, entry); no credential. */
 data class MeRepo(val owner: String, val repo: String, val ref: String, val entry: String) {
     companion object {
         fun parse(text: String): MeRepo = JSONObject(text).let { MeRepo(it.getString("owner"), it.getString("repo"), it.optString("ref", "main"), it.optString("entry")) }
+
+        /** This build's declaration (four plain BuildConfig strings): always there, with or without Cloud Store (#1656). Null only when the build names no repository. */
+        val declared: MeRepo? = MeRepo(BuildConfig.ME_OWNER, BuildConfig.ME_REPO, BuildConfig.ME_REF.ifBlank { "main" }, BuildConfig.ME_ENTRY)
+            .takeIf { it.owner.isNotBlank() && it.repo.isNotBlank() }
     }
 }

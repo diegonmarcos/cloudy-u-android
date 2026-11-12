@@ -85,8 +85,9 @@ def scrappedRef = buildJson.ui.scrapped
 def scrappedNode = new groovy.json.JsonSlurper().parse(new File(rootDir, scrappedRef.source))
 scrappedRef.path.each { k -> scrappedNode = scrappedNode?.get(k) }
 if (!(scrappedNode instanceof List) || scrappedNode.isEmpty()) throw new GradleException("${scrappedRef.source}::${scrappedRef.path.join('.')} missing or empty - the Scrapped page would list no stack (#1640)")
-// #1640 the repository the Me tab clones at runtime (owner, repo, ref, entry): a declaration, no credential and no repo content;
-// read at runtime from the kg dataset (kg.json::me), not baked.
+// #1640 the repository the Me tab clones at runtime (owner, repo, ref, entry): a declaration, no credential and no repo content.
+// Four plain configuration strings (ME_OWNER, ME_REPO, ME_REF, ME_ENTRY), like AI_GATEWAY_URL: which repository to clone is this
+// build's configuration, so the Me tab works on every install whether or not Cloud Store has served the app's data (#1656).
 def meDecl = buildJson.ui.me
 if (!meDecl?.owner || !meDecl?.repo) throw new GradleException("build.json::ui.me.owner / repo missing - the Me tab would have nothing to clone (#1640)")
 [searchConfigB64, fleetServicesB64, fleetAppsB64, debugPortsB64].each {
@@ -126,6 +127,10 @@ android {
         buildConfigField "String", "FLEET_SERVICES_B64", "\"${fleetServicesB64}\""
         buildConfigField "String", "FLEET_APPS_B64",     "\"${fleetAppsB64}\""
         buildConfigField "String", "DEBUG_PORTS_B64",    "\"${debugPortsB64}\""
+        buildConfigField "String", "ME_OWNER", "\"${meDecl.owner}\""
+        buildConfigField "String", "ME_REPO", "\"${meDecl.repo}\""
+        buildConfigField "String", "ME_REF", "\"${meDecl.ref ?: 'main'}\""
+        buildConfigField "String", "ME_ENTRY", "\"${meDecl.entry ?: ''}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 

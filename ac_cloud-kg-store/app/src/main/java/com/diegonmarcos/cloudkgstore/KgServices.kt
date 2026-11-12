@@ -45,6 +45,11 @@ class KgServices(ctx: Context, val http: Http? = null) {
         if (served == null) served = runCatching { FleetData.get(app, KgConfig.DATASET, own = true) { KgConfig.parse(it) } }.getOrNull()
         return served != null
     }
+    /** Reads the dataset again (blocking; off the main thread) and keeps the newer copy when it parses: a section added to kg.json reaches a running app. */
+    fun reload(): KgConfig {
+        runCatching { FleetData.get(app, KgConfig.DATASET, own = true) { KgConfig.parse(it) } }.getOrNull()?.let { served = it }
+        return kg
+    }
     val search: SearchConfig = SearchConfig.parse(text(BuildConfig.SEARCH_CONFIG_B64))
     private val net: Http = http ?: UrlHttp(search.userAgent)
     val engine = SearchEngine(search, net, Cache(File(app.filesDir, "results")), System::currentTimeMillis)

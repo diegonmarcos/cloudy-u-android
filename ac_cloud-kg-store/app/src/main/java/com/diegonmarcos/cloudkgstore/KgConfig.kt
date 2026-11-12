@@ -26,8 +26,6 @@ class KgConfig(
     val timeoutMs: Int, val mcpPath: String, val responseChars: Int, val pages: Map<String, KgPage>, val ask: Ask,
     /** #1640 the Headless Browsers stack the Scrapped page lists (kg.json::scrapped.headless); empty when the dataset names none. */
     val headless: List<HeadlessService> = emptyList(),
-    /** #1640 the repository the Me tab clones at runtime (kg.json::me); null when the dataset declares none. */
-    val me: MeRepo? = null,
 ) {
     data class Ask(val page: String, val system: String, val suggestions: List<String>, val mcps: List<String>)
 
@@ -63,10 +61,9 @@ class KgConfig(
                 a.getJSONArray("suggestions").let { s -> (0 until s.length()).map { s.getString(it) } },
                 a.optJSONArray("mcps")?.let { s -> (0 until s.length()).map { s.getString(it) } } ?: emptyList(),
             )
-            // An unreadable scrapped / me block is "nothing declared" for that page, never a refused dataset.
+            // An unreadable scrapped block is "nothing declared" for that page, never a refused dataset.
             val headless = runCatching { o.optJSONObject("scrapped")?.optJSONArray("headless")?.let { HeadlessService.parse(it.toString()) } }.getOrNull() ?: emptyList()
-            val me = runCatching { o.optJSONObject("me")?.let { MeRepo.parse(it.toString()) } }.getOrNull()
-            val cfg = KgConfig(o.getInt("timeout_ms"), o.getString("mcp_path"), o.getInt("response_chars"), pages, ask, headless, me)
+            val cfg = KgConfig(o.getInt("timeout_ms"), o.getString("mcp_path"), o.getInt("response_chars"), pages, ask, headless)
             require(pages.values.all { it.kind in KINDS }) { "kg.json::pages names a kind that is none of $KINDS" }
             require(cfg.mcpPath.startsWith("/")) { "kg.json::mcp_path must start with /" }
             return cfg

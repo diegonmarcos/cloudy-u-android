@@ -146,12 +146,5 @@
         }
       }
     ]
-  },
-  "me": {
-    "_doc": "#1640 the repository the Me tab clones at runtime: the owner, repo, ref and entry of ac_cloud-kg-store/build.json::ui.me, read at runtime (#1547: no BuildConfig copy). No credential. test-kg-store-app.sh B8 and KgConfigTest hold the two in step.",
-    "owner": "diegonmarcos",
-    "repo": "HardTech-Chronos",
-    "ref": "main",
-    "entry": "index.html"
   }
 }

@@ -69,11 +69,16 @@ for s in bj["ui"]["sections"]:
         if not p.get("icon"): bad.append("B1 page %r has no icon (the second row draws one per tab)" % p["id"])
 
 # B8 (#1640) Scrapped reads the shared headless declaration by reference; Me clones at runtime and serves; nothing baked, nothing spelled.
-# #1547 both declarations reach the app through its runtime dataset (kg.json::scrapped.headless, kg.json::me), never through BuildConfig:
-# the dataset must hold exactly what the reference and build.json::ui.me declare.
+# #1547 the headless list is data: it reaches the app through its runtime dataset (kg.json::scrapped.headless), never through BuildConfig,
+# and the dataset must hold exactly what the reference declares. #1656 the Me repository is configuration: four plain BuildConfig
+# strings read from build.json::ui.me, so the Me tab clones and serves on every install, served data or not.
 ui = bj["ui"]
 if ui.get("scrapped", {}).get("source") != "../ac_cloud-browser/build.json" or ui["scrapped"].get("path") != ["ui", "domains", "headless"]: bad.append("B8 ui.scrapped does not reference ac_cloud-browser/build.json::ui.domains.headless")
-if "HEADLESS_B64" in script or "ME_REPO_B64" in script: bad.append("B8 the build script bakes the headless declaration or the Me repo declaration (#1547: they are read from the kg dataset)")
+if "HEADLESS_B64" in script or "ME_REPO_B64" in script: bad.append("B8 the build script bakes the headless declaration or the Me repo declaration as base64 data (#1547)")
+for f, src in (("ME_OWNER", "meDecl.owner"), ("ME_REPO", "meDecl.repo"), ("ME_REF", "meDecl.ref"), ("ME_ENTRY", "meDecl.entry")):
+    if not re.search(r'buildConfigField\s+"String",\s*"%s",[^\n]*%s' % (f, re.escape(src)), script): bad.append("B8 the build script does not give the Me tab %s from build.json::ui.me (#1656: it must work without served data)" % f)
+scr = code(os.path.join(kt, "ScrappedDecl.kt"))
+if not all("BuildConfig.%s" % f in scr for f in ("ME_OWNER", "ME_REPO", "ME_REF", "ME_ENTRY")): bad.append("B8 MeRepo.declared does not read the build's Me configuration")
 try:
     shared = json.loads(read(os.environ.get("BROWSER_JSON") or os.path.join(app, ui["scrapped"]["source"])))
     for k in ui["scrapped"]["path"]: shared = shared[k]
@@ -81,9 +86,9 @@ except Exception as e:
     shared = None
     bad.append("B8 the referenced headless declaration cannot be read: %s" % e)
 if not shared or kg.get("scrapped", {}).get("headless") != shared: bad.append("B8 kg.json::scrapped.headless is not the referenced headless declaration (the Scrapped page would list another stack)")
-want_me = {"owner": ui.get("me", {}).get("owner"), "repo": ui.get("me", {}).get("repo"), "ref": ui.get("me", {}).get("ref", "main"), "entry": ui.get("me", {}).get("entry", "")}
-if {k: v for k, v in kg.get("me", {}).items() if not k.startswith("_")} != want_me: bad.append("B8 kg.json::me is not build.json::ui.me (the Me tab would clone another repo)")
-if "svc.kg.headless" not in code(os.path.join(kt, "ui/NativePages.kt")) or "svc.kg.me" not in code(os.path.join(kt, "ui/NativePages.kt")): bad.append("B8 the Scrapped and Me pages do not read the kg dataset")
+native0 = code(os.path.join(kt, "ui/NativePages.kt"))
+if "svc.kg.headless" not in native0: bad.append("B8 the Scrapped page does not read the kg dataset")
+if "MeRepo.declared" not in native0 or "svc.kg.me" in native0: bad.append("B8 the Me page does not read the build's own declaration (it would wait for served data, #1656)")
 if not ui.get("me", {}).get("owner") or not ui["me"].get("repo"): bad.append("B8 ui.me owner/repo are not declared")
 if any(re.search(r"token|secret|password|bearer", k, re.I) for k in ui.get("me", {})): bad.append("B8 ui.me carries a credential key")
 for lib in ("libs:local-serve", "libs:git-ui"):
@@ -179,8 +184,9 @@ mutant "scrapped loses its reference"   "sed -i 's#../ac_cloud-browser/build.jso
 mutant "me serve dropped"               "sed -i 's/ServedPage(/Foo(/' $KT/ui/NativePages.kt"                  "B8 the Me page must clone through GitConnect"
 mutant "headless baked again"           "echo 'buildConfigField \"String\", \"HEADLESS_B64\", \"x\"' >> $SCRIPT"   "B8 the build script bakes"
 mutant "headless copy drifts"           "python3 -c \"import json;p='kg.json';d=json.load(open(p));d['scrapped']['headless'].pop();json.dump(d,open(p,'w'))\"" "B8 kg.json::scrapped.headless is not"
-mutant "me copy drifts"                 "python3 -c \"import json;p='kg.json';d=json.load(open(p));d['me']['repo']='other';json.dump(d,open(p,'w'))\"" "B8 kg.json::me is not"
-mutant "pages read a baked copy"        "sed -i 's/svc.kg.headless/emptyList<HeadlessService>()/' $KT/ui/NativePages.kt" "B8 the Scrapped and Me pages do not read"
+mutant "me waits for served data"        "sed -i 's/val decl = MeRepo.declared/val decl = svc.kg.me/' $KT/ui/NativePages.kt" "B8 the Me page does not read"
+mutant "me repo not configured"         "sed -i '/\"ME_REPO\"/d' $SCRIPT"                                    "B8 the build script does not give the Me tab ME_REPO"
+mutant "pages read a baked copy"        "sed -i 's/svc.kg.headless/emptyList<HeadlessService>()/' $KT/ui/NativePages.kt" "B8 the Scrapped page does not read"
 mutant "Cloud loses its two rows"       "sed -i 's/horizontal_two_rows/horizontal_one_row/' build.json"        "B1 the Cloud section is not horizontal_two_rows"
 mutant "a Cloud group is renamed"       "sed -i 's/\"label\": \"Application\"/\"label\": \"Apps\"/' build.json"  "B1 the Cloud groups are not"
 mutant "an API page is renamed"          "sed -i 's/\"label\": \"Real Estate\"/\"label\": \"Houses\"/' build.json"  "B1 the API pages are not"
