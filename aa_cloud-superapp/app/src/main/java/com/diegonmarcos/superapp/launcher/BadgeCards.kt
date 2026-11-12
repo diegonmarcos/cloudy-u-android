@@ -327,13 +327,12 @@ private fun SummaryBadgeLine(d: BadgeCardData.Data) {
 /** #1672 a Media badge button id -> the MediaHub action it is, or null for one MediaHub does not model (left to its intent). */
 internal fun mediaActionOf(id: String): com.diegonmarcos.superapp.media.MediaHub.Action? {
     val k = id.lowercase()
-    val A = com.diegonmarcos.superapp.media.MediaHub.Action
     return when {
-        "prev" in k || "back" in k -> A.PREV
-        "next" in k || "skip" in k || "forward" in k -> A.NEXT
-        "pause" in k && "play" in k -> A.PLAY_PAUSE
-        "pause" in k -> A.PAUSE
-        "play" in k -> A.PLAY
+        "prev" in k || "back" in k -> com.diegonmarcos.superapp.media.MediaHub.Action.PREV
+        "next" in k || "skip" in k || "forward" in k -> com.diegonmarcos.superapp.media.MediaHub.Action.NEXT
+        "pause" in k && "play" in k -> com.diegonmarcos.superapp.media.MediaHub.Action.PLAY_PAUSE
+        "pause" in k -> com.diegonmarcos.superapp.media.MediaHub.Action.PAUSE
+        "play" in k -> com.diegonmarcos.superapp.media.MediaHub.Action.PLAY
         else -> null
     }
 }
