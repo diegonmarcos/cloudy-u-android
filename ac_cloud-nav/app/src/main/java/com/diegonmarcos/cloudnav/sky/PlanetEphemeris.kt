@@ -36,7 +36,8 @@ object PlanetEphemeris {
         val root = CelestialData.dataset(context, "celestial/planets") ?: return null
         val out = LinkedHashMap<String, OrbitalElements>()
         for (key in root.keys()) {
-            val body = root.getJSONObject(key)
+            // The served dataset carries its envelope ("schemaVersion": 1, #1547) beside the bodies: only objects are bodies.
+            val body = root.optJSONObject(key) ?: continue
             // "sol" (Sun) and "lun" (Moon) both ship empty "elements" arrays in the
             // source data -- the Sun is computed geometrically from Earth's position
             // below, and the Moon needs actual lunar theory (not this heliocentric

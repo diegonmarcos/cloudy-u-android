@@ -27,9 +27,9 @@ import org.junit.runner.RunWith
  * deleted — the clean phone), the export is imported back through the provider, and the second
  * export must equal the first, store by store, key by key, type by type.
  *
- * cloud-nav keeps no encrypted store, so it ships no cipher (libs:core takes security-crypto
- * compileOnly): an import naming an encrypted store must be refused for that file alone, on the
- * device, without taking the rest of the import — or the app — down with it.
+ * An import naming an encrypted store lands it encrypted beside the plain ones (every fleet app
+ * carries the cipher through libs:crash); a store the app cannot open is reported for that file
+ * alone by FleetConfigProvider.apply, without taking the rest of the import down.
  *
  * #796 the manifest is no longer in cloud-nav's APK: it travels with every call, as it does from
  * the SuperApp. This test is the caller: it reads the copy the installed Cloud-Lib-Fleetconfig
@@ -145,13 +145,26 @@ class FleetMigrationTest {
         assertEquals(1_700_000_000_123L, t.getLong("since", -1))
     }
 
-    @Test fun an_encrypted_store_in_an_app_without_the_cipher_is_refused_alone() {
+    /**
+     * libs:crash ships security-crypto to every fleet app since the Cloud News start-up crash (NoClassDefFoundError), so
+     * cloud-nav carries the cipher now and an encrypted store in an import LANDS. What must hold: it lands ENCRYPTED (never
+     * SafeEncryptedPrefs' plain "unencrypted fallback", which FleetConfig.openStore refuses, #1483), beside the plain store,
+     * and the app keeps answering. Was: "refused alone" while cloud-nav shipped no cipher.
+     */
+    @Test fun an_encrypted_store_lands_encrypted_beside_the_plain_ones() {
         val r = call(FleetConfig.METHOD_IMPORT, JSONObject().put("stores", JSONObject()
             .put("mail_jmap_prefs", JSONObject().put("server", "https://mail.example.test"))
             .put("cloud_nav_cockpit", JSONObject().put("mode", "walk"))))
-        assertEquals("cannot open", r.getJSONObject("files").getJSONObject("mail_jmap_prefs").getString("error"))
-        assertEquals(1, r.getInt("written"))
+        val mail = r.getJSONObject("files").getJSONObject("mail_jmap_prefs")
+        assertFalse("the encrypted store opened: ${mail}", mail.has("error"))
+        val mailWritten = mail.optJSONArray("written")?.length() ?: 0
+        assertEquals("the plain store's key plus what the encrypted store took", 1 + mailWritten, r.getInt("written"))
         assertEquals("walk", ctx.getSharedPreferences("cloud_nav_cockpit", Context.MODE_PRIVATE).getString("mode", null))
+        val dir = java.io.File(ctx.dataDir, "shared_prefs")
+        val onDisk = java.io.File(dir, "mail_jmap_prefs.xml")
+        if (mailWritten > 0) assertTrue("the encrypted store is on disk", onDisk.isFile)
+        assertFalse("the value is not stored in clear", onDisk.isFile && onDisk.readText().contains("mail.example.test"))
+        assertFalse("no unencrypted fallback file", java.io.File(dir, "mail_jmap_prefs_unencrypted_fallback.xml").exists())
         // And an export on the same app still answers.
         assertTrue(call(FleetConfig.METHOD_EXPORT).getJSONObject("stores").has("cloud_nav_cockpit"))
     }
