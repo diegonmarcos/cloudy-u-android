@@ -45,8 +45,8 @@ fun SectionPage(sectionId: String) {
     var openModel by rememberSaveable(sectionId) { mutableStateOf<String?>(null) }
     openModel?.let { id -> catalog?.models?.firstOrNull { it.id == id } }?.let { m -> ModelPage(m, catalog!!.categories) { openModel = null }; return }
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp).testTag(Tags.PAGE),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp).testTag(Tags.PAGE),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         entries.forEach { e ->
             when (e.kind) {

@@ -103,6 +103,8 @@ def derive_skp(m, src, version):
     ifc.export(skp.build_scene(), ifc_path)
     tool = TOOL % version
     m["view"] = {"asset": VIEW_DIR + "%s.view.glb" % m["id"], "format": "glb", "size": os.path.getsize(view_path), "sha256": sha256(view_path), "tool": tool}
+    if (old.get("view") or {}).get("thumb"):   # #1664 the preview image is rendered from the view by tools/make-thumbs.mjs: keep its declaration
+        m["view"]["thumb"] = old["view"]["thumb"]
     m["derived"] = [{"path": ifc_path, "format": "ifc", "size": os.path.getsize(ifc_path), "sha256": sha256(ifc_path), "tool": tool}]
     m.pop("conversion", None)
     m["units"] = "m"

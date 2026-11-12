@@ -48,7 +48,7 @@
     <string name="model_data_title">Model data</string>
     <string name="viewer_fit">Fit</string>
     <string name="viewer_wire">Wireframe</string>
-    <string name="viewer_gestures">Orbit: one finger. Zoom: pinch. Pan: two fingers.</string>
+    <string name="viewer_gestures">Orbit: one finger. Zoom: pinch. Pan: two fingers. Double tap: fit.</string>
     <string name="detail_name">Name</string>
     <string name="detail_category">Category</string>
     <string name="detail_extension">Extension</string>
@@ -71,4 +71,25 @@
     <string name="detail_derived_tool">Derived made by</string>
     <string name="detail_conversion">Conversion</string>
     <string name="detail_log">Conversion log</string>
+    <!-- #1664 models cards, readable table, model page around the viewer -->
+    <string name="models_title">Models</string>
+    <string name="models_count">%1$d of %2$d</string>
+    <string name="models_cards_title">Gallery</string>
+    <string name="models_cards_hint">Tap a model to open it in 3D</string>
+    <string name="models_scroll_hint">Swipe the table sideways for every column →</string>
+    <string name="models_scroll_end">← All columns shown</string>
+    <string name="thumb_none">No preview declared for this model</string>
+    <string name="thumb_unreadable">The preview image could not be read</string>
+    <string name="viewer_front">Front</string>
+    <string name="viewer_side">Side</string>
+    <string name="viewer_top">Top</string>
+    <string name="viewer_iso">Iso</string>
+    <string name="viewer_reset">Reset</string>
+    <string name="viewer_background">Light background</string>
+    <string name="viewer_full">Full screen</string>
+    <string name="viewer_full_exit">Exit full screen</string>
+    <string name="fact_format">Format</string>
+    <string name="fact_triangles">Triangles</string>
+    <string name="fact_vertices">Vertices</string>
+    <string name="fact_size">File size</string>
 </resources>

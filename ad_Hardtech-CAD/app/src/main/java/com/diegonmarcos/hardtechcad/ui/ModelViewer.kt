@@ -16,6 +16,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +47,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -56,7 +69,6 @@ import com.diegonmarcos.hardtechcad.ViewerHealth
 import com.diegonmarcos.superapp.cad.CadFormats
 import com.diegonmarcos.superapp.cad.Model
 import com.diegonmarcos.superapp.cad.ModelCache
-import com.diegonmarcos.superapp.uikit.KitStoreRow
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -75,6 +87,10 @@ private const val SCREEN_STRIP_DP = 28
 private const val SCREEN_INSET_DP = 4
 /** #1658 a model that neither shows nor fails within this long after cadOpen is reported, with the page's stage. */
 private const val LOAD_TIMEOUT_S = 30
+/** #1664 where the presentation the viewer had to step to is remembered, with the build it was measured on. */
+private const val PREFS = "cad_viewer"
+private const val PREF_PRESENT = "present"
+private const val PREF_BUILD = "present_build"
 
 /** #1658 what the page's 'painted' event read back from the WebGL framebuffer; [seq] makes every event a new value. */
 private data class Paint(val pct: Double, val w: Int, val h: Int, val gl: String, val seq: Long)
@@ -121,8 +137,12 @@ private sealed class ViewState {
 /** The viewer: plans [m] through libs:cad-core (derived view, original, or store-only), fetches it once into [dir], shows it. */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-internal fun ModelViewer(m: Model, dir: File) {
+internal fun ModelViewer(m: Model, dir: File, height: Dp = VIEWER_HEIGHT_DP.dp, full: Boolean = false, onFull: (() -> Unit)? = null) {
     val p = LocalKitPalette.current
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    // #1664 a fallback presentation is remembered for THIS build only: an update starts again on the GPU path (ViewerHealth.start)
+    val prefs = remember { ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
+    val build = BuildConfig.VERSION_CODE.toString() + "-" + BuildConfig.GIT_SHORT_SHA
     val plan = remember(m) { CadFormats.plan(m) }
     var state by remember(m) { mutableStateOf<ViewState>(if (plan is CadFormats.Plan.StoreOnly) ViewState.StoreOnly(plan.reason) else ViewState.Fetching) }
     var ready by remember { mutableStateOf(false) }
@@ -133,13 +153,20 @@ internal fun ModelViewer(m: Model, dir: File) {
     var paint by remember(m) { mutableStateOf<Paint?>(null) }
     var screen by remember(m) { mutableStateOf(-1.0) }
     var stage by remember(m) { mutableStateOf("") }
-    var present by remember { mutableStateOf(ViewerHealth.Present.WEBGL) }
+    var present by remember { mutableStateOf(ViewerHealth.start(prefs.getString(PREF_PRESENT, null), prefs.getString(PREF_BUILD, null), build)) }
+    var lastGesture by remember { mutableStateOf(0L) }
     var hostFrame by remember { mutableStateOf<ImageBitmap?>(null) }
     // #1631 every event of the real viewer page is recorded for the X-Ray App page. #1658 the handler is the CURRENT composition's: the bridge object
     // lives as long as the WebView, and one that wrote the first model's state left every later model without its shown / error state.
     val onEvent by rememberUpdatedState { e: JSONObject, json: String ->
         when (e.optString("type")) {
-            "ready" -> { ready = true; CadDiag.event(m.id, "viewer ready") }
+            "ready" -> {
+                ready = true; CadDiag.event(m.id, "viewer ready")
+                // the bridge runs on the JavaBridge thread: the WebView is driven from the main thread
+                val pr = present
+                if (pr != ViewerHealth.Present.WEBGL) web?.let { w -> w.post { w.evaluateJavascript("window.cadPresent&&window.cadPresent('${pr.js}')", null) } }
+                Unit
+            }
             "shown" -> { state = ViewState.Shown; triangles = e.optLong("triangles", -1); CadDiag.shown(m.id, e.optLong("triangles", -1)) }
             "painted" -> {
                 paint = Paint(e.optDouble("pct", -1.0), e.optInt("w"), e.optInt("h"), e.optString("gl"), System.nanoTime())
@@ -226,6 +253,7 @@ internal fun ModelViewer(m: Model, dir: File) {
                 break
             }
             p = n; present = n
+            prefs.edit().putString(PREF_PRESENT, n.js).putString(PREF_BUILD, build).apply()
             w.evaluateJavascript("window.cadPresent&&window.cadPresent('${n.js}')", null)
         }
     }
@@ -241,7 +269,7 @@ internal fun ModelViewer(m: Model, dir: File) {
                     BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { hostFrame = it.asImageBitmap(); last = shot.substringBefore('|').toInt() }
                 }
             }
-            kotlinx.coroutines.delay(200)
+            kotlinx.coroutines.delay(ViewerHealth.pullDelayMs(System.currentTimeMillis() - lastGesture))
         }
     }
     // #1631 a viewer page that never becomes ready (its module died: three.js missing, no WebGL context) used to leave a silent spinner; say so, with the page's own error
@@ -261,7 +289,7 @@ internal fun ModelViewer(m: Model, dir: File) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         // #1560 no rounded clip around the WebView: the page's GL surface is drawn by the WebView's hardware functor, which a non-rectangular
         // Compose clip layer can drop (the only fleet WebGL world inside one; CG-Omniverse and Cloud Nav draw it unclipped). Rounded border only.
-        Box(Modifier.fillMaxWidth().height(VIEWER_HEIGHT_DP.dp).background(Color(0xFF0E1116)).border(1.dp, p.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(12.dp)).testTag("viewer")) {
+        Box(Modifier.fillMaxWidth().height(height.coerceAtLeast(VIEWER_HEIGHT_DP.dp)).background(Color(0xFF0E1116)).border(1.dp, p.hairline, RoundedCornerShape(CadType.corner)).testTag("viewer")) {
             if (plan is CadFormats.Plan.Show) AndroidView(
                 factory = { c ->
                     val loader = WebViewAssetLoader.Builder()
@@ -282,6 +310,36 @@ internal fun ModelViewer(m: Model, dir: File) {
                 modifier = Modifier.fillMaxSize(),
             )
             hostFrame?.let { Image(it, contentDescription = null, contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize().testTag("viewer_host_frame")) }
+            // #1664 THE touch surface of the viewer, over the WebView and over the app-drawn frame alike: Compose takes every gesture here (so no parent
+            // scroll steals it and no presentation depends on touch reaching the WebView) and forwards it to the page's camera, which renders a new
+            // frame; the 2D canvas copies it and, in 'host', the frame pull speeds up while the finger moves. One finger orbits, a pinch zooms, two
+            // fingers pan, a double tap fits.
+            if (plan is CadFormats.Plan.Show) Box(Modifier.fillMaxSize().testTag("viewer_touch")
+                .pointerInput(Unit) { detectTapGestures(onDoubleTap = { web?.evaluateJavascript("window.cadFit&&window.cadFit()", null) }) }
+                .pointerInput(Unit) {
+                    val d = density
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false)
+                        var last: Offset? = null
+                        var lastCount = 0
+                        do {
+                            val ev = awaitPointerEvent()
+                            val down = ev.changes.filter { it.pressed }
+                            val c = down.size
+                            val moved = ev.changes.any { it.positionChange() != Offset.Zero }
+                            if (c > 0 && moved) {
+                                val centroid = ev.calculateCentroid(useCurrent = true)
+                                val delta = if (c == 1) down[0].positionChange() else if (last != null && lastCount == c) centroid - last!! else Offset.Zero
+                                val zoom = if (c >= 2) ev.calculateZoom() else 1f
+                                val calls = ViewerHealth.gesture(c, delta.x / d, delta.y / d, zoom)
+                                if (calls.isNotEmpty()) { web?.evaluateJavascript(calls.joinToString(";"), null); lastGesture = System.currentTimeMillis() }
+                                ev.changes.forEach { if (it.positionChange() != Offset.Zero) it.consume() }
+                            }
+                            last = if (c > 0) ev.calculateCentroid(useCurrent = true) else null
+                            lastCount = c
+                        } while (ev.changes.any { it.pressed })
+                    }
+                })
             val overlay = when (val s = state) {
                 ViewState.Fetching -> stringResource(R.string.viewer_fetching, m.name)
                 // #1658 a visible loading state: an empty stage with no word on it read as a broken viewer
@@ -290,42 +348,70 @@ internal fun ModelViewer(m: Model, dir: File) {
                 is ViewState.Failed -> stringResource(R.string.viewer_failed, s.why)
                 is ViewState.StoreOnly -> s.reason
             }
-            if (overlay != null) Text(overlay, color = if (state is ViewState.Fetching || state is ViewState.Loading) p.textSecondary else p.warn, fontSize = KitStoreRow.body,
+            if (overlay != null) Text(overlay, color = if (state is ViewState.Fetching || state is ViewState.Loading) p.textSecondary else p.warn, fontSize = CadType.body, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.align(Alignment.Center).padding(20.dp).testTag("viewer_status"))
         }
         if (plan is CadFormats.Plan.Show) ViewerControls(
             onFit = { web?.evaluateJavascript("window.cadFit&&window.cadFit()", null) },
             onWire = { on -> web?.evaluateJavascript("window.cadWireframe&&window.cadWireframe($on)", null) },
+            onView = { v -> web?.evaluateJavascript("window.cadView&&window.cadView('$v')", null) },
+            onReset = { web?.evaluateJavascript("window.cadReset&&window.cadReset()", null) },
+            onBackground = { light -> web?.evaluateJavascript("window.cadBackground&&window.cadBackground('${if (light) "light" else "dark"}')", null) },
+            full = full, onFull = onFull,
         )
-        Text(stringResource(R.string.viewer_model, m.name, m.format.uppercase(), m.licence), color = p.textPrimary, fontSize = KitStoreRow.body)
-        if (plan is CadFormats.Plan.Show && plan.derived)
-            Text(stringResource(R.string.viewer_derived, plan.format.uppercase(), m.format.uppercase()), color = p.textSecondary, fontSize = KitStoreRow.meta)
+        if (!full) Text(stringResource(R.string.viewer_model, m.name, m.format.uppercase(), m.licence), color = p.textPrimary, fontSize = CadType.label)
+        if (!full && plan is CadFormats.Plan.Show && plan.derived)
+            Text(stringResource(R.string.viewer_derived, plan.format.uppercase(), m.format.uppercase()), color = p.textSecondary, fontSize = CadType.caption)
         // #1658 the render state in words, always on the page: what was rendered, how it is presented and what the screen shows, or where it stopped
+        var diagOpen by remember { mutableStateOf(false) }
         val name = when (state) { ViewState.Shown -> "shown"; is ViewState.Failed -> "failed"; is ViewState.StoreOnly -> "store-only"; else -> "loading" }
         Text(ViewerHealth.line(name, stage, present, triangles, paint?.w ?: 0, paint?.h ?: 0, paint?.pct ?: -1.0, screen, paint?.gl.orEmpty(), (state as? ViewState.Failed)?.why.orEmpty()),
-            color = if (state is ViewState.Failed) p.warn else p.textSecondary, fontSize = KitStoreRow.caption, modifier = Modifier.testTag("viewer_render"))
+            color = if (state is ViewState.Failed) p.warn else p.textSecondary.copy(alpha = 0.75f), fontSize = CadType.caption, maxLines = if (diagOpen || state is ViewState.Failed) 8 else 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.clickable { diagOpen = !diagOpen }.testTag("viewer_render"))
     }
 }
 
-/** #1542 the viewer's two buttons: fit the model to the view, and the wireframe toggle (orbit, zoom and pan are the touch gestures of the stage). */
+/**
+ * #1542 the viewer's buttons: fit the model to the view and the wireframe toggle (orbit, zoom and pan are the touch gestures of the stage).
+ * #1664 plus the view presets (front / side / top / iso), reset, the background toggle and full screen, as readable kit-palette chips.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ViewerControls(onFit: () -> Unit, onWire: (Boolean) -> Unit) {
+private fun ViewerControls(onFit: () -> Unit, onWire: (Boolean) -> Unit, onView: (String) -> Unit, onReset: () -> Unit, onBackground: (Boolean) -> Unit,
+                           full: Boolean, onFull: (() -> Unit)?) {
     val p = LocalKitPalette.current
     var wire by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(KitStoreRow.gap), verticalAlignment = Alignment.CenterVertically) {
-        ControlChip(stringResource(R.string.viewer_fit), false, Modifier.testTag("viewer_fit"), onFit)
-        ControlChip(stringResource(R.string.viewer_wire), wire, Modifier.testTag("viewer_wire")) { wire = !wire; onWire(wire) }
-        Text(stringResource(R.string.viewer_gestures), color = p.textSecondary, fontSize = KitStoreRow.caption)
+    var light by remember { mutableStateOf(false) }
+    var view by remember { mutableStateOf("iso") }
+    Column(verticalArrangement = Arrangement.spacedBy(CadType.tight)) {
+        // the presets: one segmented row
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(CadType.corner)).border(1.dp, p.hairline, RoundedCornerShape(CadType.corner)).testTag("viewer_presets")) {
+            for ((id, label) in listOf("front" to R.string.viewer_front, "side" to R.string.viewer_side, "top" to R.string.viewer_top, "iso" to R.string.viewer_iso)) {
+                val on = id == view
+                Box(Modifier.weight(1f).background(if (on) p.surfaceSelected else p.surface).clickable { view = id; onView(id) }.padding(vertical = 10.dp).testTag("viewer_view:$id"),
+                    contentAlignment = Alignment.Center) {
+                    Text(stringResource(label), color = if (on) p.accent else p.textPrimary, fontSize = CadType.label, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium)
+                }
+            }
+        }
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CadType.tight), verticalArrangement = Arrangement.spacedBy(CadType.tight)) {
+            ControlChip(stringResource(R.string.viewer_fit), false, Modifier.testTag("viewer_fit"), onFit)
+            ControlChip(stringResource(R.string.viewer_reset), false, Modifier.testTag("viewer_reset")) { view = "iso"; onReset() }
+            ControlChip(stringResource(R.string.viewer_wire), wire, Modifier.testTag("viewer_wire")) { wire = !wire; onWire(wire) }
+            ControlChip(stringResource(R.string.viewer_background), light, Modifier.testTag("viewer_background")) { light = !light; onBackground(light) }
+            if (onFull != null) ControlChip(stringResource(if (full) R.string.viewer_full_exit else R.string.viewer_full), full, Modifier.testTag("viewer_full"), onFull)
+        }
+        Text(stringResource(R.string.viewer_gestures), color = p.textSecondary, fontSize = CadType.caption)
     }
 }
 
 @Composable
 private fun ControlChip(label: String, on: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val p = LocalKitPalette.current
-    val shape = RoundedCornerShape(KitStoreRow.tight)
-    Text(label, color = if (on) p.tileInk else p.accent, fontSize = KitStoreRow.body,
-        modifier = modifier.clip(shape).background(if (on) p.accent else Color.Transparent).border(1.dp, p.accent, shape)
-            .clickable(onClick = onClick).padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight))
+    val shape = RoundedCornerShape(50)
+    Text(label, color = if (on) p.tileInk else p.textPrimary, fontSize = CadType.label, fontWeight = FontWeight.Medium,
+        modifier = modifier.clip(shape).background(if (on) p.accent else p.surfaceSelected).border(1.dp, if (on) p.accent else p.hairline, shape)
+            .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 8.dp))
 }
 
 /** The string a WebView's evaluateJavascript hands back for a JS string result: a JSON string literal; null for "null" / blank. */

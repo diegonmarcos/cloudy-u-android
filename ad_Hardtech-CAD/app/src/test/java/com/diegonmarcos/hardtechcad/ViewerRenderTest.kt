@@ -120,7 +120,8 @@ class ViewerRenderTest {
         // a fixed, non-zero height with the WebView filling it, and no clip around it (#1560)
         assertTrue("private const val VIEWER_HEIGHT_DP = 300" in viewer)
         val box = viewer.lines().single { ".testTag(\"viewer\")" in it }
-        assertTrue(box, "Modifier.fillMaxWidth().height(VIEWER_HEIGHT_DP.dp)" in box && ".clip(" !in box)
+        // #1664 the viewer is now as tall as the page gives it (most of the screen, or full screen), never lower than VIEWER_HEIGHT_DP
+        assertTrue(box, "Modifier.fillMaxWidth().height(height.coerceAtLeast(VIEWER_HEIGHT_DP.dp))" in box && ".clip(" !in box)
         assertTrue(Regex("""wv\.loadUrl\(VIEWER_URL\)\s+web = wv\s+}\s+},\s+modifier = Modifier\.fillMaxSize\(\),""").containsMatchIn(viewer))
         // the page: the stage and its canvases fill the window; a canvas that has no size yet is waited for, then reported
         val dir = File(libs, "cad-core/src/main/assets/cad")

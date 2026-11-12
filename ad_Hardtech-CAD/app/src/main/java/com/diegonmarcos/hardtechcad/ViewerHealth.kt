@@ -45,6 +45,31 @@ object ViewerHealth {
     fun next(present: Present, paintedPct: Double, screenPct: Double): Present? =
         if (!lost(paintedPct, screenPct)) null else Present.entries.getOrNull(present.ordinal + 1)
 
+    /**
+     * #1664 the presentation a viewer STARTS in. A fallback the viewer had to step to is remembered for the build it was measured on ([build]), so the
+     * next model opens straight in it; a different build (an update) starts again on the GPU path (the WebGL canvas), so a fallback is never permanent.
+     */
+    fun start(remembered: String?, rememberedBuild: String?, build: String): Present =
+        if (remembered.isNullOrBlank() || rememberedBuild != build) Present.WEBGL else Present.entries.firstOrNull { it.js == remembered } ?: Present.WEBGL
+
+    /**
+     * #1664 what a gesture on the viewer becomes, in every presentation: the HOST takes the touch over the viewer and forwards it to the page's camera.
+     * One finger orbits ([dx], [dy] in CSS px), two or more pan by the centroid's move and zoom by the spread ratio ([zoom] > 1 = closer).
+     * Returns the page calls to run, in order; an empty list for a move that changes nothing.
+     */
+    fun gesture(pointers: Int, dx: Float, dy: Float, zoom: Float): List<String> {
+        val f = { v: Float -> "%.2f".format(java.util.Locale.ROOT, v) }
+        if (pointers <= 0) return emptyList()
+        if (pointers == 1) return if (dx == 0f && dy == 0f) emptyList() else listOf("window.cadOrbit&&window.cadOrbit(${f(dx)},${f(dy)})")
+        return buildList {
+            if (dx != 0f || dy != 0f) add("window.cadPan&&window.cadPan(${f(dx)},${f(dy)})")
+            if (zoom > 0f && zoom != 1f && zoom.isFinite()) add("window.cadZoom&&window.cadZoom(${"%.4f".format(java.util.Locale.ROOT, zoom)})")
+        }
+    }
+
+    /** #1664 how often the app pulls the page's frame in the 'host' presentation: fast while a gesture moves the model, slow when it is still. */
+    fun pullDelayMs(msSinceGesture: Long): Long = if (msSinceGesture in 0 until 1200) 40L else 200L
+
     private fun pct(v: Double): String = if (v < 0) "not measured" else "%.1f%%".format(java.util.Locale.ROOT, v)
 
     /** The one-line state under the viewer: what was rendered, how it is presented and what the screen really shows, or where it stopped. */

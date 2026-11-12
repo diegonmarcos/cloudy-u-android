@@ -4,7 +4,9 @@
 // Usage: node render-check.mjs <repo root>   (run where `playwright` is installed and its chromium fetched; CI does both)
 import http from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
-import { chromium } from 'playwright';
+import { createRequire } from 'node:module';
+let chromium;
+try { ({ chromium } = await import('playwright')); } catch { ({ chromium } = createRequire('/opt/node-tools/')('playwright')); }
 
 const root = process.argv[2];
 if (!root) { console.error('usage: node render-check.mjs <repo root>'); process.exit(2); }
@@ -57,6 +59,37 @@ for (const m of models) {
   if (h2 === p2.h) bad.push(`${m.id}: a drag did not orbit the model in the 2D presentation`);
   if (!/^\d+\|data:image\/jpeg;base64,/.test(p2.shot) || p2.same !== '') bad.push(`${m.id}: cadFrameShot is not "<frame>|<jpeg data url>" / '' for an unchanged frame (${p2.shot} / ${p2.same.slice(0, 20)})`);
   await page.screenshot({ path: `${process.env.RUNNER_TEMP || '.'}/render-${m.id}-2d.png` });
+  // #1664 the gestures the app forwards (one finger -> cadOrbit, pinch -> cadZoom, two fingers -> cadPan) must CHANGE THE PICTURE in every presentation:
+  // 'webgl' (the GPU canvas), '2d' (the copy in the 2D canvas) and 'host' (the frame the app pulls with cadFrameShot: a new frame number after each move).
+  for (const mode of ['webgl', '2d', 'host']) {
+    const g = await page.evaluate((mode) => {
+      window.cadPresent(mode); window.cadReset();
+      const h0 = window.cadFrameHash(), f0 = window.cadDiag().frames;
+      return { h0, f0 };
+    }, mode);
+    await page.waitForTimeout(120);
+    const r = await page.evaluate(async (g) => {
+      const tick = () => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)));
+      const h0 = window.cadFrameHash();
+      window.cadOrbit(60, 20); await tick(); const hOrbit = window.cadFrameHash(), fOrbit = window.cadDiag().frames;
+      const shot = window.cadFrameShot(g.f0);
+      window.cadZoom(1.6); await tick(); const hZoom = window.cadFrameHash();
+      window.cadPan(30, -15); await tick(); const hPan = window.cadFrameHash();
+      window.cadView('top'); await tick(); const hTop = window.cadFrameHash();
+      window.cadBackground('light'); await tick(); const hLight = window.cadFrameHash(); window.cadBackground('dark'); await tick();
+      return { h0, hOrbit, hZoom, hPan, hTop, hLight, f0: g.f0, fOrbit, shot: shot.slice(0, 30) };
+    }, g);
+    console.log(`${m.id}: ${mode}: orbit ${r.hOrbit !== r.h0}, zoom ${r.hZoom !== r.hOrbit}, pan ${r.hPan !== r.hZoom}, top view ${r.hTop !== r.hPan}, light background ${r.hLight !== r.hTop}; frames ${r.f0} -> ${r.fOrbit}`);
+    if (r.hOrbit === r.h0) bad.push(`${m.id}: ${mode}: an orbit did not change the picture`);
+    if (r.hZoom === r.hOrbit) bad.push(`${m.id}: ${mode}: a zoom did not change the picture`);
+    if (r.hPan === r.hZoom) bad.push(`${m.id}: ${mode}: a pan did not change the picture`);
+    if (r.hTop === r.hPan) bad.push(`${m.id}: ${mode}: the top preset did not change the picture`);
+    if (r.hLight === r.hTop) bad.push(`${m.id}: ${mode}: the background toggle did not change the picture`);
+    if (!(r.fOrbit > r.f0)) bad.push(`${m.id}: ${mode}: a gesture rendered no new frame (${r.f0} -> ${r.fOrbit})`);
+    if (mode === 'host' && !/^\d+\|data:image\/jpeg/.test(r.shot)) bad.push(`${m.id}: host: the app's frame pull got no new frame after a gesture (${r.shot})`);
+    await page.screenshot({ path: `${process.env.RUNNER_TEMP || '.'}/render-${m.id}-gesture-${mode}.png` });
+  }
+  await page.evaluate(() => window.cadPresent('webgl'));
   await page.close();
 }
 // #1658 a WebView that is laid out AFTER its page loaded: the canvas starts at 1x1. The viewer waits for a real size and judges the paint on it, never on the

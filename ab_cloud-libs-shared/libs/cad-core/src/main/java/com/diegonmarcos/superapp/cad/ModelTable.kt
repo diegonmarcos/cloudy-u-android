@@ -60,6 +60,15 @@ object ModelTable {
     }
 
     /** A header tap: the same column flips its direction, another column starts ascending. */
+    /**
+     * #1664 the models shown under the filters and the sort, ONE list for both presentations: the table rows and the cards below it are this list,
+     * so a filter can never leave a card the table does not show (or the reverse).
+     */
+    fun shown(models: List<Model>, f: Filters, s: Sort): List<Model> = sort(filter(models, f), s)
+
+    /** #1664 the preview image of [m] (an assets path), or "" when none is declared: the card then shows a placeholder and says why. */
+    fun thumb(m: Model): String = m.view?.thumb.orEmpty()
+
     fun toggle(s: Sort, c: Column): Sort = if (s.column == c) s.copy(descending = !s.descending) else Sort(c, false)
 
     fun categoryLabel(m: Model, declared: List<ModelCategory>): String = declared.firstOrNull { it.id == m.category }?.label ?: m.category

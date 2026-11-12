@@ -12,7 +12,7 @@ class ModelTableTest {
     private val json = """{"schema":2,"categories":[{"id":"boats","label":"Boats"},{"id":"civil","label":"Civil Engineering"},{"id":"mechanics","label":"Mechanics"}],"models":[
       {"id":"yacht","name":"Yacht","library":"boats","category":"boats","software":"Rhino","format":"iges","path":"boats/iges/y.igs","size":59000000,"sha256":"$a","updated":"2026-10-01",
        "units":"m","bbox":{"min":[0,-4,0],"max":[40,4,55]},"layer_count":32,"material_count":1,"stats":{"vertices":195709,"triangles":254076},
-       "view":{"path":"boats/glb/y.view.glb","format":"glb","size":7700000,"sha256":"$b","tool":"occt","vertices":195709,"triangles":254076},
+       "view":{"path":"boats/glb/y.view.glb","format":"glb","size":7700000,"sha256":"$b","tool":"occt","vertices":195709,"triangles":254076,"thumb":"cad/models/y.thumb.jpg"},
        "conversion_log":["brep2glb ok","254076 triangles"]},
       {"id":"museum","name":"Campidoglio","library":"architecture","category":"civil","software":"SketchUp","format":"skp","path":"architecture/skp/m.skp","size":4000000,"sha256":"$c","updated":"2026-11-05",
        "layers":["Layer0","Layer1"],"layer_count":2,"component_count":16,
@@ -77,5 +77,16 @@ class ModelTableTest {
         assertTrue(sk.any { it.key == "derived_sha256" && it.value.startsWith("ifc ") })
         // an undeclared fact is left out, never invented
         assertTrue(sk.none { it.key == "units" || it.key == "dimensions" })
+    }
+
+    @Test fun cardsAndTableAreOneListUnderEveryFilter() {
+        val opts = listOf(ModelTable.categoryOptions(models, cats), ModelTable.extensionOptions(models), ModelTable.softwareOptions(models))
+        for (c in opts[0]) for (e in opts[1]) for (sw in opts[2]) for (col in ModelTable.Column.entries) for (d in listOf(false, true)) {
+            val f = ModelTable.Filters(c.first, e.first, sw.first); val so = ModelTable.Sort(col, d)
+            assertEquals(ModelTable.sort(ModelTable.filter(models, f), so), ModelTable.shown(models, f, so))
+        }
+        // the preview image comes from the declared view; a model without one has none (the card draws a placeholder and the reason)
+        assertEquals("cad/models/y.thumb.jpg", ModelTable.thumb(models[0]))
+        assertEquals("", ModelTable.thumb(models[1]))
     }
 }

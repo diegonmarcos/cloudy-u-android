@@ -53,6 +53,7 @@ function frame(obj) {
   const box = new THREE.Box3().setFromObject(obj); const size = box.getSize(new THREE.Vector3()); const c = box.getCenter(new THREE.Vector3());
   const r = Math.max(size.x, size.y, size.z) || 1;
   camera.near = r / 1000; camera.far = r * 100; camera.updateProjectionMatrix();
+  framedRadius = r; framedCenter = c.clone();
   camera.position.copy(c).add(new THREE.Vector3(r * 0.9, r * 0.55, r * 0.9)); controls.target.copy(c); controls.update(); render();
 }
 // #1542 fit-to-view and the wireframe toggle, driven by the host's buttons.
@@ -85,6 +86,53 @@ window.cadPresent = (mode) => {
 };
 // The last rendered frame as "<frame number>|<JPEG data URL>", or '' when no frame was drawn since frame [since] (the host polls it in 'host' presentation).
 window.cadFrameShot = (since) => (D.frames === since ? '' : D.frames + '|' + renderer.domElement.toDataURL('image/jpeg', 0.9));
+// #1664 the camera, driven by the HOST's own gestures (Compose takes the touch over the viewer in every presentation and forwards it here), so a drag
+// orbits, a pinch zooms and two fingers pan whether the frame reaches the screen through the WebGL canvas, the 2D canvas or an image the app draws.
+// Each call moves the camera around controls.target and renders one frame (which the 2D / host presentations copy or pull). Pixels are CSS px.
+const _off = new THREE.Vector3(), _sph = new THREE.Spherical(), _right = new THREE.Vector3(), _up = new THREE.Vector3();
+const EPS = 1e-4;
+function commit() { camera.lookAt(controls.target); camera.updateMatrixWorld(); render(); return D.frames; }
+window.cadOrbit = (dx, dy) => {
+  const h = Math.max(innerHeight || 1, 1);
+  _off.copy(camera.position).sub(controls.target); _sph.setFromVector3(_off);
+  _sph.theta -= 2 * Math.PI * (+dx || 0) / h; _sph.phi = Math.min(Math.PI - EPS, Math.max(EPS, _sph.phi - 2 * Math.PI * (+dy || 0) / h));
+  _off.setFromSpherical(_sph); camera.position.copy(controls.target).add(_off); return commit();
+};
+// [scale] > 1 brings the camera closer (a pinch opening); the distance is kept inside the model's framing range.
+window.cadZoom = (scale) => {
+  const s = +scale; if (!(s > 0) || !isFinite(s)) return D.frames;
+  _off.copy(camera.position).sub(controls.target);
+  const r = current ? framedRadius : 1, d = Math.min(Math.max(_off.length() / s, r * 0.02), r * 40);
+  _off.setLength(d); camera.position.copy(controls.target).add(_off); return commit();
+};
+window.cadPan = (dx, dy) => {
+  const h = Math.max(innerHeight || 1, 1), d = camera.position.distanceTo(controls.target);
+  const k = 2 * d * Math.tan((camera.fov * Math.PI / 180) / 2) / h;
+  _right.setFromMatrixColumn(camera.matrix, 0).multiplyScalar(-(+dx || 0) * k); _up.setFromMatrixColumn(camera.matrix, 1).multiplyScalar((+dy || 0) * k);
+  camera.position.add(_right).add(_up); controls.target.add(_right).add(_up); return commit();
+};
+// The view presets: front (looking along -Y of the model's up axis frame: from +Z), side (+X), top (+Y), iso (the framing view); reset = iso + fit.
+let framedRadius = 1, framedCenter = new THREE.Vector3();
+const PRESETS = { front: [0, 0, 1], back: [0, 0, -1], side: [1, 0, 0], left: [-1, 0, 0], top: [0, 1, 0.0001], iso: [0.9, 0.55, 0.9] };
+window.cadView = (name) => {
+  const v = PRESETS[name]; if (!v || !current) return '';
+  const dir = new THREE.Vector3(v[0], v[1], v[2]).normalize(), dist = framedRadius * (name === 'iso' ? 1.4 : 1.9);
+  controls.target.copy(framedCenter); camera.position.copy(framedCenter).addScaledVector(dir, dist); commit(); return name;
+};
+window.cadReset = () => { if (current) { frame(current); window.cadView('iso'); } return D.frames; };
+// The stage background: 'dark' (the viewer's own #0e1116, the colour every paint measurement compares to) or 'light'.
+let bgMode = 'dark';
+window.cadBackground = (mode) => {
+  bgMode = mode === undefined ? (bgMode === 'dark' ? 'light' : 'dark') : (mode === 'light' ? 'light' : 'dark');
+  scene.background = new THREE.Color(bgMode === 'light' ? 0xe8ecf1 : 0x0e1116); document.body.style.background = bgMode === 'light' ? '#e8ecf1' : '#0e1116';
+  render(); return bgMode;
+};
+// A hash of the frame the page shows (what render-check compares before and after a gesture, in each presentation).
+window.cadFrameHash = () => {
+  const c = present === 'webgl' ? renderer.domElement : v2;
+  const t = document.createElement('canvas'); t.width = 64; t.height = 48; const g = t.getContext('2d'); g.drawImage(c, 0, 0, 64, 48);
+  const d = g.getImageData(0, 0, 64, 48).data; let h = 0; for (let i = 0; i < d.length; i++) h = (h * 31 + d[i]) | 0; return h;
+};
 // A canvas the WebView has not laid out yet is 1x1: nothing can be judged on it. Wait for a real size; a viewer that never gets one says so.
 const sized = () => renderer.domElement.width >= 16 && renderer.domElement.height >= 16;
 async function waitSized() {

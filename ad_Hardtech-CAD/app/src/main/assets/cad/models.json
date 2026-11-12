@@ -58,7 +58,8 @@
         "tool": "tools/brep2glb.mjs with occt-import-js 0.0.23 (LGPL-2.1), linear deflection 0.08 of the bounding box (254k triangles), merged by colour; mirrored from the originals repo, hash-checked by ad_Hardtech-CAD/tools/derive_models.py",
         "vertices": 195709,
         "triangles": 254076,
-        "asset": "cad/models/one-lilo.view.glb"
+        "asset": "cad/models/one-lilo.view.glb",
+        "thumb": "cad/models/one-lilo.thumb.jpg"
       },
       "conversion_log": [
         "original: IGES 5.3 written by Rhinoceros (Jun 24 2014), global section units 1HM (metres); 66128 directory entities on 32 layers; part names inside (Radar..SLDPRT) show a SolidWorks origin",
@@ -87,7 +88,8 @@
         "sha256": "af224818ec0605b1cc6090878c39c19c2980882f032f3bc198cce93905ba45ac",
         "tool": "ad_Hardtech-CAD/tools/derive_models.py with openskp 1.5.0 (MIT, https://github.com/iamahsanmehmood/openskp)",
         "vertices": 10138,
-        "triangles": 6444
+        "triangles": 6444,
+        "thumb": "cad/models/campidoglio.thumb.jpg"
       },
       "derived": [
         {
@@ -195,7 +197,8 @@
         "sha256": "eeb29676fbd3075cc5fecd56d02f6780e898b230b2f32dcd12c7482b40e024d4",
         "tool": "ad_Hardtech-CAD/tools/make_drone.py (pure Python, glTF 2.0 binary, flat-shaded, one mesh with one primitive per material)",
         "vertices": 3288,
-        "triangles": 1096
+        "triangles": 1096,
+        "thumb": "cad/models/drone.thumb.jpg"
       },
       "stats": {
         "vertices": 3288,

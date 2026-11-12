@@ -39,6 +39,9 @@ mutant "the declared triangles are wrong" "jedit \"d['models'][1]['stats']['tria
 mutant "a category is undeclared"        "jedit \"d['models'][0]['category']='ships'\""                                      "FAIL G1 one-lilo: category"
 mutant "a model drops its software"      "jedit \"d['models'][1].pop('software')\""                                          "FAIL G1 campidoglio declares no software"
 mutant "no model is declared"            "jedit \"d['models']=[]\""                                                          "FAIL G1 models.json declares no model"
+mutant "a preview image vanishes"        "rm $ASSETS/models/drone.thumb.jpg"                                                 "FAIL G6 drone: preview image"
+mutant "a model declares no preview"     "jedit \"d['models'][0]['view'].pop('thumb')\""                                    "FAIL G6 one-lilo declares no preview image"
+mutant "a preview is not a JPEG"         "printf 'not an image' > $ASSETS/models/campidoglio.thumb.jpg"                     "FAIL G6 campidoglio: preview image"
 mutant "an IFC derivative vanishes"      "rm -f data/derived/campidoglio.view.ifc"                                           "FAIL G5 campidoglio"
 # a GLB with zero triangles (valid file, nothing to draw) and one needing Draco: rewritten in place with its hash and stats kept consistent
 mutant "a GLB holds no triangles"        "python3 - <<'PY'

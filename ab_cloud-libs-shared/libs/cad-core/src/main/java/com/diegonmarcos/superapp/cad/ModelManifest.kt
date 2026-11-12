@@ -8,6 +8,8 @@ data class ModelView(
     val tool: String = "", val vertices: Long = -1, val triangles: Long = -1,
     /** A view bundled in the APK (path under assets/): drawn from there, never fetched. Blank = fetched from the originals repo at [path]. */
     val asset: String = "",
+    /** #1664 the preview image of the view (path under assets/, a JPEG rendered from the GLB by tools/make-thumbs.mjs); blank = none declared. */
+    val thumb: String = "",
 )
 
 /** A declared category of the model data (the Model filter): [id] is what a model names, [label] what the filter shows. */
@@ -81,7 +83,7 @@ object ModelManifest {
         val vs = j.optString("sha256").lowercase()
         return if (j.optString("path").isBlank() || !SHA.matches(vs)) null
         else ModelView(j.optString("path"), CadFormats.normalize(j.optString("format", j.optString("path").substringAfterLast('.'))), j.optLong("size"), vs,
-            j.optString("tool"), j.optLong("vertices", -1), j.optLong("triangles", -1), j.optString("asset"))
+            j.optString("tool"), j.optLong("vertices", -1), j.optLong("triangles", -1), j.optString("asset"), j.optString("thumb"))
     }
 
     private fun strs(a: org.json.JSONArray?): List<String> = (0 until (a?.length() ?: 0)).map { a!!.optString(it) }

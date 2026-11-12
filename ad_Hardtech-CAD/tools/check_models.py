@@ -10,7 +10,9 @@ Prints one FAIL line per violation (exit 1) or one ok line per model:
   G4  it PARSES as glTF 2.0 binary (header, JSON chunk, BIN chunk, every buffer view inside it) and needs no extension the app's
       viewer cannot decode (Draco, meshopt, ... any extensionsRequired), and holds a NON-ZERO triangle count with finite, non-degenerate
       bounds; the declared stats (triangles, vertices) equal what the file holds;
-  G5  every declared derivative (IFC) exists with its hash.
+  G5  every declared derivative (IFC) exists with its hash;
+  G6  #1664 every model has a preview image (view.thumb, rendered from its GLB by tools/make-thumbs.mjs): a JPEG next to the view in the
+      assets, so the models page can show a card with a picture of each model.
 The Node job of the models workflow (verify-models.mjs, @gltf-transform/core) parses the same files with a second, independent parser.
 """
 import hashlib, json, os, struct, sys
@@ -130,6 +132,17 @@ def check(app):
             q = os.path.join(root, d["path"]) if not os.path.isabs(d["path"]) else d["path"]
             if not os.path.isfile(q) or sha256(q) != d.get("sha256"):
                 bad.append("FAIL G5 %s: derived %s is missing or not the declared file" % (mid, d["path"]))
+        t = v.get("thumb", "")
+        tf = os.path.join(assets, t) if t else ""
+        if not t:
+            bad.append("FAIL G6 %s declares no preview image (view.thumb)" % mid)
+        elif not os.path.isfile(tf):
+            bad.append("FAIL G6 %s: preview image %s is missing" % (mid, t))
+        else:
+            with open(tf, "rb") as fh:
+                head = fh.read(3)
+            if head != b"\xff\xd8\xff" or os.path.getsize(tf) < 1000:
+                bad.append("FAIL G6 %s: preview image %s is not a JPEG" % (mid, t))
         ok.append("ok %s: %s parses, %d triangles, %d vertices" % (mid, v["asset"], tris, verts))
     return bad, ok
 
