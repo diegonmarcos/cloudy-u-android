@@ -1,0 +1,258 @@
+{
+  "_doc": "#1693 SIGN-IN OWNER policy. Cloud Account (ac_cloud-account) is the ONLY fleet app that starts a sign-in. Every other app keeps its sign-in row in place (rule 16) but the row opens Cloud Account at that provider's page, and the app reads the credential / token / session state back from Cloud Account over the fleet IPC (Cloud Account's vault syncer stays the store). Consumed by 1_cicd/src/scripts/cloud-android-sign-in-owner-guard.py, which fails for every sign-in starter outside the owner that no exemption below covers, and for every exemption that matches nothing any more. Adding a rule, an exemption or a root is a DATA edit here; nothing in the script names an app.",
+  "_rule": "one place signs in: Cloud Account; every other app links to it and reads the result over IPC.",
+  "owner": "ac_cloud-account",
+  "owner_impl": {
+    "ab_cloud-libs-shared/libs/auth": "libs:auth IS the sign-in implementation (device grants, the SignInWays surface) Cloud Account hosts; callers of its surface elsewhere are caught by the signin-ui rule.",
+    "ab_cloud-libs-shared/libs/gh": "libs:gh is the gh engine process (Cloud-Lib-Gh.apk) that runs gh auth login when the owner asks; #1692 keeps its login keeper. Who asks it is caught by engine-login-call and engine-login-decl."
+  },
+  "owner_must_hold": [
+    {
+      "file": "ac_cloud-account/app/build.gradle",
+      "needles": [
+        "project(':libs:account')"
+      ],
+      "why": "Cloud Account hosts the Account page whose Connect lines are the fleet's one sign-in"
+    }
+  ],
+  "scan_prefixes": [
+    "aa_",
+    "ab_",
+    "ac_"
+  ],
+  "extensions": [
+    ".kt",
+    ".java",
+    ".kts",
+    ".json",
+    ".js",
+    ".ts"
+  ],
+  "skip_dirs": [
+    ".git",
+    "node_modules",
+    "build",
+    "dist",
+    "target",
+    "z_archive",
+    "z-archive",
+    ".gradle"
+  ],
+  "skip_path_parts": [
+    "/src/test/",
+    "/src/androidTest/",
+    "/src/testDebug/",
+    "/test/",
+    "/tests/",
+    "/fixtures/"
+  ],
+  "_doc_skip_path_parts": "Tests may name a sign-in to prove the link and the IPC read; they start nothing on a phone.",
+  "rules": {
+    "gh-auth-login": {
+      "pattern": "\"auth\"\\s*,\\s*\"login\"",
+      "why": "runs gh auth login"
+    },
+    "engine-login-call": {
+      "pattern": "\\b[gG]h[eE]ngine\\.login\\(|\\bengine\\.login\\(",
+      "why": "asks the gh engine to start a sign-in"
+    },
+    "engine-login-decl": {
+      "pattern": "\"login_poll_ms\"",
+      "why": "declares a gh engine binding that drives a sign-in (engines.gh login timings)"
+    },
+    "device-grant": {
+      "pattern": "grant-type:device_code",
+      "why": "runs an OAuth device grant"
+    },
+    "oauth-browser": {
+      "pattern": "CustomTabsIntent|net\\.openid\\.appauth|AuthorizationRequest\\.Builder",
+      "why": "opens an OAuth browser flow"
+    },
+    "signin-ui": {
+      "pattern": "(?<!fun )\\bSignInWays\\(",
+      "why": "hosts libs:auth's sign-in surface"
+    },
+    "credential-prompt": {
+      "pattern": "PasswordVisualTransformation\\(|KeyboardType\\.Password\\b",
+      "file_context": "\\b(sign[ _-]?in|log[ _-]?in)\\b",
+      "why": "prompts for a password on a sign-in page"
+    }
+  },
+  "exempt": [
+    {
+      "path": "aa_cloud-superapp/build.json",
+      "rules": [
+        "engine-login-decl"
+      ],
+      "why": "SuperApp's engines.gh binding drives Account > GitHub > WebAuth",
+      "until": "step 2"
+    },
+    {
+      "path": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountPages.kt",
+      "rules": [
+        "signin-ui",
+        "credential-prompt"
+      ],
+      "why": "the Account page Connect lines, shared by SuperApp and Cloud Account; gated to the owner in step 2",
+      "until": "step 2"
+    },
+    {
+      "path": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AuthProvidersPage.kt",
+      "rules": [
+        "signin-ui"
+      ],
+      "why": "Account > Sign-in providers page, shared; gated to the owner in step 2",
+      "until": "step 2"
+    },
+    {
+      "path": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/ConnectWays.kt",
+      "rules": [
+        "engine-login-call"
+      ],
+      "why": "GitHub WebAuth via the gh engine, shared; gated to the owner in step 2",
+      "until": "step 2"
+    },
+    {
+      "path": "ac_cloud-drive/build.json",
+      "rules": [
+        "engine-login-decl"
+      ],
+      "why": "Drive's engines.gh binding drives the Git card's GitHub sign-in",
+      "until": "step 3"
+    },
+    {
+      "path": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/configs/SignInCard.kt",
+      "rules": [
+        "signin-ui"
+      ],
+      "why": "Drive Configs > Sign in hosts libs:auth",
+      "until": "step 3"
+    },
+    {
+      "path": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitReposScreen.kt",
+      "rules": [
+        "engine-login-call",
+        "signin-ui",
+        "credential-prompt"
+      ],
+      "why": "Drive Git: startGhLogin, cloud fallback sign-in, host password entry",
+      "until": "step 3"
+    },
+    {
+      "path": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitHostsUi.kt",
+      "rules": [
+        "credential-prompt"
+      ],
+      "why": "Drive Git hosts: token/password for a self-hosted git host",
+      "until": "step 3"
+    },
+    {
+      "path": "ac_cloud-mail/",
+      "rules": [
+        "credential-prompt",
+        "device-grant"
+      ],
+      "why": "Cloud Mail Connect (IMAP/JMAP password, OAuth device grant) and account auth settings",
+      "until": "step 4"
+    },
+    {
+      "path": "ab_cloud-libs-shared/libs/mail/",
+      "rules": [
+        "credential-prompt"
+      ],
+      "why": "libs:mail sign-in (SuperApp Mail page): same migration as Cloud Mail",
+      "until": "step 4"
+    },
+    {
+      "path": "ac_cloud-vault/",
+      "rules": [
+        "credential-prompt",
+        "oauth-browser"
+      ],
+      "why": "Bitwarden login: Cloud Vault IS the credential store Cloud Account's vault syncer reads (architect decision)",
+      "until": "permanent"
+    },
+    {
+      "path": "ac_cloud-matrix/",
+      "rules": [
+        "credential-prompt",
+        "oauth-browser"
+      ],
+      "why": "Element X upstream Matrix login (password / OIDC); kept as an upstream login with a Sign in via Cloud Account entry where the protocol allows",
+      "until": "permanent"
+    },
+    {
+      "path": "ac_cloud-code/src/plugins/",
+      "rules": [
+        "oauth-browser"
+      ],
+      "why": "Acode upstream auth and custom-tabs plugins; kept as an upstream login",
+      "until": "permanent"
+    },
+    {
+      "path": "ab_cloud-libs-shared/libs/chat/",
+      "rules": [
+        "credential-prompt"
+      ],
+      "why": "libs:chat Mattermost password login (SuperApp Chat page)",
+      "until": "pending: not in steps 1-5"
+    },
+    {
+      "path": "ab_cloud-libs-shared/libs/ops/",
+      "rules": [
+        "credential-prompt"
+      ],
+      "why": "libs:ops Dagu bearer token entry on its connect page",
+      "until": "pending: not in steps 1-5"
+    },
+    {
+      "path": "ab_cloud-libs-shared/libs/git-ui/",
+      "rules": [
+        "credential-prompt"
+      ],
+      "why": "libs:git-ui GitHub token paste",
+      "until": "pending: not in steps 1-5"
+    },
+    {
+      "path": "ab_cloud-libs-shared/libs/scraper/",
+      "rules": [
+        "device-grant"
+      ],
+      "why": "libs:scraper music service device grant (MusicAuth)",
+      "until": "pending: not in steps 1-5"
+    },
+    {
+      "path": "ab_cloud-libs-shared/libs/browser/",
+      "rules": [
+        "credential-prompt"
+      ],
+      "why": "Cloud Browser saved-passwords editor: stores site passwords, starts no fleet sign-in",
+      "until": "pending: review"
+    },
+    {
+      "path": "ac_cloud-kg-store/",
+      "rules": [
+        "credential-prompt"
+      ],
+      "why": "KG Store token entry on its Me page",
+      "until": "pending: not in steps 1-5"
+    },
+    {
+      "path": "ac_cloud-me/",
+      "rules": [
+        "credential-prompt"
+      ],
+      "why": "Cloud Me Buro screen secret entry",
+      "until": "pending: not in steps 1-5"
+    },
+    {
+      "path": "ac_cloud-tasks/",
+      "rules": [
+        "credential-prompt"
+      ],
+      "why": "Cloud Tasks settings secret entry (CalDAV)",
+      "until": "pending: not in steps 1-5"
+    }
+  ],
+  "_doc_exempt": "Each entry: a path prefix, the rules it may still trip, why, and `until` (the #1693 migration step that removes it, or `permanent` with the reason). An entry that matches nothing fails the guard, so a migrated app must drop its entry in the same commit: the list only shrinks."
+}

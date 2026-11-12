@@ -1,0 +1,40 @@
+name: "sign-in owner guard — only Cloud Account starts a sign-in"
+
+# #1693. Every fleet sign-in moves to Cloud Account: other apps keep their sign-in row, but it opens
+# Cloud Account at that provider's page and reads the result back over the fleet IPC.
+# cloud-android-sign-in-owner-guard.py fails for every sign-in starter outside ac_cloud-account
+# (gh auth login, a gh engine login call or engines.gh login declaration, an OAuth device grant, an
+# OAuth browser flow, libs:auth's SignInWays surface, a password prompt on a sign-in page) that
+# 1_cicd/src/data/sign-in-owner-guard.json does not exempt with a reason, and for every exemption
+# that matches nothing any more, so the list only shrinks as apps migrate.
+#
+# EVERY PUSH, NO PATH FILTER: the commit that adds a sign-in can be any source file in any app or lib.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: sign-in-owner-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  sign-in-owner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The tester runs FIRST: it adds a sign-in to an app seven ways, stales an exemption, empties
+      # and removes the owner, and requires red (or a refusal) each time before trusting a green.
+      - name: The guard still fails when an app other than Cloud Account starts a sign-in
+        run: bash 1_cicd/src/scripts/test/sign-in-owner-guard.test.sh
+
+      - name: Only Cloud Account starts a sign-in
+        run: python3 1_cicd/src/scripts/cloud-android-sign-in-owner-guard.py .
