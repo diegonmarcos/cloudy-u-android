@@ -264,11 +264,11 @@
     "me": {
       "_doc": "#1640 the repository the Me tab clones at RUNTIME (shallow, through libs:git-ui GitConnect, the fleet's one GitHub connect; a private repo asks once for a GitHub token kept encrypted by libs:git-sync) and serves from its clone through libs:local-serve (the Git Sites way, #1615): the html file is rendered in a loopback WebView. No repo content is in the APK; no credential is declared here.",
       "owner": "diegonmarcos",
-      "repo": "HardTech-Chronos",
+      "repo": "Projects-Library-KG",
       "ref": "main",
       "entry": "index.html",
       "entry_fallback": "first *.html at the clone root",
-      "_doc_repo": "The live repo is HardTech-Chronos (public; index.html + topics.md); the owner asked to rename it to Projects-Library-KG. The slug is this one declared value: change `repo` when the rename lands (GitHub redirects the old name meanwhile)."
+      "_doc_repo": "#1609 the library repo was renamed HardTech-Chronos -> Projects-Library-KG on 2026-11-12 (public; index.html + topics.md at root). GitHub redirects the old name, so clones made under the old slug keep working."
     },
     "configs_ui": ["nav_ui"],
     "sections": [
