@@ -253,6 +253,9 @@ class Walk:
         os.makedirs(os.path.join(self.out, "dumps"), exist_ok=True)
         ui = json.load(open(a.build_json, encoding="utf-8"))["ui"]
         self.bottom = list(ui.get("bottom_nav") or [])
+        # ui.bottom_labels false: the app DECLARES an icon-only bottom bar (Cloud Shopping's one search item): no label is ever
+        # drawn, so the restore after scrolling back up is asserted against zero labels; every other app keeps one label per item
+        self.labels_declared = ui.get("bottom_labels", True) is not False
         self.sections = {s["id"]: s for s in ui.get("sections", [])}
         self.fill_registry_labels(a.build_json, ui)
         self.w, self.h = screen_size()
@@ -762,16 +765,19 @@ class Walk:
             back = self.chrome(nodes3)
             # a heavy embedded site (me/leafy, run 40805138692) lands the restore a few frames late; its evidence shot showed the full
             # chrome back: poll for it (same end state asserted: first row, every label, full bar)
+            want_labels = before["items"] if self.labels_declared else 0
             for _ in range(6):
-                if back["row"] and len(back["labels"]) >= before["items"]:
+                if back["row"] and len(back["labels"]) >= want_labels:
                     break
                 settle(1.2)
                 nodes3 = dump() or nodes3
                 back = self.chrome(nodes3)
             if not back["row"]:
                 fails.append("P3 scrolled back up: the first row did not return")
-            if len(back["labels"]) < before["items"]:
-                fails.append("P3 scrolled back up: bottom labels did not return (%d of %d)" % (len(back["labels"]), before["items"]))
+            if len(back["labels"]) < want_labels:
+                fails.append("P3 scrolled back up: bottom labels did not return (%d of %d)" % (len(back["labels"]), want_labels))
+            if not self.labels_declared and back["labels"]:
+                fails.append("P3 the app declares an icon-only bottom bar (ui.bottom_labels false) but %d label(s) are drawn" % len(back["labels"]))
             if abs(back["bar_h"] - before["bar_h"]) > 3:
                 fails.append("P3 scrolled back up: the bottom bar did not restore (%d vs %d px)" % (back["bar_h"], before["bar_h"]))
         else:
