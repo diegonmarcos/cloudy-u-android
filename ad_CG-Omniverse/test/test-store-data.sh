@@ -25,8 +25,10 @@ bad = []
 r = subprocess.run([sys.executable, "-I", os.path.join(d, "gen-store.py"), "--check"], capture_output=True, text=True)
 if r.returncode != 0: bad.append("S1 " + (r.stdout + r.stderr).strip().splitlines()[-1] if (r.stdout + r.stderr).strip() else "S1 the generator failed")
 rows = [l for l in open(os.path.join(d, "fwa.md"), encoding="utf-8").read().splitlines() if l.strip().startswith("|")][2:]
-try: entries = json.load(open(os.path.join(d, "store.json"), encoding="utf-8")).get("entries", [])
-except Exception as e: entries = []; bad.append("S2 store.json does not parse: %s" % e)
+try: all_entries = json.load(open(os.path.join(d, "store.json"), encoding="utf-8")).get("entries", [])
+except Exception as e: all_entries = []; bad.append("S2 store.json does not parse: %s" % e)
+entries = [e for e in all_entries if "model" not in e]      # the web worlds: one per row of fwa.md (the Type Model entries are S8)
+models = [e for e in all_entries if "model" in e]
 if len(entries) != len(rows): bad.append("S2 store.json has %d entries, fwa.md %d rows" % (len(entries), len(rows)))
 for row, e in zip(rows, entries):
     c = [x.strip() for x in row.strip().strip("|").split("|")]
@@ -63,6 +65,22 @@ for e in entries:
 # S7
 for e in entries:
     if e.get("wayback") != "https://web.archive.org/web/2020/" + str(e.get("url")): bad.append("S7 %r wayback %r is not the archive copy of its url" % (e.get("id"), e.get("wayback")))
+# S8 (#1701) the 3D models: one Type Model entry per models.json row, after the web worlds, each carrying its GLB address (https), SHA-256, size and photo;
+# no model file is baked into the app (assets hold the viewer page only)
+mp = os.path.join(d, "models.json")
+decl = json.load(open(mp, encoding="utf-8")).get("models", []) if os.path.exists(mp) else []
+if [e["id"] for e in models] != [m["id"] for m in decl]: bad.append("S8 store.json models %s are not models.json %s" % ([e["id"] for e in models], [m["id"] for m in decl]))
+if all_entries[len(entries):] != models: bad.append("S8 the model entries are not last in store.json")
+for e, m in zip(models, decl):
+    mo = e["model"]
+    if (mo.get("glb"), mo.get("sha256"), mo.get("size"), mo.get("photo")) != (m["glb"]["url"], m["glb"]["sha256"], m["glb"]["size"], m["photo"]["url"]): bad.append("S8 %s does not carry its models.json GLB / SHA-256 / size / photo" % e["id"])
+    if e.get("type") != "Model" or e.get("dimension") != "3D": bad.append("S8 %s is not a Type Model 3D entry" % e["id"])
+    if not (mo.get("glb", "").startswith("https://") and mo.get("photo", "").startswith("https://")): bad.append("S8 %s has a non-https address" % e["id"])
+assets = os.path.join(app, "app/src/main/assets")
+for root_, _, files in os.walk(assets):
+    for f in files:
+        if f.lower().endswith((".glb", ".gltf", ".obj", ".step", ".stp")) and "avatar" not in os.path.relpath(root_, assets).split(os.sep)[:1]:
+            bad.append("S8 a model file is baked into the app: %s" % os.path.join(root_, f))
 # S6: the probe against a stubbed network
 import importlib.util, socket, urllib.error, urllib.request, io
 spec = importlib.util.spec_from_file_location("probe", os.path.join(d, "probe-links.py")); pr = importlib.util.module_from_spec(spec); spec.loader.exec_module(pr)
@@ -120,7 +138,10 @@ mutant "a timeout reads unverified"    "sed -i 's/return \"offline\", \"timeout\
 mutant "a proxy block reads offline"   "sed -i 's/return \"unverified\", \"proxy %d\"/return \"offline\", \"proxy %d\"/' probe-links.py" "S6 probe says offline for proxy"
 mutant "a tunnel block reads offline"  "sed -i 's/return \"unverified\", \"proxy: %s\"/return \"offline\", \"proxy: %s\"/' probe-links.py" "S6 probe says offline for tunnel"
 mutant "a wayback link points elsewhere" "sed -i 's#^WAYBACK = .*#WAYBACK = \"https://web.archive.org/web/\"#' gen-store.py && python3 gen-store.py >/dev/null" "S7"
-mutant "an entry is dropped"           "python3 -c \"import json;d=json.load(open('store.json'));d['entries'].pop();json.dump(d,open('store.json','w'),indent=2)\"" "S2"
+mutant "a web entry is dropped"        "python3 -c \"import json;d=json.load(open('store.json'));d['entries'].pop(0);json.dump(d,open('store.json','w'),indent=2)\"" "S2"
+mutant "a model entry is dropped"      "python3 -c \"import json;d=json.load(open('store.json'));d['entries'].pop();json.dump(d,open('store.json','w'),indent=2)\"" "S8"
+mutant "a model's SHA-256 is hand-edited" "sed -i '0,/\"sha256\": \"[0-9a-f]*\"/s//\"sha256\": \"0000000000000000000000000000000000000000000000000000000000000000\"/' models.json" "S1"
+mutant "a model's GLB is not https"    "sed -i 's#\"url\": \"https://media#\"url\": \"http://media#' models.json" "S1"
 
 # S3: the generator itself refuses what it cannot map
 refuse() {   # refuse <name> <sed on fwa.md> <needle in the generator's message>

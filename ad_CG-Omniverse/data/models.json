@@ -1,0 +1,58 @@
+{
+  "_doc": "The 3D models of the Store (#1701), declared data: gen-store.py merges each into data/store.json as a world of Type Model. The models are the owner's own files published in the public LFS repo diegonmarcos/hardtech-db-models (the same originals and GLB views Hardtech-CAD MCAD declares in its models.json, #1695); this app never bakes a model file: the viewer (assets/model) downloads the GLB view from `glb.url` at runtime, checks its SHA-256 and keeps it in the page's cache, and the Store card loads `photo` the same way. `repo_url` is the repo's page (open in browser). A model's GLB is a derived, triangulated view in metres, Y-up, one node per part or material; the original (OBJ / STEP) stays in the originals repo (`original`).",
+  "originals_repo": "hardtech-db-models",
+  "repo_url": "https://github.com/diegonmarcos/hardtech-db-models",
+  "checked": "2026-11-12",
+  "models": [
+    {
+      "id": "house-boat",
+      "name": "House Boat",
+      "framework": "three.js / glTF (GLB view of a Wavefront OBJ)",
+      "stack": ["GLB", "OBJ", "WebGL"],
+      "description": "Two-deck pontoon houseboat, the owner's own model: 5 materials, 23,652 triangles, 9.15 x 5.65 x 5.0 m. Rotate, zoom and auto-rotate; the original OBJ stays in the originals repo.",
+      "format": "OBJ",
+      "software": "assimp 5.2 (OBJ export)",
+      "units": "m",
+      "parts": 5,
+      "triangles": 23652,
+      "glb": {
+        "url": "https://media.githubusercontent.com/media/diegonmarcos/hardtech-db-models/main/boats/glb/house-boat.view.glb",
+        "size": 1706760,
+        "sha256": "aaca12482970b43b3bc15f15e65aaede23b7648fb873b9fbf3a876f5f158cd23"
+      },
+      "photo": {
+        "url": "https://raw.githubusercontent.com/diegonmarcos/hardtech-db-models/main/boats/photos/house-boat-7.jpg"
+      },
+      "original": {
+        "path": "boats/obj/house-boat.obj",
+        "size": 1506644,
+        "sha256": "ad1d531b637a9ecfb25532441a786966620798c707952285954b61041412e381"
+      }
+    },
+    {
+      "id": "dji-s900",
+      "name": "DJI S900",
+      "framework": "three.js / glTF (GLB view of a STEP AP214 assembly)",
+      "stack": ["GLB", "STEP", "WebGL"],
+      "description": "Hex-rotor camera drone, the owner's own SolidWorks assembly: 237 parts in 15 colours, 166,007 triangles, 0.87 x 0.59 x 0.91 m. Rotate, zoom and auto-rotate; the original STEP (22 MB) stays in the originals repo.",
+      "format": "STEP",
+      "software": "SolidWorks 2015 (STEP AP214)",
+      "units": "m",
+      "parts": 237,
+      "triangles": 166007,
+      "glb": {
+        "url": "https://media.githubusercontent.com/media/diegonmarcos/hardtech-db-models/main/mechanics/glb/dji-s900-hex-rotor-drone.view.glb",
+        "size": 6512592,
+        "sha256": "cc2289c30ab60791213a48a6480a79f670b272d4cd5c82278fc6532192481379"
+      },
+      "photo": {
+        "url": "https://raw.githubusercontent.com/diegonmarcos/hardtech-db-models/main/mechanics/photos/dji-s900-hex-rotor-drone.jpg"
+      },
+      "original": {
+        "path": "mechanics/step/dji-s900-hex-rotor-drone.step",
+        "size": 22288885,
+        "sha256": "c426eddb0fa298c92ddb567afa8bc6c8e5c5e5ddcb39837efda9f0520f7c209f"
+      }
+    }
+  ]
+}

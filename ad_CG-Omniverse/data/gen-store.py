@@ -17,6 +17,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SRC, OUT = os.path.join(HERE, "fwa.md"), os.path.join(HERE, "store.json")
 LINKS = os.path.join(HERE, "link-status.json")
 RULES = os.path.join(HERE, "world-rules.json")   # per-world launch rules (query string Galaxy appends), keyed by entry id
+MODELS = os.path.join(HERE, "models.json")   # #1701 the 3D models of the Store (declared data), merged in after the web worlds
 STATUSES = {"online", "offline", "unverified"}
 WAYBACK = "https://web.archive.org/web/2020/"   # an entry's archived copy is WAYBACK + its url (Galaxy's offline card links it)
 NSC = os.path.join(HERE, "..", "app", "src", "main", "res", "xml", "network_security_config.xml")
@@ -53,9 +54,37 @@ def load_rules(path=RULES):
     return rules
 
 
-def generate(text, links=None, rules=None):
+def load_models(path=MODELS):
+    """The Store's 3D models (data/models.json): each becomes an entry of Type Model carrying its `model` (GLB url + SHA-256 + size, photo, original)."""
+    if not os.path.exists(path): return []
+    doc = json.load(open(path, encoding="utf-8"))
+    out, seen = [], set()
+    for m in doc.get("models", []):
+        mid = m.get("id", "")
+        if not re.fullmatch(r"[a-z0-9-]+", mid) or mid in seen: raise SystemExit("models.json: id %r is empty, not a slug or duplicated" % mid)
+        seen.add(mid)
+        glb, photo = m.get("glb", {}), m.get("photo", {})
+        if not str(glb.get("url", "")).startswith("https://"): raise SystemExit("models.json: %s glb.url must be https" % mid)
+        if not re.fullmatch(r"[0-9a-f]{64}", str(glb.get("sha256", ""))): raise SystemExit("models.json: %s glb.sha256 is not a SHA-256" % mid)
+        if not isinstance(glb.get("size"), int) or glb["size"] <= 0: raise SystemExit("models.json: %s glb.size is not a byte count" % mid)
+        if not str(photo.get("url", "")).startswith("https://"): raise SystemExit("models.json: %s photo.url must be https" % mid)
+        for k in ("name", "framework", "description", "format"):
+            if not m.get(k): raise SystemExit("models.json: %s has no %s" % (mid, k))
+        out.append({
+            "id": mid, "name": m["name"], "url": doc["repo_url"], "type": "Model", "dimension": "3D", "framework": m["framework"],
+            "stack": list(m.get("stack", [])), "vr": False, "description": m["description"], "status": "online", "checked": doc["checked"],
+            "wayback": "",
+            "model": {"glb": glb["url"], "sha256": glb["sha256"], "size": glb["size"], "photo": photo["url"], "format": m["format"],
+                      "software": m.get("software", ""), "units": m.get("units", "m"), "parts": m.get("parts", 0), "triangles": m.get("triangles", 0),
+                      "original": m.get("original", {})},
+        })
+    return out
+
+
+def generate(text, links=None, rules=None, models=None):
     links = load_links() if links is None else links
     rules = load_rules() if rules is None else rules
+    models = load_models() if models is None else models
     rows = [l for l in text.splitlines() if l.strip().startswith("|")]
     if not rows or cells(rows[0]) != COLUMNS:
         raise SystemExit("fwa.md: the header is not %s" % " | ".join(COLUMNS))
@@ -86,6 +115,10 @@ def generate(text, links=None, rules=None):
         if r is None or r.get("off"): continue   # an "off" rule stays declared (with its why) but the world loads its plain address
         e["launch_query"] = r["query"]
         if "cpu_query" in r: e["launch_query_cpu"] = r["cpu_query"]
+    for m in models:
+        if m["id"] in seen: raise SystemExit("models.json: id %s is also a web world of fwa.md" % m["id"])
+        seen.add(m["id"])
+    entries += models
     unknown = sorted(set(rules) - seen)
     if unknown: raise SystemExit("world-rules.json: unknown world id(s) %s" % unknown)
     return {

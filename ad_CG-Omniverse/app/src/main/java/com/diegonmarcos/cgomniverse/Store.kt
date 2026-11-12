@@ -22,6 +22,25 @@ data class World(
     val launchQuery: String = "",
     /** The query of the CPU presentation (#1657, world-rules.json cpu_query): null = the same as [launchQuery]. */
     val launchQueryCpu: String? = null,
+    /** #1701 set for a Type Model entry: the model Galaxy shows in the viewer; null for a web world. */
+    val model: ModelRef? = null,
+)
+
+/**
+ * #1701 A 3D model of the Store (data/models.json via gen-store.py): the GLB view the viewer downloads at runtime ([glb], checked
+ * against [sha256]; never baked in the APK), the card's [photo], and the facts the card shows. Galaxy opens a world that has one in the
+ * model viewer (assets/model) instead of a web page.
+ */
+data class ModelRef(
+    val glb: String,
+    val sha256: String,
+    val size: Long,
+    val photo: String,
+    val format: String,
+    val software: String = "",
+    val units: String = "m",
+    val parts: Int = 0,
+    val triangles: Int = 0,
 )
 
 /** What the link probe found: ONLINE answered, OFFLINE is gone (404/410, timeout, no host), UNVERIFIED the probe could not tell. */
@@ -60,7 +79,7 @@ object Offline {
 
 /** A filter group of the Store: its chips (All aside) in order, and the chips a world counts for in this group. */
 enum class FilterGroup(val chips: List<String>) {
-    TYPE(listOf(Store.GAMES, Store.WEBSITES, Store.OTHERS)),
+    TYPE(listOf(Store.GAMES, Store.WEBSITES, Store.OTHERS, Store.MODELS)),
     DIMENSION(listOf(Store.D3, Store.D2)),
     DEVICE(listOf(Store.FLAT, Store.VR_GLASS));
 }
@@ -75,6 +94,7 @@ object Store {
     const val GAMES = "Games"
     const val WEBSITES = "Websites"
     const val OTHERS = "Others"
+    const val MODELS = "Models"
     const val D3 = "3D"
     const val D2 = "2D"
     const val FLAT = "Flat Screen"
@@ -96,6 +116,12 @@ object Store {
             val id = o.optString("id"); val url = o.optString("url")
             if (id.isEmpty() || url.isEmpty()) return@mapNotNull null
             val st = o.optJSONArray("stack")
+            val m = o.optJSONObject("model")?.let { mo ->
+                val glb = mo.optString("glb"); val sha = mo.optString("sha256")
+                if (glb.isEmpty() || sha.isEmpty()) null
+                else ModelRef(glb, sha, mo.optLong("size"), mo.optString("photo"), mo.optString("format"), mo.optString("software"),
+                    mo.optString("units", "m"), mo.optInt("parts"), mo.optInt("triangles"))
+            }
             World(
                 id = id, name = o.optString("name"), url = url, type = o.optString("type"), dimension = o.optString("dimension"),
                 framework = o.optString("framework"),
@@ -104,6 +130,7 @@ object Store {
                 status = LinkStatus.parse(o.optString("status")), checked = o.optString("checked"), wayback = o.optString("wayback"),
                 launchQuery = o.optString("launch_query"),
                 launchQueryCpu = if (o.has("launch_query_cpu")) o.optString("launch_query_cpu") else null,
+                model = m,
             )
         }
     }
@@ -114,6 +141,7 @@ object Store {
             "Game" -> setOf(GAMES)
             "Website" -> setOf(WEBSITES)
             "Others" -> setOf(OTHERS)
+            "Model" -> setOf(MODELS)
             else -> emptySet()
         }
         FilterGroup.DIMENSION -> when (w.dimension) {

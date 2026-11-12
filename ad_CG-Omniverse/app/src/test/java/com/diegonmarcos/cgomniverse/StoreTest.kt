@@ -113,12 +113,36 @@ class StoreTest {
     @Test fun theGeneratedCatalogueParsesWhole() {
         val f = listOf(File("../data/store.json"), File("data/store.json")).first { it.exists() }
         val worlds = Store.parse(f.readText())
-        assertEquals(31, worlds.size)
+        assertEquals(33, worlds.size)   // 31 web worlds + the 2 models (#1701)
         assertEquals(worlds.size, Store.filter(worlds, Store.allSelected()).size)
         assertEquals(5, worlds.count { it.vr })
         assertEquals(worlds.map { it.id }.toSet().size, worlds.size)
         assertTrue(worlds.all { it.url.startsWith("http") && it.name.isNotEmpty() && it.description.isNotEmpty() })
         assertTrue(Store.parse("not json").isEmpty())
+    }
+
+    @Test fun theModelsAreInTheCatalogue() {
+        val f = listOf(File("../data/store.json"), File("data/store.json")).first { it.exists() }
+        val worlds = Store.parse(f.readText())
+        val models = worlds.filter { it.model != null }
+        assertEquals(listOf("house-boat", "dji-s900"), models.map { it.id })
+        models.forEach { w ->
+            val m = w.model!!
+            assertEquals(setOf(Store.MODELS), Store.tags(w, FilterGroup.TYPE))
+            assertEquals(setOf(Store.D3), Store.tags(w, FilterGroup.DIMENSION))
+            assertTrue(m.glb.startsWith("https://") && m.photo.startsWith("https://"))
+            assertTrue(Regex("[0-9a-f]{64}").matches(m.sha256))
+            assertTrue(m.size > 0 && m.parts > 0 && m.triangles > 0)
+        }
+        assertEquals("OBJ", models[0].model!!.format); assertEquals("STEP", models[1].model!!.format)
+        assertEquals(237, models[1].model!!.parts)
+        // the Models chip alone shows exactly the two; without it they are gone and every web world stays
+        val only = Store.toggle(Store.toggle(Store.toggle(Store.allSelected(), FilterGroup.TYPE, Store.GAMES), FilterGroup.TYPE, Store.WEBSITES), FilterGroup.TYPE, Store.OTHERS)
+        assertEquals(listOf("house-boat", "dji-s900"), Store.filter(worlds, only).map { it.id })
+        assertEquals(31, Store.filter(worlds, Store.toggle(Store.allSelected(), FilterGroup.TYPE, Store.MODELS)).size)
+        // a web world never carries a model; a model entry with no address is read as a plain world (never a crash)
+        assertTrue(worlds.filter { it.model == null }.all { it.type != "Model" })
+        assertEquals(null, Store.parse("""{"entries":[{"id":"x","url":"https://x.example/","model":{"glb":""}}]}""").single().model)
     }
 
     @Test fun floor796IsInTheCatalogue() {

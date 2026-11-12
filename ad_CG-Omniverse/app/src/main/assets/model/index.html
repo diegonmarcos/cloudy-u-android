@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Model viewer</title>
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #121212; color: #e8e8ec; font: 14px/1.4 system-ui, sans-serif; }
+  #stage { position: fixed; inset: 0; overflow: hidden; background: #121212; }
+  canvas { display: block; touch-action: none; width: 100%; height: 100%; }
+  .overlay { position: fixed; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 20px; text-align: center; pointer-events: none; }
+  #status { top: 38%; }
+  #status > * { pointer-events: auto; }
+  #bar { width: min(320px, 80vw); height: 6px; border-radius: 3px; background: #2a2a31; overflow: hidden; }
+  #fill { height: 100%; width: 0; background: #7aa2ff; transition: width .15s linear; }
+  #msg { max-width: 92vw; word-break: break-word; }
+  #msg.err { color: #ff8f8f; }
+  button { font: inherit; color: #e8e8ec; background: #25252c; border: 1px solid #3a3a44; border-radius: 10px; padding: 8px 14px; min-height: 40px; }
+  button[aria-pressed="true"] { border-color: #7aa2ff; color: #7aa2ff; }
+  #tools { bottom: 14px; flex-direction: row; justify-content: center; flex-wrap: wrap; }
+  #tools button { pointer-events: auto; }
+  #info { bottom: 66px; color: #a8a8b3; font-size: 12px; }
+  [hidden] { display: none !important; }
+</style>
+<script type="importmap">{ "imports": { "three": "../space/three.module.min.js" } }</script>
+</head>
+<body>
+<div id="stage"></div>
+<div id="status" class="overlay" role="status" aria-live="polite">
+  <div id="msg">Waiting for the model...</div>
+  <div id="bar" hidden><div id="fill"></div></div>
+  <div id="actions"><button id="cancel" hidden>Cancel</button><button id="retry" hidden>Retry</button></div>
+</div>
+<div id="info" class="overlay" hidden></div>
+<div id="tools" class="overlay" hidden>
+  <button id="rotate" aria-pressed="false">Auto-rotate</button>
+  <button id="reset">Reset view</button>
+  <button id="wire" aria-pressed="false">Wireframe</button>
+</div>
+<script>
+  /* The host (the app, or the query string in a browser) hands the model over with omniModel({glb, sha256, size, name}); a call that
+     arrives before the module below has loaded is kept and consumed by it. Nothing about a model is spelled in this page. */
+  window.omniModel = function (cfg) { window.__omniPending = cfg; };
+  window.__omniModel = { state: 'idle', error: '', loaded: 0, total: 0, frames: 0, cached: false };
+  (function () {
+    var q = new URLSearchParams(location.search), g = q.get('glb');
+    if (g) window.__omniPending = { glb: g, sha256: q.get('sha256') || '', size: Number(q.get('size') || 0), name: q.get('name') || '' };
+  })();
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { OrbitControls } from '../space/OrbitControls.js';
+  import { GLTFLoader } from '../cgc/vendor/GLTFLoader.js';
+  import { RoomEnvironment } from '../cgc/vendor/RoomEnvironment.js';
+
+  const $ = (id) => document.getElementById(id);
+  const S = window.__omniModel;
+  const CACHE = 'omni-models-v1';
+  let renderer, scene, camera, controls, root, grid, stageEl = $('stage'), job = 0, abort = null, lastCfg = null, raf = 0;
+  let home = { pos: new THREE.Vector3(), target: new THREE.Vector3() };
+
+  function say(text, err) { const m = $('msg'); m.textContent = text; m.className = err ? 'err' : ''; }
+  function mb(n) { return (n / 1048576).toFixed(1) + ' MB'; }
+  function hex(buf) { return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join(''); }
+  function fail(why) {
+    S.state = 'error'; S.error = String(why);
+    say('The model could not be shown: ' + why, true);
+    $('bar').hidden = true; $('cancel').hidden = true; $('retry').hidden = !lastCfg; $('status').hidden = false;
+  }
+
+  function ensureScene() {
+    if (renderer) return true;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    } catch (e) { fail('WebGL is not available in this WebView (' + (e && e.message || e) + ')'); return false; }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(stageEl.clientWidth || innerWidth, stageEl.clientHeight || innerHeight, false);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    stageEl.appendChild(renderer.domElement);
+    renderer.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); fail('the graphics context was lost'); cancelAnimationFrame(raf); }, false);
+    renderer.domElement.addEventListener('webglcontextrestored', () => { say('Graphics restored.'); loop(); }, false);
+    scene = new THREE.Scene(); scene.background = new THREE.Color(0x121212);
+    const pm = new THREE.PMREMGenerator(renderer);
+    scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+    camera = new THREE.PerspectiveCamera(35, 1, 0.01, 1000);
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.08; controls.autoRotateSpeed = 1.5; controls.screenSpacePanning = true;
+    addEventListener('resize', resize);
+    resize(); loop();
+    return true;
+  }
+  function resize() {
+    if (!renderer) return;
+    const w = stageEl.clientWidth || innerWidth, h = stageEl.clientHeight || innerHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
+  }
+  function loop() {
+    raf = requestAnimationFrame(loop);
+    try { controls.update(); renderer.render(scene, camera); S.frames++; } catch (e) { cancelAnimationFrame(raf); fail('drawing failed: ' + (e && e.message || e)); }
+  }
+
+  /* the GLB's bytes: the page's cache first (keyed by address + SHA-256, hashed again on every hit), else the network with progress
+     and cancel; a body whose SHA-256 differs from the declared one is never drawn or cached */
+  async function fetchModel(cfg, signal) {
+    const key = new Request(cfg.glb + (cfg.glb.includes('?') ? '&' : '?') + 'sha256=' + cfg.sha256);
+    let cache = null;
+    try { cache = await caches.open(CACHE); } catch (e) { cache = null; }
+    if (cache) {
+      try {
+        const hit = await cache.match(key);
+        if (hit) {
+          const buf = await hit.arrayBuffer();
+          if (!cfg.sha256 || hex(await crypto.subtle.digest('SHA-256', buf)) === cfg.sha256) { S.cached = true; return buf; }
+          await cache.delete(key);
+        }
+      } catch (e) { /* a broken cache entry is refetched */ }
+    }
+    S.cached = false;
+    let res;
+    try { res = await fetch(cfg.glb, { signal, cache: 'no-store' }); } catch (e) {
+      if (e && e.name === 'AbortError') throw e;
+      throw new Error('the download failed (' + (e && e.message || e) + '); check the network and retry');
+    }
+    if (!res.ok) throw new Error('the server answered HTTP ' + res.status);
+    const total = Number(res.headers.get('content-length')) || cfg.size || 0;
+    S.total = total;
+    const parts = []; let got = 0;
+    if (res.body && res.body.getReader) {
+      const rd = res.body.getReader();
+      for (;;) {
+        const { done, value } = await rd.read();
+        if (done) break;
+        parts.push(value); got += value.length; S.loaded = got;
+        $('fill').style.width = total ? Math.min(100, got * 100 / total).toFixed(1) + '%' : '50%';
+        say('Downloading ' + (cfg.name || 'the model') + ': ' + mb(got) + (total ? ' of ' + mb(total) : ''));
+      }
+    } else { parts.push(new Uint8Array(await res.arrayBuffer())); got = parts[0].length; }
+    const buf = new Uint8Array(got); let o = 0; for (const p of parts) { buf.set(p, o); o += p.length; }
+    if (cfg.sha256) {
+      say('Checking the file...');
+      const h = hex(await crypto.subtle.digest('SHA-256', buf));
+      if (h !== cfg.sha256) throw new Error('the file does not match its published SHA-256 (' + h.slice(0, 12) + ' instead of ' + cfg.sha256.slice(0, 12) + '): not shown');
+    }
+    if (cache) { try { await cache.put(key, new Response(buf, { headers: { 'content-type': 'model/gltf-binary' } })); } catch (e) { /* quota: shown, not cached */ } }
+    return buf.buffer;
+  }
+
+  function show(gltf, cfg) {
+    if (root) { scene.remove(root); root.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
+    if (grid) { scene.remove(grid); grid.geometry.dispose(); grid = null; }
+    root = gltf.scene;
+    let tri = 0, meshes = 0;
+    root.traverse((o) => {
+      if (!o.isMesh) return;
+      meshes++; const g = o.geometry; tri += g.index ? g.index.count / 3 : (g.attributes.position ? g.attributes.position.count / 3 : 0);
+      (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { m.side = THREE.DoubleSide; });
+    });
+    scene.add(root);
+    const box = new THREE.Box3().setFromObject(root);
+    if (box.isEmpty()) throw new Error('the file holds no geometry');
+    const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+    const r = Math.max(size.length() / 2, 1e-6);
+    const vf = THREE.MathUtils.degToRad(camera.fov / 2), hf = Math.atan(Math.tan(vf) * camera.aspect);   // portrait: the width limits the fit
+    const d = r / Math.sin(Math.min(vf, hf)) * 1.08;
+    camera.near = d / 500; camera.far = d * 50; camera.updateProjectionMatrix();
+    home.target.copy(c); home.pos.set(c.x + d * 0.55, c.y + d * 0.35, c.z + d * 0.75);
+    controls.minDistance = d * 0.05; controls.maxDistance = d * 6;
+    grid = new THREE.GridHelper(Math.max(size.x, size.z) * 2.4, 20, 0x4a4a55, 0x2c2c34); grid.position.set(c.x, box.min.y, c.z); scene.add(grid);
+    resetView();
+    const dims = [size.x, size.y, size.z].map((v) => v.toFixed(2)).join(' x ');
+    $('info').textContent = (cfg.name ? cfg.name + ': ' : '') + meshes + ' mesh' + (meshes === 1 ? '' : 'es') + ', ' + Math.round(tri).toLocaleString('en-US') + ' triangles, ' + dims + ' m' + (S.cached ? ' (from cache)' : '');
+    S.meshes = meshes; S.triangles = Math.round(tri); S.size = [size.x, size.y, size.z];
+  }
+  function resetView() { camera.position.copy(home.pos); controls.target.copy(home.target); controls.update(); }
+
+  async function start(cfg) {
+    lastCfg = cfg; const mine = ++job;
+    if (abort) abort.abort();
+    abort = new AbortController();
+    S.state = 'loading'; S.error = ''; S.loaded = 0; S.total = 0;
+    $('status').hidden = false; $('tools').hidden = true; $('info').hidden = true; $('retry').hidden = true;
+    $('bar').hidden = false; $('fill').style.width = '0'; $('cancel').hidden = false; say('Starting...');
+    if (!cfg || !/^https:\/\//.test(cfg.glb || '') && !/^(\.\.?\/|\/)/.test(cfg.glb || '')) return fail('no model address was given');
+    if (!ensureScene()) return;
+    try {
+      const buf = await fetchModel(cfg, abort.signal);
+      if (mine !== job) return;
+      say('Building the model...');
+      const gltf = await new Promise((ok, no) => new GLTFLoader().parse(buf, '', ok, no));
+      if (mine !== job) return;
+      show(gltf, cfg);
+      $('status').hidden = true; $('tools').hidden = false; $('info').hidden = false; S.state = 'ready';
+    } catch (e) {
+      if (mine !== job) return;
+      if (e && e.name === 'AbortError') { S.state = 'cancelled'; say('Cancelled.'); $('bar').hidden = true; $('cancel').hidden = true; $('retry').hidden = false; return; }
+      fail(e && e.message || e);
+    }
+  }
+
+  $('cancel').onclick = () => { if (abort) abort.abort(); };
+  $('retry').onclick = () => { if (lastCfg) start(lastCfg); };
+  $('reset').onclick = () => { if (camera) resetView(); };
+  $('rotate').onclick = (ev) => { if (!controls) return; controls.autoRotate = !controls.autoRotate; ev.currentTarget.setAttribute('aria-pressed', String(controls.autoRotate)); };
+  $('wire').onclick = (ev) => {
+    if (!root) return; const on = ev.currentTarget.getAttribute('aria-pressed') !== 'true';
+    ev.currentTarget.setAttribute('aria-pressed', String(on));
+    root.traverse((o) => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { m.wireframe = on; }); });
+  };
+  window.omniModel = (cfg) => { try { start(cfg); } catch (e) { fail(e && e.message || e); } };
+  window.addEventListener('error', (e) => { if (S.state === 'loading') fail(e.message); });
+  if (window.__omniPending) window.omniModel(window.__omniPending);
+</script>
+</body>
+</html>

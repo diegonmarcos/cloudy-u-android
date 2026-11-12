@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -153,10 +154,13 @@ fun StatusBadge(w: World) {
 private fun WorldCard(w: World, onGalaxy: () -> Unit, onBrowser: () -> Unit) {
     val p = LocalKitPalette.current
     KitCard(Modifier.testTag(Tags.world(w.id))) {
+        val model = w.model
+        if (model != null) ModelPhoto(model, Modifier.fillMaxWidth().height(150.dp).padding(bottom = 8.dp))
         Text(w.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = p.textPrimary,
             maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.padding(top = 6.dp))
         WorldBadges(w)
+        if (model != null) Text(ModelWeb.facts(model), style = MaterialTheme.typography.labelMedium, color = p.textSecondary, modifier = Modifier.padding(top = 6.dp).testTag(Tags.modelFacts(w.id)))
         Text(w.framework, style = MaterialTheme.typography.labelMedium, color = p.accent, modifier = Modifier.padding(top = 8.dp))
         Text(w.description, style = MaterialTheme.typography.bodySmall, color = p.textSecondary, modifier = Modifier.padding(top = 2.dp))
         Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

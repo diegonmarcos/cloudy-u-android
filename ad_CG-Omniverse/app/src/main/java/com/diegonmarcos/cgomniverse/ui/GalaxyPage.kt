@@ -143,7 +143,9 @@ fun GalaxyPage(tabs: Tabs.State, onSelect: (String) -> Unit, onClose: (String) -
                     modifier = Modifier.testTag(Tags.GALAXY_EMPTY))
             }
         } else {
-            WorldView(cur, Modifier.weight(1f).fillMaxWidth())
+            // #1701 a Type Model entry opens in the model viewer, every other world in the web view as before
+            val model = cur.model
+            if (model != null) ModelView(cur, model, Modifier.weight(1f).fillMaxWidth()) else WorldView(cur, Modifier.weight(1f).fillMaxWidth())
         }
     }
 }
