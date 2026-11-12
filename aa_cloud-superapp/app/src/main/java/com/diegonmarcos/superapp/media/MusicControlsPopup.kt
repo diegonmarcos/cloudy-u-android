@@ -266,7 +266,8 @@ internal fun MusicControlsCard(ctx: Context, initialController: MediaController?
                 Spacer(Modifier.width(14.dp))
                 Glyph(if (snap.playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, 46, "music:play", Color.White) {
                     // Live session: play / pause it; none: one tap restarts the last Tidal / Spotify session.
-                    MediaHub.send(ctx, MediaHub.Action.PLAY_PAUSE, controller)
+                    if (controller == null && last != null && MediaHub.current() == null) LastMediaSession.resume(ctx)
+                    else MediaHub.send(ctx, MediaHub.Action.PLAY_PAUSE, controller)
                 }
                 Spacer(Modifier.width(14.dp))
                 Glyph(android.R.drawable.ic_media_next, 38, "music:next", Color.White) {
