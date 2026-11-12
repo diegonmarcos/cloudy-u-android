@@ -1903,6 +1903,14 @@
         "lib-torrent"
       ]
     },
+    "store_torrent_catalogue": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1681 Cloud Store > Configs > Torrent > Catalogue entries: the torrent catalogue entries the user added on this phone (name, category, magnet or https .torrent), shown in the Torrent tab after the declared runtime catalogue; user-added on this phone, never migrated.",
+      "used_by": [
+        "ac_cloud-store"
+      ]
+    },
     "store_lib_groups": {
       "kind": "prefs",
       "class": "device",
