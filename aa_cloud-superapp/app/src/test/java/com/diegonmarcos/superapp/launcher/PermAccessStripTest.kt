@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ApplicationProvider
 import com.diegonmarcos.superapp.launcher.PermAccess.Sensor
@@ -120,7 +121,8 @@ class PermAccessStripTest : KitPageHarness() {
         compose.runOnUiThread { dash = PermAccess.Dashboard.NoAccess("no shell") }
         compose.waitForIdle()
         compose.onNodeWithTag("permaccess:noaccess", useUnmergedTree = true).assertExists()
-        compose.onNodeWithTag("permaccess:openperms", useUnmergedTree = true).performClick()
+        // The no-access block lists every group as unknown, so the button sits below the bubble's fold: scroll to it as a user would.
+        compose.onNodeWithTag("permaccess:openperms", useUnmergedTree = true).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(1, perms)
     }
