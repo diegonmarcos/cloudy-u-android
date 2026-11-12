@@ -69,22 +69,25 @@ fi
 shot configs-open 6
 # #1630: every strip is {own tabs} | Agents, Perms, Logcat, X-Ray App, About. The strip scrolls, so the tail can sit
 # off screen: walk it right to left with swipes on the strip row, collecting the labels in on-screen order.
-strip_labels() { # XML -> "y label x" per tab of the strip row (the row that holds a tail label)
+strip_labels() { # XML -> "y label x" per tab of the Configs strip: the first row of tab nodes under the top bar
     python3 - "$1" <<'PY'
 import re, sys
 x = open(sys.argv[1], errors="ignore").read()
-tail = ("Agents", "Perms", "Logcat", "X-Ray App", "About")
-nodes = []
+tabs = []
 for m in re.finditer(r'<node ([^>]*)>', x):
     a = m.group(1)
-    t = (re.search(r'text="([^"]*)"', a) or [None, ""])[1]
+    d = (re.search(r'content-desc="([^"]*)"', a) or [None, ""])[1]
     b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', a)
-    if t and b: l, tp, r, d = map(int, b.groups()); nodes.append((t, l, (tp + d) // 2))
-rows = [y for t, _, y in nodes if t in tail]
-if not rows: sys.exit(0)
-y0 = min(rows)  # the strip sits above the page body
-for t, l, y in sorted(nodes, key=lambda n: n[1]):
-    if abs(y - y0) <= 24 and len(t) <= 24: print(y, t, l, sep="\t")
+    if d and b:
+        l, t, r, dn = map(int, b.groups())
+        if r > l and dn > t: tabs.append((t, l, d, (t + dn) // 2))
+tops = sorted({t for t, *_ in tabs})
+if len(tops) < 2: sys.exit(0)
+bar = tops[0]  # the top bar's icons (AI, Account, Configs)
+row = next((t for t in tops if t > bar + 20), None)
+if row is None: sys.exit(0)
+for t, l, d, cy in sorted(tabs, key=lambda n: n[1]):
+    if t == row and len(d) <= 24: print(cy, d, l, sep="\t")
 PY
 }
 order=()
@@ -109,7 +112,8 @@ for tab in Agents Perms Logcat "X-Ray App" About; do
     dismiss; found=0
     for i in 0 1 2 3 4 5 6; do
         dump cur
-        if tap_node "$OUT/cur.xml" "^$tab\$"; then found=1; break; fi
+        hit="$(strip_labels "$OUT/cur.xml" | awk -F'\t' -v t="$tab" '$2==t {print $3+20, $1; exit}')"
+        if [ -n "$hit" ]; then $T adb shell input tap $hit; found=1; break; fi
         [ -n "$ROW_Y" ] && $T adb shell input swipe $((W * 2 / 10)) "$ROW_Y" $((W * 8 / 10)) "$ROW_Y" 400; sleep 1
     done
     if [ $found = 1 ]; then shot "tab-${tab// /-}" 5; else echo "FAIL $NAME: no $tab tab on the Configs strip"; rc=1; fi

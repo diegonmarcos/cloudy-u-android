@@ -25,6 +25,25 @@ adb push "$FAKE" "/sdcard/Android/data/$PKG/files/private/identities.json" >/dev
 
 shot() { sleep "${2:-4}"; adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null; adb exec-out uiautomator dump /dev/tty > "$OUT/$1.xml" 2>/dev/null || true; }
 has() { grep -q -- "$2" "$OUT/$1.xml"; }
+# a chip row scrolls (Containers: All, Cloudy, Cloud-me, CG, Capital, Hardtech, Others): when a label is not on screen,
+# swipe the row of the nearest earlier label left and add that dump to the page's xml, then look again
+has_scrolled() { # <shot> <label> <row label>
+  has "$1" "$2" && return 0
+  local y; y="$(python3 - "$OUT/$1.xml" "$3" <<'PY'
+import re, sys
+x = open(sys.argv[1], errors="ignore").read()
+m = re.search(r'text="%s"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"' % re.escape(sys.argv[2]), x)
+if m: print((int(m.group(2)) + int(m.group(4))) // 2)
+PY
+)"
+  [ -n "$y" ] || return 1
+  for _ in 1 2 3; do
+    adb shell input swipe 900 "$y" 200 "$y" 400; sleep 1
+    adb exec-out uiautomator dump /dev/tty >> "$OUT/$1.xml" 2>/dev/null || true
+    has "$1" "$2" && return 0
+  done
+  return 1
+}
 open_page() { adb shell am start -W -n "$PKG/.MainActivity" --es shortcut_action "page:$1" </dev/null >/dev/null 2>&1; }
 
 adb shell am start -W -n "$PKG/.MainActivity" </dev/null >/dev/null 2>&1; shot 00-first-start 6
@@ -53,7 +72,10 @@ PAGES
 while read -r page wait labels; do
   [ -z "$page" ] && continue
   open_page "$page"; shot "c-$page" "$wait"
-  for l in ${labels//,/ }; do has "c-$page" "${l//_/ }" || bad "c-$page: label '${l//_/ }' missing"; done
+  anchor=""  # the nearest earlier label that is on screen: its row is the one to scroll
+  for l in ${labels//,/ }; do
+    if has_scrolled "c-$page" "${l//_/ }" "${anchor:-${l//_/ }}"; then anchor="${l//_/ }"; else bad "c-$page: label '${l//_/ }' missing"; fi
+  done
 done <<'CPAGES'
 all_topology 6 All,Cloudy,Cloud-me,CG,Capital,Hardtech,Others,Topology,Table
 all_table 6 Topology,Table,Container,Cloudy_/
