@@ -70,9 +70,9 @@ class FleetConfigTest {
 
     @Test fun `the manifest is the one baked into the APK and declares every fleet app`() {
         assertTrue(m.stores.size > 100)
-        assertEquals(com.diegonmarcos.superapp.updater.Fleet.parse(com.diegonmarcos.superapp.BuildConfig.CONSTELLATION_FLEET_B64).count { it.kind == "app" }, m.apps.size)
+        assertEquals(com.diegonmarcos.superapp.updater.Fleet.parse(com.diegonmarcos.superapp.updater.BuildConfig.CONSTELLATION_FLEET_B64).count { it.kind == "app" }, m.apps.size)
         assertEquals(setOf("config", "secret"), m.migrate)
-        assertNotNull("the SuperApp itself is a declared fleet app", m.appByPackage(ctx.packageName))
+        assertNotNull("this app itself is a declared fleet app", m.appByPackage(ctx.packageName))
     }
 
     @Test fun `a configured fleet exported from one phone and imported into a clean one is equal, app by app, field by field`() {
