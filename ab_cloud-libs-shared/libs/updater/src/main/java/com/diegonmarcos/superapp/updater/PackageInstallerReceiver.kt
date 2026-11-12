@@ -223,7 +223,8 @@ class PackageInstallerReceiver : BroadcastReceiver() {
                 // dialog per fleet lib, every few seconds, over whatever the user was doing. It now waits on its notification
                 // and the row's "waiting for confirmation" status; the user resumes it from there or from the row's Install.
                 val sessionUnattended = unattended || intent.getBooleanExtra(EXTRA_UNATTENDED, false)
-                if (confirmSurface(sessionUnattended, isForeground(context)) == ConfirmSurface.DIALOG) {
+                val dialog = if (isForeground(context)) confirmSurface(sessionUnattended, foreground = true) == ConfirmSurface.DIALOG else false
+                if (dialog) {
                     // The dialog is going up NOW and this install has not
                     // finished. Keep the gate SHUT: the next commit must wait
                     // for the user to answer, or its dialog stacks on top of
