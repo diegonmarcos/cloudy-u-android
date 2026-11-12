@@ -20,15 +20,14 @@ adb install -r -g "$APK" >/dev/null || { echo "FAIL  install"; exit 1; }
 adb logcat -c || true
 # the owner's real identities are private data (a private repo): the emulator is handed a FAKE side-loaded copy
 FAKE="$(mktemp)"; printf '{"emails":[{"address":"fixture.one@example.test","label":"Fixture mailbox","provider":"example"}]}' > "$FAKE"
-# Written AS THE APP (run-as, the debug APK): a dir that adb's shell user creates under Android/data/<pkg> is not readable by
-# the app on API 30+, so the side-loaded file was never found ("no GitHub token on this phone"). A release APK has no run-as:
-# the shell push stays as the fallback.
+# A dir that adb's shell user creates under Android/data/<pkg> is not readable by the app on API 30+, so the side-loaded
+# copy alone was never found ("no GitHub token on this phone").
 SIDE="/sdcard/Android/data/$PKG/files/private"
-if ! adb shell "run-as $PKG sh -c 'mkdir -p $SIDE && cat > $SIDE/identities.json'" < "$FAKE"; then
-  adb shell mkdir -p "$SIDE" || true
-  adb push "$FAKE" "$SIDE/identities.json" >/dev/null || true
-fi
-adb shell "run-as $PKG ls -l $SIDE" 2>/dev/null || true
+adb shell mkdir -p "$SIDE" || true
+adb push "$FAKE" "$SIDE/identities.json" >/dev/null || true
+# run-as cannot reach /sdcard (another mount namespace): the same fake file also goes in as the app's cached copy
+# (files/private/<id>.json, PrivateData's last fallback), so the page shows the fixture whichever copy the app can read.
+adb shell "run-as $PKG sh -c 'mkdir -p files/private && cat > files/private/identities.json'" < "$FAKE" || true
 
 shot() { sleep "${2:-4}"; adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null; adb exec-out uiautomator dump /dev/tty > "$OUT/$1.xml" 2>/dev/null || true; }
 has() { grep -q -- "$2" "$OUT/$1.xml"; }
@@ -44,8 +43,9 @@ if m: print((int(m.group(2)) + int(m.group(4))) // 2)
 PY
 )"
   [ -n "$y" ] || return 1
+  local w; w="$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | cut -dx -f1)"; w="${w:-320}"
   for _ in 1 2 3; do
-    adb shell input swipe 900 "$y" 200 "$y" 400; sleep 1
+    adb shell input swipe $((w * 8 / 10)) "$y" $((w * 2 / 10)) "$y" 400; sleep 1
     adb exec-out uiautomator dump /dev/tty >> "$OUT/$1.xml" 2>/dev/null || true
     has "$1" "$2" && return 0
   done
