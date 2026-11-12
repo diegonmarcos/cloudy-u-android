@@ -25,6 +25,9 @@
     <string name="me_failed">Could not clone: %1$s</string>
     <string name="me_stale">Could not update, showing the last clone: %1$s</string>
     <string name="me_retry">Retry</string>
+    <string name="me_loading">Loading the library…</string>
+    <string name="me_page_failed" formatted="false">The library page could not be shown: %s</string>
+    <string name="me_server_down">the local server did not start</string>
     <string name="me_token_hint">GitHub token (kept encrypted)</string>
     <string name="me_connect">Connect</string>
 

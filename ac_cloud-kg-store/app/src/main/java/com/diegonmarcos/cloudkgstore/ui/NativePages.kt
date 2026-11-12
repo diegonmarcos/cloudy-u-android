@@ -34,6 +34,7 @@ import com.diegonmarcos.cloudkgstore.R
 import com.diegonmarcos.cloudlib.gitui.GitConnect
 import com.diegonmarcos.cloudlib.gitui.GitConnectSpec
 import com.diegonmarcos.cloudlib.localserve.ServedPage
+import com.diegonmarcos.cloudlib.localserve.ServedPageLabels
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -45,6 +46,8 @@ object NativeTags {
     const val ME_TOKEN = "me_token"
     const val ME_CONNECT = "me_connect"
     const val ME_PULL = "me_pull"
+    const val ME_FRAME = "me_frame"
+    const val ME_PAGE = "me_page"
     fun card(id: String) = "scrapped:$id"
     fun home(id: String) = "home:$id"
 }
@@ -90,6 +93,29 @@ fun meEntry(dir: File, entry: String): File? {
 }
 
 /**
+ * #1669 the Me page's served frame: the stale note (when a pull failed) and the page, which takes EVERY remaining pixel between the
+ * fleet's top bar and the bottom nav (weight(1f), no scroll parent around the web view), on the app's surface with a loading / error
+ * state of libs:local-serve, never a black or wrap-content strip.
+ */
+@Composable
+fun MeServedFrame(file: File, stale: String?) {
+    Column(Modifier.fillMaxSize().testTag(NativeTags.ME_FRAME)) {
+        if (stale != null) KgNote(stale, error = true)
+        ServedPage(
+            file,
+            Modifier.weight(1f).fillMaxWidth().testTag(NativeTags.ME_PAGE),
+            background = MaterialTheme.colorScheme.surface,
+            labels = ServedPageLabels(
+                loading = stringResource(R.string.me_loading),
+                failed = stringResource(R.string.me_page_failed),
+                serverDown = stringResource(R.string.me_server_down),
+                retry = stringResource(R.string.me_retry),
+            ),
+        )
+    }
+}
+
+/**
  * Me: the declared repository is CLONED AT RUNTIME through libs:git-ui's GitConnect (shallow; pulled on every open) and its html
  * is served from the clone by libs:local-serve, the Git Sites way. Nothing of the repo is in the APK. A repo that needs a login
  * asks once for a GitHub token, which GitConnect keeps encrypted; nothing is typed in the declaration.
@@ -121,8 +147,7 @@ fun MePage() {
     Column(Modifier.fillMaxSize()) {
         val f = served
         if (f != null) {
-            if (!ok && line.isNotBlank()) KgNote(stringResource(R.string.me_stale, line), error = true)
-            ServedPage(f, Modifier.fillMaxSize().testTag("me_page"))
+            MeServedFrame(f, if (!ok && line.isNotBlank()) stringResource(R.string.me_stale, line) else null)
         } else {
             Column(Modifier.padding(16.dp).testTag(NativeTags.ME_STATE), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("${decl.owner}/${decl.repo}@${decl.ref}", style = MaterialTheme.typography.titleSmall)

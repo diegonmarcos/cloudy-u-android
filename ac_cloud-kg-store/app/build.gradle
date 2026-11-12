@@ -95,6 +95,8 @@ if (!meDecl?.owner || !meDecl?.repo) throw new GradleException("build.json::ui.m
 }
 
 android {
+    // #1669 Robolectric resolves the app's own strings and theme for MeServedFrameTest.
+    testOptions { unitTests { includeAndroidResources = true; all { testLogging { events 'failed'; exceptionFormat 'full' } } } }
     namespace 'com.diegonmarcos.cloudkgstore'
     compileSdk 36
 
@@ -212,4 +214,9 @@ dependencies {
     // Android's own org.json at runtime; the real library for the JVM suite.
     testImplementation 'org.json:json:20240303'
     testImplementation 'junit:junit:4.13.2'
+    // #1669 MeServedFrameTest: the Me page's served web view laid out under Robolectric on a phone-size window.
+    testImplementation 'org.robolectric:robolectric:4.16.1'
+    testImplementation platform('androidx.compose:compose-bom:2025.11.01')
+    testImplementation 'androidx.compose.ui:ui-test-junit4'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'   // createAndroidComposeRule's ComponentActivity
 }
