@@ -143,7 +143,8 @@ has 'ALL DATA WILL BE ERASED' || fail "the gate does not warn ALL DATA WILL BE E
 PHRASE=$(python3 -I -c '
 import html,re,sys
 x=open(sys.argv[1]).read()
-m=re.search(r"Type &quot;(ERASE [^&]*)&quot; to continue",x)
+# uiautomator escapes the quotes as &quot; or, when the text holds a double quote, quotes the attribute with apostrophes
+m=re.search(r"Type (?:&quot;|\")(ERASE [^&\"]*)(?:&quot;|\") to continue",x)
 print(html.unescape(m.group(1)) if m else "")' "$OUT/ui.xml")
 [ -n "$PHRASE" ] || fail "the gate shows no phrase to type: $(texts)"
 field() { dump >/dev/null; python3 -I -c '
