@@ -1017,6 +1017,40 @@
     "android.permission."
    ],
    "before": "#1550 (new)"
+  },
+  {
+   "id": "adb.99",
+   "group": "adb",
+   "field": "#1688 Run on ADB (direction by real state)",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Run on ADB: Enable",
+    "Run on ADB: Disable"
+   ],
+   "before": "#1688"
+  },
+  {
+   "id": "adb.100",
+   "group": "adb",
+   "field": "#1688 Copy command",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Copy command"
+   ],
+   "before": "#1688"
+  },
+  {
+   "id": "adb.101",
+   "group": "adb",
+   "field": "Copy adb (kept)",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Copy adb"
+   ],
+   "before": "#1688"
   }
  ]
 }

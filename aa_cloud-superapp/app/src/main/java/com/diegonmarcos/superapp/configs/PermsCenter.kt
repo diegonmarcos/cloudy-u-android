@@ -171,6 +171,7 @@ internal fun PermsCenterSection(
     onShellMany: (List<PermEntry>) -> Unit = {},
     statusState: androidx.compose.runtime.MutableState<StatusFilter>? = null,
     wide: Boolean? = null,
+    onAdbToggle: (PermEntry, AdbToggle) -> Unit = { _, _ -> },
 ) {
     val p = LocalKitPalette.current
     val page = remember(rows) { pageRows(ctx, rows) }
@@ -320,7 +321,7 @@ internal fun PermsCenterSection(
                 }
                 GroupProgress(full[g.key] ?: g, key)
                 for (r in g.rows) PermRowLine(r, highlight?.ids?.contains(r.entry.id) == true, ctx, appsOf(r.entry.id), onGrant, onShell,
-                    select = if (selecting) (r.entry.id in selected) else null, onSelect = { id -> selected = if (id in selected) selected - id else selected + id })
+                    select = if (selecting) (r.entry.id in selected) else null, onSelect = { id -> selected = if (id in selected) selected - id else selected + id }, onAdb = { t -> onAdbToggle(r.entry, t) })
             }
         }
         // #1550 (pre-#1519) a group Missing only emptied stays, with its full count and "nothing missing".
@@ -386,7 +387,7 @@ internal fun permsReport(rows: List<PermsPage.Row>, appsOf: (String) -> List<Str
  */
 @Composable
 private fun PermRowLine(r: PermsPage.Row, highlighted: Boolean, ctx: Context, apps: List<String>, onGrant: (PermEntry) -> Unit, onShell: (PermEntry) -> Unit,
-                        select: Boolean? = null, onSelect: (String) -> Unit = {}) {
+                        select: Boolean? = null, onSelect: (String) -> Unit = {}, onAdb: (AdbToggle) -> Unit = {}) {
     val p = LocalKitPalette.current
     val e = r.entry
     var open by rememberSaveable(e.id) { mutableStateOf(false) }
@@ -443,6 +444,10 @@ private fun PermRowLine(r: PermsPage.Row, highlighted: Boolean, ctx: Context, ap
                 copy(ctx, AdbScript.lines(listOf(e), Perms.vars(ctx)).joinToString("\n") { it.forComputer() })
                 Toast.makeText(ctx, "Copied", Toast.LENGTH_SHORT).show()
             }
+            // #1688 Run on ADB (enable or disable, by the real state) and Copy command (that direction's exact lines),
+            // both from libs:perms' one declaration per permission (PermsActions.commands / resetCommands).
+            val adb = remember(e.id, r.status) { runCatching { AdbToggle.forPerm(ctx.packageName, e, r.status, adbComponents(ctx), adbA11y(ctx)) }.getOrNull() }
+            if (adb != null) AdbToggleActions(adb, ctx, "perms") { onAdb(adb) }
         }
         if (open) {
             val live = remember(e.permission) { FleetPerms.liveProtection(ctx, e.permission) }
@@ -491,4 +496,29 @@ private fun Modifier.androidxSemantics(desc: String): Modifier = semantics { con
 
 private fun copy(ctx: Context, v: String) {
     (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText("perms", v))
+}
+
+/** #1688 the component names the enable / disable lines need (listener, accessibility, device admin), from this install. */
+internal fun adbComponents(ctx: Context): Map<String, String> = runCatching {
+    val v = Perms.vars(ctx)
+    buildMap {
+        v["listener"]?.takeIf { it.isNotEmpty() }?.let { put("notification_listener", it) }
+        v["a11y"]?.takeIf { it.isNotEmpty() }?.let { put("accessibility", it) }
+        v["admin"]?.takeIf { it.isNotEmpty() }?.let { put("device_admin", it) }
+    }
+}.getOrDefault(emptyMap())
+
+internal fun adbA11y(ctx: Context): String = runCatching {
+    android.provider.Settings.Secure.getString(ctx.contentResolver, android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+}.getOrNull().orEmpty()
+
+/** #1688 the two actions of one ADB-path toggle: "Run on ADB: Enable|Disable" and "Copy command". Tags perms:runadb:<id>, perms:copycmd:<id>. */
+@Composable
+internal fun AdbToggleActions(t: AdbToggle, ctx: Context, ns: String, onRun: () -> Unit) {
+    if (t.runnable) KitStoreQuick(t.runWord, KitStoreRow.AMBER_FILL,
+        Modifier.padding(start = KitStoreRow.tight).testTag("$ns:runadb:${t.id}")) { onRun() }
+    KitStoreQuick("Copy command", KitStoreRow.BLUE_FILL, Modifier.padding(start = KitStoreRow.tight).testTag("$ns:copycmd:${t.id}")) {
+        copy(ctx, t.copyText())
+        Toast.makeText(ctx, "Copied: ${t.direction.word.lowercase()} command", Toast.LENGTH_SHORT).show()
+    }
 }

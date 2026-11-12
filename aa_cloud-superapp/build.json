@@ -1035,6 +1035,14 @@
         ]
       },
       {
+        "id": "power-saving",
+        "label": "Power saving",
+        "why": "#1687 Configs > Perms and Quick actions switch the phone's power-saving mode when WRITE_SECURE_SETTINGS is not held.",
+        "commands": [
+          "settings put global low_power"
+        ]
+      },
+      {
         "id": "diagnostics",
         "label": "Shell-domain diagnostics",
         "why": "Runs the shizuku_diagnostics bundles: dumpsys battery and usb, sysfs power-supply reads.",
@@ -9977,6 +9985,23 @@
               "icon": "ic_nav_dnd",
               "label": "Do Not Disturb",
               "subtitle": "Silences everything but priority senders."
+            },
+            {
+              "id": "power_saving",
+              "icon": "ic_nav_powersave",
+              "label": "Power saving",
+              "perms_surface": true,
+              "subtitle": "The phone's own power-saving mode (PowerManager.isPowerSaveMode). Set through WRITE_SECURE_SETTINGS, else the ADB channel. The SuperApp's low-power mode follows it.",
+              "_doc": "#1687 ONE declaration, two surfaces: this tile (Launcher Quick actions, the control panel) and the Power saving card on Configs > Perms (perms_surface). adb = the exact shell lines Run on ADB / Copy command use, per direction (#1688 same mechanism as the permission rows). low_power_mode = what the SuperApp does while the system is in power saving: pause_animation stops the launcher 3D/4D auto-rotate, poll_multiplier stretches the periodic loops listed in slows. Prefs: low_power_prefs:follow_system (fleet-config.json).",
+              "adb": {
+                "enable": ["settings put global low_power 1"],
+                "disable": ["settings put global low_power 0"]
+              },
+              "low_power_mode": {
+                "pause_animation": true,
+                "poll_multiplier": 4,
+                "slows": ["3D/4D auto-rotate (paused)", "network badge", "floating nav poll", "resources panel", "notify badges", "control panel lights", "energy sampler", "status dropdowns"]
+              }
             },
             {
               "id": "rotation_lock",

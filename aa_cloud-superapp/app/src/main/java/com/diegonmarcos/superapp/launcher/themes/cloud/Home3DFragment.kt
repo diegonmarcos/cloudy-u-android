@@ -83,12 +83,21 @@ class Home3DFragment : KitComposeFragment() {
             val stop = runCatching { prefs?.observeAutoRotate { autoRotate = it } }.getOrNull()
             onDispose { runCatching { stop?.invoke() } }
         }
+        // #1687 SuperApp low-power mode (follows the system power saving) pauses the auto-rotate on top of the
+        // switch above and resumes it on exit; the switch itself is untouched.
+        var lowPower by remember { mutableStateOf(com.diegonmarcos.superapp.system.LowPowerMode.pausesAnimation) }
+        DisposableEffect(Unit) {
+            runCatching { com.diegonmarcos.superapp.system.PowerSaving.watch(ctx) }
+            lowPower = com.diegonmarcos.superapp.system.LowPowerMode.pausesAnimation
+            val stop = com.diegonmarcos.superapp.system.LowPowerMode.observe { lowPower = com.diegonmarcos.superapp.system.LowPowerMode.pausesAnimation }
+            onDispose { stop() }
+        }
 
         Box(Modifier.fillMaxSize().lockOnDoubleTap(ctx), contentAlignment = Alignment.Center) {
             if (enabled) {
                 // Oversize host so rotated corners don't clip against its own bounds.
                 PolytopeBackground(
-                    animate = animate, interactive = interactive, autoRotate = autoRotate,
+                    animate = animate, interactive = interactive, autoRotate = autoRotate && !lowPower,
                     baseShape = baseShape, cycleOn = cycleOn, cycleMinutes = cycleMinutes, cycleIds = cycleIds,
                     modifier = Modifier.size(360.dp).testTag(TAG_CUBE),
                 )

@@ -287,7 +287,135 @@ class PermissionsFragment : KitComposeFragment() {
             onAskMany = { userAsk = true; askBatch(it) },
             onShellMany = { shellAll(it) },
             statusState = statusSel,
+            onAdbToggle = { e, t -> runAdbToggle(t) {
+                com.diegonmarcos.superapp.perms.PermStatusReader.status(ctxAny().applicationContext, e, null,
+                    com.diegonmarcos.superapp.perms.Perms.vars(ctxAny().applicationContext)).state == com.diegonmarcos.superapp.perms.PermState.GRANTED
+            } },
         )
+    }
+
+    // ── #1688 Run on ADB: one toggle (a permission row or Power saving) through the ADB owner channel ──
+    /** The last run's output, shown under the note so a run is never silent. */
+    private var adbToggleOutput by mutableStateOf("")
+    private var adbToggleDown by mutableStateOf(false)
+
+    private fun runAdbToggle(t: AdbToggle, reread: () -> Boolean?) {
+        val ctx = requireContext().applicationContext
+        shellNote = "${t.label}: ${t.direction.word.lowercase()} by ADB…"
+        Thread {
+            val out = runCatching { AdbToggle.run(t, BrokerGrantChannel(ctx), reread) }
+                .getOrElse { AdbToggle.Outcome(false, "${t.label}: ${it.message ?: it.javaClass.simpleName}", "") }
+            view?.post { shellNote = out.message; adbToggleOutput = out.output; adbToggleDown = out.channelDown; centerEpoch++; powerEpoch++; rolesEpoch++ }
+        }.start()
+    }
+
+    // ── #1688 Roles held: every role / admin / listener this app holds, real state, release behind a confirm ──
+    private var rolesEpoch by mutableIntStateOf(0)
+    private var rolesState by mutableStateOf<Pair<List<RolesHeld.Held>, String>?>(null)
+    private var confirmRelease by mutableStateOf<RolesHeld.Held?>(null)
+
+    private fun loadRoles() {
+        val ctx = requireContext().applicationContext
+        Thread {
+            val ch = BrokerGrantChannel(ctx)
+            val shell: ((String) -> String?)? = if (runCatching { ch.up() }.getOrDefault(false)) { c -> ch.exec(c) } else null
+            val r = runCatching { RolesHeld.read(ctx, shell) }.getOrElse { emptyList<RolesHeld.Held>() to "read failed: ${it.message}" }
+            view?.post { rolesState = r }
+        }.start()
+    }
+
+    @Composable
+    private fun RolesHeldSection() {
+        val ctx = requireContext()
+        androidx.compose.runtime.LaunchedEffect(rolesEpoch) { loadRoles() }
+        Column(Modifier.fillMaxWidth().testTag("perms:roles")) {
+            SectionHead("ROLES HELD — what keeps this app privileged (roles, device admin, listeners)")
+            val st = rolesState
+            if (st == null) Small("Reading…")
+            else {
+                Small("Source: ${st.second}")
+                if (st.first.isEmpty()) Small("This app holds no role, device admin or listener.")
+                for (h in st.first) {
+                    val t = h.toggle()
+                    KvRow(h.kind.word, h.name)
+                    if (h.note.isNotBlank()) Small(h.note)
+                    androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth()) {
+                        AdbToggleActions(t, ctx, "perms-role") { confirmRelease = h }
+                    }
+                }
+                PermButtonRow { PermButton("Refresh roles", null) { rolesEpoch++ } }
+            }
+        }
+        val c = confirmRelease
+        if (c != null) com.diegonmarcos.superapp.uikit.KitConfirmDialog(
+            "Release ${c.kind.word.lowercase()}",
+            "This runs through the ADB Shell channel:\n" + c.release.joinToString("\n") + "\n\nThe app stops holding ${c.name}. Continue?",
+            "Release",
+            "Cancel",
+            onConfirm = {
+                confirmRelease = null
+                val t = c.toggle()
+                runAdbToggle(t) {
+                    val again = RolesHeld.read(ctx.applicationContext, BrokerGrantChannel(ctx.applicationContext).let { ch -> if (ch.up()) { x: String -> ch.exec(x) } else null })
+                    again.first.none { it.id == c.id }.not()
+                }
+                rolesEpoch++
+            },
+            onDismiss = { confirmRelease = null },
+        )
+    }
+
+    // ── #1687 Power saving: the same declared control as Launcher Quick actions (ui.control_panel power_saving) ──
+    private var powerEpoch by mutableIntStateOf(0)
+
+    @Composable
+    private fun PowerSavingCard() {
+        val ctx = requireContext()
+        val decl = remember { DeviceControls.groups.flatMap { it.rows }.firstOrNull { it.id == com.diegonmarcos.superapp.system.PowerSaving.CONTROL_ID } }
+        if (decl == null || DeviceControls.declared(decl.id)?.optBoolean("perms_surface") != true) return
+        var low by remember { mutableStateOf(com.diegonmarcos.superapp.system.LowPowerMode.statusText()) }
+        androidx.compose.runtime.DisposableEffect(Unit) {
+            runCatching { com.diegonmarcos.superapp.system.PowerSaving.watch(ctx) }
+            val stop = com.diegonmarcos.superapp.system.LowPowerMode.observe { low = com.diegonmarcos.superapp.system.LowPowerMode.statusText(); powerEpoch++ }
+            onDispose { stop() }
+        }
+        val toggle = remember(powerEpoch) { com.diegonmarcos.superapp.system.PowerSaving.toggle(ctx) }
+        val wss = remember(powerEpoch) { com.diegonmarcos.superapp.system.PowerSaving.hasSecureSettings(ctx) }
+        val up = remember(powerEpoch) { com.diegonmarcos.superapp.system.PowerSaving.channelUp(ctx) }
+        val blocked = remember(powerEpoch) { com.diegonmarcos.superapp.system.PowerSaving.blockedReason(ctx) }
+        Column(Modifier.fillMaxWidth().testTag("perms:power")) {
+            SectionHead("POWER SAVING — the phone's mode (same control as Quick actions)")
+            KvRow(decl.label, "${if (toggle.on == true) "✓" else "◯"} ${com.diegonmarcos.superapp.system.PowerSaving.word(toggle.on)} (PowerManager.isPowerSaveMode)")
+            KvRow("Permission", (if (wss) "✓ WRITE_SECURE_SETTINGS granted" else "◯ WRITE_SECURE_SETTINGS not granted") +
+                " · ADB channel " + (if (up) "✓ connected" else "◯ not connected"))
+            KvRow("Low-power mode", low)
+            Small(decl.subtitle)
+            if (blocked.isNotEmpty()) Small("⚠ $blocked")
+            PermButtonRow {
+                PermButton(if (toggle.on == true) "Turn power saving off" else "Turn power saving on", null) {
+                    val want = toggle.on != true
+                    val app = ctx.applicationContext
+                    shellNote = "Power saving: switching ${com.diegonmarcos.superapp.system.PowerSaving.word(want)}…"
+                    Thread {
+                        val r = com.diegonmarcos.superapp.system.PowerSaving.set(app, want)
+                        view?.post { shellNote = "Power saving: ${r.channel}: ${r.detail}"; adbToggleDown = r.channelDown; powerEpoch++ }
+                    }.start()
+                }
+                PermButton("ADB Shell ›", null) { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) }
+            }
+            androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth()) {
+                AdbToggleActions(toggle, ctx, "perms") { runAdbToggle(toggle) { com.diegonmarcos.superapp.system.PowerSaving.isOn(ctx) } }
+            }
+            PermButtonRow {
+                val follow = com.diegonmarcos.superapp.system.LowPowerMode.followSystem
+                PermButton(if (follow) "Low-power mode follows system: ON" else "Low-power mode follows system: OFF", null) {
+                    com.diegonmarcos.superapp.system.PowerSaving.setFollowSystem(ctx, !follow); low = com.diegonmarcos.superapp.system.LowPowerMode.statusText(); powerEpoch++
+                }
+            }
+            Small("Low-power mode slows: " + com.diegonmarcos.superapp.system.LowPowerMode.config.slows.joinToString(", "))
+            if (adbToggleDown) PermButtonRow { PermButton("Open ADB Shell to connect ›", null) { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) } }
+            if (adbToggleOutput.isNotBlank()) Small(adbToggleOutput)
+        }
     }
 
     /** The sticky top: "N of M granted, K missing" and Ask all missing. */
@@ -307,6 +435,13 @@ class PermissionsFragment : KitComposeFragment() {
     private fun rebuildFragment() { epoch++ }
 
     private fun ctxAny(): Context = requireContext()
+
+    /** #1688 open a declared chain; a chain that opens nothing says why (toast + the shell note), never silent. */
+    private fun openChain(id: String) {
+        val act = activity ?: return
+        val r = PermsOpenChains.open(act, id) { i -> runCatching { startActivity(i) }.isSuccess }
+        if (!r.ok) { shellNote = r.reason; Toast.makeText(act, r.reason, Toast.LENGTH_LONG).show() }
+    }
 
     companion object {
         /** Runtime permissions already handed to the dialog in this process: the auto-request never asks one twice per run. */
@@ -343,7 +478,9 @@ class PermissionsFragment : KitComposeFragment() {
         Column(Modifier.fillMaxSize()) {
         SummaryBar()
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 16.dp)) {
+        PowerSavingCard()
         CatalogueHead()
+        RolesHeldSection()
         // #1546 the device tools (the libs:perms section with its filter chips and actions, grant here, system pages, per-fleet
         // grants, helper apps, hotspot, recovery) are always on the page again: #1519 had folded them away, closed by default
         SectionHead("Device tools: helper apps, per-fleet grants, ADB, hotspot, recovery")
@@ -964,65 +1101,38 @@ class PermissionsFragment : KitComposeFragment() {
     // ── Settings openers ─────────────────────────────────────────────
 
     private fun openAppSettings() {
-        runCatching {
-            startActivity(android.content.Intent(
-                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                android.net.Uri.fromParts("package", requireContext().packageName, null),
-            ))
-        }
+        // #1688 the declared Open chain (PermsOpenChains["app_info"]): resolved before launch, reason when none opens.
+        openChain("app_info")
     }
 
     private fun openUsageAccessSettings() {
-        runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+        // #1688 the declared Open chain (PermsOpenChains["usage_access"]): resolved before launch, reason when none opens.
+        openChain("usage_access")
     }
 
     private fun openOverlaySettings() {
-        val ctx = requireContext()
-        val scoped = android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            android.net.Uri.fromParts("package", ctx.packageName, null))
-        if (scoped.resolveActivity(ctx.packageManager) != null) { runCatching { startActivity(scoped) }; return }
-        val list = android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-        if (list.resolveActivity(ctx.packageManager) != null) { runCatching { startActivity(list) }; return }
-        runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            android.net.Uri.fromParts("package", ctx.packageName, null))) }
+        // #1688 the declared Open chain (PermsOpenChains["overlay"]): resolved before launch, reason when none opens.
+        openChain("overlay")
     }
 
     private fun openUnknownAppSourcesSettings() {
-        val ctx = requireContext()
-        val scoped = android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-            android.net.Uri.fromParts("package", ctx.packageName, null))
-        if (scoped.resolveActivity(ctx.packageManager) != null) { runCatching { startActivity(scoped) }; return }
-        val list = android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
-        if (list.resolveActivity(ctx.packageManager) != null) { runCatching { startActivity(list) }; return }
-        runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            android.net.Uri.fromParts("package", ctx.packageName, null))) }
+        // #1688 the declared Open chain (PermsOpenChains["unknown_sources"]): resolved before launch, reason when none opens.
+        openChain("unknown_sources")
     }
 
     private fun openDefaultAppsSettings() {
-        val ctx = requireContext()
-        val i = android.content.Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
-        if (i.resolveActivity(ctx.packageManager) != null) { runCatching { startActivity(i) }; return }
-        runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_SETTINGS)) }
+        // #1688 the declared Open chain (PermsOpenChains["default_apps"]): resolved before launch, reason when none opens.
+        openChain("default_apps")
     }
 
     private fun openBatteryOptimizationSettings() {
-        val i = android.content.Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-        if (i.resolveActivity(requireContext().packageManager) != null) { runCatching { startActivity(i) }; return }
-        runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            android.net.Uri.fromParts("package", requireContext().packageName, null))) }
+        // #1688 the declared Open chain (PermsOpenChains["battery_opt"]): resolved before launch, reason when none opens.
+        openChain("battery_opt")
     }
 
     private fun openManageAllFilesSettings() {
-        val ctx = requireContext()
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            val scoped = android.content.Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                android.net.Uri.fromParts("package", ctx.packageName, null))
-            if (scoped.resolveActivity(ctx.packageManager) != null) { runCatching { startActivity(scoped) }; return }
-            val list = android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-            if (list.resolveActivity(ctx.packageManager) != null) { runCatching { startActivity(list) }; return }
-        }
-        runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            android.net.Uri.fromParts("package", ctx.packageName, null))) }
+        // #1688 the declared Open chain (PermsOpenChains["all_files"]): resolved before launch, reason when none opens.
+        openChain("all_files")
     }
 
     private fun openSamsungNeverSleepingSettings() {
@@ -1039,19 +1149,13 @@ class PermissionsFragment : KitComposeFragment() {
     }
 
     private fun openNotificationListenerSettings() {
-        val i = android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-        if (i.resolveActivity(requireContext().packageManager) != null) { runCatching { startActivity(i) }; return }
-        runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            android.net.Uri.fromParts("package", requireContext().packageName, null))) }
+        // #1688 the declared Open chain (PermsOpenChains["notification_listener"]): resolved before launch, reason when none opens.
+        openChain("notification_listener")
     }
 
     private fun openWriteSettings() {
-        runCatching {
-            startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS,
-                android.net.Uri.parse("package:" + ctxAny().packageName)))
-        }.onFailure {
-            runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS)) }
-        }
+        // #1688 the declared Open chain (PermsOpenChains["write_settings"]): resolved before launch, reason when none opens.
+        openChain("write_settings")
     }
 
     private fun openHealthConnectPerms() {

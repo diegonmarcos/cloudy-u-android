@@ -30,7 +30,7 @@ internal fun ResourcesBody(resource: String) {
     val rows by produceState(emptyList<ResRow>(), resource) {
         while (true) {
             value = withContext(Dispatchers.IO) { ResourcesProvider.read(ctx, resource) }
-            delay(REFRESH_MS)
+            delay(com.diegonmarcos.superapp.system.LowPowerMode.scaled(REFRESH_MS)) // #1687
         }
     }
     Column(Modifier.fillMaxWidth().testTag(ResourcesTags.section(resource))) {

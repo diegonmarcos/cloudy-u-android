@@ -87,18 +87,10 @@ object SpecialPerms {
                 ScreenLocker.openPermsSettings(activity, "install_unknown")
             }
             Kind.HOME -> {
-                val viaRole = Build.VERSION.SDK_INT >= 29 && runCatching {
-                    val rm = activity.getSystemService(android.app.role.RoleManager::class.java)
-                    if (rm == null || !rm.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME)) false
-                    else {
-                        @Suppress("DEPRECATION")
-                        activity.startActivityForResult(
-                            rm.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME), REQUEST_HOME_ROLE)
-                        true
-                    }
-                }.getOrDefault(false)
-                if (!viaRole && runCatching { activity.startActivity(Intent(Settings.ACTION_HOME_SETTINGS)) }.isFailure)
-                    runCatching { activity.startActivity(Intent(Settings.ACTION_SETTINGS)) }
+                // #1688 the declared chain (Home settings, Default apps, the role request, App info), each resolved
+                // before launch. The role request used to go first and "succeed" with no dialog on One UI.
+                val r = com.diegonmarcos.superapp.configs.PermsOpenChains.open(activity, "home")
+                if (!r.ok) runCatching { android.widget.Toast.makeText(activity, r.reason, android.widget.Toast.LENGTH_LONG).show() }
             }
         }
     }

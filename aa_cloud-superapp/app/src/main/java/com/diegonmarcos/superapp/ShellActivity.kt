@@ -485,6 +485,8 @@ open class ShellActivity : AppCompatActivity(),
         // Called later it would compile, run, and change nothing on screen.
         com.diegonmarcos.superapp.ui.LauncherStyle.apply(this)
         super.onCreate(savedInstanceState)
+        // #1687 the low-power mode follows the system power saving from the first frame.
+        runCatching { com.diegonmarcos.superapp.system.PowerSaving.watch(this) }
         try {
             // Edge-to-edge: content draws beneath the status / nav bars,
             // we pad the AppBar and BottomNav to keep them visible. The
@@ -2286,7 +2288,7 @@ open class ShellActivity : AppCompatActivity(),
     private val energySamplerRunnable = object : Runnable {
         override fun run() {
             runCatching { EnergyWatchdog.sample(this@ShellActivity) }
-            energySamplerHandler.postDelayed(this, 60_000L)
+            energySamplerHandler.postDelayed(this, com.diegonmarcos.superapp.system.LowPowerMode.scaled(60_000L)) // #1687
         }
     }
 

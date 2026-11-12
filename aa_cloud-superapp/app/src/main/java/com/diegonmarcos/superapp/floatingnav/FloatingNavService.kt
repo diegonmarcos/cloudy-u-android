@@ -198,7 +198,7 @@ class FloatingNavService : Service() {
             if (!interactive()) return
             val fg = lastForeground
             if (fg == polledForeground) unchangedTicks++ else { polledForeground = fg; unchangedTicks = 0 }
-            main.postDelayed(this, pollDelayMs(cfg.pollMs, unchangedTicks))
+            main.postDelayed(this, com.diegonmarcos.superapp.system.LowPowerMode.scaled(pollDelayMs(cfg.pollMs, unchangedTicks))) // #1687
         }
     }
 

@@ -195,6 +195,22 @@ object DeviceControls {
             open = { ctx -> perms(ctx, "Control panel: system settings", "write_settings") },
         ),
 
+        // CATEGORY 2. #1687 the phone's power-saving mode. State is
+        // PowerManager.isPowerSaveMode, re-read after the write; the write is
+        // WRITE_SECURE_SETTINGS (low_power) then the declared adb lines through
+        // the ADB owner channel (PowerSaving). The same control is drawn on
+        // Configs > Perms; both read and write through PowerSaving.
+        "power_saving" to Control(  // = PowerSaving.CONTROL_ID
+            observed = true,
+            read = { ctx -> com.diegonmarcos.superapp.system.PowerSaving.isOn(ctx) },
+            set = { ctx, on ->
+                val r = com.diegonmarcos.superapp.system.PowerSaving.set(ctx, on)
+                Verdict(r.ok, "${r.channel}: ${r.detail}")
+            },
+            blocked = { ctx -> com.diegonmarcos.superapp.system.PowerSaving.blockedReason(ctx) },
+            open = { ctx -> runCatching { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctx) } },
+        ),
+
         // CATEGORY 2, and the one control whose whole ladder was already
         // written: WirelessDebugging tries WRITE_SECURE_SETTINGS first, then a
         // live shell channel, and its Result is a re-read either way. Blocked
@@ -767,6 +783,16 @@ object DeviceControls {
 
     /** A boolean the declaration carries on control [id] — e.g. a switch's
      *  shipped default — false when absent. */
+    /** #1687 the raw declaration of control [id] (build.json::ui.control_panel), null when not declared. */
+    fun declared(id: String): JSONObject? = runCatching {
+        val arr = declaration.optJSONArray("groups") ?: return@runCatching null
+        for (i in 0 until arr.length()) {
+            val ca = arr.getJSONObject(i).optJSONArray("controls") ?: continue
+            for (j in 0 until ca.length()) ca.getJSONObject(j).takeIf { it.optString("id") == id }?.let { return@runCatching it }
+        }
+        null
+    }.getOrNull()
+
     fun declaredFlag(id: String, flag: String): Boolean =
         groups.asSequence().flatMap { it.rows }.firstOrNull { it.id == id }?.flags?.get(flag) == true
 

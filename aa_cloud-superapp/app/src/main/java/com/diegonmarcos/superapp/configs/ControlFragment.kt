@@ -252,7 +252,7 @@ class ControlFragment : KitComposeFragment() {
                 while (true) {
                     aged++
                     refresh(scope)
-                    delay(REFRESH_MS)
+                    delay(com.diegonmarcos.superapp.system.LowPowerMode.scaled(REFRESH_MS)) // #1687
                 }
             }
         }

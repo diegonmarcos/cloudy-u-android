@@ -196,6 +196,14 @@
         "ac_cloud-code"
       ]
     },
+    "low_power_prefs": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "#1687 the SuperApp low-power mode: key follow_system (boolean, default true) = the mode follows the phone's power saving (PowerManager.isPowerSaveMode + ACTION_POWER_SAVE_MODE_CHANGED). The power-saving state itself is the system's, never stored here.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
     "advisory_feed": {
       "kind": "prefs",
       "class": "device",

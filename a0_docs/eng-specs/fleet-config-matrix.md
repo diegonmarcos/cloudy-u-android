@@ -15,7 +15,7 @@ DataStore / Room stores and declared files it cannot move yet.
 
 | app | package | covered | gaps | coverage |
 |---|---|---:|---:|---:|
-| cloud-superapp | `com.diegonmarcos.superapp` | 59 | 0 | 100% |
+| cloud-superapp | `com.diegonmarcos.superapp` | 60 | 0 | 100% |
 | c3-morpheus | `com.diegonmarcos.morpheus` | 5 | 0 | 100% |
 | c3-watchdog | `com.diegonmarcos.watchdog` | 5 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
@@ -57,7 +57,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **439** | **57** | **88%** |
+| **fleet** | | **440** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -119,6 +119,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-adb-shell-core, lib-ai-usage,
 | `launcher_theme_prefs` | prefs | config | yes | Selected launcher theme (cloud / cloud_minimalist_black). |
 | `light_prefs` | prefs | config | yes | #1155 the Light tool's settings: default light (rear/front/both), mode (spotlight/flashing) and strobe rate (capped at 3 Hz), rear and front intensity, timer on/duration, keep-on. Preferences of the user, so they move with the phone. Kept by libs:light, so every app that compiles it (the SuperApp, Cloud Calc's Toolkit > Light) carries it. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
+| `low_power_prefs` | prefs | config | yes | #1687 the SuperApp low-power mode: key follow_system (boolean, default true) = the mode follows the phone's power saving (PowerManager.isPowerSaveMode + ACTION_POWER_SAVE_MODE_CHANGED). The power-saving state itself is the system's, never stored here. |
 | `mail_auth_prefs` | encrypted | secret | yes | Cloud Mail's per-account gateway credentials (Authelia in front of the JMAP server): one encrypted JSON blob per account, key auth:<email>, holding the auth mode (none / bearer / authelia), the pasted bearer token and the captured authelia_session cookie. Credentials: shown masked, never logged, replayed only to the account's own domain. |
 | `mail_jmap_prefs` | encrypted | config (keys: password→secret) | yes | JMAP server and email are account links; password is a credential. |
 | `markets_last_good` | prefs | device | no | Last good Yahoo price per symbol (price\|asOf\|savedAt) for the Markets badge, so a killed process still shows the last rate; refetched on the next poll. |
@@ -189,7 +190,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-adb-shell-core, lib-ai-usage,
 | `BuildConfig UI_* constants (UI_LAUNCHER_SETTINGS_B64, UI_PROFILE_*, UI_WG_*)` | config | Defaults baked into the APK from build.json; not device state but the fallback for unset prefs. |
 | `filesDir/<KEYSTORE_FILE>` | device | This device's KDE Connect TLS identity keystore; never migrate, re-pair |
 
-Coverage: 59 covered, 0 gaps.
+Coverage: 60 covered, 0 gaps.
 
 ## c3-morpheus — `com.diegonmarcos.morpheus`
 

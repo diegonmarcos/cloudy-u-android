@@ -108,7 +108,7 @@ object StatusDropdowns {
                 }
                 while (true) {
                     value = withContext(Dispatchers.IO) { appLines(ctx, g) } + thermal
-                    delay(REFRESH_MS)
+                    delay(com.diegonmarcos.superapp.system.LowPowerMode.scaled(REFRESH_MS)) // #1687
                 }
             }
         }

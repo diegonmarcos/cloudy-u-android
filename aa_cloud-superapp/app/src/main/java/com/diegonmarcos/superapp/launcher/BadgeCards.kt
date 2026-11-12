@@ -136,7 +136,7 @@ internal fun BadgeCards(summary: Boolean = false) {
     val title by androidx.compose.runtime.produceState(NotifyTitle.format(city, System.currentTimeMillis())) {
         while (true) {
             value = NotifyTitle.format(NotifyTitle.cityOf(ctx), System.currentTimeMillis())
-            kotlinx.coroutines.delay(30_000L)
+            kotlinx.coroutines.delay(com.diegonmarcos.superapp.system.LowPowerMode.scaled(30_000L)) // #1687
         }
     }
     Column(Modifier.fillMaxWidth().testTag(BadgeCardTags.LIST), verticalArrangement = Arrangement.spacedBy(NotifCard.gap)) {

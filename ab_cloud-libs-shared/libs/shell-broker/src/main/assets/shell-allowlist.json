@@ -9,6 +9,21 @@
    "segments": true,
    "allow": [
     {
+     "id": "roles-read-1",
+     "why": "#1688 read-only: who holds a role (Perms > Roles held).",
+     "re": "^cmd role get-role-holders(-as-user)? android\\.app\\.role\\.[A-Z_]+( [0-9]+)?$"
+    },
+    {
+     "id": "roles-read-2",
+     "why": "#1688 read-only: the role and device-policy dumps the Roles held section parses.",
+     "re": "^dumpsys (role|device_policy)$"
+    },
+    {
+     "id": "roles-release-self",
+     "why": "#1688 release a role / admin held by the SuperApp ITSELF (behind a confirm dialog); no other package.",
+     "re": "^(cmd role remove-role-holder android\\.app\\.role\\.[A-Z_]+ com\\.diegonmarcos\\.superapp( [0-9]+)?|dpm remove-active-admin --user 0 com\\.diegonmarcos\\.superapp/[\\w.$]+)$"
+    },
+    {
      "id": "reads-1",
      "re": "^dumpsys [\\w.:/=,@+*?-]+( [\\w.:/=,@+*?-]+)*$"
     },
@@ -98,7 +113,8 @@
     },
     {
      "id": "selfdiag-1",
-     "re": "^(logcat|uptime|id|df|netstat|ip|ss|cmd)( [\\w.:/=,@+*?-]+)*$"
+     "_doc_1688": "#1688 role writes are never a diagnostic: remove-role-holder is only roles-release-self (own package).",
+     "re": "^(?!cmd role (add|remove)-role-holder )(logcat|uptime|id|df|netstat|ip|ss|cmd)( [\\w.:/=,@+*?-]+)*$"
     },
     {
      "id": "bg-echo",

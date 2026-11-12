@@ -150,7 +150,7 @@ class NetworkBadgeService : Service() {
             if (!shouldTick(connected, interactive())) return@post
             val r = Runnable { runCatching { worker.execute { refreshNow() } } }
             tick = r
-            main.postDelayed(r, TICK_MS)
+            main.postDelayed(r, com.diegonmarcos.superapp.system.LowPowerMode.scaled(TICK_MS)) // #1687
         }
     }
 
