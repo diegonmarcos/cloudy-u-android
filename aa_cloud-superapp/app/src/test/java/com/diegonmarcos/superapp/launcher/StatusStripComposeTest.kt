@@ -69,7 +69,7 @@ class StatusStripComposeTest : KitPageHarness() {
             val x = compose.onNodeWithTag("strip:sep:$pair", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
             assertTrue("separator $pair between its neighbours", left("strip:$a") < x && x < left("strip:$b"))
         }
-        assertEquals(3, compose.onAllNodes(androidx.compose.ui.test.SemanticsMatcher("sep") { n -> n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.TestTag)?.startsWith("strip:sep:") == true }, useUnmergedTree = true).fetchSemanticsNodes().size)
+        assertEquals(3, compose.onAllNodes(androidx.compose.ui.test.SemanticsMatcher("sep") { n -> androidx.compose.ui.semantics.SemanticsConfiguration::class.let { n.config.getOrElseNullable(androidx.compose.ui.semantics.SemanticsProperties.TestTag) { null } }?.startsWith("strip:sep:") == true }, useUnmergedTree = true).fetchSemanticsNodes().size)
     }
 
     @Test
