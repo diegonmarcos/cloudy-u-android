@@ -221,7 +221,7 @@ object DeviceControls {
             set = { ctx, on ->
                 val S = com.diegonmarcos.superapp.system.SuperPowerSaving
                 val r = runCatching { if (on) S.turnOn(ctx) else S.turnOff(ctx) }
-                    .getOrElse { S.Report(false, listOf(it.message ?: "failed")) }
+                    .getOrElse { com.diegonmarcos.superapp.system.SuperPowerSaving.Report(false, listOf(it.message ?: "failed")) }
                 if (r.needs.isNotEmpty()) Handler(Looper.getMainLooper()).post { S.openFallbacks(ctx.applicationContext, r) }
                 Verdict(S.isOn(ctx) == on, r.lines.joinToString("; "))
             },

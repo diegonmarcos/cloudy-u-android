@@ -383,7 +383,7 @@ class PermissionsFragment : KitComposeFragment() {
                 val app = requireContext().applicationContext
                 val S = com.diegonmarcos.superapp.system.SuperPowerSaving
                 Thread {
-                    val r = runCatching { S.turnOn(app, stopVpn = true) }.getOrElse { S.Report(false, listOf(it.message ?: "failed")) }
+                    val r = runCatching { S.turnOn(app, stopVpn = true) }.getOrElse { com.diegonmarcos.superapp.system.SuperPowerSaving.Report(false, listOf(it.message ?: "failed")) }
                     view?.post { superReport = r.lines; superEpoch++; powerEpoch++; rolesEpoch++ }
                 }.start()
             },
@@ -425,7 +425,7 @@ class PermissionsFragment : KitComposeFragment() {
                     val app = ctx.applicationContext
                     shellNote = "Super power saving: switching ${if (on) "off" else "on"}…"
                     Thread {
-                        val r = runCatching { if (on) S.turnOff(app) else S.turnOn(app) }.getOrElse { S.Report(false, listOf(it.message ?: "failed")) }
+                        val r = runCatching { if (on) S.turnOff(app) else S.turnOn(app) }.getOrElse { com.diegonmarcos.superapp.system.SuperPowerSaving.Report(false, listOf(it.message ?: "failed")) }
                         view?.post {
                             superReport = r.lines; shellNote = "Super power saving: " + (if (r.ok) "done" else "see the steps below")
                             activity?.let { a -> S.openFallbacks(a, r) }
