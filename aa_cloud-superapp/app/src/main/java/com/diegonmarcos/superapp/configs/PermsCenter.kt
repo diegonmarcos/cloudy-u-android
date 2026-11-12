@@ -68,9 +68,6 @@ import com.diegonmarcos.superapp.uikit.KitStoreRow
 import com.diegonmarcos.superapp.uikit.KitStoreRowLine
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 
-/** One row's resolved state for the catalogue section (#1274). */
-data class PermRowState(val entry: PermEntry, val status: PermStatus)
-
 /** Result of one ADB line run through the on-device channel. */
 data class AdbRunResult(val line: AdbLine, val ok: Boolean, val output: String)
 
@@ -80,37 +77,13 @@ object AdbResult {
     fun ok(output: String?): Boolean = output != null && !BAD.containsMatchIn(output)
 }
 
-/** Reads every catalogue entry's state; the page calls it on open and on every resume. */
-fun readPermRows(ctx: Context, activity: Activity?): List<PermRowState> {
-    val vars = Perms.vars(ctx)
-    return Perms.catalogue(ctx).entries.map { PermRowState(it, PermStatusReader.status(ctx, it, activity, vars)) }
-}
-
-/** The adb lines for every applicable entry (granted ones too: the block is the full grant, safe to re-run). */
-fun adbLinesFor(ctx: Context, rows: List<PermRowState>): List<AdbLine> =
-    AdbScript.lines(rows.filter { it.status.state != PermState.NOT_APPLICABLE }.map { it.entry }, Perms.vars(ctx))
-
 /** #1519 the page's rows (libs:perms PermsPage): category, chip, reason, actions per catalogue entry. */
 internal fun pageRows(ctx: Context, rows: List<PermRowState>): List<PermsPage.Row> {
     val by = rows.associateBy { it.entry.id }
     return PermsPage.rows(rows.map { it.entry }, { by.getValue(it.id).status }, { PermsShellGrant.commands(ctx.packageName, it) != null })
 }
 
-/**
- * #1510 / #1519 the shell broker as the page's grant channel: `up` = a privileged channel is armed; `exec` answers the
- * command's output, an `error:` line when the broker refused it or it exited non-zero, null when nothing is armed.
- */
-class BrokerGrantChannel(private val ctx: Context) : PermsGrant.GrantChannel {
-    override fun up() = com.diegonmarcos.superapp.system.AdbReadiness.check(ctx).usable
-    override fun exec(command: String): String? =
-        when (val r = com.diegonmarcos.superapp.shellbroker.ShellBroker.exec(ctx, com.diegonmarcos.superapp.shellbroker.ShellBroker.SELF, command)) {
-            is com.diegonmarcos.superapp.shellclient.ShellResult.Ok ->
-                (r.stdout + r.stderr).trim().ifEmpty { if (r.exitCode == 0) "" else "error: exit ${r.exitCode}" }
-            is com.diegonmarcos.superapp.shellclient.ShellResult.Denied -> "error: refused by the shell broker (${r.reason})"
-            is com.diegonmarcos.superapp.shellclient.ShellResult.Failed -> "error: ${r.reason}"
-            else -> null
-        }
-}
+// #1682 P3: PermRowState / readPermRows / adbLinesFor live in libs:perms, BrokerGrantChannel in libs:adb-shell-core (same package).
 
 /** The sticky top of the page: "N of M granted, K missing" and Ask all missing. Never says all granted while a row is missing. */
 @Composable
