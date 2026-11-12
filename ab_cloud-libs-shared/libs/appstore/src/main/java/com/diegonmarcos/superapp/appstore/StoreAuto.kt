@@ -201,6 +201,11 @@ object StoreAuto {
         }
         // #903 the chain holds the dataSync foreground service for its whole run; #1551 only while auto-update is on and on Wi-Fi.
         val kept = runCatching { keepAliveAllowed(ctx) }.getOrDefault(false)
+        // #1483 the chain is UNATTENDED whatever woke it (launch, refresh, Wi-Fi, a retry): the sessions it commits are marked so at
+        // commit, and their confirmation waits on its notification and the row instead of opening a dialog over the user's screen.
+        // Fleet.autoPass already flagged its own pass; a chain started directly by a trigger was not flagged at all.
+        val wasUnattended = runCatching { com.diegonmarcos.superapp.updater.AutoUpdatePrefs.unattendedPass(ctx) }.getOrDefault(false)
+        if (!wasUnattended) runCatching { com.diegonmarcos.superapp.updater.AutoUpdatePrefs.setUnattendedPass(ctx, true) }
         try {
             if (kept) com.diegonmarcos.superapp.updater.BatchForeground.begin(ctx)
             val prev = load(ctx)
@@ -260,6 +265,7 @@ object StoreAuto {
             running.set(false)
             UpdateProgress.republish()
             if (kept) com.diegonmarcos.superapp.updater.BatchForeground.end(ctx)
+            if (!wasUnattended) runCatching { com.diegonmarcos.superapp.updater.AutoUpdatePrefs.setUnattendedPass(ctx, false) }
         }
     }
 
