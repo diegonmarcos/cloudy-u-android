@@ -397,8 +397,11 @@ object Declarations {
         val rowActions: List<RowActionDecl> = emptyList(),
         /** The explorer's inline search: scopes, default chip, bounds (ui.files.search). */
         val search: FilesSearchDecl = FilesSearchDecl(),
+        /** #1680 the grouped Explorer menus (ui.files.menus): "item" and "selection", drawn by ONE component. */
+        val menus: Map<String, List<com.diegonmarcos.clouddrive.files.FileMenu.MenuGroupDecl>> = emptyMap(),
     ) {
         fun rowAction(id: String): RowActionDecl? = rowActions.firstOrNull { it.id == id }
+        fun menu(id: String): List<com.diegonmarcos.clouddrive.files.FileMenu.MenuGroupDecl> = menus[id].orEmpty()
     }
 
     /** One scope chip. [fromRoot] = walk from the storage root, else from the current folder; [recursive] false = filter the listing in place. */
@@ -806,7 +809,23 @@ object Declarations {
                 val id = a.str("id"); if (id.isBlank()) null else RowActionDecl(id, a.str("label", id), a.str("icon"), a.str("snack"))
             },
             search = parseFilesSearch(o["search"] as? JsonObject),
+            menus = parseFileMenus(o["menus"] as? JsonObject),
         )
+    }
+
+    /** #1680 ui.files.menus → {menu id: groups}. Blank ids are skipped; a malformed block yields no menu, never a crash. */
+    fun parseFileMenus(o: JsonObject?): Map<String, List<com.diegonmarcos.clouddrive.files.FileMenu.MenuGroupDecl>> {
+        if (o == null) return emptyMap()
+        return o.keys.associateWith { key ->
+            val arr = o[key] as? kotlinx.serialization.json.JsonArray ?: return@associateWith emptyList()
+            objects(arr).mapNotNull { g ->
+                val gid = g.str("id"); if (gid.isBlank()) return@mapNotNull null
+                com.diegonmarcos.clouddrive.files.FileMenu.MenuGroupDecl(
+                    gid, g.str("label", gid), g.bool("git_only", false),
+                    objects(g["items"]).mapNotNull { i -> val iid = i.str("id"); if (iid.isBlank()) null else com.diegonmarcos.clouddrive.files.FileMenu.MenuItemDecl(iid, i.str("label", iid)) },
+                )
+            }
+        }
     }
 
     fun parseFilesSearch(o: JsonObject?): FilesSearchDecl {

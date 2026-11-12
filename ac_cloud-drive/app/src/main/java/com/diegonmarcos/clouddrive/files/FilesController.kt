@@ -246,16 +246,21 @@ class FilesController(
         }
     }
 
-    fun zipSelection(id: PaneId, archiveName: String) {
+    /** Zip all (or, #1680, Compress all to .tar.gz when [tarGz]) the selection into ONE archive in the pane's folder. */
+    fun zipSelection(id: PaneId, archiveName: String) = zipSelection(id, archiveName, tarGz = false)
+
+    fun zipSelection(id: PaneId, archiveName: String, tarGz: Boolean) {
         val files = selectedEntries(id).mapNotNull { it.localFile }
         val loc = s.pane(id).location as? Location.Local ?: return
         if (files.isEmpty()) return
         val safe = FileOps.sanitize(archiveName) ?: return
-        val target = FileOps.uniqueIn(File(loc.path), if (safe.lowercase().endsWith(".zip")) safe else "$safe.zip")
+        val suffix = if (tarGz) ".tar.gz" else ".zip"
+        val target = FileOps.uniqueIn(File(loc.path), if (safe.lowercase().endsWith(suffix)) safe else "$safe$suffix")
         update { FilesReducer.clearSelection(it, id) }
         val title = ctx.getString(R.string.files_job_zip, files.size)
         startJob(title) { job, set ->
-            val n = FileOps.archive(files, target, progressOf(job, set)) { job.cancelRequested.get() }
+            val n = if (tarGz) FileOps.archiveTarGz(files, target, progressOf(job, set)) { job.cancelRequested.get() }
+            else FileOps.archive(files, target, progressOf(job, set)) { job.cancelRequested.get() }
             refreshShowing(loc)
             true to ctx.getString(R.string.files_job_done, "$title · $n")
         }

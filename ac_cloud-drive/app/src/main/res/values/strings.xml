@@ -113,6 +113,8 @@
     <string name="files_copy_to_downloads">Copy to Downloads</string>
     <string name="files_copy_to_clipboard">Copy contents to clipboard</string>
     <string name="files_copied_to_clipboard">Copied the contents of %1$s</string>
+    <string name="files_copying_to_downloads">Copying %1$d item(s) to Download…</string>
+    <string name="files_selection_props">%1$d selected · %2$d files · %3$d folders · %4$s</string>
     <string name="files_compress">Compress to .zip or .tar.gz…</string>
     <string name="files_compress_title">Compress %1$s</string>
     <string name="files_compress_format">Format</string>

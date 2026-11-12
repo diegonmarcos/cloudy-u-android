@@ -56,7 +56,9 @@ import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -134,7 +136,9 @@ private sealed class FilesDialog {
     data class NewFile(val pane: PaneId) : FilesDialog()
     data class Rename(val entry: FileOps.Entry) : FilesDialog()
     data class DeleteConfirm(val pane: PaneId, val count: Int) : FilesDialog()
-    data class ZipName(val pane: PaneId) : FilesDialog()
+    data class ZipName(val pane: PaneId, val tarGz: Boolean = false) : FilesDialog()
+    /** #1680 selection menu ▸ Meta ▸ Properties: combined count and size of the selection. */
+    data class SelectionProps(val entries: List<FileOps.Entry>) : FilesDialog()
     data class BulkRename(val pane: PaneId, val files: List<File>, val location: Location) : FilesDialog()
     object Duplicates : FilesDialog()
     /** #458/#577 PDF → txt/md/html/csv beside the file, through the ONE PdfConversion path. */
@@ -304,7 +308,29 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
                 onProperties = { e -> controller.openProperties(e) },
                 onCopyPath = { entries -> copyPath(entries.map { it.location }) },
                 onPickDestination = { move -> dialog = FilesDialog.Places(ui.active, pickDestination = true, move = move) },
-                onGitMoveAll = { entries -> dialog = FilesDialog.Places(ui.active, pickDestination = true, move = true, gitMove = entries) })
+                onGitMoveAll = { entries -> dialog = FilesDialog.Places(ui.active, pickDestination = true, move = true, gitMove = entries) },
+                // #1680 the grouped selection menu's items that need the screen (dialogs, Downloads, other pane).
+                onMenuPick = { id, entries ->
+                    val otherLocal = ui.otherPane.location as? Location.Local
+                    val paths = entries.mapNotNull { (it.location as? Location.Local)?.path }
+                    when (id) {
+                        "delete_all" -> dialog = FilesDialog.DeleteConfirm(ui.active, active.selection.size)
+                        "move_all" -> dialog = FilesDialog.Places(ui.active, pickDestination = true, move = true)
+                        "copy_all" -> { if (ui.dualPane && otherLocal != null) controller.transferSelection(ui.active, otherLocal, move = false) else { dialog = FilesDialog.Places(ui.active, pickDestination = true, move = false) } }
+                        "copy_to_other_pane" -> otherLocal?.let { controller.transferSelection(ui.active, it, move = false) }
+                        "move_to_other_pane" -> otherLocal?.let { controller.transferSelection(ui.active, it, move = true) }
+                        "zip_all" -> dialog = FilesDialog.ZipName(ui.active)
+                        "tar_all" -> dialog = FilesDialog.ZipName(ui.active, tarGz = true)
+                        "copy_paths" -> copyPath(entries.map { it.location })
+                        "copy_to_downloads" -> if (paths.isNotEmpty()) { actions.copyToDownload(paths); scope.launch { snackbar.showSnackbar(ctx.getString(R.string.files_copying_to_downloads, paths.size)) } }
+                        "share" -> actions.share(entries.filter { !it.isDirectory }.mapNotNull { (it.location as? Location.Local)?.path })
+                        "properties" -> { if (entries.size == 1) controller.openProperties(entries.first()) else dialog = FilesDialog.SelectionProps(entries) }
+                        "rename" -> dialog = if (entries.size == 1) FilesDialog.Rename(entries.first()) else FilesDialog.BulkRename(ui.active, entries.mapNotNull { it.localFile }, active.location)
+                        "git_move_all" -> dialog = FilesDialog.Places(ui.active, pickDestination = true, move = true, gitMove = entries)
+                        "git_rename" -> entries.singleOrNull()?.let { dialog = FilesDialog.GitRename(it) }
+                    }
+                    Unit
+                })
         }
         jobs.forEach { job ->
             ProgressCard(job.title, job.detail, if (job.done) 1f else job.fraction, onCancel = if (job.done) null else ({ controller.cancel(job.id) }))
@@ -320,7 +346,8 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
         is FilesDialog.Rename -> TextFieldDialog(stringResource(R.string.files_rename), stringResource(R.string.files_name), d.entry.name, stringResource(R.string.files_rename), { dialog = null }) { controller.rename(d.entry, it); dialog = null }
         is FilesDialog.GitRename -> TextFieldDialog(stringResource(R.string.files_git_rename), stringResource(R.string.files_name), d.entry.name, stringResource(R.string.files_rename), { dialog = null }) { controller.gitRename(d.entry, it); dialog = null }
         is FilesDialog.DeleteConfirm -> ConfirmDialog(stringResource(R.string.files_delete_title, d.count), stringResource(R.string.files_delete_body), stringResource(R.string.chrome_delete), { dialog = null }) { controller.deleteSelection(d.pane); dialog = null }
-        is FilesDialog.ZipName -> TextFieldDialog(stringResource(R.string.files_zip), stringResource(R.string.files_zip_name), "archive.zip", stringResource(R.string.files_zip), { dialog = null }) { controller.zipSelection(d.pane, it); dialog = null }
+        is FilesDialog.ZipName -> TextFieldDialog(stringResource(R.string.files_zip), stringResource(R.string.files_zip_name), if (d.tarGz) "archive.tar.gz" else "archive.zip", stringResource(R.string.files_zip), { dialog = null }) { controller.zipSelection(d.pane, it, d.tarGz); dialog = null }
+        is FilesDialog.SelectionProps -> SelectionPropertiesDialog(d.entries) { dialog = null }
         is FilesDialog.BulkRename -> BulkRenameDialog(d.files, { dialog = null }) { plan -> controller.applyRenamePlan(plan, d.location); dialog = null }
         is FilesDialog.Unzip -> UnzipDialog(d.entry, remember(d.entry.key) { d.entry.localFile?.let { f -> File(f.parentFile, ArchiveExtractor.defaultFolderName(f.name)).path } ?: "" }, { dialog = null }) { dest -> controller.unzip(d.entry, dest); dialog = null }
         is FilesDialog.Convert -> ConvertDialog(d.entry, ConverterRegistry.default.forName(d.entry.name), { dialog = null }) { c -> controller.convert(d.entry, c); dialog = null }
@@ -695,7 +722,14 @@ private fun EntryRow(
                 val underGit by produceState(false, menu, entry.key) {
                     value = if (menu && local != null) withContext(Dispatchers.IO) { GitWorkTree.isUnderGit(local.path) } else false
                 }
-                val sections = EntryMenu.sectionsFor(entry.isDirectory, local != null, rowItems, canEdit, canEditor, isPdf, underGit)
+                // #1680 ONE grouped component (also used by the selection bar), declared in build.json ui.files.menus.item.
+                val groups = FileMenu.resolve(FileMenu.ITEM, Declarations.files.menu(FileMenu.ITEM), FileMenu.Context(
+                    count = 1, isDirectory = entry.isDirectory, isLocal = local != null, inArchive = false, anyFile = !entry.isDirectory, underGit = underGit,
+                    canEdit = canEdit, canEditor = canEditor, isPdf = isPdf,
+                    canUnzip = RowMenu.Item.UNZIP in rowItems, canConvert = RowMenu.Item.CONVERT in rowItems,
+                ))
+                if (groups.isNotEmpty()) GroupedFileMenu(groups) { id -> menu = false; itemMenuAction(id)?.let(onMenu) }
+                val sections = if (groups.isNotEmpty()) emptyList() else EntryMenu.sectionsFor(entry.isDirectory, local != null, rowItems, canEdit, canEditor, isPdf, underGit)
                 sections.forEachIndexed { i, section ->
                     if (i > 0) HorizontalDivider()
                     DropdownMenuItem(enabled = false, text = { Text(stringResource(section.group.labelRes()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }, onClick = {})
@@ -712,6 +746,51 @@ private fun EntryRow(
     }
 }
 
+// ── #1680 the ONE grouped menu component ─────────────────────────────────
+
+/** Per-item menu id → the screen's action. Unknown ids do nothing (FileMenu lists them disabled). */
+private fun itemMenuAction(id: String): EntryAction? = when (id) {
+    "git_versions" -> EntryAction.GIT_OPEN
+    else -> EntryAction.values().firstOrNull { it.name.equals(id, ignoreCase = true) }
+}
+
+/**
+ * Draws [FileMenu.resolve]'s groups inside a DropdownMenu: a primary-coloured header per group, a divider
+ * between groups, every item listed (disabled when the context does not allow it). Used by BOTH the
+ * per-item dropdown and the selection dropdown, so the two always look the same.
+ */
+@Composable
+private fun GroupedFileMenu(groups: List<FileMenu.Group>, onPick: (String) -> Unit) {
+    val copyIcon = remember { Declarations.files.rowAction(COPY_PATH)?.icon }
+    groups.forEachIndexed { i, g ->
+        if (i > 0) HorizontalDivider()
+        DropdownMenuItem(enabled = false, modifier = Modifier.testTag("files_menu_group_" + g.id), text = { Text(g.label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }, onClick = {})
+        for (item in g.items) {
+            val icon = if ((item.id == "copy_path" || item.id == "copy_paths") && copyIcon != null) copyIcon else null
+            DropdownMenuItem(
+                text = { Text(item.label) }, enabled = item.enabled, modifier = Modifier.testTag("files_menu_item_" + item.id),
+                leadingIcon = if (icon != null) ({ Icon(IconCatalog.vectorOrDefault(icon), null, Modifier.size(DriveMetrics.icon)) }) else null,
+                onClick = { runCatching { onPick(item.id) } },
+            )
+        }
+    }
+}
+
+/** #1680 combined Properties of a multi-selection: entries, files, folders, total size (walked off the main thread). */
+@Composable
+private fun SelectionPropertiesDialog(entries: List<FileOps.Entry>, onDismiss: () -> Unit) {
+    val stats by produceState<FileMenu.Stats?>(null, entries) { value = withContext(Dispatchers.IO) { runCatching { FileMenu.stats(entries.mapNotNull { it.localFile }) }.getOrNull() } }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.files_selected, entries.size)) },
+        text = {
+            val s = stats
+            Text(if (s == null) "…" else stringResource(R.string.files_selection_props, s.entries, s.files, s.folders, FileOps.humanBytes(s.bytes)))
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) } },
+    )
+}
+
 // ── selection bar ────────────────────────────────────────────────────────
 
 @Composable
@@ -719,6 +798,7 @@ private fun SelectionBar(
     ui: FilesUiState, controller: FilesController,
     onDelete: () -> Unit, onZip: () -> Unit, onRename: (List<FileOps.Entry>) -> Unit, onShare: (List<String>) -> Unit,
     onProperties: (FileOps.Entry) -> Unit, onCopyPath: (List<FileOps.Entry>) -> Unit, onPickDestination: (Boolean) -> Unit, onGitMoveAll: (List<FileOps.Entry>) -> Unit,
+    onMenuPick: (String, List<FileOps.Entry>) -> Unit = { _, _ -> },
 ) {
     val pane = ui.activePane
     val inArchive = pane.location.isArchive
@@ -747,6 +827,23 @@ private fun SelectionBar(
             DropdownMenu(expanded = more, onDismissRequest = { more = false }) {
                 val selected = controller.selectedEntries(ui.active)
                 val allUnderGit by produceState(false, selected) { value = withContext(Dispatchers.IO) { selected.isNotEmpty() && selected.all { e -> (e.location as? Location.Local)?.let { GitWorkTree.isUnderGit(it.path) } == true } } }
+                // #1680 the SAME grouped component as the per-item menu, declared in build.json ui.files.menus.selection.
+                val groups = FileMenu.resolve(FileMenu.SELECTION, Declarations.files.menu(FileMenu.SELECTION), FileMenu.Context(
+                    count = selected.size, isDirectory = selected.isNotEmpty() && selected.all { it.isDirectory },
+                    isLocal = selected.all { it.location is Location.Local }, inArchive = inArchive, anyFile = selected.any { !it.isDirectory },
+                    underGit = allUnderGit, otherPaneLocal = ui.dualPane && otherLocal != null,
+                ))
+                if (groups.isNotEmpty()) GroupedFileMenu(groups) { id ->
+                    more = false
+                    when (id) {
+                        "select_all" -> controller.update { s -> FilesReducer.selectAll(s, s.active, allKeys(s, controller)) }
+                        "invert_selection" -> controller.update { s -> FilesReducer.invert(s, s.active, allKeys(s, controller)) }
+                        "clear_selection" -> controller.update { FilesReducer.clearSelection(it, it.active) }
+                        else -> onMenuPick(id, selected)
+                    }
+                }
+                // Fallback only when ui.files.menus.selection is not declared: the previous flat list, unchanged.
+                if (groups.isEmpty()) {
                 if (!inArchive) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.chrome_delete)) }, onClick = { more = false; onDelete() })
                     DropdownMenuItem(text = { Text(stringResource(if (selected.size == 1) R.string.files_rename else R.string.files_rename_pattern)) }, onClick = { more = false; onRename(selected) })
@@ -764,6 +861,7 @@ private fun SelectionBar(
                 DropdownMenuItem(text = { Text(stringResource(R.string.files_select_all)) }, onClick = { more = false; controller.update { s -> FilesReducer.selectAll(s, s.active, allKeys(s, controller)) } })
                 DropdownMenuItem(text = { Text(stringResource(R.string.files_invert)) }, onClick = { more = false; controller.update { s -> FilesReducer.invert(s, s.active, allKeys(s, controller)) } })
                 DropdownMenuItem(text = { Text(stringResource(R.string.files_clear_selection)) }, onClick = { more = false; controller.update { FilesReducer.clearSelection(it, it.active) } })
+                }
             }
         }
     }

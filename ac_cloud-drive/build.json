@@ -750,6 +750,65 @@
           "snack": "Path copied"
         }
       ],
+      "_doc_menus": "#1680 ONE grouped menu component (FilesScreen.GroupedFileMenu + files/FileMenu.kt) draws both dropdowns from this declaration: 'item' = per file/folder menu, 'selection' = the selection bar menu. Groups render in order with a header; every item is always listed and only enabled/disabled by context; a git_only group shows only inside a git work tree (rename/move via git mv).",
+      "menus": {
+        "item": [
+          {"id": "open", "label": "Open", "items": [
+            {"id": "editor", "label": "Open in Editor"},
+            {"id": "edit", "label": "Edit as text"},
+            {"id": "open_with", "label": "Open with app…"},
+            {"id": "open_other_pane", "label": "Open in other pane"},
+            {"id": "unzip", "label": "Unzip…"},
+            {"id": "convert", "label": "Convert…"},
+            {"id": "convert_pdf", "label": "Convert PDF…"}
+          ]},
+          {"id": "share", "label": "Share", "items": [
+            {"id": "copy_path", "label": "Copy path"},
+            {"id": "copy_to_downloads", "label": "Copy to Downloads"},
+            {"id": "copy_to_clipboard", "label": "Copy to clipboard"},
+            {"id": "share", "label": "Share…"}
+          ]},
+          {"id": "meta", "label": "Meta", "items": [
+            {"id": "rename", "label": "Rename"},
+            {"id": "delete", "label": "Delete"},
+            {"id": "properties", "label": "Properties"},
+            {"id": "compress", "label": "Compress (.zip / .tar.gz)…"},
+            {"id": "bookmark", "label": "Bookmark folder"}
+          ]},
+          {"id": "git", "label": "Git", "git_only": true, "items": [
+            {"id": "git_rename", "label": "Git rename (git mv)"},
+            {"id": "git_move", "label": "Git move (git mv)…"},
+            {"id": "git_versions", "label": "Versions / history"}
+          ]}
+        ],
+        "selection": [
+          {"id": "actions", "label": "Actions", "items": [
+            {"id": "delete_all", "label": "Delete all"},
+            {"id": "move_all", "label": "Move all…"},
+            {"id": "copy_all", "label": "Copy all…"},
+            {"id": "copy_to_other_pane", "label": "Copy → other pane"},
+            {"id": "move_to_other_pane", "label": "Move → other pane"},
+            {"id": "zip_all", "label": "Zip all (.zip)"},
+            {"id": "tar_all", "label": "Compress all (.tar.gz)"},
+            {"id": "clear_selection", "label": "Clear selection"},
+            {"id": "invert_selection", "label": "Invert selection"},
+            {"id": "select_all", "label": "Select all"}
+          ]},
+          {"id": "share", "label": "Share", "items": [
+            {"id": "copy_paths", "label": "Copy paths"},
+            {"id": "copy_to_downloads", "label": "Copy to Downloads"},
+            {"id": "share", "label": "Share…"}
+          ]},
+          {"id": "meta", "label": "Meta", "items": [
+            {"id": "properties", "label": "Properties (size / count)"},
+            {"id": "rename", "label": "Rename"}
+          ]},
+          {"id": "git", "label": "Git", "git_only": true, "items": [
+            {"id": "git_move_all", "label": "Move all (git mv)…"},
+            {"id": "git_rename", "label": "Rename (git mv)"}
+          ]}
+        ]
+      },
       "default_dual_pane": true,
       "tabs_per_pane_max": 6,
       "_doc_search": "#1357 THE INLINE SEARCH of the explorer: the search icon expands a compact bar (search_height_dp, the Git page's GitSearchField) over the listing, which stays visible and filters live; under it ONE row of scope chips in this order. A scope is {id, label, recursive, from (here|root), folders_only}; default_scope is the chip selected each time the bar opens. A recursive scope runs off the main thread, streams hits, is cancelled when the query or scope changes (debounce_ms), and stops at result_ceiling hits, scan_ceiling entries and depth_ceiling levels so a huge storage never freezes the UI. Back or the x collapses the bar and keeps the current folder. test-drive-explorer-search.sh pins it.",
