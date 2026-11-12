@@ -8,7 +8,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
-import com.diegonmarcos.superapp.profile.ProfilePrefs
+import com.diegonmarcos.superapp.fleetendpoints.android.AccountClient
 import com.diegonmarcos.superapp.ui.KitPageHarness
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -91,11 +91,13 @@ class DrawerMenuComposeTest : KitPageHarness() {
     }
 
     @Test
-    fun `D4 the Profile badge sits above the menu with the stored identity`() {
-        val prefs = ProfilePrefs(ctx)
+    fun `D4 the Profile badge sits above the menu with Cloud Account's identity, or says where it lives`() {
+        // #1693 the identity is Cloud Account's (read over its provider); with Cloud Account absent the badge names it.
+        val profile = AccountClient.profile(ctx)
         show(HomeDrawerFragment.newInstance())
-        compose.onNodeWithTag(HomeDrawerFragment.TAG_NAME).assert(hasText(prefs.name))
-        compose.onNodeWithTag(HomeDrawerFragment.TAG_EMAIL).assert(hasText(prefs.email))
+        compose.waitForIdle()
+        compose.onNodeWithTag(HomeDrawerFragment.TAG_NAME).assert(hasText(profile.name.ifBlank { HomeDrawerFragment.NO_PROFILE }))
+        compose.onNodeWithTag(HomeDrawerFragment.TAG_EMAIL).assertExists()
         compose.onNodeWithTag(HomeDrawerFragment.TAG_AVATAR).assertExists()
         compose.onNodeWithTag(HomeDrawerFragment.TAG_APP_BANNER).assertExists()
     }

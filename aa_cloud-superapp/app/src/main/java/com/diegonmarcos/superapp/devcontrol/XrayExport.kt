@@ -14,7 +14,7 @@ import com.diegonmarcos.superapp.adbdebug.ShellChannels
 import com.diegonmarcos.superapp.shellbroker.ShellBroker
 import com.diegonmarcos.superapp.battery.BatteryRepository
 import com.diegonmarcos.superapp.ops.dagu.DaguPrefs
-import com.diegonmarcos.superapp.profile.AccountData
+import com.diegonmarcos.superapp.fleetendpoints.android.AccountClient
 import com.diegonmarcos.superapp.perms.LocationUse
 import com.diegonmarcos.superapp.xray.LocationUseView
 import com.diegonmarcos.superapp.xray.PARTIAL_LABEL
@@ -119,7 +119,7 @@ internal object XrayExport {
                 say("posting to the C3 API…")
                 val ops = BuildConfig.UI_C3_OPS_BASE_URL.trimEnd('/')
                 val bases = listOf(ops.replace("/c3-infra-api", "/cloudy-c3-api"), ops).distinct()
-                val bearer = AccountData.secret(ctx, "fleet.bearer").trim().ifEmpty { runCatching { DaguPrefs(ctx).bearerToken }.getOrDefault("") }
+                val bearer = AccountClient.secret(ctx, "fleet.bearer").trim().ifEmpty { runCatching { DaguPrefs(ctx).bearerToken }.getOrDefault("") }
                 when (val r = XrayPoster.post(bases, bearer, report, XrayPoster.fleetTransport, XrayPoster.plainTransport)) {
                     is XrayPoster.Outcome.Ok -> "Posted via ${r.via} to ${r.route}$tag"
                     is XrayPoster.Outcome.Failed -> "Post failed: ${r.reason}"

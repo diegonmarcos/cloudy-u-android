@@ -1213,6 +1213,8 @@ dependencies {
     // tab chrome, icons, router, haptics and the mesh tunnel through AccountHost. It owns ConfigsPrefs, the
     // StatusLight and the snack helper the pages here share, and the JGit/jsch/zxing stack behind it.
     implementation project(':libs:account')
+    // #1693 Cloud Account's client half (AccountClient: granted secrets, the profile, sign-in state, the picked mesh device).
+    implementation project(':libs:fleet-endpoints-android')
     // #877 Cloud Mesh ▸ Profiles ▸ Show as QR: the same encoder libs:account draws its cards with.
     implementation 'com.google.zxing:core:3.5.3'
     // #865 AndroidFragment: CloudStoreHandoff embeds the Store page in Compose until Cloud Store is installed.

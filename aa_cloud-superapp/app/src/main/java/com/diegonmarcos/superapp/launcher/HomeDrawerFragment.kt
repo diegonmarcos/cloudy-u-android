@@ -1,12 +1,13 @@
 package com.diegonmarcos.superapp.launcher
 import com.diegonmarcos.superapp.BuildConfig
+import androidx.compose.runtime.getValue
 import com.diegonmarcos.superapp.R
 import com.diegonmarcos.superapp.system.ModePrefs
 import com.diegonmarcos.superapp.ui.Haptics
 import com.diegonmarcos.superapp.ui.LauncherPalette
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
-import com.diegonmarcos.superapp.profile.ProfilePrefs
+import com.diegonmarcos.superapp.fleetendpoints.android.AccountClient
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -129,7 +130,10 @@ class HomeDrawerFragment : KitComposeFragment() {
             // ordinary PAGES of the sections that have both — pick one from the section grid, the
             // fan menu or the Sirius ring. NavigationListener.onDrawerModeToggle is kept for any
             // other surface that triggers it programmatically.
-            val profile = remember { ProfilePrefs(ctx) }
+            // #1693 the profile is Cloud Account's, read off the main thread over its provider.
+            val profile by androidx.compose.runtime.produceState(AccountClient.Profile(emptyMap())) {
+                value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { AccountClient.profile(ctx) }
+            }
             val modeLabel = remember { if (ModePrefs(ctx).mode == "admin") "Admin" else "Apps" }
             Row(Modifier.fillMaxWidth().background(p.surfaceSelected).heightIn(min = 84.dp)
                 .padding(horizontal = 14.dp, vertical = 10.dp).testTag(TAG_USER_ROW),
@@ -142,11 +146,11 @@ class HomeDrawerFragment : KitComposeFragment() {
                     contentAlignment = Alignment.Center) {
                     // Derived from the name, not stored: one less personal field to hold, disclose
                     // and delete, and it can no longer disagree with the name shown next to it.
-                    Text(profile.derivedInitials(), color = p.tileInk, fontWeight = FontWeight.Bold,
+                    Text(profile.initials(), color = p.tileInk, fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.labelLarge)
                 }
                 Column(Modifier.padding(start = 12.dp)) {
-                    Text(profile.name, color = p.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    Text(profile.name.ifBlank { NO_PROFILE }, color = p.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleSmall, modifier = Modifier.testTag(TAG_NAME))
                     Text(profile.email, color = p.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.labelSmall, modifier = Modifier.alpha(0.8f).testTag(TAG_EMAIL))
@@ -172,6 +176,8 @@ class HomeDrawerFragment : KitComposeFragment() {
         const val TAG_APP_BANNER = "drawer:header:app"
         const val TAG_USER_ROW = "drawer:header:user"
         const val TAG_AVATAR = "drawer:header:avatar"
+        /** #1693 what the badge reads when Cloud Account holds no profile for this app (absent, not granted, empty). */
+        const val NO_PROFILE = "Profile in Cloud Account"
         const val TAG_NAME = "drawer:header:name"
         const val TAG_EMAIL = "drawer:header:email"
         const val TAG_MODE = "drawer:header:mode"

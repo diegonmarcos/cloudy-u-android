@@ -18,7 +18,7 @@ import com.diegonmarcos.superapp.R
 import com.diegonmarcos.superapp.battery.SysfsProc
 import com.diegonmarcos.superapp.network.WgState
 import com.diegonmarcos.superapp.network.WireGuardPrefs
-import com.diegonmarcos.superapp.profile.ProfilePrefs
+import com.diegonmarcos.superapp.fleetendpoints.android.AccountClient
 import com.diegonmarcos.superapp.ui.LauncherPalette
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 
@@ -450,12 +450,14 @@ class DevControlFragment : KitComposeFragment() {
         macro("☁  REPO & RELEASES")
 
         infoSection("Profile") {
-            val prof = ProfilePrefs(ctxAny())
-            row("Name",     prof.name.ifBlank { com.diegonmarcos.superapp.account.BuildConfig.UI_PROFILE_NAME })
-            row("Email",    prof.email.ifBlank { com.diegonmarcos.superapp.account.BuildConfig.UI_PROFILE_EMAIL })
-            row("Company",  prof.company.ifBlank { com.diegonmarcos.superapp.account.BuildConfig.UI_PROFILE_COMPANY })
-            row("Location", prof.location.ifBlank { com.diegonmarcos.superapp.account.BuildConfig.UI_PROFILE_LOCATION })
-            val site = prof.website.ifBlank { com.diegonmarcos.superapp.account.BuildConfig.UI_PROFILE_WEBSITE }
+            // #1693 the profile is Cloud Account's: read over its provider, a reason when it is absent.
+            val prof = AccountClient.profile(ctxAny())
+            val unset = if (AccountClient.installed(ctxAny())) "not set in Cloud Account" else "Cloud Account is not installed"
+            row("Name",     prof.name.ifBlank { unset })
+            row("Email",    prof.email.ifBlank { unset })
+            row("Company",  prof["company"].ifBlank { unset })
+            row("Location", prof["location"].ifBlank { unset })
+            val site = prof["website"]
             if (site.isNotBlank()) row("Website", site)
             // Repos — data-driven from build.json::ui.profile_default.repos.
             small("Repos:")

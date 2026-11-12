@@ -11,7 +11,7 @@ import android.os.Process
 import com.diegonmarcos.superapp.appstore.FleetBearer
 import com.diegonmarcos.superapp.core.FleetConfig
 import com.diegonmarcos.superapp.ops.dagu.DaguPrefs
-import com.diegonmarcos.superapp.profile.AccountData
+import com.diegonmarcos.superapp.fleetendpoints.android.AccountClient
 
 /**
  * #866 The fleet bearer (libs:ops DaguPrefs) for Cloud Store's Commits / CI-CD
@@ -33,7 +33,7 @@ class FleetBearerProvider : ContentProvider() {
         if (method != FleetBearer.METHOD_BEARER) return refuse()
         // #874 Cloud Account is the source of the fleet bearer (its Connections, `fleet.bearer`, behind a grant);
         // what DaguPrefs holds is the copy Fleet Setup pushed, or the owner's own login on a phone without Cloud Account.
-        val token = AccountData.secret(ctx, "fleet.bearer").trim()
+        val token = AccountClient.secret(ctx, "fleet.bearer").trim()
             .ifEmpty { runCatching { DaguPrefs(ctx).bearerToken }.getOrDefault("") }
         return Bundle().apply { putBoolean(FleetBearer.KEY_OK, true); putString(FleetBearer.KEY_TOKEN, token) }
     }

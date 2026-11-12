@@ -21,7 +21,7 @@ import com.diegonmarcos.superapp.MainActivity
 import com.diegonmarcos.superapp.R
 import com.diegonmarcos.superapp.core.FleetNotify
 import com.diegonmarcos.superapp.ops.dagu.DaguPrefs
-import com.diegonmarcos.superapp.profile.AccountData
+import com.diegonmarcos.superapp.fleetendpoints.android.AccountClient
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 
@@ -217,7 +217,7 @@ class AiBadgeService : Service() {
         private fun prefs(ctx: Context) = ctx.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
         /** The fleet bearer this device holds (Cloud Account's fleet.bearer, else the Dagu login); "" when none. Never logged. */
-        private fun bearer(ctx: Context): String = AccountData.secret(ctx, "fleet.bearer").trim()
+        private fun bearer(ctx: Context): String = AccountClient.secret(ctx, "fleet.bearer").trim()
             .ifEmpty { runCatching { DaguPrefs(ctx).bearerToken }.getOrDefault("") }
 
         /**

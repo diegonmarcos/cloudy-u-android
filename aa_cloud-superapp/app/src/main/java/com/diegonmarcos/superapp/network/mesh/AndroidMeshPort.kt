@@ -15,8 +15,6 @@ import com.diegonmarcos.superapp.network.MeshTransport
 import com.diegonmarcos.superapp.network.WgState
 import com.diegonmarcos.superapp.network.WireGuardPrefs
 import com.diegonmarcos.superapp.network.WireGuardProfiles
-import com.diegonmarcos.superapp.profile.AccountModel
-import com.diegonmarcos.superapp.profile.VaultCockpit
 import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.Config
 import com.wireguard.crypto.Key
@@ -321,10 +319,8 @@ class AndroidMeshPort(context: Context) : MeshPort {
     /** The EXPLICITLY picked device's declared wg addresses; null when nothing is picked or no
      *  bundle is landed (the live tunnel is never consulted: it is what this guard protects). */
     private fun declaredAddresses(): Set<String>? {
-        val picked = VaultCockpit.selectedDevice(ctx).ifBlank { return null }
-        val bundle = AccountModel.get(ctx).server()?.body ?: return null
-        val d = runCatching { VaultCockpit.devices(bundle) }.getOrNull()?.firstOrNull { it.id == picked } ?: return null
-        return setOf(d.wgIp, d.wgIpv6).filter { it.isNotBlank() }.toSet()
+        // #1693 the picked device lives in Cloud Account: asked over its provider (null = no answer, guard idle).
+        return com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.meshDeviceAddresses(ctx)
     }
 
     override fun setProviderCustom(): String {

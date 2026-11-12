@@ -274,6 +274,14 @@ object AccountData {
                     if (who != ctx.packageName && !vault.grants.allow(who, com.diegonmarcos.superapp.fleetendpoints.FleetEndpointsContract.GRANT_ENDPOINTS)) error("no grant for $who")
                     else runCatching { FleetEndpointsPublisher.publish(ctx, who, vault) }.getOrElse { error(it.javaClass.simpleName) }
                 }
+                // #1693 the picked device's mesh addresses (not secret): the SuperApp's Cloud-preset guard reads them here
+                "mesh_device" -> runCatching {
+                    val picked = VaultCockpit.selectedDevice(ctx)
+                    val bundle = AccountModel.get(ctx).server()?.body
+                    val d = if (picked.isBlank() || bundle == null) null else VaultCockpit.devices(bundle).firstOrNull { it.id == picked }
+                    val a = org.json.JSONArray(); d?.let { listOf(it.wgIp, it.wgIpv6).filter { x -> x.isNotBlank() }.forEach(a::put) }
+                    Bundle().apply { putBoolean(KEY_OK, true); putString("mesh_device_json", JSONObject().put("device", d?.id.orEmpty()).put("addresses", a).toString()) }
+                }.getOrElse { error(it.javaClass.simpleName) }
                 // #1693 sign-in STATE only (no token, no identity secret): every fleet app's sign-in row reads it
                 com.diegonmarcos.superapp.fleetendpoints.SignInContract.METHOD -> {
                     val provider = arg?.trim().orEmpty()

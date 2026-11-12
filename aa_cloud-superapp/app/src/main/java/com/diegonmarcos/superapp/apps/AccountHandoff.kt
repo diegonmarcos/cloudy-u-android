@@ -24,7 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import com.diegonmarcos.superapp.profile.AccountData
+import com.diegonmarcos.superapp.fleetendpoints.android.AccountClient
 
 /**
  * #867 Account is its own app now: Cloud Account (ac_cloud-account), built from the same
@@ -38,15 +38,15 @@ import com.diegonmarcos.superapp.profile.AccountData
  * (ProfileFragment) from libs:account, so there is no embedded fallback any more; task 8
  * finishes the SuperApp side (the profile.* declarations).
  *
- * The data follows the same rule: [AccountData.migrate] copies Cloud Account's configs, profile
- * and account files into this app once, and the imported-configs blob reads through to it while
- * this app's own is empty (AccountHost.readThrough, set in App.kt).
+ * #1693 the data follows the same rule: this app keeps no copy of Cloud Account's stores; what it
+ * needs (a granted secret, the profile, sign-in state) it asks Cloud Account for over its provider
+ * ([AccountClient]).
  */
 object AccountHandoff {
-    const val PKG = AccountData.PKG
+    const val PKG = AccountClient.PKG
     private const val ACTION_OPEN = "$PKG.OPEN"
 
-    fun installed(ctx: Context): Boolean = AccountData.accountInstalled(ctx)
+    fun installed(ctx: Context): Boolean = AccountClient.installed(ctx)
 
     /** Opens Cloud Account. False when it is not installed or will not start. */
     fun open(ctx: Context): Boolean = runCatching {
