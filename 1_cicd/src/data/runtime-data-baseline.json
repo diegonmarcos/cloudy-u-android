@@ -423,7 +423,7 @@
   "ad_Capital-Stack-FinTerminal/app/build.gradle": 1
  },
  "buildconfig_b64": {
-  "aa_cloud-superapp/app/build.gradle": 60,
+  "aa_cloud-superapp/app/build.gradle": 59,
   "ab_cloud-libs-shared/keyboard-engines/app/build.gradle": 1,
   "ab_cloud-libs-shared/libs/account-ui/build.gradle": 2,
   "ab_cloud-libs-shared/libs/account/build.gradle": 7,
