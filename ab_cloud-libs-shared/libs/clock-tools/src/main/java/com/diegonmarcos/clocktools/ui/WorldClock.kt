@@ -129,7 +129,7 @@ fun WorldClockScreen(modifier: Modifier = Modifier) {
             HorizontalDivider(Modifier.padding(vertical = ClockMetrics.gap))
             if (host.hasMap) {
                 // #1423 the host's world map: a tap adds or removes the nearest city.
-                host.WorldMap(zones, ref) { z -> setZones(if (z in zones) zones - z else zones + z) }
+                host.WorldMap(zones, ref, onToggle = { z -> setZones(if (z in zones) zones - z else zones + z) })
                 HorizontalDivider(Modifier.padding(vertical = ClockMetrics.gap))
             }
         }
