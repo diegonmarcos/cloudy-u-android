@@ -44,7 +44,7 @@ ok("ShellClient.status(ctx).armed" in bp and "ShellClient.exec(ctx" in bp, "the 
 
 rb = rd("ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/SetupRunbook.kt")
 rbc = re.sub(r"//[^\n]*|/\*.*?\*/", "", rb, flags=re.S)
-ok("ShellClient.arm(ctx)" in rbc and "HostShell" not in rbc and "WdKeeper" not in rbc, "runShell opens the SuperApp's arm flow, no pairing of its own", "runShell carries a pairing flow / HostShell again")
+ok("ShellClient.openArmPage(ctx)" in rbc and "HostShell" not in rbc and "WdKeeper" not in rbc, "runShell opens the SuperApp's arm flow, no pairing of its own", "runShell carries a pairing flow / HostShell again")
 ok("SHELL -> Step(id, { checkShell() }, { runShell() })" in rb and "STORE -> Step(id, { checkStore() })" in rb, "runbook wires shell + store", "runbook does not wire shell/store")
 ok('private fun checkStore(): State =\n        storeInfo()?.let { State.Already("Cloud Store ${it.versionName} installed") }' in rb, "store check says ALREADY when Cloud Store is installed", "store check never says ALREADY")
 ok('if (ch == null && !allowPrompt)\n            return State.Failed("no shell channel' in rb, "no channel + no prompt -> a named FAILED", "no channel falls through silently")
@@ -171,7 +171,7 @@ mutate "HostShell returns in App" $K/App.kt 'runCatching { AccountVault.install(
 mutate "app no longer links the broker client" $A/app/build.gradle "implementation project(':libs:shell-client')" '' || M=$((M+1))
 mutate "the shizuku lib is linked again" $A/app/build.gradle "implementation project(':libs:shell-client')" "implementation project(':libs:shizuku-adb-debug-tools')" || M=$((M+1))
 mutate "a channel block returns" $A/build.json '"name": "cloud-account",' '"name": "cloud-account", "shizuku_client": {},' || M=$((M+1))
-mutate "runShell pairs by itself" $P/SetupRunbook.kt 'com.diegonmarcos.superapp.shellclient.ShellClient.arm(ctx)' 'HostShell.reconnect(ctx, 1)' || M=$((M+1))
+mutate "runShell pairs by itself" $P/SetupRunbook.kt 'com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctx)' 'HostShell.reconnect(ctx, 1)' || M=$((M+1))
 mutate "runbook step dropped" $A/build.json '"store",' '' || M=$((M+1))
 mutate "store never ALREADY" $P/SetupRunbook.kt 'State.Already("Cloud Store ${it.versionName} installed")' 'State.Todo("x")' || M=$((M+1))
 mutate "no channel is silent" $P/SetupRunbook.kt 'if (ch == null && !allowPrompt)' 'if (false)' || M=$((M+1))
