@@ -27,7 +27,7 @@
 #   F2  without all-files access the seed attempts nothing, reports every declared
 #       repository as needs-storage, and retries — before the migration touches
 #       the store.
-#   F3  every PUBLIC repository of a declared name family (build.json::ui.sync.git.name_families) is seeded.
+#   F3  #1679 NO repository is seeded: nothing is cloned without a user tap.
 #   F4  the seed's network constraint is declared in build.json, not hardcoded.
 #   F5  cloud-shared-store: cloud-termux makes ~/cloud-shared-store a REAL directory in
 #       its home (seen as /root/cloud-shared-store through the $HOME bind) whatever the
@@ -125,8 +125,9 @@ if not re.search(r'val seedRepos: List<GitRepoDecl> get\(\) = gitFamily\.repos\.
 fams = tuple(json.load(open(sys.argv[3]))['ui']['sync']['git']['name_families'])
 pub = [r['name'] for r in repos if r.get('public') and not r.get('private') and r['name'].startswith(fams)]
 if not pub: bad.append('the manifest declares no public repository in a declared name family at all')
-miss = [n for n in pub if not next(r for r in repos if r['name'] == n).get('seed')]
-if miss: bad.append('public repositories the seed never attempts: ' + ', '.join(miss))
+# #1679 owner rule: nothing is cloned without a user tap, so NO repository is seeded (the public ones stay listed, clone on tap).
+seeded = [r['name'] for r in repos if r.get('seed')]
+if seeded: bad.append('#1679 repositories marked for an automatic clone: ' + ', '.join(seeded))
 print('\n'.join('    ' + b for b in bad)); sys.exit(1 if bad else 0)
 PY
 }
@@ -208,7 +209,7 @@ echo "── #730 a fresh phone: the store seeds and the terminal mounts it ─�
 run() { local id="$1" what="$2"; shift 2; local out; if out="$("$@" 2>&1)"; then pass "$id $what"; else fail "$id $what"; [ -n "$out" ] && echo "$out"; fi; }
 run F1 "the seed is scheduled on first launch and re-kicked on the all-files grant" f1 "$MAIN"
 run F2 "without all-files access the seed reports needs-storage for every repository and retries" f2 "$SEED"
-run F3 "every public repository of a declared name family in the manifest is seeded" f3 "$MANIFEST"
+run F3 "#1679 no repository of the manifest is seeded (clone only on a user tap)" f3 "$MANIFEST"
 run F4 "the seed's network constraint is declared" f4 "$SEED" "$BUILD_JSON" "$GRADLE"
 run F5 "cloud-termux makes ~/cloud-shared-store in its home (grant-independent) and cloud-nix links to it" f5 "$ENTER" "$BAKE"
 run F6 "no ~/emulated link or empty mount point is left when storage is not granted" f6 "$ENTER" "$BAKE"
@@ -230,7 +231,7 @@ mut F1b "$MAIN" "s.replace('StoreSeedWorker.kick(this)', 'Unit')" f1 MUTATED
 mut F2a "$SEED" "s.replace('return conclude(blocked)', 'return Result.success()', 1)" f2 MUTATED
 mut F2b "$SEED" "s.replace('SeedReport.withoutStorage(', 'SeedReport.withoutStorageX(')" f2 MUTATED
 # F3 un-seeds the first seeded public repository (whatever its current name) through the JSON itself (a duplicate key would lose to the original).
-mut F3 "$MANIFEST" "(lambda j, d: ([r.update(seed=False) for r in [x for x in d['repos'] if x.get('seed') and x.get('public') and not x.get('private')][:1]], j.dumps(d, indent=1))[1])(__import__('json'), __import__('json').loads(s))" f3 MUTATED
+mut F3 "$MANIFEST" "(lambda j, d: ([r.update(seed=True) for r in [x for x in d['repos'] if x.get('public') and not x.get('private')][:1]], j.dumps(d, indent=1))[1])(__import__('json'), __import__('json').loads(s))" f3 MUTATED
 mut F4 "$SEED" "s.replace('if (BuildConfig.SEED_REQUIRE_UNMETERED) NetworkType.UNMETERED else NetworkType.CONNECTED', 'NetworkType.UNMETERED')" f4 MUTATED "$BUILD_JSON" "$GRADLE"
 mut F5a "$ENTER" "s.replace('mkdir -p \"\$CLOUD_STORE\" \"\$CLOUD_STORE_CFG\"', 'true')" f5 MUTATED "$BAKE"
 mut F5b "$BAKE" "s.replace('cloud_storage_link \"\$HOME/{store_dir}\" \"\$CLOUD_STORE_OWNER\"', 'cloud_storage_link \"\$HOME/{store_dir}\" \"\$CLOUD_STORE_OWNER.old\"')" f5 "$ENTER" MUTATED

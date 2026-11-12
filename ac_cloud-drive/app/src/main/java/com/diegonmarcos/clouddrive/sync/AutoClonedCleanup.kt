@@ -2,7 +2,6 @@ package com.diegonmarcos.clouddrive.sync
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -18,8 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.dp
 import com.diegonmarcos.clouddrive.Declarations
+import com.diegonmarcos.clouddrive.ui.DriveMetrics
 import com.diegonmarcos.clouddrive.ui.DriveTags
 import com.diegonmarcos.cloudlib.gitsync.ManagedRepo
 import java.io.File
@@ -52,7 +51,7 @@ object AutoClonedCleanup {
             (o["labels"] as? JsonObject)?.entries?.mapNotNull { (k, v) -> (v as? JsonPrimitive)?.contentOrNull?.let { k to it } }?.toMap().orEmpty())
     }.getOrDefault(Decl())
 
-    val decl: Decl by lazy { runCatching { parse(Declarations.decode(com.diegonmarcos.clouddrive.BuildConfig.UI_SYNC_B64)) }.getOrDefault(Decl()) }
+    val decl: Decl get() = Declarations.autoClonedCleanup
 
     /** The registered clones that are auto-cloned copies: a declared name, directly in the store's git folder. Pure. */
     fun candidates(repos: List<ManagedRepo>, names: Collection<String>, gitRoot: String, canonical: (String) -> String = { it }): List<ManagedRepo> {
@@ -88,7 +87,7 @@ internal fun AutoClonedCleanupDialog(repos: List<ManagedRepo>, coordinator: GitS
         modifier = Modifier.testTag(DriveTags.SYNC_GIT_AUTO_CLONED),
         title = { Text(d.label.ifBlank { "Remove auto-cloned copies" }) },
         text = {
-            Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) {
                 if (d.hint.isNotBlank()) Text(d.hint, style = MaterialTheme.typography.bodySmall)
                 when {
                     delete == null -> Text(d.label("no_delete", "No folder Delete action is declared."), color = MaterialTheme.colorScheme.error)

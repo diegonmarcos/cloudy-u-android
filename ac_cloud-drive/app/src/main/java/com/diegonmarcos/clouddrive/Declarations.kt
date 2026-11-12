@@ -489,6 +489,8 @@ object Declarations {
     /** #1149 Git > Cloud's public list (ui.sync.cloud_list) and Git > Me's extra hosts (ui.sync.git_hosts). */
     val cloudList: GitHostsDecl.CloudListDecl by lazy { GitHostsDecl.parseCloud(decode(BuildConfig.UI_SYNC_B64)) }
     val gitHosts: List<GitHostsDecl.GitHostDecl> by lazy { GitHostsDecl.parseHosts(decode(BuildConfig.UI_SYNC_B64)) }
+    /** #1679 ui.sync.git.auto_cloned_cleanup: the folders the retired seed cloned by itself (More ▸ Remove auto-cloned copies). */
+    val autoClonedCleanup: com.diegonmarcos.clouddrive.sync.AutoClonedCleanup.Decl by lazy { runCatching { com.diegonmarcos.clouddrive.sync.AutoClonedCleanup.parse(decode(BuildConfig.UI_SYNC_B64)) }.getOrDefault(com.diegonmarcos.clouddrive.sync.AutoClonedCleanup.Decl()) }
     /** #1216 the provider lines of Mounts > FUSE and Configs > Mounts (ui.sync.mounts.providers), in declared order. */
     val mountProviders: List<MountProviderDecl> by lazy { parseMountProviders(decode(BuildConfig.UI_SYNC_B64)) }
     /** #1216 the connection kinds Configs > Fsync lists (ui.sync.config_fsync.connection_kinds). */
