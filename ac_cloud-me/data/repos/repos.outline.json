@@ -1063,6 +1063,34 @@
      "label": "DuckPeng",
      "icon": "🦆",
      "description": "DuckPeng hub: cross-links CG, Cloud and LeafY (no member repos of its own)."
+    },
+    {
+     "code": "6.3",
+     "kind": "project",
+     "name": "Library-KG",
+     "label": "Library-KG",
+     "icon": "📚",
+     "description": "Knowledge-graph library: saved-collections board and the Chronos site.",
+     "children": [
+      {
+       "code": "6.3.1",
+       "kind": "family",
+       "name": "Library-KG",
+       "label": "Library-KG",
+       "icon": "",
+       "description": "",
+       "repos": [
+        {
+         "code": "6.3.1.1",
+         "name": "Projects-Library-KG",
+         "registry_name": "Projects-Library-KG",
+         "url": "https://github.com/diegonmarcos/Projects-Library-KG",
+         "private": false,
+         "description": "Library knowledge graph: saved-collections board (served by Cloud KG Store Me) and the Chronos site"
+        }
+       ]
+      }
+     ]
     }
    ]
   },
@@ -1125,6 +1153,14 @@
          "url": "https://github.com/diegonmarcos/diegonmarcos.github.io",
          "private": false,
          "description": "Does Ducks lives in the north pole with bears or south with Penguins?"
+        },
+        {
+         "code": "7.2.1.2",
+         "name": "front-html",
+         "registry_name": "front-html",
+         "url": "https://github.com/diegonmarcos/front-html",
+         "private": false,
+         "description": "Hub of the owner's GitHub Pages sites: submodules plus the generated pages.json."
         }
        ]
       }

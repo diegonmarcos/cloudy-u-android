@@ -18,6 +18,14 @@
   "_renames_doc": "`renames` records an old name -> new name for things that are not (or not only) repos, so a path that still says the old name is findable and a guard can flag it. `kind: repo` = a repository rename (the entry also carries `renamed_from`); `kind: app-folder` = a folder/app inside a repo. Farmers never create the old name.",
   "renames": [
     {
+      "from": "HardTech-Chronos",
+      "to": "Projects-Library-KG",
+      "kind": "repo",
+      "since": "2026-11-12",
+      "ticket": "#1609",
+      "doc": "GitHub repo renamed and moved under the Projects hub. The old name keeps working through the GitHub redirect."
+    },
+    {
       "from": "cloud-me-pvt-containers",
       "to": "z-archived_cloud-me-pvt-containers",
       "kind": "repo",
@@ -1940,6 +1948,18 @@
       "doc": "Project master for the DuckPeng family: the CG hub and the cloud hub (Leaf.y moved to the cloud-me-pub-profiles family 2026-10-28). Its own repos.json subset plus committed symlinks. Created 2026-10-27 (#1224)."
     },
     {
+      "name": "Projects-Library-KG",
+      "farm": "6.Projects",
+      "group": "b_projects",
+      "hub": "Projects-___",
+      "url": "git@github.com:diegonmarcos/Projects-Library-KG.git",
+      "private": false,
+      "renamed_from": [
+        "HardTech-Chronos"
+      ],
+      "doc": "Renamed from HardTech-Chronos (#1609). Root index.html + topics.md are the Library board cloned at runtime by Cloud KG Store Me (#1656); Chronos/ is the published site (formerly dist/), including 4.Astronomy-Astrological-sphere. Linked in front-html."
+    },
+    {
       "name": "front-gh-profile-diegonmarcos",
       "farm": "7.Others",
       "group": "c_gh",
@@ -2082,6 +2102,14 @@
         }
       ],
       "doc": "Front-end: the published site and its derive job (1_front-configs). Cloned as 'front-diegonmarcos', not after its repo name (diegonmarcos.github.io) — every front member is front-<thing>, and the bare 'front' now belongs to the project master, exactly as 'cloud' does for a_cloud."
+    },
+    {
+      "name": "front-html",
+      "farm": "7.Others",
+      "group": "c_gh",
+      "url": "git@github.com:diegonmarcos/front-html.git",
+      "private": false,
+      "doc": "Pages hub: submodules diegonmarcos.github.io and profile, and pages.json derived from the GitHub API by scripts/gen-pages.mjs (read at runtime by Cloud Browser). Placed beside front-diegonmarcos (the deployer it indexes) in 7.Others."
     },
     {
       "name": "z-archived-___",

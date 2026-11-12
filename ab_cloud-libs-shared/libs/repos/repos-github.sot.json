@@ -1117,6 +1117,24 @@
       "description": "DuckPeng — hub: CG, Cloud and LeafY"
     },
     {
+      "family": "Library-KG",
+      "name": "Projects-Library-KG",
+      "url": "https://github.com/diegonmarcos/Projects-Library-KG",
+      "role": "",
+      "visibility": "public",
+      "project": "Library-KG",
+      "field": "Projects",
+      "developer": "Projects",
+      "code": "6.3.1.1",
+      "area_code": "6",
+      "project_code": "6.3",
+      "family_code": "6.3.1",
+      "registry_name": "Projects-Library-KG",
+      "hub": "Projects-___",
+      "farm": "6.Projects",
+      "description": "Library knowledge graph: saved-collections board (served by Cloud KG Store Me) and the Chronos site"
+    },
+    {
       "family": "README",
       "name": "diegonmarcos",
       "url": "https://github.com/diegonmarcos/diegonmarcos",
@@ -1151,6 +1169,24 @@
       "hub": null,
       "farm": "7.Others",
       "description": "Does Ducks lives in the north pole with bears or south with Penguins?"
+    },
+    {
+      "family": "Deployer",
+      "name": "front-html",
+      "url": "https://github.com/diegonmarcos/front-html",
+      "role": "hub",
+      "visibility": "public",
+      "project": "Pages",
+      "field": "Others",
+      "developer": "Gh",
+      "code": "7.2.1.2",
+      "area_code": "7",
+      "project_code": "7.2",
+      "family_code": "7.2.1",
+      "registry_name": "front-html",
+      "hub": null,
+      "farm": "7.Others",
+      "description": "Hub of the owner's GitHub Pages sites: submodules plus the generated pages.json."
     },
     {
       "family": "Hub",
@@ -2469,7 +2505,7 @@
       "description": "Projects (formerly Front): endeavours, lab tools and DuckPeng.",
       "hub": "Projects-___",
       "farm": "6.Projects",
-      "repos_count": 3,
+      "repos_count": 4,
       "children": [
         {
           "code": "6.1",
@@ -2511,6 +2547,34 @@
           "farm": "6.Projects/DuckPeng",
           "repos_count": 1,
           "children": []
+        },
+        {
+          "code": "6.3",
+          "kind": "project",
+          "name": "Library-KG",
+          "label": "Library-KG",
+          "icon": "📚",
+          "developer": "Projects",
+          "description": "Knowledge-graph library: saved-collections board and the Chronos site.",
+          "hub": null,
+          "farm": "6.Projects",
+          "repos_count": 1,
+          "children": [
+            {
+              "code": "6.3.1",
+              "kind": "family",
+              "name": "Library-KG",
+              "label": "Library-KG",
+              "developer": "Projects",
+              "description": "",
+              "hub": null,
+              "farm": "6.Projects",
+              "repos_count": 1,
+              "repos": [
+                "Projects-Library-KG"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -2525,7 +2589,7 @@
       "description": "Loose GitHub repos with no project hub (profile README, GitHub Pages site).",
       "hub": null,
       "farm": "7.Others",
-      "repos_count": 2,
+      "repos_count": 3,
       "children": [
         {
           "code": "7.1",
@@ -2565,7 +2629,7 @@
           "description": "GitHub Pages deployer.",
           "hub": null,
           "farm": "7.Others",
-          "repos_count": 1,
+          "repos_count": 2,
           "children": [
             {
               "code": "7.2.1",
@@ -2576,9 +2640,10 @@
               "description": "",
               "hub": null,
               "farm": "7.Others",
-              "repos_count": 1,
+              "repos_count": 2,
               "repos": [
-                "diegonmarcos.github.io"
+                "diegonmarcos.github.io",
+                "front-html"
               ]
             }
           ]
