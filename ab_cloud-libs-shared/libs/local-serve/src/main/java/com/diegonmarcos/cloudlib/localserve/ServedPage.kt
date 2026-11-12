@@ -79,6 +79,10 @@ fun ServedPage(
     modifier: Modifier = Modifier,
     background: Color = MaterialTheme.colorScheme.surface,
     labels: ServedPageLabels = ServedPageLabels(),
+    // #1483 the host's hooks on the served WebView: [onWebView] once it exists (a shell attaches its chrome scroll bridge there),
+    // [onPageShown] each time the page finished loading (the bridge's page script goes in then). Both default to nothing.
+    onWebView: (WebView) -> Unit = {},
+    onPageShown: (WebView) -> Unit = {},
 ) {
     val server = remember(file) { LocalServer(file.absoluteFile.parentFile ?: file.absoluteFile).also { runCatching { it.start() } } }
     DisposableEffect(server) { onDispose { server.close() } }
@@ -89,7 +93,8 @@ fun ServedPage(
             AndroidView(
                 modifier = Modifier.fillMaxSize().testTag(ServedPageTags.WEB),
                 factory = { ctx ->
-                    servedWebView(ctx, background.toArgb(), onState = { state = it }, onView = { web[0] = it }).apply {
+                    servedWebView(ctx, background.toArgb(), onState = { state = it; if (it == ServedState.Shown) web[0]?.let { v -> runCatching { onPageShown(v) } } }, onView = { web[0] = it }).apply {
+                        runCatching { onWebView(this) }
                         runCatching { loadUrl(server.url(file.name)) }.onFailure { state = ServedState.Failed(it.message ?: it.javaClass.simpleName) }
                     }
                 },

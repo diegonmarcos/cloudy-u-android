@@ -99,12 +99,16 @@ fun meEntry(dir: File, entry: String): File? {
  */
 @Composable
 fun MeServedFrame(file: File, stale: String?) {
+    val collapse = com.diegonmarcos.superapp.bottomnav.LocalNavChromeCollapse.current
     Column(Modifier.fillMaxSize().testTag(NativeTags.ME_FRAME)) {
         if (stale != null) KgNote(stale, error = true)
         ServedPage(
             file,
             Modifier.weight(1f).fillMaxWidth().testTag(NativeTags.ME_PAGE),
             background = MaterialTheme.colorScheme.surface,
+            // #1483 the served page's scroll feeds the shared chrome (a WebView reports no nested scroll): reading down hides the bars
+            onWebView = { wv -> com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(wv, collapse) },
+            onPageShown = { wv -> com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.inject(wv) },
             labels = ServedPageLabels(
                 loading = stringResource(R.string.me_loading),
                 failed = stringResource(R.string.me_page_failed),

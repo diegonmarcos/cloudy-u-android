@@ -93,6 +93,14 @@ public fun Modifier.chromeScroll(collapse: BottomNavCollapse): Modifier =
                 val change = event.changes.firstOrNull() ?: continue
                 when {
                     event.changes.none { it.pressed } -> { if (down) { collapse.onFinger(false); collapse.onRelease() }; down = false }
+                    // #1483 a NEW finger-down while the watcher still thinks one is down: the previous lift never reached this box (an
+                    // embedded View list - Cloud Dialer's Fossify pager - takes the stream with requestDisallowInterceptTouchEvent and
+                    // its UP is dispatched past the Compose pass). Without this, the next gesture counted as the one that hid the bars
+                    // and they never came back. Close the lost gesture first, then start the new one.
+                    down && change.pressed && !change.previousPressed -> {
+                        collapse.onFinger(false); collapse.onRelease()
+                        collapse.onFinger(true); startX = change.position.x; startY = change.position.y
+                    }
                     !down -> { down = true; collapse.onFinger(true); startX = change.position.x; startY = change.position.y }
                     else -> {
                         val dy = change.position.y - startY
