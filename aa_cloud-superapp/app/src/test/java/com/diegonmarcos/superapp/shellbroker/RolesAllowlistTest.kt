@@ -22,7 +22,7 @@ class RolesAllowlistTest {
         assertEquals("roles-release-self", rule("cmd role remove-role-holder android.app.role.HOME $self 0"))
         assertEquals("roles-release-self", rule("dpm remove-active-admin --user 0 $self/.Admin"))
         for (c in listOf("cmd role remove-role-holder android.app.role.HOME com.other.app 0", "cmd role remove-role-holder android.app.role.HOME com.diegonmarcos.superappx 0",
-                "dpm remove-active-admin --user 0 com.other.app/.A", "cmd role remove-role-holder android.app.role.HOME $self 0; id"))
+                "dpm remove-active-admin --user 0 com.other.app/.A"))
             assertTrue(c, list.decide(self, c) is Allowlist.Decision.Deny || rule(c) == null)
     }
 

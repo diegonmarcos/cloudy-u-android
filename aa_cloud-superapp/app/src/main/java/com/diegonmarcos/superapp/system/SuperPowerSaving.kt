@@ -66,7 +66,8 @@ object SuperPowerSaving {
             listOf(restoreListenerCmd(ctx)), listOf(releaseListenerCmd(ctx))),
     )
 
-    data class Report(val ok: Boolean, val lines: List<String>, val needs: List<Intent> = emptyList())
+    /** [needs] = libs:perms catalogue ids of the grants to finish on the Perms page (PermsLink). */
+    data class Report(val ok: Boolean, val lines: List<String>, val needs: List<String> = emptyList())
 
     /** Blocking; call off the main thread. Never throws. */
     fun turnOn(ctx: Context, stopVpn: Boolean = false): Report {
@@ -98,7 +99,7 @@ object SuperPowerSaving {
     }
 
     fun turnOff(ctx: Context): Report {
-        val out = ArrayList<String>(); var ok = true; val needs = ArrayList<Intent>()
+        val out = ArrayList<String>(); var ok = true; val needs = ArrayList<String>()
         val app = ctx.applicationContext
         val plan = restorePlan(releasedAdmin(app), releasedListener(app))
         // First: the services it stopped (ADB keepers first), so the channel is back for the steps below.
@@ -109,8 +110,8 @@ object SuperPowerSaving {
             out += "Device admin: " + r.message
             if (!r.ok) {
                 ok = false
-                needs += Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent(app))
-                out += "Device admin: opening the system activation dialog instead"
+                needs += "device_admin"
+                out += "Device admin: opening its Perms row (the system activation dialog) instead"
             }
         }
         if (plan.listener) {
@@ -118,8 +119,8 @@ object SuperPowerSaving {
             out += "Notification access: " + r.message
             if (!r.ok) {
                 ok = false
-                needs += Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                out += "Notification access: opening the Notification access page instead"
+                needs += "notification_listener"
+                out += "Notification access: opening its Perms row (the Notification access page) instead"
             }
         }
         val ps = runCatching { PowerSaving.set(app, false) }.getOrNull()
@@ -128,12 +129,9 @@ object SuperPowerSaving {
         return Report(ok, out, needs)
     }
 
-    /** Launch the fallbacks of [r] (activation dialog, settings page); never throws. */
+    /** The fallbacks of [r]: the Perms page opened on those rows (PermsLink, the page's declared door); never throws. */
     fun openFallbacks(ctx: Context, r: Report) {
-        for (i in r.needs) runCatching {
-            if (ctx !is android.app.Activity) i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            if (i.resolveActivity(ctx.packageManager) != null) ctx.startActivity(i)
-        }
+        if (r.needs.isNotEmpty()) runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "Super power saving", r.needs) }
     }
 
     /** What the mode has paused, for the double-tap lock and the Phone Notifications panel. */

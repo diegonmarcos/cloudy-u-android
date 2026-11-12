@@ -9,7 +9,7 @@ import java.io.File
 /** #1689 after entering the mode no SuperApp foreground service remains except the declared keep ones; restore is exact. */
 class SuperServicesTest {
     private val decl: List<SuperServices.Decl> by lazy {
-        val groups = JSONObject(File("build.json").readText()).getJSONObject("ui").getJSONObject("control_panel").getJSONArray("groups")
+        val groups = JSONObject(File("../build.json").readText()).getJSONObject("ui").getJSONObject("control_panel").getJSONArray("groups")
         val c = (0 until groups.length()).flatMap { g -> groups.getJSONObject(g).optJSONArray("controls")?.let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.orEmpty() }
             .single { it.optString("id") == "super_power_saving" }
         val a = c.getJSONArray("services")

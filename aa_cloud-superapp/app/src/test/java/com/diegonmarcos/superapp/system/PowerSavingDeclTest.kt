@@ -8,7 +8,7 @@ import java.io.File
 
 /** #1687 one declaration, two surfaces, the real state, the channel-unavailable path, the fleet-config key. */
 class PowerSavingDeclTest {
-    private val raw = File("build.json").readText()
+    private val raw = File("../build.json").readText()
     private val m = "src/main/java/com/diegonmarcos/superapp/"
 
     @Test fun `declared exactly once in build json`() {
@@ -36,7 +36,7 @@ class PowerSavingDeclTest {
     }
 
     @Test fun `prefs are declared in fleet-config`() {
-        val stores = JSONObject(File("../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json").readText()).getJSONObject("stores")
+        val stores = JSONObject(File("../../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json").readText()).getJSONObject("stores")
         val s = stores.getJSONObject(PowerSaving.PREFS)
         assertTrue(s.getString("doc").contains(PowerSaving.KEY_FOLLOW))
     }

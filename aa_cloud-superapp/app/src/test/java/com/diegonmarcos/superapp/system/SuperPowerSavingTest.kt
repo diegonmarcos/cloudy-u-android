@@ -61,6 +61,6 @@ class SuperPowerSavingTest {
         assertTrue(File(m + "launcher/AggregatorPanels.kt").readText().contains("SuperPowerSaving.pausedReason(ctx)"))
         val f = File(m + "configs/PermissionsFragment.kt").readText()
         assertTrue(f.contains("SuperPowerCard()") && f.contains("openFallbacks"))
-        assertTrue(File("build.json").readText().contains("\"id\": \"super_power_saving\""))
+        assertTrue(File("../build.json").readText().contains("\"id\": \"super_power_saving\""))
     }
 }

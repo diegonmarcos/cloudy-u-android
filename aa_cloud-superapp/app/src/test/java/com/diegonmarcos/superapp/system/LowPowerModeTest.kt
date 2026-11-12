@@ -13,7 +13,7 @@ class LowPowerModeTest {
     @After fun reset() = LowPowerMode.resetForTest()
 
     private val decl: JSONObject by lazy {
-        val groups = JSONObject(File("build.json").readText()).getJSONObject("ui").getJSONObject("control_panel").getJSONArray("groups")
+        val groups = JSONObject(File("../build.json").readText()).getJSONObject("ui").getJSONObject("control_panel").getJSONArray("groups")
         (0 until groups.length()).flatMap { g -> groups.getJSONObject(g).optJSONArray("controls")?.let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.orEmpty() }
             .single { it.optString("id") == "power_saving" }
     }
