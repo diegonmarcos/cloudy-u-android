@@ -1,4 +1,4 @@
-//! THE APP SHELL: the pages around the shared web server. Five bottom tabs (Pages, API, Home, SSHd, Configs), the
+//! THE APP SHELL: the pages around the shared web server. Five bottom tabs (Pages, API, Home, SSHd, ADB Shell; #1677 Configs is the top bar's gear), the
 //! link chooser (Open in browser / Open embedded) and their JSON, all under the one prefix `/__app__/`.
 //!
 //! The file view itself is NOT here (and no longer embedded in the SSHd tab); `/` is the shared fleet-webserver (the Linux
@@ -38,6 +38,7 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Page, path: "/__app__/tab/sshd", tab: Some("SSHd"), post: false, summary: "The SSH-door manager: every fleet SSH door with live state, engine, port, auth, sessions and Start / Stop, a per-port Mesh-only switch and the Keep alive On/Off with its live state", handler: page_shell },
     Route { kind: Kind::Page, path: "/__app__/files", tab: None, post: false, summary: "The old Files tab: the shell sends it to the SSHd tab", handler: page_shell },
     Route { kind: Kind::Page, path: "/__app__/tab/configs", tab: Some("Configs"), post: false, summary: "About (ports, DNS names, versions), Engines (every renderer and feature) and Links (what a tapped link does)", handler: page_shell },
+    Route { kind: Kind::Page, path: "/__app__/tab/adb-shell", tab: Some("ADB Shell"), post: false, summary: "#1677 the bottom nav's ADB Shell tab: opens the Cloud SuperApp's ADB Shell page (its launcher intent with the declared page extra, build.json::adb_shell); a clear message when the SuperApp is not installed. Configs moved to the top bar's gear", handler: page_shell },
     Route { kind: Kind::Api, path: "/__app__/api/routes", tab: None, post: false, summary: "This route table as JSON: kind, path, tab, summary", handler: api_routes },
     Route { kind: Kind::Api, path: "/__app__/api/topology", tab: None, post: false, summary: "The MCP -> API -> IPC topology as one graph: nodes by layer, edges, and one row per route with method, auth, summary and status (data/mcp-catalogue.json + data/api-ipc-map.json + build.json::api.ipc)", handler: crate::topology::api_topology },
     Route { kind: Kind::Api, path: "/__app__/api/config", tab: None, post: false, summary: "Effective configuration: bind, port, root, methods, route counts", handler: api_config },
@@ -57,6 +58,10 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Api, path: "/__app__/api/sub/pages-terminals", tab: None, post: false, summary: "Pages > Terminals: each terminal app's ~/home as a servable root", handler: sub::page_terminals },
     Route { kind: Kind::Api, path: "/__app__/api/sub/pages-repos", tab: None, post: false, summary: "Pages > Repos: the repo sites, their ports and state, and the add form", handler: sub::page_repos },
     Route { kind: Kind::Api, path: "/__app__/api/sub/pages-git", tab: None, post: false, summary: "Pages > Git Sites: repositories served directly over this webserver (front-html, git-repos-master and the other declared Termux git-area repos, plus the auto-discovered local git repos), each one-click served and rendered (md + html) through the repos host", handler: sub::page_git },
+    Route { kind: Kind::Api, path: "/__app__/api/roots", tab: None, post: false, summary: "#1677 Pages > All | File Explorer | Pages: every root declared in build.json::roots with its mode (explorer | pages), source, live status (ready | missing | offline | no_access | error), reason, clone command, Start app and Configs > Perms routes", handler: crate::roots::api_roots },
+    Route { kind: Kind::Api, path: "/__app__/api/roots/ls", tab: None, post: false, summary: "#1677 GET ?root=<id>&path=<rel>: one folder of a root (folders first), always 200 with a status and reason (the File Explorer tree)", handler: crate::roots::api_ls },
+    Route { kind: Kind::Page, path: "/__app__/root", tab: None, post: false, summary: "#1677 /__app__/root/<id>/<path>: a root's file, rendered (md & html) through the repos serving paths; a Pages root's folder opens its index, links stay inside the root", handler: crate::roots::serve },
+    Route { kind: Kind::Api, path: "/__app__/api/adb-shell", tab: None, post: true, summary: "#1677 GET the declared ADB Shell deep link (SuperApp package, extra, value); POST {} opens the SuperApp's ADB Shell page through the Android bridge, 502 with missing:true when the SuperApp is not installed", handler: crate::roots::api_adb_shell },
     Route { kind: Kind::Api, path: "/__app__/api/repos", tab: None, post: true, summary: "GET the repo entries; POST {op: add|remove|start|stop, ...}: the Repos store and its sites (loopback or mesh, never public)", handler: sub::api_repos },
     Route { kind: Kind::Api, path: "/__app__/api/repos/discover", tab: None, post: false, summary: "GET ?source=<id>: the git repositories a Repos source holds", handler: sub::api_discover },
     Route { kind: Kind::Api, path: "/__app__/api/served", tab: None, post: true, summary: "GET the Pages tab: every served page (declared, user-added, adopted) with status, metadata, source and links, the add form and the undeclared-pages scan; POST {op: start|stop|start_app|rescan|declare|forget|stop_undeclared, ...}", handler: served::api_served },
@@ -67,9 +72,15 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Api, path: "/__app__/api/configs-open", tab: None, post: true, summary: "POST {page: agents|perms|logcat|xray|about}: open that tab of the shared native Configs screen (the fleet tail after the | of the Configs strip) through the Android bridge", handler: api_configs_open },
 ];
 
-/// Exact match over the table (a trailing slash is noise).
+/// #1677 the tab pages drawn in the TOP bar (its gear), not in the bottom nav: Configs, reached the fleet-default way.
+pub const TOP_BAR: &[&str] = &["/__app__/tab/configs"];
+
+/// Exact match over the table (a trailing slash is noise); `/__app__/root/<id>/<path>` is the one prefix row (roots.rs).
 pub fn find(path: &str) -> Option<&'static Route> {
     let p = path.trim_end_matches('/');
+    if p.starts_with("/__app__/root/") {
+        return ROUTES.iter().find(|r| r.path == crate::roots::RAW);
+    }
     ROUTES.iter().find(|r| r.path == p)
 }
 
@@ -120,10 +131,11 @@ pub fn routes_json_of<'a, I: Iterator<Item = &'a Route>>(rows: I) -> String {
     let rows: Vec<String> = rows
         .map(|r| {
             format!(
-                "{{\"kind\":{},\"path\":{},\"tab\":{},\"summary\":{}}}",
+                "{{\"kind\":{},\"path\":{},\"tab\":{},\"nav\":{},\"summary\":{}}}",
                 jstr(match r.kind { Kind::Page => "page", Kind::Api => "api" }),
                 jstr(r.path),
                 match r.tab { Some(t) => jstr(t), None => "null".to_string() },
+                match r.tab { Some(_) if TOP_BAR.contains(&r.path) => jstr("top"), Some(_) => jstr("bottom"), None => "null".to_string() },
                 jstr(r.summary)
             )
         })
@@ -445,7 +457,12 @@ mod tests {
     fn the_table_is_well_formed() {
         check_table().unwrap();
         let tabs: Vec<&str> = ROUTES.iter().filter_map(|r| r.tab).collect();
-        assert_eq!(tabs, ["Pages", "API", "Home", "SSHd", "Configs"], "the five bottom tabs, in order");
+        assert_eq!(tabs, ["Pages", "API", "Home", "SSHd", "Configs", "ADB Shell"], "every tab page, in order");
+        // #1677 the bottom nav: Configs gave its place to ADB Shell; Configs is the top bar's gear
+        let bottom: Vec<&str> = ROUTES.iter().filter(|r| r.tab.is_some() && !TOP_BAR.contains(&r.path)).filter_map(|r| r.tab).collect();
+        assert_eq!(bottom, ["Pages", "API", "Home", "SSHd", "ADB Shell"], "the five bottom tabs, in order");
+        assert!(routes_json().contains("\"path\":\"/__app__/tab/configs\",\"tab\":\"Configs\",\"nav\":\"top\""));
+        assert!(find("/__app__/root/front-html/a/b.html").map(|r| r.path) == Some(crate::roots::RAW));
     }
 
     #[test]

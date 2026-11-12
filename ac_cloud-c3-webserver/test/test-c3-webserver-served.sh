@@ -40,8 +40,9 @@ for old in ("Repo sites", "Sources", "This App", "pages this app serves"):
         bad.append("V1 the Pages view still names the old section " + old)
 if not re.search(r'tab: Some\("Pages"\)', rs):
     bad.append("V1 the Pages tab row is gone from the route table")
-tabs = re.findall(r'tab: Some\("([A-Za-z]+)"\)', rs.split("#[cfg(test)]")[0])
-if tabs != ["Pages", "API", "Home", "SSHd", "Configs"]:
+tabs = re.findall(r'tab: Some\("([^"]+)"\)', rs.split("#[cfg(test)]")[0])
+# #1677 Configs moved to the top bar (app.rs TOP_BAR) and ADB Shell took its bottom-nav place; the tab pages keep their order.
+if tabs != ["Pages", "API", "Home", "SSHd", "Configs", "ADB Shell"] or 'TOP_BAR: &[&str] = &["/__app__/tab/configs"]' not in rs:
     bad.append("V1 the top nav order changed: %r" % tabs)
 if 'path: "/__app__/api/served"' not in rs or "post: true" not in re.search(r'path: "/__app__/api/served"[^\n]*', rs).group(0):
     bad.append("V3 /__app__/api/served is not a routed GET+POST API")
@@ -120,7 +121,7 @@ s = open(p).read(); n = s.replace(a, b, 1); assert n != s; open(p, "w").write(n)
 PY
   if run "$d" >/dev/null 2>&1; then fail "M: '$title' stayed GREEN"; else pass "M: '$title' goes red"; fi
 }
-mutate "the Drive/Terminals/Repos sub-nav back on Pages" server/ui/shell.html "var served = function () {" "var served = function () { withSubs('pages', 'drive', null);"
+mutate "the Drive/Terminals/Repos sub-nav back on Pages" server/ui/shell.html "var served = j('/__app__/api/served')" "var served = withSubs('pages', 'drive', null) || j('/__app__/api/served')"
 mutate "no Start app button"             server/ui/shell.html "data-start-app" "data-x"
 mutate "no undeclared checker"           server/ui/shell.html "renderForm(pg.form) + renderUndeclared(pg.undeclared)" "renderForm(pg.form)"
 mutate "no Rescan"                       server/ui/shell.html "data-rescan>Rescan" "data-x>Rescan"

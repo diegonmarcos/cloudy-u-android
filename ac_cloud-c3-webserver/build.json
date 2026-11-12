@@ -314,6 +314,26 @@
       ]
     }
   },
+  "roots": {
+    "_doc": "#1677 the Pages tab roots (server/src/roots.rs): Pages > File Explorer shows each `explorer` root as a two-column explorer (tree left, the selected file rendered right); Pages > Pages serves each `pages` root like a browser (the folder's index, the first of `index` it holds, opens and its links navigate inside the root); Pages > All lists every root, each opening in its own mode. A root is a `source` of repos.sources (local: read from disk; terminal: that terminal's own my-webserver on loopback) and a `repo` folder relative to it (empty = the source's top). Files are served same-origin under /__app__/root/<id>/<path> through the repos serving paths (traversal-guarded, GET only). A missing clone is a 'clone it' state (`clone` is the command shown), a closed terminal offers Start app, missing storage access routes to Configs > Perms; nothing is an error screen.",
+    "explorer": [
+      { "id": "termux", "label": "Cloud Termux", "source": "termux", "repo": "", "note": "Cloud Termux's ~/ (read through its own my-webserver)" },
+      { "id": "nix", "label": "Cloud Nix (Nix-on-Droid)", "source": "nix", "repo": "", "note": "Nix-on-Droid's ~/ (read through its own my-webserver)" },
+      { "id": "emulated", "label": "Emulated storage", "source": "emulated", "repo": "", "note": "/storage/emulated/0, the shared storage" }
+    ],
+    "pages": [
+      { "id": "git-repos-master", "label": "git-repos-master", "source": "termux", "repo": "git-repos-master", "clone": "git clone https://github.com/diegonmarcos/git-repos-master ~/git-repos-master" },
+      { "id": "front-html", "label": "front-html", "source": "termux", "repo": "git-repos-master/front-html", "clone": "cd ~/git-repos-master && git clone https://github.com/diegonmarcos/front-html" },
+      { "id": "cloud-me-pvt-notes", "label": "cloud-me-pvt-notes", "source": "termux", "repo": "git-repos-master/cloud-me-pvt-notes", "clone": "cd ~/git-repos-master && git clone https://github.com/diegonmarcos/cloud-me-pvt-notes" }
+    ],
+    "index": ["index.html", "index.htm", "README.md", "index.md"]
+  },
+  "adb_shell": {
+    "_doc": "#1677 the bottom nav's ADB Shell tab opens the Cloud SuperApp's ADB Shell page (Configs > ADB Shell, its section page config/adb-shell): the SuperApp's launcher intent (serving.bridge_package) carrying the String extra `extra` = `value`, which the SuperApp's ShellActivity reads on create and on a new intent (handleShortcutIntent, page:<section>/<page> grammar). If the SuperApp is not installed the tab says so. Configs stays reachable from the top bar's gear (the fleet-default top-bar entry).",
+    "label": "ADB Shell",
+    "extra": "shortcut_action",
+    "value": "page:config/adb-shell"
+  },
   "serving": {
     "_doc": "THE ONE name -> port map of the phone's local servers, and the private DNS that names them. It holds NO port number: each endpoint names its `owner` (an app dir) and `port_from`, the path inside that owner's build.json where the port is declared (ac_cloud-termux and ac_cloud-nix-on-droid: runtime.webserver.port; this app: runtime.port and runtime.diag.port), and every reader resolves the number from there at BUILD time -- server/build.rs (the Rust crate: it compiles the resolved copy in, so src-tauri/build.rs and server/src/serving.rs see an ordinary `port`) and ac_cloud-browser/app/build.gradle (baked into the browser, which fails the build when its pinned tabs drift or an endpoint spells a literal `port`). A port number written here would be a second copy of the owner's, so test/test-c3-webserver-ports.sh fails on one. .app is a real public TLD and termux.app is a real website: only these four exact names are answered, by this app's own DNS server on loopback (udp, never :53 -- Android cannot bind it without root and cannot point the system resolver at loopback), and only our own apps ask it; nothing is changed system-wide. DNS carries no ports, so the browser maps the port from the resolved block. test/test-localhost-ports.sh fails when a port or name repeats across apps.",
     "dns": {

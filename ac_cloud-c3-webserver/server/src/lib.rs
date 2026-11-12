@@ -30,6 +30,7 @@ pub mod jump;
 pub mod meshlogs;
 pub mod power;
 pub mod repos;
+pub mod roots;
 pub mod served;
 pub mod serving;
 pub mod sshd;

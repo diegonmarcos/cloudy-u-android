@@ -98,6 +98,27 @@
   .sub .form input, .sub .form select { background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:7px; font:14px system-ui; min-width:0; }
   .toast { position:fixed; left:12px; right:12px; bottom:calc(var(--nav) + 10px); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:13px; z-index:9; }
   .toast.bad { border-color:#ff8a8a; color:#ff8a8a; }
+  /* #1677 Pages > All | File Explorer | Pages. A root row (mode, source, live status, the one next step); the File Explorer is two
+     columns (tree left, the selected file rendered right) and a Pages root is a browser frame; both frames fill the area between the
+     root's toolbar and the bottom nav, the served-page frame fix of #1669 (ServedPage fills the area) on the web shell's #fileview tokens. */
+  .roots .rt { padding:8px 10px; border-bottom:1px solid var(--line); display:grid; gap:4px; }
+  .roots .rt:last-child { border-bottom:0; }
+  .roots .rh { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .roots .nm { font-weight:600; }
+  .roots .why { color:var(--dim); font-size:12px; word-break:break-word; }
+  .roots .cl { font:12px ui-monospace, monospace; background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; word-break:break-all; }
+  .roots .acts { display:flex; gap:8px; flex-wrap:wrap; }
+  .rbar { display:flex; align-items:center; gap:6px; padding:6px 8px; background:var(--panel); border:1px solid var(--line); border-radius:10px; margin-bottom:6px; min-width:0; }
+  .rbar .nm { font-weight:600; white-space:nowrap; } .rbar .loc { flex:1; min-width:0; color:var(--dim); font:12px ui-monospace, monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rfill { position:fixed; left:10px; right:10px; bottom:calc(var(--nav) + 20px + env(safe-area-inset-bottom)); top:200px; }
+  .rframe { display:block; width:100%; height:100%; border:1px solid var(--line); border-radius:10px; background:#fff; }
+  .xcols { display:grid; grid-template-columns:minmax(118px, 38%) minmax(0, 1fr); gap:6px; height:100%; }
+  .xtree { overflow:auto; background:var(--panel); border:1px solid var(--line); border-radius:10px; font-size:13px; }
+  .xn { display:flex; align-items:center; gap:4px; padding:6px 6px; min-height:30px; border-bottom:1px solid var(--line); color:var(--fg); background:none; border-left:0; border-right:0; border-top:0; width:100%; text-align:left; font:13px system-ui; word-break:break-all; }
+  .xn .ic { color:var(--dim); flex:none; width:14px; } .xn.sel { background:rgba(10,132,255,.25); }
+  .xprev { min-width:0; height:100%; }
+  .xempty { color:var(--dim); font-size:12px; padding:10px; }
+  .adb { padding:12px 10px; display:grid; gap:8px; }
   /* The link chooser: a bottom sheet over the nav. */
   #scrim { position:fixed; inset:0; z-index:8; background:rgba(0,0,0,.55); display:none; }
   #scrim.on { display:block; }
@@ -151,10 +172,14 @@
 function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-// The bottom nav is the route table's tab rows, in table order.
+// The bottom nav is the route table's tab rows, in table order (#1677: but for the rows the table puts in the top bar, nav "top": Configs).
 function tabsFrom(routes) {
+  return pagesFrom(routes).filter(function (t) { return t.nav !== 'top'; });
+}
+// Every tab page the shell can show: the bottom tabs and the top bar's (Configs, behind the gear).
+function pagesFrom(routes) {
   return routes.filter(function (r) { return r.tab; }).map(function (r) {
-    return { id: r.path.split('/').pop(), label: r.tab, path: r.path };
+    return { id: r.path.split('/').pop(), label: r.tab, path: r.path, nav: r.nav || 'bottom' };
   });
 }
 function tabFromPath(pathname) {
@@ -171,6 +196,7 @@ var NAV_ICONS = {
   api: '<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 6l-3 12"/>',
   home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',
   sshd: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M7 10l3 2-3 2M12 15h5"/>',
+  'adb-shell': '<path d="M4 5h16v14H4z"/><path d="M7 9l3 3-3 3M12 15h5"/>',
   configs: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>'
 };
 function navIcon(id) {
@@ -713,6 +739,83 @@ function renderTopology(t, st) {
     '<div class="seg">' + seg + '</div>' +
     '<div class="tcols"><div class="ttree" id="topo-tree">' + topoTree(t, st) + '</div><div class="tdetail" id="topo-detail">' + topoDetail(t, st.sel) + '</div></div></section>';
 }
+// #1677 THE PAGES TAB: top sub-nav All | File Explorer | Pages over build.json::roots (/__app__/api/roots). The old split between
+// "Served pages" and "Git Sites" is gone: All holds every root (each opening in its own mode) and, below them, the served-pages list
+// and the Git Sites rows, so every root, action and status of before is still reachable (rule 16).
+var PAGES_SUBS = [{ id: 'all', label: 'All' }, { id: 'explorer', label: 'File Explorer' }, { id: 'pages', label: 'Pages' }];
+function rootsOf(data, mode) { return ((data && data.roots) || []).filter(function (r) { return !mode || r.mode === mode; }); }
+function rootUrl(r, path) {
+  var segs = String(path || '').split('/').filter(function (x) { return x; }).map(encodeURIComponent);
+  return '/__app__/root/' + encodeURIComponent(r.id) + '/' + segs.join('/');
+}
+var ROOT_STATUS = { ready: ['g', 'ready'], missing: ['a', 'not cloned'], offline: ['a', 'app not open'], no_access: ['a', 'no storage access'], error: ['a', 'error'] };
+function renderRootRow(r) {
+  var st = ROOT_STATUS[r.status] || ROOT_STATUS.error;
+  var mode = r.mode === 'pages' ? 'Pages' : 'File Explorer';
+  var acts = [];
+  if (r.status === 'ready') acts.push('<button class="act p" data-root-open="' + esc(r.id) + '">' + (r.mode === 'pages' ? '&#9205; Open page' : '&#9205; Explore') + '</button>');
+  if (r.start_app) acts.push('<button class="act p" data-act="0" data-start-app data-post="' + esc(r.start_app.post) + '" data-body="' + esc(JSON.stringify(r.start_app.body)) + '">&#9205; Start app</button>');
+  if (r.perms) acts.push('<button class="act" data-act="0" data-post="' + esc(r.perms.post) + '" data-body="' + esc(JSON.stringify(r.perms.body)) + '">' + esc(r.perms.label) + '</button>');
+  var clone = r.status === 'missing' && r.clone ? '<div class="why">Clone it on the phone (Cloud Termux), then reopen this tab:</div><div class="cl" data-clone="' + esc(r.id) + '">' + esc(r.clone) + '</div>' +
+    '<div class="acts"><button class="act" data-copy-clone="' + esc(r.clone) + '">Copy command</button></div>' : '';
+  return '<div class="rt" data-root="' + esc(r.id) + '" data-mode="' + esc(r.mode) + '" data-status="' + esc(r.status) + '"><div class="rh"><span class="dot ' + (r.status === 'ready' ? 'up' : 'down') + '"></span>' +
+    '<span class="nm">' + esc(r.label) + '</span><span class="badge">' + mode + '</span><span class="badge">' + esc(r.source_label || r.source) + '</span>' +
+    '<span class="badge ' + st[0] + '">' + st[1] + '</span></div>' +
+    (r.repo ? '<div class="why path">~/' + esc(r.repo) + '</div>' : (r.note ? '<div class="why">' + esc(r.note) + '</div>' : '')) +
+    (r.reason ? '<div class="why">' + esc(r.reason) + '</div>' : '') + clone + (acts.length ? '<div class="acts">' + acts.join('') + '</div>' : '') + '</div>';
+}
+function renderRootList(title, rows, empty) {
+  return '<section class="roots"><h2>' + esc(title) + ' &middot; ' + rows.length + '</h2>' + (rows.length ? rows.map(renderRootRow).join('') : '<div class="note">' + esc(empty || 'none declared') + '</div>') + '</section>';
+}
+function renderRootsHead(cur) { return renderSubNav(PAGES_SUBS, cur); }
+function renderRootsAll(data, served, git) {
+  var err = data && data.error ? '<div class="err">build.json::roots: ' + esc(data.error) + '</div>' : '';
+  return err + renderRootList('All roots', rootsOf(data)) + (served || '') + (git || '');
+}
+function renderRootsMode(data, mode) {
+  var err = data && data.error ? '<div class="err">build.json::roots: ' + esc(data.error) + '</div>' : '';
+  return err + (mode === 'pages' ? renderRootList('Pages: served like a browser', rootsOf(data, 'pages'), 'no Pages root declared')
+    : renderRootList('File Explorer roots', rootsOf(data, 'explorer'), 'no File Explorer root declared'));
+}
+// The toolbar above an open root: back to the list, the root's name, where it is, reload, and Open in browser.
+function renderRootBar(r, path) {
+  return '<div class="rbar" id="rbar"><button class="act" data-root-close>&#8249; Roots</button><span class="nm">' + esc(r.label) + '</span>' +
+    '<span class="loc" id="rloc">/' + esc(path || '') + '</span><button class="act" data-root-reload>&#8635;</button>' +
+    '<a class="act" href="' + esc(rootUrl(r, path)) + '" data-root-ext>&#8599;</a></div>';
+}
+// Pages mode: the root served like a browser would; its index opens, its links navigate inside /__app__/root/<id>/.
+function renderBrowser(r, path) {
+  return renderRootBar(r, path) + '<div class="rfill" id="rfill"><iframe class="rframe" id="rframe" data-browser="' + esc(r.id) + '" src="' + esc(rootUrl(r, path)) + '" title="' + esc(r.label) + '"></iframe></div>';
+}
+// File Explorer: the tree (folders lazily expanded) and the selected file rendered beside it.
+function renderTreeLevel(tree, path, depth, sel) {
+  var node = tree[path];
+  if (!node) return '';
+  if (node.status && node.status !== 'ready') return '<div class="xempty" style="padding-left:' + (8 + depth * 12) + 'px">' + esc(node.reason || node.status) + '</div>';
+  if (!node.entries.length) return '<div class="xempty" style="padding-left:' + (8 + depth * 12) + 'px">empty folder</div>';
+  return node.entries.map(function (e) {
+    var p = path ? path + '/' + e.name : e.name;
+    var pad = ' style="padding-left:' + (6 + depth * 12) + 'px"';
+    if (e.dir) {
+      var open = !!tree[p];
+      return '<button class="xn" data-tree-dir="' + esc(p) + '"' + pad + '><span class="ic">' + (open ? '&#9662;' : '&#9656;') + '</span>' + esc(e.name) + '/</button>' + (open ? renderTreeLevel(tree, p, depth + 1, sel) : '');
+    }
+    return '<button class="xn' + (p === sel ? ' sel' : '') + '" data-tree-file="' + esc(p) + '"' + pad + '><span class="ic">&middot;</span>' + esc(e.name) + '</button>';
+  }).join('');
+}
+function renderExplorer(r, tree, sel) {
+  return renderRootBar(r, sel || '') + '<div class="rfill" id="rfill"><div class="xcols" data-explorer="' + esc(r.id) + '"><div class="xtree" id="xtree">' + renderTreeLevel(tree, '', 0, sel) + '</div>' +
+    '<div class="xprev">' + (sel ? '<iframe class="rframe" id="rframe" src="' + esc(rootUrl(r, sel)) + '" title="' + esc(sel) + '"></iframe>' : '<div class="xtree xempty">Select a file on the left: it renders here (Markdown and HTML rendered, other files as the server serves them).</div>') + '</div></div></div>';
+}
+// #1677 the ADB Shell tab: the SuperApp's ADB Shell page, opened through the Android bridge.
+function renderAdbShell(link, said) {
+  var l = link || {};
+  return '<section class="adb-sec"><h2>ADB Shell</h2><div class="adb"><div>' + (l.error ? '<span class="err">' + esc(l.error) + '</span>' :
+    'The ADB Shell lives in Cloud SuperApp (Configs &rsaquo; ADB Shell). This tab opens it there' + (l.package ? ' (' + esc(l.package) + ')' : '') + '.') + '</div>' +
+    '<div class="acts"><button class="act p" data-adb-open>&#9205; Open ADB Shell in Cloud SuperApp</button></div>' +
+    '<div class="note" id="adb-said" data-adb-said>' + esc(said || '') + '</div>' +
+    '<div class="note">This app\'s own settings are under the &#9881; gear in the top bar (Configs).</div></div></section>';
+}
 if (typeof module !== 'undefined') {
   module.exports = { topoTree: topoTree, topoDetail: topoDetail, renderTopology: renderTopology, topoRelated: topoRelated, topoMatch: topoMatch,
     esc: esc, tabsFrom: tabsFrom, tabFromPath: tabFromPath, defaultTab: defaultTab, renderNav: renderNav, renderRoutes: renderRoutes,
@@ -720,7 +823,9 @@ if (typeof module !== 'undefined') {
     renderCfgTabs: renderCfgTabs, renderServing: renderServing, renderEngines: renderEngines, hostIsLocal: hostIsLocal, classifyLink: classifyLink,
     isLinkTarget: isLinkTarget, embedUrl: embedUrl, subsOf: subsOf, renderSubNav: renderSubNav, renderSubRow: renderSubRow, renderForm: renderForm, renderSubPage: renderSubPage, decide: decide, renderSheet: renderSheet, renderLinks: renderLinks,
     renderHealth: renderHealth, renderServedStrip: renderServedStrip, renderSshdStrip: renderSshdStrip, renderPortsStrip: renderPortsStrip, deviceFacts: deviceFacts, renderDeviceStrip: renderDeviceStrip, renderTopologyLink: renderTopologyLink, renderHome: renderHome,
-    renderPower: renderPower, renderMeshOnly: renderMeshOnly, renderSshd: renderSshd, renderDoor: renderDoor, doorsText: doorsText };
+    renderPower: renderPower, renderMeshOnly: renderMeshOnly, renderSshd: renderSshd, renderDoor: renderDoor, doorsText: doorsText,
+    pagesFrom: pagesFrom, PAGES_SUBS: PAGES_SUBS, rootsOf: rootsOf, rootUrl: rootUrl, renderRootRow: renderRootRow, renderRootList: renderRootList, renderRootsHead: renderRootsHead,
+    renderRootsAll: renderRootsAll, renderRootsMode: renderRootsMode, renderRootBar: renderRootBar, renderBrowser: renderBrowser, renderTreeLevel: renderTreeLevel, renderExplorer: renderExplorer, renderAdbShell: renderAdbShell };
 }
 </script>
 
@@ -734,7 +839,10 @@ if (typeof module !== 'undefined') {
   var $gear = document.getElementById('gear');
   var $sheet = document.getElementById('sheet');
   var $scrim = document.getElementById('scrim');
-  var DOORS = null, ROUTES = [], TABS = [], ABOUT = [], SERVING = null, LINKS = null, SUBPAGES = [];
+  var DOORS = null, ROUTES = [], TABS = [], PAGES = [], ABOUT = [], SERVING = null, LINKS = null, SUBPAGES = [];
+  var CUR = null, adbAuto = false;
+  // #1677 the Pages tab's state: the sub-page, the open root (null = the list), the explorer tree cache and the selected file.
+  var pagesSt = { sub: 'all', root: null, tree: {}, sel: '', path: '' }, ROOTS = null;
   var subPage = {};
   var TOPO = null, topoSt = { q: '', group: 'server', sel: null };
   var cfgPage = 'about';
@@ -799,7 +907,7 @@ if (typeof module !== 'undefined') {
   function linkClick(ev) {
     var a = ev.target && ev.target.closest ? ev.target.closest('a[href]') : null;
     if (!a || !isLinkTarget(a.getAttribute('href'))) return;
-    if (a.hasAttribute('data-jump') || a.hasAttribute('data-tab')) return;
+    if (a.hasAttribute('data-jump') || a.hasAttribute('data-tab') || a.hasAttribute('data-root-ext')) return;   // #1677 a root's Open in browser is its own button
     var href = a.getAttribute('href');
     var tab = /^\/__app__\/tab\/([a-z0-9-]+)\/?$/.exec(href);
     if (tab && a.ownerDocument === document) { ev.preventDefault(); show(tab[1], true); return; }
@@ -836,16 +944,35 @@ if (typeof module !== 'undefined') {
     });
   }
   var views = {
-    // #1615 Pages = the ONE served list plus the Git Sites sub-page (repos served directly: md + html rendered). The old Drive / Terminals /
-    // Repos sub-pages stay routes (and the Served list's add form) but get no sub-nav entry; only Git Sites is added beside the list.
+    // #1677 Pages = the top sub-nav All | File Explorer | Pages over build.json::roots. All keeps, below every root, the ONE served list
+    // (/__app__/api/served, its add form and the undeclared checker) and the Git Sites rows (#1615), so nothing of before is lost; only the
+    // "Served pages | Git Sites" split is gone. The old Drive / Terminals / Repos sub-pages stay routes with no sub-nav entry, as before.
     pages: function () {
-      var git = subsOf(SUBPAGES, 'pages').filter(function (p) { return p.id === 'git'; })[0];
-      var served = function () { return j('/__app__/api/served').then(function (pg) { return renderPages(pg); }); };
-      if (!git) return served();
-      var cur = subPage.pages === 'git' ? 'git' : 'served';
-      var nav = renderSubNav([{ id: 'served', label: 'Served pages' }, { id: 'git', label: git.label }], cur);
-      if (cur === 'git') return j(git.route).then(function (pg) { return nav + renderSubPage(pg); });
-      return served().then(function (html) { return nav + html; });
+      var head = renderRootsHead(pagesSt.sub);
+      var roots = j('/__app__/api/roots').then(function (d) { ROOTS = d; return d; }).catch(function (e) { return { roots: [], error: e.message }; });
+      if (pagesSt.root) {
+        return roots.then(function (d) {
+          var r = rootsOf(d).filter(function (x) { return x.id === pagesSt.root; })[0];
+          if (!r) { pagesSt.root = null; return head + renderRootsMode(d, pagesSt.sub === 'pages' ? 'pages' : 'explorer'); }
+          if (r.mode === 'pages') return head + renderBrowser(r, pagesSt.path);
+          var top = pagesSt.tree[''] ? Promise.resolve() : lsInto(r, '');
+          return top.then(function () { return head + renderExplorer(r, pagesSt.tree, pagesSt.sel); });
+        });
+      }
+      if (pagesSt.sub === 'all') {
+        var git = subsOf(SUBPAGES, 'pages').filter(function (p) { return p.id === 'git'; })[0];
+        var served = j('/__app__/api/served').then(function (pg) { return renderPages(pg); }).catch(function (e) { return '<div class="err">Served pages: ' + esc(e.message) + '</div>'; });
+        var gits = git ? j(git.route).then(function (pg) { return renderSubPage(pg); }).catch(function (e) { return '<div class="err">' + esc(git.label) + ': ' + esc(e.message) + '</div>'; }) : Promise.resolve('');
+        return Promise.all([roots, served, gits]).then(function (rs) { return head + renderRootsAll(rs[0], rs[1], rs[2]); });
+      }
+      return roots.then(function (d) { return head + renderRootsMode(d, pagesSt.sub); });
+    },
+    'adb-shell': function () {
+      var auto = adbAuto; adbAuto = false;
+      return j('/__app__/api/adb-shell').catch(function (e) { return { error: e.message }; }).then(function (link) {
+        if (auto && !link.error) setTimeout(openAdbShell, 0);
+        return renderAdbShell(link, auto && !link.error ? 'Opening Cloud SuperApp > ADB Shell...' : '');
+      });
     },
     api: function () {
       var topo = j('/__app__/api/topology').then(function (t) { TOPO = t; return renderTopology(t, topoSt); }).catch(function (e) { return '<div class="err">Topology: ' + esc(e.message) + '</div>'; });
@@ -869,14 +996,49 @@ if (typeof module !== 'undefined') {
     }
   };
 
+  // #1677 one folder of the open explorer root into the tree cache (a failure is a reason in the tree, never a throw).
+  function lsInto(r, path) {
+    return j('/__app__/api/roots/ls?root=' + encodeURIComponent(r.id) + '&path=' + encodeURIComponent(path)).catch(function (e) { return { status: 'error', reason: e.message, entries: [] }; })
+      .then(function (d) { pagesSt.tree[path] = { status: d.status, reason: d.reason, entries: d.entries || [] }; });
+  }
+  function openRoot() { return ROOTS ? rootsOf(ROOTS).filter(function (x) { return x.id === pagesSt.root; })[0] : null; }
+  function redrawExplorer() {
+    var r = openRoot(); var t = document.getElementById('xtree');
+    if (!r || !t) return;
+    var keep = t.scrollTop; t.innerHTML = renderTreeLevel(pagesSt.tree, '', 0, pagesSt.sel); t.scrollTop = keep;
+  }
+  // The frame fills the area from the root's toolbar to the bottom nav (the #1669 ServedPage fill, here on the web shell).
+  function fitFrame() {
+    var bar = document.getElementById('rbar'), fill = document.getElementById('rfill');
+    if (bar && fill) fill.style.top = Math.round(bar.getBoundingClientRect().bottom + 4) + 'px';
+  }
+  window.addEventListener('resize', fitFrame);
+  function trackFrame() {
+    var f = document.getElementById('rframe'); var loc = document.getElementById('rloc');
+    if (!f || !f.hasAttribute('data-browser')) return;
+    f.addEventListener('load', function () {
+      try {
+        var p = f.contentWindow.location.pathname; var pre = '/__app__/root/' + encodeURIComponent(pagesSt.root) + '/';
+        if (p.indexOf(pre) === 0) { pagesSt.path = decodeURIComponent(p.slice(pre.length)); if (loc) loc.textContent = '/' + pagesSt.path; }
+      } catch (x) {}
+    });
+  }
+  function openAdbShell() {
+    var said = function (t, bad) { var el = document.getElementById('adb-said'); if (el) { el.textContent = t; el.className = bad ? 'err' : 'note'; } };
+    post('/__app__/api/adb-shell', {}).then(function () { said('Opened Cloud SuperApp > ADB Shell.'); })
+      .catch(function (e) { said(e.message, true); toast(e.message, true); });
+  }
+
   function show(tabId, push) {
     var legacy = tabId === 'files';   // the old Files tab: the file view lives in the SSHd tab now
     if (legacy) tabId = 'sshd';
-    var tab = TABS.filter(function (t) { return t.id === tabId; })[0] || TABS.filter(function (t) { return t.id === defaultTab(TABS); })[0];
+    var tab = PAGES.filter(function (t) { return t.id === tabId; })[0] || TABS.filter(function (t) { return t.id === defaultTab(TABS); })[0];
     if (!tab) { fail('the route table declares no tabs'); return; }
     var view = views[tab.id];
     if (!view) { fail('tab ' + tab.id + ' is declared by the server but this shell has no view for it'); return; }
     closeSheet();
+    if (tab.id === 'adb-shell' && push) adbAuto = true;
+    CUR = tab.id;
     $nav.innerHTML = renderNav(TABS, tab.id);
     $sub.textContent = tab.label;
     $gear.className = tab.id === 'configs' ? 'on' : '';
@@ -887,6 +1049,7 @@ if (typeof module !== 'undefined') {
       $main.innerHTML = html;
       var fv = document.getElementById('fileview');
       if (fv) watchFrame(fv);
+      fitFrame(); trackFrame();
     }).catch(fail);
   }
 
@@ -922,7 +1085,7 @@ if (typeof module !== 'undefined') {
     $nav.classList.toggle('collapsed', y > lastY && y > 40);
     lastY = y;
   }, { passive: true });
-  function refreshTab() { var on = document.querySelector('nav button.on'); if (on) show(on.getAttribute('data-tab'), false); }
+  function refreshTab() { if (CUR) show(CUR, false); }
   $main.addEventListener('change', function (ev) {
     var box = ev.target.closest('.form');
     if (box && ev.target.getAttribute('data-f') === 'source') loadRepoList(box);
@@ -947,7 +1110,37 @@ if (typeof module !== 'undefined') {
     var tn = ev.target.closest('[data-topo]');
     if (tn) { topoSt.sel = tn.getAttribute('data-topo'); topoRedraw(true); ev.preventDefault(); return; }
     var sub = ev.target.closest('[data-sub]');
-    if (sub) { var on = document.querySelector('nav button.on'); if (on) { subPage[on.getAttribute('data-tab')] = sub.getAttribute('data-sub'); show(on.getAttribute('data-tab'), false); } return; }
+    if (sub) {
+      if (CUR === 'pages') { pagesSt.sub = sub.getAttribute('data-sub'); pagesSt.root = null; pagesSt.tree = {}; pagesSt.sel = ''; pagesSt.path = ''; }
+      else if (CUR) subPage[CUR] = sub.getAttribute('data-sub');
+      if (CUR) show(CUR, false);
+      return;
+    }
+    var ro = ev.target.closest('[data-root-open]');
+    if (ro) { pagesSt.root = ro.getAttribute('data-root-open'); pagesSt.tree = {}; pagesSt.sel = ''; pagesSt.path = ''; show('pages', false); return; }
+    if (ev.target.closest('[data-root-close]')) { pagesSt.root = null; pagesSt.tree = {}; pagesSt.sel = ''; pagesSt.path = ''; show('pages', false); return; }
+    if (ev.target.closest('[data-root-reload]')) { var rf = document.getElementById('rframe'); if (rf) { try { rf.contentWindow.location.reload(); } catch (x) { rf.src = rf.src; } } return; }
+    var td = ev.target.closest('[data-tree-dir]');
+    if (td) {
+      var dp = td.getAttribute('data-tree-dir'), rr = openRoot();
+      if (pagesSt.tree[dp]) { Object.keys(pagesSt.tree).forEach(function (k) { if (k === dp || k.indexOf(dp + '/') === 0) delete pagesSt.tree[k]; }); redrawExplorer(); }
+      else if (rr) lsInto(rr, dp).then(redrawExplorer);
+      return;
+    }
+    var tf = ev.target.closest('[data-tree-file]');
+    if (tf) {
+      var r0 = openRoot(); if (!r0) return;
+      pagesSt.sel = tf.getAttribute('data-tree-file'); redrawExplorer();
+      var prev = document.querySelector('.xprev'); if (prev) prev.innerHTML = '<iframe class="rframe" id="rframe" src="' + esc(rootUrl(r0, pagesSt.sel)) + '" title="' + esc(pagesSt.sel) + '"></iframe>';
+      var lc = document.getElementById('rloc'); if (lc) lc.textContent = '/' + pagesSt.sel;
+      var ex = document.querySelector('[data-root-ext]'); if (ex) ex.setAttribute('href', rootUrl(r0, pagesSt.sel));
+      return;
+    }
+    var ext = ev.target.closest('[data-root-ext]');
+    if (ext) { ev.preventDefault(); ev.stopPropagation(); post('/__app__/api/open', { url: location.origin + ext.getAttribute('href') }).then(function () { toast('Opening in cloud-browser'); }).catch(function (e) { toast(e.message, true); }); return; }
+    var cc = ev.target.closest('[data-copy-clone]');
+    if (cc) { copyText(cc.getAttribute('data-copy-clone'), cc); return; }
+    if (ev.target.closest('[data-adb-open]')) { openAdbShell(); return; }
     var pw = ev.target.closest('[data-power]');
     if (pw) {
       var body = {}, to = pw.getAttribute('data-to');
@@ -1008,6 +1201,7 @@ if (typeof module !== 'undefined') {
   });
   $nav.addEventListener('click', function (ev) {
     var b = ev.target.closest('button[data-tab]');
+    if (b && b.getAttribute('data-tab') === 'pages' && CUR === 'pages') { pagesSt.root = null; pagesSt.tree = {}; pagesSt.sel = ''; pagesSt.path = ''; }   // a second tap: back to the roots
     if (b) show(b.getAttribute('data-tab'), true);
   });
   $gear.addEventListener('click', function () { show('configs', true); });
@@ -1017,7 +1211,7 @@ if (typeof module !== 'undefined') {
   window.addEventListener('popstate', function () { show(startTab(), false); });
 
   Promise.all([j('/__app__/api/routes'), j('/__app__/api/links'), j('/__app__/api/serving'), j('/__app__/api/subpages')]).then(function (rs) {
-    ROUTES = rs[0]; LINKS = rs[1]; SERVING = rs[2]; SUBPAGES = rs[3]; TABS = tabsFrom(ROUTES);
+    ROUTES = rs[0]; LINKS = rs[1]; SERVING = rs[2]; SUBPAGES = rs[3]; TABS = tabsFrom(ROUTES); PAGES = pagesFrom(ROUTES);
     show(startTab(), false);
   }).catch(function (e) {
     fail(e); setTimeout(function () { location.reload(); }, 1500);

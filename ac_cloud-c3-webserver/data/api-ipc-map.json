@@ -96,6 +96,12 @@
    "via": "in-process handler, no IPC leg"
   },
   {
+   "path": "/__app__/tab/adb-shell",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg (the tab's view POSTs /__app__/api/adb-shell)"
+  },
+  {
    "path": "/__app__/files",
    "surface": "app",
    "ipc": null,
@@ -234,6 +240,24 @@
    "via": "in-process handler, no IPC leg"
   },
   {
+   "path": "/__app__/api/roots",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg (roots::api_roots; terminal roots probed over loopback HTTP)"
+  },
+  {
+   "path": "/__app__/api/roots/ls",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg (roots::api_ls)"
+  },
+  {
+   "path": "/__app__/root",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg (roots::serve through repos::dir_handler / proxy_handler)"
+  },
+  {
    "path": "/__app__/api/served",
    "surface": "app",
    "ipc": [
@@ -280,6 +304,14 @@
     "app-launch"
    ],
    "via": "api_launch -> served::launch -> served LAUNCHER (opens a build.json-declared package's launch activity: the X-Ray Device page's Start Superapp)"
+  },
+  {
+   "path": "/__app__/api/adb-shell",
+   "surface": "app",
+   "ipc": [
+    "app-launch"
+   ],
+   "via": "api_adb_shell -> served::launch_with -> served EXTRA_LAUNCHER (the SuperApp's launcher intent with the build.json::adb_shell page extra: its ADB Shell page)"
   },
   {
    "path": "/endpoints/public",

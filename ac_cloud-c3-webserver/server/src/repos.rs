@@ -224,7 +224,7 @@ pub fn resolve(cfg: &Cfg, e: &Entry) -> Result<Target, String> {
 }
 
 // ── serving ────────────────────────────────────────────────────────────────────────────────────
-fn pct_encode(s: &str) -> String {
+pub fn pct_encode(s: &str) -> String {
     let mut o = String::new();
     for b in s.bytes() {
         if b.is_ascii_alphanumeric() || b"-._~/".contains(&b) {
@@ -463,6 +463,17 @@ pub fn discover(cfg: &Cfg, source: &str) -> Result<Vec<String>, String> {
             ))
         }
     }
+}
+
+/// #1677 one folder of a terminal's own shared server (its /__api__/ls, dot entries included): (status, [(name, is_dir)]). The Pages
+/// tab's roots (roots.rs) list Termux / Nix folders through it, as discover() does: a CLIENT call, not a route this crate answers.
+pub fn terminal_ls(port: u16, full: &str, timeout: Duration) -> Result<(u16, Vec<(String, bool)>), String> {
+    let (st, _, body) = http_get(port, &format!("/__api__/ls?dot=1&path={}", pct_encode(full)), timeout)?;
+    if st != 200 {
+        return Ok((st, vec![]));
+    }
+    let v: Value = serde_json::from_slice(&body).map_err(|e| e.to_string())?;
+    Ok((st, v.as_array().map(|a| a.iter().filter_map(|x| Some((x["name"].as_str()?.to_string(), x["isDir"].as_bool().unwrap_or(false)))).collect()).unwrap_or_default()))
 }
 
 /// The URL a running entry is reachable at.

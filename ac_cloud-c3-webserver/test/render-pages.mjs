@@ -71,14 +71,18 @@ const A37 = (s) => s.w === 1080 && s.h === 2340 && s.bytes > 8000;
 await go(origin + '/__app__/');
 await until(`document.querySelectorAll('nav button').length > 0 && document.querySelector('main section')`);
 let d = await dims();
-check('P0a', JSON.stringify(d.tabs) === JSON.stringify(['Pages', 'API', 'Home', 'SSHd', 'Configs']), `the bottom nav is ${JSON.stringify(d.tabs)}`);
+check('P0a', JSON.stringify(d.tabs) === JSON.stringify(['Pages', 'API', 'Home', 'SSHd', 'ADB Shell']), `the bottom nav is ${JSON.stringify(d.tabs)} (#1677: ADB Shell in Configs' place)`);
 check('P0b', d.on === 'Home', `the app opens on Home (selected: ${d.on})`);
 
 const tabs = [['Pages', 'pages', `document.querySelector('.served')`], ['API', 'api', `document.querySelector('main section .row')`],
   ['Home', 'home', `document.querySelector('#home-status')`], ['Configs', 'configs-about', `document.querySelector('[data-cfg]')`]];
 for (const [label, name, ready] of tabs) {
-  await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === ${JSON.stringify(label)}).click()`);
-  await until(`document.querySelector('nav button.on') && document.querySelector('nav button.on').innerText.trim() === ${JSON.stringify(label)} && ${ready}`);
+  // #1677 Configs is reached the fleet-default way: the top bar's gear (it lit up, no bottom button is selected)
+  if (label === 'Configs') { await evalJs(`document.getElementById('gear').click()`); await until(`document.getElementById('gear').className === 'on' && ${ready}`); }
+  else {
+    await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === ${JSON.stringify(label)}).click()`);
+    await until(`document.querySelector('nav button.on') && document.querySelector('nav button.on').innerText.trim() === ${JSON.stringify(label)} && ${ready}`);
+  }
   d = await dims();
   const s = await shot('shell-' + name);
   check('P-' + label, d.sw <= d.vw + 1 && A37(s) && d.firstTop !== null && d.firstTop >= d.headBottom - 1,
@@ -89,7 +93,13 @@ for (const [label, name, ready] of tabs) {
 await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'Pages').click()`);
 await until(`document.querySelectorAll('.served .pg').length >= 4`);
 const subnav = await evalJs(`[...document.querySelectorAll('main .seg button, main [data-sub]')].map((b) => b.innerText.trim())`);
-check('G1', !subnav.some((x) => /Drive|Terminals|Repos/i.test(x)) && subnav.includes('Git Sites'), `Pages sub-nav is Served pages | Git Sites only, no Drive|Terminals|Repos (${JSON.stringify(subnav)})`);
+check('G1', JSON.stringify(subnav) === JSON.stringify(['All', 'File Explorer', 'Pages']), `#1677 Pages sub-nav is All | File Explorer | Pages, no Served pages | Git Sites split, no Drive|Terminals|Repos (${JSON.stringify(subnav)})`);
+const gitRows = await evalJs(`[...document.querySelectorAll('main .sub .row .head')].map((h) => h.innerText.trim())`);
+check('G1b', ['front-html', 'git-repos-master'].every((n) => gitRows.includes(n)), `All keeps the Git Sites rows (rule 16): ${JSON.stringify(gitRows)}`);
+const allRoots = await evalJs(`[...document.querySelectorAll('.roots [data-root]')].map((r) => ({ id: r.getAttribute('data-root'), mode: r.getAttribute('data-mode'), status: r.getAttribute('data-status') }))`);
+check('R1', ['termux', 'nix', 'emulated'].every((i) => allRoots.some((r) => r.id === i && r.mode === 'explorer')) && ['git-repos-master', 'front-html', 'cloud-me-pvt-notes'].every((i) => allRoots.some((r) => r.id === i && r.mode === 'pages')),
+  `All lists every root of both kinds, each with its mode: ${JSON.stringify(allRoots)}`);
+check('R2', allRoots.every((r) => ['ready', 'missing', 'offline', 'no_access', 'error'].includes(r.status)), 'every root shows a live status, never an error screen');
 const pgs = await evalJs(`[...document.querySelectorAll('.served .pg')].map((p) => ({ name: p.querySelector('.nm').innerText.trim(), rows: ['status', 'meta', 'source', 'links', 'config'].filter((r) => p.querySelector('[data-r=' + r + ']')),
   port: (p.querySelector('.rh .badge') || {}).innerText, toggle: !!p.querySelector('.rh button[data-toggle]'), app: (p.querySelector('[data-r=status]').innerText.match(/app\\s*(not open|open)/i) || [])[1] || null,
   startApp: !!p.querySelector('[data-start-app]'), hrefs: [...p.querySelectorAll('[data-r=links] a')].map((a) => a.getAttribute('href')), srcOpen: !!p.querySelector('[data-r=source] a'), meta: p.querySelector('[data-r=meta]').innerText }))`);
@@ -109,8 +119,40 @@ const und = await evalJs(`(() => { const u = document.querySelector('#undeclared
 check('G8', und && /Undeclared served pages\s*·\s*\d+/i.test(und.h) && und.rescan && und.items.every((i) => i.declare && i.stop), `the undeclared-pages checker renders with Rescan: ${JSON.stringify(und)}`);
 const sg = await shot('shell-pages-single-list');
 check('G9', A37(sg), `Pages single list, shot ${sg.w}x${sg.h}`);
-// back to Configs, where the Engines and Links checks below start
-await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'Configs').click()`);
+// ── R: #1677 File Explorer and Pages sub-pages, the two-column explorer and the browser frame ──
+for (const [sub, mode, ids] of [['explorer', 'explorer', ['termux', 'nix', 'emulated']], ['pages', 'pages', ['git-repos-master', 'front-html', 'cloud-me-pvt-notes']]]) {
+  await evalJs(`document.querySelector('[data-sub=${sub}]').click()`);
+  await until(`document.querySelector('[data-sub=${sub}].on') && document.querySelectorAll('.roots [data-root]').length > 0`);
+  const got = await evalJs(`[...document.querySelectorAll('.roots [data-root]')].map((r) => r.getAttribute('data-root') + ':' + r.getAttribute('data-mode'))`);
+  check('R-' + sub, JSON.stringify(got) === JSON.stringify(ids.map((i) => i + ':' + mode)), `${sub} lists exactly its roots in order: ${JSON.stringify(got)}`);
+  const s = await shot('shell-pages-' + sub);
+  check('R-' + sub + '-shot', A37(s), `Pages > ${sub} shot ${s.w}x${s.h}`);
+}
+// The explorer and the browser frame drawn by the shell's own pure functions over a sample tree (CI has no phone storage).
+const lay = await evalJs(`(() => { const r = { id: 'emulated', label: 'Emulated storage', mode: 'explorer' };
+  document.getElementById('main').innerHTML = renderRootsHead('explorer') + renderExplorer(r, { '': { status: 'ready', entries: [{ name: 'Docs', dir: true }, { name: 'a.md', dir: false }] } }, 'a.md');
+  const bar = document.getElementById('rbar'), fill = document.getElementById('rfill'); fill.style.top = Math.round(bar.getBoundingClientRect().bottom + 4) + 'px';
+  const t = document.getElementById('xtree').getBoundingClientRect(), p = document.querySelector('.xprev').getBoundingClientRect(), n = document.querySelector('nav').getBoundingClientRect();
+  return { tl: t.left, tr: t.right, pl: p.left, pr: p.right, th: t.height, ph: p.height, fb: fill.getBoundingClientRect().bottom, nt: n.top, vw: window.innerWidth, frame: !!document.querySelector('.xprev iframe'), sw: document.documentElement.scrollWidth }; })()`);
+check('R3', lay.tr <= lay.pl + 1 && lay.th > 300 && Math.abs(lay.th - lay.ph) < 2 && lay.frame && lay.pr <= lay.vw && lay.sw <= lay.vw + 1 && lay.fb <= lay.nt + 1,
+  `File Explorer is two columns: tree ${Math.round(lay.tl)}-${Math.round(lay.tr)} left of preview ${Math.round(lay.pl)}-${Math.round(lay.pr)}, both ${Math.round(lay.th)}px high, above the nav (${Math.round(lay.fb)} <= ${Math.round(lay.nt)})`);
+const xs = await shot('shell-pages-explorer-open');
+check('R3-shot', A37(xs), `File Explorer open shot ${xs.w}x${xs.h}`);
+const br = await evalJs(`(() => { const r = { id: 'front-html', label: 'front-html', mode: 'pages' };
+  document.getElementById('main').innerHTML = renderRootsHead('pages') + renderBrowser(r, '');
+  const bar = document.getElementById('rbar'), fill = document.getElementById('rfill'); fill.style.top = Math.round(bar.getBoundingClientRect().bottom + 4) + 'px';
+  const f = document.getElementById('rframe').getBoundingClientRect(), n = document.querySelector('nav').getBoundingClientRect();
+  return { src: document.getElementById('rframe').getAttribute('src'), h: f.height, w: f.width, vw: window.innerWidth, bottom: f.bottom, nt: n.top }; })()`);
+check('R4', br.src === '/__app__/root/front-html/' && br.h > 400 && br.w >= br.vw - 24 && br.bottom <= br.nt + 1, `a Pages root opens as a browser frame filling the area: ${JSON.stringify(br)}`);
+// ── A: #1677 the ADB Shell tab opens the SuperApp's ADB Shell page (no Android bridge in CI: the reason is shown, nothing crashes) ──
+await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'ADB Shell').click()`);
+const adb = await until(`document.querySelector('[data-adb-open]') && document.getElementById('adb-said') && document.getElementById('adb-said').textContent.length > 0`);
+const said = await evalJs(`(document.getElementById('adb-said') || {}).textContent || ''`);
+check('A1', adb && /bridge|not installed|Opened/i.test(said), `ADB Shell tab drawn and its open attempted on tap: ${JSON.stringify(said)}`);
+const as = await shot('shell-adb-shell');
+check('A1-shot', A37(as), `ADB Shell tab shot ${as.w}x${as.h}`);
+// back to Configs (the top bar's gear), where the Engines and Links checks below start
+await evalJs(`document.getElementById('gear').click()`);
 await until(`document.querySelector('[data-cfg]')`);
 
 // Configs > Engines and Links

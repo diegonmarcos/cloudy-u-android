@@ -18,7 +18,7 @@
 #       shell; the crate depends on the shared server by path and serves the drive through
 #       drive_handler over fleet_webserver::handler. (That the shared server IS the Linux UI is
 #       test-c3-webserver-shared.sh's business, and that it renders is test-c3-webserver-render.sh's.)
-#   T7  NAVIGATION STRUCTURE. The bottom nav is exactly Pages, API, Home, SSHd, Configs, each routed at
+#   T7  NAVIGATION STRUCTURE. The bottom nav is exactly Pages, API, Home, SSHd, ADB Shell (#1677; Configs is the top-bar gear's page), each routed at
 #       /__app__/tab/<id> with a view in the shell; the SSHd tab embeds the file view at / below the SSH doors; the Tauri
 #       window opens on the shell, never straight onto one served page.
 #   T4  NO PLACEHOLDER IN A SHIPPED PAGE: no not-built wording in ui/ or src/.
@@ -61,7 +61,7 @@ ui = sorted(os.listdir(os.path.join(app, "server/ui"))) if os.path.isdir(os.path
 if ui != ["diag.html", "shell.html"]:
     bad.append("server/ui holds %r; the only pages this app may carry are diag.html (:8003) and shell.html (/__app__/): the file view at / is the shared Linux UI" % ui)
 src = sorted(os.path.basename(p) for p in glob.glob(os.path.join(app, "server/src/*.rs")))
-want = ["about.rs", "apis.rs", "app.rs", "crashes.rs", "diag.rs", "dns.rs", "door.rs", "engines.rs", "ipc.rs", "jump.rs", "lib.rs", "meshlogs.rs", "power.rs", "repos.rs", "served.rs", "serving.rs", "sshd.rs", "sub.rs", "topology.rs"]   # ipc.rs (#1495/#1580): the unified IPC holder — the mesh listener's /ipc/<app>/<route> gateway and its centralized per-peer, per-route ACL over the declared registry, not a file-view route; topology.rs: the mesh topology app page under /__app__/, not a file-view route; sshd.rs: the webserver's own embedded russh sshd (mesh-gated, pubkey only), not an HTTP route; door.rs / jump.rs (#1565): the SSH door supervisor and the jump-host helpers, app logic under /__app__/ with no file-view route; crashes.rs: libs:core's local crash sink (#1122), an app route under /__app__/, not a file-view route; apis/sub/meshlogs/repos (#1490): the API and Pages sub-pages, the mesh /logs route and the repo sites (served.rs: the Pages tab list, add form and undeclared checker, app routes under /__app__/; power.rs #1503: the Server / Keep alive state machine), app routes under /__app__/ or the mesh listener's own /logs and /endpoints
+want = ["about.rs", "apis.rs", "app.rs", "crashes.rs", "diag.rs", "dns.rs", "door.rs", "engines.rs", "ipc.rs", "jump.rs", "lib.rs", "meshlogs.rs", "power.rs", "repos.rs", "roots.rs", "served.rs", "serving.rs", "sshd.rs", "sub.rs", "topology.rs"]   # ipc.rs (#1495/#1580): the unified IPC holder — the mesh listener's /ipc/<app>/<route> gateway and its centralized per-peer, per-route ACL over the declared registry, not a file-view route; topology.rs: the mesh topology app page under /__app__/, not a file-view route; sshd.rs: the webserver's own embedded russh sshd (mesh-gated, pubkey only), not an HTTP route; door.rs / jump.rs (#1565): the SSH door supervisor and the jump-host helpers, app logic under /__app__/ with no file-view route; crashes.rs: libs:core's local crash sink (#1122), an app route under /__app__/, not a file-view route; apis/sub/meshlogs/repos (#1490): the API and Pages sub-pages, the mesh /logs route and the repo sites (served.rs: the Pages tab list, add form and undeclared checker, app routes under /__app__/; power.rs #1503: the Server / Keep alive state machine; roots.rs #1677: the Pages tab roots, /__app__/api/roots, /__app__/root/<id>/ and the ADB Shell link, app routes under /__app__/ served through repos.rs), app routes under /__app__/ or the mesh listener's own /logs and /endpoints
 if src != want:
     bad.append("server/src holds %r, want exactly %r (no routes/render/files of the file view: those are the shared server's)" % (src, want))
 cargo = open(os.path.join(app, "server/Cargo.toml")).read()
@@ -107,15 +107,23 @@ src = open(os.path.join(app, "server/src/app.rs")).read()
 body = re.split(r"#\[cfg\(test\)\]", src)[0]
 rows = re.findall(r'Route \{ kind: Kind::(\w+), path: "([^"]+)", tab: (None|Some\("([^"]+)"\))', body)
 tabs = [r[3] for r in rows if r[3]]
-if tabs != ["Pages", "API", "Home", "SSHd", "Configs"]:
-    bad.append("the bottom nav is %r, want Pages, API, Home, SSHd, Configs" % tabs)
+# #1677 the bottom nav is Pages, API, Home, SSHd, ADB Shell; Configs is still a tab page, reached from the top bar's gear (TOP_BAR).
+top = re.search(r'pub const TOP_BAR: &\[&str\] = &\[([^\]]*)\]', body)
+top = re.findall(r'"([^"]+)"', top.group(1)) if top else []
+bottom = [r[3] for r in rows if r[3] and r[1] not in top]
+if bottom != ["Pages", "API", "Home", "SSHd", "ADB Shell"]:
+    bad.append("the bottom nav is %r, want Pages, API, Home, SSHd, ADB Shell" % bottom)
+if top != ["/__app__/tab/configs"] or "Configs" not in tabs:
+    bad.append("Configs is not the top bar's tab page (TOP_BAR %r)" % top)
+if "$gear.addEventListener('click', function () { show('configs', true); });" not in open(os.path.join(app, "server/ui/shell.html")).read():
+    bad.append("the top bar's gear no longer opens Configs")
 for r in rows:
-    if r[3] and r[1] != "/__app__/tab/" + r[3].lower():
+    if r[3] and r[1] != "/__app__/tab/" + r[3].lower().replace(" ", "-"):
         bad.append("tab %s is routed at %s" % (r[3], r[1]))
 shell = open(os.path.join(app, "server/ui/shell.html")).read()
 if re.search(r'<iframe id="fileview"', shell) or "<h2>Files</h2>" in shell:
     bad.append("the stale Files table/iframe is back in the SSHd tab")
-for view in ("pages:", "api:", "home:", "sshd:", "configs:"):
+for view in ("pages:", "api:", "home:", "sshd:", "configs:", "'adb-shell':"):
     if view not in shell:
         bad.append("shell.html has no view for the %s tab" % view[:-1])
 tauri = open(os.path.join(app, "src-tauri/src/lib.rs")).read()
@@ -245,7 +253,7 @@ t6() {
 
 echo "── cloud-c3-webserver ──"
 t1 "$APP" && pass "T1 the file view is the shared server's: the app's own pages answer /__app__/ only, no file-browser code of its own" || fail "T1 the app shadows or reimplements the file view"
-t7 "$APP" && pass "T7 navigation structure: five tabs Pages, API, Home, SSHd, Configs, the file view is inside the SSHd tab, the app opens on the shell" || fail "T7 the app lost its navigation structure"
+t7 "$APP" && pass "T7 navigation structure: five bottom tabs Pages, API, Home, SSHd, ADB Shell and Configs behind the top-bar gear, the file view is inside the SSHd tab, the app opens on the shell" || fail "T7 the app lost its navigation structure"
 t4 "$APP" && pass "T4 no placeholder wording in a shipped tab" || fail "T4 a shipped tab can render a placeholder"
 t5 "$APP" && pass "T5 Tauri shape: ABIs mapped, lib + server crate linked, identity from build.json, bind before window, storage asked from Rust, no shell residue" || fail "T5 the Tauri shape is broken"
 t6 "$APP" && pass "T6 rename ledger clean: no retired spelling anywhere in this app" || fail "T6 a retired spelling survives"
@@ -267,6 +275,18 @@ assert new!=s; open(p,"w").write(new)
 PY
 }
 m_custom_page() { printf '<!doctype html><nav>Pages API Home</nav>' > "$1/server/ui/browse.html"; }
+m_drop_adb_tab() { python3 - "$1" <<'PY'
+import sys; p=sys.argv[1]+"/server/src/app.rs"; s=open(p).read()
+new=s.replace('tab: Some("ADB Shell")','tab: None',1)
+assert new!=s; open(p,"w").write(new)
+PY
+}
+m_configs_bottom() { python3 - "$1" <<'PY'
+import sys; p=sys.argv[1]+"/server/src/app.rs"; s=open(p).read()
+new=s.replace('pub const TOP_BAR: &[&str] = &["/__app__/tab/configs"];','pub const TOP_BAR: &[&str] = &[];',1)
+assert new!=s; open(p,"w").write(new)
+PY
+}
 m_drop_files_tab() { python3 - "$1" <<'PY'
 import sys,re; p=sys.argv[1]+"/server/src/app.rs"; s=open(p).read()
 new=s.replace('tab: Some("SSHd")','tab: None',1)
@@ -354,6 +374,8 @@ mutate "a route outside /__app__/ (shadows the file server)" t1 m_route_outside_
 mutate "the SSHd tab removed from the nav"                 t7 m_drop_files_tab
 mutate "the app opens straight onto the file view"          t7 m_open_on_file_view
 mutate "the stale Files table put back in the SSHd tab"     t7 m_fileview_copy
+mutate "the ADB Shell tab dropped from the nav"            t7 m_drop_adb_tab
+mutate "Configs back in the bottom nav (no top-bar entry)"  t7 m_configs_bottom
 mutate "a :8002 route spelled in this crate"                t1 m_route_in_lib
 mutate "a renderer of its own in this crate"                t1 m_own_renderer
 mutate "the shared server dependency dropped"               t1 m_drop_shared_dep

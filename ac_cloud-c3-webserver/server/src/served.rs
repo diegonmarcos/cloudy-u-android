@@ -105,6 +105,21 @@ pub fn open_configs(page: &str) -> Result<(), String> {
     f(page)
 }
 
+type ExtraLauncher = dyn Fn(&str, &str, &str) -> Result<(), String> + Send + Sync;
+static EXTRA_LAUNCHER: OnceLock<Box<ExtraLauncher>> = OnceLock::new();
+
+/// #1677 Installed by the Tauri crate: open a package's MAIN/LAUNCHER activity carrying one String extra (the SuperApp reads its
+/// `shortcut_action` extra on that intent and opens the named page: the ADB Shell tab's deep link).
+pub fn set_extra_launcher(f: Box<ExtraLauncher>) -> bool {
+    EXTRA_LAUNCHER.set(f).is_ok()
+}
+
+/// #1677 launch `package` with the String extra `key` = `value` through the installed Android bridge.
+pub fn launch_with(package: &str, key: &str, value: &str) -> Result<(), String> {
+    let f = EXTRA_LAUNCHER.get().ok_or_else(|| "no Android bridge installed yet".to_string())?;
+    f(package, key, value)
+}
+
 /// #1614 launch a package's MAIN/LAUNCHER activity through the installed Android bridge (the same hook Start App uses).
 /// Used by the X-Ray Device page's "Start Superapp" button; the caller decides which package is allowed to launch.
 pub fn launch(package: &str) -> Result<(), String> {
