@@ -1,0 +1,66 @@
+name: "Proof → Hardtech-CAD STEP/OBJ models (emulator walk: catalogue, boat, drone parts, rotate, zoom)"
+
+# #1695 emulator verification of the House Boat (OBJ) and DJI S900 (STEP) models in the real Ship APK. Uploads `hardtech-cad-step-screens`.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ship_run_id:
+        description: "Ship → Hardtech-CAD run whose x86_64 APK to walk (empty = the rolling release)"
+        required: false
+        default: ""
+      gpu:
+        description: "emulator -gpu mode"
+        required: false
+        default: "swangle_indirect"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  screens:
+    if: ${{ inputs.only != 'mutants' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the x86_64 APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN: ${{ inputs.ship_run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          if [ -n "$RUN" ]; then gh run download "$RUN" -R "$GITHUB_REPOSITORY" -p 'Hardtech-CAD-x86_64-*' -D apk
+          else gh release download latest -R "$GITHUB_REPOSITORY" -p 'Hardtech-CAD-x86_64.apk' -D apk; fi
+          pick=$(find apk -name '*.apk' | head -1); [ -n "$pick" ] || { echo "::error::no APK"; exit 1; }
+          cp "$pick" app.apk; ls -la app.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the walk
+        run: |
+          cp ad_Hardtech-CAD/test/emu-step-walk/walk.py walk.py; cp ad_Hardtech-CAD/test/emu-step-walk/walk.sh walk.sh; chmod +x walk.sh
+      - name: Boot emulator + walk
+        timeout-minutes: 35
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu ${{ inputs.gpu || 'swangle_indirect' }} -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+      - name: Upload the screens
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hardtech-cad-step-screens
+          path: screens
+          retention-days: 30
