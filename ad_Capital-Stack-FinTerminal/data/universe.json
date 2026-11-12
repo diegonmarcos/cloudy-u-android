@@ -121,6 +121,12 @@
   "daily_every_s": 86400,
   "overlap_days": 10,
   "resolve": {
+   "BRK.B": {
+    "source": "cboe",
+    "code": "BRK.B",
+    "kind": "equity",
+    "note": "Berkshire Hathaway class B; Cboe keys the share class with a dot (the plain-ticker rule only takes letters)"
+   },
    "^NDX": {
     "source": "fred",
     "code": "NASDAQ100",
