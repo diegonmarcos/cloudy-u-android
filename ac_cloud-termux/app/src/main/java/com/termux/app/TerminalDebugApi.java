@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.PowerManager;
 
 import com.diegonmarcos.superapp.devtools.AppDebugServer;
+import com.diegonmarcos.superapp.fleetdata.FleetData;
 import com.termux.BuildConfig;
 import com.termux.cloud.CloudDnsBridge;
 import com.termux.cloud.CloudExecService;
@@ -56,8 +57,8 @@ final class TerminalDebugApi {
     private static final int MAX_TIMEOUT_MS = 600_000;
     /** enter.sh's first start unpacks the ~400 MB rootfs before it runs anything. */
     private static final int UNPACK_TIMEOUT_MS = 900_000;
-    /** The selftest's commands, declared beside this app's assets rather than in this file. */
-    private static final String SELFTEST_ASSET = "terminal-selftest.json";
+    /** The selftest's commands: the runtime dataset served by Cloud Store (#1547, repo data/fleet/app/cld.termux/terminal-selftest.json), not an APK asset. */
+    private static final String SELFTEST_DATASET = "terminal-selftest";
 
     private TerminalDebugApi() {}
 
@@ -71,7 +72,7 @@ final class TerminalDebugApi {
                 "run cmd in a fresh login session's environment (rootfs, HOME, PATH); "
                     + "returns stdout, stderr, exit. Bootstraps the terminal first if it never was."),
             new AppDebugServer.Op("selftest", "",
-                "run the declared tool and storage checks (" + SELFTEST_ASSET + ") and report each"),
+                "run the declared tool and storage checks (" + SELFTEST_DATASET + ") and report each"),
             new AppDebugServer.Op("wakelock", "",
                 "#787 the session wake lock (also at /api/terminal): held, since (epoch ms or null), "
                     + "sessions, wanted (the in-app toggle), wifi_lock")
@@ -118,11 +119,14 @@ final class TerminalDebugApi {
         JSONObject ready = ready(app);
         if (!ready.getBoolean("ok")) return ready.toString();
 
+        // Never throws: null = Cloud Store has not served the list yet (first run, provider absent); the caller retries later.
         JSONArray checks;
-        try (InputStream in = app.getAssets().open(SELFTEST_ASSET)) {
-            checks = new JSONObject(readAll(in)).getJSONArray("checks");
-        } catch (IOException e) {
-            return new JSONObject().put("ok", false).put("error", "cannot read " + SELFTEST_ASSET + ": " + e).toString();
+        try {
+            String served = FleetData.INSTANCE.get(app, SELFTEST_DATASET, true, (String s) -> s);
+            if (served == null) return new JSONObject().put("ok", false).put("error", SELFTEST_DATASET + " is not served yet by Cloud Store").toString();
+            checks = new JSONObject(served).getJSONArray("checks");
+        } catch (RuntimeException e) {
+            return new JSONObject().put("ok", false).put("error", "cannot read " + SELFTEST_DATASET + ": " + e).toString();
         }
 
         JSONArray results = new JSONArray();

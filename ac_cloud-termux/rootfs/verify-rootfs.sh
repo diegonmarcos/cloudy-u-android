@@ -348,11 +348,11 @@ echo "── #771: the app's own selftest, every check, against a noexec, foreig
 # the legacy CloudDrive mirror (the nix fallback), so the selftest keeps proving it: a noexec
 # tmpfs mounted at the STORE's git folder ($HOME/cloud-shared-store/git) holding a repo owned by another
 # uid (proot -0 shows the runner's own files as root's, so a foreign uid stays foreign). Then
-# app/src/main/assets/terminal-selftest.json runs check by check through enter.sh, exactly as
+# data/fleet/app/cld.termux/terminal-selftest.json runs check by check through enter.sh, exactly as
 # /api/terminal/selftest hands each one to the login shell, and every check must exit 0. Two
 # mutants prove the shared-store checks can fail: without /etc/gitconfig git status goes red,
 # without /etc/ld.so.preload the ./script check does.
-SELFTEST="$HERE/../app/src/main/assets/terminal-selftest.json"
+SELFTEST="$HERE/../../data/fleet/app/cld.termux/terminal-selftest.json"   # #1547 served at runtime, not an asset
 S0=/storage/emulated/0
 G="$W/home/cloud-shared-store/git"
 if [ -e /storage ]; then

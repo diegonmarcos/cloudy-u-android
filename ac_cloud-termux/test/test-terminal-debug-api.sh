@@ -14,8 +14,8 @@ set -u
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP="$DIR/app/src/main/java/com/termux/app"
 API="$APP/TerminalDebugApi.java"
-SELFTEST="$DIR/app/src/main/assets/terminal-selftest.json"
-SIBLING="$DIR/../data/fleet/app/cld.termux.nix/terminal-selftest.json"   # #1547 the sibling terminal reads its list at runtime (Cloud Store dataset), no asset
+SELFTEST="$DIR/../data/fleet/app/cld.termux/terminal-selftest.json"   # #1547 served at runtime (Cloud Store dataset), not an asset
+SIBLING="$DIR/../data/fleet/app/cld.termux.nix/terminal-selftest.json"   # #1547 the sibling terminal serves its list the same way
 
 fails=0
 ok()  { echo "  ok   — $1"; }
@@ -58,9 +58,16 @@ grep -q 'PARTIAL_WAKE_LOCK' "$API" && grep -q 'startForegroundService' "$API" \
 # re-stages when the installed lib's digest moves (enter.sh then re-unpacks; $HOME is bound from
 # outside the tree, so it is kept), and the answer names the builds that produced it.
 ROOTFS_JAVA="$DIR/app/src/main/java/com/termux/cloud/CloudRootfs.java"
-grep -q 'app.getAssets().open(SELFTEST_ASSET)' "$API" \
-    && ok "the selftest list is this APK's own asset, never an unpacked copy" \
-    || bad "the selftest list is not read from this APK's assets: an update cannot change it"
+[ ! -e "$DIR/app/src/main/assets/terminal-selftest.json" ] && ok "terminal-selftest.json is not baked into the APK (#1547)" || bad "terminal-selftest.json is still an APK asset (#1547)"
+grep -q 'FleetData.INSTANCE.get(app, SELFTEST_DATASET' "$API" && ! grep -q 'getAssets().open(SELFTEST' "$API" \
+    && ok "the selftest list is read through FleetData.get (libs:fleet-data-client), never an unpacked copy" \
+    || bad "TerminalDebugApi does not read the selftest list through FleetData"
+python3 - "$DIR/../data/fleet/manifest.json" "$SELFTEST" <<'PY2' && ok "manifest lists terminal-selftest for cld.termux; the served file has schemaVersion" || bad "manifest/schemaVersion for terminal-selftest"
+import json, sys
+m = json.load(open(sys.argv[1]))
+assert "terminal-selftest" in m["apps"]["cld.termux"]
+assert json.load(open(sys.argv[2]))["schemaVersion"] == 1
+PY2
 grep -q 'CloudRootfs.stage(context);' "$APP/TermuxInstaller.java" \
     && grep -q 'String want = field(libManifest(context), "sha256");' "$ROOTFS_JAVA" \
     && ok "every route call re-stages when the installed lib's digest differs from the staged one" \

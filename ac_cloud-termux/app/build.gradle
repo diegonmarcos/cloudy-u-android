@@ -82,6 +82,8 @@ android {
         // every sibling cannot see or reach this terminal.
         implementation project(":libs:core")
         implementation project(":libs:fleet-notify")   // #1660 FleetNotify + KeepAliveStatus (left libs:core)
+        // #1547 the terminal selftest list is read at RUNTIME from Cloud Store's provider, never baked into the APK.
+        implementation project(":libs:fleet-data-client")
         // #1352 Configs ▸ General / ▸ About in the terminal's menu (FleetConfigsEntries, libs:ui-nav-bars)
         implementation project(":libs:ui-nav-bars")
         // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.

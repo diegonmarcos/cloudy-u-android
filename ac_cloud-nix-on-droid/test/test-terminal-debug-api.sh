@@ -15,7 +15,7 @@ DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP="$DIR/app/src/main/java/com/termux/app"
 API="$APP/TerminalDebugApi.java"
 SELFTEST="$DIR/../data/fleet/app/cld.termux.nix/terminal-selftest.json"   # #1547 served at runtime, not an asset
-SIBLING="$DIR/../ac_cloud-termux/app/src/main/assets/terminal-selftest.json"
+SIBLING="$DIR/../data/fleet/app/cld.termux/terminal-selftest.json"
 
 fails=0
 ok()  { echo "  ok   — $1"; }

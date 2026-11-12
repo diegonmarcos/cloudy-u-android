@@ -3,7 +3,7 @@
  "seed_allowlist": {
   "_doc": "Tier-4 STATIC reference data that may stay bundled as a SEED the runtime provider overrides: path or dir/ prefix -> reason (at least 20 characters). Empty in phase 1: the tier-4 files are baselined below and move to Cloud Store packs in phase 2."
  },
- "json_max": 99,
+ "json_max": 98,
  "gradle_max": 22,
  "b64_max": 302,
  "mock_files": [
@@ -378,10 +378,6 @@
   "ac_cloud-tasks/app/src/debug/assets/mock-tasks.json": {
    "tier": "mock",
    "target": "remove from release builds (phase 1)"
-  },
-  "ac_cloud-termux/app/src/main/assets/terminal-selftest.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/terminal-selftest"
   },
   "ac_cloud-tools-small-llms/app/src/main/assets/ai/composer.json": {
    "tier": 3,
