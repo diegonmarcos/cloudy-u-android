@@ -212,7 +212,8 @@ private fun AppIcon(ctx: Context, pkg: String, sizeDp: Int) {
         value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { iconOf(ctx, pkg) }
     }
     val m = Modifier.padding(start = 2.dp).size(sizeDp.dp)
-    if (img != null) Image(img, contentDescription = pkg, modifier = m)
+    val bmp = img
+    if (bmp != null) Image(bmp, contentDescription = pkg, modifier = m)
     else Box(m.background(Color(0x44FFFFFF), CircleShape), contentAlignment = Alignment.Center) {
         Text(pkg.substringAfterLast('.').take(1).uppercase(), color = Color.White, fontSize = 8.sp)
     }

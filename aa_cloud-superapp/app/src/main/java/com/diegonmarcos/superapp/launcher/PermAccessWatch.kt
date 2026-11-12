@@ -55,12 +55,13 @@ class PermAccessWatch(private val context: Context, private val brokerRead: ((St
 
     fun state(s: Sensor): SensorState = when (s) { Sensor.MIC -> mic; Sensor.CAMERA -> camera; Sensor.LOCATION -> location }
 
-    private val recCb: AudioManager.AudioRecordingCallback? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) object : AudioManager.AudioRecordingCallback() {
+    // minSdk 26: the recording callback (API 24) always exists.
+    private val recCb: AudioManager.AudioRecordingCallback =
+        object : AudioManager.AudioRecordingCallback() {
             override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>?) {
                 micActive = !configs.isNullOrEmpty(); publish()
             }
-        } else null
+        }
 
     private val camCb = object : CameraManager.AvailabilityCallback() {
         override fun onCameraAvailable(cameraId: String) { camOpen.remove(cameraId); publish() }
@@ -85,7 +86,7 @@ class PermAccessWatch(private val context: Context, private val brokerRead: ((St
         val gen = ++generation
         val am = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
         micWatching = false
-        if (am != null && recCb != null) runCatching {
+        if (am != null) runCatching {
             am.registerAudioRecordingCallback(recCb, main); registered++; micWatching = true
             micActive = am.activeRecordingConfigurations.isNotEmpty()
         }
@@ -120,7 +121,7 @@ class PermAccessWatch(private val context: Context, private val brokerRead: ((St
         running = false
         generation++
         val am = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-        if (am != null && recCb != null && micWatching) runCatching { am.unregisterAudioRecordingCallback(recCb); registered-- }
+        if (am != null && micWatching) runCatching { am.unregisterAudioRecordingCallback(recCb); registered-- }
         val cm = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
         if (cm != null && camWatching) runCatching { cm.unregisterAvailabilityCallback(camCb); registered-- }
         val ops = context.getSystemService(Context.APP_OPS_SERVICE) as? AppOpsManager
