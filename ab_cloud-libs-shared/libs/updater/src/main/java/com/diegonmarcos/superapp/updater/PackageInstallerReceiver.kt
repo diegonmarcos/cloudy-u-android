@@ -218,7 +218,12 @@ class PackageInstallerReceiver : BroadcastReceiver() {
                 // entire download.
                 val shown = notifyConfirm(context, confirm, subject, gateKey)
                 val inPass = filed(PassLedger.Outcome.NEEDS_TAP)
-                if (isForeground(context)) {
+                // #1483 ONE PROMPT PER USER ACTION. A session an unattended pass committed (Cloud Store's store_refresh chain on
+                // launch, the periodic worker) used to open the system dialog whenever the app happened to be on screen: one
+                // dialog per fleet lib, every few seconds, over whatever the user was doing. It now waits on its notification
+                // and the row's "waiting for confirmation" status; the user resumes it from there or from the row's Install.
+                val sessionUnattended = unattended || intent.getBooleanExtra(EXTRA_UNATTENDED, false)
+                if (confirmSurface(sessionUnattended, isForeground(context)) == ConfirmSurface.DIALOG) {
                     // The dialog is going up NOW and this install has not
                     // finished. Keep the gate SHUT: the next commit must wait
                     // for the user to answer, or its dialog stacks on top of
@@ -567,9 +572,20 @@ class PackageInstallerReceiver : BroadcastReceiver() {
         /** Package this session installs, used as the InstallGate key. */
         const val EXTRA_TARGET_PKG = "target_pkg"
 
+        /** #1483 true when an unattended pass committed this session: its confirmation is never a dialog. */
+        const val EXTRA_UNATTENDED = "unattended"
+
+        /** #1483 Where a session's pending confirmation goes. DIALOG only for a session the user started while the app is on screen;
+         *  everything else waits on the notification and the Store row (one prompt per user action). Pure. */
+        fun confirmSurface(unattended: Boolean, foreground: Boolean): ConfirmSurface =
+            if (!unattended && foreground) ConfirmSurface.DIALOG else ConfirmSurface.NOTIFICATION
+
         /** EXTRA_STATUS absent. Not a value Android defines — ours, so that
          *  "the installer answered without a status" stays distinguishable
          *  from the statuses it does define instead of being read as one. */
         private const val NO_STATUS = -999
     }
 }
+
+/** #1483 Where a pending install confirmation is surfaced ([PackageInstallerReceiver.confirmSurface]). */
+enum class ConfirmSurface { DIALOG, NOTIFICATION }

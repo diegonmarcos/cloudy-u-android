@@ -213,6 +213,10 @@ internal class UpdateInstaller(private val context: Context) {
                         // and a blank one would leave the batch waiting out the
                         // full timeout for an event it already received.
                         putExtra(PackageInstallerReceiver.EXTRA_TARGET_PKG, targetPackage)
+                        // #1483 who asked for this session, fixed at commit: a session an unattended pass committed never opens the
+                        // confirmation dialog, even if its answer lands while the app is on screen (the pass flag is cleared by then)
+                        putExtra(PackageInstallerReceiver.EXTRA_UNATTENDED,
+                            runCatching { com.diegonmarcos.superapp.updater.AutoUpdatePrefs.unattendedPass(context) }.getOrDefault(false))
                     },
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
                 )
