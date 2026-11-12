@@ -200,8 +200,8 @@ object EngineProfiles {
             extra = listOf(Target("lookups", Kind.DEBUG, "Index builds", "calls:index", source = "scope indexes built since process start"))),
         engine("feeds", "Feeds & data", "the data panes: RSS, calendar and tasks, cloud / C3 health, ops, mail, chat, health, AI usage, the data backends",
             appDirs = listOf("rss", "cal", "cloud", "c3"),
-            libs = listOf("libs:databackend", "libs:fleet-data-client", "libs:ops", "libs:mail", "libs:chat", "libs:health", "libs:datamanager"),
-            libPackages = listOf("$APP.databackend", "$APP.fleetdata", "$APP.ops", "$APP.mail", "$APP.chat", "$APP.health", "$APP.datamanager"),
+            libs = listOf("libs:databackend", "libs:fleet-data-client", "libs:ops", "libs:mail", "libs:chat", "libs:health", "libs:datamanager", "libs:clock-tools", "libs:clock-tools-core"),
+            libPackages = listOf("$APP.databackend", "$APP.fleetdata", "$APP.ops", "$APP.mail", "$APP.chat", "$APP.health", "$APP.datamanager", "com.diegonmarcos.clocktools"),
             hotPaths = listOf(
                 HotPath("rss", "RSS fetch", 4_000.0, "RemoteFeed.fetch (the bound feed engine)"),
                 HotPath("cloud", "Cloud data fetch", 4_000.0, "CloudData.fetchRaw"),
