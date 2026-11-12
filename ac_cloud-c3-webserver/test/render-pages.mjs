@@ -144,9 +144,12 @@ const br = await evalJs(`(() => { const r = { id: 'front-html', label: 'front-ht
   const f = document.getElementById('rframe').getBoundingClientRect(), n = document.querySelector('nav').getBoundingClientRect();
   return { src: document.getElementById('rframe').getAttribute('src'), h: f.height, w: f.width, vw: window.innerWidth, bottom: f.bottom, nt: n.top }; })()`);
 check('R4', br.src === '/__app__/root/front-html/' && br.h > 400 && br.w >= br.vw - 24 && br.bottom <= br.nt + 1, `a Pages root opens as a browser frame filling the area: ${JSON.stringify(br)}`);
+// back to Pages > All (the sub-page the L checks below tap a served link on)
+await evalJs(`document.querySelector('[data-sub=all]').click()`);
+await until(`document.querySelector('[data-sub=all].on') && document.querySelector('.served .pg')`);
 // ── A: #1677 the ADB Shell tab opens the SuperApp's ADB Shell page (no Android bridge in CI: the reason is shown, nothing crashes) ──
 await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'ADB Shell').click()`);
-const adb = await until(`document.querySelector('[data-adb-open]') && document.getElementById('adb-said') && document.getElementById('adb-said').textContent.length > 0`);
+const adb = await until(`document.querySelector('[data-adb-open]') && document.getElementById('adb-said') && /bridge|not installed|Opened/i.test(document.getElementById('adb-said').textContent)`);
 const said = await evalJs(`(document.getElementById('adb-said') || {}).textContent || ''`);
 check('A1', adb && /bridge|not installed|Opened/i.test(said), `ADB Shell tab drawn and its open attempted on tap: ${JSON.stringify(said)}`);
 const as = await shot('shell-adb-shell');
