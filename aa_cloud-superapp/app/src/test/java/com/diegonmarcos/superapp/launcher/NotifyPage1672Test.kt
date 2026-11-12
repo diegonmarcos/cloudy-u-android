@@ -147,7 +147,8 @@ class NotifyPage1672Test : KitPageHarness() {
         assertEquals("a fleet app leaked into Phone Apps", 0, count(within(AggTags.timelineRow("phone:c1"), phone)))
         // By Categories (default): a category header, its notifications by time
         assertTrue(compose.onAllNodes(SemanticsMatcher("category") { n ->
-            n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.TestTag)?.startsWith("agg:category:phone:") == true
+            val tp = androidx.compose.ui.semantics.SemanticsProperties.TestTag
+            n.config.contains(tp) && n.config[tp].startsWith("agg:category:phone:")
         }, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
         assertTrue(top(AggTags.timelineRow("phone:w2")) < top(AggTags.timelineRow("phone:w1")))
         compose.onNodeWithTag(AggTags.groupMode("phone", AggregatorModel.GROUP_TIME), useUnmergedTree = true).performScrollTo().performClick()
