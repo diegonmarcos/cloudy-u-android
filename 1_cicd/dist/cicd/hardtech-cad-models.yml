@@ -121,10 +121,12 @@ jobs:
       - name: Install Playwright Chromium (pinned)
         run: |
           mkdir -p "$RUNNER_TEMP/rc"
-          cp "$APP/tools/render-check.mjs" "$RUNNER_TEMP/rc/"
+          cp "$APP/tools/render-check.mjs" "$APP/tools/make-thumbs.mjs" "$RUNNER_TEMP/rc/"
           cd "$RUNNER_TEMP/rc" && npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.49.1 && npx playwright install --with-deps chromium
       - name: Load the viewer with every declared model and read the canvas back
         run: node "$RUNNER_TEMP/rc/render-check.mjs" "$GITHUB_WORKSPACE"
+      - name: "#1664 every model has its preview image, rendered from its GLB by the viewer (tools/make-thumbs.mjs --check)"
+        run: node "$RUNNER_TEMP/rc/make-thumbs.mjs" "$GITHUB_WORKSPACE" --check
       - uses: actions/upload-artifact@v4
         if: always()
         with:
