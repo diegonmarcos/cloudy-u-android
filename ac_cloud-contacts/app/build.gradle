@@ -237,6 +237,9 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.9.3'
     implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.8.7'
 
+    // #1671 the JVM suite of the Groups / Business / All / People model (ContactFacetsTest: pure Kotlin, no Robolectric).
+    testImplementation 'junit:junit:4.13.2'
+
     androidTestImplementation 'androidx.test:runner:1.6.1'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }

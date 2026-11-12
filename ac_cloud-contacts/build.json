@@ -355,49 +355,117 @@
       "site_id": "1"
     }
   },
+  "tests": {
+    "_doc": "Read by 1_cicd/dist/scripts/cloud-android-test-engine.sh, which the ship workflow runs before it builds.",
+    "shell": {
+      "dir": "test",
+      "requires": [
+        "python3",
+        "grep"
+      ]
+    },
+    "unit": {
+      "_doc": "#1671 the JVM unit suite of the Groups / Business / All / People model (ContactFacetsTest). Run through build.sh test, which resolves the shared key first; scoped to :app: so a sibling library's suite cannot turn this release red.",
+      "task": ":app:testDebugUnitTest",
+      "enabled": true
+    }
+  },
   "ui": {
-    "_doc": "#1164 THE navigation declaration (libs:bottomnav NavDecl) of the contacts.html WebView shell: ui.bottom_nav is the shared bottom nav, each section is one page of the web UI and a tap runs its switchTab(). The first row (Profile top-right opens Cloud Account) and the scroll-collapse are the shared libs'; the WebView's scroll feeds the one collapse connection.",
+    "_doc": "#1164 THE navigation declaration (libs:bottomnav NavDecl) of the contacts.html WebView shell. #1671 (the #1625 / #1626 layout, moved here from Cloud Account): bottom nav Groups | Business | All | People | Configs, default All. Groups = the default groups Friends / Family / Job / Favorites (and any own group) with their members; Business = companies / organizations only; All = every contact (the earlier People page: search + source chips); People = people only, filtered by the app they came from (Social Media, Mail, Phone, and each app). A tap on those four runs the page's switchTab(). Configs is native: the fleet strip {General, Import, Channels} | Agents, Perms, Logcat, X-Ray App, About (FleetConfigsExtensions.withTail); Import (device contacts, LinkedIn / Instagram exports) and Channels (the channel registry, the earlier About page) are drawn by the page, the shared pages by libs:ui-nav-bars. READ_CONTACTS is granted in Configs > Perms. The first row (Profile top-right opens Cloud Account) and the scroll-collapse are the shared libs'.",
     "bottom_nav": [
+      "groups",
+      "business",
+      "all",
       "people",
-      "import",
-      "about"
+      "configs"
     ],
-    "default_section": "people",
-    "configs_ui": ["nav_ui"],
+    "default_section": "all",
+    "configs_ui": [
+      "nav_ui"
+    ],
     "sections": [
       {
-        "id": "people",
-        "label": "People",
-        "icon": "contacts",
+        "id": "groups",
+        "label": "Groups",
+        "icon": "groups",
+        "_doc": "#1671 the default groups Friends / Family / Job / Favorites (and any own group), each opening its members; a contact is added from its switchboard.",
         "pages": [
           {
-            "id": "people",
-            "label": "People",
+            "id": "groups",
+            "label": "Groups",
             "icon": "groups"
           }
         ]
       },
       {
-        "id": "import",
-        "label": "Import",
-        "icon": "download",
+        "id": "business",
+        "label": "Business",
+        "icon": "account_balance",
+        "_doc": "#1671 companies / organizations only (ContactFacets.isBusiness).",
         "pages": [
           {
-            "id": "import",
-            "label": "Import",
-            "icon": "file_upload"
+            "id": "business",
+            "label": "Business",
+            "icon": "account_balance"
           }
         ]
       },
       {
-        "id": "about",
-        "label": "About",
-        "icon": "info",
+        "id": "all",
+        "label": "All",
+        "icon": "contacts",
+        "_doc": "#1671 every contact: the earlier People page (search, source chips, switchboard).",
         "pages": [
+          {
+            "id": "all",
+            "label": "All",
+            "icon": "contacts"
+          }
+        ]
+      },
+      {
+        "id": "people",
+        "label": "People",
+        "icon": "person",
+        "_doc": "#1671 people only (no company), with filter chips by the app / account each came from: Social Media, Mail, Phone, Other, then each app.",
+        "pages": [
+          {
+            "id": "people",
+            "label": "People",
+            "icon": "person"
+          }
+        ]
+      },
+      {
+        "id": "configs",
+        "label": "Configs",
+        "icon": "configs",
+        "_doc": "#1671 the fleet Configs strip: General, Perms, About (shared) and the app's own Import and Channels (contacts.html); drawn {General, Import, Channels} | Agents, Perms, Logcat, X-Ray App, About.",
+        "pages": [
+          {
+            "id": "general",
+            "label": "General",
+            "icon": "settings"
+          },
+          {
+            "id": "perms",
+            "label": "Perms",
+            "icon": "security"
+          },
           {
             "id": "about",
             "label": "About",
             "icon": "info"
+          },
+          {
+            "id": "import",
+            "label": "Import",
+            "icon": "file_upload"
+          },
+          {
+            "id": "channels",
+            "label": "Channels",
+            "icon": "hub"
           }
         ]
       }
@@ -428,24 +496,43 @@
       "tagline": "People as channels, one tap to reach them",
       "description": "Cloud Contacts is a people hub rather than an address book: each person is the set of channels you can reach them on — WhatsApp, Telegram, SMS, Cloud Mail, Cloud Dialer, Matrix, Cloud Chat, LinkedIn, Instagram — and the person screen is a switchboard that opens the right app on the right conversation in one tap. It exists because most contact is no longer a phone call, and the phone's own contacts app does not know that.",
       "features": [
+        "Bottom nav Groups | Business | All | People | Configs",
         "People with every channel: WhatsApp, Telegram, SMS, mail, calls, Matrix",
         "Import contacts from other sources",
         "One tap to the right app per channel",
         "Merge duplicates across sources",
-        "Search by name or channel"
+        "Search by name or channel",
+        "Business and People split; People filtered by the app each contact came from",
+        "Default groups Friends, Family, Job, Favorites"
       ],
       "screens": [
         {
+          "name": "Groups",
+          "what": "Friends, Family, Job, Favorites and your own groups, with their members."
+        },
+        {
+          "name": "Business",
+          "what": "Companies and organizations only."
+        },
+        {
+          "name": "All",
+          "what": "Everyone, searchable, by source."
+        },
+        {
           "name": "People",
-          "what": "Everyone, searchable."
+          "what": "People only, filtered by the app they came from."
         },
         {
           "name": "Person",
-          "what": "The channel switchboard of one person."
+          "what": "The channel switchboard of one person, and its groups."
         },
         {
           "name": "Import",
-          "what": "Bring contacts in from other sources."
+          "what": "Configs > Import: bring contacts in from other sources."
+        },
+        {
+          "name": "Channels",
+          "what": "Configs > Channels: the channel registry."
         },
         {
           "name": "About",
@@ -453,9 +540,9 @@
         }
       ],
       "guide": [
-        "Grant Contacts so the hub can read the phone's contacts.",
-        "Open a person and tap a channel to start talking there.",
-        "Use Import to add people from other sources."
+        "Grant Contacts in Configs > Perms so the hub can read the phone's contacts.",
+        "Open a person and tap a channel to start talking there; tap a group to add them to it.",
+        "Use Configs > Import to add people from other sources."
       ],
       "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. Usage analytics are opt-in and off by default; when allowed, events go only to the owner's self-hosted Umami and Matomo. It calls no fleet service: its data stays on the phone.",
       "backends": [],

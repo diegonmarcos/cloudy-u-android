@@ -572,7 +572,7 @@
   },
   "ui": {
     "_doc": "Cloud Account's information architecture (#1081, reworked #1482): bottom nav Vault | Config | Connect | Devices | Activity (libs:bottomnav NavDecl), one place per thing. Vault (IDs, PayCards, Secrets, Autocomplete) is PRIVATE (masked by default); Config = the Fleet Config files (Android, Desktop, C3, Repos), PUBLIC (no secret value; test-account-configs-public.sh); Devices = Mesh, Peer Control, Backup, Files, Working, Diff. `configs` is the app's own Configs menu (General | Perms | About) opened from the top bar, NOT in the bottom nav. A page's `pages` is a second strip (NavPage.pages). MainActivity maps every leaf (section, page) to one composable; hub/HubNav.LEGACY maps every id of the earlier layouts to its place now, so libs:account links and OPEN intents (extras section/page) keep working.",
-    "bottom_nav": ["groups", "business", "all", "people", "configs"],
+    "bottom_nav": ["vault", "config", "connect", "devices", "activity"],
     "sections": [
       {
         "id": "vault",
@@ -950,41 +950,9 @@
             "icon": "info"
           }
         ]
-      },
-      {
-        "id": "groups",
-        "label": "Groups",
-        "icon": "groups",
-        "background": "dark",
-        "_doc": "#1625 Contacts groups: the default groups Friends/Family/Job/Favorites with their members; a contact can be assigned. contacts/GroupsScreen.",
-        "pages": []
-      },
-      {
-        "id": "business",
-        "label": "Business",
-        "icon": "account_balance",
-        "background": "dark",
-        "_doc": "#1625 Only company/organization contacts (a contact that carries a company name is a business contact). contacts/BusinessContactsScreen.",
-        "pages": []
-      },
-      {
-        "id": "all",
-        "label": "All",
-        "icon": "contacts",
-        "background": "dark",
-        "_doc": "#1625 All contacts. contacts/AllContactsScreen.",
-        "pages": []
-      },
-      {
-        "id": "people",
-        "label": "People",
-        "icon": "person",
-        "background": "dark",
-        "_doc": "#1625 Only people (non-company); filter chips by the app/account the contact came from (Social Media, Mail, ...), built from the sources present. contacts/PeopleContactsScreen.",
-        "pages": []
       }
     ],
-    "default_section": "all",
+    "default_section": "vault",
     "configs_ui": ["nav_ui"],
     "account": {
       "_doc": "Cloud Account redesign, task 2 (a0_docs/eng-specs/cloud-account-redesign.md sections 2, 5, 6). Read by libs:account's build.gradle into BuildConfig.UI_ACCOUNT_B64 (ForgeClient.Decl). forges: where the vault lives, each written through its contents API; auth 'bearer' sends `Authorization: Bearer <t>` (GitHub), 'token' sends `Authorization: token <t>` (Gitea). A forge's token is read from AccountVault Connections at forge.<id>.token, the primary forge id at forge.primary (default: the first forge with a repo). vault: the branch, the folder the app writes per-device profiles to (devices/<id>.json, DEFAULT.json; never an emit.py input), and the generated secrets file the connect fetch keeps reading.",
@@ -1185,8 +1153,7 @@
     "needs": [
       "notifications",
       "install_unknown",
-      "battery_opt",
-      "contacts_read"
+      "battery_opt"
     ],
     "helpers": [],
     "first_run": "libs:perms"

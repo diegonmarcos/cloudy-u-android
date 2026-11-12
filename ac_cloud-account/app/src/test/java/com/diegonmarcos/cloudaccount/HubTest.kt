@@ -69,19 +69,15 @@ class HubTest {
 
     // ── nav ──────────────────────────────────────────────────────────────
 
-    @Test fun bottomNavIsGroupsBusinessAllPeopleConfigs() {
-        // #1625 the contacts bottom nav: Groups | Business | All | People | Configs, default All.
-        assertEquals(listOf("groups", "business", "all", "people", "configs"), HubNav.ORDER)
-        assertEquals("groups,business,all,people,configs", BuildConfig.UI_BOTTOM_NAV)
+    @Test fun bottomNavIsVaultConfigConnectDevicesActivity() {
+        assertEquals(listOf("vault", "config", "connect", "devices", "activity"), HubNav.ORDER)
+        assertEquals("vault,config,connect,devices,activity", BuildConfig.UI_BOTTOM_NAV)
         assertEquals(HubNav.ORDER, MainActivity.NAV.bottomSections().map { it.id })
-        assertEquals(listOf("Groups", "Business", "All", "People", "Configs"), MainActivity.NAV.bottomSections().map { it.label })
-        assertEquals("all", MainActivity.NAV.default()?.id)
-        // #1625 the app's own Configs (General | Perms | About) is now the fifth bottom-nav item.
+        assertEquals(listOf("Vault", "Config", "Connect", "Devices", "Activity"), MainActivity.NAV.bottomSections().map { it.label })
+        assertEquals("vault", MainActivity.NAV.default()?.id)
+        // the app's own Configs (General | Perms | About) is a section the top bar opens, never a bottom-nav item
         assertNotNull(MainActivity.NAV.section("configs"))
-        assertTrue("configs" in MainActivity.NAV.bottomSections().map { it.id })
-        // the identity/vault sections stay declared (reachable by deep link) but are off the bottom bar.
-        assertTrue(listOf("vault", "config", "connect", "devices", "activity").all { MainActivity.NAV.section(it) != null })
-        assertTrue(listOf("vault", "config", "connect", "devices", "activity").none { it in MainActivity.NAV.bottomSections().map { s -> s.id } })
+        assertFalse("configs" in MainActivity.NAV.bottomSections().map { it.id })
         assertTrue("no Setup, Profiles, Secrets or Home section any more", listOf("setup", "profiles", "secrets", "home").all { MainActivity.NAV.section(it) == null })
     }
 
@@ -132,7 +128,7 @@ class HubTest {
         assertEquals("config" to "runbook", HubNav.resolve("configs", "runbook"))
         assertEquals("configs" to "about", HubNav.resolve("configs", "about"))
         assertEquals("vault" to "ids", HubNav.resolve("vault", "ids"))
-        assertEquals("all" to null, HubNav.resolve("nowhere", "x"))
+        assertEquals("vault" to null, HubNav.resolve("nowhere", "x"))
     }
 
     @Test fun strippedPagesSitUnderOneContainerEach() {
@@ -198,7 +194,7 @@ class HubTest {
         assertEquals("devices" to "bundle", MainActivity.deepLink(i("secrets", "connections")))
         assertEquals("devices" to "me", MainActivity.deepLink(i("home", "")))
         assertEquals("vault" to "snippets", MainActivity.deepLink(i("account", "snippets")))
-        assertEquals("all" to null, MainActivity.deepLink(i("bogus", "x")))
+        assertEquals("vault" to null, MainActivity.deepLink(i("bogus", "x")))
     }
 
     // ── Connections table ────────────────────────────────────────────────

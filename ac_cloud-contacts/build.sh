@@ -239,7 +239,15 @@ step_dev() {
   in_nix adb shell am start -n "$(_release_var '.android.application_id')/$APP_MAIN"
 }
 
-step_test()       { log "Test: JVM unit tests"; in_nix gradle test; }
+step_test() {
+  # #1671 the declared task (build.json::tests.unit.task), after the shared key is resolved: the signingConfig fails the
+  # configuration phase of every task, a test task included, without it.
+  local task; task="$(_release_var '.tests.unit.task')"
+  [ -n "$task" ] || task="test"
+  log "Test: JVM unit tests (gradle $task)"
+  _resolve_signing
+  in_nix gradle "$task"
+}
 step_instrument() { log "Test: instrumented (needs device)"; in_nix gradle connectedAndroidTest; }
 step_lint()       { log "Lint"; in_nix gradle lint; }
 step_clean()      { log "Clean"; in_nix gradle clean; rm -rf "$DIST_DIR"; }

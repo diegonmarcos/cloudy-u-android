@@ -40,8 +40,8 @@ def ok(c, good, bad):
     if not c: fails += 1
 
 ui = json.loads(rd(f"{A}/build.json"))["ui"]
-ok(ui["bottom_nav"] == ["groups", "business", "all", "people", "configs"] and ui["default_section"] == "all",
-   "bottom nav: Groups, Business, All, People, Configs; default All (#1625)", f"bottom nav is {ui['bottom_nav']}")
+ok(ui["bottom_nav"] == ["vault", "config", "connect", "devices", "activity"] and ui["default_section"] == "vault",
+   "bottom nav: Vault, Config, Connect, Devices, Activity; default Vault", f"bottom nav is {ui['bottom_nav']}")
 ok(all(s["id"] != "setup" for s in ui["sections"]), "no Setup island", "a Setup island is declared")
 
 nav = code(rd(f"{K}/hub/HubNav.kt"))
@@ -65,8 +65,8 @@ dead = [f"{a}/{b}->{c}/{d}" for (a, b), (c, d) in legacy.items() if c not in pag
 ok(not dead, "every LEGACY target is a declared leaf page", f"LEGACY points at undeclared or container pages {dead}")
 ok(nav.index("LEGACY[section to page.orEmpty()]") < nav.index("if (section in KNOWN)"), "resolve() translates a renamed page before passing a current section through", "a renamed page inside a current section passes through untranslated")
 strips = {s["id"]: [p["id"] for p in s["pages"] if p.get("pages")] for s in ui["sections"]}
-ok(strips == {"vault": ["secrets", "autocomplete"], "config": ["android", "c3"], "connect": ["status", "auth", "fleetsetup"], "devices": ["backup"], "activity": [], "configs": [], "groups": [], "business": [], "all": [], "people": []},
-   "the second strips are Vault > Secrets / Autocomplete, Config > Android / C3, Connect > Status / Authentication providers / Setup, Devices > Backup (the #1625 contacts sections have no strips)", f"second strips are {strips}")
+ok(strips == {"vault": ["secrets", "autocomplete"], "config": ["android", "c3"], "connect": ["status", "auth", "fleetsetup"], "devices": ["backup"], "activity": [], "configs": []},
+   "the second strips are Vault > Secrets / Autocomplete, Config > Android / C3, Connect > Status / Authentication providers / Setup, Devices > Backup", f"second strips are {strips}")
 ok(all(s.get("background") in ("dark", "light", "theme") for s in ui["sections"]), "every section declares its strip background", "a section leaves its background undeclared")
 ma = code(rd(f"{K}/MainActivity.kt"))
 ok("HubNav.resolve(s, p)" in ma, "MainActivity's go() resolves old ids", "go() does not go through HubNav.resolve")
@@ -137,7 +137,7 @@ PY
   echo "  mutation caught: $1"
 }
 M=0
-mutate "Setup island back" "$A/build.json" '"bottom_nav": ["groups",' '"bottom_nav": ["setup", "groups",' || M=1
+mutate "Setup island back" "$A/build.json" '"bottom_nav": ["vault",' '"bottom_nav": ["setup", "vault",' || M=1
 mutate "an old page loses its place" "$K/hub/HubNav.kt" '("setup" to "perms") to ("connect" to "perms"),' '' || M=1
 mutate "go() skips the resolver" "$K/MainActivity.kt" 'HubNav.resolve(s, p)' 'Pair(s, p)' || M=1
 mutate "gate reads before auth" "$LK/hub/Reveal.kt" 'if (!ok) { denied(); return@authenticate }' 'read(); if (!ok) { denied(); return@authenticate }' || M=1

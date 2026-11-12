@@ -11,6 +11,8 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.diegonmarcos.cloudcontacts.facets.ContactFacets
+import com.diegonmarcos.cloudcontacts.facets.Facet
 import com.diegonmarcos.superapp.contacts.Channels
 import com.diegonmarcos.superapp.contacts.ChannelConfig
 import com.diegonmarcos.superapp.contacts.DeviceContacts
@@ -66,6 +68,15 @@ class ContactsBridge(
     }
 
     @Volatile private var peopleCache: List<Person>? = null
+
+    // #1671 the Groups section: which default (or own) groups each person is in. The device address book is only read
+    // here, so the assignment lives in the app's own prefs (ContactFacets.encode / decode), keyed by the merged id.
+    private val groupPrefs = ctx.getSharedPreferences("contacts_groups", Context.MODE_PRIVATE)
+
+    @Synchronized
+    private fun groups(): Map<String, Set<String>> = ContactFacets.decode(groupPrefs.getString("assign", null))
+
+    private fun facet(p: Person) = Facet(p.id, p.name, p.org, p.sources)
 
     // ---- merged people (device + social, cached) -----------------------------
 
@@ -162,9 +173,17 @@ class ContactsBridge(
     @JavascriptInterface
     fun getPeople(): String {
         val arr = JSONArray()
+        val assigned = groups()
         for (p in people().sortedBy { it.name.lowercase() }) {
             val badges = Channels.forPerson(p, registry).map { it.config.id }
+            val f = facet(p)
+            val origins = ContactFacets.origins(f)
             arr.put(JSONObject().apply {
+                // #1671 the Business / People split, the app-origin filters and the group membership of the row
+                put("business", ContactFacets.isBusiness(f))
+                put("origins", JSONArray(origins.map { it.label }))
+                put("categories", JSONArray(origins.map { it.category.label }.distinct()))
+                put("groups", JSONArray(assigned[p.id].orEmpty().sorted()))
                 put("id", p.id)
                 put("name", p.name)
                 put("initials", initials(p.name))
@@ -224,7 +243,39 @@ class ContactsBridge(
             put("urls", JSONArray(p.urls))
             put("handles", handlesObj)
             put("channels", channelsArr)
+            put("business", ContactFacets.isBusiness(facet(p)))
+            put("origins", JSONArray(ContactFacets.origins(facet(p)).map { it.label }))
+            put("groups", JSONArray(groups()[p.id].orEmpty().sorted()))
+            put("allGroups", JSONArray(ContactFacets.groupNames(groups())))
         }.toString()
+    }
+
+    // ---- groups (#1671) -------------------------------------------------------------
+
+    /** The Groups section: every group (the defaults Friends / Family / Job / Favorites first) with its member count. */
+    @JavascriptInterface
+    fun getGroups(): String {
+        val assigned = groups()
+        val ids = people().map { it.id }.toSet()
+        val arr = JSONArray()
+        for (g in ContactFacets.groupNames(assigned)) {
+            arr.put(JSONObject().apply {
+                put("name", g)
+                put("default", g in ContactFacets.DEFAULT_GROUPS)
+                put("count", assigned.count { (id, gs) -> id in ids && g in gs })
+            })
+        }
+        return arr.toString()
+    }
+
+    /** Assign ([on]) or unassign one person to a group; persisted at once. Returns the fresh [getGroups]. */
+    @JavascriptInterface
+    fun setGroup(personId: String, group: String, on: Boolean): String {
+        synchronized(this) {
+            val next = ContactFacets.assign(groups(), personId, group, on)
+            groupPrefs.edit().putString("assign", ContactFacets.encode(next)).apply()
+        }
+        return getGroups()
     }
 
     // ---- permission / import launchers -------------------------------------------

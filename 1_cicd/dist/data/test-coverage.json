@@ -67,11 +67,11 @@
     },
     "ac_cloud-account": {
       "first_test": "#867 NEW APP (the Account page split out of cloud-superapp). Has 1 shell tester (test-account-app.sh): the Account page comes from libs:account with no copy here; one package name and one OPEN action across SuperApp, build.json, manifest and the fleet manifest; the data provider is signature-gated, exported only by this app and only reads; the one-shot copy never overwrites a store SuperApp already holds; SuperApp's Account entry opens this app (extapp:cloud-account) - planted mutations each go red. NOT COVERED: the Account tabs themselves (libs:account and cloud-superapp's account testers cover them), and the copy on a real phone (fill Account in SuperApp, install Cloud Account, confirm configs, profile and the S/R/L files arrive once).",
-      "shell_testers": 15,
+      "shell_testers": 16,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 24,
+      "unit_test_sources": 22,
       "workflow": "ship-cloud-account.yml"
     },
     "ac_cloud-account/web": {
@@ -175,11 +175,11 @@
     },
     "ac_cloud-contacts": {
       "first_test": "Assert every channel type a person entry can declare is one the UI knows how to render \u2014 an unknown type is a silently blank row.",
-      "shell_testers": 0,
+      "shell_testers": 1,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
-      "unit_task_declared": false,
-      "unit_test_sources": 0,
+      "unit_task_declared": true,
+      "unit_test_sources": 1,
       "workflow": "ship-cloud-contacts.yml"
     },
     "ac_cloud-dialer": {
@@ -597,6 +597,6 @@
       "workflow": "ship-lib-calc-native.yml"
     }
   },
-  "with_executed_tests": 38,
-  "with_no_tests_at_all": 28
+  "with_executed_tests": 39,
+  "with_no_tests_at_all": 27
 }

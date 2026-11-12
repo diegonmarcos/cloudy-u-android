@@ -11,6 +11,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,6 +26,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.superapp.bottomnav.NavDecl
+import com.diegonmarcos.superapp.bottomnav.NavSection
+import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions
+import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody
+import com.diegonmarcos.superapp.fleetconfigs.isFleetConfigsPage
+import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
+import com.diegonmarcos.superapp.themebg.themeBackground
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
 import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
@@ -36,8 +44,10 @@ import com.diegonmarcos.superapp.updater.Updater
 
 /**
  * Cloud Contacts: the shared nav pattern (#1164) around the contacts.html WebView. The first row (Profile top-right opens Cloud
- * Account), the bottom nav and the page background are the shared libs'; the sections are build.json::ui (People, Import, About)
- * and a tap runs the page's own switchTab(). The page's bottom bar is hidden in the shell (contacts.html, `native-nav`), and
+ * Account), the bottom nav and the page background are the shared libs'; the sections are build.json::ui, #1671: Groups | Business |
+ * All | People | Configs. A tap on the first four runs the page's own switchTab(); Configs is the fleet strip ({General, Import,
+ * Channels} | Agents, Perms, Logcat, X-Ray App, About), its own tabs drawn by the page and the shared ones by libs:ui-nav-bars.
+ * The page's bottom bar is hidden in the shell (contacts.html, `native-nav`), and
  * its scroll is wired into the one chrome collapse ([ChromeWebView]).
  *
  * The whole UI lives in assets/contacts.html (HTML/Tailwind); ContactsBridge is the Kotlin-JS seam. The activity owns only
@@ -94,19 +104,26 @@ class MainActivity : AppCompatActivity() {
 
     @Composable
     private fun ContactsShell() {
-        var section by remember { mutableStateOf(NAV.default()?.id ?: "people") }
+        var section by remember { mutableStateOf(NAV.default()?.id ?: "all") }
+        var configsPage by remember { mutableStateOf<String?>(null) }
+        // #1671 a bottom-nav tap on a web section runs the page's own switchTab(); Configs is native (the fleet strip) and
+        // hands its two own tabs (Import, Channels) to the same WebView. The WebView stays composed under every page.
+        val showWeb: (String) -> Unit = { tab -> webView.evaluateJavascript("switchTab('$tab')", null) }
+        val goConfigs: (String?) -> Unit = { page ->
+            section = "configs"
+            configsPage = page
+            webTabOf(page)?.let(showWeb)
+        }
         val go: (String) -> Unit = { id ->
-            section = id
-            webView.evaluateJavascript("switchTab('$id')", null)
+            if (id == "configs") goConfigs(configsPage) else { section = id; showWeb(id) }
         }
         val current = NAV.section(section)
         NavBarTopFirstRowScaffold(
             title = current?.label ?: getString(R.string.app_name),
-            // The title island lists the three sections (each a single page), so a pick switches the page's tab.
             hierarchy = NAV.bottomSections().map { HierarchyEntry(it.id, it.label, 0, it.id, selected = it.id == section) },
             onNavigate = { e -> go(e.sectionId) },
             onAccount = rememberAccountLauncher(),
-            onConfigs = { go("about") },
+            onConfigs = { goConfigs(null) },
             onAi = rememberSuperAppAiLauncher(),
             modifier = Modifier.fillMaxSize().statusBarsPadding(),
         ) {
@@ -123,13 +140,49 @@ class MainActivity : AppCompatActivity() {
                 selectedId = section,
                 onSelect = { go(it.id) },
             ) {
-                ChromeWebView(webView)
+                Column(Modifier.fillMaxSize()) {
+                    val configs = if (section == "configs") NAV.section("configs") else null
+                    val page = configsLeaf(configs, configsPage)
+                    if (configs != null) {
+                        NavBarTopSecondRow(
+                            // Configs ends with the fleet-default tail: {General + own tabs} | Agents, Perms, Logcat, X-Ray App, About.
+                            pages = FleetConfigsExtensions.withTail(configs.pages),
+                            selectedId = page,
+                            onSelect = { p -> goConfigs(p.leaf().id) },
+                            underTopChrome = false,
+                            surface = NAV.stripSurface(configs.id, darkTheme = true),
+                        )
+                    }
+                    Box(Modifier.fillMaxSize()) {
+                        ChromeWebView(webView)
+                        // A shared Configs page (General, Perms, About, and the opt-in Agents / Logcat / X-Ray App) covers the WebView.
+                        if (configs != null && webTabOf(page) == null && isFleetConfigsPage(page)) {
+                            Box(Modifier.fillMaxSize().themeBackground(dark = true)) {
+                                FleetConfigsPageBody(page, onAppConfigs = { goConfigs("import") })
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
+    /** The Configs page to draw: the selected one when it is declared or an opt-in tail tab, else the first (General). */
+    private fun configsLeaf(configs: NavSection?, selected: String?): String {
+        if (configs == null) return ""
+        if (selected != null && (configs.path(selected).lastOrNull()?.id == selected || FleetConfigsExtensions.isOptInTail(selected))) return selected
+        return configs.pages.firstOrNull()?.leaf()?.id.orEmpty()
+    }
+
+    /** Configs' own tabs live in contacts.html: Import is its Import panel, Channels its channel-registry panel. */
+    private fun webTabOf(page: String?): String? = when (page) {
+        "import" -> "import"
+        "channels" -> "about"
+        else -> null
+    }
+
     companion object {
-        /** build.json::ui as baked into BuildConfig: the bottom nav's items (People, Import, About) and their sections. */
+        /** build.json::ui as baked into BuildConfig: the bottom nav Groups | Business | All | People | Configs (#1671) and its sections. */
         val NAV: NavDecl by lazy {
             NavDecl.fromBuildConfig(BuildConfig.UI_SECTIONS_B64, BuildConfig.UI_BOTTOM_NAV, BuildConfig.UI_DEFAULT_SECTION)
         }

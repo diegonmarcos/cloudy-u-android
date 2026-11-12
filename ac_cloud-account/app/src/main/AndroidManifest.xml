@@ -19,10 +19,6 @@
     <!-- Configs > Perms (battery_opt): the owner may leave Account unrestricted. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-    <!-- #1626 the contacts sections (Groups | Business | All | People) read the phone's address book through
-         ContactsContract; contacts_read is asked at runtime from Configs > Perms. Read-only; nothing leaves the device. -->
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
-
     <!-- Account ▸ Import sends each ID document it finds to Cloud Vault's add-identity entry point
          (autofill/VaultIdentityHandoff.kt), which opens the vault's new-Identity screen prefilled.
          A fleet signature permission: granted at install because both apps carry the constellation

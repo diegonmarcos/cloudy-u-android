@@ -256,8 +256,51 @@ if (window.Native) {
     <div class="app-container">
         <main id="app-main" class="app-main hide-scrollbar">
 
-            <!-- ============ PEOPLE TAB ============ -->
-            <section id="tab-people" class="tab-panel">
+            <!-- ============ GROUPS TAB (#1671) ============ -->
+            <section id="tab-groups" class="tab-panel hidden">
+                <header class="panel-header">
+                    <div class="flex items-center justify-between">
+                        <h1 class="text-xl font-bold">Groups</h1>
+                        <span class="text-[12.5px] font-semibold" style="color:var(--text-faint);" id="groups-count"></span>
+                    </div>
+                    <div class="chip-scroll hide-scrollbar" id="group-chips"></div>
+                </header>
+                <div class="px-5 panel-scroll-pad" id="groups-list"></div>
+            </section>
+
+            <!-- ============ BUSINESS TAB (#1671): companies / organizations only ============ -->
+            <section id="tab-business" class="tab-panel hidden">
+                <header class="panel-header">
+                    <div class="flex items-center justify-between">
+                        <h1 class="text-xl font-bold">Business</h1>
+                        <span class="text-[12.5px] font-semibold" style="color:var(--text-faint);" id="business-count"></span>
+                    </div>
+                    <div class="search-wrap">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                        <input type="text" id="business-search" class="search-input" placeholder="Search company, email, phone…">
+                    </div>
+                </header>
+                <div class="px-5 panel-scroll-pad" id="business-list"></div>
+            </section>
+
+            <!-- ============ PEOPLE TAB (#1671): people only, filtered by the app they came from ============ -->
+            <section id="tab-people" class="tab-panel hidden">
+                <header class="panel-header">
+                    <div class="flex items-center justify-between">
+                        <h1 class="text-xl font-bold">People</h1>
+                        <span class="text-[12.5px] font-semibold" style="color:var(--text-faint);" id="persons-count"></span>
+                    </div>
+                    <div class="search-wrap">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                        <input type="text" id="persons-search" class="search-input" placeholder="Search name, org, email, phone…">
+                    </div>
+                    <div class="chip-scroll hide-scrollbar" id="origin-chips"></div>
+                </header>
+                <div class="px-5 panel-scroll-pad" id="persons-list"></div>
+            </section>
+
+            <!-- ============ ALL TAB (the earlier People page: everyone, by source) ============ -->
+            <section id="tab-all" class="tab-panel">
                 <header class="panel-header">
                     <div class="flex items-center justify-between">
                         <h1 class="text-xl font-bold">Cloud Contacts</h1>
@@ -292,7 +335,19 @@ if (window.Native) {
         </main>
 
         <nav class="bottom-nav" id="bottom-nav">
-            <button class="nav-item active" data-tab="people">
+            <button class="nav-item" data-tab="groups">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                <span>Groups</span>
+            </button>
+            <button class="nav-item" data-tab="business">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                <span>Business</span>
+            </button>
+            <button class="nav-item active" data-tab="all">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <span>All</span>
+            </button>
+            <button class="nav-item" data-tab="people">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-4 3-6.5 6.5-6.5s6.5 2.5 6.5 6.5"/><circle cx="17.5" cy="9" r="2.8"/><path d="M15.7 13.2c2.6.3 4.8 2.4 4.8 6.3"/></svg>
                 <span>People</span>
             </button>
@@ -411,7 +466,9 @@ var Api = {
     pickImport: function () { if (hasBridge()) window.Native.pickImport(); else MOCK.pickImport(); },
     removeSource: function (source) { return callBridge('removeSource', [source]) || MOCK.removeSource(source); },
     open: function (uri, pkg) { return hasBridge() ? window.Native.open(uri, pkg || '') : MOCK.open(uri, pkg); },
-    getAbout: function () { return callBridge('getAbout') || MOCK.getAbout(); }
+    getAbout: function () { return callBridge('getAbout') || MOCK.getAbout(); },
+    getGroups: function () { return callBridge('getGroups') || MOCK.getGroups(); },
+    setGroup: function (id, group, on) { return callBridge('setGroup', [id, group, !!on]) || MOCK.setGroup(id, group, on); }
 };
 
 /* =====================================================================
@@ -449,11 +506,24 @@ var MOCK_PEOPLE = [
         id: 'p3', name: 'Priya Natarajan', org: '', title: '',
         sources: ['instagram', 'local'], phones: ['+1 555 0199'], emails: [], urls: ['https://instagram.com/priyan'],
         handles: { telegram: 'priyan' }, badges: ['whatsapp', 'sms', 'phone', 'telegram', 'instagram']
+    },
+    {
+        id: 'b1', name: 'Kepler Systems', org: 'Kepler Systems', title: '', business: true,
+        sources: ['gmail:ana@example.com'], phones: ['+1 555 0150'], emails: ['hello@kepler.example'], urls: [],
+        handles: {}, badges: ['email', 'phone']
     }
 ];
+/* #1671 the mock's facets (the real ones are ContactFacets.kt, sent by the bridge): origin labels per source key. */
+function mockOrigins(sources) {
+    var map = { local: ['Phone', 'Phone'], linkedin: ['LinkedIn', 'Social Media'], instagram: ['Instagram', 'Social Media'] };
+    var out = [];
+    (sources || []).forEach(function (k) { var o = /^gmail/.test(k) ? ['Gmail', 'Mail'] : (map[k] || ['Other', 'Other']); if (out.indexOf(o) === -1) out.push(o); });
+    return out;
+}
 var MOCK = (function () {
     var sourcesState = 'off'; // 'off' | 'on' — permission toggled by requestContacts() in mock
     var socialSources = { linkedin: 1, instagram: 1 };
+    var mockGroups = { p1: ['Job'], p3: ['Friends'] };
     function state() {
         var sources = {};
         if (sourcesState === 'on') sources['local'] = 2;
@@ -473,7 +543,10 @@ var MOCK = (function () {
         getState: state,
         getPeople: function () {
             return MOCK_PEOPLE.map(function (p) {
-                return { id: p.id, name: p.name, initials: initials(p.name), org: p.org, title: p.title, sources: p.sources, badges: p.badges };
+                var o = mockOrigins(p.sources);
+                return { id: p.id, name: p.name, initials: initials(p.name), org: p.org, title: p.title, sources: p.sources, badges: p.badges,
+                    business: !!p.business, origins: o.map(function (x) { return x[0]; }), categories: o.map(function (x) { return x[1]; }).filter(function (v, i, a) { return a.indexOf(v) === i; }),
+                    groups: (mockGroups[p.id] || []).slice() };
             });
         },
         getPerson: function (id) {
@@ -491,7 +564,9 @@ var MOCK = (function () {
             });
             return {
                 id: p.id, name: p.name, initials: initials(p.name), org: p.org, title: p.title, sources: p.sources,
-                phones: p.phones, emails: p.emails, urls: p.urls, handles: p.handles, channels: channels
+                phones: p.phones, emails: p.emails, urls: p.urls, handles: p.handles, channels: channels,
+                business: !!p.business, groups: (mockGroups[p.id] || []).slice(),
+                allGroups: this.getGroups().map(function (g) { return g.name; })
             };
         },
         requestContacts: function () {
@@ -502,6 +577,19 @@ var MOCK = (function () {
             window.setTimeout(function () { window.onNative && window.onNative('import', { source: 'linkedin', count: 12 }); }, 250);
         },
         removeSource: function (source) { delete socialSources[source]; return state(); },
+        getGroups: function () {
+            var names = ['Friends', 'Family', 'Job', 'Favorites'];
+            Object.keys(mockGroups).forEach(function (id) { mockGroups[id].forEach(function (g) { if (names.indexOf(g) === -1) names.push(g); }); });
+            return names.map(function (g) {
+                return { name: g, 'default': names.indexOf(g) < 4, count: Object.keys(mockGroups).filter(function (id) { return mockGroups[id].indexOf(g) !== -1; }).length };
+            });
+        },
+        setGroup: function (id, group, on) {
+            var gs = (mockGroups[id] || []).filter(function (g) { return g !== group; });
+            if (on) gs.push(group);
+            mockGroups[id] = gs;
+            return this.getGroups();
+        },
         open: function (uri, pkg) { toast('(mock) open ' + uri); return true; },
         getAbout: function () {
             return {
@@ -518,7 +606,13 @@ var MOCK = (function () {
    State
    ===================================================================== */
 var State = {
-    tab: 'people',
+    tab: 'all',
+    groups: [],            // getGroups() result (#1671)
+    openGroup: null,       // the group whose members are listed
+    businessQuery: '',
+    personsQuery: '',
+    originFilter: 'all',   // 'all' | 'cat:<category label>' | 'org:<origin label>'
+    person: null,          // the switchboard's person (for its group toggles)
     bridgeState: null,     // getState() result
     people: [],            // getPeople() result
     query: '',
@@ -567,6 +661,9 @@ function switchTab(tab) {
     document.querySelectorAll('.nav-item').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
     if (tab === 'import') renderImport();
     if (tab === 'about') renderAbout();
+    if (tab === 'groups') renderGroups();
+    if (tab === 'business') renderBusiness();
+    if (tab === 'people') renderPersons();
 }
 
 function initNav() {
@@ -587,7 +684,11 @@ function refreshState() {
 
 function refreshPeople() {
     State.people = Api.getPeople();
+    State.groups = Api.getGroups() || [];
     renderPeopleList();
+    renderGroups();
+    renderBusiness();
+    renderPersons();
 }
 
 function renderPeopleCount() {
@@ -662,6 +763,135 @@ function renderPeopleList() {
     }).join('');
 }
 
+/* =====================================================================
+   #1671 Groups | Business | People (the All page above is the earlier People page, unchanged)
+   ===================================================================== */
+function personRowHtml(p) {
+    var sub = [p.org, p.title].filter(Boolean).join(' · ');
+    var tags = (p.groups || []).map(function (g) { return '<span class="provenance-chip">' + esc(g) + '</span>'; }).join('');
+    return '<button type="button" class="person-row" data-person-id="' + esc(p.id) + '">' +
+        '<span class="avatar-disc" style="' + avatarStyle(p.name) + '">' + esc(p.initials) + '</span>' +
+        '<span class="person-row-main">' +
+            '<span class="person-row-name">' + esc(p.name || p.org) + '</span>' +
+            (sub ? '<span class="person-row-sub">' + esc(sub) + '</span>' : '') +
+            '<span class="channel-dots">' + channelDotsHtml(p.badges || []) + tags + '</span>' +
+        '</span>' +
+        '<svg class="row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>' +
+    '</button>';
+}
+
+function listOrEmpty(mount, list, emptyTitle, emptyText) {
+    if (!mount) return;
+    mount.innerHTML = list.length ? list.map(personRowHtml).join('')
+        : '<div class="empty-state"><strong>' + esc(emptyTitle) + '</strong>' + esc(emptyText) + '</div>';
+}
+
+function matchesText(p, q) {
+    q = (q || '').trim().toLowerCase();
+    if (!q) return true;
+    return [p.name, p.org, p.title].concat(p.sources || []).concat(p.origins || []).join(' ').toLowerCase().indexOf(q) !== -1;
+}
+
+function noContactsHint() {
+    return State.people.length === 0 ? 'Grant Contacts in Configs > Perms, or import LinkedIn / Instagram in Configs > Import.' : 'Try a different search or filter.';
+}
+
+function renderBusiness() {
+    var all = State.people.filter(function (p) { return p.business; });
+    var list = all.filter(function (p) { return matchesText(p, State.businessQuery); });
+    var c = document.getElementById('business-count');
+    if (c) c.textContent = all.length + (all.length === 1 ? ' company' : ' companies');
+    listOrEmpty(document.getElementById('business-list'), list, all.length ? 'No matches' : 'No business contacts', all.length ? 'Try a different search.' : noContactsHint());
+}
+
+/* People: non-business only; chips = All, then each category present (Social Media, Mail, Phone, Other), then each app. */
+function renderPersons() {
+    var persons = State.people.filter(function (p) { return !p.business; });
+    var cats = [], origins = [];
+    persons.forEach(function (p) {
+        (p.categories || []).forEach(function (c) { if (cats.indexOf(c) === -1) cats.push(c); });
+        (p.origins || []).forEach(function (o) { if (origins.indexOf(o) === -1) origins.push(o); });
+    });
+    var order = ['Social Media', 'Mail', 'Phone', 'Other'];
+    cats.sort(function (a, b) { return order.indexOf(a) - order.indexOf(b); });
+    origins.sort();
+    var f = State.originFilter;
+    if (f !== 'all' && cats.indexOf(f.slice(4)) === -1 && origins.indexOf(f.slice(4)) === -1) f = State.originFilter = 'all';
+    var count = function (pred) { return persons.filter(pred).length; };
+    var chip = function (key, label, n) {
+        return '<button type="button" class="chip' + (f === key ? ' active' : '') + '" data-origin="' + esc(key) + '">' + esc(label) + ' <span class="count">' + n + '</span></button>';
+    };
+    var html = chip('all', 'All', persons.length);
+    cats.forEach(function (c) { html += chip('cat:' + c, c, count(function (p) { return (p.categories || []).indexOf(c) !== -1; })); });
+    origins.forEach(function (o) { html += chip('org:' + o, o, count(function (p) { return (p.origins || []).indexOf(o) !== -1; })); });
+    var chips = document.getElementById('origin-chips');
+    if (chips) chips.innerHTML = html;
+    var list = persons.filter(function (p) {
+        if (f.indexOf('cat:') === 0 && (p.categories || []).indexOf(f.slice(4)) === -1) return false;
+        if (f.indexOf('org:') === 0 && (p.origins || []).indexOf(f.slice(4)) === -1) return false;
+        return matchesText(p, State.personsQuery);
+    });
+    var c = document.getElementById('persons-count');
+    if (c) c.textContent = persons.length + (persons.length === 1 ? ' person' : ' people');
+    listOrEmpty(document.getElementById('persons-list'), list, persons.length ? 'No matches' : 'No people yet', noContactsHint());
+}
+
+/* Groups: the default groups (Friends, Family, Job, Favorites) always shown; a group opens its members. */
+function renderGroups() {
+    var groups = State.groups || [];
+    var c = document.getElementById('groups-count');
+    if (c) c.textContent = groups.length + ' groups';
+    if (State.openGroup && !groups.some(function (g) { return g.name === State.openGroup; })) State.openGroup = null;
+    var chips = document.getElementById('group-chips');
+    if (chips) chips.innerHTML = groups.map(function (g) {
+        return '<button type="button" class="chip' + (State.openGroup === g.name ? ' active' : '') + '" data-group-name="' + esc(g.name) + '">' + esc(g.name) + ' <span class="count">' + g.count + '</span></button>';
+    }).join('');
+    var mount = document.getElementById('groups-list');
+    if (!mount) return;
+    if (!State.openGroup) {
+        mount.innerHTML = groups.map(function (g) {
+            return '<button type="button" class="source-row" style="width:100%;text-align:left;" data-group-name="' + esc(g.name) + '">' +
+                '<div><div class="source-row-label">' + esc(g.name) + '</div><div class="source-row-meta">' + g.count + (g.count === 1 ? ' member' : ' members') + (g['default'] ? ' · default group' : '') + '</div></div>' +
+                '<svg class="row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>';
+        }).join('') + '<p class="text-[11.5px] mt-4" style="color:var(--text-faint);">Open a contact and tap a group to add or remove it.</p>';
+        return;
+    }
+    var members = State.people.filter(function (p) { return (p.groups || []).indexOf(State.openGroup) !== -1; });
+    listOrEmpty(mount, members, 'Nobody in ' + State.openGroup + ' yet', 'Open a contact and tap ' + State.openGroup + ' to add it.');
+}
+
+function initFacetViews() {
+    var on = function (id, ev, fn) { var el = document.getElementById(id); if (el) el.addEventListener(ev, fn); };
+    on('business-search', 'input', function (ev) { State.businessQuery = ev.target.value; renderBusiness(); });
+    on('persons-search', 'input', function (ev) { State.personsQuery = ev.target.value; renderPersons(); });
+    on('origin-chips', 'click', function (ev) {
+        var b = ev.target.closest('.chip'); if (!b) return;
+        State.originFilter = b.dataset.origin; renderPersons();
+    });
+    var openGroup = function (ev) {
+        var b = ev.target.closest('[data-group-name]'); if (!b) return false;
+        State.openGroup = State.openGroup === b.dataset.groupName && b.classList.contains('chip') ? null : b.dataset.groupName;
+        renderGroups(); return true;
+    };
+    on('group-chips', 'click', openGroup);
+    ['groups-list', 'business-list', 'persons-list'].forEach(function (id) {
+        on(id, 'click', function (ev) {
+            if (id === 'groups-list' && openGroup(ev)) return;
+            var row = ev.target.closest('.person-row');
+            if (row) openSwitchboard(row.dataset.personId);
+        });
+    });
+}
+
+function groupTogglesHtml(p) {
+    var all = p.allGroups || (State.groups || []).map(function (g) { return g.name; });
+    if (!all.length) return '';
+    return '<div class="sb-section-heading">Groups</div><div class="chip-scroll hide-scrollbar" style="flex-wrap:wrap;">' + all.map(function (g) {
+        var on = (p.groups || []).indexOf(g) !== -1;
+        return '<button type="button" class="chip' + (on ? ' active' : '') + '" data-toggle-group="' + esc(g) + '">' + esc(g) + '</button>';
+    }).join('') + '</div>';
+}
+
 function initPeopleView() {
     document.getElementById('search-input').addEventListener('input', function (ev) {
         State.query = ev.target.value;
@@ -687,6 +917,7 @@ function openSwitchboard(id) {
     var person = Api.getPerson(id);
     if (!person || person.error) { toast('Contact not found'); return; }
     State.openPersonId = id;
+    State.person = person;
     renderSwitchboard(person);
     document.getElementById('switchboard-overlay').classList.add('open');
 }
@@ -748,6 +979,7 @@ function renderSwitchboard(p) {
             (sub ? '<div class="sb-hero-sub">' + esc(sub) + '</div>' : '') +
             '<div class="provenance-row">' + provenanceChipsHtml(p.sources) + '</div>' +
         '</div>' +
+        groupTogglesHtml(p) +
         '<div class="sb-section-heading">Switchboard</div>' +
         channelsHtml +
         (rawHtml ? '<div class="sb-section-heading">Raw data</div><div class="raw-list">' + rawHtml + '</div>' : '');
@@ -760,6 +992,15 @@ function initSwitchboard() {
         if (actionBtn) { Api.open(actionBtn.dataset.uri, actionBtn.dataset.pkg); return; }
         var rawRow = ev.target.closest('.raw-row');
         if (rawRow) { copyToClipboard(rawRow.dataset.copy); return; }
+        var tg = ev.target.closest('[data-toggle-group]');
+        if (tg && State.person) {
+            var g = tg.dataset.toggleGroup, on = (State.person.groups || []).indexOf(g) === -1;
+            State.groups = Api.setGroup(State.person.id, g, on) || State.groups;
+            State.person.groups = on ? (State.person.groups || []).concat([g]) : (State.person.groups || []).filter(function (x) { return x !== g; });
+            renderSwitchboard(State.person);
+            refreshPeople();
+            toast((on ? 'Added to ' : 'Removed from ') + g);
+        }
     });
 }
 
@@ -887,6 +1128,7 @@ window.onNative = function (type, payload) {
 document.addEventListener('DOMContentLoaded', function () {
     initNav();
     initPeopleView();
+    initFacetViews();
     initSwitchboard();
     refreshState();
     refreshPeople();

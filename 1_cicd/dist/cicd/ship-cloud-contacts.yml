@@ -107,7 +107,7 @@ jobs:
         run: |
           sh 1_cicd/dist/scripts/cloud-android-test-engine.sh shell "$WORK_DIR"
           sh 1_cicd/dist/scripts/cloud-android-test-engine.sh lint  "$WORK_DIR"
-          sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit  "$WORK_DIR"
+          # unit runs below, after the JDK/SDK and the vault key: this project cannot configure without them (#1671).
 
       # Publish-if-changed gate. Android builds are not byte-reproducible, so a
       # rebuild of unchanged source published different bytes, a different
@@ -184,6 +184,17 @@ jobs:
           else
             echo "variant=debug" >> "$GITHUB_OUTPUT"
           fi
+
+      # #1671 the JVM suite (build.json::tests.unit: ContactFacetsTest), after the JDK/SDK and the vault key, because
+      # gradle cannot CONFIGURE this project without the shared signing key; fatal on failure.
+      - name: JVM unit tests (fatal on failure)
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
 
       - name: Build APK (engine)
         if: steps.gate.outputs.skip != 'true'

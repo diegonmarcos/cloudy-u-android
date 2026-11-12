@@ -57,8 +57,7 @@
    "needs": [
     "notifications",
     "install_unknown",
-    "battery_opt",
-    "contacts_read"
+    "battery_opt"
    ],
    "helpers": []
   },

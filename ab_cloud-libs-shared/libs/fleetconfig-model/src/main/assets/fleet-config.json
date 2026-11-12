@@ -2520,9 +2520,9 @@
     "contacts_groups": {
       "kind": "prefs",
       "class": "device",
-      "doc": "#1626 Cloud Account's Contacts pages: which groups (Friends, Family, Job, Favorites) each contact of the phone's address book is assigned to, keyed by the DEVICE contact id (the address book itself is read only). A new phone numbers its contacts differently, so the assignments would land on other people: per-device, never migrates.",
+      "doc": "#1671 (was #1626 in Cloud Account) Cloud Contacts' Groups section: which groups (Friends, Family, Job, Favorites or the owner's own) each merged person is in, keyed by the merged person id (ContactsBridge, ContactFacets.encode). The id is derived from the phone's and the imports' email / phone / name keys, so another phone's address book can merge differently: per-device, never migrates.",
       "used_by": [
-        "ac_cloud-account"
+        "ac_cloud-contacts"
       ]
     },
     "wd_keeper": {

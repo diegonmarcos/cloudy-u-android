@@ -30,7 +30,6 @@ import com.diegonmarcos.superapp.accountui.AccountUiHost
 import com.diegonmarcos.superapp.accountui.AccountUiPage
 import com.diegonmarcos.superapp.fleetdata.FleetDataRouting
 import com.diegonmarcos.superapp.fleetdata.ui.FleetDataPage
-import com.diegonmarcos.cloudaccount.contacts.ContactsSection
 import com.diegonmarcos.cloudaccount.hub.AppProfilesPage
 import com.diegonmarcos.cloudaccount.hub.ConnectionsPage
 import com.diegonmarcos.cloudaccount.hub.HubNav
@@ -265,12 +264,6 @@ class MainActivity : AppCompatActivity() {
                 "fleetdata" -> FleetDataPage(FleetDataRouting.ACCOUNT, Modifier.fillMaxSize())
                 else -> ActivityPage()
             }
-            // #1625 / #1626 the contacts sections, backed by the device address book (ContactsContract behind the
-            // READ_CONTACTS / contacts_read grant); ContactsSection gates the permission and persists group assignment.
-            "all" -> ContactsSection(section, go)
-            "business" -> ContactsSection(section, go)
-            "people" -> ContactsSection(section, go)
-            "groups" -> ContactsSection(section, go)
             "configs" -> Unit   // the app's own Configs: drawn above by FleetConfigsPageBody (General | Perms | About)
             else -> AccountPlaceholderPage(section, page, "no task: undeclared section")
         }

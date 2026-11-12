@@ -13,16 +13,12 @@ package com.diegonmarcos.cloudaccount.hub
  * page lives now, so no link, OPEN intent or bookmark breaks and no lib file changes.
  */
 object HubNav {
-    /** #1625 The bottom nav, left to right: the contacts sections plus the app's own Configs. */
-    val ORDER = listOf("groups", "business", "all", "people", "configs")
-    const val DEFAULT = "all"
+    /** The bottom nav, left to right, as the owner asked for it. */
+    val ORDER = listOf("vault", "config", "connect", "devices", "activity")
+    const val DEFAULT = "vault"
 
-    /**
-     * Every section id a link may name: the contacts bottom nav plus the identity/vault sections, which stay declared
-     * and reachable by deep link (#1625 moved them off the bottom bar, not out of the app). resolve() passes any of
-     * these through unchanged; LEGACY still maps the old island ids onto them.
-     */
-    val KNOWN = ORDER + listOf("vault", "config", "connect", "devices", "activity")
+    /** Every section id a link may name: the bottom nav plus the app's own Configs menu. */
+    val KNOWN = ORDER + "configs"
 
     /** Old (section, page) -> new (section, page). "" = the section's first page. */
     val LEGACY: Map<Pair<String, String>, Pair<String, String>> = mapOf(
