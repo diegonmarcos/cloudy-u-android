@@ -2613,6 +2613,14 @@
         "aa_cloud-superapp"
       ]
     },
+    "notify_badge_collapse": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "Cloud SuperApp Notify page's per-badge collapsed / expanded choice (BadgeCollapse, key = badge id, #1672). A user-facing display preference, so it migrates with the app's settings.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
     "weather_place_cache": {
       "kind": "prefs",
       "class": "device",

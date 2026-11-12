@@ -15,7 +15,7 @@ DataStore / Room stores and declared files it cannot move yet.
 
 | app | package | covered | gaps | coverage |
 |---|---|---:|---:|---:|
-| cloud-superapp | `com.diegonmarcos.superapp` | 58 | 0 | 100% |
+| cloud-superapp | `com.diegonmarcos.superapp` | 59 | 0 | 100% |
 | c3-morpheus | `com.diegonmarcos.morpheus` | 5 | 0 | 100% |
 | c3-watchdog | `com.diegonmarcos.watchdog` | 5 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
@@ -57,7 +57,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **437** | **57** | **88%** |
+| **fleet** | | **438** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -132,6 +132,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `netusage` | prefs | device | no | #1525 Network table: the periodic rx/tx counter snapshots behind the 24 h and today data-used rows; per-install counters of this boot history, never migrates. |
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `notify_app_switches` | prefs | config | yes | Cloud SuperApp Notification Center's per-app notification choices: push allowed (key push.<pkg>) and keep-alive (key keep.<pkg>) for each app the user toggled. A user-facing notification policy, so it migrates with the app's settings. |
+| `notify_badge_collapse` | prefs | config | yes | Cloud SuperApp Notify page's per-badge collapsed / expanded choice (BadgeCollapse, key = badge id, #1672). A user-facing display preference, so it migrates with the app's settings. |
 | `notify_groups` | prefs | config | yes | Per-notification-group enabled flags and group order. |
 | `onehand_prefs` | prefs | config (keys: debug_visible→device, spurious_nones_pruned_v1→device) | yes | One-hand launcher enable, trigger and per-handle slot assignments. |
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
@@ -186,7 +187,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `BuildConfig UI_* constants (UI_LAUNCHER_SETTINGS_B64, UI_PROFILE_*, UI_WG_*)` | config | Defaults baked into the APK from build.json; not device state but the fallback for unset prefs. |
 | `filesDir/<KEYSTORE_FILE>` | device | This device's KDE Connect TLS identity keystore; never migrate, re-pair |
 
-Coverage: 58 covered, 0 gaps.
+Coverage: 59 covered, 0 gaps.
 
 ## c3-morpheus — `com.diegonmarcos.morpheus`
 

@@ -1908,7 +1908,6 @@
           {
             "kind": "tile_row",
             "title": "Filter presets",
-            "subtitle": "The notification centre pre-narrowed to one app section",
             "tiles": [
               {
                 "id": "rss-inboxes",
