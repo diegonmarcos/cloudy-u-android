@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 
 /**
  * #1682 P2b the INACTIVE stand-in of the ADB owner side, compiled into the shipped build while
- * ab_cloud-libs-shared/libs/shell-client/adb-owner.json names another app (today the SuperApp). It links no ADB lib, starts
+ * 1_cicd/src/data/adb-owner.json names another app (today the SuperApp). It links no ADB lib, starts
  * nothing and draws nothing: the ADB Shell tab keeps opening the owner's page. src/owner holds the real one (CI verify builds it).
  */
 object AdbOwnerSide {

@@ -11,7 +11,7 @@
 #   B4  the broker and the client have no sticky service, no boot receiver, no foreground service, no alarm or WorkManager loop
 #   B5  the allowlist is default-deny: no caller has a catch-all rule, and the broker lib declares no unguarded component
 #   B6  libs:shell-client links nothing (no libs:core, no shizuku lib): linking it adds no fan-out edge
-#   B9  #1682 ONE ADB owner: the owner is the app named by ab_cloud-libs-shared/libs/shell-client/adb-owner.json::adb_owner (B1/B2 read it,
+#   B9  #1682 ONE ADB owner: the owner is the app named by 1_cicd/src/data/adb-owner.json::adb_owner (B1/B2 read it,
 #       not a hard-coded SuperApp); exactly that app compiles libs:shizuku-adb-debug-tools and libs:shell-broker (the exported provider), its
 #       application id is the declared `package`, and libs:shell-client's ShellWire.BROKER_PKG and <queries> name that same package
 #   B10 #1682 the declared mesh relay caller (ac_cloud-c3-webserver/data/mesh-shell-relay.json::caller) is the allowlist alias of the
@@ -28,7 +28,7 @@ import json, os, re, sys
 R = sys.argv[1]; fails = 0
 LIB = "ab_cloud-libs-shared/libs/"
 SA = "aa_cloud-superapp"
-OWNER_DECL = json.load(open(os.path.join(R, "ab_cloud-libs-shared/libs/shell-client/adb-owner.json")))
+OWNER_DECL = json.load(open(os.path.join(R, "1_cicd/src/data/adb-owner.json")))
 OWNER = OWNER_DECL["adb_owner"]; OWNER_PKG = OWNER_DECL["package"]
 BROKER = "libs:shell-broker"
 def ok(c, good, bad):

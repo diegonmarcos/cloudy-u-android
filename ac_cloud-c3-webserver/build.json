@@ -810,11 +810,11 @@
     "_doc_gradle_module": "The native app's module (its Tauri-era path, kept because other apps read its AndroidManifest.xml there); aa_cloud-superapp/test/test-app-names-pattern.sh T6 reads it to check the launcher label is build.json::name."
   },
   "adb_owner_modules": {
-    "_doc": "#1682 P2b the ADB owner side's libs, included by src-tauri/gen/android/settings.gradle ONLY when ab_cloud-libs-shared/libs/shell-client/adb-owner.json names this app (or the non-shipped CI verify sets C3_ADB_OWNER_VERIFY=1). Not in `modules`: the shipped build links none of them while the SuperApp owns ADB (test-shell-broker-guards.sh B1/B11).",
-    "libs:shizuku-adb-debug-tools": { "dir": "../ab_cloud-libs-shared/libs/shizuku-adb-debug-tools" },
-    "libs:shell-broker": { "dir": "../ab_cloud-libs-shared/libs/shell-broker" },
-    "libs:shell-client": { "dir": "../ab_cloud-libs-shared/libs/shell-client" },
-    "libs:adb-shell-core": { "dir": "../ab_cloud-libs-shared/libs/adb-shell-core" }
+    "_doc": "#1682 P2b the ADB owner side's libs, included by src-tauri/gen/android/settings.gradle (dir = the shared libs root + the lib name; no literal path, so the shipped build's lib closure does not count them) ONLY when 1_cicd/src/data/adb-owner.json names this app (or the non-shipped CI verify sets C3_ADB_OWNER_VERIFY=1). Not in `modules`: the shipped build links none of them while the SuperApp owns ADB (test-shell-broker-guards.sh B1/B11).",
+    "libs:shizuku-adb-debug-tools": { "shared_lib": true },
+    "libs:shell-broker": { "shared_lib": true },
+    "libs:shell-client": { "shared_lib": true },
+    "libs:adb-shell-core": { "shared_lib": true }
   },
   "modules": {
     "_doc": "Shared modules the gradle project (native.android_project) includes BY REFERENCE beside :app. Its settings.gradle iterates this map and, like every other reader of it (the ship workflow's trigger derivation, the publish gate, ab_cloud-libs-shared/libs/shared-modules.test.sh), resolves each dir against THIS directory, not against the gradle root three levels down. They are compiled Kotlin libraries, not source in this app's tree, so test/test-c3-webserver-native.sh (K2) does not see them. libs:devtools finds this file by walking up from the gradle root (src-tauri/gen/android), as libs:analytics does, so there is one declaration and no copy.",

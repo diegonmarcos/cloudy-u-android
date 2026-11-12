@@ -20,7 +20,14 @@ plugins {
 // superapp-owned content that a wrapper repo has no reason to redeclare, so when
 // the consumer does not define it we fall back to this module's home repo (same
 // pattern as libs/voice).
-def adbBuildJson = new groovy.json.JsonSlurper().parse(file("${rootDir}/build.json"))
+// #1682 the consumer's build.json is rootDir's, or the nearest one above it (the webserver's gradle root is src-tauri/gen/android,
+// three levels under its build.json). Same file for every app whose rootDir holds it.
+def consumerBuildJson = { ->
+    def d = rootDir
+    while (d != null && !new File(d, 'build.json').exists()) d = d.parentFile
+    d != null ? new File(d, 'build.json') : file("${rootDir}/build.json")
+}()
+def adbBuildJson = new groovy.json.JsonSlurper().parse(consumerBuildJson)
 def adbOwnServer = adbBuildJson.shizuku_diagnostics?.local_server != null
 if (adbBuildJson.shizuku_diagnostics == null) adbBuildJson = new groovy.json.JsonSlurper().parse(file('../../build.json'))
 def adbDiag       = adbBuildJson.shizuku_diagnostics ?: [:]
@@ -65,7 +72,7 @@ def sfcCfgB64 = groovy.json.JsonOutput.toJson(sfcCfg).bytes.encodeBase64().toStr
 // it can no longer be trusted to be the CONSUMER's file. Re-parse the
 // consumer's build.json (rootDir is the consuming app) for this block;
 // shizuku_client is a terminal-owned block the SuperApp never redeclares.
-def shizukuClientJson = new groovy.json.JsonSlurper().parse(file("${rootDir}/build.json"))
+def shizukuClientJson = new groovy.json.JsonSlurper().parse(consumerBuildJson)
 def shizukuClient    = shizukuClientJson.shizuku_client ?: [:]
 // The HOST app's own identity (name + application_id): AdbIdentity derives the pairing label, key subject and the
 // state scope from these, so nothing about the adb identity is typed in Kotlin. rootDir is the CONSUMING app.
@@ -82,8 +89,8 @@ def shizukuClientB64 = groovy.json.JsonOutput.toJson(shizukuClient).bytes.encode
 // build.json first; privileged-channel.json beside it when build.json has no such block (Nix-on-Droid: its
 // build.json is an input of the rootfs library's content address, so editing it would republish ~400 MB).
 def privilegedChannel    = shizukuClientJson.privileged_channel
-if (privilegedChannel == null && file("${rootDir}/privileged-channel.json").exists())
-    privilegedChannel = new groovy.json.JsonSlurper().parse(file("${rootDir}/privileged-channel.json"))
+if (privilegedChannel == null && new File(consumerBuildJson.parentFile, "privileged-channel.json").exists())
+    privilegedChannel = new groovy.json.JsonSlurper().parse(new File(consumerBuildJson.parentFile, "privileged-channel.json"))
 privilegedChannel = privilegedChannel ?: [:]
 def privilegedChannelB64 = groovy.json.JsonOutput.toJson(privilegedChannel).bytes.encodeBase64().toString()
 
