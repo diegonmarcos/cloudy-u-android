@@ -1088,6 +1088,12 @@
     <string name="message_address_copied">Adres gekopieerd</string>
     <string name="message_tag_mailbox">Postvak</string>
     <string name="message_tag_keyword">Trefwoord</string>
+    <string name="message_details_title">Berichtdetails</string>
+    <string name="message_tags_project">Projecttags</string>
+    <string name="message_tags_meta">Metatags</string>
+    <string name="message_tags_see_more">Meer tonen</string>
+    <string name="message_details_copy_all">Alles kopiëren</string>
+    <string name="message_details_copied">Details gekopieerd</string>
     <string name="message_labels">Labels en postvakken</string>
     <string name="message_labels_explainer">Een bericht kan in meerdere postvakken tegelijk zitten. Er een toevoegen haalt het niet uit de andere.</string>
     <string name="message_labels_in">Dit bericht zit in</string>

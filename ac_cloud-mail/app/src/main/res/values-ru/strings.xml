@@ -1108,6 +1108,12 @@
     <string name="message_address_copied">Адрес скопирован</string>
     <string name="message_tag_mailbox">Папка</string>
     <string name="message_tag_keyword">Метка</string>
+    <string name="message_details_title">Сведения о сообщении</string>
+    <string name="message_tags_project">Метки проектов</string>
+    <string name="message_tags_meta">Мета-метки</string>
+    <string name="message_tags_see_more">Показать ещё</string>
+    <string name="message_details_copy_all">Копировать всё</string>
+    <string name="message_details_copied">Сведения скопированы</string>
     <string name="message_labels">Метки и папки</string>
     <string name="message_labels_explainer">Письмо может находиться сразу в нескольких папках. Добавление одной не удаляет его из остальных.</string>
     <string name="message_labels_in">Это письмо находится в</string>

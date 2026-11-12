@@ -1091,6 +1091,12 @@
     <string name="message_address_copied">Indirizzo copiato</string>
     <string name="message_tag_mailbox">Casella</string>
     <string name="message_tag_keyword">Parola chiave</string>
+    <string name="message_details_title">Dettagli del messaggio</string>
+    <string name="message_tags_project">Tag di progetto</string>
+    <string name="message_tags_meta">Tag meta</string>
+    <string name="message_tags_see_more">Mostra altro</string>
+    <string name="message_details_copy_all">Copia tutto</string>
+    <string name="message_details_copied">Dettagli copiati</string>
     <string name="message_labels">Etichette e caselle</string>
     <string name="message_labels_explainer">Un messaggio può trovarsi in più caselle contemporaneamente. Aggiungerne una non lo toglie dalle altre.</string>
     <string name="message_labels_in">Questo messaggio si trova in</string>

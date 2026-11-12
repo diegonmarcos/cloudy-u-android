@@ -1097,6 +1097,12 @@
     <string name="message_address_copied">Adresse copiée</string>
     <string name="message_tag_mailbox">Boîte</string>
     <string name="message_tag_keyword">Mot-clé</string>
+    <string name="message_details_title">Détails du message</string>
+    <string name="message_tags_project">Étiquettes de projet</string>
+    <string name="message_tags_meta">Étiquettes méta</string>
+    <string name="message_tags_see_more">Voir plus</string>
+    <string name="message_details_copy_all">Tout copier</string>
+    <string name="message_details_copied">Détails copiés</string>
     <string name="message_labels">Étiquettes et boîtes</string>
     <string name="message_labels_explainer">Un message peut se trouver dans plusieurs boîtes à la fois. En ajouter une ne le retire pas des autres.</string>
     <string name="message_labels_in">Ce message se trouve dans</string>

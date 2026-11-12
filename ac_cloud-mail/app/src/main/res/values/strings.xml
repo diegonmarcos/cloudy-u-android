@@ -440,6 +440,12 @@
     <string name="message_address_copied">Address copied</string>
     <string name="message_tag_mailbox">Mailbox</string>
     <string name="message_tag_keyword">Keyword</string>
+    <string name="message_details_title">Message details</string>
+    <string name="message_tags_project">Project tags</string>
+    <string name="message_tags_meta">Meta tags</string>
+    <string name="message_tags_see_more">See more</string>
+    <string name="message_details_copy_all">Copy all</string>
+    <string name="message_details_copied">Details copied</string>
     <string name="message_labels">Tags and mailboxes</string>
     <string name="message_labels_explainer">A message can be in several mailboxes at once. Adding one does not take it out of the others.</string>
     <string name="message_labels_in">This message is in</string>

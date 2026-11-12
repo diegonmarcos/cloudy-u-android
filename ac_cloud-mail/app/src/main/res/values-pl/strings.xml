@@ -1105,6 +1105,12 @@
     <string name="message_address_copied">Skopiowano adres</string>
     <string name="message_tag_mailbox">Skrzynka</string>
     <string name="message_tag_keyword">Słowo kluczowe</string>
+    <string name="message_details_title">Szczegóły wiadomości</string>
+    <string name="message_tags_project">Tagi projektów</string>
+    <string name="message_tags_meta">Tagi meta</string>
+    <string name="message_tags_see_more">Pokaż więcej</string>
+    <string name="message_details_copy_all">Kopiuj wszystko</string>
+    <string name="message_details_copied">Skopiowano szczegóły</string>
     <string name="message_labels">Etykiety i skrzynki</string>
     <string name="message_labels_explainer">Wiadomość może znajdować się w kilku skrzynkach naraz. Dodanie kolejnej nie usuwa jej z pozostałych.</string>
     <string name="message_labels_in">Ta wiadomość znajduje się w</string>

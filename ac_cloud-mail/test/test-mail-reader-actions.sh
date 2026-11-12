@@ -360,7 +360,7 @@ else:
 # ── A2 the reading icon row, under the tags ──
 header = body("private fun MessageHeader(")
 try:
-    tags_at, row_at, resume_at = (header.index("MessageTagRow(tags)"), header.index("readingActions()"),
+    tags_at, row_at, resume_at = (header.index("MessageTagSections(tags"), header.index("readingActions()"),
                                   header.index("ResumeBox("))
     if tags_at < row_at < resume_at:
         ok("A2 the reading row is drawn after the tags and before the Resume box")

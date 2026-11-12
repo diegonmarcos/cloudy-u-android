@@ -1109,6 +1109,12 @@
     <!-- Message · tags and mailboxes -->
     <string name="message_tag_mailbox">Buzón</string>
     <string name="message_tag_keyword">Palabra clave</string>
+    <string name="message_details_title">Detalles del mensaje</string>
+    <string name="message_tags_project">Etiquetas de proyecto</string>
+    <string name="message_tags_meta">Etiquetas meta</string>
+    <string name="message_tags_see_more">Ver más</string>
+    <string name="message_details_copy_all">Copiar todo</string>
+    <string name="message_details_copied">Detalles copiados</string>
     <string name="message_labels">Etiquetas y buzones</string>
     <string name="message_labels_explainer">Un mensaje puede estar en varios buzones a la vez. Añadirlo a uno no lo saca de los demás.</string>
     <string name="message_labels_in">Este mensaje está en</string>

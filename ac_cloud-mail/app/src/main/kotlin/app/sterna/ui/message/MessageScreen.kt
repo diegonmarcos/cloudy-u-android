@@ -1912,6 +1912,38 @@ private fun MessageContent(
             )
         }
     }
+    // The full message information (#1661): what a tap on the subject opens and what "Copy all"
+    // copies. Decided HERE like the rows above and from the same on-demand header fetch, so it adds
+    // no property to the fetch every message pays for. Every tag is named, the folder the message
+    // was opened from included: this block is where the complete membership is read.
+    val detailsProjectLabel = stringResource(R.string.message_tags_project)
+    val detailsMetaLabel = stringResource(R.string.message_tags_meta)
+    val details = remember(
+        metadataEmail, metadataHeaders, messageMailboxIds, accountMailboxes, mailboxNames,
+        detailsProjectLabel, detailsMetaLabel,
+    ) {
+        if (metadataEmail == null) {
+            emptyList<DetailSection>()
+        } else {
+            // Guarded as a whole: a message no rule here anticipated shows fewer details, never a crash.
+            runCatching {
+                val memberships = messageMailboxIds.ifEmpty {
+                    (metadataEmail.mailboxIds.filterValues { it }.keys + listOfNotNull(metadataEmail.mailboxId)).toSet()
+                }
+                messageDetails(
+                    email = metadataEmail,
+                    headers = metadataHeaders,
+                    tags = everyTagOf(metadataEmail, memberships, accountMailboxes) { mailboxNames[it.id] ?: it.name },
+                    mailboxIds = memberships,
+                    mailboxNames = mailboxNames,
+                    projectLabel = detailsProjectLabel,
+                    metaLabel = detailsMetaLabel,
+                    formatTime = { millis -> MailDates.formatFull(java.time.Instant.ofEpochMilli(millis).toString()) },
+                    formatSize = { bytes -> formatSize(bytes) },
+                )
+            }.getOrDefault(emptyList<DetailSection>())
+        }
+    }
     // THE READING ROW (#293), the owner's "reading view with the ai icons below the tags + show
     // images + show as plain text ICONS". Built HERE, where this page's ViewModel and the reading
     // decisions already live, and handed down as ONE slot drawn under the tags. Always drawn —
@@ -2088,6 +2120,7 @@ private fun MessageContent(
                 tags = tags,
                 metadata = metadata,
                 onSenderPanelOpened = viewModel::loadMetadataHeaders,
+                details = details,
                 readingActions = readingActions,
                 translatedFragment = translation.fragmentFor(readerFragment),
                 translating = translation.running,
@@ -2150,6 +2183,8 @@ private fun ConversationBody(
     metadata: List<MetadataRow> = emptyList(),
     /** Pull the routing headers, once, when the sender panel is opened — never when a message is. */
     onSenderPanelOpened: () -> Unit = {},
+    /** The full message information the subject opens (#1661), already decided by [messageDetails]. */
+    details: List<DetailSection> = emptyList(),
     /** The reading icon row, drawn by [MessageHeader] under the tags (#293). Built by MessageContent. */
     readingActions: @Composable () -> Unit = {},
     /** The page's text translated in place, or null for the message as it arrived. */
@@ -2336,6 +2371,7 @@ private fun ConversationBody(
                 tags = tags,
                 metadata = metadata,
                 onSenderPanelOpened = onSenderPanelOpened,
+                details = details,
                 readingActions = readingActions,
             )
         }
@@ -2440,6 +2476,9 @@ private fun MessageHeader(
     metadata: List<MetadataRow> = emptyList(),
     /** Pull the routing headers, once, when the sender panel is opened — never when a message is. */
     onSenderPanelOpened: () -> Unit = {},
+    /** The full message information the subject opens (#1661), already decided by [messageDetails]
+     *  where the ViewModel is in scope. Passed by name. */
+    details: List<DetailSection> = emptyList(),
     /** The reading icon row (#293), drawn under the tags. Declared LAST and passed by name. */
     readingActions: @Composable () -> Unit = {},
 ) {
@@ -2453,6 +2492,9 @@ private fun MessageHeader(
     // Tapping the sender opens a panel with every participant (From / To / Cc) and per-contact
     // actions. To/Cc live on the full body, so they populate once it has loaded.
     var showParticipants by remember(msg.id) { mutableStateOf(false) }
+    // Tapping the SUBJECT opens the full message information (#1661), the way tapping the sender
+    // opens the participants panel.
+    var showDetails by remember(msg.id) { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {
         // The full subject, wrapping. The toolbar can only show a truncated single line (it shares its
         // width with the action icons), so the complete text lives here (#44).
@@ -2464,6 +2506,7 @@ private fun MessageHeader(
             fontWeight = if (unread) FontWeight.Bold else FontWeight.Medium,
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable(onClickLabel = stringResource(R.string.message_details_title)) { showDetails = true }
                 .padding(start = MailMetrics.s16, end = MailMetrics.s16, top = MailMetrics.s14),
         )
         val clipboard = LocalClipboardManager.current
@@ -2588,9 +2631,10 @@ private fun MessageHeader(
         //
         // Absent entirely when the message has none, which on a single-folder account is every
         // message: an always-present empty strip is a row of furniture.
-        if (tags.isNotEmpty()) {
-            MessageTagRow(tags)
-        }
+        //
+        // Drawn as TWO sections (#1661), in this order: Project tags, open; then Meta tags, closed
+        // behind "See more". Every tag is in exactly one of them — see MessageTagClasses.
+        MessageTagSections(tags, msg.id)
         // The reading icon row (#293) — AI Resume, Translate, Show images, plain text — UNDER the
         // tags as asked, and above the Resume box its Resume icon fills.
         readingActions()
@@ -2672,6 +2716,96 @@ private fun MessageHeader(
             senderRule = senderRule,
             onDismiss = { showParticipants = false },
         )
+    }
+    if (showDetails) {
+        // What MessageContent decided; before the message has settled, what this header itself knows.
+        val projectLabel = stringResource(R.string.message_tags_project)
+        val metaLabel = stringResource(R.string.message_tags_meta)
+        val shown = details.ifEmpty {
+            runCatching {
+                messageDetails(
+                    email = full ?: msg.header,
+                    headers = emptyList(),
+                    tags = tags,
+                    mailboxIds = emptySet(),
+                    mailboxNames = emptyMap(),
+                    projectLabel = projectLabel,
+                    metaLabel = metaLabel,
+                    formatTime = { millis -> MailDates.formatFull(java.time.Instant.ofEpochMilli(millis).toString()) },
+                    formatSize = { bytes -> formatSize(bytes) },
+                )
+            }.getOrDefault(emptyList())
+        }
+        MessageDetailsSheet(
+            sections = shown,
+            // The same on-demand header fetch the participants panel makes, paid when it is opened.
+            onOpened = onSenderPanelOpened,
+            onDismiss = { showDetails = false },
+        )
+    }
+}
+
+/**
+ * The message's tags as the reading panel's two sections (#1661): Project tags first and OPEN,
+ * Meta tags second and CLOSED behind "See more". [tagSections] decides which tag is in which, and
+ * every tag is in exactly one; a section with no tag is not drawn at all.
+ *
+ * The open/closed state is kept per message and per section, so opening the Meta tags of one
+ * message says nothing about the next one.
+ */
+@Composable
+private fun MessageTagSections(tags: List<MessageTag>, messageId: String) {
+    val sections = remember(tags) { tagSections(tags) }
+    for (section in sections) {
+        var expanded by rememberSaveable(messageId, section.kind) {
+            mutableStateOf(tagSectionExpandedByDefault(section.kind))
+        }
+        MessageTagSection(section.kind, section.tags, expanded, onToggle = { expanded = !expanded })
+    }
+}
+
+/**
+ * One section: a title line that opens and closes it, then the pills. Closed, the title carries
+ * the number of tags behind it, and the Meta section says "See more".
+ */
+@Composable
+private fun MessageTagSection(
+    kind: TagSectionKind,
+    tags: List<MessageTag>,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+) {
+    val title = stringResource(
+        when (kind) {
+            TagSectionKind.PROJECT -> R.string.message_tags_project
+            TagSectionKind.META -> R.string.message_tags_meta
+        },
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onToggle)
+            .padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s4),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = if (expanded) "\u25BE $title" else "\u25B8 $title (${tags.size})",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (!expanded && kind == TagSectionKind.META) {
+            Spacer(Modifier.width(MailMetrics.s8))
+            Text(
+                text = stringResource(R.string.message_tags_see_more),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+    if (expanded) {
+        if (tags.isNotEmpty()) {
+            MessageTagRow(tags)
+        }
     }
 }
 
