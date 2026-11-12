@@ -3139,7 +3139,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-11-11",
+        "pricing_as_of": "2026-11-12",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -3177,7 +3177,7 @@
             "params_b": 27,
             "quant": ["fp8"],
             "trained_for": ["marketing/seo"],
-            "prompt": 0.08, "completion": 0.45,
+            "prompt": 0.08, "completion": 0.35,
             "note": "Ranked for marketing/SEO only; light and predictable on short rewrites."
           },
           {
@@ -3186,7 +3186,7 @@
             "open": true,
             "params_b": 31,
             "quant": ["bf16", "fp4", "fp8"],
-            "trained_for": ["marketing/seo", "roleplay", "translation", "trivia"],
+            "trained_for": ["marketing/seo", "roleplay", "translation"],
             "prompt": 0.2, "completion": 0.4,
             "note": "Translation-ranked, served at four precisions; more headroom than the 26B."
           },
@@ -3222,7 +3222,7 @@
             "name": "DeepSeek V4 Flash 0731",
             "open": true,
             "quant": ["fp32", "fp4", "fp8", "nvfp4"],
-            "trained_for": ["academia", "finance", "health", "legal", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation", "trivia"],
+            "trained_for": ["academia", "finance", "health", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation", "trivia"],
             "prompt": 0.0434, "completion": 0.3,
             "note": "Ranked in all twelve categories at the second-lowest price here."
           },
@@ -3262,7 +3262,7 @@
           {
             "id": "openai/gpt-4.1-mini",
             "name": "GPT-4.1 mini",
-            "trained_for": [],
+            "trained_for": ["translation"],
             "prompt": 0.4, "completion": 1.6,
             "note": "Translation-ranked and closed-weight; steady, conservative English grammar fixes."
           },
