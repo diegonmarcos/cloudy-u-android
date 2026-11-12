@@ -62,8 +62,11 @@ public object FleetXrayTags {
     public fun section(id: String): String = "fleetxray_section_$id"
 }
 
-/** The adb-shell cockpit, launched by class name so this lib need not compile against libs:shizuku-adb-debug-tools. */
-private const val ADB_SHELL_ACTIVITY = "com.diegonmarcos.superapp.adbdebug.AdbShellActivity"
+/**
+ * #1682 The adb-shell cockpit of the ONE ADB owner, opened by its declared action (the owner's exported ShellArmActivity
+ * resolves it, whichever app owns ADB), so this lib names no in-process ADB class and needs no ADB lib at all.
+ */
+private const val ADB_SHELL_ACTION = "com.diegonmarcos.superapp.action.ARM_SHELL"
 
 /**
  * Configs ▸ X-Ray: the app profiler — the thirteen trackers of [FleetXrayProbes] read live for THIS app, plus the Device
@@ -270,8 +273,8 @@ private fun saveHtml(ctx: Context, p: FleetXrayExport.Profile) {
 }
 
 private fun openCockpit(ctx: Context) {
-    val i = Intent().setClassName(ctx, ADB_SHELL_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val i = Intent(ADB_SHELL_ACTION).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     if (runCatching { ctx.startActivity(i) }.isFailure) {
-        Toast.makeText(ctx, "ADB Shell cockpit is not linked in this app", Toast.LENGTH_SHORT).show()
+        Toast.makeText(ctx, "ADB Shell cockpit is not reachable: install or update the ADB owner app", Toast.LENGTH_SHORT).show()
     }
 }

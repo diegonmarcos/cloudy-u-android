@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.DialogFragment
-import com.diegonmarcos.superapp.adbdebug.AdbShellLink
+import com.diegonmarcos.superapp.shellclient.ShellClient
 import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import com.diegonmarcos.superapp.uikit.KitPalette
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
@@ -250,10 +250,15 @@ class EnergyUsageDialog : DialogFragment() {
 
             // 3b) Exact per-app mAh: dumpsys batterystats through the app's own privileged adb channel.
             Card("Per-app exact  ·  ADB channel") {
-                val channel = remember(rev) { BatteryRepository.privilegedChannel(ctx) }
-                if (channel == null) {
+                // #1682 a live broker round trip: read off the main thread (null until it answers, then the channel or "")
+                val probe = remember(rev) {
+                    mutableStateOf<String?>(null).also { st -> Thread { st.value = runCatching { BatteryRepository.privilegedChannel(ctx) }.getOrNull() ?: "" }.start() }
+                }
+                val channel = probe.value
+                if (channel == null) { Small("Checking the ADB channel…"); return@Card }
+                if (channel.isEmpty()) {
                     Small("Pair the ADB channel to read exact per-app mAh from dumpsys batterystats.")
-                    Pill("Pair ADB ›") { val host = requireActivity(); dismiss(); AdbShellLink.open(host) }
+                    Pill("Pair ADB ›") { val host = requireActivity(); dismiss(); ShellClient.openArmPage(host) }
                     return@Card
                 }
                 Small("Channel: $channel")

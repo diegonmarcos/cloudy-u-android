@@ -1,7 +1,6 @@
 package com.diegonmarcos.superapp.battery
 
 import android.content.Context
-import com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -38,7 +37,7 @@ object ChargeSnapshot {
         o.put("temp_c", s?.reading?.tempC ?: -1.0)
         o.put("power_w", Math.round((s?.powerW ?: 0.0) * 10.0) / 10.0)
 
-        val dump = runCatching { EmbeddedAdbChannel.exec(ctx, "dumpsys battery") }.getOrNull()
+        val dump = runCatching { BatteryRepository.privilegedExec(ctx, "dumpsys battery") }.getOrNull()
         if (!dump.isNullOrBlank() && !dump.startsWith("ERR") && dump.contains("Battery")) {
             o.put("adb", true)
             o.put("max_charging_current", grab(dump, "Max charging current:"))

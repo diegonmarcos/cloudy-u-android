@@ -152,7 +152,7 @@
      "re": "^cmd notification allow_listener [a-z][\\w.]*/[\\w.]+$"
     }
    ],
-   "exact": [
+   "exact": ["P=/sys/class/power_supply/battery; for f in charge_full charge_full_design cycle_count; do echo \"$f=$(cat $P/$f 2>/dev/null)\"; done; dumpsys battery 2>/dev/null; echo --batterystats--; dumpsys batterystats --charged 2>/dev/null | sed -n '/Estimated power use/,$p' | head -200", 
     "dumpsys usagestats | grep -E 'package=.*totalTimeForegroundServiceUsed=' | head -60",
     "logcat -d -b system,main -v time ActivityManager:I '*:S' | grep 'Start proc'",
     "dumpsys jobscheduler | grep -E 'JOB #|Pending queue|Active jobs|Registered|Standby bucket|Backoff' | head -400",

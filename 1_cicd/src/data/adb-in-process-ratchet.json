@@ -36,14 +36,9 @@
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/SystemDisplay.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/SystemGroups.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/xray/EngineProbes.kt",
-  "ab_cloud-libs-shared/libs/battery/src/main/java/com/diegonmarcos/superapp/battery/BatteryRepository.kt",
-  "ab_cloud-libs-shared/libs/battery/src/main/java/com/diegonmarcos/superapp/battery/ChargeSnapshot.kt",
-  "ab_cloud-libs-shared/libs/battery/src/main/java/com/diegonmarcos/superapp/battery/EnergyUsageDialog.kt",
-  "ab_cloud-libs-shared/libs/fleetconfigs-xray/src/main/java/com/diegonmarcos/superapp/fleetxray/FleetXrayPage.kt"
+  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/xray/EngineProbes.kt"
  ],
  "gradle": [
-  "ab_cloud-libs-shared/libs/battery/build.gradle",
   "ab_cloud-libs-shared/libs/updater/build.gradle",
   "aa_cloud-superapp/app/build.gradle"
  ]

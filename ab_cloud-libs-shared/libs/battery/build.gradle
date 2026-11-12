@@ -48,8 +48,8 @@ dependencies {
     implementation 'androidx.compose.material3:material3'
     implementation project(':libs:core')
     api project(':libs:ui-kit')   // CloudKitTheme
-    // Tier-2 privileged read: ShellChannels (embedded adb / our app_process server) + AdbShellLink.
-    implementation project(':libs:shizuku-adb-debug-tools')
+    // Tier-2 privileged read through the ONE ADB owner's broker (#1682): ShellClient exec/status + openArmPage, no in-process channel.
+    implementation project(':libs:shell-client')
     // BatterySessionWorker's 15-min tick also folds the current month into
     // the permanent data-usage ledger, so the monthly history survives
     // NetworkStatsManager's ~90-day retention without a second scheduler.

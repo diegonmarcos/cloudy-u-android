@@ -8,9 +8,8 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
-import com.diegonmarcos.superapp.adbdebug.ShellChannel
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
-import com.diegonmarcos.superapp.adbdebug.ShizukuShellChannel
+import com.diegonmarcos.superapp.shellclient.ShellClient
+import com.diegonmarcos.superapp.shellclient.ShellResult
 
 /**
  * The battery SoT's Android half: it READS the battery ([probe]), RECORDS the
@@ -206,21 +205,30 @@ object BatteryRepository {
         synchronized(lock) { load(ctx).filter { it.ts >= fromTs } }
 
     /**
-     * The app's own privileged shell: the embedded adb channel (paired on Configs › Network › ADB Shell) or our
-     * app_process server, never the third-party Shizuku rung of the ladder. Null = not paired; the surfaces then
-     * open the ADB Shell page (AdbShellLink.open), the one place that pairs.
+     * #1682 The privileged shell through the ONE ADB owner's broker (libs:shell-client), never an in-process channel: the
+     * embedded adb channel or the owner's app_process server, never the third-party Shizuku rung (a Shizuku-served answer is
+     * dropped, as before). Null = not armed; the surfaces then open the owner's ADB Shell page (ShellClient.openArmPage).
      */
-    private fun channel(ctx: Context): ShellChannel? =
-        runCatching { ShellChannels.active(ctx.applicationContext) }.getOrNull()?.takeUnless { it === ShizukuShellChannel }
+    private fun run(ctx: Context, cmd: String): String? {
+        val r = runCatching { ShellClient.over(ctx.applicationContext).exec(cmd, PRIVILEGED_TIMEOUT_MS) }.getOrNull() as? ShellResult.Ok
+            ?: return null
+        return r.stdout.takeIf { r.success && !r.source.contains("shizuku", ignoreCase = true) }
+    }
+
+    private const val PRIVILEGED_TIMEOUT_MS = 60_000L
 
     /** The privileged facts (sysfs capacity/cycles, dumpsys battery, per-app power) — blocking, call off the main thread. */
     fun privileged(ctx: Context): BatteryPrivileged.Facts? {
-        val ch = channel(ctx) ?: return null
-        return BatteryPrivileged.parse(runCatching { ch.exec(ctx.applicationContext, BatteryPrivileged.COMMAND) }.getOrNull())
+        val out = run(ctx, BatteryPrivileged.COMMAND) ?: return null
+        return BatteryPrivileged.parse(out)
     }
 
-    /** "Channel name" when the privileged shell is up, else null. */
-    fun privilegedChannel(ctx: Context): String? = channel(ctx)?.name()
+    /** "Channel name" when the privileged shell is up (live broker status, not Shizuku), else null. Blocking: off the main thread. */
+    fun privilegedChannel(ctx: Context): String? = runCatching { ShellClient.status(ctx.applicationContext) }.getOrNull()
+        ?.takeIf { it.armed && !it.channel.contains("shizuku", ignoreCase = true) }?.channel
+
+    /** One command through the owner's broker, stdout or null (ChargeSnapshot's `dumpsys battery`). Blocking. */
+    fun privilegedExec(ctx: Context, cmd: String): String? = run(ctx, cmd)
 
     /** (package, row name) of a uid: [BatteryLabels.display] over what PackageManager knows ("uid:N" when nothing owns it). */
     fun appLabel(ctx: Context, uid: Int): Pair<String, String> {
