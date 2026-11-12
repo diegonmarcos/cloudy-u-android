@@ -433,11 +433,11 @@
         "health": "/health"
       },
       {
-        "id": "capital-stack-finterminal-api",
+        "id": "capital-stack-finterm-api",
         "kind": "api",
-        "source": "cloud-u-containers/user-fin_capital-stack-finterminal-api/build.json",
-        "_doc": "Capital-Stack-FinTerminal's primary data source (Cloud-Fincept / fin_api): the FinceptTerminal backend on oci-apps (container capital-stack-finterminal-api, containers.app.port 8340). Its retired public host answers 302 to sign-in (#1104) and api.diegonmarcos.com/fin-api is wg_only, so it is MESH-ONLY: fin-api.mesh.diegonmarcos.com:8340 (10.0.0.6), GET /health, /api/v1/info, /api/v1/topics, /api/v1/topics/{topic}/peek.",
-        "mesh_dns": "capital-stack-finterminal-api.mesh.diegonmarcos.com",
+        "source": "cloud-u-containers/user-fin_capital-stack-finterm-api/build.json",
+        "_doc": "Capital-Stack-FinTerminal's primary data source (Cloud-Fincept / fin_api): the FinceptTerminal backend on oci-apps (container capital-stack-finterm-api, containers.app.port 8340). Its retired public host answers 302 to sign-in (#1104) and api.diegonmarcos.com/fin-api is wg_only, so it is MESH-ONLY: fin-api.mesh.diegonmarcos.com:8340 (10.0.0.6), GET /health, /api/v1/info, /api/v1/topics, /api/v1/topics/{topic}/peek.",
+        "mesh_dns": "capital-stack-finterm-api.mesh.diegonmarcos.com",
         "mesh_port": 8340,
         "mesh_scheme": "http",
         "policy": "mesh_only",

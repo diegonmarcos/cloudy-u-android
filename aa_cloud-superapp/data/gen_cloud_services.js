@@ -156,7 +156,7 @@ const USER = [
     ["Communications", ["chat-mattermost", "matrix-continuwuity", "matrix-element", "matrix-mautrix-whatsapp", "maddy", "stalwart", "cypht", "snappymail", "mail-puller", "tools-smtp-proxy"].map((n) => app(n))],
     ["Productivity", ["etherpad", "hedgedoc", "grist", "calendar-radicale", "contacts-radicale", "revealmd", "code-server", "filebrowser", "paca"].map((n) => app(n))],
     ["Media", [app("photoprism")]],
-    ["Finance", [app("crawlee-cloud"), app("capital-stack-finterminal-api")]],
+    ["Finance", [app("crawlee-cloud"), app("capital-stack-finterm-api")]],
     ["AI & Agents", [...["ollama", "ollama-arm", "ollama-hai", "rig-agentic", "rig-agentic-hai-1.5bq4", "rig-agentic-sonn-14bq8", "db-agent", "kg-graph", "claude-openai-bridge"].map((n) => app(n)), app("cloud-cgc-mcp", "Octocode (CGC)")]],
     ["Vault", [app("vaultwarden")]],
     ["News", [app("news-gdelt")]],

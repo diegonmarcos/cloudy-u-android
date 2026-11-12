@@ -14,7 +14,7 @@ import java.time.LocalDate
 class PriorityTest {
     private val sources = Catalog.parse(DataFiles.sourcesJson)
     private val dashboards = Dashboards.parse(DataFiles.dashboardsJson)
-    private val mesh = mapOf("capital-stack-finterminal-api" to "http://fin.mesh.test:8340")
+    private val mesh = mapOf("capital-stack-finterm-api" to "http://fin.mesh.test:8340")
     private val today = LocalDate.of(2026, 10, 30)
     private val ust = dashboards.first { it.id == "yield_curves" }
 

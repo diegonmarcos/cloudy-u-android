@@ -15,9 +15,9 @@
       "category": "Equity-Exchange",
       "primary": true,
       "priority": 0,
-      "coverage": "The FinceptTerminal backend (capital-stack-finterminal-api) running on oci-apps: 35 data connectors (FRED, DBnomics, IMF, World Bank, Polygon, Yahoo, Kraken, ...), 7 analytics modules, 17 brokers, 6 investor personas, MCP tools, behind one DataHub. PRIMARY source of every FinTerm entry while the phone is on the mesh. The /v1 surface (design 3.2: series, curves, quotes, calendars, fundamentals, normalised) is the declared first source of every panel that names it as fetch.primary.api.",
+      "coverage": "The FinceptTerminal backend (capital-stack-finterm-api) running on oci-apps: 35 data connectors (FRED, DBnomics, IMF, World Bank, Polygon, Yahoo, Kraken, ...), 7 analytics modules, 17 brokers, 6 investor personas, MCP tools, behind one DataHub. PRIMARY source of every FinTerm entry while the phone is on the mesh. The /v1 surface (design 3.2: series, curves, quotes, calendars, fundamentals, normalised) is the declared first source of every panel that names it as fetch.primary.api.",
       "endpoint": "",
-      "fleet_endpoint": "capital-stack-finterminal-api",
+      "fleet_endpoint": "capital-stack-finterm-api",
       "container": "cloud_fincept",
       "docs": "https://github.com/Fincept-Corporation/FinceptTerminal",
       "paths": {
@@ -72,8 +72,8 @@
         "fin-api",
         "cloud-fincept"
       ],
-      "service": "cloud-u-containers/user-fin_capital-stack-finterminal-api (container capital-stack-finterminal-api on oci-apps, image ghcr.io/diegonmarcos/capital-stack-finterminal-api, port 8340, mesh name capital-stack-finterminal-api.mesh.diegonmarcos.com)",
-      "attribution": "FinceptTerminal (upstream, Fincept Corporation), AGPL-3.0; this fleet runs its Rust port as capital-stack-finterminal-api"
+      "service": "cloud-u-containers/user-fin_capital-stack-finterm-api (container capital-stack-finterm-api on oci-apps, image ghcr.io/diegonmarcos/capital-stack-finterm-api, port 8340, mesh name capital-stack-finterm-api.mesh.diegonmarcos.com)",
+      "attribution": "FinceptTerminal (upstream, Fincept Corporation), AGPL-3.0; this fleet runs its Rust port as capital-stack-finterm-api"
     },
     {
       "id": "fred",
@@ -1355,6 +1355,6 @@
     }
   ],
   "_doc_priority": "Cloud-Fincept (0) first when the phone reaches the mesh; the key-free public sources (10) next; the keyed ones (20) last. A panel falls back series by series: a topic the container has not published (404) is read from the public source.",
-  "_doc_fin_api": "Cloud-Fincept and the owner's `fin_api` are ONE service: the FinceptTerminal Rust backend declared in cloud-u-containers/user-fin_capital-stack-finterminal-api (build.json name capital-stack-finterminal-api, 'Fincept Terminal backend'). Its retired public host answers 302 to sign-in (#1104); the declared private forms are the mesh name (capital-stack-finterminal-api.mesh.diegonmarcos.com:8340, 10.0.0.6) and the c3-pvt path; the app uses the mesh only. Own-fleet sources (priority 0) are tried before the public ones (10) and the keyed ones (20): what each serves decides it, and fin_api serves every connector the public ones do plus the analytics.",
+  "_doc_fin_api": "Cloud-Fincept and the owner's `fin_api` are ONE service: the FinceptTerminal Rust backend declared in cloud-u-containers/user-fin_capital-stack-finterm-api (build.json name capital-stack-finterm-api, 'Fincept Terminal backend'). Its retired public host answers 302 to sign-in (#1104); the declared private forms are the mesh name (capital-stack-finterm-api.mesh.diegonmarcos.com:8340, 10.0.0.6) and the c3-pvt path; the app uses the mesh only. Own-fleet sources (priority 0) are tried before the public ones (10) and the keyed ones (20): what each serves decides it, and fin_api serves every connector the public ones do plus the analytics.",
   "_doc_v1": "New connectors (design 2, M0-M3): every one parses its answer into the normalised model of Feeds.kt / engine.ts (points, events, bars, rows) and the panel's derive (points | events | candles | kv | filings) renders it. cors false = no Access-Control-Allow-Origin: the web never asks it (container or the next route). schedule.ttl_s = how long an answer is kept (the phone's cache, the container's refresh); rate_limit = the provider's stated limit. endpoint 'asset:' = a file declared in this app's data/ folder."
 }

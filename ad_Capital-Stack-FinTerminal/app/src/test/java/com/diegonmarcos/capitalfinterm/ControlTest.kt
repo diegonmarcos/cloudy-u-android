@@ -12,7 +12,7 @@ class ControlTest {
     private val d = Control.parse(DataFiles.controlJson)!!
 
     private fun body(status: String?) = if (status == null) """[{"vm":"oci-apps","containers":[]}]"""
-        else """[{"vm":"oci-apps","containers":[{"name":"other","status":"Up 1 hour"},{"name":"capital-stack-finterminal-api","status":"$status"}]}]"""
+        else """[{"vm":"oci-apps","containers":[{"name":"other","status":"Up 1 hour"},{"name":"capital-stack-finterm-api","status":"$status"}]}]"""
 
     @Test fun statesFollowDockerPsText() {
         assertEquals(CState.RUNNING, Control.state(d, body("Up 3 hours")))
@@ -49,7 +49,7 @@ class ControlTest {
 
     @Test fun addressesAreBuiltFromTheBakedMeshBaseAndTheDeclaredPaths() {
         assertEquals("http://c3.mesh.test:8081/health/deployed/oci-apps", Control.statusUrl(d, "http://c3.mesh.test:8081"))
-        assertEquals("http://c3.mesh.test:8081/vms/oci-apps/containers/capital-stack-finterminal-api/restart", Control.actionUrl(d, "http://c3.mesh.test:8081", "restart"))
+        assertEquals("http://c3.mesh.test:8081/vms/oci-apps/containers/capital-stack-finterm-api/restart", Control.actionUrl(d, "http://c3.mesh.test:8081", "restart"))
         assertNotNull(d.actions.firstOrNull { it.id == "stop" })
         assertEquals("c3-infra-api", d.fleetEndpoint)
     }
@@ -63,7 +63,7 @@ class ControlTest {
         val (ok, st) = Control.run(d, "http://c3.mesh.test:8081", http, "stop")
         assertTrue(ok)
         assertEquals(CState.STOPPED, st)
-        assertEquals(listOf("http://c3.mesh.test:8081/vms/oci-apps/containers/capital-stack-finterminal-api/stop"), posted)
+        assertEquals(listOf("http://c3.mesh.test:8081/vms/oci-apps/containers/capital-stack-finterm-api/stop"), posted)
         val failing = object : Http {
             override fun get(url: String): String = throw IOException("down")
             override fun post(url: String): String = throw IOException("down")

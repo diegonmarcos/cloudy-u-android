@@ -2,7 +2,7 @@
   "_doc": "#1093 Which apps' network_security_config.xml carry a GENERATED cleartext allowlist for the fleet's `.app` mesh hosts, and which of the declared services each one reaches. The hosts come from ac_cloud-account/build.json::fleet_endpoints (every service whose mesh_scheme is http), so no host is hand-listed anywhere; a public host is never cleartext. `services` is \"*\" (all) or the ids this app talks to. Written by 1_cicd/src/scripts/cloud-android-fleet-nsc.py write, held by libs:fleet-endpoints' FleetHostGuardTest.",
   "declaration": "ac_cloud-account/build.json",
   "apps": [
-    {"nsc": "ad_Capital-Stack-FinTerminal/app/src/main/res/xml/network_security_config.xml", "services": ["capital-stack-finterminal-api", "c3-infra-api"]},
+    {"nsc": "ad_Capital-Stack-FinTerminal/app/src/main/res/xml/network_security_config.xml", "services": ["capital-stack-finterm-api", "c3-infra-api"]},
     {"nsc": "ac_cloud-superintel/app/src/main/res/xml/network_security_config.xml", "services": ["ai-gateway", "embeddings-api"]},
     {"nsc": "ac_cloud-kg-store/app/src/main/res/xml/network_security_config.xml", "services": ["ai-gateway", "embeddings-api", "c3-infra-api", "cloud-me-api", "c3-public-api", "cgc-pub-mcp", "cgc-pvt-mcp"]},
     {"nsc": "ac_cloud-tools-small-llms/app/src/main/res/xml/network_security_config.xml", "services": ["ai-gateway", "embeddings-api", "ollama"]},

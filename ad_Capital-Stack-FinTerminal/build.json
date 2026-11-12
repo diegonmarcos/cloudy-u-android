@@ -745,7 +745,7 @@
       "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. It talks only to the fleet services listed below, over the private mesh first.",
       "backends": [
         {
-          "id": "capital-stack-finterminal-api",
+          "id": "capital-stack-finterm-api",
           "why": "market data"
         },
         {

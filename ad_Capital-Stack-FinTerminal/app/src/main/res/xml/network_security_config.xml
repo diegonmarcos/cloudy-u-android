@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- HTTPS everywhere except the WireGuard mesh: the Cloud-Fincept backend (capital-stack-finterminal-api) and c3-infra-api are http on their mesh names
+<!-- HTTPS everywhere except the WireGuard mesh: the Cloud-Fincept backend (capital-stack-finterm-api) and c3-infra-api are http on their mesh names
      (WireGuard encrypts the hop); the hosts are GENERATED from the fleet declaration below. -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false">
@@ -10,7 +10,7 @@
     <domain-config cleartextTrafficPermitted="true">
         <!-- BEGIN fleet-mesh-cleartext (generated from ac_cloud-account/build.json::fleet_endpoints by 1_cicd/src/scripts/cloud-android-fleet-nsc.py; do not edit) -->
         <domain includeSubdomains="false">c3-infra-api.mesh.diegonmarcos.com</domain>
-        <domain includeSubdomains="false">capital-stack-finterminal-api.mesh.diegonmarcos.com</domain>
+        <domain includeSubdomains="false">capital-stack-finterm-api.mesh.diegonmarcos.com</domain>
         <!-- END fleet-mesh-cleartext -->
     </domain-config>
 </network-security-config>
