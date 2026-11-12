@@ -14,6 +14,11 @@
 #   B9  #1682 ONE ADB owner: the owner is the app named by ab_cloud-libs-shared/libs/shell-client/adb-owner.json::adb_owner (B1/B2 read it,
 #       not a hard-coded SuperApp); exactly that app compiles libs:shizuku-adb-debug-tools and libs:shell-broker (the exported provider), its
 #       application id is the declared `package`, and libs:shell-client's ShellWire.BROKER_PKG and <queries> name that same package
+#   B10 #1682 the declared mesh relay caller (ac_cloud-c3-webserver/data/mesh-shell-relay.json::caller) is the allowlist alias of the
+#       webserver and is a caller with no stdin rule
+#   B11 #1682 P2b the owner side of a non-owner app is gated: its gradle links the ADB libs only inside the ADB-OWNER-SIDE block under
+#       `if (adbOwnerSide)`, settings.gradle derives adbOwnerSide from adb-owner.json (or the non-shipped CI verify env), and the dormant
+#       stand-in it ships names no ADB class. B1 reads the SHIPPED variant (the gated block stripped).
 # Then each violation is planted in the collected facts and must turn a check red.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$HERE/../.." && pwd)"
@@ -39,6 +44,13 @@ ADB_TOKENS = re.compile(r"\b(EmbeddedAdbChannel|AdbShellServer|HostShell\w*|WdKe
 HARD_CAP = 512 * 1024 * 1024
 STDIN_CALLERS = {"com.diegonmarcos.cloudstore", "com.diegonmarcos.cloudaccount", "com.diegonmarcos.clouddrive"}
 
+GATE = re.compile(r"// ADB-OWNER-SIDE BEGIN[^\n]*\n\s*if \(adbOwnerSide\) \{.*?\n\s*\}\s*\n\s*// ADB-OWNER-SIDE END", re.S)
+def shipped(g): return GATE.sub("", g)
+def gate_facts():
+    W = "ac_cloud-c3-webserver"; G = f"{W}/src-tauri/gen/android"
+    kts = rd(f"{G}/app/build.gradle.kts"); st = strip(rd(f"{G}/settings.gradle"))
+    dormant = rd(f"{W}/src-tauri/gen/android/app/src/dormant/java/com/diegonmarcos/cloudwebserver/owner/AdbOwnerSide.kt")
+    return {"kts": kts, "settings": st, "dormant": strip(dormant)}
 def collect():
     apps = {}
     for d in sorted(os.listdir(R)):
@@ -47,7 +59,7 @@ def collect():
         if not os.path.isdir(f"{R}/{d}/app") and not os.path.isdir(f"{R}/{gen}/app") and d != SA: continue
         try: bj = json.load(open(f"{R}/{d}/build.json"))
         except ValueError: continue
-        gradle = rd(f"{d}/app/build.gradle") + rd(f"{d}/settings.gradle") + rd(f"{gen}/app/build.gradle.kts")
+        gradle = rd(f"{d}/app/build.gradle") + rd(f"{d}/settings.gradle") + shipped(rd(f"{gen}/app/build.gradle.kts"))
         mods = set((bj.get("modules") or {}).keys())
         aid = ((bj.get("android") or {}).get("application_id")) or ""
         if not aid:
@@ -67,8 +79,19 @@ def collect():
         apps[d] = {"aid": aid, "shiz": shiz, "client": client, "toks": toks, "broker": broker}
     return apps
 
+RELAY = json.load(open(os.path.join(R, "ac_cloud-c3-webserver/data/mesh-shell-relay.json")))
 def verdicts(apps, pending, allow, libs, shared):
     global fails
+    gf = GF
+    if OWNER != "ac_cloud-c3-webserver":
+        gated = GATE.search(gf["kts"]) is not None and not re.search(r"project\([\"']:libs:(shizuku-adb-debug-tools|shell-broker)", shipped(gf["kts"]))
+        sett = "adb-owner.json" in gf["settings"] and "adbOwnerDecl.adb_owner == 'ac_cloud-c3-webserver'" in gf["settings"] and "C3_ADB_OWNER_VERIFY" in gf["settings"] and "if (adbOwnerSide)" in gf["settings"]
+        dorm = "const val active: Boolean = false" in gf["dormant"] and not re.search(r"superapp\.(adbdebug|shellbroker|system)", gf["dormant"])
+        ok(gated and sett and dorm, "B11 the webserver's owner side is gated by adb-owner.json and ships dormant",
+           "B11 the webserver's owner side is not gated (gradle block %s, settings gate %s, dormant stand-in %s)" % (gated, sett, dorm))
+    rc = RELAY["caller"]
+    ok(allow.get("aliases", {}).get(RELAY["caller_package"]) == rc and rc in allow["callers"] and not allow["callers"][rc].get("stdin"),
+       "B10 the mesh relay caller is the webserver's declared alias", "B10 the allowlist alias of %s is not the declared relay caller %r" % (RELAY["caller_package"], rc))
     others = {d: a for d, a in apps.items() if d != OWNER}
     bad = sorted(d for d, a in others.items() if a["shiz"])
     ok(not bad, "B1 no app but the ADB owner (%s) compiles libs:shizuku-adb-debug-tools" % OWNER, "B1 compiles libs:shizuku-adb-debug-tools: " + ", ".join(bad))
@@ -127,6 +150,7 @@ def shared_libs():
         out[n] = {"gradle_links": bool(re.search(r"project\(['\"]:libs:shizuku-adb-debug-tools['\"]\)", g2)), "imports": imps}
     return out
 
+GF = gate_facts()
 apps = collect()
 pending = json.load(open(f"{R}/{SA}/data/shell-migration.json"))["pending"]
 allow = json.load(open(f"{R}/{LIB}shell-broker/src/main/assets/shell-allowlist.json"))
@@ -173,6 +197,14 @@ planted("a second app exporting the broker (two owners)", lambda a, p, al, l, sh
 planted("the webserver compiling the shizuku lib while not the owner", lambda a, p, al, l, sh: a.__setitem__("ac_cloud-c3-webserver", dict(a.get("ac_cloud-c3-webserver", {"aid": "com.diegonmarcos.cloudwebserver", "client": False, "toks": set(), "broker": False}), shiz=True)))
 planted("the owner dropping the broker", lambda a, p, al, l, sh: a[OWNER].__setitem__("broker", False))
 planted("shell-client targeting another package than the declaration", lambda a, p, al, l, sh: l["shell-client"].__setitem__("src", l["shell-client"]["src"].replace('BROKER_PKG = "%s"' % OWNER_PKG, 'BROKER_PKG = "x.other"')))
+planted("the webserver's broker alias changed", lambda a, p, al, l, sh: al["aliases"].__setitem__(RELAY["caller_package"], "cld.termux"))
+def _gf(k, v):
+    global GF
+    old = GF; GF = dict(GF); GF[k] = v(GF[k]); return old
+for label, k, f in (("the owner libs linked outside the gate", "kts", lambda t: t + '\nimplementation(project(":libs:shell-broker"))'),
+                    ("the settings gate not reading adb-owner.json", "settings", lambda t: t.replace("adb-owner.json", "x.json")),
+                    ("the dormant stand-in active", "dormant", lambda t: t.replace("active: Boolean = false", "active: Boolean = true"))):
+    old = _gf(k, f); planted(label, lambda a, p, al, l, sh: None); GF = old
 planted("shell-client linking a project", lambda a, p, al, l, sh: l["shell-client"].__setitem__("gradle", "implementation project(':libs:core')"))
 print("FAILS=%d" % fails); sys.exit(1 if fails else 0)
 PY

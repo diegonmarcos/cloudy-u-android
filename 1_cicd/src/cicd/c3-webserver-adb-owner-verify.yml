@@ -1,0 +1,59 @@
+name: "c3-webserver ADB owner verify — the webserver compiles and tests with its ADB owner side on (built, never published or installed)"
+
+# #1682 P2b. ab_cloud-libs-shared/libs/shell-client/adb-owner.json names the ONE ADB owner (today the SuperApp). The webserver's
+# shipped build compiles only its dormant stand-in (src/dormant) and links no ADB lib (test-shell-broker-guards.sh B1/B11). This
+# workflow proves the OWNER side (src/owner + libs:shizuku-adb-debug-tools / shell-broker / adb-shell-core) compiles and its unit
+# tests pass BEFORE the P3 cut-over flips adb-owner.json: C3_ADB_OWNER_VERIFY=1 turns the gate on for this run only. It builds no
+# APK, signs nothing, publishes nothing and installs nothing (no Rust core: Kotlin compilation needs no .so).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ac_cloud-c3-webserver/build.json"
+      - "ac_cloud-c3-webserver/src-tauri/gen/android/**"
+      - "ab_cloud-libs-shared/libs/shell-client/**"
+      - "ab_cloud-libs-shared/libs/shell-broker/**"
+      - "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/**"
+      - "ab_cloud-libs-shared/libs/adb-shell-core/**"
+      - ".github/workflows/c3-webserver-adb-owner-verify.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: c3-webserver-adb-owner-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  owner-side:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
+
+      - name: Gradle caches
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Compile the webserver with the ADB owner side on, and run the owner libs' unit tests
+        working-directory: ac_cloud-c3-webserver/src-tauri/gen/android
+        env:
+          C3_ADB_OWNER_VERIFY: "1"
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace :app:compileDebugKotlin \
+            :libs:adb-shell-core:testDebugUnitTest
+          # the owner side really was the one compiled (not the dormant stand-in): its class references the lib's ADB Shell page
+          grep -rl 'adbdebug/AdbShellPage' app/build/tmp/kotlin-classes/debug/com/diegonmarcos/cloudwebserver/owner/

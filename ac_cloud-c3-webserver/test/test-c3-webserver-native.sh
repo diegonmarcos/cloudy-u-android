@@ -51,6 +51,7 @@ bj = json.load(open(os.path.join(app, "build.json")))
 nat = bj["native"]
 kdir = nat["kotlin"]["dir"]
 tdir = nat["kotlin"]["test_dir"]
+odirs = {k: v for k, v in nat["kotlin"].get("owner_dirs", {}).items() if not k.startswith("_")}   # #1682 P2b
 scripts = set(nat["build_scripts"])
 SKIP = {".git", "target", "build", ".gradle", "dist", "node_modules"}
 errors = []
@@ -77,7 +78,7 @@ for base, dirs, files in os.walk(app):
             errors.append("K1 %s: a Tauri dependency is back" % rel)
         if not name.endswith((".kt", ".java", ".kts")):
             continue
-        if not (rel.startswith(kdir + "/") or rel.startswith(tdir + "/")):
+        if not (rel.startswith(kdir + "/") or rel.startswith(tdir + "/") or any(rel.startswith(d + "/") for d in odirs.values())):
             errors.append("K2 %s: Kotlin/Java outside build.json::native.kotlin.dir" % rel)
             continue
         kotlin[rel] = rd(rel)

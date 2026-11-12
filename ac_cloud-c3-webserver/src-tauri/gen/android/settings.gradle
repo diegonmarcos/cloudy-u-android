@@ -19,4 +19,18 @@ buildJson.modules.each { name, _spec ->
 // not have. Point it at the shared root core lives in, as media-center does.
 project(':libs').projectDir = project(':libs:core').projectDir.parentFile
 
+// #1682 P2b ADB OWNER SIDE, gated. ab_cloud-libs-shared/libs/shell-client/adb-owner.json names the ONE ADB owner. While it is not this
+// app, the shipped build includes none of build.json::adb_owner_modules (the shizuku / broker libs); the non-shipped CI verify
+// (C3_ADB_OWNER_VERIFY=1, workflow c3-webserver-adb-owner-verify.yml) compiles and tests the owner side without publishing it.
+def adbOwnerDecl = new groovy.json.JsonSlurper().parse(file("${appDir}/../ab_cloud-libs-shared/libs/shell-client/adb-owner.json"))
+def adbOwnerSide = adbOwnerDecl.adb_owner == 'ac_cloud-c3-webserver' || System.getenv('C3_ADB_OWNER_VERIFY') == '1'
+gradle.ext.adbOwnerSide = adbOwnerSide
+if (adbOwnerSide) {
+    buildJson.adb_owner_modules.each { name, _spec ->
+        if (name.startsWith('_')) return
+        include ":${name}"
+        project(":${name}").projectDir = file("${appDir}/${_spec.dir}")
+    }
+}
+
 // #1682 P1: no Tauri settings (the Tauri plugin projects are gone); the app module and the shared libs above are the whole build.

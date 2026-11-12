@@ -18,7 +18,10 @@ import org.json.JSONObject
  * once; a missing SuperApp is the server's clear 'not installed' reason, shown here. P2 (#1682) moves the ADB Shell into this app.
  */
 @Composable
-fun AdbShellPage(open: (String, String?) -> Unit) {
+fun WebAdbShellPage(open: (String, String?) -> Unit) {
+    // #1682 P2b the owner side draws the one ADB Shell here once adb-owner.json names this app (src/owner); the shipped build
+    // compiles the inactive stand-in (src/dormant, active = false) and keeps opening the owner's page below.
+    if (com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.active) { com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.Page(); return }
     val (tick, bump) = rememberTick()
     val link = rememberObj(Api.ADB_SHELL, tick)
     var said by rememberSaveable { mutableStateOf("") }

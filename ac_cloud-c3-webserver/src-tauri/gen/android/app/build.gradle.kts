@@ -150,7 +150,20 @@ kotlin {
     }
 }
 
+// #1682 P2b ADB owner side (settings.gradle sets gradle.ext.adbOwnerSide from adb-owner.json, or the CI verify): src/owner
+// holds the real owner (lib ADB Shell page, readiness, Connect, Tester, Logs); src/dormant the inactive stand-in the shipped
+// build compiles while another app owns ADB. Exactly one of the two is compiled.
+val adbOwnerSide: Boolean = (gradle as ExtensionAware).extensions.extraProperties.let { it.has("adbOwnerSide") && it.get("adbOwnerSide") == true }
+android.sourceSets.getByName("main").java.srcDir(if (adbOwnerSide) "src/owner/java" else "src/dormant/java")
+
 dependencies {
+    // ADB-OWNER-SIDE BEGIN (test-shell-broker-guards.sh B1 reads the shipped variant: this block only links when adbOwnerSide)
+    if (adbOwnerSide) {
+        implementation(project(":libs:shizuku-adb-debug-tools"))
+        implementation(project(":libs:shell-broker"))
+        implementation(project(":libs:adb-shell-core"))
+    }
+    // ADB-OWNER-SIDE END
     // #1682 P1 the native UI: Compose (the fleet BOM) + the fleet's nav chrome, web view and perms libs.
     implementation(platform("androidx.compose:compose-bom:2025.11.01"))
     implementation("androidx.compose.ui:ui")

@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
         Core.attach(this)
+        com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.install(applicationContext)   // #1682 P2b no-op unless this app owns ADB
         syncKeepAlive()
         setContent { WebserverTheme { WebserverShell() } }
     }

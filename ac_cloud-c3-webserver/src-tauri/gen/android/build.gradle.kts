@@ -15,6 +15,10 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // #1682 P2b the owner side's libadb-android (com.github.MuntashirAkon) is on JitPack; only when the owner side is built.
+        if ((gradle as ExtensionAware).extensions.extraProperties.let { it.has("adbOwnerSide") && it.get("adbOwnerSide") == true }) {
+            maven { url = uri("https://jitpack.io") }
+        }
     }
 }
 
