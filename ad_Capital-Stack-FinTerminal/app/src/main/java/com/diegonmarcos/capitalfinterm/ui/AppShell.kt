@@ -97,6 +97,7 @@ fun AppShell(startDashboard: String? = null) {
                 setStack(owner, FinNavStack.open(stackOf(owner), id))
             }
             override fun openQuote(symbol: String) { setStack(section, FinNavStack.quote(stackOf(section), symbol)) }
+            override fun openIndex(key: String) { setStack(section, FinNavStack.index(stackOf(section), key)) }
             override fun openSources() { section = Decl.SECTION_CONFIG }
             override fun search() { searching = true }
         }
@@ -146,7 +147,7 @@ fun AppShell(startDashboard: String? = null) {
                 onConfigs = { section = Decl.SECTION_CONFIG },
                 dark = true,
                 sections = nav.sections,
-                leaf = FinNavStack.symbolOf(top),
+                leaf = FinNavStack.symbolOf(top) ?: FinNavStack.indexOf(top)?.let { k -> dashboards.flatMap { it.breakdown }.firstOrNull { it.key == k }?.label ?: k },
             ) {
                 NavBarBottomHost(
                     entries = nav.islandEntries(),
@@ -161,7 +162,7 @@ fun AppShell(startDashboard: String? = null) {
                     AnimatedContent(
                         targetState = section to top,
                         transitionSpec = {
-                            val pushQuote = FinNavStack.symbolOf(targetState.second) != null && targetState.first == initialState.first
+                            val pushQuote = (FinNavStack.symbolOf(targetState.second) != null || FinNavStack.indexOf(targetState.second) != null) && targetState.first == initialState.first
                             if (still || !pushQuote) fadeIn(androidx.compose.animation.core.tween(100)) togetherWith fadeOut(androidx.compose.animation.core.tween(100))
                             else slideInHorizontally(androidx.compose.animation.core.tween(200)) { it } togetherWith fadeOut(androidx.compose.animation.core.tween(200))
                         },

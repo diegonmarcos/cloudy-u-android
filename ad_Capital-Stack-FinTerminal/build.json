@@ -116,6 +116,7 @@
         "libs:ui-icons",
         "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray",
         "libs:theme-background",
+        "libs:fleet-data-client",
         "libs:ui-kit"
       ]
     },
@@ -403,7 +404,7 @@
         {
           "kind": "dashboard",
           "title": "World Indices Equity",
-          "subtitle": "Major equity index levels and moves worldwide, with DM (US sectors, strategies, mega-caps) and EM (sectors, USD sovereigns) below; tap an index for its holdings treemap",
+          "subtitle": "Major equity index levels and moves worldwide, with DM (US sectors, strategies, mega-caps) and EM (sectors, USD sovereigns) below; tap S&P 500, Nikkei 225 or FTSE 100 for its holdings table and treemap",
           "dashboard": "world_equity_indices"
         },
         {

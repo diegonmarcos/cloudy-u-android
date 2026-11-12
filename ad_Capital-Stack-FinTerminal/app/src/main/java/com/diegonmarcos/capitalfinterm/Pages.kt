@@ -111,6 +111,29 @@ object Pages {
             HomeCard(id, label.ifEmpty { e.title }, e.subtitle, icon, e)
         }
 
+    /**
+     * #1663 the Homepage's cards under the stack's `section_title` entries (EQ: Performance, then Data), in the stack's order: each group is the title
+     * and the cards of the entries declared after it, up to the next title. Cards declared before any title form a first group with an empty title; a
+     * stack with no title is one untitled group, a title with no card is left out. No card is dropped or repeated.
+     */
+    fun homeGroups(cards: List<HomeCard>, entries: List<Entry>): List<Pair<String, List<HomeCard>>> {
+        val titleOf = HashMap<String, String>()
+        var current = ""
+        for (e in entries) {
+            if (e.kind == KIND_SECTION_TITLE) { current = e.title; continue }
+            val id = pageIdOf(e)
+            if (id.isNotEmpty()) titleOf[id] = current
+        }
+        val order = ArrayList<String>()
+        val byTitle = HashMap<String, ArrayList<HomeCard>>()
+        for (c in cards) {
+            val t = titleOf[c.pageId].orEmpty()
+            if (t !in byTitle) { byTitle[t] = ArrayList(); order += t }
+            byTitle.getValue(t) += c
+        }
+        return order.map { it to byTitle.getValue(it).toList() }
+    }
+
     /** The entry a sub-page id opens, or null (Home, or an unknown id). */
     fun entryOf(entries: List<Entry>, pageId: String): Entry? = entries.firstOrNull { pageIdOf(it) == pageId }
 

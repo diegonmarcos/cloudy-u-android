@@ -212,6 +212,8 @@ dependencies {
     implementation project(':libs:fleetconfigs-logcat')
     implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
+    // #1663 the index holdings (constituents and weights) are a RUNTIME dataset served by Cloud Store: FleetData.get, nothing baked.
+    implementation project(':libs:fleet-data-client')
     // The fleet's tokens and kit: CloudKitTheme, KitPalette, KitCard, KitSettingsRow, KitButton (libs:ui-kit).
     implementation project(':libs:ui-kit')
 

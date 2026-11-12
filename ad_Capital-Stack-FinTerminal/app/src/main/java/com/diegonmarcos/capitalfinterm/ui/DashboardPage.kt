@@ -71,6 +71,7 @@ import com.diegonmarcos.capitalfinterm.FinFormat
 import com.diegonmarcos.capitalfinterm.FinLogic
 import com.diegonmarcos.capitalfinterm.FinSearchIndex
 import com.diegonmarcos.capitalfinterm.Http
+import com.diegonmarcos.capitalfinterm.IndexHoldings
 import com.diegonmarcos.capitalfinterm.Mesh
 import com.diegonmarcos.capitalfinterm.ModelCtx
 import com.diegonmarcos.capitalfinterm.Panel
@@ -210,8 +211,16 @@ fun eventsOf(d: PanelData, source: String): List<FinEvent> = d.rows.mapIndexed {
 interface FinNav {
     fun openDashboard(id: String)
     fun openQuote(symbol: String)
+    /** #1663 an index's holdings breakdown (table + treemap), by its dataset key. */
+    fun openIndex(key: String)
     fun openSources()
     fun search()
+}
+
+/** #1663 a tapped row: an index that declares a holdings breakdown opens it, any other symbol opens its quote. */
+private fun openRow(dash: Dashboard, nav: FinNav, label: String) {
+    val link = IndexHoldings.linkFor(dash.breakdown, label)
+    if (link != null) nav.openIndex(link.key) else nav.openQuote(label)
 }
 
 /** How a panel's body is drawn: the declared `display`, else by view (quotes = monitor rows; the user's watchlist = watch rows). */
@@ -305,6 +314,9 @@ fun DashboardPage(dashboardId: String, nav: FinNav) {
             ) {
                 if (tapeWanted) item(key = "tape") { FinTape(tapeQuotes.ifEmpty { null }, stale = false) { q -> nav.openQuote(q.symbol) } }
                 if (dash.search) item(key = "search") { Box(Modifier.padding(horizontal = FinDim.screenPad)) { FinSearchField(onClick = { nav.search() }) } }
+                if (dash.breakdown.isNotEmpty()) item(key = "index_links") {
+                    Box(Modifier.padding(horizontal = FinDim.screenPad)) { IndexLinksCard(dash.breakdown) { nav.openIndex(it.key) } }
+                }
                 if (dash.panels.any { displayOf(it) == "watch" }) {
                     item(key = "addrule") { Box(Modifier.padding(horizontal = FinDim.screenPad)) { AddRuleField(user) { saveUser(it) } } }
                 }
@@ -551,7 +563,7 @@ private fun PanelBody(
                     val unit = panel.raw.optString("change_unit")
                     val qs = quotesOf(data, panel.raw.optString("better_when"))
                     val tiles = ArrayList<@Composable (Modifier) -> Unit>()
-                    qs.forEach { q -> tiles.add { m -> FinKpiTile(q, q.symbol, unit, stale, m) { nav.openQuote(q.symbol) } } }
+                    qs.forEach { q -> tiles.add { m -> FinKpiTile(q, q.symbol, unit, stale, m) { openRow(dash, nav, q.symbol) } } }
                     val sp = panel.raw.optJSONObject("spread")
                     val of = sp?.optJSONArray("of")
                     val v = if (sp != null && of != null && of.length() == 2) FinLogic.spread(data.rows, of.optString(0), of.optString(1)) else null
@@ -561,10 +573,10 @@ private fun PanelBody(
                     }
                     FinKpiGrid(tiles, perRow)
                 }
-                "heat" -> FinHeatGrid(quotesOf(data), width, panel.raw.optDouble("heat_scale", 3.0), stale) { q -> nav.openQuote(q.symbol) }
+                "heat" -> FinHeatGrid(quotesOf(data), width, panel.raw.optDouble("heat_scale", 3.0), stale) { q -> openRow(dash, nav, q.symbol) }
                 "rows" -> Column {
                     val qs = quotesOf(data, panel.raw.optString("better_when"))
-                    qs.forEachIndexed { i, q -> FinMonitorRow(q, stale, width, divider = i < qs.size - 1) { nav.openQuote(q.symbol) } }
+                    qs.forEachIndexed { i, q -> FinMonitorRow(q, stale, width, divider = i < qs.size - 1) { openRow(dash, nav, q.symbol) } }
                 }
                 "calendar" -> {
                     var chip by rememberSaveable(panel.id) { mutableStateOf(0) }
@@ -595,7 +607,14 @@ private fun PanelBody(
                     }, panel.unit, panel.id)
                     Dashboards.VIEW_NEWS -> FinNewsList(panel.id, data.rows, data.links, panel.raw.optInt("limit", 8)) { openUrl(ctx, it) }
                     else -> if (data.heat.isNotEmpty()) FinMatrix(panel.id, data.columns, data.rows, data.heat, data.bold, width)
-                    else FinTable(panel.id, data.columns, data.rows, data.links, declaredTypes(panel), width, details = data.details) { openUrl(ctx, it) }
+                    else {
+                        // #1663 a row that names an index with a declared holdings breakdown opens it
+                        val taps = HashMap<Int, () -> Unit>()
+                        if (dash.breakdown.isNotEmpty()) data.rows.forEachIndexed { i, r ->
+                            IndexHoldings.linkFor(dash.breakdown, r.getOrNull(0))?.let { l -> taps[i] = { nav.openIndex(l.key) } }
+                        }
+                        FinTable(panel.id, data.columns, data.rows, data.links, declaredTypes(panel), width, details = data.details, tapRows = taps) { openUrl(ctx, it) }
+                    }
                 }
             }
         }

@@ -64,6 +64,8 @@ fun FinTable(
     /** Per-cell tints -1 (red) .. +1 (green) shaped like [rows] and the bold (row, column) cells: the EM Bonds calculator's heat map (#1447); a heat table is not sortable. */
     heat: List<List<Float?>> = emptyList(),
     bold: List<Pair<Int, Int>> = emptyList(),
+    /** #1663 rows (by source index) whose name cell opens something (an index's holdings breakdown): drawn in the accent colour, tappable. */
+    tapRows: Map<Int, () -> Unit> = emptyMap(),
     onOpen: (String) -> Unit,
 ) {
     val p = LocalFinPalette.current
@@ -120,7 +122,7 @@ fun FinTable(
             return
         }
         when {
-            i == 0 && link.isNotEmpty() -> Text(FinLogic.cell(raw), mod, color = p.accent, style = FinType.body.copy(fontSize = 12.sp), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+            i == 0 && (link.isNotEmpty() || r in tapRows) -> Text(FinLogic.cell(raw), mod, color = p.accent, style = FinType.body.copy(fontSize = 12.sp), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             t == Col.TEXT || t == Col.LINK -> Text(FinLogic.cell(raw), mod, color = if (FinLogic.missing(raw)) p.text3 else p.text,
                 style = FinType.body.copy(fontSize = 12.sp), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             t == Col.DATE -> Text(FinLogic.cell(raw), mod, color = p.text2, style = FinType.caption, textAlign = TextAlign.End, maxLines = 1)
@@ -155,7 +157,7 @@ fun FinTable(
                     for (k in 0 until shown) {
                         val r = order[k]
                         Row(Modifier.heightIn(min = FinDim.tableRow).background(if (k % 2 == 1) p.surfaceRaised.copy(alpha = 0.5f) else Color.Transparent)
-                            .let { m -> links.getOrNull(r).orEmpty().let { l -> if (l.isNotEmpty()) m.clickable { onOpen(l) } else if (details.isNotEmpty()) m.clickable { detail = r } else m } }
+                            .let { m -> links.getOrNull(r).orEmpty().let { l -> val tap = tapRows[r]; if (tap != null) m.clickable(onClick = tap).testTag("fin:rowtap:$panelId:$r") else if (l.isNotEmpty()) m.clickable { onOpen(l) } else if (details.isNotEmpty()) m.clickable { detail = r } else m } }
                             .height(FinDim.tableRow), verticalAlignment = Alignment.CenterVertically) { bodyCell(r, 0, firstW) }
                     }
                 }

@@ -1,0 +1,5842 @@
+{
+ "schemaVersion": 1,
+ "_doc": "#1663 the constituents and index weights (%) of the indices EQ > World Indices Equity breaks down by holding: S&P 500 (USA), Nikkei 225 (Japan), FTSE 100 (UK). Served at RUNTIME by the fleet data framework (Cloud Store, libs:fleet-data-client), never baked into an APK. Written by ad_Capital-Stack-FinTerminal/scripts/gen-index-holdings.py from the publishers' own files (`source`, `source_url`, `as_of` per index); do not edit by hand. `weight` is the holding's weight in % (the treemap tile's area); `symbol` is the holding's symbol at the app's quote source, which gives the performance (the tile's colour). No price or performance is stored here.",
+ "generated": "2026-11-12T08:56Z",
+ "indices": {
+  "sp500": {
+   "name": "S&P 500",
+   "country": "USA",
+   "index_symbol": "^GSPC",
+   "currency": "USD",
+   "source": "SPDR S&P 500 ETF Trust (SPY) daily holdings, State Street Global Advisors",
+   "source_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx",
+   "as_of": "2026-11-10",
+   "count": 503,
+   "weight_sum": 99.89,
+   "holdings": [
+    {
+     "ticker": "AAPL",
+     "symbol": "AAPL",
+     "name": "Apple Inc",
+     "sector": "",
+     "weight": 7.8368
+    },
+    {
+     "ticker": "NVDA",
+     "symbol": "NVDA",
+     "name": "Nvidia Corp",
+     "sector": "",
+     "weight": 6.2974
+    },
+    {
+     "ticker": "MSFT",
+     "symbol": "MSFT",
+     "name": "Microsoft Corp",
+     "sector": "",
+     "weight": 6.0999
+    },
+    {
+     "ticker": "AMZN",
+     "symbol": "AMZN",
+     "name": "Amazon.com Inc",
+     "sector": "",
+     "weight": 4.0964
+    },
+    {
+     "ticker": "GOOGL",
+     "symbol": "GOOGL",
+     "name": "Alphabet Inc CL A",
+     "sector": "",
+     "weight": 2.5985
+    },
+    {
+     "ticker": "AVGO",
+     "symbol": "AVGO",
+     "name": "Broadcom Inc",
+     "sector": "",
+     "weight": 2.4337
+    },
+    {
+     "ticker": "META",
+     "symbol": "META",
+     "name": "Meta Platforms Inc Class A",
+     "sector": "",
+     "weight": 2.1793
+    },
+    {
+     "ticker": "GOOG",
+     "symbol": "GOOG",
+     "name": "Alphabet Inc CL C",
+     "sector": "",
+     "weight": 2.0868
+    },
+    {
+     "ticker": "LLY",
+     "symbol": "LLY",
+     "name": "Eli Lilly + Co",
+     "sector": "",
+     "weight": 1.7659
+    },
+    {
+     "ticker": "BRK.B",
+     "symbol": "BRK-B",
+     "name": "Berkshire Hathaway Inc CL B",
+     "sector": "",
+     "weight": 1.674
+    },
+    {
+     "ticker": "TSLA",
+     "symbol": "TSLA",
+     "name": "Tesla Inc",
+     "sector": "",
+     "weight": 1.6492
+    },
+    {
+     "ticker": "JPM",
+     "symbol": "JPM",
+     "name": "Jpmorgan Chase + Co",
+     "sector": "",
+     "weight": 1.401
+    },
+    {
+     "ticker": "AMD",
+     "symbol": "AMD",
+     "name": "Advanced Micro Devices",
+     "sector": "",
+     "weight": 1.2959
+    },
+    {
+     "ticker": "MU",
+     "symbol": "MU",
+     "name": "Micron Technology Inc",
+     "sector": "",
+     "weight": 1.2618
+    },
+    {
+     "ticker": "V",
+     "symbol": "V",
+     "name": "Visa Inc Class A Shares",
+     "sector": "",
+     "weight": 1.1106
+    },
+    {
+     "ticker": "JNJ",
+     "symbol": "JNJ",
+     "name": "Johnson + Johnson",
+     "sector": "",
+     "weight": 1.0424
+    },
+    {
+     "ticker": "XOM",
+     "symbol": "XOM",
+     "name": "Exxonmobil Holdings Corp",
+     "sector": "",
+     "weight": 1.042
+    },
+    {
+     "ticker": "WMT",
+     "symbol": "WMT",
+     "name": "Walmart Inc",
+     "sector": "",
+     "weight": 0.8619
+    },
+    {
+     "ticker": "MA",
+     "symbol": "MA",
+     "name": "Mastercard Inc A",
+     "sector": "",
+     "weight": 0.8207
+    },
+    {
+     "ticker": "ABBV",
+     "symbol": "ABBV",
+     "name": "Abbvie Inc",
+     "sector": "",
+     "weight": 0.8005
+    },
+    {
+     "ticker": "COST",
+     "symbol": "COST",
+     "name": "Costco Wholesale Corp",
+     "sector": "",
+     "weight": 0.7287
+    },
+    {
+     "ticker": "CVX",
+     "symbol": "CVX",
+     "name": "Chevron Corp",
+     "sector": "",
+     "weight": 0.6432
+    },
+    {
+     "ticker": "PG",
+     "symbol": "PG",
+     "name": "Procter + Gamble Co/the",
+     "sector": "",
+     "weight": 0.6042
+    },
+    {
+     "ticker": "PLTR",
+     "symbol": "PLTR",
+     "name": "Palantir Technologies Inc A",
+     "sector": "",
+     "weight": 0.5986
+    },
+    {
+     "ticker": "CSCO",
+     "symbol": "CSCO",
+     "name": "Cisco Systems Inc",
+     "sector": "",
+     "weight": 0.5962
+    },
+    {
+     "ticker": "KO",
+     "symbol": "KO",
+     "name": "Coca Cola Co/the",
+     "sector": "",
+     "weight": 0.5784
+    },
+    {
+     "ticker": "MRK",
+     "symbol": "MRK",
+     "name": "Merck + Co. Inc",
+     "sector": "",
+     "weight": 0.5629
+    },
+    {
+     "ticker": "UNH",
+     "symbol": "UNH",
+     "name": "Unitedhealth Group Inc",
+     "sector": "",
+     "weight": 0.5604
+    },
+    {
+     "ticker": "GE",
+     "symbol": "GE",
+     "name": "General Electric",
+     "sector": "",
+     "weight": 0.5403
+    },
+    {
+     "ticker": "HD",
+     "symbol": "HD",
+     "name": "Home Depot Inc",
+     "sector": "",
+     "weight": 0.5391
+    },
+    {
+     "ticker": "BAC",
+     "symbol": "BAC",
+     "name": "Bank Of America Corp",
+     "sector": "",
+     "weight": 0.5079
+    },
+    {
+     "ticker": "PM",
+     "symbol": "PM",
+     "name": "Philip Morris International",
+     "sector": "",
+     "weight": 0.4666
+    },
+    {
+     "ticker": "AMAT",
+     "symbol": "AMAT",
+     "name": "Applied Materials Inc",
+     "sector": "",
+     "weight": 0.4556
+    },
+    {
+     "ticker": "INTC",
+     "symbol": "INTC",
+     "name": "Intel Corp",
+     "sector": "",
+     "weight": 0.4449
+    },
+    {
+     "ticker": "LRCX",
+     "symbol": "LRCX",
+     "name": "Lam Research Corp",
+     "sector": "",
+     "weight": 0.4286
+    },
+    {
+     "ticker": "TXN",
+     "symbol": "TXN",
+     "name": "Texas Instruments Inc",
+     "sector": "",
+     "weight": 0.423
+    },
+    {
+     "ticker": "RTX",
+     "symbol": "RTX",
+     "name": "RTX Corp",
+     "sector": "",
+     "weight": 0.416
+    },
+    {
+     "ticker": "CAT",
+     "symbol": "CAT",
+     "name": "Caterpillar Inc",
+     "sector": "",
+     "weight": 0.4139
+    },
+    {
+     "ticker": "PANW",
+     "symbol": "PANW",
+     "name": "Palo Alto Networks Inc",
+     "sector": "",
+     "weight": 0.4099
+    },
+    {
+     "ticker": "TMO",
+     "symbol": "TMO",
+     "name": "Thermo Fisher Scientific Inc",
+     "sector": "",
+     "weight": 0.409
+    },
+    {
+     "ticker": "GS",
+     "symbol": "GS",
+     "name": "Goldman Sachs Group Inc",
+     "sector": "",
+     "weight": 0.4085
+    },
+    {
+     "ticker": "NFLX",
+     "symbol": "NFLX",
+     "name": "Netflix Inc",
+     "sector": "",
+     "weight": 0.4057
+    },
+    {
+     "ticker": "WFC",
+     "symbol": "WFC",
+     "name": "Wells Fargo + Co",
+     "sector": "",
+     "weight": 0.3996
+    },
+    {
+     "ticker": "AMGN",
+     "symbol": "AMGN",
+     "name": "Amgen Inc",
+     "sector": "",
+     "weight": 0.3878
+    },
+    {
+     "ticker": "LIN",
+     "symbol": "LIN",
+     "name": "Linde PLC",
+     "sector": "",
+     "weight": 0.3706
+    },
+    {
+     "ticker": "ORCL",
+     "symbol": "ORCL",
+     "name": "Oracle Corp",
+     "sector": "",
+     "weight": 0.3569
+    },
+    {
+     "ticker": "IBM",
+     "symbol": "IBM",
+     "name": "Intl Business Machines Corp",
+     "sector": "",
+     "weight": 0.3551
+    },
+    {
+     "ticker": "CRWD",
+     "symbol": "CRWD",
+     "name": "Crowdstrike Holdings Inc A",
+     "sector": "",
+     "weight": 0.3541
+    },
+    {
+     "ticker": "MS",
+     "symbol": "MS",
+     "name": "Morgan Stanley",
+     "sector": "",
+     "weight": 0.3448
+    },
+    {
+     "ticker": "GEV",
+     "symbol": "GEV",
+     "name": "GE Vernova Inc",
+     "sector": "",
+     "weight": 0.327
+    },
+    {
+     "ticker": "GILD",
+     "symbol": "GILD",
+     "name": "Gilead Sciences Inc",
+     "sector": "",
+     "weight": 0.3264
+    },
+    {
+     "ticker": "DIS",
+     "symbol": "DIS",
+     "name": "Walt Disney Co/the",
+     "sector": "",
+     "weight": 0.317
+    },
+    {
+     "ticker": "C",
+     "symbol": "C",
+     "name": "Citigroup Inc",
+     "sector": "",
+     "weight": 0.3159
+    },
+    {
+     "ticker": "KLAC",
+     "symbol": "KLAC",
+     "name": "KLA Corp",
+     "sector": "",
+     "weight": 0.3081
+    },
+    {
+     "ticker": "MCD",
+     "symbol": "MCD",
+     "name": "Mcdonald S Corp",
+     "sector": "",
+     "weight": 0.3075
+    },
+    {
+     "ticker": "APH",
+     "symbol": "APH",
+     "name": "Amphenol Corp CL A",
+     "sector": "",
+     "weight": 0.3036
+    },
+    {
+     "ticker": "PEP",
+     "symbol": "PEP",
+     "name": "Pepsico Inc",
+     "sector": "",
+     "weight": 0.3018
+    },
+    {
+     "ticker": "ANET",
+     "symbol": "ANET",
+     "name": "Arista Networks Inc",
+     "sector": "",
+     "weight": 0.2985
+    },
+    {
+     "ticker": "VZ",
+     "symbol": "VZ",
+     "name": "Verizon Communications Inc",
+     "sector": "",
+     "weight": 0.2963
+    },
+    {
+     "ticker": "ADI",
+     "symbol": "ADI",
+     "name": "Analog Devices Inc",
+     "sector": "",
+     "weight": 0.295
+    },
+    {
+     "ticker": "ABT",
+     "symbol": "ABT",
+     "name": "Abbott Laboratories",
+     "sector": "",
+     "weight": 0.2946
+    },
+    {
+     "ticker": "QCOM",
+     "symbol": "QCOM",
+     "name": "Qualcomm Inc",
+     "sector": "",
+     "weight": 0.2857
+    },
+    {
+     "ticker": "NEE",
+     "symbol": "NEE",
+     "name": "Nextera Energy Inc",
+     "sector": "",
+     "weight": 0.2771
+    },
+    {
+     "ticker": "WELL",
+     "symbol": "WELL",
+     "name": "Welltower Inc",
+     "sector": "",
+     "weight": 0.2751
+    },
+    {
+     "ticker": "UNP",
+     "symbol": "UNP",
+     "name": "Union Pacific Corp",
+     "sector": "",
+     "weight": 0.275
+    },
+    {
+     "ticker": "BLK",
+     "symbol": "BLK",
+     "name": "Blackrock Inc",
+     "sector": "",
+     "weight": 0.2713
+    },
+    {
+     "ticker": "CRM",
+     "symbol": "CRM",
+     "name": "Salesforce Inc",
+     "sector": "",
+     "weight": 0.2696
+    },
+    {
+     "ticker": "DE",
+     "symbol": "DE",
+     "name": "Deere + Co",
+     "sector": "",
+     "weight": 0.2658
+    },
+    {
+     "ticker": "AXP",
+     "symbol": "AXP",
+     "name": "American Express Co",
+     "sector": "",
+     "weight": 0.2626
+    },
+    {
+     "ticker": "PFE",
+     "symbol": "PFE",
+     "name": "Pfizer Inc",
+     "sector": "",
+     "weight": 0.2577
+    },
+    {
+     "ticker": "COP",
+     "symbol": "COP",
+     "name": "Conocophillips",
+     "sector": "",
+     "weight": 0.2511
+    },
+    {
+     "ticker": "ISRG",
+     "symbol": "ISRG",
+     "name": "Intuitive Surgical Inc",
+     "sector": "",
+     "weight": 0.2451
+    },
+    {
+     "ticker": "ACN",
+     "symbol": "ACN",
+     "name": "Accenture PLC CL A",
+     "sector": "",
+     "weight": 0.2437
+    },
+    {
+     "ticker": "TJX",
+     "symbol": "TJX",
+     "name": "Tjx Companies Inc",
+     "sector": "",
+     "weight": 0.2331
+    },
+    {
+     "ticker": "SCHW",
+     "symbol": "SCHW",
+     "name": "Schwab (charles) Corp",
+     "sector": "",
+     "weight": 0.2328
+    },
+    {
+     "ticker": "T",
+     "symbol": "T",
+     "name": "At+t Inc",
+     "sector": "",
+     "weight": 0.2315
+    },
+    {
+     "ticker": "DHR",
+     "symbol": "DHR",
+     "name": "Danaher Corp",
+     "sector": "",
+     "weight": 0.2277
+    },
+    {
+     "ticker": "UBER",
+     "symbol": "UBER",
+     "name": "Uber Technologies Inc",
+     "sector": "",
+     "weight": 0.2205
+    },
+    {
+     "ticker": "SPGI",
+     "symbol": "SPGI",
+     "name": "S+p Global Inc",
+     "sector": "",
+     "weight": 0.2204
+    },
+    {
+     "ticker": "VRTX",
+     "symbol": "VRTX",
+     "name": "Vertex Pharmaceuticals Inc",
+     "sector": "",
+     "weight": 0.214
+    },
+    {
+     "ticker": "ETN",
+     "symbol": "ETN",
+     "name": "Eaton Corp PLC",
+     "sector": "",
+     "weight": 0.2118
+    },
+    {
+     "ticker": "BA",
+     "symbol": "BA",
+     "name": "Boeing Co/the",
+     "sector": "",
+     "weight": 0.2112
+    },
+    {
+     "ticker": "MRVL",
+     "symbol": "MRVL",
+     "name": "Marvell Technology Inc",
+     "sector": "",
+     "weight": 0.2086
+    },
+    {
+     "ticker": "PGR",
+     "symbol": "PGR",
+     "name": "Progressive Corp",
+     "sector": "",
+     "weight": 0.2077
+    },
+    {
+     "ticker": "LOW",
+     "symbol": "LOW",
+     "name": "Lowe S Cos Inc",
+     "sector": "",
+     "weight": 0.2003
+    },
+    {
+     "ticker": "CB",
+     "symbol": "CB",
+     "name": "Chubb Ltd",
+     "sector": "",
+     "weight": 0.1995
+    },
+    {
+     "ticker": "BMY",
+     "symbol": "BMY",
+     "name": "Bristol Myers Squibb Co",
+     "sector": "",
+     "weight": 0.1978
+    },
+    {
+     "ticker": "MO",
+     "symbol": "MO",
+     "name": "Altria Group Inc",
+     "sector": "",
+     "weight": 0.1966
+    },
+    {
+     "ticker": "NEM",
+     "symbol": "NEM",
+     "name": "Newmont Corp",
+     "sector": "",
+     "weight": 0.1946
+    },
+    {
+     "ticker": "MCK",
+     "symbol": "MCK",
+     "name": "Mckesson Corp",
+     "sector": "",
+     "weight": 0.1943
+    },
+    {
+     "ticker": "SNDK",
+     "symbol": "SNDK",
+     "name": "Sandisk Corp",
+     "sector": "",
+     "weight": 0.1935
+    },
+    {
+     "ticker": "SBUX",
+     "symbol": "SBUX",
+     "name": "Starbucks Corp",
+     "sector": "",
+     "weight": 0.1933
+    },
+    {
+     "ticker": "MDT",
+     "symbol": "MDT",
+     "name": "Medtronic PLC",
+     "sector": "",
+     "weight": 0.1915
+    },
+    {
+     "ticker": "PLD",
+     "symbol": "PLD",
+     "name": "Prologis Inc",
+     "sector": "",
+     "weight": 0.1906
+    },
+    {
+     "ticker": "LMT",
+     "symbol": "LMT",
+     "name": "Lockheed Martin Corp",
+     "sector": "",
+     "weight": 0.1889
+    },
+    {
+     "ticker": "PH",
+     "symbol": "PH",
+     "name": "Parker Hannifin Corp",
+     "sector": "",
+     "weight": 0.1877
+    },
+    {
+     "ticker": "ADP",
+     "symbol": "ADP",
+     "name": "Automatic Data Processing",
+     "sector": "",
+     "weight": 0.187
+    },
+    {
+     "ticker": "COF",
+     "symbol": "COF",
+     "name": "Capital One Financial Corp",
+     "sector": "",
+     "weight": 0.185
+    },
+    {
+     "ticker": "BKNG",
+     "symbol": "BKNG",
+     "name": "Booking Holdings Inc",
+     "sector": "",
+     "weight": 0.1843
+    },
+    {
+     "ticker": "CVS",
+     "symbol": "CVS",
+     "name": "CVS Health Corp",
+     "sector": "",
+     "weight": 0.1755
+    },
+    {
+     "ticker": "STX",
+     "symbol": "STX",
+     "name": "Seagate Technology Holdings",
+     "sector": "",
+     "weight": 0.1752
+    },
+    {
+     "ticker": "SYK",
+     "symbol": "SYK",
+     "name": "Stryker Corp",
+     "sector": "",
+     "weight": 0.1745
+    },
+    {
+     "ticker": "CME",
+     "symbol": "CME",
+     "name": "CME Group Inc",
+     "sector": "",
+     "weight": 0.1711
+    },
+    {
+     "ticker": "MPC",
+     "symbol": "MPC",
+     "name": "Marathon Petroleum Corp",
+     "sector": "",
+     "weight": 0.1684
+    },
+    {
+     "ticker": "SO",
+     "symbol": "SO",
+     "name": "Southern Co/the",
+     "sector": "",
+     "weight": 0.1661
+    },
+    {
+     "ticker": "APP",
+     "symbol": "APP",
+     "name": "Applovin Corp Class A",
+     "sector": "",
+     "weight": 0.1652
+    },
+    {
+     "ticker": "WDC",
+     "symbol": "WDC",
+     "name": "Western Digital Corp",
+     "sector": "",
+     "weight": 0.1607
+    },
+    {
+     "ticker": "EQIX",
+     "symbol": "EQIX",
+     "name": "Equinix Inc",
+     "sector": "",
+     "weight": 0.1599
+    },
+    {
+     "ticker": "NOW",
+     "symbol": "NOW",
+     "name": "Servicenow Inc",
+     "sector": "",
+     "weight": 0.1587
+    },
+    {
+     "ticker": "BNY",
+     "symbol": "BNY",
+     "name": "Bank Of New York Mellon Corp",
+     "sector": "",
+     "weight": 0.1579
+    },
+    {
+     "ticker": "DELL",
+     "symbol": "DELL",
+     "name": "Dell Technologies C",
+     "sector": "",
+     "weight": 0.1558
+    },
+    {
+     "ticker": "VLO",
+     "symbol": "VLO",
+     "name": "Valero Energy Corp",
+     "sector": "",
+     "weight": 0.1556
+    },
+    {
+     "ticker": "DUK",
+     "symbol": "DUK",
+     "name": "Duke Energy Corp",
+     "sector": "",
+     "weight": 0.155
+    },
+    {
+     "ticker": "PSX",
+     "symbol": "PSX",
+     "name": "Phillips 66",
+     "sector": "",
+     "weight": 0.154
+    },
+    {
+     "ticker": "ICE",
+     "symbol": "ICE",
+     "name": "Intercontinental Exchange In",
+     "sector": "",
+     "weight": 0.1526
+    },
+    {
+     "ticker": "MRSH",
+     "symbol": "MRSH",
+     "name": "Marsh + Mclennan Cos",
+     "sector": "",
+     "weight": 0.1522
+    },
+    {
+     "ticker": "MMM",
+     "symbol": "MMM",
+     "name": "3M Co",
+     "sector": "",
+     "weight": 0.1503
+    },
+    {
+     "ticker": "USB",
+     "symbol": "USB",
+     "name": "US Bancorp",
+     "sector": "",
+     "weight": 0.1459
+    },
+    {
+     "ticker": "CSX",
+     "symbol": "CSX",
+     "name": "CSX Corp",
+     "sector": "",
+     "weight": 0.1456
+    },
+    {
+     "ticker": "ADBE",
+     "symbol": "ADBE",
+     "name": "Adobe Inc",
+     "sector": "",
+     "weight": 0.1448
+    },
+    {
+     "ticker": "EMR",
+     "symbol": "EMR",
+     "name": "Emerson Electric Co",
+     "sector": "",
+     "weight": 0.1438
+    },
+    {
+     "ticker": "GD",
+     "symbol": "GD",
+     "name": "General Dynamics Corp",
+     "sector": "",
+     "weight": 0.1436
+    },
+    {
+     "ticker": "MRNA",
+     "symbol": "MRNA",
+     "name": "Moderna Inc",
+     "sector": "",
+     "weight": 0.1436
+    },
+    {
+     "ticker": "ELV",
+     "symbol": "ELV",
+     "name": "Elevance Health Inc",
+     "sector": "",
+     "weight": 0.1434
+    },
+    {
+     "ticker": "INTU",
+     "symbol": "INTU",
+     "name": "Intuit Inc",
+     "sector": "",
+     "weight": 0.1433
+    },
+    {
+     "ticker": "TT",
+     "symbol": "TT",
+     "name": "Trane Technologies PLC",
+     "sector": "",
+     "weight": 0.1425
+    },
+    {
+     "ticker": "PNC",
+     "symbol": "PNC",
+     "name": "PNC Financial Services Group",
+     "sector": "",
+     "weight": 0.1422
+    },
+    {
+     "ticker": "BX",
+     "symbol": "BX",
+     "name": "Blackstone Inc",
+     "sector": "",
+     "weight": 0.1418
+    },
+    {
+     "ticker": "MAR",
+     "symbol": "MAR",
+     "name": "Marriott International CL A",
+     "sector": "",
+     "weight": 0.1409
+    },
+    {
+     "ticker": "CDNS",
+     "symbol": "CDNS",
+     "name": "Cadence Design Sys Inc",
+     "sector": "",
+     "weight": 0.1408
+    },
+    {
+     "ticker": "REGN",
+     "symbol": "REGN",
+     "name": "Regeneron Pharmaceuticals",
+     "sector": "",
+     "weight": 0.1382
+    },
+    {
+     "ticker": "GLW",
+     "symbol": "GLW",
+     "name": "Corning Inc",
+     "sector": "",
+     "weight": 0.137
+    },
+    {
+     "ticker": "AMT",
+     "symbol": "AMT",
+     "name": "American Tower Corp",
+     "sector": "",
+     "weight": 0.1365
+    },
+    {
+     "ticker": "WM",
+     "symbol": "WM",
+     "name": "Waste Management Inc",
+     "sector": "",
+     "weight": 0.136
+    },
+    {
+     "ticker": "CEG",
+     "symbol": "CEG",
+     "name": "Constellation Energy",
+     "sector": "",
+     "weight": 0.136
+    },
+    {
+     "ticker": "SNPS",
+     "symbol": "SNPS",
+     "name": "Synopsys Inc",
+     "sector": "",
+     "weight": 0.1358
+    },
+    {
+     "ticker": "PWR",
+     "symbol": "PWR",
+     "name": "Quanta Services Inc",
+     "sector": "",
+     "weight": 0.1349
+    },
+    {
+     "ticker": "CMCSA",
+     "symbol": "CMCSA",
+     "name": "Comcast Corp Class A",
+     "sector": "",
+     "weight": 0.1348
+    },
+    {
+     "ticker": "HWM",
+     "symbol": "HWM",
+     "name": "Howmet Aerospace Inc",
+     "sector": "",
+     "weight": 0.1345
+    },
+    {
+     "ticker": "MSI",
+     "symbol": "MSI",
+     "name": "Motorola Solutions Inc",
+     "sector": "",
+     "weight": 0.1343
+    },
+    {
+     "ticker": "FCX",
+     "symbol": "FCX",
+     "name": "Freeport Mcmoran Inc",
+     "sector": "",
+     "weight": 0.1333
+    },
+    {
+     "ticker": "JCI",
+     "symbol": "JCI",
+     "name": "Johnson Controls Internation",
+     "sector": "",
+     "weight": 0.1315
+    },
+    {
+     "ticker": "HLT",
+     "symbol": "HLT",
+     "name": "Hilton Worldwide Holdings In",
+     "sector": "",
+     "weight": 0.1315
+    },
+    {
+     "ticker": "MDLZ",
+     "symbol": "MDLZ",
+     "name": "Mondelez International Inc A",
+     "sector": "",
+     "weight": 0.1307
+    },
+    {
+     "ticker": "RCL",
+     "symbol": "RCL",
+     "name": "Royal Caribbean Cruises Ltd",
+     "sector": "",
+     "weight": 0.13
+    },
+    {
+     "ticker": "TRV",
+     "symbol": "TRV",
+     "name": "Travelers Cos Inc/the",
+     "sector": "",
+     "weight": 0.1287
+    },
+    {
+     "ticker": "UPS",
+     "symbol": "UPS",
+     "name": "United Parcel Service CL B",
+     "sector": "",
+     "weight": 0.1282
+    },
+    {
+     "ticker": "WMB",
+     "symbol": "WMB",
+     "name": "Williams Cos Inc",
+     "sector": "",
+     "weight": 0.1273
+    },
+    {
+     "ticker": "TMUS",
+     "symbol": "TMUS",
+     "name": "T Mobile US Inc",
+     "sector": "",
+     "weight": 0.1258
+    },
+    {
+     "ticker": "SHW",
+     "symbol": "SHW",
+     "name": "Sherwin Williams Co/the",
+     "sector": "",
+     "weight": 0.1248
+    },
+    {
+     "ticker": "CI",
+     "symbol": "CI",
+     "name": "The Cigna Group",
+     "sector": "",
+     "weight": 0.1235
+    },
+    {
+     "ticker": "EOG",
+     "symbol": "EOG",
+     "name": "EOG Resources Inc",
+     "sector": "",
+     "weight": 0.1225
+    },
+    {
+     "ticker": "ABNB",
+     "symbol": "ABNB",
+     "name": "Airbnb Inc Class A",
+     "sector": "",
+     "weight": 0.1207
+    },
+    {
+     "ticker": "CL",
+     "symbol": "CL",
+     "name": "Colgate Palmolive Co",
+     "sector": "",
+     "weight": 0.1205
+    },
+    {
+     "ticker": "GM",
+     "symbol": "GM",
+     "name": "General Motors Co",
+     "sector": "",
+     "weight": 0.1198
+    },
+    {
+     "ticker": "CTAS",
+     "symbol": "CTAS",
+     "name": "Cintas Corp",
+     "sector": "",
+     "weight": 0.1195
+    },
+    {
+     "ticker": "ECL",
+     "symbol": "ECL",
+     "name": "Ecolab Inc",
+     "sector": "",
+     "weight": 0.1188
+    },
+    {
+     "ticker": "ROST",
+     "symbol": "ROST",
+     "name": "Ross Stores Inc",
+     "sector": "",
+     "weight": 0.1179
+    },
+    {
+     "ticker": "FTNT",
+     "symbol": "FTNT",
+     "name": "Fortinet Inc",
+     "sector": "",
+     "weight": 0.1174
+    },
+    {
+     "ticker": "MCO",
+     "symbol": "MCO",
+     "name": "Moody S Corp",
+     "sector": "",
+     "weight": 0.1172
+    },
+    {
+     "ticker": "SPG",
+     "symbol": "SPG",
+     "name": "Simon Property Group Inc",
+     "sector": "",
+     "weight": 0.1169
+    },
+    {
+     "ticker": "VRT",
+     "symbol": "VRT",
+     "name": "Vertiv Holdings Co A",
+     "sector": "",
+     "weight": 0.1153
+    },
+    {
+     "ticker": "ITW",
+     "symbol": "ITW",
+     "name": "Illinois Tool Works",
+     "sector": "",
+     "weight": 0.1151
+    },
+    {
+     "ticker": "HCA",
+     "symbol": "HCA",
+     "name": "HCA Healthcare Inc",
+     "sector": "",
+     "weight": 0.1145
+    },
+    {
+     "ticker": "SLB",
+     "symbol": "SLB",
+     "name": "Slb Ltd",
+     "sector": "",
+     "weight": 0.114
+    },
+    {
+     "ticker": "NSC",
+     "symbol": "NSC",
+     "name": "Norfolk Southern Corp",
+     "sector": "",
+     "weight": 0.1136
+    },
+    {
+     "ticker": "TGT",
+     "symbol": "TGT",
+     "name": "Target Corp",
+     "sector": "",
+     "weight": 0.1134
+    },
+    {
+     "ticker": "NOC",
+     "symbol": "NOC",
+     "name": "Northrop Grumman Corp",
+     "sector": "",
+     "weight": 0.1127
+    },
+    {
+     "ticker": "AJG",
+     "symbol": "AJG",
+     "name": "Arthur J Gallagher + Co",
+     "sector": "",
+     "weight": 0.1117
+    },
+    {
+     "ticker": "ORLY",
+     "symbol": "ORLY",
+     "name": "O Reilly Automotive Inc",
+     "sector": "",
+     "weight": 0.1115
+    },
+    {
+     "ticker": "HON",
+     "symbol": "HON",
+     "name": "Honeywell International Inc",
+     "sector": "",
+     "weight": 0.1113
+    },
+    {
+     "ticker": "AON",
+     "symbol": "AON",
+     "name": "Aon PLC Class A",
+     "sector": "",
+     "weight": 0.1098
+    },
+    {
+     "ticker": "FDX",
+     "symbol": "FDX",
+     "name": "Fedex Corp",
+     "sector": "",
+     "weight": 0.1084
+    },
+    {
+     "ticker": "AEP",
+     "symbol": "AEP",
+     "name": "American Electric Power",
+     "sector": "",
+     "weight": 0.1075
+    },
+    {
+     "ticker": "KKR",
+     "symbol": "KKR",
+     "name": "KKR + Co Inc",
+     "sector": "",
+     "weight": 0.1072
+    },
+    {
+     "ticker": "APD",
+     "symbol": "APD",
+     "name": "Air Products + Chemicals Inc",
+     "sector": "",
+     "weight": 0.107
+    },
+    {
+     "ticker": "URI",
+     "symbol": "URI",
+     "name": "United Rentals Inc",
+     "sector": "",
+     "weight": 0.106
+    },
+    {
+     "ticker": "KMB",
+     "symbol": "KMB",
+     "name": "Kimberly Clark Corp",
+     "sector": "",
+     "weight": 0.1046
+    },
+    {
+     "ticker": "TDG",
+     "symbol": "TDG",
+     "name": "Transdigm Group Inc",
+     "sector": "",
+     "weight": 0.1042
+    },
+    {
+     "ticker": "DASH",
+     "symbol": "DASH",
+     "name": "Doordash Inc A",
+     "sector": "",
+     "weight": 0.1034
+    },
+    {
+     "ticker": "MPWR",
+     "symbol": "MPWR",
+     "name": "Monolithic Power Systems Inc",
+     "sector": "",
+     "weight": 0.103
+    },
+    {
+     "ticker": "COR",
+     "symbol": "COR",
+     "name": "Cencora Inc",
+     "sector": "",
+     "weight": 0.1026
+    },
+    {
+     "ticker": "NXPI",
+     "symbol": "NXPI",
+     "name": "Nxp Semiconductors NV",
+     "sector": "",
+     "weight": 0.1017
+    },
+    {
+     "ticker": "ALL",
+     "symbol": "ALL",
+     "name": "Allstate Corp",
+     "sector": "",
+     "weight": 0.1016
+    },
+    {
+     "ticker": "MNST",
+     "symbol": "MNST",
+     "name": "Monster Beverage Corp",
+     "sector": "",
+     "weight": 0.1
+    },
+    {
+     "ticker": "BSX",
+     "symbol": "BSX",
+     "name": "Boston Scientific Corp",
+     "sector": "",
+     "weight": 0.0997
+    },
+    {
+     "ticker": "HOOD",
+     "symbol": "HOOD",
+     "name": "Robinhood Markets Inc A",
+     "sector": "",
+     "weight": 0.0992
+    },
+    {
+     "ticker": "CRH",
+     "symbol": "CRH",
+     "name": "Crh PLC",
+     "sector": "",
+     "weight": 0.0991
+    },
+    {
+     "ticker": "CAH",
+     "symbol": "CAH",
+     "name": "Cardinal Health Inc",
+     "sector": "",
+     "weight": 0.099
+    },
+    {
+     "ticker": "GWW",
+     "symbol": "GWW",
+     "name": "WW Grainger Inc",
+     "sector": "",
+     "weight": 0.0984
+    },
+    {
+     "ticker": "HPE",
+     "symbol": "HPE",
+     "name": "Hewlett Packard Enterprise",
+     "sector": "",
+     "weight": 0.098
+    },
+    {
+     "ticker": "DLR",
+     "symbol": "DLR",
+     "name": "Digital Realty Trust Inc",
+     "sector": "",
+     "weight": 0.098
+    },
+    {
+     "ticker": "TEL",
+     "symbol": "TEL",
+     "name": "TE Connectivity PLC",
+     "sector": "",
+     "weight": 0.0972
+    },
+    {
+     "ticker": "FAST",
+     "symbol": "FAST",
+     "name": "Fastenal Co",
+     "sector": "",
+     "weight": 0.0968
+    },
+    {
+     "ticker": "CMI",
+     "symbol": "CMI",
+     "name": "Cummins Inc",
+     "sector": "",
+     "weight": 0.0962
+    },
+    {
+     "ticker": "TFC",
+     "symbol": "TFC",
+     "name": "Truist Financial Corp",
+     "sector": "",
+     "weight": 0.0944
+    },
+    {
+     "ticker": "KMI",
+     "symbol": "KMI",
+     "name": "Kinder Morgan Inc",
+     "sector": "",
+     "weight": 0.0944
+    },
+    {
+     "ticker": "TRGP",
+     "symbol": "TRGP",
+     "name": "Targa Resources Corp",
+     "sector": "",
+     "weight": 0.093
+    },
+    {
+     "ticker": "EW",
+     "symbol": "EW",
+     "name": "Edwards Lifesciences Corp",
+     "sector": "",
+     "weight": 0.0926
+    },
+    {
+     "ticker": "D",
+     "symbol": "D",
+     "name": "Dominion Energy Inc",
+     "sector": "",
+     "weight": 0.0925
+    },
+    {
+     "ticker": "DDOG",
+     "symbol": "DDOG",
+     "name": "Datadog Inc Class A",
+     "sector": "",
+     "weight": 0.0921
+    },
+    {
+     "ticker": "NUE",
+     "symbol": "NUE",
+     "name": "Nucor Corp",
+     "sector": "",
+     "weight": 0.0895
+    },
+    {
+     "ticker": "APO",
+     "symbol": "APO",
+     "name": "Apollo Global Management Inc",
+     "sector": "",
+     "weight": 0.0894
+    },
+    {
+     "ticker": "BDX",
+     "symbol": "BDX",
+     "name": "Becton Dickinson And Co",
+     "sector": "",
+     "weight": 0.089
+    },
+    {
+     "ticker": "AFL",
+     "symbol": "AFL",
+     "name": "Aflac Inc",
+     "sector": "",
+     "weight": 0.0871
+    },
+    {
+     "ticker": "PSA",
+     "symbol": "PSA",
+     "name": "Public Storage",
+     "sector": "",
+     "weight": 0.0871
+    },
+    {
+     "ticker": "O",
+     "symbol": "O",
+     "name": "Realty Income Corp",
+     "sector": "",
+     "weight": 0.0868
+    },
+    {
+     "ticker": "PCAR",
+     "symbol": "PCAR",
+     "name": "Paccar Inc",
+     "sector": "",
+     "weight": 0.0859
+    },
+    {
+     "ticker": "OKE",
+     "symbol": "OKE",
+     "name": "ONEOK Inc",
+     "sector": "",
+     "weight": 0.0851
+    },
+    {
+     "ticker": "AME",
+     "symbol": "AME",
+     "name": "Ametek Inc",
+     "sector": "",
+     "weight": 0.0844
+    },
+    {
+     "ticker": "IDXX",
+     "symbol": "IDXX",
+     "name": "Idexx Laboratories Inc",
+     "sector": "",
+     "weight": 0.0844
+    },
+    {
+     "ticker": "ADSK",
+     "symbol": "ADSK",
+     "name": "Autodesk Inc",
+     "sector": "",
+     "weight": 0.0844
+    },
+    {
+     "ticker": "DAL",
+     "symbol": "DAL",
+     "name": "Delta Air Lines Inc",
+     "sector": "",
+     "weight": 0.0844
+    },
+    {
+     "ticker": "BE",
+     "symbol": "BE",
+     "name": "Bloom Energy Corp A",
+     "sector": "",
+     "weight": 0.0842
+    },
+    {
+     "ticker": "MET",
+     "symbol": "MET",
+     "name": "Metlife Inc",
+     "sector": "",
+     "weight": 0.0841
+    },
+    {
+     "ticker": "HONA",
+     "symbol": "HONA",
+     "name": "Honeywell Aerospace Inc",
+     "sector": "",
+     "weight": 0.0815
+    },
+    {
+     "ticker": "HUM",
+     "symbol": "HUM",
+     "name": "Humana Inc",
+     "sector": "",
+     "weight": 0.0813
+    },
+    {
+     "ticker": "AZO",
+     "symbol": "AZO",
+     "name": "Autozone Inc",
+     "sector": "",
+     "weight": 0.0809
+    },
+    {
+     "ticker": "CVNA",
+     "symbol": "CVNA",
+     "name": "Carvana Co",
+     "sector": "",
+     "weight": 0.0809
+    },
+    {
+     "ticker": "ETR",
+     "symbol": "ETR",
+     "name": "Entergy Corp",
+     "sector": "",
+     "weight": 0.0804
+    },
+    {
+     "ticker": "LITE",
+     "symbol": "LITE",
+     "name": "Lumentum Holdings Inc",
+     "sector": "",
+     "weight": 0.08
+    },
+    {
+     "ticker": "SRE",
+     "symbol": "SRE",
+     "name": "Sempra",
+     "sector": "",
+     "weight": 0.0792
+    },
+    {
+     "ticker": "KDP",
+     "symbol": "KDP",
+     "name": "Keurig DR Pepper Inc",
+     "sector": "",
+     "weight": 0.0791
+    },
+    {
+     "ticker": "LHX",
+     "symbol": "LHX",
+     "name": "L3harris Technologies Inc",
+     "sector": "",
+     "weight": 0.079
+    },
+    {
+     "ticker": "WAB",
+     "symbol": "WAB",
+     "name": "Wabtec Corp",
+     "sector": "",
+     "weight": 0.0788
+    },
+    {
+     "ticker": "FERG",
+     "symbol": "FERG",
+     "name": "Ferguson Enterprises Inc",
+     "sector": "",
+     "weight": 0.0774
+    },
+    {
+     "ticker": "XEL",
+     "symbol": "XEL",
+     "name": "Xcel Energy Inc",
+     "sector": "",
+     "weight": 0.0773
+    },
+    {
+     "ticker": "PYPL",
+     "symbol": "PYPL",
+     "name": "Paypal Holdings Inc",
+     "sector": "",
+     "weight": 0.0773
+    },
+    {
+     "ticker": "A",
+     "symbol": "A",
+     "name": "Agilent Technologies Inc",
+     "sector": "",
+     "weight": 0.0772
+    },
+    {
+     "ticker": "KEYS",
+     "symbol": "KEYS",
+     "name": "Keysight Technologies In",
+     "sector": "",
+     "weight": 0.0766
+    },
+    {
+     "ticker": "EBAY",
+     "symbol": "EBAY",
+     "name": "Ebay Inc",
+     "sector": "",
+     "weight": 0.0763
+    },
+    {
+     "ticker": "FITB",
+     "symbol": "FITB",
+     "name": "Fifth Third Bancorp",
+     "sector": "",
+     "weight": 0.0757
+    },
+    {
+     "ticker": "NDAQ",
+     "symbol": "NDAQ",
+     "name": "Nasdaq Inc",
+     "sector": "",
+     "weight": 0.0749
+    },
+    {
+     "ticker": "RSG",
+     "symbol": "RSG",
+     "name": "Republic Services Inc",
+     "sector": "",
+     "weight": 0.0746
+    },
+    {
+     "ticker": "VYLR",
+     "symbol": "VYLR",
+     "name": "Vylor Inc",
+     "sector": "",
+     "weight": 0.0744
+    },
+    {
+     "ticker": "F",
+     "symbol": "F",
+     "name": "Ford Motor Co",
+     "sector": "",
+     "weight": 0.0743
+    },
+    {
+     "ticker": "GRMN",
+     "symbol": "GRMN",
+     "name": "Garmin Ltd",
+     "sector": "",
+     "weight": 0.0738
+    },
+    {
+     "ticker": "DVN",
+     "symbol": "DVN",
+     "name": "Devon Energy Corp",
+     "sector": "",
+     "weight": 0.0734
+    },
+    {
+     "ticker": "MSCI",
+     "symbol": "MSCI",
+     "name": "MSCI Inc",
+     "sector": "",
+     "weight": 0.0734
+    },
+    {
+     "ticker": "BKR",
+     "symbol": "BKR",
+     "name": "Baker Hughes Co",
+     "sector": "",
+     "weight": 0.0733
+    },
+    {
+     "ticker": "VMRK",
+     "symbol": "VMRK",
+     "name": "Vivmark Residential",
+     "sector": "",
+     "weight": 0.0727
+    },
+    {
+     "ticker": "STT",
+     "symbol": "STT",
+     "name": "State Street Corp",
+     "sector": "",
+     "weight": 0.0725
+    },
+    {
+     "ticker": "EXC",
+     "symbol": "EXC",
+     "name": "Exelon Corp",
+     "sector": "",
+     "weight": 0.0724
+    },
+    {
+     "ticker": "ROP",
+     "symbol": "ROP",
+     "name": "Roper Technologies Inc",
+     "sector": "",
+     "weight": 0.0723
+    },
+    {
+     "ticker": "WAT",
+     "symbol": "WAT",
+     "name": "Waters Corp",
+     "sector": "",
+     "weight": 0.0721
+    },
+    {
+     "ticker": "NKE",
+     "symbol": "NKE",
+     "name": "Nike Inc CL B",
+     "sector": "",
+     "weight": 0.0717
+    },
+    {
+     "ticker": "VTR",
+     "symbol": "VTR",
+     "name": "Ventas Inc",
+     "sector": "",
+     "weight": 0.0714
+    },
+    {
+     "ticker": "XYZ",
+     "symbol": "XYZ",
+     "name": "Block Inc",
+     "sector": "",
+     "weight": 0.0713
+    },
+    {
+     "ticker": "AMP",
+     "symbol": "AMP",
+     "name": "Ameriprise Financial Inc",
+     "sector": "",
+     "weight": 0.0706
+    },
+    {
+     "ticker": "VEEV",
+     "symbol": "VEEV",
+     "name": "Veeva Systems Inc Class A",
+     "sector": "",
+     "weight": 0.0704
+    },
+    {
+     "ticker": "CMG",
+     "symbol": "CMG",
+     "name": "Chipotle Mexican Grill Inc",
+     "sector": "",
+     "weight": 0.0699
+    },
+    {
+     "ticker": "IQV",
+     "symbol": "IQV",
+     "name": "Iqvia Holdings Inc",
+     "sector": "",
+     "weight": 0.0696
+    },
+    {
+     "ticker": "ED",
+     "symbol": "ED",
+     "name": "Consolidated Edison Inc",
+     "sector": "",
+     "weight": 0.068
+    },
+    {
+     "ticker": "ROK",
+     "symbol": "ROK",
+     "name": "Rockwell Automation Inc",
+     "sector": "",
+     "weight": 0.0678
+    },
+    {
+     "ticker": "YUM",
+     "symbol": "YUM",
+     "name": "Yum Brands Inc",
+     "sector": "",
+     "weight": 0.0674
+    },
+    {
+     "ticker": "CARR",
+     "symbol": "CARR",
+     "name": "Carrier Global Corp",
+     "sector": "",
+     "weight": 0.0674
+    },
+    {
+     "ticker": "AIG",
+     "symbol": "AIG",
+     "name": "American International Group",
+     "sector": "",
+     "weight": 0.0663
+    },
+    {
+     "ticker": "PRU",
+     "symbol": "PRU",
+     "name": "Prudential Financial Inc",
+     "sector": "",
+     "weight": 0.0654
+    },
+    {
+     "ticker": "COHR",
+     "symbol": "COHR",
+     "name": "Coherent Corp",
+     "sector": "",
+     "weight": 0.0649
+    },
+    {
+     "ticker": "OXY",
+     "symbol": "OXY",
+     "name": "Occidental Petroleum Corp",
+     "sector": "",
+     "weight": 0.0639
+    },
+    {
+     "ticker": "VST",
+     "symbol": "VST",
+     "name": "Vistra Corp",
+     "sector": "",
+     "weight": 0.0638
+    },
+    {
+     "ticker": "TTWO",
+     "symbol": "TTWO",
+     "name": "Take Two Interactive Softwre",
+     "sector": "",
+     "weight": 0.0609
+    },
+    {
+     "ticker": "UAL",
+     "symbol": "UAL",
+     "name": "United Airlines Holdings Inc",
+     "sector": "",
+     "weight": 0.0605
+    },
+    {
+     "ticker": "CCL",
+     "symbol": "CCL",
+     "name": "Carnival Corp Ltd",
+     "sector": "",
+     "weight": 0.0604
+    },
+    {
+     "ticker": "KR",
+     "symbol": "KR",
+     "name": "Kroger Co",
+     "sector": "",
+     "weight": 0.0602
+    },
+    {
+     "ticker": "FIX",
+     "symbol": "FIX",
+     "name": "Comfort Systems USA Inc",
+     "sector": "",
+     "weight": 0.06
+    },
+    {
+     "ticker": "TER",
+     "symbol": "TER",
+     "name": "Teradyne Inc",
+     "sector": "",
+     "weight": 0.0593
+    },
+    {
+     "ticker": "CIEN",
+     "symbol": "CIEN",
+     "name": "Ciena Corp",
+     "sector": "",
+     "weight": 0.0593
+    },
+    {
+     "ticker": "CBRE",
+     "symbol": "CBRE",
+     "name": "Cbre Group Inc A",
+     "sector": "",
+     "weight": 0.059
+    },
+    {
+     "ticker": "WEC",
+     "symbol": "WEC",
+     "name": "Wec Energy Group Inc",
+     "sector": "",
+     "weight": 0.0589
+    },
+    {
+     "ticker": "CCI",
+     "symbol": "CCI",
+     "name": "Crown Castle Inc",
+     "sector": "",
+     "weight": 0.0586
+    },
+    {
+     "ticker": "CBOE",
+     "symbol": "CBOE",
+     "name": "Cboe Global Markets Inc",
+     "sector": "",
+     "weight": 0.0585
+    },
+    {
+     "ticker": "DHI",
+     "symbol": "DHI",
+     "name": "DR Horton Inc",
+     "sector": "",
+     "weight": 0.0585
+    },
+    {
+     "ticker": "WDAY",
+     "symbol": "WDAY",
+     "name": "Workday Inc Class A",
+     "sector": "",
+     "weight": 0.0583
+    },
+    {
+     "ticker": "GEHC",
+     "symbol": "GEHC",
+     "name": "GE Healthcare Technology",
+     "sector": "",
+     "weight": 0.0582
+    },
+    {
+     "ticker": "BIIB",
+     "symbol": "BIIB",
+     "name": "Biogen Inc",
+     "sector": "",
+     "weight": 0.0579
+    },
+    {
+     "ticker": "VMC",
+     "symbol": "VMC",
+     "name": "Vulcan Materials Co",
+     "sector": "",
+     "weight": 0.0576
+    },
+    {
+     "ticker": "PEG",
+     "symbol": "PEG",
+     "name": "Public Service Enterprise GP",
+     "sector": "",
+     "weight": 0.0575
+    },
+    {
+     "ticker": "SYY",
+     "symbol": "SYY",
+     "name": "Sysco Corp",
+     "sector": "",
+     "weight": 0.0574
+    },
+    {
+     "ticker": "HIG",
+     "symbol": "HIG",
+     "name": "Hartford Insurance Group Inc",
+     "sector": "",
+     "weight": 0.0573
+    },
+    {
+     "ticker": "PAYX",
+     "symbol": "PAYX",
+     "name": "Paychex Inc",
+     "sector": "",
+     "weight": 0.0571
+    },
+    {
+     "ticker": "ACGL",
+     "symbol": "ACGL",
+     "name": "Arch Capital Group Ltd",
+     "sector": "",
+     "weight": 0.0569
+    },
+    {
+     "ticker": "FANG",
+     "symbol": "FANG",
+     "name": "Diamondback Energy Inc",
+     "sector": "",
+     "weight": 0.0561
+    },
+    {
+     "ticker": "IBKR",
+     "symbol": "IBKR",
+     "name": "Interactive Brokers Gro CL A",
+     "sector": "",
+     "weight": 0.0542
+    },
+    {
+     "ticker": "MTD",
+     "symbol": "MTD",
+     "name": "Mettler Toledo International",
+     "sector": "",
+     "weight": 0.0539
+    },
+    {
+     "ticker": "CNC",
+     "symbol": "CNC",
+     "name": "Centene Corp",
+     "sector": "",
+     "weight": 0.0534
+    },
+    {
+     "ticker": "NTAP",
+     "symbol": "NTAP",
+     "name": "Netapp Inc",
+     "sector": "",
+     "weight": 0.0532
+    },
+    {
+     "ticker": "ZTS",
+     "symbol": "ZTS",
+     "name": "Zoetis Inc",
+     "sector": "",
+     "weight": 0.0525
+    },
+    {
+     "ticker": "P",
+     "symbol": "P",
+     "name": "Everpure Inc A",
+     "sector": "",
+     "weight": 0.0523
+    },
+    {
+     "ticker": "RMD",
+     "symbol": "RMD",
+     "name": "Resmed Inc",
+     "sector": "",
+     "weight": 0.052
+    },
+    {
+     "ticker": "EXR",
+     "symbol": "EXR",
+     "name": "Extra Space Storage Inc",
+     "sector": "",
+     "weight": 0.0519
+    },
+    {
+     "ticker": "FISV",
+     "symbol": "FISV",
+     "name": "Fiserv Inc",
+     "sector": "",
+     "weight": 0.0517
+    },
+    {
+     "ticker": "ADM",
+     "symbol": "ADM",
+     "name": "Archer Daniels Midland Co",
+     "sector": "",
+     "weight": 0.0516
+    },
+    {
+     "ticker": "IRM",
+     "symbol": "IRM",
+     "name": "Iron Mountain Inc",
+     "sector": "",
+     "weight": 0.0509
+    },
+    {
+     "ticker": "TWLO",
+     "symbol": "TWLO",
+     "name": "Twilio Inc A",
+     "sector": "",
+     "weight": 0.0505
+    },
+    {
+     "ticker": "MCHP",
+     "symbol": "MCHP",
+     "name": "Microchip Technology Inc",
+     "sector": "",
+     "weight": 0.0505
+    },
+    {
+     "ticker": "EQT",
+     "symbol": "EQT",
+     "name": "EQT Corp",
+     "sector": "",
+     "weight": 0.0503
+    },
+    {
+     "ticker": "NTRS",
+     "symbol": "NTRS",
+     "name": "Northern Trust Corp",
+     "sector": "",
+     "weight": 0.0502
+    },
+    {
+     "ticker": "ILMN",
+     "symbol": "ILMN",
+     "name": "Illumina Inc",
+     "sector": "",
+     "weight": 0.05
+    },
+    {
+     "ticker": "HBAN",
+     "symbol": "HBAN",
+     "name": "Huntington Bancshares Inc",
+     "sector": "",
+     "weight": 0.0491
+    },
+    {
+     "ticker": "MLM",
+     "symbol": "MLM",
+     "name": "Martin Marietta Materials",
+     "sector": "",
+     "weight": 0.049
+    },
+    {
+     "ticker": "STLD",
+     "symbol": "STLD",
+     "name": "Steel Dynamics Inc",
+     "sector": "",
+     "weight": 0.049
+    },
+    {
+     "ticker": "MTB",
+     "symbol": "MTB",
+     "name": "M + T Bank Corp",
+     "sector": "",
+     "weight": 0.0489
+    },
+    {
+     "ticker": "AEE",
+     "symbol": "AEE",
+     "name": "Ameren Corporation",
+     "sector": "",
+     "weight": 0.0486
+    },
+    {
+     "ticker": "ODFL",
+     "symbol": "ODFL",
+     "name": "Old Dominion Freight Line",
+     "sector": "",
+     "weight": 0.0483
+    },
+    {
+     "ticker": "ARES",
+     "symbol": "ARES",
+     "name": "Ares Management Corp A",
+     "sector": "",
+     "weight": 0.0481
+    },
+    {
+     "ticker": "WTW",
+     "symbol": "WTW",
+     "name": "Willis Towers Watson PLC",
+     "sector": "",
+     "weight": 0.0477
+    },
+    {
+     "ticker": "WSM",
+     "symbol": "WSM",
+     "name": "Williams Sonoma Inc",
+     "sector": "",
+     "weight": 0.0476
+    },
+    {
+     "ticker": "DG",
+     "symbol": "DG",
+     "name": "Dollar General Corp",
+     "sector": "",
+     "weight": 0.0468
+    },
+    {
+     "ticker": "CPAY",
+     "symbol": "CPAY",
+     "name": "Corpay Inc",
+     "sector": "",
+     "weight": 0.0464
+    },
+    {
+     "ticker": "DXCM",
+     "symbol": "DXCM",
+     "name": "Dexcom Inc",
+     "sector": "",
+     "weight": 0.0463
+    },
+    {
+     "ticker": "TDY",
+     "symbol": "TDY",
+     "name": "Teledyne Technologies Inc",
+     "sector": "",
+     "weight": 0.0463
+    },
+    {
+     "ticker": "LH",
+     "symbol": "LH",
+     "name": "Labcorp Holdings Inc",
+     "sector": "",
+     "weight": 0.0461
+    },
+    {
+     "ticker": "AWK",
+     "symbol": "AWK",
+     "name": "American Water Works Co Inc",
+     "sector": "",
+     "weight": 0.0461
+    },
+    {
+     "ticker": "OTIS",
+     "symbol": "OTIS",
+     "name": "Otis Worldwide Corp",
+     "sector": "",
+     "weight": 0.0458
+    },
+    {
+     "ticker": "ATO",
+     "symbol": "ATO",
+     "name": "Atmos Energy Corp",
+     "sector": "",
+     "weight": 0.0457
+    },
+    {
+     "ticker": "OKTA",
+     "symbol": "OKTA",
+     "name": "Okta Inc",
+     "sector": "",
+     "weight": 0.0456
+    },
+    {
+     "ticker": "IR",
+     "symbol": "IR",
+     "name": "Ingersoll Rand Inc",
+     "sector": "",
+     "weight": 0.0455
+    },
+    {
+     "ticker": "COIN",
+     "symbol": "COIN",
+     "name": "Coinbase Global Inc Class A",
+     "sector": "",
+     "weight": 0.0454
+    },
+    {
+     "ticker": "CTSH",
+     "symbol": "CTSH",
+     "name": "Cognizant Tech Solutions A",
+     "sector": "",
+     "weight": 0.0451
+    },
+    {
+     "ticker": "RJF",
+     "symbol": "RJF",
+     "name": "Raymond James Financial Inc",
+     "sector": "",
+     "weight": 0.0451
+    },
+    {
+     "ticker": "PCG",
+     "symbol": "PCG",
+     "name": "P G + E Corp",
+     "sector": "",
+     "weight": 0.045
+    },
+    {
+     "ticker": "CINF",
+     "symbol": "CINF",
+     "name": "Cincinnati Financial Corp",
+     "sector": "",
+     "weight": 0.0449
+    },
+    {
+     "ticker": "EXPE",
+     "symbol": "EXPE",
+     "name": "Expedia Group Inc",
+     "sector": "",
+     "weight": 0.0449
+    },
+    {
+     "ticker": "DTE",
+     "symbol": "DTE",
+     "name": "DTE Energy Company",
+     "sector": "",
+     "weight": 0.0447
+    },
+    {
+     "ticker": "WST",
+     "symbol": "WST",
+     "name": "West Pharmaceutical Services",
+     "sector": "",
+     "weight": 0.0445
+    },
+    {
+     "ticker": "VLTO",
+     "symbol": "VLTO",
+     "name": "Veralto Corp",
+     "sector": "",
+     "weight": 0.0444
+    },
+    {
+     "ticker": "DGX",
+     "symbol": "DGX",
+     "name": "Quest Diagnostics Inc",
+     "sector": "",
+     "weight": 0.0442
+    },
+    {
+     "ticker": "DOV",
+     "symbol": "DOV",
+     "name": "Dover Corp",
+     "sector": "",
+     "weight": 0.0442
+    },
+    {
+     "ticker": "EME",
+     "symbol": "EME",
+     "name": "Emcor Group Inc",
+     "sector": "",
+     "weight": 0.0439
+    },
+    {
+     "ticker": "ULTA",
+     "symbol": "ULTA",
+     "name": "Ulta Beauty Inc",
+     "sector": "",
+     "weight": 0.0438
+    },
+    {
+     "ticker": "LYV",
+     "symbol": "LYV",
+     "name": "Live Nation Entertainment In",
+     "sector": "",
+     "weight": 0.0436
+    },
+    {
+     "ticker": "FLEX",
+     "symbol": "FLEX",
+     "name": "Flex Ltd",
+     "sector": "",
+     "weight": 0.0432
+    },
+    {
+     "ticker": "EL",
+     "symbol": "EL",
+     "name": "Estee Lauder Companies CL A",
+     "sector": "",
+     "weight": 0.0432
+    },
+    {
+     "ticker": "PPG",
+     "symbol": "PPG",
+     "name": "Ppg Industries Inc",
+     "sector": "",
+     "weight": 0.0429
+    },
+    {
+     "ticker": "VICI",
+     "symbol": "VICI",
+     "name": "Vici Properties Inc",
+     "sector": "",
+     "weight": 0.0424
+    },
+    {
+     "ticker": "CFG",
+     "symbol": "CFG",
+     "name": "Citizens Financial Group",
+     "sector": "",
+     "weight": 0.0419
+    },
+    {
+     "ticker": "ON",
+     "symbol": "ON",
+     "name": "On Semiconductor",
+     "sector": "",
+     "weight": 0.0418
+    },
+    {
+     "ticker": "CPRT",
+     "symbol": "CPRT",
+     "name": "Copart Inc",
+     "sector": "",
+     "weight": 0.0417
+    },
+    {
+     "ticker": "DLTR",
+     "symbol": "DLTR",
+     "name": "Dollar Tree Inc",
+     "sector": "",
+     "weight": 0.0417
+    },
+    {
+     "ticker": "CNP",
+     "symbol": "CNP",
+     "name": "Centerpoint Energy Inc",
+     "sector": "",
+     "weight": 0.0417
+    },
+    {
+     "ticker": "PPL",
+     "symbol": "PPL",
+     "name": "PPL Corp",
+     "sector": "",
+     "weight": 0.0415
+    },
+    {
+     "ticker": "TPR",
+     "symbol": "TPR",
+     "name": "Tapestry Inc",
+     "sector": "",
+     "weight": 0.0415
+    },
+    {
+     "ticker": "HAL",
+     "symbol": "HAL",
+     "name": "Halliburton Co",
+     "sector": "",
+     "weight": 0.0411
+    },
+    {
+     "ticker": "CHD",
+     "symbol": "CHD",
+     "name": "Church + Dwight Co Inc",
+     "sector": "",
+     "weight": 0.0408
+    },
+    {
+     "ticker": "VRSK",
+     "symbol": "VRSK",
+     "name": "Verisk Analytics Inc",
+     "sector": "",
+     "weight": 0.0407
+    },
+    {
+     "ticker": "ES",
+     "symbol": "ES",
+     "name": "Eversource Energy",
+     "sector": "",
+     "weight": 0.0404
+    },
+    {
+     "ticker": "JBL",
+     "symbol": "JBL",
+     "name": "Jabil Inc",
+     "sector": "",
+     "weight": 0.0404
+    },
+    {
+     "ticker": "HPQ",
+     "symbol": "HPQ",
+     "name": "HP Inc",
+     "sector": "",
+     "weight": 0.0402
+    },
+    {
+     "ticker": "DRI",
+     "symbol": "DRI",
+     "name": "Darden Restaurants Inc",
+     "sector": "",
+     "weight": 0.04
+    },
+    {
+     "ticker": "Q",
+     "symbol": "Q",
+     "name": "Qnity Electronics Inc",
+     "sector": "",
+     "weight": 0.04
+    },
+    {
+     "ticker": "CASY",
+     "symbol": "CASY",
+     "name": "Casey S General Stores Inc",
+     "sector": "",
+     "weight": 0.04
+    },
+    {
+     "ticker": "HSY",
+     "symbol": "HSY",
+     "name": "Hershey Co/the",
+     "sector": "",
+     "weight": 0.039
+    },
+    {
+     "ticker": "VRSN",
+     "symbol": "VRSN",
+     "name": "Verisign Inc",
+     "sector": "",
+     "weight": 0.039
+    },
+    {
+     "ticker": "STE",
+     "symbol": "STE",
+     "name": "Steris PLC",
+     "sector": "",
+     "weight": 0.0384
+    },
+    {
+     "ticker": "AXON",
+     "symbol": "AXON",
+     "name": "Axon Enterprise Inc",
+     "sector": "",
+     "weight": 0.0379
+    },
+    {
+     "ticker": "RF",
+     "symbol": "RF",
+     "name": "Regions Financial Corp",
+     "sector": "",
+     "weight": 0.0379
+    },
+    {
+     "ticker": "PHM",
+     "symbol": "PHM",
+     "name": "Pultegroup Inc",
+     "sector": "",
+     "weight": 0.0377
+    },
+    {
+     "ticker": "EXPD",
+     "symbol": "EXPD",
+     "name": "Expeditors Intl Wash Inc",
+     "sector": "",
+     "weight": 0.0377
+    },
+    {
+     "ticker": "OMC",
+     "symbol": "OMC",
+     "name": "Omnicom Group",
+     "sector": "",
+     "weight": 0.0376
+    },
+    {
+     "ticker": "FE",
+     "symbol": "FE",
+     "name": "Firstenergy Corp",
+     "sector": "",
+     "weight": 0.0374
+    },
+    {
+     "ticker": "VTRS",
+     "symbol": "VTRS",
+     "name": "Viatris Inc",
+     "sector": "",
+     "weight": 0.0369
+    },
+    {
+     "ticker": "TROW",
+     "symbol": "TROW",
+     "name": "T Rowe Price Group Inc",
+     "sector": "",
+     "weight": 0.0367
+    },
+    {
+     "ticker": "SW",
+     "symbol": "SW",
+     "name": "Smurfit Westrock PLC",
+     "sector": "",
+     "weight": 0.036
+    },
+    {
+     "ticker": "EIX",
+     "symbol": "EIX",
+     "name": "Edison International",
+     "sector": "",
+     "weight": 0.0358
+    },
+    {
+     "ticker": "HUBB",
+     "symbol": "HUBB",
+     "name": "Hubbell Inc",
+     "sector": "",
+     "weight": 0.0358
+    },
+    {
+     "ticker": "SYF",
+     "symbol": "SYF",
+     "name": "Synchrony Financial",
+     "sector": "",
+     "weight": 0.0358
+    },
+    {
+     "ticker": "LUV",
+     "symbol": "LUV",
+     "name": "Southwest Airlines Co",
+     "sector": "",
+     "weight": 0.035
+    },
+    {
+     "ticker": "DOW",
+     "symbol": "DOW",
+     "name": "Dow Inc",
+     "sector": "",
+     "weight": 0.035
+    },
+    {
+     "ticker": "XYL",
+     "symbol": "XYL",
+     "name": "Xylem Inc",
+     "sector": "",
+     "weight": 0.0349
+    },
+    {
+     "ticker": "PFG",
+     "symbol": "PFG",
+     "name": "Principal Financial Group",
+     "sector": "",
+     "weight": 0.0348
+    },
+    {
+     "ticker": "GPN",
+     "symbol": "GPN",
+     "name": "Global Payments Inc",
+     "sector": "",
+     "weight": 0.0348
+    },
+    {
+     "ticker": "PKG",
+     "symbol": "PKG",
+     "name": "Packaging Corp Of America",
+     "sector": "",
+     "weight": 0.0348
+    },
+    {
+     "ticker": "FOXA",
+     "symbol": "FOXA",
+     "name": "Fox Corp Class A",
+     "sector": "",
+     "weight": 0.0341
+    },
+    {
+     "ticker": "EFX",
+     "symbol": "EFX",
+     "name": "Equifax Inc",
+     "sector": "",
+     "weight": 0.0341
+    },
+    {
+     "ticker": "BR",
+     "symbol": "BR",
+     "name": "Broadridge Financial Solutio",
+     "sector": "",
+     "weight": 0.0339
+    },
+    {
+     "ticker": "CMS",
+     "symbol": "CMS",
+     "name": "CMS Energy Corp",
+     "sector": "",
+     "weight": 0.0337
+    },
+    {
+     "ticker": "STZ",
+     "symbol": "STZ",
+     "name": "Constellation Brands Inc A",
+     "sector": "",
+     "weight": 0.0337
+    },
+    {
+     "ticker": "NI",
+     "symbol": "NI",
+     "name": "Nisource Inc",
+     "sector": "",
+     "weight": 0.0335
+    },
+    {
+     "ticker": "IFF",
+     "symbol": "IFF",
+     "name": "Intl Flavors + Fragrances",
+     "sector": "",
+     "weight": 0.0329
+    },
+    {
+     "ticker": "DD",
+     "symbol": "DD",
+     "name": "Dupont De Nemours Inc",
+     "sector": "",
+     "weight": 0.0329
+    },
+    {
+     "ticker": "PTC",
+     "symbol": "PTC",
+     "name": "Ptc Inc",
+     "sector": "",
+     "weight": 0.0326
+    },
+    {
+     "ticker": "CDW",
+     "symbol": "CDW",
+     "name": "Cdw Corp/de",
+     "sector": "",
+     "weight": 0.0324
+    },
+    {
+     "ticker": "KHC",
+     "symbol": "KHC",
+     "name": "Kraft Heinz Co/the",
+     "sector": "",
+     "weight": 0.0323
+    },
+    {
+     "ticker": "AMCR",
+     "symbol": "AMCR",
+     "name": "Amcor PLC",
+     "sector": "",
+     "weight": 0.0321
+    },
+    {
+     "ticker": "BRO",
+     "symbol": "BRO",
+     "name": "Brown + Brown Inc",
+     "sector": "",
+     "weight": 0.0319
+    },
+    {
+     "ticker": "NRG",
+     "symbol": "NRG",
+     "name": "NRG Energy Inc",
+     "sector": "",
+     "weight": 0.0317
+    },
+    {
+     "ticker": "BBY",
+     "symbol": "BBY",
+     "name": "Best Buy Co Inc",
+     "sector": "",
+     "weight": 0.0317
+    },
+    {
+     "ticker": "INCY",
+     "symbol": "INCY",
+     "name": "Incyte Corp",
+     "sector": "",
+     "weight": 0.0316
+    },
+    {
+     "ticker": "ZBH",
+     "symbol": "ZBH",
+     "name": "Zimmer Biomet Holdings Inc",
+     "sector": "",
+     "weight": 0.0316
+    },
+    {
+     "ticker": "EVRG",
+     "symbol": "EVRG",
+     "name": "Evergy Inc",
+     "sector": "",
+     "weight": 0.0315
+    },
+    {
+     "ticker": "SBAC",
+     "symbol": "SBAC",
+     "name": "Sba Communications Corp",
+     "sector": "",
+     "weight": 0.0314
+    },
+    {
+     "ticker": "FTV",
+     "symbol": "FTV",
+     "name": "Fortive Corp",
+     "sector": "",
+     "weight": 0.0313
+    },
+    {
+     "ticker": "EXE",
+     "symbol": "EXE",
+     "name": "Expand Energy Corp",
+     "sector": "",
+     "weight": 0.0312
+    },
+    {
+     "ticker": "FSLR",
+     "symbol": "FSLR",
+     "name": "First Solar Inc",
+     "sector": "",
+     "weight": 0.03
+    },
+    {
+     "ticker": "TSCO",
+     "symbol": "TSCO",
+     "name": "Tractor Supply Company",
+     "sector": "",
+     "weight": 0.0299
+    },
+    {
+     "ticker": "SNA",
+     "symbol": "SNA",
+     "name": "Snap On Inc",
+     "sector": "",
+     "weight": 0.0299
+    },
+    {
+     "ticker": "KEY",
+     "symbol": "KEY",
+     "name": "Keycorp",
+     "sector": "",
+     "weight": 0.0298
+    },
+    {
+     "ticker": "SWKS",
+     "symbol": "SWKS",
+     "name": "Skyworks Solutions Inc",
+     "sector": "",
+     "weight": 0.0291
+    },
+    {
+     "ticker": "LNT",
+     "symbol": "LNT",
+     "name": "Alliant Energy Corp",
+     "sector": "",
+     "weight": 0.0291
+    },
+    {
+     "ticker": "IP",
+     "symbol": "IP",
+     "name": "International Paper Co",
+     "sector": "",
+     "weight": 0.0287
+    },
+    {
+     "ticker": "CF",
+     "symbol": "CF",
+     "name": "CF Industries Holdings Inc",
+     "sector": "",
+     "weight": 0.0285
+    },
+    {
+     "ticker": "GIS",
+     "symbol": "GIS",
+     "name": "General Mills Inc",
+     "sector": "",
+     "weight": 0.0285
+    },
+    {
+     "ticker": "J",
+     "symbol": "J",
+     "name": "Jacobs Solutions Inc",
+     "sector": "",
+     "weight": 0.0281
+    },
+    {
+     "ticker": "L",
+     "symbol": "L",
+     "name": "Loews Corp",
+     "sector": "",
+     "weight": 0.0281
+    },
+    {
+     "ticker": "FFIV",
+     "symbol": "FFIV",
+     "name": "F5 Inc",
+     "sector": "",
+     "weight": 0.0276
+    },
+    {
+     "ticker": "BALL",
+     "symbol": "BALL",
+     "name": "Ball Corp",
+     "sector": "",
+     "weight": 0.0275
+    },
+    {
+     "ticker": "RVTY",
+     "symbol": "RVTY",
+     "name": "Revvity Inc",
+     "sector": "",
+     "weight": 0.0274
+    },
+    {
+     "ticker": "HST",
+     "symbol": "HST",
+     "name": "Host Hotels + Resorts Inc",
+     "sector": "",
+     "weight": 0.0274
+    },
+    {
+     "ticker": "ESS",
+     "symbol": "ESS",
+     "name": "Essex Property Trust Inc",
+     "sector": "",
+     "weight": 0.0274
+    },
+    {
+     "ticker": "IEX",
+     "symbol": "IEX",
+     "name": "Idex Corp",
+     "sector": "",
+     "weight": 0.0271
+    },
+    {
+     "ticker": "SWK",
+     "symbol": "SWK",
+     "name": "Stanley Black + Decker Inc",
+     "sector": "",
+     "weight": 0.0268
+    },
+    {
+     "ticker": "WRB",
+     "symbol": "WRB",
+     "name": "WR Berkley Corp",
+     "sector": "",
+     "weight": 0.0268
+    },
+    {
+     "ticker": "KIM",
+     "symbol": "KIM",
+     "name": "Kimco Realty Corp",
+     "sector": "",
+     "weight": 0.0268
+    },
+    {
+     "ticker": "LDOS",
+     "symbol": "LDOS",
+     "name": "Leidos Holdings Inc",
+     "sector": "",
+     "weight": 0.0267
+    },
+    {
+     "ticker": "NDSN",
+     "symbol": "NDSN",
+     "name": "Nordson Corp",
+     "sector": "",
+     "weight": 0.0266
+    },
+    {
+     "ticker": "GPC",
+     "symbol": "GPC",
+     "name": "Genuine Parts Co",
+     "sector": "",
+     "weight": 0.0265
+    },
+    {
+     "ticker": "HAS",
+     "symbol": "HAS",
+     "name": "Hasbro Inc",
+     "sector": "",
+     "weight": 0.0265
+    },
+    {
+     "ticker": "TSN",
+     "symbol": "TSN",
+     "name": "Tyson Foods Inc CL A",
+     "sector": "",
+     "weight": 0.0263
+    },
+    {
+     "ticker": "JBHT",
+     "symbol": "JBHT",
+     "name": "Hunt (JB) Transprt Svcs Inc",
+     "sector": "",
+     "weight": 0.026
+    },
+    {
+     "ticker": "LEN",
+     "symbol": "LEN",
+     "name": "Lennar Corp A",
+     "sector": "",
+     "weight": 0.0257
+    },
+    {
+     "ticker": "MAS",
+     "symbol": "MAS",
+     "name": "Masco Corp",
+     "sector": "",
+     "weight": 0.0255
+    },
+    {
+     "ticker": "CRL",
+     "symbol": "CRL",
+     "name": "Charles River Laboratories",
+     "sector": "",
+     "weight": 0.0252
+    },
+    {
+     "ticker": "GEN",
+     "symbol": "GEN",
+     "name": "Gen Digital Inc",
+     "sector": "",
+     "weight": 0.0249
+    },
+    {
+     "ticker": "ALLE",
+     "symbol": "ALLE",
+     "name": "Allegion PLC",
+     "sector": "",
+     "weight": 0.0249
+    },
+    {
+     "ticker": "TPL",
+     "symbol": "TPL",
+     "name": "Texas Pacific Land Corp",
+     "sector": "",
+     "weight": 0.0248
+    },
+    {
+     "ticker": "TYL",
+     "symbol": "TYL",
+     "name": "Tyler Technologies Inc",
+     "sector": "",
+     "weight": 0.0248
+    },
+    {
+     "ticker": "AIZ",
+     "symbol": "AIZ",
+     "name": "Assurant Inc",
+     "sector": "",
+     "weight": 0.0247
+    },
+    {
+     "ticker": "FICO",
+     "symbol": "FICO",
+     "name": "Fair Isaac Corp",
+     "sector": "",
+     "weight": 0.0243
+    },
+    {
+     "ticker": "LYB",
+     "symbol": "LYB",
+     "name": "Lyondellbasell Indu CL A",
+     "sector": "",
+     "weight": 0.0243
+    },
+    {
+     "ticker": "SMCI",
+     "symbol": "SMCI",
+     "name": "Super Micro Computer Inc",
+     "sector": "",
+     "weight": 0.0242
+    },
+    {
+     "ticker": "APA",
+     "symbol": "APA",
+     "name": "APA Corp",
+     "sector": "",
+     "weight": 0.0242
+    },
+    {
+     "ticker": "BG",
+     "symbol": "BG",
+     "name": "Bunge Global SA",
+     "sector": "",
+     "weight": 0.0241
+    },
+    {
+     "ticker": "FDXF",
+     "symbol": "FDXF",
+     "name": "Fedex Freight Holding Co",
+     "sector": "",
+     "weight": 0.0239
+    },
+    {
+     "ticker": "NVR",
+     "symbol": "NVR",
+     "name": "NVR Inc",
+     "sector": "",
+     "weight": 0.0237
+    },
+    {
+     "ticker": "ZBRA",
+     "symbol": "ZBRA",
+     "name": "Zebra Technologies Corp CL A",
+     "sector": "",
+     "weight": 0.0237
+    },
+    {
+     "ticker": "CHRW",
+     "symbol": "CHRW",
+     "name": "C.h. Robinson Worldwide Inc",
+     "sector": "",
+     "weight": 0.0235
+    },
+    {
+     "ticker": "TXT",
+     "symbol": "TXT",
+     "name": "Textron Inc",
+     "sector": "",
+     "weight": 0.0233
+    },
+    {
+     "ticker": "RL",
+     "symbol": "RL",
+     "name": "Ralph Lauren Corp",
+     "sector": "",
+     "weight": 0.0232
+    },
+    {
+     "ticker": "EG",
+     "symbol": "EG",
+     "name": "Everest Group Ltd",
+     "sector": "",
+     "weight": 0.0232
+    },
+    {
+     "ticker": "CHTR",
+     "symbol": "CHTR",
+     "name": "Charter Communications Inc A",
+     "sector": "",
+     "weight": 0.0231
+    },
+    {
+     "ticker": "WY",
+     "symbol": "WY",
+     "name": "Weyerhaeuser Co",
+     "sector": "",
+     "weight": 0.0228
+    },
+    {
+     "ticker": "FIS",
+     "symbol": "FIS",
+     "name": "Fidelity National Info Serv",
+     "sector": "",
+     "weight": 0.0226
+    },
+    {
+     "ticker": "INVH",
+     "symbol": "INVH",
+     "name": "Invitation Homes Inc",
+     "sector": "",
+     "weight": 0.0224
+    },
+    {
+     "ticker": "AVY",
+     "symbol": "AVY",
+     "name": "Avery Dennison Corp",
+     "sector": "",
+     "weight": 0.0223
+    },
+    {
+     "ticker": "ECHO",
+     "symbol": "ECHO",
+     "name": "Echostar Corp A",
+     "sector": "",
+     "weight": 0.0222
+    },
+    {
+     "ticker": "RDDT",
+     "symbol": "RDDT",
+     "name": "Reddit Inc CL A",
+     "sector": "",
+     "weight": 0.0222
+    },
+    {
+     "ticker": "GDDY",
+     "symbol": "GDDY",
+     "name": "Godaddy Inc Class A",
+     "sector": "",
+     "weight": 0.0221
+    },
+    {
+     "ticker": "SJM",
+     "symbol": "SJM",
+     "name": "JM Smucker Co/the",
+     "sector": "",
+     "weight": 0.022
+    },
+    {
+     "ticker": "DOC",
+     "symbol": "DOC",
+     "name": "Healthpeak Properties Inc",
+     "sector": "",
+     "weight": 0.0218
+    },
+    {
+     "ticker": "MAA",
+     "symbol": "MAA",
+     "name": "Mid America Apartment Comm",
+     "sector": "",
+     "weight": 0.0214
+    },
+    {
+     "ticker": "BAX",
+     "symbol": "BAX",
+     "name": "Baxter International Inc",
+     "sector": "",
+     "weight": 0.0212
+    },
+    {
+     "ticker": "SOLV",
+     "symbol": "SOLV",
+     "name": "Solventum Corp",
+     "sector": "",
+     "weight": 0.0201
+    },
+    {
+     "ticker": "CLX",
+     "symbol": "CLX",
+     "name": "Clorox Company",
+     "sector": "",
+     "weight": 0.02
+    },
+    {
+     "ticker": "PNW",
+     "symbol": "PNW",
+     "name": "Pinnacle West Capital",
+     "sector": "",
+     "weight": 0.0199
+    },
+    {
+     "ticker": "IVZ",
+     "symbol": "IVZ",
+     "name": "Invesco Ltd",
+     "sector": "",
+     "weight": 0.0198
+    },
+    {
+     "ticker": "TRMB",
+     "symbol": "TRMB",
+     "name": "Trimble Inc",
+     "sector": "",
+     "weight": 0.0197
+    },
+    {
+     "ticker": "GL",
+     "symbol": "GL",
+     "name": "Globe Life Inc",
+     "sector": "",
+     "weight": 0.0196
+    },
+    {
+     "ticker": "REG",
+     "symbol": "REG",
+     "name": "Regency Centers Corp",
+     "sector": "",
+     "weight": 0.0195
+    },
+    {
+     "ticker": "JKHY",
+     "symbol": "JKHY",
+     "name": "Jack Henry + Associates Inc",
+     "sector": "",
+     "weight": 0.0192
+    },
+    {
+     "ticker": "COO",
+     "symbol": "COO",
+     "name": "Cooper Cos Inc/the",
+     "sector": "",
+     "weight": 0.0192
+    },
+    {
+     "ticker": "CSGP",
+     "symbol": "CSGP",
+     "name": "Costar Group Inc",
+     "sector": "",
+     "weight": 0.0191
+    },
+    {
+     "ticker": "HII",
+     "symbol": "HII",
+     "name": "Huntington Ingalls Industrie",
+     "sector": "",
+     "weight": 0.019
+    },
+    {
+     "ticker": "AKAM",
+     "symbol": "AKAM",
+     "name": "Akamai Technologies Inc",
+     "sector": "",
+     "weight": 0.0188
+    },
+    {
+     "ticker": "DECK",
+     "symbol": "DECK",
+     "name": "Deckers Outdoor Corp",
+     "sector": "",
+     "weight": 0.0186
+    },
+    {
+     "ticker": "MKC",
+     "symbol": "MKC",
+     "name": "Mccormick + Co Non Vtg Shrs",
+     "sector": "",
+     "weight": 0.0184
+    },
+    {
+     "ticker": "TKO",
+     "symbol": "TKO",
+     "name": "Tko Group Holdings Inc",
+     "sector": "",
+     "weight": 0.0182
+    },
+    {
+     "ticker": "IT",
+     "symbol": "IT",
+     "name": "Gartner Inc",
+     "sector": "",
+     "weight": 0.0182
+    },
+    {
+     "ticker": "FDS",
+     "symbol": "FDS",
+     "name": "Factset Research Systems Inc",
+     "sector": "",
+     "weight": 0.0179
+    },
+    {
+     "ticker": "LULU",
+     "symbol": "LULU",
+     "name": "Lululemon Athletica Inc",
+     "sector": "",
+     "weight": 0.0179
+    },
+    {
+     "ticker": "ALGN",
+     "symbol": "ALGN",
+     "name": "Align Technology Inc",
+     "sector": "",
+     "weight": 0.0177
+    },
+    {
+     "ticker": "TECH",
+     "symbol": "TECH",
+     "name": "Bio Techne Corp",
+     "sector": "",
+     "weight": 0.0176
+    },
+    {
+     "ticker": "ROL",
+     "symbol": "ROL",
+     "name": "Rollins Inc",
+     "sector": "",
+     "weight": 0.0175
+    },
+    {
+     "ticker": "PNR",
+     "symbol": "PNR",
+     "name": "Pentair PLC",
+     "sector": "",
+     "weight": 0.0174
+    },
+    {
+     "ticker": "ALB",
+     "symbol": "ALB",
+     "name": "Albemarle Corp",
+     "sector": "",
+     "weight": 0.0173
+    },
+    {
+     "ticker": "LII",
+     "symbol": "LII",
+     "name": "Lennox International Inc",
+     "sector": "",
+     "weight": 0.017
+    },
+    {
+     "ticker": "DPZ",
+     "symbol": "DPZ",
+     "name": "Domino S Pizza Inc",
+     "sector": "",
+     "weight": 0.0168
+    },
+    {
+     "ticker": "UDR",
+     "symbol": "UDR",
+     "name": "Udr Inc",
+     "sector": "",
+     "weight": 0.0167
+    },
+    {
+     "ticker": "AES",
+     "symbol": "AES",
+     "name": "AES Corp",
+     "sector": "",
+     "weight": 0.0164
+    },
+    {
+     "ticker": "GNRC",
+     "symbol": "GNRC",
+     "name": "Generac Holdings Inc",
+     "sector": "",
+     "weight": 0.0164
+    },
+    {
+     "ticker": "BEN",
+     "symbol": "BEN",
+     "name": "Franklin Templeton Inc",
+     "sector": "",
+     "weight": 0.0163
+    },
+    {
+     "ticker": "LVS",
+     "symbol": "LVS",
+     "name": "Las Vegas Sands Corp",
+     "sector": "",
+     "weight": 0.0161
+    },
+    {
+     "ticker": "PODD",
+     "symbol": "PODD",
+     "name": "Insulet Corp",
+     "sector": "",
+     "weight": 0.0158
+    },
+    {
+     "ticker": "BXP",
+     "symbol": "BXP",
+     "name": "Bxp Inc",
+     "sector": "",
+     "weight": 0.0156
+    },
+    {
+     "ticker": "UHS",
+     "symbol": "UHS",
+     "name": "Universal Health Services B",
+     "sector": "",
+     "weight": 0.0156
+    },
+    {
+     "ticker": "CPT",
+     "symbol": "CPT",
+     "name": "Camden Property Trust",
+     "sector": "",
+     "weight": 0.0155
+    },
+    {
+     "ticker": "NWSA",
+     "symbol": "NWSA",
+     "name": "News Corp Class A",
+     "sector": "",
+     "weight": 0.015
+    },
+    {
+     "ticker": "FRT",
+     "symbol": "FRT",
+     "name": "Federal Realty Invs Trust",
+     "sector": "",
+     "weight": 0.0139
+    },
+    {
+     "ticker": "HSIC",
+     "symbol": "HSIC",
+     "name": "Henry Schein Inc",
+     "sector": "",
+     "weight": 0.0133
+    },
+    {
+     "ticker": "NCLH",
+     "symbol": "NCLH",
+     "name": "Norwegian Cruise Line Holdin",
+     "sector": "",
+     "weight": 0.0132
+    },
+    {
+     "ticker": "FOX",
+     "symbol": "FOX",
+     "name": "Fox Corp Class B",
+     "sector": "",
+     "weight": 0.0125
+    },
+    {
+     "ticker": "APTV",
+     "symbol": "APTV",
+     "name": "Aptiv PLC",
+     "sector": "",
+     "weight": 0.0125
+    },
+    {
+     "ticker": "MOS",
+     "symbol": "MOS",
+     "name": "Mosaic Co/the",
+     "sector": "",
+     "weight": 0.0114
+    },
+    {
+     "ticker": "AOS",
+     "symbol": "AOS",
+     "name": "Smith (a.o.) Corp",
+     "sector": "",
+     "weight": 0.0111
+    },
+    {
+     "ticker": "ARE",
+     "symbol": "ARE",
+     "name": "Alexandria Real Estate Equit",
+     "sector": "",
+     "weight": 0.0108
+    },
+    {
+     "ticker": "ERIE",
+     "symbol": "ERIE",
+     "name": "Erie Indemnity Company CL A",
+     "sector": "",
+     "weight": 0.0107
+    },
+    {
+     "ticker": "HRL",
+     "symbol": "HRL",
+     "name": "Hormel Foods Corp",
+     "sector": "",
+     "weight": 0.01
+    },
+    {
+     "ticker": "WYNN",
+     "symbol": "WYNN",
+     "name": "Wynn Resorts Ltd",
+     "sector": "",
+     "weight": 0.0096
+    },
+    {
+     "ticker": "DVA",
+     "symbol": "DVA",
+     "name": "Davita Inc",
+     "sector": "",
+     "weight": 0.0094
+    },
+    {
+     "ticker": "MGM",
+     "symbol": "MGM",
+     "name": "Mgm Resorts International",
+     "sector": "",
+     "weight": 0.009
+    },
+    {
+     "ticker": "BF.B",
+     "symbol": "BF-B",
+     "name": "Brown Forman Corp Class B",
+     "sector": "",
+     "weight": 0.0084
+    },
+    {
+     "ticker": "SKYD",
+     "symbol": "SKYD",
+     "name": "Skydance Corp",
+     "sector": "",
+     "weight": 0.0068
+    },
+    {
+     "ticker": "NWS",
+     "symbol": "NWS",
+     "name": "News Corp Class B",
+     "sector": "",
+     "weight": 0.0056
+    }
+   ]
+  },
+  "nikkei225": {
+   "name": "Nikkei 225",
+   "country": "Japan",
+   "index_symbol": "^N225",
+   "currency": "JPY",
+   "source": "Nikkei Stock Average constituent weights, Nikkei Inc.",
+   "source_url": "https://indexes.nikkei.co.jp/nkave/archives/file/nikkei_stock_average_weight_en.csv",
+   "as_of": "2026-10-30",
+   "count": 225,
+   "weight_sum": 100.0,
+   "holdings": [
+    {
+     "ticker": "6857",
+     "symbol": "6857.T",
+     "name": "Advantest Corp",
+     "sector": "Technology",
+     "weight": 11.8833
+    },
+    {
+     "ticker": "9983",
+     "symbol": "9983.T",
+     "name": "Fast Retailing Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 9.6309
+    },
+    {
+     "ticker": "8035",
+     "symbol": "8035.T",
+     "name": "Tokyo Electron Ltd.",
+     "sector": "Technology",
+     "weight": 7.6012
+    },
+    {
+     "ticker": "9984",
+     "symbol": "9984.T",
+     "name": "Softbank Group Corp",
+     "sector": "Information and Communications",
+     "weight": 5.7282
+    },
+    {
+     "ticker": "6098",
+     "symbol": "6098.T",
+     "name": "Recruit Holdings Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 3.068
+    },
+    {
+     "ticker": "6762",
+     "symbol": "6762.T",
+     "name": "TDK Corp",
+     "sector": "Technology",
+     "weight": 2.0549
+    },
+    {
+     "ticker": "9433",
+     "symbol": "9433.T",
+     "name": "KDDI Corp",
+     "sector": "Information and Communications",
+     "weight": 1.813
+    },
+    {
+     "ticker": "4062",
+     "symbol": "4062.T",
+     "name": "Ibiden Co., Ltd.",
+     "sector": "Technology",
+     "weight": 1.7809
+    },
+    {
+     "ticker": "4063",
+     "symbol": "4063.T",
+     "name": "Shin-Etsu Chemical Co., Ltd.",
+     "sector": "Materials",
+     "weight": 1.5888
+    },
+    {
+     "ticker": "6954",
+     "symbol": "6954.T",
+     "name": "Fanuc Corp",
+     "sector": "Technology",
+     "weight": 1.5191
+    },
+    {
+     "ticker": "285A",
+     "symbol": "285A.T",
+     "name": "Kioxia Holdings Corp",
+     "sector": "Technology",
+     "weight": 1.5067
+    },
+    {
+     "ticker": "6971",
+     "symbol": "6971.T",
+     "name": "Kyocera Corp",
+     "sector": "Technology",
+     "weight": 1.4615
+    },
+    {
+     "ticker": "9766",
+     "symbol": "9766.T",
+     "name": "Konami Group Corp",
+     "sector": "Information and Communications",
+     "weight": 1.4054
+    },
+    {
+     "ticker": "5803",
+     "symbol": "5803.T",
+     "name": "Fujikura Ltd.",
+     "sector": "Materials",
+     "weight": 1.2521
+    },
+    {
+     "ticker": "6367",
+     "symbol": "6367.T",
+     "name": "Daikin Industries, Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 1.1217
+    },
+    {
+     "ticker": "4519",
+     "symbol": "4519.T",
+     "name": "Chugai Pharmaceutical Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 1.0901
+    },
+    {
+     "ticker": "8015",
+     "symbol": "8015.T",
+     "name": "Toyota Tsusho Corp",
+     "sector": "Materials",
+     "weight": 1.0821
+    },
+    {
+     "ticker": "6758",
+     "symbol": "6758.T",
+     "name": "Sony Group Corp",
+     "sector": "Technology",
+     "weight": 1.0541
+    },
+    {
+     "ticker": "4543",
+     "symbol": "4543.T",
+     "name": "Terumo Corp",
+     "sector": "Technology",
+     "weight": 1.0246
+    },
+    {
+     "ticker": "7832",
+     "symbol": "7832.T",
+     "name": "Bandai Namco Holdings Inc",
+     "sector": "Capital Goods/Others",
+     "weight": 0.9925
+    },
+    {
+     "ticker": "6988",
+     "symbol": "6988.T",
+     "name": "Nitto Denko Corp",
+     "sector": "Materials",
+     "weight": 0.9033
+    },
+    {
+     "ticker": "7203",
+     "symbol": "7203.T",
+     "name": "Toyota Motor Corp",
+     "sector": "Technology",
+     "weight": 0.8176
+    },
+    {
+     "ticker": "6981",
+     "symbol": "6981.T",
+     "name": "Murata Manufacturing Co., Ltd.",
+     "sector": "Technology",
+     "weight": 0.8128
+    },
+    {
+     "ticker": "6920",
+     "symbol": "6920.T",
+     "name": "Lasertec Corp",
+     "sector": "Technology",
+     "weight": 0.8032
+    },
+    {
+     "ticker": "8058",
+     "symbol": "8058.T",
+     "name": "Mitsubishi Corp",
+     "sector": "Materials",
+     "weight": 0.7678
+    },
+    {
+     "ticker": "9735",
+     "symbol": "9735.T",
+     "name": "Secom Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.7245
+    },
+    {
+     "ticker": "7741",
+     "symbol": "7741.T",
+     "name": "Hoya Corp",
+     "sector": "Technology",
+     "weight": 0.698
+    },
+    {
+     "ticker": "8766",
+     "symbol": "8766.T",
+     "name": "Tokio Marine Holdings, Inc",
+     "sector": "Financials",
+     "weight": 0.6944
+    },
+    {
+     "ticker": "4503",
+     "symbol": "4503.T",
+     "name": "Astellas Pharma Inc",
+     "sector": "Consumer Goods",
+     "weight": 0.6847
+    },
+    {
+     "ticker": "4578",
+     "symbol": "4578.T",
+     "name": "Otsuka Holdings Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.64
+    },
+    {
+     "ticker": "6532",
+     "symbol": "6532.T",
+     "name": "Baycurrent, Inc",
+     "sector": "Consumer Goods",
+     "weight": 0.6298
+    },
+    {
+     "ticker": "8001",
+     "symbol": "8001.T",
+     "name": "Itochu Corp",
+     "sector": "Materials",
+     "weight": 0.6196
+    },
+    {
+     "ticker": "7267",
+     "symbol": "7267.T",
+     "name": "Honda Motor Co., Ltd.",
+     "sector": "Technology",
+     "weight": 0.5709
+    },
+    {
+     "ticker": "4901",
+     "symbol": "4901.T",
+     "name": "Fujifilm Holdings Corp",
+     "sector": "Materials",
+     "weight": 0.5597
+    },
+    {
+     "ticker": "2802",
+     "symbol": "2802.T",
+     "name": "Ajinomoto Co., Inc",
+     "sector": "Consumer Goods",
+     "weight": 0.5452
+    },
+    {
+     "ticker": "8031",
+     "symbol": "8031.T",
+     "name": "Mitsui & Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.5333
+    },
+    {
+     "ticker": "6146",
+     "symbol": "6146.T",
+     "name": "Disco Corp",
+     "sector": "Technology",
+     "weight": 0.5277
+    },
+    {
+     "ticker": "7453",
+     "symbol": "7453.T",
+     "name": "Ryohin Keikaku Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.5152
+    },
+    {
+     "ticker": "7735",
+     "symbol": "7735.T",
+     "name": "Screen Holdings Co., Ltd.",
+     "sector": "Technology",
+     "weight": 0.4847
+    },
+    {
+     "ticker": "4507",
+     "symbol": "4507.T",
+     "name": "Shionogi & Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.4813
+    },
+    {
+     "ticker": "2801",
+     "symbol": "2801.T",
+     "name": "Kikkoman Corp",
+     "sector": "Consumer Goods",
+     "weight": 0.4802
+    },
+    {
+     "ticker": "6976",
+     "symbol": "6976.T",
+     "name": "Taiyo Yuden Co., Ltd.",
+     "sector": "Technology",
+     "weight": 0.4556
+    },
+    {
+     "ticker": "9843",
+     "symbol": "9843.T",
+     "name": "Nitori Holdings Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.4531
+    },
+    {
+     "ticker": "7269",
+     "symbol": "7269.T",
+     "name": "Suzuki Motor Corp",
+     "sector": "Technology",
+     "weight": 0.4463
+    },
+    {
+     "ticker": "7974",
+     "symbol": "7974.T",
+     "name": "Nintendo Co., Ltd.",
+     "sector": "Information and Communications",
+     "weight": 0.4415
+    },
+    {
+     "ticker": "4568",
+     "symbol": "4568.T",
+     "name": "Daiichi Sankyo Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.4401
+    },
+    {
+     "ticker": "5108",
+     "symbol": "5108.T",
+     "name": "Bridgestone Corp",
+     "sector": "Materials",
+     "weight": 0.4247
+    },
+    {
+     "ticker": "4021",
+     "symbol": "4021.T",
+     "name": "Nissan Chemical Corp",
+     "sector": "Materials",
+     "weight": 0.4156
+    },
+    {
+     "ticker": "6861",
+     "symbol": "6861.T",
+     "name": "Keyence Corp",
+     "sector": "Technology",
+     "weight": 0.4155
+    },
+    {
+     "ticker": "4452",
+     "symbol": "4452.T",
+     "name": "Kao Corp",
+     "sector": "Materials",
+     "weight": 0.3992
+    },
+    {
+     "ticker": "6902",
+     "symbol": "6902.T",
+     "name": "Denso Corp",
+     "sector": "Technology",
+     "weight": 0.3968
+    },
+    {
+     "ticker": "4704",
+     "symbol": "4704.T",
+     "name": "Trend Micro Inc",
+     "sector": "Information and Communications",
+     "weight": 0.3894
+    },
+    {
+     "ticker": "2914",
+     "symbol": "2914.T",
+     "name": "Japan Tobacco Inc",
+     "sector": "Consumer Goods",
+     "weight": 0.386
+    },
+    {
+     "ticker": "7751",
+     "symbol": "7751.T",
+     "name": "Canon Inc",
+     "sector": "Technology",
+     "weight": 0.379
+    },
+    {
+     "ticker": "5802",
+     "symbol": "5802.T",
+     "name": "Sumitomo Electric Ind., Ltd.",
+     "sector": "Materials",
+     "weight": 0.3771
+    },
+    {
+     "ticker": "7733",
+     "symbol": "7733.T",
+     "name": "Olympus Corp",
+     "sector": "Technology",
+     "weight": 0.3711
+    },
+    {
+     "ticker": "6525",
+     "symbol": "6525.T",
+     "name": "Kokusai Electric Corp",
+     "sector": "Technology",
+     "weight": 0.3685
+    },
+    {
+     "ticker": "8053",
+     "symbol": "8053.T",
+     "name": "Sumitomo Corp",
+     "sector": "Materials",
+     "weight": 0.3588
+    },
+    {
+     "ticker": "4502",
+     "symbol": "4502.T",
+     "name": "Takeda Pharmaceutical Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.3543
+    },
+    {
+     "ticker": "8830",
+     "symbol": "8830.T",
+     "name": "Sumitomo Realty & Development Co., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.3463
+    },
+    {
+     "ticker": "6724",
+     "symbol": "6724.T",
+     "name": "Seiko Epson Corp",
+     "sector": "Technology",
+     "weight": 0.3444
+    },
+    {
+     "ticker": "3382",
+     "symbol": "3382.T",
+     "name": "Seven & I Holdings Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.34
+    },
+    {
+     "ticker": "6273",
+     "symbol": "6273.T",
+     "name": "SMC Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.3391
+    },
+    {
+     "ticker": "4307",
+     "symbol": "4307.T",
+     "name": "Nomura Research Institute, Ltd.",
+     "sector": "Information and Communications",
+     "weight": 0.3319
+    },
+    {
+     "ticker": "6301",
+     "symbol": "6301.T",
+     "name": "Komatsu Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.3293
+    },
+    {
+     "ticker": "8591",
+     "symbol": "8591.T",
+     "name": "Orix Corp",
+     "sector": "Financials",
+     "weight": 0.3114
+    },
+    {
+     "ticker": "1721",
+     "symbol": "1721.T",
+     "name": "Comsys Holdings Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.296
+    },
+    {
+     "ticker": "3659",
+     "symbol": "3659.T",
+     "name": "Nexon Co., Ltd.",
+     "sector": "Information and Communications",
+     "weight": 0.2939
+    },
+    {
+     "ticker": "6645",
+     "symbol": "6645.T",
+     "name": "Omron Corp",
+     "sector": "Technology",
+     "weight": 0.2806
+    },
+    {
+     "ticker": "7272",
+     "symbol": "7272.T",
+     "name": "Yamaha Motor Co., Ltd.",
+     "sector": "Technology",
+     "weight": 0.2763
+    },
+    {
+     "ticker": "6305",
+     "symbol": "6305.T",
+     "name": "Hitachi Const. Mach. Co., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.2756
+    },
+    {
+     "ticker": "6501",
+     "symbol": "6501.T",
+     "name": "Hitachi, Ltd.",
+     "sector": "Technology",
+     "weight": 0.2713
+    },
+    {
+     "ticker": "4523",
+     "symbol": "4523.T",
+     "name": "Eisai Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.2691
+    },
+    {
+     "ticker": "2502",
+     "symbol": "2502.T",
+     "name": "Asahi Group Holdings, Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.2637
+    },
+    {
+     "ticker": "8002",
+     "symbol": "8002.T",
+     "name": "Marubeni Corp",
+     "sector": "Materials",
+     "weight": 0.2625
+    },
+    {
+     "ticker": "8801",
+     "symbol": "8801.T",
+     "name": "Mitsui Fudosan Co., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.2526
+    },
+    {
+     "ticker": "8725",
+     "symbol": "8725.T",
+     "name": "MS&AD Insurance Group Holdings, Inc",
+     "sector": "Financials",
+     "weight": 0.2521
+    },
+    {
+     "ticker": "6503",
+     "symbol": "6503.T",
+     "name": "Mitsubishi Electric Corp",
+     "sector": "Technology",
+     "weight": 0.2471
+    },
+    {
+     "ticker": "5333",
+     "symbol": "5333.T",
+     "name": "Ngk Corp",
+     "sector": "Materials",
+     "weight": 0.2457
+    },
+    {
+     "ticker": "6841",
+     "symbol": "6841.T",
+     "name": "Yokogawa Electric Corp",
+     "sector": "Technology",
+     "weight": 0.2435
+    },
+    {
+     "ticker": "1925",
+     "symbol": "1925.T",
+     "name": "Daiwa House Ind. Co., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.2431
+    },
+    {
+     "ticker": "2413",
+     "symbol": "2413.T",
+     "name": "M3, Inc",
+     "sector": "Consumer Goods",
+     "weight": 0.2353
+    },
+    {
+     "ticker": "8630",
+     "symbol": "8630.T",
+     "name": "Sompo Holdings, Inc",
+     "sector": "Financials",
+     "weight": 0.2268
+    },
+    {
+     "ticker": "8697",
+     "symbol": "8697.T",
+     "name": "Japan Exchange Group, Inc",
+     "sector": "Financials",
+     "weight": 0.2255
+    },
+    {
+     "ticker": "8253",
+     "symbol": "8253.T",
+     "name": "Credit Saison Co., Ltd.",
+     "sector": "Financials",
+     "weight": 0.2205
+    },
+    {
+     "ticker": "5713",
+     "symbol": "5713.T",
+     "name": "Sumitomo Metal Mining Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.2165
+    },
+    {
+     "ticker": "6506",
+     "symbol": "6506.T",
+     "name": "Yaskawa Electric Corp",
+     "sector": "Technology",
+     "weight": 0.2126
+    },
+    {
+     "ticker": "9697",
+     "symbol": "9697.T",
+     "name": "Capcom Co., Ltd.",
+     "sector": "Information and Communications",
+     "weight": 0.2108
+    },
+    {
+     "ticker": "4911",
+     "symbol": "4911.T",
+     "name": "Shiseido Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.2037
+    },
+    {
+     "ticker": "8802",
+     "symbol": "8802.T",
+     "name": "Mitsubishi Estate Co., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.2034
+    },
+    {
+     "ticker": "4324",
+     "symbol": "4324.T",
+     "name": "Dentsu Group Inc",
+     "sector": "Consumer Goods",
+     "weight": 0.2018
+    },
+    {
+     "ticker": "6361",
+     "symbol": "6361.T",
+     "name": "Ebara Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1998
+    },
+    {
+     "ticker": "7951",
+     "symbol": "7951.T",
+     "name": "Yamaha Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1945
+    },
+    {
+     "ticker": "6702",
+     "symbol": "6702.T",
+     "name": "Fujitsu Ltd.",
+     "sector": "Technology",
+     "weight": 0.1929
+    },
+    {
+     "ticker": "3099",
+     "symbol": "3099.T",
+     "name": "Isetan Mitsukoshi Holdings Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.1919
+    },
+    {
+     "ticker": "8267",
+     "symbol": "8267.T",
+     "name": "Aeon Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.1918
+    },
+    {
+     "ticker": "4385",
+     "symbol": "4385.T",
+     "name": "Mercari, Inc",
+     "sector": "Information and Communications",
+     "weight": 0.1903
+    },
+    {
+     "ticker": "6963",
+     "symbol": "6963.T",
+     "name": "Rohm Co., Ltd.",
+     "sector": "Technology",
+     "weight": 0.19
+    },
+    {
+     "ticker": "6752",
+     "symbol": "6752.T",
+     "name": "Panasonic Holdings Corp",
+     "sector": "Technology",
+     "weight": 0.189
+    },
+    {
+     "ticker": "1928",
+     "symbol": "1928.T",
+     "name": "Sekisui House, Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1855
+    },
+    {
+     "ticker": "3092",
+     "symbol": "3092.T",
+     "name": "ZOZO, Inc",
+     "sector": "Consumer Goods",
+     "weight": 0.1854
+    },
+    {
+     "ticker": "8306",
+     "symbol": "8306.T",
+     "name": "Mitsubishi Ufj Financial Group, Inc",
+     "sector": "Financials",
+     "weight": 0.1836
+    },
+    {
+     "ticker": "4661",
+     "symbol": "4661.T",
+     "name": "Oriental Land Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.1831
+    },
+    {
+     "ticker": "7011",
+     "symbol": "7011.T",
+     "name": "Mitsubishi Heavy Ind., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1818
+    },
+    {
+     "ticker": "9107",
+     "symbol": "9107.T",
+     "name": "Kawasaki Kisen Kaisha, Ltd.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.1687
+    },
+    {
+     "ticker": "5101",
+     "symbol": "5101.T",
+     "name": "The Yokohama Rubber Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.1672
+    },
+    {
+     "ticker": "6479",
+     "symbol": "6479.T",
+     "name": "Minebea Mitsumi Inc",
+     "sector": "Technology",
+     "weight": 0.1661
+    },
+    {
+     "ticker": "2282",
+     "symbol": "2282.T",
+     "name": "NH Foods Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.1649
+    },
+    {
+     "ticker": "9201",
+     "symbol": "9201.T",
+     "name": "Japan Airlines Co., Ltd.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.1646
+    },
+    {
+     "ticker": "5831",
+     "symbol": "5831.T",
+     "name": "Shizuoka Financial Group, Inc",
+     "sector": "Financials",
+     "weight": 0.1631
+    },
+    {
+     "ticker": "5019",
+     "symbol": "5019.T",
+     "name": "Idemitsu Kosan Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.1614
+    },
+    {
+     "ticker": "1802",
+     "symbol": "1802.T",
+     "name": "Obayashi Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1583
+    },
+    {
+     "ticker": "5016",
+     "symbol": "5016.T",
+     "name": "JX Advanced Metals Corp",
+     "sector": "Materials",
+     "weight": 0.1574
+    },
+    {
+     "ticker": "2503",
+     "symbol": "2503.T",
+     "name": "Kirin Holdings Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.154
+    },
+    {
+     "ticker": "5332",
+     "symbol": "5332.T",
+     "name": "TOTO Ltd.",
+     "sector": "Materials",
+     "weight": 0.153
+    },
+    {
+     "ticker": "6723",
+     "symbol": "6723.T",
+     "name": "Renesas Electronics Corp",
+     "sector": "Technology",
+     "weight": 0.1526
+    },
+    {
+     "ticker": "7912",
+     "symbol": "7912.T",
+     "name": "Dai Nippon Printing Co., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1503
+    },
+    {
+     "ticker": "5801",
+     "symbol": "5801.T",
+     "name": "Furukawa Electric Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.1495
+    },
+    {
+     "ticker": "8252",
+     "symbol": "8252.T",
+     "name": "Marui Group Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.1489
+    },
+    {
+     "ticker": "7270",
+     "symbol": "7270.T",
+     "name": "Subaru Corp",
+     "sector": "Technology",
+     "weight": 0.1418
+    },
+    {
+     "ticker": "6326",
+     "symbol": "6326.T",
+     "name": "Kubota Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1391
+    },
+    {
+     "ticker": "8331",
+     "symbol": "8331.T",
+     "name": "The Chiba Bank, Ltd.",
+     "sector": "Financials",
+     "weight": 0.1334
+    },
+    {
+     "ticker": "6504",
+     "symbol": "6504.T",
+     "name": "Fuji Electric Co., Ltd.",
+     "sector": "Technology",
+     "weight": 0.1316
+    },
+    {
+     "ticker": "4151",
+     "symbol": "4151.T",
+     "name": "Kyowa Kirin Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.1312
+    },
+    {
+     "ticker": "6701",
+     "symbol": "6701.T",
+     "name": "NEC Corp",
+     "sector": "Technology",
+     "weight": 0.1292
+    },
+    {
+     "ticker": "6113",
+     "symbol": "6113.T",
+     "name": "Amada Co., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1283
+    },
+    {
+     "ticker": "6178",
+     "symbol": "6178.T",
+     "name": "Japan Post Holdings Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.1274
+    },
+    {
+     "ticker": "1812",
+     "symbol": "1812.T",
+     "name": "Kajima Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1259
+    },
+    {
+     "ticker": "9434",
+     "symbol": "9434.T",
+     "name": "Softbank Corp",
+     "sector": "Information and Communications",
+     "weight": 0.1247
+    },
+    {
+     "ticker": "9104",
+     "symbol": "9104.T",
+     "name": "Mitsui O.s.k.lines, Ltd.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.1226
+    },
+    {
+     "ticker": "9101",
+     "symbol": "9101.T",
+     "name": "Nippon Yusen K.k.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.1206
+    },
+    {
+     "ticker": "2002",
+     "symbol": "2002.T",
+     "name": "Nisshin Seifun Group Inc",
+     "sector": "Consumer Goods",
+     "weight": 0.1191
+    },
+    {
+     "ticker": "1801",
+     "symbol": "1801.T",
+     "name": "Taisei Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1187
+    },
+    {
+     "ticker": "8233",
+     "symbol": "8233.T",
+     "name": "Takashimaya Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.1149
+    },
+    {
+     "ticker": "2871",
+     "symbol": "2871.T",
+     "name": "Nichirei Corp",
+     "sector": "Consumer Goods",
+     "weight": 0.1144
+    },
+    {
+     "ticker": "7911",
+     "symbol": "7911.T",
+     "name": "Toppan Holdings Inc",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1133
+    },
+    {
+     "ticker": "9009",
+     "symbol": "9009.T",
+     "name": "Keisei Electric Railway Co., Ltd.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.1132
+    },
+    {
+     "ticker": "1963",
+     "symbol": "1963.T",
+     "name": "Jgc Holdings Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1126
+    },
+    {
+     "ticker": "6770",
+     "symbol": "6770.T",
+     "name": "Alps Alpine Co., Ltd.",
+     "sector": "Technology",
+     "weight": 0.1111
+    },
+    {
+     "ticker": "1803",
+     "symbol": "1803.T",
+     "name": "Shimizu Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1095
+    },
+    {
+     "ticker": "5706",
+     "symbol": "5706.T",
+     "name": "Mitsui Kinzoku Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.1075
+    },
+    {
+     "ticker": "6473",
+     "symbol": "6473.T",
+     "name": "JTEKT Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.1056
+    },
+    {
+     "ticker": "9022",
+     "symbol": "9022.T",
+     "name": "Central Japan Railway Co., Ltd.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.1052
+    },
+    {
+     "ticker": "9064",
+     "symbol": "9064.T",
+     "name": "Yamato Holdings Co., Ltd.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.1049
+    },
+    {
+     "ticker": "2501",
+     "symbol": "2501.T",
+     "name": "Sapporo Breweries Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.1048
+    },
+    {
+     "ticker": "8316",
+     "symbol": "8316.T",
+     "name": "Sumitomo Mitsui Financial Group, Inc",
+     "sector": "Financials",
+     "weight": 0.1032
+    },
+    {
+     "ticker": "5301",
+     "symbol": "5301.T",
+     "name": "Tokai Carbon Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.1026
+    },
+    {
+     "ticker": "4506",
+     "symbol": "4506.T",
+     "name": "Sumitomo Pharma Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.1004
+    },
+    {
+     "ticker": "3405",
+     "symbol": "3405.T",
+     "name": "Kuraray Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.0984
+    },
+    {
+     "ticker": "6526",
+     "symbol": "6526.T",
+     "name": "Socionext Inc",
+     "sector": "Technology",
+     "weight": 0.0972
+    },
+    {
+     "ticker": "7752",
+     "symbol": "7752.T",
+     "name": "Ricoh Co., Ltd.",
+     "sector": "Technology",
+     "weight": 0.0965
+    },
+    {
+     "ticker": "6103",
+     "symbol": "6103.T",
+     "name": "Okuma Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.0963
+    },
+    {
+     "ticker": "9147",
+     "symbol": "9147.T",
+     "name": "Nippon Express Holdings, Inc",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0949
+    },
+    {
+     "ticker": "9432",
+     "symbol": "9432.T",
+     "name": "NTT, Inc",
+     "sector": "Information and Communications",
+     "weight": 0.0923
+    },
+    {
+     "ticker": "2269",
+     "symbol": "2269.T",
+     "name": "Meiji Holdings Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.0918
+    },
+    {
+     "ticker": "8601",
+     "symbol": "8601.T",
+     "name": "Daiwa Securities Group Inc",
+     "sector": "Financials",
+     "weight": 0.0905
+    },
+    {
+     "ticker": "7186",
+     "symbol": "7186.T",
+     "name": "Yokohama Financial Group, Inc",
+     "sector": "Financials",
+     "weight": 0.0893
+    },
+    {
+     "ticker": "8804",
+     "symbol": "8804.T",
+     "name": "Tokyo Tatemono Co., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.0876
+    },
+    {
+     "ticker": "7731",
+     "symbol": "7731.T",
+     "name": "Nikon Corp",
+     "sector": "Technology",
+     "weight": 0.087
+    },
+    {
+     "ticker": "7013",
+     "symbol": "7013.T",
+     "name": "IHI Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.0869
+    },
+    {
+     "ticker": "1605",
+     "symbol": "1605.T",
+     "name": "Inpex Corp",
+     "sector": "Materials",
+     "weight": 0.0866
+    },
+    {
+     "ticker": "3407",
+     "symbol": "3407.T",
+     "name": "Asahi Kasei Corp",
+     "sector": "Materials",
+     "weight": 0.0855
+    },
+    {
+     "ticker": "5714",
+     "symbol": "5714.T",
+     "name": "Dowa Holdings Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.0846
+    },
+    {
+     "ticker": "8604",
+     "symbol": "8604.T",
+     "name": "Nomura Holdings, Inc",
+     "sector": "Financials",
+     "weight": 0.0797
+    },
+    {
+     "ticker": "5214",
+     "symbol": "5214.T",
+     "name": "Nippon Electric Glass Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.0796
+    },
+    {
+     "ticker": "3086",
+     "symbol": "3086.T",
+     "name": "J.front Retailing Co., Ltd.",
+     "sector": "Consumer Goods",
+     "weight": 0.0765
+    },
+    {
+     "ticker": "5020",
+     "symbol": "5020.T",
+     "name": "ENEOS Holdings, Inc",
+     "sector": "Materials",
+     "weight": 0.076
+    },
+    {
+     "ticker": "8354",
+     "symbol": "8354.T",
+     "name": "Fukuoka Financial Group, Inc",
+     "sector": "Financials",
+     "weight": 0.0741
+    },
+    {
+     "ticker": "8309",
+     "symbol": "8309.T",
+     "name": "Sumitomo Mitsui Trust Group, Inc",
+     "sector": "Financials",
+     "weight": 0.0704
+    },
+    {
+     "ticker": "4004",
+     "symbol": "4004.T",
+     "name": "Resonac Holdings Corp",
+     "sector": "Materials",
+     "weight": 0.0695
+    },
+    {
+     "ticker": "9531",
+     "symbol": "9531.T",
+     "name": "Tokyo Gas Co., Ltd.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0694
+    },
+    {
+     "ticker": "4042",
+     "symbol": "4042.T",
+     "name": "Tosoh Corp",
+     "sector": "Materials",
+     "weight": 0.0676
+    },
+    {
+     "ticker": "3289",
+     "symbol": "3289.T",
+     "name": "Tokyu Fudosan Holdings Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.0655
+    },
+    {
+     "ticker": "3402",
+     "symbol": "3402.T",
+     "name": "Toray Industries, Inc",
+     "sector": "Materials",
+     "weight": 0.0628
+    },
+    {
+     "ticker": "9532",
+     "symbol": "9532.T",
+     "name": "Osaka Gas Co., Ltd.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0628
+    },
+    {
+     "ticker": "5631",
+     "symbol": "5631.T",
+     "name": "The Japan Steel Works, Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.0627
+    },
+    {
+     "ticker": "3697",
+     "symbol": "3697.T",
+     "name": "Shift Inc",
+     "sector": "Information and Communications",
+     "weight": 0.0598
+    },
+    {
+     "ticker": "1332",
+     "symbol": "1332.T",
+     "name": "Nissui Corp",
+     "sector": "Consumer Goods",
+     "weight": 0.0592
+    },
+    {
+     "ticker": "9020",
+     "symbol": "9020.T",
+     "name": "East Japan Railway Co.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0581
+    },
+    {
+     "ticker": "5201",
+     "symbol": "5201.T",
+     "name": "Agc Inc",
+     "sector": "Materials",
+     "weight": 0.0577
+    },
+    {
+     "ticker": "7012",
+     "symbol": "7012.T",
+     "name": "Kawasaki Heavy Ind., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.0563
+    },
+    {
+     "ticker": "6302",
+     "symbol": "6302.T",
+     "name": "Sumitomo Heavy Ind., Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.0562
+    },
+    {
+     "ticker": "7202",
+     "symbol": "7202.T",
+     "name": "Isuzu Motors Ltd.",
+     "sector": "Technology",
+     "weight": 0.0547
+    },
+    {
+     "ticker": "4751",
+     "symbol": "4751.T",
+     "name": "Cyberagent, Inc",
+     "sector": "Consumer Goods",
+     "weight": 0.0541
+    },
+    {
+     "ticker": "6471",
+     "symbol": "6471.T",
+     "name": "NSK Ltd.",
+     "sector": "Capital Goods/Others",
+     "weight": 0.0534
+    },
+    {
+     "ticker": "8795",
+     "symbol": "8795.T",
+     "name": "T&d Holdings, Inc",
+     "sector": "Financials",
+     "weight": 0.0519
+    },
+    {
+     "ticker": "9007",
+     "symbol": "9007.T",
+     "name": "Odakyu Electric Railway Co., Ltd.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0466
+    },
+    {
+     "ticker": "9602",
+     "symbol": "9602.T",
+     "name": "Toho Co., Ltd",
+     "sector": "Information and Communications",
+     "weight": 0.045
+    },
+    {
+     "ticker": "4183",
+     "symbol": "4183.T",
+     "name": "Mitsui Chemicals, Inc",
+     "sector": "Materials",
+     "weight": 0.0444
+    },
+    {
+     "ticker": "3861",
+     "symbol": "3861.T",
+     "name": "Oji Holdings Corp",
+     "sector": "Materials",
+     "weight": 0.0436
+    },
+    {
+     "ticker": "9005",
+     "symbol": "9005.T",
+     "name": "Tokyu Corp",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0428
+    },
+    {
+     "ticker": "4043",
+     "symbol": "4043.T",
+     "name": "Tokuyama Corp",
+     "sector": "Materials",
+     "weight": 0.0419
+    },
+    {
+     "ticker": "8411",
+     "symbol": "8411.T",
+     "name": "Mizuho Financial Group, Inc",
+     "sector": "Financials",
+     "weight": 0.0413
+    },
+    {
+     "ticker": "9008",
+     "symbol": "9008.T",
+     "name": "Keio Corp",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0409
+    },
+    {
+     "ticker": "2432",
+     "symbol": "2432.T",
+     "name": "Dena Co., Ltd.",
+     "sector": "Information and Communications",
+     "weight": 0.0408
+    },
+    {
+     "ticker": "7532",
+     "symbol": "7532.T",
+     "name": "Pan Pacific International Holdings Corp",
+     "sector": "Consumer Goods",
+     "weight": 0.0393
+    },
+    {
+     "ticker": "8750",
+     "symbol": "8750.T",
+     "name": "Daiichi Life Group, Inc",
+     "sector": "Financials",
+     "weight": 0.0384
+    },
+    {
+     "ticker": "4755",
+     "symbol": "4755.T",
+     "name": "Rakuten Group, Inc",
+     "sector": "Consumer Goods",
+     "weight": 0.0335
+    },
+    {
+     "ticker": "9021",
+     "symbol": "9021.T",
+     "name": "West Japan Railway Co.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0329
+    },
+    {
+     "ticker": "4061",
+     "symbol": "4061.T",
+     "name": "Denka Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.0325
+    },
+    {
+     "ticker": "4188",
+     "symbol": "4188.T",
+     "name": "Mitsubishi Chemical Group Corp",
+     "sector": "Materials",
+     "weight": 0.0312
+    },
+    {
+     "ticker": "9001",
+     "symbol": "9001.T",
+     "name": "Tobu Railway Co., Ltd.",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0312
+    },
+    {
+     "ticker": "4005",
+     "symbol": "4005.T",
+     "name": "Sumitomo Chemical Co., Ltd.",
+     "sector": "Materials",
+     "weight": 0.0301
+    },
+    {
+     "ticker": "6753",
+     "symbol": "6753.T",
+     "name": "Sharp Corp",
+     "sector": "Technology",
+     "weight": 0.0287
+    },
+    {
+     "ticker": "1808",
+     "symbol": "1808.T",
+     "name": "Haseko Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.0283
+    },
+    {
+     "ticker": "2768",
+     "symbol": "2768.T",
+     "name": "Sojitz Corp",
+     "sector": "Materials",
+     "weight": 0.0273
+    },
+    {
+     "ticker": "5711",
+     "symbol": "5711.T",
+     "name": "Mitsubishi Materials Corp",
+     "sector": "Materials",
+     "weight": 0.0231
+    },
+    {
+     "ticker": "5233",
+     "symbol": "5233.T",
+     "name": "Taiheiyo Cement Corp",
+     "sector": "Materials",
+     "weight": 0.0225
+    },
+    {
+     "ticker": "6472",
+     "symbol": "6472.T",
+     "name": "Ntn Corp",
+     "sector": "Capital Goods/Others",
+     "weight": 0.0191
+    },
+    {
+     "ticker": "5401",
+     "symbol": "5401.T",
+     "name": "Nippon Steel Corp",
+     "sector": "Materials",
+     "weight": 0.0175
+    },
+    {
+     "ticker": "4208",
+     "symbol": "4208.T",
+     "name": "Ube Corp",
+     "sector": "Materials",
+     "weight": 0.0173
+    },
+    {
+     "ticker": "3401",
+     "symbol": "3401.T",
+     "name": "Teijin Ltd.",
+     "sector": "Materials",
+     "weight": 0.0171
+    },
+    {
+     "ticker": "9202",
+     "symbol": "9202.T",
+     "name": "ANA Holdings Inc",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0162
+    },
+    {
+     "ticker": "8304",
+     "symbol": "8304.T",
+     "name": "Aozora Bank, Ltd.",
+     "sector": "Financials",
+     "weight": 0.0161
+    },
+    {
+     "ticker": "7201",
+     "symbol": "7201.T",
+     "name": "Nissan Motor Co., Ltd.",
+     "sector": "Technology",
+     "weight": 0.0142
+    },
+    {
+     "ticker": "9503",
+     "symbol": "9503.T",
+     "name": "The Kansai Electric Power Co., Inc",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0139
+    },
+    {
+     "ticker": "9502",
+     "symbol": "9502.T",
+     "name": "Chubu Electric Power Co., Inc",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0133
+    },
+    {
+     "ticker": "3436",
+     "symbol": "3436.T",
+     "name": "SUMCO Corp",
+     "sector": "Materials",
+     "weight": 0.0124
+    },
+    {
+     "ticker": "8308",
+     "symbol": "8308.T",
+     "name": "Resona Holdings, Inc",
+     "sector": "Financials",
+     "weight": 0.012
+    },
+    {
+     "ticker": "7261",
+     "symbol": "7261.T",
+     "name": "Mazda Motor Corp",
+     "sector": "Technology",
+     "weight": 0.0115
+    },
+    {
+     "ticker": "4689",
+     "symbol": "4689.T",
+     "name": "LY Corp",
+     "sector": "Information and Communications",
+     "weight": 0.0107
+    },
+    {
+     "ticker": "5406",
+     "symbol": "5406.T",
+     "name": "Kobe Steel, Ltd.",
+     "sector": "Materials",
+     "weight": 0.0107
+    },
+    {
+     "ticker": "5411",
+     "symbol": "5411.T",
+     "name": "JFE Holdings, Inc",
+     "sector": "Materials",
+     "weight": 0.0094
+    },
+    {
+     "ticker": "9501",
+     "symbol": "9501.T",
+     "name": "Tokyo Electric Power Company Holdings, I",
+     "sector": "Transportation and Utilities",
+     "weight": 0.0025
+    },
+    {
+     "ticker": "7211",
+     "symbol": "7211.T",
+     "name": "Mitsubishi Motors Corp",
+     "sector": "Technology",
+     "weight": 0.0018
+    }
+   ]
+  },
+  "ftse100": {
+   "name": "FTSE 100",
+   "country": "UK",
+   "index_symbol": "^FTSE",
+   "currency": "GBP",
+   "source": "iShares Core FTSE 100 UCITS ETF (ISF) holdings, BlackRock",
+   "source_url": "https://www.blackrock.com/uk/individual/products/251795/ishares-ftse-100-ucits-etf-inc-fund/1472631233320.ajax?fileType=csv&fileName=ISF_holdings&dataType=fund",
+   "as_of": "2026-11-10",
+   "count": 100,
+   "weight_sum": 99.68,
+   "holdings": [
+    {
+     "ticker": "HSBA",
+     "symbol": "HSBA.L",
+     "name": "HSBC Holdings PLC",
+     "sector": "Financials",
+     "weight": 8.99
+    },
+    {
+     "ticker": "SHEL",
+     "symbol": "SHEL.L",
+     "name": "Shell",
+     "sector": "Energy",
+     "weight": 8.27
+    },
+    {
+     "ticker": "AZN",
+     "symbol": "AZN.L",
+     "name": "Astrazeneca PLC",
+     "sector": "Health Care",
+     "weight": 8.13
+    },
+    {
+     "ticker": "RR",
+     "symbol": "RR.L",
+     "name": "Rolls-Royce Holdings PLC",
+     "sector": "Industrials",
+     "weight": 4.36
+    },
+    {
+     "ticker": "ULVR",
+     "symbol": "ULVR.L",
+     "name": "Unilever PLC",
+     "sector": "Consumer Staples",
+     "weight": 4.01
+    },
+    {
+     "ticker": "BATS",
+     "symbol": "BATS.L",
+     "name": "British American Tobacco",
+     "sector": "Consumer Staples",
+     "weight": 3.6
+    },
+    {
+     "ticker": "BP",
+     "symbol": "BP.L",
+     "name": "BP PLC",
+     "sector": "Energy",
+     "weight": 3.38
+    },
+    {
+     "ticker": "GSK",
+     "symbol": "GSK.L",
+     "name": "Glaxosmithkline",
+     "sector": "Health Care",
+     "weight": 2.99
+    },
+    {
+     "ticker": "RIO",
+     "symbol": "RIO.L",
+     "name": "Rio Tinto",
+     "sector": "Materials",
+     "weight": 2.56
+    },
+    {
+     "ticker": "NG",
+     "symbol": "NG.L",
+     "name": "National Grid PLC",
+     "sector": "Utilities",
+     "weight": 2.44
+    },
+    {
+     "ticker": "BARC",
+     "symbol": "BARC.L",
+     "name": "Barclays PLC",
+     "sector": "Financials",
+     "weight": 2.27
+    },
+    {
+     "ticker": "LLOY",
+     "symbol": "LLOY.L",
+     "name": "Lloyds Banking Group PLC",
+     "sector": "Financials",
+     "weight": 2.21
+    },
+    {
+     "ticker": "BA",
+     "symbol": "BA.L",
+     "name": "BAE Systems PLC",
+     "sector": "Industrials",
+     "weight": 2.21
+    },
+    {
+     "ticker": "REL",
+     "symbol": "REL.L",
+     "name": "RELX PLC",
+     "sector": "Industrials",
+     "weight": 2.03
+    },
+    {
+     "ticker": "GLEN",
+     "symbol": "GLEN.L",
+     "name": "Glencore PLC",
+     "sector": "Materials",
+     "weight": 2.0
+    },
+    {
+     "ticker": "NWG",
+     "symbol": "NWG.L",
+     "name": "Natwest Group PLC",
+     "sector": "Financials",
+     "weight": 1.84
+    },
+    {
+     "ticker": "LSEG",
+     "symbol": "LSEG.L",
+     "name": "London Stock Exchange Group PLC",
+     "sector": "Financials",
+     "weight": 1.71
+    },
+    {
+     "ticker": "DGE",
+     "symbol": "DGE.L",
+     "name": "Diageo PLC",
+     "sector": "Consumer Staples",
+     "weight": 1.65
+    },
+    {
+     "ticker": "CPG",
+     "symbol": "CPG.L",
+     "name": "Compass Group PLC",
+     "sector": "Consumer Discretionary",
+     "weight": 1.65
+    },
+    {
+     "ticker": "AAL",
+     "symbol": "AAL.L",
+     "name": "Anglo American PLC",
+     "sector": "Materials",
+     "weight": 1.64
+    },
+    {
+     "ticker": "STAN",
+     "symbol": "STAN.L",
+     "name": "Standard Chartered PLC",
+     "sector": "Financials",
+     "weight": 1.5
+    },
+    {
+     "ticker": "RKT",
+     "symbol": "RKT.L",
+     "name": "Reckitt Benckiser Group PLC",
+     "sector": "Consumer Staples",
+     "weight": 1.42
+    },
+    {
+     "ticker": "TSCO",
+     "symbol": "TSCO.L",
+     "name": "Tesco PLC",
+     "sector": "Consumer Staples",
+     "weight": 1.32
+    },
+    {
+     "ticker": "SSE",
+     "symbol": "SSE.L",
+     "name": "Sse PLC",
+     "sector": "Utilities",
+     "weight": 1.26
+    },
+    {
+     "ticker": "HLN",
+     "symbol": "HLN.L",
+     "name": "Haleon PLC",
+     "sector": "Health Care",
+     "weight": 1.16
+    },
+    {
+     "ticker": "EXPN",
+     "symbol": "EXPN.L",
+     "name": "Experian PLC",
+     "sector": "Industrials",
+     "weight": 1.03
+    },
+    {
+     "ticker": "III",
+     "symbol": "III.L",
+     "name": "3I Group Fund PLC",
+     "sector": "Financials",
+     "weight": 0.98
+    },
+    {
+     "ticker": "PRU",
+     "symbol": "PRU.L",
+     "name": "Prudential PLC",
+     "sector": "Financials",
+     "weight": 0.94
+    },
+    {
+     "ticker": "AV",
+     "symbol": "AV.L",
+     "name": "Aviva PLC",
+     "sector": "Financials",
+     "weight": 0.85
+    },
+    {
+     "ticker": "IMB",
+     "symbol": "IMB.L",
+     "name": "Imperial Brands PLC",
+     "sector": "Consumer Staples",
+     "weight": 0.84
+    },
+    {
+     "ticker": "VOD",
+     "symbol": "VOD.L",
+     "name": "Vodafone Group PLC",
+     "sector": "Communication",
+     "weight": 0.82
+    },
+    {
+     "ticker": "IHG",
+     "symbol": "IHG.L",
+     "name": "Intercontinental Hotels Group PLC",
+     "sector": "Consumer Discretionary",
+     "weight": 0.74
+    },
+    {
+     "ticker": "NXT",
+     "symbol": "NXT.L",
+     "name": "Next PLC",
+     "sector": "Consumer Discretionary",
+     "weight": 0.69
+    },
+    {
+     "ticker": "CCEP",
+     "symbol": "CCEP.L",
+     "name": "Coca Cola Europacific Partners PLC",
+     "sector": "Consumer Staples",
+     "weight": 0.67
+    },
+    {
+     "ticker": "LGEN",
+     "symbol": "LGEN.L",
+     "name": "Legal And General Group PLC",
+     "sector": "Financials",
+     "weight": 0.65
+    },
+    {
+     "ticker": "SMT",
+     "symbol": "SMT.L",
+     "name": "Scottish Mortgage Investment Trust",
+     "sector": "Financials",
+     "weight": 0.63
+    },
+    {
+     "ticker": "IAG",
+     "symbol": "IAG.L",
+     "name": "International Airlines Group",
+     "sector": "Industrials",
+     "weight": 0.58
+    },
+    {
+     "ticker": "HLMA",
+     "symbol": "HLMA.L",
+     "name": "Halma PLC",
+     "sector": "Information Technology",
+     "weight": 0.51
+    },
+    {
+     "ticker": "SGRO",
+     "symbol": "SGRO.L",
+     "name": "Segro REIT PLC",
+     "sector": "Real Estate",
+     "weight": 0.49
+    },
+    {
+     "ticker": "INF",
+     "symbol": "INF.L",
+     "name": "Informa PLC",
+     "sector": "Communication",
+     "weight": 0.46
+    },
+    {
+     "ticker": "BT.A",
+     "symbol": "BT-A.L",
+     "name": "BT Group PLC",
+     "sector": "Communication",
+     "weight": 0.46
+    },
+    {
+     "ticker": "UU",
+     "symbol": "UU.L",
+     "name": "United Utilities Group PLC",
+     "sector": "Utilities",
+     "weight": 0.45
+    },
+    {
+     "ticker": "ANTO",
+     "symbol": "ANTO.L",
+     "name": "Antofagasta PLC",
+     "sector": "Materials",
+     "weight": 0.43
+    },
+    {
+     "ticker": "SGE",
+     "symbol": "SGE.L",
+     "name": "The Sage Group",
+     "sector": "Information Technology",
+     "weight": 0.4
+    },
+    {
+     "ticker": "ADM",
+     "symbol": "ADM.L",
+     "name": "Admiral Group PLC",
+     "sector": "Financials",
+     "weight": 0.38
+    },
+    {
+     "ticker": "SN",
+     "symbol": "SN.L",
+     "name": "Smith And Nephew PLC",
+     "sector": "Health Care",
+     "weight": 0.37
+    },
+    {
+     "ticker": "DPLM",
+     "symbol": "DPLM.L",
+     "name": "Diploma PLC",
+     "sector": "Industrials",
+     "weight": 0.37
+    },
+    {
+     "ticker": "MKS",
+     "symbol": "MKS.L",
+     "name": "Marks And Spencer Group PLC",
+     "sector": "Consumer Staples",
+     "weight": 0.36
+    },
+    {
+     "ticker": "BNZL",
+     "symbol": "BNZL.L",
+     "name": "Bunzl",
+     "sector": "Industrials",
+     "weight": 0.36
+    },
+    {
+     "ticker": "ITRK",
+     "symbol": "ITRK.L",
+     "name": "Intertek Group PLC",
+     "sector": "Industrials",
+     "weight": 0.35
+    },
+    {
+     "ticker": "SVT",
+     "symbol": "SVT.L",
+     "name": "Severn Trent PLC",
+     "sector": "Utilities",
+     "weight": 0.34
+    },
+    {
+     "ticker": "RTO",
+     "symbol": "RTO.L",
+     "name": "Rentokil Initial PLC",
+     "sector": "Industrials",
+     "weight": 0.34
+    },
+    {
+     "ticker": "EDV",
+     "symbol": "EDV.L",
+     "name": "Endeavour Mining",
+     "sector": "Materials",
+     "weight": 0.34
+    },
+    {
+     "ticker": "CCH",
+     "symbol": "CCH.L",
+     "name": "Coca Cola Hbc AG",
+     "sector": "Consumer Staples",
+     "weight": 0.33
+    },
+    {
+     "ticker": "SMIN",
+     "symbol": "SMIN.L",
+     "name": "Smiths Group PLC",
+     "sector": "Industrials",
+     "weight": 0.3
+    },
+    {
+     "ticker": "SDLF",
+     "symbol": "SDLF.L",
+     "name": "Standard Life PLC",
+     "sector": "Financials",
+     "weight": 0.29
+    },
+    {
+     "ticker": "PSON",
+     "symbol": "PSON.L",
+     "name": "Pearson PLC",
+     "sector": "Consumer Discretionary",
+     "weight": 0.29
+    },
+    {
+     "ticker": "CNA",
+     "symbol": "CNA.L",
+     "name": "Centrica PLC",
+     "sector": "Utilities",
+     "weight": 0.27
+    },
+    {
+     "ticker": "IMI",
+     "symbol": "IMI.L",
+     "name": "IMI PLC",
+     "sector": "Industrials",
+     "weight": 0.27
+    },
+    {
+     "ticker": "MNG",
+     "symbol": "MNG.L",
+     "name": "M&G PLC",
+     "sector": "Financials",
+     "weight": 0.26
+    },
+    {
+     "ticker": "SBRY",
+     "symbol": "SBRY.L",
+     "name": "Sainsbury(j) PLC",
+     "sector": "Consumer Staples",
+     "weight": 0.26
+    },
+    {
+     "ticker": "HSX",
+     "symbol": "HSX.L",
+     "name": "Hiscox Ltd",
+     "sector": "Financials",
+     "weight": 0.24
+    },
+    {
+     "ticker": "FCIT",
+     "symbol": "FCIT.L",
+     "name": "F&c Investment Trust Fund PLC",
+     "sector": "Financials",
+     "weight": 0.24
+    },
+    {
+     "ticker": "WEIR",
+     "symbol": "WEIR.L",
+     "name": "Weir PLC",
+     "sector": "Industrials",
+     "weight": 0.24
+    },
+    {
+     "ticker": "PCT",
+     "symbol": "PCT.L",
+     "name": "Polar Capital Technology Trust Fun",
+     "sector": "Financials",
+     "weight": 0.24
+    },
+    {
+     "ticker": "KGF",
+     "symbol": "KGF.L",
+     "name": "Kingfisher PLC",
+     "sector": "Consumer Discretionary",
+     "weight": 0.24
+    },
+    {
+     "ticker": "MRO",
+     "symbol": "MRO.L",
+     "name": "Melrose Industries PLC",
+     "sector": "Industrials",
+     "weight": 0.23
+    },
+    {
+     "ticker": "STJ",
+     "symbol": "STJ.L",
+     "name": "ST Jamess Place PLC",
+     "sector": "Financials",
+     "weight": 0.22
+    },
+    {
+     "ticker": "ABF",
+     "symbol": "ABF.L",
+     "name": "Associated British Foods PLC",
+     "sector": "Consumer Staples",
+     "weight": 0.22
+    },
+    {
+     "ticker": "LAND",
+     "symbol": "LAND.L",
+     "name": "Land Securities Group REIT PLC",
+     "sector": "Real Estate",
+     "weight": 0.22
+    },
+    {
+     "ticker": "SPX",
+     "symbol": "SPX.L",
+     "name": "Spirax Group PLC",
+     "sector": "Industrials",
+     "weight": 0.21
+    },
+    {
+     "ticker": "GAW",
+     "symbol": "GAW.L",
+     "name": "Games Workshop Group PLC",
+     "sector": "Consumer Discretionary",
+     "weight": 0.21
+    },
+    {
+     "ticker": "DCC",
+     "symbol": "DCC.L",
+     "name": "Dcc Energy PLC",
+     "sector": "Energy",
+     "weight": 0.21
+    },
+    {
+     "ticker": "BAB",
+     "symbol": "BAB.L",
+     "name": "Babcock International Group PLC",
+     "sector": "Industrials",
+     "weight": 0.2
+    },
+    {
+     "ticker": "CRDA",
+     "symbol": "CRDA.L",
+     "name": "Croda International PLC",
+     "sector": "Materials",
+     "weight": 0.2
+    },
+    {
+     "ticker": "ICG",
+     "symbol": "ICG.L",
+     "name": "ICG PLC",
+     "sector": "Financials",
+     "weight": 0.2
+    },
+    {
+     "ticker": "PSH",
+     "symbol": "PSH.L",
+     "name": "Pershing Square Holdings Fund Ltd",
+     "sector": "Financials",
+     "weight": 0.19
+    },
+    {
+     "ticker": "ALW",
+     "symbol": "ALW.L",
+     "name": "Alliance Witan Fund PLC",
+     "sector": "Financials",
+     "weight": 0.19
+    },
+    {
+     "ticker": "CTEC",
+     "symbol": "CTEC.L",
+     "name": "Convatec Group PLC",
+     "sector": "Health Care",
+     "weight": 0.19
+    },
+    {
+     "ticker": "WTB",
+     "symbol": "WTB.L",
+     "name": "Whitbread PLC",
+     "sector": "Consumer Discretionary",
+     "weight": 0.19
+    },
+    {
+     "ticker": "BGEO",
+     "symbol": "BGEO.L",
+     "name": "Lion Finance Group PLC",
+     "sector": "Financials",
+     "weight": 0.18
+    },
+    {
+     "ticker": "FRES",
+     "symbol": "FRES.L",
+     "name": "Fresnillo PLC",
+     "sector": "Materials",
+     "weight": 0.18
+    },
+    {
+     "ticker": "HWDN",
+     "symbol": "HWDN.L",
+     "name": "Howden Joinery Group PLC",
+     "sector": "Industrials",
+     "weight": 0.18
+    },
+    {
+     "ticker": "BLND",
+     "symbol": "BLND.L",
+     "name": "British Land REIT",
+     "sector": "Real Estate",
+     "weight": 0.17
+    },
+    {
+     "ticker": "WPP",
+     "symbol": "WPP.L",
+     "name": "WPP PLC",
+     "sector": "Communication",
+     "weight": 0.17
+    },
+    {
+     "ticker": "EZJ",
+     "symbol": "EZJ.L",
+     "name": "Easyjet",
+     "sector": "Industrials",
+     "weight": 0.17
+    },
+    {
+     "ticker": "BTRW",
+     "symbol": "BTRW.L",
+     "name": "Barratt Redrow PLC",
+     "sector": "Consumer Discretionary",
+     "weight": 0.17
+    },
+    {
+     "ticker": "AUTO",
+     "symbol": "AUTO.L",
+     "name": "Autotrader Group PLC",
+     "sector": "Communication",
+     "weight": 0.17
+    },
+    {
+     "ticker": "LMP",
+     "symbol": "LMP.L",
+     "name": "Londonmetric Property REIT PLC",
+     "sector": "Real Estate",
+     "weight": 0.17
+    },
+    {
+     "ticker": "MTLN",
+     "symbol": "MTLN.L",
+     "name": "Metlen Energy & Metals PLC",
+     "sector": "Industrials",
+     "weight": 0.16
+    },
+    {
+     "ticker": "ABDN",
+     "symbol": "ABDN.L",
+     "name": "Aberdeen Group PLC",
+     "sector": "Financials",
+     "weight": 0.16
+    },
+    {
+     "ticker": "BBY",
+     "symbol": "BBY.L",
+     "name": "Balfour Beatty PLC",
+     "sector": "Industrials",
+     "weight": 0.16
+    },
+    {
+     "ticker": "BRBY",
+     "symbol": "BRBY.L",
+     "name": "Burberry Group PLC",
+     "sector": "Consumer Discretionary",
+     "weight": 0.16
+    },
+    {
+     "ticker": "BBOX",
+     "symbol": "BBOX.L",
+     "name": "Tritax Big Box REIT PLC",
+     "sector": "Real Estate",
+     "weight": 0.15
+    },
+    {
+     "ticker": "INVP",
+     "symbol": "INVP.L",
+     "name": "Investec PLC",
+     "sector": "Financials",
+     "weight": 0.15
+    },
+    {
+     "ticker": "IGG",
+     "symbol": "IGG.L",
+     "name": "IG Group Holdings PLC",
+     "sector": "Financials",
+     "weight": 0.12
+    },
+    {
+     "ticker": "CCC",
+     "symbol": "CCC.L",
+     "name": "Computacenter PLC",
+     "sector": "Information Technology",
+     "weight": 0.11
+    },
+    {
+     "ticker": "JD",
+     "symbol": "JD.L",
+     "name": "JD Sports Fashion PLC",
+     "sector": "Consumer Discretionary",
+     "weight": 0.08
+    },
+    {
+     "ticker": "AAF",
+     "symbol": "AAF.L",
+     "name": "Airtel Africa PLC",
+     "sector": "Communication",
+     "weight": 0.07
+    },
+    {
+     "ticker": "ITH",
+     "symbol": "ITH.L",
+     "name": "Ithaca Energy PLC",
+     "sector": "Energy",
+     "weight": 0.02
+    }
+   ]
+  }
+ }
+}

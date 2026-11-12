@@ -1590,6 +1590,11 @@
       "id": "world_equity_indices",
       "entry": "World Indices Equity",
       "tab": "eq",
+      "index_breakdown": [
+        {"key": "sp500", "label": "S&P 500", "country": "USA", "match": ["S&P 500", "^GSPC", "^SPX", "_SPX", "SPX"]},
+        {"key": "nikkei225", "label": "Nikkei 225", "country": "Japan", "match": ["Nikkei 225", "^N225", "N225"]},
+        {"key": "ftse100", "label": "FTSE 100", "country": "UK", "match": ["FTSE 100", "^FTSE", "FTSE"]}
+      ],
       "panels": [
         {
           "id": "cboe",

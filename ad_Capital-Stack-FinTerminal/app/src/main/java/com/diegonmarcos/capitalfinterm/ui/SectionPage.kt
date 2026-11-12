@@ -84,22 +84,27 @@ fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectLis
                 Box(Modifier.width(1.dp).fillMaxHeight().background(p.hairline))
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                     val sym = FinNavStack.symbolOf(top)
+                    val idx = FinNavStack.indexOf(top)
                     when {
+                        idx != null -> IndexBreakdownPage(idx) { selected?.let(onSelectList) }
                         sym != null -> QuotePage(sym, nav)
                         selected != null -> DashboardPage(selected, nav)
                         page != null -> EntryPage(page, nav)
-                        cards.isNotEmpty() -> HomeGrid(sectionId, cards, nav, onOpenPage)
+                        cards.isNotEmpty() -> HomeGrid(sectionId, cards, entries, nav, onOpenPage)
                         else -> Box(Modifier.fillMaxSize().background(p.canvas))
                     }
                 }
             }
         } else {
             val sym = FinNavStack.symbolOf(top)
+            val idx = FinNavStack.indexOf(top)
             when {
+                // #1663 an index's holdings breakdown (table + treemap); its back line returns to the dashboard under it
+                idx != null -> IndexBreakdownPage(idx) { FinNavStack.dashboardOf(stack)?.let(onSelectList) }
                 sym != null -> QuotePage(sym, nav)
                 top.startsWith("dash:") -> DashboardPage(top.removePrefix("dash:"), nav)
                 page != null -> EntryPage(page, nav)
-                cards.isNotEmpty() -> HomeGrid(sectionId, cards, nav, onOpenPage)
+                cards.isNotEmpty() -> HomeGrid(sectionId, cards, entries, nav, onOpenPage)
                 else -> TabList(sectionId, entries, compact = false, selected = null, nav = nav, onOpen = onSelectList, onOpenConfig = onOpenConfig)
             }
         }
@@ -166,18 +171,23 @@ private fun EntryPage(e: Entry, nav: FinNav) {
 
 /** #1399 the section's Homepage: a 2-column grid of cards, one per sub-page (icon, name, one-line description); a tap opens it. */
 @Composable
-private fun HomeGrid(sectionId: String, cards: List<HomeCard>, nav: FinNav, onOpen: (String) -> Unit) {
+private fun HomeGrid(sectionId: String, cards: List<HomeCard>, entries: List<Entry>, nav: FinNav, onOpen: (String) -> Unit) {
+    // #1663 the cards under the stack's section titles (EQ: Performance, then Data), in the declared order
+    val groups = remember(sectionId) { Pages.homeGroups(cards, entries) }
     LazyColumn(
         Modifier.fillMaxSize().testTag(HOME_GRID + sectionId),
         contentPadding = PaddingValues(start = FinDim.screenPad, end = FinDim.screenPad, top = FinDim.gap, bottom = FinDim.bottomInset),
         verticalArrangement = Arrangement.spacedBy(FinDim.gap),
     ) {
         if (cards.any { it.entry.kind == Pages.KIND_DASHBOARD }) item(key = "search") { FinSearchField(onClick = { nav.search() }) }
-        cards.chunked(2).forEachIndexed { i, pair ->
-            item(key = "h:$i") {
-                Row(horizontalArrangement = Arrangement.spacedBy(FinDim.gap)) {
-                    pair.forEach { c -> HomeCardTile(c, Modifier.weight(1f)) { onOpen(c.pageId) } }
-                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+        groups.forEachIndexed { g, (title, group) ->
+            if (title.isNotEmpty()) item(key = "s:$g") { Box(Modifier.testTag(HOME_SECTION + title)) { GroupTitle(title) } }
+            group.chunked(2).forEachIndexed { i, pair ->
+                item(key = "h:$g:$i") {
+                    Row(horizontalArrangement = Arrangement.spacedBy(FinDim.gap)) {
+                        pair.forEach { c -> HomeCardTile(c, Modifier.weight(1f)) { onOpen(c.pageId) } }
+                        if (pair.size == 1) Spacer(Modifier.weight(1f))
+                    }
                 }
             }
         }
@@ -187,6 +197,8 @@ private fun HomeGrid(sectionId: String, cards: List<HomeCard>, nav: FinNav, onOp
 /** The test tag prefix of a Homepage grid (+ section id) and of one card (+ sub-page id). */
 const val HOME_GRID = "home_grid:"
 const val HOME_CARD = "home_card:"
+/** #1663 the test tag prefix of a Homepage section heading (+ its title: Performance, Data). */
+const val HOME_SECTION = "home_section:"
 
 @Composable
 private fun HomeCardTile(c: HomeCard, modifier: Modifier, onOpen: () -> Unit) {

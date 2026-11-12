@@ -22,6 +22,9 @@ object QuotesStore {
 
     fun snapshot(ctx: Context): QuotesSnapshot = QuotesSnapshot.parse(AssetData.read(ctx, SNAPSHOT)).overlay(live)
 
+    /** #1663 the quotes the source answered with in this process, by symbol (the index holdings: nothing baked stands behind them). */
+    fun liveQuotes(): Map<String, Quote> = HashMap(live)
+
     /** Asks the source for [symbols] (those not asked within the TTL unless [force]); returns how many answered. Blocking: call off the main thread. */
     fun refresh(decl: QuotesDecl, symbols: List<String>, force: Boolean, http: Http = UrlHttp(), now: () -> Long = System::currentTimeMillis): Int {
         val t = now()

@@ -32,6 +32,8 @@ data class Dashboard(
     val search: Boolean = false,
     /** #1462 a PM portfolio's risk tier (`risk`, "" = none), its market (`market`: DM | EM), equity share and EM share in % (`equity_pct`, `em_pct`, -1 = none) and why it is that tier when it has no legs. */
     val risk: String = "", val market: String = "", val equityPct: Int = -1, val emPct: Int = -1, val riskBasis: String = "",
+    /** #1663 the indices of this dashboard that open their holdings breakdown (`index_breakdown`); empty = none. */
+    val breakdown: List<IndexLink> = emptyList(),
 )
 
 /** What a dashboard shows right now, by its panels and their sources. */
@@ -64,6 +66,7 @@ object Dashboards {
                 panels = if (panels == null) emptyList() else (0 until panels.length()).mapNotNull { panels.optJSONObject(it) }.map { panel(it) },
                 isDefault = d.optBoolean("default", false), search = d.optBoolean("search", false),
                 risk = d.optString("risk"), market = d.optString("market"), equityPct = d.optInt("equity_pct", -1), emPct = d.optInt("em_pct", -1), riskBasis = d.optString("risk_basis"),
+                breakdown = IndexHoldings.links(d),
             )
         }
     }

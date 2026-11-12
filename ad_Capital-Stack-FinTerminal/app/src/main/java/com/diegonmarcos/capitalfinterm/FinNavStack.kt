@@ -23,6 +23,11 @@ object FinNavStack {
 
     fun quote(stack: List<String>, symbol: String): List<String> = if (stack.lastOrNull() == "quote:$symbol") stack else stack + "quote:$symbol"
 
+    /** #1663 an index's holdings breakdown (`index:<key>`), pushed on top of the dashboard like a quote; back pops it. */
+    fun index(stack: List<String>, key: String): List<String> = if (stack.lastOrNull() == "index:$key") stack else stack + "index:$key"
+
+    fun indexOf(screen: String?): String? = screen?.takeIf { it.startsWith("index:") }?.removePrefix("index:")
+
     fun dashboardOf(stack: List<String>): String? = stack.lastOrNull { it.startsWith("dash:") }?.removePrefix("dash:")
 
     fun pageOf(stack: List<String>): String? = stack.lastOrNull { it.startsWith("page:") }?.removePrefix("page:")
@@ -34,7 +39,7 @@ object FinNavStack {
 
     fun back(stack: List<String>, isHomeTab: Boolean): List<String>? {
         val top = stack.lastOrNull() ?: return if (isHomeTab) null else HOME
-        if (top.startsWith("quote:")) return stack.dropLast(1)
+        if (top.startsWith("quote:") || top.startsWith("index:")) return stack.dropLast(1)
         if (top != LIST) return LIST_ONLY
         return if (isHomeTab) null else HOME
     }

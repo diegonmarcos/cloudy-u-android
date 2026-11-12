@@ -1,0 +1,616 @@
+{
+ "_doc": "#1663 rule 16 parity baseline: every block (sub-page) and field (panel, its source, view, columns and items) the EQ page had BEFORE the #1612 regroup (Performance / Data sections, DM Equity and EM Equity merged into World Indices Equity). EqParityTest holds today's declaration to it: a block or a field may move or be renamed (was -> now), never disappear. Frozen: do not regenerate from today's files.",
+ "pages": [
+  {
+   "page": "eq-home",
+   "label": "Home"
+  },
+  {
+   "page": "world-equity-indices",
+   "label": "World Equity Indices"
+  },
+  {
+   "page": "eq-dm-us",
+   "label": "DM Equity (US)"
+  },
+  {
+   "page": "eq-em",
+   "label": "EM Equity"
+  },
+  {
+   "page": "equity-quote",
+   "label": "Quotes & Charts"
+  },
+  {
+   "page": "equity-fundamentals",
+   "label": "Fundamentals"
+  },
+  {
+   "page": "earnings-calendar",
+   "label": "Earnings Calendar"
+  },
+  {
+   "page": "watchlist",
+   "label": "Watchlist & Alerts"
+  },
+  {
+   "page": "fx-rates",
+   "label": "Exchange Rates"
+  },
+  {
+   "page": "commodity-prices",
+   "label": "Commodity Prices"
+  },
+  {
+   "page": "commodities",
+   "label": "Commodities"
+  }
+ ],
+ "panels": [
+  {
+   "was": "eq_dm_us/sectors",
+   "now": "world_equity_indices/dm_sectors",
+   "source": "cboe",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "WTD",
+    "MTD",
+    "YTD",
+    "1M",
+    "3M",
+    "1Y",
+    "3Y",
+    "10Y"
+   ],
+   "items": [
+    "SPY",
+    "XLK",
+    "XLF",
+    "XLV",
+    "XLY",
+    "XLP",
+    "XLE",
+    "XLI",
+    "XLB",
+    "XLU",
+    "XLRE",
+    "XLC"
+   ],
+   "live": true
+  },
+  {
+   "was": "eq_dm_us/strategies",
+   "now": "world_equity_indices/dm_strategies",
+   "source": "cboe",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "WTD",
+    "MTD",
+    "YTD",
+    "1M",
+    "3M",
+    "1Y",
+    "3Y",
+    "10Y"
+   ],
+   "items": [
+    "SPY",
+    "IWF",
+    "IWD",
+    "MTUM",
+    "QUAL",
+    "USMV",
+    "IWM",
+    "SCHD",
+    "RSP"
+   ],
+   "live": true
+  },
+  {
+   "was": "eq_dm_us/screener",
+   "now": "world_equity_indices/dm_screener",
+   "source": "cboe",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "WTD",
+    "MTD",
+    "YTD",
+    "1M",
+    "3M",
+    "1Y",
+    "3Y",
+    "10Y"
+   ],
+   "items": [
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "GOOGL",
+    "META",
+    "BRK.B",
+    "JPM",
+    "XOM",
+    "UNH",
+    "LLY",
+    "TSLA"
+   ],
+   "live": true
+  },
+  {
+   "was": "eq_em/sectors",
+   "now": "world_equity_indices/em_sectors",
+   "source": "cboe",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "WTD",
+    "MTD",
+    "YTD",
+    "1M",
+    "3M",
+    "1Y",
+    "3Y",
+    "10Y"
+   ],
+   "items": [
+    "EEM",
+    "EMQQ",
+    "EMFN",
+    "EMIT",
+    "EMHC",
+    "EMCS",
+    "EMCD",
+    "EMEN",
+    "EMIN",
+    "EMMT",
+    "EMUT",
+    "EMRE",
+    "EMCM"
+   ],
+   "live": true
+  },
+  {
+   "was": "eq_em/bonds",
+   "now": "world_equity_indices/em_bonds",
+   "source": "cboe",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "1Y",
+    "10Y",
+    "25Y"
+   ],
+   "items": [
+    "EMB",
+    "PCY",
+    "EMBOND:BR",
+    "EMBOND:MX",
+    "EMBOND:ID",
+    "EMBOND:TR",
+    "EMBOND:SA",
+    "EMBOND:PL",
+    "EMBOND:IN",
+    "EMBOND:CN",
+    "EMBOND:AR",
+    "EMBOND:ZA"
+   ],
+   "live": true
+  },
+  {
+   "was": "world_equity_indices/cboe",
+   "now": "world_equity_indices/cboe",
+   "source": "cboe",
+   "view": "quotes",
+   "columns": [
+    "Name",
+    "Last",
+    "Chg",
+    "Chg %",
+    "As of"
+   ],
+   "items": [
+    "_SPX",
+    "_NDX",
+    "_DJX",
+    "_RUT",
+    "_VIX"
+   ],
+   "live": true
+  },
+  {
+   "was": "world_equity_indices/world",
+   "now": "world_equity_indices/world",
+   "source": "polygon",
+   "view": "table",
+   "columns": [],
+   "items": [],
+   "live": false
+  },
+  {
+   "was": "world_equity_indices/global",
+   "now": "world_equity_indices/global",
+   "source": "cboe",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "WTD",
+    "MTD",
+    "YTD",
+    "1M",
+    "3M",
+    "1Y",
+    "3Y",
+    "10Y"
+   ],
+   "items": [
+    "^GSPC",
+    "^NDX",
+    "^DJI",
+    "^RUT",
+    "^GSPTSE",
+    "^BVSP",
+    "^MXX",
+    "^MERV",
+    "^STOXX50E",
+    "^STOXX",
+    "^GDAXI",
+    "^FCHI",
+    "^FTSE",
+    "FTSEMIB.MI",
+    "^IBEX",
+    "^AEX",
+    "^SSMI",
+    "^OMX",
+    "^N225",
+    "^TOPX",
+    "^HSI",
+    "000001.SS",
+    "000300.SS",
+    "^KS11",
+    "^TWII",
+    "^BSESN",
+    "^NSEI",
+    "^AXJO",
+    "^JKSE",
+    "^TASI.SR",
+    "XU100.IS",
+    "EEM"
+   ],
+   "live": true
+  },
+  {
+   "was": "equity_quote/quote",
+   "now": "equity_quote/quote",
+   "source": "cboe",
+   "view": "quotes",
+   "columns": [
+    "Name",
+    "Last",
+    "Chg",
+    "Chg %",
+    "As of"
+   ],
+   "items": [
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "SPY",
+    "QQQ"
+   ],
+   "live": true
+  },
+  {
+   "was": "equity_quote/spx",
+   "now": "equity_quote/spx",
+   "source": "cboe",
+   "view": "candles",
+   "columns": [
+    "Date",
+    "Open",
+    "High",
+    "Low",
+    "Close"
+   ],
+   "items": [],
+   "live": true
+  },
+  {
+   "was": "equity_quote/rt",
+   "now": "equity_quote/rt",
+   "source": "finnhub",
+   "view": "table",
+   "columns": [],
+   "items": [],
+   "live": false
+  },
+  {
+   "was": "equity_fundamentals/profile",
+   "now": "equity_fundamentals/profile",
+   "source": "sec_edgar",
+   "view": "kv",
+   "columns": [
+    "Field",
+    "Value"
+   ],
+   "items": [],
+   "live": true
+  },
+  {
+   "was": "equity_fundamentals/netincome",
+   "now": "equity_fundamentals/netincome",
+   "source": "sec_xbrl",
+   "view": "bars",
+   "columns": [
+    "Fiscal year",
+    "Actual",
+    "Previous",
+    "Period end"
+   ],
+   "items": [],
+   "live": true
+  },
+  {
+   "was": "equity_fundamentals/filings",
+   "now": "equity_fundamentals/filings",
+   "source": "sec_edgar",
+   "view": "news",
+   "columns": [
+    "Filing",
+    "Form",
+    "Filed"
+   ],
+   "items": [],
+   "live": true
+  },
+  {
+   "was": "earnings_calendar/week",
+   "now": "earnings_calendar/week",
+   "source": "nasdaq_calendar",
+   "view": "calendar",
+   "columns": [
+    "Date",
+    "Ctry",
+    "Company",
+    "Imp",
+    "EPS est.",
+    "EPS",
+    "EPS last yr"
+   ],
+   "items": [],
+   "live": true
+  },
+  {
+   "was": "earnings_calendar/rt",
+   "now": "earnings_calendar/rt",
+   "source": "finnhub",
+   "view": "table",
+   "columns": [],
+   "items": [],
+   "live": false
+  },
+  {
+   "was": "watchlist/quotes",
+   "now": "watchlist/quotes",
+   "source": "cboe",
+   "view": "quotes",
+   "columns": [
+    "Name",
+    "Last",
+    "Chg",
+    "Chg %",
+    "As of"
+   ],
+   "items": [
+    "AAPL",
+    "MSFT",
+    "_SPX"
+   ],
+   "live": true
+  },
+  {
+   "was": "watchlist/events",
+   "now": "watchlist/events",
+   "source": "forexfactory",
+   "view": "calendar",
+   "columns": [
+    "Time (UTC)",
+    "Ctry",
+    "Event",
+    "Imp",
+    "Cons.",
+    "Actual",
+    "Prev."
+   ],
+   "items": [],
+   "live": true
+  },
+  {
+   "was": "commodities/energy",
+   "now": "commodities/energy",
+   "source": "fred",
+   "view": "bars",
+   "columns": [
+    "Commodity",
+    "Level",
+    "1d %",
+    "Date"
+   ],
+   "items": [],
+   "live": true
+  },
+  {
+   "was": "commodities/energy_perf",
+   "now": "commodities/energy_perf",
+   "source": "cboe",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "WTD",
+    "MTD",
+    "YTD",
+    "1M",
+    "3M",
+    "1Y",
+    "3Y",
+    "10Y"
+   ],
+   "items": [
+    "CL=F",
+    "BZ=F",
+    "NG=F",
+    "RB=F",
+    "HO=F"
+   ],
+   "live": true
+  },
+  {
+   "was": "commodities/precious",
+   "now": "commodities/precious",
+   "source": "cboe",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "WTD",
+    "MTD",
+    "YTD",
+    "1M",
+    "3M",
+    "1Y",
+    "3Y",
+    "10Y"
+   ],
+   "items": [
+    "GC=F",
+    "SI=F",
+    "PL=F",
+    "PA=F"
+   ],
+   "live": true
+  },
+  {
+   "was": "commodities/industrial",
+   "now": "commodities/industrial",
+   "source": "cboe",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "WTD",
+    "MTD",
+    "YTD",
+    "1M",
+    "3M",
+    "1Y",
+    "3Y",
+    "10Y"
+   ],
+   "items": [
+    "HG=F",
+    "ALI=F",
+    "DBB",
+    "URA",
+    "LIT",
+    "REMX"
+   ],
+   "live": true
+  },
+  {
+   "was": "commodities/agri",
+   "now": "commodities/agri",
+   "source": "cboe",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "WTD",
+    "MTD",
+    "YTD",
+    "1M",
+    "3M",
+    "1Y",
+    "3Y",
+    "10Y"
+   ],
+   "items": [
+    "ZC=F",
+    "ZW=F",
+    "ZS=F",
+    "SB=F",
+    "KC=F",
+    "CC=F",
+    "LE=F",
+    "DBA"
+   ],
+   "live": true
+  },
+  {
+   "was": "commodities/digital",
+   "now": "commodities/digital",
+   "source": "coinbase",
+   "view": "table",
+   "columns": [
+    "Name",
+    "Last",
+    "WTD",
+    "MTD",
+    "YTD",
+    "1M",
+    "3M",
+    "1Y",
+    "3Y",
+    "10Y"
+   ],
+   "items": [
+    "BTC-USD",
+    "ETH-USD"
+   ],
+   "live": true
+  },
+  {
+   "was": "commodities/eia",
+   "now": "commodities/eia",
+   "source": "eia",
+   "view": "table",
+   "columns": [],
+   "items": [],
+   "live": false
+  },
+  {
+   "was": "commodities/cot",
+   "now": "commodities/cot",
+   "source": "cftc",
+   "view": "quotes",
+   "columns": [
+    "Market",
+    "Net",
+    "Chg",
+    "Chg %",
+    "Report"
+   ],
+   "items": [
+    "13874A",
+    "043602",
+    "088691",
+    "067651",
+    "099741",
+    "097741",
+    "133741",
+    "085692"
+   ],
+   "live": true
+  }
+ ]
+}
