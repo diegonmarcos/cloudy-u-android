@@ -553,7 +553,7 @@
     },
     "ad_Hardtech-CAD": {
       "first_test": "NEW APP (#1335, Lnktree family). Has 2 shell testers: test-lnktree-app.sh (the declaration, MCAD and BIM (repo folders) and SolidWorks (planned), the shared bottom nav / kit / icons, no typed address, planned entries honest, the declared kinds against the renderer, Compose only; 17 mutations proven red) and test-fleet-setup.sh, plus a JVM suite (PagesTest, HoldingsTest) run by the ship workflow.",
-      "shell_testers": 3,
+      "shell_testers": 4,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
