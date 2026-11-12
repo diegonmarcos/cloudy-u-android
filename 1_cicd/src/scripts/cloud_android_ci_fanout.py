@@ -45,9 +45,22 @@ def glob_re(pattern):
     while i < len(pattern):
         c = pattern[i]
         if pattern.startswith("**", i):
+            # `**/` between separators (or leading) also matches NO directory on GitHub: `docs/**/*.md` fires for docs/hello.md.
+            if pattern.startswith("**/", i) and (i == 0 or pattern[i - 1] == "/"):
+                out += "(?:.*/)?"
+                i += 3
+                continue
             out += ".*"
             i += 2
             continue
+        if c == "[":
+            # GitHub's filter patterns: [] matches one character listed in the brackets or in a range (a-z, A-Z, 0-9).
+            # `a[acd]_*` was escaped as a literal before, so a path declared with a set never matched anything here.
+            j = pattern.find("]", i + 1)
+            if j > i + 1:
+                out += "[" + "".join(ch if ch == "-" else re.escape(ch) for ch in pattern[i + 1:j]) + "]"
+                i = j + 1
+                continue
         out += {"*": "[^/]*", "?": "[^/]"}.get(c, re.escape(c))
         i += 1
     return re.compile(out + r"\Z")

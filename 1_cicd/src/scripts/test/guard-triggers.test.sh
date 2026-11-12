@@ -169,6 +169,20 @@ got="$(names a/skip/x | tr '\n' ' ')"
 got="$(names docs/x.md | tr '\n' ' ')"
 [ "$got" = "all.yml " ] && ok "paths-ignore skips a change made only of ignored files" || fail "docs/x.md fired: $got"
 
+# GitHub's filter patterns: [] is a character set, and `**/` between separators also matches no directory. A declared path
+# written with either used to match nothing here, so the coverage check reported reads that the workflow does fire on.
+mkdir -p "$WORK/wf2"
+wf2() { printf 'on:\n  push:\n    branches: [main]\n    paths: ["%s"]\njobs: {}\n' "$2" > "$WORK/wf2/$1.yml"; }
+wf2 set  'a[cd]_*/**/*.kt'
+wf2 deep 'x/**/b.txt'
+names2() { python3 "$FO" --wf "$WORK/wf2" --names --files "$@" | grep -v ' runs (' | tr '\n' ' '; }
+got="$(names2 ac_app/src/A.kt)";   [ "$got" = "set.yml " ]  && ok "a [] set matches one listed character" || fail "ac_app/src/A.kt fired: $got"
+got="$(names2 ac_app/A.kt)";       [ "$got" = "set.yml " ]  && ok "**/ between separators matches no directory" || fail "ac_app/A.kt fired: $got"
+got="$(names2 ab_app/src/A.kt)";   [ -z "${got// /}" ]      && ok "a [] set refuses a character it does not list" || fail "ab_app/src/A.kt fired: $got"
+got="$(names2 x/b.txt)";           [ "$got" = "deep.yml " ] && ok "x/**/b.txt matches x/b.txt" || fail "x/b.txt fired: $got"
+got="$(names2 x/p/q/b.txt)";       [ "$got" = "deep.yml " ] && ok "x/**/b.txt matches x/p/q/b.txt" || fail "x/p/q/b.txt fired: $got"
+got="$(names2 xb.txt)";            [ -z "${got// /}" ]      && ok "x/**/b.txt keeps its separators" || fail "xb.txt fired: $got"
+
 echo
 if [ "$FAILURES" -eq 0 ]; then echo "all passed"; exit 0; fi
 echo "FAIL — $FAILURES assertion(s)"; exit 1

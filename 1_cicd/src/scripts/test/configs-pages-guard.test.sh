@@ -39,10 +39,12 @@ mkdir -p "$BASE"
     cd "$ROOT" || exit 1
     {
         git ls-files -- 'a[acd]_*/build.json' 'a[acd]_*/debug-api.json'
-        git grep -l -E 'NavBarTopFirstRowScaffold\(|FleetConfigsActivity\.intent\(|FleetConfigsMenu\(|FleetConfigsButtons\(|FleetConfigsEntries\.(addTo|addButtons|open)\(' -- 'a[acd]_*' ':!*/test/*' ':!*/androidTest/*'
+        # plain grep over the tracked Kotlin/Java sources: `git grep` also opens every .gitattributes on the way, which the trigger
+        # coverage check then counts as an input of this guard
+        git ls-files -z -- 'a[acd]_*.kt' 'a[acd]_*.java' ':!*/test/*' ':!*/androidTest/*' | xargs -0 grep -l -E 'NavBarTopFirstRowScaffold\(|FleetConfigsActivity\.intent\(|FleetConfigsMenu\(|FleetConfigsButtons\(|FleetConfigsEntries\.(addTo|addButtons|open)\('
         printf '%s\n' "$DATA" ac_cloud-account/build.json ac_cloud-c3-webserver/build.json licenses/curated.json
         # the files G4 reads to see that a shortcut_reach app links libs:ui-nav-bars: its settings / build scripts or a patch of its series (Cloud Office, #1630)
-        git grep -l -F ':libs:ui-nav-bars' -- 'a[acd]_*' | grep -E '(settings|build)(-extras)?\.gradle(\.kts)?$|\.patch$'
+        git ls-files -z -- 'a[acd]_*settings.gradle' 'a[acd]_*settings.gradle.kts' 'a[acd]_*build.gradle' 'a[acd]_*build.gradle.kts' 'a[acd]_*build-extras.gradle' 'a[acd]_*.patch' | xargs -0 grep -l -F ':libs:ui-nav-bars'
         # #1652 an app whose UI lives in a shared lib module (build.json::android.ui_module_dirs): that module's sources are the app's
         python3 - <<'PY'
 import glob, json, os, subprocess
