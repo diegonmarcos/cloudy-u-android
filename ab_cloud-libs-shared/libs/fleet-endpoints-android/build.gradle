@@ -37,4 +37,5 @@ kotlin {
 dependencies {
     api project(':libs:fleet-endpoints')
     implementation project(':libs:fleetconfig-model') // FleetHttpSeam
+    implementation 'androidx.core:core-ktx:1.13.1'   // #1693 StatusLight's ContextCompat colours
 }

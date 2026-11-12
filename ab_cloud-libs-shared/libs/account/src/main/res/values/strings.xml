@@ -3,11 +3,6 @@
     <string name="import_file_error">Could not read file: %1$s. Nothing stored.</string>
     <string name="import_file_no_stream">Could not open %1$s: the picker returned no stream. Nothing read, nothing stored.</string>
     <string name="import_file_empty">Read 0 bytes from %1$s — the picker handed over an empty file. Nothing stored. Pick it from local storage (Files ▸ Downloads), not from a cloud folder that has not synced.</string>
-    <string name="status_light_on">On</string>
-    <string name="status_light_off">Off</string>
-    <string name="status_light_unknown">Unknown</string>
-    <string name="status_light_unverifiable">Not verifiable</string>
-    <string name="status_light_description">%1$s: %2$s</string>
     <string name="vault_connect_code_hint">code from the vault email</string>
     <string name="connect_vault_pill">Vault configs</string>
     <string name="connect_vault_title">Vault configs</string>

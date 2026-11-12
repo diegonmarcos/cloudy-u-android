@@ -29,11 +29,6 @@
     <string name="import_file_error">No se pudo leer el archivo: %1$s. No se guardó nada.</string>
     <string name="import_file_no_stream">No se pudo abrir %1$s: el selector no devolvió ningún flujo. Nada leído, nada guardado.</string>
     <string name="import_file_empty">Se leyeron 0 bytes de %1$s — el selector entregó un archivo vacío. No se guardó nada. Elígelo desde el almacenamiento local (Archivos ▸ Descargas), no desde una carpeta en la nube sin sincronizar.</string>
-    <string name="status_light_on">Activado</string>
-    <string name="status_light_off">Desactivado</string>
-    <string name="status_light_unknown">Desconocido</string>
-    <string name="status_light_unverifiable">No verificable</string>
-    <string name="status_light_description">%1$s: %2$s</string>
     <string name="vault_connect_code_hint">código del correo del vault</string>
     <string name="connect_vault_pill">Configs del vault</string>
     <string name="connect_vault_title">Configs del vault</string>

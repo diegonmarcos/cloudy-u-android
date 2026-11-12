@@ -55,9 +55,9 @@ KT_LCF="$APP/app/src/main/java/com/diegonmarcos/superapp/settings/LauncherConfig
 NCDIR="$APP/app/src/main/java/com/diegonmarcos/superapp/notificationcenter"
 BADGEDECL="$NCDIR/BadgeDeclaration.kt"
 BADGESVC="$NCDIR/BadgeServices.kt"
-STATUS="$APP/../ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/ui/StatusLight.kt"
-# #867 the status-light colours and words moved to libs:account with StatusLight; the rest stayed here.
-ACCRES="$APP/../ab_cloud-libs-shared/libs/account/src/main/res"
+STATUS="$APP/../ab_cloud-libs-shared/libs/fleet-endpoints-android/src/main/java/com/diegonmarcos/superapp/ui/StatusLight.kt"
+# #1693 the status-light colours and words moved with StatusLight to libs:fleet-endpoints-android (Cloud Account's client lib, linked by the SuperApp and by libs:account); the rest stayed here.
+ACCRES="$APP/../ab_cloud-libs-shared/libs/fleet-endpoints-android/src/main/res"
 COLORS="$(mktemp)"; trap 'rm -f "$COLORS"' EXIT; cat "$APP/app/src/main/res/values/colors.xml" "$ACCRES/values/colors.xml" > "$COLORS"
 STRINGS="$APP/app/src/main/res/values/strings.xml"
 THEME_BG="$APP/app/src/main/res/drawable/bg_gradient_black_purple.xml"

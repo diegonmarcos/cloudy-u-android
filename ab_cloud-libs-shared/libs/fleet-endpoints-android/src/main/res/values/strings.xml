@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- #1693 the status-light words moved here from libs:account with StatusLight: the SuperApp and Cloud Account both read them, and only Cloud Account links libs:account. -->
+    <string name="status_light_on">On</string>
+    <string name="status_light_off">Off</string>
+    <string name="status_light_unknown">Unknown</string>
+    <string name="status_light_unverifiable">Not verifiable</string>
+    <string name="status_light_description">%1$s: %2$s</string>
+</resources>

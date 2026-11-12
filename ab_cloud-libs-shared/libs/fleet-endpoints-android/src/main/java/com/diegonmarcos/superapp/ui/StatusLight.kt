@@ -2,7 +2,7 @@ package com.diegonmarcos.superapp.ui
 
 import android.content.Context
 import androidx.core.content.ContextCompat
-import com.diegonmarcos.superapp.account.R
+import com.diegonmarcos.superapp.fleetendpoints.android.R
 
 /**
  * The one place a reading about whether something is WORKING becomes something
