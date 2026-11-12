@@ -88,13 +88,27 @@ def main(manifest_path, root):
     # whoever hits it not to repoint the build at keyboard_ai or mail_ai. Those sentences are what
     # stop the next reader from "fixing" the duplication, so this matches only the forms that
     # actually resolve a block, ["x"] / .x / ("x"), which is what a build or a parser would write.
-    def resolves(block, directory):
+    # A directory another registry lists in its own `sources` is THAT application's home even when it sits
+    # inside a broader directory of mine (#1652: libs:writer-ui is cloud-writer's whole UI, shared by reference
+    # into cloud-keyboard's Writer tab, and bakes cloud-writer's writer_ai by design). Its files are checked
+    # under their owner, never counted as mine; everything else under my directories still is.
+    def claimed_by_others(mine):
+        out = []
+        for other in declared:
+            if other["label"] != mine["label"]:
+                out += [os.path.normpath(os.path.join(root, d)) for d in other.get("sources", [])]
+        return out
+
+    def resolves(block, directory, skip=()):
         pattern = r'[\[(]"%s"|\.%s\b' % (re.escape(block), re.escape(block))
         hit = subprocess.run(
-            ["grep", "-rhE", "--include=*.gradle", "--include=*.gradle.kts",
+            ["grep", "-rlE", "--include=*.gradle", "--include=*.gradle.kts",
              "--include=*.kt", "--include=*.java", "--", pattern, directory],
             capture_output=True, text=True)
-        return bool(hit.stdout.strip())
+        files = [os.path.normpath(f) for f in hit.stdout.splitlines() if f.strip()]
+        base = os.path.normpath(directory)
+        skip = [d for d in skip if d.startswith(base + os.sep)]   # only a narrower home INSIDE the scanned directory
+        return any(not any(f == d or f.startswith(d + os.sep) for d in skip) for f in files)
 
     for mine in declared:
         sources = mine.get("sources", [])
@@ -111,7 +125,7 @@ def main(manifest_path, root):
         for theirs in declared:
             if theirs["label"] == mine["label"]:
                 continue
-            if any(resolves(theirs["key"], os.path.join(root, d)) for d in sources):
+            if any(resolves(theirs["key"], os.path.join(root, d), claimed_by_others(mine)) for d in sources):
                 bad("T1 %s resolves %s - editing %s's prompts would change what %s sends"
                     % (mine["label"], theirs["key"], theirs["label"], mine["label"]))
             else:

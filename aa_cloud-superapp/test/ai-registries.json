@@ -10,7 +10,8 @@
       "sources": ["ac_cloud-mail/app"] },
     { "_doc": "cloud-writer, the application the owner asked for. It ROUTES like cloud-mail and holds no key, but it carries the same OpenRouter model table, so the same live cross-check has to reach it — and per the note above, until it appeared here nothing anywhere checked it. It is also the first registry with a MODEL PER TOOL; the tool choice is a preference in the application, not a field here, so nothing in this file changes shape for it.",
       "path": "ac_cloud-writer/build.json", "key": "writer_ai", "label": "cloud-writer",
-      "sources": ["ac_cloud-writer/app"] }
+      "_doc_sources": "#1652: libs:writer-ui (cloud-writer's UI, which bakes writer_ai) and libs:writer-core are cloud-writer's own code; cloud-keyboard hosts them by reference in its Writer tab, so that tab IS cloud-writer and edits to writer_ai reach it by design, while the keyboard's own text tools (libs:keyboard) read only keyboard_ai.",
+      "sources": ["ac_cloud-writer/app", "ab_cloud-libs-shared/libs/writer-ui", "ab_cloud-libs-shared/libs/writer-core"] }
   ],
   "_doc_catalogues": "Model CATALOGUES: curated OpenRouter selections an app BROWSES rather than routes through. They carry no prompts, no styles and no key, so they are not `registries` (T1's homes check, T7/T8 and cloud-android-ai-registry-refresh.py read only that list and would misread one); their prices are read live on the phone, so what goes stale here is an ID - a model OpenRouter stops listing. test-keyboard-ai-routing.sh T9 checks every id of every catalogue below against the live catalogue that prices its section (models, embeddings, images or videos), on the same schedule as the registries.",
   "catalogues": [
