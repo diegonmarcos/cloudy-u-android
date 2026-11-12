@@ -104,7 +104,15 @@ jobs:
           mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw"
           npm init -y >/dev/null
           npm install playwright@1.48.2
-          npx playwright install --with-deps chromium
+          # apt mirrors can be briefly unresolvable on a runner (runs 43031871527/43035804343 failed here on
+          # DNS, not on code): retry the full install, then fall back to the browser alone (the tester still
+          # FAILS in CI when Chromium cannot launch, it never skips).
+          ok=0
+          for try in 1 2 3; do
+            if npx playwright install --with-deps chromium; then ok=1; break; fi
+            echo "playwright --with-deps attempt $try failed; retrying"; sleep 20
+          done
+          if [ "$ok" != 1 ]; then npx playwright install chromium; fi
           echo "PLAYWRIGHT_PATH=$RUNNER_TEMP/pw/node_modules/playwright" >> "$GITHUB_ENV"
 
       # Same first step as every ship workflow: this application's testers run

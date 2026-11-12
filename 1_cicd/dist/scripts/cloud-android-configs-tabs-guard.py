@@ -1,3 +1,4 @@
+# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-configs-tabs-guard.py ───
 #!/usr/bin/env python3
 """
 cloud-android-configs-tabs-guard — every app's Configs starts General | Perms | About on the top nav (#1439).

@@ -49,7 +49,6 @@ on:
       #   input: "1_cicd/src/data/debug-ports.json"
       #   input: "aa_cloud-superapp/data/constellation-fleet.json"
       #   input: "ac_cloud-account/build.json"
-      #   input: "ac_cloud-browser/build.json"
       #   input: "ac_cloud-search/build.json"
       #   input: "ac_cloud-search/core/**"
       # ── end MANAGED-PATHS-HEADER ──

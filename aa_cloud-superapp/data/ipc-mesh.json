@@ -988,6 +988,7 @@
      "camera",
      "capital-stack-finterminal",
      "cg-omniverse",
+     "chat",
      "code",
      "contacts",
      "dialer",
@@ -1010,6 +1011,7 @@
      "news",
      "nix-on-droid",
      "notes",
+     "office",
      "search",
      "shopping",
      "store",
@@ -1456,6 +1458,7 @@
       "camera",
       "capital-stack-finterminal",
       "cg-omniverse",
+      "chat",
       "code",
       "contacts",
       "dialer",
@@ -1466,6 +1469,7 @@
       "keyboard",
       "keyboard-engines",
       "kg-store",
+      "lib-rclone-engine",
       "lib-rootfs-nixdroid",
       "lib-rootfs-termux",
       "mail",
@@ -1478,6 +1482,7 @@
       "news",
       "nix-on-droid",
       "notes",
+      "office",
       "search",
       "shopping",
       "store",
@@ -1604,6 +1609,7 @@
       "lib-rootfs-nixdroid",
       "lib-rootfs-termux",
       "nix-on-droid",
+      "store",
       "termux"
      ]
     }
@@ -1944,7 +1950,8 @@
    "libs": [
     "core",
     "devtools",
-    "fleetconfig-model"
+    "fleetconfig-model",
+    "perms"
    ],
    "endpoints": [
     {
@@ -2359,6 +2366,7 @@
       "matrix://"
      ],
      "callers": [
+      "aa_cloud-superapp",
       "account",
       "capital-stack-finterminal",
       "drive",
@@ -2676,7 +2684,8 @@
    "libs": [
     "core",
     "devtools",
-    "fleetconfig-model"
+    "fleetconfig-model",
+    "perms"
    ],
    "endpoints": []
   },
@@ -2815,6 +2824,7 @@
       "camera",
       "capital-stack-finterminal",
       "cg-omniverse",
+      "chat",
       "code",
       "contacts",
       "dialer",
@@ -2825,6 +2835,7 @@
       "keyboard",
       "keyboard-engines",
       "kg-store",
+      "lib-rclone-engine",
       "lib-rootfs-nixdroid",
       "lib-rootfs-termux",
       "mail",
@@ -2837,6 +2848,7 @@
       "news",
       "nix-on-droid",
       "notes",
+      "office",
       "search",
       "shopping",
       "superintel",
@@ -2855,15 +2867,22 @@
      "level": "none",
      "source": "ac_cloud-store/app/src/main/AndroidManifest.xml",
      "component": ".MainActivity",
-     "id": "intent:.MainActivity",
-     "kind": "intent",
+     "id": "deep_link:.MainActivity",
+     "kind": "deep_link",
      "name": "MainActivity",
      "actions": [
       "<pkg>.OPEN"
      ],
-     "uris": [],
+     "uris": [
+      "magnet://"
+     ],
      "callers": [
-      "aa_cloud-superapp"
+      "aa_cloud-superapp",
+      "browser",
+      "lib-rootfs-nixdroid",
+      "lib-rootfs-termux",
+      "nix-on-droid",
+      "termux"
      ]
     }
    ]
@@ -2994,6 +3013,7 @@
      "name": "SharedStoreProvider",
      "authority": "<pkg>.sharedstore",
      "callers": [
+      "aa_cloud-superapp",
       "notes"
      ]
     },
