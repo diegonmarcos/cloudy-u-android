@@ -187,7 +187,7 @@ TMP="$(mktemp -d /dev/shm/silent-notify.XXXXXX)"; trap 'rm -rf "$TMP"' EXIT
 mutate() {  # mutate <label> <file> <old> <new>
   local label="$1" f="$2" old="$3" new="$4" d="$TMP/m"
   rm -rf "$d"; mkdir -p "$d"
-  ( cd "$ROOT" && for m in core updater appstore shell-client bottomnav sysdns fleetconfig-model devtools; do
+  ( cd "$ROOT" && for m in core fleet-notify updater appstore shell-client bottomnav sysdns fleetconfig-model devtools; do
         [ -d ab_cloud-libs-shared/libs/$m/src ] && cp -r --parents ab_cloud-libs-shared/libs/$m/src "$d"; done
     cp -r --parents ac_cloud-store/build.json ac_cloud-store/app/src "$d" )
   python3 - "$d/$f" "$old" "$new" <<'PY' || { echo "  MUTATION NOT APPLIED: $label"; return 1; }
@@ -223,7 +223,7 @@ mutate "a raw channel is created again" $U/BatchForegroundService.kt 'override f
 mutate "a builder posts on the legacy id" $C/FleetAlerts.kt 'NotificationCompat.Builder(ctx, channel)' 'NotificationCompat.Builder(ctx, FALLBACK_CHANNEL)' || M=$((M+1))
 mutate "a builder sets the default sound" $U/PackageInstallerReceiver.kt '.setAutoCancel(true)' '.setAutoCancel(true).setDefaults(Notification.DEFAULT_SOUND)' || M=$((M+1))
 mutate "a builder vibrates" $C/FleetAlerts.kt 'NotificationCompat.Builder(ctx, channel)' 'NotificationCompat.Builder(ctx, channel).setVibrate(longArrayOf(0, 100))' || M=$((M+1))
-mutate "a builder is no longer quiet" $C/FleetNotify.kt '.setSilent(true)' '' || M=$((M+1))
+mutate "a builder is no longer quiet" $L/fleet-notify/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt '.setSilent(true)' '' || M=$((M+1))
 fi
 echo "== RESULT: real tree $REAL failure(s), $M mutation(s) not caught =="
 [ "$REAL" -eq 0 ] && [ "$M" -eq 0 ]
