@@ -227,8 +227,8 @@ if m and re.search(r"installAll\s*=\s*\{\s*installAll\(\)\s*\}", m.group(1)) and
     ok("Phone Apps passes real Install all / Update all verbs")
 else: bad("Phone Apps does not pass real batch verbs")
 for needle, what in (("AppInventory.launchable(ctx)", "rows start from what is installed"),
-                     ("AppInventory.launchable(ctx).filterKeys { it !in fleet }", "rows list the phone's launchable apps minus the fleet (the Cloud page's)"),
-                     ("resolver.apps.values.filter { it.pkg !in fleet }.forEach", "rows add every declared external app, never a fleet one"),
+                     ("StoreMembership.phoneOnly(AppInventory.launchable(ctx), fleetPkgs)", "rows list the phone's launchable apps minus the fleet (the Cloud page's)"),
+                     ("resolver.apps.values.filter { StoreMembership.isPhone(it.pkg, fleetPkgs) }.forEach", "rows add every declared external app, never a fleet one"),
                      ("PhoneAppActions.forMissing(", "not-installed rows derive their buttons from the one action source"),
                      ("SourceResolver.ofFleet(Fleet.status(", "fleet rows are probed by the fleet's own status"),
                      ("SourceResolver.check(app, resolver", "external rows are probed by the resolver")):

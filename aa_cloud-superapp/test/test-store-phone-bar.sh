@@ -79,7 +79,7 @@ inv, imp_ = kt.get("AppInventory.kt", ""), kt.get("StoreImport.kt", "")
 for needle, what in (("PhoneAppActions.installerOf(ctx, pkg)", "origin_store is the row buttons' own installer read"),
                      ("PhoneAppActions.isOurs(", "ours is the row buttons' own rule"),
                      ("PhoneAppActions.storePage(sources, e.origin, e.pkg)", "the import's store link is the map's own lookup"),
-                     ("PhoneAppActions.fleetByPackage(", "fleet membership comes from the manifest, alt ids included")):
+                     ("StoreMembership.fleetPackages(Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64))", "fleet membership comes from the manifest, alt ids included (#1681 the one tab classifier)")):
     if needle in inv: ok(what)
     else: bad("AppInventory: " + what + " - missing " + needle)
 if "PhoneAppActions.sources(app)" in phone: ok("the import reads the map shipped in assets")
