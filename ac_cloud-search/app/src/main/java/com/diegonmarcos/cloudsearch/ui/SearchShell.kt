@@ -287,14 +287,14 @@ private fun Chrome(state: SearchState, v: SearchConfig.Vertical) {
         else -> null
     }
     // #1697 Configs (the vertical dots) opens the fleet strip: Profile (what the old Profile popover held: the AI token, theme, city)
-    // | Agents, Perms, Logcat, X-Ray App, About. The popover itself stays one tap away: General > App.
+    // | Agents, Perms, Logcat, X-Ray App, About, opened on Profile. The popover itself stays one tap away: General > App.
     var fleetConfigsOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     androidx.compose.runtime.remember(state) {
         com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.register(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab("profile", "Profile", "person") { _ ->
             androidx.compose.foundation.layout.Column(Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(Metrics.gutter)) { ProfileMenu(state) }
         })
     }
-    if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = state.dark, onDismiss = { fleetConfigsOpen = false }, onAppConfigs = { state.toggle(Menu.PROFILE) })
+    if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = state.dark, onDismiss = { fleetConfigsOpen = false }, onAppConfigs = { state.toggle(Menu.PROFILE) }, startId = "profile")
     NavBarTopFirstRowScaffold(
         title = text,
         hierarchy = if (state.saved) emptyList() else section?.let { titleHierarchy(it, pageId) }.orEmpty(),

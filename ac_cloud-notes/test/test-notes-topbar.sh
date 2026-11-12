@@ -59,8 +59,8 @@ check('NavBarTopFirstRowScaffold(' in shell and 'rememberAccountLauncher()' in s
 check('NavBarTopSecondRow(' in shell and 'NavBarBottomHost(' in shell, 'NotesShell draws the shared second row and bottom nav')
 check('ChromeWebScroll.attach(' in shell and 'ChromeWebScroll.inject(' in rd(KT, 'CloudNotesWebViewClient.kt'), 'the editor WebView feeds the chrome scroll-collapse')
 check('AiFleetChatPanel(' in shell, "the AI panel is libs:ai's shared chat")
-check('onConfigs = { configsOpen = true }' in shell and 'NavUiConfigCard(' in shell and 'run(NativeNavScript.openSettings())' in shell,
-      'Configs opens Configs > UI (the shared nav card) with a way on to the web half\'s own Cloud Notes settings')
+check('onConfigs = { fleetConfigsOpen = true }' in shell and 'FleetConfigsScreen(' in shell and 'onAppConfigs = { configsOpen = true }' in shell and 'NavUiConfigCard(' in shell and 'run(NativeNavScript.openSettings())' in shell,
+      'Configs opens the fleet strip (#1697); its General > App opens Configs > UI (the shared nav card) with a way on to the web half\'s own Cloud Notes settings')
 check(ui.get('nav_ui', {}).get('mode') == 'clean' and 'nav_ui' in (ui.get('configs_ui') or []),
       'build.json::ui.nav_ui declares Clean as the default nav mode and lists nav_ui in configs_ui')
 check('"UI_NAV_UI_B64"' in gradle and 'UI_NAV_UI_B64' in shell and 'LocalNavUiDefault provides' in shell,
