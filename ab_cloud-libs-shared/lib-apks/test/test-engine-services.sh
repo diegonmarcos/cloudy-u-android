@@ -32,6 +32,11 @@
 #       that keeper as a specialUse foreground service with both permissions.
 #       gh polls GitHub while the user is in the browser; Android 15 cuts the
 #       network of a backgrounded process and the poll died as a DNS failure.
+#       #1692 and that hold can never stay on forever: GhLogin has a hard expiry
+#       (a watchdog that stops gh once the code expires), releases in a finally
+#       on every exit, LOGIN_START hands it a kill that ends gh's process, and the
+#       keeper's notification carries a Cancel action that cancels the job and
+#       cancels it again when the keeper itself is destroyed.
 #   E8  every engine an app BINDS by handshake is found here: gh (Cloud Drive),
 #       cal (Cloud Me and Cloud Tasks, engine-apk-split move 3), feed (SuperApp,
 #       move 4), news (Cloud News, move 5) and ml-l-image-mlkit (the image scan
@@ -198,6 +203,22 @@ for module in modules:
             if not re.search(r"GhLogin\(host,\s*hold\s*=\s*\{\s*GhLoginKeeper\.hold\(", text):
                 no("E9 gh: LOGIN_START starts gh's sign-in without GhLoginKeeper.hold — its poll loses the network "
                    "the moment the browser is up")
+            gsrc = {os.path.basename(p): code(p) for p in sources(module)}
+            job = gsrc.get("GhRunner.kt", "")
+            keeper = gsrc.get("GhLoginKeeper.kt", "")
+            if not re.search(r"watchdog\s*=\s*Thread\(\{.*?expiresAt.*?if \(ended == null\) stop\(", job, re.S):
+                no("E9 gh: GhLogin has no hard expiry — an abandoned sign-in keeps the foreground job on forever")
+            if not re.search(r"\}\s*finally\s*\{\s*releaseOnce\(\)", job):
+                no("E9 gh: GhLogin does not release the keeper in a finally — a failed or thrown sign-in keeps it on")
+            if not re.search(r"private fun stop\(.*?kill\(\).*?releaseOnce\(\)", job, re.S):
+                no("E9 gh: stopping a sign-in neither ends gh nor releases the keeper")
+            if not re.search(r"kill\s*=\s*\{\s*proc\.get\(\)\?\.destroyForcibly\(\)", text) or "proc.set(it)" not in text:
+                no("E9 gh: LOGIN_START gives GhLogin no way to end gh's process on expiry or cancel")
+            if not re.search(r"addAction\(Notification\.Action\.Builder\(null,\s*\"Cancel sign-in\",\s*cancel\)", keeper) \
+                    or not re.search(r"ACTION_CANCEL\)\s*\{.*?\.cancel\(\)", keeper, re.S):
+                no("E9 gh: the sign-in notification has no working Cancel action")
+            if not re.search(r"override fun onDestroy\(\)\s*\{\s*job\?\.takeIf \{ it\.running \}\?\.cancel\(", keeper):
+                no("E9 gh: the keeper going away leaves gh running")
 
 for must in ("gh", "cal", "feed", "news", "ml-l-image-mlkit", "calc", "ml-l-sound-yamnet", "fleetconfig", "analytics-sink", "ops-engine", "decisions-engine", "rclone-engine", "mounts-engine", "net-wg"):
     if must not in found:
@@ -261,7 +282,7 @@ _stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
     _sub "$M_SVC" '        LOGIN_POLL -> Login.poll()
 ' ''
     python3 -c 'import sys; sys.exit(0 if "LOGIN_POLL -> Login.poll()" not in open(sys.argv[1]).read() else 1)' "$M_SVC" \
-        && _applied "$R_SVC" "$M_SVC" 'LOGIN_START -> Login.start(runner, arg(args, 0), applicationContext)' \
+        && _applied "$R_SVC" "$M_SVC" 'LOGIN_START -> Login.start(runner, arg(args, 0), applicationContext, caller())' \
         && _red "E4 the engine lists a method it no longer answers (an older client would break)" engines "$MUT/libs" "$MUT/build.json"; }
 _stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
     _sub "$M_SVC" 'class GhBackendService : DataBackendService()' 'class GhBackendService : android.app.Service()'
@@ -288,8 +309,8 @@ _stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
         && _applied "$R_MF" "$M_MF" '<application>' \
         && _red "E7 the gh engine runs gh without INTERNET" engines "$MUT/libs" "$MUT/build.json"; }
 _stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
-    _sub "$M_SVC" 'GhLogin(host, hold = { GhLoginKeeper.hold(ctx) })' 'GhLogin(host)'
-    _applied "$R_SVC" "$M_SVC" 'job = GhLogin(host) {' \
+    _sub "$M_SVC" 'GhLogin(host, hold = { GhLoginKeeper.hold(ctx, it, who) }, ' 'GhLogin(host, '
+    _applied "$R_SVC" "$M_SVC" 'job = GhLogin(host, kill' \
         && _red "E9 the sign-in runs without holding the engine's network" engines "$MUT/libs" "$MUT/build.json"; }
 _stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
     _sub "$M_MF" '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
@@ -301,6 +322,48 @@ _stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
     _sub "$M_MF" 'android:foregroundServiceType="specialUse"' 'android:foregroundServiceType="dataSync"'
     _applied "$R_MF" "$M_MF" '"dataSync"' \
         && _red "E9 the keeper's declared type does not match the type it starts with" engines "$MUT/libs" "$MUT/build.json"; }
+M_JOB="$MUT/libs/gh/src/main/java/com/diegonmarcos/cloudlib/gh/GhRunner.kt"
+R_JOB="$GH/src/main/java/com/diegonmarcos/cloudlib/gh/GhRunner.kt"
+M_KEEP="$MUT/libs/gh/src/main/java/com/diegonmarcos/cloudlib/gh/GhLoginKeeper.kt"
+R_KEEP="$GH/src/main/java/com/diegonmarcos/cloudlib/gh/GhLoginKeeper.kt"
+_stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
+    _sub "$M_JOB" 'if (ended == null) stop(' 'if (ended == null) Log.i(GhRunner.TAG, '
+    _applied "$R_JOB" "$M_JOB" 'if (ended == null) Log.i(GhRunner.TAG, ' \
+        && _red "E9 #1692 an abandoned sign-in never expires (the watchdog only logs)" engines "$MUT/libs" "$MUT/build.json"; }
+_stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
+    _sub "$M_JOB" '} finally {
+            releaseOnce()
+        }' '}'
+    _applied "$R_JOB" "$M_JOB" 'e.javaClass.simpleName}")
+        }
+        ended' \
+        && _red "E9 #1692 a failed sign-in keeps the keeper (no release in finally)" engines "$MUT/libs" "$MUT/build.json"; }
+_stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
+    _sub "$M_JOB" 'runCatching { kill() }' 'runCatching { }'
+    _applied "$R_JOB" "$M_JOB" 'runCatching { }' \
+        && _red "E9 #1692 cancel and expiry leave gh running" engines "$MUT/libs" "$MUT/build.json"; }
+_stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
+    _sub "$M_SVC" 'kill = { proc.get()?.destroyForcibly() }' 'kill = { }'
+    _applied "$R_SVC" "$M_SVC" 'kill = { }' \
+        && _red "E9 #1692 LOGIN_START hands GhLogin a kill that ends nothing" engines "$MUT/libs" "$MUT/build.json"; }
+_stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
+    _sub "$M_KEEP" '            .addAction(Notification.Action.Builder(null, "Cancel sign-in", cancel).build())
+' ''
+    _applied "$R_KEEP" "$M_KEEP" '.setOngoing(true)
+            .build()
+    }' \
+        && _red "E9 #1692 the sign-in notification has no Cancel action" engines "$MUT/libs" "$MUT/build.json"; }
+_stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
+    _sub "$M_KEEP" 'if (j != null) j.cancel() else stopSelf()' 'stopSelf()'
+    _applied "$R_KEEP" "$M_KEEP" 'ACTION_CANCEL) {
+            Log.i(GhRunner.TAG, "gh-net: sign-in cancelled from the notification")
+            val j = job
+            stopSelf()' \
+        && _red "E9 #1692 Cancel hides the notification but leaves gh signing in" engines "$MUT/libs" "$MUT/build.json"; }
+_stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
+    _sub "$M_KEEP" '        job?.takeIf { it.running }?.cancel("the sign-in keeper was stopped' '        job?.takeIf { it.running }?.toString()  //("the sign-in keeper was stopped'
+    _applied "$R_KEEP" "$M_KEEP" '?.toString()  //' \
+        && _red "E9 #1692 the keeper dying leaves gh running" engines "$MUT/libs" "$MUT/build.json"; }
 _stage && _green engines engines "$MUT/libs" "$MUT/build.json" && {
     _sub "$M_MF" 'com.diegonmarcos.cloud.engine.CONTRACT' 'com.diegonmarcos.cloud.engine.VERSION'
     _applied "$R_MF" "$M_MF" 'engine.VERSION' \

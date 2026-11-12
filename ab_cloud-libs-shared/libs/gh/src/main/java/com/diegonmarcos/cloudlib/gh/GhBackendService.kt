@@ -60,10 +60,17 @@ class GhBackendService : DataBackendService() {
         CREDENTIAL -> runner.credential(arg(args, 0))
             ?.let { JSONObject().put("username", it.username).put("secret", it.secret).toString() }
             ?: "{}"
-        LOGIN_START -> Login.start(runner, arg(args, 0), applicationContext)
+        LOGIN_START -> Login.start(runner, arg(args, 0), applicationContext, caller())
         LOGIN_POLL -> Login.poll()
         else -> throw IllegalArgumentException("the gh engine does not answer '$method'")
     }
+
+    /** #1692 the app that asked, for the sign-in notification. Null when Android will not say. */
+    private fun caller(): String? = runCatching {
+        val uid = android.os.Binder.getCallingUid()
+        val pkg = packageManager.getPackagesForUid(uid)?.firstOrNull() ?: return@runCatching null
+        packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString().ifBlank { pkg }
+    }.getOrNull()
 
     private fun result(r: GhRunner.Result): String =
         JSONObject().put("exit", r.exitCode).put("output", r.output).toString()
@@ -80,9 +87,13 @@ class GhBackendService : DataBackendService() {
         private var job: GhLogin? = null
 
         @Synchronized
-        fun start(runner: GhRunner, host: String, ctx: Context): String {
+        fun start(runner: GhRunner, host: String, ctx: Context, who: String? = null): String {
             val running = job?.running == true
-            if (!running) job = GhLogin(host, hold = { GhLoginKeeper.hold(ctx) }) { onLine -> runner.login(host, onLine) }.start()
+            // #1692 gh's process is kept so expiry and Cancel end gh itself, not just the notification.
+            val proc = java.util.concurrent.atomic.AtomicReference<Process?>()
+            if (!running) job = GhLogin(host, hold = { GhLoginKeeper.hold(ctx, it, who) }, kill = { proc.get()?.destroyForcibly() }) { onLine ->
+                runner.login(host, onLine) { proc.set(it) }
+            }.start()
             else Log.i(GhRunner.TAG, "gh auth login: already running; the client follows that one")
             return JSONObject().put("started", !running).toString()
         }

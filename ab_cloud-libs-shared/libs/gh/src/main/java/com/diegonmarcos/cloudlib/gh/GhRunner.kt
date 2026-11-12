@@ -148,12 +148,14 @@ class GhRunner(private val context: Context) {
      * clipboard (measured: it warns and names desktop tools); the page copies the code itself.
      * No GH_TOKEN is ever passed here — gh refuses to log in while one is set.
      */
-    fun login(host: String, onLine: (String) -> Unit): Result = try {
+    fun login(host: String, onLine: (String) -> Unit, onProcess: (Process) -> Unit = {}): Result = try {
         val process = start(
             listOf("auth", "login", "--hostname", host, "--git-protocol", "https", "--web",
                 "--insecure-storage", "--skip-ssh-key", "--clipboard=false"),
             token = null,
         )
+        // #1692 the job gets the process so an expired or cancelled sign-in can end gh itself.
+        onProcess(process)
         drain(process, onLine)
     } catch (e: Exception) {
         Result(EXEC_FAILED, "gh could not run: ${e.message ?: e.javaClass.simpleName}")
@@ -267,34 +269,99 @@ class GhLogin(
      * #729 keeps the engine's network for as long as gh runs (GhLoginKeeper on the phone) and
      * answers its own release. Taken in [start], on the caller's thread, while the app that asked
      * is still on screen; released only once gh has exited, whatever its verdict.
+     * #1692 it is handed this job, so the keeper's notification can show the code, the time left
+     * and offer Cancel; and the release now runs on EVERY exit: gh's exit, expiry, cancel, a throw.
      */
-    private val hold: () -> (() -> Unit) = { {} },
+    private val hold: (GhLogin) -> (() -> Unit) = { {} },
+    /** #1692 ends gh itself (destroyForcibly on the phone). Called on expiry and on cancel. */
+    private val kill: () -> Unit = {},
+    /** #1692 the device code's lifetime; gh's own "expires in N minutes" replaces it when printed. */
+    expiresInMs: Long = DEFAULT_EXPIRY_MS,
     private val run: (onLine: (String) -> Unit) -> GhRunner.Result,
 ) {
     @Volatile var code = ""; private set
     @Volatile var url = ""; private set
     @Volatile var ended: GhRunner.Result? = null; private set
+    @Volatile var expiresAt: Long = System.currentTimeMillis() + expiresInMs; private set
+    /** #1692 why the job ended other than by gh's own exit ("expired", "cancelled"), else null. */
+    @Volatile var stoppedBecause: String? = null; private set
     @Volatile private var release: () -> Unit = {}
+    private val released = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val listeners = java.util.concurrent.CopyOnWriteArrayList<() -> Unit>()
+    private val lock = Object()
+
+    /** #1692 the keeper re-draws its notification when the code or the expiry changes. */
+    fun onChange(l: () -> Unit) { listeners += l }
+    private fun changed() = listeners.forEach { runCatching { it() } }
+
+    /** Gives the hold back once, whoever gets there first. Never throws. */
+    private fun releaseOnce() {
+        if (released.compareAndSet(false, true)) runCatching { release() }
+            .onFailure { Log.w(GhRunner.TAG, "gh auth login: releasing the keeper failed (${it.message})") }
+    }
 
     private val thread = Thread({
         val r = try {
             run { line ->
                 if (line.isNotBlank()) Log.i(GhRunner.TAG, "gh auth login: $line")
-                if (code.isEmpty()) GhOutput.deviceCode(line)?.let { code = it }
-                if (url.isEmpty()) GhOutput.verificationUrl(line, host)?.let { url = it }
+                var c = false
+                if (code.isEmpty()) GhOutput.deviceCode(line)?.let { code = it; c = true }
+                if (url.isEmpty()) GhOutput.verificationUrl(line, host)?.let { url = it; c = true }
+                GhOutput.expiresInMs(line)?.let { expiresAt = System.currentTimeMillis() + it; c = true; synchronized(lock) { lock.notifyAll() } }
+                if (c) changed()
             }
+        } catch (e: Throwable) {
+            GhRunner.Result(GhRunner.EXEC_FAILED, "gh sign-in failed: ${e.message ?: e.javaClass.simpleName}")
         } finally {
-            release()
+            releaseOnce()
         }
-        ended = r
+        ended = stoppedBecause?.let { GhRunner.Result(r.exitCode.takeIf { it != 0 } ?: GhRunner.EXEC_FAILED, r.output.trimEnd() + "\n" + it) } ?: r
+        synchronized(lock) { lock.notifyAll() }
     }, "gh-login").apply { isDaemon = true }
+
+    /** #1692 the hard expiry: once the code can no longer be approved, gh is ended and the hold given back. */
+    private val watchdog = Thread({
+        try {
+            synchronized(lock) {
+                while (ended == null) {
+                    val left = expiresAt - System.currentTimeMillis()
+                    if (left <= 0) break
+                    lock.wait(left)
+                }
+            }
+            if (ended == null) stop("the one-time code expired before it was approved; the sign-in was stopped")
+        } catch (_: InterruptedException) {
+        }
+    }, "gh-login-expiry").apply { isDaemon = true }
 
     val running: Boolean get() = ended == null && thread.isAlive
 
+    /** #1692 Cancel (the notification's action, or the engine going away): ends gh and releases at once. */
+    fun cancel(why: String = "the sign-in was cancelled") = stop(why)
+
+    private fun stop(why: String) {
+        if (ended != null) return
+        Log.i(GhRunner.TAG, "gh auth login: $why")
+        stoppedBecause = why
+        runCatching { kill() }.onFailure { Log.w(GhRunner.TAG, "gh auth login: ending gh failed (${it.message})") }
+        releaseOnce()
+    }
+
     fun start(): GhLogin = apply {
         Log.i(GhRunner.TAG, "gh auth login: starting for $host")
-        release = hold()
-        thread.start()
+        release = runCatching { hold(this) }.getOrElse { Log.w(GhRunner.TAG, "gh auth login: no keeper (${it.message})"); {} }
+        try {
+            thread.start()
+            watchdog.start()
+        } catch (e: Throwable) {
+            ended = GhRunner.Result(GhRunner.EXEC_FAILED, "gh sign-in could not start: ${e.message ?: e.javaClass.simpleName}")
+            releaseOnce()
+        }
+    }
+
+    companion object {
+        /** GitHub's device codes live 900 s (expires_in) unless gh says otherwise. */
+        const val DEFAULT_EXPIRY_MS = 15 * 60 * 1000L
     }
 }
 
@@ -324,6 +391,14 @@ object GhOutput {
             .filter { it.isNotEmpty() && deviceCode(it) == null && !it.contains("clipboard", ignoreCase = true) && !it.startsWith("Open this URL") }
             .joinToString(" · ")
             .ifEmpty { "gh printed nothing" }
+
+    private val EXPIRES = Regex("""expires? in (\d+) ?(seconds?|secs?|s|minutes?|mins?|m)\b""", RegexOption.IGNORE_CASE)
+
+    /** #1692 the code's lifetime when gh prints one ("expires in 15 minutes"), else null. */
+    fun expiresInMs(line: String): Long? = EXPIRES.find(line)?.let { m ->
+        val n = m.groupValues[1].toLongOrNull() ?: return null
+        if (m.groupValues[2].lowercase().startsWith("s")) n * 1000 else n * 60_000
+    }?.takeIf { it > 0 }
 
     /** `username=`/`password=` from a git-credential answer; null unless both are there. */
     fun credential(answer: String): GhRunner.Credential? {

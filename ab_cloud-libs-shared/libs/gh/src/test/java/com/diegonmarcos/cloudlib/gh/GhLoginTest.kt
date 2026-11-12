@@ -278,4 +278,72 @@ class GhLoginTest {
         assertTrue("the job never ended", waitFor(5_000) { !job.running })
         assertTrue("a thrown sign-in kept the hold", waitFor(5_000) { released.get() == 1 })
     }
+
+    /** #1692 a sign-in abandoned in the browser: at the code's expiry gh is ended and the hold given back. */
+    @Test
+    fun anAbandonedSignInReleasesAtExpiry() {
+        val gh = fakeGh(listOf("! First copy your one-time code: B1D3-EA43"))
+        val released = java.util.concurrent.atomic.AtomicInteger()
+        val job = GhLogin("github.com", hold = { { released.incrementAndGet(); Unit } }, kill = { gh.destroyForcibly() }, expiresInMs = 400) { onLine ->
+            GhRunner.drain(gh, onLine)
+        }.start()
+        assertTrue("the code never arrived", waitFor(5_000) { job.code == "B1D3-EA43" })
+        assertTrue("the abandoned sign-in was never stopped", waitFor(5_000) { !job.running })
+        assertEquals("the hold is given back exactly once", 1, released.get())
+        assertFalse("gh still runs after expiry", gh.isAlive)
+        assertTrue(job.ended!!.output.contains("expired"))
+        assertTrue(job.ended!!.exitCode != 0)
+    }
+
+    /** #1692 Cancel on the notification ends gh and releases at once. */
+    @Test
+    fun cancelReleasesAndEndsGh() {
+        val gh = fakeGh(listOf("! First copy your one-time code: B1D3-EA43"))
+        val released = java.util.concurrent.atomic.AtomicInteger()
+        val job = GhLogin("github.com", hold = { { released.incrementAndGet(); Unit } }, kill = { gh.destroyForcibly() }) { onLine ->
+            GhRunner.drain(gh, onLine)
+        }.start()
+        assertTrue(waitFor(5_000) { job.code.isNotEmpty() })
+        job.cancel()
+        assertEquals("cancel releases at once", 1, released.get())
+        assertTrue("gh survived the cancel", waitFor(5_000) { !job.running })
+        job.cancel()
+        assertEquals("a second cancel releases nothing twice", 1, released.get())
+        assertTrue(job.ended!!.output.contains("cancelled"))
+    }
+
+    /** #1692 every exit path releases exactly once: success, gh's failure, a throw, expiry, cancel. */
+    @Test
+    fun everyExitPathReleasesExactlyOnce() {
+        val paths = mapOf<String, (java.util.concurrent.atomic.AtomicInteger) -> GhLogin>(
+            "success" to { r -> GhLogin("github.com", hold = { { r.incrementAndGet(); Unit } }) { GhRunner.Result(0, "ok") } },
+            "failure" to { r -> GhLogin("github.com", hold = { { r.incrementAndGet(); Unit } }) { GhRunner.Result(1, "no") } },
+            "throw" to { r -> GhLogin("github.com", hold = { { r.incrementAndGet(); Unit } }) { throw IllegalStateException("x") } },
+            "expiry" to { r -> val gh = fakeGh(emptyList()); GhLogin("github.com", hold = { { r.incrementAndGet(); Unit } }, kill = { gh.destroyForcibly() }, expiresInMs = 200) { GhRunner.drain(gh, it) } },
+        )
+        for ((name, make) in paths) {
+            val r = java.util.concurrent.atomic.AtomicInteger()
+            val job = make(r).start()
+            assertTrue("$name never ended", waitFor(5_000) { !job.running })
+            assertTrue("$name kept the hold", waitFor(5_000) { r.get() == 1 })
+            Thread.sleep(300)
+            assertEquals("$name released more than once", 1, r.get())
+            assertNotNull("$name has no verdict", job.ended)
+        }
+        val r = java.util.concurrent.atomic.AtomicInteger()
+        val gh = fakeGh(emptyList())
+        val job = GhLogin("github.com", hold = { { r.incrementAndGet(); Unit } }, kill = { gh.destroyForcibly() }) { GhRunner.drain(gh, it) }.start()
+        job.cancel()
+        assertTrue(waitFor(5_000) { !job.running })
+        assertEquals("cancel released more than once", 1, r.get())
+    }
+
+    /** #1692 gh's own expiry, when it prints one, replaces the 15 min default. */
+    @Test
+    fun theCodesExpiryIsReadFromGhWhenPrinted() {
+        assertEquals(15 * 60_000L, GhOutput.expiresInMs("This code expires in 15 minutes"))
+        assertEquals(90_000L, GhOutput.expiresInMs("code expires in 90 seconds"))
+        assertNull(GhOutput.expiresInMs("! First copy your one-time code: B1D3-EA43"))
+        assertEquals(15 * 60_000L, GhLogin.DEFAULT_EXPIRY_MS)
+    }
 }
