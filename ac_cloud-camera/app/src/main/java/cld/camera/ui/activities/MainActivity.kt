@@ -326,7 +326,7 @@ open class MainActivity : AppCompatActivity(),
     private fun deniedOnce(vararg ids: String): Boolean = ids.all { id ->
         runCatching {
             val e = com.diegonmarcos.superapp.perms.Perms.catalogue(this).entries.firstOrNull { it.id == id } ?: return@runCatching false
-            val st = com.diegonmarcos.superapp.perms.Perms.status(this, e, this)
+            val st = com.diegonmarcos.superapp.perms.PermStatusReader.status(this, e, this)
             st.state == com.diegonmarcos.superapp.perms.PermState.DENIED && st.reason.contains("denied once")
         }.getOrDefault(false)
     }

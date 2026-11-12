@@ -95,7 +95,7 @@ class DevControlFragment : KitComposeFragment() {
         val act = activity ?: return "✗ Denied"
         // #1515 the rationale / permanent-denial reading is libs:perms' own (Perms.status), the same the Perms page shows.
         val entry = runCatching { com.diegonmarcos.superapp.perms.Perms.catalogue(ctx).entries.firstOrNull { it.permission == perm } }.getOrNull()
-        val st = entry?.let { e -> runCatching { com.diegonmarcos.superapp.perms.Perms.status(ctx, e, act) }.getOrNull() }
+        val st = entry?.let { e -> runCatching { com.diegonmarcos.superapp.perms.PermStatusReader.status(ctx, e, act) }.getOrNull() }
         if (st != null) when {
             st.state == com.diegonmarcos.superapp.perms.PermState.GRANTED -> return "✓ Granted"
             st.state == com.diegonmarcos.superapp.perms.PermState.PERMANENTLY_DENIED -> return "✗ Denied (don't ask)"
