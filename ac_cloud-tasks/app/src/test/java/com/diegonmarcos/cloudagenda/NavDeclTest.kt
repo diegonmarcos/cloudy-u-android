@@ -19,7 +19,7 @@ class NavDeclTest {
 
     @Test fun `every id Kotlin dispatches on is declared and every declared section is dispatched`() {
         assertEquals(setOf(Ids.INBOXES, Ids.BACKLOGS, Ids.TASKS, Ids.LIBRARY, Ids.PROJECTS, Ids.SETTINGS), nav.sections.map { it.id }.toSet())
-        assertEquals(listOf(Ids.PAGE_CALENDAR, Ids.PAGE_LIST, Ids.PAGE_GANTT, Ids.PAGE_KANBAN, Ids.PAGE_MINDMAP), nav.section(Ids.TASKS)!!.pages.map { it.id })
+        assertEquals(listOf(Ids.PAGE_CALENDAR, Ids.PAGE_LIST, Ids.PAGE_GANTT, Ids.PAGE_KANBAN, Ids.PAGE_MINDMAP, Ids.PAGE_CLOCK), nav.section(Ids.TASKS)!!.pages.map { it.id })
         assertEquals(
             listOf(Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT, Ids.PAGE_APPEARANCE, Ids.PAGE_AGENT, Ids.PAGE_INBOX, Ids.PAGE_FEEDS),
             nav.section(Ids.SETTINGS)!!.pages.map { it.id },
