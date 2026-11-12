@@ -58,10 +58,36 @@ fi
 
 echo "== T3: the specific call sites #435 named are actually clean =="
 # Configs ▸ Actions / one-hand star (#323): the power_saving is_action entry.
+# #1687/#1689 (owner order 2026-11-12) added a NEW, different control with the
+# same id: ui.control_panel controls[id=power_saving] (the phone's own power
+# saving, a Quick actions tile + a Perms card) and super_power_saving. That is
+# not the deleted mode, so the check now looks at the surfaces the old mode
+# used — every ui.sections[].pages entry, the circular / arc / recents menus,
+# the one-hand gestures — and allows the id only inside ui.control_panel.
 if [ -f "$BJ" ]; then
-  rg -q '"id": "power_saving"' "$BJ" \
-    && bad "Configs Actions / one-hand star still declares a power_saving action" \
-    || ok "no power_saving action entry in Configs Actions / the one-hand star"
+  T3="$(python3 - "$BJ" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); ui = d["ui"]
+hits = []
+def walk(o, path):
+    if isinstance(o, dict):
+        if o.get("id") == "power_saving" or o.get("target") in ("action:power_saving", "power_saving") or o.get("action") == "power_saving":
+            hits.append(path)
+        for k, v in o.items():
+            if k == "control_panel" and path == "ui": continue
+            walk(v, path + "." + k if path else k)
+    elif isinstance(o, list):
+        for i, v in enumerate(o): walk(v, f"{path}[{i}]")
+    elif isinstance(o, str) and o in ("action:power_saving",):
+        hits.append(path)
+walk(d, "")
+print("FAIL " + ",".join(hits) if hits else "OK")
+PY
+)"
+  case "$T3" in
+    OK) ok "no power_saving action entry in Configs Actions / the one-hand star (ui.control_panel's #1687 control allowed)" ;;
+    *)  bad "Configs Actions / one-hand star still declares a power_saving action (${T3#FAIL })" ;;
+  esac
 fi
 # Theme tab (#327): the "Battery Hunger" (singular) system-lever section.
 CFG="$SRC/settings/LauncherConfigFragment.kt"

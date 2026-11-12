@@ -10021,7 +10021,6 @@
                 {"class": "com.diegonmarcos.superapp.notificationcenter.KdeStatusService", "label": "KDE status"},
                 {"class": "com.diegonmarcos.superapp.notificationcenter.NetworkBadgeService", "label": "Network badge"},
                 {"class": "com.diegonmarcos.clocktools.ClockService", "label": "Clock / stopwatch"},
-                {"class": "com.diegonmarcos.cloudnav.maps.LocationTrackerService", "label": "Location tracker"},
                 {"class": "com.diegonmarcos.superapp.light.LightService", "label": "Light"},
                 {"class": "com.diegonmarcos.superapp.browser.download.DlService", "label": "Downloads"},
                 {"class": "com.diegonmarcos.superapp.updater.BatchForegroundService", "label": "Fleet updates (keep-alive)"},
