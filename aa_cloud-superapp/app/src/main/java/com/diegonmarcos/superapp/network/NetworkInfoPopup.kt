@@ -511,6 +511,9 @@ object NetworkInfoPopup {
         val rows = mutableListOf<String>()
         val wm = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
         if (wm == null) { rows += "—"; return rows }
+        // #1666 a location access (SSID), made only while the popup's Wi-Fi section is open; noted in the app's ledger.
+        com.diegonmarcos.superapp.perms.LocationUse.note(ctx, "network.NetworkInfoPopup.readWifi (popup Wi-Fi section)",
+            "WifiManager.getConnectionInfo (SSID)", com.diegonmarcos.superapp.perms.LocationUse.Trigger.SCREEN)
         @Suppress("DEPRECATION")
         val info = runCatching { wm.connectionInfo }.getOrNull()
         if (info == null) { rows += "—"; return rows }

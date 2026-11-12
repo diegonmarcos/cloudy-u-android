@@ -121,6 +121,9 @@ object WeatherLocation {
         return Result.Found(store.load() ?: fix, fresh)
     }
 
+    /** [com.diegonmarcos.superapp.perms.LocationUse] call-site id of the Weather card. */
+    const val SITE = "notificationcenter.WeatherLocation (Weather card, 4 h)"
+
     /** Platform side of [Probe]. */
     class AndroidProbe(private val ctx: Context) : Probe {
         private val lm get() = ctx.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -129,11 +132,15 @@ object WeatherLocation {
             runCatching { lm.isProviderEnabled(provider) }.getOrDefault(false)
 
         @SuppressLint("MissingPermission")
-        override fun lastKnown(provider: String): Fix? =
-            runCatching { lm.getLastKnownLocation(provider) }.getOrNull()?.toFix(provider)
+        override fun lastKnown(provider: String): Fix? {
+            // #1666 noted in the app's location-use ledger (X-Ray App ▸ Location use); runs on the 4 h cadence only (#1654).
+            com.diegonmarcos.superapp.perms.LocationUse.note(ctx, SITE, "LocationManager.getLastKnownLocation ($provider)", com.diegonmarcos.superapp.perms.LocationUse.Trigger.WEATHER)
+            return runCatching { lm.getLastKnownLocation(provider) }.getOrNull()?.toFix(provider)
+        }
 
         @SuppressLint("MissingPermission")
         override fun request(provider: String, timeoutMs: Long): Fix? = runCatching {
+            com.diegonmarcos.superapp.perms.LocationUse.note(ctx, SITE, "LocationManagerCompat.getCurrentLocation ($provider, one shot)", com.diegonmarcos.superapp.perms.LocationUse.Trigger.WEATHER)
             val got = arrayOfNulls<Location>(1)
             val latch = CountDownLatch(1)
             val cancel = CancellationSignal()

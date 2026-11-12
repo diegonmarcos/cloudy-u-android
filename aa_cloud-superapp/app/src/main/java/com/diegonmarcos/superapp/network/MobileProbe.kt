@@ -22,6 +22,7 @@ import android.telephony.SignalStrength
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyDisplayInfo
 import android.telephony.TelephonyManager
+import com.diegonmarcos.superapp.perms.LocationUse
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -121,10 +122,29 @@ object MobileProbe {
         ss.cellSignalStrengths.map { it.dbm }.firstOrNull { it != Int.MAX_VALUE && it < 0 }
     }.getOrNull()
 
-    private fun sim(ctx: Context, ref: SubRef): MobileLink.Sim {
+    /** [LocationUse] call-site ids of this file. */
+    const val SITE_SERVICE_STATE = "network.MobileProbe.serviceState (popup Cellular section)"
+
+    /**
+     * #1666 ServiceState without a location access. From API 33 the platform hands it with the cell identity stripped
+     * (INCLUDE_LOCATION_DATA_NONE), which Android does not count as location use, so the strip may read it. Below 33 the
+     * plain getter is a FINE_LOCATION access (it carries the cell identity once location is granted): only a screen the user
+     * opened ([screen]) reads it, noted in [LocationUse]; the strip then works from the callbacks it has (signal, display info).
+     */
+    @Suppress("MissingPermission")
+    fun serviceStateOf(ctx: Context, tm: TelephonyManager, screen: Boolean): ServiceState? = runCatching {
+        when {
+            Build.VERSION.SDK_INT >= 33 -> tm.getServiceState(TelephonyManager.INCLUDE_LOCATION_DATA_NONE)
+            Build.VERSION.SDK_INT < 31 -> tm.serviceState   // no location indicator before Android 12: unchanged
+            screen -> { LocationUse.note(ctx, SITE_SERVICE_STATE, "TelephonyManager.getServiceState", LocationUse.Trigger.SCREEN); tm.serviceState }
+            else -> null
+        }
+    }.getOrNull()
+
+    private fun sim(ctx: Context, ref: SubRef, screen: Boolean = false): MobileLink.Sim {
         val tm = forSub(ctx, ref.subId) ?: return MobileLink.Sim(ref.subId, ref.slot, ref.carrier)
         val l = live[ref.subId]
-        val ss = if (phoneGranted(ctx)) runCatching { @Suppress("MissingPermission") tm.serviceState }.getOrNull() else null
+        val ss = if (phoneGranted(ctx)) serviceStateOf(ctx, tm, screen) else null
         val signal = if (Build.VERSION.SDK_INT >= 28) runCatching { tm.signalStrength }.getOrNull() else null
         val dataUser = runCatching {
             if (Build.VERSION.SDK_INT >= 31) tm.isDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_USER)
@@ -154,10 +174,11 @@ object MobileProbe {
         )
     }
 
-    /** The inputs of [MobileLink.derive], now. Cheap binder reads; safe on the main thread. */
-    fun read(ctx: Context, cellularTransport: Boolean = false): MobileLink.Inputs {
+    /** The inputs of [MobileLink.derive], now. Cheap binder reads; safe on the main thread. [screen] = a screen the user
+     *  opened is asking (the popup), which alone may make a location-class read below API 33 (#1666); the strip passes false. */
+    fun read(ctx: Context, cellularTransport: Boolean = false, screen: Boolean = false): MobileLink.Inputs {
         val tm = base(ctx) ?: return MobileLink.Inputs(airplane(ctx), emptyList(), MobileLink.NO_SUB, cellularTransport)
-        val sims = subs(ctx, tm).map { sim(ctx, it) }
+        val sims = subs(ctx, tm).map { sim(ctx, it, screen) }
         return MobileLink.Inputs(airplane(ctx), sims, defaultDataSubId(), cellularTransport)
     }
 
@@ -320,9 +341,19 @@ object MobileProbe {
             if (Build.VERSION.SDK_INT >= 31) {
                 // One callback per listener, each registered alone: a listener this app may not use
                 // throws, and must not take the others down with it.
-                for (cb in listOf<android.telephony.TelephonyCallback>(
-                    SignalCb31(sub, changed), ServiceCb31(sub, changed), DisplayCb31(sub, changed), DataCb31(sub, changed),
-                )) runCatching { t.registerTelephonyCallback(app.mainExecutor, cb); listeners += cb }
+                // #1666 From API 33 every callback is registered with INCLUDE_LOCATION_DATA_NONE: the service state then
+                // arrives without the cell identity and Android notes no location access per event (the strip's watch runs
+                // all the time the launcher is up). On 31-32 that switch does not exist, so the service-state listener, a
+                // location access per event there, is left out; signal, display info and data state carry the strip.
+                val cbs = listOfNotNull<android.telephony.TelephonyCallback>(
+                    SignalCb31(sub, changed), if (Build.VERSION.SDK_INT >= 33) ServiceCb31(sub, changed) else null,
+                    DisplayCb31(sub, changed), DataCb31(sub, changed),
+                )
+                for (cb in cbs) runCatching {
+                    if (Build.VERSION.SDK_INT >= 33) t.registerTelephonyCallback(TelephonyManager.INCLUDE_LOCATION_DATA_NONE, app.mainExecutor, cb)
+                    else t.registerTelephonyCallback(app.mainExecutor, cb)
+                    listeners += cb
+                }
             } else {
                 @Suppress("DEPRECATION")
                 val l = LegacyListener(sub, changed)

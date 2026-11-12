@@ -96,7 +96,9 @@ fun WifiPanel(
     onOpenTab: (WifiTab) -> Unit = {},
 ) {
     val s by controller.state.collectAsState()
-    DisposableEffect(controller) { controller.attach(); onDispose { controller.detach() } }
+    // #1666 the page's scans, scan-result reads and link samples (all location accesses) run only while the page is on screen
+    // AND the app is started: leaving the page, or the app going to the background with the page open, detaches.
+    WifiLifecycle.Attach(controller)
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) { delay(1000); now = System.currentTimeMillis() } }
     BoxWithConstraints(modifier.fillMaxSize()) {

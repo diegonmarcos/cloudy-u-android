@@ -15,6 +15,8 @@ import com.diegonmarcos.superapp.shellbroker.ShellBroker
 import com.diegonmarcos.superapp.battery.BatteryRepository
 import com.diegonmarcos.superapp.ops.dagu.DaguPrefs
 import com.diegonmarcos.superapp.profile.AccountData
+import com.diegonmarcos.superapp.perms.LocationUse
+import com.diegonmarcos.superapp.xray.LocationUseView
 import com.diegonmarcos.superapp.xray.PARTIAL_LABEL
 import com.diegonmarcos.superapp.xray.SRC_APP
 import com.diegonmarcos.superapp.xray.XSection
@@ -24,6 +26,7 @@ import com.diegonmarcos.superapp.xray.XrayExporter
 import com.diegonmarcos.superapp.xray.XrayFormat
 import com.diegonmarcos.superapp.xray.XrayInputs
 import com.diegonmarcos.superapp.xray.XrayPoster
+import com.diegonmarcos.superapp.xray.XrayProbes
 import com.diegonmarcos.superapp.xray.XrayShell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,7 +87,10 @@ internal object XrayExport {
         val extra = runCatching {
             val live = runCatching { BatteryRepository.report(ctx)?.sessions }.getOrNull().orEmpty()
             XrayBattery.sections(BatteryRepository.sessions90(ctx, live), BatteryRepository.cycles(ctx), label = { uid -> BatteryRepository.appLabel(ctx, uid).second })
-        }.getOrDefault(emptyList())
+        }.getOrDefault(emptyList()) +
+            // #1666 the app's own location-use ledger, read in the sandbox (no adb needed).
+            XSection(XrayProbes.G_SECURITY, "Location use · this app's ledger (last access per call site)", SRC_APP,
+                LocationUseView.ledgerText(LocationUse.all(ctx)), id = "locledger")
         val report = XrayExporter.build(XrayInputs(
             device = "${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE})",
             appVersion = "${BuildConfig.VERSION_NAME} ${BuildConfig.GIT_SHORT_SHA}",

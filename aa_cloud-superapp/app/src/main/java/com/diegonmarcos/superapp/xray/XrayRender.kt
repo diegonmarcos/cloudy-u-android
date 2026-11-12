@@ -285,7 +285,10 @@ object XrayDigest {
         if (granted.isEmpty() && pp?.contains("requested permissions") != true) return d(t, XStatus.OK, "no data", emptyList())
         val req = pp?.let { DumpsysParsers.permLines(it, 0).firstOrNull { l -> l.label == "Requested" }?.value }
         val ls = lines("requested" to req, "granted" to granted.size.toString(), "sensitive" to sens.joinToString(" "), "other" to granted.filter { it !in SENSITIVE }.take(12).joinToString(" "))
-        return d(t, sevHigh(sens.size.toDouble(), 5.0, 9.0), "${granted.size} granted, ${sens.size} sensitive", ls)
+        // #1666 location use: the system's app-ops verdict and the app's own ledger (newest call site).
+        val loc = lines("location (system)" to c.t("locops")?.let { LocationUseView.summary(it) },
+            "location (app)" to c.t("locledger")?.lineSequence()?.firstOrNull { it.isNotBlank() }?.take(140))
+        return d(t, sevHigh(sens.size.toDouble(), 5.0, 9.0), "${granted.size} granted, ${sens.size} sensitive", ls + loc)
     }
 
     private fun suspects(c: Ctx, t: XrayProbes.Tracker): XDigest {

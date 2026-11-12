@@ -798,6 +798,9 @@ class MapsMapFragment : KitComposeFragment() {
     private fun fetchAndCenter() {
         val ctx = context ?: return
         val fused = LocationServices.getFusedLocationProviderClient(ctx)
+        // #1666 one-shot, from Locate (or the Routes page's open): noted in the app's location-use ledger.
+        com.diegonmarcos.superapp.perms.LocationUse.note(ctx, "libs:maps MapsMapFragment.fetchAndCenter (map open / Locate)",
+            "FusedLocationProviderClient.lastLocation / getCurrentLocation", com.diegonmarcos.superapp.perms.LocationUse.Trigger.BUTTON)
         fused.lastLocation.addOnSuccessListener { last ->
             if (last != null) onLoc(last)
             else fused.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)

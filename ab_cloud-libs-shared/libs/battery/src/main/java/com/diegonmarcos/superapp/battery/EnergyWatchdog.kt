@@ -89,11 +89,20 @@ object EnergyWatchdog {
             tm?.signalStrength?.cellSignalStrengths?.firstOrNull()?.dbm ?: -1
         }.getOrDefault(-1)
 
+        // #1666 the sampler runs from a background worker: the RSSI comes from the Wi-Fi network's capabilities, never
+        // WifiManager.getConnectionInfo (a location access Android shows as the app "using" location on every call).
         val wifiRssi = runCatching {
-            val wm = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE)
-                as? android.net.wifi.WifiManager
-            @Suppress("DEPRECATION")
-            wm?.connectionInfo?.rssi ?: 0
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                val cm = ctx.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+                @Suppress("DEPRECATION")
+                cm?.allNetworks?.asSequence()?.mapNotNull { cm.getNetworkCapabilities(it) }
+                    ?.firstOrNull { it.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) }
+                    ?.signalStrength?.takeIf { it != android.net.NetworkCapabilities.SIGNAL_STRENGTH_UNSPECIFIED } ?: 0
+            } else {
+                val wm = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as? android.net.wifi.WifiManager
+                @Suppress("DEPRECATION")
+                wm?.connectionInfo?.rssi ?: 0
+            }
         }.getOrDefault(0)
 
         val audioActive = runCatching {

@@ -38,37 +38,33 @@ import java.util.concurrent.TimeUnit
  */
 class TrackerWatchdog(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
 
+    /*
+     * #1666 NO KEEP-ALIVE. The tracker is a location foreground service and must start only from the user's Start; this worker
+     * re-spawning it every 15 min (and across reboots) kept the location indicator lit with nobody asking. A schedule left by an
+     * older build still fires once: it now only records that the tracker died (tracking switched off, the Maps page shows
+     * Start again) and cancels itself. It never starts the service.
+     */
     override suspend fun doWork(): Result {
         val ctx = applicationContext
         val prefs = MapsTrackerPrefs(ctx)
-        if (!prefs.enabled) {
-            // User stopped tracking — nothing to revive. The Result is
-            // success so WorkManager keeps the periodic schedule alive
-            // for the next time they enable it (cheaper than re-enqueue).
-            return Result.success()
+        if (prefs.enabled && decide(prefs.lastFixTs, System.currentTimeMillis(),
+                MapsTrackingPrefs(ctx).intervalMovingMs.coerceAtLeast(1_000).toLong()) == Verdict.DEAD) {
+            Log.w("TrackerWatchdog", "Tracker enabled but dead — NOT restarted (#1666); tracking switched off")
+            prefs.enabled = false
         }
-        if (!MapsPermissions.canTrackerRun(ctx)) {
-            // Permission was revoked. Service couldn't run anyway;
-            // skip the start so we don't log spurious stopSelf cycles.
-            return Result.success()
-        }
-        val now = System.currentTimeMillis()
-        val lastFixTs = prefs.lastFixTs
-        // Threshold = 4x the moving-interval. At default 30s cadence
-        // that's 2 min of silence — well past any real GPS hiccup but
-        // tight enough that the next 15-min tick catches a true death.
-        val intervalMs = MapsTrackingPrefs(ctx).intervalMovingMs.coerceAtLeast(1_000).toLong()
-        val staleAfter = intervalMs * 4
-        val stale = lastFixTs <= 0L || (now - lastFixTs) > staleAfter
-        if (stale) {
-            Log.w("TrackerWatchdog", "Tracker enabled but stale (last fix ${now - lastFixTs} ms ago) — restarting service")
-            LocationTrackerService.startTracking(ctx)
-        }
+        cancel(ctx)
         return Result.success()
     }
 
+    /** What the old watchdog would have done; kept as data so the decision stays visible and tested. */
+    enum class Verdict { ALIVE, DEAD }
+
     companion object {
         private const val WORK_NAME = "tracker-watchdog"
+
+        /** Threshold = 4x the moving interval, as the old watchdog judged a dead tracker. Pure. */
+        fun decide(lastFixTs: Long, now: Long, intervalMs: Long): Verdict =
+            if (lastFixTs <= 0L || (now - lastFixTs) > intervalMs * 4) Verdict.DEAD else Verdict.ALIVE
 
         /** Enqueue the periodic watchdog. Idempotent (KEEP policy) —
          *  re-calling won't disturb the existing schedule. Cadence =

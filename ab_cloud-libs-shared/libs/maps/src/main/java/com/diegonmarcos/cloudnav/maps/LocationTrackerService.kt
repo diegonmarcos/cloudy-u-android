@@ -138,11 +138,19 @@ class LocationTrackerService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        // #1666 the tracker runs only from the user's Start: an intent without ACTION_USER_START (a revival, a stale
+        // caller, a keep-alive) is refused and switches tracking off, so nothing lights the location dot on its own.
+        if (!isUserStart(intent?.action)) {
+            Log.i(TAG, "Tracker start without the user's Start (${intent?.action}) — refused, tracking off")
+            trackerPrefs.enabled = false
+            stopSelf()
+            return START_NOT_STICKY
+        }
         startForeground(NOTIF_ID, buildNotification("Tracking — waiting for GPS fix…"))
         subscribeUpdates()
-        // START_STICKY so Android revives the service after a kill /
-        // OOM; onStartCommand re-checks permissions + enabled flag.
-        return START_STICKY
+        // #1666 START_NOT_STICKY: a killed tracker is NOT revived by Android (the old START_STICKY + watchdog revival kept a
+        // location foreground service coming back in the background). The user presses Start again.
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
@@ -182,6 +190,8 @@ class LocationTrackerService : Service() {
         // in onStartCommand → safe to suppress lint.
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED) {
+            com.diegonmarcos.superapp.perms.LocationUse.note(this, SITE, "FusedLocationProviderClient.requestLocationUpdates (foreground service type location)",
+                com.diegonmarcos.superapp.perms.LocationUse.Trigger.TRACKER)
             fused.requestLocationUpdates(req, cb, Looper.getMainLooper())
         }
     }
@@ -374,6 +384,10 @@ class LocationTrackerService : Service() {
     companion object {
         private const val CHANNEL_ID = "maps_tracker"
         private const val NOTIF_ID   = 0xA1
+        /** #1666 the only start the service accepts: the user's Start on the Maps config page. */
+        const val ACTION_USER_START = "com.diegonmarcos.cloudnav.maps.ACTION_USER_START"
+        const val SITE = "libs:maps LocationTrackerService (Maps ▸ Start)"
+        fun isUserStart(action: String?): Boolean = action == ACTION_USER_START
 
         /** Convenience starter — toggles [MapsTrackerPrefs.enabled],
          *  fires startForegroundService so the OS doesn't kill the
@@ -383,9 +397,10 @@ class LocationTrackerService : Service() {
          *  kills that bypass Battery Optimization whitelist. */
         fun startTracking(ctx: android.content.Context) {
             MapsTrackerPrefs(ctx).enabled = true
-            val intent = Intent(ctx, LocationTrackerService::class.java)
+            val intent = Intent(ctx, LocationTrackerService::class.java).setAction(ACTION_USER_START)
             ContextCompat.startForegroundService(ctx, intent)
-            TrackerWatchdog.schedule(ctx)
+            // #1666 no keep-alive: the periodic watchdog that re-spawned the tracker is cancelled, never scheduled.
+            TrackerWatchdog.cancel(ctx)
         }
         /** Convenience stopper — flips enabled=false (so a service
          *  revival by START_STICKY immediately self-stops), explicitly

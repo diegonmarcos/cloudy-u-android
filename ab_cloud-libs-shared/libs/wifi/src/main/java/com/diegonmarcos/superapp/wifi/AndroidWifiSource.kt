@@ -32,6 +32,9 @@ data class RttResult(val bssid: String, val ok: Boolean, val distanceM: Double, 
  * Everything a permission or an API level withholds degrades to an empty value plus a [lastError] the page shows.
  */
 class AndroidWifiSource(private val ctx: Context) {
+    /** #1666 every location-class call of this source runs only while the Wi-Fi page is attached; each is noted in the app's ledger. */
+    private fun note(api: String) = com.diegonmarcos.superapp.perms.LocationUse.note(ctx, SITE, api, com.diegonmarcos.superapp.perms.LocationUse.Trigger.SCREEN)
+    companion object { const val SITE = "libs:wifi AndroidWifiSource (Wi-Fi page)" }
     private val wm = ctx.getSystemService(Context.WIFI_SERVICE) as? WifiManager
     private val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
     private val rtt: WifiRttManager? = if (Build.VERSION.SDK_INT >= 28 && ctx.packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_RTT))
@@ -55,7 +58,7 @@ class AndroidWifiSource(private val ctx: Context) {
 
     /** Ask for a scan. false = refused (throttled, Wi-Fi off, or no permission); the cached results still arrive. */
     @Suppress("DEPRECATION")
-    fun startScan(): Boolean = runCatching { wm?.startScan() == true }.onFailure { lastError = it.message ?: "scan refused" }.getOrDefault(false)
+    fun startScan(): Boolean = runCatching { note("WifiManager.startScan"); wm?.startScan() == true }.onFailure { lastError = it.message ?: "scan refused" }.getOrDefault(false)
 
     /** Listen for SCAN_RESULTS_AVAILABLE; [onResults] gets whether the results are fresh. Returns the unregister action. */
     fun listen(onResults: (Boolean) -> Unit): () -> Unit {
@@ -69,6 +72,7 @@ class AndroidWifiSource(private val ctx: Context) {
 
     @SuppressLint("MissingPermission")
     fun results(): List<RawScan> {
+        note("WifiManager.getScanResults")
         val list = try { wm?.scanResults.orEmpty() } catch (e: SecurityException) { lastError = "scan results need location permission"; emptyList() }
         val bootNow = SystemClock.elapsedRealtime()
         synchronized(lastResults) { list.forEach { lastResults[it.BSSID.orEmpty().lowercase()] = it } }
@@ -130,7 +134,7 @@ class AndroidWifiSource(private val ctx: Context) {
         val net = wifiNet
         val nc = net?.let { runCatching { c?.getNetworkCapabilities(it) }.getOrNull() }
         val lp = net?.let { runCatching { c?.getLinkProperties(it) }.getOrNull() }
-        val info: WifiInfo? = capsInfo ?: runCatching { w.connectionInfo }.getOrNull()
+        val info: WifiInfo? = capsInfo ?: runCatching { note("WifiManager.getConnectionInfo"); w.connectionInfo }.getOrNull()
         val dhcp = runCatching { w.dhcpInfo }.getOrNull()
         val v4 = lp?.linkAddresses?.firstOrNull { it.address is Inet4Address }
         val v6 = lp?.linkAddresses?.filter { it.address is Inet6Address }?.map { it.toString() }.orEmpty()

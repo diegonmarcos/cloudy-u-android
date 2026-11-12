@@ -317,6 +317,27 @@ class DevControlFragment : KitComposeFragment() {
                 row("✗", asked[i].removePrefix("android.permission."))
         }
 
+        infoSection("Location use") {
+            // #1666 every location-class access this app made, last one per call site (the app's ledger), then the system's
+            // location app-ops through the shell broker, so a lit location dot can be traced to its cause.
+            val entries = com.diegonmarcos.superapp.perms.LocationUse.all(appCtx)
+            if (entries.isEmpty()) small("No location-class access recorded since this build was installed.")
+            for ((k, v) in com.diegonmarcos.superapp.xray.LocationUseView.rows(entries)) row(k, v)
+            val sys = row("System app-ops", "reading…")
+            launch {
+                val text = withContext(Dispatchers.IO) {
+                    runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.execText(appCtx, com.diegonmarcos.superapp.xray.LocationUseView.APPOPS_CMD) }.getOrNull()
+                }
+                val ops = com.diegonmarcos.superapp.xray.LocationUseView.opsLines(text)
+                sys.text = when {
+                    text == null -> "— needs the ADB shell (Configs ▸ ADB Shell)"
+                    ops.isEmpty() -> "no location op recorded"
+                    else -> com.diegonmarcos.superapp.xray.LocationUseView.summary(text) + "\n" + ops.joinToString("\n")
+                }
+            }
+            button("Refresh", gray = true) { reload() }
+        }
+
         infoSection("Sections (from build.json)") {
             val all = Sections.all()
             row("Total",       all.size.toString())
@@ -1173,6 +1194,9 @@ class DevControlFragment : KitComposeFragment() {
             if (wm == null || !wm.isWifiEnabled) {
                 small("Wi-Fi is off.")
             } else {
+                // #1666 a location access (SSID / BSSID) while this X-Ray page is open; noted in the app's ledger.
+                com.diegonmarcos.superapp.perms.LocationUse.note(ctxAny(), "devcontrol.DevControlFragment Wi-Fi section (X-Ray page)",
+                    "WifiManager.getConnectionInfo (SSID/BSSID)", com.diegonmarcos.superapp.perms.LocationUse.Trigger.SCREEN)
                 @Suppress("DEPRECATION")
                 val info = runCatching { wm.connectionInfo }.getOrNull()
                 if (info == null) {

@@ -172,12 +172,17 @@ object ResourcesProvider {
         val vpn = cm.allNetworks.any { cm.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true }
         rows += ResRow("Active", when { wifi -> "Wi-Fi"; cell -> "Mobile data"; caps != null -> "Other"; else -> "Offline" })
         val wm = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
-        val info = wm?.connectionInfo
-        if (wifi && info != null) {
-            val ssid = info.ssid?.trim('"')
-            rows += ResRow("Wi-Fi", if (ssid.isNullOrBlank() || ssid == "<unknown ssid>") "Connected (name needs the location permission)" else ssid)
-            rows += ResRow("Wi-Fi signal", "${info.rssi} dBm (${ResourcesFormat.signalBars(info.rssi)}/4)")
-            if (info.ipAddress != 0) rows += ResRow("Wi-Fi IP", ResourcesFormat.ip(info.ipAddress))
+        // #1666 a home board refreshes without the user asking for Wi-Fi: no WifiManager.getConnectionInfo here (a location
+        // access, it carries the SSID / BSSID). Signal from the network's capabilities, the address from its link properties;
+        // the network's name is on the Wi-Fi page, which reads it while it is open.
+        if (wifi) {
+            rows += ResRow("Wi-Fi", "Connected (name on the Wi-Fi page)")
+            com.diegonmarcos.superapp.network.NetworkSignal.wifiRssi(ctx)?.let { rssi ->
+                rows += ResRow("Wi-Fi signal", "$rssi dBm (${ResourcesFormat.signalBars(rssi)}/4)")
+            }
+            runCatching {
+                cm.getLinkProperties(cm.activeNetwork)?.linkAddresses?.firstOrNull { it.address is java.net.Inet4Address }?.address?.hostAddress
+            }.getOrNull()?.let { rows += ResRow("Wi-Fi IP", it) }
         } else rows += ResRow("Wi-Fi", if (wm?.isWifiEnabled == true) "On, not connected" else "Off")
         val tm = ctx.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
         tm?.networkOperatorName?.takeIf { it.isNotBlank() }?.let { rows += ResRow("Carrier", it) }

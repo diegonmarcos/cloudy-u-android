@@ -159,7 +159,7 @@ internal object CellularSection {
     fun Render(ctx: Context, cellularTransport: Boolean, extra: List<String>, onGrant: () -> Unit) {
         val app = ctx.applicationContext
         val inputs = remember {
-            runCatching { MobileProbe.read(app, cellularTransport) }
+            runCatching { MobileProbe.read(app, cellularTransport, screen = true) }
                 .getOrElse { MobileLink.Inputs(false, emptyList(), MobileLink.NO_SUB, cellularTransport) }
         }
         val phone = remember { MobileProbe.phoneGranted(app) }
@@ -228,7 +228,8 @@ internal object GpsSection {
         }
         tick.let {
             val s = session
-            val loc = s?.fix ?: GpsProbe.lastKnown(app)
+            // #1666 the last-known read is a location access: only while the section is on screen, else this app's cached fix.
+            val loc = s?.fix ?: if (visible) GpsProbe.lastKnown(app) else GpsProbe.cached
             val f = loc?.let { GpsProbe.fixOf(it, usedSats = if (it.provider == "gps") s?.usedSats() else null) }
             val sats = s?.sats.orEmpty()
             PopGroup {

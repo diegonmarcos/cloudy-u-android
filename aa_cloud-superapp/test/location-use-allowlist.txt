@@ -1,0 +1,28 @@
+# #1666 Every location-class API call site in the SuperApp and every lib it links, with its OWNER. Read by
+# test-location-use-scoped.sh: a call site missing here (or a count that grew) fails the build.
+#
+# Format:  path | api | count | trigger | owner and release
+#   api      the scanner's class (location_use_scan.py APIS): fix, gnss, wifi-scan, wifi-info, ble-scan, cell, service-state,
+#            hotspot, wifi-p2p, fgs-location
+#   trigger  screen      runs only while its own screen is on screen (the user opened it); released when it leaves
+#            button      runs only from a button the user pressed on an open screen; released by its Stop / on leave
+#            weather     the Weather card's one coarse fix per 4 h (#1654), never a subscription
+#            legacy-sdk  a branch only below the API level where Android has the location indicator (31), or where the
+#                        location-free API does not exist (29); the modern branch beside it makes no location-class call
+#   Nothing else is allowed: no timer, no service, no strip / widget refresh, no app start.
+#
+aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlFragment.kt | wifi-info | 1 | screen | X-Ray page Wi-Fi section (SSID/BSSID rows): read when the user scrolls to it; one read, nothing held
+aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/GpsProbe.kt | fix | 1 | screen | lastKnown(): the popup GPS section only while visible (NetworkPopupSections visible gate); one read, the strip reads GpsProbe.cached
+aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/GpsProbe.kt | gnss | 2 | screen | LiveSession: popup GPS section, DisposableEffect(visible) start/stop + onDispose stop, capped at MAX_MS = 3 min; stop() unregisters
+aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/MobileProbe.kt | service-state | 3 | legacy-sdk | serviceStateOf: API 33+ INCLUDE_LOCATION_DATA_NONE; below 31 plain getter + LISTEN_SERVICE_STATE (no indicator there); 31-32 only with screen=true (popup), ServiceCb31 not registered on 31-32
+aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetTableReader.kt | wifi-info | 1 | screen | network popup table (SSID/BSSID rows): produceState while the popup is open; one read
+aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkInfoPopup.kt | wifi-info | 1 | screen | network popup Wi-Fi section: remember{} while the section is shown; one read
+aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkSignal.kt | wifi-info | 1 | legacy-sdk | wifiRssi(): below API 29 only (no capability signal strength there); 29+ reads NetworkCapabilities.signalStrength
+aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/WeatherLocation.kt | fix | 2 | weather | AndroidProbe: network provider getLastKnownLocation peek + one getCurrentLocation, cancelled on timeout, at most once per 4 h (#1654)
+ab_cloud-libs-shared/libs/battery/src/main/java/com/diegonmarcos/superapp/battery/EnergyWatchdog.kt | wifi-info | 1 | legacy-sdk | sample(): below API 29 only; 29+ reads the Wi-Fi network's NetworkCapabilities.signalStrength
+ab_cloud-libs-shared/libs/bluetooth/src/main/java/com/diegonmarcos/superapp/bluetooth/AndroidBleAdapter.kt | ble-scan | 2 | screen | startScan / startDiscovery: Bluetooth page (BtLifecycle.Scope stops both on leave and ON_STOP) or a web page's Web Bluetooth chooser; BLUETOOTH_SCAN is neverForLocation
+ab_cloud-libs-shared/libs/bluetooth/src/main/java/com/diegonmarcos/superapp/bluetooth/BluetoothAnalyze.kt | ble-scan | 1 | button | Analyze tab "Classic discovery" button; stops itself (~12 s), on Stop, and on leave (BtLifecycle)
+ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/LocalHotspot.kt | hotspot | 1 | button | Permissions page "Create local WiFi" button (pairing for Wireless Debugging); released by its stop
+ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/WifiDirect.kt | wifi-p2p | 2 | button | Permissions page "Create WiFi Direct" button (pairing); NEARBY_WIFI_DEVICES neverForLocation on 33+; released by its stop
+ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/AndroidWifiSource.kt | wifi-info | 1 | screen | link(): Wi-Fi page link sampler, only while WifiLifecycle.Attach holds (page on screen AND app started)
+ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/AndroidWifiSource.kt | wifi-scan | 2 | screen | startScan / getScanResults: Wi-Fi page (Scan button + Auto inside the throttle budget), only while WifiLifecycle.Attach holds

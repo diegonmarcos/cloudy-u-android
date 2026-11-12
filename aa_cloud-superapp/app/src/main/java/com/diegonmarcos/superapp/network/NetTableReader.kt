@@ -81,6 +81,9 @@ internal object NetTableReader {
         val wifi = n.with(NetworkCapabilities.TRANSPORT_WIFI)
         val notWifi = na("not on Wi-Fi")
         // WifiManager.connectionInfo carries the SSID / BSSID once Location is granted (the capabilities' copy is redacted)
+        // #1666 a location access (the popup the user opened asks), noted in the app's ledger.
+        if (wifi != null) com.diegonmarcos.superapp.perms.LocationUse.note(ctx, "network.NetTableReader.read (popup Network table)",
+            "WifiManager.getConnectionInfo (SSID/BSSID)", com.diegonmarcos.superapp.perms.LocationUse.Trigger.SCREEN)
         val info: WifiInfo? = wifi?.let { runCatching { (ctx.getSystemService(Context.WIFI_SERVICE) as? WifiManager)?.connectionInfo }.getOrNull() }
             ?: wifi?.second?.let { runCatching { if (Build.VERSION.SDK_INT >= 29) it.transportInfo as? WifiInfo else null }.getOrNull() }
         if (wifi == null || info == null) {
@@ -114,7 +117,7 @@ internal object NetTableReader {
         val ids = listOf("carrier", "nettype", "msignal", "roaming")
         val tm = ctx.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
         if (tm == null || !ctx.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return ids.associateWith { na("no telephony hardware") }
-        val inp = runCatching { MobileProbe.withLiveSignal(MobileProbe.read(ctx, n.with(NetworkCapabilities.TRANSPORT_CELLULAR) != null)) }.getOrNull()
+        val inp = runCatching { MobileProbe.withLiveSignal(MobileProbe.read(ctx, n.with(NetworkCapabilities.TRANSPORT_CELLULAR) != null, screen = true)) }.getOrNull()
         val sim = inp?.let { MobileLink.dataSim(it.sims, it.defaultDataSubId) }
         if (sim == null) return ids.associateWith { na(if (inp?.airplane == true) "airplane mode" else "no SIM") }
         val phone = MobileProbe.phoneGranted(ctx)

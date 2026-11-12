@@ -115,6 +115,8 @@ object XrayProbes {
             "dumpsys package com.diegonmarcos.superapp | grep -E 'granted=true' | head -120; echo ---; cmd appops get com.diegonmarcos.superapp | head -80", cap = 20_000),
         Probe("pkgperms", G_SECURITY, "This app's requested, install and runtime permissions (dumpsys package)",
             "dumpsys package com.diegonmarcos.superapp | grep -E -A70 'requested permissions:|install permissions:|runtime permissions:' | head -260", cap = 20_000),
+        // #1666 the system's location app-ops for this app (what the privacy indicator reads): one `appops get` per op.
+        Probe("locops", G_SECURITY, "Location use · system app-ops (FINE / COARSE / MONITOR location)", LocationUseView.APPOPS_CMD, cap = 6_000),
         // ── ② 13 SUSPECTS: the cross-tracker ranked verdict is computed (XrayAnalyze.suspects), not probed ──
     )
 

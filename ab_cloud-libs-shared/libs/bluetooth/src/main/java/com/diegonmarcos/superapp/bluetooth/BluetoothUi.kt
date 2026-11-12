@@ -71,6 +71,8 @@ internal val BtBad = Color(0xFFE5737A)
 @Composable
 fun BluetoothPanel(controller: BleController, tab: BtTab, modifier: Modifier = Modifier, onOpenTab: (BtTab) -> Unit = {}) {
     val s by controller.state.collectAsState()
+    // #1666 a scan or classic inquiry the page started ends when the page leaves or the app goes to the background.
+    BtLifecycle.Scope(controller)
     DisposableEffect(controller) { controller.refreshAdapter(); onDispose { } }
     LazyColumn(modifier.fillMaxSize().testTag("bluetooth:${tab.id}"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item("gate") { PermissionGate(controller, s) }

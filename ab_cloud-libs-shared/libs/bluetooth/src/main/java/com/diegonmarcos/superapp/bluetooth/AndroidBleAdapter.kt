@@ -26,6 +26,9 @@ import java.util.UUID
  */
 @SuppressLint("MissingPermission")
 class AndroidBleAdapter(context: Context) : BleAdapter {
+    /** #1666 the app's location-use ledger (scans run only while the Bluetooth page or a web page's chooser is on screen). */
+    private val ctxForLedger: Context = context.applicationContext
+    companion object { const val SITE = "libs:bluetooth AndroidBleAdapter (Bluetooth page / Web Bluetooth chooser)" }
     private val ctx = context.applicationContext
     private val manager = ctx.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
     private val bt: BluetoothAdapter? get() = manager?.adapter
@@ -72,6 +75,8 @@ class AndroidBleAdapter(context: Context) : BleAdapter {
             if (Build.VERSION.SDK_INT >= 26 && runCatching { bt?.isLeExtendedAdvertisingSupported == true }.getOrDefault(false)) {
                 settings.setLegacy(false).setPhy(ScanSettings.PHY_LE_ALL_SUPPORTED)
             }
+            com.diegonmarcos.superapp.perms.LocationUse.note(ctxForLedger, SITE, "BluetoothLeScanner.startScan (BLUETOOTH_SCAN neverForLocation)",
+                com.diegonmarcos.superapp.perms.LocationUse.Trigger.SCREEN)
             scanner.startScan(null, settings.build(), cb)
             scanCb = cb
             true
@@ -115,6 +120,7 @@ class AndroidBleAdapter(context: Context) : BleAdapter {
     override fun startDiscovery(onFound: (BleDevice) -> Unit, onDone: () -> Unit): Boolean = runCatching {
         val a = bt ?: return false
         cancelDiscovery()
+        com.diegonmarcos.superapp.perms.LocationUse.note(ctxForLedger, SITE, "BluetoothAdapter.startDiscovery", com.diegonmarcos.superapp.perms.LocationUse.Trigger.SCREEN)
         val rx = object : BroadcastReceiver() {
             override fun onReceive(c: Context?, i: Intent?) {
                 when (i?.action) {

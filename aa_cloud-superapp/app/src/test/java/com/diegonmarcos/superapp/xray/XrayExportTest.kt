@@ -135,7 +135,8 @@ class XrayExportTest {
         val old = listOf("profile", "packages", "deviceidle", "buckets", "appops", "listeners", "a11y", "autofill", "credential", "thermal", "top", "battery", "netstats",
             "batterystats", "batterystats-top", "services", "startproc", "jobs", "alarm", "power", "gfxinfo", "surfaceflinger", "notification", "binder", "procstats", "meminfo", "anr", "logcat", "perms")
         for (n in old) assertTrue("nothing deleted: $n", n in ids)
-        val new = listOf("df", "diskstats", "dropbox", "connectivity", "telephony", "procs", "pkgperms")
+        // #1666 locops: the system's location app-ops for this app (X-Ray App ▸ Location use)
+        val new = listOf("df", "diskstats", "dropbox", "connectivity", "telephony", "procs", "pkgperms", "locops")
         for (n in new) assertTrue("new probe $n", n in ids)
         assertEquals(old.size + new.size, ids.size)
         // macro order: the Profile Scan group first, then the trackers by number; the group index never goes back

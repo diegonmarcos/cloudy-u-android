@@ -77,6 +77,7 @@ import com.diegonmarcos.superapp.network.MobileLink
 import com.diegonmarcos.superapp.network.MobileProbe
 import com.diegonmarcos.superapp.network.NetworkInfoPopup
 import com.diegonmarcos.superapp.network.NetworkSections
+import com.diegonmarcos.superapp.network.NetworkSignal
 import com.diegonmarcos.superapp.network.SignalLevels
 import com.diegonmarcos.superapp.network.TetherModel
 import com.diegonmarcos.superapp.network.UsbDataModel
@@ -518,14 +519,12 @@ class StatusStripModel(private val context: Context) {
         applyIconTints()
     }
 
-    /** Wi-Fi RSSI -> 0..4 (RSSI_CHANGED_ACTION + every connectivity change). No location needed for RSSI. */
+    /** Wi-Fi RSSI -> 0..4 (RSSI_CHANGED_ACTION + every connectivity change). #1666: from the Wi-Fi network's capabilities
+     *  ([NetworkSignal.wifiRssi]), never WifiManager.getConnectionInfo: that is a location access on every call once location
+     *  is granted, and RSSI_CHANGED fires every few seconds, which kept the location dot lit in the background. */
     private fun refreshWifiLevel() {
-        wifiLevel = if (!hasWifi) SignalLevels.NONE else runCatching {
-            @Suppress("DEPRECATION")
-            val rssi = (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? android.net.wifi.WifiManager)
-                ?.connectionInfo?.rssi
-            SignalLevels.wifi(rssi)
-        }.getOrDefault(SignalLevels.NONE)
+        wifiLevel = if (!hasWifi) SignalLevels.NONE else runCatching { SignalLevels.wifi(NetworkSignal.wifiRssi(context)) }
+            .getOrDefault(SignalLevels.NONE)
         applyIconTints()
     }
 

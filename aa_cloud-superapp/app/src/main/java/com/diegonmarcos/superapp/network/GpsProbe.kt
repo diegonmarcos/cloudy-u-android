@@ -14,14 +14,17 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
+import com.diegonmarcos.superapp.perms.LocationUse
 
 /**
  * The location facts behind [GpsFix], never throwing; what a permission gates reads null.
  *
  * Battery contract:
  *   [StripWatch]  (the strip's GPS icon, always on while the strip is) asks for NOTHING to be
- *                 computed: the location switch, the provider broadcasts and the system's cached
- *                 fix. It holds NO location subscription (#1654). It never wakes GNSS.
+ *                 computed: the location switch, the provider broadcasts and the fix this app last
+ *                 saw on a screen the user opened ([cached]). It holds NO location subscription
+ *                 (#1654) and, #1666, makes NO location-class call at all: getLastKnownLocation is
+ *                 itself a location access Android shows as "being used", so the strip never calls it.
  *   [LiveSession] (the popup's GPS section) requests NO location (#1654): it shows the cached fix
  *                 and listens, read-only, to the satellite status other apps cause; it runs only
  *                 while that section is on screen, capped at [LiveSession.MAX_MS].
@@ -70,13 +73,26 @@ object GpsProbe {
         return GpsFix.Fix(l.provider ?: "?", if (l.hasAccuracy()) l.accuracy else null, age, sats)
     }
 
-    /** The freshest last-known fix any provider holds. No location is requested. */
-    fun lastKnown(ctx: Context): Location? {
+    /** The last fix this app read on a screen the user opened (the popup's GPS section); the strip's dots read only this. */
+    @Volatile var cached: Location? = null
+        private set
+
+    /**
+     * The freshest last-known fix any provider holds. No location is requested, but getLastKnownLocation IS a location access
+     * (#1666): only a screen the user opened calls it, it is noted in [LocationUse] under [site], and the answer is [cached].
+     */
+    fun lastKnown(ctx: Context, site: String = SITE_POPUP): Location? {
         if (!fineGranted(ctx) && !coarseGranted(ctx)) return null
         val m = lm(ctx) ?: return null
+        LocationUse.note(ctx, site, "LocationManager.getLastKnownLocation", LocationUse.Trigger.SCREEN)
         return PROVIDERS.mapNotNull { p -> runCatching { @Suppress("MissingPermission") m.getLastKnownLocation(p) }.getOrNull() }
             .maxByOrNull { it.elapsedRealtimeNanos }
+            ?.also { cached = it }
     }
+
+    /** [LocationUse] call-site ids of this file. */
+    const val SITE_POPUP = "network.GpsProbe.lastKnown (popup GPS section)"
+    const val SITE_GNSS = "network.GpsProbe.LiveSession (popup GPS section)"
 
     /** Receiver model, year and the bands it supports (API 34 lists them); [seenDual] = a second-frequency satellite was tracked live. */
     fun capabilityLines(ctx: Context, seenDual: Boolean): List<String> {
@@ -114,13 +130,13 @@ object GpsProbe {
             private set
         private var started = false
         private val receiver = object : BroadcastReceiver() {
-            override fun onReceive(c: Context, i: Intent) { last = lastKnown(app) ?: last; onChange() }
+            override fun onReceive(c: Context, i: Intent) { last = cached ?: last; onChange() }
         }
 
         fun start() {
             if (started) return
             started = true
-            last = lastKnown(app)
+            last = cached
             runCatching {
                 androidx.core.content.ContextCompat.registerReceiver(app, receiver, broadcastFilter(),
                     androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
@@ -133,8 +149,8 @@ object GpsProbe {
             runCatching { app.unregisterReceiver(receiver) }
         }
 
-        /** The dots now (a fix ages between events; the strip re-reads on its minute tick). */
-        fun dots(locationOn: Boolean = locationOn(app)): Int = GpsFix.dots(locationOn, last?.let { fixOf(it) })
+        /** The dots now (a fix ages between events; the strip re-reads on its minute tick). No location-class call. */
+        fun dots(locationOn: Boolean = locationOn(app)): Int = GpsFix.dots(locationOn, (cached ?: last)?.let { fixOf(it) })
     }
 
     /**
@@ -169,6 +185,7 @@ object GpsProbe {
             val m = lm(app) ?: return
             running = true
             fix = fix ?: lastKnown(app)
+            LocationUse.note(app, SITE_GNSS, "LocationManager.registerGnssStatusCallback", LocationUse.Trigger.SCREEN)
             runCatching {
                 @Suppress("MissingPermission")
                 if (Build.VERSION.SDK_INT >= 30) m.registerGnssStatusCallback(app.mainExecutor, status)
