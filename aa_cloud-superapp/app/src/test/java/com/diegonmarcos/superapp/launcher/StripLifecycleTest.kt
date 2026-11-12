@@ -48,7 +48,7 @@ class StripLifecycleTest : KitPageHarness() {
         model.stop() // a stop with no start is a no-op, not a crash
         assertFalse(model.running)
         val src = File("src/main/java/com/diegonmarcos/superapp/launcher/LauncherStatusStrip.kt").readText()
-        assertTrue(src.contains("StripLifecycle(model, onStart = { model.start() }, onResume = { model.refreshBroker() }, onStop = { model.stop() })"))
+        assertTrue(src.contains("StripLifecycle(model, onStart = { model.start() }, onResume = { model.refreshBroker(); model.refreshDoors() }, onStop = { model.stop() })"))
         assertFalse("the model is started by a composition-only effect again",
             Regex("""DisposableEffect\(model\)\s*\{\s*model\.start\(\)""").containsMatchIn(src))
     }
