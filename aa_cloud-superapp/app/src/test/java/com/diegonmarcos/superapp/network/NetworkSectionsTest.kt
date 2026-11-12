@@ -11,11 +11,30 @@ import java.io.File
  */
 class NetworkSectionsTest {
 
-    @Test fun `the owner's order - mobile, WiFi, BT, WG, KDE, ADB, Data, HS, GPS`() {
-        assertEquals(listOf("cellular", "wifi", "bluetooth", "mesh", "kde", "adb", "data", "hotspot", "gps"), NetworkSections.ORDER)
-        assertEquals(listOf("WiFi", "BT", "WG", "KDE", "ADB", "Data", "HS", "GPS"),
+    @Test fun `#1684 the owner's order - 5G WiFi BT HS GPS, WG KDE, WebS ADB SSHd, TypC`() {
+        assertEquals(listOf("cellular", "wifi", "bluetooth", "hotspot", "gps", "mesh", "kde", "webs", "adb", "ssh", "data"), NetworkSections.ORDER)
+        assertEquals(listOf("WiFi", "BT", "HS", "GPS", "WG", "KDE", "WebS", "ADB", "SSHd", "TypC"),
             NetworkSections.ORDER.drop(1).map { NetworkSections.LABELS.getValue(it) })
-        assertEquals(listOf("HS", "GPS"), NetworkSections.ORDER.takeLast(2).map { NetworkSections.LABELS.getValue(it) })
+        assertEquals(NetworkSections.ORDER, NetworkSections.GROUPS.flatten())
+        assertEquals(listOf(5, 2, 3, 1), NetworkSections.GROUPS.map { it.size })
+    }
+
+    @Test fun `#1684 separators sit exactly between groups`() {
+        val o = NetworkSections.ORDER
+        val seps = (1 until o.size).filter { NetworkSections.separatorBetween(o[it - 1], o[it]) }.map { o[it - 1] + "|" + o[it] }
+        assertEquals(listOf("gps|mesh", "kde|webs", "ssh|data"), seps)
+        assertTrue("no separator before the first", !NetworkSections.separatorBetween(null, o.first()))
+        assertTrue("non-network ids never separate", !NetworkSections.separatorBetween("gps", "clock"))
+    }
+
+    @Test fun `#1684 parity - every pre-1684 section and label is still there, Data only renamed`() {
+        val before = listOf("cellular", "wifi", "bluetooth", "mesh", "kde", "adb", "data", "hotspot", "gps")
+        assertTrue(NetworkSections.ORDER.containsAll(before))
+        val labels = mapOf("wifi" to "WiFi", "bluetooth" to "BT", "mesh" to "WG", "kde" to "KDE", "adb" to "ADB", "hotspot" to "HS", "gps" to "GPS")
+        for ((k, v) in labels) assertEquals(v, NetworkSections.LABELS[k])
+        assertEquals("TypC", NetworkSections.LABELS[NetworkSections.DATA])
+        assertEquals("Data", NetworkSections.DATA_FORMER_LABEL)
+        assertTrue(NetworkSections.SETTINGS.keys.containsAll(before))
     }
 
     @Test fun `inOrder returns any keyed map in the shared order`() {
@@ -39,6 +58,7 @@ class NetworkSectionsTest {
                 for (s in t.tries) assertTrue("$k: $s", s.startsWith("action:") || (s.startsWith("component:") && s.contains('/')))
             }
             is NetworkSections.Target.InApp -> assertTrue(t.page.isNotBlank())
+            is NetworkSections.Target.FleetApp -> assertTrue(t.fleetId.isNotBlank())
         }
         val s = NetworkSections.SETTINGS
         assertEquals(NetworkSections.Target.InApp("config", "wg", "Cloud Mesh ›"), s[NetworkSections.MESH])
@@ -50,14 +70,19 @@ class NetworkSectionsTest {
         assertTrue((s[NetworkSections.CELLULAR] as NetworkSections.Target.System).perSim)
     }
 
-    @Test fun `a divider sits between every two sections`() {
+    @Test fun `a divider sits between every two sections, a group divider where the group changes`() {
         val l = NetworkSections.layout()
         val sections = l.filterIsInstance<NetworkSections.Item.Section>().map { it.key }
-        assertEquals(NetworkSections.ORDER, sections)
-        for (i in 1 until l.size) if (l[i] is NetworkSections.Item.Section) assertEquals(NetworkSections.Item.Divider, l[i - 1])
+        assertEquals("#1684 dropdown order equals strip order", NetworkSections.ORDER, sections)
+        for (i in 1 until l.size) if (l[i] is NetworkSections.Item.Section) {
+            val prev = (l.subList(0, i - 1).lastOrNull { it is NetworkSections.Item.Section } as? NetworkSections.Item.Section)?.key
+            val key = (l[i] as NetworkSections.Item.Section).key
+            assertEquals(if (NetworkSections.separatorBetween(prev, key)) NetworkSections.Item.GroupDivider else NetworkSections.Item.Divider, l[i - 1])
+        }
         assertTrue(l.first() is NetworkSections.Item.Section)
         assertEquals(NetworkSections.Item.Divider, l.last())   // before the trailing Network block
-        assertEquals(NetworkSections.ORDER.size, l.count { it == NetworkSections.Item.Divider })
+        assertEquals(NetworkSections.GROUPS.size - 1, l.count { it == NetworkSections.Item.GroupDivider })
+        assertEquals(NetworkSections.ORDER.size, l.count { it == NetworkSections.Item.Divider || it == NetworkSections.Item.GroupDivider })
     }
 
     @Test fun `the popup lays out via NetworkSections layout, the strip via the declared status bar`() {

@@ -839,17 +839,26 @@
   "home_status_bar": {
     "_doc": "THE HOME STATUS BAR, DECLARED (Configs > Launcher > One-Hand > Status Bar). The top row of the home screen, drawn by launcher/LauncherStatusStrip.kt, RENDERS FROM THIS LIST: each element is placed in the cluster named by `position` (left | centre | right), in `order`, and only when `visible`; moving an element, changing its order or hiding it here changes the bar and nothing else has to be edited. `kind` picks the drawing (network = label over four signal dots, clock = the date and time, metric = a load figure, battery = the battery icon); `id` of a network element is the NetworkSections key, so the tap target stays the popup section of the same name; `short` is the caption drawn on the bar (the web replica uses it as is; the phone's mobile caption is live, 5G | Call | SOS); `pet` is the Zoomies animal row above it (status_pets), null for none; `opens` is what a tap does (network_popup | system_popup | battery_popup | tasks_popup). The clock's `format` is a SimpleDateFormat pattern. The Status Bar section of the One-Hand page lists these elements and stores the owner's runtime overrides (a visibility switch per element, an order per cluster) in status_bar_prefs; the declaration is the default. `row_height_dp` is the 26 dp the strip leaves above the toolbar island (res/values/dimens.xml::shell_top_row_margin; test-status-bar-declared.sh holds them equal). `toolbar_row` lists, read-only, the two pills of the toolbar island drawn right under the strip: they are not strip elements and the strip does not render them.",
     "row_height_dp": 26,
+    "local_doors": {
+      "_doc": "#1684 the strip's WebS and SSHd indicators, green only from a real loopback round trip (network/LocalDoors.kt): WebS = HTTP HEAD on Cloud Webserver's health route, SSHd = TCP connect + SSH-2.0 banner per door. No port is written here: app/build.gradle resolves every *_from (a path into another app's build.json, relative to the monorepo root) into BuildConfig.LOCAL_DOORS_B64; an unresolvable one bakes port null and the indicator reads unknown with that reason. doors_from takes the webserver's own ssh_doors list (each door's port_from / bind_from / bind), filtered to `sshd_ids`. Checked when the strip becomes visible and on network change events, never on a timer.",
+      "timeout_ms": 800,
+      "webs": {"id": "webs", "title": "Cloud Webserver", "port_from": "ac_cloud-c3-webserver/build.json#runtime.diag.port", "route": "/__api__/health", "bind": "127.0.0.1 (loopback only)"},
+      "doors_from": "ac_cloud-c3-webserver/build.json#ssh_doors.doors",
+      "sshd_ids": ["webserver", "nix"]
+    },
     "positions": ["left", "centre", "right"],
     "elements": [
       {"id": "cellular", "label": "Mobile data (5G / Call / SOS)", "short": "5G", "kind": "network", "position": "left", "order": 1, "visible": true, "pet": "cellular", "opens": "network_popup"},
       {"id": "wifi", "label": "WiFi", "short": "WiFi", "kind": "network", "position": "left", "order": 2, "visible": true, "pet": "wifi", "opens": "network_popup"},
       {"id": "bluetooth", "label": "Bluetooth (BT)", "short": "BT", "kind": "network", "position": "left", "order": 3, "visible": true, "pet": "bluetooth", "opens": "network_popup"},
-      {"id": "mesh", "label": "Cloud Mesh (WG)", "short": "WG", "kind": "network", "position": "left", "order": 4, "visible": true, "pet": "vpn", "opens": "network_popup"},
-      {"id": "kde", "label": "Peer Control (KDE)", "short": "KDE", "kind": "network", "position": "left", "order": 5, "visible": true, "pet": "kde", "opens": "network_popup"},
-      {"id": "adb", "label": "Debugging (ADB)", "short": "ADB", "kind": "network", "position": "left", "order": 6, "visible": true, "pet": "adb", "opens": "adb_shell_page"},
-      {"id": "data", "label": "USB data", "short": "Data", "kind": "network", "position": "left", "order": 7, "visible": true, "pet": "usb", "opens": "network_popup"},
-      {"id": "hotspot", "label": "Hotspot (HS)", "short": "HS", "kind": "network", "position": "left", "order": 8, "visible": true, "pet": "hotspot", "opens": "network_popup"},
-      {"id": "gps", "label": "Location (GPS)", "short": "GPS", "kind": "network", "position": "left", "order": 9, "visible": true, "pet": "gps", "opens": "network_popup"},
+      {"id": "hotspot", "label": "Hotspot (HS)", "short": "HS", "kind": "network", "position": "left", "order": 4, "visible": true, "pet": "hotspot", "opens": "network_popup"},
+      {"id": "gps", "label": "Location (GPS)", "short": "GPS", "kind": "network", "position": "left", "order": 5, "visible": true, "pet": "gps", "opens": "network_popup"},
+      {"id": "mesh", "label": "Cloud Mesh (WG)", "short": "WG", "kind": "network", "position": "left", "order": 6, "visible": true, "pet": "vpn", "opens": "network_popup"},
+      {"id": "kde", "label": "Peer Control (KDE)", "short": "KDE", "kind": "network", "position": "left", "order": 7, "visible": true, "pet": "kde", "opens": "network_popup"},
+      {"id": "webs", "label": "Cloud Webserver (WebS)", "short": "WebS", "kind": "network", "position": "left", "order": 8, "visible": true, "pet": null, "opens": "network_popup"},
+      {"id": "adb", "label": "Debugging (ADB)", "short": "ADB", "kind": "network", "position": "left", "order": 9, "visible": true, "pet": "adb", "opens": "adb_shell_page"},
+      {"id": "ssh", "label": "SSH door (SSHd)", "short": "SSHd", "kind": "network", "position": "left", "order": 10, "visible": true, "pet": null, "opens": "network_popup"},
+      {"id": "data", "label": "USB-C cable (TypC, was Data)", "short": "TypC", "kind": "network", "position": "left", "order": 11, "visible": true, "pet": "usb", "opens": "network_popup"},
       {"id": "clock", "label": "Date and time", "short": "", "kind": "clock", "position": "centre", "order": 1, "visible": true, "pet": null, "opens": "tasks_popup", "format": "dd-MM-yyyy HH:mm EEE"},
       {"id": "ram", "label": "RAM load (R)", "short": "R", "kind": "metric", "position": "right", "order": 1, "visible": true, "pet": "ram", "opens": "system_popup"},
       {"id": "storage", "label": "Storage load (S)", "short": "S", "kind": "metric", "position": "right", "order": 2, "visible": true, "pet": "storage", "opens": "system_popup"},
@@ -860,7 +869,7 @@
     "dropdowns": [
       {"id": "left_network", "side": "left", "title": "Network", "popup": "network_popup",
        "_doc": "THE LEFT DROPDOWN: what the left cluster's icons open (NetworkInfoPopup). Its table groups are the network_table groups below (groups_from), one block per group.",
-       "opened_by": ["cellular", "wifi", "bluetooth", "mesh", "kde", "data", "hotspot", "gps"], "groups_from": "network_table"},
+       "opened_by": ["cellular", "wifi", "bluetooth", "hotspot", "gps", "mesh", "kde", "webs", "ssh", "data"], "groups_from": "network_table"},
       {"id": "right_system", "side": "right", "title": "System", "popup": "system_popup",
        "_doc": "THE RIGHT 'SYSTEM' DROPDOWN (ui/SystemInfoPopup), reorganised into TWO MACRO BUCKETS; the X-Ray export (xray/XrayProbes.all order, rendered by XrayFormat as verbose Markdown, compact AI Markdown and HTML) mirrors them. A group with source header is a macro header (id m*, rule in the accent colour) or a tracker header (id trNN_*): rule + title, no lines. MACRO 1 DEVICE PROFILE SCAN = the static snapshot read once: device, SoC + CPU topology, GPU + graphics stack, display, capacity (RAM + storage totals). MACRO 2 PROFILING TRACKERS = twelve named trackers, each its own header + group(s): 01 Performance, 02 Render & GPU, 03 Storage, 04 Battery & Power, 05 Thermal, 06 Memory, 07 Notification & IPC, 08 Responsiveness, 09 Crash, 10 Network, 11 Process & Lifecycle, 12 Security & Perms, then 13 Suspects, the cross-tracker ranked verdict (XrayAnalyze.suspects). Adding a future tracker = one tracker header + its group(s) here, one XrayProbes.Tracker row + its probe(s), one allowlist exact line per probe, and one group->parser branch in SystemGroups.adbLines. Source app = the app's own APIs, refreshed while open; source adb = an X-Ray probe through the shell broker, read once per open.",
        "opened_by": ["ram", "storage", "cpu", "fps"], "groups": [

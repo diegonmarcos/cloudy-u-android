@@ -24,6 +24,9 @@ object UsbDataModel {
 
     enum class Role { NONE, DEVICE, HOST }
 
+    /** #1684 the TypC indicator's three states. */
+    enum class Cable(val label: String) { NONE("not connected"), CHARGE("charge-only"), DATA("data") }
+
     data class State(
         val connected: Boolean,
         val configured: Boolean,
@@ -51,6 +54,16 @@ object UsbDataModel {
             power == "Wireless" -> "○ Wireless charging (no cable)"
             power != null -> "○ Charging only (no data)"
             else -> "○ Disconnected"
+        }
+
+        /**
+         * #1684 the strip's TypC indicator: the USB-C cable as NONE (no cable; wireless charging is no cable),
+         * CHARGE (a cable that powers but moves no data: charger, or a computer port with no data function) or DATA.
+         */
+        val cable: Cable get() = when {
+            data -> Cable.DATA
+            connected || power == "AC" || power == "USB" || power == "Dock" -> Cable.CHARGE
+            else -> Cable.NONE
         }
 
         fun roleLabel(): String = when (role) {

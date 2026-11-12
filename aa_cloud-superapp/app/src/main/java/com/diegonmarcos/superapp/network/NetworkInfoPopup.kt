@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
@@ -102,6 +103,7 @@ object NetworkInfoPopup {
     const val CELLULAR = NetworkSections.CELLULAR; const val WIFI = NetworkSections.WIFI; const val MESH = NetworkSections.MESH
     const val KDE = NetworkSections.KDE; const val BLUETOOTH = NetworkSections.BLUETOOTH; const val ADB = NetworkSections.ADB
     const val DATA = NetworkSections.DATA; const val HOTSPOT = NetworkSections.HOTSPOT; const val GPS = NetworkSections.GPS
+    const val WEBS = NetworkSections.WEBS; const val SSHD = NetworkSections.SSHD
 
     /** Is the phone on the mesh: the WG icon's, dots' and this popup's one truth (see [WgLink]).
      *  Blocking (engine binder). [vpnTransport] only explains an OFF. */
@@ -203,6 +205,7 @@ object NetworkInfoPopup {
 
             for (item in NetworkSections.layout()) when (item) {
                 is NetworkSections.Item.Divider -> PopDivider()
+                is NetworkSections.Item.GroupDivider -> PopGroupDivider()
                 is NetworkSections.Item.Section -> when (item.key) {
                     // ── Cellular
                     CELLULAR -> Section(CELLULAR) {
@@ -290,12 +293,58 @@ object NetworkInfoPopup {
                         PopLink("ADB Shell ›", openAdbShell)
                     }
 
-                    // ── Data (USB-C cable in a data mode, or OTG host)
+                    // ── TypC (#1684, was "Data"): the USB-C cable - none / charge-only / data (or OTG host)
                     DATA -> Section(DATA) {
                         Header(DATA) {
-                            PopLightRow("Data", usb.data) { dismiss(); openTarget(ctx, NetworkSections.SETTINGS.getValue(DATA)) }
+                            PopLightRow(NetworkSections.LABELS.getValue(DATA), usb.data) { dismiss(); openTarget(ctx, NetworkSections.SETTINGS.getValue(DATA)) }
                         }
+                        for (row in remember { typcRows(ctx, usb) }) PopValue(row)
                         for (row in remember { readUsb(ctx, usb) }) PopValue(row)
+                    }
+
+                    // ── WebS (#1684): Cloud Webserver's HTTP server, from a real HEAD on its health route (on open)
+                    WEBS -> Section(WEBS) {
+                        val decl = remember { LocalDoors.declared }
+                        var probe by remember { mutableStateOf<LocalDoors.Probe?>(null) }
+                        var body by remember { mutableStateOf<String?>(null) }
+                        LaunchedEffect(Unit) {
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                probe = runCatching { LocalDoors.probeHttp(decl.webs, decl.timeoutMs) }.getOrNull()
+                                body = if (probe?.state == LocalDoors.State.ON) runCatching { LocalDoors.healthBody(decl.webs, decl.timeoutMs) }.getOrNull() else null
+                            }
+                        }
+                        Header(WEBS) { PopLightRow(NetworkSections.LABELS.getValue(WEBS), probe?.state == LocalDoors.State.ON) { dismiss(); openTarget(ctx, NetworkSections.SETTINGS.getValue(WEBS)) } }
+                        val p = probe
+                        if (p == null) PopValue("checking…") else {
+                            for (row in LocalDoors.rows(p)) PopValue(row)
+                            PopValue("Route: " + (p.door.route ?: "n/a"))
+                            PopValue("Uptime: " + (LocalDoors.uptime(body) ?: "n/a (" + (if (p.state == LocalDoors.State.ON) "not in the health answer" else "server down") + ")"))
+                            PopValue("Last request: n/a (the server does not publish it)")
+                        }
+                    }
+
+                    // ── SSHd (#1684): each declared SSH door, TCP connect + SSH banner on loopback (on open)
+                    SSHD -> Section(SSHD) {
+                        val decl = remember { LocalDoors.declared }
+                        var probes by remember { mutableStateOf<List<LocalDoors.Probe>?>(null) }
+                        LaunchedEffect(Unit) {
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                probes = decl.sshd.mapNotNull { runCatching { LocalDoors.probeSsh(it, decl.timeoutMs) }.getOrNull() }
+                            }
+                        }
+                        val ps = probes
+                        Header(SSHD) { PopLightRow(NetworkSections.LABELS.getValue(SSHD), ps != null && LocalDoors.combine(ps.map { it.state }) == LocalDoors.State.ON) { dismiss(); openTarget(ctx, NetworkSections.SETTINGS.getValue(SSHD)) } }
+                        when {
+                            ps == null -> PopValue("checking…")
+                            ps.isEmpty() -> PopValue("n/a (no SSH door declared in this build)")
+                            else -> {
+                                for (p in ps) {
+                                    for (row in LocalDoors.rows(p)) PopValue(row)
+                                    PopValue("Host key: n/a (needs a key exchange; see Cloud Webserver > SSHd)")
+                                    PopValue("Sessions: n/a (not readable from another app)")
+                                }
+                            }
+                        }
                     }
 
                     // ── Hotspot / tethering
@@ -636,6 +685,21 @@ object NetworkInfoPopup {
         return UsbDataModel.state(extras, batt?.getIntExtra(android.os.BatteryManager.EXTRA_PLUGGED, 0) ?: 0, otg)
     }
 
+    /** #1684 TypC rows: cable present, data vs charge, the active USB functions, the charging current where readable. */
+    private fun typcRows(ctx: Context, st: UsbDataModel.State): List<String> {
+        val current = runCatching {
+            (ctx.getSystemService(Context.BATTERY_SERVICE) as? android.os.BatteryManager)
+                ?.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+                ?.takeIf { it != Int.MIN_VALUE && it != 0 }
+        }.getOrNull()
+        return listOf(
+            "Cable: " + st.cable.label + (if (st.power != null) " (power: ${st.power})" else ""),
+            "Functions: " + st.functions.ifEmpty { listOf("none") }.joinToString(", ") + if (st.adbOverUsb) " + adb" else "",
+            // CURRENT_NOW is µA on most devices (some report mA); shown raw-scaled to mA, sign = direction.
+            "Current: " + (current?.let { (if (kotlin.math.abs(it) > 20_000) it / 1000 else it).toString() + " mA" } ?: "n/a (not reported)"),
+        )
+    }
+
     /** Data section: headline · mode · role · OTG devices · speed · power · tether NIC.
      *  Charger WATTAGE stays in the battery popup. */
     private fun readUsb(ctx: Context, st: UsbDataModel.State): List<String> {
@@ -694,6 +758,10 @@ object NetworkInfoPopup {
     private fun openTarget(ctx: Context, t: NetworkSections.Target, subId: Int = -1) {
         when (t) {
             is NetworkSections.Target.InApp -> openInApp(ctx, t.section, t.page)
+            is NetworkSections.Target.FleetApp -> runCatching {
+                if (com.diegonmarcos.superapp.launcher.WebserverLaunch.open(ctx) == com.diegonmarcos.superapp.launcher.WebserverLaunch.Opened.NONE)
+                    Toast.makeText(ctx, "Cloud Webserver is not installed", Toast.LENGTH_SHORT).show()
+            }
             is NetworkSections.Target.System -> {
                 val pm = ctx.packageManager
                 for (step in t.tries) {

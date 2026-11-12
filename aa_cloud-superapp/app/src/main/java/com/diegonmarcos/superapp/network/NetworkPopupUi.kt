@@ -63,6 +63,12 @@ internal fun PopDivider() {
     Box(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 8.dp).height(1.dp).background(POP_DIVIDER))
 }
 
+/** #1684 the line between two network groups (the strip's separator): 2 dp, brighter, more air. */
+@Composable
+internal fun PopGroupDivider() {
+    Box(Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 12.dp).height(2.dp).background(Color(0x66FFFFFF)).testTag("netpop:groupdivider"))
+}
+
 /** A status light: 10 dp. */
 @Composable
 internal fun PopDot(color: Color, modifier: Modifier = Modifier) {

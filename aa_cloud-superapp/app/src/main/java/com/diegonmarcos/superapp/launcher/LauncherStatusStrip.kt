@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -195,6 +196,18 @@ class StatusStripModel(private val context: Context) {
     private var hasBluetooth = false
     private var btCount = 0
     private var hasUsbData = false
+    /** #1684 TypC: the last USB_STATE extras + OTG list, and the battery's EXTRA_PLUGGED, so either broadcast re-derives the cable. */
+    private var usbExtras: Map<String, Boolean> = emptyMap()
+    private var usbOtg: List<String> = emptyList()
+    private var plugged = 0
+    internal var cable = com.diegonmarcos.superapp.network.UsbDataModel.Cable.NONE
+        private set
+    /** #1684 WebS / SSHd: the last real loopback round trips (null = not checked yet). */
+    @Volatile internal var websProbe: com.diegonmarcos.superapp.network.LocalDoors.Probe? = null
+        private set
+    @Volatile internal var sshdProbes: List<com.diegonmarcos.superapp.network.LocalDoors.Probe> = emptyList()
+        private set
+    private val doorsChecking = java.util.concurrent.atomic.AtomicBoolean(false)
     private var hasAdb = false
     private var hasHotspot = false
     private var hasKde = false
@@ -366,8 +379,9 @@ class StatusStripModel(private val context: Context) {
     }
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) { mainHandler.post { refreshNetworkFromConnectivity() } }
-        override fun onLost(network: Network) { mainHandler.post { refreshNetworkFromConnectivity() } }
-        override fun onAvailable(network: Network) { mainHandler.post { refreshNetworkFromConnectivity() } }
+        // #1684 a network came or went (the mesh tun included): the doors' binds may have changed, re-check them once.
+        override fun onLost(network: Network) { mainHandler.post { refreshNetworkFromConnectivity(); refreshDoors() } }
+        override fun onAvailable(network: Network) { mainHandler.post { refreshNetworkFromConnectivity(); refreshDoors() } }
     }
 
     /** True between [start] and [stop]: the receivers, callbacks and tickers below exist only then. */
@@ -426,6 +440,7 @@ class StatusStripModel(private val context: Context) {
         refreshAdb()
         com.diegonmarcos.superapp.system.AdbReadiness.addListener(brokerListener)
         refreshBroker()
+        refreshDoors()
         refreshWgLevel()
         runCatching {
             (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)
@@ -474,6 +489,8 @@ class StatusStripModel(private val context: Context) {
         val pct = if (level >= 0 && scale > 0) (level * 100 / scale) else -1
         batteryPct = pct
         batteryCharging = charging
+        val p = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
+        if (p != plugged) { plugged = p; deriveCable(); applyIconTints() }
         if (pct >= 0) toolCfg["battery"]?.let { updatePet("battery", bucketLevel(pct, it.buckets)) }
     }
 
@@ -484,10 +501,42 @@ class StatusStripModel(private val context: Context) {
         val otg = runCatching {
             (context.getSystemService(Context.USB_SERVICE) as? android.hardware.usb.UsbManager)?.deviceList?.keys?.toList()
         }.getOrNull() ?: emptyList()
-        hasUsbData = UsbDataModel.state(extras, 0, otg).data
+        usbExtras = extras; usbOtg = otg
+        deriveCable()
         usbTetherFn = extras["rndis"] == true || extras["ncm"] == true
         hasHotspot = TetherModel.State(tetherIfaces, apState, usbTetherFn).active
         applyIconTints()
+    }
+
+    /** #1684 TypC + the Data light from the last USB_STATE and battery broadcasts (no polling). */
+    private fun deriveCable() {
+        val st = UsbDataModel.state(usbExtras, plugged, usbOtg)
+        hasUsbData = st.data
+        cable = st.cable
+    }
+
+    /**
+     * #1684 WebS + SSHd: one real loopback round trip each (HTTP HEAD on the webserver's health route; TCP connect + SSH
+     * banner per declared door), off the main thread. Called when the strip becomes visible (start / resume) and on network
+     * change events; never on a timer. One check at a time.
+     */
+    internal fun refreshDoors() {
+        if (!running || !doorsChecking.compareAndSet(false, true)) return
+        runCatching {
+            Thread {
+                try {
+                    val d = com.diegonmarcos.superapp.network.LocalDoors.declared
+                    val w = runCatching { com.diegonmarcos.superapp.network.LocalDoors.probeHttp(d.webs, d.timeoutMs) }.getOrNull()
+                    val ss = d.sshd.mapNotNull { runCatching { com.diegonmarcos.superapp.network.LocalDoors.probeSsh(it, d.timeoutMs) }.getOrNull() }
+                    mainHandler.post { websProbe = w; sshdProbes = ss; applyIconTints() }
+                } finally { doorsChecking.set(false) }
+            }.apply { name = "strip-doors"; isDaemon = true }.start()
+        }.onFailure { doorsChecking.set(false) }
+    }
+
+    /** Pin door readings (tests). */
+    internal fun noteDoors(webs: com.diegonmarcos.superapp.network.LocalDoors.Probe?, sshd: List<com.diegonmarcos.superapp.network.LocalDoors.Probe>) {
+        websProbe = webs; sshdProbes = sshd; applyIconTints()
     }
 
     /** TETHER_STATE_CHANGED ("tetherArray" = tethered interfaces) or WIFI_AP_STATE_CHANGED ("wifi_state"); each updates its half. */
@@ -617,7 +666,13 @@ class StatusStripModel(private val context: Context) {
             // ADB: the label follows USB / Wireless debugging; the ONE dot is the central broker's live status.
             NetworkSections.ADB to StripChip(label.getValue(NetworkSections.ADB), if (hasAdb) on else off,
                 peerDots = AdbPeerDots.tints(brokerStatus), peerDescription = AdbPeerDots.describe(brokerStatus)),
-            NetworkSections.DATA to StripChip(label.getValue(NetworkSections.DATA), if (hasUsbData) on else off),
+            // #1684 TypC (was "Data"): white = data, amber = charge-only cable, grey = no cable.
+            NetworkSections.DATA to StripChip(label.getValue(NetworkSections.DATA), StripDoors.cableTint(cable, on, off)),
+            // #1684 WebS / SSHd: white only from a real loopback round trip; grey = down; dim = not checked / not declared.
+            NetworkSections.WEBS to StripDoors.websState(websProbe).let { st -> StripChip(label.getValue(NetworkSections.WEBS), StripDoors.tint(st, on, off),
+                peerDots = listOf(StripDoors.dot(st)), peerDescription = StripDoors.describe(st, listOfNotNull(websProbe))) },
+            NetworkSections.SSHD to StripDoors.sshdState(sshdProbes).let { st -> StripChip(label.getValue(NetworkSections.SSHD), StripDoors.tint(st, on, off),
+                peerDots = listOf(StripDoors.dot(st)), peerDescription = StripDoors.describe(st, sshdProbes)) },
             NetworkSections.HOTSPOT to StripChip(label.getValue(NetworkSections.HOTSPOT), if (hasHotspot) on else off),
             // GPS: white with location on; dots = the passive / last fix's quality (0 = none).
             NetworkSections.GPS to (if (locationOn) on else off).let { StripChip(label.getValue(NetworkSections.GPS), it, runCatching { gpsWatch.dots(locationOn) }.getOrDefault(0)) },
@@ -771,7 +826,7 @@ private fun PetAbove(model: StatusStripModel, toolId: String) {
 private fun LauncherStripContent(model: StatusStripModel) {
     val ctx = LocalView.current.context
     // #1522 the ADB dot is re-checked on every resume (the broker caches a verdict for seconds), never on a timer.
-    StripLifecycle(model, onStart = { model.start() }, onResume = { model.refreshBroker() }, onStop = { model.stop() })
+    StripLifecycle(model, onStart = { model.start() }, onResume = { model.refreshBroker(); model.refreshDoors() }, onStop = { model.stop() })
     StatusStripBody(model, ctx)
 }
 
@@ -870,8 +925,20 @@ internal fun StopwatchReadout(host: View) {
 @Composable
 private fun StripCluster(elements: List<StatusElement>, model: StatusStripModel, ctx: Context, host: View) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        for (el in elements) StripElementView(el, model, ctx, host)
+        // #1684 a thin separator where the network group changes (5G WiFi BT HS GPS | WG KDE | WebS ADB SSHd | TypC).
+        var prev: String? = null
+        for (el in elements) {
+            if (NetworkSections.separatorBetween(prev, el.id)) GroupSeparator(prev + "|" + el.id)
+            StripElementView(el, model, ctx, host)
+            prev = el.id
+        }
     }
+}
+
+/** #1684 the strip's group separator: a 1 dp hairline, the label's height, with 3 dp each side. */
+@Composable
+private fun GroupSeparator(tag: String) {
+    Box(Modifier.padding(horizontal = 3.dp).width(1.dp).height(14.dp).background(Color(0x66FFFFFF)).testTag("strip:sep:$tag"))
 }
 
 /** One declared element: its pet row, then the drawing its `kind` names, whose tap opens what its `opens` names. */
@@ -896,7 +963,7 @@ private fun StripElementView(el: StatusElement, model: StatusStripModel, ctx: Co
                 Tappable("strip:${el.id}", onTap = open) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconLabel(chip.label, chip.tint)
-                        if (chip.peerDots != null) PeerDots(chip.peerDots, chip.peerDescription)
+                        if (chip.peerDots != null) PeerDots(chip.peerDots, chip.peerDescription, name = el.id)
                         else SignalDots(chip.dots, chip.dotsTint)
                     }
                 }

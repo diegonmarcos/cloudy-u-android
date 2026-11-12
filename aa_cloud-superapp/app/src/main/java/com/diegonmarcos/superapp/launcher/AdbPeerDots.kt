@@ -38,10 +38,11 @@ internal object AdbPeerDots {
 
 /** The 2 dp dot(s) in the strip's own dot size (the same footprint class as SignalDots). */
 @Composable
-internal fun PeerDots(tints: List<Int>, description: String, modifier: Modifier = Modifier) {
-    Row(modifier.padding(top = 1.dp).semantics { contentDescription = "ADB: $description" }) {
+internal fun PeerDots(tints: List<Int>, description: String, modifier: Modifier = Modifier, name: String = "adb") {
+    // #1684 WebS / SSHd draw the same one-dot readout under their own name.
+    Row(modifier.padding(top = 1.dp).semantics { contentDescription = "${if (name == "adb") "ADB" else name}: $description" }) {
         tints.forEachIndexed { i, tint ->
-            Box(Modifier.padding(start = if (i > 0) 2.dp else 0.dp).size(2.dp).background(Color(tint), CircleShape).testTag("strip:adb:dot:$i"))
+            Box(Modifier.padding(start = if (i > 0) 2.dp else 0.dp).size(2.dp).background(Color(tint), CircleShape).testTag("strip:$name:dot:$i"))
         }
     }
 }

@@ -172,6 +172,38 @@ def declaredB64 = { String key ->
 def statusBarB64     = declaredB64('home_status_bar')
 def tasksPopupB64    = declaredB64('tasks_popup')
 def onehandPageB64   = declaredB64('onehand_page')
+// #1684 home_status_bar.local_doors -> LOCAL_DOORS_B64: every `*_from` ("<app>/build.json#a.b.c", from the monorepo root)
+// resolved here so no port is written twice. An unresolvable reference bakes null (the strip says "not declared"), never a guess.
+def localDoorsB64 = {
+    def monorepo = rootDir.parentFile
+    def slurp = new groovy.json.JsonSlurper()
+    def resolveRef = { String ref ->
+        if (!ref || !ref.contains('#')) return null
+        def (path, keys) = ref.split('#', 2) as List
+        def f = new File(monorepo, path)
+        if (!f.isFile()) return null
+        def v = slurp.parse(f)
+        for (k in keys.split('\\.')) { v = (v instanceof Map) ? v[k] : null; if (v == null) return null }
+        v
+    }
+    def toPort = { x -> (x instanceof Number) ? x.intValue() : null }
+    def toBind = { x -> x == null ? null : ((x instanceof List) ? x.join(', ') : x.toString()) }
+    def ld = buildJson.home_status_bar?.local_doors ?: [:]
+    def out = [timeout_ms: ld.timeout_ms ?: 800]
+    if (ld.webs) {
+        def w = ld.webs
+        out.webs = [id: w.id, title: w.title, route: w.route, bind: w.bind ?: toBind(resolveRef(w.bind_from)),
+                    port: w.port_from ? toPort(resolveRef(w.port_from)) : null]
+    }
+    def doors = resolveRef(ld.doors_from) ?: []
+    out.ssh = (ld.sshd_ids ?: []).collect { id ->
+        def d = doors.find { it instanceof Map && it.id == id }
+        if (d == null) return [id: id, title: id, port: null, bind: null]
+        [id: id, title: d.title ?: id, port: d.port_from ? toPort(resolveRef(d.port_from)) : toPort(d.port),
+         bind: d.bind ?: toBind(resolveRef(d.bind_from))]
+    }
+    groovy.json.JsonOutput.toJson(out).bytes.encodeBase64().toString()
+}()
 // Keyboard subtypes enabled on first run (App.initVendoredKeyboard). CSV of
 // BCP-47 language tags from build.json::keyboard_dicts.default_languages.
 def keyboardDefaultLangs = (buildJson.keyboard_dicts?.default_languages ?: []).join(',')
@@ -858,6 +890,7 @@ android {
         buildConfigField "String", "UI_HOME_GROUPS_B64",    "\"${uiGroupsB64}\""
         buildConfigField "String", "STATUS_PETS_B64",        "\"${statusPetsB64}\""
         buildConfigField "String", "STATUS_BAR_B64",         "\"${statusBarB64}\""
+        buildConfigField "String", "LOCAL_DOORS_B64",        "\"${localDoorsB64}\""
         buildConfigField "String", "TASKS_POPUP_B64",        "\"${tasksPopupB64}\""
         buildConfigField "String", "ONEHAND_PAGE_B64",       "\"${onehandPageB64}\""
         buildConfigField "String", "KEYBOARD_DEFAULT_LANGS", "\"${keyboardDefaultLangs}\""

@@ -62,6 +62,17 @@ class StatusStripComposeTest : KitPageHarness() {
     }
 
     @Test
+    fun `S1b #1684 a separator between each two groups, nowhere else`() {
+        showStrip()
+        for (pair in listOf("gps|mesh", "kde|webs", "ssh|data")) {
+            val (a, b) = pair.split("|")
+            val x = compose.onNodeWithTag("strip:sep:$pair", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+            assertTrue("separator $pair between its neighbours", left("strip:$a") < x && x < left("strip:$b"))
+        }
+        assertEquals(3, compose.onAllNodes(androidx.compose.ui.test.SemanticsMatcher("sep") { n -> n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.TestTag)?.startsWith("strip:sep:") == true }, useUnmergedTree = true).fetchSemanticsNodes().size)
+    }
+
+    @Test
     fun `S2 the clock is dated and centred`() {
         val model = showStrip()
         compose.runOnUiThread { model.refreshTime() }
