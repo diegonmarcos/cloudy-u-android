@@ -27,6 +27,11 @@ DECLARATION  1_cicd/src/data/configs-pages.json::tabs (the required first ids, t
       screen gets the strip from the lib (T0 / T7). Missing one of the five (a lib not linked, a kind not declared), the five out of
       order, or no `|` (the lib's separatorBefore) is a violation, named per app; the only way out is tabs.tail.pending with a reason
   T5  every a[acd]_* directory is checked: one without a build.json is named in tabs.no_build_json with a reason
+  T9  (#1697) THE SHARED-SCREEN REACH: an app that conforms through the shared screen (it draws no strip of its own) must PROVE its
+      Configs entry opens it: its non-test sources open the strip (a tabs.reach.needles reference: FleetConfigsScreen( / FleetConfigsActivity /
+      FleetConfigsEntries / FleetConfigsMenu( / FleetConfigsButtons(), or it is named in configs_pages.shortcut_reach (no native menu, the
+      launcher shortcuts are its entry). The scaffold's own dropdown is not enough: its gear (onConfigs) is the host's, and an app whose gear
+      opens its own page showed no strip on the phone (CG-Omniverse, CAD, FinTerm, Sim2Real, Cloud Search, Cloud Gallery, Cloud Mail, Cloud Notes)
 
 USAGE  cloud-android-configs-tabs-guard.py [ROOT]      EXIT 0 ok · 1 at least one violation
 """
@@ -216,6 +221,8 @@ def main(argv):
         draw_needles = tail.get("host_draws", [])
         mode_hosts = {k: v for k, v in tail.get("mode_hosts", {}).items() if not k.startswith("_")}
         web_hosts = {k: v for k, v in tail.get("web_hosts", {}).items() if not k.startswith("_")}
+        reach_needles = (rule.get("reach") or {}).get("needles", [])
+        shortcut_reach = {k for k in rule_all.get("shortcut_reach", {}) if not k.startswith("_")}
         for app, d in sorted(apps.items()):
             if app in exempt:
                 report.append((app, "exempt", "-", "EXEMPT  " + rule_all["exempt"][app][:70]))
@@ -257,11 +264,16 @@ def main(argv):
                 lacks += ["%s ends %s, not the tail %s" % (w, "|".join(map(str, ids[-len(tail["ids"]):])), "|".join(tail["ids"])) for w, ids in own_tabs(d) if ids[-len(tail["ids"]):] != tail["ids"]]
             elif host and host_needles and not any(n in srcs for n in host_needles):
                 lacks.append("its own Configs strip does not end with the tail (no %s in its sources)" % " / ".join(host_needles))
+            if not host and reach_needles and app not in shortcut_reach and not any(n in srcs for n in reach_needles):
+                bad.append("T9 %s: conforms through the shared screen but nothing in its sources opens it (%s) and it is not in configs_pages.shortcut_reach; "
+                           "wire its Configs entry (the gear's onConfigs) to FleetConfigsScreen" % (app, " / ".join(reach_needles)))
+                lacks.append("its Configs entry does not reach the shared screen (T9)")
             how = "own-host strip, tail via " + ("ConfigsTail" if app in mode_hosts else "native bridge (web page)" if app in web_hosts else "withTail") if host else "shared screen (FleetConfigsScreen)"
             if app in tpend and lacks:
                 how = "NOT DRAWN (pending): " + how.split(",")[0]
-            if lacks and app not in tpend:
-                bad.append("T7 %s: Configs lacks the fleet-default tail (%s); wire it or name it in tabs.tail.pending" % (app, "; ".join(lacks)))
+            t7 = [l for l in lacks if not l.endswith("(T9)")]
+            if t7 and app not in tpend:
+                bad.append("T7 %s: Configs lacks the fleet-default tail (%s); wire it or name it in tabs.tail.pending" % (app, "; ".join(t7)))
             elif not lacks and app in tpend:
                 bad.append("T7 %s: has the tail now; delete its entry in configs-pages.json::tabs.tail.pending" % app)
             report.append((app, how, "|".join(tail["ids"]), ("PENDING " + tpend[app][:60]) if app in tpend else ("FAIL " + "; ".join(lacks) if lacks else "OK")))

@@ -1,53 +1,93 @@
-name: "Test -> Configs General | Perms | About tabs (emulator)"
+name: "Test -> Configs strip {own tabs} | Agents, Perms, Logcat, X-Ray App, About (emulator, every fleet app)"
 
-# #1443: screenshots of each app's Configs screen (the strip must start General | Perms | About), taken from the APK a
-# Ship run built. 1_cicd/src/scripts/emulator-configs-tabs.sh does the walk. Dispatch only.
+# #1443 / #1630 / #1697: open Configs from each app's own entry (the first row's gear) on an emulator and assert the strip ON SCREEN
+# ({own tabs} | Agents, Perms, Logcat, X-Ray App, About), from the APK a Ship run built. 1_cicd/src/scripts/emulator-configs-tabs.sh
+# does the walk. #1697: the static configs-tabs guard passed apps whose gear opened their own page (no strip on the phone), so this
+# walk covers EVERY fleet app (each a[acd]_* with a build.json, minus configs-pages.json::exempt), not a hand-picked six.
+# Dispatch only. `runs` pins a Ship run per app (key = the app directory or its short name); an app not pinned uses the latest
+# successful run of its ship workflow on main. `apps` narrows the walk (comma-separated app directories; empty = every app).
 
 on:
   workflow_dispatch:
     inputs:
       runs:
-        description: 'JSON {"account": RUN, "browser": RUN, "c3": RUN, "drive": RUN, "nav": RUN, "news": RUN}: the Ship run id of each app'
-        required: true
+        description: 'JSON {"ad_Hardtech-CAD": RUN, ...}: Ship run ids to pin (optional; default: latest green ship run on main)'
+        required: false
+        default: '{}'
+      apps:
+        description: 'Comma-separated app directories to walk (optional; empty = every fleet app)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
   actions: read
 
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        env:
+          APPS: ${{ inputs.apps }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import glob, json, os
+          ex = {k for k in json.load(open("1_cicd/src/data/configs-pages.json")).get("exempt", {}) if not k.startswith("_")}
+          want = {a.strip() for a in os.environ.get("APPS", "").split(",") if a.strip()}
+          inc = []
+          for f in sorted(glob.glob("a[acd]_*/build.json")):
+              d = os.path.dirname(f)
+              if os.path.islink(d) or d in ex or (want and d not in want):
+                  continue
+              ship = "ship-%s.yml" % d[3:].lower()
+              if os.path.exists(".github/workflows/" + ship):
+                  inc.append({"app": d, "ship": ship})
+          print("matrix=" + json.dumps({"include": inc}))
+          PY
+
   tabs:
+    needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - { app: account, art: Cloud-Account, pkg: com.diegonmarcos.cloudaccount }
-          - { app: browser, art: Cloud-Browser, pkg: com.diegonmarcos.cloudbrowser }
-          - { app: c3, art: Cloud-C3, pkg: com.diegonmarcos.cloudc3 }
-          - { app: drive, art: Cloud-Drive, pkg: com.diegonmarcos.clouddrive }
-          - { app: nav, art: Cloud-Nav, pkg: com.diegonmarcos.cloudnav }
-          - { app: news, art: Cloud-News, pkg: com.diegonmarcos.cloudnews }
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           sparse-checkout: 1_cicd/src/scripts
 
-      - name: Fetch the APK
+      - name: Fetch the APK (x86_64) and read its package
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          RUN: ${{ fromJSON(inputs.runs)[matrix.app] }}
-          ART: ${{ matrix.art }}
+          RUNS: ${{ inputs.runs }}
+          APP: ${{ matrix.app }}
+          SHIP: ${{ matrix.ship }}
         run: |
           set -eu
+          RUN=$(python3 -c 'import json,os; r=json.loads(os.environ.get("RUNS") or "{}"); a=os.environ["APP"]; print(r.get(a) or r.get(a[3:].lower()) or "")')
+          if [ -z "$RUN" ]; then
+            RUN=$(gh run list -R "$REPO" --workflow "$SHIP" --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
+          fi
+          [ -n "$RUN" ] || { echo "::error::$APP: no green $SHIP run on main to take the APK from"; exit 1; }
+          echo "$APP: APK from $SHIP run $RUN"
           mkdir -p dl
-          gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq ".artifacts[] | select(.name|startswith(\"$ART-x86_64\")) | .name" |
+          gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq '.artifacts[] | select(.expired|not) | select(.name|test("x86_64")) | .name' |
           while read -r name; do gh run download "$RUN" -R "$REPO" -n "$name" -D "dl/$name"; done
           pick=$(find dl -name '*.apk' | sort | head -1)
-          [ -n "$pick" ] || { echo "::error::no $ART x86_64 APK in run $RUN"; exit 1; }
+          [ -n "$pick" ] || { echo "::error::$APP: no x86_64 APK in $SHIP run $RUN"; exit 1; }
           cp "$pick" app.apk
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          PKG=$("$AAPT" dump packagename app.apk)
+          [ -n "$PKG" ] || { echo "::error::$APP: cannot read the package of $pick"; exit 1; }
+          echo "PKG=$PKG" >> "$GITHUB_ENV"
 
       - name: Enable KVM
         run: |
@@ -56,7 +96,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Boot emulator + walk Configs
+      - name: Boot emulator + open Configs + assert the strip
         timeout-minutes: 25
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -65,7 +105,7 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash 1_cicd/src/scripts/emulator-configs-tabs.sh app.apk ${{ matrix.pkg }} ${{ matrix.app }} out
+          script: bash 1_cicd/src/scripts/emulator-configs-tabs.sh app.apk ${{ env.PKG }} ${{ matrix.app }} out
 
       - name: Upload evidence (screenshots, ui dumps, logcat)
         if: always()

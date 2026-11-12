@@ -1,5 +1,7 @@
 package app.sterna.ui
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
@@ -54,13 +56,17 @@ fun BottomNavBar(nav: NavController, currentRoute: String, content: @Composable 
     val ai = rememberSuperAppAiLauncher()
     val entries = mailEntries()
     // #1154 the first row: AI hands over to the SuperApp, Profile is Cloud Account, Configs is Mail's settings.
+    // #1697 Configs opens the fleet strip (General | Agents, Perms, Logcat, X-Ray App, About); Mail's own settings (the former target) is General > App.
+    var fleetConfigsOpen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = app.sterna.ui.theme.LocalSternaDarkTheme.current, onDismiss = { fleetConfigsOpen = false },
+        onAppConfigs = { if (currentRoute != "settings") nav.currentBackStackEntry?.navigateOnce { nav.navigate("settings") } })
     NavBarTopFirstRowScaffold(
         title = stringResource(itemDescription(selected ?: "home")),
         hierarchy = openSection?.let { sec -> titleHierarchy(sec, sec.pages.firstOrNull { it.id == currentRoute }?.id) }.orEmpty(),
         sections = mailNav.bottomSections(),
         onNavigate = { e -> entries.firstOrNull { it.id == e.sectionId }?.let(tap) },
         onAccount = account,
-        onConfigs = { if (currentRoute != "settings") nav.currentBackStackEntry?.navigateOnce { nav.navigate("settings") } },
+        onConfigs = { fleetConfigsOpen = true },
         onAi = ai,
         dark = app.sterna.ui.theme.LocalSternaDarkTheme.current,
         modifier = Modifier.statusBarsPadding(),

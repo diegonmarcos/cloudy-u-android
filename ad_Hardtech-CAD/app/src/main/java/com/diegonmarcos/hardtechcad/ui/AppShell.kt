@@ -1,5 +1,8 @@
 package com.diegonmarcos.hardtechcad.ui
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -45,13 +48,21 @@ fun AppShell() {
     val nav = Decl.nav
     var section by rememberSaveable { mutableStateOf(nav.default()?.id ?: Decl.SECTION_ABOUT) }
     val sec = nav.section(section)
+    // #1697 the gear opens the fleet Configs strip: {own pages} | Agents, Perms, Logcat, X-Ray App, About (FleetConfigsScreen draws the tail
+    // through FleetConfigsExtensions.stripOrder). The app's former Configs target stays one tap away: General > App.
+    var fleetConfigsOpen by rememberSaveable { mutableStateOf(false) }
+    androidx.compose.runtime.remember {
+        com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.register(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab("holdings", "Holdings", "layers") { _ -> androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) { HoldingsPanel() } })
+        com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.register(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab("app_page", "App", "info") { _ -> SectionPage(Decl.SECTION_ABOUT) })
+    }
+    if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = true, onDismiss = { fleetConfigsOpen = false }, onAppConfigs = { section = Decl.SECTION_ABOUT })
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
         NavBarTopFirstRowScaffold(
             title = sec?.label ?: stringResource(R.string.app_name),
             hierarchy = sec?.let { titleHierarchy(it, null) }.orEmpty(),
             onNavigate = { e -> section = e.sectionId },
             onAccount = rememberAccountLauncher(),
-            onConfigs = { section = Decl.SECTION_ABOUT },
+            onConfigs = { fleetConfigsOpen = true },
             dark = true,
         ) {
             NavBarBottomHost(

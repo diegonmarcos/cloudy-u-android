@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudsearch.ui
 
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -285,13 +286,22 @@ private fun Chrome(state: SearchState, v: SearchConfig.Vertical) {
         state.section in state.verticalSections -> if (v.subpages.size > 1) state.navId(v, state.subpageOf(v)) else state.vertical
         else -> null
     }
+    // #1697 Configs (the vertical dots) opens the fleet strip: Profile (what the old Profile popover held: the AI token, theme, city)
+    // | Agents, Perms, Logcat, X-Ray App, About. The popover itself stays one tap away: General > App.
+    var fleetConfigsOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    androidx.compose.runtime.remember(state) {
+        com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.register(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab("profile", "Profile", "person") { _ ->
+            androidx.compose.foundation.layout.Column(Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(Metrics.gutter)) { ProfileMenu(state) }
+        })
+    }
+    if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = state.dark, onDismiss = { fleetConfigsOpen = false }, onAppConfigs = { state.toggle(Menu.PROFILE) })
     NavBarTopFirstRowScaffold(
         title = text,
         hierarchy = if (state.saved) emptyList() else section?.let { titleHierarchy(it, pageId) }.orEmpty(),
         onNavigate = { e -> navigateTo(state, e) },
         onAccount = rememberAccountLauncher(),
         // Configs (the vertical dots) opens what the old Profile popover held: the AI token, theme, city.
-        onConfigs = { state.toggle(Menu.PROFILE) },
+        onConfigs = { fleetConfigsOpen = true },
         // AI opens the assistant page (the Search page under Chat).
         onAi = { state.openSection("chat"); state.chatPage = state.chatVertical },
         dark = state.dark,

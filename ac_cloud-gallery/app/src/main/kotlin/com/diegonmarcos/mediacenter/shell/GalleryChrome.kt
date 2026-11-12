@@ -5,6 +5,8 @@
 
 package com.diegonmarcos.mediacenter.shell
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -75,6 +77,10 @@ fun GalleryChrome(
     val entries = nav.islandEntries()
     val sectionPages = section?.pages.orEmpty()
     val page = pages.pageOf(tab.id, sectionPages.firstOrNull()?.id)
+    // #1697 the gear opens the fleet Configs strip (General | Agents, Perms, Logcat, X-Ray App, About); the Gallery's own settings
+    // screen (the former gear target) stays one tap away: General > App.
+    var fleetConfigsOpen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = dark, onDismiss = { fleetConfigsOpen = false }, onAppConfigs = onConfigs)
     CompositionLocalProvider(LocalGalleryPages provides pages) {
         Box(
             Modifier.fillMaxSize().themeBackground(dark)
@@ -89,7 +95,7 @@ fun GalleryChrome(
                     if (e.depth > 0) pages.select(e.sectionId, e.id)
                 },
                 onAccount = rememberAccountLauncher(),
-                onConfigs = onConfigs,
+                onConfigs = { fleetConfigsOpen = true },
                 onAi = onSearch,
                 sections = nav.bottomSections(),
                 dark = dark,

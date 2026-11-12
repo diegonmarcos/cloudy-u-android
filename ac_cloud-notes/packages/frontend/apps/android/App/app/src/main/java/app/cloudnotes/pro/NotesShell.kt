@@ -90,6 +90,9 @@ internal class NotesShell(
     /** Configs > UI (the shared nav UI card) is open; its "All settings" opens the web half's own settings. */
     private var configsOpen by mutableStateOf(false)
 
+    /** #1697 the gear opens the fleet Configs strip (General | Agents, Perms, Logcat, X-Ray App, About); General > App opens Configs > UI above. */
+    private var fleetConfigsOpen by mutableStateOf(false)
+
     /** The object registered on the WebView as `CloudNotesHost`; the bridge thread may write the state. */
     inner class Host {
         @JavascriptInterface
@@ -112,12 +115,13 @@ internal class NotesShell(
         CompositionLocalProvider(LocalNavUiDefault provides NavUiDecl.fromBuildConfig(BuildConfig.UI_NAV_UI_B64)) {
         CloudNotesTheme(if (dark) ThemeMode.Dark else ThemeMode.Light) {
             if (configsOpen) ConfigsUi(dark)
+            if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = dark, onDismiss = { fleetConfigsOpen = false }, onAppConfigs = { configsOpen = true })
             NavBarTopFirstRowScaffold(
                 title = section?.label ?: nav.sectionId,
                 hierarchy = section?.let { titleHierarchy(it, nav.pageId) }.orEmpty(),
                 onNavigate = { e -> if (e.depth > 0) nav.openPage(e.sectionId, e.id) else nav.open(e.sectionId) },
                 onAccount = rememberAccountLauncher(),
-                onConfigs = { configsOpen = true },
+                onConfigs = { fleetConfigsOpen = true },
                 aiPanel = { AiFleetChatPanel(gatewayUrl) },
                 sections = nav.decl.bottomSections(),
                 configsUi = false, // Configs opens Configs > UI itself (ConfigsUi below)

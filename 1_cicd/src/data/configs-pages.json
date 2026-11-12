@@ -394,6 +394,16 @@
       "pending": {
         "_doc": "Apps whose Configs does not carry the fleet-default tail yet, each with its reason (T7 / T8 fail a stale entry)."
       }
+    },
+    "reach": {
+      "_doc": "#1697 T9: an app on the shared screen proves its Configs entry opens it by one of these references in its non-test sources (or by configs_pages.shortcut_reach). The scaffold's dropdown alone does not count: the gear (onConfigs) is the host's.",
+      "needles": [
+        "FleetConfigsScreen(",
+        "FleetConfigsActivity",
+        "FleetConfigsEntries",
+        "FleetConfigsMenu(",
+        "FleetConfigsButtons("
+      ]
     }
   },
   "exempt": {

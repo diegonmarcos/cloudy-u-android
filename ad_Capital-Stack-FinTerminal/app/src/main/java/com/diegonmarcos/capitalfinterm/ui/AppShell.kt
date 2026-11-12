@@ -1,5 +1,8 @@
 package com.diegonmarcos.capitalfinterm.ui
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -132,6 +135,14 @@ fun AppShell(startDashboard: String? = null) {
     val terminal = section != Decl.SECTION_ABOUT && section != Decl.SECTION_CONFIG
     val p = LocalFinPalette.current
     val canvas = if (terminal) Modifier.background(p.canvas) else Modifier.themeBackground(dark = true)
+    // #1697 the gear opens the fleet Configs strip: {own pages} | Agents, Perms, Logcat, X-Ray App, About (FleetConfigsScreen draws the tail
+    // through FleetConfigsExtensions.stripOrder). The app's former Configs target stays one tap away: General > App.
+    var fleetConfigsOpen by rememberSaveable { mutableStateOf(false) }
+    androidx.compose.runtime.remember {
+        com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.register(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab("sources", "Sources", "key") { _ -> androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) { SourcesPanel() } })
+        com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.register(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab("data_sources", "Data sources", "database") { _ -> androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) { DataSourcesPanel() } })
+    }
+    if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = true, onDismiss = { fleetConfigsOpen = false }, onAppConfigs = { section = Decl.SECTION_CONFIG })
     CompositionLocalProvider(LocalNavUiDefault provides NavUiDecl.fromBuildConfig(BuildConfig.UI_NAV_UI_B64)) {
         Box(Modifier.fillMaxSize().then(canvas).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
             NavBarTopFirstRowScaffold(
@@ -144,7 +155,7 @@ fun AppShell(startDashboard: String? = null) {
                     } else { section = e.sectionId; openPage(e.sectionId, e.id) }
                 },
                 onAccount = rememberAccountLauncher(),
-                onConfigs = { section = Decl.SECTION_CONFIG },
+                onConfigs = { fleetConfigsOpen = true },
                 dark = true,
                 sections = nav.sections,
                 leaf = FinNavStack.symbolOf(top) ?: FinNavStack.indexOf(top)?.let { k -> dashboards.flatMap { it.breakdown }.firstOrNull { it.key == k }?.label ?: k },

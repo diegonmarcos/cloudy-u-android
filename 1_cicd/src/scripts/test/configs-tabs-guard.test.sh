@@ -22,7 +22,7 @@ out="$(cd "$ROOT" && python3 "$GUARD" .)"; rc=$?
 if [ "$rc" -eq 0 ]; then ok "the real tree passes ($(tail -1 <<<"$out"))"; else fail "the real tree is red"; printf '%s\n' "$out"; fi
 
 mkdir -p "$BASE"
-( cd "$ROOT" && for f in $(for d in a[acd]_*/; do [ -L "${d%/}" ] || [ ! -f "${d}build.json" ] || echo "${d}build.json"; done) $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "*.patch" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(|withTail\(|ConfigsTail' --include=*.kt --include=*.java a[acd]_* ab_cloud-libs-shared/libs/writer-ui 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
+( cd "$ROOT" && for f in $(for d in a[acd]_*/; do [ -L "${d%/}" ] || [ ! -f "${d}build.json" ] || echo "${d}build.json"; done) $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "*.patch" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(|withTail\(|ConfigsTail|FleetConfigsActivity|FleetConfigsEntries|FleetConfigsMenu\(|FleetConfigsButtons\(' --include=*.kt --include=*.java a[acd]_* ab_cloud-libs-shared/libs/writer-ui 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
 python3 "$GUARD" "$BASE" >/dev/null || fail "the fixture is red before any mutation"
 
 # mutant NAME RULE PYTHON — PYTHON edits the fixture (cwd = fixture) and must change a file; the guard must go red naming RULE.
@@ -147,6 +147,29 @@ open(p, 'w').write(s.replace(a, 'separatorBefore = false'))"
 mutant "Cloud Store (own settings host) drops the tail" T7 "
 p = 'ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt'; s = open(p).read()
 a = 'FleetConfigsExtensions.withTail('; assert a in s; open(p, 'w').write(s.replace(a, 'listOf<Any>('))"
+
+# #1697 T9 the shared-screen reach: an app whose gear opens its own page again, with nothing else opening the strip, is red
+mutant "Hardtech CAD's gear opens its About page again (no strip)" T9 "
+p = 'ad_Hardtech-CAD/app/src/main/java/com/diegonmarcos/hardtechcad/ui/AppShell.kt'; s = open(p).read()
+assert 'FleetConfigsScreen(' in s; open(p, 'w').write(s.replace('FleetConfigsScreen(', 'AboutOnly('))"
+mutant "Cloud Search's Configs opens only the Profile popover again" T9 "
+p = 'ac_cloud-search/app/src/main/java/com/diegonmarcos/cloudsearch/ui/SearchShell.kt'; s = open(p).read()
+assert 'FleetConfigsScreen(' in s; open(p, 'w').write(s.replace('FleetConfigsScreen(', 'ProfileOnly('))"
+mutant "Cloud Chat leaves shortcut_reach (no in-app entry left)" T9 "$J
+d = load('$DATA'); del d['shortcut_reach']['ac_cloud-chat']; save('$DATA', d)"
+
+# #1697 rule 16 field parity: each app rewired to the shared strip keeps its former Configs target, now General > App (onAppConfigs)
+parity() { # FILE NEEDLE
+    if [ -f "$ROOT/$1" ] && grep -qF -- "$2" "$ROOT/$1"; then ok "parity: $1 keeps its former Configs target"; else fail "parity: $1 lost its former Configs target ($2)"; fi
+}
+parity ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/ui/AppShell.kt 'onAppConfigs = { section = Decl.SECTION_ABOUT }'
+parity ad_Hardtech-CAD/app/src/main/java/com/diegonmarcos/hardtechcad/ui/AppShell.kt 'onAppConfigs = { section = Decl.SECTION_ABOUT }'
+parity ad_Hardtech-Sim2Real/app/src/main/java/com/diegonmarcos/hardtechsim2real/ui/AppShell.kt 'onAppConfigs = { section = Decl.SECTION_ABOUT }'
+parity ad_Capital-Stack-FinTerminal/app/src/main/java/com/diegonmarcos/capitalfinterm/ui/AppShell.kt 'onAppConfigs = { section = Decl.SECTION_CONFIG }'
+parity ac_cloud-search/app/src/main/java/com/diegonmarcos/cloudsearch/ui/SearchShell.kt 'onAppConfigs = { state.toggle(Menu.PROFILE) }'
+parity ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/shell/GalleryChrome.kt 'onAppConfigs = onConfigs'
+parity ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/MailBottomNav.kt 'onAppConfigs = { if (currentRoute != "settings") nav.currentBackStackEntry?.navigateOnce { nav.navigate("settings") } }'
+parity ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/NotesShell.kt 'onAppConfigs = { configsOpen = true }'
 
 echo "configs-tabs-guard.test: $PROVEN mutation(s) proven red, $FAILURES failure(s)"
 [ "$FAILURES" -eq 0 ]
