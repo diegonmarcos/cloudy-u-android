@@ -2854,6 +2854,10 @@
       "store": "datastore:session_<hash>_seen-invites",
       "why": "per-session seen invites"
     },
+    "SuperPowerSaving.PREFS@aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/SuperServices.kt": {
+      "store": "super_power_prefs",
+      "why": "#1689 the foreground services Super power saving stopped (stopped_services), in the declared super_power_prefs store (class device)"
+    },
     "PREFS@aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/cloud/GiteaFeed.kt": {
       "store": "gitea_feed_cache",
       "why": "const val PREFS = \"gitea_feed_cache\" (GiteaFeed.kt:26)"
