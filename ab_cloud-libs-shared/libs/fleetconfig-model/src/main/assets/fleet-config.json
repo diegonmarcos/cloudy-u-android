@@ -1324,7 +1324,10 @@
     "launcher_settings": {
       "kind": "prefs",
       "class": "config",
-      "doc": "Launcher settings: screensaver, scale, brightness, eye intensity, screensaver timeout, animation/one-hand/control toggles, and the icons-per-row steppers grid_cols_cloud and grid_cols_phone (4..8; absent until the owner moves a stepper, so a phone that never chose follows the shipped default and a chosen value migrates with the phone).",
+      "doc": "Launcher settings: screensaver, scale, brightness, eye intensity, screensaver timeout, animation/one-hand/control toggles, and the icons-per-row steppers grid_cols_cloud and grid_cols_phone (4..8; absent until the owner moves a stepper, so a phone that never chose follows the shipped default and a chosen value migrates with the phone). #1685 background_auto_rotate is the home model Auto-rotate switch (3D and 4D, default on): a per-device viewing choice, class device, never migrates.",
+      "keys": {
+        "background_auto_rotate": "device"
+      },
       "used_by": [
         "aa_cloud-superapp"
       ]

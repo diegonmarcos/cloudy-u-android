@@ -14,11 +14,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -70,12 +74,21 @@ class Home3DFragment : KitComposeFragment() {
         val cycleOn = remember { runCatching { prefs?.backgroundCycleEnabled }.getOrNull() ?: false }
         val cycleMinutes = remember { runCatching { prefs?.backgroundCycleMinutes }.getOrNull() ?: 5 }
         val cycleIds = remember { runCatching { prefs?.cycleShapeIds() }.getOrNull() ?: listOf(baseShape) }
+        // #1685 Auto-rotate (one switch for the 3D AND the 4D model, default on), read LIVE:
+        // flipping it in Configs stops / resumes the model in place, from where it is.
+        var autoRotate by remember {
+            mutableStateOf(runCatching { prefs?.backgroundAutoRotate }.getOrNull() ?: LauncherSettingsPrefs.AUTO_ROTATE_FALLBACK)
+        }
+        DisposableEffect(prefs) {
+            val stop = runCatching { prefs?.observeAutoRotate { autoRotate = it } }.getOrNull()
+            onDispose { runCatching { stop?.invoke() } }
+        }
 
         Box(Modifier.fillMaxSize().lockOnDoubleTap(ctx), contentAlignment = Alignment.Center) {
             if (enabled) {
                 // Oversize host so rotated corners don't clip against its own bounds.
                 PolytopeBackground(
-                    animate = animate, interactive = interactive,
+                    animate = animate, interactive = interactive, autoRotate = autoRotate,
                     baseShape = baseShape, cycleOn = cycleOn, cycleMinutes = cycleMinutes, cycleIds = cycleIds,
                     modifier = Modifier.size(360.dp).testTag(TAG_CUBE),
                 )
@@ -96,11 +109,15 @@ class Home3DFragment : KitComposeFragment() {
  * advances every [cycleMinutes] minutes off the SAME monotonic clock the
  * rotation reads (so no second timer runs). [animate] off freezes it;
  * [interactive] lets a drag spin the 3D stage and coast on release.
+ * #1685 [autoRotate] turns BOTH the 3D axes and the 4D planes; the angles are
+ * accumulated in [ModelSpin], so after a drag the rotation resumes from the
+ * user's orientation and with it off the model stays where it was left.
  */
 @Composable
 internal fun PolytopeBackground(
     animate: Boolean,
     interactive: Boolean,
+    autoRotate: Boolean = true,
     baseShape: String,
     cycleOn: Boolean,
     cycleMinutes: Int,
@@ -108,14 +125,15 @@ internal fun PolytopeBackground(
     modifier: Modifier = Modifier,
 ) {
     val p = LocalKitPalette.current
-    val start = remember { SystemClock.elapsedRealtime() }
     val cycling = cycleOn && cycleIds.size > 1
-    // Drag / momentum state (only used when interactive, which only applies to the 3D stage).
-    val rot = remember { floatArrayOf(PolytopeMath.ROT_X0, PolytopeMath.ROT_Y0) }   // [x, y]
-    val vel = remember { floatArrayOf(0f, 0f) }
-    val dragging = remember { booleanArrayOf(false) }
+    // #1685 the one orientation state: 3D axes + 4D planes + drag momentum (drag only when interactive).
+    val spin = remember { ModelSpin() }
     val frame = remember { mutableLongStateOf(0L) }
-    val animating by rememberUpdatedState(animate)
+    // A drag release re-arms the loop (to coast) even when auto-rotate is off and the loop had stopped.
+    val kick = remember { mutableIntStateOf(0) }
+    // Motion = the Auto-rotate switch AND the battery group's motion gate ("Cube animation" / all_anim).
+    val motion = autoRotate && animate
+    val moving by rememberUpdatedState(motion)
 
     // Pre-warm the meshes we may draw, OFF the main thread, so the first frame a
     // big polytope (120-/600-cell) appears never hitches building it inline.
@@ -128,36 +146,30 @@ internal fun PolytopeBackground(
         }
     }
 
-    // The frame clock — the ONE loop. Interactive: runs while coasting; otherwise whenever animation
-    // is on. Auto-cycle keeps it running (the shape must be able to change even on a still shape).
+    // The frame clock — the ONE loop. Runs while the model moves (auto-rotate, a drag, a coast);
+    // auto-cycle keeps it running (the shape must be able to change even on a still shape). With
+    // auto-rotate off and nothing touched it paints one frame and STOPS: no render loop when idle.
     val drawing = com.diegonmarcos.superapp.ui.rememberDrawing() // no frame callbacks while backgrounded / screen off
-    LaunchedEffect(animate, interactive, cycling, drawing) {
+    LaunchedEffect(motion, interactive, cycling, drawing, kick.intValue) {
+        var last = Long.MIN_VALUE
         while (isActive && drawing) {
-            androidx.compose.runtime.withFrameNanos { frame.longValue = it }
-            if (interactive) {
-                if (!dragging[0]) {      // coast: apply + decay momentum
-                    rot[1] += vel[1]; rot[0] += vel[0]
-                    vel[1] *= 0.95f; vel[0] *= 0.95f
-                    if (kotlin.math.abs(vel[1]) < 1e-4f) vel[1] = 0f
-                    if (kotlin.math.abs(vel[0]) < 1e-4f) vel[0] = 0f
-                }
-            } else if (!animating && !cycling) {
-                break
-            }
+            val now = androidx.compose.runtime.withFrameNanos { it }
+            val dt = if (last == Long.MIN_VALUE) 0.0 else (now - last) / 1_000_000.0
+            last = now
+            val stillMoving = runCatching { spin.step(dt, moving) }.getOrDefault(false)
+            frame.longValue = now
+            if (!stillMoving && !cycling) break
         }
     }
 
     Canvas(modifier.then(if (interactive) Modifier.pointerInput(Unit) {
         detectDragGestures(
-            onDragStart = { dragging[0] = true; vel[0] = 0f; vel[1] = 0f },
-            onDragEnd = { dragging[0] = false },
-            onDragCancel = { dragging[0] = false },
+            onDragStart = { spin.dragStart() },
+            onDragEnd = { spin.dragEnd(); kick.intValue++ },
+            onDragCancel = { spin.dragEnd(); kick.intValue++ },
         ) { change, drag ->
             change.consume()
-            val k = 0.01f   // radians per pixel
-            vel[1] = drag.x * k
-            vel[0] = -drag.y * k
-            rot[1] += vel[1]; rot[0] += vel[0]
+            spin.dragBy(drag.x, drag.y)   // 0.01 rad per pixel, as before
             frame.longValue++
         }
     } else Modifier)) {
@@ -169,11 +181,9 @@ internal fun PolytopeBackground(
         else baseShape
         val mesh = PolytopeMath.mesh(shapeId)
 
-        val elapsed = if (animating) (SystemClock.elapsedRealtime() - start).toDouble() else 0.0
-        val pr = if (interactive)
-            PolytopeMath.project(mesh, elapsed, size.width, size.height, rotXOverride = rot[0], rotYOverride = rot[1])
-        else
-            PolytopeMath.project(mesh, elapsed, size.width, size.height)
+        // #1685 every angle comes from the accumulated orientation (equal to the old elapsed=0 frame at start).
+        val pr = PolytopeMath.project(mesh, 0.0, size.width, size.height,
+            rotXOverride = spin.rotX, rotYOverride = spin.rotY, a4Override = spin.a4, b4Override = spin.b4)
 
         fun pt(i: Int) = Offset(pr.x[i], pr.y[i])
         val edges = pr.edges

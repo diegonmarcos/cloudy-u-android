@@ -9687,6 +9687,7 @@
           "subtitle": "Draw the rotating shape on the home pane. Off = a still, dark home (leanest).",
           "default": true
         },
+        "auto_rotate": {"key": "background_auto_rotate", "label": "Auto-rotate", "subtitle": "Turn the 3D and the 4D model on their own. A drag still spins it and the rotation resumes from where you left it; off = the model stays where you leave it.", "default": true},
         "stars_toggle": "stars_anim",
         "shape_key": "background_shape",
         "default_shape": "cube",

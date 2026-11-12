@@ -112,6 +112,23 @@ class LauncherSettingsPrefs(context: Context) {
         get() = sp.getInt(Config.background.cycleMinutesKey, Config.background.cycleMinutes.default)
         set(v) { sp.edit().putInt(Config.background.cycleMinutesKey, v).apply() }
 
+    /** #1685 Auto-rotate for the home model (3D AND 4D), declared at
+     *  build.json::ui.launcher_settings.background.auto_rotate (default on). */
+    var backgroundAutoRotate: Boolean
+        get() = sp.getBoolean(Config.background.autoRotateKey, Config.background.autoRotateDefault)
+        set(v) { sp.edit().putBoolean(Config.background.autoRotateKey, v).apply() }
+
+    /** Follow the Auto-rotate switch live; returns the unsubscribe. The listener is
+     *  held strongly here (SharedPreferences keeps only a weak reference). */
+    fun observeAutoRotate(onChange: (Boolean) -> Unit): () -> Unit {
+        val key = Config.background.autoRotateKey
+        val l = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, k ->
+            if (k == null || k == key) runCatching { onChange(backgroundAutoRotate) }
+        }
+        sp.registerOnSharedPreferenceChangeListener(l)
+        return { runCatching { sp.unregisterOnSharedPreferenceChangeListener(l) } }
+    }
+
     /** Is [shapeId] a member of the auto-cycle set? Defaults to true, so a fresh
      *  install cycles through every shape rather than through an empty set. */
     fun cycleShapeEnabled(shapeId: String): Boolean =
@@ -207,6 +224,11 @@ class LauncherSettingsPrefs(context: Context) {
         val cycleEnableKey: String, val cycleEnableLabel: String, val cycleEnableSubtitle: String,
         val cycleDefaultEnabled: Boolean, val cycleMemberPrefix: String,
         val cycleMinutesKey: String, val cycleMinutes: Slider,
+        // #1685 the home model's Auto-rotate switch (3D + 4D).
+        val autoRotateKey: String = "background_auto_rotate",
+        val autoRotateLabel: String = "Auto-rotate",
+        val autoRotateSubtitle: String = "",
+        val autoRotateDefault: Boolean = AUTO_ROTATE_FALLBACK,
     )
 
     object Config {
@@ -309,6 +331,7 @@ class LauncherSettingsPrefs(context: Context) {
             val o = settings.optJSONObject("background") ?: JSONObject()
             val en = o.optJSONObject("enable") ?: JSONObject()
             val cy = o.optJSONObject("cycle") ?: JSONObject()
+            val ar = o.optJSONObject("auto_rotate") ?: JSONObject()
             val shapesArr = o.optJSONArray("shapes") ?: JSONArray()
             val shapes = (0 until shapesArr.length()).map {
                 val s = shapesArr.getJSONObject(it)
@@ -336,11 +359,20 @@ class LauncherSettingsPrefs(context: Context) {
                 cycleMinutesKey = minO.optString("key", "background_cycle_minutes"),
                 cycleMinutes = Slider(minO.optString("label", "Change every"), minO.optString("subtitle", ""),
                     minO.optInt("min", 1), minO.optInt("max", 60), minO.optInt("default", 5)),
+                autoRotateKey = ar.optString("key", "background_auto_rotate").ifBlank { "background_auto_rotate" },
+                autoRotateLabel = ar.optString("label", "Auto-rotate"),
+                autoRotateSubtitle = ar.optString("subtitle", ""),
+                autoRotateDefault = ar.optBoolean("default", AUTO_ROTATE_FALLBACK),
             )
         }
         val scale: Slider by lazy { slider("scale") }
         val brightness: Slider by lazy { slider("brightness") }
         val eyeIntensity: Slider by lazy { slider("eye_intensity", 35) }
         val screensaverTimeout: Slider by lazy { slider("screensaver_timeout") }
+    }
+
+    companion object {
+        /** #1685 Auto-rotate when build.json says nothing (and on any read failure): on. */
+        const val AUTO_ROTATE_FALLBACK = true
     }
 }

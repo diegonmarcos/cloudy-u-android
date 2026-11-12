@@ -322,6 +322,13 @@ class LauncherConfigFragment : KitComposeFragment() {
         }
         GapDp(8)
 
+        // #1685 Auto-rotate: one switch for the 3D AND the 4D model. The home pane follows the
+        // key live (no chrome re-render needed), so the model stops / resumes where it is.
+        toggleRow(bg.autoRotateLabel, bg.autoRotateSubtitle, epoch, { settingsPrefs.backgroundAutoRotate }) { on ->
+            settingsPrefs.backgroundAutoRotate = on; repaintFromStore()
+        }
+        GapDp(8)
+
         // Star animation — a VIEW onto the existing stars_anim switch, never a second copy of it.
         val starsItem = LauncherSettingsPrefs.Config.toggles.firstOrNull { it.id == bg.starsToggle }
         if (starsItem != null) {

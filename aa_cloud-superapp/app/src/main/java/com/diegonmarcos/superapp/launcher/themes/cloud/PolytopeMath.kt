@@ -153,12 +153,15 @@ object PolytopeMath {
     fun project(
         mesh: Mesh, elapsedMs: Double, width: Float, height: Float,
         rotXOverride: Float? = null, rotYOverride: Float? = null,
+        a4Override: Double? = null, b4Override: Double? = null,
     ): Result {
         val cx = width / 2f; val cy = height / 2f
         val scale = minOf(width, height) / SCALE_DENOM
         val rY = rotYOverride ?: angleY(elapsedMs); val rX = rotXOverride ?: angleX(elapsedMs)
-        val a4 = ROT_Y0 + (elapsedMs / PERIOD_4A_MS) * (2.0 * Math.PI)
-        val b4 = ROT_X0 + (elapsedMs / PERIOD_4B_MS) * (2.0 * Math.PI)
+        // #1685 the 4D planes take an override too, so the home model's accumulated
+        // orientation (ModelSpin) drives them and auto-rotate can stop them.
+        val a4 = a4Override ?: (ROT_Y0 + (elapsedMs / PERIOD_4A_MS) * (2.0 * Math.PI))
+        val b4 = b4Override ?: (ROT_X0 + (elapsedMs / PERIOD_4B_MS) * (2.0 * Math.PI))
         val cyR = Math.cos(rY.toDouble()).toFloat(); val syR = Math.sin(rY.toDouble()).toFloat()
         val cxR = Math.cos(rX.toDouble()).toFloat(); val sxR = Math.sin(rX.toDouble()).toFloat()
 
