@@ -115,9 +115,9 @@ back
 for i in 1 2 3; do tap '^Web$' && break; adb shell input swipe 500 600 500 1500 300; sleep 1; done || fail "no Web action in the sheet: $(texts)"
 sleep 6; tap '^More$' || fail "the web viewer has no menu: $(texts)"; sleep 2
 shot 22-web-viewer-menu
-need 'Open in another browser' 'Open in Chrome' 'Copy link' 'Share' 'Reload' || fail "the web viewer menu: $(texts)"
+need 'Open in another browser' 'Open in Cloud Browser' 'Copy link' 'Share' 'Reload' || fail "the web viewer menu: $(texts)"
 back; back
-dump >/dev/null; has 'Open in Chrome' && fail "Back did not close the web viewer"
+dump >/dev/null; has 'Open in Cloud Browser' && fail "Back did not close the web viewer"
 for i in 1 2 3; do dump >/dev/null; has 'Goto' || break; back; done
 
 # 3. the selector in the top menu
@@ -168,7 +168,7 @@ for i in 1 2 3; do pick 'External Drive'; dump >/dev/null; grep -q 'content-desc
 grep -q 'content-desc="External Drive"' "$OUT/ui.xml" || fail "External Drive was not selected: $(texts)"
 shot 45-drive-listed
 dump >/dev/null; texts > "$OUT/drive-texts.txt"
-tap '^Check$' && sleep 1 && tap '^Check full$' && sleep 8 && shot 46-drive-checked || note "Check not tappable: $(texts)"
+tap '^Refresh$' && sleep 1 && tap '^Check full$' && sleep 8 && shot 46-drive-checked || note "Refresh > Check full (#1679: Check is labelled Refresh) not tappable: $(texts)"
 tap '^Sync$' && sleep 1 && tap '^No Winner$' && sleep 2 && tap '^No Winner$' && sleep 15 && shot 47-drive-synced || note "No Winner on the drive: $(texts)"
 tap '^Logs$' && sleep 3 && shot 48-drive-logs || note "no Logs: $(texts)"
 back

@@ -78,8 +78,10 @@ has 'text="Tiny-ML"' || fail "no Tiny-ML tab on the Cloud page: $(texts)"
 python3 -I -c '
 import re,sys
 t=[m for m in re.findall(r"text=\"([^\"]+)\"",open(sys.argv[1]).read())]
+# StoreStrip order: the declared groups, then right after Tiny-ML only the non-group slots Fleet Data, "|" and Ventoy.
 i=t.index("Tiny-ML") if "Tiny-ML" in t else -1
-sys.exit(0 if i>=0 and i+1<len(t) and t[i+1]=="Ventoy" else 1)' "$OUT/ui.xml" || fail "Ventoy is not the tab right after Tiny-ML: $(texts)"
+j=t.index("Ventoy",i+1) if i>=0 and "Ventoy" in t[i+1:] else -1
+sys.exit(0 if j>i>=0 and all(x in ("Fleet Data","|") for x in t[i+1:j]) else 1)' "$OUT/ui.xml" || fail "Ventoy is not the tab after Tiny-ML (only Fleet Data and the | separator may sit between): $(texts)"
 tap '^Ventoy$' || fail "the Ventoy tab is not tappable"; sleep 3
 shot 02-ventoy-section
 has 'Drive' || fail "no Drive heading: $(texts)"
