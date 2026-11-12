@@ -101,7 +101,7 @@ class FilesController(
     }
 
     /** #1696 the declared storage home (Environment.getExternalStorageDirectory, /storage/emulated/0). */
-    val homeLocation: Location.Local get() = Location.Local(runCatching { android.os.Environment.getExternalStorageDirectory().absolutePath }.getOrDefault("/storage/emulated/0"))
+    val homeLocation: Location.Local get() = Location.Local(runCatching { android.os.Environment.getExternalStorageDirectory().absolutePath }.getOrDefault(java.io.File(ctx.filesDir, "").absolutePath))
 
     /** #1696 Home from any state: the pane's tab opens the storage home. */
     fun home(id: PaneId) { val h = homeLocation; update { FilesNav.home(it, id, h) }; ensureLoaded(h) }

@@ -3,7 +3,7 @@ package com.diegonmarcos.clouddrive.files
 /**
  * #1696 navigation for a NON-ROOT app, PURE Kotlin (FilesNavTest proves it). The Explorer's world is the set of
  * accessible roots (storage volumes, app dirs, declared places, SAF-reached paths), not the raw filesystem parent
- * chain: Up never walks into a folder this app cannot list (/storage/emulated, /storage, /), it stops at the root
+ * chain: Up never walks into a folder this app cannot list (the parents of the emulated home), it stops at the root
  * boundary and says why; a restored path that is no longer listable falls back to Home; the breadcrumb starts at
  * the root the location sits in. Every disk probe is passed in as [canList], so nothing here touches IO.
  */
