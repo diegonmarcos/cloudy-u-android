@@ -108,6 +108,7 @@
     "install_unknown": "Install fleet updates and companion APKs.",
     "usage_access": "See which apps run and how much they are used.",
     "battery_opt": "Keep background work alive under battery optimisation.",
+    "samsung_never_sleeping": "Keep Samsung from putting the app to sleep, so background work keeps running.",
     "keep_unused": "Keep the app and its grants when it has not been opened for months, so background work keeps running.",
     "overlay": "Draw over other apps (floating windows, call screens).",
     "health_connect": "Read and write health data through Health Connect.",
