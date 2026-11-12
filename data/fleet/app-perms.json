@@ -131,6 +131,7 @@
   },
   "com.diegonmarcos.cloudkeyboard": {
    "needs": [
+    "notifications",
     "microphone",
     "contacts_read",
     "all_files"

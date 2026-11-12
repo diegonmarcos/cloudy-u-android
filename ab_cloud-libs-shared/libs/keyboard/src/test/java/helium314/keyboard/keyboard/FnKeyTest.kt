@@ -13,12 +13,15 @@ import org.junit.Test
 
 /** #1606: Dev Keyboard fn key: double-click holds fn, tap disables; the dev functional layout loses no key. */
 class FnKeyTest {
-    private fun labels(name: String) = Json.parseToJsonElement(File("src/main/assets/layouts/functional/$name.json").readText())
+    private fun labels(json: String) = Json.parseToJsonElement(json)
         .jsonArray.flatMap { r -> r.jsonArray.map { it.jsonObject } }.map { it["label"]?.jsonPrimitive?.content ?: it.toString() }
 
     @Test fun devFunctionalLayoutKeepsEveryKeyAndAddsFn() {
-        val base = labels("functional_keys")
-        val dev = labels("functional_keys_dev")
+        // the dev layout has no file of its own: it is the default functional layout plus the fn key (CornerSwipe.devFunctional)
+        val text = File("src/main/assets/layouts/functional/${CornerSwipe.FUNCTIONAL_BASE}.json").readText()
+        val base = labels(text)
+        val dev = labels(CornerSwipe.devFunctional(text))
+        assertEquals("fn sits right after the symbol/alpha switch", dev.indexOf("symbol_alpha") + 1, dev.indexOf("fn"))
         val remaining = dev.toMutableList()
         base.forEach { assertTrue("lost $it", remaining.remove(it)) } // field parity: nothing removed
         assertEquals(listOf("fn"), remaining)

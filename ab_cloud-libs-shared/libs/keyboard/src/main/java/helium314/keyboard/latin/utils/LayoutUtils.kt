@@ -1,6 +1,7 @@
 package helium314.keyboard.latin.utils
 
 import android.content.Context
+import helium314.keyboard.keyboard.CornerSwipe
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.SimplePopups
 import helium314.keyboard.keyboard.internal.keyboard_parser.getOrCreate
 import helium314.keyboard.latin.R
@@ -13,8 +14,13 @@ import java.util.Locale
 // for layouts provided by the app
 object LayoutUtils {
     fun getAvailableLayouts(layoutType: LayoutType, context: Context, locale: Locale? = null): Collection<String> {
-        if (layoutType != LayoutType.MAIN)
-            return context.assets.list(layoutType.folder)?.map { it.substringBefore(".") }.orEmpty()
+        if (layoutType != LayoutType.MAIN) {
+            val names = context.assets.list(layoutType.folder)?.map { it.substringBefore(".") }.orEmpty()
+            // #1606 the Dev Keyboard functional layout is derived from the default one (CornerSwipe.devFunctional), not a file
+            return if (layoutType == LayoutType.FUNCTIONAL && CornerSwipe.FUNCTIONAL_BASE in names && CornerSwipe.FUNCTIONAL_LAYOUT !in names)
+                (names + CornerSwipe.FUNCTIONAL_LAYOUT).sorted()
+            else names
+        }
         if (locale == null)
             return SubtypeSettings.getAllAvailableSubtypes()
                 .mapTo(HashSet()) { it.mainLayoutNameOrQwerty().substringBefore("+") }
@@ -31,6 +37,10 @@ object LayoutUtils {
     /** gets content for built-in (non-custom) layout [layoutName], with fallback to qwerty */
     fun getContent(layoutType: LayoutType, layoutName: String, context: Context): String {
         val layouts = context.assets.list(layoutType.folder)!!
+        // #1606 no file of its own: the default functional layout plus the fn key
+        if (layoutType == LayoutType.FUNCTIONAL && layoutName == CornerSwipe.FUNCTIONAL_LAYOUT && layouts.none { it.startsWith("$layoutName.") })
+            layouts.firstOrNull { it.startsWith(CornerSwipe.FUNCTIONAL_BASE + ".") }
+                ?.let { return CornerSwipe.devFunctional(context.assets.open(layoutType.folder + File.separator + it).reader().readText()) }
         layouts.firstOrNull { it.startsWith("$layoutName.") }
             ?.let { return context.assets.open(layoutType.folder + File.separator + it).reader().readText() }
         val fallback = layouts.first { it.startsWith(layoutType.default) } // must exist!

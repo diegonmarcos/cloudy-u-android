@@ -46,12 +46,18 @@ class KgConfigTest {
         assertEquals(listOf("Cloudflare Browser Run", "Cloud Headless", "Cloud Stealth"), parsed.map { it.title })
         for (s in parsed) { assertTrue(s.stack.isNotEmpty()); assertNotNull(s.link); assertTrue(s.link!!.url.isNotBlank()) }
         assertEquals("every stack key survives", shared.getJSONObject(0).getJSONObject("stack").length(), parsed[0].stack.size)
+        // #1547 the app reads it from its runtime dataset, which holds the same declaration
+        val served = KgConfig.parse(Data.kgText).headless
+        assertEquals(parsed.map { it.id }, served.map { it.id })
+        assertEquals(parsed.map { it.title to it.stack }, served.map { it.title to it.stack })
+        assertEquals(parsed.map { it.link }, served.map { it.link })
     }
 
     @Test fun meDeclaresTheRepoToCloneAtRuntime() {
         val me = MeRepo.parse(ui.getJSONObject("me").toString())
         assertTrue(me.owner.isNotBlank() && me.repo.isNotBlank())
         assertFalse("no credential in the declaration", ui.getJSONObject("me").has("token"))
+        assertEquals("the runtime dataset carries the same declaration (#1547)", me, KgConfig.parse(Data.kgText).me)
     }
 
     /** #1656 Me sources from the library repo cloned at runtime (HardTech-Chronos today, Projects-Library-KG after #1609), never from baked stub collections. */

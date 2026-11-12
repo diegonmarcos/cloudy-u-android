@@ -27,12 +27,12 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-c3 | `com.diegonmarcos.cloudc3` | 13 | 0 | 100% |
 | cloud-calc | `com.diegonmarcos.cloudcalc` | 18 | 0 | 100% |
 | cloud-camera | `cld.camera` | 11 | 0 | 100% |
-| cloud-chat | `com.diegonmarcos.comms.chat` | 6 | 0 | 100% |
+| cloud-chat | `com.diegonmarcos.comms.chat` | 8 | 0 | 100% |
 | cloud-code | `com.diegonmarcos.code` | 12 | 5 | 70% |
 | cloud-contacts | `com.diegonmarcos.cloudcontacts` | 8 | 2 | 80% |
 | cloud-dialer | `com.diegonmarcos.comms.dialer` | 9 | 2 | 81% |
 | cloud-drive | `com.diegonmarcos.clouddrive` | 17 | 6 | 73% |
-| cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 7 | 0 | 100% |
+| cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 8 | 0 | 100% |
 | cloud-mail | `com.diegonmarcos.comms.mail` | 13 | 2 | 86% |
 | cloud-matrix | `com.diegonmarcos.comms.matrix` | 4 | 9 | 30% |
 | cloud-me | `com.diegonmarcos.cloudme` | 19 | 1 | 95% |
@@ -42,7 +42,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-news | `com.diegonmarcos.cloudnews` | 9 | 1 | 90% |
 | cloud-terminal-nix | `cld.termux.nix` | 12 | 7 | 63% |
 | cloud-notes | `com.diegonmarcos.cloudnotes` | 7 | 1 | 87% |
-| cloud-office | `com.diegonmarcos.cloudoffice` | 3 | 0 | 100% |
+| cloud-office | `com.diegonmarcos.cloudoffice` | 5 | 0 | 100% |
 | cloud-search | `com.diegonmarcos.cloudsearch` | 7 | 4 | 63% |
 | cloud-store | `com.diegonmarcos.cloudstore` | 13 | 0 | 100% |
 | cloud-terminal-termux | `cld.termux` | 12 | 7 | 63% |
@@ -57,7 +57,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **430** | **57** | **88%** |
+| **fleet** | | **435** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -264,6 +264,7 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 | `apps_mesh` | prefs | config | yes | #793 the Apps Mesh page's chosen chip filter (`filter`): which members the page shows first. A view preference, so it moves with the phone; the probe cache itself is a cacheDir file and never migrates. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `autofill_sot` | prefs | config (keys: next_id→device) | yes | The non-secret autofill Source of Truth Cloud Account owns (a0_docs/eng-specs/autofill-3-tier.md): profiles_json (names, emails, phones, postal addresses), rules_json (per-site form mapping rules), snippets_json (keyboard snippets), next_id. Served to Cloud Browser and Cloud Keyboard by AutofillSotProvider behind AUTOFILL_PROFILE_READ/WRITE. Never a password, code or card: there is no column for one. |
+| `contacts_groups` | prefs | device | no | #1626 Cloud Account's Contacts pages: which groups (Friends, Family, Job, Favorites) each contact of the phone's address book is assigned to, keyed by the DEVICE contact id (the address book itself is read only). A new phone numbers its contacts differently, so the assignments would land on other people: per-device, never migrates. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
@@ -546,7 +547,7 @@ Coverage: 11 covered, 0 gaps.
 
 ## cloud-chat — `com.diegonmarcos.comms.chat`
 
-Module `ac_cloud-chat`; libs: lib-analytics, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model.
+Module `ac_cloud-chat`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -557,7 +558,10 @@ Module `ac_cloud-chat`; libs: lib-analytics, lib-core, lib-crash, lib-devtools, 
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
+| `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
+| `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
+| `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `secure_pdf_attempts` | encrypted | device | no | Mattermost secure PDF viewer wrong-password attempt counters (encrypted prefs); lockout state. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
@@ -568,7 +572,7 @@ Module `ac_cloud-chat`; libs: lib-analytics, lib-core, lib-crash, lib-devtools, 
 | `databases/ (WatermelonDB SQLite per server) and files/` | content | Mattermost local cache of teams/channels/posts; server holds the data. |
 | `app-managed server list in the app database (server URL, display name) and Keychain/Keystore tokens` | secret | Server URLs are the account link (config: pushed as chat_setup by Fleet Setup, see server-link); session tokens are secrets in the secure keystore, obtained by signing in and never pushed. Lives in the RN layer. |
 
-Coverage: 6 covered, 0 gaps.
+Coverage: 8 covered, 0 gaps.
 
 ## cloud-code — `com.diegonmarcos.code`
 
@@ -722,7 +726,7 @@ Coverage: 17 covered, 6 gaps — ai_sessions, file:filesDir/ai-sessions.json, fi
 
 ## cloud-keyboard — `com.diegonmarcos.cloudkeyboard`
 
-Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-keyboard, lib-media, lib-perms, lib-text-tools, lib-theme-background, lib-translate, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-voice.
+Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-decisions, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-keyboard, lib-media, lib-ml-l-image-ocr, lib-perms, lib-text-tools, lib-theme-background, lib-translate, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-voice, lib-writer-core, lib-writer-ui.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -738,6 +742,7 @@ Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, li
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
+| `text_tools` | prefs | config (keys: seeded_from_keyboard→device, seeded_from_serving_app→device) | yes | Mail AI text-tools choices: provider, per-provider model, enhance/summary style, translate target language (a language picker, default en), auto_translate_incoming and auto_summary_incoming switches (off by default), summary_language (default en), answer_prompt (the Answer Prediction prompt shared by the composer and the summary box suggested reply; empty means the built-in default). |
 
 | file | class | doc |
 |---|---|---|
@@ -746,7 +751,7 @@ Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, li
 | `libs:keyboard (HeliBoard) default shared prefs <pkg>_preferences` | config | Keyboard layouts, languages, theme, key behaviour; kept in the library's default prefs, not in this module's scanned list. |
 | `filesDir/vosk/<model-dir>` | device | Downloaded Vosk model files (re-downloadable); the selected model name is declared/held in the host app prefs, not in this lib |
 
-Coverage: 7 covered, 0 gaps.
+Coverage: 8 covered, 0 gaps.
 
 ## cloud-mail — `com.diegonmarcos.comms.mail`
 
@@ -1086,7 +1091,7 @@ Coverage: 7 covered, 1 gaps — datastore:auth-sessions.
 
 ## cloud-office — `com.diegonmarcos.cloudoffice`
 
-Module `ac_cloud-office`; libs: lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-ml-l-image, lib-text-tools.
+Module `ac_cloud-office`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-ml-l-image, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1094,7 +1099,10 @@ Module `ac_cloud-office`; libs: lib-core, lib-crash, lib-devtools, lib-fleetconf
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
+| `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
+| `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
+| `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 
@@ -1102,7 +1110,7 @@ Module `ac_cloud-office`; libs: lib-core, lib-crash, lib-devtools, lib-fleetconf
 |---|---|---|
 | `-` | device | keeps no configuration of its own; patches/tests only, no Android source tree (document-suite wrapper). |
 
-Coverage: 3 covered, 0 gaps.
+Coverage: 5 covered, 0 gaps.
 
 ## cloud-search — `com.diegonmarcos.cloudsearch`
 

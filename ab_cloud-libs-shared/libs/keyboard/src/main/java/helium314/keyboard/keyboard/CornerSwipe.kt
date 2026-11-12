@@ -24,6 +24,23 @@ object CornerSwipe {
     /** #1606: functional-keys layout with an fn key, used while Dev Keyboard is on */
     const val FUNCTIONAL_LAYOUT = "functional_keys_dev"
 
+    /** The functional layout [FUNCTIONAL_LAYOUT] is made from: it has no file of its own (#1547: no second baked copy of the same keys). */
+    const val FUNCTIONAL_BASE = "functional_keys"
+
+    /** The one key [FUNCTIONAL_LAYOUT] adds, right after the symbol/alpha switch of the bottom row. */
+    private const val FN_KEY = ",\n    {\n      \"label\": \"fn\",\n      \"width\": 0.1\n    }"
+
+    /**
+     * #1606 The content of [FUNCTIONAL_LAYOUT]: [base] (the [FUNCTIONAL_BASE] layout, json) with the fn key inserted after its
+     * symbol_alpha key. Every key of the base stays, in its place; a base without that key is returned unchanged.
+     */
+    @JvmStatic
+    fun devFunctional(base: String): String {
+        val at = base.indexOf("\"symbol_alpha\"")
+        val end = if (at < 0) -1 else base.indexOf('}', at)
+        return if (end < 0) base else base.substring(0, end + 1) + FN_KEY + base.substring(end + 1)
+    }
+
     @JvmStatic
     fun refreshed(context: Context): Boolean { refresh(context); return enabled }
 

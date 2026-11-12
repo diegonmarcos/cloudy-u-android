@@ -178,16 +178,26 @@ class PermissionsFragment : KitComposeFragment() {
         }
     }
 
+    /** True while the "Reset all" question is open ([ResetAllConfirm] draws it). */
+    private var confirmReset by mutableStateOf(false)
+
     /** Confirm, then revoke every runtime permission and reset every app-op / special access of this app to its default state. */
-    private fun confirmResetAll() {
-        android.app.AlertDialog.Builder(requireContext())
-            .setTitle("Reset all permissions to default")
-            .setMessage("This revokes every runtime permission and resets every app-op, special access, Do Not Disturb, " +
+    private fun confirmResetAll() { confirmReset = true }
+
+    /** The question behind "Reset all to default": the kit's Compose dialog; dismissing it (back, outside tap, Cancel) resets nothing. */
+    @Composable
+    private fun ResetAllConfirm() {
+        if (!confirmReset) return
+        com.diegonmarcos.superapp.uikit.KitConfirmDialog(
+            "Reset all permissions to default",
+            "This revokes every runtime permission and resets every app-op, special access, Do Not Disturb, " +
                 "notification access, accessibility and device-admin grant of this app back to its default state. You will " +
-                "have to grant them again. It runs through the ADB Shell channel. Continue?")
-            .setPositiveButton("Reset all") { _, _ -> resetAllToDefault() }
-            .setNegativeButton("Cancel", null)
-            .show()
+                "have to grant them again. It runs through the ADB Shell channel. Continue?",
+            "Reset all",
+            "Cancel",
+            onConfirm = { confirmReset = false; resetAllToDefault() },
+            onDismiss = { confirmReset = false },
+        )
     }
 
     private fun resetAllToDefault() {
@@ -571,6 +581,7 @@ class PermissionsFragment : KitComposeFragment() {
         Small("Revokes every runtime permission and resets every app-op, special access, Do Not Disturb, notification access, accessibility and device-admin grant for this app to default. Runs through the ADB Shell channel; needs it connected.")
         shellNote?.let { Small(it) }
         ActionButton("Reset all to default", 0xFF991B1B.toInt()) { confirmResetAll() }
+        ResetAllConfirm()
 
         ActionButton("Copy All Perms Status", DARK_VIOLET) {
             copy(ctxAny(), buildAllPermsStatus(ctxAny()))

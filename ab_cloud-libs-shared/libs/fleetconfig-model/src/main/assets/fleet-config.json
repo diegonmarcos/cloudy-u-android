@@ -2517,6 +2517,14 @@
         "ac_cloud-account"
       ]
     },
+    "contacts_groups": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1626 Cloud Account's Contacts pages: which groups (Friends, Family, Job, Favorites) each contact of the phone's address book is assigned to, keyed by the DEVICE contact id (the address book itself is read only). A new phone numbers its contacts differently, so the assignments would land on other people: per-device, never migrates.",
+      "used_by": [
+        "ac_cloud-account"
+      ]
+    },
     "wd_keeper": {
       "kind": "prefs",
       "class": "device",
@@ -3704,6 +3712,7 @@
         "lib-bottomnav",
         "lib-core",
         "lib-crash",
+        "lib-decisions",
         "lib-decisions-link",
         "lib-devtools",
         "lib-fleet-data-client",
@@ -3713,6 +3722,7 @@
         "lib-fleetconfigs-xray",
         "lib-keyboard",
         "lib-media",
+        "lib-ml-l-image-ocr",
         "lib-perms",
         "lib-text-tools",
         "lib-theme-background",
@@ -3720,7 +3730,9 @@
         "lib-ui-icons",
         "lib-ui-kit",
         "lib-ui-nav-bars",
-        "lib-voice"
+        "lib-voice",
+        "lib-writer-core",
+        "lib-writer-ui"
       ],
       "items": [
         {

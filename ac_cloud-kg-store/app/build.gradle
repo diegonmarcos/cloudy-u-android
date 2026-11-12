@@ -79,16 +79,17 @@ def fleetAppsB64 = b64(fleetManifest.apps.findAll { it.kind == 'app' }.collect {
 def debugPortsB64 = b64(new groovy.json.JsonSlurper().parse(new File(rootDir, '../1_cicd/src/data/debug-ports.json')).ports)
 // #1640 Scrapped lists the Headless Browsers stack BY REFERENCE: the ui.domains.headless key of ac_cloud-browser/build.json, the one
 // declaration Cloud Browser's Domains > Headless Browsers draws (#1637). build.json::ui.scrapped names the file and the key path.
+// #1547 nothing of it is baked: the app reads it at runtime from its kg dataset (kg.json::scrapped.headless, held equal to the
+// reference by test-kg-store-app.sh B8). The build only refuses a reference that resolves to nothing.
 def scrappedRef = buildJson.ui.scrapped
 def scrappedNode = new groovy.json.JsonSlurper().parse(new File(rootDir, scrappedRef.source))
 scrappedRef.path.each { k -> scrappedNode = scrappedNode?.get(k) }
 if (!(scrappedNode instanceof List) || scrappedNode.isEmpty()) throw new GradleException("${scrappedRef.source}::${scrappedRef.path.join('.')} missing or empty - the Scrapped page would list no stack (#1640)")
-def headlessB64 = b64(scrappedNode)
-// #1640 the repository the Me tab clones at runtime (owner, repo, ref, entry): a declaration, no credential and no repo content.
+// #1640 the repository the Me tab clones at runtime (owner, repo, ref, entry): a declaration, no credential and no repo content;
+// read at runtime from the kg dataset (kg.json::me), not baked.
 def meDecl = buildJson.ui.me
 if (!meDecl?.owner || !meDecl?.repo) throw new GradleException("build.json::ui.me.owner / repo missing - the Me tab would have nothing to clone (#1640)")
-def meB64 = b64([owner: meDecl.owner, repo: meDecl.repo, ref: meDecl.ref ?: 'main', entry: meDecl.entry ?: ''])
-[searchConfigB64, fleetServicesB64, fleetAppsB64, debugPortsB64, headlessB64, meB64].each {
+[searchConfigB64, fleetServicesB64, fleetAppsB64, debugPortsB64].each {
     if (it.length() > 65000) throw new GradleException("a baked declaration is ${it.length()} bytes: a Java string constant holds 65535")
 }
 
@@ -125,8 +126,6 @@ android {
         buildConfigField "String", "FLEET_SERVICES_B64", "\"${fleetServicesB64}\""
         buildConfigField "String", "FLEET_APPS_B64",     "\"${fleetAppsB64}\""
         buildConfigField "String", "DEBUG_PORTS_B64",    "\"${debugPortsB64}\""
-        buildConfigField "String", "HEADLESS_B64",       "\"${headlessB64}\""
-        buildConfigField "String", "ME_REPO_B64",        "\"${meB64}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 

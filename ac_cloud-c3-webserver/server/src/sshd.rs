@@ -400,7 +400,7 @@ mod tests {
         for ok in ["10.0.0.9", "10.1.0.4", "fd0c:1d00::7", "fd0c:1d01::7", "127.0.0.1", "::1", "::ffff:10.0.0.9"] {
             assert!(mesh_gate(ip(ok), true, &c), "{} is mesh or loopback", ok);
         }
-        for bad in ["192.168.1.4", "10.0.5.4", "10.2.0.1", "8.8.8.8", "fd0c:1d02::1", "2001:db8::1", "::ffff:192.168.1.4"] {
+        for bad in ["192.168.1.4", "10.0.5.4", "10.2.0.1", "203.0.113.9", "fd0c:1d02::1", "2001:db8::1", "::ffff:192.168.1.4"] {
             assert!(!mesh_gate(ip(bad), true, &c), "{} must be dropped while mesh-only is ON", bad);
         }
         assert!(mesh_gate(ip("192.168.1.4"), false, &c), "mesh-only OFF opens the port to every source (still pubkey-only)");

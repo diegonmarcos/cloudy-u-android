@@ -111,9 +111,10 @@ fun KgShell() {
                     Box(Modifier.fillMaxSize()) {
                         val kg = pageId?.let { svc.kg.page(it) }
                         when {
-                            sec?.id == Decl.SECTION_SCRAPPED -> ScrappedPage(svc)
+                            // keyed on ready: both pages read the kg dataset, so they are drawn again the moment it is served (#1547)
+                            sec?.id == Decl.SECTION_SCRAPPED -> androidx.compose.runtime.key(ready) { ScrappedPage(svc) }
                             sec?.id == Decl.SECTION_HOME -> HomePage(nav.bottomNav.filter { it != Decl.SECTION_HOME }.mapNotNull { id -> nav.section(id)?.let { id to it.label } }) { open(it, null) }
-                            sec?.id == Decl.SECTION_ME -> MePage()
+                            sec?.id == Decl.SECTION_ME -> androidx.compose.runtime.key(ready) { MePage(svc) }
                             sec?.id == Decl.SECTION_ASK ->
                                 AiChatPage(chat, theme.copy(strings = theme.strings.copy(hello = stringResource(R.string.chat_hello))), Modifier.imePadding().testTag(KgTags.CHAT), suggestions = svc.kg.ask.suggestions)
                             kg != null -> when (kg.kind) {

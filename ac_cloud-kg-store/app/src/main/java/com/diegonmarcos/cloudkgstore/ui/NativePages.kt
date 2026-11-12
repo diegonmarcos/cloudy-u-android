@@ -52,7 +52,7 @@ object NativeTags {
 /** Scrapped: one card per service of the shared Headless Browsers declaration (title, tagline, stack, note, API/MCP link). */
 @Composable
 fun ScrappedPage(svc: KgServices) {
-    val rows = HeadlessService.all
+    val rows = svc.kg.headless
     if (rows.isEmpty()) { KgNote(stringResource(R.string.scrapped_none)); return }
     LazyColumn(Modifier.fillMaxSize().testTag(NativeTags.SCRAPPED)) {
         item { KgHeading(stringResource(R.string.scrapped_heading)) }
@@ -92,8 +92,8 @@ fun meEntry(dir: File, entry: String): File? {
  * asks once for a GitHub token, which GitConnect keeps encrypted; nothing is typed in the declaration.
  */
 @Composable
-fun MePage() {
-    val decl = MeRepo.declared
+fun MePage(svc: KgServices) {
+    val decl = svc.kg.me
     if (decl == null) { KgNote(stringResource(R.string.me_undeclared), error = true); return }
     val ctx = LocalContext.current
     val gc = remember(decl) { GitConnect(ctx, GitConnectSpec("me", "Me", decl.owner, decl.repo, decl.ref, emptyList())) }

@@ -89,5 +89,69 @@
       "Which installed apps request the camera permission?"
     ],
     "mcps": ["cloud-cgc-pub-mcp"]
+  },
+  "scrapped": {
+    "_doc": "#1640 the Headless Browsers stack the Scrapped page lists, read at runtime (#1547: no BuildConfig copy). `headless` is the value of ac_cloud-browser/build.json::ui.domains.headless, the ONE declaration (#1637, Cloud Browser Domains > Headless Browsers), named by ac_cloud-kg-store/build.json::ui.scrapped; test-kg-store-app.sh B8 and KgConfigTest fail when the two differ, so edit it there and carry it here.",
+    "headless": [
+      {
+        "id": "cloudflare_browser_run",
+        "title": "Cloudflare Browser Run",
+        "tagline": "Edge Chromium renderer — stateless fallback",
+        "stack": {
+          "engine": "Headless Chromium at Cloudflare's edge (Browser Rendering REST API)",
+          "proxy": "none — but egresses from Cloudflare IPs, which dodges datacenter-IP bot walls",
+          "stealth": "none",
+          "output": "rendered HTML, markdown, screenshot, PDF, JSON, links"
+        },
+        "note": "Used as the fallback when the self-hosted browser hits a bot wall; capped ~200/day.",
+        "link": {
+          "label": "Browser Rendering REST API",
+          "url": "https://developers.cloudflare.com/browser-rendering/rest-api/",
+          "detail": "API base api.cloudflare.com/client/v4/accounts/{account}/browser-rendering/"
+        }
+      },
+      {
+        "id": "cloudy_browser_headless",
+        "title": "Cloud Headless",
+        "service": "cloudy-browser-headless",
+        "tagline": "Self-hosted Playwright browser — the default",
+        "stack": {
+          "engine": "Playwright 1.55 + Chromium (mcr.microsoft.com/playwright:v1.55.0-noble) + Node, on oci-apps:3118",
+          "proxy": "none (only a per-session URL blocklist)",
+          "stealth": "none — detects a bot wall, never evades it",
+          "output": "HTML, text, readable→markdown/json/xml, screenshot, PDF, OCR (tesseract+paddle), links, scrape; stateful sessions with persistent cookies + run(steps)"
+        },
+        "link": {
+          "label": "MCP endpoint",
+          "url": "https://mcp.diegonmarcos.com/cloudy-browser-headless",
+          "detail": "WireGuard-only, BROWSER_TOKEN bearer; mesh cloudy-browser-headless.mesh.diegonmarcos.com"
+        }
+      },
+      {
+        "id": "steel_browser",
+        "title": "Cloud Stealth",
+        "service": "steel-browser",
+        "tagline": "Steel Browser — authorized security testing",
+        "stack": {
+          "engine": "upstream Steel Browser (ghcr.io/steel-dev/steel-browser, Apache-2.0) behind a Caddy bearer sidecar",
+          "proxy": "none configured (optional ZAP route 10.0.0.6:8086)",
+          "stealth": "upstream Steel defaults only — no residential/mobile proxy pool, no CAPTCHA solver configured by the fleet",
+          "output": "full stateful session browser"
+        },
+        "note": "Mesh-only, no public route; for owner-authorized security testing of own services.",
+        "link": {
+          "label": "Steel API",
+          "url": "https://steel-browser.mesh.diegonmarcos.com:3000",
+          "detail": "mesh-only, Bearer STEEL_API_KEY"
+        }
+      }
+    ]
+  },
+  "me": {
+    "_doc": "#1640 the repository the Me tab clones at runtime: the owner, repo, ref and entry of ac_cloud-kg-store/build.json::ui.me, read at runtime (#1547: no BuildConfig copy). No credential. test-kg-store-app.sh B8 and KgConfigTest hold the two in step.",
+    "owner": "diegonmarcos",
+    "repo": "HardTech-Chronos",
+    "ref": "main",
+    "entry": "index.html"
   }
 }
