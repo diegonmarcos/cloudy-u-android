@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- #1698 the Writer tab's Tools shells extend AppCompatActivity (libs:writer-ui WriterSettingsActivity), which
+         requires an AppCompat theme; no action bar (the host draws the fleet bars), same as ac_cloud-writer. -->
+    <style name="Theme.KeyboardWriterTools" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35" xmlns:tools="http://schemas.android.com/tools">true</item>
+    </style>
+</resources>

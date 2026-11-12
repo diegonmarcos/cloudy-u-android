@@ -151,6 +151,8 @@ dependencies {
     implementation project(':libs:media')
     implementation project(':libs:translate')
     implementation project(':libs:voice')
+    // #1698 WriterSettingsActivity (the Tools shells in com.diegonmarcos.cloudwriter) extends AppCompatActivity
+    implementation 'androidx.appcompat:appcompat:1.7.0'
     // Debug-only screenshot host (ShotActivity), same BOM as the superapp.
     debugImplementation platform('androidx.compose:compose-bom:2025.11.01')
     debugImplementation 'androidx.activity:activity-compose:1.9.3'
