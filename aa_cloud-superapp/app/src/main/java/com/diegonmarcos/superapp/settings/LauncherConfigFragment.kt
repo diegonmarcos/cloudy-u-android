@@ -643,10 +643,8 @@ class LauncherConfigFragment : KitComposeFragment() {
     private fun applySystemBrightness(ctx: android.content.Context, value: Int) {
         if (value < 0) return
         if (!Settings.System.canWrite(ctx)) {
-            runCatching {
-                startActivity(Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS,
-                    Uri.parse("package:" + ctx.packageName)))
-            }
+            // #1515 the grant lives in Configs > Perms: open it on the Modify-system-settings row.
+            runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "Launcher: system brightness", listOf("write_settings")) }
             return
         }
         runCatching {

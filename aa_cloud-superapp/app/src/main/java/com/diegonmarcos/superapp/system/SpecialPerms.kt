@@ -82,10 +82,9 @@ object SpecialPerms {
     fun request(activity: Activity, kind: Kind) {
         when (kind) {
             Kind.INSTALL_UNKNOWN -> {
-                val scoped = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:${activity.packageName}"))
-                if (runCatching { activity.startActivity(scoped) }.isFailure)
-                    runCatching { activity.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)) }
+                // #1515 the settings ladder (scoped page, then the list, then App info) is libs:perms' own
+                // (catalogue entry install_unknown); this app never builds that intent itself.
+                ScreenLocker.openPermsSettings(activity, "install_unknown")
             }
             Kind.HOME -> {
                 val viaRole = Build.VERSION.SDK_INT >= 29 && runCatching {

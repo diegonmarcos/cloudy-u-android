@@ -54,8 +54,10 @@ class WeatherFaceTest {
 
     @Test fun eachButtonOpensTheRightScreen() {
         val app = WeatherFace.intentFor(ctx, Action.APP_SETTINGS)
-        assertEquals(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, app.action)
-        assertEquals("package:" + ctx.packageName, app.dataString)
+        // #1515 the location grants live in Configs > Perms: the button opens the Perms page on the location rows.
+        assertEquals(com.diegonmarcos.superapp.perms.PermsActivity::class.java.name, app.component?.className)
+        assertEquals(listOf("fine_location", "coarse_location", "background_location"),
+            app.getStringArrayExtra("com.diegonmarcos.perms.IDS")?.toList())
         assertEquals(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, WeatherFace.intentFor(ctx, Action.LOCATION_SETTINGS).action)
         assertEquals(WeatherBadgeService::class.java.name, WeatherFace.intentFor(ctx, Action.RETRY).component?.className)
     }

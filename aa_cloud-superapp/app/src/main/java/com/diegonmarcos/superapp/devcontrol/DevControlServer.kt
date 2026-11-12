@@ -472,9 +472,11 @@ object DevControlServer {
                     // Self-grant DUMP through whichever shell channel is up
                     // (the local server or Shizuku) so dumpsys also works
                     // in-process. Signature|privileged|DEVELOPMENT perm, so
-                    // `pm grant` is allowed from the shell domain.
+                    // a shell grant is allowed. #1515 the line is built and run by the privileged plane
+                    // (PrivilegedGrants, the Perms page's own grant pass), never here.
                     val ch = com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)
-                    val out = ch?.exec(ctx, "pm grant ${ctx.packageName} android.permission.DUMP")
+                    val out = if (ch == null) null else com.diegonmarcos.superapp.system.PrivilegedGrants.grant(ctx,
+                        com.diegonmarcos.superapp.system.PrivilegedGrants.Target(ctx.packageName, "android.permission.DUMP", "Dump system services")) { ch.exec(ctx, it) }
                     val held = ctx.checkSelfPermission("android.permission.DUMP") ==
                         android.content.pm.PackageManager.PERMISSION_GRANTED
                     val body = """{"channel":"${jsonEscape(ch?.name() ?: "none")}","ran":${out != null},"held":$held,"output":"${jsonEscape(out ?: "no shell channel ready")}"}"""
@@ -587,7 +589,7 @@ object DevControlServer {
             Spec("supersaving/off",     "GET",  true,  "#1506 Super Saving Battery Mode off: restore the snapshot in reverse order, exactly. Returns the per-step result.", ""),
             Spec("devcontrol/control",  "GET",  true,  "#904 Flip one Control-panel switch (the DeviceControls catalog, build.json::ui.control_panel ids): ?id=mesh&on=1|0 → {ok, detail, state}; without on → the live state and the blocked reason. The tile's own set/blocked run, so nothing the panel refuses is done here.", "id=<control id>&on=1|0"),
             Spec("devcontrol/tuning",   "GET",  true,  "Device tuning state — every entry of data/device-tuning.json (the Android 12+ phantom-process-killer fix the Cloud Terminal needs, …) with the state DeviceTuning recorded on its last pass through this app's own shell: APPLIED / PENDING (no shell yet) / FAILED (+ truncated output) + timestamp. Read-only; the pass itself runs after every successful plane connect (pairing, app start).", ""),
-            Spec("adb/grant-dump",      "GET",  true,  "Self-grant android.permission.DUMP via `pm grant` through the active shell channel, so dumpsys also works IN-PROCESS. DUMP is signature|privileged|DEVELOPMENT, so pm grant from the shell domain is allowed. Returns {channel,ran,held,output}.", ""),
+            Spec("adb/grant-dump",      "GET",  true,  "Self-grant android.permission.DUMP through the privileged plane (PrivilegedGrants, the Perms page grant pass) on the active shell channel, so dumpsys also works IN-PROCESS. DUMP is signature|privileged|DEVELOPMENT, so a shell grant is allowed. Returns {channel,ran,held,output}.", ""),
             Spec("adb/sfc",             "GET",  true,  "Samsung Super Fast Charging verdict — runs the data-driven `samsung-sfc` bundle (getprop model + dumpsys battery) through the shell-channel ladder and parses it into {tier,verdict,reasons[],device_max_watts,high_voltage_engaged,saved_max_current_ma,cable_suspect,sfc_setting_on}. Tiers: FAST_HV (negotiated) / SLOW_5V (charger-PPS or thermal suspect) / FULL_OR_TAPERING (full → healthy, not denied) / NOT_CHARGING. Answers 'why isn't my 100W cable fast-charging' WITHOUT a drained battery: surfaces the device watt-ceiling, whether the SFC toggle is on, and the peak current ever recorded. Parser is pure + JVM-tested against protocol fixtures (libs:shizuku-adb-debug-tools/SfcVerdict).", ""),
         )
         val sb = StringBuilder()

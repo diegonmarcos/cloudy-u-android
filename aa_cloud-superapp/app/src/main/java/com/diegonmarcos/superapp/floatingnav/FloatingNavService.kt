@@ -443,10 +443,8 @@ class FloatingNavService : Service() {
     private fun toggleDnd() {
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (!nm.isNotificationPolicyAccessGranted) {
-            runCatching {
-                startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }
+            // #1515 the grant lives in Configs > Perms: open it on the Do Not Disturb row.
+            runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(this, "Floating nav: Do Not Disturb", listOf("dnd_access")) }
             return
         }
         val dndOn = nm.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL

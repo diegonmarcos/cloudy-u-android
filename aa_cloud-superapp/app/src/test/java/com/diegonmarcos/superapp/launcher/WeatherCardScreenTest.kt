@@ -88,10 +88,9 @@ class WeatherCardScreenTest : KitPageHarness() {
         assertEquals(androidx.compose.ui.semantics.Role.Button,
             compose.onNodeWithTag(BadgeCardTags.action(WeatherBadgeService.BADGE_ID, "app_settings")).fetchSemanticsNode()
                 .config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Role))
-        // The button's PendingIntent opens this app's settings page (where Location is granted).
+        // The button's PendingIntent opens Configs > Perms on the location rows (#1515: the grant lives there).
         val saved = org.robolectric.Shadows.shadowOf(none.actions.single().intent).savedIntents.single()
-        assertEquals(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, saved.action)
-        assertEquals("package:" + ctx.packageName, saved.dataString)
+        assertEquals(com.diegonmarcos.superapp.perms.PermsActivity::class.java.name, saved.component?.className)
         snap("weather-card-nofix.png")
         // A seeded card has no button at all.
         showKit { Column(androidx.compose.ui.Modifier.fillMaxSize().background(NotifCard.panel).padding(12.dp)) { BadgeCard(withFix) } }

@@ -141,10 +141,8 @@ private fun NotificationAccessOff(extra: String? = null, onOpen: ((String) -> Un
             Text("Open Configs ▸ Perms", color = LocalKitPalette.current.accent)
         }
         com.diegonmarcos.superapp.uikit.KitTextButton(modifier = Modifier.testTag(TAG_GRANT), onClick = {
-            runCatching {
-                ctx.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }
+            // #1515 the grant lives in Configs > Perms: open it on the notification-listener row.
+            runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "Notify: phone notifications", listOf("notification_listener")) }
         }) { Text("Grant Notification Access", color = LocalKitPalette.current.accent) }
     }
 }

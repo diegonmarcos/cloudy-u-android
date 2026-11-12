@@ -169,7 +169,7 @@ object DeviceControls {
                 if (notifications(ctx)?.isNotificationPolicyAccessGranted == true) ""
                 else "Do Not Disturb access is not granted to this app yet."
             },
-            open = { ctx -> open(ctx, Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS) },
+            open = { ctx -> perms(ctx, "Control panel: Do Not Disturb", "dnd_access") },
         ),
 
         // CATEGORY 2. ACCELEROMETER_ROTATION is a public Settings.System key
@@ -193,10 +193,7 @@ object DeviceControls {
                 if (Settings.System.canWrite(ctx)) ""
                 else "\"Modify system settings\" is not granted to this app yet."
             },
-            open = { ctx ->
-                open(ctx, Settings.ACTION_MANAGE_WRITE_SETTINGS,
-                    android.net.Uri.parse("package:" + ctx.packageName))
-            },
+            open = { ctx -> perms(ctx, "Control panel: system settings", "write_settings") },
         ),
 
         // CATEGORY 2, and the one control whose whole ladder was already
@@ -433,10 +430,7 @@ object DeviceControls {
                 if (Settings.canDrawOverlays(ctx)) ""
                 else "\"Display over other apps\" is not granted to this app yet."
             },
-            open = { ctx ->
-                open(ctx, Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    android.net.Uri.parse("package:" + ctx.packageName))
-            },
+            open = { ctx -> perms(ctx, "Control panel: overlay", "overlay") },
         ),
 
         // CATEGORY 1. Apps/Admin is this app's own global view mode. Written
@@ -495,10 +489,7 @@ object DeviceControls {
                 if (Settings.System.canWrite(ctx)) ""
                 else "\"Modify system settings\" is not granted to this app yet."
             },
-            open = { ctx ->
-                open(ctx, Settings.ACTION_MANAGE_WRITE_SETTINGS,
-                    android.net.Uri.parse("package:" + ctx.packageName))
-            },
+            open = { ctx -> perms(ctx, "Control panel: system settings", "write_settings") },
         ),
     )
 
@@ -613,6 +604,11 @@ object DeviceControls {
         val tm = ctx.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
         runCatching { tm?.isDataEnabled }.getOrNull()?.let { return it }
         return globalInt(ctx, "mobile_data")?.let { it == 1 }
+    }
+
+    /** #1515 a missing grant is fixed in Configs > Perms: open the page on that row (never a settings intent here). */
+    private fun perms(ctx: Context, feature: String, id: String) {
+        runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, feature, listOf(id)) }
     }
 
     private fun open(ctx: Context, action: String, data: android.net.Uri? = null) {

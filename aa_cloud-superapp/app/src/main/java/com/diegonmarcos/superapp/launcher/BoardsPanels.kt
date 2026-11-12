@@ -141,10 +141,8 @@ internal fun BoardInboxBody(state: AggregatorState, onOpen: (String) -> Unit) {
         if (mail is Read.Unavailable) BoardUnavailable("mail", mail, installFix(onOpen, mail.why, "extapp:cloud-mail", "Cloud Mail"))
         if (phone is Read.Unavailable) BoardUnavailable("phone", phone, if (phone.why == Why.NO_PERMISSION)
             KitAction("Grant Notification Access", "fix:notification_access") {
-                runCatching {
-                    ctx.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                }
+                // #1515 the grant lives in Configs > Perms: open it on the notification-listener row.
+                runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "Boards: phone inbox", listOf("notification_listener")) }
             } else null)
         val groups = Boards.group((mail as? Read.Ok)?.value.orEmpty(), (phone as? Read.Ok)?.value.orEmpty())
         if (groups.isEmpty()) {

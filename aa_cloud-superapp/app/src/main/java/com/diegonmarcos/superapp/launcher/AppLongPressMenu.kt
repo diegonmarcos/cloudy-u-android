@@ -146,12 +146,8 @@ object AppLongPressMenu {
         // App info — Settings → Apps → ThisApp.
         configs += Row("App info") {
             close()
-            runCatching {
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .setData(Uri.fromParts("package", pkg, null))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                ctx.startActivity(intent)
-            }
+            // #1515 the App info intent is built in libs:perms (PermsPages), the one place that opens settings pages.
+            runCatching { com.diegonmarcos.superapp.perms.PermsPages.openAppInfo(ctx, pkg) }
         }
 
         // Uninstall — modern PackageInstaller.uninstall(): reliably raises the

@@ -291,10 +291,8 @@ class OneHandFragment : KitComposeFragment() {
                 color = Color(0xFFFF8A80), fontSize = 13.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("onehand:overlay-banner"))
             ConfigButton("Grant 'Display over other apps'", plate = Color(0xFFB3261E)) {
-                runCatching {
-                    ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        android.net.Uri.parse("package:" + ctx.packageName)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
-                }
+                // #1515 the grant lives in Configs > Perms: open it on the overlay row.
+                runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "One-Hand edge menus", listOf("overlay")) }
             }
         }
 

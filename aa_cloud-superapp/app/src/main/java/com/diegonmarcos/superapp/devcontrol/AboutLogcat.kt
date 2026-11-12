@@ -97,8 +97,8 @@ internal object AboutLogcat {
                 com.diegonmarcos.superapp.adbdebug.ShizukuAdb.exec(ctx, cmd) else null)
         return out?.ifBlank { "(empty — nothing in the buffer for this scope)" }
             ?: ("Reading another app's logs needs READ_LOGS, which Android will not give an " +
-                "app at install time.\n\nTap \"Enable all-app logs\" below: it runs " +
-                "`pm grant` through Shizuku or a paired adb ONCE, and the grant sticks — after " +
+                "app at install time.\n\nTap \"Enable all-app logs\" below: it opens Configs > Perms, whose " +
+                "Privileged row grants it through Shizuku or a paired adb ONCE, and the grant sticks — after " +
                 "that this works with Shizuku stopped.\n\nShell channel: " +
                 (com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)?.name() ?: "none ready") +
                 "\nShizuku: " + com.diegonmarcos.superapp.adbdebug.ShizukuAdb.status())
@@ -201,24 +201,17 @@ internal fun AboutLogcatViewer(onExport: (text: String, fileName: String) -> Uni
             Text("✓ READ_LOGS granted — All Apps and Select a App read every app, in this process, with Shizuku stopped.",
                 color = p.ok, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
         } else {
+            // #1515 READ_LOGS is granted in Configs > Perms (its Privileged row runs the one-time shell grant through
+            // Shizuku or a paired adb); this button opens the page there, and the row re-reads the grant on return.
+            val resumes = com.diegonmarcos.superapp.perms.rememberPermsResumes()
+            androidx.compose.runtime.LaunchedEffect(resumes) {
+                val now = AboutLogcat.holdsReadLogs(ctx)
+                if (now && !held) { held = true; refresh() }
+            }
             com.diegonmarcos.superapp.uikit.KitButton(enabled = !granting, modifier = Modifier.fillMaxWidth().testTag("about:log:grant"), onClick = {
-                granting = true
-                scope.launch {
-                    // Binds a shell channel — never on the main thread.
-                    val r = withContext(Dispatchers.IO) {
-                        com.diegonmarcos.superapp.adbdebug.ShizukuAdb.grant(ctx, "android.permission.READ_LOGS")
-                    }
-                    actions.toast(when {
-                        r.held -> "READ_LOGS granted"
-                        !r.ran -> r.output
-                        else -> "pm grant ran but the permission is still not held: ${r.output}"
-                    })
-                    granting = false
-                    held = AboutLogcat.holdsReadLogs(ctx)
-                    if (r.held) refresh()
-                }
-            }) { Text(if (granting) "Granting…" else "Enable all-app logs (one-time grant)") }
-            Text("Runs `pm grant` once through Shizuku or a paired adb. The grant persists, so nothing needs to stay running afterwards.",
+                runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "Logcat: all apps", listOf("read_logs")) }
+            }) { Text("Enable all-app logs (one-time grant in Configs ▸ Perms)") }
+            Text("Opens Configs ▸ Perms on the READ_LOGS row: one shell grant through Shizuku or a paired adb. The grant persists, so nothing needs to stay running afterwards.",
                 color = p.textSecondary, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
         }
 

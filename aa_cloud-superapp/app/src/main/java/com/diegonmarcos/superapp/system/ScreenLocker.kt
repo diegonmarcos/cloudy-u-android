@@ -88,16 +88,29 @@ object ScreenLocker {
      *  task to attach to. The user sees a single-policy ("force
      *  lock") summary + an explanation we control. */
     fun requestActivation(activity: Activity) {
-        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
-            putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, componentName(activity))
-            putExtra(
+        // #1515 the add-admin intent is libs:perms' catalogue entry device_admin (it carries our receiver); only the
+        // explanation text is added here.
+        openPermsSettings(activity, "device_admin") {
+            it.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, componentName(activity))
+            it.putExtra(
                 DevicePolicyManager.EXTRA_ADD_EXPLANATION,
                 "Allows the Cloud SuperApp to lock the screen on a home double-tap. " +
                     "Only one capability is granted (force-lock). Revoke any time in " +
                     "Settings → Security → Device admin apps.",
             )
         }
-        activity.startActivity(intent)
+    }
+
+    /**
+     * #1515 opens the settings page of catalogue entry [id] through libs:perms' own ladder (PermsSettings.intents: the
+     * exact page, its fallbacks, App info), first one that answers wins; [extra] decorates each intent. Never throws:
+     * false when no page opened or the entry is unknown on this build.
+     */
+    fun openPermsSettings(ctx: Context, id: String, extra: (Intent) -> Unit = {}): Boolean {
+        val e = runCatching { com.diegonmarcos.superapp.perms.Perms.catalogue(ctx).entries.firstOrNull { it.id == id } }.getOrNull()
+            ?: return false
+        val intents = runCatching { com.diegonmarcos.superapp.perms.PermsSettings.intents(ctx, e) }.getOrDefault(emptyList())
+        return intents.any { i -> runCatching { extra(i); ctx.startActivity(i) }.isSuccess }
     }
 
     /** Open Settings → Security → Device admin apps directly when
@@ -113,9 +126,7 @@ object ScreenLocker {
      *  LockScreenAccessibilityService — the preferred path because
      *  it preserves Smart Lock + biometric. */
     fun openSystemAccessibilitySettings(ctx: Context) {
-        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        ctx.startActivity(intent)
+        openPermsSettings(ctx, "accessibility")
     }
 
     /** Open Settings → Apps → Cloud SuperApp (the per-app info
@@ -126,10 +137,7 @@ object ScreenLocker {
      *  tapping our service in the Accessibility list silently does
      *  nothing because the toggle is system-disabled. */
     fun openAppInfo(ctx: Context) {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-            .setData(android.net.Uri.fromParts("package", ctx.packageName, null))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        ctx.startActivity(intent)
+        com.diegonmarcos.superapp.perms.PermsPages.openAppInfo(ctx, ctx.packageName)
     }
 
     /** True iff our accessibility service is enabled in the system's
