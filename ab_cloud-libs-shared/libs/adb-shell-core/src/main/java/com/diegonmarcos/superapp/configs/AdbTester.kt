@@ -11,7 +11,8 @@ import com.diegonmarcos.superapp.system.AdbReadiness
  * Per command: the command, the channel that answered, exit code, round-trip time, first lines of output or the exact error.
  * Runs only when tapped; never throws.
  */
-internal object AdbTester {
+/** #1682 P3 step 4a: owner-side lib (libs:adb-shell-core), public so the SuperApp host and the webserver owner side share it. */
+object AdbTester {
 
     data class Line(val cmd: String, val ok: Boolean, val channel: String, val exit: Int?, val ms: Long, val output: String)
 

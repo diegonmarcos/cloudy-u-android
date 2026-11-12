@@ -12,8 +12,10 @@ HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$HERE/.." && pwd)"
 D="$ROOT/app/src/main/java/com/diegonmarcos/superapp/configs"; T="$ROOT/app/src/test/java/com/diegonmarcos/superapp"
 PASS=0; FAIL=0; ok(){ PASS=$((PASS+1)); echo "  PASS: $1"; }; bad(){ FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
 code(){ python3 -c 'import re,sys;print(re.sub(r"/\*.*?\*/|//[^\n]*","",open(sys.argv[1],encoding="utf-8").read(),flags=re.S))' "$1"; }
-M="$(code "$D/AdbShellModel.kt")"; P="$(code "$D/AdbShellBrokerPage.kt")"
-python3 - "$D/AdbShellModel.kt" <<'PY' && ok "seven sections in order" || bad "sections missing or out of order"
+# #1682 P3 step 4a: the model (and its JVM test) live in the owner-side lib libs:adb-shell-core, same package.
+LD="$ROOT/../ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/configs"; LT="$ROOT/../ab_cloud-libs-shared/libs/adb-shell-core/src/test/java/com/diegonmarcos/superapp"
+M="$(code "$LD/AdbShellModel.kt")"; P="$(code "$D/AdbShellBrokerPage.kt")"
+python3 - "$LD/AdbShellModel.kt" <<'PY' && ok "seven sections in order" || bad "sections missing or out of order"
 import re, sys
 s = open(sys.argv[1], encoding='utf-8').read()
 ids = re.findall(r'^\s+[A-Z_]+\("(\w+)", "[^"]+", (?:true|false),', s, re.M)
@@ -27,5 +29,5 @@ echo "$P" | grep -E 'Button\(|minHeight|defaultMinSize|heightIn' >/dev/null && b
 echo "$P" | grep -q 'console = { AdbShellPage() }' && ok "#1550 the console hosts the full lib page" || bad "#1550 the full channel console is not hosted"
 echo "$P" | grep -q 'for (sec in AdbShellModel.ORDER)' && ok "drawn from AdbShellModel.ORDER" || bad "not drawn from the declared order"
 echo "$P" | grep -q 'ON_RESUME' && ! echo "$P" | grep -Eq 'while \(true\)|delay\(' && ok "loads on open and resume, no polling" || bad "polls, or does not reload on resume"
-for f in configs/AdbShellModelTest configs/AdbShellBrokerPageTest launcher/AdbPeerDotsTest launcher/StatusBarDeclTest; do [ -f "$T/$f.kt" ] && ok "tests: $f" || bad "missing tests: $f"; done
+for f in configs/AdbShellModelTest configs/AdbShellBrokerPageTest launcher/AdbPeerDotsTest launcher/StatusBarDeclTest; do { [ -f "$T/$f.kt" ] || [ -f "$LT/$f.kt" ]; } && ok "tests: $f" || bad "missing tests: $f"; done
 echo "== RESULT: $PASS passed, $FAIL failed =="; [ "$FAIL" -eq 0 ]

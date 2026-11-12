@@ -9,7 +9,8 @@ import com.diegonmarcos.superapp.shellclient.ShellStatus
  * #1522 The SuperApp's ADB Shell page as DATA: its sections in order, which of them start collapsed, the one primary action and
  * the pure row models. #1550 CONSOLE hosts the lib's full channel console (AdbShellPage, sections 1-7) that #1522 had dropped. [AdbShellBrokerPage] draws exactly this; no section is named anywhere else.
  */
-internal object AdbShellModel {
+/** #1682 P3 step 4a: owner-side lib (libs:adb-shell-core), public so the SuperApp host and the webserver owner side share it. */
+object AdbShellModel {
     /** [collapsed] = folded until tapped (the two logs). [help] = the section's one short line, or empty. */
     enum class Section(val id: String, val title: String, val collapsed: Boolean, val help: String) {
         STATUS("status", "Status", false, ""),

@@ -16,7 +16,7 @@ import java.io.File
  * (exit code, duration, status), search, export and the ANSI SGR parser.
  */
 class TerminalModelTest {
-    private val raw = File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText()
+    private val raw = File("../shell-broker/src/main/assets/shell-allowlist.json").readText()
     private val d = TerminalModel.parse(raw)
     private val list = Allowlist.parse(raw)
 

@@ -8,7 +8,8 @@ import org.json.JSONObject
  * history with up/down recall, autocomplete, per-command entries (timestamp, duration, exit code, state), output search and
  * the plain-text export. AdbTerminal draws exactly this.
  */
-internal object TerminalModel {
+/** #1682 P3 step 4a: owner-side lib (libs:adb-shell-core), public so the SuperApp host and the webserver owner side share it. */
+object TerminalModel {
 
     // ── declared data ──────────────────────────────────────────────────────────────────────────────
 
