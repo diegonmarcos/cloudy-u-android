@@ -27,7 +27,10 @@ Exit 1 on any finding. Rules:
                           requestPermissions / RequestPermission(s), opens a special-access or App-info settings intent, or runs
                           `pm grant` / `appops set`. one_place.exceptions are declared in data (bgpolicy acts on OTHER apps);
                           one_place.baseline lists the sites not moved yet (path or dir/ prefix + reason), may only shrink
-                          (baseline_max), and an entry that no longer violates must be dropped
+                          (baseline_max), and an entry that no longer violates must be dropped. one_place.forks (#1515 strict)
+                          names each vendored upstream fork (dir prefix + why) and EVERY file in it that asks, with the exact
+                          tokens it uses: an unlisted file, an unlisted token, or a listed file / token that no longer asks
+                          is red, so a fork exemption can never cover new code
 """
 import glob
 import json
@@ -260,6 +263,16 @@ def one_place(policy, apps):
     bad = []
     tokens, allow = op["tokens"], op["allow"]
     exc = [(e["path"], set(e["tokens"]), e.get("why", "")) for e in op.get("exceptions", [])]
+    forks = op.get("forks", {})
+    fork_seen = {}
+    for fd, fk in forks.items():
+        if fd.startswith("_"):
+            continue
+        if len(fk.get("why", "")) < 20:
+            bad.append("policy: one_place.forks[%s] needs a why" % fd)
+        for fp in fk.get("files", {}):
+            if not fp.startswith(fd):
+                bad.append("policy: one_place.forks[%s] lists %s, which is not inside the fork" % (fd, fp))
     base = {k: v for k, v in op.get("baseline", {}).items() if not k.startswith("_")}
     hit_base = set()
     for e in op.get("exceptions", []):
@@ -279,6 +292,14 @@ def one_place(policy, apps):
                     toks -= etoks
             if not toks:
                 continue
+            fd = next((d for d in forks if not d.startswith("_") and rel.startswith(d)), None)
+            if fd is not None:
+                listed = set(forks[fd].get("files", {}).get(rel, []))
+                fork_seen[rel] = toks
+                extra = toks - listed
+                if extra:
+                    bad.append("P7 %s (vendored fork %s) asks with %s, which one_place.forks does not list for this file: route it to the Perms page, or list the exact file and token with the fork's why" % (rel, fd, ", ".join(sorted(extra))))
+                continue
             key = next((k for k in base if rel == k or (k.endswith("/") and rel.startswith(k))), None)
             if key:
                 hit_base.add(key)
@@ -291,6 +312,13 @@ def one_place(policy, apps):
             bad.append("policy: one_place.baseline[%s] needs a reason" % k)
         if k not in hit_base:
             bad.append("policy: one_place.baseline[%s] no longer violates: drop it (the list only shrinks)" % k)
+    for fd, fk in forks.items():
+        if fd.startswith("_"):
+            continue
+        for fp, ftoks in fk.get("files", {}).items():
+            gone = set(ftoks) - fork_seen.get(fp, set())
+            if gone:
+                bad.append("policy: one_place.forks[%s] lists %s for %s, which no longer asks with it: drop it (the list only shrinks)" % (fd, ", ".join(sorted(gone)), fp))
     cap = op.get("baseline_max")
     if cap is not None and len(base) > cap:
         bad.append("policy: one_place.baseline has %d entries, more than baseline_max %d (the list may only shrink)" % (len(base), cap))

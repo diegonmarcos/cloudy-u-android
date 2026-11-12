@@ -143,7 +143,7 @@
   },
   "pending_page_max": 0,
   "one_place": {
-    "_doc": "#1515 P7 of 1_cicd/src/scripts/cloud-android-perms-guard.py. tokens: calls an app may make only from its Perms page. allow: path substrings of the places that may (the libs:perms lib and each app's declared Perms page). exceptions: declared in data, code that acts on OTHER apps. baseline: sites not moved into a Perms row yet (exact file, or a dir/ prefix for a vendored fork); the list only shrinks (baseline_max) and an entry that stops violating must be removed. allow also names an activity that must register the launcher its own Perms page uses (Cloud Me MainActivity hosts Configs > Perms: the Configs rows and the start-up walk go through its one launcher).",
+    "_doc": "#1515 P7 of 1_cicd/src/scripts/cloud-android-perms-guard.py. tokens: calls an app may make only from its Perms page. allow: path substrings of the places that may (the libs:perms lib and each app's declared Perms page). exceptions: declared in data, code that acts on OTHER apps. baseline: sites not moved into a Perms row yet (exact file, or a dir/ prefix for a vendored fork); the list only shrinks (baseline_max) and an entry that stops violating must be removed. allow also names an activity that must register the launcher its own Perms page uses (Cloud Me MainActivity hosts Configs > Perms: the Configs rows and the start-up walk go through its one launcher). #1515 strict (2026-11-12): baseline is empty and baseline_max 0 (every owner-written asker moved into Configs > Perms); forks lists the vendored upstream files that still ask, file by file and token by token.",
     "tokens": [
       "requestPermissions(",
       "RequestPermission",
@@ -186,33 +186,224 @@
         "why": "Background policy (bgpolicy) acts on OTHER fleet apps through the shell broker (cmd appops set, standby bucket); it never changes this app's own grants"
       }
     ],
-    "baseline": {
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/AboutLogcat.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlServer.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/floatingnav/FloatingNavService.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/WeatherFace.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/AggregatorNotify.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/AppLongPressMenu.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/BoardsPanels.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/settings/LauncherConfigFragment.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/DeviceControls.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/OneHandFragment.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/SpecialPerms.kt": "not moved into a Perms row yet (#1515)",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/ScreenLocker.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-camera/app/src/main/java/cld/camera/identify/IdentifyActivity.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-camera/app/src/main/java/cld/camera/ui/activities/MainActivity.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-dialer/": "vendored Fossify Phone fork: its own SMS and dialer screens ask",
-      "ac_cloud-matrix/": "vendored Element X fork: its own presenters ask; not an owner-written screen (Perms page per #1360 pending_page class)",
-      "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/tracker/StepsRepository.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/tracker/TrackerEngineFragment.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/configs/UpdateConfigFragment.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/configs/DevControlFragment.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-nix-on-droid/": "vendored Termux/nix-on-droid fork (termux-shared PermissionUtils); upstream code",
-      "ac_cloud-code/src/plugins/": "Acode Cordova plugins (terminal notification ask, Chat microphone ask, System all-files/storage ask): the grants are listed in Configs > Perms now; moving the plugin asks into libs:perms is the follow-up",
-      "ac_cloud-termux/": "vendored Termux fork (termux-shared PermissionUtils); upstream code, not owner-written",
-      "ac_cloud-vault/": "vendored Bitwarden fork: its own permission manager asks; replaced only with the fork's own screens"
+    "baseline": {},
+    "forks": {
+      "_doc": "#1515 strict: every vendored upstream fork that asks, with EVERY file in it that asks and the exact tokens it uses. A new file or token in a fork is red, a listed one that stops asking is red (the list only shrinks); owner code has no entry here and asks only from libs:perms / its Perms page.",
+      "ac_cloud-dialer/": {
+        "why": "vendored Fossify Phone fork (upstream org.fossify.phone code): its dialer and SMS screens ask through the fork's own flow; the grants are rows of Configs > Perms (build.json perms.needs)",
+        "files": {
+          "ac_cloud-dialer/app/src/main/kotlin/org/fossify/phone/activities/DialerActivity.kt": [
+            "ACTION_APPLICATION_DETAILS_SETTINGS",
+            "APPLICATION_DETAILS_SETTINGS"
+          ],
+          "ac_cloud-dialer/app/src/main/kotlin/org/fossify/phone/activities/MainActivity.kt": [
+            "ACTION_MANAGE_OVERLAY_PERMISSION",
+            "MANAGE_OVERLAY_PERMISSION"
+          ],
+          "ac_cloud-dialer/app/src/main/kotlin/org/fossify/phone/sms/ConversationActivity.kt": [
+            "RequestMultiplePermissions"
+          ],
+          "ac_cloud-dialer/app/src/main/kotlin/org/fossify/phone/sms/SmsComposeActivity.kt": [
+            "RequestMultiplePermissions"
+          ],
+          "ac_cloud-dialer/app/src/main/kotlin/org/fossify/phone/sms/SmsListController.kt": [
+            "RequestMultiplePermissions",
+            "requestPermissions("
+          ]
+        }
+      },
+      "ac_cloud-matrix/": {
+        "why": "vendored Element X fork (upstream io.element.android): its presenters and permission library ask; most hits are Matrix protocol names (KnockRequestPermissions); the grants are rows of Configs > Perms",
+        "files": {
+          "ac_cloud-matrix/features/call/impl/src/main/kotlin/io/element/android/features/call/impl/ui/CallScreenView.kt": [
+            "RequestPermission",
+            "requestPermissions("
+          ],
+          "ac_cloud-matrix/features/call/impl/src/main/kotlin/io/element/android/features/call/impl/ui/ElementCallActivity.kt": [
+            "RequestMultiplePermissions",
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/createroom/impl/src/main/kotlin/io/element/android/features/createroom/impl/configureroom/ConfigureRoomPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/ftue/impl/src/main/kotlin/io/element/android/features/ftue/impl/notifications/NotificationsOptInPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/knockrequests/api/src/main/kotlin/io/element/android/features/knockrequests/api/KnockRequestPermissions.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/knockrequests/impl/src/main/kotlin/io/element/android/features/knockrequests/impl/data/KnockRequestsModule.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/knockrequests/impl/src/main/kotlin/io/element/android/features/knockrequests/impl/data/KnockRequestsService.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/knockrequests/impl/src/main/kotlin/io/element/android/features/knockrequests/impl/list/KnockRequestsListState.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/knockrequests/impl/src/main/kotlin/io/element/android/features/knockrequests/impl/list/KnockRequestsListStateProvider.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/linknewdevice/impl/src/main/kotlin/io/element/android/features/linknewdevice/impl/screens/desktop/DesktopNoticePresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/location/impl/src/main/kotlin/io/element/android/features/location/impl/common/permissions/DefaultPermissionsPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/location/impl/src/main/kotlin/io/element/android/features/location/impl/common/permissions/PermissionsEvents.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/location/impl/src/main/kotlin/io/element/android/features/location/impl/common/ui/LocationConstraintsDialog.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/location/impl/src/main/kotlin/io/element/android/features/location/impl/share/ShareLocationEvent.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/location/impl/src/main/kotlin/io/element/android/features/location/impl/share/ShareLocationPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/location/impl/src/main/kotlin/io/element/android/features/location/impl/share/ShareLocationView.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/location/impl/src/main/kotlin/io/element/android/features/location/impl/show/ShowLocationEvent.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/location/impl/src/main/kotlin/io/element/android/features/location/impl/show/ShowLocationPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/location/impl/src/main/kotlin/io/element/android/features/location/impl/show/ShowLocationView.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/login/impl/src/main/kotlin/io/element/android/features/login/impl/screens/qrcode/intro/QrCodeIntroPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/messages/impl/src/main/kotlin/io/element/android/features/messages/impl/messagecomposer/MessageComposerPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/messages/impl/src/main/kotlin/io/element/android/features/messages/impl/voicemessages/composer/DefaultVoiceMessageComposerPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/preferences/impl/src/main/kotlin/io/element/android/features/preferences/impl/user/editprofile/EditUserProfilePresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/roomdetails/impl/src/main/kotlin/io/element/android/features/roomdetails/impl/RoomDetailsPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/features/roomdetailsedit/impl/src/main/kotlin/io/element/android/features/roomdetailsedit/impl/RoomDetailsEditPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/libraries/androidutils/src/main/kotlin/io/element/android/libraries/androidutils/system/SystemUtils.kt": [
+            "ACTION_APPLICATION_DETAILS_SETTINGS",
+            "APPLICATION_DETAILS_SETTINGS",
+            "MANAGE_UNKNOWN_APP_SOURCES"
+          ],
+          "ac_cloud-matrix/libraries/permissions/api/src/main/kotlin/io/element/android/libraries/permissions/api/PermissionsEvent.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/libraries/permissions/impl/src/main/kotlin/io/element/android/libraries/permissions/impl/DefaultPermissionsPresenter.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-matrix/libraries/push/impl/src/main/kotlin/io/element/android/libraries/push/impl/battery/BatteryOptimization.kt": [
+            "IGNORE_BATTERY_OPTIMIZATION_SETTINGS",
+            "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+          ]
+        }
+      },
+      "ac_cloud-nix-on-droid/": {
+        "why": "vendored Termux / nix-on-droid fork (upstream termux-shared PermissionUtils and TermuxActivity); upstream code kept as is so rebases stay possible",
+        "files": {
+          "ac_cloud-nix-on-droid/app/src/main/java/com/termux/app/TermuxActivity.java": [
+            "RequestPermission"
+          ],
+          "ac_cloud-nix-on-droid/termux-shared/src/main/java/com/termux/shared/activities/ReportActivity.java": [
+            "RequestPermission"
+          ],
+          "ac_cloud-nix-on-droid/termux-shared/src/main/java/com/termux/shared/android/PermissionUtils.java": [
+            "ACTION_MANAGE_OVERLAY_PERMISSION",
+            "MANAGE_ALL_FILES_ACCESS_PERMISSION",
+            "MANAGE_APP_ALL_FILES_ACCESS_PERMISSION",
+            "MANAGE_OVERLAY_PERMISSION",
+            "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+            "requestPermissions("
+          ]
+        }
+      },
+      "ac_cloud-code/src/plugins/": {
+        "why": "Acode Cordova plugins (Java run by the Cordova WebView host, not a Gradle module that can link libs:perms): terminal notification ask, Chat microphone ask, System all-files ask; the grants are listed in Configs > Perms",
+        "files": {
+          "ac_cloud-code/src/plugins/cloudchat/src/CloudChatPlugin.java": [
+            "RequestPermission"
+          ],
+          "ac_cloud-code/src/plugins/system/android/com/foxdebug/system/System.java": [
+            "MANAGE_ALL_FILES_ACCESS_PERMISSION",
+            "MANAGE_APP_ALL_FILES_ACCESS_PERMISSION",
+            "RequestPermission",
+            "requestPermissions("
+          ],
+          "ac_cloud-code/src/plugins/terminal/src/android/Executor.java": [
+            "RequestPermission",
+            "requestPermissions("
+          ]
+        }
+      },
+      "ac_cloud-termux/": {
+        "why": "vendored Termux fork (upstream termux-shared PermissionUtils, TermuxActivity storage ask, TermuxService battery ask); upstream code kept as is so rebases stay possible",
+        "files": {
+          "ac_cloud-termux/app/src/main/java/com/termux/app/TermuxActivity.java": [
+            "MANAGE_ALL_FILES_ACCESS_PERMISSION",
+            "MANAGE_APP_ALL_FILES_ACCESS_PERMISSION",
+            "RequestPermission",
+            "requestPermissions("
+          ],
+          "ac_cloud-termux/app/src/main/java/com/termux/app/TermuxService.java": [
+            "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+          ],
+          "ac_cloud-termux/termux-shared/src/main/java/com/termux/shared/activities/ReportActivity.java": [
+            "RequestPermission"
+          ],
+          "ac_cloud-termux/termux-shared/src/main/java/com/termux/shared/packages/PermissionUtils.java": [
+            "ACTION_MANAGE_OVERLAY_PERMISSION",
+            "MANAGE_OVERLAY_PERMISSION",
+            "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+            "requestPermissions("
+          ]
+        }
+      },
+      "ac_cloud-vault/": {
+        "why": "vendored Bitwarden fork (upstream com.x8bit.bitwarden / com.bitwarden): its PermissionsManager and screens ask; replaced only together with the fork's own screens",
+        "files": {
+          "ac_cloud-vault/app/src/main/kotlin/com/x8bit/bitwarden/ui/platform/feature/localnetworkaccess/LocalNetworkAccessScreen.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-vault/app/src/main/kotlin/com/x8bit/bitwarden/ui/platform/feature/settings/accountsecurity/managedevices/ManageDevicesScreen.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-vault/app/src/main/kotlin/com/x8bit/bitwarden/ui/platform/feature/settings/accountsecurity/pendingrequests/PendingRequestsScreen.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-vault/app/src/main/kotlin/com/x8bit/bitwarden/ui/platform/manager/permissions/PermissionsManager.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-vault/app/src/main/kotlin/com/x8bit/bitwarden/ui/platform/manager/permissions/PermissionsManagerImpl.kt": [
+            "RequestMultiplePermissions",
+            "RequestPermission"
+          ],
+          "ac_cloud-vault/authenticator/src/main/kotlin/com/bitwarden/authenticator/ui/platform/manager/permissions/PermissionsManager.kt": [
+            "RequestPermission"
+          ],
+          "ac_cloud-vault/authenticator/src/main/kotlin/com/bitwarden/authenticator/ui/platform/manager/permissions/PermissionsManagerImpl.kt": [
+            "RequestMultiplePermissions",
+            "RequestPermission"
+          ],
+          "ac_cloud-vault/ui/src/main/kotlin/com/bitwarden/ui/platform/manager/util/IntentManagerExtensions.kt": [
+            "ACTION_ACCESSIBILITY_SETTINGS",
+            "ACTION_APPLICATION_DETAILS_SETTINGS",
+            "APPLICATION_DETAILS_SETTINGS"
+          ]
+        }
+      }
     },
-    "baseline_max": 24
+    "baseline_max": 0
   },
   "package_override": {
     "_doc": "#1547 forks whose applicationId is not in build.json or their Gradle file (a Gradle property or a BuildTimeConfig constant): the real package, the key of the app's entry in the app-perms dataset.",

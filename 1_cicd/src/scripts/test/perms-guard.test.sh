@@ -15,7 +15,7 @@ mk() {
   python3 - "$r/1_cicd/src/data/perms-guard.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1])); p["pending_page"] = {}; p["pending_page_max"] = 0; p["not_android"] = {}
-op = p["one_place"]; op["baseline"] = {}; op["baseline_max"] = 0; op["min_files"] = 1; op["allow"] = op["allow"] + ["a/PermsPage.kt"]
+op = p["one_place"]; op["baseline"] = {}; op["baseline_max"] = 0; op["forks"] = {}; op["min_files"] = 1; op["allow"] = op["allow"] + ["a/PermsPage.kt"]
 op["exceptions"] = [{"path": "ac_cloud-a/app/src/main/java/a/bg/", "tokens": ["appops set"], "why": "acts on other apps through the shell broker"}]
 json.dump(p, open(sys.argv[1], "w"))
 PY
@@ -103,6 +103,13 @@ r="$(mk)"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"
 r="$(mk)"; printf 'class B { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/$A/java/a/B.kt"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"]={"ac_cloud-a/app/src/main/java/a/B.kt":"not moved into a Perms row yet"}; d["one_place"]["baseline_max"]=0'; expect "P7 the baseline growing past its max is red" 1 "$r"
 r="$(mk)"; printf 'class B { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/$A/java/a/B.kt"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"]={"ac_cloud-a/app/src/main/java/a/B.kt":"x"}; d["one_place"]["baseline_max"]=1'; expect "P7 a baseline entry without a reason is red" 1 "$r"
 r="$(mk)"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["min_files"]=50'; expect "P7 a guard that scans nothing (lost the fleet) is red" 1 "$r"
+# P7 strict (#1515): a vendored fork is exempt file by file and token by token, never by directory.
+FK='d["one_place"]["forks"]={"ac_cloud-termux/":{"why":"vendored upstream fork kept as is for rebases","files":{"ac_cloud-termux/app/src/main/java/t/F.kt":["requestPermissions("]}}}'
+r="$(mk)"; printf 'class F { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/ac_cloud-termux/app/src/main/java/t/F.kt"; jset "$r/1_cicd/src/data/perms-guard.json" "$FK"; expect "P7 a listed fork file with its listed token is green" 0 "$r"
+r="$(mk)"; printf 'class G { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/ac_cloud-termux/app/src/main/java/t/G.kt"; printf 'class F { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/ac_cloud-termux/app/src/main/java/t/F.kt"; jset "$r/1_cicd/src/data/perms-guard.json" "$FK"; expect "P7 an unlisted file inside a listed fork is red" 1 "$r"
+r="$(mk)"; printf 'class F { fun g(a: Activity) { a.requestPermissions(arrayOf("x"), 1); Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION) } }\n' > "$r/ac_cloud-termux/app/src/main/java/t/F.kt"; jset "$r/1_cicd/src/data/perms-guard.json" "$FK"; expect "P7 a new token in a listed fork file is red" 1 "$r"
+r="$(mk)"; jset "$r/1_cicd/src/data/perms-guard.json" "$FK"; expect "P7 a listed fork file that no longer asks is red (the list only shrinks)" 1 "$r"
+r="$(mk)"; printf 'class F { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/ac_cloud-termux/app/src/main/java/t/F.kt"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["forks"]={"ac_cloud-termux/":{"why":"x","files":{"ac_cloud-termux/app/src/main/java/t/F.kt":["requestPermissions("]}}}'; expect "P7 a fork without a why is red" 1 "$r"
 # P8 (#1550): a needed permission a compiled lib caps with maxSdkVersion below target_sdk, not overridden, is red.
 bt() {  # add a capping bluetooth-style lib the app compiles, give the app target_sdk and a fine_location need
   local r="$1"
