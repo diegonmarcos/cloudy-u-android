@@ -60,8 +60,7 @@ EXPECT = {
     "nav": [("cb", "CB"), ("fi", "FI"), ("eq", "EQ"), ("nw", "NW"), ("pm", "PM"), ("hg", "HG"), ("my-pm", "MY-PM")],
     "pages": {
       "fi": [("dashboard", "Yield Curves"), ("dashboard", "Yields Matrix"), ("dashboard", "Bonds Market"), ("dashboard", "Forward Rates"), ("dashboard", "World Interest Rate Probabilities"), ("dashboard", "World Bonds"), ("dashboard", "Credit"), ("dashboard", "Macro")],
-      "eq": [("dashboard", "World Equity Indices"), ("dashboard", "DM Equity (US)"), ("dashboard", "EM Equity"), ("dashboard", "Quotes & Charts"), ("dashboard", "Fundamentals"), ("dashboard", "Earnings Calendar"), ("dashboard", "Watchlist & Alerts"),
-             ("quote_board", "Exchange Rates"), ("quote_board", "Commodity Prices"), ("dashboard", "Commodities")],
+      "eq": [("section_title", "Performance"), ("dashboard", "World Indices Equity"), ("dashboard", "Commodities"), ("quote_board", "Commodity Prices"), ("quote_board", "Exchange Rates"), ("section_title", "Data"), ("dashboard", "Fundamentals"), ("dashboard", "Earnings Calendar"), ("dashboard", "Quotes"), ("dashboard", "Watchlist")],
       "cb": [("cb_table", "Countries"), ("cb_table", "DM / EM / World"), ("cb_table", "Predictions")],
       "hg": [("futures_board", "Rates Futures"), ("futures_board", "Equity Index Futures"), ("futures_board", "FX Futures"), ("futures_board", "Energy Futures"), ("futures_board", "Metals Futures"),
              ("futures_board", "Agriculture Futures"), ("futures_board", "Crypto Futures"), ("futures_board", "Volatility Futures"), ("hedge_calc", "Hedge Calculator"),

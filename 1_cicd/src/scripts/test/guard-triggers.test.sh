@@ -173,7 +173,7 @@ got="$(names docs/x.md | tr '\n' ' ')"
 # written with either used to match nothing here, so the coverage check reported reads that the workflow does fire on.
 mkdir -p "$WORK/wf2"
 wf2() { printf 'on:\n  push:\n    branches: [main]\n    paths: ["%s"]\njobs: {}\n' "$2" > "$WORK/wf2/$1.yml"; }
-wf2 set  'a[cd]_*/**/*.kt'
+wf2 set  'a[acd]_*/**/*.kt'
 wf2 deep 'x/**/b.txt'
 names2() { python3 "$FO" --wf "$WORK/wf2" --names --files "$@" | grep -v ' runs (' | tr '\n' ' '; }
 got="$(names2 ac_app/src/A.kt)";   [ "$got" = "set.yml " ]  && ok "a [] set matches one listed character" || fail "ac_app/src/A.kt fired: $got"
