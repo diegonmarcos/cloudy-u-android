@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Carrier-signal bars, for the Mobile data control row. Deliberately NOT
+     ic_ctl_wifi: the two rows sit three apart in the same group and a shared
+     glyph would make the pair unreadable at a glance. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24"
+    android:tint="?attr/colorOnSurface">
+    <path android:fillColor="@android:color/white" android:pathData="M17,4h3v16h-3V4zM5,14h3v6H5v-6zM11,9h3v11h-3V9z" />
+</vector>

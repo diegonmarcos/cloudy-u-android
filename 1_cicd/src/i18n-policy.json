@@ -120,6 +120,9 @@
     "ab_cloud-libs-shared/libs/appstore": {
       "base_language": "host"
     },
+    "ab_cloud-libs-shared/libs/fleet-endpoints-android": {
+      "base_language": "host"
+    },
     "ab_cloud-libs-shared/libs/autofill": {
       "base_language": "host"
     },
