@@ -595,9 +595,9 @@
     "cloud_clock": {
       "kind": "prefs",
       "class": "config",
-      "doc": "Clock engine data blob (alarms, timers, world-clock zones, stopwatch) as one JSON; alarms/timers/zones are user config; 'scheduled' is device alarm-scheduling state.",
+      "doc": "#1668 libs:clock-tools' store: the clock engine data blob (alarms, timers, world-clock zones and the #1667 default city, stopwatch) as one JSON; alarms/timers/zones are user config; 'scheduled' is device alarm-scheduling state. Each app that carries the lib (Cloud Calc, Cloud Tasks, the SuperApp) keeps its OWN copy in its own process, so an alarm lives and rings in exactly one app.",
       "used_by": [
-        "ac_cloud-calc"
+        "lib-clock-tools"
       ],
       "keys": {
         "scheduled": "device"
@@ -1693,6 +1693,14 @@
       "doc": "Home status bar overrides (#1332): a visibility switch per declared element and an order per cluster, laid over build.json::home_status_bar.",
       "used_by": [
         "aa_cloud-superapp"
+      ]
+    },
+    "location_use_ledger": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates.",
+      "used_by": [
+        "lib-perms"
       ]
     },
     "perm_ask_tracker": {
@@ -2899,6 +2907,7 @@
         "lib-bluetooth",
         "lib-bottomnav",
         "lib-chat",
+        "lib-clock-tools",
         "lib-core",
         "lib-crash",
         "lib-databackend",
@@ -3136,6 +3145,7 @@
         "lib-ai",
         "lib-analytics",
         "lib-bottomnav",
+        "lib-clock-tools",
         "lib-core",
         "lib-crash",
         "lib-databackend",
@@ -3308,6 +3318,7 @@
         "lib-ai",
         "lib-bluetooth",
         "lib-bottomnav",
+        "lib-clock-tools",
         "lib-core",
         "lib-crash",
         "lib-databackend",
