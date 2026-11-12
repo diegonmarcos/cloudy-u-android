@@ -1,6 +1,10 @@
 {
   "_doc": "#ipc the ratchet behind cloud-android-ipc-mesh.py I3 (a0_docs/eng-specs/fleet-ipc.md). Rule: two fleet apps on the same phone talk over Android IPC (libs:devtools FleetIpc, a provider, a bound service, an intent), never over a loopback socket. Every Kotlin/Java file under a[abc]_* that holds a loopback HTTP client shape (a socket to 127.0.0.1/localhost, an http(s)/ws URL on loopback, the FleetIpcWire.httpGet rung, URL(RishBridge.bridgeUrl())) must be listed here with the most it may hold and WHY it is not an app-to-app call on the phone. A new file, or one more shape in a listed file, fails the guard; a file that drops below its count must lower it (the list only shrinks).",
   "files": {
+  "ac_cloud-c3-webserver/src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/Api.kt": {
+   "max": 1,
+   "why": "#1682 P1 the native Compose UI reads its OWN process's Rust core over the core's loopback admin API (/__app__/api/*, build.json::runtime.port) - the same routes the web shell reads; one app, one process, never another fleet app"
+  },
     "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/MeshGateway.kt": {
       "max": 1,
       "why": "the gateway's own address in /api/fleet/apps, for external callers; a label"
