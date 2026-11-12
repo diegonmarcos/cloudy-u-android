@@ -21,9 +21,8 @@
 #   W4  (#689 retired it with the GitHub OAuth-App web flow it pinned; the
 #       absence of that flow, and gh as the GitHub leg, are pinned by
 #       test-drive-git-gh-leg.sh.)
-#   W5  the Cloud sign-in rides the fleet browser (auth.browser_mission, which
-#       captures the session cookie), with the in-app dialog as the DECLARED
-#       fallback that SAYS it is the fallback.
+#   W5  (#1693) the Cloud sign-in is a link to Cloud Account's Authelia page; the
+#       page runs no browser mission and hosts no sign-in surface.
 #   MUT each property, broken on a copy, turns its own check red.
 #
 # OWN-SOURCE ONLY. python3 and grep only, no network, no build.
@@ -112,41 +111,15 @@ w3() {
     return $bad
 }
 
-# w5 <shared bj> <page> <wiring> : the Cloud sign-in rides the fleet browser, with a declared fallback
+# w5 <shared bj> <page> <wiring> : #1693 the Cloud sign-in is a LINK to Cloud Account's Authelia page; no browser mission runs here
 w5() {
     local bj="$1" page="$2" wiring="$3" bad=0
-    python3 - "$bj" <<'PYTHON' || return 1
-import json, sys
-m = json.load(open(sys.argv[1]))["auth"].get("browser_mission") or {}
-bad = 0
-if (m.get("fleet") or "") != "browser":
-    print("    auth.browser_mission.fleet is %r; it must name the fleet browser" % m.get("fleet")); bad = 1
-for k in ("action", "permission"):
-    if "{package}" not in (m.get(k) or ""):
-        print("    browser_mission.%s does not template {package}: %r" % (k, m.get(k))); bad = 1
-for grp in ("extras", "results"):
-    if not isinstance(m.get(grp), dict) or not m[grp]:
-        print("    browser_mission.%s is not declared" % grp); bad = 1
-for key in ("url", "capture", "allow_hosts", "cookie_url"):
-    if key not in (m.get("extras") or {}):
-        print("    browser_mission.extras is missing %s" % key); bad = 1
-sys.exit(1 if bad else 0)
-PYTHON
-    # the page fires the mission and reads its result off the declared contract
-    grep -qE 'AuthMission\.plan\(ctx, contract, req\)' "$page" \
-        || { echo "    the page does not fire the auth mission"; bad=1; }
-    grep -qE 'missionLauncher\.launch\(intent\)' "$page" \
-        || { echo "    the mission is not launched for a result"; bad=1; }
-    grep -qE 'AuthMission\.read\(contract, res\.resultCode, res\.data\)' "$page" \
-        || { echo "    the mission result is not read off the declared contract"; bad=1; }
-    # the DECLARED fallback: the in-app dialog, and it SAYS it is the fallback
-    grep -qE 'policy = listOf\(FleetGit\.sessionProvider\(\)\)' "$page" \
-        || { echo "    the Cloud sign-in fallback is not scoped to the declared session_provider"; bad=1; }
-    grep -qE 'git_way_mission_not_installed">[^<]*fallback' "$STR" \
-        || { echo "    the not-installed outcome does not announce the fallback"; bad=1; }
-    # the mission is the CLOUD card's alone, fired with the cookie capture
-    grep -qE 'capture = AuthMission\.CAPTURE_COOKIE, cookieUrl = ConfigArtifact\.endpoint\(\)' "$page" \
-        || { echo "    the Cloud sign-in does not ask the browser for the session cookie"; bad=1; }
+    grep -qE 'AuthMission|missionLauncher|AuthDeclaration\.browserMission|SignInWays|SignInHost|CAPTURE_COOKIE' "$page" \
+        && { echo "    the page still runs a browser mission or hosts a sign-in surface: only Cloud Account signs in"; bad=1; }
+    grep -qE 'AccountClient\.openSignIn\(ctx, SignInContract\.PROVIDER_AUTHELIA\)' "$page" \
+        || { echo "    the Cloud sign-in is not a link to Cloud Account's Authelia page"; bad=1; }
+    grep -qE 'DriveGitChain\.RUNG_FLEET -> \{' "$page" \
+        || { echo "    the fleet rung no longer dispatches its own way"; bad=1; }
     return $bad
 }
 
@@ -213,15 +186,19 @@ _green "w3" w3 "$MUT/page.kt" "$STR" && {
     python3 -c "import sys;p=sys.argv[1];s=open(p).read().replace('enabled = !signingIn && !disabled','enabled = true');open(p,'w').write(s)" "$MUT/page.kt"
     _red "W3 the sign-in button is always enabled (a dead button when the rung is undeclared)" w3 "$MUT/page.kt" "$STR"; }
 
-# W5: the mission result no longer read off the contract
+# W5: a browser mission, or a sign-in surface, comes back onto the page
 cp "$PAGE" "$MUT/page.kt"
 _green "w5" w5 "$SHARED_BJ" "$MUT/page.kt" "$WIRING" && {
-    python3 -c "import sys;p=sys.argv[1];s=open(p).read().replace('AuthMission.read(contract, res.resultCode, res.data)','null');open(p,'w').write(s)" "$MUT/page.kt"
-    _red "W5 the page stops reading the mission result off the declared contract" w5 "$SHARED_BJ" "$MUT/page.kt" "$WIRING"; }
-cp "$SHARED_BJ" "$MUT/shared.json"
-_green "w5" w5 "$MUT/shared.json" "$PAGE" "$WIRING" && {
-    python3 -c "import json,sys;d=json.load(open(sys.argv[1]));d['auth']['browser_mission']['extras'].pop('cookie_url');json.dump(d,open(sys.argv[1],'w'))" "$MUT/shared.json"
-    _red "W5 the mission drops the cookie-capture extra" w5 "$MUT/shared.json" "$PAGE" "$WIRING"; }
+    python3 -c "import sys;p=sys.argv[1];s=open(p).read().replace('AccountClient.openSignIn(ctx, SignInContract.PROVIDER_AUTHELIA)','AuthMission.plan(ctx, contract, req).second.toString()');open(p,'w').write(s)" "$MUT/page.kt"
+    _red "W5 the Cloud sign-in runs a browser mission again" w5 "$SHARED_BJ" "$MUT/page.kt" "$WIRING"; }
+cp "$PAGE" "$MUT/page.kt"
+_green "w5" w5 "$SHARED_BJ" "$MUT/page.kt" "$WIRING" && {
+    python3 -c "import sys;p=sys.argv[1];s=open(p).read().replace('        Text(','        SignInWays(host = h)\n        Text(',1);open(p,'w').write(s)" "$MUT/page.kt"
+    _red "W5 a sign-in surface is hosted on the page again" w5 "$SHARED_BJ" "$MUT/page.kt" "$WIRING"; }
+cp "$PAGE" "$MUT/page.kt"
+_green "w5" w5 "$SHARED_BJ" "$MUT/page.kt" "$WIRING" && {
+    python3 -c "import sys;p=sys.argv[1];s=open(p).read().replace('AccountClient.openSignIn(ctx, SignInContract.PROVIDER_AUTHELIA)','\"\"');open(p,'w').write(s)" "$MUT/page.kt"
+    _red "W5 the Cloud sign-in no longer links to Cloud Account" w5 "$SHARED_BJ" "$MUT/page.kt" "$WIRING"; }
 
 echo "── $MUTATIONS mutations, $HOLLOW hollow/void ──"
 [ "$HOLLOW" -eq 0 ] || FAILURES=$((FAILURES + HOLLOW))

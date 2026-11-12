@@ -144,9 +144,12 @@ grep -q 'sign_in\|vault_connect' "$GRADLE" && fail "app/build.gradle bakes a sig
 
 echo "── S3 Configs hosts the card; the card hosts the lib's surface in this app's pill ──"
 grep -q '^    SignInCard()$' "$CONFIGS" && pass "Configs ▸ General composes SignInCard" || fail "Configs ▸ General does not compose SignInCard"
-grep -q 'SignInWays(host = host' "$CARD" && pass "SignInCard composes the lib's SignInWays" || fail "SignInCard does not compose SignInWays"
-grep -qE 'pill = \{ label, tag, onClick ->' "$CARD" && grep -q 'Pill(label, onClick' "$CARD" && pass "the ways are drawn with this app's Pill" || fail "the card does not draw the ways with Pill"
-grep -q 'DriveAuthApply.apply(app, artifact)' "$CARD" && pass "a landed artifact goes to DriveAuthApply" || fail "the host does not apply through DriveAuthApply"
+# #1693 Cloud Account is the one app that signs in: the card draws the declared ways as LINKS to it and reads its state.
+card_signin_free() { ! grep -qE 'SignInWays|SignInHost|SignInResult|requestDeviceCode|pollForToken|DeviceGrant|WebAuth' <<<"$(codeof "$1")"; }
+card_signin_free "$CARD" && pass "SignInCard starts no sign-in (no SignInWays, SignInHost, device grant or web auth)" || fail "SignInCard starts a sign-in again"
+grep -q 'AccountClient.openSignIn(ctx, provider)' "$CARD" && grep -q 'AccountClient.signInStatus(ctx, provider)' "$CARD" && pass "each declared way links to Cloud Account and shows the state it reports" || fail "the card does not link to Cloud Account / read its state"
+grep -q 'Pill(stringResource(R.string.configs_sign_in_link' "$CARD" && pass "the links are drawn with this app's Pill" || fail "the card does not draw the links with Pill"
+grep -q 'DriveAuthApply.apply(app, artifact)' "$CARD" && grep -q 'AccountClient.secret(app, "$section.$key")' "$CARD" && pass "what Cloud Account holds for the declared sections goes to DriveAuthApply, the one writer" || fail "the card does not apply Cloud Account's secrets through DriveAuthApply"
 python3 - "$CARD" "$APPLY" "$STRINGS" <<'PYTHON' && pass "every R.string the card names exists" || fail "a string the card names is missing"
 import re, sys
 used = set(re.findall(r"R\.string\.([a-z0-9_]+)", open(sys.argv[1]).read() + open(sys.argv[2]).read()))
@@ -165,7 +168,7 @@ grep -q 'throw new GradleException("build.json::auth.applies' "$GRADLE" && pass 
 echo "── S5 the apply writes only through the engines' stores ──"
 grep -q 'GitCredentialStore(ctx)' <<<"$(codeof "$APPLY")" && grep -q 'RcloneConfig.upsert' <<<"$(codeof "$APPLY")" && pass "writes go through GitCredentialStore and RcloneConfig" || fail "the apply does not use the engines' stores"
 grep -qiE 'wireguard|wg0_private_key|jmap|mail\.password|ai\.tokens|SharedPreferences|putString' <<<"$(codeof "$APPLY" "$CARD")" && fail "the apply reaches a mesh/mail/AI value or a raw preference store" || pass "no mesh, mail or AI value and no raw preference store on the drive apply path"
-grep -qE 'result\.bearer|setAutheliaCredential' <<<"$(codeof "$CARD")" && fail "the drive host stores the bearer" || pass "the drive host stores no bearer"
+grep -qE 'result\.bearer|setAutheliaCredential' <<<"$(codeof "$CARD")" && fail "the drive card stores the bearer" || pass "the drive card stores no bearer"
 grep -q 'RcloneRunner(ctx).configFile' <<<"$(codeof "$APPLY")" && pass "rclone.conf is the runner's own path, not a second copy" || fail "rclone.conf path is restated"
 
 echo "── S6 the JVM test exists and reads the declaration ──"
@@ -186,6 +189,8 @@ python3 -c 'import json,sys; b=json.load(open(sys.argv[1])); b["auth"]["applies"
 s4 "$TMP/mesh.json" "$APPLY" >/dev/null && fail "M: a declared section with no dispatch passed S4" || pass "M: undispatched declared section → S4 RED"
 sed 's/^\(\s*\)"rclone" -> {$/\1"rclone" -> {\n\1}\n\1"extra" -> {/' "$APPLY" > "$TMP/extra.kt"
 cmp -s "$APPLY" "$TMP/extra.kt" && fail "M: the dispatch mutation did not change the file (tester is stale)" || { s4 "$BJ" "$TMP/extra.kt" >/dev/null && fail "M: an undeclared dispatch branch passed S4" || pass "M: undeclared dispatch branch → S4 RED"; }
+cp "$CARD" "$TMP/card_back.kt"; printf '\nval m = SignInWays(host = h)\n' >> "$TMP/card_back.kt"
+card_signin_free "$TMP/card_back.kt" && fail "M: SignInWays back in the card passed" || pass "M: SignInWays back in the card -> S3 RED"
 grep -v 'item { SignInCard() }' "$CONFIGS" > "$TMP/nocard.kt"
 grep -q 'item { SignInCard() }' "$TMP/nocard.kt" && fail "M: card mutation stale" || pass "M: Configs without the card → S3 RED"
 s2 "$SHARED" "$BJ" "$SRC" >/dev/null && pass "M: the unmutated tree is still green" || fail "M: the unmutated tree is red"

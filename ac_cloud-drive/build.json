@@ -1279,13 +1279,11 @@
     }
   },
   "engines": {
-    "_doc": "#705 ENGINES THIS APP BINDS INSTEAD OF COMPILING. Each is a Cloud-Lib-*.apk the Store installs (a fleet row of kind lib) whose service answers core's IDataBackend; this app links nothing of the engine's module, so an engine change republishes that one APK and not this app. Per engine: `fleet` is its Store row in aa_cloud-superapp/data/constellation-fleet.json, from which app/build.gradle resolves the package (an id the manifest lacks fails the build — no package is typed here or in Kotlin); `action` finds the service inside that package ({package} is substituted at build time and matches the engine manifest's ${applicationId}.ENGINE); `min_contract` is the lowest engine CONTRACT (meta-data on the engine's service) that answers every method this app calls — the client reads it through PackageManager BEFORE binding, so an engine too old to serve this build is named as such instead of failing a call; `login_poll_ms` / `login_max_ms` pace the one long call, gh's device-flow sign-in, which the engine runs on its own thread and the client polls rather than holding a binder thread for minutes (gh's own code expires after 15).",
+    "_doc": "#705 ENGINES THIS APP BINDS INSTEAD OF COMPILING. Each is a Cloud-Lib-*.apk the Store installs (a fleet row of kind lib) whose service answers core's IDataBackend; this app links nothing of the engine's module, so an engine change republishes that one APK and not this app. Per engine: `fleet` is its Store row in aa_cloud-superapp/data/constellation-fleet.json, from which app/build.gradle resolves the package (an id the manifest lacks fails the build — no package is typed here or in Kotlin); `action` finds the service inside that package ({package} is substituted at build time and matches the engine manifest's ${applicationId}.ENGINE); `min_contract` is the lowest engine CONTRACT (meta-data on the engine's service) that answers every method this app calls — the client reads it through PackageManager BEFORE binding, so an engine too old to serve this build is named as such instead of failing a call. #1693 this app only READS the engine (status, listing, the credential helper): gh's sign-in runs in Cloud Account, so there is no login pacing here.",
     "gh": {
       "fleet": "lib-gh",
       "action": "{package}.ENGINE",
-      "min_contract": 1,
-      "login_poll_ms": 1000,
-      "login_max_ms": 960000
+      "min_contract": 1
     }
   },
   "modules": {
@@ -1329,6 +1327,7 @@
         "libs:ui-nav-bars",
         "libs:theme-background",
         "libs:auth",
+        "libs:fleet-endpoints-android",
         "libs:disk",
         "libs:shell-client",
         "libs:ai",
@@ -1381,6 +1380,16 @@
       "type": "library"
     },
     "_doc_engines": "#567 THE FOUR ENGINE LIBRARIES. The owner's vision for this application: the main APK is CHROME, and every tooling is a full engine in its OWN library — libs:file-editor (the full text editor), libs:git-sync (the native git manager that finishes the #437/#448 GitSync story: status, stage/unstage, commit, push/pull, branch list, log, diff, remotes, conflicts — GitSync's UX, over JGit), libs:rclone (remotes config + declared/ad-hoc sync jobs with progress + remote browsing, over a sha256-pinned static rclone binary) and libs:mounts (ftp/sftp/ssh/webdav connections with browse-through). Each lives on the shared shelf and is shared BY REFERENCE like every other module here, so lib-apks also ships each one as cloud-lib-{name}. THE MODULE BOUNDARY IS LAW: a library imports nothing from any application (test/test-drive-engine-modules.sh fails on the first lib -> app import). Compose only (#565): each exports ONE @Composable screen that this app's EngineActivity hosts (push 5). Landed as independently green pushes — (1) skeletons + declarations, (2) git-sync, (3) file-editor, (4) rclone + mounts, (5) drive wiring — so a module on main is never half-wired: until its engine push lands, a skeleton renders its own title and nothing else, and the app does not route to it.",
+    "libs:fleet-endpoints": {
+      "_doc_dir": "#1693 plain JVM contract (SignInContract) AccountClient speaks; this app links the Android half to open Cloud Account and read its sign-in state.",
+      "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints",
+      "type": "library"
+    },
+    "libs:fleet-endpoints-android": {
+      "_doc_dir": "#1693 AccountClient: the link to Cloud Account at a provider's page and the state it reports. Nothing here starts a sign-in.",
+      "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints-android",
+      "type": "library"
+    },
     "libs:ui-kit": {
       "_doc_dir": "#1452 the fleet's shared Compose kit; Cloud Drive's Git table draws its rows from KitStoreRow (the Cloud Store Apps list's row: same spacing, type ramp, glyphs, palette).",
       "dir": "../ab_cloud-libs-shared/libs/ui-kit",

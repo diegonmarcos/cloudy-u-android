@@ -94,9 +94,9 @@ if not isinstance(a, str) or "{package}" not in a or not a.endswith(".ENGINE"):
 c = e.get("min_contract")
 if not isinstance(c, int) or isinstance(c, bool) or c < 1:
     print("    engines.gh.min_contract %r is not a contract number >= 1" % (c,)); bad = 1
-p, m = e.get("login_poll_ms"), e.get("login_max_ms")
-if not (isinstance(p, int) and isinstance(m, int) and 0 < p <= m):
-    print("    engines.gh sign-in pacing is not 0 < login_poll_ms <= login_max_ms: %r / %r" % (p, m)); bad = 1
+# #1693 gh's sign-in runs in Cloud Account: this app declares no login pacing, it only READS the engine.
+if "login_poll_ms" in e or "login_max_ms" in e:
+    print("    engines.gh still declares sign-in pacing (login_poll_ms / login_max_ms): the sign-in is Cloud Account's"); bad = 1
 sys.exit(bad)
 PYTHON
     grep -qF 'def ghEngineFleet = fleetById[ghEngineDecl.fleet]' <<<"$(_code "$gradle")" \
@@ -108,7 +108,7 @@ m = re.search(r"if \(ghEngineFleet == null\) \{(.*?)\n\}", src, re.S)
 if not m or "throw new GradleException" not in m.group(1):
     print("    an engine fleet id the manifest lacks does not fail the build"); sys.exit(1)
 PYTHON
-    for field in GH_ENGINE_PACKAGE GH_ENGINE_ACTION GH_ENGINE_MIN_CONTRACT GH_ENGINE_POLL_MS GH_ENGINE_LOGIN_MAX_MS; do
+    for field in GH_ENGINE_PACKAGE GH_ENGINE_ACTION GH_ENGINE_MIN_CONTRACT; do
         grep -qE "buildConfigField +\"[a-zA-Z]+\", +\"$field\"" <<<"$(_code "$gradle")" \
             || { echo "    build.gradle does not bake $field"; bad=1; }
     done
@@ -187,7 +187,7 @@ STEPS
     [ "$(_code "$page" | grep -cE '\bGhRunner\b|\bGhOutput\b|ghRunner')" -eq 0 ] \
         || { echo "    the page still drives gh in-process"; bad=1; }
     local need
-    for need in 'ghEngine.status(ghHost)' 'ghEngine.repoList(ghLimit, GitHubRepos.GH_FIELDS)' 'ghEngine.login(ghHost)' 'ghEngine.credential(ghHost)'; do
+    for need in 'ghEngine.status(ghHost)' 'ghEngine.repoList(ghLimit, GitHubRepos.GH_FIELDS)' 'ghEngine.credential(ghHost)'; do
         grep -qF "$need" "$page" || { echo "    the GitHub card does not reach the engine for: $need"; bad=1; }
     done
     return $bad
@@ -205,13 +205,15 @@ d6() {
     return $bad
 }
 
-# d7 <GhEngine.kt> <page>
+# d7 <GhEngine.kt> <page> : #1693 the engine is READ-ONLY here; the sign-in is a link to Cloud Account
 d7() {
     local client="$1" page="$2" bad=0
-    grep -qF 'url.takeIf { it.isNotBlank() && runCatching { java.net.URI(it).host }.getOrNull() == host }' "$client" \
-        || { echo "    pageOnHost does not compare the page's host with the declared one"; bad=1; }
-    grep -qF 'val url = GhEngine.pageOnHost(page, ghHost)' "$page" \
-        || { echo "    the sign-in opens a page the engine named without checking its host here"; bad=1; }
+    grep -qE 'fun login\(|LOGIN_START|LOGIN_POLL|loginStart|loginPoll|fun follow\(|pageOnHost' <<<"$(_code "$client")" \
+        && { echo "    the gh client can start or follow a gh sign-in again"; bad=1; }
+    grep -qE 'ghEngine\.login\(|GhEngine\.pageOnHost' <<<"$(_code "$page")" \
+        && { echo "    the page starts a gh sign-in itself"; bad=1; }
+    grep -qF 'AccountClient.openSignIn(ctx, SignInContract.PROVIDER_GITHUB)' "$page" \
+        || { echo "    the GitHub sign-in is not a link to Cloud Account"; bad=1; }
     return $bad
 }
 
@@ -231,8 +233,8 @@ d5 "$PAGE" "$STR" && pass "two lines, two next steps, both naming Store ▸ Clou
     || fail "a missing or old engine is silent, or the page still runs gh itself"
 echo "── D6 the credential never leaves through the client ──"
 d6 "$CLIENT" && pass "redacted toString, no raw logcat, and the on-device log never carries the credential" || fail "the client can print or log the credential"
-echo "── D7 a page the sign-in opens is on the declared host ──"
-d7 "$CLIENT" "$PAGE" && pass "host-checked on this side of the binder" || fail "the sign-in could open any URL the engine names"
+echo "── D7 the engine is read-only here: the GitHub sign-in is a link to Cloud Account ──"
+d7 "$CLIENT" "$PAGE" && pass "no gh login in the client, none started by the page, the sign-in links to Cloud Account" || fail "this app can start a gh sign-in again"
 
 # ══ MUT ════════════════════════════════════════════════════════════════════
 MUT="$(mktemp -d)"; trap 'rm -rf "$MUT"' EXIT
@@ -365,11 +367,17 @@ _green d6 d6 "$MUT/GhEngine.kt" && {
     _sub "$MUT/GhEngine.kt" '        val held = ' '        log("credential for $host: $username / $secret")
         val held = '
     _applied "$CLIENT" "$MUT/GhEngine.kt" '$username / $secret' && _red "D6 the on-device log carries the secret" d6 "$MUT/GhEngine.kt"; }
-# D7 — any page gh names is opened
+# D7 — a sign-in comes back into this app
 cp "$PAGE" "$MUT/page.kt"
 _green d7 d7 "$CLIENT" "$MUT/page.kt" && {
-    _sub "$MUT/page.kt" 'val url = GhEngine.pageOnHost(page, ghHost)' 'val url = page.ifBlank { null }'
-    _applied "$PAGE" "$MUT/page.kt" 'val url = page.ifBlank { null }' && _red "D7 the sign-in opens whatever page the engine names" d7 "$CLIENT" "$MUT/page.kt"; }
+    _sub "$MUT/page.kt" 'AccountClient.openSignIn(ctx, SignInContract.PROVIDER_GITHUB)' 'ghEngine.login(ghHost) { _, _ -> }.let { null }'
+    _applied "$PAGE" "$MUT/page.kt" 'ghEngine.login(ghHost)' && _red "D7 the page runs gh auth login itself again" d7 "$CLIENT" "$MUT/page.kt"; }
+cp "$CLIENT" "$MUT/GhEngine.kt"
+_green d7 d7 "$MUT/GhEngine.kt" "$PAGE" && {
+    _sub "$MUT/GhEngine.kt" '    private fun ask(' '    fun login(host: String): Result = result(ask("loginStart", host))
+
+    private fun ask('
+    _applied "$CLIENT" "$MUT/GhEngine.kt" 'fun login(host' && _red "D7 the client can start a gh sign-in again" d7 "$MUT/GhEngine.kt" "$PAGE"; }
 
 echo "── $MUTATIONS mutations, $HOLLOW hollow/void/no-op ──"
 [ "$MUTATIONS" -ge 19 ] || { echo "  only $MUTATIONS mutations ran — a mutation block that stops early proves less than it prints"; FAILURES=$((FAILURES + 1)); }

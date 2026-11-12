@@ -93,13 +93,10 @@ a3() {
     # session_provider of the fleet rung, read off the declaration rather than typed —
     # so the page cannot grow a second provider without changing the declaration, and
     # cannot name github at all.
+    # #1693 NARROWED FURTHER: Cloud Account is the one app that signs in, so the page hosts NO libs:auth sign-in
+    # surface at all (scoped or not): its buttons are links (AccountClient.openSignIn).
     if grep -qE 'SignInWays|SignInHost|SignInResult|webauth' "$f"; then
-        grep -qE 'policy = listOf\(FleetGit\.sessionProvider\(\)\)' "$f" \
-            || { echo "    a sign-in surface on the page is NOT scoped to the declared session_provider — it could offer any way, including a GitHub one"; bad=1; }
-        # A literal provider id in the policy is the second source of truth that lets a
-        # github way back in without touching the declaration.
-        grep -qE 'policy = listOf\("' "$f" \
-            && { echo "    the page scopes its sign-in to a LITERAL provider id instead of the declared one"; bad=1; }
+        echo "    a sign-in surface is hosted on the page: only Cloud Account signs in (the page links to it)"; bad=1
     fi
     # github must not be nameable as a sign-in way here under any spelling.
     grep -qiE 'policy *= *listOf\([^)]*github|Open\.Device|DeviceFlowDialog|SignIn\.Kind\.DEVICE_FLOW' "$f" \
@@ -259,7 +256,7 @@ cmp -s "$PAGE" "$copy" && fail "MUT the device-flow mutation did not change the 
 copy="$MUT/page2c.kt"; cp "$PAGE" "$copy"
 python3 -c "
 import sys;p=sys.argv[1];s=open(p,encoding='utf-8').read()
-s=s.replace('policy = listOf(FleetGit.sessionProvider()),','')
+s=s.replace('        Text(','        SignInWays(host = fleetHost)\n        Text(',1)
 open(p,'w',encoding='utf-8').write(s)" "$copy"
 cmp -s "$PAGE" "$copy" && fail "MUT the unscoped mutation did not change the page (tester is stale)" \
     || { if a3 "$copy" "$STR" >/dev/null 2>&1; then fail "MUT an UNSCOPED sign-in surface passed — A3's scoping requirement is inert"; else pass "MUT dropping the declared scope from the page's sign-in goes RED"; fi; }

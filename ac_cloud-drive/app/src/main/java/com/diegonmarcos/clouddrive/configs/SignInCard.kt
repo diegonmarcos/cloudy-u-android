@@ -1,19 +1,18 @@
 package com.diegonmarcos.clouddrive.configs
 
-import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import com.diegonmarcos.clouddrive.R
 import com.diegonmarcos.clouddrive.ui.DriveCard
 import com.diegonmarcos.clouddrive.ui.DriveMetrics
@@ -21,63 +20,76 @@ import com.diegonmarcos.clouddrive.ui.DriveTags
 import com.diegonmarcos.clouddrive.ui.Pill
 import com.diegonmarcos.clouddrive.ui.StatusLight
 import com.diegonmarcos.cloudlib.auth.SignIn
-import com.diegonmarcos.cloudlib.auth.SignInHost
-import com.diegonmarcos.cloudlib.auth.SignInResult
-import com.diegonmarcos.cloudlib.auth.SignInWays
-import com.diegonmarcos.cloudlib.auth.UserRegistry
+import com.diegonmarcos.superapp.fleetendpoints.SignInContract
+import com.diegonmarcos.superapp.fleetendpoints.android.AccountClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 /**
- * #587 Configs ▸ Sign in: THE fleet sign-in (libs:auth — the same surface
- * cloud-superapp's Profile ▸ Connect hosts), in this app's card and pill.
- *
- * A successful sign-in lands the consolidated artifact; [DriveAuthApply]
- * writes the DRIVE-relevant sections and the card shows the per-section
- * report. The light is a LOOK at the last outcome: on when something was
- * written, off when a sign-in yielded nothing this app could apply, unknown
- * before any. Nothing is stored here but what the engines' own stores take.
+ * #587 Configs ▸ Sign in, #1693 AS A LINK: Cloud Account is the one app that signs in. The card keeps its place and its
+ * declared ways (libs:auth's registry, read only): each way's pill opens Cloud Account at that provider's page, and the
+ * light and the line are the state Cloud Account REPORTS over its provider ([AccountClient.signInStatus]). A missing or
+ * silent Cloud Account is a sentence, never a crash. What a sign-in yields for Drive is applied by [DriveAuthApply] from
+ * the vault road; nothing is stored here but what the engines' own stores take.
  */
 @Composable
 fun SignInCard(modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
+    val ways = remember { SignIn.providers.map { it.id to it.label to cloudAccountProvider(it) } }
+    var note by remember { mutableStateOf("") }
     var report by remember { mutableStateOf<DriveAuthApply.Report?>(null) }
-    var who by remember { mutableStateOf("") }
-    val host = remember { DriveSignInHost(ctx.applicationContext) { r, identity -> report = r; who = identity } }
-    val light = when (val r = report) {
-        null -> StatusLight.State.UNKNOWN
-        else -> StatusLight.of(r.ok)
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val states by produceState<Map<String, SignInContract.Status>>(emptyMap()) {
+        value = withContext(Dispatchers.IO) { ways.associate { (idLabel, provider) -> idLabel.first to AccountClient.signInStatus(ctx, provider) } }
     }
+    val any = states.values.any { it.signedIn }
     DriveCard(
         stringResource(R.string.configs_sign_in), modifier,
-        light = light,
-        summary = when {
-            who.isNotBlank() -> stringResource(R.string.configs_sign_in_as, who)
-            else -> stringResource(R.string.configs_sign_in_body)
-        },
+        light = if (any) StatusLight.State.ON else StatusLight.State.UNKNOWN,
+        summary = stringResource(R.string.configs_sign_in_body),
         tag = DriveTags.CONFIGS_CARD,
     ) {
-        SignInWays(host = host, modifier = Modifier.padding(top = DriveMetrics.pad), pill = { label, tag, onClick ->
-            Pill(label, onClick, modifier = Modifier.padding(top = DriveMetrics.gapWide).testTag(tag))
-        })
+        ways.forEach { (idLabel, provider) ->
+            val st = states[idLabel.first]
+            Text(
+                (idLabel.second) + ": " + (st?.line ?: stringResource(R.string.configs_sign_in_reading)),
+                Modifier.padding(top = DriveMetrics.gapWide), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Pill(stringResource(R.string.configs_sign_in_link, idLabel.second), { note = AccountClient.openSignIn(ctx, provider).orEmpty() },
+                modifier = Modifier.padding(top = DriveMetrics.gapWide).testTag(DriveTags.CONFIGS_SIGN_IN_LINK))
+        }
         Text(stringResource(R.string.configs_sign_in_applies, DriveAuthApply.applies.keys.joinToString(" · ")), Modifier.padding(top = DriveMetrics.pad), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        report?.let { Text(it.text(), Modifier.padding(top = DriveMetrics.gapWide).testTag(DriveTags.CONFIGS_SIGN_IN_REPORT), style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace) }
+        Pill(stringResource(R.string.configs_sign_in_apply), {
+            scope.launch { report = withContext(Dispatchers.IO) { applyFromCloudAccount(ctx.applicationContext) } }
+        }, modifier = Modifier.padding(top = DriveMetrics.gapWide).testTag(DriveTags.CONFIGS_SIGN_IN_APPLY))
+        report?.let { Text(it.text(), Modifier.padding(top = DriveMetrics.gapWide).testTag(DriveTags.CONFIGS_SIGN_IN_REPORT), style = MaterialTheme.typography.bodySmall, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace) }
+        if (note.isNotBlank()) Text(note, Modifier.padding(top = DriveMetrics.gapWide).testTag(DriveTags.CONFIGS_SIGN_IN_NOTE), style = MaterialTheme.typography.bodySmall)
     }
 }
 
+/** The provider name Cloud Account's pages and state answer to: the Authelia ways are one, every other way keeps its declared id. */
+private fun cloudAccountProvider(p: SignIn.Provider): String = when (p.kind) {
+    SignIn.Kind.AUTHELIA_BEARER, SignIn.Kind.AUTHELIA_WEB -> SignInContract.PROVIDER_AUTHELIA
+    else -> p.id
+}
+
 /**
- * The host side: the artifact goes to [DriveAuthApply], an identity-only
- * sign-in is reported as such. Nothing else — no bearer store, no journey:
- * what drive needs from a sign-in is what the artifact carries for it.
+ * What Cloud Account holds for the sections [DriveAuthApply] declares (build.json::auth.applies), read over its provider
+ * (the grant gates each path) and applied through [DriveAuthApply.apply]: the one writer. A path Cloud Account does not
+ * grant or hold is a named refusal in the report, never a crash and never a value.
  */
-class DriveSignInHost(private val app: Context, private val onOutcome: (DriveAuthApply.Report?, String) -> Unit) : SignInHost {
-    override fun onSignedIn(result: SignInResult) {
-        val artifact = result.artifact
-        val identity = result.identity.ifBlank { artifact?.let { UserRegistry.parse(it)?.primaryIdentity?.email }.orEmpty() }
-        if (artifact == null) {
-            onOutcome(DriveAuthApply.Report(listOf(DriveAuthApply.Step("identity", false,
-                app.getString(R.string.configs_sign_in_identity_only, result.provider.label)))), identity)
-            return
-        }
-        SignIn.Current.session = SignIn.Session(result.provider.id, identity)
-        onOutcome(DriveAuthApply.apply(app, artifact), identity)
+internal fun applyFromCloudAccount(app: android.content.Context): DriveAuthApply.Report {
+    val artifact = JSONObject()
+    for ((section, key) in DriveAuthApply.applies) {
+        val v = AccountClient.secret(app, "$section.$key")
+        if (v.isBlank()) continue
+        val value: Any = if (v.trimStart().startsWith("{")) runCatching { JSONObject(v) }.getOrDefault(v) else v
+        artifact.put(section, (artifact.optJSONObject(section) ?: JSONObject()).put(key, value))
+    }
+    return runCatching { DriveAuthApply.apply(app, artifact) }.getOrElse {
+        DriveAuthApply.Report(listOf(DriveAuthApply.Step("cloud-account", false, "Cloud Account answered, but applying failed (${it.javaClass.simpleName})")))
     }
 }

@@ -95,22 +95,6 @@ class GhEngine(context: Context) {
         return held
     }
 
-    /**
-     * gh's own `auth login`, run by the engine as a long-lived job. [onPrompt] gets the one-time
-     * code and the page the moment the engine has them — while gh is still waiting for GitHub —
-     * and this returns once gh exits (or after the declared ceiling, if the engine stops
-     * answering). A running gh is never a failure; only gh's own exit is a verdict.
-     */
-    fun login(host: String, onPrompt: (code: String, url: String) -> Unit): Result {
-        log("sign-in: asking the engine to start gh auth login for $host")
-        val started = ask(LOGIN_START, host)
-        if (started.has(ERROR)) return Result(EXEC_FAILED, started.optString(ERROR)).also { log("sign-in: the engine did not start gh: ${it.output}") }
-        log("sign-in: " + if (started.optBoolean("started")) "gh started" else "gh was already signing in; following that one")
-        val deadline = SystemClock.elapsedRealtime() + BuildConfig.GH_ENGINE_LOGIN_MAX_MS
-        val again = { Thread.sleep(BuildConfig.GH_ENGINE_POLL_MS); SystemClock.elapsedRealtime() < deadline }
-        return follow({ Poll.of(ask(LOGIN_POLL)) }, again, onPrompt, ::log)
-    }
-
     private fun ask(method: String, vararg args: String): JSONObject {
         val why = check()
         val c = client
@@ -123,11 +107,9 @@ class GhEngine(context: Context) {
 
     /**
      * The log line for one call: the engine's error, or gh's exit and (on a failure) its words.
-     * Only those two keys are read, so a credential answer is never described here; loginPoll is
-     * left to [follow], which logs only what changed.
+     * Only those two keys are read, so a credential answer is never described here;
      */
     private fun callLine(method: String, o: JSONObject): String? = when {
-        method == LOGIN_POLL -> null
         o.has(ERROR) -> "$method: ${o.optString(ERROR)}"
         o.has("exit") -> "$method: exit ${o.optInt("exit")}" + if (o.optInt("exit") == 0) "" else ": ${why(o.optString("output"))}"
         else -> null
@@ -139,16 +121,7 @@ class GhEngine(context: Context) {
 
     private fun log(msg: String) = DriveDebugLog.i(ctx, TAG, msg)
 
-    /** One loginPoll answer, typed. [error] is set when the engine could not be asked at all. */
-    data class Poll(
-        val code: String = "",
-        val url: String = "",
-        val running: Boolean = false,
-        val exit: Int = EXEC_FAILED,
-        val output: String = "",
-        val error: String = "",
-    ) {
-        companion object {
+    companion object {
             fun of(o: JSONObject) = Poll(
                 code = o.optString("code"), url = o.optString("url"), running = o.optBoolean("running"),
                 exit = o.optInt("exit", EXEC_FAILED), output = o.optString("output"), error = o.optString(ERROR),
@@ -168,34 +141,10 @@ class GhEngine(context: Context) {
         const val STATUS = "status"
         const val REPO_LIST = "repoList"
         const val CREDENTIAL = "credential"
-        const val LOGIN_START = "loginStart"
-        const val LOGIN_POLL = "loginPoll"
 
         private const val ERROR = "error"
 
         const val TAG = "DriveGh"
-
-        /**
-         * FOLLOW ONE SIGN-IN: poll while [again] says so, hand [onPrompt] the code and the page as
-         * soon as a poll carries them (gh still running), and return gh's verdict once a poll says
-         * it ended. Pure, so GhLoginFollowTest drives it with a scripted engine.
-         */
-        fun follow(poll: () -> Poll, again: () -> Boolean, onPrompt: (code: String, url: String) -> Unit, log: (String) -> Unit): Result {
-            var code = ""
-            var url = ""
-            while (again()) {
-                val p = poll()
-                if (p.error.isNotBlank()) return Result(EXEC_FAILED, p.error).also { log("sign-in: the engine stopped answering: ${p.error}") }
-                if (p.code != code || p.url != url) {
-                    code = p.code; url = p.url
-                    log("sign-in: one-time code ${if (code.isBlank()) "not yet printed" else "on screen"}, page ${url.ifBlank { "not yet named" }}, gh ${if (p.running) "still waiting for GitHub" else "ended"}")
-                    onPrompt(code, url)
-                }
-                if (!p.running) return Result(p.exit, p.output).also { log("sign-in: gh exited ${it.exitCode}" + if (it.ok) "" else ": ${why(it.output)}") }
-            }
-            return Result(EXEC_FAILED, "gh sign-in did not end within ${BuildConfig.GH_ENGINE_LOGIN_MAX_MS / 60_000} minutes")
-                .also { log("sign-in: ${it.output}") }
-        }
 
         /**
          * WHY gh STOPPED, in its own words: every line it printed but the device-flow prompt (any
@@ -209,9 +158,5 @@ class GhEngine(context: Context) {
                 .ifEmpty { "gh printed nothing" }
 
         private val CODE_LINE = Regex("one-time code", RegexOption.IGNORE_CASE)
-
-        /** [url] when it is a page on [host], else null — a page gh names is only ever opened on the declared host. */
-        fun pageOnHost(url: String, host: String): String? =
-            url.takeIf { it.isNotBlank() && runCatching { java.net.URI(it).host }.getOrNull() == host }
     }
 }

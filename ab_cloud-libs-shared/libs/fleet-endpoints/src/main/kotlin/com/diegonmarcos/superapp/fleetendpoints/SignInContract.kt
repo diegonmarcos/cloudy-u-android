@@ -31,6 +31,9 @@ object SignInContract {
     const val SECTION = "connect"
     const val PAGE_SIGN_IN = "signin"
     const val PAGE_PROVIDERS = "hub"
+    /** The provider names Cloud Account's pages and state answer to; an app names a provider through these, never a literal. */
+    const val PROVIDER_GITHUB = "github"
+    const val PROVIDER_AUTHELIA = "authelia"
 
     enum class State(val wire: String) {
         SIGNED_IN("signed_in"), SIGNED_OUT("signed_out"),

@@ -213,8 +213,11 @@ PYTHON
     # THE PAGE: the GitHub way is gh's; list with gh; clone gh's rows on gh's credential.
     grep -qE 'DriveGitChain\.RUNG_GITHUB -> startGhLogin\(\)' "$page" \
         || { echo "    the GitHub way does not start gh's own sign-in"; bad=1; }
-    grep -qE 'ghEngine\.login\(ghHost\)' "$page" \
-        || { echo    "    the page's sign-in does not run gh auth login on the declared host"; bad=1; }
+    # #1693 gh's own `auth login` runs in Cloud Account (GhRunner above is the runner it uses): the page LINKS to it.
+    grep -qF 'AccountClient.openSignIn(ctx, SignInContract.PROVIDER_GITHUB)' "$page" \
+        || { echo    "    the page's GitHub sign-in is not a link to Cloud Account"; bad=1; }
+    grep -qE 'ghEngine\.login\(' "$page" \
+        && { echo    "    the page runs gh auth login itself again (only Cloud Account signs in)"; bad=1; }
     grep -qE 'ghEngine\.repoList\(ghLimit, GitHubRepos\.GH_FIELDS\)' "$page" \
         || { echo "    the GitHub listing is not gh repo list"; bad=1; }
     grep -qE 'else if \(wayListing\.viaGh\) cloneViaGh\(gh\)' "$page" \
@@ -248,7 +251,6 @@ PYTHON
             || { echo "    $sid does not name its next step ($want)"; bad=1; }
     done <<'STEPS'
 git_gh_not_signed_in|tap Sign in with GitHub
-git_gh_login_failed|tap Sign in with GitHub
 git_gh_clone_no_credential|tap Sign in with GitHub
 git_gh_list_failed|tap Retry
 git_gh_list_unreadable|tap Retry

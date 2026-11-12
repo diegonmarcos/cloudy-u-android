@@ -89,4 +89,20 @@ object AccountClient {
             ?: return SignInContract.Status(provider, SignInContract.State.UNKNOWN, "Cloud Account did not answer: update it or open it once")
         return SignInContract.parse(provider, r.getBoolean(KEY_OK), r.getString(SignInContract.KEY_JSON), r.getString(KEY_ERROR))
     }
+
+    /**
+     * #1693 THE SIGN-IN LINK: opens Cloud Account at [provider]'s sign-in page. This starts nothing itself (Cloud Account
+     * owns every sign-in); null when it opened, else the reason it could not (never throws).
+     */
+    fun openSignIn(ctx: Context, provider: String): String? {
+        if (!installed(ctx)) return SignInContract.missing(provider).line
+        val extras = SignInContract.openIntentExtras(provider)
+        fun fill(i: android.content.Intent) = i.also { for ((k, v) in extras) it.putExtra(k, v) }.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        return runCatching { ctx.startActivity(fill(android.content.Intent(SignInContract.ACTION_OPEN).setPackage(PKG))); null }.getOrElse {
+            runCatching {
+                val launch = ctx.packageManager.getLaunchIntentForPackage(PKG) ?: return "Cloud Account cannot be opened (${it.javaClass.simpleName})"
+                ctx.startActivity(fill(launch)); null
+            }.getOrElse { e -> "Cloud Account cannot be opened (${e.javaClass.simpleName})" }
+        }
+    }
 }

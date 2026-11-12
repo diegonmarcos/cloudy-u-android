@@ -414,6 +414,10 @@
     <string name="configs_storage_access_body">All-files access is what lets Cloud Drive list shared storage</string>
     <string name="configs_sign_in">Sign in</string>
     <string name="configs_sign_in_body">The fleet\'s sign-in: a successful one fetches your config and applies what Drive needs from it</string>
+    <string name="configs_sign_in_link">Sign in with %1$s in Cloud Account</string>
+    <string name="configs_sign_in_reading">asking Cloud Account…</string>
+    <string name="git_way_opened_account">Opened Cloud Account: sign in there, then come back; this page reads the result.</string>
+    <string name="configs_sign_in_apply">Apply what Cloud Account holds for Drive</string>
     <string name="configs_sign_in_as">Signed in as %1$s</string>
     <string name="configs_sign_in_applies">Applied here: %1$s</string>
     <string name="configs_sign_in_identity_only">%1$s proved an identity only — nothing was fetched, so nothing to apply</string>

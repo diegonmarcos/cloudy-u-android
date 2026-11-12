@@ -96,29 +96,11 @@
   },
   "exempt": [
     {
-      "path": "ac_cloud-drive/build.json",
-      "rules": [
-        "engine-login-decl"
-      ],
-      "why": "Drive's engines.gh binding drives the Git card's GitHub sign-in",
-      "until": "step 3"
-    },
-    {
-      "path": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/configs/SignInCard.kt",
-      "rules": [
-        "signin-ui"
-      ],
-      "why": "Drive Configs > Sign in hosts libs:auth",
-      "until": "step 3"
-    },
-    {
       "path": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitReposScreen.kt",
       "rules": [
-        "engine-login-call",
-        "signin-ui",
         "credential-prompt"
       ],
-      "why": "Drive Git: startGhLogin, cloud fallback sign-in, host password entry",
+      "why": "Drive Git: the self-hosted git host token/password entry (the GitHub and Cloud buttons are links to Cloud Account)",
       "until": "step 3"
     },
     {

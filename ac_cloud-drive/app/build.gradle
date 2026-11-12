@@ -402,10 +402,8 @@ if (ghEngineFleet == null) {
 def ghEnginePackage = ghEngineFleet.package.toString()
 def ghEngineAction  = ghEngineDecl.action.toString().replace('{package}', ghEnginePackage)
 def ghEngineMinContract = ghEngineDecl.min_contract as int
-def ghEnginePollMs  = ghEngineDecl.login_poll_ms as long
-def ghEngineMaxMs   = ghEngineDecl.login_max_ms as long
-if (ghEngineMinContract < 1 || ghEnginePollMs <= 0 || ghEngineMaxMs < ghEnginePollMs) {
-    throw new GradleException("build.json::engines.gh needs min_contract >= 1 and 0 < login_poll_ms <= login_max_ms (#705)")
+if (ghEngineMinContract < 1) {
+    throw new GradleException("build.json::engines.gh needs min_contract >= 1 (#705)")
 }
 // Mount lifetime policy (build.json::mount_keeper), decoded by mounts/MountPolicy.kt.
 def mountKeeperB64 = b64((buildJson.mount_keeper ?: [:]).findAll { k, v -> !k.startsWith('_') })
@@ -588,8 +586,6 @@ android {
         buildConfigField "String", "AUTH_MISSION_PERMISSION", "\"${authMissionPermission}\"" // #1333 the Perms list resolves its {authMissionPermission}
         buildConfigField "String", "GH_ENGINE_ACTION",       "\"${ghEngineAction}\""
         buildConfigField "int",    "GH_ENGINE_MIN_CONTRACT", "${ghEngineMinContract}"
-        buildConfigField "long",   "GH_ENGINE_POLL_MS",      "${ghEnginePollMs}L"
-        buildConfigField "long",   "GH_ENGINE_LOGIN_MAX_MS", "${ghEngineMaxMs}L"
         buildConfigField "String", "UI_FILES_B64",    "\"${uiFilesB64}\""
         buildConfigField "String", "UI_MANAGE_B64",   "\"${uiManageB64}\""
         buildConfigField "String", "UI_LEGACY_B64",   "\"${uiLegacyB64}\""
@@ -740,6 +736,7 @@ dependencies {
     // #587 THE sign-in of the fleet: Configs ▸ Sign in hosts libs:auth's Compose surface
     // (the same one superapp's Profile ▸ Connect hosts) and applies the drive sections.
     implementation project(':libs:auth')
+    implementation project(':libs:fleet-endpoints-android')   // #1693 AccountClient: the link to Cloud Account and its state
     // #813 the Disk Management engine (Home ▸ Apps ▸ Disk Management, /api/disk/*); pinned to
     // this app's own grants, so it is compiled in (1_cicd/src/data/lib-classes.json).
     implementation project(':libs:disk')
