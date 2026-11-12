@@ -1,6 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.cloud_media_center" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- #1675 targetSdk 34 -> 35 (silent updates on Android 17 need 35+). Android 15 ENFORCES edge-to-edge for apps
+             targeting 35; this keeps the window exactly as it laid out at 34 (system bars outside the content). -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
         <!-- Customize your theme here. -->
     </style>
 </resources>

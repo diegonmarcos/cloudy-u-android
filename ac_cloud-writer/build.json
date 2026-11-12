@@ -21,7 +21,7 @@
     "_doc_application_id": "NEW application, so there is no update chain to break - but the fleet updater identifies applications by package id and TextTools.SERVICE_PACKAGES already names this exact string as the preferred serving application, so it is fixed from the first publish and cannot be renamed without editing a library every constellation application links.",
     "compile_sdk": 36,
     "min_sdk": 26,
-    "target_sdk": 34,
+    "target_sdk": 35,
     "version_code": 1,
     "version_name": "0.1.0-dev",
     "abi_filters": [

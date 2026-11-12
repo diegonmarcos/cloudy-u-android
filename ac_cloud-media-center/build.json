@@ -60,7 +60,7 @@
     "_doc_application_id": "A NEW identity, not the old media-center one: com.diegonmarcos.mediacenter belongs to cloud-gallery and is installed on phones, so this app takes com.diegonmarcos.cloudmediacenter, the package ac_cloud-me/build.json::ui.external_apps[cloud-media-center] already names for Cloud Me's Media tiles.",
     "compile_sdk": 36,
     "min_sdk": 26,
-    "target_sdk": 34,
+    "target_sdk": 35,
     "_doc_target_sdk": "No storage permission and no runtime grant: the app reads only its own bundled pages. compile_sdk is what the Tauri Android library compiles against.",
     "version_code": 1,
     "version_name": "0.1.0-dev",

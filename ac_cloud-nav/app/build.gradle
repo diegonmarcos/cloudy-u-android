@@ -191,7 +191,7 @@ android {
         resValue "string", "app_name", buildJson.display_name
         applicationId 'com.diegonmarcos.cloudnav'
         minSdk 26
-        targetSdk 34
+        targetSdk 35
         versionCode codeFinal
         versionName "${buildJson.android.version_name} (sha-${shortSha})"
         ndk {

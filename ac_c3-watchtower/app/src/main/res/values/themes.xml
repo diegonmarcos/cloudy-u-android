@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Same palette as the watchdog panel and morpheus, so the three C3 apps
          read as one system. No WebView here, but the dark window background is
          still what stops a white flash before the first list paints. -->
     <style name="Theme.WatchTower" parent="Theme.AppCompat.NoActionBar">
+        <!-- #1675 targetSdk 34 -> 35 (silent updates on Android 17 need 35+). Android 15 ENFORCES edge-to-edge for apps
+             targeting 35; this keeps the window exactly as it laid out at 34 (system bars outside the content). -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
         <item name="android:windowBackground">#0b0e14</item>
         <item name="android:statusBarColor">#101520</item>
         <item name="android:navigationBarColor">#0b0e14</item>

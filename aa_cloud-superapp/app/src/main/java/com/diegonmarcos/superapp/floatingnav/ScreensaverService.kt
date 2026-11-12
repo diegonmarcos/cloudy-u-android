@@ -169,8 +169,12 @@ class ScreensaverService : Service() {
         fun start(ctx: Context): Boolean {
             if (!allowed(ctx)) return false
             val i = Intent(ctx, ScreensaverService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
-            else ctx.startService(i)
+            // #1675 targetSdk 35: a background start no longer rides the overlay exemption unless an overlay is visible
+            // (ForegroundServiceStartNotAllowedException); never crash for it.
+            runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
+                else ctx.startService(i)
+            }.onFailure { android.util.Log.w("FgsStart", "could not start ScreensaverService: ${it.message}") }
             return true
         }
 

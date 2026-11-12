@@ -4,6 +4,9 @@
          (dark/vector basemap) and the chrome (bars / nav / timeline / cards)
          are one cohesive dark surface, regardless of the system setting. -->
     <style name="Theme.CloudNav" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- #1675 targetSdk 34 -> 35 (silent updates on Android 17 need 35+). Android 15 ENFORCES edge-to-edge for apps
+             targeting 35; this keeps the window exactly as it laid out at 34 (system bars outside the content). -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
         <item name="colorPrimary">@color/nav_primary</item>
         <item name="colorOnPrimary">@color/nav_on_primary</item>
         <item name="colorPrimaryContainer">@color/nav_primary_container</item>

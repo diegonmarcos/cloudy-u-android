@@ -58,7 +58,7 @@
     "application_id": "com.diegonmarcos.watchdog",
     "compile_sdk": 36,
     "min_sdk": 26,
-    "target_sdk": 34,
+    "target_sdk": 35,
     "version_code": 1,
     "version_name": "0.1.0-dev",
     "abi_filters": [

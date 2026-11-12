@@ -138,7 +138,7 @@ android {
         applicationId buildJson.android.application_id
         resValue "string", "app_name", buildJson.display_name
         minSdk 26
-        targetSdk 34
+        targetSdk 35
         versionCode codeFinal
         versionName "${buildJson.android.version_name} (sha-${shortSha})"
 

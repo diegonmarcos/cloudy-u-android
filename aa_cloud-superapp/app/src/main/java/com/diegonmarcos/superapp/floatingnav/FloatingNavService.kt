@@ -629,8 +629,12 @@ class FloatingNavService : Service() {
         fun showMenu(ctx: Context): Boolean {
             if (!overlayAllowed(ctx)) return false
             val i = Intent(ctx, FloatingNavService::class.java).setAction(ACTION_SHOW_MENU)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
-            else ctx.startService(i)
+            // #1675 targetSdk 35: a background start no longer rides the overlay exemption unless an overlay is visible
+            // (ForegroundServiceStartNotAllowedException); never crash for it.
+            runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
+                else ctx.startService(i)
+            }.onFailure { android.util.Log.w("FgsStart", "could not start FloatingNavService: ${it.message}") }
             return true
         }
 
@@ -730,8 +734,12 @@ class FloatingNavService : Service() {
         fun startIfPermitted(ctx: Context): Boolean {
             if (!overlayAllowed(ctx)) return false
             val i = Intent(ctx, FloatingNavService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
-            else ctx.startService(i)
+            // #1675 targetSdk 35: a background start no longer rides the overlay exemption unless an overlay is visible
+            // (ForegroundServiceStartNotAllowedException); never crash for it.
+            runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
+                else ctx.startService(i)
+            }.onFailure { android.util.Log.w("FgsStart", "could not start FloatingNavService: ${it.message}") }
             return true
         }
 
@@ -751,8 +759,12 @@ class FloatingNavService : Service() {
             if (!isRunning) return
             val i = Intent(ctx, FloatingNavService::class.java)
                 .setAction(ACTION_RESET_POSITION)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
-            else ctx.startService(i)
+            // #1675 targetSdk 35: a background start no longer rides the overlay exemption unless an overlay is visible
+            // (ForegroundServiceStartNotAllowedException); never crash for it.
+            runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
+                else ctx.startService(i)
+            }.onFailure { android.util.Log.w("FgsStart", "could not start FloatingNavService: ${it.message}") }
         }
 
         /** Run a notification-action target on the service (called by the
@@ -760,8 +772,12 @@ class FloatingNavService : Service() {
         fun runAction(ctx: Context, target: String) {
             val i = Intent(ctx, FloatingNavService::class.java)
                 .setAction(ACTION_NAV).putExtra(EXTRA_TARGET, target)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
-            else ctx.startService(i)
+            // #1675 targetSdk 35: a background start no longer rides the overlay exemption unless an overlay is visible
+            // (ForegroundServiceStartNotAllowedException); never crash for it.
+            runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
+                else ctx.startService(i)
+            }.onFailure { android.util.Log.w("FgsStart", "could not start FloatingNavService: ${it.message}") }
         }
     }
 }

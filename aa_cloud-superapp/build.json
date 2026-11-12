@@ -12,7 +12,7 @@
     "application_id": "com.diegonmarcos.superapp",
     "compile_sdk": 35,
     "min_sdk": 26,
-    "target_sdk": 34,
+    "target_sdk": 35,
     "version_code": 23,
     "version_name": "0.1.1-dev",
     "_doc_abi_filters": "Native-library ABIs shipped in the APK. Defaults to arm64-v8a only because MapLibre Native (added in Push 2) ships ~15-18MB of .so per ABI; shipping all 4 default ABIs (arm64-v8a + armeabi-v7a + x86 + x86_64) inflates the APK from ~22MB to ~82MB. Every Samsung Galaxy from S8 (2017) onward + every modern Pixel is arm64, so this is safe for the user's device. To support 32-bit devices or x86 emulators, add 'armeabi-v7a' / 'x86_64' to this list and rebuild — no Kotlin / gradle edits needed.",
@@ -46,7 +46,7 @@
   },
   "toolchain": {
     "_doc": "Pinned for reproducibility — all derived in flake.nix. Bump here, rebuild devShell.",
-    "_doc_sdk_bump": "compile_sdk bumped 34→35 to satisfy androidx.health.connect:connect-client:1.1.0-alpha10's AAR metadata constraint (it requires consumers to compile against Android 35+ for the new HC permission definitions wired to API 35 constants). AGP 8.5.2 maxes at compileSdk 34, so AGP bumped 8.5.2→8.7.3 (first stable AGP supporting compileSdk 35). Gradle 8.7→8.10.2 follows AGP 8.7's Gradle 8.9+ requirement. target_sdk stays at 34 — opting into Android 15 runtime behaviour is a separate concern from compiling against its APIs.",
+    "_doc_sdk_bump": "compile_sdk bumped 34→35 to satisfy androidx.health.connect:connect-client:1.1.0-alpha10's AAR metadata constraint (it requires consumers to compile against Android 35+ for the new HC permission definitions wired to API 35 constants). AGP 8.5.2 maxes at compileSdk 34, so AGP bumped 8.5.2→8.7.3 (first stable AGP supporting compileSdk 35). Gradle 8.7→8.10.2 follows AGP 8.7's Gradle 8.9+ requirement. target_sdk was 34 until #1675 raised it to 35 (silent PackageInstaller updates on Android 17 need targetSdk 35+; edge-to-edge enforcement is opted out in Theme.Superapp so the layout is unchanged).",
     "_doc_heliboard_bump": "compile_sdk bumped 35→36 + the whole toolchain re-pinned to vendor HeliBoard main as libs:keyboard (self-contained keyboard provider). HeliBoard main pins AGP 8.13.2 / Kotlin 2.3.20 / Gradle 8.14 / compileSdk 36 (Android 16) / NDK 28.0.13004108, and uses the standalone Kotlin 2.0 Compose-compiler plugin (org.jetbrains.kotlin.plugin.compose) — so app + libs:wallet dropped composeOptions.kotlinCompilerExtensionVersion in favour of that plugin. nixpkgs channel bumped 24.11→25.05 because 24.11's androidenv/kotlin/gradle predate API 36 / Kotlin 2.3 / Gradle 8.14. target_sdk unchanged. See libs/keyboard/README.md.",
     "agp": "8.13.2",
     "gradle": "8.14",

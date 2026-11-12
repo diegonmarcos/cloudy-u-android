@@ -37,7 +37,7 @@
     "_doc_application_id": "READ THE CONVENTION OUT OF THE SIBLINGS, DO NOT PATTERN-MATCH THE DIRECTORY. ac_c3-watchdog is com.diegonmarcos.watchdog and ac_c3-morpheus is com.diegonmarcos.morpheus — the `c3-` in the directory name is NOT in the package. So this is com.diegonmarcos.watchtower, NOT com.diegonmarcos.c3.watchtower. A wrong package compiles, ships, installs, and leaves a tab that opens nothing, because the SuperApp resolves the tab by getLaunchIntentForPackage on exactly this string.",
     "compile_sdk": 36,
     "min_sdk": 26,
-    "target_sdk": 34,
+    "target_sdk": 35,
     "version_code": 1,
     "version_name": "0.1.0-dev",
     "abi_filters": [

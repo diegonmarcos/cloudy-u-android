@@ -62,14 +62,15 @@ class KdeStatusService : Service() {
         /** Start (idempotent) the foreground service that pins the KDE badge. */
         fun start(ctx: Context) {
             val app = ctx.applicationContext
-            ContextCompat.startForegroundService(app, Intent(app, KdeStatusService::class.java))
+            // #1675 targetSdk 35: never crash on a refused background start.
+            runCatching { ContextCompat.startForegroundService(app, Intent(app, KdeStatusService::class.java)) }
         }
 
         /** Ask the running service to rebuild + re-post the badge from live state. */
         fun refresh(ctx: Context) {
             val app = ctx.applicationContext
-            ContextCompat.startForegroundService(
-                app, Intent(app, KdeStatusService::class.java).setAction(ACTION_REFRESH))
+            runCatching { ContextCompat.startForegroundService(
+                app, Intent(app, KdeStatusService::class.java).setAction(ACTION_REFRESH)) }
         }
 
         /** Delete-intent: re-post the badge if the user swipes it away (Android

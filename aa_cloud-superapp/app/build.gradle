@@ -808,7 +808,7 @@ android {
         resConfigs "en"
         applicationId 'com.diegonmarcos.superapp'
         minSdk 26
-        targetSdk 34
+        targetSdk 35
         versionCode codeFinal
         versionName "${buildJson.android.version_name} (sha-${shortSha})"
         // Native-library ABI filter — declared in build.json::android.abi_filters
