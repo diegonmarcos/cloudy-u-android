@@ -130,7 +130,8 @@ object MediaHub {
     }.getOrNull()
 
     fun openListenerSettings(ctx: Context) {
-        runCatching { ctx.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        // #1515 the grant lives in Configs > Perms: open it on the notification-listener row (perms-guard P7).
+        runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "Media: sessions", listOf("notification_listener")) }
     }
 
     // ── transport ───────────────────────────────────────────────────────────────────────────────────────────────
