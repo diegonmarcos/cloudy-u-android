@@ -214,8 +214,9 @@ class BatteryTruthTest {
         for (f in lib.listFiles().orEmpty().filter { it.extension == "kt" })
             assertFalse("${f.name} prompts for Shizuku", Regex("""\bShizuku(Energy|UserService|\.)""").containsMatchIn(code(f)))
         assertTrue("the battery reads skip the Shizuku rung",
-            code(File(lib, "BatteryRepository.kt")).contains("takeUnless { it === ShizukuShellChannel }"))
-        assertTrue("unpaired opens the ADB Shell page", code(File(lib, "EnergyUsageDialog.kt")).contains("AdbShellLink.open("))
+            // #1682 P3: the battery reads go through ShellClient; a Shizuku-served answer (its source) is still dropped
+            code(File(lib, "BatteryRepository.kt")).contains("!r.source.contains(\"shizuku\", ignoreCase = true)"))
+        assertTrue("unpaired opens the ADB Shell page", code(File(lib, "EnergyUsageDialog.kt")).contains("ShellClient.openArmPage("))
         val page = code(File(app, "batterystats/BatteryStatsFragment.kt"))
         assertTrue(page.contains("BatteryRepository.report(") && page.contains("BatteryRows.now(") && page.contains("BatteryRows.since("))
     }
