@@ -16,6 +16,8 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
+import androidx.compose.ui.unit.width
 import com.diegonmarcos.cloudkgstore.ui.MeServedFrame
 import com.diegonmarcos.cloudlib.localserve.ServedPageTags
 import org.junit.Assert.assertEquals
