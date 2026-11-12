@@ -82,9 +82,10 @@ class MeServedFrameTest {
         val wv = webView()
         assertEquals("MATCH_PARENT width", ViewGroup.LayoutParams.MATCH_PARENT, wv.layoutParams.width)
         assertEquals("MATCH_PARENT height", ViewGroup.LayoutParams.MATCH_PARENT, wv.layoutParams.height)
+        // measured, not laid-out, size: Robolectric's WebView provider swallows setFrame, onMeasure (View's) still runs
         val density = compose.activity.resources.displayMetrics.density
-        assertTrue("view height ${wv.height}px vs ${content.height.value * density}px", abs(wv.height - content.height.value * density) <= 2f)
-        assertTrue("view width ${wv.width}px vs ${content.width.value * density}px", abs(wv.width - content.width.value * density) <= 2f)
+        assertTrue("view height ${wv.measuredHeight}px vs ${content.height.value * density}px", abs(wv.measuredHeight - content.height.value * density) <= 2f)
+        assertTrue("view width ${wv.measuredWidth}px vs ${content.width.value * density}px", abs(wv.measuredWidth - content.width.value * density) <= 2f)
     }
 
     @Test fun theViewportIsThePagesOwnAtScaleOne() {
