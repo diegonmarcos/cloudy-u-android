@@ -25,7 +25,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
-import com.diegonmarcos.superapp.adbdebug.AdbShellLink
+import com.diegonmarcos.superapp.shellclient.ShellClient
 import com.diegonmarcos.superapp.system.QuickDisplay
 import com.diegonmarcos.superapp.system.SystemDisplay
 import com.diegonmarcos.superapp.ui.Haptics
@@ -177,7 +177,7 @@ private fun StepControl(
         is QuickDisplay.Write.NeedsAdb -> {
             Info("Needs ADB: no WRITE_SETTINGS grant and no shell channel. Run:", "display:$id:result", KitStoreRow.UPDATE)
             Info(o.command, "display:$id:command", p.textPrimary, mono = true)
-            KitStoreRowLine { KitStoreQuick("Open ADB Shell", KitStoreRow.BLUE_FILL, Modifier.testTag("display:$id:adb")) { Haptics.tap(view); AdbShellLink.open(ctx) } }
+            KitStoreRowLine { KitStoreQuick("Open ADB Shell", KitStoreRow.BLUE_FILL, Modifier.testTag("display:$id:adb")) { Haptics.tap(view); ShellClient.openArmPage(ctx) } }
         }
     }
 }

@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.diegonmarcos.superapp.adbdebug.AdbShellLink
+import com.diegonmarcos.superapp.shellclient.ShellClient
 import com.diegonmarcos.superapp.battery.BatteryCycles
 import com.diegonmarcos.superapp.battery.BatteryRepository
 import com.diegonmarcos.superapp.uikit.KitListRow
@@ -55,7 +55,7 @@ internal fun BatteryUsageBody() {
         KitSegmented(listOf(CYCLE to "Cycle", MONTH to "Month"), window, { window = it; picked = 0 }, tag = "$TAG:window")
         val d = data ?: run { AggCaption("Reading…"); return@Column }
         if (d.channel == null) KitListRow("Per-app mAh needs the ADB channel", secondary = "Pair it on the ADB Shell page",
-            pill = "Not paired" to KitState.IDLE, tag = "$TAG:pair", onClick = { AdbShellLink.open(ctx) })
+            pill = "Not paired" to KitState.IDLE, tag = "$TAG:pair", onClick = { ShellClient.openArmPage(ctx) })
         val periods = if (window == CYCLE) d.cycles.take(MAX_PERIODS).map(::cyclePeriod)
             else BatteryCycles.months(d.cycles).take(MAX_PERIODS).map(::monthPeriod)
         if (periods.isEmpty()) { AggCaption("No cycle recorded yet: one starts at the next unplug or full charge."); return@Column }

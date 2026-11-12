@@ -179,7 +179,7 @@ object NetworkInfoPopup {
                 // Configs › Network › ADB Shell inside the shell; the lib's own activity anywhere else.
                 val shell = ctx as? com.diegonmarcos.superapp.ShellActivity
                 if (shell != null) shell.openSectionPage("config", "adb-shell")
-                else com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctx)
+                else com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctx)
             }
 
             // A section wrapper that reports where it sits, and a header with its "Settings ›" link
