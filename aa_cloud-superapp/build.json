@@ -10020,7 +10020,24 @@
               "label": "Super power saving",
               "perms_surface": true,
               "subtitle": "Power saving + SuperApp low-power mode, and releases this app's own Device admin and Notification access (only those on, restored on exit) so Maximum power saving stops listing it as essential. Accessibility untouched.",
-              "_doc": "#1689 ONE declaration: this tile (Quick actions, next to Power saving) and the Super power saving card on Configs > Perms. Steps and their exact adb lines (own components only, broker rule superpower-self): dpm remove-active-admin / set-active-admin for LockScreenAdminReceiver, cmd notification disallow_listener / allow_listener for PhoneNotificationListenerService. Remembered in super_power_prefs (fleet-config.json)."
+              "_doc": "#1689 ONE declaration: this tile (Quick actions, next to Power saving) and the Super power saving card on Configs > Perms. Steps and their exact adb lines (own components only, broker rule superpower-self): dpm remove-active-admin / set-active-admin for LockScreenAdminReceiver, cmd notification disallow_listener / allow_listener for PhoneNotificationListenerService. Remembered in super_power_prefs (fleet-config.json). services = every SuperApp foreground service the mode stops (only those running; remembered; restored on exit). adb_last ones carry the ADB owner channel and are stopped LAST, after the mode's own ADB steps. keep = left running by default (the VPN; stopping it asks a confirm). Any other running foreground service of this app found at entry is stopped too and listed as undeclared.",
+              "services": [
+                {"class": "com.diegonmarcos.superapp.floatingnav.FloatingNavService", "label": "Floating nav"},
+                {"class": "com.diegonmarcos.superapp.floatingnav.ScreensaverService", "label": "Screensaver"},
+                {"class": "com.diegonmarcos.superapp.notificationcenter.KdeStatusService", "label": "KDE status"},
+                {"class": "com.diegonmarcos.superapp.notificationcenter.NetworkBadgeService", "label": "Network badge"},
+                {"class": "com.diegonmarcos.clocktools.ClockService", "label": "Clock / stopwatch"},
+                {"class": "com.diegonmarcos.cloudnav.maps.LocationTrackerService", "label": "Location tracker"},
+                {"class": "com.diegonmarcos.cloudlib.gh.GhLoginKeeper", "label": "GitHub login keeper"},
+                {"class": "com.diegonmarcos.superapp.light.LightService", "label": "Light"},
+                {"class": "com.diegonmarcos.superapp.browser.download.DlService", "label": "Downloads"},
+                {"class": "com.diegonmarcos.superapp.updater.BatchForegroundService", "label": "Fleet updates (keep-alive)"},
+                {"class": "com.diegonmarcos.superapp.adbdebug.AdbPairingService", "label": "ADB pairing", "adb_last": true},
+                {"class": "com.diegonmarcos.superapp.adbdebug.WdKeeperService", "label": "Wireless debugging keeper", "adb_last": true},
+                {"class": "com.diegonmarcos.superapp.adbdebug.HostShellService", "label": "ADB host shell", "adb_last": true},
+                {"class": "com.diegonmarcos.superapp.firewall.FirewallVpnService", "label": "Firewall VPN", "keep": true},
+                {"class": "com.diegonmarcos.superapp.firewall.FirestackTunnelService", "label": "Firestack VPN", "keep": true}
+              ]
             },
             {
               "id": "rotation_lock",

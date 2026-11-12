@@ -69,7 +69,7 @@ object SuperPowerSaving {
     data class Report(val ok: Boolean, val lines: List<String>, val needs: List<Intent> = emptyList())
 
     /** Blocking; call off the main thread. Never throws. */
-    fun turnOn(ctx: Context): Report {
+    fun turnOn(ctx: Context, stopVpn: Boolean = false): Report {
         val out = ArrayList<String>(); var ok = true
         val app = ctx.applicationContext
         PowerSaving.setFollowSystem(app, true)
@@ -92,6 +92,8 @@ object SuperPowerSaving {
             if (!r.ok) ok = false
         } else out += "Notification access: was off, left off"
         out += "Accessibility: untouched"
+        // Last: the foreground services (the ADB keepers after every ADB step above).
+        out += SuperServices.stopAll(app, stopKept = stopVpn)
         return Report(ok, out)
     }
 
@@ -99,6 +101,8 @@ object SuperPowerSaving {
         val out = ArrayList<String>(); var ok = true; val needs = ArrayList<Intent>()
         val app = ctx.applicationContext
         val plan = restorePlan(releasedAdmin(app), releasedListener(app))
+        // First: the services it stopped (ADB keepers first), so the channel is back for the steps below.
+        out += SuperServices.restoreAll(app)
         val ch = BrokerGrantChannel(app)
         if (plan.admin) {
             val r = AdbToggle.run(steps(app)[0].copy(on = false), ch) { if (await { adminActive(app) }) true else adminActive(app) }

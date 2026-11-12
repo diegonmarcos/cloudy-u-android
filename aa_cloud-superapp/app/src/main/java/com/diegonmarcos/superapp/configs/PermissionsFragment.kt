@@ -369,6 +369,28 @@ class PermissionsFragment : KitComposeFragment() {
     private var superEpoch by mutableIntStateOf(0)
     private var superReport by mutableStateOf<List<String>>(emptyList())
 
+    private var confirmVpn by mutableStateOf(false)
+
+    @Composable
+    private fun SuperVpnConfirm() {
+        if (!confirmVpn) return
+        com.diegonmarcos.superapp.uikit.KitConfirmDialog(
+            "Stop the VPN too",
+            "Super power saving keeps the Firewall / Firestack VPN running by default. Stopping it also stops per-app blocking until you turn the mode off. Continue?",
+            "Stop VPN too", "Keep VPN",
+            onConfirm = {
+                confirmVpn = false
+                val app = requireContext().applicationContext
+                val S = com.diegonmarcos.superapp.system.SuperPowerSaving
+                Thread {
+                    val r = runCatching { S.turnOn(app, stopVpn = true) }.getOrElse { S.Report(false, listOf(it.message ?: "failed")) }
+                    view?.post { superReport = r.lines; superEpoch++; powerEpoch++; rolesEpoch++ }
+                }.start()
+            },
+            onDismiss = { confirmVpn = false },
+        )
+    }
+
     @Composable
     private fun SuperPowerCard() {
         val ctx = requireContext()
@@ -388,8 +410,17 @@ class PermissionsFragment : KitComposeFragment() {
                 }
             }
             KvRow("Accessibility", "untouched")
+            val running = remember(superEpoch) { com.diegonmarcos.superapp.system.SuperServices.runningForeground(ctx) }
+            val stopped = remember(superEpoch) { com.diegonmarcos.superapp.system.SuperServices.remembered(ctx) }
+            for (d in com.diegonmarcos.superapp.system.SuperServices.declared()) KvRow("Service: ${d.label}",
+                (if (d.cls in running) "● running" else "○ stopped") + (if (d.cls in stopped) " · paused by Super power saving" else "") +
+                    (if (d.keep) " · kept by default" else "") + (if (d.adbLast) " · ADB channel, stopped last" else ""))
+            for (c in running.filter { r -> com.diegonmarcos.superapp.system.SuperServices.declared().none { it.cls == r } })
+                KvRow("Service: ${c.substringAfterLast('.')}", "● running · undeclared (stopped too by the mode)")
+            Small("The VPN stays on by default; the button below asks before stopping it as well.")
             if (on) Small("Paused: double-tap lock falls back to Accessibility (or shows 'paused by Super power saving'); Phone Notifications cannot read notifications.")
             PermButtonRow {
+                if (!on) PermButton("On, and stop the VPN too", null) { confirmVpn = true }
                 PermButton(if (on) "Turn Super power saving off" else "Turn Super power saving on", null) {
                     val app = ctx.applicationContext
                     shellNote = "Super power saving: switching ${if (on) "off" else "on"}…"
@@ -522,6 +553,7 @@ class PermissionsFragment : KitComposeFragment() {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 16.dp)) {
         PowerSavingCard()
         SuperPowerCard()
+        SuperVpnConfirm()
         CatalogueHead()
         RolesHeldSection()
         // #1546 the device tools (the libs:perms section with its filter chips and actions, grant here, system pages, per-fleet
