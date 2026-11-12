@@ -122,7 +122,7 @@ fun FinTable(
             return
         }
         when {
-            i == 0 && (link.isNotEmpty() || r in tapRows) -> Text(FinLogic.cell(raw), mod, color = p.accent, style = FinType.body.copy(fontSize = 12.sp), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+            i == 0 && (link.isNotEmpty() || r in tapRows) -> Text(FinLogic.cell(raw) + (if (r in tapRows) "  ›" else ""), mod, color = p.accent, style = FinType.body.copy(fontSize = 12.sp, fontWeight = if (r in tapRows) androidx.compose.ui.text.font.FontWeight.SemiBold else null), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             t == Col.TEXT || t == Col.LINK -> Text(FinLogic.cell(raw), mod, color = if (FinLogic.missing(raw)) p.text3 else p.text,
                 style = FinType.body.copy(fontSize = 12.sp), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             t == Col.DATE -> Text(FinLogic.cell(raw), mod, color = p.text2, style = FinType.caption, textAlign = TextAlign.End, maxLines = 1)
@@ -166,7 +166,8 @@ fun FinTable(
                     Box(Modifier.width(ws.drop(1).fold(0.dp) { a, b -> a + b }).height(1.dp).background(p.hairline))
                     for (k in 0 until shown) {
                         val r = order[k]
-                        Row(Modifier.height(FinDim.tableRow).background(if (k % 2 == 1) p.surfaceRaised.copy(alpha = 0.5f) else Color.Transparent),
+                        Row(Modifier.height(FinDim.tableRow).background(if (k % 2 == 1) p.surfaceRaised.copy(alpha = 0.5f) else Color.Transparent)
+                            .let { m -> tapRows[r]?.let { tap -> m.clickable(onClick = tap) } ?: m },
                             verticalAlignment = Alignment.CenterVertically) { for (i in 1 until n) bodyCell(r, i, ws[i]) }
                     }
                 }

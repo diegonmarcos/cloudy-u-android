@@ -36,8 +36,8 @@ object QuotesStore {
             pool.execute {
                 val url = decl.source.url.replace("{symbol}", URLEncoder.encode(s, "UTF-8"))
                 val q = runCatching { Quotes.parseChart(http.send(url, mapOf("User-Agent" to decl.source.userAgent), null)) }.getOrNull()
-                askedAt[s] = t
-                if (q != null) { live[s] = q; answered.incrementAndGet() }
+                // only an answer counts as asked: a silent symbol (rate limit, offline) is asked again the next time the page opens
+                if (q != null) { askedAt[s] = t; live[s] = q; answered.incrementAndGet() }
             }
         }
         pool.shutdown(); pool.awaitTermination(2, TimeUnit.MINUTES)

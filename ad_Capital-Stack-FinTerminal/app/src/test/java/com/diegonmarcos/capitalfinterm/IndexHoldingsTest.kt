@@ -115,4 +115,34 @@ class IndexHoldingsTest {
         assertEquals(100.0, IndexHoldings.restWeight(emptyList()), 0.0)
         assertNull(IndexHoldings.perf(null, "1D")); assertNull(IndexHoldings.perf(q(Double.NaN), "1D")); assertNull(IndexHoldings.perf(q(1.0), "5Y"))
     }
+
+    // #1702 the heat map's scale and the on-demand dataset route
+    @Test fun tileColourScaleFollowsTheReference() {
+        val flat = com.diegonmarcos.capitalfinterm.ui.tileColor(null, 2.0)
+        val small = com.diegonmarcos.capitalfinterm.ui.tileColor(0.5, 2.0)
+        val large = com.diegonmarcos.capitalfinterm.ui.tileColor(9.0, 2.0)
+        val loss = com.diegonmarcos.capitalfinterm.ui.tileColor(-4.4, 2.0)
+        assertTrue("a small gain is lighter than a large one", small.green > large.green)
+        assertTrue("a large gain is green", large.green > large.red && large.green > large.blue)
+        assertTrue("a loss is red", loss.red > loss.green && loss.red > loss.blue)
+        assertTrue("no quote is neither green nor red", kotlin.math.abs(flat.green - flat.red) < 0.1f)
+    }
+
+    @Test fun datasetIsFetchedFromItsPublishedFileWithoutCloudStore() {
+        assertEquals("https://raw.githubusercontent.com/diegonmarcos/cloudy-u-android/main/data/fleet/app/com.diegonmarcos.capitalfinterm/index-holdings.json",
+            com.diegonmarcos.capitalfinterm.ui.IndexHoldingsStore.publishedUrl("app/com.diegonmarcos.capitalfinterm/index-holdings"))
+        // the client's reader over a web-like source: parsed, then answered from the last-known-good copy when the source is silent
+        val lkg = object : com.diegonmarcos.superapp.fleetdata.LastKnownGood {
+            val m = HashMap<String, ByteArray>()
+            override fun load(key: String) = m[key]
+            override fun store(key: String, bytes: ByteArray) { m[key] = bytes }
+        }
+        var online = true
+        val src = com.diegonmarcos.superapp.fleetdata.DataSource { _, _ -> if (online) dataset.byteInputStream() else null }
+        val reader = com.diegonmarcos.superapp.fleetdata.FleetDataReader(src, lkg)
+        val first = reader.get("index-holdings", "com.diegonmarcos.capitalfinterm") { IndexHoldings.parse(it) }
+        assertNotNull(first); assertTrue(first!!.keys.containsAll(listOf("sp500", "nikkei225", "ftse100")))
+        online = false
+        assertEquals(first.keys, reader.get("index-holdings", "com.diegonmarcos.capitalfinterm") { IndexHoldings.parse(it) }?.keys)
+    }
 }

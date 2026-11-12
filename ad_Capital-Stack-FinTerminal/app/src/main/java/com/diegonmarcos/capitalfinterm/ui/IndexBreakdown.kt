@@ -57,12 +57,17 @@ import com.diegonmarcos.capitalfinterm.QuotesStore
 import com.diegonmarcos.capitalfinterm.ui.fin.FinCard
 import com.diegonmarcos.capitalfinterm.ui.fin.FinChip
 import com.diegonmarcos.capitalfinterm.ui.fin.FinDim
-import com.diegonmarcos.capitalfinterm.ui.fin.FinPalette
 import com.diegonmarcos.capitalfinterm.ui.fin.FinTable
 import com.diegonmarcos.capitalfinterm.ui.fin.FinTitleRow
 import com.diegonmarcos.capitalfinterm.ui.fin.FinType
 import com.diegonmarcos.capitalfinterm.ui.fin.LocalFinPalette
+import com.diegonmarcos.superapp.fleetdata.DataSource
 import com.diegonmarcos.superapp.fleetdata.FleetData
+import com.diegonmarcos.superapp.fleetdata.FleetDataReader
+import java.io.File
+import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -76,17 +81,35 @@ const val INDEX_TREEMAP = "index_treemap"
 const val INDEX_STATE = "index_state"
 
 /**
- * #1663 the index holdings as the app reads them: the RUNTIME dataset `index-holdings` Cloud Store serves through libs:fleet-data-client (repo
- * data/fleet/app/<package>/index-holdings.json), never an asset of the APK. Null while nothing is served (first run, Cloud Store absent or not synced
- * yet): never throws, and a null is never remembered, so the next call asks again.
+ * #1663 / #1702 the index holdings as the app reads them: the RUNTIME dataset `index-holdings` (repo data/fleet/app/<package>/index-holdings.json), never an
+ * asset of the APK. Two routes through libs:fleet-data-client: (1) Cloud Store's provider, when it is installed and has synced; (2) ON DEMAND, the
+ * client's own reader over the dataset's published file (the manifest's raw.githubusercontent.com source), schema-checked and kept as its last-known-good
+ * copy in the app's files, so the first open needs no Cloud Store sync and an offline open answers from the cache. Null only when both are empty (first run,
+ * offline): never throws, a null is never remembered, so the next call asks again.
  */
 object IndexHoldingsStore {
     @Volatile private var served: Map<String, IndexBasket>? = null
 
+    /** The published file of an own dataset route (`app/<package>/<dataset>`), the one the fleet manifest syncs from. */
+    internal fun publishedUrl(path: String): String = "https://raw.githubusercontent.com/diegonmarcos/cloudy-u-android/main/data/fleet/$path.json"
+
+    private class WebSource : DataSource {
+        override fun open(authority: String, path: String): InputStream? = runCatching {
+            val c = URL(publishedUrl(path)).openConnection() as HttpURLConnection
+            c.connectTimeout = 12_000; c.readTimeout = 30_000
+            if (c.responseCode == 200) c.inputStream else null
+        }.getOrNull()
+    }
+
     fun load(ctx: Context): Map<String, IndexBasket>? {
         served?.let { return it }
-        val got = runCatching { FleetData.get(ctx, IndexHoldings.DATASET, own = true) { IndexHoldings.parse(it) } }.getOrNull()
-        return got?.takeIf { it.isNotEmpty() }?.also { served = it }
+        val app = ctx.applicationContext
+        val parse = { t: String -> IndexHoldings.parse(t) }
+        val viaStore = runCatching { FleetData.get(app, IndexHoldings.DATASET, own = true, parse = parse) }.getOrNull()?.takeIf { it.isNotEmpty() }
+        val got = viaStore ?: runCatching {
+            FleetDataReader(WebSource(), FleetData.FileLkg(File(app.filesDir, "fleetdata-lkg-web"))).get(IndexHoldings.DATASET, app.packageName, parse)
+        }.getOrNull()?.takeIf { it.isNotEmpty() }
+        return got?.also { served = it }
     }
 }
 
@@ -161,7 +184,7 @@ fun IndexBreakdownPage(key: String, onBack: () -> Unit) {
             when {
                 baskets == null -> StateLine(
                     if (asked == 0) "Loading the index holdings…"
-                    else "The holdings dataset has not reached this phone yet. Cloud Store serves it (Cloud Store > Data > Sync now); this page asks again by itself.",
+                    else "The holdings could not be loaded yet: this phone is offline or the dataset is not published. This page asks again by itself every few seconds.",
                 )
                 basket == null -> StateLine("No holdings are published for this index yet. Breakdowns exist for: " + baskets.orEmpty().values.joinToString(", ") { it.name } + ".")
                 else -> Breakdown(basket, shown, quotes, decl, period, top, fetching, width, onPeriod = { period = it }, onTop = { top = it }, onRefresh = { refresh += 1 })
@@ -236,26 +259,43 @@ private fun Breakdown(
     )
 }
 
-private fun fill(p: FinPalette, heat: Float): Color = lerp(p.surfaceRaised, if (heat >= 0f) p.up else p.down, IndexHoldings.blend(heat))
+/**
+ * The heat map's own scale (the reference market map): a small gain is a light green, a large one a dark green, a loss a red that deepens with the move,
+ * an unquoted holding a neutral slate. Fixed colours, so a map reads the same on the light and the dark theme.
+ */
+internal fun tileColor(perf: Double?, scale: Double): Color {
+    val h = IndexHoldings.heat(perf, scale)
+    if (perf == null || h == 0f && perf == 0.0) return Color(0xFF4A5A52)
+    val m = kotlin.math.abs(h)
+    return if (h > 0f) lerp(Color(0xFF52B848), Color(0xFF14531F), m.coerceIn(0f, 1f)) else lerp(Color(0xFFE53935), Color(0xFF9E1B1B), m.coerceIn(0f, 1f))
+}
+
+/** A stable brand-like badge colour per ticker (the logo stand-in: no logo files are baked into the APK). */
+private fun badgeColor(ticker: String): Color {
+    var hsh = 7
+    ticker.forEach { hsh = hsh * 31 + it.code }
+    val hue = ((hsh and 0x7fffffff) % 360).toFloat()
+    return Color.hsv(hue, 0.55f, 0.55f)
+}
 
 /**
- * The market heat map: one Canvas, a tile per holding laid out by [IndexHoldings.treemap] (area = weight), filled by performance (down colour .. neutral ..
- * up colour), the ticker and the % change written where the tile is large enough. A tap picks a tile (its line is shown under the map).
+ * The market heat map after the reference picture: one Canvas inside a rounded frame, a tile per holding laid out by [IndexHoldings.treemap] (AREA =
+ * weight; the largest holdings in a column on the left, then rows), thin light seams between tiles, filled by performance on [tileColor]. A big tile
+ * carries a round badge, the ticker and the % change; a middle tile the badge and the %; a small one the badge; a tiny one only its colour. A tap
+ * picks a tile (its line is shown under the map).
  */
 @Composable
 private fun Treemap(rows: List<BreakdownRow>, scale: Double, width: Dp, picked: Int, onPick: (Int) -> Unit) {
-    val p = LocalFinPalette.current
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
-    // a little taller than wide on a phone, capped so the table stays within reach
-    val height = (width * 1.1f).coerceAtMost(460.dp).coerceAtLeast(220.dp)
+    val height = (width * 1.15f).coerceAtMost(560.dp).coerceAtLeast(260.dp)
     val wPx = with(density) { width.toPx() }
     val hPx = with(density) { height.toPx() }
     val rects = remember(rows, wPx, hPx) { IndexHoldings.treemap(rows.map { it.holding.weight }, wPx.toDouble(), hPx.toDouble()) }
-    val gap = with(density) { 1.dp.toPx() }
-    val minLabel = with(density) { 26.dp.toPx() }
+    val seam = with(density) { 1.2.dp.toPx() }
+    val white = Color.White
     Canvas(
-        Modifier.width(width).height(height).clip(RoundedCornerShape(FinDim.cardRadius)).background(p.canvas).testTag(INDEX_TREEMAP)
+        Modifier.width(width).height(height).clip(RoundedCornerShape(18.dp)).background(Color(0xFFB7E4B0)).testTag(INDEX_TREEMAP)
             .pointerInput(rects) {
                 detectTapGestures { at ->
                     val i = rects.indexOfFirst { r -> r.w > 0 && at.x >= r.x && at.x < r.x + r.w && at.y >= r.y && at.y < r.y + r.h }
@@ -267,39 +307,56 @@ private fun Treemap(rows: List<BreakdownRow>, scale: Double, width: Dp, picked: 
             if (r.w <= 0.0 || r.h <= 0.0) return@forEachIndexed
             val row = rows[i]
             val x = r.x.toFloat(); val y = r.y.toFloat(); val w = r.w.toFloat(); val h = r.h.toFloat()
-            val inset = if (w > gap * 3 && h > gap * 3) gap / 2 else 0f
-            drawRect(fill(p, IndexHoldings.heat(row.perf, scale)), Offset(x + inset, y + inset), Size(w - inset * 2, h - inset * 2))
-            if (i == picked) drawRect(p.text, Offset(x + gap, y + gap), Size(w - gap * 2, h - gap * 2), style = Stroke(width = gap * 2))
-            if (w < minLabel || h < minLabel * 0.6f) return@forEachIndexed
-            // the ticker sized to the tile, the % change under it when there is room for a second line
+            val s = if (w > seam * 2 && h > seam * 2) seam / 2 else 0f
+            drawRect(tileColor(row.perf, scale), Offset(x + s, y + s), Size(w - s * 2, h - s * 2))
+            if (i == picked) drawRect(white, Offset(x + seam, y + seam), Size(w - seam * 2, h - seam * 2), style = Stroke(width = seam * 2))
+            val m = minOf(w, h)
+            val mDp = with(density) { m.toDp().value }
+            if (mDp < 14f) return@forEachIndexed
             val ticker = row.holding.ticker
-            val sizePx = minOf(w * 0.9f / (ticker.length.coerceAtLeast(3) * 0.62f), h * 0.36f).coerceIn(with(density) { 7.dp.toPx() }, with(density) { 20.dp.toPx() })
-            val big = FinType.symbol.copy(color = p.text, fontSize = with(density) { sizePx.toSp() }, lineHeight = with(density) { (sizePx * 1.15f).toSp() })
-            val t1 = measurer.measure(ticker, big, overflow = TextOverflow.Clip, softWrap = false, maxLines = 1)
-            if (t1.size.width > w - gap * 2) return@forEachIndexed
             val change = row.perf?.let { String.format(Locale.ROOT, "%+.2f%%", it) }
-            val small = FinType.numSmall.copy(color = p.text, fontSize = with(density) { (sizePx * 0.72f).coerceAtLeast(7.dp.toPx()).toSp() })
+            // sizes from the tile: the badge a share of the short side, the text from the long ones
+            val badge = (m * 0.42f).coerceIn(with(density) { 10.dp.toPx() }, with(density) { 34.dp.toPx() })
+            val textPx = (m * 0.16f).coerceIn(with(density) { 8.dp.toPx() }, with(density) { 17.dp.toPx() })
+            val big = FinType.symbol.copy(color = white, fontSize = with(density) { textPx.toSp() }, lineHeight = with(density) { (textPx * 1.15f).toSp() })
+            val small = FinType.numSmall.copy(color = white, fontSize = with(density) { (textPx * 0.9f).toSp() }, lineHeight = with(density) { (textPx * 1.05f).toSp() })
+            val t1 = measurer.measure(ticker, big, overflow = TextOverflow.Clip, softWrap = false, maxLines = 1)
             val t2 = change?.let { measurer.measure(it, small, overflow = TextOverflow.Clip, softWrap = false, maxLines = 1) }
-                ?.takeIf { it.size.width <= w - gap * 2 && t1.size.height + it.size.height <= h - gap * 2 }
-            val total = t1.size.height + (t2?.size?.height ?: 0)
-            val top = y + (h - total) / 2f
-            drawText(t1, topLeft = Offset(x + (w - t1.size.width) / 2f, top))
-            if (t2 != null) drawText(t2, topLeft = Offset(x + (w - t2.size.width) / 2f, top + t1.size.height))
+            val showTicker = t1.size.width <= w - seam * 2 && badge + t1.size.height + (t2?.size?.height ?: 0) + seam * 4 <= h
+            val showPct = t2 != null && t2.size.width <= w - seam * 2 && badge + (t2.size.height) + seam * 2 <= h
+            val lines = (if (showTicker) t1.size.height else 0) + (if (showPct) t2!!.size.height else 0)
+            val showBadge = badge + lines + seam * 2 <= h && badge <= w - seam * 2
+            val badgeH = if (showBadge) badge else 0f
+            val gapPx = if (showBadge && lines > 0) seam * 2 else 0f
+            val top = y + (h - (badgeH + gapPx + lines)) / 2f
+            var cy = top
+            if (showBadge) {
+                val c = Offset(x + w / 2f, cy + badge / 2f)
+                drawCircle(badgeColor(ticker), badge / 2f, c)
+                drawCircle(white.copy(alpha = 0.9f), badge / 2f, c, style = Stroke(width = seam))
+                val ini = measurer.measure(ticker.take(if (badge > with(density) { 26.dp.toPx() }) 2 else 1), big.copy(fontSize = with(density) { (badge * 0.38f).toSp() }, lineHeight = with(density) { (badge * 0.42f).toSp() }),
+                    softWrap = false, maxLines = 1)
+                drawText(ini, topLeft = Offset(c.x - ini.size.width / 2f, c.y - ini.size.height / 2f))
+                cy += badge + gapPx
+            }
+            if (showTicker) { drawText(t1, topLeft = Offset(x + (w - t1.size.width) / 2f, cy)); cy += t1.size.height }
+            if (showPct) drawText(t2!!, topLeft = Offset(x + (w - t2.size.width) / 2f, cy))
         }
     }
 }
 
-/** The colour scale under the map: the down colour at -scale %, neutral at 0, the up colour at +scale % (and beyond). */
+/** The colour scale under the map: the deep red at -scale %, the light green at a small gain, the dark green at +scale % (and beyond). */
 @Composable
 private fun Legend(scale: Double) {
     val p = LocalFinPalette.current
-    val stops = listOf(-1f, -0.5f, 0f, 0.5f, 1f)
+    val stops = listOf(-1.0, -0.5, 0.0, 0.25, 0.5, 1.0)
     Row(Modifier.fillMaxWidth().testTag("index_legend"), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         stops.forEach { s ->
-            Box(Modifier.weight(1f).height(18.dp).clip(RoundedCornerShape(3.dp)).background(fill(p, s)), contentAlignment = Alignment.Center) {
-                val v = s * scale
-                Text(if (s == 0f) "0 %" else String.format(Locale.ROOT, "%+.1f %%", v) + (if (kotlin.math.abs(s) == 1f) (if (s > 0) " +" else " −") else ""), color = p.text, style = FinType.caption.copy(fontSize = 9.sp))
+            val v = s * scale
+            Box(Modifier.weight(1f).height(18.dp).clip(RoundedCornerShape(3.dp)).background(tileColor(if (s == 0.0) 0.0001 else v, scale)), contentAlignment = Alignment.Center) {
+                Text(if (s == 0.0) "0 %" else String.format(Locale.ROOT, "%+.1f %%", v), color = Color.White, style = FinType.caption.copy(fontSize = 9.sp))
             }
         }
     }
+    Text("Tile size = weight in the index; colour = performance over the period (red down, light green small gain, dark green large gain, grey = no quote).", color = p.text3, style = FinType.caption)
 }
