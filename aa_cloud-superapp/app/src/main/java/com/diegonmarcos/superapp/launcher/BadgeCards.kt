@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -76,6 +77,8 @@ internal object BadgeCardTags {
     /** #1672 one ongoing line of a badge in the All page's summary. */
     fun summary(id: String) = "badge-summary:$id"
     const val SUMMARY = "badge-summary"
+    /** #1672 the Media badge's MediaHub session line. */
+    fun mediaHub(id: String) = "badge-media-hub:$id"
 }
 
 /**
@@ -292,6 +295,7 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
             Text(l.value, color = if (l.alert) BADGE_ALERT else NotifCard.body, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         }
+        if (d.badge.card.kind == "media") MediaHubLine(d.badge.id)
         ActionRow(d, accent, hostView)
         }
     }
@@ -318,6 +322,36 @@ private fun SummaryBadgeLine(d: BadgeCardData.Data) {
             modifier = Modifier.weight(1f).padding(start = 10.dp))
         Box(Modifier.padding(start = 6.dp).size(8.dp).clip(CircleShape).background(if (d.live) accent else NotifCard.pill))
     }
+}
+
+/** #1672 a Media badge button id -> the MediaHub action it is, or null for one MediaHub does not model (left to its intent). */
+internal fun mediaActionOf(id: String): com.diegonmarcos.superapp.media.MediaHub.Action? {
+    val k = id.lowercase()
+    val A = com.diegonmarcos.superapp.media.MediaHub.Action
+    return when {
+        "prev" in k || "back" in k -> A.PREV
+        "next" in k || "skip" in k || "forward" in k -> A.NEXT
+        "pause" in k && "play" in k -> A.PLAY_PAUSE
+        "pause" in k -> A.PAUSE
+        "play" in k -> A.PLAY
+        else -> null
+    }
+}
+
+/** #1672 the Media badge's live line from [com.diegonmarcos.superapp.media.MediaHub.state]: the session the island and the
+ *  badge both control, or the reason nothing can be controlled. Collected, not polled. */
+@Composable
+private fun MediaHubLine(id: String) {
+    val st by com.diegonmarcos.superapp.media.MediaHub.state.collectAsState()
+    val t = st.target
+    val text = when {
+        t != null -> listOf(t.title, t.artist).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { t.pkg } +
+            if (t.playing) " · playing" else " · paused"
+        else -> st.reason.orEmpty()
+    }
+    if (text.isNotBlank()) Text(text, color = NotifCard.meta, fontSize = NotifCard.metaSp, fontFamily = NotifCard.font,
+        maxLines = 1, overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.padding(top = 6.dp).testTag(BadgeCardTags.mediaHub(id)))
 }
 
 /** #1672 the fold control at the end of a card's header: a chevron in a circle, like the notification groups'. */
@@ -371,7 +405,14 @@ private fun ActionRow(d: BadgeCardData.Data, accent: Color, hostView: android.vi
         for (a in d.actions) Column(
             Modifier.weight(1f).clip(RoundedCornerShape(14.dp))
                 .semantics(mergeDescendants = true) { role = Role.Button; contentDescription = a.label }
-                .clickable { Haptics.tap(hostView); runCatching { a.intent.send() } }
+                .clickable {
+                    Haptics.tap(hostView)
+                    // #1672 the Media badge drives the SAME session as the Media Island: MediaHub picks the target at tap
+                    // time (#1648 Tidal / Spotify rule) and falls back to a media key; it never throws.
+                    val m = if (d.badge.card.kind == "media") mediaActionOf(a.id) else null
+                    if (m != null) runCatching { com.diegonmarcos.superapp.media.MediaHub.send(hostView.context, m) }
+                    else runCatching { a.intent.send() }
+                }
                 .padding(vertical = 4.dp)
                 .testTag(BadgeCardTags.action(d.badge.id, a.id)),
             horizontalAlignment = Alignment.CenterHorizontally,
