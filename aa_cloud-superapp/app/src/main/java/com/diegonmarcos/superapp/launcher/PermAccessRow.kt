@@ -86,7 +86,7 @@ object PermAccessUi {
     fun brokerRead(ctx: Context): (String) -> String? = { cmd ->
         runCatching {
             val b = com.diegonmarcos.superapp.shellbroker.ShellBroker
-            if (!b.status(ctx).armed) null else b.execText(ctx, cmd)
+            if (!com.diegonmarcos.superapp.system.AdbReadiness.check(ctx).usable) null else b.execText(ctx, cmd)
         }.getOrNull()
     }
 

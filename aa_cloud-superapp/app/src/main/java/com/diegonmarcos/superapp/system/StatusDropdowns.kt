@@ -2,6 +2,7 @@ package com.diegonmarcos.superapp.system
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
@@ -80,7 +82,9 @@ object StatusDropdowns {
     @Composable
     private fun GroupBlock(ctx: Context, g: DropdownGroup, tagPrefix: String) {
         val short = StatusBarDecl.declared.elements.firstOrNull { it.id == g.element }?.short?.ifBlank { null }
-        val lines by produceState<List<DdLine>?>(null, g.id) {
+        // #1678 one readiness source: the rows re-read when its verdict flips (a flow, no polling) and on every open.
+        val ready by AdbReadiness.state.collectAsState()
+        val lines by produceState<List<DdLine>?>(null, g.id, ready.usable) {
             val probeText = if (g.probe != null) withContext(Dispatchers.IO) { SystemGroups.adb(ctx, g.probe) } else null
             if (g.source == HEADER) {
                 value = emptyList()
@@ -124,7 +128,14 @@ object StatusDropdowns {
                 ls.forEachIndexed { i, l ->
                     Row(Modifier.fillMaxWidth().padding(vertical = KitStoreRow.step(1)).testTag("$tagPrefix:row:${g.id}:$i")) {
                         Cap(l.label, Modifier.width(LABEL_W), DIM)
-                        Cap(l.value, Modifier.weight(1f), if (l.value.startsWith("needs ADB")) ACCENT else INK)
+                        if (l.value == SystemGroups.NEEDS_ADB) {
+                            // #1678 a needs-ADB row is a link: what is missing, and a tap opens ADB Shell and starts Connect (auto-fix).
+                            val fail = g.probe?.let { SystemGroups.probeFailure(it) }
+                            Cap(if (ready.usable && fail != null) "$fail - tap to retry" else ready.linkText(),
+                                Modifier.weight(1f).testTag("$tagPrefix:adblink:${g.id}:$i").clickable {
+                                    if (ready.usable && fail != null) AdbReadiness.connect(ctx) {} else AdbReadiness.connect(ctx) { AdbReadiness.openAdbShell(ctx) }
+                                }, ACCENT)
+                        } else Cap(l.value, Modifier.weight(1f), if (l.value.startsWith("needs ADB")) ACCENT else INK)
                     }
                     bars.getOrNull(i)?.let { f ->
                         Box(Modifier.fillMaxWidth().height(KitStoreRow.step(4)).background(KitStoreRow.RULE).testTag("$tagPrefix:bar:${g.id}:$i")) {

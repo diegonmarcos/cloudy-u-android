@@ -57,7 +57,7 @@ class App : Application(), WorkManagerConfiguration.Provider {
             com.diegonmarcos.superapp.shellbroker.ShellBroker.exec(c, com.diegonmarcos.superapp.shellbroker.ShellBroker.SELF, cmd)
         }
         com.diegonmarcos.superapp.adbdebug.HostShell.channelReady = { c ->
-            runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(c).armed }.getOrDefault(false)
+            com.diegonmarcos.superapp.system.AdbReadiness.check(c).usable
         }
         // extapp: install progress — listening before any resumed install worker publishes.
         com.diegonmarcos.superapp.extinstall.ExtAppInstalls.init(this)

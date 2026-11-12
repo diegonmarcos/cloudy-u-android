@@ -26,7 +26,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import com.diegonmarcos.superapp.adbdebug.AdbShellLink
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
 import com.diegonmarcos.superapp.system.QuickDisplay
 import com.diegonmarcos.superapp.system.SystemDisplay
 import com.diegonmarcos.superapp.ui.Haptics
@@ -125,7 +124,7 @@ internal fun DisplayControlsSection() {
         // ── Font Size ────────────────────────────────────────────────────
         val fontNow = (QuickDisplay.fontScale(ctx))
         val fontPath = if (android.provider.Settings.System.canWrite(ctx)) "WRITE_SETTINGS granted"
-            else if (ShellChannels.active(ctx) != null) "ADB shell connected" else "needs ADB"
+            else if (com.diegonmarcos.superapp.system.AdbReadiness.usableNow(ctx)) "ADB shell connected" else "needs ADB"
         StepControl(font, "font", QuickDisplay.nearest(font.steps, fontNow),
             String.format(Locale.US, "Now %.2fx (%s) · key font_scale · write path: %s", fontNow, font.nameOf(QuickDisplay.nearest(font.steps, fontNow)), fontPath),
             { String.format(Locale.US, "%.2fx", it) }) { i -> QuickDisplay.writeFont(ctx, font.steps[i]) }
@@ -133,7 +132,7 @@ internal fun DisplayControlsSection() {
         // ── Zoom Size ────────────────────────────────────────────────────
         val stable = QuickDisplay.stableDensity()
         val dens = (QuickDisplay.deviceDensity())
-        val zoomPath = if (ShellChannels.active(ctx) != null) "ADB shell connected" else "needs ADB"
+        val zoomPath = if (com.diegonmarcos.superapp.system.AdbReadiness.usableNow(ctx)) "ADB shell connected" else "needs ADB"
         val zi = QuickDisplay.nearest(zoom.steps, dens.toFloat() / stable)
         StepControl(zoom, "zoom", zi,
             String.format(Locale.US, "Now %d dpi = %.2fx of %d stable (%s) · forced: %s · smallest width %d dp · write path: %s",

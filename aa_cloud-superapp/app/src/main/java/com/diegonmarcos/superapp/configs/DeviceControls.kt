@@ -16,7 +16,6 @@ import android.telephony.TelephonyManager
 import android.util.Base64
 import com.diegonmarcos.superapp.BuildConfig
 import com.diegonmarcos.superapp.ShellActivity
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
 import com.diegonmarcos.superapp.adbdebug.WirelessDebugging
 import com.diegonmarcos.superapp.system.WirelessDebugKeeper
 import com.diegonmarcos.superapp.devcontrol.DevControlServer
@@ -214,7 +213,7 @@ object DeviceControls {
                 Verdict(r.ok, "${r.channel}: ${r.detail}")
             },
             blocked = { ctx ->
-                if (hasSecureSettings(ctx) || ShellChannels.active(ctx) != null) ""
+                if (hasSecureSettings(ctx) || com.diegonmarcos.superapp.system.AdbReadiness.usableNow(ctx)) ""
                 else "Needs WRITE_SECURE_SETTINGS or a live shell channel " +
                      "(Wireless debugging pairing / Shizuku); this device has neither."
             },

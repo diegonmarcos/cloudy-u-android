@@ -58,7 +58,7 @@ object SystemDisplay {
     }
 
     /** Whether a privileged channel exists at all, for the caller's error text. */
-    fun hasChannel(ctx: Context): Boolean = ShellChannels.active(ctx) != null
+    fun hasChannel(ctx: Context): Boolean = AdbReadiness.usableNow(ctx)
 
     // ── Dark mode ────────────────────────────────────────────────────────
 

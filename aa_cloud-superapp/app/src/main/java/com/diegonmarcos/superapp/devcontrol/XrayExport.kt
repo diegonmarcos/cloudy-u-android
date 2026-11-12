@@ -65,9 +65,9 @@ internal object XrayExport {
     private suspend fun go(ctx: Context, ask: suspend (String) -> XrayAdbGate.Choice, page: AboutPage, scope: CoroutineScope, out: XrayOut, say: (String) -> Unit): String {
         say("checking the ADB shell…")
         val gate = XrayAdbGate.run(
-            ready = { ShellChannels.active(ctx) != null },
+            ready = { com.diegonmarcos.superapp.system.AdbReadiness.check(ctx).usable },
             // the ADB Shell page's own Reconnect (lib ChannelOps), not a raw connect
-            rearm = { runCatching { ChannelOps.reconnect(ctx) }.isSuccess && ShellChannels.active(ctx) != null },
+            rearm = { runCatching { ChannelOps.reconnect(ctx) }.isSuccess && com.diegonmarcos.superapp.system.AdbReadiness.check(ctx, fresh = true).usable },
             openWirelessDebugging = { openWirelessDebugging(ctx) },
             ask = ask,
         )

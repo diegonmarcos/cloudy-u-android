@@ -170,6 +170,7 @@ private fun hms(ms: Long): String = SimpleDateFormat("HH:mm:ss", Locale.US).form
 internal fun AdbCockpitContent(
     inputs: AdbCockpitModel.Inputs?, busy: String, note: String, log: List<ChannelLog.Entry>, a: CockpitActions,
     filterOpen: Boolean = false, query: String = "", keepAlive: AdbCockpitModel.KeepAlive? = null,
+    tail: (@Composable () -> Unit)? = null,
 ) {
     val p = LocalKitPalette.current
     var filtering by remember { mutableStateOf(filterOpen) }
@@ -241,6 +242,8 @@ internal fun AdbCockpitContent(
                 }
             }
         }
+        // #1678 the Tester card, last on the Status tab
+        tail?.invoke()
     }
 }
 
@@ -371,5 +374,39 @@ internal fun AdbStatusTab() {
                 s.lastRearmAt?.let { com.diegonmarcos.superapp.adbdebug.WdKeeper.ago(it) })
         }.getOrNull()
     }
-    AdbCockpitContent(inputs, busy, note, log, a, keepAlive = keepAlive)
+    AdbCockpitContent(inputs, busy, note, log, a, keepAlive = keepAlive, tail = { AdbTesterCard { connect() } })
+}
+
+/** #1678 The Tester card: one button runs [AdbTester] over the broker; per command its channel, exit, time and output; Connect on failure. */
+@Composable
+internal fun AdbTesterCard(onConnect: () -> Unit) {
+    val ctx = LocalContext.current
+    val p = LocalKitPalette.current
+    val scope = rememberCoroutineScope()
+    var running by remember { mutableStateOf(false) }
+    var lines by remember { mutableStateOf<List<AdbTester.Line>?>(null) }
+    val mono = TextStyle(fontFamily = FontFamily.Monospace, fontSize = CockpitRoom.small, color = p.textPrimary)
+    Card("adbc:tester") {
+        Text("Tester", fontSize = CockpitRoom.head, fontWeight = FontWeight.Bold, color = p.textPrimary)
+        Text("Runs harmless commands through the same broker the status dropdown and X-Ray use.", fontSize = CockpitRoom.small, color = p.textSecondary)
+        CockpitVerb(if (running) "Testing..." else "Run tests", "adbc:tester:run", {
+            running = true
+            scope.launch(Dispatchers.IO) {
+                val r = runCatching { AdbTester.run(ctx) }.getOrElse { listOf(AdbTester.Line("tester", false, "none", null, 0, it.javaClass.simpleName)) }
+                lines = r; running = false
+            }
+        }, enabled = !running, primary = true)
+        lines?.forEachIndexed { i, l ->
+            Column(Modifier.fillMaxWidth().testTag("adbc:tester:line:$i")) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CockpitRoom.gap)) {
+                    Dot(if (l.ok) AdbCockpitModel.Light.GREEN else AdbCockpitModel.Light.RED, Modifier)
+                    Text(l.cmd, style = mono.copy(fontWeight = FontWeight.Bold))
+                }
+                Text("via ${l.channel} · exit ${l.exit?.toString() ?: "-"} · ${l.ms} ms", style = mono.copy(color = p.textSecondary))
+                SelectionContainer { Text(l.output, style = mono.copy(color = if (l.ok) p.textPrimary else p.bad)) }
+            }
+        }
+        if (lines?.any { !it.ok } == true)
+            CockpitVerb("Connect (auto-fix)", "adbc:tester:connect", onConnect, primary = true)
+    }
 }

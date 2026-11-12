@@ -783,7 +783,7 @@ class PermissionsFragment : KitComposeFragment() {
     private fun permsAdb() = com.diegonmarcos.superapp.perms.PermsAdb(
         channel = object : com.diegonmarcos.superapp.perms.PermsGrant.GrantChannel {
             // #1513 through the shell broker (its allowlist), not a channel of this screen's own
-            override fun up() = runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(ctxAny()).armed }.getOrDefault(false)
+            override fun up() = com.diegonmarcos.superapp.system.AdbReadiness.check(ctxAny()).usable
             override fun exec(command: String): String? =
                 (com.diegonmarcos.superapp.shellbroker.ShellBroker.exec(ctxAny(), com.diegonmarcos.superapp.shellbroker.ShellBroker.SELF, command)
                     as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.let { it.stdout + it.stderr }

@@ -101,7 +101,7 @@ internal fun pageRows(ctx: Context, rows: List<PermRowState>): List<PermsPage.Ro
  * command's output, an `error:` line when the broker refused it or it exited non-zero, null when nothing is armed.
  */
 class BrokerGrantChannel(private val ctx: Context) : PermsGrant.GrantChannel {
-    override fun up() = runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(ctx).armed }.getOrDefault(false)
+    override fun up() = com.diegonmarcos.superapp.system.AdbReadiness.check(ctx).usable
     override fun exec(command: String): String? =
         when (val r = com.diegonmarcos.superapp.shellbroker.ShellBroker.exec(ctx, com.diegonmarcos.superapp.shellbroker.ShellBroker.SELF, command)) {
             is com.diegonmarcos.superapp.shellclient.ShellResult.Ok ->

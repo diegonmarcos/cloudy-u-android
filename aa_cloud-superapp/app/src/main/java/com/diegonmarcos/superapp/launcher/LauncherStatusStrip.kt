@@ -424,7 +424,7 @@ class StatusStripModel(private val context: Context) {
         permAccess.start()
         (context as? android.app.Activity)?.window?.let { com.diegonmarcos.superapp.system.FpsMeter.attach(it, mainHandler) }
         refreshAdb()
-        com.diegonmarcos.superapp.shellbroker.ShellBroker.onStatusChange = { st -> mainHandler.post { noteBroker(st) } }
+        com.diegonmarcos.superapp.system.AdbReadiness.addListener(brokerListener)
         refreshBroker()
         refreshWgLevel()
         runCatching {
@@ -457,7 +457,7 @@ class StatusStripModel(private val context: Context) {
             (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.unregisterNetworkCallback(networkCallback)
         }
         mainHandler.removeCallbacks(metricsTicker)
-        com.diegonmarcos.superapp.shellbroker.ShellBroker.onStatusChange = null
+        com.diegonmarcos.superapp.system.AdbReadiness.removeListener(brokerListener)
         mainHandler.removeCallbacks(wgRefresh)
     }
 
@@ -501,6 +501,9 @@ class StatusStripModel(private val context: Context) {
     }
 
     /** Take the broker's live reading. [pin] freezes it against refreshes (a test's fixed reading). */
+    /** #1678 the one readiness source's change listener (AdbReadiness owns the broker callback). */
+    private val brokerListener: (com.diegonmarcos.superapp.shellclient.ShellStatus) -> Unit = { st -> mainHandler.post { noteBroker(st) } }
+
     internal fun noteBroker(st: com.diegonmarcos.superapp.shellclient.ShellStatus, pin: Boolean = false) {
         if (pin) brokerPinned = true else if (brokerPinned) return
         brokerStatus = st
@@ -511,7 +514,7 @@ class StatusStripModel(private val context: Context) {
     internal fun refreshBroker() {
         Thread {
             val r = runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(context) }.getOrNull()
-            if (r != null) mainHandler.post { noteBroker(r) }
+            if (r != null) { com.diegonmarcos.superapp.system.AdbReadiness.publish(r); mainHandler.post { noteBroker(r) } }
         }.start()
     }
 

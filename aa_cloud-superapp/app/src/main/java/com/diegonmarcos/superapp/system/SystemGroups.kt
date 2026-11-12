@@ -26,7 +26,8 @@ import java.util.Locale
  */
 object SystemGroups {
 
-    const val NEEDS_ADB = "needs ADB: arm the channel on Configs > Network > ADB Shell"
+    /** #1678 the marker of a needs-ADB row: the dropdown draws it as a link whose text is [AdbReadiness.State.linkText] (what is missing). */
+    const val NEEDS_ADB = "needs ADB: ADB off - tap to open ADB Shell and connect"
 
     fun bytes(b: Long): String = DumpsysParsers.bytes(b)
 
@@ -44,10 +45,33 @@ object SystemGroups {
     fun adb(ctx: Context, probeId: String): String? {
         val now = System.currentTimeMillis()
         probeCache[probeId]?.takeIf { now - it.first < PROBE_TTL_MS }?.let { return it.second }
-        val out = probeCmd(probeId)?.let { cmd -> runCatching { ShellBroker.execText(ctx, cmd) }.getOrNull() }?.takeIf { it.isNotBlank() }
-        if (out != null) probeCache[probeId] = now to out
-        return out
+        val cmd = probeCmd(probeId) ?: return null
+        // #1678 One probe at a time: the dropdown opens ~20 ADB groups at once and the broker serves 3 calls; the rest came back "busy"
+        // and were printed as "needs ADB" while the channel was connected. Queued here, each probe gets the channel in turn.
+        return synchronized(probeLock) {
+            probeCache[probeId]?.takeIf { System.currentTimeMillis() - it.first < PROBE_TTL_MS }?.let { return@synchronized it.second }
+            if (!AdbReadiness.check(ctx).usable) { probeError.remove(probeId); return@synchronized null }
+            val r = runCatching { ShellBroker.exec(ctx, ShellBroker.SELF, cmd, PROBE_TIMEOUT_MS, PROBE_MAX_BYTES) }.getOrNull()
+            val out = (r as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.stdout?.takeIf { it.isNotBlank() }
+            if (out != null) { probeCache[probeId] = System.currentTimeMillis() to out; probeError.remove(probeId) }
+            else probeError[probeId] = when (r) {
+                null -> "read failed"
+                is com.diegonmarcos.superapp.shellclient.ShellResult.Ok -> "empty output"
+                is com.diegonmarcos.superapp.shellclient.ShellResult.Denied -> "refused by the broker allowlist: ${r.reason}".take(160)
+                is com.diegonmarcos.superapp.shellclient.ShellResult.Failed -> "read failed: ${r.reason}".take(160)
+                else -> "channel dropped during the read"
+            }
+            out
+        }
     }
+
+    /** #1678 Why probe [probeId] gave nothing while ADB was usable (refused, busy, timed out, empty); null = ADB itself was off. */
+    fun probeFailure(probeId: String): String? = probeError[probeId]
+
+    private val probeLock = Any()
+    private val probeError = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private const val PROBE_TIMEOUT_MS = 60_000L
+    private const val PROBE_MAX_BYTES = 8 * 1024 * 1024
 
     /** Several groups share one probe (batterystats, gfxinfo): one read serves them all while the dropdown is open. */
     private const val PROBE_TTL_MS = 10_000L

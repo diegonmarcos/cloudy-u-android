@@ -97,7 +97,7 @@ object EngineProbes {
         put("shell.nonzero") { audit.getOrThrow().count { it.outcome == "exit" } }
         put("shell.denied") { audit.getOrThrow().count { it.outcome == "denied" } }
         put("shell.callers") { audit.getOrThrow().map { it.caller }.distinct().size }
-        put("shell.armed") { flag(ShellBroker.status(app).armed) }
+        put("shell.armed") { flag(com.diegonmarcos.superapp.system.AdbReadiness.check(app).usable) }
         val extra = audit.getOrNull().orEmpty().filter { it.outcome != "denied" }.takeIf { it.isNotEmpty() }?.let { l ->
             listOf(EngineProfiler.Path("shell", "exec", l.size.toLong(), l.sumOf { it.ms } * 1_000_000L, l.maxOf { it.ms } * 1_000_000L,
                 0L, 0L, l.maxOf { it.ts }, l.map { it.ms * 1_000_000L }, ledgerTag = ""))
