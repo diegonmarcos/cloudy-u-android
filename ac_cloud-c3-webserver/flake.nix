@@ -1,5 +1,5 @@
 {
-  description = "cloud-c3-webserver — Nix devShell for the native Android build (#1682: Kotlin / Compose over the Rust core): rustup (Android std targets), the Android SDK + NDK and JDK 17. The CI pins live in build.json::toolchain.";
+  description = "cloud-c3-webserver — Nix devShell for the native Android build (#1682: Kotlin / Compose over the Rust core): rustup (Android std targets), the Android SDK + NDK and JDK 21. The CI pins live in build.json::toolchain.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
@@ -47,7 +47,7 @@
         devShells.default = pkgs.mkShell {
           name = "cloud-c3-webserver-devshell";
           buildInputs = with pkgs; [
-            jdk17
+            jdk21
             rustup            # the Android std targets build.json::native.targets names (rustup target add)
             androidSdk
             adb-sync
@@ -61,7 +61,7 @@
           ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
           ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
           NDK_HOME = "${androidSdk}/libexec/android-sdk/ndk/27.2.12479018";
-          JAVA_HOME = "${pkgs.jdk17}/lib/openjdk";
+          JAVA_HOME = "${pkgs.jdk21}/lib/openjdk";
           GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/36.0.0/aapt2";
 
           shellHook = ''
@@ -76,14 +76,14 @@
         devShells.emulator = pkgs.mkShell {
           name = "cloud-c3-webserver-emulator-devshell";
           buildInputs = with pkgs; [
-            jdk17
+            jdk21
             emulatorSdk       # emulator + avdmanager + arm64 system image
             android-tools     # adb
             jq                # build.sh reads build.json::emulator
           ];
           ANDROID_HOME = "${emulatorSdk}/libexec/android-sdk";
           ANDROID_SDK_ROOT = "${emulatorSdk}/libexec/android-sdk";
-          JAVA_HOME = "${pkgs.jdk17}/lib/openjdk";
+          JAVA_HOME = "${pkgs.jdk21}/lib/openjdk";
         };
 
         packages.default = pkgs.runCommandLocal "cloud-c3-webserver-stub" {} ''

@@ -213,12 +213,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: sh 1_cicd/dist/scripts/cloud-android-publish-gate.sh check "$WORK_DIR" "${{ matrix.abi }}"
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21 (lint of the shared Compose libs needs the JDK 21 List API)
         if: steps.gate.outputs.skip != 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
 
       - name: Set up Android SDK + NDK
         if: steps.gate.outputs.skip != 'true'

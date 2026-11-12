@@ -259,7 +259,7 @@ fun copyText(ctx: Context, label: String, text: String) {
 fun JSONObject?.str(key: String, def: String = "-"): String {
     if (this == null || !has(key) || isNull(key)) return def
     val v = opt(key)
-    return if (v is JSONArray) (0 until v.length()).joinToString(", ") { v.opt(it).toString() } else v.toString()
+    return if (v is JSONArray) (0 until v.length()).joinToString(", ") { v.opt(it)?.toString().orEmpty() } else v.toString()
 }
 
 fun JSONObject?.objs(key: String): List<JSONObject> {
