@@ -1016,14 +1016,29 @@ class StoreCloudFragment : KitComposeFragment() {
             "open" -> verb { openApp(ctx, Fleet.installedId(ctx, app) ?: app.pkg) }
             // #1588 Fetch = cache the apk ONLY (StoreStages' cache-only download, #774); Clear wipes the cache.
             "fetch" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.DOWNLOAD, stg, tag)
-            "clear" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.CLEAR, stg, tag)
+            // #1691 Clear is dimmed (with its reason) when nothing is cached, and reports the space it freed.
+            "clear" -> if (app.blocked) null
+                else if (StoreStages.cachedBytes(ctx, app) <= 0L) dimmed(ctx, app, a, tag, "nothing cached to clear")
+                else stageVerb(ctx, app, a, StoreStages.CLEAR, stg, tag).let { v ->
+                    StoreVerb(v.label, v.fill, { clearFreed(ctx, app) }, tag, live = v.live, alpha = v.alpha)
+                }
+            // #1691 Uninstall is its own button: the store's uninstall path (Fleet.uninstall, the system
+            // confirm), dimmed with its reason when the package is absent.
+            "uninstall" -> if (installed) verb {
+                    runCatching { Fleet.uninstall(ctx, Fleet.installedId(ctx, app) ?: app.pkg) }
+                        .onFailure { Toast.makeText(ctx, "Uninstall: ${it.message}", Toast.LENGTH_LONG).show() }
+                } else dimmed(ctx, app, a, tag, "not installed, nothing to uninstall")
+            // #1691 Install (Rule 16: kept after the five): the store queue install, dimmed when present (Update covers it).
+            "install" -> if (installed) dimmed(ctx, app, a, tag, "already installed, use Update")
+                else if (app.blocked) null
+                else stageVerb(ctx, app, a, StoreStages.INSTALL, stg, tag)
             // #1588 Update = fetch (reusing the cache when present) AND install, through the prompted
             // store queue (#1675), the same install path the toggle's Install uses.
             // #1675 Update and Install go through the store queue (StoreStages.install: the cached APK or a fetch, then the one
             // PackageInstaller session), never an intent on the APK (that opened Android's "Open with" chooser).
             // Always live: one queue job (a busy row's job is joined by StoreStages.install, never doubled).
             "update" -> if (app.blocked) null else verb { runStage(ctx, app, StoreStages.INSTALL) }
-            // #1588 Download = keep a copy: stream the apk into the phone's public Downloads
+            // #1691 captioned APK (same id, same behaviour). #1588 Download = keep a copy: stream the apk into the phone's public Downloads
             // (/storage/emulated/0/Download via MediaStore), fetching into the cache first when needed.
             "download" -> if (app.blocked) null else verb { saveToDownloads(ctx, app) }
             // #redesign ONE toggle: Uninstall when present, else the NORMAL (user-confirmed) install —
@@ -1104,6 +1119,32 @@ class StoreCloudFragment : KitComposeFragment() {
             val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).apply { mkdirs() }
             val dst = File(dir, name)
             runCatching { src.copyTo(dst, overwrite = true) }.getOrNull()?.let { Uri.fromFile(dst).toString() }
+        }
+    }
+
+    /** #1691 A button that does not apply to this row: drawn dimmed, and a tap says why (never a dead button). */
+    private fun dimmed(ctx: Context, app: Fleet.App, a: FleetActions.Action, tag: String, reason: String): StoreVerb =
+        StoreVerb(a.label, a.color, {
+            Toast.makeText(ctx, "${app.label}: ${a.label} - $reason", Toast.LENGTH_SHORT).show()
+        }, tag, alpha = 0.35f, description = "${a.label}: $reason")
+
+    /** #1691 Clear through the stage pipeline, then report the bytes it freed. */
+    private fun clearFreed(ctx: Context, app: Fleet.App) {
+        thread(name = "fleet-clear-${app.id}") {
+            val before = runCatching { StoreStages.cachedBytes(ctx, app) }.getOrDefault(0L)
+            val done = runCatching { StoreStages.clear(ctx, app) }.getOrNull()
+            val after = runCatching { StoreStages.cachedBytes(ctx, app) }.getOrDefault(0L)
+            val freed = (before - after).coerceAtLeast(0L)
+            val st = runCatching { StoreChecks.status(ctx, app, force = true) }.getOrNull()
+            val stg = runCatching { StoreStages.stage(ctx, app, st) }.getOrNull()
+            main.post {
+                if (st != null) states[app.id] = st
+                if (stg != null) stages[app.id] = stg
+                if (!isAdded) return@post
+                val msg = if (done == null || done.failedAt != null) "${app.label}: clear failed${done?.text?.let { " - $it" } ?: ""}"
+                    else "${app.label}: cleared, ${human(freed)} freed"
+                Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
+            }
         }
     }
 

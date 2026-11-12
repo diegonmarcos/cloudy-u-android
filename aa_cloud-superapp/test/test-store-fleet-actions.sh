@@ -3,7 +3,7 @@
 # assets/appstore-fleet-actions.json, dispatched by id in the code.
 #
 # #1588 the menu is TWO grouped lines:
-#   rows[0] fetch/install lifecycle : Update · Uninstall⇄Install · Fetch · Clear · Download
+#   rows[0] fetch/install lifecycle : Update · Uninstall · Fetch · Clear · APK · Install (#1691; APK was Download)
 #   rows[1] open/inspect            : Open · Stop │ Access · Perm │ Libs · About
 # Update fetches (reusing the cache) AND installs through the store queue (StoreStages.install, one PackageInstaller session; #1675).
 # `install_toggle` is ONE button that reads Install (absent) / Uninstall (installed) and runs the
@@ -54,27 +54,26 @@ details = [a["id"] for a in decl["details"]]
 label = {a["id"]: a["label"] for a in flat + decl["details"]}
 
 print("== T1: the declaration is the two grouped lines the owner asked for (#1588) ==")
-if [a["id"] for a in rows[0]] == ["update", "install_toggle", "fetch", "clear", "download"]:
-    ok("row 0 = Update · Uninstall/Install · Fetch · Clear · Download")
+if [a["id"] for a in rows[0]] == ["update", "uninstall", "fetch", "clear", "download", "install"]:
+    ok("row 0 = Update · Uninstall · Fetch · Clear · APK, then the kept Install (#1691)")
 else: bad("row 0 is not the fetch/install lifecycle line: %s" % [a["id"] for a in rows[0]])
 if [a["id"] for a in rows[1]] == ["open", "stop", "access", "perms", "app_libs", "about"]:
     ok("row 1 = Open · Stop │ Access · Perm │ Libs · About")
 else: bad("row 1 is not the open/inspect line: %s" % [a["id"] for a in rows[1]])
-tog = next((a for a in flat if a["id"] == "install_toggle"), {})
-if tog.get("label") == "Install" and tog.get("label_installed") == "Uninstall":
-    ok("install_toggle reads Install / Uninstall")
-else: bad("install_toggle is not an Install/Uninstall toggle: %s" % tog)
+if [a["label"] for a in rows[0]][:5] == ["Update", "Uninstall", "Fetch", "Clear", "APK"]:
+    ok("row 0 captions, in order: Update, Uninstall, Fetch, Clear, APK (#1691)")
+else: bad("row 0 captions wrong: %s" % [a["label"] for a in rows[0]])
 if label.get("update") == "Update" and label.get("fetch") == "Fetch" \
-        and label.get("download") == "Download" and label.get("perms") == "Perm":
-    ok("captions relabelled: Update, Fetch, Download, Perm")
+        and label.get("download") == "APK" and label.get("perms") == "Perm":
+    ok("captions relabelled: Update, Fetch, APK (was Download, #1691), Perm")
 else: bad("captions not relabelled per #1588: %s" % {k: label.get(k) for k in ("update","fetch","download","perms")})
 access = next((a for a in flat if a["id"] == "access"), {})
 libsd = next((a for a in flat if a["id"] == "app_libs"), {})
 if access.get("divider_before") is True and libsd.get("divider_before") is True:
     ok("the `│` dividers are declared before Access and before Libs")
 else: bad("the group dividers are not before Access and Libs: access=%s libs=%s" % (access, libsd))
-if {"update", "fetch", "download"} <= set(ids) and "install" not in ids and "direct_install" not in ids:
-    ok("Update/Fetch/Download are on the row; plain `install` and `direct_install` are off it")
+if {"update", "fetch", "download", "uninstall", "install"} <= set(ids) and "direct_install" not in ids and "install_toggle" not in ids:
+    ok("Update/Uninstall/Fetch/Clear/APK/Install are on the row; `direct_install` and `install_toggle` are off it")
 else: bad("row lifecycle ids wrong: %s" % ids)
 if details == ["app_settings"]: ok("the About sheet keeps App settings: %s" % details)
 else: bad("details is not [app_settings]: %s" % details)
@@ -100,7 +99,7 @@ missing = [i for i in ids if not handled(ra, i)] + [i for i in details if not ha
 if ra and da and not missing: ok("every declared id has a handler (%d row, %d details)" % (len(ids), len(details)))
 else: bad("declared ids with no handler: %s" % (missing or "rowAction/detailAction not found"))
 if re.search(r'"install_toggle" ->.*?installed.*?Fleet\.uninstall.*?StoreStages\.INSTALL', ra, re.S) and "promptedInstall(" not in ra:
-    ok("install_toggle: Uninstall when installed, else the store queue install (#1675)")
+    ok("install_toggle stays wired (undrawn): Uninstall when installed, else the store queue install (#1675)")
 else: bad("install_toggle does not toggle uninstall vs the store queue install")
 # #1588 the relabelled lifecycle verbs reach their real backing paths.
 if re.search(r'"update" ->[^\n]*StoreStages\.INSTALL', ra):
@@ -158,6 +157,38 @@ else: bad("app_settings does not open ACTION_APPLICATION_DETAILS_SETTINGS")
 if "promptedInstall" not in store:
     ok("no row verb hands the APK to the system installer sheet any more (#1675: it opened an Open-with chooser)")
 else: bad("promptedInstall (an intent on the APK) is back")
+
+
+print("== T5: #1691 applicability, Clear frees the cache, field parity with the #1588 menu ==")
+if re.search(r'"uninstall" ->\s*if \(installed\).*?Fleet\.uninstall\(.*?dimmed\(ctx, app, a, tag, "not installed', ra, re.S):
+    ok("Uninstall runs Fleet.uninstall (system confirm) and is dimmed with a reason when not installed")
+else: bad("Uninstall is not wired to Fleet.uninstall with a not-installed reason")
+if re.search(r'"install" ->\s*if \(installed\) dimmed\(.*?StoreStages\.INSTALL', ra, re.S):
+    ok("Install is dimmed when installed, else the store queue install")
+else: bad("Install is not gated on installed / not the store queue install")
+if re.search(r'"clear" ->.*?StoreStages\.cachedBytes\(ctx, app\) <= 0L\) dimmed\(.*?clearFreed\(', ra, re.S):
+    ok("Clear is dimmed when nothing is cached, else runs clearFreed")
+else: bad("Clear is not gated on the cache / not wired to clearFreed")
+cf = fn(store, "clearFreed")
+if "StoreStages.cachedBytes" in cf and "StoreStages.clear(" in cf and "freed" in cf:
+    ok("clearFreed runs StoreStages.clear and reports the bytes freed")
+else: bad("clearFreed does not clear through StoreStages and report bytes freed")
+stages_src = read(os.path.join(kt, "StoreStages.kt"))
+if re.search(r"fun clear\(.*?cacheOf\(ctx, app\)\.forEach \{ ApkCache\.drop", stages_src, re.S) and "fun cachedBytes(" in stages_src:
+    ok("Clear drops exactly the entries cachedBytes counts (cacheOf)")
+else: bad("StoreStages.clear and cachedBytes do not share cacheOf")
+dm = fn(store, "dimmed")
+if "Toast.makeText" in dm and "alpha = 0.35f" in dm and "description" in dm:
+    ok("a dimmed button still answers a tap with its reason (never a dead button)")
+else: bad("dimmed() does not explain itself on tap")
+# Field parity: every id the #1588 menu drew is still drawn or still wired, with its caption (only Download -> APK).
+prev = {"update": "Update", "install_toggle": "Install", "fetch": "Fetch", "clear": "Clear", "download": "Download",
+        "open": "Open", "stop": "Stop", "access": "Access", "perms": "Perm", "app_libs": "Libs", "about": "About"}
+lost = [i for i in prev if i not in ids and not handled(ra, i)]
+moved = {i: (prev[i], label.get(i)) for i in prev if i in label and label[i] != prev[i]}
+if not lost and moved == {"download": ("Download", "APK")}:
+    ok("field parity with the #1588 menu: nothing dropped, only Download renamed APK")
+else: bad("field parity broken: lost=%s relabelled=%s" % (lost, moved))
 
 print("\n%d passed, %d failed" % (PASS, FAIL))
 sys.exit(1 if FAIL else 0)

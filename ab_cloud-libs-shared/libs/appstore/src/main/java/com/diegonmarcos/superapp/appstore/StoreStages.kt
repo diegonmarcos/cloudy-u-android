@@ -102,6 +102,16 @@ object StoreStages {
                 ?: e.file.name.startsWith("fleet-${app.id}-"))
         }.maxWithOrNull(compareBy({ it.record?.versionCode ?: 0L }, { it.modifiedAt }))
 
+    /** Every cache entry [clear] removes for [app]: complete and partial APKs. */
+    fun cacheOf(ctx: Context, app: Fleet.App): List<ApkCache.Entry> =
+        runCatching { ApkCache.entries(ctx) }.getOrDefault(emptyList()).filter { e ->
+            e.record?.pkg?.let { it in pkgs(app) } ?: e.file.name.startsWith("fleet-${app.id}-")
+        }
+
+    /** #1691 Bytes [clear] would free for [app] (0 = nothing cached, so Clear is dimmed). */
+    fun cachedBytes(ctx: Context, app: Fleet.App): Long =
+        cacheOf(ctx, app).sumOf { runCatching { it.file.length() }.getOrDefault(0L) }
+
     /** Bytes of an interrupted download waiting to be resumed, or 0. */
     fun partialBytes(ctx: Context, app: Fleet.App): Long =
         ApkCache.entries(ctx).filter { it.partial && it.file.name.startsWith("fleet-${app.id}-") }
@@ -424,9 +434,7 @@ object StoreStages {
     /** Stage 3. Deletes this app's cached APK(s) and any partial. On demand it
      *  is the user's call; the chain only calls it after [ApkCache.landed]. */
     fun clear(ctx: Context, app: Fleet.App): Stage = named(ctx, app, UpdateProgress.STAGE_CLEARING, "") {
-        ApkCache.entries(ctx).filter { e ->
-            e.record?.pkg?.let { it in pkgs(app) } ?: e.file.name.startsWith("fleet-${app.id}-")
-        }.forEach { ApkCache.drop(it.file) }
+        cacheOf(ctx, app).forEach { ApkCache.drop(it.file) }
         ApkCache.clearNote(ctx, app.pkg)
         stage(ctx, app)
     }
