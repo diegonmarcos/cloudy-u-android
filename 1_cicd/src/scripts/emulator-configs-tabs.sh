@@ -48,8 +48,22 @@ dismiss() {
         if grep -qiE 'wireless debugging|Allow .* on this network' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^cancel$|^don.t allow$' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; else break; fi
     done
 }
+# a first-run walk (Cloud Gallery: welcome, then "Step N of M" pages with Continue / Next / Finish): tap through to the app
+onboard() {
+    for _ in $(seq 1 14); do
+        dump cur
+        if grep -q 'package="com.android.permissioncontroller"\|package="com.google.android.permissioncontroller"' "$OUT/cur.xml"; then
+            tap_node "$OUT/cur.xml" 'permission_allow_button|^allow$|while using' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; continue
+        fi
+        if grep -qE 'text="Step [0-9]+ of [0-9]+"|text="Get Started"' "$OUT/cur.xml"; then
+            tap_node "$OUT/cur.xml" '^(Get Started|Continue|Next|Finish|Done|Start|Skip)$' || break; sleep 3
+        else break; fi
+    done
+}
 $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
 sleep 20
+dismiss
+onboard
 dismiss
 # first start can show a start-up permission walk (a Settings page of another package): bring the app back on top
 dump cur
