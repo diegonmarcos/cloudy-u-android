@@ -139,16 +139,54 @@ async function waitSized() {
   for (let i = 0; i < 100 && !sized(); i++) { await new Promise((r) => setTimeout(r, 50)); resize(); }
   if (!sized()) throw new Error('the viewer has no size (' + renderer.domElement.width + 'x' + renderer.domElement.height + ', window ' + innerWidth + 'x' + innerHeight + '): the WebView is collapsed or not laid out');
 }
+// #1695 the parts of the shown model (one entry per mesh node, named as in the file) with per-part visibility, and the colours as an optional filter.
+// A collapsed 'Parts (n)' button at the top right; the panel is DOM over the canvas, so it never changes what the framebuffer measures.
+const partsBox = document.createElement('div'); partsBox.id = 'parts';
+partsBox.style.cssText = 'position:absolute;right:6px;top:6px;z-index:2;max-width:62%;max-height:calc(100% - 40px);display:none;flex-direction:column;font:13px sans-serif;color:#d8dee8';
+document.body.appendChild(partsBox);
+let partsList = [];
+function partsPanel(obj) {
+  partsList = []; obj.traverse((o) => { if (o.isMesh) { const m = Array.isArray(o.material) ? o.material[0] : o.material; partsList.push({ o, name: o.name || (o.parent && o.parent.name) || 'Part ' + (partsList.length + 1), color: m && m.color ? '#' + m.color.getHexString() : '#cfd4dc' }); } });
+  partsBox.innerHTML = ''; partsBox.style.display = partsList.length > 1 ? 'flex' : 'none'; if (partsList.length < 2) return;
+  const btn = document.createElement('button'); btn.id = 'parts-toggle'; btn.textContent = 'Parts (' + partsList.length + ')';
+  btn.style.cssText = 'align-self:flex-end;background:#1b212b;color:#d8dee8;border:1px solid #39424f;border-radius:6px;padding:6px 10px;font:600 13px sans-serif';
+  const body = document.createElement('div'); body.id = 'parts-body';
+  body.style.cssText = 'display:none;margin-top:4px;background:rgba(20,25,32,.94);border:1px solid #39424f;border-radius:6px;padding:6px;overflow:auto;max-height:100%';
+  btn.onclick = () => { body.style.display = body.style.display === 'none' ? 'block' : 'none'; };
+  const colours = [...new Set(partsList.map((p) => p.color))];
+  const rows = [];
+  if (colours.length > 1) {
+    const f = document.createElement('div'); f.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px';
+    colours.forEach((c) => { const chip = document.createElement('button'); chip.title = 'Show or hide every part of this colour'; chip.dataset.on = '1';
+      chip.style.cssText = 'width:22px;height:22px;border-radius:4px;border:2px solid #d8dee8;background:' + c;
+      chip.onclick = () => { const on = chip.dataset.on !== '1'; chip.dataset.on = on ? '1' : '0'; chip.style.opacity = on ? '1' : '.35';
+        partsList.forEach((p, i) => { if (p.color === c) { p.o.visible = on; rows[i].checked = on; } }); render(); };
+      f.appendChild(chip); });
+    body.appendChild(f);
+  }
+  partsList.forEach((p) => { const l = document.createElement('label'); l.style.cssText = 'display:flex;align-items:center;gap:6px;padding:3px 0;white-space:nowrap';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = true; cb.onchange = () => { p.o.visible = cb.checked; render(); }; rows.push(cb);
+    const sw = document.createElement('span'); sw.style.cssText = 'width:10px;height:10px;border-radius:2px;flex:none;background:' + p.color;
+    const t = document.createElement('span'); t.textContent = p.name; t.style.cssText = 'overflow:hidden;text-overflow:ellipsis';
+    l.append(cb, sw, t); body.appendChild(l); });
+  partsBox.append(btn, body);
+}
+window.cadParts = (open) => { const b = document.getElementById('parts-body'); if (b && open !== undefined) b.style.display = open ? 'block' : 'none'; return partsList.map((p) => ({ name: p.name, color: p.color, visible: p.o.visible })); };
+window.cadPartVisible = (i, on) => { const p = partsList[i]; if (!p) return false; p.o.visible = !!on; render(); return true; };
+// #1695 a long load (a 22 MB STEP read in the brep worker) reports its progress to the host and can be cancelled
+let loader = null;
+window.cadCancel = () => { if (loader && loader.cancel) { loader.cancel(); return true; } return false; };
 window.cadOpen = async ({ lib, url, format }) => {
   status('Loading ' + format.toUpperCase() + '…');
+  const progress = (t) => { status(t); D.stageTo(t); post({ type: 'progress', text: t }); };
   D.opened = url; D.loadMs = -1; D.shownMs = -1; D.stageTo('importing the ' + lib + ' loader');
   try {
-    const m = await import('./' + lib + '/loader.js');
+    const m = await import('./' + lib + '/loader.js'); loader = m;
     D.stageTo('loading ' + url);
-    const obj = await m.load(url, format);
+    const obj = await m.load(url, format, progress);
     D.loadMs = D.now(); D.stageTo('framing the model');
     if (current) scene.remove(current);
-    current = obj; scene.add(obj); applyWire();
+    current = obj; scene.add(obj); applyWire(); partsPanel(obj);
     D.stageTo('waiting for a sized canvas'); await waitSized(); frame(obj);
     let tris = 0; obj.traverse((o) => { if (o.isMesh && o.geometry) tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; });
     D.triangles = Math.round(tris); D.shownMs = D.now(); D.stageTo('shown');

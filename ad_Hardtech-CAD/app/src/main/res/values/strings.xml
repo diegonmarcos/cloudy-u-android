@@ -28,6 +28,7 @@
     <string name="lib_manifest_failed">The model library could not be read (offline and nothing cached yet).</string>
     <string name="viewer_fetching">Fetching %1$s…</string>
     <string name="viewer_loading">Loading %1$s…</string>
+    <string name="viewer_cancel">Cancel</string>
     <string name="viewer_failed">Could not show this model: %1$s</string>
     <string name="viewer_derived">Shown from its derived %1$s view; the original %2$s stays the source.</string>
     <string name="viewer_model">%1$s · %2$s · %3$s</string>

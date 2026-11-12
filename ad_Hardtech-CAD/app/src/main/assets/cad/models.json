@@ -340,9 +340,9 @@
       "view": {
         "path": "mechanics/glb/dji-s900-hex-rotor-drone.view.glb",
         "format": "glb",
-        "size": 6350940,
-        "sha256": "bf3ccccfe0f6e270a2568f948b0d4722f9fed38b3697b179c4ec9d667ef38d60",
-        "tool": "tools/brep2glb.mjs with occt-import-js 0.0.23 (LGPL-2.1), linear deflection 0.02 of the bounding box (166k triangles), Y-up kept, merged by colour; mirrored from the originals repo, hash-checked by ad_Hardtech-CAD/tools/derive_models.py",
+        "size": 6512592,
+        "sha256": "cc2289c30ab60791213a48a6480a79f670b272d4cd5c82278fc6532192481379",
+        "tool": "tools/brep2glb-parts.mjs (packer tools/tess.js = libs:cad-brep tess.js) with occt-import-js 0.0.23 (LGPL-2.1), linear deflection 0.02 of the bounding box, Y-up kept, ONE NODE PER SOLID (237 parts, named from the STEP product, own colour); mirrored from the originals repo, hash-checked by ad_Hardtech-CAD/tools/derive_models.py",
         "vertices": 181109,
         "triangles": 166007,
         "asset": "cad/models/dji-s900.view.glb",
@@ -354,7 +354,7 @@
       ],
       "conversion_log": [
         "original: STEP AP214 (AUTOMOTIVE_DESIGN) written by SolidWorks 2015 (SwSTEP 2.0), 22.3 MB, 237 solids in 15 colours, metres, Y-up",
-        "view: tools/brep2glb.mjs with occt-import-js 0.0.23 (LGPL-2.1), linear deflection 0.02 of the bounding box, up-axis y (no rotation), triangles merged by colour (15 primitives)",
+        "view: tools/brep2glb-parts.mjs (packer tools/tess.js = libs:cad-brep tess.js) with occt-import-js 0.0.23 (LGPL-2.1), linear deflection 0.02 of the bounding box, Y-up kept, ONE NODE PER SOLID (237 parts, named from the STEP product, own colour) (re-made 2026-11-12 for the parts tree; the first view merged the solids by colour)",
         "thumbnail: the owner's reference photo (mechanics/photos/dji-s900-hex-rotor-drone.jpg in the originals repo), cover-cropped to 480x360 JPEG"
       ]
     }

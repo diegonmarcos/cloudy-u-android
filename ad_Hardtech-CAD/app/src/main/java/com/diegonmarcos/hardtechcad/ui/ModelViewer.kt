@@ -153,6 +153,9 @@ internal fun ModelViewer(m: Model, dir: File, height: Dp = VIEWER_HEIGHT_DP.dp, 
     var paint by remember(m) { mutableStateOf<Paint?>(null) }
     var screen by remember(m) { mutableStateOf(-1.0) }
     var stage by remember(m) { mutableStateOf("") }
+    // #1695 a long load (a 22 MB STEP in the brep worker) reports its progress; the timeout counts from the LAST progress, not the start
+    var progress by remember(m) { mutableStateOf("") }
+    var lastProgress by remember(m) { mutableStateOf(0L) }
     var present by remember { mutableStateOf(ViewerHealth.start(prefs.getString(PREF_PRESENT, null), prefs.getString(PREF_BUILD, null), build)) }
     var lastGesture by remember { mutableStateOf(0L) }
     var hostFrame by remember { mutableStateOf<ImageBitmap?>(null) }
@@ -172,6 +175,7 @@ internal fun ModelViewer(m: Model, dir: File, height: Dp = VIEWER_HEIGHT_DP.dp, 
                 paint = Paint(e.optDouble("pct", -1.0), e.optInt("w"), e.optInt("h"), e.optString("gl"), System.nanoTime())
                 CadDiag.painted(m.id, e.optDouble("pct", -1.0), e.optInt("w"), e.optInt("h"), e.optString("gl"))
             }
+            "progress" -> { progress = e.optString("text"); lastProgress = System.currentTimeMillis(); CadDiag.event(m.id, "progress " + progress) }
             "error" -> { state = ViewState.Failed(e.optString("message")); CadDiag.failed(m.id, e.optString("message")) }
             else -> CadDiag.event(m.id, json)
         }
@@ -225,6 +229,7 @@ internal fun ModelViewer(m: Model, dir: File, height: Dp = VIEWER_HEIGHT_DP.dp, 
         }
         // #1658 a load that neither shows nor fails is not left as a silent empty stage: it is reported with the stage the page stopped at
         kotlinx.coroutines.delay((LOAD_TIMEOUT_S - 20) * 1000L)
+        while (state == ViewState.Loading && System.currentTimeMillis() - lastProgress < LOAD_TIMEOUT_S * 1000L) kotlinx.coroutines.delay(1000)
         if (state == ViewState.Loading) {
             val msg = "still loading after $LOAD_TIMEOUT_S s" + (if (stage.isNotBlank()) " (viewer stage: $stage)" else "")
             CadDiag.failed(m.id, msg); state = ViewState.Failed(msg)
@@ -343,13 +348,16 @@ internal fun ModelViewer(m: Model, dir: File, height: Dp = VIEWER_HEIGHT_DP.dp, 
             val overlay = when (val s = state) {
                 ViewState.Fetching -> stringResource(R.string.viewer_fetching, m.name)
                 // #1658 a visible loading state: an empty stage with no word on it read as a broken viewer
-                ViewState.Loading -> stringResource(R.string.viewer_loading, m.name)
+                ViewState.Loading -> if (progress.isNotBlank()) progress else stringResource(R.string.viewer_loading, m.name)
                 ViewState.Shown -> null
                 is ViewState.Failed -> stringResource(R.string.viewer_failed, s.why)
                 is ViewState.StoreOnly -> s.reason
             }
             if (overlay != null) Text(overlay, color = if (state is ViewState.Fetching || state is ViewState.Loading) p.textSecondary else p.warn, fontSize = CadType.body, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.align(Alignment.Center).padding(20.dp).testTag("viewer_status"))
+            // #1695 a load that reports progress can be cancelled (the page terminates its reader worker and reports 'cancelled')
+            if (state == ViewState.Loading && progress.isNotBlank()) Text(stringResource(R.string.viewer_cancel), color = p.accent, fontSize = CadType.label,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp).clickable { web?.evaluateJavascript("window.cadCancel&&window.cadCancel()", null) }.padding(8.dp).testTag("viewer_cancel"))
         }
         if (plan is CadFormats.Plan.Show) ViewerControls(
             onFit = { web?.evaluateJavascript("window.cadFit&&window.cadFit()", null) },

@@ -235,7 +235,8 @@
     "shell": {
       "dir": "test",
       "requires": [
-        "python3"
+        "python3",
+        "node"
       ]
     },
     "unit": {
