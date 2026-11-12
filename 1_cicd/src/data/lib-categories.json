@@ -28,6 +28,7 @@
    "members": [
     "core",
     "crash",
+    "fleet-notify",
     "devtools",
     "log-export",
     "ai-usage",

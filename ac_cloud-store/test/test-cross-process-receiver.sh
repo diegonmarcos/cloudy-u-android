@@ -48,7 +48,7 @@ for arg in sys.argv[1:]:
 print("\n".join(out))
 PY
 
-CP="$ROOT/ab_cloud-libs-shared/libs/core/src/main/java/com/diegonmarcos/superapp/core/CrossProcess.kt"
+CP="$ROOT/ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/core/CrossProcess.kt"
 SENDER="$ROOT/ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/UnpackAfterInstall.kt"
 
 # X2: the helper exists and does the round-trip

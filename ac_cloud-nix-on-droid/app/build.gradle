@@ -69,6 +69,7 @@ android {
         // signature permission into this APK; without them the SuperApp and
         // every sibling cannot see or reach this terminal.
         implementation project(":libs:core")
+        implementation project(":libs:fleet-notify")   // #1660 FleetNotify + KeepAliveStatus (left libs:core)
         // #1547 the terminal selftest list is read at RUNTIME from Cloud Store's provider, never baked into the APK.
         implementation project(":libs:fleet-data-client")
         // #1352 Configs ▸ General / ▸ About in the terminal's menu (FleetConfigsEntries, libs:ui-nav-bars)

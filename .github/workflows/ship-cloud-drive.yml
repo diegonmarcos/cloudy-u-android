@@ -62,6 +62,7 @@ on:
       - "ab_cloud-libs-shared/libs/editor-core/**"
       - "ab_cloud-libs-shared/libs/file-editor/**"
       - "ab_cloud-libs-shared/libs/fleet-data-client/**"
+      - "ab_cloud-libs-shared/libs/fleet-notify/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-agents/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**"

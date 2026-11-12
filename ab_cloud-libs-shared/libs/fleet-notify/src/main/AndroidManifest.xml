@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- libs:fleet-notify declares nothing: the notification channels are created at runtime (FleetNotify), and the
+     foreground-service types and permissions belong to the app that holds the service. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" />

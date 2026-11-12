@@ -105,6 +105,7 @@
       "_doc": "The non-secret autofill SOT contract (a0_docs/eng-specs/autofill-3-tier.md). libs:browser reads Cloud Account's profiles and site rules through it (AUTOFILL_PROFILE_READ) and proposes a user-confirmed new address (AUTOFILL_PROFILE_WRITE).",
       "dir": "../ab_cloud-libs-shared/libs/autofill"
     },
+    "libs:fleet-notify": {"dir": "../ab_cloud-libs-shared/libs/fleet-notify", "type": "library", "comment": "#1660 FleetNotify + KeepAliveStatus (the keep-alive and data-widget notifications), out of libs:core; linked by libs:updater (the Store batch foreground service), which this app compiles."},
     "libs:updater": {
       "_doc_dir": "Shared BY REFERENCE from aa_cloud-superapp/libs/ — settings.gradle points projectDir here instead of at a local copy. Every app used to carry its own copy-pasted tree and they drifted: 6 apps sat 228 source lines behind superapp's updater. One directory, no sync step, no drift.",
       "dir": "../ab_cloud-libs-shared/libs/updater",

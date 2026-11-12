@@ -64,6 +64,7 @@ on:
       - "ab_cloud-libs-shared/libs/fleet-data-ui/**"
       - "ab_cloud-libs-shared/libs/fleet-endpoints-android/**"
       - "ab_cloud-libs-shared/libs/fleet-endpoints/**"
+      - "ab_cloud-libs-shared/libs/fleet-notify/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-agents/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**"

@@ -61,7 +61,7 @@ DataStore / Room stores and declared files it cannot move yet.
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
-Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
+Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -253,7 +253,7 @@ Coverage: 4 covered, 0 gaps.
 
 ## cloud-account — `com.diegonmarcos.cloudaccount`
 
-Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-auth, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-data-provider, lib-fleet-data-ui, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-mail, lib-net, lib-perms, lib-shared-store, lib-shell-client, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
+Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-auth, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-data-provider, lib-fleet-data-ui, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-mail, lib-net, lib-perms, lib-shared-store, lib-shell-client, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -311,7 +311,7 @@ Coverage: 20 covered, 1 gaps — file:filesDir/git-sync/repos.json.
 
 ## cloud-tasks — `com.diegonmarcos.cloudagenda`
 
-Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core, lib-wysiwyg.
+Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core, lib-wysiwyg.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -350,7 +350,7 @@ Coverage: 11 covered, 0 gaps.
 
 ## cloud-browser — `com.diegonmarcos.cloudbrowser`
 
-Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-bluetooth, lib-bottomnav, lib-browser, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-headless-browser, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-bluetooth, lib-bottomnav, lib-browser, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-headless-browser, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -400,7 +400,7 @@ Coverage: 18 covered, 0 gaps.
 
 ## cloud-c3-webserver — `com.diegonmarcos.cloudwebserver`
 
-Module `ac_cloud-c3-webserver`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-c3-webserver`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -444,7 +444,7 @@ Coverage: 4 covered, 0 gaps.
 
 ## cloud-c3 — `com.diegonmarcos.cloudc3`
 
-Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-ops, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater.
+Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-ops, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -611,7 +611,7 @@ Coverage: 12 covered, 5 gaps — code_chat_sessions, file:filesDir or app storag
 
 ## cloud-contacts — `com.diegonmarcos.cloudcontacts`
 
-Module `ac_cloud-contacts`; libs: lib-analytics, lib-bottomnav, lib-contacts, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-contacts`; libs: lib-analytics, lib-bottomnav, lib-contacts, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -675,7 +675,7 @@ Coverage: 9 covered, 2 gaps — call_history, file:system CallLog and BlockedNum
 
 ## cloud-drive — `com.diegonmarcos.clouddrive`
 
-Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-editor-core, lib-file-editor, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-local-serve, lib-media-viewer, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-ocr, lib-odf, lib-pdf, lib-perms, lib-rclone, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-wysiwyg.
+Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-editor-core, lib-file-editor, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-local-serve, lib-media-viewer, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-ocr, lib-odf, lib-pdf, lib-perms, lib-rclone, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-wysiwyg.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -755,7 +755,7 @@ Coverage: 8 covered, 0 gaps.
 
 ## cloud-mail — `com.diegonmarcos.comms.mail`
 
-Module `ac_cloud-mail`; libs: lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-ml-l-image, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-mail`; libs: lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-ml-l-image, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -842,7 +842,7 @@ Coverage: 4 covered, 9 gaps — datastore:elementx_featureflag, datastore:elemen
 
 ## cloud-me — `com.diegonmarcos.cloudme`
 
-Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fin, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-health, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fin, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-health, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -948,7 +948,7 @@ Coverage: 10 covered, 0 gaps.
 
 ## cloud-nav — `com.diegonmarcos.cloudnav`
 
-Module `ac_cloud-nav`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-maps, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-nav`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-maps, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -993,7 +993,7 @@ Coverage: 15 covered, 0 gaps.
 
 ## cloud-news — `com.diegonmarcos.cloudnews`
 
-Module `ac_cloud-news`; libs: lib-analytics, lib-apify, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-news`; libs: lib-analytics, lib-apify, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1027,7 +1027,7 @@ Coverage: 9 covered, 1 gaps — file:data/sources.json, topics.json (bundled) an
 
 ## cloud-terminal-nix — `cld.termux.nix`
 
-Module `ac_cloud-nix-on-droid`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-shell-client, lib-shell-rish, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-nix-on-droid`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-shell-client, lib-shell-rish, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1145,7 +1145,7 @@ Coverage: 7 covered, 4 gaps — search_agents_state, search_chat_sessions, file:
 
 ## cloud-store — `com.diegonmarcos.cloudstore`
 
-Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-data-provider, lib-fleet-data-ui, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-json-viewer, lib-model-catalogue, lib-perms, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-torrent, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive.
+Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-data-provider, lib-fleet-data-ui, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-json-viewer, lib-model-catalogue, lib-perms, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-torrent, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1187,7 +1187,7 @@ Coverage: 13 covered, 0 gaps.
 
 ## cloud-terminal-termux — `cld.termux`
 
-Module `ac_cloud-termux`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-shell-client, lib-shell-rish, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-termux`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-shell-client, lib-shell-rish, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1256,7 +1256,7 @@ Coverage: 5 covered, 1 gaps — room:PrivilegedAppDatabase.
 
 ## cloud-wallet — `com.diegonmarcos.cloudwallet`
 
-Module `ac_cloud-wallet`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-wallet.
+Module `ac_cloud-wallet`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-wallet.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

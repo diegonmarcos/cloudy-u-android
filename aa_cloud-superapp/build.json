@@ -343,6 +343,7 @@
       "dir": "../ab_cloud-libs-shared/libs/text-tools",
       "type": "library"
     },
+    "libs:fleet-notify": {"dir": "../ab_cloud-libs-shared/libs/fleet-notify", "type": "library", "comment": "#1660 FleetNotify + KeepAliveStatus (the keep-alive and data-widget notifications), out of libs:core; linked by the app (data-widget cards) and by libs:updater."},
     "libs:updater": {
       "dir": "../ab_cloud-libs-shared/libs/updater",
       "type": "library",

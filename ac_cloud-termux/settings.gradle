@@ -27,6 +27,9 @@ project(':libs:fleet-data-client').projectDir = new File(rootDir, '../ab_cloud-l
 // #1352 Configs ▸ General / ▸ About (libs:ui-nav-bars, in the terminal's menu) and its deps.
 include ':libs:ui-nav-bars'
 project(':libs:ui-nav-bars').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/ui-nav-bars')
+// #1660 libs:fleet-notify: FleetNotify + KeepAliveStatus (the session keep-alive notification), out of libs:core.
+include ':libs:fleet-notify'
+project(':libs:fleet-notify').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/fleet-notify')
 include ':libs:fleetconfigs-agents'
 project(':libs:fleetconfigs-agents').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/fleetconfigs-agents')
 include ':libs:fleetconfigs-logcat'

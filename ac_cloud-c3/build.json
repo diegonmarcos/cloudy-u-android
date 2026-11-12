@@ -126,6 +126,7 @@
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
     },
+    "libs:fleet-notify": {"dir": "../ab_cloud-libs-shared/libs/fleet-notify", "type": "library", "comment": "#1660 FleetNotify + KeepAliveStatus (the keep-alive and data-widget notifications), out of libs:core; linked by libs:updater (the Store batch foreground service), which this app compiles."},
     "libs:updater": {
       "_doc_dir": "Shared BY REFERENCE from ab_cloud-libs-shared/libs/. Also the reader of the constellation fleet manifest: since #276's fix it falls back to aa_cloud-superapp/data/constellation-fleet.json when an app carries no data/ dir of its own, and throws if neither exists — which is why this app needs no data/ dir for the fleet bake.",
       "dir": "../ab_cloud-libs-shared/libs/updater",

@@ -197,5 +197,6 @@ dependencies {
     // #1405 USB-C drives for the Ventoy tab: the same StorageVolumes/UsbVolumeModel Cloud Drive's Explorer reads.
     implementation project(':libs:usb-drive')
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.16.1'   // CrossProcessTest (#1121, moved here with CrossProcess, #1660): Parcel round-trips need the framework
     testImplementation 'org.json:json:20231013'
 }

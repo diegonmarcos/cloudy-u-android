@@ -454,6 +454,7 @@ dependencies {
     implementation(project(":libs:updater"))
     // The fleet's keep-alive notification builder (FleetNotify) for the push service's badge; libs:updater only `implementation`s core.
     implementation(project(":libs:core"))
+    implementation(project(":libs:fleet-notify"))   // #1660 FleetNotify + KeepAliveStatus (left libs:core): the keep-alive / data-widget notifications
     // The fleet setup contract's handler registry (SetupStores): the signatures store is served from here.
     // libs:core `api`s it, but libs:updater only `implementation`s core, so it is not on this app's compile path.
     implementation(project(":libs:fleetconfig-model"))

@@ -99,6 +99,7 @@
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
     },
+    "libs:fleet-notify": {"dir": "../ab_cloud-libs-shared/libs/fleet-notify", "type": "library", "comment": "#1660 FleetNotify + KeepAliveStatus (the keep-alive and data-widget notifications), out of libs:core; linked by libs:updater (the Store batch foreground service), which this app compiles."},
     "libs:updater": {
       "dir": "../ab_cloud-libs-shared/libs/updater",
       "type": "library"

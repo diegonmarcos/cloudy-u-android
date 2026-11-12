@@ -196,6 +196,7 @@ android {
 
 dependencies {
     implementation project(':libs:core')
+    implementation project(':libs:fleet-notify')   // #1660 FleetNotify + KeepAliveStatus (left libs:core): the keep-alive / data-widget notifications
     implementation project(':libs:fleetconfig-model')   // #1093 FleetHttpSeam
     implementation project(':libs:decisions-link')   // #882 updater_urgency: asks the decisions engine, holds no key
     // Fleet.shellInstall uses the shell channel (uid 2000, holds INSTALL_PACKAGES)

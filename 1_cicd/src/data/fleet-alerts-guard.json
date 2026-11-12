@@ -237,7 +237,7 @@
       "why": "#1506 The one persistent indicator of Super Saving Battery Mode with its one-tap Off action: posted once when the mode is turned on and cancelled on Off, never updated. A control for the mode the user switched on, not an alert about the fleet."
     },
     {
-      "path": "ab_cloud-libs-shared/libs/core/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt",
+      "path": "ab_cloud-libs-shared/libs/fleet-notify/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt",
       "kind": "badge",
       "notify_calls": 1,
       "why": "The shared builder of the fleet's two persistent notification kinds: FleetNotify.post is the one notify() behind a keep-alive badge refresh (the foreground-service notification of an app that is kept alive) and behind the data-widget cards (Weather, MyHealth, Battery: ongoing info posted without a foreground service). Standing status the owner re-posts, never an alert about the fleet."

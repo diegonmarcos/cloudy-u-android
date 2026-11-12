@@ -20,6 +20,7 @@
     "ui-nav-bars": "ac_cloud-mail",
     "core": null,
     "crash": null,
+    "fleet-notify": "aa_cloud-superapp",
     "perms": null,
     "ai-usage": "aa_cloud-superapp",
     "fleet-data-client": null,

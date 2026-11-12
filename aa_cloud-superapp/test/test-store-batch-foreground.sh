@@ -65,7 +65,7 @@ grep -q 'FleetNotify.startKeepAlive(this, BatchForeground.ID, BatchForeground.no
   && ok "onStartCommand → FleetNotify.startKeepAlive(..., dataSyncType()) (ServiceCompat.startForeground with FOREGROUND_SERVICE_TYPE_DATA_SYNC)" \
   || bad "the service does not start foreground with type dataSync"
 # ongoing + silent + once + Stop action are FleetNotify.keepAliveNotification's (held by core's FleetNotifyTest); the Store routes through it
-grep -q 'FleetNotify.keepAliveNotification(' "$SVC" && grep -q 'setOngoing(true)' "$LIBS/core/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt" \
+grep -q 'FleetNotify.keepAliveNotification(' "$SVC" && grep -q 'setOngoing(true)' "$LIBS/fleet-notify/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt" \
   && grep -q 'ACTION_STOP' "$SVC" \
   && ok "the notification is the fleet keep-alive badge: ongoing, silent, alerts once, with a Stop action" || bad "the notification is not an ongoing silent one"
 grep -q 'ContextCompat.startForegroundService(app, Intent(app, BatchForegroundService::class.java))' "$SVC" \

@@ -1058,6 +1058,7 @@ dependencies {
     implementation project(':libs:analytics')
     implementation project(':libs:decisions-link')   // #883 alert_interrupt: the SuperApp asks the decisions engine, holding no key
     implementation project(':libs:core')
+    implementation project(':libs:fleet-notify')   // #1660 FleetNotify + KeepAliveStatus (left libs:core): the keep-alive / data-widget notifications
     implementation project(':libs:databackend')   // #825 DataBackendClient: this app binds an engine
     implementation project(':libs:fleetconfig-model')   // #825 FleetPolicy: the manifest + policy this app plans the fleet with
     implementation project(':libs:updater')

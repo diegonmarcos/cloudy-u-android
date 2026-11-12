@@ -114,6 +114,7 @@ on:
       - "ab_cloud-libs-shared/libs/fleet-data-client/**"
       - "ab_cloud-libs-shared/libs/fleet-endpoints-android/**"
       - "ab_cloud-libs-shared/libs/fleet-endpoints/**"
+      - "ab_cloud-libs-shared/libs/fleet-notify/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
       - "ab_cloud-libs-shared/libs/health/**"
       - "ab_cloud-libs-shared/libs/kde-connect/**"

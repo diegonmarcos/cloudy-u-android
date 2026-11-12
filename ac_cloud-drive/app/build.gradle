@@ -701,6 +701,7 @@ dependencies {
     // #1547 the Agents declaration is read at RUNTIME from Cloud Store's provider, never baked into the APK (code only, no data).
     implementation project(':libs:fleet-data-client')
     implementation project(':libs:core')
+    implementation project(':libs:fleet-notify')   // #1660 FleetNotify + KeepAliveStatus (left libs:core): the keep-alive / data-widget notifications
     implementation project(':libs:databackend')   // #825 DataBackendClient: this app binds an engine
     implementation project(':libs:updater')
     // The shared scan engine: ZXing barcode decode + ML Kit OCR for the image

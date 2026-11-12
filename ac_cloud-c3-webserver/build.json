@@ -660,6 +660,7 @@
   },
   "modules": {
     "_doc": "Shared modules the Tauri gradle project (tauri.android_project) includes BY REFERENCE beside the template's :app. Its settings.gradle iterates this map and, like every other reader of it (the ship workflow's trigger derivation, the publish gate, ab_cloud-libs-shared/libs/shared-modules.test.sh), resolves each dir against THIS directory, not against the gradle root three levels down. They are compiled Kotlin libraries, not source in this app's tree, so test/test-c3-webserver-no-kotlin.sh does not see them. libs:devtools finds this file by walking up from the gradle root (src-tauri/gen/android), as libs:analytics does, so there is one declaration and no copy.",
+    "libs:fleet-notify": {"dir": "../ab_cloud-libs-shared/libs/fleet-notify", "type": "library", "comment": "#1660 FleetNotify + KeepAliveStatus (the keep-alive and data-widget notifications), out of libs:core; linked by the app (the servers keep-alive notification)."},
     "libs:core": {
       "_doc_dir": "Fleet mesh membership: core manifest-merges the CONSTELLATION_DATA signature permission (defined and requested). Declared so a core change rebuilds this app instead of shipping a stale mesh member.",
       "type": "library",

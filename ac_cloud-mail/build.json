@@ -268,6 +268,7 @@
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
     },
+    "libs:fleet-notify": {"dir": "../ab_cloud-libs-shared/libs/fleet-notify", "type": "library", "comment": "#1660 FleetNotify + KeepAliveStatus (the keep-alive and data-widget notifications), out of libs:core; linked by the app (the push keep-alive) and by libs:updater."},
     "libs:updater": {
       "_doc_dir": "Shared BY REFERENCE from ab_cloud-libs-shared/libs/ - settings.gradle points projectDir here instead of at a local copy, so a fix lands in every consuming app at build time and copies cannot drift.",
       "_doc": "The fleet's self-update chain: GHCR manifest check, resumable download, digest verification, and the one serialised PackageInstaller path whose every terminal status is surfaced. This is the SAME library Constellation - the owner's app store - drives its own updates with, pulling the SAME image (forks.mail.image) the store distributes, so mail updating itself and the store updating mail are one mechanism rather than two.",

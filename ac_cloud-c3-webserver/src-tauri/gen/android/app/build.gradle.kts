@@ -137,6 +137,7 @@ dependencies {
     // merges the fleet provider, receiver, <queries> and the signature
     // permission into this APK; nothing here calls it (settings.gradle).
     implementation(project(":libs:core"))
+    implementation(project(":libs:fleet-notify"))   // #1660 FleetNotify + KeepAliveStatus (left libs:core): the keep-alive / data-widget notifications
     // #1352 Configs ▸ General / ▸ About, reached through the launcher shortcuts the lib publishes (no native menu here)
     implementation(project(":libs:ui-nav-bars"))
     // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip (the web Configs strip opens them natively).

@@ -69,8 +69,6 @@ dependencies {
 
     // StoreNotifyPrefsTest: the pure notification-matrix logic, no device.
     testImplementation 'junit:junit:4.13.2'
-    // CrossProcessTest: Parcel round-trips of ResultReceiver need the framework (#1121).
-    testImplementation 'org.robolectric:robolectric:4.16.1'
 
     // #783 FleetConfig reads and writes an app's EncryptedSharedPreferences through the same
     // cipher the app uses (default MasterKey). compileOnly, NOT implementation: only an app that

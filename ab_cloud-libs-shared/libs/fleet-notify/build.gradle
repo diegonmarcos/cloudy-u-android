@@ -1,0 +1,50 @@
+// libs:fleet-notify (#1660): THE two kinds of persistent notification a fleet app may post (FleetNotify: the keep-alive
+// notification of a foreground service and the data-widget card) and the status lines a keep-alive notification shows
+// (KeepAliveStatus). They lived in libs:core, the mesh lib every app compiles, where each edit rebuilt the whole fleet and
+// pushed core over its line budget; only the apps that hold a foreground service or post a data widget link this module.
+// In-process by necessity: startForeground and NotificationManager.notify act for the calling package, so this cannot be
+// an engine behind IPC (lib-classes.json: pinned). The classes keep their package (com.diegonmarcos.superapp.core), as
+// HealthStore did when it left core for libs:health, so no caller changes an import.
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android' apply false
+}
+
+// AGP 9 has Kotlin built in and registers the `kotlin` extension itself; applying the Kotlin plugin on top of it fails.
+// Older AGP (the forks' builds) does not, so the plugin is applied only where nothing provided it. Same rule as libs:core.
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.fleetnotify'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    lint {
+        disable 'NullSafeMutableLiveData'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    // SilentChannels: the keep-alive and data-widget channels are created through the fleet's one silent-channel helper.
+    implementation project(':libs:core')
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.16.1'
+}

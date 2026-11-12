@@ -175,8 +175,8 @@ else:
 # ── L3 quiet progress ────────────────────────────────────────────────────────
 n = body(B, "fun notification(ctx: Context)") or ""
 # The progress line is the fleet keep-alive badge: its channel (LOW, made through SilentChannels.ensure) and its silent, alert-once
-# builder are libs:core FleetNotify's, which the Store's line goes through.
-fn = strip(os.path.join(core, "FleetNotify.kt"))
+# builder are libs:fleet-notify FleetNotify's, which the Store's line goes through.
+fn = strip(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(core)))))))), "fleet-notify/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt"))   # #1660 FleetNotify lives in libs:fleet-notify
 kc = body(fn, "private fun keepAliveChannel(")
 ka = body(fn, "fun keepAliveNotification(")
 if "FleetNotify.keepAliveNotification(" in n and re.search(r"SilentChannels\.ensure\(ctx, CHANNEL_KEEP_ALIVE, CHANNEL_KEEP_ALIVE_NAME, NotificationManager\.IMPORTANCE_LOW\)", fn) and kc:
@@ -204,7 +204,7 @@ M=0
 mutate() {  # mutate <name> <file-under-libs> <from> <to>
   local tmp; tmp="$(mktemp -d)"
   mkdir -p "$tmp/libs"
-  cp -r "$LIBS/updater" "$LIBS/core" "$tmp/libs/"
+  cp -r "$LIBS/updater" "$LIBS/core" "$LIBS/fleet-notify" "$tmp/libs/"
   python3 - "$tmp/libs/$2" "$3" "$4" <<'PY' || { echo "  MUTATION NOT PLANTED: $1"; M=$((M+1)); rm -rf "$tmp"; return; }
 import sys
 p, a, b = sys.argv[1:4]
@@ -227,8 +227,8 @@ mutate "AUTO re-offers the same bytes"     "$F" 'PassLedgerStore.offeredBefore(c
 mutate "a pending offer is not remembered" "$F" 'if (mode == Mode.AUTO && candidateSha != null) PassLedgerStore.markOffered(ctx, app.pkg, candidateSha)' ''
 mutate "a landed install keeps the marker" "$F" 'PassLedgerStore.clearOffered(ctx, app.pkg)' ''
 mutate "the marker lives in memory"        "$L" 'sha256.lowercase()).commit()' 'sha256.lowercase()).apply()'
-mutate "a loud progress channel"           "core/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt" 'CHANNEL_KEEP_ALIVE_NAME, NotificationManager.IMPORTANCE_LOW)' 'CHANNEL_KEEP_ALIVE_NAME, NotificationManager.IMPORTANCE_HIGH)'
-mutate "a progress line with sound"        "core/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt" '.setSilent(true)' '.setSilent(false)'
+mutate "a loud progress channel"           "fleet-notify/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt" 'CHANNEL_KEEP_ALIVE_NAME, NotificationManager.IMPORTANCE_LOW)' 'CHANNEL_KEEP_ALIVE_NAME, NotificationManager.IMPORTANCE_HIGH)'
+mutate "a progress line with sound"        "fleet-notify/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt" '.setSilent(true)' '.setSilent(false)'
 
 echo "test-fleet-pass-one-owner: tree failures=$base, mutations not caught=$M"
 [ "$base" -eq 0 ] && [ "$M" -eq 0 ]
