@@ -50,7 +50,7 @@ class LowPowerModeTest {
     @Test fun `the listed work asks the mode`() {
         val m = "src/main/java/com/diegonmarcos/superapp/"
         for (f in listOf("notificationcenter/NetworkBadgeService.kt", "floatingnav/FloatingNavService.kt", "launcher/ResourcesPanel.kt",
-                "launcher/BadgeCards.kt", "configs/ControlFragment.kt", "system/StatusDropdowns.kt", "ShellActivity.kt"))
+                "launcher/BadgeCards.kt", "system/StatusDropdowns.kt", "ShellActivity.kt"))
             assertTrue("$f must scale its loop", File(m + f).readText().contains("LowPowerMode.scaled("))
         val home = File(m + "launcher/themes/cloud/Home3DFragment.kt").readText()
         assertTrue(home.contains("autoRotate = autoRotate && !lowPower") && home.contains("observeAutoRotate"))

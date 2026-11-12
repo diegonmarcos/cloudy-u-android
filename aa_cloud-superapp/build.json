@@ -10005,7 +10005,7 @@
               "low_power_mode": {
                 "pause_animation": true,
                 "poll_multiplier": 4,
-                "slows": ["3D/4D auto-rotate (paused)", "network badge", "floating nav poll", "resources panel", "notify badges", "control panel lights", "energy sampler", "status dropdowns"]
+                "slows": ["3D/4D auto-rotate (paused)", "network badge", "floating nav poll", "resources panel", "notify badges", "energy sampler", "status dropdowns"]
               }
             },
             {

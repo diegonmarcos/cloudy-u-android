@@ -25,7 +25,7 @@ object LowPowerMode {
     ) {
         companion object {
             val DEFAULT_SLOWS = listOf("3D/4D auto-rotate (paused)", "network badge", "floating nav poll",
-                "resources panel", "notify badges", "control panel lights", "energy sampler", "status dropdowns")
+                "resources panel", "notify badges", "energy sampler", "status dropdowns")
 
             fun parse(o: org.json.JSONObject?): Config {
                 if (o == null) return Config()
