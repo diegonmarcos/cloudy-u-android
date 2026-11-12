@@ -24,6 +24,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,67 +59,94 @@ import androidx.compose.foundation.layout.width
  */
 @Composable
 fun ToolsShell(model: ToolsModel) {
-    val nav = Decl.nav
-    // #1630 Settings (the app's Configs) is one page of its own, then the fleet-default tail: Settings | Agents, Perms, Logcat, X-Ray App, About.
-    val sec = nav.section(model.section)?.let { s ->
-        if (s.id != Decl.SECTION_SETTINGS) s
-        else s.copy(pages = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(
-            s.pages.ifEmpty { listOf(com.diegonmarcos.superapp.bottomnav.NavPage("settings", "Settings", "settings")) }))
-    }
-    val pageId = model.page?.takeIf { p -> sec?.pages?.any { it.id == p } == true } ?: sec?.pages?.firstOrNull()?.id
-    val entries = nav.islandEntries()
     val theme = toolsAiTheme()
     LaunchedEffect(Unit) { model.refreshStore() }
     // Apps' Try in AI sets the task from outside: the composer's Task control follows it.
     LaunchedEffect(model.chatTask) { if (model.chat.task != model.chatTask) model.chat.chooseTask(model.chatTask) }
-    fun open(sectionId: String, page: String?) { model.section = sectionId; model.page = page }
+    ToolsChrome(model.section, model.page, onOpen = { s, p -> model.section = s; model.page = p }) { section, pageId ->
+        fun open(sectionId: String, page: String?) { model.section = sectionId; model.page = page }
+        when (section) {
+            Decl.SECTION_APPS -> AppsPage(model, pageId ?: Decl.PAGE_APPS_GRID)
+            Decl.SECTION_MODELS -> ModelsPage(model.models, pageId ?: Decl.PAGE_SMALL, model.view) { model.view = it }
+            Decl.SECTION_AI -> AiChatPage(model.chat, theme, Modifier.imePadding().testTag(Tags.CHAT), aboveInput = { TaskRow(model) }, header = {
+                Chip(stringResource(R.string.backend_auto), selected = model.backend == ToolsModel.AUTO, tag = Tags.BACKEND_AUTO) { model.chooseBackend(ToolsModel.AUTO) }
+                Spacer(Modifier.width(ToolsMetrics.small))
+                Chip(stringResource(R.string.backend_openrouter), selected = model.backend == ToolsModel.OPENROUTER, tag = Tags.BACKEND_OPENROUTER) { model.chooseBackend(ToolsModel.OPENROUTER) }
+                Spacer(Modifier.width(ToolsMetrics.small))
+                Chip(stringResource(R.string.backend_local), selected = model.backend == ToolsModel.LOCAL, tag = Tags.BACKEND_LOCAL) { model.chooseBackend(ToolsModel.LOCAL) }
+                if (model.backend != ToolsModel.OPENROUTER && model.loadedNames().isEmpty()) {
+                    Spacer(Modifier.width(ToolsMetrics.small))
+                    Chip(stringResource(R.string.backend_load_in_store), icon = "tasks") { open(Decl.SECTION_STORE, Decl.PAGE_LOADED) }
+                }
+            })
+            Decl.SECTION_STORE -> StorePage(model, pageId ?: Decl.PAGE_INSTALLED)
+            Decl.SECTION_MLS -> MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE, model.mlsNote)
+            Decl.SECTION_SENSORS -> SensorsPage(pageId ?: Decl.PAGE_SENSORS_INBUILT, model.sensorsJson)
+            Decl.SECTION_SETTINGS -> when (pageId) {
+                "perms", "about", "agents", "logcat", "xray" -> com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(pageId)
+                else -> SettingsPage(model)
+            }
+            else -> {}
+        }
+    }
+}
+
+/**
+ * #1483 Before Cloud Store has served this app's data (#1547: first run, Store not installed, nothing synced yet) the app still draws the
+ * fleet's shared bars, so every section and page is reachable and says why it is empty, instead of a bare full-screen loading line.
+ * Settings' fleet tail (Perms, About, ...) needs no app data and renders for real.
+ */
+@Composable
+fun ToolsLoadingShell() {
+    var section by remember { mutableStateOf(Decl.nav.default()?.id ?: Decl.nav.bottomNav.firstOrNull().orEmpty()) }
+    var page by remember { mutableStateOf<String?>(null) }
+    ToolsChrome(section, page, onOpen = { s, p -> section = s; page = p }) { s, pageId ->
+        if (s == Decl.SECTION_SETTINGS && pageId in setOf("perms", "about", "agents", "logcat", "xray")) {
+            com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(pageId!!)
+        } else {
+            Box(Modifier.fillMaxSize().padding(ToolsMetrics.gap).testTag(Tags.LOADING), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.data_loading), color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+    }
+}
+
+/**
+ * The shared chrome around one page: the first row (Profile opens Cloud Account, the gear opens Settings, the AI button the chat), the
+ * bottom nav, and the section's child pages in their declared mode (NavSectionLayout). [body] draws the page for (section, page).
+ */
+@Composable
+private fun ToolsChrome(section: String, page: String?, onOpen: (String, String?) -> Unit, body: @Composable (String, String?) -> Unit) {
+    val nav = Decl.nav
+    // #1630 Settings (the app's Configs) is one page of its own, then the fleet-default tail: Settings | Agents, Perms, Logcat, X-Ray App, About.
+    val sec = nav.section(section)?.let { s ->
+        if (s.id != Decl.SECTION_SETTINGS) s
+        else s.copy(pages = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(
+            s.pages.ifEmpty { listOf(com.diegonmarcos.superapp.bottomnav.NavPage("settings", "Settings", "settings")) }))
+    }
+    val pageId = page?.takeIf { p -> sec?.pages?.any { it.id == p } == true } ?: sec?.pages?.firstOrNull()?.id
+    val entries = nav.islandEntries()
 
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
         NavBarTopFirstRowScaffold(
             title = sec?.label ?: stringResource(R.string.app_name),
             hierarchy = sec?.let { titleHierarchy(it, pageId) }.orEmpty(),
-            onNavigate = { e -> open(e.sectionId, if (e.depth == 0) null else e.id) },
+            onNavigate = { e -> onOpen(e.sectionId, if (e.depth == 0) null else e.id) },
             onAccount = rememberAccountLauncher(),
-            onConfigs = { open(Decl.SECTION_SETTINGS, null) },
-            onAi = { open(Decl.SECTION_AI, null) },
+            onConfigs = { onOpen(Decl.SECTION_SETTINGS, null) },
+            onAi = { onOpen(Decl.SECTION_AI, null) },
             dark = true,
         ) {
             NavBarBottomHost(
                 entries = entries,
-                selectedId = model.section,
-                onSelect = { open(it.id, null) },
+                selectedId = section,
+                onSelect = { onOpen(it.id, null) },
                 modifier = Modifier.testTag(Tags.SHELL),
             ) {
-                val pageBody: @Composable () -> Unit = {
-                    Box(Modifier.fillMaxSize()) {
-                        when (model.section) {
-                            Decl.SECTION_APPS -> AppsPage(model, pageId ?: Decl.PAGE_APPS_GRID)
-                            Decl.SECTION_MODELS -> ModelsPage(model.models, pageId ?: Decl.PAGE_SMALL, model.view) { model.view = it }
-                            Decl.SECTION_AI -> AiChatPage(model.chat, theme, Modifier.imePadding().testTag(Tags.CHAT), aboveInput = { TaskRow(model) }, header = {
-                                Chip(stringResource(R.string.backend_auto), selected = model.backend == ToolsModel.AUTO, tag = Tags.BACKEND_AUTO) { model.chooseBackend(ToolsModel.AUTO) }
-                                Spacer(Modifier.width(ToolsMetrics.small))
-                                Chip(stringResource(R.string.backend_openrouter), selected = model.backend == ToolsModel.OPENROUTER, tag = Tags.BACKEND_OPENROUTER) { model.chooseBackend(ToolsModel.OPENROUTER) }
-                                Spacer(Modifier.width(ToolsMetrics.small))
-                                Chip(stringResource(R.string.backend_local), selected = model.backend == ToolsModel.LOCAL, tag = Tags.BACKEND_LOCAL) { model.chooseBackend(ToolsModel.LOCAL) }
-                                if (model.backend != ToolsModel.OPENROUTER && model.loadedNames().isEmpty()) {
-                                    Spacer(Modifier.width(ToolsMetrics.small))
-                                    Chip(stringResource(R.string.backend_load_in_store), icon = "tasks") { open(Decl.SECTION_STORE, Decl.PAGE_LOADED) }
-                                }
-                            })
-                            Decl.SECTION_STORE -> StorePage(model, pageId ?: Decl.PAGE_INSTALLED)
-                            Decl.SECTION_MLS -> MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE, model.mlsNote)
-                            Decl.SECTION_SENSORS -> SensorsPage(pageId ?: Decl.PAGE_SENSORS_INBUILT, model.sensorsJson)
-                            Decl.SECTION_SETTINGS -> when (pageId) {
-                                "perms", "about", "agents", "logcat", "xray" -> com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(pageId)
-                                else -> SettingsPage(model)
-                            }
-                            else -> {}
-                        }
-                    }
-                }
+                val pageBody: @Composable () -> Unit = { Box(Modifier.fillMaxSize()) { body(section, pageId) } }
                 // The section's child pages in the mode it declares or the user chose in Settings (one row, two rows, side menu).
                 if (sec != null && sec.pages.isNotEmpty()) {
-                    NavSectionLayout(sec, pageId, onSelect = { model.page = it.id }, modifier = Modifier.fillMaxSize().testTag(Tags.SECOND_ROW), content = pageBody)
+                    NavSectionLayout(sec, pageId, onSelect = { onOpen(section, it.id) }, modifier = Modifier.fillMaxSize().testTag(Tags.SECOND_ROW), content = pageBody)
                 } else pageBody()
             }
         }
@@ -162,6 +193,7 @@ fun Chip(text: String, selected: Boolean = false, icon: String? = null, tag: Str
 /** The test tags the pages are driven by. */
 object Tags {
     const val SHELL = "tools_shell"
+    const val LOADING = "tools_loading"
     const val SECOND_ROW = "tools_second_row"
     const val CHAT = "tools_chat"
     const val APPS = "tools_apps"

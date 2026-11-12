@@ -198,10 +198,11 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Shopping. ui.bottom_nav holds ONE section, search (a search icon, drawn WITHOUT a label: assets/shop/shop.json::chrome.bottom_labels), declared in nav-shape.json::single_bottom because N1 asks for two or more. The pages are the ONE section `shop`, default_section, drawn in vertical_side_menu mode (the collapsed rail; libs:ui-nav-bars NavSectionLayout) with the owner's five groups. Each page's filter tabs and mock rows are assets/shop/shop.json::pages[<page id>] (test-shopping-app.sh holds the ids in step both ways); the Feed page has no rows of its own: it aggregates the deals of every other page.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Shopping. ui.bottom_nav holds ONE section, search (a search icon, drawn WITHOUT a label: assets/shop/shop.json::chrome.bottom_labels, declared here as ui.bottom_labels false so the runtime nav walk asserts an icon-only bar), declared in nav-shape.json::single_bottom because N1 asks for two or more. The pages are the ONE section `shop`, default_section, drawn in vertical_side_menu mode (the collapsed rail; libs:ui-nav-bars NavSectionLayout) with the owner's five groups. Each page's filter tabs and mock rows are assets/shop/shop.json::pages[<page id>] (test-shopping-app.sh holds the ids in step both ways); the Feed page has no rows of its own: it aggregates the deals of every other page.",
     "bottom_nav": [
       "search"
     ],
+    "bottom_labels": false,
     "default_section": "shop",
     "configs_ui": [
       "nav_ui"

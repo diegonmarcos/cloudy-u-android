@@ -4,22 +4,15 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.diegonmarcos.cloudtoolssmallllms.data.ToolsData
 import com.diegonmarcos.cloudtoolssmallllms.ui.ToolsModel
 import com.diegonmarcos.cloudtoolssmallllms.ui.ToolsShell
+import com.diegonmarcos.cloudtoolssmallllms.ui.ToolsLoadingShell
 import com.diegonmarcos.cloudtoolssmallllms.ui.ToolsTheme
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
 
@@ -41,7 +34,8 @@ class MainActivity : ComponentActivity() {
                 val data by remember { ToolsData.observe(applicationContext) }.collectAsState(initial = null)
                 val d = data
                 if (d == null) {
-                    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) { Text(stringResource(R.string.data_loading)) }
+                    // #1483 the shared bars stay up while the data is missing: every page is reachable and says why it is empty
+                    ToolsLoadingShell()
                 } else key(d.version) {
                     val m = remember { ToolsModel(applicationContext, lifecycleScope, d).also { model = it; applyShare(it) } }
                     ToolsShell(m)

@@ -41,6 +41,7 @@ import com.diegonmarcos.superapp.bottomnav.islandEntries
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottomHost
 import com.diegonmarcos.superapp.navbartop1.HierarchyEntry
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
+import com.diegonmarcos.superapp.navbartop1.titleHierarchy
 import com.diegonmarcos.superapp.navbartop1.rememberSuperAppAiLauncher
 import com.diegonmarcos.superapp.updater.Updater
 
@@ -120,8 +121,13 @@ class MainActivity : AppCompatActivity() {
         NavBarTopFirstRowScaffold(
             title = current?.label ?: getString(R.string.app_name),
             // The title island lists the five sections (each a single page), so a pick switches the page's tab.
-            hierarchy = NAV.bottomSections().map { HierarchyEntry(it.id, it.label, 0, it.id, selected = it.id == section) },
-            onNavigate = { e -> go(e.sectionId) },
+            // #1483 under the open Configs its pages (the page's own groups + the fleet tail), so the dropdown lists each and a pick lands on it
+            hierarchy = NAV.bottomSections().flatMap { s ->
+                if (s.id == section && s.id == "configs")
+                    titleHierarchy(s.copy(pages = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(s.pages)), configsPage)
+                else listOf(HierarchyEntry(s.id, s.label, 0, s.id, selected = s.id == section))
+            },
+            onNavigate = { e -> if (e.depth > 0 && e.sectionId == "configs") pickConfigs(e.id) else go(e.sectionId) },
             onAccount = rememberAccountLauncher(),
             onConfigs = { go("configs") },
             onAi = rememberSuperAppAiLauncher(),
