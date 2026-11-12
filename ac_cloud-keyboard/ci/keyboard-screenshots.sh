@@ -254,7 +254,7 @@ kb navpages; NP="$(last navpages | sed 's/.*navpages -> //')"
 NPAGES=$(wc -w <<<"$NP"); echo "declared nav pages: $NPAGES"
 [ "$NPAGES" -ge 20 ] && ok "the APK declares $NPAGES nav pages" || bad "navpages: $(last navpages)"
 TABS="$(for e in $NP; do echo "${e%%/*}"; done | awk '!s[$0]++')"
-LABELS="Keyboard|Writer|Mediaboards|Textboards|Cloud Keyboard|Configs|Account|Search|More options|Back|Navigate up"
+LABELS="Keyboard|Writer|Mediaboards|Textboards|Cloud Keyboard|Configs|Account|Search|More options|Back|Navigate up|Overview|Themes|Default|Dev|Settings|Appearance|Advanced|Preferences|Gesture typing|Gesture data|Languages|Secondary layouts|Toolbar|Enhancer|Drafter|Home|Translator|Grammar|Tools|Voice Transcription|Dictionary|Writer configs|Keyboard writing tools|Emojis|GIF|Stickers|Autocomplete|Text correction|Clipboard"
 n=0
 for t in $TABS; do
     lbl="$(tr '[:lower:]' '[:upper:]' <<<"${t:0:1}")${t:1}"
@@ -265,6 +265,18 @@ for t in $TABS; do
     TX=""; TY=""
     dumpui "$OUT/nav-$t.xml"; shot "nav-$(printf '%02d' $n)-tab-$t"; n=$((n + 1))
     python3 "$CHK" "$OUT/nav-$t.xml" "tab:$t" "tab:$t" "$OUT/nav-tab-signatures.txt" "$LABELS" || FAILS=$((FAILS + 1))
+    # the fleet top sub-tab strip shows exactly the owner's sub-pages of this tab
+    case "$t" in
+        keyboard) WANT="Themes|Settings|Languages|Toolbar" ;;
+        writer) WANT="Enhancer|Drafter|Home|Translator|Grammar|Voice Transcription|Dictionary" ;;
+        mediaboards) WANT="Emojis|GIF|Stickers" ;;
+        textboards) WANT="Autocomplete|Clipboard" ;;
+        *) WANT="" ;;
+    esac
+    IFS='|' read -ra WL <<<"$WANT"
+    for w in "${WL[@]}"; do
+        grep -q "text=\"$w\"\|content-desc=\"$w\"" "$OUT/nav-$t.xml" && ok "$t top strip: $w" || bad "$t top strip has no $w tab"
+    done
 done
 for e in $NP; do
     t="${e%%/*}"; rest="${e#*/}"; id="${rest%%=*}"; route="${rest#*=}"

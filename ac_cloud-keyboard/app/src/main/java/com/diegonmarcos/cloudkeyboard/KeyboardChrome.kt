@@ -28,6 +28,8 @@ import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsEntries
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottom
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
+import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
+import com.diegonmarcos.superapp.bottomnav.NavPage
 import helium314.keyboard.settings.KbTab
 import helium314.keyboard.settings.NavPageDecl
 import helium314.keyboard.settings.SettingsActivity
@@ -58,6 +60,43 @@ object KeyboardChrome {
         return out
     }
 
+    /** #1698 a declared page as the fleet strip's [NavPage] (its sub-pages its own strip). */
+    fun navPage(p: NavPageDecl): NavPage = NavPage(p.id, p.label, iconOf(p.id))
+
+    /** #1698 the strips under the top bar for [tab] with [pageId] open: row 1 = the tab's pages, row 2 = the open page's sub-pages. */
+    fun stripRows(tab: KbTab, pageId: String?): List<Pair<List<NavPage>, String?>> {
+        val top = tab.pages.firstOrNull { p -> p.flatten().any { it.id == pageId } } ?: tab.pages.first()
+        val rows = mutableListOf(tab.pages.map { navPage(it) } to top.id)
+        if (top.children.isNotEmpty()) {
+            val sub = top.children.firstOrNull { c -> c.flatten().any { it.id == pageId } }
+            rows += (listOf(NavPageDecl(top.id + ".overview", "Overview", top.route)) + top.children).map { navPage(it) } to (sub?.id ?: (top.id + ".overview"))
+        }
+        return rows
+    }
+
+    /** Material symbol names (libs:ui-icons catalog) per page id; a page with no entry shows the generic page glyph. */
+    fun iconOf(id: String): String = when {
+        id.startsWith("themes") -> "palette"
+        id == "settings" || id.endsWith("configs") || id.endsWith("settings") -> "settings"
+        id == "languages" || id.contains("translat") -> "language"
+        id.contains("layout") -> "keyboard"
+        id == "toolbar" -> "build"
+        id.contains("appearance") -> "palette"
+        id.contains("grammar") -> "edit_note"
+        id.contains("enhanc") || id == "kb_writing_tools" -> "auto_fix_high"
+        id.contains("draft") -> "drafts"
+        id.contains("home") -> "home"
+        id.contains("voice") -> "mic"
+        id.contains("dictionar") -> "book"
+        id.contains("emoji") -> "mood"
+        id == "gif" -> "gif"
+        id == "stickers" -> "sticky_note_2"
+        id.contains("autocomplete") || id.contains("correction") -> "spellcheck"
+        id == "clipboard" -> "content_paste"
+        id.contains("routing") || id.contains("routes") -> "route"
+        else -> "article"
+    }
+
     @Composable
     fun Draw(route: String?, open: (String) -> Unit, content: @Composable () -> Unit) {
         val ctx = LocalContext.current
@@ -80,6 +119,20 @@ object KeyboardChrome {
             modifier = Modifier.statusBarsPadding(),
         ) {
             Column {
+                // #1698 the sub-pages are the fleet's own second top row (libs:ui-nav-bars NavBarTopSecondRow), the same strip
+                // and look as every other app: one row for the tab's pages, one more for the open page's sub-pages.
+                if (tab != null) stripRows(tab, pageId).forEach { (pages, sel) ->
+                    NavBarTopSecondRow(
+                        pages = pages,
+                        selectedId = sel,
+                        onSelect = { np ->
+                            val id = np.id.removeSuffix(".overview")
+                            tab.allPages.firstOrNull { it.id == id }?.let { picked = it.id; open(it.route) }
+                        },
+                        dark = true,
+                        underTopChrome = false,
+                    )
+                }
                 // the bottom bar owns the navigation-bar inset, so the pages above it do not pad for it a second time
                 Box(Modifier.weight(1f).fillMaxWidth().consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))) { content() }
                 NavBarBottom(

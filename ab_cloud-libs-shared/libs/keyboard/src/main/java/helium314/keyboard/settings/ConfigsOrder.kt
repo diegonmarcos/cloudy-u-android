@@ -102,9 +102,10 @@ enum class KbTab(val id: String, val label: String, val icon: String, val pages:
     )),
     WRITER("writer", "Writer", "edit", listOf(
         // #1652 cloud-writer's own pages (libs:writer-ui WriterSurface.Page): its former bottom nav, then Tools, dictation and configs
-        NavPageDecl("writer_home", "Documents", SettingsDestination.hostRoute("home")),
+        // #1698 cloud-writer's own bottom bar, same order and labels (ac_cloud-writer build.json ui.bottom_nav)
         NavPageDecl("writer_enhancer", "Enhancer", SettingsDestination.hostRoute("enhancer")),
         NavPageDecl("writer_drafter", "Drafter", SettingsDestination.hostRoute("drafter")),
+        NavPageDecl("writer_home", "Home", SettingsDestination.hostRoute("home")),
         NavPageDecl("writer_translator", "Translator", SettingsDestination.hostRoute("translator")),
         NavPageDecl("writer_grammar", "Grammar", SettingsDestination.hostRoute("grammar")),
         NavPageDecl("writer_tools", "Tools", SettingsDestination.hostRoute("tools"), listOf(

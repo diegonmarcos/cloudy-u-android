@@ -76,6 +76,9 @@ private fun Tile(tile: HomeTile, modifier: Modifier, onOpen: (String) -> Unit) {
             text = stringResource(tile.label),
             textAlign = TextAlign.Center,
             maxLines = 2,
+            // #1698 a dense tile label: small enough that a word fits its column (no mid-word breaks), ellipsis past two lines
+            style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
         )
     }
 }
