@@ -192,7 +192,7 @@ class ResumedWalkIsNotReconciledTest {
         // session, so the one thing a JVM test cannot do is watch this line run. The decision above
         // is executed; what is read here is that the log line calls THIS function with THE walk —
         // a token computed from anything else would be a second decision.
-        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailbox")
+        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow")
             .lines().map { it.trim() }
 
         assertTrue(

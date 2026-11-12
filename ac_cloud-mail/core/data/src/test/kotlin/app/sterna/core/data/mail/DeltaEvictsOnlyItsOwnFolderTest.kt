@@ -104,7 +104,7 @@ class DeltaEvictsOnlyItsOwnFolderTest {
     // ---- the wiring, read from the shipped source ------------------------------------------
 
     @Test fun `the delete receives the filtered list, never the delta's raw candidates`() {
-        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailbox")
+        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow")
         assertEquals(
             "the incremental branch must delete what the folder still holds (toDelete), not what " +
                 "the delta named (toRemove) — the latter reaches rows that have moved on",
@@ -119,7 +119,7 @@ class DeltaEvictsOnlyItsOwnFolderTest {
     }
 
     @Test fun `the set compared against is this mailbox's own rows, read before the delete`() {
-        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailbox")
+        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow")
         assertEquals(
             "the comparison set must be read FOR THIS MAILBOX and this account (#31/#92: an email " +
                 "id is unique only within its account, and two accounts share mailbox ids)",
@@ -142,7 +142,7 @@ class DeltaEvictsOnlyItsOwnFolderTest {
                 "or one that names its own keep set or drops the bound, deletes the mail that " +
                 "arrived while the walk ran and the cursor makes it permanent (#165)",
             listOf(
-                "reconcile = { _, keepIds, spare, evictable -> emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds, spare, evictableIds = evictable) },",
+                "reconcile = { _, keepIds, spare, evictable -> if (inboxServerIds != null) emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds + inboxServerIds, spare, evictableIds = evictable) },",
             ),
             codeLinesNaming(body, "emailDao.reconcileMailbox("),
         )
@@ -175,7 +175,7 @@ class DeltaEvictsOnlyItsOwnFolderTest {
                 "val inThisMailbox =",
                 "val toDelete = mailboxScopedEvictions(toRemove, inThisMailbox)",
             ),
-            codeLinesNaming(DaoQuerySource.mailFunctionBody("MailRepository", "syncMailbox"), "inThisMailbox"),
+            codeLinesNaming(DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow"), "inThisMailbox"),
         )
     }
 
@@ -186,7 +186,7 @@ class DeltaEvictsOnlyItsOwnFolderTest {
         assertEquals(
             listOf("return MailboxSync(fetchedIds = toFetch, departedIds = toRemove + swept)"),
             codeLinesNaming(
-                DaoQuerySource.mailFunctionBody("MailRepository", "syncMailbox"),
+                DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow"),
                 "departedIds = toRemove",
             ),
         )

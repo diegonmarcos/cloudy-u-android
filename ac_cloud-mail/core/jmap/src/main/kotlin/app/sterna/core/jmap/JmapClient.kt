@@ -75,6 +75,21 @@ class JmapClient internal constructor(
          */
     private val log: (String, Throwable?) -> Unit = { _, _ -> },
 ) {
+    /**
+     * #1674: the Inbox guard of each account whose mailboxes this client fetched, by accountId.
+     * Every membership patch consults it ([inboxSafeRemove]): no move / archive / label / rule
+     * action may take a message out of the Inbox; only a delete (Trash) or spam report (Junk) may.
+     */
+    private val inboxGuards = java.util.concurrent.ConcurrentHashMap<String, InboxGuard>()
+
+    /** The Inbox guard recorded for [accountId], or null before its mailboxes were fetched. */
+    fun inboxGuardOf(accountId: String): InboxGuard? = inboxGuards[accountId]
+
+    /** Records [accountId]'s Inbox guard from its [mailboxes] (also what [getMailboxes] does). */
+    fun rememberInboxGuard(accountId: String, mailboxes: List<Mailbox>) {
+        InboxGuard.of(mailboxes)?.let { inboxGuards[accountId] = it }
+    }
+
     /** Public constructor for app code — uses a default OkHttp client. */
     constructor(log: (String, Throwable?) -> Unit = { _, _ -> }) : this(defaultHttpClient(), DefaultJson, log)
 
@@ -152,6 +167,7 @@ class JmapClient internal constructor(
                     throw JmapException("Mailbox/get failed: HTTP ${response.code} ${response.message}")
                 }
                 decodeList(body, "Mailbox/get", Mailbox.serializer())
+                    .also { rememberInboxGuard(accountId, it) }
             }
         }
 
@@ -1103,7 +1119,9 @@ class JmapClient internal constructor(
         val args = emailSet(session, auth) {
             put("accountId", accountId)
             putJsonObject("update") {
-                putJsonObject(emailId) { putMembershipPatch(add = targetMailboxId, remove = sourceMailboxId) }
+                putJsonObject(emailId) {
+                    putMembershipPatch(add = targetMailboxId, remove = inboxSafeRemove(inboxGuards[accountId], targetMailboxId, sourceMailboxId))
+                }
             }
         }
         val result = emailSetResult(args)
@@ -1155,7 +1173,7 @@ class JmapClient internal constructor(
         val args = emailSet(session, auth) {
             put("accountId", accountId)
             putJsonObject("update") {
-                putJsonObject(emailId) { putMembershipPatch(add = add, remove = remove) }
+                putJsonObject(emailId) { putMembershipPatch(add = add, remove = inboxSafeRemove(inboxGuards[accountId], add, remove)) }
             }
         }
         val result = emailSetResult(args)
@@ -1190,7 +1208,10 @@ class JmapClient internal constructor(
             putJsonObject("update") {
                 batch.forEach { id ->
                     putJsonObject(id) {
-                        putMembershipPatch(add = targetMailboxId, remove = sourceMailboxIds[id])
+                        putMembershipPatch(
+                            add = targetMailboxId,
+                            remove = inboxSafeRemove(inboxGuards[accountId], targetMailboxId, sourceMailboxIds[id]),
+                        )
                     }
                 }
             }

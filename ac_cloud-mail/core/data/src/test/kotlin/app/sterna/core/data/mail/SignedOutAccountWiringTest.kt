@@ -57,7 +57,7 @@ class SignedOutAccountWiringTest {
                 "emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })",
                 "},",
             ),
-            block("syncMailbox", "writePage = { fresh ->", 4),
+            block("syncMailboxWindow", "writePage = { fresh ->", 4),
         )
     }
 
@@ -65,7 +65,7 @@ class SignedOutAccountWiringTest {
         // The entry check refuses to START and covers nothing after itself — the branches below
         // each ask again. It is still worth its line: it spares a session, a folder list and a
         // walk for an account that is already gone when the sync begins.
-        val body = lines("syncMailbox")
+        val body = lines("syncMailboxWindow")
         val entry = body.indexOf("$guard(localAccountId, accountStore.accounts().map { it.id })")
         val key = body.indexOf("val key = syncKey(localAccountId, mailboxId)")
         val delta = body.indexOf("if (stored != null) {")
@@ -97,7 +97,7 @@ class SignedOutAccountWiringTest {
                 "if (canApply) {",
                 "$guard(localAccountId, accountStore.accounts().map { it.id })",
             ),
-            block("syncMailbox", "if (canApply) {", 2),
+            block("syncMailboxWindow", "if (canApply) {", 2),
         )
     }
 
@@ -111,7 +111,7 @@ class SignedOutAccountWiringTest {
                 "$guard(localAccountId, accountStore.accounts().map { it.id })",
                 "emailDao.upsertAll(fetched.map { it.toEntity(localAccountId, mailboxId) })",
             ),
-            block("syncMailbox", "val fetched = client.getEmailsByIds(session, accountId, toFetch, auth)", 3),
+            block("syncMailboxWindow", "val fetched = client.getEmailsByIds(session, accountId, toFetch, auth)", 3),
         )
     }
 

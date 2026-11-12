@@ -22,7 +22,7 @@ class BlankAccountIdIsRefusedTest {
 
     @Test
     fun `syncMailbox refuses a blank local account id`() {
-        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailbox")
+        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow")
         assertTrue(
             "MailRepository.syncMailbox must refuse a blank local account id, for the same reason " +
                 "as refresh: it is the other entry point that tags cached rows with the local " +

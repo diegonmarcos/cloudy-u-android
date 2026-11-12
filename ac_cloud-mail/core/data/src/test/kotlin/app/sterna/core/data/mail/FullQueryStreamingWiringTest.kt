@@ -63,48 +63,48 @@ class FullQueryStreamingWiringTest {
     @Test fun `the full query routes through the write-through, with these arguments`() {
         // Each argument carries one of the volet's properties, and each is pinned
         // whole because each has a plausible-looking wrong version:
-        assertLine("MailRepository", "syncMailbox", "val full = fullQuerySizing(")
-        assertLine("MailRepository", "syncMailbox", "val walked = fullQueryWriteThrough<List<Email>, WindowWalk>(")
+        assertLine("MailRepository", "syncMailboxWindow", "val full = fullQuerySizing(")
+        assertLine("MailRepository", "syncMailboxWindow", "val walked = fullQueryWriteThrough<List<Email>, WindowWalk>(")
         // #165: the folder as it stood BEFORE the walk, which travels to the reconcile as the
         // bound on what may be DELETED. `localAccountId` and `mailboxId` are the SAME two the
         // reconcile is given below — a bound read off another folder would evict nothing at all
         // and switch the reconcile off. On this path it is never null: the folder is known.
         assertLine(
-            "MailRepository", "syncMailbox",
+            "MailRepository", "syncMailboxWindow",
             "folderIds = { emailDao.idsForMailbox(localAccountId, mailboxId).toSet() },",
         )
         assertLine(
-            "MailRepository", "syncMailbox",
+            "MailRepository", "syncMailboxWindow",
             "walk = { onPage -> client.queryEmailsWindow(session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage) },",
         )
         // writePage became a block when the sign-out guard moved into it: the page is refused
         // when the account is no longer configured. The guard line and its position inside the
         // block are pinned by SignedOutAccountWiringTest; what this test still owns is that the
         // write itself is an `upsertAll` of the whole page, tagged with the walk's account.
-        assertLine("MailRepository", "syncMailbox", "writePage = { fresh ->")
+        assertLine("MailRepository", "syncMailboxWindow", "writePage = { fresh ->")
         assertLine(
-            "MailRepository", "syncMailbox",
+            "MailRepository", "syncMailboxWindow",
             "emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })",
         )
-        assertLine("MailRepository", "syncMailbox", "keepIds = { reconcilableWindowIds(it) },")
-        assertLine("MailRepository", "syncMailbox", "spareIds = { recentlyMutatedIds(localAccountId) },")
+        assertLine("MailRepository", "syncMailboxWindow", "keepIds = { reconcilableWindowIds(it) },")
+        assertLine("MailRepository", "syncMailboxWindow", "spareIds = { recentlyMutatedIds(localAccountId) },")
         assertLine(
-            "MailRepository", "syncMailbox",
-            "reconcile = { _, keepIds, spare, evictable -> emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds, spare, evictableIds = evictable) },",
+            "MailRepository", "syncMailboxWindow",
+            "reconcile = { _, keepIds, spare, evictable -> if (inboxServerIds != null) emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds + inboxServerIds, spare, evictableIds = evictable) },",
         )
     }
 
     @Test fun `what the full query returns is the walk's ids, whole`() {
         // Codeberg #110 on requests 2..n: this list is the retention prune's freshIds. The last
         // page's ids would make the prune delete, in the same refresh, what the server just sent.
-        assertLine("MailRepository", "syncMailbox", "return MailboxSync(fetchedIds = walked.ids, departedIds = emptyList())")
+        assertLine("MailRepository", "syncMailboxWindow", "return MailboxSync(fetchedIds = walked.ids, departedIds = emptyList())")
     }
 
     @Test fun `the full query branch catches nothing and has no finally`() {
         // The half of the red line that lives at the call site rather than in the function: an
         // exception must climb out of syncMailbox. A `runCatching` around the write-through here
         // would let the caller carry on as if the folder had synced — and store a cursor on it.
-        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailbox").lines().map { it.trim() }
+        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow").lines().map { it.trim() }
         val start = body.indexOfFirst { it.startsWith("val full = fullQuerySizing(") }
         assertTrue("syncMailbox no longer starts its full-query branch with `val full = fullQuerySizing(`", start >= 0)
         val tail = body.drop(start)

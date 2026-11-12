@@ -1064,9 +1064,56 @@ class MailRepository(
         val departedIds: List<String>,
     )
 
-    /** Both paths report what they fetched: an id fetched and not reported is deleted by the
-     *  retention prune in the same cycle (#110). See [MailboxSync]. */
+    /**
+     * #1527: the JMAP Inbox lists EVERY message the server holds, not the newest window. For the
+     * Inbox the server's whole id list is read (ids only, paged), the window sync below keeps every
+     * cached row the server still holds (its full-query reconcile deletes only what LEFT the server),
+     * and a bounded batch of the missing ids is fetched per refresh ([JmapBacklogPlan]: new mail
+     * first, then older mail newest first). Other folders are unchanged (window + scroll mediator).
+     */
     private suspend fun syncMailbox(
+        session: JmapSession,
+        accountId: String,
+        auth: JmapAuth,
+        mailboxId: String,
+        sizing: FolderSyncSizing,
+        localAccountId: String,
+    ): MailboxSync {
+        val isInbox = client.inboxGuardOf(accountId)?.inboxId == mailboxId
+        if (!isInbox) return syncMailboxWindow(session, accountId, auth, mailboxId, sizing, localAccountId, inboxServerIds = emptySet())
+        // Null = the server's list could not be read: the window sync then deletes nothing this pass.
+        val serverIds: List<String>? = try {
+            walkAllIds(pageSize = session.getBatchSize().coerceAtLeast(JMAP_BACKLOG_CHUNK)) { position, limit ->
+                val page = client.queryEmailIds(session, accountId, mailboxId, limit, auth, position = position, calculateTotal = true)
+                page.ids to page.total
+            }
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
+        } catch (t: Throwable) {
+            null
+        }
+        val window = syncMailboxWindow(session, accountId, auth, mailboxId, sizing, localAccountId, inboxServerIds = serverIds?.toHashSet())
+        if (serverIds == null) return window
+        val cached = emailDao.idsForMailbox(localAccountId, mailboxId).toHashSet()
+        val plan = JmapBacklogPlan.next(serverIds, cached)
+        if (plan.isEmpty()) return window
+        val fetched = plan.chunked(JMAP_BACKLOG_CHUNK).flatMap { client.getEmailsByIds(session, accountId, it, auth) }
+        if (fetched.isNotEmpty()) {
+            checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
+            emailDao.upsertAll(fetched.map { it.toEntity(localAccountId, mailboxId) })
+        }
+        android.util.Log.i(
+            "MailSync",
+            "inbox backlog $localAccountId/$mailboxId: server ${serverIds.size}, cached ${cached.size}, +${fetched.size}",
+        )
+        return window.copy(fetchedIds = window.fetchedIds + fetched.map { it.id })
+    }
+
+    /** Both paths report what they fetched: an id fetched and not reported is deleted by the
+     *  retention prune in the same cycle (#110). See [MailboxSync]. [inboxServerIds]: the ids the
+     *  server's Inbox holds, kept by the full-query reconcile beside its window; empty for any other
+     *  folder; null = the Inbox list could not be read, so the reconcile deletes nothing. */
+    private suspend fun syncMailboxWindow(
         session: JmapSession,
         accountId: String,
         auth: JmapAuth,
@@ -1074,6 +1121,7 @@ class MailRepository(
         sizing: FolderSyncSizing,
         // Local StoredAccount id used to tag cached rows (distinct from the JMAP [accountId]).
         localAccountId: String,
+        inboxServerIds: Set<String>?,
     ): MailboxSync {
         // Same belt as [refresh] (#121): a blank local account id strands every row this writes.
         require(localAccountId.isNotBlank()) {
@@ -1170,7 +1218,7 @@ class MailRepository(
             },
             keepIds = { reconcilableWindowIds(it) },
             spareIds = { recentlyMutatedIds(localAccountId) },
-            reconcile = { _, keepIds, spare, evictable -> emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds, spare, evictableIds = evictable) },
+            reconcile = { _, keepIds, spare, evictable -> if (inboxServerIds != null) emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds + inboxServerIds, spare, evictableIds = evictable) },
         )
         android.util.Log.i(
             "MailSync",

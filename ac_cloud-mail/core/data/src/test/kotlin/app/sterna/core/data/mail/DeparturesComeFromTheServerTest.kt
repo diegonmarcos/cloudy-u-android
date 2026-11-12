@@ -126,7 +126,7 @@ class DeparturesComeFromTheServerTest {
     // ---- the wiring, read from the shipped source ------------------------------------------
 
     @Test fun `the delta reports as departed exactly what it evicted, plus what the sweep proved gone`() {
-        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailbox")
+        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow")
         assertEquals(
             "the departure signal must be deltaEvictions' result — reorders subtracted, the " +
                 "recently-mutated spare honoured — and never queryChanges.removed raw (#134)",
@@ -178,7 +178,7 @@ class DeparturesComeFromTheServerTest {
     @Test fun `the delta's spare is the real mutation window, not a constant`() {
         // Found by the counter-expertise: nothing executed this predicate. Both tests above build
         // their own (`{ false }`, `{ it == "M1" }`), so replacing the shipped one with a constant
-        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailbox")
+        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow")
         assertEquals(
             "the spare must be the recently-mutated window itself, asked per account (#31/#92)",
             listOf("protectionVerdict.getOrPut(id) { isRecentlyMutated(localAccountId, id) }"),

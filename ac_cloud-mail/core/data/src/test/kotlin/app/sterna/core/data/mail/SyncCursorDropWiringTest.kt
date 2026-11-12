@@ -96,9 +96,9 @@ class SyncCursorDropWiringTest {
     // -- the branch the drop aims at ----------------------------------------------------------------
 
     @Test fun `syncMailbox still decides on the presence of a cursor`() {
-        assertLine("syncMailbox", "val key = syncKey(localAccountId, mailboxId)")
-        assertLine("syncMailbox", "val stored = loadSyncState(key)")
-        assertLine("syncMailbox", "if (stored != null) {")
+        assertLine("syncMailboxWindow", "val key = syncKey(localAccountId, mailboxId)")
+        assertLine("syncMailboxWindow", "val stored = loadSyncState(key)")
+        assertLine("syncMailboxWindow", "if (stored != null) {")
     }
 
     @Test fun `the full query sizes itself on the account, not on its caller — window AND page`() {
@@ -114,12 +114,12 @@ class SyncCursorDropWiringTest {
         // arrangement — write per page, reconcile once, only on a finished walk — is pinned by
         // FullQueryStreamingWiringTest and executed by FullQueryWriteThroughTest. What this test
         // still owns is the sizing reaching the wire.
-        assertLine("syncMailbox", "val full = fullQuerySizing(")
-        assertLine("syncMailbox", "accountStore.account(localAccountId)?.syncWindow?.limit,")
-        assertLine("syncMailbox", "sizing.windowTarget,")
-        assertLine("syncMailbox", "session.getBatchSize(),")
+        assertLine("syncMailboxWindow", "val full = fullQuerySizing(")
+        assertLine("syncMailboxWindow", "accountStore.account(localAccountId)?.syncWindow?.limit,")
+        assertLine("syncMailboxWindow", "sizing.windowTarget,")
+        assertLine("syncMailboxWindow", "session.getBatchSize(),")
         assertLine(
-            "syncMailbox",
+            "syncMailboxWindow",
             "walk = { onPage -> client.queryEmailsWindow(session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage) },",
         )
     }
@@ -157,7 +157,7 @@ class SyncCursorDropWiringTest {
 
     /** The lines inside `if (stored != null) { … }` in `syncMailbox`, braces balanced. */
     private fun deltaBranch(): List<String> {
-        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailbox")
+        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow")
         val start = body.indexOf("if (stored != null) {")
         assertTrue("syncMailbox no longer branches on `if (stored != null) {` — renamed?", start >= 0)
         var depth = 0
