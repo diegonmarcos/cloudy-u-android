@@ -1017,13 +1017,16 @@ class StoreCloudFragment : KitComposeFragment() {
             "fetch" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.DOWNLOAD, stg, tag)
             "clear" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.CLEAR, stg, tag)
             // #1588 Update = fetch (reusing the cache when present) AND install, through the prompted
-            // BootstrapInstall system sheet — the same install path the toggle's Install uses.
-            "update" -> if (app.blocked) null else verb { promptedInstall(ctx, app) }
+            // store queue (#1675), the same install path the toggle's Install uses.
+            // #1675 Update and Install go through the store queue (StoreStages.install: the cached APK or a fetch, then the one
+            // PackageInstaller session), never an intent on the APK (that opened Android's "Open with" chooser).
+            // Always live: one queue job (a busy row's job is joined by StoreStages.install, never doubled).
+            "update" -> if (app.blocked) null else verb { runStage(ctx, app, StoreStages.INSTALL) }
             // #1588 Download = keep a copy: stream the apk into the phone's public Downloads
             // (/storage/emulated/0/Download via MediaStore), fetching into the cache first when needed.
             "download" -> if (app.blocked) null else verb { saveToDownloads(ctx, app) }
             // #redesign ONE toggle: Uninstall when present, else the NORMAL (user-confirmed) install —
-            // BootstrapInstall's system-sheet floor, which needs no shell channel. Its label/colour are
+            // store queue install (#1675), which needs no shell channel. Its label/colour are
             // the declaration's install vs installed pair.
             "install_toggle" -> if (installed)
                 StoreVerb(a.labelInstalled ?: a.label, a.colorInstalled, {
@@ -1031,7 +1034,7 @@ class StoreCloudFragment : KitComposeFragment() {
                         .onFailure { Toast.makeText(ctx, "Uninstall: ${it.message}", Toast.LENGTH_LONG).show() }
                 }, tag)
             else if (app.blocked) null
-            else verb { promptedInstall(ctx, app) }
+            else stageVerb(ctx, app, a, StoreStages.INSTALL, stg, tag)
             // #redesign Direct Install is the SILENT path: the store's own cached install (StoreStages,
             // downgrade-gated), no Android confirmation sheet. Distinct from the toggle's prompted install above.
             "direct_install" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.INSTALL, stg, tag)
@@ -1046,20 +1049,6 @@ class StoreCloudFragment : KitComposeFragment() {
                 Toast.makeText(ctx, "'${a.id}' is declared in ${FleetActions.ASSET} but this build has no handler for it",
                     Toast.LENGTH_LONG).show()
             }, tag)
-        }
-    }
-
-    /** #redesign the toggle's NORMAL install: fetch through the verified source ladder and hand the APK
-     *  to the SYSTEM installer ([BootstrapInstall] — Android's confirmation sheet, no shell channel). The
-     *  silent path is Direct Install (StoreStages). Off the main thread; the sheet reports its own result. */
-    private fun promptedInstall(ctx: Context, app: Fleet.App) {
-        Toast.makeText(ctx, "Fetching ${app.label}…", Toast.LENGTH_SHORT).show()
-        thread(name = "fleet-prompted-install-${app.id}") {
-            val r = BootstrapInstall.launch(ctx, app)
-            main.post {
-                r.onSuccess { c -> Toast.makeText(ctx, "${app.label}: ${c.versionName ?: c.versionCode}", Toast.LENGTH_LONG).show() }
-                    .onFailure { Toast.makeText(ctx, "${app.label}: ${it.message}", Toast.LENGTH_LONG).show() }
-            }
         }
     }
 

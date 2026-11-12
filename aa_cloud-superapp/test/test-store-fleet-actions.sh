@@ -5,7 +5,7 @@
 # #1588 the menu is TWO grouped lines:
 #   rows[0] fetch/install lifecycle : Update · Uninstall⇄Install · Fetch · Clear · Download
 #   rows[1] open/inspect            : Open · Stop │ Access · Perm │ Libs · About
-# Update fetches (reusing the cache) AND installs through the prompted BootstrapInstall system sheet.
+# Update fetches (reusing the cache) AND installs through the store queue (StoreStages.install, one PackageInstaller session; #1675).
 # `install_toggle` is ONE button that reads Install (absent) / Uninstall (installed) and runs the
 # matching action. Fetch is the cache-only download (StoreStages.DOWNLOAD, no install); Clear wipes
 # the cache; Download copies the apk into the phone's public Downloads for the user to keep. The
@@ -99,13 +99,13 @@ def handled(src, i): return re.search(r'"%s"\s*(?:,|->)' % re.escape(i), src) is
 missing = [i for i in ids if not handled(ra, i)] + [i for i in details if not handled(da, i)]
 if ra and da and not missing: ok("every declared id has a handler (%d row, %d details)" % (len(ids), len(details)))
 else: bad("declared ids with no handler: %s" % (missing or "rowAction/detailAction not found"))
-if re.search(r'"install_toggle" ->.*?installed.*?Fleet\.uninstall', ra, re.S) and "promptedInstall(" in ra:
-    ok("install_toggle: Uninstall when installed, else the prompted BootstrapInstall path")
-else: bad("install_toggle does not toggle uninstall vs prompted install")
+if re.search(r'"install_toggle" ->.*?installed.*?Fleet\.uninstall.*?StoreStages\.INSTALL', ra, re.S) and "promptedInstall(" not in ra:
+    ok("install_toggle: Uninstall when installed, else the store queue install (#1675)")
+else: bad("install_toggle does not toggle uninstall vs the store queue install")
 # #1588 the relabelled lifecycle verbs reach their real backing paths.
-if re.search(r'"update" ->.*?promptedInstall\(', ra, re.S):
-    ok("Update fetches+installs through the prompted BootstrapInstall path")
-else: bad("Update is not wired to the prompted install path")
+if re.search(r'"update" ->[^\n]*StoreStages\.INSTALL', ra):
+    ok("Update fetches (or reuses the cache) and installs through the store queue: StoreStages.install -> one session (#1675)")
+else: bad("Update is not wired to the store queue install")
 if re.search(r'"fetch" ->.*?StoreStages\.DOWNLOAD', ra, re.S):
     ok("Fetch is the cache-only StoreStages download")
 else: bad("Fetch is not wired to the cache-only StoreStages download")
@@ -155,9 +155,9 @@ if "PermsPages.appInfoIntent(pkg)" in fn(actions, "appInfo") and \
         re.search(r'"app_settings" ->(?:(?!\n\s*"\w+" ->).)*PhoneAppActions\.appInfo\(', da, re.S):
     ok("app_settings opens the package's app-details page through libs:perms PermsPages (#1274)")
 else: bad("app_settings does not open ACTION_APPLICATION_DETAILS_SETTINGS")
-if "BootstrapInstall.launch(" in fn(store, "promptedInstall"):
-    ok("the toggle's prompted install is the BootstrapInstall system-sheet floor")
-else: bad("promptedInstall does not reach BootstrapInstall.launch")
+if "promptedInstall" not in store:
+    ok("no row verb hands the APK to the system installer sheet any more (#1675: it opened an Open-with chooser)")
+else: bad("promptedInstall (an intent on the APK) is back")
 
 print("\n%d passed, %d failed" % (PASS, FAIL))
 sys.exit(1 if FAIL else 0)

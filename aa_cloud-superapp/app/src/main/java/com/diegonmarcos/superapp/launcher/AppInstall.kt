@@ -70,6 +70,15 @@ object AppInstall {
             )
         }
 
+        // ── #1675 a fleet package by the FLEET MANIFEST (not only ui.external_apps) → Cloud Store's queue ──
+        // Never a market:// or file intent for a fleet app: Cloud Store, the one installer of record, fetches (or reuses
+        // its cache) and installs it with one PackageInstaller session.
+        if (com.diegonmarcos.superapp.updater.install.StoreHandoff.isFleetPackage(pkg)) {
+            val h = com.diegonmarcos.superapp.updater.install.StoreHandoff.handOff(context, pkg)
+            return if (h != null) Outcome(true, h.message ?: label)
+            else Outcome(false, context.getString(R.string.phone_install_no_source, label))
+        }
+
         // ── third-party app → the store ──────────────────────────────────
         // Tried in order and DECIDED BY startActivity THROWING, not by
         // resolveActivity returning null: from API 30 package visibility hides

@@ -122,51 +122,6 @@ object BootstrapInstall {
     }
 
     /**
-     * The intent that shows the standard system install confirmation.
-     *
-     * `ACTION_VIEW` + `application/vnd.android.package-archive` is the public,
-     * never-deprecated door. `ACTION_INSTALL_PACKAGE` targets the same screen
-     * but has been deprecated since API 29 and is refused outright on some
-     * OEM builds, so it is only the fallback — and a fallback we can only
-     * reach when the primary resolves to nothing.
-     */
-    fun installIntent(ctx: Context, file: File): Intent {
-        val uri = uriFor(ctx, file)
-        val view = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uri, "application/vnd.android.package-archive")
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (view.resolveActivity(ctx.packageManager) != null) return view
-        @Suppress("DEPRECATION")
-        return Intent(Intent.ACTION_INSTALL_PACKAGE)
-            .setData(uri)
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            .putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
-            .putExtra(Intent.EXTRA_RETURN_RESULT, false)
-    }
-
-    /**
-     * A `content://` URI for [file], copying it into our cache first if it is
-     * somewhere the provider does not cover.
-     *
-     * Every source writes into [com.diegonmarcos.superapp.updater.cache.ApkCache],
-     * which updater_apk_paths.xml exports — so the copy is dead weight today and
-     * exists only so that a future source writing elsewhere degrades to a slow
-     * install rather than to an `IllegalArgumentException` at the last step.
-     * The copy target stays in `cacheDir` on purpose: it IS disposable, unlike
-     * the download it was made from (#625).
-     */
-    private fun uriFor(ctx: Context, file: File): Uri {
-        runCatching { return FileProvider.getUriForFile(ctx, authority(ctx), file) }
-            .onFailure { Log.w(TAG, "not under an exported path (${file.absolutePath}): ${it.message} — copying") }
-        val dir = File(ctx.cacheDir, "bootstrap").apply { mkdirs() }
-        val copy = File(dir, file.name)
-        file.copyTo(copy, overwrite = true)
-        return FileProvider.getUriForFile(ctx, authority(ctx), copy)
-    }
-
-    /**
      * The whole affordance: fetch, verify, hand to the system installer.
      *
      * Returns the [Candidate] that was offered, or the failure. Never throws
@@ -178,19 +133,18 @@ object BootstrapInstall {
         Log.i(TAG, "direct install ${candidate.appId}: ${candidate.pkg} " +
                    "versionCode ${candidate.versionCode} (installed ${candidate.installedCode ?: "none"}), " +
                    candidate.evidence)
-        // #1675 an UPDATE never goes through the ACTION_VIEW intent: it is a PackageInstaller session (USER_ACTION_NOT_REQUIRED,
-        // update ownership, package source), so it can be silent and keeps the installer of record. Only a FIRST install of a
-        // package uses the system installer screen, which asks in any case.
-        if (usesSession(candidate.installedCode != null)) {
-            try {
-                com.diegonmarcos.superapp.updater.install.UpdateInstaller(ctx).install(verified, candidate.pkg)
-            } catch (_: com.diegonmarcos.superapp.updater.install.HandedToStore) { /* Cloud Store installs it */ }
-        } else ctx.startActivity(installIntent(ctx, candidate.file))
+        // #1675 EVERY install, first or update, is a PackageInstaller session (USER_ACTION_NOT_REQUIRED, update ownership,
+        // package source; serialised and throttled by the install gate). Never an intent on the APK: ACTION_VIEW resolved to
+        // Android's "Open with" chooser on phones with a file handler, and it makes the system installer the installer of record.
+        try {
+            com.diegonmarcos.superapp.updater.install.UpdateInstaller(ctx).install(verified, candidate.pkg)
+        } catch (_: com.diegonmarcos.superapp.updater.install.HandedToStore) { /* Cloud Store installs it */ }
         candidate
     }.onFailure { Log.w(TAG, "direct install ${app.id} failed: ${it.message}") }
 
-    /** Pure (#1675): an update (the package is installed) goes through a session, never the ACTION_VIEW intent. */
-    fun usesSession(installed: Boolean): Boolean = installed
+    /** Pure (#1675): every install, first or update, goes through a session, never an intent on the APK. */
+    @Suppress("UNUSED_PARAMETER")
+    fun usesSession(installed: Boolean): Boolean = true
 
     /** Whether "Install unknown apps" is held. NOT a gate — the system asks for
      *  it inline when missing — but the UI should be able to warn first. */

@@ -211,7 +211,32 @@ class SilentUpdatesTest {
 
     @Test fun anUpdateNeverUsesTheViewIntent() {
         assertTrue(BootstrapInstall.usesSession(installed = true))
-        assertFalse(BootstrapInstall.usesSession(installed = false))
+        assertTrue("a first install is a session too", BootstrapInstall.usesSession(installed = false))
+        val boot = repo("ab_cloud-libs-shared/libs/updater/src/main/java/com/diegonmarcos/superapp/updater/BootstrapInstall.kt").readText()
+        assertFalse(boot.contains("ACTION_INSTALL_PACKAGE") || boot.contains("setDataAndType("))
+    }
+
+    /** The owner's bug: per-app Update with a cached APK opened Android's "Open with" chooser. It must enqueue a session. */
+    @Test fun perAppUpdateWithACachedApkEnqueuesASession() {
+        val a = "ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/"
+        val row = repo(a + "StoreCloudFragment.kt").readText()
+        assertTrue("Update is the queue install", Regex("\"update\" ->[^\\n]*StoreStages\\.INSTALL").containsMatchIn(row))
+        assertFalse("no prompted (intent) install remains", row.contains("promptedInstall") || row.contains("BootstrapInstall.launch"))
+        val stages = repo(a + "StoreStages.kt").readText()
+        val install = stages.substring(stages.indexOf("fun install(ctx: Context, app: Fleet.App"))
+        assertTrue("a cached APK is installed from the cache, in the queue",
+            install.contains("actionableFor(ctx, app, remote)") && install.contains("installCached(ctx, app, e)"))
+        assertTrue("a valid cached APK goes straight to install: the only fetch is the fallback when nothing is cached",
+            Regex("val e = cached\\s*\\?: fetch\\(ctx, app\\)").containsMatchIn(install) &&
+                Regex("fetch\\(").findAll(install.substring(0, install.indexOf("installCached(ctx, app, e)"))).count() == 1)
+        assertTrue("the cached bytes are re-verified before the session",
+            stages.substring(stages.indexOf("private fun installCachedGated")).let { it.contains("Fleet.cachedRelease(ctx, app)") })
+        assertTrue("the queue runs one install at a time", stages.contains("StoreJobs.runner.install(app.pkg) { installCachedGated(ctx, app, e) }"))
+        assertTrue("the queue's installer commits through Fleet.commit", repo(a + "FleetInstall.kt").readText().contains("Fleet.commit(ctx, app, apk)"))
+        val u = "ab_cloud-libs-shared/libs/updater/src/main/java/com/diegonmarcos/superapp/updater/"
+        assertTrue("Fleet.commit's session channel is the PackageInstaller session",
+            repo(u + "install/InstallChannel.kt").readText().contains("UpdateInstaller(ctx).install(apk, app.pkg)"))
+        assertTrue(repo(u + "install/UpdateInstaller.kt").readText().contains("installer.createSession(params)"))
     }
 
     @Test fun theSessionOutcomeIsLogged() {

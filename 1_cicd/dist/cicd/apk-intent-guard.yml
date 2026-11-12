@@ -1,0 +1,33 @@
+name: "apk-intent guard — no store or launcher code installs an APK through an intent (no Open-with chooser)"
+
+# WHY (#1675). Cloud Store's per-app Update handed the APK to Android with ACTION_VIEW, which opened an "Open with" chooser
+# instead of installing, and made the system installer the installer of record. Every install and update goes through the
+# store queue (StoreStages / BatchInstall -> UpdateInstaller, one PackageInstaller session). Every push: any store or
+# launcher source can bring an intent path back.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: apk-intent-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  apk-intent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The guard still fails on each way an APK can reach an intent
+        run: bash 1_cicd/src/scripts/test/apk-intent-guard.test.sh
+
+      - name: Every store install goes through the PackageInstaller session
+        run: python3 1_cicd/src/scripts/cloud-android-apk-intent-guard.py .
