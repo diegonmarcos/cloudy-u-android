@@ -125,20 +125,17 @@ jobs:
         run: sh 1_cicd/dist/scripts/cloud-android-publish-gate.sh check "$WORK_DIR" "${{ matrix.abi }}"
 
       - name: Set up JDK 17
-        if: steps.gate.outputs.skip != 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
       - name: Set up Android SDK
-        if: steps.gate.outputs.skip != 'true'
         uses: android-actions/setup-android@v3
         with:
           packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
 
       - name: Set up Gradle 8.10.2 (cached)
-        if: steps.gate.outputs.skip != 'true'
         # v6, not v3: v3 bundles the old @actions/cache client, which talks to the
         # cache service GitHub retired. Every save AND restore 400s ("Our services
         # aren't available right now"), so the Gradle distribution, the dependency
@@ -150,12 +147,10 @@ jobs:
       # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
       # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
       - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
-        if: steps.gate.outputs.skip != 'true'
         uses: ./.github/actions/gradle-cache-hygiene
       # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
 
       - name: Checkout vault (shared Android signing key)
-        if: steps.gate.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
           repository: diegonmarcos/cloud-me-pvt-vault
@@ -163,18 +158,15 @@ jobs:
           path: .vault
 
       - name: Install jq
-        if: steps.gate.outputs.skip != 'true'
         run: |
           sudo apt-get update -y && sudo apt-get install -y jq
 
       - name: Install ORAS + sops (pinned, sha256-checked, fails at the download)
-        if: steps.gate.outputs.skip != 'true'
         uses: ./.github/actions/install-pinned-tools
         with:
           tools: oras sops
 
       - name: Determine variant
-        if: steps.gate.outputs.skip != 'true'
         id: variant
         run: |
           if   [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -188,7 +180,6 @@ jobs:
       # #1671 the JVM suite (build.json::tests.unit: ContactFacetsTest), after the JDK/SDK and the vault key, because
       # gradle cannot CONFIGURE this project without the shared signing key; fatal on failure.
       - name: JVM unit tests (fatal on failure)
-        if: steps.gate.outputs.skip != 'true'
         env:
           BYPASS_NIX: "1"
           VAULT_DIR: ${{ github.workspace }}/.vault
