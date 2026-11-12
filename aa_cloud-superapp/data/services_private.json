@@ -432,7 +432,7 @@
   {
     "name": "mcp-oauth",
     "service": "mcp-oauth",
-    "vm": "local",
+    "vm": "gcp-E2-f_0",
     "private_dns": "mcp-oauth.mesh.diegonmarcos.com:4183",
     "port": 4183,
     "protocol": "http",
