@@ -8,7 +8,7 @@ import com.diegonmarcos.superapp.uikit.KitComposeFragment
 /**
  * Configs > Setup > Network > ADB Shell. The page declares four tabs in `build.json` (`adb-shell.tabs`, one shared strip like WiFi):
  * Status ([AdbStatusTab]: the control card, where Connect walks the whole chain, the step cards, the log tail), Shell ([AdbTermTab]: terminal + command
- * bookmarks), Perms ([AdbPermsTab]: the permission checker) and All ([AdbShellBrokerPage] (#1522), today's whole page, unchanged:
+ * bookmarks), Perms ([AdbPermsTab]: only the ADB Shell prerequisite chain, #1676) and All ([AdbShellBrokerPage] (#1522), today's whole page, unchanged:
  * the broker's live status, the actions, the keeper, the callers and the two collapsed logs, as dense KitStoreRow rows from [AdbShellModel]).
  * A KitComposeFragment, so it sits under the dense CloudKitTheme like every other SuperApp page (#773).
  * Where the page starts is the shell's business (ShellTopInset), not this page's.
