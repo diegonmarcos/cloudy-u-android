@@ -65,6 +65,7 @@ import com.diegonmarcos.superapp.fleetdata.DataSource
 import com.diegonmarcos.superapp.fleetdata.FleetData
 import com.diegonmarcos.superapp.fleetdata.FleetDataReader
 import java.io.File
+import org.json.JSONObject
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -90,12 +91,13 @@ const val INDEX_STATE = "index_state"
 object IndexHoldingsStore {
     @Volatile private var served: Map<String, IndexBasket>? = null
 
-    /** The published file of an own dataset route (`app/<package>/<dataset>`), the one the fleet manifest syncs from. */
-    internal fun publishedUrl(path: String): String = "https://raw.githubusercontent.com/diegonmarcos/cloudy-u-android/main/data/fleet/$path.json"
+    /** The published file of an own dataset route (`app/<package>/<dataset>`), the one the fleet manifest syncs from; the address is declared in data/quotes.json `index_holdings`, none in the code. */
+    internal fun publishedUrl(quotesJson: String, path: String): String? =
+        runCatching { JSONObject(quotesJson).getJSONObject("index_holdings").getString("url_template").replace("{path}", path) }.getOrNull()?.takeIf { it.startsWith("https://") }
 
-    private class WebSource : DataSource {
+    private class WebSource(private val quotesJson: String) : DataSource {
         override fun open(authority: String, path: String): InputStream? = runCatching {
-            val c = URL(publishedUrl(path)).openConnection() as HttpURLConnection
+            val c = URL(publishedUrl(quotesJson, path) ?: return@runCatching null).openConnection() as HttpURLConnection
             c.connectTimeout = 12_000; c.readTimeout = 30_000
             if (c.responseCode == 200) c.inputStream else null
         }.getOrNull()
@@ -107,7 +109,7 @@ object IndexHoldingsStore {
         val parse = { t: String -> IndexHoldings.parse(t) }
         val viaStore = runCatching { FleetData.get(app, IndexHoldings.DATASET, own = true, parse = parse) }.getOrNull()?.takeIf { it.isNotEmpty() }
         val got = viaStore ?: runCatching {
-            FleetDataReader(WebSource(), FleetData.FileLkg(File(app.filesDir, "fleetdata-lkg-web"))).get(IndexHoldings.DATASET, app.packageName, parse)
+            FleetDataReader(WebSource(AssetData.read(app, QuotesStore.DECL)), FleetData.FileLkg(File(app.filesDir, "fleetdata-lkg-web"))).get(IndexHoldings.DATASET, app.packageName, parse)
         }.getOrNull()?.takeIf { it.isNotEmpty() }
         return got?.also { served = it }
     }

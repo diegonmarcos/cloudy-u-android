@@ -1616,6 +1616,7 @@
   "ytd": 25,
   "_doc": "a % change at this size (absolute) is the full tint"
  },
+ "index_holdings": {"_doc": "#1702 where the EQ index breakdown asks for its runtime dataset when Cloud Store has not served it: the published file of the fleet manifest (data/fleet/app/<package>/<dataset>.json on main), fetched on demand by libs:fleet-data-client, schema-checked and kept as last-known-good. {path} is the dataset route.", "url_template": "https://raw.githubusercontent.com/diegonmarcos/cloudy-u-android/main/data/fleet/{path}.json"},
  "refresh_ttl_s": 300,
  "hedge": {
   "default_ratio": 100,

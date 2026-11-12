@@ -130,7 +130,8 @@ class IndexHoldingsTest {
 
     @Test fun datasetIsFetchedFromItsPublishedFileWithoutCloudStore() {
         assertEquals("https://raw.githubusercontent.com/diegonmarcos/cloudy-u-android/main/data/fleet/app/com.diegonmarcos.capitalfinterm/index-holdings.json",
-            com.diegonmarcos.capitalfinterm.ui.IndexHoldingsStore.publishedUrl("app/com.diegonmarcos.capitalfinterm/index-holdings"))
+            com.diegonmarcos.capitalfinterm.ui.IndexHoldingsStore.publishedUrl(DataFiles.quotesJson, "app/com.diegonmarcos.capitalfinterm/index-holdings"))
+        assertNull(com.diegonmarcos.capitalfinterm.ui.IndexHoldingsStore.publishedUrl("{}", "app/x/y"))
         // the client's reader over a web-like source: parsed, then answered from the last-known-good copy when the source is silent
         val lkg = object : com.diegonmarcos.superapp.fleetdata.LastKnownGood {
             val m = HashMap<String, ByteArray>()
