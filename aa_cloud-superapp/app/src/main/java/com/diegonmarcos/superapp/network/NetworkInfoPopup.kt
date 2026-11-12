@@ -687,16 +687,12 @@ object NetworkInfoPopup {
 
     /** #1684 TypC rows: cable present, data vs charge, the active USB functions, the charging current where readable. */
     private fun typcRows(ctx: Context, st: UsbDataModel.State): List<String> {
-        val current = runCatching {
-            (ctx.getSystemService(Context.BATTERY_SERVICE) as? android.os.BatteryManager)
-                ?.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
-                ?.takeIf { it != Int.MIN_VALUE && it != 0 }
-        }.getOrNull()
+        // The battery SoT's normalised signed current (test-battery-one-sot: no battery read outside it).
+        val current = runCatching { com.diegonmarcos.superapp.battery.BatteryRepository.report(ctx)?.currentNowMa }.getOrNull()
         return listOf(
             "Cable: " + st.cable.label + (if (st.power != null) " (power: ${st.power})" else ""),
             "Functions: " + st.functions.ifEmpty { listOf("none") }.joinToString(", ") + if (st.adbOverUsb) " + adb" else "",
-            // CURRENT_NOW is µA on most devices (some report mA); shown raw-scaled to mA, sign = direction.
-            "Current: " + (current?.let { (if (kotlin.math.abs(it) > 20_000) it / 1000 else it).toString() + " mA" } ?: "n/a (not reported)"),
+            "Current: " + (current?.let { "$it mA" } ?: "n/a (not reported)"),
         )
     }
 
