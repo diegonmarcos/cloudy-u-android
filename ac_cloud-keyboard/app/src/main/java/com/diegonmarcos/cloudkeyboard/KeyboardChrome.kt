@@ -30,6 +30,7 @@ import com.diegonmarcos.superapp.navbarbottom.NavBarBottom
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
 import com.diegonmarcos.superapp.bottomnav.NavPage
+import com.diegonmarcos.superapp.bottomnav.NavDecl
 import helium314.keyboard.settings.KbTab
 import helium314.keyboard.settings.NavPageDecl
 import helium314.keyboard.settings.SettingsActivity
@@ -60,42 +61,28 @@ object KeyboardChrome {
         return out
     }
 
-    /** #1698 a declared page as the fleet strip's [NavPage] (its sub-pages its own strip). */
-    fun navPage(p: NavPageDecl): NavPage = NavPage(p.id, p.label, iconOf(p.id))
+    /** #1698 THE nav declaration: build.json::ui baked by app/build.gradle, parsed by libs:bottomnav like every fleet app. */
+    val decl: NavDecl by lazy {
+        NavDecl.fromBuildConfig(BuildConfig.UI_SECTIONS_B64, BuildConfig.UI_BOTTOM_NAV, BuildConfig.UI_DEFAULT_SECTION)
+    }
 
-    /** #1698 the strips under the top bar for [tab] with [pageId] open: row 1 = the tab's pages, row 2 = the open page's sub-pages. */
-    fun stripRows(tab: KbTab, pageId: String?): List<Pair<List<NavPage>, String?>> {
-        val top = tab.pages.firstOrNull { p -> p.flatten().any { it.id == pageId } } ?: tab.pages.first()
-        val rows = mutableListOf(tab.pages.map { navPage(it) } to top.id)
-        if (top.children.isNotEmpty()) {
-            val sub = top.children.firstOrNull { c -> c.flatten().any { it.id == pageId } }
-            rows += (listOf(NavPageDecl(top.id + ".overview", "Overview", top.route)) + top.children).map { navPage(it) } to (sub?.id ?: (top.id + ".overview"))
+    /**
+     * #1698 the fleet second top row(s) for section [tabId] with page [pageId] open, from [decl]: row 1 = the section's pages,
+     * row 2 = the open page's own sub-pages (its overview first, under the page's id).
+     */
+    fun stripRows(decl: NavDecl, tabId: String, pageId: String?): List<Pair<List<NavPage>, String?>> {
+        val pages = decl.section(tabId)?.pages.orEmpty()
+        if (pages.isEmpty()) return emptyList()
+        val top = pages.firstOrNull { p -> p.id == pageId || p.allIds().contains(pageId) } ?: pages.first()
+        val rows = mutableListOf(pages.map { it.copy(pages = emptyList()) } to top.id)
+        if (top.pages.isNotEmpty()) {
+            val sub = top.pages.firstOrNull { c -> c.id == pageId || c.allIds().contains(pageId) }
+            rows += (listOf(top.copy(pages = emptyList())) + top.pages.map { it.copy(pages = emptyList()) }) to (sub?.id ?: top.id)
         }
         return rows
     }
 
-    /** Material symbol names (libs:ui-icons catalog) per page id; a page with no entry shows the generic page glyph. */
-    fun iconOf(id: String): String = when {
-        id.startsWith("themes") -> "palette"
-        id == "settings" || id.endsWith("configs") || id.endsWith("settings") -> "settings"
-        id == "languages" || id.contains("translat") -> "language"
-        id.contains("layout") -> "keyboard"
-        id == "toolbar" -> "build"
-        id.contains("appearance") -> "palette"
-        id.contains("grammar") -> "edit_note"
-        id.contains("enhanc") || id == "kb_writing_tools" -> "auto_fix_high"
-        id.contains("draft") -> "drafts"
-        id.contains("home") -> "home"
-        id.contains("voice") -> "mic"
-        id.contains("dictionar") -> "book"
-        id.contains("emoji") -> "mood"
-        id == "gif" -> "gif"
-        id == "stickers" -> "sticky_note_2"
-        id.contains("autocomplete") || id.contains("correction") -> "spellcheck"
-        id == "clipboard" -> "content_paste"
-        id.contains("routing") || id.contains("routes") -> "route"
-        else -> "article"
-    }
+    private fun NavPage.allIds(): List<String> = pages.flatMap { listOf(it.id) + it.allIds() }
 
     @Composable
     fun Draw(route: String?, open: (String) -> Unit, content: @Composable () -> Unit) {
@@ -121,13 +108,12 @@ object KeyboardChrome {
             Column {
                 // #1698 the sub-pages are the fleet's own second top row (libs:ui-nav-bars NavBarTopSecondRow), the same strip
                 // and look as every other app: one row for the tab's pages, one more for the open page's sub-pages.
-                if (tab != null) stripRows(tab, pageId).forEach { (pages, sel) ->
+                if (tab != null) stripRows(decl, tab.id, pageId).forEach { (pages, sel) ->
                     NavBarTopSecondRow(
                         pages = pages,
                         selectedId = sel,
                         onSelect = { np ->
-                            val id = np.id.removeSuffix(".overview")
-                            tab.allPages.firstOrNull { it.id == id }?.let { picked = it.id; open(it.route) }
+                            tab.allPages.firstOrNull { it.id == np.id }?.let { picked = it.id; open(it.route) }
                         },
                         dark = true,
                         underTopChrome = false,
@@ -136,9 +122,11 @@ object KeyboardChrome {
                 // the bottom bar owns the navigation-bar inset, so the pages above it do not pad for it a second time
                 Box(Modifier.weight(1f).fillMaxWidth().consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))) { content() }
                 NavBarBottom(
-                    entries = KbTab.entries.map { navEntry(it.id, it.label, it.icon) },
+                    // an unreadable declaration (never expected) falls back to the id->route map rather than an empty bar
+                    entries = decl.bottomSections().map { navEntry(it.id, it.label, it.icon) }
+                        .ifEmpty { KbTab.values().map { navEntry(it.id, it.label, it.icon) } },
                     selectedId = tab?.id,
-                    onSelect = { e -> KbTab.byId(e.id)?.let { picked = null; open(it.route) } },
+                    onSelect = { e -> KbTab.byId(e.id)?.let { picked = null; open(it.route) } }, // id -> route: libs:keyboard KbTab
                     dark = true,
                 )
             }

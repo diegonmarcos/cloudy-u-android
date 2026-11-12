@@ -246,7 +246,8 @@ import re, sys, xml.etree.ElementTree as ET
 for n in ET.parse(sys.argv[1]).getroot().iter("node"):
     if sys.argv[2] in ((n.get("text") or "").strip(), (n.get("content-desc") or "").strip()):
         a = list(map(int, re.findall(r"\d+", n.get("bounds", ""))))
-        if len(a) == 4: print((a[0] + a[2]) // 2, (a[1] + a[3]) // 2); break
+        if len(a) == 4: hit = ((a[0] + a[2]) // 2, (a[1] + a[3]) // 2)
+if "hit" in dir(): print(*hit)   # the LAST match: the bottom bar is drawn after the page (a page heading may share the name)
 PY
 }
 openat "" 5

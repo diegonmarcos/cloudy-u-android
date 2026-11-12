@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.wrapContentWidth
 import com.diegonmarcos.superapp.bottomnav.BottomNavEntry
 import com.diegonmarcos.superapp.bottomnav.BottomNavTags
 import com.diegonmarcos.superapp.bottomnav.ChromeBarVisibility
@@ -92,6 +93,19 @@ public object BottomSpec {
     public val INNER_PAD: Dp = SearchHtmlTokens.innerPad
     public val LIFT: Dp = 6.dp
     public val LABEL_BOTTOM: Dp = 4.dp
+    /** #1698 the smallest a label may shrink to so that it fits its cell whole (never an ellipsis: "Mediab…" was unreadable). */
+    public val LABEL_MIN: TextUnit = 9.sp
+    /** Average glyph advance of the Medium label face, in ems (a deliberately generous estimate so a fitted label is whole). */
+    private const val EM_ADVANCE = 0.58f
+    /**
+     * #1698 the label's size: [LABEL] when [label] fits [room] (the cell plus its share of the free space), else shrunk to fit,
+     * never below [LABEL_MIN]. Pure, so every app's labels are testable without drawing.
+     */
+    public fun labelSize(label: String, room: Dp): TextUnit {
+        val need = label.length * EM_ADVANCE * LABEL.value
+        if (label.isEmpty() || need <= room.value) return LABEL
+        return maxOf(LABEL_MIN.value, room.value / (label.length * EM_ADVANCE)).sp
+    }
 
     /** The width of one cell on a bar of [barWidth] holding [count] items: [CELL], or less when the bar is crowded. */
     public fun cellWidth(barWidth: Dp, count: Int): Dp =
@@ -184,9 +198,10 @@ public fun NavBarBottom(
                         }
                         // The label fades with the state and leaves the tree once faded out (a hidden label is not a node).
                         if (show > 0f) Text(
-                            e.label, color = ink, fontSize = BottomSpec.LABEL, fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = BottomSpec.LABEL_BOTTOM)
+                            // #1698 a long label shrinks to fit (BottomSpec.labelSize) and is never cut: unbounded width, no ellipsis.
+                            e.label, color = ink, fontSize = BottomSpec.labelSize(e.label, maxOf(cell, maxWidth / maxOf(1, entries.size))), fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center, maxLines = 1, softWrap = false, overflow = TextOverflow.Visible,
+                            modifier = Modifier.align(Alignment.BottomCenter).wrapContentWidth(unbounded = true).padding(bottom = BottomSpec.LABEL_BOTTOM)
                                 .testTag(BottomTags.label(e.id))
                                 .graphicsLayer { alpha = show },
                         )

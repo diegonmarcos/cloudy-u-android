@@ -26,6 +26,18 @@ class App : Application(), WorkManagerConfiguration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        // #1698 the settings window wears the fleet window (FleetChrome: edge-to-edge, transparent bars) like every app.
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityStarted(a: android.app.Activity) {
+                if (a is helium314.keyboard.settings.SettingsActivity) runCatching { com.diegonmarcos.superapp.bottomnav.FleetChrome.apply(a) }
+            }
+            override fun onActivityCreated(a: android.app.Activity, b: android.os.Bundle?) {}
+            override fun onActivityResumed(a: android.app.Activity) {}
+            override fun onActivityPaused(a: android.app.Activity) {}
+            override fun onActivityStopped(a: android.app.Activity) {}
+            override fun onActivitySaveInstanceState(a: android.app.Activity, b: android.os.Bundle) {}
+            override fun onActivityDestroyed(a: android.app.Activity) {}
+        })
         // #1352 Configs ▸ General and ▸ About (libs:ui-nav-bars) at the top of the keyboard's Configs.
         helium314.keyboard.settings.KeyboardSettingsExtras.entries = listOf(
             com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General to "Perms, update, battery, storage, notifications, language",
