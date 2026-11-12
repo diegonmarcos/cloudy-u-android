@@ -6,6 +6,13 @@ def dump():
     for _ in range(6):
         sh("shell", "uiautomator", "dump", "/sdcard/u.xml")
         x = sh("shell", "cat", "/sdcard/u.xml").stdout
+        if "isn't responding" in x or "keeps stopping" in x:
+            for m in re.finditer(r'<node [^>]*>', x):
+                n = m.group(0)
+                if ' text="Wait"' in n:
+                    b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n); q = tuple(map(int, b.groups()))
+                    sh("shell", "input", "tap", str((q[0] + q[2]) // 2), str((q[1] + q[3]) // 2)); time.sleep(3)
+            continue
         if "<hierarchy" in x: return x
         time.sleep(2)
     return ""
@@ -18,7 +25,7 @@ def find(sub, x=None):
     return out
 def tap_xy(x, y): sh("shell", "input", "tap", str(x), str(y)); time.sleep(2)
 def shot(name, wait=0):
-    time.sleep(wait)
+    time.sleep(wait); dump()
     png = b""
     for _ in range(3):
         png = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
