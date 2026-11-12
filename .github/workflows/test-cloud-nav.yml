@@ -146,6 +146,10 @@ jobs:
           script: |
             curl -fsSL --retry 3 -o /tmp/Cloud-Lib-Fleetconfig.apk https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Lib-Fleetconfig.apk
             adb install -r /tmp/Cloud-Lib-Fleetconfig.apk
+            # #1547 the sky catalog is runtime data served by Cloud Store, never in the APK; Cloud Store is not on this
+            # emulator, so ConstellationsRenderTest seeds the app's last-known-good copy from these (repo data/fleet).
+            adb shell mkdir -p /data/local/tmp/fleetdata-celestial
+            adb push ../data/fleet/app/com.diegonmarcos.cloudnav/celestial/. /data/local/tmp/fleetdata-celestial/
             rc=0
             ./build.sh instrument || rc=$?
             # Collect evidence into a WORKSPACE-relative dir — upload-artifact v4

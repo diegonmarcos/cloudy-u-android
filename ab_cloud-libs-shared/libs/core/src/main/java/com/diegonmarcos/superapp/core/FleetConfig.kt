@@ -75,7 +75,11 @@ object FleetConfig {
         val app = ctx.applicationContext
         return when (kind) {
             "prefs" -> app.getSharedPreferences(file, Context.MODE_PRIVATE).takeIf { create || it.all.isNotEmpty() }
-            "encrypted" -> if (!create && !File(app.dataDir, "shared_prefs/$file.xml").isFile) null else SafeEncryptedPrefs.prefs(app, file)
+            // An app without security-crypto gets SafeEncryptedPrefs' plain "unencrypted fallback" (never a crash):
+            // an encrypted store is never opened that way here, so an import refuses it instead of writing its
+            // secrets in clear (FleetMigrationTest: refused for that file alone).
+            "encrypted" -> if (!create && !File(app.dataDir, "shared_prefs/$file.xml").isFile) null
+                else SafeEncryptedPrefs.create(app, file).takeUnless { it.unencryptedFallback }?.prefs
             else -> null
         }
     }

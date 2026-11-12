@@ -1,6 +1,8 @@
 package com.diegonmarcos.cloudnav.sky
 
 import androidx.test.core.app.ActivityScenario
+import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -18,7 +20,25 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ConstellationsRenderTest {
 
+    /**
+     * #1547 the catalog is runtime data (Cloud Store serves it through libs:fleet-data-client), never in the APK, and Cloud Store
+     * is not on the CI emulator. test-cloud-nav.yml pushes the repo's data/fleet/app/com.diegonmarcos.cloudnav/celestial/ to
+     * /data/local/tmp/fleetdata-celestial; this seeds the app's own last-known-good copy from it (read as the shell user, the
+     * app cannot read /data/local/tmp), the same file FleetData falls back to when the provider is absent.
+     */
+    private fun seedCatalogFromRepo() {
+        val ins = InstrumentationRegistry.getInstrumentation()
+        val ctx = ins.targetContext
+        val lkg = File(ctx.filesDir, "fleetdata-lkg").apply { mkdirs() }
+        for (name in listOf("stars.6", "constellations.lines", "mw", "planets")) {
+            val pfd = ins.uiAutomation.executeShellCommand("cat /data/local/tmp/fleetdata-celestial/$name.json")
+            val bytes = android.os.ParcelFileDescriptor.AutoCloseInputStream(pfd).use { it.readBytes() }
+            if (bytes.isNotEmpty()) File(lkg, "app__${ctx.packageName}__celestial__$name.json").writeBytes(bytes)
+        }
+    }
+
     @Test fun constellations_loads_data_and_survives_interaction() {
+        seedCatalogFromRepo()
         ActivityScenario.launch(ConstellationsActivity::class.java).use { scenario ->
             var sky: SkyState? = null
             val deadline = System.currentTimeMillis() + 30_000

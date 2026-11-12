@@ -38,7 +38,8 @@ class DayScreenTest {
         rule.onNodeWithTag(DayTags.BAR).assertIsDisplayed()
         rule.onNodeWithTag(DayTags.MAP_DAY).assertIsDisplayed()
         rule.onNodeWithText("Seestrasse 1, 8000, Zurich, Zurich, Switzerland").assertIsDisplayed()
-        rule.onNodeWithTag(DayTags.LIST).performScrollToNode(hasText("Cafe Central"))
+        // the stay row titles itself "At Cafe Central" (DayFormat.stayTitle); no node reads the bare name, so scroll by substring
+        rule.onNodeWithTag(DayTags.LIST).performScrollToNode(hasText("Cafe Central", substring = true))
         rule.onNodeWithText("At Cafe Central").assertExists()
         rule.onNodeWithText("Bahnhofstrasse 14, 8001, Zurich, Zurich, Switzerland").assertExists()
         rule.onNodeWithText("Food and drink", substring = true).assertExists()
