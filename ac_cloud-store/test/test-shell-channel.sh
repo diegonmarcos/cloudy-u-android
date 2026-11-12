@@ -58,6 +58,9 @@ ok("src/broker/java" in ug and "findProject(':libs:shell-client')" in ug, "libs:
 fl = rd("ab_cloud-libs-shared/libs/updater/src/main/java/com/diegonmarcos/superapp/updater/Fleet.kt")
 ok("listOf(ShellInstall, SessionInstall)" in fl and "listOf(ShellInstall)" in fl,
    "Fleet.commit tries the shell install first and the session second", "Fleet.commit's ladder is not shell-first")
+ok("if (SilentReadiness.prefersSession(verdict)) listOf(SessionInstall, ShellInstall) else channels(ctx)" in fl,
+   "#1675 a package the native silent path covers goes through the public PackageInstaller session first, else the shell-first ladder",
+   "#1675 Fleet.commit no longer puts the native silent session first where it applies")
 hand = rd("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/apps/CloudStoreHandoff.kt")
 ok("fun ownsInstalls(" in hand, "SuperApp has one question: does Cloud Store own installs", "CloudStoreHandoff.ownsInstalls is gone")
 sa = rd("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/ShellActivity.kt")

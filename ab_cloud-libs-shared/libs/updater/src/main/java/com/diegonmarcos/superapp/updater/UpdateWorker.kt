@@ -276,7 +276,12 @@ class UpdateWorker(
             UpdateProgress.update(UpdateProgress.State.Failed(why))
             throw InstallRefused(why)
         }
-        UpdateInstaller(applicationContext).install(apk)
+        // #1675 an app other than Cloud Store hands its own update to Cloud Store (the installer of record), which installs it
+        // silently; Cloud Store itself commits its own session (an app may silently update itself when it is its own installer).
+        try { UpdateInstaller(applicationContext).install(apk) } catch (h: com.diegonmarcos.superapp.updater.install.HandedToStore) {
+            Log.i("Updater/Worker", h.message ?: "self-update handed to Cloud Store")
+            UpdateProgress.update(UpdateProgress.State.Waiting(h.message ?: "Cloud Store installs this update"))
+        }
     }
 
     companion object {

@@ -1,5 +1,7 @@
 package com.diegonmarcos.superapp.updater
 
+import com.diegonmarcos.superapp.updater.install.SilentReadiness
+
 import com.diegonmarcos.superapp.updater.apk.ApkIntegrity
 import com.diegonmarcos.superapp.updater.apk.VerifiedApk
 import com.diegonmarcos.superapp.updater.cache.ApkCache
@@ -694,7 +696,7 @@ object Fleet {
         // had merely not reconnected since the last app start, or had run `pm
         // install` and been refused. Each channel now hands back a sentence.
         val declined = mutableListOf<String>()
-        for (channel in channels(ctx)) {
+        for (channel in channels(ctx, app, apk)) {
             val why = channel.install(ctx, app, apk)
             if (why == null) {
                 Log.i(TAG, "install committed via ${channel.name}: ${app.label} (${app.pkg})")
@@ -764,6 +766,17 @@ object Fleet {
     private fun channels(ctx: Context): List<InstallChannel> =
         if (AutoUpdatePrefs.requireSilent(ctx)) listOf(ShellInstall)
         else listOf(ShellInstall, SessionInstall)
+
+    /**
+     * #1675 PUBLIC APIS FIRST. When every Android condition for a native silent update holds for THIS package (Cloud Store is
+     * its installer of record, targetSdk, no new dangerous permission; [SilentReadiness]), the PackageInstaller session with
+     * USER_ACTION_NOT_REQUIRED goes first: no adb, no Shizuku, no dialog. Otherwise the ladder is unchanged (the optional shell
+     * channel, then the confirmed session; "never prompt" keeps the shell only).
+     */
+    private fun channels(ctx: Context, app: App, apk: VerifiedApk): List<InstallChannel> {
+        val verdict = SilentReadiness.assess(ctx, app.pkg, apk.file)
+        return if (SilentReadiness.prefersSession(verdict)) listOf(SessionInstall, ShellInstall) else channels(ctx)
+    }
 
 
     /** Which apps installAll acts on. UPDATES = only apps ALREADY installed

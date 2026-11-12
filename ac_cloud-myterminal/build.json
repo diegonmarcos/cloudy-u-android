@@ -19,7 +19,7 @@
     "_doc_application_id": "UNCHANGED by the #561 rebrand (cloud-ide -> cloud-myterminal). An applicationId IS the install identity: #405/#495 measured that changing it makes Android treat the result as a different app, so the fleet updater's install fails with 'Update failed: versionCode N vs installed M' and the owner has to uninstall by hand. The brand is .name (launcher label, fleet listing) and release.* (asset, image); none of those are identity, so the rebrand ships as an ordinary update over the installed hub.",
     "compile_sdk": 35,
     "min_sdk": 26,
-    "target_sdk": 34,
+    "target_sdk": 35,
     "version_code": 3,
     "version_name": "0.1.0-dev",
     "_doc_abi_filters": "Hub is pure-JVM (no native libs) so ABI filtering is irrelevant to it; kept for schema parity with aa_cloud-superapp / ea_cloud-comms. The forks declare their own abi_filters.",
@@ -215,7 +215,9 @@
   },
   "links": {
     "_doc": "Where a URL tapped in the terminal opens. Long-press on a link (or on an entry of the pane menu's URL list) opens it in browser_package when that app is installed, else in the phone's default browser; a tap copies it. Baked as BuildConfig.LINK_BROWSER_PACKAGE (LinkOpener.kt); the manifest's <queries> names the same package so the lookup sees it.",
-    "browser_package": "com.diegonmarcos.cloudbrowser"
+    "browser_package": "com.diegonmarcos.cloudbrowser",
+    "store_package": "com.diegonmarcos.cloudstore",
+    "_doc_store_package": "#1675 Cloud Store, the fleet's one installer of record: the hub skips its own self-update and never claims update ownership while it is installed (package visibility through <queries>)"
   },
   "configs_pages": {
     "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",

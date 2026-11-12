@@ -23,7 +23,7 @@ object Updater {
 
     /** Enqueue (or refresh) the periodic update worker. Idempotent. */
     fun start(context: Context) {
-        if (!com.diegonmarcos.ide.BuildConfig.AUTO_UPDATE_ENABLED) { cancel(context); return }
+        if (!com.diegonmarcos.ide.BuildConfig.AUTO_UPDATE_ENABLED || storeInstalled(context)) { cancel(context); return }
         val constraints = Constraints.Builder().apply {
             setRequiredNetworkType(if (com.diegonmarcos.ide.BuildConfig.AU_REQUIRE_UNMETERED) NetworkType.UNMETERED else NetworkType.CONNECTED)
             if (com.diegonmarcos.ide.BuildConfig.AU_REQUIRE_CHARGING) setRequiresCharging(true)
@@ -48,4 +48,15 @@ object Updater {
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(ONE_SHOT_NAME, ExistingWorkPolicy.REPLACE, request)
     }
+
+
+    /**
+     * #1675 Cloud Store is the ONE installer of record of every fleet app: when it is installed it updates this app silently
+     * (PackageInstaller USER_ACTION_NOT_REQUIRED), so this app schedules no self-update of its own and never claims update
+     * ownership, which would make every later Store update prompt.
+     */
+    fun storeInstalled(context: Context): Boolean =
+        runCatching { context.packageManager.getPackageInfo(STORE_PKG, 0); true }.getOrDefault(false)
+
+    const val STORE_PKG = "com.diegonmarcos.cloudstore"
 }

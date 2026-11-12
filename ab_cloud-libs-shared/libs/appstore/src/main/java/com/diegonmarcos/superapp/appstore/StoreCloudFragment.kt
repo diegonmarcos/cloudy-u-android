@@ -47,6 +47,7 @@ import com.diegonmarcos.superapp.updater.BootstrapInstall
 import com.diegonmarcos.superapp.updater.Fleet
 import com.diegonmarcos.superapp.updater.FleetIdentity
 import com.diegonmarcos.superapp.updater.Updater
+import com.diegonmarcos.superapp.updater.install.SilentReadiness
 import java.io.File
 import kotlin.concurrent.thread
 import org.json.JSONArray
@@ -730,8 +731,28 @@ class StoreCloudFragment : KitComposeFragment() {
             headTag = "store-head:${app.id}", metaTag = "store-meta:${app.id}", dotTag = "store-dot:${app.id}",
             below = {
                 ui.error?.let { ErrorArea(ctx, app, it) }
+                SilentArea(ctx, app, stg)
                 MigrationArea(ctx, app, stg)
             }) { FleetDetail(ctx, app, ui, stg) }
+    }
+
+    /**
+     * #1675 Whether this app's NEXT update installs silently or will prompt, and why (not installer of record, targetSdk, a new
+     * permission, the throttle, first install), read from [SilentReadiness] for an installed app. Re-read whenever the row's
+     * stage changes; the last session's real outcome is under Diagnose (install diagnostics).
+     */
+    @Composable
+    private fun SilentArea(ctx: Context, app: Fleet.App, stg: StoreStages.Stage?) {
+        val line = remember(stg) {
+            runCatching {
+                if (StoreStages.installedKey(ctx, app).isEmpty()) null
+                else SilentReadiness.assess(ctx, app.pkg, null).line
+            }.getOrNull()
+        } ?: return
+        Text("Next update: $line", color = (if (line == "silent") cDim else cErr).ink(), fontSize = StoreDensity.T_META.sp,
+            maxLines = 2, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = sdp(StoreDensity.S12), end = sdp(StoreDensity.S12), bottom = sdp(StoreDensity.S4))
+                .testTag("store-silent:${app.id}"))
     }
 
     /**

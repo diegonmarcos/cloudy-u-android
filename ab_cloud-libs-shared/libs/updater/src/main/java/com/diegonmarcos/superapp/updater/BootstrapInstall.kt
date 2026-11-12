@@ -101,7 +101,10 @@ object BootstrapInstall {
      * would put the caller right back in the "it did nothing and said nothing"
      * failure this whole feature exists to end.
      */
-    fun stage(ctx: Context, app: Fleet.App): Candidate {
+    fun stage(ctx: Context, app: Fleet.App): Candidate = stageVerified(ctx, app).first
+
+    /** [stage] plus the [com.diegonmarcos.superapp.updater.apk.VerifiedApk] it read, for the session path (#1675). */
+    private fun stageVerified(ctx: Context, app: Fleet.App): Pair<Candidate, com.diegonmarcos.superapp.updater.apk.VerifiedApk> {
         val apk = Fleet.download(ctx, app)        // VerifiedApk — verification is its type
         val identity = com.diegonmarcos.superapp.updater.apk.ApkIntegrity.identify(ctx, apk.file)
         val installed = installedInfo(ctx, app)
@@ -115,7 +118,7 @@ object BootstrapInstall {
             versionCode = identity?.versionCode ?: -1L,
             installedVersionName = installed?.first,
             installedCode = installed?.second,
-        )
+        ) to apk
     }
 
     /**
@@ -171,13 +174,23 @@ object BootstrapInstall {
      * reaches, and a crash there is the end of the line.
      */
     fun launch(ctx: Context, app: Fleet.App): Result<Candidate> = runCatching {
-        val candidate = stage(ctx, app)
+        val (candidate, verified) = stageVerified(ctx, app)
         Log.i(TAG, "direct install ${candidate.appId}: ${candidate.pkg} " +
                    "versionCode ${candidate.versionCode} (installed ${candidate.installedCode ?: "none"}), " +
                    candidate.evidence)
-        ctx.startActivity(installIntent(ctx, candidate.file))
+        // #1675 an UPDATE never goes through the ACTION_VIEW intent: it is a PackageInstaller session (USER_ACTION_NOT_REQUIRED,
+        // update ownership, package source), so it can be silent and keeps the installer of record. Only a FIRST install of a
+        // package uses the system installer screen, which asks in any case.
+        if (usesSession(candidate.installedCode != null)) {
+            try {
+                com.diegonmarcos.superapp.updater.install.UpdateInstaller(ctx).install(verified, candidate.pkg)
+            } catch (_: com.diegonmarcos.superapp.updater.install.HandedToStore) { /* Cloud Store installs it */ }
+        } else ctx.startActivity(installIntent(ctx, candidate.file))
         candidate
     }.onFailure { Log.w(TAG, "direct install ${app.id} failed: ${it.message}") }
+
+    /** Pure (#1675): an update (the package is installed) goes through a session, never the ACTION_VIEW intent. */
+    fun usesSession(installed: Boolean): Boolean = installed
 
     /** Whether "Install unknown apps" is held. NOT a gate — the system asks for
      *  it inline when missing — but the UI should be able to warn first. */

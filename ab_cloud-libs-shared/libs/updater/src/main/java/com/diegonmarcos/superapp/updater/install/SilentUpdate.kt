@@ -31,7 +31,7 @@ object SilentUpdate {
      * Pure. Silent only for Android 12+ (S), the toggle on and a fleet-signed package. Ownership is requested only on the silent path
      * and only on 14+. The package source (STORE) is provenance, not silence, so it is set for every install on 13+ as before.
      */
-    fun plan(sdk: Int, silentOn: Boolean, fleetSigned: Boolean): Plan {
+    fun plan(sdk: Int, silentOn: Boolean, fleetSigned: Boolean, installerOfRecord: Boolean = true): Plan {
         val source = if (sdk >= Build.VERSION_CODES.TIRAMISU) PackageInstaller.PACKAGE_SOURCE_STORE else null
         val why = when {
             sdk < Build.VERSION_CODES.S -> "Android 11 or older has no native silent update"
@@ -45,7 +45,9 @@ object SilentUpdate {
             layer1 = silent,
             requireUserAction = if (silent) PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED
                                 else PackageInstaller.SessionParams.USER_ACTION_REQUIRED,
-            requestOwnership = silent && sdk >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+            // #1675 only the fleet's ONE installer of record (Cloud Store) asks for update ownership; any other app asking would
+            // take ownership away from it and turn every later Store update into a prompt.
+            requestOwnership = silent && installerOfRecord && sdk >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
             packageSource = source,
             why = why,
         )

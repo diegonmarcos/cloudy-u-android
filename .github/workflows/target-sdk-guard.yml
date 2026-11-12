@@ -1,0 +1,36 @@
+name: "target-sdk guard — every fleet app targets the SDK Android 17 demands for a silent update (35+)"
+
+# WHY (#1675). Cloud Store updates fleet apps through PackageInstaller sessions with USER_ACTION_NOT_REQUIRED, and Android
+# honours that only when the updated app's targetSdk meets the device's rule (Android 12 -> 29+, 13 -> 30+, 14 -> 31+,
+# 15 -> 33+, 16 -> 34+, 17 -> 35+). The owner's phone runs Android 17, so a fleet app below 35 prompts on every update while
+# every build stays green. This guard fails on such an app unless 1_cicd/src/data/target-sdk-guard.json exempts it with the
+# reason its targetSdk cannot be raised.
+#
+# Its own workflow and every push: the commit it has to catch can touch any app's build.json or Gradle file.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: target-sdk-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  target-sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The guard still fails on a low app, a stale exemption and a floor that drifts
+        run: bash 1_cicd/src/scripts/test/target-sdk-guard.test.sh
+
+      - name: No fleet app targets an SDK below the silent-update floor
+        run: python3 1_cicd/src/scripts/cloud-android-target-sdk-guard.py . --matrix

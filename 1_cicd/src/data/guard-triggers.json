@@ -3,6 +3,7 @@
   "unfiltered": {
     "_doc": "Workflows that keep running on every push, each with the reason. These scan the whole fleet's sources, so a filter would be a second copy of 'every app, every lib' and save almost nothing. leak-scan.yml is not listed because it has no source here (it is fleet-emitted straight into .github/workflows); it runs on every push.",
     "runtime-data-guard.yml": "#1547: scans every module for baked JSON (assets, res/raw), gradle asset injection and BuildConfig base64 fields; the commit it must catch can add one anywhere",
+    "target-sdk-guard.yml": "#1675 reads every fleet app's build.json and Gradle / catalog / gradle.properties targetSdk; any app's commit can lower it below the silent-update floor",
     "perms-guard.yml": "#1360 scans every app's sources, manifests and build.json (and the libs they merge): any app's commit can drop a declared permission",
     "ai-chat-guard.yml": "scans every app and lib tree for a second AI chat UI (bubbles on the OpenAI roles, a chat page composable, a composable naming the model endpoint); the commit it must catch can be any source file anywhere",
     "launcher-icons-guard.yml": "reads every fleet app's build.json and launcher res dir, the shared keyboard lib res and the SuperApp Cloud page; a hand edit to any app's icon must turn it red",

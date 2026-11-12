@@ -31,7 +31,9 @@ internal class UpdateInstaller(private val context: Context) {
                     else PackageInstaller.SessionParams.USER_ACTION_REQUIRED
                 )
             }
-            if (Build.VERSION.SDK_INT >= 34) {
+            // #1675 only when Cloud Store (the fleet's one installer of record) is absent: claiming ownership here would take it
+            // away from Cloud Store and turn its silent updates into prompts.
+            if (Build.VERSION.SDK_INT >= 34 && !Updater.storeInstalled(context)) {
                 // Claim update ownership (Android 14+). This hub carries its
                 // OWN copy of UpdateInstaller rather than linking libs:updater,
                 // so the fix has to land twice - see the same block there.

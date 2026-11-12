@@ -102,6 +102,11 @@ class ApkInstallWorker(
             UpdateProgress.stage(UpdateProgress.STAGE_INSTALLING)
             UpdateInstaller(applicationContext).install(verified, pkg)
             Result.success()
+        } catch (h: com.diegonmarcos.superapp.updater.install.HandedToStore) {
+            // #1675 Cloud Store, the installer of record, installs it: not a failure of this app.
+            Log.i(TAG, h.message ?: "handed to Cloud Store")
+            UpdateProgress.update(UpdateProgress.State.Waiting(h.message ?: "Cloud Store installs $label"))
+            Result.success()
         } catch (c: java.util.concurrent.CancellationException) {
             // User hit Cancel: cancelNow() already flipped state to Cancelled.
             // Don't clobber it with Failed. Worker is cancelled → success is moot.

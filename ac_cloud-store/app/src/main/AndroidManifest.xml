@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- #1675 restated here so this manifest is the record: the store installs and SILENTLY updates fleet apps (and itself)
+         through PackageInstaller sessions with USER_ACTION_NOT_REQUIRED, which needs both. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <!-- #865 Cloud Store: the constellation store as its own APK. The install
          engine (libs:updater) brings INTERNET, POST_NOTIFICATIONS,
          REQUEST_INSTALL_PACKAGES, UPDATE_PACKAGES_WITHOUT_USER_ACTION and its
@@ -90,7 +94,9 @@
                 <data android:scheme="file" />
                 <data android:mimeType="application/x-bittorrent" />
             </intent-filter>
-            <!-- SuperApp opens a given tab: com.diegonmarcos.cloudstore.OPEN + extra "tab". -->
+            <!-- SuperApp opens a given tab: com.diegonmarcos.cloudstore.OPEN + extra "tab". #1675 + extra "install_pkg": another
+                 fleet app hands Cloud Store, the ONE installer of record, an install or update of a fleet package
+                 (libs:updater StoreHandoff); Cloud Store queues it in its own process. No receiver (#1502). -->
             <intent-filter>
                 <action android:name="com.diegonmarcos.cloudstore.OPEN" />
                 <category android:name="android.intent.category.DEFAULT" />

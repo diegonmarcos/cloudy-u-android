@@ -97,6 +97,11 @@ object InstallDiagnostics {
             }.getOrNull() ?: "unknown")
         }
 
+        sb.append("\n── silent update (#1675) ──────────────────────────\n")
+        line("next update", SilentReadinessLine.of(ctx, pkg))
+        line("installer of record", com.diegonmarcos.superapp.updater.install.SilentReadiness.INSTALLER_OF_RECORD)
+        sessions(ctx).filter { it.contains(" $pkg ") }.takeLast(8).forEach { sb.append("  ").append(it).append('\n') }
+
         sb.append("\n── device ─────────────────────────────────────────\n")
         line("model", "${Build.MANUFACTURER} ${Build.MODEL}")
         line("android", "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
@@ -114,4 +119,37 @@ object InstallDiagnostics {
         return sb.toString()
     }
 
+    // ── #1675 the session log: what each install session did (silent / prompted / failed + Android's message) ──────────
+
+    private const val SESSION_LOG = "install-sessions.log"
+    private const val SESSION_LOG_MAX = 200
+
+    /** Pure: one log line. */
+    fun sessionLine(whenText: String, pkg: String, outcome: String, detail: String): String =
+        "$whenText $pkg $outcome" + if (detail.isBlank()) "" else " — ${detail.replace('\n', ' ').take(300)}"
+
+    /** Pure: the session outcome named by PackageInstaller's terminal [status], given whether a confirmation was asked. */
+    fun sessionOutcome(status: Int, prompted: Boolean): String = when (status) {
+        PackageInstaller.STATUS_PENDING_USER_ACTION -> "prompting"
+        PackageInstaller.STATUS_SUCCESS -> if (prompted) "prompted" else "silent"
+        else -> "failed"
+    }
+
+    /** Append one line (kept to the last [SESSION_LOG_MAX]). Never throws. */
+    fun recordSession(ctx: Context, pkg: String, outcome: String, detail: String) {
+        runCatching {
+            val f = File(ctx.filesDir, SESSION_LOG)
+            val lines = (if (f.exists()) f.readLines() else emptyList()) + sessionLine(ts(), pkg, outcome, detail)
+            f.writeText(lines.takeLast(SESSION_LOG_MAX).joinToString("\n", postfix = "\n"))
+        }
+    }
+
+    /** The session log, oldest first; empty when none. */
+    fun sessions(ctx: Context): List<String> =
+        runCatching { File(ctx.filesDir, SESSION_LOG).takeIf { it.exists() }?.readLines().orEmpty() }.getOrDefault(emptyList())
+
+    private object SilentReadinessLine {
+        fun of(ctx: Context, pkg: String): String =
+            com.diegonmarcos.superapp.updater.install.SilentReadiness.lastVerdict(ctx, pkg) ?: "not assessed yet"
+    }
 }

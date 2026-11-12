@@ -38,6 +38,12 @@ object Updater {
         if (!StoreNotifyGate.mayPost(context)) { cancelAll(context); return }
         // #1502 Cloud Account never runs a background job: clear what an older build queued and stop.
         if (BackgroundGate.never(context)) { cancelAll(context); return }
+        // #1675 Cloud Store is the one installer of record and its fleet pass updates this app silently: no periodic
+        // self-update of its own here (it would only download what Cloud Store installs). Bootstrap: without Cloud Store
+        // installed, this app still updates itself.
+        if (com.diegonmarcos.superapp.updater.install.SilentReadiness.route(context.packageName,
+                com.diegonmarcos.superapp.updater.install.SilentReadiness.storeInstalled(context)) ==
+            com.diegonmarcos.superapp.updater.install.SilentReadiness.Route.HANDOFF) { cancel(context); return }
         // IDENTITY GATE (#453). A work-profile, parallel-clone or Secure
         // Folder copy of this app is not the install the updater owns. It must
         // not schedule the periodic self-update at all — never queue work whose
@@ -260,6 +266,12 @@ object Updater {
      * means a re-tap while a download is in flight is a no-op.
      */
     fun installApk(context: Context, apkUrl: String, packageName: String, label: String) {
+        // #1675 one installer of record: hand it to Cloud Store BEFORE downloading anything here.
+        com.diegonmarcos.superapp.updater.install.StoreHandoff.handOff(context, packageName)?.let {
+            UpdateProgress.update(UpdateProgress.State.Waiting(
+                if (it.handedOver) "Cloud Store is installing $label" else "Cloud Store installs $label (open Cloud Store)"))
+            return
+        }
         val data = Data.Builder()
             .putString(ApkInstallWorker.KEY_URL, apkUrl)
             .putString(ApkInstallWorker.KEY_PKG, packageName)

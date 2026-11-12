@@ -141,6 +141,18 @@ class PackageInstallerReceiver : BroadcastReceiver() {
             return
         }
 
+        // #1675 the session outcome, in the install diagnostics: silent (success with no confirmation asked), prompted, or failed
+        // with Android's own status message. A session that asked is remembered by id until its terminal status lands.
+        if (!isUninstall && gateKey.isNotEmpty()) runCatching {
+            val prefs = context.getSharedPreferences("install_sessions_prompted", Context.MODE_PRIVATE)
+            val key = sessionId.toString()
+            if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) prefs.edit().putBoolean(key, true).apply()
+            val outcome = InstallDiagnostics.sessionOutcome(status, prefs.getBoolean(key, false))
+            InstallDiagnostics.recordSession(context, gateKey, outcome,
+                if (outcome == "failed") "status $status ${legacyName ?: ""} $message".trim() else "session $sessionId")
+            if (status != PackageInstaller.STATUS_PENDING_USER_ACTION) prefs.edit().remove(key).apply()
+        }
+
         // Install results arrive asynchronously, and the last few can land
         // AFTER Fleet.autoPass has cleared UpdateProgress.quiet in its finally.
         // Those late callbacks were the second way a background pass reached

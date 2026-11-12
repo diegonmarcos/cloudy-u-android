@@ -36,7 +36,7 @@ internal interface InstallChannel {
 
 /** Shell install (Shizuku / embedded adb) — no dialog at all. */
 internal object ShellInstall : InstallChannel {
-    override val name = "shell"
+    override val name = SilentReadiness.CHANNEL_SHELL
     private const val TAG = "FleetUpdater"
 
     override fun install(ctx: Context, app: Fleet.App, apk: VerifiedApk): String? {
@@ -197,9 +197,12 @@ internal object ShellInstall : InstallChannel {
  *  result arrives asynchronously at [PackageInstallerReceiver], which is what
  *  moves UpdateProgress off Installing; hence no Done here. */
 internal object SessionInstall : InstallChannel {
-    override val name = "session"
+    override val name = SilentReadiness.CHANNEL_SESSION
     override fun install(ctx: Context, app: Fleet.App, apk: VerifiedApk): String? {
-        UpdateInstaller(ctx).install(apk, app.pkg)
+        // #1675 handed to Cloud Store (the installer of record): it was taken, by Cloud Store, so this channel took it.
+        try { UpdateInstaller(ctx).install(apk, app.pkg) } catch (h: HandedToStore) {
+            UpdateProgress.update(UpdateProgress.State.Waiting(h.message ?: "Cloud Store installs ${app.label}"))
+        }
         return null
     }
 }

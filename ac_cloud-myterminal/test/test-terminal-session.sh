@@ -320,7 +320,8 @@ pkgs = {b.get("package") for b in tgt["backends"].values()}
 browser = json.load(open(os.path.join(APP, "build.json"))).get("links", {}).get("browser_package")
 queries = {p.get(A + "name") for q in hub.findall("queries") for p in q.findall("package")}
 qactions = {a.get(A + "name") for q in hub.findall("queries") for i in q.findall("intent") for a in i.findall("action")}
-want = pkgs | {browser}
+store = json.load(open(os.path.join(APP, "build.json"))).get("links", {}).get("store_package")   # #1675 installer of record
+want = pkgs | {browser} | ({store} if store else set())
 if None in pkgs or not browser:
     bad("S8 a backend has no `package`, or build.json has no links.browser_package")
 elif queries == want and ACTION in qactions:

@@ -68,6 +68,8 @@ class MainActivity : AppCompatActivity() {
         // The Store tab "Fleet Data" renders libs:fleet-data-ui's page inline in the Store's own pane (no separate Activity).
         StorePages.fleetDataPane = { authority, modifier -> com.diegonmarcos.superapp.fleetdata.ui.FleetDataPage(authority, modifier) }
         requested = tabFrom(intent)
+        // #1675 another fleet app handed Cloud Store (the one installer of record) an install of a fleet package.
+        com.diegonmarcos.superapp.updater.install.StoreHandoff.accept(this, intent)
         // A magnet link or a .torrent opened with this app goes to the engine and lands on the Torrent tab.
         if (TorrentIntake.handle(this, intent)) requested = TAB_TORRENT
         setContent {
@@ -84,6 +86,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         tabFrom(intent)?.let { requested = it }
+        com.diegonmarcos.superapp.updater.install.StoreHandoff.accept(this, intent)
         if (TorrentIntake.handle(this, intent)) requested = TAB_TORRENT
     }
 

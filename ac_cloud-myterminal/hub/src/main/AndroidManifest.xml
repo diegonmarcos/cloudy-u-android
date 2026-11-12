@@ -40,6 +40,8 @@
         <package android:name="cld.termux" />
         <package android:name="cld.termux.nix" />
         <package android:name="com.diegonmarcos.cloudbrowser" />
+        <!-- #1675 Cloud Store (build.json::links.store_package), the fleet's one installer of record. -->
+        <package android:name="com.diegonmarcos.cloudstore" />
         <intent>
             <action android:name="com.diegonmarcos.cloud.terminal.SESSION" />
         </intent>

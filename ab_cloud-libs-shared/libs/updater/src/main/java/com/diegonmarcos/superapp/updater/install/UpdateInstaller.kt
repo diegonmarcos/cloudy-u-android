@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.updater.install
 
 import com.diegonmarcos.superapp.updater.BuildConfig
+import com.diegonmarcos.superapp.updater.InstallDiagnostics
 import com.diegonmarcos.superapp.updater.ApkInstallWorker
 import com.diegonmarcos.superapp.updater.AutoUpdatePrefs
 import com.diegonmarcos.superapp.updater.PackageInstallerReceiver
@@ -55,6 +56,13 @@ internal class UpdateInstaller(private val context: Context) {
      */
     fun install(apk: VerifiedApk, targetPackage: String = context.packageName) {
         Log.i(tag, "install ${apk.file.name} → $targetPackage [${apk.evidence}]")
+        // #1675 ONE INSTALLER OF RECORD: any app other than Cloud Store hands the install to Cloud Store (when it is installed)
+        // instead of opening a session of its own, which would make it the package's installer and every later Store update a
+        // prompt. This is the single choke every path reaches (batch, row button, ApkInstallWorker, self-update).
+        StoreHandoff.handOff(context, targetPackage)?.let { h ->
+            InstallDiagnostics.recordSession(context, targetPackage, "handed off", h.message.orEmpty())
+            throw h
+        }
         InstallGate.serialised(targetPackage, InstallGate.SETTLE_MS) {
             installLocked(apk.file, targetPackage, apk.splits.map { it.file })
         }
@@ -118,7 +126,8 @@ internal class UpdateInstaller(private val context: Context) {
             // decides: a package this app does not own yet shows ONE dialog on its first Store update, then updates silently.
             // Without the "install unknown apps" grant NOT_REQUIRED degrades to a prompt on its own.
             val plan = SilentUpdate.plan(Build.VERSION.SDK_INT, AutoUpdatePrefs.silent(context),
-                SilentUpdate.isFleetSigned(context, targetPackage, apk))
+                SilentUpdate.isFleetSigned(context, targetPackage, apk),
+                installerOfRecord = SilentReadiness.isInstallerOfRecord(context.packageName))
             Log.i(tag, "silent plan for $targetPackage: ${if (plan.layer1) "native silent" else plan.why}")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) plan.requireUserAction?.let { setRequireUserAction(it) }
             if (plan.requestOwnership && Build.VERSION.SDK_INT >= 34) setRequestUpdateOwnership(true)
@@ -126,9 +135,25 @@ internal class UpdateInstaller(private val context: Context) {
             // sideload and RESTRICTS the installed app; our GHCR fleet updater IS the constellation's app store.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) plan.packageSource?.let { setPackageSource(it) }
         }
+        // #1675 every Android condition for a silent update, checked BEFORE the session: installer of record, targetSdk, new
+        // dangerous permissions, the per-package throttle. A throttle is waited out (one session per package per 30 s, inside
+        // the process-wide install lock, so the queue is spaced, never doubled up); anything else is said, then the session
+        // still runs and Android shows its one dialog, never a silent failure.
+        var verdict = SilentReadiness.assess(context, targetPackage, apk)
+        if (verdict.reason == SilentReadiness.Reason.THROTTLE) {
+            val wait = SilentReadiness.throttleWaitMs(SilentReadiness.lastCommitMs(targetPackage), System.currentTimeMillis())
+            Log.i(tag, "throttle: waiting ${wait} ms before the next session for $targetPackage")
+            if (wait > 0) Thread.sleep(wait)
+            verdict = SilentReadiness.assess(context, targetPackage, apk)
+        }
+        Log.i(tag, "silent readiness for $targetPackage: ${verdict.line}")
+        if (verdict.reason == SilentReadiness.Reason.NEW_PERMISSION)
+            UpdateProgress.update(UpdateProgress.State.Waiting("$targetPackage ${verdict.line}. Android will ask you to confirm it."))
+        InstallDiagnostics.recordSession(context, targetPackage, "committing", verdict.line)
         reapStaleSessions(installer)
         supersedeOlderSessions(installer, targetPackage)
         val sessionId = installer.createSession(params)
+        SilentReadiness.markCommitted(targetPackage)
         try {
             installer.openSession(sessionId).use { session ->
                 // Declare the length ONCE and re-check it after the copy. The

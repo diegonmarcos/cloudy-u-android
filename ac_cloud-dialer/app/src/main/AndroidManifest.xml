@@ -27,6 +27,8 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- #1675 silent self-update when Cloud Store is not installed (PackageInstaller USER_ACTION_NOT_REQUIRED). -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
@@ -40,6 +42,8 @@
         tools:node="remove" />
 
     <queries>
+        <!-- #1675 Cloud Store, the fleet's one installer of record (the updater defers to it). -->
+        <package android:name="com.diegonmarcos.cloudstore" />
         <package android:name="org.fossify.contacts.debug" />
         <package android:name="org.fossify.contacts" />
 

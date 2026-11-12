@@ -1,0 +1,16 @@
+{
+  "_doc": "#1675 policy of 1_cicd/src/scripts/cloud-android-target-sdk-guard.py. floor: the lowest targetSdk a fleet app may ship, the rule Android applies to a SILENT update (PackageInstaller USER_ACTION_NOT_REQUIRED) on the newest Android the fleet runs on (newest_device_sdk; the owner's phone runs Android 17 = API 37, which demands 35). Must equal libs:updater SilentReadiness.FLEET_MIN_TARGET_SDK / minTargetSdk(NEWEST_DEVICE_SDK). exempt: apps whose targetSdk CANNOT be raised without breaking what the app exists to do, each with the reason; such an app is always updated with Android's one confirmation and Cloud Store says so on its row ('will prompt: targetSdk ...'). An exemption that is no longer below the floor is red (drop it).",
+  "floor": 35,
+  "exempt_max": 5,
+  "unresolved": {
+    "ac_cloud-office": "the Android shell's Gradle tree is Collabora's, fetched from Gerrit at upstream.online.revision at build time and not vendored in git, so its targetSdk cannot be read here; it is upstream's value"
+  },
+  "newest_device_sdk": 37,
+  "exempt": {
+    "ac_cloud-termux": "targetSdk 28 on purpose: from 29 Android forbids exec() of files in the app's data dir (W^X), which is the whole terminal (the rootfs binaries run from $PREFIX); shared_user_id with nix-on-droid also pins the same SELinux domain (untrusted_app_27). See build.json::_doc of the shared store.",
+    "ac_cloud-nix-on-droid": "targetSdk 28 on purpose: same uid and SELinux domain as cloud-termux (shared_user_id, untrusted_app_27), and the nix store binaries run from the app's data dir, which targetSdk 29+ forbids (W^X).",
+    "ac_cloud-code": "targetSdk 28 is not ours to set: Acode's hooks/post-process.js pins it for the F-Droid flavour (legacy storage + exec of its terminal), see build.json::android._doc_target_sdk.",
+    "ac_cloud-c3-webserver": "targetSdk 28 for the storage model: one READ_EXTERNAL_STORAGE grant covers the served root; from 29 scoped storage needs MANAGE_EXTERNAL_STORAGE or per-tree grants, see build.json::android._doc_target_sdk.",
+    "ae-tool_termux-boot": "targetSdk 28 on purpose: raising it puts the BOOT_COMPLETED receiver under Android 10+ background-start limits, which is exactly what this app exists to do (build.json::android._doc_target_sdk)."
+  }
+}

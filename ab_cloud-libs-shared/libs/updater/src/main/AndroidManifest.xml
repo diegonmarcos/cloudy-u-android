@@ -17,6 +17,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
+    <!-- #1675 ONE installer of record: every fleet app must SEE Cloud Store to hand it installs and updates
+         (install/StoreHandoff opens Cloud Store with the package); without it the hand-off falls back to a local session. -->
+    <queries>
+        <package android:name="com.diegonmarcos.cloudstore" />
+    </queries>
+
     <application>
         <service
             android:name="com.diegonmarcos.superapp.updater.BatchForegroundService"

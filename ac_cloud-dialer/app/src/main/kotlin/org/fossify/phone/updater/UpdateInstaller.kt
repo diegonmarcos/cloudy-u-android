@@ -21,7 +21,9 @@ internal class UpdateInstaller(private val context: Context) {
         val installer = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
             setAppPackageName(targetPackage)
-            if (Build.VERSION.SDK_INT >= 34) {
+            // #1675 only when Cloud Store (the fleet's one installer of record) is absent: claiming ownership here would take it
+            // away from Cloud Store and turn its silent updates into prompts.
+            if (Build.VERSION.SDK_INT >= 34 && !Updater.storeInstalled(context)) {
                 // Claim update ownership (Android 14+), same as the constellation's
                 // other installers. Without it UPDATE_PACKAGES_WITHOUT_USER_ACTION is
                 // inert whenever something else installed this app last, and every
@@ -29,7 +31,9 @@ internal class UpdateInstaller(private val context: Context) {
                 setRequestUpdateOwnership(true)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_REQUIRED)
+                // #1675 NOT_REQUIRED: silent when Android's conditions hold (installer of record, targetSdk, no new runtime
+                // permission), and Android itself falls back to its one dialog when they do not.
+                setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 // Without an explicit package source, Android 14/15 Enhanced
