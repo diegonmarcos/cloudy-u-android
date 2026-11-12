@@ -1,15 +1,5 @@
 [
   {
-    "name": "cloudy-ai-api",
-    "service": "cloudy-ai-api",
-    "vm": "oci-A1-f_0",
-    "public_url": "api.diegonmarcos.com/ai",
-    "auth": "two_factor",
-    "private_dns": "cloudy-ai-api.mesh.diegonmarcos.com:4185",
-    "port": 4185,
-    "category": "sec"
-  },
-  {
     "name": "languagetool",
     "service": "languagetool",
     "vm": "oci-A1-f_0",
@@ -28,16 +18,6 @@
     "private_dns": "c3-public-api.mesh.diegonmarcos.com:8087",
     "port": 8087,
     "category": "obs"
-  },
-  {
-    "name": "c3bot-relay",
-    "service": "c3bot-relay",
-    "vm": "oci-A1-f_0",
-    "public_url": "mcp.diegonmarcos.com",
-    "auth": "none",
-    "private_dns": "c3bot-relay.mesh.diegonmarcos.com:3119",
-    "port": 3119,
-    "category": "sec"
   },
   {
     "name": "cloud-drive-mcp",
@@ -268,6 +248,16 @@
     "private_dns": "umami.mesh.diegonmarcos.com:3006",
     "port": 3006,
     "category": "tools"
+  },
+  {
+    "name": "c3bot-relay",
+    "service": "c3bot-relay",
+    "vm": "oci-A1-f_0",
+    "public_url": "mcp.diegonmarcos.com",
+    "auth": "none",
+    "private_dns": "c3bot-relay.mesh.diegonmarcos.com:3119",
+    "port": 3119,
+    "category": "sec"
   },
   {
     "name": "authelia",

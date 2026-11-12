@@ -10,6 +10,16 @@
     "db_engine": null
   },
   {
+    "name": "cloudy-ai-api",
+    "service": "cloudy-ai-api",
+    "vm": "oci-A1-f_0",
+    "private_dns": "cloudy-ai-api.mesh.diegonmarcos.com:4185",
+    "port": 4185,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
     "name": "cloudy-ai-embeddings-api",
     "service": "cloudy-ai-embeddings-api",
     "vm": "oci-A1-f_0",
@@ -50,26 +60,6 @@
     "db_engine": null
   },
   {
-    "name": "google-apps-script-personal",
-    "service": "google-apps-script-personal",
-    "vm": "local",
-    "private_dns": "google-apps-script-personal",
-    "port": null,
-    "protocol": "tcp",
-    "category": "app",
-    "db_engine": null
-  },
-  {
-    "name": "google-apps-script-workspace",
-    "service": "google-apps-script-workspace",
-    "vm": "local",
-    "private_dns": "google-apps-script-workspace",
-    "port": null,
-    "protocol": "tcp",
-    "category": "app",
-    "db_engine": null
-  },
-  {
     "name": "cloud-builder-x",
     "service": "cloud-builder-x",
     "vm": "local",
@@ -107,6 +97,26 @@
     "port": null,
     "protocol": "tcp",
     "category": "cloud",
+    "db_engine": null
+  },
+  {
+    "name": "google-apps-script-personal",
+    "service": "google-apps-script-personal",
+    "vm": "local",
+    "private_dns": "google-apps-script-personal",
+    "port": null,
+    "protocol": "tcp",
+    "category": "app",
+    "db_engine": null
+  },
+  {
+    "name": "google-apps-script-workspace",
+    "service": "google-apps-script-workspace",
+    "vm": "local",
+    "private_dns": "google-apps-script-workspace",
+    "port": null,
+    "protocol": "tcp",
+    "category": "app",
     "db_engine": null
   },
   {
