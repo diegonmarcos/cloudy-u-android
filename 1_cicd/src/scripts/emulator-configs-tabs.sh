@@ -40,6 +40,8 @@ dismiss() {
         dump cur
         # Cloud Drive's start gate (no terminal installed): continue with local files
         if grep -q 'Continue with local files' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^Continue with local files$'; sleep 6; continue; fi
+        # Cloud Gallery's first-run welcome (Get Started): enter the app
+        if grep -q 'text="Get Started"' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^Get Started$'; then sleep 5; continue; fi
         # the fleet's own install-source ask (Skip), or Android's "not allowed to install unknown apps" (Cancel)
         if grep -q 'text="Install unknown apps"' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^Skip$'; then sleep 3; continue; fi
         if grep -qiE 'allowed to install unknown apps' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^cancel$' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; continue; fi
@@ -130,7 +132,7 @@ ok = None not in pos and pos == sorted(pos) and any(t != "|" for t in o[:pos[0]]
 sys.exit(0 if ok else 1)
 PY
 [ $? -eq 0 ] || { echo "FAIL $NAME: the Configs strip is not {own tabs} | Agents, Perms, Logcat, X-Ray App, About"; rc=1; }
-$T adb logcat -d -t 3000 > "$OUT/$NAME-logcat.txt"
-grep -E "FATAL EXCEPTION" -A12 "$OUT/$NAME-logcat.txt" | grep -B2 -A12 "$PKG" | head -40 > "$OUT/$NAME-crash.txt" || true
+$T adb logcat -d -t 30000 > "$OUT/$NAME-logcat.txt"; $T adb logcat -d -b crash > "$OUT/$NAME-logcat-crash.txt" 2>&1 || true
+cat "$OUT/$NAME-logcat.txt" "$OUT/$NAME-logcat-crash.txt" | grep -E "FATAL EXCEPTION" -A12 | grep -B2 -A12 "$PKG" | head -40 > "$OUT/$NAME-crash.txt" || true
 [ -s "$OUT/$NAME-crash.txt" ] && { echo "FAIL $NAME: crash in logcat"; rc=1; }
 exit $rc
