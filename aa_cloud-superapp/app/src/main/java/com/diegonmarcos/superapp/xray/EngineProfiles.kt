@@ -182,7 +182,7 @@ object EngineProfiles {
                 state(Kind.DEBUG, "callers", "Callers", source = "audit ring: distinct callers"),
             )),
         engine("network", "Network & mesh", "DNS, the mesh supervisor and WireGuard, the firewall, Wi-Fi and Bluetooth pages, the local web server, fleet endpoints",
-            appDirs = listOf("network"),
+            appDirs = listOf("network", "location"), // #1690 location/ = the Cloud Nav location reader the GPS views use
             libs = listOf("libs:net", "libs:firewall", "libs:sysdns", "libs:wifi", "libs:bluetooth", "libs:webserver", "libs:fleet-endpoints", "libs:fleet-endpoints-android"),
             libPackages = listOf("$APP.net", "$APP.firewall", "$APP.wifi", "$APP.bluetooth", "$APP.webserver", "$APP.fleetendpoints", "com.diegonmarcos.cloudlib.sysdns"),
             ledger = listOf("net.", "location."),
