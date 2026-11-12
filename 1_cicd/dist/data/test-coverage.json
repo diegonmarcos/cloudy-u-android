@@ -13,11 +13,11 @@
     },
     "aa_cloud-superapp": {
       "first_test": "Has 91 shell testers. tests.unit.enabled=false, so its step named 'JVM unit tests (fatal on failure)' executes nothing and goes green \u2014 its own task, not this one.",
-      "shell_testers": 188,
+      "shell_testers": 189,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 289,
+      "unit_test_sources": 290,
       "workflow": "ship-cloud-superapp.yml"
     },
     "ab_cloud-libs-shared/keyboard-engines": {
@@ -310,11 +310,11 @@
     },
     "ac_cloud-nav": {
       "first_test": "Assert the Google/OSM module split in settings.gradle matches build.json::modules \u2014 a module in one and not the other builds an APK missing a map provider.",
-      "shell_testers": 3,
+      "shell_testers": 4,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
-      "unit_test_sources": 27,
+      "unit_test_sources": 28,
       "workflow": "ship-cloud-nav.yml"
     },
     "ac_cloud-nav/web": {
