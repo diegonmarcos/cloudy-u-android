@@ -15,6 +15,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -111,6 +114,9 @@ class MusicControlsPopup(private val ctx: Context) {
         /** Fixed popup height in dp — the compact landscape box that ends just after the transport buttons. */
         internal const val POPUP_HEIGHT_DP = 167
 
+        /** #1635: extra height for the session switcher row, shown when more than one media session is active. */
+        internal const val SWITCHER_DP = 30
+
         /** Shazam package — the leftmost popup button launches it. */
         internal const val SHAZAM_PKG = "com.shazam.android"
 
@@ -166,19 +172,31 @@ private class MusicSnapshot(c: MediaController?) {
 
 /** The card, split from [MusicControlsPopup.show] so it can be drawn without a window. */
 @Composable
-internal fun MusicControlsCard(ctx: Context, controller: MediaController?, playingPackage: String?, close: () -> Unit) {
+internal fun MusicControlsCard(ctx: Context, initialController: MediaController?, initialPackage: String?, close: () -> Unit) {
     val dm = ctx.resources.displayMetrics
+    // #1635: the card follows the LIVE session list (MediaHub) instead of the controller captured when the island was
+    // tapped: a session that ends, restarts or is switched in the session row re-binds the card, and every control is
+    // sent through MediaHub.send, which re-resolves the live controller at the moment of the tap.
+    val hub by MediaHub.state.collectAsState()
+    var controller by remember(initialController) { mutableStateOf(initialController) }
+    LaunchedEffect(hub) {
+        val live = MediaHub.current(controller)
+        if (live !== controller && (live != null || hub.access == MediaHub.Access.GRANTED)) controller = live
+    }
+    val playingPackage = controller?.packageName ?: initialPackage
+    val switcher = hub.sessions.size > 1
     val snap = remember(controller) { MusicSnapshot(controller) }
     // Nothing playing: the persisted last session (package, track, art, position) - art dimmed, Play resumes it.
     val last = remember(controller) { if (controller == null) LastMediaSession.load(ctx) else null }
     // Registered while the card is composed, unregistered with it - the old attach/detachController.
     DisposableEffect(controller) {
+        val bound = controller
         val cb = object : MediaController.Callback() {
-            override fun onPlaybackStateChanged(state: PlaybackState?) { snap.refreshState(controller) }
-            override fun onMetadataChanged(metadata: MediaMetadata?) { snap.refreshMetadata(controller) }
+            override fun onPlaybackStateChanged(state: PlaybackState?) { snap.refreshState(bound) }
+            override fun onMetadataChanged(metadata: MediaMetadata?) { snap.refreshMetadata(bound) }
         }
-        controller?.registerCallback(cb, Handler(Looper.getMainLooper()))
-        onDispose { controller?.let { runCatching { it.unregisterCallback(cb) } } }
+        bound?.let { runCatching { it.registerCallback(cb, Handler(Looper.getMainLooper())) } }
+        onDispose { bound?.let { runCatching { it.unregisterCallback(cb) } } }
     }
     var faved by remember(controller) {
         mutableStateOf(runCatching {
@@ -189,7 +207,8 @@ internal fun MusicControlsCard(ctx: Context, controller: MediaController?, playi
     // WIDE + SHORT landscape card (Samsung media-card shape): nearly the full screen wide, a compact fixed box tall that ends
     // right after the transport buttons. The art is clipped INTO that box, so it can never inflate the card.
     val shape = RoundedCornerShape(20.dp)
-    Box(Modifier.width((dm.widthPixels * 0.92f / dm.density).dp).height(MusicControlsPopup.POPUP_HEIGHT_DP.dp)
+    Box(Modifier.width((dm.widthPixels * 0.92f / dm.density).dp)
+        .height((MusicControlsPopup.POPUP_HEIGHT_DP + if (switcher) MusicControlsPopup.SWITCHER_DP else 0).dp)
         .clip(shape).background(Color.Black).border(1.dp, Color(0x55B794F4), shape).testTag("music:card")) {
         (snap.art ?: last?.art)?.let {
             Image(it.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().testTag("music:art"))
@@ -206,7 +225,7 @@ internal fun MusicControlsCard(ctx: Context, controller: MediaController?, playi
                 Box(Modifier.size(44.dp).clickable(enabled = iconPkg != null) {
                     runCatching {
                         val intent = ctx.packageManager.getLaunchIntentForPackage(iconPkg!!)
-                        if (intent != null) ctx.startActivity(intent)
+                        if (intent != null) ctx.startActivity(intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
                     }
                     close()
                 }.testTag("music:app-icon")) { AppIcon(icon, 44.dp) }
@@ -214,12 +233,22 @@ internal fun MusicControlsCard(ctx: Context, controller: MediaController?, playi
                     Text(if (controller == null) (last?.title ?: "Nothing playing") else snap.title, color = Color(0xFFF5F5F5), fontSize = 14.sp,
                         fontWeight = FontWeight.Medium, maxLines = 1, style = SHADOW.copy(fontSize = 14.sp),
                         modifier = Modifier.basicMarquee().testTag("music:title"))
-                    Text(if (controller == null) last?.artist.orEmpty() else snap.artist, color = Color(0xFFD4D4D4), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    if (controller == null && hub.access == MediaHub.Access.MISSING) {
+                        // No notification-listener access: the reason + a shortcut to grant it (never a dead card).
+                        Text(hub.reason.orEmpty(), color = Color(0xFFFFC46B), fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            style = SHADOW.copy(fontSize = 10.sp),
+                            modifier = Modifier.padding(top = 2.dp).clickable { MediaHub.openListenerSettings(ctx); close() }.testTag("music:access"))
+                    } else Text(if (controller == null) last?.artist.orEmpty() else snap.artist, color = Color(0xFFD4D4D4), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         style = SHADOW.copy(fontSize = 11.sp), modifier = Modifier.padding(top = 2.dp))
                 }
                 if (controller == null && last == null) IdleLaunchers(ctx, close)
             }
-            if (controller != null) LiveRows(ctx, controller, snap) else IdleRows(last)
+            val live = controller
+            if (live != null) LiveRows(ctx, live, snap) else IdleRows(last)
+            if (switcher) SessionSwitcher(ctx, hub, controller?.let(MediaHub::keyOf)) { key ->
+                MediaHub.select(key)
+                MediaHub.controller(key)?.let { controller = it }
+            }
             // Row 3: Shazam | prev | play/pause | next | heart.
             Row(Modifier.fillMaxWidth().padding(top = 2.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 Glyph(R.drawable.ic_music_recognise, 34, "music:shazam", Color.White) {
@@ -232,19 +261,16 @@ internal fun MusicControlsCard(ctx: Context, controller: MediaController?, playi
                 }
                 Spacer(Modifier.width(14.dp))
                 Glyph(android.R.drawable.ic_media_previous, 38, "music:prev", Color.White) {
-                    controller?.let { runCatching { it.transportControls.skipToPrevious() } }
+                    MediaHub.send(ctx, MediaHub.Action.PREV, controller)
                 }
                 Spacer(Modifier.width(14.dp))
                 Glyph(if (snap.playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, 46, "music:play", Color.White) {
-                    if (controller == null) LastMediaSession.resume(ctx) // one tap restarts the last session
-                    else controller.let { c ->
-                        val playing = c.playbackState?.state == PlaybackState.STATE_PLAYING
-                        runCatching { if (playing) c.transportControls.pause() else c.transportControls.play() }
-                    }
+                    // Live session: play / pause it; none: one tap restarts the last Tidal / Spotify session.
+                    MediaHub.send(ctx, MediaHub.Action.PLAY_PAUSE, controller)
                 }
                 Spacer(Modifier.width(14.dp))
                 Glyph(android.R.drawable.ic_media_next, 38, "music:next", Color.White) {
-                    controller?.let { runCatching { it.transportControls.skipToNext() } }
+                    MediaHub.send(ctx, MediaHub.Action.NEXT, controller)
                 }
                 Spacer(Modifier.width(14.dp))
                 // Favourite (heart): reflects the session's heart rating when published, toggles on tap, and pushes the new
@@ -282,6 +308,29 @@ private fun IdleLaunchers(ctx: Context, close: () -> Unit) {
             }.testTag("music:idle:$pkg")) {
                 if (icon != null) AppIcon(icon, 26.dp)
                 else Icon(painterResource(R.drawable.ic_music_recognise), null, tint = Color(0xCCFFFFFF))
+            }
+        }
+    }
+}
+
+/** #1635: every active media session as a chip (app icon + track); tap drives that session from now on. */
+@Composable
+private fun SessionSwitcher(ctx: Context, hub: MediaHub.State, currentKey: String?, onPick: (String) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp).horizontalScroll(rememberScrollState()).testTag("music:sessions"),
+        verticalAlignment = Alignment.CenterVertically) {
+        for ((i, s) in hub.sessions.withIndex()) {
+            val icon by produceState<android.graphics.drawable.Drawable?>(AppIconCache.cached(s.pkg), s.pkg) {
+                if (value == null) value = withContext(Dispatchers.IO) { AppIconCache.load(ctx, s.pkg) }
+            }
+            val on = s.key == (currentKey ?: hub.targetKey)
+            val chip = RoundedCornerShape(10.dp)
+            Row(Modifier.padding(start = if (i > 0) 6.dp else 0.dp).height(22.dp).clip(chip)
+                .background(if (on) Color(0x66B794F4) else Color(0x33FFFFFF)).clickable { onPick(s.key) }
+                .padding(horizontal = 6.dp).testTag("music:session:${s.pkg}"), verticalAlignment = Alignment.CenterVertically) {
+                AppIcon(icon, 14.dp)
+                Text((if (s.playing) "\u25B6 " else "") + s.title.ifBlank { s.pkg.substringAfterLast('.') },
+                    color = Color.White, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 4.dp).width(96.dp))
             }
         }
     }
@@ -335,7 +384,7 @@ private fun LiveRows(ctx: Context, c: MediaController, snap: MusicSnapshot) {
         onValueChangeFinished = {
             val f = dragging
             dragging = null
-            if (f != null && duration > 0L) runCatching { c.transportControls.seekTo((duration * f).toLong().coerceAtLeast(0)) }
+            if (f != null && duration > 0L) MediaHub.send(ctx, MediaHub.Action.SEEK, c, (duration * f).toLong())
         },
         modifier = Modifier.fillMaxWidth().padding(top = 6.dp).testTag("music:progress"))
     Row(Modifier.fillMaxWidth()) {

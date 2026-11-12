@@ -124,6 +124,12 @@ class NowPlayingMonitor(
             val initial = m.getActiveSessions(notifListenerComponent) ?: emptyList()
             rebindCallbacks(initial)
             evaluateAndDispatch()
+        }.onFailure {
+            // #1635: no notification-listener access - say so (the card shows the reason + a grant shortcut) instead
+            // of leaving the controls bound to nothing. start() runs on every resume, so a later grant is picked up.
+            runCatching { m.removeOnActiveSessionsChangedListener(sessionsChangedListener) }
+            MediaHub.publishAccessMissing()
+            currentController = null; activeController = null
         }
     }
 
@@ -168,7 +174,10 @@ class NowPlayingMonitor(
         currentController = playing
         // Controllable session for the popup: the playing one, else the most
         // recently listed session so a PAUSED player is still reachable.
-        activeController = playing ?: tracked.firstOrNull()
+        // #1635: the same rule the Notify Media badge uses (MediaHub.pickTarget): the user-picked session, else the
+        // playing one (Tidal / Spotify first), else a PAUSED Tidal / Spotify one - never a paused Telegram / browser
+        // session (#1648). MediaHub also publishes every session for the switcher and the persistent badge.
+        activeController = MediaHub.publish(tracked)
         currentPackage = playingPkg
         currentTitle = title
         currentArtist = artist
