@@ -20,7 +20,6 @@ import com.diegonmarcos.cloudwebserver.ui.Note
 import com.diegonmarcos.cloudwebserver.ui.PageColumn
 import com.diegonmarcos.superapp.adbdebug.AdbShellPage
 import com.diegonmarcos.superapp.adbdebug.ChannelLog
-import com.diegonmarcos.superapp.adbdebug.ShellAccess
 import com.diegonmarcos.superapp.shellbroker.ShellBroker
 import com.diegonmarcos.superapp.shellclient.ShellResult
 import com.diegonmarcos.superapp.system.AdbReadiness
@@ -32,19 +31,19 @@ import kotlinx.coroutines.withContext
  * #1682 P2b the REAL ADB owner side, compiled only when adb-owner.json names this app (P3 cut-over) or by the non-shipped CI
  * verify (C3_ADB_OWNER_VERIFY=1). It hosts the one ADB Shell: the lib's page (pairing + its notification, embedded adb, local
  * server / embedded / Shizuku modes), the readiness source (libs:adb-shell-core AdbReadiness, pushed, no polling), Connect with
- * auto-fix (ShellAccess.ensure, the lib's ladder), the Tester (`id -u` over the broker) and the channel log. The AdbShellServer stays
+ * auto-fix (the lib page's own Connect), the Tester (`id -u` over the broker) and the channel log. The AdbShellServer stays
  * loopback + token inside the lib; nothing here is reachable from the Rust HTTP / SSHd / API / mesh routes.
  */
 object AdbOwnerSide {
     const val active: Boolean = true
     const val why: String = ""
 
-    /** Process start: own the broker's change callback and hand AdbReadiness this app's Connect chain. Never throws. */
+    /**
+     * Process start: own the broker's change callback (AdbReadiness). Connect with auto-fix is the lib ADB Shell page's own control
+     * (adb-shell-one-place: the page is the only place that connects), drawn below; the Status card's Connect re-checks. Never throws.
+     */
     fun install(ctx: Context) {
-        runCatching {
-            AdbReadiness.install()
-            AdbReadiness.connector = { c -> runCatching { ShellAccess.ensure(c) {} } }
-        }
+        runCatching { AdbReadiness.install() }
     }
 
     @Composable
