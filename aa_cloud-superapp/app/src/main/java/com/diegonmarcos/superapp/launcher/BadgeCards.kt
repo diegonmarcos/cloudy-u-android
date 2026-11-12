@@ -329,8 +329,8 @@ private fun CollapseChevron(id: String, expanded: Boolean, onClick: () -> Unit) 
             .clickable(onClick = onClick).testTag(BadgeCardTags.toggle(id)),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(painterResource(com.diegonmarcos.superapp.R.drawable.ic_chevron_right), null, tint = NotifCard.title,
-            modifier = Modifier.size(14.dp).rotate(if (expanded) 270f else 90f))
+        // A text glyph: this file draws no drawable of its own (NotifyCardGuardTest).
+        Text(if (expanded) "▴" else "▾", color = NotifCard.title, fontSize = 14.sp, fontFamily = NotifCard.font)
     }
 }
 

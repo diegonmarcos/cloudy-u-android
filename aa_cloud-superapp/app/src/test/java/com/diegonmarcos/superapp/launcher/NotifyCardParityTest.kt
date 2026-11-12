@@ -87,8 +87,9 @@ class NotifyCardParityTest {
     fun `the notify page renders badges in the owner's declared order`() {
         assertEquals(
             listOf(
-                "weather_today", "myhealth", "markets_prices",
+                // #1672 owner order: Media, Me Infos, Device Infos, Actions
                 "media_now_playing",
+                "weather_today", "myhealth", "markets_prices",
                 "network_mesh", "network_data", "battery_status", "ai_usage",
                 "floating_nav_quick_actions", "kde_status",
             ),

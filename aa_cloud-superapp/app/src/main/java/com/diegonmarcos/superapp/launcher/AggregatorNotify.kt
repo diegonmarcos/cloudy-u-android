@@ -165,7 +165,16 @@ private fun SplitCenter(state: AggregatorState, panel: Sections.StackPanel, onOp
     Column(Modifier.fillMaxWidth().testTag(AggTags.feed(feed))) {
         if (!all) GroupModeSwitch(state, feed, VIEW_OPTIONS)
         val granted = remember(state.epoch) { runCatching { AggregatorModel.isNotificationAccessGranted(ctx) }.getOrDefault(false) }
-        if (!granted) Column(Modifier.fillMaxWidth().testTag(AggTags.ACCESS_PROMPT)) { NotificationAccessOff(onOpen = onOpen) }
+        if (!granted) Column(Modifier.fillMaxWidth().testTag(AggTags.ACCESS_PROMPT)) {
+            // Cloudy Apps still has the in-app feed, so it only notes what it cannot read; Phone and All say it in full.
+            if (feed == com.diegonmarcos.superapp.notificationcenter.AppSplit.CLOUDY) {
+                AggCaption("fleet app notifications need notification access")
+                com.diegonmarcos.superapp.uikit.KitTextButton(modifier = Modifier.testTag(AggTags.OPEN_PERMS),
+                    onClick = { runCatching { onOpen(AggregatorModel.PERMS_TARGET) } }) {
+                    Text("Open Configs ▸ Perms", color = LocalKitPalette.current.accent)
+                }
+            } else NotificationAccessOff(onOpen = onOpen)
+        }
         if (!granted && feed == com.diegonmarcos.superapp.notificationcenter.AppSplit.PHONE) return@Column
         val views by remember(panel) { derivedStateOf { runCatching { state.splitViews(panel) }.getOrDefault(emptyList()) } }
         if (views.isEmpty()) {

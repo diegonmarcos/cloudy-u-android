@@ -89,8 +89,12 @@ class NotifyPage1672Test : KitPageHarness() {
     private fun count(m: SemanticsMatcher) = compose.onAllNodes(m, useUnmergedTree = true).fetchSemanticsNodes().size
     private fun exists(tag: String) = compose.onAllNodesWithTag(tag, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
+    /** One sub-page on screen at a time, as the tab strip shows them (the harness's show() adds). */
     private fun page(id: String = "my-rss") {
-        show(AggregatorStackFragment.newInstance("communication", "", id))
+        compose.runOnUiThread {
+            compose.activity.supportFragmentManager.beginTransaction()
+                .replace(android.R.id.content, AggregatorStackFragment.newInstance("communication", "", id)).commitNow()
+        }
         compose.waitForIdle()
     }
 
