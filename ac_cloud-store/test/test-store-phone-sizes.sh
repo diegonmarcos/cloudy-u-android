@@ -98,16 +98,16 @@ echo "== real tree =="
 check "$ROOT"; F=$?
 
 M=0
-mutate() {  # <name> <file-rel> <from> <to>
-  local name="$1" rel="$2" from="$3" to="$4" box; box="$(mktemp -d)"
+mutate() {  # <name> <file-rel> <from> <to> [all]   (all: replace every occurrence, for a use the page now has twice)
+  local name="$1" rel="$2" from="$3" to="$4" all="${5:-}" box; box="$(mktemp -d)"
   mkdir -p "$box/$(dirname "$LIBREL")" "$box/ac_cloud-store/app/src/main"
   cp -r "$ROOT/$LIBREL" "$box/$LIBREL"; cp "$ROOT/ac_cloud-store/app/src/main/AndroidManifest.xml" "$box/ac_cloud-store/app/src/main/"
-  python3 - "$box/$rel" "$from" "$to" <<'PY' || { echo "  MUTATION NOT PLANTED: $name"; rm -rf "$box"; return 1; }
+  python3 - "$box/$rel" "$from" "$to" "$all" <<'PY' || { echo "  MUTATION NOT PLANTED: $name"; rm -rf "$box"; return 1; }
 import sys
-p, a, b = sys.argv[1:]
+p, a, b, every = sys.argv[1:]
 s = open(p, encoding='utf-8').read()
 if a not in s: sys.exit(1)
-open(p, 'w', encoding='utf-8').write(s.replace(a, b, 1))
+open(p, 'w', encoding='utf-8').write(s.replace(a, b, -1 if every else 1))
 PY
   local kot=skip; case "$rel" in *StoreSizes.kt) kot="";; esac
   if check "$box" $kot >/dev/null 2>&1; then echo "  MUTATION SURVIVED: $name"; rm -rf "$box"; return 1; fi
@@ -120,7 +120,7 @@ mutate "no APK fallback" $P/StoreSizeProbe.kt 'val s = (ss?.let { full(it, pkg) 
 mutate "Phone back to a sideways scroller" $P/StorePhoneFragment.kt 'StoreRow.Actions(verbs)' 'Box(Modifier.horizontalScroll(rememberScrollState()))' || M=$((M+1))
 mutate "Phone draws its own card" $P/StorePhoneFragment.kt 'StoreRow.Item(r.label, open,' 'StoreRow.Card(tag = "x") { StoreRow.Head(r.label, open,' || M=$((M+1))
 mutate "Phone drops the shared summary line" $P/StorePhoneFragment.kt 'StoreRow.Summary(' 'StoreCaption(' || M=$((M+1))
-mutate "Cloud stops using the shared actions" $P/StoreCloudFragment.kt 'StoreRow.Actions(' 'MyActions(' || M=$((M+1))
+mutate "Cloud stops using the shared actions" $P/StoreCloudFragment.kt 'StoreRow.Actions(' 'MyActions(' all || M=$((M+1))
 mutate "sort not persisted" $P/StorePhoneFragment.kt 'StoreSizes.saveSort(sortStore, sort)' 'Unit' || M=$((M+1))
 mutate "sizes measured on the main thread" $P/StorePhoneFragment.kt 'thread(name = "store-phone-sizes") {' 'run {' || M=$((M+1))
 mutate "manifest drops usage access" ac_cloud-store/app/src/main/AndroidManifest.xml 'android:name="android.permission.PACKAGE_USAGE_STATS"' 'android:name="android.permission.NOPE"' || M=$((M+1))
