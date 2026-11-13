@@ -21,9 +21,6 @@ adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/n
 adb shell settings put global hide_error_dialogs 1 || true
 adb shell wm size 1080x2340 || true; adb shell wm density 420 || true   # a legible, phone-like screenshot
 
-# a punch-hole cutout like the phone's: the date drops to its own line below the first, as on the device
-adb shell cmd overlay enable com.android.internal.display.cutout.emulation.hole >/dev/null 2>&1 || true; sleep 3
-
 dump() { local i; for i in 1 2 3; do adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
   adb shell cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; grep -q '<node' "$OUT/ui.xml" && return 0; sleep 2; done; }
 cap() { adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/$1.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/$1.xml"; }
@@ -42,7 +39,7 @@ PY
 
 wake; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 14
 adb shell input keyevent KEYCODE_HOME; sleep 4
-cap strip-home
+sleep 6; cap strip-home
 # The Mic / Camera / Location row merges into one clickable node without a label uiautomator can read: tap where it is (right edge,
 # just under the resources line) at a few heights until the dashboard opens.
 W=$(adb shell wm size | grep -o '[0-9]*x[0-9]*' | tail -1 | cut -dx -f1); H=$(adb shell wm size | grep -o '[0-9]*x[0-9]*' | tail -1 | cut -dx -f2)
