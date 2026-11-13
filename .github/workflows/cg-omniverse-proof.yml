@@ -217,6 +217,12 @@ jobs:
           tap("Page diagnostics"); shot("14-galaxy-floor796-diagnostics", 4)
           sh("shell", "input", "swipe", "540", "1700", "540", "700", "400"); shot("15-galaxy-floor796-diagnostics-failed", 1)
           sh("shell", "input", "keyevent", "KEYCODE_BACK")
+          # #1694 experiment: the same world with the pinned copy off (Cloud-Browser has no intercept); same wait
+          sh("shell", "am", "force-stop", pkg)
+          open("w.xml", "w").write('<map><boolean name="pin.floor796" value="false" /></map>')
+          sh("push", "w.xml", "/data/local/tmp/w.xml"); sh("shell", "chmod", "644", "/data/local/tmp/w.xml")
+          print(sh("shell", "run-as", pkg, "cp", "/data/local/tmp/w.xml", "shared_prefs/worlds.xml").stdout)
+          launch("-e", "world", "floor796", wait=0); shot("12-galaxy-floor796-pin-off", 110)
           launch("-e", "world", "lusion-v3", wait=0); shot("10-galaxy-two-tabs", 20)
           # #1701 the Store's 3D models: the cards (photo, facts), then each model open in Galaxy (runtime download, SHA-256 check, viewer)
           launch("-e", "section", "store"); seek("House Boat"); shot("16-store-models", 3)
