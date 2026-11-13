@@ -18,21 +18,10 @@ object TextTools {
      * The apps that may OWN the engines, the settings and the credential, MOST PREFERRED
      * FIRST. [TextToolsClient] binds the first entry that actually publishes [ACTION].
      *
-     * A LIST RATHER THAN ONE NAME, because the home is moving. cloud-writer is the app the
-     * owner asked for — one place for Text Enhance, Translate, Grammar check and Resume,
-     * with a screen he can open — and cloud-keyboard is where all of it lives until that
-     * app ships. While this were a single constant naming the keyboard, cloud-writer could
-     * be built, signed, shipped and installed and nothing on the phone would ever talk to
-     * it; every consumer would have to be rebuilt on the same day to notice. Ordered
-     * preference makes the handover an INSTALL rather than a fleet-wide release:
-     *
-     *  - no cloud-writer on the phone -> the keyboard resolves, exactly as before. This
-     *    list changes no behaviour on any device that exists today.
-     *  - cloud-writer installed        -> every consumer picks it up at its next rebind,
-     *    with no consumer rebuild and no consumer commit.
-     *  - cloud-writer removed again    -> the binding dies, the client re-resolves and
-     *    lands back on the keyboard. The fallback is not a special case; it is the same
-     *    line of code as the first bind.
+     * A LIST RATHER THAN ONE NAME so a future home can be added by an install rather than a fleet-wide release.
+     * #1707: the standalone cloud-writer app was retired and its Writer lives in cloud-keyboard (the Writer tab), so the
+     * keyboard is the only entry: it owns the engines, the settings and the credential. (The retired app never published
+     * the action, so nothing on a phone ever bound to it.)
      *
      * ORDER IS THE PREFERENCE AND IS THE ONLY THING THIS LIST MEANS. It is not a fallback
      * chain to be walked when a call fails: a bound peer that answers an ERROR has answered,
@@ -44,7 +33,6 @@ object TextTools {
      * a stranger.
      */
     val SERVICE_PACKAGES = listOf(
-        "com.diegonmarcos.cloudwriter",
         "com.diegonmarcos.cloudkeyboard",
     )
 

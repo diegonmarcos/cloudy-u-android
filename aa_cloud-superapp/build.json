@@ -3043,11 +3043,11 @@
                 "target": "extapp:cloud-keyboard"
               },
               {
-                "_doc": "Writer \u2014 hands off to the standalone Cloud Writer app (ac_cloud-writer, com.diegonmarcos.cloudwriter, read from ITS android.application_id and app/build.gradle namespace, not guessed from the slug). Same shape as the Keyboard tile beside it: target=extapp:cloud-writer \u2192 ShellActivity.launchExternalApp opens the package if installed, else downloads + installs ui.external_apps[id=cloud-writer].install_apk_url \u2014 no ACTION_VIEW, so there is no seventh ad-hoc startActivity site and no ActivityNotFoundException path. POSITION IS DELIBERATE AND IT IS NOT LAST: GroupedTilesFragment walks group.tiles in declared order with no sort, and the Camera tile below records the owner asking for the camera 'as last' in this row on 2026-09-10, so Writer goes in front of it rather than displacing a placement he named. icon ic_writer is Cloud Writer's own launcher foreground copied into this app's drawables \u2014 Sections.iconResFor falls back to ic_link_tile in silence when a name resolves to nothing, so the file's existence is pinned by test-writer-tile.sh rather than trusted.",
+                "_doc": "Writer \u2014 opens the Writer tab of Cloud Keyboard (#1707: the standalone Cloud Writer app was retired and merged into the keyboard). target=extapp:cloud-keyboard#page:writer \u2192 ShellActivity.launchExternalApp opens com.diegonmarcos.cloudkeyboard (ui.external_apps[id=cloud-keyboard]) with shortcut_action=page:writer, which the keyboard's SettingsActivity resolves through SettingsDestination.externalRoute(\"writer\") to the Writer tab; not installed \u2192 the keyboard's install offer.",
                 "id": "writer",
                 "label": "Writer",
                 "icon": "ic_writer",
-                "target": "extapp:cloud-writer"
+                "target": "extapp:cloud-keyboard#page:writer"
               },
               {
                 "_doc": "#1627 DOUBLE divider ('||'): a stronger group rule than the single '|'. `separator:true` + `double:true`; GroupedTilesFragment draws a bolder TileDivider on the previous tile's edge. Not clickable, not focusable, no target, dropped by TileGroup.destinations.",
@@ -9326,16 +9326,6 @@
         "forks": {}
       },
       {
-        "_doc": "Cloud Writer — the standalone writing app (ac_cloud-writer, published by ship-cloud-writer.yml since #259). Added because the Cloud ▸ Tools Primary tile targets extapp:cloud-writer, and test-app-identity-resolves.sh T1 makes that an invariant rather than a convention: with no entry here Sections.externalApp returns null and the tile snacks 'Unknown app: cloud-writer' — a tile that fails AFTER the tap, which is the failure mode the C3 tile's _doc calls worse than no tile at all. package read from ac_cloud-writer/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors ac_cloud-writer/build.json::release.gh_release and answered 200 / 3,276,890 bytes on 2026-09-11. folder=prod_docs ('.Docs & Notes') is the taxonomy half of the same record — PhoneFolders derives the pkg: keyword from it, so NO literal keyword for com.diegonmarcos.cloudwriter may be added to ui.phone_folders (T8b fails on exactly that).",
-        "_doc_abi": "install_apk_url names the arm64 asset, which is the ONLY shape this schema has — all 19 entries carry one flat URL. Cloud Writer is the first companion published in two ABI variants (Cloud-Writer.apk / Cloud-Writer-x86_64.apk, both in the generated data/constellation-fleet.json under `assets`), so on an x86_64 device a flat arm64 URL is #43 again: INSTALL_FAILED_NO_MATCHING_ABIS. The per-ABI names are NOT restated here. ShellActivity.launchExternalApp resolves this URL through the fleet manifest's assets map before installing, via the one ABI rule the updater already owns (AbiUpdateTag.resolveFrom, the same rule Fleet.App.abiReleaseUrl uses) — so this field stays the arm64 default and the device picks.",
-        "id": "cloud-writer",
-        "folder": "prod_docs",
-        "hub_package": "com.diegonmarcos.cloudwriter",
-        "install_package": "com.diegonmarcos.cloudwriter",
-        "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Writer.apk",
-        "forks": {}
-      },
-      {
         "_doc": "Cloud Calc (ac_cloud-calc, published by ship-cloud-calc.yml since #767). Added in #772 for the Cloud ▸ Tools Primary tile: every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ac_cloud-calc/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors ac_cloud-calc's arm64 release asset; x86_64 devices are resolved through the fleet assets map exactly as Cloud Writer's _doc_abi describes. folder=prod_utils ('=Utilities') is the taxonomy half of the same record — PhoneFolders derives the pkg: keyword from it, so NO literal keyword for com.diegonmarcos.cloudcalc may be added to ui.phone_folders.",
         "id": "cloud-calc",
         "folder": "prod_utils",
@@ -9859,13 +9849,6 @@
         "role": "routes"
       },
       {
-        "_doc": "Cloud Writer — the application the owner asked for, and the only peer with a MODEL PER TOOL: Text Enhance, Grammar Check and Summary each resolve their own, which is what \"here we will define the AI model to do Summary, Grammar Only, Text Enhance\" asked for. It routes exactly as Cloud Mail does — its own registry (ac_cloud-writer/build.json::writer_ai), its own composed prompts, its own provider, and NO key: it calls enhanceWith/summariseWith and the serving app spends the credential.",
-        "_doc_not_serves_yet": "cloud-writer is FIRST in TextTools.SERVICE_PACKAGES, so it becomes the server the day its manifest publishes the ITextTools action — not the day this row is edited. This row reads `routes` because that APK does not publish it, for a reason no manifest can fix: the owner's provider key lives in cloud-keyboard's SharedPreferences under cloud-keyboard's uid and no install moves it, so a serving cloud-writer would take Enhance, Summary, Translate and Grammar from every consumer on its first bind and answer 'No API key' to all four. When it does serve, this row becomes `serves` and Cloud Keyboard's drops to `routes` IN THE SAME COMMIT — AiFleetRoster documents that exactly one app serves, and two `serves` rows with one real server makes this console report a peer that cannot answer.",
-        "package": "com.diegonmarcos.cloudwriter",
-        "label": "cloud-writer",
-        "role": "routes"
-      },
-      {
         "_doc": "This app. It holds no provider key and no route of its own — it links libs:text-tools only to ASK the keyboard about its routing state. Listed because the owner asked for the fleet view to include this app; 'holds no key, routes nothing, this is the console' is the true answer for it.",
         "package": "com.diegonmarcos.superapp",
         "label": "cloud-superapp",
@@ -9881,10 +9864,9 @@
         "action": "com.diegonmarcos.superapp.texttools.ITextTools",
         "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
         "serves": [
-          "com.diegonmarcos.cloudwriter",
           "com.diegonmarcos.cloudkeyboard"
         ],
-        "note": "Enhance, Translate, Grammar and Resume for every app. Order is PREFERENCE, not a retry chain: the first installed server wins and resolution happens once per bind. Cloud Writer is preferred and deliberately publishes no service yet, so today the keyboard serves."
+        "note": "Enhance, Translate, Grammar and Resume for every app. Order is PREFERENCE, not a retry chain: the first installed server wins and resolution happens once per bind. The standalone Cloud Writer was retired (#1707): the keyboard serves."
       },
       {
         "id": "fleet-token",

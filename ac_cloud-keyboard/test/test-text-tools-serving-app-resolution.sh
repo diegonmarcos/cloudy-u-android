@@ -14,8 +14,7 @@
 # owner just finds that a tool stopped working, or worse that it kept working
 # while pointing at the wrong app.
 #
-#   T1/T2  the list exists and cloud-writer is BEFORE cloud-keyboard. Reverse
-#          them and cloud-writer can be installed on the phone while every
+#   T1/T2  (#1707) the list names cloud-keyboard and no longer the retired cloud-writer.
 #          consumer keeps talking to the keyboard, with nothing on screen saying
 #          so. Order is the entire meaning of the list.
 #   T3     no single-address constant survives. A leftover SERVICE_PKG is a
@@ -134,29 +133,23 @@ check_body() {
 
 echo "── Text tools: which app serves, and what never reaches a log ──"
 
-# ── T1 ── the ordered list exists and holds both addresses ────────────────
+# ── T1 ── the ordered list exists and holds the keyboard ───────────────────
+# #1707 the standalone cloud-writer app is retired (its Writer is the keyboard's Writer tab), so the keyboard is the one entry.
 PACKAGES="$(list_body "$ADDRESSES" 'val SERVICE_PACKAGES')"
 if check_body "$PACKAGES" "T1 SERVICE_PACKAGES"; then
-    if grep -q "\"$WRITER_PKG\"" <<<"$PACKAGES" && grep -q "\"$KEYBOARD_PKG\"" <<<"$PACKAGES"; then
-        pass "T1 SERVICE_PACKAGES names both cloud-writer and cloud-keyboard"
+    if grep -q "\"$KEYBOARD_PKG\"" <<<"$PACKAGES"; then
+        pass "T1 SERVICE_PACKAGES names cloud-keyboard"
     else
-        fail "T1 SERVICE_PACKAGES must name both $WRITER_PKG and $KEYBOARD_PKG — a list with one entry is the constant it replaced"
+        fail "T1 SERVICE_PACKAGES must name $KEYBOARD_PKG — it owns the engines, the settings and the credential"
     fi
 fi
 
-# ── T2 ── cloud-writer comes FIRST. The order is the whole semantic ───────
+# ── T2 ── the retired cloud-writer is NOT an address any more ─────────────
 if [ -n "$PACKAGES" ]; then
-    # Line numbers within the extracted list, so nothing outside it can decide
-    # this. Two greps rather than one regex: an ordering assertion built from a
-    # single pattern passes when NEITHER matches.
-    WRITER_AT="$(grep -n "\"$WRITER_PKG\"" <<<"$PACKAGES" | head -1 | awk -F: '{print $1}')"
-    KEYBOARD_AT="$(grep -n "\"$KEYBOARD_PKG\"" <<<"$PACKAGES" | head -1 | awk -F: '{print $1}')"
-    if [ -z "$WRITER_AT" ] || [ -z "$KEYBOARD_AT" ]; then
-        fail "T2 could not locate both packages inside SERVICE_PACKAGES — see T1"
-    elif [ "$WRITER_AT" -lt "$KEYBOARD_AT" ]; then
-        pass "T2 cloud-writer is preferred over cloud-keyboard (line $WRITER_AT before $KEYBOARD_AT)"
+    if grep -q "\"$WRITER_PKG\"" <<<"$PACKAGES"; then
+        fail "T2 SERVICE_PACKAGES still names the retired $WRITER_PKG (#1707)"
     else
-        fail "T2 cloud-keyboard is listed before cloud-writer — cloud-writer could be installed and nothing would ever bind it"
+        pass "T2 the retired cloud-writer is not in SERVICE_PACKAGES"
     fi
 fi
 
@@ -246,7 +239,7 @@ fi
 # application's release. A manifest that names cloud-writer's package makes an
 # absent cloud-writer a consumer problem.
 # Same fail-closed reasoning as T3: grep status 2 is an error, not an all-clear.
-HARD_DEP="$(grep -rn "$WRITER_PKG" --include='AndroidManifest.xml' --include='*.gradle' --include='*.gradle.kts' "$ROOT")"; RC=$?
+HARD_DEP="$(grep -rnE "[\"']$WRITER_PKG[\"']" --include='AndroidManifest.xml' --include='*.gradle' --include='*.gradle.kts' "$ROOT")"; RC=$?
 HARD_DEP="$(printf '%s\n' "$HARD_DEP" | grep -v '/\.git/' | grep -v "^$ROOT/ac_cloud-writer/")" || true
 if [ "$RC" -gt 1 ]; then
     fail "T8 the search itself failed (grep exit $RC) — an empty result here would be a verdict drawn from the error, not from the tree"

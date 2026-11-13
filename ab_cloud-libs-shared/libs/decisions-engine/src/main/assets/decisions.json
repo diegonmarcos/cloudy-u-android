@@ -212,7 +212,7 @@
    "consent": "implicit",
    "content": "none",
    "apps": [
-    "com.diegonmarcos.cloudwriter"
+    "com.diegonmarcos.cloudkeyboard"
    ],
    "gate": {
     "after": [

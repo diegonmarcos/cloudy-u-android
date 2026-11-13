@@ -2106,9 +2106,9 @@ class WriterSurface(
         private fun activityClass(simple: String): Class<out Activity> =
             Class.forName("com.diegonmarcos.cloudwriter.$simple").asSubclass(Activity::class.java)
 
-        /** The activity that hosts the app: cloud-writer's MainActivity, or the host application's launcher where there is none. */
+        /** The activity that hosts the Writer (#1707): the host's WriterShareActivity (Cloud Keyboard), else the host's launcher. */
         fun mainIntent(context: Context): Intent {
-            val own = Intent().setClassName(context.packageName, "com.diegonmarcos.cloudwriter.MainActivity")
+            val own = Intent().setClassName(context.packageName, "com.diegonmarcos.cloudkeyboard.WriterShareActivity")
             if (own.resolveActivity(context.packageManager) != null) return own
             return context.packageManager.getLaunchIntentForPackage(context.packageName) ?: own
         }

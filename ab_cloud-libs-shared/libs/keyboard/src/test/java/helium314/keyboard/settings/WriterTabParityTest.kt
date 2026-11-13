@@ -5,13 +5,13 @@ import org.junit.Test
 import java.io.File
 
 /**
- * #1698 the keyboard's Writer tab IS cloud-writer: its first top sub-tabs are cloud-writer's bottom bar (ac_cloud-writer
- * build.json ui.bottom_nav), same ids, same order, same labels, each drawn by libs:writer-ui's WriterSurface through the
+ * #1698 the keyboard's Writer tab IS cloud-writer: its first top sub-tabs are cloud-writer's bottom bar (libs:writer-ui
+ * writer-config.json ui.bottom_nav; the standalone app was retired in #1707), same ids, same order, same labels, each drawn by libs:writer-ui's WriterSurface through the
  * host/<id> route; Voice Transcription and Dictionary follow.
  */
 class WriterTabParityTest {
     private fun writerBuildJson(): String? = generateSequence(File("").absoluteFile) { it.parentFile }
-        .map { File(it, "ac_cloud-writer/build.json") }.firstOrNull { it.isFile }?.readText()
+        .map { File(it, "ab_cloud-libs-shared/libs/writer-ui/writer-config.json") }.firstOrNull { it.isFile }?.readText()
 
     @Test fun writerTabStartsWithCloudWritersBottomBarInOrderMinusHome() {
         val bar = listOf("enhancer" to "Enhancer", "drafter" to "Drafter", "home" to "Home", "translator" to "Translator", "grammar" to "Grammar")

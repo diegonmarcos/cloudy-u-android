@@ -128,14 +128,6 @@
       "1_cicd/src/cicd/ship-cloud-wallet-wasm.yml",
       "1_cicd/src/templates/ship-wasm.yml.in"
     ],
-    "ac_cloud-writer/web": [
-      "ab_cloud-libs-shared/web/**",
-      "ab_cloud-libs-shared/libs/ui-kit/src/commonMain/**",
-      "ab_cloud-libs-shared/libs/bottomnav/src/commonMain/**",
-      "ac_cloud-writer/test/test-writer-web.sh",
-      "1_cicd/src/cicd/ship-cloud-writer-wasm.yml",
-      "1_cicd/src/templates/ship-wasm.yml.in"
-    ],
     "ac_cloud-myterminal/web": [
       "ab_cloud-libs-shared/web/**",
       "ab_cloud-libs-shared/libs/ui-kit/src/commonMain/**",

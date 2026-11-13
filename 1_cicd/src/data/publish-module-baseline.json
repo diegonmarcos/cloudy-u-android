@@ -55,8 +55,6 @@
   "1_cicd/src/cicd/ship-cloud-vault.yml": 2,
   "1_cicd/src/cicd/ship-cloud-wallet-wasm.yml": 3,
   "1_cicd/src/cicd/ship-cloud-wallet.yml": 1,
-  "1_cicd/src/cicd/ship-cloud-writer-wasm.yml": 3,
-  "1_cicd/src/cicd/ship-cloud-writer.yml": 2,
   "1_cicd/src/cicd/ship-garmin-watchface.yml": 2,
   "1_cicd/src/cicd/ship-termux-boot.yml": 7,
   "1_cicd/src/scripts/cloud-android-publish-gate.sh": 1,

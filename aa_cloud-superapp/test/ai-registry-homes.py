@@ -47,12 +47,14 @@ def main(manifest_path, root):
     found = set()
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
-        if "build.json" not in filenames:
-            continue
-        path = os.path.join(dirpath, "build.json")
-        with open(path, encoding="utf-8", errors="replace") as handle:
-            if MARKER in handle.read():
-                found.add(os.path.relpath(path, root))
+        # #1707 a registry lives in a build.json, or in libs:writer-ui's writer-config.json (the Writer's, moved from ac_cloud-writer)
+        for name in ("build.json", "writer-config.json"):
+            if name not in filenames:
+                continue
+            path = os.path.join(dirpath, name)
+            with open(path, encoding="utf-8", errors="replace") as handle:
+                if MARKER in handle.read():
+                    found.add(os.path.relpath(path, root))
 
     listed = {r["path"] for r in declared}
     if found == listed:

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Dark mode: TRUE BLACK, matching what CloudWriterTheme's OLED pull does to the background
-         the moment it composes. The owner runs a Samsung black Power Saving theme (tasks 186 and
-         229), so any other value here is a grey rectangle that flashes before the real screen. -->
-    <color name="window_background">#000000</color>
-</resources>

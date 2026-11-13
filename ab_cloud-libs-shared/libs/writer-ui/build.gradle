@@ -1,17 +1,17 @@
 // libs:writer-ui (#1652) — Cloud Writer's whole UI as a library, shared BY REFERENCE: the app
-// (ac_cloud-writer) hosts it in a thin MainActivity, and cloud-keyboard's Writer tab hosts the very
+// (retired, #1707) hosted it in a thin MainActivity, and cloud-keyboard's Writer tab hosts the very
 // same code, so the two cannot drift (rule 16: replicate exactly, no fork).
 //
 // WHAT IS HERE: WriterSurface (the whole app as Content(), or ONE named page as Page(id), see its
 // companion for the ids), the five tool pages and their activity shells, the Listen engine and its
 // service class, prefs, registry, routes, the Compose components and theme, the strings. WHAT IS NOT:
 // the manifest. This module declares no component; the host owns MainActivity, the activity list,
-// ListenService, the OCR FileProvider and the debug-API provider (ac_cloud-writer/app declares each
+// ListenService, the OCR FileProvider and the debug-API provider (ac_cloud-keyboard/app declares each
 // exactly once). The pure logic is libs:writer-core.
 //
-// ITS BAKED CONFIG IS AC_CLOUD-WRITER'S build.json (writer_ai, writer_routes, update, ui): one source
-// of truth, read from there whichever app builds this module, so the app and an embedding host bake
-// byte-identical registries, routes and nav declarations. FAILS THE BUILD when a block is missing
+// ITS BAKED CONFIG IS writer-config.json (writer_ai, writer_routes, update, ui; #1707, moved from the retired
+// ac_cloud-writer/build.json): one source of truth, so every embedding host bakes byte-identical
+// registries, routes and nav declarations. FAILS THE BUILD when a block is missing
 // (a registry that silently resolved to empty draws an app whose tool menu is blank).
 plugins {
     id 'com.android.library'
@@ -20,10 +20,8 @@ plugins {
 }
 apply from: '../fleet-urls.gradle'   // #1093 fleetUrl(): fleet hosts come from the one declaration
 
-def writerJson = [new File(projectDir.canonicalFile, '../../../ac_cloud-writer/build.json'),
-                  new File(rootDir, '../ac_cloud-writer/build.json'),
-                  new File(rootDir, 'ac_cloud-writer/build.json')].find { it.exists() }
-if (writerJson == null) throw new GradleException("libs:writer-ui bakes ac_cloud-writer/build.json and it is not in the checkout.")
+def writerJson = new File(projectDir, 'writer-config.json')
+if (!writerJson.exists()) throw new GradleException("libs:writer-ui bakes writer-config.json (next to this build.gradle) and it is missing.")
 def buildJson = new groovy.json.JsonSlurper().parse(writerJson)
 
 def writerAi = buildJson.writer_ai

@@ -543,6 +543,35 @@ class StoreCloudFragment : KitComposeFragment() {
             tags = FILTER_TAGS)
         FleetList(ctx, list, hasLibSections)
         if (buildTimeLibs.isNotEmpty()) BuildTimeLibs(buildTimeLibs == "ml")
+        if (tabs.getOrNull(tab)?.id == "apps") RetiredSection(ctx)
+    }
+
+    /**
+     * #1707 RETIRED: an app that left the fleet (appstore-retired-apps.json) and is still installed here stays on the page, marked
+     * retired, with where its function lives now and an Uninstall; it is not offered for update and is gone from the page once removed.
+     */
+    @Composable
+    private fun RetiredSection(ctx: Context) {
+        var open by remember { mutableStateOf<String?>(null) }
+        // re-read when the page resumes (progress.tick moves on every install/uninstall event)
+        val gone = remember(progress.tick, resume) { runCatching { RetiredApps.installed(ctx) }.getOrDefault(emptyList()) }
+        if (gone.isEmpty()) return
+        SectionHeading("Retired")
+        for (e in gone) {
+            val isOpen = open == e.pkg
+            StoreRow.Item(e.label, isOpen, { open = if (isOpen) null else e.pkg }, tag = "store-retired:${e.pkg}",
+                dot = "✕", dotColor = cErr, meta = RetiredApps.meta(e), metaColor = cErr,
+                quick = StoreQuick("Uninstall", cBlk) { runCatching { Fleet.uninstall(ctx, e.pkg) } },
+                headTag = "store-retired-head:${e.pkg}", metaTag = "store-retired-meta:${e.pkg}") {
+                StoreCaption(RetiredApps.explain(e))
+                Text(e.pkg, color = cDim.ink(), fontSize = StoreDensity.T_CAPTION.sp, fontFamily = FontFamily.Monospace)
+                StoreRow.Actions(listOfNotNull(
+                    StoreVerb("Uninstall", cBlk, { runCatching { Fleet.uninstall(ctx, e.pkg) } }, "store-retired-uninstall:${e.pkg}"),
+                    StoreVerb("Open ${e.replacementLabel.ifBlank { "replacement" }}", cMiss, { openReplacement(ctx, e.replacementPackage) },
+                        "store-retired-open:${e.pkg}").takeIf { e.replacementPackage.isNotBlank() },
+                ))
+            }
+        }
     }
 
     /** True when [app] belongs in the current filter. An app whose state has not
@@ -1248,6 +1277,12 @@ class StoreCloudFragment : KitComposeFragment() {
             }
             checkAll(ctx)
         }
+    }
+
+    /** #1707 the retired app's replacement, opened at its Writer page (the keyboard's SettingsActivity reads open_at=writer). */
+    private fun openReplacement(ctx: Context, pkg: String) {
+        val i = ctx.packageManager.getLaunchIntentForPackage(pkg)?.putExtra("open_at", "writer")
+        if (i != null) startActivity(i) else Toast.makeText(ctx, "Not installed", Toast.LENGTH_SHORT).show()
     }
 
     private fun openApp(ctx: Context, pkg: String) {

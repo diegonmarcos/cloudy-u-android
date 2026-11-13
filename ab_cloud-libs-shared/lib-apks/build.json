@@ -242,7 +242,7 @@
       "watchdog": "The ssh bridge Cloud C3's watchdog uses, shared by reference.",
       "webserver": "The HTTP serving engine, free of every other fleet dependency.",
       "writer-core": "Cloud Writer's pure logic (routing, OpenRouter wire, Listen segmenter, Markdown tools, document store), plain JVM.",
-      "writer-ui": "Cloud Writer's whole UI (WriterSurface and its pages), hosted by cloud-writer and by the keyboard's Writer tab.",
+      "writer-ui": "Cloud Writer's whole UI (WriterSurface and its pages), hosted by the keyboard's Writer tab (the standalone Cloud Writer was retired, #1707).",
       "cad-core": "The CAD model library core: models.json manifest, format to viewer-lib routing with store-only reasons, sha256-verified model cache and the three.js viewer page.",
       "cad-mesh": "CAD viewer lib for glTF/GLB, OBJ and FBX (three.js loaders).",
       "cad-brep": "CAD viewer lib for STEP and IGES (occt-import-js, Open CASCADE in WASM).",

@@ -1,0 +1,13 @@
+{
+  "_doc": "#1707 apps that were retired from the fleet and are no longer published. The Store keeps showing one, as RETIRED with an Uninstall action, for as long as a copy is still installed (StoreCloudFragment > Apps > Retired), so an installed copy never silently vanishes from the list. Once uninstalled it is gone from the page. `replacement_label` says where the function lives now.",
+  "apps": [
+    {
+      "package": "com.diegonmarcos.cloudwriter",
+      "label": "Cloud Writer",
+      "retired": "2026-11-13",
+      "replacement_label": "Cloud Keyboard > Writer",
+      "replacement_package": "com.diegonmarcos.cloudkeyboard",
+      "reason": "Merged into Cloud Keyboard: its Writer tab has every page of the former app. No update is published any more."
+    }
+  ]
+}

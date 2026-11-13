@@ -472,16 +472,6 @@
     "install_unknown"
    ],
    "helpers": []
-  },
-  {
-   "app": "ac_cloud-writer",
-   "package": "com.diegonmarcos.cloudwriter",
-   "label": "cloud-writer",
-   "needs": [
-    "notifications",
-    "microphone"
-   ],
-   "helpers": []
   }
  ]
 }

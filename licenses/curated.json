@@ -446,12 +446,6 @@
    "what": "Cloud Wallet app",
    "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
   },
-  "ac_cloud-writer": {
-   "licence": "LicenseRef-NoLicenseGranted",
-   "kind": "own",
-   "what": "Cloud Writer app",
-   "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
-  },
   "b_infra": {
    "licence": "LicenseRef-NoLicenseGranted",
    "kind": "own",
@@ -806,10 +800,6 @@
    "licence_source": "Gradle wrapper (build tool, not packaged in an APK)"
   },
   "ac_cloud-wallet/web/gradle/wrapper/gradle-wrapper.jar": {
-   "licence": "Apache-2.0",
-   "licence_source": "Gradle wrapper (build tool, not packaged in an APK)"
-  },
-  "ac_cloud-writer/web/gradle/wrapper/gradle-wrapper.jar": {
    "licence": "Apache-2.0",
    "licence_source": "Gradle wrapper (build tool, not packaged in an APK)"
   },

@@ -1,6 +1,0 @@
-# gradle / kotlin build state
-.gradle/
-.kotlin/
-build/
-local.properties
-kotlin-js-store/

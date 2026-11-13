@@ -441,23 +441,6 @@
         "tester": "test-wallet-web.sh",
         "size_budget_mb": 20
       }
-    },
-    {
-      "name": "cloud-writer",
-      "module": "ac_cloud-writer",
-      "application_id": "com.diegonmarcos.cloudwriter",
-      "description": "Cloud Writer - the application the owner asked for: one place that owns Text Enhance, Translate, Grammar Check and Summary (Resume), with its own model choice f",
-      "web": {
-        "_doc": "#876 Cloud Writer as a Kotlin/Wasm page (web/ is its own gradle root; the shared libs' pure-Compose sources arrive through the ab_cloud-libs-shared/web composite). Rendered into 1_cicd/src/cicd/ship-cloud-writer-wasm.yml by the workflow generator: `./gradlew wasmJsBrowserDistribution` in `dir`, tested by test/test-writer-web.sh, `build/dist/wasmJs/productionExecutable` zipped to `artifact` and attached to the rolling release as `gh_asset`. A mocked page: the island and tab strips are ui.bottom_nav / ui.sections as the Android shell reads them, the first section shows mock data and the rest say they live in the Android app. The APK's own ship ignores this directory.",
-        "dir": "web",
-        "host": "ubuntu-latest",
-        "artifact": "Cloud-Writer.wasm.zip",
-        "gh_asset": "Cloud-Writer.wasm.zip",
-        "portal_slug": "cloud-writer",
-        "entry": "index.html",
-        "tester": "test-writer-web.sh",
-        "size_budget_mb": 20
-      }
     }
   ]
 }

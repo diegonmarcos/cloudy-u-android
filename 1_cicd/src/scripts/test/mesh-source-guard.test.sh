@@ -19,11 +19,11 @@ GUARD="$ROOT/1_cicd/src/scripts/cloud-android-mesh-source-guard.py"
 CORE_MF=ab_cloud-libs-shared/libs/core/src/main/AndroidManifest.xml
 DEV_MF=ab_cloud-libs-shared/libs/devtools/src/main/AndroidManifest.xml
 FLEET=aa_cloud-superapp/data/constellation-fleet.json
-WRITER=ac_cloud-writer/app/build.gradle
+WRITER=ac_cloud-keyboard/app/build.gradle
 MAIL=ac_cloud-mail/app/build.gradle.kts
 CORE=ab_cloud-libs-shared/libs/core/build.gradle
 SHARED=ab_cloud-libs-shared/libs
-WRITER_WF=.github/workflows/ship-cloud-writer.yml
+WRITER_WF=.github/workflows/ship-cloud-keyboard.yml
 INIT_KT=ab_cloud-libs-shared/libs/devtools/src/main/java/com/diegonmarcos/superapp/devtools/DebugInitProvider.kt
 CAMERA_MF=ac_cloud-camera/app/src/main/AndroidManifest.xml
 for f in "$GUARD" "$ROOT/$CORE_MF" "$ROOT/$DEV_MF" "$ROOT/$FLEET" "$ROOT/$WRITER" "$ROOT/$MAIL" "$ROOT/$CORE" "$ROOT/$WRITER_WF" "$ROOT/$INIT_KT" "$ROOT/$CAMERA_MF"; do
@@ -88,7 +88,7 @@ PY
     else fail "$1 stayed green or named the wrong thing (rc=$rc)"; printf '%s\n' "$out" | tail -5; fi
 }
 cut "writer drops every lib that reaches core" "$WRITER" core \
-    "writer           G1 dependency closure lacks libs:core (direct:"
+    "keyboard         G1 dependency closure lacks libs:core (direct:"
 cut "mail drops every lib that reaches core" "$MAIL" core \
     "mail             G1 dependency closure lacks libs:core (direct:"
 # devtools reaches an app through core's api edge and, since #1630, through fleetconfigs-logcat's own: with no shared lib
@@ -106,12 +106,12 @@ fi
 # A static lib an app compiles is a push path of its workflow, so a core edit ships writer.
 mutate "writer's ship workflow stops watching core" "$WRITER_WF" \
     "s=s.replace('      - \"ab_cloud-libs-shared/libs/core/**\"\n', '', 1)" \
-    "writer           G2 ship-cloud-writer.yml does not watch ab_cloud-libs-shared/libs/core/**"
+    "keyboard         G2 ship-cloud-keyboard.yml does not watch ab_cloud-libs-shared/libs/core/**"
 # #763 G2 is two-sided: watching a lib the app does not compile rebuilds and
 # republishes it for nothing (vault watched analytics, browser and updater).
 mutate "writer's ship workflow watches a lib writer does not compile" "$WRITER_WF" \
     "s=s.replace('      - \"ab_cloud-libs-shared/libs/core/**\"\n', '      - \"ab_cloud-libs-shared/libs/core/**\"\n      - \"ab_cloud-libs-shared/libs/fin/**\"\n', 1)" \
-    "writer           G2 ship-cloud-writer.yml watches ab_cloud-libs-shared/libs/fin/** which"
+    "keyboard         G2 ship-cloud-keyboard.yml watches ab_cloud-libs-shared/libs/fin/** which"
 mutate "core stops requesting CONSTELLATION_DATA" "$CORE_MF" \
     "s=re.sub(r'<uses-permission[^>]*CONSTELLATION_DATA\"\s*/>', '', s, count=1)" \
     "libs:core no longer REQUESTS CONSTELLATION_DATA"
@@ -134,7 +134,7 @@ mutate "camera's manifest strips INTERNET back out" "$CAMERA_MF" \
     "s=s.replace('<uses-permission android:name=\"android.permission.CAMERA\"/>', '<uses-permission android:name=\"android.permission.CAMERA\"/><uses-permission android:name=\"android.permission.INTERNET\" tools:node=\"remove\"/>', 1)" \
     "camera           G4 app/src/main/AndroidManifest.xml removes android.permission.INTERNET"
 mutate "a fleet app row points at a dir that is not there" "$FLEET" \
-    "d=json.loads(s); [r.update(repo_url=r['repo_url']+'-gone') for r in d['apps'] if r['id']=='writer']; s=json.dumps(d)" \
-    "writer           source dir"
+    "d=json.loads(s); [r.update(repo_url=r['repo_url']+'-gone') for r in d['apps'] if r['id']=='keyboard']; s=json.dumps(d)" \
+    "keyboard         source dir"
 
 [ "$FAILURES" -eq 0 ] && echo "mesh-source-guard.test: OK" || { echo "mesh-source-guard.test: $FAILURES FAILED"; exit 1; }

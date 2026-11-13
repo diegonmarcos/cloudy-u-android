@@ -750,8 +750,8 @@
           "why": "The fleet's main AI chat."
         },
         {
-          "app": "ac_cloud-writer",
-          "why": "Text tools with a model per tool."
+          "app": "ac_cloud-keyboard",
+          "why": "Text tools (its Writer tab) with a model per tool."
         },
         {
           "app": "ac_cloud-account",

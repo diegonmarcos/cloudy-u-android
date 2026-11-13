@@ -44,12 +44,6 @@
       "asset": "Cloud-Tools-Small-LLMs"
     },
     {
-      "app": "ac_cloud-writer",
-      "ship": "ship-cloud-writer.yml",
-      "artifact": "Cloud-Writer-",
-      "asset": "Cloud-Writer"
-    },
-    {
       "app": "ac_cloud-browser",
       "ship": "ship-cloud-browser.yml",
       "artifact": "Cloud-Browser-",

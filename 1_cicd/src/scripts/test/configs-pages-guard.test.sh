@@ -138,7 +138,7 @@ mutate "an app without a name"                  "$APP/build.json" "$(J "d.pop('d
 # G4 the app reaches the pages
 mutate "an app whose sources stop drawing the scaffold" "$APPKT" "s=s.replace('NavBarTopFirstRowScaffold(','OwnScaffold(')" "G4 $APP: no source reaches Configs"
 # #1652 an app whose UI is a shared lib module: G4 reads the declared module, so the lib losing the scaffold is that app's finding
-UIAPP=ac_cloud-writer
+UIAPP=ac_cloud-keyboard
 UIKT="$(cd "$BASE" && python3 -c "import json,os,sys; b=json.load(open('$UIAPP/build.json')); print('\n'.join(os.path.normpath(os.path.join('$UIAPP',d)) for d in b['android']['ui_module_dirs']))" | while IFS= read -r d; do grep -rl 'NavBarTopFirstRowScaffold(' "$d"; done)"
 if [ -z "$UIKT" ]; then fail "no scaffold call under $UIAPP's android.ui_module_dirs — the fixture moved"; else
     stage

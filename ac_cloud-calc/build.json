@@ -5496,8 +5496,8 @@
       ],
       "related": [
         {
-          "app": "ac_cloud-writer",
-          "why": "Text tools on the same AI gateway."
+          "app": "ac_cloud-keyboard",
+          "why": "Text tools (its Writer tab) on the same AI gateway."
         },
         {
           "app": "ac_cloud-account",

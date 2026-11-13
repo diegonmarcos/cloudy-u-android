@@ -3862,6 +3862,18 @@
           "class": "config",
           "doc": "Keyboard layouts, languages, theme, key behaviour; kept in the library's default prefs, not in this module's scanned list.",
           "store": "<default>"
+        },
+        {
+          "id": "writer-documents",
+          "path": "filesDir/documents/*.md (libs:writer-ui DocStore: the Writer tab's Home document list, dictation transcripts)",
+          "class": "content",
+          "doc": "#1707 user data of the Writer, which moved here from the retired standalone Cloud Writer: the documents the user wrote or dictated. Plain files in this app's private storage, not a declared store, so the contract does not carry the bytes; the Writer's settings (provider, per-tool models, routes, OCR engine, theme) are the text_tools prefs store, which already migrates with this app (used_by lib-writer-ui). A phone that still has the retired Cloud Writer keeps its documents inside that app until it is removed (Store > Retired shows it with Uninstall): copy or share what you need out of it first."
+        },
+        {
+          "id": "writer-ocr-cache",
+          "path": "cacheDir/ocr/",
+          "class": "device",
+          "doc": "#1707 the one folder the Writer's Take picture writes its photo into for OCR (FileProvider authority <applicationId>.ocr); a cache, never migrates."
         }
       ]
     },
@@ -4597,34 +4609,6 @@
         "lib-ui-nav-bars",
         "lib-updater",
         "lib-wallet"
-      ],
-      "items": []
-    },
-    "writer": {
-      "package": "com.diegonmarcos.cloudwriter",
-      "module": "ac_cloud-writer",
-      "schema_version": 1,
-      "libs": [
-        "lib-bottomnav",
-        "lib-core",
-        "lib-crash",
-        "lib-decisions",
-        "lib-decisions-link",
-        "lib-devtools",
-        "lib-fleet-data-client",
-        "lib-fleetconfig-model",
-        "lib-fleetconfigs-agents",
-        "lib-fleetconfigs-logcat",
-        "lib-fleetconfigs-xray",
-        "lib-ml-l-image-ocr",
-        "lib-perms",
-        "lib-text-tools",
-        "lib-theme-background",
-        "lib-ui-icons",
-        "lib-ui-kit",
-        "lib-ui-nav-bars",
-        "lib-writer-core",
-        "lib-writer-ui"
       ],
       "items": []
     },

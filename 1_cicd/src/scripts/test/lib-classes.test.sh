@@ -15,7 +15,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 GUARD="$ROOT/1_cicd/src/scripts/cloud-android-lib-classes.py"
 DATA=1_cicd/src/data/lib-classes.json
-WRITER_BJ=ac_cloud-writer/build.json
+WRITER_BJ=ac_cloud-keyboard/build.json
 for f in "$GUARD" "$ROOT/$DATA" "$ROOT/$WRITER_BJ"; do
     [ -f "$f" ] || { echo "ERROR missing source: $f — this test is unrun, not passing"; exit 1; }
 done

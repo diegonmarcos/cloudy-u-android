@@ -70,7 +70,10 @@ for pair in "c3-webserver:Configs" "c3:Configs" "morpheus:Configs" "watchtower:C
   [ "$(jq -r --arg a "$a" '.app_categories[] | select(.members | index($a)) | .label' "$FLEET")" = "$c" ] && ok "$a is filed under $c" || bad "$a is not under $c"
 done
 # 1704 RULE 16 parity: every app the Store listed before this change (the pre-#1704 Cloud > Apps tab) is still listed
-PRE="aa_cloud-superapp morpheus watchdog watchtower account browser c3-webserver c3 calc camera chat code contacts dialer drive gallery keyboard kg-store mail matrix me media-center myterminal nav news nix-on-droid notes office search shopping store superintel tasks termux tools-small-llms vault wallet writer cg-omniverse capital-stack-finterminal hardtech-cad hardtech-sim2real"
+PRE="aa_cloud-superapp morpheus watchdog watchtower account browser c3-webserver c3 calc camera chat code contacts dialer drive gallery keyboard kg-store mail matrix me media-center myterminal nav news nix-on-droid notes office search shopping store superintel tasks termux tools-small-llms vault wallet cg-omniverse capital-stack-finterminal hardtech-cad hardtech-sim2real"
+# #1707 writer was retired (merged into cloud-keyboard): it is no longer a fleet row; the Store lists an installed copy under Retired
+[ "$(jq -r '[.apps[] | select(.id == "writer")] | length' "$FLEET")" = 0 ] && ok "writer is retired from the fleet manifest" || bad "writer is still in the fleet manifest"
+jq -e '.apps[] | select(.package == "com.diegonmarcos.cloudwriter")' ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-retired-apps.json >/dev/null 2>&1 && ok "the Store keeps Cloud Writer in its Retired list" || bad "Cloud Writer is missing from appstore-retired-apps.json"
 miss=""; for a in $PRE; do jq -e --arg a "$a" '[.app_categories[].members[]] | index($a)' "$FLEET" >/dev/null || miss="$miss $a"; done
 [ -z "$miss" ] && ok "parity: every previously listed app is still listed" || bad "disappeared from the Store:$miss"
 dupe="$(jq -r '[.app_categories[].members[]] | group_by(.)[] | select(length > 1) | .[0]' "$FLEET")"

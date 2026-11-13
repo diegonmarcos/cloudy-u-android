@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Light mode: the starting window, painted before the first composition. Matches Material's
-         light surface closely enough that the hand-off to Compose is not a visible flash. -->
-    <color name="window_background">#FFFBFE</color>
-</resources>

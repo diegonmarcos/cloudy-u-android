@@ -107,20 +107,6 @@
       }
     },
     {
-      "id": "ac_cloud-writer",
-      "scope": "in",
-      "wave": 0,
-      "ui": "compose",
-      "size": "-",
-      "notes": "Compose. Nothing counted.",
-      "baseline": {
-        "view_screens": 0,
-        "layout_xml": 0,
-        "view_ui_files": 0,
-        "custom_views": 0
-      }
-    },
-    {
       "id": "ac_cloud-c3-webserver",
       "scope": "in",
       "wave": 0,

@@ -21,4 +21,6 @@
 <resources>
     <string name="english_ime_name" translatable="false">Cloud Keyboard</string>
     <string name="translate">Translate</string>
+    <!-- #1707 the Writer entry in the share sheet and the text-selection menu (was the standalone Cloud Writer's label). -->
+    <string name="writer_share_label">Writer</string>
 </resources>

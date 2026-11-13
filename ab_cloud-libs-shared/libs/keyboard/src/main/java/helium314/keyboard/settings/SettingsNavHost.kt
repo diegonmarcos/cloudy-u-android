@@ -328,7 +328,12 @@ object SettingsDestination {
     )
 
     /** The route [name] asks for, or null when it is not one another app may reach. */
-    fun externalRoute(name: String?): String? = name?.let { external[it] }
+    fun externalRoute(name: String?): String? = name?.let {
+        // #1707 the Writer: any fleet app that used to open the standalone Cloud Writer opens the keyboard's Writer tab (its landing page).
+        // Resolved at call time, not in [external]: KbTab's pages are built from this object's routes, so naming it in the map's initialiser
+        // would make the two initialise each other.
+        external[it] ?: if (it == "writer") KbTab.WRITER.route else if (it == "writer_configs") hostRoute("settings") else null
+    }
 
 
     private val navScope = CoroutineScope(Dispatchers.Default)

@@ -143,11 +143,6 @@
       "order": 2
     },
     {
-      "package": "com.diegonmarcos.cloudwriter",
-      "folder": "prod_docs",
-      "order": 3
-    },
-    {
       "package": "com.diegonmarcos.cloudcalc",
       "folder": "prod_utils",
       "order": 1

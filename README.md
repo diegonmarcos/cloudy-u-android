@@ -1082,15 +1082,6 @@ cloudy-u-android/
 │   └── web/
 │       ├── gradle/
 │       └── src/
-├── ac_cloud-writer/
-│   ├── app/
-│   │   └── src/
-│   ├── core/
-│   │   └── src/
-│   ├── test/
-│   └── web/
-│       ├── gradle/
-│       └── src/
 ├── b_infra/
 │   ├── home-manager/
 │   ├── termux/

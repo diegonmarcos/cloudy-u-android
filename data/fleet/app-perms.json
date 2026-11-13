@@ -309,14 +309,6 @@
    "first_run": "libs:perms",
    "helpers": []
   },
-  "com.diegonmarcos.cloudwriter": {
-   "needs": [
-    "notifications",
-    "microphone"
-   ],
-   "first_run": "libs:perms",
-   "helpers": []
-  },
   "com.diegonmarcos.code": {
    "needs": [
     "notifications",

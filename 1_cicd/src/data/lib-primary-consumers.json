@@ -49,7 +49,7 @@
     "ui-kit": "aa_cloud-superapp",
     "updater": "aa_cloud-superapp",
     "voice": "ac_cloud-keyboard",
-    "writer-core": "ac_cloud-writer",
-    "writer-ui": "ac_cloud-writer"
+    "writer-core": "ac_cloud-keyboard",
+    "writer-ui": "ac_cloud-keyboard"
   }
 }

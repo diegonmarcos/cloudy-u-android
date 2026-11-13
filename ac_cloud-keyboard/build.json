@@ -8,7 +8,11 @@
     "application_id": "com.diegonmarcos.cloudkeyboard",
     "version_code": 1,
     "version_name": "1.1",
-    "_doc_version": "version_code/version_name live here, not in app/build.gradle. libs/keyboard is shared by reference and reads ${rootDir}/build.json, so these are what the keyboard APK's BuildConfig reports - they used to resolve to aa_cloud-superapp's because the module read a relative path."
+    "_doc_version": "version_code/version_name live here, not in app/build.gradle. libs/keyboard is shared by reference and reads ${rootDir}/build.json, so these are what the keyboard APK's BuildConfig reports - they used to resolve to aa_cloud-superapp's because the module read a relative path.",
+    "_doc_ui_module_dirs": "#1707 the Writer tab's UI lives in this shared library (WriterSurface, hosted through WriterHost); the configs/nav guards read it as part of the app (1_cicd/src/scripts/cloud-android-configs-pages-guard.py, -configs-tabs-guard.py, -nav-shape-guard.py). It was the standalone Cloud Writer's UI module until that app was retired.",
+    "ui_module_dirs": [
+      "../ab_cloud-libs-shared/libs/writer-ui"
+    ]
   },
   "toolchain": {
     "agp": "8.13.2",
@@ -285,10 +289,6 @@
       "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. Usage analytics are opt-in and off by default; when allowed, events go only to the owner's self-hosted Umami and Matomo. It calls no fleet service: its data stays on the phone.",
       "backends": [],
       "related": [
-        {
-          "app": "ac_cloud-writer",
-          "why": "Longer text tools on the same AI routing."
-        },
         {
           "app": "ac_cloud-account",
           "why": "Profiles and snippets for autofill."

@@ -2,7 +2,8 @@
 <!--
   Cloud Writer's own launcher glyph, for the Cloud ▸ Tools Primary tile.
 
-  SOURCE: ac_cloud-writer/app/src/main/res/drawable/ic_cloud_writer_fg.xml —
+  SOURCE (the app is retired, #1707; the glyph stays as the Writer tile of the keyboard's Writer page):
+  ac_cloud-writer/app/src/main/res/drawable/ic_cloud_writer_fg.xml —
   the adaptive-icon FOREGROUND that app ships as its launcher icon. Paths are
   copied verbatim; nothing was redrawn. Copied rather than depended on because
   aa_cloud-superapp does not compile ac_cloud-writer and there is no shared

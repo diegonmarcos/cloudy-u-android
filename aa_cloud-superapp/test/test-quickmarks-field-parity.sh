@@ -47,7 +47,7 @@ def apptargets(group):
 # T2 — field parity for #1627 (the old Tools Primary ∪ Data Apps targets)
 PRE_PRIMARY_DATA = {
     "extapp:cloud-browser", "extapp:cloud-nav", "extapp:cloud-camera", "extapp:cloud-calc",
-    "extapp:cloud-keyboard", "extapp:cloud-writer", "extapp:cloud-wallet", "extapp:cloud-vault",
+    "extapp:cloud-keyboard", "extapp:cloud-keyboard#page:writer", "extapp:cloud-wallet", "extapp:cloud-vault",
     "extapp:cloud-drive", "extapp:cloud-notes", "extapp:cloud-tasks", "extapp:cloud-gallery",
     "extapp:cloud-media-center", "extapp:cloud-office",
 }

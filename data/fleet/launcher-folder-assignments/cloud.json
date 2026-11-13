@@ -29,7 +29,6 @@
 
     { "package": "com.diegonmarcos.cloudnotes",          "folder": "notes",     "order": 1 },
 
-    { "package": "com.diegonmarcos.cloudwriter",         "folder": "writer",    "order": 1 },
     { "package": "com.diegonmarcos.cloudoffice",         "folder": "writer",    "order": 2 },
 
     { "package": "com.diegonmarcos.clouddrive",          "folder": "drive",     "order": 1 },

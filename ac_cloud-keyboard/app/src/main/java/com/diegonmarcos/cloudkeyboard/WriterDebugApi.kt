@@ -1,30 +1,20 @@
-package com.diegonmarcos.cloudwriter
-
-
-import com.diegonmarcos.cloudwriter.writerui.BuildConfig
+package com.diegonmarcos.cloudkeyboard
 
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.net.Uri
+import com.diegonmarcos.cloudwriter.ListenEngine
+import com.diegonmarcos.cloudwriter.ServingApp
+import com.diegonmarcos.cloudwriter.WriterRoutes
+import com.diegonmarcos.cloudwriter.WriterToolRunner
 import com.diegonmarcos.superapp.devtools.AppDebugServer
 import org.json.JSONObject
 
 /**
- * Cloud Writer on the fleet debug API (#800), for checks with the screen locked:
- *
- *   /api/writer/listen/status          Listen's live state: running, paused, requested and answering
- *                                      route, why it fell back, the partial text, segments written,
- *                                      microphone permission, on-device engine bind, the model
- *   /api/writer/translate?text=&to=    a real translation on the Translation route (to = a Language
- *                                      Output id such as `spanish`, or a tag such as `es`), answering
- *                                      the text and the route that produced it
- *   /api/writer/route                  both functions' route, model and last answer, online, whether
- *                                      the Account holds a key (never the key), and the text-tools
- *                                      serving app's state — the #800 status probe, on demand
- *
- * The op is never `state`: update-ack-guard.json owns that branch key fleet-wide (GET /api/state).
+ * #1707 the Writer's fleet debug API (/api/writer/*), moved from the retired standalone Cloud Writer into Cloud Keyboard
+ * (checks with the screen locked): listen/status, translate?text=&to=, route. The op is never `state` (update-ack-guard owns it).
  */
 object WriterDebugApi {
     @Volatile private var registered = false
@@ -34,7 +24,7 @@ object WriterDebugApi {
         registered = true
         val app = ctx.applicationContext
         AppDebugServer.route(
-            BuildConfig.DEBUG_API_GROUP,
+            "writer", // = writer-config.json::writer_routes.debug_api.group (test-writer-parity.sh holds the two equal)
             listOf(
                 AppDebugServer.Op("listen/status", "", "Listen: running, paused, requested and answering route, fallback reason, partial, segments, mic, engine"),
                 AppDebugServer.Op("translate", "text=<text>&to=<language id or tag>", "translate on the Translation route; answers the text and the route that did it"),
@@ -68,15 +58,10 @@ object WriterDebugApi {
     }
 }
 
-/**
- * Registers [WriterDebugApi] before Application.onCreate (the CalcDebugApiProvider trick): a
- * ContentProvider's onCreate runs first, so the routes exist even if the app's own startup later
- * throws. Not a real provider and not exported.
- */
+/** Registers [WriterDebugApi] before Application.onCreate. Not a real provider, not exported; a debug facility never takes the app down. */
 class WriterDebugApiProvider : ContentProvider() {
     override fun onCreate(): Boolean {
         val ctx = context ?: return false
-        // A debug facility must never take the host app down.
         runCatching { WriterDebugApi.register(ctx) }
         return true
     }

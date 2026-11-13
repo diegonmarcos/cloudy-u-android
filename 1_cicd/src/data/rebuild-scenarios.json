@@ -7,10 +7,10 @@
         "ab_cloud-libs-shared/libs/core/src/main/java/com/diegonmarcos/superapp/core/FleetAlerts.kt"
       ],
       "expect": {
-        "apps": 43,
+        "apps": 42,
         "libs": 0,
         "rootfs": 0,
-        "ship": 44,
+        "ship": 43,
         "refresh": 0
       }
     },
@@ -20,10 +20,10 @@
         "ab_cloud-libs-shared/libs/devtools/src/main/java/com/diegonmarcos/superapp/devtools/AppDebugServer.kt"
       ],
       "expect": {
-        "apps": 43,
+        "apps": 42,
         "libs": 0,
         "rootfs": 0,
-        "ship": 44,
+        "ship": 43,
         "refresh": 0
       }
     },
@@ -60,10 +60,10 @@
         "ab_cloud-libs-shared/libs/bottomnav/src/main/java/com/diegonmarcos/superapp/bottomnav/BottomNav.kt"
       ],
       "expect": {
-        "apps": 42,
+        "apps": 41,
         "libs": 0,
         "rootfs": 0,
-        "ship": 43,
+        "ship": 42,
         "refresh": 0
       }
     },
@@ -104,7 +104,6 @@
         "1_cicd/src/cicd/ship-cloud-termux.yml",
         "1_cicd/src/cicd/ship-cloud-vault.yml",
         "1_cicd/src/cicd/ship-cloud-wallet.yml",
-        "1_cicd/src/cicd/ship-cloud-writer.yml",
         "1_cicd/src/cicd/ship-garmin-watchface.yml",
         "1_cicd/src/cicd/ship-termux-boot.yml",
         "1_cicd/dist/cicd/ship-c3-morpheus.yml",
@@ -139,7 +138,6 @@
         "1_cicd/dist/cicd/ship-cloud-termux.yml",
         "1_cicd/dist/cicd/ship-cloud-vault.yml",
         "1_cicd/dist/cicd/ship-cloud-wallet.yml",
-        "1_cicd/dist/cicd/ship-cloud-writer.yml",
         "1_cicd/dist/cicd/ship-garmin-watchface.yml",
         "1_cicd/dist/cicd/ship-termux-boot.yml",
         ".github/workflows/ship-c3-morpheus.yml",
@@ -174,7 +172,6 @@
         ".github/workflows/ship-cloud-termux.yml",
         ".github/workflows/ship-cloud-vault.yml",
         ".github/workflows/ship-cloud-wallet.yml",
-        ".github/workflows/ship-cloud-writer.yml",
         ".github/workflows/ship-garmin-watchface.yml",
         ".github/workflows/ship-termux-boot.yml"
       ],
@@ -221,10 +218,10 @@
         "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/java/com/diegonmarcos/superapp/fleetconfig/FleetPolicy.kt"
       ],
       "expect": {
-        "apps": 43,
+        "apps": 42,
         "libs": 0,
         "rootfs": 0,
-        "ship": 44,
+        "ship": 43,
         "refresh": 0
       }
     },
@@ -235,10 +232,10 @@
         "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
       ],
       "expect": {
-        "apps": 43,
+        "apps": 42,
         "libs": 0,
         "rootfs": 0,
-        "ship": 44,
+        "ship": 43,
         "refresh": 0
       }
     },
@@ -392,7 +389,7 @@
       "id": "#881 contract: libs/decisions-link (15 apps compile it: the Jev call sites of #882/#883)",
       "_doc": "A contract ships no APK of its own and the publish gate hashes an engine's own directory only (#870), so a client edit republishes nothing until an app compiles it; a wire change ships the engine through its CONTRACT bump in the engine's own manifest.",
       "files": ["ab_cloud-libs-shared/libs/decisions-link/src/main/java/com/diegonmarcos/superapp/decisions/link/DecisionsLink.kt"],
-      "expect": { "apps": 15, "libs": 0, "rootfs": 0, "ship": 16, "refresh": 0 }
+      "expect": { "apps": 14, "libs": 0, "rootfs": 0, "ship": 15, "refresh": 0 }
     },
     {
       "id": "#871 engine lib: libs/ops-engine (the Dagu calls that left the SuperApp and C3)",
@@ -653,19 +650,6 @@
       }
     },
     {
-      "id": "ac_cloud-writer/web (#876: the page ships alone)",
-      "files": [
-        "ac_cloud-writer/web/src/wasmJsMain/kotlin/com/diegonmarcos/cloudwriter/web/Main.kt"
-      ],
-      "expect": {
-        "apps": 1,
-        "libs": 0,
-        "rootfs": 0,
-        "ship": 1,
-        "refresh": 0
-      }
-    },
-    {
       "id": "ac_cloud-myterminal/web (#876: the page ships alone)",
       "files": [
         "ac_cloud-myterminal/web/src/wasmJsMain/kotlin/com/diegonmarcos/cloudmyterminal/web/Main.kt"
@@ -711,10 +695,10 @@
         "ab_cloud-libs-shared/libs/ui-kit/src/commonMain/kotlin/com/diegonmarcos/superapp/uikit/CloudKit.kt"
       ],
       "expect": {
-        "apps": 45,
+        "apps": 43,
         "libs": 0,
         "rootfs": 0,
-        "ship": 46,
+        "ship": 44,
         "refresh": 0
       }
     }

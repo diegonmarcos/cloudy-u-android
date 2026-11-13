@@ -1123,8 +1123,8 @@
           "why": "Backs up the notes folder."
         },
         {
-          "app": "ac_cloud-writer",
-          "why": "Text tools for a draft."
+          "app": "ac_cloud-keyboard",
+          "why": "Text tools for a draft (its Writer tab)."
         },
         {
           "app": "ac_cloud-store",

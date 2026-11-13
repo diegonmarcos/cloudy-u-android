@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Tester: the Writer tile on Cloud ▸ Tools Primary.
 #
+# (#1707: the tile now opens the Writer tab of Cloud Keyboard; T3/T4 were rewritten for that.)
+#
 # The owner asked for one thing — "cloud-sa/cloud/tools primary: add here
 # 'Writer' the cloud-writer icon link" — and the ways a change like that
 # reports green while giving him a dead tile are all known, because this
@@ -30,7 +32,6 @@ APP="$(cd "$(dirname "$0")/.." && pwd)"          # → aa_cloud-superapp
 ROOT="$(cd "$APP/.." && pwd)"                    # → cloud-u-android
 BJ="$APP/build.json"
 FLEET="$APP/data/constellation-fleet.json"
-WRITER="$ROOT/ac_cloud-writer"
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  PASS: $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
@@ -57,7 +58,7 @@ LABEL="$(jq -r "$GROUP | .tiles[] | select(.id == \"writer\") | .label" "$BJ")"
 eq "its label is the owner's word" "$LABEL" "Writer"
 
 TARGET="$(jq -r "$GROUP | .tiles[] | select(.id == \"writer\") | .target" "$BJ")"
-eq "its target hands off to the app" "$TARGET" "extapp:cloud-writer"
+eq "its target opens the keyboard's Writer page" "$TARGET" "extapp:cloud-keyboard#page:writer"
 
 # The negative half of the section assertion: the Phone page's identically
 # titled group must NOT have grown a Writer entry. Without this, a tile added
@@ -77,53 +78,39 @@ eq "tile names an icon" "$ICON" "ic_writer"
   && ok "res/drawable/$ICON.xml exists" \
   || bad "res/drawable/$ICON.xml missing — iconResFor would silently fall back to ic_link_tile"
 
-echo "== T3: the package is ac_cloud-writer's own, in all four places =="
-# Read, never restate. Both of the app's own declarations, then both copies
-# in the SuperApp. A tester that hardcoded the string would agree with a typo.
-PKG_BJ="$(jq -r '.android.application_id' "$WRITER/build.json")"
-PKG_GR="$(sed -n "s/^[[:space:]]*namespace[[:space:]]*'\\(.*\\)'[[:space:]]*$/\\1/p" \
-          "$WRITER/app/build.gradle" | head -1)"
-case "$PKG_BJ" in
-  com.*) ok "ac_cloud-writer/build.json::android.application_id = $PKG_BJ" ;;
-  *)     bad "could not read android.application_id from ac_cloud-writer/build.json (got '$PKG_BJ')" ;;
+echo "== T3: (#1707) the Writer tile opens the KEYBOARD's Writer page; the standalone app is retired =="
+# The tile used to hand off to ac_cloud-writer. That app is gone (merged into Cloud Keyboard's Writer tab), so the tile
+# targets extapp:cloud-keyboard with the deep target page:writer, which SettingsActivity resolves to the Writer tab.
+KB="$ROOT/ac_cloud-keyboard"
+PKG_KB="$(jq -r '.android.application_id' "$KB/build.json")"
+case "$PKG_KB" in
+  com.*) ok "ac_cloud-keyboard/build.json::android.application_id = $PKG_KB" ;;
+  *)     bad "could not read android.application_id from ac_cloud-keyboard/build.json (got '$PKG_KB')" ;;
 esac
-eq "app/build.gradle::namespace agrees" "$PKG_GR" "$PKG_BJ"
-
-EA_HUB="$(jq -r '.ui.external_apps[] | select(.id == "cloud-writer") | .hub_package' "$BJ")"
-EA_INS="$(jq -r '.ui.external_apps[] | select(.id == "cloud-writer") | .install_package' "$BJ")"
-FL_PKG="$(jq -r '.apps[] | select(.id == "writer") | .package' "$FLEET")"
-eq "ui.external_apps.hub_package agrees"     "$EA_HUB" "$PKG_BJ"
-eq "ui.external_apps.install_package agrees" "$EA_INS" "$PKG_BJ"
-eq "constellation-fleet.json agrees"         "$FL_PKG" "$PKG_BJ"
-
-echo "== T4: the not-installed path has something to install =="
-# launchExternalApp: no candidate package launches → Updater.installApk with
-# install_apk_url. Blank url or blank package → a bare "not installed" snack
-# and no offer. Neither is ActivityNotFoundException (this path never builds
-# an ACTION_VIEW intent), but a blank url is still a tile that does nothing.
-EA_URL="$(jq -r '.ui.external_apps[] | select(.id == "cloud-writer") | .install_apk_url' "$BJ")"
+EA_HUB="$(jq -r '.ui.external_apps[] | select(.id == "cloud-keyboard") | .hub_package' "$BJ")"
+eq "ui.external_apps[cloud-keyboard].hub_package agrees" "$EA_HUB" "$PKG_KB"
+EA_URL="$(jq -r '.ui.external_apps[] | select(.id == "cloud-keyboard") | .install_apk_url' "$BJ")"
 case "$EA_URL" in
-  https://*/Cloud-Writer.apk) ok "install_apk_url offers a real APK ($EA_URL)" ;;
-  *)                          bad "install_apk_url is not a Cloud-Writer.apk URL: '$EA_URL'" ;;
+  https://*/Cloud-Keyboard.apk) ok "the not-installed path offers the keyboard APK ($EA_URL)" ;;
+  *)                            bad "install_apk_url of cloud-keyboard is not a Cloud-Keyboard.apk URL: '$EA_URL'" ;;
 esac
-EA_FOLDER="$(jq -r '.ui.external_apps[] | select(.id == "cloud-writer") | .folder' "$BJ")"
-FOLDER_OK="$(jq -r --arg f "$EA_FOLDER" '[.ui.phone_folders[] | select(.id == $f)] | length' "$BJ")"
-eq "its folder is a declared phone_folder ($EA_FOLDER)" "$FOLDER_OK" "1"
-# Identity and taxonomy are ONE record for our own apps: PhoneFolders derives
-# the pkg: keyword from .folder, so a literal keyword here is a second owner.
-DUP="$(jq -r --arg p "$PKG_BJ" '[.ui.phone_folders[].match_keywords // []
-       | .[] | select(ascii_downcase == ("pkg:" + ($p | ascii_downcase)))] | length' "$BJ")"
-eq "no ui.phone_folders keyword restates the package" "$DUP" "0"
+N_EA="$(jq -r '[.ui.external_apps[] | select(.id == "cloud-writer")] | length' "$BJ")"
+eq "no ui.external_apps entry for the retired cloud-writer" "$N_EA" "0"
+N_FL="$(jq -r '[.apps[] | select(.id == "writer")] | length' "$FLEET")"
+eq "the fleet manifest no longer lists writer" "$N_FL" "0"
+[ ! -e "$ROOT/ac_cloud-writer" ] && ok "ac_cloud-writer is gone" || bad "ac_cloud-writer still exists"
 
-echo "== T5: both ABI variants resolve, and the install path picks between them =="
-A_ARM="$(jq -r '.apps[] | select(.id == "writer") | .assets["arm64-v8a"] // ""' "$FLEET")"
-A_X86="$(jq -r '.apps[] | select(.id == "writer") | .assets["x86_64"]    // ""' "$FLEET")"
-eq "fleet declares the arm64 asset"  "$A_ARM" "Cloud-Writer.apk"
-eq "fleet declares the x86_64 asset" "$A_X86" "Cloud-Writer-x86_64.apk"
-[ "$A_ARM" != "$A_X86" ] \
-  && ok "the two variants are different files (a map that maps everything to one name is not an ABI map)" \
-  || bad "arm64 and x86_64 name the same asset — #43's hardcoded-arm64 shape, wearing a map"
+echo "== T4: the keyboard resolves the deep target =="
+NAV="$ROOT/ab_cloud-libs-shared/libs/keyboard/src/main/java/helium314/keyboard/settings"
+grep -q 'it == "writer"' "$NAV/SettingsNavHost.kt" \
+  && ok "SettingsDestination.externalRoute resolves 'writer' to the Writer tab" \
+  || bad "SettingsDestination.externalRoute has no 'writer' route"
+grep -q 'shortcut_action' "$NAV/SettingsActivity.kt" \
+  && ok "SettingsActivity reads shortcut_action=page:<name>" \
+  || bad "SettingsActivity does not read shortcut_action"
 
+echo "== T5: the first-install path still picks the ABI asset (the rule Cloud Writer introduced, kept for every companion) =="
+APP="$(cd "$(dirname "$0")/.." && pwd)"
 # ShellActivity must ROUTE the flat install_apk_url through that map. Grepped
 # against the file with its comments STRIPPED, because the paragraph above
 # this code in ShellActivity.kt names AbiUpdateTag, Fleet.parse and

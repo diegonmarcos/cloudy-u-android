@@ -353,8 +353,7 @@
      "vault",
      "wallet",
      "watchdog",
-     "watchtower",
-     "writer"
+     "watchtower"
     ]
    }
   ],
@@ -590,8 +589,7 @@
      "vault",
      "wallet",
      "watchdog",
-     "watchtower",
-     "writer"
+     "watchtower"
     ]
    },
    {
@@ -730,8 +728,7 @@
      "vault",
      "wallet",
      "watchdog",
-     "watchtower",
-     "writer"
+     "watchtower"
     ]
    }
   ],
@@ -815,8 +812,7 @@
      "lib-ml-l-image-mlkit",
      "mail",
      "search",
-     "tools-small-llms",
-     "writer"
+     "tools-small-llms"
     ]
    }
   ],
@@ -1036,8 +1032,7 @@
      "vault",
      "wallet",
      "watchdog",
-     "watchtower",
-     "writer"
+     "watchtower"
     ]
    }
   ],
@@ -1153,8 +1148,7 @@
      "vault",
      "wallet",
      "watchdog",
-     "watchtower",
-     "writer"
+     "watchtower"
     ]
    }
   ],
@@ -1388,8 +1382,7 @@
       "vault",
       "wallet",
       "watchdog",
-      "watchtower",
-      "writer"
+      "watchtower"
      ]
     },
     {
@@ -1534,8 +1527,7 @@
       "vault",
       "wallet",
       "watchdog",
-      "watchtower",
-      "writer"
+      "watchtower"
      ]
     },
     {
@@ -2330,6 +2322,36 @@
      "level": "signature",
      "source": "ac_cloud-keyboard/app/src/main/java/com/diegonmarcos/cloudkeyboard/App.kt",
      "callers": []
+    },
+    {
+     "id": "op:writer/listen/status",
+     "kind": "op",
+     "name": "writer/listen/status",
+     "method": "fleet.ipc.v1",
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-keyboard/app/src/main/java/com/diegonmarcos/cloudkeyboard/WriterDebugApi.kt",
+     "callers": []
+    },
+    {
+     "id": "op:writer/route",
+     "kind": "op",
+     "name": "writer/route",
+     "method": "fleet.ipc.v1",
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-keyboard/app/src/main/java/com/diegonmarcos/cloudkeyboard/WriterDebugApi.kt",
+     "callers": []
+    },
+    {
+     "id": "op:writer/translate",
+     "kind": "op",
+     "name": "writer/translate",
+     "method": "fleet.ipc.v1",
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-keyboard/app/src/main/java/com/diegonmarcos/cloudkeyboard/WriterDebugApi.kt",
+     "callers": []
     }
    ]
   },
@@ -2925,8 +2947,7 @@
       "vault",
       "wallet",
       "watchdog",
-      "watchtower",
-      "writer"
+      "watchtower"
      ]
     },
     {
@@ -3269,52 +3290,6 @@
    "endpoints": []
   },
   {
-   "id": "writer",
-   "pkg": "com.diegonmarcos.cloudwriter",
-   "label": "cloud-writer",
-   "kind": "app",
-   "dir": "ac_cloud-writer",
-   "door": true,
-   "libs": [
-    "core",
-    "devtools",
-    "fleetconfig-model",
-    "perms"
-   ],
-   "endpoints": [
-    {
-     "id": "op:writer/listen/status",
-     "kind": "op",
-     "name": "writer/listen/status",
-     "method": "fleet.ipc.v1",
-     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
-     "level": "signature",
-     "source": "ac_cloud-writer/app/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt",
-     "callers": []
-    },
-    {
-     "id": "op:writer/route",
-     "kind": "op",
-     "name": "writer/route",
-     "method": "fleet.ipc.v1",
-     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
-     "level": "signature",
-     "source": "ac_cloud-writer/app/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt",
-     "callers": []
-    },
-    {
-     "id": "op:writer/translate",
-     "kind": "op",
-     "name": "writer/translate",
-     "method": "fleet.ipc.v1",
-     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
-     "level": "signature",
-     "source": "ac_cloud-writer/app/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt",
-     "callers": []
-    }
-   ]
-  },
-  {
    "id": "cg-omniverse",
    "pkg": "com.diegonmarcos.cgomniverse",
    "label": "cg-omniverse",
@@ -3489,8 +3464,7 @@
       }
      ],
      "callers": [
-      "keyboard",
-      "writer"
+      "keyboard"
      ]
     }
    ]

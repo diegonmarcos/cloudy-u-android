@@ -48,7 +48,6 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-terminal-termux | `cld.termux` | 12 | 7 | 63% |
 | cloud-vault | `com.diegonmarcos.cloudvault` | 5 | 1 | 83% |
 | cloud-wallet | `com.diegonmarcos.cloudwallet` | 8 | 0 | 100% |
-| cloud-writer | `com.diegonmarcos.cloudwriter` | 5 | 0 | 100% |
 | cloud-shopping | `com.diegonmarcos.cloudshopping` | 4 | 0 | 100% |
 | cloud-superintel | `com.diegonmarcos.cloudsuperintel` | 6 | 2 | 75% |
 | cloud-kg-store | `com.diegonmarcos.cloudkgstore` | 8 | 3 | 72% |
@@ -57,7 +56,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **439** | **57** | **88%** |
+| **fleet** | | **434** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -783,6 +782,8 @@ Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, li
 | `filesDir/<type>.dict` | device | Extracted dictionary cache from the companion dict app. |
 | `externalFilesDir|filesDir/<crash file>` | device | Crash report dump. |
 | `libs:keyboard (HeliBoard) default shared prefs <pkg>_preferences` | config | Keyboard layouts, languages, theme, key behaviour; kept in the library's default prefs, not in this module's scanned list. |
+| `filesDir/documents/*.md (libs:writer-ui DocStore: the Writer tab's Home document list, dictation transcripts)` | content | #1707 user data of the Writer, which moved here from the retired standalone Cloud Writer: the documents the user wrote or dictated. Plain files in this app's private storage, not a declared store, so the contract does not carry the bytes; the Writer's settings (provider, per-tool models, routes, OCR engine, theme) are the text_tools prefs store, which already migrates with this app (used_by lib-writer-ui). A phone that still has the retired Cloud Writer keeps its documents inside that app until it is removed (Store > Retired shows it with Uninstall): copy or share what you need out of it first. |
+| `cacheDir/ocr/` | device | #1707 the one folder the Writer's Take picture writes its photo into for OCR (FileProvider authority <applicationId>.ocr); a cache, never migrates. |
 | `filesDir/vosk/<model-dir>` | device | Downloaded Vosk model files (re-downloadable); the selected model name is declared/held in the host app prefs, not in this lib |
 
 Coverage: 9 covered, 0 gaps.
@@ -1342,26 +1343,6 @@ Module `ac_cloud-wallet`; libs: lib-analytics, lib-bottomnav, lib-core, lib-cras
 | `wallet_store` | prefs | content (keys: seed_version→device) | no | Wallet items (cards/passes) the user stored; seed_version is a marker. |
 
 Coverage: 8 covered, 0 gaps.
-
-## cloud-writer — `com.diegonmarcos.cloudwriter`
-
-Module `ac_cloud-writer`; libs: lib-bottomnav, lib-core, lib-crash, lib-decisions, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-ml-l-image-ocr, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-writer-core, lib-writer-ui.
-
-| store | kind | class | migrates | doc |
-|---|---|---|---|---|
-| `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
-| `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
-| `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
-| `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
-| `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
-| `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
-| `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
-| `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
-| `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
-| `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
-| `text_tools` | prefs | config (keys: seeded_from_keyboard→device, seeded_from_serving_app→device) | yes | Mail AI text-tools choices: provider, per-provider model, enhance/summary style, translate target language (a language picker, default en), auto_translate_incoming and auto_summary_incoming switches (off by default), summary_language (default en), answer_prompt (the Answer Prediction prompt shared by the composer and the summary box suggested reply; empty means the built-in default). |
-
-Coverage: 5 covered, 0 gaps.
 
 ## cloud-shopping — `com.diegonmarcos.cloudshopping`
 

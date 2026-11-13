@@ -260,6 +260,10 @@ case "$CMD" in
     # #843: the JVM tests of libs:keyboard (KeyboardViewStateTest - the view-state invariant).
     log "Running libs:keyboard JVM unit tests…"
     _gradle :libs:keyboard:testDebugUnitTest
+    # #1707 the Writer's JVM suites moved here with the retired standalone Cloud Writer (its `gradle test` ran them): the
+    # writer-core logic suite and the shared libs:decisions suite, each followed by its PIT mutation gate (threshold 80).
+    log "Running libs:writer-core and libs:decisions JVM unit tests + PIT…"
+    _gradle :libs:writer-core:test :libs:decisions:test
     ;;
   clean)
     _gradle clean

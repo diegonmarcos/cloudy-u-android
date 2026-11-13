@@ -50,7 +50,6 @@
   },
   "rule_allow": {
     "nested_safe_drawing": [
-      "ac_cloud-writer/",
       "ab_cloud-libs-shared/libs/writer-ui/",
       "ac_cloud-gallery/",
       "ac_cloud-drive/",
@@ -60,7 +59,6 @@
       "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/themes/minimalist/MinimalistBlackFragment.kt"
     ],
     "scaffold_without_insets": [
-      "ac_cloud-writer/",
       "ab_cloud-libs-shared/libs/writer-ui/",
       "ac_cloud-gallery/",
       "ac_cloud-drive/",
@@ -95,7 +93,6 @@
     "ad_Hardtech-Sim2Real",
     "ac_cloud-kg-store",
     "ac_cloud-tools-small-llms",
-    "ac_cloud-writer",
     "ab_cloud-libs-shared/libs/writer-ui",
     "ac_cloud-gallery",
     "ac_cloud-drive",
@@ -128,7 +125,6 @@
       "ab_cloud-libs-shared/libs/ui-kit/"
     ],
     "sp_literal": [
-      "ac_cloud-writer/",
       "ab_cloud-libs-shared/libs/writer-ui/",
       "ad_Hardtech-CAD/"
     ]

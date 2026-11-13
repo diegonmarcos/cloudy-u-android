@@ -95,7 +95,10 @@ open class SettingsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
         //
         // null when the extra is absent or not allowlisted, which is the normal launcher
         // case and leaves the start destination exactly as it was.
-        val openAt = SettingsDestination.externalRoute(intent?.getStringExtra(EXTRA_OPEN_AT))
+        // #1707 a launcher tile hands a deep target as shortcut_action = "page:<name>" (the SuperApp's Writer tile: page:writer)
+        val openAt = SettingsDestination.externalRoute(
+            intent?.getStringExtra(EXTRA_OPEN_AT)
+                ?: intent?.getStringExtra("shortcut_action")?.takeIf { it.startsWith("page:") }?.removePrefix("page:"))
 
         val cv = ComposeView(context = this)
         setContentView(cv)

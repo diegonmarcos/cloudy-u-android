@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- The same ground every Cloud panel sits on, so the icon reads as the
-         same product as the screen it opens. -->
-    <color name="ic_launcher_background">#7C3AED</color>
-</resources>

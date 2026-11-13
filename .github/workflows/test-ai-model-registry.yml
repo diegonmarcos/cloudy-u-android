@@ -39,7 +39,7 @@ on:
       - "ab_cloud-libs-shared/build.json"
       - "ac_cloud-mail/build.json"
       - "ab_cloud-libs-shared/libs/model-catalogue/src/main/assets/models/catalogue.json"
-      - "ac_cloud-writer/build.json"
+      - "ab_cloud-libs-shared/libs/writer-ui/writer-config.json"
       - "1_cicd/src/scripts/cloud-android-ai-registry-refresh.py"
 
 # contents: write for ONE thing only: the scheduled refresh below commits the
@@ -76,9 +76,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 1_cicd/src/scripts/cloud-android-ai-registry-refresh.py
-          changed="$(git status --porcelain -- ab_cloud-libs-shared/build.json ac_cloud-mail/build.json ac_cloud-writer/build.json)"
+          changed="$(git status --porcelain -- ab_cloud-libs-shared/build.json ac_cloud-mail/build.json ab_cloud-libs-shared/libs/writer-ui/writer-config.json)"
           if [ -z "$changed" ]; then echo "Nothing drifted: the baked registries already match OpenRouter."; exit 0; fi
-          git add -- ab_cloud-libs-shared/build.json ac_cloud-mail/build.json ac_cloud-writer/build.json
+          git add -- ab_cloud-libs-shared/build.json ac_cloud-mail/build.json ab_cloud-libs-shared/libs/writer-ui/writer-config.json
           git -c user.name="Claude" -c user.email="noreply@anthropic.com" \
             commit -m "ci(ai-registry): refresh the baked OpenRouter values via run ${GITHUB_RUN_ID} [skip ci]"
           bash 1_cicd/dist/scripts/cloud-android-push-main.sh && exit 0

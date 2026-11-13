@@ -126,5 +126,47 @@
             android:label="@string/settings_screen_routes"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize" />
+
+        <!-- #1707 the retired standalone Cloud Writer's entry points, now the keyboard's Writer: text or an image shared in, text selected
+             in another app (PROCESS_TEXT), and the explicit deep link other fleet apps use. Hosts libs:writer-ui's WriterSurface. -->
+        <activity android:name=".WriterShareActivity"
+            android:theme="@style/Theme.KeyboardWriterTools"
+            android:exported="true"
+            android:label="@string/writer_share_label"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- #1707 Writer OCR: Take picture writes the photo into this app's cache through this provider (no CAMERA permission). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.ocr"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/ocr_paths" />
+        </provider>
+
+        <!-- #1707 Registers /api/writer/* on the fleet debug server. Not exported, not a real provider. -->
+        <provider
+            android:name=".WriterDebugApiProvider"
+            android:authorities="${applicationId}.writerdebugapi"
+            android:exported="false" />
     </application>
 </manifest>
