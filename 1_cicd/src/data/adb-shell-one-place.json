@@ -62,10 +62,7 @@
     "AdbShellLink.kt"
    ]
   },
-  "offenders": {
-   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkSections.kt": "#1682 the network popup's ADB row is Target.InApp config/adb-shell; the SuperApp agent retargets it to the owner",
-   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/App.kt": "#1682 the SuperApp's AdbShellLink.hostOpener opens its own config/adb-shell route; removed with the SuperApp's own page"
-  },
+  "offenders": {},
   "store_must_use": {
    "_doc": "Store code that opens the ADB page does it through the client door to the owner's page (or AdbShellLink.open where the owner lib is linked), nothing else.",
    "calls": [
