@@ -106,7 +106,7 @@ class FleetIdentityPageTest : KitPageHarness() {
 
     @Test
     fun `I4 Identity is Cloud Store Access only, Configs keeps one Apps Access tile`() {
-        val ids = Sections.byId("config")!!.pages.map { it.id }
+        val ids = Sections.byId("config")!!.allPages.map { it.id }   // #1719 Apps Access is hidden behind the Network page (reached from its Home and OS Perms)
         assertTrue("Configs declares no identity page: $ids", "identity" !in ids && "apps-mesh" !in ids)
         assertTrue("Configs has the Apps Access tile: $ids", "apps-access" in ids)
         show(FleetIdentityFragment())

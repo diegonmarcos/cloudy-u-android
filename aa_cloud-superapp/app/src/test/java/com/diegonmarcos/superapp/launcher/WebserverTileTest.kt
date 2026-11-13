@@ -25,7 +25,8 @@ class WebserverTileTest {
 
     @Test
     fun `W1 the tile follows DNS and its icon is its own`() {
-        val pages = Sections.byId("config")!!.pages.filterNot { it.hidden }
+        // #1719 the Network pages are declared hidden behind the one Network page; the declared Network group is the check
+        val pages = Sections.byId("config")!!.allPages.filter { it.group == "Network" && it.id in setOf("firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "bluetooth") }
         val i = pages.indexOfFirst { it.id == "webserver" }
         assertTrue("Webserver tile missing", i > 0)
         assertEquals("dns", pages[i - 1].id)

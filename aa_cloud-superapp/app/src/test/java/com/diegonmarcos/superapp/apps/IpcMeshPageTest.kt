@@ -70,7 +70,7 @@ class IpcMeshPageTest : KitPageHarness() {
 
     @Test
     fun `P3 IPC is Cloud Store Access only, Configs keeps one Apps Access tile and hosts the shared page`() {
-        val pages = Sections.byId("config")!!.pages
+        val pages = Sections.byId("config")!!.allPages   // #1719 the Network pages are hidden behind the Network page
         // #1719 the Network pages are declared hidden behind the one Network page; the declared Network group is the check
         val net = pages.filter { it.group == "Network" && it.id in setOf("firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "bluetooth") }.map { it.id }
         assertTrue("Configs declares no ipc page: ${pages.map { it.id }}", pages.none { it.id == "ipc" || it.id == "apps-mesh" })

@@ -15,7 +15,7 @@ import java.io.File
  *   N3 parity (rule 16): every page the Network group held is still declared (hidden), reached from Home / the bar; the only
  *      icon gone is ADB Shell (explicit owner removal), and its page id still resolves
  *   N4 renames: Cloud Mesh -> VPN, Firewall -> NG Firewall (page and Configs row tile), in build.json
- *   N5 NG Firewall takes over the screen (owns toolbar and bottom nav), has its own nav and a Back button, and each view is the engine's screen
+ *   N5 NG Firewall takes over the screen (owns the bottom nav, the top row stays the shell's), has its own nav and a Back button, and each view is the engine's screen
  *   N6 the nav is drawn by libs:bottomnav's island with no styling argument (nav-shape N7), the page is routed from SectionPages
  */
 class NetworkNavTest {
@@ -90,7 +90,7 @@ class NetworkNavTest {
 
     @Test fun `N5 NG Firewall owns the whole screen with its own nav and Back`() {
         val s = src("network/NgFirewallFragment.kt")
-        assertTrue(s.contains("override fun ownsToolbar(): Boolean = true"))
+        assertFalse("the shell's top row stays (PageTopInsetTest T2)", s.contains("ownsToolbar"))
         assertTrue(s.contains("override fun ownsBottomNav(): Boolean = true"))
         assertTrue(s.contains("TAG_BACK") && s.contains("close()"))
         assertTrue(s.contains("FirewallDialog.newInstance(tab).apply { showsDialog = false }"))

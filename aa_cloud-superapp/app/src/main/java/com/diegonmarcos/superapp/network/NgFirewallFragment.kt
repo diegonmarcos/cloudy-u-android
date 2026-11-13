@@ -31,9 +31,9 @@ import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 
 /**
- * #1719 NG Firewall, full screen. It takes over the shell ([ShellOverride] owns the toolbar and the bottom nav): the
+ * #1719 NG Firewall, taking the screen over below the shell's top row. It is a [ShellOverride] that owns the bottom nav: the
  * SuperApp's own bottom nav is replaced by the firewall's own ([NgFirewallNav]: Status | Apps | Rules, libs:bottomnav's
- * island) and a Back button at the top closes it, the shell's back-stack listener then restores the SuperApp chrome.
+ * island) and a Back button at the top of the page closes it, the shell's back-stack listener then restores the SuperApp nav.
  * Every view is the engine's own screen ([FirewallDialog], one per section), so nothing the firewall page had is lost.
  */
 class NgFirewallFragment : KitComposeFragment(), ShellOverride {
@@ -42,7 +42,7 @@ class NgFirewallFragment : KitComposeFragment(), ShellOverride {
 
     val selectedTab: String get() = selected
 
-    override fun ownsToolbar(): Boolean = true
+    // The bottom nav only: the shell keeps its top row (PageTopInsetTest T2 / ShellTopInsetStaticGuardTest S5: no page hides the top row).
     override fun ownsBottomNav(): Boolean = true
 
     override fun palette() = LauncherPalette.kit(requireContext())
