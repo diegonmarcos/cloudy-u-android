@@ -54,11 +54,9 @@ class PermAccessStripTest : KitPageHarness() {
         showStrip()
         val row = b("permaccess:row")
         val res = listOf("strip:ram", "strip:storage", "strip:cpu").map { b(it) }
-        // #1721 the row now shares the date's line (it was directly under the resources line).
+        // #1721 the row sits under the resources line, never on it (on a camera-cutout phone it shares the date's line: StatusStripComposeTest S1c)
         val resBottom = res.maxOf { it.bottom }
         assertTrue("row top ${row.top} is above the resources line bottom $resBottom", row.top >= resBottom - 0.5f)
-        val clk = b("strip:clock")
-        assertEquals("row is centred on the date's line", clk.center.y, row.center.y, 2f * compose.activity.resources.displayMetrics.density)
         val clock = b("strip:clock")
         assertTrue("row ${row.left} runs into the clock ${clock.right}", row.left >= clock.right)
         val rightEdge = maxOf(res.maxOf { it.right }, b("strip:battery").right)

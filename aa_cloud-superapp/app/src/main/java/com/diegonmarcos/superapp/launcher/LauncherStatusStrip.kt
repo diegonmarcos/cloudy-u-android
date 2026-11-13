@@ -1032,7 +1032,12 @@ internal fun StripRow(
         val reserveH = h(res)
         val clockBlock = reserveH + (h(ck) * s).roundToInt() + dotsPx
         val lh = (h(l) * s).roundToInt()
-        val height = maxOf(clockBlock, lh).coerceIn(c.minHeight, c.maxHeight)
+        // #1721 the access row's top: on the date's line, never overlapping the resources line above it (no cutout reserve = same line)
+        val rH = (h(r) * s).roundToInt(); val aH = (h(ac) * s).roundToInt(); val dH = (h(ck) * s).roundToInt()
+        val base = maxOf(clockBlock, lh)
+        val resTop0 = StripLayout.resourcesTop((base - lh) / 2, lh - (dotsPx * s).roundToInt(), rH)
+        val accTop0 = maxOf(StripLayout.accessTop((base - clockBlock) / 2 + reserveH, dH, aH), resTop0 + rH)
+        val height = maxOf(base, accTop0 + aH).coerceIn(c.minHeight, c.maxHeight)
         val width = room.coerceIn(c.minWidth, c.maxWidth)
         layout(width, height) {
             val origin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
@@ -1044,11 +1049,9 @@ internal fun StripRow(
             ck.forEach { place(it, ((width - it.width * s) / 2f).roundToInt(), top + reserveH) }
             // #1721 shared tokens (StripLayout): the resources line is centred on the network labels' line (the left column
             // minus its dots row), the access row on the date's line.
-            val leftTop = (height - lh) / 2
-            val resTop = StripLayout.resourcesTop(leftTop, (h(l) * s).roundToInt() - (dotsPx * s).roundToInt(), (h(r) * s).roundToInt())
+            val resTop = StripLayout.resourcesTop((height - lh) / 2, lh - (dotsPx * s).roundToInt(), rH)
             r.forEach { place(it, (width - it.width * s).roundToInt(), resTop) }
-            val dateTop = top + reserveH
-            val accTop = StripLayout.accessTop(dateTop, (h(ck) * s).roundToInt(), (h(ac) * s).roundToInt())
+            val accTop = maxOf(StripLayout.accessTop(top + reserveH, dH, aH), resTop + rH)
             ac.forEach { place(it, (width - it.width * s).roundToInt(), accTop) }
             // #1646 the stopwatch readout: centred in the empty region between the left cluster and the date, scaled down
             // (never moved onto either) when that region is narrower than it.

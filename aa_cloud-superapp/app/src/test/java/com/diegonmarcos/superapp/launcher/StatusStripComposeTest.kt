@@ -74,7 +74,9 @@ class StatusStripComposeTest : KitPageHarness() {
 
     @Test
     fun `S1c #1721 resources line shares the network labels line, access row shares the date line`() {
-        showStrip()
+        val model = showStrip()
+        compose.runOnUiThread { model.noteCutout(160); model.refreshTime() }   // a camera cutout puts the date on its own line below the first
+        compose.waitForIdle()
         val d = compose.activity.resources.displayMetrics.density
         fun b(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
         // the network labels' own text line: the chip's top, label height = its height minus the dots row (3 dp)
