@@ -98,7 +98,7 @@ object StoreGit {
 
     /** #1282 a bare mirror at [guestDir] (BareClones.path in guest form); [depth] 0 = full history. Never touches a working clone. */
     fun bareClone(ctx: Context, url: String, guestDir: String, token: String, depth: Int): GitOpResult {
-        val r = shell(ctx).job("set -e; mkdir -p \"\$(dirname ${q(guestDir)})\"; " + authed(BareClones.cloneArgs(url, guestDir, depth) { q(it) }), stdin = token)
+        val r = shell(ctx).job("set -e; mkdir -p \"\$(dirname ${q(guestDir)})\"; " + authed(BareClones.cloneArgs(url, guestDir, depth, { q(it) })), stdin = token)
         return GitOpResult(r.ok, if (r.ok) "bare mirror at $guestDir" else failed("bare clone in cld.termux", r), (r.out + "\n" + r.err).trim().takeLast(4000))
     }
 
