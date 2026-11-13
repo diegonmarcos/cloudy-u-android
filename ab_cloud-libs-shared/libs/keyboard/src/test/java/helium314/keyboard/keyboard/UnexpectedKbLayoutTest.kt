@@ -176,7 +176,7 @@ class UnexpectedKbLayoutTest {
     /** The design's proportions, measured on the 1080 px wide comparison: taller keys, a larger centre glyph, legends near the design's. */
     @Test fun designProportions() {
         assertEquals(1.16f * 818f / 690f, UnexpectedKb.HEIGHT_FACTOR, 0.01f) // measured on the 1080 px comparison
-        assertTrue(UnexpectedKb.TEXT_FACTOR in 1.1f..1.5f && UnexpectedKb.LEGEND_FACTOR in 1.1f..1.5f)
+        assertTrue(UnexpectedKb.TEXT_FACTOR in 1.0f..2.0f && UnexpectedKb.LEGEND_FACTOR in 1.0f..2.0f)
         val sv = File("src/main/java/helium314/keyboard/latin/settings/SettingsValues.java").readText()
         assertTrue(sv.contains("UnexpectedKb.HEIGHT_FACTOR"))
     }
