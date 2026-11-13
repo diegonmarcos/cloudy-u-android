@@ -1119,12 +1119,7 @@
   },
   "shizuku_diagnostics": {
     "_doc": "Data-driven catalog of shell-domain diagnostic bundles run by libs:shizuku-adb-debug-tools. Two execution channels share this catalog (ladder, first ready wins): (1) local_server — OUR OWN app_process server (AdbShellServer) started once per boot via the adb one-liner from /api/adb/server-command; it runs in the SHELL SELinux domain (uid 2000) so dumpsys/usb/sysfs that untrusted_app is denied all work. NO third-party app. (2) Shizuku UserService — optional fallback when its app happens to be running. The lib's build.gradle base64-encodes bundles[] into BuildConfig.ADB_DIAG_BUNDLES_B64; AdbDiagnostics decodes + runs the chosen bundle, returning {bundle,label,channel,ok,results:[{id,cmd,out}]}. Adding a diagnostic = one entry here, no Kotlin edit (Pillar: DATA-DRIVEN). READ-ONLY diagnostics only — never a write/mutation.",
-    "local_server": {
-      "_doc": "OUR app_process shell-domain server. Started by `adb shell CLASSPATH=<apk> app_process /system/bin <class> <token> <port>` (the /api/adb/server-command one-liner, run once per boot via wireless debugging). Loopback + per-boot random token. This is the self-contained replacement for the Shizuku app.",
-      "port": 38099,
-      "class": "com.diegonmarcos.superapp.adbdebug.AdbShellServer",
-      "nice_name": "superapp-adb"
-    },
+    "_local_server_moved": "#1682 the ADB owner is the Cloud Webserver (1_cicd/src/data/adb-owner.json): the loopback app_process shell server is declared there (ac_cloud-c3-webserver/build.json::shizuku_diagnostics.local_server, port 38099). The SuperApp is a client and declares none (test-adb-shell-one-place.sh G7: one port per app with a server). Rolling the owner back to the SuperApp means putting that block back here.",
     "bundles": [
       {
         "id": "charger",

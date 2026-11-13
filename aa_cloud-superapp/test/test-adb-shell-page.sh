@@ -31,7 +31,11 @@ PY
 echo "$out" | grep -qx 'AFTER adb-shell' && ok "ADB Shell comes right after Apps Access" || bad "ADB Shell is not right after Apps Access"
 echo "$out" | grep -qx 'LABEL ADB Shell' && ok "the label is ADB Shell (build.json, one place)" || bad "the label is not ADB Shell"
 echo "$out" | grep -qx 'ONCE 1' && ok "declared once" || bad "declared 0 or 2+ times"
-echo "$out" | grep -qx 'OWN True' && ok "the SuperApp declares its own local server, so its default mode is Local server" || bad "no local_server in the SuperApp's build.json"
+# #1682 the local server belongs to the declared ADB owner: the SuperApp declares none once it is a client, the owner declares it
+OWNER_APP="$(python3 -c "import json;print(json.load(open('$ROOT/1_cicd/src/data/adb-owner.json'))['adb_owner'])")"
+OWNER_HAS="$(python3 -c "import json;print('local_server' in (json.load(open('$ROOT/$OWNER_APP/build.json')).get('shizuku_diagnostics') or {}))")"
+if [ "$OWNER_APP" = aa_cloud-superapp ]; then want=True; else want=False; fi
+{ [ "$OWNER_HAS" = True ] && echo "$out" | grep -qx "OWN $want"; } && ok "the declared ADB owner ($OWNER_APP) declares the local server; the SuperApp declares it only while it is the owner" || bad "local_server declaration does not match the ADB owner ($OWNER_APP has: $OWNER_HAS, SuperApp OWN want $want)"
 echo "$out" | grep -qE '^NEEDS [1-9]' && ok "the SuperApp declares what it needs the channel for" || bad "no privileged_channel.needs in the SuperApp's build.json"
 grep -q 'pageId == "adb-shell".*AdbSide.page("adb-shell")' "$ROOT/aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/SectionPages.kt" && ok "routed to AdbShellFragment" || bad "adb-shell is not routed"
 grep -q 'AdbShellBrokerPage(' "$ROOT/aa_cloud-superapp/app/src/owner/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt" && ok "the fragment hosts the SuperApp broker page" || bad "the fragment does not host AdbShellBrokerPage"
