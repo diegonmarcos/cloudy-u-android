@@ -2,6 +2,7 @@
 
 package com.diegonmarcos.superapp.configs
 
+import com.diegonmarcos.superapp.system.WirelessDebugKeeper
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -84,7 +85,7 @@ fun loadAdbPage(ctx: Context): AdbPageState {
         status = runCatching { ShellBroker.status(ctx) }.getOrNull(),
         wireless = runCatching { WirelessDebugging.isOn(ctx) }.getOrNull(),
         paired = facts?.adbPaired == true, port = AdbShellModel.port(facts?.adbEndpoint),
-        keeperOn = AdbOwnerHost.keeperEnabled(ctx), keeper = keeper,
+        keeperOn = WirelessDebugKeeper.Prefs.enabled(ctx), keeper = keeper,
         callers = runCatching { AdbShellModel.callers(ShellBroker.callerSummaries(ctx), ShellBroker.auditEntries(ctx)) }.getOrDefault(emptyList()),
         audit = runCatching { ShellBroker.auditEntries(ctx) }.getOrDefault(emptyList()),
         keeperLog = runCatching { WdKeeper.audit(ctx).entries() }.getOrDefault(emptyList()),
@@ -117,7 +118,7 @@ fun AdbShellBrokerPage() {
         primary = { if (it == AdbShellModel.Primary.PAIR) pair() else rearm() }, rearm = rearm, pair = pair,
         openSettings = { AdbShellLink.open(ctx, ControlStatus.Action.OPEN_SETTINGS) },
         testNow = { run("Testing") { ShellBroker.invalidate(ctx); ShellBroker.status(ctx).let { it.adbLine() + "\n" + it.line() } } },
-        toggleKeeper = { AdbOwnerHost.setKeeperEnabled(ctx, !state.keeperOn); tick++ },
+        toggleKeeper = { WirelessDebugKeeper.Prefs.setEnabled(ctx, !state.keeperOn); tick++ },
         fixPerms = { WdKeeper.openPermsFix(ctx) },
     )
     AdbShellLayout(

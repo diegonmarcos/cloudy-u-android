@@ -19,8 +19,7 @@
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneBootReceiver.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneWorker.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/QuickDisplay.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/SystemDisplay.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt"
+  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/SystemDisplay.kt"
  ],
  "gradle": [
   "ab_cloud-libs-shared/libs/updater/build.gradle",

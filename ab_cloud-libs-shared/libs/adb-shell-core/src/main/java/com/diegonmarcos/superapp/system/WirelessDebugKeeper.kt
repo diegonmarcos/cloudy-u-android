@@ -21,7 +21,7 @@ import androidx.work.workDataOf
 import com.diegonmarcos.superapp.core.FleetAlerts
 import com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
 import com.diegonmarcos.superapp.adbdebug.WirelessDebugging
-import com.diegonmarcos.superapp.configs.DeviceControls
+import com.diegonmarcos.superapp.configs.AdbOwnerHost
 import com.diegonmarcos.superapp.system.WirelessDebugKeepAlive.Trigger
 import java.util.concurrent.TimeUnit
 
@@ -103,7 +103,7 @@ class WirelessDebugKeeper(ctx: Context, params: WorkerParameters) : Worker(ctx, 
         private const val KEY_ENABLED = "enabled"
 
         fun enabled(ctx: Context): Boolean = ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-            .getBoolean(KEY_ENABLED, DeviceControls.declaredFlag(WirelessDebugKeeper.CONTROL_ID, "default_on"))
+            .getBoolean(KEY_ENABLED, AdbOwnerHost.declaredFlag(WirelessDebugKeeper.CONTROL_ID, "default_on"))
 
         fun setEnabled(ctx: Context, on: Boolean) {
             ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean(KEY_ENABLED, on).apply()
@@ -164,7 +164,7 @@ class WirelessDebugKeeper(ctx: Context, params: WorkerParameters) : Worker(ctx, 
 
         /** Bring scheduling in line with the switch. Called from App.onCreate,
          *  the boot receiver and the switch itself. */
-        fun sync(ctx: Context, trigger: Trigger) { com.diegonmarcos.superapp.xray.EngineProfiler.time("system", "wdkeeper") {
+        fun sync(ctx: Context, trigger: Trigger) { AdbOwnerHost.profile("system", "wdkeeper") {
             val app = ctx.applicationContext
             val wm = WorkManager.getInstance(app)
             if (!Prefs.enabled(app)) {
@@ -172,7 +172,7 @@ class WirelessDebugKeeper(ctx: Context, params: WorkerParameters) : Worker(ctx, 
                 wm.cancelUniqueWork(TICK_NAME)
                 cancelNotice(app)
                 com.diegonmarcos.superapp.adbdebug.WdKeeper.stop(app)
-                return
+                return@profile
             }
             // #1467 the shared keeper (libs:shizuku-adb-debug-tools WdKeeper): foreground service, observer, Wi-Fi callback,
             // audit log and leader election with Cloud Store, so whichever app is alive re-arms and the two never fight.

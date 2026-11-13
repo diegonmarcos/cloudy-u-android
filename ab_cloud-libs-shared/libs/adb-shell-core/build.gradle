@@ -34,6 +34,9 @@ dependencies {
     implementation project(':libs:perms')
     // #1682 P3 step 4c: the cockpit pages draw with the fleet UI kit (KitStoreRow, LocalKitPalette); it brings compose + fragment-ktx
     api project(':libs:ui-kit')
+    // #1682 P3 step 4d: WirelessDebugKeeper (WorkManager worker) withdraws its legacy alert through libs:core FleetAlerts
+    implementation project(':libs:core')
+    implementation 'androidx.work:work-runtime-ktx:2.12.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 
     testImplementation 'junit:junit:4.13.2'

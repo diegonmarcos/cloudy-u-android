@@ -2,6 +2,7 @@
 
 package com.diegonmarcos.superapp.configs
 
+import com.diegonmarcos.superapp.system.WirelessDebugKeeper
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -363,12 +364,12 @@ fun AdbStatusTab() {
             note = "Log copied."
         },
         clearLog = { ChannelLog.shared.clear() },
-        setKeepAlive = { on -> AdbOwnerHost.setKeeperEnabled(ctx, on); tick++ },
+        setKeepAlive = { on -> WirelessDebugKeeper.Prefs.setEnabled(ctx, on); tick++ },
     )
     val log = remember(logTick, tick) { ChannelLog.shared.entries() }
     val keepAlive = remember(tick) {
         runCatching {
-            val on = AdbOwnerHost.keeperEnabled(ctx)
+            val on = WirelessDebugKeeper.Prefs.enabled(ctx)
             val s = com.diegonmarcos.superapp.adbdebug.WdKeeper.snapshot(ctx)
             AdbCockpitModel.keepAlive(on, s.armed, s.serviceRunning, s.canWrite, s.batteryExempt,
                 s.lastRearmAt?.let { com.diegonmarcos.superapp.adbdebug.WdKeeper.ago(it) })

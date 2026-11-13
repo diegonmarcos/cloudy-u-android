@@ -2172,7 +2172,7 @@
       "class": "config",
       "doc": "Wireless-debugging keepalive switch (`enabled`), the owner's choice in Configs ▸ Controls.",
       "used_by": [
-        "aa_cloud-superapp"
+        "lib-adb-shell-core"
       ]
     },
     "wd_keepalive_status": {
@@ -2180,7 +2180,7 @@
       "class": "device",
       "doc": "Wireless-debugging keepalive worker status (ready, last tick/reconnect/failure times).",
       "used_by": [
-        "aa_cloud-superapp"
+        "lib-adb-shell-core"
       ]
     },
     "webview_layer_guard": {

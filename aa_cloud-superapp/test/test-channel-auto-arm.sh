@@ -38,7 +38,7 @@ allowed = {LIB+"ShellAccess.kt", LIB+"ChannelDevice.kt", LIB+"EmbeddedAdbChannel
 bad = sorted(set(raw) - allowed)
 ok(not bad, "A3 no implicit caller uses the raw autoConnect", "A3 raw EmbeddedAdbChannel.autoConnect( in: " + ", ".join(bad))
 ok(re.search(r"fun autoArm\(.*ChannelAutoArm\.enabled\(ctx\).*autoConnect\(ctx\)", src(LIB+"EmbeddedAdbChannel.kt"), re.S) is not None, "A3 autoArm asks the switch before connecting", "A3 EmbeddedAdbChannel.autoArm does not consult ChannelAutoArm.enabled")
-for p, why in [(SA+"devcontrol/DevControlServer.kt", "start thread and /api/adb/autoconnect"), (SA+"system/WirelessDebugKeeper.kt", "keeper reconnect"),
+for p, why in [(SA+"devcontrol/DevControlServer.kt", "start thread and /api/adb/autoconnect"), ("ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt", "keeper reconnect"),
                (SA+"system/PrivilegedPlaneWorker.kt", "boot worker"), (LIB+"WirelessDebugging.kt", "implicit re-arm of a privileged tool"),
                ("ab_cloud-libs-shared/libs/updater/src/shell/java/com/diegonmarcos/superapp/updater/ShellChannelAccess.kt", "install path reconnect"), (LIB+"HostShell.kt", "Store/Account re-arm")]:
     ok("autoArm(" in src(p) or "ChannelAutoArm.enabled(" in src(p), f"A3 {os.path.basename(p)} gated ({why})", f"A3 {p} ({why}) is not gated")
@@ -57,7 +57,7 @@ echo "== channel auto-arm =="; check "$ROOT"; REAL=$?
 MUT=0; N=0
 SAp=aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp
 LIBp=ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug
-FILES="aa_cloud-superapp/build.json $SAp/App.kt $SAp/devcontrol/DevControlServer.kt $SAp/system/WirelessDebugKeeper.kt $SAp/system/PrivilegedPlaneWorker.kt $SAp/system/PrivilegedPlaneBootReceiver.kt ab_cloud-libs-shared/libs/updater/src/shell/java/com/diegonmarcos/superapp/updater/ShellChannelAccess.kt $LIBp/EmbeddedAdbChannel.kt $LIBp/WirelessDebugging.kt $LIBp/HostShell.kt $LIBp/ChannelAutoArm.kt $LIBp/ShellAccess.kt $LIBp/ChannelDevice.kt"
+FILES="aa_cloud-superapp/build.json $SAp/App.kt $SAp/devcontrol/DevControlServer.kt ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt $SAp/system/PrivilegedPlaneWorker.kt $SAp/system/PrivilegedPlaneBootReceiver.kt ab_cloud-libs-shared/libs/updater/src/shell/java/com/diegonmarcos/superapp/updater/ShellChannelAccess.kt $LIBp/EmbeddedAdbChannel.kt $LIBp/WirelessDebugging.kt $LIBp/HostShell.kt $LIBp/ChannelAutoArm.kt $LIBp/ShellAccess.kt $LIBp/ChannelDevice.kt"
 mutate() { # mutate <desc> <file> <python-expr old> <new>
   N=$((N+1)); S="$(mktemp -d)"; mkdir -p "$S/x"
   (cd "$ROOT" && for f in $FILES; do mkdir -p "$S/x/$(dirname "$f")"; cp "$f" "$S/x/$f"; done)

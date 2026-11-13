@@ -52,13 +52,14 @@ ok()  { PASS=$((PASS+1)); echo "  PASS: $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
 
 SYS="$APP/app/src/main/java/com/diegonmarcos/superapp/system"
-KEEPER="$SYS/WirelessDebugKeeper.kt"
-CORE="$SYS/WirelessDebugKeepAlive.kt"
+KSYS="$APP/../ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system"  # #1682 P3 step 4d: the keeper lives in libs:adb-shell-core
+KEEPER="$KSYS/WirelessDebugKeeper.kt"
+CORE="$KSYS/WirelessDebugKeepAlive.kt"
 PPW="$SYS/PrivilegedPlaneWorker.kt"
 BOOT="$SYS/PrivilegedPlaneBootReceiver.kt"
 APPKT="$APP/app/src/main/java/com/diegonmarcos/superapp/App.kt"
 CONTROLS="$APP/app/src/main/java/com/diegonmarcos/superapp/configs/DeviceControls.kt"
-JVMTEST="$APP/app/src/test/java/com/diegonmarcos/superapp/system/WirelessDebugKeepAliveTest.kt"
+JVMTEST="$APP/../ab_cloud-libs-shared/libs/adb-shell-core/src/test/java/com/diegonmarcos/superapp/system/WirelessDebugKeepAliveTest.kt"
 BJ="$APP/build.json"
 
 for tool in python3 jq; do
