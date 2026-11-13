@@ -285,6 +285,7 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 			className: "cloud-row",
 			onclick: () => system.manageAllFiles(() => refreshIndex(), (e) => toast(String(e))),
 		}, el("span", { className: "icon folder_open" }), "Allow access to all files, then retry");
+		console.info(`cloud-code backlog index: ${got.state}${got.reason ? ` (${got.reason})` : ""}`);
 		if (got.state === "live") {
 			indexNote.textContent = `cloud-me-pvt-tasks index.html, read from the clone ${ageText(got.savedAt, Date.now())}`;
 		} else if (got.state === "offline") {

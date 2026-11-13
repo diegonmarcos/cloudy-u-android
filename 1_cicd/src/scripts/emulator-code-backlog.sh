@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # emulator-code-backlog — #1699 screenshots on a booted emulator of Cloud Code's Backlog page, from the APK a Ship run built.
-# Three states, each asserted from the page text the uiautomator tree reads and screenshotted:
+# Three states, each asserted from the state the page logs to the WebView console (a Cordova page has no accessibility tree, so
+# taps are by screen fraction) and screenshotted:
 #   live        a clone's root index.html (a public fixture, never the private backlog) -> "read from the clone"
 #   offline     the clone removed, the app restarted -> "Offline copy saved" + the reason, the last-good page still shown
 #   unavailable app data cleared and no clone    -> the reason ("not on this device"), no crash
@@ -42,14 +43,20 @@ dismiss() {
     done
 }
 grant() { $T adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow; $T adb shell pm grant "$PKG" android.permission.READ_EXTERNAL_STORAGE 2>/dev/null || true; }
-launch() {
-    $T adb shell am force-stop "$PKG"
-    $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
-    sleep 22; dismiss
-    dump cur; tap_node "$OUT/cur.xml" '^backlog$' || true; sleep 4
+tapf() { # X% Y% of the screen
+    local wh w h; wh="$($T adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1)"; w="${wh%x*}"; h="${wh#*x}"
+    $T adb shell input tap $((w * $1 / 100)) $((h * $2 / 100))
 }
-expect() { # NAME REGEX
-    if grep -qiE "$2" "$OUT/backlog-$1.xml"; then echo "PASS $1: page says /$2/"; else echo "FAIL $1: the page does not say /$2/"; rc=1; fi
+launch() { # FIRST=1 on a fresh app data: Acode asks once about update checks (Cancel); then open the Backlog tab (first bar icon)
+    $T adb shell am force-stop "$PKG"; $T adb logcat -c || true
+    $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+    sleep 25
+    if [ "${1:-0}" = 1 ]; then tapf 25 63; sleep 3; fi
+    tapf 13 92; sleep 6
+}
+expect() { # NAME REGEX: the console line the page logged for this state
+    $T adb logcat -d | grep -E "cloud-code backlog index" > "$OUT/console-$1.txt" || true
+    if grep -qiE "$2" "$OUT/console-$1.txt"; then echo "PASS $1: $(tail -1 "$OUT/console-$1.txt" | cut -c1-200)"; else echo "FAIL $1: console has no /$2/"; rc=1; fi
 }
 
 # a public fixture standing in for the private repo's root index.html
@@ -63,16 +70,16 @@ HTML
 
 grant
 $T adb shell mkdir -p "$CLONE"; $T adb push "$OUT/fx/index.html" "$CLONE/index.html" >/dev/null
-launch; shot live 3
-expect live 'read from the clone|Fixture ticket'
+launch 1; shot live 3
+expect live 'index: live'
 
 $T adb shell rm -rf "$CLONE"
 launch; shot offline 3
-expect offline 'Offline copy saved'
+expect offline 'index: offline'
 
 $T adb shell pm clear "$PKG" >/dev/null 2>&1; grant
-launch; shot unavailable 3
-expect unavailable 'not on this device|Cannot reach|denied'
+launch 1; shot unavailable 3
+expect unavailable 'index: unavailable.*No earlier copy'
 
 $T adb logcat -d -t 30000 > "$OUT/logcat.txt"; $T adb logcat -d -b crash > "$OUT/logcat-crash.txt" 2>&1 || true
 cat "$OUT/logcat.txt" "$OUT/logcat-crash.txt" | grep -E "FATAL EXCEPTION" -A12 | grep -B2 -A12 "$PKG" | head -40 > "$OUT/crash.txt" || true
