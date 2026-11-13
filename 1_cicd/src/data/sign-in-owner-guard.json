@@ -146,14 +146,6 @@
       "until": "permanent"
     },
     {
-      "path": "ab_cloud-libs-shared/libs/ops/",
-      "rules": [
-        "credential-prompt"
-      ],
-      "why": "libs:ops Dagu bearer token entry on its connect page",
-      "until": "pending: not in steps 1-5"
-    },
-    {
       "path": "ab_cloud-libs-shared/libs/scraper/",
       "rules": [
         "device-grant"

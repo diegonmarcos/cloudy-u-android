@@ -85,6 +85,12 @@ class MainActivity : AppCompatActivity(),
         // The tab's fragment is re-added by the Compose host once it has a container for it.
         super.onCreate(KitFragmentHostState.withoutFragments(savedInstanceState))
         FleetChrome.apply(this)
+        // #1693 the Dagu bearer token is typed in Cloud Account (App credentials): the Dagu page reads it over the provider.
+        com.diegonmarcos.superapp.ops.OpsCredentials.read = { c, id ->
+            val x = com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.credential(c, id)
+            com.diegonmarcos.superapp.ops.OpsCredentials.Cred(x.value, x.line)
+        }
+        com.diegonmarcos.superapp.ops.OpsCredentials.open = { c -> com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(c) }
 
         // The app opens on ui.default_section (Home); a saved tab (or an old id) is resolved through ui.aliases.
         C3Nav.start(Declarations.nav, Declarations.aliases, savedInstanceState?.getString(STATE_TAB))

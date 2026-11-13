@@ -305,6 +305,7 @@ android {
 
 dependencies {
     implementation project(':libs:analytics')
+    implementation project(':libs:fleet-endpoints-android')   // #1693 AccountClient: App credentials read from Cloud Account
     implementation project(':libs:core')
     implementation project(':libs:updater')
     // #648 the fleet's bottom-nav island: the five tabs are the same Compose pill

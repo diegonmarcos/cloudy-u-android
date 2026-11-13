@@ -55,6 +55,12 @@ class App : Application(), WorkManagerConfiguration.Provider {
             val x = com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.credential(c, id)
             com.diegonmarcos.superapp.chat.ChatCredentials.Cred(x.value, x.line)
         }
+        // #1693 the Dagu bearer token likewise.
+        com.diegonmarcos.superapp.ops.OpsCredentials.read = { c, id ->
+            val x = com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.credential(c, id)
+            com.diegonmarcos.superapp.ops.OpsCredentials.Cred(x.value, x.line)
+        }
+        com.diegonmarcos.superapp.ops.OpsCredentials.open = { c -> com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(c) }
         com.diegonmarcos.superapp.chat.ChatCredentials.open = { c -> com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(c) }
         // ONE auto-arm switch: Configs > Keep Wireless debugging on (default build.json::privileged_channel.default_on = off).
         com.diegonmarcos.superapp.adbdebug.ChannelAutoArm.hostSwitch = { c -> com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.enabled(c) }

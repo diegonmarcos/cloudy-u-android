@@ -37,8 +37,6 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
@@ -123,27 +121,29 @@ class DaguFragment : Fragment() {
     private fun LoginForm(ctx: Context) {
         val p = LocalKitPalette.current
         var url by remember { mutableStateOf(prefs.serverUrl) }
-        var token by remember { mutableStateOf("") }
         var label by remember { mutableStateOf("") }
         Header("Dagu — Sign in")
-        Small(
-            "Paste an Authelia bearer token. Generate one on the laptop with:\n" +
-                "  python ~/git/cloud-vault/A0_keys/providers/authelia/oauth/get_token.py\n" +
-                "  jq -r .access_token ~/git/cloud-vault/A0_keys/providers/authelia/oauth/authelia_tokens.json")
+        // #1693 the Authelia bearer token is typed once in Cloud Account (App credentials); this page only reads it from there.
+        Small("The Authelia bearer token is entered in Cloud Account (App credentials) and read from there.")
         Field("Server URL", url, KeyboardType.Uri) { url = it }
-        Field("Bearer token", token, KeyboardType.Password, secret = true) { token = it }
         Field("Label (optional)", label, KeyboardType.Text) { label = it }
         Text(loginStatus, color = p.textSecondary, fontSize = 12.sp,
             modifier = Modifier.padding(vertical = 8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(enabled = !testing, onClick = {
-            val u = url.trim(); val t = token.trim(); val l = label.trim()
-            if (u.isBlank() || t.isBlank()) {
-                loginStatus = "Server URL and bearer token both required."
+            val u = url.trim(); val l = label.trim()
+            if (u.isBlank()) {
+                loginStatus = "Server URL required."
                 return@Button
             }
-            loginStatus = "Testing…"
+            loginStatus = "Reading Cloud Account…"
             testing = true
             Thread {
+                val cred = runCatching { OpsCredentials.read(ctx, OpsCredentials.ID_DAGU_TOKEN) }.getOrElse { OpsCredentials.Cred("", "Cloud Account read failed") }
+                val why = OpsCredentials.usable(cred)
+                if (why != null) { main.post { loginStatus = why; testing = false }; return@Thread }
+                val t = cred.value.trim()
+                main.post { loginStatus = "Testing…" }
                 val result = runCatching { DaguClient(ctx, u, t).listDags() }
                 main.post {
                     result.onSuccess {
@@ -160,7 +160,9 @@ class DaguFragment : Fragment() {
                     }
                 }
             }.start()
-        }) { Text("Save & test") }
+        }) { Text("Sign in with Cloud Account") }
+        Button(onClick = { loginStatus = OpsCredentials.open(ctx).orEmpty() }) { Text("Set it in Cloud Account") }
+        }
     }
 
     // ─────────────────────────── list view ───────────────────────────
@@ -182,7 +184,7 @@ class DaguFragment : Fragment() {
             when (val l = load) {
                 Load.Loading -> Text("Loading…", color = p.textSecondary, fontSize = 13.sp)
                 is Load.Failed -> Text(
-                    "Load failed: ${l.message}\nIf the token expired, Sign out + paste a fresh one.",
+                    "Load failed: ${l.message}\nIf the token expired, change it in Cloud Account, then Sign out and sign in again.",
                     color = colorResource(R.color.ops_error), fontSize = 12.sp)
                 is Load.Done ->
                     if (l.dags.isEmpty()) {
@@ -332,11 +334,10 @@ class DaguFragment : Fragment() {
     }
 
     @Composable
-    private fun Field(label: String, value: String, type: KeyboardType, secret: Boolean = false, onChange: (String) -> Unit) {
+    private fun Field(label: String, value: String, type: KeyboardType, onChange: (String) -> Unit) {
         OutlinedTextField(
             value = value, onValueChange = onChange, singleLine = true,
             label = { Text(label, fontSize = 11.sp) },
-            visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardOptions = KeyboardOptions(keyboardType = type),
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp))
     }

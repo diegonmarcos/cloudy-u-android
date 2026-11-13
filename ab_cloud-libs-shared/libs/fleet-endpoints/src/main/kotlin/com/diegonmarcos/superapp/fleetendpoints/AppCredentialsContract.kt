@@ -32,6 +32,7 @@ object AppCredentialsContract {
     const val PKG_SUPERAPP = "com.diegonmarcos.superapp"
     const val PKG_DRIVE = "com.diegonmarcos.clouddrive"
     const val PKG_TASKS = "com.diegonmarcos.cloudagenda"
+    const val PKG_C3 = "com.diegonmarcos.cloudc3"
 
     /** Grows with each migrated app (each batch adds its entries and a seed version in AccountVault). */
     val CATALOG: List<Entry> = listOf(
@@ -43,6 +44,7 @@ object AppCredentialsContract {
         Entry("tasks.jmap_secret", "Cloud Tasks mail agent secret", "the JMAP bearer token or Authelia session of the mail agent (Cloud Tasks > Settings > Agent)", listOf(PKG_TASKS)),
         Entry("mattermost.login", "Mattermost email or username", "the account that signs in to the Mattermost server (SuperApp > Chat)", listOf(PKG_SUPERAPP), secret = false),
         Entry("mattermost.password", "Mattermost password", "the password of that Mattermost account", listOf(PKG_SUPERAPP)),
+        Entry("dagu.token", "Dagu bearer token", "the Authelia bearer token of the Dagu server (SuperApp > C3 > Dagu, Cloud C3)", listOf(PKG_SUPERAPP, PKG_C3)),
     )
 
     /** The name part of a prefixed id made safe: letters, digits, `_` and `-` only, at most 60. */

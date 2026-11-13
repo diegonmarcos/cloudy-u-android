@@ -28,7 +28,7 @@ mutate() {  # label file old new
   rm -rf "$TMP/r"; mkdir -p "$TMP/r/$(dirname "$CH")" "$TMP/r/$(dirname "$APP")"; cp -r "$ROOT/$CH" "$TMP/r/$CH"; cp "$ROOT/$APP" "$TMP/r/$APP"
   python3 - "$TMP/r/$2" "$3" "$4" <<'PY'
 import sys
-p, a, b = sys.argv[1:4]; s = open(p, encoding="utf-8").read(); assert a in s, "anchor missing: " + a; open(p, "w", encoding="utf-8").write(s.replace(a, b, 1))
+p, a, b = sys.argv[1:4]; s = open(p, encoding="utf-8").read(); assert a in s, "anchor missing: " + a; open(p, "w", encoding="utf-8").write(s.replace(a, b))
 PY
   if check "$TMP/r" >/dev/null 2>&1; then echo "  NOT RED: $1"; M=1; else echo "  red  $1"; fi
 }
