@@ -1441,5 +1441,5 @@
     <string name="cloud_secret_taken">preso da Cloud Account</string>
     <string name="cloud_secret_take">Prendilo da Cloud Account</string>
     <string name="cloud_secret_set">Impostalo in Cloud Account</string>
-    <string name="connect_oauth_cloud_account">L'accesso OAuth è gestito da Cloud Account: installalo e riprova</string>
+    <string name="connect_oauth_cloud_account">L\'accesso OAuth è gestito da Cloud Account: installalo e riprova</string>
 </resources>
