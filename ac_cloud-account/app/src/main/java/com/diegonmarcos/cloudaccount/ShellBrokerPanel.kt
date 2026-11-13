@@ -28,6 +28,12 @@ object ShellBrokerLines {
     }
 }
 
+/** #1682 The one action of this app's ADB entries: open the owner's (Cloud C3 Webserver) ADB Shell page. */
+object ShellBrokerPanelActions {
+    fun openOwnerAdbPage(ctx: android.content.Context): Boolean =
+        runCatching { ShellClient.openArmPage(ctx) }.getOrDefault(false)
+}
+
 /**
  * #1512 The privileged shell of this app is the SuperApp's shell broker (libs:shell-client), not a channel of its own: this panel
  * reports its state and opens the SuperApp's arm flow. Nothing to pair, reconnect or keep alive here. Used by Connect > ADB Shell
@@ -45,7 +51,7 @@ fun ShellBrokerPanel(onChange: () -> Unit = {}) {
     Column(Modifier.padding(16.dp).testTag("shell-broker-panel")) {
         ShellBrokerLines.of(status).forEach { Text(it, color = MaterialTheme.colorScheme.onSurface) }
         Row {
-            Button(onClick = { ShellClient.openArmPage(ctx); tick++ }, content = { Text("Arm in SuperApp") })
+            Button(onClick = { ShellBrokerPanelActions.openOwnerAdbPage(ctx); tick++ }, content = { Text("Open ADB Shell") })
             Button(onClick = { tick++ }, modifier = Modifier.padding(start = 8.dp), content = { Text("Re-check") })
         }
         Text("Installs of Cloud Store and the setup runbook's grants run through the SuperApp's shell broker, under this app's own allowlist entry.",

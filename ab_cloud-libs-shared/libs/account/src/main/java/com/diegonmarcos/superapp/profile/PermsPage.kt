@@ -85,9 +85,9 @@ fun AccountPermsPage(go: (section: String, page: String) -> Unit) {
             KitCard(Modifier.fillMaxWidth()) {
                 val ch = channel
                 if (ch == null) {
-                    KitListRow("No shell channel", secondary = "Grant all needs one: arm the shell broker in the SuperApp",
+                    KitListRow("No shell channel", secondary = "Grant all needs one: arm the shell broker in Cloud C3 Webserver (the ADB owner)",
                         pill = "none" to KitState.BAD, tag = "perms:channel")
-                    KitActionBar(listOf(KitAction("Open ADB Shell", PermsPageTags.NO_CHANNEL) { go("setup", "adb-shell") }))
+                    KitActionBar(listOf(KitAction("Open ADB Shell", PermsPageTags.NO_CHANNEL) { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctx) }))  // #1682 the webserver owns ADB: open its page
                 } else KitListRow("Shell channel", secondary = ch.name(), pill = "ready" to KitState.OK, tag = "perms:channel")
                 KitActionBar(listOf(KitAction(if (busy) "Granting…" else "Grant all (${plan?.todo?.size ?: 0} from the profile)",
                     PermsPageTags.GRANT_ALL, !busy && plan != null && ch != null) {

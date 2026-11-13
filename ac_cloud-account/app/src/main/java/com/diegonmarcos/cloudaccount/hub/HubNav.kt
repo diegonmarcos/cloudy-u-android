@@ -13,6 +13,10 @@ package com.diegonmarcos.cloudaccount.hub
  * page lives now, so no link, OPEN intent or bookmark breaks and no lib file changes.
  */
 object HubNav {
+    /** #1682 Every old id of the ADB Shell page (setup / configs > adb-shell) lands on this one page, which opens the owner's
+     *  (Cloud C3 Webserver) ADB Shell page through ShellClient.openArmPage; there is no ADB page of this app's own. */
+    val ADB_PAGE = "connect" to "adb-shell"
+
     /** The bottom nav, left to right, as the owner asked for it. */
     val ORDER = listOf("vault", "config", "connect", "devices", "activity")
     const val DEFAULT = "vault"
@@ -35,7 +39,7 @@ object HubNav {
         ("setup" to "apps") to ("config" to "cloud-apps"),
         ("setup" to "configs") to ("connect" to "push"),
         ("setup" to "perms") to ("connect" to "perms"),
-        ("setup" to "adb-shell") to ("connect" to "adb-shell"),
+        ("setup" to "adb-shell") to ADB_PAGE,
         ("settings" to "") to ("connect" to "settings"),
         // Profiles, Secrets (four islands of 2026-10-13/14)
         ("profiles" to "") to ("connect" to "apps"),
@@ -68,7 +72,7 @@ object HubNav {
         ("configs" to "apps") to ("config" to "cloud-apps"),
         ("configs" to "configs") to ("connect" to "push"),
         ("configs" to "perms") to ("connect" to "perms"),
-        ("configs" to "adb-shell") to ("connect" to "adb-shell"),
+        ("configs" to "adb-shell") to ADB_PAGE,
         // #1438 Configs > Android is Cloud Apps / Phone Apps / Runbook; Push, Perms and ADB Shell moved to Connect > Setup;
         // Personal Info > Wallet became Pay Cards.
         ("configs" to "push") to ("connect" to "push"),

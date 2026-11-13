@@ -253,7 +253,13 @@ class MainActivity : AppCompatActivity() {
                 // #1438 moved here from Configs > Android.
                 "push" -> FleetSetupPage(model)
                 "perms" -> AccountPermsPage(go)
-                "adb-shell" -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { ShellBrokerPanel() }
+                "adb-shell" -> {
+                    // #1682 ADB lives in Cloud C3 Webserver: entering this page opens the owner's ADB Shell page once; the status panel stays.
+                    var opened by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+                    val pageCtx = androidx.compose.ui.platform.LocalContext.current
+                    LaunchedEffect(opened) { if (!opened) { opened = true; ShellBrokerPanelActions.openOwnerAdbPage(pageCtx) } }
+                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { ShellBrokerPanel() }
+                }
                 "drive" -> DriveSetupPage()
                 "hub" -> AuthProvidersPage()
                 "signin" -> AccountConnectPage()
