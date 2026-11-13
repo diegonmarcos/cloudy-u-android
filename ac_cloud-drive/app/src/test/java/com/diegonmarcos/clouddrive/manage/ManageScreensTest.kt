@@ -6,6 +6,7 @@ import android.os.Looper
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Column
+import com.diegonmarcos.clouddrive.Declarations
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -107,5 +108,35 @@ class ManageScreensTest {
         compose.onNodeWithTag(DriveTags.XRAY_GENERATE).assertIsDisplayed()
         shot("overview-xray@a37.png")
         File(System.getProperty("user.dir"), "build/drive-screens").apply { mkdirs() }.resolve("xray-memory-sample.md").writeText(XrayMemoryReport.markdown(XrayMemoryReportTest().full()))
+    }
+
+    @Test fun overviewTerminalsAppsAndDataSections() {
+        val ctx = RuntimeEnvironment.getApplication()
+        LocalAppsApi.publish(rows("com.fleet.alpha", "com.phone.bravo", "com.phone.charlie"))
+        val links = listOf(
+            TerminalLink("termux", "Cloud Terminal Termux", "terminal", "termux", "cld.termux", true),
+            TerminalLink("nix", "Cloud Terminal Nix", "terminal", "nix-on-droid", "cld.termux.nix", false))
+        val strips = Declarations.parseManage(File(System.getProperty("user.dir")).let { if (File(it, "build.json").isFile) it else it.parentFile }.resolve("build.json").let { f -> org.json.JSONObject(f.readText()).getJSONObject("ui").getJSONObject("manage").toString() }).dataStrips
+        compose.setContent {
+            DriveTheme {
+                androidx.compose.foundation.lazy.LazyColumn {
+                    item { com.diegonmarcos.clouddrive.ui.SectionHeader("TERMINALS") }
+                    item { TerminalLinks(links) }
+                    item { com.diegonmarcos.clouddrive.ui.SectionHeader("APPS") }
+                    item { AppsSummary() }
+                    item { com.diegonmarcos.clouddrive.ui.SectionHeader("DATA") }
+                    strips.forEach { d -> item { DataStrip(d) } }
+                }
+            }
+        }
+        idle()
+        compose.onNodeWithTag(DriveTags.terminalLink("termux")).assertIsDisplayed()
+        compose.onNodeWithTag(DriveTags.terminalLink("nix")).assertIsDisplayed()
+        compose.onNodeWithTag(DriveTags.terminalGet("nix")).assertIsDisplayed()
+        compose.onNodeWithText("not installed").assertIsDisplayed()
+        compose.onNodeWithTag(DriveTags.appsSumRow("cloud")).assertIsDisplayed()
+        compose.onNodeWithTag(DriveTags.appsSumRow("phone")).assertIsDisplayed()
+        compose.onNodeWithTag(DriveTags.dataStrip("screenshots")).assertIsDisplayed()
+        shot("overview-terminals-apps-data@a37.png")
     }
 }

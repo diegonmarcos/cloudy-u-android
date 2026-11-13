@@ -90,7 +90,7 @@ fun OverviewPage(storage: StorageCoordinator) {
 
 /** The terminals as icon links side by side: tap opens the app (launch intent of its package); an absent one says "not installed" and offers Cloud Store on that app. */
 @Composable
-private fun TerminalLinks(links: List<TerminalLink>) {
+internal fun TerminalLinks(links: List<TerminalLink>) {
     val ctx = LocalContext.current
     Row(Modifier.fillMaxWidth().padding(DriveMetrics.gutter), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(DriveMetrics.pad)) {
         for (l in links) {
