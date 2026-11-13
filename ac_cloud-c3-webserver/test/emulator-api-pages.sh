@@ -36,7 +36,8 @@ n=0
 while read -r label want <&3; do   # fd 3: adb reads stdin and would eat the page list
   [ -z "$label" ] && continue
   n=$((n+1)); name="$n-$(echo "$label" | tr 'A-Z ' 'a-z-')"
-  tap_page "${label//_/ }" || { fail "the second row has no '${label//_/ }' page"; continue; }
+  # a label the row has scrolled out of view: drag the row left (it sits at about a sixth of the height) and look again
+  tap_page "${label//_/ }" || { adb shell input swipe $((WD*8/10)) $((HT*17/100)) $((WD*2/10)) $((HT*17/100)) 300 </dev/null; sleep 1; tap_page "${label//_/ }"; } || { fail "the second row has no '${label//_/ }' page"; continue; }
   ok=0
   for i in 1 2 3 4 5 6; do sleep 4; dump "$name"; has "$name" "${want//_/ }" && { ok=1; break; }; done
   shoot "$name"
