@@ -43,6 +43,8 @@ dismiss() {
         if grep -q 'Continue with local files' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^Continue with local files$'; sleep 6; continue; fi
         # Cloud Gallery's first-run welcome (Get Started): enter the app
         if grep -q 'text="Get Started"' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^Get Started$'; then sleep 5; continue; fi
+        # Android's "access all device logs" ask (the Logcat tab reads the log): Don't allow
+        if grep -qiE 'access all device logs' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^don.t allow$'; then sleep 2; continue; fi
         # Cloud Code's (Acode) update-check confirm: Cancel
         if grep -q 'Enable update' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^cancel$'; then sleep 2; continue; fi
         # the fleet's own install-source ask (Skip), or Android's "not allowed to install unknown apps" (Cancel)
