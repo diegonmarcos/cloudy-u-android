@@ -12,16 +12,22 @@ import com.diegonmarcos.cloudwebserver.Decl
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
+/** #1713 the declared ADB Shell sub page ids (the fleet second row); an id nobody declares falls back to Status, never to a blank page. */
+fun adbPageId(page: String?): String = when (page) {
+    Decl.PAGE_ADB_STATUS, Decl.PAGE_ADB_TERM, Decl.PAGE_ADB_PERMS, Decl.PAGE_ADB_SERVER, Decl.PAGE_ADB_ALL -> page
+    else -> Decl.PAGE_ADB_STATUS
+}
+
 /**
  * #1677 the ADB Shell tab, native: the SuperApp's ADB Shell page (build.json::adb_shell), opened through the Rust core (POST
  * /__app__/api/adb-shell -> served::launch_with -> the SuperApp's launcher intent with its page extra). Selecting the tab opens it
  * once; a missing SuperApp is the server's clear 'not installed' reason, shown here. P2 (#1682) moves the ADB Shell into this app.
  */
 @Composable
-fun WebAdbShellPage(open: (String, String?) -> Unit) {
+fun WebAdbShellPage(open: (String, String?) -> Unit, page: String? = null) {
     // #1682 P2b the owner side draws the one ADB Shell here once adb-owner.json names this app (src/owner); the shipped build
     // compiles the inactive stand-in (src/dormant, active = false) and keeps opening the owner's page below.
-    if (com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.active) { com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.Page(); return }
+    if (com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.active) { com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.Page(adbPageId(page)); return }
     val (tick, bump) = rememberTick()
     val link = rememberObj(Api.ADB_SHELL, tick)
     var said by rememberSaveable { mutableStateOf("") }

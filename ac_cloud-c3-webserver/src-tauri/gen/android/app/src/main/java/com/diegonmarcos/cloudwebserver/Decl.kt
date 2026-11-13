@@ -33,4 +33,11 @@ object Decl {
     const val PAGE_DEVICE = "device"
     const val PAGE_ENGINES = "engines"
     const val PAGE_LINKS = "links"
+
+    // #1713 the ADB Shell section's sub pages (the fleet second row): Status, Shell, Perms, Server, All. Ids are unique in the app (N12).
+    const val PAGE_ADB_STATUS = "adb_status"
+    const val PAGE_ADB_TERM = "adb_term"
+    const val PAGE_ADB_PERMS = "adb_perms"
+    const val PAGE_ADB_SERVER = "adb_server"
+    const val PAGE_ADB_ALL = "adb_all"
 }

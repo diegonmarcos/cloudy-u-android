@@ -19,7 +19,7 @@ FIELDS = ['"c3_adb_shell"', '"c3_adb"', '"c3_adb_open"', '"c3_adb_refresh"', '"c
 def check(page, shell, old_exists):
     bad = [f for f in FIELDS if f not in page]
     if "fun WebAdbShellPage(" not in page: bad.append("fun WebAdbShellPage(")
-    if "Decl.SECTION_ADB_SHELL -> WebAdbShellPage(open)" not in shell: bad.append("Shell.kt dispatch")
+    if "Decl.SECTION_ADB_SHELL -> WebAdbShellPage(open" not in shell: bad.append("Shell.kt dispatch")
     if old_exists: bad.append("ui/AdbShellPage.kt is back (the lib owns the one AdbShellPage)")
     return bad
 page = rd(os.path.join(UI, "WebAdbShellPage.kt")); shell = rd(os.path.join(UI, "Shell.kt")); old = os.path.exists(os.path.join(UI, "AdbShellPage.kt"))
@@ -28,7 +28,7 @@ print(("  PASS: " if not bad else "  FAIL: ") + "WebAdbShellPage keeps every fie
 for f in FIELDS + ["fun WebAdbShellPage("]:
     red = bool(check(page.replace(f, "X"), shell, False))
     print(("  PASS: " if red else "  FAIL: ") + "dropping %s turns red" % f); fails += 0 if red else 1
-for label, sh, o in (("the section dispatch dropped", shell.replace("WebAdbShellPage(open)", "X"), False), ("the old file back", shell, True)):
+for label, sh, o in (("the section dispatch dropped", shell.replace("WebAdbShellPage(open, page)", "X"), False), ("the old file back", shell, True)):
     red = bool(check(page, sh, o)); print(("  PASS: " if red else "  FAIL: ") + label + " turns red"); fails += 0 if red else 1
 # #1682 P4 per-feature parity: every feature of the SuperApp's ADB Shell page (its AdbShellFragment: the four tabs, each a lib composable)
 # is on the OWNER page (src/owner AdbOwnerSide) too, plus the owner's own: readiness + Connect + re-check, the Tester, the channel log and

@@ -12,5 +12,6 @@ object AdbOwnerSide {
     const val active: Boolean = false
     const val why: String = "the ADB owner is another app (adb-owner.json); this app links no ADB channel"
     fun install(ctx: Context) {}
-    @Composable fun Page() {}
+    val FIELD_HOME: Map<String, String> = emptyMap()
+    @Composable fun Page(page: String? = null) {}
 }

@@ -142,7 +142,39 @@
       {
         "id": "adb_shell",
         "label": "ADB Shell",
-        "icon": "android"
+        "icon": "android",
+        "pages": [
+          {
+            "id": "adb_status",
+            "label": "Status",
+            "icon": "info",
+            "pages": []
+          },
+          {
+            "id": "adb_term",
+            "label": "Shell",
+            "icon": "terminal",
+            "pages": []
+          },
+          {
+            "id": "adb_perms",
+            "label": "Perms",
+            "icon": "verified_user",
+            "pages": []
+          },
+          {
+            "id": "adb_server",
+            "label": "Server",
+            "icon": "dns",
+            "pages": []
+          },
+          {
+            "id": "adb_all",
+            "label": "All",
+            "icon": "apps",
+            "pages": []
+          }
+        ]
       },
       {
         "id": "configs",
