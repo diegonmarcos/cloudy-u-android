@@ -89,7 +89,7 @@ mutate "the Store opens the SuperApp's in-app page" $ST '' $'\nfun z(s: android.
 mutate "the Store opens the lib's AdbShellActivity" $ST '' $'\nval q = com.diegonmarcos.superapp.adbdebug.AdbShellActivity::class\nfun y(c: android.content.Context) { com.diegonmarcos.superapp.adbdebug.AdbShellActivity.open(c) }\n' || M=$((M+1))
 mutate "the Store stops using the owner door" $ST 'ShellClient.openArmPage(' 'Unit.hashCode(' || M=$((M+1))
 mutate "a new offender is not on the ratchet" ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt '' $'\nfun w(a: Any) { go("setup", "adb-shell") }\n' || M=$((M+1))
-mutate "a ratchet entry is stale (file fixed)" aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkSections.kt 'Target.InApp("config", "adb-shell"' 'Target.Owner("adb-shell"' || M=$((M+1))
+mutate "a ratchet entry is stale (listed file does not open the SuperApp page)" $J '"offenders": {}' '"offenders": {"ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreShell.kt": "planted: this file never opens the SuperApp page, so the entry is stale"}' || M=$((M+1))
 mutate "the owner stops hosting the page" ac_cloud-c3-webserver/src-tauri/gen/android/app/src/owner/java/com/diegonmarcos/cloudwebserver/owner/AdbOwnerSide.kt 'AdbShellBrokerPage(' 'AdbShellBrokerPag(' || M=$((M+1))
 mutate "the wire targets another app" ab_cloud-libs-shared/libs/shell-client/src/main/java/com/diegonmarcos/superapp/shellclient/ShellWire.kt '"com.diegonmarcos.cloudwebserver"' '"com.diegonmarcos.superapp"' || M=$((M+1))
 echo "== RESULT: real tree $REAL failure(s), $M mutation(s) not caught =="
