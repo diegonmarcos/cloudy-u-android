@@ -35,7 +35,6 @@ on:
       - "aa_cloud-superapp/app/build.gradle"
       - "aa_cloud-superapp/app/src/androidTest/**"
       - "aa_cloud-superapp/build.sh"
-      - "ab_cloud-libs-shared/libs/account/**"
       - "ab_cloud-libs-shared/libs/adb-shell-core/**"
       - "ab_cloud-libs-shared/libs/ai-usage/**"
       - "ab_cloud-libs-shared/libs/analytics/**"

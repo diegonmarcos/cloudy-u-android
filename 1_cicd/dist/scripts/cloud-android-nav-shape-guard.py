@@ -397,6 +397,26 @@ def check_app(root, app, ui, spec, bad):
     # N9
     check_backgrounds(app, sections, spec, code, rel, bad)
 
+    # N14 (#1483) the title dropdown's section list holds EVERY declared section, so a user (and the runtime walk, P6) reaches
+    # every page from it: each NavBarTopFirstRowScaffold call passes `sections =` the declaration's whole list (NavDecl.sections),
+    # never the bar's subset (bottomSections) or none at all (the dropdown then lists the open section alone).
+    check_section_peers(app, code, rel, bad)
+
+
+SCAFFOLD_CALL = re.compile(r"\bNavBarTopFirstRowScaffold\s*\(")
+ALL_SECTIONS = re.compile(r"\bsections\s*=\s*([\w.]*\.sections\b|Sections\.all\b)")
+
+
+def check_section_peers(app, code, rel, bad):
+    for p, text in code.items():
+        for m in SCAFFOLD_CALL.finditer(text):
+            if text[:m.start()].rstrip().endswith("fun"):
+                continue  # the scaffold's own declaration
+            args = top_level(text, m.end() - 1)
+            if not ALL_SECTIONS.search(args):
+                bad.append(f"N14 {app}: {rel(p)}:{line_of(text, m.start())} NavBarTopFirstRowScaffold does not pass sections = <NavDecl>.sections "
+                           f"(every declared section, bar and off-bar, must be a peer in the title dropdown)")
+
 
 KT_NUM = re.compile(r"^(-?\d+(?:\.\d+)?)(?:\.(?:dp|sp))?$")
 KT_COLOR = re.compile(r"Color\(\s*(0x[0-9A-Fa-f]{8})\s*\)")

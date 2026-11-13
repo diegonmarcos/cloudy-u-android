@@ -1,3 +1,4 @@
+# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-sign-in-owner-guard.py ───
 #!/usr/bin/env python3
 """#1693 sign-in owner guard: Cloud Account is the only fleet app that STARTS a sign-in.
 

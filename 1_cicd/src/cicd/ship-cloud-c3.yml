@@ -44,8 +44,6 @@ on:
       # fleet-refresh.yml (schedule only) ships the app for a moved cross-app dir.
       #   input: "1_cicd/src/cicd/ship-cloud-c3.yml"
       # ── end MANAGED-PATHS-HEADER ──
-      - "ab_cloud-libs-shared/libs/fleet-endpoints-android/**"
-      - "ab_cloud-libs-shared/libs/fleet-endpoints/**"
       - "ab_cloud-libs-shared/libs/ai/**"
       - "ab_cloud-libs-shared/libs/analytics/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
@@ -54,6 +52,8 @@ on:
       - "ab_cloud-libs-shared/libs/decisions-link/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
       - "ab_cloud-libs-shared/libs/fleet-data-client/**"
+      - "ab_cloud-libs-shared/libs/fleet-endpoints-android/**"
+      - "ab_cloud-libs-shared/libs/fleet-endpoints/**"
       - "ab_cloud-libs-shared/libs/fleet-notify/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-agents/**"
