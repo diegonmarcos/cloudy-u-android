@@ -32,12 +32,14 @@ overview() {  # open Overview and look for the app's card by its label
 }
 open_store() {
   adb shell am start -W -n "$S/$(adb shell cmd package resolve-activity --brief "$S" | tr -d '\r' | tail -1 | sed 's#.*/##')" >/dev/null; sleep 8
-  for i in 1 2 3 4; do tap_re "Wait|Cancel" && sleep 3; done
+  for i in 1 2 3 4; do tap_re "Wait|Cancel|Not now" && sleep 3; done
 }
 
 # ---- A. Configs > Server page
 adb shell am force-stop "$W"; adb shell am force-stop "$S"; adb shell input keyevent KEYCODE_HOME
-adb shell am start -W -n "$W/.MainActivity" >/dev/null; sleep 8; shoot A0-home
+adb logcat -c; adb shell am start -W -n "$W/.MainActivity" > "$OUT/A-start.txt" 2>&1; sleep 10; shoot A0-home; top | tee "$OUT/A0-top.txt"
+adb logcat -d | grep -E "AndroidRuntime|FATAL|cloudwebserver.*(died|crash|Exception)" | head -40 > "$OUT/A0-crash.txt" || true
+for i in 1 2 3; do tap_re "Not now|Skip|Later|Dismiss|Cancel|Allow|While using" && sleep 2; done; shoot A0b-home
 tap_re "Configs" && sleep 3 || fail "A: no Configs gear on the Home page"
 shoot A1-configs
 tap_re "Server" && sleep 3 || fail "A: no Server tab on the Configs page"
