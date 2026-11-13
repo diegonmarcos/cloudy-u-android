@@ -61,7 +61,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          sparse-checkout: 1_cicd/src/scripts
+          sparse-checkout: |
+            1_cicd/src/scripts
+            ${{ matrix.app }}/build.json
 
       - name: Fetch the APK (x86_64) and read its package
         env:
@@ -82,6 +84,13 @@ jobs:
           gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq '.artifacts[] | select(.expired|not) | select(.name|test("x86_64|universal")) | .name' |
           while read -r name; do gh run download "$RUN" -R "$REPO" -n "$name" -D "dl/$name"; done
           pick=$(find dl -name '*.apk' | sort | head -1)
+          if [ -z "$pick" ]; then   # a ship that publishes only to the rolling GH Release (Cloud Office): take the APK from there
+            TAG=$(jq -r '.release.gh_release.rolling_tag // empty' "$APP/build.json")
+            if [ -n "$TAG" ]; then
+              gh release download "$TAG" -R "$REPO" -p '*.apk' -D dl_rel || true
+              pick=$(ls dl_rel/*x86_64*.apk dl_rel/*universal*.apk dl_rel/*.apk 2>/dev/null | head -1)
+            fi
+          fi
           [ -n "$pick" ] || { echo "::error::$APP: no x86_64 APK in $SHIP run $RUN"; exit 1; }
           cp "$pick" app.apk
           AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
