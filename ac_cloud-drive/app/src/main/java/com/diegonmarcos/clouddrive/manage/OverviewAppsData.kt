@@ -136,9 +136,14 @@ private fun openFile(ctx: Context, f: RecentFile) {
     r.exceptionOrNull()?.let { android.widget.Toast.makeText(ctx, ctx.getString(R.string.manage_data_open_failed, f.name, it.message ?: it.javaClass.simpleName), android.widget.Toast.LENGTH_SHORT).show() }
 }
 
-private fun hasGrant(ctx: Context): Boolean =
-    if (Build.VERSION.SDK_INT >= 30) runCatching { Environment.isExternalStorageManager() }.getOrDefault(false)
-    else ctx.checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED
+/** The grant check; a seam so a JVM test sets the answer (null = ask the phone). A failing platform call counts as "not granted", never a crash. */
+internal var grantProbe: ((Context) -> Boolean)? = null
+
+private fun hasGrant(ctx: Context): Boolean = runCatching {
+    grantProbe?.invoke(ctx)
+        ?: if (Build.VERSION.SDK_INT >= 30) Environment.isExternalStorageManager()
+        else ctx.checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED
+}.getOrDefault(false)
 
 /** Blocking; never throws: a missing grant or a failed query comes back as [StripState.Unavailable] with the reason. */
 internal fun loadStrip(ctx: Context, d: Declarations.DataStripDecl): StripState {
