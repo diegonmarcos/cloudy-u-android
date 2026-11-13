@@ -19,12 +19,13 @@ tap_re() {  # tap the first node whose text or content-desc matches the regex $1
 rc=0
 fail() { echo "::error::$*"; rc=1; }
 recents() { adb shell dumpsys activity recents | tr -d '\r' > "$OUT/$1-recents.txt"; }
-in_recents() {  # the webserver task is listed in Recents and its base intent is not marked exclude-from-recents (0x00800000)
+in_recents() {  # the webserver task is listed in Recents and its root intent is not marked exclude-from-recents (0x00800000)
   recents "$1"
-  line=$(grep -E "A=$W|cmp=$W/|$W/" "$OUT/$1-recents.txt" | grep -E "Recent #|TaskRecord|Task\{|baseIntent|Intent \{|flg=" | head -5)
-  echo "$line" > "$OUT/$1-recents-webserver.txt"
-  grep -q "$W" "$OUT/$1-recents.txt" || return 1
-  ! grep -E "$W" "$OUT/$1-recents.txt" | grep -qiE "excludeFromRecents|flg=0x[0-9a-f]*[89a-f][0-9a-f]{5}\b.*$W|exclude_from_recents"
+  awk -v w="$W" '/Recent #/{blk=($0 ~ w)} blk' "$OUT/$1-recents.txt" > "$OUT/$1-recents-webserver.txt"
+  [ -s "$OUT/$1-recents-webserver.txt" ] || return 1
+  flg=$(grep -m1 -oE "intent=\{[^}]*flg=0x[0-9a-f]+" "$OUT/$1-recents-webserver.txt" | grep -oE "0x[0-9a-f]+$")
+  echo "$1: webserver task root intent flags ${flg:-none}" | tee -a "$OUT/flags.txt"
+  [ $(( ${flg:-0x0} & 0x00800000 )) -eq 0 ]
 }
 overview() {  # open Overview and look for the app's card by its label
   adb shell input keyevent KEYCODE_APP_SWITCH; sleep 3; shoot "$1"; dump "$1"
