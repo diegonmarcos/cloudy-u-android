@@ -589,6 +589,11 @@
     <string name="manage_xray_share">Share</string>
     <string name="manage_overview_local">LOCAL</string>
     <string name="manage_overview_cloud">CLOUD</string>
+    <string name="manage_overview_terminals">TERMINALS</string>
+    <string name="manage_terminal_open">Open %1$s</string>
+    <string name="manage_terminal_not_installed">not installed</string>
+    <string name="manage_terminal_get">Get in Cloud Store</string>
+    <string name="manage_terminal_failed">Could not open %1$s: %2$s</string>
     <string name="manage_overview_na">n/a · %1$s</string>
     <string name="manage_overview_checking">checking…</string>
     <string name="manage_overview_usage">%1$s used · %2$s free · %3$s</string>

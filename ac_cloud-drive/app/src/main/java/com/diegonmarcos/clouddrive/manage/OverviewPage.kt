@@ -1,5 +1,6 @@
 package com.diegonmarcos.clouddrive.manage
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -65,13 +66,56 @@ fun OverviewPage(storage: StorageCoordinator) {
             cloud = cloud + (t.id to u)
         }
     }
+    val terminals = remember {
+        OverviewTerminals.resolve(decl.terminals, Declarations.constellation) { pkg -> ctx.packageManager.getLaunchIntentForPackage(pkg) != null }
+    }
     LazyColumn(Modifier.fillMaxSize().testTag(DriveTags.OVERVIEW)) {
         item { XrayMemoryRow() }
         item { SectionHeader(stringResource(R.string.manage_overview_local), count = local?.size) }
         items(local.orEmpty(), key = { it.id }) { VolumeRow(it.label, it.icon, it) }
         item { SectionHeader(stringResource(R.string.manage_overview_cloud), count = targets.size) }
         items(targets, key = { it.id }) { t -> VolumeRow(t.label, t.icon, cloud[t.id], id = t.id) }
+        if (terminals.isNotEmpty()) {
+            item { SectionHeader(stringResource(R.string.manage_overview_terminals), count = terminals.size) }
+            item { TerminalLinks(terminals) }
+        }
     }
+}
+
+/** The terminals as icon links side by side: tap opens the app (launch intent of its package); an absent one says "not installed" and offers Cloud Store on that app. */
+@Composable
+private fun TerminalLinks(links: List<TerminalLink>) {
+    val ctx = LocalContext.current
+    Row(Modifier.fillMaxWidth().padding(DriveMetrics.gutter), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(DriveMetrics.pad)) {
+        for (l in links) {
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                val tint = if (l.installed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                androidx.compose.foundation.layout.Box(
+                    Modifier.testTag(DriveTags.terminalLink(l.id)).fillMaxWidth().clickable(enabled = l.installed) { openTerminal(ctx, l) }.padding(DriveMetrics.pad),
+                    contentAlignment = Alignment.Center,
+                ) { Icon(IconCatalog.vectorOrDefault(l.icon), contentDescription = stringResource(R.string.manage_terminal_open, l.label), Modifier.size(DriveMetrics.glyphIcon * 2), tint = tint) }
+                KitStoreName(l.label)
+                if (l.installed) KitStoreCaption(l.packageName, color = MaterialTheme.colorScheme.onSurfaceVariant, mono = true)
+                else {
+                    KitStoreCaption(stringResource(R.string.manage_terminal_not_installed), color = MaterialTheme.colorScheme.error)
+                    Pill(stringResource(R.string.manage_terminal_get), { openStore(ctx, l) }, modifier = Modifier.testTag(DriveTags.terminalGet(l.id)).padding(top = DriveMetrics.pad), filled = true, enabled = l.packageName.isNotBlank())
+                }
+            }
+        }
+    }
+    Hairline()
+}
+
+private fun openTerminal(ctx: android.content.Context, l: TerminalLink) {
+    val intent = runCatching { ctx.packageManager.getLaunchIntentForPackage(l.packageName) }.getOrNull()
+    val r = if (intent == null) Result.failure(IllegalStateException("not installed")) else runCatching { ctx.startActivity(intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+    r.exceptionOrNull()?.let { android.widget.Toast.makeText(ctx, ctx.getString(R.string.manage_terminal_failed, l.label, it.message ?: it.javaClass.simpleName), android.widget.Toast.LENGTH_SHORT).show() }
+}
+
+/** Cloud Store, the installer of record, opened on that app (libs:updater StoreHandoff). */
+private fun openStore(ctx: android.content.Context, l: TerminalLink) {
+    val r = runCatching { ctx.startActivity(com.diegonmarcos.superapp.updater.install.StoreHandoff.intent(ctx.packageName, l.packageName)) }
+    r.exceptionOrNull()?.let { android.widget.Toast.makeText(ctx, ctx.getString(R.string.manage_terminal_failed, "Cloud Store", it.message ?: it.javaClass.simpleName), android.widget.Toast.LENGTH_SHORT).show() }
 }
 
 @Composable

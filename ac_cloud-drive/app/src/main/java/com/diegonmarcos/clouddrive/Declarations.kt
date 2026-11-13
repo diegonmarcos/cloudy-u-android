@@ -341,7 +341,7 @@ object Declarations {
 
     /** #1537 one volume source of Manage (ui.manage); [kind] is what manage/VolumeSources dispatches on. */
     data class ManageSource(val id: String, val label: String, val icon: String, val kind: String, val remote: String = "", val fleet: String = "", val relative: String = "")
-    data class ManageDecl(val local: List<ManageSource>, val cloud: List<ManageSource>, val switcher: List<String>, val defaultVolume: String)
+    data class ManageDecl(val local: List<ManageSource>, val cloud: List<ManageSource>, val switcher: List<String>, val defaultVolume: String, val terminals: List<ManageSource> = emptyList())
     /** #1537 an old route and where it lands now. An empty [page] matches the whole old tab. */
     data class LegacyRoute(val tab: String, val page: String, val toTab: String, val toPage: String)
 
@@ -870,7 +870,7 @@ object Declarations {
         }
         val ov = o["overview"] as? JsonObject
         val ld = o["local_data"] as? JsonObject
-        return ManageDecl(sources(ov?.get("local")), sources(ov?.get("cloud")), ld?.strings("switcher").orEmpty(), ld?.str("default_volume").orEmpty())
+        return ManageDecl(sources(ov?.get("local")), sources(ov?.get("cloud")), ld?.strings("switcher").orEmpty(), ld?.str("default_volume").orEmpty(), sources(ov?.get("terminals")))
     }
 
     fun parseLegacyRoutes(text: String): List<LegacyRoute> = objects(element(text)).mapNotNull { r ->

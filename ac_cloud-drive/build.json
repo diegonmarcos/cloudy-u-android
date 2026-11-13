@@ -823,6 +823,10 @@
           {"id": "nix", "label": "Nix home", "icon": "terminal", "kind": "app_home", "fleet": "nix-on-droid", "relative": "files/home"},
           {"id": "external", "label": "External drive", "icon": "usb", "kind": "external_drives"}
         ],
+        "terminals": [
+          {"id": "termux", "label": "Cloud Terminal Termux", "icon": "terminal", "kind": "terminal_link", "fleet": "termux"},
+          {"id": "nix", "label": "Cloud Terminal Nix", "icon": "terminal", "kind": "terminal_link", "fleet": "nix-on-droid"}
+        ],
         "cloud": [
           {"id": "cloud-s3", "label": "Cloud-S3", "icon": "cloud", "kind": "remote", "remote": "oracle_s3"},
           {"id": "gdrive", "label": "Google Drive", "icon": "cloud", "kind": "remote", "remote": "gdrive"},
