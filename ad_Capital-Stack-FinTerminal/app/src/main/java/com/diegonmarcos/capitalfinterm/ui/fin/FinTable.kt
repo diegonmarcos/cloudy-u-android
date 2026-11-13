@@ -98,7 +98,8 @@ fun FinTable(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = if (right) androidx.compose.foundation.layout.Arrangement.End else androidx.compose.foundation.layout.Arrangement.Start,
         ) {
-            Text(columns.getOrElse(i) { "" }.uppercase(Locale.ROOT), color = p.text2, style = FinType.label, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            // #1722 the terminal table header: bold ink, amber on the sorted column
+            Text(columns.getOrElse(i) { "" }, color = if (sortCol == i && sortStep != 0) p.accent else p.text, style = FinType.label, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f, fill = false))
             if (sortCol == i && sortStep != 0) {
                 val numeric = t != Col.TEXT && t != Col.LINK && t != Col.DATE
@@ -123,8 +124,9 @@ fun FinTable(
         }
         when {
             i == 0 && (link.isNotEmpty() || r in tapRows) -> Text(FinLogic.cell(raw) + (if (r in tapRows) "  ›" else ""), mod, color = p.accent, style = FinType.body.copy(fontSize = 12.sp, fontWeight = if (r in tapRows) androidx.compose.ui.text.font.FontWeight.SemiBold else null), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
-            t == Col.TEXT || t == Col.LINK -> Text(FinLogic.cell(raw), mod, color = if (FinLogic.missing(raw)) p.text3 else p.text,
-                style = FinType.body.copy(fontSize = 12.sp), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+            // #1722 the pinned name column reads as a terminal ticker: amber, semi-bold
+            t == Col.TEXT || t == Col.LINK -> Text(FinLogic.cell(raw), mod, color = if (FinLogic.missing(raw)) p.text3 else if (i == 0) p.accent else p.text,
+                style = FinType.body.copy(fontSize = 12.sp, fontWeight = if (i == 0) FontWeight.SemiBold else null), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             t == Col.DATE -> Text(FinLogic.cell(raw), mod, color = p.text2, style = FinType.caption, textAlign = TextAlign.End, maxLines = 1)
             t == Col.HEAT -> {
                 val s = FinLogic.cell(raw)
@@ -156,7 +158,7 @@ fun FinTable(
                     Box(Modifier.fillMaxWidth().height(1.dp).background(p.hairline))
                     for (k in 0 until shown) {
                         val r = order[k]
-                        Row(Modifier.heightIn(min = FinDim.tableRow).background(if (k % 2 == 1) p.surfaceRaised.copy(alpha = 0.5f) else Color.Transparent)
+                        Row(Modifier.heightIn(min = FinDim.tableRow).background(if (k % 2 == 1) p.zebra else Color.Transparent)
                             .let { m -> links.getOrNull(r).orEmpty().let { l -> val tap = tapRows[r]; if (tap != null) m.clickable(onClick = tap).testTag("fin:rowtap:$panelId:$r") else if (l.isNotEmpty()) m.clickable { onOpen(l) } else if (details.isNotEmpty()) m.clickable { detail = r } else m } }
                             .height(FinDim.tableRow), verticalAlignment = Alignment.CenterVertically) { bodyCell(r, 0, firstW) }
                     }
@@ -166,7 +168,7 @@ fun FinTable(
                     Box(Modifier.width(ws.drop(1).fold(0.dp) { a, b -> a + b }).height(1.dp).background(p.hairline))
                     for (k in 0 until shown) {
                         val r = order[k]
-                        Row(Modifier.height(FinDim.tableRow).background(if (k % 2 == 1) p.surfaceRaised.copy(alpha = 0.5f) else Color.Transparent)
+                        Row(Modifier.height(FinDim.tableRow).background(if (k % 2 == 1) p.zebra else Color.Transparent)
                             .let { m -> tapRows[r]?.let { tap -> m.clickable(onClick = tap) } ?: m },
                             verticalAlignment = Alignment.CenterVertically) { for (i in 1 until n) bodyCell(r, i, ws[i]) }
                     }

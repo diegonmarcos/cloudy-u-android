@@ -1,24 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The FinTerm terminal palette (FinTerm UI spec 1.1), dark by default: libs:ui-kit's CloudKitTheme paints from the app_* roles
-         (ui/AppTheme.kt); the fin_* roles carry direction (up/down/flat), staleness (amber) and importance. Blue accent on purpose:
-         never green or teal, so it cannot read as direction. The web mirror reads the same values through the fleet token generator. -->
-    <color name="app_background">#FF0B1016</color>
-    <color name="app_surface">#FF121A23</color>
-    <color name="app_surface_raised">#FF1A2532</color>
-    <color name="app_text">#FFE6EDF3</color>
-    <color name="app_text_secondary">#FF9AA7B4</color>
-    <color name="app_outline">#FF243040</color>
-    <color name="app_accent">#FF5AA7FF</color>
-    <color name="app_on_accent">#FF0B1016</color>
-    <color name="fin_text3">#FF6E7B89</color>
-    <color name="fin_up">#FF2FD37A</color>
-    <color name="fin_down">#FFF26D6D</color>
-    <color name="fin_amber">#FFF5B740</color>
-    <color name="fin_flash_up">#FF163B2A</color>
-    <color name="fin_flash_down">#FF3F1E24</color>
-    <color name="fin_skeleton">#FF1F2A36</color>
-    <color name="fin_skeleton_hi">#FF26323F</color>
+    <!-- The FinTerm terminal palette (#1722, the terminal-style UI): a black canvas, amber for function codes, the command line and the
+         selected tab, a grey gradient for panel headers, a 1dp rule around every panel, red function-menu buttons, yellow for the page's
+         security line and totals. libs:ui-kit's CloudKitTheme paints from the app_* roles (ui/AppTheme.kt); the fin_* roles carry
+         direction (up/down/flat), staleness and importance. Amber accent on purpose: never green or red, so it cannot read as direction.
+         This file is the one place the palette is spelled. -->
+    <color name="app_background">#FF000000</color>
+    <color name="app_surface">#FF000000</color>
+    <color name="app_surface_raised">#FF1D1D1D</color>
+    <color name="app_text">#FFE6E6E6</color>
+    <color name="app_text_secondary">#FF9A9A9A</color>
+    <color name="app_outline">#FF383838</color>
+    <color name="app_accent">#FFFB8B1E</color>
+    <color name="app_on_accent">#FF000000</color>
+    <color name="fin_text3">#FF6E6E6E</color>
+    <color name="fin_up">#FF2BD27A</color>
+    <color name="fin_down">#FFFF433D</color>
+    <color name="fin_amber">#FFFFD24A</color>
+    <color name="fin_flash_up">#FF0C3B22</color>
+    <color name="fin_flash_down">#FF471311</color>
+    <color name="fin_skeleton">#FF161616</color>
+    <color name="fin_skeleton_hi">#FF262626</color>
+    <!-- the terminal chrome: panel header gradient (top, bottom), the menu bar, the function-menu red, the row selection, the zebra row, the link blue -->
+    <color name="fin_head_top">#FF333333</color>
+    <color name="fin_head">#FF262626</color>
+    <color name="fin_head2">#FF1A1A1A</color>
+    <color name="fin_menu">#FF8E1B16</color>
+    <color name="fin_menu_ink">#FFFFC9C4</color>
+    <color name="fin_select">#FF0B2E5E</color>
+    <color name="fin_zebra">#FF070707</color>
+    <color name="fin_row_rule">#FF141414</color>
+    <color name="fin_blue">#FF3D8BFF</color>
+    <color name="fin_yellow">#FFFFD24A</color>
     <!-- Config > Colour-blind safe (preference fin_cvd): up turns blue, down amber; the sign still carries direction. -->
     <color name="fin_cvd_up">#FF4C9EEB</color>
     <color name="fin_cvd_down">#FFF5B740</color>

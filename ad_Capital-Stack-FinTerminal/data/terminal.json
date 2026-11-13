@@ -1,0 +1,89 @@
+{
+ "_doc": "#1722 THE TERMINAL CHROME of Capital-Stack-FinTerminal: the market monitor's tiles (a symbol of the quote source, data/quotes.json `source`, and the label it is shown under), the red function-menu buttons of the command line, the words of the command line and of the status line. No figure is declared: a tile shows what the quote source answers.",
+ "monitor": [
+  {
+   "symbol": "^GSPC",
+   "label": "S&P 500",
+   "decimals": 2
+  },
+  {
+   "symbol": "^NDX",
+   "label": "NASDAQ 100",
+   "decimals": 2
+  },
+  {
+   "symbol": "^DJI",
+   "label": "DOW JONES",
+   "decimals": 0
+  },
+  {
+   "symbol": "^RUT",
+   "label": "RUSSELL 2000",
+   "decimals": 2
+  },
+  {
+   "symbol": "^VIX",
+   "label": "VIX",
+   "decimals": 2
+  },
+  {
+   "symbol": "^TNX",
+   "label": "US 10Y",
+   "decimals": 3
+  },
+  {
+   "symbol": "EURUSD=X",
+   "label": "EUR/USD",
+   "decimals": 4
+  },
+  {
+   "symbol": "GC=F",
+   "label": "GOLD",
+   "decimals": 1
+  },
+  {
+   "symbol": "CL=F",
+   "label": "WTI",
+   "decimals": 2
+  },
+  {
+   "symbol": "BTC-USD",
+   "label": "BITCOIN",
+   "decimals": 0
+  }
+ ],
+ "menu": [
+  {
+   "id": "functions",
+   "number": "96)",
+   "label": "Functions"
+  },
+  {
+   "id": "search",
+   "number": "97)",
+   "label": "Search"
+  },
+  {
+   "id": "sources",
+   "number": "98)",
+   "label": "Sources"
+  }
+ ],
+ "command": {
+  "placeholder": "FI, GDM, TOP",
+  "unknown": "No function {word}. 96) Functions lists every mnemonic; 97) Search finds a security.",
+  "functions_title": "Functions",
+  "functions_meta": "type a mnemonic and GO, or tap a line",
+  "home": "Homepage"
+ },
+ "status": {
+  "live": "Delayed quotes",
+  "waiting": "Waiting for quotes",
+  "pricing": "Pricing",
+  "pricing_value": "Last trade",
+  "currency": "Currency",
+  "currency_value": "USD",
+  "source": "Source",
+  "functions": "Functions"
+ }
+}

@@ -58,7 +58,7 @@ class CatalogTest {
     }
 
     @Test fun anUnmappedEntryIsReported() {
-        assertEquals(listOf("fi" to "Nowhere"), Catalog.unmapped(sources.filter { !it.primary }, listOf("fi" to "Yield Curves", "fi" to "Nowhere")))
+        assertEquals(listOf("cb" to "Nowhere"), Catalog.unmapped(sources.filter { !it.primary }, listOf("cb" to "Yield Curves", "cb" to "Nowhere")))
     }
 
     @Test fun aJsonNullIsEmptyNotTheTextNull() {

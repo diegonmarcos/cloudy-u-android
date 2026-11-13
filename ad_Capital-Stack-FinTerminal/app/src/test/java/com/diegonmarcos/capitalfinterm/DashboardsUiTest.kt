@@ -13,8 +13,8 @@ class DashboardsUiTest {
     @Test fun eachTabOpensOnItsDeclaredDefault() {
         assertEquals("fx", Dashboards.defaultOf(dashboards, listOf("crypto", "fx")))
         assertEquals("yield_curves", Dashboards.defaultOf(dashboards, listOf("yield_curves", "forward_rates")))
-        // #1399 FI opens on its Homepage: no FI dashboard is declared default
-        assertTrue(dashboards.none { it.tab == "fi" && it.isDefault })
+        // #1399 FI opens on its Homepage: no FI dashboard is declared default; #1722 the rates dashboards moved to CB, which opens on its Homepage too
+        assertTrue(dashboards.none { (it.tab == "fi" || it.tab == "cb") && it.isDefault })
         for ((tab, id) in mapOf("eq" to "world_equity_indices", "hg" to "fx", "nw" to "economic_calendar", "pm" to "portfolio_risk")) {
             assertEquals(tab, listOf(id), dashboards.filter { it.tab == tab && it.isDefault }.map { it.id })
         }
@@ -45,10 +45,14 @@ class DashboardsUiTest {
     }
 
     @Test fun fixedIncomeHoldsNoEquityPanel() {
-        // FI is fixed income only: no FI panel reads an equity source, and the Market Monitor equity tiles live in EQ (World Equity Indices)
+        // The rates and macro dashboards (FI until #1722, CB since) are fixed income only: none of their panels reads an equity source, and the Market
+        // Monitor equity tiles live in EQ (World Equity Indices)
         val equitySources = setOf("cboe")
-        for (dd in dashboards.filter { it.tab == "fi" && it.id != "bonds_market" }) for (p in dd.panels)
-            assertFalse("${dd.id}/${p.id} reads ${p.source} in FI", p.source in equitySources)
+        val rates = dashboards.filter { it.tab == "cb" && it.id != "bonds_market" }
+        assertEquals(listOf("credit", "forward_rates", "macro", "rate_probabilities", "world_bonds", "yield_curves", "yields_matrix"), rates.map { it.id }.sorted())
+        assertTrue("no dashboard is left under FI: FI is the bond groups", dashboards.none { it.tab == "fi" })
+        for (dd in rates) for (p in dd.panels)
+            assertFalse("${dd.id}/${p.id} reads ${p.source} in the rates pages", p.source in equitySources)
         assertTrue(d("world_equity_indices").panels.any { it.source == "cboe" })
     }
 

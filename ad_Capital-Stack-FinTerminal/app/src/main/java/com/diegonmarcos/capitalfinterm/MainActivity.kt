@@ -15,10 +15,13 @@ class MainActivity : ComponentActivity() {
         // `--es dashboard <id>` opens that dashboard (a deep link for the CI emulator walk and the launcher); unknown ids are ignored
         // `finterm://dashboard/<id>` (ACTION_VIEW) is the same deep link for other apps and the launcher
         val start = intent?.getStringExtra(EXTRA_DASHBOARD) ?: intent?.data?.takeIf { it.scheme == "finterm" }?.lastPathSegment
+        // #1722 `--es mode graphic|table` opens a performance page in that mode (the CI emulator walk)
+        com.diegonmarcos.capitalfinterm.ui.PerfUi.startMode = intent?.getStringExtra(EXTRA_MODE)
         setContent { AppTheme { AppShell(startDashboard = start) } }
     }
 
     companion object {
         const val EXTRA_DASHBOARD = "dashboard"
+        const val EXTRA_MODE = "mode"
     }
 }

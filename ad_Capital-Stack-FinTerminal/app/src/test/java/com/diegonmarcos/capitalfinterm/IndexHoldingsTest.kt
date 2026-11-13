@@ -23,10 +23,11 @@ class IndexHoldingsTest {
         val titles = entries.map { if (it.kind == Pages.KIND_SECTION_TITLE) "#" + it.title else it.title }
         val perf = titles.indexOf("#Performance"); val data = titles.indexOf("#Data")
         assertTrue(perf in 0 until data)
+        // #1722 Performance is the ten factor portfolios, then the index performance page; every other page is Data (nothing dropped: MovedPagesTest)
         val p = titles.subList(perf + 1, data)
-        assertTrue(p.indexOf("World Indices Equity") < p.indexOf("Commodities") && p.indexOf("Commodities") < p.indexOf("Exchange Rates"))
+        assertEquals(listOf("Growth", "Value", "Quality", "Vol", "Top", "Cyclical", "Defensive", "Dividend", "Momentum", "Small", "World Indices Equity"), p)
         val d = titles.subList(data + 1, titles.size)
-        assertEquals(listOf("Fundamentals", "Earnings Calendar", "Quotes", "Watchlist"), d.take(4))
+        assertEquals(listOf("Commodities", "Commodity Prices", "Exchange Rates", "Fundamentals", "Earnings Calendar", "Quotes", "Watchlist"), d)
         assertTrue("DM / EM Equity are merged", titles.none { it == "DM Equity (US)" || it == "EM Equity" })
     }
 
@@ -38,7 +39,9 @@ class IndexHoldingsTest {
         val groups = Pages.homeGroups(cards, entries)
         assertEquals(listOf("Performance", "Data"), groups.map { it.first }.filter { it.isNotEmpty() })
         assertEquals(cards.map { it.pageId }.sorted(), groups.flatMap { it.second }.map { it.pageId }.sorted())
-        assertEquals("world-equity-indices", groups.first { it.first == "Performance" }.second.first().pageId)
+        assertEquals("eq-growth", groups.first { it.first == "Performance" }.second.first().pageId)
+        assertEquals("world-equity-indices", groups.first { it.first == "Performance" }.second.last().pageId)
+        assertEquals("commodities", groups.first { it.first == "Data" }.second.first().pageId)
     }
 
     @Test fun mergedPanelsLiveInWorldIndicesEquity() {

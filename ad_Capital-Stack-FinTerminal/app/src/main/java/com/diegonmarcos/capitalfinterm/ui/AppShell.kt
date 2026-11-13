@@ -15,7 +15,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -40,7 +45,18 @@ import com.diegonmarcos.capitalfinterm.FreeStack
 import com.diegonmarcos.capitalfinterm.UrlHttp
 import com.diegonmarcos.capitalfinterm.Pages
 import com.diegonmarcos.capitalfinterm.R
+import com.diegonmarcos.capitalfinterm.FinFunction
+import com.diegonmarcos.capitalfinterm.Quote
+import com.diegonmarcos.capitalfinterm.QuotesStore
+import com.diegonmarcos.capitalfinterm.Terminal
+import com.diegonmarcos.capitalfinterm.ui.fin.FinCommandBar
+import com.diegonmarcos.capitalfinterm.ui.fin.FinMonitor
+import com.diegonmarcos.capitalfinterm.ui.fin.FinMonitorTile
+import com.diegonmarcos.capitalfinterm.ui.fin.FinPanel
 import com.diegonmarcos.capitalfinterm.ui.fin.FinSearch
+import com.diegonmarcos.capitalfinterm.ui.fin.FinStatusLine
+import com.diegonmarcos.capitalfinterm.ui.fin.FinTags
+import com.diegonmarcos.capitalfinterm.ui.fin.FinType
 import com.diegonmarcos.capitalfinterm.ui.fin.LocalFinPalette
 import com.diegonmarcos.capitalfinterm.ui.fin.LocalReduceMotion
 import com.diegonmarcos.superapp.bottomnav.LocalNavUiDefault
@@ -114,6 +130,43 @@ fun AppShell(startDashboard: String? = null) {
             else -> FinNavStack.openPage(id)
         })
     }
+    // #1722 the command line: every section and every page that declares a function mnemonic (build.json ui.stacks `fn`), opened by typing it and GO
+    val functions = remember { Pages.functions(Decl.stacks, nav.sections.filter { it.pages.isNotEmpty() }.map { it.id to it.label }) }
+    fun go(f: FinFunction) {
+        if (nav.section(f.section) == null) return
+        section = f.section
+        when {
+            f.dashboard.isNotEmpty() -> setStack(f.section, FinNavStack.open(stackOf(f.section), f.dashboard))
+            f.page.isNotEmpty() -> openPage(f.section, f.page)
+            else -> setStack(f.section, FinNavStack.LIST_ONLY)
+        }
+    }
+    val terminalDecl = remember { runCatching { Terminal.parse(AssetData.read(ctx, Terminal.FILE)) }.getOrNull() }
+    var command by rememberSaveable { mutableStateOf("") }
+    var commandMsg by rememberSaveable { mutableStateOf("") }
+    var functionsOpen by rememberSaveable { mutableStateOf(false) }
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
+    fun runCommand() {
+        val word = Pages.commandWord(command)
+        if (word.isEmpty()) { functionsOpen = true; return }
+        val f = Pages.function(functions, word)
+        if (f != null) { go(f); command = ""; commandMsg = ""; focus.clearFocus() }
+        else commandMsg = Terminal.unknown(terminalDecl, word)
+    }
+    // the market monitor: the baked snapshot's quotes with what the quote source answered since; asked when the app opens and when the section changes
+    // (never on a timer: a symbol asked within the declared TTL is not asked again)
+    val baseQuotes = remember { runCatching { QuotesStore.snapshot(ctx).quotes }.getOrDefault(emptyMap()) }
+    var monitorQuotes by remember { mutableStateOf<Map<String, Quote>>(baseQuotes) }
+    var monitorLive by remember { mutableStateOf(false) }
+    LaunchedEffect(section) {
+        val tiles = terminalDecl?.monitor.orEmpty()
+        if (tiles.isEmpty()) return@LaunchedEffect
+        val qd = runCatching { QuotesStore.decl(ctx) }.getOrNull() ?: return@LaunchedEffect
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { QuotesStore.refresh(qd, tiles.map { it.symbol }, force = false) } }
+        val answered = QuotesStore.liveQuotes()
+        monitorQuotes = baseQuotes + answered
+        monitorLive = tiles.any { it.symbol in answered }
+    }
     LaunchedEffect(startDashboard) {
         if (startDashboard == null) return@LaunchedEffect
         // #1399 a removed dashboard's deep link (ui.redirects, e.g. FI Market Monitor) opens its section's Homepage.
@@ -122,6 +175,8 @@ fun AppShell(startDashboard: String? = null) {
         else if (dashboards.any { it.id == startDashboard }) finNav.openDashboard(startDashboard)
         // a section id (`--es dashboard fi`) opens that section on its Homepage (the CI emulator nav walk)
         else if (nav.section(startDashboard) != null) { section = startDashboard; setStack(startDashboard, FinNavStack.LIST_ONLY) }
+        // #1722 a sub-page id (`--es dashboard fi-gov-dm`) or a function mnemonic (`--es dashboard GDM`) opens that page
+        else (functions.firstOrNull { it.page.isNotEmpty() && it.page == startDashboard } ?: Pages.function(functions, startDashboard))?.let { go(it) }
     }
     // Back (UI spec 4.4): search -> quote pops -> a sub-page -> the section's Homepage -> the home tab -> exit.
     val back = FinNavStack.back(stack, section == homeSection)
@@ -170,6 +225,34 @@ fun AppShell(startDashboard: String? = null) {
                     Column(Modifier.fillMaxSize()) {
                     // #1399 the fleet nav lib's one-row mode: ONE horizontally scrollable row of the section's sub-pages, Home first.
                     if (sec != null && sec.pages.isNotEmpty()) NavBarTopSecondRows(sec, FinNavStack.selectedPage(stack, section), onSelect = { openPage(section, it.id) }, underTopChrome = false)
+                    // #1722 the terminal chrome on every terminal page: the command line (amber field + GO, the red function-menu buttons, the clock),
+                    // the market monitor and the status line
+                    if (terminal) {
+                        FinCommandBar(
+                            value = command, placeholder = terminalDecl?.commandWord("placeholder").orEmpty(), message = commandMsg,
+                            menu = terminalDecl?.menu.orEmpty().map { Triple(it.id, it.number, it.label) },
+                            onValue = { command = it; commandMsg = "" }, onGo = { runCommand() },
+                            onMenu = { id ->
+                                when (id) {
+                                    Terminal.MENU_FUNCTIONS -> functionsOpen = true
+                                    Terminal.MENU_SEARCH -> searching = true
+                                    Terminal.MENU_SOURCES -> section = Decl.SECTION_CONFIG
+                                }
+                            },
+                        )
+                        val tiles = terminalDecl?.monitor.orEmpty()
+                        if (tiles.isNotEmpty()) FinMonitor(tiles.map { t -> monitorQuotes[t.symbol].let { q -> FinMonitorTile(t.symbol, t.label, Terminal.price(q, t.decimals), q?.pct) } }) { }
+                        val live = monitorLive
+                        FinStatusLine(
+                            live, terminalDecl?.statusWord(if (live) "live" else "waiting").orEmpty(),
+                            listOf(
+                                terminalDecl?.statusWord("pricing").orEmpty() to terminalDecl?.statusWord("pricing_value").orEmpty(),
+                                terminalDecl?.statusWord("currency").orEmpty() to terminalDecl?.statusWord("currency_value").orEmpty(),
+                                terminalDecl?.statusWord("functions").orEmpty() to functions.size.toString(),
+                                "Build" to BuildConfig.GIT_SHORT_SHA,
+                            ).filter { it.first.isNotEmpty() },
+                        )
+                    }
                     AnimatedContent(
                         targetState = section to top,
                         transitionSpec = {
@@ -186,6 +269,12 @@ fun AppShell(startDashboard: String? = null) {
                     }
                 }
             }
+        }
+    }
+    if (functionsOpen) {
+        FunctionsDialog(functions, terminalDecl?.commandWord("functions_title").orEmpty().ifEmpty { "Functions" }, terminalDecl?.commandWord("functions_meta").orEmpty(),
+            terminalDecl?.commandWord("home").orEmpty().ifEmpty { "Homepage" }, sectionLabel = { id -> nav.section(id)?.label ?: id }, onDismiss = { functionsOpen = false }) { f ->
+            functionsOpen = false; command = ""; commandMsg = ""; go(f)
         }
     }
     if (searching) {
@@ -206,6 +295,38 @@ fun AppShell(startDashboard: String? = null) {
         FinSearch(catalogue, onDismiss = { searching = false }, remote = remote) { item ->
             searching = false
             if (item.kind == FinSearchIndex.KIND_DASHBOARD) finNav.openDashboard(item.target) else finNav.openQuote(item.symbol)
+        }
+    }
+}
+
+/**
+ * #1722 the function list (the command line's 96) button, or GO on an empty line): every mnemonic with the page it opens and where that page lives
+ * (section, group), in the declared order; a tap opens the page.
+ */
+@Composable
+private fun FunctionsDialog(
+    functions: List<FinFunction>, title: String, meta: String, homeWord: String, sectionLabel: (String) -> String, onDismiss: () -> Unit, onPick: (FinFunction) -> Unit,
+) {
+    val p = LocalFinPalette.current
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        FinPanel("96)", title, Modifier.testTag(FinTags.FUNCTIONS), meta = meta) {
+            androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxWidth().heightIn(max = 520.dp)) {
+                items(functions.size) { i ->
+                    val f = functions[i]
+                    val isSection = f.dashboard.isEmpty() && f.page.isEmpty()
+                    androidx.compose.foundation.layout.Row(
+                        Modifier.fillMaxWidth().height(28.dp).background(if (isSection) p.head2 else if (i % 2 == 1) p.zebra else androidx.compose.ui.graphics.Color.Transparent)
+                            .clickable { onPick(f) }.padding(horizontal = 8.dp).testTag(FinTags.function(f.fn)),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    ) {
+                        androidx.compose.material3.Text(f.fn, Modifier.width(64.dp), color = p.accent, style = FinType.code, maxLines = 1)
+                        androidx.compose.material3.Text(if (isSection) f.title + " " + homeWord else f.title, Modifier.weight(1f), color = if (isSection) p.yellow else p.text, style = FinType.body, maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        if (!isSection) androidx.compose.material3.Text(sectionLabel(f.section) + (if (f.group.isNotEmpty()) " \u203A " + f.group else ""), Modifier.padding(start = 8.dp), color = p.text2,
+                            style = FinType.caption, maxLines = 1)
+                    }
+                }
+            }
         }
     }
 }

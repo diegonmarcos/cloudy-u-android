@@ -37,7 +37,7 @@
       "connector": "fincept_topic",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "*"
           ]
@@ -89,7 +89,7 @@
       "connector": "fred_series",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Yield Curves",
             "Forward Rates"
@@ -109,7 +109,7 @@
           ]
         },
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Credit"
           ]
@@ -139,14 +139,14 @@
       "connector": "dbnomics_series",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "World Interest Rate Probabilities",
             "World Bonds"
           ]
         },
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Yield Curves",
             "Forward Rates"
@@ -190,7 +190,7 @@
       "connector": "imf_datamapper",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "World Bonds"
           ]
@@ -214,7 +214,7 @@
       "connector": "worldbank_indicator",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "World Bonds"
           ]
@@ -241,7 +241,7 @@
       "connector": null,
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Yield Curves"
           ]
@@ -280,7 +280,7 @@
       "connector": null,
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Yield Curves",
             "World Interest Rate Probabilities",
@@ -294,7 +294,7 @@
           ]
         },
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Credit"
           ]
@@ -321,7 +321,7 @@
       "connector": null,
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "World Bonds"
           ]
@@ -610,7 +610,7 @@
       "connector": "treasury_xml",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Yield Curves",
             "Yields Matrix",
@@ -642,7 +642,7 @@
       "connector": "sdmx_json",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Yield Curves"
           ]
@@ -672,7 +672,7 @@
       "connector": "sdmx_json",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Macro"
           ]
@@ -702,7 +702,7 @@
       "connector": "jsonstat",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Macro"
           ]
@@ -738,7 +738,7 @@
       "connector": "bls_series",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Macro"
           ]
@@ -804,7 +804,7 @@
       "connector": "ff_calendar",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Macro"
           ]
@@ -847,7 +847,7 @@
       "connector": "declared_events",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Macro"
           ]
@@ -888,7 +888,7 @@
       "connector": "polymarket_events",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "World Interest Rate Probabilities"
           ]
@@ -1027,7 +1027,7 @@
       "connector": "cboe_quotes",
       "feeds": [
         {
-          "tab": "fi",
+          "tab": "cb",
           "entries": [
             "Bonds Market"
           ]

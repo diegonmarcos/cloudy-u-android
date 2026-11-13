@@ -9,6 +9,9 @@
 #       one-line description; SectionPage draws them as a grid of cards that open the sub-page
 #   N4  FI Market Monitor is gone (no dashboard, stack entry, page, or feed names it) and its deep link redirects to the FI Homepage
 #   N5  #1538+ the bottom nav is CB | FI | EQ | NW | PM | HG | MY-PM, no EX/CM section, legacy EX deep links redirect to the HG Homepage, every dashboard and redirect names a live section
+#   N6  #1722 FI is the bond groups only (All | Gov Bonds DM | Gov Bonds EM | AAA Bonds | AA-A Bonds | BBB Bonds | Junk, each a perf_portfolio declared in
+#       data/portfolios.json with both modes), no dashboard sits under FI, every page ui.moved names lives in its `to` section, every sub-page and detail
+#       page carries a unique function mnemonic (`fn`), the shell draws the command line and SectionPage draws the performance page
 # then plants a mutation per rule in a scratch copy and requires RED for each.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -74,6 +77,29 @@ for r in ui.get("redirects", []):
     if r.get("tab") not in secs: bad.append("N5 redirect %s targets the unknown section %s" % (r.get("from"), r.get("tab")))
 for d in dash:
     if d.get("tab") not in secs: bad.append("N5 dashboard %s sits in the unknown section %s" % (d["id"], d.get("tab")))
+# N6
+port = json.loads(read(os.path.join(app, "data/portfolios.json")))
+groups = {g["key"]: g for g in port["groups"]}
+fi = ui["stacks"].get("fi", [])
+if [e.get("title") for e in fi] != ["All", "Gov Bonds DM", "Gov Bonds EM", "AAA Bonds", "AA-A Bonds", "BBB Bonds", "Junk"]: bad.append("N6 FI is not the bond groups: %s" % [e.get("title") for e in fi])
+if any(e.get("kind") != "perf_portfolio" for e in fi): bad.append("N6 an FI page is not a performance portfolio")
+if any(d.get("tab") == "fi" for d in dash): bad.append("N6 a dashboard still sits under FI: %s" % [d["id"] for d in dash if d.get("tab") == "fi"])
+for sid, es in ui["stacks"].items():
+    for e in es:
+        if e.get("kind") != "perf_portfolio": continue
+        g = groups.get(e.get("view"))
+        if g is None: bad.append("N6 page %s/%s names no portfolio of data/portfolios.json" % (sid, e.get("page")))
+        elif g.get("section") != sid or g.get("label") != e.get("title"): bad.append("N6 portfolio %s is declared for %s/%s, not %s/%s" % (e.get("view"), g.get("section"), g.get("label"), sid, e.get("title")))
+if port.get("modes") != ["table", "graphic"]: bad.append("N6 the performance pages do not declare the Table and Graphic modes: %s" % port.get("modes"))
+where = {p["id"]: s["id"] for s in ui["sections"] for p in s.get("pages", [])}
+for m in ui.get("moved", {}).get("pages", []):
+    if where.get(m["page"]) != m["to"]: bad.append("N6 moved page %s is not under %s (it is under %s)" % (m["page"], m["to"], where.get(m["page"])))
+if len([m for m in ui.get("moved", {}).get("pages", []) if m.get("from") == "fi" and m.get("to") == "cb"]) != 8: bad.append("N6 ui.moved does not send the eight rates / macro pages from FI to CB")
+fns = [e.get("fn", "") for es in ui["stacks"].values() for e in es if e.get("kind") not in ("section_title", "about", "sources")]
+if any(not f for f in fns): bad.append("N6 a page has no function mnemonic")
+if len(fns) != len(set(fns)): bad.append("N6 a function mnemonic is used twice: %s" % sorted({f for f in fns if fns.count(f) > 1}))
+if "FinCommandBar(" not in shell or "Pages.function(" not in shell: bad.append("N6 AppShell draws no command line")
+if "KIND_PERF_PORTFOLIO -> PerfPortfolioPage(" not in page: bad.append("N6 SectionPage does not draw a performance portfolio")
 for b in bad: print("FAIL " + b)
 sys.exit(1 if bad else 0)
 PY
@@ -112,5 +138,14 @@ mutant "EX comes back"                      "$JE;d=L('build.json');d['ui']['sect
 mutant "the EX deep link is not redirected" "$JE;d=L('build.json');d['ui']['redirects']=[r for r in d['ui']['redirects'] if r['from']!='ex'];D('build.json',d)" "N5 the legacy ex deep link"
 mutant "a dashboard sits in a dead section" "$JE;d=L('data/dashboards.json');d['dashboards'][0]['tab']='ex';D('data/dashboards.json',d)" "N5 dashboard"
 mutant "the shell ignores redirects"        "$SUB;S('$KT/ui/AppShell.kt','Pages.redirect(','Pages.redirekt(')" "N4 AppShell ignores"
+mutant "a rates page goes back under FI"    "$JE;d=L('build.json');s=d['ui']['stacks'];s['fi'].append(s['cb'].pop(5));D('build.json',d)" "N6 FI is not the bond groups"
+mutant "a dashboard sits under FI again"    "$JE;d=L('data/dashboards.json');[x.__setitem__('tab','fi') for x in d['dashboards'] if x['id']=='credit'];D('data/dashboards.json',d)" "N6 a dashboard still sits under FI"
+mutant "a portfolio page is not declared"   "$JE;d=L('data/portfolios.json');d['groups']=[g for g in d['groups'] if g['key']!='eq-momentum'];D('data/portfolios.json',d)" "N6 page eq/eq-momentum names no portfolio"
+mutant "the Graphic mode is dropped"        "$JE;d=L('data/portfolios.json');d['modes']=['table'];D('data/portfolios.json',d)" "N6 the performance pages do not declare"
+mutant "a moved page is not where the map says" "$JE;d=L('build.json');[m.__setitem__('to','eq') for m in d['ui']['moved']['pages'] if m['page']=='macro'];D('build.json',d)" "N6 moved page macro"
+mutant "two pages share a mnemonic"         "$JE;d=L('build.json');d['ui']['stacks']['fi'][1]['fn']='TOP';D('build.json',d)" "N6 a function mnemonic is used twice"
+mutant "a page loses its mnemonic"          "$JE;d=L('build.json');d['ui']['stacks']['nw'][0].pop('fn');D('build.json',d)" "N6 a page has no function mnemonic"
+mutant "the shell drops the command line"   "$SUB;S('$KT/ui/AppShell.kt','FinCommandBar(','FinCommandBarz(')" "N6 AppShell draws no command line"
+mutant "the performance page is not drawn"  "$SUB;S('$KT/ui/SectionPage.kt','KIND_PERF_PORTFOLIO -> PerfPortfolioPage(','KIND_PERF_PORTFOLIO -> PerfPortfolioPagez(')" "N6 SectionPage does not draw"
 
 [ "$FAILS" -eq 0 ] && echo "ALL GREEN" || { echo "$FAILS FAILED"; exit 1; }

@@ -530,7 +530,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 34,
+      "unit_test_sources": 37,
       "workflow": "ship-capital-stack-finterminal.yml"
     },
     "ad_Hardtech-CAD": {

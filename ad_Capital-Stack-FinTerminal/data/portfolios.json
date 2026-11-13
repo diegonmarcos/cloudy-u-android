@@ -1,0 +1,1145 @@
+{
+ "_doc": "#1722 THE PERFORMANCE PORTFOLIOS of Capital-Stack-FinTerminal: EQ > Performance (ten factor portfolios) and FI (the bond groups). This file is the DECLARATION: which portfolios exist, where their constituents and weights come from (a fund's published holdings, a declared weighting scheme), the benchmarks and the words of the page. The constituents and weights themselves are the RUNTIME dataset `dataset` (repo data/fleet/app/<package>/<dataset>.json, written by scripts/gen-perf-portfolios.py from this file and the publishers' own files, served by the fleet data framework; never an asset of the APK). No price and no performance is declared or stored: every figure is asked of the app's quote source (data/quotes.json `source`) when a page opens.",
+ "dataset": "perf-portfolios",
+ "periods": [
+  "1D",
+  "1W",
+  "1M",
+  "YTD"
+ ],
+ "default_period": "YTD",
+ "modes": [
+  "table",
+  "graphic"
+ ],
+ "default_mode": "table",
+ "card_top": 5,
+ "tops": [
+  25,
+  50,
+  0
+ ],
+ "default_top": 50,
+ "max_holdings": 100,
+ "bubble": {
+  "x": "1M",
+  "y": "YTD",
+  "_doc": "The bubble chart: x = performance over `x`, y = performance over `y`, bubble area = weight."
+ },
+ "publishers": {
+  "ssga": {
+   "label": "State Street Global Advisors, SPDR daily holdings",
+   "url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-{etf}.xlsx"
+  },
+  "ishares_page": {
+   "label": "BlackRock iShares product page, exposure breakdown by geography (% of market value)",
+   "url": "https://www.ishares.com/us/products/{id}/{slug}"
+  },
+  "imf": {
+   "label": "IMF World Economic Outlook DataMapper, GDP at current prices, USD bn (NGDPD)",
+   "file": "data/cb-snapshot.json",
+   "path": "weights.fx",
+   "_doc": "The IMF figures the CB page already carries (written by scripts/gen-cb-snapshot.py from the IMF DataMapper): one GDP source for the whole app."
+  }
+ },
+ "sector_etfs": {
+  "XLK": "Technology",
+  "XLF": "Financials",
+  "XLV": "Health Care",
+  "XLY": "Consumer Discretionary",
+  "XLC": "Communication",
+  "XLI": "Industrials",
+  "XLP": "Consumer Staples",
+  "XLE": "Energy",
+  "XLU": "Utilities",
+  "XLRE": "Real Estate",
+  "XLB": "Materials"
+ },
+ "_doc_sector_etfs": "The Select Sector SPDR funds: a holding's sector is the sector fund that holds it (the publisher's equity holdings files print no sector).",
+ "countries": {
+  "US": {
+   "name": "United States",
+   "ccy": "USD"
+  },
+  "JP": {
+   "name": "Japan",
+   "ccy": "JPY"
+  },
+  "DE": {
+   "name": "Germany",
+   "ccy": "EUR"
+  },
+  "FR": {
+   "name": "France",
+   "ccy": "EUR"
+  },
+  "IT": {
+   "name": "Italy",
+   "ccy": "EUR"
+  },
+  "ES": {
+   "name": "Spain",
+   "ccy": "EUR"
+  },
+  "GB": {
+   "name": "United Kingdom",
+   "ccy": "GBP"
+  },
+  "CA": {
+   "name": "Canada",
+   "ccy": "CAD"
+  },
+  "AU": {
+   "name": "Australia",
+   "ccy": "AUD"
+  },
+  "CH": {
+   "name": "Switzerland",
+   "ccy": "CHF"
+  },
+  "SE": {
+   "name": "Sweden",
+   "ccy": "SEK"
+  },
+  "NL": {
+   "name": "Netherlands",
+   "ccy": "EUR"
+  },
+  "BE": {
+   "name": "Belgium",
+   "ccy": "EUR"
+  },
+  "AT": {
+   "name": "Austria",
+   "ccy": "EUR"
+  },
+  "IE": {
+   "name": "Ireland",
+   "ccy": "EUR"
+  },
+  "FI": {
+   "name": "Finland",
+   "ccy": "EUR"
+  },
+  "PT": {
+   "name": "Portugal",
+   "ccy": "EUR"
+  },
+  "DK": {
+   "name": "Denmark",
+   "ccy": "DKK"
+  },
+  "NO": {
+   "name": "Norway",
+   "ccy": "NOK"
+  },
+  "NZ": {
+   "name": "New Zealand",
+   "ccy": "NZD"
+  },
+  "SG": {
+   "name": "Singapore",
+   "ccy": "SGD"
+  },
+  "IL": {
+   "name": "Israel",
+   "ccy": "ILS"
+  },
+  "KR": {
+   "name": "South Korea",
+   "ccy": "KRW"
+  },
+  "SA": {
+   "name": "Saudi Arabia",
+   "ccy": "SAR"
+  },
+  "MX": {
+   "name": "Mexico",
+   "ccy": "MXN"
+  },
+  "TR": {
+   "name": "Turkey",
+   "ccy": "TRY",
+   "alias": [
+    "Turkiye",
+    "Türkiye"
+   ]
+  },
+  "ID": {
+   "name": "Indonesia",
+   "ccy": "IDR"
+  },
+  "BR": {
+   "name": "Brazil",
+   "ccy": "BRL"
+  },
+  "PL": {
+   "name": "Poland",
+   "ccy": "PLN"
+  },
+  "CO": {
+   "name": "Colombia",
+   "ccy": "COP"
+  },
+  "DO": {
+   "name": "Dominican Republic",
+   "ccy": "DOP"
+  },
+  "PH": {
+   "name": "Philippines",
+   "ccy": "PHP"
+  },
+  "CL": {
+   "name": "Chile",
+   "ccy": "CLP"
+  },
+  "HU": {
+   "name": "Hungary",
+   "ccy": "HUF"
+  },
+  "RO": {
+   "name": "Romania",
+   "ccy": "RON"
+  },
+  "ZA": {
+   "name": "South Africa",
+   "ccy": "ZAR"
+  },
+  "BH": {
+   "name": "Bahrain",
+   "ccy": "BHD"
+  },
+  "PE": {
+   "name": "Peru",
+   "ccy": "PEN"
+  },
+  "PA": {
+   "name": "Panama",
+   "ccy": "USD"
+  },
+  "EG": {
+   "name": "Egypt",
+   "ccy": "EGP"
+  },
+  "CN": {
+   "name": "China",
+   "ccy": "CNY"
+  },
+  "AR": {
+   "name": "Argentina",
+   "ccy": "ARS"
+  },
+  "OM": {
+   "name": "Oman",
+   "ccy": "OMR"
+  },
+  "NG": {
+   "name": "Nigeria",
+   "ccy": "NGN"
+  },
+  "UY": {
+   "name": "Uruguay",
+   "ccy": "UYU"
+  },
+  "MY": {
+   "name": "Malaysia",
+   "ccy": "MYR"
+  },
+  "EC": {
+   "name": "Ecuador",
+   "ccy": "USD"
+  },
+  "AO": {
+   "name": "Angola",
+   "ccy": "AOA"
+  },
+  "UA": {
+   "name": "Ukraine",
+   "ccy": "UAH"
+  },
+  "KZ": {
+   "name": "Kazakhstan",
+   "ccy": "KZT"
+  },
+  "CI": {
+   "name": "Ivory Coast",
+   "ccy": "XOF",
+   "alias": [
+    "Cote D'Ivoire (Ivory Coast)",
+    "Cote d'Ivoire",
+    "Côte d'Ivoire"
+   ]
+  },
+  "CR": {
+   "name": "Costa Rica",
+   "ccy": "CRC"
+  },
+  "TH": {
+   "name": "Thailand",
+   "ccy": "THB"
+  },
+  "IN": {
+   "name": "India",
+   "ccy": "INR"
+  },
+  "CZ": {
+   "name": "Czech Republic",
+   "ccy": "CZK",
+   "alias": [
+    "Czechia"
+   ]
+  },
+  "QA": {
+   "name": "Qatar",
+   "ccy": "QAR"
+  },
+  "AE": {
+   "name": "United Arab Emirates",
+   "ccy": "AED"
+  },
+  "KW": {
+   "name": "Kuwait",
+   "ccy": "KWD"
+  },
+  "RS": {
+   "name": "Serbia",
+   "ccy": "RSD"
+  },
+  "GH": {
+   "name": "Ghana",
+   "ccy": "GHS"
+  },
+  "KE": {
+   "name": "Kenya",
+   "ccy": "KES"
+  },
+  "PK": {
+   "name": "Pakistan",
+   "ccy": "PKR"
+  },
+  "LK": {
+   "name": "Sri Lanka",
+   "ccy": "LKR"
+  },
+  "JO": {
+   "name": "Jordan",
+   "ccy": "JOD"
+  },
+  "GT": {
+   "name": "Guatemala",
+   "ccy": "GTQ"
+  },
+  "PY": {
+   "name": "Paraguay",
+   "ccy": "PYG"
+  },
+  "SV": {
+   "name": "El Salvador",
+   "ccy": "USD"
+  },
+  "MA": {
+   "name": "Morocco",
+   "ccy": "MAD"
+  },
+  "JM": {
+   "name": "Jamaica",
+   "ccy": "JMD"
+  },
+  "ZM": {
+   "name": "Zambia",
+   "ccy": "ZMW"
+  },
+  "SN": {
+   "name": "Senegal",
+   "ccy": "XOF"
+  },
+  "BG": {
+   "name": "Bulgaria",
+   "ccy": "BGN"
+  },
+  "HK": {
+   "name": "Hong Kong",
+   "ccy": "HKD"
+  },
+  "TW": {
+   "name": "Taiwan",
+   "ccy": "TWD"
+  },
+  "VN": {
+   "name": "Vietnam",
+   "ccy": "VND"
+  }
+ },
+ "fx": {
+  "symbol": "{ccy}=X",
+  "_doc": "The quote source's symbol of USD/{ccy} (units of the currency per 1 USD): a currency's move against the dollar is the inverse of that rate's move. USD itself has no symbol."
+ },
+ "groups": [
+  {
+   "key": "eq-growth",
+   "section": "eq",
+   "label": "Growth",
+   "kind": "etf",
+   "etf": "SPYG",
+   "etf_name": "SPDR Portfolio S&P 500 Growth ETF",
+   "what": "S&P 500 Growth: the growth half of the S&P 500 by sales growth, earnings change and momentum",
+   "benchmarks": [
+    {
+     "symbol": "SPYG",
+     "label": "SPYG"
+    },
+    {
+     "symbol": "SPY",
+     "label": "S&P 500"
+    }
+   ],
+   "bucket_label": "Sector",
+   "unit": "USD",
+   "schemes": [
+    {
+     "id": "etf",
+     "label": "Fund weights (SPYG)",
+     "method": "The fund's own published weights, largest holdings first"
+    }
+   ],
+   "default_scheme": "etf"
+  },
+  {
+   "key": "eq-value",
+   "section": "eq",
+   "label": "Value",
+   "kind": "etf",
+   "etf": "SPYV",
+   "etf_name": "SPDR Portfolio S&P 500 Value ETF",
+   "what": "S&P 500 Value: the value half of the S&P 500 by book value, earnings and sales to price",
+   "benchmarks": [
+    {
+     "symbol": "SPYV",
+     "label": "SPYV"
+    },
+    {
+     "symbol": "SPY",
+     "label": "S&P 500"
+    }
+   ],
+   "bucket_label": "Sector",
+   "unit": "USD",
+   "schemes": [
+    {
+     "id": "etf",
+     "label": "Fund weights (SPYV)",
+     "method": "The fund's own published weights, largest holdings first"
+    }
+   ],
+   "default_scheme": "etf"
+  },
+  {
+   "key": "eq-quality",
+   "section": "eq",
+   "label": "Quality",
+   "kind": "etf",
+   "etf": "QUS",
+   "etf_name": "SPDR MSCI USA StrategicFactors ETF",
+   "what": "MSCI USA Factor Mix A-Series: quality, value and low volatility in equal parts (the publisher's quality-tilted US fund)",
+   "benchmarks": [
+    {
+     "symbol": "QUS",
+     "label": "QUS"
+    },
+    {
+     "symbol": "SPY",
+     "label": "S&P 500"
+    }
+   ],
+   "bucket_label": "Sector",
+   "unit": "USD",
+   "schemes": [
+    {
+     "id": "etf",
+     "label": "Fund weights (QUS)",
+     "method": "The fund's own published weights, largest holdings first"
+    }
+   ],
+   "default_scheme": "etf"
+  },
+  {
+   "key": "eq-vol",
+   "section": "eq",
+   "label": "Vol",
+   "kind": "etf",
+   "etf": "LGLV",
+   "etf_name": "SPDR SSGA US Large Cap Low Volatility Index ETF",
+   "what": "Low volatility: the least volatile US large caps",
+   "benchmarks": [
+    {
+     "symbol": "LGLV",
+     "label": "LGLV"
+    },
+    {
+     "symbol": "SPY",
+     "label": "S&P 500"
+    }
+   ],
+   "bucket_label": "Sector",
+   "unit": "USD",
+   "schemes": [
+    {
+     "id": "etf",
+     "label": "Fund weights (LGLV)",
+     "method": "The fund's own published weights, largest holdings first"
+    }
+   ],
+   "default_scheme": "etf"
+  },
+  {
+   "key": "eq-top",
+   "section": "eq",
+   "label": "Top",
+   "kind": "etf",
+   "etf": "SPY",
+   "etf_name": "SPDR S&P 500 ETF Trust",
+   "what": "The 20 largest companies of the S&P 500",
+   "benchmarks": [
+    {
+     "symbol": "SPY",
+     "label": "S&P 500"
+    }
+   ],
+   "bucket_label": "Sector",
+   "unit": "USD",
+   "schemes": [
+    {
+     "id": "etf",
+     "label": "Fund weights (SPY)",
+     "method": "The fund's own published weights, its 20 largest holdings rescaled to 100 %"
+    }
+   ],
+   "default_scheme": "etf",
+   "top": 20
+  },
+  {
+   "key": "eq-cyclical",
+   "section": "eq",
+   "label": "Cyclical",
+   "kind": "etf",
+   "etf": "XLY",
+   "etf_name": "Consumer Discretionary Select Sector SPDR Fund",
+   "what": "Cyclicals: the consumer discretionary sector of the S&P 500",
+   "benchmarks": [
+    {
+     "symbol": "XLY",
+     "label": "XLY"
+    },
+    {
+     "symbol": "SPY",
+     "label": "S&P 500"
+    }
+   ],
+   "bucket_label": "Sector",
+   "unit": "USD",
+   "schemes": [
+    {
+     "id": "etf",
+     "label": "Fund weights (XLY)",
+     "method": "The fund's own published weights, largest holdings first"
+    }
+   ],
+   "default_scheme": "etf"
+  },
+  {
+   "key": "eq-defensive",
+   "section": "eq",
+   "label": "Defensive",
+   "kind": "etf",
+   "etf": "XLP",
+   "etf_name": "Consumer Staples Select Sector SPDR Fund",
+   "what": "Defensives: the consumer staples sector of the S&P 500",
+   "benchmarks": [
+    {
+     "symbol": "XLP",
+     "label": "XLP"
+    },
+    {
+     "symbol": "SPY",
+     "label": "S&P 500"
+    }
+   ],
+   "bucket_label": "Sector",
+   "unit": "USD",
+   "schemes": [
+    {
+     "id": "etf",
+     "label": "Fund weights (XLP)",
+     "method": "The fund's own published weights, largest holdings first"
+    }
+   ],
+   "default_scheme": "etf"
+  },
+  {
+   "key": "eq-dividend",
+   "section": "eq",
+   "label": "Dividend",
+   "kind": "etf",
+   "etf": "SDY",
+   "etf_name": "SPDR S&P Dividend ETF",
+   "what": "S&P High Yield Dividend Aristocrats: companies that raised dividends for 20+ years, weighted by yield",
+   "benchmarks": [
+    {
+     "symbol": "SDY",
+     "label": "SDY"
+    },
+    {
+     "symbol": "SPY",
+     "label": "S&P 500"
+    }
+   ],
+   "bucket_label": "Sector",
+   "unit": "USD",
+   "schemes": [
+    {
+     "id": "etf",
+     "label": "Fund weights (SDY)",
+     "method": "The fund's own published weights, largest holdings first"
+    }
+   ],
+   "default_scheme": "etf"
+  },
+  {
+   "key": "eq-momentum",
+   "section": "eq",
+   "label": "Momentum",
+   "kind": "etf",
+   "etf": "MMTM",
+   "etf_name": "SPDR S&P 1500 Momentum Tilt ETF",
+   "what": "S&P 1500 Positive Momentum Tilt: the S&P 1500 overweighting the stocks with the strongest 12-month momentum",
+   "benchmarks": [
+    {
+     "symbol": "MMTM",
+     "label": "MMTM"
+    },
+    {
+     "symbol": "SPY",
+     "label": "S&P 500"
+    }
+   ],
+   "bucket_label": "Sector",
+   "unit": "USD",
+   "schemes": [
+    {
+     "id": "etf",
+     "label": "Fund weights (MMTM)",
+     "method": "The fund's own published weights, largest holdings first"
+    }
+   ],
+   "default_scheme": "etf"
+  },
+  {
+   "key": "eq-small",
+   "section": "eq",
+   "label": "Small",
+   "kind": "etf",
+   "etf": "SPSM",
+   "etf_name": "SPDR Portfolio S&P 600 Small Cap ETF",
+   "what": "S&P SmallCap 600: US small caps",
+   "benchmarks": [
+    {
+     "symbol": "SPSM",
+     "label": "SPSM"
+    },
+    {
+     "symbol": "SPY",
+     "label": "S&P 500"
+    }
+   ],
+   "bucket_label": "Sector",
+   "unit": "USD",
+   "schemes": [
+    {
+     "id": "etf",
+     "label": "Fund weights (SPSM)",
+     "method": "The fund's own published weights, largest holdings first"
+    }
+   ],
+   "default_scheme": "etf"
+  },
+  {
+   "key": "fi-gov-dm",
+   "section": "fi",
+   "label": "Gov Bonds DM",
+   "kind": "countries_dm",
+   "what": "Developed-market government bonds by country; each country's figure is a listed fund of its government bonds, in the fund's own currency",
+   "bucket_label": "Region",
+   "unit": "local",
+   "benchmarks": [
+    {
+     "symbol": "GOVT",
+     "label": "US Treasuries"
+    },
+    {
+     "symbol": "BWX",
+     "label": "Intl Treasuries"
+    }
+   ],
+   "schemes": [
+    {
+     "id": "gdp",
+     "label": "GDP-weighted",
+     "method": "Each country at its share of the group's nominal GDP in USD",
+     "publisher": "imf",
+     "year": "2025"
+    },
+    {
+     "id": "usd_index",
+     "label": "USD index weights",
+     "method": "The currency weights of the US Dollar Index (ICE DXY, fixed since 1999); the euro's weight is split between the euro members by GDP; the dollar itself has no weight",
+     "basket": {
+      "EUR": 57.6,
+      "JPY": 13.6,
+      "GBP": 11.9,
+      "CAD": 9.1,
+      "SEK": 4.2,
+      "CHF": 3.6
+     }
+    },
+    {
+     "id": "liquidity",
+     "label": "Liquidity (market value)",
+     "method": "Each country at the market value of its government bonds in the SPDR Bloomberg International Treasury Bond ETF (BWX), a market-value index of investment-grade treasuries outside the US; the US is not in that index",
+     "publisher": "ssga",
+     "etf": "BWX"
+    }
+   ],
+   "default_scheme": "gdp",
+   "constituents": [
+    {
+     "cc": "US",
+     "symbol": "GOVT",
+     "proxy": "iShares U.S. Treasury Bond ETF",
+     "bucket": "Americas"
+    },
+    {
+     "cc": "JP",
+     "symbol": "2561.T",
+     "proxy": "iShares Core Japan Government Bond ETF",
+     "bucket": "Asia-Pacific"
+    },
+    {
+     "cc": "DE",
+     "symbol": "IS0L.DE",
+     "proxy": "iShares Germany Govt Bond UCITS ETF",
+     "bucket": "Europe"
+    },
+    {
+     "cc": "GB",
+     "symbol": "IGLT.L",
+     "proxy": "iShares Core UK Gilts UCITS ETF",
+     "bucket": "Europe"
+    },
+    {
+     "cc": "FR",
+     "symbol": "IFRB.AS",
+     "proxy": "iShares France Govt Bond UCITS ETF",
+     "bucket": "Europe"
+    },
+    {
+     "cc": "IT",
+     "symbol": "IS0M.DE",
+     "proxy": "iShares Italy Govt Bond UCITS ETF",
+     "bucket": "Europe"
+    },
+    {
+     "cc": "CA",
+     "symbol": "XGB.TO",
+     "proxy": "iShares Core Canadian Government Bond Index ETF",
+     "bucket": "Americas"
+    },
+    {
+     "cc": "ES",
+     "symbol": "IS0P.DE",
+     "proxy": "iShares Spain Govt Bond UCITS ETF",
+     "bucket": "Europe"
+    },
+    {
+     "cc": "AU",
+     "symbol": "VGB.AX",
+     "proxy": "Vanguard Australian Government Bond Index ETF",
+     "bucket": "Asia-Pacific"
+    },
+    {
+     "cc": "CH",
+     "symbol": "CSBGC0.SW",
+     "proxy": "iShares Swiss Domestic Government Bond 7-15 ETF",
+     "bucket": "Europe"
+    },
+    {
+     "cc": "SE",
+     "symbol": "",
+     "proxy": "",
+     "bucket": "Europe",
+     "note": "no listed fund of Swedish government bonds at the quote source"
+    }
+   ]
+  },
+  {
+   "key": "fi-gov-em",
+   "section": "fi",
+   "label": "Gov Bonds EM",
+   "kind": "countries_em",
+   "what": "Emerging-market government bonds by country, at the country weights of the main EM government bond funds",
+   "bucket_label": "Currency",
+   "unit": "fx",
+   "perf_note": "No key-free source publishes a per-country EM sovereign bond return: a country's figure is its currency against the US dollar (the currency leg of a local-currency bond; 0 for a dollar country). The funds' own total returns are the benchmark figures above.",
+   "benchmarks": [
+    {
+     "symbol": "EMB",
+     "label": "EMB (USD)"
+    },
+    {
+     "symbol": "EMLC",
+     "label": "EMLC (local)"
+    },
+    {
+     "symbol": "EBND",
+     "label": "EBND (local)"
+    }
+   ],
+   "schemes": [
+    {
+     "id": "emb",
+     "label": "EMB weights (USD bonds)",
+     "method": "Country weights of the iShares J.P. Morgan USD Emerging Markets Bond ETF (EMB), the largest EM government bond fund: % of market value by country",
+     "publisher": "ishares_page",
+     "id_ishares": "239572",
+     "slug": "ishares-jp-morgan-usd-emerging-markets-bond-etf",
+     "fund": "EMB"
+    },
+    {
+     "id": "local",
+     "label": "EBND weights (local bonds)",
+     "method": "Country weights of the SPDR Bloomberg Emerging Markets Local Bond ETF (EBND): the weights of its holdings summed by issuing country",
+     "publisher": "ssga",
+     "etf": "EBND",
+     "fund": "EBND"
+    }
+   ],
+   "default_scheme": "emb"
+  },
+  {
+   "key": "fi-aaa",
+   "section": "fi",
+   "label": "AAA Bonds",
+   "kind": "funds",
+   "what": "AAA-rated bonds: the listed funds of AAA-rated securities (senior CLO tranches)",
+   "bucket_label": "Type",
+   "unit": "USD",
+   "benchmarks": [
+    {
+     "symbol": "AGG",
+     "label": "US Aggregate"
+    }
+   ],
+   "schemes": [
+    {
+     "id": "equal",
+     "label": "Equal weight",
+     "method": "Every listed fund at the same weight (no fund size is published key-free)"
+    }
+   ],
+   "default_scheme": "equal",
+   "constituents": [
+    {
+     "ticker": "JAAA",
+     "symbol": "JAAA",
+     "name": "Janus Henderson AAA CLO ETF",
+     "bucket": "AAA CLO"
+    },
+    {
+     "ticker": "PAAA",
+     "symbol": "PAAA",
+     "name": "PGIM AAA CLO ETF",
+     "bucket": "AAA CLO"
+    },
+    {
+     "ticker": "CLOX",
+     "symbol": "CLOX",
+     "name": "Eldridge AAA CLO ETF",
+     "bucket": "AAA CLO"
+    },
+    {
+     "ticker": "FAAA",
+     "symbol": "FAAA",
+     "name": "Fidelity AAA CLO ETF",
+     "bucket": "AAA CLO"
+    },
+    {
+     "ticker": "AAAC",
+     "symbol": "AAAC",
+     "name": "Columbia AAA CLO ETF",
+     "bucket": "AAA CLO"
+    },
+    {
+     "ticker": "TRPA",
+     "symbol": "TRPA",
+     "name": "Hartford AAA CLO ETF",
+     "bucket": "AAA CLO"
+    }
+   ]
+  },
+  {
+   "key": "fi-aa-a",
+   "section": "fi",
+   "label": "AA-A Bonds",
+   "kind": "funds",
+   "what": "AA to A rated bonds: high-grade corporates, US agencies, agency mortgage-backed securities and municipals",
+   "bucket_label": "Type",
+   "unit": "USD",
+   "benchmarks": [
+    {
+     "symbol": "AGG",
+     "label": "US Aggregate"
+    }
+   ],
+   "schemes": [
+    {
+     "id": "equal",
+     "label": "Equal weight",
+     "method": "Every listed fund at the same weight (no fund size is published key-free)"
+    }
+   ],
+   "default_scheme": "equal",
+   "constituents": [
+    {
+     "ticker": "QLTA",
+     "symbol": "QLTA",
+     "name": "iShares Aaa - A Rated Corporate Bond ETF",
+     "bucket": "Corporate Aaa-A"
+    },
+    {
+     "ticker": "AGZ",
+     "symbol": "AGZ",
+     "name": "iShares Agency Bond ETF",
+     "bucket": "US agency"
+    },
+    {
+     "ticker": "MBB",
+     "symbol": "MBB",
+     "name": "iShares MBS ETF",
+     "bucket": "Agency MBS"
+    },
+    {
+     "ticker": "MUB",
+     "symbol": "MUB",
+     "name": "iShares National Muni Bond ETF",
+     "bucket": "Municipal"
+    },
+    {
+     "ticker": "VTEB",
+     "symbol": "VTEB",
+     "name": "Vanguard Tax-Exempt Bond ETF",
+     "bucket": "Municipal"
+    }
+   ]
+  },
+  {
+   "key": "fi-bbb",
+   "section": "fi",
+   "label": "BBB Bonds",
+   "kind": "funds",
+   "what": "BBB-rated corporate bonds, by maturity",
+   "bucket_label": "Type",
+   "unit": "USD",
+   "benchmarks": [
+    {
+     "symbol": "AGG",
+     "label": "US Aggregate"
+    }
+   ],
+   "schemes": [
+    {
+     "id": "equal",
+     "label": "Equal weight",
+     "method": "Every listed fund at the same weight (no fund size is published key-free)"
+    }
+   ],
+   "default_scheme": "equal",
+   "constituents": [
+    {
+     "ticker": "LQDB",
+     "symbol": "LQDB",
+     "name": "iShares BBB Rated Corporate Bond ETF",
+     "bucket": "BBB all maturities"
+    },
+    {
+     "ticker": "BBBS",
+     "symbol": "BBBS",
+     "name": "BondBloxx BBB Rated 1-5 Year Corporate Bond ETF",
+     "bucket": "BBB 1-5Y"
+    },
+    {
+     "ticker": "BBBI",
+     "symbol": "BBBI",
+     "name": "BondBloxx BBB Rated 5-10 Year Corporate Bond ETF",
+     "bucket": "BBB 5-10Y"
+    },
+    {
+     "ticker": "BBBL",
+     "symbol": "BBBL",
+     "name": "BondBloxx BBB Rated 10+ Year Corporate Bond ETF",
+     "bucket": "BBB 10Y+"
+    }
+   ]
+  },
+  {
+   "key": "fi-junk",
+   "section": "fi",
+   "label": "Junk",
+   "kind": "funds",
+   "what": "High-yield (below investment grade) corporate bonds: broad, short maturity, by rating and fallen angels",
+   "bucket_label": "Type",
+   "unit": "USD",
+   "benchmarks": [
+    {
+     "symbol": "AGG",
+     "label": "US Aggregate"
+    }
+   ],
+   "schemes": [
+    {
+     "id": "equal",
+     "label": "Equal weight",
+     "method": "Every listed fund at the same weight (no fund size is published key-free)"
+    }
+   ],
+   "default_scheme": "equal",
+   "constituents": [
+    {
+     "ticker": "HYG",
+     "symbol": "HYG",
+     "name": "iShares iBoxx $ High Yield Corporate Bond ETF",
+     "bucket": "Broad"
+    },
+    {
+     "ticker": "JNK",
+     "symbol": "JNK",
+     "name": "SPDR Bloomberg High Yield Bond ETF",
+     "bucket": "Broad"
+    },
+    {
+     "ticker": "USHY",
+     "symbol": "USHY",
+     "name": "iShares Broad USD High Yield Corporate Bond ETF",
+     "bucket": "Broad"
+    },
+    {
+     "ticker": "HYLB",
+     "symbol": "HYLB",
+     "name": "Xtrackers USD High Yield Corporate Bond ETF",
+     "bucket": "Broad"
+    },
+    {
+     "ticker": "SHYG",
+     "symbol": "SHYG",
+     "name": "iShares 0-5 Year High Yield Corporate Bond ETF",
+     "bucket": "Short"
+    },
+    {
+     "ticker": "SJNK",
+     "symbol": "SJNK",
+     "name": "SPDR Bloomberg Short Term High Yield Bond ETF",
+     "bucket": "Short"
+    },
+    {
+     "ticker": "ANGL",
+     "symbol": "ANGL",
+     "name": "VanEck Fallen Angel High Yield Bond ETF",
+     "bucket": "Fallen angels"
+    },
+    {
+     "ticker": "XBB",
+     "symbol": "XBB",
+     "name": "BondBloxx BB Rated USD High Yield Corporate Bond ETF",
+     "bucket": "BB"
+    },
+    {
+     "ticker": "XB",
+     "symbol": "XB",
+     "name": "BondBloxx B Rated USD High Yield Corporate Bond ETF",
+     "bucket": "B"
+    },
+    {
+     "ticker": "XCCC",
+     "symbol": "XCCC",
+     "name": "BondBloxx CCC Rated USD High Yield Corporate Bond ETF",
+     "bucket": "CCC"
+    }
+   ]
+  },
+  {
+   "key": "fi-all",
+   "section": "fi",
+   "label": "All",
+   "kind": "union",
+   "what": "Every bond group side by side: each group at the same weight, its members at their weights inside the group",
+   "bucket_label": "Group",
+   "unit": "mixed",
+   "benchmarks": [
+    {
+     "symbol": "AGG",
+     "label": "US Aggregate"
+    },
+    {
+     "symbol": "BNDX",
+     "label": "Intl Aggregate"
+    }
+   ],
+   "members": [
+    "fi-gov-dm",
+    "fi-gov-em",
+    "fi-aaa",
+    "fi-aa-a",
+    "fi-bbb",
+    "fi-junk"
+   ],
+   "schemes": [
+    {
+     "id": "equal_groups",
+     "label": "Equal group weights",
+     "method": "Each of the six groups at one sixth; inside a group its default scheme"
+    }
+   ],
+   "default_scheme": "equal_groups"
+  }
+ ],
+ "ui": {
+  "table": "Table",
+  "graphic": "Graphic",
+  "see_all": "See all",
+  "weight": "Wt %",
+  "contrib": "Contrib pp",
+  "ticker": "Ticker",
+  "name": "Name",
+  "total": "Total",
+  "rest": "Rest of the fund",
+  "scheme": "Weights",
+  "period": "Period",
+  "show": "Show",
+  "map": "Heat map",
+  "attribution": "Performance attribution",
+  "bubble": "Relative performance",
+  "constituents": "Constituents",
+  "size": "Size",
+  "color": "Color",
+  "advdec": "Adv/Dec",
+  "portfolio": "Portfolio",
+  "benchmark": "Benchmark",
+  "active": "Active",
+  "quoted": "Quoted",
+  "loading": "Loading the constituents…",
+  "offline": "The constituents could not be loaded yet: this phone is offline or the dataset is not published. This page asks again by itself every few seconds.",
+  "missing": "No constituents are published for this portfolio yet.",
+  "noperf": "The quote source has not answered for these constituents: weights only. Refresh asks again.",
+  "asking": "Asking the quote source…",
+  "refresh": "Refresh",
+  "refreshing": "Refreshing…"
+ }
+}

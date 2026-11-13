@@ -89,7 +89,7 @@ fun FinSkeleton(width: Dp?, height: Dp, modifier: Modifier = Modifier, radius: D
     }.testTag("fin:skeleton"))
 }
 
-/** A flat terminal card (spec 1.4): 12dp radius, surface fill, 1dp hairline, no shadow. */
+/** A flat terminal panel (spec 1.4, #1722): square, black fill, a 1dp rule, no shadow. */
 @Composable
 fun FinCard(modifier: Modifier = Modifier, pad: Boolean = true, content: @Composable ColumnScope.() -> Unit) {
     val p = LocalFinPalette.current
@@ -101,17 +101,27 @@ fun FinCard(modifier: Modifier = Modifier, pad: Boolean = true, content: @Compos
     )
 }
 
-/** A panel's 32dp title row: the uppercase title, and at its right the amber clock when stale (spec 2 common rules). */
+/**
+ * A panel's title row (#1722 the terminal header strip): the amber function [code] in a black box when the panel has one, the white title on the grey
+ * header gradient, the panel's own controls, and at the right the yellow clock when stale (spec 2 common rules). The strip is 26dp inside a 32dp row.
+ */
 @Composable
-fun FinTitleRow(title: String, stale: Boolean = false, staleNote: String = "", trailing: @Composable (() -> Unit)? = null) {
+fun FinTitleRow(title: String, stale: Boolean = false, staleNote: String = "", code: String = "", trailing: @Composable (() -> Unit)? = null) {
     val p = LocalFinPalette.current
     var tip by remember { mutableStateOf(false) }
     Column {
-        Row(Modifier.fillMaxWidth().height(FinDim.title), verticalAlignment = Alignment.CenterVertically) {
-            Text(title.uppercase(Locale.ROOT), Modifier.weight(1f), color = p.text, style = FinType.label.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
+        Row(Modifier.fillMaxWidth().height(FinDim.title).padding(bottom = FinDim.title - FinDim.panelHead)
+            .background(Brush.verticalGradient(listOf(p.headTop, p.head))), verticalAlignment = Alignment.CenterVertically) {
+            if (code.isNotBlank()) {
+                Box(Modifier.height(FinDim.panelHead).background(p.canvas).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+                    Text(code.uppercase(Locale.ROOT), color = p.accent, style = FinType.code, maxLines = 1)
+                }
+                Box(Modifier.width(1.dp).height(FinDim.panelHead).background(p.hairline))
+            }
+            Text(title, Modifier.weight(1f).padding(horizontal = 8.dp), color = Color.White, style = FinType.body.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
             trailing?.invoke()
-            if (stale) Icon(Icons.Outlined.Schedule, "stale", Modifier.padding(start = 8.dp).size(16.dp).clickable { tip = !tip }.testTag("fin:stale"), tint = p.amber)
+            if (stale) Icon(Icons.Outlined.Schedule, "stale", Modifier.padding(start = 8.dp, end = 6.dp).size(16.dp).clickable { tip = !tip }.testTag("fin:stale"), tint = p.amber)
         }
         if (tip && staleNote.isNotBlank()) Text(staleNote, color = p.amber, style = FinType.caption)
     }
@@ -196,16 +206,16 @@ fun FinEmptyBody(message: String) {
     }
 }
 
-/** A 32dp chip (spec 1.4): 8dp radius, hairline outline; selected = accent at 20 % with an accent outline and ink. */
+/** A chip (spec 1.4, #1722 a terminal tab): square, a rule outline; selected = the amber fill with black ink. */
 @Composable
 fun FinChip(text: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val p = LocalFinPalette.current
     val shape = RoundedCornerShape(FinDim.chipRadius)
     Box(
-        modifier.height(FinDim.chip).clip(shape).background(if (selected) p.accent.copy(alpha = 0.2f) else Color.Transparent)
+        modifier.height(FinDim.chip).clip(shape).background(if (selected) p.accent else Color.Transparent)
             .border(1.dp, if (selected) p.accent else p.hairline, shape).clickable(onClick = onClick).padding(horizontal = 10.dp).testTag("fin:chip:$text"),
         contentAlignment = Alignment.Center,
-    ) { Text(text, color = if (selected) p.accent else p.text2, style = FinType.label) }
+    ) { Text(text, color = if (selected) p.canvas else p.text2, style = FinType.label) }
 }
 
 /**

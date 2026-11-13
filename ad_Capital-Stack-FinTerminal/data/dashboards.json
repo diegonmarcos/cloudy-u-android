@@ -38,7 +38,7 @@
     {
       "id": "yield_curves",
       "entry": "Yield Curves",
-      "tab": "fi",
+      "tab": "cb",
       "panels": [
         {
           "id": "ust",
@@ -263,7 +263,7 @@
     {
       "id": "yields_matrix",
       "entry": "Yields Matrix",
-      "tab": "fi",
+      "tab": "cb",
       "panels": [
         {
           "id": "spot",
@@ -721,7 +721,7 @@
     {
       "id": "bonds_market",
       "entry": "Bonds Market",
-      "tab": "fi",
+      "tab": "cb",
       "panels": [
         {
           "id": "us",
@@ -793,7 +793,7 @@
     {
       "id": "forward_rates",
       "entry": "Forward Rates",
-      "tab": "fi",
+      "tab": "cb",
       "panels": [
         {
           "id": "fwd",
@@ -899,7 +899,7 @@
     {
       "id": "rate_probabilities",
       "entry": "World Interest Rate Probabilities",
-      "tab": "fi",
+      "tab": "cb",
       "panels": [
         {
           "id": "policy",
@@ -1025,7 +1025,7 @@
     {
       "id": "world_bonds",
       "entry": "World Bonds",
-      "tab": "fi",
+      "tab": "cb",
       "panels": [
         {
           "id": "g20_real",
@@ -3823,7 +3823,7 @@
     {
       "id": "credit",
       "entry": "Credit",
-      "tab": "fi",
+      "tab": "cb",
       "panels": [
         {
           "id": "oas",
@@ -3978,7 +3978,7 @@
     {
       "id": "macro",
       "entry": "Macro",
-      "tab": "fi",
+      "tab": "cb",
       "panels": [
         {
           "id": "next",

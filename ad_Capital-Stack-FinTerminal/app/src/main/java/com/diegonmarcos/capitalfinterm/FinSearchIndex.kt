@@ -32,7 +32,7 @@ object FinSearchIndex {
             "fx" in k || "frankfurter" in k || dashboardId == "fx" -> "FX" to "FX"
             "commod" in k || "energy" in k -> "Commodities" to "CO"
             "equity" in k || "cboe" in k || "indices" in k -> "Equities & indices" to "EQ"
-            tab == "fi" || "ust" in k || "funding" in k || "rates" in k -> "Rates & yields" to "FI"
+            tab == "fi" || tab == "cb" || "ust" in k || "funding" in k || "rates" in k -> "Rates & yields" to "FI"
             else -> "Equities & indices" to "EQ"
         }
     }

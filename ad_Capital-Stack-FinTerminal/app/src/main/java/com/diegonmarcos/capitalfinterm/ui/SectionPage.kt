@@ -50,6 +50,7 @@ import com.diegonmarcos.capitalfinterm.HomeCard
 import com.diegonmarcos.superapp.navbartop2.SecondRowIcons
 import com.diegonmarcos.capitalfinterm.R
 import com.diegonmarcos.capitalfinterm.ui.fin.FinDim
+import com.diegonmarcos.capitalfinterm.ui.fin.FinPanelHead
 import com.diegonmarcos.capitalfinterm.ui.fin.FinType
 import com.diegonmarcos.capitalfinterm.ui.fin.FinUi
 import com.diegonmarcos.capitalfinterm.ui.fin.LocalFinPalette
@@ -118,7 +119,7 @@ private fun TabList(sectionId: String, entries: List<Entry>, compact: Boolean, s
     val sources = remember { AssetData.sources(ctx) }
     val dashboards = remember { AssetData.dashboards(ctx) }
     val dashEntries = entries.filter { it.kind == Pages.KIND_DASHBOARD }
-    val others = entries.filter { it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE && it.kind != Pages.KIND_CB_TABLE && it.kind != Pages.KIND_QUOTE_BOARD && it.kind != Pages.KIND_FUTURES_BOARD && it.kind != Pages.KIND_HEDGE_CALC }
+    val others = entries.filter { it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE && it.kind != Pages.KIND_CB_TABLE && it.kind != Pages.KIND_QUOTE_BOARD && it.kind != Pages.KIND_FUTURES_BOARD && it.kind != Pages.KIND_HEDGE_CALC && it.kind != Pages.KIND_PERF_PORTFOLIO }
     fun status(e: Entry): DashStatus? = dashboards.firstOrNull { it.id == e.dashboard }?.let { Dashboards.status(it, sources) }
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -164,6 +165,8 @@ private fun EntryPage(e: Entry, nav: FinNav) {
             Pages.KIND_QUOTE_BOARD -> QuoteBoardPage(e.view)
             Pages.KIND_FUTURES_BOARD -> FuturesBoardPage(e.view)
             Pages.KIND_HEDGE_CALC -> HedgePage()
+            // #1722 a performance portfolio (EQ > Performance, the FI bond groups): Table | Graphic over the runtime dataset
+            Pages.KIND_PERF_PORTFOLIO -> PerfPortfolioPage(e.view, e.fn)
             else -> Text(e.title, color = LocalFinPalette.current.text, style = FinType.title)
         }
     }
@@ -174,6 +177,8 @@ private fun EntryPage(e: Entry, nav: FinNav) {
 private fun HomeGrid(sectionId: String, cards: List<HomeCard>, entries: List<Entry>, nav: FinNav, onOpen: (String) -> Unit) {
     // #1663 the cards under the stack's section titles (EQ: Performance, then Data), in the declared order
     val groups = remember(sectionId) { Pages.homeGroups(cards, entries) }
+    // #1722 the performance portfolios of this Homepage (EQ > Performance, the FI bond groups): their cards list the top constituents with returns
+    val perf = rememberPerfHome(remember(sectionId) { cards.filter { it.entry.kind == Pages.KIND_PERF_PORTFOLIO }.map { it.entry.view } })
     LazyColumn(
         Modifier.fillMaxSize().testTag(HOME_GRID + sectionId),
         contentPadding = PaddingValues(start = FinDim.screenPad, end = FinDim.screenPad, top = FinDim.gap, bottom = FinDim.bottomInset),
@@ -181,11 +186,11 @@ private fun HomeGrid(sectionId: String, cards: List<HomeCard>, entries: List<Ent
     ) {
         if (cards.any { it.entry.kind == Pages.KIND_DASHBOARD }) item(key = "search") { FinSearchField(onClick = { nav.search() }) }
         groups.forEachIndexed { g, (title, group) ->
-            if (title.isNotEmpty()) item(key = "s:$g") { Box(Modifier.testTag(HOME_SECTION + title)) { GroupTitle(title) } }
+            if (title.isNotEmpty()) item(key = "s:$g") { Box(Modifier.testTag(HOME_SECTION + title)) { HomeSectionTitle(title, group.size) } }
             group.chunked(2).forEachIndexed { i, pair ->
                 item(key = "h:$g:$i") {
                     Row(horizontalArrangement = Arrangement.spacedBy(FinDim.gap)) {
-                        pair.forEach { c -> HomeCardTile(c, Modifier.weight(1f)) { onOpen(c.pageId) } }
+                        pair.forEach { c -> HomeCardTile(c, Modifier.weight(1f), perf) { onOpen(c.pageId) } }
                         if (pair.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
@@ -200,20 +205,32 @@ const val HOME_CARD = "home_card:"
 /** #1663 the test tag prefix of a Homepage section heading (+ its title: Performance, Data). */
 const val HOME_SECTION = "home_section:"
 
+/** #1722 a Homepage group's heading as a terminal strip: the group's name in yellow, how many pages it holds. */
 @Composable
-private fun HomeCardTile(c: HomeCard, modifier: Modifier, onOpen: () -> Unit) {
+private fun HomeSectionTitle(title: String, count: Int) {
     val p = LocalFinPalette.current
-    Column(
-        modifier.height(112.dp).clip(RoundedCornerShape(FinDim.cardRadius)).background(p.surface).border(1.dp, p.hairline, RoundedCornerShape(FinDim.cardRadius))
-            .clickable(onClick = onOpen).padding(12.dp).testTag(HOME_CARD + c.pageId),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(SecondRowIcons.vector(c.icon), contentDescription = null, tint = p.accent, modifier = Modifier.size(20.dp))
+    Row(Modifier.fillMaxWidth().height(FinDim.panelHead).background(p.head2).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(title.uppercase(java.util.Locale.ROOT), Modifier.weight(1f), color = p.yellow, style = FinType.label, maxLines = 1)
+        Text(count.toString(), color = p.text2, style = FinType.caption, maxLines = 1)
+    }
+}
+
+/**
+ * A Homepage card as a terminal panel (#1722): the header strip with the page's function mnemonic in amber and its name, then its icon and one-line
+ * description; a performance portfolio's card lists its top constituents with their returns and "See all" instead ([PerfCardBody]).
+ */
+@Composable
+private fun HomeCardTile(c: HomeCard, modifier: Modifier, perf: PerfHomeState? = null, onOpen: () -> Unit) {
+    val p = LocalFinPalette.current
+    val isPerf = c.entry.kind == Pages.KIND_PERF_PORTFOLIO && perf != null
+    Column(modifier.height(if (isPerf) 176.dp else 100.dp).background(p.canvas).border(1.dp, p.hairline).clickable(onClick = onOpen).padding(1.dp).testTag(HOME_CARD + c.pageId)) {
+        FinPanelHead(c.entry.fn, c.title)
+        if (isPerf && perf != null) PerfCardBody(c.entry.view, perf)
+        else Row(Modifier.padding(8.dp), verticalAlignment = Alignment.Top) {
+            Icon(SecondRowIcons.vector(c.icon), contentDescription = null, tint = p.accent, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text(c.title, Modifier.weight(1f), color = p.text, style = FinType.title, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(c.subtitle, Modifier.weight(1f), color = p.text2, style = FinType.caption, maxLines = 4, overflow = TextOverflow.Ellipsis)
         }
-        Text(c.subtitle, color = p.text2, style = FinType.caption, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 

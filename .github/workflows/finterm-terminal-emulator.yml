@@ -1,0 +1,65 @@
+# The terminal-style FinTerm on an emulator (#1722): the Ship run's x86_64 APK; walks the Homepages, the FI bond groups (Table + Graphic), the CB rates pages, EQ Performance and EQ Data, the command line; screenshots uploaded as the finterm-terminal artifact. Dispatch only.
+name: "Test -> FinTerm terminal UI (emulator screenshots)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      ship_run_id:
+        description: "Ship -> Capital-Stack-FinTerminal run id whose x86_64 APK artifact to shoot"
+        required: true
+      wait_s:
+        description: "Optional: seconds to wait for each page to settle (default 25)"
+        required: false
+        default: "25"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: ad_Capital-Stack-FinTerminal/test
+
+      - name: Fetch the FinTerm APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ inputs.ship_run_id }}
+        run: |
+          set -eu
+          name=$(gh api "repos/$REPO/actions/runs/$RUN/artifacts" --jq '.artifacts[] | select(.name|startswith("Capital-Stack-FinTerminal-x86_64")) | .name' | head -1)
+          [ -n "$name" ] || { echo "::error::no x86_64 APK artifact on run $RUN"; exit 1; }
+          gh run download "$RUN" -R "$REPO" -n "$name" -D apk
+          cp "$(find apk -name '*.apk' | head -1)" finterm.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + walk the terminal
+        timeout-minutes: 60
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: FT_WAIT='${{ inputs.wait_s }}' bash ad_Capital-Stack-FinTerminal/test/emulator-terminal.sh finterm.apk out
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finterm-terminal
+          path: out
+          if-no-files-found: warn

@@ -322,7 +322,8 @@ fun DashboardPage(dashboardId: String, nav: FinNav) {
                 }
                 items(order, key = { it.id }) { panel ->
                     Box(Modifier.padding(horizontal = FinDim.screenPad)) {
-                        PanelSlot(dash, panel, sources, keys, user, width - FinDim.screenPad * 2, nav,
+                        // #1722 a panel's function code: its place on the page, as a terminal numbers its panels
+                        PanelSlot(dash, panel, sources, keys, user, width - FinDim.screenPad * 2, nav, code = (order.indexOf(panel) + 1).toString() + ")",
                             onUser = { saveUser(it) },
                             onRemoved = { sym, prev ->
                                 scope.launch {
@@ -413,7 +414,7 @@ private fun AddRuleField(user: UserLists, onChange: (UserLists) -> Unit) {
  */
 @Composable
 private fun PanelSlot(
-    dash: Dashboard, panel: Panel, sources: List<Source>, keys: SourceKeys, user: UserLists, width: Dp, nav: FinNav,
+    dash: Dashboard, panel: Panel, sources: List<Source>, keys: SourceKeys, user: UserLists, width: Dp, nav: FinNav, code: String = "",
     onUser: (UserLists) -> Unit, onRemoved: (String, UserLists) -> Unit, onRefresh: () -> Unit,
 ) {
     val ctx = LocalContext.current
@@ -433,7 +434,7 @@ private fun PanelSlot(
     }
     if (shown.isStatic) {
         FinCard {
-            FinTitleRow(shown.title)
+            FinTitleRow(shown.title, code = code)
             FinBars(Engine.alloc(shown, dash.legs).chart, "%", shown.id)
         }
         return
@@ -463,7 +464,7 @@ private fun PanelSlot(
         if (bleed) Spacer(Modifier.height(4.dp))
         if (!chartish) {
             Box(inset) {
-                FinTitleRow(shown.title, stale = ok?.stale == true,
+                FinTitleRow(shown.title, stale = ok?.stale == true, code = code,
                     staleNote = if (entry == null) "" else "Last fetched ${ok?.fetchedAt.orEmpty()}" + if (entry.failures > 0) ", refresh failed: ${entry.error}" else "",
                     trailing = if (segments.size > 1) ({ SegmentChips(segments, sources, seg) { seg = it } }) else null)
             }

@@ -194,7 +194,7 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Capital-Stack-FinTerminal: the sections on the bottom bar in order, a hidden Config (the gear of the first row: Sources, About) and a hidden About. #1335 ui.stacks[<section>] is the page of that section: a list of entries drawn by declared KIND (Pages.kt: entry, section_title, holdings, about, dashboard, sources). A `dashboard` entry (every FinTerm entry) has a title, a one-line subtitle and `dashboard`, the id of its dashboard in data/dashboards.json; the dashboard names its declared source(s) in data/sources.json (the catalog, with endpoints, auth, coverage and the tabs/entries each source feeds), so no address is typed in this file or in Kotlin. The `sources` kind is Config > Sources: the catalog by category and the user's own API keys, stored encrypted on the phone. An `entry` (still drawn for the other Lnktree apps' shape) has ONE declared source for its target: `site` (the label of a link of aa_cloud-superapp/data/linktree.json), `registry` (a code of aa_cloud-superapp/build.json ui.app_urls.registry_sites) or `repo` + `path`; app/build.gradle resolves them at BUILD time from the SuperApp's own declarations and bakes UI_TARGETS_B64. A `planned` entry has a note and no source and is drawn greyed. Market figures are never declared here: a dashboard shows what its source returns, with its date and attribution.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Capital-Stack-FinTerminal: the sections on the bottom bar in order, a hidden Config (the gear of the first row: Sources, About) and a hidden About. #1335 ui.stacks[<section>] is the page of that section: a list of entries drawn by declared KIND (Pages.kt: entry, section_title, holdings, about, dashboard, sources). A `dashboard` entry (every FinTerm entry) has a title, a one-line subtitle and `dashboard`, the id of its dashboard in data/dashboards.json; the dashboard names its declared source(s) in data/sources.json (the catalog, with endpoints, auth, coverage and the tabs/entries each source feeds), so no address is typed in this file or in Kotlin. The `sources` kind is Config > Sources: the catalog by category and the user's own API keys, stored encrypted on the phone. An `entry` (still drawn for the other Lnktree apps' shape) has ONE declared source for its target: `site` (the label of a link of aa_cloud-superapp/data/linktree.json), `registry` (a code of aa_cloud-superapp/build.json ui.app_urls.registry_sites) or `repo` + `path`; app/build.gradle resolves them at BUILD time from the SuperApp's own declarations and bakes UI_TARGETS_B64. A `planned` entry has a note and no source and is drawn greyed. Market figures are never declared here: a dashboard shows what its source returns, with its date and attribution. #1722 every sub-page and detail page carries `fn`, its function mnemonic: the command line (amber field + GO) opens a page by it. `perf_portfolio` is a performance portfolio (data/portfolios.json group `view`): its constituents and weights are the runtime dataset perf-portfolios, its figures the quote source's; FI is the bond groups (All | Gov Bonds DM | Gov Bonds EM | AAA | AA-A | BBB | Junk), the rates, macro and credit pages that were under FI are under CB, EQ is Performance (the factor portfolios) and Data.",
     "bottom_nav": [
       "cb",
       "fi",
@@ -205,9 +205,87 @@
       "my-pm"
     ],
     "default_section": "cb",
-    "nav_ui": {"mode": "classic", "scroll_hide": true},
-    "configs_ui": ["nav_ui"],
-    "redirects": [{"from": "pm_a2_low", "tab": "pm", "to": "home", "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"}, {"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}, {"from": "ex", "tab": "hg", "to": "home", "note": "The EX tab became HG (Hedging): the old EX section deep link opens the HG Homepage"}, {"from": "ex-home", "tab": "hg", "to": "home", "note": "The EX Homepage became the HG Homepage"}, {"from": "cm", "tab": "eq", "to": "commodity-prices", "note": "The CM section was folded into Commodity Prices (EQ): its deep links open that page"}, {"from": "ex-commodities", "tab": "eq", "to": "commodity-prices", "note": "The old EX Commodities page moved to EQ: Commodity Prices"}, {"from": "pm-commodities", "tab": "eq", "to": "commodity-prices", "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"}, {"from": "pm_commodities", "tab": "eq", "to": "commodity-prices", "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"}, {"from": "pm-vol", "tab": "pm", "to": "pm-portfolios", "note": "PM Vol became Portfolios"}, {"from": "pm-profiles", "tab": "pm", "to": "pm-portfolios", "note": "PM Profiles became Portfolios (US Cyclicals)"}, {"from": "eq_dm_us", "tab": "eq", "to": "world-equity-indices", "note": "#1612 DM Equity (US) merged into World Indices Equity: its deep links open that page"}, {"from": "eq_em", "tab": "eq", "to": "world-equity-indices", "note": "#1612 EM Equity merged into World Indices Equity: its deep links open that page"}],
+    "nav_ui": {
+      "mode": "classic",
+      "scroll_hide": true
+    },
+    "configs_ui": [
+      "nav_ui"
+    ],
+    "redirects": [
+      {
+        "from": "pm_a2_low",
+        "tab": "pm",
+        "to": "home",
+        "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"
+      },
+      {
+        "from": "market_monitor",
+        "tab": "fi",
+        "to": "home",
+        "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"
+      },
+      {
+        "from": "ex",
+        "tab": "hg",
+        "to": "home",
+        "note": "The EX tab became HG (Hedging): the old EX section deep link opens the HG Homepage"
+      },
+      {
+        "from": "ex-home",
+        "tab": "hg",
+        "to": "home",
+        "note": "The EX Homepage became the HG Homepage"
+      },
+      {
+        "from": "cm",
+        "tab": "eq",
+        "to": "commodity-prices",
+        "note": "The CM section was folded into Commodity Prices (EQ): its deep links open that page"
+      },
+      {
+        "from": "ex-commodities",
+        "tab": "eq",
+        "to": "commodity-prices",
+        "note": "The old EX Commodities page moved to EQ: Commodity Prices"
+      },
+      {
+        "from": "pm-commodities",
+        "tab": "eq",
+        "to": "commodity-prices",
+        "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"
+      },
+      {
+        "from": "pm_commodities",
+        "tab": "eq",
+        "to": "commodity-prices",
+        "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"
+      },
+      {
+        "from": "pm-vol",
+        "tab": "pm",
+        "to": "pm-portfolios",
+        "note": "PM Vol became Portfolios"
+      },
+      {
+        "from": "pm-profiles",
+        "tab": "pm",
+        "to": "pm-portfolios",
+        "note": "PM Profiles became Portfolios (US Cyclicals)"
+      },
+      {
+        "from": "eq_dm_us",
+        "tab": "eq",
+        "to": "world-equity-indices",
+        "note": "#1612 DM Equity (US) merged into World Indices Equity: its deep links open that page"
+      },
+      {
+        "from": "eq_em",
+        "tab": "eq",
+        "to": "world-equity-indices",
+        "note": "#1612 EM Equity merged into World Indices Equity: its deep links open that page"
+      }
+    ],
     "sections": [
       {
         "id": "cb",
@@ -218,7 +296,15 @@
           {"id": "cb-home", "label": "Home", "icon": "home"},
           {"id": "cb-countries", "label": "Countries", "icon": "public"},
           {"id": "cb-groups", "label": "DM / EM / World", "icon": "table_chart"},
-          {"id": "cb-predictions", "label": "Predictions", "icon": "insights"}
+          {"id": "cb-predictions", "label": "Predictions", "icon": "insights"},
+          {"id": "yield-curves", "label": "Yield Curves", "icon": "timeline"},
+          {"id": "yields-matrix", "label": "Yields Matrix", "icon": "table_chart"},
+          {"id": "forward-rates", "label": "Forward Rates", "icon": "insights"},
+          {"id": "rate-probabilities", "label": "World Interest Rate Probabilities", "icon": "speed"},
+          {"id": "world-bonds", "label": "World Bonds", "icon": "public"},
+          {"id": "bonds-market", "label": "Bonds Market", "icon": "bar_chart"},
+          {"id": "macro", "label": "Macro", "icon": "language"},
+          {"id": "credit", "label": "Credit", "icon": "assessment"}
         ]
       },
       {
@@ -228,14 +314,13 @@
         "nav_mode": "horizontal_one_row",
         "pages": [
           {"id": "fi-home", "label": "Home", "icon": "home"},
-          {"id": "yield-curves", "label": "Yield Curves", "icon": "timeline"},
-          {"id": "yields-matrix", "label": "Yields Matrix", "icon": "table_chart"},
-          {"id": "bonds-market", "label": "Bonds Market", "icon": "bar_chart"},
-          {"id": "forward-rates", "label": "Forward Rates", "icon": "insights"},
-          {"id": "rate-probabilities", "label": "World Interest Rate Probabilities", "icon": "speed"},
-          {"id": "world-bonds", "label": "World Bonds", "icon": "public"},
-          {"id": "credit", "label": "Credit", "icon": "assessment"},
-          {"id": "macro", "label": "Macro", "icon": "language"}
+          {"id": "fi-all", "label": "All", "icon": "dataset"},
+          {"id": "fi-gov-dm", "label": "Gov Bonds DM", "icon": "public"},
+          {"id": "fi-gov-em", "label": "Gov Bonds EM", "icon": "language"},
+          {"id": "fi-aaa", "label": "AAA Bonds", "icon": "verified_user"},
+          {"id": "fi-aa-a", "label": "AA-A Bonds", "icon": "security"},
+          {"id": "fi-bbb", "label": "BBB Bonds", "icon": "assessment"},
+          {"id": "fi-junk", "label": "Junk", "icon": "bolt"}
         ]
       },
       {
@@ -245,6 +330,16 @@
         "nav_mode": "horizontal_one_row",
         "pages": [
           {"id": "eq-home", "label": "Home", "icon": "home"},
+          {"id": "eq-growth", "label": "Growth", "icon": "trending_up"},
+          {"id": "eq-value", "label": "Value", "icon": "payments"},
+          {"id": "eq-quality", "label": "Quality", "icon": "star"},
+          {"id": "eq-vol", "label": "Vol", "icon": "speed"},
+          {"id": "eq-top", "label": "Top", "icon": "emoji_events"},
+          {"id": "eq-cyclical", "label": "Cyclical", "icon": "cached"},
+          {"id": "eq-defensive", "label": "Defensive", "icon": "security"},
+          {"id": "eq-dividend", "label": "Dividend", "icon": "account_balance_wallet"},
+          {"id": "eq-momentum", "label": "Momentum", "icon": "rocket_launch"},
+          {"id": "eq-small", "label": "Small", "icon": "apps"},
           {"id": "world-equity-indices", "label": "World Indices Equity", "icon": "public"},
           {"id": "commodities", "label": "Commodities", "icon": "inventory_2"},
           {"id": "commodity-prices", "label": "Commodity Prices", "icon": "inventory_2"},
@@ -325,75 +420,154 @@
     "stacks": {
       "cb": [
         {
+          "kind": "section_title",
+          "title": "Central banks"
+        },
+        {
           "kind": "cb_table",
           "page": "cb-countries",
           "view": "countries",
           "title": "Countries",
-          "subtitle": "Central-bank macro by country: DM, euro area, BRICS EM; DM / EM / World rows pinned, simple or full indicators, forecast year"
+          "subtitle": "Central-bank macro by country: DM, euro area, BRICS EM; DM / EM / World rows pinned, simple or full indicators, forecast year",
+          "fn": "CTRY"
         },
         {
           "kind": "cb_table",
           "page": "cb-groups",
           "view": "groups",
           "title": "DM / EM / World",
-          "subtitle": "GDP-weighted aggregates of the countries, weighted by IMF PPP or market-FX GDP"
+          "subtitle": "GDP-weighted aggregates of the countries, weighted by IMF PPP or market-FX GDP",
+          "fn": "GRPS"
         },
         {
           "kind": "cb_table",
           "page": "cb-predictions",
           "view": "predictions",
           "title": "Predictions",
-          "subtitle": "IMF and OECD forecasts for the current year, +1 and +2, the banks' own projections and a Taylor-rule policy-rate path"
-        }
-      ],
-      "fi": [
+          "subtitle": "IMF and OECD forecasts for the current year, +1 and +2, the banks' own projections and a Taylor-rule policy-rate path",
+          "fn": "PRED"
+        },
+        {
+          "kind": "section_title",
+          "title": "Rates"
+        },
         {
           "kind": "dashboard",
           "title": "Yield Curves",
           "subtitle": "Spot, forward and zero curves, US and major sovereigns",
-          "dashboard": "yield_curves"
+          "dashboard": "yield_curves",
+          "fn": "YCRV"
         },
         {
           "kind": "dashboard",
           "title": "Yields Matrix",
           "subtitle": "Government yields, country x tenor (3M-30Y), spot or 1y forward; GDP-weighted World / DM / EM averages",
-          "dashboard": "yields_matrix"
-        },
-        {
-          "kind": "dashboard",
-          "title": "Bonds Market",
-          "subtitle": "US bond market: Treasuries by maturity, TIPS, aggregate, MBS, IG, HY, munis (WTD to 10Y)",
-          "dashboard": "bonds_market"
+          "dashboard": "yields_matrix",
+          "fn": "YMAT"
         },
         {
           "kind": "dashboard",
           "title": "Forward Rates",
           "subtitle": "Forward rate curves and the paths they imply",
-          "dashboard": "forward_rates"
+          "dashboard": "forward_rates",
+          "fn": "FWCV"
         },
         {
           "kind": "dashboard",
           "title": "World Interest Rate Probabilities",
           "subtitle": "Market-implied central bank rate paths",
-          "dashboard": "rate_probabilities"
+          "dashboard": "rate_probabilities",
+          "fn": "WIRP"
         },
         {
           "kind": "dashboard",
           "title": "World Bonds",
           "subtitle": "Sovereign bond yields and spreads by country",
-          "dashboard": "world_bonds"
+          "dashboard": "world_bonds",
+          "fn": "WB"
         },
         {
           "kind": "dashboard",
-          "title": "Credit",
-          "subtitle": "Corporate spreads (ICE BofA OAS), corporate yields and curve slopes",
-          "dashboard": "credit"
+          "title": "Bonds Market",
+          "subtitle": "US bond market: Treasuries by maturity, TIPS, aggregate, MBS, IG, HY, munis (WTD to 10Y)",
+          "dashboard": "bonds_market",
+          "fn": "BMKT"
+        },
+        {
+          "kind": "section_title",
+          "title": "Macro & Credit"
         },
         {
           "kind": "dashboard",
           "title": "Macro",
           "subtitle": "Latest official prints: US (BLS), euro area (Eurostat), G7 inflation (OECD)",
-          "dashboard": "macro"
+          "dashboard": "macro",
+          "fn": "ECO"
+        },
+        {
+          "kind": "dashboard",
+          "title": "Credit",
+          "subtitle": "Corporate spreads (ICE BofA OAS), corporate yields and curve slopes",
+          "dashboard": "credit",
+          "fn": "CRDT"
+        }
+      ],
+      "fi": [
+        {
+          "kind": "perf_portfolio",
+          "page": "fi-all",
+          "view": "fi-all",
+          "title": "All",
+          "subtitle": "Every bond group side by side: government DM and EM, AAA, AA-A, BBB and junk, each group at the same weight",
+          "fn": "FIA"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "fi-gov-dm",
+          "view": "fi-gov-dm",
+          "title": "Gov Bonds DM",
+          "subtitle": "Developed-market government bonds by country: GDP-weighted, USD index or liquidity weights; table and heat map",
+          "fn": "GDM"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "fi-gov-em",
+          "view": "fi-gov-em",
+          "title": "Gov Bonds EM",
+          "subtitle": "Emerging-market government bonds by country at the weights of the main EM government bond funds (EMB, EBND)",
+          "fn": "GEM"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "fi-aaa",
+          "view": "fi-aaa",
+          "title": "AAA Bonds",
+          "subtitle": "AAA-rated bonds: the listed AAA funds, performance table and graphics",
+          "fn": "AAA"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "fi-aa-a",
+          "view": "fi-aa-a",
+          "title": "AA-A Bonds",
+          "subtitle": "AA to A rated bonds: high-grade corporates, agencies, agency MBS and municipals",
+          "fn": "AA"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "fi-bbb",
+          "view": "fi-bbb",
+          "title": "BBB Bonds",
+          "subtitle": "BBB-rated corporate bonds by maturity",
+          "fn": "BBB"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "fi-junk",
+          "view": "fi-junk",
+          "title": "Junk",
+          "subtitle": "High-yield bonds: broad, short, by rating (BB, B, CCC) and fallen angels",
+          "fn": "JUNK"
         }
       ],
       "eq": [
@@ -402,30 +576,91 @@
           "title": "Performance"
         },
         {
+          "kind": "perf_portfolio",
+          "page": "eq-growth",
+          "view": "eq-growth",
+          "title": "Growth",
+          "subtitle": "S&P 500 Growth: top constituents and returns; table and heat map",
+          "fn": "GRW"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "eq-value",
+          "view": "eq-value",
+          "title": "Value",
+          "subtitle": "S&P 500 Value: top constituents and returns; table and heat map",
+          "fn": "VAL"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "eq-quality",
+          "view": "eq-quality",
+          "title": "Quality",
+          "subtitle": "Quality-tilted US large caps (MSCI USA Factor Mix): top constituents and returns",
+          "fn": "QLTY"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "eq-vol",
+          "view": "eq-vol",
+          "title": "Vol",
+          "subtitle": "Low-volatility US large caps: top constituents and returns",
+          "fn": "VOL"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "eq-top",
+          "view": "eq-top",
+          "title": "Top",
+          "subtitle": "The 20 largest companies of the S&P 500 and their returns",
+          "fn": "TOP"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "eq-cyclical",
+          "view": "eq-cyclical",
+          "title": "Cyclical",
+          "subtitle": "Cyclicals: the consumer discretionary sector, constituents and returns",
+          "fn": "CYC"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "eq-defensive",
+          "view": "eq-defensive",
+          "title": "Defensive",
+          "subtitle": "Defensives: the consumer staples sector, constituents and returns",
+          "fn": "DEF"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "eq-dividend",
+          "view": "eq-dividend",
+          "title": "Dividend",
+          "subtitle": "Dividend aristocrats weighted by yield: constituents and returns",
+          "fn": "DVD"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "eq-momentum",
+          "view": "eq-momentum",
+          "title": "Momentum",
+          "subtitle": "Momentum tilt of the S&P 1500: top constituents and returns",
+          "fn": "MOM"
+        },
+        {
+          "kind": "perf_portfolio",
+          "page": "eq-small",
+          "view": "eq-small",
+          "title": "Small",
+          "subtitle": "US small caps (S&P 600): top constituents and returns",
+          "fn": "SML"
+        },
+        {
           "kind": "dashboard",
           "title": "World Indices Equity",
           "subtitle": "Major equity index levels and moves worldwide, with DM (US sectors, strategies, mega-caps) and EM (sectors, USD sovereigns) below; tap S&P 500, Nikkei 225 or FTSE 100 for its holdings table and treemap",
-          "dashboard": "world_equity_indices"
-        },
-        {
-          "kind": "dashboard",
-          "title": "Commodities",
-          "subtitle": "Energy, precious metals, industrial metals and minerals, agriculture, Bitcoin and Ether (WTD to 10Y)",
-          "dashboard": "commodities"
-        },
-        {
-          "kind": "quote_board",
-          "page": "commodity-prices",
-          "view": "commodities",
-          "title": "Commodity Prices",
-          "subtitle": "Energy, metals and agriculture front-month prices: last, change, 1W, 1M, YTD, unit and currency"
-        },
-        {
-          "kind": "quote_board",
-          "page": "fx-rates",
-          "view": "fx_rates",
-          "title": "Exchange Rates",
-          "subtitle": "Cross-rate table of the major and EM currencies: spot, change, 1W, 1M and YTD, and the base x quote matrix"
+          "dashboard": "world_equity_indices",
+          "fn": "WEI"
         },
         {
           "kind": "section_title",
@@ -433,27 +668,54 @@
         },
         {
           "kind": "dashboard",
+          "title": "Commodities",
+          "subtitle": "Energy, precious metals, industrial metals and minerals, agriculture, Bitcoin and Ether (WTD to 10Y)",
+          "dashboard": "commodities",
+          "fn": "CMDT"
+        },
+        {
+          "kind": "quote_board",
+          "page": "commodity-prices",
+          "view": "commodities",
+          "title": "Commodity Prices",
+          "subtitle": "Energy, metals and agriculture front-month prices: last, change, 1W, 1M, YTD, unit and currency",
+          "fn": "CPX"
+        },
+        {
+          "kind": "quote_board",
+          "page": "fx-rates",
+          "view": "fx_rates",
+          "title": "Exchange Rates",
+          "subtitle": "Cross-rate table of the major and EM currencies: spot, change, 1W, 1M and YTD, and the base x quote matrix",
+          "fn": "FXR"
+        },
+        {
+          "kind": "dashboard",
           "title": "Fundamentals",
           "subtitle": "SEC EDGAR company profile, reported financials and filings",
-          "dashboard": "equity_fundamentals"
+          "dashboard": "equity_fundamentals",
+          "fn": "FA"
         },
         {
           "kind": "dashboard",
           "title": "Earnings Calendar",
           "subtitle": "Earnings this week with EPS consensus and last year's EPS",
-          "dashboard": "earnings_calendar"
+          "dashboard": "earnings_calendar",
+          "fn": "EVTS"
         },
         {
           "kind": "dashboard",
           "title": "Quotes",
           "subtitle": "Delayed quotes and daily charts for stocks, ETFs and indices",
-          "dashboard": "equity_quote"
+          "dashboard": "equity_quote",
+          "fn": "QUOT"
         },
         {
           "kind": "dashboard",
           "title": "Watchlist",
           "subtitle": "Your symbols, price alerts and event alerts, kept on this device",
-          "dashboard": "watchlist"
+          "dashboard": "watchlist",
+          "fn": "WL"
         }
       ],
       "nw": [
@@ -461,115 +723,152 @@
           "kind": "dashboard",
           "title": "Economic Calendar",
           "subtitle": "Economic events by day: time, country, importance, consensus, actual, previous",
-          "dashboard": "economic_calendar"
+          "dashboard": "economic_calendar",
+          "fn": "ECAL"
         },
         {
           "kind": "dashboard",
           "title": "News",
           "subtitle": "Global news from the GDELT feed",
-          "dashboard": "news"
+          "dashboard": "news",
+          "fn": "NEWS"
         },
         {
           "kind": "dashboard",
           "title": "Central Bank Calendar",
           "subtitle": "Next policy decisions, current policy rates and market-implied odds",
-          "dashboard": "central_bank_calendar"
+          "dashboard": "central_bank_calendar",
+          "fn": "CBCL"
         }
       ],
       "pm": [
         {
-          "kind": "pm_table", "page": "pm-portfolios", "table": "portfolios",
+          "kind": "pm_table",
+          "page": "pm-portfolios",
+          "table": "portfolios",
           "title": "Portfolios",
-          "subtitle": "Portfolios DM vs EM and Portfolios US Cyclicals: Vol, the Top 3 allocations and the full allocation list"
+          "subtitle": "Portfolios DM vs EM and Portfolios US Cyclicals: Vol, the Top 3 allocations and the full allocation list",
+          "fn": "PORT"
         },
         {
-          "kind": "pm_table", "page": "pm-performance", "table": "performance",
+          "kind": "pm_table",
+          "page": "pm-performance",
+          "table": "performance",
           "title": "Performance",
-          "subtitle": "Every portfolio: Today, Last 7d, Last 30d, MTD, YTD, Last 1y and the Last 3y CAGR, from real delayed prices of its legs"
+          "subtitle": "Every portfolio: Today, Last 7d, Last 30d, MTD, YTD, Last 1y and the Last 3y CAGR, from real delayed prices of its legs",
+          "fn": "PERF"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "Portfolio & Risk Analytics",
           "subtitle": "Comprehensive portfolio tracking, attribution analysis, factor exposures and scenario stress testing for well-known portfolios",
-          "dashboard": "portfolio_risk"
+          "dashboard": "portfolio_risk",
+          "fn": "RISK"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM Cash B100",
           "subtitle": "100% short-term sovereign bonds, each currency at its USD Dollar Index weight (the index only tracks FX; the bonds are held)",
-          "dashboard": "pm_a1_cash"
+          "dashboard": "pm_a1_cash",
+          "fn": "PA1"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM E30B70",
           "subtitle": "70% bonds, 30% equity",
-          "dashboard": "mp_70_30"
+          "dashboard": "mp_70_30",
+          "fn": "P3070"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM E40B60",
           "subtitle": "60% bonds, 40% equity",
-          "dashboard": "mp_60_40"
+          "dashboard": "mp_60_40",
+          "fn": "P4060"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM E60B40",
           "subtitle": "40% bonds, 60% equity",
-          "dashboard": "mp_40_60"
+          "dashboard": "mp_40_60",
+          "fn": "P6040"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM E70B30",
           "subtitle": "30% bonds, 70% equity",
-          "dashboard": "mp_30_70"
+          "dashboard": "mp_30_70",
+          "fn": "P7030"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM E40B40 · EM E10B10",
           "subtitle": "Placeholder tier: DM equity 40 / bonds 40, EM equity 10 / bonds 10",
-          "dashboard": "pm_b1_mid"
+          "dashboard": "pm_b1_mid",
+          "fn": "PB1"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "EM B100",
           "subtitle": "DM 0, EM equity 0 / bonds 100: the EM Bonds calculator, return after inflation and taxes",
-          "dashboard": "pm_d1_em_bonds"
+          "dashboard": "pm_d1_em_bonds",
+          "fn": "PD1"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM E50B10 · EM E30B10",
           "subtitle": "Placeholder tier: DM equity 50 / bonds 10, EM equity 30 / bonds 10",
-          "dashboard": "pm_c1_risky"
+          "dashboard": "pm_c1_risky",
+          "fn": "PC1"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM E70 · EM E30",
           "subtitle": "70% Developed Markets, 30% Emerging Markets",
-          "dashboard": "mp_70_30_DM_EM"
+          "dashboard": "mp_70_30_DM_EM",
+          "fn": "E7030"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM E60 · EM E40",
           "subtitle": "60% Developed Markets, 40% Emerging Markets",
-          "dashboard": "mp_60_40_DM_EM"
+          "dashboard": "mp_60_40_DM_EM",
+          "fn": "E6040"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM E40 · EM E60",
           "subtitle": "40% Developed Markets, 60% Emerging Markets",
-          "dashboard": "mp_40_60_DM_EM"
+          "dashboard": "mp_40_60_DM_EM",
+          "fn": "E4060"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "DM E30 · EM E70",
           "subtitle": "30% Developed Markets, 70% Emerging Markets",
-          "dashboard": "mp_30_70_DM_EM"
+          "dashboard": "mp_30_70_DM_EM",
+          "fn": "E3070"
         },
         {
-          "kind": "dashboard", "detail": true,
+          "kind": "dashboard",
+          "detail": true,
           "title": "EM Carry EUR→BRL",
           "subtitle": "EM carry trade: funding currency against the EM high-yielder, breakeven and net return",
-          "dashboard": "pm_d0_carry"
+          "dashboard": "pm_d0_carry",
+          "fn": "CARY"
         }
       ],
       "hg": [
@@ -578,88 +877,102 @@
           "page": "hg-rates",
           "view": "rates",
           "title": "Rates Futures",
-          "subtitle": "SOFR, Fed Funds, Euribor, EUR STR, SONIA, TONA and the 2y, 5y, 10y, 30y bond futures (Treasury, Bund, BTP, OAT, Gilt, JGB): delayed quotes, term structure, implied rate"
+          "subtitle": "SOFR, Fed Funds, Euribor, EUR STR, SONIA, TONA and the 2y, 5y, 10y, 30y bond futures (Treasury, Bund, BTP, OAT, Gilt, JGB): delayed quotes, term structure, implied rate",
+          "fn": "FRAT"
         },
         {
           "kind": "futures_board",
           "page": "hg-equity",
           "view": "equity",
           "title": "Equity Index Futures",
-          "subtitle": "ES, NQ, YM, RTY, Euro Stoxx 50, DAX, FTSE, Nikkei, Hang Seng, KOSPI, Nifty, Ibovespa, ASX: delayed quotes and term structure"
+          "subtitle": "ES, NQ, YM, RTY, Euro Stoxx 50, DAX, FTSE, Nikkei, Hang Seng, KOSPI, Nifty, Ibovespa, ASX: delayed quotes and term structure",
+          "fn": "FEQ"
         },
         {
           "kind": "futures_board",
           "page": "hg-fx",
           "view": "fx",
           "title": "FX Futures",
-          "subtitle": "6E, 6J, 6B, 6A, 6C, 6S, 6M, BRL, INR, CNH and the dollar index: delayed quotes and term structure"
+          "subtitle": "6E, 6J, 6B, 6A, 6C, 6S, 6M, BRL, INR, CNH and the dollar index: delayed quotes and term structure",
+          "fn": "FFX"
         },
         {
           "kind": "futures_board",
           "page": "hg-energy",
           "view": "energy",
           "title": "Energy Futures",
-          "subtitle": "WTI, Brent, natural gas (HH, TTF), RBOB, heating oil, gasoil, coal: delayed quotes and term structure"
+          "subtitle": "WTI, Brent, natural gas (HH, TTF), RBOB, heating oil, gasoil, coal: delayed quotes and term structure",
+          "fn": "FNRG"
         },
         {
           "kind": "futures_board",
           "page": "hg-metals",
           "view": "metals",
           "title": "Metals Futures",
-          "subtitle": "Gold, silver, copper, platinum, palladium, aluminium, nickel, zinc, iron ore: delayed quotes and term structure"
+          "subtitle": "Gold, silver, copper, platinum, palladium, aluminium, nickel, zinc, iron ore: delayed quotes and term structure",
+          "fn": "FMET"
         },
         {
           "kind": "futures_board",
           "page": "hg-agriculture",
           "view": "agriculture",
           "title": "Agriculture Futures",
-          "subtitle": "Corn, wheat, the soy complex, coffee, sugar, cocoa, cotton, cattle, hogs: delayed quotes and term structure"
+          "subtitle": "Corn, wheat, the soy complex, coffee, sugar, cocoa, cotton, cattle, hogs: delayed quotes and term structure",
+          "fn": "FAGR"
         },
         {
           "kind": "futures_board",
           "page": "hg-crypto",
           "view": "crypto",
           "title": "Crypto Futures",
-          "subtitle": "Bitcoin and Ether futures on CME: delayed quotes and term structure"
+          "subtitle": "Bitcoin and Ether futures on CME: delayed quotes and term structure",
+          "fn": "FCRY"
         },
         {
           "kind": "futures_board",
           "page": "hg-volatility",
           "view": "volatility",
           "title": "Volatility Futures",
-          "subtitle": "VIX and VSTOXX: delayed quotes (the VIX index is the cash level)"
+          "subtitle": "VIX and VSTOXX: delayed quotes (the VIX index is the cash level)",
+          "fn": "FVOL"
         },
         {
           "kind": "hedge_calc",
           "page": "hedge-calculator",
           "view": "hedge",
           "title": "Hedge Calculator",
-          "subtitle": "Hedge ratio and notional: contracts needed from a future's declared multiplier and its delayed price"
+          "subtitle": "Hedge ratio and notional: contracts needed from a future's declared multiplier and its delayed price",
+          "fn": "HDGE"
         },
         {
           "kind": "dashboard",
           "title": "FX",
           "subtitle": "Comprehensive real-time currency pricing, matrix crosses, spot rates, and forwards",
-          "dashboard": "fx"
+          "dashboard": "fx",
+          "fn": "FXC"
         },
         {
           "kind": "dashboard",
           "title": "Onshore USD Rates",
           "subtitle": "Onshore USD rate benchmarks and curves",
-          "dashboard": "onshore_usd_rates"
+          "dashboard": "onshore_usd_rates",
+          "fn": "USDR"
         },
         {
           "kind": "dashboard",
           "title": "Crypto",
           "subtitle": "Crypto spot, 24h change and daily candles",
-          "dashboard": "crypto"
+          "dashboard": "crypto",
+          "fn": "CRYP"
         }
       ],
       "my-pm": [
         {
-          "kind": "holdings", "page": "holdings",
+          "kind": "holdings",
+          "page": "holdings",
           "title": "Personal portfolio",
-          "subtitle": "Your holdings: ticker, quantity, cost, kept on this phone"
+          "subtitle": "Your holdings: ticker, quantity, cost, kept on this phone",
+          "fn": "MYPM"
         }
       ],
       "about": [
@@ -675,6 +988,107 @@
         },
         {
           "kind": "about"
+        }
+      ]
+    },
+    "moved": {
+      "_doc": "#1722 the reorganisation's old -> new map (rule 16: nothing removed, every page reachable at its new place). from: the section a page was under; to: the section and group it is under now. test: MovedPagesTest.",
+      "pages": [
+        {
+          "page": "yield-curves",
+          "from": "fi",
+          "to": "cb",
+          "group": "Rates"
+        },
+        {
+          "page": "yields-matrix",
+          "from": "fi",
+          "to": "cb",
+          "group": "Rates"
+        },
+        {
+          "page": "forward-rates",
+          "from": "fi",
+          "to": "cb",
+          "group": "Rates"
+        },
+        {
+          "page": "rate-probabilities",
+          "from": "fi",
+          "to": "cb",
+          "group": "Rates"
+        },
+        {
+          "page": "world-bonds",
+          "from": "fi",
+          "to": "cb",
+          "group": "Rates"
+        },
+        {
+          "page": "bonds-market",
+          "from": "fi",
+          "to": "cb",
+          "group": "Rates"
+        },
+        {
+          "page": "macro",
+          "from": "fi",
+          "to": "cb",
+          "group": "Macro & Credit"
+        },
+        {
+          "page": "credit",
+          "from": "fi",
+          "to": "cb",
+          "group": "Macro & Credit"
+        },
+        {
+          "page": "world-equity-indices",
+          "from": "eq",
+          "to": "eq",
+          "group": "Performance"
+        },
+        {
+          "page": "commodities",
+          "from": "eq",
+          "to": "eq",
+          "group": "Data"
+        },
+        {
+          "page": "commodity-prices",
+          "from": "eq",
+          "to": "eq",
+          "group": "Data"
+        },
+        {
+          "page": "fx-rates",
+          "from": "eq",
+          "to": "eq",
+          "group": "Data"
+        },
+        {
+          "page": "equity-fundamentals",
+          "from": "eq",
+          "to": "eq",
+          "group": "Data"
+        },
+        {
+          "page": "earnings-calendar",
+          "from": "eq",
+          "to": "eq",
+          "group": "Data"
+        },
+        {
+          "page": "equity-quote",
+          "from": "eq",
+          "to": "eq",
+          "group": "Data"
+        },
+        {
+          "page": "watchlist",
+          "from": "eq",
+          "to": "eq",
+          "group": "Data"
         }
       ]
     }

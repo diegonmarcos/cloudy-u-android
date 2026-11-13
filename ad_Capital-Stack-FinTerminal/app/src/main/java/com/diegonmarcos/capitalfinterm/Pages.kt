@@ -26,9 +26,14 @@ data class Entry(
     val table: String = "",
     /** #1478 a dashboard that is a detail page (a row of the PM Vol table opens it), not a sub-page of the one-row nav. */
     val detail: Boolean = false,
-    /** The view of a `cb_table` entry (countries | groups | predictions): the CB page's table. */
+    /** The view of a `cb_table` entry (countries | groups | predictions): the CB page's table; of a `perf_portfolio` entry, its group in data/portfolios.json. */
     val view: String = "",
+    /** #1722 the entry's function mnemonic (`fn`): the word the command line opens it by; "" = none. */
+    val fn: String = "",
 )
+
+/** #1722 one function of the command line: its mnemonic, the section it lives in, its title, and what it opens (a dashboard id, else a sub-page id; both empty = the section's Homepage). */
+data class FinFunction(val fn: String, val section: String, val title: String, val dashboard: String, val page: String, val group: String = "")
 
 /** #1399 one card of a section's Homepage: the sub-page it opens, its declared label, icon and one-line description. */
 data class HomeCard(val pageId: String, val title: String, val subtitle: String, val icon: String, val entry: Entry)
@@ -46,6 +51,8 @@ object Pages {
     const val KIND_QUOTE_BOARD = "quote_board"
     const val KIND_FUTURES_BOARD = "futures_board"
     const val KIND_HEDGE_CALC = "hedge_calc"
+    /** #1722 a performance portfolio (data/portfolios.json group `view`): Table and Graphic modes over the runtime dataset perf-portfolios. */
+    const val KIND_PERF_PORTFOLIO = "perf_portfolio"
 
     /** The entries declared for [sectionId] in the stacks JSON (empty when the section declares none). */
     fun entries(stacks: String, sectionId: String): List<Entry> {
@@ -66,6 +73,7 @@ object Pages {
                 table = o.optString("table"),
                 detail = o.optBoolean("detail", false),
                 view = o.optString("view"),
+                fn = o.optString("fn"),
             )
         }
     }
@@ -133,6 +141,35 @@ object Pages {
         }
         return order.map { it to byTitle.getValue(it).toList() }
     }
+
+    /**
+     * #1722 the command line's functions: one per section (its label as the mnemonic, opening its Homepage) and one per entry that declares `fn` (a sub-page,
+     * or a `detail` dashboard), in the declared order. [sections] is (id, label) of the sections that hold pages.
+     */
+    fun functions(stacks: String, sections: List<Pair<String, String>>): List<FinFunction> {
+        val out = ArrayList<FinFunction>()
+        for ((id, label) in sections) {
+            out += FinFunction(label.uppercase(java.util.Locale.ROOT), id, label, "", "")
+            var group = ""
+            for (e in entries(stacks, id)) {
+                if (e.kind == KIND_SECTION_TITLE) { group = e.title; continue }
+                if (e.fn.isEmpty()) continue
+                out += FinFunction(e.fn.uppercase(java.util.Locale.ROOT), id, e.title, if (e.kind == KIND_DASHBOARD) e.dashboard else "", if (e.kind == KIND_DASHBOARD) "" else e.page, group)
+            }
+        }
+        return out
+    }
+
+    /** What the command line's [input] opens: the function whose mnemonic it is (case and blanks ignored, a trailing GO dropped), or null. */
+    fun function(functions: List<FinFunction>, input: String): FinFunction? {
+        val word = commandWord(input)
+        if (word.isEmpty()) return null
+        return functions.firstOrNull { it.fn == word }
+    }
+
+    /** The command line's word: upper case, blanks trimmed, a typed "<GO>" or " GO" at the end dropped. */
+    fun commandWord(input: String): String =
+        input.trim().uppercase(java.util.Locale.ROOT).removeSuffix("<GO>").trim().let { if (it.endsWith(" GO")) it.dropLast(3).trim() else it }
 
     /** The entry a sub-page id opens, or null (Home, or an unknown id). */
     fun entryOf(entries: List<Entry>, pageId: String): Entry? = entries.firstOrNull { pageIdOf(it) == pageId }

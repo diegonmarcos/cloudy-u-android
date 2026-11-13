@@ -67,7 +67,7 @@ fun FinChartHeader(title: String, hover: String?, ranges: List<String>, range: S
     val p = LocalFinPalette.current
     Row(Modifier.fillMaxWidth().height(FinDim.title), verticalAlignment = Alignment.CenterVertically) {
         if (hover != null) Text(hover, Modifier.weight(1f), color = p.accent, style = FinType.numSmall, maxLines = 1)
-        else Text(title.uppercase(Locale.ROOT), Modifier.weight(1f), color = p.text, style = FinType.label.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
+        else Text(title, Modifier.weight(1f), color = androidx.compose.ui.graphics.Color.White, style = FinType.body.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
             maxLines = 1, overflow = TextOverflow.Ellipsis)
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             ranges.forEach { r -> FinChip(r, r == range, Modifier.height(24.dp)) { onRange(r) } }

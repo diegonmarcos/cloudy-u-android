@@ -19,6 +19,8 @@ class FinSearchIndexTest {
         assertEquals("Crypto" to "CR", FinSearchIndex.groupOf("hg", "crypto", "spot"))
         assertEquals("FX" to "FX", FinSearchIndex.groupOf("hg", "fx", "ecb"))
         assertEquals("Rates & yields" to "FI", FinSearchIndex.groupOf("fi", "market_monitor", "ust"))
+        // #1722 the rates dashboards sit under CB: their symbols are still rates
+        assertEquals("Rates & yields" to "FI", FinSearchIndex.groupOf("cb", "world_bonds", "merged"))
         assertEquals("Equities & indices" to "EQ", FinSearchIndex.groupOf("eq", "world_equity_indices", "cboe"))
         assertEquals("Equities & indices" to "EQ", FinSearchIndex.groupOf("fi", "market_monitor", "equity"))
     }

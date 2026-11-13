@@ -21,5 +21,10 @@ object DataFiles {
     val pmPerformanceJson: String get() = find("../data/pm-performance.json", "data/pm-performance.json").readText()
     fun pmFixture(name: String): String = find("src/test/resources/pm/$name", "app/src/test/resources/pm/$name").readText()
     val buildJson: String get() = find("../build.json", "build.json").readText()
+    val portfoliosJson: String get() = find("../data/portfolios.json", "data/portfolios.json").readText()
+    val terminalJson: String get() = find("../data/terminal.json", "data/terminal.json").readText()
+    /** #1722 the RUNTIME dataset of the performance portfolios (repo data/fleet/app/<package>/), as the fleet data framework serves it. */
+    val perfPortfoliosJson: String get() = find("../../data/fleet/app/com.diegonmarcos.capitalfinterm/perf-portfolios.json", "../data/fleet/app/com.diegonmarcos.capitalfinterm/perf-portfolios.json").readText()
+    fun resource(name: String): String = find("src/test/resources/$name", "app/src/test/resources/$name").readText()
     val engineFixtureJson: String get() = find("src/test/resources/engine-fixture.json", "app/src/test/resources/engine-fixture.json").readText()
 }
