@@ -452,6 +452,9 @@ public class KeyboardView extends View {
                 paint.setColor(Color.TRANSPARENT);
                 paint.clearShadowLayer();
             }
+            // Unexpected theme: the Fn key is blue while the Fn layer is on
+            if (UnexpectedKb.active && UnexpectedKb.fn && key.getCode() == helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode.FN)
+                paint.setColor(0xFF4A9EFF);
             blendAlpha(paint, params.mAnimAlpha);
             canvas.drawText(label, 0, label.length(), labelX, labelBaseline, paint);
             // Turn off drop shadow and reset x-scale.
@@ -459,23 +462,36 @@ public class KeyboardView extends View {
             paint.setTextScaleX(1.0f);
         }
 
-        // #1413 Dev Keyboard: four small corner labels (NW, NE, SW, SE) instead of the single hint label.
-        final java.util.List<String> corners = CornerSwipe.isActive(keyboard) && key.getLabel() != null
-                ? CornerSwipe.INSTANCE.getCorners().get(key.getLabel().toLowerCase(java.util.Locale.ROOT)) : null;
+        // #1413 Dev Keyboard / Unexpected theme: small corner labels (NW, NE, SW, SE, and N, S, W, E for the compass key and the
+        // space bar) instead of the single hint label. The table is data (CornerSwipe / UnexpectedKb).
+        final String cornerId = CornerSwipe.isActive(keyboard) ? CornerSwipe.idOf(key.getLabel(), key.getCode()) : null;
+        final java.util.List<String> corners = CornerSwipe.legendsOf(cornerId);
         if (corners != null) {
             paint.setTextSize(key.selectHintTextSize(params) * mFontSizeMultiplier);
             paint.setColor(params.mHintLabelColor);
             paint.setTextAlign(Align.CENTER);
-            final float padX = keyWidth * 0.18f;
+            final float padX = Math.min(keyWidth * 0.18f, keyHeight * 0.24f);
             final float topY = keyHeight * 0.30f;
             final float bottomY = keyHeight * 0.90f;
-            for (int i = 0; i < 4; i++) {
-                final String c = corners.get(i);
-                if (c.isEmpty()) continue;
-                final String text = CornerSwipe.labelOf(c);
-                final float x = (i % 2 == 0) ? padX : keyWidth - padX;
-                final float y = (i < 2) ? topY : bottomY;
+            final float midY = keyHeight * 0.62f;
+            for (int i = 0; i < corners.size() && i < 8; i++) {
+                final String text = corners.get(i);
+                if (text.isEmpty()) continue;
+                final float x, y;
+                switch (i) {
+                    case 4: x = keyWidth / 2f; y = topY; break; // N
+                    case 5: x = keyWidth / 2f; y = bottomY; break; // S
+                    case 6: x = padX; y = midY; break; // W
+                    case 7: x = keyWidth - padX; y = midY; break; // E
+                    default: x = (i % 2 == 0) ? padX : keyWidth - padX; y = (i < 2) ? topY : bottomY;
+                }
                 canvas.drawText(text, 0, text.length(), x, y, paint);
+            }
+            final String centerLegend = CornerSwipe.centerLegendOf(cornerId);
+            if (centerLegend != null && (label == null || label.isEmpty())) {
+                paint.setTextSize(key.selectTextSize(params) * mFontSizeMultiplier);
+                paint.setColor(params.mHintLabelColor);
+                canvas.drawText(centerLegend, 0, centerLegend.length(), keyWidth / 2f, centerY + paint.getTextSize() * 0.35f, paint);
             }
         }
 

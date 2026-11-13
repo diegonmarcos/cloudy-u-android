@@ -36,6 +36,9 @@ object LayoutUtils {
 
     /** gets content for built-in (non-custom) layout [layoutName], with fallback to qwerty */
     fun getContent(layoutType: LayoutType, layoutName: String, context: Context): String {
+        // the Unexpected theme's keyboard is built from its data file (assets/unexpected_kb/layout.json)
+        if ((layoutType == LayoutType.MAIN || layoutType == LayoutType.FUNCTIONAL))
+            runCatching { helium314.keyboard.keyboard.UnexpectedKb.contentFor(layoutName, context) }.getOrNull()?.let { return it }
         val layouts = context.assets.list(layoutType.folder)!!
         // #1606 no file of its own: the default functional layout plus the fn key
         if (layoutType == LayoutType.FUNCTIONAL && layoutName == CornerSwipe.FUNCTIONAL_LAYOUT && layouts.none { it.startsWith("$layoutName.") })

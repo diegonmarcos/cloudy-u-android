@@ -31,7 +31,7 @@ object KeyCode {
     const val FN_LOCK =                       -6
     const val DELETE =                        -7
     //const val DELETE_WORD =                   -8
-    //const val FORWARD_DELETE =                -9
+    const val FORWARD_DELETE =                -9 // only sent by the Unexpected theme's corner swipe (not a layout-file code)
     //const val FORWARD_DELETE_WORD =          -10
     const val SHIFT =                        -11
     const val CAPS_LOCK =                    -13
@@ -255,6 +255,7 @@ object KeyCode {
         PAGE_DOWN -> KeyEvent.KEYCODE_PAGE_DOWN
         ESCAPE -> KeyEvent.KEYCODE_ESCAPE
         INSERT -> KeyEvent.KEYCODE_INSERT
+        FORWARD_DELETE -> KeyEvent.KEYCODE_FORWARD_DEL
         SLEEP -> KeyEvent.KEYCODE_SLEEP
         MEDIA_PLAY -> KeyEvent.KEYCODE_MEDIA_PLAY
         MEDIA_PAUSE -> KeyEvent.KEYCODE_MEDIA_PAUSE

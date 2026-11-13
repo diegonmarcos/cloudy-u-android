@@ -1595,6 +1595,8 @@ New dictionary:
     <string name="kb_theme_default">Default</string>
     <string name="kb_theme_default_summary">The standard keyboard</string>
     <string name="kb_theme_dev">Dev</string>
+    <string name="kb_theme_unexpected">Unexpected</string>
+    <string name="kb_theme_unexpected_summary">Dark rounded keys, a centre glyph and up to four corner glyphs per key: swipe toward a corner to type it. Ctrl and Fn modifiers (Fn shows the F1-F12 and currency layer), compass key for arrows</string>
     <string name="kb_theme_dev_summary">Developer keyboard: dark keys, white glyphs, number row, corner swipes for Esc, Tab, Ctrl, arrows and symbols, fn key</string>
     <!-- #1665 Keyboard > Themes / Settings, Mediaboards pages -->
     <string name="kb_theme_open">Open</string>

@@ -103,6 +103,9 @@ fun SettingsNavHost(
         composable(SettingsDestination.ThemeDev) { // #1665 Keyboard > Themes > Dev
             ThemePageScreen(KbThemePreset.DEV, onClickBack = ::goBack)
         }
+        composable(SettingsDestination.ThemeUnexpected) { // Keyboard > Themes > Unexpected
+            ThemePageScreen(KbThemePreset.UNEXPECTED, onClickBack = ::goBack)
+        }
         composable(SettingsDestination.KeyboardSettings) { // #1665 Keyboard > Settings
             KeyboardSettingsScreen(onClickBack = ::goBack, onOpen = { navController.navigate(it) })
         }
@@ -251,6 +254,7 @@ object SettingsDestination {
     const val Themes = "themes" // #1622: Themes picker
     const val ThemeDefault = "themes/default" // #1665 the Default theme's page
     const val ThemeDev = "themes/dev" // #1665 the Dev theme's page
+    const val ThemeUnexpected = "themes/unexpected" // the Unexpected theme's page
     const val KeyboardSettings = "kb_settings" // #1665 Keyboard > Settings
     const val Gif = "gif_info" // #1665 Mediaboards > GIF
     const val Stickers = "stickers_info" // #1665 Mediaboards > Stickers
@@ -288,7 +292,11 @@ object SettingsDestination {
     const val Layouts = "layouts"
     const val Dictionaries = "dictionaries"
     /** #1665 the route of [preset]'s own page. */
-    fun themeRoute(preset: KbThemePreset): String = if (preset == KbThemePreset.DEV) ThemeDev else ThemeDefault
+    fun themeRoute(preset: KbThemePreset): String = when (preset) {
+        KbThemePreset.DEV -> ThemeDev
+        KbThemePreset.UNEXPECTED -> ThemeUnexpected
+        KbThemePreset.DEFAULT -> ThemeDefault
+    }
     val navTarget = MutableStateFlow(Settings)
 
     /**

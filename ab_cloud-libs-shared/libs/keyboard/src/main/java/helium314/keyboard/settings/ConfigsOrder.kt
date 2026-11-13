@@ -88,7 +88,8 @@ enum class KbTab(val id: String, val label: String, val icon: String, val pages:
         // #1665 the picker, then each theme's own page (preview, use it, what it sets)
         NavPageDecl("themes", "Themes", SettingsDestination.Themes, listOf(
             NavPageDecl(KbThemePreset.DEFAULT.pageId, "Default", KbThemePreset.DEFAULT.route),
-            NavPageDecl(KbThemePreset.DEV.pageId, "Dev", KbThemePreset.DEV.route))),
+            NavPageDecl(KbThemePreset.DEV.pageId, "Dev", KbThemePreset.DEV.route),
+            NavPageDecl(KbThemePreset.UNEXPECTED.pageId, "Unexpected", KbThemePreset.UNEXPECTED.route))),
         // #1665 Settings = every keyboard / theme setting on one page (KeyboardSettingsScreen); the full pages fold under it
         NavPageDecl("settings", "Settings", SettingsDestination.KeyboardSettings, listOf(
             NavPageDecl("appearance", "Appearance", SettingsDestination.Appearance),

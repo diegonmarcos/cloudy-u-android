@@ -1,7 +1,8 @@
 {
  "_doc": "#1547 THE baseline of the runtime-data guard (cloud-android-runtime-data-guard.py): everything that is still baked into an APK, listed so a NEW baked JSON, gradle asset injection or BuildConfig base64 field fails CI. It only shrinks: migrate a dataset to the fleet data framework (libs:fleet-data-client, providers Cloud Store / Cloud Account), then drop its line here and lower the ceilings. json: path -> tier (1 personal -> Cloud Account personal/, 2 fleet/infra -> Cloud Account fleet/, 3 app defaults -> Cloud Store, 4 static reference -> Cloud Store pack or seed, mock = removed from release builds) and its target provider. The phase-2 order is in ticket #1547.",
  "seed_allowlist": {
-  "_doc": "Tier-4 STATIC reference data that may stay bundled as a SEED the runtime provider overrides: path or dir/ prefix -> reason (at least 20 characters). Empty in phase 1: the tier-4 files are baselined below and move to Cloud Store packs in phase 2."
+  "_doc": "Tier-4 STATIC reference data that may stay bundled as a SEED the runtime provider overrides: path or dir/ prefix -> reason (at least 20 characters). Empty in phase 1: the tier-4 files are baselined below and move to Cloud Store packs in phase 2.",
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/unexpected_kb/layout.json": "Tier-4 static reference: the Unexpected keyboard theme's key and corner-glyph declaration (two layers). The theme must work offline on first use; a served pack may later override it."
  },
  "json_max": 94,
  "gradle_max": 22,

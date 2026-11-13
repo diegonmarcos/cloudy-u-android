@@ -23,7 +23,7 @@ class KeyboardNavChromeTest {
     @Test fun keyboardHasThemesDefaultDevSettingsLanguagesAndToolbarInside() {
         val k = KbTab.KEYBOARD
         assertEquals(listOf("Themes", "Settings", "Languages", "Toolbar"), k.pages.map { it.label })
-        assertEquals(listOf("Default", "Dev"), k.pages.first { it.label == "Themes" }.children.map { it.label })
+        assertEquals(listOf("Default", "Dev", "Unexpected"), k.pages.first { it.label == "Themes" }.children.map { it.label })
         // Settings hosts the theme-config settings: Appearance and Advanced fold in; Secondary layouts fold under Languages
         assertTrue(tab(k).containsAll(listOf("Appearance", "Advanced")))
         assertEquals(listOf("Secondary layouts"), k.pages.first { it.label == "Languages" }.children.map { it.label })

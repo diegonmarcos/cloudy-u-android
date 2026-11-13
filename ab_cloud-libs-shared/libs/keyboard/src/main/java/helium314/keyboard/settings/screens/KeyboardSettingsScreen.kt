@@ -38,7 +38,7 @@ fun KeyboardSettingsScreen(
     val prefs = ctx.prefs()
     val b = (ctx.getActivity() as? SettingsActivity)?.prefChanged?.collectAsState()
     if ((b?.value ?: 0) < 0) Log.v("irrelevant", "recompose on preference change")
-    val dev = KbThemePreset.current(ctx) == KbThemePreset.DEV
+    val dev = KbThemePreset.current(ctx).isDark
     SearchSettingsScreen(onClickBack = onClickBack, title = stringResource(R.string.kb_settings_title), settings = emptyList()) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Preference(

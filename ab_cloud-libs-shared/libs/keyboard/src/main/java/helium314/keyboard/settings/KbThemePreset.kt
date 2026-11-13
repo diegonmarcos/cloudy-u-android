@@ -8,13 +8,15 @@ import androidx.core.content.edit
 import helium314.keyboard.keyboard.CornerSwipe
 import helium314.keyboard.keyboard.KeyboardSwitcher
 import helium314.keyboard.keyboard.KeyboardTheme
+import helium314.keyboard.keyboard.UnexpectedKb
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.settings.Defaults
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.prefs
 
 /**
- * #1622: the keyboard's Themes, declared once. Exactly two (#1665): the ordinary keyboard ([DEFAULT]) and
+ * #1622: the keyboard's Themes, declared once: the ordinary keyboard ([DEFAULT]), [UNEXPECTED] (the Unexpected keyboard rebuilt from
+ * a data file) and, since #1665,
  * [DEV], the developer theme designed after the Unexpected Keyboard app — dark keys, white centred
  * glyphs (the [KeyboardTheme.THEME_UNEXPECTED] colours) and the corner-swipe legends of the "unexpected"
  * main layout (the same flag the Dev Keyboard toggle drives). The Themes picker screen draws
@@ -27,7 +29,12 @@ enum class KbThemePreset(
 ) {
     DEFAULT("default", R.string.kb_theme_default, R.string.kb_theme_default_summary),
     // #1665 named Dev in the UI; its stored id stays "unexpected" so a phone that picked it before keeps it
-    DEV("unexpected", R.string.kb_theme_dev, R.string.kb_theme_dev_summary);
+    DEV("unexpected", R.string.kb_theme_dev, R.string.kb_theme_dev_summary),
+    // the "Unexpected" theme (its own keyboard: assets/unexpected_kb/layout.json). Its stored id differs from DEV's legacy "unexpected"
+    UNEXPECTED("unexpected_kb", R.string.kb_theme_unexpected, R.string.kb_theme_unexpected_summary);
+
+    /** Both dark themes (Dev, Unexpected) draw with the Unexpected colours and switch the corner swipes on. */
+    val isDark: Boolean get() = this != DEFAULT
 
     /** #1665 the nav page id (Keyboard > Themes > Default / Dev) and route of this theme's own page. */
     val pageId: String get() = "themes_" + name.lowercase()
@@ -54,8 +61,8 @@ enum class KbThemePreset(
         fun colorThemeName(context: Context, preset: KbThemePreset): String {
             val prefs = context.prefs()
             return when {
-                preset == DEV -> KeyboardTheme.THEME_UNEXPECTED
-                current(prefs) == DEV -> prefs.getString(PREV_DAY, Defaults.PREF_THEME_COLORS) ?: Defaults.PREF_THEME_COLORS
+                preset.isDark -> KeyboardTheme.THEME_UNEXPECTED
+                current(prefs).isDark -> prefs.getString(PREV_DAY, Defaults.PREF_THEME_COLORS) ?: Defaults.PREF_THEME_COLORS
                 else -> prefs.getString(Settings.PREF_THEME_COLORS, Defaults.PREF_THEME_COLORS) ?: Defaults.PREF_THEME_COLORS
             }.let { if (preset == DEFAULT && it == KeyboardTheme.THEME_UNEXPECTED) Defaults.PREF_THEME_COLORS else it }
         }
@@ -66,7 +73,9 @@ enum class KbThemePreset(
         /** Select [preset]: swap the colour theme and the corner-swipe flag, then redraw the keyboard. */
         fun apply(context: Context, preset: KbThemePreset) {
             applyTo(context.prefs(), preset)
-            CornerSwipe.enabled = preset == DEV
+            CornerSwipe.enabled = preset.isDark
+            UnexpectedKb.active = false // re-read from the prefs by CornerSwipe.refresh on the next layout build
+            UnexpectedKb.fn = false
             // #1665 the switch is real: drop the cached layouts too, so the Dev layout (or the subtype's own) loads on the next draw
             runCatching { helium314.keyboard.keyboard.internal.keyboard_parser.LayoutParser.clearCache() }
             KeyboardSwitcher.getInstance().setThemeNeedsReload()
@@ -74,15 +83,16 @@ enum class KbThemePreset(
 
         /** #1665 the prefs half of [apply] (pure, testable): theme id, colour themes (the user's own parked and restored), Dev flag. */
         fun applyTo(prefs: SharedPreferences, preset: KbThemePreset) {
-            val wasDev = current(prefs) == DEV
+            val wasDev = current(prefs).isDark
             when (preset) {
-                DEV -> {
+                DEV, UNEXPECTED -> {
                     if (!wasDev) prefs.edit {
                         putString(PREV_DAY, prefs.getString(Settings.PREF_THEME_COLORS, Defaults.PREF_THEME_COLORS))
                         putString(PREV_NIGHT, prefs.getString(Settings.PREF_THEME_COLORS_NIGHT, Defaults.PREF_THEME_COLORS_NIGHT))
                     }
                     prefs.edit {
-                        putString(PREF, DEV.id)
+                        putString(PREF, preset.id)
+                        putBoolean(UnexpectedKb.PREF, preset == UNEXPECTED)
                         putString(Settings.PREF_THEME_COLORS, KeyboardTheme.THEME_UNEXPECTED)
                         putString(Settings.PREF_THEME_COLORS_NIGHT, KeyboardTheme.THEME_UNEXPECTED)
                         putBoolean(CornerSwipe.PREF, true)
@@ -93,6 +103,7 @@ enum class KbThemePreset(
                     val night = prefs.getString(PREV_NIGHT, Defaults.PREF_THEME_COLORS_NIGHT) ?: Defaults.PREF_THEME_COLORS_NIGHT
                     prefs.edit {
                         putString(PREF, DEFAULT.id)
+                        putBoolean(UnexpectedKb.PREF, false)
                         // Only undo the colour theme if Unexpected itself set it — never clobber a user's own pick.
                         if (prefs.getString(Settings.PREF_THEME_COLORS, Defaults.PREF_THEME_COLORS) == KeyboardTheme.THEME_UNEXPECTED)
                             putString(Settings.PREF_THEME_COLORS, day)

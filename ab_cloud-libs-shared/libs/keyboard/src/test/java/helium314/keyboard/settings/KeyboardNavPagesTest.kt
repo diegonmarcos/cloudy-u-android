@@ -51,8 +51,9 @@ class KeyboardNavPagesTest {
         assertEquals(SettingsDestination.Languages, k.getValue("Languages").route)
         assertEquals(SettingsDestination.Toolbar, k.getValue("Toolbar").route)
         val themes = k.getValue("Themes").children
-        assertEquals(listOf("Default", "Dev"), themes.map { it.label })
-        assertEquals(listOf(SettingsDestination.ThemeDefault, SettingsDestination.ThemeDev), themes.map { it.route })
+        assertEquals(listOf("Default", "Dev", "Unexpected"), themes.map { it.label })
+        assertEquals(listOf(SettingsDestination.ThemeDefault, SettingsDestination.ThemeDev, SettingsDestination.ThemeUnexpected), themes.map { it.route })
+        assertTrue(drawnBy().getValue(SettingsDestination.ThemeUnexpected).contains("ThemePageScreen(KbThemePreset.UNEXPECTED"))
         assertTrue(drawnBy().getValue(SettingsDestination.ThemeDefault).contains("ThemePageScreen(KbThemePreset.DEFAULT"))
         assertTrue(drawnBy().getValue(SettingsDestination.ThemeDev).contains("ThemePageScreen(KbThemePreset.DEV"))
         assertTrue(drawnBy().getValue(SettingsDestination.KeyboardSettings).contains("KeyboardSettingsScreen("))
@@ -73,12 +74,16 @@ class KeyboardNavPagesTest {
         assertEquals(listOf(SettingsDestination.Autocomplete, SettingsDestination.Clipboard), KbTab.TEXTBOARDS.pages.map { it.route })
     }
 
-    @Test fun themesAreExactlyDefaultAndDevAndNeverCalledUnexpected() {
-        assertEquals(listOf("DEFAULT", "DEV"), KbThemePreset.entries.map { it.name })
+    /** Rule 16: Default and Dev stay (labels and stored ids), and Unexpected is added after them with its own stored id. */
+    @Test fun themesAreDefaultDevAndUnexpected_noneRemoved() {
+        assertEquals(listOf("DEFAULT", "DEV", "UNEXPECTED"), KbThemePreset.entries.map { it.name })
+        assertEquals(listOf("default", "unexpected", "unexpected_kb"), KbThemePreset.entries.map { it.id }) // Dev keeps its legacy stored id
         val strings = File("src/main/res/values/strings.xml").readText()
         assertTrue(strings.contains("<string name=\"kb_theme_dev\">Dev</string>"))
-        assertFalse(strings.contains("name=\"kb_theme_unexpected\""))
-        assertFalse(File(screens, "ThemesScreen.kt").readText().contains("Unexpected"))
+        assertTrue(strings.contains("<string name=\"kb_theme_default\">Default</string>"))
+        assertTrue(strings.contains("<string name=\"kb_theme_unexpected\">Unexpected</string>"))
+        val screen = File(screens, "ThemesScreen.kt").readText()
+        assertTrue(screen.contains("KbThemePreset.entries.forEach")) // the picker draws every preset
     }
 
     @Test fun pickingATheme_switchesTheLayout() {
@@ -99,6 +104,18 @@ class KeyboardNavPagesTest {
         // the toolbar key and the Configs switch go through the theme, and the parser loads the layout from the flag
         assertTrue(File("src/main/java/helium314/keyboard/keyboard/CornerSwipe.kt").readText().contains("KbThemePreset.setDev(context, !enabled)"))
         assertTrue(File("src/main/java/helium314/keyboard/keyboard/internal/keyboard_parser/LayoutParser.kt").readText().contains("CornerSwipe.mainLayoutFor(CornerSwipe.enabled"))
+        // the Unexpected theme is its own preset: dark colours, corner swipes and its own layout flag on, Default restores everything
+        val u = FakePrefs(mapOf("theme_colors" to "light"))
+        KbThemePreset.applyTo(u, KbThemePreset.UNEXPECTED)
+        assertEquals(KbThemePreset.UNEXPECTED, KbThemePreset.current(u))
+        assertEquals(true, u.data[CornerSwipe.PREF])
+        assertEquals(true, u.data[helium314.keyboard.keyboard.UnexpectedKb.PREF])
+        assertEquals("unexpected", u.data["theme_colors"])
+        KbThemePreset.applyTo(u, KbThemePreset.DEV) // Dev keeps working from Unexpected
+        assertEquals(false, u.data[helium314.keyboard.keyboard.UnexpectedKb.PREF])
+        KbThemePreset.applyTo(u, KbThemePreset.DEFAULT)
+        assertEquals("light", u.data["theme_colors"])
+        assertEquals(false, u.data[CornerSwipe.PREF])
         // the Dev theme always has its number row on letters and on symbols
         val sv = File("src/main/java/helium314/keyboard/latin/settings/SettingsValues.java").readText()
         assertTrue(sv.contains("mShowsNumberRow = devTheme ||") && sv.contains("mShowsNumberRowInSymbols = devTheme ||"))

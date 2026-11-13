@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.keyboard
 
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.text.InputType
 import android.util.SparseArray
@@ -506,6 +508,19 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
             metaPressStates[primaryCode] = MetaPressState.RELEASED_BUT_ACTIVE
             keyboardSwitcher.mainKeyboardView?.updateLockState(primaryCode, true)
         }
+        syncFnLayer()
+    }
+
+    /**
+     * The Unexpected theme shows its Fn layer exactly while the Fn modifier is on (one tap = one key, double tap holds, a tap
+     * releases). The keyboard is rebuilt after the touch has finished, never in the middle of it.
+     */
+    private fun syncFnLayer() {
+        if (!UnexpectedKb.active) return
+        val on = metaState and KeyEvent.META_FUNCTION_ON != 0
+        if (UnexpectedKb.fn == on) return
+        UnexpectedKb.setFn(on)
+        Handler(Looper.getMainLooper()).post { keyboardSwitcher.reloadMainKeyboard() }
     }
 
     private fun metaAfterCodeInput(primaryCode: Int) {
@@ -535,6 +550,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
                 }
             }
         }
+        syncFnLayer()
     }
 
     companion object {

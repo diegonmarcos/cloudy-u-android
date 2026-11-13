@@ -38,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import helium314.keyboard.keyboard.CornerSwipe
+import helium314.keyboard.keyboard.UnexpectedKb
 import helium314.keyboard.keyboard.KeyboardTheme
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.common.ColorType
@@ -160,6 +161,13 @@ internal fun themeFacts(ctx: Context, preset: KbThemePreset): List<Pair<String, 
             ctx.getString(R.string.kb_theme_fact_corners) to on,
             ctx.getString(R.string.kb_theme_fact_fn) to on,
         )
+        KbThemePreset.UNEXPECTED -> listOf(
+            ctx.getString(R.string.kb_theme_fact_colors) to ctx.getString(R.string.kb_theme_unexpected),
+            ctx.getString(R.string.kb_theme_fact_layout) to UnexpectedKb.ASSET,
+            ctx.getString(R.string.number_row) to on,
+            ctx.getString(R.string.kb_theme_fact_corners) to on,
+            ctx.getString(R.string.kb_theme_fact_fn) to on,
+        )
         KbThemePreset.DEFAULT -> listOf(
             ctx.getString(R.string.kb_theme_fact_colors) to KbThemePreset.colorThemeName(ctx, preset),
             ctx.getString(R.string.theme_style) to (p.getString(Settings.PREF_THEME_STYLE, Defaults.PREF_THEME_STYLE) ?: ""),
@@ -189,9 +197,18 @@ private fun palette(ctx: Context, preset: KbThemePreset): Palette {
 @Composable
 fun ThemePreview(ctx: Context, preset: KbThemePreset) {
     val pal = remember(preset) { palette(ctx, preset) }
-    val dev = preset == KbThemePreset.DEV
+    val dev = preset.isDark
     val numberRow = dev || ctx.prefs().getBoolean(Settings.PREF_SHOW_NUMBER_ROW, Defaults.PREF_SHOW_NUMBER_ROW)
-    val rows = buildList {
+    // Unexpected: the miniature is drawn from the same data file as the real keyboard (never a second copy of the keys)
+    val data = if (preset == KbThemePreset.UNEXPECTED) remember { UnexpectedKb.load(ctx)?.layer(false) } else null
+    val dataKeys = data?.all?.associateBy { it.id }.orEmpty()
+    val rows = if (data != null) buildList {
+        data.rows.forEachIndexed { i, r ->
+            val ks = r.map { it.center }
+            add(if (i == data.rows.lastIndex) listOf("⇧") + ks + listOf("⌫") else ks)
+        }
+        add(listOf("Ctrl", "Fn", "space", "◎", "⏎"))
+    } else buildList {
         if (numberRow) add("1234567890".map { it.toString() })
         add("qwertyuiop".map { it.toString() })
         add("asdfghjkl".map { it.toString() })
@@ -202,9 +219,10 @@ fun ThemePreview(ctx: Context, preset: KbThemePreset) {
         rows.forEachIndexed { r, row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 row.forEach { k ->
-                    val functional = (r == 0 && numberRow) || k.length > 1 || k == "⇧" || k == "⌫" || k == "⏎"
-                    val w = when (k) { "space" -> 4f; "?123", "⇧", "⌫", "⏎" -> 1.5f; else -> 1f }
-                    val corners = if (dev) CornerSwipe.corners[k].orEmpty() else emptyList()
+                    val functional = (r == 0 && numberRow && data == null) || k.length > 1 || k == "⇧" || k == "⌫" || k == "⏎"
+                    val w = when (k) { "space" -> 4f; "?123", "⇧", "⌫", "⏎", "Ctrl" -> 1.5f; else -> 1f }
+                    val corners = if (data != null) (dataKeys[k.lowercase()]?.corners?.take(4)?.map { it?.label ?: "" }.orEmpty())
+                        else if (dev) CornerSwipe.corners[k].orEmpty() else emptyList()
                     Box(
                         Modifier.weight(w).height(30.dp)
                             .background(if (functional && k != "space") pal.fn else pal.key, RoundedCornerShape(4.dp))
@@ -214,7 +232,7 @@ fun ThemePreview(ctx: Context, preset: KbThemePreset) {
                         val at = listOf(Alignment.TopStart, Alignment.TopEnd, Alignment.BottomStart, Alignment.BottomEnd)
                         corners.take(4).forEachIndexed { i, a ->
                             if (a.isNotEmpty() && a != k)
-                                Text(CornerSwipe.labelOf(a).take(3), Modifier.align(at[i]).padding(horizontal = 1.dp), color = pal.hint, fontSize = 6.sp)
+                                Text((if (data != null) a else CornerSwipe.labelOf(a)).take(3), Modifier.align(at[i]).padding(horizontal = 1.dp), color = pal.hint, fontSize = 6.sp)
                         }
                     }
                 }

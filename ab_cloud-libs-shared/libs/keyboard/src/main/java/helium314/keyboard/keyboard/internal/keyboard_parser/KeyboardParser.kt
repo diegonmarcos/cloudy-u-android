@@ -100,7 +100,7 @@ class KeyboardParser(private val params: KeyboardParams, private val context: Co
 
         val numberRow = getNumberRow()
         addNumberRowOrPopupKeys(baseKeys, numberRow)
-        if (params.mId.isAlphabetKeyboard)
+        if (params.mId.isAlphabetKeyboard && !helium314.keyboard.keyboard.UnexpectedKb.active) // the Unexpected keys carry their own corners
             addSymbolPopupKeys(baseKeys)
         if (params.mId.isAlphaOrSymbolKeyboard && params.mId.mNumberRowEnabled) {
             val newLabelFlags = defaultLabelFlags or
@@ -328,7 +328,7 @@ class KeyboardParser(private val params: KeyboardParams, private val context: Co
     }
 
     // some layouts have numbers hardcoded in the main layout (pcqwerty as keys, and others as popups)
-    private fun hasBuiltInNumbers() = when (params.mId.mSubtype.mainLayoutName) {
+    private fun hasBuiltInNumbers() = helium314.keyboard.keyboard.UnexpectedKb.active || when (params.mId.mSubtype.mainLayoutName) {
         "pcqwerty" -> true
         "lao", "thai", "korean_sebeolsik_390", "korean_sebeolsik_final" -> params.mPopupKeyOrder.contains(POPUP_KEYS_LAYOUT)
         else -> false

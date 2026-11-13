@@ -10,6 +10,8 @@ import static java.lang.Math.abs;
 
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.view.MotionEvent;
 
@@ -142,6 +144,21 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
     private int mLastY;
     private int mStartX;
     private Key mCornerSwipeKey; // #1413 key a Dev Keyboard corner swipe started on, else null
+    private String mCornerSwipeId; // table id (CornerSwipe.idOf) of mCornerSwipeKey
+    // Unexpected theme compass key: the arrow the finger points at is sent at once and repeats while held
+    private static final Handler sCompassHandler = new Handler(Looper.getMainLooper());
+    private static final long COMPASS_REPEAT_DELAY_MS = 380, COMPASS_REPEAT_MS = 55;
+    private int mCompassCode = 0;
+    private final Runnable mCompassRepeat = new Runnable() {
+        @Override public void run() {
+            if (mCompassCode == 0) return;
+            sListener.onCodeInput(mCompassCode, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, true);
+            sCompassHandler.postDelayed(this, COMPASS_REPEAT_MS);
+        }
+    };
+    private void stopCompassRepeat() {
+        sCompassHandler.removeCallbacks(mCompassRepeat);
+    }
     private int mStartY;
     private long mStartTime;
     private boolean mInHorizontalSwipe = false;
@@ -735,8 +752,9 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
             mStartX = x;
             mStartY = y;
             mStartTime = SystemClock.elapsedRealtime();
-            mCornerSwipeKey = (CornerSwipe.isActive(mKeyboard) && key.getLabel() != null
-                    && CornerSwipe.INSTANCE.getCorners().containsKey(key.getLabel().toLowerCase(Locale.ROOT))) ? key : null;
+            mCornerSwipeId = CornerSwipe.isActive(mKeyboard) ? CornerSwipe.idOf(key.getLabel(), key.getCode()) : null;
+            mCornerSwipeKey = mCornerSwipeId != null ? key : null;
+            mCompassCode = 0;
         }
     }
 
@@ -992,6 +1010,18 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
         if (mCornerSwipeKey != null) {
             mLastX = x;
             mLastY = y;
+            if (CornerSwipe.isCompass(mCornerSwipeId)) {
+                final Integer code = CornerSwipe.codeForId(mCornerSwipeId, x - mStartX, y - mStartY, mCornerSwipeKey.getWidth() * 0.35f);
+                final int newCode = code == null ? 0 : code;
+                if (newCode != mCompassCode) {
+                    stopCompassRepeat();
+                    mCompassCode = newCode;
+                    if (newCode != 0) {
+                        sListener.onCodeInput(newCode, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false);
+                        sCompassHandler.postDelayed(mCompassRepeat, COMPASS_REPEAT_DELAY_MS);
+                    }
+                }
+            }
             return;
         }
 
@@ -1128,12 +1158,21 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
 
         if (mIsTrackingForActionDisabled) {
             mCornerSwipeKey = null;
+            stopCompassRepeat();
+            mCompassCode = 0;
             return;
         }
         final Key cornerKey = mCornerSwipeKey;
         mCornerSwipeKey = null;
         if (cornerKey != null) {
-            final Integer cornerCode = CornerSwipe.codeFor(cornerKey.getLabel(), x - mStartX, y - mStartY,
+            if (CornerSwipe.isCompass(mCornerSwipeId)) {
+                // the compass key acts while the finger points (see onMoveEventInternal); lifting only stops the repeat, a plain tap does nothing
+                stopCompassRepeat();
+                mCompassCode = 0;
+                callListenerOnRelease(cornerKey, cornerKey.getCode(), false);
+                return;
+            }
+            final Integer cornerCode = CornerSwipe.codeForId(mCornerSwipeId, x - mStartX, y - mStartY,
                     cornerKey.getWidth() * 0.5f);
             if (cornerCode != null) {
                 sListener.onCodeInput(cornerCode, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false);
@@ -1232,6 +1271,8 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
     }
 
     private void onCancelEventInternal() {
+        stopCompassRepeat();
+        mCompassCode = 0;
         sTimerProxy.cancelKeyTimersOf(this);
         setReleasedKeyGraphics(mCurrentKey, true);
         resetKeySelectionByDraggingFinger();

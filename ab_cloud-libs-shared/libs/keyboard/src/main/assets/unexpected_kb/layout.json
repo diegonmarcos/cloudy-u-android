@@ -1,0 +1,38 @@
+{
+ "name": "unexpected",
+ "note": "The Unexpected theme's keyboard, declared as data: per layer the letter rows (centre glyph c, corner glyphs nw/ne/sw/se) and the special keys. A corner is a glyph (typed as is), an action name, or {a: action, l: label}. UnexpectedKb builds the keyboard layout, the corner legends and the swipe table from this file; nothing about the keys is hardcoded in the views.",
+ "layers": {
+  "base": {
+   "rows": [
+    [{"c":"1","se":"!"},{"c":"2","se":"@"},{"c":"3","se":"#"},{"c":"4","se":"$"},{"c":"5","se":"%"},{"c":"6","sw":"^"},{"c":"7","sw":"&"},{"c":"8","sw":"*"},{"c":"9","sw":"("},{"c":"0","sw":")"}],
+    [{"c":"q","sw":{"a":"esc","l":"Esc"}},{"c":"w","sw":"\""},{"c":"e","sw":"£"},{"c":"r"},{"c":"t"},{"c":"y"},{"c":"u"},{"c":"i"},{"c":"o"},{"c":"p"}],
+    [{"c":"a","nw":{"a":"tab","l":"⇥"},"ne":"`"},{"c":"s"},{"c":"d"},{"c":"f"},{"c":"g","ne":"-","sw":"_"},{"c":"h","ne":"=","sw":"+"},{"c":"j","sw":"{","se":"}"},{"c":"k","sw":"[","se":"]"},{"c":"l","ne":"~","sw":"'"}],
+    [{"c":"z","ne":"|","sw":"\\"},{"c":"x"},{"c":"c","ne":"<"},{"c":"v","ne":">"},{"c":"b","ne":"?","sw":"/"},{"c":"n","ne":":","sw":",","se":";"},{"c":"m","sw":"."}]
+   ],
+   "special": [
+    {"id":"delete","ne":{"a":"fdel","l":"⌦"}},
+    {"id":"ctrl","c":"Ctrl","width":0.17,"sw":{"a":"clipboard","l":"⎘"},"se":{"a":"symbols","l":"123+"}},
+    {"id":"fn","c":"Fn","width":0.12,"ne":{"a":"ime_picker","l":"⌨"},"sw":{"a":"emoji","l":"☺"},"se":{"a":"settings","l":"⚙"}},
+    {"id":"space","center":"␣","e":{"a":"right","l":"→"},"w":{"a":"left","l":"←"}},
+    {"id":"compass","c":"◎","width":0.15,"n":{"a":"up","l":"↑"},"s":{"a":"down","l":"↓"},"w":{"a":"left","l":"←"},"e":{"a":"right","l":"→"},"ne":{"a":"voice","l":"🎤"}},
+    {"id":"enter","width":0.13}
+   ]
+  },
+  "fn": {
+   "rows": [
+    [{"c":"F1","a":"f1","se":"¡"},{"c":"F2","a":"f2","se":"@"},{"c":"F3","a":"f3","se":"#"},{"c":"F4","a":"f4","se":"$"},{"c":"F5","a":"f5","se":"‰"},{"c":"F6","a":"f6","sw":"¬"},{"c":"F7","a":"f7","sw":"&"},{"c":"F8","a":"f8","sw":"°"},{"c":"F9","a":"f9","sw":"„"},{"c":"F10","a":"f10","sw":"”"}],
+    [{"c":"q","sw":{"a":"insert","l":"Ins"}},{"c":"w","sw":"„"},{"c":"€"},{"c":"₹"},{"c":"t"},{"c":"¥"},{"c":"µ"},{"c":"i"},{"c":"œ","sw":{"a":"f11","l":"F11"}},{"c":"₽","sw":{"a":"f12","l":"F12"}}],
+    [{"c":"æ","nw":{"a":"tab","l":"\\t"},"ne":"`"},{"c":"s"},{"c":"d"},{"c":"f"},{"c":"g","ne":"−","sw":"—"},{"c":"₴","ne":"≈","sw":"+"},{"c":"j","sw":"‹","se":"›"},{"c":"k","sw":"‚","se":"‘"},{"c":"£","ne":"~","sw":","}],
+    [{"c":"₿","ne":"¦","sw":"\\"},{"c":"x"},{"c":"₵","ne":"«"},{"c":"v","ne":"»"},{"c":"₱","ne":"¿","sw":"/"},{"c":"n","ne":{"a":"select","l":"⇔"},"sw":".","se":";"},{"c":"m","sw":"…"}]
+   ],
+   "special": [
+    {"id":"delete","ne":{"a":"fdel","l":"⌦"}},
+    {"id":"ctrl","c":"Ctrl","width":0.17,"sw":{"a":"clipboard","l":"⎘"},"se":{"a":"","l":"πλ∇¬"}},
+    {"id":"fn","c":"Fn","width":0.12,"ne":{"a":"ime_picker","l":"⌨"},"sw":{"a":"emoji","l":"☺"},"se":{"a":"settings","l":"⚙"}},
+    {"id":"space","center":"␣","e":{"a":"right","l":"→"},"w":{"a":"left","l":"←"}},
+    {"id":"compass","c":"◎","width":0.15,"n":{"a":"pgup","l":"⇞"},"s":{"a":"pgdn","l":"⇟"},"w":{"a":"left","l":"←"},"e":{"a":"right","l":"→"},"nw":{"a":"home","l":"⇱"},"se":{"a":"end","l":"⇲"},"ne":{"a":"voice","l":"🎤"}},
+    {"id":"enter","width":0.13}
+   ]
+  }
+ }
+}
