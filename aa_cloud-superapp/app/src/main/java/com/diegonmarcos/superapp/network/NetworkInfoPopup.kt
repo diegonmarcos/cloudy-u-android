@@ -176,10 +176,9 @@ object NetworkInfoPopup {
             val grant: () -> Unit = { dismiss(); openTarget(ctx, NetworkSections.PERMISSIONS) }
             val openAdbShell: () -> Unit = {
                 dismiss()
-                // Configs › Network › ADB Shell inside the shell; the lib's own activity anywhere else.
-                val shell = ctx as? com.diegonmarcos.superapp.ShellActivity
-                if (shell != null) shell.openSectionPage("config", "adb-shell")
-                else com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctx)
+                // #1682 P4 the ADB Shell page is the owner's: AdbReadiness.openAdbShell opens it (the owner app's page; the in-frame page only
+                // while the SuperApp itself is the owner)
+                com.diegonmarcos.superapp.system.AdbReadiness.openAdbShell(ctx)
             }
 
             // A section wrapper that reports where it sits, and a header with its "Settings ›" link

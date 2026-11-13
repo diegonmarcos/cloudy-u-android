@@ -31,6 +31,10 @@ class AdbOwnerLinkFragment : KitComposeFragment() {
     override fun Content() {
         val ctx = LocalContext.current
         val ready by AdbReadiness.state.collectAsState()
+        // #1682 P4 every in-SuperApp route to "the ADB Shell page" (Configs > Network > ADB Shell, the status chips' page: links, the
+        // declared opens) lands here and goes on to the owner's page at once; this page stays as the way back with the owner's readiness.
+        var forwarded by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+        androidx.compose.runtime.LaunchedEffect(Unit) { if (!forwarded) { forwarded = true; ShellClient.openArmPage(ctx) } }
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("ADB Shell lives in the ADB owner app", style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag("adb-owner-title"))
             Text(ready.linkText(), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("adb-owner-status"))

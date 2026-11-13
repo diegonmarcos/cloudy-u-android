@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import com.diegonmarcos.cloudwebserver.Core
 import com.diegonmarcos.cloudwebserver.Decl
+import com.diegonmarcos.cloudwebserver.LaunchTarget
 import com.diegonmarcos.superapp.bottomnav.islandEntries
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions
@@ -50,6 +51,9 @@ fun WebserverShell() {
     val pageId = page?.takeIf { p -> sec?.pages?.any { it.id == p } == true } ?: sec?.pages?.firstOrNull()?.id
     val entries = nav.islandEntries()
     fun open(sectionId: String, pageId: String? = null) { section = sectionId; page = pageId }
+    // #1682 P4 every fleet link that opens "the ADB Shell page" lands here (ShellArmActivity -> MainActivity extra): the ADB Shell section
+    val wanted = LaunchTarget.section
+    androidx.compose.runtime.LaunchedEffect(wanted) { if (wanted != null && nav.section(wanted) != null) { open(wanted); LaunchTarget.section = null } }
 
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
         NavBarTopFirstRowScaffold(

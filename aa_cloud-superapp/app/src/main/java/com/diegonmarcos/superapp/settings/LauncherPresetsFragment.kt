@@ -118,7 +118,7 @@ class LauncherPresetsFragment : KitComposeFragment() {
                         modifier = Modifier.testTag(KitTags.tile("${group.id}:${t.id}")),
                     )
                     if (t.cmd) PresetCmdLine(PresetCmdCheck.of(true, shell), Modifier.testTag("preset-cmd:${t.id}")) {
-                        (activity as? ShellActivity)?.openSectionPage("config", "adb-shell")
+                        com.diegonmarcos.superapp.system.AdbReadiness.openAdbShell(requireContext())
                     }
                     Spacer(Modifier.height(8.dp))
                 }

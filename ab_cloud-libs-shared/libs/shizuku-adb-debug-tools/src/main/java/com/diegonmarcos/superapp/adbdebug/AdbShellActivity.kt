@@ -58,6 +58,13 @@ object AdbShellLink {
             if (host != null && runCatching { host.openAdbShellInFrame() }.getOrDefault(false)) return
             c = c.baseContext
         }
+        // #1682 P4 this lib is compiled only into the ADB OWNER: its own app's page is THE ADB Shell page, so open it through the same launcher
+        // deep-link extra the broker's ShellArmActivity uses (the Webserver's MainActivity turns it into its ADB Shell section); the bare lib
+        // screen only when that start is refused.
+        val home = Intent().setClassName(ctx.packageName, "${ctx.packageName}.MainActivity")
+            .putExtra("shortcut_action", "page:config/adb-shell")
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        if (runCatching { ctx.startActivity(home) }.isSuccess) return
         val i = Intent(ctx, AdbShellActivity::class.java)
         if (ctx !is android.app.Activity) i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { ctx.startActivity(i) }

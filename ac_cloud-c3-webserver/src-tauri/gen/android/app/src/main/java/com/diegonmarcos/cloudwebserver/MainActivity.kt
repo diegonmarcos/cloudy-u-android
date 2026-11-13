@@ -6,6 +6,8 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.diegonmarcos.cloudwebserver.ui.WebserverShell
 import com.diegonmarcos.cloudwebserver.ui.WebserverTheme
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
@@ -21,10 +23,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
+        LaunchTarget.from(intent)
         Core.attach(this)
         com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.install(applicationContext)   // #1682 P2b no-op unless this app owns ADB
         syncKeepAlive()
         setContent { WebserverTheme { WebserverShell() } }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        LaunchTarget.from(intent)
     }
 
     override fun onDestroy() {
@@ -53,5 +62,17 @@ class MainActivity : ComponentActivity() {
             val svc = Intent(this, KeepAliveService::class.java)
             if (on) startForegroundService(svc) else stopService(svc)
         }
+    }
+}
+
+/**
+ * #1682 P4 the section a launch intent asks for. The ADB owner's ShellArmActivity (libs:shell-broker) starts this activity with the
+ * launcher deep-link extra `shortcut_action = page:config/adb-shell`; here that is the ADB Shell section (the owner page). A compose state,
+ * so a new intent into the running singleTask activity switches the page too.
+ */
+object LaunchTarget {
+    var section by androidx.compose.runtime.mutableStateOf<String?>(null)
+    fun from(i: Intent?) {
+        if (i?.getStringExtra("shortcut_action") == "page:config/adb-shell") section = Decl.SECTION_ADB_SHELL
     }
 }
