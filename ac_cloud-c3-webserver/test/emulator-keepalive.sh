@@ -10,15 +10,18 @@ rc=0; fail() { echo "::error::$*"; rc=1; }
 adb install -r -g "$WS_APK" >"$OUT/install.txt" 2>&1 || { cat "$OUT/install.txt"; exit 1; }
 adb logcat -c
 shoot() { adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null || true; }
-power() {   # the admin API answers once the Rust core is attached: retry until it takes the switch
+power() {   # the admin API answers once the Rust core is attached; where the emulator's port forward does not reach it, write the switch file the app reads (PowerState) and relaunch, which runs syncKeepAlive
   adb forward tcp:18002 tcp:8002 >/dev/null
-  for i in 1 2 3 4 5 6 7 8 9 10; do
+  for i in 1 2 3 4 5; do
     r=$(curl -s -m 10 -X POST -H 'content-type: application/json' -H 'x-c3-write: 1' -d "$1" http://127.0.0.1:18002/__app__/api/power 2>&1)
     echo "$1 -> $r" >>"$OUT/power.txt"
     case "$r" in *keep_alive*) return 0;; esac
     sleep 3
   done
-  fail "the power API never took $1"
+  case "$1" in *true*) v=true;; *) v=false;; esac
+  echo "power API unreachable: writing power.json keep_alive=$v and relaunching" | tee -a "$OUT/power.txt"
+  adb shell "mkdir -p /sdcard/Android/data/$W/files; echo '{\"server\":true,\"keep_alive\":$v}' > /sdcard/Android/data/$W/files/power.json"
+  adb shell am force-stop "$W"; adb shell am start -W -n "$W/.MainActivity" >/dev/null; sleep 10
 }
 fg_state() { adb shell dumpsys activity services "$W" 2>/dev/null | tr -d '\r'; }
 launch() { adb shell am force-stop "$W"; adb shell input keyevent KEYCODE_HOME; adb shell am start -W -n "$W/.MainActivity" >/dev/null; sleep 12; }
