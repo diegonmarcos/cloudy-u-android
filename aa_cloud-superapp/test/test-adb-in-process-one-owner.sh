@@ -45,14 +45,14 @@ def owner_classes():
         for d, _, fs in os.walk(os.path.join(R, "ab_cloud-libs-shared/libs", lib, "src/main")):
             for f in fs:
                 if f.endswith((".kt", ".java")):
-                    names |= set(re.findall(r"^(?:public |internal |private |abstract |sealed |data |enum |open |fun )*(?:class|object|interface) ([A-Z]\w+)", rd(os.path.join(d, f)), re.M))
+                    names |= set(re.findall(r"^(?:public |internal |private |abstract |sealed |data |enum |open |fun )*(?:class|object|interface|typealias) ([A-Z]\w+)", rd(os.path.join(d, f)), re.M)) | set(re.findall(r"^(?:@Composable\s+)?(?:public |internal )?fun (?:<[^>]*> )?([A-Z]\w+)\(", rd(os.path.join(d, f)), re.M))
     return names - {"Tab", "State", "Status", "Prefs", "Ok", "Row", "Result", "Method", "Allowlist", "ConnState", "StatusRow", "Reply"} | {"Allowlist"}
 def client_users():
     names = owner_classes(); out = set()
     # a name the SuperApp declares itself (its own energy ShizukuUserService) is not the owner lib's class
     for d, _, fs in os.walk(os.path.join(R, "aa_cloud-superapp/app/src/main")):
         for f in fs:
-            if f.endswith(".kt"): names -= set(re.findall(r"^(?:public |internal |private |abstract |sealed |data |enum |open )*(?:class|object|interface) ([A-Z]\w+)", rd(os.path.join(d, f)), re.M))
+            if f.endswith(".kt"): names -= set(re.findall(r"^(?:public |internal |private |abstract |sealed |data |enum |open )*(?:class|object|interface|typealias) ([A-Z]\w+)", rd(os.path.join(d, f)), re.M)) | set(re.findall(r"^(?:@Composable\s+)?(?:public |internal )?fun (?:<[^>]*> )?([A-Z]\w+)\(", rd(os.path.join(d, f)), re.M))
     strs = re.compile(r'"(?:[^"\\\n]|\\.)*"')
     roots = [os.path.join(R, "aa_cloud-superapp/app/src/main"), os.path.join(R, "aa_cloud-superapp/app/src/client"), os.path.join(R, "aa_cloud-superapp/app/src/test")]
     rx = re.compile(r"\b(" + "|".join(sorted(names, key=len, reverse=True)) + r")\b")
