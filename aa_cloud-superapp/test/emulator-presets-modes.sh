@@ -17,6 +17,7 @@ adb shell locksettings set-disabled true >/dev/null 2>&1 || true
 wake
 adb install -r -g "$APK" || { echo "::error::install failed"; exit 2; }
 adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW deny || true
+adb shell appops set "$PKG" REQUEST_INSTALL_PACKAGES allow || true
 adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
 adb shell cmd role add-role-holder android.app.role.HOME "$PKG" 0 || true
 adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
@@ -63,9 +64,12 @@ page_text() { local i; for i in 1 2 3; do down; done; : > "$OUT/page.txt"; for i
 MODES='(Power Mode|Focus Mode|Saving Energy Mode|Super Saving Battery Mode)'
 on_count() { grep -cE "^$MODES  ·  (on, tap to turn off|modified)" "$OUT/page.txt"; }
 is_on() { grep -qE "^$1  ·  (on, tap to turn off|modified)" "$OUT/page.txt"; }
-open_presets() { wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "page:config/presets" >/dev/null; sleep 8; }
+# A first-run prompt (install source, permissions) sits over the page: answer Skip / Not now until none is left.
+prompts() { local i xy w; for i in 1 2 3 4; do dump; xy=""; for w in "Skip" "Not now" "Later"; do xy=$(centre "$w"); [ -n "$xy" ] && break; done; [ -n "$xy" ] || return 0; adb shell input tap $xy; sleep 3; done; }
+open_presets() { wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "page:config/presets" >/dev/null; sleep 8; prompts; }
 
 wake; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 12
+prompts
 open_presets
 cap presets-1-page-adb-status-line
 page_text; cp "$OUT/page.txt" "$OUT/presets-1-page.txt"
@@ -107,8 +111,9 @@ adb shell cmd statusbar collapse; sleep 2
 
 # the Notify page (Persistent Badges): photographed, the Actions section holds the Presets card
 wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "page:communication/notify-badges" >/dev/null; sleep 8
-cap notify-page-top; up; up; cap notify-page-actions; up; cap notify-page-actions-2
+prompts; cap notify-page-top; up; up; cap notify-page-actions; up; cap notify-page-actions-2
 
 adb logcat -d -s AndroidRuntime:E > "$OUT/crashes.txt" 2>&1 || true
-grep -q "FATAL EXCEPTION" "$OUT/crashes.txt" && { echo "::error::the app crashed"; fail=1; }
+# only the SuperApp's own process counts (the emulator's system UI may fall over when its stock launcher is disabled)
+grep -A1 "FATAL EXCEPTION" "$OUT/crashes.txt" | grep -q "Process: $PKG" && { echo "::error::the app crashed"; fail=1; }
 exit $fail
