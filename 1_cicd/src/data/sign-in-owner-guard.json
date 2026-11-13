@@ -162,14 +162,6 @@
       "until": "pending: review"
     },
     {
-      "path": "ac_cloud-kg-store/",
-      "rules": [
-        "credential-prompt"
-      ],
-      "why": "KG Store token entry on its Me page",
-      "until": "pending: not in steps 1-5"
-    },
-    {
       "path": "ac_cloud-me/",
       "rules": [
         "credential-prompt"

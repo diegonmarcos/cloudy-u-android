@@ -179,6 +179,7 @@ android {
 
 dependencies {
     implementation project(':libs:core')
+    implementation project(':libs:fleet-endpoints-android')   // #1693 AccountClient: App credentials read from Cloud Account
     // #1547 the page declaration (kg) is read at RUNTIME from Cloud Store's provider, never baked into the APK.
     implementation project(':libs:fleet-data-client')
     // The fleet's navigation: NavDecl and the top-bar scaffold's drawer (libs:bottomnav), the first row with

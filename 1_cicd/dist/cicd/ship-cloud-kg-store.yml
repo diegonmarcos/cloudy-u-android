@@ -52,6 +52,8 @@ on:
       #   input: "ac_cloud-search/build.json"
       #   input: "ac_cloud-search/core/**"
       # ── end MANAGED-PATHS-HEADER ──
+      - "ab_cloud-libs-shared/libs/fleet-endpoints-android/**"
+      - "ab_cloud-libs-shared/libs/fleet-endpoints/**"
       - "ab_cloud-libs-shared/libs/ai/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
       - "ab_cloud-libs-shared/libs/core/**"

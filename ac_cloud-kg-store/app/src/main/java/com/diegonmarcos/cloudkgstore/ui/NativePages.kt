@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.cloudkgstore.HeadlessService
 import com.diegonmarcos.cloudkgstore.KgServices
@@ -136,7 +134,7 @@ fun MePage() {
     var line by remember { mutableStateOf("") }
     var ok by remember { mutableStateOf(false) }
     var served by remember { mutableStateOf<File?>(null) }
-    var typed by remember { mutableStateOf("") }
+    var credLine by remember { mutableStateOf("") }
 
     LaunchedEffect(gc, tick) {
         busy = true
@@ -163,9 +161,18 @@ fun MePage() {
                 if (!busy) {
                     TextButton({ tick++ }, Modifier.testTag(NativeTags.ME_PULL)) { Text(stringResource(R.string.me_retry)) }
                     if (!ok) {
-                        OutlinedTextField(typed, { typed = it }, Modifier.fillMaxWidth().testTag(NativeTags.ME_TOKEN), singleLine = true,
-                            label = { Text(stringResource(R.string.me_token_hint)) }, visualTransformation = PasswordVisualTransformation())
-                        Row { Button({ scope.launch { gc.saveToken(typed); typed = ""; tick++ } }, Modifier.testTag(NativeTags.ME_CONNECT), enabled = typed.isNotBlank()) { Text(stringResource(R.string.me_connect)) } }
+                        // #1693 the GitHub token is typed once in Cloud Account (App credentials); here it is only taken from there.
+                        Text(credLine.ifBlank { stringResource(R.string.me_token_in_account) }, Modifier.testTag(NativeTags.ME_TOKEN),
+                            style = MaterialTheme.typography.bodySmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button({
+                                scope.launch {
+                                    val c = withContext(Dispatchers.IO) { com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.credential(ctx, "git.github_token", "The GitHub token") }
+                                    if (c.present) { gc.saveToken(c.value); credLine = ""; tick++ } else credLine = c.line
+                                }
+                            }, Modifier.testTag(NativeTags.ME_CONNECT)) { Text(stringResource(R.string.me_take)) }
+                            TextButton({ credLine = com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(ctx).orEmpty() }) { Text(stringResource(R.string.me_set)) }
+                        }
                     }
                 }
             }

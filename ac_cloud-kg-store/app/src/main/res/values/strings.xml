@@ -28,8 +28,9 @@
     <string name="me_loading">Loading the library…</string>
     <string name="me_page_failed" formatted="false">The library page could not be shown: %s</string>
     <string name="me_server_down">the local server did not start</string>
-    <string name="me_token_hint">GitHub token (kept encrypted)</string>
-    <string name="me_connect">Connect</string>
+    <string name="me_token_in_account">This repository needs a GitHub token: enter it once in Cloud Account (App credentials), then take it here.</string>
+    <string name="me_take">Take it from Cloud Account</string>
+    <string name="me_set">Set it in Cloud Account</string>
 
     <string name="go">Search</string>
     <string name="send">Send</string>

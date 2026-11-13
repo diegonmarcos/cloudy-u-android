@@ -113,6 +113,7 @@
       "type": "application",
       "depends_on": [
         "libs:core",
+        "libs:fleet-endpoints-android",
         "libs:bottomnav",
         "libs:ui-icons",
         "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray",
@@ -125,6 +126,16 @@
         "libs:ai",
         "search-core"
       ]
+    },
+    "libs:fleet-endpoints": {
+      "_doc_dir": "#1693 plain JVM contract (App credentials) AccountClient speaks.",
+      "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints",
+      "type": "library"
+    },
+    "libs:fleet-endpoints-android": {
+      "_doc_dir": "#1693 AccountClient: opens Cloud Account at App credentials and reads a credential the person filed there. Nothing here starts a sign-in.",
+      "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints-android",
+      "type": "library"
     },
     "libs:core": {
       "dir": "../ab_cloud-libs-shared/libs/core",
