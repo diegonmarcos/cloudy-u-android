@@ -267,9 +267,9 @@ class EngineProfilesTest {
         assertTrue("one block per engine of the catalogue", block.contains("for (e in EngineProfiles.ENGINES) asyncSection(engineHead(e)"))
         assertTrue("every target kind is drawn", block.contains("for (k in EngineProfiles.Kind.values())") && block.contains("for (x in r.rows(k)) row(x.target.label, x.value)"))
         assertTrue("the scoreboard lists every engine", block.contains("asyncSection(ENGINE_SCOREBOARD") && block.contains("EngineProfiles.reports(inputs)"))
-        assertTrue("the ADB Shell link is in the profiler", block.contains("button(\"ADB Shell ›\", gray = true) { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) }"))
+        assertTrue("the ADB Shell link is in the profiler", block.contains("button(\"ADB Shell ›\", gray = true) { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) }"))
         // ...and the links the page already had are still there (Repo & Releases ▸ Profile, Dev Tools).
-        assertEquals(3, Regex("""button\("ADB Shell ›", gray = true\) \{ com\.diegonmarcos\.superapp\.adbdebug\.AdbShellLink\.open\(ctxAny\(\)\) \}""").findAll(dev).count())
+        assertEquals(3, Regex("""button\("ADB Shell ›", gray = true\) \{ com\.diegonmarcos\.superapp\.shellclient\.ShellClient\.openArmPage\(ctxAny\(\)\) \}""").findAll(dev).count())
         assertEquals("every macro group the page had, plus the new one", 14, Regex("""(?m)^\s+macro\("([^"]+)"\)""").findAll(dev).count())
 
         // The page draws one block per engine, in catalogue order, under the one group; About does not get them.

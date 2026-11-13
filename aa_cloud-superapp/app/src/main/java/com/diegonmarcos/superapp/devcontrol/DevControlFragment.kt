@@ -262,7 +262,7 @@ class DevControlFragment : KitComposeFragment() {
             row("All engines", "${reports.count { it.verdict == EngineProfiles.Verdict.PASS }} pass · " +
                 "${reports.count { it.verdict == EngineProfiles.Verdict.FAIL }} fail · " +
                 "${reports.count { it.verdict == EngineProfiles.Verdict.NO_DATA }} no sample · ${reports.size} engines")
-            button("ADB Shell ›", gray = true) { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) }
+            button("ADB Shell ›", gray = true) { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) }
             button("Refresh", gray = true) { engines.invalidate(); reload() }
             button("Reset measurement window", gray = true) { EngineProfiler.reset(); engines.invalidate(); reload() }
         }
@@ -477,7 +477,7 @@ class DevControlFragment : KitComposeFragment() {
             // is on the ADB Shell page, which the button opens.
             row("Wireless debugging",
                 if (WirelessDebugging.isOn(ctxAny())) "ON" else "OFF")
-            button("ADB Shell ›", gray = true) { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) }
+            button("ADB Shell ›", gray = true) { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) }
             // The consolidated cloud-data config that feeds the mesh.
             small("Config source:")
             row("Consolidated", BuildConfig.UI_CONSOLIDATED_CONFIG.ifBlank { "—" })
@@ -1351,7 +1351,7 @@ class DevControlFragment : KitComposeFragment() {
             // bearer left as a placeholder is a walkthrough nobody can follow.
             val prefs = DevControlPrefs(requireContext())
             small("Self-contained ADB — enable Wireless Debugging, then pair via /api/adb/pair + /api/adb/connect:")
-            button("ADB Shell ›", gray = true) { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) }
+            button("ADB Shell ›", gray = true) { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) }
             // ── Self-contained ADB how-to (embedded adb client, no Shizuku
             //    app, no PC; works with WireGuard ON). Long-press any row to
             //    copy. Documented here next to the button that enables it.

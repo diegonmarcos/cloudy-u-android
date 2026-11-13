@@ -27,6 +27,7 @@
    "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/": "the implementation of the channel and its page"
   },
   "files": {
+   "ab_cloud-libs-shared/libs/shell-client/src/main/java/com/diegonmarcos/superapp/shellclient/ShellClient.kt": "#1682 P3 the client's chip link: opens the phone's own Wireless debugging switch in Developer options (ShellClient.openWirelessDebuggingSettings) and otherwise the owner's ADB Shell page; it carries no control, no pairing and no channel",
    "ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbDevRoutes.kt": "the loopback HTTP debug API (/api/adb/pair, /connect, ...) driven by curl; it is not a screen",
    "ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt": "background keeper that re-arms adb_wifi_enabled and raises one fleet alert whose deep link is the system screen only the person can use",
    "ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/WifiUi.kt": "#1263 WiFi page: one button opens Developer options so the person can switch Wi-Fi scan throttling off; no pairing, connecting, server or adb state",

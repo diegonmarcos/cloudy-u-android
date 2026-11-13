@@ -208,7 +208,7 @@ object DeviceControls {
                 Verdict(r.ok, "${r.channel}: ${r.detail}")
             },
             blocked = { ctx -> com.diegonmarcos.superapp.system.PowerSaving.blockedReason(ctx) },
-            open = { ctx -> runCatching { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctx) } },
+            open = { ctx -> runCatching { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctx) } },
         ),
 
         // #1689 Super power saving. NOT OBSERVED: the mode is this app's own

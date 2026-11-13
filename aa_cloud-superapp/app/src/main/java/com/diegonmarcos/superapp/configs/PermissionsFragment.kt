@@ -281,7 +281,7 @@ class PermissionsFragment : KitComposeFragment() {
             onGrant = { grantRow(it) },
             onShell = { shellGrant(it) },
             onRunAdb = { runAdbBlock(rows) },
-            onOpenAdbShell = { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) },
+            onOpenAdbShell = { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) },
             ctx = act,
             onAskAgain = { startAuto(force = true) },
             onAskMany = { userAsk = true; askBatch(it) },
@@ -474,7 +474,7 @@ class PermissionsFragment : KitComposeFragment() {
                         view?.post { shellNote = "Power saving: ${r.channel}: ${r.detail}"; adbToggleDown = r.channelDown; powerEpoch++ }
                     }.start()
                 }
-                PermButton("Connect on the ADB Shell page", null) { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) }
+                PermButton("Connect on the ADB Shell page", null) { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) }
             }
             androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth()) {
                 AdbToggleActions(toggle, ctx, "perms") { runAdbToggle(toggle) { com.diegonmarcos.superapp.system.PowerSaving.isOn(ctx) } }
@@ -486,7 +486,7 @@ class PermissionsFragment : KitComposeFragment() {
                 }
             }
             Small("Low-power mode slows: " + com.diegonmarcos.superapp.system.LowPowerMode.config.slows.joinToString(", "))
-            if (adbToggleDown) PermButtonRow { PermButton("Open ADB Shell to connect ›", null) { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) } }
+            if (adbToggleDown) PermButtonRow { PermButton("Open ADB Shell to connect ›", null) { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) } }
             if (adbToggleOutput.isNotBlank()) Small(adbToggleOutput)
         }
     }
@@ -598,7 +598,7 @@ class PermissionsFragment : KitComposeFragment() {
         // libs:shizuku-adb-debug-tools has; test-adb-shell-one-place.sh holds it to that.
         KvRow("Privileged channel", plane?.let { "✓ ${it.name()}" } ?: "◯ no adb session (server: ${com.diegonmarcos.superapp.adbdebug.AdbShellBootstrap.bootstrapState(ctxAny())})")
         PermButtonRow {
-            PermButton("ADB Shell ›", null) { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) }
+            PermButton("ADB Shell ›", null) { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) }
         }
         // Pairing network helpers: Wireless debugging needs a Wi-Fi network, and these CREATE one (they
         // are not channel controls). The connecting itself is on the ADB Shell page.
@@ -908,7 +908,7 @@ class PermissionsFragment : KitComposeFragment() {
                         Toast.makeText(ctxAny(),
                             "WiFi Direct up (host ${status.ownerIp ?: "?"}). Now open ADB Shell and press Connect.",
                             Toast.LENGTH_LONG).show()
-                        com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny())
+                        com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny())
                     }
                     is WifiDirect.Status.Failed -> Toast.makeText(ctxAny(),
                         "Couldn't create WiFi Direct group (${status.reason}).", Toast.LENGTH_LONG).show()
@@ -1000,7 +1000,7 @@ class PermissionsFragment : KitComposeFragment() {
                 (com.diegonmarcos.superapp.shellbroker.ShellBroker.exec(ctxAny(), com.diegonmarcos.superapp.shellbroker.ShellBroker.SELF, command)
                     as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.let { it.stdout + it.stderr }
         },
-        connect = { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) },
+        connect = { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) },
     )
 
     /** The one channel-availability check for this screen; null = no shell. */

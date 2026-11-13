@@ -2,8 +2,7 @@ package com.diegonmarcos.superapp.bgpolicy
 
 import android.app.Activity
 import android.widget.Toast
-import com.diegonmarcos.superapp.adbdebug.AdbShellLink
-import com.diegonmarcos.superapp.adbdebug.ControlStatus
+import com.diegonmarcos.superapp.shellclient.ShellClient
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -22,8 +21,8 @@ internal object BgUi {
         val r = runBlocking {
             BgGate.run(
                 ready = { BgHost.shell(ctx) != null },
-                openArmFlow = { activity.runOnUiThread { AdbShellLink.open(activity) } },
-                openWirelessDebugging = { activity.runOnUiThread { AdbShellLink.open(activity, ControlStatus.Action.OPEN_SETTINGS) } },
+                openArmFlow = { activity.runOnUiThread { ShellClient.openArmPage(activity) } },
+                openWirelessDebugging = { activity.runOnUiThread { ShellClient.openWirelessDebuggingSettings(activity) } },
                 ask = { dialogs.askGate(it, withoutAdb) },
             )
         }

@@ -951,7 +951,7 @@ private fun StripElementView(el: StatusElement, model: StatusStripModel, ctx: Co
             "system_popup" -> SystemInfoPopup.show(ctx, host, r)
             "tasks_popup" -> TasksPopup.show(host, r)
             // #1522 the ADB icon (one dot: the broker's live status) opens the ADB Shell page itself, not the network dropdown.
-            "adb_shell_page" -> com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctx)
+            "adb_shell_page" -> com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctx)
             else -> Unit
         }
     }

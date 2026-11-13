@@ -3,7 +3,6 @@
  "files": [
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/App.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/ShellActivity.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/bgpolicy/BgUi.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/DeviceControls.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/AboutLogcat.kt",

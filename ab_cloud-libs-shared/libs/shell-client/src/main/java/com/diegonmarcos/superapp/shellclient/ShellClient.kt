@@ -196,6 +196,17 @@ class ShellClient(private val transport: Transport) {
             return r.isSuccess
         }
 
+        /**
+         * #1682 P3: the Wireless debugging switch of Developer options (the one setting a chip can open without any ADB class); falls back to
+         * [openArmPage] when the phone has no such page. True when something was started.
+         */
+        fun openWirelessDebuggingSettings(ctx: Context): Boolean {
+            val i = Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+                .putExtra(":settings:fragment_args_key", "toggle_adb_wireless")
+            if (ctx !is android.app.Activity) i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            return runCatching { ctx.startActivity(i) }.isSuccess || openArmPage(ctx)
+        }
+
         @Deprecated("use openArmPage", ReplaceWith("openArmPage(ctx)"))
         fun arm(ctx: Context): Boolean = openArmPage(ctx)
 

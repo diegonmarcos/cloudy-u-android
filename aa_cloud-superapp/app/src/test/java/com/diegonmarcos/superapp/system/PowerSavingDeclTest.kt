@@ -32,7 +32,7 @@ class PowerSavingDeclTest {
         assertTrue(src.contains("isPowerSaveMode") && src.contains("ACTION_POWER_SAVE_MODE_CHANGED"))
         assertTrue(src.contains("AdbToggle.CHANNEL_DOWN"))
         val dc = File(m + "configs/DeviceControls.kt").readText()
-        assertTrue(dc.contains("PowerSaving.blockedReason(ctx)") && dc.contains("AdbShellLink.open(ctx)"))
+        assertTrue(dc.contains("PowerSaving.blockedReason(ctx)") && dc.contains("ShellClient.openArmPage(ctx)"))
     }
 
     @Test fun `prefs are declared in fleet-config`() {

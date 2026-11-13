@@ -112,7 +112,7 @@ ok("com.diegonmarcos.superapp.adbdebug.AdbShellActivity" in man, "the lib manife
 ok("StoreShell.arm(ctx)" in code("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreBar.kt"), "the Store bar chip opens the SuperApp's arm flow (the Store has no channel page of its own)", "the Store bar chip no longer opens the SuperApp's arm flow")
 for f, why in (("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt", "the Permissions page chip"),
                ("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlFragment.kt", "the Dev control chip")):
-    ok("AdbShellLink.open(" in code(f), f"{why} opens the page", f"{why} no longer opens the ADB Shell page")
+    ok("ShellClient.openArmPage(" in code(f), f"{why} opens the page", f"{why} no longer opens the ADB Shell page")
 pp = code("ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/PermsPage.kt")
 ok('go("setup", "adb-shell")' in pp, "Account's Perms page links to Setup > ADB Shell", "Account's Perms page does not link to the ADB Shell page")
 
