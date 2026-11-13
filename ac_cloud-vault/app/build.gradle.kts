@@ -81,7 +81,9 @@ configure<ApplicationExtension> {
     // #1093 the Android halves of the fleet endpoint design (NetworkChangeWatch, FleetEndpointsClient): two files shared with
     // Cloud Account and Cloud Mail, compiled here BY REFERENCE next to the shared JVM tree in :network (no copy, and the
     // strict dependency locks of this build see no new module).
-    sourceSets["main"].kotlin.directories.add("../../ab_cloud-libs-shared/libs/fleet-endpoints-android/src/main/java")
+    // Only the fleetendpoints.android package: the lib's ui/StatusLight.kt (#1693) draws with the lib's own resources (R), which a
+    // by-reference compile has no namespace for, and Vault has no use for a status-light.
+    sourceSets["main"].kotlin.directories.add("../../ab_cloud-libs-shared/libs/fleet-endpoints-android/src/main/java/com/diegonmarcos/superapp/fleetendpoints/android")
     compileSdk {
         version = release(libs.versions.compileSdk.get().toInt())
     }
