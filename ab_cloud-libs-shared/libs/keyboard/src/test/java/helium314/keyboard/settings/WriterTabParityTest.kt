@@ -13,18 +13,21 @@ class WriterTabParityTest {
     private fun writerBuildJson(): String? = generateSequence(File("").absoluteFile) { it.parentFile }
         .map { File(it, "ac_cloud-writer/build.json") }.firstOrNull { it.isFile }?.readText()
 
-    @Test fun writerTabStartsWithCloudWritersBottomBarInOrder() {
-        val want = listOf("enhancer" to "Enhancer", "drafter" to "Drafter", "home" to "Home", "translator" to "Translator", "grammar" to "Grammar")
+    @Test fun writerTabStartsWithCloudWritersBottomBarInOrderMinusHome() {
+        val bar = listOf("enhancer" to "Enhancer", "drafter" to "Drafter", "home" to "Home", "translator" to "Translator", "grammar" to "Grammar")
         writerBuildJson()?.let { json ->
-            val bar = Regex("\"bottom_nav\"\\s*:\\s*\\[([^]]*)]").find(json)!!.groupValues[1]
+            val declared = Regex("\"bottom_nav\"\\s*:\\s*\\[([^]]*)]").find(json)!!.groupValues[1]
                 .split(",").map { it.trim().trim('"') }.filter { it.isNotEmpty() }
-            assertEquals(want.map { it.first }, bar)
+            assertEquals(bar.map { it.first }, declared) // cloud-writer itself keeps its Home
         }
-        val firstFive = KbTab.WRITER.pages.take(5)
-        assertEquals(want.map { SettingsDestination.hostRoute(it.first) }, firstFive.map { it.route })
-        assertEquals(want.map { it.second }, firstFive.map { it.label })
+        // the keyboard's Writer is that bar without Home (explicit removal; its content moved under Voice Transcription)
+        val want = bar.filter { it.first != "home" }
+        val firstFour = KbTab.WRITER.pages.take(4)
+        assertEquals(want.map { SettingsDestination.hostRoute(it.first) }, firstFour.map { it.route })
+        assertEquals(want.map { it.second }, firstFour.map { it.label })
         val labels = KbTab.WRITER.pages.map { it.label }
-        assert(labels.indexOf("Voice Transcription") > 4 && labels.indexOf("Dictionary") > 4)
+        assert(labels.indexOf("Voice Transcription") > 3)
+        assertEquals("Configs Writer is the very last page of Writer", "Configs Writer", labels.last())
     }
 
     /** #1698 Writer > Tools opens cloud-writer's tool activities by class name: the keyboard declares and ships every one (it crashed without). */

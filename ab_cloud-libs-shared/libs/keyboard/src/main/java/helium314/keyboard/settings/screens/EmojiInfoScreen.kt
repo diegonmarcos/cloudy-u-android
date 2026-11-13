@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -50,7 +51,9 @@ import helium314.keyboard.latin.utils.DictionaryInfoUtils
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.latin.utils.previewDark
+import helium314.keyboard.settings.EmojiLists
 import helium314.keyboard.settings.SearchSettingsScreen
+import helium314.keyboard.settings.KbDensity
 import helium314.keyboard.settings.SettingsActivity
 import helium314.keyboard.settings.SettingsWithoutKey
 import helium314.keyboard.settings.initPreview
@@ -74,7 +77,7 @@ fun EmojiInfoScreen(onClickBack: () -> Unit) {
     ) {
         val context = LocalContext.current
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(Modifier.padding(horizontal = KbDensity.pageGutter, vertical = KbDensity.blockGap)) {
                 Text(stringResource(R.string.mediaboards_emoji_search_hint), style = MaterialTheme.typography.bodyMedium)
                 val emojiLocales = runCatching { DictionaryInfoUtils.getLocalesWithEmojiDicts(context) }.getOrDefault(emptyList())
                 Text(
@@ -87,6 +90,8 @@ fun EmojiInfoScreen(onClickBack: () -> Unit) {
                 fontScaled = prefs.getFloat(Settings.PREF_EMOJI_FONT_SCALE, Defaults.PREF_EMOJI_FONT_SCALE) != 1f,
                 skinTones = prefs.getInt(Settings.PREF_EMOJI_MAX_SDK, 0) >= 24,
             ))
+            // the lists of emojis, at the bottom of the page (the keyboard's own emoji files, read when the page opens)
+            EmojiListsSection()
         }
     }
 }
@@ -108,6 +113,33 @@ internal fun emojiSettingKeys(fontScaled: Boolean = true, skinTones: Boolean = t
     Settings.PREF_INLINE_EMOJI_SEARCH,
     Settings.PREF_ENABLE_EMOJI_ALT_PHYSICAL_KEY,
 )
+
+/** One list per emoji category: its name and count, then every emoji of it wrapped over the page width. */
+@Composable
+private fun EmojiListsSection() {
+    val ctx = LocalContext.current
+    val cats by produceState<List<EmojiLists.Category>?>(null, ctx) {
+        value = withContext(Dispatchers.IO) {
+            EmojiLists.load { path -> ctx.assets.open(path).bufferedReader().use { it.readLines() } }
+        }
+    }
+    PreferenceCategory(stringResource(R.string.mediaboards_emoji_lists))
+    val list = cats
+    if (list == null) {
+        Text(stringResource(R.string.mediaboards_emoji_lists_loading), Modifier.padding(horizontal = KbDensity.pageGutter), style = MaterialTheme.typography.bodyMedium)
+        return
+    }
+    if (list.isEmpty()) {
+        Text(stringResource(R.string.mediaboards_emoji_lists_none), Modifier.padding(horizontal = KbDensity.pageGutter), style = MaterialTheme.typography.bodyMedium)
+        return
+    }
+    list.forEach { c ->
+        Column(Modifier.fillMaxWidth().padding(horizontal = KbDensity.pageGutter, vertical = KbDensity.innerGap)) {
+            Text("${c.label} (${c.emojis.size})", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.secondary)
+            Text(c.emojis.joinToString(" "), Modifier.testTag("emoji:list:${c.file}"), style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
 
 @Composable
 private fun ColumnScope.SettingRows(keys: List<Any?>) {
@@ -136,7 +168,7 @@ fun GifScreen(onClickBack: () -> Unit) {
         var items by remember { mutableStateOf<List<MediaItem>>(emptyList()) }
         val noResults = stringResource(R.string.mediaboards_gif_no_results)
         val failed = stringResource(R.string.mediaboards_gif_failed)
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(KbDensity.pageGutter), verticalArrangement = Arrangement.spacedBy(KbDensity.innerGap)) {
             PreferenceCategory(stringResource(R.string.mediaboards_gif_source))
             Fact(stringResource(R.string.mediaboards_gif_panel), stringResource(if (MediaRuntime.enabled) R.string.kb_theme_on else R.string.kb_theme_off))
             Fact(stringResource(R.string.mediaboards_gif_provider), gif?.provider ?: stringResource(R.string.mediaboards_gif_none))
@@ -182,7 +214,7 @@ fun StickersScreen(onClickBack: () -> Unit) {
                     .getOrDefault(emptyList())
             }
         }
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(KbDensity.pageGutter), verticalArrangement = Arrangement.spacedBy(KbDensity.innerGap)) {
             PreferenceCategory(stringResource(R.string.mediaboards_sticker_source))
             Fact(stringResource(R.string.mediaboards_sticker_panel), stringResource(if (MediaRuntime.stickersEnabled) R.string.kb_theme_on else R.string.kb_theme_off))
             Text(stringResource(R.string.mediaboards_sticker_source_desc), style = MaterialTheme.typography.bodyMedium)

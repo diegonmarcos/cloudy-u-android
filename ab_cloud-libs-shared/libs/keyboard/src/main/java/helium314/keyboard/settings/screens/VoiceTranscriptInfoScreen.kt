@@ -18,6 +18,7 @@ import helium314.keyboard.latin.R
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.latin.utils.previewDark
 import helium314.keyboard.settings.SearchSettingsScreen
+import helium314.keyboard.settings.KbDensity
 import helium314.keyboard.settings.initPreview
 import helium314.keyboard.settings.preferences.PreferenceCategory
 
@@ -31,7 +32,7 @@ fun VoiceTranscriptInfoScreen(onClickBack: () -> Unit) {
     ) {
         val context = LocalContext.current
         val client = VoiceEngines.client
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(KbDensity.pageGutter)) {
             Text(
                 "Tap the mic icon on the keyboard toolbar to start dictation. Speech is " +
                     "transcribed fully offline using a downloaded Vosk model for the current " +

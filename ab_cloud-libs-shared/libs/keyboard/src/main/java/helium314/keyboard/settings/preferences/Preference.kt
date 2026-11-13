@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import helium314.keyboard.latin.R
 import helium314.keyboard.settings.IconOrImage
+import helium314.keyboard.settings.KbDensity
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.latin.utils.previewDark
 
@@ -43,7 +44,7 @@ fun PreferenceCategory(
         HorizontalDivider()
         Text(
             text = title,
-            modifier = modifier.padding(top = 12.dp, start = 16.dp, end = 8.dp, bottom = 8.dp),
+            modifier = modifier.padding(top = KbDensity.sectionTop, start = KbDensity.pageGutter, end = KbDensity.blockGap, bottom = KbDensity.sectionBottom),
             color = MaterialTheme.colorScheme.secondary,
             style = MaterialTheme.typography.titleSmall
         )
@@ -63,8 +64,8 @@ fun Preference(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .heightIn(min = 44.dp)
-            .padding(vertical = 10.dp, horizontal = 12.dp),
+            .heightIn(min = KbDensity.rowMinHeight)
+            .padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.rowPadH),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

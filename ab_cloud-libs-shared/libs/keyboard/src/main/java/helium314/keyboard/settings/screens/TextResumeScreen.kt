@@ -38,6 +38,7 @@ import helium314.keyboard.settings.preferences.ListPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import helium314.keyboard.settings.KbDensity
 
 // SuperApp addition — "Text Resume".
 //
@@ -84,7 +85,7 @@ private fun SummaryTestBox(setting: Setting) {
     var copied by remember { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
     val dim = MaterialTheme.colorScheme.onSurfaceVariant
-    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 12.dp)) {
+    Column(Modifier.fillMaxWidth().padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.rowPadH)) {
         Text(setting.title, style = MaterialTheme.typography.bodyLarge)
         setting.description?.let {
             Text(it, Modifier.padding(top = 2.dp), color = dim, style = MaterialTheme.typography.bodyMedium)
@@ -92,11 +93,11 @@ private fun SummaryTestBox(setting: Setting) {
         OutlinedTextField(
             value = input,
             onValueChange = { input = it },
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = KbDensity.innerGap),
             minLines = 3,
             placeholder = { Text(stringResource(R.string.summary_test_hint)) },
         )
-        Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(top = KbDensity.innerGap), verticalAlignment = Alignment.CenterVertically) {
             Button(
                 enabled = !busy && input.isNotBlank(),
                 onClick = {
@@ -123,7 +124,7 @@ private fun SummaryTestBox(setting: Setting) {
         if (busy) {
             Text(
                 stringResource(R.string.enhance_test_running, AiRouter.provider(ctx).label),
-                Modifier.padding(top = 8.dp),
+                Modifier.padding(top = KbDensity.innerGap),
                 color = dim,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -131,7 +132,7 @@ private fun SummaryTestBox(setting: Setting) {
             OutlinedTextField(
                 value = output,
                 onValueChange = { output = it; copied = false },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = KbDensity.innerGap),
                 minLines = 3,
                 label = { Text(stringResource(R.string.enhance_test_output)) },
             )

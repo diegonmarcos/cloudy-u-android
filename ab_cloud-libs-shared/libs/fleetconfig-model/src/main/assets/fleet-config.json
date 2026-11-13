@@ -96,6 +96,15 @@
         "lib-keyboard"
       ]
     },
+    "autocomplete_userdata": {
+      "kind": "encrypted",
+      "class": "secret",
+      "doc": "Cloud Keyboard Writer > Configs Writer > Autocomplete: the user data tables the owner fills in (Personal Data, Keys, Urls, Notes, Others) as one JSON document under the key 'tables', in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs. Migrates to a new phone through the vault as a secret (personal data and keys), always masked on screen where it is a key. No row is baked into the APK: every row is typed by the user.",
+      "helper": "ac_cloud-keyboard/app/src/main/java/com/diegonmarcos/cloudkeyboard/App.kt",
+      "used_by": [
+        "ac_cloud-keyboard"
+      ]
+    },
     "PUSH_NOTIFICATIONS": {
       "kind": "prefs",
       "class": "device",

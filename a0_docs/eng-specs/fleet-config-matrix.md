@@ -32,7 +32,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-contacts | `com.diegonmarcos.cloudcontacts` | 8 | 2 | 80% |
 | cloud-dialer | `com.diegonmarcos.comms.dialer` | 9 | 2 | 81% |
 | cloud-drive | `com.diegonmarcos.clouddrive` | 17 | 6 | 73% |
-| cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 8 | 0 | 100% |
+| cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 9 | 0 | 100% |
 | cloud-mail | `com.diegonmarcos.comms.mail` | 13 | 2 | 86% |
 | cloud-matrix | `com.diegonmarcos.comms.matrix` | 4 | 9 | 30% |
 | cloud-me | `com.diegonmarcos.cloudme` | 19 | 1 | 95% |
@@ -57,7 +57,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **438** | **57** | **88%** |
+| **fleet** | | **439** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -764,6 +764,7 @@ Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, li
 |---|---|---|---|---|
 | `<default>` | prefs | config (keys: accountBiometricIntegrityValid→device, addActionCount→device, addSitePromptShown→device, app_shell_number_since_boot→device, bg_startup_tracing→device, biometricIntegritySource→device, browserAutofillDialogReshowTime→device, copyActionCount→device, crashLoggingEnabled→device, createActionCount→device, current_session→device, hasShownAccessibilityDisclaimer→device, hasUserLoggedInOrCreatedAccount→device, isVaultRegisteredForExport→device, last_notification_id→device, resumeScreen→device, shouldShowAddLoginCoachMark→device, shouldShowGeneratorCoachMark→device, showAutofillSettingBadge→device, showBrowserAutofillSettingBadge→device, showImportLoginsSettingBadge→device, showUnlockSettingBadge→device, terminal_session_number_since_boot→device, translate_recent_pairs→device, vaultLastSyncTime→device) | yes | The app's default SharedPreferences (<package>_preferences): HeliBoard keyboard settings (libs:keyboard), translate settings (libs:translate), the vault's bwPreferencesStorage keys, and the terminals' settings (Termux TermuxAppSharedPreferences: fontsize, log_level, extra keys, soft keyboard, screen-on; the session cursor, notification id and per-boot counters are device). Element X keeps only DI scaffolding here (device). bg_startup_tracing is the WebView's own startup-tracing flag, written into any app that hosts a WebView (device). Device for apps whose current code reads none of it: mail (the FairEmail-era settings the Sterna clone, 8b7ca107d, never reads — migrating them would only plant dead keys), notes (an intro-shown marker only) and office (the asset-extraction commit marker only). |
 | `autocomplete_store` | prefs | device | no | #1103 Cloud Keyboard's own Autocomplete database (IDs, Addresses, URLs, Secrets), kept like a browser's autofill store: one key, rows, holding an AES-GCM blob sealed with a non-exportable Android Keystore key of this phone. It is a cache of what Cloud Account syncs to the keyboard over its accountdata provider (grant autocomplete.read): it is re-filled from there, cannot be read on another phone (the key stays here) and never migrates. No vault calls, no network. |
+| `autocomplete_userdata` | encrypted | secret | yes | Cloud Keyboard Writer > Configs Writer > Autocomplete: the user data tables the owner fills in (Personal Data, Keys, Urls, Notes, Others) as one JSON document under the key 'tables', in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs. Migrates to a new phone through the vault as a secret (personal data and keys), always masked on screen where it is a key. No row is baked into the APK: every row is typed by the user. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
@@ -784,7 +785,7 @@ Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, li
 | `libs:keyboard (HeliBoard) default shared prefs <pkg>_preferences` | config | Keyboard layouts, languages, theme, key behaviour; kept in the library's default prefs, not in this module's scanned list. |
 | `filesDir/vosk/<model-dir>` | device | Downloaded Vosk model files (re-downloadable); the selected model name is declared/held in the host app prefs, not in this lib |
 
-Coverage: 8 covered, 0 gaps.
+Coverage: 9 covered, 0 gaps.
 
 ## cloud-mail — `com.diegonmarcos.comms.mail`
 

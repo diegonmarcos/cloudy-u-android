@@ -3,6 +3,7 @@ package helium314.keyboard.settings
 
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -37,10 +38,11 @@ class KeyboardNavChromeTest {
     @Test fun writerTabExposesEveryCloudWriterPageAsATopNavSubpage() {
         val routes = KbTab.WRITER.allPages.map { it.route }.toSet()
         listOf(
-            "enhancer", "drafter", "home", "translator", "grammar", // its former bottom nav
+            "enhancer", "drafter", "translator", "grammar", // its former bottom nav (Home is removed from the keyboard's Writer: its content moved under Voice Transcription)
             "tools", "tools.enhance", "tools.translation", "tools.grammar", "tools.ai_routing", "tools.routes", // Tools
             "dictation", "settings", // Listen and its configs
         ).forEach { assertTrue(it, SettingsDestination.hostRoute(it) in routes) }
+        assertFalse("Home is removed from the keyboard's Writer", SettingsDestination.hostRoute("home") in routes)
         assertTrue(nav.contains("composable(SettingsDestination.HostPage)"))
         assertTrue(nav.contains("KeyboardSettingsExtras.hostPage"))
         // the app draws them with the shared lib, not a copy
@@ -51,7 +53,7 @@ class KeyboardNavChromeTest {
 
     @Test fun mediaboardsAndTextboardsSubpages() {
         assertEquals(listOf("Emojis", "GIF", "Stickers"), KbTab.MEDIABOARDS.pages.map { it.label })
-        assertEquals(listOf("Autocomplete", "Clipboard"), KbTab.TEXTBOARDS.pages.map { it.label })
+        assertEquals(listOf("Clipboard"), KbTab.TEXTBOARDS.pages.map { it.label }) // Autocomplete moved under Writer > Configs Writer
     }
 
     /** Rule 16: every page the old nav (#1651 five tabs, Emoji, Secondary layouts, Languages, Appearance, Advanced) reached is still reachable. */

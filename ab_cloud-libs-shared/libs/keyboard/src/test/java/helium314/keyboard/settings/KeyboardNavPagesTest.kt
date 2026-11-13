@@ -70,8 +70,12 @@ class KeyboardNavPagesTest {
         val src = File(screens, "EmojiInfoScreen.kt").readText()
         assertTrue(src.contains("GifProvider.from(gif).fetch(")) // the GIF page runs a real search
         assertTrue(src.contains("StickerRepo.packs(ctx)")) // the Stickers page lists the real packs
-        assertEquals(listOf("Autocomplete", "Clipboard"), KbTab.TEXTBOARDS.pages.map { it.label })
-        assertEquals(listOf(SettingsDestination.Autocomplete, SettingsDestination.Clipboard), KbTab.TEXTBOARDS.pages.map { it.route })
+        assertEquals(listOf("Clipboard"), KbTab.TEXTBOARDS.pages.map { it.label })
+        assertEquals(listOf(SettingsDestination.Clipboard), KbTab.TEXTBOARDS.pages.map { it.route })
+        // Autocomplete (with Text correction) moved under Writer > Configs Writer: the same screens, a new home
+        val auto = KbTab.WRITER.allPages.first { it.id == "autocomplete" }
+        assertEquals(SettingsDestination.Autocomplete, auto.route)
+        assertEquals(listOf(SettingsDestination.TextCorrection), auto.children.map { it.route })
     }
 
     /** Rule 16: Default and Dev stay (labels and stored ids), and Unexpected is added after them with its own stored id. */

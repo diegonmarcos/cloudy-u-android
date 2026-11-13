@@ -24,6 +24,7 @@ import helium314.keyboard.latin.R
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.latin.utils.previewDark
 import helium314.keyboard.settings.SearchSettingsScreen
+import helium314.keyboard.settings.KbDensity
 import helium314.keyboard.settings.Setting
 import helium314.keyboard.settings.SettingsActivity
 import helium314.keyboard.settings.initPreview
@@ -92,7 +93,7 @@ fun TranslationInfoScreen(onClickBack: () -> Unit) {
             val client = RoutedTranslateEngineClient.onDevice()
             val liveLangs = client?.supportedLanguages().orEmpty()
             PreferenceCategory("Engine")
-            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(Modifier.padding(horizontal = KbDensity.pageGutter, vertical = KbDensity.blockGap)) {
                 Text(
                     "Tap the translate icon on the toolbar: type in the bar, see the live " +
                         "translation underneath, then Insert / Replace / Copy (Enter runs the " +

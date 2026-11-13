@@ -1619,6 +1619,16 @@ New dictionary:
     <string name="mediaboards_emoji_search_hint">Tap the search icon in the emoji keyboard\'s category strip to search emoji, stickers and GIFs together in one bar drawn above the keys.</string>
     <string name="mediaboards_emoji_no_dict">No on-device emoji-name dictionary installed for the enabled languages.</string>
     <string name="mediaboards_emoji_dicts">Emoji-name search dictionary installed for: %1$s.</string>
+    <string name="mediaboards_emoji_lists">Emoji lists</string>
+    <string name="mediaboards_emoji_lists_loading">Loading the emoji lists...</string>
+    <string name="mediaboards_emoji_lists_none">The emoji lists could not be read on this build.</string>
+    <string name="autocomplete_userdata">Your data for Autocomplete</string>
+    <string name="autocomplete_userdata_note">Tables you fill in yourself. They are kept encrypted on this phone, in the keyboard\'s own store; nothing is shipped in the app.</string>
+    <string name="autocomplete_userdata_unavailable">This build has no store for the tables, so they cannot be saved here.</string>
+    <string name="autocomplete_userdata_empty">empty, tap to add</string>
+    <string name="autocomplete_userdata_add">Add to %1$s</string>
+    <string name="autocomplete_userdata_save">Save</string>
+    <string name="autocomplete_userdata_delete">Delete</string>
     <string name="mediaboards_emoji_panel">Emoji panel</string>
     <string name="mediaboards_emoji_look">Look</string>
     <string name="mediaboards_emoji_typing">While typing</string>

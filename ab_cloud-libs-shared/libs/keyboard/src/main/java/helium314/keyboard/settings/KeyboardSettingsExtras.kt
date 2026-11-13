@@ -24,5 +24,12 @@ object KeyboardSettingsExtras {
     /** #1652 pages the host draws itself (the Writer tab's cloud-writer pages, libs:writer-ui): called with the page id of a `host/<id>` route. */
     @Volatile var hostPage: (@Composable (id: String) -> Unit)? = null
 
+    /**
+     * The app's declared encrypted store for the Autocomplete user-data tables (fleet-config `autocomplete_userdata`): the host opens
+     * it (the standalone Cloud Keyboard through libs:crash SafeEncryptedPrefs). null (the keyboard engines APK) = the tables show why they
+     * cannot be saved instead of keeping data anywhere undeclared.
+     */
+    @Volatile var userDataPrefs: ((Context) -> android.content.SharedPreferences)? = null
+
     @Volatile var chrome: (@Composable (route: String?, open: (String) -> Unit, content: @Composable () -> Unit) -> Unit)? = null
 }

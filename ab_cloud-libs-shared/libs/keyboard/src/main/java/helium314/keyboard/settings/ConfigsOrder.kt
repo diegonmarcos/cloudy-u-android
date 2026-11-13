@@ -47,8 +47,8 @@ enum class AllSettingsPage(val section: HomeGroup) {
         ADVANCED -> KbHome.KEYBOARD to "advanced"
         EMOJI -> KbHome.MEDIABOARDS to "emojis"
         CLIPBOARD -> KbHome.TEXTBOARDS to "clipboard"
-        AUTOCOMPLETE -> KbHome.TEXTBOARDS to "autocomplete"
-        TEXT_CORRECTION -> KbHome.TEXTBOARDS to "text_correction"
+        AUTOCOMPLETE -> KbHome.WRITER to "autocomplete"
+        TEXT_CORRECTION -> KbHome.WRITER to "text_correction"
         DICTIONARIES -> KbHome.WRITER to "dictionary"
         TRANSLATION -> KbHome.WRITER to "kb_translator"
         TEXT_ENHANCE -> KbHome.WRITER to "kb_writing_tools"
@@ -102,11 +102,11 @@ enum class KbTab(val id: String, val label: String, val icon: String, val pages:
         NavPageDecl("toolbar", "Toolbar", SettingsDestination.Toolbar),
     )),
     WRITER("writer", "Writer", "edit", listOf(
-        // #1652 cloud-writer's own pages (libs:writer-ui WriterSurface.Page): its former bottom nav, then Tools, dictation and configs
-        // #1698 cloud-writer's own bottom bar, same order and labels (ac_cloud-writer build.json ui.bottom_nav)
+        // #1652 cloud-writer's own pages (libs:writer-ui WriterSurface.Page): its former bottom nav, then Tools and dictation
+        // #1698 cloud-writer's own bottom bar, same order and labels (ac_cloud-writer build.json ui.bottom_nav) MINUS Home: the
+        // document list is not a Writer sub-page here any more (its content now lives under Voice Transcription, where the text lands)
         NavPageDecl("writer_enhancer", "Enhancer", SettingsDestination.hostRoute("enhancer")),
         NavPageDecl("writer_drafter", "Drafter", SettingsDestination.hostRoute("drafter")),
-        NavPageDecl("writer_home", "Home", SettingsDestination.hostRoute("home")),
         NavPageDecl("writer_translator", "Translator", SettingsDestination.hostRoute("translator")),
         NavPageDecl("writer_grammar", "Grammar", SettingsDestination.hostRoute("grammar")),
         NavPageDecl("writer_tools", "Tools", SettingsDestination.hostRoute("tools"), listOf(
@@ -115,17 +115,26 @@ enum class KbTab(val id: String, val label: String, val icon: String, val pages:
             NavPageDecl("writer_tools_grammar", "Grammar check", SettingsDestination.hostRoute("tools.grammar")),
             NavPageDecl("writer_tools_ai_routing", "AI routing", SettingsDestination.hostRoute("tools.ai_routing")),
             NavPageDecl("writer_tools_routes", "Routes", SettingsDestination.hostRoute("tools.routes")))),
-        NavPageDecl("voice_transcription", "Voice Transcription", SettingsDestination.hostRoute("dictation"), listOf(
-            NavPageDecl("voice_transcription_settings", "Voice transcription settings", SettingsDestination.VoiceTranscript))),
-        NavPageDecl("dictionary", "Dictionary", SettingsDestination.Dictionaries, listOf(
-            NavPageDecl("personal_dictionary", "Personal dictionary", SettingsDestination.PersonalDictionaries))),
-        NavPageDecl("writer_configs", "Writer configs", SettingsDestination.hostRoute("settings")),
-        // the keyboard's own writing-tool pages (Enhancer etc. as keyboard settings) stay reachable
-        NavPageDecl("kb_writing_tools", "Keyboard writing tools", SettingsDestination.TextEnhance, listOf(
-            NavPageDecl("kb_drafter", "Draft Answer", SettingsDestination.DraftAnswer),
+        NavPageDecl("voice_transcription", "Voice Transcription", SettingsDestination.hostRoute("dictation")),
+        // Configs Writer: EVERY config page of Writer, by topic, the very last page of Writer (landing = the Writer app's own configs page)
+        NavPageDecl("writer_configs", "Configs Writer", SettingsDestination.hostRoute("settings"), listOf(
+            // topic: text tools (enhance, draft answer, summarise)
+            NavPageDecl("kb_writing_tools", "Text enhancement", SettingsDestination.TextEnhance, listOf(
+                NavPageDecl("kb_drafter", "Draft Answer", SettingsDestination.DraftAnswer),
+                NavPageDecl("kb_summarise", "Summarise", SettingsDestination.TextResume))),
+            // topic: translation
             NavPageDecl("kb_translator", "Translation", SettingsDestination.Translation),
+            // topic: grammar
             NavPageDecl("kb_grammar", "Grammar Check", SettingsDestination.GrammarCheck),
-            NavPageDecl("kb_summarise", "Summarise", SettingsDestination.TextResume),
+            // topic: autocomplete and corrections (the Autocomplete page with its user-data tables, Text correction)
+            NavPageDecl("autocomplete", "Autocomplete", SettingsDestination.Autocomplete, listOf(
+                NavPageDecl("text_correction", "Text correction", SettingsDestination.TextCorrection))),
+            // topic: voice
+            NavPageDecl("voice_transcription_settings", "Voice transcription settings", SettingsDestination.VoiceTranscript),
+            // topic: dictionaries
+            NavPageDecl("dictionary", "Dictionary", SettingsDestination.Dictionaries, listOf(
+                NavPageDecl("personal_dictionary", "Personal dictionary", SettingsDestination.PersonalDictionaries))),
+            // topic: AI routing
             NavPageDecl("kb_ai_routing", "AI routing", SettingsDestination.AiRouting))),
     )),
     MEDIABOARDS("mediaboards", "Mediaboards", "layers", listOf(
@@ -135,8 +144,7 @@ enum class KbTab(val id: String, val label: String, val icon: String, val pages:
         NavPageDecl("stickers", "Stickers", SettingsDestination.Stickers),
     )),
     TEXTBOARDS("textboards", "Textboards", "content_paste", listOf(
-        NavPageDecl("autocomplete", "Autocomplete", SettingsDestination.Autocomplete, listOf(
-            NavPageDecl("text_correction", "Text correction", SettingsDestination.TextCorrection))),
+        // Autocomplete and Text correction moved under Writer > Configs Writer; the Clipboard stays here
         NavPageDecl("clipboard", "Clipboard", SettingsDestination.Clipboard),
     ));
 

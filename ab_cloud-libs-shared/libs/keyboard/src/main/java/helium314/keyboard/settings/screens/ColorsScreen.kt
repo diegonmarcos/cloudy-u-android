@@ -56,6 +56,7 @@ import helium314.keyboard.latin.utils.getActivity
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.latin.utils.CloseIcon
 import helium314.keyboard.settings.SearchScreen
+import helium314.keyboard.settings.KbDensity
 import helium314.keyboard.settings.SettingsActivity
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.settings.contentTextDirectionStyle
@@ -183,7 +184,7 @@ fun ColorsScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(horizontal = KbDensity.pageGutter, vertical = KbDensity.blockGap)
                         .clickable { chosenColorString = Json.encodeToString(colorSetting) }
                 ) {
                     Spacer(

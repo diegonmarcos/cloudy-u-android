@@ -58,6 +58,7 @@ import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
+import helium314.keyboard.settings.KbDensity
 
 // Configs ▸ AI Routing: the OpenRouter model list (Refresh, search, free filter) and one selectable model
 // table per task; plus the routing switch Translation and Grammar Check show, and the read-only model line
@@ -138,10 +139,10 @@ fun AiCatalogRow(setting: Setting) {
     LaunchedEffect(Unit) { if (CatalogUi.catalog == null && !CatalogUi.busy) refresh(ctx) }
     val dim = MaterialTheme.colorScheme.onSurfaceVariant
     KitScope {
-        Column(Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 12.dp)) {
+        Column(Modifier.fillMaxWidth().padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.rowPadH)) {
             Text(setting.title, style = MaterialTheme.typography.bodyLarge)
             setting.description?.let { Text(it, Modifier.padding(top = 2.dp), color = dim, style = MaterialTheme.typography.bodyMedium) }
-            Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.padding(top = KbDensity.innerGap), verticalAlignment = Alignment.CenterVertically) {
                 Button(enabled = !CatalogUi.busy, onClick = { scope.launch { refresh(ctx) } }, modifier = Modifier.testTag("ai:catalog:refresh")) {
                     Text(stringResource(R.string.ai_catalog_refresh))
                 }
@@ -161,7 +162,7 @@ fun AiCatalogRow(setting: Setting) {
             }
             KitSearchBar(
                 query = CatalogUi.query, onQueryChange = { CatalogUi.query = it }, onSubmit = {},
-                modifier = Modifier.padding(top = 8.dp), placeholder = stringResource(R.string.ai_catalog_search),
+                modifier = Modifier.padding(top = KbDensity.innerGap), placeholder = stringResource(R.string.ai_catalog_search),
             )
             KitSwitchRow(stringResource(R.string.ai_catalog_free_only), "", CatalogUi.freeOnly, { CatalogUi.freeOnly = it })
         }
@@ -187,7 +188,7 @@ fun AiTaskTable(setting: Setting, task: AiTask) {
         if (pinned != null) listOf(pinned) + f.filter { it.id != selected } else f
     }
     KitScope {
-        Column(Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 12.dp).testTag("ai:table:${task.id}")) {
+        Column(Modifier.fillMaxWidth().padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.rowPadH).testTag("ai:table:${task.id}")) {
             Text(setting.title, style = MaterialTheme.typography.bodyLarge)
             setting.description?.let { Text(it, Modifier.padding(top = 2.dp), color = dim, style = MaterialTheme.typography.bodyMedium) }
             Text(stringResource(R.string.ai_task_in_use, AiTaskRouting.modelInUse(ctx, task)) +
@@ -242,7 +243,7 @@ fun AiRoutingSwitch(setting: Setting, task: AiTask) {
         null -> ctx.getString(R.string.ai_engine_none)
     }
     KitScope {
-        Column(Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 12.dp).testTag("ai:routing:${task.id}")) {
+        Column(Modifier.fillMaxWidth().padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.rowPadH).testTag("ai:routing:${task.id}")) {
             Text(setting.title, style = MaterialTheme.typography.bodyLarge)
             setting.description?.let { Text(it, Modifier.padding(top = 2.dp), color = dim, style = MaterialTheme.typography.bodyMedium) }
             listOf(AiEngine.ML to R.string.ai_engine_ml, AiEngine.OPENROUTER to R.string.ai_engine_openrouter).forEach { (e, label) ->
@@ -251,7 +252,7 @@ fun AiRoutingSwitch(setting: Setting, task: AiTask) {
             }
             Text(stringResource(R.string.ai_routing_active, name(res.active)) +
                 if (res.reason != EngineResolution.Reason.CHOSEN) " (" + reasonText(ctx, res.reason) + ")" else "",
-                Modifier.padding(top = 8.dp).testTag("ai:routing:${task.id}:active"), style = MaterialTheme.typography.bodyMedium)
+                Modifier.padding(top = KbDensity.innerGap).testTag("ai:routing:${task.id}:active"), style = MaterialTheme.typography.bodyMedium)
             Text(stringResource(R.string.ai_routing_fallback, res.fallback?.let { name(it) } ?: ctx.getString(R.string.ai_engine_none)),
                 Modifier.padding(top = 2.dp), color = dim, style = MaterialTheme.typography.bodySmall)
             Text(stringResource(R.string.ai_routing_open_tables), Modifier.padding(top = 6.dp)
@@ -275,7 +276,7 @@ fun AiEnhanceModelRow(setting: Setting) {
     val ctx = LocalContext.current
     val dim = MaterialTheme.colorScheme.onSurfaceVariant
     val picked = AiTaskModels.get(ctx.prefs().asStore(), AiTask.ENHANCE)
-    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 12.dp).testTag("ai:enhance:model")) {
+    Column(Modifier.fillMaxWidth().padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.rowPadH).testTag("ai:enhance:model")) {
         Text(setting.title, style = MaterialTheme.typography.bodyLarge)
         Text(AiTaskRouting.modelInUse(ctx, AiTask.ENHANCE), Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodyMedium)
         Text(stringResource(if (picked != null) R.string.ai_enhance_model_picked else R.string.ai_enhance_model_default),

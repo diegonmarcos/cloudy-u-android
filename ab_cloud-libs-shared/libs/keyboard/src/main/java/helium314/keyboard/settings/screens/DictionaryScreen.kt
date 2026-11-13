@@ -40,6 +40,7 @@ import helium314.keyboard.latin.utils.htmlToAnnotated
 import helium314.keyboard.latin.utils.locale
 import helium314.keyboard.latin.utils.withHtmlLink
 import helium314.keyboard.settings.SearchScreen
+import helium314.keyboard.settings.KbDensity
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.settings.dialogs.ConfirmationDialog
 import helium314.keyboard.settings.dialogs.DictionaryDialog
@@ -79,7 +80,7 @@ fun DictionaryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .clickable { showAddDictDialog = true }
-                        .padding(vertical = 4.dp, horizontal = 16.dp)
+                        .padding(vertical = KbDensity.innerGap, horizontal = KbDensity.pageGutter)
                         .fillMaxWidth()
                 ) {
                     Text(
@@ -91,7 +92,7 @@ fun DictionaryScreen(
                 Column(
                     Modifier
                         .clickable { selectedLocale = locale }
-                        .padding(vertical = 6.dp, horizontal = 16.dp)
+                        .padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.pageGutter)
                         .fillMaxWidth()
                 ) {
                     val (dicts, hasInternal) = getUserAndInternalDictionaries(ctx, locale)

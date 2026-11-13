@@ -191,7 +191,7 @@ fun <T: Any?> SearchScreen(
                         onSearchChange = { searchText = it },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = KbDensity.pageGutter, vertical = KbDensity.blockGap),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surface
                         )

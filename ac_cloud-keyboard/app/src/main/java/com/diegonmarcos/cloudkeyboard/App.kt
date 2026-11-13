@@ -51,6 +51,8 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // Configs strip ({app tabs} | Agents, Perms, Logcat, X-Ray App, About; the tail tabs register from the linked fleetconfigs libs).
         helium314.keyboard.settings.KeyboardSettingsExtras.chrome = { route, open, content -> KeyboardChrome.Draw(route, open, content) }
         helium314.keyboard.settings.KeyboardSettingsExtras.hostPage = { id -> WriterHost.Page(id) }
+        // the Autocomplete user-data tables (Writer > Configs Writer > Autocomplete): the declared encrypted store `autocomplete_userdata` (fleet-config.json)
+        helium314.keyboard.settings.KeyboardSettingsExtras.userDataPrefs = { ctx -> com.diegonmarcos.superapp.crash.SafeEncryptedPrefs.prefs(ctx, "autocomplete_userdata") }
         com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.register(
             com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab("keyboard", "Keyboard", "settings") { dark -> KeyboardConfigsTabBody(dark) }
         )

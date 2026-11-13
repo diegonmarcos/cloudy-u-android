@@ -48,6 +48,7 @@ import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.latin.utils.previewDark
 import helium314.keyboard.settings.KbThemePreset
+import helium314.keyboard.settings.KbDensity
 import helium314.keyboard.settings.SearchSettingsScreen
 import helium314.keyboard.settings.initPreview
 import helium314.keyboard.settings.preferences.PreferenceCategory
@@ -69,7 +70,7 @@ fun ThemesScreen(
         title = stringResource(R.string.kb_themes),
         settings = emptyList(),
     ) {
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = KbDensity.pageGutter, vertical = KbDensity.blockGap)) {
             KbThemePreset.entries.forEach { preset ->
                 ThemeCard(ctx, preset, selected == preset,
                     onSelect = { KbThemePreset.apply(ctx, preset); selected = preset },
@@ -121,7 +122,7 @@ fun ThemePageScreen(
         title = stringResource(preset.label),
         settings = emptyList(),
     ) {
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = KbDensity.pageGutter, vertical = KbDensity.blockGap)) {
             Text(stringResource(preset.summary), style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(8.dp))
             if (redraw >= 0) ThemePreview(ctx, preset)

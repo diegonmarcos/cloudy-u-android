@@ -47,6 +47,7 @@ import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
+import helium314.keyboard.settings.KbDensity
 
 // SuperApp addition — "AI Model Routing": the ONE provider/token/model choice shared by
 // Text Enhancements and Grammar check (mode "ai"). Everything here is built from
@@ -225,7 +226,7 @@ private fun AiPricingTable(setting: Setting, p: AiRouter.Provider) {
     val scroll = rememberScrollState()
     val label = MaterialTheme.typography.labelMedium
     val body = MaterialTheme.typography.bodyMedium
-    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 12.dp)) {
+    Column(Modifier.fillMaxWidth().padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.rowPadH)) {
         Text(setting.title, style = MaterialTheme.typography.bodyLarge)
         setting.description?.let { Text(it, Modifier.padding(top = 2.dp), color = dim, style = MaterialTheme.typography.bodyMedium) }
         Row(Modifier.fillMaxWidth().padding(top = 6.dp).horizontalScroll(scroll)) {

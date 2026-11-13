@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import helium314.keyboard.latin.AiRouter
 import helium314.keyboard.latin.R
 import helium314.keyboard.settings.Setting
+import helium314.keyboard.settings.KbDensity
 
 /**
  * SuperApp addition — THE PROMPT, shown where the settings that build it are.
@@ -45,7 +46,7 @@ fun PromptPreview(setting: Setting, text: String) {
     val clipboard = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
     val dim = MaterialTheme.colorScheme.onSurfaceVariant
-    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 12.dp)) {
+    Column(Modifier.fillMaxWidth().padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.rowPadH)) {
         Text(setting.title, style = MaterialTheme.typography.bodyLarge)
         setting.description?.let {
             Text(it, Modifier.padding(top = 2.dp), color = dim, style = MaterialTheme.typography.bodyMedium)
@@ -57,7 +58,7 @@ fun PromptPreview(setting: Setting, text: String) {
             onValueChange = {},
             readOnly = true,
             enabled = false,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = KbDensity.innerGap),
             minLines = 3,
             maxLines = 12,
         )

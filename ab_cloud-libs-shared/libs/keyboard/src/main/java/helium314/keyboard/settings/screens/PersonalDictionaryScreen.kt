@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.common.LocaleUtils.localizedDisplayName
 import helium314.keyboard.settings.DropDownField
+import helium314.keyboard.settings.KbDensity
 import helium314.keyboard.settings.SearchScreen
 import helium314.keyboard.settings.dialogs.ThreeButtonAlertDialog
 import java.util.Locale
@@ -73,7 +74,7 @@ fun PersonalDictionaryScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { selectedWord = it }
-                    .padding(vertical = 6.dp, horizontal = 16.dp)
+                    .padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.pageGutter)
             ) {
                 Column {
                     Text(it.word, style = MaterialTheme.typography.bodyLarge)

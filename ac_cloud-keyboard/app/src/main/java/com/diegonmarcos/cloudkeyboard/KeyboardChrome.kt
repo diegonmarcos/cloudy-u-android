@@ -68,16 +68,18 @@ object KeyboardChrome {
 
     /**
      * #1698 the fleet second top row(s) for section [tabId] with page [pageId] open, from [decl]: row 1 = the section's pages,
-     * row 2 = the open page's own sub-pages (its overview first, under the page's id).
+     * row 2 = the open page's own sub-pages (its overview first, under the page's id), and one more row per level below.
      */
     fun stripRows(decl: NavDecl, tabId: String, pageId: String?): List<Pair<List<NavPage>, String?>> {
         val pages = decl.section(tabId)?.pages.orEmpty()
         if (pages.isEmpty()) return emptyList()
-        val top = pages.firstOrNull { p -> p.id == pageId || p.allIds().contains(pageId) } ?: pages.first()
-        val rows = mutableListOf(pages.map { it.copy(pages = emptyList()) } to top.id)
-        if (top.pages.isNotEmpty()) {
+        var top = pages.firstOrNull { p -> p.id == pageId || p.allIds().contains(pageId) } ?: pages.first()
+        val rows = mutableListOf(pages.map { it.copy(pages = emptyList()) } to (top.id as String?))
+        // one more row for every level the open page sits under (Writer > Configs Writer > Text enhancement > Draft Answer = 3 rows)
+        while (top.pages.isNotEmpty()) {
             val sub = top.pages.firstOrNull { c -> c.id == pageId || c.allIds().contains(pageId) }
             rows += (listOf(top.copy(pages = emptyList())) + top.pages.map { it.copy(pages = emptyList()) }) to (sub?.id ?: top.id)
+            top = sub ?: break
         }
         return rows
     }

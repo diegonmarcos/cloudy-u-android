@@ -28,6 +28,7 @@ import helium314.keyboard.latin.utils.Log
 import helium314.keyboard.latin.utils.getActivity
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.settings.SettingsActivity
+import helium314.keyboard.settings.KbDensity
 import helium314.keyboard.settings.preferences.PreferenceCategory
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -181,7 +182,7 @@ fun GrammarCheckScreen(onClickBack: () -> Unit) {
 private fun EnginesList() {
     PreferenceCategory(stringResource(R.string.grammar_engines_category))
     GrammarEngines.ALL.forEach { e ->
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 3.dp)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = KbDensity.pageGutter, vertical = KbDensity.innerGap)) {
             Row {
                 Text(e.title, fontSize = 14.sp, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface)
                 Text(

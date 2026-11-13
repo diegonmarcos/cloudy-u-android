@@ -584,6 +584,9 @@ class WriterSurface(
      */
     @Composable
     private fun DictationPage() {
+        // a document opened from the documents section below shows in place; Back returns to this page
+        BackHandler(enabled = screen.value == Screen.EDITOR) { back() }
+        if (screen.value == Screen.EDITOR) { EditorScreen(); return }
         val s = ListenEngine.state.value
         var transcript by remember { mutableStateOf("") }
         LaunchedEffect(s.segments, s.running) {
@@ -601,6 +604,65 @@ class WriterSurface(
                     Text(transcript, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(12.dp))
                 }
                 WriterButton(stringResource(R.string.action_copy), { copy(transcript) }, kind = ControlKind.TONAL)
+            }
+            Spacer(Modifier.height(BlockGap))
+            DocumentsSection()
+        }
+    }
+
+    /**
+     * The documents of the removed Home page, as a section of the Voice Transcription page: search, the import actions (file,
+     * scan, image), the documents as cards (open, share, delete as on Home) and a New document button. Not lazy: it sits inside
+     * the page's own scroll.
+     */
+    @Composable
+    private fun DocumentsSection() {
+        val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { importFile(it) } }
+        val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { importImage(it) } }
+        var shot by remember { mutableStateOf<Uri?>(null) }
+        val takePhoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> shot?.takeIf { ok }?.let { importImage(it) } }
+        LaunchedEffect(Unit) { reloadDocs() }
+        val list = DocList.sort(docs.value, docSort.value)
+        KitBridge {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(WriterDims.gap)) {
+                WriterLabel(stringResource(R.string.doc_list_title))
+                WriterSearchField(
+                    query = query.value,
+                    onQueryChange = { query.value = it; reloadDocs() },
+                    placeholder = stringResource(R.string.doc_search_hint),
+                    clearLabel = stringResource(R.string.action_clear),
+                )
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(WriterDims.gap)) {
+                    WriterButton(
+                        stringResource(R.string.import_file),
+                        { pickFile.launch(arrayOf("text/*", "text/markdown", "text/html", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream")) },
+                        Modifier.testTag("writer:import-file"), ControlKind.TONAL, Icons.Rounded.FileOpen,
+                    )
+                    WriterButton(
+                        stringResource(R.string.import_scan),
+                        {
+                            val dir = File(cacheDir, "ocr").apply { mkdirs() }
+                            val uri = FileProvider.getUriForFile(activity, packageName + ".ocr", File(dir, "shot.jpg"))
+                            shot = uri
+                            takePhoto.launch(uri)
+                        },
+                        Modifier.testTag("writer:import-scan"), ControlKind.TONAL, Icons.Rounded.PhotoCamera,
+                    )
+                    WriterButton(
+                        stringResource(R.string.import_image), { pickImage.launch("image/*") },
+                        Modifier.testTag("writer:import-image"), ControlKind.TONAL, Icons.Rounded.AddPhotoAlternate,
+                    )
+                }
+                importNote.value?.let { (line, state) -> KitStatusBanner(line, state, tag = "import") }
+                when {
+                    !docsLoaded.value -> KitSkeletonRows(3)
+                    list.isEmpty() -> Text(
+                        stringResource(if (query.value.isNotBlank()) R.string.doc_no_match_title else R.string.doc_empty_title),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    else -> list.forEach { DocCard(it) }
+                }
+                WriterButton(stringResource(R.string.doc_new), { newDoc() }, Modifier.testTag("writer:new"), icon = Icons.Rounded.Add)
             }
         }
     }

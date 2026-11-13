@@ -284,7 +284,7 @@ kb navpages; NP="$(last navpages | sed 's/.*navpages -> //')"
 NPAGES=$(wc -w <<<"$NP"); echo "declared nav pages: $NPAGES"
 [ "$NPAGES" -ge 20 ] && ok "the APK declares $NPAGES nav pages" || bad "navpages: $(last navpages)"
 TABS="$(for e in $NP; do echo "${e%%/*}"; done | awk '!s[$0]++')"
-LABELS="Keyboard|Writer|Mediaboards|Textboards|Cloud Keyboard|Configs|Account|Search|More options|Back|Navigate up|Overview|Themes|Default|Dev|Settings|Appearance|Advanced|Preferences|Gesture typing|Gesture data|Languages|Secondary layouts|Toolbar|Enhancer|Drafter|Home|Translator|Grammar|Tools|Voice Transcription|Dictionary|Writer configs|Keyboard writing tools|Emojis|GIF|Stickers|Autocomplete|Text correction|Clipboard"
+LABELS="Keyboard|Writer|Mediaboards|Textboards|Cloud Keyboard|Configs|Account|Search|More options|Back|Navigate up|Overview|Themes|Default|Dev|Settings|Appearance|Advanced|Preferences|Gesture typing|Gesture data|Languages|Secondary layouts|Toolbar|Enhancer|Drafter|Translator|Grammar|Tools|Voice Transcription|Configs Writer|Text enhancement|Draft Answer|Summarise|Translation|Grammar Check|Voice transcription settings|Dictionary|Personal dictionary|AI routing|Emojis|GIF|Stickers|Autocomplete|Text correction|Clipboard"
 n=0
 for t in $TABS; do
     lbl="$(tr '[:lower:]' '[:upper:]' <<<"${t:0:1}")${t:1}"
@@ -298,9 +298,9 @@ for t in $TABS; do
     # the fleet top sub-tab strip shows exactly the owner's sub-pages of this tab
     case "$t" in
         keyboard) WANT="Themes|Settings|Languages|Toolbar" ;;
-        writer) WANT="Enhancer|Drafter|Home|Translator|Grammar|Voice Transcription|Dictionary" ;;
+        writer) WANT="Enhancer|Drafter|Translator|Grammar|Tools|Voice Transcription|Configs Writer" ;;
         mediaboards) WANT="Emojis|GIF|Stickers" ;;
-        textboards) WANT="Autocomplete|Clipboard" ;;
+        textboards) WANT="Clipboard" ;;
         *) WANT="" ;;
     esac
     IFS='|' read -ra WL <<<"$WANT"
@@ -333,6 +333,19 @@ for e in $NP; do
     if adb logcat -d | grep -q "FATAL EXCEPTION"; then bad "a crash after opening $t/$id"; break; fi
 done
 
+# the reorg's changed pages scrolled to their bottom: the Emoji lists, the Autocomplete tables, Voice Transcription's documents
+kb nav emojis; sleep 3; for _ in 1 2 3 4; do up; done; dumpui "$OUT/bottom-emojis.xml" || true; shot "bottom-emojis"
+grep -q "Emoji lists\|Smileys and emotion" "$OUT/bottom-emojis.xml" && ok "the Emoji page lists the emojis at its bottom" || bad "no emoji lists at the bottom of the Emoji page"
+kb nav autocomplete; sleep 3; for _ in 1 2 3 4 5 6; do up; done; dumpui "$OUT/bottom-autocomplete.xml" || true; shot "bottom-autocomplete"
+for tt in "Personal Data" "Keys" "Urls" "Notes" "Others"; do
+    grep -q "text=\"$tt (\|text=\"Add to $tt\"" "$OUT/bottom-autocomplete.xml" && ok "the Autocomplete page shows the $tt table" || bad "no $tt table on the Autocomplete page"
+done
+read -r TX TY < <(centre "$OUT/bottom-autocomplete.xml" "Add to Others")
+if [ -n "${TX:-}" ]; then adb shell input tap "$TX" "$TY"; sleep 2; shot "autocomplete-add-dialog"; dumpui "$OUT/autocomplete-add-dialog.xml" || true
+    grep -q 'text="Save"' "$OUT/autocomplete-add-dialog.xml" && ok "the add dialog opens with Save" || bad "the add dialog has no Save"; adb shell input keyevent 4; sleep 1
+else bad "no Add to Others row to open"; fi
+TX=""; TY=""
+kb nav voice_transcription; sleep 3; for _ in 1 2 3; do up; done; shot "bottom-voice-transcription"
 if adb logcat -d | grep -q "FATAL EXCEPTION.*"; then bad "a crash is in the log"; adb logcat -d | grep -A12 "FATAL EXCEPTION" | head -40; else ok "no crash in the log"; fi
 adb logcat -d > "$OUT/logcat.txt" 2>/dev/null
 adb logcat -d -s KbdShot:I > "$OUT/kbdshot.txt" 2>/dev/null

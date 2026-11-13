@@ -43,6 +43,7 @@ import helium314.keyboard.latin.utils.getActivity
 import helium314.keyboard.latin.utils.locale
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.settings.SearchScreen
+import helium314.keyboard.settings.KbDensity
 import helium314.keyboard.settings.SettingsActivity
 import helium314.keyboard.settings.SettingsDestination
 import helium314.keyboard.latin.utils.Theme
@@ -92,7 +93,7 @@ private fun SubtypeRow(subtype: InputMethodSubtype, isEnabled: Boolean) {
             .clickable {
                 SettingsDestination.navigateTo(SettingsDestination.Subtype + subtype.toSettingsSubtype().toPref())
             }
-            .padding(vertical = 6.dp, horizontal = 16.dp)
+            .padding(vertical = KbDensity.rowPadV, horizontal = KbDensity.pageGutter)
     ) {
         var showNoDictDialog by remember { mutableStateOf(false) }
         Column(modifier = Modifier.weight(1f)) {
