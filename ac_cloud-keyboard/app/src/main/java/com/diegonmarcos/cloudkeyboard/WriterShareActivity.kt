@@ -11,7 +11,7 @@ import com.diegonmarcos.superapp.bottomnav.FleetChrome
 
 /**
  * #1707 the Writer entry points the retired standalone Cloud Writer had, now Cloud Keyboard's: text shared in (SEND text/plain),
- * an image shared in (SEND image/*, read by OCR into the Enhancer), text selected in another app (PROCESS_TEXT), and the deep link
+ * an image shared in (SEND image/..., read by OCR into the Enhancer), text selected in another app (PROCESS_TEXT), and the deep link
  * any fleet app uses to open the Writer (an explicit start, optionally with EXTRA_SECTION / EXTRA_PAGE). It hosts libs:writer-ui's
  * [WriterSurface] exactly as the old MainActivity did, so a shared text opens in the Writer editor.
  */

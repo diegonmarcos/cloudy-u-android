@@ -13,7 +13,7 @@ import com.diegonmarcos.superapp.devtools.AppDebugServer
 import org.json.JSONObject
 
 /**
- * #1707 the Writer's fleet debug API (/api/writer/*), moved from the retired standalone Cloud Writer into Cloud Keyboard
+ * #1707 the Writer's fleet debug API (/api/writer/...), moved from the retired standalone Cloud Writer into Cloud Keyboard
  * (checks with the screen locked): listen/status, translate?text=&to=, route. The op is never `state` (update-ack-guard owns it).
  */
 object WriterDebugApi {
