@@ -109,8 +109,10 @@ class KeyboardNavPagesTest {
         assertTrue(File("src/main/java/helium314/keyboard/keyboard/CornerSwipe.kt").readText().contains("KbThemePreset.setDev(context, !enabled)"))
         assertTrue(File("src/main/java/helium314/keyboard/keyboard/internal/keyboard_parser/LayoutParser.kt").readText().contains("CornerSwipe.mainLayoutFor(CornerSwipe.enabled"))
         // the Unexpected theme is its own preset: dark colours, corner swipes and its own layout flag on, Default restores everything
-        val u = FakePrefs(mapOf("theme_colors" to "light"))
+        val u = FakePrefs(mapOf("theme_colors" to "light", "theme_style" to "Material"))
         KbThemePreset.applyTo(u, KbThemePreset.UNEXPECTED)
+        assertEquals("Rounded", u.data["theme_style"]) // rounded, bordered keys as designed
+        assertEquals(true, u.data["theme_key_borders"])
         assertEquals(KbThemePreset.UNEXPECTED, KbThemePreset.current(u))
         assertEquals(true, u.data[CornerSwipe.PREF])
         assertEquals(true, u.data[helium314.keyboard.keyboard.UnexpectedKb.PREF])
@@ -119,6 +121,7 @@ class KeyboardNavPagesTest {
         assertEquals(false, u.data[helium314.keyboard.keyboard.UnexpectedKb.PREF])
         KbThemePreset.applyTo(u, KbThemePreset.DEFAULT)
         assertEquals("light", u.data["theme_colors"])
+        assertEquals("Material", u.data["theme_style"]) // the user's own style comes back
         assertEquals(false, u.data[CornerSwipe.PREF])
         // the Dev theme always has its number row on letters and on symbols
         val sv = File("src/main/java/helium314/keyboard/latin/settings/SettingsValues.java").readText()

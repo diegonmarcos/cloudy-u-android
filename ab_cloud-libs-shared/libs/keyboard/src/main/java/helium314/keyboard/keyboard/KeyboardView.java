@@ -469,7 +469,8 @@ public class KeyboardView extends View {
         final String cornerId = CornerSwipe.isActive(keyboard) ? CornerSwipe.idOf(key.getLabel(), key.getCode()) : null;
         final java.util.List<String> corners = CornerSwipe.legendsOf(cornerId);
         if (corners != null) {
-            paint.setTextSize(key.selectHintTextSize(params) * mFontSizeMultiplier);
+            // the design's corner glyphs are a little larger than the stock hint size
+            paint.setTextSize(key.selectHintTextSize(params) * mFontSizeMultiplier * (UnexpectedKb.active ? 1.4f : 1f));
             paint.setColor(params.mHintLabelColor);
             paint.setTextAlign(Align.CENTER);
             final float padX = Math.min(keyWidth * 0.18f, keyHeight * 0.24f);

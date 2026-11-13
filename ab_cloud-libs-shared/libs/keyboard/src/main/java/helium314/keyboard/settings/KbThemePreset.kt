@@ -46,6 +46,9 @@ enum class KbThemePreset(
         // rather than guessing. Absent until Unexpected is first applied.
         private const val PREV_DAY = "pref_kb_theme_prev_colors"
         private const val PREV_NIGHT = "pref_kb_theme_prev_colors_night"
+        // the style and key borders in use before Unexpected, parked the same way (Unexpected draws rounded, bordered keys)
+        private const val PREV_STYLE = "pref_kb_theme_prev_style"
+        private const val PREV_BORDERS = "pref_kb_theme_prev_borders"
 
         /** The theme currently selected, or [DEFAULT] when none has been chosen. */
         fun current(context: Context): KbThemePreset = current(context.prefs())
@@ -86,6 +89,10 @@ enum class KbThemePreset(
             val wasDev = current(prefs).isDark
             when (preset) {
                 DEV, UNEXPECTED -> {
+                    if (preset == UNEXPECTED && !prefs.contains(PREV_STYLE)) prefs.edit {
+                        putString(PREV_STYLE, prefs.getString(Settings.PREF_THEME_STYLE, Defaults.PREF_THEME_STYLE))
+                        putBoolean(PREV_BORDERS, prefs.getBoolean(Settings.PREF_THEME_KEY_BORDERS, Defaults.PREF_THEME_KEY_BORDERS))
+                    }
                     if (!wasDev) prefs.edit {
                         putString(PREV_DAY, prefs.getString(Settings.PREF_THEME_COLORS, Defaults.PREF_THEME_COLORS))
                         putString(PREV_NIGHT, prefs.getString(Settings.PREF_THEME_COLORS_NIGHT, Defaults.PREF_THEME_COLORS_NIGHT))
@@ -93,6 +100,14 @@ enum class KbThemePreset(
                     prefs.edit {
                         putString(PREF, preset.id)
                         putBoolean(UnexpectedKb.PREF, preset == UNEXPECTED)
+                        if (preset == UNEXPECTED) { // dark grey rounded keys with visible key backgrounds, as designed
+                            putString(Settings.PREF_THEME_STYLE, KeyboardTheme.STYLE_ROUNDED)
+                            putBoolean(Settings.PREF_THEME_KEY_BORDERS, true)
+                        } else if (prefs.contains(PREV_STYLE)) { // Dev after Unexpected: the user's own style and borders come back
+                            putString(Settings.PREF_THEME_STYLE, prefs.getString(PREV_STYLE, Defaults.PREF_THEME_STYLE) ?: Defaults.PREF_THEME_STYLE)
+                            putBoolean(Settings.PREF_THEME_KEY_BORDERS, prefs.getBoolean(PREV_BORDERS, Defaults.PREF_THEME_KEY_BORDERS))
+                            remove(PREV_STYLE); remove(PREV_BORDERS)
+                        }
                         putString(Settings.PREF_THEME_COLORS, KeyboardTheme.THEME_UNEXPECTED)
                         putString(Settings.PREF_THEME_COLORS_NIGHT, KeyboardTheme.THEME_UNEXPECTED)
                         putBoolean(CornerSwipe.PREF, true)
@@ -103,6 +118,12 @@ enum class KbThemePreset(
                     val night = prefs.getString(PREV_NIGHT, Defaults.PREF_THEME_COLORS_NIGHT) ?: Defaults.PREF_THEME_COLORS_NIGHT
                     prefs.edit {
                         putString(PREF, DEFAULT.id)
+                        // leaving Unexpected: its parked style and borders come back (only if it set them)
+                        if (prefs.contains(PREV_STYLE)) {
+                            putString(Settings.PREF_THEME_STYLE, prefs.getString(PREV_STYLE, Defaults.PREF_THEME_STYLE) ?: Defaults.PREF_THEME_STYLE)
+                            putBoolean(Settings.PREF_THEME_KEY_BORDERS, prefs.getBoolean(PREV_BORDERS, Defaults.PREF_THEME_KEY_BORDERS))
+                            remove(PREV_STYLE); remove(PREV_BORDERS)
+                        }
                         putBoolean(UnexpectedKb.PREF, false)
                         // Only undo the colour theme if Unexpected itself set it — never clobber a user's own pick.
                         if (prefs.getString(Settings.PREF_THEME_COLORS, Defaults.PREF_THEME_COLORS) == KeyboardTheme.THEME_UNEXPECTED)
