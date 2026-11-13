@@ -157,7 +157,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-12",
+        "pricing_as_of": "2026-11-13",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -200,10 +200,11 @@
               "academia",
               "marketing",
               "roleplay",
-              "translation"
+              "translation",
+              "trivia"
             ],
-            "prompt": 0.08,
-            "completion": 0.1,
+            "prompt": 0.09,
+            "completion": 0.3,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -294,6 +295,7 @@
               "academia",
               "finance",
               "health",
+              "legal",
               "marketing",
               "marketing/seo",
               "programming",
@@ -375,9 +377,7 @@
           {
             "id": "openai/gpt-4.1-mini",
             "name": "GPT-4.1 mini",
-            "trained_for": [
-              "translation"
-            ],
+            "trained_for": [],
             "prompt": 0.4,
             "completion": 1.6,
             "note": "Translation-ranked and closed-weight; steady, conservative English grammar fixes."
