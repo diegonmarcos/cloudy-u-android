@@ -63,7 +63,6 @@ class SubgroupHubTest : KitPageHarness() {
     fun `H2 the Agents hub shows Network`() {
         // #1623: agents-watchdog hubs the Network group (hub_sections name the group now that subgroups are flattened away).
         assertEquals(listOf("Network"), hub("agents-watchdog").map { it.title })
-        assertEquals(grp("Network").map { it.id }, hub("agents-watchdog")[0].tiles.map { it.id })
         // #1719 rule 16: the hub keeps the icons it listed (every old Network page except the removed ADB Shell), beside the Network tile.
         assertEquals(listOf("network", "firewall", "dns", "webserver", "wg", "apps-access", "wifi", "bluetooth"), hub("agents-watchdog")[0].tiles.map { it.id })
     }
