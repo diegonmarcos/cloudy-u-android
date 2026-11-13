@@ -161,9 +161,10 @@ class ConnectPlanTest {
             val plan = ConnectPlan.steps(mode, via)
             for ((i, step) in plan.withIndex()) {
                 if (step == StepId.PAIR) continue                                  // PAIR hands over to the person: its own test
-                // A started Shizuku service makes its "running" step already true (skipped by design); to prove that step's own
-                // stop-and-explain, the fake start does not bring the service up.
-                val dev = FakeDevice(none, failAt = step, startFlipsShizuku = step != StepId.SHIZUKU_RUNNING)
+                // A started Shizuku service makes its "running" step already true (skipped by design, proven in
+                // shizukuChainStartsTheServiceThroughEmbeddedThenCloses); here the fake start leaves the service down so
+                // the running step itself runs and every step of the plan is proven to stop and explain.
+                val dev = FakeDevice(none, failAt = step, startFlipsShizuku = false)
                 val out = ConnectPlan.run(mode, via, dev)
                 val tag = "$mode/$via fail@$step"
                 assertEquals(tag, ConnectStatus.FAILED, out.status)
