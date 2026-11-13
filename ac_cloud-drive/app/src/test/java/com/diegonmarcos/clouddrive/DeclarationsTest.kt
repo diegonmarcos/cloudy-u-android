@@ -162,7 +162,7 @@ class DeclarationsTest {
     @Test fun manageAndFsyncDeclareTheirSubPages() {
         // #1537 Manage = Overview | Local-Apps | Local-Data, Fsync = Folders | Agents (#1491: Projects moved to the bottom nav), Editor and Projects have no strip.
         assertEquals(listOf("overview", "local_apps", "local_data"), Declarations.navPages(Declarations.SECTION_MANAGE).map { it.id })
-        assertEquals(listOf("Overview", "Local-Apps", "Local-Data"), Declarations.navPages(Declarations.SECTION_MANAGE).map { it.label })
+        assertEquals(listOf("Overview", "Local Apps", "Local-Data"), Declarations.navPages(Declarations.SECTION_MANAGE).map { it.label })
         assertEquals(listOf("folders", "agents"), nav().section(Declarations.SECTION_FSYNC)?.pages?.map { it.id })
         assertEquals(listOf("Folders", "Agents"), nav().section(Declarations.SECTION_FSYNC)?.pages?.map { it.label })
         assertTrue(nav().section(Declarations.SECTION_PROJECTS)?.pages.orEmpty().isEmpty())

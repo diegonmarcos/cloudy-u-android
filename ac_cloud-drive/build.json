@@ -180,7 +180,7 @@
           },
           {
             "id": "local_apps",
-            "label": "Local-Apps",
+            "label": "Local Apps",
             "icon": "apps"
           },
           {
@@ -828,6 +828,11 @@
           {"id": "gdrive", "label": "Google Drive", "icon": "cloud", "kind": "remote", "remote": "gdrive"},
           {"id": "mounts", "label": "Mounts", "icon": "cloud", "kind": "mount_providers"}
         ]
+      },
+      "local_apps": {
+        "_doc": "#1715 Local Apps is the ONE installed-apps page (the Fleet apps sub page was removed on the owner's instruction; its fields are mapped in test/test-drive-local-apps.sh and FleetAppsParityTest). The list is cached: the last one shows at once with 'updated <age>' while a background read replaces it; Refresh in the page bar, pull-down and package add/remove/replace broadcasts re-read it. The cache is this app's own file in its private files dir (not shared, no secrets: labels, versions, sizes).",
+        "cache": {"file": "cloud-drive-cache/local-apps.json", "invalidate_on": ["PACKAGE_ADDED", "PACKAGE_REMOVED", "PACKAGE_REPLACED"]},
+        "xray_memory": {"_doc": "Overview > X-Ray Memory: one device report as a .md (save dialog / share sheet). ADB owner channel commands (allowlist entry com.diegonmarcos.clouddrive in libs:shell-broker): dumpsys meminfo, df -h, du -k -d 1 /sdcard.", "shell": ["dumpsys meminfo", "df -h", "du -k -d 1 /sdcard"]}
       },
       "local_data": {
         "switcher": ["emulated", "termux", "nix", "external"],

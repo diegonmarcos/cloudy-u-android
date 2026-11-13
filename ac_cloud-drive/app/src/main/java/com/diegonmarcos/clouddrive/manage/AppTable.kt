@@ -21,12 +21,16 @@ data class AppRow(
     val cacheBytes: Long?,
     val running: Boolean?,
     val ramKb: Long?,
+    /** Local-Apps parity with the removed Fleet Apps page: the installed version, and (when the package is a declared fleet app) its glyph and launch fallback. */
+    val versionName: String? = null,
+    val fleetIcon: String? = null,
+    val fleetUrl: String? = null,
 ) {
     /** App + data + cache; null when any of them is unknown (a partial sum would rank wrongly). */
     val totalBytes: Long? get() = if (appBytes == null || dataBytes == null || cacheBytes == null) null else appBytes + dataBytes + cacheBytes
 }
 
-enum class AppColumn { NAME, TOTAL, APP, DATA, CACHE, RUNNING, RAM }
+enum class AppColumn { NAME, VERSION, TOTAL, APP, DATA, CACHE, RUNNING, RAM }
 
 object AppTable {
     const val DASH = "—"
@@ -36,6 +40,7 @@ object AppTable {
     fun sort(rows: List<AppRow>, column: AppColumn = DEFAULT_SORT, descending: Boolean = true): List<AppRow> {
         fun key(r: AppRow): Comparable<*>? = when (column) {
             AppColumn.NAME -> r.label.lowercase()
+            AppColumn.VERSION -> r.versionName?.lowercase()
             AppColumn.TOTAL -> r.totalBytes
             AppColumn.APP -> r.appBytes
             AppColumn.DATA -> r.dataBytes

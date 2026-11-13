@@ -53,7 +53,6 @@ import com.diegonmarcos.clouddrive.Declarations
 import com.diegonmarcos.clouddrive.DriveActions
 import com.diegonmarcos.clouddrive.DrivePrefs
 import com.diegonmarcos.clouddrive.R
-import com.diegonmarcos.clouddrive.apps.AppsGrid
 import com.diegonmarcos.clouddrive.editor.EditorHook
 import com.diegonmarcos.clouddrive.storage.StorageCoordinator
 import com.diegonmarcos.clouddrive.ui.SectionHeader
@@ -78,7 +77,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * MANAGE (#1537): a bottom-nav page, Home deleted. Three sub-pages of ui.sections[manage].pages: Overview (every volume
- * with its usage), Local-Apps (the fleet's app grid and the installed-apps table ranked by size) and Local-Data
+ * with its usage), Local-Apps (the installed-apps table ranked by size, cached and refreshable) and Local-Data
  * (everything in a chosen volume that is not an app, with the owner's category filter). The `when` is the ONE place
  * Kotlin names the three page ids.
  */
@@ -112,33 +111,33 @@ fun ManageScreen(
     }
 }
 
-/** Local-Apps: the fleet's app grid (the former Home Apps page) and the installed-apps table, one pill to switch. */
+/**
+ * Local Apps (the former Fleet-apps | Installed pair, merged): the ONE installed-apps table. The Fleet-apps grid page is gone
+ * (owner removal, #1715); every field of it that applies to an installed app lives here (see [FleetAppsParity]). Its list is
+ * cached: the last one shows at once with "updated <age>" while a background read replaces it; Refresh in the page bar,
+ * pull-down, and a package add / remove / replace broadcast all re-read it.
+ */
 @Composable
-fun LocalAppsPage(actions: DriveActions, prefs: DrivePrefs, onRoute: (tab: String, page: String) -> Unit) {
-    var installed by rememberSaveable { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize()) {
-        PillRow(Modifier.padding(horizontal = DriveMetrics.gutter)) {
-            Pill(stringResource(R.string.manage_apps_view_fleet), { installed = false }, modifier = Modifier.testTag(DriveTags.appsView("fleet")), filled = !installed)
-            Pill(stringResource(R.string.manage_apps_view_installed), { installed = true }, modifier = Modifier.testTag(DriveTags.appsView("installed")), filled = installed)
-        }
-        Box(Modifier.weight(1f)) {
-            if (installed) AppsPage(prefs)
-            else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                SectionHeader(stringResource(R.string.home_apps_section), count = Declarations.apps.size)
-                Text(stringResource(R.string.home_apps_hint), Modifier.padding(horizontal = DriveMetrics.sectionInset), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                AppsGrid(actions, onRoute)
-            }
-        }
-    }
-}
+fun LocalAppsPage(actions: DriveActions, prefs: DrivePrefs, onRoute: (tab: String, page: String) -> Unit) = AppsPage(prefs, actions = actions, onRoute = onRoute)
 
 // ── Apps ─────────────────────────────────────────────────────────────────────
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun AppsPage(prefs: DrivePrefs, collect: (android.content.Context) -> AppSnapshot.Snapshot = { AppSnapshot.collect(it) }) {
+fun AppsPage(
+    prefs: DrivePrefs,
+    collect: (android.content.Context) -> AppSnapshot.Snapshot = { AppSnapshot.collect(it) },
+    actions: DriveActions? = null,
+    onRoute: (tab: String, page: String) -> Unit = { _, _ -> },
+    cache: LocalAppsCache? = null,
+) {
     val ctx = LocalContext.current
+    val store = remember(cache) { cache ?: LocalAppsCache(File(ctx.filesDir, "cloud-drive-cache/" + LocalAppsCache.FILE_NAME)) }
     var snap by remember { mutableStateOf<AppSnapshot.Snapshot?>(null) }
+    var fromCache by remember { mutableStateOf(false) }
+    var refreshing by remember { mutableStateOf(false) }
     var tick by remember { mutableStateOf(0) }
+    var clock by remember { mutableStateOf(System.currentTimeMillis()) }
     val saved = remember { prefs.appsSort() }
     var column by rememberSaveable { mutableStateOf(saved.first?.let { n -> AppColumn.entries.firstOrNull { it.name == n } } ?: AppTable.DEFAULT_SORT) }
     var descending by rememberSaveable { mutableStateOf(saved.second) }
@@ -148,27 +147,64 @@ fun AppsPage(prefs: DrivePrefs, collect: (android.content.Context) -> AppSnapsho
         lifecycle.addObserver(obs)
         onDispose { lifecycle.removeObserver(obs) }
     }
-    LaunchedEffect(tick) { snap = withContext(Dispatchers.IO) { runCatching { collect(ctx) }.getOrNull() } ?: snap }
+    // A package added / removed / replaced makes the cached list stale: mark it and re-read at once.
+    DisposableEffect(ctx) {
+        val rx = object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: android.content.Context?, i: android.content.Intent?) { store.invalidate(); tick++ }
+        }
+        val f = android.content.IntentFilter().apply {
+            addAction(android.content.Intent.ACTION_PACKAGE_ADDED); addAction(android.content.Intent.ACTION_PACKAGE_REMOVED); addAction(android.content.Intent.ACTION_PACKAGE_REPLACED)
+            addDataScheme("package")
+        }
+        runCatching { androidx.core.content.ContextCompat.registerReceiver(ctx, rx, f, androidx.core.content.ContextCompat.RECEIVER_EXPORTED) }
+        onDispose { runCatching { ctx.unregisterReceiver(rx) } }
+    }
+    LaunchedEffect(tick) {
+        refreshing = true
+        withContext(Dispatchers.IO) { LocalAppsCache.load(store, { collect(ctx) }) { s, cached -> snap = s; fromCache = cached } }
+        clock = System.currentTimeMillis(); refreshing = false
+    }
+    val doRefresh = { tick++ ; Unit }
     Column(Modifier.fillMaxSize()) {
-        // #1356 no title row (the terminal shortcut is the Termux tile of Home ▸ Apps): the content starts under the top bar.
+        // The page bar: Refresh, the age of the list, and the in-app shortcuts the Fleet-apps grid carried (GitSync, RSync).
+        PillRow(Modifier.padding(horizontal = DriveMetrics.gutter)) {
+            Pill(stringResource(R.string.manage_apps_refresh), doRefresh, modifier = Modifier.testTag(DriveTags.APPS_REFRESH), enabled = !refreshing)
+            Declarations.apps.filter { it.routeTab.isNotBlank() }.forEach { a ->
+                Pill(a.icon + " " + a.label, { onRoute(a.routeTab, a.routePage) }, modifier = Modifier.testTag(DriveTags.appTile(a.label)))
+            }
+            Text(
+                snap?.let { LocalAppsCache.ageLabel(clock, it.capturedAt) + if (refreshing) " · refreshing" else "" } ?: stringResource(R.string.manage_apps_loading),
+                Modifier.weight(1f).testTag(DriveTags.APPS_UPDATED), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End, maxLines = 1,
+            )
+        }
         val s = snap
         if (s == null) { LoadingState(Modifier.weight(1f)); return@Column }
-        if (!s.usageAccess) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gutter, vertical = DriveMetrics.gap).testTag(DriveTags.APPS_USAGE_GRANT), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.manage_apps_usage_missing), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                Pill(stringResource(R.string.disk_grant_usage), { AppSizes.openPermissions(ctx) }, filled = true)
+        androidx.compose.material3.pulltorefresh.PullToRefreshBox(isRefreshing = refreshing, onRefresh = { tick++ }, modifier = Modifier.weight(1f).fillMaxWidth().testTag(DriveTags.APPS_PULL)) {
+            Column(Modifier.fillMaxSize()) {
+                if (!s.usageAccess) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gutter, vertical = DriveMetrics.gap).testTag(DriveTags.APPS_USAGE_GRANT), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.manage_apps_usage_missing), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                        Pill(stringResource(R.string.disk_grant_usage), { AppSizes.openPermissions(ctx) }, filled = true)
+                    }
+                }
+                if (s.shell == null) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gutter, vertical = DriveMetrics.gap).testTag(DriveTags.APPS_SHELL_HINT), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.manage_apps_shell_hint), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                // Fleet apps declared but not on this phone: catalogue only, installed from Cloud Store.
+                val have = remember(s) { s.rows.map { it.pkg }.toSet() }
+                val missing = remember(s) { Declarations.apps.filter { it.packageName.isNotBlank() && it.packageName !in have }.map { it.label } }
+                if (missing.isNotEmpty()) {
+                    Text(stringResource(R.string.manage_apps_fleet_missing, missing.joinToString(", ")), Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gutter, vertical = DriveMetrics.gap).testTag(DriveTags.APPS_FLEET_MISSING), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                val rows = remember(s, column, descending) { AppTable.sort(s.rows, column, descending) }
+                AppsTable(rows, column, descending, onSort = { c ->
+                    if (c == column) descending = !descending else { column = c; descending = c != AppColumn.NAME && c != AppColumn.VERSION }
+                    prefs.setAppsSort(column.name, descending)
+                }, onOpen = { pkg -> PermsPages.openAppInfo(ctx, pkg) }, onLaunch = actions?.let { a -> { r: AppRow -> a.launchApp(r.pkg, r.fleetUrl.orEmpty()) } })
             }
         }
-        if (s.shell == null) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gutter, vertical = DriveMetrics.gap).testTag(DriveTags.APPS_SHELL_HINT), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.manage_apps_shell_hint), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-            }
-        }
-        val rows = remember(s, column, descending) { AppTable.sort(s.rows, column, descending) }
-        AppsTable(rows, column, descending, onSort = { c ->
-            if (c == column) descending = !descending else { column = c; descending = c != AppColumn.NAME }
-            prefs.setAppsSort(column.name, descending)
-        }, onOpen = { pkg -> PermsPages.openAppInfo(ctx, pkg) })
     }
 }
 
@@ -176,6 +212,7 @@ fun AppsPage(prefs: DrivePrefs, collect: (android.content.Context) -> AppSnapsho
 @Composable
 private fun columnLabel(c: AppColumn): String = stringResource(when (c) {
     AppColumn.NAME -> R.string.manage_apps_col_name
+    AppColumn.VERSION -> R.string.manage_apps_col_version
     AppColumn.TOTAL -> R.string.manage_apps_col_total
     AppColumn.APP -> R.string.manage_apps_col_app
     AppColumn.DATA -> R.string.manage_apps_col_data
@@ -187,31 +224,34 @@ private fun columnLabel(c: AppColumn): String = stringResource(when (c) {
 /** Sticky header, sortable columns, one horizontal scroll shared by header and rows (the table is wider than a phone). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AppsTable(rows: List<AppRow>, column: AppColumn, descending: Boolean, onSort: (AppColumn) -> Unit, onOpen: (String) -> Unit) {
+fun AppsTable(rows: List<AppRow>, column: AppColumn, descending: Boolean, onSort: (AppColumn) -> Unit, onOpen: (String) -> Unit, onLaunch: ((AppRow) -> Boolean)? = null) {
     val hs = rememberScrollState()
     val yes = stringResource(R.string.manage_yes); val no = stringResource(R.string.manage_no)
     Box(Modifier.fillMaxSize().horizontalScroll(hs)) {
-        LazyColumn(Modifier.width(DriveMetrics.tableName + DriveMetrics.tableCell * (AppColumn.entries.size - 1)).testTag(DriveTags.APPS_TABLE)) {
+        LazyColumn(Modifier.width(DriveMetrics.tableName + DriveMetrics.tableCell * AppColumn.entries.size).testTag(DriveTags.APPS_TABLE)) {
             stickyHeader {
                 Row(Modifier.background(MaterialTheme.colorScheme.surfaceVariant).heightIn(min = DriveMetrics.tap).testTag(DriveTags.APPS_HEADER), verticalAlignment = Alignment.CenterVertically) {
                     AppColumn.entries.forEach { c ->
                         val arrow = if (c == column) (if (descending) " ▼" else " ▲") else ""
-                        Text(columnLabel(c) + arrow, cellModifier(c).clickable { onSort(c) }.testTag(DriveTags.appsHeader(c.name)), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, textAlign = if (c == AppColumn.NAME) TextAlign.Start else TextAlign.End, maxLines = 1)
+                        Text(columnLabel(c) + arrow, cellModifier(c).clickable { onSort(c) }.testTag(DriveTags.appsHeader(c.name)), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, textAlign = if (c == AppColumn.NAME || c == AppColumn.VERSION) TextAlign.Start else TextAlign.End, maxLines = 1)
                     }
+                    if (onLaunch != null) Text(stringResource(R.string.manage_apps_col_actions), cellModifier(AppColumn.TOTAL), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End, maxLines = 1)
                 }
             }
             items(rows, key = { it.pkg }) { r ->
                 Row(Modifier.heightIn(min = DriveMetrics.rowHeight).clickable { onOpen(r.pkg) }.testTag(DriveTags.APPS_ROW), verticalAlignment = Alignment.CenterVertically) {
                     Column(cellModifier(AppColumn.NAME)) {
-                        Text(r.label, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text((r.fleetIcon?.let { "$it " } ?: "") + r.label, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(r.pkg, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
+                    Text(r.versionName ?: AppTable.DASH, cellModifier(AppColumn.VERSION), style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Num(AppTable.size(r.totalBytes), AppColumn.TOTAL, bold = true)
                     Num(AppTable.size(r.appBytes), AppColumn.APP)
                     Num(AppTable.size(r.dataBytes), AppColumn.DATA)
                     Num(AppTable.size(r.cacheBytes), AppColumn.CACHE)
                     Num(AppTable.running(r.running, yes, no), AppColumn.RUNNING)
                     Num(AppTable.ram(r.ramKb), AppColumn.RAM)
+                    if (onLaunch != null) Text(stringResource(R.string.manage_apps_open), cellModifier(AppColumn.TOTAL).clickable { onLaunch(r) }.testTag(DriveTags.appOpen(r.pkg)), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.End, maxLines = 1)
                 }
                 Hairline()
             }

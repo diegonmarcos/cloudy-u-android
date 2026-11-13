@@ -23,9 +23,15 @@ import com.diegonmarcos.superapp.shellclient.ShellResult
  *    `ps -A -o NAME` and `dumpsys meminfo` when one is up. Otherwise the cells are null ("—").
  */
 object AppSnapshot {
-    data class Snapshot(val rows: List<AppRow>, val usageAccess: Boolean, val shell: String?)
+    data class Snapshot(val rows: List<AppRow>, val usageAccess: Boolean, val shell: String?, /** epoch ms the data was read (0 = unknown) */ val capturedAt: Long = 0L)
 
-    fun collect(ctx: Context, useShell: Boolean = true): Snapshot {
+    /** Declared fleet apps by package: glyph and fallback URL, so an installed fleet app keeps its Fleet-Apps identity in Local Apps. */
+    fun fleetByPackage(): Map<String, Pair<String, String>> =
+        com.diegonmarcos.clouddrive.Declarations.apps.filter { it.packageName.isNotBlank() }.associate { it.packageName to (it.icon to it.fallbackUrl) }
+
+    fun collect(ctx: Context, useShell: Boolean = true, now: Long = System.currentTimeMillis()): Snapshot {
+        val fleet = runCatching { fleetByPackage() }.getOrDefault(emptyMap())
+        val versions = runCatching { pmVersions(ctx.packageManager) }.getOrDefault(emptyMap())
         val pm = ctx.packageManager
         val usage = AppSizes.hasUsageAccess(ctx)
         val ss = ctx.getSystemService(Context.STORAGE_STATS_SERVICE) as StorageStatsManager
@@ -51,15 +57,21 @@ object AppSnapshot {
                 appBytes = sizes?.first, dataBytes = sizes?.second, cacheBytes = sizes?.third,
                 running = if (own.containsKey(pkg)) true else null,
                 ramKb = own[pkg],
+                versionName = versions[pkg],
+                fleetIcon = fleet[pkg]?.first, fleetUrl = fleet[pkg]?.second,
             )
         }
-        if (!useShell) return Snapshot(AppTable.sort(rows), usage, null)
+        if (!useShell) return Snapshot(AppTable.sort(rows), usage, null, now)
         // #1510 through the SuperApp's shell broker (libs:shell-client): both commands are on this app's allowlist entry; unarmed = no shell columns.
         val client = ShellClient.over(ctx)
         fun sh(cmd: String): ShellResult.Ok? = runCatching { client.exec(cmd, timeoutMs = 20_000L) }.getOrNull() as? ShellResult.Ok
         val psOut = sh("ps -A -o NAME")
         val ps = psOut?.stdout?.let(AppTable::parsePs)?.takeIf { it.isNotEmpty() }
         val mem = sh("dumpsys meminfo")?.stdout?.let(AppTable::parseMeminfo)?.takeIf { it.isNotEmpty() }
-        return Snapshot(AppTable.sort(AppTable.withShell(rows, ps, mem)), usage, psOut?.source)
+        return Snapshot(AppTable.sort(AppTable.withShell(rows, ps, mem)), usage, psOut?.source, now)
     }
+
+    @Suppress("DEPRECATION")
+    private fun pmVersions(pm: PackageManager): Map<String, String?> =
+        pm.getInstalledPackages(0).associate { it.packageName to it.versionName }
 }

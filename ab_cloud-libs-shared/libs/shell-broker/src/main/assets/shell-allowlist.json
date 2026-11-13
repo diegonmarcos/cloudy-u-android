@@ -316,6 +316,16 @@
      "re": "^dumpsys meminfo( [\\w.:/=,@+*?-]+)*$"
     },
     {
+     "id": "drive-xray-df",
+     "why": "X-Ray Memory report: read-only filesystem usage.",
+     "re": "^df( -[a-zA-Z]+)*$"
+    },
+    {
+     "id": "drive-xray-du",
+     "why": "X-Ray Memory report: read-only per-folder sizes of shared storage, one level deep.",
+     "re": "^du -k -d [0-2] /(sdcard|storage/emulated/0)$"
+    },
+    {
      "id": "probe-echo",
      "re": "^echo shell-ok$"
     },
