@@ -34,7 +34,7 @@ class MailOAuthContractTest {
     @Test fun `ids are catalogue ids and flat`() {
         for (f in listOf("access", "refresh", "expires")) assertNotNull(AppCredentialsContract.entry(MailOAuthContract.credId(" Me@Example.org", f)))
         assertEquals("mail.oauth.me_example_org.access", MailOAuthContract.credId("Me@Example.org", MailOAuthContract.FIELD_ACCESS))
-        assertTrue(AppCredentialsContract.defaultGrants(AppCredentialsContract.PKG_MAIL).contains("cred.mail.oauth.*") || true)
+        assertTrue(AppCredentialsContract.defaultGrants(AppCredentialsContract.PKG_MAIL).contains("cred.mail.oauth.*"))
         assertTrue(MailOAuthContract.pendingLine("a@b.c").contains("Cloud Account"))
     }
 }

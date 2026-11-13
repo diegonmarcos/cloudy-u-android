@@ -271,8 +271,12 @@ object AccountData {
                 // #1693 the fleet's mail accounts (address + password + endpoints) for Cloud Mail: default deny, the `mail.accounts` grant
                 // #1693 a credential typed in Cloud Account's App credentials page, per-credential grant `cred.<id>`, default deny
                 com.diegonmarcos.superapp.fleetendpoints.AppCredentialsContract.METHOD -> AppCredentialsStore.read(ctx, caller(ctx), arg)
-                // #1693 a Mail OAuth sign-in request (no secret in it): grant `mail.oauth`, default deny
-                com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_REQUEST -> MailOAuthPending.accept(ctx, caller(ctx), arg)
+                // #1693 Cloud Mail's OAuth device grant runs HERE: start (a code to show) and one poll (the tokens once approved); grant `mail.oauth`, default deny
+                com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_START, com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_POLL -> {
+                    val who = caller(ctx)
+                    if (who != ctx.packageName && !AccountVault(ctx).grants.allow(who, com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.GRANT_REQUEST)) error("no grant for $who")
+                    else if (method == com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_START) MailOAuthSessions.start(arg) else MailOAuthSessions.poll(arg)
+                }
                 com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.METHOD -> {
                     val who = caller(ctx)
                     val vault = AccountVault(ctx)
