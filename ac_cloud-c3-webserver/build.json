@@ -486,6 +486,14 @@
     ],
     "index": ["index.html", "index.htm", "README.md", "index.md"]
   },
+  "shizuku_diagnostics": {
+    "_doc": "#1713 this app is the ADB owner (adb-owner.json), so it owns the loopback app_process shell server: libs:shizuku-adb-debug-tools bakes ADB_SHELL_SERVER_OWN from this block, and the Server sub page of the ADB Shell (Start / Stop / Restart) is only live for an app that owns one. Same server as the SuperApp declared (port, class, nice name), no diagnostics bundles.",
+    "local_server": {
+      "port": 38099,
+      "class": "com.diegonmarcos.superapp.adbdebug.AdbShellServer",
+      "nice_name": "superapp-adb"
+    }
+  },
   "adb_shell": {
     "_doc": "#1677 the bottom nav's ADB Shell tab opens the Cloud SuperApp's ADB Shell page (Configs > ADB Shell, its section page config/adb-shell): the SuperApp's launcher intent (serving.bridge_package) carrying the String extra `extra` = `value`, which the SuperApp's ShellActivity reads on create and on a new intent (handleShortcutIntent, page:<section>/<page> grammar). If the SuperApp is not installed the tab says so. Configs stays reachable from the top bar's gear (the fleet-default top-bar entry).",
     "label": "ADB Shell",

@@ -105,9 +105,9 @@ object AdbOwnerSide {
             onDispose { ChannelLog.shared.removeListener(l) }
         }
         Column(Modifier.fillMaxSize()) {
-            Box(Modifier.weight(1f).fillMaxWidth()) { CloudKitTheme(palette) { AdbStatusTab() } }
+            Box(Modifier.weight(3f).fillMaxWidth()) { CloudKitTheme(palette) { AdbStatusTab() } }
             // the old Server tab's Status, Tester and Logs cards (#1713: moved here, not dropped)
-            PageColumn("c3_adb_owner") {
+            Box(Modifier.weight(2f).fillMaxWidth()) { PageColumn("c3_adb_owner") {
                 Card("Status", "c3_adb_owner_status") {
                     Note(ready.linkText())
                     Acts {
@@ -134,7 +134,7 @@ object AdbOwnerSide {
                     if (tester.isNotEmpty()) Note(tester)
                 }
                 Card("Logs", "c3_adb_owner_logs") { Note(logText.ifBlank { "no channel log yet" }) }
-            }
+            } }
         }
     }
 
