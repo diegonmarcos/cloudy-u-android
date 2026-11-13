@@ -39,14 +39,15 @@ bad = sorted(set(raw) - allowed)
 ok(not bad, "A3 no implicit caller uses the raw autoConnect", "A3 raw EmbeddedAdbChannel.autoConnect( in: " + ", ".join(bad))
 ok(re.search(r"fun autoArm\(.*ChannelAutoArm\.enabled\(ctx\).*autoConnect\(ctx\)", src(LIB+"EmbeddedAdbChannel.kt"), re.S) is not None, "A3 autoArm asks the switch before connecting", "A3 EmbeddedAdbChannel.autoArm does not consult ChannelAutoArm.enabled")
 for p, why in [(SA+"devcontrol/DevControlServer.kt", "start thread and /api/adb/autoconnect"), ("ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt", "keeper reconnect"),
-               (SA+"system/PrivilegedPlaneWorker.kt", "boot worker"), (LIB+"WirelessDebugging.kt", "implicit re-arm of a privileged tool"),
-               ("ab_cloud-libs-shared/libs/updater/src/shell/java/com/diegonmarcos/superapp/updater/ShellChannelAccess.kt", "install path reconnect"), (LIB+"HostShell.kt", "Store/Account re-arm")]:
+               ("ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneWorker.kt", "boot worker"), (LIB+"WirelessDebugging.kt", "implicit re-arm of a privileged tool"),
+               # (the updater's ShellChannelAccess is gone: its install path no longer arms the channel itself, #1682 P3 step 2)
+               (LIB+"HostShell.kt", "Store/Account re-arm")]:
     ok("autoArm(" in src(p) or "ChannelAutoArm.enabled(" in src(p), f"A3 {os.path.basename(p)} gated ({why})", f"A3 {p} ({why}) is not gated")
-ok("ChannelAutoArm.enabled(" in src(SA+"system/PrivilegedPlaneBootReceiver.kt"), "A4 SuperApp boot receiver consults the switch", "A4 PrivilegedPlaneBootReceiver ignores the switch")
+ok("ChannelAutoArm.enabled(" in src("ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneBootReceiver.kt"), "A4 SuperApp boot receiver consults the switch", "A4 PrivilegedPlaneBootReceiver ignores the switch")
 hs = src(LIB+"HostShell.kt")
 ok(re.search(r"ACTION_BOOT_COMPLETED\)\s*\{\s*if \(ChannelAutoArm\.enabled\(context\)\) HostShell\.schedule", hs) is not None, "A4 Store boot receiver consults the switch", "A4 HostShellBootReceiver schedules the re-arm without the switch")
 ok(re.search(r"fun reconnect\([^)]*\)[^{]*\{\s*if \(!ChannelAutoArm\.enabled\(ctx\)\) return", hs) is not None, "A4 HostShell.reconnect returns before keepWirelessDebuggingOn when off", "A4 HostShell.reconnect arms without the switch")
-pw = src(SA+"system/PrivilegedPlaneWorker.kt")
+pw = src("ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneWorker.kt")
 ok(pw.find("ChannelAutoArm.enabled(ctx)") != -1 and pw.find("ChannelAutoArm.enabled(ctx)") < pw.find("for (attempt in 1..ATTEMPTS)"), "A4 PrivilegedPlaneWorker checks the switch before its connect loop", "A4 PrivilegedPlaneWorker connects before checking the switch")
 ok("ChannelAutoArm.hostSwitch" in src(SA+"App.kt") and "WirelessDebugKeeper.Prefs.enabled" in src(SA+"App.kt"), "A5 SuperApp plugs its one switch into ChannelAutoArm", "A5 SuperApp App.onCreate does not set ChannelAutoArm.hostSwitch")
 ok(re.search(r"fun resolve\(stored: Boolean\?, json: String\?\): Boolean = stored \?: declaredDefault\(json\)", src(LIB+"ChannelAutoArm.kt")) is not None, "A5 stored choice wins over the declared default", "A5 ChannelAutoArm.resolve changed")
@@ -56,8 +57,9 @@ PY
 echo "== channel auto-arm =="; check "$ROOT"; REAL=$?
 MUT=0; N=0
 SAp=aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp
+LSp=ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system
 LIBp=ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug
-FILES="aa_cloud-superapp/build.json $SAp/App.kt $SAp/devcontrol/DevControlServer.kt ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt $SAp/system/PrivilegedPlaneWorker.kt $SAp/system/PrivilegedPlaneBootReceiver.kt ab_cloud-libs-shared/libs/updater/src/shell/java/com/diegonmarcos/superapp/updater/ShellChannelAccess.kt $LIBp/EmbeddedAdbChannel.kt $LIBp/WirelessDebugging.kt $LIBp/HostShell.kt $LIBp/ChannelAutoArm.kt $LIBp/ShellAccess.kt $LIBp/ChannelDevice.kt"
+FILES="aa_cloud-superapp/build.json $SAp/App.kt $SAp/devcontrol/DevControlServer.kt ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt $LSp/PrivilegedPlaneWorker.kt $LSp/PrivilegedPlaneBootReceiver.kt $LIBp/EmbeddedAdbChannel.kt $LIBp/WirelessDebugging.kt $LIBp/HostShell.kt $LIBp/ChannelAutoArm.kt $LIBp/ShellAccess.kt $LIBp/ChannelDevice.kt"
 mutate() { # mutate <desc> <file> <python-expr old> <new>
   N=$((N+1)); S="$(mktemp -d)"; mkdir -p "$S/x"
   (cd "$ROOT" && for f in $FILES; do mkdir -p "$S/x/$(dirname "$f")"; cp "$f" "$S/x/$f"; done)
@@ -74,7 +76,7 @@ mutate "SuperApp defaults on" aa_cloud-superapp/build.json '"default_on": false,
     "_default_on_doc"' '"default_on": true,
     "_default_on_doc"'
 mutate "the DevControl start thread connects raw" $SAp/devcontrol/DevControlServer.kt 'EmbeddedAdbChannel.autoArm(app)' 'EmbeddedAdbChannel.autoConnect(app)'
-mutate "the boot receiver ignores the switch" $SAp/system/PrivilegedPlaneBootReceiver.kt 'ChannelAutoArm.enabled(context)' 'true'
+mutate "the boot receiver ignores the switch" $LSp/PrivilegedPlaneBootReceiver.kt 'ChannelAutoArm.enabled(context)' 'true'
 mutate "the Store boot receiver ignores the switch" $LIBp/HostShell.kt 'if (ChannelAutoArm.enabled(context)) HostShell.schedule' 'HostShell.schedule'
 mutate "autoArm connects whatever the switch says" $LIBp/EmbeddedAdbChannel.kt 'if (ChannelAutoArm.enabled(ctx)) autoConnect(ctx) else false to ChannelAutoArm.OFF_MSG' 'autoConnect(ctx)'
 mutate "the privileged tool's re-arm connects raw" $LIBp/WirelessDebugging.kt 'EmbeddedAdbChannel.autoArm(ctx).first' 'EmbeddedAdbChannel.autoConnect(ctx).first'

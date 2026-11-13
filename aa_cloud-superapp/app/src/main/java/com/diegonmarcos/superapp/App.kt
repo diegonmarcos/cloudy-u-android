@@ -76,6 +76,9 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // #1682 P3 step 4d: the keeper lives in libs:adb-shell-core; the SuperApp hands it the declared control flags and the X-Ray profiler.
         com.diegonmarcos.superapp.configs.AdbOwnerHost.declaredFlag = { id, flag -> com.diegonmarcos.superapp.configs.DeviceControls.declaredFlag(id, flag) }
         com.diegonmarcos.superapp.configs.AdbOwnerHost.profiler = { engine, path, block -> com.diegonmarcos.superapp.xray.EngineProfiler.time(engine, path) { block() } }
+        com.diegonmarcos.superapp.configs.AdbOwnerHost.waker = { engine, source -> com.diegonmarcos.superapp.xray.EngineProfiler.wake(engine, source) }
+        com.diegonmarcos.superapp.configs.AdbOwnerHost.errors = { engine, where, what -> com.diegonmarcos.superapp.xray.EngineProfiler.error(engine, where, what) }
+        com.diegonmarcos.superapp.configs.AdbOwnerHost.plane = com.diegonmarcos.superapp.system.PrivilegedPlaneHost
         com.diegonmarcos.superapp.system.AdbReadiness.connector = { c -> com.diegonmarcos.superapp.configs.AdbCockpitOps.connect(c) }
         com.diegonmarcos.superapp.system.AdbReadiness.hostOpener = { c ->
             val shell = generateSequence(c) { (it as? android.content.ContextWrapper)?.baseContext }

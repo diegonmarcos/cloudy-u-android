@@ -36,7 +36,7 @@ DATA="$APP/data/device-tuning.json"
 GRADLE="$APP/app/build.gradle"
 SRC="$APP/app/src/main/java/com/diegonmarcos/superapp"
 ENGINE="$SRC/system/DeviceTuning.kt"
-PPW="$SRC/system/PrivilegedPlaneWorker.kt"
+PPW="$APP/../ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneWorker.kt"  # #1682 P3 step 4d: the boot worker is the owner lib's; the tuning pass is the host hook PrivilegedPlaneHost
 APPKT="$SRC/App.kt"
 PAGE="$SRC/configs/PermissionsFragment.kt"
 SERVER="$SRC/devcontrol/DevControlServer.kt"
@@ -112,7 +112,9 @@ else
 fi
 
 # T6
-if grep -q 'DeviceTuning.run(ctx)' <<<"$(code "$PPW")" \
+if grep -q 'AdbOwnerHost.tune(ctx)' <<<"$(code "$PPW")" \
+   && grep -q 'DeviceTuning.run(ctx, exec)' <<<"$(code "$SRC/system/PrivilegedPlaneHost.kt")" \
+   && grep -q 'AdbOwnerHost.plane = com.diegonmarcos.superapp.system.PrivilegedPlaneHost' <<<"$(code "$APPKT")" \
    && grep -q 'AdbPairingService.onConnected' <<<"$(code "$APPKT")" \
    && grep -q 'OneTimeWorkRequestBuilder<com.diegonmarcos.superapp.system.PrivilegedPlaneWorker>' <<<"$(code "$APPKT")"; then
   ok "T6 the pass runs after the plane connects (pairing success + app start, via PrivilegedPlaneWorker)"

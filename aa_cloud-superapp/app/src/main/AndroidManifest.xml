@@ -234,13 +234,7 @@
         <receiver
             android:name=".extinstall.ExtInstallActionReceiver"
             android:exported="false" />
-        <receiver
-            android:name=".system.PrivilegedPlaneBootReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
+        <!-- #1682 P3 step 4d: PrivilegedPlaneBootReceiver (BOOT_COMPLETED) is declared by libs:adb-shell-core and merged in. -->
         <!-- #1120 after a reboot the mesh comes back (unless Connect on boot is off); the supervisor then
              reconnects until the owner taps Disconnect. -->
         <receiver

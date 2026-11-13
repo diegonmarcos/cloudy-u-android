@@ -1,3 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- #1682 P2a libs:adb-shell-core: no component (no service, no receiver, no permission); pure ADB Shell model + readiness. -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
+<!-- #1682 P2a libs:adb-shell-core: the ADB Shell model + readiness. P3 step 4d: the owner's boot hook lives here too (the receiver that
+     arms the channel after a reboot and syncs the keep-alive keeper), so whichever app owns ADB gets it by compiling this lib. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <receiver
+            android:name="com.diegonmarcos.superapp.system.PrivilegedPlaneBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
