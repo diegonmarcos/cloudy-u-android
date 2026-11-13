@@ -138,8 +138,8 @@ internal fun XrayPerfSection(c: ThemeColors) {
 @Composable
 private fun PerfButton(label: String, c: ThemeColors, tag: String, onClick: () -> Unit) {
     val shape = RoundedCornerShape(12.dp)
-    Text(label, Modifier.clip(shape).background(c.tabSelected, shape).clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 8.dp).testTag(tag),
-        color = c.onTabSelected, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+    Text(label, Modifier.clip(shape).background(c.tabSelected, shape).clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 8.dp).testTag(tag),
+        color = c.onTabSelected, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
 }
 
 /**

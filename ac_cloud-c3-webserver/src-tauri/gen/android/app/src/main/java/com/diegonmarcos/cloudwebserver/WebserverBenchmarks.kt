@@ -19,7 +19,7 @@ object WebserverBenchmarks {
         Triple("web.api.catalogue", "API catalogue build (routes)", Api.ROUTES),
         Triple("web.pages.index-scan", "Page index / served roots scan", Api.SERVED),
         Triple("web.adb.status", "ADB status round trip", Api.ADB_SHELL),
-        Triple("web.api.health", "Server health read", Api.HEALTH),
+        Triple("web.api.power", "Server power state read", Api.POWER),
     )
 
     private fun httpBenchmark(op: String, title: String, route: String) = XrayBenchmark(op, title, "read-only; $ROUNDS GET requests of $route to 127.0.0.1, no write header", 20_000, 2) { _ ->
