@@ -137,7 +137,7 @@ private fun openFile(ctx: Context, f: RecentFile) {
 }
 
 private fun hasGrant(ctx: Context): Boolean =
-    if (Build.VERSION.SDK_INT >= 30) Environment.isExternalStorageManager()
+    if (Build.VERSION.SDK_INT >= 30) runCatching { Environment.isExternalStorageManager() }.getOrDefault(false)
     else ctx.checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
 /** Blocking; never throws: a missing grant or a failed query comes back as [StripState.Unavailable] with the reason. */
