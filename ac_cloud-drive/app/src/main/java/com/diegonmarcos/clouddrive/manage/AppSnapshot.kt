@@ -29,7 +29,10 @@ object AppSnapshot {
     fun fleetByPackage(): Map<String, Pair<String, String>> =
         com.diegonmarcos.clouddrive.Declarations.apps.filter { it.packageName.isNotBlank() }.associate { it.packageName to (it.icon to it.fallbackUrl) }
 
-    fun collect(ctx: Context, useShell: Boolean = true, now: Long = System.currentTimeMillis()): Snapshot {
+    fun collect(ctx: Context, useShell: Boolean = true, now: Long = System.currentTimeMillis()): Snapshot =
+        com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("apps.local.refresh") { sp -> collectUnmeasured(ctx, useShell, now).also { sp.add(items = it.rows.size.toLong()); sp.note = if (useShell) "with shell" else "no shell" } }
+
+    private fun collectUnmeasured(ctx: Context, useShell: Boolean, now: Long): Snapshot {
         val fleet = runCatching { fleetByPackage() }.getOrDefault(emptyMap())
         val versions = runCatching { pmVersions(ctx.packageManager) }.getOrDefault(emptyMap())
         val pm = ctx.packageManager

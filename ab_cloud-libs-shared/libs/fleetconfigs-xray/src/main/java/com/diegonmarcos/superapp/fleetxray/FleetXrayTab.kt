@@ -24,6 +24,8 @@ public object FleetXrayTab {
 public class FleetXrayInitProvider : ContentProvider() {
     override fun onCreate(): Boolean {
         FleetXrayTab.register()
+        // The profiler loads its persisted ring buffer; a failure here never blocks the app start.
+        runCatching { context?.filesDir?.let { com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.init(it) } }
         return true
     }
     override fun query(uri: Uri, projection: Array<out String>?, selection: String?, selectionArgs: Array<out String>?, sortOrder: String?): Cursor? = null

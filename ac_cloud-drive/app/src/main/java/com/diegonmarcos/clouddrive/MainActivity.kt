@@ -140,6 +140,8 @@ class MainActivity : ComponentActivity(), DriveActions {
 
     /** Every initialiser, each behind [guarded]: one failing phase is recorded and the rest still run. */
     private fun startup() {
+        // #1728 the X-Ray App > Performance benchmarks of this app (declared, read-only, bounded)
+        guarded("DriveBenchmarks", optional = true) { com.diegonmarcos.clouddrive.manage.DriveBenchmarks.register() }
         // #1693 the Cloud (Authelia) session is Cloud Account's: read over the fleet IPC, never earned here
         guarded("DriveSessionSource", optional = true) {
             com.diegonmarcos.clouddrive.sync.DriveSessionSource.install(this)

@@ -28,10 +28,14 @@ object XrayMemoryCollector {
     private const val TOP_FILES = 25
 
     fun collect(ctx: Context, snap: AppSnapshot.Snapshot?, appVersion: String, now: Long = System.currentTimeMillis(),
-                exec: (String) -> ShellResult? = { cmd -> runCatching { ShellClient.over(ctx).exec(cmd, timeoutMs = 30_000L) }.getOrElse { ShellResult.Failed(it.message ?: it.javaClass.simpleName) } }): XrayMemoryReport.Inputs {
+                exec: (String) -> ShellResult? = { cmd -> runCatching { ShellClient.over(ctx).exec(cmd, timeoutMs = 30_000L) }.getOrElse { ShellResult.Failed(it.message ?: it.javaClass.simpleName) } },
+                maxEntries: Int = MAX_ENTRIES, budgetMs: Long = BUDGET_MS): XrayMemoryReport.Inputs =
+        com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("xray.memory.scan") { collectUnmeasured(ctx, snap, appVersion, now, exec, maxEntries, budgetMs) }
+
+    private fun collectUnmeasured(ctx: Context, snap: AppSnapshot.Snapshot?, appVersion: String, now: Long, exec: (String) -> ShellResult?, maxEntries: Int, budgetMs: Long): XrayMemoryReport.Inputs {
         val device = XrayMemoryReport.Device(Build.MANUFACTURER.orEmpty(), Build.MODEL.orEmpty(), Build.VERSION.RELEASE.orEmpty(), Build.VERSION.SDK_INT,
             appVersion, SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.US).format(Date(now)))
-        val walk = walkShared(ctx)
+        val walk = walkShared(ctx, maxEntries, budgetMs)
         return XrayMemoryReport.Inputs(
             device = device,
             volumes = volumes(ctx),
@@ -91,7 +95,7 @@ object XrayMemoryCollector {
                        val media: XrayMemoryReport.Src<List<XrayMemoryReport.MediaCat>>, val note: String?)
 
     /** A bounded depth-first walk of shared storage: per top-level folder totals, the largest files, and bytes per file category. Names and sizes only; symlinks are not followed. */
-    private fun walkShared(ctx: Context): Walk {
+    private fun walkShared(ctx: Context, maxEntries: Int, budgetMs: Long): Walk {
         if (!Places.hasAllFilesAccess(ctx)) {
             val why = "all-files access not granted (Settings > Special app access > All files access)"
             return Walk(XrayMemoryReport.Src.NA(why), XrayMemoryReport.Src.NA(why), XrayMemoryReport.Src.NA(why), "skipped, $why")
@@ -110,8 +114,8 @@ object XrayMemoryCollector {
             val kids = runCatching { dir.listFiles() }.getOrNull() ?: return
             for (k in kids) {
                 if (partial != null) return
-                if (++entries > MAX_ENTRIES) { partial = "partial, stopped after $MAX_ENTRIES entries"; return }
-                if ((entries and 1023) == 0 && System.currentTimeMillis() - t0 > BUDGET_MS) { partial = "partial, stopped after ${BUDGET_MS / 1000} s"; return }
+                if (++entries > maxEntries) { partial = "partial, stopped after $maxEntries entries"; return }
+                if ((entries and 1023) == 0 && System.currentTimeMillis() - t0 > budgetMs) { partial = "partial, stopped after ${budgetMs / 1000} s"; return }
                 if (runCatching { java.nio.file.Files.isSymbolicLink(k.toPath()) }.getOrDefault(false)) continue
                 if (k.isDirectory) visit(k, topName)
                 else {
@@ -129,6 +133,7 @@ object XrayMemoryCollector {
                 cats.getOrPut(FileClassifier.classifyOrOthers(k.name)) { LongArray(2) }.also { it[0]++; it[1] += len }
                 top += XrayMemoryReport.Sized(k.absolutePath, len); if (top.size > TOP_FILES) top.poll() }
         }
+        com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.count(items = entries.toLong(), bytes = cats.values.sumOf { it[1] })
         return Walk(
             XrayMemoryReport.Src.Ok(folderBytes.map { XrayMemoryReport.Sized(it.key, it.value) }.sortedByDescending { it.bytes }.take(TOP_FOLDERS)),
             XrayMemoryReport.Src.Ok(top.sortedByDescending { it.bytes }),

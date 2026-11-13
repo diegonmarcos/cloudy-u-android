@@ -26,15 +26,24 @@ object RepoDiskSize {
     }
 
     /** The recursive byte count of [dir], links not followed. Blocking: refuses the main thread. */
-    fun compute(dir: File): Long {
+    fun compute(dir: File): Long = compute(dir, Int.MAX_VALUE)
+
+    /** [maxEntries] bounds the walk (the Performance benchmark's cap); the default is unbounded, as before. Recorded as the folder-scan span of X-Ray > Performance. */
+    fun compute(dir: File, maxEntries: Int): Long {
         check(!StartupGuard.onMainThread()) { "disk walk asked from the main thread" }
         if (!dir.isDirectory) return 0L
-        var total = 0L
-        Files.walkFileTree(dir.toPath(), emptySet(), Int.MAX_VALUE, object : SimpleFileVisitor<Path>() {
-            override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult { if (attrs.isRegularFile) total += attrs.size(); return FileVisitResult.CONTINUE }
-            override fun visitFileFailed(file: Path, exc: java.io.IOException): FileVisitResult = FileVisitResult.CONTINUE
-        })
-        return total
+        return com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("fsync.folder.scan") { sp ->
+            var total = 0L; var seen = 0
+            Files.walkFileTree(dir.toPath(), emptySet(), Int.MAX_VALUE, object : SimpleFileVisitor<Path>() {
+                override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                    if (attrs.isRegularFile) total += attrs.size()
+                    return if (++seen >= maxEntries) FileVisitResult.TERMINATE else FileVisitResult.CONTINUE
+                }
+                override fun visitFileFailed(file: Path, exc: java.io.IOException): FileVisitResult = FileVisitResult.CONTINUE
+            })
+            sp.add(items = seen.toLong(), bytes = total)
+            total
+        }
     }
 
     /** True when [cached] still describes [dir]. */

@@ -36,6 +36,16 @@ class DataScanner(private val skipNames: Set<String> = DEFAULT_SKIP) {
         cancelled: () -> Boolean = { false },
         progress: (Progress) -> Unit = {},
         mimeOf: (String) -> String? = { null },
+    ): Result = com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("drive.largest-folders.walk") { sp ->
+        scanUnmeasured(roots, cache, cancelled, progress, mimeOf).also { r -> sp.add(items = r.items.size.toLong(), bytes = r.items.sumOf { it.size }); if (!r.complete) sp.note = "cancelled or bounded" }
+    }
+
+    private fun scanUnmeasured(
+        roots: List<File>,
+        cache: Map<String, DirEntry> = emptyMap(),
+        cancelled: () -> Boolean = { false },
+        progress: (Progress) -> Unit = {},
+        mimeOf: (String) -> String? = { null },
     ): Result {
         val real = roots.mapNotNull { r -> runCatching { r.toPath().toRealPath() }.getOrNull()?.let { r.absolutePath to it } }.distinctBy { it.second }
         val realRoots = real.map { it.second }

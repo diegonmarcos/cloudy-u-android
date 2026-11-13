@@ -595,7 +595,10 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
     }
 
     /** ONE operation on ONE repository, recorded — the shared body of [runOp] and [pullAll]. Blocking. */
-    private fun perform(repo: ManagedRepo, opId: String, message: String, token: () -> String, trigger: String): GitOpResult {
+    private fun perform(repo: ManagedRepo, opId: String, message: String, token: () -> String, trigger: String): GitOpResult =
+        com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("git.sync.op") { sp -> sp.note = opId; sp.add(items = 1); performUnmeasured(repo, opId, message, token, trigger) }
+
+    private fun performUnmeasured(repo: ManagedRepo, opId: String, message: String, token: () -> String, trigger: String): GitOpResult {
             val result = run {
                 runCatching {
                     GitEngine(ctx, File(repo.path)).use { e ->
@@ -1387,7 +1390,12 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         }
 
         /** The real probe: libs:git-sync's own status, never a second JGit call here. */
-        fun probeStatus(dir: File): GitStatusReader.Probe = GitEngine(engineContext ?: error("no coordinator has been built yet, so there is no Context to reach the git sync engine with"), dir).use { e ->
+        fun probeStatus(dir: File): GitStatusReader.Probe = com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("git.status.read") { sp -> sp.add(items = 1); probeStatusUnmeasured(dir) }
+
+        /** True once a coordinator has been built (the engine Context exists): the Performance benchmarks skip with a reason until then. */
+        internal fun engineReady(): Boolean = engineContext != null
+
+        private fun probeStatusUnmeasured(dir: File): GitStatusReader.Probe = GitEngine(engineContext ?: error("no coordinator has been built yet, so there is no Context to reach the git sync engine with"), dir).use { e ->
             val s = e.status()
             GitStatusReader.Probe(
                 s.branch, s.upstream, s.ahead, s.behind, s.files.size - s.conflicts.size, s.conflicts.size, s.repositoryState,
@@ -1403,7 +1411,9 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
          * when the two tips differ); otherwise ONE script in cld.termux (a store owned by cld.termux is invisible to java.io).
          * Throws, with the exact path, when neither can read the clone: the row then ends in ERROR with that message.
          */
-        fun probeLight(dir: File): GitStatusReader.Probe {
+        fun probeLight(dir: File): GitStatusReader.Probe = com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("git.sync.light-check") { sp -> sp.add(items = 1); probeLightUnmeasured(dir) }
+
+        private fun probeLightUnmeasured(dir: File): GitStatusReader.Probe {
             // #1358 a clone in shared storage is the git engine's to run: without its own All files access every verb fails, so the row says that first.
             if (EngineGrant.blocks(dir.absolutePath)) error(EngineGrant.REASON + " (" + dir.absolutePath + ")")
             if (File(dir, ".git").isDirectory) return RepoCheap.lightProbe(dir) { _ ->

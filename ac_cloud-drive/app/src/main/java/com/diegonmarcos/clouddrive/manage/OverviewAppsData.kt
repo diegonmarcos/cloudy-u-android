@@ -139,14 +139,17 @@ private fun openFile(ctx: Context, f: RecentFile) {
 /** The grant check; a seam so a JVM test sets the answer (null = ask the phone). A failing platform call counts as "not granted", never a crash. */
 internal var grantProbe: ((Context) -> Boolean)? = null
 
-private fun hasGrant(ctx: Context): Boolean = runCatching {
+internal fun hasGrant(ctx: Context): Boolean = runCatching {
     grantProbe?.invoke(ctx)
         ?: if (Build.VERSION.SDK_INT >= 30) Environment.isExternalStorageManager()
         else ctx.checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED
 }.getOrDefault(false)
 
 /** Blocking; never throws: a missing grant or a failed query comes back as [StripState.Unavailable] with the reason. */
-internal fun loadStrip(ctx: Context, d: Declarations.DataStripDecl): StripState {
+internal fun loadStrip(ctx: Context, d: Declarations.DataStripDecl): StripState =
+    com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("mediastore.data-strips.query") { sp -> loadStripUnmeasured(ctx, d).also { if (it is StripState.Files) sp.add(items = it.files.size.toLong(), bytes = it.files.sumOf { f -> f.size }) else sp.note = (it as StripState.Unavailable).reason.take(80) } }
+
+private fun loadStripUnmeasured(ctx: Context, d: Declarations.DataStripDecl): StripState {
     if (!hasGrant(ctx)) return StripState.Unavailable(ctx.getString(R.string.manage_data_no_grant))
     val (sel, args) = RecentMedia.selection(d) ?: return StripState.Unavailable("no folder declared")
     return runCatching {

@@ -5021,6 +5021,16 @@
     },
     "lib-perms": {
       "items": []
+    },
+    "lib-fleetconfigs-xray": {
+      "items": [
+        {
+          "id": "xray-perf",
+          "path": "filesDir/xray-perf.tsv",
+          "class": "device",
+          "doc": "#1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated."
+        }
+      ]
     }
   },
   "_doc_items": "apps[].items / libs[].items: configuration kept OUTSIDE a declared store (files, a fork's own database). `store` names the declared store that actually holds it (the contract moves it when that store is portable); `via: install` = reproduced by installing the same build (baked from git); `via: connect` = re-fetched from the vault on Connect. Anything else with a migrating class is a named gap in the coverage."

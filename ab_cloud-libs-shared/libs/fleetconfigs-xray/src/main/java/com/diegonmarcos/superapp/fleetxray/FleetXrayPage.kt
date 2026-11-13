@@ -96,6 +96,7 @@ public fun FleetXrayPage(dark: Boolean) {
                 }
             }
         }
+        com.diegonmarcos.superapp.fleetxray.perf.XrayPerfSection(c)
         Spacer(Modifier.height(40.dp))
     }
 }

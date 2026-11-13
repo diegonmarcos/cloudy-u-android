@@ -214,14 +214,8 @@ internal fun XrayMemoryRow() {
     Hairline()
 }
 
-/** The share sheet for a finished report: the Markdown as text (capped, so the binder call stays small; Save .md writes the whole file). */
+/** The share sheet for a finished report: the shared export of libs:fleetconfigs-xray (the Markdown as text, capped; Save .md writes the whole file). */
 private object XrayShare {
-    const val MAX_CHARS = 200_000
-    fun share(ctx: android.content.Context, md: String, name: String) {
-        val text = if (md.length > MAX_CHARS) md.take(MAX_CHARS) + "\n\n(truncated for sharing; use Save .md for the whole report)\n" else md
-        val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-            type = "text/plain"; putExtra(android.content.Intent.EXTRA_SUBJECT, name); putExtra(android.content.Intent.EXTRA_TEXT, text)
-        }
-        runCatching { ctx.startActivity(android.content.Intent.createChooser(send, name).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
-    }
+    const val MAX_CHARS = com.diegonmarcos.superapp.fleetxray.perf.XrayFileExport.MAX_SHARE_CHARS
+    fun share(ctx: android.content.Context, md: String, name: String) = com.diegonmarcos.superapp.fleetxray.perf.XrayFileExport.share(ctx, md, name)
 }
