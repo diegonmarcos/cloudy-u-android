@@ -303,9 +303,12 @@ class EngineProfilesTest {
         has("App.kt", "XrayLifecycleProbe.install(this)")
         // Every hot path of the catalogue has a recorder: wrapped above, booked by the platform probe, or read from the broker's audit ring.
         val all = src.walkTopDown().filter { it.isFile && it.extension == "kt" }.joinToString("\n") { it.readText() }
+        val owner = File("../../ab_cloud-libs-shared/libs/adb-shell-core/src/main").walkTopDown().filter { it.isFile && it.extension == "kt" }.joinToString("\n") { it.readText() }
         for (e in EngineProfiles.ENGINES) for (h in e.hotPaths) {
             val recorded = h.id in setOf("page", "activity", "frame") || (e.id == "shell" && h.id == "exec") ||
-                all.contains("EngineProfiler.time(\"${e.id}\", \"${h.id}\"")
+                all.contains("EngineProfiler.time(\"${e.id}\", \"${h.id}\"") ||
+                // #1682 P3 step 4d: the owner code in libs:adb-shell-core times itself through the host hook (App installs EngineProfiler.time behind it)
+                owner.contains("AdbOwnerHost.profile(\"${e.id}\", \"${h.id}\")") || owner.contains("AdbOwnerHost.timed(\"${e.id}\", \"${h.id}\")")
             assertTrue("${e.id}/${h.id}: nothing records this hot path", recorded)
         }
     }
