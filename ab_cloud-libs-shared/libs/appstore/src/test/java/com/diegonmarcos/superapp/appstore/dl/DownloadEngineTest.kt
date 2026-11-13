@@ -138,6 +138,8 @@ class DownloadEngineTest {
         val j = e.finish("a")
         assertEquals(DlState.FAILED, j.state)
         assertTrue(j.error, j.error.contains("sha256 mismatch"))
+        // the engine publishes FAILED first and calls onFailed right after, outside its lock: wait for the callback, never assume it
+        until { failed.get() >= 1 }
         assertEquals(0, installed.get())
         assertEquals(1, failed.get())
         assertFalse(File(cacheDir, "fleet-a-dl.apk.part").exists())
