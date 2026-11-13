@@ -2,7 +2,7 @@ package com.diegonmarcos.superapp.daytimelines
 
 import android.app.Application
 import androidx.compose.foundation.layout.Column
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
