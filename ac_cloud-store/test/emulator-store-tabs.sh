@@ -50,12 +50,23 @@ done
 # it (tapping the page's Sync now) and is red when a model page still has no data, or when a page that left (Apps Mesh, Cloud Perms)
 # is back on the strip.
 dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1; }
-adb shell am start -W -n "$ACT" --es tab access >/dev/null; sleep 6
+# tap a strip page by its label (text or content-desc: a label the strip has scrolled away is a content-desc only)
+tap_page() {
+  dump cur
+  b=$(grep -oE "(text|content-desc)=\"$1\"[^>]*bounds=\"\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]\"" "$OUT/cur.xml" | sed -n 1p | grep -oE '[0-9]+' | tail -4 | tr '\n' ' ')
+  [ -n "$b" ] || return 1
+  set -- $b; adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 ))
+}
+PY1=$((H*3/5)); PY2=$((H*3/10))     # page swipes stay clear of the bottom island
+down() { for i in $(seq 1 "$1"); do adb shell input swipe $X $PY1 $X $PY2 250; sleep 0.5; done; sleep 1; }
+top()  { for i in 1 2 3 4 5 6; do adb shell input swipe $X $PY2 $X $PY1 100; done; sleep 1; }
+open_access() { adb shell am start -W -n "$ACT" --es tab access >/dev/null; sleep 4; }
+open_access; sleep 2
 dump access-strip
 for gone in "Apps Mesh" "Cloud Perms" "Apps MCP-API"; do
-  if grep -q "text=\"$gone\"" "$OUT/access-strip.xml"; then echo "::error::Access still shows the $gone page"; rc=1; fi
+  if grep -qE "(text|content-desc)=\"$gone\"" "$OUT/access-strip.xml"; then echo "::error::Access still shows the $gone page"; rc=1; fi
 done
-if tap_text 'MCP \(device\)'; then
+if tap_page 'MCP \(device\)'; then
   for i in $(seq 1 18); do
     sleep 8; dump access-mcp
     grep -q 'device MCP tools' "$OUT/access-mcp.xml" && break
@@ -63,38 +74,39 @@ if tap_text 'MCP \(device\)'; then
   done
   shoot access-mcp
   grep -q 'device MCP tools' "$OUT/access-mcp.xml" || { echo "::error::Access > MCP (device) has no data: the device access dataset was not served"; rc=1; }
-  for i in 1 2 3; do adb shell input swipe $X $Y1 $X $Y2 250; sleep 0.5; done; sleep 1; shoot access-mcp-tools
+  down 3; shoot access-mcp-tools; top
 else
   echo "::error::no MCP (device) page on the Access strip"; rc=1
 fi
-if tap_text APIs; then
+if tap_page APIs; then
   sleep 4; shoot access-apis; dump access-apis
   grep -q 'API routes' "$OUT/access-apis.xml" || { echo "::error::Access > APIs has no data"; rc=1; }
   if grep -qE 'text="0 routes"' "$OUT/access-apis.xml"; then echo "::error::Access > APIs shows an app with 0 routes"; rc=1; fi
-  for i in 1 2; do adb shell input swipe $X $Y1 $X $Y2 250; sleep 0.5; done; sleep 1; shoot access-apis-rows; dump access-apis-rows
+  b=$(grep -oE 'text="[0-9]+ routes"[^>]*bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' "$OUT/access-apis.xml" | sed -n 1p | grep -oE '[0-9]+' | tail -4 | tr '\n' ' ')
+  if [ -n "$b" ]; then set -- $b; adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 )); sleep 2; shoot access-apis-open; adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 )); sleep 1; fi
+  down 2; shoot access-apis-rows; dump access-apis-rows
   if grep -qE 'text="0 routes"' "$OUT/access-apis-rows.xml"; then echo "::error::Access > APIs shows an app with 0 routes"; rc=1; fi
-  b=$(grep -oE 'text="[0-9]+ routes"[^>]*bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' "$OUT/access-apis-rows.xml" | sed -n 1p | grep -oE '[0-9]+' | tail -4 | tr '\n' ' ')
-  if [ -n "$b" ]; then set -- $b; adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 )); sleep 2; shoot access-apis-open; fi
+  top
 else
   echo "::error::no APIs page on the Access strip"; rc=1
 fi
-if tap_text IPC; then
+if tap_page IPC; then
   sleep 4; shoot access-ipc-gateway; dump access-ipc
   grep -q 'gateway routes' "$OUT/access-ipc.xml" || { echo "::error::Access > IPC shows no gateway routes"; rc=1; }
+  down 2; shoot access-ipc-gateway-rows; top
   if tap_text 'Endpoint registry'; then sleep 5; shoot access-ipc-registry; tap_text 'Gateway routes' || true; fi
 else
   echo "::error::no IPC page on the Access strip"; rc=1
 fi
-if tap_text Identity; then
+if tap_page Identity; then
   sleep 4; shoot access-identity-direct; dump access-identity
   grep -q 'Signature level' "$OUT/access-identity.xml" || { echo "::error::Access > Identity shows no signature-level card"; rc=1; }
-  for i in 1 2; do adb shell input swipe $X $Y1 $X $Y2 250; sleep 0.5; done; sleep 1; shoot access-identity-direct-apps
-  for i in 1 2 3; do adb shell input swipe $X $Y2 $X $Y1 100; done
+  down 2; shoot access-identity-direct-apps; top
   if tap_text 'Linux identity'; then sleep 5; shoot access-identity-uid; tap_text 'Direct access' || true; fi
 else
   echo "::error::no Identity page on the Access strip"; rc=1
 fi
-if tap_text 'Android Perms'; then
+if tap_page 'Android Perms'; then
   sleep 5; shoot access-android; dump access-android
   grep -q 'OS reach' "$OUT/access-android.xml" || { echo "::error::Access > Android Perms shows no OS reach card"; rc=1; }
 else

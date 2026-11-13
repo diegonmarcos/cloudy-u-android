@@ -14,7 +14,7 @@ tap_exact() {  # tap the node whose text or content-desc is exactly $1 (the LAST
   [ -n "$b" ] || return 1
   set -- $b; adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 ))
 }
-has() { grep -q -- "$2" "$OUT/$1.xml"; }
+has() { grep -qi -- "$2" "$OUT/$1.xml"; }   # card titles are drawn in capitals
 rc=0; fail() { echo "::error::$*"; rc=1; }
 adb shell am force-stop "$W"; adb shell input keyevent KEYCODE_HOME
 adb shell am start -W -n "$W/.MainActivity" >/dev/null; sleep 8
@@ -27,7 +27,7 @@ read -r WD HT < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | ta
 X=$((WD/2)); Y1=$((HT*3/4)); Y2=$((HT/3))
 n=0
 # page label, the text the device access model must put on it (_ = space)
-while read -r label want; do
+while read -r label want <&3; do   # fd 3: adb reads stdin and would eat the page list
   [ -z "$label" ] && continue
   n=$((n+1)); name="$n-$(echo "$label" | tr 'A-Z ' 'a-z-')"
   tap_exact "${label//_/ }" || { fail "the second row has no '${label//_/ }' page"; continue; }
@@ -36,7 +36,7 @@ while read -r label want; do
   shoot "$name"
   [ "$ok" = 1 ] || fail "API > ${label//_/ } does not show '${want//_/ }' (the device access model has no data)"
   adb shell input swipe $X $Y1 $X $Y2 300; sleep 1; shoot "$name-more"
-done <<'PAGES'
+done 3<<'PAGES'
 Topology API_topology
 MCP MCP_tools
 Mesh_Endpoints Mesh_gateway
