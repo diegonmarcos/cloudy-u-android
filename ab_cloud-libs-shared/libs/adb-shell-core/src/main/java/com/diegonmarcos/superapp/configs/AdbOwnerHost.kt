@@ -23,6 +23,8 @@ object AdbOwnerHost {
     interface Plane {
         fun tune(ctx: Context, exec: (String) -> String?)
         fun selfGrant(ctx: Context, exec: (String) -> String?)
+        /** Self-grant android.permission.DUMP through [exec] (the debug server's adb/grant-dump); null = not run. */
+        fun grantDump(ctx: Context, exec: (String) -> String?): String? = null
     }
     object NoPlane : Plane {
         override fun tune(ctx: Context, exec: (String) -> String?) {}
@@ -46,4 +48,5 @@ object AdbOwnerHost {
     fun error(engine: String, where: String, what: String) { runCatching { errors.invoke(engine, where, what) } }
     fun tune(ctx: Context, exec: (String) -> String?) { runCatching { plane.tune(ctx, exec) } }
     fun selfGrant(ctx: Context, exec: (String) -> String?) { runCatching { plane.selfGrant(ctx, exec) } }
+    fun grantDump(ctx: Context, exec: (String) -> String?): String? = runCatching { plane.grantDump(ctx, exec) }.getOrNull()
 }

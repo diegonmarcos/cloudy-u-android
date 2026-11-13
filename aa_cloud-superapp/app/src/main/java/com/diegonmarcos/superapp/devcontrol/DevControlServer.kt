@@ -413,30 +413,6 @@ object DevControlServer {
                     // still gets signal 9 without a shell round trip of its own.
                     reply(writer, "200 OK", com.diegonmarcos.superapp.system.DeviceTuning.toJson(ctx), "application/json")
                 }
-                "adb/grant-dump" -> {
-                    // Self-grant DUMP through whichever shell channel is up
-                    // (the local server or Shizuku) so dumpsys also works
-                    // in-process. Signature|privileged|DEVELOPMENT perm, so
-                    // a shell grant is allowed. #1515 the line is built and run by the privileged plane
-                    // (PrivilegedGrants, the Perms page's own grant pass), never here.
-                    val ch = com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)
-                    val out = if (ch == null) null else com.diegonmarcos.superapp.system.PrivilegedGrants.grant(ctx,
-                        com.diegonmarcos.superapp.system.PrivilegedGrants.Target(ctx.packageName, "android.permission.DUMP", "Dump system services")) { ch.exec(ctx, it) }
-                    val held = ctx.checkSelfPermission("android.permission.DUMP") ==
-                        android.content.pm.PackageManager.PERMISSION_GRANTED
-                    val body = """{"channel":"${jsonEscape(ch?.name() ?: "none")}","ran":${out != null},"held":$held,"output":"${jsonEscape(out ?: "no shell channel ready")}"}"""
-                    reply(writer, "200 OK", body, "application/json")
-                }
-                "adb/sfc" -> {
-                    // Samsung Super Fast Charging verdict — runs the data-driven
-                    // `samsung-sfc` bundle through the shell ladder and parses
-                    // dumpsys battery into {tier, verdict, reasons[]}. No drained
-                    // battery needed: surfaces device watt-ceiling + SFC toggle +
-                    // peak-current-ever so "why isn't 100W fast" is answered now.
-                    reply(writer, "200 OK",
-                        com.diegonmarcos.superapp.adbdebug.SfcVerdict.run(ctx),
-                        "application/json")
-                }
                 else -> reply(writer, "404 Not Found", "not found — see /api/docs\n")
             }
         } finally {

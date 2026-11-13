@@ -1188,7 +1188,7 @@
      "method": "fleet.ipc.v1",
      "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
      "level": "signature",
-     "source": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbBridgeApi.kt",
+     "source": "ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbBridgeApi.kt",
      "callers": []
     },
     {

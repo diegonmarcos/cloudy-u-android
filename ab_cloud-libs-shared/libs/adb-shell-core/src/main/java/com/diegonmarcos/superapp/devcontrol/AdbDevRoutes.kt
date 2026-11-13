@@ -13,7 +13,7 @@ object AdbDevRoutes {
 
     /** The routes [handle] serves (the server's `when` sends these here). */
     val ROUTES = setOf("adb/status", "keeper/status", "adb/netinfo", "adb/pair", "adb/autoconnect", "adb/connect",
-        "adb/server-command", "adb/diagnostics", "adb/exec", "adb/sfc")
+        "adb/server-command", "adb/diagnostics", "adb/exec", "adb/sfc", "adb/grant-dump")
 
     /** Best-effort auto-reconnect of the embedded channel at app start (a paired phone with Wireless Debugging on comes back with no port). */
     fun autoConnectAtStart(app: Context) {
@@ -62,6 +62,14 @@ object AdbDevRoutes {
                     ?: "ERR: no shell channel ready — ${com.diegonmarcos.superapp.adbdebug.LocalShellChannel.status(ctx)}\n"
                 Reply("200 OK", out)
             }
+        }
+        "adb/grant-dump" -> {
+            // Self-grant DUMP through whichever shell channel is up (the local server or Shizuku) so dumpsys also works in-process.
+            // #1515 the line is built and run by the host's privileged plane (PrivilegedGrants), never here.
+            val ch = com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)
+            val out = if (ch == null) null else com.diegonmarcos.superapp.configs.AdbOwnerHost.grantDump(ctx) { ch.exec(ctx, it) }
+            val held = ctx.checkSelfPermission("android.permission.DUMP") == android.content.pm.PackageManager.PERMISSION_GRANTED
+            Reply("200 OK", """{"channel":"${jsonEscape(ch?.name() ?: "none")}","ran":${out != null},"held":$held,"output":"${jsonEscape(out ?: "no shell channel ready")}"}""", true)
         }
         "adb/sfc" -> Reply("200 OK", com.diegonmarcos.superapp.adbdebug.SfcVerdict.run(ctx), true)
         else -> null

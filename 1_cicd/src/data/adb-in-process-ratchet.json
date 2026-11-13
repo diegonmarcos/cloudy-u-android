@@ -4,8 +4,6 @@
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/App.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/ShellActivity.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbBridgeApi.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlServer.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkPopupSections.kt"
  ],
  "gradle": [

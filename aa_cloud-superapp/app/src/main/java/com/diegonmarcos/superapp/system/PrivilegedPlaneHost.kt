@@ -17,6 +17,9 @@ object PrivilegedPlaneHost : AdbOwnerHost.Plane {
 
     override fun selfGrant(ctx: Context, exec: (String) -> String?) = grantAll(ctx, exec)
 
+    override fun grantDump(ctx: Context, exec: (String) -> String?): String? =
+        PrivilegedGrants.grant(ctx, PrivilegedGrants.Target(ctx.packageName, "android.permission.DUMP", "Dump system services")) { exec(it) }
+
     /**
      * Grant everything PrivilegedGrants resolves off the running platform.
      *
