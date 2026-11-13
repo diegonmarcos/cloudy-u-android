@@ -87,7 +87,8 @@ object ConnectPlan {
         return when (mode) {
             ChannelMode.SHIZUKU ->
                 listOf(Method("Shizuku only", "If its service is not running it is started through the embedded adb session by itself, then allow this app; nothing else is used."))
-            ChannelMode.LOCAL_SERVER -> listOf(pair, mdns, launch)
+            // #1682 rule 16: "Run over the adb session" stays a Local-server method: until the server answers (and whenever Shizuku is its fallback) commands run over the adb session itself
+            ChannelMode.LOCAL_SERVER -> listOf(pair, mdns, direct, launch)
             ChannelMode.EMBEDDED_ONLY, ChannelMode.AUTO -> listOf(pair, mdns, direct)
         }
     }

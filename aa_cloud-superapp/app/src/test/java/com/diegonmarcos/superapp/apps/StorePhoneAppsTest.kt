@@ -59,6 +59,8 @@ class StorePhoneAppsTest : KitPageHarness() {
         AppStoreHost.classify = { _, _ -> emptyMap() }
     }
 
+    private fun String.withoutCheckedAt() = replace(Regex("\\(checked [0-9:]+\\)"), "(checked)")
+
     private fun idle() { shadowOf(Looper.getMainLooper()).idle(); compose.waitForIdle() }
 
     /**
@@ -115,7 +117,8 @@ class StorePhoneAppsTest : KitPageHarness() {
         assertEquals("Phone Apps does not draw the same controls",
             cloud.controls.keys - StoreBar.Item.DOWNLOAD, phone.controls.keys)
         for ((item, seen) in phone.controls)
-            assertEquals("$item label differs between the tabs", cloud.controls.getValue(item).text, seen.text)
+            // the chip says when it was checked ("(checked 14:18:45)"): two tabs read a second apart must still be the same label
+            assertEquals("$item label differs between the tabs", cloud.controls.getValue(item).text.withoutCheckedAt(), seen.text.withoutCheckedAt())
         assertEquals("the Cloud tab has a disabled control", emptySet<StoreBar.Item>(),
             cloud.controls.filterValues { it.disabled }.keys)
         // #571: Install all / Update all are real on Phone Apps — this store installs

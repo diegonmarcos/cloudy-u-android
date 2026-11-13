@@ -127,7 +127,7 @@ class ConnectPlanTest {
         val adbWay = listOf("Pair with code", "Connect via mDNS", "Run over the adb session")
         assertEquals(adbWay, ConnectPlan.methods(EMBEDDED_ONLY, LaunchVia.ADB).map { it.title })
         assertEquals(adbWay, ConnectPlan.methods(AUTO, LaunchVia.ADB, ownsServer = false).map { it.title })
-        assertEquals(listOf("Pair with code", "Connect via mDNS", "Launch the local server"), ConnectPlan.methods(LOCAL_SERVER, LaunchVia.SHIZUKU).map { it.title })
+        assertEquals(listOf("Pair with code", "Connect via mDNS", "Run over the adb session", "Launch the local server"), ConnectPlan.methods(LOCAL_SERVER, LaunchVia.SHIZUKU).map { it.title })
         assertEquals(listOf("Shizuku only"), ConnectPlan.methods(SHIZUKU, LaunchVia.ADB, ownsServer = false).map { it.title })
         assertEquals(listOf("Shizuku only"), ConnectPlan.methods(SHIZUKU, LaunchVia.ADB).map { it.title })
         assertTrue(ConnectPlan.methods(AUTO, LaunchVia.ADB).none { it.title.contains("Shizuku") })

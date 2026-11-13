@@ -40,9 +40,10 @@ class AdbShellRestoreTest {
             "layer table" to "ChannelState.rows(",
             "layer probe time" to "Dim(\"Probed\"",
             "channel mode bar" to "ChannelModeBar {",
-            "server launcher choice" to "LaunchVia.values()",
+            // #1709/#1682: the launcher is automatic (Embedded first, Shizuku fallback), no longer a choice: the page still names which one launched the server
+            "server launcher (shown, automatic)" to "\"launcher: \" + (AdbShellBootstrap.lastLauncher(ctx)",
             "connect method plan" to "ConnectPlan.methods(",
-            "connect step runner" to "for (s in steps)",
+            "connect step runner" to "for (s in if (steps.isEmpty()) auto else steps)",
             "connect outcome" to "ConnectStatus.WAITING_FOR_USER",
             "keep armed toggle" to "Keep armed: ON",
             "disabled-action reasons" to "ChannelActions.enablement(",

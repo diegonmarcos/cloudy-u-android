@@ -1031,6 +1031,8 @@
       ],
       "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. It calls no fleet service: its data stays on the phone.",
       "perms_why": {
+        "background_run": "Keep the server, SSHd and the ADB owner service alive while the screen is off (the always-on foreground service the Keep alive switch controls).",
+        "samsung_unrestricted": "Stay unrestricted in Samsung's battery settings so One UI does not stop the always-on server and ADB owner service in the background.",
         "write_settings": "Parity grant with the SuperApp (perms.needs): backs the user-controllable system-settings plane (screen brightness, auto-rotate, timeout) that the X-Ray Device page's device profile reports on; the write itself is performed by the SuperApp service this Rust app mirrors, not by this app directly.",
         "dnd_access": "Parity grant with the SuperApp (perms.needs): lets the X-Ray Device page's device profile read the Do Not Disturb / notification-policy state the device scan reports; the policy change is performed by the SuperApp service this Rust app mirrors, not by this app directly."
       },
