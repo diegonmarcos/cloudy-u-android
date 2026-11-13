@@ -10,8 +10,12 @@ object ChannelModePrefs {
     /** True when this app declares its own local server (build.json::shizuku_diagnostics.local_server). */
     fun ownsServer(): Boolean = BuildConfig.ADB_SHELL_SERVER_OWN
 
-    /** Local server where the app owns one (SuperApp, Store, Account), else Auto: a terminal has no server of its own. */
-    fun default(): ChannelMode = if (ownsServer()) ChannelMode.LOCAL_SERVER else ChannelMode.AUTO
+    /**
+     * Local server for EVERY app (#1709): new installs and anyone who never chose a profile get it; a stored choice wins.
+     * An app with no server of its own reaches the owner's server (the shell-client / bridge route, kept as the
+     * fallback behind the local layers by [ChannelSelector.execOrder] with ownsServer = false).
+     */
+    fun default(): ChannelMode = ChannelMode.LOCAL_SERVER
 
     fun current(ctx: Context): ChannelMode = runCatching {
         ChannelMode.parse(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null), default())
@@ -29,7 +33,11 @@ object ChannelModePrefs {
     }
 }
 
-/** Who launches the local server (Embedded adb or Shizuku): the page's choice, kept in the same prefs. */
+/**
+ * Who launched the local server. No longer a user choice (the person picks only the profile): the launcher is automatic,
+ * Embedded adb first, Shizuku only as the fallback. The `launch_via` key stays readable for migration; [set] is kept for
+ * old callers and nothing in the UI calls it.
+ */
 object LaunchViaPrefs {
     private const val PREFS = "adb_shell"
     private const val KEY = "launch_via"
@@ -42,9 +50,11 @@ object LaunchViaPrefs {
         runCatching { ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, via.id).commit() }
     }
 
-    /** [sources] (channels allowed to launch the server) with the chosen launcher first. */
-    fun order(ctx: Context, sources: List<ShellChannel>): List<ShellChannel> {
-        val first = if (current(ctx) == LaunchVia.SHIZUKU) ChannelSelector.SHIZUKU else ChannelSelector.EMBEDDED
-        return sources.sortedBy { if (it.name() == first) 0 else 1 }
-    }
+    /** [sources] (channels allowed to launch the server), Embedded adb first, Shizuku only after it. */
+    @Suppress("UNUSED_PARAMETER")
+    fun order(ctx: Context, sources: List<ShellChannel>): List<ShellChannel> = orderNames(sources) { it.name() }
+
+    /** Pure: the automatic launcher order. */
+    fun <T> orderNames(sources: List<T>, name: (T) -> String): List<T> =
+        sources.sortedBy { if (name(it) == ChannelSelector.EMBEDDED) 0 else 1 }
 }

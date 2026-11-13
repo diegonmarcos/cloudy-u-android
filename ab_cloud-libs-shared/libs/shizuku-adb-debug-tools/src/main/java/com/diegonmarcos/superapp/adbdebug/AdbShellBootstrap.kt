@@ -58,18 +58,22 @@ object AdbShellBootstrap {
     }
 
     /**
-     * Launch the OPTIONAL loopback server over the first ready channel of [sources]. Called from ONE
-     * place, the Restart-server button ([ChannelOps.startServer]); never from a connect, a reconnect, an
-     * auto-fix or a channel lookup. The server is an extra (it keeps answering after the adb session
-     * drops), not a prerequisite: the adbd connection is already the shell channel.
-     * Logs one line per attempt; the result is kept for [bootstrapState].
+     * Launch the loopback server over the first ready channel of [sources] (launcher order: [LaunchViaPrefs.order],
+     * embedded adb first, Shizuku as the fallback). Two callers, both in ChannelDevice.kt: the Restart-server button
+     * ([ChannelOps.startServer], [reason] "button") and the automatic chain's LAUNCH_SERVER step
+     * ([DeviceConnectExecutor], reason "auto"). Never from a lookup, a reconnect or the pairing service.
+     * Logs one line per attempt with the real outcome and the launcher used; kept for [bootstrapState].
      */
-    fun ensureServer(ctx: Context, sources: List<ShellChannel>): Boolean {
+    fun ensureServer(ctx: Context, sources: List<ShellChannel>, reason: String = "button"): Boolean {
         val listening = LocalShellChannel.isReady(ctx)
         if (listening && LocalShellChannel.probe(ctx)) return true
-        val via = sources.firstOrNull { it !== LocalShellChannel && it.isReady(ctx) } ?: return false
+        val via = sources.firstOrNull { it !== LocalShellChannel && it.isReady(ctx) }
+        if (via == null) {
+            record(ctx, "$reason: no launcher ready (embedded adb not connected, Shizuku not granted)")
+            return false
+        }
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        sp.edit().putLong(K_BOOT_AT, SystemClock.elapsedRealtime()).putString(K_BOOT_RESULT, "started by its button via ${via.name()}: launching").apply()
+        record(ctx, "$reason via ${via.name()}: launching")
         // A listening server that does not answer is the previous APK's process (shell uid, it
         // outlives the app): kill it first, by its nice-name, through the channel that still works.
         val launch = (if (listening) "pkill -f '${niceName().dropLast(1)}[${niceName().last()}]'; sleep 1; " else "") + shellCommand(ctx)
@@ -77,17 +81,29 @@ object AdbShellBootstrap {
         var up = false
         // Up = it ANSWERS a round trip, not that the port accepts.
         repeat(10) { if (!up) { Thread.sleep(500); up = LocalShellChannel.isReady(ctx) && LocalShellChannel.probe(ctx) } }
-        val result = "started by its button via ${via.name()}: " +
+        val result = "$reason via ${via.name()}: " +
             if (up) "server up" else "server did not come up" + (if (out.isBlank()) "" else " (${out.take(80)})")
-        sp.edit().putString(K_BOOT_RESULT, result).apply()
-        Log.i(TAG, "optional server $result")
-        ChannelLog.shared.add("server", result)
+        sp.edit().putString(K_LAUNCHER, via.name()).apply()
+        record(ctx, result)
+        Log.i(TAG, "server $result")
         return up
     }
 
-    /** One short string for /api/adb/status + the Permissions row: was the
-     *  optional server started this boot (by its button), through which channel, and how
-     *  did it end. No network — safe on the main thread. */
+    /** Writes the real state (bootstrapState) and the ChannelLog line. */
+    fun record(ctx: Context, text: String) {
+        runCatching {
+            ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putLong(K_BOOT_AT, SystemClock.elapsedRealtime()).putString(K_BOOT_RESULT, text).apply()
+        }
+        ChannelLog.shared.add("server", text)
+    }
+
+    /** Who launched the server last (channel name), or null. */
+    fun lastLauncher(ctx: Context): String? =
+        runCatching { ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(K_LAUNCHER, null) }.getOrNull()
+
+    /** One short string for /api/adb/status + the Permissions row: the last launch attempt this boot (automatic or by
+     *  the Restart button), through which launcher, and how it really ended. No network, safe on the main thread. */
     fun bootstrapState(ctx: Context): String {
         val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val last = sp.getLong(K_BOOT_AT, -1L)
@@ -95,11 +111,12 @@ object AdbShellBootstrap {
         return sp.getString(K_BOOT_RESULT, null) ?: NOT_STARTED
     }
 
-    /** The server is optional and is started only by its button. */
-    const val NOT_STARTED = "not started this boot (optional; started only from its Restart button)"
+    /** Nothing attempted yet this boot: in Local server mode the app starts it by itself when a command needs it. */
+    const val NOT_STARTED = "no launch attempt this boot (Local server mode starts it by itself when a command needs it; Restart server forces it)"
     private const val TAG     = "AdbShellBootstrap"
     private const val PREFS   = "adb_shell"
     private const val K_TOKEN = "token"
     private const val K_BOOT_AT     = "bootstrap_at"      // elapsedRealtime ms of the last attempt
     private const val K_BOOT_RESULT = "bootstrap_result"
+    private const val K_LAUNCHER    = "bootstrap_launcher"
 }

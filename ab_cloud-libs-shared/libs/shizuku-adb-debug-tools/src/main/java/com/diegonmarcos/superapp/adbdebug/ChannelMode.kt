@@ -36,9 +36,11 @@ object ChannelSelector {
     const val BRIDGE = "superapp-bridge"
 
     /** Channel names allowed to RUN COMMANDS in [mode], in order, out of [ladder] (preference order). */
-    fun execOrder(mode: ChannelMode, ladder: List<String>): List<String> = when (mode) {
+    fun execOrder(mode: ChannelMode, ladder: List<String>, ownsServer: Boolean = true): List<String> = when (mode) {
         ChannelMode.AUTO -> ladder
-        ChannelMode.LOCAL_SERVER -> listOf(LOCAL, EMBEDDED).filter { it in ladder }
+        // An app with no server of its own (a client of the owner) keeps the owner route behind the local layers.
+        ChannelMode.LOCAL_SERVER ->
+            listOf(LOCAL, EMBEDDED).filter { it in ladder } + (if (ownsServer) emptyList() else ladder.filter { it != LOCAL && it != EMBEDDED })
         ChannelMode.EMBEDDED_ONLY -> ladder.filter { it == EMBEDDED }
         ChannelMode.SHIZUKU -> ladder.filter { it == SHIZUKU }
     }
@@ -63,9 +65,9 @@ object ChannelSelector {
      * for the server, answering). A pure read: it starts nothing, so a mode can never reach into
      * another channel (or launch a server) as a side effect of being asked what is up.
      */
-    fun <T> select(mode: ChannelMode, ladder: List<T>, name: (T) -> String, usable: (T) -> Boolean): T? {
+    fun <T> select(mode: ChannelMode, ladder: List<T>, name: (T) -> String, usable: (T) -> Boolean, ownsServer: Boolean = true): T? {
         val byName = ladder.associateBy(name)
-        return execOrder(mode, ladder.map(name)).mapNotNull { byName[it] }.firstOrNull(usable)
+        return execOrder(mode, ladder.map(name), ownsServer).mapNotNull { byName[it] }.firstOrNull(usable)
     }
 
     /** The control's label in Shizuku mode. */
@@ -108,7 +110,7 @@ fun ChannelMode.title(): String = when (this) {
 
 /** What a mode does, one line. */
 fun ChannelMode.hint(): String = when (this) {
-    ChannelMode.LOCAL_SERVER -> "Commands run over the adbd connection on 127.0.0.1 (the loopback server first, when it was started). Never Shizuku."
+    ChannelMode.LOCAL_SERVER -> "The app starts the loopback server by itself (embedded adb launches it, then closes; Shizuku only as the fallback) and every command runs through it."
     ChannelMode.EMBEDDED_ONLY -> "Embedded adb only; the local server is skipped."
     ChannelMode.SHIZUKU -> "The external Shizuku app only."
     ChannelMode.AUTO -> "Embedded adb, then the local server, then Shizuku."

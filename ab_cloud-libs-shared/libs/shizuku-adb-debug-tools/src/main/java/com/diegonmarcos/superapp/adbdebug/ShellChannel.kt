@@ -86,7 +86,7 @@ object ShellChannels {
      * directly (a Shizuku fallback, a status line) asks this first, so it cannot cross into another mode's channel.
      */
     fun modeUses(ctx: Context, name: String): Boolean =
-        name in ChannelSelector.execOrder(ChannelModePrefs.current(ctx), all.map { it.name() })
+        name in ChannelSelector.execOrder(ChannelModePrefs.current(ctx), all.map { it.name() }, ChannelModePrefs.ownsServer())
 
     /**
      * The channel that runs commands in the chosen mode, or null. A pure read of what is up: it
@@ -97,7 +97,12 @@ object ShellChannels {
         // Our server is the one channel that can WEDGE: a uid-2000 app_process launched from the
         // previous APK keeps its listening socket after an update while every exec dies in it, so
         // isReady (a connect) stays true. It is asked to execute before it is trusted.
-        return ChannelSelector.select(ChannelModePrefs.current(ctx), all, { it.name() },
-            usable = { it.isReady(ctx) && (it !== LocalShellChannel || it.probe(ctx)) })
+        val mode = ChannelModePrefs.current(ctx)
+        val found = ChannelSelector.select(mode, all, { it.name() },
+            usable = { it.isReady(ctx) && (it !== LocalShellChannel || it.probe(ctx)) }, ownsServer = ChannelModePrefs.ownsServer())
+        // #1709 Local server mode: a command that finds the server not answering posts ONE async, single-flight
+        // request to bring it up (the result of this lookup is unchanged; it never blocks and never launches here).
+        if (mode == ChannelMode.LOCAL_SERVER && found !== LocalShellChannel) LocalServerAutoStart.request(ctx, "command")
+        return found
     }
 }

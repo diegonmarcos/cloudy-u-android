@@ -82,6 +82,8 @@ object WdKeeper {
     /** Bring everything in line with the switch. Called from App.onCreate, the boot receivers and the switch itself. Idempotent. */
     fun start(ctx: Context) {
         val app = ctx.applicationContext
+        // #1709 app start / boot receiver: Local server profile brings its server up (async, single-flight), keeper armed or not.
+        LocalServerAutoStart.request(app, "app-start")
         if (!armed(app)) { stop(app); return }
         p(app).edit().putBoolean(KEY_ARMED, true).apply()
         heartbeat(app)
@@ -173,6 +175,8 @@ object WdKeeper {
                             audit(app).add(WdAuditLog.Entry(now, on == 1, wifiConnected(app), cause.label, if (mine && on == 1) p(app).getString("self_write_by", null) ?: app.packageName else "-"))
                         }
                         kick(app, if (on == 1) "setting-on" else "setting-off")
+                        // #1709 Wireless debugging became available: bring the Local server profile's server up (async, single-flight).
+                        if (on == 1) LocalServerAutoStart.request(app, "wireless-debugging-on")
                     }
                 })
         }.onFailure { Log.w(TAG, "setting observer: ${it.message}") }

@@ -32,15 +32,22 @@ import com.diegonmarcos.superapp.configs.AdbOwnerHost
  */
 class PrivilegedPlaneWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
-    override fun doWork(): Result { AdbOwnerHost.wake("system", "plane_worker"); return AdbOwnerHost.timed("system", "plane") { arm() } }
+    override fun doWork(): Result {
+        AdbOwnerHost.wake("system", "plane_worker")
+        val r = AdbOwnerHost.timed("system", "plane") { arm() }
+        // #1709 after the plane work (it may leave embedded adb connected): in Local server mode bring the loopback
+        // server up through embedded adb, verify, close adb. Off the main thread here; single-flight; real outcome logged.
+        runCatching { com.diegonmarcos.superapp.adbdebug.LocalServerAutoStart.runBlocking(applicationContext, "boot") }
+        return r
+    }
 
     private fun arm(): Result {
         val ctx = applicationContext
         enableWirelessDebugging(ctx)
         // First consultation of the chosen mode's channel at start: a pure read, it launches nothing.
-        // The loopback server is optional and started only from its own button.
+        // Local server mode: the chain at the end of doWork starts the loopback server by itself (#1709).
         Log.i(TAG, "shell ladder at start: ${com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)?.name() ?: "none"}" +
-            " — optional loopback server ${com.diegonmarcos.superapp.adbdebug.AdbShellBootstrap.bootstrapState(ctx)}")
+            " — loopback server ${com.diegonmarcos.superapp.adbdebug.AdbShellBootstrap.bootstrapState(ctx)}")
         // #891 the tuning pass needs A shell, not the embedded one: run it now through whatever the
         // ladder resolved (own server, Shizuku). A phone that never paired the embedded adb — the
         // owner's — otherwise never gets its device tuning; the pass is verify-first and single-run.

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Configs > ADB Shell: the connection modes are INDEPENDENT channels and nothing bootstraps a server through the channel it provides.
 # Static (no build, no device). The behaviour itself is proven by the JVM suites named in M7; this pins the wiring they cannot see.
-#  M1 the Connect plan has no server-start step: StepId holds no START_SERVER, ConnectPlan names no server launch.
-#  M2 the loopback app_process server is launched from ONE place, the Restart-server button (ChannelOps.startServer): never from the
-#     channel lookup (ShellChannels.active), the reconnect (ShellAccess), the pairing service, or the app.
-#  M3 the channel lookup is a pure read: ChannelSelector.select takes no relaunch callback.
+#  M1 the old circular START_SERVER step is gone: StepId holds no START_SERVER; LAUNCH_SERVER (#1709) is a step of the Local server plan ONLY.
+#  M2 (#1709) the loopback app_process server is launched from TWO places, both in ChannelDevice.kt: the Restart-server button
+#     (ChannelOps.startServer) and the Local server chain's LAUNCH_SERVER step (DeviceConnectExecutor, which the single-flight
+#     LocalServerAutoStart drives): never from the channel lookup (ShellChannels.active), the reconnect (ShellAccess), the pairing service,
+#     or the app.
+#  M3 the channel lookup returns what is up and launches nothing itself: ChannelSelector.select takes no relaunch callback; the only thing
+#     ShellChannels.active may do beyond reading is post the async single-flight LocalServerAutoStart.request (never a blocking run).
 #  M4 Reconnect is gated by the mode: ShellAccess decides from rungs(mode) and reaches Shizuku only behind that gate; Local server and
 #     Embedded modes hold the adb rung alone, Shizuku mode the Shizuku rung alone.
 #     A direct Shizuku fallback outside the selection (pm grant, logcat, the Perms plane line) asks the mode first.
@@ -60,20 +63,28 @@ def check(S):
     r = []
     plan, mode, chan, acc, dev = S[LIB + "ConnectPlan.kt"], S[LIB + "ChannelMode.kt"], S[LIB + "ShellChannel.kt"], S[LIB + "ShellAccess.kt"], S[LIB + "ChannelDevice.kt"]
     steps = body(plan, "enum class StepId")
-    r.append(("M1a", "START_SERVER" not in steps and not re.search(r'"[^"]*server[^"]*"', steps, re.I), "StepId has no server-start step"))
+    sp = body(plan, "fun steps(")
+    r.append(("M1a", "START_SERVER" not in steps and len(re.findall(r"LAUNCH_SERVER", sp)) == 1 and
+              re.search(r"ChannelMode\.LOCAL_SERVER\s*->[^\n]*LAUNCH_SERVER", sp) is not None, "StepId has no START_SERVER; LAUNCH_SERVER is in the Local server plan only"))
     r.append(("M1b", not re.search(r"startServer|ensureServer|START_SERVER|Launch the server", plan), "ConnectPlan plans and names no server launch"))
     r.append(("M1c", not re.search(r"\bSTART_SERVER\b", "".join(S.values())), "no code refers to a START_SERVER step"))
     callers = sorted(p for p, t in S.items() if re.search(r"AdbShellBootstrap\.ensureServer\(", t))
     r.append(("M2a", callers == [LIB + "ChannelDevice.kt"], "ensureServer is called from ChannelDevice.kt only (found: %s)" % (", ".join(callers) or "none")))
-    r.append(("M2b", len(re.findall(r"AdbShellBootstrap\.ensureServer\(", dev)) == 1 and "ensureServer(" in body(dev, "fun startServer("),
-              "the one ensureServer call sits in ChannelOps.startServer (the Restart-server button)"))
-    r.append(("M2c", not re.search(r"ensureServer|shellCommand\(|startServer\(", body(dev, "class DeviceConnectExecutor")), "the Connect executor starts no server"))
+    exe = body(dev, "class DeviceConnectExecutor")
+    launch_branch = body(exe[exe.find("StepId.LAUNCH_SERVER ->"):], "StepId.LAUNCH_SERVER ->") if "StepId.LAUNCH_SERVER ->" in exe else ""
+    r.append(("M2b", len(re.findall(r"AdbShellBootstrap\.ensureServer\(", dev)) == 2 and "ensureServer(" in body(dev, "fun startServer(") and "ensureServer(" in exe,
+              "the two ensureServer calls sit in ChannelOps.startServer (the Restart-server button) and DeviceConnectExecutor (the chain step)"))
+    r.append(("M2c", len(re.findall(r"ensureServer", exe)) == 1 and "ensureServer" in launch_branch and not re.search(r"shellCommand\(|startServer\(", exe),
+              "the Connect executor launches the server only inside its LAUNCH_SERVER step"))
     r.append(("M2d", not re.search(r"AdbShellBootstrap|shellCommand\(", S[LIB + "AdbPairingService.kt"]), "the pairing service launches nothing through the session"))
     launchers = sorted(p for p, t in S.items() if re.search(r"AdbShellBootstrap\.shellCommand\(|[^.\w]shellCommand\(ctx\)", t) and p != LIB + "AdbShellBootstrap.kt")
     r.append(("M2e", launchers == [], "nothing outside AdbShellBootstrap sends the launch line (found: %s)" % (", ".join(launchers) or "none")))
     sel = body(mode, "fun <T> select(")
     r.append(("M3a", sel != "" and "relaunch" not in sel and "relaunch" not in body(chan, "fun active("), "ChannelSelector.select / ShellChannels.active take no relaunch"))
-    r.append(("M3b", not re.search(r"ensureServer|autoConnect|connectLive|requestPermission|bindBlocking", body(chan, "fun active(")), "ShellChannels.active is a pure read"))
+    act = body(chan, "fun active(")
+    r.append(("M3b", not re.search(r"ensureServer|autoConnect|connectLive|requestPermission|bindBlocking|runBlocking", act), "ShellChannels.active launches and connects nothing itself"))
+    r.append(("M3c", len(re.findall(r"LocalServerAutoStart\.", act)) <= 1 and (act.count("LocalServerAutoStart.") == 0 or "LocalServerAutoStart.request(" in act),
+              "ShellChannels.active only posts the async single-flight LocalServerAutoStart.request"))
     rungs = body(acc, "fun rungs(")
     r.append(("M4a", re.search(r"ChannelMode\.SHIZUKU\s*->\s*listOf\(EnsureRung\.SHIZUKU\)", rungs) is not None, "Shizuku mode reconnects Shizuku only"))
     r.append(("M4b", re.search(r"ChannelMode\.EMBEDDED_ONLY,\s*ChannelMode\.LOCAL_SERVER\s*->\s*listOf\(EnsureRung\.EMBEDDED_ADB\)", rungs) is not None,
@@ -115,7 +126,8 @@ def check(S):
     return r
 
 def tests_exist():
-    want = {LIBT + "ConnectPlanTest.kt": ["modesAreIndependentChains", "noStepStartsAServer", "localServerModeConnectsOnTheAdbSessionAlone"],
+    want = {LIBT + "ConnectPlanTest.kt": ["modesAreIndependentChains", "noStepStartsAServer", "localServerChainLaunchesAndClosesEmbedded", "localServerUpOpensNoEmbeddedSession", "shizukuChainStartsTheServiceThroughEmbeddedThenCloses"],
+            LIBT + "ServerAutoStartTest.kt": ["serverDownConnectsLaunchesProbesAndClosesEmbedded", "serverUpOpensNoEmbeddedSession", "launchFailsEveryTimeEmbeddedIsClosedAndTheStateSaysWhy", "singleFlightNeverLaunchesInParallel", "defaultProfileIsLocalServer"],
             LIBT + "ChannelModeTest.kt": ["modesNeverCrossCall", "localServerModeRunsOverTheAdbSessionWhenNoServerWasStarted", "reconnectRungsPerMode"],
             LIBT + "ChannelStateTest.kt": ["launchSourceRules"], LIBT + "ChannelActionsTest.kt": ["noServerIsStillUpOverAdbAndDownOnlyWhenNothingAnswers"],
             CORET + "AdbCockpitModelTest.kt": ["C11 the modes are independent channels", "C12 a mode row is green only on a real round trip"],
@@ -136,13 +148,14 @@ print(("  PASS: " if not bad else "  FAIL: ") + "M7 the JVM behaviour tests exis
 # M8: plant each violation in memory; the named rule must turn red.
 MUT = [
     ("a server-start step comes back", LIB + "ConnectPlan.kt", 'VERIFY("Round trip"),', 'START_SERVER("Start local server"),\n    VERIFY("Round trip"),', "M1a"),
-    ("the channel lookup launches the server again", LIB + "ShellChannel.kt", "return ChannelSelector.select(", "AdbShellBootstrap.ensureServer(ctx, all); return ChannelSelector.select(", "M2a"),
+    ("the channel lookup launches the server again", LIB + "ShellChannel.kt", "val found = ChannelSelector.select(", "AdbShellBootstrap.ensureServer(ctx, all); val found = ChannelSelector.select(", "M2a"),
     ("the pairing service launches the server again", LIB + "AdbPairingService.kt", "val live = EmbeddedAdbChannel.probe(this)", "EmbeddedAdbChannel.exec(this, AdbShellBootstrap.shellCommand(this)); val live = EmbeddedAdbChannel.probe(this)", "M2d"),
-    ("the Connect executor starts the server", LIB + "ChannelDevice.kt", "StepId.VERIFY -> {", "StepId.VERIFY -> { ChannelOps.startServer(app, restart = false);", "M2c"),
+    ("the Connect executor starts the server outside its launch step", LIB + "ChannelDevice.kt", "StepId.VERIFY -> if (", "StepId.VERIFY -> if (ChannelOps.startServer(app, restart = false).isEmpty()) StepResult(false) else if (", "M2c"),
+    ("the channel lookup launches the server synchronously", LIB + "ShellChannel.kt", "return found", "LocalServerAutoStart.runBlocking(ctx, \"x\"); return found", "M3b"),
     ("Local server mode reconnects through Shizuku", LIB + "ShellAccess.kt", "ChannelMode.EMBEDDED_ONLY, ChannelMode.LOCAL_SERVER -> listOf(EnsureRung.EMBEDDED_ADB)", "ChannelMode.EMBEDDED_ONLY, ChannelMode.LOCAL_SERVER -> listOf(EnsureRung.EMBEDDED_ADB, EnsureRung.SHIZUKU)", "M4b"),
     ("the reconnect drops its Shizuku gate", LIB + "ShellAccess.kt", "if (EnsureRung.SHIZUKU !in rungs)", "if (false)", "M4c"),
     ("Local server mode launches through Shizuku", LIB + "ChannelMode.kt", "ChannelMode.LOCAL_SERVER -> ladder.filter { it == EMBEDDED }", "ChannelMode.LOCAL_SERVER -> ladder.filter { it != LOCAL }", "M5a"),
-    ("Local server mode runs commands on the server only", LIB + "ChannelMode.kt", "ChannelMode.LOCAL_SERVER -> listOf(LOCAL, EMBEDDED)", "ChannelMode.LOCAL_SERVER -> listOf(LOCAL)", "M5c"),
+    ("Local server mode runs commands on the server only", LIB + "ChannelMode.kt", "listOf(LOCAL, EMBEDDED).filter { it in ladder }", "listOf(LOCAL).filter { it in ladder }", "M5c"),
     ("the pm grant falls back to Shizuku in any mode", LIB + "ShizukuAdb.kt", "(if (ShellChannels.modeUses(ctx, ChannelSelector.SHIZUKU)) exec(ctx, cmd) else null)", "exec(ctx, cmd)", "M4e"),
     ("the adb connect trusts the socket flag", LIB + "ChannelDevice.kt", "EmbeddedAdbChannel.connectLive(app)", "EmbeddedAdbChannel.autoConnect(app)", "M6b"),
     ("the Local Server row reads Shizuku", CORE + "configs/AdbCockpitModel.kt", "LOCAL -> f.serverRunning || f.adbPaired", "LOCAL -> f.serverRunning || f.adbPaired || f.shizuku == ShizukuState.UP", "M6c"),

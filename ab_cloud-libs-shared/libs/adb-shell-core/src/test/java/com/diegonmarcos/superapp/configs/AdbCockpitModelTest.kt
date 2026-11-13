@@ -180,18 +180,20 @@ class AdbCockpitModelTest {
     }
 
     @Test fun `C9 auto-fix order and gates`() {
-        // Local Server walks the adb channel's real prerequisites and ends on the round trip: no server-start step to walk into
-        assertEquals(listOf("PERMS", "DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "VERIFY"),
+        // #1709 Local Server walks the adb prerequisites, launches the server through them, verifies the server's own round trip, closes adb
+        assertEquals(listOf("PERMS", "DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "LAUNCH_SERVER", "VERIFY", "CLOSE_EMBEDDED"),
             AdbCockpitModel.autoFixOrder(ChannelMode.LOCAL_SERVER, LaunchVia.ADB, true))
         assertEquals(AdbCockpitModel.autoFixOrder(ChannelMode.LOCAL_SERVER, LaunchVia.ADB, true), AdbCockpitModel.autoFixOrder(ChannelMode.LOCAL_SERVER, LaunchVia.SHIZUKU, true))
-        assertEquals(listOf("PERMS", "SHIZUKU_RUNNING", "SHIZUKU_PERMISSION", "VERIFY"), AdbCockpitModel.autoFixOrder(ChannelMode.SHIZUKU, LaunchVia.ADB, true))
+        assertEquals(listOf("PERMS", "DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "SHIZUKU_START", "SHIZUKU_RUNNING", "SHIZUKU_PERMISSION", "VERIFY", "CLOSE_EMBEDDED"),
+            AdbCockpitModel.autoFixOrder(ChannelMode.SHIZUKU, LaunchVia.ADB, true))
         assertEquals(listOf("PERMS", "DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "VERIFY"), AdbCockpitModel.autoFixOrder(ChannelMode.EMBEDDED_ONLY, LaunchVia.ADB, true))
         // every consent gate is in some order, and the gates are exactly the person's steps
         val all = ChannelMode.values().flatMap { AdbCockpitModel.autoFixOrder(it, LaunchVia.ADB, true) + AdbCockpitModel.autoFixOrder(it, LaunchVia.SHIZUKU, true) }.toSet()
         assertTrue(all.containsAll(AdbCockpitModel.USER_GATES))
         assertFalse("ADB_CONNECT runs by itself", "ADB_CONNECT" in AdbCockpitModel.USER_GATES)
-        assertTrue("no order holds a server-start step", all.none { it.contains("SERVER") })
-        for (m in ChannelMode.values()) for (v in LaunchVia.values()) assertEquals("VERIFY", AdbCockpitModel.autoFixOrder(m, v, true).last())
+        assertTrue("the old circular server-start step is gone", all.none { it.contains("START_SERVER") })
+        for (m in listOf(ChannelMode.EMBEDDED_ONLY, ChannelMode.AUTO)) for (v in LaunchVia.values()) assertEquals("VERIFY", AdbCockpitModel.autoFixOrder(m, v, true).last())
+        for (m in listOf(ChannelMode.LOCAL_SERVER, ChannelMode.SHIZUKU)) assertEquals("CLOSE_EMBEDDED", AdbCockpitModel.autoFixOrder(m, LaunchVia.ADB, true).last())
     }
 
     @Test fun `C11 the modes are independent channels`() {
@@ -200,7 +202,9 @@ class AdbCockpitModelTest {
         for (v in LaunchVia.values()) {
             for (m in listOf(ChannelMode.LOCAL_SERVER, ChannelMode.EMBEDDED_ONLY))
                 assertTrue("$m/$v walks into Shizuku", AdbCockpitModel.autoFixOrder(m, v, true).none { it in shizukuSteps })
-            assertTrue("Shizuku/$v walks into adb", AdbCockpitModel.autoFixOrder(ChannelMode.SHIZUKU, v, true).none { it in adbSteps })
+            // #1709 Shizuku mode starts a stopped service through embedded adb: the adb steps are there, all before SHIZUKU_START
+            val shz = AdbCockpitModel.autoFixOrder(ChannelMode.SHIZUKU, v, true)
+            assertTrue("Shizuku/$v: adb steps after the Shizuku start", shz.filter { it in adbSteps }.all { shz.indexOf(it) < shz.indexOf("SHIZUKU_START") })
         }
         // Local Server mode with Shizuku fully up and adb down: Shizuku changes nothing. Its row is dim, the mode is not "ready"
         // through it, Connect waits on Local Server, and the server's Start is not offered through it.

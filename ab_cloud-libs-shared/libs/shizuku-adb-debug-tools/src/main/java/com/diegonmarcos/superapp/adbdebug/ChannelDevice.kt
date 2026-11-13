@@ -134,17 +134,27 @@ object ChannelOps {
     }
 
     /**
-     * Starts (or replaces) the OPTIONAL loopback server. Only this explicit button does it; Connect,
-     * Reconnect and Auto-fix never do, and no channel waits for it: commands already run over the adb session.
+     * Starts (or replaces) the loopback server on demand (the Restart-server button; kept). In the Local server
+     * profile the app also does it by itself ([LocalServerAutoStart]); Connect, Reconnect and Auto-fix launch nothing.
      */
     fun startServer(ctx: Context, restart: Boolean): String {
         val sources = launchSources(ctx)
         val via = sources.firstOrNull() ?: run {
+            // No session up: the button runs the whole automatic chain (wireless debugging, pairing prompt, connect, launch, close).
+            if (LocalServerAutoStart.applies(ctx)) {
+                if (restart) { stopServer(ctx) }
+                val o = LocalServerAutoStart.runBlocking(ctx, "button")
+                return if (o == null && LocalShellChannel.probe(ctx)) "Local server already running." else LocalServerAutoStart.summary(o)
+            }
             log.add("action", "server: ${ChannelModePrefs.current(ctx).title()} mode has no session up to start it with")
             return "No session of ${ChannelModePrefs.current(ctx).title()} mode is up to start the server with - Reconnect first."
         }
         if (restart) { stopServer(ctx); Thread.sleep(500) }
-        val ok = AdbShellBootstrap.ensureServer(ctx, sources)
+        val ok = AdbShellBootstrap.ensureServer(ctx, sources, "button")
+        // Local server profile: the embedded session was only the launcher, it closes once the server answers.
+        if (ok && LocalServerAutoStart.applies(ctx) && via.name() == ChannelSelector.EMBEDDED) {
+            EmbeddedAdbChannel.disconnect(ctx); log.add("action", "embedded adb session closed after the launch (the pairing is kept)")
+        }
         val line = if (ok) "Local server running (started via ${via.name()})."
         else "The optional loopback server did not come up (${AdbShellBootstrap.bootstrapState(ctx)}). Commands still run over ${via.name()}."
         log.add("action", (if (restart) "restart" else "start") + " optional server via ${via.name()}: " + if (ok) "up" else "did not come up; commands still run over ${via.name()}")
@@ -233,7 +243,11 @@ class DeviceConnectExecutor(private val ctx: Context) : ConnectExecutor {
         StepId.WIRELESS_DEBUG -> {
             val r = WirelessDebugging.set(app, true)
             if (r.ok) StepResult(true, "turned on via ${r.channel}")
-            else StepResult(false, "could not be turned on from here (${r.channel})")
+            else {
+                // No grant to write it: open the exact settings toggle for the person.
+                runCatching { ChannelOps.setup(app, SetupAction.OPEN_WIRELESS_DEBUGGING) }
+                StepResult(false, "could not be turned on from here (${r.channel}); opened the Wireless debugging toggle")
+            }
         }
         StepId.PAIR -> {
             val said = ChannelOps.pair(app)
@@ -248,7 +262,35 @@ class DeviceConnectExecutor(private val ctx: Context) : ConnectExecutor {
             ShizukuAdb.requestPermission { }
             StepResult(false, "prompt shown", needsUser = true)
         }
-        StepId.VERIFY -> {
+        // Shizuku's documented adb start command, sent over the embedded session this chain just opened.
+        StepId.SHIZUKU_START -> {
+            val out = EmbeddedAdbChannel.exec(app, "sh /sdcard/Android/data/moe.shizuku.privileged.api/start.sh")?.trim().orEmpty()
+            var up = ShizukuAdb.isAvailable()
+            repeat(20) { if (!up) { Thread.sleep(500); up = ShizukuAdb.isAvailable() } }
+            if (up) StepResult(true, "Shizuku service started via embedded adb")
+            else StepResult(false, if (!ShizukuStatus.installed(app)) "Shizuku is not installed" else "did not start" + if (out.isBlank()) "" else " (${out.take(80)})")
+        }
+        // Embedded adb first, Shizuku only when embedded cannot answer and Shizuku is granted; the real outcome says which.
+        StepId.LAUNCH_SERVER -> {
+            val usable = ShellChannels.all.filter {
+                (it.name() == ChannelSelector.EMBEDDED && it.isReady(app) && it.probe(app)) ||
+                    (it.name() == ChannelSelector.SHIZUKU && ShizukuAdb.isGranted() && it.isReady(app))
+            }
+            val ok = AdbShellBootstrap.ensureServer(app, LaunchViaPrefs.order(app, usable), "auto")
+            StepResult(ok, AdbShellBootstrap.bootstrapState(app))
+        }
+        StepId.CLOSE_EMBEDDED -> {
+            EmbeddedAdbChannel.disconnect(app)
+            ChannelLog.shared.add("action", "embedded adb session closed after the chain (the pairing is kept)")
+            StepResult(true, "closed; pairing kept")
+        }
+        StepId.VERIFY -> if (ChannelModePrefs.current(app) == ChannelMode.LOCAL_SERVER && ChannelModePrefs.ownsServer()) {
+            // Local server profile: the round trip must be the SERVER's own (an open adb session would also answer).
+            val out = LocalShellChannel.exec(app, "id; echo rc=\$?")?.trim()
+            val uid = ShellUid.of(out)
+            if (LocalShellChannel.probe(app) && (uid == "uid 2000" || uid == "uid 0")) StepResult(true, "via local-server: $uid")
+            else StepResult(false, "local server did not answer a round trip" + (uid?.let { " ($it)" } ?: ""))
+        } else {
             val ch = ShellChannels.active(app)
             val out = ch?.exec(app, "id; echo rc=\$?")?.trim()
             val uid = ShellUid.of(out)

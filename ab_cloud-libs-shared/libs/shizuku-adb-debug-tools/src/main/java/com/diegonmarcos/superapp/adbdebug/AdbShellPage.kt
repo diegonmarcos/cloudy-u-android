@@ -142,7 +142,8 @@ fun AdbShellPage(modifier: Modifier = Modifier) {
     val log = ChannelLog.shared
 
     var mode by remember { mutableStateOf(ChannelModePrefs.current(ctx)) }
-    var via by remember { mutableStateOf(LaunchViaPrefs.current(ctx)) }
+    // The launcher is automatic (Embedded first, Shizuku fallback): not a choice; the stored key is only read for migration.
+    val via = LaunchVia.ADB
     var raw by remember { mutableStateOf<ChannelFacts?>(null) }
     var connecting by remember { mutableStateOf(false) }
     var steps by remember { mutableStateOf<List<StepRun>>(emptyList()) }
@@ -157,7 +158,8 @@ fun AdbShellPage(modifier: Modifier = Modifier) {
     DisposableEffect(Unit) {
         val l: () -> Unit = { logTick++ }
         log.addListener(l)
-        onDispose { log.removeListener(l) }
+        LocalServerAutoStart.addListener(l)
+        onDispose { log.removeListener(l); LocalServerAutoStart.removeListener(l) }
     }
     LaunchedEffect(tick, mode) {
         val f = withContext(Dispatchers.IO) { runCatching { ChannelReader.read(ctx) }.getOrNull() }
@@ -257,16 +259,11 @@ fun AdbShellPage(modifier: Modifier = Modifier) {
         // ── 2  connect ───────────────────────────────────────────────────────────────────────────
         Section("2  CONNECT") {
             ChannelModeBar { m -> mode = m; log.add("mode", "mode set to ${m.title()}"); tick++ }
-            // Each mode is its own channel. Local server mode never reaches for Shizuku, so the launcher choice
-            // is offered where a ladder of channels is the declared behaviour (Auto) and only orders the Restart-server button.
-            if (mode == ChannelMode.LOCAL_SERVER) Dim("Local server = the adbd connection on 127.0.0.1. Commands run over it once it is connected; " +
-                "the loopback server is optional (Restart server, over the adb session only). Shizuku is never used in this mode.", size = 11)
-            if (mode == ChannelMode.AUTO) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Dim("Restart server launches via", size = 11)
-                for (v in LaunchVia.values()) DenseButton(v.title, primary = v == via, onClick = {
-                    via = v; LaunchViaPrefs.set(ctx, v); log.add("mode", "server launcher set to ${v.title}"); tick++
-                })
-            }
+            // The person picks only the profile; the app runs the whole chain itself (below) and shows where it stopped.
+            if (mode == ChannelMode.LOCAL_SERVER) Dim("Local server: the app turns Wireless debugging on, pairs only if needed, connects embedded adb, " +
+                "launches the server through it (Shizuku only as the fallback), verifies a round trip and closes adb. All commands then use the server.", size = 11)
+            LocalServerAutoStart.lastOutcome?.let { Dim("last automatic run: " + AutoStartCore.describe(it), size = 11) }
+            Dim("launcher: " + (AdbShellBootstrap.lastLauncher(ctx) ?: "none yet") + "  ·  " + AdbShellBootstrap.bootstrapState(ctx), size = 11)
             val owns = ChannelModePrefs.ownsServer()
             for ((i, m) in ConnectPlan.methods(mode, via, owns).withIndex())
                 Text("${i + 1}. ${m.title} - ${m.detail}", fontSize = 11.sp)
@@ -274,7 +271,9 @@ fun AdbShellPage(modifier: Modifier = Modifier) {
                 DenseButton(if (connecting) "Connecting..." else "Connect", primary = true, enabled = !connecting && busy == null, onClick = { connect() })
                 Dim("runs: " + ConnectPlan.steps(mode, via, owns).joinToString(" > ") { it.label }, Modifier.weight(1f))
             }
-            for (s in steps) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            // The automatic chain's steps (running on its own after a reboot, at start, when a command finds the channel down).
+            val auto = remember(logTick, tick) { LocalServerAutoStart.lastSteps }
+            for (s in if (steps.isEmpty()) auto else steps) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(glyph(s.state), Modifier.width(12.dp), fontSize = 11.sp, color = glyphColor(s.state), fontFamily = FontFamily.Monospace)
                 Text(s.id.label, Modifier.weight(1f), fontSize = 11.sp)
                 if (s.detail.isNotBlank()) Dim(s.detail.take(60), Modifier.weight(1f))

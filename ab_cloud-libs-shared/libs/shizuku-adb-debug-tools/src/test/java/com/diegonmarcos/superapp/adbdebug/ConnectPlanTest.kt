@@ -32,6 +32,9 @@ class ConnectPlanTest {
                 StepId.SHIZUKU_RUNNING -> f.copy(shizukuInstalled = true, shizukuRunning = true)
                 StepId.SHIZUKU_PERMISSION -> f.copy(shizukuGranted = true)
                 StepId.VERIFY -> f
+                StepId.SHIZUKU_START -> f.copy(shizukuRunning = true)
+                StepId.LAUNCH_SERVER -> f.copy(serverRunning = true)
+                StepId.CLOSE_EMBEDDED -> f.copy(adbConnected = false)
             }
             return StepResult(true, "ok:${step.name}")
         }
@@ -41,55 +44,89 @@ class ConnectPlanTest {
         val adb = listOf(StepId.DEV_OPTIONS, StepId.WIRELESS_DEBUG, StepId.PAIR, StepId.ADB_CONNECT)
         val shz = listOf(StepId.SHIZUKU_RUNNING, StepId.SHIZUKU_PERMISSION)
         assertEquals(adb + StepId.VERIFY, ConnectPlan.steps(EMBEDDED_ONLY, LaunchVia.ADB))
-        assertEquals(shz + StepId.VERIFY, ConnectPlan.steps(SHIZUKU, LaunchVia.ADB))
-        // Local server = the adbd connection: the same adb chain, and no "start the server" step in any mode.
-        assertEquals(adb + StepId.VERIFY, ConnectPlan.steps(LOCAL_SERVER, LaunchVia.ADB))
+        // #1709 Shizuku: adb part, Shizuku's own start through it, its service + permission, the round trip, adb closed.
+        assertEquals(adb + StepId.SHIZUKU_START + shz + StepId.VERIFY + StepId.CLOSE_EMBEDDED, ConnectPlan.steps(SHIZUKU, LaunchVia.ADB))
+        // #1709 Local server: adb part, launch the server through it, the server's own round trip, adb closed.
+        assertEquals(adb + StepId.LAUNCH_SERVER + StepId.VERIFY + StepId.CLOSE_EMBEDDED, ConnectPlan.steps(LOCAL_SERVER, LaunchVia.ADB))
         assertEquals(adb + StepId.VERIFY, ConnectPlan.steps(AUTO, LaunchVia.ADB))
-        for (m in ChannelMode.values()) for (v in LaunchVia.values()) assertEquals(StepId.VERIFY, ConnectPlan.steps(m, v).last())
+        // Embedded and Auto are unchanged: they end on the round trip and leave the session open.
+        for (m in listOf(EMBEDDED_ONLY, AUTO)) for (v in LaunchVia.values()) assertEquals(StepId.VERIFY, ConnectPlan.steps(m, v).last())
+        for (m in listOf(LOCAL_SERVER, SHIZUKU)) assertEquals(StepId.CLOSE_EMBEDDED, ConnectPlan.steps(m).last())
         assertEquals(adb + StepId.VERIFY, ConnectPlan.steps(AUTO, LaunchVia.ADB, ownsServer = false))
         assertEquals(adb, ConnectPlan.ADB_CHAIN); assertEquals(shz, ConnectPlan.SHIZUKU_CHAIN)
     }
 
-    /** The owner's rule: each mode is ONE self-contained channel. The launcher choice and server ownership change no chain. */
+    /** Embedded and Auto never walk into Shizuku or the server; the launcher choice and server ownership change no chain. */
     @Test fun modesAreIndependentChains() {
-        val shizukuSteps = setOf(StepId.SHIZUKU_RUNNING, StepId.SHIZUKU_PERMISSION)
-        val adbSteps = setOf(StepId.DEV_OPTIONS, StepId.WIRELESS_DEBUG, StepId.PAIR, StepId.ADB_CONNECT)
+        val shizukuSteps = setOf(StepId.SHIZUKU_START, StepId.SHIZUKU_RUNNING, StepId.SHIZUKU_PERMISSION)
         for (v in LaunchVia.values()) for (owns in listOf(true, false)) {
-            for (m in listOf(LOCAL_SERVER, EMBEDDED_ONLY, AUTO)) {
+            for (m in listOf(EMBEDDED_ONLY, AUTO)) {
                 val plan = ConnectPlan.steps(m, v, owns)
                 assertTrue("$m/$v walks into Shizuku", plan.none { it in shizukuSteps })
-                assertTrue("$m/$v names Shizuku", ConnectPlan.methods(m, v, owns).none { (it.title + it.detail).contains("Shizuku") })
+                assertTrue("$m/$v launches a server", StepId.LAUNCH_SERVER !in plan)
             }
-            val shz = ConnectPlan.steps(SHIZUKU, v, owns)
-            assertTrue("Shizuku/$v walks into adb", shz.none { it in adbSteps })
-            assertTrue(ConnectPlan.methods(SHIZUKU, v, owns).none { (it.title + it.detail).contains("adb") || it.title.contains("Pair") })
-            // the launcher choice is not part of any chain
+            // Local server: no Shizuku STEP (Shizuku is only the launcher fallback, decided inside the run).
+            assertTrue(ConnectPlan.steps(LOCAL_SERVER, v, owns).none { it in shizukuSteps })
             for (m in ChannelMode.values()) assertEquals("$m", ConnectPlan.steps(m, LaunchVia.ADB, owns), ConnectPlan.steps(m, v, owns))
         }
     }
 
-    /** No step starts a server: the circular "start the server through the channel it provides" step is gone for good. */
+    /** The server launch is a step of the Local server chain only; the old circular "start the server" step stays gone. */
     @Test fun noStepStartsAServer() {
-        assertEquals(listOf("DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "SHIZUKU_RUNNING", "SHIZUKU_PERMISSION", "VERIFY"), StepId.values().map { it.name })
-        assertTrue(StepId.values().none { it.label.contains("server", ignoreCase = true) })
-        for (m in ChannelMode.values()) assertTrue("$m", ConnectPlan.methods(m).none { it.title.contains("Launch the server") })
+        assertEquals(listOf("DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "SHIZUKU_RUNNING", "SHIZUKU_PERMISSION", "VERIFY",
+            "SHIZUKU_START", "LAUNCH_SERVER", "CLOSE_EMBEDDED"), StepId.values().map { it.name })
+        assertTrue(StepId.values().none { it.name == "START_SERVER" })
+        for (m in ChannelMode.values()) if (m != LOCAL_SERVER) assertFalse("$m", StepId.LAUNCH_SERVER in ConnectPlan.steps(m))
     }
 
-    /** The reported log: adb already connected, server not running. Local server mode succeeds on the round trip and runs nothing else. */
-    @Test fun localServerModeConnectsOnTheAdbSessionAlone() {
-        val dev = FakeDevice(none.copy(devOptions = true, wirelessDebug = true, adbPaired = true, adbConnected = true, serverRunning = false))
-        val log = ChannelLog()
-        val out = ConnectPlan.run(LOCAL_SERVER, LaunchVia.SHIZUKU, dev, log)
+    /** Server down: the whole Local chain runs (embedded connect, launch, server round trip, embedded closed). */
+    @Test fun localServerChainLaunchesAndClosesEmbedded() {
+        val dev = FakeDevice(none.copy(devOptions = true, wirelessDebug = true, adbPaired = true, adbConnected = false, serverRunning = false))
+        val out = ConnectPlan.run(LOCAL_SERVER, LaunchVia.ADB, dev, ChannelLog())
+        assertEquals(ConnectStatus.SUCCESS, out.status)
+        assertEquals(listOf(StepId.ADB_CONNECT, StepId.LAUNCH_SERVER, StepId.VERIFY, StepId.CLOSE_EMBEDDED), dev.ran)
+        assertFalse(dev.f.adbConnected); assertTrue(dev.f.serverRunning)
+    }
+
+    /** Server already answers: no embedded session is opened, only the round trip runs. */
+    @Test fun localServerUpOpensNoEmbeddedSession() {
+        val dev = FakeDevice(none.copy(serverRunning = true))
+        val out = ConnectPlan.run(LOCAL_SERVER, LaunchVia.ADB, dev)
         assertEquals(ConnectStatus.SUCCESS, out.status)
         assertEquals(listOf(StepId.VERIFY), dev.ran)
-        assertFalse(log.asText().contains("server")); assertFalse(log.asText().contains("Shizuku"))
+        assertTrue(out.steps.filter { it.id != StepId.VERIFY }.all { it.state == StepState.SKIPPED })
+    }
+
+    /** Embedded cannot connect but Shizuku runs and is granted: it launches; the adb steps are skipped with the reason. */
+    @Test fun localServerFallsBackToShizukuWhenEmbeddedCannotConnect() {
+        val shz = none.copy(shizukuInstalled = true, shizukuRunning = true, shizukuGranted = true, devOptions = true, wirelessDebug = true, adbPaired = true)
+        val dev = FakeDevice(shz, failAt = StepId.ADB_CONNECT)
+        val out = ConnectPlan.run(LOCAL_SERVER, LaunchVia.ADB, dev)
+        assertEquals(ConnectStatus.SUCCESS, out.status)
+        assertEquals(listOf(StepId.ADB_CONNECT, StepId.LAUNCH_SERVER, StepId.VERIFY), dev.ran)
+        assertTrue(out.steps.first { it.id == StepId.ADB_CONNECT }.detail.contains("Shizuku launches"))
+        // without a granted Shizuku the same failure stops the chain at the connect
+        val no = ConnectPlan.run(LOCAL_SERVER, LaunchVia.ADB, FakeDevice(none.copy(devOptions = true, wirelessDebug = true, adbPaired = true), failAt = StepId.ADB_CONNECT))
+        assertEquals(StepId.ADB_CONNECT, no.failedStep)
+    }
+
+    /** Shizuku profile: a stopped service is started through embedded adb, then adb is closed; a running one skips adb. */
+    @Test fun shizukuChainStartsTheServiceThroughEmbeddedThenCloses() {
+        val dev = FakeDevice(none.copy(shizukuInstalled = true, devOptions = true, wirelessDebug = true, adbPaired = true))
+        val out = ConnectPlan.run(SHIZUKU, LaunchVia.ADB, dev)
+        assertEquals(ConnectStatus.SUCCESS, out.status)
+        assertEquals(listOf(StepId.ADB_CONNECT, StepId.SHIZUKU_START, StepId.SHIZUKU_PERMISSION, StepId.VERIFY, StepId.CLOSE_EMBEDDED), dev.ran)
+        val up = FakeDevice(none.copy(shizukuInstalled = true, shizukuRunning = true, shizukuGranted = true))
+        val o2 = ConnectPlan.run(SHIZUKU, LaunchVia.ADB, up)
+        assertEquals(ConnectStatus.SUCCESS, o2.status)
+        assertEquals(listOf(StepId.VERIFY), up.ran)
     }
 
     @Test fun methodsShowOnlyWhatAppliesToTheMode() {
         val adbWay = listOf("Pair with code", "Connect via mDNS", "Run over the adb session")
         assertEquals(adbWay, ConnectPlan.methods(EMBEDDED_ONLY, LaunchVia.ADB).map { it.title })
         assertEquals(adbWay, ConnectPlan.methods(AUTO, LaunchVia.ADB, ownsServer = false).map { it.title })
-        assertEquals(adbWay, ConnectPlan.methods(LOCAL_SERVER, LaunchVia.SHIZUKU).map { it.title })
+        assertEquals(listOf("Pair with code", "Connect via mDNS", "Launch the local server"), ConnectPlan.methods(LOCAL_SERVER, LaunchVia.SHIZUKU).map { it.title })
         assertEquals(listOf("Shizuku only"), ConnectPlan.methods(SHIZUKU, LaunchVia.ADB, ownsServer = false).map { it.title })
         assertEquals(listOf("Shizuku only"), ConnectPlan.methods(SHIZUKU, LaunchVia.ADB).map { it.title })
         assertTrue(ConnectPlan.methods(AUTO, LaunchVia.ADB).none { it.title.contains("Shizuku") })
@@ -160,7 +197,7 @@ class ConnectPlanTest {
         }
         val out = ConnectPlan.run(SHIZUKU, LaunchVia.ADB, dev)
         assertEquals(ConnectStatus.FAILED, out.status)
-        assertEquals(StepId.SHIZUKU_RUNNING, out.failedStep)
+        assertEquals(StepId.DEV_OPTIONS, out.failedStep)
         assertEquals("socket closed", out.steps[0].detail)
     }
 

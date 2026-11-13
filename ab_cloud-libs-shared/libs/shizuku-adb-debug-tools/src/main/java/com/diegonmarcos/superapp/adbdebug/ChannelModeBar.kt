@@ -57,9 +57,8 @@ fun ChannelModeBar(onChanged: (ChannelMode) -> Unit = {}) {
     var cur by remember { mutableStateOf(ChannelModePrefs.current(ctx)) }
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            // An app with no server of its own (a terminal) has no Local server mode to offer.
+            // Local server is the default profile of every app (#1709); an app with no server of its own reaches the owner's.
             val modes = listOf(ChannelMode.LOCAL_SERVER, ChannelMode.EMBEDDED_ONLY, ChannelMode.SHIZUKU, ChannelMode.AUTO)
-                .filter { it != ChannelMode.LOCAL_SERVER || ChannelModePrefs.ownsServer() }
             for (m in modes) {
                 DenseButton(m.title(), primary = m == cur, onClick = { cur = m; ChannelModePrefs.set(ctx, m); onChanged(m) })
             }
