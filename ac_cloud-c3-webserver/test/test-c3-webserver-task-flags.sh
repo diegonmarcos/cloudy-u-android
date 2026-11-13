@@ -12,7 +12,7 @@
 #   F1 MainActivity is the only LAUNCHER activity and it is a normal task root: launchMode standard|singleTask|singleTop, no excludeFromRecents /
 #      noHistory / finishOnTaskLaunch / documentLaunchMode / singleInstance / allowTaskReparenting / taskAffinity other than the package's own
 #   F2 every other activity that hides itself (excludeFromRecents, noHistory, finishOnTaskLaunch, documentLaunchMode) either has taskAffinity=""
-#      (never the root of the app's task) or is declared in HIDDEN_OK with the reason it cannot become the root
+#      (never the root of the app's task) or is declared in HIDDEN_OK with the reason it cannot become the root (CrashActivity, PermsActivity)
 #   F3 ShellArmActivity (the ADB deep link's entry) is exported behind the signature permission and has taskAffinity=""
 #   F4 the trampoline starts MainActivity with NEW_TASK (so the deep link lands in the app's own task, never in the caller's)
 # Each rule is proven red by a mutation (run with MUTATE=1).
@@ -41,14 +41,25 @@ for i, m in enumerate(mans):
     root = ET.parse(m).getroot()
     for a in root.iter('activity'):
         n = a.get(A + 'name')
-        if n.startswith('.'): n = 'com.diegonmarcos.cloudwebserver' + n
+        if n.startswith('.'):  # relative to the module's namespace (the app's, or the library's from its build.gradle)
+            ns = 'com.diegonmarcos.cloudwebserver'
+            if i > 0:
+                for g in ('build.gradle', 'build.gradle.kts'):
+                    gp = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(m))), g)
+                    if os.path.exists(gp):
+                        mm = re.search(r"namespace\s*=?\s*['\"]([\w.]+)['\"]", open(gp).read())
+                        if mm: ns = mm.group(1); break
+            n = ns + n
         cur = acts.setdefault(n, {'attrs': {}, 'filters': [], 'src': m})
         for k, v in a.attrib.items(): cur['attrs'].setdefault(k, v)
         for f in a.findall('intent-filter'):
             cur['filters'].append([c.get(A + 'name') for c in f.iter('category')])
 e = []
 # HIDDEN_OK: activities that hide themselves and are fine: the reason each can never be the root of the app's task
-HIDDEN_OK = {'com.diegonmarcos.superapp.crash.CrashActivity': 'its own process (:crash), shown only after the app crashed, so the app task already exists'}
+HIDDEN_OK = {
+    'com.diegonmarcos.superapp.crash.CrashActivity': 'its own process (:crash), shown only after the app crashed, so the app task already exists',
+    'com.diegonmarcos.superapp.perms.PermsActivity': 'libs:perms\' own page, opened (NEW_TASK, same affinity) by the app\'s running MainActivity (first run, Configs > Perms), so it joins the existing task and is never its root',
+}
 def at(n, k): return acts[n]['attrs'].get(A + k)
 HIDE = ('excludeFromRecents', 'noHistory', 'finishOnTaskLaunch', 'documentLaunchMode')
 launchers = [n for n, a in acts.items() if any('android.intent.category.LAUNCHER' in f for f in a['filters'])]

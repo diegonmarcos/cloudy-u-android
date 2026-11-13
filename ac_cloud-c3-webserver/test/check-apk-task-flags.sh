@@ -29,7 +29,7 @@ for ln in lines:
 def val(a, k): return a['attrs'].get(k)
 def is_true(v): return v is not None and (v == 'true' or (v.startswith('(type 0x12)') and v.endswith('0xffffffff')))
 e = []
-HIDDEN_OK = {'com.diegonmarcos.superapp.crash.CrashActivity'}
+HIDDEN_OK = {'com.diegonmarcos.superapp.crash.CrashActivity', 'com.diegonmarcos.superapp.perms.PermsActivity'}  # reasons: test-c3-webserver-task-flags.sh
 MAIN = 'com.diegonmarcos.cloudwebserver.MainActivity'
 launch = [a for a in acts if 'android.intent.category.LAUNCHER' in a['cats']]
 if len(launch) != 1 or val(launch[0], 'name').strip('"') != MAIN: e.append('launcher activities: %s' % [val(a, 'name') for a in launch])
