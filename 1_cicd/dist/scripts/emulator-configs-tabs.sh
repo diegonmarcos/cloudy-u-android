@@ -59,7 +59,7 @@ onboard() {
             tap_node "$OUT/cur.xml" 'permission_allow_button|^allow$|while using' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; continue
         fi
         if grep -qE 'text="Step [0-9]+ of [0-9]+"|text="Get Started"' "$OUT/cur.xml"; then
-            tap_node "$OUT/cur.xml" '^(Get Started|Continue|Next|Finish|Done|Start|Skip)$' || break; sleep 3
+            tap_node "$OUT/cur.xml" '^(Get Started|Continue|Next|Finish|Done|Start|Skip( for now)?)$' || break; sleep 3
         else break; fi
     done
 }
