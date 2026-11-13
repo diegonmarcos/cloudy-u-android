@@ -116,7 +116,7 @@ object EngineProfiles {
             )),
         engine("ui", "UI", "the frame pipeline of every window, the shell chrome and effects, the icon cache, the floating nav and screensaver overlays",
             appDirs = listOf("ui", "floatingnav", "shell", "light"),
-            libs = listOf("libs:ui-kit", "libs:ui-icons", "libs:bottomnav", "libs:light", "libs:web-core", "libs:text-tools"),
+            libs = listOf("libs:ui-kit", "libs:ui-icons", "libs:bottomnav", "libs:ui-nav-bars", "libs:theme-background", "libs:light", "libs:web-core", "libs:text-tools"),
             libPackages = listOf("$APP.uikit", "$APP.uiicons", "$APP.bottomnav", "$APP.texttools", "com.diegonmarcos.cloudlib.web"),
             hotPaths = listOf(
                 HotPath("frame", "Frame", 32.0, "FrameMetrics TOTAL_DURATION of every resumed activity's window (XrayLifecycleProbe)"),
