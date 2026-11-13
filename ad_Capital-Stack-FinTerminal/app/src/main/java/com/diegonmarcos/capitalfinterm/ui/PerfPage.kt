@@ -194,7 +194,7 @@ fun PerfCardBody(view: String, state: PerfHomeState) {
                         Spacer(Modifier.width(6.dp))
                         Text(r.c.name, Modifier.weight(1f), color = p.text2, style = FinType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Spacer(Modifier.width(6.dp))
-                        Text(PerfPortfolios.s1(r.perf), color = if (r.perf == null) p.text3 else p.dir(dirOf(r.perf)), style = FinType.numStrong, maxLines = 1)
+                        Text(PerfPortfolios.s1(r.perf), color = if (r.perf == null) p.text3 else p.dir(perfDir(r.perf)), style = FinType.numStrong, maxLines = 1)
                     }
                 }
                 Spacer(Modifier.weight(1f))
@@ -204,8 +204,8 @@ fun PerfCardBody(view: String, state: PerfHomeState) {
     }
 }
 
-private fun dirOf(v: Double?): FinFormat.Dir = if (v == null || v == 0.0) FinFormat.Dir.FLAT else if (v > 0.0) FinFormat.Dir.UP else FinFormat.Dir.DOWN
-private fun topLabel(n: Int): String = if (n <= 0) "All" else "Top $n"
+private fun perfDir(v: Double?): FinFormat.Dir = if (v == null || v == 0.0) FinFormat.Dir.FLAT else if (v > 0.0) FinFormat.Dir.UP else FinFormat.Dir.DOWN
+private fun perfTopLabel(n: Int): String = if (n <= 0) "All" else "Top $n"
 
 /**
  * One performance portfolio (a factor portfolio of EQ > Performance, a bond group of FI): a header panel (the mode tabs Table | Graphic, the period, the
@@ -262,9 +262,9 @@ fun PerfPortfolioPage(view: String, fn: String) {
             val portfolio = PerfPortfolios.portfolioReturn(rows)
             val bench = group.benchmarks.map { b -> b to IndexHoldings.perf(quotes[b.symbol], period) }
             val stats = ArrayList<FinStat>()
-            stats += FinStat(decl.word("portfolio"), PerfPortfolios.s2(portfolio) + if (portfolio == null) "" else "%", portfolio?.let { dirOf(it) })
-            bench.forEach { (b, v) -> stats += FinStat(b.label, PerfPortfolios.s2(v) + if (v == null) "" else "%", v?.let { dirOf(it) }) }
-            PerfPortfolios.active(portfolio, bench.firstOrNull()?.second)?.let { stats += FinStat(decl.word("active"), PerfPortfolios.s2(it) + " pp", dirOf(it)) }
+            stats += FinStat(decl.word("portfolio"), PerfPortfolios.s2(portfolio) + if (portfolio == null) "" else "%", portfolio?.let { perfDir(it) })
+            bench.forEach { (b, v) -> stats += FinStat(b.label, PerfPortfolios.s2(v) + if (v == null) "" else "%", v?.let { perfDir(it) }) }
+            PerfPortfolios.active(portfolio, bench.firstOrNull()?.second)?.let { stats += FinStat(decl.word("active"), PerfPortfolios.s2(it) + " pp", perfDir(it)) }
             stats += FinStat(decl.word("quoted"), rows.count { it.perf != null }.toString() + "/" + rows.size)
 
             FinPanel(
@@ -275,7 +275,7 @@ fun PerfPortfolioPage(view: String, fn: String) {
                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     FinTabs("period", decl.periods.map { it to it }, period, height = FinDim.chip) { period = it }
                     Box(Modifier.width(1.dp).height(FinDim.chip).background(p.hairline))
-                    FinTabs("top", decl.tops.map { it.toString() to topLabel(it) }, top.toString(), height = FinDim.chip) { top = it.toIntOrNull() ?: 0 }
+                    FinTabs("top", decl.tops.map { it.toString() to perfTopLabel(it) }, top.toString(), height = FinDim.chip) { top = it.toIntOrNull() ?: 0 }
                     FinChip(if (fetching) decl.word("refreshing") else decl.word("refresh"), false) { if (!fetching) refresh += 1 }
                 }
                 if (group.schemes.size > 1) {
@@ -294,9 +294,9 @@ fun PerfPortfolioPage(view: String, fn: String) {
             }
 
             when {
-                baskets == null -> StateLine(fn, group.label, if (asked == 0) decl.word("loading") else decl.word("offline"))
-                basket == null -> StateLine(fn, group.label, decl.word("missing"))
-                rows.isEmpty() -> StateLine(fn, group.label, decl.word("missing"))
+                baskets == null -> PerfStateLine(fn, group.label, if (asked == 0) decl.word("loading") else decl.word("offline"))
+                basket == null -> PerfStateLine(fn, group.label, decl.word("missing"))
+                rows.isEmpty() -> PerfStateLine(fn, group.label, decl.word("missing"))
                 mode == PerfPortfolios.MODE_GRAPHIC -> Graphics(decl, group, basket, scheme, rows, quotes, qdecl, period, top, fetching, width) { period = it }
                 else -> TableMode(decl, group, basket, scheme, rows, quotes, period, top, fetching, width) { period = it }
             }
@@ -313,7 +313,7 @@ fun PerfPortfolioPage(view: String, fn: String) {
 }
 
 @Composable
-private fun StateLine(fn: String, title: String, text: String) {
+private fun PerfStateLine(fn: String, title: String, text: String) {
     val p = LocalFinPalette.current
     FinPanel(fn, title, Modifier.testTag(PERF_STATE)) { Text(text, Modifier.padding(10.dp), color = p.text2, style = FinType.body) }
 }
@@ -385,7 +385,7 @@ private fun TableMode(
                         NumCell(PerfPortfolios.f2(r.weight), COL_NUM, p.text)
                         decl.periods.forEach { per ->
                             val v = if (per == period) r.perf else PerfPortfolios.perf(r.c, quotes, per)
-                            NumCell(PerfPortfolios.s2(v), COL_NUM, if (v == null) p.text3 else p.dir(dirOf(v)))
+                            NumCell(PerfPortfolios.s2(v), COL_NUM, if (v == null) p.text3 else p.dir(perfDir(v)))
                         }
                         ContribCell(r.contribution, PerfPortfolios.barShare(r.contribution, rows))
                     }
@@ -437,9 +437,9 @@ private fun NumCell(text: String, w: Dp, color: Color, bold: Boolean = false) {
 private fun ContribCell(contribution: Double?, share: Float) {
     val p = LocalFinPalette.current
     Row(Modifier.width(COL_CONTRIB).padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
-        if (contribution != null && share > 0f) Box(Modifier.width(44.dp * share).height(8.dp).background(p.dir(dirOf(contribution))))
+        if (contribution != null && share > 0f) Box(Modifier.width(44.dp * share).height(8.dp).background(p.dir(perfDir(contribution))))
         Spacer(Modifier.width(6.dp))
-        Text(PerfPortfolios.s2(contribution), Modifier.width(48.dp), color = if (contribution == null) p.text3 else p.dir(dirOf(contribution)), style = FinType.num, textAlign = TextAlign.End, maxLines = 1, softWrap = false)
+        Text(PerfPortfolios.s2(contribution), Modifier.width(48.dp), color = if (contribution == null) p.text3 else p.dir(perfDir(contribution)), style = FinType.num, textAlign = TextAlign.End, maxLines = 1, softWrap = false)
     }
 }
 
@@ -488,9 +488,9 @@ private fun Graphics(
     val bench = group.benchmarks.firstOrNull()
     val benchRet = bench?.let { IndexHoldings.perf(quotes[it.symbol], period) }
     val portStats = ArrayList<FinStat>()
-    portStats += FinStat(decl.word("portfolio"), PerfPortfolios.s2(portfolio) + if (portfolio == null) "" else "%", portfolio?.let { dirOf(it) })
-    if (bench != null) portStats += FinStat(bench.label, PerfPortfolios.s2(benchRet) + if (benchRet == null) "" else "%", benchRet?.let { dirOf(it) })
-    PerfPortfolios.active(portfolio, benchRet)?.let { portStats += FinStat(decl.word("active"), PerfPortfolios.s2(it) + " pp", dirOf(it)) }
+    portStats += FinStat(decl.word("portfolio"), PerfPortfolios.s2(portfolio) + if (portfolio == null) "" else "%", portfolio?.let { perfDir(it) })
+    if (bench != null) portStats += FinStat(bench.label, PerfPortfolios.s2(benchRet) + if (benchRet == null) "" else "%", benchRet?.let { perfDir(it) })
+    PerfPortfolios.active(portfolio, benchRet)?.let { portStats += FinStat(decl.word("active"), PerfPortfolios.s2(it) + " pp", perfDir(it)) }
     PerfPortfolios.total(rows)?.let { (c, w) -> portStats += FinStat(decl.word("contrib"), PerfPortfolios.s2(c) + " on " + PerfPortfolios.f1(w) + " %") }
     FinPanel("PORT", decl.word("attribution"), Modifier.testTag(PERF_WATERFALL), meta = "by " + group.bucketLabel.lowercase(Locale.ROOT) + " · " + period, subhead = portStats) {
         if (steps.isEmpty()) NoPerf(decl, fetching) else PerfWaterfall(steps)
@@ -582,7 +582,7 @@ private fun PerfWaterfall(steps: List<PerfStep>) {
             Row(Modifier.fillMaxWidth().height(24.dp).background(if (s.total) p.surfaceRaised else Color.Transparent), verticalAlignment = Alignment.CenterVertically) {
                 Text(s.label, Modifier.width(118.dp).padding(horizontal = 8.dp), color = if (s.total) p.yellow else p.text, style = if (s.total) FinType.symbol else FinType.body,
                     maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
-                val color = if (s.total) p.accent else p.dir(dirOf(s.value))
+                val color = if (s.total) p.accent else p.dir(perfDir(s.value))
                 val rule = p.hairline
                 Canvas(Modifier.weight(1f).fillMaxHeight().testTag("perf_step:" + s.label)) {
                     fun xOf(v: Double): Float = ((v - lo) / span * size.width).toFloat()
@@ -592,7 +592,7 @@ private fun PerfWaterfall(steps: List<PerfStep>) {
                     val inset = 5.dp.toPx()
                     drawRect(color, Offset(a, inset), Size(max(b - a, 1.dp.toPx()), size.height - inset * 2))
                 }
-                Text(PerfPortfolios.s2(s.value), Modifier.width(58.dp).padding(horizontal = 6.dp), color = if (s.total) p.yellow else p.dir(dirOf(s.value)), style = FinType.num,
+                Text(PerfPortfolios.s2(s.value), Modifier.width(58.dp).padding(horizontal = 6.dp), color = if (s.total) p.yellow else p.dir(perfDir(s.value)), style = FinType.num,
                     textAlign = TextAlign.End, maxLines = 1, softWrap = false)
             }
         }
