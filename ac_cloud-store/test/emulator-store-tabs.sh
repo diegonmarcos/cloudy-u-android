@@ -27,6 +27,12 @@ read -r W H < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail
 X=$((W/2)); Y1=$((H*4/5)); Y2=$((H/4))
 shoot start
 rc=0
+# #1704 the Cloud > Apps list scrolled to its end: the last category headings are in shot and none is Other/Others
+for i in $(seq 1 25); do adb shell input swipe $X $Y1 $X $Y2 200; sleep 0.4; done
+sleep 2; shoot apps-end
+adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "$OUT/apps-end.xml" >/dev/null 2>&1
+if grep -qE 'text="Others?"' "$OUT/apps-end.xml"; then echo "::error::the Cloud tab shows an Other(s) group"; rc=1; fi
+for i in $(seq 1 25); do adb shell input swipe $X $Y2 $X $Y1 100; done
 for tab in Libs Lite-ML; do
   if tap_text "$tab"; then
     sleep 4; shoot "$tab-top"
