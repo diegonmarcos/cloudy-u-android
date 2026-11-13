@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo
 import android.net.Uri
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -61,6 +62,11 @@ object CloudWeb {
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun <T : WebView> configure(wv: T, profile: WebProfile, desktop: Boolean = false): T {
         profiles[wv] = profile
+        // #1694 a WebView added to a Compose AndroidView (or any parent) with no layout params gets the parent's default,
+        // WRAP_CONTENT: Chromium then lays the page out in a zero-height initial containing block (matchMedia('(min-height:1px)')
+        // false, `html { height: 100% }` = 0px, floor796's canvas 0 x 0) while innerHeight still reports the frame. A web view
+        // always fills the space it is given.
+        if (wv.layoutParams == null) wv.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         wv.setLayerType(View.LAYER_TYPE_NONE, null)
         // debugging only (#1430): a debuggable build of a GPU world or the Browser opens chrome://inspect, and the
         // WebView DevTools app's flags (enable-unsafe-webgpu, Vulkan) reach it; a release build never does
