@@ -67,18 +67,18 @@ import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
 by = {p['id']: p for p in pages}
 store_caption = json.load(open(sys.argv[2]))['pages']['mesh']['label']
-mesh = [p['id'] for p in pages if p.get('group') == 'Network' and not p.get('hidden')]
+mesh = [p['id'] for p in pages if p.get('group') == 'Network' and p['id'] in ('network','firewall','dns','webserver','wg','apps-access','adb-shell','wifi','bluetooth')]  # #1719 declared order; the pages are hidden behind the Network page
 print('WG', by.get('wg', {}).get('label'), by.get('wg', {}).get('action'))
 print('APPS', by.get('apps-access', {}).get('label'), by.get('apps-access', {}).get('action'), '|', store_caption, '|', ','.join(i for i in ('apps-mesh', 'ipc', 'identity', 'apps-mesh-members') if i in by))
 print('ORDER', ','.join(mesh))
 EOF
 )"
 echo "$out" | sed 's/^/    /'
-echo "$out" | grep -qx 'WG Cloud Mesh section:wg' && ok "the wg page reads Cloud Mesh and still opens section:wg" \
-  || bad "the wg page is not 'Cloud Mesh' opening section:wg"
+echo "$out" | grep -qx 'WG VPN section:wg' && ok "the wg page reads VPN (#1719, was Cloud Mesh) and still opens section:wg" \
+  || bad "the wg page is not 'VPN' opening section:wg"
 echo "$out" | grep -qx 'APPS Apps Access action:open_apps_access | Apps Mesh | ' && ok "Configs holds ONE Apps Access tile (action:open_apps_access) and declares no Apps Mesh / IPC / Identity page; the Store's Access keeps Apps Mesh" \
   || bad "Configs must declare exactly the Apps Access tile and no apps-mesh, ipc, identity or apps-mesh-members page"
-echo "$out" | grep -qx 'ORDER firewall,dns,webserver,wg,apps-access,adb-shell,wifi,bluetooth' && ok "Setup ▸ Network = Firewall (#1548: the Watchdog hub moved to Agents) · DNS (#740) · Webserver · Cloud Mesh · Apps Access · ADB Shell · WiFi (#1263) · Bluetooth (moved in from Fleet)" \
+echo "$out" | grep -qx 'ORDER network,firewall,dns,webserver,wg,apps-access,adb-shell,wifi,bluetooth' && ok "Setup ▸ Network = Firewall (#1548: the Watchdog hub moved to Agents) · DNS (#740) · Webserver · Cloud Mesh · Apps Access · ADB Shell · WiFi (#1263) · Bluetooth (moved in from Fleet)" \
   || bad "Setup ▸ Network is not firewall, dns, webserver, wg, apps-access, adb-shell, wifi, bluetooth in that order"
 
 echo "== C2: one page, two entry points =="

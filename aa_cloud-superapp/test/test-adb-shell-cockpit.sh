@@ -35,8 +35,10 @@ for t in tabs:
     if not by[t][0].get('hidden'): bad.append('%s is not hidden' % t)
     if sum(t in g['pages'] for g in sec['groups']) != 1: bad.append('%s not in exactly one group' % t)
 if '_doc' not in page or 'FOUR TABS' not in page['_doc']: bad.append('_doc does not describe the tabs')
-vis = [p['id'] for p in sec['pages'] if p.get('group') == 'Network' and not p.get('hidden')]
+# #1719 the Network group shows one page (Network); the pages it held are declared hidden behind it, in the same order, and the ADB Shell icon is gone (explicit owner removal)
+vis = [p['id'] for p in sec['pages'] if p.get('group') == 'Network' and p['id'] in ('network','firewall','dns','webserver','wg','apps-access','adb-shell','wifi','bluetooth')]
 if vis[vis.index('adb-shell') - 1] != 'apps-access': bad.append('not after apps-access')
+if not page.get('hidden'): bad.append('adb-shell icon is still drawn (#1719 removed it)')
 sys.exit(1 if bad else 0) if not print('; '.join(bad)) or True else 0
 PY
 for t in adb-status:STATUS adb-term:SHELL adb-perms:PERMS adb-all:ALL; do

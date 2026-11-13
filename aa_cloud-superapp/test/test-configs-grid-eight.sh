@@ -59,10 +59,10 @@ echo "== G4: Network order =="
 got="$(python3 - "$APP/build.json" <<'PY'
 import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
-print(','.join(p['label'] for p in pages if p.get('group') == 'Network' and not p.get('hidden')))
+print(','.join(p['label'] for p in pages if p.get('group') == 'Network' and p['id'] in ('network','firewall','dns','webserver','wg','apps-access','adb-shell','wifi','bluetooth')))   # #1719 declared order (hidden behind the Network page)
 PY
 )"
-[ "$got" = "Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi,Bluetooth" ] && ok "Network = $got" || bad "Network is: $got"
+[ "$got" = "Network,NG Firewall,DNS,Webserver,VPN,Apps Access,ADB Shell,WiFi,Bluetooth" ] && ok "Network = $got" || bad "Network is: $got"
 
 echo "== G5: Home row =="
 grep -q 'referenced.pages.filterNot { it.separator }' "$KT/Sections.kt" && ok "Home Configs row skips separator pages" || bad "Home row would draw the separator as a cell"

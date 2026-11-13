@@ -43,8 +43,9 @@ pages = sec['pages']; by = {p['id']: p for p in pages}
 probs = []
 w = by.get('wifi')
 if not w: print('no wifi page'); sys.exit()
-if (w.get('group'), w.get('subgroup'), w.get('label'), w.get('icon')) != ('Network', '', 'WiFi', 'ic_wifi') or w.get('hidden'): probs.append('page = %r' % {k: w.get(k) for k in ('group', 'subgroup', 'label', 'icon', 'hidden')})
-vis = [p['id'] for p in pages if not p.get('hidden') and not p.get('is_action')]
+if (w.get('group'), w.get('subgroup'), w.get('label'), w.get('icon')) != ('Network', '', 'WiFi', 'ic_wifi') or not w.get('hidden'): probs.append('page = %r' % {k: w.get(k) for k in ('group', 'subgroup', 'label', 'icon', 'hidden')})
+# #1719 the Network pages are hidden behind the one Network page: the declared order is the check
+vis = [p['id'] for p in pages if (not p.get('hidden') or p['id'] in ('network','firewall','dns','webserver','wg','apps-access','adb-shell','wifi','bluetooth')) and not p.get('is_action')]
 if 'adb-shell' not in vis or vis[vis.index('adb-shell') + 1:vis.index('adb-shell') + 2] != ['wifi']: probs.append('WiFi is not the tile right after ADB Shell: %r' % vis)
 want = ['wifi-scan', 'wifi-channels', 'wifi-link', 'wifi-tools', 'wifi-log']
 if w.get('tabs') != want: probs.append('tabs = %r' % w.get('tabs'))
@@ -83,7 +84,7 @@ probs = []
 need = ['wifi', 'wifi-scan', 'wifi-channels', 'wifi-link', 'wifi-tools', 'wifi-log']
 if any(i not in network for i in need): probs.append('network group lacks %r' % [i for i in need if i not in network])
 if any(i in others for i in need): probs.append('another group still lists wifi pages %r' % [i for i in need if i in others])
-net = [p['id'] for p in sec['pages'] if p.get('group') == 'Network' and not p.get('hidden')]
+net = [p['id'] for p in sec['pages'] if p.get('group') == 'Network' and p['id'] in ('network','firewall','dns','webserver','wg','apps-access','adb-shell','wifi','bluetooth')]   # #1719 declared order
 if 'adb-shell' not in net or net[net.index('adb-shell') + 1:net.index('adb-shell') + 2] != ['wifi']:
     probs.append('WiFi is not the Network tile right after ADB Shell: %r' % net)
 seen = [i for g in sec['groups'] for i in g['pages']]

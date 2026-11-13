@@ -77,7 +77,7 @@ def members(g, s=''):
 want = {
     # #1623 one page, six top-level groups
     ('Launcher', ''): ['Quick Actions', 'UI', 'Folders', 'One-Hand', '|', 'Notify'],  # the | separates One-Hand from Notify
-    ('Network', ''):  ['Firewall', 'DNS', 'Webserver', 'Cloud Mesh', 'Apps Access', 'ADB Shell', 'WiFi', 'Bluetooth'],
+    ('Network', ''):  ['Network'],  # #1719 ONE page with its own bottom nav; the eight pages it held are declared hidden behind it (`reaches`)
     ('Apps', ''):     ['Store'],
     ('Connect', ''):  ['Account', 'Cloudy C3', 'Peer Control'],
     ('Tools', ''):    ['Watchdog', '|', 'X-Ray Device', 'Logcat Fleet', 'Agents'],  # Watchdog -> extapp:c3-watchdog; the | before the observability pair; Agents is the in-app hub (the owner's dual listing, kept once here)
@@ -87,7 +87,7 @@ problems = ['%s%s = %r' % (g, ' ▸ ' + s if s else '', members(g, s))
             for (g, s), exp in want.items() if members(g, s) != exp]
 print('; '.join(problems) or 'OK')
 PY
-)" "Launcher = Quick Actions/UI/Folders/One-Hand | Notify; Network = Firewall/DNS/Webserver/Cloud Mesh/Apps Access/ADB Shell/WiFi/Bluetooth; Apps = Store; Connect = Account/Cloudy C3/Peer Control; Tools = Watchdog | X-Ray Device/Logcat Fleet/Agents; Configs = Perms/Logcat/X-Ray App/About (#1623)"
+)" "Launcher = Quick Actions/UI/Folders/One-Hand | Notify; Network = Network (one page, own bottom nav; the eight pages it held are hidden behind it); Apps = Store; Connect = Account/Cloudy C3/Peer Control; Tools = Watchdog | X-Ray Device/Logcat Fleet/Agents; Configs = Perms/Logcat/X-Ray App/About (#1623)"
 
 echo "== T3: Store is the former Constellation, and Cloud Constellation is INSIDE it =="
 # #563 renamed the Constellation page Store; the word survives as the label of
@@ -174,9 +174,9 @@ w = {p[k] for p in pages for k in ('group', 'subgroup') if p.get(k)}
 w |= {p['label'] for p in pages if not p.get('hidden') and not p.get('is_action')}
 print(len(w))
 ")
-[ "$WORDS" = 32 ] \
-  && ok "T4 derived 32 words from the declaration (#1623 one page, six groups: Launcher, Network, Apps, Connect, Tools, Configs; no subgroups; 26 visible page labels incl. the two | separators (one word), Agents (the relabelled hub) and Watchdog (the c3-watchdog launch); Cloudy C3 is the c3 page's label)" \
-  || bad "T4 derived $WORDS words, expected 32 — it is checking a different set than it claims"
+[ "$WORDS" = 24 ] \
+  && ok "T4 derived 24 words from the declaration (#1623 one page, six groups: Launcher, Network, Apps, Connect, Tools, Configs; no subgroups; 26 visible page labels incl. the two | separators (one word), Agents (the relabelled hub) and Watchdog (the c3-watchdog launch); Cloudy C3 is the c3 page's label)" \
+  || bad "T4 derived $WORDS words, expected 24 — it is checking a different set than it claims"
 
 # The ONE heading Kotlin may still name is the fallback for a section that
 # declares none, which is every section but this one. Pinned so it stays the only
@@ -203,6 +203,8 @@ pages = next(s for s in json.load(raw)['ui']['sections']
              if s['id'] == 'config')['pages']
 by_id   = {p['id']: p for p in pages}
 tiled   = {p['id'] for p in pages if not p.get('hidden')}
+# #1719 a page that `reaches` others (Configs > Network hosts them behind its own bottom nav) is their door
+tiled  |= {r for p in pages if p['id'] in tiled for r in p.get('reaches', [])}
 as_tab  = {}
 for _ in range(4):  # tabs of tabs (Controls > Panels > UI | Tools): walk until nothing new is reachable
     as_tab.update({t: p['id'] for p in pages if p['id'] in tiled or p['id'] in as_tab for t in p.get('tabs', [])})
@@ -229,9 +231,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 58 ] \
-  && ok "58 config pages declared (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
-  || bad "$COUNT config pages, expected 58 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 59 ] \
+  && ok "59 config pages declared (#1719 added the Network page) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
+  || bad "$COUNT config pages, expected 59 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS — the single shared row (#1610) =="
 # #1610 downgraded the ticket's two per-subpage Actions columns to ONE shared row
@@ -309,7 +311,7 @@ echo "== T9: NO PAGE WAS LOST — the id set before the regroup == the id set no
 # id to BEFORE below.
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
-BEFORE = {'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'onehand', 'app-folders', 'notify', 'launcher',
+BEFORE = {'network', 'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'onehand', 'app-folders', 'notify', 'launcher',
           'profile', 'wg', 'kde', 'ai', 'perms', 'store', 'about',
           'websearch', 'localsearch', 'textenhance', 'library', 'tokens',
           'store-cloud', 'store-phone',
@@ -429,7 +431,7 @@ for g, s, label, icon in tiles:
 want = ['H:LAUNCHER',
         'Quick Actions[ic_home]', 'UI[ic_ctl_brightness]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', '|[None]', 'Notify[ic_rss]',
         'H:NETWORK',
-        'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]', 'Bluetooth[ic_bluetooth]',
+        'Network[ic_world]',   # #1719 ONE tile; Firewall, DNS, Webserver, VPN (was Cloud Mesh), Apps Access, WiFi, Bluetooth are its bottom nav and Home icons; the ADB Shell icon is removed
         'H:APPS',
         'Store[ic_storefront]',
         'H:CONNECT',
@@ -446,7 +448,7 @@ else:
     print('rendered != spec: ' + ' | '.join(l for l in difflib.unified_diff(want, out, lineterm='', n=0)
                                            if l[:1] in '+-' and l[:3] not in ('+++', '---')))
 PY
-)" "grid = LAUNCHER[Quick Actions,UI,Folders,One-Hand | Notify] NETWORK[Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi,Bluetooth] APPS[Store] CONNECT[Account,Cloudy C3,Peer Control] TOOLS[Watchdog | X-Ray Device,Logcat Fleet,Agents] CONFIGS[Perms,Logcat,X-Ray App,About] ACTIONS[Update All,KDE Connect,Animations,Sync Clipboard,Saving Mode,Focus Mode] (#1623)"
+)" "grid = LAUNCHER[Quick Actions,UI,Folders,One-Hand | Notify] NETWORK[Network] APPS[Store] CONNECT[Account,Cloudy C3,Peer Control] TOOLS[Watchdog | X-Ray Device,Logcat Fleet,Agents] CONFIGS[Perms,Logcat,X-Ray App,About] ACTIONS[Update All,KDE Connect,Animations,Sync Clipboard,Saving Mode,Focus Mode] (#1623)"
 
 echo "== T12: THE AI PAGE IS GONE, not hidden — no route, target or tile names it (#723) =="
 # Deleting a declaration and leaving its door behind is the dead-tile failure:

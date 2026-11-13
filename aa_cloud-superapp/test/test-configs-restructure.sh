@@ -155,10 +155,10 @@ check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 by = {p['id']: p for p in sec['pages']}
-net = [p['id'] for p in sec['pages'] if p.get('group') == 'Network' and not p.get('hidden')]
+net = [p['id'] for p in sec['pages'] if p.get('group') == 'Network' and p['id'] in ('network','firewall','dns','webserver','wg','apps-access','adb-shell','wifi','bluetooth')]   # #1719 declared order, hidden behind the Network page
 tabs = by['bluetooth']['tabs']
 probs = []
-if net != ['firewall', 'dns', 'webserver', 'wg', 'apps-access', 'adb-shell', 'wifi', 'bluetooth']: probs.append('Network = %r' % net)
+if net != ['network', 'firewall', 'dns', 'webserver', 'wg', 'apps-access', 'adb-shell', 'wifi', 'bluetooth']: probs.append('Network = %r' % net)
 network = next(g for g in sec['groups'] if g['id'] == 'network')['pages']
 others = [i for g in sec['groups'] if g['id'] != 'network' for i in g['pages']]
 if not set(['bluetooth'] + tabs) <= set(network): probs.append('network group lacks bluetooth pages')
