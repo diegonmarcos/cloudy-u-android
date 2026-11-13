@@ -25,6 +25,10 @@ export interface VaultNative {
   rename(options: { root: string; id: string; name: string }): Promise<{ id: string }>;
   remove(options: { root: string; id: string }): Promise<void>;
   openSettings(): Promise<void>;
+  /** #1717 the declared roots as this phone sees them (places or a reason each) */
+  roots(): Promise<{ roots: { id: string; places: { label: string; root: string }[]; reason?: string | null }[] }>;
+  /** #1717 launch the app that owns a root (the open_app grant action) */
+  openApp(options: { id: string }): Promise<void>;
 }
 
 export interface VaultEntry {
@@ -43,6 +47,10 @@ export interface VaultFS {
   readBinary(path: string): Promise<string>;
   writeText(path: string, text: string): Promise<void>;
   createFile(dir: string, name: string, text?: string): Promise<string>;
+  /** #1717 a new folder inside [dir]; answers its path */
+  createFolder(dir: string, name: string): Promise<string>;
+  /** #1717 make [path] addressable (list its ancestors); false when it does not exist */
+  ensure(path: string): Promise<boolean>;
   /** missing file reads resolve null instead of throwing */
   tryReadText(path: string): Promise<string | null>;
 }
@@ -85,6 +93,27 @@ export function nativeVaultFS(native: VaultNative, root: string): VaultFS {
       if (text !== '') await native.writeText({ root, id, text });
       return path;
     },
+    async createFolder(dir, name) {
+      const { id } = await native.create({ root, parentId: need(dir), name, isDir: true });
+      const path = joinPath(dir, name);
+      ids.set(path, id);
+      return path;
+    },
+    async ensure(path) {
+      try {
+        if (ids.has(path)) return true;
+        const parts = path.split('/');
+        let dir = '';
+        for (const part of parts) {
+          const next = joinPath(dir, part);
+          if (!ids.has(next) && !(await fs.list(dir)).some(e => e.path === next)) return false;
+          dir = next;
+        }
+        return ids.has(path);
+      } catch {
+        return false;
+      }
+    },
     async tryReadText(path) {
       try {
         // walk down listing each level so the ids exist
@@ -110,13 +139,14 @@ export function nativeVaultFS(native: VaultNative, root: string): VaultFS {
   return fs;
 }
 
-/** Walk the vault and return every file entry, bounded by the declared limits. */
+/** Walk the vault and return every file entry (and, #1717, every folder), bounded by the declared limits. */
 export async function walkVault(
   fs: VaultFS,
   limits: { max_depth: number; max_notes: number; skip_dirs: string[] },
   opts: { hidden?: boolean } = {}
-): Promise<{ files: VaultEntry[]; truncated: boolean }> {
+): Promise<{ files: VaultEntry[]; dirs: VaultEntry[]; truncated: boolean }> {
   const files: VaultEntry[] = [];
+  const dirs: VaultEntry[] = [];
   let truncated = false;
   const visit = async (dir: string, depth: number): Promise<void> => {
     if (depth > limits.max_depth) return void (truncated = true);
@@ -124,6 +154,7 @@ export async function walkVault(
       if (e.isDir) {
         if (limits.skip_dirs.includes(e.name)) continue;
         if (e.name.startsWith('.') && !opts.hidden) continue;
+        dirs.push(e);
         await visit(e.path, depth + 1);
       } else {
         if (e.name.startsWith('.') && !opts.hidden) continue;
@@ -134,5 +165,5 @@ export async function walkVault(
     }
   };
   await visit('', 0);
-  return { files, truncated };
+  return { files, dirs, truncated };
 }

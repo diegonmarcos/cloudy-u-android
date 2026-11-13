@@ -1,7 +1,7 @@
 // .canvas files (JSON Canvas) on a pan/zoom board: text cards (markdown), file cards, link
 // cards and groups, with edges. Edits write back through serializeCanvas, so what Obsidian
 // wrote (and any field we do not know) is kept.
-import { type PointerEvent as RPointerEvent, useMemo, useRef, useState, type WheelEvent as RWheelEvent } from 'react';
+import { type PointerEvent as RPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState, type WheelEvent as RWheelEvent } from 'react';
 
 import {
   addEdge,
@@ -18,7 +18,7 @@ import {
   serializeCanvas,
   updateNode,
 } from './jsoncanvas';
-import { renderMarkdown } from './markdown';
+import { IMAGE_EXT, parseFrontmatter, renderMarkdown } from './markdown';
 import { Icon } from './icons';
 
 interface View {
@@ -37,12 +37,61 @@ export interface CanvasViewProps {
   text: string;
   onChange: (text: string) => void;
   /** open a vault file (file cards) */
-  onOpenFile: (target: string) => void;
+  onOpenFile: (target: string, subpath?: string) => void;
+  /** #1717 a link tapped in a text card or a link card: target as written; href = markdown destination or URL */
+  onOpenLink?: (target: string, opts: { href: boolean; heading?: string }) => void;
+  /** #1717 file cards show what they point at: resolve the card's file, read an image or a note */
+  resolveFile?: (target: string) => string | null;
+  readDataUrl?: (path: string) => Promise<string | null>;
+  readText?: (path: string) => Promise<string | null>;
+  /** #1717 the control rail of Canvas mode; when given, zoom and fit live there instead of the tool row */
+  rail?: (ctl: CanvasControls) => ReactNode;
 }
+
+export interface CanvasControls {
+  k: number;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  /** back to 100% at the origin */
+  reset: () => void;
+  fit: () => void;
+}
+
+/** A file card: the image, or the note rendered, or (when it cannot be read) its name and path. */
+const FileCard = ({ file, resolveFile, readDataUrl, readText }: Pick<CanvasViewProps, 'resolveFile' | 'readDataUrl' | 'readText'> & { file: string }) => {
+  const [shown, setShown] = useState<{ kind: 'image'; url: string } | { kind: 'note'; html: string } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    setShown(null);
+    const hit = resolveFile?.(file) ?? null;
+    if (!hit) return;
+    void (async () => {
+      try {
+        if (IMAGE_EXT.test(hit)) {
+          const url = await readDataUrl?.(hit);
+          if (alive && url) setShown({ kind: 'image', url });
+        } else if (/\.(md|markdown)$/i.test(hit)) {
+          const text = await readText?.(hit);
+          if (alive && typeof text === 'string') setShown({ kind: 'note', html: renderMarkdown(parseFrontmatter(text).body) });
+        }
+      } catch {
+        /* the card keeps its name and path */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [file, resolveFile, readDataUrl, readText]);
+  if (shown?.kind === 'image') return <img src={shown.url} alt={file} />;
+  if (shown?.kind === 'note') {
+    return <div><strong>{file.split('/').pop()}</strong><div className="cnv-note" style={{ margin: 0, maxWidth: 'none' }} dangerouslySetInnerHTML={{ __html: shown.html }} /></div>;
+  }
+  return <div><strong>{file.split('/').pop()}</strong><div className="cnv-dim">{file}</div></div>;
+};
 
 const PRESETS = [undefined, '1', '2', '3', '4', '5', '6'];
 
-export const CanvasView = ({ text, onChange, onOpenFile }: CanvasViewProps) => {
+export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile, readDataUrl, readText, rail }: CanvasViewProps) => {
   const parsed = useMemo(() => parseCanvas(text), [text]);
   const canvas = parsed.canvas;
   const [view, setView] = useState<View>({ x: 40, y: 40, k: 1 });
@@ -54,6 +103,8 @@ export const CanvasView = ({ text, onChange, onOpenFile }: CanvasViewProps) => {
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ dist: number; k: number } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  // #1717 the board captures the pointer, so a link in a card is followed from down/up, not from a click
+  const linkTap = useRef<{ a: HTMLElement; x: number; y: number } | null>(null);
 
   const commit = (next: JsonCanvas) => onChange(serializeCanvas(next));
 
@@ -75,6 +126,8 @@ export const CanvasView = ({ text, onChange, onOpenFile }: CanvasViewProps) => {
   const down = (e: RPointerEvent<HTMLDivElement>) => {
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const a = (e.target as HTMLElement).closest<HTMLElement>('a.internal-link, a.external-link');
+    linkTap.current = a ? { a, x: e.clientX, y: e.clientY } : null;
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
       pinch.current = { dist: Math.hypot(a!.x - b!.x, a!.y - b!.y), k: view.k };
@@ -140,6 +193,14 @@ export const CanvasView = ({ text, onChange, onOpenFile }: CanvasViewProps) => {
   const up = (e: RPointerEvent<HTMLDivElement>) => {
     pointers.current.delete(e.pointerId);
     pinch.current = null;
+    const tap = linkTap.current;
+    linkTap.current = null;
+    if (tap && onOpenLink && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 8) {
+      const ext = tap.a.classList.contains('external-link');
+      onOpenLink(ext ? (tap.a.getAttribute('href') ?? '') : (tap.a.dataset.target ?? ''), { href: ext || tap.a.dataset.href === '1', heading: tap.a.dataset.heading });
+      setGesture(null);
+      return;
+    }
     if (!gesture) return;
     if (gesture.kind === 'move' && (Math.abs(gesture.dx) > 1 || Math.abs(gesture.dy) > 1)) {
       commit(moveNode(canvas, gesture.id, gesture.dx, gesture.dy));
@@ -234,7 +295,10 @@ export const CanvasView = ({ text, onChange, onOpenFile }: CanvasViewProps) => {
             </button>
           )}
           {sel && sel.type === 'file' && sel.file && (
-            <button type="button" className="cnv-btn" onClick={() => onOpenFile(sel.file!)}>Open file</button>
+            <button type="button" className="cnv-btn" onClick={() => onOpenFile(sel.file!, typeof sel.subpath === 'string' ? sel.subpath : undefined)}>Open file</button>
+          )}
+          {sel && sel.type === 'link' && sel.url && onOpenLink && (
+            <button type="button" className="cnv-btn" data-testid="canvas-open-link" onClick={() => onOpenLink(sel.url!, { href: true })}>Open link</button>
           )}
           {sel && (
             <button type="button" className="cnv-btn" onClick={() => commit(updateNode(canvas, sel.id, { color: PRESETS[(PRESETS.indexOf(sel.color) + 1) % PRESETS.length] }))}>
@@ -251,10 +315,21 @@ export const CanvasView = ({ text, onChange, onOpenFile }: CanvasViewProps) => {
               <Icon name="close" /> Delete link
             </button>
           )}
-          <button type="button" className="cnv-btn" onClick={() => setView(v => ({ ...v, k: Math.min(4, v.k * 1.25) }))}>+</button>
-          <button type="button" className="cnv-btn" onClick={() => setView(v => ({ ...v, k: Math.max(0.1, v.k / 1.25) }))}>-</button>
-          <button type="button" className="cnv-btn" onClick={fit}>Fit</button>
+          {!rail && <button type="button" className="cnv-btn" onClick={() => setView(v => ({ ...v, k: Math.min(4, v.k * 1.25) }))}>+</button>}
+          {!rail && <button type="button" className="cnv-btn" onClick={() => setView(v => ({ ...v, k: Math.max(0.1, v.k / 1.25) }))}>-</button>}
+          {!rail && <button type="button" className="cnv-btn" onClick={fit}>Fit</button>}
         </div>
+        {rail && (
+          <div className="cnv-rail" data-testid="canvas-rail" onPointerDown={e => e.stopPropagation()} onPointerUp={e => e.stopPropagation()}>
+            {rail({
+              k: view.k,
+              zoomIn: () => setView(v => ({ ...v, k: Math.min(4, v.k * 1.25) })),
+              zoomOut: () => setView(v => ({ ...v, k: Math.max(0.1, v.k / 1.25) })),
+              reset: () => setView({ x: 40, y: 40, k: 1 }),
+              fit,
+            })}
+          </div>
+        )}
       </div>
       {editing && sel && sel.id === editing && (
         <div className="cnv-banner" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
@@ -282,7 +357,7 @@ export const CanvasView = ({ text, onChange, onOpenFile }: CanvasViewProps) => {
         style={{ left: n.x, top: n.y, width: n.width, height: n.height, borderColor: color, outline: isFrom ? '2px dashed orange' : undefined }}
       >
         {n.type === 'text' && <div className="cnv-note" style={{ margin: 0, maxWidth: 'none' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(n.text ?? '') }} />}
-        {n.type === 'file' && <div><strong>{(n.file ?? '').split('/').pop()}</strong><div className="cnv-dim">{n.file}</div></div>}
+        {n.type === 'file' && <FileCard file={n.file ?? ''} resolveFile={resolveFile} readDataUrl={readDataUrl} readText={readText} />}
         {n.type === 'link' && <div><strong>Link</strong><div className="cnv-dim" style={{ overflowWrap: 'anywhere' }}>{n.url}</div></div>}
         {n.type === 'group' && <strong style={{ color }}>{n.label}</strong>}
         {isSel && (

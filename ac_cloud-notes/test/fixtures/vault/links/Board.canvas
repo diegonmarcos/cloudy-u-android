@@ -1,0 +1,11 @@
+{
+  "nodes": [
+    {"id": "g1", "type": "group", "x": 0, "y": 0, "width": 600, "height": 400, "label": "Group"},
+    {"id": "f1", "type": "file", "file": "Target.md", "subpath": "#Section Two", "x": 20, "y": 40, "width": 200, "height": 120},
+    {"id": "f2", "type": "file", "file": "assets/pic.png", "x": 240, "y": 40, "width": 120, "height": 120},
+    {"id": "l1", "type": "link", "url": "https://example.org/canvas", "x": 380, "y": 40, "width": 200, "height": 80},
+    {"id": "t1", "type": "text", "text": "Card with [[Index]] and [md](notes/Deep%20Note.md) and [web](https://example.org/card)", "x": 20, "y": 200, "width": 300, "height": 120},
+    {"id": "f3", "type": "file", "file": "Missing.md", "x": 340, "y": 200, "width": 200, "height": 80}
+  ],
+  "edges": [{"id": "e1", "fromNode": "f1", "toNode": "t1"}]
+}

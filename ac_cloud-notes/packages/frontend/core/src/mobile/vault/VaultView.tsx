@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { VAULT_DECL } from './decl';
 import { Icon } from './icons';
 import type { KeyValueStore } from './recent-vaults';
+import { SourcePanel } from './sidebar/SourcePanel';
 import { VAULT_CSS } from './style';
 import { useVault } from './use-vault';
 import { VaultShell } from './VaultShell';
@@ -66,6 +67,9 @@ export const VaultView = () => {
             <input className="cnv-input" value={typed} onChange={e => setTyped(e.target.value)} aria-label="Vault path" data-testid="path-input" />
             <button type="button" className="cnv-btn cnv-primary" disabled={api.busy} onClick={() => void api.openTyped(typed)}>Open</button>
           </div>
+          {/* #1717 the same Source section the left sidebar has: the declared roots with their reason and grant action */}
+          <h3>Source</h3>
+          <SourcePanel api={api} decl={decl} rootsOnly />
         </div>
       )}
     </>

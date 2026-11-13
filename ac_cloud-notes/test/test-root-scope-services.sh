@@ -114,13 +114,17 @@ fi
 # indistinguishable from the boot failure above and was misread as one.
 # MainActivity dispatches more than one event now (view-intent, open-file, memory-pressure), so "the first one on each side"
 # no longer compares like with like. Every event the native side dispatches must have a listener in the web layer.
-native_events="$(grep -oE "new Event\('[^']+'\)" \
-  "$ROOT/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt" \
+# #1717 the floating button was removed: the open event is fired by the Vault sidebar's Source section
+# (core/src/mobile/vault/sidebar/SourcePanel.tsx); MainActivity still fires the view-intent event. Both are
+# native-or-menu ways into the same root-scope listener, so both are checked.
+native_events="$( { grep -oE "new Event\('[^']+'\)" \
+  "$ROOT/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt"; \
+  grep -oE "new Event\('[^']+'\)" "$ROOT/packages/frontend/core/src/mobile/vault/sidebar/SourcePanel.tsx"; } \
   | sed "s/new Event('//;s/')//" | sort -u)"
 if [ -z "$native_events" ]; then
-  fail "MainActivity.kt dispatches no event: the FAB has no way into the web layer"
+  fail "neither MainActivity.kt nor the Source section dispatches an event: there is no way into the importer"
 fi
-case "$native_events" in *cloud-notes:open-file*) ok "the FAB's event cloud-notes:open-file is dispatched" ;; *) fail "MainActivity.kt no longer dispatches cloud-notes:open-file (the FAB's event)" ;; esac
+case "$native_events" in *cloud-notes:open-file*) ok "the import event cloud-notes:open-file is dispatched (Source section)" ;; *) fail "nothing dispatches cloud-notes:open-file any more (the importer cannot be opened)" ;; esac
 for ev in $native_events; do
   if grep -rqF "addEventListener('$ev'" "$ROOT/packages/frontend/apps/android/src" "$ROOT/packages/frontend/core/src/mobile"; then
     ok "native event '$ev' has a listener in the web layer"

@@ -2,11 +2,10 @@
 // (vault-index.worker.ts) and under node. Links resolve the way Obsidian's "shortest path"
 // does: a path-looking target matches by path suffix, a bare name by file name; ties go to
 // the file in the same folder, then to the shortest path.
-import { parseCanvas } from './jsoncanvas';
-import { baseName, extOf, stem } from './file-types';
+import { extractAllLinks, type LinkKind, pointsAtFile, resolveTarget } from './core/link-resolver';
+import { extOf, stem } from './file-types';
 import {
   extractHeadings,
-  extractLinks,
   extractTags,
   extractTasks,
   type Heading,
@@ -18,6 +17,10 @@ export interface RawLink {
   target: string;
   heading?: string;
   embed: boolean;
+  /** #1717 which kind of link this is (core/link-resolver.ts) */
+  kind?: LinkKind;
+  block?: string;
+  alias?: string;
 }
 
 export interface IndexedLink extends RawLink {
@@ -48,26 +51,9 @@ export interface VaultIndex {
 
 export const INDEXED_EXT = ['md', 'markdown', 'canvas'];
 
+/** Resolve a link target to a vault path. Kept as the index's name for LinkResolver's one rule (core/link-resolver.ts). */
 export function resolveLink(target: string, fromPath: string, allPaths: readonly string[]): string | null {
-  const t = target.trim().replace(/^\/+/, '');
-  if (t === '') return null;
-  const lower = t.toLowerCase();
-  const wanted = extOf(t) === '' ? [lower + '.md', lower] : [lower];
-  const fromDir = fromPath.includes('/') ? fromPath.slice(0, fromPath.lastIndexOf('/')) : '';
-  const hits = allPaths.filter(p => {
-    const pl = p.toLowerCase();
-    return wanted.some(w => (t.includes('/') ? pl === w || pl.endsWith('/' + w) : baseName(pl) === w));
-  });
-  if (hits.length === 0) return null;
-  const dirOf = (p: string) => (p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '');
-  hits.sort(
-    (a, b) =>
-      Number(dirOf(b) === fromDir) - Number(dirOf(a) === fromDir) ||
-      Number(wanted[0] === a.toLowerCase()) - Number(wanted[0] === b.toLowerCase()) ||
-      a.split('/').length - b.split('/').length ||
-      a.localeCompare(b)
-  );
-  return hits[0]!;
+  return resolveTarget(target, fromPath, allPaths);
 }
 
 interface Parsed {
@@ -81,24 +67,22 @@ interface Parsed {
   frontmatter: Record<string, unknown>;
 }
 
+/** The links of a file that point at vault files, every kind (wikilinks, embeds, markdown links and images, canvas nodes). */
+const fileLinks = (path: string, text: string): RawLink[] =>
+  extractAllLinks(path, text)
+    .filter(pointsAtFile)
+    .map(l => ({ target: l.target, heading: l.heading, embed: l.embed, kind: l.kind, ...(l.block ? { block: l.block } : {}), ...(l.alias ? { alias: l.alias } : {}) }));
+
 export function parseNote(path: string, text: string): Parsed {
   if (extOf(path) === 'canvas') {
-    const { canvas } = parseCanvas(text);
-    const links: RawLink[] = [];
-    for (const n of canvas.nodes) {
-      if (n.type === 'file' && typeof n.file === 'string') links.push({ target: n.file, embed: true });
-      if (n.type === 'text' && typeof n.text === 'string') {
-        for (const l of extractLinks(n.text)) links.push({ target: l.target, heading: l.heading, embed: l.embed });
-      }
-    }
-    return { path, title: stem(path), links, tags: [], headings: [], words: 0, tasks: { total: 0, done: 0 }, frontmatter: {} };
+    return { path, title: stem(path), links: fileLinks(path, text), tags: [], headings: [], words: 0, tasks: { total: 0, done: 0 }, frontmatter: {} };
   }
   const fm = parseFrontmatter(text);
   const tasks = extractTasks(fm.body);
   return {
     path,
     title: stem(path),
-    links: extractLinks(fm.body).map(l => ({ target: l.target, heading: l.heading, embed: l.embed })),
+    links: fileLinks(path, fm.body),
     tags: extractTags(fm.body, fm.data),
     headings: extractHeadings(fm.body),
     words: wordCount(fm.body),

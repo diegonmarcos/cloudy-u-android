@@ -1,6 +1,8 @@
 // Types of build.json::vault (mirrored in vault-decl.json). Declaration is data; these
 // are only its shape so the pure modules can take it as an argument.
 
+import type { SourcesDecl } from './core/vault-source';
+
 export type PluginStatus = 'builtin' | 'planned' | 'na';
 
 export interface PluginRow {
@@ -54,6 +56,8 @@ export interface VaultDecl {
     recent_max: number;
     storage_key: string;
   };
+  /** #1717 the roots the Source section offers (core/vault-source.ts) */
+  sources: SourcesDecl & { recent_files_max: number };
   limits: { max_text_bytes: number; autosave_ms: number; max_notes: number; max_depth: number; index_chunk: number; skip_dirs: string[] };
   config_dir: string;
   config_files: { id: string; file: string; label: string }[];
@@ -65,6 +69,10 @@ export interface VaultDecl {
     status: string[];
     tab_max: number;
     wide_breakpoint_px: number;
+    /** #1717 the floating bottom pill, in order */
+    bottom_bar: string[];
+    /** #1717 the two view modes of the main pane */
+    modes: { id: 'file' | 'canvas'; label: string; icon: string }[];
   };
   commands: CommandRow[];
   file_types: FileTypeRow[];

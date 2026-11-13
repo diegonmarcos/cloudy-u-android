@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +68,7 @@ internal object DrawerDocs {
  * Cloud Notes' one shell (#1164), the shared nav scaffold every migrated app uses: the first row (hamburger with the doc tree /
  * section drawer, the section title island with its pages, AI = libs:ai's shared chat, Profile top-right launching Cloud Account,
  * Configs asking the web half to open Cloud Notes's own settings), the second row (the open section's pages), the shared bottom
- * nav (build.json::ui) and the shared page background. The editor WebView (with the open-file button, in [Content]'s container) is the content; its scroll (and its inner scrollers')
+ * nav (build.json::ui) and the shared page background. The editor WebView (in [Content]'s container) is the content; its scroll (and its inner scrollers')
  * feeds the ONE chrome collapse through [ChromeWebScroll], so reading down hides the first row and compacts the other two.
  * The shell owns every inset: the web half adds no status-bar or system-bar padding of its own (setup.ts).
  */
@@ -87,6 +88,9 @@ internal class NotesShell(
 
     fun setDark(dark: Boolean) { darkState = dark }
 
+    /** #1717 true while the Vault view is shown with its own bars: the content fills the screen, the shared bars are not drawn. */
+    private var vaultChrome by mutableStateOf(false)
+
     /** Configs > UI (the shared nav UI card) is open; its "All settings" opens the web half's own settings. */
     private var configsOpen by mutableStateOf(false)
 
@@ -98,6 +102,23 @@ internal class NotesShell(
         @JavascriptInterface
         fun setDocs(json: String) {
             DrawerDocs.parse(json)?.let { docs = it }
+        }
+
+        /**
+         * #1717 the Vault view draws its own Obsidian-style top bar and bottom pill; while it is shown ([on]) the app's bars
+         * step aside so there is one set of bars, and they return when the vault closes or the user asks for them
+         * (vault menu > Show app navigation bars).
+         */
+        @JavascriptInterface
+        fun setVaultChrome(on: Boolean) {
+            vaultChrome = on
+        }
+
+        /** #1717 the vault menu's way out: open a section exactly as the bottom nav would. */
+        @JavascriptInterface
+        fun openSection(id: String) {
+            vaultChrome = false
+            nav.open(id)
         }
     }
 
@@ -116,7 +137,16 @@ internal class NotesShell(
         CloudNotesTheme(if (dark) ThemeMode.Dark else ThemeMode.Light) {
             if (configsOpen) ConfigsUi(dark)
             if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = dark, onDismiss = { fleetConfigsOpen = false }, onAppConfigs = { configsOpen = true })
-            NavBarTopFirstRowScaffold(
+            if (vaultChrome) {
+                // #1717 the vault is its own shell (sidebar toggle, breadcrumb, mode switch, bottom pill): the editor fills the screen
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    AndroidView(
+                        factory = { (container.parent as? ViewGroup)?.removeView(container); container },
+                        modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().testTag("notes_vault_chrome"),
+                        update = { ChromeWebScroll.attach(web, null) },
+                    )
+                }
+            } else NavBarTopFirstRowScaffold(
                 title = section?.label ?: nav.sectionId,
                 hierarchy = section?.let { titleHierarchy(it, nav.pageId) }.orEmpty(),
                 onNavigate = { e -> if (e.depth > 0) nav.openPage(e.sectionId, e.id) else nav.open(e.sectionId) },

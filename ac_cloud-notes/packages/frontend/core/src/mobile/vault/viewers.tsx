@@ -1,15 +1,24 @@
-// The viewers: one per build.json::vault.file_types handler. Each gets the tab and the vault
-// API; text-based ones edit the tab's buffer, the tab is saved by autosave or Save.
-import { type MouseEvent as RMouseEvent, useEffect, useMemo, useRef, useState } from 'react';
+// The file-mode renderers: one per build.json::vault.file_types handler (markdown, json, html,
+// mermaid, image, text). Each gets the tab and the vault API; text-based ones edit the tab's
+// buffer, the tab is saved by autosave or Save. Links go through the LinkResolver (api.followLink,
+// api.resolver); nothing here resolves a link itself. The canvas board is NOT here: it is
+// Canvas mode (canvas-view/CanvasMode.tsx).
+import { type MouseEvent as RMouseEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
-import { CanvasView } from './canvas-view';
 import type { VaultDecl } from './decl-types';
 import { enhanceMarkdown, renderMermaidInto } from './enhance';
 import { buildSandboxFrame } from './html-sandbox';
 import { jsonRows, parseJson } from './json-tree';
-import { parseFrontmatter, renderMarkdown } from './markdown';
-import { resolveLink } from './vault-index';
+import { renderMarkdown } from './markdown';
 import type { Tab, VaultApi } from './use-vault';
+
+/** Scroll [root] to the heading a link asked for (h1..h6 carry data-anchor). */
+const scrollToAnchor = (root: HTMLElement | null, heading?: string) => {
+  if (!root || !heading) return;
+  const want = heading.trim().toLowerCase();
+  const hit = [...root.querySelectorAll<HTMLElement>('[data-anchor]')].find(h => h.dataset.anchor === want);
+  hit?.scrollIntoView({ block: 'start' });
+};
 
 export const SourceEditor = ({ tab, api }: { tab: Tab; api: VaultApi }) => (
   <textarea
@@ -21,46 +30,51 @@ export const SourceEditor = ({ tab, api }: { tab: Tab; api: VaultApi }) => (
   />
 );
 
-export const MarkdownView = ({ tab, api, decl }: { tab: Tab; api: VaultApi; decl: VaultDecl }) => {
+export const MarkdownView = ({ tab, api, decl, header }: { tab: Tab; api: VaultApi; decl: VaultDecl; header?: ReactNode }) => {
   const ref = useRef<HTMLDivElement>(null);
   const text = tab.text ?? '';
-  const fm = useMemo(() => parseFrontmatter(text), [text]);
   const html = useMemo(() => renderMarkdown(text), [text]);
-  const hidden = tab.path.startsWith(decl.config_dir + '/');
+  void decl;
 
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
     let alive = true;
-    const paths = api.allPaths;
     void enhanceMarkdown(root, {
       path: tab.path,
       alive: () => alive,
-      resolve: (t, from) => resolveLink(t, from, paths),
-      readText: async p => {
-        const cached = api.noteTexts.current.get(p);
-        if (cached !== undefined) return cached;
-        return api.vault ? api.vault.fs.tryReadText(p) : null;
-      },
+      resolve: (t, from) => api.resolver.resolve(t, from),
+      readText: api.readNote,
       readDataUrl: api.readDataUrl,
-    });
+    }).then(() => {
+      const a = alive ? api.takeAnchor(tab.path) : null;
+      if (a) scrollToAnchor(root, a.heading);
+    }).catch(() => undefined);
+    const onAnchor = (e: Event) => {
+      const d = (e as CustomEvent).detail as { path?: string; heading?: string } | undefined;
+      if (d?.path === tab.path) { api.takeAnchor(tab.path); scrollToAnchor(root, d.heading); }
+    };
+    window.addEventListener('cloud-notes:vault-anchor', onAnchor);
     return () => {
       alive = false;
+      window.removeEventListener('cloud-notes:vault-anchor', onAnchor);
     };
-  }, [html, tab.path, api.allPaths, api.noteTexts, api.vault, api.readDataUrl]);
+  }, [html, tab.path, api.resolver, api.readNote, api.readDataUrl, api.takeAnchor]);
 
   const onClick = (e: RMouseEvent<HTMLDivElement>) => {
     const t = e.target as HTMLElement;
     const link = t.closest<HTMLElement>('a.internal-link');
     if (link) {
       e.preventDefault();
-      if (link.dataset.target) void api.followLink(link.dataset.target, tab.path);
+      if (link.dataset.target !== undefined) {
+        void api.followLink(link.dataset.target, tab.path, { href: link.dataset.href === '1', heading: link.dataset.heading });
+      }
       return;
     }
     const ext = t.closest<HTMLAnchorElement>('a.external-link');
     if (ext) {
       e.preventDefault();
-      window.open(ext.href, '_blank', 'noopener,noreferrer');
+      void api.followLink(ext.getAttribute('href') ?? '', tab.path);
       return;
     }
     const tag = t.closest<HTMLElement>('a.tag');
@@ -70,19 +84,9 @@ export const MarkdownView = ({ tab, api, decl }: { tab: Tab; api: VaultApi; decl
     }
   };
 
-  const entries = Object.entries(fm.data);
   return (
     <div className="cnv-pane" data-testid="markdown-preview">
-      {fm.present && entries.length > 0 && !hidden && (
-        <dl className="cnv-props" data-testid="properties">
-          {entries.map(([k, v]) => (
-            <div key={k}>
-              <dt>{k}</dt>
-              <dd>{Array.isArray(v) ? v.join(', ') : String(v ?? '')}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
+      {header}
       <div ref={ref} className="cnv-note" onClick={onClick} dangerouslySetInnerHTML={{ __html: html }} />
       <div style={{ height: 96 }} />
     </div>
@@ -172,14 +176,3 @@ export const ImageView = ({ tab, api }: { tab: Tab; api: VaultApi }) => {
   }, [tab.path, api.readDataUrl]);
   return <div className="cnv-pane">{url ? <img src={url} alt={tab.path} style={{ maxWidth: '100%' }} /> : <span className="cnv-dim">Loading image</span>}</div>;
 };
-
-export const CanvasPane = ({ tab, api }: { tab: Tab; api: VaultApi }) => (
-  <CanvasView
-    text={tab.text ?? ''}
-    onChange={t => api.setText(tab.path, t)}
-    onOpenFile={target => {
-      const hit = resolveLink(target, tab.path, api.allPaths);
-      if (hit) void api.openFile(hit);
-    }}
-  />
-);

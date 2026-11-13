@@ -1,13 +1,10 @@
 package app.cloudnotes.pro
 
-import androidx.compose.ui.graphics.toArgb
-import app.cloudnotes.pro.theme.ObsidianTokens
 import com.diegonmarcos.cloudlib.web.CloudWeb
 import com.diegonmarcos.cloudlib.web.WebProfile
 import android.content.ComponentCallbacks2
 import android.content.Intent
 import android.os.Bundle
-import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.ConsoleMessage
@@ -27,16 +24,13 @@ import app.cloudnotes.pro.plugin.LocalHashCashPlugin
 import app.cloudnotes.pro.plugin.NbStorePlugin
 import app.cloudnotes.pro.plugin.MobileBackPlugin
 import app.cloudnotes.pro.plugin.PreviewPlugin
-import app.cloudnotes.pro.utils.dp2px
 import app.cloudnotes.pro.utils.px2dp
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
 import com.diegonmarcos.superapp.bottomnav.NavDecl
 import com.getcapacitor.BridgeActivity
 import com.getcapacitor.BridgeWebChromeClient
 import com.getcapacitor.WebViewListener
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.view.updateMargins
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -84,7 +78,6 @@ class MainActivity : BridgeActivity(), CloudNotesThemePlugin.Callback {
             navHeight = px2dp(insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom)
             ViewCompat.onApplyWindowInsets(v, insets)
         }
-        setupOpenFileFab()
         setupNativeNav()
         // #1642 a text file opened with this app from a file manager; a recreation does not read it twice
         if (savedInstanceState == null) captureViewIntent(intent)
@@ -112,7 +105,7 @@ class MainActivity : BridgeActivity(), CloudNotesThemePlugin.Callback {
     }
 
     // #1164: the shared nav scaffold (first row, second row, bottom nav, page background, scroll-collapse) is the activity's
-    // content and the Capacitor layout (editor WebView + open-file button) sits inside it. The web half hides its own tabs once
+    // content and the Capacitor layout (the editor WebView) sits inside it. The web half hides its own tabs once
     // it sees cloudNotesNativeNav and adds no system-bar padding (setup.ts).
     private fun setupNativeNav() {
         val decl = NavDecl.fromBuildConfig(
@@ -131,32 +124,10 @@ class MainActivity : BridgeActivity(), CloudNotesThemePlugin.Callback {
         setContentView(ComposeView(this).apply { setContent { shell.Content(container, bridge.webView) } })
     }
 
-    // #469: the ONE feature over upstream — open a file from emulated storage.
-    // The FAB asks the editor for a path; the editor reads it through the
-    // ExternalFilePlugin and imports the markdown into the local workspace.
-    private fun setupOpenFileFab() {
-        val fab = FloatingActionButton(this).apply {
-            layoutParams = CoordinatorLayout.LayoutParams(dp2px(52), dp2px(52)).apply {
-                gravity = Gravity.END or Gravity.BOTTOM
-                updateMargins(0, 0, dp2px(24), dp2px(24))
-            }
-            customSize = dp2px(52)
-            setImageResource(R.drawable.ic_open_file)
-            // #1369 Obsidian's --interactive-accent (generated ObsidianTokens), the same in light and dark
-            backgroundTintList = android.content.res.ColorStateList.valueOf(ObsidianTokens.Light.interactiveAccent.toArgb())
-            imageTintList = android.content.res.ColorStateList.valueOf(ObsidianTokens.Light.textOnAccent.toArgb())
-            setOnClickListener {
-                bridge.webView.post {
-                    bridge.webView.evaluateJavascript(
-                        "window.dispatchEvent(new Event('cloud-notes:open-file'))",
-                        null,
-                    )
-                }
-            }
-            val parent = bridge.webView.parent as CoordinatorLayout
-            parent.addView(this)
-        }
-    }
+    // #469: the ONE feature over upstream — open a file from emulated storage. #1717: the floating button that asked
+    // for it is gone (explicit removal); the same web event is fired from the Vault sidebar's Source section
+    // (core/src/mobile/vault/sidebar/SourcePanel.tsx, "Import a file or folder into the workspace"), the explorer in
+    // app.tsx and ExternalFilePlugin are unchanged.
 
     override fun load() {
         super.load()

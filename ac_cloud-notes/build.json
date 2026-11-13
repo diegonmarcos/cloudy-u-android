@@ -16,10 +16,10 @@
     "compile_sdk": 36,
     "gradle_module": "packages/frontend/apps/android/App/app",
     "_doc_gradle_module": "Path (app-relative) of the Gradle module that builds the APK. EVERY other app in this fleet keeps it at ./app, so test-app-names-pattern.sh T6 hardcoded that convention and looked for <dir>/app/build.gradle \u2014 which this app has never had, because the Android project is nested inside the vendored monorepo. T6 therefore SKIPPED this app in silence, which is exactly how a launcher tile with the wrong label shipped behind 18 green checks (#522). The path is DATA now; T6 reads it and falls back to \"app\" for everyone else.",
-    "version_code": 168,
+    "version_code": 169,
     "version_name": "0.27.5",
     "_doc_application_id": "FLIPPED (#495): this app now IS Cloud Notes, replacing Markor (formerly ac_cloud-notes, now deleted). #469 shipped it alongside the live Markor under its earlier, since retired application id on purpose, to avoid ripping out a live app and a 9000-file vendor in one commit; #495 is the flip that was always the documented next step. namespace is app.cloudnotes.pro (renamed from the upstream package in #1091) \u2014 never shipped as install identity.",
-    "_doc_version": "164/0.27.5 (#495). version_code must exceed ac_cloud-notes's last shipped 163 or the fleet updater's downgrade guard refuses to install this as an update over the device's existing Cloud Notes (observed live: 'stale candidate for notes: versionCode 1 is OLDER than the installed 163') \u2014 the vendored Gradle defaults to versionCode 1 with no wiring to this file, which is the defect #495 fixes below. version_name FOLLOWS THE UPSTREAM'S OWN VERSIONING (package.json version at the pinned revision) rather than continuing Markor's Apache-tag-mirroring scheme (163/2.16.1 mirrored upstream Markor tag v2.16.1) \u2014 the two apps have unrelated release trains and there is nothing for a post-flip Cloud Notes to mirror from Markor any more. Read into Gradle by app/build.gradle via JsonSlurper (see that file) \u2014 this is the ONE declaration; nothing else states these numbers. BUMPED TO 165 (#522): the fleet updater compares versionCode and will not offer an update that is not strictly newer, so a rebuild that kept 164 would fix the name and the logging in the repository and leave the owner's phone on the same bytes it has now. 164 is what run 5ba51c1ce published and what is installed today. The applicationId is UNCHANGED (com.diegonmarcos.cloudnotes since #495), so 165 installs straight over it as an ordinary update \u2014 no uninstall, no data loss. BUMPED TO 166 (#743) for the same reason: the APK now carries libs:core's fleet mesh membership, and only a strictly newer code reaches the phone. BUMPED TO 167: 166 crashed on launch (the resource shrinker stripped the ic_nav_* drawables looked up by name; res/raw/keep_nav_icons.xml keeps them), and only a strictly newer code replaces it on the phone. BUMPED TO 168 (#1091): the rename of the packages, crates and native library changes the shipped payload (libcloud_notes_mobile_native.so), and only a strictly newer code reaches the phone."
+    "_doc_version": "164/0.27.5 (#495). version_code must exceed ac_cloud-notes's last shipped 163 or the fleet updater's downgrade guard refuses to install this as an update over the device's existing Cloud Notes (observed live: 'stale candidate for notes: versionCode 1 is OLDER than the installed 163') \u2014 the vendored Gradle defaults to versionCode 1 with no wiring to this file, which is the defect #495 fixes below. version_name FOLLOWS THE UPSTREAM'S OWN VERSIONING (package.json version at the pinned revision) rather than continuing Markor's Apache-tag-mirroring scheme (163/2.16.1 mirrored upstream Markor tag v2.16.1) \u2014 the two apps have unrelated release trains and there is nothing for a post-flip Cloud Notes to mirror from Markor any more. Read into Gradle by app/build.gradle via JsonSlurper (see that file) \u2014 this is the ONE declaration; nothing else states these numbers. BUMPED TO 165 (#522): the fleet updater compares versionCode and will not offer an update that is not strictly newer, so a rebuild that kept 164 would fix the name and the logging in the repository and leave the owner's phone on the same bytes it has now. 164 is what run 5ba51c1ce published and what is installed today. The applicationId is UNCHANGED (com.diegonmarcos.cloudnotes since #495), so 165 installs straight over it as an ordinary update \u2014 no uninstall, no data loss. BUMPED TO 166 (#743) for the same reason: the APK now carries libs:core's fleet mesh membership, and only a strictly newer code reaches the phone. BUMPED TO 167: 166 crashed on launch (the resource shrinker stripped the ic_nav_* drawables looked up by name; res/raw/keep_nav_icons.xml keeps them), and only a strictly newer code replaces it on the phone. BUMPED TO 168 (#1091): the rename of the packages, crates and native library changes the shipped payload (libcloud_notes_mobile_native.so), and only a strictly newer code reaches the phone. BUMPED TO 169 (#1717): the Vault view redesign (sidebar, persisted tabs, File and Canvas modes, Source roots) changes the web bundle and the native plugin, and only a strictly newer code reaches the phone."
   },
   "upstream": {
     "repo": "https://github.com/toeverything/AFFiNE.git",
@@ -250,6 +250,62 @@
       "recent_max": 10,
       "storage_key": "cloud-notes:vault:recent"
     },
+    "sources": {
+      "_doc": "#1717 the roots the left sidebar's Source section offers to mount (VaultSource, core/src/mobile/vault/core/vault-source.ts). Same ids, labels, kinds and order as Cloud Drive's editor explorer (ac_cloud-drive/build.json ui.manage.overview.local, #1714) and the same reason names (EditorRoots.Reason); test/vault/source.test.mjs fails when the two drift. The phone's answer comes from VaultPlugin.roots: emulated = /storage/emulated/0 (All files access); termux = a folder granted through Cloud Terminal Termux's documents provider and the fleet shared store; nix = a folder granted through Cloud Terminal Nix's documents provider; external = removable volumes of StorageManager. A root that cannot be opened stays listed with reasons[<reason>].text and its action (grant_storage = the Perms page on All files access, pick_folder = the system folder picker with a persisted grant, open_app = launch the owning app, none).",
+      "roots": [
+        {
+          "id": "emulated",
+          "label": "Emulated",
+          "icon": "smartphone",
+          "kind": "emulated"
+        },
+        {
+          "id": "termux",
+          "label": "Termux home",
+          "icon": "terminal",
+          "kind": "terminal_home",
+          "package": "cld.termux"
+        },
+        {
+          "id": "nix",
+          "label": "Nix home",
+          "icon": "terminal",
+          "kind": "app_home",
+          "fleet": "nix-on-droid",
+          "package": "cld.termux.nix"
+        },
+        {
+          "id": "external",
+          "label": "External drive",
+          "icon": "usb",
+          "kind": "external_drives"
+        }
+      ],
+      "reasons": {
+        "NO_STORAGE_GRANT": {
+          "text": "{label} needs All files access for Cloud Notes.",
+          "action": "grant_storage",
+          "action_label": "Grant access"
+        },
+        "APP_NOT_INSTALLED": {
+          "text": "{label} belongs to an app that is not installed on this phone.",
+          "action": "none",
+          "action_label": ""
+        },
+        "NOT_READABLE": {
+          "text": "{label} is private to its app. Choose its folder once in the system picker and it stays mounted.",
+          "action": "pick_folder",
+          "action_label": "Choose folder"
+        },
+        "NO_DRIVE": {
+          "text": "No external drive is connected. Plug one in, or choose a folder.",
+          "action": "pick_folder",
+          "action_label": "Choose folder"
+        }
+      },
+      "no_native": "Folder access needs the Android app; this page is a preview.",
+      "recent_files_max": 30
+    },
     "limits": {
       "max_text_bytes": 5242880,
       "autosave_ms": 1500,
@@ -368,7 +424,9 @@
       ],
       "left_panes": [
         "files",
-        "search"
+        "search",
+        "recent",
+        "source"
       ],
       "right_panes": [
         "outline",
@@ -383,7 +441,28 @@
         "path"
       ],
       "tab_max": 12,
-      "wide_breakpoint_px": 900
+      "wide_breakpoint_px": 900,
+      "_doc_1717": "#1717 left_panes gained recent (flat list of the vault.sources.recent_files_max most recently modified files) and source (the root picker); bottom_bar is the floating pill (back, forward, search, new, tabs, menu); modes are the two view modes of the main pane (a tab's mode follows its file type: canvas handler = canvas, every other handler = file).",
+      "bottom_bar": [
+        "back",
+        "forward",
+        "search",
+        "new",
+        "tabs",
+        "menu"
+      ],
+      "modes": [
+        {
+          "id": "file",
+          "label": "File",
+          "icon": "file"
+        },
+        {
+          "id": "canvas",
+          "label": "Canvas",
+          "icon": "canvas"
+        }
+      ]
     },
     "commands": [
       {
@@ -456,6 +535,50 @@
       {
         "id": "reindex",
         "label": "Rebuild the vault index"
+      },
+      {
+        "id": "new-folder",
+        "label": "New folder"
+      },
+      {
+        "id": "collapse-all",
+        "label": "Collapse all folders"
+      },
+      {
+        "id": "expand-all",
+        "label": "Expand all folders"
+      },
+      {
+        "id": "recent-files",
+        "label": "Show recent files"
+      },
+      {
+        "id": "choose-source",
+        "label": "Choose source (root to mount)"
+      },
+      {
+        "id": "tab-switcher",
+        "label": "Open tab switcher"
+      },
+      {
+        "id": "go-back",
+        "label": "Go back"
+      },
+      {
+        "id": "go-forward",
+        "label": "Go forward"
+      },
+      {
+        "id": "mode-file",
+        "label": "Switch to File mode"
+      },
+      {
+        "id": "mode-canvas",
+        "label": "Switch to Canvas mode"
+      },
+      {
+        "id": "import-file",
+        "label": "Import a file or folder into the workspace"
       }
     ],
     "file_types": [
@@ -1049,11 +1172,12 @@
       "converter": "blocksuite/cloud-notes/widgets/linked-doc/src/transformers/html.ts"
     },
     "file_explorer": {
-      "_doc": "Read by test/test-file-explorer.sh (#547). entrypoint is where the explorer renders and picks a file; plugin_ts is the web-side plugin type; native_plugin is the Kotlin class that must implement every method that type declares; activity is where the FAB dispatches the event the explorer listens for. Method and event names are DERIVED from these files, never written in the tester.",
+      "_doc": "Read by test/test-file-explorer.sh (#547). entrypoint is where the explorer renders and picks a file; plugin_ts is the web-side plugin type; native_plugin is the Kotlin class that must implement every method that type declares; activity is where the view-intent event the explorer listens for is dispatched; source_menu (#1717) is the Vault sidebar's Source section, which dispatches the open event since the floating button was removed. Method and event names are DERIVED from these files, never written in the tester.",
       "entrypoint": "packages/frontend/apps/android/src/app.tsx",
       "plugin_ts": "packages/frontend/apps/android/src/plugins/external-file.ts",
       "native_plugin": "packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/plugin/ExternalFilePlugin.kt",
-      "activity": "packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt"
+      "activity": "packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt",
+      "source_menu": "packages/frontend/core/src/mobile/vault/sidebar/SourcePanel.tsx"
     }
   },
   "configs_pages": {

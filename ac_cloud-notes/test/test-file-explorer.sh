@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ac_cloud-notes tester (#547): the FAB opens a file EXPLORER, not a typed-path
+# ac_cloud-notes tester (#547, #1717): the import action opens a file EXPLORER, not a typed-path
 # prompt, and the native side that feeds it is confined and consistent.
 #
 # Neither compiler can see any of this: the TS plugin type is hand-written
@@ -19,7 +19,7 @@ import json, os, re, sys
 root = sys.argv[1]
 cfg = json.load(open(os.path.join(root, 'build.json')))['tests']['file_explorer']
 src = {}
-for key in ('entrypoint', 'plugin_ts', 'native_plugin', 'activity'):
+for key in ('entrypoint', 'plugin_ts', 'native_plugin', 'activity', 'source_menu'):
     path = os.path.join(root, cfg[key])
     if not os.path.isfile(path):
         print('  FAIL  %s missing: %s' % (key, cfg[key]))
@@ -66,12 +66,17 @@ check(re.search(r'\bopenExternalFile\s*\(\s*\w+\s*\)', app) is not None
 check(re.search(r'\bExternalFile\.listDir\s*\(\s*\{\s*path\s*:\s*EXTERNAL_FILE_ROOT|\bbrowse\s*\(\s*EXTERNAL_FILE_ROOT', app) is not None,
       'the FAB event starts the explorer at the storage root')
 
-# ── the FAB event: what the explorer listens for, native dispatches ───────
+# ── the explorer's events: what it listens for is dispatched ──────────────
+# #1717 the floating button is gone: the open event is fired by the Vault sidebar's Source section
+# (build.json::tests.file_explorer.source_menu), the view-intent event still by MainActivity.
 fired = set(re.findall(r"dispatchEvent\(new Event\('([^']+)'\)\)", src['activity']))
+fired |= set(re.findall(r"dispatchEvent\(new Event\('([^']+)'\)\)", src['source_menu']))
+check('FloatingActionButton' not in src['activity'], 'MainActivity draws no floating button (the Source section opens the explorer)')
+check(re.search(r"onClick=\{requestImport\}", src['source_menu']) is not None, 'the Source section has the import action')
 m = re.search(r'const\s+ExternalFileOpener\s*=', app)
 heard = set(re.findall(r"addEventListener\('([^']+)'", braced(app, m.start()))) if m else set()
 check(bool(heard) and heard <= fired,
-      'every event the explorer listens for is one MainActivity dispatches: %s' % sorted(heard)
+      'every event the explorer listens for is dispatched (MainActivity or the Source section): %s' % sorted(heard)
       + ('' if heard <= fired else ' — never fired: %s' % sorted(heard - fired)))
 
 # ── native: confined, and offers only what readFile accepts ────────────────

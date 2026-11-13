@@ -10,6 +10,8 @@
              to ac_cloud-termux by test-vault.sh). A provider entry here would clash with the
              application providers in the manifest merge. -->
         <package android:name="cld.termux" />
+        <!-- #1717 Source > Nix home: the root answers "not installed" from a package lookup (build.json::vault.sources.roots). -->
+        <package android:name="cld.termux.nix" />
     </queries>
 
     <application

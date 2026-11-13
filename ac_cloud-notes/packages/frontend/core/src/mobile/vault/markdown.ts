@@ -185,17 +185,20 @@ function inline(src: string): string {
     }
     return hold(`<a class="internal-link" href="#" ${attrs}>${escapeHtml(label)}</a>`);
   });
-  s = s.replace(/!\[([^\]\n]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_m, alt: string, url: string) => {
-    const u = safeHref(url);
+  // #1717 a destination may be wrapped in <...> so it can hold spaces ([x](<My Note.md>))
+  const bare = (url: string) => (url.startsWith('<') && url.endsWith('>') ? url.slice(1, -1) : url);
+  s = s.replace(/!\[([^\]\n]*)\]\((<[^>\n]+>|[^)\s]+)(?:\s+"[^"]*")?\)/g, (_m, alt: string, url: string) => {
+    const u = safeHref(bare(url));
     return u === null ? escapeHtml(alt) : hold(`<img alt="${escapeHtml(alt)}" data-src="${escapeHtml(u)}">`);
   });
-  s = s.replace(/\[([^\]\n]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_m, label: string, url: string) => {
-    const u = safeHref(url);
+  s = s.replace(/\[([^\]\n]+)\]\((<[^>\n]+>|[^)\s]+)(?:\s+"[^"]*")?\)/g, (_m, label: string, url: string) => {
+    const u = safeHref(bare(url));
     if (u === null) return escapeHtml(label);
-    const ext = /^https?:/i.test(u);
+    const ext = /^(https?:|mailto:)/i.test(u);
+    // #1717 data-href marks a markdown destination (percent-encoded, relative): LinkResolver decodes it, a wikilink target is taken as written
     return hold(
       `<a class="${ext ? 'external-link' : 'internal-link'}" href="${ext ? escapeHtml(u) : '#'}"` +
-        (ext ? ' rel="noopener noreferrer" target="_blank"' : ` data-target="${escapeHtml(u)}"`) +
+        (ext ? ' rel="noopener noreferrer" target="_blank"' : ` data-target="${escapeHtml(u)}" data-href="1"`) +
         `>${escapeHtml(label)}</a>`
     );
   });
@@ -271,7 +274,8 @@ export function renderMarkdown(src: string, opts: RenderOptions = {}): string {
     }
     const h = /^(#{1,6})\s+(.+?)\s*#*\s*$/.exec(line);
     if (h) {
-      out.push(`<h${h[1]!.length}>${inline(h[2]!)}</h${h[1]!.length}>`);
+      // #1717 data-anchor carries the heading text so a [[Note#Heading]] or (#heading) link can scroll to it
+      out.push(`<h${h[1]!.length} data-anchor="${escapeHtml(h[2]!.trim().toLowerCase())}">${inline(h[2]!)}</h${h[1]!.length}>`);
       i++;
       continue;
     }

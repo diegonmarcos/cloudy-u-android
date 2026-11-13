@@ -1,6 +1,6 @@
-// Sidebar panes: Files, Search (left); Outline, Backlinks, Outgoing links, Tags (right);
+// Sidebar panes: Search (left; the Files tree, Recent and Source are sidebar/Sidebar.tsx); Outline, Backlinks, Outgoing links, Tags (right);
 // and Configs > Vault, the read-only view of <vault>/.obsidian.
-import { type ReactElement, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import type { VaultDecl } from './decl-types';
 import { Icon } from './icons';
@@ -9,61 +9,6 @@ import { searchContent, searchPaths, tagCounts } from './vault-index';
 import type { VaultApi } from './use-vault';
 
 const STATUS_LABEL = { builtin: 'built in', planned: 'planned', na: 'not applicable', unmapped: 'not mapped' } as const;
-
-export const FilesPane = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) => {
-  const [open, setOpen] = useState<Set<string>>(new Set());
-  const [dir, setDir] = useState('');
-  useEffect(() => {
-    if (api.vault) void api.loadDir('').catch(() => undefined);
-  }, [api.vault]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const toggle = (path: string) => {
-    setDir(path);
-    setOpen(prev => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else {
-        next.add(path);
-        void api.loadDir(path).catch(() => undefined);
-      }
-      return next;
-    });
-  };
-
-  const rows = (parent: string, depth: number): ReactElement[] =>
-    (api.dirs[parent] ?? [])
-      .filter(e => api.showHidden || !e.name.startsWith('.'))
-      .filter(e => !(e.isDir && decl.limits.skip_dirs.includes(e.name)))
-      .flatMap(e => [
-        <button
-          key={e.path}
-          type="button"
-          className="cnv-row"
-          aria-current={api.active === e.path}
-          style={{ paddingLeft: 8 + depth * 14 }}
-          onClick={() => (e.isDir ? toggle(e.path) : void api.openFile(e.path))}
-        >
-          {e.isDir ? <span style={{ display: 'inline-block', transform: open.has(e.path) ? 'rotate(90deg)' : undefined }}><Icon name="chevron" size={14} /></span> : <Icon name="file" size={14} />}
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
-        </button>,
-        ...(e.isDir && open.has(e.path) ? rows(e.path, depth + 1) : []),
-      ]);
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }} data-testid="files-pane">
-      <div style={{ display: 'flex', gap: 4, padding: '6px 8px' }}>
-        <button type="button" className="cnv-btn" title="New note" onClick={() => void api.newNote(dir)}><Icon name="plus" /> Note</button>
-        <button type="button" className="cnv-btn" title="New canvas" onClick={() => void api.newCanvas(dir)}><Icon name="canvas" /> Canvas</button>
-        <button type="button" className="cnv-btn" title="Show hidden files" aria-pressed={api.showHidden} onClick={api.toggleHidden}><Icon name="eye" /></button>
-      </div>
-      <div className="cnv-scroll">
-        {rows('', 0)}
-        {api.truncated && <div className="cnv-dim">The vault is larger than the declared limits; the listing is partial.</div>}
-        <div style={{ height: 96 }} />
-      </div>
-    </div>
-  );
-};
 
 export const SearchPane = ({ api, initial }: { api: VaultApi; initial?: string }) => {
   const [q, setQ] = useState(initial ?? '');
@@ -125,8 +70,9 @@ export const OutgoingPane = ({ api }: { api: VaultApi }) => {
   return (
     <div className="cnv-scroll" data-testid="outgoing-pane">
       {!note || note.links.length === 0 ? <div className="cnv-dim">No outgoing links.</div> : note.links.map((l, i) => (
-        <button key={i} type="button" className="cnv-row" style={{ opacity: l.resolved ? 1 : 0.55 }} onClick={() => api.active && void api.followLink(l.target, api.active)}>
-          {l.embed ? '!' : ''}{l.target}{l.resolved ? '' : ' (unresolved)'}
+        <button key={i} type="button" className="cnv-row" style={{ opacity: l.resolved ? 1 : 0.55 }} data-link-kind={l.kind ?? 'wikilink'} onClick={() => api.active && void api.followLink(l.target, api.active, { heading: l.heading })}>
+          <span style={{ flex: 1 }}>{l.embed ? '!' : ''}{l.target}{l.heading ? ` > ${l.heading}` : ''}{l.resolved ? '' : ' (unresolved)'}</span>
+          <span className="cnv-dim">{l.kind ?? 'wikilink'}</span>
         </button>
       ))}
     </div>

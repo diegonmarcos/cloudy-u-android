@@ -1,0 +1,759 @@
+{
+ "_doc": "Field-parity baseline of the Vault view as it was BEFORE the #1717 redesign (commit a3e3f6d38). Generated once from that commit; test/vault/parity.test.mjs proves every entry is still present. Never edit by hand to make the test pass.",
+ "commit": "a3e3f6d38",
+ "commands": [
+  {
+   "id": "command-palette",
+   "label": "Open command palette",
+   "hotkey": "Ctrl+P"
+  },
+  {
+   "id": "quick-switcher",
+   "label": "Open quick switcher",
+   "hotkey": "Ctrl+O"
+  },
+  {
+   "id": "open-vault",
+   "label": "Open vault (folder)"
+  },
+  {
+   "id": "new-note",
+   "label": "New note",
+   "hotkey": "Ctrl+N"
+  },
+  {
+   "id": "new-canvas",
+   "label": "New canvas"
+  },
+  {
+   "id": "save",
+   "label": "Save",
+   "hotkey": "Ctrl+S"
+  },
+  {
+   "id": "toggle-mode",
+   "label": "Toggle edit and preview",
+   "hotkey": "Ctrl+E"
+  },
+  {
+   "id": "close-tab",
+   "label": "Close tab",
+   "hotkey": "Ctrl+W"
+  },
+  {
+   "id": "toggle-left",
+   "label": "Toggle left sidebar"
+  },
+  {
+   "id": "toggle-right",
+   "label": "Toggle right sidebar"
+  },
+  {
+   "id": "search-in-files",
+   "label": "Search in files",
+   "hotkey": "Ctrl+Shift+F"
+  },
+  {
+   "id": "open-graph",
+   "label": "Open graph view"
+  },
+  {
+   "id": "vault-configs",
+   "label": "Show vault configs (.obsidian)"
+  },
+  {
+   "id": "toggle-hidden",
+   "label": "Show or hide hidden files"
+  },
+  {
+   "id": "toggle-cdn",
+   "label": "Allow or block CDN scripts in HTML pages"
+  },
+  {
+   "id": "reindex",
+   "label": "Rebuild the vault index"
+  }
+ ],
+ "ribbon": [
+  {
+   "id": "files",
+   "label": "Files",
+   "icon": "folder",
+   "action": "pane:left:files"
+  },
+  {
+   "id": "search",
+   "label": "Search",
+   "icon": "search",
+   "action": "pane:left:search"
+  },
+  {
+   "id": "switcher",
+   "label": "Quick switcher",
+   "icon": "jump",
+   "action": "command:quick-switcher"
+  },
+  {
+   "id": "graph",
+   "label": "Graph view",
+   "icon": "graph",
+   "action": "command:open-graph"
+  },
+  {
+   "id": "canvas",
+   "label": "New canvas",
+   "icon": "canvas",
+   "action": "command:new-canvas"
+  },
+  {
+   "id": "palette",
+   "label": "Command palette",
+   "icon": "terminal",
+   "action": "command:command-palette"
+  },
+  {
+   "id": "configs",
+   "label": "Vault configs",
+   "icon": "gear",
+   "action": "command:vault-configs"
+  },
+  {
+   "id": "open",
+   "label": "Open another vault",
+   "icon": "vault",
+   "action": "command:open-vault"
+  }
+ ],
+ "left_panes": [
+  "files",
+  "search"
+ ],
+ "right_panes": [
+  "outline",
+  "backlinks",
+  "outgoing",
+  "tags"
+ ],
+ "status": [
+  "backlinks",
+  "words",
+  "chars",
+  "path"
+ ],
+ "tab_max": 12,
+ "wide_breakpoint_px": 900,
+ "file_types": [
+  {
+   "handler": "markdown",
+   "label": "Markdown",
+   "ext": [
+    "md",
+    "markdown"
+   ],
+   "views": [
+    "preview",
+    "source"
+   ],
+   "default_view": "preview",
+   "editable": true
+  },
+  {
+   "handler": "canvas",
+   "label": "JSON Canvas",
+   "ext": [
+    "canvas"
+   ],
+   "views": [
+    "canvas",
+    "source"
+   ],
+   "default_view": "canvas",
+   "editable": true
+  },
+  {
+   "handler": "json",
+   "label": "JSON",
+   "ext": [
+    "json",
+    "jsonc",
+    "geojson"
+   ],
+   "views": [
+    "tree",
+    "source"
+   ],
+   "default_view": "tree",
+   "editable": true
+  },
+  {
+   "handler": "html",
+   "label": "HTML",
+   "ext": [
+    "html",
+    "htm",
+    "xhtml"
+   ],
+   "views": [
+    "render",
+    "source"
+   ],
+   "default_view": "render",
+   "editable": true
+  },
+  {
+   "handler": "mermaid",
+   "label": "Mermaid",
+   "ext": [
+    "mmd",
+    "mermaid"
+   ],
+   "views": [
+    "render",
+    "source"
+   ],
+   "default_view": "render",
+   "editable": true
+  },
+  {
+   "handler": "image",
+   "label": "Image",
+   "ext": [
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "webp",
+    "bmp",
+    "avif",
+    "svg"
+   ],
+   "views": [
+    "image"
+   ],
+   "default_view": "image",
+   "editable": false
+  },
+  {
+   "handler": "text",
+   "label": "Text",
+   "ext": [
+    "txt",
+    "css",
+    "js",
+    "ts",
+    "yml",
+    "yaml",
+    "csv",
+    "xml",
+    "toml",
+    "ini",
+    "sh",
+    "py",
+    "log"
+   ],
+   "views": [
+    "source"
+   ],
+   "default_view": "source",
+   "editable": true
+  },
+  {
+   "handler": "unsupported",
+   "label": "Not supported yet",
+   "ext": [
+    "pdf"
+   ],
+   "views": [],
+   "default_view": "",
+   "editable": false
+  }
+ ],
+ "limits": {
+  "max_text_bytes": 5242880,
+  "autosave_ms": 1500,
+  "max_notes": 5000,
+  "max_depth": 16,
+  "index_chunk": 100,
+  "skip_dirs": [
+   ".git",
+   "node_modules",
+   ".trash"
+  ]
+ },
+ "open": {
+  "saf": true,
+  "direct_roots": [
+   "/storage/emulated/0/"
+  ],
+  "store": {
+   "owner_package": "cld.termux",
+   "authority": "cld.termux.sharedstore",
+   "permission": "com.diegonmarcos.cloud.permission.SHARED_STORE",
+   "git_subdir": "git"
+  },
+  "recent_max": 10,
+  "storage_key": "cloud-notes:vault:recent"
+ },
+ "config_files": [
+  {
+   "id": "app",
+   "file": "app.json",
+   "label": "Editor and files"
+  },
+  {
+   "id": "appearance",
+   "file": "appearance.json",
+   "label": "Appearance"
+  },
+  {
+   "id": "core-plugins",
+   "file": "core-plugins.json",
+   "label": "Core plugins"
+  },
+  {
+   "id": "community-plugins",
+   "file": "community-plugins.json",
+   "label": "Community plugins"
+  },
+  {
+   "id": "hotkeys",
+   "file": "hotkeys.json",
+   "label": "Hotkeys"
+  },
+  {
+   "id": "graph",
+   "file": "graph.json",
+   "label": "Graph"
+  },
+  {
+   "id": "canvas",
+   "file": "canvas.json",
+   "label": "Canvas"
+  }
+ ],
+ "config_dirs": [
+  {
+   "id": "snippets",
+   "dir": "snippets",
+   "ext": ".css",
+   "label": "CSS snippets"
+  },
+  {
+   "id": "plugins",
+   "dir": "plugins",
+   "manifest": "manifest.json",
+   "label": "Installed plugin folders"
+  }
+ ],
+ "html": {
+  "sandbox": "allow-scripts",
+  "csp_default": {
+   "default-src": [
+    "'none'"
+   ],
+   "img-src": [
+    "data:",
+    "blob:"
+   ],
+   "style-src": [
+    "'unsafe-inline'"
+   ],
+   "font-src": [
+    "data:"
+   ],
+   "script-src": [
+    "'unsafe-inline'"
+   ],
+   "connect-src": [
+    "'none'"
+   ],
+   "frame-src": [
+    "'none'"
+   ],
+   "form-action": [
+    "'none'"
+   ],
+   "base-uri": [
+    "'none'"
+   ]
+  },
+  "cdn": {
+   "default": false,
+   "label": "Allow CDN scripts and fonts",
+   "script": [
+    "https://cdn.tailwindcss.com",
+    "https://cdn.jsdelivr.net",
+    "https://unpkg.com",
+    "https://cdnjs.cloudflare.com"
+   ],
+   "style": [
+    "https://fonts.googleapis.com",
+    "https://cdn.jsdelivr.net",
+    "https://unpkg.com",
+    "https://cdnjs.cloudflare.com"
+   ],
+   "font": [
+    "https://fonts.gstatic.com",
+    "https://cdn.jsdelivr.net",
+    "https://cdnjs.cloudflare.com"
+   ],
+   "script_extra": [
+    "'unsafe-eval'"
+   ]
+  }
+ },
+ "plugins": [
+  "file-explorer",
+  "global-search",
+  "switcher",
+  "graph",
+  "backlink",
+  "canvas",
+  "outgoing-link",
+  "tag-pane",
+  "footnotes",
+  "properties",
+  "page-preview",
+  "daily-notes",
+  "templates",
+  "note-composer",
+  "command-palette",
+  "slash-command",
+  "editor-status",
+  "bookmarks",
+  "markdown-importer",
+  "zk-prefixer",
+  "random-note",
+  "outline",
+  "word-count",
+  "slides",
+  "audio-recorder",
+  "workspaces",
+  "file-recovery",
+  "publish",
+  "sync",
+  "bases",
+  "webviewer",
+  "obsidian-excalidraw-plugin",
+  "templater-obsidian",
+  "dataview",
+  "obsidian-tasks-plugin",
+  "table-editor-obsidian",
+  "obsidian-git",
+  "calendar",
+  "obsidian-style-settings",
+  "obsidian-kanban",
+  "remotely-save",
+  "quickadd",
+  "omnisearch",
+  "beautiful-mermaid-renderer",
+  "beautiful-mermaid",
+  "pdf-plus",
+  "obsidian-zotero-desktop-connector",
+  "obsidian-html-plugin",
+  "json-editor",
+  "xml-viewer",
+  "notebook-navigator",
+  "show-hidden-files",
+  "new-3d-graph"
+ ],
+ "api": [
+  "active",
+  "allPaths",
+  "busy",
+  "closeTab",
+  "closeVault",
+  "config",
+  "dirs",
+  "error",
+  "files",
+  "followLink",
+  "forget",
+  "hasNative",
+  "index",
+  "indexing",
+  "loadDir",
+  "newCanvas",
+  "newNote",
+  "noteTexts",
+  "openFile",
+  "openRoot",
+  "openTyped",
+  "patchTab",
+  "persisted",
+  "pickFolder",
+  "readDataUrl",
+  "rebuildIndex",
+  "recent",
+  "save",
+  "setActive",
+  "setError",
+  "setText",
+  "showHidden",
+  "tabs",
+  "titleOf",
+  "toggleHidden",
+  "truncated",
+  "vault"
+ ],
+ "testids": [
+  "backlinks-pane",
+  "canvas-edit",
+  "canvas-errors",
+  "canvas-view",
+  "cdn-toggle",
+  "configs-none",
+  "configs-pane",
+  "files-pane",
+  "html-banner",
+  "html-frame",
+  "json-error",
+  "json-tree",
+  "markdown-preview",
+  "mermaid-render",
+  "mode-toggle",
+  "open-folder",
+  "outgoing-pane",
+  "outline-pane",
+  "palette-",
+  "path-input",
+  "plugin-",
+  "properties",
+  "ribbon",
+  "search-input",
+  "search-pane",
+  "sidebar-",
+  "source-editor",
+  "status-bar",
+  "tab-error",
+  "tabbar",
+  "tags-pane",
+  "unsupported",
+  "vault-drawer-actions",
+  "vault-empty",
+  "vault-error",
+  "vault-graph",
+  "vault-shell",
+  "vault-start"
+ ],
+ "labels": [
+  "Actions",
+  "Community plugins",
+  "Core plugins",
+  "Highlight a note",
+  "New canvas",
+  "New note",
+  "Ribbon",
+  "Search names and text, or #tag",
+  "Show hidden files",
+  "Toggle edit and preview",
+  "Toggle left sidebar",
+  "Toggle right sidebar",
+  "Vault path"
+ ],
+ "canvas_tools": [
+  "Card",
+  "Group",
+  "Connect",
+  "Pick target",
+  "Edit",
+  "Open file",
+  "Colour",
+  "Delete",
+  "Delete link",
+  ">+<",
+  ">-<",
+  ">Fit<",
+  "Done"
+ ],
+ "exports": {
+  "VaultShell.tsx": [
+   "VaultShell"
+  ],
+  "VaultView.tsx": [
+   "VaultView"
+  ],
+  "canvas-view.tsx": [
+   "CanvasView"
+  ],
+  "decl-types.ts": [],
+  "decl.ts": [
+   "VAULT_DECL"
+  ],
+  "enhance.ts": [
+   "enhanceMarkdown",
+   "renderMermaidInto"
+  ],
+  "file-types.ts": [
+   "baseName",
+   "extOf",
+   "handlerFor",
+   "isTextHandler",
+   "stem"
+  ],
+  "html-sandbox.ts": [
+   "buildCsp",
+   "buildSandboxFrame",
+   "externalRefs"
+  ],
+  "icons.tsx": [
+   "Icon",
+   "LUCIDE"
+  ],
+  "index-runner.ts": [
+   "runIndex"
+  ],
+  "index.ts": [],
+  "json-tree.ts": [
+   "formatJson",
+   "jsonRows",
+   "kindOf",
+   "parseJson"
+  ],
+  "jsoncanvas.ts": [
+   "CANVAS_PRESET_COLORS",
+   "addEdge",
+   "addGroup",
+   "addTextNode",
+   "anchor",
+   "bounds",
+   "canvasColor",
+   "emptyCanvas",
+   "membersOf",
+   "moveNode",
+   "newId",
+   "parseCanvas",
+   "removeEdge",
+   "removeNode",
+   "serializeCanvas",
+   "updateNode"
+  ],
+  "markdown.ts": [
+   "CALLOUT_TYPES",
+   "IMAGE_EXT",
+   "escapeHtml",
+   "extractHeadings",
+   "extractLinks",
+   "extractTags",
+   "extractTasks",
+   "maskCode",
+   "parseFrontmatter",
+   "parseWikiTarget",
+   "renderMarkdown",
+   "safeHref",
+   "wordCount"
+  ],
+  "native-host.ts": [
+   "provideVaultNative",
+   "vaultNative"
+  ],
+  "obsidian-config.ts": [
+   "enabledMap",
+   "parseHotkeys",
+   "readObsidianConfig",
+   "statusOf"
+  ],
+  "palette.tsx": [
+   "Palette"
+  ],
+  "panes.tsx": [
+   "BacklinksPane",
+   "ConfigsPane",
+   "FilesPane",
+   "OutgoingPane",
+   "OutlinePane",
+   "SearchPane",
+   "TagsPane"
+  ],
+  "recent-vaults.ts": [
+   "forgetRecent",
+   "kindOfRoot",
+   "readRecent",
+   "touchRecent"
+  ],
+  "style.ts": [
+   "VAULT_CSS"
+  ],
+  "use-vault.ts": [
+   "useVault"
+  ],
+  "vault-fs.ts": [
+   "joinPath",
+   "nativeVaultFS",
+   "parentOf",
+   "walkVault"
+  ],
+  "vault-graph.tsx": [
+   "VaultGraph"
+  ],
+  "vault-index.ts": [
+   "INDEXED_EXT",
+   "IndexBuilder",
+   "buildIndex",
+   "parseNote",
+   "resolveLink",
+   "searchContent",
+   "searchPaths",
+   "tagCounts"
+  ],
+  "vault-index.worker.ts": [],
+  "viewers.tsx": [
+   "CanvasPane",
+   "HtmlView",
+   "ImageView",
+   "JsonView",
+   "MarkdownView",
+   "MermaidView",
+   "SourceEditor"
+  ]
+ },
+ "native_methods": [
+  "create",
+  "list",
+  "openPath",
+  "openSettings",
+  "persisted",
+  "pickVault",
+  "readBinary",
+  "readText",
+  "releaseVault",
+  "remove",
+  "rename",
+  "writeText"
+ ],
+ "kotlin_vault_methods": [
+  "create",
+  "list",
+  "openPath",
+  "openSettings",
+  "persisted",
+  "pickVault",
+  "readBinary",
+  "readText",
+  "releaseVault",
+  "remove",
+  "rename",
+  "writeText"
+ ],
+ "kotlin_external_methods": [
+  "listDir",
+  "listFiles",
+  "openSettings",
+  "readBinary",
+  "readFile",
+  "takePendingOpen"
+ ],
+ "events": [
+  "cloud-notes:probe",
+  "cloud-notes:vault-search"
+ ],
+ "native_open_file_event": "cloud-notes:open-file",
+ "link_kinds": [
+  "wikilink",
+  "wiki-embed",
+  "md-link",
+  "md-image",
+  "external",
+  "canvas-file"
+ ]
+}
