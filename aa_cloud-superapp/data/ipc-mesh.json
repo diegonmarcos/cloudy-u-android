@@ -15,6 +15,20 @@
   "route": "/app/<id|pkg>/api/<op>"
  },
  "shared": {
+  "adb-shell-core": [
+   {
+    "id": "op:adb/exec",
+    "kind": "op",
+    "name": "adb/exec",
+    "method": "fleet.ipc.v1",
+    "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+    "level": "signature",
+    "source": "libs:adb-shell-core/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbBridgeApi.kt",
+    "callers": [
+     "aa_cloud-superapp"
+    ]
+   }
+  ],
   "analytics-sink": [
    {
     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
@@ -1099,12 +1113,48 @@
     "callers": [
      "aa_cloud-superapp",
      "account",
+     "browser",
+     "c3",
+     "c3-webserver",
+     "calc",
+     "camera",
+     "capital-stack-finterminal",
+     "cg-omniverse",
+     "chat",
+     "code",
+     "contacts",
+     "dialer",
      "drive",
+     "gallery",
+     "hardtech-cad",
+     "hardtech-sim2real",
+     "keyboard",
+     "kg-store",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
+     "mail",
+     "matrix",
+     "me",
+     "media-center",
+     "morpheus",
+     "myterminal",
+     "nav",
+     "news",
      "nix-on-droid",
+     "notes",
+     "office",
+     "search",
+     "shopping",
      "store",
-     "termux"
+     "superintel",
+     "tasks",
+     "termux",
+     "tools-small-llms",
+     "vault",
+     "wallet",
+     "watchdog",
+     "watchtower",
+     "writer"
     ]
    }
   ],
@@ -1172,6 +1222,7 @@
    "dir": "aa_cloud-superapp",
    "door": true,
    "libs": [
+    "adb-shell-core",
     "appstore",
     "core",
     "devtools",
@@ -1181,16 +1232,6 @@
     "shizuku-adb-debug-tools"
    ],
    "endpoints": [
-    {
-     "id": "op:adb/exec",
-     "kind": "op",
-     "name": "adb/exec",
-     "method": "fleet.ipc.v1",
-     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
-     "level": "signature",
-     "source": "ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbBridgeApi.kt",
-     "callers": []
-    },
     {
      "id": "op:diagnostics/get",
      "kind": "op",
@@ -1527,6 +1568,20 @@
      "callers": [
       "browser"
      ]
+    },
+    {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-account/app/src/main/AndroidManifest.xml",
+     "component": "com.diegonmarcos.superapp.profile.MailOAuthCodeActivity",
+     "id": "intent:com.diegonmarcos.superapp.profile.MailOAuthCodeActivity",
+     "kind": "intent",
+     "name": "MailOAuthCodeActivity",
+     "actions": [
+      "<pkg>.MAIL_OAUTH_CODE"
+     ],
+     "uris": [],
+     "callers": []
     }
    ]
   },
