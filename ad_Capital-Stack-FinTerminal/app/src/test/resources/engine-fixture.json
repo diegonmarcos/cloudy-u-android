@@ -4,7 +4,7 @@
     {
       "id": "engine_fixture",
       "entry": "Yield Curves",
-      "tab": "fi",
+      "tab": "cb",
       "panels": [
         {
           "id": "ust",
