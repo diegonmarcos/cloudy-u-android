@@ -183,8 +183,10 @@ pub fn build(cat: &Value, map: &Value, b: &Value, apps: &[App], table: &[Route])
     json!({"nodes": nodes, "edges": edges, "routes": out_rows})
 }
 
+/// #1725 the topology of THIS DEVICE: the device's own MCP tools (apis::device_catalogue), this app's routes and the IPC behind
+/// them. The remote servers and the c3-api nodes their tools map to are Cloud C3's (Infra > APIs > C3 MCP).
 pub fn topology() -> Value {
-    build(apis::data()["mcp_catalogue"].as_array().map(|_| &apis::data()["mcp_catalogue"]).unwrap_or(&Value::Null), map(), apis::build(), apis::apps(), app::ROUTES)
+    build(&apis::device_catalogue(apis::data()), map(), apis::build(), apis::apps(), app::ROUTES)
 }
 
 pub fn api_topology(_ctx: &crate::Ctx, _req: &Req) -> Resp {
@@ -231,7 +233,7 @@ mod tests {
         for layer in ["mcp", "api", "ipc"] {
             assert!(nodes.iter().any(|n| n["layer"] == layer), "layer {} has nodes", layer);
         }
-        assert!(nodes.iter().filter(|n| n["layer"] == "mcp").count() > 150, "all catalogue tools are nodes");
+        assert!(nodes.iter().filter(|n| n["layer"] == "mcp").count() > 10, "the device tools of the catalogue are nodes");
         let layer = |id: &str| nodes.iter().find(|n| n["id"] == id).map(|n| s(&n["layer"])).unwrap();
         for e in arr(&t["edges"]) {
             assert!(ids.contains(&s(&e["from"])) && ids.contains(&s(&e["to"])), "edge {} references real nodes", e);

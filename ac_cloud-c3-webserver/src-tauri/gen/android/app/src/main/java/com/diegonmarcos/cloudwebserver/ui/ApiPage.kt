@@ -221,7 +221,7 @@ private fun DeviceAccessCards(page: String, tick: Int) {
 
 @Composable
 private fun AccessGateway(doc: DeviceAccess.Doc, g: DeviceAccess.Gateway, full: Boolean = false) {
-    Card((if (g.id == "mesh") "Mesh gateway" else "On-phone API gateway") + " · " + (doc.app(g.pkg)?.label ?: g.app.ifEmpty { g.pkg }), "c3_access_gateway_${g.id}", badges = { Badge("this device") }) {
+    Card((if (g.id == "mesh") "Mesh gateway" else "On-phone API gateway") + " · " + (doc.app(g.pkg)?.label ?: g.app.ifEmpty { g.pkg }), "c3_access_gateway_${g.id}") {
         Kv("address", g.address + (if (g.id == "mesh") g.ipcRoute + "/<app>/<route>" else g.route), mono = true)
         Note(g.what)
         if (g.auth.isNotEmpty()) Kv("auth", g.auth)
@@ -239,8 +239,10 @@ private fun AccessGateway(doc: DeviceAccess.Doc, g: DeviceAccess.Gateway, full: 
 
 @Composable
 private fun AccessMcp(doc: DeviceAccess.Doc) {
-    Card("This device · ${doc.mcp.tools.size} MCP tools", "c3_access_mcp", badges = { Badge("this device"); Badge(doc.mcp.server.ifEmpty { "no server" }) }) {
-        if (doc.mcp.endpoint.isNotEmpty()) Kv("server", doc.mcp.endpoint, mono = true)
+    // one short badge only: a second one had no room beside the title and drew as an empty pill; the server is a row
+    Card("This device · ${doc.mcp.tools.size} MCP tools", "c3_access_mcp") {
+        Kv("server", doc.mcp.server.ifEmpty { "not declared" })
+        if (doc.mcp.endpoint.isNotEmpty()) Kv("endpoint", doc.mcp.endpoint, mono = true)
         Kv("auth", doc.mcp.auth.ifEmpty { "?" } + (if (doc.mcp.aliases.isEmpty()) "" else " · aliases " + doc.mcp.aliases.joinToString(", ")))
         Note("An agent's tool call reaches this phone through one of two doors; ${doc.tools("mesh").size} tools come in through the mesh gateway, ${doc.tools("debug").size} through the on-phone gateway.")
     }
@@ -266,7 +268,8 @@ private fun AccessApis(doc: DeviceAccess.Doc) {
     var open by rememberSaveable { mutableStateOf("") }
     doc.gateway("debug")?.let { AccessGateway(doc, it) }
     val rows = doc.apps.sortedBy { it.label.lowercase() }
-    Card("This device · ${rows.size} members · ${doc.apiTotal} API routes", "c3_access_apis", badges = { Badge("this device"); Badge("${doc.members().size} apps"); Badge("${doc.members("lib").size} libs") }) {
+    Card("This device · ${rows.size} members · ${doc.apiTotal} API routes", "c3_access_apis") {
+        Kv("members", "${doc.members().size} apps · ${doc.members("lib").size} libs")
         val zero = doc.zeroApis()
         if (zero.isNotEmpty()) ErrorNote("${zero.size} app(s) expose the fleet door but list no route: " + zero.joinToString(", ") { it.label })
         Note("Counts come from the declared maps (the fleet IPC registry, this app's route map, each app's api_endpoints), not from a probe.")
@@ -288,7 +291,8 @@ private fun AccessApis(doc: DeviceAccess.Doc) {
 private fun AccessIpc(doc: DeviceAccess.Doc) {
     var open by rememberSaveable { mutableStateOf("") }
     val rows = doc.apps.sortedBy { it.label.lowercase() }
-    Card("This device · ${doc.ipcTotal} IPC routes behind the mesh gateway", "c3_access_ipc", badges = { Badge("this device"); Badge("${doc.scopes.size} scopes"); Badge("${doc.peers.size} peers") }) {
+    Card("This device · ${doc.ipcTotal} IPC routes behind the mesh gateway", "c3_access_ipc") {
+        Kv("access", "${doc.scopes.size} scopes · ${doc.peers.size} peers")
         doc.gateway("mesh")?.let { g -> Kv("gateway", g.address + g.ipcRoute + "/<app>/<route>", mono = true) }
         rows.forEach { a ->
             val eps = doc.ipcEndpoints(a)

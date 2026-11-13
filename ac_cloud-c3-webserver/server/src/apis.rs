@@ -145,6 +145,37 @@ pub fn public_page(d: &Value) -> Value {
     page("Public Endpoints", "The public URLs of the fleet services, from the fleet endpoint declaration (Cloud Account). Reach them with the fleet bearer where the policy says so.", vec![group(&format!("{} public URLs", rows.len()), rows)])
 }
 
+/// #1725 The catalogue of THIS DEVICE: of every MCP server, only the tools that act on this phone (the device access model's
+/// `mcp.tools`, i.e. the catalogue tools of its device node), and only the servers that carry one. The remote servers and their
+/// c3-api routes are no part of this app's pages any more: they are Cloud C3 > Infra > APIs > C3 MCP.
+pub fn device_catalogue(d: &Value) -> Value {
+    let device: Vec<&str> = d["device_access"]["mcp"]["tools"].as_array().map(|a| a.iter().filter_map(|t| t["tool"].as_str()).collect()).unwrap_or_default();
+    let servers: Vec<Value> = d["mcp_catalogue"]
+        .as_array()
+        .map(|a| a.as_slice())
+        .unwrap_or(&[])
+        .iter()
+        .filter_map(|sv| {
+            let tools: Vec<Value> = sv["tools"].as_array().map(|a| a.as_slice()).unwrap_or(&[]).iter().filter(|t| t["tool"].as_str().map(|n| device.contains(&n)).unwrap_or(false)).cloned().collect();
+            if tools.is_empty() {
+                return None;
+            }
+            let mut one = sv.clone();
+            one["tools_count"] = json!(tools.len());
+            one["tools"] = Value::Array(tools);
+            Some(one)
+        })
+        .collect();
+    Value::Array(servers)
+}
+
+/// The MCP page of the app's own API tab (#1725): the device's own MCP tools only.
+pub fn device_mcp_page(d: &Value) -> Value {
+    let mut p = mcp_page(&json!({"mcp_catalogue": device_catalogue(d)}));
+    p["note"] = json!("The MCP tools that act on this phone, from the generated catalogue: tool, the server that carries it and the auth the edge enforces. The other MCP servers and the c3-api routes they map to are Cloud C3 > Infra > APIs > C3 MCP.");
+    p
+}
+
 /// The title prefix of the one group of [mesh_page] that is not this device's.
 pub const FLEET_MESH_GROUP: &str = "Fleet services on the mesh";
 
@@ -322,6 +353,30 @@ mod tests {
         assert_eq!(&titles(&full)[..2], &titles(&device)[..], "the device groups are the full page's own");
         assert!(full["groups"][2]["rows"].as_array().unwrap().len() >= 10, "the off-device JSON keeps the fleet services");
         assert!(public_page(data())["groups"][0]["rows"].as_array().unwrap().len() >= 3, "the off-device JSON keeps the public URLs");
+    }
+
+    /// #1725 the MCP page and the topology are this device's: only the device tools of the catalogue, no other server, and no
+    /// remote (c3-api) node; the tools kept are exactly the device access model's.
+    #[test]
+    fn the_mcp_page_and_the_topology_are_this_device_only() {
+        let want: Vec<String> = data()["device_access"]["mcp"]["tools"].as_array().unwrap().iter().map(|t| s(&t["tool"])).collect();
+        assert!(want.len() >= 10, "the model lists the device tools");
+        let cat = device_catalogue(data());
+        let got: Vec<String> = cat.as_array().unwrap().iter().flat_map(|sv| sv["tools"].as_array().unwrap().iter().map(|t| s(&t["tool"]))).collect();
+        assert_eq!(got, want, "the device catalogue is the model's tool list");
+        assert_eq!(cat.as_array().unwrap().len(), 1, "one server carries the device tools");
+        let all = data()["mcp_catalogue"].as_array().unwrap();
+        assert!(all.len() > cat.as_array().unwrap().len(), "the full catalogue has remote servers that are not listed here");
+        let page = device_mcp_page(data());
+        let rows: usize = page["groups"].as_array().unwrap().iter().map(|g| g["rows"].as_array().unwrap().len()).sum();
+        assert_eq!(rows, want.len());
+        let t = crate::topology::topology();
+        let nodes = t["nodes"].as_array().unwrap();
+        assert!(!nodes.iter().any(|n| s(&n["id"]).starts_with("api:c3:") || n["meta"]["surface"] == "c3"), "no remote c3-api node");
+        let tools: Vec<String> = nodes.iter().filter(|n| n["layer"] == "mcp" && n["meta"]["kind"] == "tool").map(|n| s(&n["label"])).collect();
+        assert_eq!(tools, want, "the topology's MCP tools are the device tools");
+        assert_eq!(nodes.iter().filter(|n| n["layer"] == "mcp" && n["meta"]["kind"] == "server").count(), 1);
+        assert!(!t["edges"].as_array().unwrap().iter().any(|e| e["kind"] == "maps_to"), "no edge to a remote API");
     }
 
     /// #1718 ONE data source: the compiled-in device access dataset (the model Cloud Store > Access draws) carries what this tab's

@@ -67,6 +67,7 @@ fun InfraSectionScreen(
     identities: PrivateIdentitiesState = PrivateIdentitiesState(), onToken: (String) -> Unit = {},
     apis: ApiProviders.Decl = Declarations.apiProviders,
     fleet: FleetEndpoints.Decl = Declarations.fleetEndpoints,
+    mcp: C3Mcp.Decl = Declarations.c3Mcp,
 ) {
     when (section) {
         InfraSections.PROVIDERS -> ProvidersScreen(slice, live)
@@ -80,7 +81,7 @@ fun InfraSectionScreen(
         InfraSections.CONTROL -> OpsCatalogScreen(InfraTags.screen(InfraSections.CONTROL), "hier_control")
         InfraSections.DOMAINS_PUBLIC -> PublicDomainsScreen(slice, identities, onToken)
         InfraSections.DOMAINS -> DomainsScreen(slice, live, today)
-        else -> apis.groupOfPage(section)?.let { if (it.id == fleet.group) FleetEndpointsScreen(section, it, fleet) else ApiProvidersScreen(section, it, apis) }
+        else -> apis.groupOfPage(section)?.let { if (it.id == fleet.group) FleetEndpointsScreen(section, it, fleet) else if (it.id == mcp.group) C3McpScreen(section, it, mcp) else ApiProvidersScreen(section, it, apis) }
             ?: Text("Unknown Infra page: $section", color = LocalKitPalette.current.bad)
     }
 }
@@ -119,6 +120,23 @@ fun FleetEndpointsScreen(section: String, group: ApiProviders.Group, fleet: Flee
         }
         fleet.services.forEach { s ->
             DenseRow(InfraTags.row(section, s.id), s.id, listOf(s.kind, s.policy).filter { it.isNotBlank() }.joinToString(" - "), FleetEndpoints.lines(s), links = FleetEndpoints.links(s))
+        }
+    }
+}
+
+// ── APIs > C3 MCP (#1725): the MCP servers, their tools and c3-api routes, moved here from Cloud C3 Webserver > API ──
+
+@Composable
+fun C3McpScreen(section: String, group: ApiProviders.Group, mcp: C3Mcp.Decl) {
+    Page(section, mcp.summary()) {
+        if (mcp.servers.isEmpty()) {
+            DenseRow(InfraTags.row(section, "none"), "None declared", "", listOf("No ${group.label} server is declared (data/api_providers.json::mcp_catalogue is empty)"))
+        }
+        mcp.servers.forEach { s ->
+            DenseRow(InfraTags.head(section, s.name), s.name, "${s.auth} - ${s.toolsCount} tools", C3Mcp.lines(s))
+            s.tools.forEach { t ->
+                DenseRow(InfraTags.row(section, s.name + "/" + t.tool), t.tool, if (t.mcpOnly) "mcp_only" else s.name, C3Mcp.lines(t))
+            }
         }
     }
 }

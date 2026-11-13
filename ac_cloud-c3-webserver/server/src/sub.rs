@@ -33,7 +33,7 @@ fn with_gateway(mut page: Value) -> Value {
 }
 
 pub fn api_mcp(_c: &Ctx, _r: &Req) -> Resp {
-    ok(with_gateway(apis::mcp_page(apis::data())))
+    ok(with_gateway(apis::device_mcp_page(apis::data())))
 }
 
 /// #1718 THE device access model, whole: the dataset Cloud Store serves (data/fleet/device-access.json), compiled in. The native API

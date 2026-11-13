@@ -130,6 +130,11 @@ object Declarations {
         com.diegonmarcos.cloudc3.pages.FleetEndpoints.parse(decode(BuildConfig.API_PROVIDERS_B64))
     }
 
+    /** data/api_providers.json::mcp_catalogue (#1725): the C3 MCP servers, their tools and c3-api routes, Infra > APIs > C3 MCP. */
+    val c3Mcp: com.diegonmarcos.cloudc3.pages.C3Mcp.Decl by lazy {
+        com.diegonmarcos.cloudc3.pages.C3Mcp.parse(decode(BuildConfig.API_PROVIDERS_B64))
+    }
+
     /** data/ops_maps.json (#1480): the Ops maps, and the wg-mesh snapshot (data/mesh.json) the Network map reads. */
     val opsMaps: JsonObject by lazy { element(decode(BuildConfig.OPS_MAPS_B64)) as? JsonObject ?: JsonObject(emptyMap()) }
     val meshJson: JsonObject by lazy { element(decode(BuildConfig.MESH_JSON_B64)) as? JsonObject ?: JsonObject(emptyMap()) }

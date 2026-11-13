@@ -97,6 +97,12 @@
        "label": "C3 Endpoints",
        "api": [],
        "mcp": []
+      },
+      {
+       "id": "api_mcp",
+       "label": "C3 MCP",
+       "api": [],
+       "mcp": []
       }
      ]
     },

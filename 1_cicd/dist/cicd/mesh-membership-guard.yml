@@ -122,6 +122,7 @@ jobs:
           # from Cloud Account's fleet_endpoints). A declaration that is invalid stays red in the check steps below.
           python3 1_cicd/src/scripts/cloud-android-device-access.py write . || true
           python3 ac_cloud-c3/data/gen_fleet_endpoints.py write . || true
+          python3 ac_cloud-c3/data/gen_c3_mcp.py write . || true   # #1725 Cloud C3's MCP catalogue block (from the webserver's generated catalogue minus the device tools)
           f="aa_cloud-superapp/data/ipc-mesh.json data/fleet/device-access.json ac_cloud-c3/data/api_providers.json"
           if git diff --quiet -- $f; then echo "IPC registry and the files derived with it are already current."; exit 0; fi
           git diff --stat -- $f
@@ -137,3 +138,6 @@ jobs:
 
       - name: Cloud C3's fleet endpoints are current (#1718, moved from Cloud C3 Webserver > API)
         run: python3 ac_cloud-c3/data/gen_fleet_endpoints.py check .
+
+      - name: Cloud C3's MCP catalogue is current (#1725, moved from Cloud C3 Webserver > API)
+        run: python3 ac_cloud-c3/data/gen_c3_mcp.py check .
