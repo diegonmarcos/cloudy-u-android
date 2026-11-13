@@ -173,11 +173,11 @@ fun AppsPage(
             Declarations.apps.filter { it.routeTab.isNotBlank() }.forEach { a ->
                 Pill(a.icon + " " + a.label, { onRoute(a.routeTab, a.routePage) }, modifier = Modifier.testTag(DriveTags.appTile(a.label)))
             }
+        }
             Text(
                 snap?.let { LocalAppsCache.ageLabel(clock, it.capturedAt) + if (refreshing) " · refreshing" else "" } ?: stringResource(R.string.manage_apps_loading),
-                Modifier.weight(1f).testTag(DriveTags.APPS_UPDATED), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End, maxLines = 1,
+                Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gutter).testTag(DriveTags.APPS_UPDATED), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Start, maxLines = 1,
             )
-        }
         val s = snap
         if (s == null) { LoadingState(Modifier.weight(1f)); return@Column }
         val agg = remember(s) { LocalAppsApi.aggregate(s.rows) }
