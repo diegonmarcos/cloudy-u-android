@@ -16,6 +16,8 @@ data class PerfBenchmark(val symbol: String, val label: String)
 data class PerfGroup(
     val key: String, val section: String, val label: String, val kind: String, val what: String, val bucketLabel: String, val unit: String, val perfNote: String,
     val etf: String, val etfName: String, val schemes: List<PerfScheme>, val defaultScheme: String, val benchmarks: List<PerfBenchmark>,
+    /** #1727 the fund(s) the portfolio is meant to follow when the generator reads another fund of the same index or factor ("" = the same). */
+    val intended: String = "",
 ) {
     fun scheme(id: String): PerfScheme? = schemes.firstOrNull { it.id == id }
 }
@@ -24,6 +26,8 @@ data class PerfGroup(
 data class PerfDecl(
     val dataset: String, val periods: List<String>, val defaultPeriod: String, val modes: List<String>, val defaultMode: String, val cardTop: Int,
     val tops: List<Int>, val defaultTop: Int, val bubbleX: String, val bubbleY: String, val groups: List<PerfGroup>, val ui: Map<String, String>,
+    /** #1727 the flow panel: how many buckets and how many constituents it draws before folding the rest. */
+    val sankeyBuckets: Int = 6, val sankeyHoldings: Int = 10,
 ) {
     fun group(key: String): PerfGroup? = groups.firstOrNull { it.key == key }
     fun word(k: String): String = ui[k].orEmpty()
@@ -36,7 +40,26 @@ data class PerfDecl(
  */
 data class PerfConstituent(
     val ticker: String, val symbol: String, val name: String, val bucket: String, val weights: Map<String, Double>, val basis: String, val proxy: String, val note: String,
+    /**
+     * #1727 a sovereign ([PerfPortfolios.BASIS_SOV]): [fx] is the symbol of USD per the country's currency ("" = a dollar country) and [proxyCcy] says what
+     * the bond fund [symbol] is priced in: "local" (its move is the bond return in local currency) or "usd" (its move is already the dollar return).
+     */
+    val fx: String = "", val proxyCcy: String = "",
 )
+
+/**
+ * #1727 a sovereign's figure in its three parts, in %: the bond return in local currency, the currency against the dollar, the unhedged dollar return;
+ * [approx] when the bond return is the yield and duration approximation of the sovereign-returns source instead of a listed fund's move.
+ */
+data class PerfParts(val bond: Double?, val fx: Double?, val usd: Double?, val approx: Boolean)
+
+/** One node of the flow panel: its label, its weight in %, its column (0 the portfolio, 1 a bucket, 2 a constituent) and where it sits on the 0..1 height. */
+data class FlowNode(val label: String, val value: Double, val col: Int, val y0: Double, val y1: Double, val row: PerfRow? = null)
+
+/** One ribbon of the flow panel: from node [from] to node [to], its weight, and the span it takes on each of the two nodes (0..1 height). */
+data class FlowLink(val from: Int, val to: Int, val value: Double, val sy0: Double, val sy1: Double, val ty0: Double, val ty1: Double)
+
+data class Flow(val nodes: List<FlowNode>, val links: List<FlowLink>)
 
 /** Where one scheme's weights come from: the publisher, its address, the date and the share of the fund the publisher lists outside the constituents. */
 data class PerfSchemeSource(val source: String, val sourceUrl: String, val asOf: String, val unlisted: Double?)
@@ -70,6 +93,9 @@ object PerfPortfolios {
 
     const val BASIS_FX = "fx"
     const val BASIS_USD = "usd"
+    /** #1727 a sovereign: the dollar return of the country's government bonds (a listed fund, else the sovereign-returns source), with its currency leg. */
+    const val BASIS_SOV = "sov"
+    const val PROXY_USD = "usd"
 
     /** The sort keys of the constituents table. */
     const val SORT_TICKER = "ticker"
@@ -96,6 +122,7 @@ object PerfPortfolios {
                 schemes = if (ss == null) emptyList() else (0 until ss.length()).mapNotNull { ss.optJSONObject(it) }.map { PerfScheme(it.optString("id"), it.optString("label"), it.optString("method")) },
                 defaultScheme = g.optString("default_scheme"),
                 benchmarks = if (bs == null) emptyList() else (0 until bs.length()).mapNotNull { bs.optJSONObject(it) }.map { PerfBenchmark(it.optString("symbol"), it.optString("label")) },
+                intended = g.optString("intended"),
             )
         }
         val ui = o.optJSONObject("ui") ?: JSONObject()
@@ -107,6 +134,7 @@ object PerfPortfolios {
             cardTop = o.optInt("card_top", 5), tops = if (tops == null) listOf(0) else (0 until tops.length()).map { tops.optInt(it) }, defaultTop = o.optInt("default_top", 0),
             bubbleX = bubble.optString("x").ifEmpty { "1M" }, bubbleY = bubble.optString("y").ifEmpty { "YTD" }, groups = groups,
             ui = ui.keys().asSequence().associateWith { ui.optString(it) },
+            sankeyBuckets = o.optJSONObject("sankey")?.optInt("buckets", 6) ?: 6, sankeyHoldings = o.optJSONObject("sankey")?.optInt("holdings", 10) ?: 10,
         )
     }.getOrNull()
 
@@ -123,7 +151,7 @@ object PerfPortfolios {
                 val ws = LinkedHashMap<String, Double>()
                 if (w != null) for (k in w.keys()) { val v = w.optDouble(k, Double.NaN); if (v.isFinite() && v > 0.0) ws[k] = v }
                 if (t.isBlank() || ws.isEmpty()) null
-                else PerfConstituent(t, c.optString("symbol"), c.optString("name").ifBlank { t }, c.optString("bucket"), ws, c.optString("basis"), c.optString("proxy"), c.optString("note"))
+                else PerfConstituent(t, c.optString("symbol"), c.optString("name").ifBlank { t }, c.optString("bucket"), ws, c.optString("basis"), c.optString("proxy"), c.optString("note"), c.optString("fx"), c.optString("proxy_ccy"))
             }
             if (cs.isEmpty()) continue
             val ss = o.optJSONObject("scheme_sources")
@@ -145,11 +173,40 @@ object PerfPortfolios {
     fun sourceOf(basket: PerfBasket, scheme: String): PerfSchemeSource =
         basket.schemeSources[scheme] ?: PerfSchemeSource(basket.source, basket.sourceUrl, basket.asOf, null)
 
+    /** The move of a currency against the dollar over [period] in %: the inverse of the move of [symbol] (USD per currency); 0 for a dollar country (no symbol). */
+    fun fxMove(symbol: String, quotes: Map<String, Quote>, period: String): Double? {
+        if (symbol.isBlank()) return 0.0
+        val r = IndexHoldings.perf(quotes[symbol], period) ?: return null
+        val f = 1.0 + r / 100.0
+        return if (f > 0.0) (1.0 / f - 1.0) * 100.0 else null
+    }
+
+    private fun compound(a: Double, b: Double): Double = ((1.0 + a / 100.0) * (1.0 + b / 100.0) - 1.0) * 100.0
+    private fun strip(total: Double, part: Double): Double? = (1.0 + part / 100.0).let { if (it > 0.0) ((1.0 + total / 100.0) / it - 1.0) * 100.0 else null }
+
+    /**
+     * #1727 a sovereign's figure over [period]: the bond return of its listed fund when the quote source answered (a fund priced in the local currency
+     * gives the local return, the dollar return is that compounded with the currency's move; a fund priced in dollars gives the dollar return, the
+     * local return is that with the currency's move taken out); else the local return of the sovereign-returns source ([sov]: country to period to %),
+     * flagged approximate. Each part is null when what it needs did not answer.
+     */
+    fun parts(c: PerfConstituent, quotes: Map<String, Quote>, period: String, sov: Map<String, Map<String, Double>> = emptyMap()): PerfParts {
+        val fx = fxMove(c.fx, quotes, period)
+        val fund = if (c.symbol.isBlank()) null else IndexHoldings.perf(quotes[c.symbol], period)
+        if (fund != null) {
+            return if (c.proxyCcy == PROXY_USD) PerfParts(fx?.let { strip(fund, it) }, fx, fund, false) else PerfParts(fund, fx, fx?.let { compound(fund, it) }, false)
+        }
+        val local = sov[c.ticker]?.get(period)?.takeIf { it.isFinite() } ?: return PerfParts(null, fx, null, false)
+        return PerfParts(local, fx, fx?.let { compound(local, it) }, true)
+    }
+
     /**
      * A constituent's performance over [period] in %: its instrument's move; for a currency ([BASIS_FX], the symbol is USD per currency) the currency's move
-     * against the dollar, the inverse of the rate's; 0 for a dollar country; null when it has no listed instrument or the source did not answer.
+     * against the dollar, the inverse of the rate's; 0 for a dollar country; for a sovereign ([BASIS_SOV]) the dollar return of [parts]; null when it has
+     * no listed instrument or the source did not answer.
      */
-    fun perf(c: PerfConstituent, quotes: Map<String, Quote>, period: String): Double? {
+    fun perf(c: PerfConstituent, quotes: Map<String, Quote>, period: String, sov: Map<String, Map<String, Double>> = emptyMap()): Double? {
+        if (c.basis == BASIS_SOV) return parts(c, quotes, period, sov).usd
         if (c.basis == BASIS_USD) return 0.0
         if (c.symbol.isBlank()) return null
         val r = IndexHoldings.perf(quotes[c.symbol], period) ?: return null
@@ -159,14 +216,17 @@ object PerfPortfolios {
     }
 
     /** The constituents that carry a weight under [scheme], largest first (the [top] largest; every one when [top] <= 0), with performance and contribution. */
-    fun rows(basket: PerfBasket, scheme: String, quotes: Map<String, Quote>, period: String, top: Int): List<PerfRow> {
+    fun rows(basket: PerfBasket, scheme: String, quotes: Map<String, Quote>, period: String, top: Int, sov: Map<String, Map<String, Double>> = emptyMap()): List<PerfRow> {
         val all = basket.constituents.mapNotNull { c -> c.weights[scheme]?.takeIf { it > 0.0 }?.let { c to it } }.sortedByDescending { it.second }
         val shown = if (top <= 0) all else all.take(top)
-        return shown.map { (c, w) -> perf(c, quotes, period).let { PerfRow(c, w, it, IndexHoldings.contribution(w, it)) } }
+        return shown.map { (c, w) -> perf(c, quotes, period, sov).let { PerfRow(c, w, it, IndexHoldings.contribution(w, it)) } }
     }
 
+    /** True when the portfolio's constituents are sovereigns: its table shows the bond and the currency leg beside the dollar return. */
+    fun isSovereign(basket: PerfBasket): Boolean = basket.constituents.any { it.basis == BASIS_SOV }
+
     /** The symbols the quote source is asked for [rows]: every listed instrument once. */
-    fun symbols(rows: List<PerfRow>): List<String> = rows.map { it.c.symbol }.filter { it.isNotBlank() }.distinct()
+    fun symbols(rows: List<PerfRow>): List<String> = rows.flatMap { listOf(it.c.symbol, it.c.fx) }.filter { it.isNotBlank() }.distinct()
 
     /** The sum of the shown weights in %. */
     fun weightSum(rows: List<PerfRow>): Double = rows.sumOf { it.weight }
@@ -233,10 +293,10 @@ object PerfPortfolios {
     }
 
     /** The bubbles: every shown constituent whose instrument answered for both periods. */
-    fun bubbles(basket: PerfBasket, scheme: String, quotes: Map<String, Quote>, xPeriod: String, yPeriod: String, top: Int): List<PerfBubble> =
-        rows(basket, scheme, quotes, xPeriod, top).mapNotNull { r ->
+    fun bubbles(basket: PerfBasket, scheme: String, quotes: Map<String, Quote>, xPeriod: String, yPeriod: String, top: Int, sov: Map<String, Map<String, Double>> = emptyMap()): List<PerfBubble> =
+        rows(basket, scheme, quotes, xPeriod, top, sov).mapNotNull { r ->
             val x = r.perf ?: return@mapNotNull null
-            val y = perf(r.c, quotes, yPeriod) ?: return@mapNotNull null
+            val y = perf(r.c, quotes, yPeriod, sov) ?: return@mapNotNull null
             PerfBubble(r.c.ticker, x, y, r.weight)
         }
 
@@ -253,13 +313,13 @@ object PerfPortfolios {
     fun s1(v: Double?): String = v?.let { String.format(Locale.ROOT, "%+.1f", it) } ?: FinFormat.DASH
 
     /** The cells of the constituents table, one line per row: ticker, name, bucket, weight %, one performance per period, contribution pp. */
-    fun cells(rows: List<PerfRow>, quotes: Map<String, Quote>, periods: List<String>): List<List<String>> =
-        rows.map { r -> listOf(r.c.ticker, r.c.name, r.c.bucket, f2(r.weight)) + periods.map { s2(perf(r.c, quotes, it)) } + s2(r.contribution) }
+    fun cells(rows: List<PerfRow>, quotes: Map<String, Quote>, periods: List<String>, sov: Map<String, Map<String, Double>> = emptyMap()): List<List<String>> =
+        rows.map { r -> listOf(r.c.ticker, r.c.name, r.c.bucket, f2(r.weight)) + periods.map { s2(perf(r.c, quotes, it, sov)) } + s2(r.contribution) }
 
     /** The totals line: the shown weight, the portfolio's return per period (the weighted mean of the quoted constituents) and the summed contribution. */
-    fun totals(basket: PerfBasket, scheme: String, quotes: Map<String, Quote>, periods: List<String>, period: String, top: Int, label: String): List<String> {
-        val shown = rows(basket, scheme, quotes, period, top)
-        return listOf(label, "", "", f2(weightSum(shown))) + periods.map { p -> s2(portfolioReturn(rows(basket, scheme, quotes, p, top))) } + s2(total(shown)?.first)
+    fun totals(basket: PerfBasket, scheme: String, quotes: Map<String, Quote>, periods: List<String>, period: String, top: Int, label: String, sov: Map<String, Map<String, Double>> = emptyMap()): List<String> {
+        val shown = rows(basket, scheme, quotes, period, top, sov)
+        return listOf(label, "", "", f2(weightSum(shown))) + periods.map { p -> s2(portfolioReturn(rows(basket, scheme, quotes, p, top, sov))) } + s2(total(shown)?.first)
     }
 
     /** The share of the largest absolute contribution a bar fills (0..1): the contribution bars of the table. */
@@ -267,5 +327,63 @@ object PerfPortfolios {
         val hi = rows.mapNotNull { it.contribution?.let(::abs) }.maxOrNull() ?: return 0f
         if (contribution == null || !(hi > 0.0)) return 0f
         return (abs(contribution) / hi).coerceIn(0.0, 1.0).toFloat()
+    }
+
+    /**
+     * #1727 the flow panel (the reference's sankey): the portfolio into its buckets, each bucket into the portfolio's largest constituents. Column 0 is the
+     * portfolio (the shown weight), column 1 the [maxBuckets] heaviest buckets with the others folded into [otherLabel], column 2 the [maxHoldings] largest
+     * constituents (in the order of their buckets) and one [restLabel] node for everything else. A node's height is its weight; [gap] of the height
+     * separates the nodes of a column; a ribbon keeps its weight on both ends, so what leaves a node is what the node weighs. Empty for no row.
+     */
+    fun flow(rows: List<PerfRow>, maxBuckets: Int, maxHoldings: Int, portfolioLabel: String, otherLabel: String, restLabel: String, gap: Double = 0.012): Flow {
+        val total = rows.sumOf { it.weight }
+        if (rows.isEmpty() || !(total > 0.0)) return Flow(emptyList(), emptyList())
+        val byBucket = rows.groupBy { it.c.bucket.ifBlank { otherLabel } }.map { (k, v) -> k to v }.sortedByDescending { (_, v) -> v.sumOf { it.weight } }
+        val keep = byBucket.take(max(1, maxBuckets)).filter { it.first != otherLabel }
+        val folded = byBucket.filter { b -> keep.none { it.first == b.first } }.flatMap { it.second }
+        val buckets = if (folded.isEmpty()) keep else keep + (otherLabel to folded)
+        val top = rows.sortedByDescending { it.weight }.take(max(1, maxHoldings)).toSet()
+        val nodes = ArrayList<FlowNode>()
+        val links = ArrayList<FlowLink>()
+        nodes += FlowNode(portfolioLabel, total, 0, 0.0, 1.0)
+        fun stack(values: List<Double>): List<Pair<Double, Double>> {
+            val usable = 1.0 - gap * max(0, values.size - 1)
+            var at = 0.0
+            return values.map { v -> val h = v / total * usable; (at to at + h).also { at += h + gap } }
+        }
+        val bucketSpans = stack(buckets.map { (_, v) -> v.sumOf { it.weight } })
+        val bucketIdx = buckets.mapIndexed { i, (k, v) -> nodes.size.also { nodes += FlowNode(k, v.sumOf { it.weight }, 1, bucketSpans[i].first, bucketSpans[i].second) } }
+        // portfolio -> bucket: the portfolio's side is stacked without gaps, in the buckets' order
+        var from = 0.0
+        buckets.forEachIndexed { i, (_, v) ->
+            val h = v.sumOf { it.weight } / total
+            links += FlowLink(0, bucketIdx[i], v.sumOf { it.weight }, from, from + h, bucketSpans[i].first, bucketSpans[i].second)
+            from += h
+        }
+        val shown = buckets.flatMap { (_, v) -> v.filter { it in top }.sortedByDescending { it.weight } }
+        val rest = total - shown.sumOf { it.weight }
+        val leafSpans = stack(shown.map { it.weight } + (if (rest > 1e-9) listOf(rest) else emptyList()))
+        val leafIdx = shown.mapIndexed { i, r -> nodes.size.also { nodes += FlowNode(r.c.ticker, r.weight, 2, leafSpans[i].first, leafSpans[i].second, r) } }
+        val restIdx = if (rest > 1e-9) nodes.size.also { nodes += FlowNode(restLabel, rest, 2, leafSpans.last().first, leafSpans.last().second) } else -1
+        var restAt = if (restIdx >= 0) leafSpans.last().first else 0.0
+        buckets.forEachIndexed { i, (_, v) ->
+            val (b0, b1) = bucketSpans[i]
+            val bw = v.sumOf { it.weight }
+            var at = b0
+            for (r in v.filter { it in top }.sortedByDescending { it.weight }) {
+                val h = (b1 - b0) * r.weight / bw
+                val k = shown.indexOf(r)
+                links += FlowLink(bucketIdx[i], leafIdx[k], r.weight, at, at + h, leafSpans[k].first, leafSpans[k].second)
+                at += h
+            }
+            val left = bw - v.filter { it in top }.sumOf { it.weight }
+            if (left > 1e-9 && restIdx >= 0) {
+                val h = (b1 - b0) * left / bw
+                val th = (leafSpans.last().second - leafSpans.last().first) * left / rest
+                links += FlowLink(bucketIdx[i], restIdx, left, at, at + h, restAt, restAt + th)
+                restAt += th
+            }
+        }
+        return Flow(nodes, links)
     }
 }

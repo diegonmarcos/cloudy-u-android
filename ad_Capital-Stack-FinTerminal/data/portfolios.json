@@ -147,11 +147,21 @@
   },
   "KR": {
    "name": "South Korea",
-   "ccy": "KRW"
+   "ccy": "KRW",
+   "bond_proxy": {
+    "symbol": "152380.KS",
+    "name": "KODEX 10-year Korea Treasury Bond futures ETF",
+    "currency": "local"
+   }
   },
   "SA": {
    "name": "Saudi Arabia",
-   "ccy": "SAR"
+   "ccy": "SAR",
+   "bond_proxy": {
+    "symbol": "9403.SR",
+    "name": "Albilad Saudi Sovereign Sukuk ETF",
+    "currency": "local"
+   }
   },
   "MX": {
    "name": "Mexico",
@@ -171,11 +181,21 @@
   },
   "BR": {
    "name": "Brazil",
-   "ccy": "BRL"
+   "ccy": "BRL",
+   "bond_proxy": {
+    "symbol": "IMAB11.SA",
+    "name": "It Now IMA-B ETF (Brazilian inflation-linked government bonds)",
+    "currency": "local"
+   }
   },
   "PL": {
    "name": "Poland",
-   "ccy": "PLN"
+   "ccy": "PLN",
+   "bond_proxy": {
+    "symbol": "ETFBTBSP.WA",
+    "name": "Beta ETF TBSP (Polish Treasury bonds)",
+    "currency": "local"
+   }
   },
   "CO": {
    "name": "Colombia",
@@ -203,7 +223,12 @@
   },
   "ZA": {
    "name": "South Africa",
-   "ccy": "ZAR"
+   "ccy": "ZAR",
+   "bond_proxy": {
+    "symbol": "STXGOV.JO",
+    "name": "Satrix SA Bond ETF",
+    "currency": "local"
+   }
   },
   "BH": {
    "name": "Bahrain",
@@ -223,7 +248,12 @@
   },
   "CN": {
    "name": "China",
-   "ccy": "CNY"
+   "ccy": "CNY",
+   "bond_proxy": {
+    "symbol": "2829.HK",
+    "name": "iShares China Government Bond ETF (Hong Kong)",
+    "currency": "usd"
+   }
   },
   "AR": {
    "name": "Argentina",
@@ -243,7 +273,12 @@
   },
   "MY": {
    "name": "Malaysia",
-   "ccy": "MYR"
+   "ccy": "MYR",
+   "bond_proxy": {
+    "symbol": "0800EA.KL",
+    "name": "ABF Malaysia Bond Index Fund",
+    "currency": "local"
+   }
   },
   "EC": {
    "name": "Ecuador",
@@ -276,11 +311,21 @@
   },
   "TH": {
    "name": "Thailand",
-   "ccy": "THB"
+   "ccy": "THB",
+   "bond_proxy": {
+    "symbol": "ABFTH.BK",
+    "name": "ABF Thailand Bond Index Fund",
+    "currency": "local"
+   }
   },
   "IN": {
    "name": "India",
-   "ccy": "INR"
+   "ccy": "INR",
+   "bond_proxy": {
+    "symbol": "INGB.AS",
+    "name": "iShares India INR Govt Bond UCITS ETF (USD)",
+    "currency": "usd"
+   }
   },
   "CZ": {
    "name": "Czech Republic",
@@ -402,7 +447,8 @@
      "method": "The fund's own published weights, largest holdings first"
     }
    ],
-   "default_scheme": "etf"
+   "default_scheme": "etf",
+   "intended": "IVW / IWF"
   },
   {
    "key": "eq-value",
@@ -431,7 +477,8 @@
      "method": "The fund's own published weights, largest holdings first"
     }
    ],
-   "default_scheme": "etf"
+   "default_scheme": "etf",
+   "intended": "IVE / IWD"
   },
   {
    "key": "eq-quality",
@@ -460,7 +507,8 @@
      "method": "The fund's own published weights, largest holdings first"
     }
    ],
-   "default_scheme": "etf"
+   "default_scheme": "etf",
+   "intended": "QUAL"
   },
   {
    "key": "eq-vol",
@@ -489,7 +537,8 @@
      "method": "The fund's own published weights, largest holdings first"
     }
    ],
-   "default_scheme": "etf"
+   "default_scheme": "etf",
+   "intended": "USMV"
   },
   {
    "key": "eq-top",
@@ -515,7 +564,8 @@
     }
    ],
    "default_scheme": "etf",
-   "top": 20
+   "top": 20,
+   "intended": "TOPT / OEF"
   },
   {
    "key": "eq-cyclical",
@@ -544,7 +594,8 @@
      "method": "The fund's own published weights, largest holdings first"
     }
    ],
-   "default_scheme": "etf"
+   "default_scheme": "etf",
+   "intended": "IYC"
   },
   {
    "key": "eq-defensive",
@@ -573,7 +624,8 @@
      "method": "The fund's own published weights, largest holdings first"
     }
    ],
-   "default_scheme": "etf"
+   "default_scheme": "etf",
+   "intended": "IYK"
   },
   {
    "key": "eq-dividend",
@@ -602,7 +654,8 @@
      "method": "The fund's own published weights, largest holdings first"
     }
    ],
-   "default_scheme": "etf"
+   "default_scheme": "etf",
+   "intended": "DVY / SCHD"
   },
   {
    "key": "eq-momentum",
@@ -631,7 +684,8 @@
      "method": "The fund's own published weights, largest holdings first"
     }
    ],
-   "default_scheme": "etf"
+   "default_scheme": "etf",
+   "intended": "MTUM"
   },
   {
    "key": "eq-small",
@@ -660,7 +714,8 @@
      "method": "The fund's own published weights, largest holdings first"
     }
    ],
-   "default_scheme": "etf"
+   "default_scheme": "etf",
+   "intended": "IJR / IWM"
   },
   {
    "key": "fi-gov-dm",
@@ -773,10 +828,9 @@
     },
     {
      "cc": "SE",
-     "symbol": "",
-     "proxy": "",
-     "bucket": "Europe",
-     "note": "no listed fund of Swedish government bonds at the quote source"
+     "symbol": "XACT-OBLIGATION.ST",
+     "proxy": "XACT Obligation ETF (Swedish government and covered bonds)",
+     "bucket": "Europe"
     }
    ]
   },
@@ -785,10 +839,10 @@
    "section": "fi",
    "label": "Gov Bonds EM",
    "kind": "countries_em",
-   "what": "Emerging-market government bonds by country, at the country weights of the main EM government bond funds",
+   "what": "Emerging-market government bonds by country, at the country weights of the main EM government bond funds; each country's figure is its government bond return in US dollars",
    "bucket_label": "Currency",
-   "unit": "fx",
-   "perf_note": "No key-free source publishes a per-country EM sovereign bond return: a country's figure is its currency against the US dollar (the currency leg of a local-currency bond; 0 for a dollar country). The funds' own total returns are the benchmark figures above.",
+   "unit": "usd",
+   "perf_note": "A country's figure is the unhedged dollar return of its government bonds: a listed fund of the country's bonds where the quote source has one, else the 10-year yield and duration approximation of the sovereign-returns source (1M and YTD only, to the last published month). Bond % is the return in local currency, FX % the currency against the dollar. A country with neither has no figure; a dollar country has no FX leg.",
    "benchmarks": [
     {
      "symbol": "EMB",
@@ -1140,6 +1194,58 @@
   "noperf": "The quote source has not answered for these constituents: weights only. Refresh asks again.",
   "asking": "Asking the quote source…",
   "refresh": "Refresh",
-  "refreshing": "Refreshing…"
+  "refreshing": "Refreshing…",
+  "bond": "Bond %",
+  "fx": "FX %",
+  "flow": "Weight flow",
+  "other": "Other",
+  "rest_short": "Rest",
+  "intended": "Follows"
+ },
+ "_doc_bond_proxy": "countries.<cc>.bond_proxy: a listed fund of the country's government bonds at the quote source. currency `local` = the fund is priced in the country's own currency (its move is the bond return in local currency); `usd` = priced in US or Hong Kong dollars, unhedged (its move is already the dollar return).",
+ "_doc_intended": "groups[].intended: the iShares fund(s) the portfolio is meant to follow. Their holdings files are behind the publisher's site-entry page for an automated reader (the CSV endpoint answers with the product page), so the generator reads the State Street fund of the same index or factor (`etf`) and the page prints both; EMLC (VanEck) likewise, EBND stands in.",
+ "sovereign": {
+  "_doc": "#1727 where a country without a listed bond fund gets its government bond return: the fleet container's sovereign-returns route first (private mesh), else the same arithmetic on the OECD 10-year yields read from DBnomics. Monthly data: it answers the 1M and YTD periods, to its last published month.",
+  "primary": {
+   "source": "cloud_fincept",
+   "api": "/v1/bonds/sovereign-returns"
+  },
+  "fallback": {
+   "source": "dbnomics",
+   "path": "/series",
+   "series": "OECD/DSD_KEI@DF_KEI/{a3}.M.IRLT.PA._Z._Z._Z",
+   "params": {
+    "observations": "1",
+    "metadata": "0",
+    "limit": "100"
+   }
+  },
+  "tenor_years": 10,
+  "a3": {
+   "SE": "SWE",
+   "CN": "CHN",
+   "IN": "IND",
+   "BR": "BRA",
+   "KR": "KOR",
+   "MX": "MEX",
+   "PL": "POL",
+   "ZA": "ZAF",
+   "CZ": "CZE",
+   "HU": "HUN",
+   "IL": "ISR",
+   "CO": "COL",
+   "CL": "CHL",
+   "CR": "CRI"
+  },
+  "periods": {
+   "1M": "m1",
+   "YTD": "ytd"
+  },
+  "label": "10-year yield and duration approximation (OECD yields)"
+ },
+ "sankey": {
+  "buckets": 6,
+  "holdings": 10,
+  "_doc": "The flow panel: the portfolio into its largest `buckets` buckets (the rest folded), each bucket into the portfolio's `holdings` largest constituents (the rest of a bucket folded)."
  }
 }

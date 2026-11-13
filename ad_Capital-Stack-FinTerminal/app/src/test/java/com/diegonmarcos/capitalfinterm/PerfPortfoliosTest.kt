@@ -117,9 +117,8 @@ class PerfPortfoliosTest {
         assertTrue(PerfPortfolios.sourceOf(b, "gdp").source.contains("IMF"))
         assertTrue(PerfPortfolios.sourceOf(b, "liquidity").source.contains("BWX"))
         assertTrue(PerfPortfolios.sourceOf(b, "usd_index").source.contains("Dollar Index"))
-        // a country's figure is a listed fund of its government bonds; Sweden has none and says so
-        assertTrue(b.constituents.filter { it.ticker != "SE" }.all { it.symbol.isNotBlank() && it.proxy.isNotBlank() })
-        assertTrue(b.constituents.first { it.ticker == "SE" }.let { it.symbol.isBlank() && it.note.isNotBlank() })
+        // a country's figure is a listed fund of its government bonds, Sweden included (#1727: SovereignFlowTest)
+        assertTrue(b.constituents.all { it.symbol.isNotBlank() && it.proxy.isNotBlank() })
     }
 
     @Test fun govEmUsesTheWeightsOfTheEmGovernmentBondFunds() {
@@ -141,9 +140,9 @@ class PerfPortfoliosTest {
         // no developed market is counted as an EM sovereign
         val dm = baskets.getValue("fi-gov-dm").constituents.map { it.ticker }.toSet()
         assertTrue(b.constituents.none { it.ticker in dm })
-        // a country's figure is its currency against the dollar (declared), a dollar country has none
+        // #1727 a country's figure is the dollar return of its government bonds, with the currency as its own leg (SovereignFlowTest)
         assertTrue(g.perfNote.contains("currency"))
-        assertTrue(b.constituents.all { it.basis == PerfPortfolios.BASIS_FX && it.symbol.endsWith("=X") || it.basis == PerfPortfolios.BASIS_USD && it.symbol.isEmpty() })
+        assertTrue(b.constituents.all { it.basis == PerfPortfolios.BASIS_SOV })
     }
 
     @Test fun topIsTheTwentyLargestOfTheSp500RescaledAndAFactorPortfolioIsLargestFirst() {

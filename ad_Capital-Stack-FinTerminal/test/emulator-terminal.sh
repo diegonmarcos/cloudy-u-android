@@ -69,7 +69,15 @@ adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard eq >/dev/null; s
 dump "$OUT/ui-cmd.xml"
 XY=$(node_xy "$OUT/ui-cmd.xml" "Functions"); echo "functions xy=${XY:-none}" | tee -a "$OUT/walk.txt"
 if [ -n "$XY" ]; then set -- $XY; adb shell input tap "$1" "$2"; sleep 4; shot functions; dump "$OUT/ui-functions.xml"; adb shell input keyevent 4; sleep 2; fi
-XY=$(node_xy "$OUT/ui-cmd.xml" "<GO>"); echo "go xy=${XY:-none}" | tee -a "$OUT/walk.txt"
+# the GO button carries the content description GO (its text is escaped in the dump)
+XY=$(python3 -I - "$OUT/ui-cmd.xml" <<'PY'
+import re, sys
+for m in re.finditer(r'<node [^>]*>', open(sys.argv[1], encoding="utf-8").read()):
+    n = m.group(0); b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+    if ' content-desc="GO"' in n and b:
+        a = [int(v) for v in b.groups()]; print((a[0] + a[2]) // 2, (a[1] + a[3]) // 2); break
+PY
+); echo "go xy=${XY:-none}" | tee -a "$OUT/walk.txt"
 if [ -n "$XY" ]; then
   set -- $XY
   # the amber field sits left of GO
@@ -78,7 +86,8 @@ if [ -n "$XY" ]; then
   adb shell input tap "$1" "$2"; sleep "$WAIT"
   adb shell input keyevent 4; sleep 1
   shot command-gdm; dump "$OUT/ui-command-gdm.xml"
-  grep -c 'Gov Bonds DM' "$OUT/ui-command-gdm.xml" > "$OUT/command-gdm.txt" 2>/dev/null || true
+  # typed GDM + GO must have opened FI > Gov Bonds DM: its scheme tabs are on the page
+  if grep -q 'GDP-WEIGHTED' "$OUT/ui-command-gdm.xml" 2>/dev/null; then echo "command GDM opened Gov Bonds DM: yes" | tee -a "$OUT/walk.txt"; else echo "command GDM opened Gov Bonds DM: NO" | tee -a "$OUT/walk.txt"; fi
 fi
 adb logcat -d -t 5000 > "$OUT/logcat.txt" 2>/dev/null || true
 grep -c "FATAL EXCEPTION" "$OUT/logcat.txt" > "$OUT/crashes.txt" || true

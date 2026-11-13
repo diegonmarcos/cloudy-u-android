@@ -625,7 +625,7 @@
     "format": "dbnomics",
     "path": "/series",
     "params": {
-     "series_ids": "OECD/DSD_KEI@DF_KEI/CHN.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IND.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/BRA.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/RUS.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/KOR.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MEX.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IDN.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/TUR.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/SAU.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/POL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/THA.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ZAF.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ARG.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ARE.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MYS.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/PHL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/EGY.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/COL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/CHL.M.IRLT.PA._Z._Z._Z",
+     "series_ids": "OECD/DSD_KEI@DF_KEI/CHN.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IND.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/BRA.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/RUS.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/KOR.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MEX.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IDN.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/TUR.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/SAU.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/POL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/THA.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ZAF.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ARG.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ARE.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MYS.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/PHL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/EGY.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/COL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/CHL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/CZE.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/HUN.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ISR.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/CRI.M.IRLT.PA._Z._Z._Z",
      "observations": "1",
      "limit": "100"
     },
@@ -648,7 +648,7 @@
      "PHL.M.IRLT.PA._Z._Z._Z": "curve:PH:10Y",
      "EGY.M.IRLT.PA._Z._Z._Z": "curve:EG:10Y",
      "COL.M.IRLT.PA._Z._Z._Z": "curve:CO:10Y",
-     "CHL.M.IRLT.PA._Z._Z._Z": "curve:CL:10Y"
+     "CHL.M.IRLT.PA._Z._Z._Z": "curve:CL:10Y", "CZE.M.IRLT.PA._Z._Z._Z": "curve:CZ:10Y", "HUN.M.IRLT.PA._Z._Z._Z": "curve:HU:10Y", "ISR.M.IRLT.PA._Z._Z._Z": "curve:IL:10Y", "CRI.M.IRLT.PA._Z._Z._Z": "curve:CR:10Y"
     },
     "method": "OECD long-term interest rate (10-year government benchmark, monthly) via DBnomics"
    }
@@ -698,7 +698,7 @@
    "page_days": 366,
    "params": {
     "base": "USD",
-    "symbols": "AUD,CAD,CHF,EUR,GBP,JPY,NOK,NZD,SEK,BRL,CNY,IDR,INR,KRW,MXN,MYR,PHP,PLN,THB,TRY,ZAR"
+    "symbols": "AUD,CAD,CHF,EUR,GBP,JPY,NOK,NZD,SEK,BRL,CNY,IDR,INR,KRW,MXN,MYR,PHP,PLN,THB,TRY,ZAR,CZK,HUF,ILS"
    },
    "every_s": 86400,
    "first": "1999-01-04"
@@ -1272,6 +1272,7 @@
   "method": "10Y nominal yield: 30-day moving average of the daily benchmark (US Treasury via FRED DGS10; the container's daily curve feeds: Bundesbank, MoF Japan, BoE, BoC, RBA), else the OECD monthly long-term rate (via DBnomics) for the month the window centres on. FX: ECB reference rates (Frankfurter), RUB from the Bank of Russia; US CPI: FRED CPIAUCSL.",
   "footer": "Pure fixed-rate nominal benchmarks (no inflation-linked debt; Brazil NTN-F, not NTN-B). FX depreciation = MA30 today / MA30 -1y - 1 (LCU per USD; + = local currency weaker); 3Y = (MA30 today / MA30 -3y)^(1/3) - 1. Net USD yield = nominal today - FX depreciation. Real = net - US CPI (trailing 12 months). All in % a year; a dash names its reason below."
  },
+ "sovereign_returns": {"_doc": "#1727 per-country sovereign bond returns for the FI performance pages (Gov Bonds EM, Sweden in Gov Bonds DM): the container's /v1/bonds/sovereign-returns. For every country of `ccy` with a stored 10-year yield: the local-currency return, the currency's move against the dollar and the unhedged USD return over the last month (m1), the year to date (ytd) and the last 12 months (y1), cumulative, not annualised. Same arithmetic as em_bonds.method; a window with a missing month is null.", "route": "/v1/bonds/sovereign-returns", "tenor": "10Y", "ccy": {"SE": "SEK", "CN": "CNY", "IN": "INR", "BR": "BRL", "KR": "KRW", "MX": "MXN", "ID": "IDR", "TR": "TRY", "PL": "PLN", "TH": "THB", "ZA": "ZAR", "MY": "MYR", "PH": "PHP", "CZ": "CZK", "HU": "HUF", "IL": "ILS", "CO": "COP", "CL": "CLP", "CR": "CRC", "SA": "SAR", "EG": "EGP", "AR": "ARS"}, "method": "Constant-maturity 10-year government bond, monthly: r_local = y(t-1)/12 - D(t-1) x (y(t) - y(t-1)), D the modified duration of a 10-year par bond with semiannual coupons at y(t-1); r_usd = (1 + r_local) x FX(t-1)/FX(t) - 1 (ECB reference rates, local currency per USD); compounded over the window. Yields: OECD 10-year benchmark (monthly averages) or the central bank's daily series at month end. An approximation: no convexity, no reinvestment timing, no credit events, no taxes."},
  "free_stack": {
   "_doc": "#1416 THE free, non-real-time data stack of FinTerm: five sources, each a declared store format of the container (capital-stack-finterminal-api, store.rs STORE_FORMATS; gen-fetchers.mjs checks this block) and a direct-fetch path in the APK (FreeStack.kt). About > Data sources (APK) and the web About page list every source here with its coverage, licence/terms, rate limit, key need and live status. Nothing about a source is typed in Kotlin, Rust or Svelte. per_min is the hard pacing budget (requests a minute, one gap of 60000/per_min ms between two requests to one source). A keyed source names its fleet secret (key.env: the container reads it from the fleet secret store through that variable, never prints it) and its APK key slot (key.slot, Config > Sources, encrypted on the phone); without a key the source reports needs_key with key.reason. A flagged source (flag) runs only when its flag is on (container env flag.env = 1; APK flag.default) and only as the last fallback after flag.after.",
   "route": "/v1/sources",

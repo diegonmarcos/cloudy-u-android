@@ -35,6 +35,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
@@ -187,7 +189,8 @@ fun FinCommandBar(value: String, placeholder: String, message: String, menu: Lis
                         modifier = Modifier.fillMaxWidth().testTag(FinTags.COMMAND_INPUT),
                     )
                 }
-                Box(Modifier.fillMaxHeight().background(p.canvas).clickable(onClick = onGo).padding(horizontal = 8.dp).testTag(FinTags.COMMAND_GO), contentAlignment = Alignment.Center) {
+                // the content description makes the button findable by an accessibility walk (uiautomator shows it as content-desc "GO")
+                Box(Modifier.fillMaxHeight().background(p.canvas).clickable(onClick = onGo).semantics { contentDescription = "GO" }.padding(horizontal = 8.dp).testTag(FinTags.COMMAND_GO), contentAlignment = Alignment.Center) {
                     Text("<GO>", color = p.accent, style = FinType.code, maxLines = 1)
                 }
             }

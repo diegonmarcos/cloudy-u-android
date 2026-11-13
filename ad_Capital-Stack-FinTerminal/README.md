@@ -27,3 +27,11 @@ Lnktree family, declared in `1_cicd/src/data/app-families.json`; the Cloud famil
   bubble chart): `PerfPortfolios.kt` (pure rules), `ui/PerfPage.kt`. Gov Bonds DM is GDP-weighted by default with USD index and liquidity weights as
   options; Gov Bonds EM uses the country weights of EMB (default) or EBND; the scheme in use and its source are printed on the page.
 * Emulator walk of the terminal UI: `test/emulator-terminal.sh` (`.github/workflows/finterm-terminal-emulator.yml`, dispatch with a Ship run id).
+* Follow-ups (#1727): Gov Bonds EM shows each country's government bond return in dollars with its two legs (Bond %, FX %): a listed fund of the
+  country's bonds where the quote source has one (`data/portfolios.json::countries.<cc>.bond_proxy`), else the yield and duration approximation of the
+  sovereign-returns source (`sovereign`: the container's `/v1/bonds/sovereign-returns` on the mesh, declared in `data/universe.json::sovereign_returns`,
+  else the same arithmetic on the OECD yields from DBnomics; `SovereignReturns.kt`); Sweden has its listed fund. The Graphic mode has a flow panel
+  (portfolio to buckets to largest constituents, `PerfPortfolios.flow`). The dataset is refreshed by rerunning `scripts/gen-perf-portfolios.py`
+  (a scheduled workflow for it is proposed, not installed). `groups[].intended` names the iShares fund a factor portfolio is meant to follow; its holdings file is not readable by an automated
+  reader (site-entry page), so the State Street fund of the same index or factor is read.
+

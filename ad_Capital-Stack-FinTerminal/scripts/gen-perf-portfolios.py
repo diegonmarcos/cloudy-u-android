@@ -270,7 +270,11 @@ def build_em(decl, g):
     cons = []
     for cc in ccs:
         ccy = cs[cc]["ccy"]
-        cons.append({"ticker": cc, "symbol": fx_symbol(decl, ccy), "name": cs[cc]["name"], "bucket": ccy, "basis": "fx" if ccy != "USD" else "usd",
+        bp = cs[cc].get("bond_proxy") or {}
+        # the figure is the country's government bond return in dollars: `symbol` a listed fund of its bonds ("" = none: the sovereign-returns source
+        # answers), `fx` the currency's symbol ("" = a dollar country), `proxy_ccy` whether the fund's move is local-currency or already dollars
+        cons.append({"ticker": cc, "symbol": bp.get("symbol", ""), "name": cs[cc]["name"], "bucket": ccy, "basis": "sov", "fx": fx_symbol(decl, ccy),
+                     "proxy": bp.get("name", ""), "proxy_ccy": bp.get("currency", ""),
                      "weights": {sid: w[cc] for sid, w in weights.items() if cc in w}})
     d = notes[g["default_scheme"]]
     return {"source": d["source"], "source_url": d["source_url"], "as_of": d["as_of"], "scheme_sources": notes, "count": len(cons), "shown": len(cons), "constituents": cons}

@@ -48,6 +48,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.capitalfinterm.AssetData
+import com.diegonmarcos.capitalfinterm.Decl
+import com.diegonmarcos.capitalfinterm.Flow
+import com.diegonmarcos.capitalfinterm.Mesh
+import com.diegonmarcos.capitalfinterm.SovRow
+import com.diegonmarcos.capitalfinterm.SovereignReturns
+import com.diegonmarcos.capitalfinterm.UrlHttp
+import androidx.compose.ui.graphics.Path
 import com.diegonmarcos.capitalfinterm.FinFormat
 import com.diegonmarcos.capitalfinterm.IndexHoldings
 import com.diegonmarcos.capitalfinterm.PerfBasket
@@ -91,6 +98,7 @@ const val PERF_WATERFALL = "perf_waterfall"
 const val PERF_BUBBLE = "perf_bubble"
 const val PERF_CARD = "perf_card:"
 const val PERF_SCHEME = "perf_scheme"
+const val PERF_FLOW = "perf_flow"
 
 /**
  * #1722 the performance portfolios as the app reads them: the DECLARATION is the asset data/portfolios.json; the constituents and weights are the RUNTIME
@@ -127,13 +135,53 @@ object PerfStore {
     }
 }
 
+/**
+ * #1727 the government bond return of a country without a listed bond fund (data/portfolios.json `sovereign`): the fleet container's sovereign-returns
+ * route when the private mesh answers, else the same yield and duration arithmetic on the declared public yield series. Asked once per process (again
+ * after a minute while nothing answered); never throws: no answer is an empty map and the page shows no figure for those countries.
+ */
+object SovStore {
+    @Volatile private var served: Map<String, SovRow>? = null
+    @Volatile private var askedAt = 0L
+
+    fun load(ctx: Context): Map<String, SovRow> {
+        served?.let { return it }
+        val now = System.currentTimeMillis()
+        if (now - askedAt < 60_000L) return emptyMap()
+        askedAt = now
+        val app = ctx.applicationContext
+        val decl = runCatching { SovereignReturns.parseDecl(AssetData.read(app, PerfStore.DECL)) }.getOrNull() ?: return emptyMap()
+        val sources = runCatching { AssetData.sources(app) }.getOrDefault(emptyList())
+        val primary = sources.firstOrNull { it.id == decl.primarySource }
+        val base = primary?.let { Decl.fleetMesh[it.fleetEndpoint] }.orEmpty()
+        val viaApi = if (primary == null || base.isEmpty()) null else runCatching {
+            val mesh = UrlHttp(connectMs = 4_000, readMs = 15_000, cleartextHosts = Decl.fleetMesh.values.map { Mesh.hostOf(it) }.toSet())
+            if (Mesh.reachable(mesh, base, primary.paths["health"].orEmpty())) SovereignReturns.parseApi(mesh.get(base.trimEnd('/') + decl.api), primary.name) else null
+        }.getOrNull()?.takeIf { it.isNotEmpty() }
+        val got = viaApi ?: sources.firstOrNull { it.id == decl.fallbackSource }?.let { s ->
+            runCatching { SovereignReturns.parseYields(UrlHttp(readMs = 30_000).get(SovereignReturns.fallbackUrl(decl, s.endpoint)), decl, s.name) }.getOrNull()
+        }.orEmpty()
+        if (got.isNotEmpty()) served = got
+        return got
+    }
+
+    /** Country to page period to the local-currency bond return in %. */
+    fun periods(ctx: Context): Map<String, Map<String, Double>> {
+        val decl = runCatching { SovereignReturns.parseDecl(AssetData.read(ctx.applicationContext, PerfStore.DECL)) }.getOrNull() ?: return emptyMap()
+        return SovereignReturns.byPeriod(load(ctx), decl)
+    }
+
+    /** "source, to YYYY-MM" of what answered; "" when nothing did. */
+    fun note(): String = served?.values?.firstOrNull()?.let { r -> r.source + ", to " + (served?.values?.maxOfOrNull { it.asOf } ?: r.asOf) }.orEmpty()
+}
+
 /** The mode a deep link asks a performance page to open in (`--es mode graphic`); null = the declared default. */
 object PerfUi {
     @Volatile var startMode: String? = null
 }
 
 /** What a section's Homepage knows about its performance portfolios: the declaration, the dataset (null while it has not arrived) and the quotes so far. */
-class PerfHomeState(val decl: PerfDecl?, val baskets: Map<String, PerfBasket>?, val quotes: Map<String, Quote>, val asked: Int)
+class PerfHomeState(val decl: PerfDecl?, val baskets: Map<String, PerfBasket>?, val quotes: Map<String, Quote>, val asked: Int, val sov: Map<String, Map<String, Double>> = emptyMap())
 
 /** The Homepage's portfolios: the dataset asked off the main thread (again every few seconds until it arrives), then one quote request for the cards' top constituents. */
 @Composable
@@ -143,6 +191,11 @@ fun rememberPerfHome(views: List<String>): PerfHomeState {
     var baskets by remember { mutableStateOf<Map<String, PerfBasket>?>(null) }
     var asked by remember { mutableIntStateOf(0) }
     var quotes by remember { mutableStateOf<Map<String, Quote>>(emptyMap()) }
+    var sov by remember { mutableStateOf<Map<String, Map<String, Double>>>(emptyMap()) }
+    LaunchedEffect(baskets, views) {
+        val all = baskets ?: return@LaunchedEffect
+        if (views.any { v -> all[v]?.let { PerfPortfolios.isSovereign(it) } == true }) sov = withContext(Dispatchers.IO) { runCatching { SovStore.periods(ctx) }.getOrDefault(emptyMap()) }
+    }
     LaunchedEffect(views) {
         if (views.isEmpty() || decl == null) return@LaunchedEffect
         while (baskets == null) {
@@ -165,7 +218,7 @@ fun rememberPerfHome(views: List<String>): PerfHomeState {
             quotes = QuotesStore.liveQuotes()
         }
     }
-    return PerfHomeState(decl, baskets, quotes, asked)
+    return PerfHomeState(decl, baskets, quotes, asked, sov)
 }
 
 /** A Homepage card's body: the portfolio's largest constituents with their return over the default period, then "See all N". */
@@ -182,7 +235,7 @@ fun PerfCardBody(view: String, state: PerfHomeState) {
             basket == null -> Text(decl.word("missing"), color = p.text3, style = FinType.caption, maxLines = 4)
             else -> {
                 val scheme = PerfPortfolios.schemeOf(group, null)
-                val rows = remember(basket, state.quotes) { PerfPortfolios.rows(basket, scheme, state.quotes, decl.defaultPeriod, decl.cardTop) }
+                val rows = remember(basket, state.quotes, state.sov) { PerfPortfolios.rows(basket, scheme, state.quotes, decl.defaultPeriod, decl.cardTop, state.sov) }
                 val n = basket.constituents.count { (it.weights[scheme] ?: 0.0) > 0.0 }
                 Row(Modifier.fillMaxWidth().height(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(decl.word("ticker"), Modifier.weight(1f), color = p.text2, style = FinType.caption, maxLines = 1)
@@ -234,6 +287,7 @@ fun PerfPortfolioPage(view: String, fn: String) {
     var quotes by remember { mutableStateOf<Map<String, Quote>>(emptyMap()) }
     var fetching by remember { mutableStateOf(false) }
     var refresh by remember { mutableIntStateOf(0) }
+    var sov by remember { mutableStateOf<Map<String, Map<String, Double>>>(emptyMap()) }
 
     LaunchedEffect(view) {
         while (baskets == null) {
@@ -243,6 +297,10 @@ fun PerfPortfolioPage(view: String, fn: String) {
         }
     }
     val basket = baskets?.get(view)
+    // #1727 a sovereign portfolio: the bond returns of the countries without a listed fund, from the sovereign-returns source
+    LaunchedEffect(basket, refresh) {
+        if (basket != null && PerfPortfolios.isSovereign(basket)) sov = withContext(Dispatchers.IO) { runCatching { SovStore.periods(ctx) }.getOrDefault(emptyMap()) }
+    }
     LaunchedEffect(basket, scheme, top, refresh) {
         if (basket == null || qdecl == null) return@LaunchedEffect
         quotes = QuotesStore.liveQuotes()
@@ -258,7 +316,7 @@ fun PerfPortfolioPage(view: String, fn: String) {
     BoxWithConstraints(Modifier.fillMaxSize().testTag(PERF_PAGE + view)) {
         val width = maxWidth
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = FinDim.bottomInset), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            val rows = remember(basket, scheme, quotes, period, top) { if (basket == null) emptyList() else PerfPortfolios.rows(basket, scheme, quotes, period, top) }
+            val rows = remember(basket, scheme, quotes, period, top, sov) { if (basket == null) emptyList() else PerfPortfolios.rows(basket, scheme, quotes, period, top, sov) }
             val portfolio = PerfPortfolios.portfolioReturn(rows)
             val bench = group.benchmarks.map { b -> b to IndexHoldings.perf(quotes[b.symbol], period) }
             val stats = ArrayList<FinStat>()
@@ -288,6 +346,7 @@ fun PerfPortfolioPage(view: String, fn: String) {
                 val src = basket?.let { PerfPortfolios.sourceOf(it, scheme) }
                 Text(
                     (sch?.let { decl.word("scheme") + ": " + it.label + ". " + it.method + ". " } ?: "") +
+                        (if (group.intended.isNotEmpty()) decl.word("intended") + ": " + group.intended + " (read from " + group.etf + ", the same index or factor). " else "") +
                         (src?.let { "Source: " + it.source + (if (it.asOf.isNotEmpty()) ", as of " + it.asOf else "") + "." + (it.unlisted?.takeIf { u -> u >= 0.05 }?.let { u -> " Not listed by country or cash: " + PerfPortfolios.f1(u) + " %." } ?: "") } ?: ""),
                     Modifier.padding(horizontal = 8.dp).padding(bottom = 6.dp).testTag(PERF_SCHEME), color = p.text2, style = FinType.caption,
                 )
@@ -297,13 +356,13 @@ fun PerfPortfolioPage(view: String, fn: String) {
                 baskets == null -> PerfStateLine(fn, group.label, if (asked == 0) decl.word("loading") else decl.word("offline"))
                 basket == null -> PerfStateLine(fn, group.label, decl.word("missing"))
                 rows.isEmpty() -> PerfStateLine(fn, group.label, decl.word("missing"))
-                mode == PerfPortfolios.MODE_GRAPHIC -> Graphics(decl, group, basket, scheme, rows, quotes, qdecl, period, top, fetching, width) { period = it }
-                else -> TableMode(decl, group, basket, scheme, rows, quotes, period, top, fetching, width) { period = it }
+                mode == PerfPortfolios.MODE_GRAPHIC -> Graphics(decl, group, basket, scheme, rows, quotes, qdecl, period, top, fetching, width, sov) { period = it }
+                else -> TableMode(decl, group, basket, scheme, rows, quotes, period, top, fetching, width, sov) { period = it }
             }
             if (basket != null) {
                 Text(
                     group.what + ". " + (if (group.perfNote.isNotEmpty()) group.perfNote + " " else "") + "Figures: " + (qdecl?.source?.label ?: "quote source") +
-                        (qdecl?.source?.delay?.takeIf { it.isNotEmpty() }?.let { ", $it" } ?: "") + ". Contribution = weight x performance, in percentage points." +
+                        (qdecl?.source?.delay?.takeIf { it.isNotEmpty() }?.let { ", $it" } ?: "") + ". Contribution = weight x performance, in percentage points." + (if (PerfPortfolios.isSovereign(basket) && SovStore.note().isNotEmpty()) " Approximated bond returns (~): " + SovStore.note() + "." else "") +
                         (if (basket.count > basket.constituents.size) " The dataset carries the " + basket.constituents.size + " largest of the fund's " + basket.count + " holdings." else ""),
                     Modifier.padding(horizontal = 2.dp), color = p.text3, style = FinType.caption,
                 )
@@ -338,14 +397,15 @@ private val ROW_H = 26.dp
 @Composable
 private fun TableMode(
     decl: PerfDecl, group: PerfGroup, basket: PerfBasket, scheme: String, rows: List<PerfRow>, quotes: Map<String, Quote>, period: String, top: Int, fetching: Boolean, width: Dp,
-    onPeriod: (String) -> Unit,
+    sov: Map<String, Map<String, Double>>, onPeriod: (String) -> Unit,
 ) {
+    val sovereign = remember(basket) { PerfPortfolios.isSovereign(basket) }
     val p = LocalFinPalette.current
     var sortKey by rememberSaveable(basket.key) { mutableStateOf(PerfPortfolios.SORT_WEIGHT) }
     var desc by rememberSaveable(basket.key) { mutableStateOf(true) }
     var picked by rememberSaveable(basket.key) { mutableStateOf("") }
     val sorted = remember(rows, sortKey, desc) { PerfPortfolios.sort(rows, sortKey, desc) }
-    val totals = remember(basket, scheme, quotes, period, top) { PerfPortfolios.totals(basket, scheme, quotes, decl.periods, period, top, decl.word("total")) }
+    val totals = remember(basket, scheme, quotes, period, top, sov) { PerfPortfolios.totals(basket, scheme, quotes, decl.periods, period, top, decl.word("total"), sov) }
     fun sortBy(key: String) {
         if (sortKey == key) desc = !desc else { sortKey = key; desc = key == PerfPortfolios.SORT_WEIGHT || key == PerfPortfolios.SORT_PERF || key == PerfPortfolios.SORT_CONTRIB }
     }
@@ -376,6 +436,11 @@ private fun TableMode(
                             if (per != period) { onPeriod(per); sortKey = PerfPortfolios.SORT_PERF; desc = true } else sortBy(PerfPortfolios.SORT_PERF)
                         }
                     }
+                    // #1727 a sovereign's dollar return in its two legs over the page's period: the bond in local currency, the currency against the dollar
+                    if (sovereign) {
+                        HeadCell(decl.word("bond"), COL_NUM + 8.dp, left = false, on = false, desc = desc, tag = "perf_col:bond") { }
+                        HeadCell(decl.word("fx"), COL_NUM, left = false, on = false, desc = desc, tag = "perf_col:fx") { }
+                    }
                     HeadCell(decl.word("contrib"), COL_CONTRIB, left = false, on = sortKey == PerfPortfolios.SORT_CONTRIB, desc = desc) { sortBy(PerfPortfolios.SORT_CONTRIB) }
                     HeadCell(group.bucketLabel, COL_BUCKET, left = true, on = sortKey == PerfPortfolios.SORT_BUCKET, desc = desc) { sortBy(PerfPortfolios.SORT_BUCKET) }
                 }
@@ -384,14 +449,19 @@ private fun TableMode(
                         TextCell(r.c.name, COL_NAME, p.text)
                         NumCell(PerfPortfolios.f2(r.weight), COL_NUM, p.text)
                         decl.periods.forEach { per ->
-                            val v = if (per == period) r.perf else PerfPortfolios.perf(r.c, quotes, per)
+                            val v = if (per == period) r.perf else PerfPortfolios.perf(r.c, quotes, per, sov)
                             NumCell(PerfPortfolios.s2(v), COL_NUM, if (v == null) p.text3 else p.dir(perfDir(v)))
+                        }
+                        if (sovereign) {
+                            val parts = PerfPortfolios.parts(r.c, quotes, period, sov)
+                            NumCell((if (parts.approx && parts.bond != null) "~" else "") + PerfPortfolios.s2(parts.bond), COL_NUM + 8.dp, if (parts.bond == null) p.text3 else p.dir(perfDir(parts.bond)))
+                            NumCell(PerfPortfolios.s2(parts.fx), COL_NUM, if (parts.fx == null) p.text3 else p.dir(perfDir(parts.fx)))
                         }
                         ContribCell(r.contribution, PerfPortfolios.barShare(r.contribution, rows))
                         TextCell(r.c.bucket, COL_BUCKET, p.text2)
                     }
                 }
-                Box(Modifier.width(COL_NAME + COL_BUCKET + COL_NUM * (decl.periods.size + 1) + COL_CONTRIB).height(1.dp).background(p.hairline))
+                Box(Modifier.width(COL_NAME + COL_BUCKET + COL_NUM * (decl.periods.size + 1 + (if (sovereign) 2 else 0)) + (if (sovereign) 8.dp else 0.dp) + COL_CONTRIB).height(1.dp).background(p.hairline))
                 Row(Modifier.height(ROW_H).background(p.surfaceRaised), verticalAlignment = Alignment.CenterVertically) {
                     TextCell(PerfPortfolios.sourceOf(basket, scheme).asOf.let { if (it.isEmpty()) "" else "as of $it" }, COL_NAME, p.text2)
                     NumCell(totals[3], COL_NUM, p.text, bold = true)
@@ -399,6 +469,7 @@ private fun TableMode(
                         val s = totals.getOrElse(4 + k) { FinFormat.DASH }
                         NumCell(s, COL_NUM, if (s == FinFormat.DASH) p.text3 else p.dir(FinFormat.dirOf(s)), bold = true)
                     }
+                    if (sovereign) { NumCell("", COL_NUM + 8.dp, p.text3); NumCell("", COL_NUM, p.text3) }
                     val c = totals.last()
                     NumCell(c, COL_CONTRIB, if (c == FinFormat.DASH) p.text3 else p.dir(FinFormat.dirOf(c)), bold = true)
                     TextCell("", COL_BUCKET, p.text2)
@@ -450,7 +521,8 @@ private fun PickedLine(r: PerfRow, period: String) {
     val p = LocalFinPalette.current
     Text(
         r.c.ticker + "  " + r.c.name + (if (r.c.proxy.isNotEmpty()) "  ·  " + r.c.proxy + (if (r.c.symbol.isNotEmpty()) " (" + r.c.symbol + ")" else "") else "") +
-            (if (r.c.basis == PerfPortfolios.BASIS_FX) "  ·  currency vs USD (" + r.c.symbol + ")" else "") + (if (r.c.note.isNotEmpty()) "  ·  " + r.c.note else "") +
+            (if (r.c.basis == PerfPortfolios.BASIS_FX) "  ·  currency vs USD (" + r.c.symbol + ")" else "") +
+            (if (r.c.basis == PerfPortfolios.BASIS_SOV) "  ·  " + (if (r.c.symbol.isEmpty()) "no listed bond fund: yield and duration approximation where published" else "dollar return of its government bonds") else "") + (if (r.c.note.isNotEmpty()) "  ·  " + r.c.note else "") +
             "  ·  weight " + PerfPortfolios.f2(r.weight) + " %  ·  $period " + (r.perf?.let { PerfPortfolios.s2(it) + " %" } ?: "n/a") +
             "  ·  contribution " + (r.contribution?.let { PerfPortfolios.s2(it) + " pp" } ?: "n/a"),
         Modifier.padding(horizontal = 8.dp, vertical = 6.dp).testTag("perf_picked"), color = p.text, style = FinType.caption,
@@ -463,7 +535,7 @@ private fun PickedLine(r: PerfRow, period: String) {
 @Composable
 private fun Graphics(
     decl: PerfDecl, group: PerfGroup, basket: PerfBasket, scheme: String, rows: List<PerfRow>, quotes: Map<String, Quote>, qdecl: QuotesDecl?, period: String, top: Int,
-    fetching: Boolean, width: Dp, onPeriod: (String) -> Unit,
+    fetching: Boolean, width: Dp, sov: Map<String, Map<String, Double>>, onPeriod: (String) -> Unit,
 ) {
     val p = LocalFinPalette.current
     val scale = qdecl?.heat?.get(IndexHoldings.heatKey(period)) ?: 2.0
@@ -498,7 +570,20 @@ private fun Graphics(
         if (steps.isEmpty()) NoPerf(decl, fetching) else PerfWaterfall(steps)
     }
 
-    val bubbles = remember(basket, scheme, quotes, top) { PerfPortfolios.bubbles(basket, scheme, quotes, decl.bubbleX, decl.bubbleY, top) }
+    // #1727 the flow panel (the reference's sankey): the portfolio into its buckets, each bucket into the largest constituents
+    val flow = remember(rows) { PerfPortfolios.flow(rows, decl.sankeyBuckets, decl.sankeyHoldings, group.label, decl.word("other").ifEmpty { "Other" }, decl.word("rest_short").ifEmpty { "Rest" }) }
+    FinPanel(
+        "FLOW", decl.word("flow").ifEmpty { "Weight flow" }, Modifier.testTag(PERF_FLOW), meta = group.bucketLabel.lowercase(Locale.ROOT) + " \u2192 constituents",
+        subhead = listOf(
+            FinStat(group.bucketLabel + "s", flow.nodes.count { it.col == 1 }.toString()),
+            FinStat("Largest", flow.nodes.filter { it.col == 1 }.maxByOrNull { it.value }?.let { it.label + " " + PerfPortfolios.f1(it.value) + "%" }.orEmpty()),
+            FinStat("Colour", "Performance $period"),
+        ),
+    ) {
+        if (flow.nodes.isEmpty()) NoPerf(decl, fetching) else PerfFlowChart(flow, scale, inner)
+    }
+
+    val bubbles = remember(basket, scheme, quotes, top, sov) { PerfPortfolios.bubbles(basket, scheme, quotes, decl.bubbleX, decl.bubbleY, top, sov) }
     FinPanel(
         "EQRV", decl.word("bubble"), Modifier.testTag(PERF_BUBBLE), meta = decl.bubbleX + " vs " + decl.bubbleY,
         subhead = listOf(
@@ -652,5 +737,50 @@ private fun PerfBubbleChart(bubbles: List<PerfBubble>, xPeriod: String, yPeriod:
         drawText(xLo, topLeft = Offset(padL, padT + plotH + 2.dp.toPx()))
         drawText(xHi, topLeft = Offset(padL + plotW - xHi.size.width, padT + plotH + 2.dp.toPx()))
         drawText(xT, topLeft = Offset(padL + (plotW - xT.size.width) / 2f, padT + plotH + 2.dp.toPx()))
+    }
+}
+
+/** The bucket colours of the flow panel, in the order of the buckets (the terminal's amber first, then blues and muted tones; the folded bucket is grey). */
+private val FLOW_COLORS = listOf(Color(0xFFFB8B1E), Color(0xFF3D8BFF), Color(0xFFFFD24A), Color(0xFF9B6BFF), Color(0xFF2BB7C4), Color(0xFFE0629A), Color(0xFF8A8A8A))
+
+/**
+ * The flow panel (the reference's sankey): three columns of nodes (the portfolio, its buckets, its largest constituents) joined by ribbons as thick as the
+ * weight they carry. A bucket and its ribbons share a colour; a constituent's node is filled by its performance on [perfTileColor]; labels sit right of
+ * their node with the weight in %.
+ */
+@Composable
+private fun PerfFlowChart(flow: Flow, scale: Double, width: Dp) {
+    val p = LocalFinPalette.current
+    val measurer = rememberTextMeasurer()
+    val height = (width * 0.9f).coerceAtMost(420.dp).coerceAtLeast(260.dp)
+    val label = FinType.caption.copy(color = p.text)
+    val muted = FinType.caption.copy(color = p.text2)
+    val buckets = flow.nodes.withIndex().filter { it.value.col == 1 }.map { it.index }
+    Canvas(Modifier.width(width).height(height).testTag("perf_flow_chart")) {
+        val pad = 6.dp.toPx(); val nodeW = 9.dp.toPx()
+        val h = size.height - pad * 2
+        val x0 = pad; val x1 = size.width * 0.36f; val x2 = size.width * 0.72f
+        fun xOf(col: Int): Float = when (col) { 0 -> x0; 1 -> x1; else -> x2 }
+        fun yOf(v: Double): Float = pad + (v * h).toFloat()
+        fun colorOf(node: Int): Color = buckets.indexOf(node).let { i -> if (i < 0) FLOW_COLORS.last() else FLOW_COLORS[minOf(i, FLOW_COLORS.size - 1)] }
+        flow.links.forEach { l ->
+            val a = xOf(flow.nodes[l.from].col) + nodeW; val b = xOf(flow.nodes[l.to].col)
+            val mid = (a + b) / 2f
+            val c = colorOf(if (flow.nodes[l.from].col == 1) l.from else l.to)
+            val path = Path().apply {
+                moveTo(a, yOf(l.sy0)); cubicTo(mid, yOf(l.sy0), mid, yOf(l.ty0), b, yOf(l.ty0))
+                lineTo(b, yOf(l.ty1)); cubicTo(mid, yOf(l.ty1), mid, yOf(l.sy1), a, yOf(l.sy1)); close()
+            }
+            drawPath(path, c.copy(alpha = 0.30f))
+        }
+        flow.nodes.forEachIndexed { i, n ->
+            val x = xOf(n.col); val top = yOf(n.y0); val hh = max(1.dp.toPx(), yOf(n.y1) - top)
+            val fill = when (n.col) { 0 -> p.accent; 1 -> colorOf(i); else -> n.row?.let { perfTileColor(it.perf, scale) } ?: FLOW_COLORS.last() }
+            drawRect(fill, Offset(x, top), Size(nodeW, hh))
+            if (n.col == 0) return@forEachIndexed
+            val t = measurer.measure(n.label + "  " + PerfPortfolios.f1(n.value), if (n.col == 1) label else muted, overflow = TextOverflow.Ellipsis, softWrap = false, maxLines = 1,
+                constraints = androidx.compose.ui.unit.Constraints(maxWidth = max(1f, (if (n.col == 1) x2 - x1 - nodeW - 8.dp.toPx() else size.width - x2 - nodeW - 4.dp.toPx())).toInt()))
+            if (t.size.height <= hh + 2.dp.toPx()) drawText(t, topLeft = Offset(x + nodeW + 4.dp.toPx(), top + (hh - t.size.height) / 2f))
+        }
     }
 }
