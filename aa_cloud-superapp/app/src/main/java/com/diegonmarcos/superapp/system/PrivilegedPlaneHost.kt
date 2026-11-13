@@ -34,7 +34,7 @@ object PrivilegedPlaneHost : AdbOwnerHost.Plane {
         Log.i(TAG, "privileged targets (${targets.size}): " +
             targets.joinToString { "${it.pkg}/${it.perm.substringAfterLast('.')}" })
         for (t in targets) {
-            val out = PrivilegedGrants.grant(ctx, t) exec
+            val out = PrivilegedGrants.grant(ctx, t) { exec(it) }
             Log.i(TAG, "grant ${t.pkg} ${t.perm} -> ${out?.trim()?.take(160) ?: "no output (channel down?)"}")
         }
         // Withdraw what policy no longer sanctions. Narrowing an entry to fewer
@@ -43,7 +43,7 @@ object PrivilegedPlaneHost : AdbOwnerHost.Plane {
         // narrow. Runs after the grants so a package that is both granted and
         // stale (different permissions) ends up in the right state either way.
         for (t in PrivilegedGrants.staleGrants(ctx)) {
-            val out = PrivilegedGrants.revoke(ctx, t) exec
+            val out = PrivilegedGrants.revoke(ctx, t) { exec(it) }
             Log.i(TAG, "revoke ${t.pkg} ${t.perm} -> ${out?.trim()?.take(160) ?: "no output (channel down?)"}")
         }
         // Whitelist the WHOLE fleet, NOT the resolved targets. resolve() skips
