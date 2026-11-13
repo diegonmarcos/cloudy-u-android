@@ -3,7 +3,8 @@ name: "Proof → CG-Omniverse (filter mutants + emulator screens)"
 # Two proofs the Ship run cannot give, on demand:
 #   mutants  every rule of the Store's filter logic (Store.kt), of Galaxy's tabs (Tabs.kt) and of pin offline (#1711: web-core
 #            PinPolicy.kt and SiteCache.kt, the app's ui/Pinned.kt and RenderProbe.kt) is held by a JVM test: each job plants ONE mutant and passes only when the suite goes
-#            RED (a mutant that stays green fails the run). A baseline job requires the real tree GREEN.
+#            RED (a mutant that stays green fails the run), and red for the declared reason: a test of the expected class, or, where a
+#            rule is held before any test can run, the build's own refusal. A baseline job requires the real tree GREEN.
 #   screens  installs the x86_64 APK of a Ship run (or the rolling release) on an emulator and walks Store (all selected, filtered)
 #            and Galaxy (A Way to Go's offline card, a live world, the list), each opened DIRECTLY by the launch extras
 #            (`am start -e section store` / `-e world <id>`, Launch.kt) so they never depend on the Avatar page; Avatar (default,
@@ -20,6 +21,10 @@ on:
         description: "mutants | screens | both"
         required: false
         default: "both"
+      mutants:
+        description: "JSON list of the mutants to run, e.g. [\"baseline\",\"catalogue-floor796\"] (empty = every mutant)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -37,7 +42,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mutant: [baseline, type-map, dim-mixed, vr-yes-flat, vr-no-glass, chip-any, group-all, toggle-one, all-clears, is-all, default-all, tabs-default, tabs-open-focus, tabs-open-select, tabs-close-neighbour, tabs-close-keep, tabs-persist-selected, tabs-persist-all, catalogue-floor796, tabs-declared-first, tabs-seed-once, tabs-seed-order, tabs-restore-legacy, pin-miss-live, pin-document-live, pin-refresh-live, pin-copy-newest, pin-record-volatile, pin-scene-parts, pin-scene-wait, render-seen-step, render-seen-alarm, cache-variants-bound, cache-blob-whole, cache-newest, cache-one-writer]
+        # every mutant by default; the `mutants` input narrows a run to a JSON list of them
+        mutant: ${{ fromJSON(inputs.mutants != '' && inputs.mutants || '["baseline","type-map","dim-mixed","vr-yes-flat","vr-no-glass","chip-any","group-all","toggle-one","all-clears","is-all","default-all","tabs-default","tabs-open-focus","tabs-open-select","tabs-close-neighbour","tabs-close-keep","tabs-persist-selected","tabs-persist-all","catalogue-floor796","catalogue-floor796-entry","tabs-declared-first","tabs-seed-once","tabs-seed-order","tabs-restore-legacy","pin-miss-live","pin-document-live","pin-refresh-live","pin-copy-newest","pin-record-volatile","pin-scene-parts","pin-scene-wait","render-seen-step","render-seen-alarm","cache-variants-bound","cache-blob-whole","cache-newest","cache-one-writer"]') }}
     steps:
       - uses: actions/checkout@v4
       - name: Plant the mutant
@@ -73,7 +79,10 @@ jobs:
             "tabs-close-keep":       ('if (s.selected != id) s.selected else', 'if (false) s.selected else', T),
             "tabs-persist-selected": ('sel.takeIf { it in open } ?: open.firstOrNull()', 'open.firstOrNull()', T),
             "tabs-persist-all":      ('s.open.joinToString(",")', 's.open.take(1).joinToString(",")', T),
-            "catalogue-floor796":    ('"id": "floor796"', '"id": "floor-796"', C),
+            # #1711 floor796 is a declared default tab, so the build itself now refuses a catalogue without it (app/build.gradle, before any
+            # test runs): that refusal is what kills the first mutant; the second one keeps StoreTest's floor796 entry test proven
+            "catalogue-floor796":    ('"id": "floor796"', '"id": "floor-796"', C, "BUILD: build.json::galaxy_tabs: 'floor796' is not a world of data/store.json"),
+            "catalogue-floor796-entry": ('"url": "https://floor796.com",', '"url": "https://floor796.example",', C),
             # #1711 the declared default tabs (Orion, floor796, Messenger) and their one-time seeding (Tabs.kt, TabsTest)
             "tabs-declared-first":   ('State(tabs, tabs.firstOrNull())', 'State(tabs, tabs.lastOrNull())', T),
             "tabs-seed-once":        ('it in known && it !in given && it !in s.open', 'it in known && it !in s.open', T),
@@ -98,8 +107,9 @@ jobs:
             "cache-one-writer":      ('Boolean = synchronized(LOCK) {', 'Boolean = run {', S),
           }[os.environ["M"]]
           if M is None: sys.exit(0)
-          if len(M) == 3: p = M[2]
-          with open("expect.txt", "w") as f: f.write({T: "TabsTest", C: "StoreTest", P: "PinPolicyTest", S: "SiteCacheTest", G: "PinPolicyTest", R: "RenderProbeTest"}.get(p, "StoreTest"))
+          if len(M) >= 3: p = M[2]
+          # what must kill the mutant: a test class of the JVM suite, or (a fourth element, "BUILD: <message>") the build's own refusal
+          with open("expect.txt", "w") as f: f.write(M[3] if len(M) == 4 else {T: "TabsTest", C: "StoreTest", P: "PinPolicyTest", S: "SiteCacheTest", G: "PinPolicyTest", R: "RenderProbeTest"}.get(p, "StoreTest"))
           s = open(p).read()
           if s.count(M[0]) != 1: sys.exit("mutation target not found exactly once: %r" % M[0])
           open(p, "w").write(s.replace(M[0], M[1]))
@@ -150,7 +160,10 @@ jobs:
           else
             [ $rc -ne 0 ] || { echo "::error::mutant $M stayed GREEN: no test holds this rule"; exit 1; }
             E=$(cat expect.txt 2>/dev/null || echo StoreTest)
-            grep -qE "$E > .* FAILED" unit.log || { echo "::error::mutant $M is red but not from $E"; exit 1; }
+            case "$E" in
+              "BUILD: "*) grep -qF "${E#BUILD: }" unit.log || { echo "::error::mutant $M is red but the build did not refuse it with: ${E#BUILD: }"; exit 1; } ;;
+              *) grep -qE "$E > .* FAILED" unit.log || { echo "::error::mutant $M is red but not from $E"; exit 1; } ;;
+            esac
             echo "mutant $M is RED (killed)"
           fi
 
