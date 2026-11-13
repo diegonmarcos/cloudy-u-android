@@ -1,0 +1,171 @@
+# ╔═══════════════════════════════════════════════════════════════════════╗
+# ║ Test → terminal at its targetSdk (emulator, reusable)        (#1708)  ║
+# ║                                                                        ║
+# ║ From targetSdk 29 Android forbids execve() of a file in the app's own  ║
+# ║ data directory, which is everything a terminal runs. This installs a   ║
+# ║ terminal APK on a clean emulator (the rootfs library first, as the     ║
+# ║ Store does) and runs, under the app's own uid and SELinux domain:      ║
+# ║ the login shell of a typed session, bootstrap binaries and #! scripts  ║
+# ║ of every shape, dpkg/apt/pkg with a package built, installed and       ║
+# ║ removed offline, RUN_COMMAND (plain and through bin/login), the guest  ║
+# ║ under proot with the declared terminal-selftest list, and the failsafe ║
+# ║ session. Script: 1_cicd/src/scripts/emulator-terminal-target-sdk.sh.   ║
+# ║                                                                        ║
+# ║ Called by ship-cloud-termux.yml and ship-cloud-nix-on-droid.yml for    ║
+# ║ the APK they built (the expected targetSdk is read from that app's     ║
+# ║ gradle.properties), and by prove-terminal-target-sdk.yml for a build   ║
+# ║ at a raised targetSdk and for the published build it is compared to.   ║
+# ╚═══════════════════════════════════════════════════════════════════════╝
+name: "Test → terminal at its targetSdk (emulator, reusable)"
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: "termux | nix"
+        type: string
+        required: true
+      label:
+        description: "Name of the evidence artifact: <label>-api<level>"
+        type: string
+        required: true
+      work_dir:
+        description: "The app's directory (its gradle.properties names the expected targetSdk)"
+        type: string
+        required: true
+      source:
+        description: "artifact = the APK this run built; release = the published one"
+        type: string
+        default: "artifact"
+      artifact_prefix:
+        description: "Name prefix of the x86_64 APK artifact (source artifact)"
+        type: string
+        default: ""
+      release_asset:
+        description: "Release asset of the app, x86_64 (source release)"
+        type: string
+        default: ""
+      lib_package:
+        description: "Package of the rootfs library APK to install first ('' = none)"
+        type: string
+        default: ""
+      lib_release_asset:
+        description: "Release asset of that lib (x86_64) when this run did not rebuild it"
+        type: string
+        default: ""
+      release_tag:
+        type: string
+        default: "latest"
+      min_target:
+        description: "Lowest targetSdk the APK must report; '' = the app's gradle.properties; 0 = not asserted"
+        type: string
+        default: ""
+      api_levels:
+        type: string
+        default: "[34, 35]"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  target-sdk:
+    name: "${{ inputs.label }} · API ${{ matrix.api-level }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: ${{ fromJSON(inputs.api_levels) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            1_cicd/src/scripts
+            data/fleet/app
+            ${{ inputs.work_dir }}/gradle.properties
+          sparse-checkout-cone-mode: false
+
+      - name: Fetch this run's APKs
+        if: inputs.source == 'artifact'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ inputs.artifact_prefix }}*
+          path: apk
+
+      - name: Pick the app APK (and the lib APK)
+        id: apk
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SOURCE: ${{ inputs.source }}
+          APP_ASSET: ${{ inputs.release_asset }}
+          LIB_PKG: ${{ inputs.lib_package }}
+          LIB_ASSET: ${{ inputs.lib_release_asset }}
+          TAG: ${{ inputs.release_tag }}
+          MIN_TARGET: ${{ inputs.min_target }}
+          WORK_DIR: ${{ inputs.work_dir }}
+        run: |
+          set -eu
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          app=""; lib=""
+          if [ "$SOURCE" = release ]; then
+            gh release download "$TAG" -R "$REPO" -p "$APP_ASSET" -O app.apk
+          else
+            for f in $(find apk -name '*.apk' 2>/dev/null | sort); do
+              p=$("$aapt2" dump packagename "$f")
+              echo "$f -> $p"
+              if [ -n "$LIB_PKG" ] && [ "$p" = "$LIB_PKG" ]; then lib="$f"; elif [ -z "$app" ]; then app="$f"; fi
+            done
+            if [ -z "$app" ]; then
+              echo "No APK in this run (the publish gate skipped the build): nothing new to test."
+              echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            cp "$app" app.apk
+          fi
+          pkg=$("$aapt2" dump packagename app.apk)
+          if [ -n "$LIB_PKG" ]; then
+            if [ -n "$lib" ]; then cp "$lib" lib.apk
+            else gh release download "$TAG" -R "$REPO" -p "$LIB_ASSET" -O lib.apk; fi
+            [ "$("$aapt2" dump packagename lib.apk)" = "$LIB_PKG" ] || { echo "::error::lib.apk is not $LIB_PKG"; exit 1; }
+          fi
+          if [ -z "$MIN_TARGET" ]; then
+            MIN_TARGET="$(sed -n 's/^targetSdkVersion=//p' "$WORK_DIR/gradle.properties")"
+            [ -n "$MIN_TARGET" ] || { echo "::error::$WORK_DIR/gradle.properties names no targetSdkVersion"; exit 1; }
+          fi
+          selftest="data/fleet/app/$pkg/terminal-selftest.json"
+          [ -f "$selftest" ] || { echo "::error::$selftest is missing: the declared selftest list would not run"; exit 1; }
+          { echo "skip=false"; echo "pkg=$pkg"; echo "min_target=$MIN_TARGET"; echo "selftest=$selftest"; } >> "$GITHUB_OUTPUT"
+          echo "$pkg: the APK must report targetSdk >= $MIN_TARGET"
+
+      - name: Enable KVM
+        if: steps.apk.outputs.skip != 'true'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot a clean emulator + run every check
+        if: steps.apk.outputs.skip != 'true'
+        timeout-minutes: 130
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          target: google_apis
+          disk-size: 8G
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -wipe-data -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash 1_cicd/src/scripts/emulator-terminal-target-sdk.sh ${{ inputs.app }} app.apk lib.apk out ${{ steps.apk.outputs.min_target }} ${{ steps.apk.outputs.selftest }}
+
+      - name: Upload evidence (results.tsv, logs, logcat, screenshots)
+        if: always() && steps.apk.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.label }}-api${{ matrix.api-level }}
+          path: out/
+          if-no-files-found: warn

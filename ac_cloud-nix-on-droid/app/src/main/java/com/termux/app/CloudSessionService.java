@@ -212,7 +212,12 @@ public class CloudSessionService extends Service {
 
         String[] commandArgs = shellEnvironment.setupShellCommandArguments(executable, null);
         String[] argv = commandArgs.clone();
-        argv[0] = (loginShell ? "-" : "") + ShellUtils.getExecutableBasename(commandArgs[0]);
+        // #1708 started through an interpreter (bin/login at targetSdk 29+), the process gets the
+        // argv[0] the kernel would have given it (the interpreter's path), never a "-sh": that
+        // would make /system/bin/sh a login shell that reads ~/.profile before bin/login runs.
+        String program = com.termux.shared.termux.shell.TermuxShellUtils.setupShellCommandArgumentsDirect(executable, null)[0];
+        if (program.equals(commandArgs[0]))
+            argv[0] = (loginShell ? "-" : "") + ShellUtils.getExecutableBasename(program);
         command.executable = commandArgs[0];
         command.arguments = argv;
 

@@ -489,6 +489,41 @@ python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); d["android_denied_t
     "$STORE_SRC/pty-selftest.json" "$W/pty-tcgets-denied.json"
 pty_mutant "$W/pty-tcgets-denied.json" "denying TCGETS" tty stty claude-tui
 
+echo "── #1708: the native proot and its loader (what an app at targetSdk 29+ may exec) run the same login ──"
+# At targetSdk 29+ the app may not exec the staged proot nor the loader proot extracts into
+# PROOT_TMP_DIR. It ships both as native libraries and CloudRootfs links them beside enter.sh as
+# native-proot / native-proot-loader. Staged here the same way (the loader is carved out of the
+# pinned proot by the script the build runs), enter.sh must log in through them. The mutant proves
+# the loader named by the link is the one proot uses: a loader that is not a loader must stop
+# every guest program.
+if [ -z "$abi" ]; then
+    echo "FAIL cannot tell the staged proot's ABI, so its loader cannot be carved"; fail=1
+else
+    mkdir -p "$W/nld"
+    cp "$STAGE/proot" "$W/nld/libcloudproot.so"
+    if python3 "$STORE_SRC/carve-proot-loader.py" "$abi" "$STAGE/proot" "$W/nld/libcloudprootloader.so"; then
+        chmod 0755 "$W/nld/libcloudproot.so" "$W/nld/libcloudprootloader.so"
+        ln -s "$W/nld/libcloudproot.so" "$STAGE/native-proot"
+        ln -s "$W/nld/libcloudprootloader.so" "$STAGE/native-proot-loader"
+        got="$(enter -c "sh -c 'uname -s'" 2>&1 | tail -1)"
+        if [ "$got" = Linux ]; then
+            echo "ok   the login runs through native-proot with PROOT_LOADER naming the native loader"
+        else
+            echo "FAIL native proot login: got '$got'"; fail=1
+        fi
+        cp /dev/null "$W/nld/not-a-loader"; chmod 0755 "$W/nld/not-a-loader"
+        ln -sfn "$W/nld/not-a-loader" "$STAGE/native-proot-loader"
+        if [ "$(enter -c "sh -c 'uname -s'" 2>/dev/null | tail -1)" = Linux ]; then
+            echo "FAIL MUTATION SURVIVED: a login still worked with a broken native loader, so PROOT_LOADER is not what proot uses"; fail=1
+        else
+            echo "ok   mutation proved: with a broken native loader no guest program starts"
+        fi
+        rm -f "$STAGE/native-proot" "$STAGE/native-proot-loader"
+    else
+        echo "FAIL carve-proot-loader.py could not carve the staged proot's loader"; fail=1
+    fi
+fi
+
 echo "── sizes ──"
 echo "   tarball $(wc -c < "$ART/rootfs.tar.zst") bytes, unpacked $(du -sk "$STAGE/rootfs" | cut -f1) KiB"
 exit "$fail"

@@ -1,0 +1,13 @@
+{
+  "_doc": "#1708 the loader the pinned proot (proot.json beside this file) embeds, pinned by sha256 per ABI: the bytes between proot's own symbols _binary_loader_exe_start and _binary_loader_exe_end, which carve-proot-loader.py writes out as a file of its own and refuses unless they hash to the value here. Both terminals ship proot AND that loader as native libraries (libcloudproot.so, libcloudprootloader.so under jniLibs) and point PROOT_LOADER at the latter: from targetSdk 29 an app may not execve() a file in its data directory, which is where proot would otherwise extract the loader before exec'ing it for every guest program. Same proot, same loader, another directory. A file of its own, NOT a key of proot.json: proot.json is one of the nix rootfs library's identity files (ac_cloud-nix-on-droid/build.json), and the loader changes nothing in that library's bytes. When proot.json's pin moves, re-run carve-proot-loader.py (it prints the new digest in its FAIL line) and update the value here in the same commit.",
+  "archs": {
+    "arm64-v8a": {
+      "proot_sha256": "713eb72bfe8c78316c71a9f93b090d293d138796968feb93ca2eb7b0e8c25244",
+      "loader_sha256": "4761adf17aa9c661e34007f88889f5c1979f558d2617571abc6ea47412113189"
+    },
+    "x86_64": {
+      "proot_sha256": "47243d24cb8770aa2b62726596e5b768369fda64efeab80fa6baf9a38e732a90",
+      "loader_sha256": "527f16755cf9f2cfe7216beab5e926385f7bd6ad7949ef3cf5d74953db09c2e5"
+    }
+  }
+}

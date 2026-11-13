@@ -34,10 +34,41 @@ public class TermuxApplication extends Application {
     /** #794 why there is no bridge here, for /api/sysdns/state; null while none was tried. */
     private static String dnsBridgeWhyNot;
 
+    /**
+     * Applies the edge-to-edge opt-out style to every activity of this app's own code, before
+     * its content view exists (the only moment a window attribute can still be set). The style
+     * is empty below API 35. Activities of the shared fleet libraries are left as they are.
+     */
+    private void keepWindowInsideSystemBars() {
+        if (android.os.Build.VERSION.SDK_INT < 35) return;
+        registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
+            @Override
+            public void onActivityPreCreated(android.app.Activity activity, android.os.Bundle savedInstanceState) {
+                try {
+                    if (activity.getClass().getName().startsWith("com.termux."))
+                        activity.getTheme().applyStyle(com.termux.R.style.CloudEdgeToEdgeOptOut, false);
+                } catch (RuntimeException e) {
+                    Logger.logStackTraceWithMessage(LOG_TAG, "Edge-to-edge opt-out not applied", e);
+                }
+            }
+            @Override public void onActivityCreated(android.app.Activity activity, android.os.Bundle savedInstanceState) { }
+            @Override public void onActivityStarted(android.app.Activity activity) { }
+            @Override public void onActivityResumed(android.app.Activity activity) { }
+            @Override public void onActivityPaused(android.app.Activity activity) { }
+            @Override public void onActivityStopped(android.app.Activity activity) { }
+            @Override public void onActivitySaveInstanceState(android.app.Activity activity, android.os.Bundle outState) { }
+            @Override public void onActivityDestroyed(android.app.Activity activity) { }
+        });
+    }
+
     public void onCreate() {
         super.onCreate();
 
         Context context = getApplicationContext();
+
+        // #1708 targetSdk 35 enforces edge-to-edge; the terminal's own screens keep the window
+        // they were laid out for (res/values-v35/edge_to_edge.xml).
+        keepWindowInsideSystemBars();
 
         // Set crash handler for the app
         TermuxCrashUtils.setDefaultCrashHandler(this);

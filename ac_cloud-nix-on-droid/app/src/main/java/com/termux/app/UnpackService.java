@@ -49,7 +49,13 @@ public class UnpackService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startForeground(NOTIFICATION_ID, notification());
+        try {
+            startForeground(NOTIFICATION_ID, notification());
+        } catch (RuntimeException e) {
+            // #1708 refused in the background at targetSdk 31+ unless the start is exempt (MY_PACKAGE_REPLACED
+            // and a start by the visible Store both are): the unpack still runs, without the protection.
+            Logger.logStackTraceWithMessage(LOG_TAG, "Could not enter the foreground", e);
+        }
         final ResultReceiver receiver = receiverOf(intent);
         final Context app = getApplicationContext();
         new Thread(() -> {

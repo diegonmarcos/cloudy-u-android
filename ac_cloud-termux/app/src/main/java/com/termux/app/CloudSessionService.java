@@ -192,7 +192,11 @@ public class CloudSessionService extends Service {
 
         String[] processArgs = env.setupProcessArgs(executable, new String[0]);
         String[] argv = processArgs.clone();
-        argv[0] = (loginShell ? "-" : "") + ShellUtils.getExecutableBasename(processArgs[0]);
+        // #1708 started through the system linker or an interpreter, the process gets the argv[0]
+        // the kernel would have given it (that file's path), never a "-name".
+        String program = com.termux.shared.shell.TermuxShellUtils.setupProcessArgsDirect(executable, null)[0];
+        if (program.equals(processArgs[0]))
+            argv[0] = (loginShell ? "-" : "") + ShellUtils.getExecutableBasename(program);
 
         int[] pid = new int[1];
         int fd = JNI.createSubprocess(processArgs[0], workdir, argv, environment, pid, rows, cols, 0, 0);

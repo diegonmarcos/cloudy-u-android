@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- #1708 targetSdk 35 draws every window edge to edge, under the status and navigation bars.
+         The terminal's own screens (the terminal with its extra-keys row, Settings, Help, the
+         report viewer) were laid out for a window that stops at the bars, so they keep that
+         window: TermuxApplication applies this style to each of them before its content is set.
+         The fleet's shared screens (Perms, Configs) handle their own insets and do not get it. -->
+    <style name="CloudEdgeToEdgeOptOut">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>

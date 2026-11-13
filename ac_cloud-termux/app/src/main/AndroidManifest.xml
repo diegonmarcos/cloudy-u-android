@@ -88,6 +88,10 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- #1708 targetSdk 34+: a foreground service declares its type and holds that type's
+         permission. The terminal's services keep shell sessions and commands alive; nothing is
+         played, located or synced, so the type is specialUse (each service states its use). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -111,6 +115,7 @@
         <activity
             android:name=".app.TermuxActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode|keyboard|keyboardHidden|navigation"
+            android:exported="true"
             android:label="@string/application_name"
             android:launchMode="singleTask"
             android:resizeableActivity="true">
@@ -132,6 +137,7 @@
 
         <activity-alias
             android:name=".HomeActivity"
+            android:exported="true"
             android:targetActivity=".app.TermuxActivity">
 
             <!-- Launch activity automatically on boot on Android Things devices -->
@@ -159,6 +165,7 @@
 
         <activity
             android:name=".shared.activities.ReportActivity"
+            android:exported="false"
             android:theme="@style/Theme.AppCompat.TermuxReportActivity"
             android:documentLaunchMode="intoExisting"
             />
@@ -166,6 +173,7 @@
         <activity
             android:name=".filepicker.TermuxFileReceiverActivity"
             android:excludeFromRecents="true"
+            android:exported="true"
             android:label="@string/application_name"
             android:noHistory="true"
             android:resizeableActivity="true"
@@ -238,16 +246,25 @@
 
         <service
             android:name=".app.TermuxService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the terminal's shell sessions and the commands running in them alive while the app is not on screen" />
+        </service>
 
 
         <service
             android:name=".app.RunCommandService"
             android:exported="true"
+            android:foregroundServiceType="specialUse"
             android:permission="${TERMUX_PACKAGE_NAME}.permission.RUN_COMMAND">
             <intent-filter>
                 <action android:name="${TERMUX_PACKAGE_NAME}.RUN_COMMAND" />
             </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Hands a command another app asked this terminal to run over to the terminal service" />
         </service>
 
         <!-- #1121 Self-unpack: after this app is updated (by the Store, adb, anything) the system's
@@ -265,10 +282,14 @@
         <service
             android:name=".app.UnpackService"
             android:exported="true"
+            android:foregroundServiceType="specialUse"
             android:permission="com.diegonmarcos.cloud.permission.TERMINAL_SESSION">
             <intent-filter>
                 <action android:name="com.diegonmarcos.cloud.action.UNPACK" />
             </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Unpacks the terminal's bundled files after an update, without opening the app" />
         </service>
 
         <!-- A login shell in a PTY for Cloud MyTerminal (ICloudSession): no sshd, no

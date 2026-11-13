@@ -24,8 +24,29 @@ supplies the glibc root. `agy` login is a runtime step, never baked.
 
 ## What we changed
 
-Nothing yet beyond vendoring. Divergence from upstream belongs in this section
-as it lands, so the cost of the fork stays visible.
+Divergence from upstream belongs in this section as it lands, so the cost of the fork
+stays visible.
+
+### Running at targetSdk 29+ (#1708)
+
+Upstream targets SDK 28 because from 29 Android forbids `execve()` of files in the app's data
+directory. This fork can target 35 (silent Cloud Store updates on Android 17) the way upstream's own
+`termux-exec` 2.x provides for:
+
+- the first exec of every session or command goes through the system linker
+  (`termux-shared/.../shell/SystemLinkerExec.java`, called from `TermuxShellUtils.setupProcessArgs`):
+  `/system/bin/linker64 $PREFIX/bin/sh $PREFIX/bin/login`;
+- the session carries `LD_PRELOAD=$PREFIX/lib/libtermux-exec-ld-preload.so` from its first process
+  on, so the bootstrap's own library rewrites every later exec the same way;
+- proot and its loader run from the native library directory (`libcloudproot.so`,
+  `libcloudprootloader.so`, linked beside `enter.sh` by `CloudRootfs.linkNative`), since a static
+  binary cannot be loaded by the linker.
+
+All of it applies only when the process may not exec its data (Android 10+ and not the
+`untrusted_app_25/27` domain); elsewhere nothing changes. `test/test-system-linker-exec.sh` runs the
+class and pins the wiring; `1_cicd/src/scripts/emulator-terminal-target-sdk.sh` runs the terminal on
+API 34 and 35 emulators. Known limits, upstream's: a statically linked ELF in the data directory
+cannot run, and a program sees the linker as `/proc/self/exe`.
 
 ## applicationId
 

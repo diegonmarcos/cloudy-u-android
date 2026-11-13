@@ -122,11 +122,17 @@ public class TermuxSession {
 
         String[] processArgs = shellEnvironmentClient.setupProcessArgs(executionCommand.executable, executionCommand.arguments);
 
+        // #1708 the name the session shows is the program's, as it always was, also when the
+        // program is started through the system linker or an interpreter (processArgs[0] is then
+        // that file). The process itself gets the argv[0] the kernel would have given it in that
+        // case, the file's own path: a "-name" there would make /system/bin/sh a login shell.
+        String program = TermuxShellUtils.setupProcessArgsDirect(executionCommand.executable, null)[0];
+        boolean rewritten = !program.equals(processArgs[0]);
         executionCommand.executable = processArgs[0];
-        String processName = (isLoginShell ? "-" : "") + ShellUtils.getExecutableBasename(executionCommand.executable);
+        String processName = (isLoginShell ? "-" : "") + ShellUtils.getExecutableBasename(program);
 
         String[] arguments = new String[processArgs.length];
-        arguments[0] = processName;
+        arguments[0] = rewritten ? processArgs[0] : processName;
         if (processArgs.length > 1) System.arraycopy(processArgs, 1, arguments, 1, processArgs.length - 1);
 
         executionCommand.arguments = arguments;

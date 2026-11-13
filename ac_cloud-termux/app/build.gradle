@@ -592,6 +592,42 @@ tasks.register('verifyCloudRootfs') {
 }
 preBuild.dependsOn tasks.named('verifyCloudRootfs')
 
+// ── #1708: proot and its loader as NATIVE LIBRARIES ─────────────────────────
+// From targetSdk 29 an app may not execve() a file in its own data directory
+// (SELinux: no execute_no_trans on app_data_file). The staged proot above is
+// such a file, and so is the loader it writes into its temp directory and
+// execs for every guest program. nativeLibraryDir is the one place an app may
+// both ship into and exec from, so the SAME proot (the asset the rootfs job
+// built and verified, byte for byte) and the loader carved out of it
+// (ab_cloud-terminal-store/carve-proot-loader.py, refused unless it hashes to
+// proot-loader.json's pin) ship there as libcloudproot.so and
+// libcloudprootloader.so. CloudRootfs.linkNative keeps two links to them
+// beside enter.sh, which runs proot from there with PROOT_LOADER set. Nothing
+// dlopens these; the lib*.so names are what gets a file into that directory.
+// The asset stays: enter.sh falls back to it when the links are absent.
+tasks.register('stageNativeProot') {
+    description = 'Copy the staged proot into jniLibs and carve its loader beside it.'
+    // No declared outputs: the directory is fetchFleetTools' too, and this runs every build.
+    doLast {
+        def proot = new File(cloudRootfsAssetsDir, 'proot')
+        if (!proot.isFile() || proot.length() == 0)
+            throw new GradleException("${proot} is missing: run ac_cloud-termux/rootfs/build-rootfs.sh <abi> ${cloudRootfsAssetsDir} first (CI does)")
+        fleetToolsDir.mkdirs()
+        new File(fleetToolsDir, 'libcloudproot.so').bytes = proot.bytes
+        def carver = new File(projectDir.parentFile.parentFile, 'ab_cloud-terminal-store/carve-proot-loader.py')
+        if (!carver.isFile()) throw new GradleException("missing ${carver} (the proot loader carver)")
+        def loader = new File(fleetToolsDir, 'libcloudprootloader.so')
+        def result = exec {
+            commandLine 'python3', carver.absolutePath, fleetAbi, proot.absolutePath, loader.absolutePath
+            ignoreExitValue = true
+        }
+        if (result.exitValue != 0 || !loader.isFile() || loader.length() == 0)
+            throw new GradleException("carve-proot-loader.py failed for ${proot} (exit ${result.exitValue}); see log above")
+        logger.lifecycle("stageNativeProot: libcloudproot.so (${proot.length()} bytes), libcloudprootloader.so (${loader.length()} bytes) -> ${fleetToolsDir}")
+    }
+}
+preBuild.dependsOn tasks.named('stageNativeProot')
+
 // #787 build.json::wake_lock -- whether a session takes the wake lock without being asked, and
 // whether the Wi-Fi lock comes with it. Both must be declared booleans: a missing key must not
 // quietly become "off".

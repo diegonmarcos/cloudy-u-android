@@ -213,10 +213,24 @@ public class RunCommandService extends Service {
         }
 
         // Start TERMUX_SERVICE and pass it execution intent
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            this.startForegroundService(execIntent);
-        } else {
-            this.startService(execIntent);
+        // #1708 targetSdk 31+: a foreground-service start made while this app is in the background
+        // is refused unless the app is exempt (battery optimisation off or "display over other
+        // apps", both asked on the Perms page). The command must still run, so the refusal falls
+        // back to a plain start, which Android allows while this service itself is in the
+        // foreground; TermuxService then runs the command without the foreground protection.
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                this.startForegroundService(execIntent);
+            } else {
+                this.startService(execIntent);
+            }
+        } catch (RuntimeException e) {
+            Logger.logStackTraceWithMessage(LOG_TAG, "Foreground start of TermuxService refused, starting it plainly", e);
+            try {
+                this.startService(execIntent);
+            } catch (RuntimeException e2) {
+                Logger.logStackTraceWithMessage(LOG_TAG, "TermuxService could not be started: the command does not run", e2);
+            }
         }
 
         return stopService();
@@ -230,7 +244,12 @@ public class RunCommandService extends Service {
     private void runStartForeground() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             setupNotificationChannel();
-            startForeground(TermuxConstants.TERMUX_RUN_COMMAND_NOTIFICATION_ID, buildNotification());
+            try {
+                startForeground(TermuxConstants.TERMUX_RUN_COMMAND_NOTIFICATION_ID, buildNotification());
+            } catch (RuntimeException e) {
+                // #1708 refused in the background at targetSdk 31+ (see onStartCommand): the intent is still handled.
+                Logger.logStackTraceWithMessage(LOG_TAG, "Could not enter the foreground", e);
+            }
         }
     }
 

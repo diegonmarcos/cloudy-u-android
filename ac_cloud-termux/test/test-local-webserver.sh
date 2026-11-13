@@ -53,7 +53,7 @@ grep -q 'render-local-webserver.py" "$HERE/../build.json" "$OUT/cloud-store/loca
 python3 - "$ENTER" <<'PY' && ok "enter.sh runs the local_webserver block once, after storage and before the session exec" || bad "enter.sh's local_webserver block is missing, duplicated or after the exec"
 import sys
 s = open(sys.argv[1]).read()
-b, e, x = s.find("# local_webserver begin"), s.find("# local_webserver end"), s.rfind('exec "$HERE/proot"')
+b, e, x = s.find("# local_webserver begin"), s.find("# local_webserver end"), s.rfind('exec "$PROOT"')
 assert s.count("# local_webserver begin") == 1 and 0 < b < e < x, (b, e, x)
 assert s.find("# startup-step: storage_links") < b
 code = "\n".join(l for l in s[b:e].splitlines() if not l.lstrip().startswith("#"))

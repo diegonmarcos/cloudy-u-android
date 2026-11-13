@@ -948,7 +948,11 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         intentFilter.addAction(TERMUX_ACTIVITY.ACTION_RELOAD_STYLE);
         intentFilter.addAction(TERMUX_ACTIVITY.ACTION_REQUEST_PERMISSIONS);
 
-        registerReceiver(mTermuxActivityBroadcastReceiver, intentFilter);
+        // #1708 targetSdk 34+ requires the export flag on a receiver for non-system broadcasts.
+        // Exported, as it effectively always was: the reload-settings and setup-storage scripts
+        // send these actions with `am broadcast` from a session.
+        androidx.core.content.ContextCompat.registerReceiver(this, mTermuxActivityBroadcastReceiver, intentFilter,
+            androidx.core.content.ContextCompat.RECEIVER_EXPORTED);
     }
 
     private void unregisterTermuxActivityBroadcastReceiver() {

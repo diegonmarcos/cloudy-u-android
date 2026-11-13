@@ -84,7 +84,10 @@ public class SystemEventReceiver extends BroadcastReceiver {
         intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         intentFilter.addAction(Intent.ACTION_PACKAGE_REPLACED);
         intentFilter.addDataScheme("package");
-        context.registerReceiver(getInstance(), intentFilter);
+        // #1708 targetSdk 34+ wants the export flag stated; these are the system's own broadcasts,
+        // which reach a receiver that is not exported.
+        androidx.core.content.ContextCompat.registerReceiver(context, getInstance(), intentFilter,
+            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     public synchronized static void unregisterPackageUpdateEvents(@NonNull Context context) {

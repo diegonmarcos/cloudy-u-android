@@ -121,11 +121,18 @@ public class TermuxSession {
         // Setup command args
         String[] commandArgs = shellEnvironmentClient.setupShellCommandArguments(executionCommand.executable, executionCommand.arguments);
 
+        // #1708 the name the session shows is the program's, as it always was, also when the
+        // program is started through an interpreter (bin/login, a /system/bin/sh script, at
+        // targetSdk 29+: commandArgs[0] is then /system/bin/sh). The process itself gets the
+        // argv[0] the kernel would have given it in that case, the interpreter's path: a "-sh"
+        // there would make /system/bin/sh a LOGIN shell that reads ~/.profile before bin/login.
+        String program = com.termux.shared.termux.shell.TermuxShellUtils.setupShellCommandArgumentsDirect(executionCommand.executable, null)[0];
+        boolean rewritten = !program.equals(commandArgs[0]);
         executionCommand.executable = commandArgs[0];
-        String processName = (isLoginShell ? "-" : "") + ShellUtils.getExecutableBasename(executionCommand.executable);
+        String processName = (isLoginShell ? "-" : "") + ShellUtils.getExecutableBasename(program);
 
         String[] arguments = new String[commandArgs.length];
-        arguments[0] = processName;
+        arguments[0] = rewritten ? commandArgs[0] : processName;
         if (commandArgs.length > 1) System.arraycopy(commandArgs, 1, arguments, 1, commandArgs.length - 1);
 
         executionCommand.arguments = arguments;

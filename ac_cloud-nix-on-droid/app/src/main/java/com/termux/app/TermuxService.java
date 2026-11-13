@@ -213,7 +213,16 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
     /** Make service run in foreground mode. */
     private void runStartForeground() {
         setupNotificationChannel();
-        startForeground(TermuxConstants.TERMUX_APP_NOTIFICATION_ID, buildNotification());
+        try {
+            startForeground(TermuxConstants.TERMUX_APP_NOTIFICATION_ID, buildNotification());
+        } catch (RuntimeException e) {
+            // #1708 targetSdk 31+: Android refuses a foreground start made while the app is in the
+            // background (ForegroundServiceStartNotAllowedException) unless the app is exempt
+            // (battery optimisation off or "display over other apps", both on the Perms page).
+            // The sessions and commands still run; only the protection from being stopped is
+            // missing, and the log says why. Never a crash.
+            Logger.logStackTraceWithMessage(LOG_TAG, "Could not enter the foreground", e);
+        }
     }
 
     /** #1487 idle stop: a headless start (unpack, CloudSession prepare, boot) must not leave a foreground service up. */
@@ -820,7 +829,7 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
 
         // Set pending intent to be launched when notification is clicked
         Intent notificationIntent = TermuxActivity.newInstance(this);
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
 
         // Set notification text
@@ -841,7 +850,7 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
         if (SSHD_PORT > 0) lines.add("sshd " + SSHD_PORT + (mSshdUp == null ? " checking" : mSshdUp ? " up" : " down"));
 
         Intent exitIntent = new Intent(this, TermuxService.class).setAction(TERMUX_SERVICE.ACTION_STOP_SERVICE);
-        PendingIntent stopIntent = PendingIntent.getService(this, 0, exitIntent, 0);
+        PendingIntent stopIntent = PendingIntent.getService(this, 0, exitIntent, PendingIntent.FLAG_IMMUTABLE);
 
         final boolean wakeLockWanted = wakeLockWanted(this);
         String newWakeAction = wakeLockWanted ? TERMUX_SERVICE.ACTION_WAKE_UNLOCK : TERMUX_SERVICE.ACTION_WAKE_LOCK;
@@ -849,7 +858,7 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
         String actionTitle = res.getString(wakeLockWanted ? R.string.notification_action_wake_unlock : R.string.notification_action_wake_lock);
         int actionIcon = wakeLockWanted ? android.R.drawable.ic_lock_idle_lock : android.R.drawable.ic_lock_lock;
         java.util.List<FleetNotify.Action> extra = java.util.Collections.singletonList(
-            new FleetNotify.Action(actionIcon, actionTitle, PendingIntent.getService(this, 0, toggleWakeLockIntent, 0)));
+            new FleetNotify.Action(actionIcon, actionTitle, PendingIntent.getService(this, 0, toggleWakeLockIntent, PendingIntent.FLAG_IMMUTABLE)));
 
         return FleetNotify.keepAliveNotification(this, R.drawable.ic_service_notification, TermuxConstants.TERMUX_APP_NAME,
             lines, stopIntent, contentIntent, extra, null, 0xFF607D8B);

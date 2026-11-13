@@ -48,10 +48,37 @@ fi
 login=""
 if [ "${1:-}" = -l ]; then login=-l; shift; fi
 
-# termux-exec is a bionic library; preloaded into glibc processes it breaks every exec.
-unset LD_PRELOAD
+# termux-exec is a bionic library; preloaded into glibc processes it breaks every exec. It is
+# dropped at the two places a guest is started (the session exec at the end of this file and the
+# webserver launcher, which unsets it itself), NOT here: #1708, at targetSdk 29+ this app may not
+# execve() its own data files, and termux-exec is what starts them through the system linker
+# instead. Every Termux tool this file calls before the guest (realpath, zstd, tar, sed, mv, rm,
+# cmp, od ...) is such a file, so the library has to stay loaded until the guest starts.
 export PROOT_TMP_DIR="$HERE/tmp"
 mkdir -p "$PROOT_TMP_DIR"
+
+# native_proot begin
+# #1708 -- the proot this file runs. The staged proot beside this file is a file in the app's
+# data directory, and so is the loader proot extracts into PROOT_TMP_DIR and execs for every
+# guest program: both are "Permission denied" for an app that targets SDK 29+. The app ships the
+# SAME proot and its loader in its native library directory (the one place an app may exec from)
+# and CloudRootfs.linkNative keeps two links to them beside this file. When both resolve, proot
+# runs from there and is told where its loader is (PROOT_LOADER, read by proot before it extracts
+# anything). The links are resolved to the real paths on purpose: termux-exec sends every exec of
+# a path inside the app's data directory through the system linker, which cannot load a static
+# binary, and a link here IS such a path. No links (an older app build, CI's tester): the staged
+# proot, exactly as before.
+PROOT="$HERE/proot"
+if [ -e "$HERE/native-proot" ] && [ -e "$HERE/native-proot-loader" ]; then
+    native_proot="$(realpath "$HERE/native-proot" 2>/dev/null || true)"
+    native_loader="$(realpath "$HERE/native-proot-loader" 2>/dev/null || true)"
+    if [ -n "$native_proot" ] && [ -n "$native_loader" ]; then
+        PROOT="$native_proot"
+        PROOT_LOADER="$native_loader"
+        export PROOT_LOADER
+    fi
+fi
+# native_proot end
 
 # wipe_rootfs begin
 # startup-step: wipe_stale_root
@@ -143,7 +170,8 @@ unpack_rootfs() {  # $1 = wanted digest; 0 = $ROOTFS holds it (UNPACK_OLD = old 
     mkdir -p "$ROOTFS"
     # Android forbids hard links in app storage; --link2symlink emulates the
     # rootfs's and proot resolves them later.
-    if zstd -dc "$HERE/rootfs.tar.zst" | "$HERE/proot" --link2symlink -0 \
+    # "${PROOT:-...}": the native proot chosen above (#1708), the staged one when this block runs alone.
+    if zstd -dc "$HERE/rootfs.tar.zst" | "${PROOT:-$HERE/proot}" --link2symlink -0 \
             tar --no-same-owner --no-same-permissions -xf - -C "$ROOTFS" \
         && [ -f "$ROOTFS/etc/passwd" ]; then
         :
@@ -349,7 +377,7 @@ if [ -f "$HERE/cloud-store/local-webserver.sh" ]; then
     . "$HERE/cloud-store/local-webserver.sh"
     if [ -x "$ROOTFS/usr/local/bin/$CLOUD_WEBSERVER_BIN" ]; then
         # shellcheck disable=SC2086 # $binds is a list of flags
-        cloud_webserver_autostart /root "$HERE/proot" --link2symlink --sysvipc -0 -r "$ROOTFS" \
+        cloud_webserver_autostart /root "${PROOT:-$HERE/proot}" --link2symlink --sysvipc -0 -r "$ROOTFS" \
             -b /dev -b /proc -b /sys -b /proc/self/fd:/dev/fd -b "$HOME:/root" $binds -w /root \
             /usr/bin/env -i HOME=/root USER=root LOGNAME=root LANG=C.UTF-8 TMPDIR=/tmp \
                 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin $store_web_env \
@@ -368,8 +396,11 @@ fi
 # guest's loopback port below 1024 up by 2000 -- so :53 reaches the app's
 # SystemDnsBridge on libs/sysdns data/sysdns.json::bridge_port. A guest server
 # binding a port below 1024 moves the same way (proot prints the new port).
+# #1708 the last Termux tool has run: from here on only the guest starts, and termux-exec (a
+# bionic library) must not be preloaded into its glibc processes.
+unset LD_PRELOAD
 # shellcheck disable=SC2086 # $binds is a list of flags
-exec "$HERE/proot" --kill-on-exit --link2symlink --sysvipc -p -0 -r "$ROOTFS" \
+exec "$PROOT" --kill-on-exit --link2symlink --sysvipc -p -0 -r "$ROOTFS" \
     -b /dev -b /proc -b /sys -b /proc/self/fd:/dev/fd -b "$HOME:/root" $binds -w /root \
     /usr/bin/env -i HOME=/root USER=root LOGNAME=root SHELL="$login_shell" \
         TERM="${TERM:-xterm-256color}" COLORTERM="${COLORTERM:-truecolor}" LANG=C.UTF-8 TMPDIR=/tmp \

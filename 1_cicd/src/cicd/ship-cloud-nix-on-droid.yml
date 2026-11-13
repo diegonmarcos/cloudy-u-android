@@ -345,3 +345,22 @@ jobs:
       artifact_prefix: cloud-nixdroid-x86_64-
       lib_package: "com.diegonmarcos.cloudlib.rootfsnixdroid"
       lib_release_asset: "Cloud-Lib-Rootfs-Nixdroid-x86_64.apk"
+
+  # #1708 the APK at its targetSdk, on API 34 and 35 emulators, under the app's own SELinux domain:
+  # a typed login session, bootstrap binaries and #! scripts, dpkg/apt/pkg, RUN_COMMAND, the guest
+  # under proot and the failsafe session (1_cicd/src/cicd/test-terminal-target-sdk.yml). The
+  # expected targetSdk is read from ac_cloud-nix-on-droid/gradle.properties.
+  target_sdk:
+    needs: build_and_publish
+    if: ${{ !cancelled() && needs.build_and_publish.result == 'success' }}
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/test-terminal-target-sdk.yml
+    with:
+      app: nix
+      label: cloud-terminal-nix-target-sdk
+      work_dir: ac_cloud-nix-on-droid
+      artifact_prefix: cloud-nixdroid-x86_64-
+      lib_package: "com.diegonmarcos.cloudlib.rootfsnixdroid"
+      lib_release_asset: "Cloud-Lib-Rootfs-Nixdroid-x86_64.apk"

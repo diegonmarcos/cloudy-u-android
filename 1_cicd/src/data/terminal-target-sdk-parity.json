@@ -1,0 +1,8 @@
+{
+  "_doc": "#1708 the field-parity rule of the two Cloud Terminals' targetSdk raise (28 -> 35). 1_cicd/src/scripts/emulator-terminal-target-sdk.sh runs the same checks against the PUBLISHED build and against the new one, on the same emulator image; terminal-target-sdk-parity.py fails when a check that is ok on the published build is not ok on the new one. known_differences is the ONLY way such a check may stay green: per app, the check's name and the exact technical reason the new target cannot do it. Every entry must still be failing on the new build (an entry for a check that passes is stale and red), and the list may only shrink (max). Empty is the goal and the starting point.",
+  "max": 0,
+  "known_differences": {
+    "termux": {},
+    "nix": {}
+  }
+}

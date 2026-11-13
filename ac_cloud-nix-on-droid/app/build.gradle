@@ -725,6 +725,50 @@ def sha256Of(File file) {
 // nothing and still go green.
 tasks.matching { it.name ==~ /merge.*Assets/ }.configureEach { dependsOn bakeBootstrap }
 
+// ── #1708: proot and its loader as NATIVE LIBRARIES ─────────────────────────
+// From targetSdk 29 an app may not execve() a file in its own data directory
+// (SELinux: no execute_no_trans on app_data_file). $PREFIX/bin/proot-static,
+// which bin/login execs for every session, is such a file, and so is the
+// loader proot writes into its temp directory and execs for every guest
+// program. nativeLibraryDir is the one place an app may both ship into and
+// exec from, so the SAME proot the bootstrap carries
+// (ab_cloud-terminal-store/proot.json, fetched and hash-checked by
+// fetch-proot.py exactly as bakeBootstrap does) and the loader carved out of
+// it (carve-proot-loader.py, refused unless it hashes to proot-loader.json's
+// pin) ship there as libcloudproot.so and libcloudprootloader.so. At run time
+// termux-shared's NativeProot links bin/proot-static to the first and names
+// the second in PROOT_LOADER. Nothing dlopens these; the lib*.so names are
+// what gets a file into that directory. Never committed (*.so is ignored).
+tasks.register('stageNativeProot') {
+    description = 'Fetch the pinned proot into jniLibs and carve its loader beside it.'
+    doLast {
+        def abi = bootstrapAbi()
+        def store = new File(projectDir.parentFile.parentFile, "ab_cloud-terminal-store")
+        def fetcher = new File(store, "fetch-proot.py")
+        def carver = new File(store, "carve-proot-loader.py")
+        if (!fetcher.isFile() || !carver.isFile())
+            throw new GradleException("missing " + fetcher + " or " + carver + " (the native proot stage)")
+        def libDir = new File(projectDir, "src/main/jniLibs/" + abi)
+        libDir.mkdirs()
+        def proot = new File(libDir, "libcloudproot.so")
+        def loader = new File(libDir, "libcloudprootloader.so")
+        def fetched = exec {
+            commandLine "python3", fetcher.absolutePath, abi, proot.absolutePath
+            ignoreExitValue = true
+        }
+        if (fetched.exitValue != 0 || !proot.isFile() || proot.length() == 0)
+            throw new GradleException("fetch-proot.py failed for " + abi + " (exit " + fetched.exitValue + "); see log above")
+        def carved = exec {
+            commandLine "python3", carver.absolutePath, abi, proot.absolutePath, loader.absolutePath
+            ignoreExitValue = true
+        }
+        if (carved.exitValue != 0 || !loader.isFile() || loader.length() == 0)
+            throw new GradleException("carve-proot-loader.py failed for " + proot + " (exit " + carved.exitValue + "); see log above")
+        logger.quiet("stageNativeProot: libcloudproot.so (" + proot.length() + " B), libcloudprootloader.so (" + loader.length() + " B) -> " + libDir)
+    }
+}
+preBuild.dependsOn tasks.named('stageNativeProot')
+
 /* NIX-ON-DROID: Unused
 task downloadBootstraps() {
     doLast {

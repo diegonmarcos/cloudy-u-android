@@ -290,6 +290,70 @@ public final class CloudRootfs {
             Os.rename(tmp.getAbsolutePath(), target.getAbsolutePath());
             Logger.logInfo(LOG_TAG, "Refreshed " + target + " from this APK");
         }
+        linkNative(context);
+    }
+
+    /** The links enter.sh follows to the proot and the loader this APK ships as native libraries. */
+    static final String NATIVE_PROOT_LINK = "native-proot";
+    static final String NATIVE_LOADER_LINK = "native-proot-loader";
+
+    /**
+     * #1708: points {@code native-proot} and {@code native-proot-loader} (beside enter.sh) at
+     * libcloudproot.so and libcloudprootloader.so in this APK's native library directory.
+     *
+     * At targetSdk 29+ an app may not execve() a file in its data directory, and the staged
+     * {@code proot} above is one, as is the loader it extracts into its temp directory for every
+     * guest program. The native library directory is the one place an app may exec from, so the
+     * same two binaries ship there (app/build.gradle stageNativeProot: the very proot
+     * build-rootfs.sh staged, and the loader carved out of it). enter.sh runs them when both
+     * links resolve and falls back to the staged proot otherwise.
+     *
+     * Only where the rule applies ({@link com.termux.shared.shell.SystemLinkerExec#required()}):
+     * anywhere else (Android 9 and older, or a process still in a domain that may exec its
+     * data) the links are removed and the terminal runs the staged proot exactly as it always
+     * did.
+     *
+     * The directory moves with every app update, so this runs on every process start
+     * (TermuxApplication) and whenever the files are refreshed. It never creates the stage
+     * directory (an empty $PREFIX is how the installer knows the bootstrap is missing) and
+     * never throws: a terminal whose links could not be written still opens.
+     */
+    public static synchronized void linkNative(Context context) {
+        try {
+            File dir = stageDir();
+            if (!dir.isDirectory()) return;
+            boolean on = com.termux.shared.shell.SystemLinkerExec.required();
+            String nativeDir = context.getApplicationInfo().nativeLibraryDir;
+            File proot = new File(nativeDir, com.termux.shared.shell.TermuxShellUtils.NATIVE_PROOT);
+            File loader = new File(nativeDir, com.termux.shared.shell.TermuxShellUtils.NATIVE_PROOT_LOADER);
+            boolean both = on && proot.isFile() && loader.isFile();
+            link(both ? proot : null, new File(dir, NATIVE_PROOT_LINK));
+            link(both ? loader : null, new File(dir, NATIVE_LOADER_LINK));
+        } catch (Throwable t) {
+            Logger.logError(LOG_TAG, "Could not link the native proot: " + t);
+        }
+    }
+
+    /** {@code link -> target}, replaced atomically when it names something else; a null target removes the link. */
+    private static void link(File target, File link) throws ErrnoException {
+        String current = null;
+        try {
+            current = Os.readlink(link.getAbsolutePath());
+        } catch (ErrnoException e) {
+            // Not a link (or not there): replaced below.
+        }
+        if (target == null) {
+            if (current != null) //noinspection ResultOfMethodCallIgnored
+                link.delete();
+            return;
+        }
+        if (target.getAbsolutePath().equals(current)) return;
+        File tmp = new File(link.getParentFile(), link.getName() + ".new");
+        //noinspection ResultOfMethodCallIgnored
+        tmp.delete();
+        Os.symlink(target.getAbsolutePath(), tmp.getAbsolutePath());
+        Os.rename(tmp.getAbsolutePath(), link.getAbsolutePath());
+        Logger.logInfo(LOG_TAG, link + " -> " + target);
     }
 
     private static byte[] bytes(InputStream in) throws IOException {

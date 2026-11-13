@@ -34,7 +34,13 @@ public class MeshSshdService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startForeground(NOTIFICATION_ID, notification());
+        try {
+            startForeground(NOTIFICATION_ID, notification());
+        } catch (RuntimeException e) {
+            // #1708 refused in the background at targetSdk 31+ unless the caller is in the foreground (it is,
+            // by contract): the sshd script still runs, without the protection. Never a crash.
+            com.termux.shared.logger.Logger.logStackTraceWithMessage("MeshSshdService", "Could not enter the foreground", e);
+        }
         final String action = intent == null ? null : intent.getAction();
         final android.content.Context app = getApplicationContext();
         // The caller owns the Mesh-only switch and sends it with every start; absent means build.json::mesh_sshd.mesh_only.default.

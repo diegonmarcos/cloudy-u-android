@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- #1708 empty below API 35, where nothing is enforced; see values-v35/edge_to_edge.xml. -->
+    <style name="CloudEdgeToEdgeOptOut" />
+</resources>

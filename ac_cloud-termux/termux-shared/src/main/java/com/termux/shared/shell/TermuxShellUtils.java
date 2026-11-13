@@ -112,6 +112,8 @@ public class TermuxShellUtils {
 
         environment.add("ANDROID__BUILD_VERSION_SDK=" + Build.VERSION.SDK_INT);
 
+        addSystemLinkerExecEnvironment(currentPackageContext, environment);
+
         if (isFailSafe) {
             // Keep the default path so that system binaries can be used in the failsafe session.
             environment.add("PATH=" + System.getenv("PATH"));
@@ -125,6 +127,44 @@ public class TermuxShellUtils {
         return environment.toArray(new String[0]);
     }
 
+    /**
+     * #1708 What a session needs when this app may not execve() its own data files (targetSdk 29+,
+     * see {@link SystemLinkerExec}); nothing is added otherwise.
+     *
+     * LD_PRELOAD: the bootstrap's termux-exec library, so EVERY exec inside the session goes
+     * through the system linker. bin/login exports the same value itself, but only after it has
+     * already run tty, cat and realpath, and its first shell must be intercepted for those to
+     * start. The failsafe session gets it too (when the file is a loadable library), because a
+     * failsafe shell that cannot run $PREFIX/bin/dpkg or apt cannot repair anything.
+     *
+     * NOT set here: PROOT_LOADER. enter.sh sets it for its own proot from the link CloudRootfs
+     * keeps beside it; exported to the whole session it would also be forced on a proot the user
+     * installs with pkg, whose loader protocol is its own.
+     *
+     * TERMUX_APP__TARGET_SDK: what termux-exec and scripts read to know which rule applies.
+     */
+    private static void addSystemLinkerExecEnvironment(Context context, List<String> environment) {
+        try {
+            environment.add("TERMUX_APP__TARGET_SDK=" + context.getApplicationInfo().targetSdkVersion);
+        } catch (RuntimeException e) {
+            // A context without an ApplicationInfo: the variable is informational.
+        }
+        if (!SystemLinkerExec.required()) return;
+        String preload = SystemLinkerExec.preloadLibrary(TermuxConstants.TERMUX_PREFIX_DIR_PATH);
+        if (preload != null) environment.add("LD_PRELOAD=" + preload);
+    }
+
+    /** proot's loader as it ships under jniLibs (app/build.gradle stageNativeProot). */
+    public static final String NATIVE_PROOT_LOADER = "libcloudprootloader.so";
+    /** proot itself as it ships under jniLibs. */
+    public static final String NATIVE_PROOT = "libcloudproot.so";
+
+    /** This app's data directory under every path it is reached by (what {@link SystemLinkerExec} wraps). */
+    public static String[] appDataRoots() {
+        return SystemLinkerExec.dataRoots(TermuxConstants.TERMUX_PACKAGE_NAME,
+            TermuxConstants.TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH, android.os.Process.myUid() / 100000);
+    }
+
     public static void addToEnvIfPresent(List<String> environment, String name) {
         String value = System.getenv(name);
         if (value != null) {
@@ -132,7 +172,18 @@ public class TermuxShellUtils {
         }
     }
 
+    /**
+     * The argv to exec for {@code fileToExecute}: {@link #setupProcessArgsDirect} and, where this
+     * app may not exec its own data files (#1708, targetSdk 29+), the same command started
+     * through the system linker ({@link SystemLinkerExec#wrap}). Every exec this app makes goes
+     * through here: a session's pty, TermuxTask, CloudExecService, CloudSessionService.
+     */
     public static String[] setupProcessArgs(@NonNull String fileToExecute, String[] arguments) {
+        return SystemLinkerExec.wrap(setupProcessArgsDirect(fileToExecute, arguments),
+            appDataRoots(), TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH);
+    }
+
+    public static String[] setupProcessArgsDirect(@NonNull String fileToExecute, String[] arguments) {
         // The file to execute may either be:
         // - An elf file, in which we execute it directly.
         // - A script file without shebang, which we execute with our standard shell $PREFIX/bin/sh instead of the

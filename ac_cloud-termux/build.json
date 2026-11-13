@@ -85,7 +85,7 @@
       "type": "library"
     },
     "libs:shell-client": {
-      "_doc_dir": "#1512 The SuperApp's shell broker client (ShellClient.arm for Settings, and what libs:shell-rish answers through). No channel, pairing, service or boot hook here.",
+      "_doc_dir": "#1512 The SuperApp's shell broker client (ShellClient.openArmPage for Settings, and what libs:shell-rish answers through). No channel, pairing, service or boot hook here.",
       "type": "library",
       "dir": "../ab_cloud-libs-shared/libs/shell-client"
     },

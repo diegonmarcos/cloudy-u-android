@@ -79,7 +79,7 @@ public class SettingsActivity extends AppCompatActivity {
             Preference adbShellPreference = findPreference("adb_shell");
             if (adbShellPreference != null) {
                 adbShellPreference.setOnPreferenceClickListener(preference -> {
-                    com.diegonmarcos.superapp.shellclient.ShellClient.Companion.arm(context);
+                    com.diegonmarcos.superapp.shellclient.ShellClient.Companion.openArmPage(context);
                     return true;
                 });
             }

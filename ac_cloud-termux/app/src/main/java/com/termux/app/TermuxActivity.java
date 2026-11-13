@@ -767,6 +767,15 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
      * For processes to access shared internal storage (/sdcard) we need this permission.
      */
     public boolean ensureStoragePermissionGranted() {
+        // #1708 at targetSdk 30+ on Android 11+ the grant that opens /sdcard is All files access;
+        // WRITE_EXTERNAL_STORAGE can no longer be granted there, so asking for it would never end.
+        // Nothing is asked from here: every session start already asks for that grant
+        // (TermuxTerminalSessionClient.addNewSession), and it is a row of the Perms page.
+        if (getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.R && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) return true;
+            Logger.logInfo(LOG_TAG, "All files access is not granted: it is asked when a session starts and on the Perms page.");
+            return false;
+        }
         if (PermissionUtils.checkPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             return true;
         } else {
@@ -886,7 +895,11 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         intentFilter.addAction(TERMUX_ACTIVITY.ACTION_REQUEST_PERMISSIONS);
         intentFilter.addAction(TERMUX_ACTIVITY.ACTION_RELOAD_STYLE);
 
-        registerReceiver(mTermuxActivityBroadcastReceiver, intentFilter);
+        // #1708 targetSdk 34+ requires the export flag on a receiver for non-system broadcasts.
+        // Exported, as it effectively always was: termux-reload-settings and termux-setup-storage
+        // send these two actions with `am broadcast` from a session.
+        androidx.core.content.ContextCompat.registerReceiver(this, mTermuxActivityBroadcastReceiver, intentFilter,
+            androidx.core.content.ContextCompat.RECEIVER_EXPORTED);
     }
 
     private void unregisterTermuxActivityBroadcastReceiever() {

@@ -1,5 +1,6 @@
 package com.termux.shared.termux.shell;
 
+import com.termux.shared.shell.SystemLinkerExec;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -28,7 +29,21 @@ public class TermuxShellUtils {
      * command arguments if needed.
      */
     @NonNull
+    /**
+     * The argv to exec for {@code executable}: {@link #setupShellCommandArgumentsDirect} and, where
+     * this app may not exec its own data files (#1708, targetSdk 29+), the same command started the
+     * way the kernel would have ({@link SystemLinkerExec#wrap}): bin/login, a /system/bin/sh script
+     * in the data directory, becomes {@code /system/bin/sh $PREFIX/bin/login}. Every exec this app
+     * makes goes through here: a session's pty, AppShell, TerminalDebugApi, CloudSessionService.
+     */
     public static String[] setupShellCommandArguments(@NonNull String executable, @Nullable String[] arguments) {
+        return SystemLinkerExec.wrap(setupShellCommandArgumentsDirect(executable, arguments),
+            SystemLinkerExec.dataRoots(TermuxConstants.TERMUX_PACKAGE_NAME,
+                TermuxConstants.TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH, android.os.Process.myUid() / 100000),
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH);
+    }
+
+    public static String[] setupShellCommandArgumentsDirect(@NonNull String executable, @Nullable String[] arguments) {
         // The file to execute may either be:
         // - An elf file, in which we execute it directly.
         // - A script file without shebang, which we execute with our standard shell $PREFIX/bin/sh instead of the

@@ -26,8 +26,28 @@ login (`agy`), never baked.
 
 ## What we changed
 
-Nothing yet beyond vendoring. Divergence from upstream belongs in this section
-as it lands, so the cost of the fork stays visible.
+Divergence from upstream belongs in this section as it lands, so the cost of the fork
+stays visible.
+
+### Running at targetSdk 29+ (#1708)
+
+Upstream targets SDK 28 because from 29 Android forbids `execve()` of files in the app's data
+directory. Here that is three files, and this fork can target 35 (silent Cloud Store updates on
+Android 17) by starting each of them another way:
+
+- `bin/login`, a `/system/bin/sh` script, is started as `/system/bin/sh $PREFIX/bin/login`
+  (`termux-shared/.../shell/SystemLinkerExec.java`, called from
+  `TermuxShellUtils.setupShellCommandArguments`);
+- `bin/proot-static` becomes a link to `libcloudproot.so` in the native library directory, and
+  `PROOT_LOADER` names `libcloudprootloader.so` there (`termux-shared/.../termux/shell/NativeProot.java`,
+  applied whenever a command's environment is built). The bootstrap's own proot is kept beside it as
+  `proot-static.data`.
+
+Everything inside the guest is mapped by proot's loader, not exec'd, and is unaffected. All of it
+applies only when the process may not exec its data (Android 10+ and not the `untrusted_app_25/27`
+domain). `test/test-system-linker-exec.sh` pins the wiring;
+`1_cicd/src/scripts/emulator-terminal-target-sdk.sh` runs the terminal on API 34 and 35 emulators.
+Known limit: in the failsafe session a script in the data directory is run as `sh <script>`.
 
 ## applicationId
 

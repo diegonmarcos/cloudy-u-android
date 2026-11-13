@@ -1,0 +1,334 @@
+# ╔═══════════════════════════════════════════════════════════════════════╗
+# ║ Prove → the two Cloud Terminals at a raised targetSdk        (#1708)  ║
+# ║                                                                        ║
+# ║ A ship run PUBLISHES and only then tests, so a targetSdk raise that    ║
+# ║ broke the terminal would already be on the release when its test went  ║
+# ║ red. This workflow is the proof that comes first. It builds            ║
+# ║ cloud-terminal-termux and cloud-terminal-nix from this commit exactly  ║
+# ║ as their ship workflows do (same engine, same signing key, same rootfs ║
+# ║ and bootstrap), with ONE difference, targetSdkVersion set to the input ║
+# ║ in the runner's checkout, and publishes NOTHING. Then, on API 34 and   ║
+# ║ 35 emulators, it runs test-terminal-target-sdk.yml against that build  ║
+# ║ and against the PUBLISHED build, and the parity job fails on any check ║
+# ║ the published build passes and the new one does not                    ║
+# ║ (terminal-target-sdk-parity.py, policy in                              ║
+# ║ 1_cicd/src/data/terminal-target-sdk-parity.json).                      ║
+# ║                                                                        ║
+# ║ Green here is what allows gradle.properties to say 35 and the fleet    ║
+# ║ guard's exemption to go. Manual only: it publishes nothing and gates   ║
+# ║ nothing by itself.                                                     ║
+# ╚═══════════════════════════════════════════════════════════════════════╝
+name: "Prove → Cloud Terminals at a raised targetSdk (no publish, emulator, parity)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_sdk:
+        description: "targetSdkVersion to build both terminals with"
+        required: true
+        default: "35"
+      apps:
+        description: "Which terminals: termux, nix or termux,nix"
+        required: true
+        default: "termux,nix"
+      api_levels:
+        description: "Emulator API levels (JSON list)"
+        required: true
+        default: "[34, 35]"
+      rootfs_run_id:
+        description: "Ship cloud-termux run whose verified cloud-rootfs-x86_64 artifact to reuse (empty = build and verify the rootfs here)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: prove-terminal-target-sdk-${{ github.ref }}-${{ inputs.apps }}
+  cancel-in-progress: true
+
+jobs:
+  # ── cloud-terminal-termux: the rootfs, as ship-cloud-termux.yml builds and verifies it ──
+  termux_rootfs:
+    name: "termux · rootfs build + verify (x86_64)"
+    if: ${{ contains(inputs.apps, 'termux') && inputs.rootfs_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      WORK_DIR: ac_cloud-termux
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools the builder and tester call
+        run: sudo apt-get update -y && sudo apt-get install -y --no-install-recommends zstd binutils file
+      - name: Build the rootfs from rootfs.json + the fleet tool belt
+        run: sh "$WORK_DIR/rootfs/build-rootfs.sh" x86_64 "$RUNNER_TEMP/cloud-rootfs"
+      - name: "Test → the rootfs runs under the proot the APK ships"
+        run: sh "$WORK_DIR/rootfs/verify-rootfs.sh" "$RUNNER_TEMP/cloud-rootfs"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prove-cloud-rootfs-x86_64
+          path: ${{ runner.temp }}/cloud-rootfs
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3
+
+  termux_build:
+    name: "termux · build at targetSdk ${{ inputs.target_sdk }} (x86_64, not published)"
+    needs: termux_rootfs
+    if: ${{ !cancelled() && contains(inputs.apps, 'termux') && (needs.termux_rootfs.result == 'success' || needs.termux_rootfs.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      WORK_DIR: ac_cloud-termux
+      FORK: termux
+      CLOUDNAV_VARIANT: x86_64
+      COMMS_BUNDLE_ABI: x86_64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - name: Checkout vault (shared Android signing key)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq and zstd
+        run: sudo apt-get update -y && sudo apt-get install -y jq zstd
+      - name: Install sops (pinned, sha256-checked, fails at the download)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: sops
+      - name: Materialize fork (vendored in-repo tree)
+        working-directory: ${{ env.WORK_DIR }}
+        env:
+          BYPASS_NIX: "1"
+        run: |
+          chmod +x build.sh
+          ./build.sh materialize-fork "$FORK"
+      - name: Rootfs asset dir (from rootfs.json)
+        id: rootfs
+        run: echo "dir=$(jq -r .asset_dir "$WORK_DIR/rootfs/rootfs.json")" >> "$GITHUB_OUTPUT"
+      - name: Fetch the rootfs verified by this run
+        if: inputs.rootfs_run_id == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: prove-cloud-rootfs-x86_64
+          path: ${{ env.WORK_DIR }}/app/src/main/assets/${{ steps.rootfs.outputs.dir }}
+      - name: Fetch the rootfs a ship run verified
+        if: inputs.rootfs_run_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ inputs.rootfs_run_id }}
+          DEST: ${{ env.WORK_DIR }}/app/src/main/assets/${{ steps.rootfs.outputs.dir }}
+        run: |
+          set -eu
+          name="$(gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("cloud-rootfs-x86_64-")) | .name' | head -1)"
+          [ -n "$name" ] || { echo "::error::run $RUN has no cloud-rootfs-x86_64-* artifact"; exit 1; }
+          mkdir -p "$DEST"
+          gh run download "$RUN" -R "$REPO" -n "$name" -D "$DEST"
+          # The login shell and its store wiring are THIS commit's, not that run's.
+          cp "$WORK_DIR/rootfs/enter.sh" "$DEST/enter.sh"
+          ls -l "$DEST"
+      - name: Build at the raised targetSdk, signed with the constellation key, NOT published
+        working-directory: ${{ env.WORK_DIR }}
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_SDK: ${{ inputs.target_sdk }}
+        run: |
+          set -euo pipefail
+          sed -i "s/^targetSdkVersion=.*/targetSdkVersion=${TARGET_SDK}/" gradle.properties
+          grep -n '^targetSdkVersion=' gradle.properties
+          export COMMS_BUILD_TIMESTAMP="$(date -u '+%Y%m%d.%H%M%S')"
+          ./build.sh build-fork "$FORK" 2>&1 | tee "$RUNNER_TEMP/gradle-build.log"
+          ls -la dist/
+      - name: Why the build failed (readable without a token)
+        if: failure()
+        run: sh 1_cicd/dist/scripts/cloud-android-annotate-build-failure.sh "$RUNNER_TEMP/gradle-build.log" "prove build [termux]"
+      - name: "16 KB page size: native libs LOAD-aligned (the libraries this change adds are declared)"
+        run: python3 1_cicd/dist/scripts/cloud-android-page-size-guard.py "ac_cloud-termux" ${{ env.WORK_DIR }}/dist/*.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloud-terminal-x86_64-${{ github.sha }}
+          path: ${{ env.WORK_DIR }}/dist/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  # ── cloud-terminal-nix: as ship-cloud-nix-on-droid.yml builds it ─────────
+  nix_build:
+    name: "nix · build at targetSdk ${{ inputs.target_sdk }} (x86_64, not published)"
+    if: ${{ contains(inputs.apps, 'nix') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      WORK_DIR: ac_cloud-nix-on-droid
+      FORK: nixdroid
+      CLOUDNAV_VARIANT: x86_64
+      COMMS_BUNDLE_ABI: x86_64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - name: Checkout vault (shared Android signing key)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq and zstd
+        run: sudo apt-get update -y && sudo apt-get install -y jq zstd
+      - name: Install sops (pinned, sha256-checked, fails at the download)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: sops
+      - name: Install Nix (for baking default agent tooling into the bootstrap)
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Materialize fork (vendored in-repo tree)
+        working-directory: ${{ env.WORK_DIR }}
+        env:
+          BYPASS_NIX: "1"
+        run: |
+          chmod +x build.sh
+          ./build.sh materialize-fork "$FORK"
+      - name: Build at the raised targetSdk, signed with the constellation key, NOT published
+        working-directory: ${{ env.WORK_DIR }}
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_SDK: ${{ inputs.target_sdk }}
+        run: |
+          set -euo pipefail
+          sed -i "s/^targetSdkVersion=.*/targetSdkVersion=${TARGET_SDK}/" gradle.properties
+          grep -n '^targetSdkVersion=' gradle.properties
+          export COMMS_BUILD_TIMESTAMP="$(date -u '+%Y%m%d.%H%M%S')"
+          ./build.sh build-fork "$FORK" 2>&1 | tee "$RUNNER_TEMP/gradle-build.log"
+          ls -la dist/
+      - name: Why the build failed (readable without a token)
+        if: failure()
+        run: sh 1_cicd/dist/scripts/cloud-android-annotate-build-failure.sh "$RUNNER_TEMP/gradle-build.log" "prove build [nix-on-droid]"
+      - name: "16 KB page size: native libs LOAD-aligned (the libraries this change adds are declared)"
+        run: python3 1_cicd/dist/scripts/cloud-android-page-size-guard.py "ac_cloud-nix-on-droid" ${{ env.WORK_DIR }}/dist/*.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloud-nixdroid-x86_64-${{ github.sha }}
+          path: ${{ env.WORK_DIR }}/dist/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  # ── the build under test, on every API level ───────────────────────────
+  termux_new:
+    needs: termux_build
+    if: ${{ !cancelled() && needs.termux_build.result == 'success' }}
+    uses: ./.github/workflows/test-terminal-target-sdk.yml
+    with:
+      app: termux
+      label: prove-termux-new
+      work_dir: ac_cloud-termux
+      artifact_prefix: cloud-terminal-x86_64-
+      lib_package: "com.diegonmarcos.cloudlib.rootfstermux"
+      lib_release_asset: "Cloud-Lib-Rootfs-Termux-x86_64.apk"
+      min_target: ${{ inputs.target_sdk }}
+      api_levels: ${{ inputs.api_levels }}
+
+  nix_new:
+    needs: nix_build
+    if: ${{ !cancelled() && needs.nix_build.result == 'success' }}
+    uses: ./.github/workflows/test-terminal-target-sdk.yml
+    with:
+      app: nix
+      label: prove-nix-new
+      work_dir: ac_cloud-nix-on-droid
+      artifact_prefix: cloud-nixdroid-x86_64-
+      lib_package: "com.diegonmarcos.cloudlib.rootfsnixdroid"
+      lib_release_asset: "Cloud-Lib-Rootfs-Nixdroid-x86_64.apk"
+      min_target: ${{ inputs.target_sdk }}
+      api_levels: ${{ inputs.api_levels }}
+
+  # ── the published build, same checks, same images: what parity is measured against ──
+  termux_published:
+    if: ${{ contains(inputs.apps, 'termux') }}
+    uses: ./.github/workflows/test-terminal-target-sdk.yml
+    with:
+      app: termux
+      label: prove-termux-published
+      work_dir: ac_cloud-termux
+      source: release
+      release_asset: cloud-terminal-x86_64.apk
+      lib_package: "com.diegonmarcos.cloudlib.rootfstermux"
+      lib_release_asset: "Cloud-Lib-Rootfs-Termux-x86_64.apk"
+      min_target: "0"
+      api_levels: ${{ inputs.api_levels }}
+
+  nix_published:
+    if: ${{ contains(inputs.apps, 'nix') }}
+    uses: ./.github/workflows/test-terminal-target-sdk.yml
+    with:
+      app: nix
+      label: prove-nix-published
+      work_dir: ac_cloud-nix-on-droid
+      source: release
+      release_asset: cloud-nixdroid-x86_64.apk
+      lib_package: "com.diegonmarcos.cloudlib.rootfsnixdroid"
+      lib_release_asset: "Cloud-Lib-Rootfs-Nixdroid-x86_64.apk"
+      min_target: "0"
+      api_levels: ${{ inputs.api_levels }}
+
+  # ── field parity: nothing the published build does is lost ─────────────
+  parity:
+    name: "Parity: published vs targetSdk ${{ inputs.target_sdk }}"
+    needs: [termux_new, nix_new, termux_published, nix_published]
+    # Runs after a red emulator job too: the table of what was lost is the diagnosis.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    env:
+      APPS: ${{ inputs.apps }}
+      LEVELS: ${{ inputs.api_levels }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            1_cicd/src/scripts
+            1_cicd/src/data
+      - name: The parity check still fails when it should
+        run: bash 1_cicd/src/scripts/test/terminal-target-sdk-parity.test.sh
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: prove-*
+          path: evidence
+      - name: Every check the published build passes, the new build passes
+        run: |
+          set -u
+          fail=0
+          for app in $(echo "$APPS" | tr ',' ' '); do
+            for level in $(echo "$LEVELS" | tr -d '[] ' | tr ',' ' '); do
+              base="evidence/prove-$app-published-api$level/results.tsv"
+              new="evidence/prove-$app-new-api$level/results.tsv"
+              echo "════════ $app · API $level ════════"
+              if [ ! -f "$base" ] || [ ! -f "$new" ]; then
+                echo "::error title=parity $app API $level::results are missing ($( [ -f "$base" ] || echo "published ")$( [ -f "$new" ] || echo "new")): nothing is proven"
+                fail=1; continue
+              fi
+              python3 1_cicd/src/scripts/terminal-target-sdk-parity.py "$app" "$base" "$new" || fail=1
+            done
+          done
+          exit "$fail"

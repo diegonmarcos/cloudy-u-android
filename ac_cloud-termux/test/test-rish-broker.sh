@@ -36,7 +36,7 @@ for pair in "termux:$TERMUX:cld.termux" "nix:$NIX:cld.termux.nix"; do
     has "$repo/app/build.gradle" 'project(":libs:shell-rish")' "[$name] app depends on libs:shell-rish"
     has "$repo/app/src/main/java/com/termux/app/TermuxApplication.java" 'ShellRish' "[$name] exports rish through ShellRish on launch"
     hasnt "$repo/app/src/main/java/com/termux/app/TermuxApplication.java" 'RishBridge' "[$name] no RishBridge left"
-    has "$repo/app/src/main/java/com/termux/app/activities/SettingsActivity.java" 'ShellClient.Companion.arm' "[$name] the settings entry opens the SuperApp's arm flow"
+    has "$repo/app/src/main/java/com/termux/app/activities/SettingsActivity.java" 'ShellClient.Companion.openArmPage(context)' "[$name] the settings entry opens the SuperApp's arm flow"
     python3 - "$ALLOW" "$appid" <<'PY' || bad "[$name] broker allowlist has no entry for $appid"
 import json, sys
 d = json.load(open(sys.argv[1]))
