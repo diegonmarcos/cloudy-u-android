@@ -21,6 +21,9 @@ adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/n
 adb shell settings put global hide_error_dialogs 1 || true
 adb shell wm size 1080x2340 || true; adb shell wm density 420 || true   # a legible, phone-like screenshot
 
+# a punch-hole cutout like the phone's: the date drops to its own line below the first, as on the device
+adb shell cmd overlay enable com.android.internal.display.cutout.emulation.hole >/dev/null 2>&1 || true; sleep 3
+
 dump() { local i; for i in 1 2 3; do adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
   adb shell cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; grep -q '<node' "$OUT/ui.xml" && return 0; sleep 2; done; }
 cap() { adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/$1.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/$1.xml"; }
@@ -48,6 +51,7 @@ for fy in 0.034 0.038 0.030 0.042 0.046 0.026; do
   grep -q "Privacy dashboard" "$OUT/ui.xml" && break
 done
 cap privacy-dashboard
+adb shell input keyevent KEYCODE_BACK; sleep 3; adb shell input tap 540 1400; sleep 3; cap strip-home-after
 grep -q "Privacy dashboard" "$OUT/ui.xml" || { echo "::error::the Privacy dashboard did not open"; fail=1; }
 grep -q "armed for the SuperApp\|SuperApp's ADB shell" "$OUT/ui.xml" && { echo "::error::the old in-process ADB wording is still shown"; fail=1; }
 if grep -q "Permission history unavailable" "$OUT/ui.xml"; then
