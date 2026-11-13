@@ -207,6 +207,7 @@ Module `ac_c3-morpheus`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools,
 | file | class | doc |
 |---|---|---|
 | `-` | device | keeps no configuration of its own; uses libs:core (fleet devtools provider). |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 5 covered, 0 gaps.
 
@@ -231,6 +232,7 @@ Module `ac_c3-watchdog`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools,
 | file | class | doc |
 |---|---|---|
 | `-` | device | keeps no configuration of its own; uses libs:watchdog and libs:core (fleet devtools provider). |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 5 covered, 0 gaps.
 
@@ -251,6 +253,10 @@ Module `ac_c3-watchtower`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtool
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `watchtower_cache` | prefs | device | no | TTL cache of GitHub workflow-runs responses per repo (<owner>/<repo>/runs.ts/.body). |
+
+| file | class | doc |
+|---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 4 covered, 0 gaps.
 
@@ -309,6 +315,7 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 
 | file | class | doc |
 |---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 | `filesDir/git-sync/repos.json` | config | Registered repos to sync |
 | `filesDir/git-sync/known_hosts` | device | Pinned git SSH host keys |
 
@@ -354,6 +361,7 @@ Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-clock-t
 |---|---|---|
 | `app assets data/calendars.json (bundled) and engine state in app storage` | content | Calendar and todo data synced from CalDAV; the CalDAV url/username/password is in caldav_secure_prefs. |
 | `databases/tasks.db` | content | The Tasks page's own data: projects, lists, tasks and subtasks, tags, attachment links, and the mail agent's declaration and proposals. SQLite with ordered, additive migrations; nothing ever wipes it. The JMAP / Authelia secret of the agent is in the Keystore-encrypted tasks_agent_secrets file, not here. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 12 covered, 0 gaps.
 
@@ -407,6 +415,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 | file | class | doc |
 |---|---|---|
 | `browser_settings` | config | #802 every user setting is a key of the declared browser_settings store (libs:browser BrowserSettings over build.json::ui.browser.settings); tabs and history are the lib's own declared stores. Nothing is kept outside them. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 18 covered, 0 gaps.
 
@@ -437,6 +446,7 @@ Module `ac_cloud-c3-webserver`; libs: lib-adb-grants, lib-adb-readiness, lib-adb
 | file | class | doc |
 |---|---|---|
 | `shared_prefs/c3_links.xml` | device | The remembered link choice per declared link type (Configs > Links); never migrates. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 7 covered, 0 gaps.
 
@@ -460,6 +470,7 @@ Module `ac_cloud-media-center`; libs: lib-bottomnav, lib-core, lib-crash, lib-de
 | file | class | doc |
 |---|---|---|
 | `-` | device | keeps no configuration of its own on device; its pages and their data are bundled in the APK from build.json and web/. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 4 covered, 0 gaps.
 
@@ -496,6 +507,10 @@ Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 | `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
+
+| file | class | doc |
+|---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 13 covered, 0 gaps.
 
@@ -538,6 +553,7 @@ Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-clock-to
 | `SharedPreferences cloud_image_recognition:route + model (libs ml-l-image RecognitionPrefs)` | config | Chosen image recognition route and model for Measure > Camera; default from RecognitionConfig json default_route. |
 | `filesDir/sound/*.csv|*.wav` | content | Saved sound-measure sessions. |
 | `filesDir/camera/last.jpg` | device | Last captured measure photo. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 18 covered, 0 gaps.
 
@@ -568,6 +584,7 @@ Module `ac_cloud-camera`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 | `SharedPreferences cloud_image_recognition:route + model (shared lib)` | config | Image identify route and model chosen by the user, shared engine. |
 | `shared_prefs/{QR_SCAN,OBJECTS,AUTO,FACE_RETOUCH,PORTRAIT,NIGHT,HDR,CAMERA,VIDEO,VR}.xml` | config | Per-mode camera settings. |
 | `filesDir vosk-model-small-en-us-0.15 (not bundled)` | device | Optional offline voice model dir; engine not present, so nothing to move. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 11 covered, 0 gaps.
 
@@ -598,6 +615,7 @@ Module `ac_cloud-chat`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash,
 | `shared_prefs/chat_setup.xml (server_url, server_name)` | config | The fleet server Cloud Account pushes (bundle chat.server_url / chat.server_name -> chat_setup): the server screen pre-fills and connects to it. The migrating part of mm-servers. |
 | `databases/ (WatermelonDB SQLite per server) and files/` | content | Mattermost local cache of teams/channels/posts; server holds the data. |
 | `app-managed server list in the app database (server URL, display name) and Keychain/Keystore tokens` | secret | Server URLs are the account link (config: pushed as chat_setup by Fleet Setup, see server-link); session tokens are secrets in the secure keystore, obtained by signing in and never pushed. Lives in the RN layer. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 8 covered, 0 gaps.
 
@@ -634,6 +652,7 @@ Module `ac_cloud-code`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-de
 | `ac_cloud-code/src/cloud/chat/model.js localStorage cloud-code.chat.settings, .mcp.<agent>, .toggles.<agent>` | config | Chat defaults (agent, model, effort, permission mode), the MCP servers enabled per agent and the gateway toggles per agent; user state, copy it. |
 | `ac_cloud-code/src/cloud/chat/model.js localStorage cloud-code.chat.sessions` | config | The chats kept on this phone (text and attachment names, never attachment bytes); mirrored to files/chat-sessions.json and carried through the code_chat_sessions store. |
 | `encrypted prefs cloud_code_chat_secrets` | secret | The OpenRouter token pasted in Profile & Config; vault. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 12 covered, 5 gaps — code_chat_sessions, file:filesDir or app storage: Acode settings (www/ settings, keybindings, installed plugins, themes, fonts), file:ac_cloud-code/src/lib/projects.js saved folders list (localStorage), file:ac_cloud-code/src/cloud/chat/model.js localStorage cloud-code.chat.settings, .mcp.<agent>, .toggles.<agent>, file:ac_cloud-code/src/cloud/chat/model.js localStorage cloud-code.chat.sessions.
 
@@ -671,6 +690,7 @@ Module `ac_cloud-contacts`; libs: lib-analytics, lib-bottomnav, lib-contacts, li
 | `system ContactsContract provider, exported as vCard` | config | The contacts themselves, through ContactsBackup. |
 | `shared_prefs/<package>_preferences.xml (Fossify Config)` | config | Contacts display/sort/visible-sources settings; scanner found no named store. |
 | `-` | device | keeps no configuration of its own; uses libs:contacts, libs:core, libs:updater, libs:analytics (contacts are system data). |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 8 covered, 2 gaps — contacts_vcards, file:system ContactsContract provider, exported as vCard.
 
@@ -703,6 +723,7 @@ Module `ac_cloud-dialer`; libs: lib-analytics, lib-bottomnav, lib-core, lib-cras
 | `filesDir/screening_log.json` | device | Log of screened/blocked calls. |
 | `system BlockedNumberContract provider and default-dialer role / call-screening role` | content | Blocked numbers and the default phone app role live in the system; the blocked numbers migrate through the call_history store. |
 | `assets/call_providers.json, assets/spam_patterns.json` | device | Read-only bundled assets. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 9 covered, 2 gaps — call_history, file:system CallLog and BlockedNumberContract providers.
 
@@ -751,6 +772,7 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | `filesDir/git-sync/history.json` | device | Sync history log. |
 | `filesDir/<REPORT_FILE>` | device | Store seeding report text. |
 | `filesDir/ai-sessions.json` | config | AI tab chat history (libs:ai's file session store; never carries a token); carried to a new phone through the ai_sessions store |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 | `filesDir/git-sync/repos.json` | config | Registered repos to sync |
 | `filesDir/git-sync/known_hosts` | device | Pinned git SSH host keys |
 | `filesDir/mounts/mounts.json` | config | Mount specs (host, path, keyPath, protocol); passwords live in mounts-credentials |
@@ -789,6 +811,7 @@ Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, li
 | `libs:keyboard (HeliBoard) default shared prefs <pkg>_preferences` | config | Keyboard layouts, languages, theme, key behaviour; kept in the library's default prefs, not in this module's scanned list. |
 | `filesDir/documents/*.md (libs:writer-ui DocStore: the Writer tab's Home document list, dictation transcripts)` | content | #1707 user data of the Writer, which moved here from the retired standalone Cloud Writer: the documents the user wrote or dictated. Plain files in this app's private storage, not a declared store, so the contract does not carry the bytes; the Writer's settings (provider, per-tool models, routes, OCR engine, theme) are the text_tools prefs store, which already migrates with this app (used_by lib-writer-ui). A phone that still has the retired Cloud Writer keeps its documents inside that app until it is removed (Store > Retired shows it with Uninstall): copy or share what you need out of it first. |
 | `cacheDir/ocr/` | device | #1707 the one folder the Writer's Take picture writes its photo into for OCR (FileProvider authority <applicationId>.ocr); a cache, never migrates. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 | `filesDir/vosk/<model-dir>` | device | Downloaded Vosk model files (re-downloadable); the selected model name is declared/held in the host app prefs, not in this lib |
 
 Coverage: 9 covered, 0 gaps.
@@ -838,6 +861,7 @@ Module `ac_cloud-mail`; libs: lib-bottomnav, lib-core, lib-crash, lib-databacken
 | `databases/sterna.db (Room SternaDatabase)` | content | Mail cache; rebuilt from server. |
 | `shared_prefs/sterna_account.xml accounts JSON` | secret | Mail account server/IMAP/SMTP/JMAP settings and credentials; account link is config but travels with the secret through the vault; passwords encrypted with a device Keystore key and cannot be copied raw. |
 | `Room SternaDatabase tables (mailboxes watched/muted/collapsed in account JSON)` | device | No settings tables in Room; per-account watched, muted (the Inbox's Notify about new mail, default on) and collapsed folders live in the account JSON. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 13 covered, 2 gaps — datastore:settings, mail_signatures.
 
@@ -881,6 +905,7 @@ Module `ac_cloud-matrix`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 | `filesDir/sessions/<session>/ (matrix-rust-sdk sqlite state+crypto stores) and databases/session-database` | device | matrix-rust-sdk state and E2EE crypto store: this device's identity — the new phone signs in and verifies as a new device. |
 | `databases/ SessionDatabase (SQLDelight) sessions table` | secret | Access/refresh tokens, homeserver URL, user id; homeserver+user id are the account link, tokens go via vault or re-login. |
 | `cacheDir/ (media, logs)` | device | Caches. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 4 covered, 9 gaps — datastore:elementx_featureflag, datastore:elementx_preferences, datastore:elementx_rageshake, datastore:elementx_voice_player, datastore:pin_code_store, datastore:push_store_<userId>, datastore:session_<hash>_preferences, datastore:vector_analytics, file:databases/ SessionDatabase (SQLDelight) sessions table.
 
@@ -926,6 +951,7 @@ Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bot
 | file | class | doc |
 |---|---|---|
 | `assets/health_*.json (from ac_cloud-me/data/health)` | config | #1180 Cloud Me > Health declared content (plan, formulas, home clusters, workout programme) is baked from git into the build, so a new phone gets it by installing the same build; the user's own entries are the health_user store. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 | `filesDir/git-sync/repos.json` | config | Registered repos to sync |
 | `filesDir/git-sync/known_hosts` | device | Pinned git SSH host keys |
 
@@ -962,6 +988,7 @@ Module `ac_cloud-gallery`; libs: lib-analytics, lib-bottomnav, lib-core, lib-cra
 |---|---|---|
 | `filesDir/<vault uuid>/{info file,<mediaId>.enc}` | content | Encrypted media vaults, Keystore-bound. They migrate through Cloud Drive: Backup & restore ▸ Sync to Cloud Drive writes them password-encrypted to <Cloud Drive shared store>/gallery/vaults.rfbk, Cloud Drive's Sync carries it, and Restore vaults from Cloud Drive re-encrypts them under the new phone's keystore. |
 | `filesDir/<modelsDir>/<group>/ {visual_quant,textual_quant,mobile_sam,version-RFB-320,arcface}.onnx, vocab.json, merges.txt` | device | Downloaded on-device ML models; re-downloadable, selection is implicit by feature. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 7 covered, 1 gaps — datastore:settings.
 
@@ -992,6 +1019,7 @@ Module `ac_cloud-myterminal`; libs: lib-analytics, lib-bottomnav, lib-core, lib-
 | `ac_cloud-myterminal/data/ide-endpoints.json` | config | Endpoint declaration baked in the APK; reproducible from git. |
 | `filesDir/terminal_id_ecdsa and terminal_id_ecdsa.pub` | device | Hub's own generated ssh keypair (SshBackend.ensureKeyPair); device identity, never migrate; the new phone generates its own and its pubkey must be added to each env's authorized_keys. |
 | `externalFilesDir/crashes/` | device | Crash report dumps queued for DiagnosticsPush. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 10 covered, 0 gaps.
 
@@ -1040,6 +1068,7 @@ Module `ac_cloud-nav`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, 
 |---|---|---|
 | `externalFilesDir/trace/trace.log, crashes/` | device | Debug trace and crash dumps. |
 | `databases/maps.db (timeline_segments), databases/tracker_engine.db` | device | THE timeline store (#1114): move / stop / sleep segments that Daily, Stops, Steps and the SuperApp's MyTrips read, plus the engine's step samples and fixes it is built from. Recorded data, not configuration: it is re-derived by recording on the new phone, never migrated. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 15 covered, 0 gaps.
 
@@ -1077,6 +1106,7 @@ Module `ac_cloud-news`; libs: lib-analytics, lib-apify, lib-bottomnav, lib-core,
 | file | class | doc |
 |---|---|---|
 | `data/sources.json, topics.json (bundled) and engine-held user source/topic choices and saved articles` | config | Selected sources/topics are config, saved articles are content; the engine keeps them in its own storage which the scanner did not see. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 9 covered, 1 gaps — file:data/sources.json, topics.json (bundled) and engine-held user source/topic choices and saved articles.
 
@@ -1114,6 +1144,7 @@ Module `ac_cloud-nix-on-droid`; libs: lib-bottomnav, lib-core, lib-crash, lib-de
 | `$HOME/.hermes/config.yaml` | config | Hermes config; binary declared (rootfs-extras.nix), config user-edited state. |
 | `$HOME/.hermes/.env, exported keys in rc` | secret | Provider keys for goose and hermes. #790: Account imports OPENROUTER_API_KEY into the agent-auth store and every login exports it; keys typed into the tools' own files stay the phone's own. |
 | `$HOME/.ssh/ (authorized_keys; sshd on port 8024)` | config | authorized_keys with the cloud-myterminal hub key; private keys secret. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 12 covered, 7 gaps — file:$HOME/.config/nix-on-droid/nix-on-droid.nix (+flake.nix), file:$HOME/.termux/termux.properties, file:$HOME/.config/fish/, .bashrc, .zshrc, .gitconfig, file:$HOME/.claude/ (settings.json, CLAUDE.md, mcp config), file:$HOME/.config/goose/config.yaml, file:$HOME/.hermes/config.yaml, file:$HOME/.ssh/ (authorized_keys; sshd on port 8024).
 
@@ -1143,6 +1174,7 @@ Module `ac_cloud-notes`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-d
 |---|---|---|
 | `filesDir/ (NbStorePlugin appStoragePath, per-workspace sqlite)` | content | Cloud Notes local workspace docs; server is source of truth. |
 | `filesDir/logs/<date>.log` | device | Rotating logs. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 7 covered, 1 gaps — datastore:auth-sessions.
 
@@ -1167,6 +1199,7 @@ Module `ac_cloud-office`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 | file | class | doc |
 |---|---|---|
 | `-` | device | keeps no configuration of its own; patches/tests only, no Android source tree (document-suite wrapper). |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 5 covered, 0 gaps.
 
@@ -1199,6 +1232,7 @@ Module `ac_cloud-search`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-
 | `filesDir/chat-sessions.json` | config | AI chat history (never carries the token); carried to a new phone through the search_chat_sessions store |
 | `filesDir/agents` | config | Agents run log and reports (runs.json, reports.json); carried to a new phone through the search_agents_state store |
 | `filesDir/things` | device | cached Things answers (OpenStreetMap stores per area, Open Prices, the store-site price service, geocoded cities), refetched from the sources |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 7 covered, 4 gaps — search_agents_state, search_chat_sessions, file:filesDir/chat-sessions.json, file:filesDir/agents.
 
@@ -1246,6 +1280,10 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 | `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 
+| file | class | doc |
+|---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
+
 Coverage: 13 covered, 0 gaps.
 
 ## cloud-terminal-termux — `cld.termux`
@@ -1283,6 +1321,7 @@ Module `ac_cloud-termux`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 | `$HOME/.hermes/.env, goose keyring/env, exported API keys in rc` | secret | Provider keys for goose and hermes. #790: Account imports OPENROUTER_API_KEY into the agent-auth store and every login exports it; keys typed into the tools' own files stay the phone's own. |
 | `$HOME/.ssh/ (authorized_keys, config; id_* private keys)` | config | authorized_keys must contain the cloud-myterminal hub public key; private keys id_* are secret, known_hosts is device. |
 | `$HOME/cloud-shared-store` | device | The fleet store (cloud-shared-store): a directory in cld.termux's home (a link to it in cld.termux.nix through the shared uid); recreated at login. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 12 covered, 7 gaps — file:$HOME/.termux/termux.properties, file:$HOME/.termux/ (colors.properties, font.ttf, style), file:$HOME/.config/fish/, .bashrc, .zshrc, .profile, .gitconfig, file:$HOME/.claude/ (settings.json, CLAUDE.md, mcp config, agents), file:$HOME/.config/goose/config.yaml, file:$HOME/.hermes/ (config.yaml, skills, memory), file:$HOME/.ssh/ (authorized_keys, config; id_* private keys).
 
@@ -1316,6 +1355,7 @@ Module `ac_cloud-vault`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools,
 | file | class | doc |
 |---|---|---|
 | `encrypted prefs: bwCookieConfig:<hostname>` | device | Per-host cookie config inside Bitwarden's encrypted prefs (a device store): sessions are re-established by signing in. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 5 covered, 1 gaps — room:PrivilegedAppDatabase.
 
@@ -1347,6 +1387,10 @@ Module `ac_cloud-wallet`; libs: lib-analytics, lib-bottomnav, lib-core, lib-cras
 | `wallet_mail_connector` | prefs | config (keys: password→secret) | yes | Mail connector host/email are account links; password is a credential. |
 | `wallet_store` | prefs | content (keys: seed_version→device) | no | Wallet items (cards/passes) the user stored; seed_version is a marker. |
 
+| file | class | doc |
+|---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
+
 Coverage: 8 covered, 0 gaps.
 
 ## cloud-shopping — `com.diegonmarcos.cloudshopping`
@@ -1365,6 +1409,10 @@ Module `ac_cloud-shopping`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtoo
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
+
+| file | class | doc |
+|---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 4 covered, 0 gaps.
 
@@ -1391,6 +1439,7 @@ Module `ac_cloud-superintel`; libs: lib-ai, lib-ai-usage, lib-bottomnav, lib-cor
 | file | class | doc |
 |---|---|---|
 | `filesDir/ai-sessions.json` | config | The chat history of the sessions drawer (libs:ai's file session store; never carries a token); carried to a new phone through the ai_sessions store |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 6 covered, 2 gaps — ai_sessions, file:filesDir/ai-sessions.json.
 
@@ -1420,6 +1469,7 @@ Module `ac_cloud-kg-store`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, li
 |---|---|---|
 | `filesDir/results` | device | cached answers of the Web pages' sources (Cloud Search's declared sources, read through its linked core), refetched from the sources |
 | `filesDir/ai-sessions.json` | config | The assistant's chat history (libs:ai's file session store; never carries a token); carried to a new phone through the ai_sessions store |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 | `filesDir/git-sync/repos.json` | config | Registered repos to sync |
 | `filesDir/git-sync/known_hosts` | device | Pinned git SSH host keys |
 
@@ -1457,6 +1507,7 @@ Module `ac_cloud-tools-small-llms`; libs: lib-ai, lib-bottomnav, lib-core, lib-c
 | `SharedPreferences cloud_tools_small_llms:pinned_model (default empty = the task picks)` | config | The model the AI chat is pinned to (Settings, advanced); empty = each task picks its small model and escalates to its medium one. |
 | `SharedPreferences cloud_tools_small_llms:local_usage` | content | Every chat call served by a local runtime (time, model, estimated tokens, duration; no cost): the Local usage section on Costs. |
 | `filesDir/ai-sessions.json` | config | AI tab chat history (libs:ai's file session store; never carries a token); carried to a new phone through the ai_sessions store |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 12 covered, 2 gaps — ai_sessions, file:filesDir/ai-sessions.json.
 
@@ -1481,6 +1532,10 @@ Module `ad_CG-Omniverse`; libs: lib-bottomnav, lib-cgc-3d, lib-core, lib-crash, 
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `worlds` | prefs | config | yes | CG-Omniverse's Galaxy worlds: whether each embedded world opens in desktop mode, one boolean per world id (key desktop.<worldId>). A user view choice, so it migrates with the app's settings. |
 
+| file | class | doc |
+|---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
+
 Coverage: 8 covered, 0 gaps.
 
 ## capital-stack-finterminal — `com.diegonmarcos.capitalfinterm`
@@ -1501,6 +1556,10 @@ Module `ad_Capital-Stack-FinTerminal`; libs: lib-bottomnav, lib-core, lib-crash,
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
+
+| file | class | doc |
+|---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 5 covered, 0 gaps.
 
@@ -1524,6 +1583,10 @@ Module `ad_Hardtech-CAD`; libs: lib-bottomnav, lib-cad-3dm, lib-cad-brep, lib-ca
 | `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 
+| file | class | doc |
+|---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
+
 Coverage: 5 covered, 0 gaps.
 
 ## hardtech-sim2real — `com.diegonmarcos.hardtechsim2real`
@@ -1543,6 +1606,10 @@ Module `ad_Hardtech-Sim2Real`; libs: lib-bottomnav, lib-core, lib-crash, lib-dev
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
+
+| file | class | doc |
+|---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
 Coverage: 4 covered, 0 gaps.
 

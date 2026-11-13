@@ -1,3 +1,4 @@
+# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-licence-inventory.py ───
 #!/usr/bin/env python3
 """
 cloud-android-licence-inventory — #805: one machine-readable licence inventory
