@@ -30,6 +30,20 @@
         "SignInContract.METHOD ->"
       ],
       "why": "Cloud Account answers the sign-in status over the accountdata provider"
+    },
+    {
+      "file": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountData.kt",
+      "needles": [
+        "AppCredentialsContract.METHOD ->"
+      ],
+      "why": "Cloud Account answers the app credentials (per-credential grant) over the accountdata provider"
+    },
+    {
+      "file": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountPages.kt",
+      "needles": [
+        "AppCredentialsPanel()"
+      ],
+      "why": "the App credentials entry lives on Cloud Account's Connect > Sign in page"
     }
   ],
   "scan_prefixes": [
@@ -221,7 +235,9 @@
     }
   },
   "_doc_owner_only_libs": "#1693 libs only the owner may link: libs:account is Cloud Account's alone (its Connect / Providers pages, its stores and the sign-in code behind them). Another app reads what it needs over Cloud Account's provider (libs:fleet-endpoints-android AccountClient).",
-  "owner_lib_hosts": ["ab_cloud-libs-shared/libs/account/"],
+  "owner_lib_hosts": [
+    "ab_cloud-libs-shared/libs/account/"
+  ],
   "owner_only_libs": [
     "libs:account",
     "libs:mail"

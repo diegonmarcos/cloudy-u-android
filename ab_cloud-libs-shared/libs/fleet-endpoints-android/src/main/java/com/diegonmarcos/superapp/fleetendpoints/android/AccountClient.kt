@@ -3,6 +3,7 @@ package com.diegonmarcos.superapp.fleetendpoints.android
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import com.diegonmarcos.superapp.fleetendpoints.AppCredentialsContract
 import com.diegonmarcos.superapp.fleetendpoints.SignInContract
 import org.json.JSONObject
 
@@ -117,4 +118,22 @@ object AccountClient {
             }.getOrElse { e -> "Cloud Account cannot be opened (${e.javaClass.simpleName})" }
         }
     }
+
+    /**
+     * #1693 A credential the person typed in Cloud Account (App credentials), read over the provider's per-credential grant.
+     * BLOCKS; never throws; the value is in no log and no line: a missing, refusing or unknown credential is a [AppCredentialsContract.Credential]
+     * with an empty value and the sentence naming the fix.
+     */
+    fun credential(ctx: Context, id: String, label: String = id): AppCredentialsContract.Credential {
+        if (AppCredentialsContract.entry(id) == null) return AppCredentialsContract.Credential(id, "", "unknown credential id")
+        if (!installed(ctx)) return AppCredentialsContract.Credential(id, "", SignInContract.missing(AppCredentialsContract.PROVIDER).line)
+        val r = call(ctx, AppCredentialsContract.METHOD, id)
+            ?: return AppCredentialsContract.Credential(id, "", "Cloud Account did not answer: update it or open it once")
+        if (!r.getBoolean(KEY_OK)) return AppCredentialsContract.Credential(id, "", AppCredentialsContract.refusal(r.getString(KEY_ERROR)))
+        val v = r.getString(AppCredentialsContract.KEY_VALUE).orEmpty()
+        return AppCredentialsContract.Credential(id, v, if (v.isBlank()) AppCredentialsContract.missing(label) else "from Cloud Account")
+    }
+
+    /** Opens Cloud Account at the App credentials page; null when it opened, else the reason. */
+    fun openCredentials(ctx: Context): String? = openSignIn(ctx, AppCredentialsContract.PROVIDER)
 }

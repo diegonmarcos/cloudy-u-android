@@ -224,12 +224,17 @@ class AccountVault(context: Context) {
             7 to mapOf(DRIVE_PACKAGE to listOf(com.diegonmarcos.superapp.fleetendpoints.DriveCredentialsContract.GRANT_UNISON)),
             // #1693 Cloud Mail takes the fleet's mail accounts (address, password, endpoints) from here instead of a second sign-in; revocable in Secrets.
             8 to mapOf(MAIL_PACKAGE to listOf(com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.GRANT_READ)),
+            // #1693 batch 1 of the App credentials: the git token (Drive, KG Store) and the self-hosted git host tokens (Drive).
+            9 to mapOf(
+                DRIVE_PACKAGE to listOf("cred.git.github_token", "cred.git.host.*"),
+                "com.diegonmarcos.cloudkgstore" to listOf("cred.git.github_token"),
+            ),
         )
         const val DRIVE_PACKAGE = "com.diegonmarcos.clouddrive"
         const val KEYBOARD_PACKAGE = "com.diegonmarcos.cloudkeyboard"
         const val VAULT_PACKAGE = "com.diegonmarcos.cloudvault"
         const val MAIL_PACKAGE = "com.diegonmarcos.comms.mail"
-        const val SEED_VERSION = 8
+        const val SEED_VERSION = 9
         val DEFAULT_GRANTS: Map<String, List<String>> = DEFAULT_GRANTS_BY_VERSION.values
             .fold(emptyMap<String, List<String>>()) { acc, m -> acc + m.mapValues { (k, v) -> acc[k].orEmpty() + v } }
 

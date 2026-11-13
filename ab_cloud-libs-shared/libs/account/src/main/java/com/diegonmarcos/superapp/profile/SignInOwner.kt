@@ -48,6 +48,11 @@ object SignInOwner {
     /** Cloud Account's own answer: a forge token it filed, else the last vault fetch and the way that made it. No secret leaves. */
     fun local(ctx: Context, provider: String): SignInContract.Status = runCatching {
         val vault = AccountVault(ctx)
+        if (provider == com.diegonmarcos.superapp.fleetendpoints.AppCredentialsContract.PROVIDER) {
+            val n = AppCredentialsStore.filled(vault)
+            return if (n > 0) SignInContract.Status(provider, SignInContract.State.SIGNED_IN, "$n app credential(s) filed in Cloud Account")
+            else SignInContract.Status(provider, SignInContract.State.SIGNED_OUT, "no app credential is filed: enter them in Cloud Account > Connect > Sign in > App credentials")
+        }
         if (provider == com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.PROVIDER) {
             // fleet mail is "signed in" when the vault declares accounts and at least one has a password Cloud Mail can take
             val n = runCatching { MailAccountsPublisher.build(ctx, vault).accounts }.getOrDefault(emptyList())

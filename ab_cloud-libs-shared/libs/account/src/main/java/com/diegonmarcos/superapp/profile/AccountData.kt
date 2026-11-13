@@ -269,6 +269,8 @@ object AccountData {
                         .getOrElse { error(it.javaClass.simpleName) }
                 }
                 // #1693 the fleet's mail accounts (address + password + endpoints) for Cloud Mail: default deny, the `mail.accounts` grant
+                // #1693 a credential typed in Cloud Account's App credentials page, per-credential grant `cred.<id>`, default deny
+                com.diegonmarcos.superapp.fleetendpoints.AppCredentialsContract.METHOD -> AppCredentialsStore.read(ctx, caller(ctx), arg)
                 com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.METHOD -> {
                     val who = caller(ctx)
                     val vault = AccountVault(ctx)

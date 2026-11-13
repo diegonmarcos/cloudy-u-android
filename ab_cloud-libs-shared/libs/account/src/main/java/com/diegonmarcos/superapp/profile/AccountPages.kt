@@ -551,6 +551,8 @@ fun AccountConnectPage() {
                 }
             }
         }
+        // #1693 the credentials other apps used to ask for themselves are entered here (owner only)
+        AppCredentialsPanel()
         KitSectionHeader("Origin", "", eyebrow = true)
         OriginPicker(tick) { tick++ }
         KitActionBar(listOf(KitAction("Fetch now", AccountPageTags.FETCH) { launchWay { ConnectWays.fetchNow(ctx) } }))

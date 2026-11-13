@@ -61,7 +61,7 @@ object SignInContract {
     /** The extras of the intent that opens Cloud Account at [provider]'s sign-in page. */
     fun openIntentExtras(provider: String): Map<String, String> = mapOf(
         EXTRA_SECTION to SECTION,
-        EXTRA_PAGE to if (provider == "github" || provider == "gitea" || provider == "vault") PAGE_SIGN_IN else PAGE_PROVIDERS,
+        EXTRA_PAGE to if (provider == "github" || provider == "gitea" || provider == "vault" || provider == "credentials") PAGE_SIGN_IN else PAGE_PROVIDERS,
         EXTRA_PROVIDER to provider,
     )
 
