@@ -111,6 +111,12 @@ if ok_drone:
     pinch(540, 700, 300, 60); shot("drone-06-zoomed-out")
     if p:
         x1, y1, x2, y2 = p[0]; tap_xy((x1 + x2) // 2, (y1 + y2) // 2); time.sleep(2); shot("drone-07-parts-panel"); note("drone-07-texts", dump())
+    x = dump()
+    cb = [tuple(map(int, m.groups())) for m in re.finditer(r'class="android.widget.CheckBox"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)]
+    print("checkboxes", len(cb))
+    if cb:
+        for c in cb[:3]: tap_xy((c[0] + c[2]) // 2, (c[1] + c[3]) // 2)
+        time.sleep(2); shot("drone-07b-parts-unchecked")
     for _ in range(3):
         sh("shell", "input", "swipe", "540", "1700", "540", "900", "500"); time.sleep(1)
     shot("drone-08-scrolled"); note("drone-08-texts", dump())
