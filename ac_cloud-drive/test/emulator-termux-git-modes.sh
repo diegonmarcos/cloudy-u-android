@@ -58,7 +58,7 @@ IPC_TIMEOUT=960 ipc $TERMUX terminal/exec "cmd=echo shell=\$SHELL home=\$HOME; c
 grep -q '"ok":true' "$OUT/bootstrap.json" || fail "cld.termux did not bootstrap: $(head -c 600 "$OUT/bootstrap.json")"
 state | tee "$OUT/state-healthy.txt"
 
-# The Drive clone scripts pin the branch main (fleet repos), so the fixtures are repos whose default branch is main (not octocat/Hello-World, master).
+# #1731 the clone takes the remote's default branch: Spoon-Knife (main) and Hello-World (master) must both clone, bare clone and pull.
 echo "── 1. healthy rootfs: clone, bare clone, force_pull ──"
 clone_wait Spoon-Knife https://github.com/octocat/Spoon-Knife.git | tee "$OUT/1-clone.json"; echo
 grep -q '"ok":true\|"name":"Spoon-Knife"' "$OUT/1-clone.json" || fail "healthy clone failed: $(head -c 1500 "$OUT/1-clone.json")"
@@ -66,6 +66,14 @@ IPC_TIMEOUT=900 ipc $DRIVE git/bare "url=https://github.com/github/gitignore.git
 grep -q '"ok":true' "$OUT/1-bare.json" || fail "healthy bare clone failed: $(head -c 1500 "$OUT/1-bare.json")"
 IPC_TIMEOUT=420 ipc $DRIVE git/pull force=1 name=Spoon-Knife | tee "$OUT/1-force-pull.json"; echo
 grep -q '"ok":true' "$OUT/1-force-pull.json" || fail "healthy force_pull failed: $(head -c 1500 "$OUT/1-force-pull.json")"
+echo "-- 1b master-default fixture (octocat/Hello-World, #1731) --"
+clone_wait Hello-World https://github.com/octocat/Hello-World.git | tee "$OUT/1b-clone-master.json"; echo
+grep -q '"ok":true\|"name":"Hello-World"' "$OUT/1b-clone-master.json" || fail "master-default clone failed: $(head -c 1500 "$OUT/1b-clone-master.json")"
+grep -q 'Remote branch main not found' "$OUT/1b-clone-master.json" && fail "clone still pins --branch main"
+IPC_TIMEOUT=900 ipc $DRIVE git/bare "url=https://github.com/octocat/Hello-World.git" depth=1 | tee "$OUT/1b-bare-master.json"; echo
+grep -q '"ok":true' "$OUT/1b-bare-master.json" || fail "master-default bare clone failed: $(head -c 1500 "$OUT/1b-bare-master.json")"
+IPC_TIMEOUT=420 ipc $DRIVE git/pull force=1 name=Hello-World | tee "$OUT/1b-force-pull-master.json"; echo
+grep -q '"ok":true' "$OUT/1b-force-pull-master.json" || fail "master-default force_pull failed: $(head -c 1500 "$OUT/1b-force-pull-master.json")"
 shot 1-healthy
 
 echo "── 2. the phone's state: tarball gone, stamp stale ──"

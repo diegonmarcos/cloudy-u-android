@@ -97,7 +97,7 @@ object TermuxGitWire {
             "stash_pop" -> ok(g(dir, "-c user.name=${q(a.optString("name"))} -c user.email=${q(a.optString("email"))} stash pop"))
             // #1289 Solve Conflicts: continue the rebase in progress once every file is staged; GIT_EDITOR=true keeps each message. Never a push.
             "rebase_continue" -> ok("GIT_EDITOR=true " + g(dir, "-c user.name=${q(a.optString("name"))} -c user.email=${q(a.optString("email"))} rebase --continue"))
-            "checkout_main" -> ok(g(dir, "checkout main") + " 2>/dev/null || " + g(dir, "checkout master"))
+            "checkout_main" -> ok("D=\"\$(" + g(dir, "symbolic-ref --short refs/remotes/$remote/HEAD") + " 2>/dev/null | sed 's#^[^/]*/##')\"; { [ -n \"\$D\" ] && " + g(dir, "checkout \"\$D\"") + "; } 2>/dev/null || " + g(dir, "checkout main") + " 2>/dev/null || " + g(dir, "checkout master"))  // #1731 the remote's default branch first
             "shrink" -> a.optInt("depth", 0).takeIf { it in 1..1000 }?.let { d ->
                 ok(gAuthed(dir, "fetch --depth $d ${q(remote)}") + "; " + g(dir, "reflog expire --expire=now --all") + "; " + g(dir, "gc --prune=now -q"), true, header)
             } ?: (null to "bad depth")

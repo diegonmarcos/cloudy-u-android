@@ -48,9 +48,10 @@ object StoreGit {
             "H=\"Authorization: Basic \$(printf '${com.diegonmarcos.cloudlib.gitui.GitConnectRules.USER}:%s' \"\$T\" | base64 | tr -d '\\n')\"; " +
             "git -c http.extraHeader=\"\$H\" $args; else git $args; fi"
 
-    fun cloneScript(url: String, guestDir: String, depth: Int?): String =
+    /** #1731 no `--branch` unless the repo declares one: git clones the remote's default branch (main, master, ...). */
+    fun cloneScript(url: String, guestDir: String, depth: Int?, branch: String? = null): String =
         "set -e; mkdir -p \"\$(dirname ${q(guestDir)})\"; " +
-            authed("clone --single-branch --branch main ${if (depth != null && depth > 0) "--depth $depth " else ""}${q(url)} ${q(guestDir)}")
+            authed("clone --single-branch ${if (!branch.isNullOrBlank()) "--branch ${q(branch)} " else ""}${if (depth != null && depth > 0) "--depth $depth " else ""}${q(url)} ${q(guestDir)}")
 
     /**
      * #1491 the script of one declared clone mode (the git binary, the path JGit cannot take for a partial-clone filter). A single-branch
