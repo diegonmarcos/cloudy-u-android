@@ -168,7 +168,7 @@ object CornerSwipe {
 
     /** True for the compass key: 8-way swipes, no tap, repeats while held. */
     @JvmStatic
-    fun isCompass(id: String?): Boolean = UnexpectedKb.active && id == UnexpectedKb.COMPASS
+    fun isCompass(id: String?): Boolean = UnexpectedKb.active && UnexpectedKb.keyDef(id)?.id == "compass"
 
     /** Code to send for a swipe of (dx, dy) on table key [id], or null (then the tap stands). */
     @JvmStatic

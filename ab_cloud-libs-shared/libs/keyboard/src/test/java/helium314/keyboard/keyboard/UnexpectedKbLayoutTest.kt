@@ -110,6 +110,18 @@ class UnexpectedKbLayoutTest {
                 assertEquals("g", UnexpectedKb.idOf("G", 0))
             }
             UnexpectedKb.fn = false
+            // the compass key is found by the glyph it shows as its label, and is the only compass
+            assertEquals(UnexpectedKb.COMPASS, UnexpectedKb.idOf(UnexpectedKb.COMPASS, 0))
+            assertEquals("compass", UnexpectedKb.keyDef(UnexpectedKb.COMPASS)?.id)
+            assertEquals("ctrl", UnexpectedKb.keyDef(UnexpectedKb.idOf("Ctrl", 0))?.id)
+            UnexpectedKb.active = true
+            try {
+                assertTrue(CornerSwipe.isCompass(UnexpectedKb.idOf(UnexpectedKb.COMPASS, 0)))
+                assertTrue(!CornerSwipe.isCompass(UnexpectedKb.idOf("g", 0)))
+                // compass swipes pick arrows / selection by sector (west = left arrow; north-west = select left)
+                assertEquals(helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode.ARROW_LEFT, CornerSwipe.codeForId(UnexpectedKb.COMPASS, -60, 0, 20f))
+                assertEquals(helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode.SELECT_LEFT, CornerSwipe.codeForId(UnexpectedKb.COMPASS, -50, -50, 20f))
+            } finally { UnexpectedKb.active = false }
             assertEquals("space", UnexpectedKb.idOf(null, 32))
             assertEquals("delete", UnexpectedKb.idOf("", -7))
             assertNull(UnexpectedKb.idOf("zz", 0))

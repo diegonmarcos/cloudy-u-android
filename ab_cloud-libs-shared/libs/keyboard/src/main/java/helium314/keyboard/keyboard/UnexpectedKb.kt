@@ -113,7 +113,11 @@ object UnexpectedKb {
     }
 
     @Volatile private var cached: Layout? = null
-        set(v) { field = v; tables = if (v == null) emptyList() else listOf(false, true).map { l -> v.layer(l).all.associateBy { it.id } } }
+        set(v) { field = v; tables = if (v == null) emptyList() else listOf(false, true).map { l ->
+            val all = v.layer(l).all
+            // a key is found by its id and, for the special keys, by the glyph it carries as its label (the compass key's)
+            all.associateBy { it.id } + all.filter { it.center.isNotEmpty() && it.id != it.center.lowercase() }.associateBy { it.center.lowercase() }
+        } }
     /** id -> key per layer (base, fn), rebuilt when the layout is set: the key view asks per key per draw. */
     @Volatile private var tables: List<Map<String, KeyDef>> = emptyList()
 
