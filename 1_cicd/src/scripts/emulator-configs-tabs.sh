@@ -84,6 +84,14 @@ if ! grep -qE 'text="(Agents|Perms|Logcat|X-Ray App|About)"' "$OUT/cur.xml"; the
     if tap_node "$OUT/cur.xml" 'configs'; then :; elif tap_node "$OUT/cur.xml" 'more options|settings'; then sleep 2; dump cur; tap_node "$OUT/cur.xml" '^configs$' || true; fi
     dismiss
 fi
+# a WebView / Cordova host has no native gear the uiautomator tree can see (Cloud Code): its Configs reach is the launcher shortcut
+# (guard shortcut_reach). Start the shortcut's target, FleetConfigsActivity, as root (it is not exported) and assert its strip.
+dump cur
+if ! grep -qE 'text="(Agents|Perms|Logcat|X-Ray App|About)"' "$OUT/cur.xml"; then
+    $T adb root >/dev/null 2>&1; sleep 3; $T adb wait-for-device
+    $T adb shell am start -n "$PKG/com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity" --es fleet_configs_page general >/dev/null 2>&1
+    sleep 5; dismiss
+fi
 shot configs-open 6
 # #1630: every strip is {own tabs} | Agents, Perms, Logcat, X-Ray App, About. The strip scrolls, so the tail can sit
 # off screen: walk it right to left with swipes on the strip row, collecting the labels in on-screen order.
