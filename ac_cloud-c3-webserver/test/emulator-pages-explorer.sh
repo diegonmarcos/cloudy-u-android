@@ -46,7 +46,7 @@ has "Open Embedded" || fail "All: a root row has no Open Embedded"
 has "Open Folder" || fail "All: the drive root has no Open Folder (Drive)"
 # the Open Folder chooser (Browser vs Embedded)
 tap_re "Open Folder" L && sleep 3 || fail "no Open Folder (Drive) chip"
-shoot 03-link-chooser; has "Embedded" || fail "the chooser does not offer Embedded"
+shoot 03-link-chooser; has "[Ee]mbedded" || fail "the chooser does not offer Embedded"
 tap_re "Cancel" && sleep 1
 # the served pages below the roots
 for i in 1 2 3; do up; done; shoot 02b-pages-all-served
