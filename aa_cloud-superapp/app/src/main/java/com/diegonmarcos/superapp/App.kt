@@ -50,6 +50,12 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // on the very first inflation.
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         super.onCreate()
+        // #1693 the Mattermost login and password are typed in Cloud Account (App credentials): the chat page reads them over the provider.
+        com.diegonmarcos.superapp.chat.ChatCredentials.read = { c, id ->
+            val x = com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.credential(c, id)
+            com.diegonmarcos.superapp.chat.ChatCredentials.Cred(x.value, x.line)
+        }
+        com.diegonmarcos.superapp.chat.ChatCredentials.open = { c -> com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(c) }
         // ONE auto-arm switch: Configs > Keep Wireless debugging on (default build.json::privileged_channel.default_on = off).
         com.diegonmarcos.superapp.adbdebug.ChannelAutoArm.hostSwitch = { c -> com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.enabled(c) }
         // #1513 the keeper's self-grant of WRITE_SECURE_SETTINGS goes through the shell broker (allowlisted for exactly that grant).

@@ -41,6 +41,8 @@ object AppCredentialsContract {
         Entry("git.ssh.", "Per-repository ssh passphrase", "one per synced repository: id git.ssh.<repo>; the key's passphrase", listOf(PKG_DRIVE)),
         Entry("tasks.caldav_password", "Cloud Tasks CalDAV password", "the password for the CalDAV server set up in Cloud Tasks > Configs", listOf(PKG_TASKS)),
         Entry("tasks.jmap_secret", "Cloud Tasks mail agent secret", "the JMAP bearer token or Authelia session of the mail agent (Cloud Tasks > Settings > Agent)", listOf(PKG_TASKS)),
+        Entry("mattermost.login", "Mattermost email or username", "the account that signs in to the Mattermost server (SuperApp > Chat)", listOf(PKG_SUPERAPP), secret = false),
+        Entry("mattermost.password", "Mattermost password", "the password of that Mattermost account", listOf(PKG_SUPERAPP)),
     )
 
     /** The name part of a prefixed id made safe: letters, digits, `_` and `-` only, at most 60. */

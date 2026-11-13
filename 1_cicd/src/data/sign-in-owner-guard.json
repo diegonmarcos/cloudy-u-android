@@ -4,7 +4,7 @@
   "owner": "ac_cloud-account",
   "owner_impl": {
     "ab_cloud-libs-shared/libs/auth": "libs:auth IS the sign-in implementation (device grants, the SignInWays surface) Cloud Account hosts; callers of its surface elsewhere are caught by the signin-ui rule.",
-    "ab_cloud-libs-shared/libs/mail": "libs:mail is JmapPrefs for Cloud Account; its MailFragment / MailAuthUi password prompts have no host of their own and only Cloud Account may link it (owner_only_libs).",
+    "ab_cloud-libs-shared/libs/mail": "libs:mail is JmapPrefs and the embedded mail pages (SuperApp links it too); its password form moves to a Cloud Account read in the Mail batch.",
     "ab_cloud-libs-shared/libs/gh": "libs:gh is the gh engine process (Cloud-Lib-Gh.apk) that runs gh auth login when the owner asks; #1692 keeps its login keeper. Who asks it is caught by engine-login-call and engine-login-decl."
   },
   "owner_must_hold": [
@@ -146,14 +146,6 @@
       "until": "permanent"
     },
     {
-      "path": "ab_cloud-libs-shared/libs/chat/",
-      "rules": [
-        "credential-prompt"
-      ],
-      "why": "libs:chat Mattermost password login (SuperApp Chat page)",
-      "until": "pending: not in steps 1-5"
-    },
-    {
       "path": "ab_cloud-libs-shared/libs/ops/",
       "rules": [
         "credential-prompt"
@@ -207,7 +199,6 @@
     "ab_cloud-libs-shared/libs/account/"
   ],
   "owner_only_libs": [
-    "libs:account",
-    "libs:mail"
+    "libs:account"
   ]
 }

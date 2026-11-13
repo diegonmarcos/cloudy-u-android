@@ -32,8 +32,6 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
@@ -112,42 +110,48 @@ class MattermostFragment : Fragment() {
     private fun LoginForm(ctx: Context) {
         val p = LocalKitPalette.current
         var url by remember { mutableStateOf(prefs.serverUrl) }
-        var email by remember { mutableStateOf("") }
-        var pass by remember { mutableStateOf("") }
         Header("Mattermost — Sign in")
         Field("Server URL", url, KeyboardType.Uri) { url = it }
-        Field("Email or username", email, KeyboardType.Email) { email = it }
-        Field("Password", pass, KeyboardType.Password, secret = true) { pass = it }
+        // #1693 the login and password are typed once in Cloud Account (App credentials); this page only reads them from there.
+        Text("The email or username and the password are entered in Cloud Account (App credentials) and read from there.",
+            color = p.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
         Text(loginStatus, color = p.textSecondary, fontSize = 12.sp,
             modifier = Modifier.padding(vertical = 8.dp))
-        Button(enabled = !signingIn, onClick = {
-            val u = url.trim(); val e = email.trim()
-            if (u.isBlank() || e.isBlank() || pass.isBlank()) {
-                loginStatus = "All three fields required."
-                return@Button
-            }
-            loginStatus = "Signing in…"
-            signingIn = true
-            val password = pass
-            Thread {
-                val result = runCatching {
-                    MattermostClient(serverUrl = u, token = "").login(e, password)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(enabled = !signingIn, onClick = {
+                val u = url.trim()
+                if (u.isBlank()) {
+                    loginStatus = "Server URL required."
+                    return@Button
                 }
-                main.post {
-                    result.onSuccess { r ->
-                        prefs.serverUrl = u
-                        prefs.token = r.token
-                        prefs.userId = r.user.id
-                        loggedIn = true
-                        signingIn = false
-                        loadAndRender(ctx)
-                    }.onFailure { err ->
-                        loginStatus = "Login failed: ${err.message}"
-                        signingIn = false
+                loginStatus = "Reading Cloud Account…"
+                signingIn = true
+                Thread {
+                    val login = runCatching { ChatCredentials.read(ctx, ChatCredentials.ID_LOGIN) }.getOrElse { ChatCredentials.Cred("", "Cloud Account read failed") }
+                    val password = runCatching { ChatCredentials.read(ctx, ChatCredentials.ID_PASSWORD) }.getOrElse { ChatCredentials.Cred("", "Cloud Account read failed") }
+                    val why = ChatCredentials.usable(login, password)
+                    if (why != null) { main.post { loginStatus = why; signingIn = false }; return@Thread }
+                    main.post { loginStatus = "Signing in…" }
+                    val result = runCatching {
+                        MattermostClient(serverUrl = u, token = "").login(login.value.trim(), password.value)
                     }
-                }
-            }.start()
-        }) { Text("Login") }
+                    main.post {
+                        result.onSuccess { r ->
+                            prefs.serverUrl = u
+                            prefs.token = r.token
+                            prefs.userId = r.user.id
+                            loggedIn = true
+                            signingIn = false
+                            loadAndRender(ctx)
+                        }.onFailure { err ->
+                            loginStatus = "Login failed: ${err.message}"
+                            signingIn = false
+                        }
+                    }
+                }.start()
+            }) { Text("Sign in with Cloud Account") }
+            Button(onClick = { loginStatus = ChatCredentials.open(ctx).orEmpty() }) { Text("Set it in Cloud Account") }
+        }
     }
 
     // ─────────────────────────── list view ───────────────────────────
@@ -267,11 +271,10 @@ class MattermostFragment : Fragment() {
     }
 
     @Composable
-    private fun Field(label: String, value: String, type: KeyboardType, secret: Boolean = false, onChange: (String) -> Unit) {
+    private fun Field(label: String, value: String, type: KeyboardType, onChange: (String) -> Unit) {
         OutlinedTextField(
             value = value, onValueChange = onChange, singleLine = true,
             label = { Text(label, fontSize = 11.sp) },
-            visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardOptions = KeyboardOptions(keyboardType = type),
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp))
     }
