@@ -13,7 +13,7 @@ import java.io.File
  */
 class AdbShellRestoreTest {
     private fun code(f: File) = f.readText().replace(Regex("(?s)/\\*.*?\\*/"), "").replace(Regex("//[^\\n]*"), "")
-    private val superapp = File("src/main/java/com/diegonmarcos/superapp/configs")
+    private val superapp = File("../../ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/configs")
     private val lib = File("../../ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/AdbShellPage.kt")
 
     @Test fun `the SuperApp page hosts the full channel console`() {
