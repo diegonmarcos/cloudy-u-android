@@ -90,9 +90,7 @@ object DevControlServer {
         // app start, so a paired device with Wireless Debugging ON comes back
         // online after every update/relaunch with NO manual connect port.
         // Silent no-op if not paired / WD off. Off the main + server threads.
-        Thread {
-            runCatching { com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel.autoArm(app) }
-        }.apply { isDaemon = true; name = "adb-autoconnect"; start() }
+        com.diegonmarcos.superapp.devcontrol.AdbDevRoutes.autoConnectAtStart(app)
     }
 
     fun stop() {
@@ -379,62 +377,9 @@ object DevControlServer {
                     reply(writer, "200 OK", """{"ok":true,"message":"energy ledger + sample store cleared"}""", "application/json")
                 }
                 // ── libs:shizuku-adb-debug-tools — self-contained adb shell ──
-                "adb/status" -> { reply(writer, "200 OK", adbStatusJson(ctx), "application/json") }
-                "keeper/status" -> { reply(writer, "200 OK", com.diegonmarcos.superapp.adbdebug.WdKeeper.statusJson(ctx), "application/json") }
-                "adb/netinfo" -> { reply(writer, "200 OK", adbNetInfoJson(ctx), "application/json") }
-                "adb/pair" -> {
-                    // Shizuku-exact: no host, no port. AdbPairingService discovers
-                    // _adb-tls-pairing._tcp over mDNS (a typed port was how pairing
-                    // ended up against the CONNECT port → "Connection reset"), posts
-                    // the "Enter pairing code" notification, pairs in the foreground,
-                    // then connects + starts the plane. code= is optional: a script
-                    // can hand it over here instead of typing it into the shade.
-                    val r = runCatching { com.diegonmarcos.superapp.adbdebug.AdbPairingService.start(ctx, query["code"]) }
-                    val msg = if (r.isSuccess) "pairing notification posted — enter the code there (or pass code=)"
-                              else "could not start pairing service: ${r.exceptionOrNull()?.message}"
-                    reply(writer, "200 OK", """{"ok":${r.isSuccess},"message":"${jsonEscape(msg)}"}""", "application/json")
-                }
-                "adb/autoconnect" -> {
-                    // mDNS auto-discovery of the local adbd connect service —
-                    // no manual connect port. Needs paired + Wireless Debugging ON.
-                    val (ok, msg) = com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel.autoArm(ctx)
-                    reply(writer, "200 OK", """{"ok":$ok,"message":"${jsonEscape(msg)}"}""", "application/json")
-                }
-                "adb/connect" -> {
-                    // host = IP from the main Wireless-debugging screen, port = the
-                    // CONNECT port (distinct from the pairing port). After a pair.
-                    val host = query["host"] ?: "127.0.0.1"
-                    val port = query["port"]?.toIntOrNull()
-                    if (port == null) {
-                        reply(writer, "400 Bad Request", "need host=<ip>&port=<connectPort>\n")
-                    } else {
-                        val (ok, msg) = com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel.connect(ctx, host, port)
-                        reply(writer, "200 OK", """{"ok":$ok,"message":"${jsonEscape(msg)}"}""", "application/json")
-                    }
-                }
-                "adb/server-command" -> {
-                    // The one-liner to run ONCE per boot (via adb / Wireless
-                    // Debugging) to start OUR shell-domain app_process server.
-                    val cmd = com.diegonmarcos.superapp.adbdebug.AdbShellBootstrap.serverCommand(ctx)
-                    val body = """{"command":"${jsonEscape(cmd)}","port":${com.diegonmarcos.superapp.adbdebug.AdbShellBootstrap.port()},"note":"Run once per boot. Grants the SHELL SELinux domain our server needs; after this the app is self-contained (no Shizuku app)."}"""
-                    reply(writer, "200 OK", body, "application/json")
-                }
-                "adb/diagnostics" -> {
-                    val bundle = query["bundle"] ?: "charger"
-                    reply(writer, "200 OK",
-                        com.diegonmarcos.superapp.adbdebug.AdbDiagnostics.runBundle(ctx, bundle),
-                        "application/json")
-                }
-                "adb/exec" -> {
-                    val cmd = query["cmd"]
-                    if (cmd.isNullOrBlank()) {
-                        reply(writer, "400 Bad Request", "missing cmd\n")
-                    } else {
-                        val ch = com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)
-                        val out = ch?.exec(ctx, cmd)
-                            ?: "ERR: no shell channel ready — ${com.diegonmarcos.superapp.adbdebug.LocalShellChannel.status(ctx)}\n"
-                        reply(writer, "200 OK", out)
-                    }
+                // #1682 P3 step 4d: the owner's pairing / connect / diagnostics routes live in libs:adb-shell-core (AdbDevRoutes)
+                in com.diegonmarcos.superapp.devcontrol.AdbDevRoutes.ROUTES -> com.diegonmarcos.superapp.devcontrol.AdbDevRoutes.handle(ctx, op, query)?.let {
+                    reply(writer, it.status, it.body, if (it.json) "application/json" else "text/plain")
                 }
                 // #1506 Background policy + Super Saving from the c3 peers-control tools (peers.bg_policy_get/set, peers.super_saving_on/off).
                 "bgpolicy/get" -> { reply(writer, "200 OK", com.diegonmarcos.superapp.bgpolicy.BgPolicyApi.get(ctx, query), "application/json") }
@@ -869,97 +814,6 @@ object DevControlServer {
         sb.append(""""ok":""").append(ok).append(',')
         sb.append(""""blocked":""").append(total - ok).append('}')
         sb.append('}')
-        return sb.toString()
-    }
-
-    /** Device network layout — every NIC + its IPs, plus each
-     *  ConnectivityManager Network with transports + link addresses +
-     *  routes. Answers "which interface owns 10.0.0.9 and what's the real
-     *  Wi-Fi IP" so the embedded-adb pairing targets the right address. */
-    private fun adbNetInfoJson(ctx: Context): String {
-        val sb = StringBuilder("{")
-        // ── java.net interfaces ──
-        sb.append(""""interfaces":[""")
-        runCatching {
-            val ifaces = java.net.NetworkInterface.getNetworkInterfaces()
-            var first = true
-            for (nif in java.util.Collections.list(ifaces)) {
-                val addrs = nif.inetAddresses
-                val list = java.util.Collections.list(addrs)
-                if (!first) sb.append(','); first = false
-                sb.append('{')
-                sb.append(""""name":"""").append(jsonEscape(nif.name)).append('"').append(',')
-                sb.append(""""up":""").append(runCatching { nif.isUp }.getOrDefault(false)).append(',')
-                sb.append(""""addrs":[""")
-                list.forEachIndexed { i, a ->
-                    if (i > 0) sb.append(',')
-                    sb.append('"').append(jsonEscape(a.hostAddress ?: "")).append('"')
-                }
-                sb.append("]}")
-            }
-        }
-        sb.append("],")
-        // ── ConnectivityManager networks ──
-        sb.append(""""networks":[""")
-        runCatching {
-            val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-            cm.allNetworks.forEachIndexed { i, n ->
-                if (i > 0) sb.append(',')
-                val caps = cm.getNetworkCapabilities(n)
-                val lp = cm.getLinkProperties(n)
-                sb.append('{')
-                sb.append(""""wifi":""").append(caps?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ?: false).append(',')
-                sb.append(""""cell":""").append(caps?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ?: false).append(',')
-                sb.append(""""vpn":""").append(caps?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN) ?: false).append(',')
-                sb.append(""""iface":"""").append(jsonEscape(lp?.interfaceName ?: "")).append('"').append(',')
-                sb.append(""""addrs":[""")
-                lp?.linkAddresses?.forEachIndexed { j, la ->
-                    if (j > 0) sb.append(',')
-                    sb.append('"').append(jsonEscape(la.address.hostAddress ?: "")).append('"')
-                }
-                sb.append("]}")
-            }
-        }
-        sb.append("]}")
-        return sb.toString()
-    }
-
-    /** Shell-channel ladder status (self-contained local-server first,
-     *  Shizuku fallback) + the data-driven bundle ids available via
-     *  /api/adb/diagnostics. */
-    private fun adbStatusJson(ctx: Context): String {
-        val channels = com.diegonmarcos.superapp.adbdebug.ShellChannels.all
-        val active = com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)
-        val bundles = com.diegonmarcos.superapp.adbdebug.AdbDiagnostics.bundleIds()
-        val dumpHeld = ctx.checkSelfPermission("android.permission.DUMP") ==
-            android.content.pm.PackageManager.PERMISSION_GRANTED
-        val sb = StringBuilder("{")
-        sb.append(""""active":"""").append(jsonEscape(active?.name() ?: "none")).append('"').append(',')
-        sb.append(""""dump_in_process":""").append(dumpHeld).append(',')
-        sb.append(""""channels":[""")
-        channels.forEachIndexed { i, c ->
-            if (i > 0) sb.append(',')
-            sb.append('{')
-            sb.append(""""name":"""").append(jsonEscape(c.name())).append('"').append(',')
-            sb.append(""""ready":""").append(c.isReady(ctx)).append(',')
-            sb.append(""""status":"""").append(jsonEscape(c.status(ctx))).append('"')
-            sb.append('}')
-        }
-        sb.append("],")
-        // Wireless Debugging keep-alive: is the switch on, did the last pass
-        // get the channel back, and if not, why.
-        sb.append(""""keepalive":{""")
-        com.diegonmarcos.superapp.system.WirelessDebugKeeper.Status.rows(ctx).forEachIndexed { i, (k, v) ->
-            if (i > 0) sb.append(',')
-            sb.append('"').append(jsonEscape(k)).append("\":\"").append(jsonEscape(v)).append('"')
-        }
-        sb.append("},")
-        sb.append(""""bundles":[""")
-        bundles.forEachIndexed { i, b ->
-            if (i > 0) sb.append(',')
-            sb.append('"').append(jsonEscape(b)).append('"')
-        }
-        sb.append("]}")
         return sb.toString()
     }
 

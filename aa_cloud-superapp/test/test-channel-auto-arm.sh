@@ -38,7 +38,7 @@ allowed = {LIB+"ShellAccess.kt", LIB+"ChannelDevice.kt", LIB+"EmbeddedAdbChannel
 bad = sorted(set(raw) - allowed)
 ok(not bad, "A3 no implicit caller uses the raw autoConnect", "A3 raw EmbeddedAdbChannel.autoConnect( in: " + ", ".join(bad))
 ok(re.search(r"fun autoArm\(.*ChannelAutoArm\.enabled\(ctx\).*autoConnect\(ctx\)", src(LIB+"EmbeddedAdbChannel.kt"), re.S) is not None, "A3 autoArm asks the switch before connecting", "A3 EmbeddedAdbChannel.autoArm does not consult ChannelAutoArm.enabled")
-for p, why in [(SA+"devcontrol/DevControlServer.kt", "start thread and /api/adb/autoconnect"), ("ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt", "keeper reconnect"),
+for p, why in [("ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbDevRoutes.kt", "start thread and /api/adb/autoconnect"), ("ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt", "keeper reconnect"),
                ("ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneWorker.kt", "boot worker"), (LIB+"WirelessDebugging.kt", "implicit re-arm of a privileged tool"),
                # (the updater's ShellChannelAccess is gone: its install path no longer arms the channel itself, #1682 P3 step 2)
                (LIB+"HostShell.kt", "Store/Account re-arm")]:
@@ -59,7 +59,7 @@ MUT=0; N=0
 SAp=aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp
 LSp=ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system
 LIBp=ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug
-FILES="aa_cloud-superapp/build.json $SAp/App.kt $SAp/devcontrol/DevControlServer.kt ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt $LSp/PrivilegedPlaneWorker.kt $LSp/PrivilegedPlaneBootReceiver.kt $LIBp/EmbeddedAdbChannel.kt $LIBp/WirelessDebugging.kt $LIBp/HostShell.kt $LIBp/ChannelAutoArm.kt $LIBp/ShellAccess.kt $LIBp/ChannelDevice.kt"
+FILES="aa_cloud-superapp/build.json $SAp/App.kt ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbDevRoutes.kt ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt $LSp/PrivilegedPlaneWorker.kt $LSp/PrivilegedPlaneBootReceiver.kt $LIBp/EmbeddedAdbChannel.kt $LIBp/WirelessDebugging.kt $LIBp/HostShell.kt $LIBp/ChannelAutoArm.kt $LIBp/ShellAccess.kt $LIBp/ChannelDevice.kt"
 mutate() { # mutate <desc> <file> <python-expr old> <new>
   N=$((N+1)); S="$(mktemp -d)"; mkdir -p "$S/x"
   (cd "$ROOT" && for f in $FILES; do mkdir -p "$S/x/$(dirname "$f")"; cp "$f" "$S/x/$f"; done)
@@ -75,7 +75,7 @@ PY
 mutate "SuperApp defaults on" aa_cloud-superapp/build.json '"default_on": false,
     "_default_on_doc"' '"default_on": true,
     "_default_on_doc"'
-mutate "the DevControl start thread connects raw" $SAp/devcontrol/DevControlServer.kt 'EmbeddedAdbChannel.autoArm(app)' 'EmbeddedAdbChannel.autoConnect(app)'
+mutate "the DevControl start thread connects raw" ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbDevRoutes.kt 'EmbeddedAdbChannel.autoArm(app)' 'EmbeddedAdbChannel.autoConnect(app)'
 mutate "the boot receiver ignores the switch" $LSp/PrivilegedPlaneBootReceiver.kt 'ChannelAutoArm.enabled(context)' 'true'
 mutate "the Store boot receiver ignores the switch" $LIBp/HostShell.kt 'if (ChannelAutoArm.enabled(context)) HostShell.schedule' 'HostShell.schedule'
 mutate "autoArm connects whatever the switch says" $LIBp/EmbeddedAdbChannel.kt 'if (ChannelAutoArm.enabled(ctx)) autoConnect(ctx) else false to ChannelAutoArm.OFF_MSG' 'autoConnect(ctx)'
