@@ -16,3 +16,13 @@ fun rememberPermsAsk(onResult: () -> Unit = {}): (List<PermEntry>) -> Unit {
     val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r -> PermsRequest.handleResult(ctx, r); onResult() }
     return { entries -> PermsRequest.requestVia(ctx, entries) { ask.launch(it) } }
 }
+
+/**
+ * #1682 a one-off system request for raw runtime permission names (the ADB pairing helpers' location / nearby-Wi-Fi grants), through the
+ * one place that asks: [onResult] gets each name's answer. Not catalogue-driven: the caller names exactly what the platform call needs.
+ */
+@Composable
+fun rememberRawPermAsk(onResult: (Map<String, Boolean>) -> Unit): (Array<String>) -> Unit {
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r -> onResult(r) }
+    return { names -> ask.launch(names) }
+}

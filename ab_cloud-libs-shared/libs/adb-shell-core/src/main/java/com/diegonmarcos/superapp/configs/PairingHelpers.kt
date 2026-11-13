@@ -9,8 +9,6 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +21,7 @@ import androidx.compose.ui.platform.testTag
 import com.diegonmarcos.superapp.adbdebug.LocalHotspot
 import com.diegonmarcos.superapp.adbdebug.WifiDirect
 import com.diegonmarcos.superapp.perms.PermsRequest
+import com.diegonmarcos.superapp.perms.rememberRawPermAsk
 import com.diegonmarcos.superapp.uikit.KitStoreCaption
 import com.diegonmarcos.superapp.uikit.KitStoreQuick
 import com.diegonmarcos.superapp.uikit.KitStoreRow
@@ -72,12 +71,12 @@ fun PairingHelpers() {
         }
     }.getOrElse { say("WiFi Direct failed: ${it.message}") }
 
-    val hotspotPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+    val hotspotPerm = rememberRawPermAsk { result ->
         if (result[Manifest.permission.ACCESS_FINE_LOCATION] == true) startHotspot()
         else say("Location is required by Android to create a local WiFi hotspot")
     }
-    val directPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) startDirect() else say("That permission is required by Android to create a WiFi Direct group")
+    val directPerm = rememberRawPermAsk { result ->
+        if (result.values.any { it }) startDirect() else say("That permission is required by Android to create a WiFi Direct group")
     }
 
     /** The two shared preconditions; false = the person was sent to fix one and taps again. */
@@ -102,14 +101,14 @@ fun PairingHelpers() {
     fun requestHotspot() {
         if (!preconditions("a hotspot")) return
         if (ctx.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) startHotspot()
-        else hotspotPerm.launch(PermsRequest.expand(listOf(Manifest.permission.ACCESS_FINE_LOCATION)).toTypedArray())
+        else hotspotPerm(PermsRequest.expand(listOf(Manifest.permission.ACCESS_FINE_LOCATION)).toTypedArray())
     }
 
     fun requestDirect() {
         if (!preconditions("WiFi Direct")) return
         // NEARBY_WIFI_DEVICES (33+) or ACCESS_FINE_LOCATION (below 33).
         val perm = if (Build.VERSION.SDK_INT >= 33) "android.permission.NEARBY_WIFI_DEVICES" else Manifest.permission.ACCESS_FINE_LOCATION
-        if (ctx.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) startDirect() else directPerm.launch(perm)
+        if (ctx.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) startDirect() else directPerm(arrayOf(perm))
     }
 
     @Suppress("UNUSED_VARIABLE") val reread = bump
