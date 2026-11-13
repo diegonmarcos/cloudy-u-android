@@ -326,10 +326,11 @@ private fun NoPerf(decl: PerfDecl, fetching: Boolean) {
 
 // ── TABLE ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-private val COL_TICKER = 62.dp
-private val COL_NAME = 132.dp
-private val COL_BUCKET = 104.dp
-private val COL_NUM = 58.dp
+// the width of a phone holds the ticker, the name, the weight and three period columns; the contribution and the bucket scroll in from the right
+private val COL_TICKER = 58.dp
+private val COL_NAME = 100.dp
+private val COL_BUCKET = 110.dp
+private val COL_NUM = 52.dp
 private val COL_CONTRIB = 112.dp
 private val ROW_H = 26.dp
 
@@ -369,7 +370,6 @@ private fun TableMode(
             Column(Modifier.weight(1f).horizontalScroll(scroll)) {
                 Row {
                     HeadCell(decl.word("name"), COL_NAME, left = true, on = sortKey == PerfPortfolios.SORT_NAME, desc = desc) { sortBy(PerfPortfolios.SORT_NAME) }
-                    HeadCell(group.bucketLabel, COL_BUCKET, left = true, on = sortKey == PerfPortfolios.SORT_BUCKET, desc = desc) { sortBy(PerfPortfolios.SORT_BUCKET) }
                     HeadCell(decl.word("weight"), COL_NUM, left = false, on = sortKey == PerfPortfolios.SORT_WEIGHT, desc = desc) { sortBy(PerfPortfolios.SORT_WEIGHT) }
                     decl.periods.forEach { per ->
                         HeadCell("$per %", COL_NUM, left = false, on = sortKey == PerfPortfolios.SORT_PERF && per == period, desc = desc, tag = "perf_col:$per") {
@@ -377,22 +377,23 @@ private fun TableMode(
                         }
                     }
                     HeadCell(decl.word("contrib"), COL_CONTRIB, left = false, on = sortKey == PerfPortfolios.SORT_CONTRIB, desc = desc) { sortBy(PerfPortfolios.SORT_CONTRIB) }
+                    HeadCell(group.bucketLabel, COL_BUCKET, left = true, on = sortKey == PerfPortfolios.SORT_BUCKET, desc = desc) { sortBy(PerfPortfolios.SORT_BUCKET) }
                 }
                 sorted.forEachIndexed { i, r ->
                     Row(Modifier.height(ROW_H).background(rowFill(i, r.c.ticker == picked)).clickable { picked = if (picked == r.c.ticker) "" else r.c.ticker }, verticalAlignment = Alignment.CenterVertically) {
                         TextCell(r.c.name, COL_NAME, p.text)
-                        TextCell(r.c.bucket, COL_BUCKET, p.text2)
                         NumCell(PerfPortfolios.f2(r.weight), COL_NUM, p.text)
                         decl.periods.forEach { per ->
                             val v = if (per == period) r.perf else PerfPortfolios.perf(r.c, quotes, per)
                             NumCell(PerfPortfolios.s2(v), COL_NUM, if (v == null) p.text3 else p.dir(perfDir(v)))
                         }
                         ContribCell(r.contribution, PerfPortfolios.barShare(r.contribution, rows))
+                        TextCell(r.c.bucket, COL_BUCKET, p.text2)
                     }
                 }
                 Box(Modifier.width(COL_NAME + COL_BUCKET + COL_NUM * (decl.periods.size + 1) + COL_CONTRIB).height(1.dp).background(p.hairline))
                 Row(Modifier.height(ROW_H).background(p.surfaceRaised), verticalAlignment = Alignment.CenterVertically) {
-                    TextCell(PerfPortfolios.sourceOf(basket, scheme).asOf.let { if (it.isEmpty()) "" else "weights as of $it" }, COL_NAME + COL_BUCKET, p.text2)
+                    TextCell(PerfPortfolios.sourceOf(basket, scheme).asOf.let { if (it.isEmpty()) "" else "as of $it" }, COL_NAME, p.text2)
                     NumCell(totals[3], COL_NUM, p.text, bold = true)
                     decl.periods.forEachIndexed { k, _ ->
                         val s = totals.getOrElse(4 + k) { FinFormat.DASH }
@@ -400,6 +401,7 @@ private fun TableMode(
                     }
                     val c = totals.last()
                     NumCell(c, COL_CONTRIB, if (c == FinFormat.DASH) p.text3 else p.dir(FinFormat.dirOf(c)), bold = true)
+                    TextCell("", COL_BUCKET, p.text2)
                 }
             }
         }

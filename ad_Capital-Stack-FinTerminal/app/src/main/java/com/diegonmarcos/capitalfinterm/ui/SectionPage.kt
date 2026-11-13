@@ -223,7 +223,7 @@ private fun HomeSectionTitle(title: String, count: Int) {
 private fun HomeCardTile(c: HomeCard, modifier: Modifier, perf: PerfHomeState? = null, onOpen: () -> Unit) {
     val p = LocalFinPalette.current
     val isPerf = c.entry.kind == Pages.KIND_PERF_PORTFOLIO && perf != null
-    Column(modifier.height(if (isPerf) 176.dp else 100.dp).background(p.canvas).border(1.dp, p.hairline).clickable(onClick = onOpen).padding(1.dp).testTag(HOME_CARD + c.pageId)) {
+    Column(modifier.height(if (isPerf) 200.dp else 100.dp).background(p.canvas).border(1.dp, p.hairline).clickable(onClick = onOpen).padding(1.dp).testTag(HOME_CARD + c.pageId)) {
         FinPanelHead(c.entry.fn, c.title)
         if (isPerf && perf != null) PerfCardBody(c.entry.view, perf)
         else Row(Modifier.padding(8.dp), verticalAlignment = Alignment.Top) {

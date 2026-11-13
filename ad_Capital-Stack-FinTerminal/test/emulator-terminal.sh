@@ -9,10 +9,18 @@ PKG=com.diegonmarcos.capitalfinterm
 WAIT="${FT_WAIT:-25}"
 adb install -r -g "$APK" || exit 1
 adb shell settings delete global cloud_nav_ui_mode || true
+# the launcher of an emulator can stop responding under load: its dialog must not cover the app under test
+adb shell settings put global hide_error_dialogs 1 || true
 read -r W H < <(adb shell wm size | awk -F'[ x]' '/Physical/{print $3, $4}')
 W=${W:-1080}; H=${H:-2400}
 dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 && adb pull /sdcard/ui.xml "$1" >/dev/null 2>&1 || true; }
-shot() { adb exec-out screencap -p > "$OUT/$1.png"; }
+undialog() { # a system "not responding" dialog over the app: press Wait
+  adb shell uiautomator dump /sdcard/dlg.xml >/dev/null 2>&1 && adb pull /sdcard/dlg.xml "$OUT/.dlg.xml" >/dev/null 2>&1 || return 0
+  grep -q "t responding" "$OUT/.dlg.xml" 2>/dev/null || return 0
+  DXY=$(node_xy "$OUT/.dlg.xml" "Wait"); [ -n "$DXY" ] && { adb shell input tap $DXY; sleep 2; }
+  return 0
+}
+shot() { undialog; adb exec-out screencap -p > "$OUT/$1.png"; }
 down() { adb shell input swipe $((W / 2)) $((H * 3 / 4)) $((W / 2)) $((H * 3 / 10)) 500; sleep 3; }
 # node_xy <xml> <text prefix> -> "x y" of the first node whose text starts with the key
 node_xy() {
