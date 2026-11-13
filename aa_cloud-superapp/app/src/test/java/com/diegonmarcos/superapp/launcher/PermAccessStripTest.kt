@@ -14,6 +14,7 @@ import com.diegonmarcos.superapp.launcher.PermAccess.SensorState
 import com.diegonmarcos.superapp.settings.LauncherSettingsPrefs
 import com.diegonmarcos.superapp.ui.KitPageHarness
 import com.diegonmarcos.superapp.ui.ShellFxState
+import com.diegonmarcos.superapp.shellclient.ShellResult as SR
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -143,10 +144,9 @@ class PermAccessStripTest : KitPageHarness() {
     }
 
     @Test fun `P7 #1721 every owner answer maps to a reason, an Ok with data is data`() {
-        val r = com.diegonmarcos.superapp.shellclient.ShellResult
-        assertTrue(PermAccessUi.whyNot(r.Denied("not allowlisted")).contains("refused"))
-        assertTrue(PermAccessUi.whyNot(r.Failed("timeout", true)).contains("did not complete"))
-        assertTrue(PermAccessUi.whyNot(r.Ok(1, "", "boom", "adb")).contains("exit 1"))
+        assertTrue(PermAccessUi.whyNot(SR.Denied("not allowlisted")).contains("refused"))
+        assertTrue(PermAccessUi.whyNot(SR.Failed("timeout", true)).contains("did not complete"))
+        assertTrue(PermAccessUi.whyNot(SR.Ok(1, "", "boom", "adb")).contains("exit 1"))
         val d = PermAccessUi.load({ null }); assertTrue(d is PermAccess.Dashboard.NoAccess)
     }
 }
