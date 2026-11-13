@@ -102,13 +102,13 @@ for grp in ("Primary", "Data"):
 if "Configs" in by:
     ct = by["Configs"]["tiles"]
     labels = [t.get("label") for t in ct]
-    WANT = ["Quick Actions", "UI", "|", "Firewall", "WiFi", "|", "Store", "|", "Account", "C3", "|", "Watchdog", "|", "About"]
+    WANT = ["Quick Actions", "UI", "|", "NG Firewall", "WiFi", "|", "Store", "|", "Account", "C3", "|", "Watchdog", "|", "About"]
     if labels != WANT:
         emit("T5", "Configs row = %r" % labels)
     bytgt = {t.get("label"): t.get("target") for t in ct if not t.get("separator")}
     EXP = {
         "Quick Actions": "page:config/controls", "UI": "page:config/panels-ui",
-        "Firewall": "page:config/firewall", "WiFi": "page:config/wifi",
+        "NG Firewall": "page:config/firewall", "WiFi": "page:config/wifi",
         "Store": "extapp:cloud-store", "Account": "extapp:cloud-account",
         "C3": "extapp:cloud-c3", "Watchdog": "extapp:c3-watchdog", "About": "page:config/app-about",
     }

@@ -3495,7 +3495,7 @@
               {
                 "_doc": "#1628 Configs row group 2a: Firewall -> the Network firewall page (page:config/firewall).",
                 "id": "configs-firewall",
-                "label": "Firewall",
+                "label": "NG Firewall",
                 "icon": "ic_lock",
                 "target": "page:config/firewall"
               },
@@ -5187,6 +5187,7 @@
             "label": "Network",
             "icon": "ic_settings",
             "pages": [
+              "network",
               "firewall",
               "dns",
               "webserver",
@@ -5376,10 +5377,20 @@
             "subgroup": ""
           },
           {
+            "_doc": "#1719 NETWORK — the one visible Network page, with its own bottom nav (libs:bottomnav island): Wireless | DNS | VPN | Home | NG Firewall | OS Perms | Webserver. Home (default) is the icon grid of every Network item; Wireless holds the Wi-Fi and Bluetooth icons (their pages open as before); DNS and VPN (formerly Cloud Mesh) host the existing pages; NG Firewall opens full screen with its own nav and Back; OS Perms opens Cloud Store > Access; Webserver opens Cloud C3 Webserver. The eight pages the Network group held are still declared below, now `hidden` (reached from this page; every page: route and deep link unchanged). The ADB Shell icon is not drawn here any more (explicit owner removal #1719: ADB Shell lives in Cloud C3 Webserver, whose link covers it); its page id still resolves. The structure is network/NetworkNav.kt (pure) and network/NetworkNavFragment.kt.",
+            "id": "network",
+            "label": "Network",
+            "icon": "ic_world",
+            "reaches": ["firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "bluetooth"],
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
             "_doc": "Firewall — the no-root per-app firewall (libs:firewall, firestack VPN) as a Network page. SectionPages embeds the engine's FirewallDialog (master switch, VPN consent, per-app rules) as the page; Configs ▸ Observability ▸ About keeps only a read-only status summary with a 'Manage in Network ▸ Firewall' link. First after the Watchdog hub in Network: it owns the one VPN slot the Cloud Mesh and DNS below depend on.",
             "id": "firewall",
-            "label": "Firewall",
+            "label": "NG Firewall",
             "icon": "ic_lock",
+            "hidden": true,
             "group": "Network",
             "subgroup": ""
           },
@@ -5388,6 +5399,7 @@
             "id": "dns",
             "label": "DNS",
             "icon": "ic_world",
+            "hidden": true,
             "group": "Network",
             "subgroup": ""
           },
@@ -5397,6 +5409,7 @@
             "label": "Webserver",
             "icon": "ic_web",
             "action": "action:open_webserver",
+            "hidden": true,
             "group": "Network",
             "subgroup": ""
           },
@@ -5404,9 +5417,10 @@
             "_doc": "WireGuard is a CHILD of Configs. It lives in its own module-backed section (sections[wg], module libs:net) but is surfaced here as a real config page so it appears in the Configs grid + Home-Apps Configs row in order. action=section:wg opens that section; sections[wg].parent=config makes Back from it return to Configs (MainActivity.navigateUpToParent).",
             "_doc_label": "#733 RENAMED WireGuard → Cloud Mesh, the caption only: the tile opens the same section:wg and the id stays `wg` (page:config/wg and the wizard's section:wg route name it; an id is identity, not a caption).",
             "id": "wg",
-            "label": "Cloud Mesh",
+            "label": "VPN",
             "icon": "ic_wg",
             "action": "section:wg",
+            "hidden": true,
             "group": "Network",
             "subgroup": ""
           },
@@ -5416,6 +5430,7 @@
             "label": "Apps Access",
             "icon": "ic_apps",
             "action": "action:open_apps_access",
+            "hidden": true,
             "group": "Network",
             "subgroup": ""
           },
@@ -5430,6 +5445,7 @@
               "adb-perms",
               "adb-all"
             ],
+            "hidden": true,
             "group": "Network",
             "subgroup": ""
           },
@@ -5445,6 +5461,7 @@
               "wifi-tools",
               "wifi-log"
             ],
+            "hidden": true,
             "group": "Network",
             "subgroup": ""
           },
@@ -5462,6 +5479,7 @@
               "bluetooth-debug",
               "bluetooth-dev"
             ],
+            "hidden": true,
             "group": "Network",
             "subgroup": ""
           },

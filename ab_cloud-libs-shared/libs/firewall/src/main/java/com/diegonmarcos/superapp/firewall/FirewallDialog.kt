@@ -120,8 +120,18 @@ class FirewallDialog : DialogFragment() {
                 .map { it to pm.getApplicationLabel(it).toString() }
                 .sortedBy { it.second.lowercase() }
         }
+        // #1719 NG Firewall's own sub pages are views of this one screen: status (header, master switch, explainer),
+        // apps (the full per-app list) and rules (only the apps that carry a non-default rule). SECTION_ALL, the default,
+        // is the whole screen exactly as before, so nothing that opened the dialog changes.
+        val section = arguments?.getString(ARG_SECTION) ?: SECTION_ALL
+        val showHeader = section == SECTION_ALL || section == SECTION_STATUS
+        val showList = section != SECTION_STATUS
+        val listed = if (section == SECTION_RULES) {
+            apps.filter { !FirewallRules.rule(ctx, it.first.packageName).isDefault }
+        } else apps
         Column(Modifier.fillMaxSize().background(colorResource(R.color.fw_bg)).padding(20.dp)) {
-            Text("Firewall", color = p.textPrimary, fontSize = 20.sp)
+          if (showHeader) {
+            Text("NG Firewall", color = p.textPrimary, fontSize = 20.sp)
             Text(
                 if (s == null) "" else
                     "${FirewallInfo.fmtState(s)} · ${s.blockedCount} blocked · ${s.transport}" +
@@ -141,9 +151,14 @@ class FirewallDialog : DialogFragment() {
                     "every app the firewall is blocking right now.",
                 color = p.textSecondary.copy(alpha = 0.6f), fontSize = 11.sp,
                 modifier = Modifier.padding(top = 6.dp, bottom = 12.dp))
-
+          }
+          if (showList) {
+            if (listed.isEmpty()) {
+                Text("No app has a custom rule yet: every app is allowed. Open Apps to set one.",
+                    color = p.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+            }
             LazyColumn(Modifier.fillMaxWidth().weight(1f)) {
-                items(apps, key = { it.first.packageName }) { (app, label) ->
+                items(listed, key = { it.first.packageName }) { (app, label) ->
                     val summary = remember(ruleVersion, app.packageName) {
                         summarize(FirewallRules.rule(ctx, app.packageName))
                     }
@@ -154,6 +169,7 @@ class FirewallDialog : DialogFragment() {
                     }
                 }
             }
+          }
         }
 
         editing?.let { app -> RuleEditor(app, apps.firstOrNull { it.first == app }?.second ?: app.packageName) }
@@ -278,5 +294,16 @@ class FirewallDialog : DialogFragment() {
         info = FirewallInfo.read(ctx)
     }
 
-    companion object { const val TAG = "FirewallDialog" }
+    companion object {
+        const val TAG = "FirewallDialog"
+        /** #1719 which view of the screen to draw (argument [ARG_SECTION]); absent = [SECTION_ALL]. */
+        const val ARG_SECTION = "section"
+        const val SECTION_ALL = "all"
+        const val SECTION_STATUS = "status"
+        const val SECTION_APPS = "apps"
+        const val SECTION_RULES = "rules"
+        fun newInstance(section: String): FirewallDialog = FirewallDialog().apply {
+            arguments = Bundle().apply { putString(ARG_SECTION, section) }
+        }
+    }
 }

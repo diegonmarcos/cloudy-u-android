@@ -51,8 +51,11 @@ class SubgroupHubTest : KitPageHarness() {
         assertEquals(listOf("perms", "logcat", "xray-app", "app-about"), grp("Configs").map { it.id })
         assertEquals(listOf("X-Ray Device", "Logcat Fleet"),
             grp("Tools").filter { it.id == "xray" || it.id == "logcat-fleet" }.map { it.label })
-        assertTrue("Bluetooth is a Network page", grp("Network").any { it.id == "bluetooth" })
-        assertEquals("firewall", grp("Network").first().id)
+        // #1719 the Network group shows ONE page, Network (the page with its own bottom nav); Bluetooth, the firewall and the rest
+        // are still Network pages, declared hidden and reached from it (NetworkNavParityTest holds the full list).
+        assertEquals(listOf("network"), grp("Network").map { it.id })
+        assertTrue("Bluetooth is a Network page", config.allPages.any { it.id == "bluetooth" && it.group == "Network" })
+        assertEquals("firewall", config.allPages.first { it.group == "Network" && it.id != "network" }.id)
         assertTrue("Watchdog is no Network item any more", grp("Network").none { it.id == "agents-watchdog" })
     }
 
@@ -61,19 +64,21 @@ class SubgroupHubTest : KitPageHarness() {
         // #1623: agents-watchdog hubs the Network group (hub_sections name the group now that subgroups are flattened away).
         assertEquals(listOf("Network"), hub("agents-watchdog").map { it.title })
         assertEquals(grp("Network").map { it.id }, hub("agents-watchdog")[0].tiles.map { it.id })
-        assertTrue(hub("agents-watchdog")[0].tiles.map { it.id }.containsAll(listOf("firewall", "dns")))
+        // #1719 the Network section of the hub is the one Network tile; the pages it used to list are its Home icons.
+        assertEquals(listOf("network"), hub("agents-watchdog")[0].tiles.map { it.id })
     }
 
     @Test
     fun `H3 pages navigate in-app, apps keep their own declared action`() {
-        val by = hub("agents-watchdog").flatMap { it.tiles }.associateBy { it.id }
-        assertEquals("page:config/firewall", by.getValue("firewall").target)
-        assertEquals("page:config/dns", by.getValue("dns").target)
-        assertEquals("page:config/bluetooth", by.getValue("bluetooth").target)
-        assertEquals("action:open_webserver", by.getValue("webserver").target)
-        assertEquals("action:open_apps_access", by.getValue("apps-access").target)
-        assertEquals("section:wg", by.getValue("wg").target)
-        for (p in grp("Network")) assertEquals(p.id, Sections.hubTarget("config", p), by.getValue(p.id).target)
+        // #1719 the pages are hidden behind the Network page, so their targets are read from allPages.
+        val by = config.allPages.filter { it.group == "Network" }.associateBy { it.id }
+        assertEquals("page:config/network", Sections.hubTarget("config", by.getValue("network")))
+        assertEquals("page:config/firewall", Sections.hubTarget("config", by.getValue("firewall")))
+        assertEquals("page:config/dns", Sections.hubTarget("config", by.getValue("dns")))
+        assertEquals("page:config/bluetooth", Sections.hubTarget("config", by.getValue("bluetooth")))
+        assertEquals("action:open_webserver", Sections.hubTarget("config", by.getValue("webserver")))
+        assertEquals("action:open_apps_access", Sections.hubTarget("config", by.getValue("apps-access")))
+        assertEquals("section:wg", Sections.hubTarget("config", by.getValue("wg")))
     }
 
     @Test
@@ -103,9 +108,9 @@ class SubgroupHubTest : KitPageHarness() {
         // and a Firewall tile (page:config/firewall) is present. The config-section Agents hub page is a separate surface.
         val row = Sections.all().flatMap { it.tileGroups }.single { it.title == "Configs" }.tiles.filter { !it.separator }
         assertEquals(
-            listOf("Quick Actions", "UI", "Firewall", "WiFi", "Store", "Account", "C3", "Watchdog", "About"),
+            listOf("Quick Actions", "UI", "NG Firewall", "WiFi", "Store", "Account", "C3", "Watchdog", "About"),
             row.map { it.label })
         assertTrue("Watchdog launches the C3-Watchdog app", row.any { it.label == "Watchdog" && it.target == "extapp:c3-watchdog" })
-        assertTrue("Firewall opens the Network firewall page", row.any { it.label == "Firewall" && it.target == "page:config/firewall" })
+        assertTrue("Firewall opens the Network firewall page", row.any { it.label == "NG Firewall" && it.target == "page:config/firewall" })
     }
 }

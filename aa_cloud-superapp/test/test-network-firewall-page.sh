@@ -18,15 +18,20 @@ echo "== F1: Network order =="
 got="$(python3 - "$APP/build.json" <<'PY'
 import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
-print(','.join(p['label'] for p in pages if p.get('group') == 'Network' and not p.get('hidden')))
+# #1719 the Network group shows ONE page (Network, with its own bottom nav); the pages it held are declared hidden and reached from it.
+vis = [p['label'] for p in pages if p.get('group') == 'Network' and not p.get('hidden')]
+allp = [p['label'] for p in pages if p.get('group') == 'Network' and p['id'] in ('network','firewall','dns','webserver','wg','apps-access','adb-shell','wifi','bluetooth')]
+print(','.join(vis) + '|' + ','.join(allp))
 PY
 )"
-[ "$got" = "Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi,Bluetooth" ] && ok "Network = $got" || bad "Network order is: $got"
+[ "$got" = "Network|Network,NG Firewall,DNS,Webserver,VPN,Apps Access,ADB Shell,WiFi,Bluetooth" ] && ok "Network = $got" || bad "Network order is: $got"
 
 echo "== F2: Firewall page hosts the controls =="
-grep -qE 'pageId == "firewall" +-> .*FirewallDialog\(\)\.apply \{ showsDialog = false \}' "$KT/launcher/SectionPages.kt" \
-  && ok "config/firewall hosts FirewallDialog as a page (master switch, consent, per-app rules)" \
-  || bad "config/firewall does not embed FirewallDialog (showsDialog = false)"
+grep -qE 'pageId == "firewall" +-> .*NgFirewallFragment\.newInstance\(\)' "$KT/launcher/SectionPages.kt" \
+  && ok "config/firewall opens NgFirewallFragment (#1719)" || bad "config/firewall does not open NgFirewallFragment"
+grep -q 'FirewallDialog.newInstance(tab).apply { showsDialog = false }' "$KT/network/NgFirewallFragment.kt" \
+  && ok "NG Firewall hosts FirewallDialog as its pages (master switch, consent, per-app rules)" \
+  || bad "NgFirewallFragment does not embed FirewallDialog (showsDialog = false)"
 
 echo "== F3: About is read-only for the firewall =="
 blk="$(awk '/infoSection\("Firewall"\) \{/{f=1} f{print} f&&/^        }$/{exit}' "$KT/devcontrol/DevControlFragment.kt")"

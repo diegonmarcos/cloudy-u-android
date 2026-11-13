@@ -31,5 +31,8 @@
     <item name="section_pane_1"       type="id" />
     <item name="section_pane_2"       type="id" />
     <item name="section_pane_3"       type="id" />
+    <!-- #1719 the Network page's and NG Firewall's one content pane (DNS / VPN / the firewall views). -->
+    <item name="network_pane"         type="id" />
+    <item name="ngfw_pane"            type="id" />
 
 </resources>
