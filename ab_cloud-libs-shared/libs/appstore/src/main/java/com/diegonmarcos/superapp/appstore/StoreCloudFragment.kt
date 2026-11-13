@@ -723,9 +723,13 @@ class StoreCloudFragment : KitComposeFragment() {
         val stg = stages[app.id]
         val ui = rowUi(ctx, app, s, stg, checking[app.id] == true)
         val open = expanded[app.id] == true
+        // #1704 a SILENT next update is folded into the right-hand status as a small marker (one-line row); the full
+        // "Next update: silent" text stays in the detail view. A PROMPT keeps its own explanatory line under the row.
+        val silentLine = remember(stg) { nextUpdateLine(ctx, app) }
+        val silent = silentLine == "silent"
         StoreRow.Item(app.label, open, { expanded[app.id] = !open },
             Modifier.onGloballyPositioned { rowTops[app.id] = it.positionInRoot().y }, tag = "store-row:${app.id}",
-            dot = ui.dot, dotColor = ui.dotColor, meta = ui.meta, metaColor = ui.metaColor,
+            dot = ui.dot, dotColor = ui.dotColor, meta = if (silent && ui.meta.isNotEmpty()) ui.meta + " · silent" else ui.meta, metaColor = ui.metaColor,
             // The per-app action, on the collapsed row on purpose: updating ONE app is the common case, and
             // making it expand-then-tap would cost two taps for the thing people do most.
             quick = ui.quick?.let { (label, fill) -> StoreQuick(label, fill) { next(ctx, app) } },
@@ -744,17 +748,19 @@ class StoreCloudFragment : KitComposeFragment() {
      */
     @Composable
     private fun SilentArea(ctx: Context, app: Fleet.App, stg: StoreStages.Stage?) {
-        val line = remember(stg) {
-            runCatching {
-                if (StoreStages.installedKey(ctx, app).isEmpty()) null
-                else SilentReadiness.assess(ctx, app.pkg, null).line
-            }.getOrNull()
-        } ?: return
-        Text("Next update: $line", color = (if (line == "silent") cDim else cErr).ink(), fontSize = StoreDensity.T_META.sp,
+        val line = remember(stg) { nextUpdateLine(ctx, app) } ?: return
+        if (line == "silent") return   // #1704 folded into the row's status; the detail view carries the full text
+        Text("Next update: $line", color = cErr.ink(), fontSize = StoreDensity.T_META.sp,
             maxLines = 2, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = sdp(StoreDensity.S12), end = sdp(StoreDensity.S12), bottom = sdp(StoreDensity.S4))
                 .testTag("store-silent:${app.id}"))
     }
+
+    /** The assessed next-update line of an installed app (null when not installed or unreadable). */
+    private fun nextUpdateLine(ctx: Context, app: Fleet.App): String? = runCatching {
+        if (StoreStages.installedKey(ctx, app).isEmpty()) null
+        else SilentReadiness.assess(ctx, app.pkg, null).line
+    }.getOrNull()
 
     /**
      * SharedUidMigration: the one-time card for an app whose update changes its Linux uid.
@@ -855,6 +861,11 @@ class StoreCloudFragment : KitComposeFragment() {
     @Composable
     private fun FleetDetail(ctx: Context, app: Fleet.App, ui: RowUi, stg: StoreStages.Stage?) {
         Column {
+            // #1704 the full next-update text, always reachable here (rule 16: the row only folds it).
+            remember(stg) { nextUpdateLine(ctx, app) }?.let { line ->
+                Text("Next update: $line", color = (if (line == "silent") cDim else cErr).ink(), fontSize = StoreDensity.T_META.sp,
+                    modifier = Modifier.padding(bottom = sdp(StoreDensity.S4)).testTag("store-detail-next-update:${app.id}"))
+            }
             // The chip must offer the SAME bytes the updater would install, so it
             // uses the per-ABI asset too — handing an x86_64 user the arm64 APK is
             // the manual version of the bug Fleet.App.abiReleaseUrl fixes.
