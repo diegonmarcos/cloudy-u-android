@@ -334,8 +334,10 @@ for e in $NP; do
 done
 
 # the reorg's changed pages scrolled to their bottom: the Emoji lists, the Autocomplete tables, Voice Transcription's documents
-kb nav emojis; sleep 3; for _ in 1 2 3 4; do up; done; dumpui "$OUT/bottom-emojis.xml" || true; shot "bottom-emojis"
-grep -q "Emoji lists\|Smileys and emotion" "$OUT/bottom-emojis.xml" && ok "the Emoji page lists the emojis at its bottom" || bad "no emoji lists at the bottom of the Emoji page"
+kb nav emojis; sleep 3; for _ in 1 2 3 4 5 6; do up; done; dumpui "$OUT/mid-emojis.xml" || true; shot "emoji-lists-start"
+for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do up; done; dumpui "$OUT/bottom-emojis.xml" || true; shot "bottom-emojis"
+EMOJI_HEAD='text="\(Smileys and emotion\|People and body\|Animals and nature\|Food and drink\|Travel and places\|Activities\|Objects\|Symbols\|Flags\|Emoticons\) ('
+if grep -q "$EMOJI_HEAD" "$OUT/mid-emojis.xml" "$OUT/bottom-emojis.xml"; then ok "the Emoji page lists the emojis below its settings"; else bad "no emoji lists on the Emoji page"; fi
 kb nav autocomplete; sleep 3; for _ in 1 2 3 4 5 6; do up; done; dumpui "$OUT/bottom-autocomplete.xml" || true; shot "bottom-autocomplete"
 for tt in "Personal Data" "Keys" "Urls" "Notes" "Others"; do
     grep -q "text=\"$tt (\|text=\"Add to $tt\"" "$OUT/bottom-autocomplete.xml" && ok "the Autocomplete page shows the $tt table" || bad "no $tt table on the Autocomplete page"
