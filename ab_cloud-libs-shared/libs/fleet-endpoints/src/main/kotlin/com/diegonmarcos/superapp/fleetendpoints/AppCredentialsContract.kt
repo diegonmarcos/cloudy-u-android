@@ -35,6 +35,7 @@ object AppCredentialsContract {
     const val PKG_C3 = "com.diegonmarcos.cloudc3"
     const val PKG_ME = "com.diegonmarcos.cloudme"
     const val PKG_BROWSER = "com.diegonmarcos.cloudbrowser"
+    const val PKG_MAIL = "com.diegonmarcos.comms.mail"
 
     /** Grows with each migrated app (each batch adds its entries and a seed version in AccountVault). */
     val CATALOG: List<Entry> = listOf(
@@ -54,6 +55,10 @@ object AppCredentialsContract {
         Entry("music.ytmusic.access", "YouTube Music access token", "filed by Connect (device grant) in Cloud Account", listOf(PKG_BROWSER)),
         Entry("music.ytmusic.refresh", "YouTube Music refresh token", "filed by Connect (device grant) in Cloud Account", listOf(PKG_BROWSER)),
         Entry("music.ytmusic.expires", "YouTube Music token expiry", "epoch milliseconds, 0 = never; filed by Connect", listOf(PKG_BROWSER), secret = false),
+        // Cloud Mail's secrets (it types none): a mailbox password / API token per address, and the gateway token.
+        Entry("mail.password.", "Mailbox password", "one per mailbox: id mail.password.<address> (letters, digits, _ and - only: other characters become _, lower case)", listOf(PKG_MAIL)),
+        Entry("mail.token.", "Mailbox API token", "one per JMAP-token mailbox: id mail.token.<address> (same spelling as the password)", listOf(PKG_MAIL)),
+        Entry("mail.gateway_token", "Mail gateway token", "the bearer token of Cloud Mail > Account > Authentication", listOf(PKG_MAIL)),
     )
 
     /** The name part of a prefixed id made safe: letters, digits, `_` and `-` only, at most 60. */

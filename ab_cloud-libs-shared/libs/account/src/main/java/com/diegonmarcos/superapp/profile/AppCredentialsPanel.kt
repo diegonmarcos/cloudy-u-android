@@ -122,6 +122,9 @@ private fun PrefixedCard(e: AppCredentialsContract.Entry, vault: AccountVault, s
     }
 }
 
+/** #1693 (moved from Cloud Mail's SettingTextField) whether a secret field offers the eye: only a secret, and only with something typed in it. */
+fun revealIconOffered(isSecret: Boolean, value: String): Boolean = isSecret && value.isNotEmpty()
+
 @Composable
 private fun CredentialRow(id: String, filed: Boolean, e: AppCredentialsContract.Entry, submit: (String?) -> Unit) {
     val p = LocalKitPalette.current
@@ -131,8 +134,17 @@ private fun CredentialRow(id: String, filed: Boolean, e: AppCredentialsContract.
         Text((if (filed) "filed" else "not set") + " · " + e.hint, color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
         // A credential box is kept out of the keyboard's learned words and corrections.
         val keep = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false)
+        // Keyed on emptiness, not on the value: the reveal survives typing but falls back to hidden as soon as the field is cleared, so the
+        // next secret typed into it is never printed in clear.
+        var revealRequested by remember(draft.isEmpty()) { mutableStateOf(false) }
+        val masked = e.secret && !revealRequested
         OutlinedTextField(draft, { draft = it }, label = { Text("value") }, singleLine = true, keyboardOptions = keep,
-            visualTransformation = if (e.secret) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+            visualTransformation = if (masked) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+            trailingIcon = if (revealIconOffered(e.secret, draft)) {
+                { androidx.compose.material3.TextButton(onClick = { revealRequested = !revealRequested }) { Text(if (revealRequested) "Hide" else "Show") } }
+            } else {
+                null
+            },
             modifier = Modifier.fillMaxWidth().testTag(AppCredentialsTags.field(id)))
         KitActionBar(buildList {
             add(KitAction("Save", AppCredentialsTags.save(id)) { val v = draft; draft = ""; submit(v) })

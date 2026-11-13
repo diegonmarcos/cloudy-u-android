@@ -76,7 +76,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -87,6 +86,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import app.sterna.R
+import app.sterna.fleet.CloudSecrets
+import app.sterna.ui.CloudSecretField
 import app.sterna.core.data.autoconfig.MailAutoconfigResult
 import app.sterna.core.jmap.withLoginHint
 import app.sterna.ui.browser.InAppBrowser
@@ -147,7 +148,6 @@ fun ConnectScreen(
     // Quick setup and the fields it fills are one piece of state, so chips, fields and Connect
     // can never disagree about which provider is selected (#105).
     var preset by rememberSaveable(stateSaver = PresetFormSaver) { mutableStateOf(PresetForm.NONE) }
-    var passwordVisible by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     // At first run this screen sits above the navigation graph, so the guard against a second
     // browser hangs off the activity.
@@ -608,9 +608,8 @@ fun ConnectScreen(
                                     value = password,
                                     onValue = { password = it },
                                     label = stringResource(R.string.connect_password),
-                                    visible = passwordVisible,
-                                    onVisible = { passwordVisible = it },
                                     reveal = credentialReveal,
+                                    email = username,
                                 )
                                 val busy = state is ConnectState.Connecting || state is ConnectState.Discovering
                                 // Not the manual form's submit: that reads the protocol chips, and
@@ -799,9 +798,9 @@ fun ConnectScreen(
                             label = stringResource(
                                 if (tokenMode) R.string.connect_auth_api_token else R.string.connect_password,
                             ),
-                            visible = passwordVisible,
-                            onVisible = { passwordVisible = it },
                             reveal = credentialReveal,
+                            email = username,
+                            token = tokenMode,
                         )
                         val busy = state is ConnectState.Connecting || state is ConnectState.Discovering
                         Button(
@@ -958,40 +957,24 @@ private fun EmailField(
 
 /** The secret field: a password at the credentials step, a password or an API token on the manual
  *  form (which is why the [label] is the caller's to choose). */
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+/** The secret slot: a password at the credentials step, a password or an API token on the manual form (which is why the [label] is the
+ *  caller's to choose). #1693 It is not typed here: it is entered once in Cloud Account (App credentials) and taken from there; [email]
+ *  names the mailbox the credential is filed under (blank = ask for the address first), [token] picks the API-token id. */
 @Composable
 private fun SecretField(
     value: String,
     onValue: (String) -> Unit,
     label: String,
-    visible: Boolean,
-    onVisible: (Boolean) -> Unit,
     reveal: CredentialBlockReveal,
+    email: String = "",
+    token: Boolean = false,
 ) {
-    val focusManager = LocalFocusManager.current
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValue,
-        label = { Text(label) },
-        singleLine = true,
-        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
-        trailingIcon = {
-            IconButton(onClick = { onVisible(!visible) }) {
-                Icon(
-                    if (visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                    contentDescription = stringResource(
-                        if (visible) R.string.connect_password_hide else R.string.connect_password_show,
-                    ),
-                )
-            }
-        },
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Done,
-        ),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        modifier = Modifier.fillMaxWidth().credentialField(reveal)
-            .autofill(listOf(AutofillType.Password), onValue),
+    CloudSecretField(
+        label = label,
+        idOrNull = if (email.isBlank()) null else if (token) CloudSecrets.tokenId(email) else CloudSecrets.passwordId(email),
+        filled = value.isNotEmpty(),
+        onTaken = onValue,
+        modifier = Modifier.fillMaxWidth().credentialField(reveal),
     )
 }
 
@@ -1208,7 +1191,6 @@ private fun ImportOAuthPanel(target: ConnectViewModel.SignInTarget, viewModel: C
 private fun ImportSignInPanel(target: ConnectViewModel.SignInTarget, viewModel: ConnectViewModel) {
     val account = target.account
     var password by rememberSaveable(account.id) { mutableStateOf("") }
-    var passwordVisible by rememberSaveable(account.id) { mutableStateOf(false) }
     Spacer(Modifier.height(MailMetrics.s8))
     Text(
         stringResource(R.string.connect_import_signin_title),
@@ -1236,26 +1218,13 @@ private fun ImportSignInPanel(target: ConnectViewModel.SignInTarget, viewModel: 
         )
         AppPasswordHelpLink()
     }
-    OutlinedTextField(
-        value = password,
-        onValueChange = { password = it },
-        label = { Text(stringResource(R.string.connect_password)) },
-        singleLine = true,
-        isError = target.error != null,
-        enabled = !target.verifying,
-        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        trailingIcon = {
-            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                Icon(
-                    if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                    contentDescription = null,
-                )
-            }
-        },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { if (password.isNotBlank()) viewModel.submitImportPassword(password) }),
-        // Autofill hint so password managers (Bitwarden…) recognise and fill this field.
-        modifier = Modifier.fillMaxWidth().autofill(listOf(AutofillType.Password)) { password = it },
+    // #1693 the password is entered once in Cloud Account (App credentials) and taken from there, not typed here.
+    CloudSecretField(
+        label = stringResource(R.string.connect_password),
+        idOrNull = CloudSecrets.passwordId(account.email),
+        filled = password.isNotBlank(),
+        onTaken = { password = it },
+        modifier = Modifier.fillMaxWidth(),
     )
     target.error?.let {
         Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)

@@ -1540,4 +1540,8 @@
     <string name="alert_accounts_channels_count">%1$d channels</string>
     <string name="alert_accounts_none">No accounts added yet</string>
     <string name="alert_accounts_remove">Remove account</string>
+    <string name="cloud_secret_note">entered in Cloud Account (App credentials), then take it here</string>
+    <string name="cloud_secret_taken">taken from Cloud Account</string>
+    <string name="cloud_secret_take">Take it from Cloud Account</string>
+    <string name="cloud_secret_set">Set it in Cloud Account</string>
 </resources>

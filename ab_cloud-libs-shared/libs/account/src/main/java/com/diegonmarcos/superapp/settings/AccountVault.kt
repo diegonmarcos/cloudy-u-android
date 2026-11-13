@@ -241,12 +241,14 @@ class AccountVault(context: Context) {
             14 to mapOf("com.diegonmarcos.cloudme" to listOf("cred.me.buro_backup_passphrase")),
             // #1693 batch 8: Cloud Browser's Music page takes the YouTube Music client and the tokens the device grant filed in Cloud Account.
             15 to mapOf("com.diegonmarcos.cloudbrowser" to listOf("cred.music.ytmusic.*")),
+            // #1693 batch 9: Cloud Mail's mailbox passwords, API tokens and gateway token are read from here (it types none).
+            16 to mapOf(MAIL_PACKAGE to listOf("cred.mail.password.*", "cred.mail.token.*", "cred.mail.gateway_token")),
         )
         const val DRIVE_PACKAGE = "com.diegonmarcos.clouddrive"
         const val KEYBOARD_PACKAGE = "com.diegonmarcos.cloudkeyboard"
         const val VAULT_PACKAGE = "com.diegonmarcos.cloudvault"
         const val MAIL_PACKAGE = "com.diegonmarcos.comms.mail"
-        const val SEED_VERSION = 15
+        const val SEED_VERSION = 16
         val DEFAULT_GRANTS: Map<String, List<String>> = DEFAULT_GRANTS_BY_VERSION.values
             .fold(emptyMap<String, List<String>>()) { acc, m -> acc + m.mapValues { (k, v) -> acc[k].orEmpty() + v } }
 

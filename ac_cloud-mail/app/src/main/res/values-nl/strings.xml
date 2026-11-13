@@ -1434,4 +1434,8 @@
     <string name="alert_accounts_channels_count">%1$d kanalen</string>
     <string name="alert_accounts_none">Nog geen accounts</string>
     <string name="alert_accounts_remove">Account verwijderen</string>
+    <string name="cloud_secret_note">wordt ingevoerd in Cloud Account (app-gegevens) en hier overgenomen</string>
+    <string name="cloud_secret_taken">overgenomen uit Cloud Account</string>
+    <string name="cloud_secret_take">Overnemen uit Cloud Account</string>
+    <string name="cloud_secret_set">Instellen in Cloud Account</string>
 </resources>

@@ -1454,4 +1454,8 @@
     <string name="alert_accounts_channels_count">Каналов: %1$d</string>
     <string name="alert_accounts_none">Записей пока нет</string>
     <string name="alert_accounts_remove">Удалить запись</string>
+    <string name="cloud_secret_note">вводится в Cloud Account (учётные данные приложений) и берётся здесь</string>
+    <string name="cloud_secret_taken">взято из Cloud Account</string>
+    <string name="cloud_secret_take">Взять из Cloud Account</string>
+    <string name="cloud_secret_set">Задать в Cloud Account</string>
 </resources>

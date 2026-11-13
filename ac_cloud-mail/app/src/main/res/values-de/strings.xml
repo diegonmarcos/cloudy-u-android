@@ -1431,4 +1431,8 @@
     <string name="alert_accounts_channels_count">%1$d Kanäle</string>
     <string name="alert_accounts_none">Noch keine Konten</string>
     <string name="alert_accounts_remove">Konto entfernen</string>
+    <string name="cloud_secret_note">wird in Cloud Account (App-Zugangsdaten) eingegeben und hier übernommen</string>
+    <string name="cloud_secret_taken">aus Cloud Account übernommen</string>
+    <string name="cloud_secret_take">Aus Cloud Account übernehmen</string>
+    <string name="cloud_secret_set">In Cloud Account festlegen</string>
 </resources>

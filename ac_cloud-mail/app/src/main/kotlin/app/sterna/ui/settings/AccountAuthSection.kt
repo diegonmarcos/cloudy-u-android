@@ -37,11 +37,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.sterna.R
+import app.sterna.fleet.CloudSecrets
+import app.sterna.ui.CloudSecretField
 import app.sterna.core.data.account.GatewayMode
 import app.sterna.core.data.account.GatewayStatus
 import app.sterna.core.jmap.GatewayCookies
@@ -148,17 +149,14 @@ fun AccountAuthSection(
             GatewayMode.NONE -> Hint(R.string.gw_none_hint)
             GatewayMode.BEARER -> {
                 Hint(R.string.gw_bearer_hint)
-                var draft by remember(fleetToken) { mutableStateOf(fleetToken) }
-                OutlinedTextField(
-                    value = draft, onValueChange = { draft = it }, singleLine = true,
-                    label = { Text(stringResource(R.string.gw_fleet_token_label)) },
-                    visualTransformation = PasswordVisualTransformation(),
+                // #1693 the gateway token is entered once in Cloud Account (App credentials) and taken from there, not typed here.
+                CloudSecretField(
+                    label = stringResource(R.string.gw_fleet_token_label),
+                    idOrNull = CloudSecrets.GATEWAY_TOKEN_ID,
+                    filled = fleetToken.isNotBlank(),
+                    onTaken = { onFleetToken(it.trim()) },
                     modifier = Modifier.fillMaxWidth().testTag(AccountAuthTags.FLEET_TOKEN),
                 )
-                Button(
-                    onClick = { onFleetToken(draft) }, enabled = draft.trim() != fleetToken,
-                    modifier = Modifier.testTag(AccountAuthTags.FLEET_SAVE),
-                ) { Text(stringResource(R.string.gw_fleet_token_save)) }
             }
             GatewayMode.AUTHELIA -> {
                 val signed = status == GatewayStatus.SIGNED_IN

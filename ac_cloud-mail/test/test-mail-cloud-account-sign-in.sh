@@ -41,7 +41,7 @@ gate = s.index('caller is not a fleet app'); m = s.index('MailAccountsContract.M
 body = s[m:m + 700]
 sys.exit(0 if gate < m and 'MailAccountsContract.GRANT_READ' in body and 'who != ctx.packageName' in body and 'error("no grant for $who")' in body else 1)
 PY
-    code "$6" | grep -q '8 to mapOf(MAIL_PACKAGE to listOf(com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.GRANT_READ))' && code "$6" | grep -q 'SEED_VERSION = 8' || { echo "the grant is not seeded for the mail app at version 8"; return 1; }
+    code "$6" | grep -q '8 to mapOf(MAIL_PACKAGE to listOf(com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.GRANT_READ))' && code "$6" | grep -Eq 'SEED_VERSION = (8|9|1[0-9])' || { echo "the grant is not seeded for the mail app at version 8 (a later SEED_VERSION is fine)"; return 1; }
     return 0
 }
 echo "== S1-S3 =="

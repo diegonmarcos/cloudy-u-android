@@ -59,8 +59,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import app.sterna.R
 import app.sterna.ui.components.Monogram
 import app.sterna.ui.components.onAccentColor
@@ -375,42 +373,20 @@ fun SettingCopyableRow(
     }
 }
 
-internal fun revealIconOffered(isPassword: Boolean, value: String): Boolean =
-    isPassword && value.isNotEmpty()
-
+// #1693 the secret slot (password / API token) moved to Cloud Account: this is a plain text field again. The reveal rule it had
+// (revealIconOffered, keyed on emptiness) lives with the field that now masks a secret: libs:account's App credentials page.
 @Composable
 fun SettingTextField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
     keyboardType: KeyboardType = KeyboardType.Text,
-    isPassword: Boolean = false,
 ) {
-    // Keyed on emptiness, not on the value: the reveal survives typing but falls back to hidden
-    // as soon as the field is cleared. Without the key a revealed-then-cleared field prints the
-    // next secret typed into it in clear text.
-    var revealRequested by remember(value.isEmpty()) { mutableStateOf(false) }
-    val masked = isPassword && !revealRequested
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
         singleLine = true,
-        visualTransformation = if (masked) PasswordVisualTransformation() else VisualTransformation.None,
-        trailingIcon = if (revealIconOffered(isPassword, value)) {
-            {
-                IconButton(onClick = { revealRequested = !revealRequested }) {
-                    Icon(
-                        if (revealRequested) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                        contentDescription = stringResource(
-                            if (revealRequested) R.string.connect_password_hide else R.string.connect_password_show,
-                        ),
-                    )
-                }
-            }
-        } else {
-            null
-        },
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         modifier = Modifier
             .fillMaxWidth()

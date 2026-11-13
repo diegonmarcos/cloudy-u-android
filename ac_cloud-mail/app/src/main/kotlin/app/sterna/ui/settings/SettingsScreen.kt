@@ -145,6 +145,8 @@ import app.sterna.ui.navigateOnce
 import app.sterna.ui.rememberLeaveOnce
 import app.sterna.ui.rememberMotionEnabled
 import app.sterna.R
+import app.sterna.fleet.CloudSecrets
+import app.sterna.ui.CloudSecretField
 import app.sterna.ui.connect.ConnectScreen
 import app.sterna.ui.components.AppPasswordHelpLink
 import app.sterna.ui.components.LoadingRing
@@ -1789,19 +1791,16 @@ private fun AccountDetailScreen(
                 // token, which save() would overwrite with whatever is typed here, killing the
                 // account. (API-token accounts do type their token into this slot.)
                 if (account.authType != AuthType.OAUTH) {
-                    SettingTextField(
-                        // For API-token accounts the encrypted slot holds the token, not a password.
-                        label = stringResource(
-                            if (account.authType == AuthType.API_TOKEN) {
-                                R.string.settings_api_token_label
-                            } else {
-                                R.string.settings_password_label
-                            },
-                        ),
-                        value = password,
-                        onValueChange = { password = it; markEdited(); viewModel.clearConnTest() },
-                        keyboardType = KeyboardType.Password,
-                        isPassword = true,
+                    // #1693 the password / API token is entered once in Cloud Account (App credentials) and taken from there.
+                    val secretLabel = stringResource(
+                        if (account.authType == AuthType.API_TOKEN) R.string.settings_api_token_label else R.string.settings_password_label,
+                    )
+                    CloudSecretField(
+                        label = secretLabel,
+                        idOrNull = if (username.isBlank()) null else if (account.authType == AuthType.API_TOKEN) CloudSecrets.tokenId(username) else CloudSecrets.passwordId(username),
+                        filled = password.isNotBlank(),
+                        onTaken = { password = it; markEdited(); viewModel.clearConnTest() },
+                        modifier = Modifier.padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s4),
                     )
                 }
             }

@@ -113,11 +113,10 @@
     {
       "path": "ac_cloud-mail/",
       "rules": [
-        "credential-prompt",
         "device-grant"
       ],
-      "why": "Cloud Mail is a general mail client: the per-account IMAP/JMAP password and provider OAuth are protocol logins of THAT client (third-party mailboxes), not fleet sign-ins. The fleet's own accounts come from Cloud Account (MailAccountSync, #1693: 'Sign in via Cloud Account' + 'Take the accounts')",
-      "until": "permanent"
+      "why": "Cloud Mail: every password / token field is gone (taken from Cloud Account, #1693); what remains is the OAuth device grant in core/jmap OAuthClient, which moves to Cloud Account in the next Mail step",
+      "until": "pending: Mail OAuth device grant"
     },
     {
       "path": "ac_cloud-vault/",
