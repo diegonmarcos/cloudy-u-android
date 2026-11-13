@@ -3,15 +3,9 @@
  "files": [
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/App.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/ShellActivity.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/DeviceControls.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/AboutLogcat.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbBridgeApi.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlFragment.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlServer.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/FleetLogcatFragment.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/XrayExport.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/LauncherStatusStrip.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkPopupSections.kt"
  ],
  "gradle": [

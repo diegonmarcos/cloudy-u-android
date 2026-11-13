@@ -44,7 +44,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import android.widget.Toast
 import com.diegonmarcos.superapp.BuildConfig
-import com.diegonmarcos.superapp.adbdebug.WirelessDebugging
+import com.diegonmarcos.superapp.system.WirelessDebuggingSwitch
 import com.diegonmarcos.superapp.updater.BuildConfig as UpdBuildConfig
 import com.diegonmarcos.superapp.updater.BuildAge
 import com.diegonmarcos.superapp.updater.Fleet
@@ -476,7 +476,7 @@ class DevControlFragment : KitComposeFragment() {
             // Status is read here (unprivileged); every control (pair, connect, the server, Shizuku)
             // is on the ADB Shell page, which the button opens.
             row("Wireless debugging",
-                if (WirelessDebugging.isOn(ctxAny())) "ON" else "OFF")
+                if (WirelessDebuggingSwitch.isOn(ctxAny())) "ON" else "OFF")
             button("ADB Shell ›", gray = true) { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) }
             // The consolidated cloud-data config that feeds the mesh.
             small("Config source:")

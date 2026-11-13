@@ -122,8 +122,7 @@ internal fun FleetLogcatScreen(
         // ── the reader: the mechanism in force ────────────────────────────────
         val reader = remember(held, status) {
             if (held) "Reader: READ_LOGS granted — in-process, every app, nothing needs to stay running."
-            else "Reader: shell channel (${com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)?.name() ?: "none ready"}; " +
-                "Shizuku: ${com.diegonmarcos.superapp.adbdebug.ShizukuAdb.status()}). Other apps' logs need READ_LOGS or a live channel."
+            else "Reader: shell channel (${com.diegonmarcos.superapp.system.AdbReadiness.state.value.let { if (it.usable) it.via else "none ready" }}). Other apps' logs need READ_LOGS or a live channel."
         }
         Text(reader, color = if (held) p.ok else p.textSecondary, fontSize = 11.sp, modifier = Modifier.testTag("logfleet:reader"))
         if (!held) {

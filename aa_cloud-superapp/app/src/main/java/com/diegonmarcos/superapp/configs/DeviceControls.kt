@@ -16,7 +16,7 @@ import android.telephony.TelephonyManager
 import android.util.Base64
 import com.diegonmarcos.superapp.BuildConfig
 import com.diegonmarcos.superapp.ShellActivity
-import com.diegonmarcos.superapp.adbdebug.WirelessDebugging
+import com.diegonmarcos.superapp.system.WirelessDebuggingSwitch
 import com.diegonmarcos.superapp.system.WirelessDebugKeeper
 import com.diegonmarcos.superapp.devcontrol.DevControlServer
 import com.diegonmarcos.superapp.devtools.DevControlPrefs
@@ -61,7 +61,7 @@ import org.json.JSONObject
  * ── Why a write is not believed ───────────────────────────────────────────
  * Every [set] returns a [Verdict] computed by RE-READING the same source
  * [read] uses, so `ok` means the device agrees, never that a call did not
- * throw. That is the shape [WirelessDebugging.set] already proved in this
+ * throw. That is the shape [WirelessDebuggingSwitch.set] already proved in this
  * repo, and the reason the Wireless-debugging entry below is three lines: it
  * was already right.
  *
@@ -229,20 +229,20 @@ object DeviceControls {
         ),
 
         // CATEGORY 2, and the one control whose whole ladder was already
-        // written: WirelessDebugging tries WRITE_SECURE_SETTINGS first, then a
+        // written: WirelessDebuggingSwitch tries WRITE_SECURE_SETTINGS first, then a
         // live shell channel, and its Result is a re-read either way. Blocked
         // only when BOTH rungs are gone, which is exactly when it could not
         // land the write.
         "wireless_debugging" to Control(
             // Settings.Global.adb_wifi_enabled — the daemon's own flag.
             observed = true,
-            read = { ctx -> WirelessDebugging.isOn(ctx) },
+            read = { ctx -> WirelessDebuggingSwitch.isOn(ctx) },
             set = { ctx, on ->
                 // The keep-alive follows the owner's hand: switching debugging
                 // off here must not be undone by the watchdog a minute later,
                 // and switching it on here is asking for it to stay on.
                 WirelessDebugKeeper.Prefs.setEnabled(ctx, on)
-                val r = WirelessDebugging.set(ctx, on)
+                val r = WirelessDebuggingSwitch.set(ctx, on)
                 Verdict(r.ok, "${r.channel}: ${r.detail}")
             },
             blocked = { ctx ->

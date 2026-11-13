@@ -91,17 +91,14 @@ internal object AboutLogcat {
             return "Per-app filtering needs Android 10+ (logcat --uid). Use All Apps on this device."
         }
         val cmd = args.joinToString(" ")
-        // The chosen mode's channel; Shizuku directly only where the mode uses Shizuku (never in the adb modes).
-        val out = com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)?.exec(ctx, cmd)
-            ?: (if (com.diegonmarcos.superapp.adbdebug.ShellChannels.modeUses(ctx, com.diegonmarcos.superapp.adbdebug.ChannelSelector.SHIZUKU))
-                com.diegonmarcos.superapp.adbdebug.ShizukuAdb.exec(ctx, cmd) else null)
+        // #1682 P3: the owner's broker (the chosen mode's channel, Shizuku included where the mode uses it), through the output door.
+        val out = com.diegonmarcos.superapp.bgpolicy.BgHost.shell(ctx)?.exec(cmd)
         return out?.ifBlank { "(empty — nothing in the buffer for this scope)" }
             ?: ("Reading another app's logs needs READ_LOGS, which Android will not give an " +
                 "app at install time.\n\nTap \"Enable all-app logs\" below: it opens Configs > Perms, whose " +
                 "Privileged row grants it through Shizuku or a paired adb ONCE, and the grant sticks — after " +
                 "that this works with Shizuku stopped.\n\nShell channel: " +
-                (com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)?.name() ?: "none ready") +
-                "\nShizuku: " + com.diegonmarcos.superapp.adbdebug.ShizukuAdb.status())
+                com.diegonmarcos.superapp.system.AdbReadiness.state.value.let { if (it.usable) it.via else "none ready (${it.why.ifBlank { "not checked yet" }})" })
     }
 
     /** Every installed app as (label, uid), A–Z. */

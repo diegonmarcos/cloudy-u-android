@@ -8,9 +8,6 @@ import android.os.Build
 import android.provider.MediaStore
 import android.provider.Settings
 import com.diegonmarcos.superapp.BuildConfig
-import com.diegonmarcos.superapp.adbdebug.ChannelOps
-import com.diegonmarcos.superapp.adbdebug.SetupAction
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
 import com.diegonmarcos.superapp.battery.BatteryRepository
 import com.diegonmarcos.superapp.ops.dagu.DaguPrefs
 import com.diegonmarcos.superapp.fleetendpoints.android.AccountClient
@@ -65,16 +62,16 @@ internal object XrayExport {
         say("checking the ADB shell…")
         val gate = XrayAdbGate.run(
             ready = { com.diegonmarcos.superapp.system.AdbReadiness.check(ctx).usable },
-            // the ADB Shell page's own Reconnect (lib ChannelOps), not a raw connect
-            rearm = { runCatching { ChannelOps.reconnect(ctx) }.isSuccess && com.diegonmarcos.superapp.system.AdbReadiness.check(ctx, fresh = true).usable },
+            // the ADB Shell page's own Connect chain (the host hook AdbReadiness.connector), not a raw connect
+            rearm = { runCatching { com.diegonmarcos.superapp.system.AdbReadiness.connector?.invoke(ctx) }.isSuccess && com.diegonmarcos.superapp.system.AdbReadiness.check(ctx, fresh = true).usable },
             openWirelessDebugging = { openWirelessDebugging(ctx) },
             ask = ask,
         )
         if (gate is XrayAdbGate.Result.Cancelled) return "Export cancelled"
-        val ch = if (gate is XrayAdbGate.Result.Ready) ShellChannels.active(ctx) else null
+        val ch = if (gate is XrayAdbGate.Result.Ready) com.diegonmarcos.superapp.system.AdbReadiness.state.value.via else null
         val shell = ch?.let { c ->
             object : XrayShell {
-                override val channel = c.name()
+                override val channel = c
                 // #1510 through the SuperApp's one shell broker (SuperApp entry: the X-Ray probes are declared `exact` lines).
                 override fun exec(cmd: String): String? = (com.diegonmarcos.superapp.shellclient.ShellClient.execOut(ctx, cmd, 60_000L) as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.stdout
             }
@@ -158,7 +155,7 @@ internal object XrayExport {
     }
 
     private fun openWirelessDebugging(ctx: Context) {
-        runCatching { ChannelOps.setup(ctx, SetupAction.OPEN_WIRELESS_DEBUGGING) }
+        runCatching { com.diegonmarcos.superapp.shellclient.ShellClient.openWirelessDebuggingSettings(ctx) }
     }
 }
 

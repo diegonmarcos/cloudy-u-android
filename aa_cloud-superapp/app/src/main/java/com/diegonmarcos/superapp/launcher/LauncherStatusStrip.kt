@@ -373,7 +373,7 @@ class StatusStripModel(private val context: Context) {
         // #1550 a Wireless debugging / adb switch flipped: the dot re-checks the transport now (no cached green).
         override fun onChange(selfChange: Boolean) {
             refreshAdb()
-            runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.invalidate(context) }
+            runCatching { com.diegonmarcos.superapp.shellclient.ShellClient.invalidate(context) }
             refreshBroker()
         }
     }
@@ -562,7 +562,7 @@ class StatusStripModel(private val context: Context) {
     /** One live check (an `id -u` round trip, off the main thread) when the strip opens or the screen resumes; no timer. */
     internal fun refreshBroker() {
         Thread {
-            val r = runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(context) }.getOrNull()
+            val r = runCatching { com.diegonmarcos.superapp.shellclient.ShellClient.status(context) }.getOrNull()
             if (r != null) { com.diegonmarcos.superapp.system.AdbReadiness.publish(r); mainHandler.post { noteBroker(r) } }
         }.start()
     }
@@ -571,7 +571,7 @@ class StatusStripModel(private val context: Context) {
         val cr = context.contentResolver
         val usb = runCatching { android.provider.Settings.Global.getInt(cr, android.provider.Settings.Global.ADB_ENABLED, 0) == 1 }.getOrDefault(false)
         // Wireless debugging: the lib's own read (Settings.Global adb_wifi_enabled, API 30+).
-        val wifi = runCatching { com.diegonmarcos.superapp.adbdebug.WirelessDebugging.isOn(context) }.getOrDefault(false)
+        val wifi = runCatching { com.diegonmarcos.superapp.system.WirelessDebuggingSwitch.isOn(context) }.getOrDefault(false)
         hasAdb = usb || wifi
         applyIconTints()
     }
