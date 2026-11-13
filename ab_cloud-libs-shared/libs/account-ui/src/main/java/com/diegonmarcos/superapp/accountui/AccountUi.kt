@@ -43,6 +43,11 @@ import org.json.JSONObject
 interface AccountUiHost {
     /** The GitHub token for a private source repo, or null (public repos still read). */
     fun ghToken(ctx: Context): String? = null
+
+    /** #1693 a credential filed in Cloud Account's App credentials (Cloud Account answers from its vault); null where this host cannot read one. */
+    fun appCredential(ctx: Context, id: String): String? = null
+    /** #1693 opens where App credentials are entered: null when it opened, else the sentence saying where to go. */
+    fun openCredentials(ctx: Context): String? = "Open Cloud Account > Connect > Sign in > App credentials"
     /** Runs one adb-shell line through the host's privileged channel; null = no channel answered. */
     fun shell(ctx: Context, cmd: String): String? = null
     /** Configs > Android > Runbook > Setup steps. */

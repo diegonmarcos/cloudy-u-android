@@ -74,7 +74,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import com.diegonmarcos.clouddrive.BuildConfig
 import com.diegonmarcos.clouddrive.Declarations
@@ -1048,7 +1047,9 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                         item(key = "host-card-" + host.id) {
                             GitHostCard(
                                 decl = host, state = hs,
-                                onSignIn = { u, t -> hostsState.signIn(host, u, t) },
+                                onTakeToken = { u -> hostsState.takeFromCloudAccount(host, u) },
+                                onOpenCredentials = { hostsState.openCloudAccount() },
+                                said = hostsState.said,
                                 onSignOut = { hostsState.signOut(host) },
                                 onRefresh = { hostsState.refresh(host) },
                                 onOpenTokenPage = { actions.openUrl(host.tokenUrl) },
@@ -1951,11 +1952,28 @@ private fun RepoSettingsSheet(repo: ManagedRepo, coordinator: GitSyncCoordinator
             }
             if (authKind == "https") {
                 OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.sync_auth_username)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(secret, { secret = it }, label = { Text(stringResource(if (hasSecret) R.string.sync_auth_token_stored else R.string.sync_auth_token)) }, singleLine = true, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
             }
             if (authKind == "ssh") {
                 OutlinedTextField(keyPath, { keyPath = it }, label = { Text(stringResource(R.string.sync_auth_key_path)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(secret, { secret = it }, label = { Text(stringResource(R.string.sync_auth_passphrase)) }, singleLine = true, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+            }
+            // #1693 the token / passphrase is typed in Cloud Account (App credentials); here it is only taken from there.
+            if (authKind == "https" || authKind == "ssh") {
+                val ctx = LocalContext.current
+                val scope = rememberCoroutineScope()
+                var credLine by remember { mutableStateOf("") }
+                Text(stringResource(if (hasSecret) R.string.sync_auth_token_stored else R.string.sync_auth_from_account), Modifier.padding(top = DriveMetrics.pad),
+                    style = MaterialTheme.typography.bodySmall)
+                if (credLine.isNotBlank()) Text(credLine, style = MaterialTheme.typography.bodySmall)
+                Row(Modifier.padding(top = DriveMetrics.gapWide), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
+                    Pill(stringResource(R.string.sync_auth_take), {
+                        val id = if (authKind == "ssh") CloudCredentials.sshPassphraseId(repo.id) else CloudCredentials.repoTokenId(repo.id)
+                        scope.launch {
+                            val c = withContext(Dispatchers.IO) { CloudCredentials.read(ctx, id) }
+                            if (c.present) { secret = c.value; credLine = ctx.getString(R.string.sync_auth_taken) } else credLine = c.line
+                        }
+                    })
+                    Pill(stringResource(R.string.sync_auth_set), { credLine = CloudCredentials.openAccount(ctx).orEmpty() })
+                }
             }
             Text(stringResource(R.string.sync_settings_author), Modifier.padding(top = DriveMetrics.padWide), style = MaterialTheme.typography.labelLarge)
             OutlinedTextField(authorName, { authorName = it }, label = { Text(stringResource(R.string.sync_settings_author_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())

@@ -24,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,15 +49,15 @@ object GitConnectTags {
  * typed once and kept encrypted by libs:git-sync's GitCredentialStore.
  */
 @Composable
-fun GitConnectPanel(specs: List<GitConnectSpec>, hostToken: (Context) -> String? = { null }) {
+fun GitConnectPanel(specs: List<GitConnectSpec>, hostToken: (Context) -> String? = { null }, openCredentials: ((Context) -> String?)? = null) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (specs.isEmpty()) Text("No repo is declared for this profile.", Modifier.testTag("gitconnect:none"))
-        for (s in specs) GitConnectRepo(s, hostToken)
+        for (s in specs) GitConnectRepo(s, hostToken, openCredentials)
     }
 }
 
 @Composable
-private fun GitConnectRepo(spec: GitConnectSpec, hostToken: (Context) -> String?) {
+private fun GitConnectRepo(spec: GitConnectSpec, hostToken: (Context) -> String?, openCredentials: ((Context) -> String?)?) {
     val ctx = LocalContext.current
     val gc = remember(spec) { GitConnect(ctx, spec, hostToken) }
     val scope = rememberCoroutineScope()
@@ -66,7 +65,7 @@ private fun GitConnectRepo(spec: GitConnectSpec, hostToken: (Context) -> String?
     var line by remember { mutableStateOf("Not pulled yet") }
     var conflict by remember { mutableStateOf(false) }
     var diff by remember { mutableStateOf("") }
-    var typed by remember { mutableStateOf("") }
+    var opened by remember { mutableStateOf("") }
     val texts = remember { mutableStateMapOf<String, String>() }
     val hasToken = remember(tick) { gc.hasToken() }
 
@@ -86,9 +85,10 @@ private fun GitConnectRepo(spec: GitConnectSpec, hostToken: (Context) -> String?
         Text("${spec.label} · ${spec.owner}/${spec.repo}@${spec.ref}")
         Text("${GitConnectRules.access(hasToken)} · $line", Modifier.testTag(GitConnectTags.state(spec.id)))
         if (!hasToken) {
-            OutlinedTextField(typed, { typed = it }, Modifier.fillMaxWidth().testTag(GitConnectTags.token(spec.id)),
-                label = { Text("GitHub token (kept encrypted)") }, singleLine = true, visualTransformation = PasswordVisualTransformation())
-            TextButton({ gc.saveToken(typed); typed = ""; tick++; pull() }, Modifier.testTag(GitConnectTags.saveToken(spec.id)), enabled = typed.isNotBlank()) { Text("Connect") }
+            // #1693 the token is typed once in Cloud Account (App credentials) and read from there: no secret is typed on this page.
+            Text("GitHub token: enter it in Cloud Account (App credentials), then pull again.", Modifier.testTag(GitConnectTags.token(spec.id)))
+            if (openCredentials != null) TextButton({ opened = openCredentials(ctx).orEmpty() }, Modifier.testTag(GitConnectTags.saveToken(spec.id))) { Text("Open Cloud Account") }
+            if (opened.isNotBlank()) Text(opened)
         }
         TextButton({ pull() }, Modifier.testTag(GitConnectTags.pull(spec.id))) { Text("Pull") }
         for (p in spec.paths) {

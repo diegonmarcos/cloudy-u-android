@@ -50,7 +50,6 @@ fun AppCredentialsPanel() {
     val vault = remember { AccountVault(ctx) }
     var tick by remember { mutableIntStateOf(0) }
     var said by remember { mutableStateOf("") }
-    var newHost by remember { mutableStateOf("") }
     val ids = remember(tick) { AppCredentialsStore.ids(vault) }
     KitSectionHeader("App credentials", "", eyebrow = true)
     Column(Modifier.testTag(AppCredentialsTags.PANEL), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -62,17 +61,23 @@ fun AppCredentialsPanel() {
             else if (AppCredentialsStore.put(vault, id, value)) "filed $id" else "not filed: empty, too long or unknown"
             tick++
         }
-        for (e in AppCredentialsContract.CATALOG.filter { it.prefix }) KitCard {
-            Text(e.label, color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
-            OutlinedTextField(newHost, { newHost = it.trim() }, label = { Text("host name (id ${e.id}<host>)") }, singleLine = true,
-                modifier = Modifier.fillMaxWidth().testTag(AppCredentialsTags.NEW_ID))
-            val id = e.id + newHost
-            if (newHost.isNotBlank() && AppCredentialsContract.entry(id) != null) CredentialRow(id, AppCredentialsStore.get(vault, id).isNotBlank(), e) { value ->
-                said = if (value == null) { AppCredentialsStore.remove(vault, id); "cleared $id" }
-                else if (AppCredentialsStore.put(vault, id, value)) "filed $id" else "not filed"
-                if (value != null) newHost = ""
-                tick++
-            }
+        for (e in AppCredentialsContract.CATALOG.filter { it.prefix }) PrefixedCard(e, vault) { said = it; tick++ }
+    }
+}
+
+/** A prefixed credential (`git.host.<host>`, `git.repo.<repo>`): the name part is typed, then the value. */
+@Composable
+private fun PrefixedCard(e: AppCredentialsContract.Entry, vault: AccountVault, said: (String) -> Unit) {
+    val p = LocalKitPalette.current
+    var name by remember(e.id) { mutableStateOf("") }
+    KitCard {
+        Text(e.label, color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
+        OutlinedTextField(name, { name = it.trim() }, label = { Text("name (id ${e.id}<name>)") }, singleLine = true,
+            modifier = Modifier.fillMaxWidth().testTag(AppCredentialsTags.NEW_ID + ":" + e.id))
+        val id = e.id + name
+        if (name.isNotBlank() && AppCredentialsContract.entry(id) != null) CredentialRow(id, AppCredentialsStore.get(vault, id).isNotBlank(), e) { value ->
+            if (value == null) { AppCredentialsStore.remove(vault, id); said("cleared $id") }
+            else { said(if (AppCredentialsStore.put(vault, id, value)) "filed $id" else "not filed"); name = "" }
         }
     }
 }

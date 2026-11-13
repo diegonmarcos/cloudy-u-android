@@ -35,8 +35,13 @@ object AppCredentialsContract {
     /** Grows with each migrated app (each batch adds its entries and a seed version in AccountVault). */
     val CATALOG: List<Entry> = listOf(
         Entry("git.github_token", "GitHub token", "personal access token for the in-app Git page (repo scope)", listOf(PKG_DRIVE, "com.diegonmarcos.cloudkgstore")),
-        Entry("git.host.", "Self-hosted git host token", "one per host: id git.host.<host>; token or password for that host", listOf(PKG_DRIVE)),
+        Entry("git.host.", "Self-hosted git host token", "one per host: id git.host.<host id>; token or password for that host", listOf(PKG_DRIVE)),
+        Entry("git.repo.", "Per-repository sync token", "one per synced repository: id git.repo.<repo>; the https token or password", listOf(PKG_DRIVE)),
+        Entry("git.ssh.", "Per-repository ssh passphrase", "one per synced repository: id git.ssh.<repo>; the key's passphrase", listOf(PKG_DRIVE)),
     )
+
+    /** The name part of a prefixed id made safe: letters, digits, `_` and `-` only, at most 60. */
+    fun slug(raw: String): String = raw.map { if (it.isLetterOrDigit() || it == '_' || it == '-') it else '_' }.joinToString("").take(60).ifBlank { "_" }
 
     fun validId(id: String?): Boolean = !id.isNullOrBlank() && id.length <= 96 && id.all { it.isLetterOrDigit() || it in "._-" } && !id.startsWith(".") && !id.contains("..")
 

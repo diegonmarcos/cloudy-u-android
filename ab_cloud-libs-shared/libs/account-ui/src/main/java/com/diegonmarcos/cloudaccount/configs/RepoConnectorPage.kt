@@ -12,5 +12,6 @@ import com.diegonmarcos.superapp.accountui.AccountUiHost
  */
 @Composable
 fun RepoConnectorPage() {
-    GitConnectPanel(ConfigsSources.baked.connectors, hostToken = { ctx -> AccountUiHost.current.ghToken(ctx) })
+    GitConnectPanel(ConfigsSources.baked.connectors, hostToken = { ctx -> AccountUiHost.current.ghToken(ctx)?.takeIf { it.isNotBlank() } ?: AccountUiHost.current.appCredential(ctx, "git.github_token") },
+        openCredentials = { ctx -> AccountUiHost.current.openCredentials(ctx) })
 }

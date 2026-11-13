@@ -31,6 +31,13 @@ class AppCredentialsContractTest {
         assertFalse(AppCredentialsContract.vaultPath("git.host.a.b").drop("appcred.".length).contains('.'))
     }
 
+    @Test fun `a repository name is made safe for an id`() {
+        assertEquals("my_repo_1", AppCredentialsContract.slug("my repo/1"))
+        assertEquals(60, AppCredentialsContract.slug("x".repeat(90)).length)
+        assertNotNull(AppCredentialsContract.entry("git.repo." + AppCredentialsContract.slug("a b/c")))
+        assertNotNull(AppCredentialsContract.entry("git.ssh." + AppCredentialsContract.slug("k")))
+    }
+
     @Test fun `no log form carries the value`() {
         val c = AppCredentialsContract.Credential("git.github_token", "ghp_SECRET", "from Cloud Account")
         assertFalse(c.toString().contains("ghp_SECRET"))

@@ -18,7 +18,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.diegonmarcos.clouddrive.Declarations
 import com.diegonmarcos.clouddrive.R
 import com.diegonmarcos.clouddrive.ui.DriveCard
@@ -62,6 +61,20 @@ class GitHostsState(private val ctx: Context, private val scope: CoroutineScope)
         (store.authFor(ManagedRepo(id = key, name = "", path = "", authKind = "https")) as? GitAuth.Https)?.secret.orEmpty()
 
     private fun put(id: String, h: Host) { hosts = hosts + (id to h) }
+
+    /** #1693 the one line the cards show about the Cloud Account read ("" = nothing to say). */
+    var said by mutableStateOf("")
+        private set
+
+    /** #1693 Signs in with the token Cloud Account holds for [d] (App credentials); a missing one says where to enter it. */
+    fun takeFromCloudAccount(d: GitHostsDecl.GitHostDecl, user: String) {
+        scope.launch {
+            val c = withContext(Dispatchers.IO) { CloudCredentials.read(ctx, CloudCredentials.hostId(d.id)) }
+            if (c.present) { said = ""; signIn(d, user, c.value) } else said = c.line
+        }
+    }
+
+    fun openCloudAccount() { said = CloudCredentials.openAccount(ctx).orEmpty() }
 
     /** On entering the page: every declared host that already holds a token lists itself. */
     fun restore() {
@@ -110,13 +123,14 @@ class GitHostsState(private val ctx: Context, private val scope: CoroutineScope)
 fun GitHostCard(
     decl: GitHostsDecl.GitHostDecl,
     state: GitHostsState.Host,
-    onSignIn: (user: String, token: String) -> Unit,
     onSignOut: () -> Unit,
     onRefresh: () -> Unit,
     onOpenTokenPage: () -> Unit,
+    onTakeToken: (user: String) -> Unit,
+    onOpenCredentials: () -> Unit,
+    said: String = "",
 ) {
     var user by remember { mutableStateOf("") }
-    var token by remember { mutableStateOf("") }
     DriveCard(
         decl.label,
         light = if (state.signedIn) StatusLight.State.ON else StatusLight.State.UNKNOWN,
@@ -133,19 +147,19 @@ fun GitHostCard(
                 user, { user = it }, label = { Text(decl.userLabel.ifBlank { stringResource(R.string.git_host_user) }) },
                 singleLine = true, modifier = Modifier.fillMaxWidth().padding(top = DriveMetrics.gapWide),
             )
-            OutlinedTextField(
-                token, { token = it }, label = { Text(stringResource(R.string.git_host_token)) },
-                singleLine = true, visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth().padding(top = DriveMetrics.gapWide).testTag(DriveTags.hostToken(decl.id)),
-            )
+            // #1693 the token is typed in Cloud Account (App credentials), not here: Take reads it back over the provider.
+            Text(stringResource(R.string.git_host_token_in_account), Modifier.padding(top = DriveMetrics.gapWide).testTag(DriveTags.hostToken(decl.id)),
+                style = MaterialTheme.typography.bodySmall)
+            if (said.isNotBlank()) Text(said, Modifier.padding(top = DriveMetrics.gapWide), style = MaterialTheme.typography.bodySmall,
+                color = colorResource(R.color.status_light_off))
             PillRow {
                 Pill(
-                    stringResource(R.string.git_way_signin, decl.label), { onSignIn(user, token); token = "" },
+                    stringResource(R.string.git_host_take_token, decl.label), { onTakeToken(user) },
                     icon = IconCatalog.vectorOrDefault(decl.icon), filled = true,
-                    enabled = token.isNotBlank() && (!decl.needsUser || user.isNotBlank()),
+                    enabled = !decl.needsUser || user.isNotBlank(),
                     modifier = Modifier.testTag(DriveTags.hostSignIn(decl.id)),
                 )
+                Pill(stringResource(R.string.git_host_set_token), onOpenCredentials)
                 if (decl.tokenUrl.isNotBlank()) Pill(stringResource(R.string.git_host_get_token), onOpenTokenPage)
             }
         } else {

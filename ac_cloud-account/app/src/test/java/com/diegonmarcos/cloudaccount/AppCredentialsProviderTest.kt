@@ -95,6 +95,8 @@ class AppCredentialsProviderTest {
         assertTrue(v.grants.allow(AccountVault.DRIVE_PACKAGE, "cred.git.host.git.example.org"))
         assertTrue(v.grants.allow("com.diegonmarcos.cloudkgstore", "cred.git.github_token"))
         assertFalse(v.grants.allow("com.diegonmarcos.cloudkgstore", "cred.git.host.git.example.org"))
+        assertTrue(v.grants.allow(AccountVault.DRIVE_PACKAGE, "cred.git.repo.myrepo"))
+        assertTrue(v.grants.allow(AccountVault.DRIVE_PACKAGE, "cred.git.ssh.myrepo"))
         v.grants.revoke(AccountVault.DRIVE_PACKAGE, "cred.git.github_token"); v.seedDefaults()
         assertFalse(v.grants.allow(AccountVault.DRIVE_PACKAGE, "cred.git.github_token"))
     }

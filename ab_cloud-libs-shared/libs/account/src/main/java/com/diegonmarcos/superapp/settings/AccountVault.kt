@@ -229,12 +229,14 @@ class AccountVault(context: Context) {
                 DRIVE_PACKAGE to listOf("cred.git.github_token", "cred.git.host.*"),
                 "com.diegonmarcos.cloudkgstore" to listOf("cred.git.github_token"),
             ),
+            // #1693 batch 2: Drive's per-repository sync token and ssh passphrase.
+            10 to mapOf(DRIVE_PACKAGE to listOf("cred.git.repo.*", "cred.git.ssh.*")),
         )
         const val DRIVE_PACKAGE = "com.diegonmarcos.clouddrive"
         const val KEYBOARD_PACKAGE = "com.diegonmarcos.cloudkeyboard"
         const val VAULT_PACKAGE = "com.diegonmarcos.cloudvault"
         const val MAIL_PACKAGE = "com.diegonmarcos.comms.mail"
-        const val SEED_VERSION = 9
+        const val SEED_VERSION = 10
         val DEFAULT_GRANTS: Map<String, List<String>> = DEFAULT_GRANTS_BY_VERSION.values
             .fold(emptyMap<String, List<String>>()) { acc, m -> acc + m.mapValues { (k, v) -> acc[k].orEmpty() + v } }
 

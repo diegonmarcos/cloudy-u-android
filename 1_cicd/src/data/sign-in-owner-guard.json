@@ -111,22 +111,6 @@
   },
   "exempt": [
     {
-      "path": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitReposScreen.kt",
-      "rules": [
-        "credential-prompt"
-      ],
-      "why": "Drive Git: the self-hosted git host token/password entry (the GitHub and Cloud buttons are links to Cloud Account)",
-      "until": "step 3"
-    },
-    {
-      "path": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitHostsUi.kt",
-      "rules": [
-        "credential-prompt"
-      ],
-      "why": "Drive Git hosts: token/password for a self-hosted git host",
-      "until": "step 3"
-    },
-    {
       "path": "ac_cloud-mail/",
       "rules": [
         "credential-prompt",
@@ -175,14 +159,6 @@
         "credential-prompt"
       ],
       "why": "libs:ops Dagu bearer token entry on its connect page",
-      "until": "pending: not in steps 1-5"
-    },
-    {
-      "path": "ab_cloud-libs-shared/libs/git-ui/",
-      "rules": [
-        "credential-prompt"
-      ],
-      "why": "libs:git-ui GitHub token paste",
       "until": "pending: not in steps 1-5"
     },
     {
