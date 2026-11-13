@@ -418,7 +418,7 @@
     },
     "ac_cloud-store": {
       "first_test": "#865 NEW APP (the Store split out of cloud-superapp). Has 1 shell tester (test-store-app.sh): the three Store pages come from libs:appstore with no copy here; Cloud Store claims the fleet pass; libs:appstore honours AppStoreHost.runsFleetPass at all four entry points (start, kick, checkNow, doWork); SuperApp hands the pass and its three Store pages to Cloud Store exactly when it is installed; one package name and one OPEN action across hand-off, build.json, manifest and the fleet manifest - 10 planted mutations each go red. NOT COVERED: the store pages themselves (libs:appstore and cloud-superapp's 91 store testers cover them), and the hand-off on a real phone (install Cloud Store, then confirm SuperApp's Store pages show the Open button and SuperApp's fleet pass stands down).",
-      "shell_testers": 25,
+      "shell_testers": 26,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
