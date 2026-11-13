@@ -32,6 +32,7 @@ Lnktree family, declared in `1_cicd/src/data/app-families.json`; the Cloud famil
   sovereign-returns source (`sovereign`: the container's `/v1/bonds/sovereign-returns` on the mesh, declared in `data/universe.json::sovereign_returns`,
   else the same arithmetic on the OECD yields from DBnomics; `SovereignReturns.kt`); Sweden has its listed fund. The Graphic mode has a flow panel
   (portfolio to buckets to largest constituents, `PerfPortfolios.flow`). The dataset is refreshed by rerunning `scripts/gen-perf-portfolios.py`
-  (a scheduled workflow for it is proposed, not installed). `groups[].intended` names the iShares fund a factor portfolio is meant to follow; its holdings file is not readable by an automated
-  reader (site-entry page), so the State Street fund of the same index or factor is read.
+  (scheduled: `.github/workflows/finterm-perf-portfolios-refresh.yml`, weekly, commits the dataset when it changed). `groups[].intended` names the iShares fund a factor portfolio is meant to follow; its holdings CSV (`.../ishares.com/.../<id>.ajax?fileType=csv`) answers an HTML site-entry page to an automated reader (checked 2026-11-13) and
+  VanEck's holdings download redirects in a loop, so neither can be read; the State Street fund of the same index or factor is read. The container's
+  `/v1/bonds/sovereign-returns` (`store.rs`, `sovereign_windows` test) serves the yield and duration bond returns with the local, currency and USD legs.
 

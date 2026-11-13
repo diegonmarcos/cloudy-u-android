@@ -1,0 +1,47 @@
+# Scheduled refresh of the FinTerm performance-portfolios runtime dataset (#1727): reruns ad_Capital-Stack-FinTerminal/scripts/gen-perf-portfolios.py
+# (publishers' own holdings files, no key) and commits data/fleet/app/com.diegonmarcos.capitalfinterm/perf-portfolios.json when it changed.
+# Weekly, free tier (one short job). The commit carries [skip ci]: the dataset is read at runtime, no APK is rebuilt for it.
+name: "Data -> FinTerm performance portfolios refresh"
+
+on:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finterm-perf-portfolios-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ad_Capital-Stack-FinTerminal/data
+            ad_Capital-Stack-FinTerminal/scripts
+            data/fleet/app/com.diegonmarcos.capitalfinterm
+
+      - name: Regenerate and validate
+        run: |
+          set -eu
+          python3 ad_Capital-Stack-FinTerminal/scripts/gen-perf-portfolios.py
+          python3 ad_Capital-Stack-FinTerminal/scripts/gen-perf-portfolios.py --check
+
+      - name: Commit when changed
+        run: |
+          set -eu
+          f=data/fleet/app/com.diegonmarcos.capitalfinterm
+          if git diff --quiet -- "$f"; then echo "dataset unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$f"
+          git commit -m "finterm: perf-portfolios dataset refreshed from the publishers' files [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
