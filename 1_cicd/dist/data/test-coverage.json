@@ -346,7 +346,7 @@
     },
     "ac_cloud-nix-on-droid": {
       "first_test": "Now has 1 shell tester (test-bootstrap-baked.sh, #348): the proot+glibc runtime is baked in, pinned by sha256, and rewritten for THIS app id \u2014 the three ways this APK could install, launch and still have no shell. 21 JVM unit test classes still have never executed; declare tests.unit.task.",
-      "shell_testers": 24,
+      "shell_testers": 25,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
@@ -454,7 +454,7 @@
     },
     "ac_cloud-termux": {
       "first_test": "Now has 1 shell tester (test-rootfs-declared.sh, #470): the baked agent-coding rootfs is one declaration that consumes the fleet tool belt and is wired into build, gradle and Java; its runtime half (rootfs/verify-rootfs.sh) runs in the ship workflow's rootfs job and proves every declared binary loads and executes under the shipped proot. 21 JVM unit test classes still have never executed; declare tests.unit.task.",
-      "shell_testers": 23,
+      "shell_testers": 24,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
