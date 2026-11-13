@@ -83,8 +83,8 @@ if [ -n "$XY" ]; then
   # the amber field sits left of GO
   adb shell input tap $(( $1 - W / 6 )) "$2"; sleep 2
   adb shell input text GDM; sleep 1
+  shot command-typed
   adb shell input tap "$1" "$2"; sleep "$WAIT"
-  adb shell input keyevent 4; sleep 1
   shot command-gdm; dump "$OUT/ui-command-gdm.xml"
   # typed GDM + GO must have opened FI > Gov Bonds DM: its scheme tabs are on the page
   if grep -q 'GDP-WEIGHTED' "$OUT/ui-command-gdm.xml" 2>/dev/null; then echo "command GDM opened Gov Bonds DM: yes" | tee -a "$OUT/walk.txt"; else echo "command GDM opened Gov Bonds DM: NO" | tee -a "$OUT/walk.txt"; fi
