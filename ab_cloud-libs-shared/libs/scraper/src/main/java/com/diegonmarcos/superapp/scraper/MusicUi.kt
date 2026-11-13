@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -175,20 +176,16 @@ fun MusicPage(c: ThemeColors) {
             .onFailure { message = "Sync failed: ${it.message}" }
     }
 
-    fun device(spec: ServiceSpec) = scope.launch {
-        val id = accounts.clientId(spec.id)
-        val r = runCatching {
-            val dc = withContext(Dispatchers.IO) { MusicOAuth.startDevice(http, spec, id) }
-            message = "Open ${dc.url} and enter ${dc.userCode}"
-            var waited = 0L
-            var t: TokenSet? = null
-            while (t == null && waited < dc.expiresInSec) {
-                delay(dc.intervalSec * 1000); waited += dc.intervalSec
-                t = withContext(Dispatchers.IO) { MusicOAuth.pollDevice(http, spec, id, accounts.clientSecret(spec.id), dc.deviceCode) }
+    /** #1693 a device-grant service (YouTube Music) is connected in Cloud Account; this takes the client and the tokens it filed. */
+    fun takeFromAccount(spec: ServiceSpec) = scope.launch {
+        val taken = withContext(Dispatchers.IO) { MusicCredentials.take(ctx, spec.id) }
+        when (taken) {
+            is MusicCredentials.Taken.Ok -> {
+                if (taken.client.isNotBlank()) accounts.setClient(spec.id, taken.client, taken.secret)
+                accounts.save(spec.id, taken.tokens); rev++; message = "${spec.label} connected (from Cloud Account)"; load(spec)
             }
-            t ?: error("the code expired")
+            is MusicCredentials.Taken.Missing -> message = "${spec.label}: ${taken.line}"
         }
-        r.onSuccess { accounts.save(spec.id, it); rev++; message = "${spec.label} connected"; load(spec) }.onFailure { message = "${spec.label}: ${it.message}" }
     }
 
     oauth?.let { (spec, state, verifier) ->
@@ -268,16 +265,26 @@ fun MusicPage(c: ThemeColors) {
                 Column(Modifier.fillMaxWidth().padding(start = 40.dp, end = 12.dp, bottom = 8.dp).testTag("music:connect:${spec.id}")) {
                     Text(spec.help, color = c.inkDim, style = MaterialTheme.typography.bodySmall)
                     if (spec.redirect.isNotEmpty()) Text("Redirect URI: ${spec.redirect}", color = c.ink, style = MaterialTheme.typography.bodySmall)
-                    val colors = OutlinedTextFieldDefaults.colors(focusedTextColor = c.ink, unfocusedTextColor = c.ink, focusedLabelColor = c.accent, unfocusedLabelColor = c.inkDim)
-                    OutlinedTextField(cid, { cid = it }, label = { Text("Client id") }, singleLine = true, colors = colors, modifier = Modifier.fillMaxWidth().testTag("music:cid:${spec.id}"))
-                    if (spec.needsSecret) OutlinedTextField(sec, { sec = it }, label = { Text("Client secret (stored encrypted)") }, singleLine = true, colors = colors,
-                        modifier = Modifier.fillMaxWidth().testTag("music:secret:${spec.id}"))
-                    Button(onClick = {
-                        accounts.setClient(spec.id, cid, sec)
-                        if (spec.auth == AuthKind.DEVICE) device(spec) else oauth = Triple(spec, MusicOAuth.verifier().take(16), MusicOAuth.verifier())
-                        connecting = null
-                    }, enabled = cid.isNotBlank() && (!spec.needsSecret || sec.isNotBlank() || accounts.clientSecret(spec.id).isNotEmpty()),
-                        colors = ButtonDefaults.buttonColors(containerColor = c.accent), modifier = Modifier.padding(top = 4.dp).testTag("music:signin:${spec.id}")) { Text("Sign in") }
+                    if (spec.auth == AuthKind.DEVICE) {
+                        // #1693 the device grant runs in Cloud Account (App credentials > Connect); here it is only taken from there.
+                        Text("Connected in Cloud Account (App credentials), then taken here.", color = c.inkDim, style = MaterialTheme.typography.bodySmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+                            Button(onClick = { takeFromAccount(spec); connecting = null },
+                                colors = ButtonDefaults.buttonColors(containerColor = c.accent), modifier = Modifier.testTag("music:signin:${spec.id}")) { Text("Take from Cloud Account") }
+                            TextButton(onClick = { message = MusicCredentials.open(ctx).orEmpty() }, modifier = Modifier.testTag("music:open-account:${spec.id}")) { Text("Set up in Cloud Account", color = c.ink) }
+                        }
+                    } else {
+                        val colors = OutlinedTextFieldDefaults.colors(focusedTextColor = c.ink, unfocusedTextColor = c.ink, focusedLabelColor = c.accent, unfocusedLabelColor = c.inkDim)
+                        OutlinedTextField(cid, { cid = it }, label = { Text("Client id") }, singleLine = true, colors = colors, modifier = Modifier.fillMaxWidth().testTag("music:cid:${spec.id}"))
+                        if (spec.needsSecret) OutlinedTextField(sec, { sec = it }, label = { Text("Client secret (stored encrypted)") }, singleLine = true, colors = colors,
+                            modifier = Modifier.fillMaxWidth().testTag("music:secret:${spec.id}"))
+                        Button(onClick = {
+                            accounts.setClient(spec.id, cid, sec)
+                            oauth = Triple(spec, MusicOAuth.verifier().take(16), MusicOAuth.verifier())
+                            connecting = null
+                        }, enabled = cid.isNotBlank() && (!spec.needsSecret || sec.isNotBlank() || accounts.clientSecret(spec.id).isNotEmpty()),
+                            colors = ButtonDefaults.buttonColors(containerColor = c.accent), modifier = Modifier.padding(top = 4.dp).testTag("music:signin:${spec.id}")) { Text("Sign in") }
+                    }
                 }
             }
             if (isOpen) {

@@ -146,14 +146,6 @@
       "until": "permanent"
     },
     {
-      "path": "ab_cloud-libs-shared/libs/scraper/",
-      "rules": [
-        "device-grant"
-      ],
-      "why": "libs:scraper music service device grant (MusicAuth)",
-      "until": "pending: not in steps 1-5"
-    },
-    {
       "path": "ab_cloud-libs-shared/libs/browser/",
       "rules": [
         "credential-prompt"

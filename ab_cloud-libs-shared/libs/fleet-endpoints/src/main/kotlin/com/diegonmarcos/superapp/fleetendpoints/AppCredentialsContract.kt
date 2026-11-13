@@ -34,6 +34,7 @@ object AppCredentialsContract {
     const val PKG_TASKS = "com.diegonmarcos.cloudagenda"
     const val PKG_C3 = "com.diegonmarcos.cloudc3"
     const val PKG_ME = "com.diegonmarcos.cloudme"
+    const val PKG_BROWSER = "com.diegonmarcos.cloudbrowser"
 
     /** Grows with each migrated app (each batch adds its entries and a seed version in AccountVault). */
     val CATALOG: List<Entry> = listOf(
@@ -47,6 +48,12 @@ object AppCredentialsContract {
         Entry("mattermost.password", "Mattermost password", "the password of that Mattermost account", listOf(PKG_SUPERAPP)),
         Entry("dagu.token", "Dagu bearer token", "the Authelia bearer token of the Dagu server (SuperApp > C3 > Dagu, Cloud C3)", listOf(PKG_SUPERAPP, PKG_C3)),
         Entry("me.buro_backup_passphrase", "Cloud Me Buro backup passphrase", "encrypts and decrypts the Buro backup bundle (Cloud Me > Buro > Import / Export)", listOf(PKG_ME)),
+        // The YouTube Music device grant runs in Cloud Account; Cloud Browser's Music page takes the client and the tokens it filed.
+        Entry("music.ytmusic.client_id", "YouTube Music client id", "the TVs and Limited Input OAuth client id (Google Cloud console)", listOf(PKG_BROWSER), secret = false),
+        Entry("music.ytmusic.client_secret", "YouTube Music client secret", "the secret of that OAuth client", listOf(PKG_BROWSER)),
+        Entry("music.ytmusic.access", "YouTube Music access token", "filed by Connect (device grant) in Cloud Account", listOf(PKG_BROWSER)),
+        Entry("music.ytmusic.refresh", "YouTube Music refresh token", "filed by Connect (device grant) in Cloud Account", listOf(PKG_BROWSER)),
+        Entry("music.ytmusic.expires", "YouTube Music token expiry", "epoch milliseconds, 0 = never; filed by Connect", listOf(PKG_BROWSER), secret = false),
     )
 
     /** The name part of a prefixed id made safe: letters, digits, `_` and `-` only, at most 60. */

@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -62,6 +63,45 @@ fun AppCredentialsPanel() {
             tick++
         }
         for (e in AppCredentialsContract.CATALOG.filter { it.prefix }) PrefixedCard(e, vault) { said = it; tick++ }
+        for (spec in MusicDeviceGrant.SPECS.values) MusicDeviceCard(spec, vault) { said = it; tick++ }
+    }
+}
+
+/** #1693 a music service that signs in with a device grant: its tokens are filed by the grant, which runs here and nowhere else. */
+@Composable
+private fun MusicDeviceCard(spec: MusicDeviceGrant.Spec, vault: AccountVault, said: (String) -> Unit) {
+    val ctx = LocalContext.current
+    val p = LocalKitPalette.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
+    var busy by remember { mutableStateOf(false) }
+    var line by remember { mutableStateOf("") }
+    val connected = AppCredentialsStore.get(vault, "music.${spec.id}.access").isNotBlank()
+    KitCard {
+        Text("${spec.label} sign-in", color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
+        Text((if (connected) "connected" else "not connected") + " · file the client id (music.${spec.id}.client_id) and secret (music.${spec.id}.client_secret) above, then connect",
+            color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+        if (line.isNotBlank()) Text(line, color = p.textSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag(AppCredentialsTags.field("music:${spec.id}:line")))
+        KitActionBar(buildList {
+            add(KitAction(if (busy) "Waiting for approval…" else "Connect ${spec.label}", AppCredentialsTags.save("music:${spec.id}"), enabled = !busy) {
+                busy = true; line = "asking for a code…"
+                scope.launch {
+                    val o = MusicDeviceGrant.run(ctx, spec, onCode = { c ->
+                        line = "Open ${c.url} and enter ${c.userCode}"
+                        runCatching { uri.openUri(c.url) }
+                    })
+                    busy = false
+                    when (o) {
+                        is MusicDeviceGrant.Outcome.Connected -> { line = ""; said("${spec.label} connected: Cloud Browser can take the tokens") }
+                        is MusicDeviceGrant.Outcome.Failed -> { line = o.why; said(o.why) }
+                    }
+                }
+            })
+            if (connected) add(KitAction("Disconnect", AppCredentialsTags.clear("music:${spec.id}")) {
+                for (k in listOf("access", "refresh", "expires")) AppCredentialsStore.remove(vault, "music.${spec.id}.$k")
+                said("${spec.label} disconnected")
+            })
+        })
     }
 }
 

@@ -239,12 +239,14 @@ class AccountVault(context: Context) {
             13 to mapOf("com.diegonmarcos.superapp" to listOf("cred.dagu.token"), "com.diegonmarcos.cloudc3" to listOf("cred.dagu.token")),
             // #1693 batch 7: the Cloud Me Buro backup passphrase.
             14 to mapOf("com.diegonmarcos.cloudme" to listOf("cred.me.buro_backup_passphrase")),
+            // #1693 batch 8: Cloud Browser's Music page takes the YouTube Music client and the tokens the device grant filed in Cloud Account.
+            15 to mapOf("com.diegonmarcos.cloudbrowser" to listOf("cred.music.ytmusic.*")),
         )
         const val DRIVE_PACKAGE = "com.diegonmarcos.clouddrive"
         const val KEYBOARD_PACKAGE = "com.diegonmarcos.cloudkeyboard"
         const val VAULT_PACKAGE = "com.diegonmarcos.cloudvault"
         const val MAIL_PACKAGE = "com.diegonmarcos.comms.mail"
-        const val SEED_VERSION = 14
+        const val SEED_VERSION = 15
         val DEFAULT_GRANTS: Map<String, List<String>> = DEFAULT_GRANTS_BY_VERSION.values
             .fold(emptyMap<String, List<String>>()) { acc, m -> acc + m.mapValues { (k, v) -> acc[k].orEmpty() + v } }
 

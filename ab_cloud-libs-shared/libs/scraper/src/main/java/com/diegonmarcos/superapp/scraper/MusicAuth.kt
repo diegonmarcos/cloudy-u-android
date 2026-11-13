@@ -137,8 +137,6 @@ class MusicAccounts(private val store: TokenStore, private val now: () -> Long =
     fun disconnect(s: String) { for (k in listOf("access", "refresh", "expires")) store.remove("$s.$k") }
 }
 
-data class DeviceCode(val deviceCode: String, val userCode: String, val url: String, val intervalSec: Long, val expiresInSec: Long)
-
 data class Callback(val code: String? = null, val token: String? = null, val expiresInSec: Long = 0, val error: String? = null)
 
 /** The sign-in protocol steps, pure over [MusicHttp] so each is testable. */
@@ -188,19 +186,5 @@ object MusicOAuth {
         val t = tokens(http.postForm(spec.tokenUrl, f))
         return t.copy(refresh = t.refresh ?: refreshToken)
     }
-
-    fun startDevice(http: MusicHttp, spec: ServiceSpec, clientId: String): DeviceCode {
-        val o = JSONObject(http.postForm(spec.deviceUrl, mapOf("client_id" to clientId, "scope" to spec.scopes)))
-        return DeviceCode(o.getString("device_code"), o.getString("user_code"),
-            o.optString("verification_url").ifBlank { o.optString("verification_uri", "https://www.google.com/device") },
-            o.optLong("interval", 5), o.optLong("expires_in", 900))
-    }
-
-    /** The tokens once the user approved, null while the grant is still pending. */
-    fun pollDevice(http: MusicHttp, spec: ServiceSpec, clientId: String, secret: String, deviceCode: String): TokenSet? = try {
-        tokens(http.postForm(spec.tokenUrl, mapOf("client_id" to clientId, "client_secret" to secret, "device_code" to deviceCode,
-            "grant_type" to "urn:ietf:params:oauth:grant-type:device_code")))
-    } catch (e: MusicHttpException) {
-        if (e.message.orEmpty().let { it.contains("authorization_pending") || it.contains("slow_down") }) null else throw e
-    }
+    // #1693 the OAuth device grant (start + poll) left this lib: it runs in Cloud Account only (libs:account MusicDeviceGrant); this page takes the tokens it filed.
 }
