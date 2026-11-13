@@ -29,6 +29,7 @@ object MailAccountSync {
         val i = android.content.Intent(SignInContract.ACTION_OPEN).setPackage(SignInContract.ACCOUNT_PACKAGE)
             .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
         for ((k, v) in SignInContract.openIntentExtras(MailAccountsContract.PROVIDER)) i.putExtra(k, v)
+        // unguarded: a single tap on a button that reports the reason it could not open (a repeat tap only re-opens the same Cloud Account page).
         return runCatching { ctx.startActivity(i); null }.getOrElse { "Cloud Account cannot be opened (${it.javaClass.simpleName})" }
     }
 

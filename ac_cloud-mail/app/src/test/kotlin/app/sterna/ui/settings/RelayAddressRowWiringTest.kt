@@ -244,12 +244,11 @@ class RelayAddressRowWiringTest {
 
     @Test fun `the address is not typed into a masked field`() {
         assertEquals(
-            "'isPassword' may appear exactly once in SettingsScreen.kt, on the API-token field " +
-                "(CredentialRevealWiringTest in Cloud Account owns that one). A relay address is not a secret: it " +
+            "'isPassword' appears nowhere in SettingsScreen.kt any more (#1693): the API-token / password field moved to Cloud Account " +
+                "(CredentialRevealWiringTest there owns the reveal rule). A relay address is not a secret: it " +
                 "is meant to be read, selected and pasted into someone else's app, so borrowing " +
-                "the reveal eye for it would hide the one thing the block exists to show — and a " +
-                "second isPassword here is also a secret field this repo's lints do not know about.",
-            listOf("isPassword = true,"),
+                "a masked field for it would hide the one thing the block exists to show.",
+            emptyList<String>(),
             screenLines().filter { "isPassword" in it },
         )
     }
