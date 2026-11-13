@@ -130,6 +130,10 @@ jobs:
             adb install -r lib.apk || { echo "::error::lib APK install failed"; exit 2; }
           fi
           adb install -r -g app.apk || { echo "::error::app APK install failed"; exit 2; }
+          # #1708 at targetSdk 30+ the grant that opens /sdcard (where the verdict is written) is
+          # All files access, a special grant `install -g` does not give. Granted here as the
+          # app's Perms page does at first run; a no-op for an app on legacy storage.
+          adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow || true
           adb logcat -c || true
           act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
           case "$act" in */*) ;; *) echo "::error::$PKG has no launcher activity ($act)"; exit 2;; esac
