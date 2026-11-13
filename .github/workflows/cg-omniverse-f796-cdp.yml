@@ -1,8 +1,18 @@
-name: "Probe → CG-Omniverse floor796 (CDP on the emulator)"
+name: "Check → CG-Omniverse Galaxy worlds render (CDP on the emulator)"
 
-# #1694 on demand: installs the x86_64 APK of a Ship run (debuggable) on an emulator, opens floor796 in Galaxy, attaches to the
-# WebView over DevTools (adb forward) and records every console message, failed request and, every 15 s, the page's real
-# viewport / canvas / DOM state. Same for Cloud-Browser when its APK is available. Uploads `cg-omniverse-f796-cdp`.
+# #1694 / #1711 on demand: installs the x86_64 APK of a Ship run (debuggable) on an emulator and proves, over DevTools (adb
+# forward to the WebView), that Galaxy's declared default tabs reach real drawn content:
+#   live     each world (data/store.json ids, WORLDS) is opened by the launch extra; the check passes when the page holds a canvas
+#            (floor796: a light-DOM canvas that reads back drawn; the others: a canvas anywhere, closed shadow roots included) AND the
+#            screen itself shows the scene (a screencap of the world's area is not one flat colour), inside the world's deadline.
+#            floor796 is then reloaded once to record the whole request timeline (which answers came from the pin-offline
+#            intercept: response header Client-Via) and the #1694 viewport assertion (layout viewport not zero) is kept.
+#   pinned   the regression of #1711: the phone showed floor796's top bar over a flat #101010 page with 0 canvases, 0 failed
+#            requests: its first data request (data/matrix.json?r=<random>, same origin) had no answer. The origin's address is
+#            dropped on the emulator (iptables, the CDN hosts stay reachable), the app is started cold and floor796 must STILL
+#            reach a drawn canvas: the pinned copy answers what the live site does not.
+# mode=baseline records the same facts and never fails (used to capture the state of a build before a fix).
+# Uploads `cg-omniverse-galaxy-check-<api>` (log, request timelines, screenshots, the app's own diagnostics texts).
 
 on:
   workflow_dispatch:
@@ -11,6 +21,18 @@ on:
         description: "Ship -> CG-Omniverse run whose x86_64 APK to use (empty = the rolling release)"
         required: false
         default: ""
+      mode:
+        description: "check (assertions gate the run) | baseline (record only, never fails)"
+        required: false
+        default: "check"
+      worlds:
+        description: "Store ids to open, in order (data/store.json)"
+        required: false
+        default: "cyber-city-orion,floor796,messenger"
+      api_levels:
+        description: "Emulator API levels, a JSON list"
+        required: false
+        default: "[34, 36]"
 
 permissions:
   contents: read
@@ -18,8 +40,13 @@ permissions:
 
 jobs:
   probe:
+    name: "Galaxy worlds render (API ${{ matrix.api }})"
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        api: ${{ fromJSON(inputs.api_levels) }}
     steps:
       - uses: actions/checkout@v4
       - name: Get the APKs
@@ -41,88 +68,385 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Write the probe
+      - name: Write the check
         run: |
-          pip install websocket-client
-          cat > cdp.py <<'PY'
-          import json, subprocess, sys, time, urllib.request, websocket
-          pkg, label, secs = sys.argv[1], sys.argv[2], int(sys.argv[3])
-          def sh(*a): return subprocess.run(["adb", *a], capture_output=True, text=True, timeout=60).stdout
-          out = open("probe/%s.log" % label, "w")
+          pip install websocket-client pillow
+          cat > check.py <<'PY'
+          import json, os, re, socket, subprocess, sys, time, urllib.request
+          import websocket
+          from PIL import Image
+
+          PKG = "com.diegonmarcos.cgomniverse"
+          BROWSER = "com.diegonmarcos.cloudbrowser"
+          OUT = "probe"
+          MODE = os.environ.get("MODE", "check")
+          WORLDS = [w.strip() for w in os.environ.get("WORLDS", "").split(",") if w.strip()]
+          STORE = json.load(open("ad_CG-Omniverse/data/store.json"))["entries"]
+          URL = dict((e["id"], e["url"]) for e in STORE)
+          # how long each world may take to reach drawn content on a software-GL emulator, and the pinned world's deadline
+          DEADLINE = {"floor796": 120}
+          DEADLINE_DEFAULT = 200
+          PINNED = "floor796"
+          PINNED_DEADLINE = 150
+          T0 = time.time()
+          os.makedirs(OUT, exist_ok=True)
+          LOG = open(OUT + "/check.log", "w")
+
           def log(*a):
-              s = " ".join(str(x) for x in a); out.write(s + "\n"); out.flush(); print(s)
-          pid = sh("shell", "pidof", pkg).split()[0]
-          sock = None
-          for l in sh("shell", "cat", "/proc/net/unix").splitlines():
-              if "webview_devtools_remote_" + pid in l: sock = l.split("@")[-1]
-          log("pid", pid, "socket", sock)
-          sh("forward", "tcp:9222", "localabstract:" + sock)
-          pages = json.load(urllib.request.urlopen("http://localhost:9222/json"))
-          log("pages", json.dumps([(p.get("url"), p.get("type")) for p in pages]))
-          page = [p for p in pages if p.get("type") == "page" and "floor796" in p.get("url", "")] or [p for p in pages if p.get("type") == "page"]
-          ws = websocket.create_connection(page[0]["webSocketDebuggerUrl"], timeout=5, suppress_origin=True)
-          n = [0]
-          def send(m, p=None):
-              n[0] += 1; ws.send(json.dumps({"id": n[0], "method": m, "params": p or {}})); return n[0]
-          for m in ("Runtime.enable", "Log.enable", "Network.enable", "Page.enable"): send(m)
-          STATE = "(function(){var c=document.querySelectorAll('canvas'),o={url:location.href,rs:document.readyState,vis:document.visibilityState,iw:innerWidth,ih:innerHeight,dpr:devicePixelRatio,cw:document.documentElement.clientWidth,ch:document.documentElement.clientHeight,bw:document.body&&document.body.clientWidth,bh:document.body&&document.body.clientHeight,cdn:document.documentElement.dataset.cdn,nodes:document.getElementsByTagName('*').length,canv:[],body:(document.body?document.body.className:'')};for(var i=0;i<c.length&&i<6;i++){var r=c[i].getBoundingClientRect(),s=getComputedStyle(c[i]);o.canv.push([c[i].width,c[i].height,r.width,r.height,s.display,s.position,c[i].parentElement&&c[i].parentElement.tagName+'.'+c[i].parentElement.className,c[i].parentElement&&c[i].parentElement.clientWidth+'x'+c[i].parentElement.clientHeight])}var l=document.getElementById('initial-loader');o.loader=!!l;o.ls=(function(){try{return localStorage.getItem('modern-agent')}catch(e){return 'x'}})();o.top=Array.from(document.body.children).slice(0,12).map(function(e){return e.tagName+'#'+e.id+'.'+e.className+' '+e.clientWidth+'x'+e.clientHeight});return JSON.stringify(o)})()"
-          STATE2 = "(async function(){var o={compat:document.compatMode,doctype:document.doctype&&document.doctype.name,sheets:[]};for(var i=0;i<document.styleSheets.length;i++){var ss=document.styleSheets[i];var n=-1;try{n=ss.cssRules.length}catch(e){n='err '+e}o.sheets.push([ss.href,n,ss.disabled])}var h=document.documentElement,b=document.body,m=document.querySelector('main');function cs(e){var c=getComputedStyle(e);return [e.tagName,c.height,c.display,c.position,c.overflow,e.getBoundingClientRect().height]}o.html=cs(h);o.body=cs(b);o.main=cs(m);try{var r=await fetch('/front.5be05bf611184a967d9a.css');var t=await r.text();o.css=[r.status,r.headers.get('content-type'),t.length,t.slice(0,160)]}catch(e){o.css='err '+e}b.style.height='100%';o.bodyAfterInline=b.getBoundingClientRect().height;return JSON.stringify(o)})()"
-          STATE3 = "(function(){var o={inline:document.documentElement.style.cssText,attrs:Array.from(document.documentElement.attributes).map(function(a){return a.name+'='+a.value}),bodyAttrs:document.body.style.cssText,rules:[],hh:getComputedStyle(document.documentElement).height,mq:matchMedia('(min-height:1px)').matches,orient:screen.width+'x'+screen.height+' '+outerWidth+'x'+outerHeight};function walk(rs,ctx){for(var i=0;i<rs.length;i++){var r=rs[i];if(r.cssRules&&r.conditionText!==undefined){walk(r.cssRules,ctx+' @'+r.conditionText)}else if(r.selectorText&&/(^|[ ,])(html|:root|body|main)([ ,:.#\\[]|$)/.test(r.selectorText)){o.rules.push(ctx+' '+r.cssText.slice(0,200))}}}for(var j=0;j<document.styleSheets.length;j++){try{walk(document.styleSheets[j].cssRules,'')}catch(e){}}return JSON.stringify(o)})()"
-          ASSERT = "(function(){var c=document.querySelector('canvas');var r=c&&c.getBoundingClientRect();return JSON.stringify({mq:matchMedia('(min-height:1px)').matches,body:document.body.getBoundingClientRect().height,cssH:r?r.height:-1,ih:innerHeight})})()"
-          t0 = time.time(); nxt = 0; reloaded = False
-          send("Page.getLayoutMetrics"); send("Emulation.getDeviceMetricsOverride") if False else None
-          send("Page.reload")
-          ws.settimeout(1)
-          verdict = []
-          while time.time() - t0 < secs:
-              if time.time() - t0 >= nxt:
-                  nxt += 15; send("Runtime.evaluate", {"expression": ASSERT, "returnByValue": True}); send("Runtime.evaluate", {"expression": STATE3, "returnByValue": True}); send("Runtime.evaluate", {"expression": STATE2, "returnByValue": True, "awaitPromise": True}); i = send("Runtime.evaluate", {"expression": STATE, "returnByValue": True}); log("[%ds] eval sent id %d" % (time.time() - t0, i))
-              try: m = json.loads(ws.recv())
-              except websocket.WebSocketTimeoutException: continue
-              meth = m.get("method")
-              if meth == "Runtime.consoleAPICalled":
-                  p = m["params"]; log("[%ds] console.%s" % (time.time() - t0, p["type"]), " | ".join(str(a.get("value", a.get("description", ""))) for a in p["args"])[:400])
-              elif meth == "Runtime.exceptionThrown": log("[%ds] EXC" % (time.time() - t0), json.dumps(m["params"])[:600])
-              elif meth == "Log.entryAdded": e = m["params"]["entry"]; log("[%ds] log" % (time.time() - t0), e.get("level"), e.get("text", "")[:300], e.get("url", ""))
-              elif meth == "Network.loadingFailed": log("[%ds] NETFAIL" % (time.time() - t0), json.dumps(m["params"])[:300])
-              elif meth in ("Page.frameNavigated",): log("[%ds] nav" % (time.time() - t0), m["params"]["frame"].get("url"))
-              elif meth == "Network.responseReceived":
-                  r = m["params"]["response"]; log("[%ds] resp" % (time.time() - t0), r["status"], r["url"][:140], r.get("encodedDataLength", ""))
-              elif "result" in m and "layoutViewport" in m["result"]: log("[%ds] METRICS" % (time.time() - t0), json.dumps(m["result"]))
-              elif "result" in m and "result" in m["result"] and "value" in m["result"]["result"] and m["result"]["result"]["value"].startswith('{"mq"'): verdict.append(json.loads(m["result"]["result"]["value"])); log("[%ds] ASSERT" % (time.time() - t0), m["result"]["result"]["value"])
-              elif "result" in m and "result" in m["result"] and "value" in m["result"]["result"]: log("[%ds] STATE" % (time.time() - t0), m["result"]["result"]["value"])
-          # the regression test (#1694): once the tab is shown, the page's layout viewport is not zero and floor796 sizes its canvas
-          last = verdict[-1] if verdict else None
-          log("VERDICT", json.dumps(last))
-          sys.exit(0 if last and last["mq"] and last["body"] > 0 and last["cssH"] > 0 else 3)
+              s = "[%6.1fs] " % (time.time() - T0) + " ".join(str(x) for x in a)
+              LOG.write(s + "\n"); LOG.flush(); print(s, flush=True)
+
+          def adb(*a, timeout=90):
+              try: return subprocess.run(["adb", *a], capture_output=True, text=True, timeout=timeout).stdout
+              except subprocess.TimeoutExpired: return ""
+
+          STATE = r"""(function(){var o={url:location.href,rs:document.readyState,iw:innerWidth,ih:innerHeight,dpr:devicePixelRatio,
+          cdn:(document.documentElement.dataset||{}).cdn||'',canvases:0,drawn:0,blank:0,unreadable:0,cw:0,ch:0,
+          videos:document.querySelectorAll('video').length,spinner:!!document.querySelector('.spinner_show'),
+          loader:!!document.getElementById('initial-loader'),ctx:window.__cloudCtx||null,mq:matchMedia('(min-height:1px)').matches,
+          body:document.body?document.body.getBoundingClientRect().height:-1};
+          var cs=document.querySelectorAll('canvas');o.canvases=cs.length;
+          for(var i=0;i<cs.length&&i<12;i++){var c=cs[i];if(c.clientWidth*c.clientHeight>o.cw*o.ch){o.cw=c.clientWidth;o.ch=c.clientHeight}
+          try{var t=document.createElement('canvas');t.width=t.height=16;var x=t.getContext('2d',{willReadFrequently:true});x.drawImage(c,0,0,16,16);
+          var d=x.getImageData(0,0,16,16).data,k=0;for(var j=4;j<d.length;j+=4){if(d[j]!==d[0]||d[j+1]!==d[1]||d[j+2]!==d[2]||d[j+3]!==d[3]){k=1;break}}
+          if(k)o.drawn++;else o.blank++}catch(e){o.unreadable++}}
+          return JSON.stringify(o)})()"""
+
+          # counts the WebGL draw calls the page issues from now on (a loader drawn in the DOM issues none; a scene issues many per frame)
+          GL_HOOK = r"""(function(){if(window.__probeGl)return 'already';var s=window.__probeGl={calls:0};
+          [window.WebGLRenderingContext,window.WebGL2RenderingContext].forEach(function(C){if(!C)return;var p=C.prototype;
+          ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced','drawRangeElements'].forEach(function(k){var o=p[k];if(!o)return;
+          p[k]=function(){s.calls++;return o.apply(this,arguments)}})});return 'hooked'})()"""
+          GL_READ = "(function(){var s=window.__probeGl;if(!s)return -1;var n=s.calls;s.calls=0;return n})()"
+          # a start gate drawn in the DOM (Orion's ENTER): clicked through the page; one drawn in the scene is tapped on the screen (TAPS)
+          ENTER_JS = r"""(function(){var els=document.querySelectorAll('button,a,div,span,p');for(var i=0;i<els.length;i++){
+          var t=(els[i].textContent||'').trim();if(/^(enter|begin|start|play)$/i.test(t)&&els[i].children.length===0){els[i].click();return 'clicked '+t}}return 'none'})()"""
+          # where a world's own start button sits inside its area (share of width, share of height), for the "entered" screenshot only
+          TAPS = {"cyber-city-orion": [(0.5, 0.59)], "messenger": [(0.5, 0.855)]}
+
+          class Cdp:
+              def __init__(self, url):
+                  self.ws = websocket.create_connection(url, timeout=10, suppress_origin=True)
+                  self.n = 0; self.req = {}; self.order = []; self.console = []; self.navs = []
+                  for m in ("Runtime.enable", "Log.enable", "Network.enable", "Page.enable"): self.send(m)
+              def send(self, method, params=None):
+                  self.n += 1; self.ws.send(json.dumps({"id": self.n, "method": method, "params": params or {}})); return self.n
+              def recv(self, timeout):
+                  self.ws.settimeout(timeout)
+                  try: return json.loads(self.ws.recv())
+                  except websocket.WebSocketTimeoutException: return None
+                  except Exception as e: return {"closed": str(e)}
+              def event(self, m):
+                  meth = m.get("method"); p = m.get("params", {})
+                  if meth == "Network.requestWillBeSent":
+                      r = p.get("request", {}); i = p.get("requestId")
+                      if i not in self.req: self.order.append(i)
+                      self.req[i] = {"url": r.get("url", ""), "t": p.get("timestamp", 0), "type": p.get("type", "")}
+                  elif meth == "Network.responseReceived":
+                      r = p.get("response", {}); i = p.get("requestId")
+                      if i not in self.req: self.order.append(i)
+                      q = self.req.setdefault(i, {"url": r.get("url", ""), "t": 0, "type": p.get("type", "")})
+                      h = dict((k.lower(), v) for k, v in (r.get("headers") or {}).items())
+                      q["status"] = r.get("status"); q["via"] = h.get("client-via", ""); q["tr"] = p.get("timestamp", 0)
+                  elif meth == "Network.loadingFinished":
+                      q = self.req.get(p.get("requestId"))
+                      if q is not None: q["tf"] = p.get("timestamp", 0); q["bytes"] = p.get("encodedDataLength", 0)
+                  elif meth == "Network.loadingFailed":
+                      q = self.req.get(p.get("requestId"))
+                      if q is not None: q["fail"] = p.get("errorText", "failed") + (" (canceled)" if p.get("canceled") else "")
+                  elif meth == "Runtime.consoleAPICalled":
+                      text = " | ".join(str(a.get("value", a.get("description", ""))) for a in p.get("args", []))[:300]
+                      self.console.append([p.get("type"), text]); log("  console." + str(p.get("type")), text)
+                  elif meth == "Runtime.exceptionThrown":
+                      text = json.dumps(p)[:400]; self.console.append(["exception", text]); log("  EXCEPTION", text)
+                  elif meth == "Log.entryAdded":
+                      e = p.get("entry", {})
+                      if e.get("level") in ("error", "warning"): log("  log." + e.get("level"), e.get("text", "")[:240], e.get("url", "")[:120])
+                      if e.get("level") == "error": self.console.append(["log.error", e.get("text", "")[:300]])
+                  elif meth == "Page.frameNavigated":
+                      f = p.get("frame", {})
+                      if not f.get("parentId"): self.navs.append(f.get("url")); log("  nav", f.get("url"))
+              def call(self, method, params=None, timeout=25):
+                  i = self.send(method, params); end = time.time() + timeout
+                  while time.time() < end:
+                      m = self.recv(1)
+                      if m is None: continue
+                      if "closed" in m: return None
+                      if m.get("id") == i: return m.get("result", {})
+                      self.event(m)
+                  return None
+              def pump(self, secs):
+                  end = time.time() + secs
+                  while time.time() < end:
+                      m = self.recv(min(1.0, max(0.05, end - time.time())))
+                      if m is None: continue
+                      if "closed" in m: return False
+                      self.event(m)
+                  return True
+              def js(self, expr, timeout=25):
+                  r = self.call("Runtime.evaluate", {"expression": expr, "returnByValue": True}, timeout)
+                  try: return r["result"]["value"]
+                  except Exception: return None
+              def canvases(self):
+                  # every canvas of the page, closed shadow roots and frames included (the page's own querySelectorAll cannot see those)
+                  r = self.call("DOM.getDocument", {"depth": -1, "pierce": True}, 40)
+                  found = []
+                  def walk(n):
+                      if (n.get("nodeName") or "").lower() == "canvas":
+                          a = n.get("attributes") or []; d = dict(zip(a[0::2], a[1::2])); found.append([d.get("width"), d.get("height")])
+                      for ch in n.get("children") or []: walk(ch)
+                      for sr in n.get("shadowRoots") or []: walk(sr)
+                      if n.get("contentDocument"): walk(n["contentDocument"])
+                  if r and "root" in r: walk(r["root"])
+                  return found
+              def timeline(self, path, host):
+                  # every request of this page, in order: when it was asked, when it was answered, by whom
+                  rows = []; t0 = min([q["t"] for q in self.req.values() if q.get("t")] or [0])
+                  for i in self.order:
+                      q = self.req[i]; u = q["url"]
+                      if u.startswith("data:") or u.startswith("blob:"): continue
+                      asked = q.get("t", 0) - t0
+                      if "tr" in q: ans = ("%7.2fs" % (q["tr"] - q["t"])) if q.get("t") else "      ?"
+                      elif "fail" in q: ans = "FAILED " + q["fail"]
+                      else: ans = "PENDING (no answer)"
+                      who = "pin-intercept" if q.get("via") else ("network" if "tr" in q else "-")
+                      rows.append("+%7.2fs  %-22s %-13s %-4s %-9s %s" % (asked, ans, who, q.get("status", ""), q.get("type", ""), u[:150]))
+                  open(path, "w").write("\n".join(rows) + "\n")
+                  same = [q for q in self.req.values() if ("//" + host + "/") in q["url"]]
+                  skip = ("data:", "blob:")
+                  return {"requests": len(self.req), "same_origin": len(same), "by_intercept": len([q for q in same if q.get("via")]),
+                          "pending": [q["url"][:120] for q in self.req.values() if "tr" not in q and "fail" not in q and not q["url"].startswith(skip)][:12],
+                          "failed": [q["url"][:120] + " " + q["fail"] for q in self.req.values() if "fail" in q][:12]}
+              def close(self):
+                  try: self.ws.close()
+                  except Exception: pass
+
+          def pages(pkg):
+              pid = adb("shell", "pidof", pkg).split()
+              if not pid: return []
+              sock = None
+              for l in adb("shell", "cat", "/proc/net/unix").splitlines():
+                  if "webview_devtools_remote_" + pid[0] in l: sock = l.split("@")[-1].strip()
+              if not sock: return []
+              adb("forward", "tcp:9222", "localabstract:" + sock)
+              try: return json.load(urllib.request.urlopen("http://localhost:9222/json", timeout=5))
+              except Exception: return []
+
+          def attach(pkg, host):
+              # the world's page: the one on its host, else the one still blank (its document has not arrived yet); never the app's own asset pages
+              ps = [p for p in pages(pkg) if p.get("type") == "page" and "appassets.androidplatform.net" not in p.get("url", "")]
+              hit = [p for p in ps if host in p.get("url", "")] or ps
+              if not hit: return None
+              try: return Cdp(hit[0]["webSocketDebuggerUrl"])
+              except Exception as e: log("  attach failed", e); return None
+
+          def screen(name=None):
+              # the pixels the screen really shows in the middle of the world's area (below the app's bars and its loading chip)
+              try: png = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
+              except subprocess.TimeoutExpired: return {"error": "screencap timed out"}
+              path = OUT + "/" + (name or "_poll") + ".png"
+              open(path, "wb").write(png)
+              try:
+                  im = Image.open(path).convert("RGB"); w, h = im.size
+                  box = im.crop((int(w * 0.04), int(h * 0.50), int(w * 0.96), int(h * 0.84))).resize((96, 96), Image.NEAREST)
+                  counts = {}
+                  for r, g, b in box.getdata():
+                      q = (r & 0xF0, g & 0xF0, b & 0xF0); counts[q] = counts.get(q, 0) + 1
+                  top = max(counts, key=counts.get)
+                  return {"colours": len(counts), "share": round(counts[top] / float(96 * 96), 3), "dominant": "#%02x%02x%02x" % top}
+              except Exception as e: return {"error": str(e)}
+
+          def on_screen(s, light=True):
+              # not one flat colour: a hand-drawn 2D scene holds hundreds of colours, a WebGL intro may hold a few over a gradient
+              if light: return s.get("colours", 0) >= 12 and s.get("share", 1.0) < 0.95
+              return s.get("colours", 0) >= 6 and s.get("share", 1.0) < 0.97
+
+          def texts():
+              # what the app itself says on the screen (the loading chip, the no-render banner, the diagnostics sheet)
+              for _ in range(3):
+                  adb("shell", "uiautomator", "dump", "/sdcard/u.xml", timeout=60)
+                  x = adb("shell", "cat", "/sdcard/u.xml")
+                  if "<hierarchy" in x:
+                      out = []
+                      for m in re.finditer(r'<node [^>]*>', x):
+                          n = m.group(0); t = re.search(r' text="([^"]*)"', n); d = re.search(r' content-desc="([^"]*)"', n)
+                          b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+                          for v in ((t.group(1) if t else ""), (d.group(1) if d else "")):
+                              if v: out.append((v, tuple(map(int, b.groups())) if b else None))
+                      return out
+                  time.sleep(2)
+              return []
+
+          def tap(label):
+              for v, b in texts():
+                  if v == label and b:
+                      adb("shell", "input", "tap", str((b[0] + b[2]) // 2), str((b[1] + b[3]) // 2)); time.sleep(2); return True
+              return False
+
+          def web_bounds():
+              # the world's WebView on the screen (px), read from the view tree
+              x = adb("shell", "cat", "/sdcard/u.xml")
+              m = re.search(r'class="android.webkit.WebView"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)
+              return tuple(map(int, m.groups())) if m else None
+
+          def enter(cdp, wid, label):
+              # past the world's own start gate, for a screenshot of the scene itself (recorded, never asserted)
+              how = cdp.js(ENTER_JS, 10) if cdp is not None else None
+              texts(); b = web_bounds()
+              if b:
+                  for rx, ry in TAPS.get(wid, []):
+                      adb("shell", "input", "tap", str(int(b[0] + rx * (b[2] - b[0]))), str(int(b[1] + ry * (b[3] - b[1])))); time.sleep(1)
+              if cdp is not None: cdp.pump(20)
+              else: time.sleep(20)
+              s = screen(label + "-entered"); log(label, "entered (%s, area %s): screen %s" % (how, b, json.dumps(s))); return s
+
+          KEEP = r"rendered|loading|not rendered|Failed requests|Pin offline|pinned copy|Console errors|canvases|Canvases|Presentation|screen:|GPU contexts"
+
+          def diagnostics(label):
+              # the app's own Page diagnostics sheet: the render check, Failed requests, the pin-offline lines
+              if not tap("Page diagnostics"): log(label, "no Page diagnostics button on screen"); return []
+              time.sleep(3)
+              rows = [v for v, b in texts()]
+              screen(label + "-diagnostics")
+              adb("shell", "input", "swipe", "540", "1900", "540", "700", "400"); time.sleep(1)
+              rows += [v for v, b in texts() if v not in rows]
+              screen(label + "-diagnostics-2")
+              adb("shell", "input", "keyevent", "KEYCODE_BACK"); time.sleep(1)
+              open(OUT + "/" + label + "-diagnostics.txt", "w").write("\n".join(rows) + "\n")
+              keep = [r for r in rows if re.search(KEEP, r)]
+              for r in keep: log(label, "  diag:", r[:220])
+              return keep[:14]
+
+          def watch(wid, label, secs, light):
+              # opens the world cold and waits until it holds a canvas AND the screen shows it; returns the facts and the session
+              host = URL[wid].split("/")[2]
+              res = {"world": wid, "label": label, "host": host, "deadline_s": secs, "drawn_s": None, "canvas_s": None}
+              adb("shell", "am", "start", "-S", "-W", "-n", PKG + "/.MainActivity", "-e", "world", wid)
+              t0 = time.time(); cdp = None; last = None; seen = False
+              while time.time() - t0 < secs:
+                  if cdp is None:
+                      cdp = attach(PKG, host)
+                      if cdp is None:
+                          if not seen and time.time() - t0 > 50: res["skipped"] = "no page for this world (not in this build's catalogue?)"; break
+                          time.sleep(1.5); continue
+                      seen = True; log(label, "attached after %.1fs" % (time.time() - t0))
+                  if not cdp.pump(2.0): cdp.close(); cdp = None; continue
+                  st = cdp.js(STATE, 15)
+                  if st is None: cdp.close(); cdp = None; continue
+                  s = json.loads(st); scr = screen()
+                  if light:
+                      # a 2D canvas of the document that reads back drawn
+                      n = s["drawn"]; draws = "-"; pierced = "-"
+                  else:
+                      # a canvas anywhere in the page (closed shadow roots included) that the page is issuing WebGL draw calls into
+                      cdp.js(GL_HOOK, 10); cdp.pump(1.0); draws = cdp.js(GL_READ, 10); pierced = len(cdp.canvases())
+                      n = pierced if isinstance(draws, int) and draws > 0 else 0
+                  line = "canvases=%d drawn=%d blank=%d css=%dx%d spinner=%s cdn=%s pierced=%s gl_draws=%s screen=%s url=%s" % (
+                      s["canvases"], s["drawn"], s["blank"], s["cw"], s["ch"], s["spinner"], s["cdn"], pierced, draws, json.dumps(scr), s["url"][:60])
+                  if line != last: log(label, line); last = line
+                  res["state"] = s; res["screen"] = scr; res["gl_draws"] = draws; res["pierced"] = pierced
+                  if n > 0 and res["canvas_s"] is None: res["canvas_s"] = round(time.time() - t0, 1)
+                  if n > 0 and on_screen(scr, light): res["drawn_s"] = round(time.time() - t0, 1); break
+              res["final_screen"] = screen(label)
+              res["overlay"] = [v for v, b in texts() if v.startswith("Loading ") or "is not rendering" in v or "pinned copy" in v.lower() or "is offline" in v.lower()][:6]
+              log(label, "RESULT drawn_s=%s canvas_s=%s overlay=%s" % (res["drawn_s"], res["canvas_s"], res["overlay"]))
+              return res, cdp
+
+          summary = {"mode": MODE, "worlds": [], "webview": ""}
+          wv = adb("shell", "dumpsys", "webviewupdate")
+          open(OUT + "/webview.txt", "w").write(wv)
+          m = re.search(r"Current WebView package[^\n]*", wv); summary["webview"] = m.group(0).strip() if m else ""
+          log("mode", MODE, "worlds", WORLDS, summary["webview"])
+
+          # ── live: every declared tab reaches drawn content ─────────────────────────────────────────────────────────────────
+          for wid in WORLDS:
+              if wid not in URL:
+                  summary["worlds"].append({"world": wid, "skipped": "not in data/store.json"}); log("live-" + wid, "SKIPPED: not in data/store.json"); continue
+              res, cdp = watch(wid, "live-" + wid, DEADLINE.get(wid, DEADLINE_DEFAULT), wid == PINNED)
+              if cdp is not None and wid == PINNED and res["drawn_s"] is not None:
+                  # the #1694 viewport assertion, then one reload to record the whole request timeline of a load
+                  s = res["state"]; res["viewport_ok"] = bool(s["mq"] and s["body"] > 0 and s["ch"] > 0)
+                  cdp.req.clear(); cdp.order[:] = []
+                  cdp.send("Page.reload"); t1 = time.time(); res["reload_drawn_s"] = None
+                  while time.time() - t1 < 90:
+                      if not cdp.pump(2.0): break
+                      st = cdp.js(STATE, 15)
+                      if st and json.loads(st)["drawn"] > 0 and on_screen(screen()): res["reload_drawn_s"] = round(time.time() - t1, 1); break
+                  cdp.pump(6)
+                  res["timeline"] = cdp.timeline(OUT + "/live-" + wid + "-timeline.txt", res["host"])
+                  log("live-" + wid, "reload drawn_s=%s timeline=%s" % (res["reload_drawn_s"], json.dumps(res["timeline"])))
+              if "skipped" not in res and wid != PINNED and res["drawn_s"] is not None: res["entered_screen"] = enter(cdp, wid, "live-" + wid)
+              if cdp is not None: cdp.close()
+              if "skipped" not in res: res["diagnostics"] = diagnostics("live-" + wid)
+              summary["worlds"].append(res)
+
+          # ── pinned: the origin stops answering, the pinned world must still render (#1711) ─────────────────────────────────
+          pinned = {"world": PINNED, "skipped": "not opened"}
+          if PINNED in WORLDS and PINNED in URL:
+              host = URL[PINNED].split("/")[2]
+              ips = sorted(set(a[4][0] for a in socket.getaddrinfo(host, 443, socket.AF_INET)))
+              time.sleep(20)   # the copy of the first loads is written in the background
+              man = adb("shell", "cat /data/data/" + PKG + "/files/site-cache-v2/" + host + "/manifest.json")
+              try: keys = sorted(json.loads(man).get("entries", {}).keys())
+              except Exception: keys = []
+              open(OUT + "/pinned-copy-urls.txt", "w").write("\n".join(keys) + "\n")
+              log("pinned", "copy holds %d urls; origin %s = %s" % (len(keys), host, ips))
+              adb("shell", "am", "force-stop", PKG)
+              for ip in ips: log("pinned", "drop", ip, adb("shell", "iptables", "-w", "-I", "OUTPUT", "-d", ip, "-j", "DROP").strip() or "ok")
+              pinned, cdp = watch(PINNED, "pinned-" + PINNED, PINNED_DEADLINE, True)
+              pinned["copy_urls"] = len(keys); pinned["origin"] = ips
+              if cdp is not None:
+                  cdp.pump(3); pinned["timeline"] = cdp.timeline(OUT + "/pinned-" + PINNED + "-timeline.txt", host); cdp.close()
+                  log("pinned", "timeline", json.dumps(pinned["timeline"]))
+              pinned["diagnostics"] = diagnostics("pinned-" + PINNED)
+              log("pinned", "iptables", adb("shell", "iptables", "-w", "-L", "OUTPUT", "-v", "-n").strip().replace("\n", " | ")[:400])
+              for ip in ips: adb("shell", "iptables", "-w", "-D", "OUTPUT", "-d", ip, "-j", "DROP")
+          summary["pinned"] = pinned
+
+          # ── Cloud-Browser on the same emulator, the same address (side by side, recorded only) ─────────────────────────────
+          if os.path.exists("browser.apk") and PINNED in URL:
+              adb("install", "-r", "-g", "browser.apk", timeout=240)
+              adb("shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", URL[PINNED], "-p", BROWSER); time.sleep(30)
+              c = attach(BROWSER, URL[PINNED].split("/")[2])
+              if c is not None:
+                  c.pump(2); summary["cloud_browser"] = {"state": c.js(STATE, 15), "screen": screen("cloud-browser-" + PINNED)}; c.close()
+                  log("cloud-browser", json.dumps(summary["cloud_browser"])[:400])
+
+          # ── verdict ───────────────────────────────────────────────────────────────────────────────────────────────────────
+          bad = []
+          for r in summary["worlds"]:
+              if "skipped" in r: bad.append("%s was not opened: %s" % (r["world"], r["skipped"])); continue
+              if r["drawn_s"] is None: bad.append("%s did not reach drawn content in %d s (%s)" % (r["world"], r["deadline_s"], json.dumps(r.get("screen"))))
+              if r["world"] == PINNED and r["drawn_s"] is not None and not r.get("viewport_ok", False): bad.append("%s: the layout viewport is zero (#1694)" % r["world"])
+          if "skipped" in pinned: bad.append("the pinned world was not checked: " + pinned["skipped"])
+          elif pinned["drawn_s"] is None: bad.append("%s did not render from its pinned copy while its origin did not answer (%d s): %s" % (PINNED, PINNED_DEADLINE, pinned.get("overlay")))
+          summary["failed"] = bad
+          json.dump(summary, open(OUT + "/summary.json", "w"), indent=1)
+          for b in bad: log("FAIL", b)
+          log("VERDICT", "GREEN" if not bad else "RED (%d)" % len(bad), "mode", MODE)
+          sys.exit(0 if (not bad or MODE == "baseline") else 3)
           PY
           cat > run.sh <<'EOF'
           #!/bin/bash
-          mkdir -p probe screens
+          mkdir -p probe
+          adb root; sleep 3; adb wait-for-device
           adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
           adb install -r -g app.apk || exit 2
-          adb logcat -v threadtime "*:W" CloudWebConsole:I chromium:I > probe/logcat.txt 2>&1 &
-          adb shell am start -S -W -n com.diegonmarcos.cgomniverse/.MainActivity -e section galaxy; sleep 20
-          adb shell run-as com.diegonmarcos.cgomniverse sh -c 'cd files/site-cache-v2 && ls -R | head -40; cat floor796.com/manifest.json | head -c 4000' > probe/cache-manifest.txt 2>&1
-          adb shell dumpsys activity top | grep -iE "WebView|AndroidViewsHandler|ComposeView|AndroidComposeView" | head -20 > probe/views-galaxy.txt
-          python3 cdp.py com.diegonmarcos.cgomniverse galaxy 50; RC=$?
-          adb shell run-as com.diegonmarcos.cgomniverse sh -c 'cd files/site-cache-v2/floor796.com && for f in blobs/*; do s=$(wc -c < $f); echo $f $s; done | sort -k2 -n | head -60' >> probe/cache-manifest.txt 2>&1
-          adb exec-out screencap -p > probe/galaxy.png
-          if [ -f browser.apk ]; then
-            adb install -r -g browser.apk
-            adb shell am start -a android.intent.action.VIEW -d https://floor796.com -p com.diegonmarcos.cloudbrowser; sleep 20
-            adb shell dumpsys activity top | grep -iE "WebView|AndroidViewsHandler|ComposeView|AndroidComposeView" | head -20 > probe/views-browser.txt
-            python3 cdp.py com.diegonmarcos.cloudbrowser browser 40
-            adb exec-out screencap -p > probe/browser.png
-          fi
+          adb logcat -v threadtime "*:W" CloudWebConsole:I CloudWebPin:I chromium:I > probe/logcat.txt 2>&1 &
+          adb shell dumpsys package com.diegonmarcos.cgomniverse | grep -E "versionName|firstInstallTime" > probe/package.txt || true
+          python3 check.py; RC=$?
+          rm -f probe/_poll.png
           exit $RC
           EOF
           chmod +x run.sh
-      - name: Boot emulator + probe
-        timeout-minutes: 30
+      - name: Boot emulator + check
+        timeout-minutes: 45
         uses: reactivecircus/android-emulator-runner@v2
+        env:
+          MODE: ${{ inputs.mode }}
+          WORLDS: ${{ inputs.worlds }}
         with:
-          api-level: 34
+          api-level: ${{ matrix.api }}
           arch: x86_64
           target: google_apis
           profile: pixel_5
@@ -135,6 +459,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cg-omniverse-f796-cdp
+          name: cg-omniverse-galaxy-check-${{ matrix.api }}
           path: probe
           retention-days: 14
