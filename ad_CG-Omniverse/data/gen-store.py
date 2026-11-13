@@ -51,6 +51,8 @@ def load_rules(path=RULES):
         q = r.get("query", "")
         if not re.fullmatch(r"[A-Za-z0-9_.=&-]+", q): raise SystemExit("world-rules.json: %s query %r is not a plain query string" % (sid, q))
         if not isinstance(r.get("off", False), bool): raise SystemExit("world-rules.json: %s off %r is not true/false" % (sid, r.get("off")))
+        g = r.get("grace_s", 0)
+        if not isinstance(g, int) or isinstance(g, bool) or not 0 <= g <= 600: raise SystemExit("world-rules.json: %s grace_s %r is not 0..600 seconds" % (sid, g))
     return rules
 
 
@@ -112,7 +114,9 @@ def generate(text, links=None, rules=None, models=None):
     if not entries: raise SystemExit("fwa.md: no rows")
     for e in entries:
         r = rules.get(e["id"])
-        if r is None or r.get("off"): continue   # an "off" rule stays declared (with its why) but the world loads its plain address
+        if r is None: continue
+        if r.get("grace_s"): e["render_grace_s"] = r["grace_s"]   # #1694 how long the render check waits for a heavy world (applies even when the query rule is off)
+        if r.get("off"): continue   # an "off" rule stays declared (with its why) but the world loads its plain address
         e["launch_query"] = r["query"]
         if "cpu_query" in r: e["launch_query_cpu"] = r["cpu_query"]
     for m in models:

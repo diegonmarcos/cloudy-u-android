@@ -150,6 +150,9 @@ class StoreTest {
         val w = Store.parse(f.readText()).single { it.id == "floor796" }
         assertEquals("floor796", w.name)
         assertEquals("https://floor796.com", w.url)
+        assertEquals(240_000L, w.renderGraceMs)   // #1694 the render check waits for its 175 MB scene file
+        assertEquals("", w.launchQuery)
+        assertEquals(0L, Store.parse(f.readText()).first { it.id == "lusion-v3" }.renderGraceMs)
         assertEquals(setOf(Store.WEBSITES), Store.tags(w, FilterGroup.TYPE))
         assertEquals(setOf(Store.D2), Store.tags(w, FilterGroup.DIMENSION))
         assertEquals(setOf(Store.FLAT), Store.tags(w, FilterGroup.DEVICE))

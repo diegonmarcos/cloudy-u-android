@@ -249,7 +249,7 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
             val screen = Web.screenSample(ctx as? android.app.Activity, wv)
             val rec = OmniXray.worlds().firstOrNull { it.id == w.id }
             val v = RenderProbe.verdict(viewSize.width, viewSize.height, pg, screen, if (finishedAt == 0L) -1L else System.currentTimeMillis() - finishedAt,
-                PageConsole.errors().map { PageConsole.format(it) }, (rec?.subErrors?.size ?: 0) + (rec?.httpErrors?.size ?: 0))
+                PageConsole.errors().map { PageConsole.format(it) }, (rec?.subErrors?.size ?: 0) + (rec?.httpErrors?.size ?: 0), w.renderGraceMs)
             renderPage = pg; render = v; OmniXray.worldRender(w.id, RenderProbe.presentation(cpu) + "; " + v.text())
             if (v.state == RenderProbe.State.RENDERED && cpu && !Web.cpuPresent(ctx, w.id)) Web.setCpuPresent(ctx, w.id, true)
             if (RenderProbe.stepToCpu(v, cpu, viewSize.width, viewSize.height)) {

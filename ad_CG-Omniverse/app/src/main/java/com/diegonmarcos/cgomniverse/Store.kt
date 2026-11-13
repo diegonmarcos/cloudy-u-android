@@ -24,6 +24,8 @@ data class World(
     val launchQueryCpu: String? = null,
     /** #1701 set for a Type Model entry: the model Galaxy shows in the viewer; null for a web world. */
     val model: ModelRef? = null,
+    /** #1694 how long (ms) the render check waits for this world before it calls a flat screen a failure; 0 = [RenderProbe.GRACE_MS] (world-rules.json grace_s). */
+    val renderGraceMs: Long = 0L,
 )
 
 /**
@@ -131,6 +133,7 @@ object Store {
                 launchQuery = o.optString("launch_query"),
                 launchQueryCpu = if (o.has("launch_query_cpu")) o.optString("launch_query_cpu") else null,
                 model = m,
+                renderGraceMs = o.optLong("render_grace_s", 0L) * 1000L,
             )
         }
     }

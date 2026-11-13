@@ -182,4 +182,13 @@ class RenderProbeTest {
             "Tags.WORLD_FALLBACK", "Tags.WORLD_DIAG_SHEET", "Store.launchUrl(w, cpu)", "Pinned.intercept(", "PageDiag.SCRIPT", "\"Console errors (")
             .forEach { assertTrue("GalaxyPage lost $it", g.contains(it)) }
     }
+
+    /** #1694 a heavy world declares a longer wait: still loading inside it, failed after it, and never shorter than the default. */
+    @Test fun aWorldsOwnGraceExtendsTheLoadingWindow() {
+        val g = 240_000L
+        assertEquals(RenderProbe.State.LOADING, RenderProbe.verdict(1080, 1800, page(), flat, g - 1, graceMs = g).state)
+        assertEquals(RenderProbe.State.NOT_RENDERED, RenderProbe.verdict(1080, 1800, page(), flat, g, graceMs = g).state)
+        assertEquals(RenderProbe.State.NOT_RENDERED, RenderProbe.verdict(1080, 1800, page(), flat, RenderProbe.GRACE_MS, graceMs = 1_000L).state)
+        assertEquals(RenderProbe.State.LOADING, RenderProbe.verdict(1080, 1800, page(), flat, RenderProbe.GRACE_MS - 1, graceMs = 1_000L).state)
+    }
 }

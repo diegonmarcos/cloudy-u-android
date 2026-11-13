@@ -124,9 +124,10 @@ object RenderProbe {
      * the load grace; the page never answered; its viewport is empty; it produces no frames; it drew but the screen is flat (the
      * WebView is not compositing its canvas / video layers); its videos decoded nothing; its canvases are blank; it has no
      * scene at all. [viewW] x [viewH] = the measured size of the world's area in px; [sinceFinishedMs] < 0 = the main frame has
-     * not finished; [errors] = the page's console errors; [failedRequests] = its failed subresource and HTTP >= 400 requests.
+     * not finished; [graceMs] = a world's own longer wait (never shorter than [GRACE_MS]); [errors] = the page's console errors; [failedRequests] = its failed subresource and HTTP >= 400 requests.
      */
-    fun verdict(viewW: Int, viewH: Int, page: Page?, screen: Screen?, sinceFinishedMs: Long, errors: List<String> = emptyList(), failedRequests: Int = 0): Verdict {
+    fun verdict(viewW: Int, viewH: Int, page: Page?, screen: Screen?, sinceFinishedMs: Long, errors: List<String> = emptyList(), failedRequests: Int = 0, graceMs: Long = 0L): Verdict {
+        val grace = maxOf(GRACE_MS, graceMs)
         val facts = ArrayList<String>()
         facts += "content area $viewW x $viewH px"
         screen?.let { facts += "screen: " + it.text() }
@@ -140,7 +141,7 @@ object RenderProbe {
         if (viewW <= 0 || viewH <= 0) return no("the world's content area has no size ($viewW x $viewH px), so the page is laid out collapsed")
         if (screen != null && !screen.flat) return Verdict(State.RENDERED, "the screen shows the world (${screen.colours} colours)", facts)
         if (sinceFinishedMs < 0) return Verdict(State.LOADING, "loading the page", facts)
-        if (sinceFinishedMs < GRACE_MS && !(screen == null && page?.hasPixels == true)) return Verdict(State.LOADING, "waiting for the first frame", facts)
+        if (sinceFinishedMs < grace && !(screen == null && page?.hasPixels == true)) return Verdict(State.LOADING, "waiting for the first frame", facts)
         if (page == null) return no("the page did not answer the render check (its script is blocked or the renderer is busy)")
         if (page.viewportW <= 0 || page.viewportH <= 0) return no("the page was given an empty viewport (${page.viewportW} x ${page.viewportH} css px)")
         if (page.frames == 0) return no("the page produces no animation frames (it reports itself ${page.visibility}), so its scene loop never runs")

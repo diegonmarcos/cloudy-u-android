@@ -1,5 +1,5 @@
 {
-  "_doc": "Per-world launch rules, keyed by Store id (data/fwa.md slug). gen-store.py copies each rule into store.json as launch_query; Galaxy appends it to the world's address (Store.launchUrl). Declared here, never spelled in Kotlin. An optional cpu_query (launch_query_cpu) replaces it when Galaxy falls back to the CPU presentation (#1657: the WebView did not bring the world to the screen). A rule with \"off\": true stays declared with its why but is not applied: the world loads its plain address.",
+  "_doc": "Per-world launch rules, keyed by Store id (data/fwa.md slug). gen-store.py copies each rule into store.json as launch_query; Galaxy appends it to the world's address (Store.launchUrl). Declared here, never spelled in Kotlin. An optional cpu_query (launch_query_cpu) replaces it when Galaxy falls back to the CPU presentation (#1657: the WebView did not bring the world to the screen). A rule with \"off\": true stays declared with its why but is not applied: the world loads its plain address. An optional grace_s (0..600) is how long the render check treats a flat world as still loading (store.json render_grace_s), declared for heavy worlds.",
   "rules": {
     "floor796": {
       "off": true,
@@ -7,7 +7,9 @@
       "query": "old-render",
       "why": "The default engine downloads a 175 MB F796 file into a worker (held twice in memory, plus a Cache API write) and stays blank when the WebView renderer cannot hold it. ?old-render selects the legacy engine, which streams the 127 MB MP4 tiles for the viewport only. Remove this rule to get the best-quality engine back.",
       "cpu_query": "",
-      "cpu_why": "The legacy engine is video tiles, which only the GPU presents. In the CPU presentation (CPU-backed 2D canvases) the default canvas engine is loaded instead, so the scene is drawn as a bitmap the WebView presents like any image."
+      "cpu_why": "The legacy engine is video tiles, which only the GPU presents. In the CPU presentation (CPU-backed 2D canvases) the default canvas engine is loaded instead, so the scene is drawn as a bitmap the WebView presents like any image.",
+      "grace_s": 240,
+      "grace_why": "#1694 the default engine loads a 175 MB scene file before it creates its canvas (0x0 until then), which takes longer than the 20 s default on a slow link or an emulator; the render check called it 'not rendering' and reloaded it in the CPU presentation, which restarted the download. Cloud-Browser (no render check) shows the scene. The check now waits this long for floor796."
     }
   }
 }
