@@ -29,20 +29,19 @@ object XrayMemoryCollector {
 
     fun collect(ctx: Context, snap: AppSnapshot.Snapshot?, appVersion: String, now: Long = System.currentTimeMillis(),
                 exec: (String) -> ShellResult? = { cmd -> runCatching { ShellClient.over(ctx).exec(cmd, timeoutMs = 30_000L) }.getOrElse { ShellResult.Failed(it.message ?: it.javaClass.simpleName) } }): XrayMemoryReport.Inputs {
-        val R = XrayMemoryReport
-        val device = R.Device(Build.MANUFACTURER.orEmpty(), Build.MODEL.orEmpty(), Build.VERSION.RELEASE.orEmpty(), Build.VERSION.SDK_INT,
+        val device = XrayMemoryReport.Device(Build.MANUFACTURER.orEmpty(), Build.MODEL.orEmpty(), Build.VERSION.RELEASE.orEmpty(), Build.VERSION.SDK_INT,
             appVersion, SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.US).format(Date(now)))
         val walk = walkShared(ctx)
-        return R.Inputs(
+        return XrayMemoryReport.Inputs(
             device = device,
             volumes = volumes(ctx),
             apps = appsSource(snap),
             folders = walk.folders, files = walk.files, media = walk.media, scanNote = walk.note,
             mem = memory(ctx),
             procs = procs(snap),
-            adbMeminfo = shell(exec("dumpsys meminfo"), "dumpsys meminfo") { R.trimMeminfo(it) },
-            adbDf = shell(exec("df -h"), "df -h") { R.scrubLines(it) },
-            adbDu = shell(exec("du -k -d 1 /sdcard"), "du") { R.scrubLines(it) },
+            adbMeminfo = shell(exec("dumpsys meminfo"), "dumpsys meminfo") { XrayMemoryReport.trimMeminfo(it) },
+            adbDf = shell(exec("df -h"), "df -h") { XrayMemoryReport.scrubLines(it) },
+            adbDu = shell(exec("du -k -d 1 /sdcard"), "du") { XrayMemoryReport.scrubLines(it) },
         )
     }
 
