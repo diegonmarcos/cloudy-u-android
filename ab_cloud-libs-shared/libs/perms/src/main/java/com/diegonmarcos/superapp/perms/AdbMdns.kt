@@ -1,4 +1,4 @@
-package com.diegonmarcos.superapp.adbdebug
+package com.diegonmarcos.superapp.perms
 
 import android.content.Context
 import android.net.nsd.NsdManager

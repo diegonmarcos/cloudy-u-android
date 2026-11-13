@@ -15,19 +15,16 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import com.diegonmarcos.superapp.adbdebug.AdbMdns
-import com.diegonmarcos.superapp.adbdebug.ChannelReader
-import com.diegonmarcos.superapp.adbdebug.ChannelState
-import com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
-import com.diegonmarcos.superapp.adbdebug.WirelessDebugging
-import com.diegonmarcos.superapp.adbdebug.title
+import com.diegonmarcos.superapp.bgpolicy.BgHost
+import com.diegonmarcos.superapp.perms.AdbMdns
+import com.diegonmarcos.superapp.system.AdbReadiness
+import com.diegonmarcos.superapp.system.WirelessDebuggingSwitch
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
 /**
- * The network popup's ADB section. Every channel fact comes from libs:shizuku-adb-debug-tools
- * (ChannelReader / ChannelState / WirelessDebugging / EmbeddedAdbChannel / AdbMdns); nothing here
+ * The network popup's ADB section. The channel facts come from the owner's broker (AdbReadiness over libs:shell-client), the
+ * switch from WirelessDebuggingSwitch, the port from AdbMdns; nothing here
  * re-derives the channel's status. The slow reads (the channel probe, the mDNS port lookup) fill
  * their line in after the bubble is up.
  */
@@ -47,10 +44,10 @@ internal object AdbSection {
         val app = ctx.applicationContext
         return Snap(
             usb = runCatching { Settings.Global.getInt(app.contentResolver, Settings.Global.ADB_ENABLED, 0) == 1 }.getOrDefault(false),
-            wireless = runCatching { WirelessDebugging.isOn(app) }.getOrDefault(false),
+            wireless = runCatching { WirelessDebuggingSwitch.isOn(app) }.getOrDefault(false),
             wirelessSupported = Build.VERSION.SDK_INT >= 30,
             wifiIp = wifiIpv4(),
-            sessionEndpoint = runCatching { EmbeddedAdbChannel.endpoint(app) }.getOrNull(),
+            sessionEndpoint = null,   // the owner's connected endpoint is read off the main thread in Render
         )
     }
 
@@ -59,8 +56,17 @@ internal object AdbSection {
         val app = ctx.applicationContext
         PopValue("USB debugging: ${onOff(s.usb)}")
         PopValue("Wireless debugging: " + if (s.wirelessSupported) onOff(s.wireless) else "— (Android 11+)")
-        if (s.wireless) {
-            val known = s.sessionEndpoint?.takeIf { it.contains(':') && !it.startsWith("127.") }
+        // #1682 P3: the owner's connected endpoint comes with the broker's live status (a provider call: off the main thread).
+        val ep by produceState<Pair<Boolean, String?>>(false to null) {
+            value = true to withContext(Dispatchers.IO) {
+                runCatching {
+                    com.diegonmarcos.superapp.shellclient.ShellClient.status(app).adbDetail.trim()
+                        .takeIf { Regex("""\d{1,3}(\.\d{1,3}){3}:\d+""").matches(it) }
+                }.getOrNull()
+            }
+        }
+        if (s.wireless && ep.first) {
+            val known = ep.second?.takeIf { it.contains(':') && !it.startsWith("127.") }
             // The connect port rotates on every toggle and is only advertised over mDNS, which is how
             // the lib's own connect finds it: same lookup, our own address only, given up after 4 s.
             var line by remember { mutableStateOf("Wireless: " + (known ?: "${s.wifiIp ?: "—"}:… (looking up the port)")) }
@@ -85,8 +91,8 @@ internal object AdbSection {
         val chan by produceState("Shell channel: checking…") {
             value = withContext(Dispatchers.IO) {
                 runCatching {
-                    val f = ChannelReader.read(app)
-                    ChannelState.chip(f).removePrefix("ADB Shell: ").let { "Shell channel: $it · ${f.mode.title()} mode" }
+                    val r = AdbReadiness.check(app)
+                    if (r.usable) "Shell channel: connected (${r.via})" else "Shell channel: off" + (if (r.why.isBlank()) "" else " - ${r.why}")
                 }.getOrElse { "Shell channel: — (could not read)" }
             }
         }
@@ -121,13 +127,13 @@ internal object HotspotSection {
         // (ssid line, clients line), both "checking…" until the shell answers.
         val lines by produceState("SSID: checking…" to "Clients: checking…") {
             value = withContext(Dispatchers.IO) {
-                val ch = runCatching { ShellChannels.active(app) }.getOrNull()
+                val ch = runCatching { BgHost.shell(app) }.getOrNull()
                 if (ch == null) {
                     val need = "— needs the ADB Shell channel"
                     return@withContext "SSID: $need" to "Clients: $need"
                 }
                 val out = runCatching {
-                    ch.exec(app, "dumpsys wifi 2>/dev/null | grep -E 'mApConfig|mConnectedClient|SoftApInfo|mNumAssociatedStations' | head -40; echo $SPLIT; ip neigh show 2>/dev/null")
+                    ch.exec("dumpsys wifi 2>/dev/null | grep -E 'mApConfig|mConnectedClient|SoftApInfo|mNumAssociatedStations' | head -40; echo $SPLIT; ip neigh show 2>/dev/null")
                 }.getOrNull().orEmpty()
                 val dump = out.substringBefore(SPLIT)
                 val neigh = out.substringAfter(SPLIT, "")
@@ -175,8 +181,8 @@ internal object CellularSection {
         val lines by produceState(blocks.map { MobileLink.simLines(it.sim, it.isData, phone, it.d) }) {
             if (todo.isEmpty()) return@produceState
             val fresh = withContext(Dispatchers.IO) {
-                val ch = runCatching { ShellChannels.active(app) }.getOrNull()
-                val out = ch?.let { c -> runCatching { c.exec(app, MobileProbe.shellCommand(todo.map { it.sim.subId })) }.getOrNull() }
+                val ch = runCatching { BgHost.shell(app) }.getOrNull()
+                val out = ch?.let { c -> runCatching { c.exec(MobileProbe.shellCommand(todo.map { it.sim.subId })) }.getOrNull() }
                 blocks.map { b ->
                     if (b !in todo) null else {
                         val d2 = if (out.isNullOrBlank()) b.d.copy(needsShell = ch == null) else MobileProbe.withShell(b.d, out, b.sim.subId)

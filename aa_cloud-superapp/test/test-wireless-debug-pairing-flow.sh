@@ -43,7 +43,7 @@ PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  PASS: $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
 
-MDNS="$SRC/AdbMdns.kt"
+MDNS="$ROOT/ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/AdbMdns.kt"   # #1682 P3 step 4e: shared by the pairing service and the SuperApp popup
 SVC="$SRC/AdbPairingService.kt"
 BOOT="$SRC/AdbShellBootstrap.kt"
 MANIFEST="$LIB/src/main/AndroidManifest.xml"

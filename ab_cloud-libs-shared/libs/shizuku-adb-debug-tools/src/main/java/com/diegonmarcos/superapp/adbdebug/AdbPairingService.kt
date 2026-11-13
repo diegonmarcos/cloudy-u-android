@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.adbdebug
 
+import com.diegonmarcos.superapp.perms.AdbMdns
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
