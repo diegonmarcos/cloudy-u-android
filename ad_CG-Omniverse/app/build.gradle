@@ -98,6 +98,10 @@ if (!storeJson.entries) throw new GradleException("data/store.json has no entrie
 if (!avatarJson.categories || !avatarJson.default || !avatarJson.scene) throw new GradleException("data/avatar.json declares no categories, no default avatar or no scene")
 def storeB64  = b64(storeJson)
 def avatarB64 = b64(avatarJson)
+// #1711 Galaxy's declared default tabs (build.json::galaxy_tabs, in tab order): every id must be a world of the catalogue.
+def galaxyTabs = (buildJson.galaxy_tabs ?: []).collect { it.toString() }
+def storeIds = storeJson.entries.collect { it.id.toString() } as Set
+galaxyTabs.each { if (!storeIds.contains(it)) throw new GradleException("build.json::galaxy_tabs: '${it}' is not a world of data/store.json") }
 def uiTargetsB64 = b64([sites: targetSites, registry_sites: targetRegistry, repo_base: (appUrls.repo_base ?: '')])
 
 android {
@@ -132,6 +136,7 @@ android {
         buildConfigField "String", "UI_TARGETS_B64",     "\"${uiTargetsB64}\""
         buildConfigField "String", "STORE_B64",          "\"${storeB64}\""
         buildConfigField "String", "PIN_OFFLINE",        "\"${(buildJson.pin_offline ?: []).join(',')}\""
+        buildConfigField "String", "GALAXY_TABS",        "\"${galaxyTabs.join(',')}\""
         buildConfigField "String", "AVATAR_B64",         "\"${avatarB64}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }

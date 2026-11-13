@@ -6,6 +6,7 @@ import android.os.Build
 import com.diegonmarcos.cloudlib.web.GpuPageModel
 import com.diegonmarcos.cloudlib.web.PageConsole
 import com.diegonmarcos.cloudlib.web.PageDiag
+import com.diegonmarcos.cloudlib.web.PinPolicy
 import com.diegonmarcos.cloudlib.web.SiteGpuChoice
 import com.diegonmarcos.cloudlib.web.WorldRoute
 import com.diegonmarcos.cloudlib.web.WorldRouting
@@ -97,8 +98,10 @@ import com.diegonmarcos.superapp.uikit.KitCard
 import com.diegonmarcos.superapp.uikit.KitOutlinedButton
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 import kotlin.coroutines.resume
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -150,6 +153,9 @@ fun GalaxyPage(tabs: Tabs.State, onSelect: (String) -> Unit, onClose: (String) -
     }
 }
 
+/** The render check's verdict changes and the pinned-copy fallback, in logcat under one tag (read by the log export and the emulator check). */
+private fun logRender(msg: String) { runCatching { android.util.Log.i("CgoRender", msg) } }
+
 /**
  * One world, filling its tab: a WebView with WebGL on and hardware acceleration, a bar with desktop mode, reload and open-in-browser, and
  * for a VR entry the WebXR state this WebView reports (Android's WebView has no immersive WebXR today, so a VR world offers the
@@ -177,7 +183,16 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
     var refreshing by remember(w.id) { mutableStateOf(false) }
     val host = Uri.parse(w.url).host.orEmpty()
     val pinned = Pinned.isPinned(ctx, w.id)
-    val reload = { refreshing = true; error = null; offline = false; finished = false; attempt++; if (web == null) generation++ else web?.reload(); Unit }
+    // #1711 this load is shown from the pinned copy: the live document did not arrive (offline, or the site not answering).
+    // committed = the WebView received the document of the current load
+    var fromCopy by remember(w.id) { mutableStateOf(false) }
+    var copyWhy by remember(w.id) { mutableStateOf("") }
+    var committed by remember(w.id) { mutableStateOf(false) }
+    // one per main-frame load the WebView starts (the first load, a reload, the page reloading itself), and the address it asked for
+    var loadSeq by remember(w.id) { mutableIntStateOf(0) }
+    var startedUrl by remember(w.id) { mutableStateOf("") }
+    // an explicit reload asks the live site again (and is the one thing that refetches the pinned copy)
+    val reload = { refreshing = true; fromCopy = false; copyWhy = ""; error = null; offline = false; finished = false; attempt++; if (web == null) generation++ else web?.reload(); Unit }
     LaunchedEffect(w.id, attempt) {
         val start = System.currentTimeMillis()
         delay(Offline.LOAD_TIMEOUT_MS)
@@ -231,6 +246,25 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
     var renderHidden by remember(w.id) { mutableStateOf(false) }
     // the presentation ladder: as the page draws (GPU layers), then CPU-backed canvases; remembered per world once seen on the screen
     var cpu by remember(w.id) { mutableStateOf(Web.cpuPresent(ctx, w.id)) }
+    // #1711 a pinned world never waits on a live site that does not answer: when the document of a load the WebView started has
+    // not arrived after PinPolicy.LIVE_WAIT_MS and the pinned copy holds it, the world is loaded from the copy (which then also
+    // answers the data requests the live site would not). A world with no copy keeps waiting for the load watchdog above.
+    LaunchedEffect(w.id, loadSeq) {
+        if (!pinned || loadSeq == 0) return@LaunchedEffect
+        val url = Store.launchUrl(w, cpu)
+        // only the world's own document is taken from the copy: a link the user followed inside the page is left alone
+        if (fromCopy || PinPolicy.documentKey(startedUrl) != PinPolicy.documentKey(url)) return@LaunchedEffect
+        delay(PinPolicy.LIVE_WAIT_MS)
+        if (committed || fromCopy || error != null || offline) return@LaunchedEffect
+        if (!withContext(Dispatchers.IO) { Pinned.hasDocument(ctx, host, url) }) return@LaunchedEffect
+        val wv = web ?: return@LaunchedEffect
+        copyWhy = "the live site did not answer in ${PinPolicy.LIVE_WAIT_MS / 1000} s"
+        OmniXray.event("world:" + w.id, "the live page did not arrive ($copyWhy): showing the pinned copy")
+        logRender(w.id + ": pinned copy shown, $copyWhy")
+        fromCopy = true; finished = false
+        wv.stopLoading(); wv.loadUrl(url)
+        attempt++
+    }
     LaunchedEffect(w.id, generation, desktop, attempt, cpu) {
         render = null; renderPage = null; renderHidden = false
         while (true) {
@@ -250,6 +284,8 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
             val rec = OmniXray.worlds().firstOrNull { it.id == w.id }
             val v = RenderProbe.verdict(viewSize.width, viewSize.height, pg, screen, if (finishedAt == 0L) -1L else System.currentTimeMillis() - finishedAt,
                 PageConsole.errors().map { PageConsole.format(it) }, (rec?.subErrors?.size ?: 0) + (rec?.httpErrors?.size ?: 0), w.renderGraceMs)
+            // every change of the verdict also goes to logcat (tag CgoRender), so the log export tells when a world rendered or why not
+            if (v.state != render?.state) logRender(w.id + ": " + RenderProbe.presentation(cpu) + "; " + v.text().take(700))
             renderPage = pg; render = v; OmniXray.worldRender(w.id, RenderProbe.presentation(cpu) + "; " + v.text())
             if (v.state == RenderProbe.State.RENDERED && cpu && !Web.cpuPresent(ctx, w.id)) Web.setCpuPresent(ctx, w.id, true)
             if (RenderProbe.stepToCpu(v, cpu, viewSize.width, viewSize.height)) {
@@ -267,7 +303,7 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
         Row(Modifier.fillMaxWidth().background(p.surface).padding(horizontal = 4.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f).padding(start = 10.dp)) {
                 Text(w.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = p.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(Uri.parse(w.url).host.orEmpty(), style = MaterialTheme.typography.labelSmall, color = p.textSecondary, maxLines = 1)
+                Text(Uri.parse(w.url).host.orEmpty() + (if (fromCopy) " · pinned copy" else ""), style = MaterialTheme.typography.labelSmall, color = p.textSecondary, maxLines = 1)
             }
             if (w.vr) {
                 IconButton(
@@ -313,6 +349,7 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                 AndroidView(factory = { c ->
                     CloudWeb.create(c, WebProfile.WEB_WORLD, desktop).also { wv ->
                         if (cpu) Web.cpuCanvas(wv)
+                        Web.contextProbe(wv)
                         wv.webChromeClient = object : CloudChromeClient(ctx as? android.app.Activity) {
                             override fun onProgressChanged(view: WebView, newProgress: Int) { progress = newProgress; OmniXray.worldProgress(w.id, newProgress) }
                             // protected media (some worlds stream DRM video) is the one resource granted; nothing else is asked of the user
@@ -328,12 +365,17 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                                 Web.openInBrowser(c, request.url.toString()); return true
                             }
                             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
-                                (if (pinned) Pinned.intercept(c, host, request, refreshing) else null) ?: super.shouldInterceptRequest(view, request)
-                            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) { error = null; finishedAt = 0L; OmniXray.worldStarted(w.id, url) }
-                            override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) { canBack = view.canGoBack() }
+                                (if (pinned) Pinned.intercept(c, host, request, refreshing, fromCopy) else null) ?: super.shouldInterceptRequest(view, request)
+                            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+                                error = null; finishedAt = 0L; committed = false; startedUrl = url; loadSeq++
+                                OmniXray.worldStarted(w.id, url)
+                            }
+                            // the document of this load arrived (#1711: the live page answered, the pinned copy is not needed)
+                            override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) { canBack = view.canGoBack(); committed = true }
+                            override fun onPageCommitVisible(view: WebView, url: String) { committed = true }
                             override fun onPageFinished(view: WebView, url: String) {
                                 OmniXray.worldFinished(w.id, url)
-                                finishedAt = System.currentTimeMillis()
+                                finishedAt = System.currentTimeMillis(); committed = true
                                 // #1631 what this world's page can draw with, measured in the page (no bridge is added to a foreign page)
                                 view.evaluateJavascript(PageDiag.SCRIPT, null)
                                 view.postDelayed({
@@ -349,6 +391,16 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                                 OmniXray.worldError(w.id, request.url.toString(), request.isForMainFrame, err.errorCode,
                                     err.description?.toString().orEmpty() + (if (Pinned.wasServed(request.url.toString())) " [pinned copy]" else " [network]"))
                                 if (!request.isForMainFrame) return
+                                // #1711 a pinned world whose live page fails (offline, no route, a timeout) is shown from its pinned copy, not as an error card
+                                val copyUrl = Store.launchUrl(w, cpu)
+                                if (pinned && !fromCopy && PinPolicy.documentKey(request.url.toString()) == PinPolicy.documentKey(copyUrl) && Pinned.hasDocument(c, host, copyUrl)) {
+                                    copyWhy = err.description?.toString().orEmpty().ifEmpty { "the live site did not answer" }
+                                    OmniXray.event("world:" + w.id, "the live page failed ($copyWhy): showing the pinned copy")
+                                    logRender(w.id + ": pinned copy shown, the live page failed: $copyWhy")
+                                    fromCopy = true
+                                    view.post { view.loadUrl(copyUrl) }
+                                    return
+                                }
                                 if (Offline.isOfflineError(err.errorCode)) offline = true else error = err.description?.toString()
                             }
                             override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, response: WebResourceResponse) {
@@ -480,8 +532,15 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                     color = p.textPrimary, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp).testTag(Tags.WORLD_DIAG_FAILED))
                 if (failedReq.isEmpty()) Text("none", style = MaterialTheme.typography.bodySmall, color = p.textSecondary)
                 failedReq.forEach { Text(it, style = MaterialTheme.typography.labelSmall, color = p.textSecondary, modifier = Modifier.padding(vertical = 1.dp)) }
-                Text("Pin offline: " + (if (pinned) "on (documents network-first, assets from the pinned copy)" else "off"),
+                Text("Pin offline: " + Pinned.status(pinned, fromCopy, copyWhy),
                     style = MaterialTheme.typography.labelSmall, color = p.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                // #1711 what the intercept did with this world's latest requests: answered from the copy, left to the network, stored
+                if (pinned) {
+                    val pinLog = Pinned.log(host)
+                    Text("Pin offline log (${pinLog.size}): " + Pinned.logSummary(host).ifEmpty { "no request of this world yet" },
+                        style = MaterialTheme.typography.labelSmall, color = p.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                    pinLog.forEach { Text(it, style = MaterialTheme.typography.labelSmall, color = p.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(vertical = 1.dp)) }
+                }
                 val errors = PageConsole.errors().takeLast(30)
                 Text("Console errors (${errors.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
                     color = p.textPrimary, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))

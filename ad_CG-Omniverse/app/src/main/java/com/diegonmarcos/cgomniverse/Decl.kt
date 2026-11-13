@@ -19,6 +19,9 @@ object Decl {
     val worlds: List<World> by lazy { Store.parse(decode(BuildConfig.STORE_B64)) }
     val avatar: AvatarSpec by lazy { Avatar.spec(decode(BuildConfig.AVATAR_B64)) }
 
+    /** #1711 Galaxy's declared default tabs (build.json::galaxy_tabs): Store ids, in tab order. */
+    val galaxyTabs: List<String> by lazy { Tabs.ids(BuildConfig.GALAXY_TABS) }
+
     /** The one section Kotlin dispatches on: the gear on the first row opens it (declared in ui.sections, not on the bottom bar). */
     const val SECTION_ABOUT = "about"
     /** Where "Open in Galaxy" lands. */

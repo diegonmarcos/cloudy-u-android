@@ -1,8 +1,9 @@
 name: "Proof → CG-Omniverse (filter mutants + emulator screens)"
 
 # Two proofs the Ship run cannot give, on demand:
-#   mutants  every rule of the Store's filter logic (Store.kt) is held by a JVM test: each job plants ONE mutant and passes only
-#            when the suite goes RED (a mutant that stays green fails the run). A baseline job requires the real tree GREEN.
+#   mutants  every rule of the Store's filter logic (Store.kt), of Galaxy's tabs (Tabs.kt) and of pin offline (#1711: web-core
+#            PinPolicy.kt and SiteCache.kt) is held by a JVM test: each job plants ONE mutant and passes only when the suite goes
+#            RED (a mutant that stays green fails the run). A baseline job requires the real tree GREEN.
 #   screens  installs the x86_64 APK of a Ship run (or the rolling release) on an emulator and walks Store (all selected, filtered)
 #            and Galaxy (A Way to Go's offline card, a live world, the list), each opened DIRECTLY by the launch extras
 #            (`am start -e section store` / `-e world <id>`, Launch.kt) so they never depend on the Avatar page; Avatar (default,
@@ -36,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mutant: [baseline, type-map, dim-mixed, vr-yes-flat, vr-no-glass, chip-any, group-all, toggle-one, all-clears, is-all, default-all, tabs-default, tabs-open-focus, tabs-open-select, tabs-close-neighbour, tabs-close-keep, tabs-persist-selected, tabs-persist-all, catalogue-floor796]
+        mutant: [baseline, type-map, dim-mixed, vr-yes-flat, vr-no-glass, chip-any, group-all, toggle-one, all-clears, is-all, default-all, tabs-default, tabs-open-focus, tabs-open-select, tabs-close-neighbour, tabs-close-keep, tabs-persist-selected, tabs-persist-all, catalogue-floor796, tabs-declared-first, tabs-seed-once, tabs-seed-order, tabs-restore-legacy, pin-miss-live, pin-document-live, pin-refresh-live, pin-copy-newest, pin-record-volatile, cache-variants-bound, cache-blob-whole, cache-newest, cache-one-writer]
     steps:
       - uses: actions/checkout@v4
       - name: Plant the mutant
@@ -48,6 +49,8 @@ jobs:
           p = "ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/Store.kt"
           T = "ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/Tabs.kt"
           C = "ad_CG-Omniverse/data/store.json"
+          P = "ab_cloud-libs-shared/libs/web-core/src/main/java/com/diegonmarcos/cloudlib/web/PinPolicy.kt"
+          S = "ab_cloud-libs-shared/libs/web-core/src/main/java/com/diegonmarcos/cloudlib/web/SiteCache.kt"
           M = {
             "baseline":    None,
             "type-map":    ('"Others" -> setOf(OTHERS)', '"Others" -> setOf(WEBSITES)'),
@@ -69,10 +72,26 @@ jobs:
             "tabs-persist-selected": ('sel.takeIf { it in open } ?: open.firstOrNull()', 'open.firstOrNull()', T),
             "tabs-persist-all":      ('s.open.joinToString(",")', 's.open.take(1).joinToString(",")', T),
             "catalogue-floor796":    ('"id": "floor796"', '"id": "floor-796"', C),
+            # #1711 the declared default tabs (Orion, floor796, Messenger) and their one-time seeding (Tabs.kt, TabsTest)
+            "tabs-declared-first":   ('State(tabs, tabs.firstOrNull())', 'State(tabs, tabs.lastOrNull())', T),
+            "tabs-seed-once":        ('it in known && it !in given && it !in s.open', 'it in known && it !in s.open', T),
+            "tabs-seed-order":       ('front + s.open.filter { it !in front }', 's.open.filter { it !in front } + front', T),
+            "tabs-restore-legacy":   ('else setOf(DEFAULT_WORLD)', 'else emptySet()', T),
+            # #1711 pin offline never stands between a live page and the network (web-core PinPolicy.kt, PinPolicyTest)
+            "pin-miss-live":         ('else -> Action.PASS_AND_RECORD', 'else -> Action.PASS', P),
+            "pin-document-live":     ('document && liveDocuments -> Action.PASS_AND_RECORD', 'document && liveDocuments -> Action.SERVE', P),
+            "pin-refresh-live":      ('refresh -> Action.PASS_AND_RECORD', 'refresh -> Action.SERVE', P),
+            "pin-copy-newest":       ('Action.SERVE_NEWEST else Action.PASS', 'Action.PASS else Action.PASS', P),
+            "pin-record-volatile":   ('hasQuery && newestStoredAt != null -> now - newestStoredAt >= RECORD_AGAIN_MS', 'hasQuery && newestStoredAt != null -> true', P),
+            # #1711 the copy: bounded queries per path, whole blobs only, the newest query answers, one writer at a time (web-core SiteCache.kt, SiteCacheTest)
+            "cache-variants-bound":  ('if (same.size <= MAX_VARIANTS) return', 'if (true) return', S),
+            "cache-blob-whole":      ('if (o.has("size") && f.length() != o.optLong("size")) return null', 'if (false) return null', S),
+            "cache-newest":          ('.toList().asReversed().maxByOrNull { it.stored }', '.toList().asReversed().minByOrNull { it.stored }', S),
+            "cache-one-writer":      ('Boolean = synchronized(LOCK) {', 'Boolean = run {', S),
           }[os.environ["M"]]
           if M is None: sys.exit(0)
           if len(M) == 3: p = M[2]
-          with open("expect.txt", "w") as f: f.write({T: "TabsTest", C: "StoreTest"}.get(p, "StoreTest"))
+          with open("expect.txt", "w") as f: f.write({T: "TabsTest", C: "StoreTest", P: "PinPolicyTest", S: "SiteCacheTest"}.get(p, "StoreTest"))
           s = open(p).read()
           if s.count(M[0]) != 1: sys.exit("mutation target not found exactly once: %r" % M[0])
           open(p, "w").write(s.replace(M[0], M[1]))
@@ -116,7 +135,7 @@ jobs:
           sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > unit.log 2>&1
           rc=$?
           tail -60 unit.log
-          grep -E "(StoreTest|TabsTest) > .* FAILED|tests completed" unit.log || true
+          grep -E "(StoreTest|TabsTest|PinPolicyTest|SiteCacheTest) > .* FAILED|tests completed" unit.log || true
           if [ "$M" = baseline ]; then
             [ $rc -eq 0 ] || { echo "::error::the real tree is RED"; exit 1; }
             echo "baseline GREEN"
@@ -210,14 +229,19 @@ jobs:
                   if any(label in (t, d) for t, d, b in nodes(dump())): return True
                   sh("shell", "input", "swipe", "540", "1700", "540", "1000", "300"); time.sleep(0.8)
               print("::warning::'%s' never came on screen" % label); return False
-          # #1400 Galaxy tabs: the fresh install opens one tab, floor796; a Store world adds a second tab
-          launch("-e", "section", "galaxy", wait=0); shot("09-galaxy-tab-floor796", 25)
+          # #1400 Galaxy tabs: the fresh install opens the declared default tabs (#1711: Cyber City Orion, floor796, Messenger; Orion shown);
+          # a Store world adds another tab
+          launch("-e", "section", "galaxy", wait=0); shot("09b-galaxy-default-tabs", 40)
+          launch("-e", "world", "floor796", wait=0); shot("09-galaxy-tab-floor796", 25)
           # #1701 floor796 loads the plain address (Galaxy = Cloud-Browser, #1694): the Page diagnostics sheet shows Failed requests
-          shot("13-galaxy-floor796-after-3min", 180)   # the canvas engine loads a 175 MB file: give a software-GL emulator time
+          shot("13-galaxy-floor796-after-3min", 180)   # a software-GL emulator draws the scene's tiles slowly: give it time
           tap("Page diagnostics"); shot("14-galaxy-floor796-diagnostics", 4)
           sh("shell", "input", "swipe", "540", "1700", "540", "700", "400"); shot("15-galaxy-floor796-diagnostics-failed", 1)
           sh("shell", "input", "keyevent", "KEYCODE_BACK")
           launch("-e", "world", "lusion-v3", wait=0); shot("10-galaxy-two-tabs", 20)
+          # #1711 the other two default tabs, each on its own
+          launch("-e", "world", "cyber-city-orion", wait=0); shot("19-galaxy-world-cyber-city-orion", 60)
+          launch("-e", "world", "messenger", wait=0); shot("20-galaxy-world-messenger", 60)
           # #1701 the Store's 3D models: the cards (photo, facts), then each model open in Galaxy (runtime download, SHA-256 check, viewer)
           launch("-e", "section", "store"); seek("House Boat"); shot("16-store-models", 3)
           launch("-e", "world", "house-boat", wait=0); shot("17-galaxy-model-house-boat", 40)

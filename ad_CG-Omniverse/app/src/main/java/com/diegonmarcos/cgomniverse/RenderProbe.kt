@@ -35,7 +35,8 @@ object RenderProbe {
 
     /** Reads what the page drew ([SCRIPT] first, [COUNT_MS] earlier). A canvas is read back through a 16 px copy; a tainted one is "unreadable". */
     const val READ = "(function(){var r=window.__cloudRender||{};var o={vw:window.innerWidth,vh:window.innerHeight,vis:document.visibilityState," +
-        "raf:r.raf||0,timer:!!r.t,io:!!r.io,canvases:0,drawn:0,blank:0,unreadable:0,cw:0,ch:0,videos:0,vready:0,vframes:0,verr:0,imgs:0,ibroken:0};" +
+        "raf:r.raf||0,timer:!!r.t,io:!!r.io,canvases:0,drawn:0,blank:0,unreadable:0,cw:0,ch:0,videos:0,vready:0,vframes:0,verr:0,imgs:0,ibroken:0," +
+        "gl:(window.__cloudCtx||{}).gl||0,gpu:(window.__cloudCtx||{}).gpu||0,d2:(window.__cloudCtx||{}).d2||0};" +
         "var cs=document.querySelectorAll('canvas');o.canvases=cs.length;" +
         "for(var i=0;i<cs.length&&i<12;i++){var c=cs[i];if(c.clientWidth*c.clientHeight>o.cw*o.ch){o.cw=c.clientWidth;o.ch=c.clientHeight}" +
         "try{var t=document.createElement('canvas');t.width=t.height=16;var x=t.getContext('2d',{willReadFrequently:true});x.drawImage(c,0,0,16,16);" +
@@ -46,6 +47,16 @@ object RenderProbe {
         "try{o.vframes+=v.getVideoPlaybackQuality().totalVideoFrames}catch(e){}}" +
         "var im=document.images;o.imgs=im.length;for(i=0;i<im.length;i++){if(im[i].complete&&!im[i].naturalWidth)o.ibroken++}" +
         "return JSON.stringify(o)})()"
+
+    /**
+     * #1711 run at document start in every world: counts the canvas contexts the page creates, by kind (WebGL, WebGPU, 2D). A
+     * scene whose canvas is not in the document (a closed shadow root: Messenger's three.js canvas; or a canvas never attached)
+     * is invisible to [READ]'s canvas list, so without this count a world that is rendering would read "0 canvases" and, on a
+     * flat screen, "its scene never started". The page's own call is passed through untouched.
+     */
+    const val CONTEXT_JS = "(function(){if(window.__cloudCtx)return;var n=window.__cloudCtx={gl:0,gpu:0,d2:0};var g=HTMLCanvasElement.prototype.getContext;" +
+        "HTMLCanvasElement.prototype.getContext=function(t){var r=g.apply(this,arguments);try{if(r){if(t==='2d')n.d2++;else if(t==='webgpu')n.gpu++;" +
+        "else if(/webgl/.test(t))n.gl++}}catch(e){}return r}})();"
 
     /**
      * The CPU presentation, run at document start: every 2D canvas context is CPU-backed (willReadFrequently), so the page's
@@ -69,15 +80,21 @@ object RenderProbe {
         val canvases: Int, val drawn: Int, val blank: Int, val unreadable: Int, val canvasW: Int, val canvasH: Int,
         val videos: Int, val videosReady: Int, val videoFrames: Int, val videoErrors: Int,
         val images: Int, val imagesBroken: Int,
+        /** #1711 the contexts the page created ([CONTEXT_JS]), wherever their canvas is: WebGL, WebGPU, 2D. */
+        val glContexts: Int = 0, val gpuContexts: Int = 0, val contexts2d: Int = 0,
     ) {
         /** The page itself holds pixels: a canvas that reads back drawn, or a video that decoded a frame. */
         val hasPixels: Boolean get() = drawn > 0 || videoFrames > 0
+
+        /** #1711 the page drives a GPU scene (WebGL / WebGPU contexts), whether or not its canvas is in the document. */
+        val sceneContexts: Int get() = glContexts + gpuContexts
 
         fun rows(): List<Pair<String, String>> = listOf(
             "Page viewport" to "$viewportW x $viewportH css px, $visibility",
             "Animation frames in ${COUNT_MS / 1000} s" to frames.toString(),
             "Timers / IntersectionObserver" to (if (timer) "running" else "not firing") + " / " + (if (observer) "firing" else "not firing"),
             "Canvases" to "$canvases ($drawn drawn, $blank blank, $unreadable unreadable; largest $canvasW x $canvasH css px)",
+            "Canvas contexts created" to "$glContexts WebGL, $gpuContexts WebGPU, $contexts2d 2D (counted from the page start, also for a canvas outside the document)",
             "Videos" to "$videos ($videosReady with data, $videoFrames frames decoded, $videoErrors errors)",
             "Images" to "$images ($imagesBroken broken)",
         )
@@ -94,6 +111,7 @@ object RenderProbe {
             o.optInt("vw"), o.optInt("vh"), o.optString("vis"), o.optInt("raf"), o.optBoolean("timer"), o.optBoolean("io"),
             o.optInt("canvases"), o.optInt("drawn"), o.optInt("blank"), o.optInt("unreadable"), o.optInt("cw"), o.optInt("ch"),
             o.optInt("videos"), o.optInt("vready"), o.optInt("vframes"), o.optInt("verr"), o.optInt("imgs"), o.optInt("ibroken"),
+            o.optInt("gl"), o.optInt("gpu"), o.optInt("d2"),
         )
     }
 
@@ -134,6 +152,7 @@ object RenderProbe {
         page?.let { p ->
             facts += "page viewport ${p.viewportW} x ${p.viewportH}, ${p.visibility}, ${p.frames} frames/s"
             facts += "${p.canvases} canvases (${p.drawn} drawn, ${p.blank} blank), ${p.videos} videos (${p.videoFrames} frames decoded, ${p.videoErrors} errors)"
+            if (p.sceneContexts > 0) facts += "${p.sceneContexts} GPU contexts created by the page"
         }
         if (failedRequests > 0) facts += "$failedRequests failed requests"
         if (errors.isNotEmpty()) facts += "${errors.size} console errors, last: " + errors.last().take(200)
@@ -152,6 +171,9 @@ object RenderProbe {
         }
         if (page.videos > 0) return no("${page.videos} video tiles, none decoded a frame (${page.videosReady} with data, ${page.videoErrors} errors)")
         if (page.canvases > 0) return no("${page.canvases} canvases exist but nothing was drawn into them (${page.blank} blank, ${page.unreadable} unreadable)")
+        // #1711 a scene on a canvas outside the document (a closed shadow root) cannot be read back: it started, the screen decides
+        if (page.sceneContexts > 0) return no("the page started a GPU scene (${page.sceneContexts} contexts, on a canvas that is not in the document) but the screen shows " +
+            (screen?.text() ?: "nothing that could be sampled") + ": the scene is not reaching the screen")
         return no("the page has no canvas and no video: its scene never started")
     }
 }

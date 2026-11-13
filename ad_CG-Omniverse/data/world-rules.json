@@ -9,7 +9,8 @@
       "cpu_query": "",
       "cpu_why": "The legacy engine is video tiles, which only the GPU presents. In the CPU presentation (CPU-backed 2D canvases) the default canvas engine is loaded instead, so the scene is drawn as a bitmap the WebView presents like any image.",
       "grace_s": 240,
-      "grace_why": "#1694 the default engine loads a 175 MB scene file before it creates its canvas (0x0 until then), which takes longer than the 20 s default on a slow link or an emulator; the render check called it 'not rendering' and reloaded it in the CPU presentation, which restarted the download. Cloud-Browser (no render check) shows the scene. The check now waits this long for floor796."
+      "grace_why": "#1694 the default engine loads a 175 MB scene file before it creates its canvas (0x0 until then), which takes longer than the 20 s default on a slow link or an emulator; the render check called it 'not rendering' and reloaded it in the CPU presentation, which restarted the download. Cloud-Browser (no render check) shows the scene. The check now waits this long for floor796.",
+      "grace_note": "#1711 measured (plain Chromium and the emulator): the canvas is created as soon as data/matrix.json answers and the engine then loads only the viewport's tiles (8 files of 1 to 3 MB on a phone), not a 175 MB file. The 0 x 0 canvas of #1694 was the zero-height viewport (fixed in web-core), and the blank page on the phone was the matrix.json request left unanswered by the pin-offline intercept (fixed by web-core PinPolicy). The wait is kept as declared: it only delays the no-render banner."
     }
   }
 }

@@ -5,12 +5,15 @@ name: "Check → CG-Omniverse Galaxy worlds render (CDP on the emulator)"
 #   live     each world (data/store.json ids, WORLDS) is opened by the launch extra; the check passes when the page holds a canvas
 #            (floor796: a light-DOM canvas that reads back drawn; the others: a canvas anywhere, closed shadow roots included) AND the
 #            screen itself shows the scene (a screencap of the world's area is not one flat colour), inside the world's deadline.
-#            floor796 is then reloaded once to record the whole request timeline (which answers came from the pin-offline
-#            intercept: response header Client-Via) and the #1694 viewport assertion (layout viewport not zero) is kept.
+#            A WebGL world must also be receiving draw calls (a loader drawn in the DOM issues none). floor796 is then reloaded
+#            once to record the whole request timeline (which answers came from the pin-offline intercept: response header
+#            Client-Via): its document and its first data request must be answered by the network, never by the intercept
+#            (#1711), and the #1694 viewport assertion (layout viewport not zero) is kept.
 #   pinned   the regression of #1711: the phone showed floor796's top bar over a flat #101010 page with 0 canvases, 0 failed
 #            requests: its first data request (data/matrix.json?r=<random>, same origin) had no answer. The origin's address is
 #            dropped on the emulator (iptables, the CDN hosts stay reachable), the app is started cold and floor796 must STILL
-#            reach a drawn canvas: the pinned copy answers what the live site does not.
+#            reach a drawn canvas: the pinned copy answers what the live site does not. (The site's own 1 s CDN probe can time
+#            out on a slow emulator and send the page to its origin for everything; the check then reloads, twice at most.)
 # mode=baseline records the same facts and never fails (used to capture the state of a build before a fix).
 # Uploads `cg-omniverse-galaxy-check-<api>` (log, request timelines, screenshots, the app's own diagnostics texts).
 
@@ -240,8 +243,17 @@ jobs:
               try: return Cdp(hit[0]["webSocketDebuggerUrl"])
               except Exception as e: log("  attach failed", e); return None
 
+          def dismiss():
+              # an emulator's own "isn't responding" dialog (the launcher, at boot) must neither cover the world nor be sampled as its pixels
+              f = adb("shell", "dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'")
+              if "Not Responding" in f or "isn't responding" in f:
+                  log("  a system dialog is in front:", " ".join(f.split())[:200])
+                  if not tap("Wait"): adb("shell", "input", "keyevent", "KEYCODE_BACK")
+                  time.sleep(1)
+
           def screen(name=None):
               # the pixels the screen really shows in the middle of the world's area (below the app's bars and its loading chip)
+              dismiss()
               try: png = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
               except subprocess.TimeoutExpired: return {"error": "screencap timed out"}
               path = OUT + "/" + (name or "_poll") + ".png"
@@ -321,6 +333,7 @@ jobs:
               # opens the world cold and waits until it holds a canvas AND the screen shows it; returns the facts and the session
               host = URL[wid].split("/")[2]
               res = {"world": wid, "label": label, "host": host, "deadline_s": secs, "drawn_s": None, "canvas_s": None}
+              dismiss()
               adb("shell", "am", "start", "-S", "-W", "-n", PKG + "/.MainActivity", "-e", "world", wid)
               t0 = time.time(); cdp = None; last = None; seen = False
               while time.time() - t0 < secs:
@@ -374,7 +387,12 @@ jobs:
                       if st and json.loads(st)["drawn"] > 0 and on_screen(screen()): res["reload_drawn_s"] = round(time.time() - t1, 1); break
                   cdp.pump(6)
                   res["timeline"] = cdp.timeline(OUT + "/live-" + wid + "-timeline.txt", res["host"])
-                  log("live-" + wid, "reload drawn_s=%s timeline=%s" % (res["reload_drawn_s"], json.dumps(res["timeline"])))
+                  # #1711 who answered the live page's document and its first data request (data/matrix.json?r=<random>): the network, never the pin-offline intercept
+                  origin = "https://" + res["host"] + "/"
+                  live = [q for q in cdp.req.values() if q["url"] == origin or q["url"].startswith(origin + "data/matrix.json")]
+                  res["live_requests"] = [[q["url"][:90], "pin-intercept" if q.get("via") else ("network" if "tr" in q else "unanswered")] for q in live]
+                  res["live_by_network"] = bool(live) and all("tr" in q and not q.get("via") for q in live) and any("data/matrix.json" in q["url"] for q in live)
+                  log("live-" + wid, "reload drawn_s=%s live document and data: %s timeline=%s" % (res["reload_drawn_s"], json.dumps(res["live_requests"]), json.dumps(res["timeline"])))
               if "skipped" not in res and wid != PINNED and res["drawn_s"] is not None: res["entered_screen"] = enter(cdp, wid, "live-" + wid)
               if cdp is not None: cdp.close()
               if "skipped" not in res: res["diagnostics"] = diagnostics("live-" + wid)
@@ -395,6 +413,28 @@ jobs:
               for ip in ips: log("pinned", "drop", ip, adb("shell", "iptables", "-w", "-I", "OUTPUT", "-d", ip, "-j", "DROP").strip() or "ok")
               pinned, cdp = watch(PINNED, "pinned-" + PINNED, PINNED_DEADLINE, True)
               pinned["copy_urls"] = len(keys); pinned["origin"] = ips
+              pinned["copy_has_document"] = ("https://" + host + "/") in keys
+              pinned["copy_has_matrix"] = any(k.startswith("https://" + host + "/data/matrix.json") for k in keys)
+              attempts = [{"how": "cold start", "drawn_s": pinned["drawn_s"], "cdn": (pinned.get("state") or {}).get("cdn")}]
+              tries = 0
+              while pinned["drawn_s"] is None and tries < 2:
+                  # the site's own CDN probe (1 s per CDN) can time out on a slow emulator; the page then asks its dropped origin for
+                  # everything, which no copy can answer. That is the site's timing, not the app's: reload and look again.
+                  tries += 1
+                  if cdp is None: cdp = attach(PKG, host)
+                  if cdp is None: break
+                  cdp.req.clear(); cdp.order[:] = []
+                  cdp.send("Page.reload"); t1 = time.time()
+                  while time.time() - t1 < 100:
+                      if not cdp.pump(2.0): cdp.close(); cdp = None; break
+                      st = cdp.js(STATE, 15)
+                      if st is None: continue
+                      st = json.loads(st); scr = screen(); pinned["state"] = st; pinned["screen"] = scr
+                      if st["drawn"] > 0 and on_screen(scr): pinned["drawn_s"] = round(time.time() - t1, 1); break
+                  attempts.append({"how": "reload %d" % tries, "drawn_s": pinned["drawn_s"], "cdn": (pinned.get("state") or {}).get("cdn")})
+              pinned["attempts"] = attempts
+              pinned["final_screen"] = screen("pinned-" + PINNED)
+              log("pinned", "attempts", json.dumps(attempts), "copy has document/matrix:", pinned["copy_has_document"], pinned["copy_has_matrix"])
               if cdp is not None:
                   cdp.pump(3); pinned["timeline"] = cdp.timeline(OUT + "/pinned-" + PINNED + "-timeline.txt", host); cdp.close()
                   log("pinned", "timeline", json.dumps(pinned["timeline"]))
@@ -418,6 +458,8 @@ jobs:
               if "skipped" in r: bad.append("%s was not opened: %s" % (r["world"], r["skipped"])); continue
               if r["drawn_s"] is None: bad.append("%s did not reach drawn content in %d s (%s)" % (r["world"], r["deadline_s"], json.dumps(r.get("screen"))))
               if r["world"] == PINNED and r["drawn_s"] is not None and not r.get("viewport_ok", False): bad.append("%s: the layout viewport is zero (#1694)" % r["world"])
+              if r["world"] == PINNED and r["drawn_s"] is not None and not r.get("live_by_network", False):
+                  bad.append("%s: the live page's document or its data/matrix.json request was not answered by the network: %s (#1711)" % (r["world"], json.dumps(r.get("live_requests"))))
           if "skipped" in pinned: bad.append("the pinned world was not checked: " + pinned["skipped"])
           elif pinned["drawn_s"] is None: bad.append("%s did not render from its pinned copy while its origin did not answer (%d s): %s" % (PINNED, PINNED_DEADLINE, pinned.get("overlay")))
           summary["failed"] = bad
@@ -431,11 +473,14 @@ jobs:
           mkdir -p probe
           adb root; sleep 3; adb wait-for-device
           adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          adb shell settings put global hide_error_dialogs 1 || true
           adb install -r -g app.apk || exit 2
-          adb logcat -v threadtime "*:W" CloudWebConsole:I CloudWebPin:I chromium:I > probe/logcat.txt 2>&1 &
+          adb logcat -v threadtime "*:W" CloudWebConsole:I CloudWebPin:I CgoRender:I chromium:I > probe/logcat.txt 2>&1 &
           adb shell dumpsys package com.diegonmarcos.cgomniverse | grep -E "versionName|firstInstallTime" > probe/package.txt || true
           python3 check.py; RC=$?
           rm -f probe/_poll.png
+          # what the app itself logged: the pin-offline decisions and the render verdicts
+          grep -E " CloudWebPin: | CgoRender: " probe/logcat.txt > probe/app-pin-and-render.log || true
           exit $RC
           EOF
           chmod +x run.sh

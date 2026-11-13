@@ -9,9 +9,17 @@ import java.security.MessageDigest
  * manifest per site (url -> hash, mime, headers, status). Pure JVM (no Android), so the suite holds every rule.
  * Cache-first and never expiring: server Cache-Control is ignored and nothing is evicted; only [put] (an explicit
  * refresh or a first capture) writes, and a failed refresh simply never calls it, so the old copy stays.
+ *
+ * #1711 three things keep the copy sound. Every file is written whole or not at all (a temp file renamed into place): a
+ * process killed in the middle of a write can no longer leave half a manifest or half a blob that is then served for ever.
+ * An entry remembers its size and when it was stored, so a blob that does not hold every byte is not served. And a path
+ * keeps only its newest [MAX_VARIANTS] queries: a page that defeats caches asks for the same file under a new query on every
+ * load (floor796: data/matrix.json?r=<random>), which otherwise grows the copy without bound; [newest] is what the copy
+ * answers with for such a path when the live site does not answer.
  */
 class SiteCache(private val root: File) {
-    data class Entry(val url: String, val hash: String, val mime: String, val status: Int, val headers: Map<String, String>)
+    /** [stored] = when this entry was written (ms; 0 for a copy made before #1711). */
+    data class Entry(val url: String, val hash: String, val mime: String, val status: Int, val headers: Map<String, String>, val stored: Long = 0L)
     data class Served(val status: Int, val mime: String, val headers: Map<String, String>, val body: ByteArray, val encoding: String? = null)
     data class Stats(val files: Int, val bytes: Long, val lastRefresh: Long)
 
@@ -24,30 +32,88 @@ class SiteCache(private val root: File) {
             ?: JSONObject().put("entries", JSONObject()).put("refreshed", 0L)
 
     private fun save(host: String, m: JSONObject) {
-        dir(host).mkdirs(); manifestFile(host).writeText(m.toString())
+        writeWhole(manifestFile(host), m.toString().toByteArray(Charsets.UTF_8))
+    }
+
+    /** [bytes] into [f], whole or not at all: written beside it and renamed into place, so a reader never sees half a file. */
+    private fun writeWhole(f: File, bytes: ByteArray) {
+        val parent = f.parentFile ?: throw java.io.IOException("no folder for " + f.name)
+        parent.mkdirs()
+        val tmp = File(parent, f.name + TMP + System.nanoTime())
+        try {
+            tmp.writeBytes(bytes)
+            if (!tmp.renameTo(f)) { f.delete(); if (!tmp.renameTo(f)) throw java.io.IOException("cannot store " + f.name) }
+        } finally {
+            if (tmp.exists()) tmp.delete()
+        }
     }
 
     /** Stores [body] for [url]; returns true when the stored bytes changed (new or different hash). */
-    fun put(host: String, url: String, status: Int, mime: String, headers: Map<String, String>, body: ByteArray, now: Long = System.currentTimeMillis()): Boolean {
+    fun put(host: String, url: String, status: Int, mime: String, headers: Map<String, String>, body: ByteArray, now: Long = System.currentTimeMillis()): Boolean = synchronized(LOCK) {
         val hash = sha256(body)
         val m = load(host)
         val key = normalise(url)
-        val old = m.getJSONObject("entries").optJSONObject(key)
+        val entries = m.getJSONObject("entries")
+        val old = entries.optJSONObject(key)
         val f = blob(host, hash)
-        if (!f.isFile) { f.parentFile!!.mkdirs(); f.writeBytes(body) }
+        // a blob is trusted only when it holds every byte: one cut short by a killed process is written again, never served
+        if (!f.isFile || f.length() != body.size.toLong()) writeWhole(f, body)
         val h = JSONObject(); headers.forEach { (k, v) -> h.put(k, v) }
-        m.getJSONObject("entries").put(key, JSONObject().put("hash", hash).put("mime", mimeFor(key, mime)).put("status", status).put("headers", h))
+        entries.put(key, JSONObject().put("hash", hash).put("mime", mimeFor(key, mime)).put("status", status).put("headers", h)
+            .put("size", body.size.toLong()).put("t", now))
+        prune(host, entries, key)
         m.put("refreshed", now)
         save(host, m)
-        return old?.optString("hash") != hash
+        old?.optString("hash") != hash
+    }
+
+    /**
+     * A path keeps its newest [MAX_VARIANTS] queries (the entry without a query is never counted or dropped); the blobs no
+     * entry refers to any more are deleted. Called with the entry just stored, so that one always stays.
+     */
+    private fun prune(host: String, entries: JSONObject, key: String) {
+        if ('?' !in key) return
+        val path = pathOf(key)
+        val same = entries.keys().asSequence().filter { '?' in it && pathOf(it) == path }.toList()
+        if (same.size <= MAX_VARIANTS) return
+        // newest first; entries from before #1711 carry no time, among those the ones written last (later in the manifest) count as newer
+        val drop = same.asReversed().sortedByDescending { if (it == key) Long.MAX_VALUE else entries.optJSONObject(it)?.optLong("t", 0L) ?: 0L }.drop(MAX_VARIANTS)
+        val gone = drop.mapNotNull { entries.optJSONObject(it)?.optString("hash") }.toSet()
+        drop.forEach { entries.remove(it) }
+        val live = entries.keys().asSequence().mapNotNull { entries.optJSONObject(it)?.optString("hash") }.toSet()
+        (gone - live).forEach { runCatching { blob(host, it).delete() } }
+    }
+
+    private fun entryOf(host: String, key: String, o: JSONObject): Entry? {
+        val f = blob(host, o.optString("hash"))
+        if (!f.isFile) return null
+        // an entry that knows its size is served only when the blob holds exactly that many bytes
+        if (o.has("size") && f.length() != o.optLong("size")) return null
+        val h = o.optJSONObject("headers")
+        return Entry(key, o.getString("hash"), o.getString("mime"), o.optInt("status", 200),
+            h?.keys()?.asSequence()?.associateWith { h.getString(it) } ?: emptyMap(), o.optLong("t", 0L))
     }
 
     fun lookup(host: String, url: String): Entry? {
-        val o = load(host).getJSONObject("entries").optJSONObject(normalise(url)) ?: return null
-        if (!blob(host, o.getString("hash")).isFile) return null
-        val h = o.optJSONObject("headers")
-        return Entry(normalise(url), o.getString("hash"), o.getString("mime"), o.optInt("status", 200),
-            h?.keys()?.asSequence()?.associateWith { h.getString(it) } ?: emptyMap())
+        val key = normalise(url)
+        val o = load(host).getJSONObject("entries").optJSONObject(key) ?: return null
+        return entryOf(host, key, o)
+    }
+
+    /**
+     * #1711 the newest stored answer for [url]'s path under ANY query (the exact address first when it is stored): what the
+     * copy answers with when the page asks under a cache-defeating query that was never stored and the live site does not
+     * answer. Null when the path holds nothing.
+     */
+    fun newest(host: String, url: String): Entry? {
+        val key = normalise(url)
+        val es = load(host).getJSONObject("entries")
+        es.optJSONObject(key)?.let { o -> entryOf(host, key, o)?.let { return it } }
+        val path = pathOf(key)
+        // entries from before #1711 carry no time: among equals the one written last (later in the manifest) wins
+        return es.keys().asSequence().filter { pathOf(it) == path }
+            .mapNotNull { k -> es.optJSONObject(k)?.let { entryOf(host, k, it) } }
+            .toList().asReversed().maxByOrNull { it.stored }
     }
 
     /**
@@ -56,8 +122,9 @@ class SiteCache(private val root: File) {
      * (a worker computes download progress from it), the stored COOP / COEP / CORP / CSP / CORS headers, and CORS for the page's
      * [origin] (echoed with `Vary: Origin`, else `*`). Cache-Control and Expires are dropped (the copy never expires).
      */
-    fun serve(host: String, url: String, range: String? = null, origin: String? = null): Served? {
-        val e = lookup(host, url) ?: return null
+    fun serve(host: String, url: String, range: String? = null, origin: String? = null, anyQuery: Boolean = false): Served? {
+        // [anyQuery]: the exact address, else the newest stored query of the same path ([newest])
+        val e = (if (anyQuery) newest(host, url) else lookup(host, url)) ?: return null
         val body = blob(host, e.hash).readBytes()
         val dropped = setOf("cache-control", "expires", "content-length", "content-type", "content-encoding", "transfer-encoding", "content-range", "age", "date")
         val headers = e.headers.filterKeys { it.lowercase() !in dropped }.toMutableMap()
@@ -95,9 +162,19 @@ class SiteCache(private val root: File) {
     /** Every URL held for [host] (the refresh walks these). */
     fun urls(host: String): List<String> = load(host).getJSONObject("entries").keys().asSequence().sorted().toList()
 
-    fun delete(host: String) { dir(host).deleteRecursively() }
+    fun delete(host: String) { synchronized(LOCK) { dir(host).deleteRecursively() } }
 
     companion object {
+        /** One writer at a time across every instance: the manifest is read, changed and written back. */
+        private val LOCK = Any()
+        private const val TMP = ".tmp"
+
+        /** How many queries of one path the copy keeps (the newest win). */
+        const val MAX_VARIANTS = 4
+
+        /** The address without its query: `https://host/data/matrix.json?r=0.5` -> `https://host/data/matrix.json`. */
+        fun pathOf(url: String): String = normalise(url).substringBefore('?')
+
         /**
          * The response headers a copy keeps (case-insensitive): what the browser acts on. Content-Type is kept whole (its charset
          * is served back), COOP / COEP / CORP keep cross-origin isolation and SharedArrayBuffer working, CORS and CSP keep the

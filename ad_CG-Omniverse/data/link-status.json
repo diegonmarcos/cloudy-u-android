@@ -26,10 +26,20 @@
       "checked": "2026-10-31",
       "detail": "HTTP 200"
     },
+    "https://messenger.abeto.co/": {
+      "status": "online",
+      "checked": "2026-11-13",
+      "detail": "HTTP 200"
+    },
     "https://museum.xbox.com/": {
       "status": "online",
       "checked": "2026-10-31",
       "detail": "HTTP 404"
+    },
+    "https://orion.adrianred.com/": {
+      "status": "online",
+      "checked": "2026-11-13",
+      "detail": "HTTP 200"
     },
     "https://paperplanes.world/": {
       "status": "online",

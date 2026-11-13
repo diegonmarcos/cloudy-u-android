@@ -183,6 +183,24 @@
       "wayback": "https://web.archive.org/web/2020/https://thefwa.com/cases/the-cool-club-x-fwa"
     },
     {
+      "id": "cyber-city-orion",
+      "name": "Cyber City Orion",
+      "url": "https://orion.adrianred.com/",
+      "type": "Game",
+      "dimension": "3D",
+      "framework": "Three.js",
+      "stack": [
+        "WebGL",
+        "GLSL",
+        "JavaScript"
+      ],
+      "vr": false,
+      "description": "A rainy Blade Runner inspired cyberpunk city by Adrian Red, flown through in a hover car while collecting its coins.",
+      "status": "online",
+      "checked": "2026-11-13",
+      "wayback": "https://web.archive.org/web/2020/https://orion.adrianred.com/"
+    },
+    {
       "id": "floor796",
       "name": "floor796",
       "url": "https://floor796.com",
@@ -200,6 +218,24 @@
       "checked": "",
       "wayback": "https://web.archive.org/web/2020/https://floor796.com",
       "render_grace_s": 240
+    },
+    {
+      "id": "messenger",
+      "name": "Messenger",
+      "url": "https://messenger.abeto.co/",
+      "type": "Game",
+      "dimension": "3D",
+      "framework": "Three.js",
+      "stack": [
+        "WebGL",
+        "GLSL",
+        "JavaScript"
+      ],
+      "vr": false,
+      "description": "A tiny hand-drawn planet by Abeto where you walk around delivering letters to its inhabitants.",
+      "status": "online",
+      "checked": "2026-11-13",
+      "wayback": "https://web.archive.org/web/2020/https://messenger.abeto.co/"
     },
     {
       "id": "food-for-fish",

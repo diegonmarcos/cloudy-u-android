@@ -40,8 +40,15 @@ def check(root, ok):
     ok("fun sameOrigin(" in mirror and "scheme" in mirror and "hostKey" in mirror, "O1 scope is the same origin (scheme, host, port)")
     ok("RETRY_FLOOR_MS = 30_000L" in mirror and "maxOf(asked, RETRY_FLOOR_MS)" in mirror, "O1 a retry never comes sooner than 30 s")
     ok("fun allowed(env: Env, userTap: Boolean): Boolean = userTap || (env.charging && env.wifi)" in mirror, "O1 an unattended download needs the charger and Wi-Fi, a tap needs neither")
-    i = android.find("fun intercept(")
-    ok(i >= 0 and 0 < android.find("c.serve(", i) < android.find("http.fetch(", i), "O1 the copy is read before the network (cache-first, never expiring)")
+    # #1711 the intercept answers from the copy and never asks the network itself: what the copy does not hold is left to the
+    # WebView and stored afterwards by the recorder (the only caller of http.fetch, after the intercept, on its own thread)
+    i = android.find("fun intercept("); j = android.find("private fun header(", i)
+    body = android[i:j] if 0 <= i < j else ""
+    ok("PinPolicy.Action.SERVE -> c.serve(host, url, range, origin)" in body and "http.fetch(" not in body and "openConnection" not in body
+       and android.find("SiteMirrorStore.http.fetch(", j) > j > 0, "O1 the copy is read before the network (cache-first, never expiring; never a fetch inside the request)")
+    policy = f(WC + "/PinPolicy.kt")
+    ok("stored -> Action.SERVE" in policy and "else -> Action.PASS_AND_RECORD" in policy and "PinRecorder.record(ctx, host, url, document, refresh)" in body,
+       "O1 a request the copy does not hold goes to the WebView and is stored in the background")
     ok("fun refresh(" in mirror and "cache.urls(key)" in mirror, "O1 Refresh is the only thing that refetches a held file")
     # O2
     ok("return BrowserHostHooks.intercept?.invoke(r)" in frag, "O2 the shared host serves through the hook, after the tracker block")
@@ -82,7 +89,9 @@ def check(root, ok):
 main("offline-gpu", check, [
     ("the retry floor drops", WC + "/SiteMirror.kt", "RETRY_FLOOR_MS = 30_000L", "RETRY_FLOOR_MS = 1_000L", "O1 a retry never"),
     ("the gate lets an unattended run go on battery", WC + "/SiteMirror.kt", "userTap || (env.charging && env.wifi)", "userTap || env.wifi", "O1 an unattended download"),
-    ("serving asks the network first", WC + "/SiteMirrorAndroid.kt", "if (!refresh) c.serve(host, url, range, origin)?.let { return response(it) }\n        val old = c.lookup(host, url)", "val old = c.lookup(host, url)", "O1 the copy is read before"),
+    ("serving asks the network first", WC + "/SiteMirrorAndroid.kt", "PinPolicy.Action.SERVE -> c.serve(host, url, range, origin)", "PinPolicy.Action.SERVE -> null", "O1 the copy is read before"),
+    ("the intercept fetches inside the request again", WC + "/SiteMirrorAndroid.kt", "        PinLog.add(PinLog.LIVE, url, ms, why)", "        http.fetch(url, null)\n        PinLog.add(PinLog.LIVE, url, ms, why)", "O1 the copy is read before"),
+    ("a miss is no longer stored", WC + "/PinPolicy.kt", "else -> Action.PASS_AND_RECORD", "else -> Action.PASS", "O1 a request the copy does not hold"),
     ("the host stops serving the copy", LIB + "/BrowserHostFragment.kt", "return BrowserHostHooks.intercept?.invoke(r)", "return null", "O2 the shared host"),
     ("the pin default is dropped", B, '"pin_offline": ["floor796.com"]', '"pin_offline": []', "O4 floor796.com"),
     ("Delete leaves the Cached sites list", APP + "/sites/SitesUi.kt", 'testTag("domains:cached:delete:', 'testTag("domains:cached:gone:', "O5 Files Cached lists"),

@@ -84,7 +84,15 @@ object Web {
     fun cpuCanvas(wv: WebView): Boolean = WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT) &&
         runCatching { WebViewCompat.addDocumentStartJavaScript(wv, RenderProbe.CPU_CANVAS_JS, setOf("*")) }.isSuccess
 
+    /** #1711 installs [RenderProbe.CONTEXT_JS] at document start of every frame of [wv]: the render check then knows a scene exists even when its canvas is outside the document; false when this WebView cannot. */
+    fun contextProbe(wv: WebView): Boolean = WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT) &&
+        runCatching { WebViewCompat.addDocumentStartJavaScript(wv, RenderProbe.CONTEXT_JS, setOf("*")) }.isSuccess
+
     /** Galaxy's open tabs and the selected one ([com.diegonmarcos.cgomniverse.Tabs.encode]); null until the first save. */
     fun tabs(ctx: Context): String? = prefs(ctx).getString("galaxy.tabs", null)
     fun setTabs(ctx: Context, encoded: String) = prefs(ctx).edit().putString("galaxy.tabs", encoded).apply()
+
+    /** #1711 the declared default tabs this device was already given ([com.diegonmarcos.cgomniverse.Tabs.seed]); null until the first save. */
+    fun tabsSeeded(ctx: Context): String? = prefs(ctx).getString("galaxy.tabs.seeded", null)
+    fun setTabsSeeded(ctx: Context, ids: String) = prefs(ctx).edit().putString("galaxy.tabs.seeded", ids).apply()
 }

@@ -113,7 +113,10 @@ fun AppShell(startSection: String? = null, startWorld: String? = null, incoming:
     val sec = nav.section(section)
     val ctx = LocalContext.current
     var tabs by remember {
-        val saved = Tabs.decode(Web.tabs(ctx), Decl.worlds)
+        // #1711 the first launch opens the declared default tabs; a device that already has tabs is given the declared ones it never had, once
+        val restored = Tabs.restore(Web.tabs(ctx), Web.tabsSeeded(ctx), Decl.galaxyTabs, Decl.worlds)
+        Web.setTabsSeeded(ctx, restored.seeded)
+        val saved = restored.state
         mutableStateOf(start.worldId?.let { Tabs.open(saved, it) } ?: saved)
     }
     LaunchedEffect(tabs) { Web.setTabs(ctx, Tabs.encode(tabs)) }

@@ -113,7 +113,7 @@ class StoreTest {
     @Test fun theGeneratedCatalogueParsesWhole() {
         val f = listOf(File("../data/store.json"), File("data/store.json")).first { it.exists() }
         val worlds = Store.parse(f.readText())
-        assertEquals(33, worlds.size)   // 31 web worlds + the 2 models (#1701)
+        assertEquals(35, worlds.size)   // 33 web worlds (#1711: + Cyber City Orion and Messenger) + the 2 models (#1701)
         assertEquals(worlds.size, Store.filter(worlds, Store.allSelected()).size)
         assertEquals(5, worlds.count { it.vr })
         assertEquals(worlds.map { it.id }.toSet().size, worlds.size)
@@ -139,10 +139,35 @@ class StoreTest {
         // the Models chip alone shows exactly the two; without it they are gone and every web world stays
         val only = Store.toggle(Store.toggle(Store.toggle(Store.allSelected(), FilterGroup.TYPE, Store.GAMES), FilterGroup.TYPE, Store.WEBSITES), FilterGroup.TYPE, Store.OTHERS)
         assertEquals(listOf("house-boat", "dji-s900"), Store.filter(worlds, only).map { it.id })
-        assertEquals(31, Store.filter(worlds, Store.toggle(Store.allSelected(), FilterGroup.TYPE, Store.MODELS)).size)
+        assertEquals(33, Store.filter(worlds, Store.toggle(Store.allSelected(), FilterGroup.TYPE, Store.MODELS)).size)
         // a web world never carries a model; a model entry with no address is read as a plain world (never a crash)
         assertTrue(worlds.filter { it.model == null }.all { it.type != "Model" })
         assertEquals(null, Store.parse("""{"entries":[{"id":"x","url":"https://x.example/","model":{"glb":""}}]}""").single().model)
+    }
+
+    /** #1711 the two worlds Galaxy opens beside floor796, declared like it: a row of data/fwa.md, generated into store.json. */
+    @Test fun orionAndMessengerAreInTheCatalogue() {
+        val f = listOf(File("../data/store.json"), File("data/store.json")).first { it.exists() }
+        val worlds = Store.parse(f.readText())
+        val orion = worlds.single { it.id == "cyber-city-orion" }
+        val messenger = worlds.single { it.id == "messenger" }
+        assertEquals("Cyber City Orion", orion.name); assertEquals("https://orion.adrianred.com/", orion.url)
+        assertEquals("Messenger", messenger.name); assertEquals("https://messenger.abeto.co/", messenger.url)
+        listOf(orion, messenger).forEach { w ->
+            assertEquals(setOf(Store.GAMES), Store.tags(w, FilterGroup.TYPE))
+            assertEquals(setOf(Store.D3), Store.tags(w, FilterGroup.DIMENSION))
+            assertEquals(setOf(Store.FLAT), Store.tags(w, FilterGroup.DEVICE))
+            assertEquals(LinkStatus.ONLINE, w.status); assertTrue(w.checked.isNotEmpty())
+            // a plain WebGL world: no launch rule, the default render wait, no model, no WebGPU stack (never routed to Cloud-Browser)
+            assertEquals("", w.launchQuery); assertEquals(null, w.launchQueryCpu); assertEquals(0L, w.renderGraceMs); assertEquals(null, w.model)
+            assertTrue(w.stack.contains("WebGL")); assertFalse(w.stack.any { it.equals("WebGPU", true) })
+            assertEquals(w.url, Store.launchUrl(w)); assertEquals(w.url, Store.launchUrl(w, cpu = true))
+        }
+        // they stand around floor796 in the catalogue, in the tab order
+        val ids = worlds.map { it.id }
+        assertEquals(listOf("cyber-city-orion", "floor796", "messenger"), ids.subList(ids.indexOf("cyber-city-orion"), ids.indexOf("cyber-city-orion") + 3))
+        val md = listOf(File("../data/fwa.md"), File("data/fwa.md")).first { it.exists() }.readText()
+        assertTrue(md.contains("[Cyber City Orion](https://orion.adrianred.com/)") && md.contains("[Messenger](https://messenger.abeto.co/)"))
     }
 
     @Test fun floor796IsInTheCatalogue() {

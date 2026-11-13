@@ -67,12 +67,20 @@ object SiteMirrorStore {
     }
 
     /**
-     * Serves a request from the copy of a PINNED site, cache-first and never expiring; a miss is fetched, stored and served
-     * (so the page's own runtime requests are recorded, lazy chunks included). Same origin only, GET only. Null = not ours,
-     * Chromium loads it itself (also for a Range miss and a body too big to buffer). [refresh] (an explicit reload) refetches
-     * conditionally first; a failed refetch keeps the old copy. Called off the main thread by shouldInterceptRequest.
+     * Answers a request from the copy of a PINNED site: what the copy holds is served cache-first and never expires. Same
+     * origin only, GET only. Null = not answered here, Chromium loads it itself.
+     *
+     * #1711 NOTHING is fetched in here any more ([PinPolicy]). A request the copy does not hold (and, for a host that shows
+     * documents live, a document; and everything on a [refresh]) is left to the WebView's own network stack at once, and
+     * [PinRecorder] stores it in the background, so the page's own runtime requests are still recorded (lazy chunks
+     * included) while a slow or unreachable second client can no longer hold a live page's request. [source] COPY (the page is
+     * shown from the pinned copy: offline, or the live site did not answer) also answers a path whose query was never stored
+     * with its newest stored query. Called off the main thread by shouldInterceptRequest.
      */
-    fun intercept(ctx: Context, pinned: List<String>, req: WebResourceRequest, refresh: Boolean = false): WebResourceResponse? {
+    fun intercept(
+        ctx: Context, pinned: List<String>, req: WebResourceRequest, refresh: Boolean = false,
+        liveDocuments: Boolean = false, source: PinPolicy.Source = PinPolicy.Source.LIVE,
+    ): WebResourceResponse? {
         val u = req.url
         if (req.method != "GET" || (u.scheme != "https" && u.scheme != "http")) return null
         val host = MirrorScope.hostKey(u.host.orEmpty())
@@ -81,18 +89,111 @@ object SiteMirrorStore {
         val url = SiteCache.normalise(u.toString())
         val c = cache(ctx)
         val hdr = req.requestHeaders.orEmpty()
-        val range = hdr["Range"]
-        val origin = hdr["Origin"]
-        if (!refresh) c.serve(host, url, range, origin)?.let { return response(it) }
-        val old = c.lookup(host, url)
-        val r = http.fetch(url, if (refresh) old?.headers?.entries?.firstOrNull { it.key.equals("ETag", true) }?.value else null)
-        if (r != null && r.code == 200) c.put(host, url, 200, r.mime, SiteCache.keepHeaders(r.headers), r.body)
-        if (r == null && old == null && range != null) return null
-        return c.serve(host, url, range, origin)?.let { response(it) }
+        val range = header(hdr, "Range")
+        val origin = header(hdr, "Origin")
+        val document = PinPolicy.isDocument(req.isForMainFrame, header(hdr, "Accept"))
+        val t0 = System.nanoTime()
+        val stored = c.lookup(host, url) != null
+        val storedPath = !stored && source == PinPolicy.Source.COPY && c.newest(host, url) != null
+        val action = PinPolicy.decide(source, document, liveDocuments, refresh, stored, storedPath)
+        val served = when (action) {
+            PinPolicy.Action.SERVE -> c.serve(host, url, range, origin)
+            PinPolicy.Action.SERVE_NEWEST -> c.serve(host, url, range, origin, anyQuery = true)
+            else -> null
+        }
+        val ms = (System.nanoTime() - t0) / 1_000_000
+        if (served != null) {
+            PinLog.add(if (action == PinPolicy.Action.SERVE_NEWEST) PinLog.SERVED_NEWEST else PinLog.SERVED, url, ms, "${served.body.size} bytes")
+            return response(served)
+        }
+        // never fetched here: the WebView loads it with its own network stack, and the copy is written in the background
+        val why = when {
+            source == PinPolicy.Source.COPY -> "not in the copy"
+            refresh -> "reload"
+            document -> "document"
+            else -> "not in the copy yet"
+        }
+        PinLog.add(PinLog.LIVE, url, ms, why)
+        if (action != PinPolicy.Action.PASS) PinRecorder.record(ctx, host, url, document, refresh)
+        return null
     }
+
+    private fun header(h: Map<String, String>, name: String): String? = h.entries.firstOrNull { it.key.equals(name, true) }?.value
 
     private fun response(s: SiteCache.Served) = WebResourceResponse(s.mime, s.encoding, s.status,
         if (s.status == 206) "Partial Content" else "OK", s.headers, ByteArrayInputStream(s.body))
+}
+
+/**
+ * #1711 the copy of a pinned site is written OFF the request path: [SiteMirrorStore.intercept] leaves what the copy does
+ * not hold to the WebView and queues the address here; one background thread fetches it ([SiteMirrorStore.http]: the
+ * WebView's user agent, conditional on the stored ETag) and stores it. A request is never held by this client: when it is
+ * slow or has no route the page does not notice, the copy is only written later. What is fetched again and when is
+ * [PinPolicy.record].
+ */
+object PinRecorder {
+    private const val MAX_PENDING = 256
+
+    /** The page's own first requests go out before the recorder asks for the same files. */
+    private const val START_DELAY_MS = 1_500L
+
+    private class Job(val host: String, val url: String, val document: Boolean, val refresh: Boolean)
+
+    private val lock = Any()
+    private val pending = LinkedHashMap<String, Job>()
+    private var worker: Thread? = null
+
+    /** Queues [url] of the pinned [host] and returns at once. An address already queued is not queued twice (a reload upgrades it). */
+    fun record(ctx: Context, host: String, url: String, document: Boolean, refresh: Boolean) {
+        val app = ctx.applicationContext
+        synchronized(lock) {
+            val old = pending[url]
+            if (old != null && (old.refresh || !refresh)) return
+            if (old == null && pending.size >= MAX_PENDING) return
+            pending[url] = Job(host, url, document || old?.document == true, refresh)
+            if (worker == null) worker = Thread({ drain(app) }, "pin-recorder").apply { isDaemon = true; start() }
+        }
+    }
+
+    /** How many addresses wait to be stored. */
+    fun queued(): Int = synchronized(lock) { pending.size }
+
+    /** Stores what is queued, one address after the other, and ends when the queue is empty: nothing waits on a timer. */
+    private fun drain(app: Context) {
+        runCatching { Thread.sleep(START_DELAY_MS) }
+        var job = next()
+        while (job != null) {
+            val j: Job = job
+            runCatching { store(app, j) }.onFailure { PinLog.add(PinLog.RECORD_FAILED, j.url, -1L, it.javaClass.simpleName) }
+            job = next()
+        }
+    }
+
+    /** The next queued address; null when the queue is empty (this worker then ends, a later request starts a new one). */
+    private fun next(): Job? = synchronized(lock) {
+        val k = pending.keys.firstOrNull()
+        if (k == null) { worker = null; null } else pending.remove(k)
+    }
+
+    private fun store(app: Context, job: Job) {
+        val c = SiteMirrorStore.cache(app)
+        val hasQuery = '?' in job.url
+        val exact = c.lookup(job.host, job.url)
+        val newest = if (exact == null && hasQuery) c.newest(job.host, job.url) else exact
+        if (!PinPolicy.record(job.refresh, job.document, hasQuery, exact?.stored, newest?.stored, System.currentTimeMillis())) return
+        val t0 = System.nanoTime()
+        val r = SiteMirrorStore.http.fetch(job.url, exact?.headers?.entries?.firstOrNull { it.key.equals("ETag", true) }?.value)
+        val ms = (System.nanoTime() - t0) / 1_000_000
+        when {
+            r == null -> PinLog.add(PinLog.RECORD_FAILED, job.url, ms, "no answer")
+            r.code == 200 -> {
+                c.put(job.host, job.url, 200, r.mime, SiteCache.keepHeaders(r.headers), r.body)
+                PinLog.add(PinLog.RECORDED, job.url, ms, "${r.body.size} bytes")
+            }
+            r.code == 304 -> PinLog.add(PinLog.UNCHANGED, job.url, ms)
+            else -> PinLog.add(PinLog.RECORD_FAILED, job.url, ms, "HTTP ${r.code}")
+        }
+    }
 }
 
 /**
@@ -120,7 +221,8 @@ class SiteMirrorRunner(context: Context) {
 
     /**
      * Download [start]'s whole site: a same-origin crawl, then the start page runs once in a hidden view so the requests the
-     * page makes while it runs (lazy chunks, fetch(), media) are recorded into the same copy. [userTap] = the user asked now.
+     * page makes while it runs (lazy chunks, fetch(), media) are recorded into the same copy ([PinRecorder] writes them in the
+     * background, #1711). [userTap] = the user asked now.
      */
     fun download(start: String, userTap: Boolean, limits: MirrorLimits = MirrorLimits(), onFinished: () -> Unit = {}) =
         launch(PinnedSites.keyOf(start), userTap, {
@@ -135,7 +237,7 @@ class SiteMirrorRunner(context: Context) {
             r.files > 0
         }, onFinished)
 
-    /** Runs [start] in a hidden view for [RECORD_MS]; every same-origin request it makes is stored (and served) by [SiteMirrorStore.intercept]. */
+    /** Runs [start] in a hidden view for [RECORD_MS]; every same-origin request it makes is served or queued for storing by [SiteMirrorStore.intercept]. */
     private fun record(start: String) {
         val key = PinnedSites.keyOf(start)
         val latch = CountDownLatch(1)

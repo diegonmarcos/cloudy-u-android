@@ -43,7 +43,8 @@ class RenderProbeTest {
         assertEquals(3, p.images); assertEquals(1, p.imagesBroken)
         assertTrue(p.timer && p.observer && p.hasPixels)
         assertFalse(page(canvases = 1, blank = 1).hasPixels)
-        assertEquals(6, p.rows().size)
+        assertEquals(7, p.rows().size)   // #1711 + "Canvas contexts created"; the six before it are unchanged
+        assertEquals(listOf("Page viewport", "Animation frames in 1 s", "Timers / IntersectionObserver", "Canvases", "Canvas contexts created", "Videos", "Images"), p.rows().map { it.first })
         assertNull(RenderProbe.parse(null)); assertNull(RenderProbe.parse("null")); assertNull(RenderProbe.parse("\"not json\"")); assertNull(RenderProbe.parse("\"{}\""))
     }
 
@@ -90,6 +91,35 @@ class RenderProbeTest {
         val shown = reason(page(canvases = 1, drawn = 1, videos = 6, vframes = 300))
         assertTrue(shown, shown.contains("the page drew (1 canvases with pixels, 300 video frames decoded) but the screen shows one flat colour #303030"))
         assertTrue(shown.contains("not showing its canvas / video layers") && shown.contains("ignore-gpu-blocklist"))
+    }
+
+    /**
+     * #1711 a scene on a canvas outside the document (Messenger: three.js in a closed shadow root) is invisible to the page's
+     * canvas list. The contexts counted from the page start say a scene exists; whether it shows is the screen's word.
+     */
+    @Test fun aSceneOutsideTheDocumentIsNotCalledNeverStarted() {
+        val raw = JSONObject.quote(JSONObject().put("vw", 412).put("vh", 760).put("vis", "visible").put("raf", 60).put("timer", true).put("io", true)
+            .put("canvases", 0).put("gl", 2).put("gpu", 0).put("d2", 1).toString())
+        val p = RenderProbe.parse(raw)!!
+        assertEquals(2, p.glContexts); assertEquals(0, p.gpuContexts); assertEquals(1, p.contexts2d); assertEquals(2, p.sceneContexts)
+        assertEquals(0, p.canvases); assertFalse(p.hasPixels)
+        assertTrue(p.rows().toMap()["Canvas contexts created"]!!.startsWith("2 WebGL, 0 WebGPU, 1 2D"))
+        // the screen shows it: rendered, whatever the page's canvas list says
+        assertEquals(RenderProbe.State.RENDERED, RenderProbe.verdict(1080, 1800, p, painted, late).state)
+        // a flat screen after the grace: the scene started but does not reach the screen (never "no canvas ... never started")
+        val v = RenderProbe.verdict(1080, 1800, p, flat, late)
+        assertEquals(RenderProbe.State.NOT_RENDERED, v.state)
+        assertTrue(v.reason, v.reason.contains("started a GPU scene (2 contexts, on a canvas that is not in the document)") && v.reason.contains("one flat colour #303030"))
+        assertFalse(v.reason.contains("never started"))
+        assertTrue(v.text(), v.text().contains("2 GPU contexts created by the page"))
+        // a page from before the count (no gl / gpu / d2 in its answer) reads as before
+        assertEquals(0, page().sceneContexts); assertTrue(RenderProbe.verdict(1080, 1800, page(), flat, late).reason.contains("no canvas and no video"))
+        // the count is taken at document start, the page's own call passes through untouched, and READ reports it
+        listOf("window.__cloudCtx", "HTMLCanvasElement.prototype.getContext", "g.apply(this,arguments)", "t==='webgpu'", "/webgl/.test(t)", "return r")
+            .forEach { assertTrue(it, RenderProbe.CONTEXT_JS.contains(it)) }
+        listOf("gl:(window.__cloudCtx||{}).gl||0", "gpu:(window.__cloudCtx||{}).gpu||0", "d2:(window.__cloudCtx||{}).d2||0").forEach { assertTrue(it, RenderProbe.READ.contains(it)) }
+        assertTrue(source("app/src/main/java/com/diegonmarcos/cgomniverse/ui/Web.kt").contains("addDocumentStartJavaScript(wv, RenderProbe.CONTEXT_JS"))
+        assertTrue(source("app/src/main/java/com/diegonmarcos/cgomniverse/ui/GalaxyPage.kt").contains("Web.contextProbe(wv)"))
     }
 
     @Test fun aPageWithPixelsAndNoScreenSampleCountsAsRendered() {
