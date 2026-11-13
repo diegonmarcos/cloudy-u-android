@@ -7,6 +7,7 @@ import app.sterna.core.jmap.DeviceAuthorization
 import app.sterna.core.jmap.DeviceTokenResult
 import app.sterna.core.jmap.JmapException
 import app.sterna.core.jmap.OAuthTokens
+import com.diegonmarcos.superapp.fleetendpoints.FleetEndpointsContract
 import com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,7 +21,7 @@ import kotlinx.coroutines.withContext
 class CloudAccountOAuthBroker(private val ctx: Context) : OAuthDeviceBroker {
     private fun call(method: String, arg: String): android.os.Bundle? {
         if (!MailEndpointSync.accountInstalled(ctx)) return null
-        return runCatching { ctx.contentResolver.call(Uri.parse("content://${MailOAuthContract.AUTHORITY}"), method, arg, null) }.getOrNull()
+        return runCatching { ctx.contentResolver.call(Uri.parse("content://${FleetEndpointsContract.AUTHORITY}"), method, arg, null) }.getOrNull()
     }
 
     override suspend fun start(email: String, host: String, deviceEndpoint: String, tokenEndpoint: String, clientId: String, scope: String): DeviceAuthorization =
