@@ -1,8 +1,31 @@
 package com.diegonmarcos.cloudwebserver.owner
 
 import android.content.Context
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.diegonmarcos.cloudwebserver.ui.Tone
+import com.diegonmarcos.superapp.configs.AdbPermsTab
+import com.diegonmarcos.superapp.configs.AdbShellBrokerPage
+import com.diegonmarcos.superapp.configs.AdbStatusTab
+import com.diegonmarcos.superapp.configs.AdbTermTab
+import com.diegonmarcos.superapp.uikit.CloudKitTheme
+import com.diegonmarcos.superapp.uikit.KitPalette
+import com.diegonmarcos.superapp.themebg.ThemeBackground
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -46,8 +69,42 @@ object AdbOwnerSide {
         runCatching { com.diegonmarcos.superapp.system.AdbReadinessOwner.install() }
     }
 
+    /** The owner page: the SuperApp's ADB Shell tabs (#1682 P3 step 5/6 parity: Status cockpit, Shell terminal, Perms chain, All) plus this app's own server tab. */
+    private val TABS = listOf("status" to "Status", "shell" to "Shell", "perms" to "Perms", "all" to "All", "server" to "Server")
+
     @Composable
     fun Page() {
+        var tab by rememberSaveable { mutableStateOf("status") }
+        val c = ThemeBackground.colors(true)
+        // the cockpit composables draw with the fleet UI kit: it needs its palette, built from this app's fleet theme
+        val palette = remember(c) {
+            KitPalette(
+                surface = c.top, surfaceSelected = c.ink.copy(alpha = 0.10f).compositeOver(c.top), textPrimary = c.ink, textSecondary = c.inkDim,
+                accent = c.accent, hairline = Tone.Line, tileInk = c.top, ok = Tone.Up, warn = Tone.Warn, bad = Tone.Bad,
+            )
+        }
+        Column(Modifier.fillMaxSize().testTag("c3_adb_owner_root")) {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 10.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                for ((id, label) in TABS) {
+                    Text(label, fontWeight = if (tab == id) FontWeight.Bold else FontWeight.Normal,
+                        color = if (tab == id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.clickable { tab = id }.padding(vertical = 4.dp).testTag("c3_adb_owner_tab_$id"))
+                }
+            }
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                when (tab) {
+                    "status" -> CloudKitTheme(palette) { AdbStatusTab() }
+                    "shell" -> CloudKitTheme(palette) { AdbTermTab() }
+                    "perms" -> CloudKitTheme(palette) { AdbPermsTab() }
+                    "all" -> CloudKitTheme(palette) { AdbShellBrokerPage() }
+                    else -> ServerTab()
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun ServerTab() {
         val ctx = LocalContext.current
         val ready by AdbReadiness.state.collectAsState()
         val scope = rememberCoroutineScope()
