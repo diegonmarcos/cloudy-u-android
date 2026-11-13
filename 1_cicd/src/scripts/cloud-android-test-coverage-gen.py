@@ -70,7 +70,8 @@ for wf in sorted(glob.glob(os.path.join(root, "1_cicd/src/cicd/ship-*.yml"))):
 
     units = 0
     for dirpath, _, files in os.walk(d):
-        if os.sep + "src" + os.sep + "test" + os.sep in dirpath + os.sep:
+        # #1682 P3 step 5: the SuperApp's owner-only suites live in src/owner/test (compiled only while it is the ADB owner); they count too
+        if os.sep + "src" + os.sep + "test" + os.sep in dirpath + os.sep or os.sep + "src" + os.sep + "owner" + os.sep + "test" + os.sep in dirpath + os.sep:
             units += sum(1 for f in files if f.endswith((".kt", ".java")))
 
     unit = tests.get("unit") or {}
