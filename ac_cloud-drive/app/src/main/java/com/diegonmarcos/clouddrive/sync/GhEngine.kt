@@ -122,14 +122,6 @@ class GhEngine(context: Context) {
     private fun log(msg: String) = DriveDebugLog.i(ctx, TAG, msg)
 
     companion object {
-            fun of(o: JSONObject) = Poll(
-                code = o.optString("code"), url = o.optString("url"), running = o.optBoolean("running"),
-                exit = o.optInt("exit", EXEC_FAILED), output = o.optString("output"), error = o.optString(ERROR),
-            )
-        }
-    }
-
-    companion object {
         /** Same exit code GhRunner used for a gh that could not run at all: no real one is negative. */
         const val EXEC_FAILED = -1
 

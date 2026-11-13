@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.ops.dagu
 
 import android.content.Context
+import com.diegonmarcos.superapp.ops.OpsCredentials
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
