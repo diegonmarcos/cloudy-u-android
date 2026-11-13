@@ -131,6 +131,7 @@ export const Sidebar = ({ api, decl, onOpen, onCommand, searchSeed, top, followT
     <>
       {top}
       {body()}
+      <nav aria-label="Actions" data-testid="vault-drawer-actions" style={{ display: 'contents' }}>
       <div className="cnv-actions" data-testid="sidebar-actions" style={{ position: 'relative' }}>
         <button type="button" className="cnv-btn" title="New file" aria-label="New file" data-action="new-file" onClick={() => void api.newNote(dir)}><Icon name="newFile" size={20} /></button>
         <button type="button" className="cnv-btn" title="New folder" aria-label="New folder" data-action="new-folder" onClick={() => void api.newFolder(dir)}><Icon name="newFolder" size={20} /></button>
@@ -143,6 +144,7 @@ export const Sidebar = ({ api, decl, onOpen, onCommand, searchSeed, top, followT
         {menu === 'order' && <Menu testId="order-menu" items={orderItems} style={{ bottom: '100%', left: 8 }} onClose={() => setMenu(null)} onPick={id => setPrefs({ order: id as OrderBy })} />}
         {menu === 'filter' && <Menu testId="filter-menu" items={filterItems} style={{ bottom: '100%', right: 8 }} onClose={() => setMenu(null)} onPick={id => setPrefs({ filter: id as FileFilter })} />}
       </div>
+      </nav>
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', flex: 'none' }}>
         <button type="button" className="cnv-viewpill" data-testid="view-picker" onClick={() => setMenu('view')}>
           <Icon name={VIEW_ICON[view]} size={20} />

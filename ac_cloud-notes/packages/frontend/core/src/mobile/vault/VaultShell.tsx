@@ -217,8 +217,9 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
     : rightPane === 'outgoing' ? <OutgoingPane api={api} />
     : <TagsPane api={api} onTag={t => { setSearchSeed('#' + t); showLeft('search'); }} />;
 
-  // Obsidian mobile has no ribbon strip: on a narrow screen the ribbon's actions are one compact icon row at the top of the left
-  // drawer (data-testid vault-drawer-actions); on a wide screen they stay the vertical ribbon at the far left (#1369).
+  // Obsidian mobile has no ribbon strip: on a narrow screen the ribbon's actions live in the left drawer (action row, view pill,
+  // gear menu: Quick switcher, Graph, Command palette, Vault configs, Open another vault); on a wide screen they stay the
+  // vertical ribbon at the far left (#1369).
   const ribbonButtons = (labelled: boolean) => decl.layout.ribbon.map(r => (
     <button key={r.id} type="button" className="cnv-btn" title={r.label} aria-label={r.label} data-ribbon={r.id}
       onClick={() => { if (labelled && !r.action.startsWith('pane:')) setLeftOpen(false); ribbonAction(r.action); }}>
@@ -231,7 +232,6 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
       <Sidebar
         api={api} decl={decl} onOpen={openPath} onCommand={run} searchSeed={searchSeed}
         followTheme={followTheme} onToggleTheme={() => setFollowTheme(v => { setFlag(THEME_KEY, !v); return !v; })}
-        top={narrow ? <nav className="cnv-drawer-actions" aria-label="Actions" data-testid="vault-drawer-actions">{ribbonButtons(true)}</nav> : undefined}
       />
     </div>
   );

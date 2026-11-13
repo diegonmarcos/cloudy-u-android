@@ -525,6 +525,7 @@
       "scene_nav_mode": "clean",
       "scene_themes": ["dark", "light"],
       "scene_boot_s": 10,
+      "scene_theme_setup": [["shell", "pm clear {pkg}"], ["shell", "appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow"]],
       "scene_setup": [["shell", "mkdir -p /sdcard/Documents"], ["push", "../ac_cloud-notes/test/fixtures/vault/sample", "/sdcard/Documents/sample-vault"], ["shell", "appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow"]],
       "scenes": [
         {"name": "notes-list", "steps": [["tap", "bottomnav_item_history_tabs"], ["wait", 3]]},
@@ -534,6 +535,7 @@
         {"name": "vault", "steps": [["tap", "bottomnav_item_history_tabs"], ["tap", "topbar_menu"], ["tap", "navclean_sub"], ["tap", "Vault"], ["wait", 4], ["tap", "/storage/emulated/0/"], ["key", "KEYCODE_MOVE_END"], ["type", "Documents/sample-vault"], ["tap", "Open"], ["wait", 5]]},
         {"name": "vault-sidebar-tree", "steps": [["tap", "bottomnav_item_history_tabs"], ["tap", "topbar_menu"], ["tap", "navclean_sub"], ["tap", "Vault"], ["wait", 5], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "notes"], ["wait", 1]]},
         {"name": "vault-file-view", "steps": [["tap", "bottomnav_item_history_tabs"], ["tap", "topbar_menu"], ["tap", "navclean_sub"], ["tap", "Vault"], ["wait", 5], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Home.md"], ["wait", 3]]},
+        {"name": "vault-file-nested", "steps": [["tap", "bottomnav_item_history_tabs"], ["tap", "topbar_menu"], ["tap", "navclean_sub"], ["tap", "Vault"], ["wait", 5], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "notes"], ["tap", "Ideas.md"], ["wait", 3]]},
         {"name": "vault-canvas-view", "steps": [["tap", "bottomnav_item_history_tabs"], ["tap", "topbar_menu"], ["tap", "navclean_sub"], ["tap", "Vault"], ["wait", 5], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "board.canvas"], ["wait", 3]]},
         {"name": "vault-tabs-restored", "steps": [["tap", "bottomnav_item_history_tabs"], ["tap", "topbar_menu"], ["tap", "navclean_sub"], ["tap", "Vault"], ["wait", 5], ["wait", 3], ["tap", "Tabs"], ["wait", 1]]},
         {"name": "vault-sidebar-recent", "steps": [["tap", "bottomnav_item_history_tabs"], ["tap", "topbar_menu"], ["tap", "navclean_sub"], ["tap", "Vault"], ["wait", 5], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Recent files"], ["wait", 1]]},

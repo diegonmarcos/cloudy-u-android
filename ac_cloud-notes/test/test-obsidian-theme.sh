@@ -35,6 +35,7 @@ F = {
     'webtheme': (ROOT, 'packages/frontend/apps/android/src/app.tsx'),
     'vstyle': (ROOT, 'packages/frontend/core/src/mobile/vault/style.ts'),
     'vshell': (ROOT, 'packages/frontend/core/src/mobile/vault/VaultShell.tsx'),
+    'vsidebar': (ROOT, 'packages/frontend/core/src/mobile/vault/sidebar/Sidebar.tsx'),
     'icons': (ROOT, 'packages/frontend/core/src/mobile/vault/icons.tsx'),
     'polyfill': (ROOT, 'packages/frontend/core/src/bootstrap/polyfill/browser.ts'),
     'urlpoly': (ROOT, 'packages/frontend/core/src/bootstrap/polyfill/url.ts'),
@@ -174,7 +175,9 @@ def chk_V_no_literal_colour(p):
 
 def chk_V_ribbon_in_drawer(p):
     v = open(p['vshell']).read()
-    return 'data-testid="vault-drawer-actions"' in v and "{!narrow && <nav className=\"cnv-ribbon\"" in v
+    sb = open(p['vsidebar']).read()
+    # #1717: no extra ribbon icon row above the tree; the drawer actions are the sidebar action row and the gear menu
+    return 'data-testid="vault-drawer-actions"' in sb and 'vault-drawer-actions' not in v and 'top={narrow' not in v and "{!narrow && <nav className=\"cnv-ribbon\"" in v
 
 def chk_V_lucide(p):
     return 'strokeWidth={1.75}' in open(p['icons']).read()
@@ -201,7 +204,7 @@ def chk_K_keyboard_toolbar(f):
 
 def chk_G_vault_scene(f):
     w = read(f, 'walk')
-    return 'appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow' in w and '"name": "editor-toolbar"' in w
+    return w.count('appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow') >= 2 and '"scene_theme_setup"' in w and '"name": "editor-toolbar"' in w
 
 CHECKS = [
     ('T1 generated sheet and tokens equal data/obsidian-theme.json', chk_T_data_matches_generated,
