@@ -267,6 +267,12 @@
       "why": "#1151 The AI usage data-widget card of the Resources group, re-posted through NotifyGate.postCtx. Standing status, not an alert about the fleet."
     },
     {
+      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/PresetsBadge.kt",
+      "kind": "badge",
+      "notify_calls": 1,
+      "why": "The Presets data-widget card of the Actions group (#1720: the current mode, sandbox and theme of Quick actions > Presets with its quick actions), re-posted through NotifyGate.postCtx when the state changes. Standing status its owner chose to pin, not an alert about the fleet."
+    },
+    {
       "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/DataBadgeService.kt",
       "kind": "badge",
       "notify_calls": 1,

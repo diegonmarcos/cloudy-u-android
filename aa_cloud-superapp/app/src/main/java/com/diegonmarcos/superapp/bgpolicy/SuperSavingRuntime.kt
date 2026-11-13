@@ -111,6 +111,9 @@ object SuperSavingRuntime {
     /** App start: the screen-off hook and the indicator come back with the process when the mode is on (a reboot clears the notification). */
     fun onAppStart(app: Context) {
         runCatching { PresetModes.migrate(app) } // #1720 upgrade repair of a double state, before anything reads the mode
+        // the Presets badge is redrawn from the repaired state at every process start (a boot or an update starts the process
+        // from a broadcast, where its short service may not be startable; the post itself always is)
+        runCatching { com.diegonmarcos.superapp.notificationcenter.PresetsBadge.refresh(app) }
         if (!active(app)) return
         if (SystemSaver.extreme(app)) { Thread({ runCatching { turnOff(app) } }, "super-saving-yield").start(); return }
         if (BgPrefsKv(app).get(K_IDLE) == "1") SsScreenOff.register(app)
