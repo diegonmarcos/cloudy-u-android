@@ -77,3 +77,8 @@ internal object StoreStatus {
         }
     }
 }
+
+/** Tests only (StoreStatus is internal): forget the Store chip's last answer and probe floor. */
+object StoreTestHooks {
+    fun forgetProbeHistory() = StoreStatus.forgetProbeHistoryForTest()
+}
