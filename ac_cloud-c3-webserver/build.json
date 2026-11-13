@@ -454,7 +454,7 @@
     ],
     "pages": [
       { "id": "git-repos-master", "label": "git-repos-master", "source": "termux", "repo": "git-repos-master", "clone": "git clone https://github.com/diegonmarcos/git-repos-master ~/git-repos-master" },
-      { "id": "front-html", "label": "front-html", "source": "termux", "repo": "git-repos-master/front-html", "clone": "cd ~/git-repos-master && git clone https://github.com/diegonmarcos/front-html" },
+      { "id": "front-html", "label": "front-html", "source": "termux", "repo": "git-repos-master/front-html", "clone": "cd ~/git-repos-master && git clone https://github.com/diegonmarcos/front-html___ front-html" },
       { "id": "cloud-me-pvt-notes", "label": "cloud-me-pvt-notes", "source": "termux", "repo": "git-repos-master/cloud-me-pvt-notes", "clone": "cd ~/git-repos-master && git clone https://github.com/diegonmarcos/cloud-me-pvt-notes" }
     ],
     "index": ["index.html", "index.htm", "README.md", "index.md"]
