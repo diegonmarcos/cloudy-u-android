@@ -70,9 +70,9 @@ export const VAULT_CSS = `
 .cnv-round{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex:none;border:0;border-radius:999px;background:var(--background-secondary);color:var(--text-muted);cursor:pointer}
 .cnv-round:hover,.cnv-round[aria-pressed=true]{color:var(--text-normal);background:var(--background-modifier-hover)}
 .cnv-round:disabled{opacity:.35;cursor:default}
-.cnv-crumbs{flex:1;min-width:0;display:flex;justify-content:center;gap:6px;overflow:hidden;white-space:nowrap;font-size:var(--font-ui-small);color:var(--text-muted)}
-.cnv-crumbs span{overflow:hidden;text-overflow:ellipsis}
-.cnv-crumbs .cnv-crumb-name{color:var(--text-normal);font-weight:700;flex:none;max-width:60%}
+.cnv-crumbs{flex:1;min-width:0;display:flex;justify-content:center;gap:4px;overflow:hidden;white-space:nowrap;font-size:var(--font-ui-small);color:var(--text-muted)}
+.cnv-crumbs span{overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.cnv-crumbs .cnv-crumb-name{color:var(--text-normal);font-weight:700;flex:0 0 auto;max-width:70%}
 .cnv-crumbs .cnv-crumb-sep{color:var(--text-faint);flex:none}
 .cnv-pill{display:inline-flex;align-items:center;gap:2px;padding:0 6px;height:44px;flex:none;border-radius:999px;background:var(--background-secondary)}
 .cnv-pill .cnv-btn{min-width:36px;min-height:36px;border-radius:999px}
