@@ -149,8 +149,8 @@
       "rules": [
         "credential-prompt"
       ],
-      "why": "Cloud Browser saved-passwords editor: stores site passwords, starts no fleet sign-in",
-      "until": "pending: review"
+      "why": "Cloud Browser's saved website passwords and card secrets are the user's own logins to OTHER sites (not a fleet sign-in): the Autocomplete secrets editor stores them, and Cloud Vault serves them through Android Autofill (VaultAutofill: the browser holds no vault SDK, the fill UI is the Vault's own); Cloud Account's Autocomplete is the shared source of non-secret profile data",
+      "until": "permanent"
     }
   ],
   "_doc_exempt": "Each entry: a path prefix, the rules it may still trip, why, and `until` (the #1693 migration step that removes it, or `permanent` with the reason). An entry that matches nothing fails the guard, so a migrated app must drop its entry in the same commit: the list only shrinks.",
