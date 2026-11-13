@@ -57,6 +57,8 @@ tap '^Termux home$' || fail "no Termux chip"; sleep 3; shot 03-explorer-termux
 tap '^Nix home$' || fail "no Nix chip"; sleep 3; shot 04-explorer-nix
 tap '^External drive$' || fail "no External chip"; sleep 3; shot 05-explorer-external
 tap '^Emulated$' || fail "no Emulated chip"; sleep 3
+# the listing is longer than the panel: swipe it up until the folder shows
+for i in 1 2 3 4; do dump >/dev/null; has Documents && break; adb shell input swipe 150 480 150 250 300; sleep 1; done
 tap '^Documents$' || fail "no Documents folder: $(texts)"; sleep 2
 tap '^editor-demo$' || fail "no fixture folder: $(texts)"; sleep 2
 shot 06-explorer-fixture-folder
