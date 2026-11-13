@@ -42,8 +42,8 @@ out="$(python3 "$G" --files ab_cloud-libs-shared/libs/news/src/main/java/x.kt)"
 grep -q "0 app(s)  | 1 lib APK(s) news" <<<"$out" || grep -Eq "predicted: 0 app\(s\) *\| 1 lib APK\(s\) news" <<<"$out" \
     && ok "libs/news -> exactly one lib APK, no app" || fail "libs/news did not predict exactly 'news' and no app: $out"
 out="$(python3 "$G" --files ab_cloud-libs-shared/libs/account/src/main/java/x.kt)"
-grep -Eq "predicted: 2 app\(s\) ac_cloud-account aa_cloud-superapp *\| 0 lib APK" <<<"$out" \
-    && ok "libs/account (static) -> every app that compiles it (account, superapp), no lib APK" || fail "libs/account prediction wrong: $out"
+grep -Eq "predicted: 1 app\(s\) ac_cloud-account *\| 0 lib APK" <<<"$out" \
+    && ok "libs/account (static) -> every app that compiles it (only Cloud Account since #1693), no lib APK" || fail "libs/account prediction wrong: $out"
 
 python3 "$G" static && ok "the real workflows hold the static ownership rule" || fail "the real workflows watch something their app does not own"
 python3 "$G" --scenarios "$SC" >/dev/null && ok "every rebuild scenario is isolated" || fail "a rebuild scenario violates isolation"
