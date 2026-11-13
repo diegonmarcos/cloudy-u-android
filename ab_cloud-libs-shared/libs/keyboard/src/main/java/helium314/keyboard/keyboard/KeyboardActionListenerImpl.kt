@@ -520,7 +520,8 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
         val on = (metaState and KeyEvent.META_FUNCTION_ON) != 0
         if (UnexpectedKb.fn == on) return
         UnexpectedKb.setFn(on)
-        Handler(Looper.getMainLooper()).post { keyboardSwitcher.reloadMainKeyboard() }
+        // the built keyboards are cached by id, not by layout: drop them so the other layer's layout is read
+        Handler(Looper.getMainLooper()).post { KeyboardLayoutSet.onKeyboardThemeChanged(); keyboardSwitcher.reloadMainKeyboard() }
     }
 
     private fun metaAfterCodeInput(primaryCode: Int) {
