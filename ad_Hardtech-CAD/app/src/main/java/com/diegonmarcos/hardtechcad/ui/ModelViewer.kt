@@ -347,6 +347,8 @@ internal fun ModelViewer(m: Model, dir: File, height: Dp = VIEWER_HEIGHT_DP.dp, 
                         } while (ev.changes.any { it.pressed })
                     }
                 })
+            // #1695 the Parts panel (per-part checkboxes), drawn by the host above the touch surface so it can be tapped in every presentation
+            if (plan is CadFormats.Plan.Show) HostParts(web, state == ViewState.Shown, Modifier.align(Alignment.TopEnd).padding(6.dp))
             val overlay = when (val s = state) {
                 ViewState.Fetching -> stringResource(R.string.viewer_fetching, m.name)
                 // #1658 a visible loading state: an empty stage with no word on it read as a broken viewer

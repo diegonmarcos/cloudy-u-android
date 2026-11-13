@@ -172,6 +172,8 @@ function partsPanel(obj) {
   partsBox.append(btn, body);
 }
 window.cadParts = (open) => { const b = document.getElementById('parts-body'); if (b && open !== undefined) b.style.display = open ? 'block' : 'none'; return partsList.map((p) => ({ name: p.name, color: p.color, visible: p.o.visible })); };
+// #1695 the host (Compose) owns the touch surface of the viewer, so the DOM button could never be tapped: the host draws its own Parts panel and hides this one.
+window.cadHostParts = (on) => { partsBox.style.visibility = on ? 'hidden' : 'visible'; return !!on; };
 window.cadPartVisible = (i, on) => { const p = partsList[i]; if (!p) return false; p.o.visible = !!on; render(); return true; };
 // #1695 a long load (a 22 MB STEP read in the brep worker) reports its progress to the host and can be cancelled
 let loader = null;
