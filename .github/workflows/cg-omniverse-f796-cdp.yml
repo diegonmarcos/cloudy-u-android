@@ -66,12 +66,13 @@ jobs:
               n[0] += 1; ws.send(json.dumps({"id": n[0], "method": m, "params": p or {}})); return n[0]
           for m in ("Runtime.enable", "Log.enable", "Network.enable", "Page.enable"): send(m)
           STATE = "(function(){var c=document.querySelectorAll('canvas'),o={url:location.href,rs:document.readyState,vis:document.visibilityState,iw:innerWidth,ih:innerHeight,dpr:devicePixelRatio,cw:document.documentElement.clientWidth,ch:document.documentElement.clientHeight,bw:document.body&&document.body.clientWidth,bh:document.body&&document.body.clientHeight,cdn:document.documentElement.dataset.cdn,nodes:document.getElementsByTagName('*').length,canv:[],body:(document.body?document.body.className:'')};for(var i=0;i<c.length&&i<6;i++){var r=c[i].getBoundingClientRect(),s=getComputedStyle(c[i]);o.canv.push([c[i].width,c[i].height,r.width,r.height,s.display,s.position,c[i].parentElement&&c[i].parentElement.tagName+'.'+c[i].parentElement.className,c[i].parentElement&&c[i].parentElement.clientWidth+'x'+c[i].parentElement.clientHeight])}var l=document.getElementById('initial-loader');o.loader=!!l;o.ls=(function(){try{return localStorage.getItem('modern-agent')}catch(e){return 'x'}})();o.top=Array.from(document.body.children).slice(0,12).map(function(e){return e.tagName+'#'+e.id+'.'+e.className+' '+e.clientWidth+'x'+e.clientHeight});return JSON.stringify(o)})()"
+          STATE2 = "(async function(){var o={compat:document.compatMode,doctype:document.doctype&&document.doctype.name,sheets:[]};for(var i=0;i<document.styleSheets.length;i++){var ss=document.styleSheets[i];var n=-1;try{n=ss.cssRules.length}catch(e){n='err '+e}o.sheets.push([ss.href,n,ss.disabled])}var h=document.documentElement,b=document.body,m=document.querySelector('main');function cs(e){var c=getComputedStyle(e);return [e.tagName,c.height,c.display,c.position,c.overflow,e.getBoundingClientRect().height]}o.html=cs(h);o.body=cs(b);o.main=cs(m);try{var r=await fetch('/front.5be05bf611184a967d9a.css');var t=await r.text();o.css=[r.status,r.headers.get('content-type'),t.length,t.slice(0,160)]}catch(e){o.css='err '+e}b.style.height='100%';o.bodyAfterInline=b.getBoundingClientRect().height;return JSON.stringify(o)})()"
           t0 = time.time(); nxt = 0; reloaded = False
           send("Page.reload")
           ws.settimeout(1)
           while time.time() - t0 < secs:
               if time.time() - t0 >= nxt:
-                  nxt += 15; i = send("Runtime.evaluate", {"expression": STATE, "returnByValue": True}); log("[%ds] eval sent id %d" % (time.time() - t0, i))
+                  nxt += 15; send("Runtime.evaluate", {"expression": STATE2, "returnByValue": True, "awaitPromise": True}); i = send("Runtime.evaluate", {"expression": STATE, "returnByValue": True}); log("[%ds] eval sent id %d" % (time.time() - t0, i))
               try: m = json.loads(ws.recv())
               except websocket.WebSocketTimeoutException: continue
               meth = m.get("method")
@@ -92,12 +93,14 @@ jobs:
           adb install -r -g app.apk || exit 2
           adb logcat -v threadtime "*:W" CloudWebConsole:I chromium:I > probe/logcat.txt 2>&1 &
           adb shell am start -S -W -n com.diegonmarcos.cgomniverse/.MainActivity -e section galaxy; sleep 20
-          python3 cdp.py com.diegonmarcos.cgomniverse galaxy 200
+          adb shell run-as com.diegonmarcos.cgomniverse sh -c 'cd files/site-cache-v2 && ls -R | head -40; cat floor796.com/manifest.json | head -c 4000' > probe/cache-manifest.txt 2>&1
+          python3 cdp.py com.diegonmarcos.cgomniverse galaxy 50
+          adb shell run-as com.diegonmarcos.cgomniverse sh -c 'cd files/site-cache-v2/floor796.com && for f in blobs/*; do s=$(wc -c < $f); echo $f $s; done | sort -k2 -n | head -60' >> probe/cache-manifest.txt 2>&1
           adb exec-out screencap -p > probe/galaxy.png
           if [ -f browser.apk ]; then
             adb install -r -g browser.apk
             adb shell am start -a android.intent.action.VIEW -d https://floor796.com -p com.diegonmarcos.cloudbrowser; sleep 20
-            python3 cdp.py com.diegonmarcos.cloudbrowser browser 200
+            python3 cdp.py com.diegonmarcos.cloudbrowser browser 40
             adb exec-out screencap -p > probe/browser.png
           fi
           exit 0
