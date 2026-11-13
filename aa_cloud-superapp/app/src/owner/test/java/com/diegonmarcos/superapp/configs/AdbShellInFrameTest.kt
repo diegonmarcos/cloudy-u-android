@@ -36,7 +36,7 @@ class AdbShellInFrameTest {
         assertEquals(listOf("adb-status", "adb-term", "adb-perms", "adb-all"), AdbCockpitModel.Tab.values().map { it.pageId })
         for (t in AdbCockpitModel.Tab.values()) assertEquals(t.pageId, AdbShellFragment::class.java, pages.first { it.id == t.pageId }.factory().javaClass)
         assertTrue("the adb-shell page itself is the strip (it declares tabs)", pages.first { it.id == "adb-shell" }.factory().javaClass != AdbShellFragment::class.java)
-        val code = File(java, "configs/AdbShellFragment.kt").readText().replace(Regex("(?s)/\\*.*?\\*/"), "")
+        val code = File(System.getProperty("user.dir"), "src/owner/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt").readText().replace(Regex("(?s)/\\*.*?\\*/"), "")
         assertTrue("hosts AdbShellBrokerPage", code.contains("AdbShellBrokerPage()"))
         assertTrue("draws no page, theme or scroll of its own", !code.contains("AdbShellScreen") && !code.contains("verticalScroll") && !code.contains("MaterialTheme"))
     }
