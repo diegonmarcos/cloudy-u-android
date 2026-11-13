@@ -329,6 +329,10 @@ object DriveTags {
     const val APPS_FLEET_MISSING = "manage_apps_fleet_missing"
     fun appOpen(pkg: String) = "manage_apps_open_$pkg"
     /** X-Ray Memory (Manage > Overview): the row, its Generate action and the Save / Share actions of a finished report. */
+    const val OVERVIEW_APPS = "manage_overview_apps"
+    fun appsSumRow(id: String) = "manage_overview_apps_$id"
+    fun dataStrip(id: String) = "manage_overview_data_$id"
+    fun dataItem(id: String, i: Int) = "manage_overview_data_${id}_$i"
     fun terminalLink(id: String) = "manage_terminal_link_$id"
     fun terminalGet(id: String) = "manage_terminal_get_$id"
     const val XRAY_ROW = "manage_xray_row"

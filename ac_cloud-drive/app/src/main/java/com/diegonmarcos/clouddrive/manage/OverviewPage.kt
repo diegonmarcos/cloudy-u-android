@@ -79,6 +79,12 @@ fun OverviewPage(storage: StorageCoordinator) {
             item { SectionHeader(stringResource(R.string.manage_overview_terminals), count = terminals.size) }
             item { TerminalLinks(terminals) }
         }
+        item { SectionHeader(stringResource(R.string.manage_overview_apps)) }
+        item { AppsSummary() }
+        if (decl.dataStrips.isNotEmpty()) {
+            item { SectionHeader(stringResource(R.string.manage_overview_data), count = decl.dataStrips.size) }
+            items(decl.dataStrips, key = { "data_" + it.id }) { DataStrip(it) }
+        }
     }
 }
 

@@ -341,7 +341,9 @@ object Declarations {
 
     /** #1537 one volume source of Manage (ui.manage); [kind] is what manage/VolumeSources dispatches on. */
     data class ManageSource(val id: String, val label: String, val icon: String, val kind: String, val remote: String = "", val fleet: String = "", val relative: String = "")
-    data class ManageDecl(val local: List<ManageSource>, val cloud: List<ManageSource>, val switcher: List<String>, val defaultVolume: String, val terminals: List<ManageSource> = emptyList())
+    data class ManageDecl(val local: List<ManageSource>, val cloud: List<ManageSource>, val switcher: List<String>, val defaultVolume: String, val terminals: List<ManageSource> = emptyList(), val dataStrips: List<DataStripDecl> = emptyList())
+    /** Overview > DATA strip: the newest files under [paths] (MediaStore RELATIVE_PATH prefixes); [imagesOnly] limits it to images. */
+    data class DataStripDecl(val id: String, val label: String, val paths: List<String>, val imagesOnly: Boolean, val limit: Int)
     /** #1537 an old route and where it lands now. An empty [page] matches the whole old tab. */
     data class LegacyRoute(val tab: String, val page: String, val toTab: String, val toPage: String)
 
@@ -870,7 +872,8 @@ object Declarations {
         }
         val ov = o["overview"] as? JsonObject
         val ld = o["local_data"] as? JsonObject
-        return ManageDecl(sources(ov?.get("local")), sources(ov?.get("cloud")), ld?.strings("switcher").orEmpty(), ld?.str("default_volume").orEmpty(), sources(ov?.get("terminals")))
+        return ManageDecl(sources(ov?.get("local")), sources(ov?.get("cloud")), ld?.strings("switcher").orEmpty(), ld?.str("default_volume").orEmpty(), sources(ov?.get("terminals")),
+            objects(ov?.get("data")).mapNotNull { d -> val id = d.str("id"); if (id.isBlank()) null else DataStripDecl(id, d.str("label", id), d.strings("paths"), d.bool("images_only"), d.int("limit") ?: 20) })
     }
 
     fun parseLegacyRoutes(text: String): List<LegacyRoute> = objects(element(text)).mapNotNull { r ->

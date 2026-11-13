@@ -827,6 +827,11 @@
           {"id": "termux", "label": "Cloud Terminal Termux", "icon": "terminal", "kind": "terminal_link", "fleet": "termux"},
           {"id": "nix", "label": "Cloud Terminal Nix", "icon": "terminal", "kind": "terminal_link", "fleet": "nix-on-droid"}
         ],
+        "data": [
+          {"id": "screenshots", "label": "Images Screenshot", "paths": ["DCIM/Screenshots/", "Pictures/Screenshots/"], "images_only": true, "limit": 20},
+          {"id": "downloads", "label": "Download", "paths": ["Download/"], "images_only": false, "limit": 20},
+          {"id": "camera", "label": "Images Camera", "paths": ["DCIM/Camera/"], "images_only": true, "limit": 20}
+        ],
         "cloud": [
           {"id": "cloud-s3", "label": "Cloud-S3", "icon": "cloud", "kind": "remote", "remote": "oracle_s3"},
           {"id": "gdrive", "label": "Google Drive", "icon": "cloud", "kind": "remote", "remote": "gdrive"},
