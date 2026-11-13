@@ -107,8 +107,8 @@ def check(S):
     grant = body(S[LIB + "ShizukuAdb.kt"], "fun grant(")
     logcat = S[SA + "devcontrol/AboutLogcat.kt"]
     r.append(("M4e", "ShellChannels.modeUses(ctx, ChannelSelector.SHIZUKU)) exec(ctx, cmd)" in grant and
-              re.search(r"ShellChannels\.active\(ctx\)\?\.exec\(ctx, cmd\)\s*\?:\s*(com\.diegonmarcos\.superapp\.adbdebug\.)?ShizukuAdb\.exec\(", logcat) is None and
-              "modeUses(ctx, com.diegonmarcos.superapp.adbdebug.ChannelSelector.SHIZUKU)" in logcat and
+              # #1682 P3 step 4e: the logcat reader goes through the owner's broker (which applies the mode), no direct Shizuku call at all
+              "ShizukuAdb" not in logcat and "ShellChannels" not in logcat and "BgHost.shell(ctx)" in logcat and
               "modeUses(" in body(S[SA + "configs/PermissionsFragment.kt"], "private fun shellPlane("),
               "a direct Shizuku fallback (pm grant, logcat, the Perms plane line) asks the mode first"))
     return r
