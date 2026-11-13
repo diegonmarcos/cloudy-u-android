@@ -184,8 +184,7 @@ private fun MusicBrowserCard(spec: MusicOAuthFlow.Spec, vault: AccountVault, sai
     val o = open
     if (o != null) androidx.compose.ui.window.Dialog(onDismissRequest = { open = null }) {
         androidx.compose.ui.viewinterop.AndroidView(factory = { c ->
-            android.webkit.WebView(c).apply {
-                settings.javaScriptEnabled = true
+            com.diegonmarcos.cloudlib.web.CloudWeb.create(c, com.diegonmarcos.cloudlib.web.WebProfile.BROWSER).apply {
                 webViewClient = object : android.webkit.WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: android.webkit.WebView?, request: android.webkit.WebResourceRequest?): Boolean {
                         val cb = MusicOAuthFlow.callback(request?.url?.toString() ?: return false, spec, o.first) ?: return false

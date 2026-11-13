@@ -159,6 +159,7 @@ dependencies {
     // `api`: AccountHost's signatures expose KitPalette, and the host builds Compose views with it.
     api project(':libs:ui-kit')
     implementation project(':libs:auth')
+    implementation project(':libs:web-core')          // #1371 #1693 the music sign-in sheet is CloudWeb.create(ctx, WebProfile.BROWSER)
     implementation project(':libs:bottomnav')         // #868 PageTabsView: Profile's own tab strip (the shared pill strip)
     implementation project(':libs:shell-client')      // #1512 SetupRunbook / PermsPlan: the SuperApp's shell broker (no channel of its own)
 

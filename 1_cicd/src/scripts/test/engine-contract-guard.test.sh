@@ -28,6 +28,9 @@ FLEET=aa_cloud-superapp/data/constellation-fleet.json
 LIBBJ=ab_cloud-libs-shared/lib-apks/build.json
 GH=ab_cloud-libs-shared/libs/gh
 DRIVEBJ=ac_cloud-drive/build.json
+# #1693: the gh sign-in binding (the client that calls loginStart/loginPoll) moved from the SuperApp to Cloud Account
+ACCBJ=ac_cloud-account/build.json
+ACCMF=ac_cloud-account/app/src/main/AndroidManifest.xml
 CLIENT=ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/GhEngine.kt
 SVC=$GH/src/main/java/com/diegonmarcos/cloudlib/gh/GhBackendService.kt
 MF=$GH/src/main/AndroidManifest.xml
@@ -98,7 +101,7 @@ for f in "$ROOT/$AN/engine-client.json" "$ROOT/$ANCLIENT" "$ROOT/$SINKSVC"; do
 done
 for f in "$GUARD" "$ROOT/$FLEET" "$ROOT/$LIBBJ" "$ROOT/$DRIVEBJ" "$ROOT/$CLIENT" "$ROOT/$SVC" "$ROOT/$MF" "$ROOT/$WF" \
          "$ROOT/$DRIVEMF" "$ROOT/$DRIVEGRADLE" "$ROOT/$FEED/src/main/AndroidManifest.xml" "$ROOT/$SABJ" "$ROOT/$SAMF" \
-         "$ROOT/$SAFEED" "$ROOT/$SACAL" "$ROOT/$CAL/src/main/AndroidManifest.xml" "$ROOT/$SAGH" "$ROOT/$SAWF" "$ROOT/$NEWS/src/main/AndroidManifest.xml" "$ROOT/$NEWSBJ" \
+         "$ROOT/$SAFEED" "$ROOT/$SACAL" "$ROOT/$CAL/src/main/AndroidManifest.xml" "$ROOT/$SAGH" "$ROOT/$ACCBJ" "$ROOT/$ACCMF" "$ROOT/$SAWF" "$ROOT/$NEWS/src/main/AndroidManifest.xml" "$ROOT/$NEWSBJ" \
          "$ROOT/$NEWSCLIENT" "$ROOT/$NEWSMF" "$ROOT/$NEWSGRADLE" "$ROOT/$NEWSWF" "$ROOT/$IMG/engine-client.json" \
          "$ROOT/$IMGCLIENT" "$ROOT/$IMGSVC"; do
     [ -f "$f" ] || { echo "ERROR missing source: $f — this test is unrun, not passing"; exit 1; }
@@ -110,7 +113,7 @@ stage() {
         "$WORK/t/ab_cloud-libs-shared/lib-apks" "$(dirname "$WORK/t/$CLIENT")" "$WORK/t/.github/workflows"
     cp "$ROOT/$FLEET" "$WORK/t/$FLEET"; cp "$ROOT/$LIBBJ" "$WORK/t/$LIBBJ"; cp "$ROOT/$WF" "$WORK/t/$WF"
     cp -r "$ROOT/$GH" "$WORK/t/$GH"; cp "$ROOT/$DRIVEBJ" "$WORK/t/$DRIVEBJ"; cp "$ROOT/$CLIENT" "$WORK/t/$CLIENT"
-    local f; for f in "$DRIVEMF" "$DRIVEGRADLE" "$SABJ" "$SAMF" "$SAFEED" "$SACAL" "$SAGH" "$SAWF" \
+    local f; for f in "$DRIVEMF" "$DRIVEGRADLE" "$SABJ" "$SAMF" "$SAFEED" "$SACAL" "$SAGH" "$ACCBJ" "$ACCMF" "$SAWF" \
                       "$NEWSBJ" "$NEWSCLIENT" "$NEWSMF" "$NEWSGRADLE" "$NEWSWF"; do
         mkdir -p "$(dirname "$WORK/t/$f")"; cp "$ROOT/$f" "$WORK/t/$f"; done
     cp -r "$ROOT/$FEED" "$WORK/t/$FEED"; cp -r "$ROOT/$CAL" "$WORK/t/$CAL"; cp -r "$ROOT/$NEWS" "$WORK/t/$NEWS"
@@ -333,6 +336,7 @@ stage; js "$DRIVEBJ" 'd["modules"]["libs:decisions-engine"] = {"dir": "../ab_clo
 landed "$DRIVEBJ" '"libs:decisions-engine"' && red "K6 #881 an app declares the decisions engine's module (it would compile the token and the budget back in)" "K6"
 stage; js "$DRIVEBJ" 'd.pop("engines"); d["_planted"] = "no-engines"'
 js "$SABJ" 'd.pop("engines"); d["_planted"] = "no-engines"'
+js "$ACCBJ" 'd.pop("engines"); d["_planted"] = "no-engines"'
 js "$NEWSBJ" 'd.pop("engines"); d["_planted"] = "no-engines"'
 js "$IMG/engine-client.json" 'd.pop("engines"); d["_planted"] = "no-engines"'
 js "$AN/engine-client.json" 'd.pop("engines"); d["_planted"] = "no-engines"'
@@ -340,7 +344,7 @@ js "$OPS/engine-client.json" 'd.pop("engines"); d["_planted"] = "no-engines"'
 js "$DEC/engine-client.json" 'd.pop("engines"); d["_planted"] = "no-engines"'
 js "$RC/engine-client.json" 'd.pop("engines"); d["_planted"] = "no-engines"'
 js "$MT/engine-client.json" 'd.pop("engines"); d["_planted"] = "no-engines"'
-landed "$DRIVEBJ" 'no-engines' && landed "$SABJ" 'no-engines' && landed "$NEWSBJ" 'no-engines' && landed "$IMG/engine-client.json" 'no-engines' && red "vacuity: no app declares an engine, so nothing is checked" "no app declares"
+landed "$DRIVEBJ" 'no-engines' && landed "$SABJ" 'no-engines' && landed "$ACCBJ" 'no-engines' && landed "$NEWSBJ" 'no-engines' && landed "$IMG/engine-client.json" 'no-engines' && red "vacuity: no app declares an engine, so nothing is checked" "no app declares"
 
 echo
 if [ "$FAILURES" -eq 0 ]; then echo "PASS — the engine contract guard fails on every broken binding and passes the real one"; else echo "FAIL — $FAILURES case(s)"; exit 1; fi
