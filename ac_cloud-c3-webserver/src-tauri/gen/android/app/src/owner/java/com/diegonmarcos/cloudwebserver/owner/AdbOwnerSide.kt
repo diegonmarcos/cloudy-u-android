@@ -70,6 +70,10 @@ object AdbOwnerSide {
         "Status" to Decl.PAGE_ADB_STATUS, "Tester" to Decl.PAGE_ADB_STATUS, "Logs" to Decl.PAGE_ADB_STATUS, "ADB Shell" to Decl.PAGE_ADB_ALL,
     )
 
+    /** #1723 the ADB shell status table on Home (AdbHomeStatus.kt); every row opens its ADB Shell sub page. */
+    @Composable
+    fun HomeStatus(tick: Int, open: (String, String?) -> Unit) = AdbHomeStatus(tick, open)
+
     /** The owner page body for one declared sub page (ids = build.json::ui, Decl.PAGE_ADB_*). An unknown id falls back to Status. */
     @Composable
     fun Page(page: String? = null) {

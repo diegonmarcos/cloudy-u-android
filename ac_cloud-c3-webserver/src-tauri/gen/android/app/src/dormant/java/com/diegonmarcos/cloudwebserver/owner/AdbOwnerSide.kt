@@ -2,6 +2,9 @@ package com.diegonmarcos.cloudwebserver.owner
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import com.diegonmarcos.cloudwebserver.Decl
+import com.diegonmarcos.cloudwebserver.ui.DRow
+import com.diegonmarcos.cloudwebserver.ui.DenseCard
 
 /**
  * #1682 P2b the INACTIVE stand-in of the ADB owner side, compiled into the shipped build while
@@ -14,4 +17,12 @@ object AdbOwnerSide {
     fun install(ctx: Context) {}
     val FIELD_HOME: Map<String, String> = emptyMap()
     @Composable fun Page(page: String? = null) {}
+
+    /** #1723 Home's ADB shell status table: this build links no ADB channel, so one tappable row names the owner and opens the ADB Shell. */
+    @Composable
+    fun HomeStatus(tick: Int, open: (String, String?) -> Unit) {
+        DenseCard("ADB shell", "c3_home_adb") {
+            DRow("Owner", why, tag = "c3_home_adb_owner") { open(Decl.SECTION_ADB_SHELL, Decl.PAGE_ADB_STATUS) }
+        }
+    }
 }

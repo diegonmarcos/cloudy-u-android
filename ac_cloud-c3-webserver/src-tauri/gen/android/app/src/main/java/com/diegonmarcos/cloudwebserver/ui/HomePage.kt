@@ -1,7 +1,17 @@
 package com.diegonmarcos.cloudwebserver.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+import com.diegonmarcos.superapp.uikit.KitDensity
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -16,8 +26,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Home = the STATUS cockpit, the web shell's renderHome: Status (power + health + version), the Server switches, Served pages,
- * SSHd engines, Ports & DNS, the Device strip, the API topology link and the full device report (About groups).
+ * Home = the STATUS cockpit, the web shell's renderHome: Status (power + health + version), the Server switches, the ADB shell status table
+ * (#1723), Served pages, SSHd engines, Ports & DNS, the Device strip, the API topology link and the full device report (About groups).
+ * #1723 drawn as a dense console: thin panels, compact aligned table rows (Dense.kt, KitDensity), every item of before kept.
  */
 @Composable
 fun HomePage(open: (String, String?) -> Unit) {
@@ -28,21 +39,23 @@ fun HomePage(open: (String, String?) -> Unit) {
     val served = rememberObj(Api.SERVED, tick)
     val sshd = rememberObj(Api.SSHD, tick)
     val about = rememberArr(Api.ABOUT, tick)
-    PageColumn("c3_home") {
-        Acts { Act("Refresh", "c3_home_refresh") { bump() } }
-        Loaded(power, "power") { pw ->
+    DensePage("c3_home") {
+        DActs { DAct("Refresh", "c3_home_refresh") { bump() } }
+        DLoaded(power, "power") { pw ->
             val sv = (serving as? Load.Ok)?.value
             HealthCard(pw, (health as? Load.Ok)?.value, health is Load.Err, sv)
             PowerCard(pw, bump)
         }
-        Loaded(served, "served pages") { ServedStrip(it) { open(Decl.SECTION_PAGES, Decl.PAGE_ALL) } }
-        Loaded(sshd, "sshd") { SshdStrip(it) { open(Decl.SECTION_SSHD, null) } }
-        Loaded(serving, "serving") { PortsStrip(it) }
-        Loaded(about, "device") { DeviceStrip(it) { open(Decl.SECTION_CONFIGS, Decl.PAGE_DEVICE) } }
-        Card("API topology", "c3_home_topology") {
-            Acts { LinkText("Open the API topology (MCP → API → IPC) ›", "c3_home_goto_api") { open(Decl.SECTION_API, Decl.PAGE_TOPOLOGY) } }
+        // #1723 the ADB shell status table (the owner side reads the real server; the shipped stand-in names the owner)
+        com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.HomeStatus(tick, open)
+        DLoaded(served, "served pages") { ServedStrip(it) { open(Decl.SECTION_PAGES, Decl.PAGE_ALL) } }
+        DLoaded(sshd, "sshd") { SshdStrip(it) { open(Decl.SECTION_SSHD, null) } }
+        DLoaded(serving, "serving") { PortsStrip(it) }
+        DLoaded(about, "device") { DeviceStrip(it) { open(Decl.SECTION_CONFIGS, Decl.PAGE_DEVICE) } }
+        DenseCard("API topology", "c3_home_topology") {
+            DRow("Topology", "Open the API topology (MCP → API → IPC)", tag = "c3_home_goto_api") { open(Decl.SECTION_API, Decl.PAGE_TOPOLOGY) }
         }
-        Loaded(about, "about") { AboutGroups(it) }
+        DLoaded(about, "about") { AboutGroups(it) }
     }
 }
 
@@ -52,12 +65,12 @@ fun HealthCard(pw: JSONObject, health: JSONObject?, healthDown: Boolean, sv: JSO
     val on = pw.optBoolean("server")
     val running = pw.optBoolean("running")
     val state = if (on) (if (running) "Server ON, serving" else "Server ON, starting") else "Server OFF: pages, sshd, DNS and sites stopped; this admin page stays up"
-    Card("Status", "c3_home_status", badges = { Badge(if (on) "ON" else "OFF", if (on) Tone.Up else Tone.Down) }) {
-        Kv("State", state, up = on && running)
-        Kv("Version", if (sv != null) "${sv.str("app")} ${sv.str("version_name")}" else "-")
-        Kv("Uptime", if (health != null && health.has("uptime_s")) "${fmtUp(health.longOrNull("uptime_s"))} (pid ${health.str("pid")})" else "-")
-        Kv("Health", if (health != null) (if (health.optBoolean("ok")) "ok" else "not ok") else if (healthDown) "not answering (Server OFF stops :8003)" else "-")
-        Kv("Keep alive", "${if (pw.optBoolean("keep_alive")) "ON" else "OFF"} · ${pw.str("sites")} active sites")
+    DenseCard("Status", "c3_home_status", badges = { Badge(if (on) "ON" else "OFF", if (on) Tone.Up else Tone.Down) }) {
+        DRow("State", state, up = on && running)
+        DRow("Version", if (sv != null) "${sv.str("app")} ${sv.str("version_name")}" else "-")
+        DRow("Uptime", if (health != null && health.has("uptime_s")) "${fmtUp(health.longOrNull("uptime_s"))} (pid ${health.str("pid")})" else "-")
+        DRow("Health", if (health != null) (if (health.optBoolean("ok")) "ok" else "not ok") else if (healthDown) "not answering (Server OFF stops :8003)" else "-")
+        DRow("Keep alive", "${if (pw.optBoolean("keep_alive")) "ON" else "OFF"} · ${pw.str("sites")} active sites")
     }
 }
 
@@ -68,18 +81,18 @@ fun PowerCard(st: JSONObject, bump: () -> Unit) {
     var confirmOff by remember { mutableStateOf(false) }
     val ssh = st.optJSONObject("ssh_door")
     fun set(key: String, value: Any?) = actions.post(Api.POWER, JSONObject().put(key, value ?: JSONObject.NULL)) { "Applied" }
-    Card("Server", "c3_power") {
+    DenseCard("Server", "c3_power") {
         SwitchRow("Server", st.optBoolean("server"), "OFF stops the served pages, DNS, the mesh listener, sshd and every site; this admin page stays up so you can switch it back ON", "c3_power_server") { to ->
             if (!to) { confirmOff = true } else { set("server", true) }
         }
         SwitchRow("Keep alive", st.optBoolean("keep_alive"), "ON keeps the server up with a notification and starts it at boot; OFF stops it when the app closes", "c3_power_keep_alive") { set("keep_alive", it) }
         SwitchRow("SSH door :${ssh.str("port")}", ssh?.optBoolean("wanted") == true, "ON asks Cloud Terminal Nix-on-Droid to start its sshd; follows Keep alive until set here. It is stopped again only if this app started it", "c3_power_ssh_door") { set("ssh_door", it) }
-        Kv("State", if (st.optBoolean("running")) "running" else "stopped")
-        Kv("Ports", st.optJSONArray("ports").objs().joinToString(", ") { "${it.str("proto")} ${it.str("port")}" }.ifEmpty { "none" })
+        DRow("State", if (st.optBoolean("running")) "running" else "stopped")
+        DRow("Ports", st.optJSONArray("ports").objs().joinToString(", ") { "${it.str("proto")} ${it.str("port")}" }.ifEmpty { "none" })
         val follows = ssh == null || !ssh.has("explicit") || ssh.isNull("explicit")
-        Kv("SSH door", "tcp ${ssh.str("port")} ${ssh.str("state")} · ${if (follows) "follows Keep alive" else "own switch"} · via ${ssh.str("via")}")
-        if (!follows) Acts { Act("Follow Keep alive", "c3_power_ssh_follow") { set("ssh_door", null) } }
-        Kv("Active sites", st.str("sites"))
+        DRow("SSH door", "tcp ${ssh.str("port")} ${ssh.str("state")} · ${if (follows) "follows Keep alive" else "own switch"} · via ${ssh.str("via")}")
+        if (!follows) DActs { DAct("Follow Keep alive", "c3_power_ssh_follow") { set("ssh_door", null) } }
+        DRow("Active sites", st.str("sites"))
     }
     if (confirmOff) AlertDialog(
         onDismissRequest = { confirmOff = false },
@@ -90,37 +103,54 @@ fun PowerCard(st: JSONObject, bump: () -> Unit) {
     )
 }
 
+/** A switch as one table row: state dot, label, ON/OFF, the compact toggle at the right; the explanation is the caption below. */
 @Composable
 fun SwitchRow(label: String, on: Boolean, note: String, tag: String, onSet: (Boolean) -> Unit) {
     Column {
-        Kv(label, if (on) "ON" else "OFF", up = on)
-        Acts { Act(if (on) "Turn OFF" else "Turn ON", tag) { onSet(!on) } }
-        Note(note)
+        Row(Modifier.fillMaxWidth().padding(horizontal = KitDensity.rowPadH, vertical = Dense.ROW_V), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.weight(1f)) { DRow2(label, if (on) "ON" else "OFF", on) }
+            DAct(if (on) "Turn OFF" else "Turn ON", tag) { onSet(!on) }
+        }
+        DNote(note)
     }
 }
 
-/** renderServedStrip. */
+/** DRow without its own outer padding (it sits inside another padded row). */
+@Composable
+private fun DRow2(k: String, v: String, up: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.width(Dense.KEY_COL), verticalAlignment = Alignment.CenterVertically) {
+            DDot(up); Spacer(Modifier.width(4.dp))
+            Text(k, style = MaterialTheme.typography.bodySmall.copy(fontSize = KitDensity.caption), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+        }
+        Text(v, style = MaterialTheme.typography.bodySmall.copy(fontSize = KitDensity.body), color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+/** renderServedStrip: a real table (name | port | role | state). */
 @Composable
 fun ServedStrip(pg: JSONObject, goto: () -> Unit) {
     val rows = pg.objs("rows")
-    Card("Served pages · ${rows.size}", "c3_home_pages", trailing = { LinkText("Pages ›", "c3_home_goto_pages", goto) }) {
+    DenseCard("Served pages · ${rows.size}", "c3_home_pages", trailing = { DLink("Pages ›", "c3_home_goto_pages", goto) }) {
+        val w = listOf<Int?>(null, 46, 74, 70)
+        DCols(listOf("name", "port", "role", "state"), w, head = true)
         rows.forEach { r ->
             val on = r.optBoolean("serving")
-            Kv(r.str("name"), ":${r.str("port")} · ${r.str("role")} · ${if (on) "serving" else if (r.optBoolean("paused")) "stopped" else "not serving"}${if (r.has("app")) " · app ${r.str("app")}" else ""}", up = on)
+            DCols(listOf(r.str("name") + if (r.has("app")) " · app ${r.str("app")}" else "", ":${r.str("port")}", r.str("role"), if (on) "serving" else if (r.optBoolean("paused")) "stopped" else "not serving"), w, up = on)
         }
-        Kv("Undeclared ports", (pg.optJSONObject("undeclared")?.optJSONArray("items")?.length() ?: 0).toString())
+        DRow("Undeclared ports", (pg.optJSONObject("undeclared")?.optJSONArray("items")?.length() ?: 0).toString())
     }
 }
 
 /** renderSshdStrip. */
 @Composable
 fun SshdStrip(d: JSONObject, goto: () -> Unit) {
-    Card("SSHd engines · keep alive ${if (d.optBoolean("keep_alive")) "ON" else "OFF"}", "c3_home_sshd", trailing = { LinkText("SSHd ›", "c3_home_goto_sshd", goto) }) {
+    DenseCard("SSHd engines · keep alive ${if (d.optBoolean("keep_alive")) "ON" else "OFF"}", "c3_home_sshd", trailing = { DLink("SSHd ›", "c3_home_goto_sshd", goto) }) {
         d.objs("doors").forEach { x ->
             val st = x.str("state")
             val ctl = x.optJSONObject("control")
             val own = ctl != null && ctl.has("explicit") && !ctl.isNull("explicit")
-            Kv(x.str("title"), "${if (x.has("port") && !x.isNull("port")) "tcp ${x.str("port")}" else "no port"} · $st · ${if (own) "own switch" else "follows keep alive"}", up = st == "listening" || st == "connected")
+            DRow(x.str("title"), "${if (x.has("port") && !x.isNull("port")) "tcp ${x.str("port")}" else "no port"} · $st · ${if (own) "own switch" else "follows keep alive"}", up = st == "listening" || st == "connected")
         }
     }
 }
@@ -128,13 +158,13 @@ fun SshdStrip(d: JSONObject, goto: () -> Unit) {
 /** renderPortsStrip. */
 @Composable
 fun PortsStrip(sv: JSONObject) {
-    Card("Ports & DNS", "c3_home_ports") {
+    DenseCard("Ports & DNS", "c3_home_ports") {
         sv.objs("endpoints").forEach { e ->
             val up = if (e.has("up") && !e.isNull("up")) e.optBoolean("up") else null
-            Kv(e.str("name"), "127.0.0.1:${e.str("port")} · ${e.str("role")}${when (up) { true -> " · answering now"; false -> " · not answering"; null -> "" }}", up = up == true)
+            DRow(e.str("name"), "127.0.0.1:${e.str("port")} · ${e.str("role")}${when (up) { true -> " · answering now"; false -> " · not answering"; null -> "" }}", up = up == true, mono = true)
         }
         val dns = sv.optJSONObject("dns")
-        Kv("DNS", "udp ${dns.str("host")}:${dns.str("port")} · ${dns.str("answer")}")
+        DRow("DNS", "udp ${dns.str("host")}:${dns.str("port")} · ${dns.str("answer")}", mono = true)
     }
 }
 
@@ -155,9 +185,9 @@ fun deviceFacts(groups: JSONArray): List<Pair<String, String>> {
 @Composable
 fun DeviceStrip(groups: JSONArray, goto: () -> Unit) {
     val ctx = LocalContext.current
-    Card("Device", "c3_home_device", trailing = { LinkText("Full report ›", "c3_home_goto_device", goto) }) {
-        deviceFacts(groups).forEach { (k, v) -> Kv(k, v) }
-        Acts { Act("Copy All Infos", "c3_copy_about") { copyText(ctx, "about", aboutText(groups)) } }
+    DenseCard("Device", "c3_home_device", trailing = { DLink("Full report ›", "c3_home_goto_device", goto) }) {
+        deviceFacts(groups).forEach { (k, v) -> DRow(k, v) }
+        DActs { DAct("Copy All Infos", "c3_copy_about") { copyText(ctx, "about", aboutText(groups)) } }
     }
 }
 
@@ -165,8 +195,8 @@ fun DeviceStrip(groups: JSONArray, goto: () -> Unit) {
 @Composable
 fun AboutGroups(groups: JSONArray) {
     groups.objs().forEach { g ->
-        Note(g.str("macro").uppercase())
-        g.objs("sections").forEach { s -> Card(s.str("title")) { s.optJSONArray("rows").pairs().forEach { (k, v) -> Kv(k, v) } } }
+        DNote(g.str("macro").uppercase())
+        g.objs("sections").forEach { s -> DenseCard(s.str("title")) { s.optJSONArray("rows").pairs().forEach { (k, v) -> DRow(k, v) } } }
     }
 }
 

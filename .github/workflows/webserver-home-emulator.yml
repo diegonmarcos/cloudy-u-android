@@ -1,0 +1,60 @@
+name: "Test -> Cloud C3 Webserver Home (emulator)"
+
+# #1723 Cloud C3 Webserver Home (the dense console + the ADB shell status table): screenshots down the page, then a tap on an ADB row. From the APK of a Ship run
+# (default: the latest green on main). Dispatch only.
+on:
+  workflow_dispatch:
+    inputs:
+      webserver_run_id: { description: 'Ship Cloud C3 Webserver run id (default: latest green on main)', required: false, default: '' }
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  walk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-c3-webserver/test
+
+      - name: Fetch the APK (x86_64)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -eu
+          RUN="${{ inputs.webserver_run_id }}"; [ -n "$RUN" ] || RUN=$(gh run list -R "$REPO" --workflow ship-cloud-c3-webserver.yml --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
+          [ -n "$RUN" ] || { echo "::error::no green ship run"; exit 1; }
+          echo "ship run $RUN"; mkdir -p dl
+          gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq '.artifacts[] | select(.expired|not) | select(.name|test("^Cloud-.*(x86_64|universal)")) | .name' |
+          while read -r name; do gh run download "$RUN" -R "$REPO" -n "$name" -D "dl/$name"; done
+          pick=$(find dl -name '*.apk' | sort | head -1); [ -n "$pick" ] || { echo "::error::no APK in run $RUN"; exit 1; }
+          cp "$pick" webserver.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator, walk Home
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-c3-webserver/test/emulator-home.sh webserver.apk out
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webserver-home-evidence
+          path: out/
+          if-no-files-found: warn
