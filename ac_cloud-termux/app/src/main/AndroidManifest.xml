@@ -70,7 +70,7 @@
          PackageManager.getApplicationInfo() finds cloud-lib-rootfs-termux (the rootfs
          library whose APK carries the root filesystem this terminal enters) and
          startActivity() reaches the SuperApp's Store when that library is not
-         installed. Declared even though targetSdkVersion is 28, where Android's
+         installed. Declared since targetSdkVersion was 28, where Android's
          package-visibility filtering does not apply yet: without this the two
          lookups work only BECAUSE of that target level, which is an accident the
          next targetSdk bump would turn into "the library is not installed" and a

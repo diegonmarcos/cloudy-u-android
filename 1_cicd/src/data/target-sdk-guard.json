@@ -7,8 +7,6 @@
   },
   "newest_device_sdk": 37,
   "exempt": {
-    "ac_cloud-termux": "targetSdk 28 on purpose: from 29 Android forbids exec() of files in the app's data dir (W^X), which is the whole terminal (the rootfs binaries run from $PREFIX); shared_user_id with nix-on-droid also pins the same SELinux domain (untrusted_app_27). See build.json::_doc of the shared store.",
-    "ac_cloud-nix-on-droid": "targetSdk 28 on purpose: same uid and SELinux domain as cloud-termux (shared_user_id, untrusted_app_27), and the nix store binaries run from the app's data dir, which targetSdk 29+ forbids (W^X).",
     "ae-tool_termux-boot": "targetSdk 28 on purpose: raising it puts the BOOT_COMPLETED receiver under Android 10+ background-start limits, which is exactly what this app exists to do (build.json::android._doc_target_sdk)."
   }
 }
