@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,40 +52,33 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
 
-/** Overview > APPS: Cloud Apps / Phone Apps summed from the Local Apps cache file (re-read every few seconds, so a Local Apps refresh shows here). */
+/** Overview > APPS: Cloud Apps / Phone Apps from the cached Local Apps aggregate ([LocalAppsApi]); it updates whenever Local Apps refreshes. */
 @Composable
 internal fun AppsSummary() {
     val ctx = LocalContext.current
     val file = remember { File(ctx.filesDir, "cloud-drive-cache/" + LocalAppsCache.FILE_NAME) }
-    var snap by remember { mutableStateOf<AppSnapshot.Snapshot?>(null) }
+    LaunchedEffect(Unit) { withContext(Dispatchers.IO) { LocalAppsApi.aggregate(ctx) } }
+    val agg by LocalAppsApi.state.collectAsState()
     var now by remember { mutableStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) {
-        var seen = -1L
-        while (true) {
-            val stamp = file.lastModified()
-            if (stamp != seen) { seen = stamp; snap = withContext(Dispatchers.IO) { LocalAppsCache(file).read() } }
-            now = System.currentTimeMillis()
-            delay(3000)
-        }
-    }
-    val s = snap
+    LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(10_000) } }
+    val stamp = remember(agg) { file.lastModified() }
     Column(Modifier.fillMaxWidth().testTag(DriveTags.OVERVIEW_APPS).padding(horizontal = DriveMetrics.sectionInset)) {
-        if (s == null) KitStoreCaption(stringResource(R.string.manage_apps_sum_none), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val a = agg
+        if (a == null) KitStoreCaption(stringResource(R.string.manage_apps_sum_none), color = MaterialTheme.colorScheme.onSurfaceVariant)
         else {
-            val fleet = remember { runCatching { Declarations.constellation.map { it.packageName }.filter { it.isNotBlank() }.toSet() }.getOrDefault(emptySet()) }
-            val rows = OverviewAppsSummary.summarize(s.rows, fleet)
             val heads = listOf(R.string.manage_apps_sum_group, R.string.manage_apps_sum_total, R.string.manage_apps_sum_app, R.string.manage_apps_sum_data, R.string.manage_apps_sum_cache, R.string.manage_apps_sum_amount)
             Row(Modifier.fillMaxWidth()) {
                 heads.forEachIndexed { i, h -> KitStoreCaption(stringResource(h), Modifier.weight(if (i == 0) 1.4f else 1f), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
-            for (r in rows) {
-                Row(Modifier.fillMaxWidth().testTag(DriveTags.appsSumRow(r.id)).padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                    KitStoreName(stringResource(if (r.id == OverviewAppsSummary.CLOUD) R.string.manage_apps_sum_cloud else R.string.manage_apps_sum_phone), Modifier.weight(1.4f))
-                    for (v in listOf(r.total, r.app, r.data, r.cache)) KitStoreCaption(v?.let { FileOps.humanBytes(it) } ?: "n/a", Modifier.weight(1f))
-                    KitStoreCaption(r.amount.toString(), Modifier.weight(1f))
+            for (g in AppGroup.entries) {
+                val t = a[g] ?: continue
+                Row(Modifier.fillMaxWidth().testTag(DriveTags.appsSumRow(g.name.lowercase())).padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    KitStoreName(stringResource(if (g == AppGroup.CLOUD) R.string.manage_apps_sum_cloud else R.string.manage_apps_sum_phone), Modifier.weight(1.4f))
+                    for (v in listOf(t.totalBytes, t.appBytes, t.dataBytes, t.cacheBytes)) KitStoreCaption(FileOps.humanBytes(v), Modifier.weight(1f))
+                    KitStoreCaption(t.count.toString(), Modifier.weight(1f))
                 }
             }
-            KitStoreCaption(LocalAppsCache.ageLabel(now, s.capturedAt), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            KitStoreCaption(LocalAppsCache.ageLabel(now, stamp), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
     Hairline()

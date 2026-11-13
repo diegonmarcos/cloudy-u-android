@@ -10,27 +10,22 @@ import java.io.File
 
 class OverviewAppsDataTest {
     private fun row(pkg: String, app: Long?, data: Long?, cache: Long?, icon: String? = null) =
-        AppRow(pkg, pkg, false, app, data, cache, fleetIcon = icon)
+        AppRow(pkg, pkg, false, app, data, cache, null, null, fleetIcon = icon)
 
-    @Test fun cloudAndPhoneAppsAreSummedFromTheCachedRows() {
-        val rows = listOf(row("cld.termux", 100, 50, 10), row("com.x", 20, 5, 1), row("com.y", 30, null, 4), row("com.diegonmarcos.t", 1, 1, 1, icon = "tasks"))
-        val (cloud, phone) = OverviewAppsSummary.summarize(rows, setOf("cld.termux"))
-        assertEquals(AppsSumRow("cloud", 163, 101, 51, 11, 2), cloud)
-        assertEquals(AppsSumRow("phone", 60, 50, 5, 5, 2), phone)
-    }
-
-    @Test fun aGroupWithNoSizesIsNullNotZeroAndEmptyCacheNeverCrashes() {
-        val (c, p) = OverviewAppsSummary.summarize(listOf(row("com.z", null, null, null)), emptySet())
-        assertEquals(0, c.amount); assertNull(c.total)
-        assertEquals(1, p.amount); assertNull(p.total); assertNull(p.app)
-    }
-
-    @Test fun cacheFileRoundTripFeedsTheSummary() {
+    @Test fun cloudAndPhoneAppsComeFromTheCachedAggregate() {
         val f = File.createTempFile("apps", ".json")
-        val c = LocalAppsCache(f)
-        c.write(AppSnapshot.Snapshot(listOf(row("cld.termux", 7, 3, 1)), false, null, 5L))
-        val s = OverviewAppsSummary.summarize(LocalAppsCache(f).read()!!.rows, setOf("cld.termux"))
-        assertEquals(11L, s[0].total); f.delete()
+        LocalAppsCache(f).write(AppSnapshot.Snapshot(listOf(row("a", 100, 50, 10, "x"), row("b", 20, 5, 1), row("c", 30, 0, 4)), false, null, 5L))
+        val agg = LocalAppsApi.aggregate(LocalAppsCache(f).read()!!.rows)
+        assertEquals(1, agg[AppGroup.CLOUD]!!.count); assertEquals(160L, agg[AppGroup.CLOUD]!!.totalBytes)
+        assertEquals(2, agg[AppGroup.PHONE]!!.count); assertEquals(60L, agg[AppGroup.PHONE]!!.totalBytes)
+        // a Local Apps cache write publishes the aggregate the Overview observes
+        assertEquals(2, LocalAppsApi.state.value!![AppGroup.PHONE]!!.count)
+        f.delete()
+    }
+
+    @Test fun emptyCacheNeverCrashes() {
+        val agg = LocalAppsApi.aggregate(emptyList())
+        assertEquals(0, agg[AppGroup.CLOUD]!!.count); assertEquals(0L, agg[AppGroup.PHONE]!!.totalBytes)
     }
 
     @Test fun stripSelectionFiltersByRelativePathAndImagesOnly() {
