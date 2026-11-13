@@ -112,6 +112,7 @@ class ManageScreensTest {
 
     @Test fun overviewTerminalsAppsAndDataSections() {
         val ctx = RuntimeEnvironment.getApplication()
+        grantProbe = { false }   // no All-files grant: the strips show their reason row
         LocalAppsApi.publish(rows("com.fleet.alpha", "com.phone.bravo", "com.phone.charlie"))
         val links = listOf(
             TerminalLink("termux", "Cloud Terminal Termux", "terminal", "termux", "cld.termux", true),
