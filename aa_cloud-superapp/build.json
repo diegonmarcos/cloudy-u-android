@@ -248,6 +248,9 @@
         "libs:wifi",
         "libs:clock-tools",
         "libs:perms",
+        "libs:fleetconfigs-xray",
+        "libs:ui-nav-bars",
+        "libs:theme-background",
         "libs:datamanager",
         "libs:launcher-onehand",
         "libs:launcher-zoomies",
@@ -502,6 +505,24 @@
       "comment": "The Light tool (#1155) shared by reference: LightModel (rules, plain Kotlin), LightAndroid (torch, clock, prefs, the Off-action foreground service, manifest-merged) and LightPanel (the Compose page). The SuperApp's LightActivity and Cloud Calc's Toolkit > Light page both draw LightPanel over the one Light engine; the engine's rules are tested in app/src/test/.../light/LightEngineTest.kt."
     },
     "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
+      "type": "library",
+      "depends_on": ["libs:ui-nav-bars"],
+      "comment": "#1728 X-Ray App > Performance: the fleet profiler (spans, ring buffer, verdicts), declared benchmarks, the Markdown export and the table panel the X-Ray App page draws."
+    },
+    "libs:ui-nav-bars": {
+      "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars",
+      "type": "library",
+      "depends_on": ["libs:bottomnav", "libs:theme-background", "libs:perms"],
+      "comment": "#1728 the shared Configs framework the profiler panel's host lib builds on (shared BY REFERENCE)."
+    },
+    "libs:theme-background": {
+      "dir": "../ab_cloud-libs-shared/libs/theme-background",
+      "type": "library",
+      "depends_on": [],
+      "comment": "#1728 the shared theme colours (ThemeBackground) of the profiler panel (shared BY REFERENCE)."
+    },
     "libs:perms": {
       "dir": "../ab_cloud-libs-shared/libs/perms",
       "type": "library",

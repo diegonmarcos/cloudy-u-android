@@ -113,7 +113,9 @@ internal fun XrayPerfSection(c: ThemeColors) {
                 val d = perfDevice(ctx)
                 val md = XrayPerfReport.markdown(d, XrayProfiler.runs(), XrayProfiler.outcomes())
                 ready = XrayPerfReport.fileName(d) to md
-                status = "Report ready: ${md.length} characters"
+                // A copy stays in the app's own files folder too (reachable over adb and by a file manager), so the report survives a cancelled Save.
+                val kept = runCatching { java.io.File(ctx.getExternalFilesDir(null) ?: ctx.filesDir, ready!!.first).also { it.writeText(md) }.name }.getOrNull()
+                status = "Report ready: ${md.length} characters" + (kept?.let { ", copy kept as $it" } ?: "")
             }
         }
         ready?.let { r ->
@@ -138,4 +140,13 @@ private fun PerfButton(label: String, c: ThemeColors, tag: String, onClick: () -
     val shape = RoundedCornerShape(12.dp)
     Text(label, Modifier.clip(shape).background(c.tabSelected, shape).clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 8.dp).testTag(tag),
         color = c.onTabSelected, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+}
+
+/**
+ * The Performance section for a host that draws its own X-Ray App page (Cloud SuperApp): the same table, Run benchmark, Clear and
+ * Export .md as the shared page, in the fleet theme.
+ */
+@Composable
+public fun XrayPerformancePanel(dark: Boolean = true) {
+    XrayPerfSection(com.diegonmarcos.superapp.themebg.ThemeBackground.colors(dark))
 }

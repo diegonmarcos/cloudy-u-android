@@ -1174,6 +1174,7 @@ dependencies {
     implementation project(':libs:clock-tools')
     // libs:perms (#1274) - the permission contract the Permissions page draws and every feature banner links through.
     implementation project(':libs:perms')
+    implementation project(':libs:fleetconfigs-xray')   // #1728 X-Ray App > Performance: profiler, benchmarks, .md export
     // libs:datamanager — per-app usage + network DATA providers (feeds the
     // Phone smart folders + Suite/Phone Active Apps). Sibling of libs:battery.
     implementation project(':libs:datamanager')

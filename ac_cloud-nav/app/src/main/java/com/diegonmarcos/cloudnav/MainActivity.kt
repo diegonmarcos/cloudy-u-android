@@ -66,6 +66,8 @@ class MainActivity : AppCompatActivity() {
         val savedTab = savedInstanceState?.getString(KEY_TAB)
         super.onCreate(KitFragmentHostState.withoutFragments(savedInstanceState))
         FleetChrome.apply(this)
+        // #1728 the X-Ray App > Performance benchmarks of this app
+        runCatching { NavBenchmarks.register() }
 
         // Schedule the periodic GHCR self-update check (data-driven cadence).
         // The Update tab in Configs offers a manual check-now button.

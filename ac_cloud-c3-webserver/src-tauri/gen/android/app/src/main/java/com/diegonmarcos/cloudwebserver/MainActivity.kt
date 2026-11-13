@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
         LaunchTarget.from(intent)
+        runCatching { WebserverBenchmarks.register() }   // #1728 X-Ray App > Performance benchmarks
         Core.attach(this)
         com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.install(applicationContext)   // #1682 P2b no-op unless this app owns ADB
         syncKeepAlive()

@@ -1,0 +1,91 @@
+name: "Test -> X-Ray App > Performance: Run benchmark + Export .md on an emulator (#1728)"
+
+# #1728: from the APK a Ship run built, open Configs > X-Ray App, press Run benchmark, wait for it, press Export .md and upload the
+# exported report. 1_cicd/src/scripts/emulator-xray-perf.sh does the walk. Dispatch only. `apps` = comma-separated app directories
+# (default: the five heavy apps); `runs` pins a Ship run per app directory (optional; default: the latest green ship run on main).
+
+on:
+  workflow_dispatch:
+    inputs:
+      apps:
+        description: 'Comma-separated app directories'
+        required: false
+        default: 'ac_cloud-drive,aa_cloud-superapp,ac_cloud-c3-webserver,ac_cloud-store,ac_cloud-nav'
+      runs:
+        description: 'JSON {"ac_cloud-drive": RUN, ...} Ship run ids to pin (optional)'
+        required: false
+        default: '{}'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [ac_cloud-drive, aa_cloud-superapp, ac_cloud-c3-webserver, ac_cloud-store, ac_cloud-nav]
+    steps:
+      - name: Skip an app that was not asked for
+        id: want
+        env:
+          APPS: ${{ inputs.apps }}
+          APP: ${{ matrix.app }}
+        run: |
+          case ",$APPS," in *",$APP,"*) echo "run=yes" >> "$GITHUB_OUTPUT" ;; *) echo "run=no" >> "$GITHUB_OUTPUT" ;; esac
+      - uses: actions/checkout@v4
+        if: steps.want.outputs.run == 'yes'
+        with:
+          sparse-checkout: |
+            1_cicd/src/scripts
+      - name: Fetch the APK (x86_64) and read its package
+        if: steps.want.outputs.run == 'yes'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUNS: ${{ inputs.runs }}
+          APP: ${{ matrix.app }}
+        run: |
+          set -eu
+          SHIP="ship-${APP:3}.yml"
+          RUN=$(python3 -c 'import json,os; r=json.loads(os.environ.get("RUNS") or "{}"); print(r.get(os.environ["APP"]) or "")')
+          if [ -z "$RUN" ]; then
+            RUN=$(gh run list -R "$REPO" --workflow "$SHIP" --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
+          fi
+          [ -n "$RUN" ] || { echo "::error::$APP: no green $SHIP run on main"; exit 1; }
+          echo "$APP: APK from $SHIP run $RUN"
+          mkdir -p dl
+          gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq '.artifacts[] | select(.expired|not) | select(.name|test("x86_64|universal")) | .name' |
+          while read -r name; do gh run download "$RUN" -R "$REPO" -n "$name" -D "dl/$name"; done
+          pick=$(find dl -name '*.apk' | sort | head -1)
+          [ -n "$pick" ] || { echo "::error::$APP: no x86_64 APK in $SHIP run $RUN"; exit 1; }
+          cp "$pick" app.apk
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          echo "PKG=$("$AAPT" dump packagename app.apk)" >> "$GITHUB_ENV"
+      - name: Enable KVM
+        if: steps.want.outputs.run == 'yes'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot emulator, Run benchmark, Export .md
+        if: steps.want.outputs.run == 'yes'
+        timeout-minutes: 35
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash 1_cicd/src/scripts/emulator-xray-perf.sh app.apk ${{ env.PKG }} ${{ matrix.app }} out
+      - name: Upload the exported report and evidence
+        if: always() && steps.want.outputs.run == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: xray-perf-${{ matrix.app }}
+          path: out/
+          if-no-files-found: warn

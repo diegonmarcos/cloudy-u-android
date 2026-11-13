@@ -149,6 +149,8 @@ class DevControlFragment : KitComposeFragment() {
                         AboutBlock.CopyAll -> AboutButton(AboutItem.Button("Copy All Infos", false, onClick = { copyAll(ctx, page) }))
                     }
                 }
+                // #1728 Configs > X-Ray App > Performance: per-operation table, Run benchmark, Clear and Export .md (libs:fleetconfigs-xray)
+                if (onlyMacros == APP_XRAY_MACROS.toSet()) item(key = "performance") { com.diegonmarcos.superapp.fleetxray.perf.XrayPerformancePanel(dark = true) }
             }
             prompt?.let { AboutPromptDialog(it) { prompt = null } }
             xrayAsk?.let { XrayAdbDialog(it) }

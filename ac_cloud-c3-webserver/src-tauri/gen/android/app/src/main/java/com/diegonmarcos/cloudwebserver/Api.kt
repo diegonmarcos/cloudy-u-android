@@ -54,6 +54,9 @@ object Api {
 
     suspend fun get(path: String): Reply = withContext(Dispatchers.IO) { call("GET", path, null) }
 
+    /** Blocking GET for the Performance benchmarks, which run on an IO thread and time THIS thread's CPU; never throws. */
+    internal fun getBlocking(path: String): Reply = call("GET", path, null)
+
     suspend fun post(path: String, body: JSONObject): Reply = withContext(Dispatchers.IO) { call("POST", path, body) }
 
     private fun call(method: String, path: String, body: JSONObject?): Reply = try {

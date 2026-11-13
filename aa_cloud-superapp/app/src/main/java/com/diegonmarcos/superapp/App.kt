@@ -50,6 +50,8 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // on the very first inflation.
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         super.onCreate()
+        // #1728 the X-Ray App > Performance benchmarks of this app
+        runCatching { com.diegonmarcos.superapp.xray.SuperAppBenchmarks.register() }
         // #1693 the Mattermost login and password are typed in Cloud Account (App credentials): the chat page reads them over the provider.
         com.diegonmarcos.superapp.chat.ChatCredentials.read = { c, id ->
             val x = com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.credential(c, id)

@@ -113,6 +113,8 @@ object EngineProfiler {
             s.ring[s.ringAt] = w; s.ringAt = (s.ringAt + 1) % RING; if (s.ringSize < RING) s.ringSize++
         }
         records.incrementAndGet()
+        // #1728 every engine path also feeds the fleet profiler (X-Ray App > Performance): wall + thread CPU, under "<engine>.<path>"
+        runCatching { com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.record(com.diegonmarcos.superapp.fleetxray.perf.PerfRun("$engine.$path", nowMs(), w, if (cpuNs > 0L || ledgerTag.isNotEmpty()) c else -1L)) }
         if (ledgerTag.isNotEmpty()) EnergyLedger.addCpu(ledgerTag, c)
     }
 

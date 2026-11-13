@@ -24,9 +24,13 @@ object Core {
     fun attach(activity: MainActivity) {
         Thread {
             state = runCatching {
-                System.loadLibrary(LIB)
-                val port = activity.nativeAttach(activity)
-                if (port > 0) CoreState.Up(port) else CoreState.Failed("the Rust core did not report its port")
+                // #1728 the Rust core's start (library load + attach) is recorded once per launch for X-Ray App > Performance
+                com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("web.core.start") { sp ->
+                    System.loadLibrary(LIB)
+                    val port = activity.nativeAttach(activity)
+                    sp.add(items = 1)
+                    if (port > 0) CoreState.Up(port) else CoreState.Failed("the Rust core did not report its port")
+                }
             }.getOrElse { CoreState.Failed("the Rust core did not load: ${it.message ?: it.javaClass.simpleName}") }
         }.apply { name = "c3-core-attach" }.start()
     }
