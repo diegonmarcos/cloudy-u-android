@@ -855,14 +855,22 @@ public final class InputLogic {
                     ScriptUtils.isScriptRtl(currentKeyboardScript) ? KeyEvent.KEYCODE_DPAD_LEFT : KeyEvent.KEYCODE_DPAD_RIGHT,
                     KeyEvent.META_CTRL_ON | event.getMetaState());
                 break;
-            case KeyCode.SELECT_LEFT, KeyCode.SELECT_RIGHT, KeyCode.SELECT_UP, KeyCode.SELECT_DOWN:
-                // selection: the arrow with shift held (the compass key's diagonal swipes)
+            case KeyCode.SELECT_LEFT, KeyCode.SELECT_RIGHT, KeyCode.SELECT_UP, KeyCode.SELECT_DOWN: {
+                // selection: the arrow with Shift held (the compass key's diagonal swipes). A text field only extends its selection while it
+                // has seen Shift go down, so Shift is pressed around the arrow, not just named in the arrow's meta state.
+                final int shiftMeta = KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON | event.getMetaState();
+                final long t = SystemClock.uptimeMillis();
+                mConnection.sendKeyEvent(new KeyEvent(t, t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT, 0, shiftMeta,
+                        KeyCharacterMap.VIRTUAL_KEYBOARD, 0, KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE));
                 sendDownUpKeyEventWithMetaState(
                     keyCode == KeyCode.SELECT_LEFT ? KeyEvent.KEYCODE_DPAD_LEFT
                         : keyCode == KeyCode.SELECT_RIGHT ? KeyEvent.KEYCODE_DPAD_RIGHT
                         : keyCode == KeyCode.SELECT_UP ? KeyEvent.KEYCODE_DPAD_UP : KeyEvent.KEYCODE_DPAD_DOWN,
-                    KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON | event.getMetaState());
+                    shiftMeta);
+                mConnection.sendKeyEvent(new KeyEvent(t, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SHIFT_LEFT, 0,
+                        event.getMetaState(), KeyCharacterMap.VIRTUAL_KEYBOARD, 0, KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE));
                 break;
+            }
             case KeyCode.MOVE_START_OF_PAGE:
                 final int selectionEnd1 = mConnection.getExpectedSelectionEnd();
                 final int selectionStart1 = mConnection.getExpectedSelectionStart();
