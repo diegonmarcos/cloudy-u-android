@@ -373,7 +373,7 @@ mod tests {
         // the fleet logs route, the browser control routes and the shell routes are all declared.
         assert!(r.entries.iter().any(|e| e.app_class == "fleet" && e.route == "logs" && e.ipc.endpoint == "logexport"));
         assert!(r.entries.iter().any(|e| e.app_class.contains("cloudbrowser") && e.route == "command" && e.ipc.post));
-        assert!(r.entries.iter().any(|e| e.app_class.contains("superapp") && e.route == "exec" && e.ipc.broker_status));
+        assert!(r.entries.iter().any(|e| e.ipc.endpoint == "shellbroker" && e.route == "exec" && e.ipc.broker_status));
     }
 
     #[test]
