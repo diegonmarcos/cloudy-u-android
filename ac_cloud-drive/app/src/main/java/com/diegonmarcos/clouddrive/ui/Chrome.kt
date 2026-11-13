@@ -288,6 +288,11 @@ object DriveTags {
     const val PROJECTS = "projects"
     const val PROJECT_ROW = "project_row"
     const val EDITOR = "editor"
+    /** #1714 the Editor's file explorer: the hamburger, the panel, one root chip per root and the inaccessible-root reason row. */
+    const val EDITOR_MENU = "editor_explorer_menu"
+    const val EDITOR_PANEL = "editor_explorer_panel"
+    fun editorRoot(id: String) = "editor_explorer_root_$id"
+    const val EDITOR_ROOT_REASON = "editor_explorer_root_reason"
     const val APPS_GRID = "apps_grid"
     /** #813 one tile of the Apps grid, by its declared label. */
     fun appTile(label: String) = "apps_tile_$label"

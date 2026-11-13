@@ -1,7 +1,26 @@
 package com.diegonmarcos.clouddrive.editor
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
+import com.diegonmarcos.clouddrive.ui.DriveMetrics
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -13,6 +32,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -61,11 +81,20 @@ fun EditorScreen(actions: DriveActions, openInExplorer: (String) -> Unit, modifi
     LaunchedEffect(tabs) { store.save(tabs) }
     val pending by EditorHook.pending.collectAsState()
     val scope = rememberCoroutineScope()
+    var explorerOpen by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = explorerOpen) { explorerOpen = false }
     LaunchedEffect(pending) {
-        pending?.let { tabs = tabs.open(it); EditorHook.pending.value = null }
+        pending?.let { tabs = tabs.open(it); EditorHook.pending.value = null; explorerOpen = false }
+    }
+    // #1714 the file explorer panel: the hamburger sits at the top-left of the editor content (below the app bar), the panel slides over it.
+    Box(modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize()) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        IconButton(onClick = { explorerOpen = true }, modifier = Modifier.size(DriveMetrics.tap).testTag(DriveTags.EDITOR_MENU)) { Icon(Icons.Filled.Menu, stringResource(R.string.editor_explorer_open), Modifier.size(DriveMetrics.glyphIcon)) }
+        androidx.compose.material3.Text(stringResource(R.string.editor_explorer_files), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     EditorHost(
-        tabs = tabs, onTabs = { tabs = it }, modifier = modifier.fillMaxSize().testTag(DriveTags.EDITOR), router = EditorHook.router,
+        tabs = tabs, onTabs = { tabs = it }, modifier = Modifier.weight(1f).fillMaxWidth().testTag(DriveTags.EDITOR), router = EditorHook.router,
         // the empty state scrolls, so the shell's chrome collapse follows it like on every other page (a viewer owns its own scrolling)
         empty = { Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { EmptyState(IconCatalog.vectorOrDefault("edit_note"), stringResource(R.string.editor_empty_title), stringResource(R.string.editor_empty_hint)) } },
         // #1607 Export: whole-file Copy to clipboard (read off the main thread), Copy to Download (MediaStore), Copy path.
@@ -77,6 +106,12 @@ fun EditorScreen(actions: DriveActions, openInExplorer: (String) -> Unit, modifi
             }
         },
     ) { tab, route -> EditorBody(tab, route) }
+    }
+    if (explorerOpen) Row(Modifier.fillMaxSize()) {
+        EditorExplorerPanel(actions, tabs.activePath, { explorerOpen = false }, Modifier.fillMaxWidth(0.88f))
+        Box(Modifier.weight(1f).fillMaxHeight().background(Color.Black.copy(alpha = 0.4f)).clickable { explorerOpen = false })
+    }
+    }
 }
 
 @Composable

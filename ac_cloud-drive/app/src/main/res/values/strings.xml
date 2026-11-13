@@ -829,4 +829,16 @@
     <string name="git_list_refreshing">refreshing</string>
     <string name="git_list_refresh">Refresh repo list</string>
     <string name="git_sheet_refresh_title">Refresh</string>
+    <string name="editor_explorer_open">Open file explorer</string>
+    <string name="editor_explorer_close">Close file explorer</string>
+    <string name="editor_explorer_title">Open a file</string>
+    <string name="editor_explorer_files">Files</string>
+    <string name="editor_root_reason_grant">%1$s needs All files access. Grant it to browse this root.</string>
+    <string name="editor_root_reason_not_installed">%1$s is not installed, so its home cannot be browsed.</string>
+    <string name="editor_root_reason_not_readable">%1$s is installed but its home is not readable by this app (the shared uid is not in effect). Open it once, then retry.</string>
+    <string name="editor_root_reason_no_drive">No removable drive is mounted. Plug in an SD card or USB drive, or grant a folder.</string>
+    <string name="editor_root_action_grant">Grant access</string>
+    <string name="editor_root_action_open_app">Open app</string>
+    <string name="editor_root_action_folder">Grant a folder</string>
+    <string name="editor_root_action_retry">Retry</string>
 </resources>
