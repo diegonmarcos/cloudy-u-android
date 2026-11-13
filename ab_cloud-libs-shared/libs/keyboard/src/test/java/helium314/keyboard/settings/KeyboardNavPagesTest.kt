@@ -109,8 +109,9 @@ class KeyboardNavPagesTest {
         assertTrue(File("src/main/java/helium314/keyboard/keyboard/CornerSwipe.kt").readText().contains("KbThemePreset.setDev(context, !enabled)"))
         assertTrue(File("src/main/java/helium314/keyboard/keyboard/internal/keyboard_parser/LayoutParser.kt").readText().contains("CornerSwipe.mainLayoutFor(CornerSwipe.enabled"))
         // the Unexpected theme is its own preset: dark colours, corner swipes and its own layout flag on, Default restores everything
-        val u = FakePrefs(mapOf("theme_colors" to "light", "theme_style" to "Material"))
+        val u = FakePrefs(mapOf("theme_colors" to "light", "theme_style" to "Material", "toolbar_mode" to "TOOLBAR_KEYS"))
         KbThemePreset.applyTo(u, KbThemePreset.UNEXPECTED)
+        assertEquals("HIDDEN", u.data["toolbar_mode"]) // the toolbar / clipboard strip is hidden so the rows get the design's height
         assertEquals("Rounded", u.data["theme_style"]) // rounded, bordered keys as designed
         assertEquals(true, u.data["theme_key_borders"])
         assertEquals(KbThemePreset.UNEXPECTED, KbThemePreset.current(u))
@@ -118,6 +119,7 @@ class KeyboardNavPagesTest {
         assertEquals(true, u.data[helium314.keyboard.keyboard.UnexpectedKb.PREF])
         assertEquals("unexpected", u.data["theme_colors"])
         KbThemePreset.applyTo(u, KbThemePreset.DEV) // Dev keeps working from Unexpected
+        assertEquals("TOOLBAR_KEYS", u.data["toolbar_mode"]) // and the user's own toolbar comes back
         assertEquals(false, u.data[helium314.keyboard.keyboard.UnexpectedKb.PREF])
         KbThemePreset.applyTo(u, KbThemePreset.DEFAULT)
         assertEquals("light", u.data["theme_colors"])

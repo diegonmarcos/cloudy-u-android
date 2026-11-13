@@ -173,6 +173,14 @@ class UnexpectedKbLayoutTest {
         assertTrue(File("src/main/java/helium314/keyboard/keyboard/UnexpectedKeyDrawable.kt").readText().contains("drawRoundRect"))
     }
 
+    /** The design's proportions, measured on the 1080 px wide comparison: taller keys, a larger centre glyph, legends near the design's. */
+    @Test fun designProportions() {
+        assertEquals(150f / 129f, UnexpectedKb.HEIGHT_FACTOR, 0.02f)
+        assertTrue(UnexpectedKb.TEXT_FACTOR in 1.1f..1.5f && UnexpectedKb.LEGEND_FACTOR in 1.1f..1.5f)
+        val sv = File("src/main/java/helium314/keyboard/latin/settings/SettingsValues.java").readText()
+        assertTrue(sv.contains("UnexpectedKb.HEIGHT_FACTOR"))
+    }
+
     @Test fun themeIsWiredWithoutHardcodedKeys() {
         // the views only ask the table; no key glyph literal of the theme lives in them
         val view = File("src/main/java/helium314/keyboard/keyboard/KeyboardView.java").readText()

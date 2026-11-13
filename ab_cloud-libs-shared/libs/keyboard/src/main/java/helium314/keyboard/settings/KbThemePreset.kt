@@ -12,6 +12,7 @@ import helium314.keyboard.keyboard.UnexpectedKb
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.settings.Defaults
 import helium314.keyboard.latin.settings.Settings
+import helium314.keyboard.latin.utils.ToolbarMode
 import helium314.keyboard.latin.utils.prefs
 
 /**
@@ -49,6 +50,8 @@ enum class KbThemePreset(
         // the style and key borders in use before Unexpected, parked the same way (Unexpected draws rounded, bordered keys)
         private const val PREV_STYLE = "pref_kb_theme_prev_style"
         private const val PREV_BORDERS = "pref_kb_theme_prev_borders"
+        // the toolbar mode before Unexpected (it hides the toolbar / clipboard strip so the five rows get the design's height)
+        private const val PREV_TOOLBAR = "pref_kb_theme_prev_toolbar_mode"
 
         /** The theme currently selected, or [DEFAULT] when none has been chosen. */
         fun current(context: Context): KbThemePreset = current(context.prefs())
@@ -92,6 +95,7 @@ enum class KbThemePreset(
                     if (preset == UNEXPECTED && !prefs.contains(PREV_STYLE)) prefs.edit {
                         putString(PREV_STYLE, prefs.getString(Settings.PREF_THEME_STYLE, Defaults.PREF_THEME_STYLE))
                         putBoolean(PREV_BORDERS, prefs.getBoolean(Settings.PREF_THEME_KEY_BORDERS, Defaults.PREF_THEME_KEY_BORDERS))
+                        putString(PREV_TOOLBAR, prefs.getString(Settings.PREF_TOOLBAR_MODE, Defaults.PREF_TOOLBAR_MODE))
                     }
                     if (!wasDev) prefs.edit {
                         putString(PREV_DAY, prefs.getString(Settings.PREF_THEME_COLORS, Defaults.PREF_THEME_COLORS))
@@ -103,10 +107,14 @@ enum class KbThemePreset(
                         if (preset == UNEXPECTED) { // dark grey rounded keys with visible key backgrounds, as designed
                             putString(Settings.PREF_THEME_STYLE, KeyboardTheme.STYLE_ROUNDED)
                             putBoolean(Settings.PREF_THEME_KEY_BORDERS, true)
+                            // the toolbar and clipboard strip are hidden (Keyboard > Toolbar brings them back; the clipboard, emoji and settings
+                            // keys are on the keyboard itself), so the five rows get the design's height
+                            putString(Settings.PREF_TOOLBAR_MODE, ToolbarMode.HIDDEN.name)
                         } else if (prefs.contains(PREV_STYLE)) { // Dev after Unexpected: the user's own style and borders come back
                             putString(Settings.PREF_THEME_STYLE, prefs.getString(PREV_STYLE, Defaults.PREF_THEME_STYLE) ?: Defaults.PREF_THEME_STYLE)
                             putBoolean(Settings.PREF_THEME_KEY_BORDERS, prefs.getBoolean(PREV_BORDERS, Defaults.PREF_THEME_KEY_BORDERS))
-                            remove(PREV_STYLE); remove(PREV_BORDERS)
+                            prefs.getString(PREV_TOOLBAR, null)?.let { putString(Settings.PREF_TOOLBAR_MODE, it) }
+                            remove(PREV_STYLE); remove(PREV_BORDERS); remove(PREV_TOOLBAR)
                         }
                         putString(Settings.PREF_THEME_COLORS, KeyboardTheme.THEME_UNEXPECTED)
                         putString(Settings.PREF_THEME_COLORS_NIGHT, KeyboardTheme.THEME_UNEXPECTED)
@@ -122,7 +130,8 @@ enum class KbThemePreset(
                         if (prefs.contains(PREV_STYLE)) {
                             putString(Settings.PREF_THEME_STYLE, prefs.getString(PREV_STYLE, Defaults.PREF_THEME_STYLE) ?: Defaults.PREF_THEME_STYLE)
                             putBoolean(Settings.PREF_THEME_KEY_BORDERS, prefs.getBoolean(PREV_BORDERS, Defaults.PREF_THEME_KEY_BORDERS))
-                            remove(PREV_STYLE); remove(PREV_BORDERS)
+                            prefs.getString(PREV_TOOLBAR, null)?.let { putString(Settings.PREF_TOOLBAR_MODE, it) }
+                            remove(PREV_STYLE); remove(PREV_BORDERS); remove(PREV_TOOLBAR)
                         }
                         putBoolean(UnexpectedKb.PREF, false)
                         // Only undo the colour theme if Unexpected itself set it — never clobber a user's own pick.

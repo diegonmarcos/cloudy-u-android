@@ -399,7 +399,7 @@ public class KeyboardView extends View {
                 && CornerSwipe.centerLegendOf(CornerSwipe.idOf(label, key.getCode())) != null; // Unexpected space bar: its glyph, not the language name
         if (label != null && !labelReplaced) {
             paint.setTypeface(KeyboardTypeface.resolve(label, key.selectTypeface(params)));
-            paint.setTextSize(key.selectTextSize(params) * mFontSizeMultiplier);
+            paint.setTextSize(key.selectTextSize(params) * mFontSizeMultiplier * (UnexpectedKb.active && !(this instanceof PopupKeysKeyboardView) ? UnexpectedKb.TEXT_FACTOR : 1f));
             final float labelCharHeight = TypefaceUtils.getReferenceCharHeight(paint);
             final float labelCharWidth = TypefaceUtils.getReferenceCharWidth(paint);
 
@@ -471,7 +471,7 @@ public class KeyboardView extends View {
         final java.util.List<String> corners = CornerSwipe.legendsOf(cornerId);
         if (corners != null) {
             // the design's corner glyphs are a little larger than the stock hint size
-            paint.setTextSize(key.selectHintTextSize(params) * mFontSizeMultiplier * (UnexpectedKb.active ? 1.4f : 1f));
+            paint.setTextSize(key.selectHintTextSize(params) * mFontSizeMultiplier * (UnexpectedKb.active ? UnexpectedKb.LEGEND_FACTOR : 1f));
             paint.setColor(params.mHintLabelColor);
             paint.setTextAlign(Align.CENTER);
             final float padX = Math.min(keyWidth * 0.18f, keyHeight * 0.24f);

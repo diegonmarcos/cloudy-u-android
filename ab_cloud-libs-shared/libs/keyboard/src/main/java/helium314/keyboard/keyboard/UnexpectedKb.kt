@@ -24,6 +24,12 @@ object UnexpectedKb {
     const val MAIN_FN = "unexpected_kb_fn"
     const val FUNCTIONAL = "functional_keys_unexpected"
     const val COMPASS = "⦶"
+    /** Key height of the design relative to the stock keyboard (measured on the 1080 px wide comparison: row pitch 150 px vs 129 px). */
+    const val HEIGHT_FACTOR = 1.16f
+    /** Centre glyph size relative to the stock key text (measured: the design's letter is 40 px tall where the stock one is 30 px at the same key height). */
+    const val TEXT_FACTOR = 1.24f
+    /** Corner legend size relative to the stock hint text. */
+    const val LEGEND_FACTOR = 1.27f
 
     /** Theme on (mirrored from the prefs by [CornerSwipe.refresh]). */
     @JvmField @Volatile var active = false
