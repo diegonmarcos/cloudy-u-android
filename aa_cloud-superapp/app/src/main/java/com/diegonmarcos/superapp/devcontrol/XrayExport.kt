@@ -155,7 +155,7 @@ internal object XrayExport {
     }
 
     private fun openWirelessDebugging(ctx: Context) {
-        runCatching { com.diegonmarcos.superapp.shellclient.ShellClient.openWirelessDebuggingSettings(ctx) }
+        runCatching { com.diegonmarcos.superapp.system.WirelessDebuggingSwitch.openSettings(ctx) }
     }
 }
 

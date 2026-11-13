@@ -92,7 +92,7 @@ object EngineProbes {
         put("bgpolicy.app_mah") { appMah.also { if (it == null) missing["bgpolicy.app_mah"] = "no per-app batterystats reading yet (needs the ADB shell)" } }
 
         // Shell / ADB broker: the broker's own audit ring is the measurement (every call, its real duration and outcome).
-        val audit = runCatching { ShellClient.audit(app) ?: throw IllegalStateException("the ADB owner refused the audit read") }
+        val audit = runCatching { com.diegonmarcos.superapp.configs.ShellAudit.rows(app) ?: throw IllegalStateException("the ADB owner refused the audit read") }
         put("shell.failed") { audit.getOrThrow().count { it.outcome == "timeout" || it.outcome == "legacy-fail" } }
         put("shell.nonzero") { audit.getOrThrow().count { it.outcome == "exit" } }
         put("shell.denied") { audit.getOrThrow().count { it.outcome == "denied" } }

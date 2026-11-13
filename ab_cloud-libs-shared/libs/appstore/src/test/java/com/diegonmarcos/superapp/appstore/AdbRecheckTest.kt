@@ -1,4 +1,6 @@
-package com.diegonmarcos.superapp.shellclient
+package com.diegonmarcos.superapp.appstore
+
+import com.diegonmarcos.superapp.shellclient.AdbLink
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

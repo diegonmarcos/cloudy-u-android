@@ -22,7 +22,7 @@ internal object BgUi {
             BgGate.run(
                 ready = { BgHost.shell(ctx) != null },
                 openArmFlow = { activity.runOnUiThread { ShellClient.openArmPage(activity) } },
-                openWirelessDebugging = { activity.runOnUiThread { ShellClient.openWirelessDebuggingSettings(activity) } },
+                openWirelessDebugging = { activity.runOnUiThread { com.diegonmarcos.superapp.system.WirelessDebuggingSwitch.openSettings(activity) } },
                 ask = { dialogs.askGate(it, withoutAdb) },
             )
         }

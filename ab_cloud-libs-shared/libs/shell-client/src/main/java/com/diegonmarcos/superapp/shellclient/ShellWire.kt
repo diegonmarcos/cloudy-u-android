@@ -106,21 +106,8 @@ object ShellWire {
             .put("exit", r.exit).put("ms", r.ms).put("source", r.source)) }
     }.toString()
 
-    /** null = not an audit answer (refused, outdated owner, unreadable). */
-    fun decodeAudit(json: String?): List<AuditRow>? {
-        val a = runCatching { org.json.JSONArray(json.orEmpty()) }.getOrNull() ?: return null
-        return (0 until a.length()).mapNotNull { i -> a.optJSONObject(i)?.let { o ->
-            AuditRow(o.optLong("ts"), o.optString("caller"), o.optString("cmd"), o.optString("outcome"), o.optInt("exit", -1),
-                o.optLong("ms"), o.optString("source")) } }
-    }
-
     fun encodeCallers(rows: List<Pair<String, String>>): String =
         org.json.JSONArray().apply { rows.forEach { (k, v) -> put(JSONObject().put("caller", k).put("summary", v)) } }.toString()
-
-    fun decodeCallers(json: String?): List<Pair<String, String>>? {
-        val a = runCatching { org.json.JSONArray(json.orEmpty()) }.getOrNull() ?: return null
-        return (0 until a.length()).mapNotNull { i -> a.optJSONObject(i)?.let { it.optString("caller") to it.optString("summary") } }
-    }
 
     /** Clamp a caller's timeout into 1 s .. [MAX_TIMEOUT_MS]; every call has one. */
     fun clampTimeout(ms: Long): Long = ms.coerceIn(1_000L, MAX_TIMEOUT_MS)

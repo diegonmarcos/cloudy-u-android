@@ -14,11 +14,11 @@ import java.util.concurrent.TimeoutException
  * #1510 The thin client of the SuperApp's shell broker. It owns no channel: no pairing, no reconnect loop, no keep-alive,
  * no boot receiver. Every call is one provider call on the SuperApp (which starts its process), answered under the CALLER's
  * allowlist entry (the broker reads the caller from the binder uid, never from this client). An unarmed broker answers
- * [ShellResult.NeedsArm]; the UI then offers "Arm in SuperApp" ([arm]).
+ * [ShellResult.NeedsArm]; the UI then offers "Arm in SuperApp".
  *
  * Blocking: call off the main thread. Every call is bounded by [exec]'s timeout.
  */
-class ShellClient(private val transport: Transport) {
+class ShellClient(val transport: Transport) {
 
     /** One round trip to the broker; null = the broker could not be reached. Pure seam, so the rules are unit-tested. */
     fun interface Transport {
@@ -72,12 +72,6 @@ class ShellClient(private val transport: Transport) {
 
     /** #1682 Ask the owner to drop its cached status (a page resumed, a setting changed); false = the owner did not answer. */
     fun invalidate(): Boolean = runCatching { transport.call(ShellWire.M_INVALIDATE, "", emptyMap()) != null }.getOrDefault(false)
-
-    /** #1682 The owner's audit ring, or null when it refused (no `audit` grant) or did not answer. */
-    fun audit(): List<ShellWire.AuditRow>? = runCatching { ShellWire.decodeAudit(transport.call(ShellWire.M_AUDIT, "", emptyMap())) }.getOrNull()
-
-    /** #1682 (caller, rule summary) of every allowlist entry, or null when refused / unreachable. */
-    fun callers(): List<Pair<String, String>>? = runCatching { ShellWire.decodeCallers(transport.call(ShellWire.M_CALLERS, "", emptyMap())) }.getOrNull()
 
     /** The broker's LIVE status: it runs a round trip through the real channel on every call (a few seconds of cache at most, broker side). */
     fun status(): ShellStatus {
@@ -165,8 +159,6 @@ class ShellClient(private val transport: Transport) {
         fun exec(ctx: Context, cmd: String, timeoutMs: Long = ShellWire.DEFAULT_TIMEOUT_MS): ShellResult = over(ctx).exec(cmd, timeoutMs)
         fun execOut(ctx: Context, cmd: String, timeoutMs: Long = ShellWire.DEFAULT_TIMEOUT_MS): ShellResult = over(ctx).execOut(cmd, timeoutMs)
         fun invalidate(ctx: Context): Boolean = over(ctx).invalidate()
-        fun audit(ctx: Context): List<ShellWire.AuditRow>? = over(ctx).audit()
-        fun callers(ctx: Context): List<Pair<String, String>>? = over(ctx).callers()
         fun status(ctx: Context): ShellStatus {
             if (!superAppInstalled(ctx)) return ShellStatus(false, false, "none", "SuperApp missing", System.currentTimeMillis(),
                 "SuperApp is not installed")
@@ -183,11 +175,7 @@ class ShellClient(private val transport: Transport) {
         fun execStdin(ctx: Context, cmd: String, stdin: java.io.File, timeoutMs: Long = ShellWire.STDIN_DEFAULT_TIMEOUT_MS): ShellResult =
             over(ctx).execStdin(cmd, stdin, timeoutMs)
 
-        /**
-         * THE one way every app opens the SuperApp's ADB Shell page (the broker / re-arm page): an explicit intent to the declared
-         * exported entry, NEW_TASK from any context. Never silent: a missing SuperApp or a refused start is shown as a toast.
-         * Returns true when the page was started.
-         */
+        /** THE one way every app opens the owner's ADB Shell page: the declared exported entry, NEW_TASK, a toast (never silent) on failure; true = started. */
         fun openArmPage(ctx: Context): Boolean {
             if (!superAppInstalled(ctx)) { toast(ctx, "Cloud SuperApp is not installed: it owns the ADB shell. Install it from the Store."); return false }
             val i = armIntent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -195,20 +183,6 @@ class ShellClient(private val transport: Transport) {
             if (r.isFailure) toast(ctx, "Could not open Cloud SuperApp > ADB Shell (${r.exceptionOrNull()?.javaClass?.simpleName}). Update the SuperApp.")
             return r.isSuccess
         }
-
-        /**
-         * #1682 P3: the Wireless debugging switch of Developer options (the one setting a chip can open without any ADB class); falls back to
-         * [openArmPage] when the phone has no such page. True when something was started.
-         */
-        fun openWirelessDebuggingSettings(ctx: Context): Boolean {
-            val i = Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
-                .putExtra(":settings:fragment_args_key", "toggle_adb_wireless")
-            if (ctx !is android.app.Activity) i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            return runCatching { ctx.startActivity(i) }.isSuccess || openArmPage(ctx)
-        }
-
-        @Deprecated("use openArmPage", ReplaceWith("openArmPage(ctx)"))
-        fun arm(ctx: Context): Boolean = openArmPage(ctx)
 
         private fun toast(ctx: Context, msg: String) {
             runCatching { android.widget.Toast.makeText(ctx.applicationContext, msg, android.widget.Toast.LENGTH_LONG).show() }

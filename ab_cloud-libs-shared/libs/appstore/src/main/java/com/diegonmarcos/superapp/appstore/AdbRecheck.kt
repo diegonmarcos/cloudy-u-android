@@ -1,4 +1,4 @@
-package com.diegonmarcos.superapp.shellclient
+package com.diegonmarcos.superapp.appstore
 
 /**
  * #1556 WHEN THE adb-transport probe MAY RUN AGAIN. Pure Kotlin, no android: a JVM test pins "settles once, never loops" and the

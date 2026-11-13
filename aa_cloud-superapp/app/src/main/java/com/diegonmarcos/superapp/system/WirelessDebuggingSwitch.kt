@@ -19,6 +19,13 @@ object WirelessDebuggingSwitch {
     /** What actually happened; [ok] = the re-read agrees with what was asked. */
     data class Result(val ok: Boolean, val channel: String, val detail: String, val on: Boolean)
 
+    /** The phone's own Wireless debugging switch in Developer options (no ADB class); the owner's ADB Shell page when the phone has none. */
+    fun openSettings(ctx: Context): Boolean {
+        val i = android.content.Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS).putExtra(":settings:fragment_args_key", "toggle_adb_wireless")
+        if (ctx !is android.app.Activity) i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        return runCatching { ctx.startActivity(i) }.isSuccess || ShellClient.openArmPage(ctx)
+    }
+
     fun isOn(ctx: Context): Boolean = runCatching { Settings.Global.getInt(ctx.contentResolver, KEY, 0) == 1 }.getOrDefault(false)
 
     /** Blocking (the broker call): call off the main thread. */
