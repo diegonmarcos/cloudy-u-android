@@ -1210,6 +1210,9 @@ class Walk:
         try:
             for theme in self.cfg.get("scene_themes", ["dark", "light"]):
                 shell("cmd uimode night %s" % ("yes" if theme == "dark" else "no"))
+                # every theme starts from the same app state (scenes persist prefs, tabs and the mounted vault)
+                for st in self.cfg.get("scene_theme_setup", []):
+                    self.scene_step(st)
                 for sc in scenes:
                     name, t0 = "scene_%s_%s" % (theme, sc["name"]), time.time()
                     shell("am force-stop %s" % self.pkg)
