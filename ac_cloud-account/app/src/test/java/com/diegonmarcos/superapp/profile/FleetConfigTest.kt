@@ -165,7 +165,7 @@ class FleetConfigTest {
         ctx.getSharedPreferences("launcher_theme_prefs", Context.MODE_PRIVATE).edit().putString("theme", "cloud_minimalist_black").commit()
         val out = provider.call(FleetConfig.METHOD_EXPORT, null, null)
         val json = JSONObject(out.getString(FleetConfig.KEY_JSON)!!)
-        assertEquals("aa_cloud-superapp", json.getString("app"))
+        assertEquals("account", json.getString("app"))
         assertEquals("cloud_minimalist_black", json.getJSONObject("stores").getJSONObject("launcher_theme_prefs").getString("theme"))
         val body = JSONObject().put("stores", JSONObject().put("launcher_theme_prefs", JSONObject().put("theme", "cloud")))
         val r = provider.call(FleetConfig.METHOD_IMPORT, null, Bundle().apply { putString(FleetConfig.KEY_JSON, body.toString()) })

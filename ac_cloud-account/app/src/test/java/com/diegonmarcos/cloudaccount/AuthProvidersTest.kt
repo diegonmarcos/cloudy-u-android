@@ -12,7 +12,7 @@ import org.robolectric.RobolectricTestRunner
 class AuthProvidersTest {
     @Test fun theProvidersPageIsTheFirstLeafOfAuthenticationProviders() {
         val auth = MainActivity.NAV.section("connect")!!.page("auth")!!
-        assertEquals(listOf("hub", "signin", "settings"), auth.pages.map { it.id })
+        assertEquals(listOf("hub", "signin", "import-configs", "settings"), auth.pages.map { it.id })
         assertEquals("Providers", auth.pages.first().label)
     }
 

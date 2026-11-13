@@ -153,7 +153,7 @@ class HubTest {
         assertEquals(listOf("auth", "hub"), path("connect", "hub"))
         assertEquals(listOf("fleetsetup", "services"), path("connect", "services"))
         assertEquals(listOf("fleetsetup", "drive"), path("connect", "drive"))
-        assertEquals(listOf("hub", "signin", "settings"), nav.section("connect")!!.page("auth")!!.pages.map { it.id })
+        assertEquals(listOf("hub", "signin", "import-configs", "settings"), nav.section("connect")!!.page("auth")!!.pages.map { it.id })
         assertEquals("hub", nav.section("connect")!!.page("auth")!!.leaf().id)
         assertEquals(listOf("desktop"), path("config", "desktop"))
         // the owner's tabs, exactly and in order
