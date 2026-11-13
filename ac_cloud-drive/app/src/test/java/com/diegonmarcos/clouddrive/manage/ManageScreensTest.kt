@@ -7,6 +7,7 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -93,6 +94,8 @@ class ManageScreensTest {
         compose.onNodeWithText("Charlie", substring = true).assertIsDisplayed()
         until("the cache write") { cache.read()?.rows?.firstOrNull()?.pkg == "com.fresh.charlie" }
         val before = reads
+        // the button is disabled while a read is still finishing (the cache write lands just before it re-enables)
+        until("Refresh enabled") { runCatching { compose.onNodeWithTag(DriveTags.APPS_REFRESH).assertIsEnabled() }.isSuccess }
         compose.onNodeWithTag(DriveTags.APPS_REFRESH).performClick()
         until("Refresh re-reads") { reads > before }
     }
