@@ -26,13 +26,35 @@ function btn(label, iconName, onclick) {
 	return el("button", { className: "cloud-ctl", onclick }, icon(iconName), el("span", {}, label));
 }
 
+// #1697 Configs is {own page} | Agents, Perms, Logcat, X-Ray App, About: this page is the app's own part; the five fleet tabs open the
+// native fleet Configs screen (libs:ui-nav-bars FleetConfigsActivity, own package, not exported) on the tapped tab.
+const FLEET_PKG = "com.diegonmarcos.code";
+const FLEET_ACTIVITY = "com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity";
+export const FLEET_TAIL = [["agents", "Agents"], ["perms", "Perms"], ["logcat", "Logcat"], ["xray", "X-Ray App"], ["about", "About"]];
+
+function openFleetTab(id) {
+	try {
+		system.launchApp(FLEET_PKG, FLEET_ACTIVITY, { fleet_configs_page: id }, () => {}, () => toast("Fleet Configs is not available in this build"));
+	} catch (e) {
+		toast("Fleet Configs is not available in this build");
+	}
+}
+
+function fleetStrip() {
+	const bar = el("div", { className: "cloud-fleet-strip", style: "display:flex;gap:6px;overflow-x:auto;padding:6px 0 10px;white-space:nowrap" },
+		el("button", { className: "cloud-ctl", disabled: true, "aria-current": "page" }, el("span", {}, "Profile & Config")),
+		el("span", { "aria-hidden": "true", style: "align-self:center;opacity:.6" }, "|"));
+	for (const [id, label] of FLEET_TAIL) bar.append(el("button", { className: "cloud-ctl", onclick: () => openFleetTab(id) }, el("span", {}, label)));
+	return bar;
+}
+
 export function openProfile() {
 	const pg = page("Profile & Config", chatSettingsChanged);
 	const account = el("div");
 	const token = el("div");
 	const defaults = el("div");
 	const storage = el("div");
-	pg.body.append(account, token, defaults, storage, about());
+	pg.body.append(fleetStrip(), account, token, defaults, storage, about());
 	const refreshToken = async () => {
 		let st = null;
 		try {

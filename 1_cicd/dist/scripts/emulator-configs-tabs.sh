@@ -88,7 +88,7 @@ fi
 # a WebView / Cordova host has no native gear the uiautomator tree can see (Cloud Code): its Configs reach is the launcher shortcut
 # (guard shortcut_reach). Start the shortcut's target, FleetConfigsActivity, as root (it is not exported) and assert its strip.
 dump cur
-if ! grep -qE 'text="(Agents|Perms|Logcat|X-Ray App|About)"' "$OUT/cur.xml"; then
+if ! grep -qE 'content-desc="(Logcat|X-Ray App)"' "$OUT/cur.xml"; then
     $T adb root >/dev/null 2>&1; sleep 3; $T adb wait-for-device
     $T adb shell am start -n "$PKG/com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity" --es fleet_configs_page general >/dev/null 2>&1
     sleep 5; dismiss
