@@ -103,6 +103,7 @@ public class KeyboardView extends View {
 
     public KeyboardView(final Context context, final AttributeSet attrs, final int defStyle) {
         super(context, attrs, defStyle);
+        CornerSwipe.refresh(context); // the Unexpected theme's key backgrounds are chosen below, so its flag must be current
         mColors = Settings.getValues().mColors;
 
         final TypedArray keyboardViewAttr = context.obtainStyledAttributes(attrs,
@@ -490,7 +491,11 @@ public class KeyboardView extends View {
                 }
                 if (text.startsWith(UnexpectedKb.ICON_PREFIX)) {
                     // an icon legend: the keyboard's own icon, tinted like a hint
-                    final android.graphics.drawable.Drawable ic = keyboard.mIconsSet.getIconDrawable(text.substring(UnexpectedKb.ICON_PREFIX.length()));
+                    final String iconName = text.substring(UnexpectedKb.ICON_PREFIX.length());
+                    final int own = UnexpectedKb.ownIconRes(iconName);
+                    final android.graphics.drawable.Drawable ic = own != 0
+                            ? androidx.core.content.ContextCompat.getDrawable(getContext(), own)
+                            : keyboard.mIconsSet.getIconDrawable(iconName);
                     if (ic != null) {
                         final int isz = Math.round(keyHeight * 0.24f);
                         ic.setColorFilter(params.mHintLabelColor, PorterDuff.Mode.MULTIPLY);

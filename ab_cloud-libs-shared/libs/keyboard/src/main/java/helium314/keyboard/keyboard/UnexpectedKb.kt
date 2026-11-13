@@ -59,7 +59,21 @@ object UnexpectedKb {
     const val ICON_PREFIX = "!icon/"
 
     /** Text stand-ins for the icon legends ("!icon/<name>"), used where no icon can be drawn (the Themes preview, a missing drawable). */
-    val iconFallback = mapOf("clipboard" to "⎘", "emoji" to "☺", "settings" to "⚙", "voice" to "♪", "language_switch_key" to "⌨")
+    val iconFallback = mapOf(
+        "clipboard" to "⎘", "emoji" to "☺", "settings" to "⚙", "voice" to "♪", "language_switch_key" to "⌨",
+        "unexp_keyboard" to "⌨", "unexp_home" to "⇱", "unexp_end" to "⇲", "unexp_pgup" to "⇞", "unexp_pgdn" to "⇟", "unexp_select" to "⇔",
+    )
+
+    /** Icons of this theme's own (res/drawable/ic_unexp_*), by legend name; the other legends use the keyboard's icon set. */
+    @JvmStatic fun ownIconRes(name: String): Int = when (name) {
+        "unexp_keyboard" -> helium314.keyboard.latin.R.drawable.ic_unexp_keyboard
+        "unexp_home" -> helium314.keyboard.latin.R.drawable.ic_unexp_home
+        "unexp_end" -> helium314.keyboard.latin.R.drawable.ic_unexp_end
+        "unexp_pgup" -> helium314.keyboard.latin.R.drawable.ic_unexp_pgup
+        "unexp_pgdn" -> helium314.keyboard.latin.R.drawable.ic_unexp_pgdn
+        "unexp_select" -> helium314.keyboard.latin.R.drawable.ic_unexp_select
+        else -> 0
+    }
 
     /** [label] as plain text: an icon legend becomes its stand-in glyph. */
     @JvmStatic fun textOf(label: String): String =
@@ -139,6 +153,13 @@ object UnexpectedKb {
         val deg = Math.toDegrees(kotlin.math.atan2(-dy.toDouble(), dx.toDouble()))
         val sector = Math.floorMod(Math.round(deg / 45.0).toInt(), 8)
         return intArrayOf(E, NE, N, NW, W, SW, S, SE)[sector]
+    }
+
+    /** The theme's key background (design: ~5 dp corners, thin gaps); sizes in dp scaled by the screen density. */
+    @JvmStatic fun keyBackground(): android.graphics.drawable.Drawable {
+        val d = android.content.res.Resources.getSystem().displayMetrics.density
+        val h = Math.round(1.2f * d); val v = Math.round(0.6f * d)
+        return UnexpectedKeyDrawable(5f * d, android.graphics.Rect(h, v, h, v))
     }
 
     // ---- derived HeliBoard layouts --------------------------------------------------------------------------------------

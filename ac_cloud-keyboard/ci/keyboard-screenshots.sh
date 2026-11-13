@@ -42,6 +42,9 @@ last() { adb logcat -d -s KbdShot:I | grep -- "$1 ->" | tail -1; }
 state() { kb state; last state; }
 
 adb logcat -c
+# a phone-sized screen (1080 x 2400 at 420 dpi, like the owner's phone) so the shots are comparable with the design
+adb shell wm size 1080x2400 >/dev/null 2>&1; adb shell wm density 420 >/dev/null 2>&1; sleep 6
+echo "screen: $(adb shell wm size | tr '\n' ' ') $(adb shell wm density | tr '\n' ' ')"
 # The fleet UI-mode override must not leak into these shots.
 adb shell settings delete global cloud_nav_ui_mode >/dev/null 2>&1
 adb install -r -g "$APK" >/dev/null && ok "installed" || { bad "install"; exit 1; }
@@ -255,6 +258,21 @@ tapkey "u+20ac"; kb themestate; D="$(last themestate)"; echo "$D"
 grep -q "fn=false" <<<"$D" && ok "one key later the Fn layer is off again (Fn is one-shot)" || bad "Fn layer stayed on: $D"
 kb fieldtext; F2="$(last fieldtext)"; grep -q "€" <<<"$F2" && ok "the Fn layer typed the euro key" || bad "Fn layer key: $F2"
 shot 39-unexpected-after-fn-key
+# the compass key: pointing West moves the cursor and repeats while held; pointing North-West extends a selection (shift + left), also repeating
+kb text " hello world"; kb select end; kb selinfo; E0="$(last selinfo)"; echo "$E0"
+N=$(sed -n 's/.*len=\([0-9]*\).*/\1/p' <<<"$E0")
+kb keypos U+29B6; read -r _ KX KY KW KH < <(last keypos | sed 's/.*key=[^ ]* //; s/^/k /')
+adb shell input swipe "$KX" "$KY" $((KX - KW * 3 / 4)) "$KY" 1500; sleep 1
+kb selinfo; E1="$(last selinfo)"; echo "$E1"
+P=$(sed -n 's/.*sel=\([0-9]*\),.*/\1/p' <<<"$E1")
+[ -n "$P" ] && [ -n "$N" ] && [ "$P" -le $((N - 3)) ] && ok "compass West moved the cursor $((N - P)) places (it repeats while held)" || bad "compass West: $E1 (len $N)"
+kb select end
+adb shell input swipe "$KX" "$KY" $((KX - KW * 3 / 4)) $((KY - KH * 3 / 4)) 1500; sleep 1
+kb selinfo; E2="$(last selinfo)"; echo "$E2"
+S2=$(sed -n 's/.*sel=\([0-9]*\),\([0-9]*\).*/\1 \2/p' <<<"$E2")
+read -r SA SB <<<"$S2"
+[ -n "${SA:-}" ] && [ "${SB:-}" = "$N" ] && [ "$SA" -le $((N - 3)) ] && ok "compass North-West selected text: $SA..$SB (shift + left, repeating)" || bad "compass selection: $E2 (len $N)"
+shot 39b-unexpected-compass-selection
 kb theme default; sleep 2; kb themestate; D="$(last themestate)"; echo "$D"
 grep -q "theme=default active=false" <<<"$D" && ok "Default theme restored" || bad "Default not restored: $D"
 shot 40-default-restored

@@ -33,6 +33,7 @@ import helium314.keyboard.latin.utils.darken
 import helium314.keyboard.latin.utils.isBrightColor
 import helium314.keyboard.latin.utils.isDarkColor
 import java.util.EnumMap
+import helium314.keyboard.keyboard.UnexpectedKb
 import androidx.core.graphics.drawable.toDrawable
 
 interface Colors {
@@ -77,8 +78,11 @@ interface Colors {
             else -> null // keyBackground
         }?.mutate() ?: attr.getDrawable(R.styleable.KeyboardView_keyBackground)?.mutate()!! // keyBackground always exists
 
-        setColor(drawable, color)
-        return drawable
+        // the Unexpected theme draws its own flat rounded keys (reference radius and gap) instead of the style's drawables
+        val result = if (UnexpectedKb.active && (color == KEY_BACKGROUND || color == FUNCTIONAL_KEY_BACKGROUND
+                || color == SPACE_BAR_BACKGROUND || color == ACTION_KEY_BACKGROUND)) UnexpectedKb.keyBackground() else drawable
+        setColor(result, color)
+        return result
     }
 }
 

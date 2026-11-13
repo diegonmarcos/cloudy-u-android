@@ -77,8 +77,8 @@ enum class KbThemePreset(
         fun apply(context: Context, preset: KbThemePreset) {
             applyTo(context.prefs(), preset)
             CornerSwipe.enabled = preset.isDark
-            UnexpectedKb.active = false // re-read from the prefs by CornerSwipe.refresh on the next layout build
             UnexpectedKb.fn = false
+            CornerSwipe.refresh(context) // re-reads the prefs just written: the new theme's flag is current before the views are rebuilt
             // #1665 the switch is real: drop the cached layouts too, so the Dev layout (or the subtype's own) loads on the next draw
             runCatching { helium314.keyboard.keyboard.internal.keyboard_parser.LayoutParser.clearCache() }
             KeyboardSwitcher.getInstance().setThemeNeedsReload()

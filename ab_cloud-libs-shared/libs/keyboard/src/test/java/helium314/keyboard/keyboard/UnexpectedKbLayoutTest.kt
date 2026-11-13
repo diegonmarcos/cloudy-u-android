@@ -75,10 +75,19 @@ class UnexpectedKbLayoutTest {
         assertEquals("!icon/clipboard", ctrl.corners[UnexpectedKb.SW]!!.label); assertEquals("123+", ctrl.corners[UnexpectedKb.SE]!!.label)
         val fn = base.special("fn")!!
         assertEquals("!icon/emoji", fn.corners[UnexpectedKb.SW]!!.label); assertEquals("!icon/settings", fn.corners[UnexpectedKb.SE]!!.label)
-        assertEquals("!icon/language_switch_key", fn.corners[UnexpectedKb.NE]!!.label)
+        assertEquals("!icon/unexp_keyboard", fn.corners[UnexpectedKb.NE]!!.label)
         assertEquals("!icon/voice", base.special("enter")!!.corners[UnexpectedKb.NW]!!.label) // the mic legend belongs to the enter key
         // every icon legend has a text stand-in and the compass diagonals select (hidden legends)
         layout.layers.values.flatMap { it.all }.flatMap { it.corners.filterNotNull() }.filter { it.label.startsWith(UnexpectedKb.ICON_PREFIX) }.forEach { assertTrue(it.label, UnexpectedKb.textOf(it.label).isNotEmpty()) }
+        // every theme-owned icon legend has its drawable file; the others are names of the keyboard's own icon set
+        val own = setOf("clipboard", "emoji", "settings", "voice")
+        layout.layers.values.flatMap { it.all }.flatMap { it.corners.filterNotNull() }.filter { it.label.startsWith(UnexpectedKb.ICON_PREFIX) }
+            .map { it.label.removePrefix(UnexpectedKb.ICON_PREFIX) }.forEach { n ->
+                if (n !in own) assertTrue("no drawable for $n", File("src/main/res/drawable/ic_$n.xml").isFile)
+            }
+        val fnCompass = layout.layer(true).special("compass")!!
+        assertEquals(listOf("!icon/unexp_pgup", "!icon/unexp_pgdn", "!icon/unexp_home", "!icon/unexp_end"),
+            listOf(UnexpectedKb.N, UnexpectedKb.S, UnexpectedKb.NW, UnexpectedKb.SE).map { fnCompass.corners[it]!!.label })
         val cmp = base.special("compass")!!
         assertEquals(listOf("sel_left", "sel_up", "sel_down", "sel_right"), listOf(UnexpectedKb.NW, UnexpectedKb.NE, UnexpectedKb.SW, UnexpectedKb.SE).map { cmp.corners[it]!!.action })
         assertEquals("space centre glyph", "␣", base.special("space")!!.centerLegend)
@@ -142,6 +151,14 @@ class UnexpectedKbLayoutTest {
         val fnc = Json.parseToJsonElement(UnexpectedKb.functionalJson(l, false)).jsonArray
         val labels = fnc.flatMap { r -> r.jsonArray.map { it.jsonObject } }.map { it["label"]?.jsonPrimitive?.content ?: "-" }
         assertEquals(listOf("shift", "-", "delete", "Ctrl", "Fn", "space", UnexpectedKb.COMPASS, "action"), labels)
+    }
+
+    /** The key background is the theme's own flat rounded rectangle, installed for every key kind, never the stock style's drawable. */
+    @Test fun keyBackgroundIsTheThemesOwn() {
+        val colors = File("src/main/java/helium314/keyboard/latin/common/Colors.kt").readText()
+        assertTrue(colors.contains("UnexpectedKb.keyBackground()"))
+        listOf("KEY_BACKGROUND", "FUNCTIONAL_KEY_BACKGROUND", "SPACE_BAR_BACKGROUND", "ACTION_KEY_BACKGROUND").forEach { assertTrue(it, colors.contains("color == $it")) }
+        assertTrue(File("src/main/java/helium314/keyboard/keyboard/UnexpectedKeyDrawable.kt").readText().contains("drawRoundRect"))
     }
 
     @Test fun themeIsWiredWithoutHardcodedKeys() {

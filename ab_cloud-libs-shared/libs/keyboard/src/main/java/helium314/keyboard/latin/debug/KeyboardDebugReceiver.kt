@@ -168,6 +168,9 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
                 "key=$arg ${at[0] + key.x + key.width / 2} ${at[1] + key.y + key.height / 2} ${key.width} ${key.height}"
             }
             "fieldtext" -> "field=[${fieldText()}]"
+            // the field's selection, to read back what the compass key did: "sel=<start>,<end> len=<n>"
+            "selinfo" -> ime.currentInputConnection?.getExtractedText(ExtractedTextRequest(), 0)
+                ?.let { "sel=${it.selectionStart},${it.selectionEnd} len=${it.text?.length ?: 0}" } ?: "no connection"
             else -> "unknown command"
         }
     }
