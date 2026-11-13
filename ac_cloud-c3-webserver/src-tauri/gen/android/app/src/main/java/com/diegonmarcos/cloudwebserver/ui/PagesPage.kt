@@ -1,6 +1,12 @@
 package com.diegonmarcos.cloudwebserver.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -66,7 +72,7 @@ fun PagesSection(sub: String, open: (String, String?) -> Unit = { _, _ -> }) {
         return
     }
     PageColumn("c3_pages_$sub") {
-        Acts { Act("Refresh", "c3_pages_refresh") { bump() } }
+        ChipRow { Chip("↻ Refresh", "c3_pages_refresh") { bump() } }
         Loaded(roots, "build.json::roots") { d ->
             if (d.has("error")) ErrorNote("build.json::roots: ${d.str("error")}")
             val all = d.optJSONArray("roots").objs()
@@ -89,46 +95,76 @@ private fun RootList(title: String, rows: List<JSONObject>, empty: String, bump:
     val ctx = LocalContext.current
     Card("$title · ${rows.size}", "c3_roots") {
         if (rows.isEmpty()) Note(empty)
-        rows.forEach { r ->
+        rows.forEachIndexed { i, r ->
+            if (i > 0) Hairline()
             val (tone, words) = ROOT_STATUS[r.optString("status")] ?: ROOT_STATUS.getValue("error")
-            Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("c3_root_${r.optString("id")}")) {
-                Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Dot(r.optString("status") == "ready")
-                    Text(" " + r.str("label"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-                }
-                Row(Modifier.padding(horizontal = 12.dp, vertical = 2.dp).horizontalScroll(rememberScrollState())) {
-                    Badge(if (r.optString("mode") == "pages") "Pages" else "File Explorer")
-                    Badge(r.optString("source_label").ifEmpty { r.str("source") })
+            val ready = r.optString("status") == "ready"
+            val pages = r.optString("mode") == "pages"
+            val target = rootTarget(r)
+            Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp).testTag("c3_root_${r.optString("id")}"), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Dot(ready)
+                    Spacer(Modifier.width(7.dp))
+                    Text(r.str("label"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    Badge(if (pages) "Pages" else "File Explorer")
                     Badge(words, tone)
                 }
-                when {
-                    r.has("repo") && !r.isNull("repo") -> Note("~/" + r.str("repo"))
-                    r.has("note") && !r.isNull("note") -> Note(r.str("note"))
+                val where = when {
+                    r.has("repo") && !r.isNull("repo") && r.optString("repo").isNotEmpty() -> "~/" + r.str("repo")
+                    r.has("note") && !r.isNull("note") && r.optString("note").isNotEmpty() -> r.str("note")
+                    else -> ""
                 }
-                if (r.has("reason") && !r.isNull("reason")) Note(r.str("reason"))
+                Text(listOf(r.optString("source_label").ifEmpty { r.str("source") }, where).filter { it.isNotEmpty() }.joinToString("  ·  "),
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (r.has("reason") && !r.isNull("reason") && r.optString("reason").isNotEmpty()) Text(r.str("reason"), style = MaterialTheme.typography.labelSmall, color = Tone.Warn)
                 val clone = r.optString("clone")
                 if (r.optString("status") == "missing" && clone.isNotEmpty()) {
-                    Note("Clone it on the phone (Cloud Termux), then reopen this tab:")
-                    Text(clone, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 12.dp).testTag("c3_clone_${r.optString("id")}"))
-                    Acts { Act("Copy command", "c3_copy_clone") { copyText(ctx, "clone", clone) } }
+                    Text("Clone it on the phone (Cloud Termux), then reopen this tab:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(clone, style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.fillMaxWidth().background(Tone.Card, RoundedCornerShape(6.dp)).padding(6.dp).testTag("c3_clone_${r.optString("id")}"))
                 }
-                val ready = r.optString("status") == "ready"
-                val target = rootTarget(r)
-                Acts {
-                    if (ready) Act(if (r.optString("mode") == "pages") "▶ Open page" else "▶ Explore", "c3_root_open_${r.optString("id")}") { open(r.optString("id")) }
-                    r.optJSONObject("start_app")?.let { a -> Act("▶ Start app", "c3_root_start_app") { actions.run(a) } }
-                    r.optJSONObject("perms")?.let { a -> ActButton(a, actions, "c3_root_perms") }
+                val perms = r.optJSONObject("perms"); val startApp = r.optJSONObject("start_app")
+                val drive = r.optString("drive_url").takeIf { it.isNotEmpty() && !r.isNull("drive_url") }
+                ChipRow(inset = false) {
+                    if (ready) Chip(if (pages) "▶ Open page" else "▶ Explore", "c3_root_open_${r.optString("id")}", primary = true) { open(r.optString("id")) }
+                    if (startApp != null) Chip("▶ Start app", "c3_root_start_app", primary = !ready) { actions.run(startApp) }
+                    if (perms != null) Chip(perms.optString("label", "Perms"), "c3_root_perms") { actions.run(perms) }
+                    if (r.optString("status") == "missing" && clone.isNotEmpty()) Chip("Copy command", "c3_copy_clone") { copyText(ctx, "clone", clone) }
                     if (ready) {
-                        Act("Open in Browser", "c3_root_browser") { actions.post(Api.OPEN, JSONObject().put("url", target)) { "Opening in cloud-browser" } }
-                        Act("Open Embedded", "c3_root_embedded") { Links.embedded = Links.embedUrl(target) }
-                        r.optString("drive_url").takeIf { it.isNotEmpty() && !r.isNull("drive_url") }?.let { d ->
-                            Act("Open Folder (Drive)", "c3_root_folder") { openLink(ctx, d, actions) }
-                            Act("Copy path", "c3_root_copy_path") { copyText(ctx, "path", "/storage/emulated/0/" + r.optString("repo")) }
+                        Chip("Open in Browser", "c3_root_browser") { actions.post(Api.OPEN, JSONObject().put("url", target)) { "Opening in cloud-browser" } }
+                        Chip("Open Embedded", "c3_root_embedded") { Links.embedded = Links.embedUrl(target) }
+                        if (drive != null) {
+                            Chip("Open Folder (Drive)", "c3_root_folder") { openLink(ctx, drive, actions) }
+                            Chip("Copy path", "c3_root_copy_path") { copyText(ctx, "path", "/storage/emulated/0/" + r.optString("repo")) }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+/** A hairline between the rows of a card. */
+@Composable
+private fun Hairline() {
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Tone.Line))
+}
+
+/** The action chips of one row, wrapped: dense, one visual group per row. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun ChipRow(inset: Boolean = true, content: @Composable () -> Unit) {
+    androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth().padding(start = if (inset) 12.dp else 0.dp, end = if (inset) 12.dp else 0.dp, top = 2.dp)) { content() }
+}
+
+/** A dense action chip (console grade): 28 dp high, hairline border, the accent fill for the row's primary action. Colours are kit / theme tokens only. */
+@Composable
+private fun Chip(label: String, tag: String, primary: Boolean = false, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(6.dp)
+    val frame = Modifier.padding(end = 6.dp, bottom = 5.dp).height(28.dp).clip(shape)
+        .let { if (primary) it.background(MaterialTheme.colorScheme.primary, shape) else it.background(Tone.Card, shape).border(1.dp, Tone.Line, shape) }
+    Box(frame.clickable(onClick = onClick).padding(horizontal = 10.dp).testTag(tag), contentAlignment = Alignment.Center) {
+        Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = if (primary) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (primary) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface, maxLines = 1)
     }
 }
 
@@ -140,15 +176,20 @@ private fun rootTarget(r: JSONObject): String =
 @Composable
 private fun RootBar(r: JSONObject, path: String, handle: FrameHandle, close: () -> Unit, extUrl: String, view: (@Composable () -> Unit)? = null) {
     val actions = rememberActions {}
-    Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp).horizontalScroll(rememberScrollState()).testTag("c3_rbar"), verticalAlignment = Alignment.CenterVertically) {
-        Act("‹ Roots", "c3_root_close") { if (!handle.back()) close() }
-        Text(r.str("label"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
-        Text(" /$path ", style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("c3_rloc"))
-        view?.invoke()
-        Act("↻", "c3_root_reload") { handle.reload() }
-        Act("↗ Browser", "c3_root_ext") { actions.post(Api.OPEN, JSONObject().put("url", extUrl)) { "Opening in cloud-browser" } }
-        Act("⧉ Embedded", "c3_root_embed") { Links.embedded = Links.embedUrl(extUrl) }
-        if (handle.view != null) LinkText("✕", "c3_root_exit") { close() }
+    Column(Modifier.fillMaxWidth().background(Tone.Card).testTag("c3_rbar")) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Chip("‹ Roots", "c3_root_close") { if (!handle.back()) close() }
+            Text(r.str("label"), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(end = 6.dp))
+            Text("/$path", style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).testTag("c3_rloc"))
+            if (handle.view != null) LinkText("✕", "c3_root_exit") { close() }
+        }
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(start = 8.dp, top = 0.dp)) {
+            view?.invoke()
+            Chip("↻ Reload", "c3_root_reload") { handle.reload() }
+            Chip("↗ Browser", "c3_root_ext") { actions.post(Api.OPEN, JSONObject().put("url", extUrl)) { "Opening in cloud-browser" } }
+            Chip("⧉ Embedded", "c3_root_embed") { Links.embedded = Links.embedUrl(extUrl) }
+        }
+        Hairline()
     }
 }
 
@@ -196,7 +237,7 @@ private fun ExplorerRoot(r: JSONObject, close: () -> Unit) {
     val ext = if (framework && frameUrl != null) frameUrl else Api.url(Api.rootPath(id, sel))
     Column(Modifier.fillMaxSize().testTag("c3_explorer_$id")) {
         RootBar(r, if (framework) "" else sel, handle, close, ext, view = {
-            if (frameUrl != null) Act(if (framework) "Tree view" else "Framework view", "c3_root_view") { framework = !framework }
+            if (frameUrl != null) Chip(if (framework) "Tree view" else "Framework view", "c3_root_view", primary = true) { framework = !framework }
         })
         err?.let { ErrorNote(it) }
         if (framework && frameUrl != null) {
@@ -216,7 +257,7 @@ private fun ExplorerRoot(r: JSONObject, close: () -> Unit) {
 @Composable
 private fun TreeLevel(tree: Map<String, JSONObject>, path: String, depth: Int, sel: String, onDir: (String) -> Unit, onFile: (String) -> Unit) {
     val node = tree[path] ?: return
-    val pad = Modifier.padding(start = (6 + depth * 12).dp, top = 3.dp, bottom = 3.dp, end = 4.dp)
+    val pad = Modifier.padding(start = (6 + depth * 12).dp, top = 4.dp, bottom = 4.dp, end = 4.dp)
     val status = node.optString("status", "ready")
     if (status != "ready") { Text(node.optString("reason").ifEmpty { status }, style = MaterialTheme.typography.labelSmall, color = Tone.Warn, modifier = pad); return }
     val entries = node.optJSONArray("entries").objs()
@@ -226,12 +267,13 @@ private fun TreeLevel(tree: Map<String, JSONObject>, path: String, depth: Int, s
         val p = if (path.isEmpty()) name else "$path/$name"
         if (e.optBoolean("dir")) {
             val open = tree.containsKey(p)
-            Text((if (open) "▾ " else "▸ ") + "$name/", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            Text((if (open) "▾ " else "▸ ") + "$name/", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.fillMaxWidth().clickable { onDir(p) }.then(pad).testTag("c3_tree_dir"))
             if (open) TreeLevel(tree, p, depth + 1, sel, onDir, onFile)
         } else {
-            Text("· $name", style = MaterialTheme.typography.labelMedium, color = if (p == sel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth().clickable { onFile(p) }.then(pad).testTag("c3_tree_file"))
+            val on = p == sel
+            Text("· $name", style = MaterialTheme.typography.labelMedium, color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth().let { if (on) it.background(Tone.Line) else it }.clickable { onFile(p) }.then(pad).testTag("c3_tree_file"))
         }
     }
 }
@@ -245,31 +287,35 @@ fun ServedPages(tick: Int, bump: () -> Unit, open: (String, String?) -> Unit = {
     Loaded(served, "served pages") { pg ->
         val rows = pg.objs("rows")
         Card("Served pages · ${rows.size}", "c3_served") {
-            rows.forEach { r ->
+            rows.forEachIndexed { i, r ->
+                if (i > 0) Hairline()
                 val on = r.optBoolean("serving")
-                Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("c3_served_${r.optString("id")}")) {
-                    Row(Modifier.padding(horizontal = 12.dp).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
-                        Dot(on); Text(" " + r.str("name") + " ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                val links = r.objs("links")
+                Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp).testTag("c3_served_${r.optString("id")}"), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Dot(on); Spacer(Modifier.width(7.dp))
+                        Text(r.str("name"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                         Badge(":" + r.str("port")); Badge(r.str("role")); Badge(if (on) "serving" else if (r.optBoolean("paused")) "stopped" else "not serving", if (on) Tone.Up else Tone.Down)
                     }
-                    Kv("serving", if (on) "on" else "off", up = on)
-                    if (r.has("app")) Kv("app", r.str("app"), up = r.optString("app") == "open")
-                    Kv("auth", r.str("auth")); Kv("exposure", r.str("exposure")); Kv("host", r.str("host"))
-                    Kv("source", r.str("source"), mono = true)
-                    val links = r.objs("links")
-                    Kv("links", if (links.isEmpty()) "none while stopped" else links.joinToString(" · ") { it.str("label") })
-                    Acts {
-                        r.optJSONObject("toggle")?.let { ActButton(it, actions, "c3_served_toggle") }
-                        r.optJSONObject("start_app")?.let { a -> Act("▶ Start app", "c3_served_start_app") { actions.run(a) } }
-                        links.forEach { l ->
-                            LinkText(l.str("label") + " ↗", "c3_served_link") { openLink(ctx, l.optString("href"), actions) }
-                            LinkText("embedded", "c3_served_link_embedded") { Links.embedded = Links.embedUrl(Api.absolute(l.optString("href"))) }
+                    val facts = listOf("serving " + if (on) "on" else "off") + (if (r.has("app")) listOf("app " + r.str("app")) else emptyList()) +
+                        listOf("auth " + r.str("auth"), r.str("exposure"), r.str("host"))
+                    Text(facts.joinToString("  ·  "), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(r.str("source"), style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    if (links.isEmpty()) Text("links: none while stopped", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChipRow(inset = false) {
+                        r.optJSONObject("toggle")?.let { t ->
+                            Chip(t.optString("label", "Run"), "c3_served_toggle", primary = !t.optBoolean("danger", false)) { if (t.optBoolean("disabled", false)) toast(ctx, t.optString("why", "not available")) else actions.run(t) }
                         }
-                        r.optString("source_open").takeIf { it.isNotEmpty() }?.let { u -> LinkText("source ↗", "c3_served_source") { openLink(ctx, u, actions) } }
-                        LinkText("⚙ edit config ›", "c3_served_config") {
+                        r.optJSONObject("start_app")?.let { a -> Chip("▶ Start app", "c3_served_start_app") { actions.run(a) } }
+                        links.forEach { l ->
+                            Chip(l.str("label") + " ↗", "c3_served_link") { openLink(ctx, l.optString("href"), actions) }
+                            Chip("⧉", "c3_served_link_embedded") { Links.embedded = Links.embedUrl(Api.absolute(l.optString("href"))) }
+                        }
+                        r.optString("source_open").takeIf { it.isNotEmpty() }?.let { u -> Chip("source ↗", "c3_served_source") { openLink(ctx, u, actions) } }
+                        Chip("⚙ config", "c3_served_config") {
                             if (r.optString("config") == "form") toast(ctx, "the add form is below the list") else open(Decl.SECTION_CONFIGS, Decl.PAGE_SERVER)
                         }
-                        r.optJSONObject("remove")?.let { ActButton(it, actions, "c3_served_remove") }
+                        r.optJSONObject("remove")?.let { x -> Chip(x.optString("label", "Remove"), "c3_served_remove") { if (x.optBoolean("disabled", false)) toast(ctx, x.optString("why", "not available")) else actions.run(x) } }
                     }
                 }
             }
@@ -279,13 +325,13 @@ fun ServedPages(tick: Int, bump: () -> Unit, open: (String, String?) -> Unit = {
         pg.optJSONObject("form")?.let { FormCard(it, actions) }
         pg.optJSONObject("undeclared")?.let { u ->
             val items = u.objs("items")
-            Card("⚠ Undeclared served pages · ${items.size}", "c3_undeclared", trailing = { Act("Rescan", "c3_rescan") { actions.post(Api.SERVED, JSONObject().put("op", "rescan")) { "Rescanned" } } }) {
+            Card("⚠ Undeclared served pages · ${items.size}", "c3_undeclared", trailing = { Chip("Rescan", "c3_rescan") { actions.post(Api.SERVED, JSONObject().put("op", "rescan")) { "Rescanned" } } }) {
                 if (items.isEmpty()) Note("none: every port found is in the declared list above (${u.str("declared")} declared ports).")
                 items.forEach { x ->
                     Kv(":" + x.str("port"), "${x.str("addr")} — ${x.str("label")}", up = true)
-                    Acts {
-                        Act("Declare", "c3_undeclared_declare") { actions.post(Api.SERVED, JSONObject().put("op", "declare").put("port", x.opt("port"))) }
-                        Act("Stop", "c3_undeclared_stop") {
+                    ChipRow {
+                        Chip("Declare", "c3_undeclared_declare", primary = true) { actions.post(Api.SERVED, JSONObject().put("op", "declare").put("port", x.opt("port"))) }
+                        Chip("Stop", "c3_undeclared_stop") {
                             if (!x.optBoolean("ours")) toast(ctx, "held by another app: Android does not let this app stop it")
                             else actions.post(Api.SERVED, JSONObject().put("op", "stop_undeclared").put("port", x.opt("port")))
                         }
@@ -308,13 +354,13 @@ fun FormCard(f: JSONObject, actions: Actions) {
             if (x.optString("kind") == "select" && options.isNotEmpty()) {
                 if (values[id] == null) values[id] = options.first().optString("value")
                 Kv(x.str("label"), "")
-                Acts { options.forEach { o -> Act((if (values[id] == o.optString("value")) "● " else "○ ") + o.str("label")) { values[id] = o.optString("value") } } }
+                ChipRow { options.forEach { o -> Chip((if (values[id] == o.optString("value")) "● " else "○ ") + o.str("label"), "c3_form_opt_${o.optString("value")}") { values[id] = o.optString("value") } } }
             } else {
                 OutlinedTextField(values[id].orEmpty(), { values[id] = it }, label = { Text(x.str("label")) }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp).testTag("c3_form_$id"))
             }
         }
-        Acts {
-            Act(f.optJSONObject("submit").str("label", "Add"), "c3_form_submit") {
+        ChipRow {
+            Chip(f.optJSONObject("submit").str("label", "Add"), "c3_form_submit", primary = true) {
                 val body = JSONObject((f.optJSONObject("submit")?.optJSONObject("body") ?: JSONObject()).toString())
                 values.forEach { (k, v) -> body.put(k, v) }
                 actions.post(f.optString("post"), body) { "Added" }
@@ -343,17 +389,18 @@ fun SubPage(route: String, tick: Int, bump: () -> Unit) {
             Card(g.str("title"), "c3_sub_group") {
                 val rows = g.objs("rows")
                 if (rows.isEmpty()) Note("none")
-                rows.forEach { r ->
-                    Column(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                        Row(Modifier.padding(horizontal = 12.dp).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
-                            Text(r.str("head") + " ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                rows.forEachIndexed { i, r ->
+                    if (i > 0) Hairline()
+                    Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+                            Text(r.str("head") + " ", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             r.optJSONArray("badges").strs().forEach { Badge(it) }
                         }
-                        r.optJSONArray("lines").strs().filter { it.isNotBlank() && it != "null" }.forEach { Note(it) }
+                        r.optJSONArray("lines").strs().filter { it.isNotBlank() && it != "null" }.forEach { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                         val links = r.objs("links"); val acts = r.objs("actions")
-                        if (links.isNotEmpty() || acts.isNotEmpty()) Acts {
-                            links.forEach { l -> LinkText(l.str("label") + " ↗", "c3_sub_link") { openLink(ctx, l.optString("href"), actions) } }
-                            acts.forEach { a -> ActButton(a, actions, "c3_sub_act") }
+                        if (links.isNotEmpty() || acts.isNotEmpty()) ChipRow(inset = false) {
+                            links.forEach { l -> Chip(l.str("label") + " ↗", "c3_sub_link") { openLink(ctx, l.optString("href"), actions) } }
+                            acts.forEach { a -> Chip(a.optString("label", "Run"), "c3_sub_act") { if (a.optBoolean("disabled", false)) toast(ctx, a.optString("why", "not available")) else actions.run(a) } }
                         }
                     }
                 }
