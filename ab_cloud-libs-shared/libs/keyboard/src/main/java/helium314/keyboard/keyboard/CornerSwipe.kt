@@ -96,6 +96,7 @@ object CornerSwipe {
         "pgup" to KeyCode.PAGE_UP, "pgdn" to KeyCode.PAGE_DOWN, "fdel" to KeyCode.FORWARD_DELETE,
         "clipboard" to KeyCode.CLIPBOARD, "symbols" to KeyCode.SYMBOL, "emoji" to KeyCode.EMOJI, "settings" to KeyCode.SETTINGS,
         "voice" to KeyCode.VOICE_INPUT, "ime_picker" to KeyCode.SYSTEM_INPUT_METHOD_PICKER, "select" to KeyCode.CLIPBOARD_SELECT_WORD,
+        "sel_left" to KeyCode.SELECT_LEFT, "sel_right" to KeyCode.SELECT_RIGHT, "sel_up" to KeyCode.SELECT_UP, "sel_down" to KeyCode.SELECT_DOWN,
         "f1" to KeyCode.F1, "f2" to KeyCode.F2, "f3" to KeyCode.F3, "f4" to KeyCode.F4, "f5" to KeyCode.F5, "f6" to KeyCode.F6,
         "f7" to KeyCode.F7, "f8" to KeyCode.F8, "f9" to KeyCode.F9, "f10" to KeyCode.F10, "f11" to KeyCode.F11, "f12" to KeyCode.F12,
     )

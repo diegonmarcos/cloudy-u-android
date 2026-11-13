@@ -208,7 +208,7 @@ fun ThemePreview(ctx: Context, preset: KbThemePreset) {
             val ks = r.map { it.center }
             add(if (i == data.rows.lastIndex) listOf("⇧") + ks + listOf("⌫") else ks)
         }
-        add(listOf("Ctrl", "Fn", "space", "◎", "⏎"))
+        add(listOf("Ctrl", "Fn", "space", UnexpectedKb.COMPASS, "⏎"))
     } else buildList {
         if (numberRow) add("1234567890".map { it.toString() })
         add("qwertyuiop".map { it.toString() })
@@ -233,7 +233,7 @@ fun ThemePreview(ctx: Context, preset: KbThemePreset) {
                         val at = listOf(Alignment.TopStart, Alignment.TopEnd, Alignment.BottomStart, Alignment.BottomEnd)
                         corners.take(4).forEachIndexed { i, a ->
                             if (a.isNotEmpty() && a != k)
-                                Text((if (data != null) a else CornerSwipe.labelOf(a)).take(3), Modifier.align(at[i]).padding(horizontal = 1.dp), color = pal.hint, fontSize = 6.sp)
+                                Text((if (data != null) UnexpectedKb.textOf(a) else CornerSwipe.labelOf(a)).take(3), Modifier.align(at[i]).padding(horizontal = 1.dp), color = pal.hint, fontSize = 6.sp)
                         }
                     }
                 }

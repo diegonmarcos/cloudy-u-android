@@ -23,7 +23,7 @@ object UnexpectedKb {
     const val MAIN_BASE = "unexpected_kb"
     const val MAIN_FN = "unexpected_kb_fn"
     const val FUNCTIONAL = "functional_keys_unexpected"
-    const val COMPASS = "◎"
+    const val COMPASS = "⦶"
 
     /** Theme on (mirrored from the prefs by [CornerSwipe.refresh]). */
     @JvmField @Volatile var active = false
@@ -55,6 +55,15 @@ object UnexpectedKb {
         "home" to "⇱", "end" to "⇲", "pgup" to "⇞", "pgdn" to "⇟", "fdel" to "⌦", "clipboard" to "⎘", "symbols" to "123+",
         "emoji" to "☺", "settings" to "⚙", "voice" to "🎤", "ime_picker" to "⌨", "select" to "⇔",
     ) + (1..12).associate { "f$it" to "F$it" }
+
+    const val ICON_PREFIX = "!icon/"
+
+    /** Text stand-ins for the icon legends ("!icon/<name>"), used where no icon can be drawn (the Themes preview, a missing drawable). */
+    val iconFallback = mapOf("clipboard" to "⎘", "emoji" to "☺", "settings" to "⚙", "voice" to "♪", "language_switch_key" to "⌨")
+
+    /** [label] as plain text: an icon legend becomes its stand-in glyph. */
+    @JvmStatic fun textOf(label: String): String =
+        if (label.startsWith(ICON_PREFIX)) iconFallback[label.removePrefix(ICON_PREFIX)] ?: "" else label
 
     private fun corner(e: JsonElement?): Corner? {
         if (e == null) return null
@@ -111,7 +120,7 @@ object UnexpectedKb {
     @JvmStatic fun idOf(label: String?, code: Int): String? {
         val t = table(fn)
         if (!label.isNullOrEmpty()) return label.lowercase().takeIf { it in t }
-        return when (code) { 32 -> "space"; -7 -> "delete"; else -> null }?.takeIf { it in t }
+        return when (code) { 32 -> "space"; -7 -> "delete"; 10 -> "enter"; else -> null }?.takeIf { it in t }
     }
 
     @JvmStatic fun keyDef(id: String?): KeyDef? = id?.let { table(fn)[it] }

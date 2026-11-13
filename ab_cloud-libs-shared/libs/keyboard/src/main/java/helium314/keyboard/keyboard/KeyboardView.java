@@ -394,7 +394,9 @@ public class KeyboardView extends View {
         float labelX = centerX;
         float labelBaseline = centerY;
         final String label = key.getLabel();
-        if (label != null) {
+        final boolean labelReplaced = CornerSwipe.isActive(keyboard)
+                && CornerSwipe.centerLegendOf(CornerSwipe.idOf(label, key.getCode())) != null; // Unexpected space bar: its glyph, not the language name
+        if (label != null && !labelReplaced) {
             paint.setTypeface(KeyboardTypeface.resolve(label, key.selectTypeface(params)));
             paint.setTextSize(key.selectTextSize(params) * mFontSizeMultiplier);
             final float labelCharHeight = TypefaceUtils.getReferenceCharHeight(paint);
@@ -485,10 +487,21 @@ public class KeyboardView extends View {
                     case 7: x = keyWidth - padX; y = midY; break; // E
                     default: x = (i % 2 == 0) ? padX : keyWidth - padX; y = (i < 2) ? topY : bottomY;
                 }
-                canvas.drawText(text, 0, text.length(), x, y, paint);
+                if (text.startsWith(UnexpectedKb.ICON_PREFIX)) {
+                    // an icon legend: the keyboard's own icon, tinted like a hint
+                    final android.graphics.drawable.Drawable ic = keyboard.mIconsSet.getIconDrawable(text.substring(UnexpectedKb.ICON_PREFIX.length()));
+                    if (ic != null) {
+                        final int isz = Math.round(keyHeight * 0.24f);
+                        ic.setColorFilter(params.mHintLabelColor, PorterDuff.Mode.MULTIPLY);
+                        drawIcon(canvas, ic, Math.round(x - isz / 2f), Math.round(y - isz), isz, isz);
+                        continue;
+                    }
+                }
+                final String plain = UnexpectedKb.textOf(text);
+                if (!plain.isEmpty()) canvas.drawText(plain, 0, plain.length(), x, y, paint);
             }
             final String centerLegend = CornerSwipe.centerLegendOf(cornerId);
-            if (centerLegend != null && (label == null || label.isEmpty())) {
+            if (centerLegend != null) {
                 paint.setTextSize(key.selectTextSize(params) * mFontSizeMultiplier);
                 paint.setColor(params.mHintLabelColor);
                 canvas.drawText(centerLegend, 0, centerLegend.length(), keyWidth / 2f, centerY + paint.getTextSize() * 0.35f, paint);

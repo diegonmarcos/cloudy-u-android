@@ -181,8 +181,10 @@ object KeyCode {
     const val F11 =                       -10038
     const val F12 =                       -10039
     const val BACK =                      -10040
-    //const val SELECT_LEFT =               -10041
-    //const val SELECT_RIGHT =              -10042
+    const val SELECT_LEFT =               -10041 // shift + arrow left (sent by the Unexpected theme's compass key)
+    const val SELECT_RIGHT =              -10042
+    const val SELECT_UP =                 -10061
+    const val SELECT_DOWN =               -10062
     const val TIMESTAMP =                 -10043
     const val CTRL_LEFT =                 -10044
     const val CTRL_RIGHT =                -10045

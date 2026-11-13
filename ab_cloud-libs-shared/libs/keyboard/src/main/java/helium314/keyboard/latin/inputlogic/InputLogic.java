@@ -855,6 +855,14 @@ public final class InputLogic {
                     ScriptUtils.isScriptRtl(currentKeyboardScript) ? KeyEvent.KEYCODE_DPAD_LEFT : KeyEvent.KEYCODE_DPAD_RIGHT,
                     KeyEvent.META_CTRL_ON | event.getMetaState());
                 break;
+            case KeyCode.SELECT_LEFT, KeyCode.SELECT_RIGHT, KeyCode.SELECT_UP, KeyCode.SELECT_DOWN:
+                // selection: the arrow with shift held (the compass key's diagonal swipes)
+                sendDownUpKeyEventWithMetaState(
+                    keyCode == KeyCode.SELECT_LEFT ? KeyEvent.KEYCODE_DPAD_LEFT
+                        : keyCode == KeyCode.SELECT_RIGHT ? KeyEvent.KEYCODE_DPAD_RIGHT
+                        : keyCode == KeyCode.SELECT_UP ? KeyEvent.KEYCODE_DPAD_UP : KeyEvent.KEYCODE_DPAD_DOWN,
+                    KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON | event.getMetaState());
+                break;
             case KeyCode.MOVE_START_OF_PAGE:
                 final int selectionEnd1 = mConnection.getExpectedSelectionEnd();
                 final int selectionStart1 = mConnection.getExpectedSelectionStart();

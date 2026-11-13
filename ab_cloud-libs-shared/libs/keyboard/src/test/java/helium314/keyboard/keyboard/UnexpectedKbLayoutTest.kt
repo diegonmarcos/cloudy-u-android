@@ -34,8 +34,8 @@ class UnexpectedKbLayoutTest {
     private val fnRef = """
         F1:∅,∅,∅,¡ F2:∅,∅,∅,@ F3:∅,∅,∅,# F4:∅,∅,∅,$ F5:∅,∅,∅,‰ F6:∅,∅,¬,∅ F7:∅,∅,&,∅ F8:∅,∅,°,∅ F9:∅,∅,„,∅ F10:∅,∅,”,∅
         q:∅,∅,Ins,∅ w:∅,∅,„,∅ €:∅,∅,∅,∅ ₹:∅,∅,∅,∅ t:∅,∅,∅,∅ ¥:∅,∅,∅,∅ µ:∅,∅,∅,∅ i:∅,∅,∅,∅ œ:∅,∅,F11,∅ ₽:∅,∅,F12,∅
-        æ:BST,`,∅,∅ s:∅,∅,∅,∅ d:∅,∅,∅,∅ f:∅,∅,∅,∅ g:∅,−,—,∅ ₴:∅,≈,+,∅ j:∅,∅,‹,› k:∅,∅,‚,‘ £:∅,~,COMMA,∅
-        ₿:∅,¦,BS,∅ x:∅,∅,∅,∅ ₵:∅,«,∅,∅ v:∅,»,∅,∅ ₱:∅,¿,/,∅ n:∅,⇔,.,; m:∅,∅,…,∅
+        æ:BST,`,∅,∅ s:∅,∅,∅,∅ d:∅,∅,∅,∅ f:∅,∅,∅,∅ g:∅,−,—,∅ ₴:∅,≈,+,∅ j:∅,∅,‹,› k:∅,∅,‘,’ £:∅,~,COMMA,∅
+        ₿:∅,¦,BS,∅ x:∅,∅,∅,∅ ¢:∅,«,∅,∅ v:∅,»,∅,∅ ₱:∅,¿,/,∅ n:∅,⇔,.,; m:∅,∅,…,∅
     """
 
     private fun parseRef(ref: String): Map<String, List<String>> = ref.trim().split(Regex("\\s+")).associate { tok ->
@@ -72,9 +72,16 @@ class UnexpectedKbLayoutTest {
         assertEquals((1..10).map { "F$it" }, layout.layer(true).rows[0].map { it.center })
         // small labels of the bottom row
         val ctrl = base.special("ctrl")!!
-        assertEquals("⎘", ctrl.corners[UnexpectedKb.SW]!!.label); assertEquals("123+", ctrl.corners[UnexpectedKb.SE]!!.label)
+        assertEquals("!icon/clipboard", ctrl.corners[UnexpectedKb.SW]!!.label); assertEquals("123+", ctrl.corners[UnexpectedKb.SE]!!.label)
         val fn = base.special("fn")!!
-        assertEquals("☺", fn.corners[UnexpectedKb.SW]!!.label); assertEquals("⚙", fn.corners[UnexpectedKb.SE]!!.label)
+        assertEquals("!icon/emoji", fn.corners[UnexpectedKb.SW]!!.label); assertEquals("!icon/settings", fn.corners[UnexpectedKb.SE]!!.label)
+        assertEquals("!icon/language_switch_key", fn.corners[UnexpectedKb.NE]!!.label)
+        assertEquals("!icon/voice", base.special("enter")!!.corners[UnexpectedKb.NW]!!.label) // the mic legend belongs to the enter key
+        // every icon legend has a text stand-in and the compass diagonals select (hidden legends)
+        layout.layers.values.flatMap { it.all }.flatMap { it.corners.filterNotNull() }.filter { it.label.startsWith(UnexpectedKb.ICON_PREFIX) }.forEach { assertTrue(it.label, UnexpectedKb.textOf(it.label).isNotEmpty()) }
+        val cmp = base.special("compass")!!
+        assertEquals(listOf("sel_left", "sel_up", "sel_down", "sel_right"), listOf(UnexpectedKb.NW, UnexpectedKb.NE, UnexpectedKb.SW, UnexpectedKb.SE).map { cmp.corners[it]!!.action })
+        assertEquals("space centre glyph", "␣", base.special("space")!!.centerLegend)
         val compass = base.special("compass")!!
         assertEquals(listOf("↑", "↓", "←", "→"), listOf(UnexpectedKb.N, UnexpectedKb.S, UnexpectedKb.W, UnexpectedKb.E).map { compass.corners[it]!!.label })
         assertEquals("πλ∇¬", layout.layer(true).special("ctrl")!!.corners[UnexpectedKb.SE]!!.label)
@@ -134,7 +141,7 @@ class UnexpectedKbLayoutTest {
         }
         val fnc = Json.parseToJsonElement(UnexpectedKb.functionalJson(l, false)).jsonArray
         val labels = fnc.flatMap { r -> r.jsonArray.map { it.jsonObject } }.map { it["label"]?.jsonPrimitive?.content ?: "-" }
-        assertEquals(listOf("shift", "-", "delete", "Ctrl", "Fn", "space", "◎", "action"), labels)
+        assertEquals(listOf("shift", "-", "delete", "Ctrl", "Fn", "space", UnexpectedKb.COMPASS, "action"), labels)
     }
 
     @Test fun themeIsWiredWithoutHardcodedKeys() {
