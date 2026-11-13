@@ -31,6 +31,7 @@ object AppCredentialsContract {
 
     const val PKG_SUPERAPP = "com.diegonmarcos.superapp"
     const val PKG_DRIVE = "com.diegonmarcos.clouddrive"
+    const val PKG_TASKS = "com.diegonmarcos.cloudagenda"
 
     /** Grows with each migrated app (each batch adds its entries and a seed version in AccountVault). */
     val CATALOG: List<Entry> = listOf(
@@ -38,6 +39,8 @@ object AppCredentialsContract {
         Entry("git.host.", "Self-hosted git host token", "one per host: id git.host.<host id>; token or password for that host", listOf(PKG_DRIVE)),
         Entry("git.repo.", "Per-repository sync token", "one per synced repository: id git.repo.<repo>; the https token or password", listOf(PKG_DRIVE)),
         Entry("git.ssh.", "Per-repository ssh passphrase", "one per synced repository: id git.ssh.<repo>; the key's passphrase", listOf(PKG_DRIVE)),
+        Entry("tasks.caldav_password", "Cloud Tasks CalDAV password", "the password for the CalDAV server set up in Cloud Tasks > Configs", listOf(PKG_TASKS)),
+        Entry("tasks.jmap_secret", "Cloud Tasks mail agent secret", "the JMAP bearer token or Authelia session of the mail agent (Cloud Tasks > Settings > Agent)", listOf(PKG_TASKS)),
     )
 
     /** The name part of a prefixed id made safe: letters, digits, `_` and `-` only, at most 60. */

@@ -27,7 +27,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.cloudagenda.agent.AgentStatus
 import com.diegonmarcos.cloudagenda.data.AgentConfig
@@ -155,12 +157,25 @@ fun AgentPage(
                     modifier = Modifier.fillMaxWidth().testTag(SettingsTags.JMAP_URL))
                 KitSegmented(JmapAuth.entries.map { it.id to it.label }, draft.jmapAuth.id, { draft = draft.copy(jmapAuth = JmapAuth.of(it)) }, tag = SettingsTags.JMAP_AUTH)
                 if (draft.jmapAuth != JmapAuth.NONE) {
-                    OutlinedTextField(
-                        secretDraft, { secretDraft = it }, singleLine = true, visualTransformation = PasswordVisualTransformation(),
-                        label = { Text(if (draft.jmapAuth == JmapAuth.BEARER) "Bearer token" else "Authelia session (authelia_session cookie value)") },
-                        supportingText = { Text(if (secretAvailable) "Stored encrypted with the Android Keystore, never in the database." else "The Keystore is unavailable: the secret is not kept.") },
-                        modifier = Modifier.fillMaxWidth().testTag(SettingsTags.JMAP_SECRET),
-                    )
+                    // #1693 the bearer / session secret is typed in Cloud Account (App credentials); here it is only taken from there.
+                    val ctx = androidx.compose.ui.platform.LocalContext.current
+                    val scope = androidx.compose.runtime.rememberCoroutineScope()
+                    var credLine by remember { mutableStateOf("") }
+                    Text(if (draft.jmapAuth == JmapAuth.BEARER) "Bearer token: entered in Cloud Account (App credentials)." else "Authelia session: entered in Cloud Account (App credentials).",
+                        color = p.textSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag(SettingsTags.JMAP_SECRET))
+                    Text(if (secretAvailable) "Kept encrypted with the Android Keystore, never in the database." else "The Keystore is unavailable: the secret is not kept.",
+                        color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+                    if (credLine.isNotBlank()) Text(credLine, color = p.warn, style = MaterialTheme.typography.bodySmall)
+                    Row {
+                        TextButton(onClick = {
+                            scope.launch {
+                                val c = withContext(Dispatchers.IO) { com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.credential(ctx, "tasks.jmap_secret", "The JMAP secret") }
+                                if (c.present) { secretDraft = c.value; credLine = "Taken from Cloud Account: Save to keep it." } else credLine = c.line
+                            }
+                        }, modifier = Modifier.testTag(SettingsTags.JMAP_SECRET + ":take")) { Text("Take it from Cloud Account") }
+                        TextButton(onClick = { credLine = com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(ctx).orEmpty() },
+                            modifier = Modifier.testTag(SettingsTags.JMAP_SECRET + ":set")) { Text("Set it in Cloud Account") }
+                    }
                 }
                 OutlinedTextField(draft.account, { draft = draft.copy(account = it) }, label = { Text("JMAP account id (blank = primary)") }, singleLine = true,
                     modifier = Modifier.fillMaxWidth().testTag(SettingsTags.ACCOUNT))

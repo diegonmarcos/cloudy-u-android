@@ -231,12 +231,14 @@ class AccountVault(context: Context) {
             ),
             // #1693 batch 2: Drive's per-repository sync token and ssh passphrase.
             10 to mapOf(DRIVE_PACKAGE to listOf("cred.git.repo.*", "cred.git.ssh.*")),
+            // #1693 batch 3: Cloud Tasks' CalDAV password and mail-agent secret.
+            11 to mapOf("com.diegonmarcos.cloudagenda" to listOf("cred.tasks.caldav_password", "cred.tasks.jmap_secret")),
         )
         const val DRIVE_PACKAGE = "com.diegonmarcos.clouddrive"
         const val KEYBOARD_PACKAGE = "com.diegonmarcos.cloudkeyboard"
         const val VAULT_PACKAGE = "com.diegonmarcos.cloudvault"
         const val MAIL_PACKAGE = "com.diegonmarcos.comms.mail"
-        const val SEED_VERSION = 10
+        const val SEED_VERSION = 11
         val DEFAULT_GRANTS: Map<String, List<String>> = DEFAULT_GRANTS_BY_VERSION.values
             .fold(emptyMap<String, List<String>>()) { acc, m -> acc + m.mapValues { (k, v) -> acc[k].orEmpty() + v } }
 

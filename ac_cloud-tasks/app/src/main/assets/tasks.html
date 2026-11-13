@@ -413,7 +413,11 @@
                             </div>
                             <div>
                                 <label class="field-label">Password</label>
-                                <input type="password" id="caldav-password" class="field-input" placeholder="••••••••">
+                                <div id="caldav-password-state" class="text-[13px]"></div>
+                                <div class="flex gap-2 mt-1">
+                                    <button id="caldav-take-btn" class="btn-light">Take it from Cloud Account</button>
+                                    <button id="caldav-set-btn" class="btn-light">Set it in Cloud Account</button>
+                                </div>
                             </div>
                             <div class="flex gap-2">
                                 <button id="caldav-save-btn" class="btn-dark">Save</button>
@@ -531,7 +535,7 @@ function startOfDay(d) { var x = new Date(d); x.setHours(0,0,0,0); return x; }
    dev), matching the previous no-bridge-means-mock behaviour.
    ===================================================================== */
 var DEMO_MODE_KEY = 'cc.demoMode';
-var SYNC_EXEMPT_METHODS = { sync: 1, syncStatus: 1, syncTodos: 1, todoSyncStatus: 1, caldavConfig: 1, setCaldavConfig: 1, testCaldav: 1 };
+var SYNC_EXEMPT_METHODS = { sync: 1, syncStatus: 1, syncTodos: 1, todoSyncStatus: 1, caldavConfig: 1, setCaldavConfig: 1, testCaldav: 1, takeCaldavPassword: 1, openCloudAccountCredentials: 1 };
 
 function loadDemoMode() {
     try {
@@ -1002,6 +1006,8 @@ var MOCK = (function () {
             if (obj.password) mockCaldav.hasPassword = true;
             return { ok: true, error: '' };
         },
+        takeCaldavPassword: function () { mockCaldav.hasPassword = true; return { ok: true, error: '' }; },
+        openCloudAccountCredentials: function () { return { ok: false, error: 'Cloud Account is not available in the browser preview.' }; },
         testCaldav: function () {
             if (!mockCaldav.url) return { ok: false, error: 'No server configured — set a URL and credentials first.', collections: [] };
             return { ok: true, error: '', collections: [{ id: 'personal', name: 'Personal' }, { id: 'tasks', name: 'Tasks' }, { id: 'shared-family', name: 'Family (shared)' }] };
@@ -1081,6 +1087,16 @@ var Api = {
     setCaldavConfig: function (obj) {
         var r = callBridge('setCaldavConfig', [JSON.stringify(obj)]);
         if (r.mock) return MOCK.setCaldavConfig(JSON.stringify(obj));
+        return r.ok ? r.data : { ok: false, error: r.error };
+    },
+    takeCaldavPassword: function () {
+        var r = callBridge('takeCaldavPassword');
+        if (r.mock) return MOCK.takeCaldavPassword();
+        return r.ok ? r.data : { ok: false, error: r.error };
+    },
+    openCloudAccountCredentials: function () {
+        var r = callBridge('openCloudAccountCredentials');
+        if (r.mock) return MOCK.openCloudAccountCredentials();
         return r.ok ? r.data : { ok: false, error: r.error };
     },
     testCaldav: function () {
@@ -2202,7 +2218,7 @@ function loadConfigCaldav() {
     if (cfg && cfg.error) { document.getElementById('caldav-result').innerHTML = '<span style="color:#A33;">' + esc(cfg.error) + '</span>'; return; }
     document.getElementById('caldav-url').value = cfg.url || '';
     document.getElementById('caldav-username').value = cfg.username || '';
-    document.getElementById('caldav-password').placeholder = cfg.hasPassword ? '•••••••• (unchanged)' : '••••••••';
+    document.getElementById('caldav-password-state').textContent = cfg.hasPassword ? 'Stored (from Cloud Account). Take it again after changing it there.' : 'Not set: enter it in Cloud Account (App credentials), then take it here.';
 }
 
 function initConfigsTab() {
@@ -2217,18 +2233,27 @@ function initConfigsTab() {
     document.getElementById('caldav-save-btn').addEventListener('click', function () {
         var obj = {
             url: document.getElementById('caldav-url').value.trim(),
-            username: document.getElementById('caldav-username').value.trim(),
-            password: document.getElementById('caldav-password').value
+            username: document.getElementById('caldav-username').value.trim()
         };
         var res = Api.setCaldavConfig(obj);
         var out = document.getElementById('caldav-result');
         if (res && res.ok) {
             out.innerHTML = '<span style="color:#2E7D32;">Saved.</span>';
-            document.getElementById('caldav-password').value = '';
             loadConfigCaldav();
         } else {
             out.innerHTML = '<span style="color:#A33;">' + esc((res && res.error) || 'Could not save.') + '</span>';
         }
+    });
+    // #1693 the password is typed in Cloud Account (App credentials); here it is only taken from there.
+    document.getElementById('caldav-take-btn').addEventListener('click', function () {
+        var res = Api.takeCaldavPassword();
+        var out = document.getElementById('caldav-result');
+        if (res && res.ok) { out.innerHTML = '<span style="color:#2E7D32;">Password taken from Cloud Account.</span>'; loadConfigCaldav(); }
+        else out.innerHTML = '<span style="color:#A33;">' + esc((res && res.error) || 'Could not take it.') + '</span>';
+    });
+    document.getElementById('caldav-set-btn').addEventListener('click', function () {
+        var res = Api.openCloudAccountCredentials();
+        if (!(res && res.ok)) document.getElementById('caldav-result').innerHTML = '<span style="color:#A33;">' + esc((res && res.error) || 'Cloud Account cannot be opened.') + '</span>';
     });
     document.getElementById('caldav-test-btn').addEventListener('click', function () {
         var out = document.getElementById('caldav-result');

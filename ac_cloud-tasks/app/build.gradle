@@ -319,6 +319,7 @@ android {
 
 dependencies {
     implementation project(':libs:web-core')   // #1371 the fleet's one web view (CloudWeb, WebProfile)
+    implementation project(':libs:fleet-endpoints-android')   // #1693 AccountClient: App credentials read from Cloud Account
     implementation project(':libs:analytics')
     implementation project(':libs:core')
     implementation project(':libs:databackend')   // #825 DataBackendClient: this app binds an engine

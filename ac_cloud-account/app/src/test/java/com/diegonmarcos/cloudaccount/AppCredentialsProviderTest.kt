@@ -97,6 +97,9 @@ class AppCredentialsProviderTest {
         assertFalse(v.grants.allow("com.diegonmarcos.cloudkgstore", "cred.git.host.git.example.org"))
         assertTrue(v.grants.allow(AccountVault.DRIVE_PACKAGE, "cred.git.repo.myrepo"))
         assertTrue(v.grants.allow(AccountVault.DRIVE_PACKAGE, "cred.git.ssh.myrepo"))
+        assertTrue(v.grants.allow("com.diegonmarcos.cloudagenda", "cred.tasks.caldav_password"))
+        assertTrue(v.grants.allow("com.diegonmarcos.cloudagenda", "cred.tasks.jmap_secret"))
+        assertFalse("Tasks is granted only its own", v.grants.allow("com.diegonmarcos.cloudagenda", "cred.git.github_token"))
         v.grants.revoke(AccountVault.DRIVE_PACKAGE, "cred.git.github_token"); v.seedDefaults()
         assertFalse(v.grants.allow(AccountVault.DRIVE_PACKAGE, "cred.git.github_token"))
     }

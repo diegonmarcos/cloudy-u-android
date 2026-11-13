@@ -44,6 +44,8 @@ class CalBridge(private val ctx: Context) {
         const val SEED = "seed"
         /** The calendar id accepted screenshot events carry. */
         const val AGENTS_CALENDAR = "agents-screenshots"
+        /** #1693 the App credentials id of the CalDAV password (Cloud Account holds it). */
+        const val CALDAV_CREDENTIAL = "tasks.caldav_password"
     }
 
     @Volatile private var syncRunning = false
@@ -365,6 +367,31 @@ class CalBridge(private val ctx: Context) {
         } catch (e: Exception) {
             okErr(false, e.message ?: e.javaClass.simpleName)
         }
+    }
+
+    /**
+     * #1693 The CalDAV password is typed in Cloud Account (App credentials), never here: this takes it over the provider's
+     * per-credential grant and files it in the encrypted store above, next to the URL and username already saved. BLOCKS (a provider
+     * call, like [testCaldav]); the answer names the fix and never carries the value.
+     */
+    @JavascriptInterface
+    fun takeCaldavPassword(): String {
+        return try {
+            val c = com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.credential(ctx, CALDAV_CREDENTIAL, "The CalDAV password")
+            if (!c.present) return okErr(false, c.line)
+            val (url, username) = CaldavPrefs.urlAndUsername(ctx)
+            CaldavPrefs.set(ctx, url, username, c.value)
+            okErr(true, "")
+        } catch (e: Exception) {
+            okErr(false, e.javaClass.simpleName)
+        }
+    }
+
+    /** #1693 Opens Cloud Account at App credentials; ok=false carries the reason it could not. */
+    @JavascriptInterface
+    fun openCloudAccountCredentials(): String {
+        val why = com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(ctx)
+        return okErr(why == null, why.orEmpty())
     }
 
     /** Round-trips discovery only (no writes) so the Configs screen can

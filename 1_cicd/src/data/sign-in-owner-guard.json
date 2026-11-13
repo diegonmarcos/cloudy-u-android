@@ -192,14 +192,6 @@
       ],
       "why": "Cloud Me Buro screen secret entry",
       "until": "pending: not in steps 1-5"
-    },
-    {
-      "path": "ac_cloud-tasks/",
-      "rules": [
-        "credential-prompt"
-      ],
-      "why": "Cloud Tasks settings secret entry (CalDAV)",
-      "until": "pending: not in steps 1-5"
     }
   ],
   "_doc_exempt": "Each entry: a path prefix, the rules it may still trip, why, and `until` (the #1693 migration step that removes it, or `permanent` with the reason). An entry that matches nothing fails the guard, so a migrated app must drop its entry in the same commit: the list only shrinks.",

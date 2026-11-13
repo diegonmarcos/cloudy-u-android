@@ -30,6 +30,16 @@
     "log_sink_stream": "cloud-tasks"
   },
   "modules": {
+    "libs:fleet-endpoints": {
+      "_doc_dir": "#1693 plain JVM contract (App credentials) AccountClient speaks.",
+      "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints",
+      "type": "library"
+    },
+    "libs:fleet-endpoints-android": {
+      "_doc_dir": "#1693 AccountClient: opens Cloud Account at App credentials and reads a credential the person filed there. Nothing here starts a sign-in.",
+      "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints-android",
+      "type": "library"
+    },
     "libs:web-core": {
       "_doc": "#1371 THE embedded web view: CloudWeb.create(ctx, WebProfile.X), profiles, GPU probe, render-process recovery, shared BY REFERENCE.",
       "dir": "../ab_cloud-libs-shared/libs/web-core",
@@ -44,6 +54,7 @@
       "type": "application",
       "depends_on": [
         "libs:web-core",
+        "libs:fleet-endpoints-android",
         "libs:core",
         "libs:updater",
         "libs:bottomnav",

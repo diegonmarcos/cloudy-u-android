@@ -38,6 +38,12 @@ class AppCredentialsContractTest {
         assertNotNull(AppCredentialsContract.entry("git.ssh." + AppCredentialsContract.slug("k")))
     }
 
+    @Test fun `each catalogue entry is granted by default to its own packages only`() {
+        assertEquals(listOf("cred.tasks.caldav_password", "cred.tasks.jmap_secret"), AppCredentialsContract.defaultGrants(AppCredentialsContract.PKG_TASKS))
+        assertTrue(AppCredentialsContract.CATALOG.all { it.packages.isNotEmpty() && it.label.isNotBlank() })
+        assertEquals("catalogue ids are unique", AppCredentialsContract.CATALOG.size, AppCredentialsContract.CATALOG.map { it.id }.toSet().size)
+    }
+
     @Test fun `no log form carries the value`() {
         val c = AppCredentialsContract.Credential("git.github_token", "ghp_SECRET", "from Cloud Account")
         assertFalse(c.toString().contains("ghp_SECRET"))
