@@ -208,7 +208,15 @@ jobs:
               print("::warning::'%s' never came on screen" % label); return False
           # #1400 Galaxy tabs: the fresh install opens one tab, floor796; a Store world adds a second tab
           launch("-e", "section", "galaxy", wait=0); shot("09-galaxy-tab-floor796", 25)
+          # #1701 floor796 loads the plain address (Galaxy = Cloud-Browser, #1694): the Page diagnostics sheet shows Failed requests
+          tap("Page diagnostics"); shot("14-galaxy-floor796-diagnostics", 4)
+          sh("shell", "input", "swipe", "540", "1700", "540", "700", "400"); shot("15-galaxy-floor796-diagnostics-failed", 1)
+          sh("shell", "input", "keyevent", "KEYCODE_BACK")
           launch("-e", "world", "lusion-v3", wait=0); shot("10-galaxy-two-tabs", 20)
+          # #1701 the Store's 3D models: the cards (photo, facts), then each model open in Galaxy (runtime download, SHA-256 check, viewer)
+          launch("-e", "section", "store"); seek("House Boat"); shot("16-store-models", 3)
+          launch("-e", "world", "house-boat", wait=0); shot("17-galaxy-model-house-boat", 40)
+          launch("-e", "world", "dji-s900", wait=0); shot("18-galaxy-model-dji-s900", 60)
           launch("-e", "section", "store"); seek("floor796"); shot("11-store-floor796", 1)
           launch("-e", "world", "a-way-to-go", wait=0); shot("06-galaxy-world-a-way-to-go", 25)
           launch("-e", "world", "webgl-fluid-simulation", wait=0); shot("07-galaxy-world-fluid", 20)
