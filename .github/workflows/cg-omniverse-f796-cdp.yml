@@ -1,0 +1,125 @@
+name: "Probe → CG-Omniverse floor796 (CDP on the emulator)"
+
+# #1694 on demand: installs the x86_64 APK of a Ship run (debuggable) on an emulator, opens floor796 in Galaxy, attaches to the
+# WebView over DevTools (adb forward) and records every console message, failed request and, every 15 s, the page's real
+# viewport / canvas / DOM state. Same for Cloud-Browser when its APK is available. Uploads `cg-omniverse-f796-cdp`.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ship_run_id:
+        description: "Ship -> CG-Omniverse run whose x86_64 APK to use (empty = the rolling release)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the APKs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN: ${{ inputs.ship_run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          if [ -n "$RUN" ]; then gh run download "$RUN" -R "$GITHUB_REPOSITORY" -p 'CG-Omniverse-x86_64-*' -D apk
+          else gh release download latest -R "$GITHUB_REPOSITORY" -p 'CG-Omniverse-x86_64.apk' -D apk; fi
+          pick=$(find apk -name '*.apk' | head -1); [ -n "$pick" ] || { echo "::error::no APK"; exit 1; }
+          cp "$pick" app.apk
+          gh release download latest -R "$GITHUB_REPOSITORY" -p 'Cloud-Browser-x86_64.apk' -D browser 2>/dev/null \
+            || gh release download latest-x86_64 -R "$GITHUB_REPOSITORY" -p 'Cloud-Browser-x86_64.apk' -D browser 2>/dev/null || true
+          [ -f browser/Cloud-Browser-x86_64.apk ] && cp browser/Cloud-Browser-x86_64.apk browser.apk || true
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the probe
+        run: |
+          pip install websocket-client
+          cat > cdp.py <<'PY'
+          import json, subprocess, sys, time, urllib.request, websocket
+          pkg, label, secs = sys.argv[1], sys.argv[2], int(sys.argv[3])
+          def sh(*a): return subprocess.run(["adb", *a], capture_output=True, text=True, timeout=60).stdout
+          out = open("probe/%s.log" % label, "w")
+          def log(*a):
+              s = " ".join(str(x) for x in a); out.write(s + "\n"); out.flush(); print(s)
+          pid = sh("shell", "pidof", pkg).split()[0]
+          sock = None
+          for l in sh("shell", "cat", "/proc/net/unix").splitlines():
+              if "webview_devtools_remote_" + pid in l: sock = l.split("@")[-1]
+          log("pid", pid, "socket", sock)
+          sh("forward", "tcp:9222", "localabstract:" + sock)
+          pages = json.load(urllib.request.urlopen("http://localhost:9222/json"))
+          log("pages", json.dumps([(p.get("url"), p.get("type")) for p in pages]))
+          page = [p for p in pages if p.get("type") == "page" and "floor796" in p.get("url", "")] or [p for p in pages if p.get("type") == "page"]
+          ws = websocket.create_connection(page[0]["webSocketDebuggerUrl"], timeout=5, suppress_origin=True)
+          n = [0]
+          def send(m, p=None):
+              n[0] += 1; ws.send(json.dumps({"id": n[0], "method": m, "params": p or {}})); return n[0]
+          for m in ("Runtime.enable", "Log.enable", "Network.enable", "Page.enable"): send(m)
+          STATE = "(function(){var c=document.querySelectorAll('canvas'),o={url:location.href,rs:document.readyState,vis:document.visibilityState,iw:innerWidth,ih:innerHeight,dpr:devicePixelRatio,cw:document.documentElement.clientWidth,ch:document.documentElement.clientHeight,bw:document.body&&document.body.clientWidth,bh:document.body&&document.body.clientHeight,cdn:document.documentElement.dataset.cdn,nodes:document.getElementsByTagName('*').length,canv:[],body:(document.body?document.body.className:'')};for(var i=0;i<c.length&&i<6;i++){var r=c[i].getBoundingClientRect(),s=getComputedStyle(c[i]);o.canv.push([c[i].width,c[i].height,r.width,r.height,s.display,s.position,c[i].parentElement&&c[i].parentElement.tagName+'.'+c[i].parentElement.className,c[i].parentElement&&c[i].parentElement.clientWidth+'x'+c[i].parentElement.clientHeight])}var l=document.getElementById('initial-loader');o.loader=!!l;o.ls=(function(){try{return localStorage.getItem('modern-agent')}catch(e){return 'x'}})();o.top=Array.from(document.body.children).slice(0,12).map(function(e){return e.tagName+'#'+e.id+'.'+e.className+' '+e.clientWidth+'x'+e.clientHeight});return JSON.stringify(o)})()"
+          t0 = time.time(); nxt = 0; reloaded = False
+          send("Page.reload")
+          ws.settimeout(1)
+          while time.time() - t0 < secs:
+              if time.time() - t0 >= nxt:
+                  nxt += 15; i = send("Runtime.evaluate", {"expression": STATE, "returnByValue": True}); log("[%ds] eval sent id %d" % (time.time() - t0, i))
+              try: m = json.loads(ws.recv())
+              except websocket.WebSocketTimeoutException: continue
+              meth = m.get("method")
+              if meth == "Runtime.consoleAPICalled":
+                  p = m["params"]; log("[%ds] console.%s" % (time.time() - t0, p["type"]), " | ".join(str(a.get("value", a.get("description", ""))) for a in p["args"])[:400])
+              elif meth == "Runtime.exceptionThrown": log("[%ds] EXC" % (time.time() - t0), json.dumps(m["params"])[:600])
+              elif meth == "Log.entryAdded": e = m["params"]["entry"]; log("[%ds] log" % (time.time() - t0), e.get("level"), e.get("text", "")[:300], e.get("url", ""))
+              elif meth == "Network.loadingFailed": log("[%ds] NETFAIL" % (time.time() - t0), json.dumps(m["params"])[:300])
+              elif meth in ("Page.frameNavigated",): log("[%ds] nav" % (time.time() - t0), m["params"]["frame"].get("url"))
+              elif meth == "Network.responseReceived":
+                  r = m["params"]["response"]; log("[%ds] resp" % (time.time() - t0), r["status"], r["url"][:140], r.get("encodedDataLength", ""))
+              elif "result" in m and "result" in m["result"] and "value" in m["result"]["result"]: log("[%ds] STATE" % (time.time() - t0), m["result"]["result"]["value"])
+          PY
+          cat > run.sh <<'EOF'
+          #!/bin/bash
+          mkdir -p probe screens
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          adb install -r -g app.apk || exit 2
+          adb logcat -v threadtime "*:W" CloudWebConsole:I chromium:I > probe/logcat.txt 2>&1 &
+          adb shell am start -S -W -n com.diegonmarcos.cgomniverse/.MainActivity -e section galaxy; sleep 20
+          python3 cdp.py com.diegonmarcos.cgomniverse galaxy 200
+          adb exec-out screencap -p > probe/galaxy.png
+          if [ -f browser.apk ]; then
+            adb install -r -g browser.apk
+            adb shell am start -a android.intent.action.VIEW -d https://floor796.com -p com.diegonmarcos.cloudbrowser; sleep 20
+            python3 cdp.py com.diegonmarcos.cloudbrowser browser 200
+            adb exec-out screencap -p > probe/browser.png
+          fi
+          exit 0
+          EOF
+          chmod +x run.sh
+      - name: Boot emulator + probe
+        timeout-minutes: 30
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./run.sh
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cg-omniverse-f796-cdp
+          path: probe
+          retention-days: 14
