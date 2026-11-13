@@ -71,7 +71,7 @@ class StoreGitFishShellTest {
     @Test fun theOldDoubleQuotedWrapIsRefusedByFish_theBugThisFixes() {
         val old = { s: String -> "exec /system/bin/sh \"\$HOME/.termux/shell\" -c " + q("sh -c " + q(s)) }
         val g = File(home, "store/git/bare/o/x.git").absolutePath
-        val r = job("set -e; mkdir -p \"\$(dirname ${q(g)})\"; " + StoreGit.authed(BareClones.cloneArgs("file:///nonexistent", g, 1) { q(it) }), "", old)
+        val r = job("set -e; mkdir -p \"\$(dirname ${q(g)})\"; " + StoreGit.authed(BareClones.cloneArgs("file:///nonexistent", g, 1, { q(it) })), "", old)
         println("old wrap under fish -> exit ${r.exit}: ${r.out.trim()}")
         assertTrue("the old wrap must fail under fish (it did on the phone): ${r.out}", r.exit != 0 && "fish" in r.out)
     }
@@ -81,7 +81,7 @@ class StoreGitFishShellTest {
         val targets = listOf("Hello-World", "Spoon-Knife", "cloudy-___").map { n -> "file://" + localRemote(n).absolutePath to n }
         val failures = targets.mapNotNull { (url, name) ->
             val g = File(home, "store/git/bare/o/$name.git").absolutePath
-            val r = job("set -e; mkdir -p \"\$(dirname ${q(g)})\"; " + StoreGit.authed(BareClones.cloneArgs(url, g, 1) { q(it) }), stdin = "")
+            val r = job("set -e; mkdir -p \"\$(dirname ${q(g)})\"; " + StoreGit.authed(BareClones.cloneArgs(url, g, 1, { q(it) })), stdin = "")
             println("bare $name -> exit ${r.exit}: ${r.out.trim()}")
             if (r.exit == 0 && File(g, "HEAD").isFile) null else BulkDepth.block("failed", name, BulkDepth.withTail("exit ${r.exit}", r.out))
         }
