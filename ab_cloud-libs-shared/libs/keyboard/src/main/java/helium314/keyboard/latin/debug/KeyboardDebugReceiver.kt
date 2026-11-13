@@ -159,9 +159,11 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
             "keypos" -> {
                 val view = switcher.mainKeyboardView ?: return "no view"
                 val at = IntArray(2).also { view.getLocationOnScreen(it) }
+                // "U+20AC" names a key by code point (a shell cannot be trusted to pass a non-ASCII label through am)
+                val want = if (arg.startsWith("U+")) String(Character.toChars(arg.substring(2).toInt(16))) else arg
                 val key = view.keyboard?.sortedKeys?.firstOrNull {
                     if (arg == "space") it.code == 32 else if (arg == "delete") it.code == KeyCode.DELETE else if (arg.startsWith("u+")) it.label?.let { l -> l.isNotEmpty() && l.codePointAt(0) == arg.substring(2).toIntOrNull(16) } == true
-                    else it.label.equals(arg, ignoreCase = true)
+                    else it.label.equals(want, ignoreCase = true)
                 } ?: return "no key $arg"
                 "key=$arg ${at[0] + key.x + key.width / 2} ${at[1] + key.y + key.height / 2} ${key.width} ${key.height}"
             }
