@@ -164,7 +164,7 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
                 val key = view.keyboard?.sortedKeys?.firstOrNull {
                     if (arg == "space") it.code == 32 else if (arg == "delete") it.code == KeyCode.DELETE else if (arg.startsWith("u+")) it.label?.let { l -> l.isNotEmpty() && l.codePointAt(0) == arg.substring(2).toIntOrNull(16) } == true
                     else it.label.equals(want, ignoreCase = true)
-                } ?: return "no key $arg"
+                } ?: return "no key $arg among [" + view.keyboard?.sortedKeys?.joinToString(" ") { k -> "${k.label}/${k.code}" } + "]"
                 "key=$arg ${at[0] + key.x + key.width / 2} ${at[1] + key.y + key.height / 2} ${key.width} ${key.height}"
             }
             "fieldtext" -> "field=[${fieldText()}]"

@@ -242,7 +242,7 @@ swipekey() {   # $1 = key label, $2 = dx sign, $3 = dy sign
     kb keypos "$1"; read -r _ KX KY KW KH < <(last keypos | sed 's/.*key=[^ ]* //; s/^/k /')
     adb shell input swipe "$KX" "$KY" $((KX + $2 * KW)) $((KY + $3 * KH)) 120; sleep 1
 }
-tapkey() { kb keypos "$1"; read -r _ KX KY KW KH < <(last keypos | sed 's/.*key=[^ ]* //; s/^/k /'); adb shell input tap "$KX" "$KY"; sleep 1; }
+tapkey() { kb keypos "$1"; last keypos | cut -c1-600; read -r _ KX KY KW KH < <(last keypos | sed 's/.*key=[^ ]* //; s/^/k /'); adb shell input tap "$KX" "$KY"; sleep 1; }
 kb fieldtext; F0="$(last fieldtext)"
 tapkey g; swipekey g 1 -1; swipekey g -1 1; swipekey h 1 -1; swipekey 1 1 1; swipekey n 1 1
 kb fieldtext; F1="$(last fieldtext)"; echo "$F1"
