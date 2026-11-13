@@ -15,7 +15,7 @@ tap_re() {  # tap the first node whose text matches the regex $1; 0 when found
 }
 open_store() {
   adb shell am start -W -n "$S/$(adb shell cmd package resolve-activity --brief "$S" | tr -d '\r' | tail -1 | sed 's#.*/##')" >/dev/null; sleep 8
-  for i in 1 2 3 4; do tap_re "Wait|Cancel" && sleep 3; done
+  for i in 1 2 3 4; do tap_re "Wait|Cancel|Not now" && sleep 3; done
 }
 rc=0
 attempt() {  # attempt <label>: tap the Store's ADB chip, then judge what the webserver shows
