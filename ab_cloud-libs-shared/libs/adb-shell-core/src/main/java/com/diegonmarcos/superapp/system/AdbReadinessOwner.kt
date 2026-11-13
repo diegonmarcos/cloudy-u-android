@@ -13,6 +13,11 @@ object AdbReadinessOwner {
     @Synchronized fun install() {
         AdbReadiness.ownerInstall = { ShellBroker.onStatusChange = { st -> AdbReadiness.publish(st) } }
         AdbReadiness.ownerUsableNow = { ctx -> ShellChannels.active(ctx) != null }
+        // the owner's keep-alive switch for fleet clients (the broker provider's keeper_get / keeper_set; allowlist entry flag `keeper`)
+        ShellBroker.keeperHook = { ctx, set ->
+            if (set != null) WirelessDebugKeeper.Prefs.setEnabled(ctx, set)
+            WirelessDebugKeeper.Prefs.enabled(ctx)
+        }
         AdbReadiness.install()
     }
 }

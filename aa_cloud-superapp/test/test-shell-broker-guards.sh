@@ -136,7 +136,9 @@ def verdicts(apps, pending, allow, libs, shared):
     miss = sorted(d for d, a in clients.items() if a["aid"] not in callers and aliases.get(a["aid"]) not in callers)
     ok(not miss, "B3 every shell-client app has an allowlist entry (%d)" % len(clients), "B3 shell-client app without an allowlist entry: " + ", ".join(miss))
     known = {a["aid"] for a in apps.values() if a["aid"]} | set(aliases.values())
-    ghost = sorted(c for c in callers if c not in known)
+    # #1682 a logical identity (an entry that `extends` another, e.g. the owner's own "owner") is not a package: it must extend a known caller and carry no dot-package name
+    logical = {c for c, v in callers.items() if v.get("extends") in callers and "." not in c}
+    ghost = sorted(c for c in callers if c not in known and c not in logical)
     ok(not ghost, "B3 every allowlist caller is a known app id or alias", "B3 allowlist caller that is no app: " + ", ".join(ghost))
     for name, text in libs.items():
         body = strip(text["src"])

@@ -97,4 +97,17 @@ class AllowlistTest {
         for (c in listOf("screencap -p /sdcard/x.png; id", "screencap -p /data/local/tmp/x.png", "logcat -d | grep x", "sh -c id", "reboot", "rm -rf /sdcard"))
             assertTrue(c, real.decide(web, c) is Decision.Deny)
     }
+
+    // #1682 the logical owner identity extends the SuperApp's rules and adds its own; the Webserver's package (mesh relay) gets neither.
+    @Test fun ownerExtendsTheSuperAppAndTheRelayStaysRestricted() {
+        val f = listOf("src/main/assets/shell-allowlist.json", "ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json")
+            .map { java.io.File(it) }.firstOrNull { it.isFile } ?: return
+        val a = Allowlist.parse(f.readText())
+        val sa = "com.diegonmarcos.superapp"
+        assertTrue(a.decide("owner", "id -u") is Allowlist.Decision.Allow)
+        assertTrue(a.decide("owner", "pm grant com.diegonmarcos.cloudwebserver android.permission.WRITE_SECURE_SETTINGS") is Allowlist.Decision.Allow)
+        assertTrue(a.decide("owner", "pm grant com.evil.app android.permission.WRITE_SECURE_SETTINGS") is Allowlist.Decision.Deny)
+        for (c in listOf("dumpsys battery", "getprop")) assertEquals(a.decide(sa, c)::class, a.decide("owner", c)::class)
+        assertTrue(a.decide("com.diegonmarcos.cloudwebserver", "pm grant com.diegonmarcos.cloudwebserver android.permission.WRITE_SECURE_SETTINGS") is Allowlist.Decision.Deny)
+    }
 }

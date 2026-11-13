@@ -33,11 +33,6 @@ on:
       - "ab_cloud-libs-shared/libs/adb-shell-core/**"
       - ".github/workflows/c3-webserver-adb-owner-verify.yml"
   workflow_dispatch:
-    inputs:
-      flipped:
-        description: "also run the two jobs that apply the flip (red by design until the owner's broker identity is decided)"
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -83,13 +78,10 @@ jobs:
           # the owner side really was the one compiled (not the dormant stand-in): its class references the lib's ADB Shell page
           grep -rl 'adbdebug/AdbShellPage' app/build/tmp/kotlin-classes/debug/com/diegonmarcos/cloudwebserver/owner/
 
-  # The two flipped jobs run on workflow_dispatch with the input flipped=true only (gh workflow run c3-webserver-adb-owner-verify.yml --ref main -f flipped=true), NOT on push, until the
-  # flip commit is made: a flipped tree is red by design while the owner's own broker identity is undecided (the terminal snippets and the
-  # tester run as ShellBroker.SELF, which after the flip resolves to the webserver's restricted 'mesh' relay entry: TerminalModelTest "every
-  # snippet is allowed" proves it). Nothing is relaxed: the jobs stay as strict as they are, they just do not run on every push yet.
+  # #1682 the flip is made (1_cicd/src/data/adb-owner.json names the Webserver): the script below is a no-op that proves the tree is flipped, and
+  # these two jobs run on EVERY push as the ongoing proof of both sides.
   client-superapp-flipped:
     name: "SuperApp as a CLIENT with the flip applied (compile + unit suites)"
-    if: github.event_name == 'workflow_dispatch' && inputs.flipped
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -159,9 +151,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
 
+      # the call-site allowlist suites (ClientCallSitesAllowlistTest, SelfAllowlistTest, the plane commands ...) need the broker's Allowlist, an
+      # owner lib the client build does not carry: they run here against the SuperApp's owner source set (rollback path), proving every command
+      # the SuperApp sends as a client is on its allowlist entry
+      - name: SuperApp owner-source-set suites (call sites vs the allowlist)
+        env:
+          BYPASS_NIX: "1"
+          C3_ADB_OWNER_VERIFY: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
+
   owner-webserver-flipped:
     name: "Webserver as THE OWNER with the flip applied (adb-owner.json alone, no env switch)"
-    if: github.event_name == 'workflow_dispatch' && inputs.flipped
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:

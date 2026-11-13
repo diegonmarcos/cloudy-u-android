@@ -21,7 +21,9 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
     data class Entry(val rules: List<Rule>, val exact: Map<String, Rule> = emptyMap(), val segments: Boolean = false,
                      val stdin: List<Rule> = emptyList(),
                      /** #1682 the output door's cap for this caller (0 = no door); [audit] = may read the audit ring and summaries. */
-                     val outMaxBytes: Int = 0, val audit: Boolean = false)
+                     val outMaxBytes: Int = 0, val audit: Boolean = false,
+                     /** #1682 may read / flip the owner's keep-alive switch (keeper_get / keeper_set). */
+                     val keeper: Boolean = false)
 
     sealed class Decision {
         data class Allow(val rule: Rule) : Decision()
@@ -38,6 +40,7 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
 
     /** #1682 May [pkg] read the audit ring and the caller summaries? Default no. */
     fun mayAudit(pkg: String): Boolean = callers[callerKey(pkg)]?.audit == true
+    fun mayKeeper(pkg: String): Boolean = callers[callerKey(pkg)]?.keeper == true
 
     /** One short line of what [key] may do (the ADB Shell page's Callers rows): rule count, exact lines, stdin, chaining. */
     fun summary(key: String): String {
@@ -120,23 +123,33 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
             val o = JSONObject(json)
             val cs = o.getJSONObject("callers")
             val callers = LinkedHashMap<String, Entry>()
-            for (k in cs.keys()) {
+            // #1682 an entry may `extends` another (a logical identity such as the owner's own "owner" extends the SuperApp's rules):
+            // its rules / exact lines / stdin rules are the base's followed by its own; segments, outMaxBytes and audit are its own when
+            // present, else the base's. A binder caller can never be named by a logical key (no package is called "owner").
+            fun build(k: String, depth: Int): Entry {
+                callers[k]?.let { return it }
                 val c = cs.getJSONObject(k)
-                val arr = c.getJSONArray("allow")
-                val rules = (0 until arr.length()).map { i ->
+                val base = c.optString("extends", "").takeIf { it.isNotEmpty() && depth < 4 && cs.has(it) }?.let { build(it, depth + 1) }
+                val arr = c.optJSONArray("allow")
+                val own = if (arr == null) emptyList() else (0 until arr.length()).map { i ->
                     val r = arr.getJSONObject(i)
                     Rule(r.getString("id"), Regex(r.getString("re")), r.optString("meta", ""))
                 }
                 val ex = LinkedHashMap<String, Rule>()
+                base?.let { ex.putAll(it.exact) }
                 c.optJSONArray("exact")?.let { a -> for (i in 0 until a.length()) ex[a.getString(i).trim()] = Rule("exact-${i + 1}", Regex("^$")) }
-                val sin = c.optJSONArray("stdin")?.let { a ->
+                val sin = (base?.stdin ?: emptyList()) + (c.optJSONArray("stdin")?.let { a ->
                     (0 until a.length()).map { i ->
                         val r = a.getJSONObject(i)
                         Rule(r.getString("id"), Regex(r.getString("re")), r.optString("meta", ""), r.getLong("maxBytes"))
                     }
-                } ?: emptyList()
-                callers[k] = Entry(rules, ex, c.optBoolean("segments", false), sin, c.optInt("outMaxBytes", 0), c.optBoolean("audit", false))
+                } ?: emptyList())
+                return Entry((base?.rules ?: emptyList()) + own, ex, if (c.has("segments")) c.getBoolean("segments") else base?.segments ?: false, sin,
+                    if (c.has("outMaxBytes")) c.getInt("outMaxBytes") else base?.outMaxBytes ?: 0,
+                    if (c.has("audit")) c.getBoolean("audit") else base?.audit ?: false,
+                    if (c.has("keeper")) c.getBoolean("keeper") else base?.keeper ?: false).also { callers[k] = it }
             }
+            for (k in cs.keys().asSequence().toList()) build(k, 0)
             val al = LinkedHashMap<String, String>()
             o.optJSONObject("aliases")?.let { a -> for (k in a.keys()) al[k] = a.getString(k) }
             return Allowlist(callers, al)

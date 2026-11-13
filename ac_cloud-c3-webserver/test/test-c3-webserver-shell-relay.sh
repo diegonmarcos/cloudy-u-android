@@ -55,6 +55,14 @@ def checks(D, M, A, R):
     ok4 = all(s in M["acl_scopes"] for s in scopes) and holders == sorted(D["scope_peers"])
     out.append(("S4 the scope, its peers and the broker caller are the declared ones", [] if ok4 else ["peers/allowlist"]))
     out.append(("S5 no other Rust source names the shell broker", sorted(k for k, v in R.items() if k != "server/src/ipc.rs" and "shellbroker" in strip(v)) + (["server/src/ipc.rs"] if "shellbroker" in g else [])))
+    # S6 (#1682 c) an `also_apps` alias on a relaying route is declared too: the old path is the same relay, not a second undeclared one
+    al_bad = []
+    for e in ents:
+        if relays(e):
+            a = dec.get(key(e))
+            want = sorted("/ipc/%s/%s" % (x, e["route"]) for x in e.get("also_apps", []))
+            if a is not None and sorted(a.get("alias_paths", [])) != want: al_bad.append(e["route"])
+    out.append(("S6 every alias path of a relay route is declared", al_bad))
     return out
 fails = 0
 for n, b in checks(decl, ipc, allow, rust):
@@ -65,12 +73,13 @@ def plant(label, rid, f):
     f(D, M, A, R)
     red = any(n.startswith(rid) and b for n, b in checks(D, M, A, R))
     print(("  PASS: " if red else "  FAIL: ") + f"planted: {label} turns {rid} red"); fails += 0 if red else 1
-first = lambda M, r: next(e for e in M["ipc_registry"]["entries"] if e["route"] == r and "superapp" in e.get("app_class", ""))
+first = lambda M, r: next(e for e in M["ipc_registry"]["entries"] if e["route"] == r and e["ipc"]["endpoint"] == "shellbroker")   # the owner-agnostic shell entry
 plant("a new undeclared relay route", "S1", lambda D, M, A, R: M["ipc_registry"]["entries"].append(dict(copy.deepcopy(first(M, "exec")), route="exec2")))
 plant("an undeclared route switching status to exec", "S1", lambda D, M, A, R: first(M, "status")["ipc"].__setitem__("method", "exec_json"))
 plant("a declared route losing its scope", "S2", lambda D, M, A, R: first(M, "exec").__setitem__("acl", "logs.read"))
 plant("a declared route losing its cmd check", "S2", lambda D, M, A, R: first(M, "exec")["ipc"].__setitem__("require_cmd", False))
 plant("the declared method changing", "S2", lambda D, M, A, R: D["allowed"][0].__setitem__("method", "exec"))
+plant("an undeclared alias app on a relay route", "S6", lambda D, M, A, R: first(M, "exec").__setitem__("also_apps", first(M, "exec").get("also_apps", []) + ["x_other_app"]))
 plant("the gateway's scope check removed", "S3", lambda D, M, A, R: R.__setitem__("server/src/ipc.rs", R["server/src/ipc.rs"].replace("if !allowed(&peer.scopes, &entry.acl)", "if false")))
 plant("the bearer gate removed", "S3", lambda D, M, A, R: R.__setitem__("server/src/meshlogs.rs", R["server/src/meshlogs.rs"].replace('authorize(req.header("authorization")', 'Option::<Resp>::None.or(None).xor(None); let _ = (')))
 plant("the read-only peer granted shell.exec", "S4", lambda D, M, A, R: M["peers"]["ops-console"]["scopes"].append("shell.exec"))

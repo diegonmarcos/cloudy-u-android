@@ -167,6 +167,7 @@ class BrokerCore(
     }
 
     fun mayAudit(caller: String): Boolean = allowlist().mayAudit(caller)
+    fun mayKeeper(caller: String): Boolean = allowlist().mayKeeper(caller)
 
     /**
      * #1512 The stdin door: stream [declaredSize] bytes of [input] to [cmd]'s stdin (`pm install -S <size>`). Default deny: the caller's

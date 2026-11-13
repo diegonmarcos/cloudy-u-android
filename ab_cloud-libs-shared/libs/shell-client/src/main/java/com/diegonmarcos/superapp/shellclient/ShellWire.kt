@@ -4,7 +4,7 @@ import org.json.JSONObject
 
 /** #1510 The broker's wire: provider authority, methods, keys, and the JSON codec both halves share (pure, unit-tested). */
 object ShellWire {
-    const val BROKER_PKG = "com.diegonmarcos.superapp"
+    const val BROKER_PKG = "com.diegonmarcos.cloudwebserver"
     const val AUTHORITY = "$BROKER_PKG.shellbroker"
     /** Signature permission guarding the provider, the service and the arm activity (the fleet key). */
     const val PERMISSION = "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"

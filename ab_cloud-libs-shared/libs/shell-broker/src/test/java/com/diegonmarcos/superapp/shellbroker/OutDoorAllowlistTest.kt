@@ -28,7 +28,7 @@ class OutDoorAllowlistTest {
         val shipped = Allowlist.parse(f.readText())
         val audit = shipped.callers().filter { shipped.mayAudit(it) }
         val out = shipped.callers().filter { shipped.outCap(it) > 0 }
-        assertEquals(listOf("com.diegonmarcos.superapp"), audit)
-        assertEquals(listOf("com.diegonmarcos.superapp"), out)
+        assertEquals(listOf("com.diegonmarcos.superapp", "owner"), audit)   // #1682 the logical owner identity extends the SuperApp entry
+        assertEquals(listOf("com.diegonmarcos.superapp", "owner"), out)
     }
 }

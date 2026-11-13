@@ -36,7 +36,7 @@
   {
    "id": "shellbroker",
    "kind": "provider",
-   "authority": "com.diegonmarcos.superapp.shellbroker",
+   "authority": "com.diegonmarcos.cloudwebserver.shellbroker",
    "what": "SuperApp shell broker provider (served via /ipc, #1580)"
   },
   {
@@ -407,21 +407,33 @@
  "peers": {
   "_doc": "#1495/#1580 CENTRALIZED mesh-peer access, held once by the holder (Cloud-Webserver) instead of by each app. After the fleet-bearer membership gate (mesh-only + Bearer, meshlogs::authorize), the caller's peer identity is the `X-C3-Peer` header; no header means the default peer `fleet`. cloud-mesh (SuperApp > Networks > Mesh) owns peer DISCOVERY and the per-peer token binding (phase 2); NO token value is ever stored here. `fleet` keeps full access for back-compat (the SuperApp-minted fleet bearer).",
   "fleet": {
-   "scopes": ["*"],
+   "scopes": [
+    "*"
+   ],
    "what": "the SuperApp-minted fleet bearer; full access (back-compat with the per-app endpoints being retired)"
   },
   "ops-console": {
-   "scopes": ["logs.read", "diag.read"],
+   "scopes": [
+    "logs.read",
+    "diag.read"
+   ],
    "what": "a read-only operations peer: logs and diagnostics only, never shell or browser control"
   },
   "browser-peer": {
-   "scopes": ["browser.control", "logs.read"],
+   "scopes": [
+    "browser.control",
+    "logs.read"
+   ],
    "what": "a peer allowed to drive the headless browser and read logs"
   }
  },
  "ipc_registry": {
   "_doc": "#1495/#1580 THE ONE DECLARED REGISTRY of the unified holder. Each on-device IPC route of every fleet app, as MCP tool <-> gateway route <-> IPC target <-> required ACL. Cloud-Webserver serves them ALL at `<route_prefix>/<app>/<route>` (app by fleet-manifest id or package; the authority is NEVER taken from the request, always `{package}` of a manifest app). `app_class` is `fleet` (every manifest app) or `package:<pkg>` (that one app). `legacy_route` is the per-app mesh endpoint this unifies; #1580 removes each legacy endpoint once its app is reachable here. `ipc.endpoint` is an id of `ipc_endpoints`. `status`: active | deprecated.",
   "route_prefix": "/ipc",
+  "app_aliases": {
+   "_doc": "#1682 `/ipc/<alias>/<route>` resolves to the manifest app id on the right. `adb-owner` is the stable name of whichever app owns the ADB shell (1_cicd/src/data/adb-owner.json; the flip script re-points it); the shell routes also keep the old `/ipc/aa_cloud-superapp/...` path through their `also_apps`.",
+   "adb-owner": "ac_cloud-c3-webserver"
+  },
   "entries": [
    {
     "route": "logs",
@@ -435,7 +447,12 @@
      "endpoint": "logexport",
      "kind": "provider",
      "authority": "{package}.logexport",
-     "methods": ["meta", "logs", "crashes", "export"],
+     "methods": [
+      "meta",
+      "logs",
+      "crashes",
+      "export"
+     ],
      "default_method": "export",
      "post": false
     }
@@ -519,14 +536,18 @@
      "endpoint": "headless",
      "kind": "provider",
      "authority": "{package}.headless",
-     "method_from_body": {"field": "on", "true": "cdp_on", "false": "cdp_off"},
+     "method_from_body": {
+      "field": "on",
+      "true": "cdp_on",
+      "false": "cdp_off"
+     },
      "post": true,
      "max_body": 1000000
     }
    },
    {
     "route": "status",
-    "app_class": "package:com.diegonmarcos.superapp",
+    "app_class": "package:com.diegonmarcos.cloudwebserver",
     "mcp_tool": null,
     "legacy_route": null,
     "acl": "shell.exec",
@@ -538,11 +559,14 @@
      "authority": "{package}.shellbroker",
      "method": "status",
      "post": false
-    }
+    },
+    "also_apps": [
+     "aa_cloud-superapp"
+    ]
    },
    {
     "route": "exec",
-    "app_class": "package:com.diegonmarcos.superapp",
+    "app_class": "package:com.diegonmarcos.cloudwebserver",
     "mcp_tool": null,
     "legacy_route": null,
     "acl": "shell.exec",
@@ -557,11 +581,14 @@
      "max_body": 8192,
      "require_cmd": true,
      "broker_status": true
-    }
+    },
+    "also_apps": [
+     "aa_cloud-superapp"
+    ]
    },
    {
     "route": "stream",
-    "app_class": "package:com.diegonmarcos.superapp",
+    "app_class": "package:com.diegonmarcos.cloudwebserver",
     "mcp_tool": null,
     "legacy_route": null,
     "acl": "shell.exec",
@@ -576,7 +603,10 @@
      "max_body": 8192,
      "require_cmd": true,
      "broker_status": true
-    }
+    },
+    "also_apps": [
+     "aa_cloud-superapp"
+    ]
    },
    {
     "route": "diag",
@@ -590,7 +620,11 @@
      "endpoint": "fleetdiag",
      "kind": "provider",
      "authority": "{package}.fleetdiag",
-     "methods": ["about", "logcat", "diagnose"],
+     "methods": [
+      "about",
+      "logcat",
+      "diagnose"
+     ],
      "default_method": "about",
      "post": false
     }

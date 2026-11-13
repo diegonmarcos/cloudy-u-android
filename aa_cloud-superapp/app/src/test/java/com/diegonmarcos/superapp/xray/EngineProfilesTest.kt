@@ -75,7 +75,10 @@ class EngineProfilesTest {
         assertEquals("an engine names a package the app does not have", emptyList<String>(), owned - dirs.toSet())
 
         val modules = JSONObject(File("../build.json").readText()).getJSONObject("modules")
-        val libs = modules.keys().asSequence().filter { it.startsWith("libs:") }.toList().sorted()
+        // #1682 each side checks its OWN link set: a module flagged adb_owner_only is linked only while this build is the ADB owner
+        val ownerSide = com.diegonmarcos.superapp.adbside.AdbSide.OWNER
+        val libs = modules.keys().asSequence().filter { it.startsWith("libs:") }
+            .filter { ownerSide || modules.optJSONObject(it)?.optBoolean("adb_owner_only", false) != true }.toList().sorted()
         assertTrue(libs.size > 30)
         for (l in libs) assertEquals("lib '$l' must be owned by exactly one engine", 1, EngineProfiles.ENGINES.count { l in it.libs })
         assertEquals("an engine names a lib build.json does not link", emptyList<String>(), EngineProfiles.ENGINES.flatMap { it.libs } - libs.toSet())

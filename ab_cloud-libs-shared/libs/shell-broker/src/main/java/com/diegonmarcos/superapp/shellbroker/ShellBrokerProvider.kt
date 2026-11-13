@@ -26,6 +26,14 @@ class ShellBrokerProvider : ContentProvider() {
         if (method == ShellWire.M_EXEC_STDIN) return execStdin(ctx, uid, arg.orEmpty(), extras)
         if (method == ShellWire.M_EXEC_OUT) return execOut(ctx, uid, arg.orEmpty(), extras)
         if (method == ShellWire.M_INVALIDATE) { ShellBroker.invalidate(ctx); return reply("{}") }
+        if (method == "keeper_get" || method == "keeper_set") {   // #1682 the owner's keep-alive switch for fleet clients (allowlist entry flag `keeper`)
+            val who = CallerId.of(ctx, uid, callingPackage) ?: return reply(ShellWire.encode(ShellResult.Denied("unknown caller")))
+            if (!ShellBroker.mayKeeper(ctx, who)) return reply(ShellWire.encode(ShellResult.Denied("no keeper grant")))
+            val hook = ShellBroker.keeperHook ?: return reply(ShellWire.encode(ShellResult.Failed("no keeper on this owner")))
+            val now = runCatching { hook(ctx, if (method == "keeper_set") arg == "1" else null) }.getOrNull()
+                ?: return reply(ShellWire.encode(ShellResult.Failed("keeper failed")))
+            return reply("{\"keeper\":$now}")
+        }
         if (method == ShellWire.M_AUDIT || method == ShellWire.M_CALLERS) {
             val who = CallerId.of(ctx, uid, callingPackage) ?: return reply(ShellWire.encode(ShellResult.Denied("unknown caller")))
             if (!ShellBroker.mayAudit(ctx, who)) return reply(ShellWire.encode(ShellResult.Denied("no audit grant")))

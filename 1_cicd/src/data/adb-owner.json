@@ -1,6 +1,5 @@
 {
   "_doc": "#1682 THE one declaration of the ADB owner: exactly one app at any time compiles libs:shizuku-adb-debug-tools (pairing, embedded adb, AdbShellServer, broker) and exports the shell-broker provider; every other app reaches it through libs:shell-client. ShellWire.BROKER_PKG / AUTHORITY and this lib's <queries> must name `package` (aa_cloud-superapp/test/test-shell-broker-guards.sh B1). The cut-over to the webserver (P3) flips `adb_owner` + `package` in ONE commit together with the provider move, so no commit has two owners.",
-  "adb_owner": "aa_cloud-superapp",
-  "package": "com.diegonmarcos.superapp",
-  "next_owner": { "module": "ac_cloud-c3-webserver", "package": "com.diegonmarcos.cloudwebserver", "phase": "P3 cut-over" }
+  "adb_owner": "ac_cloud-c3-webserver",
+  "package": "com.diegonmarcos.cloudwebserver"
 }

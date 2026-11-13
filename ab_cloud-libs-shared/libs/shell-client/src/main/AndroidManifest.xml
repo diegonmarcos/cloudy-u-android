@@ -2,6 +2,6 @@
 <!-- #1510 libs:shell-client: no component at all. No service, no receiver, no boot hook; only the visibility of the broker's app. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <queries>
-        <package android:name="com.diegonmarcos.superapp" />
+        <package android:name="com.diegonmarcos.cloudwebserver" />
     </queries>
 </manifest>

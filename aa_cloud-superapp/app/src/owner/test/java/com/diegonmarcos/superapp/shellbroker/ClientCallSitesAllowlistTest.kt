@@ -6,6 +6,7 @@ import com.diegonmarcos.superapp.network.AlwaysOnVpn
 import com.diegonmarcos.superapp.system.PackageVerifier
 import com.diegonmarcos.superapp.system.QuickDisplay
 import com.diegonmarcos.superapp.xray.LocationUseView
+import com.diegonmarcos.superapp.system.DeviceTuning
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -41,6 +42,18 @@ class ClientCallSitesAllowlistTest {
     @Test fun outputDoorKeepsTheInProcessBudget() = assertEquals(8 * 1024 * 1024, list.outCap(self))
     @Test fun auditGrantIsTheOwnerHostsOnly() {
         assertTrue(list.mayAudit(self))
-        assertEquals(listOf(self), list.callers().filter { list.mayAudit(it) })
+        assertEquals(listOf(self, "owner"), list.callers().filter { list.mayAudit(it) })   // owner = the logical identity that extends the SuperApp entry
+    }
+
+    // #1682 the privileged plane sent through the client (ClientPlaneWorker -> PrivilegedPlaneRun): every literal it runs is on the entry
+    @Test fun planeDeviceTuningCommandsAreAllowed() {
+        val es = DeviceTuning.entries()
+        assertTrue("device tuning declares entries", es.isNotEmpty())
+        for (e in es) { allowed("${e.verifyCmd} 2>&1"); e.apply.forEach { allowed("$it 2>&1") } }
+    }
+    @Test fun planeWhitelistAndSelfGrantsAreAllowed() {
+        allowed("dumpsys deviceidle whitelist +com.diegonmarcos.cloudmail 2>&1 && echo OK")
+        allowed("pm grant com.diegonmarcos.superapp android.permission.DUMP")
+        allowed("pm grant com.diegonmarcos.superapp android.permission.WRITE_SECURE_SETTINGS")
     }
 }

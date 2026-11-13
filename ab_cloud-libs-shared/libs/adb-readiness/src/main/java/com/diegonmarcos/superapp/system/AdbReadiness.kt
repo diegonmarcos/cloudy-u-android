@@ -67,6 +67,9 @@ object AdbReadiness {
         return runCatching {
             if (fresh) ShellClient.invalidate(ctx)
             val st = ShellClient.status(ctx)
+            // a client has no push from the owner: a verdict that flips is announced to the listeners here (no timer, only when asked)
+            val flipped = flow.value.usable != st.armed
+            if (flipped) publish(st)
             of(st).also { flow.value = it }
         }.getOrElse { State(false, "status check failed (${it.javaClass.simpleName})", "none", System.currentTimeMillis()) }
     }

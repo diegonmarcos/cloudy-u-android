@@ -113,7 +113,7 @@ fi
 
 # T6
 if grep -q 'AdbOwnerHost.tune(ctx)' <<<"$(code "$PPW")" \
-   && grep -q 'DeviceTuning.run(ctx, exec)' <<<"$(code "$APP/app/src/owner/java/com/diegonmarcos/superapp/system/PrivilegedPlaneHost.kt")" \
+   && grep -q 'DeviceTuning.run(ctx, exec)' <<<"$(code "$APP/app/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneRun.kt")" \
    && grep -q 'AdbOwnerHost.plane = PrivilegedPlaneHost' <<<"$(code "$APPKT")" \
    && grep -q 'AdbPairingService.onConnected' <<<"$(code "$APPKT")" \
    && grep -q 'OneTimeWorkRequestBuilder<PrivilegedPlaneWorker>' <<<"$(code "$APPKT")"; then

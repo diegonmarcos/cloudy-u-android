@@ -15,7 +15,7 @@ import java.io.File
  * Entry points: [ShellBrokerProvider] and [ShellBrokerService] (other apps), and [exec] for the SuperApp's own features.
  */
 object ShellBroker {
-    const val SELF = "com.diegonmarcos.superapp"
+    const val SELF = "owner"
     private const val ALLOWLIST_ASSET = "shell-allowlist.json"
     private const val SPOOL_DIR = "shell-stdin"
     private const val AUDIT_FILE = "shell-broker-audit.jsonl"
@@ -83,6 +83,10 @@ object ShellBroker {
         core(ctx).also { it.reapIfIdle() }.execOut(caller, cmd, timeoutMs)
 
     fun mayAudit(ctx: Context, caller: String): Boolean = core(ctx).mayAudit(caller)
+    fun mayKeeper(ctx: Context, caller: String): Boolean = core(ctx).mayKeeper(caller)
+
+    /** #1682 the owner's keep-alive switch as the provider's keeper_get / keeper_set reach it: [set] null = read; returns the switch now. Installed by the owner side. */
+    @Volatile var keeperHook: ((Context, Boolean?) -> Boolean)? = null
 
     /** #1512 The stdin door ([BrokerCore.execStdin]): [input] is the client's descriptor, read for at most [size] bytes into the cache spool. */
     fun execStdin(ctx: Context, caller: String, cmd: String, input: java.io.InputStream, size: Long,

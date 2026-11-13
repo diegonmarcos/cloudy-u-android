@@ -53,6 +53,9 @@ pub struct Entry {
     pub status: String,
     pub what: String,
     pub ipc: Ipc,
+    /// #1682 other manifest app ids that reach this same entry (the SuperApp's old `/ipc/aa_cloud-superapp/exec` path after the ADB
+    /// owner moved): same handler, same ACL, same provider (the entry's own `package:` class fills `{package}`).
+    pub also_apps: Vec<String>,
 }
 
 /// The whole declared registry: scopes, per-peer access, and the routes.
@@ -62,6 +65,8 @@ pub struct Registry {
     pub scopes: BTreeMap<String, String>,
     pub peers: BTreeMap<String, Vec<String>>,
     pub entries: Vec<Entry>,
+    /// #1682 `/ipc/<alias>/...` -> a manifest app id (`adb-owner` -> the app that owns the ADB shell).
+    pub app_aliases: BTreeMap<String, String>,
 }
 
 /// A caller after the fleet-bearer gate: its id and the scopes the registry grants it.
@@ -132,6 +137,7 @@ impl Registry {
                 acl,
                 status: e["status"].as_str().unwrap_or("active").to_string(),
                 what: s(&e["what"]),
+                also_apps: strs(&e["also_apps"]),
                 ipc: Ipc {
                     endpoint,
                     kind: s(&ipc["kind"]),
@@ -150,12 +156,14 @@ impl Registry {
         if entries.is_empty() {
             return Err("ipc_registry.entries is empty".into());
         }
-        Ok(Registry { prefix, scopes, peers, entries })
+        let app_aliases: BTreeMap<String, String> = reg["app_aliases"].as_object()
+            .map(|o| o.iter().filter(|(k, _)| !k.starts_with('_')).map(|(k, v)| (k.clone(), s(v))).collect()).unwrap_or_default();
+        Ok(Registry { prefix, scopes, peers, entries, app_aliases })
     }
 
     /// Does this entry apply to this app? `fleet` is every manifest app; otherwise the class is `package:<pkg>` or the app id.
     pub fn applies(e: &Entry, app: &App) -> bool {
-        e.app_class == "fleet" || e.app_class == format!("package:{}", app.package) || e.app_class == app.id
+        e.app_class == "fleet" || e.app_class == format!("package:{}", app.package) || e.app_class == app.id || e.also_apps.iter().any(|a| *a == app.id)
     }
 
     /// The registry routes that apply to one app (for the index listing and the UI).
@@ -230,6 +238,8 @@ pub fn gateway(reg: &Registry, apps: &[App], rest: &str, req: &Req, peer: &Peer,
         Some((a, r)) => (a, r.trim_matches('/')),
         None => (rest, ""),
     };
+    // #1682 `adb-owner` is the stable name of whichever app owns the ADB shell (registry app_aliases), never a package taken from the request.
+    let app_seg = reg.app_aliases.get(app_seg).map(String::as_str).unwrap_or(app_seg);
     let app = match apps.iter().find(|a| a.id == app_seg || a.package == app_seg) {
         Some(a) => a,
         None => return err(404, &format!("{} is not an app of the fleet manifest", app_seg)),
@@ -280,7 +290,9 @@ pub fn gateway(reg: &Registry, apps: &[App], rest: &str, req: &Req, peer: &Peer,
         }
     }
     let arg = if entry.ipc.post { String::from_utf8_lossy(&req.body).to_string() } else { query_arg(req) };
-    let authority = entry.ipc.authority.replace("{package}", &app.package);
+    // the entry's own `package:` class names the provider's app (an `also_apps` alias reaches the SAME provider as the owner path)
+    let provider_pkg = entry.app_class.strip_prefix("package:").unwrap_or(&app.package);
+    let authority = entry.ipc.authority.replace("{package}", provider_pkg);
     match src(&authority, &method, &arg) {
         Ok((_, payload)) => {
             if entry.ipc.broker_status {
@@ -344,7 +356,7 @@ mod tests {
         let sink = seen.clone();
         let f: Box<LogSource> = Box::new(move |authority: &str, method: &str, arg: &str| {
             sink.lock().unwrap().push((authority.to_string(), method.to_string(), arg.to_string()));
-            if authority.starts_with("com.diegonmarcos.superapp.shellbroker") {
+            if authority.ends_with(".shellbroker") {
                 Ok(("application/json".into(), "{\"state\":\"ok\",\"exitCode\":0}".into()))
             } else {
                 Ok(("application/json".into(), format!("{{\"m\":\"{}\",\"a\":\"{}\"}}", method, arg)))
@@ -428,7 +440,8 @@ mod tests {
         assert!(s.iter().any(|x| x.0 == "com.diegonmarcos.cloudbrowser.headless" && x.1 == "command"));
         assert!(s.iter().any(|x| x.0 == "com.diegonmarcos.cloudbrowser.headless" && x.1 == "cdp_on"));
         assert!(s.iter().any(|x| x.0 == "com.diegonmarcos.cloudbrowser.headless" && x.1 == "cdp_off"));
-        assert!(s.iter().any(|x| x.0 == "com.diegonmarcos.superapp.shellbroker" && x.1 == "exec_json"));
+        let owner_auth = format!("{}.shellbroker", r.entries.iter().find(|e| e.route == "exec" && e.ipc.endpoint == "shellbroker").unwrap().app_class.trim_start_matches("package:"));
+        assert!(s.iter().any(|x| x.0 == owner_auth && x.1 == "exec_json"));
         let bad = |body: &str| gateway(&r, &apps(), "aa_cloud-superapp/exec", &post("/ipc/aa_cloud-superapp/exec", body), &fleet_peer(), &no_wake(), &{ let f: Box<LogSource> = Box::new(|_: &str, _: &str, _: &str| panic!("refused body must not reach the phone")); f }).status;
         assert_eq!(bad("not json"), 400);
         assert_eq!(bad("{\"cmd\":\"  \"}"), 400);
@@ -456,5 +469,31 @@ mod tests {
         let a = gateway(&reg(), &apps(), "drive", &get("/ipc/drive"), &fleet_peer(), &no_wake(), &src);
         let av: Value = serde_json::from_slice(&a.body).unwrap();
         assert!(av["routes"].as_array().unwrap().iter().any(|r| r["route"] == "/ipc/<app>/logs"));
+    }
+
+    /// #1682 `/ipc/adb-owner/exec` and the old `/ipc/aa_cloud-superapp/exec` reach the SAME handler and the SAME provider (the owner's),
+    /// whichever app owns the shell: the registry is re-pointed at the Webserver the way the flip script does it.
+    #[test]
+    fn adb_owner_route_and_the_superapp_alias_resolve_to_the_same_handler() {
+        let mut m: Value = serde_json::from_str(&std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../data/api-ipc-map.json")).unwrap()).unwrap();
+        let owner_pkg = "com.diegonmarcos.cloudwebserver";
+        for e in m["ipc_registry"]["entries"].as_array_mut().unwrap() {
+            if e["ipc"]["endpoint"] == "shellbroker" {
+                e["app_class"] = json!(format!("package:{}", owner_pkg));
+                e["also_apps"] = json!(["aa_cloud-superapp"]);
+            }
+        }
+        m["ipc_registry"]["app_aliases"] = json!({"adb-owner": "ac_cloud-c3-webserver"});
+        let r = Registry::from_map(&m).unwrap();
+        let mut a = apps();
+        a.push(App { id: "ac_cloud-c3-webserver".into(), name: "Cloud Webserver".into(), package: owner_pkg.into(), engines: vec![] });
+        let (seen, src) = spy();
+        for path in ["adb-owner/exec", "aa_cloud-superapp/exec"] {
+            let resp = gateway(&r, &a, path, &post(&format!("/ipc/{}", path), "{\"cmd\":\"id\"}"), &fleet_peer(), &no_wake(), &src);
+            assert_eq!(resp.status, 200, "{} resolves", path);
+        }
+        let s = seen.lock().unwrap().clone();
+        assert_eq!(s.len(), 2);
+        assert!(s.iter().all(|x| x.0 == format!("{}.shellbroker", owner_pkg) && x.1 == "exec_json"), "both reach the owner's provider: {:?}", s);
     }
 }

@@ -2,10 +2,32 @@
   "_doc": "#1682 SECURITY (architect decision): no Rust HTTP / SSHd / API / mesh route relays a shell command, EXCEPT the routes listed here. Each is an existing /ipc holder route (data/api-ipc-map.json::ipc_registry, server/src/ipc.rs), kept by rule 16 for the c3 peers-control tools: it runs only after the mesh-only + bearer gate (meshlogs::authorize), only for a peer whose scopes hold `acl`, and the phone side is the shell broker's per-caller allowlist under `caller` (default deny). The AdbShellServer itself stays loopback + token. Guard: test/test-c3-webserver-shell-relay.sh. A new relay route, a changed caller / scope / method, or a lost auth / scope check turns it red. `status` is not listed: it reads the broker's state and runs no command.",
   "caller": "mesh",
   "caller_package": "com.diegonmarcos.cloudwebserver",
-  "scope_peers": ["fleet"],
-  "read_only_methods": ["status"],
+  "scope_peers": [
+    "fleet"
+  ],
+  "read_only_methods": [
+    "status"
+  ],
   "allowed": [
-    { "route": "exec", "app_class": "package:com.diegonmarcos.superapp", "acl": "shell.exec", "method": "exec_json", "path": "/ipc/aa_cloud-superapp/exec" },
-    { "route": "stream", "app_class": "package:com.diegonmarcos.superapp", "acl": "shell.exec", "method": "stream_json", "path": "/ipc/aa_cloud-superapp/stream" }
+    {
+      "route": "exec",
+      "app_class": "package:com.diegonmarcos.cloudwebserver",
+      "acl": "shell.exec",
+      "method": "exec_json",
+      "path": "/ipc/adb-owner/exec",
+      "alias_paths": [
+        "/ipc/aa_cloud-superapp/exec"
+      ]
+    },
+    {
+      "route": "stream",
+      "app_class": "package:com.diegonmarcos.cloudwebserver",
+      "acl": "shell.exec",
+      "method": "stream_json",
+      "path": "/ipc/adb-owner/stream",
+      "alias_paths": [
+        "/ipc/aa_cloud-superapp/stream"
+      ]
+    }
   ]
 }

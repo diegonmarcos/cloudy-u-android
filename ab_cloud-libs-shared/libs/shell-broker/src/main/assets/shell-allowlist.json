@@ -7,6 +7,7 @@
   "com.diegonmarcos.superapp": {
    "outMaxBytes": 8388608,
    "audit": true,
+   "keeper": true,
    "why": "The broker's own host: X-Ray, Background policy, Super Saving, device tuning, perms, installs, diagnostics (internal callers).",
    "segments": true,
    "allow": [
@@ -184,6 +185,14 @@
     "dumpsys activity processes | head -200",
     "dumpsys package com.diegonmarcos.superapp | grep -E -A70 'requested permissions:|install permissions:|runtime permissions:' | head -260"
    ]
+  },
+  "owner": {
+    "extends": "com.diegonmarcos.superapp",
+    "why": "#1682 the ADB OWNER's own in-process identity (ShellBroker.SELF): its terminal, Tester, keeper self-grant and audit page. A logical key, not a package: no binder caller can resolve to it, so the mesh relay (the Webserver's package, alias mesh) stays restricted. It carries every rule of the SuperApp's entry plus the owner-only ones below.",
+    "allow": [
+      {"id": "owner-tester", "why": "the Tester's id -u round trip", "re": "^id( -u)?$"},
+      {"id": "owner-selfgrant-wss", "why": "the keeper's self-grant of WRITE_SECURE_SETTINGS to the Cloud Webserver once it owns the channel", "re": "^pm grant com\\.diegonmarcos\\.cloudwebserver android\\.permission\\.WRITE_SECURE_SETTINGS$"}
+    ]
   },
   "com.diegonmarcos.cloudstore": {
    "why": "Store installs and updates, the Play Protect switch, grants, force-stop.",
