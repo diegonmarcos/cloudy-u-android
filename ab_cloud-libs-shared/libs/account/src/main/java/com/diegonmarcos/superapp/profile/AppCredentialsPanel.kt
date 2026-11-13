@@ -64,6 +64,7 @@ fun AppCredentialsPanel() {
         }
         for (e in AppCredentialsContract.CATALOG.filter { it.prefix }) PrefixedCard(e, vault) { said = it; tick++ }
         for (spec in MusicDeviceGrant.SPECS.values) MusicDeviceCard(spec, vault) { said = it; tick++ }
+        MailSignInsCard(vault, tick) { said = it; tick++ }
     }
 }
 
@@ -150,5 +151,37 @@ private fun CredentialRow(id: String, filed: Boolean, e: AppCredentialsContract.
             add(KitAction("Save", AppCredentialsTags.save(id)) { val v = draft; draft = ""; submit(v) })
             if (filed) add(KitAction("Clear", AppCredentialsTags.clear(id)) { draft = ""; submit(null) })
         })
+    }
+}
+
+/** #1693 Mail's OAuth sign-ins waiting for approval: each runs the device grant here and files the tokens Cloud Mail takes. */
+@Composable
+private fun MailSignInsCard(vault: AccountVault, tick: Int, said: (String) -> Unit) {
+    val ctx = LocalContext.current
+    val p = LocalKitPalette.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
+    var busy by remember { mutableStateOf<String?>(null) }
+    var line by remember { mutableStateOf("") }
+    val pending = remember(tick, busy) { MailOAuthPending.list(vault) }
+    KitCard {
+        Text("Mail sign-ins", color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
+        Text(if (pending.isEmpty()) "none waiting: start one in Cloud Mail (Connect, an account whose provider signs in with OAuth)" else "${pending.size} waiting for approval",
+            color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+        if (line.isNotBlank()) Text(line, color = p.textSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag(AppCredentialsTags.field("mailoauth:line")))
+        for (r in pending) KitActionBar(listOf(
+            KitAction(if (busy == r.email) "Waiting for approval…" else "Sign in ${r.email}", AppCredentialsTags.save("mailoauth:${r.email}"), enabled = busy == null) {
+                busy = r.email; line = "asking for a code…"
+                scope.launch {
+                    val o = MailOAuthPending.run(ctx, r, onCode = { c -> line = "Open ${c.url} and enter ${c.userCode}"; runCatching { uri.openUri(c.url) } })
+                    busy = null
+                    when (o) {
+                        is MusicDeviceGrant.Outcome.Connected -> { line = ""; said("${r.email} signed in: Cloud Mail can take it") }
+                        is MusicDeviceGrant.Outcome.Failed -> { line = o.why; said(o.why) }
+                    }
+                }
+            },
+            KitAction("Discard", AppCredentialsTags.clear("mailoauth:${r.email}"), enabled = busy == null) { MailOAuthPending.remove(vault, r.email); said("discarded ${r.email}") },
+        ))
     }
 }

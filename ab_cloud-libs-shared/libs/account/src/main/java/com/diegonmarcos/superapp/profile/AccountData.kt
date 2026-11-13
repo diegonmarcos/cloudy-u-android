@@ -271,6 +271,8 @@ object AccountData {
                 // #1693 the fleet's mail accounts (address + password + endpoints) for Cloud Mail: default deny, the `mail.accounts` grant
                 // #1693 a credential typed in Cloud Account's App credentials page, per-credential grant `cred.<id>`, default deny
                 com.diegonmarcos.superapp.fleetendpoints.AppCredentialsContract.METHOD -> AppCredentialsStore.read(ctx, caller(ctx), arg)
+                // #1693 a Mail OAuth sign-in request (no secret in it): grant `mail.oauth`, default deny
+                com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_REQUEST -> MailOAuthPending.accept(ctx, caller(ctx), arg)
                 com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.METHOD -> {
                     val who = caller(ctx)
                     val vault = AccountVault(ctx)

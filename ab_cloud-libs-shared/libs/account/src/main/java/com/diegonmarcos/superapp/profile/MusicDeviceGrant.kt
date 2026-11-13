@@ -59,15 +59,20 @@ object MusicDeviceGrant {
 
     /** The tokens once the person approved, null while pending; any other provider error is thrown ([Http]). */
     fun poll(post: Post, spec: Spec, clientId: String, secret: String, deviceCode: String): Tokens? = try {
-        parseTokens(post.form(spec.tokenUrl, mapOf("client_id" to clientId, "client_secret" to secret, "device_code" to deviceCode,
-            "grant_type" to "urn:ietf:params:oauth:grant-type:device_code")))
+        parseTokens(post.form(spec.tokenUrl, buildMap {
+            put("client_id", clientId); if (secret.isNotBlank()) put("client_secret", secret)
+            put("device_code", deviceCode); put("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
+        }))
     } catch (e: Http) { if (stillPending(e.body)) null else throw e }
 
     /** Files [t] where Cloud Browser takes it (`music.<id>.access|refresh|expires`); `expires` is an absolute epoch-ms, 0 = never. */
-    fun file(vault: AccountVault, spec: Spec, t: Tokens, nowMs: Long) {
-        AppCredentialsStore.put(vault, "music.${spec.id}.access", t.access)
-        t.refresh?.let { AppCredentialsStore.put(vault, "music.${spec.id}.refresh", it) }
-        AppCredentialsStore.put(vault, "music.${spec.id}.expires", if (t.expiresInSec > 0) (nowMs + t.expiresInSec * 1000).toString() else "0")
+    fun file(vault: AccountVault, spec: Spec, t: Tokens, nowMs: Long) = fileUnder(vault, "music.${spec.id}", t, nowMs)
+
+    /** The same filing under any catalogue prefix (`mail.oauth.<address>` for a Mail sign-in). */
+    fun fileUnder(vault: AccountVault, prefix: String, t: Tokens, nowMs: Long) {
+        AppCredentialsStore.put(vault, "$prefix.access", t.access)
+        t.refresh?.let { AppCredentialsStore.put(vault, "$prefix.refresh", it) }
+        AppCredentialsStore.put(vault, "$prefix.expires", if (t.expiresInSec > 0) (nowMs + t.expiresInSec * 1000).toString() else "0")
     }
 
     /**
@@ -98,10 +103,13 @@ object MusicDeviceGrant {
         }
     }
 
+    /** The real transport (a redirect is never followed). */
+    fun defaultPost(): Post = HttpPost
+
     private val HttpPost = Post { url, fields ->
         val c = URL(url).openConnection() as HttpURLConnection
         try {
-            c.requestMethod = "POST"; c.doOutput = true; c.connectTimeout = 15_000; c.readTimeout = 20_000
+            c.requestMethod = "POST"; c.doOutput = true; c.instanceFollowRedirects = false; c.connectTimeout = 15_000; c.readTimeout = 20_000   // no redirect: the device code is never replayed to another host
             c.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
             c.outputStream.use { it.write(fields.entries.joinToString("&") { (k, v) -> URLEncoder.encode(k, "UTF-8") + "=" + URLEncoder.encode(v, "UTF-8") }.toByteArray()) }
             val ok = c.responseCode in 200..299

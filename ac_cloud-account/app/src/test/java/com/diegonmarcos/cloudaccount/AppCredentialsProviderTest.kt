@@ -108,6 +108,8 @@ class AppCredentialsProviderTest {
         assertTrue(v.grants.allow(AccountVault.MAIL_PACKAGE, "cred.mail.password.me_example_org"))
         assertTrue(v.grants.allow(AccountVault.MAIL_PACKAGE, "cred.mail.token.me_example_org"))
         assertTrue(v.grants.allow(AccountVault.MAIL_PACKAGE, "cred.mail.gateway_token"))
+        assertTrue(v.grants.allow(AccountVault.MAIL_PACKAGE, "mail.oauth"))
+        assertTrue(v.grants.allow(AccountVault.MAIL_PACKAGE, "cred.mail.oauth.me_example_org.access"))
         assertFalse("Tasks is granted only its own", v.grants.allow("com.diegonmarcos.cloudagenda", "cred.git.github_token"))
         v.grants.revoke(AccountVault.DRIVE_PACKAGE, "cred.git.github_token"); v.seedDefaults()
         assertFalse(v.grants.allow(AccountVault.DRIVE_PACKAGE, "cred.git.github_token"))

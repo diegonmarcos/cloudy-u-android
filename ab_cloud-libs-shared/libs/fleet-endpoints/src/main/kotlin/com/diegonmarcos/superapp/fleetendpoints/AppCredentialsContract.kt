@@ -58,6 +58,7 @@ object AppCredentialsContract {
         // Cloud Mail's secrets (it types none): a mailbox password / API token per address, and the gateway token.
         Entry("mail.password.", "Mailbox password", "one per mailbox: id mail.password.<address> (letters, digits, _ and - only: other characters become _, lower case)", listOf(PKG_MAIL)),
         Entry("mail.token.", "Mailbox API token", "one per JMAP-token mailbox: id mail.token.<address> (same spelling as the password)", listOf(PKG_MAIL)),
+        Entry("mail.oauth.", "Mail OAuth token", "filed by a Mail sign-in run in Cloud Account (App credentials > Mail sign-ins): mail.oauth.<address>.access|refresh|expires", listOf(PKG_MAIL)),
         Entry("mail.gateway_token", "Mail gateway token", "the bearer token of Cloud Mail > Account > Authentication", listOf(PKG_MAIL)),
     )
 
