@@ -17,7 +17,7 @@ internal object StripDoors {
         LocalDoors.State.ON -> on; LocalDoors.State.OFF -> off; LocalDoors.State.UNKNOWN -> UNKNOWN_TINT
     }
 
-    /** The one dot under WebS / SSHd: green up, red down, grey not checked (ADB's dot colours). */
+    /** The one dot under WebS / SSHd: filled = up, outline = down, faint outline = not checked (ADB's dot style, #1721). */
     fun dot(s: LocalDoors.State): Int = AdbPeerDots.tint(when (s) { LocalDoors.State.ON -> true; LocalDoors.State.OFF -> false; LocalDoors.State.UNKNOWN -> null })
 
     fun describe(s: LocalDoors.State, ps: List<LocalDoors.Probe>): String =

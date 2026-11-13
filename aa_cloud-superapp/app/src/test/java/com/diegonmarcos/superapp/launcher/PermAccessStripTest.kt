@@ -25,7 +25,7 @@ import org.robolectric.annotation.Config
 
 /**
  * #1673 the Permission Access Status row in the home status block.
- *   P1 the row sits directly under the resources line (RAM / storage / CPU / battery), inside the right cluster
+ *   P1 the row sits under the resources line (RAM / storage / CPU / battery) on the date's line, right-aligned (#1721)
  *   P2 status-block parity: every element the strip drew before is still drawn
  *   P3 the watch registers its callbacks only while started (visible) and releases all of them when stopped (hidden)
  *   P4 the strip's lifecycle starts the watch on ON_START and releases it on ON_STOP
@@ -49,13 +49,15 @@ class PermAccessStripTest : KitPageHarness() {
 
     private fun b(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
 
-    @Test fun `P1 the row is directly under the resources line`() {
+    @Test fun `P1 the row is under the resources line, on the date line`() {
         showStrip()
         val row = b("permaccess:row")
         val res = listOf("strip:ram", "strip:storage", "strip:cpu").map { b(it) }
+        // #1721 the row now shares the date's line (it was directly under the resources line).
         val resBottom = res.maxOf { it.bottom }
         assertTrue("row top ${row.top} is above the resources line bottom $resBottom", row.top >= resBottom - 0.5f)
-        assertTrue("row is not right under the resources line (gap ${row.top - resBottom})", row.top - resBottom < 12f * compose.activity.resources.displayMetrics.density)
+        val clk = b("strip:clock")
+        assertEquals("row is centred on the date's line", clk.center.y, row.center.y, 2f * compose.activity.resources.displayMetrics.density)
         val clock = b("strip:clock")
         assertTrue("row ${row.left} runs into the clock ${clock.right}", row.left >= clock.right)
         val rightEdge = maxOf(res.maxOf { it.right }, b("strip:battery").right)
@@ -125,5 +127,26 @@ class PermAccessStripTest : KitPageHarness() {
         compose.onNodeWithTag("permaccess:openperms", useUnmergedTree = true).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(1, perms)
+    }
+
+    @Test fun `P6 #1721 no access points at the Webserver ADB Shell page, with the owner's real reason`() {
+        var adb = 0
+        showKit { DashboardSheet(compose.activity, { null }, onPerms = {}, initial = PermAccess.Dashboard.NoAccess(
+            PermAccessUi.whyNot(com.diegonmarcos.superapp.shellclient.ShellResult.NeedsArm)), onAdb = { adb++ }) }
+        compose.onNodeWithTag("permaccess:noaccess", useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag("permaccess:openadb", useUnmergedTree = true).performScrollTo().performClick()
+        compose.waitForIdle()
+        assertEquals(1, adb)
+        for (stale in listOf("armed for the SuperApp", "SuperApp's ADB shell", "Configs > Perms > ADB"))
+            assertFalse("stale in-process wording: $stale", PermAccess.NO_ACCESS_HELP.contains(stale) || PermAccessUi.whyNot(com.diegonmarcos.superapp.shellclient.ShellResult.NeedsArm).contains(stale))
+        assertTrue(PermAccess.NO_ACCESS_HELP.contains("Cloud C3 Webserver"))
+    }
+
+    @Test fun `P7 #1721 every owner answer maps to a reason, an Ok with data is data`() {
+        val r = com.diegonmarcos.superapp.shellclient.ShellResult
+        assertTrue(PermAccessUi.whyNot(r.Denied("not allowlisted")).contains("refused"))
+        assertTrue(PermAccessUi.whyNot(r.Failed("timeout", true)).contains("did not complete"))
+        assertTrue(PermAccessUi.whyNot(r.Ok(1, "", "boom", "adb")).contains("exit 1"))
+        val d = PermAccessUi.load({ null }); assertTrue(d is PermAccess.Dashboard.NoAccess)
     }
 }

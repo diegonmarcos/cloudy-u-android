@@ -9,8 +9,7 @@ import java.util.Locale
  *  - [Sensor] / [SensorState]: the three live icons under the resources line (Mic, Camera, Location) and how a reading maps
  *    to ACTIVE (coloured), IDLE (grey) or UNKNOWN (grey + "?", the launcher cannot see that sensor's state).
  *  - [GROUPS]: every permission group Android's own Privacy dashboard reports, each with the app-ops that count as a use of it.
- *  - [parseDumpsys]: the system's app-ops history as `dumpsys appops --op <OP>` prints it (read through the SuperApp's shell
- *    broker, rule reads-1), into one [Use] per (group, package): the access records in the window and the last time.
+ *  - [parseDumpsys]: the system's app-ops history as `dumpsys appops --op <OP>` prints it (read through ShellClient from the ADB owner, Cloud C3 Webserver), into one [Use] per (group, package): the access records in the window and the last time.
  *  - [dashboard]: the 24 h dashboard rows (used groups first by last use, unused groups after, greyed), with the +N overflow.
  *
  * Never fake data: a group nobody used in the window says so; no access to the history is [Dashboard.NoAccess] with the reason.
@@ -183,5 +182,5 @@ object PermAccess {
 
     /** The explanation the row and the dashboard show when the launcher has no access to the history / a sensor. */
     const val NO_ACCESS_HELP = "Android keeps the permission history in its app-ops service, which only the system or an ADB " +
-        "shell can read. Arm the SuperApp's ADB shell (Configs > Perms > ADB shell / Wireless debugging) and open this again."
+        "shell can read. The ADB shell belongs to Cloud C3 Webserver: arm it there (Webserver > ADB Shell / Wireless debugging) and open this again."
 }

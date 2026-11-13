@@ -54,7 +54,7 @@ internal fun BatteryUsageBody() {
         AggCaption("Battery use per app")
         KitSegmented(listOf(CYCLE to "Cycle", MONTH to "Month"), window, { window = it; picked = 0 }, tag = "$TAG:window")
         val d = data ?: run { AggCaption("Reading…"); return@Column }
-        if (d.channel == null) KitListRow("Per-app mAh needs the ADB channel", secondary = "Pair it on the ADB Shell page",
+        if (d.channel == null) KitListRow("Per-app mAh needs the ADB channel", secondary = "Pair it on the Cloud C3 Webserver ADB Shell page",
             pill = "Not paired" to KitState.IDLE, tag = "$TAG:pair", onClick = { ShellClient.openArmPage(ctx) })
         val periods = if (window == CYCLE) d.cycles.take(MAX_PERIODS).map(::cyclePeriod)
             else BatteryCycles.months(d.cycles).take(MAX_PERIODS).map(::monthPeriod)

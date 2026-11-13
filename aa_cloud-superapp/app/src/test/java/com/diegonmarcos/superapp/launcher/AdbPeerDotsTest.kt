@@ -56,6 +56,29 @@ class AdbPeerDotsTest : KitPageHarness() {
         assertEquals("unknown transport is grey", listOf(AdbPeerDots.OFF), AdbPeerDots.tints(ShellStatus(true, true, "x", "", 1L)))
     }
 
+    /** #1721 WebS / ADB / SSHd: no red/green; filled = connected, outline = disconnected (the real verdict, never a proxy). */
+    @Test fun `D5 connected is a filled dot, disconnected an outline dot, no red or green`() {
+        for (t in listOf(AdbPeerDots.UP, AdbPeerDots.DOWN, AdbPeerDots.OFF)) {
+            val c = androidx.compose.ui.graphics.Color(t)
+            assertTrue("tint ${Integer.toHexString(t)} is neutral (white), not red/green", c.red == c.green && c.green == c.blue)
+        }
+        assertTrue(AdbPeerDots.isFilled(AdbPeerDots.tints(up).single()))
+        assertTrue(!AdbPeerDots.isFilled(AdbPeerDots.tints(down).single()))
+        assertTrue("brokerOnly (wireless debugging off) is not filled", !AdbPeerDots.isFilled(AdbPeerDots.tints(brokerOnly).single()))
+        assertTrue("not checked is not filled", !AdbPeerDots.isFilled(AdbPeerDots.tint(null)))
+        for (st in listOf(com.diegonmarcos.superapp.network.LocalDoors.State.ON)) assertTrue(AdbPeerDots.isFilled(StripDoors.dot(st)))
+        for (st in listOf(com.diegonmarcos.superapp.network.LocalDoors.State.OFF, com.diegonmarcos.superapp.network.LocalDoors.State.UNKNOWN)) assertTrue(!AdbPeerDots.isFilled(StripDoors.dot(st)))
+    }
+
+    @Test fun `D5b the drawn dot says connected or disconnected`() {
+        val model = StatusStripModel(compose.activity)
+        model.noteBroker(up, pin = true)
+        showKit { Column(Modifier.wrapContentSize()) { StatusStripBody(model, compose.activity) } }
+        val sd = compose.onNodeWithTag("strip:adb:dot:0", useUnmergedTree = true).fetchSemanticsNode().config
+            .getOrElseNullable(androidx.compose.ui.semantics.SemanticsProperties.StateDescription) { null }
+        assertEquals("connected", sd)
+    }
+
     @Test fun `D2 one dot under ADB`() {
         val model = StatusStripModel(compose.activity)
         model.noteBroker(down, pin = true)

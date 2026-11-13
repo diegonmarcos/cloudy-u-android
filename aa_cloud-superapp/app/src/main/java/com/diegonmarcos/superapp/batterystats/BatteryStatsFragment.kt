@@ -159,7 +159,7 @@ class BatteryStatsFragment : KitComposeFragment() {
             val pv = priv
             when {
                 pv == null -> Line("asking the privileged channel…")
-                pv.channel == null -> Line("${BatteryRows.DASH} (needs the privileged shell channel: Configs › Network › ADB Shell)")
+                pv.channel == null -> Line("${BatteryRows.DASH} (needs the privileged shell channel: Cloud C3 Webserver > ADB Shell)")
                 pv.apps.isEmpty() -> Line("${BatteryRows.DASH} (no per-app block from ${pv.channel})")
                 else -> AppTable(pv.apps)
             }

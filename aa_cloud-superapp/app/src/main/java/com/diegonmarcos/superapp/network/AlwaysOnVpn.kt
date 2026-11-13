@@ -47,7 +47,7 @@ object AlwaysOnVpn {
     fun lockdownCommand(on: Boolean) = "settings put secure $KEY_LOCKDOWN ${if (on) 1 else 0}"
 
     /** The reason shown when the privileged channel is not there to change it. */
-    const val NO_CHANNEL = "No privileged shell is armed (Configs > ADB Shell: pair Wireless debugging, or start Shizuku), so this app cannot change Android's setting. Open Android VPN settings to switch it there."
+    const val NO_CHANNEL = "No privileged shell is armed (pair Wireless debugging on the Cloud C3 Webserver ADB Shell page), so this app cannot change Android's setting. Open Android VPN settings to switch it there."
 
     fun read(ctx: Context): Reading {
         val cr = ctx.contentResolver

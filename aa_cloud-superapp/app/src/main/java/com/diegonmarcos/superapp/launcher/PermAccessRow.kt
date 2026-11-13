@@ -56,7 +56,7 @@ import kotlin.math.roundToInt
 /**
  * #1673 "Permission Access Status": the row of Mic / Camera / Location icons directly under the resources line of the home status
  * block (right cluster), and the 24 h privacy dashboard its tap opens. Live states come from [PermAccessWatch] (callbacks, only while
- * the launcher is visible); the dashboard reads the app-ops history once when it opens, through the SuperApp's shell broker.
+ * the launcher is visible); the dashboard reads the app-ops history once when it opens, through ShellClient from the ADB owner (Cloud C3 Webserver).
  */
 object PermAccessUi {
 
@@ -82,25 +82,49 @@ object PermAccessUi {
     val LOCATION = vector("location", "M12,2C8.13,2 5,5.13 5,9c0,5.25 7,13 7,13s7,-7.75 7,-13c0,-3.87 -3.13,-7 -7,-7zM12,11.5c-1.38,0 -2.5,-1.12 -2.5,-2.5s1.12,-2.5 2.5,-2.5 2.5,1.12 2.5,2.5 -1.12,2.5 -2.5,2.5z")
     fun icon(s: Sensor): ImageVector = when (s) { Sensor.MIC -> MIC; Sensor.CAMERA -> CAMERA; Sensor.LOCATION -> LOCATION }
 
-    /** The broker's reading, or null when no ADB shell is armed / it refused (then the dashboard says why). Blocking. */
+    /**
+     * Why the last [brokerRead] returned null, in the owner's real words (the ADB state of Cloud C3 Webserver, or the answer it
+     * gave to the app-ops read): the dashboard shows this instead of a generic "no shell armed" (#1721).
+     */
+    @Volatile var lastReadWhy: String? = null
+
+    /** #1721 a failed round trip through the ADB owner, as the sentence the dashboard shows. Pure. */
+    fun whyNot(r: com.diegonmarcos.superapp.shellclient.ShellResult): String = when (r) {
+        is com.diegonmarcos.superapp.shellclient.ShellResult.Ok -> "The Cloud C3 Webserver ADB shell answered with exit ${r.exitCode} and no app-ops data${r.stderr.lineSequence().firstOrNull { it.isNotBlank() }?.let { ": " + it.take(100) } ?: ""}."
+        com.diegonmarcos.superapp.shellclient.ShellResult.NeedsArm -> "The Cloud C3 Webserver ADB shell is not armed."
+        is com.diegonmarcos.superapp.shellclient.ShellResult.Denied -> "The Cloud C3 Webserver refused the app-ops read (${r.reason.take(120)})."
+        is com.diegonmarcos.superapp.shellclient.ShellResult.Failed -> "The Cloud C3 Webserver did not complete the app-ops read (${r.reason.take(120)})."
+    }
+
+    /** The reading through the ADB OWNER (Cloud C3 Webserver, via [ShellClient]); null = unavailable, and [lastReadWhy] says why. Blocking. */
     fun brokerRead(ctx: Context): (String) -> String? = { cmd ->
         runCatching {
-            if (!com.diegonmarcos.superapp.system.AdbReadiness.check(ctx).usable) null else (com.diegonmarcos.superapp.shellclient.ShellClient.execOut(ctx, cmd, 60_000L) as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.stdout
-        }.getOrNull()
+            val st = com.diegonmarcos.superapp.system.AdbReadiness.check(ctx)
+            if (!st.usable) { lastReadWhy = "Cloud C3 Webserver ADB shell: ${st.linkText()}"; null }
+            else when (val r = com.diegonmarcos.superapp.shellclient.ShellClient.execOut(ctx, cmd, 60_000L)) {
+                // the commands are `;`-joined: the exit code is the LAST dumpsys's, the data is in stdout either way
+                is com.diegonmarcos.superapp.shellclient.ShellResult.Ok -> { lastReadWhy = null; r.stdout.takeIf { it.isNotBlank() } ?: run { lastReadWhy = whyNot(r); null } }
+                else -> { lastReadWhy = whyNot(r); null }
+            }
+        }.getOrElse { lastReadWhy = "The app-ops read through Cloud C3 Webserver failed (${it.javaClass.simpleName})."; null }
     }
 
     /** The dashboard read: [PermAccess.DASHBOARD_CMD] through [read], parsed for the 24 h window. Blocking. */
     fun load(read: (String) -> String?, nowMs: Long = System.currentTimeMillis()): PermAccess.Dashboard {
+        lastReadWhy = null
         val text = runCatching { read(PermAccess.DASHBOARD_CMD) }.getOrNull()
-            ?: return PermAccess.Dashboard.NoAccess("No ADB shell is armed for the SuperApp, or it refused the app-ops read.")
+            ?: return PermAccess.Dashboard.NoAccess(lastReadWhy ?: "The Cloud C3 Webserver ADB shell did not answer the app-ops read.")
         if (!text.contains("Package ") && !text.contains("Uid ")) return PermAccess.Dashboard.NoAccess(
             "The system answered without app-ops data: ${text.lineSequence().firstOrNull { it.isNotBlank() }?.take(120) ?: "empty output"}")
         return PermAccess.dashboard(PermAccess.parseDumpsys(text, nowMs), nowMs)
     }
 
     fun show(ctx: Context, host: View, rect: IntRect, read: (String) -> String? = brokerRead(ctx)) {
-        KitPopup.show(host, rect, KitPopup.Align.END) { close -> DashboardSheet(ctx, read, onPerms = { close(); openPerms(ctx) }) }
+        KitPopup.show(host, rect, KitPopup.Align.END) { close -> DashboardSheet(ctx, read, onPerms = { close(); openPerms(ctx) }, onAdb = { close(); openAdbShell(ctx) }) }
     }
+
+    /** #1721 the ADB owner's page: Cloud C3 Webserver > ADB Shell (never an in-process page). */
+    fun openAdbShell(ctx: Context) { runCatching { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctx) } }
 
     fun openPerms(ctx: Context) {
         runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "Privacy dashboard", emptySet()) }
@@ -136,7 +160,7 @@ internal fun PermAccessStatusRow(watch: PermAccessWatch, onOpen: (IntRect) -> Un
 
 /** The 24 h privacy dashboard: one row per group Android reports, apps' icons + "+N", counts / last time, expandable. */
 @Composable
-internal fun DashboardSheet(ctx: Context, read: (String) -> String?, onPerms: () -> Unit, initial: PermAccess.Dashboard? = null) {
+internal fun DashboardSheet(ctx: Context, read: (String) -> String?, onPerms: () -> Unit, initial: PermAccess.Dashboard? = null, onAdb: () -> Unit = { PermAccessUi.openAdbShell(ctx) }) {
     var dash by remember { mutableStateOf(initial) }
     LaunchedEffect(Unit) {
         if (dash == null) dash = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { PermAccessUi.load(read) }
@@ -146,7 +170,7 @@ internal fun DashboardSheet(ctx: Context, read: (String) -> String?, onPerms: ()
         Text("Privacy dashboard · past 24 hours", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
         when (val d = dash) {
             null -> Text("Reading the system's permission history...", color = DIM, fontSize = 11.sp, modifier = Modifier.testTag("permaccess:loading"))
-            is PermAccess.Dashboard.NoAccess -> NoAccessBlock(d.reason, onPerms)
+            is PermAccess.Dashboard.NoAccess -> NoAccessBlock(d.reason, onPerms, onAdb)
             is PermAccess.Dashboard.Ready -> {
                 if (d.empty) Text("No app used a permission in the past 24 hours.", color = DIM, fontSize = 11.sp, modifier = Modifier.testTag("permaccess:empty"))
                 for (row in d.rows) GroupRow(ctx, row)
@@ -160,13 +184,16 @@ internal fun DashboardSheet(ctx: Context, read: (String) -> String?, onPerms: ()
 private val DIM = Color(0xAAFFFFFF)
 
 @Composable
-private fun NoAccessBlock(reason: String, onPerms: () -> Unit) {
+private fun NoAccessBlock(reason: String, onPerms: () -> Unit, onAdb: () -> Unit) {
     Column(Modifier.testTag("permaccess:noaccess").padding(top = 4.dp)) {
         Text("Permission history unavailable", color = Color(0xFFFBBF24), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Text(reason, color = Color.White, fontSize = 11.sp)
         Text(PermAccess.NO_ACCESS_HELP, color = DIM, fontSize = 11.sp, modifier = Modifier.padding(top = 2.dp))
         for (g in PermAccess.GROUPS) Text("${g.label}: unknown", color = Color(0x55FFFFFF), fontSize = 10.sp)
-        Text("Open Configs > Perms", color = Color(0xFF60A5FA), fontSize = 12.sp, fontWeight = FontWeight.Bold,
+        Text("Open Webserver > ADB Shell", color = Color(0xFF60A5FA), fontSize = 12.sp, fontWeight = FontWeight.Bold,
+            modifier = Modifier.testTag("permaccess:openadb").padding(top = 6.dp)
+                .background(Color(0x2260A5FA), RoundedCornerShape(6.dp)).clickable { onAdb() }.padding(horizontal = 8.dp, vertical = 4.dp))
+        Text("Open Configs > Perms (app permissions)", color = Color(0xFF60A5FA), fontSize = 12.sp, fontWeight = FontWeight.Bold,
             modifier = Modifier.testTag("permaccess:openperms").padding(top = 6.dp)
                 .background(Color(0x2260A5FA), RoundedCornerShape(6.dp)).clickable { onPerms() }.padding(horizontal = 8.dp, vertical = 4.dp))
     }

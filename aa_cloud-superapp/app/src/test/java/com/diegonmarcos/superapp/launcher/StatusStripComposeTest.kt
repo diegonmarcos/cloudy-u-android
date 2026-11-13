@@ -73,6 +73,19 @@ class StatusStripComposeTest : KitPageHarness() {
     }
 
     @Test
+    fun `S1c #1721 resources line shares the network labels line, access row shares the date line`() {
+        showStrip()
+        val d = compose.activity.resources.displayMetrics.density
+        fun b(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        // the network labels' own text line: the chip's top, label height = its height minus the dots row (3 dp)
+        val net = b("strip:cellular").let { it.top + (it.height - 3f * d) / 2f }
+        val res = b("strip:ram").center.y
+        assertEquals("resources line centre $res vs network labels centre $net", net, res, 2f * d)
+        assertEquals("access row on the date line", b("strip:clock").center.y, b("permaccess:row").center.y, 2f * d)
+        assertTrue("resources top ${b("strip:ram").top} not above network top ${b("strip:cellular").top} by more than 2dp", b("strip:ram").top >= b("strip:cellular").top - 2f * d)
+    }
+
+    @Test
     fun `S2 the clock is dated and centred`() {
         val model = showStrip()
         compose.runOnUiThread { model.refreshTime() }

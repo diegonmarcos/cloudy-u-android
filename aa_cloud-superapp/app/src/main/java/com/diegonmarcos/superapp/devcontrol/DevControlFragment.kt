@@ -330,7 +330,7 @@ class DevControlFragment : KitComposeFragment() {
                 }
                 val ops = com.diegonmarcos.superapp.xray.LocationUseView.opsLines(text)
                 sys.text = when {
-                    text == null -> "— needs the ADB shell (Configs ▸ ADB Shell)"
+                    text == null -> "— needs the ADB shell (Cloud C3 Webserver > ADB Shell)"
                     ops.isEmpty() -> "no location op recorded"
                     else -> com.diegonmarcos.superapp.xray.LocationUseView.summary(text) + "\n" + ops.joinToString("\n")
                 }

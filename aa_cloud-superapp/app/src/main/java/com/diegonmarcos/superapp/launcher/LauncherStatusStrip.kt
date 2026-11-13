@@ -879,12 +879,9 @@ internal fun StatusStripBody(model: StatusStripModel, ctx: Context) {
             // CENTRE: the clock, below the camera punch-hole / pet row.
             clock = { StripCluster(layout.getValue(StatusBarDecl.CENTRE), model, ctx, host) },
             // #1673 the resources line, and directly under it the Permission Access Status row (Mic / Camera / Location).
-            right = {
-                Column(horizontalAlignment = Alignment.End) {
-                    StripCluster(layout.getValue(StatusBarDecl.RIGHT), model, ctx, host)
-                    PermAccessStatusRow(model.permAccess) { r -> PermAccessUi.show(ctx, host, r) }
-                }
-            },
+            // #1721 two slots, one column: the resources line shares the network cluster's text line, the access row shares the date's line.
+            right = { StripCluster(layout.getValue(StatusBarDecl.RIGHT), model, ctx, host) },
+            access = { PermAccessStatusRow(model.permAccess) { r -> PermAccessUi.show(ctx, host, r) } },
             stopwatch = { StopwatchReadout(host) },
         )
         // ── Bottom hairline: faint white separator. ShellActivity nudges the toolbar island 6 dp below it. ──
@@ -1016,14 +1013,15 @@ internal fun StripRow(
     reservePx: Int, dotsPx: Int, gapPx: Int, modifier: Modifier,
     left: @Composable () -> Unit, reserve: @Composable (Int) -> Unit, clock: @Composable () -> Unit, right: @Composable () -> Unit,
     stopwatch: @Composable () -> Unit = {},
+    access: @Composable () -> Unit = {},
 ) {
     androidx.compose.ui.layout.Layout(
-        contents = listOf(left, { reserve(reservePx) }, clock, right, stopwatch), modifier = modifier,
-    ) { (lm, resm, cm, rm, sm), c ->
+        contents = listOf(left, { reserve(reservePx) }, clock, right, stopwatch, access), modifier = modifier,
+    ) { (lm, resm, cm, rm, sm, am), c ->
         val free = androidx.compose.ui.unit.Constraints()
         val l = lm.map { it.measure(free) }; val res = resm.map { it.measure(free) }
         val ck = cm.map { it.measure(free) }; val r = rm.map { it.measure(free) }
-        val sw = sm.map { it.measure(free) }
+        val sw = sm.map { it.measure(free) }; val ac = am.map { it.measure(free) }
         fun w(ps: List<androidx.compose.ui.layout.Placeable>) = ps.maxOfOrNull { it.width } ?: 0
         fun h(ps: List<androidx.compose.ui.layout.Placeable>) = ps.maxOfOrNull { it.height } ?: 0
         val room = if (c.hasBoundedWidth) c.maxWidth else w(ck) + 2 * maxOf(w(l), w(r)) + 2 * gapPx
@@ -1031,8 +1029,8 @@ internal fun StripRow(
         val s = stripScale(room - 2 * gapPx, needed)
         val reserveH = h(res)
         val clockBlock = reserveH + (h(ck) * s).roundToInt() + dotsPx
-        val lh = (h(l) * s).roundToInt(); val rh = (h(r) * s).roundToInt() + dotsPx
-        val height = maxOf(clockBlock, lh, rh).coerceIn(c.minHeight, c.maxHeight)
+        val lh = (h(l) * s).roundToInt()
+        val height = maxOf(clockBlock, lh).coerceIn(c.minHeight, c.maxHeight)
         val width = room.coerceIn(c.minWidth, c.maxWidth)
         layout(width, height) {
             val origin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
@@ -1042,7 +1040,14 @@ internal fun StripRow(
             val top = (height - clockBlock) / 2
             res.forEach { it.place((width - it.width) / 2, top) }
             ck.forEach { place(it, ((width - it.width * s) / 2f).roundToInt(), top + reserveH) }
-            r.forEach { place(it, (width - it.width * s).roundToInt(), (height - rh) / 2) }
+            // #1721 shared tokens (StripLayout): the resources line is centred on the network labels' line (the left column
+            // minus its dots row), the access row on the date's line.
+            val leftTop = (height - lh) / 2
+            val resTop = StripLayout.resourcesTop(leftTop, (h(l) * s).roundToInt() - (dotsPx * s).roundToInt(), (h(r) * s).roundToInt())
+            r.forEach { place(it, (width - it.width * s).roundToInt(), resTop) }
+            val dateTop = top + reserveH
+            val accTop = StripLayout.accessTop(dateTop, (h(ck) * s).roundToInt(), (h(ac) * s).roundToInt())
+            ac.forEach { place(it, (width - it.width * s).roundToInt(), accTop) }
             // #1646 the stopwatch readout: centred in the empty region between the left cluster and the date, scaled down
             // (never moved onto either) when that region is narrower than it.
             val lEnd = (w(l) * s).roundToInt() + gapPx
@@ -1055,6 +1060,14 @@ internal fun StripRow(
             }
         }
     }
+}
+
+/** #1721 the strip's shared vertical layout tokens: the right column's two rows line up with the left column and the date. */
+internal object StripLayout {
+    /** Top of the resources line: its centre equals the centre of the network labels' line (top [labelTop], height [labelH]). */
+    fun resourcesTop(labelTop: Int, labelH: Int, resH: Int): Int = labelTop + (labelH - resH) / 2
+    /** Top of the access row: its centre equals the centre of the date line (top [dateTop], height [dateH]). */
+    fun accessTop(dateTop: Int, dateH: Int, accH: Int): Int = dateTop + (dateH - accH) / 2
 }
 
 /** The one factor the strip's clusters and clock are drawn at: 1 when [needed] fits [room], else room / needed. */
