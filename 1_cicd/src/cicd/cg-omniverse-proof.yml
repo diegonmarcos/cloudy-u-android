@@ -209,6 +209,7 @@ jobs:
           # #1400 Galaxy tabs: the fresh install opens one tab, floor796; a Store world adds a second tab
           launch("-e", "section", "galaxy", wait=0); shot("09-galaxy-tab-floor796", 25)
           # #1701 floor796 loads the plain address (Galaxy = Cloud-Browser, #1694): the Page diagnostics sheet shows Failed requests
+          shot("13-galaxy-floor796-after-2min", 110)   # the canvas engine loads a 175 MB file: give a software-GL emulator time
           tap("Page diagnostics"); shot("14-galaxy-floor796-diagnostics", 4)
           sh("shell", "input", "swipe", "540", "1700", "540", "700", "400"); shot("15-galaxy-floor796-diagnostics-failed", 1)
           sh("shell", "input", "keyevent", "KEYCODE_BACK")
