@@ -7,6 +7,8 @@
 #   O4  #1682 P3 step 5: the SuperApp builds as a CLIENT, so nothing under aa_cloud-superapp/app/src/main or src/test (or a shared lib outside
 #       the owner libs) names a class of libs:adb-shell-core / shizuku-adb-debug-tools / shell-broker; those classes are used only from
 #       src/owner and src/owner/test (the client variant, src/client, names none of them either)
+#   O5  #1682 P4 parity: the client AdbSide has exactly the members of the owner AdbSide (a feature added on one side only breaks one build),
+#       and the client's ADB page (AdbOwnerLinkFragment) opens the owner's page and shows its readiness
 #   O3  once adb-owner.json names an owner other than aa_cloud-superapp the ratchet is EMPTY (the cut-over moved every user)
 # Then each violation is planted and must turn red.
 set -u
@@ -64,11 +66,24 @@ def client_users():
                     for m in rx.finditer(t):
                         out.add(os.path.relpath(p, R) + " -> " + m.group(1)); break
     return out
+def side_members(t):
+    t = strip(t)
+    return sorted(set(re.findall(r"^\s{4}(?:fun|val|const val|class)\s+(\w+)", t, re.M)))
+def parity(owner_src, client_src, link_src):
+    bad = []
+    o, c = side_members(owner_src), side_members(client_src)
+    bad += ["owner-only member " + m for m in o if m not in c] + ["client-only member " + m for m in c if m not in o]
+    ls = strip(link_src)
+    if "ShellClient.openArmPage(" not in ls: bad.append("client page does not open the owner's page")
+    if "AdbReadiness.state" not in ls: bad.append("client page does not show the owner's readiness")
+    return bad
 def checks(users, links, rat, owner):
     out = []
     lf, lg = set(rat["files"]), set(rat["gradle"])
     out.append(("O1 no new in-process ADB user", sorted((users - lf) | (links - lg))))
     out.append(("O2 every ratchet entry still is a user (else delete it)", sorted((lf - users) | (lg - links))))
+    SD = "aa_cloud-superapp/app/src/%s/java/com/diegonmarcos/superapp/"
+    out.append(("O5 client AdbSide matches the owner AdbSide; the client page links to the owner", parity(rd(os.path.join(R, SD % "owner" + "adbside/AdbSide.kt")), rd(os.path.join(R, SD % "client" + "adbside/AdbSide.kt")), rd(os.path.join(R, SD % "client" + "configs/AdbOwnerLinkFragment.kt")))))
     out.append(("O4 the client-built SuperApp sources name no owner class", sorted(client_users())))
     out.append(("O3 after the cut-over no in-process user is left", sorted(lf | lg) if owner != "aa_cloud-superapp" else []))
     return out
@@ -84,5 +99,9 @@ for label, rid, u, l, r, o in (
         ("the flip with users left", "O3", U, L, FAKE, "ac_cloud-c3-webserver")):
     red = any(n.startswith(rid) and b for n, b in checks(u, l, r, o))
     print(("  PASS: " if red else "  FAIL: ") + f"planted: {label} turns {rid} red"); fails += 0 if red else 1
+_o = rd(os.path.join(R, "aa_cloud-superapp/app/src/owner/java/com/diegonmarcos/superapp/adbside/AdbSide.kt")); _c = rd(os.path.join(R, "aa_cloud-superapp/app/src/client/java/com/diegonmarcos/superapp/adbside/AdbSide.kt")); _l = rd(os.path.join(R, "aa_cloud-superapp/app/src/client/java/com/diegonmarcos/superapp/configs/AdbOwnerLinkFragment.kt"))
+for label, o2, c2, l2 in (("a member only on the owner AdbSide", _o + "\n    fun extraOwnerOnly() = 1\n", _c, _l), ("a member only on the client AdbSide", _o, _c + "\n    fun extraClientOnly() = 1\n", _l),
+                          ("a client page that no longer opens the owner", _o, _c, _l.replace("ShellClient.openArmPage(", "x(")), ("a client page with no readiness", _o, _c, _l.replace("AdbReadiness.state", "y"))):
+    red = bool(parity(o2, c2, l2)); print(("  PASS: " if red else "  FAIL: ") + f"planted: {label} turns O5 red"); fails += 0 if red else 1
 print("FAIL" if fails else "PASS: one ADB owner ratchet"); sys.exit(1 if fails else 0)
 PY

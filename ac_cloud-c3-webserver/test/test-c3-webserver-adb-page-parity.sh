@@ -30,5 +30,23 @@ for f in FIELDS + ["fun WebAdbShellPage("]:
     print(("  PASS: " if red else "  FAIL: ") + "dropping %s turns red" % f); fails += 0 if red else 1
 for label, sh, o in (("the section dispatch dropped", shell.replace("WebAdbShellPage(open)", "X"), False), ("the old file back", shell, True)):
     red = bool(check(page, sh, o)); print(("  PASS: " if red else "  FAIL: ") + label + " turns red"); fails += 0 if red else 1
+# #1682 P4 per-feature parity: every feature of the SuperApp's ADB Shell page (its AdbShellFragment: the four tabs, each a lib composable)
+# is on the OWNER page (src/owner AdbOwnerSide) too, plus the owner's own: readiness + Connect + re-check, the Tester, the channel log and
+# the lib's pairing / modes page. The SuperApp's fragment is read, so a tab added there without the owner page fails here.
+ROOT = os.path.abspath(os.path.join(APP, ".."))
+OWNER = rd(os.path.join(APP, "src-tauri/gen/android/app/src/owner/java/com/diegonmarcos/cloudwebserver/owner/AdbOwnerSide.kt"))
+FRAG = re.sub(r"//[^\n]*|/\*.*?\*/", "", rd(os.path.join(ROOT, "aa_cloud-superapp/app/src/owner/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt")), flags=re.S)
+SA_TABS = re.findall(r"AdbCockpitModel\.Tab\.\w+ -> (\w+)\(\)", FRAG)
+OWN_FEATURES = ["AdbReadiness.connect(", "AdbReadiness.check(ctx, fresh = true)", "ShellBroker.exec(ctx, ShellBroker.SELF, \"id -u\")", "ChannelLog.shared", "AdbShellPage()", "AdbReadiness.state.collectAsState()"]
+def owner_bad(owner, tabs):
+    miss = [t for t in tabs if t + "()" not in owner]
+    miss += [f for f in OWN_FEATURES if f not in owner]
+    if len(tabs) < 4: miss.append("the SuperApp fragment hosts fewer than 4 tabs (parsed %s)" % tabs)
+    return miss
+b = owner_bad(OWNER, SA_TABS)
+print(("  PASS: " if not b else "  FAIL: ") + "P4 the owner page hosts every SuperApp ADB feature (%s + owner's own)" % ", ".join(SA_TABS) + ("" if not b else " -> " + ", ".join(b))); fails += 1 if b else 0
+for f in SA_TABS + OWN_FEATURES:
+    red = bool(owner_bad(OWNER.replace(f, "X"), SA_TABS)); print(("  PASS: " if red else "  FAIL: ") + "P4 dropping %s from the owner page turns red" % f); fails += 0 if red else 1
+red = bool(owner_bad(OWNER, SA_TABS + ["AdbNewTab"])); print(("  PASS: " if red else "  FAIL: ") + "P4 a new SuperApp tab missing on the owner page turns red"); fails += 0 if red else 1
 print("FAIL" if fails else "PASS: ADB Shell page parity"); sys.exit(1 if fails else 0)
 PY
