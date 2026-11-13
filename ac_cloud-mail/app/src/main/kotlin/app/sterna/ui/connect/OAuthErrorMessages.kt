@@ -22,6 +22,9 @@ fun oauthFailureSpec(
         OAuthMessage(R.string.connect_oauth_declined)
     error == "expired_token" ->
         OAuthMessage(R.string.connect_oauth_expired)
+    // #1693 the grant runs in Cloud Account: not installed, not granted or too old.
+    error == "cloud_account_unavailable" ->
+        OAuthMessage(R.string.connect_oauth_cloud_account)
     // Must stay gated on an AADSTS code: this sentence names Microsoft, while `description` is
     // prose from whatever server answered — a Keycloak saying "invalid_client, contact your
     // administrator" matches `admin`. Real refusals carry a code.

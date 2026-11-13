@@ -1447,4 +1447,5 @@
     <string name="cloud_secret_taken">repris depuis Cloud Account</string>
     <string name="cloud_secret_take">Le reprendre depuis Cloud Account</string>
     <string name="cloud_secret_set">Le définir dans Cloud Account</string>
+    <string name="connect_oauth_cloud_account">La connexion OAuth est assurée par Cloud Account : installez-le puis réessayez</string>
 </resources>

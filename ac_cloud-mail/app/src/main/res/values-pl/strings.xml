@@ -1455,4 +1455,5 @@
     <string name="cloud_secret_taken">pobrano z Cloud Account</string>
     <string name="cloud_secret_take">Pobierz z Cloud Account</string>
     <string name="cloud_secret_set">Ustaw w Cloud Account</string>
+    <string name="connect_oauth_cloud_account">Logowanie OAuth obsługuje Cloud Account: zainstaluj go i spróbuj ponownie</string>
 </resources>

@@ -59,41 +59,41 @@ class MailOAuthSessionsTest {
     @Test fun pollIsPendingThenSuccess() {
         server.enqueue(MockResponse().setBody(device)); val h = started(startBundle(req())).handle
         server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":"authorization_pending"}"""))
-        assertEquals("pending", answer(MailOAuthSessions.poll(h)).state)
+        assertEquals("pending", answer(MailOAuthSessions.pollOnce(h)).state)
         server.enqueue(MockResponse().setBody("""{"access_token":"AT","refresh_token":"RT","expires_in":3600,"token_type":"Bearer","id_token":"IDT"}"""))
-        val ok = answer(MailOAuthSessions.poll(h))
+        val ok = answer(MailOAuthSessions.pollOnce(h))
         assertEquals("success", ok.state); assertEquals("AT", ok.accessToken); assertEquals("RT", ok.refreshToken); assertEquals("IDT", ok.idToken)
         val body = server.let { it.takeRequest(); it.takeRequest(); it.takeRequest().body.readUtf8() }
         assertTrue(body.contains("grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code")); assertTrue(body.contains("device_code=DC")); assertFalse("a public client sends no secret", body.contains("client_secret"))
-        assertEquals("the handle is spent once the tokens are handed over", "expired_token", answer(MailOAuthSessions.poll(h)).error)
+        assertEquals("the handle is spent once the tokens are handed over", "expired_token", answer(MailOAuthSessions.pollOnce(h)).error)
     }
 
     @Test fun pollSlowDownAndDenied() {
         server.enqueue(MockResponse().setBody(device)); val h = started(startBundle(req())).handle
         server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":"slow_down"}"""))
-        assertEquals("slow_down", answer(MailOAuthSessions.poll(h)).state)
+        assertEquals("slow_down", answer(MailOAuthSessions.pollOnce(h)).state)
         server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":"access_denied"}"""))
-        val d = answer(MailOAuthSessions.poll(h)); assertEquals("failed", d.state); assertEquals("access_denied", d.error)
+        val d = answer(MailOAuthSessions.pollOnce(h)); assertEquals("failed", d.state); assertEquals("access_denied", d.error)
     }
 
     @Test fun aFailureCarriesDescriptionAndAadsts() {
         server.enqueue(MockResponse().setBody(device)); val h = started(startBundle(req())).handle
         server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":"authorization_declined","error_description":"AADSTS650051: app not approved."}"""))
-        val f = answer(MailOAuthSessions.poll(h))
+        val f = answer(MailOAuthSessions.pollOnce(h))
         assertEquals("authorization_declined", f.error); assertEquals("AADSTS650051", f.aadsts); assertTrue(f.description.contains("not approved"))
     }
 
     @Test fun aMalformedTokenAnswerCarriesNoToken() {
         server.enqueue(MockResponse().setBody(device)); val h = started(startBundle(req())).handle
         server.enqueue(MockResponse().setBody("""{"access_token":"SECRET-AT","refresh_token":"SECRET-RT","expires_in":36"""))
-        val f = answer(MailOAuthSessions.poll(h))
+        val f = answer(MailOAuthSessions.pollOnce(h))
         assertEquals("failed", f.state); assertFalse(f.json().contains("SECRET-AT")); assertFalse(f.json().contains("SECRET-RT")); assertFalse(f.toString().contains("SECRET"))
     }
 
     @Test fun anUnreadableAnswerIsNotANetworkFailureAndNamesNoBody() {
         server.enqueue(MockResponse().setBody(device)); val h = started(startBundle(req())).handle
         server.enqueue(MockResponse().setHeader("Content-Type", "text/html").setBody("<html><body>SECRET-PROXY-PAGE: authentication required</body></html>"))
-        val f = answer(MailOAuthSessions.poll(h))
+        val f = answer(MailOAuthSessions.pollOnce(h))
         assertEquals("failed", f.state); assertTrue(f.error != "network_error"); assertFalse(f.json().contains("SECRET-PROXY-PAGE"))
     }
 
@@ -114,7 +114,7 @@ class MailOAuthSessionsTest {
     @Test fun anUnreachableServerIsReportedWithoutNamingIt() {
         server.enqueue(MockResponse().setBody(device)); val h = started(startBundle(req())).handle
         val port = server.port; server.shutdown()
-        val f = answer(MailOAuthSessions.poll(h))
+        val f = answer(MailOAuthSessions.pollOnce(h))
         assertEquals("failed", f.state); assertEquals("network_error", f.error)
         val text = f.json()
         assertFalse(text.contains("localhost")); assertFalse(text.contains("127.0.0.1")); assertFalse(text.contains(port.toString()))
@@ -124,8 +124,8 @@ class MailOAuthSessionsTest {
     @Test fun anExpiredSessionIsExpiredToken() {
         server.enqueue(MockResponse().setBody(device)); val h = started(startBundle(req())).handle
         MailOAuthSessions.nowMs = { System.currentTimeMillis() + 2_000_000L }
-        assertEquals("expired_token", answer(MailOAuthSessions.poll(h)).error)
-        assertEquals("expired_token", answer(MailOAuthSessions.poll("nope")).error)
+        assertEquals("expired_token", answer(MailOAuthSessions.pollOnce(h)).error)
+        assertEquals("expired_token", answer(MailOAuthSessions.pollOnce("nope")).error)
     }
 
     @Test fun aRedirectNeverReplaysTheDeviceCodeOrTheStart() {
@@ -138,14 +138,14 @@ class MailOAuthSessionsTest {
             assertEquals(0, second.requestCount)
             server.enqueue(MockResponse().setBody(device)); val h = started(startBundle(req())).handle
             server.enqueue(MockResponse().setResponseCode(307).setHeader("Location", second.url("/steal").toString()))
-            val f = answer(MailOAuthSessions.poll(h))
+            val f = answer(MailOAuthSessions.pollOnce(h))
             assertEquals("the device code must not be replayed to the redirect target", 0, second.requestCount)
             assertEquals("failed", f.state); assertEquals("http_307", f.error)
         } finally { second.shutdown() }
     }
 
     @Test fun theProviderWireIsRefusedForABadRequestAndDemandsNoSecret() {
-        val b = MailOAuthSessions.start(req().copy(tokenEndpoint = "https://evil.net/t").json())
+        val b = MailOAuthSessions.start(androidx.test.core.app.ApplicationProvider.getApplicationContext(), req().copy(tokenEndpoint = "https://evil.net/t").json())
         assertFalse(b.getBoolean(MailOAuthContract.KEY_OK)); assertNotNull(b.getString(MailOAuthContract.KEY_ERROR))
     }
 }

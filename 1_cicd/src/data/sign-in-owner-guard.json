@@ -111,14 +111,6 @@
   },
   "exempt": [
     {
-      "path": "ac_cloud-mail/",
-      "rules": [
-        "device-grant"
-      ],
-      "why": "Cloud Mail: every password / token field is gone (taken from Cloud Account, #1693); what remains is the OAuth device grant in core/jmap OAuthClient, which moves to Cloud Account in the next Mail step",
-      "until": "pending: Mail OAuth device grant"
-    },
-    {
       "path": "ac_cloud-vault/",
       "rules": [
         "credential-prompt",

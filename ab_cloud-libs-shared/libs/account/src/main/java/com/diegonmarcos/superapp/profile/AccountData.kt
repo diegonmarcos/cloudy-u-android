@@ -275,7 +275,7 @@ object AccountData {
                 com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_START, com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_POLL -> {
                     val who = caller(ctx)
                     if (who != ctx.packageName && !AccountVault(ctx).grants.allow(who, com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.GRANT_REQUEST)) error("no grant for $who")
-                    else if (method == com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_START) MailOAuthSessions.start(arg) else MailOAuthSessions.poll(arg)
+                    else if (method == com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_START) MailOAuthSessions.start(ctx, arg) else MailOAuthSessions.poll(ctx, arg)
                 }
                 com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.METHOD -> {
                     val who = caller(ctx)

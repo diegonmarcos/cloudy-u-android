@@ -1544,4 +1544,5 @@
     <string name="cloud_secret_taken">taken from Cloud Account</string>
     <string name="cloud_secret_take">Take it from Cloud Account</string>
     <string name="cloud_secret_set">Set it in Cloud Account</string>
+    <string name="connect_oauth_cloud_account">The OAuth sign-in is run by Cloud Account: install it, then try again</string>
 </resources>

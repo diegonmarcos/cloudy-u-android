@@ -1435,4 +1435,5 @@
     <string name="cloud_secret_taken">aus Cloud Account übernommen</string>
     <string name="cloud_secret_take">Aus Cloud Account übernehmen</string>
     <string name="cloud_secret_set">In Cloud Account festlegen</string>
+    <string name="connect_oauth_cloud_account">Die OAuth-Anmeldung übernimmt Cloud Account: installieren Sie es und versuchen Sie es erneut</string>
 </resources>

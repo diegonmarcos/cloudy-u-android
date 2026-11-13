@@ -23,7 +23,9 @@ object MailOAuthSessions {
     private fun ok(json: String) = Bundle().apply { putBoolean(MailOAuthContract.KEY_OK, true); putString(MailOAuthContract.KEY_JSON, json) }
     private fun refuse(why: String) = Bundle().apply { putBoolean(MailOAuthContract.KEY_OK, false); putString(MailOAuthContract.KEY_ERROR, why) }
 
-    fun start(arg: String?): Bundle {
+    /** Owner only: the grant runs in Cloud Account's process, for a caller the provider already checked. */
+    fun start(ctx: android.content.Context, arg: String?): Bundle {
+        if (!SignInOwner.isOwner(ctx)) return refuse("the mail sign-in runs in Cloud Account only")
         val r = MailOAuthContract.parse(arg) ?: return refuse("the request was refused: check its endpoints and address")
         return startUnchecked(r)
     }
@@ -45,7 +47,13 @@ object MailOAuthSessions {
         } catch (_: IOException) { refuse("the provider could not be reached") }
     }
 
-    fun poll(handle: String?): Bundle {
+    fun poll(ctx: android.content.Context, handle: String?): Bundle {
+        if (!SignInOwner.isOwner(ctx)) return refuse("the mail sign-in runs in Cloud Account only")
+        return pollOnce(handle)
+    }
+
+    /** One token request for [handle] (the seam the tests use). */
+    fun pollOnce(handle: String?): Bundle {
         val s = sessions[handle.orEmpty()] ?: return ok(failed("expired_token").json())
         if (nowMs() > s.deadlineMs) { sessions.remove(handle); return ok(failed("expired_token").json()) }
         val a = try {

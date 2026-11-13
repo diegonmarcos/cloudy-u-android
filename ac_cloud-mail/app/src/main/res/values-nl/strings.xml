@@ -1438,4 +1438,5 @@
     <string name="cloud_secret_taken">overgenomen uit Cloud Account</string>
     <string name="cloud_secret_take">Overnemen uit Cloud Account</string>
     <string name="cloud_secret_set">Instellen in Cloud Account</string>
+    <string name="connect_oauth_cloud_account">De OAuth-aanmelding wordt door Cloud Account uitgevoerd: installeer het en probeer opnieuw</string>
 </resources>

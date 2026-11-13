@@ -1458,4 +1458,5 @@
     <string name="cloud_secret_taken">взято из Cloud Account</string>
     <string name="cloud_secret_take">Взять из Cloud Account</string>
     <string name="cloud_secret_set">Задать в Cloud Account</string>
+    <string name="connect_oauth_cloud_account">Вход через OAuth выполняет Cloud Account: установите его и повторите попытку</string>
 </resources>

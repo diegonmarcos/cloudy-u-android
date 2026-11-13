@@ -1445,4 +1445,5 @@
     <string name="cloud_secret_taken">trazido do Cloud Account</string>
     <string name="cloud_secret_take">Trazer do Cloud Account</string>
     <string name="cloud_secret_set">Definir no Cloud Account</string>
+    <string name="connect_oauth_cloud_account">O início de sessão OAuth é feito pelo Cloud Account: instale-o e tente novamente</string>
 </resources>

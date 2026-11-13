@@ -59,7 +59,7 @@ class OutlookSignIn(
         job = scope.launch {
             try {
                 _progress.value = OutlookProgress.Starting
-                val device = repo.startProviderDeviceAuth(provider)
+                val device = repo.startProviderDeviceAuth(provider, email)
                 _progress.value = OutlookProgress.AwaitingApproval(
                     device.userCode, device.verificationUri, device.verificationUriComplete,
                 )

@@ -287,75 +287,7 @@ class OAuthClient internal constructor(
         )
     }
 
-    /** Begin the device flow: ask the server for a user code + verification URL. */
-    suspend fun startDeviceAuthorization(
-        metadata: OAuthMetadata,
-        clientId: String,
-        scope: String,
-    ): DeviceAuthorization = withContext(Dispatchers.IO) {
-        val endpoint = metadata.deviceAuthorizationEndpoint
-            ?: throw JmapException("Server has no device-authorization endpoint")
-        val form = FormBody.Builder()
-            .add("client_id", clientId)
-            .add("scope", scope)
-            .build()
-        val request = Request.Builder().url(endpoint).post(form).header("Accept", "application/json").build()
-        tokenHttpClient.newCall(request).execute().use { response ->
-            val body = response.body?.string().orEmpty()
-            if (!response.isSuccessful) {
-                    // The `error` field only, RFC 6749 §5.2's short closed vocabulary: neither the body
-                    // nor `error_description` goes into the message or the cause — this endpoint's
-                    // payload is a device code, and a proxy's error page is prose.
-                throw JmapException(
-                    "Device authorization failed: HTTP ${response.code}",
-                    httpCode = response.code,
-                    oauthError = parseError(body)?.error,
-                )
-            }
-            decodeGuarded(body, "device authorization", DeviceAuthorization.serializer())
-        }
-    }
-
-    /** Poll the token endpoint once for the device grant. */
-    suspend fun pollDeviceToken(
-        metadata: OAuthMetadata,
-        deviceCode: String,
-        clientId: String,
-    ): DeviceTokenResult = withContext(Dispatchers.IO) {
-        val form = FormBody.Builder()
-            .add("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
-            .add("device_code", deviceCode)
-            .add("client_id", clientId)
-            .build()
-        val request = Request.Builder().url(metadata.tokenEndpoint).post(form).header("Accept", "application/json").build()
-            // Caught BY TYPE, IOException only. Catching by scope made a 200 whose body this client
-            // cannot read report itself as a dead network. Catching by type also keeps a
-            // CancellationException (leaving the screen mid-poll) passing.
-        try {
-            tokenHttpClient.newCall(request).execute().use { response ->
-                val body = response.body?.string().orEmpty()
-                if (response.isSuccessful) {
-                    DeviceTokenResult.Success(decodeGuarded(body, "token", OAuthTokens.serializer()))
-                } else {
-                    val parsed = parseError(body)
-                    when (parsed?.error) {
-                        "authorization_pending" -> DeviceTokenResult.Pending
-                        "slow_down" -> DeviceTokenResult.SlowDown
-                        else -> DeviceTokenResult.Failed(
-                            error = parsed?.error ?: "http_${response.code}",
-                            description = parsed?.description.orEmpty(),
-                            aadstsCode = parsed?.aadstsCode,
-                        )
-                    }
-                }
-            }
-            // A fixed token, NOT `e.message`: OkHttp names the URL, the host and the port in it, and
-            // the connect screen DISPLAYS this field. The caller only needs to know the exchange never
-            // reached a server.
-        } catch (_: IOException) {
-            DeviceTokenResult.Failed("network_error")
-        }
-    }
+    // #1693 the OAuth device grant (start + poll) left this client: it runs in Cloud Account (libs:account MailOAuthSessions); the types stay, the app maps its answers onto them.
 
         /**
          * Exchange an authorization code for tokens (RFC 6749 §4.1.3), proving PKCE possession. The

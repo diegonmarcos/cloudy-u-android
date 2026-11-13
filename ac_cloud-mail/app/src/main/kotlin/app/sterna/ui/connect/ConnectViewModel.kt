@@ -421,7 +421,7 @@ class ConnectViewModel(application: Application) : AndroidViewModel(application)
                 )
                 return@launch
             }
-            val start = runCatching { container.mailRepository.startDeviceAuthorization(found) }
+            val start = runCatching { container.mailRepository.startDeviceAuthorization(found, emailTrim) }
             val device = start.getOrNull()
             if (device == null) {
                 // A transport failure carries no oauthError and falls back to the generic sentence.

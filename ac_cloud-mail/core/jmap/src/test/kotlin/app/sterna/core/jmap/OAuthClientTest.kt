@@ -33,51 +33,6 @@ class OAuthClientTest {
         deviceAuthorizationEndpoint = server.url("/auth/device").toString(),
     )
 
-    @Test fun startDeviceAuthorization_parsesAndSendsClientAndScope() = runBlocking {
-        server.enqueue(
-            MockResponse().setHeader("Content-Type", "application/json").setBody(
-                """{"device_code":"DC","user_code":"WDJB-MJHT",
-                   "verification_uri":"https://srv/device",
-                   "verification_uri_complete":"https://srv/device?code=WDJB-MJHT",
-                   "expires_in":1800,"interval":5}""".trimIndent(),
-            ),
-        )
-
-        val device = client.startDeviceAuthorization(metadata(), "sterna", "scope-a offline_access")
-
-        assertEquals("DC", device.deviceCode)
-        assertEquals("WDJB-MJHT", device.userCode)
-        assertEquals(5, device.interval)
-        val body = server.takeRequest().body.readUtf8()
-        assertTrue(body.contains("client_id=sterna"))
-        assertTrue(body.contains("scope=scope-a"))
-    }
-
-    @Test fun pollDeviceToken_pendingThenSuccess() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":"authorization_pending"}"""))
-        assertEquals(DeviceTokenResult.Pending, client.pollDeviceToken(metadata(), "DC", "sterna"))
-
-        server.enqueue(
-            MockResponse().setBody(
-                """{"access_token":"AT","refresh_token":"RT","expires_in":3600,"token_type":"Bearer"}""",
-            ),
-        )
-        val result = client.pollDeviceToken(metadata(), "DC", "sterna")
-        assertTrue(result is DeviceTokenResult.Success)
-        assertEquals("AT", (result as DeviceTokenResult.Success).tokens.accessToken)
-        assertEquals("RT", result.tokens.refreshToken)
-    }
-
-    @Test fun pollDeviceToken_slowDownAndDenied() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":"slow_down"}"""))
-        assertEquals(DeviceTokenResult.SlowDown, client.pollDeviceToken(metadata(), "DC", "sterna"))
-
-        server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":"access_denied"}"""))
-        val denied = client.pollDeviceToken(metadata(), "DC", "sterna")
-        assertTrue(denied is DeviceTokenResult.Failed)
-        assertEquals("access_denied", (denied as DeviceTokenResult.Failed).error)
-    }
-
     @Test fun parseError_extractsErrorDescriptionAndAadsts() {
         val parsed = client.parseError(
             """{"error":"invalid_grant","error_description":"AADSTS90094: The grant requires admin permission."}""",
@@ -99,20 +54,6 @@ class OAuthClientTest {
     @Test fun parseError_returnsNullForNonError() {
         assertNull(client.parseError("""{"foo":"bar"}"""))
         assertNull(client.parseError("not json"))
-    }
-
-    @Test fun pollDeviceToken_failedCarriesDescriptionAndAadsts() = runBlocking {
-        server.enqueue(
-            MockResponse().setResponseCode(400).setBody(
-                """{"error":"authorization_declined","error_description":"AADSTS650051: app not approved."}""",
-            ),
-        )
-        val result = client.pollDeviceToken(metadata(), "DC", "sterna")
-        assertTrue(result is DeviceTokenResult.Failed)
-        result as DeviceTokenResult.Failed
-        assertEquals("authorization_declined", result.error)
-        assertEquals("AADSTS650051", result.aadstsCode)
-        assertTrue(result.description.contains("not approved"))
     }
 
     @Test fun refresh_exchangesRefreshTokenForAccessToken() = runBlocking {
@@ -153,113 +94,12 @@ class OAuthClientTest {
         }
     }
 
-    @Test fun pollDeviceToken_doesNotPutTheTokensInTheErrorOfAMalformedResponse() {
-        // Same payload on the device-flow path, whose failure text reaches the connect screen.
-        // Read whatever surfaces — a returned Failed or a thrown exception: the guard is that
-        // the tokens are in neither, and it must not depend on which shape the failure takes.
-        server.enqueue(
-            MockResponse().setBody(
-                """{"access_token":"SECRET-AT","refresh_token":"SECRET-RT","expires_in":36""",
-            ),
-        )
-        val outcome = runCatching { runBlocking { client.pollDeviceToken(metadata(), "DC", "sterna") } }
-        val text = outcome.fold(
-            onSuccess = { it.toString() },
-            onFailure = { e ->
-                generateSequence<Throwable>(e) { it.cause }.joinToString(" ") { "${it.javaClass} ${it.message}" }
-            },
-        )
-        assertFalse("the failure carried the access token: $text", text.contains("SECRET-AT"))
-        assertFalse("the failure carried the refresh token: $text", text.contains("SECRET-RT"))
-    }
-
-    /**
-     * A body this client cannot read is NOT a transport failure. The poll used to wrap the whole
-     */
-    @Test fun pollDeviceToken_doesNotCallAnUnreadableAnswerANetworkFailure() {
-        server.enqueue(
-            MockResponse().setHeader("Content-Type", "text/html")
-                .setBody("<html><body>SECRET-PROXY-PAGE: authentication required</body></html>"),
-        )
-
-        val outcome = runCatching { runBlocking { client.pollDeviceToken(metadata(), "DC", "sterna") } }
-
-        assertNotEquals(
-            "a 200 whose body cannot be read is not a network failure",
-            DeviceTokenResult.Failed("network_error"), outcome.getOrNull(),
-        )
-        val failure = outcome.exceptionOrNull()
-        assertTrue("expected the unreadable answer to surface as a JmapException, got $outcome", failure is JmapException)
-        val text = generateSequence<Throwable>(failure) { it.cause }
-            .joinToString(" ") { "${it.javaClass} ${it.message}" }
-        assertFalse("the error carried the body: $text", text.contains("SECRET-PROXY-PAGE"))
-    }
-
-    @Test fun startDeviceAuthorization_doesNotPutTheResponseInItsError() {
-        server.enqueue(
-            MockResponse().setBody(
-                """{"device_code":"SECRET-DC","user_code":"UC","verification_uri":"https://s/d","interval":""",
-            ),
-        )
-        try {
-            runBlocking { client.startDeviceAuthorization(metadata(), "sterna", "scope-a") }
-            throw AssertionError("expected the malformed response to fail")
-        } catch (e: Exception) {
-            val text = generateSequence<Throwable>(e) { it.cause }.joinToString(" ") { "${it.javaClass} ${it.message}" }
-            assertFalse("the error carried the payload: $text", text.contains("SECRET-DC"))
-        }
-    }
-
     // ---- The refusal must reach the screen, and only the protocol's word for it ----
     //
     // Two halves of the same rule. The connect screen has to be able to say WHY a sign-in failed,
     // so the server's `error` field has to survive the call — but an exception message here is
     // written by OkHttp and carries the URL, the host and the port, and the response body is the
     // caller's own tokens. So: the closed vocabulary of RFC 6749 §5.2 travels, the prose does not.
-
-    @Test fun pollDeviceToken_reportsAnUnreachableServerWithoutNamingIt() = runBlocking {
-        val endpoint = server.url("/auth/token").toString()
-        val port = server.port
-        server.shutdown() // nothing is listening any more: a real transport failure
-        val metadata = OAuthMetadata(tokenEndpoint = endpoint, deviceAuthorizationEndpoint = endpoint)
-
-        val result = client.pollDeviceToken(metadata, "DC", "sterna")
-
-        assertTrue("expected a terminal failure, got $result", result is DeviceTokenResult.Failed)
-        result as DeviceTokenResult.Failed
-        assertEquals("network_error", result.error)
-        // The connect screen renders this text: OkHttp's own message would put the host and port
-        // of the account's server on a screen anyone can be looking over.
-        val text = result.error + " " + result.description
-        assertFalse("the failure named the host: $text", text.contains("localhost"))
-        assertFalse("the failure named the host: $text", text.contains("127.0.0.1"))
-        assertFalse("the failure named the port: $text", text.contains(port.toString()))
-        assertFalse("the failure carried OkHttp's prose: $text", text.contains("Failed to connect", ignoreCase = true))
-
-        server = MockWebServer().apply { start() } // tearDown shuts one down
-    }
-
-    @Test fun startDeviceAuthorization_carriesTheOAuthErrorButNotTheBody() {
-        server.enqueue(
-            MockResponse().setResponseCode(400).setBody(
-                """{"error":"invalid_client","error_description":"SECRET-DESCRIPTION for tenant X"}""",
-            ),
-        )
-
-        val outcome = runCatching {
-            runBlocking { client.startDeviceAuthorization(metadata(), "sterna", "scope-a") }
-        }
-
-        val failure = outcome.exceptionOrNull()
-        assertTrue("expected a JmapException, got $outcome", failure is JmapException)
-        failure as JmapException
-        assertEquals("invalid_client", failure.oauthError)
-        assertEquals(400, failure.httpCode)
-        val text = generateSequence<Throwable>(failure) { it.cause }
-            .joinToString(" ") { "${it.javaClass} ${it.message}" }
-        assertFalse("the error carried the response body: $text", text.contains("SECRET-DESCRIPTION"))
-        assertFalse("the error carried the response body: $text", text.contains("error_description"))
-    }
 
     // ---- A 3xx on one of the three POSTs must not send the secret to the host it names ----
     //
@@ -322,52 +162,6 @@ class OAuthClientTest {
                 assertEquals("HTTP $code", code, (failure as JmapException).httpCode)
             }
             assertEquals("nothing may reach the redirect target, for any 3xx", 0, second.requestCount)
-        } finally {
-            second.shutdown()
-        }
-    }
-
-    @Test fun pollDeviceToken_doesNotReplayTheDeviceCodeToARedirectTarget() = runBlocking {
-        val second = startSecondServer()
-        try {
-            second.enqueue(
-                MockResponse().setBody("""{"access_token":"EVIL-AT","refresh_token":"EVIL-RT"}"""),
-            )
-            server.enqueue(
-                MockResponse().setResponseCode(307).setHeader("Location", second.url("/steal").toString()),
-            )
-
-            // This path swallows throwables (runCatching) and answers with a result, so pin both
-            // the result the connect screen gets and the silence of the redirect target.
-            val result = client.pollDeviceToken(metadata(), "SECRET-DC", "sterna")
-
-            assertEquals("the device code must not be replayed to the redirect target", 0, second.requestCount)
-            assertEquals(DeviceTokenResult.Failed("http_307"), result)
-        } finally {
-            second.shutdown()
-        }
-    }
-
-    @Test fun startDeviceAuthorization_doesNotReplayTheRequestToARedirectTarget() {
-        val second = startSecondServer()
-        try {
-            second.enqueue(
-                MockResponse().setBody(
-                    """{"device_code":"EVIL-DC","user_code":"UC","verification_uri":"https://evil.example/d"}""",
-                ),
-            )
-            server.enqueue(
-                MockResponse().setResponseCode(307).setHeader("Location", second.url("/steal").toString()),
-            )
-
-            val outcome = runCatching {
-                runBlocking { client.startDeviceAuthorization(metadata(), "sterna", "scope-a offline_access") }
-            }
-
-            assertEquals("the device-authorization POST must not be replayed", 0, second.requestCount)
-            val failure = outcome.exceptionOrNull()
-            assertTrue("expected the 307 to surface as a JmapException, got $outcome", failure is JmapException)
-            assertEquals(307, (failure as JmapException).httpCode)
         } finally {
             second.shutdown()
         }

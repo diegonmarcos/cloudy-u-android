@@ -129,6 +129,8 @@ class AppContainer(context: Context) {
             app.sterna.push.PushController.apply(appContext, userInitiated = false)
         }
         // Let the data layer arm the delivery worker from any send call site (compose, RSVP, …).
+        // #1693 Cloud Account runs the OAuth device grant (a provider call): the repository hands it the endpoints, the screen keeps its states.
+        mailRepository.oauthDeviceBroker = app.sterna.fleet.CloudAccountOAuthBroker(appContext)
         mailRepository.outboxScheduler = OutboxScheduler { id, delay -> Outbox.enqueue(appContext, id, delay) }
         // The same for a draft the server could not be given (#95): the save books the deferred
         // upload itself. Without this the only bookings were the startup re-arm and the worker's.

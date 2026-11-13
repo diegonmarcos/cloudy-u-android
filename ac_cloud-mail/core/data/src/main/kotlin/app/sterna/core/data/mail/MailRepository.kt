@@ -1933,13 +1933,28 @@ class MailRepository(
     suspend fun discoverOAuth(host: String, addressDomain: String): OAuthMetadata? =
         oauthClient.discoverMetadata(host, addressDomain)
 
-    /** Begin the device flow against [metadata] using Sterna's client id + scopes. */
-    suspend fun startDeviceAuthorization(metadata: OAuthMetadata): DeviceAuthorization =
-        oauthClient.startDeviceAuthorization(metadata, Jmap.OAUTH_CLIENT_ID, Jmap.OAUTH_SCOPE)
+    /** #1693 Cloud Account runs the OAuth device grant: set by the app (a provider call). Null = it cannot, and every start says so. */
+    var oauthDeviceBroker: OAuthDeviceBroker? = null
 
-    /** Poll the token endpoint once for a pending device authorization. */
-    suspend fun pollDeviceToken(metadata: OAuthMetadata, deviceCode: String): DeviceTokenResult =
-        oauthClient.pollDeviceToken(metadata, deviceCode, Jmap.OAUTH_CLIENT_ID)
+    private fun broker(): OAuthDeviceBroker = oauthDeviceBroker
+        ?: throw app.sterna.core.jmap.JmapException("Cloud Account runs the OAuth sign-in", oauthError = "cloud_account_unavailable")
+
+    /** The address the request carries when the caller has none to give: the endpoints' own host (they were vetted by the discovery already). */
+    private fun requestEmail(email: String, tokenEndpoint: String): String =
+        email.takeIf { it.contains('@') } ?: ("device@" + tokenEndpoint.removePrefix("https://").substringBefore('/').substringBefore(':'))
+
+    private fun hostOf(endpoint: String) = endpoint.removePrefix("https://").substringBefore('/').substringBefore(':')
+
+    /** Begin the device flow against [metadata] using Sterna's client id + scopes, run by Cloud Account (#1693). */
+    suspend fun startDeviceAuthorization(metadata: OAuthMetadata, email: String = ""): DeviceAuthorization =
+        broker().start(
+            requestEmail(email, metadata.tokenEndpoint), hostOf(metadata.issuer.ifBlank { metadata.tokenEndpoint }),
+            metadata.deviceAuthorizationEndpoint ?: throw app.sterna.core.jmap.JmapException("Server has no device-authorization endpoint"),
+            metadata.tokenEndpoint, Jmap.OAUTH_CLIENT_ID, Jmap.OAUTH_SCOPE,
+        )
+
+    /** Poll once for a pending device authorization ([deviceCode] is the handle Cloud Account issued). */
+    suspend fun pollDeviceToken(metadata: OAuthMetadata, deviceCode: String): DeviceTokenResult = broker().poll(deviceCode)
 
     /**
      * The URL the browser is sent to for the authorization-code grant, with Sterna's client id and scopes.
@@ -2027,12 +2042,15 @@ class MailRepository(
     }
 
     /** Begin the device flow for a built-in OAuth provider (Microsoft, …). */
-    suspend fun startProviderDeviceAuth(provider: OAuthProvider): DeviceAuthorization =
-        oauthClient.startDeviceAuthorization(provider.metadata, provider.clientId, provider.scope)
+    suspend fun startProviderDeviceAuth(provider: OAuthProvider, email: String = ""): DeviceAuthorization =
+        broker().start(
+            requestEmail(email, provider.metadata.tokenEndpoint), hostOf(provider.metadata.issuer.ifBlank { provider.metadata.tokenEndpoint }),
+            provider.metadata.deviceAuthorizationEndpoint ?: throw app.sterna.core.jmap.JmapException("Provider has no device-authorization endpoint"),
+            provider.metadata.tokenEndpoint, provider.clientId, provider.scope,
+        )
 
-    /** Poll a built-in provider's token endpoint once for a pending device authorization. */
-    suspend fun pollProviderToken(provider: OAuthProvider, deviceCode: String): DeviceTokenResult =
-        oauthClient.pollDeviceToken(provider.metadata, deviceCode, provider.clientId)
+    /** Poll a built-in provider's grant once for a pending device authorization (run by Cloud Account, #1693). */
+    suspend fun pollProviderToken(provider: OAuthProvider, deviceCode: String): DeviceTokenResult = broker().poll(deviceCode)
 
     /**
      * Run a provider device flow to completion: start it, hand the user code to [onCode], then poll until the
