@@ -60,6 +60,14 @@ object AppCredentialsContract {
         Entry("mail.token.", "Mailbox API token", "one per JMAP-token mailbox: id mail.token.<address> (same spelling as the password)", listOf(PKG_MAIL)),
         Entry("mail.oauth.", "Mail OAuth token", "filed by a Mail sign-in run in Cloud Account (App credentials > Mail sign-ins): mail.oauth.<address>.access|refresh|expires", listOf(PKG_MAIL)),
         Entry("mail.gateway_token", "Mail gateway token", "the bearer token of Cloud Mail > Account > Authentication", listOf(PKG_MAIL)),
+        // The Spotify (code + PKCE) and Deezer (implicit) sign-ins run in Cloud Account; Cloud Browser takes the client and the tokens they filed.
+        Entry("music.spotify.client_id", "Spotify client id", "the app's client id (developer.spotify.com; redirect http://127.0.0.1:8765/callback)", listOf(PKG_BROWSER), secret = false),
+        Entry("music.spotify.access", "Spotify access token", "filed by the Spotify sign-in in Cloud Account", listOf(PKG_BROWSER)),
+        Entry("music.spotify.refresh", "Spotify refresh token", "filed by the Spotify sign-in in Cloud Account", listOf(PKG_BROWSER)),
+        Entry("music.spotify.expires", "Spotify token expiry", "epoch milliseconds, 0 = never", listOf(PKG_BROWSER), secret = false),
+        Entry("music.deezer.client_id", "Deezer app id", "the app id (developers.deezer.com; redirect http://127.0.0.1:8765/callback)", listOf(PKG_BROWSER), secret = false),
+        Entry("music.deezer.access", "Deezer access token", "filed by the Deezer sign-in in Cloud Account", listOf(PKG_BROWSER)),
+        Entry("music.deezer.expires", "Deezer token expiry", "epoch milliseconds, 0 = never", listOf(PKG_BROWSER), secret = false),
     )
 
     /** The name part of a prefixed id made safe: letters, digits, `_` and `-` only, at most 60. */

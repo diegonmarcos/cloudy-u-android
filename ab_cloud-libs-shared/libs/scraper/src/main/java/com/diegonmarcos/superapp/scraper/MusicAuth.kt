@@ -137,48 +137,15 @@ class MusicAccounts(private val store: TokenStore, private val now: () -> Long =
     fun disconnect(s: String) { for (k in listOf("access", "refresh", "expires")) store.remove("$s.$k") }
 }
 
-data class Callback(val code: String? = null, val token: String? = null, val expiresInSec: Long = 0, val error: String? = null)
-
 /** The sign-in protocol steps, pure over [MusicHttp] so each is testable. */
 object MusicOAuth {
-    private val b64 = Base64.getUrlEncoder().withoutPadding()
-
-    fun verifier(rnd: SecureRandom = SecureRandom()): String = ByteArray(48).also { rnd.nextBytes(it) }.let { b64.encodeToString(it) }
-
-    fun challenge(verifier: String): String = b64.encodeToString(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)))
-
-    fun authUrl(spec: ServiceSpec, clientId: String, state: String, challenge: String?): String {
-        val q = when (spec.auth) {
-            AuthKind.PKCE -> mapOf("response_type" to "code", "client_id" to clientId, "redirect_uri" to spec.redirect, "scope" to spec.scopes,
-                "state" to state, "code_challenge_method" to "S256", "code_challenge" to requireNotNull(challenge))
-            AuthKind.IMPLICIT -> mapOf("app_id" to clientId, "redirect_uri" to spec.redirect, "perms" to spec.scopes, "response_type" to "token", "state" to state)
-            else -> throw IllegalArgumentException("${spec.id} has no browser sign-in")
-        }
-        return spec.authUrl + "?" + MusicHttp.form(q)
-    }
-
-    private fun params(s: String): Map<String, String> = s.split('&').filter { it.contains('=') }.associate {
-        URLDecoder.decode(it.substringBefore('='), "UTF-8") to URLDecoder.decode(it.substringAfter('='), "UTF-8")
-    }
-
-    /** The result when [url] is the redirect back to the app (query for a code, fragment for a token), null for any other page. */
-    fun callback(url: String, spec: ServiceSpec, state: String): Callback? {
-        if (spec.redirect.isEmpty() || !url.startsWith(spec.redirect)) return null
-        val rest = url.removePrefix(spec.redirect)
-        val p = params(rest.substringBefore('#').removePrefix("?")) + params(rest.substringAfter('#', ""))
-        if (p["state"] != null && p["state"] != state) return Callback(error = "state mismatch")
-        p["error"]?.let { return Callback(error = it) }
-        return Callback(code = p["code"], token = p["access_token"], expiresInSec = p["expires"]?.toLongOrNull() ?: 0)
-    }
+    // #1693 the sign-in steps (PKCE verifier / challenge, the authorization URL, the redirect callback, the code exchange) moved to Cloud Account
+    // (libs:account MusicOAuthFlow); what stays here is keeping a token alive.
 
     private fun tokens(json: String): TokenSet {
         val o = JSONObject(json)
         return TokenSet(o.getString("access_token"), o.optString("refresh_token").ifBlank { null }, o.optLong("expires_in"))
     }
-
-    fun exchange(http: MusicHttp, spec: ServiceSpec, clientId: String, code: String, verifier: String): TokenSet =
-        tokens(http.postForm(spec.tokenUrl, mapOf("grant_type" to "authorization_code", "code" to code, "redirect_uri" to spec.redirect,
-            "client_id" to clientId, "code_verifier" to verifier)))
 
     fun refresh(http: MusicHttp, spec: ServiceSpec, clientId: String, secret: String, refreshToken: String): TokenSet {
         val f = mutableMapOf("grant_type" to "refresh_token", "refresh_token" to refreshToken, "client_id" to clientId)

@@ -3,6 +3,7 @@ package com.diegonmarcos.superapp.profile
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -64,6 +65,7 @@ fun AppCredentialsPanel() {
         }
         for (e in AppCredentialsContract.CATALOG.filter { it.prefix }) PrefixedCard(e, vault) { said = it; tick++ }
         for (spec in MusicDeviceGrant.SPECS.values) MusicDeviceCard(spec, vault) { said = it; tick++ }
+        for (spec in MusicOAuthFlow.SPECS.values) MusicBrowserCard(spec, vault) { said = it; tick++ }
     }
 }
 
@@ -153,3 +155,53 @@ private fun CredentialRow(id: String, filed: Boolean, e: AppCredentialsContract.
     }
 }
 
+
+/** #1693 Spotify / Deezer: the browser sign-in runs here (a WebView sheet that captures the redirect); the tokens are filed for Cloud Browser to take. */
+@Composable
+private fun MusicBrowserCard(spec: MusicOAuthFlow.Spec, vault: AccountVault, said: (String) -> Unit) {
+    val ctx = LocalContext.current
+    val p = LocalKitPalette.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var open by remember { mutableStateOf<Pair<String, String>?>(null) }   // state, verifier
+    var line by remember { mutableStateOf("") }
+    val connected = AppCredentialsStore.get(vault, "music.${spec.id}.access").isNotBlank()
+    val clientId = AppCredentialsStore.get(vault, "music.${spec.id}.client_id")
+    KitCard {
+        Text("${spec.label} sign-in", color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
+        Text((if (connected) "connected" else "not connected") + " · file the client id (music.${spec.id}.client_id) above, then sign in; redirect ${spec.redirect}",
+            color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+        if (line.isNotBlank()) Text(line, color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+        KitActionBar(buildList {
+            add(KitAction("Sign in with ${spec.label}", AppCredentialsTags.save("music:${spec.id}"), enabled = clientId.isNotBlank() && SignInOwner.isOwner(ctx)) {
+                open = MusicOAuthFlow.verifier().take(16) to MusicOAuthFlow.verifier()
+            })
+            if (connected) add(KitAction("Disconnect", AppCredentialsTags.clear("music:${spec.id}")) {
+                for (k in listOf("access", "refresh", "expires")) AppCredentialsStore.remove(vault, "music.${spec.id}.$k")
+                said("${spec.label} disconnected")
+            })
+        })
+    }
+    val o = open
+    if (o != null) androidx.compose.ui.window.Dialog(onDismissRequest = { open = null }) {
+        androidx.compose.ui.viewinterop.AndroidView(factory = { c ->
+            android.webkit.WebView(c).apply {
+                settings.javaScriptEnabled = true
+                webViewClient = object : android.webkit.WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: android.webkit.WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                        val cb = MusicOAuthFlow.callback(request?.url?.toString() ?: return false, spec, o.first) ?: return false
+                        open = null
+                        scope.launch {
+                            val r = runCatching {
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { MusicOAuthFlow.tokensOf(MusicDeviceGrant.defaultPost(), spec, clientId, cb, o.second) }
+                            }
+                            r.onSuccess { MusicOAuthFlow.file(ctx, spec, it); line = ""; said("${spec.label} connected: Cloud Browser can take the tokens") }
+                                .onFailure { line = "${spec.label}: ${it.message ?: it.javaClass.simpleName}".take(160); said(line) }
+                        }
+                        return true
+                    }
+                }
+                loadUrl(MusicOAuthFlow.authUrl(spec, clientId, o.first, if (spec.pkce) MusicOAuthFlow.challenge(o.second) else null))
+            }
+        }, modifier = Modifier.fillMaxWidth().padding(8.dp))
+    }
+}

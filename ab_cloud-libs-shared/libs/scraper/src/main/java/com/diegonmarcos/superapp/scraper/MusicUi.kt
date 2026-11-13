@@ -108,7 +108,6 @@ fun MusicPage(c: ThemeColors) {
     val lists = remember { mutableStateMapOf<String, List<Playlist>>() }
     val webRows = remember { mutableStateMapOf<String, List<Track>>() }
     var webOf by remember { mutableStateOf<ServiceSpec?>(null) }
-    var oauth by remember { mutableStateOf<Triple<ServiceSpec, String, String>?>(null) }   // service, state, PKCE verifier
     var sync by remember { mutableStateOf<Pair<ServiceSpec, Playlist>?>(null) }
     var target by remember { mutableStateOf<String?>(null) }
     var dry by remember { mutableStateOf(true) }
@@ -188,25 +187,7 @@ fun MusicPage(c: ThemeColors) {
         }
     }
 
-    oauth?.let { (spec, state, verifier) ->
-        val client = object : CloudWebClient(WebProfile.BROWSER) {
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val cb = MusicOAuth.callback(request?.url?.toString() ?: return false, spec, state) ?: return false
-                oauth = null
-                scope.launch {
-                    val r = runCatching {
-                        cb.error?.let { error(it) }
-                        if (cb.token != null) TokenSet(cb.token, null, cb.expiresInSec)
-                        else withContext(Dispatchers.IO) { MusicOAuth.exchange(http, spec, accounts.clientId(spec.id), cb.code ?: error("no code"), verifier) }
-                    }
-                    r.onSuccess { accounts.save(spec.id, it); rev++; message = "${spec.label} connected"; load(spec) }.onFailure { message = "${spec.label}: ${it.message}" }
-                }
-                return true
-            }
-        }
-        val url = MusicOAuth.authUrl(spec, accounts.clientId(spec.id), state, if (spec.auth == AuthKind.PKCE) MusicOAuth.challenge(verifier) else null)
-        WebSheet(url, "Sign in to ${spec.label}", c, client, onClose = { oauth = null })
-    }
+    // #1693 the Spotify / Deezer browser sign-ins (code + PKCE, implicit) left this page: they run in Cloud Account (App credentials > Music); this page takes the tokens.
 
     webOf?.let { spec ->
         val web = spec.web!!
@@ -260,30 +241,15 @@ fun MusicPage(c: ThemeColors) {
                 }
             }
             if (isOpen && spec.auth != AuthKind.WEB && (connecting == spec.id || st != ConnectStatus.CONNECTED)) item(key = "conn:" + spec.id) {
-                var cid by remember { mutableStateOf(accounts.clientId(spec.id)) }
-                var sec by remember { mutableStateOf("") }
                 Column(Modifier.fillMaxWidth().padding(start = 40.dp, end = 12.dp, bottom = 8.dp).testTag("music:connect:${spec.id}")) {
                     Text(spec.help, color = c.inkDim, style = MaterialTheme.typography.bodySmall)
                     if (spec.redirect.isNotEmpty()) Text("Redirect URI: ${spec.redirect}", color = c.ink, style = MaterialTheme.typography.bodySmall)
-                    if (spec.auth == AuthKind.DEVICE) {
-                        // #1693 the device grant runs in Cloud Account (App credentials > Connect); here it is only taken from there.
-                        Text("Connected in Cloud Account (App credentials), then taken here.", color = c.inkDim, style = MaterialTheme.typography.bodySmall)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
-                            Button(onClick = { takeFromAccount(spec); connecting = null },
-                                colors = ButtonDefaults.buttonColors(containerColor = c.accent), modifier = Modifier.testTag("music:signin:${spec.id}")) { Text("Take from Cloud Account") }
-                            TextButton(onClick = { message = MusicCredentials.open(ctx).orEmpty() }, modifier = Modifier.testTag("music:open-account:${spec.id}")) { Text("Set up in Cloud Account", color = c.ink) }
-                        }
-                    } else {
-                        val colors = OutlinedTextFieldDefaults.colors(focusedTextColor = c.ink, unfocusedTextColor = c.ink, focusedLabelColor = c.accent, unfocusedLabelColor = c.inkDim)
-                        OutlinedTextField(cid, { cid = it }, label = { Text("Client id") }, singleLine = true, colors = colors, modifier = Modifier.fillMaxWidth().testTag("music:cid:${spec.id}"))
-                        if (spec.needsSecret) OutlinedTextField(sec, { sec = it }, label = { Text("Client secret (stored encrypted)") }, singleLine = true, colors = colors,
-                            modifier = Modifier.fillMaxWidth().testTag("music:secret:${spec.id}"))
-                        Button(onClick = {
-                            accounts.setClient(spec.id, cid, sec)
-                            oauth = Triple(spec, MusicOAuth.verifier().take(16), MusicOAuth.verifier())
-                            connecting = null
-                        }, enabled = cid.isNotBlank() && (!spec.needsSecret || sec.isNotBlank() || accounts.clientSecret(spec.id).isNotEmpty()),
-                            colors = ButtonDefaults.buttonColors(containerColor = c.accent), modifier = Modifier.padding(top = 4.dp).testTag("music:signin:${spec.id}")) { Text("Sign in") }
+                    // #1693 every sign-in (device grant, code + PKCE, implicit) runs in Cloud Account (App credentials > Music); here it is only taken from there.
+                    Text("Signed in once in Cloud Account (App credentials), then taken here.", color = c.inkDim, style = MaterialTheme.typography.bodySmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+                        Button(onClick = { takeFromAccount(spec); connecting = null },
+                            colors = ButtonDefaults.buttonColors(containerColor = c.accent), modifier = Modifier.testTag("music:signin:${spec.id}")) { Text("Take from Cloud Account") }
+                        TextButton(onClick = { message = MusicCredentials.open(ctx).orEmpty() }, modifier = Modifier.testTag("music:open-account:${spec.id}")) { Text("Set up in Cloud Account", color = c.ink) }
                     }
                 }
             }
