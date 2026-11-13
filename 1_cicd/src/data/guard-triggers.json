@@ -197,6 +197,7 @@
         "aa_cloud-superapp/app/src/main/res/values*/**",
         "ab_cloud-libs-shared/libs/*/src/main/res/values*/**",
         "ab_cloud-libs-shared/libs/keyboard/src/main/java/helium314/keyboard/latin/**",
+        "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/settings/**",
         "ab_cloud-libs-shared/libs/launcher-onehand/src/main/java/**",
         "ab_cloud-libs-shared/libs/translate/src/main/java/**"
       ]
