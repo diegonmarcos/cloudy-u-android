@@ -57,7 +57,7 @@ class DriveBenchmarksTest {
     }
 
     @Test fun sampleIsBoundedInFilesAndBytesAndSkipsTinyAndHugeFiles() {
-        val dir = createTempDir("sample")
+        val dir = java.nio.file.Files.createTempDirectory("sample").toFile()
         val files = (1..10).map { i -> File(dir, "f$i").also { it.writeBytes(ByteArray(10_000)) } } + File(dir, "tiny").also { it.writeBytes(ByteArray(10)) } + File(dir, "huge").also { it.writeBytes(ByteArray(40_000)) }
         assertEquals(3, DriveBenchmarks.pickSample(files.asSequence(), maxFiles = 3, maxBytes = 1_000_000).size)
         val byBytes = DriveBenchmarks.pickSample(files.asSequence(), maxFiles = 50, maxBytes = 25_000)
