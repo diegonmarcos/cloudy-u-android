@@ -108,6 +108,6 @@ class AllowlistTest {
         assertTrue(a.decide("owner", "pm grant com.diegonmarcos.cloudwebserver android.permission.WRITE_SECURE_SETTINGS") is Allowlist.Decision.Allow)
         assertTrue(a.decide("owner", "rm -rf /data") is Allowlist.Decision.Deny)
         for (c in listOf("dumpsys battery", "getprop")) assertEquals(a.decide(sa, c)::class, a.decide("owner", c)::class)
-        assertTrue(a.decide("com.diegonmarcos.cloudwebserver", "pm grant com.diegonmarcos.cloudwebserver android.permission.WRITE_SECURE_SETTINGS") is Allowlist.Decision.Deny)
+        assertTrue(!a.mayKeeper("com.diegonmarcos.cloudwebserver") && !a.mayAudit("com.diegonmarcos.cloudwebserver") && a.outCap("com.diegonmarcos.cloudwebserver") == 0)   // the relay identity gets none of the owner grants
     }
 }
