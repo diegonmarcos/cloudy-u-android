@@ -58,12 +58,13 @@ IPC_TIMEOUT=960 ipc $TERMUX terminal/exec "cmd=echo shell=\$SHELL home=\$HOME; c
 grep -q '"ok":true' "$OUT/bootstrap.json" || fail "cld.termux did not bootstrap: $(head -c 600 "$OUT/bootstrap.json")"
 state | tee "$OUT/state-healthy.txt"
 
+# The Drive clone scripts pin the branch main (fleet repos), so the fixtures are repos whose default branch is main (not octocat/Hello-World, master).
 echo "── 1. healthy rootfs: clone, bare clone, force_pull ──"
-clone_wait Hello-World https://github.com/octocat/Hello-World.git | tee "$OUT/1-clone.json"; echo
-grep -q '"ok":true\|"name":"Hello-World"' "$OUT/1-clone.json" || fail "healthy clone failed: $(head -c 1500 "$OUT/1-clone.json")"
-IPC_TIMEOUT=900 ipc $DRIVE git/bare "url=https://github.com/octocat/Spoon-Knife.git" depth=1 | tee "$OUT/1-bare.json"; echo
+clone_wait Spoon-Knife https://github.com/octocat/Spoon-Knife.git | tee "$OUT/1-clone.json"; echo
+grep -q '"ok":true\|"name":"Spoon-Knife"' "$OUT/1-clone.json" || fail "healthy clone failed: $(head -c 1500 "$OUT/1-clone.json")"
+IPC_TIMEOUT=900 ipc $DRIVE git/bare "url=https://github.com/github/gitignore.git" depth=1 | tee "$OUT/1-bare.json"; echo
 grep -q '"ok":true' "$OUT/1-bare.json" || fail "healthy bare clone failed: $(head -c 1500 "$OUT/1-bare.json")"
-IPC_TIMEOUT=420 ipc $DRIVE git/pull force=1 name=Hello-World | tee "$OUT/1-force-pull.json"; echo
+IPC_TIMEOUT=420 ipc $DRIVE git/pull force=1 name=Spoon-Knife | tee "$OUT/1-force-pull.json"; echo
 grep -q '"ok":true' "$OUT/1-force-pull.json" || fail "healthy force_pull failed: $(head -c 1500 "$OUT/1-force-pull.json")"
 shot 1-healthy
 
@@ -76,17 +77,17 @@ grep -q 'no unpacked rootfs matches' "$OUT/2-fallback.txt" || echo "::warning::t
 adb shell "rm -f $STAGE/rootfs.tar.zst; echo stale > $STAGE/rootfs/.cloud-rootfs.sha256"  # the probe must not have changed it
 
 echo "-- 2a bare clone, no user action --"
-IPC_TIMEOUT=1800 ipc $DRIVE git/bare "url=https://github.com/octocat/git-consortium.git" depth=1 | tee "$OUT/2-bare.json"; echo
+IPC_TIMEOUT=1800 ipc $DRIVE git/bare "url=https://github.com/octocat/Spoon-Knife.git" depth=1 | tee "$OUT/2-bare.json"; echo
 shot 2-bare
 grep -q '"ok":true' "$OUT/2-bare.json" || fail "bare clone in the broken state failed: $(head -c 2000 "$OUT/2-bare.json")"
 grep -q "cannot create directory '/root'" "$OUT/2-bare.json" && fail "a job still ran a /root path in plain Termux"
 echo "-- 2b clone --"
 break_rootfs
-clone_wait Spoon-Knife https://github.com/octocat/Spoon-Knife.git | tee "$OUT/2-clone.json"; echo
-grep -q '"ok":true\|"name":"Spoon-Knife"' "$OUT/2-clone.json" || fail "clone in the broken state failed: $(head -c 2000 "$OUT/2-clone.json")"
+clone_wait gitignore https://github.com/github/gitignore.git | tee "$OUT/2-clone.json"; echo
+grep -q '"ok":true\|"name":"gitignore"' "$OUT/2-clone.json" || fail "clone in the broken state failed: $(head -c 2000 "$OUT/2-clone.json")"
 echo "-- 2c force_pull --"
 break_rootfs
-IPC_TIMEOUT=1500 ipc $DRIVE git/pull force=1 name=Hello-World | tee "$OUT/2-force-pull.json"; echo
+IPC_TIMEOUT=1500 ipc $DRIVE git/pull force=1 name=Spoon-Knife | tee "$OUT/2-force-pull.json"; echo
 grep -q '"ok":true' "$OUT/2-force-pull.json" || fail "force_pull in the broken state failed: $(head -c 2000 "$OUT/2-force-pull.json")"
 
 echo "── 3. the rootfs ends repaired ──"
