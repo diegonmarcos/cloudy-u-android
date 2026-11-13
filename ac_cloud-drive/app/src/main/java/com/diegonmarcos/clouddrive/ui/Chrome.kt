@@ -321,6 +321,8 @@ object DriveTags {
     const val OVERVIEW = "manage_overview"
     fun overviewRow(id: String) = "manage_overview_row_$id"
     const val OVERVIEW_BAR = "manage_overview_bar"
+    fun appsGroup(id: String) = "manage_apps_group_$id"
+    fun appsTotal(label: String) = "manage_apps_total_$label"
     const val APPS_REFRESH = "manage_apps_refresh"
     const val APPS_UPDATED = "manage_apps_updated"
     const val APPS_PULL = "manage_apps_pull"

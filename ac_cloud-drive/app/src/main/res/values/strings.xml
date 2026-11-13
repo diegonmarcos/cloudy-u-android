@@ -573,6 +573,9 @@
     <string name="manage_group_others">Others</string>
     <string name="manage_filter_all">All</string>
     <string name="manage_data_volume_na">%1$s is not available: %2$s</string>
+    <string name="manage_apps_group_all">All (%1$d)</string>
+    <string name="manage_apps_group_cloud">Cloud Apps (%1$d)</string>
+    <string name="manage_apps_group_phone">Phone Apps (%1$d)</string>
     <string name="manage_apps_refresh">Refresh</string>
     <string name="manage_apps_loading">Reading apps…</string>
     <string name="manage_apps_open">Open</string>

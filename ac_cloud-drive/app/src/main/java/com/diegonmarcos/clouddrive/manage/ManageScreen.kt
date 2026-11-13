@@ -137,6 +137,7 @@ fun AppsPage(
     var fromCache by remember { mutableStateOf(false) }
     var refreshing by remember { mutableStateOf(false) }
     var tick by remember { mutableStateOf(0) }
+    var group by rememberSaveable { mutableStateOf<String?>(null) }   // null = All, else an AppGroup name
     var clock by remember { mutableStateOf(System.currentTimeMillis()) }
     val saved = remember { prefs.appsSort() }
     var column by rememberSaveable { mutableStateOf(saved.first?.let { n -> AppColumn.entries.firstOrNull { it.name == n } } ?: AppTable.DEFAULT_SORT) }
@@ -179,6 +180,12 @@ fun AppsPage(
         }
         val s = snap
         if (s == null) { LoadingState(Modifier.weight(1f)); return@Column }
+        val agg = remember(s) { LocalAppsApi.aggregate(s.rows) }
+        PillRow(Modifier.padding(horizontal = DriveMetrics.gutter)) {
+            Pill(stringResource(R.string.manage_apps_group_all, s.rows.size), { group = null }, modifier = Modifier.testTag(DriveTags.appsGroup("all")), filled = group == null)
+            Pill(stringResource(R.string.manage_apps_group_cloud, agg[AppGroup.CLOUD]?.count ?: 0), { group = AppGroup.CLOUD.name }, modifier = Modifier.testTag(DriveTags.appsGroup("cloud")), filled = group == AppGroup.CLOUD.name)
+            Pill(stringResource(R.string.manage_apps_group_phone, agg[AppGroup.PHONE]?.count ?: 0), { group = AppGroup.PHONE.name }, modifier = Modifier.testTag(DriveTags.appsGroup("phone")), filled = group == AppGroup.PHONE.name)
+        }
         androidx.compose.material3.pulltorefresh.PullToRefreshBox(isRefreshing = refreshing, onRefresh = { tick++ }, modifier = Modifier.weight(1f).fillMaxWidth().testTag(DriveTags.APPS_PULL)) {
             Column(Modifier.fillMaxSize()) {
                 if (!s.usageAccess) {
@@ -198,8 +205,17 @@ fun AppsPage(
                 if (missing.isNotEmpty()) {
                     Text(stringResource(R.string.manage_apps_fleet_missing, missing.joinToString(", ")), Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gutter, vertical = DriveMetrics.gap).testTag(DriveTags.APPS_FLEET_MISSING), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                val rows = remember(s, column, descending) { AppTable.sort(s.rows, column, descending) }
-                AppsTable(rows, column, descending, onSort = { c ->
+                val shown = remember(s, group) { if (group == null) s.rows else s.rows.filter { LocalAppsApi.group(it).name == group } }
+                val rows = remember(shown, column, descending) { AppTable.sort(shown, column, descending) }
+                // Total rows: the shown group's, and in All also each group's own.
+                val totalRows = remember(s, group) {
+                    when (group) {
+                        null -> listOf("Total" to LocalAppsApi.totals(s.rows), "Cloud Apps" to agg.getValue(AppGroup.CLOUD), "Phone Apps" to agg.getValue(AppGroup.PHONE))
+                        AppGroup.CLOUD.name -> listOf("Cloud Apps total" to agg.getValue(AppGroup.CLOUD))
+                        else -> listOf("Phone Apps total" to agg.getValue(AppGroup.PHONE))
+                    }
+                }
+                AppsTable(rows, column, descending, totalRows = totalRows, onSort = { c ->
                     if (c == column) descending = !descending else { column = c; descending = c != AppColumn.NAME && c != AppColumn.VERSION }
                     prefs.setAppsSort(column.name, descending)
                 }, onOpen = { pkg -> PermsPages.openAppInfo(ctx, pkg) }, onLaunch = actions?.let { a -> { r: AppRow -> a.launchApp(r.pkg, r.fleetUrl.orEmpty()) } })
@@ -224,7 +240,7 @@ private fun columnLabel(c: AppColumn): String = stringResource(when (c) {
 /** Sticky header, sortable columns, one horizontal scroll shared by header and rows (the table is wider than a phone). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AppsTable(rows: List<AppRow>, column: AppColumn, descending: Boolean, onSort: (AppColumn) -> Unit, onOpen: (String) -> Unit, onLaunch: ((AppRow) -> Boolean)? = null) {
+fun AppsTable(rows: List<AppRow>, column: AppColumn, descending: Boolean, onSort: (AppColumn) -> Unit, onOpen: (String) -> Unit, onLaunch: ((AppRow) -> Boolean)? = null, totalRows: List<Pair<String, AppTotals>> = emptyList()) {
     val hs = rememberScrollState()
     val yes = stringResource(R.string.manage_yes); val no = stringResource(R.string.manage_no)
     Box(Modifier.fillMaxSize().horizontalScroll(hs)) {
@@ -237,6 +253,20 @@ fun AppsTable(rows: List<AppRow>, column: AppColumn, descending: Boolean, onSort
                     }
                     if (onLaunch != null) Text(stringResource(R.string.manage_apps_col_actions), cellModifier(AppColumn.TOTAL), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End, maxLines = 1)
                 }
+            }
+            items(totalRows, key = { "total:" + it.first }) { (label, t) ->
+                Row(Modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)).heightIn(min = DriveMetrics.rowHeight).testTag(DriveTags.appsTotal(label)), verticalAlignment = Alignment.CenterVertically) {
+                    Column(cellModifier(AppColumn.NAME)) {
+                        Text("$label (${t.count})", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (t.unknown > 0) Text("${t.unknown} unread", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                    }
+                    Text("", cellModifier(AppColumn.VERSION))
+                    Num(AppTable.size(t.totalBytes), AppColumn.TOTAL, bold = true)
+                    Num(AppTable.size(t.appBytes), AppColumn.APP, bold = true)
+                    Num(AppTable.size(t.dataBytes), AppColumn.DATA, bold = true)
+                    Num(AppTable.size(t.cacheBytes), AppColumn.CACHE, bold = true)
+                }
+                Hairline()
             }
             items(rows, key = { it.pkg }) { r ->
                 Row(Modifier.heightIn(min = DriveMetrics.rowHeight).clickable { onOpen(r.pkg) }.testTag(DriveTags.APPS_ROW), verticalAlignment = Alignment.CenterVertically) {

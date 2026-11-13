@@ -11,7 +11,7 @@ import java.io.File
  */
 class LocalAppsCache(private val file: File) {
     fun read(): AppSnapshot.Snapshot? = runCatching { if (file.isFile) decode(file.readText()) else null }.getOrNull()
-    fun write(s: AppSnapshot.Snapshot) { runCatching { file.parentFile?.mkdirs(); val tmp = File(file.path + ".tmp"); tmp.writeText(encode(s)); tmp.renameTo(file) } }
+    fun write(s: AppSnapshot.Snapshot) { runCatching { LocalAppsApi.publish(s) }; runCatching { file.parentFile?.mkdirs(); val tmp = File(file.path + ".tmp"); tmp.writeText(encode(s)); tmp.renameTo(file) } }
     /** Package set changed: the cached list is stale; keep the rows but zero the capture time so "updated" never claims fresh data. */
     fun invalidate() { read()?.let { write(it.copy(capturedAt = 0L)) } }
 
