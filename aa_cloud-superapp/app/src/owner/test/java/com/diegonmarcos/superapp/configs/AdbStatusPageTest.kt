@@ -80,6 +80,9 @@ class AdbStatusPageTest : KitPageHarness() {
                 StepId.SHIZUKU_RUNNING -> f.copy(shizukuInstalled = true, shizukuRunning = true)
                 StepId.SHIZUKU_PERMISSION -> f.copy(shizukuGranted = true, shizukuAnswers = true)
                 StepId.VERIFY -> f
+                StepId.SHIZUKU_START -> f.copy(shizukuRunning = true)
+                StepId.LAUNCH_SERVER -> f.copy(serverRunning = true)
+                StepId.CLOSE_EMBEDDED -> f.copy(adbConnected = false)
             }
             return StepResult(true, "ok")
         }
@@ -106,14 +109,14 @@ class AdbStatusPageTest : KitPageHarness() {
             override fun facts() = dev.facts()
             override fun run(step: StepId) = dev.run(step).also { order += step.name }
         }) { order += "PERMS"; "perms ok" }
-        assertEquals(listOf("PERMS", "DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "VERIFY"), order)
+        assertEquals(listOf("PERMS", "DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "LAUNCH_SERVER", "VERIFY", "CLOSE_EMBEDDED"), order)
         assertEquals(order, AdbCockpitModel.autoFixOrder(ChannelMode.LOCAL_SERVER, LaunchVia.ADB, true))
         assertEquals("Connected.", r.note); assertNull(r.failure); assertNull(r.waiting)
         assertEquals(Light.GREEN, connected(dev.f, "local").light)
-        // Shizuku mode walks Shizuku's chain and nothing of adb
+        // Shizuku mode (#1709) pairs/connects embedded adb, starts the service through it (which makes "running" true), asks the grant, verifies, closes adb
         val shz = FakeDevice(facts(ChannelMode.SHIZUKU))
         AdbCockpitOps.connect(ChannelMode.SHIZUKU, LaunchVia.ADB, true, shz) { "perms ok" }
-        assertEquals(listOf("SHIZUKU_RUNNING", "SHIZUKU_PERMISSION", "VERIFY"), shz.ran)
+        assertEquals(listOf("PAIR", "ADB_CONNECT", "SHIZUKU_START", "SHIZUKU_PERMISSION", "VERIFY", "CLOSE_EMBEDDED"), shz.ran)
         // a step that is already true is not run again, the rest still are
         val half = FakeDevice(facts(paired = true))
         AdbCockpitOps.connect(ChannelMode.EMBEDDED_ONLY, LaunchVia.ADB, true, half) { "perms ok" }
@@ -140,7 +143,7 @@ class AdbStatusPageTest : KitPageHarness() {
         assertTrue(AdbCockpitModel.resumes(r.waiting, paired))
         val rest = FakeDevice(paired)
         assertEquals("Connected.", AdbCockpitOps.connect(ChannelMode.LOCAL_SERVER, LaunchVia.ADB, true, rest) { "perms ok" }.note)
-        assertEquals(listOf("ADB_CONNECT", "VERIFY"), rest.ran)
+        assertEquals(listOf("ADB_CONNECT", "LAUNCH_SERVER", "VERIFY", "CLOSE_EMBEDDED"), rest.ran)
         assertFalse(AdbCockpitModel.resumes(null, paired))
         assertFalse("already connected", AdbCockpitModel.resumes(StepId.PAIR, rest.f))
     }
