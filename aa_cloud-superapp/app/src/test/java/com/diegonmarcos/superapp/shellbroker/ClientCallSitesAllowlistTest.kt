@@ -2,6 +2,8 @@ package com.diegonmarcos.superapp.shellbroker
 
 import com.diegonmarcos.superapp.battery.BatteryPrivileged
 import com.diegonmarcos.superapp.launcher.PermAccess
+import com.diegonmarcos.superapp.network.AlwaysOnVpn
+import com.diegonmarcos.superapp.system.QuickDisplay
 import com.diegonmarcos.superapp.xray.LocationUseView
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -21,6 +23,18 @@ class ClientCallSitesAllowlistTest {
     @Test fun batteryLibCommandsAreAllowed() { allowed(BatteryPrivileged.COMMAND); allowed("dumpsys battery") }
     @Test fun permAccessDashboardIsAllowed() = allowed(PermAccess.DASHBOARD_CMD)
     @Test fun locationAppopsIsAllowed() = allowed(LocationUseView.APPOPS_CMD)
+    // #1682 P3 step 4e: Always-on VPN, Private DNS, Quick display and System display run through the client too
+    @Test fun alwaysOnVpnCommandsAreAllowed() {
+        for (on in listOf(true, false)) AlwaysOnVpn.commands(on, "com.diegonmarcos.cloudmesh").forEach { allowed(it) }
+        allowed(AlwaysOnVpn.lockdownCommand(true)); allowed(AlwaysOnVpn.lockdownCommand(false))
+        allowed("settings get secure always_on_vpn_app"); allowed("settings get secure always_on_vpn_lockdown")
+    }
+    @Test fun quickDisplayCommandsAreAllowed() { allowed(QuickDisplay.fontCommand(1.1f)); allowed(QuickDisplay.densityCommand(420)) }
+    @Test fun privateDnsAndNightModeAreAllowed() {
+        allowed("settings get global private_dns_mode"); allowed("settings put global private_dns_mode hostname")
+        allowed("settings put global private_dns_specifier dns.example.com")
+        allowed("cmd uimode night yes"); allowed("cmd uimode night no")
+    }
     @Test fun outputDoorKeepsTheInProcessBudget() = assertEquals(8 * 1024 * 1024, list.outCap(self))
     @Test fun auditGrantIsTheOwnerHostsOnly() {
         assertTrue(list.mayAudit(self))

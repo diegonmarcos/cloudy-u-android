@@ -12,11 +12,7 @@
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/FleetLogcatFragment.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/XrayExport.kt",
   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/LauncherStatusStrip.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/AlwaysOnVpn.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/FleetDns.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkPopupSections.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/QuickDisplay.kt",
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/SystemDisplay.kt"
+  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkPopupSections.kt"
  ],
  "gradle": [
   "ab_cloud-libs-shared/libs/updater/build.gradle",

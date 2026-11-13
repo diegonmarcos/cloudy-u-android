@@ -8,7 +8,7 @@ import android.provider.Settings
 import android.util.Base64
 import com.diegonmarcos.superapp.BuildConfig
 import com.diegonmarcos.cloudlib.sysdns.FleetDnsBridge
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
+import com.diegonmarcos.superapp.bgpolicy.BgHost
 import com.diegonmarcos.superapp.core.FleetAlerts
 import com.diegonmarcos.superapp.net.AidlBackend
 import com.wireguard.android.backend.BackendException
@@ -478,7 +478,7 @@ object FleetDns {
         fun global(key: String): String? =
             runCatching { Settings.Global.getString(cr, key) }.getOrNull()
                 ?: runCatching {
-                    ShellChannels.active(ctx)?.exec(ctx, "settings get global $key")?.trim()
+                    BgHost.shell(ctx)?.exec("settings get global $key")?.trim()
                         ?.takeIf { it.isNotEmpty() && it != "null" }
                 }.getOrNull()
         val cm = ctx.getSystemService(ConnectivityManager::class.java)
@@ -517,13 +517,13 @@ object FleetDns {
      */
     fun writeAndroid(ctx: Context, mode: String, host: String): String? {
         require(decl.androidModes.any { it.first == mode }) { "undeclared Private DNS mode $mode" }
-        val ch = ShellChannels.active(ctx) ?: return null
+        val ch = BgHost.shell(ctx) ?: return null
         val cmds = mutableListOf("settings put global private_dns_mode $mode")
         if (mode == "hostname") {
             require(HOSTNAME.matches(host)) { "not a hostname: $host" }
             cmds += "settings put global private_dns_specifier $host"
         }
-        return cmds.joinToString("\n") { ch.exec(ctx, it) ?: "(channel refused: $it)" }
+        return cmds.joinToString("\n") { ch.exec(it) ?: "(channel refused: $it)" }
     }
 
     // ── test lookup ──────────────────────────────────────────────────────

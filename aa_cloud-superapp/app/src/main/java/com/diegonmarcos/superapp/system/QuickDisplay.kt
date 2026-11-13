@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.provider.Settings
 import android.util.DisplayMetrics
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
+import com.diegonmarcos.superapp.bgpolicy.BgHost
 import com.diegonmarcos.superapp.settings.LauncherSettingsPrefs
 import org.json.JSONObject
 import java.util.Locale
@@ -116,20 +116,20 @@ object QuickDisplay {
     // ── privileged writes (call off the main thread) ─────────────────────
 
     private fun shell(ctx: Context, cmd: String): String? =
-        runCatching { ShellChannels.active(ctx)?.exec(ctx, cmd) }.getOrNull()
+        runCatching { BgHost.shell(ctx)?.exec(cmd) }.getOrNull()
 
     fun writeFont(ctx: Context, f: Float): Write {
         if (Settings.System.canWrite(ctx)) {
             val ok = runCatching { Settings.System.putFloat(ctx.contentResolver, "font_scale", f) }.getOrDefault(false)
             if (ok) return Write.Done
         }
-        if (ShellChannels.active(ctx) == null) return Write.NeedsAdb("adb shell " + fontCommand(f))
+        if (BgHost.shell(ctx) == null) return Write.NeedsAdb("adb shell " + fontCommand(f))
         shell(ctx, fontCommand(f)) ?: return Write.Failed("the shell did not answer")
         return if (Math.abs(fontScale(ctx) - f) < 0.01f) Write.Done else Write.Failed("the shell ran it but font_scale is ${fontScale(ctx)}")
     }
 
     fun writeDensity(ctx: Context, dpi: Int): Write {
-        if (ShellChannels.active(ctx) == null) return Write.NeedsAdb("adb shell " + densityCommand(dpi))
+        if (BgHost.shell(ctx) == null) return Write.NeedsAdb("adb shell " + densityCommand(dpi))
         shell(ctx, densityCommand(dpi)) ?: return Write.Failed("the shell did not answer")
         return Write.Done
     }

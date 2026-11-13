@@ -2,7 +2,7 @@ package com.diegonmarcos.superapp.system
 
 import android.content.Context
 import android.content.res.Configuration
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
+import com.diegonmarcos.superapp.bgpolicy.BgHost
 import com.diegonmarcos.superapp.settings.LauncherSettingsPrefs
 
 /**
@@ -53,8 +53,8 @@ object SystemDisplay {
     }
 
     private fun exec(ctx: Context): ((String) -> String?)? {
-        val channel = ShellChannels.active(ctx) ?: return null
-        return { command -> channel.exec(ctx, command) }
+        val channel = BgHost.shell(ctx) ?: return null
+        return { command -> channel.exec(command) }
     }
 
     /** Whether a privileged channel exists at all, for the caller's error text. */

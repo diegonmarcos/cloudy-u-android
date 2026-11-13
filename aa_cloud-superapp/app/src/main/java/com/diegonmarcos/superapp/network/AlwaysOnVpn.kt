@@ -2,13 +2,13 @@ package com.diegonmarcos.superapp.network
 
 import android.content.Context
 import android.provider.Settings
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
+import com.diegonmarcos.superapp.bgpolicy.BgHost
 import com.diegonmarcos.superapp.net.AidlBackend
 
 /**
  * #1120 Android's Always-on VPN for the mesh engine: its REAL status (Settings.Secure `always_on_vpn_app` /
  * `always_on_vpn_lockdown`) and the change, made through the fleet's privileged shell channel
- * ([ShellChannels]: our embedded adb client, our app_process server, Shizuku ...) exactly as
+ * (the shell broker via libs:shell-client: the owner's embedded adb client, its app_process server ...) exactly as
  * FleetDns.writeAndroid changes Private DNS. With no channel armed nothing is attempted; the caller shows
  * [Unavailable.reason] and deep-links to Android's VPN settings.
  *
@@ -55,11 +55,11 @@ object AlwaysOnVpn {
         if (direct != null && (direct.first != null || direct.second != null)) {
             return Reading(parseApp(direct.first), parseLockdown(direct.second), "settings")
         }
-        val ch = runCatching { ShellChannels.active(ctx) }.getOrNull()
+        val ch = runCatching { BgHost.shell(ctx) }.getOrNull()
         if (ch != null) {
-            val app = runCatching { ch.exec(ctx, "settings get secure $KEY_APP") }.getOrNull()
-            val ld = runCatching { ch.exec(ctx, "settings get secure $KEY_LOCKDOWN") }.getOrNull()
-            if (app != null || ld != null) return Reading(parseApp(app), parseLockdown(ld), ch.name())
+            val app = runCatching { ch.exec("settings get secure $KEY_APP") }.getOrNull()
+            val ld = runCatching { ch.exec("settings get secure $KEY_LOCKDOWN") }.getOrNull()
+            if (app != null || ld != null) return Reading(parseApp(app), parseLockdown(ld), ch.channel)
         }
         // Nothing was set (a missing key reads null) or nothing could be read: no always-on app is the honest default.
         return Reading(null, if (direct != null) false else null, if (direct != null) "settings" else "none")
@@ -67,30 +67,30 @@ object AlwaysOnVpn {
 
     fun view(ctx: Context, engineAlwaysOn: Boolean?): View {
         val r = read(ctx)
-        val ch = runCatching { ShellChannels.active(ctx) }.getOrNull()
+        val ch = runCatching { BgHost.shell(ctx) }.getOrNull()
         val on = when {
             r.source == "none" -> engineAlwaysOn
             else -> isOurs(r.pkg) || engineAlwaysOn == true
         }
-        return View(on, r.lockdown, ch != null, ch?.name().orEmpty(), if (ch == null) NO_CHANNEL else "", r.pkg)
+        return View(on, r.lockdown, ch != null, ch?.channel.orEmpty(), if (ch == null) NO_CHANNEL else "", r.pkg)
     }
 
     /** Switch Always-on for the engine; returns what happened, throws with the reason when it cannot. */
     fun write(ctx: Context, on: Boolean, engine: String = AidlBackend.ENGINE_PKG): String {
-        val ch = ShellChannels.active(ctx) ?: error(NO_CHANNEL)
-        val out = commands(on, engine).joinToString("; ") { ch.exec(ctx, it) ?: error("the ${ch.name()} channel refused: $it") }
+        val ch = BgHost.shell(ctx) ?: error(NO_CHANNEL)
+        val out = commands(on, engine).joinToString("; ") { ch.exec(it) ?: error("the ${ch.channel} channel refused: $it") }
         val after = read(ctx)
         check(isOurs(after.pkg, engine) == on) {
-            "the ${ch.name()} channel ran it but Android still reports always-on = ${after.pkg ?: "none"}" + (if (out.isNotBlank()) " ($out)" else "")
+            "the ${ch.channel} channel ran it but Android still reports always-on = ${after.pkg ?: "none"}" + (if (out.isNotBlank()) " ($out)" else "")
         }
-        return if (on) "Always-on VPN is on for the mesh engine (via ${ch.name()})" else "Always-on VPN is off (via ${ch.name()})"
+        return if (on) "Always-on VPN is on for the mesh engine (via ${ch.channel})" else "Always-on VPN is off (via ${ch.channel})"
     }
 
     fun writeLockdown(ctx: Context, on: Boolean): String {
-        val ch = ShellChannels.active(ctx) ?: error(NO_CHANNEL)
-        ch.exec(ctx, lockdownCommand(on)) ?: error("the ${ch.name()} channel refused the lockdown change")
+        val ch = BgHost.shell(ctx) ?: error(NO_CHANNEL)
+        ch.exec(lockdownCommand(on)) ?: error("the ${ch.channel} channel refused the lockdown change")
         val after = read(ctx)
-        check(after.lockdown == on) { "the ${ch.name()} channel ran it but Android still reports lockdown = ${after.lockdown}" }
-        return if (on) "Kill switch (lockdown) is on - traffic is blocked without the VPN (via ${ch.name()})" else "Kill switch (lockdown) is off (via ${ch.name()})"
+        check(after.lockdown == on) { "the ${ch.channel} channel ran it but Android still reports lockdown = ${after.lockdown}" }
+        return if (on) "Kill switch (lockdown) is on - traffic is blocked without the VPN (via ${ch.channel})" else "Kill switch (lockdown) is off (via ${ch.channel})"
     }
 }
