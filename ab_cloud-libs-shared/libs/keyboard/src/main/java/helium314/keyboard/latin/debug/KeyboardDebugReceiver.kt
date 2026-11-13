@@ -146,6 +146,25 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
                     "shown=${GrammarPopup.shownIssue?.let { "${it.original}->${it.suggestion}@${it.start}" } ?: "-"} " +
                     "at=${s.all.joinToString(",") { "${it.start}..${it.end}" }} field=[${fieldText()}]"
             }
+            // The Unexpected theme (CI screenshots): "theme unexpected_kb" applies a Themes preset, "fnlayer" taps Fn, "keypos g" logs a key's
+            // centre and size on the screen (to swipe it), "fieldtext" logs the field.
+            "theme" -> {
+                val preset = helium314.keyboard.settings.KbThemePreset.entries.firstOrNull { it.id == arg } ?: return "unknown theme"
+                helium314.keyboard.settings.KbThemePreset.apply(ime, preset)
+                "theme=${helium314.keyboard.settings.KbThemePreset.current(ime).id}"
+            }
+            "fnlayer" -> { press(KeyCode.FN); "fn=${helium314.keyboard.keyboard.UnexpectedKb.fn}" }
+            "themestate" -> "theme=${helium314.keyboard.settings.KbThemePreset.current(ime).id} active=${helium314.keyboard.keyboard.UnexpectedKb.active} " +
+                "fn=${helium314.keyboard.keyboard.UnexpectedKb.fn} keys=${switcher.mainKeyboardView?.keyboard?.sortedKeys?.size}"
+            "keypos" -> {
+                val view = switcher.mainKeyboardView ?: return "no view"
+                val at = IntArray(2).also { view.getLocationOnScreen(it) }
+                val key = view.keyboard?.sortedKeys?.firstOrNull {
+                    if (arg == "space") it.code == 32 else if (arg == "delete") it.code == KeyCode.DELETE else it.label.equals(arg, ignoreCase = true)
+                } ?: return "no key $arg"
+                "key=$arg ${at[0] + key.x + key.width / 2} ${at[1] + key.y + key.height / 2} ${key.width} ${key.height}"
+            }
+            "fieldtext" -> "field=[${fieldText()}]"
             else -> "unknown command"
         }
     }

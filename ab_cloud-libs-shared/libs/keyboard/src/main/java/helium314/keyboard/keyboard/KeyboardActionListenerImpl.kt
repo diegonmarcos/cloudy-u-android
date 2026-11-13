@@ -517,7 +517,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
      */
     private fun syncFnLayer() {
         if (!UnexpectedKb.active) return
-        val on = metaState and KeyEvent.META_FUNCTION_ON != 0
+        val on = (metaState and KeyEvent.META_FUNCTION_ON) != 0
         if (UnexpectedKb.fn == on) return
         UnexpectedKb.setFn(on)
         Handler(Looper.getMainLooper()).post { keyboardSwitcher.reloadMainKeyboard() }

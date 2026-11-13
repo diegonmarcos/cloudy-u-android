@@ -22,6 +22,8 @@
 #   26..28 answer-*        Draft Answer: the panel on the newest clipboard item, the clipboard source picker, a draft
 #   29..30 configs-answer  Configs with Draft Answer after Text Enhancement, and the Draft Answer page
 #   31..35 dev-keyboard-*  Dev Keyboard off/on from the toolbar, the Unexpected layout's corner labels
+#   36..40 unexpected-*    the Unexpected theme (Themes): base layer, corner swipes typing the corner glyph, the Fn layer (Fn blue),
+#                          read back from the keyboard; kept as shot-unexpected-*.png for the side-by-side with the design
 #   nav-*                  #1698 the settings nav walk: each bottom tab (tapped on the real bar) and EVERY declared page
 #                          (KbTab, read from the APK: navpages), each checked for content of its own (ci/nav-walk-check.py)
 #
@@ -229,6 +231,33 @@ grep -q "on=false" <<<"$D" && ok "the toolbar key turned Dev Keyboard off again"
 shot 34-unexpected-layout-dev-off
 kb code DEV_KEYBOARD
 openat "" 4; up; shot 35-configs-dev-keyboard-on
+
+# ── the Unexpected theme (Keyboard > Themes > Unexpected): its own keyboard from assets/unexpected_kb/layout.json ─
+fieldkb "--ez edittext true" "Unexpected theme"
+kb theme unexpected_kb; sleep 3; kb themestate; D="$(last themestate)"; echo "$D"
+grep -q "theme=unexpected_kb active=true fn=false" <<<"$D" && ok "the Unexpected theme is on, base layer" || bad "Unexpected theme not on: $D"
+shot 36-unexpected-base
+# swipe a key toward a corner: it types that corner's glyph; a tap types the centre
+swipekey() {   # $1 = key label, $2 = dx sign, $3 = dy sign
+    kb keypos "$1"; read -r _ KX KY KW KH < <(last keypos | sed 's/.*key=[^ ]* //; s/^/k /')
+    adb shell input swipe "$KX" "$KY" $((KX + $2 * KW)) $((KY + $3 * KH)) 120; sleep 1
+}
+tapkey() { kb keypos "$1"; read -r _ KX KY KW KH < <(last keypos | sed 's/.*key=[^ ]* //; s/^/k /'); adb shell input tap "$KX" "$KY"; sleep 1; }
+kb fieldtext; F0="$(last fieldtext)"
+tapkey g; swipekey g 1 -1; swipekey g -1 1; swipekey h 1 -1; swipekey 1 1 1; swipekey n 1 1
+kb fieldtext; F1="$(last fieldtext)"; echo "$F1"
+grep -q "g-_=!;" <<<"$F1" && ok "tap types the centre, swipes type the NE / SW / SE corner glyphs (g - _ = ! ;)" || bad "corner swipes typed: $F1"
+shot 37-unexpected-after-swipes
+kb fnlayer; sleep 3; kb themestate; D="$(last themestate)"; echo "$D"
+grep -q "fn=true" <<<"$D" && ok "Fn switched the Fn layer on" || bad "Fn layer not on: $D"
+shot 38-unexpected-fn
+tapkey "€"; kb themestate; D="$(last themestate)"; echo "$D"
+grep -q "fn=false" <<<"$D" && ok "one key later the Fn layer is off again (Fn is one-shot)" || bad "Fn layer stayed on: $D"
+kb fieldtext; F2="$(last fieldtext)"; grep -q "€" <<<"$F2" && ok "the Fn layer typed the euro key" || bad "Fn layer key: $F2"
+shot 39-unexpected-after-fn-key
+kb theme default; sleep 2; kb themestate; D="$(last themestate)"; echo "$D"
+grep -q "theme=default active=false" <<<"$D" && ok "Default theme restored" || bad "Default not restored: $D"
+shot 40-default-restored
 
 # ── #1698 the settings nav walk: every bottom tab tapped on the real bar, then EVERY page the APK declares (navpages), each
 # screenshotted and checked for content of its own: not empty, no placeholder, not the same screen as another route ─
