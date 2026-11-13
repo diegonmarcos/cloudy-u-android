@@ -177,10 +177,10 @@ class ShellClient(val transport: Transport) {
 
         /** THE one way every app opens the owner's ADB Shell page: the declared exported entry, NEW_TASK, a toast (never silent) on failure; true = started. */
         fun openArmPage(ctx: Context): Boolean {
-            if (!superAppInstalled(ctx)) { toast(ctx, "Cloud SuperApp is not installed: it owns the ADB shell. Install it from the Store."); return false }
+            if (!superAppInstalled(ctx)) { toast(ctx, "Cloud C3 Webserver is not installed: it owns the ADB shell. Install it from the Store."); return false }
             val i = armIntent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             val r = runCatching { ctx.startActivity(i) }
-            if (r.isFailure) toast(ctx, "Could not open Cloud SuperApp > ADB Shell (${r.exceptionOrNull()?.javaClass?.simpleName}). Update the SuperApp.")
+            if (r.isFailure) toast(ctx, "Could not open Cloud C3 Webserver > ADB Shell (${r.exceptionOrNull()?.javaClass?.simpleName}). Update the Cloud C3 Webserver.")
             return r.isSuccess
         }
 

@@ -24,7 +24,7 @@ internal object StoreShell {
 
     fun status(ctx: Context): ShellStatus = ShellClient.status(ctx)
 
-    /** The "Arm in SuperApp" step: the broker's own flow (ADB Shell page / Wireless debugging switch). */
+    /** #1682 THE Store's ADB door: the ADB owner's (Cloud C3 Webserver) page, by the client-safe explicit intent (ShellWire.BROKER_PKG); the Store links no owner lib, so this is what AdbShellLink.open resolves to for a client. */
     fun arm(ctx: Context): Boolean = ShellClient.openArmPage(ctx)
 
     internal fun text(r: ShellResult): String? = when (r) {

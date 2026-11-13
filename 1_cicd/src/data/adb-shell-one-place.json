@@ -1,5 +1,5 @@
 {
- "_doc": "ONE PAGE FOR THE PRIVILEGED CHANNEL. The ADB Shell page (libs:shizuku-adb-debug-tools AdbShellPage) is the only place that PAIRS, CONNECTS, DISCONNECTS, starts or stops the local server, asks Shizuku for permission, switches the channel mode or opens the Wireless-debugging settings on the person's behalf. Every other screen shows a compact status chip that opens it (AdbShellLink.open / AdbShellChip / StoreBar.channelButton). Read by aa_cloud-superapp/test/test-adb-shell-one-place.sh, which fails when a first-party source file outside `allow` contains one of the `controls`, when an app that links the lib does not expose the page (`hosts`), or when the page grows a minimum height.",
+ "_doc": "ONE PAGE FOR THE PRIVILEGED CHANNEL. #1682 P3 the ADB owner is the Cloud C3 Webserver app: the ADB Shell page (libs:shizuku-adb-debug-tools AdbShellPage, hosted by the webserver's AdbOwnerSide) is the only place that PAIRS, CONNECTS, DISCONNECTS, starts or stops the local server, asks Shizuku for permission, switches the channel mode or opens the Wireless-debugging settings on the person's behalf. Every other screen shows a compact status chip that opens it (AdbShellLink.open / AdbShellChip / StoreBar.channelButton). Read by aa_cloud-superapp/test/test-adb-shell-one-place.sh, which fails when a first-party source file outside `allow` contains one of the `controls`, when an app that links the lib does not expose the page (`hosts`), or when the page grows a minimum height.",
  "page": {
   "lib": "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
   "dir": "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug",
@@ -37,10 +37,57 @@
   }
  },
  "hosts": {
-  "_doc": "Every app whose gradle links the lib must expose the page, and must say what it needs the channel for (build.json::privileged_channel.needs). `has` is a string that must appear in `file`. #1512: only the SuperApp links the lib; Cloud Store, Cloud Account and the terminals reach the shell through the SuperApp's broker (libs:shell-client) and host no ADB Shell page of their own.",
+  "_doc": "Every app whose gradle links the lib must expose the page, and must say what it needs the channel for (build.json::privileged_channel.needs). `has` is a string that must appear in `file`. #1682 P3: the ADB owner is the Cloud C3 Webserver app (ac_cloud-c3-webserver, AdbOwnerSide hosts AdbShellBrokerPage); Cloud Store, Cloud Account, the SuperApp and the terminals reach the shell through the owner's broker (libs:shell-client) and open the owner's page through AdbShellLink.open. `consumers` is what gradle must show linking the lib today (the SuperApp until its client build drops it; the guard fails when the list and gradle differ, so the cut-over cannot pass unnoticed). The ADB owner's own host entry is `owner_host` (it declares no privileged_channel.needs block yet; test-adb-page-owner-only.sh holds that it hosts the page).",
   "aa_cloud-superapp": {
    "file": "aa_cloud-superapp/app/src/owner/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt",
    "has": "AdbShellBrokerPage("
   }
+ },
+ "owner_page": {
+  "_doc": "#1682 THE ONE ADB PAGE IS THE OWNER'S (Cloud C3 Webserver). No first-party source outside the owner side may open the SuperApp's own ADB page: the in-app route (section config, page adb-shell / adb-status), the lib's AdbShellActivity of the superapp package. Every chip calls AdbShellLink.open. Read by ac_cloud-store/test/test-adb-page-owner-only.sh. `offenders` is a SHRINKING RATCHET, never an allow-forever: each entry is a file that still opens the SuperApp's page today and names the ticket step that removes it; a file that no longer matches is STALE and fails (delete the entry), a file not listed fails. The list only shrinks; it is empty when the SuperApp and Account commits land. ShellClient.openArmPage is NOT forbidden: its explicit intent targets ShellWire.BROKER_PKG, which must equal the owner app's application id (checked), so it is the client-safe door to the owner's page.",
+  "forbidden": {
+   "in-app-route": "openSectionPage\\(\\s*\"config\"\\s*,\\s*\"adb-(shell|status)\"|Target\\.InApp\\(\\s*\"config\"\\s*,\\s*\"adb-shell\"|\\bgo\\(\\s*\"setup\"\\s*,\\s*\"adb-shell\"",
+   "superapp-activity": "adbdebug\\.AdbShellActivity|AdbShellActivity\\.(open|start|launch|intent)"
+  },
+  "owner_side": {
+   "_doc": "The only places allowed to name those (prefixes / files): the webserver app, the AdbShellLink opener, the shell-client lib that declares the intents, and the lib that implements the page.",
+   "dirs": [
+    "ac_cloud-c3-webserver/",
+    "ab_cloud-libs-shared/libs/shell-client/",
+    "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/",
+    "aa_cloud-superapp/app/src/owner/",
+    "aa_cloud-superapp/app/src/client/"
+   ],
+   "files_named": [
+    "AdbShellLink.kt"
+   ]
+  },
+  "offenders": {
+   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkSections.kt": "#1682 the network popup's ADB row is Target.InApp config/adb-shell; the SuperApp agent retargets it to the owner",
+   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/App.kt": "#1682 the SuperApp's AdbShellLink.hostOpener opens its own config/adb-shell route; removed with the SuperApp's own page",
+   "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/PermsPage.kt": "#1682 Account's Perms page links go(setup, adb-shell); the Account agent retargets it to the owner"
+  },
+  "store_must_use": {
+   "_doc": "Store code that opens the ADB page does it through the client door to the owner's page (or AdbShellLink.open where the owner lib is linked), nothing else.",
+   "calls": [
+    "ShellClient.openArmPage(",
+    "AdbShellLink.open("
+   ],
+   "files": [
+    "ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreShell.kt",
+    "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt"
+   ],
+   "owner_package": {
+    "wire": "ab_cloud-libs-shared/libs/shell-client/src/main/java/com/diegonmarcos/superapp/shellclient/ShellWire.kt",
+    "const": "BROKER_PKG",
+    "build_json": "ac_cloud-c3-webserver/build.json"
+   }
+  }
+ },
+ "owner_host": {
+  "_doc": "#1682 P3 the ADB owner: the Cloud C3 Webserver app hosts THE one ADB Shell page (AdbShellBrokerPage inside its AdbOwnerSide). Held by test-adb-page-owner-only.sh (O4).",
+  "app": "ac_cloud-c3-webserver",
+  "file": "ac_cloud-c3-webserver/src-tauri/gen/android/app/src/owner/java/com/diegonmarcos/cloudwebserver/owner/AdbOwnerSide.kt",
+  "has": "AdbShellBrokerPage("
  }
 }

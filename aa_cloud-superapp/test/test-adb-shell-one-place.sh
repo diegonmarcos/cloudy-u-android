@@ -78,7 +78,7 @@ for d in sorted(os.listdir(R)):
         if os.path.isfile(gp) and re.search(r"project\(\s*[\"']:libs:shizuku-adb-debug-tools[\"']\s*\)", open(gp, encoding="utf-8", errors="replace").read()):
             consumers.append(d); break
 hosts = {k: v for k, v in D["hosts"].items() if not k.startswith("_")}
-ok(consumers == ["aa_cloud-superapp"], f"#1512 only the SuperApp links the lib: {', '.join(consumers)}", f"#1512 apps other than the SuperApp link the lib (or none does): {consumers}")
+ok(set(consumers) <= {"aa_cloud-superapp", "ac_cloud-c3-webserver"} and "ac_cloud-store" not in consumers, f"#1512/#1682 only the SuperApp and the ADB owner (Cloud C3 Webserver) link the lib: {', '.join(consumers)}", f"#1512/#1682 an app other than the SuperApp and the ADB owner links the lib: {consumers}")
 ok(not [c for c in consumers if c not in hosts], "every consumer app has a declared host for the page",
    "apps link the lib with no page host declared in the data: " + ", ".join(c for c in consumers if c not in hosts))
 for app, h in sorted(hosts.items()):
@@ -109,7 +109,10 @@ man = open(f"{R}/{pg['lib']}/src/main/AndroidManifest.xml", encoding="utf-8").re
 ok("com.diegonmarcos.superapp.adbdebug.AdbShellActivity" in man, "the lib manifest declares the page's Activity (every consumer merges it)", "AdbShellActivity is not declared in the lib manifest")
 
 # G5
-ok("StoreShell.arm(ctx)" in code("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreBar.kt"), "the Store bar chip opens the SuperApp's arm flow (the Store has no channel page of its own)", "the Store bar chip no longer opens the SuperApp's arm flow")
+ok("StoreShell.arm(ctx)" in code("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreBar.kt")
+   and "ShellClient.openArmPage(" in code("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreShell.kt")
+   and "adbdebug" not in code("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreShell.kt"),
+   "the Store bar chip opens the ADB owner's page (#1682: the Cloud C3 Webserver; the Store has no channel page of its own)", "the Store bar chip no longer opens the owner's ADB page through the client door (ShellClient.openArmPage targets the owner package)")
 for f, why in (("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt", "the Permissions page chip"),
                ("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlFragment.kt", "the Dev control chip")):
     ok("ShellClient.openArmPage(" in code(f), f"{why} opens the page", f"{why} no longer opens the ADB Shell page")
