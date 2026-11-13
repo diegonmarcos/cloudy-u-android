@@ -81,7 +81,8 @@ interface Colors {
         // the Unexpected theme draws its own flat rounded keys (reference radius and gap) instead of the style's drawables
         val result = if (UnexpectedKb.active && (color == KEY_BACKGROUND || color == FUNCTIONAL_KEY_BACKGROUND
                 || color == SPACE_BAR_BACKGROUND || color == ACTION_KEY_BACKGROUND)) UnexpectedKb.keyBackground() else drawable
-        setColor(result, color)
+        // the design's enter key is the same dark grey as the other functional keys, not the accent colour
+        setColor(result, if (result !== drawable && color == ACTION_KEY_BACKGROUND) FUNCTIONAL_KEY_BACKGROUND else color)
         return result
     }
 }
