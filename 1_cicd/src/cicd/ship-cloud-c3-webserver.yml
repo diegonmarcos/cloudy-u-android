@@ -316,6 +316,14 @@ jobs:
             unzip -lv "$f" | awk 'NR>3 && ($8 ~ /\.so$|\.dex$/) {print "  " $8 ": " $1 " B unpacked, " $3 " B stored"}'
           done
 
+      # #1712 the task flags of the MERGED manifest in the built APK: one normal task, listed in Recents, the ADB deep link's trampoline on
+      # its own affinity. Companion of test/test-c3-webserver-task-flags.sh, which reads the sources.
+      - name: "Test -> merged manifest task flags (Recents)"
+        if: steps.gate.outputs.skip != 'true'
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          for f in dist/*.apk; do bash test/check-apk-task-flags.sh "$f"; done
+
       # cargo resolved the crate graph on this run; the lockfile is handed out so
       # it can be committed and later runs build the same graph (--locked).
       - name: Hand out the resolved Cargo.lock

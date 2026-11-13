@@ -28,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -49,28 +49,42 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diegonmarcos.cloudwebserver.Api
 import com.diegonmarcos.superapp.themebg.ThemeBackground
+import com.diegonmarcos.superapp.uikit.CloudKitTheme
+import com.diegonmarcos.superapp.uikit.KitPalette
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** The app's look: the fleet's dark palette (libs:theme-background) as a Material 3 scheme; the bars draw their own (libs:ui-nav-bars). */
+/**
+ * The app's look: the fleet's dark palette (libs:theme-background) handed to the fleet kit (libs:ui-kit CloudKitTheme), which maps it to the
+ * Material 3 roles AND sets the default content colour. #1712: the theme used to be a bare MaterialTheme, so any text a page left uncoloured
+ * (and every colour the page named itself) was not from the fleet tokens; now every colour on a page is a kit / theme token. Guard:
+ * test/test-c3-webserver-theme-tokens.sh. The bars draw their own (libs:ui-nav-bars).
+ */
 @Composable
 fun WebserverTheme(content: @Composable () -> Unit) {
+    val palette = remember { webserverPalette() }
+    CloudKitTheme(palette, content)
+}
+
+/** The kit palette of this app, built from the fleet's dark theme tokens only (no colour literal). */
+fun webserverPalette(): KitPalette {
     val c = ThemeBackground.colors(true)
-    MaterialTheme(
-        colorScheme = darkColorScheme(primary = c.accent, onSurface = c.ink, onSurfaceVariant = c.inkDim, surface = c.top, background = c.top),
-        content = content,
+    return KitPalette(
+        surface = c.top, surfaceSelected = c.ink.copy(alpha = 0.10f).compositeOver(c.top), textPrimary = c.ink, textSecondary = c.inkDim,
+        accent = c.accent, hairline = c.islandBorder, tileInk = c.top, ok = KitPalette.DEFAULT_OK, warn = KitPalette.DEFAULT_WARN, bad = KitPalette.DEFAULT_BAD,
     )
 }
 
-/** The status colours of the web shell's dots and badges (up / down / attention). */
+/** The status colours of the web shell's dots and badges (up / down / attention) and the card surface: the kit's state tokens and the theme's. */
 object Tone {
-    val Up = Color(0xFF3FB950)
-    val Down = Color(0xFF8B949E)
-    val Warn = Color(0xFFD29922)
-    val Bad = Color(0xFFF85149)
-    val Card = Color(0x1AFFFFFF)
-    val Line = Color(0x26FFFFFF)
+    private val c = ThemeBackground.colors(true)
+    val Up = KitPalette.DEFAULT_OK
+    val Down = c.inkDim
+    val Warn = KitPalette.DEFAULT_WARN
+    val Bad = KitPalette.DEFAULT_BAD
+    val Card = c.tabStrip
+    val Line = c.islandBorder
 }
 
 /** What a page shows for one API read: loading, the value, or the reason it failed (never a crash). */

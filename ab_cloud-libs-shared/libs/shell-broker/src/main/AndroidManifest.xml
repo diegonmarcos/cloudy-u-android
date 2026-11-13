@@ -13,10 +13,15 @@
             android:name="com.diegonmarcos.superapp.shellbroker.ShellBrokerService"
             android:exported="true"
             android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+        <!-- #1712 THE trampoline is excludeFromRecents, so it must never be the root of the OWNER's task: another app's ADB button starts it with
+             NEW_TASK, and with the default (package) affinity a cold start made it the root of the owner's task, which Android then hid from
+             Recents for good (the app could not be switched back to). taskAffinity="" puts it in its own throwaway task; it starts the owner's
+             MainActivity (singleTask, package affinity) into the owner's own, listed task and finishes. Guard: c3-webserver test-c3-webserver-task-flags.sh. -->
         <activity
             android:name="com.diegonmarcos.superapp.shellbroker.ShellArmActivity"
             android:exported="true"
             android:excludeFromRecents="true"
+            android:taskAffinity=""
             android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
             android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
