@@ -64,8 +64,7 @@
   },
   "offenders": {
    "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/NetworkSections.kt": "#1682 the network popup's ADB row is Target.InApp config/adb-shell; the SuperApp agent retargets it to the owner",
-   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/App.kt": "#1682 the SuperApp's AdbShellLink.hostOpener opens its own config/adb-shell route; removed with the SuperApp's own page",
-   "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/PermsPage.kt": "#1682 Account's Perms page links go(setup, adb-shell); the Account agent retargets it to the owner"
+   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/App.kt": "#1682 the SuperApp's AdbShellLink.hostOpener opens its own config/adb-shell route; removed with the SuperApp's own page"
   },
   "store_must_use": {
    "_doc": "Store code that opens the ADB page does it through the client door to the owner's page (or AdbShellLink.open where the owner lib is linked), nothing else.",
