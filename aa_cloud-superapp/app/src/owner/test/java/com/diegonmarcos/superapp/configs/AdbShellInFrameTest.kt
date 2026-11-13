@@ -28,7 +28,7 @@ class AdbShellInFrameTest {
         val side = File(System.getProperty("user.dir"), "src/owner/java/com/diegonmarcos/superapp/adbside/AdbSide.kt").readText()
         assertTrue("the owner AdbSide installs the lib's in-frame opener", side.contains("AdbShellLink.hostOpener = inFrame") && side.contains("AdbReadiness.hostOpener = inFrame"))
         assertTrue("App hands the facade its opener", app.contains("AdbSide.install(this)"))
-        assertTrue("it opens Configs > ADB Shell", Regex("shell\\.openSectionPage\\(\"config\", \"adb-shell\"\\)").containsMatchIn(app))
+        assertTrue("no SuperApp in-frame opener: every ADB link goes to the owner (#1682 P4)", !app.contains("openSectionPage(\"config\", \"adb-shell\")"))
     }
 
     @Test fun `Configs ADB Shell is a strip over four tabs, each an AdbShellFragment, and All is the broker page`() {

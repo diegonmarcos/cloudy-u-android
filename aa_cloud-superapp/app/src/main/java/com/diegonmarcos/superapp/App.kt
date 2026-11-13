@@ -64,11 +64,8 @@ class App : Application(), WorkManagerConfiguration.Provider {
         com.diegonmarcos.superapp.chat.ChatCredentials.open = { c -> com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(c) }
         // #1682 P3 step 5: every ADB OWNER hook (channel auto-arm, grant runner, keeper / plane hosts, readiness owner half, Connect chain,
         // in-frame opener) lives behind ONE facade; the client build (adb-owner.json names another app) installs none of them.
-        com.diegonmarcos.superapp.adbside.AdbSide.install(this) { c ->
-            val shell = generateSequence(c) { (it as? android.content.ContextWrapper)?.baseContext }
-                .firstOrNull { it is ShellActivity } as? ShellActivity
-            if (shell != null) { shell.openSectionPage("config", "adb-shell"); true } else false
-        }
+        // the in-frame ADB page no longer exists in any build: every "open the ADB Shell" goes to the owner (AdbShellLink / AdbReadiness)
+        com.diegonmarcos.superapp.adbside.AdbSide.install(this) { _ -> false }
         // extapp: install progress — listening before any resumed install worker publishes.
         com.diegonmarcos.superapp.extinstall.ExtAppInstalls.init(this)
         // The island's haptics are the lib's; "Vibration on tap" (Configs -> Launcher -> Others) still gates them.

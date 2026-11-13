@@ -87,6 +87,8 @@ object NetworkSections {
         data class System(val tries: List<String>, val perSim: Boolean = false, override val label: String = "Settings ›") : Target()
         data class InApp(val section: String, val page: String, override val label: String) : Target()
         /** #1684 another fleet app, opened by its own launcher ([fleetId] in the fleet manifest), e.g. Cloud Webserver. */
+        /** #1682 the ADB Shell page is the ADB owner's (AdbReadiness.openAdbShell), never a SuperApp page. */
+        data class AdbOwner(override val label: String) : Target()
         data class FleetApp(val fleetId: String, override val label: String) : Target()
     }
 
@@ -104,7 +106,7 @@ object NetworkSections {
         BLUETOOTH to Target.System(listOf("action:android.settings.BLUETOOTH_SETTINGS", ANY_SETTINGS)),
         MESH to Target.InApp("config", "wg", "Cloud Mesh ›"),
         KDE to Target.InApp("config", "kde", "Peer Control ›"),
-        ADB to Target.InApp("config", "adb-shell", "ADB Shell ›"),
+        ADB to Target.AdbOwner("ADB Shell ›"),
         DATA to Target.System(listOf(
             "component:$SETTINGS_PKG/$SETTINGS_PKG.Settings\$UsbDetailsActivity",
             "action:android.settings.CONNECTED_DEVICE_SETTINGS",

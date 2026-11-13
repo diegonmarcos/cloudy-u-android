@@ -753,6 +753,7 @@ object NetworkInfoPopup {
     private fun openTarget(ctx: Context, t: NetworkSections.Target, subId: Int = -1) {
         when (t) {
             is NetworkSections.Target.InApp -> openInApp(ctx, t.section, t.page)
+            is NetworkSections.Target.AdbOwner -> com.diegonmarcos.superapp.system.AdbReadiness.openAdbShell(ctx)
             is NetworkSections.Target.FleetApp -> runCatching {
                 if (com.diegonmarcos.superapp.launcher.WebserverLaunch.open(ctx) == com.diegonmarcos.superapp.launcher.WebserverLaunch.Opened.NONE)
                     Toast.makeText(ctx, "Cloud Webserver is not installed", Toast.LENGTH_SHORT).show()

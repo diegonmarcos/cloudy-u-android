@@ -58,12 +58,13 @@ class NetworkSectionsTest {
                 for (s in t.tries) assertTrue("$k: $s", s.startsWith("action:") || (s.startsWith("component:") && s.contains('/')))
             }
             is NetworkSections.Target.InApp -> assertTrue(t.page.isNotBlank())
+            is NetworkSections.Target.AdbOwner -> assertTrue(t.label.isNotBlank())
             is NetworkSections.Target.FleetApp -> assertTrue(t.fleetId.isNotBlank())
         }
         val s = NetworkSections.SETTINGS
         assertEquals(NetworkSections.Target.InApp("config", "wg", "Cloud Mesh ›"), s[NetworkSections.MESH])
         assertEquals(NetworkSections.Target.InApp("config", "kde", "Peer Control ›"), s[NetworkSections.KDE])
-        assertEquals(NetworkSections.Target.InApp("config", "adb-shell", "ADB Shell ›"), s[NetworkSections.ADB])
+        assertEquals(NetworkSections.Target.AdbOwner("ADB Shell ›"), s[NetworkSections.ADB])
         assertEquals("action:android.settings.LOCATION_SOURCE_SETTINGS", (s[NetworkSections.GPS] as NetworkSections.Target.System).tries[0])
         assertEquals("action:android.settings.WIFI_SETTINGS", (s[NetworkSections.WIFI] as NetworkSections.Target.System).tries[0])
         assertEquals("action:android.settings.BLUETOOTH_SETTINGS", (s[NetworkSections.BLUETOOTH] as NetworkSections.Target.System).tries[0])
