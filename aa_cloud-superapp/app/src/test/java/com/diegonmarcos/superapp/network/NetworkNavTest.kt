@@ -20,8 +20,10 @@ import java.io.File
  */
 class NetworkNavTest {
 
+    /** user.dir is the app MODULE (aa_cloud-superapp/app); build.json sits one level up. */
     private val app = File(System.getProperty("user.dir"))
-    private val build = JSONObject(File(app, "build.json").readText())
+    private val project = app.parentFile
+    private val build = JSONObject(File(project, "build.json").readText())
     private val kt = File(app, "src/main/java/com/diegonmarcos/superapp")
     private fun src(rel: String) = File(kt, rel).readText().replace(Regex("(?s)/\\*.*?\\*/"), "").replace(Regex("(?m)(?<=\\s|^)//.*$"), "")
 
@@ -94,7 +96,7 @@ class NetworkNavTest {
         assertTrue(s.contains("FirewallDialog.newInstance(tab).apply { showsDialog = false }"))
         assertEquals(listOf("Status", "Apps", "Rules"), NgFirewallNav.TABS.map { it.second })
         assertEquals(NgFirewallNav.TABS.map { it.first }.toSet(), NgFirewallNav.ICONS.keys)
-        val dialog = File(app, "../ab_cloud-libs-shared/libs/firewall/src/main/java/com/diegonmarcos/superapp/firewall/FirewallDialog.kt").readText()
+        val dialog = File(project, "../ab_cloud-libs-shared/libs/firewall/src/main/java/com/diegonmarcos/superapp/firewall/FirewallDialog.kt").readText()
         for (sec in listOf("SECTION_ALL", "SECTION_STATUS", "SECTION_APPS", "SECTION_RULES")) assertTrue(sec, dialog.contains("const val $sec"))
         // the default view is the whole previous screen
         assertTrue(dialog.contains("?: SECTION_ALL"))
@@ -113,6 +115,6 @@ class NetworkNavTest {
     }
 
     @Test fun `N7 the Configs row tile is renamed with its target intact`() {
-        assertTrue(File(app, "build.json").readText().contains("\"id\": \"configs-firewall\",\n                \"label\": \"NG Firewall\",\n                \"icon\": \"ic_lock\",\n                \"target\": \"page:config/firewall\""))
+        assertTrue(File(project, "build.json").readText().contains("\"id\": \"configs-firewall\",\n                \"label\": \"NG Firewall\",\n                \"icon\": \"ic_lock\",\n                \"target\": \"page:config/firewall\""))
     }
 }

@@ -101,7 +101,12 @@ class ShellTopInsetStaticGuardTest {
             "fragment_container" in swaps && swaps.all { it == "fragment_container" || it == "detail_container" || it == "drawer_content" })
         val implementers = java.walkTopDown().filter { it.isFile && it.extension == "kt" }
             .filter { Regex("[:,]\\s*ShellOverride\\b").containsMatchIn(text(it)) }.map { it.name }.toList()
-        assertFalse("these pages take the chrome over: $implementers", implementers.isNotEmpty())
+        // #1719 the one declared exception: Configs > Network replaces the shell's bottom nav with its own (libs:bottomnav island) and NG Firewall
+        // takes the whole screen (own nav + Back). Each is a named file and each still starts under the shell's padded container; any other
+        // page taking the chrome over still fails here.
+        val declared = setOf("NetworkNavFragment.kt", "NgFirewallFragment.kt")
+        assertEquals("only the declared #1719 pages may own chrome", declared, implementers.filter { it in declared }.toSet())
+        assertFalse("these pages take the chrome over: ${implementers - declared}", (implementers - declared).isNotEmpty())
     }
 
     @Test fun `S6 a tab strip under the shell takes no second top inset`() {
