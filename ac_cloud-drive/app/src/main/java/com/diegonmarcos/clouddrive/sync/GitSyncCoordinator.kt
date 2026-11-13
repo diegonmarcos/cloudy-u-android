@@ -67,7 +67,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         pickAuth(
             kind = repo.authKind,
             stored = { credentials.authFor(repo) },
-            session = { com.diegonmarcos.cloudlib.gitsync.GitAuth.Session(FleetGit.sessionHeader(), FleetSession.cookie) },
+            session = { com.diegonmarcos.cloudlib.gitsync.GitAuth.Session(FleetGit.sessionHeader(), FleetSession.fresh()) },
             declaredToken = token,
             owner = Declarations.sync.git.owner,
             declaredHost = hostOf(repo.remoteUrl) == hostOf(Declarations.sync.git.cloneUrl(repo.name)),

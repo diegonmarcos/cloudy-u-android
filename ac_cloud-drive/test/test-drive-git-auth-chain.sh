@@ -744,7 +744,7 @@ PYTHON
     # the DECLARED header; the store consulted only inside it.
     grep -qE 'const val AUTH_SESSION = "session"' "$coord" \
         || { echo "    the coordinator has no session auth kind"; bad=1; }
-    grep -qE 'GitAuth\.Session\(FleetGit\.sessionHeader\(\), FleetSession\.cookie\)' "$coord" \
+    grep -qE 'GitAuth\.Session\(FleetGit\.sessionHeader\(\), FleetSession\.fresh\(\)\)' "$coord" \
         || { echo "    the session auth is not assembled from the declared header + the in-memory session"; bad=1; }
     local stores
     stores="$(_code "$coord" | grep -oE 'credentials\.authFor\(' | wc -l | tr -d ' ')"
@@ -1045,7 +1045,7 @@ _stage && _green "c11" _c11 && {
                            '.put("header", "Authorization").put("value", "Bearer " + auth.value)'
     _red "C11 the session sent as a bearer — measured to collide with gitea's own token auth" _c11; }
 _stage && _green "c11" _c11 && {
-    _sub "$W/GitSyncCoordinator.kt" 'GitAuth.Session(FleetGit.sessionHeader(), FleetSession.cookie)' \
+    _sub "$W/GitSyncCoordinator.kt" 'GitAuth.Session(FleetGit.sessionHeader(), FleetSession.fresh())' \
                                     'credentials.authFor(repo)'
     _red "C11 the coordinator stops assembling the session auth (store-only, which cannot hold it)" _c11; }
 _stage && _green "c11" _c11 && {

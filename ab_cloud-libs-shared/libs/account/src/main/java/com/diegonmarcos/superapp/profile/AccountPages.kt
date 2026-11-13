@@ -469,6 +469,8 @@ fun AccountConnectPage() {
     }
     val signInHost = remember {
         object : SignInHost {
+            // #1693 the session the portal login earned is Cloud Account's: held short-lived in memory, served over the `session` method
+            override fun onWebSession(cookie: String) { SessionLease.remember(cookie) }
             override fun onSignedIn(result: SignInResult) { status = said(ConnectWays.signedIn(ctx, result).line); tick++ }
         }
     }

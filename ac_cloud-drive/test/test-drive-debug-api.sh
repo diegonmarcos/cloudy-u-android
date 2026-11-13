@@ -98,7 +98,7 @@ import re, sys
 src = open(sys.argv[1], encoding="utf-8").read()
 code = "\n".join(l for l in src.splitlines() if not l.strip().startswith(("*", "//", "/*")))
 # a token or cookie VALUE interpolated into any string is the defect
-for forbidden in ('${cookie', 'esc(cookie', '${token', 'esc(token', '${FleetSession.cookie', 'esc(FleetSession.cookie', '.token', 'Authorization'):
+for forbidden in ('${cookie', 'esc(cookie', '${token', 'esc(token', '${FleetSession.cookie', 'esc(FleetSession.cookie', '${FleetSession.fresh()', 'esc(FleetSession.fresh()', '.token', 'Authorization'):
     if forbidden in code: sys.exit(1)
 # session presence is only ever a boolean
 if '"session_present":${FleetSession.present}' not in code: sys.exit(1)
@@ -285,7 +285,7 @@ _stage && _green "d6" d6 "$W/DriveDebugApi.kt" && {
     _red "D6 a failed clone reported ok — the 200-with-nothing shape" d6 "$W/DriveDebugApi.kt"; }
 
 _stage && _green "d8" d8 "$W/DriveDebugApi.kt" "$W/DriveGitChain.kt" && {
-    _sub "$W/DriveDebugApi.kt" 'when (val out = runCatching { DriveGitChain.repos(ctx, rungId, FleetSession.cookie) }' 'when (val out = runCatching { FleetGit.repos(FleetSession.cookie, rungId) }'
+    _sub "$W/DriveDebugApi.kt" 'when (val out = runCatching { DriveGitChain.repos(ctx, rungId, FleetSession.fresh()) }' 'when (val out = runCatching { FleetGit.repos(FleetSession.fresh(), rungId) }'
     _red "D8 /api/git/list?rung=github asks the fleet lister again (no fleet repos_url)" d8 "$W/DriveDebugApi.kt" "$W/DriveGitChain.kt"; }
 _stage && _green "d8" d8 "$W/DriveDebugApi.kt" "$W/DriveGitChain.kt" && {
     _sub "$W/DriveGitChain.kt" 'runCatching { GhEngine(ctx).credential(host) }.getOrNull()?.secret' 'null'

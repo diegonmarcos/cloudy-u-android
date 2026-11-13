@@ -463,23 +463,27 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
      */
     fun cloneViaFleet(rungId: String, gh: GitHubRepos.Repo) {
         if (cloneBlocked()) return
-        if (!FleetSession.present) {
-            handoff = ctx.getString(R.string.git_fleet_clone_no_session)
-            return
+        scope.launch {
+            // #1693 the session is Cloud Account's: one blocking read of its short-lived lease, off the main thread
+            val have = withContext(Dispatchers.IO) { FleetSession.sync() }
+            if (!have) {
+                handoff = ctx.getString(R.string.git_fleet_clone_no_session)
+                return@launch
+            }
+            val url = FleetGit.cloneUrl(rungId, gh.owner, gh.name, gh.cloneUrl)
+            if (url.isBlank()) {
+                handoff = ctx.getString(R.string.git_clone_url_missing, gh.name)
+                return@launch
+            }
+            coordinator.cloneInto(
+                name = gh.name,
+                url = url,
+                authKind = GitSyncCoordinator.AUTH_SESSION,
+                username = "",
+                token = "",
+                into = cloneFolder,
+            )
         }
-        val url = FleetGit.cloneUrl(rungId, gh.owner, gh.name, gh.cloneUrl)
-        if (url.isBlank()) {
-            handoff = ctx.getString(R.string.git_clone_url_missing, gh.name)
-            return
-        }
-        coordinator.cloneInto(
-            name = gh.name,
-            url = url,
-            authKind = GitSyncCoordinator.AUTH_SESSION,
-            username = "",
-            token = "",
-            into = cloneFolder,
-        )
     }
 
     /**
@@ -496,7 +500,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             // git-proxy-api are both declared under this kind now, and asking the
             // family's first-ranked endpoint after the SECOND one answered would
             // list from a service the chain just measured as unreachable.
-            val outcome = withContext(Dispatchers.IO) { FleetGit.repos(FleetSession.cookie, rungId) }
+            val outcome = withContext(Dispatchers.IO) { FleetGit.repos(FleetSession.fresh(), rungId) }
             cloudListing = when (outcome) {
                 is FleetGit.Outcome.Listed -> GitListing(loaded = true, repos = outcome.repos, complete = true, rungId = rungId)
                 is FleetGit.Outcome.Refused -> GitListing(loaded = true, error = outcome.why)
@@ -545,7 +549,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         chain = chain.copy(running = true, narrative = "", answeredBy = "")
         scope.launch {
             val outcome = withContext(Dispatchers.IO) {
-                DriveGitChain.resolve(ctx.applicationContext, session = FleetSession.cookie)
+                DriveGitChain.resolve(ctx.applicationContext, session = FleetSession.fresh())
             }
             chain = chain.copy(
                 running = false,
@@ -707,7 +711,9 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 }
             }
         }
-        if (FleetSession.present) page.ways.firstOrNull { DriveGitChain.rung(it.rung)?.kind == DriveGitChain.RUNG_FLEET }?.let { fetchFleetListing(it.rung) }
+        scope.launch {
+            if (withContext(Dispatchers.IO) { FleetSession.sync() }) page.ways.firstOrNull { DriveGitChain.rung(it.rung)?.kind == DriveGitChain.RUNG_FLEET }?.let { fetchFleetListing(it.rung) }
+        }
     }
 
     /**

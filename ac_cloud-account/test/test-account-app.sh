@@ -80,7 +80,7 @@ PY
 
   # 2. the provider: read-only, caller re-checked, one method; the copy never overwrites
   local ad; ad="$(strip "$AD")"
-  printf '%s' "$ad" | grep -q 'checkCallingPermission(FleetConfig.PERMISSION)' && ok "provider re-checks the caller (call() is not permission-checked by the framework)" || bad "provider does not re-check its caller"
+  printf '%s' "$ad" | grep -q 'checkCallingPermission(FleetConfig.PERMISSION) != PackageManager.PERMISSION_GRANTED' && ok "provider re-checks the caller (call() is not permission-checked by the framework)" || bad "provider does not re-check its caller"
   printf '%s' "$ad" | grep -q 'METHOD_EXPORT -> {' && printf '%s' "$ad" | grep -q 'METHOD_SECRET -> secretFor(' && printf '%s' "$ad" | grep -q 'else -> error("unknown method $method")' && ok "provider answers the export and one secret, nothing else" || bad "provider answers more (or less) than the export and one secret"
   printf '%s' "$ad" | grep -q '!AccountVault(ctx).grants.allow(who, GRANT_EXPORT)' && printf '%s' "$ad" | grep -q 'caller != ctx.packageName && !vault.grants.allow(caller, path)' && ok "both methods are behind the Secrets grants (#874)" || bad "a provider method is not behind a grant"
   printf '%s' "$ad" | sed -n '/class Provider/,$p' | grep -Eq 'ConfigsPrefs|\.json *=|store\.write|\.edit\(|AccountData\.apply|apply\(ctx' && bad "provider writes or reads outside the export" || ok "provider does not write"

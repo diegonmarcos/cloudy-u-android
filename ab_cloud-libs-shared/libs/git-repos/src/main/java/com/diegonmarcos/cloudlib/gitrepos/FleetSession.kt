@@ -25,22 +25,50 @@ package com.diegonmarcos.cloudlib.gitrepos
 object FleetSession {
 
     /**
-     * The cookie from the last completed fleet browser login, or "" when there has been
-     * none in this process. Written only by the sign-in host's `onWebSession`.
+     * #1693 THE SESSION IS CLOUD ACCOUNT'S: a short-lived lease (cookie + expiry) read over the fleet IPC and held here in
+     * process memory only. No sign-in code lives in the app that holds it; an expired lease reads as no session.
      */
-    @Volatile
-    var cookie: String = ""
-        private set
+    data class Lease(val cookie: String, val expiresAtMs: Long)
 
-    /** Remember the session libs:auth's browser login just earned. Memory only. */
+    @Volatile private var held: Lease? = null
+
+    /** The blocking read of Cloud Account's session lease (null: none / refused / not installed). Set once by the host app. */
+    @Volatile var source: (() -> Lease?)? = null
+
+    /** The clock; a test hands in its own. */
+    @Volatile var clock: () -> Long = { System.currentTimeMillis() }
+
+    /** The cookie of the lease in hand, or "" when there is none or it has expired. Never blocks: [sync] fetches. */
+    val cookie: String
+        get() {
+            val l = held ?: return ""
+            if (l.expiresAtMs <= clock()) { held = null; return "" }
+            return l.cookie
+        }
+
+    /** Remember a session for this process only (the debug route injects one; the lease is capped at [SHORT_LIVED_MS]). */
     fun remember(value: String) {
-        cookie = value.trim()
+        val v = value.trim()
+        held = if (v.isBlank()) null else Lease(v, clock() + SHORT_LIVED_MS)
     }
 
-    /** Forget it — on an explicit sign-out, or when the fleet refuses it as stale. */
+    /** Take what Cloud Account holds, when the lease in hand is gone. BLOCKING: call it off the main thread. */
+    fun sync(): Boolean {
+        if (cookie.isNotBlank()) return true
+        val l = runCatching { source?.invoke() }.getOrNull()
+        held = l?.takeIf { it.cookie.isNotBlank() && it.expiresAtMs > clock() }
+        return held != null
+    }
+
+    /** [sync] then the cookie: for a caller already off the main thread. */
+    fun fresh(): String { sync(); return cookie }
+
+    /** Forget it, when the fleet refuses it as stale. */
     fun forget() {
-        cookie = ""
+        held = null
     }
 
     val present: Boolean get() = cookie.isNotBlank()
+
+    const val SHORT_LIVED_MS = 60L * 60 * 1000
 }

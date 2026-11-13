@@ -298,6 +298,17 @@ object AccountData {
                         putString(com.diegonmarcos.superapp.fleetendpoints.SignInContract.KEY_JSON, SignInOwner.local(ctx, provider).json().toString())
                     }
                 }
+                // #1693 the short-lived Authelia session: signature-gated (the check above AND here), refreshed by Cloud Account, never logged
+                com.diegonmarcos.superapp.fleetendpoints.SignInContract.METHOD_SESSION -> {
+                    val allowed = Binder.getCallingUid() == Process.myUid() ||
+                        ctx.checkCallingPermission(FleetConfig.PERMISSION) == PackageManager.PERMISSION_GRANTED
+                    val sess = SessionLease.answer(arg?.trim().orEmpty(), allowed, SessionProbe.probe())
+                    if (!allowed) error("caller is not a fleet app")
+                    else Bundle().apply {
+                        putBoolean(KEY_OK, true)
+                        putString(com.diegonmarcos.superapp.fleetendpoints.SignInContract.KEY_SESSION_JSON, sess.json().toString())
+                    }
+                }
                 else -> error("unknown method $method")
             }
         }

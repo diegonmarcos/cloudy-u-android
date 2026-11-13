@@ -173,7 +173,7 @@ object DriveDebugApi {
     /** The REAL chain, with the in-process session. The narrative is the page's own
      *  account of every rung; the outcome's token is deliberately never read here. */
     private fun chainJson(ctx: Context): String {
-        val outcome = runCatching { DriveGitChain.resolve(ctx, session = FleetSession.cookie) }
+        val outcome = runCatching { DriveGitChain.resolve(ctx, session = FleetSession.fresh()) }
             .getOrElse { return errJson("chain threw: ${it.message ?: it}") }
         return """{"ok":${outcome.ok},"answered_by":${jsonStr(outcome.answeredBy)},"narrative":"${esc(outcome.narrative())}"}"""
     }
@@ -183,7 +183,7 @@ object DriveDebugApi {
      *  owners only — the listing's clone URLs stay in-process (they feed /api/git/clone),
      *  because a listing URL can carry a credential in its userinfo. */
     private fun listJson(ctx: Context, rungId: String): String =
-        when (val out = runCatching { DriveGitChain.repos(ctx, rungId, FleetSession.cookie) }
+        when (val out = runCatching { DriveGitChain.repos(ctx, rungId, FleetSession.fresh()) }
             .getOrElse { return errJson("listing threw: ${it.message ?: it}") }) {
             is FleetGit.Outcome.Listed -> buildString {
                 append("""{"ok":true,"status":"listed","count":${out.repos.size},"repos":[""")
@@ -227,11 +227,11 @@ object DriveDebugApi {
         var leg = "caller-supplied url"
         var viaFleet = false
         if (url.isBlank()) {
-            val chain = runCatching { DriveGitChain.resolve(ctx, session = FleetSession.cookie) }
+            val chain = runCatching { DriveGitChain.resolve(ctx, session = FleetSession.fresh()) }
                 .getOrElse { return errJson("chain threw: ${it.message ?: it}") }
             if (!chain.ok) return errJson("no rung answered, so no listing can name the URL: ${chain.narrative()}")
             val rung = chain.answeredBy.orEmpty()
-            when (val out = runCatching { DriveGitChain.repos(ctx, rung, FleetSession.cookie) }
+            when (val out = runCatching { DriveGitChain.repos(ctx, rung, FleetSession.fresh()) }
                 .getOrElse { return errJson("listing threw: ${it.message ?: it}") }) {
                 is FleetGit.Outcome.Listed -> {
                     val hit = out.repos.firstOrNull { it.name == name }

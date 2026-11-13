@@ -122,6 +122,8 @@ fun AuthProvidersPage() {
     }
     val host = remember {
         object : SignInHost {
+            // #1693 the session the portal login earned is Cloud Account's: held short-lived in memory, served over the `session` method
+            override fun onWebSession(cookie: String) { SessionLease.remember(cookie) }
             override fun onSignedIn(result: SignInResult) {
                 said = ConnectWays.signedIn(ctx, result).line
                 if (result.provider.kind != SignIn.Kind.AUTHELIA_BEARER && result.provider.kind != SignIn.Kind.AUTHELIA_WEB) {

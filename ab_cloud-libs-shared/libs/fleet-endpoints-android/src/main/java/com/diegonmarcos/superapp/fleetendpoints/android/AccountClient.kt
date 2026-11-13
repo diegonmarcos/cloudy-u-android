@@ -91,6 +91,18 @@ object AccountClient {
     }
 
     /**
+     * #1693 The short-lived [provider] session Cloud Account holds (cookie + expiry), for the one rung that must present it.
+     * BLOCKING, never throws; a missing / refusing / signed-out Cloud Account is a session with no cookie and the reason.
+     * The cookie is a credential: present it, never log it or keep it past its expiry ([SignInContract.Session.toString] hides it).
+     */
+    fun session(ctx: Context, provider: String, now: Long = System.currentTimeMillis()): SignInContract.Session {
+        if (!installed(ctx)) return SignInContract.noSession(provider, SignInContract.State.UNKNOWN, SignInContract.missing(provider).line)
+        val r = call(ctx, SignInContract.METHOD_SESSION, provider)
+            ?: return SignInContract.noSession(provider, SignInContract.State.UNKNOWN, "Cloud Account did not answer: update it or open it once")
+        return SignInContract.parseSession(provider, r.getBoolean(KEY_OK), r.getString(SignInContract.KEY_SESSION_JSON), r.getString(KEY_ERROR), now)
+    }
+
+    /**
      * #1693 THE SIGN-IN LINK: opens Cloud Account at [provider]'s sign-in page. This starts nothing itself (Cloud Account
      * owns every sign-in); null when it opened, else the reason it could not (never throws).
      */

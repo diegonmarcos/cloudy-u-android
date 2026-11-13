@@ -140,6 +140,10 @@ class MainActivity : ComponentActivity(), DriveActions {
 
     /** Every initialiser, each behind [guarded]: one failing phase is recorded and the rest still run. */
     private fun startup() {
+        // #1693 the Cloud (Authelia) session is Cloud Account's: read over the fleet IPC, never earned here
+        guarded("DriveSessionSource", optional = true) {
+            com.diegonmarcos.clouddrive.sync.DriveSessionSource.install(this)
+        }
         guarded("FleetChrome") {
             FleetChrome.apply(this)
         }
