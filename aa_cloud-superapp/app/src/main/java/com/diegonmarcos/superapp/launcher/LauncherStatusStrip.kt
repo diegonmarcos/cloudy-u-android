@@ -1017,7 +1017,9 @@ internal fun StripRow(
 ) {
     androidx.compose.ui.layout.Layout(
         contents = listOf(left, { reserve(reservePx) }, clock, right, stopwatch, access), modifier = modifier,
-    ) { (lm, resm, cm, rm, sm, am), c ->
+    ) { measurables, c ->
+        // six slots: Kotlin destructures a List only up to component5, so the sixth is read by index
+        val (lm, resm, cm, rm, sm) = measurables; val am = measurables[5]
         val free = androidx.compose.ui.unit.Constraints()
         val l = lm.map { it.measure(free) }; val res = resm.map { it.measure(free) }
         val ck = cm.map { it.measure(free) }; val r = rm.map { it.measure(free) }
