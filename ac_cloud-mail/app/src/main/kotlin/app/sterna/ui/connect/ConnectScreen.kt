@@ -475,6 +475,23 @@ fun ConnectScreen(
                         Spacer(Modifier.width(MailMetrics.s8))
                         Text(stringResource(R.string.connect_import_settings))
                     }
+                    // #1693 the fleet's own accounts are signed in in Cloud Account: this opens it at the mail page, and takes what it holds.
+                    OutlinedButton(
+                        onClick = { app.sterna.fleet.MailAccountSync.openCloudAccount(context)?.let { snackbar(it) } },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Filled.SettingsBackupRestore, contentDescription = null)
+                        Spacer(Modifier.width(MailMetrics.s8))
+                        Text(stringResource(R.string.connect_cloud_account_open))
+                    }
+                    OutlinedButton(
+                        onClick = { viewModel.takeAccountsFromCloudAccount { snackbar(it) } },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Filled.SettingsBackupRestore, contentDescription = null)
+                        Spacer(Modifier.width(MailMetrics.s8))
+                        Text(stringResource(R.string.connect_cloud_account_import))
+                    }
                     // No protocol question, no host field, no sign-in method: the probes answer those.
                     Column(
                         modifier = Modifier.bringIntoViewRequester(credentialReveal.block),

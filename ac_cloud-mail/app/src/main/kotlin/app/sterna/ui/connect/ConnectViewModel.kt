@@ -30,7 +30,9 @@ import app.sterna.core.jmap.OAuthMetadata
 import app.sterna.net.hasUsableNetwork
 import app.sterna.push.NewMailNotifier
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -516,6 +518,30 @@ class ConnectViewModel(application: Application) : AndroidViewModel(application)
             return
         }
         container.outlookSignIn.start(emailTrim, accountName)
+    }
+
+    /**
+     * #1693 The fleet's mail accounts come from Cloud Account, the one app that signs in: this asks its provider (off the main
+     * thread) and adds what it holds through the vault import's writer. [onResult] gets one sentence for the snackbar; a missing or
+     * refusing Cloud Account is that sentence, never a crash, and no password is in it.
+     */
+    fun takeAccountsFromCloudAccount(onResult: (String) -> Unit) {
+        viewModelScope.launch {
+            val out = withContext(Dispatchers.IO) {
+                runCatching { app.sterna.fleet.MailAccountSync.pull(app, container.accountStore) }
+                    .getOrElse { app.sterna.fleet.MailAccountSync.Outcome.Refused("Cloud Account could not be read (${it.javaClass.simpleName})") }
+            }
+            onResult(
+                when (out) {
+                    is app.sterna.fleet.MailAccountSync.Outcome.Added ->
+                        if (out.count > 0) app.getString(R.string.connect_cloud_account_added, out.count, out.total)
+                        else app.getString(R.string.connect_cloud_account_nothing_new)
+                    app.sterna.fleet.MailAccountSync.Outcome.AccountMissing ->
+                        com.diegonmarcos.superapp.fleetendpoints.SignInContract.missing(com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.PROVIDER).line
+                    is app.sterna.fleet.MailAccountSync.Outcome.Refused -> out.line
+                },
+            )
+        }
     }
 
     /** Mirror the app-scoped Outlook sign-in into this screen's state. */

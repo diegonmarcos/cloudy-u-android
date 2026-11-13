@@ -940,6 +940,10 @@
     <string name="connect_import_signin_skip">Salta per ora</string>
     <string name="connect_import_invalid">Questo file non è un backup di Cloud Mail valido.</string>
     <string name="connect_import_settings">Ripristina da un backup Cloud Mail</string>
+    <string name="connect_cloud_account_open">Accedi tramite Cloud Account</string>
+    <string name="connect_cloud_account_import">Prendi gli account da Cloud Account</string>
+    <string name="connect_cloud_account_added">%1$d account su %2$d presi da Cloud Account</string>
+    <string name="connect_cloud_account_nothing_new">Niente di nuovo: gli account di Cloud Account sono già qui.</string>
     <string name="connect_import_no_accounts">Impostazioni importate. Il backup non aveva account, aggiungine uno qui sotto.</string>
     <string name="connect_import_k9">Importa da K-9 o Thunderbird</string>
     <string name="connect_import_k9_none">Nessun account importabile trovato in quel file.</string>

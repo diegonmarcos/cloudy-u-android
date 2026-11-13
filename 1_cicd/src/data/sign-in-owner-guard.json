@@ -4,6 +4,7 @@
   "owner": "ac_cloud-account",
   "owner_impl": {
     "ab_cloud-libs-shared/libs/auth": "libs:auth IS the sign-in implementation (device grants, the SignInWays surface) Cloud Account hosts; callers of its surface elsewhere are caught by the signin-ui rule.",
+    "ab_cloud-libs-shared/libs/mail": "libs:mail is JmapPrefs for Cloud Account; its MailFragment / MailAuthUi password prompts have no host of their own and only Cloud Account may link it (owner_only_libs).",
     "ab_cloud-libs-shared/libs/gh": "libs:gh is the gh engine process (Cloud-Lib-Gh.apk) that runs gh auth login when the owner asks; #1692 keeps its login keeper. Who asks it is caught by engine-login-call and engine-login-decl."
   },
   "owner_must_hold": [
@@ -117,16 +118,8 @@
         "credential-prompt",
         "device-grant"
       ],
-      "why": "Cloud Mail Connect (IMAP/JMAP password, OAuth device grant) and account auth settings",
-      "until": "step 4"
-    },
-    {
-      "path": "ab_cloud-libs-shared/libs/mail/",
-      "rules": [
-        "credential-prompt"
-      ],
-      "why": "libs:mail sign-in (SuperApp Mail page): same migration as Cloud Mail",
-      "until": "step 4"
+      "why": "Cloud Mail is a general mail client: the per-account IMAP/JMAP password and provider OAuth are protocol logins of THAT client (third-party mailboxes), not fleet sign-ins. The fleet's own accounts come from Cloud Account (MailAccountSync, #1693: 'Sign in via Cloud Account' + 'Take the accounts')",
+      "until": "permanent"
     },
     {
       "path": "ac_cloud-vault/",
@@ -228,7 +221,9 @@
     }
   },
   "_doc_owner_only_libs": "#1693 libs only the owner may link: libs:account is Cloud Account's alone (its Connect / Providers pages, its stores and the sign-in code behind them). Another app reads what it needs over Cloud Account's provider (libs:fleet-endpoints-android AccountClient).",
+  "owner_lib_hosts": ["ab_cloud-libs-shared/libs/account/"],
   "owner_only_libs": [
-    "libs:account"
+    "libs:account",
+    "libs:mail"
   ]
 }

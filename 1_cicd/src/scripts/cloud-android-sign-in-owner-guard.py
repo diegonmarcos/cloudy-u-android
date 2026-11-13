@@ -114,6 +114,8 @@ def main(argv):
         needle = "project(':%s')" % lib
         for rel, text in (files_git(root, rev, dict(cfg, extensions=[".gradle", ".kts"])) if rev else files_worktree(root, dict(cfg, extensions=[".gradle", ".kts"]))):
             if rel.startswith(owner) or rel.startswith("ab_cloud-libs-shared/libs/%s/" % lib.split(":")[-1]): continue
+            # libs the owner hosts (libs:account is Cloud Account's lib) may link the owner's other libs
+            if any(rel.startswith(h) for h in cfg.get("owner_lib_hosts", [])): continue
             code = "\n".join(l for l in text.split("\n") if not l.strip().startswith("//"))
             if needle in code or ('"%s"' % lib) in code:
                 bad.append(f"{rel}: links {lib}, which only {owner} may link (#1693)")

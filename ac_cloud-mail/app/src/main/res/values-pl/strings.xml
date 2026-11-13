@@ -954,6 +954,10 @@
     <string name="connect_import_signin_skip">Pomiń na razie</string>
     <string name="connect_import_invalid">Ten plik nie jest prawidłową kopią zapasową Cloud Mail.</string>
     <string name="connect_import_settings">Przywróć z kopii zapasowej Cloud Mail</string>
+    <string name="connect_cloud_account_open">Zaloguj przez Cloud Account</string>
+    <string name="connect_cloud_account_import">Pobierz konta z Cloud Account</string>
+    <string name="connect_cloud_account_added">Pobrano z Cloud Account: %1$d z %2$d</string>
+    <string name="connect_cloud_account_nothing_new">Nic nowego: konta z Cloud Account już tu są.</string>
     <string name="connect_import_no_accounts">Ustawienia zaimportowane. Kopia nie zawierała kont – dodaj je poniżej.</string>
     <string name="connect_import_k9">Importuj z K-9 lub Thunderbird</string>
     <string name="connect_import_k9_none">Nie znaleziono kont do zaimportowania w tym pliku.</string>

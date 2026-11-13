@@ -937,6 +937,10 @@
     <string name="connect_import_signin_skip">Nu overslaan</string>
     <string name="connect_import_invalid">Dat bestand is geen geldige Cloud Mail-back-up.</string>
     <string name="connect_import_settings">Herstellen vanaf een Cloud Mail-back-up</string>
+    <string name="connect_cloud_account_open">Aanmelden via Cloud Account</string>
+    <string name="connect_cloud_account_import">Accounts overnemen uit Cloud Account</string>
+    <string name="connect_cloud_account_added">%1$d van %2$d account(s) overgenomen uit Cloud Account</string>
+    <string name="connect_cloud_account_nothing_new">Niets nieuws: de accounts uit Cloud Account staan er al.</string>
     <string name="connect_import_no_accounts">Instellingen geïmporteerd. De back-up had geen accounts, voeg er hieronder een toe.</string>
     <string name="connect_import_k9">Importeren uit K-9 of Thunderbird</string>
     <string name="connect_import_k9_none">Er zijn geen importeerbare accounts in dat bestand gevonden.</string>

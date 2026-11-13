@@ -222,12 +222,14 @@ class AccountVault(context: Context) {
                 com.diegonmarcos.superapp.fleetendpoints.DriveCredentialsContract.GRANTS),
             // #1173 the Folders Sync (Unison) pairs got their own grant after v6 was seeded: a phone already at v6 gets it here.
             7 to mapOf(DRIVE_PACKAGE to listOf(com.diegonmarcos.superapp.fleetendpoints.DriveCredentialsContract.GRANT_UNISON)),
+            // #1693 Cloud Mail takes the fleet's mail accounts (address, password, endpoints) from here instead of a second sign-in; revocable in Secrets.
+            8 to mapOf(MAIL_PACKAGE to listOf(com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.GRANT_READ)),
         )
         const val DRIVE_PACKAGE = "com.diegonmarcos.clouddrive"
         const val KEYBOARD_PACKAGE = "com.diegonmarcos.cloudkeyboard"
         const val VAULT_PACKAGE = "com.diegonmarcos.cloudvault"
         const val MAIL_PACKAGE = "com.diegonmarcos.comms.mail"
-        const val SEED_VERSION = 7
+        const val SEED_VERSION = 8
         val DEFAULT_GRANTS: Map<String, List<String>> = DEFAULT_GRANTS_BY_VERSION.values
             .fold(emptyMap<String, List<String>>()) { acc, m -> acc + m.mapValues { (k, v) -> acc[k].orEmpty() + v } }
 

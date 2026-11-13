@@ -268,6 +268,13 @@ object AccountData {
                     else runCatching { vault.putConnection("sim.$arg", extras?.getString(KEY_VALUE).orEmpty()); Bundle().apply { putBoolean(KEY_OK, true) } }
                         .getOrElse { error(it.javaClass.simpleName) }
                 }
+                // #1693 the fleet's mail accounts (address + password + endpoints) for Cloud Mail: default deny, the `mail.accounts` grant
+                com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.METHOD -> {
+                    val who = caller(ctx)
+                    val vault = AccountVault(ctx)
+                    if (who != ctx.packageName && !vault.grants.allow(who, com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.GRANT_READ)) error("no grant for $who")
+                    else runCatching { MailAccountsPublisher.publish(ctx, vault) }.getOrElse { error(it.javaClass.simpleName) }
+                }
                 METHOD_FLEET_ENDPOINTS -> {
                     val who = caller(ctx)
                     val vault = AccountVault(ctx)

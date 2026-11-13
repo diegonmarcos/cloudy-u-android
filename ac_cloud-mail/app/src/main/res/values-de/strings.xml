@@ -934,6 +934,10 @@
     <string name="connect_import_signin_skip">Vorerst überspringen</string>
     <string name="connect_import_invalid">Diese Datei ist keine gültige Cloud Mail-Sicherung.</string>
     <string name="connect_import_settings">Aus einem Cloud Mail-Backup wiederherstellen</string>
+    <string name="connect_cloud_account_open">Über Cloud Account anmelden</string>
+    <string name="connect_cloud_account_import">Konten aus Cloud Account übernehmen</string>
+    <string name="connect_cloud_account_added">%1$d von %2$d Konto/Konten aus Cloud Account übernommen</string>
+    <string name="connect_cloud_account_nothing_new">Nichts Neues: die Konten aus Cloud Account sind schon da.</string>
     <string name="connect_import_no_accounts">Einstellungen importiert. Die Sicherung enthielt keine Konten – fügen Sie unten eines hinzu.</string>
     <string name="connect_import_k9">Aus K-9 oder Thunderbird importieren</string>
     <string name="connect_import_k9_none">In dieser Datei wurden keine importierbaren Konten gefunden.</string>

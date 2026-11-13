@@ -940,6 +940,10 @@
     <string name="connect_import_signin_skip">Omitir por ahora</string>
     <string name="connect_import_invalid">Ese archivo no es una copia de seguridad válida de Cloud Mail.</string>
     <string name="connect_import_settings">Restaurar desde una copia de Cloud Mail</string>
+    <string name="connect_cloud_account_open">Iniciar sesión con Cloud Account</string>
+    <string name="connect_cloud_account_import">Tomar las cuentas de Cloud Account</string>
+    <string name="connect_cloud_account_added">%1$d de %2$d cuenta(s) tomadas de Cloud Account</string>
+    <string name="connect_cloud_account_nothing_new">Nada nuevo: las cuentas de Cloud Account ya están aquí.</string>
     <string name="connect_import_no_accounts">Ajustes importados. La copia no tenía cuentas, así que añade una abajo.</string>
     <string name="connect_import_k9">Importar desde K-9 o Thunderbird</string>
     <string name="connect_import_k9_none">No se encontraron cuentas importables en ese archivo.</string>

@@ -69,6 +69,15 @@ object VaultMailImport {
             Log.w(AccountStore.TAG, "vault mail: no endpoint declared; nothing added")
             return 0
         }
+        return addAll(plan, store)
+    }
+
+    /**
+     * #1693 Every account of [plan] through [AccountStore.add] (or the credential restore of one already stored), the owner's made
+     * current; returns how many were added. The one writer for both feeds: the vault section delivered in transit ([run]) and
+     * Cloud Account's `mail_accounts` answer (app.sterna.fleet.MailAccountSync).
+     */
+    fun addAll(plan: Plan, store: AccountStore): Int {
         var added = 0
         var current: String? = null
         for (d in plan.accounts) {

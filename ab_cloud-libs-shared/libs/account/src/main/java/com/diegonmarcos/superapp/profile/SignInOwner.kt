@@ -48,6 +48,16 @@ object SignInOwner {
     /** Cloud Account's own answer: a forge token it filed, else the last vault fetch and the way that made it. No secret leaves. */
     fun local(ctx: Context, provider: String): SignInContract.Status = runCatching {
         val vault = AccountVault(ctx)
+        if (provider == com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.PROVIDER) {
+            // fleet mail is "signed in" when the vault declares accounts and at least one has a password Cloud Mail can take
+            val n = runCatching { MailAccountsPublisher.build(ctx, vault).accounts }.getOrDefault(emptyList())
+            val withPw = n.count { !it.password.isNullOrBlank() }
+            return when {
+                withPw > 0 -> SignInContract.Status(provider, SignInContract.State.SIGNED_IN, "$withPw mail account(s) in the Cloud Account vault, ready for Cloud Mail")
+                n.isNotEmpty() -> SignInContract.Status(provider, SignInContract.State.SIGNED_OUT, "${n.size} mail account(s) declared but no password: import the vault in Cloud Account")
+                else -> SignInContract.Status(provider, SignInContract.State.SIGNED_OUT, "no mail account in the Cloud Account vault: import the vault there")
+            }
+        }
         val filed = (vault.connection("forge.$provider.token") as? String).orEmpty().isNotBlank()
         val last = ConnectWays.lastFetch(ctx)
         val at = last?.optString("at").orEmpty()

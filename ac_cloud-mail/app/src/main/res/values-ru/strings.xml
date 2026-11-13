@@ -957,6 +957,10 @@
     <string name="connect_import_signin_skip">Пропустить пока</string>
     <string name="connect_import_invalid">Этот файл не является допустимой резервной копией Cloud Mail.</string>
     <string name="connect_import_settings">Восстановить из резервной копии Cloud Mail</string>
+    <string name="connect_cloud_account_open">Войти через Cloud Account</string>
+    <string name="connect_cloud_account_import">Взять аккаунты из Cloud Account</string>
+    <string name="connect_cloud_account_added">Взято из Cloud Account: %1$d из %2$d</string>
+    <string name="connect_cloud_account_nothing_new">Нового нет: аккаунты из Cloud Account уже здесь.</string>
     <string name="connect_import_no_accounts">Настройки импортированы. В копии не было учётных записей — добавьте её ниже.</string>
     <string name="connect_import_k9">Импорт из K-9 или Thunderbird</string>
     <string name="connect_import_k9_none">В этом файле не найдено учётных записей для импорта.</string>
