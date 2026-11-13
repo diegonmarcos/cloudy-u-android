@@ -2,7 +2,7 @@ name: "Proof → CG-Omniverse (filter mutants + emulator screens)"
 
 # Two proofs the Ship run cannot give, on demand:
 #   mutants  every rule of the Store's filter logic (Store.kt), of Galaxy's tabs (Tabs.kt) and of pin offline (#1711: web-core
-#            PinPolicy.kt and SiteCache.kt) is held by a JVM test: each job plants ONE mutant and passes only when the suite goes
+#            PinPolicy.kt and SiteCache.kt, the app's ui/Pinned.kt) is held by a JVM test: each job plants ONE mutant and passes only when the suite goes
 #            RED (a mutant that stays green fails the run). A baseline job requires the real tree GREEN.
 #   screens  installs the x86_64 APK of a Ship run (or the rolling release) on an emulator and walks Store (all selected, filtered)
 #            and Galaxy (A Way to Go's offline card, a live world, the list), each opened DIRECTLY by the launch extras
@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mutant: [baseline, type-map, dim-mixed, vr-yes-flat, vr-no-glass, chip-any, group-all, toggle-one, all-clears, is-all, default-all, tabs-default, tabs-open-focus, tabs-open-select, tabs-close-neighbour, tabs-close-keep, tabs-persist-selected, tabs-persist-all, catalogue-floor796, tabs-declared-first, tabs-seed-once, tabs-seed-order, tabs-restore-legacy, pin-miss-live, pin-document-live, pin-refresh-live, pin-copy-newest, pin-record-volatile, cache-variants-bound, cache-blob-whole, cache-newest, cache-one-writer]
+        mutant: [baseline, type-map, dim-mixed, vr-yes-flat, vr-no-glass, chip-any, group-all, toggle-one, all-clears, is-all, default-all, tabs-default, tabs-open-focus, tabs-open-select, tabs-close-neighbour, tabs-close-keep, tabs-persist-selected, tabs-persist-all, catalogue-floor796, tabs-declared-first, tabs-seed-once, tabs-seed-order, tabs-restore-legacy, pin-miss-live, pin-document-live, pin-refresh-live, pin-copy-newest, pin-record-volatile, pin-scene-parts, pin-scene-wait, cache-variants-bound, cache-blob-whole, cache-newest, cache-one-writer]
     steps:
       - uses: actions/checkout@v4
       - name: Plant the mutant
@@ -51,6 +51,7 @@ jobs:
           C = "ad_CG-Omniverse/data/store.json"
           P = "ab_cloud-libs-shared/libs/web-core/src/main/java/com/diegonmarcos/cloudlib/web/PinPolicy.kt"
           S = "ab_cloud-libs-shared/libs/web-core/src/main/java/com/diegonmarcos/cloudlib/web/SiteCache.kt"
+          G = "ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/ui/Pinned.kt"
           M = {
             "baseline":    None,
             "type-map":    ('"Others" -> setOf(OTHERS)', '"Others" -> setOf(WEBSITES)'),
@@ -83,6 +84,9 @@ jobs:
             "pin-refresh-live":      ('refresh -> Action.PASS_AND_RECORD', 'refresh -> Action.SERVE', P),
             "pin-copy-newest":       ('Action.SERVE_NEWEST else Action.PASS', 'Action.PASS else Action.PASS', P),
             "pin-record-volatile":   ('hasQuery && newestStoredAt != null -> now - newestStoredAt >= RECORD_AGAIN_MS', 'hasQuery && newestStoredAt != null -> true', P),
+            # #1711 a live page that starts no scene is shown from the pinned copy (ui/Pinned.kt sceneOverdue, PinPolicyTest)
+            "pin-scene-parts":       ('page.canvases + page.videos + page.sceneContexts == 0', 'page.canvases + page.videos + page.sceneContexts + page.contexts2d == 0', G),
+            "pin-scene-wait":        ('sinceDocumentMs >= SCENE_WAIT_MS', 'sinceDocumentMs >= 0L', G),
             # #1711 the copy: bounded queries per path, whole blobs only, the newest query answers, one writer at a time (web-core SiteCache.kt, SiteCacheTest)
             "cache-variants-bound":  ('if (same.size <= MAX_VARIANTS) return', 'if (true) return', S),
             "cache-blob-whole":      ('if (o.has("size") && f.length() != o.optLong("size")) return null', 'if (false) return null', S),
@@ -91,7 +95,7 @@ jobs:
           }[os.environ["M"]]
           if M is None: sys.exit(0)
           if len(M) == 3: p = M[2]
-          with open("expect.txt", "w") as f: f.write({T: "TabsTest", C: "StoreTest", P: "PinPolicyTest", S: "SiteCacheTest"}.get(p, "StoreTest"))
+          with open("expect.txt", "w") as f: f.write({T: "TabsTest", C: "StoreTest", P: "PinPolicyTest", S: "SiteCacheTest", G: "PinPolicyTest"}.get(p, "StoreTest"))
           s = open(p).read()
           if s.count(M[0]) != 1: sys.exit("mutation target not found exactly once: %r" % M[0])
           open(p, "w").write(s.replace(M[0], M[1]))

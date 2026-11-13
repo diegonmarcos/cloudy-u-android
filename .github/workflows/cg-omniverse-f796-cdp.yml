@@ -9,11 +9,16 @@ name: "Check → CG-Omniverse Galaxy worlds render (CDP on the emulator)"
 #            once to record the whole request timeline (which answers came from the pin-offline intercept: response header
 #            Client-Via): its document and its first data request must be answered by the network, never by the intercept
 #            (#1711), and the #1694 viewport assertion (layout viewport not zero) is kept.
-#   pinned   the regression of #1711: the phone showed floor796's top bar over a flat #101010 page with 0 canvases, 0 failed
-#            requests: its first data request (data/matrix.json?r=<random>, same origin) had no answer. The origin's address is
-#            dropped on the emulator (iptables, the CDN hosts stay reachable), the app is started cold and floor796 must STILL
-#            reach a drawn canvas: the pinned copy answers what the live site does not. (The site's own 1 s CDN probe can time
-#            out on a slow emulator and send the page to its origin for everything; the check then reloads, twice at most.)
+#   held     the regression of #1711, exactly as the phone showed it: floor796's top bar over a flat #101010 page with 0
+#            canvases, 0 failed requests, 0 console errors. Its first data request (data/matrix.json?r=<random>, same origin)
+#            had no answer. Here the live document answers and that one request is held for ever over DevTools (Fetch domain:
+#            paused, never continued). The page must first look like the phone's (recorded: held-floor796-stuck.png), and the
+#            app must then show the world from its pinned copy by itself and reach a drawn canvas, the data request answered
+#            by the copy (response header Client-Via).
+#   pinned   the same with the whole origin gone: its address is dropped on the emulator (iptables, the CDN hosts stay
+#            reachable), the app is started cold and floor796 must STILL reach a drawn canvas: the pinned copy answers what
+#            the live site does not. (The site's own 1 s CDN probe can time out on a slow emulator and send the page to its
+#            origin for everything; the check then reloads, twice at most.)
 # mode=baseline records the same facts and never fails (used to capture the state of a build before a fix).
 # Uploads `cg-omniverse-galaxy-check-<api>` (log, request timelines, screenshots, the app's own diagnostics texts).
 
@@ -91,6 +96,7 @@ jobs:
           DEADLINE_DEFAULT = 200
           PINNED = "floor796"
           PINNED_DEADLINE = 150
+          HELD_DEADLINE = 170
           T0 = time.time()
           os.makedirs(OUT, exist_ok=True)
           LOG = open(OUT + "/check.log", "w")
@@ -131,6 +137,7 @@ jobs:
               def __init__(self, url):
                   self.ws = websocket.create_connection(url, timeout=10, suppress_origin=True)
                   self.n = 0; self.req = {}; self.order = []; self.console = []; self.navs = []
+                  self.paused = []; self.release = False   # Fetch domain: the requests held so far; True = let the next ones through
                   for m in ("Runtime.enable", "Log.enable", "Network.enable", "Page.enable"): self.send(m)
               def send(self, method, params=None):
                   self.n += 1; self.ws.send(json.dumps({"id": self.n, "method": method, "params": params or {}})); return self.n
@@ -169,13 +176,18 @@ jobs:
                   elif meth == "Page.frameNavigated":
                       f = p.get("frame", {})
                       if not f.get("parentId"): self.navs.append(f.get("url")); log("  nav", f.get("url"))
+                  elif meth == "Fetch.requestPaused":
+                      # a request matching the held pattern: left without an answer until the app shows its pinned copy, then let through
+                      u = p.get("request", {}).get("url", ""); self.paused.append(u)
+                      if self.release: self.send("Fetch.continueRequest", {"requestId": p.get("requestId")})
+                      log("  let through" if self.release else "  HELD (no answer)", u[:120])
               def call(self, method, params=None, timeout=25):
                   i = self.send(method, params); end = time.time() + timeout
                   while time.time() < end:
                       m = self.recv(1)
                       if m is None: continue
                       if "closed" in m: return None
-                      if m.get("id") == i: return m.get("result", {})
+                      if m.get("id") == i: return {"__error": m["error"]} if "error" in m else m.get("result", {})
                       self.event(m)
                   return None
               def pump(self, secs):
@@ -243,6 +255,16 @@ jobs:
               try: return Cdp(hit[0]["webSocketDebuggerUrl"])
               except Exception as e: log("  attach failed", e); return None
 
+          SIZE = [1080, 2340]   # the screen, in px (set by every screenshot)
+
+          def copy_shown():
+              # how many times the app said it shows a world from its pinned copy (logcat tag CgoRender)
+              return len(re.findall(r"pinned copy shown", adb("logcat", "-d", "-s", "CgoRender:I")))
+
+          def overlay():
+              # what the app says over or beside the world: the loading chip, the no-render banner, the pinned-copy mark, the offline card
+              return [v for v, b in texts() if v.startswith("Loading ") or "is not rendering" in v or "pinned copy" in v.lower() or "is offline" in v.lower()][:6]
+
           def dismiss():
               # an emulator's own "isn't responding" dialog (the launcher, at boot) must neither cover the world nor be sampled as its pixels
               f = adb("shell", "dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'")
@@ -259,7 +281,7 @@ jobs:
               path = OUT + "/" + (name or "_poll") + ".png"
               open(path, "wb").write(png)
               try:
-                  im = Image.open(path).convert("RGB"); w, h = im.size
+                  im = Image.open(path).convert("RGB"); w, h = im.size; SIZE[:] = [w, h]
                   box = im.crop((int(w * 0.04), int(h * 0.50), int(w * 0.96), int(h * 0.84))).resize((96, 96), Image.NEAREST)
                   counts = {}
                   for r, g, b in box.getdata():
@@ -305,6 +327,8 @@ jobs:
               # past the world's own start gate, for a screenshot of the scene itself (recorded, never asserted)
               how = cdp.js(ENTER_JS, 10) if cdp is not None else None
               texts(); b = web_bounds()
+              # the view tree of a page that never stops animating cannot always be read: the world's area is then where the app lays it out
+              if not b: b = (0, int(SIZE[1] * 0.223), SIZE[0], int(SIZE[1] * 0.873))
               if b:
                   for rx, ry in TAPS.get(wid, []):
                       adb("shell", "input", "tap", str(int(b[0] + rx * (b[2] - b[0]))), str(int(b[1] + ry * (b[3] - b[1])))); time.sleep(1)
@@ -361,7 +385,7 @@ jobs:
                   if n > 0 and res["canvas_s"] is None: res["canvas_s"] = round(time.time() - t0, 1)
                   if n > 0 and on_screen(scr, light): res["drawn_s"] = round(time.time() - t0, 1); break
               res["final_screen"] = screen(label)
-              res["overlay"] = [v for v, b in texts() if v.startswith("Loading ") or "is not rendering" in v or "pinned copy" in v.lower() or "is offline" in v.lower()][:6]
+              res["overlay"] = overlay()
               log(label, "RESULT drawn_s=%s canvas_s=%s overlay=%s" % (res["drawn_s"], res["canvas_s"], res["overlay"]))
               return res, cdp
 
@@ -397,6 +421,47 @@ jobs:
               if cdp is not None: cdp.close()
               if "skipped" not in res: res["diagnostics"] = diagnostics("live-" + wid)
               summary["worlds"].append(res)
+
+          # ── held: the live document answers, its first data request never does: the phone's picture (#1711) ───────────────
+          held = {"world": PINNED, "skipped": "not opened"}
+          if PINNED in WORLDS and PINNED in URL:
+              host = URL[PINNED].split("/")[2]
+              held, cdp = watch(PINNED, "held-" + PINNED + "-before", DEADLINE.get(PINNED, DEADLINE_DEFAULT), True)
+              held["live_drawn_s"] = held["drawn_s"]; held["drawn_s"] = None; held["paused"] = []; held["deadline_s"] = HELD_DEADLINE
+              if cdp is not None and held["live_drawn_s"] is not None:
+                  r = cdp.call("Fetch.enable", {"patterns": [{"urlPattern": "*://" + host + "/data/matrix.json*"}]}, 15)
+                  held["fetch_enable"] = "ok" if r is not None and "__error" not in r else json.dumps(r)
+                  cdp.req.clear(); cdp.order[:] = []; c0 = copy_shown()
+                  cdp.send("Page.reload"); t1 = time.time()
+                  log("held", "Fetch.enable", held["fetch_enable"], "reload; pinned copies shown so far:", c0)
+                  while time.time() - t1 < HELD_DEADLINE:
+                      if not cdp.pump(2.0): cdp.close(); cdp = None; break
+                      held["paused"] = cdp.paused[:6]
+                      # the app says it shows the pinned copy: from then on the data request is let through (the copy must answer it)
+                      if not cdp.release and copy_shown() > c0:
+                          cdp.release = True; held["copy_shown_s"] = round(time.time() - t1, 1); log("held", "the app shows the pinned copy after %.1fs" % (time.time() - t1))
+                      st = cdp.js(STATE, 15)
+                      if st is None: continue
+                      st = json.loads(st); scr = screen(); held["state"] = st; held["screen"] = scr
+                      if "stuck" not in held and not cdp.release and cdp.paused and time.time() - t1 >= 25:
+                          # what the phone showed: the top bar over a flat page, the spinner, no canvas
+                          held["stuck"] = {"at_s": round(time.time() - t1, 1), "canvases": st["canvases"], "spinner": st["spinner"], "ctx": st["ctx"],
+                                           "screen": screen("held-" + PINNED + "-stuck"), "overlay": overlay()}
+                          log("held", "while the data request has no answer:", json.dumps(held["stuck"]))
+                      if cdp.release and st["drawn"] > 0 and on_screen(scr): held["drawn_s"] = round(time.time() - t1, 1); break
+                  if cdp is not None:
+                      cdp.pump(4)
+                      mx = [q for q in cdp.req.values() if "/data/matrix.json" in q["url"]]
+                      held["matrix_requests"] = [[q["url"][:80], "pin-intercept" if q.get("via") else ("network" if "tr" in q else "unanswered")] for q in mx]
+                      held["matrix_from_copy"] = any(q.get("via") for q in mx)
+                      held["timeline"] = cdp.timeline(OUT + "/held-" + PINNED + "-timeline.txt", host)
+                      cdp.call("Fetch.disable", None, 10); cdp.close()
+              held["final_screen"] = screen("held-" + PINNED)
+              held["overlay"] = overlay()
+              log("held", "RESULT drawn_s=%s copy_shown_s=%s held=%s matrix=%s overlay=%s" % (
+                  held["drawn_s"], held.get("copy_shown_s"), held["paused"][:2], json.dumps(held.get("matrix_requests")), held["overlay"]))
+              if "skipped" not in held: held["diagnostics"] = diagnostics("held-" + PINNED)
+          summary["held"] = held
 
           # ── pinned: the origin stops answering, the pinned world must still render (#1711) ─────────────────────────────────
           pinned = {"world": PINNED, "skipped": "not opened"}
@@ -460,6 +525,13 @@ jobs:
               if r["world"] == PINNED and r["drawn_s"] is not None and not r.get("viewport_ok", False): bad.append("%s: the layout viewport is zero (#1694)" % r["world"])
               if r["world"] == PINNED and r["drawn_s"] is not None and not r.get("live_by_network", False):
                   bad.append("%s: the live page's document or its data/matrix.json request was not answered by the network: %s (#1711)" % (r["world"], json.dumps(r.get("live_requests"))))
+          if "skipped" in held: bad.append("the held data request case was not checked: " + held["skipped"])
+          elif held.get("live_drawn_s") is None: bad.append("held: %s did not render live, so the case could not start" % PINNED)
+          elif not held.get("paused"): bad.append("held: the data request was never held (Fetch.enable: %s), so the case proves nothing" % held.get("fetch_enable"))
+          elif held["drawn_s"] is None:
+              bad.append("%s stayed without its scene while its first data request had no answer (%d s; pinned copy shown after %s s): %s" % (
+                  PINNED, HELD_DEADLINE, held.get("copy_shown_s"), held.get("overlay")))
+          elif not held.get("matrix_from_copy"): bad.append("held: %s rendered but its data request was not answered by the pinned copy: %s" % (PINNED, json.dumps(held.get("matrix_requests"))))
           if "skipped" in pinned: bad.append("the pinned world was not checked: " + pinned["skipped"])
           elif pinned["drawn_s"] is None: bad.append("%s did not render from its pinned copy while its origin did not answer (%d s): %s" % (PINNED, PINNED_DEADLINE, pinned.get("overlay")))
           summary["failed"] = bad

@@ -145,6 +145,25 @@ class StoreTest {
         assertEquals(null, Store.parse("""{"entries":[{"id":"x","url":"https://x.example/","model":{"glb":""}}]}""").single().model)
     }
 
+    /**
+     * #1711 parity with the catalogue before Cyber City Orion and Messenger were added: every one of its 33 entries is still
+     * there, in the same order, with nothing in between but the two new worlds (Rule 16: adding never removes).
+     */
+    @Test fun theCatalogueOfTheVersionBeforeIsWholeAndInItsOrder() {
+        val before = listOf(
+            "bruno-simon-portfolio", "lusion-v3", "pioneer-corn-revolutionized", "nomadic-tribe", "kpr", "prometheus-fuels", "frans-hals-museum", "orano",
+            "active-theory-v5", "the-cool-club-x-fwa", "floor796", "food-for-fish", "paper-planes", "star-atlas", "interland", "kode-sports-club",
+            "ouigo-let-s-play", "wayfinder", "mammut-expedition-baikal", "the-aviator", "a-way-to-go", "20-years-of-xbox-museum", "dunkirk-webvr",
+            "persepolis-reimagined", "bear-71-vr", "ponk-installation", "petra-vr-experience", "webgl-fluid-simulation", "gucci-vault", "jam3-fwa-100",
+            "inside-the-head", "house-boat", "dji-s900",
+        )
+        val f = listOf(File("../data/store.json"), File("data/store.json")).first { it.exists() }
+        val now = Store.parse(f.readText()).map { it.id }
+        assertEquals(33, before.size)
+        assertEquals(before, now.filter { it in before })
+        assertEquals(listOf("cyber-city-orion", "messenger"), now.filter { it !in before })
+    }
+
     /** #1711 the two worlds Galaxy opens beside floor796, declared like it: a row of data/fwa.md, generated into store.json. */
     @Test fun orionAndMessengerAreInTheCatalogue() {
         val f = listOf(File("../data/store.json"), File("data/store.json")).first { it.exists() }

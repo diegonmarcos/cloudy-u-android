@@ -9,6 +9,7 @@ import com.diegonmarcos.cloudlib.web.PinPolicy.Action.SERVE
 import com.diegonmarcos.cloudlib.web.PinPolicy.Action.SERVE_NEWEST
 import com.diegonmarcos.cloudlib.web.PinPolicy.Source.COPY
 import com.diegonmarcos.cloudlib.web.PinPolicy.Source.LIVE
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -143,10 +144,47 @@ class PinPolicyTest {
             "PinPolicy.documentKey(request.url.toString()) == PinPolicy.documentKey(copyUrl) && Pinned.hasDocument(c, host, copyUrl)",
             "view.post { view.loadUrl(copyUrl) }",
             // the arrival of the live document is what cancels the fallback; every load the WebView starts is watched
-            "committed = false; startedUrl = url; loadSeq++", "canBack = view.canGoBack(); committed = true", "override fun onPageCommitVisible(",
+            "committed = false; startedUrl = url; loadSeq++", "canBack = view.canGoBack(); arrived()", "override fun onPageCommitVisible(",
+            "val arrived = { if (!committed) { committed = true; committedAt = System.currentTimeMillis() }; Unit }",
             // an explicit reload asks the live site again
             "val reload = { refreshing = true; fromCopy = false; copyWhy = \"\";",
             "\"Pin offline: \" + Pinned.status(pinned, fromCopy, copyWhy)", "\"Pin offline log (\${pinLog.size}): \"", "\" · pinned copy\"",
         ).forEach { assertTrue("GalaxyPage lacks $it", g.contains(it)) }
+    }
+
+    /**
+     * The live document arrived but its first data request has no answer: the page shows its top bar over a flat page and holds
+     * no canvas, for as long as it is left alone (what the phone showed for floor796, with 0 failed requests and 0 console
+     * errors). After [Pinned.SCENE_WAIT_MS] the pinned copy is shown instead; a page that has its scene is never touched.
+     */
+    @Test fun aLivePageThatStartsNoSceneIsShownFromThePinnedCopy() {
+        fun page(canvases: Int = 0, videos: Int = 0, gl: Int = 0, gpu: Int = 0, d2: Int = 0): RenderProbe.Page = RenderProbe.parse(JSONObject.quote(
+            JSONObject().put("vw", 501).put("vh", 799).put("vis", "visible").put("raf", 60).put("canvases", canvases).put("videos", videos)
+                .put("gl", gl).put("gpu", gpu).put("d2", d2).toString()))!!
+        val wait = Pinned.SCENE_WAIT_MS
+        assertEquals(45_000L, wait)
+        // floor796 with data/matrix.json held, measured in Chromium: 0 canvases, 0 videos, and three 2D contexts it made on the way
+        val stuck = page(d2 = 3)
+        assertTrue(Pinned.sceneOverdue(wait, false, stuck))
+        assertTrue(Pinned.sceneOverdue(wait + 60_000L, false, stuck))
+        assertFalse(Pinned.sceneOverdue(wait - 1L, false, stuck))                          // still inside the wait
+        assertFalse(Pinned.sceneOverdue(wait, true, stuck))                                // the screen shows the world
+        assertFalse(Pinned.sceneOverdue(wait, false, null))                                // the page did not answer the check: nothing is concluded
+        // a page that has its scene stays with the live site, however long its first frame takes
+        assertFalse(Pinned.sceneOverdue(wait * 4, false, page(canvases = 1, d2 = 11)))     // floor796 once its data arrived
+        assertFalse(Pinned.sceneOverdue(wait * 4, false, page(videos = 2)))
+        assertFalse(Pinned.sceneOverdue(wait * 4, false, page(gl = 1)))                    // a canvas in a closed shadow root (Messenger)
+        assertFalse(Pinned.sceneOverdue(wait * 4, false, page(gpu = 1)))
+        // Galaxy asks once per load, only for a pinned world on its live page, and only when the copy holds the world's document
+        val g = app("ui/GalaxyPage.kt")
+        listOf(
+            "if (pinned && !fromCopy && !copyAsked && committed && Pinned.sceneOverdue(System.currentTimeMillis() - committedAt, v.state == RenderProbe.State.RENDERED, pg)) {",
+            "copyAsked = true",
+            "if (PinPolicy.documentKey(startedUrl) == PinPolicy.documentKey(url) && withContext(Dispatchers.IO) { Pinned.hasDocument(ctx, host, url) }) {",
+            "copyWhy = \"the live page started no scene in \${Pinned.SCENE_WAIT_MS / 1000} s\"",
+            "fromCopy = true; finished = false; finishedAt = 0L",
+        ).forEach { assertTrue("GalaxyPage lacks $it", g.contains(it)) }
+        // the copy keeps the world's own render wait: the same page decodes the same tiles
+        assertTrue(g.contains("(rec?.subErrors?.size ?: 0) + (rec?.httpErrors?.size ?: 0), w.renderGraceMs)"))
     }
 }

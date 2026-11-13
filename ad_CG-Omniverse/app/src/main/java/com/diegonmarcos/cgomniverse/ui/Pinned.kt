@@ -4,6 +4,7 @@ import android.content.Context
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import com.diegonmarcos.cgomniverse.BuildConfig
+import com.diegonmarcos.cgomniverse.RenderProbe
 import com.diegonmarcos.cloudlib.web.PinLog
 import com.diegonmarcos.cloudlib.web.PinPolicy
 import com.diegonmarcos.cloudlib.web.PinnedSites
@@ -29,7 +30,9 @@ import com.diegonmarcos.cloudlib.web.SiteMirrorStore
  * the copy and the scene waited on that client: no answer = the top bar over a flat #101010 page, 0 canvases, 0 failed
  * requests. Such a request now goes straight to the WebView's own network stack. When the live document does not arrive
  * (offline, or the site not answering within [PinPolicy.LIVE_WAIT_MS]) Galaxy shows the world from its pinned copy: the stored
- * document, and for an address whose query was never stored the newest stored answer of that path.
+ * document, and for an address whose query was never stored the newest stored answer of that path. The same when the live
+ * document arrived but the page started no scene within [SCENE_WAIT_MS] ([sceneOverdue]): a data request the network leaves
+ * unanswered looks exactly like that.
  */
 object Pinned {
     fun cache(ctx: Context): SiteCache = SiteMirrorStore.cache(ctx)
@@ -75,6 +78,20 @@ object Pinned {
      */
     fun hasDocument(ctx: Context, host: String, launchUrl: String): Boolean =
         runCatching { cache(ctx).lookup(PinnedSites.keyOf(host), PinPolicy.documentKey(launchUrl)) != null }.getOrDefault(false)
+
+    /** #1711 how long a pinned world's live page may stay without a scene after its document arrived before its pinned copy is shown instead. */
+    const val SCENE_WAIT_MS = 45_000L
+
+    /**
+     * #1711 the live document arrived but the page never started its scene: what the phone showed for floor796 (its top bar
+     * over a flat page, 0 canvases, 0 videos) while its first data request had no answer. The pinned copy is then shown instead
+     * and answers that request itself. [sinceDocumentMs] = since the live document arrived; [rendered] = the screen shows the
+     * world; [page] = what the page answered to the render check (null = it did not answer: nothing is concluded). A scene is
+     * a canvas or a video in the document, or a GPU context (a canvas in a closed shadow root). 2D contexts are not counted: a
+     * page creates those to measure text or probe features long before it has a scene (floor796 holds 3 while it waits).
+     */
+    fun sceneOverdue(sinceDocumentMs: Long, rendered: Boolean, page: RenderProbe.Page?): Boolean =
+        !rendered && page != null && page.canvases + page.videos + page.sceneContexts == 0 && sinceDocumentMs >= SCENE_WAIT_MS
 
     /** #1711 the diagnostics line under "Failed requests": what pin offline does for this load, in words. */
     fun status(pinned: Boolean, fromCopy: Boolean, why: String): String = when {
