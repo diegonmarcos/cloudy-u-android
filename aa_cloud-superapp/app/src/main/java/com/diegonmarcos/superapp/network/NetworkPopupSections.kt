@@ -141,7 +141,7 @@ internal object HotspotSection {
                 val n = TetherModel.countClients(neigh, st.tethered)
                 val count = maxOf(n, ap.clients ?: 0)
                 ("SSID: ${ap.ssid ?: "—"}" + (ap.band?.let { " · $it" } ?: "")) to
-                    ("Clients: " + if (out.isBlank()) "— (no answer from ${ch.name()})" else "$count")
+                    ("Clients: " + if (out.isBlank()) "— (no answer from ${ch.channel})" else "$count")
             }
         }
         if (st.wifi) PopValue(lines.first)
