@@ -145,6 +145,7 @@ openat() {
 }
 read -r SW SH < <(adb shell wm size | sed -n 's/.*: *\([0-9]*\)x\([0-9]*\).*/\1 \2/p' | tail -1)
 SW=${SW:-1080}; SH=${SH:-1920}
+DENS=$(adb shell wm density | grep -o '[0-9]*' | tail -1); DENS=${DENS:-160}   # the edit field sits ~105 dp from the top at any density
 up() { adb shell input swipe $((SW / 2)) $((SH * 85 / 100)) $((SW / 2)) $((SH * 30 / 100)) 500; sleep 2; }
 openat ai_routing 4
 for _ in $(seq 1 40); do adb logcat -d | grep -E "AiCatalog.*(refreshed|offline|failed)" | grep -q . && break; sleep 1; done
@@ -166,7 +167,7 @@ fieldkb() {   # $1 = extra args for am start
     adb shell am start -f $CLEAR -n "$PKG/.ShotActivity" $1 >/dev/null; sleep 3
     for _ in 1 2 3 4; do
         shown && break
-        adb shell input tap $((SW / 2)) $((SH * 118 / 640)); sleep 3
+        adb shell input tap $((SW / 2)) $((105 * DENS / 160)); sleep 3
     done
     shown && ok "the keyboard is up for $2" || bad "the keyboard is not up for $2"
 }
