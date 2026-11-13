@@ -43,7 +43,8 @@ object FleetNotify {
      * notifications are silent: there it is a `_silent_v2` id, and the id returned is the one to post on). Idempotent: a
      * channel that exists is never touched, so what the user set in Android's settings is kept. LOW importance, no sound.
      */
-    private fun keepAliveChannel(ctx: Context): String =
+    @JvmStatic
+    fun keepAliveChannel(ctx: Context): String =
         SilentChannels.ensure(ctx, CHANNEL_KEEP_ALIVE, CHANNEL_KEEP_ALIVE_NAME, NotificationManager.IMPORTANCE_LOW) {
             description = "An app that is kept running in the background, with what it is doing."
             setSound(null, null)

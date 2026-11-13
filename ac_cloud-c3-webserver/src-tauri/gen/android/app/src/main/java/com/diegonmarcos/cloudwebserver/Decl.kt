@@ -31,6 +31,7 @@ object Decl {
     const val PAGE_TOPOLOGY = "topology"
     const val PAGE_SERVER = "server"
     const val PAGE_DEVICE = "device"
+    const val PAGE_PERMS = "perms"   // #1724 Configs > Perms (build.json::ui configs perms)
     const val PAGE_ENGINES = "engines"
     const val PAGE_LINKS = "links"
 

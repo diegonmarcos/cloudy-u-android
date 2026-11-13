@@ -301,6 +301,16 @@ _native_build() {
   NATIVE_APK="$apks"
 }
 
+# #1724 the app's JVM unit tests (src/test: the keep-alive start contract and Keep-alive health). gradle needs the signing env at
+# configuration time like every task, so it is resolved first. The ship workflow runs this after the toolchain is set up.
+step_unit() {
+  local project; project="$(_release_var '.native.android_project')"
+  log "Unit: gradle :app:testDebugUnitTest ($project)"
+  _resolve_signing
+  _resolve_ssh_key
+  (cd "$SCRIPT_DIR/$project" && chmod +x gradlew && in_nix ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest)
+}
+
 step_build() {
   log "Build: $(_release_var '.name') (native Kotlin / Compose over the Rust core, release profile)"
   _resolve_signing
@@ -744,6 +754,7 @@ case "$CMD" in
   release)    step_release ;;
   dev)        step_dev ;;
   test)       step_test ;;
+  unit)       step_unit ;;
   clean)      step_clean ;;
   shell)      step_shell ;;
   ship)       step_ship ;;

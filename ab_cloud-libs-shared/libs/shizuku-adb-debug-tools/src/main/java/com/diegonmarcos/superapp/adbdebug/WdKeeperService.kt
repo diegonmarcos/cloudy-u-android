@@ -27,13 +27,15 @@ class WdKeeperService : Service() {
     override fun onCreate() { super.onCreate(); running = true }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!WdKeeper.armed(this)) { stopSelf(); return START_NOT_STICKY }
+        // #1724 startForeground FIRST on every start request (a disarmed keeper too): a service started with startForegroundService
+        // that returns without it crashes the app (ForegroundServiceDidNotStartInTimeException). The disarmed check comes after.
         val channel = SilentChannels.ensure(this, CHANNEL_ID, "Keep wireless debugging on", NotificationManager.IMPORTANCE_MIN,
             progress = true) { setShowBadge(false) }
         runCatching {
             if (Build.VERSION.SDK_INT >= 34) startForeground(NOTIF_ID, notification(channel), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
             else startForeground(NOTIF_ID, notification(channel))
         }.onFailure { Log.w(TAG, "not promoted to foreground", it) }
+        if (!WdKeeper.armed(this)) { stopSelf(); return START_NOT_STICKY }
         // NOT WdKeeper.start() here: start() starts this service, so calling it from onStartCommand looped
         // start -> startForegroundService -> onStartCommand -> start at ~140 Hz ("tick[start]: NOTHING" every 7 ms).
         if (loop?.isAlive != true) loop = Thread({ beat() }, "wd-keeper-beat").apply { isDaemon = true; start() }

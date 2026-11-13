@@ -46,6 +46,8 @@ fun HomePage(open: (String, String?) -> Unit) {
             HealthCard(pw, (health as? Load.Ok)?.value, health is Load.Err, sv)
             PowerCard(pw, bump)
         }
+        // #1724 each requirement of the keep-alive service, real state + fix (its own section, independent of the server round trips)
+        KeepAliveHealthCard(tick, open)
         // #1723 the ADB shell status table (the owner side reads the real server; the shipped stand-in names the owner)
         com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.HomeStatus(tick, open)
         DLoaded(served, "served pages") { ServedStrip(it) { open(Decl.SECTION_PAGES, Decl.PAGE_ALL) } }

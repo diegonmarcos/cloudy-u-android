@@ -59,8 +59,8 @@ class MainActivity : ComponentActivity() {
                 if (on) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                 PackageManager.DONT_KILL_APP,
             )
-            val svc = Intent(this, KeepAliveService::class.java)
-            if (on) startForegroundService(svc) else stopService(svc)
+            // #1724 only starts when the service will really go foreground; otherwise the reason is kept for Home (never throws)
+            KeepAliveStarter.sync(this, KeepAliveFlow.Origin.ACTIVITY)
         }
     }
 }

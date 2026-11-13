@@ -42,10 +42,15 @@ svc, boot, act = rd(kt + "KeepAliveService.kt"), rd(kt + "BootReceiver.kt"), rd(
 for name, src in (("KeepAliveService", svc), ("BootReceiver", boot), ("MainActivity", act)):
     if "PowerState.serviceAllowed" not in src:
         bad.append("P3 %s does not go through PowerState.serviceAllowed" % name)
-if svc.index("PowerState.serviceAllowed") > svc.index("START_STICKY"):
-    bad.append("P3 START_STICKY is returned before the gate")
-if "START_NOT_STICKY" not in svc:
-    bad.append("P3 the refused path must be START_NOT_STICKY")
+# #1724 the start flow moved to KeepAliveFlow (pure, unit-tested): the service's gate is its Host.serviceAllowed, and the flow
+# checks it before it binds the servers and returns STICKY; every refused path is NOT_STICKY.
+flow = rd(kt + "KeepAliveFlow.kt")
+if "KeepAliveFlow.onStartCommand" not in svc:
+    bad.append("P3 KeepAliveService does not run KeepAliveFlow.onStartCommand")
+if flow.index("host.serviceAllowed()") > flow.index("return STICKY"):
+    bad.append("P3 STICKY is returned before the gate")
+if "NOT_STICKY" not in flow or flow.count("return NOT_STICKY") < 3:
+    bad.append("P3 the refused paths must be NOT_STICKY")
 if not re.search(r'android:name="\.BootReceiver"\s+android:enabled="false"', rd("src-tauri/gen/android/app/src/main/AndroidManifest.xml")):
     bad.append("P4 the boot receiver is not declared android:enabled=\"false\"")
 lib = rd("server/src/lib.rs")

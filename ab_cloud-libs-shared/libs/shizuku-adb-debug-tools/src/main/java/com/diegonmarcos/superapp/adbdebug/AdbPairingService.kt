@@ -54,17 +54,19 @@ class AdbPairingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // #1724 startForeground FIRST on every path, the Stop action included: a start through startForegroundService that stops
+        // itself without it crashes the app (ForegroundServiceDidNotStartInTimeException). A refusal is logged, never thrown.
+        runCatching { startForeground(NOTIF_ID, notification(statusLine())) }
+            .onFailure { android.util.Log.w("AdbPairingService", "not promoted to foreground", it) }
         when (intent?.action) {
             ACTION_STOP -> { stopSelf(); return START_NOT_STICKY }
             ACTION_CODE -> {
-                startForeground(NOTIF_ID, notification(statusLine()))
                 val code = RemoteInput.getResultsFromIntent(intent)?.getCharSequence(KEY_CODE)?.toString()
                     ?: intent.getStringExtra(KEY_CODE)
                 if (code.isNullOrBlank()) show("No code entered — tap \"Enter pairing code\" again")
                 else submit(code.trim())
             }
             else -> {
-                startForeground(NOTIF_ID, notification(statusLine()))
                 PairingClaim.take()   // the other adb app (AdbPeers) refuses to pair while this one holds the window
                 intent?.getStringExtra(KEY_CODE)?.takeIf { it.isNotBlank() }?.let { pendingCode = it.trim() }
                 startDiscovery()

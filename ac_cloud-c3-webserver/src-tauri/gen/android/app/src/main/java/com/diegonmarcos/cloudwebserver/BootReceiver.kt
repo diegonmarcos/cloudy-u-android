@@ -16,6 +16,6 @@ class BootReceiver : BroadcastReceiver() {
             return
         }
         Log.i("C3BootReceiver", "start keep-alive service on " + intent.action)
-        context.startForegroundService(Intent(context, KeepAliveService::class.java))
+        KeepAliveStarter.sync(context, KeepAliveFlow.Origin.BOOT)   // #1724 refusals are caught and kept as the reason, never thrown
     }
 }

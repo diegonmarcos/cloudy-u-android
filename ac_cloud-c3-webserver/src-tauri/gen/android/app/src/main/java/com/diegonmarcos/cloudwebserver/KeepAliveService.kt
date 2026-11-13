@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import android.util.Log
 import com.diegonmarcos.superapp.core.FleetNotify
 import com.diegonmarcos.superapp.core.KeepAliveStatus
 
@@ -26,10 +27,33 @@ class KeepAliveService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        // Required within 5 s of startForegroundService, even when the gate below then refuses. The type is the
-        // fleet default (specialUse), the one the manifest declares for this service (required from targetSdk 34).
-        FleetNotify.startKeepAlive(this, NOTIFICATION_ID, notification(listOf("Server and Keep alive are ON", "Starting servers...")))
+        // #1724 Required within 5 s of startForegroundService, even when the gate then refuses; onStartCommand does it again
+        // for every later start request (the timeout applies to each one). Never throws.
+        enterForeground(listOf("Server and Keep alive are ON", "Starting servers..."))
     }
+
+    /**
+     * startForeground with the declared type (specialUse, build.json / manifest PROPERTY_SPECIAL_USE_FGS_SUBTYPE); the channel is
+     * created by FleetNotify before the notification is built. A refusal (ForegroundServiceStartNotAllowedException, SecurityException,
+     * a notification that cannot be built) is caught, recorded as the real reason (Home > Keep-alive health) and answered false.
+     */
+    private fun enterForeground(lines: List<String>): Boolean {
+        val ok = KeepAliveFlow.guarded(
+            {
+                FleetNotify.keepAliveChannel(this)   // the channel exists before any notification is built
+                val n = runCatching { notification(lines) }.getOrElse { plainNotification() }
+                FleetNotify.startKeepAlive(this, NOTIFICATION_ID, n)
+            },
+            { KeepAliveReason.set(this, it); Log.w(TAG, "foreground start refused: $it") },
+        )
+        if (ok) KeepAliveReason.clear(this)
+        return ok
+    }
+
+    /** Last resort when the rich notification cannot be built: a minimal one on the same channel. */
+    private fun plainNotification(): Notification =
+        androidx.core.app.NotificationCompat.Builder(this, FleetNotify.keepAliveChannel(this))
+            .setSmallIcon(android.R.drawable.stat_notify_sync).setContentTitle("Cloud C3 WebServer").setOngoing(true).build()
 
     private fun notification(lines: List<String>): Notification {
         val stop = PendingIntent.getService(
@@ -57,28 +81,31 @@ class KeepAliveService : Service() {
         super.onDestroy()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int =
+        // #1724 KeepAliveFlow.onStartCommand calls startForeground FIRST on every path (Stop action, gate refusal, normal start).
+        KeepAliveFlow.onStartCommand(host, intent?.action)
+
+    private val host = object : KeepAliveFlow.Host {
+        override fun enterForeground(): Boolean = this@KeepAliveService.enterForeground(listOf("Server and Keep alive are ON", "Starting servers..."))
+        override fun serviceAllowed(): Boolean = runCatching { PowerState.serviceAllowed(this@KeepAliveService) }.getOrDefault(false)
+        override fun stopServers() {
             alive = false
             Thread { runCatching { System.loadLibrary("cloud_c3_webserver_lib"); nativeStop() } }.start()
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
-            return START_NOT_STICKY
         }
-        if (!PowerState.serviceAllowed(this)) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
+        override fun stopSelfNow() {
+            runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
             stopSelf()
-            return START_NOT_STICKY
         }
-        // Off the main thread: loading the library and binding must not hold the 5 s foreground deadline.
-        Thread {
-            runCatching {
-                System.loadLibrary("cloud_c3_webserver_lib")
-                nativeStart()
-            }
-            runCatching { refreshStatus() }
-        }.start()
-        return START_STICKY
+        override fun startServers() {
+            // Off the main thread: loading the library and binding must not hold the 5 s foreground deadline.
+            Thread {
+                runCatching {
+                    System.loadLibrary("cloud_c3_webserver_lib")
+                    nativeStart()
+                }
+                runCatching { refreshStatus() }
+            }.start()
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -88,6 +115,7 @@ class KeepAliveService : Service() {
         /** build.json::runtime.port (the app's loopback server) and the nix-on-droid mesh sshd door (mesh_sshd.port). */
         private const val PORT_APP = 8002
         private const val PORT_SSHD = 8024
-        const val ACTION_STOP = "com.diegonmarcos.cloudwebserver.STOP"
+        const val ACTION_STOP = KeepAliveFlow.ACTION_STOP
+        private const val TAG = "C3KeepAlive"
     }
 }

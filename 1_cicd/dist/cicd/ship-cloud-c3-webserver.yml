@@ -306,6 +306,17 @@ jobs:
           fi
           ls -la dist/
 
+      # #1724 the JVM unit tests of the app (keep-alive start contract: startForeground first on every path; Keep-alive health).
+      - name: "Test -> JVM unit tests (keep-alive contract, fatal on failure)"
+        if: steps.gate.outputs.skip != 'true'
+        working-directory: ${{ env.WORK_DIR }}
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          CLOUDNAV_VARIANT: ${{ matrix.abi }}
+        run: ./build.sh unit
+
       # The size budget is read off this line (the Kotlin-shell APK was 1.1 MB).
       - name: APK size and what is in it
         if: steps.gate.outputs.skip != 'true'
