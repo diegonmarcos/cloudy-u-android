@@ -49,6 +49,8 @@ wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "page:conf
 
 CUR=home; cap network-home
 need Wireless DNS VPN Home "NG Firewall" "OS Perms" Webserver "Wi-Fi" Bluetooth
+# the SuperApp's own bottom nav is replaced by the Network nav while this page is open
+for w in Notify Boards Cloud Phone; do has "$w" && { echo "::error::the SuperApp bottom nav ($w) is still drawn under the Network nav"; fail=1; }; done
 has "ADB Shell" && { echo "::error::the ADB Shell icon is still in Network"; fail=1; }
 tap "Wireless"; CUR=wireless; cap network-wireless; need "Wi-Fi" Bluetooth
 tap "DNS"; sleep 3; CUR=dns; cap network-dns; need Wireless VPN
@@ -68,5 +70,5 @@ tap "‹ Back"; sleep 2; CUR=back; cap network-after-back
 need Wireless DNS VPN Home "NG Firewall" "OS Perms" Webserver
 has "‹ Back" && { echo "::error::NG Firewall's Back is still shown after closing it"; fail=1; }
 adb logcat -d -s AndroidRuntime:E > "$OUT/crashes.txt" 2>&1 || true
-grep -q "FATAL EXCEPTION" "$OUT/crashes.txt" && { echo "::error::the app crashed"; fail=1; }
+grep -q "Process: $PKG" "$OUT/crashes.txt" && { echo "::error::the app crashed"; fail=1; }
 exit $fail

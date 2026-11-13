@@ -1086,7 +1086,7 @@ open class ShellActivity : AppCompatActivity(),
                     com.diegonmarcos.superapp.launcher.StripIslandGap.follow(strip, toolbarIsland, dp(6))
                 }
                 toolbarIsland?.visibility = View.VISIBLE
-                bottomNavIsland?.visibility = View.VISIBLE
+                bottomNavIsland?.visibility = if (pageOwnsBottomNav()) View.GONE else View.VISIBLE   // #1719 a page with its own bottom nav keeps it
             }
             // No isLauncher here, deliberately. This theme is a mode of this app;
             // gating its chrome on owning the home button meant that on a phone
@@ -1133,7 +1133,7 @@ open class ShellActivity : AppCompatActivity(),
                 // 6dp gap from THAT padded edge is already correct.
                 setToolbarIslandTopMargin(toolbarIsland, dp(6))
                 toolbarIsland?.visibility = View.VISIBLE
-                bottomNavIsland?.visibility = View.VISIBLE
+                bottomNavIsland?.visibility = if (pageOwnsBottomNav()) View.GONE else View.VISIBLE   // #1719 a page with its own bottom nav keeps it
             }
         }
         // The backdrop every fragment is drawn over, from the theme's own
@@ -1479,6 +1479,12 @@ open class ShellActivity : AppCompatActivity(),
             applyLauncherChrome()
             insets
         }
+    }
+
+    /** #1719 True when the page on screen (a modal overlay first) draws its own bottom nav ([ShellOverride.ownsBottomNav]): Configs > Network and NG Firewall. */
+    private fun pageOwnsBottomNav(): Boolean {
+        val top = supportFragmentManager.findFragmentById(R.id.overlay_container) ?: supportFragmentManager.findFragmentById(R.id.fragment_container)
+        return (top as? ShellOverride)?.ownsBottomNav() == true
     }
 
     /**
