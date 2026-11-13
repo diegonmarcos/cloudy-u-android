@@ -59,20 +59,12 @@ on:
       # app compiles is watched above: any change in it ships every consumer.
       # fleet-refresh.yml (schedule only) ships the app for a moved cross-app dir.
       #   input: "1_cicd/src/cicd/ship-cloud-c3-webserver.yml"
-      #   input: "ac_cloud-nix-on-droid/build.json"
+      #   input: "1_cicd/src/data/adb-owner.json"
+#   input: "ac_cloud-nix-on-droid/build.json"
       #   input: "ac_cloud-termux/build.json"
       # ── end MANAGED-PATHS-HEADER ──
       # The ONE web server of the fleet (:8002 is its `start`) and the verbatim Linux UI it bundles.
       # A STATIC Rust lib this app compiles, so it is watched and hashed like a module dir.
-      # #1682 the Webserver is the ADB owner: its build links the owner libs (settings.gradle, adb-owner.json), so a change in them republishes it
-      - "ab_cloud-libs-shared/libs/adb-grants/**"
-      - "ab_cloud-libs-shared/libs/adb-readiness/**"
-      - "ab_cloud-libs-shared/libs/adb-shell-core/**"
-      - "ab_cloud-libs-shared/libs/shell-broker/**"
-      - "ab_cloud-libs-shared/libs/shell-client/**"
-      - "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/**"
-      - "ab_cloud-libs-shared/libs/ui-kit/**"
-      - "1_cicd/src/data/adb-owner.json"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
       - "ab_cloud-libs-shared/libs/core/**"
       - "ab_cloud-libs-shared/libs/crash/**"
