@@ -211,8 +211,10 @@ dependencies {
     // Conscrypt, libadb-android and the Shizuku client for a dialog-free
     // install only SuperApp performs. The matching source-set switch above
     // supplies a stub channel to the apps that opt out.
+    // ADB-OWNER-SIDE BEGIN (linked only in the one app whose settings include the owner libs: adb-owner.json)
     if (findProject(':libs:shizuku-adb-debug-tools') != null) {
         implementation project(':libs:shizuku-adb-debug-tools')
+    // ADB-OWNER-SIDE END
     } else if (findProject(':libs:shell-client') != null) {
         // #1512 the broker variant (src/broker): the client of the SuperApp's shell broker, no project dependency of its own.
         implementation project(':libs:shell-client')

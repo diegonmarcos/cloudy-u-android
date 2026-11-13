@@ -239,6 +239,7 @@
         "libs:shizuku-adb-debug-tools",
         "libs:shell-broker",
         "libs:adb-readiness",
+        "libs:adb-grants",
         "libs:adb-shell-core",
         "libs:firewall",
         "libs:battery",
@@ -425,6 +426,7 @@
     "libs:shizuku-adb-debug-tools": {
       "dir": "../ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
       "type": "library",
+      "adb_owner_only": true,
       "depends_on": [
         "libs:core"
       ],
@@ -443,19 +445,31 @@
       ],
       "comment": "#1682 P3 step 5 the CLIENT-SAFE readiness source: AdbReadiness (#1678, 'is ADB usable now') over ShellClient.status, no owner lib. The SuperApp links it as owner and as client; the owner side adds AdbReadinessOwner (libs:adb-shell-core)."
     },
+    "libs:adb-grants": {
+      "dir": "../ab_cloud-libs-shared/libs/adb-grants",
+      "type": "library",
+      "depends_on": [
+        "libs:adb-readiness",
+        "libs:perms"
+      ],
+      "comment": "#1682 P3 step 5 the client-safe grant pieces: BrokerGrantChannel (perms grant channel over ShellClient), AdbToggle (toggle model over the perms types), ShellAudit (audit / callers read). Moved out of libs:adb-shell-core, behaviour unchanged."
+    },
     "libs:adb-shell-core": {
       "dir": "../ab_cloud-libs-shared/libs/adb-shell-core",
       "type": "library",
+      "adb_owner_only": true,
       "depends_on": [
         "libs:shizuku-adb-debug-tools",
         "libs:shell-broker",
-        "libs:adb-readiness"
+        "libs:adb-readiness",
+        "libs:adb-grants"
       ],
       "comment": "#1682 P2a the ADB Shell's pure core, moved out of app/ so the ADB owner (Cloud Webserver) and the SuperApp share one copy: AdbReadiness (#1678 the one 'ADB usable now' source; the host installs connector / hostOpener), AdbCockpitModel (#1647 Status cockpit), AdbPrereqs (#1676 Perms chain). Same packages, no component."
     },
     "libs:shell-broker": {
       "dir": "../ab_cloud-libs-shared/libs/shell-broker",
       "type": "library",
+      "adb_owner_only": true,
       "depends_on": [
         "libs:core",
         "libs:shizuku-adb-debug-tools",

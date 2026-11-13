@@ -29,5 +29,5 @@ echo "$P" | grep -E 'Button\(|minHeight|defaultMinSize|heightIn' >/dev/null && b
 echo "$P" | grep -q 'console = { AdbShellPage() }' && ok "#1550 the console hosts the full lib page" || bad "#1550 the full channel console is not hosted"
 echo "$P" | grep -q 'for (sec in AdbShellModel.ORDER)' && ok "drawn from AdbShellModel.ORDER" || bad "not drawn from the declared order"
 echo "$P" | grep -q 'ON_RESUME' && ! echo "$P" | grep -Eq 'while \(true\)|delay\(' && ok "loads on open and resume, no polling" || bad "polls, or does not reload on resume"
-for f in configs/AdbShellModelTest configs/AdbShellBrokerPageTest launcher/AdbPeerDotsTest launcher/StatusBarDeclTest; do { [ -f "$T/$f.kt" ] || [ -f "$LT/$f.kt" ]; } && ok "tests: $f" || bad "missing tests: $f"; done
+for f in configs/AdbShellModelTest configs/AdbShellBrokerPageTest launcher/AdbPeerDotsTest launcher/StatusBarDeclTest; do { [ -f "$T/$f.kt" ] || [ -f "$ROOT/app/src/owner/test/java/com/diegonmarcos/superapp/$f.kt" ] || [ -f "$LT/$f.kt" ]; } && ok "tests: $f" || bad "missing tests: $f"; done
 echo "== RESULT: $PASS passed, $FAIL failed =="; [ "$FAIL" -eq 0 ]

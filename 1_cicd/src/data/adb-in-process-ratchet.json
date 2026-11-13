@@ -1,10 +1,5 @@
 {
- "_doc": "#1682 P3 ratchet: ONE ADB owner means no in-process ADB channel (com.diegonmarcos.superapp.adbdebug / .shellbroker classes, or a gradle link to libs:shizuku-adb-debug-tools / shell-broker / adb-shell-core) anywhere outside the owner's own tree and those three owner libs. These are the users the P3 cut-over moves to libs:shell-client (architect scope: every SuperApp file and every shared lib). The list only shrinks; the guard (aa_cloud-superapp/test/test-adb-in-process-one-owner.sh) fails on a new user, on a listed file that no longer is one (delete the entry), and, once 1_cicd/src/data/adb-owner.json names an owner other than aa_cloud-superapp, on any entry left at all.",
- "files": [
-  "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/App.kt"
- ],
- "gradle": [
-  "ab_cloud-libs-shared/libs/updater/build.gradle",
-  "aa_cloud-superapp/app/build.gradle"
- ]
+ "_doc": "#1682 P3 ratchet: ONE ADB owner means no in-process ADB channel (com.diegonmarcos.superapp.adbdebug / .shellbroker classes, or a gradle link to libs:shizuku-adb-debug-tools / shell-broker / adb-shell-core) anywhere outside the owner's own tree and those three owner libs. These are the users the P3 cut-over moves to libs:shell-client (architect scope: every SuperApp file and every shared lib). The list only shrinks; the guard (aa_cloud-superapp/test/test-adb-in-process-one-owner.sh) fails on a new user, on a listed file that no longer is one (delete the entry), and, once 1_cicd/src/data/adb-owner.json names an owner other than aa_cloud-superapp, on any entry left at all. #1682 P3 step 5: EMPTY. The last users (App.kt hooks, the AdbShellHost implementation, the gradle links) moved behind the AdbSide facade (aa_cloud-superapp/app/src/owner and src/client) and the owner-gated gradle blocks (// ADB-OWNER-SIDE BEGIN/END), which the guard does not count.",
+ "files": [],
+ "gradle": []
 }

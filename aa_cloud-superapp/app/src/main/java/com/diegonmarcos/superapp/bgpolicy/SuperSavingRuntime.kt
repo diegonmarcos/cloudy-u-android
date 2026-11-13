@@ -11,7 +11,7 @@ import android.content.IntentFilter
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.diegonmarcos.superapp.R
-import com.diegonmarcos.superapp.system.WirelessDebugKeeper
+import com.diegonmarcos.superapp.adbside.AdbSide
 
 /**
  * #1506 Super Saving on the device: the declared steps over the real shell, the real sync switch and the real keeper, plus the
@@ -31,8 +31,8 @@ object SuperSavingRuntime {
         override fun setMasterSync(on: Boolean) = ContentResolver.setMasterSyncAutomatically(on)
         override fun idleArmed() = BgPrefsKv(app).get(K_IDLE) == "1"
         override fun armIdle(on: Boolean) { BgPrefsKv(app).put(K_IDLE, if (on) "1" else "0"); if (on) SsScreenOff.register(app) else SsScreenOff.unregister(app) }
-        override fun keeperEnabled() = WirelessDebugKeeper.Prefs.enabled(app)
-        override fun setKeeper(on: Boolean) = WirelessDebugKeeper.Prefs.setEnabled(app, on)
+        override fun keeperEnabled() = AdbSide.keeperEnabled(app)
+        override fun setKeeper(on: Boolean) = AdbSide.setKeeper(app, on)
         override fun packages() = BgHost.packages(app)
     }
 

@@ -33,8 +33,8 @@ echo "$out" | grep -qx 'LABEL ADB Shell' && ok "the label is ADB Shell (build.js
 echo "$out" | grep -qx 'ONCE 1' && ok "declared once" || bad "declared 0 or 2+ times"
 echo "$out" | grep -qx 'OWN True' && ok "the SuperApp declares its own local server, so its default mode is Local server" || bad "no local_server in the SuperApp's build.json"
 echo "$out" | grep -qE '^NEEDS [1-9]' && ok "the SuperApp declares what it needs the channel for" || bad "no privileged_channel.needs in the SuperApp's build.json"
-grep -q 'pageId == "adb-shell".*AdbShellFragment' "$ROOT/aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/SectionPages.kt" && ok "routed to AdbShellFragment" || bad "adb-shell is not routed"
-grep -q 'AdbShellBrokerPage(' "$ROOT/aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt" && ok "the fragment hosts the SuperApp broker page" || bad "the fragment does not host AdbShellBrokerPage"
+grep -q 'pageId == "adb-shell".*AdbSide.page("adb-shell")' "$ROOT/aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/SectionPages.kt" && ok "routed to AdbShellFragment" || bad "adb-shell is not routed"
+grep -q 'AdbShellBrokerPage(' "$ROOT/aa_cloud-superapp/app/src/owner/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt" && ok "the fragment hosts the SuperApp broker page" || bad "the fragment does not host AdbShellBrokerPage"
 # the six sections, in the order the owner asked for
 python3 - "$LM/AdbShellPage.kt" <<'PY' && ok "the page draws its seven sections in order" || bad "the page's sections are missing or out of order"
 import sys

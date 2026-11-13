@@ -5,6 +5,12 @@ name: "c3-webserver ADB owner verify — the webserver compiles and tests with i
 # workflow proves the OWNER side (src/owner + libs:shizuku-adb-debug-tools / shell-broker / adb-shell-core) compiles and its unit
 # tests pass BEFORE the P3 cut-over flips adb-owner.json: C3_ADB_OWNER_VERIFY=1 turns the gate on for this run only. It builds no
 # APK, signs nothing, publishes nothing and installs nothing (no Rust core: Kotlin compilation needs no .so).
+#
+# #1682 P3 step 5/6: two more jobs apply THE FLIP to the checkout (1_cicd/src/data/adb-owner-flip.py: adb-owner.json, ShellBroker.SELF,
+# ShellWire.BROKER_PKG, <queries>, api-ipc-map; the flip commit is that script's exact output) and then build both sides of it:
+#   client-superapp-flipped   the SuperApp as a CLIENT (no owner libs; src/client) compiles and its unit suites pass
+#   owner-webserver-flipped   the webserver as THE OWNER (no env switch: adb-owner.json alone turns the owner side on) compiles + tests
+# plus the flipped-tree guards (shell broker B1-B12, one-owner ratchet, one-place, mesh relay). Nothing is built for release.
 
 on:
   push:
@@ -13,9 +19,16 @@ on:
       - "ac_cloud-c3-webserver/build.json"
       - "ac_cloud-c3-webserver/src-tauri/gen/android/**"
       - "1_cicd/src/data/adb-owner.json"
+      - "1_cicd/src/data/adb-owner-flip.py"
+      - "aa_cloud-superapp/settings.gradle"
+      - "aa_cloud-superapp/build.json"
+      - "aa_cloud-superapp/app/build.gradle"
+      - "aa_cloud-superapp/app/src/owner/**"
+      - "aa_cloud-superapp/app/src/client/**"
       - "ab_cloud-libs-shared/libs/shell-client/**"
       - "ab_cloud-libs-shared/libs/shell-broker/**"
       - "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/**"
+      - "ab_cloud-libs-shared/libs/adb-grants/**"
       - "ab_cloud-libs-shared/libs/adb-readiness/**"
       - "ab_cloud-libs-shared/libs/adb-shell-core/**"
       - ".github/workflows/c3-webserver-adb-owner-verify.yml"
@@ -61,6 +74,115 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon --stacktrace :app:compileDebugKotlin \
-            :libs:adb-shell-core:testDebugUnitTest :libs:adb-readiness:testDebugUnitTest
+            :libs:adb-shell-core:testDebugUnitTest :libs:adb-readiness:testDebugUnitTest :libs:adb-grants:testDebugUnitTest
           # the owner side really was the one compiled (not the dormant stand-in): its class references the lib's ADB Shell page
+          grep -rl 'adbdebug/AdbShellPage' app/build/tmp/kotlin-classes/debug/com/diegonmarcos/cloudwebserver/owner/
+
+  client-superapp-flipped:
+    name: "SuperApp as a CLIENT with the flip applied (compile + unit suites)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      WORK_DIR: aa_cloud-superapp
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply the flip (the exact edit the flip commit makes)
+        run: python3 1_cicd/src/data/adb-owner-flip.py
+
+      - name: Flipped-tree guards (shell broker B1-B12, one-owner ratchet O1-O4, one place, readiness source)
+        run: |
+          set -e
+          for t in test-shell-broker-guards test-adb-in-process-one-owner test-adb-shell-one-place test-adb-readiness-one-source; do
+            echo "::group::$t"; bash aa_cloud-superapp/test/$t.sh; echo "::endgroup::"
+          done
+          bash ac_cloud-c3-webserver/test/test-c3-webserver-shell-relay.sh
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-34 platforms;android-26 build-tools;36.0.0 build-tools;35.0.0 build-tools;34.0.0 platform-tools cmake;3.22.1 ndk;28.0.13004108 ndk;26.1.10909125"
+
+      - name: Set up Gradle 8.14 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.14"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+
+      - name: Cache firestack Go modules + checksum-db tiles
+        uses: actions/cache@v4
+        with:
+          path: ab_cloud-libs-shared/.cache/gomodcache
+          key: firestack-gomodcache-${{ runner.os }}-${{ hashFiles('ab_cloud-libs-shared/libs/firewall/firestack/go.sum') }}
+          restore-keys: firestack-gomodcache-${{ runner.os }}-
+
+      # gradle cannot even CONFIGURE this project without the shared signing key (the same vault checkout the ship uses); nothing is signed or published
+      - name: Checkout vault (shared Android signing key)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+
+      - name: Install ORAS + sops (pinned, sha256-checked, fails at the download)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+
+      - name: SuperApp unit suites as a client (compiles src/client, no owner lib is in the build)
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
+
+  owner-webserver-flipped:
+    name: "Webserver as THE OWNER with the flip applied (adb-owner.json alone, no env switch)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply the flip (the exact edit the flip commit makes)
+        run: python3 1_cicd/src/data/adb-owner-flip.py
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
+
+      - name: Gradle caches
+        uses: gradle/actions/setup-gradle@v6
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+
+      - name: Compile the webserver as the owner (no C3_ADB_OWNER_VERIFY) and run the owner libs' unit tests
+        working-directory: ac_cloud-c3-webserver/src-tauri/gen/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace :app:compileDebugKotlin \
+            :libs:adb-shell-core:testDebugUnitTest :libs:adb-readiness:testDebugUnitTest :libs:adb-grants:testDebugUnitTest \
+            :libs:shell-broker:testDebugUnitTest :libs:shell-client:testDebugUnitTest
           grep -rl 'adbdebug/AdbShellPage' app/build/tmp/kotlin-classes/debug/com/diegonmarcos/cloudwebserver/owner/

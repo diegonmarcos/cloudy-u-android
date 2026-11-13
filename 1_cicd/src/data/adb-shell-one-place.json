@@ -39,7 +39,7 @@
  "hosts": {
   "_doc": "Every app whose gradle links the lib must expose the page, and must say what it needs the channel for (build.json::privileged_channel.needs). `has` is a string that must appear in `file`. #1512: only the SuperApp links the lib; Cloud Store, Cloud Account and the terminals reach the shell through the SuperApp's broker (libs:shell-client) and host no ADB Shell page of their own.",
   "aa_cloud-superapp": {
-   "file": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt",
+   "file": "aa_cloud-superapp/app/src/owner/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt",
    "has": "AdbShellBrokerPage("
   }
  }

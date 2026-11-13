@@ -57,7 +57,7 @@ KEEPER="$KSYS/WirelessDebugKeeper.kt"
 CORE="$KSYS/WirelessDebugKeepAlive.kt"
 PPW="$KSYS/PrivilegedPlaneWorker.kt"
 BOOT="$KSYS/PrivilegedPlaneBootReceiver.kt"
-APPKT="$APP/app/src/main/java/com/diegonmarcos/superapp/App.kt"
+APPKT="$APP/app/src/owner/java/com/diegonmarcos/superapp/adbside/AdbSide.kt"   # #1682 P3 step 5: the owner hooks live in the AdbSide facade (src/owner)
 CONTROLS="$APP/app/src/main/java/com/diegonmarcos/superapp/configs/DeviceControls.kt"
 JVMTEST="$APP/../ab_cloud-libs-shared/libs/adb-shell-core/src/test/java/com/diegonmarcos/superapp/system/WirelessDebugKeepAliveTest.kt"
 BJ="$APP/build.json"
@@ -190,7 +190,7 @@ fi
 if python3 -c '
 import sys,re; s=sys.argv[1]
 m=re.search(r"\"wireless_debugging\" to Control\((.*?)\n        \),", s, re.S)
-sys.exit(0 if m and "WirelessDebugKeeper.Prefs.setEnabled(ctx, on)" in m.group(1) else 1)' "$(code "$CONTROLS")"; then
+sys.exit(0 if m and "AdbSide.setKeeper(ctx, on)" in m.group(1) else 1)' "$(code "$CONTROLS")"; then
   ok "T10 switching Wireless debugging from the panel moves the keep-alive with it"
 else
   bad "T10 the panel's Wireless debugging switch leaves the keep-alive behind — the watchdog undoes the owner's OFF"

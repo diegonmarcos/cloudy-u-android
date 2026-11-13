@@ -163,6 +163,7 @@ dependencies {
         implementation(project(":libs:shell-broker"))
         implementation(project(":libs:adb-shell-core"))
         implementation(project(":libs:adb-readiness"))
+        implementation(project(":libs:adb-grants"))
     }
     // ADB-OWNER-SIDE END
     // #1682 P1 the native UI: Compose (the fleet BOM) + the fleet's nav chrome, web view and perms libs.

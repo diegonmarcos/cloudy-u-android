@@ -95,6 +95,7 @@ on:
       # republishes and an unrelated edit elsewhere in that file does not.
       - "aa_cloud-superapp/**"
       - "ab_cloud-libs-shared/build.json"
+      - "ab_cloud-libs-shared/libs/adb-grants/**"
       - "ab_cloud-libs-shared/libs/adb-readiness/**"
       - "ab_cloud-libs-shared/libs/adb-shell-core/**"
       - "ab_cloud-libs-shared/libs/ai-usage/**"

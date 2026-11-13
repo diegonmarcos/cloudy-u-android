@@ -61,7 +61,7 @@ DataStore / Room stores and declared files it cannot move yet.
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
-Module `aa_cloud-superapp`; libs: lib-adb-readiness, lib-adb-shell-core, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
+Module `aa_cloud-superapp`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-shell-core, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

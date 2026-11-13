@@ -772,11 +772,7 @@ class PermissionsFragment : KitComposeFragment() {
 
     // ── Reorg helpers (state + button on ONE row; grant-here vs open-a-page) ──
     /** Enqueue the self-healing worker (connect + pm grant the privileged list). */
-    private fun armPlane() = runCatching {
-        androidx.work.WorkManager.getInstance(ctxAny()).enqueueUniqueWork(
-            "privileged-plane", androidx.work.ExistingWorkPolicy.REPLACE,
-            androidx.work.OneTimeWorkRequestBuilder<com.diegonmarcos.superapp.system.PrivilegedPlaneWorker>().build())
-    }.let { }
+    private fun armPlane() = com.diegonmarcos.superapp.adbside.AdbSide.armPlane(ctxAny())
     /** startLocalOnlyHotspot has THREE platform preconditions, and failing any
      *  throws or onFailed()s with an opaque code. Check + guide the user through
      *  each in order (measured 2026-09-03: WiFi radio off + location denied both

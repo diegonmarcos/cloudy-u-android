@@ -25,7 +25,9 @@ class AdbShellInFrameTest {
         val shell = File(java, "ShellActivity.kt").readText()
         assertTrue("ShellActivity implements no ADB class", !shell.contains("adbdebug") && !shell.contains("openAdbShellInFrame"))
         val app = File(java, "App.kt").readText()
-        assertTrue("App installs the lib's in-frame opener", app.contains("AdbShellLink.hostOpener = adbInFrame"))
+        val side = File(System.getProperty("user.dir"), "src/owner/java/com/diegonmarcos/superapp/adbside/AdbSide.kt").readText()
+        assertTrue("the owner AdbSide installs the lib's in-frame opener", side.contains("AdbShellLink.hostOpener = inFrame") && side.contains("AdbReadiness.hostOpener = inFrame"))
+        assertTrue("App hands the facade its opener", app.contains("AdbSide.install(this)"))
         assertTrue("it opens Configs > ADB Shell", Regex("shell\\.openSectionPage\\(\"config\", \"adb-shell\"\)").containsMatchIn(app))
     }
 

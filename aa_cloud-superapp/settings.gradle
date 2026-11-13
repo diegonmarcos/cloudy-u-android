@@ -27,8 +27,14 @@ dependencyResolutionManagement {
 rootProject.name = "cloud-superapp"
 
 def buildJson = new groovy.json.JsonSlurper().parse(file('build.json'))
+// #1682 P3 step 5: the ADB OWNER libs (build.json::modules entries flagged adb_owner_only) are part of this build only while
+// 1_cicd/src/data/adb-owner.json names this app (or the non-shipped CI verify sets C3_ADB_OWNER_VERIFY=1). Once another app owns ADB
+// the SuperApp is a CLIENT: no shizuku lib, no broker, no adb-shell-core project, so nothing in it can hold the channel.
+def adbOwnerDecl = new groovy.json.JsonSlurper().parse(file('../1_cicd/src/data/adb-owner.json'))
+gradle.ext.adbOwnerSide = adbOwnerDecl.adb_owner == 'aa_cloud-superapp' || System.getenv('C3_ADB_OWNER_VERIFY') == '1'
 buildJson.modules.each { name, _spec ->
     if (name.startsWith('_')) return  // skip _doc keys
+    if (_spec?.adb_owner_only && !gradle.ext.adbOwnerSide) return
     include ":${name}"
     // Map gradle path :libs:foo → libs/foo/  (vs. :app → app/), unless the
     // module declares a `dir` in build.json. `dir` is how a module is SHARED by

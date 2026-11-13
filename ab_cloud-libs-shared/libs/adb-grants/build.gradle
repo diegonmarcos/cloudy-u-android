@@ -1,0 +1,33 @@
+// #1682 P3 step 5 libs:adb-grants: the CLIENT-SAFE pieces a grant / toggle screen needs next to AdbReadiness, moved out of
+// libs:adb-shell-core unchanged in behaviour: BrokerGrantChannel (the perms grant channel over the ShellClient wire), AdbToggle (the
+// toggle model over the perms types) and ShellAudit (the audit / callers read). No owner lib: a client-only app links this.
+apply plugin: 'com.android.library'
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.adbgrants'
+    compileSdk 36
+    defaultConfig { minSdk 26 }
+    testOptions { unitTests.includeAndroidResources = true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:adb-readiness')
+    // AdbToggle / BrokerGrantChannel are built on the perms grant model (PermsGrant.GrantChannel, PermEntry ...)
+    api project(':libs:perms')
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20250107'
+}

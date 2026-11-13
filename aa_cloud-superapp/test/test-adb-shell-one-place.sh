@@ -218,7 +218,7 @@ mutate "Permissions page toggles Wireless debugging" $A/configs/PermissionsFragm
 mutate "a new place opens Developer options" $A/devcontrol/DevControlFragment.kt '' $'\nval i = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)\n' || M=$((M+1))
 mutate "Shizuku prompt in a screen" $A/configs/PermissionsFragment.kt '' $'\nfun s(c: android.content.Context) { ShizukuStatus.act(c) }\n' || M=$((M+1))
 mutate "a stale allowlist entry" ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/WifiUi.kt 'Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS' 'Settings.ACTION_WIFI_SETTINGS' || M=$((M+1))
-mutate "the SuperApp hosts a page of its own" $A/configs/AdbShellFragment.kt 'AdbShellBrokerPage()' 'AdbShellScreen(dark = true)' || M=$((M+1))
+mutate "the SuperApp hosts a page of its own" aa_cloud-superapp/app/src/owner/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt 'AdbShellBrokerPage()' 'AdbShellScreen(dark = true)' || M=$((M+1))
 mutate "a second copy of the page in an app" $S/MainActivity.kt '' $'\n@androidx.compose.runtime.Composable fun AdbShellMine() {}\n' || M=$((M+1))
 mutate "the peer list drifts from build.json" $P/AdbPeers.kt '"com.diegonmarcos.cloudstore"' '"com.diegonmarcos.cloudstoreX"' || M=$((M+1))
 mutate "the status provider is not declared" ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/AndroidManifest.xml 'com.diegonmarcos.superapp.adbdebug.AdbStatusProvider' 'com.diegonmarcos.superapp.adbdebug.Gone' || M=$((M+1))

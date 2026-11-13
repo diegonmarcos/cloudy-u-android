@@ -62,34 +62,13 @@ class App : Application(), WorkManagerConfiguration.Provider {
         }
         com.diegonmarcos.superapp.ops.OpsCredentials.open = { c -> com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(c) }
         com.diegonmarcos.superapp.chat.ChatCredentials.open = { c -> com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(c) }
-        // ONE auto-arm switch: Configs > Keep Wireless debugging on (default build.json::privileged_channel.default_on = off).
-        com.diegonmarcos.superapp.adbdebug.ChannelAutoArm.hostSwitch = { c -> com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.enabled(c) }
-        // #1513 the keeper's self-grant of WRITE_SECURE_SETTINGS goes through the shell broker (allowlisted for exactly that grant).
-        com.diegonmarcos.superapp.adbdebug.HostShell.grantRunner = { c, cmd ->
-            com.diegonmarcos.superapp.shellbroker.ShellBroker.exec(c, com.diegonmarcos.superapp.shellbroker.ShellBroker.SELF, cmd)
-        }
-        com.diegonmarcos.superapp.adbdebug.HostShell.channelReady = { c ->
-            com.diegonmarcos.superapp.system.AdbReadiness.check(c).usable
-        }
-        // #1682 P2a: AdbReadiness lives in libs:adb-shell-core; the SuperApp hands it its Connect chain and its in-shell page opener
-        // (the same two calls the readiness object made itself before the move).
-        // #1682 P3 step 4d: the keeper lives in libs:adb-shell-core; the SuperApp hands it the declared control flags and the X-Ray profiler.
-        com.diegonmarcos.superapp.configs.AdbOwnerHost.declaredFlag = { id, flag -> com.diegonmarcos.superapp.configs.DeviceControls.declaredFlag(id, flag) }
-        com.diegonmarcos.superapp.configs.AdbOwnerHost.profiler = { engine, path, block -> com.diegonmarcos.superapp.xray.EngineProfiler.time(engine, path) { block() } }
-        com.diegonmarcos.superapp.configs.AdbOwnerHost.waker = { engine, source -> com.diegonmarcos.superapp.xray.EngineProfiler.wake(engine, source) }
-        com.diegonmarcos.superapp.configs.AdbOwnerHost.errors = { engine, where, what -> com.diegonmarcos.superapp.xray.EngineProfiler.error(engine, where, what) }
-        com.diegonmarcos.superapp.configs.AdbOwnerHost.plane = com.diegonmarcos.superapp.system.PrivilegedPlaneHost
-        // #1682 P3 step 5: the readiness source is client-safe (libs:adb-readiness); this process owns the channel, so it adds the owner half.
-        com.diegonmarcos.superapp.system.AdbReadinessOwner.install()
-        com.diegonmarcos.superapp.system.AdbReadiness.connector = { c -> com.diegonmarcos.superapp.configs.AdbCockpitOps.connect(c) }
-        // #1682 P3 step 1: ONE in-frame opener for both: ShellActivity no longer implements the lib's AdbShellHost.
-        val adbInFrame: (android.content.Context) -> Boolean = { c ->
+        // #1682 P3 step 5: every ADB OWNER hook (channel auto-arm, grant runner, keeper / plane hosts, readiness owner half, Connect chain,
+        // in-frame opener) lives behind ONE facade; the client build (adb-owner.json names another app) installs none of them.
+        com.diegonmarcos.superapp.adbside.AdbSide.install(this) { c ->
             val shell = generateSequence(c) { (it as? android.content.ContextWrapper)?.baseContext }
                 .firstOrNull { it is ShellActivity } as? ShellActivity
             if (shell != null) { shell.openSectionPage("config", "adb-shell"); true } else false
         }
-        com.diegonmarcos.superapp.system.AdbReadiness.hostOpener = adbInFrame
-        com.diegonmarcos.superapp.adbdebug.AdbShellLink.hostOpener = adbInFrame
         // extapp: install progress — listening before any resumed install worker publishes.
         com.diegonmarcos.superapp.extinstall.ExtAppInstalls.init(this)
         // The island's haptics are the lib's; "Vibration on tap" (Configs -> Launcher -> Others) still gates them.
@@ -102,27 +81,7 @@ class App : Application(), WorkManagerConfiguration.Provider {
         com.diegonmarcos.superapp.appstore.FeedViewer.fleetBearer = {
             runCatching { com.diegonmarcos.superapp.ops.dagu.DaguPrefs(this).bearerToken }.getOrDefault("")
         }
-        // Privileged plane re-arm on every launch (unique, KEEP): BOOT_COMPLETED is
-        // delayed or dropped on some OEMs, and the first successful connect right
-        // after the one-time pairing must not wait for a reboot. Cheap when
-        // already connected (autoConnect short-circuits).
-        // The Shizuku-style pairing service (libs:shizuku-adb-debug-tools) ends
-        // with the channel up; the plane (pm grant list) is this app's to arm.
-        com.diegonmarcos.superapp.adbdebug.AdbPairingService.onConnected = { c ->
-            androidx.work.WorkManager.getInstance(c).enqueueUniqueWork(
-                "privileged-plane", androidx.work.ExistingWorkPolicy.REPLACE,
-                androidx.work.OneTimeWorkRequestBuilder<com.diegonmarcos.superapp.system.PrivilegedPlaneWorker>().build())
-        }
-        runCatching {
-            androidx.work.WorkManager.getInstance(this).enqueueUniqueWork(
-                "privileged-plane", androidx.work.ExistingWorkPolicy.KEEP,
-                androidx.work.OneTimeWorkRequestBuilder<com.diegonmarcos.superapp.system.PrivilegedPlaneWorker>().build())
-            // #290: the platform clears Wireless Debugging mid-session; the keeper
-            // re-arms it and reconnects the channel while the owner's keep-alive
-            // switch is on, and stands down entirely when it is off.
-            com.diegonmarcos.superapp.system.WirelessDebugKeeper.sync(
-                this, com.diegonmarcos.superapp.system.WirelessDebugKeepAlive.Trigger.PERIODIC)
-        }
+        com.diegonmarcos.superapp.adbside.AdbSide.installBoot(this)
 
         // #1120 The mesh is connected by default and reconnects until the owner taps Disconnect.
         runCatching { com.diegonmarcos.superapp.network.MeshSupervisorRunner.start(this) }
@@ -272,7 +231,7 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // #794: /api/net/dns/overview — the DNS page as JSON: preset in effect or not, every app's path, every server.
         runCatching { com.diegonmarcos.superapp.network.DnsOverview.register(this) }
         // #ipc the SuperApp bridge (adb/exec) over the fleet IPC layer: terminals and Drive call it.
-        runCatching { com.diegonmarcos.superapp.devcontrol.AdbBridgeApi.register(this) }
+        com.diegonmarcos.superapp.adbside.AdbSide.registerBridge(this)
         // Schedule the battery SoT's low-frequency tick (15 min cadence):
         // one history sample even when the SuperApp is backgrounded or
         // killed and no battery surface is open (BatteryRepository.record).

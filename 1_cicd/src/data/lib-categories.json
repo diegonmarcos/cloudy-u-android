@@ -139,6 +139,7 @@
     "kde-connect",
     "health",
     "autofill",
+    "adb-grants",
     "adb-readiness",
     "adb-shell-core",
     "shell-broker",

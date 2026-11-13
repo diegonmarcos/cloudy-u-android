@@ -746,7 +746,7 @@ class DevControlFragment : KitComposeFragment() {
                     android.provider.Settings.Global.getInt(cr, "adb_wifi_enabled") == 1
                 }.getOrDefault(false)
                 row("Wireless ADB", adbWifi.toString())
-                for ((k, v) in com.diegonmarcos.superapp.system.WirelessDebugKeeper.Status.rows(ctxAny()))
+                for ((k, v) in com.diegonmarcos.superapp.adbside.AdbSide.keeperRows(ctxAny()))
                     row("Keep-alive $k", v)
             }
             val km = ctxAny().getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager

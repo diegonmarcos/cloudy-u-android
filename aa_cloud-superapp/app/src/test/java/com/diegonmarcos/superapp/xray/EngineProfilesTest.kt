@@ -295,9 +295,9 @@ class EngineProfilesTest {
         has("rss/RemoteFeed.kt", "EngineProfiler.time(\"feeds\", \"rss\")")
         has("cloud/CloudData.kt", "EngineProfiler.time(\"feeds\", \"cloud\")")
         assertTrue("the plane worker no longer records plane", File("../../ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/PrivilegedPlaneWorker.kt").readText().contains("AdbOwnerHost.timed(\"system\", \"plane\")"))
-        // #1682 P3 step 4d: the keeper is in libs:adb-shell-core and times itself through AdbOwnerHost.profile; App.onCreate installs EngineProfiler.time behind it
+        // #1682 P3 step 4d: the keeper is in libs:adb-shell-core and times itself through AdbOwnerHost.profile; the owner AdbSide installs EngineProfiler.time behind it
         assertTrue("the keeper no longer records wdkeeper", File("../../ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt").readText().contains("AdbOwnerHost.profile(\"system\", \"wdkeeper\")"))
-        has("App.kt", "AdbOwnerHost.profiler = { engine, path, block -> com.diegonmarcos.superapp.xray.EngineProfiler.time(engine, path) { block() } }")
+        has("../../../../../owner/java/com/diegonmarcos/superapp/adbside/AdbSide.kt", "AdbOwnerHost.profiler = { engine, path, block -> EngineProfiler.time(engine, path) { block() } }")
         has("devcontrol/DevControlServer.kt", "EngineProfiler.time(\"xray\", \"http\")")
         has("xray/EngineProbes.kt", "EngineProfiler.time(\"xray\", \"report\")")
         has("App.kt", "XrayLifecycleProbe.install(this)")

@@ -32,6 +32,8 @@ dependencies {
     api project(':libs:shell-broker')
     // #1682 P3 step 5: AdbReadiness is client-safe and lives in its own lib; the owner side adds AdbReadinessOwner on top of it
     api project(':libs:adb-readiness')
+    // BrokerGrantChannel / AdbToggle / ShellAudit are client-safe too (libs:adb-grants)
+    api project(':libs:adb-grants')
     // #1682 P3 BrokerGrantChannel implements libs:perms PermsGrant.GrantChannel
     implementation project(':libs:perms')
     // #1682 P3 step 4c: the cockpit pages draw with the fleet UI kit (KitStoreRow, LocalKitPalette); it brings compose + fragment-ktx

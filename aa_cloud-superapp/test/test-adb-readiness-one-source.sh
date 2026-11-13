@@ -30,6 +30,8 @@ def load():
                     p = os.path.join(d, f); rel = os.path.relpath(p, root)
                     files[rel] = strip(open(p, encoding="utf-8").read())
                     if tag == "lib:": files[tag + rel] = ""
+    # #1682 P3 step 5: the owner hooks (connector / hostOpener / AdbReadinessOwner.install) are installed by the owner AdbSide facade
+    files["owner:AdbSide.kt"] = strip(open(os.path.join(APP, "app/src/owner/java/com/diegonmarcos/superapp/adbside/AdbSide.kt"), encoding="utf-8").read())
     return files
 CB = re.compile(r"onStatusChange\s*=(?!=)")
 VERDICT = re.compile(r"ShellBroker\.status\([^)]*\)\.armed|ShellChannels\.active\([^)]*\)\s*[!=]=\s*null")
@@ -50,9 +52,9 @@ def checks(F):
     out.append(("R6 AdbReadiness lives in libs:adb-readiness only (client-safe: over ShellClient, no owner class), the SuperApp installs its hooks, the owner half is libs:adb-shell-core's",
                 [] if ("lib:" + OWN in F and not F.get("app:" + OWN) and "ShellClient.status(" in F.get(OWN, "")
                        and not re.search(r"adbdebug|shellbroker", F.get(OWN, ""))
-                       and "ShellBroker.onStatusChange" in F.get(OWNER_HALF, "") and "AdbReadinessOwner.install()" in F.get("App.kt", "")
-                       and "AdbReadiness.connector =" in F.get("App.kt", "")
-                       and "AdbReadiness.hostOpener =" in F.get("App.kt", "")) else [OWN]))
+                       and "ShellBroker.onStatusChange" in F.get(OWNER_HALF, "") and "AdbReadinessOwner.install()" in F.get("owner:AdbSide.kt", "")
+                       and "AdbReadiness.connector =" in F.get("owner:AdbSide.kt", "")
+                       and "AdbReadiness.hostOpener =" in F.get("owner:AdbSide.kt", "")) else [OWN]))
     return out
 fails = 0
 F = load()

@@ -815,6 +815,7 @@
     "libs:shell-broker": { "shared_lib": true },
     "libs:shell-client": { "shared_lib": true },
     "libs:adb-readiness": { "shared_lib": true },
+    "libs:adb-grants": { "shared_lib": true },
     "libs:adb-shell-core": { "shared_lib": true },
     "libs:ui-kit": { "shared_lib": true }
   },

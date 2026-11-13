@@ -121,12 +121,12 @@ object SectionPages {
         sectionId == "config" && pageId == "store-phone"    -> com.diegonmarcos.superapp.apps.CloudStoreHandoff.page(pageId)
         // Apps Mesh / IPC / Identity are Cloud Store > Access now (one tile, Configs > Network > Apps Access, action open_apps_access).
         // Configs > Network > ADB Shell: the privileged channel's full control (lib AdbShellPage).
-        sectionId == "config" && pageId == "adb-shell"      -> com.diegonmarcos.superapp.configs.AdbShellFragment.newInstance()
+        sectionId == "config" && pageId == "adb-shell"      -> com.diegonmarcos.superapp.adbside.AdbSide.page("adb-shell")
         // The `adb-shell` page declares `tabs`, so the strip branch at the top answers it; these are its four tabs (Status cockpit, Shell, Perms, All).
-        sectionId == "config" && pageId == "adb-status"     -> com.diegonmarcos.superapp.configs.AdbShellFragment.newInstance(com.diegonmarcos.superapp.configs.AdbCockpitModel.Tab.STATUS)
-        sectionId == "config" && pageId == "adb-term"       -> com.diegonmarcos.superapp.configs.AdbShellFragment.newInstance(com.diegonmarcos.superapp.configs.AdbCockpitModel.Tab.SHELL)
-        sectionId == "config" && pageId == "adb-perms"      -> com.diegonmarcos.superapp.configs.AdbShellFragment.newInstance(com.diegonmarcos.superapp.configs.AdbCockpitModel.Tab.PERMS)
-        sectionId == "config" && pageId == "adb-all"        -> com.diegonmarcos.superapp.configs.AdbShellFragment.newInstance(com.diegonmarcos.superapp.configs.AdbCockpitModel.Tab.ALL)
+        sectionId == "config" && pageId == "adb-status"     -> com.diegonmarcos.superapp.adbside.AdbSide.page("adb-status")
+        sectionId == "config" && pageId == "adb-term"       -> com.diegonmarcos.superapp.adbside.AdbSide.page("adb-term")
+        sectionId == "config" && pageId == "adb-perms"      -> com.diegonmarcos.superapp.adbside.AdbSide.page("adb-perms")
+        sectionId == "config" && pageId == "adb-all"        -> com.diegonmarcos.superapp.adbside.AdbSide.page("adb-all")
         // Configs ▸ Setup ▸ Launcher ▸ Logcat: the DEDICATED single-app logcat (this app only, online, filters apart from actions).
         sectionId == "config" && pageId == "logcat"         -> com.diegonmarcos.superapp.devcontrol.LogcatFragment.newInstance()
         // Configs ▸ Setup ▸ Watchtower - Obsv ▸ Logcat Fleet: the fleet-wide reader (multi-select apps, per-app view, export).

@@ -50,7 +50,7 @@ MANIFEST="$LIB/src/main/AndroidManifest.xml"
 GRADLE="$LIB/build.gradle"
 PERMS="$APP/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt"
 DCS="$APP/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlServer.kt"
-APPKT="$APP/app/src/main/java/com/diegonmarcos/superapp/App.kt"
+APPKT="$APP/app/src/owner/java/com/diegonmarcos/superapp/adbside/AdbSide.kt"   # #1682 P3 step 5: the owner hooks live in the AdbSide facade (src/owner)
 
 for f in "$MDNS" "$SVC" "$BOOT" "$MANIFEST" "$GRADLE" "$PERMS" "$DCS" "$APPKT"; do
   if [ ! -f "$f" ]; then

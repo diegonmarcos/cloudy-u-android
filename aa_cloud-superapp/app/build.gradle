@@ -1020,6 +1020,17 @@ android {
         }
     }
 
+    // #1682 P3 step 5: THE ADB-OWNER SWITCH of this app. 1_cicd/src/data/adb-owner.json names the one ADB owner; settings.gradle sets
+    // gradle.ext.adbOwnerSide (true while it names this app). Owner: src/owner holds the real AdbSide facade (hooks, keeper, plane,
+    // dev routes, the ADB Shell page). Client: src/client holds the same facade as links to the owner over libs:shell-client, the owner
+    // libs are not in the build at all, and the files / tests that only exist for the owner side (src/owner, src/owner/test) are not compiled.
+    // (test-adb-in-process-one-owner.sh O4: nothing under src/main or src/test may name an owner class.)
+    sourceSets {
+        main { java.srcDir(gradle.ext.adbOwnerSide ? 'src/owner/java' : 'src/client/java') }
+        // the suites of the owner-only code (the ADB Shell page, the broker allowlists, the keeper / plane hosts) live in src/owner/test
+        test { if (gradle.ext.adbOwnerSide) java.srcDir('src/owner/test/java') }
+    }
+
     // Stable signing — required for the in-app updater to install update APKs.
     // The ONE shared Cloud-constellation key (release.jks + sops passwords) lives
     // in vault; build.sh::_resolve_signing resolves it and exports
@@ -1130,13 +1141,21 @@ dependencies {
     // via Shizuku (ShizukuAdb + AdbDiagnostics). DevControlServer exposes
     // it at /api/adb/*. Carries its own IShellService.aidl + UserService,
     // independent of app/'s energy-specific ShizukuEnergy.
-    implementation project(':libs:shizuku-adb-debug-tools')
-    // #1510 libs:shell-broker — the one shell broker (provider + bound service + allowlist + audit); other apps link libs:shell-client.
-    implementation project(':libs:shell-broker')
-    // #1682 P2a libs:adb-shell-core — AdbReadiness / AdbCockpitModel / AdbPrereqs, shared with the ADB owner (Cloud Webserver).
-    implementation project(':libs:adb-shell-core')
+    // #1682 P3 step 5 ADB-OWNER-SIDE: linked only while adb-owner.json names this app (settings.gradle then includes the three
+    // projects); as a CLIENT the SuperApp links libs:shell-client (through libs:adb-readiness) and nothing of the owner.
+    // ADB-OWNER-SIDE BEGIN (test-adb-in-process-one-owner.sh does not count this gated block as an in-process user)
+    if (gradle.ext.adbOwnerSide) {
+        implementation project(':libs:shizuku-adb-debug-tools')
+        // #1510 libs:shell-broker — the one shell broker (provider + bound service + allowlist + audit); other apps link libs:shell-client.
+        implementation project(':libs:shell-broker')
+        // #1682 P2a libs:adb-shell-core — the owner's cockpit / keeper / plane / dev routes, shared with the ADB owner (Cloud Webserver).
+        implementation project(':libs:adb-shell-core')
+    }
+    // ADB-OWNER-SIDE END
     // #1682 P3 step 5 libs:adb-readiness — the client-safe readiness source (over libs:shell-client); linked in both owner and client mode.
     implementation project(':libs:adb-readiness')
+    // #1682 P3 step 5 libs:adb-grants — BrokerGrantChannel / AdbToggle / ShellAudit over the ShellClient wire (client-safe).
+    implementation project(':libs:adb-grants')
     // libs:firewall — original no-root per-app outbound firewall (local
     // VpnService). Surfaced in the About screen under Battery. Complex
     // tooling is cherry-picked from the RethinkDNS reference upstream

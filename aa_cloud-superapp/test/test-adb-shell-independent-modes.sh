@@ -21,7 +21,7 @@ R = sys.argv[1]
 LIB = "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/"
 LIBT = "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/test/java/com/diegonmarcos/superapp/adbdebug/"
 SA = "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/"
-SAT = "aa_cloud-superapp/app/src/test/java/com/diegonmarcos/superapp/configs/"
+SAT = "aa_cloud-superapp/app/src/owner/test/java/com/diegonmarcos/superapp/configs/"
 # #1682 P2a the cockpit model and its test moved to libs:adb-shell-core (same package)
 CORE = "ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/"
 CORET = "ab_cloud-libs-shared/libs/adb-shell-core/src/test/java/com/diegonmarcos/superapp/configs/"

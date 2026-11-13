@@ -40,9 +40,11 @@ if vis[vis.index('adb-shell') - 1] != 'apps-access': bad.append('not after apps-
 sys.exit(1 if bad else 0) if not print('; '.join(bad)) or True else 0
 PY
 for t in adb-status:STATUS adb-term:SHELL adb-perms:PERMS adb-all:ALL; do
-  grep -q "pageId == \"${t%%:*}\".*AdbShellFragment.newInstance(.*Tab.${t##*:})" "$D/launcher/SectionPages.kt" && ok "${t%%:*} routed to AdbShellFragment (${t##*:})" || bad "${t%%:*} is not routed"
+  # #1682 P3 step 5: SectionPages asks the AdbSide facade, whose owner variant maps the page id to AdbShellFragment's tab
+  grep -q "pageId == \"${t%%:*}\".*AdbSide.page(\"${t%%:*}\")" "$D/launcher/SectionPages.kt" && ok "${t%%:*} routed through AdbSide.page" || bad "${t%%:*} is not routed"
 done
-F="$(code "$C/AdbShellFragment.kt")"
+grep -q 'AdbShellFragment.newInstance(AdbCockpitModel.Tab.of(pageId))' "$ROOT/app/src/owner/java/com/diegonmarcos/superapp/adbside/AdbSide.kt" && ok "the owner AdbSide opens AdbShellFragment on the tab" || bad "the owner AdbSide does not open the tab fragment"
+F="$(code "$ROOT/app/src/owner/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt")"
 for w in 'AdbStatusTab()' 'AdbTermTab()' 'AdbPermsTab()' 'AdbShellBrokerPage()'; do echo "$F" | grep -qF "$w" && ok "the fragment hosts $w" || bad "the fragment does not host $w"; done
 LC="$ROOT/../ab_cloud-libs-shared/libs/adb-shell-core/src/main/java/com/diegonmarcos/superapp/configs"; LT="$ROOT/../ab_cloud-libs-shared/libs/adb-shell-core/src/test/java/com/diegonmarcos/superapp"  # #1682 P2a the model moved to libs:adb-shell-core
 M="$(code "$LC/AdbCockpitModel.kt")"
@@ -72,5 +74,5 @@ echo "$O" | grep -q 'ConnectPlan.run' && echo "$O" | grep -q 'needsUser = true' 
 echo "$P" | grep -Eq 'adbc:autofix|autoFix' && bad "a separate Auto-fix control is back on the Status page" || ok "no separate Auto-fix control"
 echo "$P" | grep -q 'Do.CONNECT -> connect()' && echo "$P" | grep -q 'AdbCockpitModel.resumes(waiting, r.facts)' && ok "the top Connect runs the chain, and a run that stopped for the person resumes" || bad "the top Connect does not run / resume the chain"
 [ -f "$LT/configs/AdbCockpitModelTest.kt" ] && ok "tests: configs/AdbCockpitModelTest (libs:adb-shell-core)" || bad "missing tests: configs/AdbCockpitModelTest in libs:adb-shell-core"
-for f in configs/AdbCockpitPageTest configs/AdbStatusPageTest configs/AdbShellInFrameTest; do [ -f "$T/$f.kt" ] && ok "tests: $f" || bad "missing tests: $f"; done
+for f in configs/AdbCockpitPageTest configs/AdbStatusPageTest configs/AdbShellInFrameTest; do [ -f "$ROOT/app/src/owner/test/java/com/diegonmarcos/superapp/$f.kt" ] && ok "tests: $f" || bad "missing tests: $f"; done
 echo "== RESULT: $PASS passed, $FAIL failed =="; [ "$FAIL" -eq 0 ]

@@ -6,7 +6,6 @@ import com.diegonmarcos.superapp.devtools.DevControlPrefs
 import com.diegonmarcos.superapp.devtools.DiagnosticsPush
 import com.diegonmarcos.superapp.battery.EnergyStore
 import com.diegonmarcos.superapp.system.Trace
-import com.diegonmarcos.superapp.system.ShizukuUserService
 import com.diegonmarcos.superapp.system.CrashLogger
 import com.diegonmarcos.superapp.App
 import com.diegonmarcos.superapp.R
@@ -90,7 +89,7 @@ object DevControlServer {
         // app start, so a paired device with Wireless Debugging ON comes back
         // online after every update/relaunch with NO manual connect port.
         // Silent no-op if not paired / WD off. Off the main + server threads.
-        com.diegonmarcos.superapp.devcontrol.AdbDevRoutes.autoConnectAtStart(app)
+        com.diegonmarcos.superapp.adbside.AdbSide.devAutoConnectAtStart(app)
     }
 
     fun stop() {
@@ -378,7 +377,8 @@ object DevControlServer {
                 }
                 // ── libs:shizuku-adb-debug-tools — self-contained adb shell ──
                 // #1682 P3 step 4d: the owner's pairing / connect / diagnostics routes live in libs:adb-shell-core (AdbDevRoutes)
-                in com.diegonmarcos.superapp.devcontrol.AdbDevRoutes.ROUTES -> com.diegonmarcos.superapp.devcontrol.AdbDevRoutes.handle(ctx, op, query)?.let {
+                // #1682 P3 step 5: through the AdbSide facade (the client build serves none of them: they are the owner app's)
+                in com.diegonmarcos.superapp.adbside.AdbSide.devRoutes -> com.diegonmarcos.superapp.adbside.AdbSide.devRoute(ctx, op, query)?.let {
                     reply(writer, it.status, it.body, if (it.json) "application/json" else "text/plain")
                 }
                 // #1506 Background policy + Super Saving from the c3 peers-control tools (peers.bg_policy_get/set, peers.super_saving_on/off).

@@ -17,7 +17,7 @@ import android.util.Base64
 import com.diegonmarcos.superapp.BuildConfig
 import com.diegonmarcos.superapp.ShellActivity
 import com.diegonmarcos.superapp.system.WirelessDebuggingSwitch
-import com.diegonmarcos.superapp.system.WirelessDebugKeeper
+import com.diegonmarcos.superapp.adbside.AdbSide
 import com.diegonmarcos.superapp.devcontrol.DevControlServer
 import com.diegonmarcos.superapp.devtools.DevControlPrefs
 import com.diegonmarcos.superapp.firewall.FirewallController
@@ -241,7 +241,7 @@ object DeviceControls {
                 // The keep-alive follows the owner's hand: switching debugging
                 // off here must not be undone by the watchdog a minute later,
                 // and switching it on here is asking for it to stay on.
-                WirelessDebugKeeper.Prefs.setEnabled(ctx, on)
+                AdbSide.setKeeper(ctx, on)
                 val r = WirelessDebuggingSwitch.set(ctx, on)
                 Verdict(r.ok, "${r.channel}: ${r.detail}")
             },
@@ -258,11 +258,11 @@ object DeviceControls {
         // back is on Configs ▸ Dev control and /api/adb/status, not here.
         "wireless_debugging_keepalive" to Control(  // = WirelessDebugKeeper.CONTROL_ID
             observed = false,
-            read = { ctx -> WirelessDebugKeeper.Prefs.enabled(ctx) },
+            read = { ctx -> AdbSide.keeperEnabled(ctx) },
             set = { ctx, on ->
-                WirelessDebugKeeper.Prefs.setEnabled(ctx, on)
-                Verdict(WirelessDebugKeeper.Prefs.enabled(ctx) == on,
-                    "Keep-alive is " + fmt(WirelessDebugKeeper.Prefs.enabled(ctx)))
+                AdbSide.setKeeper(ctx, on)
+                Verdict(AdbSide.keeperEnabled(ctx) == on,
+                    "Keep-alive is " + fmt(AdbSide.keeperEnabled(ctx)))
             },
         ),
 
