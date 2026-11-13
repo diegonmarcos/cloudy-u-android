@@ -63,7 +63,7 @@ ok("PermsPlan.capture(ctx" in dp and "build(device, apps, settings, cls, perms =
 
 pg = rd(f"{PROF}/PermsPage.kt")
 ok("PermsPlan.apply(ctx, p, ch)" in pg and "GRANT_ALL" in pg, "page: Grant all runs PermsPlan.apply", "page has no Grant all")
-ok('go("setup", "adb-shell")' in pg, "page: no channel offers the ADB Shell page", "page: no channel is not offered the ADB Shell page")
+ok('ShellClient.openArmPage(ctx)' in pg and 'NO_CHANNEL' in pg, "page: no channel offers the owner's ADB Shell page", "page: no channel is not offered the owner's ADB Shell page")
 ok("PermsPlan.settingsIntent(item)" in pg and "needs the user" in pg, "page: needs-the-user rows open Settings", "page: needs-the-user rows do not open Settings")
 ok("PermsPlan.applyOne(ctx, i, channel)" in pg, "page: per-row Grant", "page: no per-row Grant")
 

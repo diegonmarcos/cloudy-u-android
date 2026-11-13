@@ -39,7 +39,7 @@ object HubNav {
         ("setup" to "apps") to ("config" to "cloud-apps"),
         ("setup" to "configs") to ("connect" to "push"),
         ("setup" to "perms") to ("connect" to "perms"),
-        ("setup" to "adb-shell") to ADB_PAGE,
+        ("setup" to "adb-shell") to ("connect" to "adb-shell"),
         ("settings" to "") to ("connect" to "settings"),
         // Profiles, Secrets (four islands of 2026-10-13/14)
         ("profiles" to "") to ("connect" to "apps"),
@@ -72,7 +72,7 @@ object HubNav {
         ("configs" to "apps") to ("config" to "cloud-apps"),
         ("configs" to "configs") to ("connect" to "push"),
         ("configs" to "perms") to ("connect" to "perms"),
-        ("configs" to "adb-shell") to ADB_PAGE,
+        ("configs" to "adb-shell") to ("connect" to "adb-shell"),
         // #1438 Configs > Android is Cloud Apps / Phone Apps / Runbook; Push, Perms and ADB Shell moved to Connect > Setup;
         // Personal Info > Wallet became Pay Cards.
         ("configs" to "push") to ("connect" to "push"),
