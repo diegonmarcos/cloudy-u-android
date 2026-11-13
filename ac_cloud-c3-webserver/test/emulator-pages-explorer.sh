@@ -30,7 +30,13 @@ printf '# Proof page\n\nA **Markdown** file rendered by the shared server.\n\n- 
 printf '{"app":"c3-webserver","roots":["termux","nix","emulated"],"ok":true,"n":3}\n' > "$OUT/data.json"
 adb push "$OUT/README.md" /sdcard/c3-proof/README.md >/dev/null; adb push "$OUT/data.json" /sdcard/c3-proof/data.json >/dev/null
 adb shell am force-stop "$W"; adb shell input keyevent KEYCODE_HOME
-adb logcat -c; adb shell am start -W -n "$W/.MainActivity" >/dev/null; sleep 10
+adb logcat -c
+for try in 1 2 3; do
+  adb shell am start -W -n "$W/.MainActivity" >"$OUT/start-$try.txt" 2>&1; sleep 10
+  adb shell dumpsys activity activities | tr -d '\r' | grep -m1 -E "topResumedActivity|mResumedActivity" | grep -q "$W" && break
+  adb logcat -d | grep -E "FATAL|$W" | tail -60 > "$OUT/start-$try-log.txt"; shoot "00-start-$try-failed"
+done
+shoot 00-started
 for i in 1 2 3; do tap_re "Not now|Skip|Later|Dismiss|Cancel|Allow|While using" && sleep 2; done
 tap_re "Pages" L || fail "no Pages tab"; sleep 4
 shoot 01-pages-all; dump 01-pages-all
