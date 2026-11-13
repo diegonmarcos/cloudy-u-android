@@ -32,7 +32,7 @@ stays visible.
 ### Running at targetSdk 29+ (#1708)
 
 Upstream targets SDK 28 because from 29 Android forbids `execve()` of files in the app's data
-directory. Here that is three files, and this fork can target 35 (silent Cloud Store updates on
+directory. Here that is three files, and this fork targets 35 (silent Cloud Store updates on
 Android 17) by starting each of them another way:
 
 - `bin/login`, a `/system/bin/sh` script, is started as `/system/bin/sh $PREFIX/bin/login`
