@@ -243,6 +243,9 @@ jobs:
           VAULT_DIR: ${{ github.workspace }}/.vault
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # #1733: OpsConsole* moved to src/owner/test in the #1682 flip; that source set compiles only on the ADB-owner side,
+          # so this step (and only it) builds the SuperApp as the owner, as c3-webserver-adb-owner-verify does.
+          C3_ADB_OWNER_VERIFY: "1"
           UNIT_TEST_FILTER: "com.diegonmarcos.superapp.configs.OpsConsole*"
         run: bash ./build.sh test
 

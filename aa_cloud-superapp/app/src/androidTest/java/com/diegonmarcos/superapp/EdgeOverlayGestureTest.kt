@@ -138,6 +138,7 @@ class EdgeOverlayGestureTest {
      * victim is brought back to front (and its stop baselined) whenever the prompt dance disturbed it.
      */
     private var stopBase = 0
+    private val KEEPER_CLASS = "com.diegonmarcos.superapp.system.WirelessDebugKeeper"
 
     /**
      * Run 39068681107 (94a8f68d2): the keeper is a PERIODIC worker in the app under test; it re-raised the prompt
@@ -146,11 +147,20 @@ class EdgeOverlayGestureTest {
      * Stop the source for the duration of the test instead of racing it.
      */
     private fun silenceWirelessDebugKeeper() {
-        runCatching { com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.setEnabled(ctx, false) }
+        // #1733: since #1682 the keeper lives in libs:adb-shell-core, which only the ADB-owner build links (the SuperApp is
+        // a client; the periodic worker runs in Cloud C3 Webserver). Reach it by NAME so this suite compiles in both builds,
+        // and silence it only where it is present - with no keeper in this process there is nothing to race the test.
+        val keeper = runCatching { Class.forName(KEEPER_CLASS) }.getOrNull() ?: return
+        runCatching {
+            val prefs = Class.forName("$KEEPER_CLASS\$Prefs")
+            val holder = prefs.getField("INSTANCE").get(null)
+            prefs.getMethod("setEnabled", android.content.Context::class.java, Boolean::class.javaPrimitiveType).invoke(holder, ctx, false)
+        }
         runCatching {
             val wm = androidx.work.WorkManager.getInstance(ctx)
-            wm.cancelUniqueWork(com.diegonmarcos.superapp.system.WirelessDebugKeeper.UNIQUE_NAME)
-            wm.cancelAllWorkByTag(com.diegonmarcos.superapp.system.WirelessDebugKeeper::class.java.name)
+            val unique = keeper.getField("UNIQUE_NAME").get(null) as String
+            wm.cancelUniqueWork(unique)
+            wm.cancelAllWorkByTag(KEEPER_CLASS)
         }
     }
     private fun focus(): String = sh("dumpsys window | grep -m1 mCurrentFocus")

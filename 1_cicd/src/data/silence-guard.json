@@ -125,7 +125,7 @@
       "_doc": "#585 Configs ▸ Profile ▸ 'Import from a file instead' (journey step 4, last line); #1693 Cloud Account ▸ Connect ▸ Import configs now (libs:account). The owner picked the sops-ENCRYPTED vault file: valid JSON, so the old route wrote all 1.3 MB into the paste store, overwrote the stored Authelia bearer on the way, said 'saved' — and no consumer recognised a single key. The Enhance defect in the import's costume: a 'success' that changed nothing. Two entry points because the file is described on pick (before Save) and again, with the write, on Save; every exit of both goes through report(, which puts the sentence on screen and announces it.",
       "label": "Profile import — open file",
       "source": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/settings/ImportConfigsFragment.kt",
-      "entry": "internal fun loadFromUri(uri: Uri)",
+      "entry": "fun loadFromUri(uri: Uri)",
       "reporters": ["report(", "describe("],
       "messages": {
         "reporter": "report(",
@@ -140,7 +140,7 @@
     {
       "label": "Profile import — describe / Save",
       "source": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/settings/ImportConfigsFragment.kt",
-      "entry": "internal fun describe(v: VaultFile.Verdict, store: Boolean)",
+      "entry": "fun describe(v: VaultFile.Verdict, store: Boolean)",
       "reporters": ["report("],
       "messages": {
         "reporter": "report(",
