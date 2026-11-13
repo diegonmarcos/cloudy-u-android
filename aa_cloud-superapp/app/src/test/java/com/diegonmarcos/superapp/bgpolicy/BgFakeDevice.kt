@@ -25,9 +25,13 @@ class BgFakeDevice(vararg apps: String) : BgShell {
 
     override fun exec(cmd: String): String? {
         log += cmd
-        special(cmd)?.let { return it }
+        // #1720 a batch (several statements in one exec) is answered statement by statement, like `sh -c` does
+        if (!cmd.contains(';') && !cmd.contains('\n')) special(cmd)?.let { return it }
         val out = StringBuilder()
-        for (line in cmd.split("\n")) for (stmt in line.split(";").map { it.trim() }.filter { it.isNotEmpty() }) run(stmt, out)
+        for (line in cmd.split("\n")) for (stmt in line.split(";").map { it.trim() }.filter { it.isNotEmpty() }) {
+            val sp = special(stmt)
+            if (sp != null) out.append(sp) else run(stmt, out)
+        }
         return out.toString()
     }
 
@@ -44,7 +48,15 @@ class BgFakeDevice(vararg apps: String) : BgShell {
             c == "svc nfc enable" -> { nfc = "on"; "" }
             c == "svc bluetooth disable" -> { settings["global/bluetooth_on"] = "0"; "" }
             c == "svc bluetooth enable" -> { settings["global/bluetooth_on"] = "1"; "" }
-            c.startsWith("dumpsys bluetooth_manager") -> if (btConnected) "1\n" else "0\n"
+            c.startsWith("dumpsys bluetooth_manager") -> if (btConnected) "  state: ON\n  ConnectionState: STATE_CONNECTED\n" else "  state: ON\n  ConnectionState: STATE_DISCONNECTED\n"
+            // #1720 the commands the broker allowlist carries (no pipes, no svc): cmd nfc / bluetooth_manager / phone data
+            c == "cmd nfc disable-nfc" -> { nfc = "off"; "" }
+            c == "cmd nfc enable-nfc" -> { nfc = "on"; "" }
+            c == "cmd bluetooth_manager disable" -> { settings["global/bluetooth_on"] = "0"; "" }
+            c == "cmd bluetooth_manager enable" -> { settings["global/bluetooth_on"] = "1"; "" }
+            c == "cmd phone data disable" -> { settings["global/mobile_data"] = "0"; "" }
+            c == "cmd phone data enable" -> { settings["global/mobile_data"] = "1"; "" }
+            c.startsWith("cmd notification set_dnd ") -> { settings["global/zen_mode"] = mapOf("off" to "0", "priority" to "1", "none" to "2", "alarms" to "3")[t[3]] ?: "0"; "" }
             c.startsWith("ip route get") -> if (wifiConnected) "dev wlan\n" else ""
             c == "svc data disable" -> { settings["global/mobile_data"] = "0"; "" }
             c == "svc data enable" -> { settings["global/mobile_data"] = "1"; "" }

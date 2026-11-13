@@ -32,6 +32,10 @@ object LauncherModes {
         /** #1591 Non-empty = picking this preset ALSO runs this shell command through the adb-shell broker
          *  (ShellBroker.execText), after its toggles are applied. A quick action a preset can trigger. */
         val cmd: String = "",
+        /** #1720 The mode's system steps as declared (`steps`, a JSON array in the step vocabulary of bgpolicy.SsDecl); "" = none. */
+        val steps: String = "",
+        /** #1720 The declared switches as written (JSON object), handed to the engine's launcher step so it can journal each prior value. */
+        val togglesJson: String = "",
     )
 
     private fun declaration(): JSONArray =
@@ -46,14 +50,16 @@ object LauncherModes {
         (0 until arr.length()).map { i ->
             val o: JSONObject = arr.getJSONObject(i)
             val id = o.optString("id")
-            Mode(id, o.optString("label"), o.optString("subtitle"), toggles[id] ?: emptyMap(), o.optString("engine"), o.optString("cmd"))
+            val own = toggles[id] ?: emptyMap()
+            Mode(id, o.optString("label"), o.optString("subtitle"), own, o.optString("engine"), o.optString("cmd"),
+                o.optJSONArray("steps")?.toString().orEmpty(), JSONObject(own).toString())
         }
     }.getOrDefault(emptyList())
 
     /** Record the pick, then set the switches it names. Unnamed switches keep
      *  their value. No Activity recreate: a mode names no style. */
     fun apply(ctx: Context, mode: Mode) {
-        LauncherModePrefs(ctx).selected = mode.id
+        PresetState.setMode(ctx, mode.id) // #1720 the one writer of the picked mode
         LauncherThemes.applyToggles(ctx, mode.toggles)
     }
 
@@ -70,8 +76,13 @@ class LauncherModePrefs(context: Context) {
         .getSharedPreferences("launcher_mode_prefs", Context.MODE_PRIVATE)
 
     var selected: String?
-        get() = sp.getString("mode", null)
+        get() = sp.getString("mode", null)?.takeIf { it.isNotEmpty() }
         set(value) { sp.edit().putString("mode", value).apply() }
+
+    /** #1720 The version of the one-mode state this install was repaired to ([PresetModes.migrate]); 0 = never. */
+    var stateVersion: Int
+        get() = sp.getInt("state_v", 0)
+        set(value) { sp.edit().putInt("state_v", value).apply() }
 }
 
 /** `build.json::ui.launcher_presets` — which groups the Presets tab shows, in

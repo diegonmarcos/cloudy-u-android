@@ -1,0 +1,532 @@
+{
+ "_doc": "#1720 TEST DATA, not shipped. What Quick actions > Presets and its modes declared and drew BEFORE #1720 (origin/main c8d96f1f7, 2026-11-13), field by field. test/test-presets-modes-1720.sh proves every entry is still there after the rework (rule 16: a reorganisation loses no field). The only values allowed to differ are the three Super Saving command lines the shell broker refused (listed under `changed_commands` with the reason); their steps, labels and effects stay. Entries are only ever added.",
+ "groups": [
+  {
+   "id": "sandboxes",
+   "kind": "profile",
+   "label": "Sandboxes",
+   "subtitle": "Which apps and subsystems this launcher lets through. One at a time."
+  },
+  {
+   "id": "themes",
+   "kind": "theme",
+   "label": "Themes",
+   "subtitle": "The launcher's whole UI. Picking one rewrites the design and sets the switches it declares, together."
+  },
+  {
+   "id": "modes",
+   "kind": "mode",
+   "label": "Modes",
+   "subtitle": "A bundle of switches for what you are doing. Sets only the switches it names; the rest keep their value."
+  }
+ ],
+ "modes": [
+  {
+   "id": "power",
+   "label": "Power Mode",
+   "subtitle": "Everything on — every animation, live stats, the 3D home, background polls. Full experience, full battery cost.",
+   "toggles": {
+    "all_anim": true,
+    "pets_anim": true,
+    "cube_anim": true,
+    "island_anim": true,
+    "stars_anim": true,
+    "star_twinkle": true,
+    "status_live": true,
+    "home_3d": true,
+    "dynamic_island": true,
+    "apps_warmup": true,
+    "fleet_check": true,
+    "ntfy_poll": true,
+    "background_pause": false,
+    "oled_black": false
+   },
+   "cmd": "settings put global heads_up_notifications_enabled 1"
+  },
+  {
+   "id": "focus",
+   "label": "Focus Mode",
+   "subtitle": "Quiet launcher — decorative animation, the dynamic island and message polling off, so nothing moves or interrupts.",
+   "toggles": {
+    "pets_anim": false,
+    "cube_anim": false,
+    "island_anim": false,
+    "stars_anim": false,
+    "star_twinkle": false,
+    "dynamic_island": false,
+    "ntfy_poll": false
+   },
+   "cmd": "settings put global heads_up_notifications_enabled 0"
+  },
+  {
+   "id": "saving_energy",
+   "label": "Saving Energy Mode",
+   "subtitle": "Leanest launcher — animations, live stats and 3D home off, background work paused, pure-black OLED window, usage uploads batched.",
+   "toggles": {
+    "all_anim": false,
+    "pets_anim": false,
+    "cube_anim": false,
+    "island_anim": false,
+    "stars_anim": false,
+    "star_twinkle": false,
+    "status_live": false,
+    "home_3d": false,
+    "dynamic_island": false,
+    "apps_warmup": false,
+    "maps_tracker": false,
+    "fleet_check": false,
+    "background_pause": true,
+    "oled_black": true,
+    "analytics_batch": true
+   }
+  },
+  {
+   "id": "super_saving",
+   "label": "Super Saving Battery Mode",
+   "subtitle": "The most aggressive battery mode: every non-essential app restricted, battery saver and doze forced, radios and scans off, sync off, slowest display, fleet engines stopped. One tap on Off restores everything exactly. Most steps need the ADB shell.",
+   "engine": "super_saving"
+  }
+ ],
+ "profiles": [
+  {
+   "id": "work",
+   "label": "Work",
+   "subtitle": "Same as Personal for now — tag-based hide rules ship once each app/tile carries an app_tags list (e.g. work / personal / finance)."
+  },
+  {
+   "id": "personal",
+   "label": "Personal",
+   "subtitle": "Your default everyday profile — every installed app and folder visible."
+  },
+  {
+   "id": "guest",
+   "label": "Guest",
+   "subtitle": "Locked down — only the system browser is reachable. WireGuard tunnel disabled so the guest can't see your private mesh. No SuperApp sections, no chat, no mail, no vault."
+  }
+ ],
+ "themes": [
+  {
+   "id": "cloud",
+   "label": "Cloud Purple",
+   "subtitle": "The default rich SuperApp UI — bottom nav, dynamic island, 3D home. Top status strip trimmed to Time · Battery only.",
+   "toggles": {
+    "all_anim": true,
+    "pets_anim": true,
+    "cube_anim": true,
+    "island_anim": true,
+    "stars_anim": true,
+    "star_twinkle": true,
+    "status_live": true,
+    "home_3d": true,
+    "dynamic_island": true,
+    "oled_black": false,
+    "background_pause": false,
+    "apps_warmup": true,
+    "maps_tracker": true,
+    "wireguard_pinned": false,
+    "fleet_check": true,
+    "ntfy_poll": true,
+    "analytics_batch": true,
+    "bottom_nav": true,
+    "drawer": true
+   }
+  },
+  {
+   "id": "cloud_minimalist_black",
+   "label": "Cloud Minimalistic",
+   "subtitle": "Terminal aesthetic — pure black background, monospace green app list, no chrome. One-screen scroll.",
+   "toggles": {
+    "all_anim": false,
+    "pets_anim": false,
+    "cube_anim": false,
+    "island_anim": false,
+    "stars_anim": false,
+    "star_twinkle": false,
+    "status_live": false,
+    "home_3d": false,
+    "dynamic_island": false,
+    "oled_black": true,
+    "background_pause": false,
+    "apps_warmup": true,
+    "maps_tracker": true,
+    "wireguard_pinned": false,
+    "fleet_check": true,
+    "ntfy_poll": true,
+    "analytics_batch": true,
+    "bottom_nav": false,
+    "drawer": false
+   }
+  }
+ ],
+ "super_saving_indicator": {
+  "title": "Super Saving Battery Mode is on",
+  "text": "Tap Off to restore everything exactly as it was.",
+  "off": "Off"
+ },
+ "super_saving_steps": [
+  {
+   "id": "bg_policy",
+   "label": "Background policy: restrict every non-essential app (fleet included)",
+   "kind": "bg_policy",
+   "adb": true,
+   "optional": false,
+   "settings": [],
+   "packages": []
+  },
+  {
+   "id": "battery_saver",
+   "label": "System battery saver on",
+   "kind": "setting",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "global",
+     "low_power",
+     "1"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "adaptive_battery",
+   "label": "Adaptive battery on",
+   "kind": "setting",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "global",
+     "adaptive_battery_management_enabled",
+     "1"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "idle_screen_off",
+   "label": "Doze: force deep idle whenever the screen is off",
+   "kind": "idle_screen_off",
+   "adb": true,
+   "optional": false,
+   "settings": [],
+   "packages": []
+  },
+  {
+   "id": "wifi_scan",
+   "label": "Wi-Fi scanning off",
+   "kind": "setting",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "global",
+     "wifi_scan_always_enabled",
+     "0"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "ble_scan",
+   "label": "Bluetooth LE scanning off",
+   "kind": "setting",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "global",
+     "ble_scan_always_enabled",
+     "0"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "location",
+   "label": "Location off",
+   "kind": "setting",
+   "adb": true,
+   "optional": true,
+   "settings": [
+    [
+     "secure",
+     "location_mode",
+     "0"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "nfc",
+   "label": "NFC off",
+   "kind": "shell_toggle",
+   "adb": true,
+   "optional": false,
+   "settings": [],
+   "packages": []
+  },
+  {
+   "id": "bluetooth",
+   "label": "Bluetooth off unless a device is connected",
+   "kind": "shell_toggle",
+   "adb": true,
+   "optional": false,
+   "settings": [],
+   "packages": []
+  },
+  {
+   "id": "mobile_data",
+   "label": "Mobile data off while on Wi-Fi (optional)",
+   "kind": "shell_toggle",
+   "adb": true,
+   "optional": true,
+   "settings": [],
+   "packages": []
+  },
+  {
+   "id": "network_type",
+   "label": "5G to LTE preferred, if available (optional)",
+   "kind": "setting",
+   "adb": true,
+   "optional": true,
+   "settings": [
+    [
+     "global",
+     "preferred_network_mode",
+     "9"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "sync",
+   "label": "Auto-sync off",
+   "kind": "sync",
+   "adb": false,
+   "optional": false,
+   "settings": [],
+   "packages": []
+  },
+  {
+   "id": "refresh_rate",
+   "label": "Lowest refresh rate (60 Hz)",
+   "kind": "setting",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "system",
+     "peak_refresh_rate",
+     "60"
+    ],
+    [
+     "system",
+     "min_refresh_rate",
+     "60"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "brightness_auto",
+   "label": "Automatic brightness, dimmer",
+   "kind": "setting",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "system",
+     "screen_brightness_mode",
+     "1"
+    ],
+    [
+     "system",
+     "screen_auto_brightness_adj",
+     "-0.5"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "brightness_cap",
+   "label": "Brightness capped (never raised)",
+   "kind": "setting_cap",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "system",
+     "screen_brightness",
+     "max=80"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "screen_timeout",
+   "label": "Screen timeout 15 s",
+   "kind": "setting",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "system",
+     "screen_off_timeout",
+     "15000"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "dark_mode",
+   "label": "Dark mode on",
+   "kind": "shell_toggle",
+   "adb": true,
+   "optional": false,
+   "settings": [],
+   "packages": []
+  },
+  {
+   "id": "aod_doze",
+   "label": "Always-on display off",
+   "kind": "setting",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "secure",
+     "doze_always_on",
+     "0"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "aod_samsung",
+   "label": "Always-on display off (Samsung)",
+   "kind": "setting",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "system",
+     "aod_mode",
+     "0"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "animations",
+   "label": "Animations off (window, transition, animator scale 0)",
+   "kind": "setting",
+   "adb": true,
+   "optional": false,
+   "settings": [
+    [
+     "global",
+     "window_animation_scale",
+     "0"
+    ],
+    [
+     "global",
+     "transition_animation_scale",
+     "0"
+    ],
+    [
+     "global",
+     "animator_duration_scale",
+     "0"
+    ]
+   ],
+   "packages": []
+  },
+  {
+   "id": "keeper",
+   "label": "Fleet: stop the wireless-debug keeper unless this mode still needs the shell",
+   "kind": "keeper",
+   "adb": false,
+   "optional": false,
+   "settings": [],
+   "packages": []
+  },
+  {
+   "id": "fleet_stop",
+   "label": "Fleet: stop the Webserver, Headless and terminal engines",
+   "kind": "fleet_stop",
+   "adb": true,
+   "optional": false,
+   "settings": [],
+   "packages": [
+    "com.diegonmarcos.cloudwebserver",
+    "com.diegonmarcos.cloudc3",
+    "cld.termux",
+    "cld.termux.nix",
+    "cld.termux.nix.boot",
+    "com.diegonmarcos.ide"
+   ]
+  }
+ ],
+ "changed_commands": {
+  "nfc": "`svc nfc` and a piped dumpsys are refused by the shell broker allowlist; now `cmd nfc` and a regular expression over the plain dumpsys",
+  "bluetooth": "`svc bluetooth` and a piped dumpsys are refused; now `cmd bluetooth_manager` and skip_if_re",
+  "mobile_data": "`svc data` and a piped, redirected `ip route` are refused; now `cmd phone data` and require_re"
+ },
+ "page_strings": [
+  "  ·  modified",
+  "  ·  on, tap to turn off",
+  "Not changed: Off needs the ADB shell for the steps that used it.",
+  "Not turned on.",
+  "Off: ",
+  "On: ",
+  "Shell action: checking the ADB shell...",
+  "Shell action: runnable · ADB shell up via ",
+  "Shell action: will not run · ADB shell down - ",
+  "You changed a switch by hand, so this is no longer exactly "
+ ],
+ "page_tags": [
+  "preset-cmd:"
+ ],
+ "page_calls": [
+  "LauncherPresets.groups()",
+  "LauncherModes.load()",
+  "LauncherThemes.loadFromBuildConfig()",
+  "LauncherProfiles.loadFromBuildConfig()",
+  "LauncherThemes.apply(ctx",
+  "notifyLauncherThemeChanged()",
+  "ConstellationWorker.start(",
+  "applyLauncherChrome()",
+  "applyShellLiveToggles(",
+  "runPresetCmd(",
+  "BgDialogHost(dialogs)",
+  "SystemSaver.extreme(",
+  "PresetCmdLine(",
+  "AdbReadiness.openAdbShell(",
+  "KitSelectableTile(",
+  "KitSectionHeader(",
+  "Haptics.tap(view)",
+  "ShellClient.execOut(",
+  "ShellClient.invalidate("
+ ],
+ "notify_actions_members": [
+  "floating_nav_quick_actions",
+  "kde_status"
+ ],
+ "notify_producers": [
+  "kde_status",
+  "media_now_playing",
+  "floating_nav_quick_actions",
+  "network_mesh",
+  "network_data",
+  "battery_status",
+  "ai_usage",
+  "myhealth",
+  "weather_today",
+  "markets_prices",
+  "phone_notification_listener",
+  "recovery_advisory",
+  "screensaver_channel",
+  "launcher_icon_badge"
+ ]
+}

@@ -83,6 +83,18 @@ class NotifyCardsShotTest : KitPageHarness() {
         frame("kde_status", KdeStatusNotifier.build(ctx), "notify-cards-kde.png", listOf("share", "desktop", "ping", "connect", "find"))
     }
 
+    /** #1720 The Presets badge of Notify > Actions: its card (five icon buttons, the mode / sandbox / theme) next to its notification. */
+    @Test
+    fun `render the Presets card next to its notification`() {
+        com.diegonmarcos.superapp.notificationcenter.PresetsBadge.inline = true
+        com.diegonmarcos.superapp.settings.PresetModes.select(ctx, "focus", shell = null)
+        frame("presets_state", com.diegonmarcos.superapp.notificationcenter.PresetsBadge.build(ctx), "notify-cards-presets.png",
+            listOf("presets", "mode-off", "next-mode", "next-sandbox", "next-theme"))
+        // the ship workflow uploads app/build/board-shots: the evidence travels with the run
+        File(System.getProperty("user.dir"), "build/configs-screens/notify-cards-presets.png")
+            .copyTo(File(System.getProperty("user.dir"), "build/board-shots/notify-badge-presets.png").apply { parentFile?.mkdirs() }, overwrite = true)
+    }
+
     @Test
     fun `the Notify page draws the six section subtitles`() {
         BadgeCardData.override = null

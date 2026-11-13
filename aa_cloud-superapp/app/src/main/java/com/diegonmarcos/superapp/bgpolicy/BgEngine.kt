@@ -25,7 +25,8 @@ class BgEngine(
     fun readAll(pkgs: List<BgPkg>, cfg: BgConfig): List<Pair<BgPkg, BgState>>? {
         val g = BgCmd.parseGlobal(run(BgCmd.READ_GLOBAL) ?: return null)
         val per = HashMap<String, Triple<String, String, String>>()
-        for (chunk in pkgs.map { it.pkg }.chunked(BgCmd.CHUNK)) per += BgCmd.parsePkgs(run(BgCmd.readPkgs(chunk)) ?: continue)
+        // #1720 chunked by line length (the broker refuses a line over 2048 characters), not by a fixed count
+        for (chunk in BgCmd.readPkgsChunks(pkgs.map { it.pkg })) per += BgCmd.parsePkgs(run(chunk) ?: continue)
         val rows = pkgs.mapNotNull { p -> per[p.pkg]?.let { p to stateOf(p.pkg, it, g) } }
         return rows.sortedWith(compareBy({ !cfg.isFleet(it.first.pkg) }, { it.first.label.lowercase() }))
     }
@@ -94,8 +95,63 @@ class BgEngine(
 
     // ── bulk ──
     /** Restrict every non-essential package (fleet included). Essential ones are listed as skipped, never touched. */
-    fun restrictAll(pkgs: List<BgPkg>, cfg: BgConfig): List<BgOutcome> =
-        pkgs.filter { cfg.bulkIncludesSystem || !it.system }.map { restrict(it.pkg) }
+    fun restrictAll(pkgs: List<BgPkg>, cfg: BgConfig): List<BgOutcome> {
+        // #1720 batched: the same verdict per package as [restrict] (prior captured first, state read back after), but the
+        // whole list costs a few dozen execs instead of five per package (one device-wide read, then reads and writes packed
+        // into lines under the broker's cap).
+        val list = pkgs.filter { cfg.bulkIncludesSystem || !it.system }.map { it.pkg }
+        val out = HashMap<String, BgOutcome>()
+        val todo = ArrayList<String>()
+        for (p in list) when {
+            essential.isEssential(p) -> out[p] = say(BgOutcome(p, BgAction.RESTRICT, false, true, "essential app, never restricted"))
+            !available -> out[p] = say(BgOutcome.noAdb(p, BgAction.RESTRICT))
+            else -> todo += p
+        }
+        if (todo.isNotEmpty()) {
+            val before = readMany(todo)
+            val writable = todo.filter { before[it] != null }
+            // The prior state is what Restore brings back, so without a readable one nothing is changed.
+            for (p in todo) if (before[p] == null) out[p] = say(BgOutcome(p, BgAction.RESTRICT, false, false, "could not read the prior state, nothing changed"))
+            for (p in writable) store.capture(p, BgPrior.of(before.getValue(p)))
+            for (c in BgCmd.batch(writable.map { BgCmd.restrict(it) })) run(c)
+            val after = if (writable.isEmpty()) emptyMap() else readMany(writable)
+            for (p in writable) {
+                val s = after[p]
+                if (s == null) { out[p] = say(BgOutcome(p, BgAction.RESTRICT, false, false, "could not read the state back")); continue }
+                val bad = ArrayList<String>()
+                if (s.runAny != "ignore") bad += "background op is ${s.runAny}"
+                if (s.runIn != "ignore") bad += "run-in-background op is ${s.runIn}"
+                if (s.bucket != Bucket.RESTRICTED) bad += "bucket is ${Bucket.name(s.bucket)}"
+                if (s.idleWhitelisted) bad += "still doze-exempt"
+                if (bad.isEmpty()) store.setChoice(p, BgChoice.RESTRICT)
+                out[p] = say(BgOutcome(p, BgAction.RESTRICT, bad.isEmpty(), false, bad.joinToString("; "), s))
+            }
+        }
+        return list.mapNotNull { out[it] }
+    }
+
+    /** #1720 The state of many packages: one device-wide read, then the per-package reads packed into as few execs as fit. */
+    private fun readMany(pkgs: List<String>): Map<String, BgState> {
+        val g = BgCmd.parseGlobal(run(BgCmd.READ_GLOBAL) ?: return emptyMap())
+        val per = HashMap<String, Triple<String, String, String>>()
+        for (chunk in BgCmd.readPkgsChunks(pkgs)) per += BgCmd.parsePkgs(run(chunk) ?: continue)
+        return pkgs.mapNotNull { p -> per[p]?.let { p to stateOf(p, it, g) } }.toMap()
+    }
+
+    /** #1720 [restore], batched (Super Saving Off): every captured prior put back and read back in a few dozen execs, not three per package. */
+    fun restoreBatched(skip: Set<String> = emptySet()): List<BgOutcome> {
+        if (!available) return listOf(say(BgOutcome.noAdb("*", BgAction.RESTORE)))
+        val priors = store.priors().filterKeys { it !in skip }
+        if (priors.isEmpty()) return emptyList()
+        for (c in BgCmd.batch(priors.map { (pkg, prior) -> BgCmd.putBack(pkg, prior) })) run(c)
+        val after = readMany(priors.keys.toList())
+        return priors.map { (pkg, prior) ->
+            val s = after[pkg]
+            val ok = s != null && sameMode(s.runAny, prior.runAny) && sameMode(s.runIn, prior.runIn) && s.idleWhitelisted == prior.idleWhitelisted
+            if (ok) { store.forgetPrior(pkg); store.setChoice(pkg, null) }
+            say(BgOutcome(pkg, BgAction.RESTORE, ok, false, if (ok) "" else "state differs after restore", s))
+        }
+    }
 
     /** Put every captured prior back (except [skip]), then forget the choice. Exact: the op modes, the bucket and the doze whitelist as they were. */
     fun restore(skip: Set<String> = emptySet()): List<BgOutcome> {

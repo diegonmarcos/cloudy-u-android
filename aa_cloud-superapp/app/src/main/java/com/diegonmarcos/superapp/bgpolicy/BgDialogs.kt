@@ -33,11 +33,13 @@ internal class BgDialogs {
     var offerWithout by mutableStateOf(false)
 
     /** Suspends the calling (worker) thread's coroutine until the user answers the arm prompt. */
-    suspend fun askGate(message: String, withoutAdb: Boolean = false): BgGate.Choice = suspendCancellableCoroutine { c ->
+    suspend fun askGate(message: String, withoutAdb: Boolean = false, title: String = GATE_TITLE): BgGate.Choice = suspendCancellableCoroutine { c ->
         offerWithout = withoutAdb
-        gate = Ask("Background policy needs ADB", message) { gate = null; if (c.isActive) c.resume(it) }
+        gate = Ask(title, message) { gate = null; if (c.isActive) c.resume(it) }
         c.invokeOnCancellation { gate = null }
     }
+
+    companion object { const val GATE_TITLE = "Background policy needs ADB" }
 
     fun askConfirm(title: String, message: String, yes: () -> Unit) {
         confirm = Ask<Boolean>(title, message) { confirm = null; if (it) yes() }

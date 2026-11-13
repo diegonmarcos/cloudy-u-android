@@ -6039,6 +6039,7 @@
       }
     ],
     "_doc_launcher_modes": "Launcher MODES (Configs ▸ Launcher ▸ Presets ▸ Modes, #574): named bundles of the launcher's own switches — no chrome, no palette. `toggles` names ids from ui.launcher_settings.toggles and is applied by the SAME engine a theme's `toggles` go through (LauncherThemes.applyToggles), including the parse-time drop of `user_owned` ids; a switch a mode does not name keeps its value. The selected mode is persisted by LauncherModePrefs; 'modified' is DERIVED by comparing the device to this map, exactly as a theme's is. NOT the reverse of #435: that deleted power-saving theme was a theme with its own home pane, design vocabulary and system-lever engine — a mode here has none of those, only switches that already exist.",
+    "_doc_launcher_modes_1720": "#1720 THE FOUR MODES AS A LADDER, exactly one active at a time (single state source: LauncherModePrefs key 'mode', read through settings/PresetState; picking a mode first runs the previous mode's Off from its restore journal, bgpolicy/SuperSaving, then applies the new one). Bundles do not stack and do not overlap in purpose: POWER = performance (launcher: everything on; system: battery saver off, heads-up on, Samsung motion smoothness adaptive + enhanced processing on, plain Android peak refresh uncapped). FOCUS = attention only, no power lever (launcher: decorative animation, island and polling off; system: Do Not Disturb priority-only, heads-up off, Samsung edge lighting off). SAVING ENERGY = moderate saving with the phone fully usable (launcher: lean; system: battery saver on, adaptive battery, 60 Hz, Samsung enhanced processing off, 30 s screen timeout, always-on display off, background Wi-Fi / BLE scans off); it restricts no app and touches no radio. SUPER SAVING = everything Saving Energy does, harder, plus what only it does: every non-essential app restricted, doze forced on screen-off, NFC / Bluetooth / mobile data / location / sync off, 15 s timeout, capped brightness, dark mode, animations off, fleet engines stopped (steps in app/src/main/assets/super-saving.json). Samsung keys (refresh_rate_mode, sem_enhanced_cpu_responsiveness, aod_mode, edge_lighting) are tried only on a Samsung and only when the key exists on that build (skip_if_unset); the plain-Android fallback carries the same intent elsewhere. `cmd` (#1591) stays and runs after the steps.",
     "launcher_modes": [
       {
         "id": "power",
@@ -6061,7 +6062,15 @@
           "oled_black": false
         },
         "_doc_cmd": "#1591 presets→adb: picking a preset can also run a shell command through the adb-shell broker (ShellBroker.execText), run after the toggles by LauncherPresetsFragment.runPresetCmd. Power restores heads-up (peek) notifications that Focus turned off; a safe, reversible global setting, a no-op toast when no shell channel is armed.",
-        "cmd": "settings put global heads_up_notifications_enabled 1"
+        "cmd": "settings put global heads_up_notifications_enabled 1",
+        "_doc_steps": "#1720 the system half of this mode, in the step vocabulary of app/src/main/assets/super-saving.json (kinds setting / shell_toggle; `when` samsung | not_samsung, `skip_if_unset`, `min_sdk` = runtime capability detection, a step this device cannot run is skipped with the reason). Every step journals the prior value before it writes; Off (or picking another mode) puts back exactly those.",
+        "steps": [
+          {"id": "battery_saver_off", "label": "System battery saver off", "kind": "setting", "adb": true, "items": [{"ns": "global", "key": "low_power", "value": "0"}]},
+          {"id": "heads_up_on", "label": "Heads-up (peek) notifications on", "kind": "setting", "adb": true, "items": [{"ns": "global", "key": "heads_up_notifications_enabled", "value": "1"}]},
+          {"id": "refresh_rate_samsung", "label": "Motion smoothness: adaptive, up to the panel maximum (Samsung)", "kind": "setting", "adb": true, "when": "samsung", "items": [{"ns": "secure", "key": "refresh_rate_mode", "value": "1", "skip_if_unset": true}]},
+          {"id": "refresh_rate", "label": "Smooth display: peak refresh rate uncapped (plain Android)", "kind": "setting", "adb": true, "when": "not_samsung", "items": [{"ns": "system", "key": "peak_refresh_rate", "value": "Infinity", "skip_if_unset": true}]},
+          {"id": "processing_speed_samsung", "label": "Processing speed: enhanced processing on (Samsung)", "kind": "setting", "adb": true, "when": "samsung", "items": [{"ns": "global", "key": "sem_enhanced_cpu_responsiveness", "value": "1", "skip_if_unset": true}]}
+        ]
       },
       {
         "id": "focus",
@@ -6077,7 +6086,13 @@
           "ntfy_poll": false
         },
         "_doc_cmd": "#1591 presets→adb: Focus silences heads-up (peek) notifications via the adb-shell broker, the shell counterpart to #1596's in-app non-urgent-alert hush. Reversible — Power turns it back on.",
-        "cmd": "settings put global heads_up_notifications_enabled 0"
+        "cmd": "settings put global heads_up_notifications_enabled 0",
+        "_doc_steps": "#1720 the system half of this mode, in the step vocabulary of app/src/main/assets/super-saving.json (kinds setting / shell_toggle; `when` samsung | not_samsung, `skip_if_unset`, `min_sdk` = runtime capability detection, a step this device cannot run is skipped with the reason). Every step journals the prior value before it writes; Off (or picking another mode) puts back exactly those.",
+        "steps": [
+          {"id": "dnd", "label": "Do Not Disturb: priority only", "kind": "shell_toggle", "adb": true, "read": "settings get global zen_mode", "read_re": "^([0-3])", "apply": "cmd notification set_dnd priority", "skip_if_old": ["1"], "verify": ["1"], "revert_by_old": {"0": "cmd notification set_dnd off", "2": "cmd notification set_dnd none", "3": "cmd notification set_dnd alarms"}},
+          {"id": "heads_up_off", "label": "Heads-up (peek) notifications off", "kind": "setting", "adb": true, "items": [{"ns": "global", "key": "heads_up_notifications_enabled", "value": "0"}]},
+          {"id": "edge_lighting_samsung", "label": "Edge lighting off (Samsung)", "kind": "setting", "adb": true, "when": "samsung", "items": [{"ns": "system", "key": "edge_lighting", "value": "0", "skip_if_unset": true}]}
+        ]
       },
       {
         "id": "saving_energy",
@@ -6099,7 +6114,19 @@
           "background_pause": true,
           "oled_black": true,
           "analytics_batch": true
-        }
+        },
+        "_doc_steps": "#1720 the system half of this mode, in the step vocabulary of app/src/main/assets/super-saving.json (kinds setting / shell_toggle; `when` samsung | not_samsung, `skip_if_unset`, `min_sdk` = runtime capability detection, a step this device cannot run is skipped with the reason). Every step journals the prior value before it writes; Off (or picking another mode) puts back exactly those.",
+        "steps": [
+          {"id": "battery_saver", "label": "System battery saver on (Samsung: Power saving)", "kind": "setting", "adb": true, "items": [{"ns": "global", "key": "low_power", "value": "1"}]},
+          {"id": "adaptive_battery", "label": "Adaptive battery on", "kind": "setting", "adb": true, "items": [{"ns": "global", "key": "adaptive_battery_management_enabled", "value": "1"}]},
+          {"id": "refresh_rate_samsung", "label": "Motion smoothness: standard, 60 Hz (Samsung)", "kind": "setting", "adb": true, "when": "samsung", "items": [{"ns": "secure", "key": "refresh_rate_mode", "value": "0", "skip_if_unset": true}]},
+          {"id": "refresh_rate", "label": "Refresh rate 60 Hz (plain Android)", "kind": "setting", "adb": true, "when": "not_samsung", "items": [{"ns": "system", "key": "peak_refresh_rate", "value": "60", "skip_if_unset": true}, {"ns": "system", "key": "min_refresh_rate", "value": "60", "skip_if_unset": true}]},
+          {"id": "processing_speed_samsung", "label": "Processing speed: enhanced processing off (Samsung)", "kind": "setting", "adb": true, "when": "samsung", "items": [{"ns": "global", "key": "sem_enhanced_cpu_responsiveness", "value": "0", "skip_if_unset": true}]},
+          {"id": "screen_timeout", "label": "Screen timeout 30 s", "kind": "setting", "adb": true, "items": [{"ns": "system", "key": "screen_off_timeout", "value": "30000"}]},
+          {"id": "aod_doze", "label": "Always-on display off", "kind": "setting", "adb": true, "items": [{"ns": "secure", "key": "doze_always_on", "value": "0", "skip_if_unset": true}]},
+          {"id": "aod_samsung", "label": "Always-on display off (Samsung)", "kind": "setting", "adb": true, "when": "samsung", "items": [{"ns": "system", "key": "aod_mode", "value": "0", "skip_if_unset": true}]},
+          {"id": "background_scans", "label": "Background Wi-Fi and Bluetooth LE scanning off", "kind": "setting", "adb": true, "items": [{"ns": "global", "key": "wifi_scan_always_enabled", "value": "0"}, {"ns": "global", "key": "ble_scan_always_enabled", "value": "0"}]}
+        ]
       },
       {
         "_doc": "#1506 Not a bundle of launcher switches: `engine` hands the pick to bgpolicy/SuperSaving, whose ordered, reversible steps are declared in app/src/main/assets/super-saving.json (background policy, battery saver, doze, radios, sync, display, fleet). It names no toggles; picking it takes a snapshot of the prior state, and picking it again (or the notification's Off) restores everything exactly. Steps that need the ADB shell are skipped with a note when it is not connected.",
@@ -10224,7 +10251,7 @@
         {
           "id": "actions",
           "label": "Actions",
-          "members": ["floating_nav_quick_actions", "kde_status"]
+          "members": ["floating_nav_quick_actions", "kde_status", "presets_state"]
         }
       ],
       "_doc_sections": "NOTIFY-CENTER REDESIGN (#1603, owner 2026-11-10, supersedes the 2026-11-08 order): SIX categories, then the keep-alive block below. `page_order` top to bottom: Me Infos (live: Weather, Health, Fin Terminal), Media, Device Infos (network: Mesh, Data, Battery, AI), Actions (Quick Actions, KDE Connect), Cloud Publisher, Phone Publisher, then Apps Keep Alive BELOW the six. Alerts is REMOVED as a section and a badge (redundant: the fleet collector still stores, nothing posts a shade group for it). Ids in page_order are either a shade group above or an `app_sections` id. An app section has no producer: its rows are APPS. A push section carries a `filter` (cloudy | phone) and renders the one matching split as a flat list - Cloud Publisher is the fleet's own apps (AppSplit: com.diegonmarcos.* / cloud-*), Phone Publisher every other app. The keep-alive section has no filter and keeps its two labelled sub-groups (Cloudy, Phone). push = the owner's per-app allow switch for the phone-notification history (PhoneNotificationListenerService skips a muted app); keepalive = the owner's per-app keep-alive list (KeepAliveStore). Pinned by NotifySectionsTest and test-notify-sections.sh.",
@@ -10556,6 +10583,46 @@
               "key": "persistent",
               "type": "toggle",
               "label": "Keep it pinned (ongoing)",
+              "default": true
+            }
+          ]
+        },
+        {
+          "_doc": "#1720 The Presets badge of Notify > Actions: the current Mode, Sandbox and Theme of Quick actions > Presets, read from the single state source (settings/PresetState) and nothing else, with five quick actions: Presets (show: opens the page), Mode off, Next mode, Next sandbox, Next theme. A data widget (plain notify, no foreground service, no alarm): redrawn only when the state changes, at process start and when it is swiped away.",
+          "id": "presets_state",
+          "card": {"rank": 11, "kind": "text", "accent": "#B388FF"},
+          "label": "Presets",
+          "subtitle": "The current Mode, Sandbox and Theme of Quick actions > Presets, with quick actions: open the page, turn the mode off, next mode, next sandbox, next theme. Exactly one choice per group is ever active; a mode change restores the previous mode first.",
+          "icon": "ic_stat_notify",
+          "surface": "system_notification",
+          "channel": "presets_state",
+          "owner": "notificationcenter/PresetsBadge.kt",
+          "shows_badge": false,
+          "enabled": true,
+          "badge": true,
+          "persistent": true,
+          "service": "com.diegonmarcos.superapp.notificationcenter.PresetsBadgeService",
+          "requires": [
+            "notifications"
+          ],
+          "shows": "Mode (or none, and a pending restore), sandbox, theme; actions Presets, Mode off, Next mode, Next sandbox, Next theme.",
+          "customization": [
+            {
+              "key": "enabled",
+              "type": "toggle",
+              "label": "Show this badge",
+              "default": true
+            },
+            {
+              "key": "persistent",
+              "type": "toggle",
+              "label": "Keep it pinned (ongoing)",
+              "default": true
+            },
+            {
+              "key": "actions",
+              "type": "toggle",
+              "label": "Show action buttons",
               "default": true
             }
           ]

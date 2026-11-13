@@ -72,6 +72,7 @@ class NotifyCardParityTest {
         "myhealth" -> generic(b, listOf(BadgeModel.Action("grant-access", R.drawable.ic_act_key, "Grant access", pi(1))))
         "ai_usage" -> generic(b, listOf(BadgeModel.Action("refresh", R.drawable.ic_act_refresh, "Refresh", pi(1))))
         "battery_status", "fleet_alerts" -> generic(b, emptyList())
+        "presets_state" -> com.diegonmarcos.superapp.notificationcenter.PresetsBadge.build(ctx) // #1720 its real builder
         else -> throw AssertionError("badge '${b.id}' has no notification in NotifyCardParityTest: add it, so its card is proven equal")
     }
 
@@ -91,7 +92,7 @@ class NotifyCardParityTest {
                 "media_now_playing",
                 "weather_today", "myhealth", "markets_prices",
                 "network_mesh", "network_data", "battery_status", "ai_usage",
-                "floating_nav_quick_actions", "kde_status",
+                "floating_nav_quick_actions", "kde_status", "presets_state", // #1720 Presets closes Actions
             ),
             orderedBadges(ctx).map { it.id },
         )

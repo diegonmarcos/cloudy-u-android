@@ -8,7 +8,7 @@ import android.content.Intent
 import android.os.SystemClock
 
 /**
- * The data-widget badges (Weather, MyHealth, Battery, Data, AI, Markets) are standing INFORMATION cards, not keep-alives: each is posted with
+ * The data-widget badges (Weather, MyHealth, Battery, Data, AI, Markets, Presets) are standing INFORMATION cards, not keep-alives: each is posted with
  * plain notify ([com.diegonmarcos.superapp.core.FleetNotify.dataWidgetNotification]) and its owner service is a short
  * job (post, schedule the next read, stopSelf). None of them calls startForeground or declares a foregroundServiceType,
  * so Android no longer lists the app under "Background activities / app is running in the background" because of them.
@@ -32,6 +32,8 @@ object DataWidgetRuntime {
         Widget(DataBadgeService::class.java, DataBadgeService.NOTIF_ID, DataBadgeService.BADGE_ID),
         Widget(AiBadgeService::class.java, AiBadgeService.NOTIF_ID, AiBadgeService.BADGE_ID),
         Widget(MarketsBadgeService::class.java, MarketsBadgeService.NOTIF_ID, MarketsBadgeService.BADGE_ID),
+        // #1720 Presets (mode, sandbox, theme): state-driven, it never arms the alarm
+        Widget(PresetsBadgeService::class.java, PresetsBadge.NOTIF_ID, PresetsBadge.BADGE_ID),
     )
 
     fun of(fqcn: String): Widget? = widgets.firstOrNull { it.cls.name == fqcn }

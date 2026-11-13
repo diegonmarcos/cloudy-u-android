@@ -33,6 +33,59 @@ object BgCmd {
 
     fun forceStop(p: String) = "am force-stop ${safePkg(p)}"
 
+    // ── #1720 batched reads and writes: one exec carries many settings, each value after its own marker line ──
+    private val MARK = Regex("[\\w.:-]+")
+    /** The marker of one value inside a batched exec (the broker's echo rule allows only these characters, so no slash). */
+    fun mark(id: String): String { require(MARK.matches(id)) { "not a marker: $id" }; return "echo '@@$id'" }
+    fun markOf(ns: String, key: String) = "$ns:$key"
+
+    /** Longest command line a batch may reach; the broker refuses a line over 2048 characters. */
+    const val BATCH_MAX = 1800
+
+    /** Pack command lines into as few execs as stay under [BATCH_MAX] each; [sep] joins them (`; ` or a newline, both split by the broker). */
+    fun batch(parts: List<String>, sep: String = "; "): List<String> {
+        val out = ArrayList<String>(); val cur = StringBuilder()
+        for (p in parts) {
+            if (cur.isNotEmpty() && cur.length + p.length + sep.length > BATCH_MAX) { out += cur.toString(); cur.setLength(0) }
+            if (cur.isNotEmpty()) cur.append(sep)
+            cur.append(p)
+        }
+        if (cur.isNotEmpty()) out += cur.toString()
+        return out
+    }
+    private fun chunked(parts: List<String>): List<String> = batch(parts)
+
+    /**
+     * [readPkgs] for a long list, split by LENGTH: a fixed 30 packages made a line of several thousand characters, which the
+     * broker refuses (over 2048), so the bulk read answered nothing.
+     */
+    fun readPkgsChunks(pkgs: List<String>): List<String> = batch(pkgs.map { readPkgs(listOf(it)) }, "\n")
+
+    /** Read many settings in as few execs as fit: `mark; get` per key. [keys] = (namespace, key). */
+    fun settingsRead(keys: List<Pair<String, String>>): List<String> =
+        chunked(keys.map { (ns, k) -> mark(markOf(ns, k)) + "; " + settingGet(ns, k) })
+
+    /** Write many settings and read each one back in the same exec. value null = delete the key (it was unset). */
+    fun settingsWrite(items: List<Triple<String, String, String?>>): List<String> =
+        chunked(items.map { (ns, k, v) -> (if (v == null) settingDelete(ns, k) else settingPut(ns, k, v)) + "; " + mark(markOf(ns, k)) + "; " + settingGet(ns, k) })
+
+    /** Run [apply], then [read] behind a marker, in one exec. */
+    fun thenRead(apply: String, read: String) = "$apply; ${mark(READ_MARK)}; $read"
+    const val READ_MARK = "read"
+
+    /** Output of a marked batch → marker → the text that followed it (trimmed). */
+    fun parseMarked(out: String): Map<String, String> {
+        val res = LinkedHashMap<String, String>()
+        var key: String? = null; val buf = StringBuilder()
+        fun flush() { key?.let { res[it] = buf.toString().trim() }; buf.setLength(0) }
+        for (raw in out.lineSequence()) {
+            val l = raw.trimEnd()
+            if (l.startsWith("@@")) { flush(); key = l.removePrefix("@@").trim() } else buf.append(l).append('\n')
+        }
+        flush()
+        return res
+    }
+
     fun component(p: String, comp: String, enable: Boolean) =
         "pm ${if (enable) "enable" else "disable"} '${safePkg(p)}/${safeComp(comp)}'"
 

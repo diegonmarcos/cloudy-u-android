@@ -32,6 +32,7 @@ class DataWidgetNotFgsTest {
         "DataBadgeService" to "$dir/DataBadgeService.kt",
         "AiBadgeService" to "$dir/AiBadgeService.kt",
         "MarketsBadgeService" to "$dir/MarketsBadgeService.kt",
+        "PresetsBadge" to "$dir/PresetsBadge.kt", // #1720 the Presets badge is a data widget too
         "DataWidgetRuntime" to "$dir/DataWidgetRuntime.kt",
         "DataWidgetWakeReceiver" to "$dir/DataWidgetWakeReceiver.kt",
     )
@@ -50,7 +51,7 @@ class DataWidgetNotFgsTest {
     }
 
     @Test fun everyDataWidgetCardIsBuiltByTheSharedDataWidgetBuilder() {
-        listOf("WeatherBadgeService", "HealthBadgeService", "BatteryBadgeService", "DataBadgeService", "AiBadgeService", "MarketsBadgeService").forEach {
+        listOf("WeatherBadgeService", "HealthBadgeService", "BatteryBadgeService", "DataBadgeService", "AiBadgeService", "MarketsBadgeService", "PresetsBadge").forEach {
             val c = code(sources.getValue(it))
             assertTrue("$it does not use FleetNotify.dataWidgetBuilder", c.contains("FleetNotify.dataWidgetBuilder("))
             assertTrue("$it does not post with NotifyGate.postCtx (a plain notify through the gate)", c.contains("NotifyGate.postCtx("))
@@ -60,14 +61,14 @@ class DataWidgetNotFgsTest {
 
     @Test fun theManifestDeclaresNoForegroundTypeForThem() {
         val m = File("src/main/AndroidManifest.xml").readText()
-        listOf("WeatherBadgeService", "HealthBadgeService", "BatteryBadgeService", "DataBadgeService", "AiBadgeService", "MarketsBadgeService").forEach { n ->
+        listOf("WeatherBadgeService", "HealthBadgeService", "BatteryBadgeService", "DataBadgeService", "AiBadgeService", "MarketsBadgeService", "PresetsBadgeService").forEach { n ->
             val svc = Regex("""<service\b[^>]*notificationcenter\.$n[^>]*?/?>""", RegexOption.DOT_MATCHES_ALL).find(m)!!.value.substringBefore(">")
             assertFalse("$n still declares a foregroundServiceType", svc.contains("foregroundServiceType"))
         }
     }
 
     @Test fun everyDeclaredWidgetBadgeIsRoutedThroughTheRuntime() {
-        assertEquals(setOf("weather_today", "myhealth", "battery_status", "network_data", "ai_usage", "markets_prices"), DataWidgetRuntime.widgets.map { it.badgeId }.toSet())
+        assertEquals(setOf("weather_today", "myhealth", "battery_status", "network_data", "ai_usage", "markets_prices", "presets_state"), DataWidgetRuntime.widgets.map { it.badgeId }.toSet())
         DataWidgetRuntime.widgets.forEach { w ->
             val b = BadgeServices.declared.first { it.id == w.badgeId }
             assertEquals(w.cls.name, b.service)
@@ -80,7 +81,7 @@ class DataWidgetNotFgsTest {
 
     @Test fun theWidgetServicesNeverGoForeground() {
         listOf(WeatherBadgeService::class.java, HealthBadgeService::class.java, BatteryBadgeService::class.java,
-            DataBadgeService::class.java, AiBadgeService::class.java, MarketsBadgeService::class.java).forEach { cls ->
+            DataBadgeService::class.java, AiBadgeService::class.java, MarketsBadgeService::class.java, PresetsBadgeService::class.java).forEach { cls ->
             val svc = Robolectric.buildService(cls).create().get()
             assertNull("${cls.simpleName} went foreground", shadowOf(svc).lastForegroundNotification)
         }

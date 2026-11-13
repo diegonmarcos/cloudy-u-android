@@ -39,7 +39,7 @@ class NotifySectionsTest {
         assertEquals(listOf("Weather", "Health", "Fin Terminal Markets"), groups.first { it.id == "live" }.members.map { labels[it] })
         val placed = groups.flatMap { it.members }.toSet()
         assertEquals(setOf("kde_status", "media_now_playing", "floating_nav_quick_actions", "network_mesh", "network_data",
-            "battery_status", "ai_usage", "myhealth", "weather_today", "markets_prices"), placed)
+            "battery_status", "ai_usage", "myhealth", "weather_today", "markets_prices", "presets_state"), placed) // #1720 + Presets (Actions)
     }
 
     @Test fun `push splits into Cloud and Phone publishers, keep-alive keeps Cloudy then Phone`() {

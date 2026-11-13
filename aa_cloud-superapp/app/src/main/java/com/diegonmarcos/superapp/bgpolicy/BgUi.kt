@@ -15,7 +15,9 @@ internal object BgUi {
     class Acquired(val shell: BgShell?, val proceed: Boolean)
 
     /** Blocking; call off the main thread. Asks to arm the shell when it is down: the ADB Shell page, the wireless-debugging switch, or (when [withoutAdb]) go on without. */
-    fun acquire(activity: Activity, dialogs: BgDialogs, withoutAdb: Boolean = false): Acquired {
+    fun acquire(activity: Activity, dialogs: BgDialogs, withoutAdb: Boolean = false,
+                /** #1720 the asker's own words for the prompt (a Presets mode is not the Background policy); null = the policy's. */
+                title: String? = null, message: String? = null): Acquired {
         val ctx = activity.applicationContext
         BgHost.shell(ctx)?.let { return Acquired(it, true) }
         val r = runBlocking {
@@ -23,7 +25,7 @@ internal object BgUi {
                 ready = { BgHost.shell(ctx) != null },
                 openArmFlow = { activity.runOnUiThread { ShellClient.openArmPage(activity) } },
                 openWirelessDebugging = { activity.runOnUiThread { com.diegonmarcos.superapp.system.WirelessDebuggingSwitch.openSettings(activity) } },
-                ask = { dialogs.askGate(it, withoutAdb) },
+                ask = { dialogs.askGate(message ?: it, withoutAdb, title ?: BgDialogs.GATE_TITLE) },
             )
         }
         return when (r) {

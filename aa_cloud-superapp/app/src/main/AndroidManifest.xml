@@ -8,6 +8,11 @@
          perm: never a dialog, granted once by the plane itself via pm grant. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
+    <!-- #1720 The master auto-sync switch of the Super Saving "Auto-sync off" step (ContentResolver.get / setMasterSyncAutomatically).
+         Both are normal permissions. They were missing: the step threw on every On and its restore threw on every Off, which
+         is why the mode could not be turned off ("0 steps done, 1 did not take"). -->
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Haptics.tap / Vibrator.vibrate() in ui/Haptics.kt — without this,
@@ -302,6 +307,16 @@
         <!-- #1506 Super Saving's one-tap Off (the ongoing notification's action): restores the snapshot once. -->
         <receiver
             android:name=".bgpolicy.SuperSavingOffReceiver"
+            android:exported="false" />
+        <!-- #1720 The "Presets" badge of Notify > Actions (current mode, sandbox, theme): a data widget posted with plain
+             notify by a short job (no foregroundServiceType, never a foreground service), and the receiver of its quick
+             actions (Mode off, Next mode, Next sandbox, Next theme). Not exported: only this app's own PendingIntents,
+             BadgeServices.ensureAll and the badge's delete intent reach them. -->
+        <service
+            android:name=".notificationcenter.PresetsBadgeService"
+            android:exported="false" />
+        <receiver
+            android:name=".notificationcenter.PresetsBadgeReceiver"
             android:exported="false" />
         <receiver
             android:name=".notificationcenter.BadgeRestartReceiver"

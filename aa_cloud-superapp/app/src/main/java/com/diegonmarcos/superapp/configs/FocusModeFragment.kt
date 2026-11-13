@@ -49,6 +49,22 @@ class FocusModeFragment : KitComposeFragment() {
         return super.onCreateView(inf, c, s)
     }
 
+    /** #1720 Focus is one of the Presets modes: the switch follows the single state source, whoever changed it. */
+    private var unobserve: (() -> Unit)? = null
+
+    override fun onStart() {
+        super.onStart()
+        on = FocusMode.active(requireContext())
+        unobserve = com.diegonmarcos.superapp.settings.PresetState.observe {
+            activity?.runOnUiThread { if (isAdded) on = FocusMode.active(requireContext()) }
+        }
+    }
+
+    override fun onStop() {
+        unobserve?.invoke(); unobserve = null
+        super.onStop()
+    }
+
     @Composable
     override fun Content() {
         val view = LocalView.current

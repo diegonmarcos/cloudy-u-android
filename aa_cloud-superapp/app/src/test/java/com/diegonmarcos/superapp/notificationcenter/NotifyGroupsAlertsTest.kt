@@ -78,7 +78,7 @@ class NotifyGroupsAlertsTest {
         assertTrue("#894 no Store group or badge: Store notifications are Cloud Store's",
             NotifyGroups.declared.none { it.id == "store" } && BadgeServices.declared.none { it.id == "store_updates" })
         assertEquals(listOf("weather_today", "myhealth", "markets_prices"), group("live").members)
-        assertEquals(listOf("floating_nav_quick_actions", "kde_status"), group("actions").members)
+        assertEquals(listOf("floating_nav_quick_actions", "kde_status", "presets_state"), group("actions").members) // #1720 Presets joins Actions
         assertEquals(listOf("media_now_playing"), group("media").members)
         assertEquals(listOf(NetworkBadgeService.BADGE_ID, DataBadgeService.BADGE_ID, BatteryBadgeService.BADGE_ID, AiBadgeService.BADGE_ID), group("network").members)
         assertTrue("Alerts is removed: no alerts group, no fleet_alerts badge",

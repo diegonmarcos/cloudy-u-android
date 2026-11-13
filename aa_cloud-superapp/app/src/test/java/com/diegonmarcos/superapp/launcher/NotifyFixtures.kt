@@ -27,6 +27,7 @@ internal object NotifyFixtures {
             "kde_status" -> d("Pixel 8 · connected", "Battery 81% · Wi-Fi", 0.81f)
             "media_now_playing" -> d("Blue in Green", "Miles Davis · Kind of Blue", 0.42f)
             "floating_nav_quick_actions" -> d("Quickmarks", "5 pinned · tap to open")
+            "presets_state" -> d("Presets · Mode: Focus Mode", "Sandbox: Personal · Theme: Cloud Purple")
             "fleet_alerts" -> d("2 alerts", "gcp-proxy disk at 91 %", null, listOf(l("Backups", "Nightly backup slow")))
             else -> d(b.label, "ready")
         }
