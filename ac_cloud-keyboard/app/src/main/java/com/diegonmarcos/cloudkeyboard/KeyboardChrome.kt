@@ -31,7 +31,6 @@ import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
 import com.diegonmarcos.superapp.bottomnav.NavPage
 import com.diegonmarcos.superapp.bottomnav.NavDecl
-import com.diegonmarcos.cloudwriter.writerui.BuildConfig as WriterUi
 import helium314.keyboard.settings.KbTab
 import helium314.keyboard.settings.NavPageDecl
 import helium314.keyboard.settings.SettingsActivity
@@ -64,7 +63,7 @@ object KeyboardChrome {
 
     /** #1698 THE nav declaration: build.json::ui baked by app/build.gradle, parsed by libs:bottomnav like every fleet app. */
     val decl: NavDecl by lazy {
-        NavDecl.fromBuildConfig(WriterUi.UI_SECTIONS_B64, WriterUi.UI_BOTTOM_NAV, WriterUi.UI_DEFAULT_SECTION)
+        NavDecl.fromBuildConfig(BuildConfig.UI_SECTIONS_B64, BuildConfig.UI_BOTTOM_NAV, BuildConfig.UI_DEFAULT_SECTION)
     }
 
     /**
