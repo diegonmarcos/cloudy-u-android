@@ -31,8 +31,8 @@ object UnexpectedKb {
     const val HEIGHT_FACTOR = 1.375f
     /** Centre glyph size relative to the stock key text, taking the taller keys into account (the design's 't' is 40 px tall; the pass before measured 42 px). */
     const val TEXT_FACTOR = 1.14f
-    /** Corner legend size relative to the stock hint text (the design's '$' is 18 x 34 px; the pass before measured 13 x 26). */
-    const val LEGEND_FACTOR = 1.52f
+    /** Corner legend size relative to the stock hint text (the design's '$' is 18 x 34 px; measured 17 x 30 at 1.52). */
+    const val LEGEND_FACTOR = 1.66f
 
     /** Theme on (mirrored from the prefs by [CornerSwipe.refresh]). */
     @JvmField @Volatile var active = false

@@ -504,7 +504,12 @@ public class KeyboardView extends View {
                     }
                 }
                 final String plain = UnexpectedKb.textOf(text);
-                if (!plain.isEmpty()) canvas.drawText(plain, 0, plain.length(), x, y, paint);
+                if (!plain.isEmpty()) {
+                    // a wide legend (Esc, F11, 123+) stays inside the key instead of hanging over its edge
+                    final float half = paint.measureText(plain) / 2f, margin = keyWidth * 0.03f;
+                    final float cx = Math.min(Math.max(x, half + margin), keyWidth - half - margin);
+                    canvas.drawText(plain, 0, plain.length(), cx, y, paint);
+                }
             }
             final String centerLegend = CornerSwipe.centerLegendOf(cornerId);
             if (centerLegend != null) {
