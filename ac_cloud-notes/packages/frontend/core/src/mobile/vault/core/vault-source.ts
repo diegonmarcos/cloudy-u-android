@@ -20,7 +20,7 @@ export interface SourceRootDecl {
   icon: string;
   kind: string;
   /** the app that owns this home (Termux, Nix) */
-  package?: string;
+  owner?: { package: string };
   fleet?: string;
 }
 

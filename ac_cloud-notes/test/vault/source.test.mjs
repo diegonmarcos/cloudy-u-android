@@ -77,10 +77,12 @@ test('the native side answers every declared root and performs the grant actions
   assert.match(KT, /@PluginMethod\s+fun roots\(call/);
   assert.match(KT, /@PluginMethod\s+fun openApp\(call/);
   for (const r of decl.sources.roots) assert.ok(KT.includes(`"${r.id}"`), `VaultPlugin answers root ${r.id}`);
-  for (const r of decl.sources.roots.filter(x => x.package)) assert.ok(KT.includes(`"${r.package}"`), `VaultPlugin knows ${r.package}`);
+  const owners = decl.sources.roots.filter(x => x.owner).map(x => x.owner.package);
+  assert.deepEqual(owners, ['cld.termux', 'cld.termux.nix']);
+  for (const pkg of owners) assert.ok(KT.includes(`"${pkg}"`), `VaultPlugin knows ${pkg}`);
   for (const reason of vs.SOURCE_REASONS) assert.ok(KT.includes(`"${reason}"`), `VaultPlugin can answer ${reason}`);
   const man = readFileSync(join(APP, 'packages/frontend/apps/android/App/app/src/main/AndroidManifest.xml'), 'utf8');
-  for (const r of decl.sources.roots.filter(x => x.package)) assert.ok(man.includes(`<package android:name="${r.package}"`), `the manifest can see ${r.package}`);
+  for (const pkg of owners) assert.ok(man.includes(`<package android:name="${pkg}"`), `the manifest can see ${pkg}`);
   assert.match(KT, /storageVolumes/);
 });
 

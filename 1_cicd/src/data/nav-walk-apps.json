@@ -521,11 +521,11 @@
       "ship": "ship-cloud-notes.yml",
       "artifact": "cloud-notes-arm64-v8a-",
       "asset": "Cloud-Notes",
-      "_doc_scenes": "#1369 Obsidian look review: each scene photographed in dark and light, Clean nav (cloud-android-nav-walk.py run_scenes). #1717 the Vault view redesign: the app is restarted before every scene and the data is kept, so after `vault` mounted the sample vault every later scene finds it mounted again with its tabs (vault-tabs-restored is that proof: the tab switcher after a restart); sidebar tree / recent / filter, File view, Canvas view and the Source section are one scene each; the last scene puts the filter back to All files so the second theme pass starts from the same state (its `vault` scene then finds no start screen and is reported skipped).",
+      "_doc_scenes": "#1369 Obsidian look review: each scene photographed in dark and light, Clean nav (cloud-android-nav-walk.py run_scenes). The push source is relative to 1_cicd (the directory the walk script resolves it against), hence the leading ../ : without it nothing was pushed and every vault scene was skipped on a "Not a folder" start screen. #1717 the Vault view redesign: the app is restarted before every scene and the data is kept, so after `vault` mounted the sample vault every later scene finds it mounted again with its tabs (vault-tabs-restored is that proof: the tab switcher after a restart); sidebar tree / recent / filter, File view, Canvas view and the Source section are one scene each; the last scene puts the filter back to All files so the second theme pass starts from the same state (its `vault` scene then finds no start screen and is reported skipped).",
       "scene_nav_mode": "clean",
       "scene_themes": ["dark", "light"],
       "scene_boot_s": 10,
-      "scene_setup": [["shell", "mkdir -p /sdcard/Documents"], ["push", "ac_cloud-notes/test/fixtures/vault/sample", "/sdcard/Documents/sample-vault"], ["shell", "appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow"]],
+      "scene_setup": [["shell", "mkdir -p /sdcard/Documents"], ["push", "../ac_cloud-notes/test/fixtures/vault/sample", "/sdcard/Documents/sample-vault"], ["shell", "appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow"]],
       "scenes": [
         {"name": "notes-list", "steps": [["tap", "bottomnav_item_history_tabs"], ["wait", 3]]},
         {"name": "editor", "steps": [["tap", "topbar_menu"], ["tap", "New page"], ["wait", 4]]},

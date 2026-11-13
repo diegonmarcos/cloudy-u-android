@@ -251,7 +251,7 @@
       "storage_key": "cloud-notes:vault:recent"
     },
     "sources": {
-      "_doc": "#1717 the roots the left sidebar's Source section offers to mount (VaultSource, core/src/mobile/vault/core/vault-source.ts). Same ids, labels, kinds and order as Cloud Drive's editor explorer (ac_cloud-drive/build.json ui.manage.overview.local, #1714) and the same reason names (EditorRoots.Reason); test/vault/source.test.mjs fails when the two drift. The phone's answer comes from VaultPlugin.roots: emulated = /storage/emulated/0 (All files access); termux = a folder granted through Cloud Terminal Termux's documents provider and the fleet shared store; nix = a folder granted through Cloud Terminal Nix's documents provider; external = removable volumes of StorageManager. A root that cannot be opened stays listed with reasons[<reason>].text and its action (grant_storage = the Perms page on All files access, pick_folder = the system folder picker with a persisted grant, open_app = launch the owning app, none).",
+      "_doc": "#1717 the roots the left sidebar's Source section offers to mount (VaultSource, core/src/mobile/vault/core/vault-source.ts). Same ids, labels, kinds and order as Cloud Drive's editor explorer (ac_cloud-drive/build.json ui.manage.overview.local, #1714) and the same reason names (EditorRoots.Reason); test/vault/source.test.mjs fails when the two drift. The phone's answer comes from VaultPlugin.roots: emulated = /storage/emulated/0 (All files access); termux = a folder granted through Cloud Terminal Termux's documents provider and the fleet shared store; nix = a folder granted through Cloud Terminal Nix's documents provider; external = removable volumes of StorageManager. owner.package is the app a home belongs to (nested, so the root's label is not read as that app's name; test-app-names-pattern.sh T4). A root that cannot be opened stays listed with reasons[<reason>].text and its action (grant_storage = the Perms page on All files access, pick_folder = the system folder picker with a persisted grant, open_app = launch the owning app, none).",
       "roots": [
         {
           "id": "emulated",
@@ -264,7 +264,9 @@
           "label": "Termux home",
           "icon": "terminal",
           "kind": "terminal_home",
-          "package": "cld.termux"
+          "owner": {
+            "package": "cld.termux"
+          }
         },
         {
           "id": "nix",
@@ -272,7 +274,9 @@
           "icon": "terminal",
           "kind": "app_home",
           "fleet": "nix-on-droid",
-          "package": "cld.termux.nix"
+          "owner": {
+            "package": "cld.termux.nix"
+          }
         },
         {
           "id": "external",
