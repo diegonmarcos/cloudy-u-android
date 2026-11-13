@@ -272,6 +272,13 @@ internal fun tileColor(perf: Double?, scale: Double): Color {
     return if (h > 0f) lerp(Color(0xFF52B848), Color(0xFF14531F), m.coerceIn(0f, 1f)) else lerp(Color(0xFFE53935), Color(0xFF9E1B1B), m.coerceIn(0f, 1f))
 }
 
+internal fun tileName(h: com.diegonmarcos.capitalfinterm.IndexHolding): String {
+    val t = h.ticker
+    if (t.any { it.isLetter() } && !t.first().isDigit() || h.name.isBlank()) return t
+    val w = h.name.trim().split(Regex("[\\s,.]+")).firstOrNull { it.isNotBlank() }.orEmpty()
+    return w.take(10).ifBlank { t }
+}
+
 /** A stable brand-like badge colour per ticker (the logo stand-in: no logo files are baked into the APK). */
 private fun badgeColor(ticker: String): Color {
     var hsh = 7
@@ -315,7 +322,8 @@ private fun Treemap(rows: List<BreakdownRow>, scale: Double, width: Dp, picked: 
             val m = minOf(w, h)
             val mDp = with(density) { m.toDp().value }
             if (mDp < 14f) return@forEachIndexed
-            val ticker = row.holding.ticker
+            // a numeric exchange code (Tokyo 6857) says nothing on a tile: the company's first word stands in for it
+            val ticker = tileName(row.holding)
             val change = row.perf?.let { String.format(Locale.ROOT, "%+.2f%%", it) }
             // sizes from the tile: the badge a share of the short side, the text from the long ones
             val badge = (m * 0.42f).coerceIn(with(density) { 10.dp.toPx() }, with(density) { 34.dp.toPx() })

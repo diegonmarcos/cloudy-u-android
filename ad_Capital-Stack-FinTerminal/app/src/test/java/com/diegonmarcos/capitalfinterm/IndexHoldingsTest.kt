@@ -146,4 +146,11 @@ class IndexHoldingsTest {
         online = false
         assertEquals(first.keys, reader.get("index-holdings", "com.diegonmarcos.capitalfinterm") { IndexHoldings.parse(it) }?.keys)
     }
+
+    @Test fun numericCodesAreNamedByTheirCompanyOnTheTiles() {
+        val tile = { h: IndexHolding -> com.diegonmarcos.capitalfinterm.ui.tileName(h) }
+        assertEquals("AAPL", tile(IndexHolding("AAPL", "AAPL", "Apple Inc", "", 6.0)))
+        assertEquals("Advantest", tile(IndexHolding("6857", "6857.T", "Advantest Corp", "", 6.0)))
+        assertEquals("6857", tile(IndexHolding("6857", "6857.T", "", "", 6.0)))
+    }
 }
