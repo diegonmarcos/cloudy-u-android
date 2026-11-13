@@ -37,7 +37,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.diegonmarcos.clouddrive.Declarations
 import com.diegonmarcos.clouddrive.R
 import com.diegonmarcos.clouddrive.files.FileOps
@@ -72,7 +71,7 @@ internal fun AppsSummary() {
             }
             for (g in AppGroup.entries) {
                 val t = a[g] ?: continue
-                Row(Modifier.fillMaxWidth().testTag(DriveTags.appsSumRow(g.name.lowercase())).padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth().testTag(DriveTags.appsSumRow(g.name.lowercase())).padding(vertical = DriveMetrics.tight), verticalAlignment = Alignment.CenterVertically) {
                     KitStoreName(stringResource(if (g == AppGroup.CLOUD) R.string.manage_apps_sum_cloud else R.string.manage_apps_sum_phone), Modifier.weight(1.4f))
                     for (v in listOf(t.totalBytes, t.appBytes, t.dataBytes, t.cacheBytes)) KitStoreCaption(FileOps.humanBytes(v), Modifier.weight(1f))
                     KitStoreCaption(t.count.toString(), Modifier.weight(1f))
@@ -108,10 +107,10 @@ internal fun DataStrip(d: Declarations.DataStripDecl) {
 private fun DataItem(strip: String, index: Int, f: RecentFile) {
     val ctx = LocalContext.current
     val thumb by produceThumb(ctx, f)
-    Column(Modifier.width(88.dp).testTag(DriveTags.dataItem(strip, index)).clickable { openFile(ctx, f) }, horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.width(DriveMetrics.appTile).testTag(DriveTags.dataItem(strip, index)).clickable { openFile(ctx, f) }, horizontalAlignment = Alignment.CenterHorizontally) {
         val bmp = thumb
-        if (bmp != null) Image(bmp, contentDescription = f.name, Modifier.size(88.dp), contentScale = ContentScale.Crop)
-        else Box(Modifier.size(88.dp), contentAlignment = Alignment.Center) { Icon(IconCatalog.vectorOrDefault("description"), contentDescription = f.name, Modifier.size(DriveMetrics.glyphIcon * 2), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        if (bmp != null) Image(bmp, contentDescription = f.name, Modifier.size(DriveMetrics.appTile), contentScale = ContentScale.Crop)
+        else Box(Modifier.size(DriveMetrics.appTile), contentAlignment = Alignment.Center) { Icon(IconCatalog.vectorOrDefault("description"), contentDescription = f.name, Modifier.size(DriveMetrics.glyphIcon * 2), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
         if (bmp == null) { KitStoreCaption(f.name, color = MaterialTheme.colorScheme.onSurface); KitStoreCaption(FileOps.humanBytes(f.size), color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
