@@ -1,5 +1,6 @@
 package app.sterna.ui.connect
 
+import app.sterna.fleet.MailAccountSync
 import android.app.Application
 import android.widget.Toast
 import androidx.annotation.StringRes
@@ -528,17 +529,17 @@ class ConnectViewModel(application: Application) : AndroidViewModel(application)
     fun takeAccountsFromCloudAccount(onResult: (String) -> Unit) {
         viewModelScope.launch {
             val out = withContext(Dispatchers.IO) {
-                runCatching { app.sterna.fleet.MailAccountSync.pull(app, container.accountStore) }
-                    .getOrElse { app.sterna.fleet.MailAccountSync.Outcome.Refused("Cloud Account could not be read (${it.javaClass.simpleName})") }
+                runCatching { MailAccountSync.pull(app, container.accountStore) }
+                    .getOrElse { MailAccountSync.Outcome.Refused("Cloud Account could not be read (${it.javaClass.simpleName})") }
             }
             onResult(
                 when (out) {
-                    is app.sterna.fleet.MailAccountSync.Outcome.Added ->
+                    is MailAccountSync.Outcome.Added ->
                         if (out.count > 0) app.getString(R.string.connect_cloud_account_added, out.count, out.total)
                         else app.getString(R.string.connect_cloud_account_nothing_new)
-                    app.sterna.fleet.MailAccountSync.Outcome.AccountMissing ->
+                    MailAccountSync.Outcome.AccountMissing ->
                         com.diegonmarcos.superapp.fleetendpoints.SignInContract.missing(com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.PROVIDER).line
-                    is app.sterna.fleet.MailAccountSync.Outcome.Refused -> out.line
+                    is MailAccountSync.Outcome.Refused -> out.line
                 },
             )
         }
