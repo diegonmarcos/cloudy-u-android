@@ -39,4 +39,26 @@ class CloudAccountOAuthBrokerTest {
         val s = MailOAuthContract.StartAnswer("H", "UC", "https://v", null, 5, 60)
         assertEquals(s, MailOAuthContract.parseStart(s.json())); assertTrue(MailOAuthContract.parseStart("nope") == null)
     }
+
+    // ---- #1703 the authorization-code grant ----
+
+    @Test fun `a code start answer is the handle the screen carries, and nothing else of it`() {
+        assertEquals("H9", CloudAccountOAuthBroker.toHandle(MailOAuthContract.CodeStartAnswer("H9", 600)))
+        assertNull(CloudAccountOAuthBroker.toHandle(null))
+    }
+
+    @Test fun `the code finish answer maps onto the same verdicts, a failure word reaching the screen unchanged`() {
+        val ok = CloudAccountOAuthBroker.toResult(MailOAuthContract.PollAnswer("success", "AT", "RT", 3600)) as DeviceTokenResult.Success
+        assertEquals("AT", ok.tokens.accessToken)
+        assertEquals(DeviceTokenResult.Failed("state_mismatch"), CloudAccountOAuthBroker.toResult(MailOAuthContract.PollAnswer("failed", error = MailOAuthContract.ERR_STATE_MISMATCH)))
+        assertEquals(DeviceTokenResult.Failed("access_denied"), CloudAccountOAuthBroker.toResult(MailOAuthContract.PollAnswer("failed", error = "access_denied")))
+    }
+
+    @Test fun `the code request on the wire names the package's own redirect and carries no secret of ours`() {
+        val r = MailOAuthContract.CodeRequest("me@example.org", "mail.example.org", "https://auth.example.org/authorize", "https://auth.example.org/token", "sterna", "mail", "app.sterna://oauth")
+        val j = r.json()
+        assertFalse("no verifier or state is in this app to send", j.contains("verifier") || j.contains("\"state\""))
+        assertEquals(r, MailOAuthContract.parseCode(j, "app.sterna"))
+        assertNull(MailOAuthContract.parseCode(j, "someone.else"))
+    }
 }

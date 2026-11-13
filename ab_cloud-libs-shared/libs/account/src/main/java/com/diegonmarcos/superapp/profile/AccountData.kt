@@ -277,6 +277,12 @@ object AccountData {
                     if (who != ctx.packageName && !AccountVault(ctx).grants.allow(who, com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.GRANT_REQUEST)) error("no grant for $who")
                     else if (method == com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_START) MailOAuthSessions.start(ctx, arg) else MailOAuthSessions.poll(ctx, arg)
                 }
+                // #1703 the same grant's authorization-code half (PKCE + browser): start (a handle), finish (the redirect's code + state in, the tokens out); same grant `mail.oauth`
+                com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_CODE_START, com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_CODE_FINISH -> {
+                    val who = caller(ctx)
+                    if (who != ctx.packageName && !AccountVault(ctx).grants.allow(who, com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.GRANT_REQUEST)) error("no grant for $who")
+                    else if (method == com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract.METHOD_CODE_START) MailOAuthCodeSessions.start(ctx, arg, who) else MailOAuthCodeSessions.finish(ctx, arg)
+                }
                 com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.METHOD -> {
                     val who = caller(ctx)
                     val vault = AccountVault(ctx)

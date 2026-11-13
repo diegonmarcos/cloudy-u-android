@@ -2,6 +2,7 @@ package app.sterna.ui.connect
 
 import android.content.Intent
 import android.net.Uri
+import com.diegonmarcos.superapp.fleetendpoints.MailOAuthContract
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
@@ -1007,9 +1008,12 @@ private fun BrowserAuthorizationPanel(state: ConnectState.AwaitingBrowser, onCan
             leaveOnce {
                 // Reports back rather than swallowing: a build with no browser must say so, and
                 // must not crash on ActivityNotFoundException either.
+                // #1703 the browser trip starts in Cloud Account (it holds the PKCE verifier, the state and the URL): this opens ITS page for the handle.
                 val opened = runCatching {
                     context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse(state.authorizationUrl))
+                        Intent(MailOAuthContract.ACTION_CODE_OPEN)
+                            .setPackage(MailOAuthContract.ACCOUNT_PACKAGE)
+                            .putExtra(MailOAuthContract.EXTRA_HANDLE, state.handle)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     )
                 }.isSuccess

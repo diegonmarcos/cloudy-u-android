@@ -48,4 +48,33 @@ class MailOAuthContractTest {
         assertFalse(ok.toString().contains("SECRET"))
         assertNull(MailOAuthContract.parsePoll("""{"v":1,"state":"teapot"}""")); assertNull(MailOAuthContract.parsePoll(null))
     }
+
+    // ---- #1703 the authorization-code grant ----
+    private val code = MailOAuthContract.CodeRequest("me@example.org", "mail.example.org", "https://auth.example.org/authorize", "https://auth.example.org/token", "cid", "mail offline_access", "app.sterna://oauth")
+
+    @Test fun `a code request round-trips for the package whose scheme it names`() = assertEquals(code, MailOAuthContract.parseCode(code.json(), "app.sterna"))
+
+    @Test fun `a code request is refused for another caller, a web redirect, a foreign or cleartext endpoint or no caller`() {
+        assertNull("another app's scheme", MailOAuthContract.parseCode(code.json(), "evil.app"))
+        assertNull("no caller", MailOAuthContract.parseCode(code.json(), null))
+        assertNull("a web page", MailOAuthContract.parseCode(code.copy(redirectUri = "https://evil.net/cb").json(), "app.sterna"))
+        assertNull("another path", MailOAuthContract.parseCode(code.copy(redirectUri = "app.sterna://other").json(), "app.sterna"))
+        assertNull(MailOAuthContract.parseCode(code.copy(authorizationEndpoint = "https://evil.net/authorize").json(), "app.sterna"))
+        assertNull(MailOAuthContract.parseCode(code.copy(authorizationEndpoint = "http://auth.example.org/authorize").json(), "app.sterna"))
+        assertNull(MailOAuthContract.parseCode(code.copy(tokenEndpoint = "https://evil.net/token").json(), "app.sterna"))
+        assertNull(MailOAuthContract.parseCode(code.copy(email = "nobody").json(), "app.sterna"))
+        assertNull(MailOAuthContract.parseCode(code.copy(clientId = " ").json(), "app.sterna"))
+        assertNull(MailOAuthContract.parseCode("""{"v":2}""", "app.sterna"))
+        assertNull(MailOAuthContract.parseCode("nope", "app.sterna"))
+    }
+
+    @Test fun `the code start answer and the finish round-trip and no log form carries a code`() {
+        val a = MailOAuthContract.CodeStartAnswer("H1", 600)
+        assertEquals(a, MailOAuthContract.parseCodeStart(a.json())); assertNull(MailOAuthContract.parseCodeStart("""{"v":1}"""))
+        val f = MailOAuthContract.CodeFinish("H1", "SECRET-CODE", "ST", null)
+        assertEquals(f, MailOAuthContract.parseCodeFinish(f.json()))
+        assertFalse(f.toString().contains("SECRET")); assertFalse(a.toString().contains("H1"))
+        assertNull(MailOAuthContract.parseCodeFinish("""{"v":1}"""))
+        assertEquals("denied", MailOAuthContract.parseCodeFinish(MailOAuthContract.CodeFinish("H", null, "S", "denied").json())!!.error)
+    }
 }

@@ -11,27 +11,24 @@ import java.io.File
 class OAuthCodeWiringTest {
 
     /**
-     * The exchange posts what [tokenExchangeFor] decided, whole, and nothing it re-derived here.
+     * #1703 THE GRANT IS CLOUD ACCOUNT'S: this driver hands the redirect's code + state over and takes the tokens back. It names no verifier, no state, no
+     * authorization URL and no token endpoint call (PKCE is decoration the moment a second place can draw the verifier; the provenance rule that
+     * `tokenExchangeFor` pinned here moved with the exchange, and is executed in Cloud Account's MailOAuthCodeSessionsTest).
      */
-    @Test fun `the exchange posts what tokenExchangeFor decided`() {
+    @Test fun `the exchange is handed to Cloud Account and nothing of the grant is drawn here`() {
         val body = functionBody(SIGN_IN, "exchange")
         val lines = body.lines().map { it.trim() }
-        listOf(
-            "val exchange = tokenExchangeFor(verdict, redirectUri)",
-            "metadata = exchange.metadata,",
-            "code = exchange.code,",
-            "redirectUri = exchange.redirectUri,",
-            "codeVerifier = exchange.codeVerifier,",
-        ).forEach { required ->
-            assertTrue(
-                "OAuthCodeSignIn.exchange must carry exactly this whole line:\n  $required\n" +
-                    "The provenance IS the rule: an exchange with a freshly drawn verifier is " +
-                    "still an exchange, still non-blank, still compiles — and PKCE is then " +
-                    "decoration, because the server holds the challenge of the other one. Body " +
-                    "was:\n$body",
-                lines.contains(required),
-            )
-        }
+        assertTrue(
+            "OAuthCodeSignIn.exchange must hand the redirect to Cloud Account, as this whole line:\n  $HANDS_TO_ACCOUNT\nBody was:\n$body",
+            lines.contains(HANDS_TO_ACCOUNT),
+        )
+        val offenders = (SIGN_IN.readText() + REDIRECT.readText()).lines().map { it.trim() }
+            .filter { !it.startsWith("//") && !it.startsWith("*") && !it.startsWith("/**") }
+            .filter { GRANT_IN_THIS_APP.containsMatchIn(it) }
+        assertEquals(
+            "the authorization-code grant runs in Cloud Account: no verifier, state, URL or code exchange here. Found:\n" + offenders.joinToString("\n"),
+            emptyList<String>(), offenders,
+        )
     }
 
     /**
@@ -183,6 +180,9 @@ class OAuthCodeWiringTest {
             "accountAddedToast(created, R.string.connect_outlook_added)",
             "?.let { toast(appContext.getString(it)) }",
         )
+
+        const val HANDS_TO_ACCOUNT = "val answer = repo.finishAuthorizationCode(request.handle, code = code, state = state, error = error)"
+        val GRANT_IN_THIS_APP = Regex("""\bPkce\b|codeVerifier|code_verifier|newCodeVerifier|buildAuthorizationUrl|exchangeCode|ACTION_VIEW""")
 
         val REFRESHED_SENTENCE = Regex("""\bR\.string\.connect_account_refreshed\b""")
 

@@ -2,6 +2,7 @@ package app.sterna.fleet
 
 import android.content.Context
 import android.net.Uri
+import app.sterna.core.data.mail.OAuthCodeBroker
 import app.sterna.core.data.mail.OAuthDeviceBroker
 import app.sterna.core.jmap.DeviceAuthorization
 import app.sterna.core.jmap.DeviceTokenResult
@@ -17,8 +18,11 @@ import kotlinx.coroutines.withContext
  * the two wire answers ([MailOAuthContract.StartAnswer], [MailOAuthContract.PollAnswer]) onto the types the Connect walk already speaks
  * ([DeviceAuthorization], [DeviceTokenResult]), so what the screen says is unchanged. A missing, refusing or older Cloud Account is an
  * exception with the `cloud_account_unavailable` word (one sentence on screen), never a crash; no token is in any message.
+ *
+ * #1703 the authorization-code grant goes the same way ([OAuthCodeBroker]): [start] below answers a handle (Cloud Account keeps the PKCE verifier, the state
+ * and the URL and opens the browser itself), and [finish] hands the redirect's code + state back and gets the tokens. This app never holds either secret.
  */
-class CloudAccountOAuthBroker(private val ctx: Context) : OAuthDeviceBroker {
+class CloudAccountOAuthBroker(private val ctx: Context) : OAuthDeviceBroker, OAuthCodeBroker {
     private fun call(method: String, arg: String): android.os.Bundle? {
         if (!MailEndpointSync.accountInstalled(ctx)) return null
         return runCatching { ctx.contentResolver.call(Uri.parse("content://${FleetEndpointsContract.AUTHORITY}"), method, arg, null) }.getOrNull()
@@ -39,7 +43,24 @@ class CloudAccountOAuthBroker(private val ctx: Context) : OAuthDeviceBroker {
         toResult(MailOAuthContract.parsePoll(reply.getString(MailOAuthContract.KEY_JSON)))
     }
 
+    override suspend fun start(email: String, host: String, authorizationEndpoint: String, tokenEndpoint: String, clientId: String, scope: String, redirectUri: String): String =
+        withContext(Dispatchers.IO) {
+            val reply = call(MailOAuthContract.METHOD_CODE_START, MailOAuthContract.CodeRequest(email, host, authorizationEndpoint, tokenEndpoint, clientId, scope, redirectUri).json())
+                ?: throw JmapException("Cloud Account did not answer", oauthError = "cloud_account_unavailable")
+            if (!reply.getBoolean(MailOAuthContract.KEY_OK)) throw JmapException(MailOAuthContract.refusal(reply.getString(MailOAuthContract.KEY_ERROR)), oauthError = "cloud_account_unavailable")
+            toHandle(MailOAuthContract.parseCodeStart(reply.getString(MailOAuthContract.KEY_JSON)))
+                ?: throw JmapException("Cloud Account answered something that is not a sign-in handle", oauthError = "cloud_account_unavailable")
+        }
+
+    override suspend fun finish(handle: String, code: String?, state: String?, error: String?): DeviceTokenResult = withContext(Dispatchers.IO) {
+        val reply = call(MailOAuthContract.METHOD_CODE_FINISH, MailOAuthContract.CodeFinish(handle, code, state, error).json()) ?: return@withContext DeviceTokenResult.Failed("cloud_account_unavailable")
+        if (!reply.getBoolean(MailOAuthContract.KEY_OK)) return@withContext DeviceTokenResult.Failed("cloud_account_unavailable")
+        toResult(MailOAuthContract.parsePoll(reply.getString(MailOAuthContract.KEY_JSON)))
+    }
+
     companion object {
+        /** The wire code-start answer as the handle the screen carries; null for no answer. */
+        fun toHandle(a: MailOAuthContract.CodeStartAnswer?): String? = a?.handle
         /** The wire start answer as the screen's [DeviceAuthorization]; [DeviceAuthorization.deviceCode] is Cloud Account's handle. Null for no answer. */
         fun toDevice(a: MailOAuthContract.StartAnswer?): DeviceAuthorization? =
             a?.let { DeviceAuthorization(it.handle, it.userCode, it.verificationUri, it.verificationUriComplete, it.expiresIn, it.interval) }

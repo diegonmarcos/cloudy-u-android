@@ -62,4 +62,40 @@ class MailOAuthProviderTest {
         v.grants.revoke(other, MailOAuthContract.GRANT_REQUEST)
         assertFalse(call(MailOAuthContract.METHOD_POLL, "x").getBoolean(MailOAuthContract.KEY_OK))
     }
+
+    // ---- #1703 the authorization-code half ----
+    private val badCode = MailOAuthContract.CodeRequest("me@example.org", "mail.example.org", "https://evil.net/authorize", "https://evil.net/token", "cid", "mail", "com.example.other://oauth")
+    private val goodCode = MailOAuthContract.CodeRequest("me@example.org", "mail.example.org", "https://auth.example.org/authorize", "https://auth.example.org/token", "cid", "mail", "com.example.other://oauth")
+
+    @Test fun theCodeMethodsNeedTheGrantToo() {
+        for (m in listOf(MailOAuthContract.METHOD_CODE_START, MailOAuthContract.METHOD_CODE_FINISH)) {
+            val r = call(m, badCode.json())
+            assertFalse(m, r.getBoolean(MailOAuthContract.KEY_OK)); assertTrue(r.getString(MailOAuthContract.KEY_ERROR)!!.contains("no grant"))
+        }
+    }
+
+    @Test fun aGrantedCodeStartForAForeignEndpointOrAnotherAppsSchemeIsRefused() {
+        AccountVault(ctx).grants.grant(other, MailOAuthContract.GRANT_REQUEST)
+        val s = call(MailOAuthContract.METHOD_CODE_START, badCode.json())
+        assertFalse(s.getBoolean(MailOAuthContract.KEY_OK)); assertTrue(s.getString(MailOAuthContract.KEY_ERROR)!!.contains("refused"))
+        val scheme = call(MailOAuthContract.METHOD_CODE_START, goodCode.copy(redirectUri = "app.sterna://oauth").json())
+        assertFalse("another package's scheme", scheme.getBoolean(MailOAuthContract.KEY_OK))
+    }
+
+    @Test fun aGrantedCodeStartOpensARequestAndAFinishOfNothingIsNoPending() {
+        AccountVault(ctx).grants.grant(other, MailOAuthContract.GRANT_REQUEST)
+        val s = call(MailOAuthContract.METHOD_CODE_START, goodCode.json())
+        assertTrue(s.getString(MailOAuthContract.KEY_ERROR), s.getBoolean(MailOAuthContract.KEY_OK))
+        assertTrue(MailOAuthContract.parseCodeStart(s.getString(MailOAuthContract.KEY_JSON)) != null)
+        val f = call(MailOAuthContract.METHOD_CODE_FINISH, MailOAuthContract.CodeFinish("unknown-handle", "C", "S", null).json())
+        assertTrue(f.getBoolean(MailOAuthContract.KEY_OK))
+        assertTrue(MailOAuthContract.parsePoll(f.getString(MailOAuthContract.KEY_JSON))!!.error == MailOAuthContract.ERR_NO_PENDING)
+    }
+
+    @Test fun aRevokeStopsTheCodeMethodsAtOnce() {
+        val v = AccountVault(ctx); v.grants.grant(other, MailOAuthContract.GRANT_REQUEST)
+        assertTrue(call(MailOAuthContract.METHOD_CODE_FINISH, MailOAuthContract.CodeFinish("x", null, null, null).json()).getBoolean(MailOAuthContract.KEY_OK))
+        v.grants.revoke(other, MailOAuthContract.GRANT_REQUEST)
+        assertFalse(call(MailOAuthContract.METHOD_CODE_FINISH, MailOAuthContract.CodeFinish("x", null, null, null).json()).getBoolean(MailOAuthContract.KEY_OK))
+    }
 }

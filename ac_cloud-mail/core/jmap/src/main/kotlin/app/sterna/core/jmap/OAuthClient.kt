@@ -13,9 +13,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
-import java.security.MessageDigest
-import java.security.SecureRandom
-import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 /** OAuth 2.0 authorization-server metadata (RFC 8414), trimmed to what we use. */
@@ -87,79 +84,7 @@ sealed interface DeviceTokenResult {
     ) : DeviceTokenResult
 }
 
-    /**
-     * PKCE — Proof Key for Code Exchange (RFC 7636). A public client cannot keep a secret, so PKCE
-     */
-object Pkce {
-    /** The only method we announce. `plain` sends the verifier itself through the browser. */
-    const val CODE_CHALLENGE_METHOD = "S256"
-
-    /** RFC 7636 §4.1 `unreserved` = ALPHA / DIGIT / "-" / "." / "_" / "~". */
-    private const val UNRESERVED =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
-
-        /**
-         * One instance, seeded by the OS; `SecureRandom.nextInt(bound)` is unbiased. The TYPE IS
-         */
-    internal val random: SecureRandom = SecureRandom()
-
-    /** A fresh `code_verifier`: [length] characters of `unreserved`, 43..128 (RFC 7636 §4.1). */
-    fun newCodeVerifier(length: Int = 64): String {
-        require(length in 43..128) { "a code verifier is 43 to 128 characters (RFC 7636 §4.1)" }
-        val out = StringBuilder(length)
-        repeat(length) { out.append(UNRESERVED[random.nextInt(UNRESERVED.length)]) }
-        return out.toString()
-    }
-
-    /** `BASE64URL(SHA256(ASCII(verifier)))`, unpadded — RFC 7636 §4.2. */
-    fun codeChallengeOf(verifier: String): String =
-        Base64.getUrlEncoder().withoutPadding().encodeToString(
-            MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)),
-        )
-}
-
-    /**
-     * Build the URL the browser is sent to (RFC 6749 §4.1.1). Pure: String in, String out, no I/O.
-     */
-fun buildAuthorizationUrl(
-    authorizationEndpoint: String,
-    clientId: String,
-    redirectUri: String,
-    scope: String,
-    state: String,
-    codeChallenge: String,
-): String {
-    // Neither the endpoint nor any parameter goes into the message: this is the same rule the
-    // POSTs below follow, and the caller already knows what it passed in.
-    val base = authorizationEndpoint.toHttpUrlOrNull()
-        ?: throw JmapException("The authorization endpoint is not a usable URL")
-    if (base.scheme != "https") {
-        throw JmapException("The authorization endpoint must be https")
-    }
-    val builder = base.newBuilder()
-    GRANT_PARAMETERS.forEach { builder.removeAllQueryParameters(it) }
-    return builder
-        .addEncodedQueryParameter("response_type", percentEncode("code"))
-        .addEncodedQueryParameter("client_id", percentEncode(clientId))
-        .addEncodedQueryParameter("redirect_uri", percentEncode(redirectUri))
-        .addEncodedQueryParameter("scope", percentEncode(scope))
-        .addEncodedQueryParameter("state", percentEncode(state))
-        .addEncodedQueryParameter("code_challenge", percentEncode(codeChallenge))
-        .addEncodedQueryParameter("code_challenge_method", percentEncode(Pkce.CODE_CHALLENGE_METHOD))
-        .build()
-        .toString()
-}
-
-/** The seven names the grant owns — also the ones taken off the endpoint's own query. */
-private val GRANT_PARAMETERS = listOf(
-    "response_type",
-    "client_id",
-    "redirect_uri",
-    "scope",
-    "state",
-    "code_challenge",
-    "code_challenge_method",
-)
+// #1703 PKCE and the authorization URL left this module with the authorization-code grant: Cloud Account runs it (libs:account MailOAuthCodeSessions).
 
     /**
      * Add `login_hint` (OIDC Core §3.1.2.1) to a device-flow verification URL, so the approval page
@@ -180,7 +105,7 @@ private const val LOGIN_HINT = "login_hint"
 
 /**
  * RFC 3986 percent-encoding: everything outside `unreserved` becomes `%XX` over its UTF-8 bytes.
- * A space is `%20` and never `+` — see [buildAuthorizationUrl]. Uppercase hex, no locale involved.
+ * A space is `%20` and never `+` (the same rule the authorization URL follows in Cloud Account). Uppercase hex, no locale involved.
  */
 private fun percentEncode(value: String): String {
     val out = StringBuilder(value.length)
@@ -289,38 +214,7 @@ class OAuthClient internal constructor(
 
     // #1693 the OAuth device grant (start + poll) left this client: it runs in Cloud Account (libs:account MailOAuthSessions); the types stay, the app maps its answers onto them.
 
-        /**
-         * Exchange an authorization code for tokens (RFC 6749 §4.1.3), proving PKCE possession. The
-         */
-    suspend fun exchangeCode(
-        metadata: OAuthMetadata,
-        code: String,
-        redirectUri: String,
-        clientId: String,
-        codeVerifier: String,
-    ): OAuthTokens = withContext(Dispatchers.IO) {
-        val form = FormBody.Builder()
-            .add("grant_type", "authorization_code")
-            .add("code", code)
-            .add("redirect_uri", redirectUri)
-            .add("client_id", clientId)
-            .add("code_verifier", codeVerifier)
-            .build()
-        val request = Request.Builder().url(metadata.tokenEndpoint).post(form).header("Accept", "application/json").build()
-        tokenHttpClient.newCall(request).execute().use { response ->
-            val body = response.body?.string().orEmpty()
-            if (!response.isSuccessful) {
-                    // Same halves as `startDeviceAuthorization`: the protocol's `error` word travels,
-                    // the body and `error_description` never do — this payload is the account's tokens.
-                throw JmapException(
-                    "Code exchange failed: HTTP ${response.code}",
-                    httpCode = response.code,
-                    oauthError = parseError(body)?.error,
-                )
-            }
-            decodeGuarded(body, "token", OAuthTokens.serializer())
-        }
-    }
+    // #1703 the authorization-code exchange left this client too: Cloud Account redeems the code (it holds the PKCE verifier).
 
     /** Exchange a refresh token for a fresh access token (RFC 6749 §6). */
     suspend fun refresh(

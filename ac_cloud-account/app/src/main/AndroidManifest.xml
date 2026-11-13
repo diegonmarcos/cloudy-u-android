@@ -57,6 +57,20 @@
             </intent-filter>
         </activity>
 
+        <!-- #1703 Cloud Mail's OAuth code grant opens its browser trip from HERE (PKCE, state and the authorization URL live in Cloud Account).
+             Fleet signature permission: only an APK signed with the fleet key can start it; it holds no UI, it opens the browser and finishes. -->
+        <activity
+            android:name="com.diegonmarcos.superapp.profile.MailOAuthCodeActivity"
+            android:exported="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="com.diegonmarcos.cloudaccount.MAIL_OAUTH_CODE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- #1502 / #1512 no pairing service, keep-alive service, boot receiver, WorkManager job or sticky service. Account declares no
              AutofillService and no CredentialProviderService: nothing in this app is bound by the system on its own; its providers
              below start the process only for the duration of a caller's own call. -->

@@ -130,7 +130,10 @@ class AppContainer(context: Context) {
         }
         // Let the data layer arm the delivery worker from any send call site (compose, RSVP, …).
         // #1693 Cloud Account runs the OAuth device grant (a provider call): the repository hands it the endpoints, the screen keeps its states.
-        mailRepository.oauthDeviceBroker = app.sterna.fleet.CloudAccountOAuthBroker(appContext)
+        // #1703 and the authorization-code grant too (PKCE, state, browser, code exchange): the same broker, the same grant.
+        val accountBroker = app.sterna.fleet.CloudAccountOAuthBroker(appContext)
+        mailRepository.oauthDeviceBroker = accountBroker
+        mailRepository.oauthCodeBroker = accountBroker
         mailRepository.outboxScheduler = OutboxScheduler { id, delay -> Outbox.enqueue(appContext, id, delay) }
         // The same for a draft the server could not be given (#95): the save books the deferred
         // upload itself. Without this the only bookings were the startup re-arm and the worker's.

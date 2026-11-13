@@ -12,6 +12,16 @@ import org.json.JSONObject
 object MailOAuthContract {
     const val METHOD_START = "mail_oauth_start"
     const val METHOD_POLL = "mail_oauth_poll"
+    /** #1703 THE AUTHORIZATION-CODE GRANT (custom-tab redirect + PKCE) runs here too: [METHOD_CODE_START] (`arg` = [CodeRequest] json) answers a [CodeStartAnswer] (a handle; the PKCE verifier and the state stay in Cloud Account), Cloud Mail opens Cloud Account's [ACTION_CODE_OPEN] activity with the handle (it opens the browser), the redirect lands on Cloud Mail's own scheme and [METHOD_CODE_FINISH] (`arg` = [CodeFinish] json) hands the code + state back: Cloud Account checks the state, redeems the code with the verifier and answers one [PollAnswer] (the tokens, or a failure word). Same grant [GRANT_REQUEST]. */
+    const val METHOD_CODE_START = "mail_oauth_code_start"
+    const val METHOD_CODE_FINISH = "mail_oauth_code_finish"
+    const val ACTION_CODE_OPEN = "${FleetEndpointsContract.ACCOUNT_PACKAGE}.MAIL_OAUTH_CODE"
+    const val EXTRA_HANDLE = "handle"
+    const val ACCOUNT_PACKAGE = FleetEndpointsContract.ACCOUNT_PACKAGE
+    /** The failure words Cloud Account answers for a redirect it cannot redeem (besides the provider's own `error` word). */
+    const val ERR_STATE_MISMATCH = "state_mismatch"
+    const val ERR_NO_PENDING = "no_pending_request"
+    const val ERR_NOTHING_USABLE = "nothing_usable"
     const val KEY_JSON = "mail_oauth_json"
     const val GRANT_REQUEST = "mail.oauth"
     const val KEY_OK = FleetEndpointsContract.KEY_OK
@@ -49,6 +59,55 @@ object MailOAuthContract {
         if (h.isBlank() || h.contains('@')) return false
         val owners = listOf(host.removePrefix("https://").substringBefore('/').substringBefore(':'), addressDomain).map { it.lowercase() }.filter { it.isNotBlank() }
         return owners.any { h == it || h.endsWith(".$it") }
+    }
+
+    /** The code grant's request: the endpoints (both checked like [Request]'s), the client, and the redirect the browser comes back on. */
+    data class CodeRequest(val email: String, val host: String, val authorizationEndpoint: String, val tokenEndpoint: String, val clientId: String, val scope: String, val redirectUri: String) {
+        fun json(): String = JSONObject().put("v", 1).put("email", email).put("host", host).put("authorization_endpoint", authorizationEndpoint)
+            .put("token_endpoint", tokenEndpoint).put("client_id", clientId).put("scope", scope).put("redirect_uri", redirectUri).toString()
+    }
+
+    /** The redirect Cloud Mail registers: `<its own package>://oauth`, and nothing else (a caller cannot name another app's scheme or a web page). */
+    fun redirectAllowed(redirect: String, callerPackage: String?): Boolean = !callerPackage.isNullOrBlank() && redirect == "$callerPackage://oauth"
+
+    /** The code request, or null when it is not one of this version, names no address, an endpoint is not allowed, or the redirect is not the caller's own. */
+    fun parseCode(text: String?, callerPackage: String?): CodeRequest? {
+        val o = runCatching { JSONObject(text ?: return null) }.getOrNull() ?: return null
+        if (o.optInt("v", 0) != 1) return null
+        val email = o.optString("email").trim()
+        if (!email.contains('@') || email.length > 254) return null
+        val host = o.optString("host").trim()
+        val domain = email.substringAfter('@')
+        val auth = o.optString("authorization_endpoint").trim(); val tok = o.optString("token_endpoint").trim()
+        if (!endpointAllowed(auth, host, domain) || !endpointAllowed(tok, host, domain)) return null
+        val client = o.optString("client_id").trim()
+        if (client.isBlank() || client.length > 256) return null
+        val redirect = o.optString("redirect_uri").trim()
+        if (!redirectAllowed(redirect, callerPackage)) return null
+        return CodeRequest(email, host, auth, tok, client, o.optString("scope").trim().take(512), redirect)
+    }
+
+    data class CodeStartAnswer(val handle: String, val expiresIn: Int) {
+        fun json(): String = JSONObject().put("v", 1).put("handle", handle).put("expires_in", expiresIn).toString()
+        override fun toString() = "CodeStartAnswer(expiresIn=$expiresIn)"
+    }
+
+    fun parseCodeStart(text: String?): CodeStartAnswer? {
+        val o = runCatching { JSONObject(text ?: return null) }.getOrNull() ?: return null
+        if (o.optInt("v", 0) != 1 || o.optString("handle").isBlank()) return null
+        return CodeStartAnswer(o.getString("handle"), o.optInt("expires_in", 600))
+    }
+
+    /** What came back on the redirect: the handle it belongs to and the three query values, untouched (Cloud Account judges them). The code is a secret: no log form shows it. */
+    data class CodeFinish(val handle: String, val code: String?, val state: String?, val error: String?) {
+        override fun toString() = "CodeFinish(error=$error)"
+        fun json(): String = JSONObject().put("v", 1).put("handle", handle).also { o -> code?.let { o.put("code", it) }; state?.let { o.put("state", it) }; error?.let { o.put("error", it) } }.toString()
+    }
+
+    fun parseCodeFinish(text: String?): CodeFinish? {
+        val o = runCatching { JSONObject(text ?: return null) }.getOrNull() ?: return null
+        if (o.optInt("v", 0) != 1 || o.optString("handle").isBlank()) return null
+        return CodeFinish(o.getString("handle"), o.optString("code").ifBlank { null }, o.optString("state").ifBlank { null }, o.optString("error").ifBlank { null })
     }
 
     fun credId(email: String, field: String) = "mail.oauth." + AppCredentialsContract.slug(email.trim().lowercase()) + "." + field

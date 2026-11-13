@@ -23,6 +23,7 @@ cat > "$POL" <<'JSON'
   "engine-login-decl": {"pattern": "\"login_poll_ms\"", "why": "engines.gh"},
   "device-grant": {"pattern": "grant-type:device_code", "why": "device grant"},
   "oauth-browser": {"pattern": "CustomTabsIntent|net\\.openid\\.appauth", "why": "oauth browser"},
+  "oauth-code-start": {"pattern": "code_challenge_method|\\bPkce\\.newCodeVerifier\\(|\\bbuildAuthorizationUrl\\(|ACTION_VIEW[^\\n]{0,80}(?i:authori[sz]|authUrl|oauth)", "why": "oauth code grant start"},
   "signin-ui": {"pattern": "(?<!fun )\\bSignInWays\\(", "why": "sign-in surface"},
   "credential-prompt": {"pattern": "PasswordVisualTransformation\\(", "file_context": "\\b(sign[ _-]?in|log[ _-]?in)\\b", "why": "password"}},
  "owner_only_libs": ["libs:account"],
@@ -33,7 +34,7 @@ fixture() {
   local t="$1"; rm -rf "$t"; mkdir -p "$t/ac_cloud-account/app/src/main/java" "$t/ab_cloud-libs-shared/libs/auth/src/main/java" \
     "$t/ac_cloud-demo/app/src/main/java" "$t/ac_cloud-demo/app/src/test/java" "$t/ac_cloud-fork/src"
   echo "implementation project(':libs:account')" > "$t/ac_cloud-account/app/build.gradle"
-  echo 'fun go() { SignInWays(host); ghEngine.login(h) {} ; listOf("auth", "login") }' > "$t/ac_cloud-account/app/src/main/java/A.kt"
+  echo 'fun go() { SignInWays(host); ghEngine.login(h) {} ; listOf("auth", "login"); val v = Pkce.newCodeVerifier(); buildAuthorizationUrl(a, b, c, d, e, f); startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(authorizationUrl))) }' > "$t/ac_cloud-account/app/src/main/java/A.kt"
   echo 'fun SignInWays(host: Any) {} // grant-type:device_code' > "$t/ab_cloud-libs-shared/libs/auth/src/main/java/S.kt"
   echo 'fun row() { openCloudAccount("github") } // a password field elsewhere: PasswordVisualTransformation()' > "$t/ac_cloud-demo/app/src/main/java/Row.kt"
   echo 'fun t() { SignInWays(fake) } // sign in' > "$t/ac_cloud-demo/app/src/test/java/T.kt"
@@ -42,11 +43,12 @@ fixture() {
 run() { python3 "$GUARD" "$1" --policy "$POL" >"$WORK/out" 2>&1; echo $?; }
 
 F="$WORK/f"; fixture "$F"
-[ "$(run "$F")" = 0 ] && ok "clean fleet is green (owner, owner impl, test sources, a declared exemption, a password field off a sign-in page)" || { fail "clean fleet red"; cat "$WORK/out"; }
+[ "$(run "$F")" = 0 ] && ok "clean fleet is green (owner incl. its own OAuth code grant start, owner impl, test sources, a declared exemption, a password field off a sign-in page)" || { fail "clean fleet red"; cat "$WORK/out"; }
 
 i=0
 for bad in 'listOf("auth", "login")' 'ghEngine.login(host) { _, _ -> }' 'SignInWays(host = h)' 'val g = "urn:ietf:params:oauth:grant-type:device_code"' \
-           'val t = CustomTabsIntent.Builder()' 'Text("Sign in"); OutlinedTextField(p, {}, visualTransformation = PasswordVisualTransformation())'; do
+           'val t = CustomTabsIntent.Builder()' 'val v = Pkce.newCodeVerifier()' 'val u = buildAuthorizationUrl(e, c, r, s, st, ch)' 'val q = mapOf("code_challenge_method" to "S256")' \
+           'context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(state.authorizationUrl)))' 'Text("Sign in"); OutlinedTextField(p, {}, visualTransformation = PasswordVisualTransformation())'; do
   i=$((i+1)); fixture "$F"; echo "fun x() { $bad }" > "$F/ac_cloud-demo/app/src/main/java/Bad$i.kt"
   [ "$(run "$F")" = 1 ] && ok "RED: an app starts a sign-in ($bad)" || fail "stayed green for: $bad"
 done

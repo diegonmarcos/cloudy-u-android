@@ -85,7 +85,6 @@ import app.sterna.core.jmap.JmapAuth
 import app.sterna.core.jmap.JmapClient
 import app.sterna.core.jmap.JmapException
 import app.sterna.core.jmap.WindowWalk
-import app.sterna.core.jmap.buildAuthorizationUrl
 import app.sterna.core.imap.CryptoEnvelope
 import app.sterna.core.imap.CryptoKind
 import app.sterna.core.imap.ImapUidValidityChanged
@@ -1956,31 +1955,23 @@ class MailRepository(
     /** Poll once for a pending device authorization ([deviceCode] is the handle Cloud Account issued). */
     suspend fun pollDeviceToken(metadata: OAuthMetadata, deviceCode: String): DeviceTokenResult = broker().poll(deviceCode)
 
-    /**
-     * The URL the browser is sent to for the authorization-code grant, with Sterna's client id and scopes.
-     */
-    fun authorizationUrl(
-        metadata: OAuthMetadata,
-        redirectUri: String,
-        state: String,
-        codeChallenge: String,
-    ): String = buildAuthorizationUrl(
-        authorizationEndpoint = metadata.authorizationEndpoint
-            ?: throw JmapException("Server has no authorization endpoint"),
-        clientId = Jmap.OAUTH_CLIENT_ID,
-        redirectUri = redirectUri,
-        scope = Jmap.OAUTH_SCOPE,
-        state = state,
-        codeChallenge = codeChallenge,
-    )
+    /** #1703 Cloud Account runs the OAuth authorization-code grant (PKCE, browser, state): set by the app (a provider call). Null = it cannot, and every start says so. */
+    var oauthCodeBroker: OAuthCodeBroker? = null
 
-    /** Redeem an authorization code, proving PKCE possession with [codeVerifier] (RFC 7636). */
-    suspend fun exchangeCode(
-        metadata: OAuthMetadata,
-        code: String,
-        redirectUri: String,
-        codeVerifier: String,
-    ): OAuthTokens = oauthClient.exchangeCode(metadata, code, redirectUri, Jmap.OAUTH_CLIENT_ID, codeVerifier)
+    private fun codeBroker(): OAuthCodeBroker = oauthCodeBroker
+        ?: throw JmapException("Cloud Account runs the OAuth sign-in", oauthError = "cloud_account_unavailable")
+
+    /** Begin the authorization-code grant against [metadata] with Sterna's client id + scopes: the handle Cloud Account issued. Throws (never a crash) when Cloud Account cannot. */
+    suspend fun startAuthorizationCode(metadata: OAuthMetadata, host: String, email: String, redirectUri: String): String =
+        codeBroker().start(
+            requestEmail(email, metadata.tokenEndpoint), host,
+            metadata.authorizationEndpoint ?: throw JmapException("Server has no authorization endpoint"),
+            metadata.tokenEndpoint, Jmap.OAUTH_CLIENT_ID, Jmap.OAUTH_SCOPE, redirectUri,
+        )
+
+    /** The redirect's code + state (or error) for [handle]: Cloud Account checks the state and redeems the code with the verifier it holds (RFC 7636). */
+    suspend fun finishAuthorizationCode(handle: String, code: String?, state: String?, error: String?): DeviceTokenResult =
+        codeBroker().finish(handle, code, state, error)
 
     /** Throws, persisting nothing, if [tokens] don't authenticate against [host]. Returns true when
      *  THIS add created the account — a re-add must land on the existing one and succeed. */

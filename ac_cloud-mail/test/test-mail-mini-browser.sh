@@ -100,8 +100,8 @@ has 'InAppBrowser.openLink(context, Uri.parse(MS_APP_PASSWORD_URL))' \
 # B12 — OAuth deliberately does NOT. Its redirect returns on a scheme this browser refuses to
 # navigate, and a sign-in belongs in the browser that already holds the session. If someone
 # "finishes the job" by routing these too, sign-in breaks silently.
-has 'Intent(Intent.ACTION_VIEW, Uri.parse(state.authorizationUrl))' "$UI/connect/ConnectScreen.kt" \
-    "B12 the OAuth authorization hand-off stays external"
+has 'Intent(MailOAuthContract.ACTION_CODE_OPEN)' "$UI/connect/ConnectScreen.kt" \
+    "B12 the OAuth authorization hand-off stays external (#1703: Cloud Account opens the browser)"
 hasre 'Intent\(Intent\.ACTION_VIEW, Uri\.parse\(target\)\)' "$UI/settings/SettingsScreen.kt" \
     "B12 the device-code hand-off stays external"
 

@@ -39,6 +39,22 @@
       "why": "Cloud Account answers the app credentials (per-credential grant) over the accountdata provider"
     },
     {
+      "file": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountData.kt",
+      "needles": [
+        "MailOAuthContract.METHOD_CODE_START",
+        "MailOAuthCodeSessions.start("
+      ],
+      "why": "Cloud Account runs Cloud Mail's OAuth authorization-code grant (PKCE, state, browser, code exchange) behind the mail.oauth grant (#1703)"
+    },
+    {
+      "file": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/MailOAuthCodeActivity.kt",
+      "needles": [
+        "SignInOwner.isOwner(this)",
+        "MailOAuthCodeSessions.authorizationUrl("
+      ],
+      "why": "the browser trip of the OAuth code grant starts in Cloud Account, owner-checked (#1703)"
+    },
+    {
       "file": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountPages.kt",
       "needles": [
         "AppCredentialsPanel()"
@@ -99,6 +115,10 @@
       "pattern": "CustomTabsIntent|net\\.openid\\.appauth|AuthorizationRequest\\.Builder",
       "why": "opens an OAuth browser flow"
     },
+    "oauth-code-start": {
+      "pattern": "code_challenge_method|\\bPkce\\.newCodeVerifier\\(|\\bbuildAuthorizationUrl\\(|ACTION_VIEW[^\\n]{0,80}(?i:authori[sz]|authUrl|oauth)",
+      "why": "starts an OAuth authorization-code grant (PKCE challenge, authorization URL or a browser/custom-tab view of one)"
+    },
     "signin-ui": {
       "pattern": "(?<!fun )\\bSignInWays\\(",
       "why": "hosts libs:auth's sign-in surface"
@@ -114,7 +134,8 @@
       "path": "ac_cloud-vault/",
       "rules": [
         "credential-prompt",
-        "oauth-browser"
+        "oauth-browser",
+        "oauth-code-start"
       ],
       "why": "Bitwarden login: Cloud Vault IS the credential store Cloud Account's vault syncer reads (architect decision)",
       "until": "permanent"

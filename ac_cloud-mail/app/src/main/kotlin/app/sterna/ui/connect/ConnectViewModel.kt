@@ -56,8 +56,8 @@ sealed interface ConnectState {
          *  the screen, which cannot tell the two producers apart and would hint Microsoft too. */
         val loginHint: String? = null,
     ) : ConnectState
-    /** Authorization-code flow started: the browser must be sent to [authorizationUrl] (#55). */
-    data class AwaitingBrowser(val authorizationUrl: String) : ConnectState
+    /** Authorization-code flow started (#55): Cloud Account opens the browser for [handle] (#1703); the answer returns on this app's redirect. */
+    data class AwaitingBrowser(val handle: String) : ConnectState
     data class Error(val message: String) : ConnectState
 }
 
@@ -580,7 +580,7 @@ class ConnectViewModel(application: Application) : AndroidViewModel(application)
                     // Idle is where the driver sits before and after a sign-in: adopting it would
                     // wipe whatever this screen is showing, including the error just emitted.
                     OAuthCodeProgress.Idle -> return@collect
-                    is OAuthCodeProgress.AwaitingBrowser -> ConnectState.AwaitingBrowser(p.authorizationUrl)
+                    is OAuthCodeProgress.AwaitingBrowser -> ConnectState.AwaitingBrowser(p.handle)
                     OAuthCodeProgress.Connecting -> ConnectState.Connecting
                 }
             }
