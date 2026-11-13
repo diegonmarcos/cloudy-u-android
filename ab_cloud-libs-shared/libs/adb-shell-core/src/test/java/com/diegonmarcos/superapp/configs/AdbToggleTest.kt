@@ -15,7 +15,7 @@ import java.io.File
 
 /** #1688 every ADB-path permission has Run on ADB + Copy command, both directions from the one declaration. */
 class AdbToggleTest {
-    private val cat = PermCatalogue.parse(File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json").readText())
+    private val cat = PermCatalogue.parse(File("../perms/src/main/assets/perms-catalogue.json").readText())
     private val pkg = "com.diegonmarcos.superapp"
     private val comps = mapOf("notification_listener" to "$pkg/.L", "accessibility" to "$pkg/.A", "device_admin" to "$pkg/.D")
 
