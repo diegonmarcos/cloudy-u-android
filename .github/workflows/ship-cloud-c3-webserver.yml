@@ -64,6 +64,9 @@ on:
       # ── end MANAGED-PATHS-HEADER ──
       # The ONE web server of the fleet (:8002 is its `start`) and the verbatim Linux UI it bundles.
       # A STATIC Rust lib this app compiles, so it is watched and hashed like a module dir.
+      - "ab_cloud-libs-shared/libs/adb-grants/**"
+      - "ab_cloud-libs-shared/libs/adb-readiness/**"
+      - "ab_cloud-libs-shared/libs/adb-shell-core/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
       - "ab_cloud-libs-shared/libs/core/**"
       - "ab_cloud-libs-shared/libs/crash/**"
@@ -76,8 +79,12 @@ on:
       - "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**"
       - "ab_cloud-libs-shared/libs/perms/**"
+      - "ab_cloud-libs-shared/libs/shell-broker/**"
+      - "ab_cloud-libs-shared/libs/shell-client/**"
+      - "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"
       - "ab_cloud-libs-shared/libs/ui-icons/**"
+      - "ab_cloud-libs-shared/libs/ui-kit/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ab_cloud-libs-shared/libs/web-core/**"
       - "ac_cloud-c3-webserver/**"

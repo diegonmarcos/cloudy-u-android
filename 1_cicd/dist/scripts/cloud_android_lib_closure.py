@@ -1,5 +1,4 @@
 # ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud_android_lib_closure.py ───
-#!/usr/bin/env python3
 """
 cloud_android_lib_closure — #763: which shared library directories are really
 inputs of an application. ONE answer, imported by everything that asks:
@@ -123,6 +122,16 @@ def module_map(root, app):
                 d = os.path.normpath(os.path.join(app, m["dir"]))
                 if d.startswith(SHARED_LIBS + os.sep):
                     out.add(d.split(os.sep)[len(SHARED_LIBS.split("/"))])
+    # #1682 the ADB owner's libs (build.json::adb_owner_modules, by name) are part of the owner app's build while
+    # 1_cicd/src/data/adb-owner.json names it, so they are watched and hashed like module dirs.
+    try:
+        owner = json.load(open(os.path.join(root, "1_cicd/src/data/adb-owner.json"))).get("adb_owner")
+        if owner == os.path.basename(app):
+            for name in (cfg.get("adb_owner_modules") or {}):
+                if name.startswith("libs:"):
+                    out.add(name[len("libs:"):])
+    except (OSError, ValueError):
+        pass
     return out
 
 
