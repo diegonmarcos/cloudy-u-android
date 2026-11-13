@@ -4,6 +4,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -65,6 +67,7 @@ import kotlinx.coroutines.withContext
  * openEntry, which respects the Editor's file-type table (Office formats go to another app). A root that cannot be browsed
  * shows a reason row with its grant action instead of a list.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EditorExplorerPanel(actions: DriveActions, currentPath: String?, onClose: () -> Unit, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
@@ -117,7 +120,8 @@ fun EditorExplorerPanel(actions: DriveActions, currentPath: String?, onClose: ()
                 IconButton(onClick = onClose, modifier = Modifier.size(DriveMetrics.tap)) { Icon(Icons.Filled.Close, stringResource(R.string.editor_explorer_close), Modifier.size(DriveMetrics.icon)) }
             }
             // The root selector, always first.
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = DriveMetrics.pad), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) {
+            // A FlowRow, not a scrolling row: all four roots are on screen at once, however narrow the panel.
+            FlowRow(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.pad), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) {
                 roots.forEach { r ->
                     FilterChip(selected = r.id == selectedId, onClick = { selectedId = r.id; driveIndex = 0 }, modifier = Modifier.testTag(DriveTags.editorRoot(r.id)),
                         label = { Text(r.label, style = MaterialTheme.typography.labelMedium) },
