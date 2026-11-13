@@ -2,7 +2,7 @@
 // Obsidian default-theme variable (component/src/theme/obsidian.gen.css, generated from data/obsidian-theme.json),
 // so the vault wears the app theme in light and dark. No literal colours here (test/test-obsidian-theme.sh).
 export const VAULT_CSS = `
-.cnv-root{display:flex;flex-direction:column;height:100%;min-height:0;font-size:var(--font-ui-medium);font-family:var(--font-interface);color:var(--text-normal);background:var(--background-primary);position:relative;overflow:hidden}
+.cnv-root{display:flex;flex-direction:column;position:fixed;inset:0;z-index:1;min-height:0;font-size:var(--font-ui-medium);font-family:var(--font-interface);color:var(--text-normal);background:var(--background-primary);position:relative;overflow:hidden}
 .cnv-body{display:flex;flex:1;min-height:0;position:relative}
 .cnv-ribbon{display:flex;flex-direction:column;gap:2px;padding:6px 4px;border-right:1px solid var(--background-modifier-border);background:var(--background-secondary);flex:none}
 .cnv-ribbon.cnv-narrow{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--background-modifier-border)}
@@ -14,7 +14,7 @@ export const VAULT_CSS = `
 .cnv-side.cnv-drawer{position:absolute;top:0;bottom:0;z-index:20;width:min(86vw,320px);background:var(--background-secondary);box-shadow:0 0 24px var(--shadow)}
 .cnv-side.cnv-drawer.cnv-right{right:0}
 .cnv-scrim{position:absolute;inset:0;z-index:19;background:var(--background-modifier-cover)}
-.cnv-drawer-actions{display:flex;flex-direction:column;padding:8px;border-bottom:1px solid var(--background-modifier-border);flex:none}
+.cnv-drawer-actions{display:flex;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:2px;padding:6px 8px;border-bottom:1px solid var(--background-modifier-border);flex:none}
 .cnv-drawer-actions .cnv-row{gap:12px;min-height:40px;font-size:var(--font-ui-medium);color:var(--text-normal)}
 .cnv-drawer-actions .cnv-row svg{color:var(--text-muted)}
 .cnv-side-tabs .cnv-tab{display:inline-flex;align-items:center;justify-content:center;min-width:36px}
@@ -97,8 +97,8 @@ export const VAULT_CSS = `
 .cnv-tree .cnv-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cnv-badge{flex:none;padding:0 4px;border:1px solid currentColor;border-radius:4px;font-size:9px;font-weight:700;line-height:14px;letter-spacing:.03em;color:var(--text-faint)}
 .cnv-badge[data-kind=canvas]{color:var(--color-purple)}.cnv-badge[data-kind=data]{color:var(--color-orange)}.cnv-badge[data-kind=image]{color:var(--color-green)}.cnv-badge[data-kind=web]{color:var(--color-blue)}.cnv-badge[data-kind=text]{color:var(--text-muted)}
-.cnv-actions{display:flex;justify-content:center;gap:6px;padding:6px 8px;flex:none;flex-wrap:wrap}
-.cnv-actions .cnv-btn{min-width:40px;min-height:40px}
+.cnv-actions{display:flex;justify-content:center;gap:2px;padding:6px 4px;flex:none;flex-wrap:wrap}
+.cnv-actions .cnv-btn{min-width:34px;min-height:40px;padding:4px}
 .cnv-actions .cnv-btn[data-on=true]{color:var(--interactive-accent)}
 .cnv-viewpill{display:flex;align-items:center;gap:10px;margin:2px 10px 6px;padding:0 16px;min-height:48px;border:0;border-radius:999px;background:var(--background-modifier-hover);color:var(--text-normal);font:inherit;font-weight:700;font-size:var(--font-ui-small);cursor:pointer;flex:none;position:relative}
 .cnv-viewpill>span{flex:1;text-align:left}

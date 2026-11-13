@@ -217,12 +217,12 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
     : rightPane === 'outgoing' ? <OutgoingPane api={api} />
     : <TagsPane api={api} onTag={t => { setSearchSeed('#' + t); showLeft('search'); }} />;
 
-  // Obsidian mobile has no ribbon strip: on a narrow screen the ribbon's actions are a labelled row at the top of the left
+  // Obsidian mobile has no ribbon strip: on a narrow screen the ribbon's actions are one compact icon row at the top of the left
   // drawer (data-testid vault-drawer-actions); on a wide screen they stay the vertical ribbon at the far left (#1369).
   const ribbonButtons = (labelled: boolean) => decl.layout.ribbon.map(r => (
-    <button key={r.id} type="button" className={labelled ? 'cnv-row' : 'cnv-btn'} title={r.label} aria-label={r.label} data-ribbon={r.id}
+    <button key={r.id} type="button" className="cnv-btn" title={r.label} aria-label={r.label} data-ribbon={r.id}
       onClick={() => { if (labelled && !r.action.startsWith('pane:')) setLeftOpen(false); ribbonAction(r.action); }}>
-      <Icon name={r.icon} />{labelled && <span>{r.label}</span>}
+      <Icon name={r.icon} />
     </button>
   ));
 

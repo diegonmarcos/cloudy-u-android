@@ -34,7 +34,7 @@ export const Menu = ({ items, onPick, onClose, style, testId, header }: {
         <div key={it.id}>
           {it.divider && <hr />}
           {it.title && <div className="cnv-menu-title">{it.title}</div>}
-          <button type="button" role="menuitem" className="cnv-row" disabled={it.disabled} aria-checked={it.checked} data-item={it.id}
+          <button type="button" role="menuitem" className="cnv-row" disabled={it.disabled} aria-checked={it.checked} aria-label={it.label} data-item={it.id}
             style={it.disabled ? { opacity: 0.45 } : undefined}
             onClick={() => { onClose(); onPick(it.id); }}>
             {it.icon ? <Icon name={it.icon} size={16} /> : <span style={{ width: 16 }} />}
