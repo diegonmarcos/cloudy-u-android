@@ -2,7 +2,7 @@
 // Obsidian default-theme variable (component/src/theme/obsidian.gen.css, generated from data/obsidian-theme.json),
 // so the vault wears the app theme in light and dark. No literal colours here (test/test-obsidian-theme.sh).
 export const VAULT_CSS = `
-.cnv-root{display:flex;flex-direction:column;position:fixed;inset:0;z-index:1;min-height:0;font-size:var(--font-ui-medium);font-family:var(--font-interface);color:var(--text-normal);background:var(--background-primary);position:relative;overflow:hidden}
+.cnv-root{display:flex;flex-direction:column;position:fixed;inset:0;z-index:1;min-height:0;font-size:var(--font-ui-medium);font-family:var(--font-interface);color:var(--text-normal);background:var(--background-primary);overflow:hidden}
 .cnv-body{display:flex;flex:1;min-height:0;position:relative}
 .cnv-ribbon{display:flex;flex-direction:column;gap:2px;padding:6px 4px;border-right:1px solid var(--background-modifier-border);background:var(--background-secondary);flex:none}
 .cnv-ribbon.cnv-narrow{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--background-modifier-border)}
