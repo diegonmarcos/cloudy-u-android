@@ -3,9 +3,11 @@ import fsOperation from "fileSystem";
 import toast from "components/toast";
 import confirm from "dialogs/confirm";
 import loader from "dialogs/loader";
+import select from "dialogs/select";
 import Ref from "html-tag-js/ref";
 import actionStack from "lib/actionStack";
 import auth, { loginEvents } from "lib/auth";
+import { openCloudAccountSignIn } from "lib/cloudAccount";
 import config from "lib/config";
 import helpers from "utils/helpers";
 import Url from "utils/Url";
@@ -113,12 +115,18 @@ function create($container, $toggler) {
 			let user = await auth.getLoggedInUser();
 
 			if (!user) {
-				const confirmation = await confirm(
-					strings.confirm,
-					strings["confirm-login"],
-				);
+				// #1693 two ways in: the Acode account (the plugin marketplace's own, upstream) or Cloud Account (the fleet's one sign-in)
+				loader.hide();
+				const way = await select(strings["confirm-login"], [
+					{ value: "acode", text: strings.login },
+					{ value: "cloud-account", text: strings["sign-in-via-cloud-account"] || "Sign in via Cloud Account" },
+				]);
 
-				if (!confirmation) {
+				if (way === "cloud-account") {
+					await openCloudAccountSignIn(globalThis.system, (message) => toast(message));
+					return;
+				}
+				if (way !== "acode") {
 					return;
 				}
 

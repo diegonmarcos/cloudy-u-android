@@ -94,6 +94,13 @@
             </intent-filter>
         </config-file>
 
+        <!-- #1693 Cloud Account is the fleet's one sign-in: visible by name so "Sign in via Cloud Account" can open it on API 30+ -->
+        <config-file parent="/*" target="AndroidManifest.xml">
+            <queries>
+                <package android:name="com.diegonmarcos.cloudaccount" />
+            </queries>
+        </config-file>
+
         <config-file target="AndroidManifest.xml" parent="./application">
             <activity-alias
                 android:name=".MainActivityIconDefault"

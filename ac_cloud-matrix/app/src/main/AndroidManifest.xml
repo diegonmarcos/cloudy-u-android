@@ -11,6 +11,11 @@
     <!-- To be able to install APK from the application -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- #1693 Cloud Account is the fleet's one sign-in: visible by name so the "Sign in via Cloud Account" entry can open it on API 30+ -->
+    <queries>
+        <package android:name="com.diegonmarcos.cloudaccount" />
+    </queries>
+
     <application
         android:name=".ElementXApplication"
         android:allowBackup="false"

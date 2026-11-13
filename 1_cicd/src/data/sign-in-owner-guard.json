@@ -136,7 +136,7 @@
         "credential-prompt",
         "oauth-browser"
       ],
-      "why": "Element X upstream Matrix login (password / OIDC); kept as an upstream login with a Sign in via Cloud Account entry where the protocol allows",
+      "why": "Element X upstream Matrix login (password / OIDC); upstream login kept; the onboarding carries the Sign in via Cloud Account entry (#1693, test-matrix-cloud-account-entry.sh)",
       "until": "permanent"
     },
     {
@@ -144,7 +144,7 @@
       "rules": [
         "oauth-browser"
       ],
-      "why": "Acode upstream auth and custom-tabs plugins; kept as an upstream login",
+      "why": "Acode upstream auth and custom-tabs plugins kept as the upstream login; the sidebar sign-in choice carries the Sign in via Cloud Account entry (#1693, test-code-cloud-account-entry.sh)",
       "until": "permanent"
     },
     {

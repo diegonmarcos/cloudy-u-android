@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- #1693 the fleet's one sign-in is Cloud Account; not Localazy-managed, so a sync does not drop it -->
+  <string name="cloud_account_sign_in">Sign in via Cloud Account</string>
+  <string name="cloud_account_missing">Cloud Account is not installed: install it to sign in there.</string>
+</resources>

@@ -306,6 +306,15 @@ private fun OnBoardingButtons(
                     .fillMaxWidth()
             )
         }
+        // #1693 Cloud Account is the fleet's one sign-in: this entry opens it at the Matrix page (the login above stays the upstream one).
+        val context = androidx.compose.ui.platform.LocalContext.current
+        TextButton(
+            text = stringResource(id = R.string.cloud_account_sign_in),
+            onClick = { openCloudAccountSignIn(context) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(TestTags.onBoardingCloudAccount)
+        )
         if (state.canCreateAccount) {
             TextButton(
                 text = stringResource(id = R.string.screen_onboarding_sign_up),
@@ -359,4 +368,16 @@ internal fun OnBoardingViewPreview(
         onLearnMoreClick = {},
         onCreateAccountContinue = {},
     )
+}
+
+private const val CLOUD_ACCOUNT_PACKAGE = "com.diegonmarcos.cloudaccount"
+
+/** Opens Cloud Account at the Matrix provider page; a missing Cloud Account is a toast naming the fix, never a crash. */
+private fun openCloudAccountSignIn(context: android.content.Context) {
+    val intent = android.content.Intent("$CLOUD_ACCOUNT_PACKAGE.OPEN").setPackage(CLOUD_ACCOUNT_PACKAGE)
+        .putExtra("section", "connect").putExtra("page", "hub").putExtra("provider", "matrix")
+        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+    runCatching { context.startActivity(intent) }.onFailure {
+        android.widget.Toast.makeText(context, context.getString(R.string.cloud_account_missing), android.widget.Toast.LENGTH_LONG).show()
+    }
 }

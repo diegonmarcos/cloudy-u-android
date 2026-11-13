@@ -16,6 +16,7 @@ object TestTags {
      * OnBoarding screen.
      */
     val onBoardingSignIn = TestTag("onboarding-sign_in")
+    val onBoardingCloudAccount = TestTag("onboarding-cloud_account")
 
     /**
      * Login screen.
