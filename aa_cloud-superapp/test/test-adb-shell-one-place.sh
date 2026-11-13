@@ -117,7 +117,7 @@ for f, why in (("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/c
                ("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlFragment.kt", "the Dev control chip")):
     ok("ShellClient.openArmPage(" in code(f), f"{why} opens the page", f"{why} no longer opens the ADB Shell page")
 pp = code("ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/PermsPage.kt")
-ok('go("setup", "adb-shell")' in pp, "Account's Perms page links to Setup > ADB Shell", "Account's Perms page does not link to the ADB Shell page")
+ok("ShellClient.openArmPage(ctx)" in pp and 'go("setup", "adb-shell")' not in pp, "Account's Perms page opens the owner's ADB Shell page (#1682)", "Account's Perms page does not link to the ADB Shell page")
 
 # G6: per-app identity (the lib derives it from the HOST's build.json; no app's label is typed in the shared code)
 LIB = "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools"
