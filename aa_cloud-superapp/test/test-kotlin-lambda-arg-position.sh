@@ -149,7 +149,7 @@ def scan(roots):
                 dirnames[:] = []; continue
             files += [os.path.join(dirpath, f) for f in filenames if f.endswith('.kt')]
 
-    cache, traps = {}, {}
+    cache, traps, private_traps = {}, {}, {}
     for path in files:
         try: src = open(path, encoding='utf-8', errors='replace').read()
         except OSError: continue
@@ -170,9 +170,27 @@ def scan(roots):
             if len(params) < 2 or is_functional(params[-1]):
                 continue                          # the lambda lands where meant
             if any(is_functional(p) for p in params[:-1]):
-                traps[name] = (path, code[:m.start()].count('\n') + 1)
+                # A PRIVATE function is visible to its own file only (#1728: ui-nav-bars' test helper `private fun show(dark, ...)`
+                # re-aimed nothing in an app that merely links the lib): its trap is armed for that file alone.
+                line_start = code.rfind('\n', 0, m.start()) + 1
+                if re.search(r'\bprivate\b', code[line_start:m.start()]):
+                    private_traps.setdefault(name, []).append((path, code[:m.start()].count('\n') + 1))
+                else:
+                    traps[name] = (path, code[:m.start()].count('\n') + 1)
 
     hits = []
+    if not traps and not private_traps:
+        return traps, hits
+    # a private trap is a trap for its own file only: it joins the scan under that restriction
+    for name, decls in private_traps.items():
+        for dpath, dline in decls:
+            for path, src in cache.items():
+                if path != dpath: continue
+                for lineno, line in enumerate(src.split('\n'), 1):
+                    stripped = line.lstrip()
+                    if stripped.startswith(('//', '*', '/*')) or 'fun ' + name in line: continue
+                    if re.search(r'(?<![\w"])' + re.escape(name) + r'\s*\([^()]*\)\s*\{', line):
+                        hits.append((path, lineno, name, (dpath, dline), stripped))
     if not traps:
         return traps, hits
     # A leading '"' is excluded as well as a word character: a tester asserting
