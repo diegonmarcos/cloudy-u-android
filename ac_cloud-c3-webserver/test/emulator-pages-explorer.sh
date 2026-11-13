@@ -14,6 +14,13 @@ tap_re() {  # tap the nth (default first) node whose text / content-desc starts 
   [ -n "$b" ] || return 1
   set -- $b; adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 ))
 }
+SZ=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); SW=${SZ%x*}; SH=${SZ#*x}
+up() { adb shell input swipe $((SW/2)) $((SH*70/100)) $((SW/2)) $((SH*30/100)) 350; sleep 1; }   # scroll the page down
+top_() { for i in 1 2 3 4 5 6; do adb shell input swipe $((SW/2)) $((SH*30/100)) $((SW/2)) $((SH*75/100)) 250; done; sleep 1; }
+tap_scroll() {  # scroll down until a node matching $1 shows, then tap it (the last match on screen)
+  for i in 1 2 3 4 5 6 7; do tap_re "$1" L && return 0; up; done; return 1
+}
+seen_scroll() { for i in 1 2 3 4 5 6 7; do has "$1" && return 0; up; done; return 1; }
 has() { dump cur; grep -q "$1" "$OUT/cur.xml"; }
 rc=0; fail() { echo "::error::$*"; rc=1; }
 # shared storage readable by the app, and files for every renderer: Markdown, JSON, text
@@ -27,28 +34,28 @@ adb logcat -c; adb shell am start -W -n "$W/.MainActivity" >/dev/null; sleep 10
 for i in 1 2 3; do tap_re "Not now|Skip|Later|Dismiss|Cancel|Allow|While using" && sleep 2; done
 tap_re "Pages" L || fail "no Pages tab"; sleep 4
 shoot 01-pages-all; dump 01-pages-all
-has "Open in Browser" || fail "All: a root row has no Open in Browser"
+seen_scroll "Open in Browser" || fail "All: a root row has no Open in Browser"
+shoot 02-root-action-set
 has "Open Embedded" || fail "All: a root row has no Open Embedded"
 has "Open Folder" || fail "All: the drive root has no Open Folder (Drive)"
-# a swipe up shows the served pages below the roots
-adb shell input swipe 540 1700 540 600 300; sleep 2; shoot 02-pages-all-served
-adb shell input swipe 540 600 540 1700 300; sleep 1
 # the Open Folder chooser (Browser vs Embedded)
-tap_re "Open Folder" && sleep 3 || fail "no Open Folder (Drive) chip"
+tap_re "Open Folder" L && sleep 3 || fail "no Open Folder (Drive) chip"
 shoot 03-link-chooser; has "Embedded" || fail "the chooser does not offer Embedded"
 tap_re "Cancel" && sleep 1
+# the served pages below the roots
+for i in 1 2 3; do up; done; shoot 02b-pages-all-served
 # File Explorer: the list, then the framework view of Emulated storage
-tap_re "File Explorer" 1 && sleep 3 || fail "no File Explorer sub page"
+top_; tap_re "File Explorer" 1 && sleep 3 || fail "no File Explorer sub page"
 shoot 04-explorer-roots
-tap_re "▶ Explore" L || fail "no Explore chip on a ready root"; sleep 9
+tap_scroll "▶ Explore" || fail "no Explore chip on a ready root"; sleep 9
 shoot 05-explorer-framework; dump 05-explorer-framework
 has "Tree view" || fail "the explorer has no Tree view switch (framework view not the default)"
 # the tree view
 tap_re "Tree view" && sleep 4; shoot 06-explorer-tree
 has "c3-proof\|Android\|DCIM" || echo "note: tree shows no known folder"
 tap_re "‹ Roots" && sleep 2
-# Pages sub page (second row; the label is "Pages" and is the first match on that row)
-tap_re "Pages" 1 && sleep 1; shoot 07-pages-browser
+# Pages sub page (second row)
+top_; tap_re "Pages" 1 && sleep 1; shoot 07-pages-browser
 adb logcat -d -t 1500 > "$OUT/logcat.txt" 2>/dev/null || true
 grep -q "FATAL EXCEPTION" "$OUT/logcat.txt" && grep -A3 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -q "$W" && fail "the app crashed during the walk"
 exit $rc
