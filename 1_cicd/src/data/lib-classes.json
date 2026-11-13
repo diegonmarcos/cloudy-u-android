@@ -8,7 +8,7 @@
     "pinned": "Non-GUI, but bound to the consuming process by an OS boundary no IPC fixes; the reason is required.",
     "logic": "Non-GUI logic still compiled into its apps: the migration backlog. Each one is a candidate engine."
   },
-  "backlog_baseline": 28,
+  "backlog_baseline": 29,
   "libs": {
     "ai":                      { "class": "gui",      "why": "#823 the fleet's AI chat (renamed from search-page) in Compose: the page, the consent card, the assistant panel, the gateway and OpenRouter backends and the shared ai.json contract, hosted and themed by cloud-search, cloud-browser, cloud-drive and cloud-tools-small-llms. It stores nothing of its own (sessions go in the host's AiSessionStore), reads no OpenRouter key (the app hands an AiTokenSource) and ships no APK." },
     "ai-usage":                { "class": "contract", "why": "#1499 the read of the fleet AI usage table (c3 API GET /ai/usage): AiUsageClient (mesh first, public with the fleet bearer) and AiUsageModel (parse + card words), shared by the SuperApp Notify AI badge and Cloud SuperIntel Cost so one source feeds both. Plain JVM over org.json, renders nothing. #1543 added the weekly now-usage model (AiUsageModel.week, four-line words) and the per-family token tables (Tokens, Period, FamilyRow) both consumers draw; still pure parse + words, no I/O beyond AiUsageClient. Budget 270 -> 330.", "budget_lines": 330 },
