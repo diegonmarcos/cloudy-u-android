@@ -97,7 +97,7 @@ object EngineProfiles {
 
     val ENGINES: List<Engine> = listOf(
         engine("notify", "Notify", "the notification engine: the one notify() door, the phone-notification intake, the badges / data widgets, alerts",
-            appDirs = listOf("notificationcenter"), libs = listOf("libs:decisions-link", "libs:kde-connect", "libs:ai-usage", "libs:fleet-notify"),
+            appDirs = listOf("notificationcenter", "daytimelines"), libs = listOf("libs:decisions-link", "libs:kde-connect", "libs:ai-usage", "libs:fleet-notify"),
             libPackages = listOf("$APP.decisions.link", "$APP.kdeconnect"),
             hotPaths = listOf(
                 HotPath("post", "notify() door", 8.0, "NotifyGate.post"),

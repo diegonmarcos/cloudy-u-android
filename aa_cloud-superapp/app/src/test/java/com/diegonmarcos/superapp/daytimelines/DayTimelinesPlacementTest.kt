@@ -38,6 +38,8 @@ class DayTimelinesPlacementTest : KitPageHarness() {
     private val noon = date.atTime(12, 0).atZone(berlin).toInstant().toEpochMilli()
     private val startHour = date.atStartOfDay(berlin).toEpochSecond() / 3600L
 
+    private fun n(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true)
+
     private fun snapshot(status: DataStatus = DataStatus(DataStatus.Kind.LIVE, 0L), note: String? = null): DayRepo.Snapshot {
         val hrs = (0 until 24).map { Hour(startHour + it, 8.0 + it * 0.6, if (it < 8) "clearsky_night" else if (it < 14) "rain" else "partlycloudy_day") }
         return DayRepo.Snapshot(DayTimelines.build(date, berlin, "Berlin", 52.52, 13.405, hrs, noon), status, note)
@@ -47,37 +49,37 @@ class DayTimelinesPlacementTest : KitPageHarness() {
         showKit { DayTimelinesBody(snapshot(), noon) }
         for (t in listOf(DayTimelinesTags.HEADER, DayTimelinesTags.LANES, DayTimelinesTags.DAY, DayTimelinesTags.TEMP, DayTimelinesTags.MOON,
             DayTimelinesTags.SKY, DayTimelinesTags.NOW, DayTimelinesTags.AXIS, DayTimelinesTags.LEGEND, DayTimelinesTags.STATUS))
-            compose.onNodeWithTag(t).assertExists()
-        compose.onNodeWithTag(DayTimelinesTags.icon(0)).assertExists()
-        compose.onNodeWithTag(DayTimelinesTags.icon(8)).assertExists()
-        compose.onNodeWithTag(DayTimelinesTags.sky("sun")).assertExists()
-        compose.onNodeWithTag(DayTimelinesTags.sky("jupiter"), useUnmergedTree = true).assertExists()
+            n(t).assertExists()
+        n(DayTimelinesTags.icon(0)).assertExists()
+        n(DayTimelinesTags.icon(8)).assertExists()
+        n(DayTimelinesTags.sky("sun")).assertExists()
+        n(DayTimelinesTags.sky("jupiter")).assertExists()
     }
 
     @Test fun `tap flips to the JSON data and back`() {
         showKit { DayTimelinesBody(snapshot(), noon) }
-        compose.onNodeWithTag(DayTimelinesTags.JSON).assertDoesNotExist()
+        n(DayTimelinesTags.JSON).assertDoesNotExist()
         compose.onNodeWithTag(DayTimelinesTags.CARD).performClick(); compose.waitForIdle()
-        compose.onNodeWithTag(DayTimelinesTags.JSON).assertExists()
-        compose.onNodeWithTag(DayTimelinesTags.LANES).assertDoesNotExist()
+        n(DayTimelinesTags.JSON).assertExists()
+        n(DayTimelinesTags.LANES).assertDoesNotExist()
         compose.onNodeWithTag(DayTimelinesTags.CARD).performClick(); compose.waitForIdle()
-        compose.onNodeWithTag(DayTimelinesTags.LANES).assertExists()
+        n(DayTimelinesTags.LANES).assertExists()
     }
 
     @Test fun `offline card says so and still draws the sky`() {
         showKit { DayTimelinesBody(snapshot(DataStatus(DataStatus.Kind.CACHED, 3 * 3_600_000L, "offline"), "Default city: no location fix on this phone yet"), noon) }
-        compose.onNodeWithTag(DayTimelinesTags.STATUS).assertExists()
-        val txt = compose.onNodeWithTag(DayTimelinesTags.STATUS).fetchSemanticsNode().config
+        n(DayTimelinesTags.STATUS).assertExists()
+        val txt = n(DayTimelinesTags.STATUS).fetchSemanticsNode().config
             .getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)?.joinToString("") { it.text }.orEmpty()
         assertTrue(txt, txt.contains("cached 3 h ago") && txt.contains("Default city"))
-        compose.onNodeWithTag(DayTimelinesTags.MOON).assertExists()
+        n(DayTimelinesTags.MOON).assertExists()
         // No data at all: a reason, no crash, bars still there.
         val none = DayRepo.Snapshot(DayTimelines.build(date, berlin, "Berlin", 52.52, 13.405, emptyList(), noon), DataStatus(DataStatus.Kind.NONE, 0L, "offline"), null)
         showKit { DayTimelinesBody(none, noon) }
-        compose.onNodeWithTag(DayTimelinesTags.TEMP).assertExists()
-        compose.onNodeWithTag(DayTimelinesTags.icon(0)).assertDoesNotExist()
+        n(DayTimelinesTags.TEMP).assertExists()
+        n(DayTimelinesTags.icon(0)).assertDoesNotExist()
         showKit { DayTimelinesBody(null, noon) }
-        compose.onNodeWithTag(DayTimelinesTags.STATUS).assertExists()
+        n(DayTimelinesTags.STATUS).assertExists()
     }
 
     // ---- placement 2: the date dropdown, right after the Agenda
@@ -94,7 +96,7 @@ class DayTimelinesPlacementTest : KitPageHarness() {
         compose.onNodeWithTag("cal:table:timelines").assertExists()
         compose.onNodeWithTag(DayTimelinesTags.CARD, useUnmergedTree = true).assertExists()
         compose.onNodeWithTag("cal:table:todo").assertExists()
-        fun top(tag: String) = compose.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.top
+        fun top(tag: String) = compose.onNodeWithTag(tag).fetchSemanticsNode().positionInRoot.y
         assertTrue("agenda, then timelines, then todo", top("cal:table:agenda") < top("cal:table:timelines") && top("cal:table:timelines") < top("cal:table:todo"))
     }
 
