@@ -154,7 +154,7 @@ object DriveBenchmarks {
             if (!hasGrant(ctx)) return@XrayBenchmark "media access not granted"
             strips.forEach { loadStrip(ctx, it) }; null
         },
-        XrayBenchmark("drive.core.ab", "Rust vs Kotlin engines (A/B)", "read-only; hashing of the bounded sample, a walk capped at ${SIZE_MAX_ENTRIES * 3} entries and 6 s, a tree diff of that listing; each engine twice, Rust then Kotlin", 40_000, 2) { ctx -> driveCoreAb(ctx) },
+        XrayBenchmark("engines.rust-vs-kotlin.ab", "Rust vs Kotlin engines (A/B)", "read-only; hashing of the bounded sample, a walk capped at ${SIZE_MAX_ENTRIES * 3} entries and 6 s, a tree diff of that listing; each engine twice, Rust then Kotlin", 40_000, 2) { ctx -> driveCoreAb(ctx) },
     )
 
     /**
@@ -179,7 +179,7 @@ object DriveBenchmarks {
         DriveCore.nativeUnavailableReason()?.let { return "the Rust core is not loaded ($it): nothing to compare" }
         val files = sampleFiles(ctx)
         val root = (if (Places.hasAllFilesAccess(ctx)) runCatching { Environment.getExternalStorageDirectory() }.getOrNull() else null)?.takeIf { it.isDirectory } ?: ctx.filesDir
-        return XrayProfiler.span("drive.core.ab") { sp ->
+        return XrayProfiler.span("engines.rust-vs-kotlin.ab") { sp ->
             for (impl in Impl.entries) {
                 if (files.isNotEmpty()) DriveCore.withImpl(Engine.HASH, impl) { DriveCore.hashFiles(files.map { it.absolutePath }, DriveCore.BLAKE3 or DriveCore.SHA256) }
                 val snap = DriveCore.withImpl(Engine.WALK, impl) { DriveCore.walk(root.absolutePath, WalkOpts(maxEntries = SIZE_MAX_ENTRIES.toLong() * 3, budgetMs = WALK_MS, listFiles = true)) }

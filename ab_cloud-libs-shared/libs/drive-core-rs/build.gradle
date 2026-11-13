@@ -21,8 +21,11 @@ def targetDir = layout.buildDirectory.dir('cargo-target').get().asFile
 def hostDir = layout.buildDirectory.dir('cargo-host').get().asFile
 def minApi = 26
 
+// Found by looking at PATH (and rustup's default bin dir), not by running `cargo --version`: an external process at configuration time is
+// refused by Gradle's configuration cache.
 def hasCargo = {
-    try { new ProcessBuilder('cargo', '--version').redirectErrorStream(true).start().waitFor() == 0 } catch (Exception ignored) { false }
+    def dirs = (System.getenv('PATH') ?: '').split(File.pathSeparator).toList() + [System.getProperty('user.home') + '/.cargo/bin']
+    dirs.any { it && new File(it, 'cargo').canExecute() }
 }.call()
 
 def ndkHome = {
@@ -90,11 +93,11 @@ abis.each { abi, spec ->
         // 16 KB page size (Android 15+): LOAD segments aligned to 16 KB whatever the NDK default is (page-size guard).
         environment "CARGO_TARGET_${envTriple}_RUSTFLAGS", '-C link-arg=-Wl,-z,max-page-size=16384'
         commandLine 'cargo', 'build', '--release', '--target', triple
+        def builtSo = new File(targetDir, "${triple}/release/libdrive_core_rs.so")
+        def abiDir = new File(jniOut, abi)
         doLast {
-            copy {
-                from new File(targetDir, "${triple}/release/libdrive_core_rs.so")
-                into new File(jniOut, abi)
-            }
+            abiDir.mkdirs()
+            java.nio.file.Files.copy(builtSo.toPath(), new File(abiDir, 'libdrive_core_rs.so').toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
         }
     }
     rustTasks << t

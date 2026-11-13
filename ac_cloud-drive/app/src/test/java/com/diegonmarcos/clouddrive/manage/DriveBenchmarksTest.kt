@@ -12,7 +12,7 @@ class DriveBenchmarksTest {
 
     @Test fun theEightHotPathsAndTheRustABAreDeclared() {
         assertEquals(listOf("xray.memory.scan", "drive.largest-folders.walk", "fsync.folder.scan", "git.status.read", "git.sync.light-check",
-            "apps.local.refresh", "files.hash.sha256", "mediastore.data-strips.query", "drive.core.ab"), ops)
+            "apps.local.refresh", "files.hash.sha256", "mediastore.data-strips.query", "engines.rust-vs-kotlin.ab"), ops)
     }
 
     @Test fun everyBenchmarkIsBoundedAndSaysWhyItIsSafe() {
@@ -35,7 +35,7 @@ class DriveBenchmarksTest {
             "xray.memory.scan" to "manage/XrayMemoryCollector.kt", "drive.largest-folders.walk" to "manage/DataScanner.kt", "fsync.folder.scan" to "sync/RepoDiskSize.kt",
             "git.status.read" to "sync/GitSyncCoordinator.kt", "git.sync.light-check" to "sync/GitSyncCoordinator.kt", "apps.local.refresh" to "manage/AppSnapshot.kt",
             "files.hash.sha256" to "manage/DriveBenchmarks.kt", "mediastore.data-strips.query" to "manage/OverviewAppsData.kt",
-            "drive.core.ab" to "manage/DriveBenchmarks.kt")
+            "engines.rust-vs-kotlin.ab" to "manage/DriveBenchmarks.kt")
         assertEquals(ops.toSet(), where.keys)
         where.forEach { (op, file) -> assertTrue("$op is not a span in $file", source(file).contains("span(\"$op")) }
     }
