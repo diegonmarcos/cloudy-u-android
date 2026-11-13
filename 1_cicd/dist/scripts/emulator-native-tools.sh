@@ -21,6 +21,8 @@ FILES="/data/data/$PKG/files"
 adb shell "ls -l $NLD" | tee "$OUT/nld.txt"
 adb shell am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -p "$PKG" >/dev/null 2>&1 || true
 sleep 5
+# What the app's own start does (init-sandbox.sh): the files dir exists and libtalloc.so.2 is a link to the bundled library.
+adb shell "run-as $PKG sh -c 'mkdir -p $FILES/tmp && ln -sf $NLD/libtalloc.so $FILES/libtalloc.so.2'"
 fail=0
 for spec in "$@"; do
   f="${spec%%:*}"; rest="${spec#*:}"
@@ -29,11 +31,11 @@ for spec in "$@"; do
       if adb shell "[ -f $NLD/$f ]"; then echo "ok   $f present"; else echo "FAIL $f missing from $NLD"; fail=1; fi ;;
     run:*)
       args="${rest#run:}"
-      out=$(adb shell "run-as $PKG sh -c 'cd $FILES && $NLD/$f $args' 2>&1; echo RC=\$?" | tr -d '\r'); rc=$(echo "$out" | sed -n 's/^RC=//p' | tail -1)
+      out=$(adb shell "run-as $PKG sh -c 'cd $FILES && LD_LIBRARY_PATH=$FILES:$NLD $NLD/$f $args' 2>&1; echo RC=\$?" | tr -d '\r'); rc=$(echo "$out" | sed -n 's/^RC=//p' | tail -1)
       echo "$out" | head -5
       if [ "$rc" = 0 ]; then echo "ok   $f runs"; else echo "FAIL $f rc=$rc"; fail=1; fi ;;
     prootrun)
-      out=$(adb shell "run-as $PKG sh -c 'mkdir -p $FILES/tmp && cd $FILES && PROOT_TMP_DIR=$FILES/tmp PROOT_LOADER=$NLD/libproot.so LD_LIBRARY_PATH=$NLD $NLD/$f --kill-on-exit -r / /system/bin/sh -c \"echo PROOT_OK\"' 2>&1; echo RC=\$?" | tr -d '\r')
+      out=$(adb shell "run-as $PKG sh -c 'mkdir -p $FILES/tmp && cd $FILES && PROOT_TMP_DIR=$FILES/tmp PROOT_LOADER=$NLD/libproot.so LD_LIBRARY_PATH=$FILES:$NLD $NLD/$f --kill-on-exit -r / /system/bin/sh -c \"echo PROOT_OK\"' 2>&1; echo RC=\$?" | tr -d '\r')
       echo "$out" | head -8
       if echo "$out" | grep -q PROOT_OK; then echo "ok   $f ran a command through proot"; else echo "FAIL $f proot run"; fail=1; fi ;;
   esac
