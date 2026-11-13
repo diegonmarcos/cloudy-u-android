@@ -144,6 +144,10 @@ jobs:
           else gh release download latest -R "$GITHUB_REPOSITORY" -p 'CG-Omniverse-x86_64.apk' -D apk; fi
           pick=$(find apk -name '*.apk' | head -1); [ -n "$pick" ] || { echo "::error::no APK"; exit 1; }
           cp "$pick" app.apk; ls -la app.apk
+          # #1694 the same emulator's Cloud-Browser (best effort): floor796 is loaded in it for the side-by-side
+          gh release download latest -R "$GITHUB_REPOSITORY" -p 'Cloud-Browser-x86_64.apk' -D browser 2>/dev/null \
+            || gh release download latest-x86_64 -R "$GITHUB_REPOSITORY" -p 'Cloud-Browser-x86_64.apk' -D browser 2>/dev/null || true
+          [ -f browser/Cloud-Browser-x86_64.apk ] && cp browser/Cloud-Browser-x86_64.apk browser.apk || true
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -223,6 +227,10 @@ jobs:
           launch("-e", "world", "webgl-fluid-simulation", wait=0); shot("07-galaxy-world-fluid", 20)
           sh("shell", "input", "swipe", "300", "1200", "800", "900", "300"); shot("08-galaxy-world-fluid-touched", 2)
           # Avatar last (#1373 owns it): a slow or hung Avatar page cannot cost the Store and Galaxy shots
+          sh("shell", "dumpsys", "webviewupdate"); open("screens/webview.txt", "w").write(sh("shell", "dumpsys", "webviewupdate").stdout)
+          if len(sys.argv) > 2:   # Cloud-Browser on the same emulator, the same address, the same wait (#1694)
+              sh("shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", "https://floor796.com", "-p", sys.argv[2]); time.sleep(5)
+              shot("08-cloud-browser-floor796", 110)
           launch("-e", "section", "avatar", wait=0); shot("01-avatar-default", 20)
           sh("shell", "input", "swipe", "700", "900", "350", "900", "600"); shot("02-avatar-rotated", 3)
           PY
@@ -232,9 +240,10 @@ jobs:
           mkdir -p screens
           adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
           adb install -r -g app.apk || exit 2
+          BR=""; if [ -f browser.apk ]; then adb install -r -g browser.apk && BR=com.diegonmarcos.cloudbrowser; fi
           PKG=com.diegonmarcos.cgomniverse
           adb logcat -v threadtime "*:W" chromium:I > screens/logcat.txt 2>&1 &
-          python3 walk.py "$PKG"; rc=$?
+          python3 walk.py "$PKG" $BR; rc=$?
           adb shell dumpsys package "$PKG" | grep -E "versionName|codePath" > screens/package.txt || true
           ls -la app.apk >> screens/package.txt
           exit $rc
