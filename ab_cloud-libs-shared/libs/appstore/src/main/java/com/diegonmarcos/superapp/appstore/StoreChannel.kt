@@ -46,7 +46,7 @@ internal object ControlStatus {
         ChannelStatus(Channel.NOT_PAIRED, null, reason, System.currentTimeMillis(), AdbLink.UNKNOWN, "")
 
     fun fromBroker(s: ShellStatus): ChannelStatus = when {
-        !s.brokerInstalled -> ChannelStatus(Channel.NOT_PAIRED, null, s.reason.ifBlank { "SuperApp (the shell broker) is not installed" }, s.checkedAt)
+        !s.brokerInstalled -> ChannelStatus(Channel.NOT_PAIRED, null, s.reason.ifBlank { "Cloud C3 Webserver (the ADB owner) is not installed" }, s.checkedAt)
         s.armed -> ChannelStatus(Channel.UP, s.channel, null, s.checkedAt, s.adb, s.adbDetail)
         else -> ChannelStatus(Channel.DOWN, null, s.reason.ifBlank { s.detail }.ifBlank { "not armed" }, s.checkedAt, s.adb, s.adbDetail)
     }
@@ -66,8 +66,8 @@ internal object ControlStatus {
     private fun adbPart(s: ChannelStatus): String = s.adb.label + if (s.adbDetail.isNotBlank()) " (${s.adbDetail})" else ""
 
     fun label(s: ChannelStatus): String = when (s.state) {
-        Channel.UP -> "${adbPart(s)} · Shell: SuperApp broker (${s.via ?: "armed"})${s.at}"
-        Channel.DOWN -> "${adbPart(s)} · Shell broker: ${s.reason ?: "not armed"} - Arm in SuperApp${s.at}"
-        Channel.NOT_PAIRED -> "Shell broker: ${s.reason ?: "SuperApp missing"}${s.at}"
+        Channel.UP -> "${adbPart(s)} · Shell: Cloud C3 Webserver (${s.via ?: "armed"})${s.at}"
+        Channel.DOWN -> "${adbPart(s)} · Shell broker: ${s.reason ?: "not armed"} - Arm in Cloud C3 Webserver${s.at}"
+        Channel.NOT_PAIRED -> "Shell broker: ${s.reason ?: "Cloud C3 Webserver missing"}${s.at}"
     }
 }

@@ -440,7 +440,7 @@ private fun OsReachCard(ctx: Context, apps: List<Pair<String, String>>, channelU
             owner == null || owner.pkg.isEmpty() -> "ADB owner: " + (doc.problem ?: "not declared")
             else -> "ADB owner: ${doc.app(owner.pkg)?.label ?: owner.app}  ·  ${owner.pkg}  ·  ${if (ownerInstalled == true) "installed" else "not installed"}"
         }, Modifier.testTag(OsReach.TAG_OWNER), color = if (ownerInstalled == true) UP else MISSING, fontSize = StoreDensity.T_META.sp)
-        Text("The one app that owns the ADB shell (pairing, embedded adb, the shell broker); every other app reaches the shell through it.", color = DIM, fontSize = StoreDensity.T_CAPTION.sp)
+        Text("The one app that owns the ADB shell (pairing, embedded adb, the shell broker: Cloud C3 Webserver); every other app reaches the shell through it.", color = DIM, fontSize = StoreDensity.T_CAPTION.sp)
         Text(if (channelUp) "● privileged channel up: a real shell round-trip answered" else "● privileged channel down: turn on Wireless debugging (the chip above)",
             color = if (channelUp) UP else BLOCKED, fontSize = StoreDensity.T_META.sp)
         Text((if (open) "▾ " else "▸ ") + "${reach.size} installed app(s) request grants above the runtime level  ·  ${reach.sumOf { r -> r.third.count { it.granted } }} held",

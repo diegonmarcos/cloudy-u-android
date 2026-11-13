@@ -25,7 +25,21 @@ internal object StoreShell {
     fun status(ctx: Context): ShellStatus = ShellClient.status(ctx)
 
     /** #1682 THE Store's ADB door: the ADB owner's (Cloud C3 Webserver) page, by the client-safe explicit intent (ShellWire.BROKER_PKG); the Store links no owner lib, so this is what AdbShellLink.open resolves to for a client. */
-    fun arm(ctx: Context): Boolean = ShellClient.openArmPage(ctx)
+    fun arm(ctx: Context): Boolean {
+        if (ShellClient.superAppInstalled(ctx)) return ShellClient.openArmPage(ctx)
+        // Cloud C3 Webserver is missing: offer the install (the Store's own hand-off queues it on the Cloud tab) instead of a dead tap.
+        return offerInstall(ctx)
+    }
+
+    /** Opens the Store's Cloud tab with the ADB owner queued for install, and says so. False (with a toast) when that cannot start. Never throws. */
+    fun offerInstall(ctx: Context): Boolean {
+        val started = runCatching {
+            ctx.startActivity(com.diegonmarcos.superapp.updater.install.StoreHandoff.intent(ctx.packageName, com.diegonmarcos.superapp.shellclient.ShellWire.BROKER_PKG)); true
+        }.getOrDefault(false)
+        runCatching { android.widget.Toast.makeText(ctx, if (started) "Cloud C3 Webserver is not installed: installing it from the Store (it owns the ADB shell)."
+            else "Cloud C3 Webserver is not installed: it owns the ADB shell. Install it from the Store Cloud tab.", android.widget.Toast.LENGTH_LONG).show() }
+        return started
+    }
 
     internal fun text(r: ShellResult): String? = when (r) {
         is ShellResult.Ok -> r.stdout + r.stderr

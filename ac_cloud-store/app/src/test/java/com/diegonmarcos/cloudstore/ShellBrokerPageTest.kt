@@ -18,7 +18,7 @@ class ShellBrokerPageTest {
     }
 
     @Test fun aMissingSuperAppSaysToInstallIt() {
-        assertTrue(ShellBrokerPage.lines(ShellStatus(false, false, "none", "")).any { it.contains("Install Cloud SuperApp") })
+        assertTrue(ShellBrokerPage.lines(ShellStatus(false, false, "none", "")).any { it.contains("Install Cloud C3 Webserver") })
     }
 
     @Test fun beforeTheFirstAnswerItSaysChecking() {

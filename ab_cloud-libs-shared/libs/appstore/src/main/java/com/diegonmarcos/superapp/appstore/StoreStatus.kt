@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
+import com.diegonmarcos.superapp.shellclient.ShellStatus
 
 /**
  * The Store bar's two status controls, measured rather than inferred. The rules (mapping) are [ControlStatus]'s; this is the
@@ -29,11 +30,16 @@ internal object StoreStatus {
     @Volatile private var ppViaShell: ControlStatus.Tri? = null
     private val running = AtomicBoolean(false)
 
+    /** Test seams (StoreTestHooks): the clock and an injected broker answer (non-null = [refresh] runs inline, on the caller's thread). Production: the wall
+     *  clock and the live [StoreShell.status] on a probe thread; a suite that injects them reads no real time and waits for no thread. */
+    @Volatile internal var clock: () -> Long = { System.currentTimeMillis() }
+    @Volatile internal var injected: ShellStatus? = null
+
     fun channel(@Suppress("UNUSED_PARAMETER") ctx: Context): ControlStatus.ChannelStatus? = cached
-    fun fresh(@Suppress("UNUSED_PARAMETER") ctx: Context): Boolean = cached != null && System.currentTimeMillis() - at < TTL_MS
+    fun fresh(@Suppress("UNUSED_PARAMETER") ctx: Context): Boolean = cached != null && clock() - at < TTL_MS
 
     /** #1556 Whether a re-probe may start now: never while one is in flight, and never more than once per [AdbRecheck.FLOOR_MS]. */
-    fun dueForRecheck(now: Long = System.currentTimeMillis()): Boolean = AdbRecheck.due(lastProbeAt, now, running.get())
+    fun dueForRecheck(now: Long = clock()): Boolean = AdbRecheck.due(lastProbeAt, now, running.get())
 
     /** Cheap provider read; falls back to the last shell-read answer when the provider has none. */
     fun playProtect(ctx: Context): ControlStatus.Tri {
@@ -48,7 +54,13 @@ internal object StoreStatus {
 
     /** Tests only: forget the last answer AND the probe floor, so a suite that shares this JVM-wide state with an earlier one probes afresh (#1682: the
      *  Phone Apps chip test waited 15 s on a 30 s floor left by whichever suite ran first, so its outcome depended on test order). */
-    fun forgetProbeHistoryForTest() { cached = null; ppViaShell = null; lastProbeAt = 0L }
+    fun forgetProbeHistoryForTest() { cached = null; ppViaShell = null; lastProbeAt = 0L; running.set(false) }
+
+    /** Tests only: inject the clock and the broker's answer and run [refresh] inline, so no real time or thread is involved. */
+    fun injectForTest(now: Long, status: ShellStatus) { clock = { now }; injected = status; forgetProbeHistoryForTest() }
+
+    /** Tests only: back to the wall clock, the real broker read and the probe thread. */
+    fun restoreForTest() { clock = { System.currentTimeMillis() }; injected = null; forgetProbeHistoryForTest() }
 
     /**
      * Re-probe off the main thread (single flight), then [done] (call-site posts to the UI).
@@ -61,11 +73,13 @@ internal object StoreStatus {
     fun refresh(ctx: Context, done: () -> Unit) {
         if (!running.compareAndSet(false, true)) return
         val app = ctx.applicationContext
-        lastProbeAt = System.currentTimeMillis()
-        thread(name = "store-status-probe") {
+        lastProbeAt = clock()
+        val body = {
             val pool = Executors.newSingleThreadExecutor { r -> Thread(r, "store-status-broker").apply { isDaemon = true } }
             val ch: ControlStatus.ChannelStatus = try {
-                pool.submit<ControlStatus.ChannelStatus> { ControlStatus.fromBroker(StoreShell.status(app)) }
+                val inj = injected
+                if (inj != null) ControlStatus.fromBroker(inj)   // tests: no executor, no deadline, no real time
+                else pool.submit<ControlStatus.ChannelStatus> { ControlStatus.fromBroker(StoreShell.status(app)) }
                     .get(PROBE_BUDGET_MS, TimeUnit.MILLISECONDS)
             } catch (e: TimeoutException) {
                 ControlStatus.unreachable("the shell broker did not answer within ${PROBE_BUDGET_MS / 1000}s")
@@ -73,15 +87,19 @@ internal object StoreStatus {
                 ControlStatus.unreachable("the shell broker could not be reached (${(e.cause ?: e).javaClass.simpleName})")
             } finally { pool.shutdownNow() }
             try {
-                cached = ch; at = System.currentTimeMillis()
+                cached = ch; at = clock()
                 if (ch.shellUsable && ControlStatus.playProtect(StorePlayProtect.reading(app)) == ControlStatus.Tri.UNKNOWN)
                     ppViaShell = ControlStatus.playProtect(StorePlayProtect.readingViaShell(app))
             } finally { running.set(false); done() }
         }
+        if (injected != null) body() else thread(name = "store-status-probe") { body() }
     }
 }
 
 /** Tests only (StoreStatus is internal): forget the Store chip's last answer and probe floor. */
 object StoreTestHooks {
     fun forgetProbeHistory() = StoreStatus.forgetProbeHistoryForTest()
+    /** Deterministic chip: the clock stands still at [now], the broker answers [status], and the probe runs inline. */
+    fun injectProbe(now: Long, status: com.diegonmarcos.superapp.shellclient.ShellStatus) = StoreStatus.injectForTest(now, status)
+    fun restoreProbe() = StoreStatus.restoreForTest()
 }

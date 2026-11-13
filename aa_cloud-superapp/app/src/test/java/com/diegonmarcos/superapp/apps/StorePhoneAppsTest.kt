@@ -53,31 +53,35 @@ class StorePhoneAppsTest : KitPageHarness() {
     private val ctx: Context = ApplicationProvider.getApplicationContext()
     private val pm get() = ctx.packageManager
 
-    @org.junit.Before fun freshChannelProbe() { com.diegonmarcos.superapp.appstore.StoreTestHooks.forgetProbeHistory() }
+    /** #1732 The chip probe is injected: a standing clock and a fixed broker answer, run inline, so no real time and no probe thread decide the outcome. */
+    @org.junit.Before fun freshChannelProbe() {
+        com.diegonmarcos.superapp.appstore.StoreTestHooks.injectProbe(
+            PROBE_AT, com.diegonmarcos.superapp.shellclient.ShellStatus(false, false, "none", "Cloud C3 Webserver missing", PROBE_AT, "Cloud C3 Webserver is not installed"))
+    }
 
     @After fun resetHost() {
+        com.diegonmarcos.superapp.appstore.StoreTestHooks.restoreProbe()
         AppStoreHost.classify = { _, _ -> emptyMap() }
     }
+
+    private companion object { const val PROBE_AT = 1_700_000_000_000L; const val MAX_IDLE_PASSES = 50 }
 
     private fun String.withoutCheckedAt() = replace(Regex("\\(checked [0-9:]+\\)"), "(checked)")
 
     private fun idle() { shadowOf(Looper.getMainLooper()).idle(); compose.waitForIdle() }
 
     /**
-     * The Wireless Dbg chip is filled by StoreStatus.refresh, a probe on its OWN thread that posts the
-     * result to the main looper. idle() alone does not wait for that thread, so the first tab drawn could
-     * still read "checking..." while the second read the cached answer (seen in CI: "Wireless Dbg:
-     * checking..." vs "not paired - Pair"). Keep idling the main looper until the chip has left the
-     * loading state, so both tabs are compared on the settled status.
+     * The Wireless Dbg chip is filled by StoreStatus.refresh. With the probe injected (see [freshChannelProbe]) refresh runs inline and its
+     * result is posted to the main looper, so a bounded number of idle passes settles it: no wall clock, no sleep. The assertion stays: the
+     * chip must have left "checking..." before the tabs are compared.
      */
-    private fun settleChannel(timeoutMs: Long = 15_000) {
-        val deadline = System.currentTimeMillis() + timeoutMs
+    private fun settleChannel() {
         fun label() = compose.onAllNodes(hasTestTag(StoreBar.itemTag(StoreBar.Item.WIRELESS_DEBUG)))
             .fetchSemanticsNodes().firstOrNull()?.text()
+        var passes = 0
         while (label()?.endsWith("checking...") != false) {
-            assertTrue("the Wireless Dbg status never settled (still '${label()}')",
-                System.currentTimeMillis() < deadline)
-            Thread.sleep(10); idle()
+            assertTrue("the Wireless Dbg status never settled (still '${label()}')", ++passes <= MAX_IDLE_PASSES)
+            idle()
         }
     }
 

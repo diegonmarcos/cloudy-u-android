@@ -67,7 +67,7 @@ class RishRelay(private val token: String, private val exec: (cmd: String, timeo
         is Parsed.Cmd -> when (val r = exec(req.cmd, req.timeoutMs)) {
             is ShellResult.Ok -> Reply(200, r.stdout + r.stderr, r.exitCode)
             is ShellResult.Denied -> Reply(403, "rish: denied by the shell broker: ${r.reason}\n", 126)
-            ShellResult.NeedsArm -> Reply(503, "rish: the SuperApp's shell broker is not armed: open the SuperApp and arm it (Wireless debugging), then retry\n", 75)
+            ShellResult.NeedsArm -> Reply(503, "rish: the ADB shell of Cloud C3 Webserver is not armed: open Cloud C3 Webserver > ADB Shell and arm it (Wireless debugging), then retry\n", 75)
             is ShellResult.Failed -> Reply(502, "rish: ${r.reason}\n", if (r.timedOut) 124 else 1)
         }
     }

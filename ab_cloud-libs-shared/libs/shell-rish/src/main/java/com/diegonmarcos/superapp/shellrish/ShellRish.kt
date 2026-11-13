@@ -56,7 +56,7 @@ set -u
 : "@{RISH_ENV:=/usr/local/etc/rish.env}"
 [ -r "@RISH_ENV" ] || { echo "rish: @RISH_ENV missing: open the terminal app so it writes it" >&2; exit 1; }
 . "@RISH_ENV"
-if [ "@#" -eq 0 ]; then echo "usage: rish <command...>   (runs through the SuperApp's shell broker; only allowlisted commands)" >&2; exit 2; fi
+if [ "@#" -eq 0 ]; then echo "usage: rish <command...>   (runs through the ADB shell of Cloud C3 Webserver; only allowlisted commands)" >&2; exit 2; fi
 enc=@(printf '%s' "@*" | od -An -v -tx1 | tr -d ' \n' | sed 's/../%&/g')
 h="@{TMPDIR:-/tmp}/rish.@@"
 trap 'rm -f "@h.h" "@h.b"' EXIT

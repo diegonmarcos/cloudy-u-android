@@ -160,8 +160,8 @@ class ShellClient(val transport: Transport) {
         fun execOut(ctx: Context, cmd: String, timeoutMs: Long = ShellWire.DEFAULT_TIMEOUT_MS): ShellResult = over(ctx).execOut(cmd, timeoutMs)
         fun invalidate(ctx: Context): Boolean = over(ctx).invalidate()
         fun status(ctx: Context): ShellStatus {
-            if (!superAppInstalled(ctx)) return ShellStatus(false, false, "none", "SuperApp missing", System.currentTimeMillis(),
-                "SuperApp is not installed")
+            if (!superAppInstalled(ctx)) return ShellStatus(false, false, "none", "Cloud C3 Webserver missing", System.currentTimeMillis(),
+                "Cloud C3 Webserver is not installed (it owns the ADB shell): install it from the Store")
             return over(ctx).status()
         }
 

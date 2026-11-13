@@ -274,7 +274,7 @@ class SetupRunbook(private val ctx: Context) {
     private fun checkShell(): State {
         val ch = ShellChannels.active(ctx)
         if (ch != null) return State.Already("channel ${ch.name()} up")
-        return State.Todo("the SuperApp's shell broker is not armed: ${ShellChannels.status(ctx)}")
+        return State.Todo("the ADB shell of Cloud C3 Webserver is not armed: ${ShellChannels.status(ctx)}")
     }
 
     private fun runShell(): State {

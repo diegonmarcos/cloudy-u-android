@@ -56,7 +56,7 @@ object StorePlayProtect {
         }
         val st = StoreShell.status(ctx)
         if (!st.armed) return Result(false, "none",
-            "No shell channel: ${st.detail}. Arm the shell broker in the SuperApp, then retry.", state(ctx))
+            "No shell channel: ${st.detail}. Arm the ADB shell in Cloud C3 Webserver, then retry.", state(ctx))
         val out = commands(scan).joinToString("\n") { cmd -> cmd + " -> " + (StoreShell.exec(ctx, cmd) ?: "no output").trim().ifBlank { "ok" } }
         val after = state(ctx)
         return Result(after.on == scan, "shell broker (${st.channel})", out, after)

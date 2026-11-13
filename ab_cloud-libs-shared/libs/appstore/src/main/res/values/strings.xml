@@ -33,7 +33,7 @@
 
     <string name="store_phone_why_unpublished">Not published in the Cloud fleet yet, so there is nothing to update to.</string>
     <string name="store_phone_why_no_launcher">This app has no launcher screen to open.</string>
-    <string name="store_phone_why_no_shell">Force-stop needs the SuperApp\'s shell broker armed. Tap the shell chip in the Store header (Arm in SuperApp), or use App info ▸ Force stop.</string>
+    <string name="store_phone_why_no_shell">Force-stop needs the ADB shell of Cloud C3 Webserver armed. Tap the shell chip in the Store header (Arm in Cloud C3 Webserver), or use App info ▸ Force stop.</string>
     <string name="store_self_stop_install_notice">An install is in progress; it resumes when SuperApp opens again. Stopping…</string>
     <string name="store_fleet_stop_no_channel">Stop force-stops the app through the privileged shell channel (embedded adb, local shell or Shizuku), and none is connected right now. Open ADB Shell from the Store header and Connect to arm it, or open App settings — Android\'s own Force stop is there.</string>
     <string name="store_fleet_not_installed">%1$s is not installed, so Android has no settings page for it yet.</string>
@@ -50,9 +50,9 @@
     <string name="store_bar_play_protect_unknown">This device does not let the Store read Play Protect\'s install scan. Tap to open its settings.</string>
     <string name="store_bar_play_protect_settings">Play Protect: toggle not allowed here (%1$s). Opened its settings.</string>
     <string name="store_bar_channel_checking">Shell broker: checking...</string>
-    <string name="store_bar_channel_up_caption">The SuperApp\'s shell broker is armed, so installs carry no tap. It runs this app\'s commands under this app\'s own allowlist entry.</string>
-    <string name="store_bar_channel_down_caption">The SuperApp\'s shell broker is reachable but not armed. Tap the button: the SuperApp opens its arm flow.</string>
-    <string name="store_bar_channel_unpaired_caption">The SuperApp (the shell broker) is not installed, so there is no silent install. Install it from the Cloud tab.</string>
+    <string name="store_bar_channel_up_caption">The ADB shell of Cloud C3 Webserver is armed, so installs carry no tap. It runs this app\'s commands under this app\'s own allowlist entry.</string>
+    <string name="store_bar_channel_down_caption">The ADB shell of Cloud C3 Webserver is reachable but not armed. Tap the button: Cloud C3 Webserver opens its ADB Shell page.</string>
+    <string name="store_bar_channel_unpaired_caption">Cloud C3 Webserver (the ADB owner) is not installed, so there is no silent install. Tap the button to install it from the Cloud tab, or open it once it is installed.</string>
     <string name="store_bar_play_protect_off">No install-scan prompt - fleet installs go straight through.</string>
     <string name="store_bar_play_protect_on">Play Protect prompts on every install. Turning it off needs the embedded adb channel (or Shizuku, if you run it); it is device-wide and survives uninstall.</string>
     <string name="store_bar_silent_off">Grant \'Install unknown apps\' for no-tap updates.</string>
