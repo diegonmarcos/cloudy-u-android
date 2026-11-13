@@ -867,6 +867,18 @@
    "licence": "MIT",
    "licence_source": "KaTeX font from the katex 0.19.1 npm package (MIT, see ac_cloud-calc/data/assets/latex/katex/LICENSE); glyph designs derive from the AMS Computer Modern fonts, SIL OFL 1.1 (#1329)"
   },
+  "ad_Capital-Stack-FinTerminal/app/src/main/res/font/ibm_plex_sans_condensed_medium.ttf": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex Sans Condensed (IBM/plex, via google/fonts ofl/ibmplexsanscondensed) is published by IBM under the SIL Open Font License 1.1 (ad_Capital-Stack-FinTerminal/licenses/IBM-Plex-Sans-Condensed-OFL.txt)"
+  },
+  "ad_Capital-Stack-FinTerminal/app/src/main/res/font/ibm_plex_sans_condensed_regular.ttf": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex Sans Condensed (IBM/plex, via google/fonts ofl/ibmplexsanscondensed) is published by IBM under the SIL Open Font License 1.1 (ad_Capital-Stack-FinTerminal/licenses/IBM-Plex-Sans-Condensed-OFL.txt)"
+  },
+  "ad_Capital-Stack-FinTerminal/app/src/main/res/font/ibm_plex_sans_condensed_semibold.ttf": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex Sans Condensed (IBM/plex, via google/fonts ofl/ibmplexsanscondensed) is published by IBM under the SIL Open Font License 1.1 (ad_Capital-Stack-FinTerminal/licenses/IBM-Plex-Sans-Condensed-OFL.txt)"
+  },
   "ad_Capital-Stack-FinTerminal/app/src/main/res/font/noto_sans_mono_regular.ttf": {
    "licence": "OFL-1.1",
    "licence_source": "Noto Sans Mono (Google Noto fonts, notofonts.github.io) is published under the SIL Open Font License 1.1"

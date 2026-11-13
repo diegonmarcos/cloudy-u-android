@@ -5,8 +5,8 @@
    "Apache-2.0": 84,
    "MIT": 78,
    "NOASSERTION": 34,
+   "OFL-1.1": 10,
    "GPL-3.0-only": 9,
-   "OFL-1.1": 7,
    "GPL-3.0": 3
   },
   "dir": {
@@ -3019,6 +3019,30 @@
    ],
    "licence": "Apache-2.0",
    "licence_source": "Gradle wrapper (build tool, not packaged in an APK)"
+  },
+  "asset:ad_Capital-Stack-FinTerminal/app/src/main/res/font/ibm_plex_sans_condensed_medium.ttf": {
+   "kind": "asset",
+   "declared_in": [
+    "ad_Capital-Stack-FinTerminal/app/src/main/res/font/ibm_plex_sans_condensed_medium.ttf"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex Sans Condensed (IBM/plex, via google/fonts ofl/ibmplexsanscondensed) is published by IBM under the SIL Open Font License 1.1 (ad_Capital-Stack-FinTerminal/licenses/IBM-Plex-Sans-Condensed-OFL.txt)"
+  },
+  "asset:ad_Capital-Stack-FinTerminal/app/src/main/res/font/ibm_plex_sans_condensed_regular.ttf": {
+   "kind": "asset",
+   "declared_in": [
+    "ad_Capital-Stack-FinTerminal/app/src/main/res/font/ibm_plex_sans_condensed_regular.ttf"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex Sans Condensed (IBM/plex, via google/fonts ofl/ibmplexsanscondensed) is published by IBM under the SIL Open Font License 1.1 (ad_Capital-Stack-FinTerminal/licenses/IBM-Plex-Sans-Condensed-OFL.txt)"
+  },
+  "asset:ad_Capital-Stack-FinTerminal/app/src/main/res/font/ibm_plex_sans_condensed_semibold.ttf": {
+   "kind": "asset",
+   "declared_in": [
+    "ad_Capital-Stack-FinTerminal/app/src/main/res/font/ibm_plex_sans_condensed_semibold.ttf"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex Sans Condensed (IBM/plex, via google/fonts ofl/ibmplexsanscondensed) is published by IBM under the SIL Open Font License 1.1 (ad_Capital-Stack-FinTerminal/licenses/IBM-Plex-Sans-Condensed-OFL.txt)"
   },
   "asset:ad_Capital-Stack-FinTerminal/app/src/main/res/font/noto_sans_mono_medium.ttf": {
    "kind": "asset",
