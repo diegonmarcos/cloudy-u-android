@@ -19,6 +19,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -121,9 +123,10 @@ class MeShellTest {
         compose.waitForIdle()
         compose.onNodeWithTag(TopFirstRowTags.entry(section.id)).assertIsDisplayed()
         // Lnktree lists 16 pages (#1298 Proj): the later entries are reached by scrolling the menu.
-        for (p in section.pages) compose.onNodeWithTag(TopFirstRowTags.entry(p.id)).performScrollTo().assertIsDisplayed()
+        // #1483 the section list follows the pages, and a page id may equal a section id (Health): the page entry is the first node
+        for (p in section.pages) compose.onAllNodesWithTag(TopFirstRowTags.entry(p.id)).onFirst().performScrollTo().assertIsDisplayed()
         val last = section.pages.last()
-        compose.onNodeWithTag(TopFirstRowTags.entry(last.id)).performClick()
+        compose.onAllNodesWithTag(TopFirstRowTags.entry(last.id)).onFirst().performClick()
         compose.waitForIdle()
         assertEquals(listOf(section.id to last.id), pagesOpened)
     }

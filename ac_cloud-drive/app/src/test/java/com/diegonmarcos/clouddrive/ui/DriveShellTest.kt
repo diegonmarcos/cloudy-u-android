@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
 import com.diegonmarcos.clouddrive.Declarations
@@ -144,8 +145,8 @@ class DriveShellTest {
         compose.onNodeWithTag(TopBarTags.TITLE).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(TopFirstRowTags.DROPDOWN).assertIsDisplayed()
-        Declarations.nav.sections.forEach { compose.onNodeWithTag(DriveTags.drawerItem(it.id)).assertIsDisplayed() }
-        compose.onNodeWithTag(DriveTags.drawerItem("git")).performClick()
+        Declarations.nav.sections.forEach { compose.onNodeWithTag(DriveTags.drawerItem(it.id)).performScrollTo().assertIsDisplayed() } // #1483 the list holds the off-bar sections too: the menu scrolls
+        compose.onNodeWithTag(DriveTags.drawerItem("git")).performScrollTo().performClick()
         compose.waitForIdle()
         compose.onNodeWithText("content:git").assertIsDisplayed()
         compose.onNodeWithTag(BottomNavTags.item("git")).assertIsSelected()

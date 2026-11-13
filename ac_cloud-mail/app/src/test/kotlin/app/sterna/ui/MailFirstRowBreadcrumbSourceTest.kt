@@ -27,8 +27,8 @@ class MailFirstRowBreadcrumbSourceTest {
         assertTrue("the shared first row scaffold is not used", bar.any { it.startsWith("NavBarTopFirstRowScaffold(") })
         assertTrue("the hierarchy is not derived from the declared section (titleHierarchy)",
             bar.any { it.contains("titleHierarchy(") && it.contains("currentRoute") })
-        assertTrue("the declared bottom sections are not handed to the row (siblings of a section)",
-            bar.any { it.contains("sections = mailNav.bottomSections()") })
+        assertTrue("every declared section (bar and off-bar) is not handed to the row (peers in the title dropdown, #1483)",
+            bar.any { it.contains("sections = mailNav.sections") })
         assertFalse("the first row is switched back to the centred island", bar.any { it.contains("onTitleClick") })
     }
 
