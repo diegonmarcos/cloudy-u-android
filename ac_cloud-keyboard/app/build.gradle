@@ -145,6 +145,8 @@ dependencies {
     // #1651 the default Configs tail: Agents, Logcat, X-Ray App (Perms and About come with ui-nav-bars)
     // #1652 the Writer tab: cloud-writer's UI (WriterSurface.Page) as top-nav sub-pages
     implementation project(':libs:writer-ui')
+    // #1707 WriterDebugApi reads the Answer type of the Writer's routing (writer-ui keeps writer-core as a private dependency)
+    implementation project(':libs:writer-core')
     implementation project(':libs:fleetconfigs-agents')
     implementation project(':libs:fleetconfigs-logcat')
     implementation project(':libs:fleetconfigs-xray')
