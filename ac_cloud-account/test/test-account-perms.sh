@@ -118,7 +118,7 @@ mutate "capture missing roles" "$PROF/PermsPlan.kt" '.put("roles", roles)' '' ||
 mutate "capture missing battery" "$PROF/PermsPlan.kt" '.put("battery", battery)' '' || MUT=1
 mutate "DeviceProfile perms left empty" "$PROF/DeviceProfile.kt" 'build(device, apps, settings, cls, perms = perms)' 'build(device, apps, settings, cls)' || MUT=1
 mutate "page not mounted" "ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt" '"perms" -> AccountPermsPage(go)' '"perms" -> AccountPlaceholderPage(section, page, "task 6")' || MUT=1
-mutate "no-channel row offers nothing" "$PROF/PermsPage.kt" 'go("setup", "adb-shell")' '' || MUT=1
+mutate "no-channel row offers nothing" "$PROF/PermsPage.kt" 'ShellClient.openArmPage(ctx)' '' || MUT=1
 
 [ "$REAL" -eq 0 ] && [ "$MUT" -eq 0 ] && { echo "PASS"; exit 0; }
 echo "FAIL (real=$REAL mutations=$MUT)"; exit 1
