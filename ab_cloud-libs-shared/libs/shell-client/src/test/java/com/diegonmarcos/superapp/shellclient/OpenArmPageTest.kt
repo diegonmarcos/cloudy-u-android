@@ -61,7 +61,12 @@ class OpenArmPageTest {
     // shell-client must merge the library's <queries> and none may remove it.
     @Test fun theLibraryDeclaresTheSuperAppInQueries() {
         val m = File("src/main/AndroidManifest.xml").readText()
-        assertTrue(m.contains("<queries>") && m.contains("""<package android:name="com.diegonmarcos.superapp" />"""))
+        // #1682: the owner is the app 1_cicd/src/data/adb-owner.json names (the SuperApp until the P3 flip, the Cloud Webserver after it)
+        var root: File? = File("").absoluteFile
+        while (root != null && !File(root, "1_cicd/src/data/adb-owner.json").exists()) root = root.parentFile
+        assertNotNull("repo root", root)
+        val owner = Regex("\"package\"\\s*:\\s*\"([^\"]+)\"").find(File(root!!, "1_cicd/src/data/adb-owner.json").readText())!!.groupValues[1]
+        assertTrue(m.contains("<queries>") && m.contains("""<package android:name="$owner" />"""))
     }
 
     @Test fun noAppThatUsesShellClientRemovesTheQueries() {
