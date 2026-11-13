@@ -72,7 +72,7 @@ object PrivilegedPlaneRun {
      */
     private fun batteryWhitelistFleet(ctx: Context, pkgs: Set<String>, exec: (String) -> String?) {
         for (pkg in pkgs) {
-            val out = exec("dumpsys deviceidle whitelist +$pkg 2>&1 && echo OK")
+            val out = exec("dumpsys deviceidle whitelist +$pkg 2>&1")   // #1682 no `&&`: the broker allowlist refuses chains, and the output line is all the log needs
             Log.i(TAG, "deviceidle whitelist +$pkg -> ${out?.trim()?.take(120)}")
         }
     }

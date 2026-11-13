@@ -145,7 +145,9 @@ class AdbStatusPageTest : KitPageHarness() {
         assertEquals("Connected.", AdbCockpitOps.connect(ChannelMode.LOCAL_SERVER, LaunchVia.ADB, true, rest) { "perms ok" }.note)
         assertEquals(listOf("ADB_CONNECT", "LAUNCH_SERVER", "VERIFY", "CLOSE_EMBEDDED"), rest.ran)
         assertFalse(AdbCockpitModel.resumes(null, paired))
-        assertFalse("already connected", AdbCockpitModel.resumes(StepId.PAIR, rest.f))
+        // #1709: the Local-server chain closes the embedded session on purpose, so what is left is the server (running); with the adb session up it is connected
+        assertTrue("the chain left the local server running", rest.f.serverRunning)
+        assertFalse("already connected", AdbCockpitModel.resumes(StepId.PAIR, rest.f.copy(adbConnected = true)))
     }
 
     @Test fun `S4 every group is a card of light, step name, message, action icons rows`() {

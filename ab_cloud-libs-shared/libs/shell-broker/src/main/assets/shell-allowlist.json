@@ -153,9 +153,15 @@
     {
      "id": "account-listener",
      "re": "^cmd notification allow_listener [a-z][\\w.]*/[\\w.]+$"
+    },
+    {
+     "id": "tuning-device-config",
+     "why": "#1682 device tuning as a client: read a device_config flag, and the one persistent-sync switch the tuning entries use",
+     "re": "^(device_config get [\\w.:/=,@+*?-]+ [\\w.:/=,@+*?-]+|device_config set_sync_disabled_for_tests persistent)$"
     }
    ],
-   "exact": ["P=/sys/class/power_supply/battery; for f in charge_full charge_full_design cycle_count; do echo \"$f=$(cat $P/$f 2>/dev/null)\"; done; dumpsys battery 2>/dev/null; echo --batterystats--; dumpsys batterystats --charged 2>/dev/null | sed -n '/Estimated power use/,$p' | head -200", 
+   "exact": [
+    "P=/sys/class/power_supply/battery; for f in charge_full charge_full_design cycle_count; do echo \"$f=$(cat $P/$f 2>/dev/null)\"; done; dumpsys battery 2>/dev/null; echo --batterystats--; dumpsys batterystats --charged 2>/dev/null | sed -n '/Estimated power use/,$p' | head -200",
     "dumpsys usagestats | grep -E 'package=.*totalTimeForegroundServiceUsed=' | head -60",
     "logcat -d -b system,main -v time ActivityManager:I '*:S' | grep 'Start proc'",
     "dumpsys jobscheduler | grep -E 'JOB #|Pending queue|Active jobs|Registered|Standby bucket|Backoff' | head -400",
@@ -183,16 +189,30 @@
     "dumpsys connectivity | head -200",
     "dumpsys telephony.registry | grep -E 'mSignalStrength|mServiceState|mDataConnectionState|mCallState|mNetworkType' | head -40",
     "dumpsys activity processes | head -200",
-    "dumpsys package com.diegonmarcos.superapp | grep -E -A70 'requested permissions:|install permissions:|runtime permissions:' | head -260"
+    "dumpsys package com.diegonmarcos.superapp | grep -E -A70 'requested permissions:|install permissions:|runtime permissions:' | head -260",
+    "dumpsys deviceidle whitelist | grep -c -E \"cld.termux|com.diegonmarcos.(superapp|cloudstore|cloudaccount)\"",
+    "b=$(am get-standby-bucket cld.termux); [ \"$b\" -le 10 ] && echo ok",
+    "appops get com.diegonmarcos.cloudlib.netwg ACTIVATE_VPN | grep -q allow && echo ok",
+    "dumpsys deviceidle whitelist | grep -c -E \"cld.termux|com.diegonmarcos.(superapp|cloudstore|cloudaccount)\" 2>&1",
+    "b=$(am get-standby-bucket cld.termux); [ \"$b\" -le 10 ] && echo ok 2>&1",
+    "appops get com.diegonmarcos.cloudlib.netwg ACTIVATE_VPN | grep -q allow && echo ok 2>&1"
    ]
   },
   "owner": {
-    "extends": "com.diegonmarcos.superapp",
-    "why": "#1682 the ADB OWNER's own in-process identity (ShellBroker.SELF): its terminal, Tester, keeper self-grant and audit page. A logical key, not a package: no binder caller can resolve to it, so the mesh relay (the Webserver's package, alias mesh) stays restricted. It carries every rule of the SuperApp's entry plus the owner-only ones below.",
-    "allow": [
-      {"id": "owner-tester", "why": "the Tester's id -u round trip", "re": "^id( -u)?$"},
-      {"id": "owner-selfgrant-wss", "why": "the keeper's self-grant of WRITE_SECURE_SETTINGS to the Cloud Webserver once it owns the channel", "re": "^pm grant com\\.diegonmarcos\\.cloudwebserver android\\.permission\\.WRITE_SECURE_SETTINGS$"}
-    ]
+   "extends": "com.diegonmarcos.superapp",
+   "why": "#1682 the ADB OWNER's own in-process identity (ShellBroker.SELF): its terminal, Tester, keeper self-grant and audit page. A logical key, not a package: no binder caller can resolve to it, so the mesh relay (the Webserver's package, alias mesh) stays restricted. It carries every rule of the SuperApp's entry plus the owner-only ones below.",
+   "allow": [
+    {
+     "id": "owner-tester",
+     "why": "the Tester's id -u round trip",
+     "re": "^id( -u)?$"
+    },
+    {
+     "id": "owner-selfgrant-wss",
+     "why": "the keeper's self-grant of WRITE_SECURE_SETTINGS to the Cloud Webserver once it owns the channel",
+     "re": "^pm grant com\\.diegonmarcos\\.cloudwebserver android\\.permission\\.WRITE_SECURE_SETTINGS$"
+    }
+   ]
   },
   "com.diegonmarcos.cloudstore": {
    "why": "Store installs and updates, the Play Protect switch, grants, force-stop.",

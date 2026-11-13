@@ -6,7 +6,6 @@ import com.diegonmarcos.superapp.network.AlwaysOnVpn
 import com.diegonmarcos.superapp.system.PackageVerifier
 import com.diegonmarcos.superapp.system.QuickDisplay
 import com.diegonmarcos.superapp.xray.LocationUseView
-import com.diegonmarcos.superapp.system.DeviceTuning
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -47,12 +46,17 @@ class ClientCallSitesAllowlistTest {
 
     // #1682 the privileged plane sent through the client (ClientPlaneWorker -> PrivilegedPlaneRun): every literal it runs is on the entry
     @Test fun planeDeviceTuningCommandsAreAllowed() {
-        val es = DeviceTuning.entries()
-        assertTrue("device tuning declares entries", es.isNotEmpty())
-        for (e in es) { allowed("${e.verifyCmd} 2>&1"); e.apply.forEach { allowed("$it 2>&1") } }
+        // DeviceTuning.entries() decodes a BuildConfig field with android.util.Base64 (a stub in a plain JVM test): read the declared file itself
+        val entries = org.json.JSONObject(File("../data/device-tuning.json").readText()).getJSONArray("entries")
+        assertTrue("device tuning declares entries", entries.length() > 0)
+        for (i in 0 until entries.length()) {
+            val e = entries.getJSONObject(i)
+            allowed(e.getJSONObject("verify").getString("cmd") + " 2>&1")
+            val apply = e.optJSONArray("apply"); for (k in 0 until (apply?.length() ?: 0)) allowed(apply!!.getString(k) + " 2>&1")
+        }
     }
     @Test fun planeWhitelistAndSelfGrantsAreAllowed() {
-        allowed("dumpsys deviceidle whitelist +com.diegonmarcos.cloudmail 2>&1 && echo OK")
+        allowed("dumpsys deviceidle whitelist +com.diegonmarcos.cloudmail 2>&1")
         allowed("pm grant com.diegonmarcos.superapp android.permission.DUMP")
         allowed("pm grant com.diegonmarcos.superapp android.permission.WRITE_SECURE_SETTINGS")
     }
