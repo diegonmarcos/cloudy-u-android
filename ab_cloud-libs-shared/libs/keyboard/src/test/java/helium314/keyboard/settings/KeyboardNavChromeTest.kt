@@ -81,7 +81,7 @@ class KeyboardNavChromeTest {
         assertTrue(chrome.contains("NavBarTopFirstRowScaffold("))
         assertTrue(chrome.contains("NavBarBottom("))
         // #1698 drawn from THE declaration (build.json::ui via libs:bottomnav NavDecl), not a bespoke list; sub-pages on the fleet second row
-        assertTrue(chrome.contains("NavDecl.fromBuildConfig(BuildConfig.UI_SECTIONS_B64"))
+        assertTrue(chrome.contains("NavDecl.fromBuildConfig(WriterUi.UI_SECTIONS_B64"))
         assertTrue(chrome.contains("decl.bottomSections()"))
         assertTrue(chrome.contains("NavBarTopSecondRow("))
         assertTrue(appFile("app/src/main/java/com/diegonmarcos/cloudkeyboard/App.kt").contains("KeyboardSettingsExtras.chrome"))

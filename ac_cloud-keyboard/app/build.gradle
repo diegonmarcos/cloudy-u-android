@@ -7,10 +7,9 @@ plugins {
 // keyboard_media config → base64 → BuildConfig (mirrors superapp pattern).
 // GIF API keys come from env (exported by build.sh _resolve_gif_keys via vault/sops).
 def buildJson        = new groovy.json.JsonSlurper().parse(file("${rootDir}/build.json"))
-// #1698 build.json::ui, THE nav declaration (libs:bottomnav NavDecl), baked like every fleet app
-def uiBottomNav      = (buildJson.ui?.bottom_nav ?: []).join(',')
-def uiSectionsB64    = groovy.json.JsonOutput.toJson(buildJson.ui?.sections ?: []).getBytes('UTF-8').encodeBase64().toString()
-def uiDefaultSection = (buildJson.ui?.default_section ?: '').toString()
+// #1698 build.json::ui is THE nav declaration. UI_BOTTOM_NAV, UI_SECTIONS_B64 and UI_DEFAULT_SECTION are baked from this same
+// build.json (rootDir) by libs:writer-ui, which this app links, and KeyboardChrome reads them from there: no second base64 field here
+// (runtime-data D3 ceiling).
 def keyboardMediaB64 = groovy.json.JsonOutput.toJson(buildJson.keyboard_media ?: [:]).bytes.encodeBase64().toString()
 def giphyApiKey      = (System.getenv('GIPHY_API_KEY') ?: '').toString()
 def defaultLocales   = (buildJson.default_locales ?: []).join(',')
@@ -79,9 +78,6 @@ android {
         versionCode codeFinal
         versionName "${buildJson.android.version_name} (sha-${shortSha})"
         buildConfigField "String", "GIT_SHORT_SHA", "\"${shortSha}\""
-        buildConfigField "String", "UI_BOTTOM_NAV", "\"${uiBottomNav}\""
-        buildConfigField "String", "UI_SECTIONS_B64", "\"${uiSectionsB64}\""
-        buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
         buildConfigField "String", "MEDIA_CONFIG_B64", "\"${keyboardMediaB64}\""
         buildConfigField "String", "GIPHY_API_KEY",   "\"${giphyApiKey}\""
         buildConfigField "String", "DEFAULT_LOCALES", "\"${defaultLocales}\""
