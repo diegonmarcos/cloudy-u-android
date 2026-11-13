@@ -80,6 +80,10 @@
     "browser.*"
    ]
   },
+  "infra/apis/api_endpoints": {
+   "api": [],
+   "mcp": []
+  },
   "infra/personal/desktop": {
    "api": [],
    "mcp": []

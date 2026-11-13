@@ -332,7 +332,9 @@ mod tests {
         let d = &data()["device_access"];
         assert!(d["schemaVersion"].as_u64().unwrap_or(0) >= 1, "the dataset is compiled in whole");
         let members = d["apps"].as_array().expect("device_access.apps");
-        let find = |pkg: &str| members.iter().find(|a| a["pkg"] == pkg);
+        fn find<'a>(members: &'a [Value], pkg: &str) -> Option<&'a Value> {
+            members.iter().find(|a| a["pkg"] == pkg)
+        }
         let tpl = build()["api"]["ipc"].as_array().unwrap();
         assert_eq!(d["ipc_templates"].as_array().unwrap().len(), tpl.len());
         for (a, b) in d["ipc_templates"].as_array().unwrap().iter().zip(tpl) {
@@ -343,7 +345,7 @@ mod tests {
         assert_eq!(d["engine_action"], build()["api"]["engine_action"]);
         let reg = crate::ipc::registry().as_ref().expect("the registry parses");
         for app in apps() {
-            let m = find(&app.package).unwrap_or_else(|| panic!("{} is on the Apps pages but not in the model", app.package));
+            let m = find(members, &app.package).unwrap_or_else(|| panic!("{} is on the Apps pages but not in the model", app.package));
             assert_eq!(m["engines"].as_array().unwrap().len(), app.engines.len(), "{} engines", app.id);
             assert!(!m["ops"].as_array().unwrap().is_empty(), "{} counts zero API routes", app.id);
             if let Some(p) = data()["debug_ports"][&app.package].as_u64() {
@@ -356,7 +358,7 @@ mod tests {
                 }
             }
         }
-        let own = find(s(&build()["android"]["application_id"]).as_str()).expect("this app is in the model");
+        let own = find(members, s(&build()["android"]["application_id"]).as_str()).expect("this app is in the model");
         let mine: Vec<&str> = own["routes"].as_array().unwrap().iter().filter(|r| r["surface"] == "app").filter_map(|r| r["path"].as_str()).collect();
         for r in crate::app::ROUTES {
             assert!(mine.contains(&r.path), "{} is a route of this app but not in the model (regenerate data/fleet/device-access.json)", r.path);

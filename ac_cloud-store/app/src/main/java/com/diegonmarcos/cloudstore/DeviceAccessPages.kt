@@ -117,10 +117,10 @@ private fun copy(ctx: Context, text: String) = runCatching {
     Toast.makeText(ctx, "Device access copied", Toast.LENGTH_SHORT).show()
 }
 
-@Composable private fun Mono(text: String, color: Color = Color.White, tag: String? = null) =
+@Composable private fun AccessMono(text: String, color: Color = Color.White, tag: String? = null) =
     Text(text, if (tag == null) Modifier else Modifier.testTag(tag), color = color, fontFamily = FontFamily.Monospace, fontSize = StoreDensity.T_CAPTION.sp)
-@Composable private fun Dim(text: String) = Text(text, color = DIM, fontSize = StoreDensity.T_CAPTION.sp)
-@Composable private fun Head(text: String) = Text(text, Modifier.padding(top = dpOf(StoreDensity.S4)), color = DIM, fontWeight = FontWeight.Bold, fontSize = StoreDensity.T_META.sp)
+@Composable private fun AccessDim(text: String) = Text(text, color = DIM, fontSize = StoreDensity.T_CAPTION.sp)
+@Composable private fun AccessHead(text: String) = Text(text, Modifier.padding(top = dpOf(StoreDensity.S4)), color = DIM, fontWeight = FontWeight.Bold, fontSize = StoreDensity.T_META.sp)
 
 @Composable
 private fun GatewayCard(doc: DeviceAccess.Doc, g: DeviceAccess.Gateway, extra: @Composable ColumnScope.() -> Unit = {}) {
@@ -128,13 +128,13 @@ private fun GatewayCard(doc: DeviceAccess.Doc, g: DeviceAccess.Gateway, extra: @
         Column(Modifier.padding(dpOf(StoreDensity.S12), dpOf(StoreDensity.S6))) {
             Text((if (g.id == "mesh") "Mesh gateway" else "On-phone API gateway") + "  ·  " + (doc.app(g.pkg)?.label ?: g.app.ifEmpty { g.pkg }),
                 color = Color.White, fontWeight = FontWeight.Bold, fontSize = StoreDensity.T_TITLE.sp)
-            Mono(g.address + (if (g.id == "mesh") g.ipcRoute + "/<app>/<route>" else g.route))
-            Dim(g.what)
-            if (g.auth.isNotEmpty()) Dim("auth: ${g.auth}")
-            if (g.cidrs.isNotEmpty()) Dim("peers from ${g.cidrs.joinToString(", ")}")
-            if (g.roster.isNotEmpty()) Dim("roster ${g.roster}")
-            if (g.logsRoute.isNotEmpty() || g.endpointsRoute.isNotEmpty()) Dim("also ${listOf(g.logsRoute, g.endpointsRoute).filter { it.isNotEmpty() }.joinToString(", ")}")
-            if (g.aliases.isNotEmpty()) Dim("aliases " + g.aliases.entries.joinToString(", ") { "${it.key} = ${it.value}" })
+            AccessMono(g.address + (if (g.id == "mesh") g.ipcRoute + "/<app>/<route>" else g.route))
+            AccessDim(g.what)
+            if (g.auth.isNotEmpty()) AccessDim("auth: ${g.auth}")
+            if (g.cidrs.isNotEmpty()) AccessDim("peers from ${g.cidrs.joinToString(", ")}")
+            if (g.roster.isNotEmpty()) AccessDim("roster ${g.roster}")
+            if (g.logsRoute.isNotEmpty() || g.endpointsRoute.isNotEmpty()) AccessDim("also ${listOf(g.logsRoute, g.endpointsRoute).filter { it.isNotEmpty() }.joinToString(", ")}")
+            if (g.aliases.isNotEmpty()) AccessDim("aliases " + g.aliases.entries.joinToString(", ") { "${it.key} = ${it.value}" })
             extra()
         }
     }
@@ -153,24 +153,24 @@ fun DeviceMcpPage(model: DeviceAccess.Doc? = null) = ModelPage(model,
     StoreRow.Card {
         Column(Modifier.padding(dpOf(StoreDensity.S12), dpOf(StoreDensity.S6))) {
             Text("MCP server  ·  ${doc.mcp.server.ifEmpty { "not declared" }}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = StoreDensity.T_TITLE.sp)
-            if (doc.mcp.endpoint.isNotEmpty()) Mono(doc.mcp.endpoint)
-            Dim("auth: ${doc.mcp.auth.ifEmpty { "?" }}" + (if (doc.mcp.aliases.isEmpty()) "" else "  ·  aliases ${doc.mcp.aliases.joinToString(", ")}") + "  ·  device tools under ${doc.mcp.node}")
+            if (doc.mcp.endpoint.isNotEmpty()) AccessMono(doc.mcp.endpoint)
+            AccessDim("auth: ${doc.mcp.auth.ifEmpty { "?" }}" + (if (doc.mcp.aliases.isEmpty()) "" else "  ·  aliases ${doc.mcp.aliases.joinToString(", ")}") + "  ·  device tools under ${doc.mcp.node}")
         }
     }
     for (g in doc.gateways.sortedBy { if (it.id == "mesh") 0 else 1 }) GatewayCard(doc, g) {
         val tools = doc.tools(g.id)
-        Head("${tools.size} tool(s) through this door")
-        for (t in tools) Mono(DeviceAccess.line(t), tag = DeviceAccessTags.TOOL + t.tool)
+        AccessHead("${tools.size} tool(s) through this door")
+        for (t in tools) AccessMono(DeviceAccess.line(t), tag = DeviceAccessTags.TOOL + t.tool)
     }
     val kind = doc.kinds.firstOrNull { it.id == "mcp" }
-    Head((kind?.label ?: "MCP") + " endpoints the apps declare" + (kind?.what?.takeIf { it.isNotEmpty() }?.let { " ($it)" } ?: ""))
+    AccessHead((kind?.label ?: "MCP") + " endpoints the apps declare" + (kind?.what?.takeIf { it.isNotEmpty() }?.let { " ($it)" } ?: ""))
     for (a in doc.members()) {
         val eps = a.declared["mcp"].orEmpty()
         if (eps.isEmpty()) continue
         Text(a.label, color = Color.White, fontSize = StoreDensity.T_META.sp)
-        for (e in eps) Mono("${e.method} ${e.url}  ·  ${e.what}")
+        for (e in eps) AccessMono("${e.method} ${e.url}  ·  ${e.what}")
     }
-    Dim(doc.members().filter { it.declared["mcp"].isNullOrEmpty() }.let { none -> if (none.isEmpty()) "Every app declares one." else "MISSING (declares none): " + none.joinToString(", ") { it.label } })
+    AccessDim(doc.members().filter { it.declared["mcp"].isNullOrEmpty() }.let { none -> if (none.isEmpty()) "Every app declares one." else "MISSING (declares none): " + none.joinToString(", ") { it.label } })
 }
 
 /** The member filter both list pages share: the apps, the libs, or every member. */
@@ -207,14 +207,14 @@ fun DeviceApisPage(model: DeviceAccess.Doc? = null, expandAll: Boolean = false) 
         StoreRow.Item(a.label + (if (a.kind == "lib") "  ·  lib" else ""), isOpen, { open = if (a.id in open) open - a.id else open + a.id }, tag = DeviceAccessTags.API_ROW + a.id,
             dot = if (n > 0) "✓" else "◯", dotColor = if (n > 0) OK else GAP,
             meta = if (n > 0) "$n routes" else if (a.door) "0 routes" else "no API door", metaColor = if (n > 0) OK else GAP, metaTag = DeviceAccessTags.API_COUNT + a.id) {
-            Mono(a.pkg, DIM)
-            Dim("fleet door ${if (a.door) "content://" + doc.doorAuthority.replace("<pkg>", a.pkg) + " (${doc.doorMethod})" else "none"}" + (a.port?.let { "  ·  debug port $it" } ?: ""))
-            if (a.ops.isNotEmpty()) { Head("${a.ops.size} ops behind the on-phone gateway"); for (op in a.ops) Mono(doc.opUrl(a, op)) }
-            if (a.routes.isNotEmpty()) { Head("${a.routes.size} routes of its own listener"); for (r in a.routes) Mono(DeviceAccess.line(r)) }
+            AccessMono(a.pkg, DIM)
+            AccessDim("fleet door ${if (a.door) "content://" + doc.doorAuthority.replace("<pkg>", a.pkg) + " (${doc.doorMethod})" else "none"}" + (a.port?.let { "  ·  debug port $it" } ?: ""))
+            if (a.ops.isNotEmpty()) { AccessHead("${a.ops.size} ops behind the on-phone gateway"); for (op in a.ops) AccessMono(doc.opUrl(a, op)) }
+            if (a.routes.isNotEmpty()) { AccessHead("${a.routes.size} routes of its own listener"); for (r in a.routes) AccessMono(DeviceAccess.line(r)) }
             for (k in doc.kinds) {
                 val eps = doc.declared(a, k.id)
-                Head(k.label + " - " + k.what + if (doc.inherits(a, k.id)) "  (default: ${doc.sharedDebug.lib})" else "")
-                if (eps.isEmpty()) Mono("MISSING", Color(GAP)) else for (e in eps) Mono("${e.method} ${e.url}")
+                AccessHead(k.label + " - " + k.what + if (doc.inherits(a, k.id)) "  (default: ${doc.sharedDebug.lib})" else "")
+                if (eps.isEmpty()) AccessMono("MISSING", Color(GAP)) else for (e in eps) AccessMono("${e.method} ${e.url}")
             }
         }
     }
@@ -235,8 +235,8 @@ fun DeviceIpcPage(model: DeviceAccess.Doc? = null, expandAll: Boolean = false) =
         "${rows.sumOf { doc.ipcEndpoints(it).size }} per-app endpoints", DeviceAccessTags.SUMMARY + PAGE_IPC)
     doc.gateway("mesh")?.let { g ->
         GatewayCard(doc, g) {
-            Head("${doc.scopes.size} ACL scopes"); for ((k, v) in doc.scopes) Mono("$k  ·  $v")
-            Head("${doc.peers.size} mesh peers (access held once, here)"); for (p in doc.peers) Mono("${p.id}  ·  ${if (p.full) "full access" else p.scopes.joinToString(", ")}  ·  ${p.what}")
+            AccessHead("${doc.scopes.size} ACL scopes"); for ((k, v) in doc.scopes) AccessMono("$k  ·  $v")
+            AccessHead("${doc.peers.size} mesh peers (access held once, here)"); for (p in doc.peers) AccessMono("${p.id}  ·  ${if (p.full) "full access" else p.scopes.joinToString(", ")}  ·  ${p.what}")
         }
     }
     MemberFilter(doc, filter) { filter = it }
@@ -246,11 +246,11 @@ fun DeviceIpcPage(model: DeviceAccess.Doc? = null, expandAll: Boolean = false) =
         StoreRow.Item(a.label + (if (a.kind == "lib") "  ·  lib" else ""), isOpen, { open = if (a.id in open) open - a.id else open + a.id }, tag = DeviceAccessTags.IPC_ROW + a.id,
             dot = if (a.ipcCount > 0) "✓" else "◯", dotColor = if (a.ipcCount > 0) OK else GAP,
             meta = "${a.ipcCount} routes  ·  ${eps.size} endpoints", metaColor = if (a.ipcCount > 0) OK else GAP, metaTag = DeviceAccessTags.IPC_COUNT + a.id) {
-            Mono(a.pkg, DIM)
-            Head("${a.ipcCount} routes behind the mesh gateway")
-            for (r in a.ipc) { Mono(DeviceAccess.line(r)); if (r.what.isNotEmpty()) Dim(r.what) }
-            Head("${eps.size} IPC endpoints of this app")
-            for (e in eps) { Mono("${e.kind}  ${e.authority}  ·  ${e.methods}"); Dim(listOf(e.guard, e.what).filter { it.isNotEmpty() }.joinToString("  ·  ")) }
+            AccessMono(a.pkg, DIM)
+            AccessHead("${a.ipcCount} routes behind the mesh gateway")
+            for (r in a.ipc) { AccessMono(DeviceAccess.line(r)); if (r.what.isNotEmpty()) AccessDim(r.what) }
+            AccessHead("${eps.size} IPC endpoints of this app")
+            for (e in eps) { AccessMono("${e.kind}  ${e.authority}  ·  ${e.methods}"); AccessDim(listOf(e.guard, e.what).filter { it.isNotEmpty() }.joinToString("  ·  ")) }
         }
     }
 }

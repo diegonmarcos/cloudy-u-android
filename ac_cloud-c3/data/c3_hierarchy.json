@@ -91,6 +91,12 @@
        "mcp": [
         "browser.*"
        ]
+      },
+      {
+       "id": "api_endpoints",
+       "label": "C3 Endpoints",
+       "api": [],
+       "mcp": []
       }
      ]
     },
