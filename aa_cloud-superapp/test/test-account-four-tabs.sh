@@ -24,9 +24,9 @@ FORBID='superapp\.profile\.|superapp\.settings\.(ConfigsPrefs|AccountVault|MailS
 n1() {   # $1 = build.json, $2 = app/build.gradle, $3 = source dir
     jq -e '(.modules | has("libs:account") | not) and ([.. | strings | select(. == "libs:account")] | length == 0)' "$1" >/dev/null \
         || { echo "build.json still declares libs:account"; return 1; }
-    grep -vE '^\s*//' "$2" | grep -qF "project(':libs:account')" && { echo "app/build.gradle still links libs:account"; return 1; }
+    grep -qF "project(':libs:account')" <<<"$(grep -vE '^\s*//' "$2")" && { echo "app/build.gradle still links libs:account"; return 1; }
     local hit f; hit=""
-    while IFS= read -r f; do grep -vE '^\s*(//|\*|/\*)' "$f" | grep -qE "$FORBID" && { hit=$f; break; }; done < <(grep -rlE "$FORBID" --include='*.kt' "$3")
+    while IFS= read -r f; do grep -qE "$FORBID" <<<"$(grep -vE '^\s*(//|\*|/\*)' "$f")" && { hit=$f; break; }; done < <(grep -rlE "$FORBID" --include='*.kt' "$3")
     [ -n "$hit" ] && { echo "$hit names a libs:account class"; return 1; }
     [ -e "$3/settings/ImportConfigsFragment.kt" ] && { echo "the Import page is back in the SuperApp"; return 1; }
     return 0

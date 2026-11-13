@@ -26,14 +26,14 @@ code() { grep -vE '^\s*(//|\*|/\*)' "$1"; }
 
 check() {   # $1 ConnectScreen $2 ConnectViewModel $3 MailAccountSync $4 AccountData $5 publisher $6 vault $7 res dir
     local n
-    code "$1" | grep -q 'MailAccountSync.openCloudAccount(context)' && code "$1" | grep -q 'viewModel.takeAccountsFromCloudAccount' || { echo "the Connect screen lacks the Cloud Account entries"; return 1; }
+    grep -q 'MailAccountSync.openCloudAccount(context)' <<<"$(code "$1")" && grep -q 'viewModel.takeAccountsFromCloudAccount' <<<"$(code "$1")" || { echo "the Connect screen lacks the Cloud Account entries"; return 1; }
     for k in connect_cloud_account_open connect_cloud_account_import connect_cloud_account_added connect_cloud_account_nothing_new; do
         n=$(grep -l "name=\"$k\"" "$7"/values*/strings.xml | wc -l); [ "$n" -ge 9 ] || { echo "$k is in $n locale file(s), not all 9"; return 1; }
     done
-    code "$2" | grep -q 'MailAccountSync.pull(app, container.accountStore)' || { echo "the view model does not pull through MailAccountSync"; return 1; }
-    code "$3" | grep -q 'VaultMailImport.addAll(planOf(p), store)' && code "$3" | grep -q 'MailAccountsContract.METHOD' || { echo "the pull does not go through the provider and the one writer"; return 1; }
+    grep -q 'MailAccountSync.pull(app, container.accountStore)' <<<"$(code "$2")" || { echo "the view model does not pull through MailAccountSync"; return 1; }
+    grep -q 'VaultMailImport.addAll(planOf(p), store)' <<<"$(code "$3")" && grep -q 'MailAccountsContract.METHOD' <<<"$(code "$3")" || { echo "the pull does not go through the provider and the one writer"; return 1; }
     grep -Eq 'Log\.[a-z]\(|println\(|printStackTrace' "$3" "$5" && { echo "the pull or the publisher logs"; return 1; }
-    code "$3" | grep -q 'Outcome.Refused(MailAccountsContract.refusal(' || { echo "a refusal is not a sentence"; return 1; }
+    grep -q 'Outcome.Refused(MailAccountsContract.refusal(' <<<"$(code "$3")" || { echo "a refusal is not a sentence"; return 1; }
     python3 - "$4" <<'PY' || { echo "the mail_accounts method is not grant-gated behind the signature check"; return 1; }
 import sys
 s = open(sys.argv[1], encoding='utf-8').read()
@@ -41,7 +41,7 @@ gate = s.index('caller is not a fleet app'); m = s.index('MailAccountsContract.M
 body = s[m:m + 700]
 sys.exit(0 if gate < m and 'MailAccountsContract.GRANT_READ' in body and 'who != ctx.packageName' in body and 'error("no grant for $who")' in body else 1)
 PY
-    code "$6" | grep -q '8 to mapOf(MAIL_PACKAGE to listOf(com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.GRANT_READ))' && code "$6" | grep -Eq 'SEED_VERSION = (8|9|1[0-9])' || { echo "the grant is not seeded for the mail app at version 8 (a later SEED_VERSION is fine)"; return 1; }
+    grep -q '8 to mapOf(MAIL_PACKAGE to listOf(com.diegonmarcos.superapp.fleetendpoints.MailAccountsContract.GRANT_READ))' <<<"$(code "$6")" && grep -Eq 'SEED_VERSION = (8|9|1[0-9])' <<<"$(code "$6")" || { echo "the grant is not seeded for the mail app at version 8 (a later SEED_VERSION is fine)"; return 1; }
     return 0
 }
 echo "== S1-S3 =="
