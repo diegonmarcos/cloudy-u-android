@@ -271,8 +271,9 @@ kb select end
 adb shell input swipe "$KX" "$KY" $((KX - KW * 3 / 4)) $((KY - KH * 3 / 4)) 1500; sleep 1
 kb selinfo; E2="$(last selinfo)"; echo "$E2"
 S2=$(sed -n 's/.*sel=\([0-9]*\),\([0-9]*\).*/\1 \2/p' <<<"$E2")
-read -r SA SB <<<"$S2"
-[ -n "${SA:-}" ] && [ "${SB:-}" = "$N" ] && [ "$SA" -le $((N - 3)) ] && ok "compass North-West selected text: $SA..$SB (shift + left, repeating)" || bad "compass selection: $E2 (len $N)"
+read -r SA SB <<<"$S2"   # the anchor and the moving end: extending left leaves the anchor at the cursor's old place
+[ -n "${SA:-}" ] && [ -n "${SB:-}" ] && LO=$((SA < SB ? SA : SB)) && HI=$((SA < SB ? SB : SA)) \
+  && [ "$HI" = "$N" ] && [ "$LO" -le $((N - 3)) ] && ok "compass North-West selected text: $LO..$HI (shift + left, repeating)" || bad "compass selection: $E2 (len $N)"
 shot 39b-unexpected-compass-selection
 kb theme default; sleep 2; kb themestate; D="$(last themestate)"; echo "$D"
 grep -q "theme=default active=false" <<<"$D" && ok "Default theme restored" || bad "Default not restored: $D"
