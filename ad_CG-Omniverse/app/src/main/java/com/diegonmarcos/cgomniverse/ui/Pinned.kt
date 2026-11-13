@@ -79,19 +79,28 @@ object Pinned {
     fun hasDocument(ctx: Context, host: String, launchUrl: String): Boolean =
         runCatching { cache(ctx).lookup(PinnedSites.keyOf(host), PinPolicy.documentKey(launchUrl)) != null }.getOrDefault(false)
 
+    /**
+     * #1711 the page the view holds ([current] = WebView.getUrl(): the page shown, or the one being loaded) is the world's own
+     * document, so its pinned copy may take its place; nothing yet (null, blank) counts as the world's own. A page the user
+     * went to through a link inside the world is left alone.
+     */
+    fun ownDocument(current: String?, launchUrl: String): Boolean =
+        current.isNullOrBlank() || current == "about:blank" || PinPolicy.documentKey(current) == PinPolicy.documentKey(launchUrl)
+
     /** #1711 how long a pinned world's live page may stay without a scene after its document arrived before its pinned copy is shown instead. */
     const val SCENE_WAIT_MS = 45_000L
 
     /**
      * #1711 the live document arrived but the page never started its scene: what the phone showed for floor796 (its top bar
      * over a flat page, 0 canvases, 0 videos) while its first data request had no answer. The pinned copy is then shown instead
-     * and answers that request itself. [sinceDocumentMs] = since the live document arrived; [rendered] = the screen shows the
-     * world; [page] = what the page answered to the render check (null = it did not answer: nothing is concluded). A scene is
-     * a canvas or a video in the document, or a GPU context (a canvas in a closed shadow root). 2D contexts are not counted: a
-     * page creates those to measure text or probe features long before it has a scene (floor796 holds 3 while it waits).
+     * and answers that request itself. [sinceDocumentMs] = since the live document arrived; [rendered] = the screen has shown
+     * the world in this load; [page] = what the page answered to the render check (null = it did not answer: nothing is
+     * concluded). A scene is [RenderProbe.Page.hasScene]: a canvas or a video in the document, or a GPU canvas attached anywhere
+     * (a closed shadow root). Contexts alone are not a scene: a page, and this app's own capability check, create them on
+     * throwaway canvases long before there is one (measured on the emulator while floor796 waits: 1 WebGL and 4 2D contexts).
      */
     fun sceneOverdue(sinceDocumentMs: Long, rendered: Boolean, page: RenderProbe.Page?): Boolean =
-        !rendered && page != null && page.canvases + page.videos + page.sceneContexts == 0 && sinceDocumentMs >= SCENE_WAIT_MS
+        !rendered && page != null && !page.hasScene && sinceDocumentMs >= SCENE_WAIT_MS
 
     /** #1711 the diagnostics line under "Failed requests": what pin offline does for this load, in words. */
     fun status(pinned: Boolean, fromCopy: Boolean, why: String): String = when {

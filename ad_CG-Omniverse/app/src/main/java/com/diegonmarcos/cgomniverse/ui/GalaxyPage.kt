@@ -183,17 +183,18 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
     var refreshing by remember(w.id) { mutableStateOf(false) }
     val host = Uri.parse(w.url).host.orEmpty()
     val pinned = Pinned.isPinned(ctx, w.id)
-    // #1711 this load is shown from the pinned copy: the live document did not arrive (offline, or the site not answering).
-    // committed = the WebView received the document of the current load
+    // #1711 this load is shown from the pinned copy: the live document did not arrive (offline, or the site not answering), or
+    // it arrived and started no scene
     var fromCopy by remember(w.id) { mutableStateOf(false) }
     var copyWhy by remember(w.id) { mutableStateOf("") }
-    var committed by remember(w.id) { mutableStateOf(false) }
+    // the attempt (a load this view started itself: the first one, a reload, a presentation change) whose document arrived, and
+    // when the document now shown arrived. Not taken from onPageStarted: a WebView reports that only once the document commits
+    // (measured on WebView 113 and 133), so through it a live site that never answers would never be noticed
+    var arrivedAttempt by remember(w.id) { mutableIntStateOf(-1) }
     var committedAt by remember(w.id) { mutableStateOf(0L) }
-    // the document of the current load arrived (the WebView committed it): the live site answered
-    val arrived = { if (!committed) { committed = true; committedAt = System.currentTimeMillis() }; Unit }
-    // one per main-frame load the WebView starts (the first load, a reload, the page reloading itself), and the address it asked for
-    var loadSeq by remember(w.id) { mutableIntStateOf(0) }
-    var startedUrl by remember(w.id) { mutableStateOf("") }
+    val arrived = { if (arrivedAttempt != attempt) { arrivedAttempt = attempt; committedAt = System.currentTimeMillis() }; Unit }
+    // the screen has shown this world since its document arrived
+    var seenOnScreen by remember(w.id) { mutableStateOf(false) }
     // an explicit reload asks the live site again (and is the one thing that refetches the pinned copy)
     val reload = { refreshing = true; fromCopy = false; copyWhy = ""; error = null; offline = false; finished = false; attempt++; if (web == null) generation++ else web?.reload(); Unit }
     LaunchedEffect(w.id, attempt) {
@@ -219,7 +220,7 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
     LaunchedEffect(showDiag) {
         if (!showDiag) return@LaunchedEffect
         diag = null
-        web?.evaluateJavascript(PageDiag.SCRIPT, null)
+        web?.evaluateJavascript(RenderProbe.own(PageDiag.SCRIPT), null)
         delay(1500)
         web?.evaluateJavascript(PageDiag.READ) { diag = PageDiag.parse(it) }
     }
@@ -249,18 +250,17 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
     var renderHidden by remember(w.id) { mutableStateOf(false) }
     // the presentation ladder: as the page draws (GPU layers), then CPU-backed canvases; remembered per world once seen on the screen
     var cpu by remember(w.id) { mutableStateOf(Web.cpuPresent(ctx, w.id)) }
-    // #1711 a pinned world never waits on a live site that does not answer: when the document of a load the WebView started has
+    // #1711 a pinned world never waits on a live site that does not answer: when the document of a load this view started has
     // not arrived after PinPolicy.LIVE_WAIT_MS and the pinned copy holds it, the world is loaded from the copy (which then also
     // answers the data requests the live site would not). A world with no copy keeps waiting for the load watchdog above.
-    LaunchedEffect(w.id, loadSeq) {
-        if (!pinned || loadSeq == 0) return@LaunchedEffect
+    LaunchedEffect(w.id, attempt) {
+        if (!pinned || fromCopy) return@LaunchedEffect
+        delay(PinPolicy.LIVE_WAIT_MS)
+        if (arrivedAttempt == attempt || fromCopy || error != null || offline) return@LaunchedEffect
+        val wv = web ?: return@LaunchedEffect
         val url = Store.launchUrl(w, cpu)
         // only the world's own document is taken from the copy: a link the user followed inside the page is left alone
-        if (fromCopy || PinPolicy.documentKey(startedUrl) != PinPolicy.documentKey(url)) return@LaunchedEffect
-        delay(PinPolicy.LIVE_WAIT_MS)
-        if (committed || fromCopy || error != null || offline) return@LaunchedEffect
-        if (!withContext(Dispatchers.IO) { Pinned.hasDocument(ctx, host, url) }) return@LaunchedEffect
-        val wv = web ?: return@LaunchedEffect
+        if (!Pinned.ownDocument(wv.url, url) || !withContext(Dispatchers.IO) { Pinned.hasDocument(ctx, host, url) }) return@LaunchedEffect
         copyWhy = "the live site did not answer in ${PinPolicy.LIVE_WAIT_MS / 1000} s"
         OmniXray.event("world:" + w.id, "the live page did not arrive ($copyWhy): showing the pinned copy")
         logRender(w.id + ": pinned copy shown, $copyWhy")
@@ -269,7 +269,7 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
         attempt++
     }
     LaunchedEffect(w.id, generation, desktop, attempt, cpu) {
-        render = null; renderPage = null; renderHidden = false
+        render = null; renderPage = null; renderHidden = false; seenOnScreen = false
         var copyAsked = false
         while (true) {
             delay(if (render?.state == RenderProbe.State.RENDERED) RenderProbe.POLL_RENDERED_MS else RenderProbe.POLL_MS)
@@ -291,13 +291,14 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
             // every change of the verdict also goes to logcat (tag CgoRender), so the log export tells when a world rendered or why not
             if (v.state != render?.state) logRender(w.id + ": " + RenderProbe.presentation(cpu) + "; " + v.text().take(700))
             renderPage = pg; render = v; OmniXray.worldRender(w.id, RenderProbe.presentation(cpu) + "; " + v.text())
-            // #1711 the live document arrived but the page started no scene: no canvas, no video, no GPU context. The phone showed
-            // floor796 exactly so (its top bar over a flat page) while its first data request had no answer. A pinned world is then
-            // shown from its copy, which answers that request itself; asked once per load.
-            if (pinned && !fromCopy && !copyAsked && committed && Pinned.sceneOverdue(System.currentTimeMillis() - committedAt, v.state == RenderProbe.State.RENDERED, pg)) {
+            if (v.state == RenderProbe.State.RENDERED) seenOnScreen = true
+            // #1711 the live document arrived but the page started no scene: no canvas, no video, no attached GPU canvas. The phone
+            // showed floor796 exactly so (its top bar over a flat page) while its first data request had no answer. A pinned world
+            // is then shown from its copy, which answers that request itself; asked once per load.
+            if (pinned && !fromCopy && !copyAsked && arrivedAttempt == attempt && Pinned.sceneOverdue(System.currentTimeMillis() - committedAt, seenOnScreen, pg)) {
                 copyAsked = true
                 val url = Store.launchUrl(w, cpu)
-                if (PinPolicy.documentKey(startedUrl) == PinPolicy.documentKey(url) && withContext(Dispatchers.IO) { Pinned.hasDocument(ctx, host, url) }) {
+                if (Pinned.ownDocument(wv.url, url) && withContext(Dispatchers.IO) { Pinned.hasDocument(ctx, host, url) }) {
                     copyWhy = "the live page started no scene in ${Pinned.SCENE_WAIT_MS / 1000} s"
                     OmniXray.event("world:" + w.id, "the live page shows nothing ($copyWhy): showing the pinned copy")
                     logRender(w.id + ": pinned copy shown, $copyWhy")
@@ -308,7 +309,8 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                 }
             }
             if (v.state == RenderProbe.State.RENDERED && cpu && !Web.cpuPresent(ctx, w.id)) Web.setCpuPresent(ctx, w.id, true)
-            if (RenderProbe.stepToCpu(v, cpu, viewSize.width, viewSize.height)) {
+            // a world the screen already showed in this load is never loaded again for a later flat or unreadable moment (#1711)
+            if (RenderProbe.stepToCpu(v, cpu, viewSize.width, viewSize.height, seenOnScreen)) {
                 OmniXray.event("world:" + w.id, "not on the screen (" + v.reason + "): loading the CPU presentation")
                 // the replaced view must not keep decoding behind the new one: destroyed once the new presentation's view has taken its place
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ if (web !== wv) runCatching { wv.destroy() } }, 1_000)
@@ -387,18 +389,19 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
                                 (if (pinned) Pinned.intercept(c, host, request, refreshing, fromCopy) else null) ?: super.shouldInterceptRequest(view, request)
                             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
-                                error = null; finishedAt = 0L; committed = false; startedUrl = url; loadSeq++
+                                // a new document: the wait for its scene starts over (reported at the latest when the document commits)
+                                error = null; finishedAt = 0L; seenOnScreen = false; committedAt = System.currentTimeMillis()
                                 OmniXray.worldStarted(w.id, url)
                             }
                             // the document of this load arrived (#1711: the live page answered, the pinned copy is not needed)
                             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) { canBack = view.canGoBack(); arrived() }
                             // a new document is on the screen (never a same-document change): the wait for its scene starts here even when no start was reported
-                            override fun onPageCommitVisible(view: WebView, url: String) { committed = true; committedAt = System.currentTimeMillis() }
+                            override fun onPageCommitVisible(view: WebView, url: String) { arrivedAttempt = attempt; committedAt = System.currentTimeMillis(); seenOnScreen = false }
                             override fun onPageFinished(view: WebView, url: String) {
                                 OmniXray.worldFinished(w.id, url)
                                 finishedAt = System.currentTimeMillis(); arrived()
                                 // #1631 what this world's page can draw with, measured in the page (no bridge is added to a foreign page)
-                                view.evaluateJavascript(PageDiag.SCRIPT, null)
+                                view.evaluateJavascript(RenderProbe.own(PageDiag.SCRIPT), null)
                                 view.postDelayed({
                                     view.evaluateJavascript(PageDiag.READ) { raw ->
                                         PageDiag.parse(raw)?.let { d -> OmniXray.worldDiag(w.id, d.rows().joinToString("; ") { it.label + ": " + it.value }) }
@@ -455,7 +458,7 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                 modifier = Modifier.align(Alignment.TopCenter).padding(8.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xB3000000))
                     .padding(horizontal = 10.dp, vertical = 4.dp).testTag(Tags.WORLD_RENDER_LOADING),
             )
-            if (!offline && error == null && rv != null && rv.state == RenderProbe.State.NOT_RENDERED && !renderHidden) Column(
+            if (!offline && error == null && rv != null && RenderProbe.alarm(rv, seenOnScreen) && !renderHidden) Column(
                 Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(8.dp)
                     .heightIn(max = with(LocalDensity.current) { (viewSize.height * RenderProbe.BANNER_MAX).toDp() })
                     .clip(RoundedCornerShape(10.dp)).background(Color(0xF20B0D16)).border(1.dp, p.accent, RoundedCornerShape(10.dp)).padding(10.dp)

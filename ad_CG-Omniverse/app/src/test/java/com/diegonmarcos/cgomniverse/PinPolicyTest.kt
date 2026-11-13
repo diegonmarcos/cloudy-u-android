@@ -137,19 +137,37 @@ class PinPolicyTest {
         assertEquals(8_000L, PinPolicy.LIVE_WAIT_MS)
         val g = app("ui/GalaxyPage.kt")
         listOf(
-            "Pinned.intercept(c, host, request, refreshing, fromCopy)", "delay(PinPolicy.LIVE_WAIT_MS)", "LaunchedEffect(w.id, loadSeq)",
-            "if (committed || fromCopy || error != null || offline) return@LaunchedEffect", "Pinned.hasDocument(ctx, host, url)",
+            "Pinned.intercept(c, host, request, refreshing, fromCopy)", "if (!pinned || fromCopy) return@LaunchedEffect", "delay(PinPolicy.LIVE_WAIT_MS)",
+            "if (arrivedAttempt == attempt || fromCopy || error != null || offline) return@LaunchedEffect",
+            "if (!Pinned.ownDocument(wv.url, url) || !withContext(Dispatchers.IO) { Pinned.hasDocument(ctx, host, url) }) return@LaunchedEffect",
             "fromCopy = true; finished = false", "wv.stopLoading(); wv.loadUrl(url)",
             // a main-frame failure of the world's own document (offline, no route) goes to the copy instead of the error card
             "PinPolicy.documentKey(request.url.toString()) == PinPolicy.documentKey(copyUrl) && Pinned.hasDocument(c, host, copyUrl)",
             "view.post { view.loadUrl(copyUrl) }",
-            // the arrival of the live document is what cancels the fallback; every load the WebView starts is watched
-            "committed = false; startedUrl = url; loadSeq++", "canBack = view.canGoBack(); arrived()", "override fun onPageCommitVisible(",
-            "val arrived = { if (!committed) { committed = true; committedAt = System.currentTimeMillis() }; Unit }",
+            // the arrival of the live document is what cancels the fallback; every load this view starts (an attempt) is watched
+            "val arrived = { if (arrivedAttempt != attempt) { arrivedAttempt = attempt; committedAt = System.currentTimeMillis() }; Unit }",
+            "canBack = view.canGoBack(); arrived()",
+            "override fun onPageCommitVisible(view: WebView, url: String) { arrivedAttempt = attempt; committedAt = System.currentTimeMillis(); seenOnScreen = false }",
             // an explicit reload asks the live site again
             "val reload = { refreshing = true; fromCopy = false; copyWhy = \"\";",
             "\"Pin offline: \" + Pinned.status(pinned, fromCopy, copyWhy)", "\"Pin offline log (\${pinLog.size}): \"", "\" · pinned copy\"",
         ).forEach { assertTrue("GalaxyPage lacks $it", g.contains(it)) }
+        // the wait starts with the load this view starts, never with onPageStarted: a WebView reports that only once the document
+        // commits (measured on WebView 113 and 133: with the origin gone the fallback keyed on it never ran)
+        val wait = g.substringAfter("LaunchedEffect(w.id, attempt) {\n        if (!pinned || fromCopy) return@LaunchedEffect").substringBefore("LaunchedEffect(w.id, generation, desktop, attempt, cpu)")
+        assertTrue(wait.length in 200..2500 && wait.contains("delay(PinPolicy.LIVE_WAIT_MS)") && wait.contains("attempt++"))
+        assertFalse(g.contains("loadSeq")); assertFalse(g.contains("startedUrl"))
+    }
+
+    /** The pinned copy takes the place of the world's own document only: a page the user reached through a link inside the world is left alone. */
+    @Test fun onlyTheWorldsOwnDocumentIsTakenFromTheCopy() {
+        val launch = "https://floor796.com"
+        assertTrue(Pinned.ownDocument("https://floor796.com/", launch))            // the page shown, or the one being loaded
+        assertTrue(Pinned.ownDocument("https://floor796.com", launch))
+        assertTrue(Pinned.ownDocument("https://floor796.com/#t0l0", launch))       // a fragment is the same document
+        assertTrue(Pinned.ownDocument(null, launch)); assertTrue(Pinned.ownDocument("", launch)); assertTrue(Pinned.ownDocument("about:blank", launch))
+        assertFalse(Pinned.ownDocument("https://floor796.com/about", launch))
+        assertFalse(Pinned.ownDocument("https://other.example/", launch))
     }
 
     /**
@@ -158,29 +176,30 @@ class PinPolicyTest {
      * errors). After [Pinned.SCENE_WAIT_MS] the pinned copy is shown instead; a page that has its scene is never touched.
      */
     @Test fun aLivePageThatStartsNoSceneIsShownFromThePinnedCopy() {
-        fun page(canvases: Int = 0, videos: Int = 0, gl: Int = 0, gpu: Int = 0, d2: Int = 0): RenderProbe.Page = RenderProbe.parse(JSONObject.quote(
+        fun page(canvases: Int = 0, videos: Int = 0, gl: Int = 0, gpu: Int = 0, d2: Int = 0, attached: Int = 0): RenderProbe.Page = RenderProbe.parse(JSONObject.quote(
             JSONObject().put("vw", 501).put("vh", 799).put("vis", "visible").put("raf", 60).put("canvases", canvases).put("videos", videos)
-                .put("gl", gl).put("gpu", gpu).put("d2", d2).toString()))!!
+                .put("gl", gl).put("gpu", gpu).put("d2", d2).put("glc", attached).toString()))!!
         val wait = Pinned.SCENE_WAIT_MS
         assertEquals(45_000L, wait)
-        // floor796 with data/matrix.json held, measured in Chromium: 0 canvases, 0 videos, and three 2D contexts it made on the way
-        val stuck = page(d2 = 3)
+        // floor796 with data/matrix.json held, measured in the app on the emulator (WebView 113 and 133): 0 canvases, 0 videos, and
+        // contexts made on the way that are no scene (1 WebGL by the app's own capability check, 4 2D), none on an attached canvas
+        val stuck = page(gl = 1, d2 = 4)
         assertTrue(Pinned.sceneOverdue(wait, false, stuck))
         assertTrue(Pinned.sceneOverdue(wait + 60_000L, false, stuck))
         assertFalse(Pinned.sceneOverdue(wait - 1L, false, stuck))                          // still inside the wait
-        assertFalse(Pinned.sceneOverdue(wait, true, stuck))                                // the screen shows the world
+        assertFalse(Pinned.sceneOverdue(wait, true, stuck))                                // the screen has shown the world in this load
         assertFalse(Pinned.sceneOverdue(wait, false, null))                                // the page did not answer the check: nothing is concluded
         // a page that has its scene stays with the live site, however long its first frame takes
         assertFalse(Pinned.sceneOverdue(wait * 4, false, page(canvases = 1, d2 = 11)))     // floor796 once its data arrived
         assertFalse(Pinned.sceneOverdue(wait * 4, false, page(videos = 2)))
-        assertFalse(Pinned.sceneOverdue(wait * 4, false, page(gl = 1)))                    // a canvas in a closed shadow root (Messenger)
-        assertFalse(Pinned.sceneOverdue(wait * 4, false, page(gpu = 1)))
+        assertFalse(Pinned.sceneOverdue(wait * 4, false, page(gl = 1, attached = 1)))      // a GPU canvas in a closed shadow root (Messenger)
+        assertFalse(Pinned.sceneOverdue(wait * 4, false, page(gpu = 1, attached = 1)))
         // Galaxy asks once per load, only for a pinned world on its live page, and only when the copy holds the world's document
         val g = app("ui/GalaxyPage.kt")
         listOf(
-            "if (pinned && !fromCopy && !copyAsked && committed && Pinned.sceneOverdue(System.currentTimeMillis() - committedAt, v.state == RenderProbe.State.RENDERED, pg)) {",
+            "if (pinned && !fromCopy && !copyAsked && arrivedAttempt == attempt && Pinned.sceneOverdue(System.currentTimeMillis() - committedAt, seenOnScreen, pg)) {",
             "copyAsked = true",
-            "if (PinPolicy.documentKey(startedUrl) == PinPolicy.documentKey(url) && withContext(Dispatchers.IO) { Pinned.hasDocument(ctx, host, url) }) {",
+            "if (Pinned.ownDocument(wv.url, url) && withContext(Dispatchers.IO) { Pinned.hasDocument(ctx, host, url) }) {",
             "copyWhy = \"the live page started no scene in \${Pinned.SCENE_WAIT_MS / 1000} s\"",
             "fromCopy = true; finished = false; finishedAt = 0L",
         ).forEach { assertTrue("GalaxyPage lacks $it", g.contains(it)) }

@@ -5,7 +5,10 @@ name: "Check → CG-Omniverse Galaxy worlds render (CDP on the emulator)"
 #   live     each world (data/store.json ids, WORLDS) is opened by the launch extra; the check passes when the page holds a canvas
 #            (floor796: a light-DOM canvas that reads back drawn; the others: a canvas anywhere, closed shadow roots included) AND the
 #            screen itself shows the scene (a screencap of the world's area is not one flat colour), inside the world's deadline.
-#            A WebGL world must also be receiving draw calls (a loader drawn in the DOM issues none). floor796 is then reloaded
+#            A WebGL world must also be receiving draw calls (a loader drawn in the DOM issues none); it is then taken past its
+#            own start gate and watched for up to 150 s while it loads on (screenshot <world>-scene.png, recorded): the app must
+#            not load a world again once the screen has shown it (its log, tag CgoRender, must hold no CPU presentation line
+#            after the first rendered one: the first run of this check found Orion thrown back from 21% to 0%). floor796 is then reloaded
 #            once to record the whole request timeline (which answers came from the pin-offline intercept: response header
 #            Client-Via): its document and its first data request must be answered by the network, never by the intercept
 #            (#1711), and the #1694 viewport assertion (layout viewport not zero) is kept.
@@ -137,7 +140,7 @@ jobs:
               def __init__(self, url):
                   self.ws = websocket.create_connection(url, timeout=10, suppress_origin=True)
                   self.n = 0; self.req = {}; self.order = []; self.console = []; self.navs = []
-                  self.paused = []; self.release = False   # Fetch domain: the requests held so far; True = let the next ones through
+                  self.paused = []; self.waiting = []; self.release = False   # Fetch domain: the requests held so far, the ones still paused; True = let them through
                   for m in ("Runtime.enable", "Log.enable", "Network.enable", "Page.enable"): self.send(m)
               def send(self, method, params=None):
                   self.n += 1; self.ws.send(json.dumps({"id": self.n, "method": method, "params": params or {}})); return self.n
@@ -180,7 +183,13 @@ jobs:
                       # a request matching the held pattern: left without an answer until the app shows its pinned copy, then let through
                       u = p.get("request", {}).get("url", ""); self.paused.append(u)
                       if self.release: self.send("Fetch.continueRequest", {"requestId": p.get("requestId")})
+                      else: self.waiting.append(p.get("requestId"))
                       log("  let through" if self.release else "  HELD (no answer)", u[:120])
+              def let_through(self):
+                  # from now on a matching request is continued at once, and so is every one still paused (one of a document that is gone answers with an error, ignored)
+                  self.release = True
+                  for i in self.waiting: self.send("Fetch.continueRequest", {"requestId": i})
+                  self.waiting = []
               def call(self, method, params=None, timeout=25):
                   i = self.send(method, params); end = time.time() + timeout
                   while time.time() < end:
@@ -257,9 +266,30 @@ jobs:
 
           SIZE = [1080, 2340]   # the screen, in px (set by every screenshot)
 
-          def copy_shown():
-              # how many times the app said it shows a world from its pinned copy (logcat tag CgoRender)
-              return len(re.findall(r"pinned copy shown", adb("logcat", "-d", "-s", "CgoRender:I")))
+          def device_now():
+              # the emulator's clock (epoch seconds), to cut the app's log by phase
+              try: return float(adb("shell", "date", "+%s").strip())
+              except Exception: return 0.0
+
+          def app_log(since=0.0, tag="CgoRender"):
+              # what the app itself logged: tag CgoRender = every change of a world's render verdict and every pinned-copy fallback,
+              # tag CloudWebPin = what pin offline did with each request (served from the copy, left to the network, stored)
+              out = []
+              for l in adb("logcat", "-d", "-v", "epoch", "-s", tag + ":I").splitlines():
+                  m = re.match(r"\s*(\d+\.\d+)\s+\d+\s+\d+\s+[A-Z]\s+" + tag + r"\s*:\s?(.*)$", l)
+                  if m and float(m.group(1)) >= since: out.append(m.group(2))
+              return out
+
+          def copy_shown(since=0.0):
+              # how many times the app said it shows a world from its pinned copy
+              return len([l for l in app_log(since) if "pinned copy shown" in l])
+
+          def loaded_again(wid, since):
+              # the app loaded this world again in its CPU presentation AFTER the screen had shown it: the lines that say so
+              lines = app_log(since); seen = None
+              for i, l in enumerate(lines):
+                  if l.startswith(wid + ": ") and "; rendered: " in l: seen = i; break
+              return [] if seen is None else [l[:160] for l in lines[seen + 1:] if l.startswith(wid + ": CPU canvas")]
 
           def overlay():
               # what the app says over or beside the world: the loading chip, the no-render banner, the pinned-copy mark, the offline card
@@ -324,19 +354,30 @@ jobs:
               return tuple(map(int, m.groups())) if m else None
 
           def enter(cdp, wid, label):
-              # past the world's own start gate, for a screenshot of the scene itself (recorded, never asserted)
-              how = cdp.js(ENTER_JS, 10) if cdp is not None else None
+              # past the world's own start gate and into its scene, for a screenshot of the scene itself and to see that the app leaves a
+              # world it has shown alone while the page loads on (the screenshot is recorded, never asserted)
               texts(); b = web_bounds()
               # the view tree of a page that never stops animating cannot always be read: the world's area is then where the app lays it out
               if not b: b = (0, int(SIZE[1] * 0.223), SIZE[0], int(SIZE[1] * 0.873))
-              if b:
-                  for rx, ry in TAPS.get(wid, []):
-                      adb("shell", "input", "tap", str(int(b[0] + rx * (b[2] - b[0]))), str(int(b[1] + ry * (b[3] - b[1])))); time.sleep(1)
-              if cdp is not None: cdp.pump(20)
-              else: time.sleep(20)
-              s = screen(label + "-entered"); log(label, "entered (%s, area %s): screen %s" % (how, b, json.dumps(s))); return s
+              how = None; t0 = time.time(); best = None
+              while time.time() - t0 < 150:
+                  if how in (None, "none") and cdp is not None: how = cdp.js(ENTER_JS, 10)
+                  if time.time() - t0 < 60 or how in (None, "none"):
+                      for rx, ry in TAPS.get(wid, []):
+                          adb("shell", "input", "tap", str(int(b[0] + rx * (b[2] - b[0]))), str(int(b[1] + ry * (b[3] - b[1])))); time.sleep(1)
+                  if cdp is not None: cdp.pump(8)
+                  else: time.sleep(8)
+                  s = screen(label + "-entered")
+                  if best is None or s.get("colours", 0) > best.get("colours", 0):
+                      best = s
+                      try: os.replace(OUT + "/" + label + "-entered.png", OUT + "/" + label + "-scene.png")
+                      except Exception: pass
+                  # a scene: many colours, no single one filling the area
+                  if time.time() - t0 > 40 and s.get("colours", 0) >= 60 and s.get("share", 1.0) < 0.8: break
+              s = screen(label + "-entered")
+              log(label, "entered (%s, area %s) after %.0fs: screen %s, richest %s" % (how, b, time.time() - t0, json.dumps(s), json.dumps(best))); return s
 
-          KEEP = r"rendered|loading|not rendered|Failed requests|Pin offline|pinned copy|Console errors|canvases|Canvases|Presentation|screen:|GPU contexts"
+          KEEP = r"rendered|loading|not rendered|Failed requests|Pin offline|pinned copy|Console errors|canvases|Canvases|Presentation|screen:|GPU canvases|WebGL"
 
           def diagnostics(label):
               # the app's own Page diagnostics sheet: the render check, Failed requests, the pin-offline lines
@@ -399,6 +440,7 @@ jobs:
           for wid in WORLDS:
               if wid not in URL:
                   summary["worlds"].append({"world": wid, "skipped": "not in data/store.json"}); log("live-" + wid, "SKIPPED: not in data/store.json"); continue
+              t_world = device_now()
               res, cdp = watch(wid, "live-" + wid, DEADLINE.get(wid, DEADLINE_DEFAULT), wid == PINNED)
               if cdp is not None and wid == PINNED and res["drawn_s"] is not None:
                   # the #1694 viewport assertion, then one reload to record the whole request timeline of a load
@@ -419,6 +461,9 @@ jobs:
                   log("live-" + wid, "reload drawn_s=%s live document and data: %s timeline=%s" % (res["reload_drawn_s"], json.dumps(res["live_requests"]), json.dumps(res["timeline"])))
               if "skipped" not in res and wid != PINNED and res["drawn_s"] is not None: res["entered_screen"] = enter(cdp, wid, "live-" + wid)
               if cdp is not None: cdp.close()
+              # #1711 a world the screen has shown is never loaded again by the app (its CPU presentation) while the page loads on
+              res["loaded_again"] = loaded_again(wid, t_world)
+              if res["loaded_again"]: log("live-" + wid, "LOADED AGAIN after it was on the screen:", res["loaded_again"])
               if "skipped" not in res: res["diagnostics"] = diagnostics("live-" + wid)
               summary["worlds"].append(res)
 
@@ -427,19 +472,19 @@ jobs:
           if PINNED in WORLDS and PINNED in URL:
               host = URL[PINNED].split("/")[2]
               held, cdp = watch(PINNED, "held-" + PINNED + "-before", DEADLINE.get(PINNED, DEADLINE_DEFAULT), True)
-              held["live_drawn_s"] = held["drawn_s"]; held["drawn_s"] = None; held["paused"] = []; held["deadline_s"] = HELD_DEADLINE
+              held["live_drawn_s"] = held["drawn_s"]; held["drawn_s"] = None; held["paused"] = []; held["deadline_s"] = HELD_DEADLINE; held["t0"] = device_now()
               if cdp is not None and held["live_drawn_s"] is not None:
                   r = cdp.call("Fetch.enable", {"patterns": [{"urlPattern": "*://" + host + "/data/matrix.json*"}]}, 15)
                   held["fetch_enable"] = "ok" if r is not None and "__error" not in r else json.dumps(r)
-                  cdp.req.clear(); cdp.order[:] = []; c0 = copy_shown()
+                  cdp.req.clear(); cdp.order[:] = []; t_held = device_now(); c0 = copy_shown(t_held)
                   cdp.send("Page.reload"); t1 = time.time()
                   log("held", "Fetch.enable", held["fetch_enable"], "reload; pinned copies shown so far:", c0)
                   while time.time() - t1 < HELD_DEADLINE:
                       if not cdp.pump(2.0): cdp.close(); cdp = None; break
                       held["paused"] = cdp.paused[:6]
                       # the app says it shows the pinned copy: from then on the data request is let through (the copy must answer it)
-                      if not cdp.release and copy_shown() > c0:
-                          cdp.release = True; held["copy_shown_s"] = round(time.time() - t1, 1); log("held", "the app shows the pinned copy after %.1fs" % (time.time() - t1))
+                      if not cdp.release and copy_shown(t_held) > c0:
+                          cdp.let_through(); held["copy_shown_s"] = round(time.time() - t1, 1); log("held", "the app shows the pinned copy after %.1fs" % (time.time() - t1))
                       st = cdp.js(STATE, 15)
                       if st is None: continue
                       st = json.loads(st); scr = screen(); held["state"] = st; held["screen"] = scr
@@ -458,6 +503,9 @@ jobs:
                       cdp.call("Fetch.disable", None, 10); cdp.close()
               held["final_screen"] = screen("held-" + PINNED)
               held["overlay"] = overlay()
+              held["app_said"] = [l[:200] for l in app_log(held.get("t0", 0.0)) if "pinned copy shown" in l][-2:]
+              held["copy_answered"] = [l[:170] for l in app_log(held.get("t0", 0.0), "CloudWebPin") if "newest stored copy" in l][-3:]
+              log("held", "the app said:", held["app_said"], "the copy answered:", held["copy_answered"])
               log("held", "RESULT drawn_s=%s copy_shown_s=%s held=%s matrix=%s overlay=%s" % (
                   held["drawn_s"], held.get("copy_shown_s"), held["paused"][:2], json.dumps(held.get("matrix_requests")), held["overlay"]))
               if "skipped" not in held: held["diagnostics"] = diagnostics("held-" + PINNED)
@@ -522,6 +570,7 @@ jobs:
           for r in summary["worlds"]:
               if "skipped" in r: bad.append("%s was not opened: %s" % (r["world"], r["skipped"])); continue
               if r["drawn_s"] is None: bad.append("%s did not reach drawn content in %d s (%s)" % (r["world"], r["deadline_s"], json.dumps(r.get("screen"))))
+              if r.get("loaded_again"): bad.append("%s was loaded again by the app after the screen had shown it: %s (#1711)" % (r["world"], r["loaded_again"][:2]))
               if r["world"] == PINNED and r["drawn_s"] is not None and not r.get("viewport_ok", False): bad.append("%s: the layout viewport is zero (#1694)" % r["world"])
               if r["world"] == PINNED and r["drawn_s"] is not None and not r.get("live_by_network", False):
                   bad.append("%s: the live page's document or its data/matrix.json request was not answered by the network: %s (#1711)" % (r["world"], json.dumps(r.get("live_requests"))))

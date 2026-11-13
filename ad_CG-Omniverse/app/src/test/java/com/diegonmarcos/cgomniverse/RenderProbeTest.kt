@@ -94,32 +94,76 @@ class RenderProbeTest {
     }
 
     /**
-     * #1711 a scene on a canvas outside the document (Messenger: three.js in a closed shadow root) is invisible to the page's
-     * canvas list. The contexts counted from the page start say a scene exists; whether it shows is the screen's word.
+     * #1711 a scene on a canvas the page's own list cannot reach (Messenger: three.js in a closed shadow root) is invisible to the
+     * page's canvas list. The GPU canvases attached to the page say a scene exists; whether it shows is the screen's word.
      */
     @Test fun aSceneOutsideTheDocumentIsNotCalledNeverStarted() {
-        val raw = JSONObject.quote(JSONObject().put("vw", 412).put("vh", 760).put("vis", "visible").put("raf", 60).put("timer", true).put("io", true)
-            .put("canvases", 0).put("gl", 2).put("gpu", 0).put("d2", 1).toString())
-        val p = RenderProbe.parse(raw)!!
-        assertEquals(2, p.glContexts); assertEquals(0, p.gpuContexts); assertEquals(1, p.contexts2d); assertEquals(2, p.sceneContexts)
-        assertEquals(0, p.canvases); assertFalse(p.hasPixels)
-        assertTrue(p.rows().toMap()["Canvas contexts created"]!!.startsWith("2 WebGL, 0 WebGPU, 1 2D"))
+        fun raw(attached: Int, gl: Int = 2, d2: Int = 1) = JSONObject.quote(JSONObject().put("vw", 412).put("vh", 760).put("vis", "visible").put("raf", 60)
+            .put("timer", true).put("io", true).put("canvases", 0).put("gl", gl).put("gpu", 0).put("d2", d2).put("glc", attached).toString())
+        val p = RenderProbe.parse(raw(attached = 1))!!
+        assertEquals(2, p.glContexts); assertEquals(0, p.gpuContexts); assertEquals(1, p.contexts2d); assertEquals(1, p.gpuCanvases)
+        assertEquals(0, p.canvases); assertFalse(p.hasPixels); assertTrue(p.hasScene)
+        val row = p.rows().toMap()["Canvas contexts created"]!!
+        assertTrue(row, row.startsWith("2 WebGL, 0 WebGPU, 1 2D") && row.contains("1 GPU canvases attached to the page"))
         // the screen shows it: rendered, whatever the page's canvas list says
         assertEquals(RenderProbe.State.RENDERED, RenderProbe.verdict(1080, 1800, p, painted, late).state)
-        // a flat screen after the grace: the scene started but does not reach the screen (never "no canvas ... never started")
+        // a flat screen after the grace: the scene runs but does not reach the screen (never "no canvas ... never started")
         val v = RenderProbe.verdict(1080, 1800, p, flat, late)
         assertEquals(RenderProbe.State.NOT_RENDERED, v.state)
-        assertTrue(v.reason, v.reason.contains("started a GPU scene (2 contexts, on a canvas that is not in the document)") && v.reason.contains("one flat colour #303030"))
+        assertTrue(v.reason, v.reason.contains("runs a GPU scene (1 attached canvases outside the page's canvas list)") && v.reason.contains("one flat colour #303030"))
         assertFalse(v.reason.contains("never started"))
-        assertTrue(v.text(), v.text().contains("2 GPU contexts created by the page"))
-        // a page from before the count (no gl / gpu / d2 in its answer) reads as before
-        assertEquals(0, page().sceneContexts); assertTrue(RenderProbe.verdict(1080, 1800, page(), flat, late).reason.contains("no canvas and no video"))
-        // the count is taken at document start, the page's own call passes through untouched, and READ reports it
-        listOf("window.__cloudCtx", "HTMLCanvasElement.prototype.getContext", "g.apply(this,arguments)", "t==='webgpu'", "/webgl/.test(t)", "return r")
-            .forEach { assertTrue(it, RenderProbe.CONTEXT_JS.contains(it)) }
-        listOf("gl:(window.__cloudCtx||{}).gl||0", "gpu:(window.__cloudCtx||{}).gpu||0", "d2:(window.__cloudCtx||{}).d2||0").forEach { assertTrue(it, RenderProbe.READ.contains(it)) }
+        assertTrue(v.text(), v.text().contains("1 GPU canvases attached to the page"))
+        // the screen cannot be sampled: the attached GPU canvas is the scene, as a canvas that reads back drawn is; inside the grace it is still loading
+        val unsampled = RenderProbe.verdict(1080, 1800, p, null, late)
+        assertEquals(RenderProbe.State.RENDERED, unsampled.state); assertTrue(unsampled.reason, unsampled.reason.contains("the screen could not be sampled"))
+        assertEquals(RenderProbe.State.LOADING, RenderProbe.verdict(1080, 1800, p, null, 0).state)
+        // a context alone is not a scene: a page makes one on a throwaway canvas only to see whether WebGL exists. Measured on the
+        // emulator while floor796 waits for its data (the app's own capability check still counted then): 1 WebGL and 4 2D contexts, no canvas attached
+        val probeOnly = RenderProbe.parse(raw(attached = 0, gl = 1, d2 = 4))!!
+        assertEquals(1, probeOnly.glContexts); assertEquals(0, probeOnly.gpuCanvases); assertFalse(probeOnly.hasScene)
+        assertTrue(RenderProbe.verdict(1080, 1800, probeOnly, flat, late).reason.contains("no canvas and no video"))
+        assertEquals(RenderProbe.State.NOT_RENDERED, RenderProbe.verdict(1080, 1800, probeOnly, null, late).state)
+        assertFalse(RenderProbe.verdict(1080, 1800, probeOnly, flat, late).text().contains("GPU canvases attached"))
+        // a page from before the count (no gl / gpu / d2 / glc in its answer) reads as before
+        assertEquals(0, page().gpuCanvases); assertFalse(page().hasScene); assertTrue(page(canvases = 1).hasScene); assertTrue(page(videos = 1).hasScene)
+        assertTrue(RenderProbe.verdict(1080, 1800, page(), flat, late).reason.contains("no canvas and no video"))
+        // the count is taken at document start (each canvas once), the GPU canvases are remembered weakly, the page's own call passes through
+        // untouched, READ reports them, and this app's own checks are not counted as the page's
+        listOf("window.__cloudCtx", "HTMLCanvasElement.prototype.getContext", "g.apply(this,arguments)", "t==='webgpu'", "/webgl/.test(t)", "return r",
+            "new WeakSet()", "!s.has(this)", "!n.off", "window.WeakRef", "new WeakRef(this)", "n.c.length<64").forEach { assertTrue(it, RenderProbe.CONTEXT_JS.contains(it)) }
+        listOf("gl:(window.__cloudCtx||{}).gl||0", "gpu:(window.__cloudCtx||{}).gpu||0", "d2:(window.__cloudCtx||{}).d2||0", "glc:0", ".deref()", "E.isConnected",
+            "if(N)N.off=1;", "if(N)N.off=0;").forEach { assertTrue(it, RenderProbe.READ.contains(it)) }
+        assertEquals("(function(){var n=window.__cloudCtx;if(n)n.off=1;try{X()}finally{if(n)n.off=0}})()", RenderProbe.own("X()"))
+        assertEquals(2, Regex("evaluateJavascript\\(RenderProbe\\.own\\(PageDiag\\.SCRIPT\\), null\\)").findAll(source("app/src/main/java/com/diegonmarcos/cgomniverse/ui/GalaxyPage.kt")).count())
+        assertFalse(source("app/src/main/java/com/diegonmarcos/cgomniverse/ui/GalaxyPage.kt").contains("evaluateJavascript(PageDiag.SCRIPT"))
         assertTrue(source("app/src/main/java/com/diegonmarcos/cgomniverse/ui/Web.kt").contains("addDocumentStartJavaScript(wv, RenderProbe.CONTEXT_JS"))
         assertTrue(source("app/src/main/java/com/diegonmarcos/cgomniverse/ui/GalaxyPage.kt").contains("Web.contextProbe(wv)"))
+    }
+
+    /**
+     * #1711 a world the screen already showed in this load is never loaded again, and gets no banner, for a later flat or unreadable
+     * moment: a game's loading screen between two scenes (Messenger: white), a renderer busy compiling (Cyber City Orion was thrown
+     * back from 21% to 0% on the emulator). A world that was never on the screen keeps the ladder and the banner.
+     */
+    @Test fun aWorldAlreadySeenIsNeverLoadedAgainForAFlatMoment() {
+        val busy = RenderProbe.verdict(1080, 1800, null, null, late)                          // the page did not answer, the screen could not be sampled
+        val flatLater = RenderProbe.verdict(1080, 1800, page(canvases = 1, blank = 1), flat, late)
+        listOf(busy, flatLater).forEach { v ->
+            assertEquals(RenderProbe.State.NOT_RENDERED, v.state)
+            assertTrue(RenderProbe.stepToCpu(v, cpu = false, viewW = 1080, viewH = 1800, seen = false))
+            assertFalse(RenderProbe.stepToCpu(v, cpu = false, viewW = 1080, viewH = 1800, seen = true))
+            assertTrue(RenderProbe.alarm(v, seen = false)); assertFalse(RenderProbe.alarm(v, seen = true))
+        }
+        assertFalse(RenderProbe.alarm(null, false))
+        assertFalse(RenderProbe.alarm(RenderProbe.verdict(1080, 1800, page(), painted, late), false))    // rendered
+        assertFalse(RenderProbe.alarm(RenderProbe.verdict(1080, 1800, page(), flat, 0), false))          // still loading
+        val g = source("app/src/main/java/com/diegonmarcos/cgomniverse/ui/GalaxyPage.kt")
+        listOf(
+            "if (v.state == RenderProbe.State.RENDERED) seenOnScreen = true", "RenderProbe.stepToCpu(v, cpu, viewSize.width, viewSize.height, seenOnScreen)",
+            "rv != null && RenderProbe.alarm(rv, seenOnScreen) && !renderHidden",
+            // a new load, and a new document inside the same load, start unseen
+            "render = null; renderPage = null; renderHidden = false; seenOnScreen = false", "seenOnScreen = false; committedAt = System.currentTimeMillis()",
+        ).forEach { assertTrue("GalaxyPage lacks $it", g.contains(it)) }
     }
 
     @Test fun aPageWithPixelsAndNoScreenSampleCountsAsRendered() {
@@ -193,7 +237,7 @@ class RenderProbeTest {
             "WorldView(cur, Modifier.weight(1f).fillMaxWidth())", "Box(Modifier.weight(1f).fillMaxWidth().onSizeChanged { viewSize = it })",
             "modifier = Modifier.fillMaxSize().testTag(Tags.WORLD_WEB)", "RenderProbe.verdict(viewSize.width, viewSize.height,",
             "RenderProbe.SCRIPT", "RenderProbe.READ", "Web.screenSample(", "PageConsole.errors()", "OmniXray.worldRender(w.id,",
-            "key(w.id, generation, desktop, cpu)", "if (cpu) Web.cpuCanvas(wv)", "RenderProbe.stepToCpu(v, cpu, viewSize.width, viewSize.height)",
+            "key(w.id, generation, desktop, cpu)", "if (cpu) Web.cpuCanvas(wv)", "RenderProbe.stepToCpu(v, cpu, viewSize.width, viewSize.height, seenOnScreen)",
             "Web.setCpuPresent(ctx, w.id, true)", "Tags.WORLD_RENDER_GPU",
             "Tags.WORLD_RENDER_LOADING", "Tags.WORLD_RENDER_NONE", "R.string.world_render_loading", "R.string.world_render_none", "\"Render check\"",
         ).forEach { assertTrue("GalaxyPage lacks $it", g.contains(it)) }
