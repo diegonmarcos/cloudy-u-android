@@ -27,6 +27,19 @@ while IFS= read -r line; do
 done <<< "$nav_out"
 [ "$checks" -ge 15 ] || fail "the nav driver made only $checks checks — it is not seeing the module"
 
+# ── #1699 the Backlog root index (live / offline last-good / reason) + rule-16 field parity ──
+idx_out="$(node "$ROOT/test/backlog_index.mjs" "$ROOT" 2>&1)"
+idx_status=$?
+[ "$idx_status" -eq 0 ] || fail "backlog index driver crashed (exit $idx_status): $idx_out"
+idx_checks=0
+while IFS= read -r line; do
+  case "$line" in
+    "CHECK ok "*)  ok "${line#CHECK ok }"; idx_checks=$((idx_checks + 1)) ;;
+    "CHECK bad "*) fail "${line#CHECK bad }"; idx_checks=$((idx_checks + 1)) ;;
+  esac
+done <<< "$idx_out"
+[ "$idx_checks" -ge 30 ] || fail "the backlog index driver made only $idx_checks checks"
+
 # ── #1158 the shared bars (first row, second row, bottom bar, gradient), through the real bars.js ──
 bars_out="$(node "$ROOT/test/cloud_bars.mjs" "$ROOT" 2>&1)"
 status=$?

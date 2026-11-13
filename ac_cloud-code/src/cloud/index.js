@@ -38,6 +38,7 @@ import { mountBars } from "./bars-dom";
 import { pageOfFile } from "./bars";
 import { listAgents, listRepos } from "./seams";
 import { el } from "./dom";
+import { loadIndex, ageText } from "./backlog-index";
 import { bindTitle, drawer, topBar } from "./chrome";
 import { openProfile } from "./profile";
 import { chatDrawer, renderChat } from "./chat/view";
@@ -120,7 +121,8 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 	let current = entry;
 	const body = el("div", { className: "cloud-md" });
 
-	async function load(file) {
+	async function load(file, quiet = false) {
+		if (docs && !quiet && mode !== "views") setMode("views");
 		body.textContent = `Loading ${file} …`;
 		current = file;
 		selectedPage(panel.dataset.tab, pageOfFile(tabs.find((t) => t.id === panel.dataset.tab), file));
@@ -244,9 +246,75 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 		return aside;
 	};
 
+	// #1699 the Backlog tab opens on the clone's ROOT index.html (rendered backlog) with Refresh,
+	// an offline last-good copy and a visible reason; the dist/*.md views stay one tap away ("Views").
+	const indexBox = el("div", { className: "cloud-backlog-index" });
+	const indexNote = el("div", { className: "cloud-backlog-note cloud-muted" });
+	const modeBtn = {
+		index: el("button", { className: "cloud-row cloud-backlog-mode", onclick: () => setMode("index") }, "Index"),
+		views: el("button", { className: "cloud-row cloud-backlog-mode", onclick: () => setMode("views") }, "Views"),
+	};
+	const refreshBtn = el("button", { className: "cloud-row cloud-backlog-mode", title: "Refresh from the clone", onclick: () => refreshIndex() }, el("span", { className: "icon refresh" }), "Refresh");
+	const modeBar = el("div", { className: "cloud-backlog-modes" }, modeBtn.index, modeBtn.views, refreshBtn);
+	const cachePath = () => `${cordova.file.dataDirectory}${nav.backlog.last_good}`;
+	const indexIo = () => ({
+		readLive: () => fsOperation(docsDir.replace(/\/?$/, "/"), nav.backlog.index).readFile("utf8"),
+		readLast: async () => {
+			const f = fsOperation(cachePath());
+			if (!(await f.exists())) return null;
+			const raw = JSON.parse(await f.readFile("utf8"));
+			return { text: raw.html, savedAt: raw.savedAt };
+		},
+		writeLast: async (text) => {
+			const data = JSON.stringify({ savedAt: Date.now(), html: text });
+			const f = fsOperation(cachePath());
+			if (await f.exists()) await f.writeFile(data);
+			else await fsOperation(cordova.file.dataDirectory).createFile(nav.backlog.last_good, data);
+		},
+		now: () => Date.now(),
+	});
+	async function refreshIndex() {
+		indexNote.textContent = "Reading the repository clone …";
+		let got;
+		try {
+			got = await loadIndex(indexIo(), `${docsDir.replace(/^file:\/\//, "")}/${nav.backlog.index}`);
+		} catch (err) {
+			got = { state: "unavailable", reason: String(err?.message || err) };
+		}
+		const grant = el("button", {
+			className: "cloud-row",
+			onclick: () => system.manageAllFiles(() => refreshIndex(), (e) => toast(String(e))),
+		}, el("span", { className: "icon folder_open" }), "Allow access to all files, then retry");
+		if (got.state === "live") {
+			indexNote.textContent = `cloud-me-pvt-tasks index.html, read from the clone ${ageText(got.savedAt, Date.now())}`;
+		} else if (got.state === "offline") {
+			indexNote.replaceChildren(`Offline copy saved ${ageText(got.savedAt, Date.now())}. ${got.reason}`, grant);
+		} else {
+			indexNote.replaceChildren(got.reason, grant);
+		}
+		if (got.html) {
+			// Sandboxed: the page's own scripts may run (filters) but it cannot reach this app's DOM or storage.
+			indexBox.replaceChildren(el("iframe", { className: "cloud-backlog-frame", sandbox: "allow-scripts", srcdoc: got.html, title: "Backlog" }));
+		} else {
+			indexBox.replaceChildren(el("p", { className: "cloud-muted" }, "Nothing to show yet. Use the Views switch for the dist pages once the clone exists."));
+		}
+	}
+	function setMode(m) {
+		mode = m;
+		indexBox.style.display = m === "index" ? "" : "none";
+		indexNote.style.display = m === "index" ? "" : "none";
+		body.style.display = m === "views" ? "" : "none";
+		modeBtn.index.classList.toggle("active", m === "index");
+		modeBtn.views.classList.toggle("active", m === "views");
+		if (m === "index") refreshIndex();
+	}
+	let mode = docs ? "index" : "views";
+
 	const asidePane = docs ? buildDocsPane() : null;
-	if (asidePane) panel.replaceChildren(panelHeader(title), el("div", { className: "cloud-backlog-split" }, asidePane, body), ...extra);
-	else panel.replaceChildren(panelHeader(title), body, ...extra);
+	const main = docs ? el("div", { className: "cloud-backlog-main" }, modeBar, indexNote, indexBox, body) : body;
+	if (asidePane) panel.replaceChildren(panelHeader(title), el("div", { className: "cloud-backlog-split" }, asidePane, main), ...extra);
+	else panel.replaceChildren(panelHeader(title), main, ...extra);
+	if (docs) setMode("index");
 
 	const items = [
 		{ id: "reload", label: "Reload", icon: "refresh", run: () => load(current) },
@@ -255,6 +323,11 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 		{ id: "repo", label: "Open the repository", icon: "git", run: () => repo.click() },
 		{ id: "folder", label: "Backlog folder", icon: "folder_open", run: () => change.click() },
 	];
+	if (docs) {
+		items.unshift({ id: "index-refresh", label: "Refresh index", icon: "refresh", run: () => { setMode("index"); refreshIndex(); } },
+			{ id: "view-index", label: "Index (rendered backlog)", icon: "home", run: () => setMode("index") },
+			{ id: "view-views", label: "Views (dist pages)", icon: "folder_open", run: () => setMode("views") });
+	}
 	if (asidePane) {
 		items.push({ id: "docs-reload", label: "Reload docs tree", icon: "refresh", run: () => asidePane._reload() });
 		items.push({ id: "docs-folder", label: "cloud-docs folder", icon: "folder_open", run: async () => {
@@ -268,7 +341,7 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 	}
 	MENUS[panel.dataset.tab] = () => ({ items });
 	LOADERS[panel.dataset.tab] = load;
-	await load(pageFileOf(panel.dataset.tab, entry));
+	await load(pageFileOf(panel.dataset.tab, entry), true);
 }
 
 function renderBacklog(panel) {

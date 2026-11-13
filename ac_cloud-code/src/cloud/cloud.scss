@@ -1103,3 +1103,10 @@ body.cloud-collapsed {
     border-radius: 10px 10px 0 0;
   }
 }
+
+.cloud-backlog-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.cloud-backlog-modes { display: flex; flex-direction: row; gap: 6px; }
+.cloud-backlog-modes .cloud-backlog-mode { flex: 0 0 auto; width: auto; padding: 4px 12px; }
+.cloud-backlog-modes .cloud-backlog-mode.active { font-weight: 600; text-decoration: underline; }
+.cloud-backlog-note { font-size: 12px; padding: 0 2px; }
+.cloud-backlog-frame { width: 100%; height: calc(100vh - 220px); min-height: 320px; border: 0; background: #fff; }

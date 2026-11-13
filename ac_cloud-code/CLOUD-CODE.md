@@ -81,7 +81,9 @@ Backlog | Editor | Repos | Chat | Agents | Browser | MyTerminal. Chat replaced H
 tiles duplicated the bar; its Configs card, the all-files grant, moved to Profile & Config).
 
 - **Editor**: Acode, untouched. Selecting it hides every cloud panel.
-- **Backlog**: renders `cloud-me-pvt-tasks/1___BACKLOG___/1.1.Product-Backlog/dist/*.md`
+- **Backlog** (#1699): opens on the clone's root `index.html` (sandboxed frame) with Refresh, an offline
+  last-good copy (app data dir) and a visible reason when the clone cannot be read; the "Views" switch keeps
+  the earlier page: renders `cloud-me-pvt-tasks/1___BACKLOG___/1.1.Product-Backlog/dist/*.md`
   as-is and follows the files' own "Views:" links. That repo is private and this
   APK is public, so it is read from the owner's on-device clone (the folder can be
   changed in the tab). Nothing is re-derived.

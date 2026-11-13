@@ -1,0 +1,38 @@
+{
+ "_doc": "#1699 field parity: the Backlog page as of origin/main a5fd52d88 (before the root-index view). Every entry must still exist; the test fails when one is removed.",
+ "menu_ids": [
+  "reload",
+  "entry",
+  "edit",
+  "repo",
+  "folder",
+  "docs-reload",
+  "docs-folder"
+ ],
+ "nav_backlog_keys": [
+  "_doc",
+  "source_dir",
+  "entry"
+ ],
+ "sub_pages": {
+  "sts": "P-Backlog-sts.md",
+  "prj": "P-Backlog-prj.md",
+  "pry": "P-Backlog-pry.md",
+  "eff": "P-Backlog-eff.md",
+  "bat": "P-Backlog-bat.md",
+  "mdl": "P-Backlog-mdl.md"
+ },
+ "snippets": [
+  "stored(\"backlog.dir\", gitPath(nav.backlog.source_dir))",
+  "fsOperation(dir, file).readFile(\"utf8\")",
+  "markdownIt({ html: false, linkify: true })",
+  "browser.open(href)",
+  "openFile(`${dir}${current}`",
+  "openFolder(gitPath(repoName)",
+  "new FileTree(treeBox",
+  "Allow access to all files, then retry",
+  "cloud-docs-toggle",
+  "MENUS[panel.dataset.tab]",
+  "LOADERS[panel.dataset.tab] = load"
+ ]
+}
