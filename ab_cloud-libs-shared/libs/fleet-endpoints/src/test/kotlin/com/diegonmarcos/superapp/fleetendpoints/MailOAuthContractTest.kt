@@ -35,6 +35,17 @@ class MailOAuthContractTest {
         for (f in listOf("access", "refresh", "expires")) assertNotNull(AppCredentialsContract.entry(MailOAuthContract.credId(" Me@Example.org", f)))
         assertEquals("mail.oauth.me_example_org.access", MailOAuthContract.credId("Me@Example.org", MailOAuthContract.FIELD_ACCESS))
         assertTrue(AppCredentialsContract.defaultGrants(AppCredentialsContract.PKG_MAIL).contains("cred.mail.oauth.*"))
-        assertTrue(MailOAuthContract.pendingLine("a@b.c").contains("Cloud Account"))
+        assertTrue(MailOAuthContract.refusal(null).contains("no reason given"))
+    }
+
+    @Test fun `the start and poll answers round-trip, refuse another version and carry no token in a log form`() {
+        val st = MailOAuthContract.StartAnswer("H", "UC", "https://v", "https://v?c=1", 5, 900)
+        assertEquals(st, MailOAuthContract.parseStart(st.json()))
+        assertNull(MailOAuthContract.parseStart("""{"v":2,"handle":"H","user_code":"U"}""")); assertNull(MailOAuthContract.parseStart("""{"v":1,"handle":"","user_code":"U"}"""))
+        val ok = MailOAuthContract.PollAnswer("success", "SECRET-AT", "SECRET-RT", 60, "IDT", "mail")
+        val back = MailOAuthContract.parsePoll(ok.json())!!
+        assertEquals("SECRET-AT", back.accessToken); assertEquals("IDT", back.idToken)
+        assertFalse(ok.toString().contains("SECRET"))
+        assertNull(MailOAuthContract.parsePoll("""{"v":1,"state":"teapot"}""")); assertNull(MailOAuthContract.parsePoll(null))
     }
 }
