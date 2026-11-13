@@ -177,6 +177,11 @@ class MainActivity : AppCompatActivity() {
         // #570 an inventory handed over by Account (Apply list to Store): the Phone page consumes it on resume.
         i?.getStringExtra(StoreImport.EXTRA_IMPORT)?.let { StoreImport.pending = it }
         val tab = i?.getStringExtra(EXTRA_TAB)
+        // #1719 a deep link to one Access page (SuperApp > Network > OS Perms asks for access + android): the page must be one of Access's.
+        if (tab == TAB_ACCESS) i?.getStringExtra(EXTRA_PAGE)?.let { pg ->
+            val target = AccessPages.resolve(pg)
+            if (NAV.section(TAB_ACCESS)?.pages?.any { it.id == target } == true) choose(TAB_ACCESS, target)
+        }
         // SuperApp's apps-mesh page used to open the Mesh tab. Apps Mesh is retired (#1580: one mesh gateway); the gateway's routes are Access > IPC.
         if (tab == LEGACY_MESH) { choose(TAB_ACCESS, AccessPages.resolve(LEGACY_MESH)); return TAB_ACCESS }
         // Feed moved into the Cloud page (Commits and CI-CD panels): an intent asking for the old tab opens Cloud.
@@ -187,6 +192,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         /** Intent extra naming the tab to open: [TAB_CLOUD], [TAB_PHONE], [TAB_SEARCH], [TAB_TORRENT] or [TAB_ACCESS]. */
         const val EXTRA_TAB = "tab"
+        /** Intent extra naming one page of the tab (with [TAB_ACCESS]: mcp, apis, ipc, identity or android); unknown = the tab's own choice. */
+        const val EXTRA_PAGE = "page"
         const val TAB_CLOUD = "cloud"
         const val TAB_PHONE = "phone"
         const val TAB_SEARCH = "search"

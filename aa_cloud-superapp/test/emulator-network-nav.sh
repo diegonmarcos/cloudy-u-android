@@ -2,7 +2,7 @@
 # #1719 Emulator proof of Configs > Network and its bottom nav, and of NG Firewall taking over the screen:
 #   bash aa_cloud-superapp/test/emulator-network-nav.sh <superapp.apk> <out dir>
 # Opens page:config/network, photographs Home (default), Wireless, DNS, VPN, then NG Firewall (full screen: own nav Status | Apps | Rules and a
-# Back button, the SuperApp nav absent), its three views, and Back (the Network nav is restored). Fails when a label of the bar is missing,
+# no Back control of its own: the shell arrow is the one, the SuperApp nav absent), its three views, and Back (the Network nav is restored). Fails when a label of the bar is missing,
 # NG Firewall lacks its own nav or Back, or Back does not restore the Network bar. OS Perms and Webserver are links out of the app: photographed
 # only (the apps they open are not on the emulator).
 set -u
@@ -61,14 +61,16 @@ adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "page:config/net
 tap "Webserver"; sleep 3; cap network-webserver-link
 adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "page:config/network" >/dev/null; sleep 6
 tap "NG Firewall"; sleep 3; CUR=ngfw; cap ng-firewall-status
-need "‹ Back" Status Apps Rules
+need "NG Firewall" Status Apps Rules
 for w in Wireless DNS VPN "OS Perms" Webserver; do has "$w" && { echo "::error::SuperApp/Network nav still shown inside NG Firewall ($w)"; fail=1; }; done
-tap "Apps"; CUR=ngfw-apps; cap ng-firewall-apps; need "‹ Back" Status Apps Rules
-tap "Rules"; CUR=ngfw-rules; cap ng-firewall-rules; need "‹ Back" Status Apps Rules
+tap "Apps"; CUR=ngfw-apps; cap ng-firewall-apps; need "NG Firewall" Status Apps Rules
+tap "Rules"; CUR=ngfw-rules; cap ng-firewall-rules; need "NG Firewall" Status Apps Rules
 tap "Status"; CUR=ngfw-status2; cap ng-firewall-status-again
-tap "‹ Back"; sleep 2; CUR=back; cap network-after-back
+read -r SW SH < <(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
+# the ONE Back control: the shell's top-right arrow (NG Firewall draws none of its own)
+adb shell input tap $((SW * 89 / 100)) $((SH * 9 / 100)); sleep 3; CUR=back; cap network-after-back
 need Wireless DNS VPN Home "NG Firewall" "OS Perms" Webserver
-has "‹ Back" && { echo "::error::NG Firewall's Back is still shown after closing it"; fail=1; }
+has Rules && { echo "::error::NG Firewall is still shown after Back"; fail=1; }
 adb logcat -d -s AndroidRuntime:E > "$OUT/crashes.txt" 2>&1 || true
 grep -q "Process: $PKG" "$OUT/crashes.txt" && { echo "::error::the app crashed"; fail=1; }
 exit $fail

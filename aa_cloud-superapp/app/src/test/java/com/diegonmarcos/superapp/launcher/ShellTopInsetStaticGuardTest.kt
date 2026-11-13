@@ -107,6 +107,8 @@ class ShellTopInsetStaticGuardTest {
         val declared = setOf("NetworkNavFragment.kt", "NgFirewallFragment.kt")
         assertEquals("only the declared #1719 pages may own chrome", declared, implementers.filter { it in declared }.toSet())
         // ...and they own the BOTTOM nav only: the top row is the shell's, so nothing can draw under it.
+        // ...and, owning their own bottom nav, they answer the shell's Back arrow themselves (one Back control, #1719).
+        for (f in java.walkTopDown().filter { it.name in declared }) assertTrue("${f.name} must be a BackHandler", text(f).contains("override fun tryHandleBack()"))
         for (f in java.walkTopDown().filter { it.name in declared }) assertFalse("${f.name} must not hide the top row", text(f).contains("fun ownsToolbar(): Boolean = true"))
         assertFalse("these pages take the chrome over: ${implementers - declared}", (implementers - declared).isNotEmpty())
     }

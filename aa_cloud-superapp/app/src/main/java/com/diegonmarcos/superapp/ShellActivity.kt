@@ -1950,6 +1950,10 @@ open class ShellActivity : AppCompatActivity(),
                 findViewById<View>(R.id.fragment_container)?.snack("KDE Connect: connecting…")
             }
             // Configs > Network > Apps Access: Cloud Store's Access section, else the Store's install offer.
+            // #1719 Configs > Network > OS Perms: Cloud Store > Access > Android Perms directly, else the install offer.
+            actionType == "open_os_perms" -> {
+                if (!com.diegonmarcos.superapp.apps.CloudStoreHandoff.open(this, "access", "android")) launchExternalApp("cloud-store")
+            }
             actionType == "open_apps_access" -> {
                 if (!com.diegonmarcos.superapp.apps.CloudStoreHandoff.open(this, "access")) launchExternalApp("cloud-store")
             }

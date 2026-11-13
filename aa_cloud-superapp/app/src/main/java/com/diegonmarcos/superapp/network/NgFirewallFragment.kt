@@ -25,6 +25,7 @@ import com.diegonmarcos.superapp.R
 import com.diegonmarcos.superapp.bottomnav.BottomNavIslandView
 import com.diegonmarcos.superapp.bottomnav.BottomNavViewItem
 import com.diegonmarcos.superapp.firewall.FirewallDialog
+import com.diegonmarcos.superapp.launcher.BackHandler
 import com.diegonmarcos.superapp.system.ShellOverride
 import com.diegonmarcos.superapp.ui.LauncherPalette
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
@@ -33,10 +34,10 @@ import com.diegonmarcos.superapp.uikit.LocalKitPalette
 /**
  * #1719 NG Firewall, taking the screen over below the shell's top row. It is a [ShellOverride] that owns the bottom nav: the
  * SuperApp's own bottom nav is replaced by the firewall's own ([NgFirewallNav]: Status | Apps | Rules, libs:bottomnav's
- * island) and a Back button at the top of the page closes it, the shell's back-stack listener then restores the SuperApp nav.
+ * island) and the shell's one Back arrow (routed here through [BackHandler]) closes it, the shell's back-stack listener then restores the SuperApp nav.
  * Every view is the engine's own screen ([FirewallDialog], one per section), so nothing the firewall page had is lost.
  */
-class NgFirewallFragment : KitComposeFragment(), ShellOverride {
+class NgFirewallFragment : KitComposeFragment(), ShellOverride, BackHandler {
 
     private var selected by mutableStateOf(NgFirewallNav.DEFAULT)
 
@@ -58,6 +59,9 @@ class NgFirewallFragment : KitComposeFragment(), ShellOverride {
         outState.putString(STATE_TAB, selected)
     }
 
+    /** The shell's top-row Back arrow (and the system Back) close NG Firewall: the one Back control of this page. */
+    override fun tryHandleBack(): Boolean { close(); return true }
+
     /** Close NG Firewall: pop it; the shell re-applies its chrome on the back-stack change. With nothing to pop, go to Network. */
     internal fun close() {
         val fm = parentFragmentManager
@@ -76,10 +80,8 @@ class NgFirewallFragment : KitComposeFragment(), ShellOverride {
         }
         var shown by remember { mutableStateOf<String?>(null) }
         Column(Modifier.fillMaxSize().testTag(TAG_ROOT)) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("‹ Back", color = p.accent, fontSize = 16.sp,
-                    modifier = Modifier.clickable { close() }.padding(horizontal = 8.dp, vertical = 10.dp).testTag(TAG_BACK))
-                Text("NG Firewall", color = p.textPrimary, fontSize = 18.sp, modifier = Modifier.padding(start = 8.dp))
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("NG Firewall", color = p.textPrimary, fontSize = 18.sp)
             }
             AndroidView(
                 modifier = Modifier.weight(1f).fillMaxWidth().testTag(TAG_PANE),
@@ -119,7 +121,6 @@ class NgFirewallFragment : KitComposeFragment(), ShellOverride {
 
     companion object {
         const val TAG_ROOT = "ngfw:root"
-        const val TAG_BACK = "ngfw:back"
         const val TAG_PANE = "ngfw:pane"
         private const val STATE_TAB = "tab"
         fun newInstance(): NgFirewallFragment = NgFirewallFragment()

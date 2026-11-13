@@ -30,8 +30,8 @@ object NetworkNav {
     const val TARGET_WIFI = "page:config/wifi"
     const val TARGET_BLUETOOTH = "page:config/bluetooth"
     const val TARGET_FIREWALL = "page:config/firewall"
-    /** Cloud Store > Access (the Store's own Access section; its Android Perms part has no deep link of its own yet). */
-    const val TARGET_PERMS = "action:open_apps_access"
+    /** Cloud Store > Access > Android Perms (the Store's EXTRA_PAGE deep link, #1719). */
+    const val TARGET_PERMS = "action:open_os_perms"
     const val TARGET_WEBSERVER = "action:open_webserver"
 
     /** One icon of a grid: [icon] is a drawable name (resolved by the host), [target] what a tap does. */
@@ -77,7 +77,7 @@ object NetworkNav {
         "dns" to "DNS bar item (the page itself) and Home icon",
         "webserver" to "Webserver bar item and Home icon",
         "wg" to "VPN bar item (the page itself, formerly Cloud Mesh) and Home icon",
-        "apps-access" to "OS Perms bar item and Home icon (Cloud Store > Access)",
+        "apps-access" to "OS Perms bar item and Home icon (Cloud Store > Access > Android Perms)",
         "wifi" to "Wireless tab icon and Home icon",
         "bluetooth" to "Wireless tab icon and Home icon",
     )

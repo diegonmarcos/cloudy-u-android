@@ -15,7 +15,7 @@ import java.io.File
  *   N3 parity (rule 16): every page the Network group held is still declared (hidden), reached from Home / the bar; the only
  *      icon gone is ADB Shell (explicit owner removal), and its page id still resolves
  *   N4 renames: Cloud Mesh -> VPN, Firewall -> NG Firewall (page and Configs row tile), in build.json
- *   N5 NG Firewall takes over the screen (owns the bottom nav, the top row stays the shell's), has its own nav and a Back button, and each view is the engine's screen
+ *   N5 NG Firewall takes over the screen (owns the bottom nav, the top row stays the shell's), has its own nav and answers the shell Back arrow, and each view is the engine's screen
  *   N6 the nav is drawn by libs:bottomnav's island with no styling argument (nav-shape N7), the page is routed from SectionPages
  */
 class NetworkNavTest {
@@ -50,7 +50,7 @@ class NetworkNavTest {
 
     @Test fun `N2 targets - links open the firewall, Store Access and the Webserver, tabs stay in the page`() {
         assertEquals("page:config/firewall", NetworkNav.linkTarget("firewall"))
-        assertEquals("action:open_apps_access", NetworkNav.linkTarget("perms"))
+        assertEquals("action:open_os_perms", NetworkNav.linkTarget("perms"))
         assertEquals("action:open_webserver", NetworkNav.linkTarget("webserver"))
         for (t in NetworkNav.PAGE_TABS) assertNull(t, NetworkNav.linkTarget(t))
         assertEquals(listOf("Wi-Fi", "Bluetooth"), NetworkNav.WIRELESS_ITEMS.map { it.label })
@@ -80,6 +80,24 @@ class NetworkNavTest {
         assertEquals("action:open_webserver", all.getValue("webserver").getString("action"))
     }
 
+    @Test fun `N8 one Back control - a page that owns the bottom nav answers the shell's Back arrow`() {
+        for (f in listOf("network/NetworkNavFragment.kt", "network/NgFirewallFragment.kt")) {
+            val s = src(f)
+            assertTrue("$f is a BackHandler", s.contains("BackHandler"))
+            assertTrue("$f answers tryHandleBack", s.contains("override fun tryHandleBack()"))
+        }
+        val fw = src("network/NgFirewallFragment.kt")
+        assertFalse("no second Back control inside NG Firewall", fw.contains("TAG_BACK") || fw.contains("\u2039 Back"))
+        assertTrue(fw.contains("close()"))
+    }
+
+    @Test fun `N9 OS Perms deep-links Store Access Android Perms and the Store reads it`() {
+        assertEquals("action:open_os_perms", NetworkNav.TARGET_PERMS)
+        assertTrue(src("ShellActivity.kt").contains("CloudStoreHandoff.open(this, \"access\", \"android\")"))
+        val store = File(project, "../ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt")
+        if (store.exists()) assertTrue(store.readText().contains("EXTRA_PAGE") && store.readText().contains("TAB_ACCESS"))
+    }
+
     @Test fun `N4 renames - Cloud Mesh is VPN, Firewall is NG Firewall`() {
         val all = pages().associateBy { it.getString("id") }
         assertEquals("VPN", all.getValue("wg").getString("label"))
@@ -92,7 +110,7 @@ class NetworkNavTest {
         val s = src("network/NgFirewallFragment.kt")
         assertFalse("the shell's top row stays (PageTopInsetTest T2)", s.contains("ownsToolbar"))
         assertTrue(s.contains("override fun ownsBottomNav(): Boolean = true"))
-        assertTrue(s.contains("TAG_BACK") && s.contains("close()"))
+        assertTrue(s.contains("override fun tryHandleBack()") && s.contains("close()"))
         assertTrue(s.contains("FirewallDialog.newInstance(tab).apply { showsDialog = false }"))
         assertEquals(listOf("Status", "Apps", "Rules"), NgFirewallNav.TABS.map { it.second })
         assertEquals(NgFirewallNav.TABS.map { it.first }.toSet(), NgFirewallNav.ICONS.keys)

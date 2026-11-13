@@ -5376,6 +5376,7 @@
             "id": "network",
             "label": "Network",
             "icon": "ic_world",
+            "hub_pages": ["wifi", "bluetooth", "dns", "wg", "firewall", "apps-access", "webserver"],
             "reaches": ["firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "bluetooth"],
             "group": "Network",
             "subgroup": ""

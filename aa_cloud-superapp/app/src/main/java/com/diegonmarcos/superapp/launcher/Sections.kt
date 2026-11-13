@@ -533,6 +533,10 @@ object Sections {
          *  section per entry, in this order, each listing every other visible page declared with that [subgroup]
          *  ([hubSections]). Empty ⇒ an ordinary page. */
         val hubSections: List<String> = emptyList(),
+
+        /** `hub_pages` (#1719): ids of HIDDEN pages of the section that a hub still lists as tiles next to this page (the Agents hub's Network
+         *  section keeps its icons: Wi-Fi, Bluetooth, DNS, VPN, NG Firewall, Apps Access, Webserver, now reached through the Network page). */
+        val hubPages: List<String> = emptyList(),
     )
 
     /** App-level action tile shown in the Home master TileGrid below the
@@ -770,6 +774,7 @@ object Sections {
                         subgroup = po.optString("subgroup", ""),
                         settings = po.optJSONArray("settings")?.let { sa -> (0 until sa.length()).map { sa.getString(it) } }.orEmpty(),
                         hubSections = po.optJSONArray("hub_sections")?.let { ha -> (0 until ha.length()).map { ha.getString(it) } }.orEmpty(),
+                        hubPages = po.optJSONArray("hub_pages")?.let { ha -> (0 until ha.length()).map { ha.getString(it) } }.orEmpty(),
                         appsFromTileGroup = po.optString("apps_from_tile_group", ""),
                         appsExtraTileIds = po.optJSONArray("apps_extra_tile_ids")?.let { ea ->
                             (0 until ea.length()).map { ea.getString(it) }
@@ -1089,11 +1094,12 @@ object Sections {
      * is), else `page:<section>/<id>`, which opens the page inside this app. A subgroup with no pages yields no section.
      */
     fun hubSections(section: Section, hub: Page): List<HubSection> = hub.hubSections.mapNotNull { sub ->
-        section.pages
+        val listedHidden = section.pages.flatMap { it.hubPages }.toSet()   // #1719 hidden pages a visible page asks the hubs to keep listing
+        section.allPages
             // #1623 Configs flattened its subgroups into the six top-level groups, so a hub whose
             // hub_sections name a group (e.g. the Agents hub over "Network") must match on group when
             // a page carries no subgroup. Pages that still declare a subgroup match on it, unchanged.
-            .filter { (it.subgroup.ifBlank { it.group }) == sub && it.id != hub.id && !it.hidden && !it.separator }
+            .filter { (it.subgroup.ifBlank { it.group }) == sub && it.id != hub.id && (!it.hidden || it.id in listedHidden) && !it.separator }
             .map { AggTile(it.id, it.label, it.iconName ?: "", hubTarget(section.id, it)) }
             .takeIf { it.isNotEmpty() }
             ?.let { HubSection(sub, it) }

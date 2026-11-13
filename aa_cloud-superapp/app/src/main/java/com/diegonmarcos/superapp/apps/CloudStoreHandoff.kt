@@ -44,6 +44,7 @@ object CloudStoreHandoff {
     const val PKG = "com.diegonmarcos.cloudstore"
     private const val ACTION_OPEN = "com.diegonmarcos.cloudstore.OPEN"
     private const val EXTRA_TAB = "tab"
+    private const val EXTRA_PAGE = "page"
 
     /** Store page id (SectionPages) → Cloud Store tab. */
     val TAB_OF_PAGE = mapOf("store-cloud" to "cloud", "store-phone" to "phone", "apps-mesh" to "mesh")
@@ -92,8 +93,8 @@ object CloudStoreHandoff {
     }.getOrDefault(false)   // NameNotFoundException = not installed
 
     /** Opens Cloud Store on [tab]. False when it is not installed or will not start. */
-    fun open(ctx: Context, tab: String): Boolean = runCatching {
-        ctx.startActivity(Intent(ACTION_OPEN).setPackage(PKG).putExtra(EXTRA_TAB, tab)
+    fun open(ctx: Context, tab: String, page: String? = null): Boolean = runCatching {
+        ctx.startActivity(Intent(ACTION_OPEN).setPackage(PKG).putExtra(EXTRA_TAB, tab).apply { if (page != null) putExtra(EXTRA_PAGE, page) }
             // #570 Account ▸ Fleet ▸ Apps ▸ Apply list to Store, when Cloud Store (not the embedded page) is the Store.
             .putExtra(com.diegonmarcos.superapp.appstore.StoreImport.EXTRA_IMPORT, com.diegonmarcos.superapp.appstore.StoreImport.takePending())
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
