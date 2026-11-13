@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -90,7 +90,7 @@ fun EditorScreen(actions: DriveActions, openInExplorer: (String) -> Unit, modifi
     Box(modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-        IconButton(onClick = { explorerOpen = true }, modifier = Modifier.size(DriveMetrics.tap).testTag(DriveTags.EDITOR_MENU)) { Icon(Icons.Filled.Menu, stringResource(R.string.editor_explorer_open), Modifier.size(DriveMetrics.glyphIcon)) }
+        IconButton(onClick = { explorerOpen = true }, modifier = Modifier.size(DriveMetrics.tap).testTag(DriveTags.EDITOR_MENU)) { Icon(Icons.Filled.Folder, stringResource(R.string.editor_explorer_open), Modifier.size(DriveMetrics.glyphIcon)) }
         androidx.compose.material3.Text(stringResource(R.string.editor_explorer_files), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     EditorHost(
