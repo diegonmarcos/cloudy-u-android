@@ -89,11 +89,13 @@ fn keep_top(v: &mut Vec<(u64, String)>, n: usize) {
     v.truncate(n);
 }
 
+/// The mtime in ms at WHOLE-SECOND resolution: the platforms' own readers disagree below it (Android's java.nio reads seconds, Rust
+/// reads nanoseconds), and a sync compare must not see a change in a file nobody wrote. The Kotlin reference truncates the same way.
 fn mtime_ms(md: &std::fs::Metadata) -> i64 {
     md.modified()
         .ok()
         .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-        .map(|d| d.as_millis() as i64)
+        .map(|d| (d.as_secs() * 1000) as i64)
         .unwrap_or(0)
 }
 

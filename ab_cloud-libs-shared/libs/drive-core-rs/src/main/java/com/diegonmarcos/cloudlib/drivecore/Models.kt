@@ -29,6 +29,7 @@ data class WalkOpts(
 
 data class SizedPath(val bytes: Long, val path: String)
 data class ExtTotal(val count: Long, val bytes: Long)
+/** One file of a listing: [mtimeMs] is the modification time at whole-second resolution (both engines truncate to it). */
 data class ListedFile(val path: String, val bytes: Long, val mtimeMs: Long, val hash: String = "")
 
 /** A walk's answer, whole, from one call. [byExt] keys are the extension as written in the name ("" when none). */

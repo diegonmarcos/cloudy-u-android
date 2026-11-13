@@ -153,6 +153,16 @@ class DriveCoreParityTest {
         assertEquals(7L + 100 + 300 + 5 + 1000 + 2 + 3 + 9999 + 8888 + 50 + 11, rust)
     }
 
+    @Test fun mtimesAreWholeSecondsInBothEngines() {
+        needCore()
+        val f = file("m.bin", 3)
+        assertTrue(f.setLastModified(1_700_000_000_789L))
+        val rust = DriveCore.snapshot(root.path)
+        val kotlin = DriveCore.withImpl(Engine.WALK, Impl.KOTLIN) { DriveCore.snapshot(root.path) }
+        assertEquals(kotlin, rust)
+        assertEquals(1_700_000_000_000L, rust.single().mtimeMs)
+    }
+
     // ── diff ───────────────────────────────────────────────────────────────
 
     @Test fun diffsAgree() {

@@ -45,6 +45,9 @@ internal object KotlinEngines {
     /** Sequential on purpose: the parallel path is the Rust core's job; this one is the reference. */
     fun hash(paths: List<String>, algos: Int, limit: Long): List<FileHash> = paths.map { hashOne(it, algos, limit) }
 
+    /** The mtime in ms at whole-second resolution (the Rust core truncates the same way: Android's java.nio and Rust disagree below a second). */
+    private fun mtimeSeconds(a: BasicFileAttributes): Long = Math.floorDiv(a.lastModifiedTime().toMillis(), 1000L).coerceAtLeast(0L) * 1000L
+
     /** The extension the way FileClassifier.extensionOf reads it, case preserved. */
     fun extOf(name: String): String {
         val dot = name.lastIndexOf('.')
@@ -87,7 +90,7 @@ internal object KotlinEngines {
                     dirs++
                     stack += Job(File(rootDir, name), name, File(rootDir, name).path)
                 } else if (attrs.isRegularFile) {
-                    addFile(o.looseLabel, name, File(rootDir, name).path, attrs.size(), attrs.lastModifiedTime().toMillis())
+                    addFile(o.looseLabel, name, File(rootDir, name).path, attrs.size(), mtimeSeconds(attrs))
                 }
             }
         }
@@ -110,7 +113,7 @@ internal object KotlinEngines {
                         dirs++
                         stack += Job(File(job.dir, name), rel, job.top)
                     } else if (attrs.isRegularFile) {
-                        addFile(job.top, name, File(job.dir, name).path, attrs.size(), attrs.lastModifiedTime().toMillis())
+                        addFile(job.top, name, File(job.dir, name).path, attrs.size(), mtimeSeconds(attrs))
                     }
                 }
             }

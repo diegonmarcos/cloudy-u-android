@@ -69,6 +69,7 @@ object DriveEngines {
             val wr = DriveCore.withImpl(Engine.WALK, Impl.RUST) { DriveCore.walk(root.path, o) }
             val wk = DriveCore.withImpl(Engine.WALK, Impl.KOTLIN) { DriveCore.walk(root.path, o) }
             out += "selftest: walk rust files=${wr.files} dirs=${wr.dirs} bytes=${wr.bytes} equalToKotlin=${wr == wk}"
+            if (wr != wk) out += "selftest: walk differs: rust=${wr.toString().take(400)} kotlin=${wk.toString().take(400)}"
             val left = wr.listing
             val right = left.drop(1) + ListedFile("/new/x", 1, 1)
             val dr = DriveCore.withImpl(Engine.DIFF, Impl.RUST) { DriveCore.diff(left, right) }
