@@ -82,13 +82,19 @@ def pinch(cx, cy, d0, d1, steps=12):
     print("pinch", r.returncode, r.stderr[:200]); time.sleep(2); return r.returncode == 0
 
 def open_model(label, key):
-    if find("Back to the models"):
-        h = find("Back to the models")[0]; tap_xy((h[0] + h[2]) // 2, (h[1] + h[3]) // 2); time.sleep(3)
-    else: home_models(); shot("%s-00-home" % key)
-    h = scroll_to(label)
-    if not h: return False
-    x1, y1, x2, y2 = h[0]; tap_xy((x1 + x2) // 2, (y1 + y2) // 2); time.sleep(5)
-    shot("%s-01-opened-loading", 1) if False else shot("%s-01-opened-loading" % key)
+    for attempt in range(4):
+        if find("Back to the models"):
+            h = find("Back to the models")[0]; tap_xy((h[0] + h[2]) // 2, (h[1] + h[3]) // 2); time.sleep(3)
+        elif not find("Name") and not find(label): home_models()
+        for _ in range(4): sh("shell", "input", "swipe", "540", "600", "540", "1900", "300"); time.sleep(1)
+        h = scroll_to(label)
+        if not h: continue
+        x1, y1, x2, y2 = h[0]; tap_xy((x1 + x2) // 2, (y1 + y2) // 2); time.sleep(5)
+        if find("Back to the models"): break
+        print("::warning::attempt %d did not open %s" % (attempt, label))
+    else:
+        return False
+    shot("%s-01-opened-loading" % key)
     x = settle(); time.sleep(20)
     shot("%s-02-rendered" % key); note("%s-02-texts" % key, dump()); return True
 
