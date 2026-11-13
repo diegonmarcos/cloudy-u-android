@@ -1,0 +1,26 @@
+[package]
+name = "drive-core-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Cloud Drive's shared native core (#1729): streaming file hashing, parallel directory walk and sizing, file-tree diff, behind a thin JNI layer. Kotlin stays the API surface and the fallback."
+publish = false
+
+[lib]
+# libdrive_core_rs.so: System.loadLibrary("drive_core_rs") from libs:drive-core-rs' NativeBridge.
+name = "drive_core_rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# BLAKE3: `pure` = no C / assembly, so the same crate builds for arm64-v8a, armeabi-v7a and x86_64 with the cargo linker alone.
+blake3 = { version = "1", default-features = false, features = ["std", "pure"] }
+sha2 = "0.10"
+# The JNI layer (src/jni_api.rs).
+jni = "0.21"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+# NEVER "abort": a panic must unwind to the catch_unwind at the JNI boundary so Kotlin can fall back (#1729).
+panic = "unwind"

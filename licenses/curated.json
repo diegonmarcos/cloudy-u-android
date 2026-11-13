@@ -895,5 +895,140 @@
    "licence": "Apache-2.0",
    "licence_source": "Roboto (googlefonts/roboto-2) is published by Google under the Apache License 2.0"
   }
- }
+ },
+ "cargo_lockfiles": [
+  "ab_cloud-libs-shared/libs/drive-core-rs/Cargo.lock"
+ ],
+ "cargo_licences": {
+  "arrayvec": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "blake3": {
+   "licence": "CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception"
+  },
+  "block-buffer": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "bytes": {
+   "licence": "MIT"
+  },
+  "cc": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "cesu8": {
+   "licence": "Apache-2.0 OR MIT"
+  },
+  "cfg-if": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "combine": {
+   "licence": "MIT"
+  },
+  "constant_time_eq": {
+   "licence": "CC0-1.0 OR MIT-0 OR Apache-2.0"
+  },
+  "cpufeatures": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "crypto-common": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "digest": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "find-msvc-tools": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "generic-array": {
+   "licence": "MIT"
+  },
+  "jni": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "jni-sys": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "jni-sys-macros": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "libc": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "log": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "memchr": {
+   "licence": "Unlicense OR MIT"
+  },
+  "proc-macro2": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "quote": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "same-file": {
+   "licence": "Unlicense OR MIT"
+  },
+  "sha2": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "shlex": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "syn": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "thiserror": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "thiserror-impl": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "typenum": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "unicode-ident": {
+   "licence": "(MIT OR Apache-2.0) AND Unicode-3.0"
+  },
+  "version_check": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "walkdir": {
+   "licence": "Unlicense OR MIT"
+  },
+  "winapi-util": {
+   "licence": "Unlicense OR MIT"
+  },
+  "windows-link": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "windows-sys": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "windows-targets": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "windows_aarch64_gnullvm": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "windows_aarch64_msvc": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "windows_i686_gnu": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "windows_i686_msvc": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "windows_x86_64_gnu": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "windows_x86_64_gnullvm": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "windows_x86_64_msvc": {
+   "licence": "MIT OR Apache-2.0"
+  }
+ },
+ "_doc_cargo": "#1729 Rust crates: cargo_lockfiles lists the Cargo.lock files whose registry crates are inventory subjects (cargo:<crate>); cargo_licences maps each crate to the SPDX expression it declares (cargo metadata; the legacy 'A/B' spelling written as 'A OR B'). A new crate in a listed lock fails the licence guard until it is added here and the inventory is refreshed."
 }

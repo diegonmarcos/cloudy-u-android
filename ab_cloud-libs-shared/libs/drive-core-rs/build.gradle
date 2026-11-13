@@ -1,0 +1,127 @@
+// libs:drive-core-rs (#1729) — Cloud Drive's shared native core: streaming hashing (BLAKE3 + SHA-256), parallel directory
+// walk and sizing, file-tree diff, in Rust (this directory's Cargo crate) behind a thin JNI layer. Kotlin (DriveCore) stays the API
+// surface and the fallback; the Rust panics are caught at the JNI boundary.
+//
+// BUILD, the pattern of ac_cloud-c3-webserver (cargo + the NDK clang as the linker, no Tauri): one `cargo build --release --target
+// <triple>` per ABI (arm64-v8a, armeabi-v7a, x86_64), the .so copied to build/rustJniLibs/<abi>/, which is a jniLibs source dir
+// of this module; the consuming app's abiFilters pick the ABIs its APK carries. A host build (cargoHostBuild) feeds the JVM unit
+// tests, so the parity suite runs the REAL core against the Kotlin reference on the CI runner.
+//
+// Toolchain: cargo + the three Android rust targets + an NDK (ANDROID_NDK_HOME, or the newest under ANDROID_HOME/ndk). With no
+// cargo the build WARNS and ships no .so (the app then runs its Kotlin engines and logs why); DRIVE_CORE_RS_REQUIRED=1 (CI) turns
+// that into a build failure, so a shipped APK without the core cannot go green.
+apply plugin: 'com.android.library'
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+def required = System.getenv('DRIVE_CORE_RS_REQUIRED') == '1'
+def jniOut = layout.buildDirectory.dir('rustJniLibs').get().asFile
+def targetDir = layout.buildDirectory.dir('cargo-target').get().asFile
+def hostDir = layout.buildDirectory.dir('cargo-host').get().asFile
+def minApi = 26
+
+def hasCargo = {
+    try { new ProcessBuilder('cargo', '--version').redirectErrorStream(true).start().waitFor() == 0 } catch (Exception ignored) { false }
+}.call()
+
+def ndkHome = {
+    def env = System.getenv('ANDROID_NDK_HOME') ?: System.getenv('ANDROID_NDK_ROOT')
+    if (env && new File(env).isDirectory()) return env
+    def sdk = System.getenv('ANDROID_HOME') ?: System.getenv('ANDROID_SDK_ROOT')
+    def ndks = sdk ? new File(sdk, 'ndk').listFiles()?.findAll { it.isDirectory() }?.sort { it.name } : null
+    return ndks ? ndks.last().absolutePath : null
+}.call()
+
+android {
+    namespace 'com.diegonmarcos.cloudlib.drivecore'
+    compileSdk 36
+    defaultConfig { minSdk 26 }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    sourceSets.main.jniLibs.srcDir(jniOut)
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
+
+// abi -> [rust triple, NDK clang prefix]
+def abis = [
+    'arm64-v8a'  : ['aarch64-linux-android', 'aarch64-linux-android'],
+    'armeabi-v7a': ['armv7-linux-androideabi', 'armv7a-linux-androideabi'],
+    'x86_64'     : ['x86_64-linux-android', 'x86_64-linux-android'],
+]
+
+def rustTasks = []
+abis.each { abi, spec ->
+    def triple = spec[0]
+    def clang = spec[1]
+    def taskName = 'cargoBuild' + abi.replace('-', '_')
+    def t = tasks.register(taskName, Exec) {
+        group = 'rust'
+        description = "cargo build --release --target ${triple} -> jniLibs/${abi}/libdrive_core_rs.so"
+        workingDir projectDir
+        inputs.files(fileTree(projectDir) { include 'Cargo.toml', 'Cargo.lock', 'src/**/*.rs' })
+        outputs.dir(new File(jniOut, abi))
+        onlyIf {
+            if (!hasCargo || ndkHome == null) {
+                def why = !hasCargo ? 'cargo is not installed' : 'no Android NDK (ANDROID_NDK_HOME)'
+                if (required) throw new GradleException("DRIVE_CORE_RS_REQUIRED=1 but ${why}: libdrive_core_rs.so cannot be built")
+                logger.warn("drive-core-rs: ${why}; ${abi} ships no native core (Cloud Drive falls back to its Kotlin engines)")
+                return false
+            }
+            return true
+        }
+        def bin = "${ndkHome}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+        def envTriple = triple.toUpperCase().replace('-', '_')
+        environment "CARGO_TARGET_DIR", targetDir.absolutePath
+        environment "CARGO_TARGET_${envTriple}_LINKER", "${bin}/${clang}${minApi}-clang"
+        environment "CC_${triple.replace('-', '_')}", "${bin}/${clang}${minApi}-clang"
+        environment "AR_${triple.replace('-', '_')}", "${bin}/llvm-ar"
+        // 16 KB page size (Android 15+): LOAD segments aligned to 16 KB whatever the NDK default is (page-size guard).
+        environment "CARGO_TARGET_${envTriple}_RUSTFLAGS", '-C link-arg=-Wl,-z,max-page-size=16384'
+        commandLine 'cargo', 'build', '--release', '--target', triple
+        doLast {
+            copy {
+                from new File(targetDir, "${triple}/release/libdrive_core_rs.so")
+                into new File(jniOut, abi)
+            }
+        }
+    }
+    rustTasks << t
+}
+
+tasks.matching { it.name ==~ /merge.*JniLibFolders/ }.configureEach { dependsOn(rustTasks) }
+
+def hostBuild = tasks.register('cargoHostBuild', Exec) {
+    group = 'rust'
+    description = 'cargo build --release for the runner itself: the .so the JVM parity tests load'
+    workingDir projectDir
+    inputs.files(fileTree(projectDir) { include 'Cargo.toml', 'Cargo.lock', 'src/**/*.rs' })
+    outputs.dir(hostDir)
+    onlyIf {
+        if (!hasCargo) {
+            if (required) throw new GradleException('DRIVE_CORE_RS_REQUIRED=1 but cargo is not installed: the parity tests cannot load the core')
+            logger.warn('drive-core-rs: cargo is not installed; the parity tests that need the core are skipped')
+            return false
+        }
+        return true
+    }
+    environment 'CARGO_TARGET_DIR', hostDir.absolutePath
+    commandLine 'cargo', 'build', '--release'
+}
+
+tasks.withType(Test).configureEach {
+    dependsOn(hostBuild)
+    systemProperty 'java.library.path', new File(hostDir, 'release').absolutePath + File.pathSeparator + System.getProperty('java.library.path')
+    systemProperty 'drive.core.required', required ? '1' : '0'
+}

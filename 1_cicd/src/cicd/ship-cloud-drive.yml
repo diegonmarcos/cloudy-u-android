@@ -58,6 +58,7 @@ on:
       - "ab_cloud-libs-shared/libs/decisions-link/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
       - "ab_cloud-libs-shared/libs/disk-scan/**"
+      - "ab_cloud-libs-shared/libs/drive-core-rs/**"
       - "ab_cloud-libs-shared/libs/disk/**"
       - "ab_cloud-libs-shared/libs/editor-core/**"
       - "ab_cloud-libs-shared/libs/file-editor/**"
@@ -107,6 +108,8 @@ concurrency:
 
 env:
   WORK_DIR: ac_cloud-drive
+  # #1729 the Rust core (libs:drive-core-rs) is REQUIRED on CI: a build without cargo or the NDK fails instead of shipping an APK on the Kotlin fallback.
+  DRIVE_CORE_RS_REQUIRED: "1"
 
 jobs:
   build_and_publish:
@@ -123,6 +126,26 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # ── #1729 THE RUST CORE (libs:drive-core-rs): toolchain read from build.json::native_core.toolchain, then its own suite ──
+      # Same pattern as the Cloud C3 Webserver's core: cargo + the NDK clang, one .so per ABI, loaded by JNI.
+      - name: Resolve the native core toolchain (build.json::native_core.toolchain)
+        id: native
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          set -eu
+          targets="$(jq -r '.native_core.toolchain.rust_targets | join(",")' build.json)"
+          ndk="$(jq -r '.native_core.toolchain.ndk' build.json)"
+          [ -n "$targets" ] && [ "$ndk" != "null" ] || { echo "::error::build.json::native_core.toolchain is incomplete"; exit 1; }
+          { echo "targets=$targets"; echo "ndk=$ndk"; } >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ steps.native.outputs.targets }}
+
+      - name: "Test → the Rust core (cargo test)"
+        working-directory: ab_cloud-libs-shared/libs/drive-core-rs
+        run: cargo test
 
       # Every application's testers, and — for the 24 that have none — the
       # COVERAGE-GAP line naming exactly what this run did NOT check. Until this
@@ -164,7 +187,11 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools ndk;${{ steps.native.outputs.ndk }}"
+
+      # The NDK libs:drive-core-rs links the Rust core with (its build.gradle reads ANDROID_NDK_HOME).
+      - name: Point the build at the NDK
+        run: echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${{ steps.native.outputs.ndk }}" >> "$GITHUB_ENV"
 
       - name: Set up Gradle 8.10.2 (cached)
         # v6, not v3: v3 bundles the old @actions/cache client, which talks to the
@@ -278,6 +305,15 @@ jobs:
       - name: Why the build failed (readable without a token)
         if: failure() && steps.gate.outputs.skip != 'true'
         run: sh 1_cicd/dist/scripts/cloud-android-annotate-build-failure.sh "$RUNNER_TEMP/gradle-build.log" "build [cloud-drive]"
+
+      - name: "Rust core: libdrive_core_rs.so is in the APK, with its size (#1729)"
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          set -eu
+          for apk in ${{ env.WORK_DIR }}/dist/*.apk; do
+            ls -l "$apk"
+            unzip -lv "$apk" | grep -E 'lib/(arm64-v8a|x86_64)/libdrive_core_rs\.so' || { echo "::error::$apk carries no libdrive_core_rs.so: the Rust core did not ship"; exit 1; }
+          done
 
       # ── MANAGED-PAGE-SIZE-GUARD: injected by cloud-android-page-size-inject.py ──
       # 16 KB page size (Android 15+): every lib/{arm64-v8a,x86_64}/*.so in the APK about

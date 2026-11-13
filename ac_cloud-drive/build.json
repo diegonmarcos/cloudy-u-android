@@ -1343,6 +1343,7 @@
         "libs:auth",
         "libs:fleet-endpoints-android",
         "libs:disk",
+        "libs:drive-core-rs",
         "libs:shell-client",
         "libs:ai",
         "libs:model-catalogue"
@@ -1517,6 +1518,11 @@
       "dir": "../ab_cloud-libs-shared/libs/model-catalogue",
       "type": "library"
     },
+    "libs:drive-core-rs": {
+      "_doc_dir": "#1729 Cloud Drive's shared native core: streaming BLAKE3 + SHA-256 hashing, parallel directory walk and sizing, file-tree diff, in Rust (cargo + the NDK clang, JNI, jniLibs per ABI arm64-v8a / armeabi-v7a / x86_64) behind the Kotlin DriveCore facade, which stays the API surface and the fallback. Linked by the app; shared BY REFERENCE so other apps can reuse it. Per-engine switches: native_core.",
+      "dir": "../ab_cloud-libs-shared/libs/drive-core-rs",
+      "type": "library"
+    },
     "libs:disk-scan": {
       "_doc_dir": "#813 libs:disk's arithmetic (walk, storage map, huge-file threshold, duplicates, clean plan), plain JVM, PIT-gated at 80. Not linked by the app: libs:disk compiles it with `api`, so settings.gradle must include it.",
       "dir": "../ab_cloud-libs-shared/libs/disk-scan",
@@ -1536,6 +1542,22 @@
     "tester": "test-drive-web.sh",
     "size_budget_mb": 20,
     "gradle_extra": " --refresh-dependencies"
+  },
+  "native_core": {
+    "_doc": "#1729 THE SWITCH of Cloud Drive's Rust engines (libs:drive-core-rs). One entry per engine: `rust` (the default) runs the Rust core, `kotlin` runs the identical Kotlin reference path. A core that did not load, an error or a panic in it (caught at the JNI boundary) and every content:// path fall back to Kotlin on their own, with the reason in logcat (tag DriveCore); this block only sets which one answers FIRST. The X-Ray App benchmark flips it at run time (DriveCore.withImpl) to report Rust and Kotlin side by side. Baked as BuildConfig.DRIVE_CORE_DEFAULTS and applied by DriveCore.configure at startup.",
+    "engines": {
+      "hash": "rust",
+      "walk": "rust",
+      "diff": "rust"
+    },
+    "_doc_not_moved": "Not moved, on purpose: Android API work (MediaStore, StorageStatsManager, SAF), the UI, git (a later decision; gitoxide is the candidate) and compression: Drive compresses with java.util.zip Deflate (zip, tar.gz), not zstd, so the zstd engine is not built.",
+    "crates": ["blake3", "sha2", "jni"],
+    "toolchain": {
+      "_doc": "Read by the ship workflow (never restated there): the same pattern as ac_cloud-c3-webserver/build.json::toolchain / native. cargo builds the crate for each Android ABI (arm64-v8a, armeabi-v7a, x86_64) with the NDK clang as linker; the app's abiFilters pick the ABIs its APK carries.",
+      "ndk": "27.2.12479018",
+      "rust": "stable",
+      "rust_targets": ["aarch64-linux-android", "armv7-linux-androideabi", "x86_64-linux-android"]
+    }
   },
   "tests": {
     "_doc": "Read by 1_cicd/dist/scripts/cloud-android-test-engine.sh, which the ship workflow runs before it builds. Until #330 this block was absent and test/ did not exist, so the shell phase printed COVERAGE-GAP and exited 0: the only question this application's pipeline asked was whether Gradle exited 0, and Gradle cannot see a WebView calling a Kotlin class by string name.",

@@ -11,6 +11,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.zip.GZIPOutputStream
+import com.diegonmarcos.clouddrive.DriveEngines
+import com.diegonmarcos.cloudlib.drivecore.DriveCore
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -476,16 +478,21 @@ object FileOps {
         bySize.values.filter { it.size > 1 }.forEach { bucket ->
             if (cancelled()) return groups
             val byHash = HashMap<String, MutableList<String>>()
-            bucket.forEach { f -> if (!cancelled()) byHash.getOrPut(sha256(f)) { mutableListOf() }.add(f.absolutePath) }
+            // #1729 one batched, parallel DriveCore hash per slice of the bucket (cancel is polled between slices); an unreadable file is left out of the groups
+            DriveEngines.ensure()
+            for (slice in bucket.chunked(64)) {
+                if (cancelled()) break
+                DriveCore.hashFiles(slice.map { it.absolutePath }, DriveCore.SHA256).forEach { h -> if (h.error.isEmpty()) byHash.getOrPut(h.sha256) { mutableListOf() }.add(h.path) }
+            }
             byHash.values.filter { it.size > 1 }.forEach { groups += DuplicateGroup(bucket.first().length(), it) }
         }
         return groups.sortedByDescending { it.size * it.paths.size }
     }
 
+    /** The lowercase hex SHA-256 of [file]: the DriveCore hash engine (Rust, Kotlin fallback). Throws like the stream it replaced when the file cannot be read. */
     fun sha256(file: File): String {
-        val d = MessageDigest.getInstance("SHA-256"); val buf = ByteArray(BUFFER)
-        FileInputStream(file).use { input -> while (true) { val n = input.read(buf); if (n < 0) break; d.update(buf, 0, n) } }
-        return hex(d.digest())
+        DriveEngines.ensure()
+        return DriveCore.sha256Hex(file.absolutePath) ?: throw IOException("cannot read ${file.path}")
     }
 
     private fun hex(digest: ByteArray): String = digest.joinToString("") { String.format(Locale.US, "%02x", it.toInt() and 0xFF) }

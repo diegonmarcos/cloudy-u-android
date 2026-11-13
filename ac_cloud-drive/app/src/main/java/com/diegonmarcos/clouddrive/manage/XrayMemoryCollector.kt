@@ -6,14 +6,16 @@ import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import android.os.storage.StorageManager
+import com.diegonmarcos.clouddrive.DriveEngines
 import com.diegonmarcos.clouddrive.files.Places
+import com.diegonmarcos.cloudlib.drivecore.DriveCore
+import com.diegonmarcos.cloudlib.drivecore.WalkOpts
 import com.diegonmarcos.superapp.shellclient.ShellClient
 import com.diegonmarcos.superapp.shellclient.ShellResult
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.PriorityQueue
 
 /**
  * X-Ray Memory's reader: every source is asked for real and answers data or a reason ([XrayMemoryReport.Src]). Blocking; off the main thread.
@@ -94,7 +96,7 @@ object XrayMemoryCollector {
     private class Walk(val folders: XrayMemoryReport.Src<List<XrayMemoryReport.Sized>>, val files: XrayMemoryReport.Src<List<XrayMemoryReport.Sized>>,
                        val media: XrayMemoryReport.Src<List<XrayMemoryReport.MediaCat>>, val note: String?)
 
-    /** A bounded depth-first walk of shared storage: per top-level folder totals, the largest files, and bytes per file category. Names and sizes only; symlinks are not followed. */
+    /** A bounded walk of shared storage (DriveCore, #1729): per top-level folder totals, the largest files, and bytes per file category. Names and sizes only; symlinks are not followed. */
     private fun walkShared(ctx: Context, maxEntries: Int, budgetMs: Long): Walk {
         if (!Places.hasAllFilesAccess(ctx)) {
             val why = "all-files access not granted (Settings > Special app access > All files access)"
@@ -105,40 +107,24 @@ object XrayMemoryCollector {
             val why = "shared storage is not mounted"
             return Walk(XrayMemoryReport.Src.NA(why), XrayMemoryReport.Src.NA(why), XrayMemoryReport.Src.NA(why), "skipped, $why")
         }
-        val t0 = System.currentTimeMillis()
-        var entries = 0; var partial: String? = null
-        val folderBytes = LinkedHashMap<String, Long>()
-        val top = PriorityQueue<XrayMemoryReport.Sized>(compareBy<XrayMemoryReport.Sized> { it.bytes })
+        // #1729 the walk is the DriveCore walk engine (Rust by default, the identical Kotlin reference path as fallback): ONE batched call
+        // returns the folder totals, the largest files and the bytes per extension; this class only classifies the extensions.
+        DriveEngines.ensure()
+        val loose = "${root.absolutePath} (loose files)"
+        val agg = runCatching {
+            DriveCore.walk(root.absolutePath, WalkOpts(maxEntries = maxEntries.toLong(), budgetMs = budgetMs, topFiles = TOP_FILES, topFolders = TOP_FOLDERS, looseLabel = loose))
+        }.getOrElse {
+            val why = "the storage walk failed: ${it.message ?: it.javaClass.simpleName}"
+            return Walk(XrayMemoryReport.Src.NA(why), XrayMemoryReport.Src.NA(why), XrayMemoryReport.Src.NA(why), "skipped, $why")
+        }
         val cats = HashMap<DataKind, LongArray>()
-        fun visit(dir: File, topName: String) {
-            val kids = runCatching { dir.listFiles() }.getOrNull() ?: return
-            for (k in kids) {
-                if (partial != null) return
-                if (++entries > maxEntries) { partial = "partial, stopped after $maxEntries entries"; return }
-                if ((entries and 1023) == 0 && System.currentTimeMillis() - t0 > budgetMs) { partial = "partial, stopped after ${budgetMs / 1000} s"; return }
-                if (runCatching { java.nio.file.Files.isSymbolicLink(k.toPath()) }.getOrDefault(false)) continue
-                if (k.isDirectory) visit(k, topName)
-                else {
-                    val len = k.length()
-                    folderBytes[topName] = (folderBytes[topName] ?: 0L) + len
-                    cats.getOrPut(FileClassifier.classifyOrOthers(k.name)) { LongArray(2) }.also { it[0]++; it[1] += len }
-                    top += XrayMemoryReport.Sized(k.absolutePath, len); if (top.size > TOP_FILES) top.poll()
-                }
-            }
-        }
-        root.listFiles().orEmpty().forEach { k ->
-            if (partial != null) return@forEach
-            if (k.isDirectory) visit(k, k.absolutePath)
-            else { val len = k.length(); folderBytes["${root.absolutePath} (loose files)"] = (folderBytes["${root.absolutePath} (loose files)"] ?: 0L) + len
-                cats.getOrPut(FileClassifier.classifyOrOthers(k.name)) { LongArray(2) }.also { it[0]++; it[1] += len }
-                top += XrayMemoryReport.Sized(k.absolutePath, len); if (top.size > TOP_FILES) top.poll() }
-        }
-        com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.count(items = entries.toLong(), bytes = cats.values.sumOf { it[1] })
+        agg.byExt.forEach { (ext, t) -> cats.getOrPut(FileClassifier.classifyOrOthers("x.$ext")) { LongArray(2) }.also { it[0] += t.count; it[1] += t.bytes } }
+        com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.count(items = agg.entries, bytes = agg.bytes)
         return Walk(
-            XrayMemoryReport.Src.Ok(folderBytes.map { XrayMemoryReport.Sized(it.key, it.value) }.sortedByDescending { it.bytes }.take(TOP_FOLDERS)),
-            XrayMemoryReport.Src.Ok(top.sortedByDescending { it.bytes }),
+            XrayMemoryReport.Src.Ok(agg.folders.map { XrayMemoryReport.Sized(it.first, it.second) }),
+            XrayMemoryReport.Src.Ok(agg.topFiles.map { XrayMemoryReport.Sized(it.path, it.bytes) }),
             XrayMemoryReport.Src.Ok(cats.map { XrayMemoryReport.MediaCat(it.key.name.lowercase(), it.value[0], it.value[1]) }.sortedByDescending { it.bytes }),
-            partial,
+            agg.partial.ifEmpty { null },
         )
     }
 }

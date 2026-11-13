@@ -2,6 +2,11 @@ package com.diegonmarcos.clouddrive.sync
 
 import android.content.SharedPreferences
 import com.diegonmarcos.clouddrive.startup.StartupGuard
+import com.diegonmarcos.clouddrive.DriveEngines
+import com.diegonmarcos.cloudlib.drivecore.DriveCore
+import com.diegonmarcos.cloudlib.drivecore.Engine
+import com.diegonmarcos.cloudlib.drivecore.Impl
+import com.diegonmarcos.cloudlib.drivecore.WalkOpts
 import java.io.File
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -28,8 +33,28 @@ object RepoDiskSize {
     /** The recursive byte count of [dir], links not followed. Blocking: refuses the main thread. */
     fun compute(dir: File): Long = compute(dir, Int.MAX_VALUE)
 
-    /** [maxEntries] bounds the walk (the Performance benchmark's cap); the default is unbounded, as before. Recorded as the folder-scan span of X-Ray > Performance. */
+    /**
+     * [maxEntries] bounds the walk (the Performance benchmark's cap); the default is unbounded, as before. Recorded as the folder-scan span of
+     * X-Ray > Performance. #1729 answered by the DriveCore walk engine (Rust by default, the same Kotlin walk as fallback when the switch
+     * says Kotlin, the core is missing or it fails): [computeKotlin] is that Kotlin walk, kept as it was.
+     */
     fun compute(dir: File, maxEntries: Int): Long {
+        check(!StartupGuard.onMainThread()) { "disk walk asked from the main thread" }
+        if (!dir.isDirectory) return 0L
+        if (DriveCore.impl(Engine.WALK) != Impl.RUST) return computeKotlin(dir, maxEntries)
+        DriveEngines.ensure()
+        return com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("fsync.folder.scan") { sp ->
+            val agg = runCatching {
+                DriveCore.walk(dir.absolutePath, WalkOpts(maxEntries = maxEntries.toLong(), budgetMs = Long.MAX_VALUE / 4, topFiles = 0, topFolders = 1))
+            }.getOrNull()
+            if (agg == null) return@span computeKotlin(dir, maxEntries)
+            sp.add(items = agg.files, bytes = agg.bytes)
+            agg.bytes
+        }
+    }
+
+    /** The Kotlin walk: [compute] with the switch on Kotlin, and the benchmark's Kotlin row. Links are not followed. */
+    fun computeKotlin(dir: File, maxEntries: Int): Long {
         check(!StartupGuard.onMainThread()) { "disk walk asked from the main thread" }
         if (!dir.isDirectory) return 0L
         return com.diegonmarcos.superapp.fleetxray.perf.XrayProfiler.span("fsync.folder.scan") { sp ->

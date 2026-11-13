@@ -3759,6 +3759,7 @@
         "lib-devtools",
         "lib-disk",
         "lib-disk-scan",
+        "lib-drive-core-rs",
         "lib-editor-core",
         "lib-file-editor",
         "lib-fleet-data-client",

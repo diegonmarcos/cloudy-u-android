@@ -13,6 +13,8 @@ plugins {
 def gradleScriptStartMs = System.currentTimeMillis()
 
 def buildJson  = new groovy.json.JsonSlurper().parse(file('../build.json'))
+// #1729 build.json::native_core.engines as `hash=rust,walk=rust,diff=rust` (DriveCore.configure reads it).
+def driveCoreDefaults = (buildJson.native_core?.engines ?: [:]).collect { k, v -> k + '=' + v }.join(',')
 // Version code: minutes since 2026-01-01 UTC over a 3,000,000 base.
 //
 // This used to be build.json's version_code plus GITHUB_RUN_NUMBER, which is
@@ -559,6 +561,8 @@ android {
         buildConfigField "String", "LOG_SINK_STREAM", "\"${logSinkStream}\""
         buildConfigField "String", "DEBUG_LOG_DIR",   "\"${debugLogDir}\""
         buildConfigField "String", "CONNECTIONS_B64", "\"${connectionsB64}\""
+        // #1729 build.json::native_core.engines as `hash=rust,walk=rust,diff=rust`: which implementation of each engine answers first (DriveEngines.ensure)
+        buildConfigField "String", "DRIVE_CORE_DEFAULTS", "\"${driveCoreDefaults}\""
         buildConfigField "String", "MIRROR_JOBS_B64", "\"${mirrorJobsB64}\""
         buildConfigField "String", "RCLONE_REMOTES_B64", "\"${rcloneRemotesB64}\""
         buildConfigField "String", "RCLONE_JOBS_B64",    "\"${rcloneJobsB64}\""
@@ -740,6 +744,8 @@ dependencies {
     // #813 the Disk Management engine (Home ▸ Apps ▸ Disk Management, /api/disk/*); pinned to
     // this app's own grants, so it is compiled in (1_cicd/src/data/lib-classes.json).
     implementation project(':libs:disk')
+    // #1729 the Rust engines (hashing, directory walk and sizing, tree diff) behind DriveCore, with the Kotlin reference path as fallback; build.json::native_core
+    implementation project(':libs:drive-core-rs')
     implementation project(':libs:usb-drive')   // #1375/#1405 USB-C drives (StorageVolumes, UsbVolumeModel): the Git volume selector and Files
     // Manage ▸ Apps: running state + PSS of other apps through the SuperApp's shell broker (#1510): a thin client, no adb channel of its own.
     implementation project(':libs:shell-client')

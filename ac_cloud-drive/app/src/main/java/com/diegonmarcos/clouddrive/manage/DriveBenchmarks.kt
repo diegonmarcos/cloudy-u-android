@@ -4,6 +4,12 @@ import android.content.Context
 import android.os.Environment
 import com.diegonmarcos.clouddrive.BuildConfig
 import com.diegonmarcos.clouddrive.Declarations
+import com.diegonmarcos.clouddrive.DriveEngines
+import com.diegonmarcos.cloudlib.drivecore.DriveCore
+import com.diegonmarcos.cloudlib.drivecore.Engine
+import com.diegonmarcos.cloudlib.drivecore.Impl
+import com.diegonmarcos.cloudlib.drivecore.ListedFile
+import com.diegonmarcos.cloudlib.drivecore.WalkOpts
 import com.diegonmarcos.clouddrive.SharedStore
 import com.diegonmarcos.clouddrive.files.Places
 import com.diegonmarcos.clouddrive.sync.GitSyncCoordinator
@@ -34,8 +40,8 @@ object DriveBenchmarks {
 
     /** engine name -> lowercase hex SHA-256 of a file. */
     private val hashEngines = LinkedHashMap<String, (File) -> String>().apply { put("kotlin", ::sha256Kotlin) }
-    /** engine name -> bytes of a folder, stopping after maxEntries files. "kotlin" is [RepoDiskSize.compute] and records its own span. */
-    private val sizeEngines = LinkedHashMap<String, (File, Int) -> Long>().apply { put("kotlin", { d, n -> RepoDiskSize.compute(d, n) }) }
+    /** engine name -> bytes of a folder, stopping after maxEntries files. "kotlin" is [RepoDiskSize.computeKotlin] and records its own span; #1729 adds the "rust" row (the DriveCore walk). */
+    private val sizeEngines = LinkedHashMap<String, (File, Int) -> Long>().apply { put("kotlin", { d, n -> RepoDiskSize.computeKotlin(d, n) }) }
 
     @Synchronized fun registerHashEngine(name: String, f: (File) -> String) { hashEngines[name] = f }
     @Synchronized fun registerSizeEngine(name: String, f: (File, Int) -> Long) { sizeEngines[name] = f }
@@ -148,8 +154,43 @@ object DriveBenchmarks {
             if (!hasGrant(ctx)) return@XrayBenchmark "media access not granted"
             strips.forEach { loadStrip(ctx, it) }; null
         },
+        XrayBenchmark("drive.core.ab", "Rust vs Kotlin engines (A/B)", "read-only; hashing of the bounded sample, a walk capped at ${SIZE_MAX_ENTRIES * 3} entries and 6 s, a tree diff of that listing; each engine twice, Rust then Kotlin", 40_000, 2) { ctx -> driveCoreAb(ctx) },
     )
 
+    /**
+     * #1729 the Rust engines join the per-engine rows ("files.hash.sha256.rust", "fsync.folder.scan.rust") when the core is loaded; when it is not
+     * the row is simply absent and the reason is logged (tag DriveCore), never a fake Rust row that measured Kotlin.
+     */
+    fun registerDriveCoreEngines() {
+        DriveEngines.ensure()
+        val why = DriveCore.nativeUnavailableReason()
+        if (why != null) { runCatching { android.util.Log.i(DriveCore.TAG, "no rust benchmark rows: $why") }; return }
+        registerHashEngine("rust") { f -> DriveCore.withImpl(Engine.HASH, Impl.RUST) { DriveCore.sha256Hex(f.absolutePath) }.orEmpty() }
+        registerSizeEngine("rust") { d, n -> DriveCore.withImpl(Engine.WALK, Impl.RUST) { DriveCore.walk(d.absolutePath, WalkOpts(maxEntries = n.toLong(), budgetMs = Long.MAX_VALUE / 4, topFiles = 0, topFolders = 1)).bytes } }
+    }
+
+    /** A deterministic "newer" listing of [left] (every 7th file gone, every 5th resized, a few new): the CPU work of a sync compare, no second tree needed. */
+    fun perturbed(left: List<ListedFile>): List<ListedFile> =
+        left.mapIndexedNotNull { i, f -> when { i % 7 == 6 -> null; i % 5 == 4 -> f.copy(bytes = f.bytes + 1); else -> f } } + (0 until 8).map { ListedFile("/new/n$it", it.toLong(), 1L) }
+
+    /** The A/B benchmark: each Rust engine and its Kotlin reference run on the same bounded input, their spans `drive.core.<engine>.<rust|kotlin>` are the rows. */
+    private fun driveCoreAb(ctx: Context): String? {
+        DriveEngines.ensure()
+        DriveCore.nativeUnavailableReason()?.let { return "the Rust core is not loaded ($it): nothing to compare" }
+        val files = sampleFiles(ctx)
+        val root = (if (Places.hasAllFilesAccess(ctx)) runCatching { Environment.getExternalStorageDirectory() }.getOrNull() else null)?.takeIf { it.isDirectory } ?: ctx.filesDir
+        return XrayProfiler.span("drive.core.ab") { sp ->
+            for (impl in Impl.entries) {
+                if (files.isNotEmpty()) DriveCore.withImpl(Engine.HASH, impl) { DriveCore.hashFiles(files.map { it.absolutePath }, DriveCore.BLAKE3 or DriveCore.SHA256) }
+                val snap = DriveCore.withImpl(Engine.WALK, impl) { DriveCore.walk(root.absolutePath, WalkOpts(maxEntries = SIZE_MAX_ENTRIES.toLong() * 3, budgetMs = WALK_MS, listFiles = true)) }
+                sp.add(items = snap.files, bytes = snap.bytes)
+                DriveCore.withImpl(Engine.DIFF, impl) { DriveCore.diff(snap.listing, perturbed(snap.listing)) }
+            }
+            sp.note = "hash ${files.size} files, walk + diff of ${root.name}"
+            null
+        }
+    }
+
     /** Registers the declared benchmarks with the shared runner. */
-    fun register() { XrayBenchmarks.register(*all().toTypedArray()) }
+    fun register() { registerDriveCoreEngines(); XrayBenchmarks.register(*all().toTypedArray()) }
 }

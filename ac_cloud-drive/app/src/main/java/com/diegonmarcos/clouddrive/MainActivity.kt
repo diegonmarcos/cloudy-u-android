@@ -141,6 +141,14 @@ class MainActivity : ComponentActivity(), DriveActions {
     /** Every initialiser, each behind [guarded]: one failing phase is recorded and the rest still run. */
     private fun startup() {
         // #1728 the X-Ray App > Performance benchmarks of this app (declared, read-only, bounded)
+        // #1729 the Rust engines: apply the declared switches, wrap the engines in profiler spans, log which core loaded
+        guarded("DriveEngines", optional = true) { com.diegonmarcos.clouddrive.DriveEngines.ensure() }
+        guarded("DriveEnginesSelfTest", optional = true) {
+            if (intent?.getBooleanExtra(com.diegonmarcos.clouddrive.DriveEngines.EXTRA_SELFTEST, false) == true) {
+                val dir = cacheDir
+                Thread { com.diegonmarcos.clouddrive.DriveEngines.selfTest(dir).forEach { runCatching { android.util.Log.i(com.diegonmarcos.cloudlib.drivecore.DriveCore.TAG, it) } } }.start()
+            }
+        }
         guarded("DriveBenchmarks", optional = true) { com.diegonmarcos.clouddrive.manage.DriveBenchmarks.register() }
         // #1693 the Cloud (Authelia) session is Cloud Account's: read over the fleet IPC, never earned here
         guarded("DriveSessionSource", optional = true) {

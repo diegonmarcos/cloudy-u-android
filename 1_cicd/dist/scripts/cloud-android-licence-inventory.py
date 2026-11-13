@@ -1,4 +1,3 @@
-# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-licence-inventory.py ───
 #!/usr/bin/env python3
 """
 cloud-android-licence-inventory — #805: one machine-readable licence inventory
@@ -21,6 +20,8 @@ and anything under licenses/curated.json::scan_skip_prefixes excluded):
                    own code and not subjects)
   asset:<path>     every tracked binary of a licence-bearing kind
                    (curated.asset_extensions: native libs, jars, models, fonts…)
+  cargo:<crate>    every crate a Cargo.lock listed in licenses/curated.json::cargo_lockfiles resolves (a lock lists the
+                   whole closure, so the transitive crates are subjects too: unlike maven/npm they ARE resolved) -> curated.cargo_licences
   fetched:<repo>:<path>
                    every file the build FETCHES from another repository at a pinned commit and
                    ships (ab_cloud-terminal-store/store.json::linux_tools: the linux-store /
@@ -158,6 +159,17 @@ def discover(root):
                         v = v.get("strictly", v.get("require", ""))
                 if g and a:
                     add(f"maven:{g}:{a}", declared_in=f, version=str(v or ""), scope="catalog")
+
+    for lock in cur.get("cargo_lockfiles", []):
+        if lock not in files:
+            continue
+        try:
+            pk = tomllib.load(open(os.path.join(root, lock), "rb")).get("package", [])
+        except Exception:
+            continue
+        for c in pk:
+            if c.get("source"):   # registry crates; the workspace's own crate has no source and is own code
+                add("cargo:" + c["name"], declared_in=lock, version=str(c.get("version", "")), scope="shipped")
 
     store = "ab_cloud-terminal-store/store.json"
     if store in files:
@@ -314,6 +326,10 @@ def refresh(root, offline):
             out.update({"licence": lic.get("spdx") or "NOASSERTION",
                         "licence_source": "ab_cloud-terminal-store/store.json::linux_tools.licence"
                                           + (f" (holder {lic['holder']})" if lic.get("holder") else "")})
+        elif kind == "cargo":
+            c = cur.get("cargo_licences", {}).get(k.split(":", 1)[1])
+            out.update({"licence": c["licence"], "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)"}
+                       if c else {"licence": "NOASSERTION", "licence_source": "MISSING from licenses/curated.json::cargo_licences"})
         elif offline:
             prev = old.get(k, {})
             out.update({"licence": prev.get("licence", "NOASSERTION"),
@@ -331,6 +347,8 @@ def refresh(root, offline):
             out.update(resolve_npm(k, e))
         if kind in ("maven", "npm"):
             out["transitive"] = "not resolved (needs a Gradle/npm resolution; see script docstring)"
+        elif kind == "cargo":
+            out["transitive"] = "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
         dp = deepest(list(up_by_path), out["declared_in"][0]) if out.get("declared_in") else None
         if dp:
             out["within_upstream_module"] = up_by_path[dp]["id"]
@@ -388,12 +406,12 @@ def check(root):
     p = os.path.join(root, "licenses/inventory.json")
     inv = json.load(open(p)).get("entries", {}) if os.path.exists(p) else {}
     missing = sorted(k for k in subj if k not in inv)
-    bad = sorted(k for k, e in inv.items() if e.get("kind") in ("dir", "vendored") and
+    bad = sorted(k for k, e in inv.items() if e.get("kind") in ("dir", "vendored", "cargo") and
                  e.get("licence") == "NOASSERTION" and k in subj)
     for k in missing:
         print(f"MISSING  {k}  (declared in {subj[k]['declared_in'][0]})")
     for k in bad:
-        print(f"NO-LICENCE  {k}  (licenses/curated.json::directories has no entry)")
+        print(f"NO-LICENCE  {k}  (licenses/curated.json has no licence for it)")
     if missing or bad:
         print(f"\n{len(missing)} subject(s) without an inventory entry, {len(bad)} directory(ies) without a licence.\n"
               "Add the directory to licenses/curated.json (or the upstream to licenses/upstreams.json), then run\n"

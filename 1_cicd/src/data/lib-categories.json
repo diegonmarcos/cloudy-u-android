@@ -61,6 +61,7 @@
     "datamanager",
     "disk",
     "disk-scan",
+    "drive-core-rs",
     "mounts",
     "rclone",
     "usb-drive",
