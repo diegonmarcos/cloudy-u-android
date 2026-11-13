@@ -61,7 +61,7 @@ mutate "the arm activity drops the page extra" ab_cloud-libs-shared/libs/shell-b
 mutate "onNewIntent stops routing" $A/java/com/diegonmarcos/cloudwebserver/MainActivity.kt '        setIntent(intent)
         LaunchTarget.from(intent)' '        setIntent(intent)' || M=$((M+1))
 mutate "onCreate routes after setContent" $A/java/com/diegonmarcos/cloudwebserver/MainActivity.kt '        LaunchTarget.from(intent)
-        Core.attach(this)' '        Core.attach(this)' || M=$((M+1))
+        runCatching { WebserverBenchmarks.register() }' '        runCatching { WebserverBenchmarks.register() }' || M=$((M+1))
 mutate "MainActivity loses singleTask" $A/AndroidManifest.xml 'android:launchMode="singleTask"' 'android:launchMode="standard"' || M=$((M+1))
 mutate "Shell stops opening the wanted section" $A/java/com/diegonmarcos/cloudwebserver/ui/Shell.kt 'open(wanted);' '' || M=$((M+1))
 mutate "the client targets another class" ab_cloud-libs-shared/libs/shell-client/src/main/java/com/diegonmarcos/superapp/shellclient/ShellClient.kt 'ShellWire.ARM_ACTIVITY)' 'ShellWire.ARM_ACTIVITY + "X")' || M=$((M+1))
