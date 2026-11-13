@@ -1,0 +1,93 @@
+name: "Test -> Cloud Notes vault scenes (emulator screenshots: sidebar, recent, filter, source, file view, canvas view, tabs restored)"
+
+# #1717: install the APK a Ship run built and run the Cloud Notes scenes of 1_cicd/src/data/nav-walk-apps.json through the nav
+# walk driver (screenshots of every vault scene, dark and light). Dispatch only. `run` pins a ship-cloud-notes.yml run
+# (default: latest green run on main).
+
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: 'Ship run id to take the APK from (optional)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  notes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch the APK and read its package
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ inputs.run }}
+        run: |
+          set -eu
+          if [ -z "$RUN" ]; then
+            RUN=$(gh run list -R "$REPO" --workflow ship-cloud-notes.yml --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
+          fi
+          [ -n "$RUN" ] || { echo "::error::no green ship-cloud-notes.yml run on main"; exit 1; }
+          echo "APK from run $RUN"
+          mkdir -p dl
+          gh run download "$RUN" -R "$REPO" -p 'cloud-notes-arm64*' -D dl
+          pick=$(find dl -name '*.apk' | sort | head -1)
+          [ -n "$pick" ] || { echo "::error::no APK in run $RUN"; exit 1; }
+          cp "$pick" app-under-test.apk
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          echo "PKG=$("$AAPT" dump packagename app-under-test.apk)" >> "$GITHUB_ENV"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the scene script
+        run: |
+          cat > walk.sh <<'SH'
+          #!/bin/bash
+          set -u
+          mkdir -p walk-out
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow || true
+          adb logcat -v threadtime "*:W" chromium:I > walk-out/logcat-stream.txt 2>&1 &
+          LP=$!
+          rc=0
+          python3 1_cicd/src/scripts/cloud-android-nav-walk.py --app ac_cloud-notes --build-json ac_cloud-notes/build.json --pkg "$PKG" --out walk-out || rc=$?
+          timeout 60 adb logcat -d -v threadtime > walk-out/logcat.txt || true
+          kill "$LP" 2>/dev/null || true
+          exit $rc
+          SH
+          chmod +x walk.sh
+
+      - name: Boot emulator + scenes
+        timeout-minutes: 70
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notes-emulator-evidence
+          path: walk-out
+          if-no-files-found: warn
