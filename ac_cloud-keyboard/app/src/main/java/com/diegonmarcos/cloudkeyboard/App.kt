@@ -79,7 +79,7 @@ class App : Application(), WorkManagerConfiguration.Provider {
         runCatching { helium314.keyboard.latin.RichInputMethodManager.init(this) }
         runCatching { helium314.keyboard.latin.settings.Defaults.initDynamicDefaults(this) }
         runCatching { helium314.keyboard.latin.utils.upgradeToolbarPrefs(heliboardPrefs()) }
-        runCatching { MediaRuntime.configure(BuildConfig.MEDIA_CONFIG_B64, null, BuildConfig.GIPHY_API_KEY) }
+        runCatching { MediaRuntime.configure(android.util.Base64.encodeToString(BuildConfig.MEDIA_CONFIG_JSON.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP), null, BuildConfig.GIPHY_API_KEY) }
         // Register AIDL client so libs:translate's Translator / TranslateBarView
         // delegate to the companion cloud-keyboard-libs service (ML Kit not bundled here).
         runCatching { TranslateEngines.client = AidlTranslateEngineClient(this) }

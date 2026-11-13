@@ -11,7 +11,9 @@ def buildJson        = new groovy.json.JsonSlurper().parse(file("${rootDir}/buil
 def uiBottomNav      = (buildJson.ui?.bottom_nav ?: []).join(',')
 def uiSectionsB64    = groovy.json.JsonOutput.toJson(buildJson.ui?.sections ?: []).getBytes('UTF-8').encodeBase64().toString()
 def uiDefaultSection = (buildJson.ui?.default_section ?: '').toString()
-def keyboardMediaB64 = groovy.json.JsonOutput.toJson(buildJson.keyboard_media ?: [:]).bytes.encodeBase64().toString()
+// #1698 the media config is baked as a plain (escaped) JSON string and encoded at runtime (App.kt), so this app's one base64 BuildConfig
+// field is the nav declaration's UI_SECTIONS_B64 (runtime-data D3 ceiling for this file stays at 1)
+def keyboardMediaJson = groovy.json.JsonOutput.toJson(buildJson.keyboard_media ?: [:]).replace('\\', '\\\\').replace('"', '\\"')
 def giphyApiKey      = (System.getenv('GIPHY_API_KEY') ?: '').toString()
 def defaultLocales   = (buildJson.default_locales ?: []).join(',')
 
@@ -82,7 +84,7 @@ android {
         buildConfigField "String", "UI_BOTTOM_NAV", "\"${uiBottomNav}\""
         buildConfigField "String", "UI_SECTIONS_B64", "\"${uiSectionsB64}\""
         buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
-        buildConfigField "String", "MEDIA_CONFIG_B64", "\"${keyboardMediaB64}\""
+        buildConfigField "String", "MEDIA_CONFIG_JSON", "\"${keyboardMediaJson}\""
         buildConfigField "String", "GIPHY_API_KEY",   "\"${giphyApiKey}\""
         buildConfigField "String", "DEFAULT_LOCALES", "\"${defaultLocales}\""
         // build.json::debug_api.group - the /api/<group>/ the keyboard serves (#776).
