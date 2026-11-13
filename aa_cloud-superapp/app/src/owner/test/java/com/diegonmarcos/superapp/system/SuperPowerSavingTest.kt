@@ -20,7 +20,7 @@ import java.io.File
 class SuperPowerSavingTest {
     private val ctx: Application = ApplicationProvider.getApplicationContext()
     private val list = Allowlist.parse(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
-    private fun rule(c: String) = (list.decide(ShellBroker.SELF, c) as? Allowlist.Decision.Allow)?.rule?.id
+    private fun rule(c: String) = (list.decide("com.diegonmarcos.superapp", c) as? Allowlist.Decision.Allow)?.rule?.id
 
     @Test fun `only on grants are released, only remembered ones restored`() {
         assertEquals(SuperPowerSaving.Plan(true, false), SuperPowerSaving.releasePlan(adminOn = true, listenerOn = false))
@@ -45,7 +45,7 @@ class SuperPowerSavingTest {
     }
 
     @Test fun `broker allows the four lines for own components only`() {
-        val pkg = ShellBroker.SELF
+        val pkg = "com.diegonmarcos.superapp"
         assertEquals("superpower-self", rule("dpm set-active-admin --user 0 $pkg/.system.LockScreenAdminReceiver"))
         assertEquals("roles-release-self", rule("dpm remove-active-admin --user 0 $pkg/.system.LockScreenAdminReceiver"))
         assertEquals("superpower-self", rule("cmd notification allow_listener $pkg/com.diegonmarcos.superapp.notificationcenter.PhoneNotificationListenerService"))

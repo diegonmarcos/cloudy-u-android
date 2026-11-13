@@ -15,7 +15,7 @@ import java.io.File
  */
 class SelfAllowlistTest {
     private val list = Allowlist.parse(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
-    private val self = ShellBroker.SELF
+    private val self = "com.diegonmarcos.superapp"
 
     private fun allowed(cmd: String) = assertTrue("refused: $cmd -> ${list.decide(self, cmd)}", list.decide(self, cmd) is Allowlist.Decision.Allow)
 

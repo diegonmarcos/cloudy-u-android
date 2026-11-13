@@ -101,7 +101,7 @@ class AdbPermsChainTest : KitPageHarness() {
         val entries = (up + AdbPrereqs.rows(facts(mode = ChannelMode.SHIZUKU), allOn, pkg)).flatMap { it.actions }.filterIsInstance<Action.Grant>().map { it.entry }.toSet()
         assertEquals(AdbPrereqs.GRANT_ENTRIES.toSet(), entries)
         val cat = com.diegonmarcos.superapp.perms.Perms.catalogue(ctx).entries.associateBy { it.id }
-        val vars = com.diegonmarcos.superapp.perms.Perms.vars(ctx) + ("pkg" to ShellBroker.SELF)
+        val vars = com.diegonmarcos.superapp.perms.Perms.vars(ctx) + ("pkg" to "com.diegonmarcos.superapp")
         for (id in entries) {
             val e = cat[id] ?: error("$id is not a Configs > Perms row")
             val lines = com.diegonmarcos.superapp.perms.AdbScript.lines(listOf(e), vars)

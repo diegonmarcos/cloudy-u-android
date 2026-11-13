@@ -8,7 +8,7 @@ import java.io.File
 /** #1688 role reads are read-only rules; the release rule is the SuperApp's own package only; writes elsewhere stay refused. */
 class RolesAllowlistTest {
     private val list = Allowlist.parse(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
-    private val self = ShellBroker.SELF
+    private val self = "com.diegonmarcos.superapp"
     private fun rule(c: String) = (list.decide(self, c) as? Allowlist.Decision.Allow)?.rule?.id
 
     @Test fun `reads are allowed by the read-only rules`() {
