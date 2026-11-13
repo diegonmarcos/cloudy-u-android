@@ -799,8 +799,8 @@
     "_doc_application_id": "Identity, not brand (#405/#495): the package id stays through the rename to cloud-c3-webserver, exactly as ac_c3-watchdog keeps com.diegonmarcos.watchdog, because moving it forces a manual reinstall on every phone.",
     "compile_sdk": 36,
     "min_sdk": 26,
-    "target_sdk": 28,
-    "_doc_target_sdk": "28 for the STORAGE model: at 28 one READ_EXTERNAL_STORAGE grant (asked by libs:perms' first run and Configs > Perms, #1682; the Tauri host asked it from Rust) covers the whole of runtime.serve_root; from 29 scoped storage would need MANAGE_EXTERNAL_STORAGE or per-tree grants to serve shared storage. compile_sdk is what the app and the shared libs compile against.",
+    "target_sdk": 35,
+    "_doc_target_sdk": "35 (#1708, was 28) so Cloud Store updates are silent on Android 17. The old reason was the STORAGE model: at 28 one READ_EXTERNAL_STORAGE grant covered runtime.serve_root. From 29 that grant is scoped, so the served root (/storage/emulated/0) is read through All files access (MANAGE_EXTERNAL_STORAGE, perms id all_files, already in perms.needs and declared in the manifest): one grant in Configs > Perms (Grant all), after which the Rust server reads shared storage with plain file calls exactly as before. Nothing is executed from the app data dir (the shell is /system/bin/sh; the jump helpers are run by sh), so W^X does not apply. Foreground service: KeepAliveService declares foregroundServiceType specialUse (required from 34). Edge-to-edge (enforced at 35) is opted out in the app theme (values-v35). compile_sdk is what the app and the shared libs compile against.",
     "version_code": 3,
     "version_name": "0.3.0-dev",
     "abi_filters": [

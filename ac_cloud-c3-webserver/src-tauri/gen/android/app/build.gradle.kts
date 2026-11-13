@@ -130,7 +130,7 @@ android {
         }
     }
     lint {
-        // targetSdk 28 is the storage model, see build.json::android._doc_target_sdk.
+        // Kept disabled: see build.json::android._doc_target_sdk (targetSdk 35 since #1708).
         disable.add("ExpiredTargetSdkVersion")
     }
     compileOptions {

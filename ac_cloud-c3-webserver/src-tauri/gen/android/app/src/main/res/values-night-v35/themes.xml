@@ -1,0 +1,6 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- #1708 targetSdk 35 enforces edge-to-edge; this app keeps its layout (same opt-out as the SuperApp). -->
+    <style name="Theme.cloud_c3_webserver" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
+    </style>
+</resources>

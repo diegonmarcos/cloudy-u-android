@@ -26,9 +26,9 @@ class KeepAliveService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        // Required within 5 s of startForegroundService, even when the gate below then refuses. No type: the manifest
-        // declares none for this service (targetSdk below 34).
-        FleetNotify.startKeepAlive(this, NOTIFICATION_ID, notification(listOf("Server and Keep alive are ON", "Starting servers...")), 0)
+        // Required within 5 s of startForegroundService, even when the gate below then refuses. The type is the
+        // fleet default (specialUse), the one the manifest declares for this service (required from targetSdk 34).
+        FleetNotify.startKeepAlive(this, NOTIFICATION_ID, notification(listOf("Server and Keep alive are ON", "Starting servers...")))
     }
 
     private fun notification(lines: List<String>): Notification {

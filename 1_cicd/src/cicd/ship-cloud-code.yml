@@ -258,3 +258,17 @@ jobs:
       app: cloud-code
       artifact_prefix: cloud-code-universal-
       api_levels: "[34]"
+
+  # #1708 targetSdk 36 (silent Store updates): the terminal's proot, loaders and axs ship as lib*.so and must LAUNCH from
+  # nativeLibraryDir on a real emulator (1_cicd/src/scripts/emulator-native-tools.sh).
+  native_tools:
+    needs: build_and_publish
+    if: needs.build_and_publish.outputs.built == 'true'
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/test-native-tools.yml
+    with:
+      app: cloud-code
+      artifact_prefix: cloud-code-universal-
+      specs: "libproot-xed.so:run:--version libproot.so:present libtalloc.so:present libaxs.so:run:--help libproot-xed.so:prootrun"

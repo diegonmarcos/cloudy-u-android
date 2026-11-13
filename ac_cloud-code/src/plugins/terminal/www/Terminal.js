@@ -329,13 +329,13 @@ const Terminal = {
 
                 logger("✅  All downloads completed");
             }else{
-                logger("📦  Extracting assets...");
-                await new Promise((resolve, reject) => {
-                    system.extractAsset(`alpine_assets/${architecture.libraryDirectory}/alpine.rootfs`, `${filesDir}/alpine.tar.gz`, resolve, (e)=>{
-                        console.error(`Failed to extract alpine.tar.gz: ${formatError(e)}`);
-                        reject(e);
-                    });
-                });
+                // #1708 targetSdk >= 29: proot, its loaders, talloc and axs ship as lib*.so in the APK and run from
+                // nativeLibraryDir (nothing executable is downloaded). Only the root filesystem, which is data and is
+                // entered through proot, is fetched, exactly as the F-Droid path did.
+                const alpineUrl = "https://dl-cdn.alpinelinux.org/alpine/v3.21/releases/"
+                    + architecture.alpineDirectory + "/" + architecture.alpineFilename;
+                logger("⬇️  Downloading sandbox filesystem...");
+                await downloadFile(alpineUrl, cordova.file.dataDirectory + "alpine.tar.gz", "Sandbox filesystem");
 
                 try{
                     await Executor.execute("rm -f $PREFIX/axs && ln -s $NATIVE_DIR/libaxs.so $PREFIX/axs")

@@ -5,7 +5,7 @@
     <!-- #1360 KeepAliveService's foreground notification is hidden on Android 13+ without it. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- cloud-c3-webserver: build.json::runtime.serve_root is shared storage,
-         readable at targetSdk 28 once this is granted. #1682: asked by libs:perms'
+         readable through the All files access grant below (targetSdk 35, #1708). #1682: asked by libs:perms'
          first run and Configs > Perms (build.json::perms.needs storage_read). -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <!-- The keep-alive service (KeepAliveService): foreground, started at boot and after an update, only with Server ON and Keep alive ON (#1502). -->
@@ -111,7 +111,12 @@
         <service
             android:name=".KeepAliveService"
             android:exported="true"
-            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+            android:foregroundServiceType="specialUse"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the local web server and SSH door of Cloud C3 WebServer reachable while the app is closed" />
+        </service>
 
         <!-- #1502 disabled until Keep alive is ON (MainActivity.syncKeepAlive enables it). Exported so the emulator test can send BOOT_COMPLETED / MY_PACKAGE_REPLACED to it by component; all it does is
              start the app's own keep-alive service, so a spoofed broadcast gains nothing. -->

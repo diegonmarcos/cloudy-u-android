@@ -1,0 +1,36 @@
+{
+  "_doc": "#1708 the terminal's native tools, shipped as lib*.so under jniLibs/<abi>/ and run from applicationInfo.nativeLibraryDir, the one place an app at targetSdk >= 29 may exec from (W^X). They are the very files the terminal plugin used to download into the app's data dir at the F-Droid flavour (Terminal.js), from the same upstreams, now fetched at BUILD time by tools/fetch-native-tools.py and refused unless the sha256 matches. Never committed: licence-boundaries keeps *.so out of the tree. libproot-xed.so = proot, libproot.so / libproot32.so = proot's loaders (PROOT_LOADER / PROOT_LOADER32 in init-sandbox.sh), libtalloc.so = its library (linked as libtalloc.so.2 at start), libaxs.so = the axs terminal server (ProcessManager links $PREFIX/axs to it). proot and talloc are GPL-2.0 / LGPL, sources: https://github.com/proot-me/proot and https://talloc.samba.org/ ; axs: https://github.com/bajrangCoder/acodex_server (MIT).",
+  "libs_base": "https://raw.githubusercontent.com/Acode-Foundation/Acode/b7dbe3d69dcf5165e19581fe3927f0838dce09f4/src/plugins/proot/libs",
+  "axs_base": "https://github.com/bajrangCoder/acodex_server/releases/download/v0.2.17",
+  "abis": {
+    "arm64-v8a": {
+      "libs_dir": "arm64", "axs": "axs-pie-android-arm64",
+      "files": {
+        "libproot-xed.so": "b1751c915b74072eb29448c41426f983d2e7386c882d4831ce026ae1d973c32f",
+        "libproot.so": "12d2b63e897fd91a334fce23edea5d2419cae4d5fd2a369f05d03ab75682add0",
+        "libproot32.so": "2da4cc752708370e84b99e30eed1d8986bb8ac2149f048e585b3662e92b37c19",
+        "libtalloc.so": "6d02eb1bc6f6a03b2b940f003c7c9c1f2a8e4f16fab13a0f6b5c52c6d1ad56d9",
+        "libaxs.so": "d05e550e44261f256f687aaa028e0fc88fe24a16c7cab76935ec5273b0f73cd4"
+      }
+    },
+    "armeabi-v7a": {
+      "libs_dir": "arm32", "axs": "axs-pie-android-armv7",
+      "files": {
+        "libproot-xed.so": "33b381d1a945dc33a7d66cec72e4eb0491b3c8a079e8cc0efb7f6d3b7256819b",
+        "libproot.so": "19e9a2dd9bca570bfd4c92cdfca3eecd792e91aa0ae21067cc06bf719fcf152c",
+        "libtalloc.so": "87aad4fa7232bd2c22daf14da5aae57fbb8723397ce9af62ae1af6df799fc738",
+        "libaxs.so": "d4aebccb6540ad475826c3f70682884c03de36445bacb9010275b4ab81c7d4c5"
+      }
+    },
+    "x86_64": {
+      "libs_dir": "x64", "axs": "axs-pie-android-x86_64",
+      "files": {
+        "libproot-xed.so": "b29cef0fef7a9b7f9aaf22b66570614db1b6a62f24689af6b6a8a60118f15d52",
+        "libproot.so": "4ca6f14810548610501d012144abeb4c27c1530e2e37201cabf30cab2c39a585",
+        "libproot32.so": "8342faa11418109aa31946ab57add61b29e0f3d242ee63146c4e2d37a103abda",
+        "libtalloc.so": "5a2f0f3697c782a864ae4584cf098612ed1ea0b1f281b052da79677e22f6d453",
+        "libaxs.so": "f827ddc3a252aec6ee7035a9fc13faf4550b94f646d97732ee8ca94cee9a3458"
+      }
+    }
+  }
+}

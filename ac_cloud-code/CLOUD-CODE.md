@@ -71,7 +71,7 @@ The editor itself is untouched.
 
 Built as upstream's `paid dev apk fdroid`. **Paid** means no AdMob. **fdroid** means no
 proot and no Google Play Billing (`cordova-plugin-iap` removed after setup), and
-`hooks/post-process.js` pins targetSdk 28. These are upstream's own axes, declared in
+`hooks/post-process.js` pins targetSdk 28 only when the engine says the declared target is <= 28 (#1708: it is 36 now; proot, its loaders and axs ship as `lib*.so` and run from `nativeLibraryDir`, see `tools/native-tools.json`). These are upstream's own axes, declared in
 `build.json::upstream.flavor` and reproduced by `cloud-code-engine.sh`.
 
 ## The nav

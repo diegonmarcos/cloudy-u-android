@@ -1,0 +1,88 @@
+name: "Test -> native tools launch (emulator, reusable)"
+
+# #1708 an app at targetSdk >= 35 may not exec from its data dir (W^X), so every executable it needs ships as lib*.so and runs from
+# applicationInfo.nativeLibraryDir. This installs the APK a Ship run built on a real emulator and proves each declared tool is
+# present there AND launches (1_cicd/src/scripts/emulator-native-tools.sh). Rule 16: a tool that stops launching fails the ship.
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        type: string
+        required: true
+      artifact_prefix:
+        type: string
+        required: true
+      specs:
+        description: "Space separated file:mode specs, see emulator-native-tools.sh"
+        type: string
+        required: true
+      api_levels:
+        type: string
+        default: "[34]"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  native-tools:
+    name: "Native tools launch (${{ inputs.app }} · API ${{ matrix.api-level }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: ${{ fromJSON(inputs.api_levels) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            1_cicd/src/scripts
+
+      - name: Fetch the APK under test (this run's artifact)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ inputs.artifact_prefix }}*
+          path: apk
+
+      - name: Pick the APK, read its package
+        run: |
+          set -eu
+          find apk -name '*.apk' | sort > apks.txt; cat apks.txt
+          pick=""
+          for want in x86_64 universal arm64 ''; do
+            pick=$(grep -i -- "$want" apks.txt | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no APK in this run"; exit 1; }
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          pkg=$("$aapt2" dump packagename "$pick")
+          cp "$pick" app-under-test.apk
+          echo "PKG=$pkg" >> "$GITHUB_ENV"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + launch every native tool
+        timeout-minutes: 25
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash 1_cicd/src/scripts/emulator-native-tools.sh app-under-test.apk ${{ env.PKG }} out ${{ inputs.specs }}
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.app }}-native-tools-api${{ matrix.api-level }}
+          path: out/
+          if-no-files-found: warn

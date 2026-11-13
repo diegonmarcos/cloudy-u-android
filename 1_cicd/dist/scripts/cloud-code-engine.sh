@@ -187,9 +187,14 @@ step_build_fork() {
   # Upstream's build.sh and its Cordova hooks talk to each other through
   # $TMPDIR/fdroid.bool (post-process.js pins targetSdk 28 on it). Written
   # BEFORE setup, because `cordova platform add` already runs the hooks.
-  local tmp="${TMPDIR:-/tmp}"
-  printf '%s\n' "$FDROID" > "$tmp/fdroid.bool"
-  log "build-fork: flavour $VARIANT, fdroid=$FDROID (upstream's own axes, build.json::upstream.flavor)"
+  # #1708: that hook pins targetSdk 28 only when the flag is true. This build targets build.json::android.target_sdk
+  # (>= 35, silent Store updates) and runs the terminal's proot, loader and axs from nativeLibraryDir (W^X safe), so the
+  # flag it reads is "true" only for a declared target_sdk of 28 or less.
+  local tmp="${TMPDIR:-/tmp}" tsdk hookflag
+  tsdk="$(_json '.android.target_sdk')"
+  hookflag=false; [ "${tsdk:-0}" -le 28 ] && hookflag=true
+  printf '%s\n' "$hookflag" > "$tmp/fdroid.bool"
+  log "build-fork: flavour $VARIANT, fdroid=$FDROID (upstream's own axes, build.json::upstream.flavor), targetSdk=$tsdk"
 
   log "build-fork: npm ci (lock is committed; proot pruned from it with the plugin)"
   npm ci --no-audit --no-fund
@@ -228,6 +233,14 @@ PY
 
   log "build-fork: web bundle (rspack, development — upstream's 'd' mode)"
   rspack --mode development
+
+  # #1708 the terminal's native tools ship as lib*.so under jniLibs and run from applicationInfo.nativeLibraryDir
+  # (the only place an app at targetSdk >= 29 may exec from). Fetched here, hash-pinned, never committed
+  # (licence-boundaries: no *.so / *.rootfs in the tree).
+  if [ "${tsdk:-0}" -ge 29 ]; then
+    log "build-fork: native terminal tools -> platforms/android/app/src/main/jniLibs (tools/fetch-native-tools.py)"
+    python3 tools/fetch-native-tools.py "$APP_ROOT" "$APP_ROOT/platforms/android/app/src/main/jniLibs"
+  fi
 
   log "build-fork: cordova build android (debug)"
   # An EMPTY build config, explicitly: Cordova reads ./build.json by default,

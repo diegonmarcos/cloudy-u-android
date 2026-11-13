@@ -65,8 +65,17 @@ public class ProcessManager {
     }
 
     private boolean isFdroidBuild() {
-        // F-Droid builds are intentionally pinned to targetSdkVersion 28.
-        // This convention is also exposed to scripts through the FDROID env var.
+        // The FDROID env var means "the terminal's tools are NOT bundled": proot, its loaders and axs are then
+        // downloaded into the data dir, which only a targetSdk <= 28 app may exec from. #1708: this build bundles them
+        // as lib*.so and runs them from nativeLibraryDir (any targetSdk), so the answer is whether libproot-xed.so is
+        // there. A legacy build without it still falls back on its own targetSdk.
+        try {
+            if (new File(context.getApplicationInfo().nativeLibraryDir, "libproot-xed.so").exists()) {
+                return false;
+            }
+        } catch (Exception ignored) {
+            // fall through to the targetSdk rule
+        }
         return getTargetSdkVersion() <= 28;
     }
 
