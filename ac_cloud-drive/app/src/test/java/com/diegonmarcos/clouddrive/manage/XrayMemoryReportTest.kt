@@ -16,10 +16,10 @@ class XrayMemoryReportTest {
 
     fun full() = XrayMemoryReport.Inputs(
         device,
-        volumes = Src.Ok(listOf(XrayMemoryReport.Volume("Internal storage", "/storage/emulated/0", 128_000_000_000, 40_000_000_000, "mounted"))),
+        volumes = Src.Ok(listOf(XrayMemoryReport.Volume("Internal storage", "/mnt/sample-volume", 128_000_000_000, 40_000_000_000, "mounted"))),
         apps = Src.Ok(apps()),
-        folders = Src.Ok(listOf(XrayMemoryReport.Sized("/storage/emulated/0/DCIM", 9_000_000_000))),
-        files = Src.Ok(listOf(XrayMemoryReport.Sized("/storage/emulated/0/Download/big.iso", 4_000_000_000), XrayMemoryReport.Sized("/storage/emulated/0/.ssh/id_rsa", 1700))),
+        folders = Src.Ok(listOf(XrayMemoryReport.Sized("/mnt/sample-volume/DCIM", 9_000_000_000))),
+        files = Src.Ok(listOf(XrayMemoryReport.Sized("/mnt/sample-volume/Download/big.iso", 4_000_000_000), XrayMemoryReport.Sized("/mnt/sample-volume/.ssh/id_rsa", 1700))),
         media = Src.Ok(listOf(XrayMemoryReport.MediaCat("videos", 12, 5_000_000_000))),
         mem = Src.Ok(XrayMemoryReport.Mem(8_000_000_000, 3_000_000_000, 400_000_000, false)),
         procs = Src.Ok(listOf(XrayMemoryReport.Proc("com.a", 120_000))),

@@ -48,7 +48,8 @@ import json, sys
 apps = json.load(open(sys.argv[1], encoding="utf-8"))["apps"]
 if not any(a.get("route") == {"tab": "manage", "page": "overview"} for a in apps): sys.exit(1)
 screen = open(sys.argv[2], encoding="utf-8").read()
-if 'if (installed) AppsPage(prefs)' not in screen: sys.exit(1)
+# #1715 Fleet apps page removed: Local Apps is the one AppsPage
+if 'fun LocalAppsPage(' not in screen or 'AppsPage(prefs, actions = actions' not in screen: sys.exit(1)
 PY
 }
 k3() {
