@@ -15,7 +15,7 @@ DataStore / Room stores and declared files it cannot move yet.
 
 | app | package | covered | gaps | coverage |
 |---|---|---:|---:|---:|
-| cloud-superapp | `com.diegonmarcos.superapp` | 60 | 0 | 100% |
+| cloud-superapp | `com.diegonmarcos.superapp` | 58 | 0 | 100% |
 | c3-morpheus | `com.diegonmarcos.morpheus` | 5 | 0 | 100% |
 | c3-watchdog | `com.diegonmarcos.watchdog` | 5 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
@@ -57,17 +57,14 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **440** | **57** | **88%** |
+| **fleet** | | **438** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
-Module `aa_cloud-superapp`; libs: lib-account, lib-adb-shell-core, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
+Module `aa_cloud-superapp`; libs: lib-adb-shell-core, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
-| `account_activity` | prefs | device | no | #1081 Cloud Account's Activity page: a short on-device log (newest last, capped at 200) of what the account did, as sentences naming a thing (revealed github.token, auto-backup ok). It never holds a secret value (ActivityFeed.record drops one that looks like it) and records this phone's history, never configuration. |
-| `account_data_migration` | prefs | device | no | #867 whether this app has already copied the imported configs, profile and S/R/L account files over from the Cloud Account app. It records this phone's progress, never configuration. |
-| `account_migrate` | prefs | device | no | #783 the new-phone migration journal: per app, the hash of the declared copy applied and its outcome, so a re-run resumes. It describes this phone's progress, never configuration. |
 | `adb_shell` | prefs | device | no | Per-install random token shared with the local adb shell server (install identity), the flag that this install was ever paired with Wireless Debugging (drives the Cloud Store channel control: not paired vs down), and channel_mode, the owner's Privileged channel choice (local \| embedded \| shizuku \| auto; default local where the app owns a local server). |
 | `adb_terminal` | prefs | config | yes | Configs > ADB Terminal: the owner's favourite shell commands (string set under key 'favourites', command ids from the shipped shell allowlist) pinned to the top of the terminal. Absent until the first star. |
 | `advisory_feed` | prefs | device | no | Single 'last' poll timestamp throttling the ntfy advisory feed; sync cursor. |
@@ -103,7 +100,6 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-adb-shell-core, lib-ai-usage,
 | `gitea_feed_cache` | prefs | device | no | 15-minute TTL cache of Gitea commit feed responses (GiteaFeed PREFS constant), pure cache. |
 | `health_store` | prefs | device | no | Health Connect snapshots, history and source last-seen; cache of device data. |
 | `home_swipe_prefs` | prefs | config | yes | User's chosen action for swipe up/left/right/down on the launcher home. |
-| `import_configs` | encrypted | secret (keys: app_configs_json→secret, configs_json→secret, data_json→secret, grants_json→device, grants_seeded→device, mail_signatures→device) | yes | EncryptedSharedPreferences, THE Account vault's one keystore-backed file (#874): `configs_json` the Connections (the imported blob incl. auth.authelia_token and email, fleet bearer, mesh, DNS, Dagu, mail), `data_json` the identities, `app_configs_json` the Configs captured from every app; `grants_json` the per-app Secret grants (never migrates: a grant is the owner's decision on THIS phone) and `grants_seeded` its marker. Mostly credentials. `mail_signatures` is the copy of Mail's signatures the vault last held for the bundle (Mail's own store is the source of truth and travels through mail_signatures). |
 | `install_sessions_prompted` | prefs | device | no | #1675 Install sessions the updater already raised a confirm prompt for, so one session asks once: per-device session state, never a setting. |
 | `kdeconnect_clipboard` | prefs | content | no | Clipboard history exchanged with the peer. |
 | `kdeconnect_device_overrides` | prefs | config | yes | Per-device host/port/label overrides for paired KDE Connect peers. |
@@ -140,7 +136,6 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-adb-shell-core, lib-ai-usage,
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `phone_notif_store` | prefs | device | no | Local buffer (max 50) of captured phone notifications; transient local history not meant to move. |
-| `profile_prefs` | prefs | config (keys: banner_uri→device, install_id→device, install_secret→device, picture_uri→device, schema_version→device) | yes | Owner profile card fields (name, email, phone, birth, company, location, website, titles) plus install identity. |
 | `recent_cloud_tiles` | prefs | device | no | Most-recently-opened cloud tile list (max 12), usage history. |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `search_scope_prefs` | prefs | config | yes | The SuperApp search's scope chips as each entry point was last left (scopes_home_star, scopes_home_sheet, scopes_cloud_apps_page: the build.json::ui.search_scopes ids that are on). Absent until the owner taps a chip there, so an entry never touched starts on its defaults. |
@@ -170,7 +165,6 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-adb-shell-core, lib-ai-usage,
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 | `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 | `user_registry` | prefs | config (keys: applied_at→device, peer_id→device) | yes | Registry JSON, identity_email and peer_id: user identity/peer registry applied on this device. |
-| `vault_cockpit` | prefs | device | no | Only holds this phone's device_id used in the vault cockpit. |
 | `wd_keepalive` | prefs | config | yes | Wireless-debugging keepalive switch (`enabled`), the owner's choice in Configs ▸ Controls. |
 | `wd_keepalive_status` | prefs | device | no | Wireless-debugging keepalive worker status (ready, last tick/reconnect/failure times). |
 | `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
@@ -191,7 +185,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-adb-shell-core, lib-ai-usage,
 | `BuildConfig UI_* constants (UI_LAUNCHER_SETTINGS_B64, UI_PROFILE_*, UI_WG_*)` | config | Defaults baked into the APK from build.json; not device state but the fallback for unset prefs. |
 | `filesDir/<KEYSTORE_FILE>` | device | This device's KDE Connect TLS identity keystore; never migrate, re-pair |
 
-Coverage: 60 covered, 0 gaps.
+Coverage: 58 covered, 0 gaps.
 
 ## c3-morpheus — `com.diegonmarcos.morpheus`
 
@@ -323,7 +317,7 @@ Coverage: 20 covered, 1 gaps — file:filesDir/git-sync/repos.json.
 
 ## cloud-tasks — `com.diegonmarcos.cloudagenda`
 
-Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core, lib-wysiwyg.
+Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core, lib-wysiwyg.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -467,7 +461,7 @@ Coverage: 4 covered, 0 gaps.
 
 ## cloud-c3 — `com.diegonmarcos.cloudc3`
 
-Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-ops, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater.
+Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-ops, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -710,7 +704,7 @@ Coverage: 9 covered, 2 gaps — call_history, file:system CallLog and BlockedNum
 
 ## cloud-drive — `com.diegonmarcos.clouddrive`
 
-Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-editor-core, lib-file-editor, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-local-serve, lib-media-viewer, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-ocr, lib-odf, lib-pdf, lib-perms, lib-rclone, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-wysiwyg.
+Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-editor-core, lib-file-editor, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-local-serve, lib-media-viewer, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-ocr, lib-odf, lib-pdf, lib-perms, lib-rclone, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-wysiwyg.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1415,7 +1409,7 @@ Coverage: 6 covered, 2 gaps — ai_sessions, file:filesDir/ai-sessions.json.
 
 ## cloud-kg-store — `com.diegonmarcos.cloudkgstore`
 
-Module `ac_cloud-kg-store`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-local-serve, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
+Module `ac_cloud-kg-store`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-local-serve, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
