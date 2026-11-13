@@ -14,6 +14,12 @@ tap_exact() {  # tap the node whose text or content-desc is exactly $1 (the LAST
   [ -n "$b" ] || return 1
   set -- $b; adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 ))
 }
+tap_page() {  # a page of the second row: the FIRST match (the row is at the top; a card below may carry the same word)
+  dump cur
+  b=$(grep -oE "(text|content-desc)=\"$1\"[^>]*bounds=\"\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]\"" "$OUT/cur.xml" | sed -n 1p | grep -oE '[0-9]+' | tail -4 | tr '\n' ' ')
+  [ -n "$b" ] || return 1
+  set -- $b; adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 ))
+}
 has() { grep -qi -- "$2" "$OUT/$1.xml"; }   # card titles are drawn in capitals
 rc=0; fail() { echo "::error::$*"; rc=1; }
 adb shell am force-stop "$W"; adb shell input keyevent KEYCODE_HOME
@@ -30,12 +36,13 @@ n=0
 while read -r label want <&3; do   # fd 3: adb reads stdin and would eat the page list
   [ -z "$label" ] && continue
   n=$((n+1)); name="$n-$(echo "$label" | tr 'A-Z ' 'a-z-')"
-  tap_exact "${label//_/ }" || { fail "the second row has no '${label//_/ }' page"; continue; }
+  tap_page "${label//_/ }" || { fail "the second row has no '${label//_/ }' page"; continue; }
   ok=0
   for i in 1 2 3 4 5 6; do sleep 4; dump "$name"; has "$name" "${want//_/ }" && { ok=1; break; }; done
   shoot "$name"
   [ "$ok" = 1 ] || fail "API > ${label//_/ } does not show '${want//_/ }' (the device access model has no data)"
   adb shell input swipe $X $Y1 $X $Y2 300; sleep 1; shoot "$name-more"
+  for i in 1 2 3; do adb shell input swipe $X $Y2 $X $Y1 100; done; sleep 1   # back to the top: the second row is there
 done 3<<'PAGES'
 Topology API_topology
 MCP MCP_tools
