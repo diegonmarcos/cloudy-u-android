@@ -2961,6 +2961,7 @@
       "module": "aa_cloud-superapp",
       "schema_version": 1,
       "libs": [
+        "lib-adb-readiness",
         "lib-adb-shell-core",
         "lib-ai-usage",
         "lib-analytics",

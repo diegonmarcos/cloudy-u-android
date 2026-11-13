@@ -238,6 +238,7 @@
         "libs:kde-connect",
         "libs:shizuku-adb-debug-tools",
         "libs:shell-broker",
+        "libs:adb-readiness",
         "libs:adb-shell-core",
         "libs:firewall",
         "libs:battery",
@@ -434,12 +435,21 @@
       "type": "library",
       "comment": "#1510 The thin client of the shell broker: ShellClient.exec/stream/status/arm over the SuperApp's signature-guarded provider, ShellResult (Ok / NeedsArm / Denied / Failed). No pairing, no reconnect loop, no service, no receiver. Every other app that needs a shell links this instead of libs:shizuku-adb-debug-tools."
     },
+    "libs:adb-readiness": {
+      "dir": "../ab_cloud-libs-shared/libs/adb-readiness",
+      "type": "library",
+      "depends_on": [
+        "libs:shell-client"
+      ],
+      "comment": "#1682 P3 step 5 the CLIENT-SAFE readiness source: AdbReadiness (#1678, 'is ADB usable now') over ShellClient.status, no owner lib. The SuperApp links it as owner and as client; the owner side adds AdbReadinessOwner (libs:adb-shell-core)."
+    },
     "libs:adb-shell-core": {
       "dir": "../ab_cloud-libs-shared/libs/adb-shell-core",
       "type": "library",
       "depends_on": [
         "libs:shizuku-adb-debug-tools",
-        "libs:shell-broker"
+        "libs:shell-broker",
+        "libs:adb-readiness"
       ],
       "comment": "#1682 P2a the ADB Shell's pure core, moved out of app/ so the ADB owner (Cloud Webserver) and the SuperApp share one copy: AdbReadiness (#1678 the one 'ADB usable now' source; the host installs connector / hostOpener), AdbCockpitModel (#1647 Status cockpit), AdbPrereqs (#1676 Perms chain). Same packages, no component."
     },

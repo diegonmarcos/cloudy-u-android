@@ -79,6 +79,8 @@ class App : Application(), WorkManagerConfiguration.Provider {
         com.diegonmarcos.superapp.configs.AdbOwnerHost.waker = { engine, source -> com.diegonmarcos.superapp.xray.EngineProfiler.wake(engine, source) }
         com.diegonmarcos.superapp.configs.AdbOwnerHost.errors = { engine, where, what -> com.diegonmarcos.superapp.xray.EngineProfiler.error(engine, where, what) }
         com.diegonmarcos.superapp.configs.AdbOwnerHost.plane = com.diegonmarcos.superapp.system.PrivilegedPlaneHost
+        // #1682 P3 step 5: the readiness source is client-safe (libs:adb-readiness); this process owns the channel, so it adds the owner half.
+        com.diegonmarcos.superapp.system.AdbReadinessOwner.install()
         com.diegonmarcos.superapp.system.AdbReadiness.connector = { c -> com.diegonmarcos.superapp.configs.AdbCockpitOps.connect(c) }
         // #1682 P3 step 1: ONE in-frame opener for both: ShellActivity no longer implements the lib's AdbShellHost.
         val adbInFrame: (android.content.Context) -> Boolean = { c ->

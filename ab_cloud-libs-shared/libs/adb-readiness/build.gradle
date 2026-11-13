@@ -1,0 +1,32 @@
+// #1682 P3 step 5 libs:adb-readiness: the CLIENT-SAFE "is ADB usable now" source (AdbReadiness). It answers over libs:shell-client
+// (ShellClient.status), never over an in-process channel, so an app that is only a CLIENT of the ADB owner links this and none of the
+// owner libs (shizuku-adb-debug-tools / shell-broker / adb-shell-core). The owner side adds the broker's own push through the hooks.
+apply plugin: 'com.android.library'
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.adbreadiness'
+    compileSdk 36
+    defaultConfig { minSdk 26 }
+    testOptions { unitTests.includeAndroidResources = true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:shell-client')
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20250107'
+}

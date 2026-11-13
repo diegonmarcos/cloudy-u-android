@@ -48,4 +48,15 @@ class AdbReadinessCoreTest {
     @Test fun hostHooksStartUnset() {
         assertNull(AdbReadiness.connector); assertNull(AdbReadiness.hostOpener)
     }
+
+    @Test fun aClientOnlyAppHasNoOwnerHooksAndNeverCrashes() {
+        // #1682 P3 step 5: no owner side linked -> install is a no-op and the non-blocking answer is the last verdict only.
+        assertNull(AdbReadiness.ownerInstall); assertNull(AdbReadiness.ownerUsableNow)
+        AdbReadiness.install()
+        var ran = 0
+        AdbReadiness.ownerInstall = { ran++ }
+        try { AdbReadiness.install(); assertEquals(1, ran) } finally { AdbReadiness.ownerInstall = null }
+        AdbReadiness.ownerInstall = { throw IllegalStateException("boom") }
+        try { AdbReadiness.install() } finally { AdbReadiness.ownerInstall = null }
+    }
 }

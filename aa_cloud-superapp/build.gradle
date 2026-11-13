@@ -22,9 +22,10 @@ plugins {
 //  - :libs:shizuku-adb-debug-tools   the privileged channel's pure rules: the connect plan per mode, the channel selection, the status
 //                               table, the buttons, the setup checklist. Only the SuperApp links this lib (#1512), so no other
 //                               pipeline runs these suites; without this line the mode-independence tests never executed.
+//  - :libs:adb-readiness        #1682 P3 step 5 the client-safe readiness core (AdbReadinessCoreTest)
 //  - :libs:adb-shell-core       #1682 the cockpit model (AdbCockpitModelTest) and the readiness core moved out of app/
 tasks.register('superappUnitTests') {
     group = 'verification'
     description = 'Unit suites the SuperApp ship runs (see build.json::tests.unit).'
-    dependsOn ':libs:shell-client:testDebugUnitTest', ':libs:shell-broker:testDebugUnitTest', ':libs:shizuku-adb-debug-tools:testDebugUnitTest', ':libs:adb-shell-core:testDebugUnitTest', ':app:testDebugUnitTest'
+    dependsOn ':libs:shell-client:testDebugUnitTest', ':libs:shell-broker:testDebugUnitTest', ':libs:shizuku-adb-debug-tools:testDebugUnitTest', ':libs:adb-shell-core:testDebugUnitTest', ':libs:adb-readiness:testDebugUnitTest', ':app:testDebugUnitTest'
 }

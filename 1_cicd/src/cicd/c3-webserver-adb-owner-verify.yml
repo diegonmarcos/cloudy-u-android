@@ -16,6 +16,7 @@ on:
       - "ab_cloud-libs-shared/libs/shell-client/**"
       - "ab_cloud-libs-shared/libs/shell-broker/**"
       - "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/**"
+      - "ab_cloud-libs-shared/libs/adb-readiness/**"
       - "ab_cloud-libs-shared/libs/adb-shell-core/**"
       - ".github/workflows/c3-webserver-adb-owner-verify.yml"
   workflow_dispatch:
@@ -60,6 +61,6 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon --stacktrace :app:compileDebugKotlin \
-            :libs:adb-shell-core:testDebugUnitTest
+            :libs:adb-shell-core:testDebugUnitTest :libs:adb-readiness:testDebugUnitTest
           # the owner side really was the one compiled (not the dormant stand-in): its class references the lib's ADB Shell page
           grep -rl 'adbdebug/AdbShellPage' app/build/tmp/kotlin-classes/debug/com/diegonmarcos/cloudwebserver/owner/

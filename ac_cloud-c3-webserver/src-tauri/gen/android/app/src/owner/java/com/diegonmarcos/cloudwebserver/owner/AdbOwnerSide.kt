@@ -43,7 +43,7 @@ object AdbOwnerSide {
      * (adb-shell-one-place: the page is the only place that connects), drawn below; the Status card's Connect re-checks. Never throws.
      */
     fun install(ctx: Context) {
-        runCatching { AdbReadiness.install() }
+        runCatching { com.diegonmarcos.superapp.system.AdbReadinessOwner.install() }
     }
 
     @Composable

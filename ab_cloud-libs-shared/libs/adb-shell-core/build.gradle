@@ -1,5 +1,5 @@
 // #1682 P2a libs:adb-shell-core: the ADB Shell's pure core moved out of the SuperApp so the owner (Cloud Webserver, P2b) and the
-// SuperApp share ONE copy: AdbReadiness (the #1678 single "ADB usable now" source), AdbCockpitModel (the #1647 Status cockpit model)
+// SuperApp share ONE copy: AdbReadinessOwner (the owner half of the #1678 readiness source; AdbReadiness itself is libs:adb-readiness), AdbCockpitModel (the #1647 Status cockpit model)
 // and AdbPrereqs (the #1676 Perms chain). Packages are kept (com.diegonmarcos.superapp.system / .configs) so no consumer changes.
 // No UI, no service, no receiver: the host installs AdbReadiness.connector / hostOpener at process start.
 apply plugin: 'com.android.library'
@@ -30,6 +30,8 @@ kotlin {
 dependencies {
     api project(':libs:shizuku-adb-debug-tools')
     api project(':libs:shell-broker')
+    // #1682 P3 step 5: AdbReadiness is client-safe and lives in its own lib; the owner side adds AdbReadinessOwner on top of it
+    api project(':libs:adb-readiness')
     // #1682 P3 BrokerGrantChannel implements libs:perms PermsGrant.GrantChannel
     implementation project(':libs:perms')
     // #1682 P3 step 4c: the cockpit pages draw with the fleet UI kit (KitStoreRow, LocalKitPalette); it brings compose + fragment-ktx

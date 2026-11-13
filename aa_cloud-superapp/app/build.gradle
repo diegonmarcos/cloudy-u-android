@@ -1135,6 +1135,8 @@ dependencies {
     implementation project(':libs:shell-broker')
     // #1682 P2a libs:adb-shell-core — AdbReadiness / AdbCockpitModel / AdbPrereqs, shared with the ADB owner (Cloud Webserver).
     implementation project(':libs:adb-shell-core')
+    // #1682 P3 step 5 libs:adb-readiness — the client-safe readiness source (over libs:shell-client); linked in both owner and client mode.
+    implementation project(':libs:adb-readiness')
     // libs:firewall — original no-root per-app outbound firewall (local
     // VpnService). Surfaced in the About screen under Battery. Complex
     // tooling is cherry-picked from the RethinkDNS reference upstream
