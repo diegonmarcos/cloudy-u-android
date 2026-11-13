@@ -30,18 +30,19 @@ expected() {  # $1 = fleet file
     | [ $fleet[0].groups[] | select(.id == "apps") | .members[] ] as $tab
     | [ (.ui.sections[] | select(.id == "cloud") | .tile_groups[]) as $g
         | { label: $g.title,
-            ids: [ $g.tiles[]
+            ids: ( [ $g.tiles[]
                    | select(.category_skip != true)    # 1627 a duplicate shortcut (e.g. the Me tile in Data) does not claim the Store category of that app
                    | (.fleet_app // ( (.target // "") as $t
                        | if ($t | startswith("extapp:")) then $byPkg[ $ext[ ($t | ltrimstr("extapp:") | sub("#.*$"; "")) ] // "" ]
                          elif ($t | startswith("app://")) then $byPkg[ $t | ltrimstr("app://") ]
                          else null end ))
-                   | select(. != null and IN($tab[])) ] } ] as $groups
+                   | select(. != null and IN($tab[])) ]
+                 + [ ($g.store_apps // [])[] | select(IN($tab[])) ] ) } ] as $groups   # 1704 tile-less members a group files
     | ($groups | reduce .[] as $g ([]; . as $acc
          | ([ $acc[].members[] ]) as $seen
          | $acc + [{label: $g.label, members: ([ $g.ids[] | select(IN($seen[]?) | not) ] | reduce .[] as $i ([]; if IN(.[]; $i) then . else . + [$i] end))}])) as $filed
     | ($filed | map(select(.members | length > 0)))
-      + [{label: "Other", members: [ $tab[] | select(IN($filed[].members[]) | not) ]}]
+      + (if ([ $tab[] | select(IN($filed[].members[]) | not) ] | length) > 0 then [{label: "UNFILED", members: [ $tab[] | select(IN($filed[].members[]) | not) ]}] else [] end)
   ' "$BUILD" 2>/dev/null
 }
 actual() { jq -c '[ .app_categories[] | {label, members} ]' "$1"; }
@@ -62,7 +63,16 @@ echo "== T1/T2: the Store's categories equal the SuperApp's Cloud > Apps tile gr
 if [ "$(jq -c 'length' <<<"$(expected "$FLEET")")" -lt 3 ]; then bad "could not derive the expectation from tile_groups"; fi
 out="$(check "$FLEET")" && ok "app_categories == tile_groups: same names, same order, same membership, Other last" \
   || bad "app_categories differ from the tile groups - rerun aa_cloud-superapp/data/regen.sh --constellation-only: $out"
-[ "$(jq -r '.app_categories[-1].label' "$FLEET")" = "Other" ] && ok "the last category is the declared Other" || bad "last category is not Other"
+# 1704 there is NO Other: every app of the tab is filed by a tile group (or its store_apps)
+[ "$(jq -r '[.app_categories[] | select(.id == "other" or .label == "Other" or .label == "Others")] | length' "$FLEET")" = 0 ] && ok "no Other / Others category" || bad "an Other category is back"
+for pair in "c3-webserver:Configs" "c3:Configs" "morpheus:Configs" "watchtower:Configs" "watchdog:Configs" "termux:AGI"; do
+  a="${pair%%:*}"; c="${pair##*:}"
+  [ "$(jq -r --arg a "$a" '.app_categories[] | select(.members | index($a)) | .label' "$FLEET")" = "$c" ] && ok "$a is filed under $c" || bad "$a is not under $c"
+done
+# 1704 RULE 16 parity: every app the Store listed before this change (the pre-#1704 Cloud > Apps tab) is still listed
+PRE="aa_cloud-superapp morpheus watchdog watchtower account browser c3-webserver c3 calc camera chat code contacts dialer drive gallery keyboard kg-store mail matrix me media-center myterminal nav news nix-on-droid notes office search shopping store superintel tasks termux tools-small-llms vault wallet writer cg-omniverse capital-stack-finterminal hardtech-cad hardtech-sim2real"
+miss=""; for a in $PRE; do jq -e --arg a "$a" '[.app_categories[].members[]] | index($a)' "$FLEET" >/dev/null || miss="$miss $a"; done
+[ -z "$miss" ] && ok "parity: every previously listed app is still listed" || bad "disappeared from the Store:$miss"
 dupe="$(jq -r '[.app_categories[].members[]] | group_by(.)[] | select(length > 1) | .[0]' "$FLEET")"
 [ -z "$dupe" ] && ok "no app is in two categories" || bad "in two categories: $dupe"
 unf="$(jq -r '[.app_categories[].members[]] as $f | (.groups[] | select(.id == "apps") | .members[]) | select(IN($f[]) | not)' "$FLEET")"
@@ -84,7 +94,8 @@ mut() {  # $1 name  $2 jq filter
 mut "an app moved to another category" '.app_categories[0].members as $m | .app_categories[1].members += [$m[0]] | .app_categories[0].members = $m[1:]'
 mut "two categories swapped" '.app_categories[0] as $a | .app_categories[1] as $b | .app_categories[0] = $b | .app_categories[1] = $a'
 mut "a category renamed" '.app_categories[0].label = "Inbox"'
-mut "Other dropped" '.app_categories |= .[:-1]'
+mut "an app unfiled (dropped from its category)" '.app_categories[-1].members |= .[:-1]'
+mut "an Other group back" '.app_categories += [{id:"other",label:"Other",members:[]}]'
 mut "two apps swapped inside a category" '.app_categories[1].members |= ([.[1], .[0]] + .[2:])'
 
 echo "passed $PASS, failed $FAIL"

@@ -3347,6 +3347,8 @@
           },
           {
             "title": "AGI",
+            "_doc_store_apps": "#1704 Store-only members: apps with no tile on this row (Termux) that the Store files under AGI. Same group, no tile drawn.",
+            "store_apps": ["termux"],
             "tiles": [
               {
                 "_doc": "#1162 SI, Cloud SuperIntel (ac_cloud-superintel, com.diegonmarcos.cloudsuperintel): the Gemini-style chat app (sessions drawer, model picker, streaming, markdown) over the fleet AI contract. Opened through ui.external_apps[cloud-superintel]; not installed = the #249 placeholder and the tap installs it. First tile of the AGI row, right before AI (the Claude bot).",
@@ -3466,6 +3468,8 @@
           {
             "_doc": "Configs (#324) - the surfaces that configure the fleet rather than being part of it, pulled out of Tools Primary so a config errand is one recognisable row instead of a hunt through the tool tiles. It sits LAST among the declared groups on purpose: GroupedTilesFragment appends a synthetic 'Actions' header after every data group it renders (see LauncherNavController.GROUP_ACTIONS), so 'after Lnktree and before Actions' is exactly this position and there is no Actions group in this array to sit before.",
             "title": "Configs",
+            "_doc_store_apps": "#1704 Store-only members: c3 apps that have no tile on this row (the Cloud tab of the Store files every app by this declaration, never in an Others group). Same group, same category, no tile drawn. Parity: test-store-cloud-categories.sh.",
+            "store_apps": ["c3-webserver", "morpheus", "watchtower"],
             "_doc_row_order": "#1628 OWNER ORDER (2026-11, supersedes #1611): the Cloud > Apps > Configs row reads exactly Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About - six tile groups divided by five '|' separators. Groups: [Quick Actions, UI] [Firewall, WiFi] [Store] [Account, C3] [Watchdog] [About]. Each tile maps to a real existing page/app id (no page invented): Quick Actions=page:config/controls, UI=page:config/panels-ui, Firewall=page:config/firewall, WiFi=page:config/wifi, Store=extapp:cloud-store, Account=extapp:cloud-account, C3=extapp:cloud-c3, Watchdog=extapp:c3-watchdog, About=page:config/app-about. #1611's five tiles (Quick Actions, Watchdog, Account, C3, Store) are all retained; UI, Firewall, WiFi, About added. test-c3-is-an-app.sh finds this group by its CONTENT (a group holding both Store and Quick Actions labels), so the reorder keeps it identifiable. Pinned by test-configs-apps-row.sh.",
             "tiles": [
               {
