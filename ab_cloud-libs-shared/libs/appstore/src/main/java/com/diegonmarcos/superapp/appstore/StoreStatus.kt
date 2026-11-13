@@ -41,7 +41,10 @@ internal object StoreStatus {
         return if (t == ControlStatus.Tri.UNKNOWN) ppViaShell ?: t else t
     }
 
-    fun invalidate() { cached = null; ppViaShell = null }
+    /** Forget the answer. The probe floor goes with it: an answer that is gone with a 30 s floor still standing leaves the chip on "checking..." until the
+     *  floor ends (#1682: with the ADB owner another app, returning to the Store re-ran this on every resume). The callers are user actions (resume, a tap),
+     *  never the adb-setting observer, so this cannot start a probe loop (#1556). */
+    fun invalidate() { cached = null; ppViaShell = null; lastProbeAt = 0L }
 
     /** Tests only: forget the last answer AND the probe floor, so a suite that shares this JVM-wide state with an earlier one probes afresh (#1682: the
      *  Phone Apps chip test waited 15 s on a 30 s floor left by whichever suite ran first, so its outcome depended on test order). */
