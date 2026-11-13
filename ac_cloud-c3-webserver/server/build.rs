@@ -97,7 +97,8 @@ fn main() {
         let (file, path) = spec.split_once('#').unwrap_or_else(|| panic!("api.sources.{} must be file#path", name));
         let blob = read(&repo.join(file));
         let mut n = &blob;
-        for key in path.split('.') {
+        // `file#` with no path is the whole document (#1718 the device access dataset).
+        for key in path.split('.').filter(|k| !k.is_empty()) {
             n = n.get(key).unwrap_or_else(|| panic!("{} has no {} (api.sources.{})", file, path, name));
         }
         api.insert(name.clone(), n.clone());

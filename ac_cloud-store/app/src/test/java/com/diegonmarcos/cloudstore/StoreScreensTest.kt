@@ -21,7 +21,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -36,6 +38,7 @@ import com.diegonmarcos.superapp.appstore.StoreCloudFragment
 import com.diegonmarcos.superapp.appstore.StorePages
 import com.diegonmarcos.superapp.appstore.StorePhoneFragment
 import com.diegonmarcos.superapp.appstore.BuildConfig as StoreBuild
+import com.diegonmarcos.superapp.fleetdata.DeviceAccess
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottomHost
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
@@ -77,6 +80,11 @@ class StoreScreensTest(private val section: String, private val shot: String) {
 
     /** The page id, without the "-bottom" variant suffix. */
     private val page get() = shot.removeSuffix(BOTTOM)
+    /** The declared page a shot belongs to (the strip's selection). */
+    private val stripPage get() = VARIANT[page] ?: page
+
+    /** #1718 THE device access model, parsed from the dataset Cloud Store serves (the file in the repo, not a fixture). */
+    private val model: DeviceAccess.Doc by lazy { DeviceAccess.parse(File("../../data/fleet/device-access.json").readText()) }
 
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(TestRule { base, _ ->
@@ -95,7 +103,7 @@ class StoreScreensTest(private val section: String, private val shot: String) {
     @Before fun seed() {
         val ctx: Context = ApplicationProvider.getApplicationContext()
         StorePages.hostDrawsStrip = true
-        // Fleet apps installed on the "phone" with a few requested permissions: Access > Android / Cloud Perms read them.
+        // Fleet apps installed on the "phone" with a few requested permissions: Access > Android Perms and Identity > Direct access read them.
         val fleet = Fleet.parse(StoreBuild.CONSTELLATION_FLEET_B64).filter { it.pkg != ctx.packageName }.take(6)
         for (a in fleet) shadowOf(ctx.packageManager).installPackage(PackageInfo().apply {
             packageName = a.pkg
@@ -128,8 +136,16 @@ class StoreScreensTest(private val section: String, private val shot: String) {
             "cloud/cloud" -> AndroidFragment<StoreCloudFragment>(Modifier.fillMaxSize())
             "phone/installed", "phone/declared", "search/search-cloudy", "search/search-android", "search/search-torrent" -> AndroidFragment<StorePhoneFragment>(Modifier.fillMaxSize())
             "torrent/torrent" -> TorrentPage()
+            // #1718 the five Access pages. MCP, APIs and the gateway half of IPC are drawn from the served dataset itself.
+            "access/mcp" -> DeviceMcpPage(model)
+            "access/apis" -> DeviceApisPage(model)
+            "access/apis-open" -> DeviceApisPage(model, expandAll = true)
+            "access/ipc" -> DeviceIpcPage(model)
+            "access/ipc-open" -> DeviceIpcPage(model, expandAll = true)
+            "access/ipc-registry" -> { AccessPages.ipcView = AccessPages.VIEW_REGISTRY; AccessPage(PAGE_IPC) }
             "access/identity" -> FleetIdentityPage(registry, live)
-            "access/mesh", "access/ipc", "access/android", "access/cloud" -> AccessPage(page)
+            "access/identity-direct" -> DirectAccessPage(model)
+            "access/android" -> AccessPage(page)
             "settings/sources", "settings/adb", "settings/ai", "settings/notifications", "settings/torrent", "settings/about" -> ConfigsPage(page)
             else -> error("no page for $section/$page")
         }
@@ -149,7 +165,7 @@ class StoreScreensTest(private val section: String, private val shot: String) {
                             selectedId = section, onSelect = {},
                         ) {
                             Column(Modifier.fillMaxSize()) {
-                                if (sec.pages.size > 1) NavBarTopSecondRow(sec.pages, page, onSelect = {}, underTopChrome = false)
+                                if (sec.pages.size > 1) NavBarTopSecondRow(sec.pages, stripPage, onSelect = {}, underTopChrome = false)
                                 Box(Modifier.weight(1f).fillMaxWidth()) { PageFor() }
                             }
                         }
@@ -169,6 +185,47 @@ class StoreScreensTest(private val section: String, private val shot: String) {
         File(OUT, "$name.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
+    /**
+     * #1718 what each Access page must show, on the real dataset: every device MCP tool and both doors; a row and a non-zero
+     * route count for every app (the "APIs read zero" bug); every member's gateway routes; and, under Identity, each seeded
+     * app's former Cloud Perms card (the constellation permission, held or not) beside the shared-uid groups.
+     */
+    private fun accessChecks() {
+        assertTrue("the served dataset did not parse: ${model.problem}", model.problem == null && model.apps.isNotEmpty())
+        fun tag(t: String) = compose.onNodeWithTag(t, useUnmergedTree = true)
+        when (page) {
+            "mcp" -> {
+                tag(DeviceAccessTags.SUMMARY + PAGE_MCP).assertExists()
+                for (g in model.gateways) tag(DeviceAccessTags.GATEWAY + g.id).assertExists()
+                assertTrue(model.mcp.tools.isNotEmpty()); for (t in model.mcp.tools) tag(DeviceAccessTags.TOOL + t.tool).assertExists()
+            }
+            "apis", "apis-open" -> {
+                tag(DeviceAccessTags.SUMMARY + PAGE_APIS).assertExists()
+                compose.onAllNodes(androidx.compose.ui.test.hasTestTag(DeviceAccessTags.ZERO), useUnmergedTree = true).assertCountEquals(0)
+                for (a in model.members()) {
+                    tag(DeviceAccessTags.API_ROW + a.id).assertExists()
+                    assertTrue("${a.id} counts ${a.apiCount} API routes", a.apiCount > 0)
+                    tag(DeviceAccessTags.API_COUNT + a.id).assertTextEquals("${a.apiCount} routes")
+                }
+                if (page == "apis-open") compose.onAllNodesWithText(model.opUrl(model.members().first(), model.members().first().ops.first()), useUnmergedTree = true).assertCountEquals(1)
+            }
+            "ipc", "ipc-open" -> {
+                tag(DeviceAccessTags.SUMMARY + PAGE_IPC).assertExists(); tag(DeviceAccessTags.GATEWAY + "mesh").assertExists()
+                for (a in model.members()) { tag(DeviceAccessTags.IPC_ROW + a.id).assertExists(); assertTrue("${a.id} has no gateway route", a.ipcCount > 0) }
+            }
+            "identity-direct" -> {
+                tag(DirectAccess.TAG_SUMMARY).assertExists(); tag(DirectAccess.TAG_SIGNATURE).assertExists(); tag(DirectAccess.TAG_UID).assertExists()
+                val ctx: Context = ApplicationProvider.getApplicationContext()
+                val installed = Fleet.parse(StoreBuild.CONSTELLATION_FLEET_B64).filter { it.pkg != ctx.packageName }.take(6)
+                tag(DirectAccess.TAG_APP + installed.first().pkg).assertExists()
+                // the Cloud Perms card's own lines, now under Identity: the grant state and the permission's name
+                assertTrue(compose.onAllNodesWithText("Cloud data access", substring = true, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
+                assertTrue(compose.onAllNodesWithText("com.diegonmarcos.cloud.permission.CONSTELLATION_DATA", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
+                for (g in model.groups) assertTrue(compose.onAllNodesWithText(g.label, substring = true, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
+            }
+        }
+    }
+
     @Test fun `the page renders under the top row, island and strip`() {
         OUT.mkdirs()
         val name = "$section-$shot"
@@ -178,6 +235,7 @@ class StoreScreensTest(private val section: String, private val shot: String) {
             compose.waitForIdle()
             val nodes = compose.onAllNodes(SemanticsMatcher("any") { true }, useUnmergedTree = true).fetchSemanticsNodes(false)
             assertTrue("$name drew nothing", nodes.isNotEmpty())
+            if (section == "access" && page in setOf("mcp", "apis", "apis-open", "ipc", "ipc-open", "identity-direct")) accessChecks()
             if ("$section/$page" == "access/identity") {
                 val rows = FleetIdentity.sorted(FleetIdentity.rows(registry, live), FleetIdentity.Sort.UID)
                 for (g in FleetIdentity.byUid(rows).filter { it.shared })
@@ -214,14 +272,18 @@ class StoreScreensTest(private val section: String, private val shot: String) {
         /** Pages that must render (the rest are best-effort until the first CI run shows which of them can). */
         private val MUST = setOf(
             "access/identity", "access/identity-bottom", "settings/notifications",
-            "settings/sources", "settings/about", "access/cloud", "access/ipc",
+            "settings/sources", "settings/about", "access/ipc",
+            "access/mcp", "access/apis", "access/apis-open", "access/ipc-open", "access/identity-direct", "access/android",
         )
+        /** Shots of one page in another state: the strip shows the page they belong to. */
+        private val VARIANT = mapOf("apis-open" to "apis", "ipc-open" to "ipc", "ipc-registry" to "ipc", "identity-direct" to "identity")
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}/{1}")
         fun pages(): List<Array<Any>> = listOf(
             "cloud/cloud", "phone/installed", "phone/declared", "search/search-cloudy", "search/search-android", "search/search-torrent", "torrent/torrent",
-            "access/mesh", "access/ipc", "access/identity", "access/identity-bottom", "access/android", "access/cloud",
+            "access/mcp", "access/apis", "access/apis-open", "access/ipc", "access/ipc-open", "access/ipc-registry",
+            "access/identity", "access/identity-direct", "access/identity-bottom", "access/android",
             "settings/sources", "settings/adb", "settings/ai", "settings/notifications", "settings/torrent", "settings/about",
         ).map { it.split('/').toTypedArray<Any>() }
     }

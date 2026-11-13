@@ -177,8 +177,8 @@ class MainActivity : AppCompatActivity() {
         // #570 an inventory handed over by Account (Apply list to Store): the Phone page consumes it on resume.
         i?.getStringExtra(StoreImport.EXTRA_IMPORT)?.let { StoreImport.pending = it }
         val tab = i?.getStringExtra(EXTRA_TAB)
-        // SuperApp's apps-mesh page used to open the Mesh tab; Apps Mesh is Access's first page now.
-        if (tab == LEGACY_MESH) { choose(TAB_ACCESS, PAGE_MESH); return TAB_ACCESS }
+        // SuperApp's apps-mesh page used to open the Mesh tab. Apps Mesh is retired (#1580: one mesh gateway); the gateway's routes are Access > IPC.
+        if (tab == LEGACY_MESH) { choose(TAB_ACCESS, AccessPages.resolve(LEGACY_MESH)); return TAB_ACCESS }
         // Feed moved into the Cloud page (Commits and CI-CD panels): an intent asking for the old tab opens Cloud.
         if (tab == LEGACY_FEED) return TAB_CLOUD
         return tab?.takeIf { t -> NAV.section(t) != null }
@@ -194,7 +194,7 @@ class MainActivity : AppCompatActivity() {
         /** The old Feed tab: its Commits and CI-CD feeds are panels on the Cloud page now. */
         private const val LEGACY_FEED = "feed"
         const val TAB_ACCESS = "access"
-        /** The old Mesh tab: Apps Mesh is Access's first page now; an intent asking for `mesh` opens it. */
+        /** The old Mesh tab: Apps Mesh is retired (#1580); an intent asking for `mesh` opens Access > IPC, where the one mesh gateway is. */
         private const val LEGACY_MESH = "mesh"
         const val TAB_SETTINGS = "settings"
         /** build.json::ui as baked into BuildConfig: the island's items and the section ids. */

@@ -67,6 +67,7 @@ node_python 4 Containers-Node-Python,GitHub_Pages,GitHub_Actions,Google_Firebase
 storage 4 Storage
 api_ai 4 AI,OpenRouter,Claude
 api_scraper 4 Scraper,Apify,Cloudy_Crawlee
+api_endpoints 4 C3_Endpoints,ai-gateway,Public:,Mesh:
 desktop 4 Desktop,Mobile,Gadgets
 mobile 4 Mobile
 gadgets 4 Gadgets

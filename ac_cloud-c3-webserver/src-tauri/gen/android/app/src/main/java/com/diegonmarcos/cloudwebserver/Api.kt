@@ -34,6 +34,8 @@ object Api {
     const val ROUTES = "/__app__/api/routes"
     const val SUBPAGES = "/__app__/api/subpages"
     const val TOPOLOGY = "/__app__/api/topology"
+    /** #1718 the device access dataset, whole: parsed by libs:fleet-data-client DeviceAccess, the model Cloud Store > Access draws too. */
+    const val ACCESS = "/__app__/api/access"
     const val ROOTS = "/__app__/api/roots"
     const val ROOTS_LS = "/__app__/api/roots/ls"
     const val ADB_SHELL = "/__app__/api/adb-shell"

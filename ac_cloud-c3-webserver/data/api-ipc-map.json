@@ -180,7 +180,7 @@
    "via": "in-process handler, no IPC leg"
   },
   {
-   "path": "/__app__/api/sub/api-public",
+   "path": "/__app__/api/access",
    "surface": "app",
    "ipc": null,
    "via": "in-process handler, no IPC leg"

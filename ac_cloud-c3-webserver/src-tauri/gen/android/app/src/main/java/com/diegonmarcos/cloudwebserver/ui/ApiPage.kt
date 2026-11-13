@@ -19,11 +19,17 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.cloudwebserver.Api
 import com.diegonmarcos.cloudwebserver.Decl
+import com.diegonmarcos.superapp.fleetdata.DeviceAccess
+import androidx.compose.runtime.remember
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
+ * #1718 The API section shows ONLY this device (the fleet services' public and mesh URLs are Cloud C3's), and every sub-page opens
+ * with the device access model: [DeviceAccessCards], drawn from libs:fleet-data-client DeviceAccess over the dataset the core
+ * serves at [Api.ACCESS]. Cloud Store > Access draws the same model from the same dataset, so the two pages hold one list.
+ *
  * The API section: Topology (MCP -> API -> IPC, the web shell's renderTopology: filter, grouping, the node list with the selection's
  * edge neighbours marked, a Swagger-style detail with Try it for an app GET route), then the declared sub-pages of build.json::subpages
  * (tab api: MCP, Public / Mesh / Apps Endpoints, Apps IPC); Apps Endpoints keeps the route table listing below it (renderRoutes).
@@ -37,6 +43,7 @@ fun ApiSection(page: String) {
         Acts { Act("Refresh", "c3_api_refresh") { bump() } }
         Loaded(subs, "sub-pages") { arr ->
             val sp = arr.objs().firstOrNull { it.optString("tab") == "api" && it.optString("id") == page }
+            DeviceAccessCards(page, tick)
             if (sp == null) ErrorNote("build.json::subpages declares no api page '$page'") else SubPage(sp.optString("route"), tick, bump)
             if (page == "apps") RoutesCard(tick)
         }
@@ -187,4 +194,109 @@ private fun TryIt(path: String) {
     val scope = rememberCoroutineScope()
     Acts { Act("Try it (GET)", "c3_topo_try") { scope.launch { out = when (val r = Api.get(path)) { is Api.Reply.Ok -> "200\n" + (if (r.value is JSONArray) (r.value as JSONArray).toString(1) else (r.value as JSONObject).toString(1)).take(4000); is Api.Reply.Err -> r.reason } } } }
     out?.let { Text(it, style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 12.dp).testTag("c3_topo_try_out")) }
+}
+
+
+/**
+ * #1718 THE device access model on this page: the same [DeviceAccess] document Cloud Store > Access draws (one data source, not
+ * two lists). MCP: the device MCP doors and tools. Mesh Endpoints: the one mesh gateway with its scopes and peers. Apps Endpoints:
+ * each app's own API routes with the real count (never zero for an app that exposes one). Apps IPC: each app's IPC routes behind
+ * the gateway and its IPC endpoints. A dataset that cannot be read is a reason, never a crash.
+ */
+@Composable
+private fun DeviceAccessCards(page: String, tick: Int) {
+    val raw = rememberObj(Api.ACCESS, tick)
+    Loaded(raw, "device access model") { o ->
+        val doc = remember(o) { DeviceAccess.parse(o.toString()) }
+        val problem = doc.problem
+        if (problem != null && doc.apps.isEmpty()) ErrorNote(problem)
+        else when (page) {
+            "mcp" -> AccessMcp(doc)
+            "mesh" -> doc.gateway("mesh")?.let { AccessGateway(doc, it, full = true) } ?: Note("The device access model declares no mesh gateway.")
+            "apps" -> AccessApis(doc)
+            "ipc" -> AccessIpc(doc)
+        }
+    }
+}
+
+@Composable
+private fun AccessGateway(doc: DeviceAccess.Doc, g: DeviceAccess.Gateway, full: Boolean = false) {
+    Card((if (g.id == "mesh") "Mesh gateway" else "On-phone API gateway") + " · " + (doc.app(g.pkg)?.label ?: g.app.ifEmpty { g.pkg }), "c3_access_gateway_${g.id}", badges = { Badge("this device") }) {
+        Kv("address", g.address + (if (g.id == "mesh") g.ipcRoute + "/<app>/<route>" else g.route), mono = true)
+        Note(g.what)
+        if (g.auth.isNotEmpty()) Kv("auth", g.auth)
+        if (g.cidrs.isNotEmpty()) Kv("peers from", g.cidrs.joinToString(", "), mono = true)
+        if (g.roster.isNotEmpty()) Kv("roster", g.roster, mono = true)
+        if (g.logsRoute.isNotEmpty() || g.endpointsRoute.isNotEmpty()) Kv("also", listOf(g.logsRoute, g.endpointsRoute).filter { it.isNotEmpty() }.joinToString(", "), mono = true)
+        g.aliases.forEach { (k, v) -> Kv("alias $k", v, mono = true) }
+        if (full) {
+            Note("${doc.scopes.size} ACL scopes · ${doc.peers.size} mesh peers · ${doc.ipcTotal} routes over ${doc.apps.count { it.ipcCount > 0 }} members")
+            doc.scopes.forEach { (k, v) -> Kv(k, v) }
+            doc.peers.forEach { p -> Kv("peer ${p.id}", (if (p.full) "full access" else p.scopes.joinToString(", ")) + " · " + p.what) }
+        }
+    }
+}
+
+@Composable
+private fun AccessMcp(doc: DeviceAccess.Doc) {
+    Card("This device · ${doc.mcp.tools.size} MCP tools", "c3_access_mcp", badges = { Badge("this device"); Badge(doc.mcp.server.ifEmpty { "no server" }) }) {
+        if (doc.mcp.endpoint.isNotEmpty()) Kv("server", doc.mcp.endpoint, mono = true)
+        Kv("auth", doc.mcp.auth.ifEmpty { "?" } + (if (doc.mcp.aliases.isEmpty()) "" else " · aliases " + doc.mcp.aliases.joinToString(", ")))
+        Note("An agent's tool call reaches this phone through one of two doors; ${doc.tools("mesh").size} tools come in through the mesh gateway, ${doc.tools("debug").size} through the on-phone gateway.")
+    }
+    doc.gateways.sortedBy { if (it.id == "mesh") 0 else 1 }.forEach { g ->
+        AccessGateway(doc, g)
+        Card("${doc.tools(g.id).size} tools through the ${if (g.id == "mesh") "mesh" else "on-phone"} gateway", "c3_access_tools_${g.id}") {
+            doc.tools(g.id).forEach { t -> Kv(t.tool, if (t.routes.isEmpty()) (t.legacy?.let { "was $it" } ?: "") else t.routes.joinToString("  |  ") { "${it.method} ${it.path}" + if (it.acl.isEmpty()) "" else " [${it.acl}]" }, mono = true) }
+        }
+    }
+}
+
+/** One member row that unfolds: the head (label, the counts) and, open, [detail]. */
+@Composable
+private fun AccessRow(id: String, head: String, meta: String, ok: Boolean, tag: String, open: Boolean, toggle: () -> Unit, detail: @Composable () -> Unit) {
+    Column(Modifier.fillMaxWidth().clickable(onClick = toggle).padding(horizontal = 12.dp, vertical = 3.dp).testTag(tag + id)) {
+        Text((if (open) "▾ " else "▸ ") + head + "  ·  " + meta, style = MaterialTheme.typography.bodySmall, color = if (ok) MaterialTheme.colorScheme.onSurface else Tone.Warn)
+    }
+    if (open) detail()
+}
+
+@Composable
+private fun AccessApis(doc: DeviceAccess.Doc) {
+    var open by rememberSaveable { mutableStateOf("") }
+    doc.gateway("debug")?.let { AccessGateway(doc, it) }
+    val rows = doc.apps.sortedBy { it.label.lowercase() }
+    Card("This device · ${rows.size} members · ${doc.apiTotal} API routes", "c3_access_apis", badges = { Badge("this device"); Badge("${doc.members().size} apps"); Badge("${doc.members("lib").size} libs") }) {
+        val zero = doc.zeroApis()
+        if (zero.isNotEmpty()) ErrorNote("${zero.size} app(s) expose the fleet door but list no route: " + zero.joinToString(", ") { it.label })
+        Note("Counts come from the declared maps (the fleet IPC registry, this app's route map, each app's api_endpoints), not from a probe.")
+        rows.forEach { a ->
+            AccessRow(a.id, a.label + (if (a.kind == "lib") " (lib)" else ""), "${a.apiCount} routes" + (a.port?.let { " · :$it" } ?: ""), a.apiCount > 0, "c3_access_api_", open == a.id, { open = if (open == a.id) "" else a.id }) {
+                Kv("package", a.pkg, mono = true)
+                a.ops.forEach { op -> Kv("op", doc.opUrl(a, op), mono = true) }
+                a.routes.forEach { r -> Kv("route", DeviceAccess.line(r), mono = true) }
+                doc.kinds.forEach { k ->
+                    val eps = doc.declared(a, k.id)
+                    if (eps.isEmpty()) Kv(k.label, "MISSING") else eps.forEach { e -> Kv(k.label + if (doc.inherits(a, k.id)) " (default)" else "", "${e.method} ${e.url}", mono = true) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccessIpc(doc: DeviceAccess.Doc) {
+    var open by rememberSaveable { mutableStateOf("") }
+    val rows = doc.apps.sortedBy { it.label.lowercase() }
+    Card("This device · ${doc.ipcTotal} IPC routes behind the mesh gateway", "c3_access_ipc", badges = { Badge("this device"); Badge("${doc.scopes.size} scopes"); Badge("${doc.peers.size} peers") }) {
+        doc.gateway("mesh")?.let { g -> Kv("gateway", g.address + g.ipcRoute + "/<app>/<route>", mono = true) }
+        rows.forEach { a ->
+            val eps = doc.ipcEndpoints(a)
+            AccessRow(a.id, a.label + (if (a.kind == "lib") " (lib)" else ""), "${a.ipcCount} routes · ${eps.size} endpoints", a.ipcCount > 0, "c3_access_ipc_", open == a.id, { open = if (open == a.id) "" else a.id }) {
+                Kv("package", a.pkg, mono = true)
+                a.ipc.forEach { r -> Kv(r.route, DeviceAccess.line(r), mono = true); if (r.what.isNotEmpty()) Note(r.what) }
+                eps.forEach { e -> Kv(e.id, "${e.kind} ${e.authority} · ${e.methods}", mono = true) }
+            }
+        }
+    }
 }

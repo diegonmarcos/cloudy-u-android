@@ -93,10 +93,10 @@ check() {
     printf '%s' "$sp" | grep -q "pageId == \"$pg\" *-> *com.diegonmarcos.superapp.apps.CloudStoreHandoff.page(pageId)" && ok "SuperApp page $pg goes through the hand-off" || bad "SuperApp page $pg bypasses the hand-off"
   done
   # Apps Mesh left SuperApp's Configs for Store > Access (one Apps Access tile, test-apps-mesh.sh C1): SuperApp routes no apps-mesh page of its own.
-  printf '%s' "$sp" | grep -q 'pageId == "apps-mesh"' && bad "SuperApp still routes an apps-mesh page (it is Store > Access now)" || ok "SuperApp routes no apps-mesh page of its own (Store > Access hosts Apps Mesh)"
-  # #1211 the Store's Apps Mesh view carries no App API Endpoints button (Access > Apps MCP-API replaced it)
-  grep -q 'AppsMeshFragment.ARG_SHOW_ENDPOINTS to false' "$S/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt" \
-    && ok "the Store's Apps Mesh view hides the App API Endpoints button" || bad "the Store's Apps Mesh view still offers App API Endpoints"
+  printf '%s' "$sp" | grep -q 'pageId == "apps-mesh"' && bad "SuperApp still routes an apps-mesh page (Apps Mesh is retired, #1580)" || ok "SuperApp routes no apps-mesh page of its own (Apps Mesh is retired, #1580)"
+  # #1718/#1580 Apps Mesh is retired from the Store (one mesh gateway): no page hosts AppsMeshFragment, and an old `mesh` id lands on Access > IPC
+  ! grep -rq 'AppsMeshFragment' "$S/app/src/main/java" && grep -q '"mesh" to PAGE_IPC' "$S/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt" \
+    && ok "the Store hosts no Apps Mesh page; the old mesh id opens Access > IPC" || bad "the Store still hosts Apps Mesh, or the old mesh id lands nowhere"
 
   # 4. one package name, one OPEN action
   local appid pkg action
@@ -170,7 +170,7 @@ assert feeds is None or [f['id'] for f in feeds][:3] == ['commits', 'prs', 'cicd
 pg = lambda i: [p.get('id') for p in secs.get(i, {}).get('pages') or []]
 ok = (ui.get('bottom_nav') == ['cloud', 'phone', 'search', 'torrent', 'access'] and 'feed' not in secs and 'torrent' in secs
       and set(ui['bottom_nav']) <= set(secs) and 'settings' in secs and 'mesh' not in secs and 'perms' not in secs
-      and pg('access') == ['mesh', 'mcpapi', 'ipc', 'identity', 'android', 'cloud']
+      and pg('access') == ['mcp', 'apis', 'ipc', 'identity', 'android']
       and pg('phone') == ['installed', 'declared'] and 'search' in secs and pg('search') == ['search-cloudy', 'search-android', 'search-torrent']
       and ui.get('default_section') == 'cloud')
 sys.exit(0 if ok else 1)
@@ -182,7 +182,7 @@ PY
   printf '%s' "$ma" | grep -q 'TorrentPage()' && printf '%s' "$ma" | grep -q 'AccessPage(pageOf(it))' && ! printf '%s' "$ma" | grep -q 'FeedPage' && ok "MainActivity hosts the Torrent and Access pages (Feed moved into Cloud)" || bad "MainActivity does not host TorrentPage and AccessPage, or still hosts FeedPage"
   printf '%s' "$ma" | grep -q 'NavSectionLayout(section, pageOf(section)' && printf '%s' "$ma" | grep -q 'StorePages.hostDrawsStrip = true' && ok "MainActivity draws the declared child pages with PageTabs and tells the pages it does" || bad "MainActivity does not draw section.pages with PageTabs"
   local CS="$S/app/src/main/java/com/diegonmarcos/cloudstore"
-  [ -f "$CS/TorrentPage.kt" ] && [ -f "$CS/AccessPage.kt" ] && [ ! -f "$CS/FeedPage.kt" ] && grep -q '@Composable' "$CS/TorrentPage.kt" && grep -q '@Composable' "$CS/AccessPage.kt" && grep -q 'AndroidFragment<AppsMeshFragment>' "$CS/AccessPage.kt" && grep -q 'TorrentEngines.get(' "$CS/TorrentPage.kt" && grep -q 'FeedViewer.load(' "$L/StoreFeedPanels.kt" && ok "the Torrent and Access pages are Compose (the ratchet's rule), Access hosts Apps Mesh, the Torrent page drives the engine, and the feeds are libs:appstore's StoreFeedPanels over FeedViewer" || bad "TorrentPage/AccessPage are missing, not Compose, FeedPage is back, or the feed panels no longer read FeedViewer"
+  [ -f "$CS/TorrentPage.kt" ] && [ -f "$CS/AccessPage.kt" ] && [ ! -f "$CS/FeedPage.kt" ] && grep -q '@Composable' "$CS/TorrentPage.kt" && grep -q '@Composable' "$CS/AccessPage.kt" && grep -q 'PAGE_APIS -> DeviceApisPage()' "$CS/AccessPage.kt" && grep -q 'TorrentEngines.get(' "$CS/TorrentPage.kt" && grep -q 'FeedViewer.load(' "$L/StoreFeedPanels.kt" && ok "the Torrent and Access pages are Compose (the ratchet's rule), Access draws the device access model, the Torrent page drives the engine, and the feeds are libs:appstore's StoreFeedPanels over FeedViewer" || bad "TorrentPage/AccessPage are missing, not Compose, FeedPage is back, or the feed panels no longer read FeedViewer"
   grep -q 'object StoreTabs' "$L/StoreBar.kt" && ok "the shared strip builder (StoreTabs) lives once in libs:appstore" || bad "StoreTabs is missing from libs:appstore"
   ! grep -qE 'renderPerms|renderFeed|FeedViewer' "$L/StoreCloudFragment.kt" && grep -q 'StoreFeedPanels.Buttons' "$L/StoreCloudFragment.kt" && grep -q 'StoreFeedPanels.Page(' "$L/StoreCloudFragment.kt" && ok "the Cloud page draws its Commits / CI-CD feeds only as StoreFeedPanels buttons and pages (no Perms)" || bad "the Cloud page carries the old Feed/Perms parts, or lost the feed panels"
   grep -q 'StoreTabs.Bar(' "$L/StorePhoneFragment.kt" && grep -q 'StoreTabs.Bar(' "$L/StoreCloudFragment.kt" && ok "Cloud and Phone draw their top tabs with the one StoreTabs.Bar" || bad "a Store page draws its tabs with something other than StoreTabs.Bar"
@@ -238,8 +238,9 @@ mutate "store page bypasses hand-off" super/launcher/SectionPages.kt 'pageId == 
 mutate "package name drifts" super/apps/CloudStoreHandoff.kt 'const val PKG = "com.diegonmarcos.cloudstore"' 'const val PKG = "com.diegonmarcos.store"' || M=$((M+1))
 mutate "OPEN action dropped" store/app/src/main/AndroidManifest.xml '<action android:name="com.diegonmarcos.cloudstore.OPEN" />' '' || M=$((M+1))
 mutate "Cloud Store gives up the pass" store/app/src/main/java/com/diegonmarcos/cloudstore/App.kt 'runsFleetPass = { true }' 'runsFleetPass = { false }' || M=$((M+1))
-mutate "Apps Mesh dropped from Access" store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt 'AndroidFragment<AppsMeshFragment>' 'AndroidFragment<StoreCloudFragment>' || M=$((M+1))
-mutate "Store Apps Mesh offers App API Endpoints again" store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt 'AppsMeshFragment.ARG_SHOW_ENDPOINTS to false' 'AppsMeshFragment.ARG_SHOW_ENDPOINTS to true' || M=$((M+1))
+mutate "APIs page dropped from Access" store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt 'PAGE_APIS -> DeviceApisPage()' 'PAGE_APIS -> AndroidPermsPage()' || M=$((M+1))
+mutate "Apps Mesh hosted in the Store again" store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt 'PAGE_MCP -> DeviceMcpPage()' 'PAGE_MCP -> androidx.fragment.compose.AndroidFragment<com.diegonmarcos.superapp.appstore.AppsMeshFragment>()' || M=$((M+1))
+mutate "the old mesh id lands nowhere" store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt '"mesh" to PAGE_IPC, ' '' || M=$((M+1))
 mutate "SuperApp routes its own apps-mesh page again" super/launcher/SectionPages.kt 'sectionId == "config" && pageId == "adb-shell"' 'pageId == "apps-mesh" -> null
         sectionId == "config" && pageId == "adb-shell"' || M=$((M+1))
 mutate "island replaced by a TabRow" store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt 'NavBarBottomHost(' 'TabRow(' || M=$((M+1))

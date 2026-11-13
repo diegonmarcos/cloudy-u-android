@@ -72,10 +72,12 @@ if "pub fn launch_with" not in served or "not installed" not in roots:
     bad.append("R8 no launch_with hook / no clear SuperApp-missing message")
 if "post('/__app__/api/adb-shell'" not in html:
     bad.append("R8 the ADB Shell tab does not open the SuperApp page")
-# P: rule 16 parity with the version before #1677 (frozen here).
+# P: rule 16 parity with the version before #1677 (frozen here). #1718: /__app__/api/sub/api-public left this list on purpose: the API tab shows only
+# this device, and the fleet services' public URLs it listed are Cloud C3 > Infra > APIs > C3 Endpoints now (ac_cloud-c3/test/test-c3-fleet-endpoints.sh
+# proves every one of them is there); the off-device /endpoints/public JSON is unchanged.
 OLD_ROUTES = ["/__app__", "/__app__/tab/pages", "/__app__/tab/api", "/__app__/tab/home", "/__app__/tab/sshd", "/__app__/files", "/__app__/tab/configs",
   "/__app__/api/routes", "/__app__/api/topology", "/__app__/api/config", "/__app__/api/serving", "/__app__/api/engines", "/__app__/api/about", "/__app__/api/links",
-  "/__app__/crashes", "/__app__/api/crashes", "/__app__/api/subpages", "/__app__/api/sub/api-mcp", "/__app__/api/sub/api-public", "/__app__/api/sub/api-mesh",
+  "/__app__/crashes", "/__app__/api/crashes", "/__app__/api/subpages", "/__app__/api/sub/api-mcp", "/__app__/api/sub/api-mesh",
   "/__app__/api/sub/api-apps", "/__app__/api/sub/api-ipc", "/__app__/api/sub/pages-drive", "/__app__/api/sub/pages-terminals", "/__app__/api/sub/pages-repos",
   "/__app__/api/sub/pages-git", "/__app__/api/repos", "/__app__/api/repos/discover", "/__app__/api/served", "/__app__/api/power", "/__app__/api/sshd",
   "/__app__/api/open", "/__app__/api/launch", "/__app__/api/configs-open"]

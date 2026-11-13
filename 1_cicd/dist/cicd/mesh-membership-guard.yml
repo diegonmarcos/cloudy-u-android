@@ -116,12 +116,24 @@ jobs:
         run: |
           set -euo pipefail
           python3 1_cicd/src/scripts/cloud-android-ipc-mesh.py gen .
-          f=aa_cloud-superapp/data/ipc-mesh.json
-          if git diff --quiet -- "$f"; then echo "IPC registry already current."; exit 0; fi
-          git diff --stat -- "$f"
-          git add -- "$f"
+          # #1718 two more files derived from declarations other apps own, refreshed here for the same reason: the device access
+          # dataset (Cloud Store > Access and Cloud C3 Webserver > API read it; derived from the registry above, the webserver's
+          # route map, the port table, the MCP catalogue, each app's api_endpoints) and Cloud C3's fleet endpoints block (derived
+          # from Cloud Account's fleet_endpoints). A declaration that is invalid stays red in the check steps below.
+          python3 1_cicd/src/scripts/cloud-android-device-access.py write . || true
+          python3 ac_cloud-c3/data/gen_fleet_endpoints.py write . || true
+          f="aa_cloud-superapp/data/ipc-mesh.json data/fleet/device-access.json ac_cloud-c3/data/api_providers.json"
+          if git diff --quiet -- $f; then echo "IPC registry and the files derived with it are already current."; exit 0; fi
+          git diff --stat -- $f
+          git add -- $f
           git -c user.name="github-actions[bot]" -c user.email="noreply@anthropic.com" commit -q -m "ci(ipc-mesh): regenerate the IPC registry from ${GITHUB_SHA::8} via run ${GITHUB_RUN_ID} [skip ci]"
           bash 1_cicd/dist/scripts/cloud-android-push-main.sh
 
       - name: App to app on the phone is IPC, and the IPC registry is current (#ipc)
         run: python3 1_cicd/src/scripts/cloud-android-ipc-mesh.py check .
+
+      - name: The device access dataset is current (#1718, one model for Cloud Store > Access and Cloud C3 Webserver > API)
+        run: python3 1_cicd/src/scripts/cloud-android-device-access.py check .
+
+      - name: Cloud C3's fleet endpoints are current (#1718, moved from Cloud C3 Webserver > API)
+        run: python3 ac_cloud-c3/data/gen_fleet_endpoints.py check .

@@ -66,6 +66,7 @@ fun InfraSectionScreen(
     section: String, slice: FleetModel.Slice, live: FleetLiveState, today: LocalDate = LocalDate.now(),
     identities: PrivateIdentitiesState = PrivateIdentitiesState(), onToken: (String) -> Unit = {},
     apis: ApiProviders.Decl = Declarations.apiProviders,
+    fleet: FleetEndpoints.Decl = Declarations.fleetEndpoints,
 ) {
     when (section) {
         InfraSections.PROVIDERS -> ProvidersScreen(slice, live)
@@ -79,7 +80,7 @@ fun InfraSectionScreen(
         InfraSections.CONTROL -> OpsCatalogScreen(InfraTags.screen(InfraSections.CONTROL), "hier_control")
         InfraSections.DOMAINS_PUBLIC -> PublicDomainsScreen(slice, identities, onToken)
         InfraSections.DOMAINS -> DomainsScreen(slice, live, today)
-        else -> apis.groupOfPage(section)?.let { ApiProvidersScreen(section, it, apis) }
+        else -> apis.groupOfPage(section)?.let { if (it.id == fleet.group) FleetEndpointsScreen(section, it, fleet) else ApiProvidersScreen(section, it, apis) }
             ?: Text("Unknown Infra page: $section", color = LocalKitPalette.current.bad)
     }
 }
@@ -104,6 +105,20 @@ fun ApiProvidersScreen(section: String, group: ApiProviders.Group, apis: ApiProv
                 ),
                 links = p.links,
             )
+        }
+    }
+}
+
+// ── APIs > C3 Endpoints (#1718): the fleet services' public and mesh URLs, moved here from Cloud C3 Webserver > API ──
+
+@Composable
+fun FleetEndpointsScreen(section: String, group: ApiProviders.Group, fleet: FleetEndpoints.Decl) {
+    Page(section, fleet.summary()) {
+        if (fleet.services.isEmpty()) {
+            DenseRow(InfraTags.row(section, "none"), "None declared", "", listOf("No ${group.label} endpoint is declared (data/api_providers.json::fleet_endpoints is empty)"))
+        }
+        fleet.services.forEach { s ->
+            DenseRow(InfraTags.row(section, s.id), s.id, listOf(s.kind, s.policy).filter { it.isNotBlank() }.joinToString(" - "), FleetEndpoints.lines(s), links = FleetEndpoints.links(s))
         }
     }
 }

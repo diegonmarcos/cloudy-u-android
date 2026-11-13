@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # #ipc Cloud Store > Access > IPC: the fleet's IPC Mesh (a0_docs/eng-specs/fleet-ipc.md).
-#   S1 build.json::ui access.pages: ipc ("IPC") after Apps MCP-API (#1211), itself right after mesh ("Apps Mesh"), 2..8 pages (nav rule)
-#   S2 AccessPage routes PAGE_IPC to libs:appstore's shared IpcMeshPage — the composable SuperApp's
+#   S1 build.json::ui access.pages: ipc ("IPC") after APIs, itself right after MCP (device) (#1718), 2..8 pages (nav rule)
+#   S2 AccessPage routes PAGE_IPC to IpcAccessPage, whose registry view is libs:appstore's shared IpcMeshPage (its gateway view is
+#      the device access model's DeviceIpcPage) — the composable SuperApp's
 #      Configs > Network > IPC draws too; no second copy anywhere in the fleet
 #   S3 the page draws exactly IpcMesh.rows (one row per member, and per declared endpoint unfolded),
 #      each tagged, so "every declared endpoint is listed" is one function's property
@@ -25,13 +26,13 @@ check() {  # check <root> -> number of failures (printed)
   local BJ="$R/ac_cloud-store/build.json" AP="$R/ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt"
   local PG="$R/$KT/IpcMeshPage.kt" MD="$R/$KT/IpcMesh.kt" GR="$R/$LIB/build.gradle" REG="$R/aa_cloud-superapp/data/ipc-mesh.json"
   for x in "$BJ" "$AP" "$PG" "$MD" "$GR" "$REG"; do [ -f "$x" ] || { bad "missing ${x#$R/}"; return 1; }; done
-  python3 - "$BJ" <<'PY' && ok "S1 Access = mesh, ipc, … (IPC after Apps Mesh, 2..8 pages)" || bad "S1 Access pages do not put IPC after Apps Mesh within 2..8"
+  python3 - "$BJ" <<'PY' && ok "S1 Access = mcp, apis, ipc, … (IPC after APIs, 2..8 pages)" || bad "S1 Access pages do not put IPC after MCP and APIs within 2..8"
 import json, sys
 s = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'access')
 ids = [p['id'] for p in s['pages']]; lab = {p['id']: p['label'] for p in s['pages']}
-sys.exit(0 if 'ipc' in ids and ids.index('ipc') == ids.index('mcpapi') + 1 and ids.index('mcpapi') == ids.index('mesh') + 1 and lab['ipc'] == 'IPC' and 2 <= len(ids) <= 8 else 1)
+sys.exit(0 if 'ipc' in ids and ids.index('ipc') == ids.index('apis') + 1 and ids.index('apis') == ids.index('mcp') + 1 and lab['ipc'] == 'IPC' and 2 <= len(ids) <= 8 else 1)
 PY
-  grep -q 'const val PAGE_IPC = "ipc"' "$AP" && grep -q 'PAGE_IPC -> IpcMeshPage()' "$AP" \
+  grep -q 'const val PAGE_IPC = "ipc"' "$AP" && grep -q 'PAGE_IPC -> IpcAccessPage()' "$AP" && grep -q 'if (view == AccessPages.VIEW_REGISTRY) IpcMeshPage() else DeviceIpcPage()' "$AP" \
     && ok "S2 AccessPage routes ipc to the shared IpcMeshPage" || bad "S2 AccessPage does not route ipc to IpcMeshPage"
   local copies; copies="$(grep -rl --include=*.kt 'fun IpcMeshPage(' "$R"/a[abc]_* 2>/dev/null | grep -v '/test/' | wc -l)"
   [ "$copies" = 1 ] && ok "S2 one IpcMeshPage in the fleet" || bad "S2 $copies IpcMeshPage definitions (one shared composable only)"
@@ -77,7 +78,8 @@ while IFS='|' read -r file expr; do
   else echo "  PASS: caught: $file ${expr:0:70}"; PASS=$((PASS+1)); fi
 done <<MUT
 ac_cloud-store/build.json|s.replace('"id": "ipc"', '"id": "ipc-x"')
-ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('PAGE_IPC -> IpcMeshPage()', 'PAGE_IPC -> PermsList(cloud = true)')
+ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('PAGE_IPC -> IpcAccessPage()', 'PAGE_IPC -> AndroidPermsPage()')
+ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('if (view == AccessPages.VIEW_REGISTRY) IpcMeshPage() else DeviceIpcPage()', 'DeviceIpcPage()')
 $KT/IpcMeshPage.kt|s.replace('.testTag(row.tag)', '')
 $KT/IpcMesh.kt|s.replace('m.endpoints.map { Row(TAG_ENDPOINT + key(m, it), m, it) }', 'm.endpoints.take(1).map { Row(TAG_ENDPOINT + key(m, it), m, it) }')
 $KT/IpcMesh.kt|s.replace('installed[m.id] = v', 'installed[m.id] = v; FleetIpc.ping(ctx, m.pkg)')

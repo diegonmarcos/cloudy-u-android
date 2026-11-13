@@ -1,4 +1,6 @@
-//! The API tab's four sub-pages (Public Endpoints, Mesh Endpoints, Apps Endpoints, Apps IPC) as data.
+//! The API tab's sub-pages (MCP, Mesh Endpoints, Apps Endpoints, Apps IPC) as data. #1718: the tab shows ONLY this device; the fleet
+//! services' public and mesh URLs (`public_page`, the fleet group of `mesh_page`) are no page of it any more (they are Cloud C3's) and
+//! stay only behind the mesh listener's `/endpoints` JSON, which cloudy-c3-mcp reads off the device.
 //!
 //! Nothing here names an app, a service or a port: every row is read from declarations that already exist (build.json::api.sources,
 //! resolved by build.rs into `api-data.json`: the fleet services, the per-app debug ports, the fleet manifest) and from this
@@ -143,6 +145,19 @@ pub fn public_page(d: &Value) -> Value {
     page("Public Endpoints", "The public URLs of the fleet services, from the fleet endpoint declaration (Cloud Account). Reach them with the fleet bearer where the policy says so.", vec![group(&format!("{} public URLs", rows.len()), rows)])
 }
 
+/// The title prefix of the one group of [mesh_page] that is not this device's.
+pub const FLEET_MESH_GROUP: &str = "Fleet services on the mesh";
+
+/// The Mesh Endpoints page of the app's own API tab (#1718): this phone's mesh listener and the apps behind it, nothing of the fleet's
+/// other machines.
+pub fn device_mesh_page(m: &Mesh, apps: &[App]) -> Value {
+    let mut p = mesh_page(&Value::Null, m, apps);
+    if let Some(g) = p["groups"].as_array_mut() {
+        g.retain(|x| !x["title"].as_str().unwrap_or("").starts_with(FLEET_MESH_GROUP));
+    }
+    p
+}
+
 pub fn mesh_page(d: &Value, m: &Mesh, apps: &[App]) -> Value {
     let base = format!("http://{}:{}", m.bind, m.port);
     let mut head = vec![row(
@@ -167,7 +182,7 @@ pub fn mesh_page(d: &Value, m: &Mesh, apps: &[App]) -> Value {
     page(
         "Mesh Endpoints",
         "This phone's mesh listener routes each app's log export (libs:log-export) onto the mesh. It is bound to the mesh address only, never public.",
-        vec![group("Cloud-Webserver on the mesh", head), group(&format!("Apps logs · {}", logs.len()), logs), group(&format!("Fleet services on the mesh · {}", svc.len()), svc)],
+        vec![group("Cloud-Webserver on the mesh", head), group(&format!("Apps logs · {}", logs.len()), logs), group(&format!("{} · {}", FLEET_MESH_GROUP, svc.len()), svc)],
     )
 }
 
@@ -286,6 +301,71 @@ mod tests {
         assert_eq!(rows.as_array().unwrap().len(), 1);
         assert_eq!(rows[0]["links"][0]["href"], "https://x.example.org/p");
         assert_eq!(public_url(&json!({"public_domain": ""})), None);
+    }
+
+    /// #1718 the app's own API tab shows ONLY this device: no Public Endpoints page or route, no fleet services on its Mesh page; the
+    /// off-device JSON (`/endpoints`, for cloudy-c3-mcp) still carries both, so nothing an MCP tool reads is lost.
+    #[test]
+    fn the_api_tab_shows_only_this_device() {
+        let subs = build()["subpages"].as_array().unwrap();
+        assert!(!subs.iter().any(|s| s["id"] == "public" || s["label"].as_str().unwrap_or("").contains("Public")), "no Public Endpoints sub-page");
+        assert!(!crate::app::ROUTES.iter().any(|r| r.path.contains("api-public")), "no Public Endpoints route");
+        let ui = &build()["ui"]["sections"];
+        let api = ui.as_array().unwrap().iter().find(|s| s["id"] == "api").expect("the API section");
+        assert!(!api["pages"].as_array().unwrap().iter().any(|p| p["id"] == "public"), "no Public Endpoints page in the nav");
+        let m = Mesh::from_build(build()).expect("build.json::mesh");
+        let device = device_mesh_page(&m, apps());
+        let titles = |p: &Value| p["groups"].as_array().unwrap().iter().map(|g| s(&g["title"])).collect::<Vec<_>>();
+        assert!(!titles(&device).iter().any(|t| t.starts_with(FLEET_MESH_GROUP)), "the device page lists no fleet service");
+        assert_eq!(titles(&device).len(), 2, "the listener and the apps' logs stay");
+        let full = mesh_page(data(), &m, apps());
+        assert_eq!(&titles(&full)[..2], &titles(&device)[..], "the device groups are the full page's own");
+        assert!(full["groups"][2]["rows"].as_array().unwrap().len() >= 10, "the off-device JSON keeps the fleet services");
+        assert!(public_page(data())["groups"][0]["rows"].as_array().unwrap().len() >= 3, "the off-device JSON keeps the public URLs");
+    }
+
+    /// #1718 ONE data source: the compiled-in device access dataset (the model Cloud Store > Access draws) carries what this tab's
+    /// own pages derive from the declarations: every manifest app, each app's IPC templates, every route of the unified holder
+    /// and every route of this app. A page and the model can therefore never list different things.
+    #[test]
+    fn the_device_access_model_holds_what_the_pages_list() {
+        let d = &data()["device_access"];
+        assert!(d["schemaVersion"].as_u64().unwrap_or(0) >= 1, "the dataset is compiled in whole");
+        let members = d["apps"].as_array().expect("device_access.apps");
+        let find = |pkg: &str| members.iter().find(|a| a["pkg"] == pkg);
+        let tpl = build()["api"]["ipc"].as_array().unwrap();
+        assert_eq!(d["ipc_templates"].as_array().unwrap().len(), tpl.len());
+        for (a, b) in d["ipc_templates"].as_array().unwrap().iter().zip(tpl) {
+            for k in ["id", "kind", "authority", "methods", "guard", "what"] {
+                assert_eq!(a[k], b[k], "ipc template {} {}", b["id"], k);
+            }
+        }
+        assert_eq!(d["engine_action"], build()["api"]["engine_action"]);
+        let reg = crate::ipc::registry().as_ref().expect("the registry parses");
+        for app in apps() {
+            let m = find(&app.package).unwrap_or_else(|| panic!("{} is on the Apps pages but not in the model", app.package));
+            assert_eq!(m["engines"].as_array().unwrap().len(), app.engines.len(), "{} engines", app.id);
+            assert!(!m["ops"].as_array().unwrap().is_empty(), "{} counts zero API routes", app.id);
+            if let Some(p) = data()["debug_ports"][&app.package].as_u64() {
+                assert_eq!(m["port"].as_u64(), Some(p), "{} port", app.id);
+            }
+            let routes: Vec<String> = m["ipc"].as_array().unwrap().iter().map(|r| s(&r["route"])).collect();
+            for e in &reg.entries {
+                if e.app_class == "fleet" || e.app_class == format!("package:{}", app.package) {
+                    assert!(routes.contains(&e.route), "{} lost its gateway route {}", app.id, e.route);
+                }
+            }
+        }
+        let own = find(s(&build()["android"]["application_id"]).as_str()).expect("this app is in the model");
+        let mine: Vec<&str> = own["routes"].as_array().unwrap().iter().filter(|r| r["surface"] == "app").filter_map(|r| r["path"].as_str()).collect();
+        for r in crate::app::ROUTES {
+            assert!(mine.contains(&r.path), "{} is a route of this app but not in the model (regenerate data/fleet/device-access.json)", r.path);
+        }
+        assert_eq!(mine.len(), crate::app::ROUTES.len());
+        assert_eq!(d["gateways"]["debug"]["port"], data()["debug_gateway"]["port"]);
+        assert_eq!(d["gateways"]["mesh"]["ipc_route"].as_str(), Some(reg.prefix.as_str()));
+        assert_eq!(d["peers"].as_array().unwrap().len(), reg.peers.len());
+        assert_eq!(d["acl_scopes"].as_object().unwrap().len(), reg.scopes.len());
     }
 
     #[test]

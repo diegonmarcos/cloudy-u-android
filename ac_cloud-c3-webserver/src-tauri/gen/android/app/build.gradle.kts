@@ -179,6 +179,7 @@ dependencies {
     implementation(project(":libs:ui-kit"))   // #1712 the fleet kit tokens (KitPalette ok/warn/bad, CloudKitTheme): the Tone colours and the theme come from it
     implementation(project(":libs:web-core"))   // #1371 the fleet's one web view: the Pages browser frame and the File Explorer preview
     implementation(project(":libs:perms"))
+    implementation(project(":libs:fleet-data-client"))   // #1718 DeviceAccess: the ONE device access model, shared with Cloud Store > Access
     implementation("androidx.webkit:webkit:1.14.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.activity:activity-ktx:1.10.1")

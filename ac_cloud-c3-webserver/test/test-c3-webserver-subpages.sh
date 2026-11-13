@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # #1490 cloud-c3-webserver: the API and Pages sub-pages, the mesh log route and the Repos serving.
 #
-#   S1  build.json::subpages is exactly API (MCP first, Public Endpoints, Mesh Endpoints, Apps Endpoints, Apps IPC) and Pages (Drive, Terminals,
+#   S1  build.json::subpages is exactly API (MCP first, Mesh Endpoints, Apps Endpoints, Apps IPC; #1718: no Public Endpoints, the tab shows only this
+#       device and the fleet services are Cloud C3's) and Pages (Drive, Terminals,
 #       Repos), and every declared route is a row of app.rs::ROUTES (cargo test's check_table also refuses the reverse).
 #   S2  the shell draws the sub-nav and every sub-page from the declaration (pure block under node), escaping what it draws.
 #   S3  the mesh listener can never be public: the declared bind comes from a WireGuard profile, the subnets are RFC 1918 ranges, the
@@ -25,7 +26,7 @@ import json, re, sys
 app, shell, build, repo = sys.argv[1:5]
 b = json.load(open(build))
 bad = []
-want = [("api", "mcp", "MCP"), ("api", "public", "Public Endpoints"), ("api", "mesh", "Mesh Endpoints"), ("api", "apps", "Apps Endpoints"), ("api", "ipc", "Apps IPC"),
+want = [("api", "mcp", "MCP"), ("api", "mesh", "Mesh Endpoints"), ("api", "apps", "Apps Endpoints"), ("api", "ipc", "Apps IPC"),
         ("pages", "drive", "Drive"), ("pages", "terminals", "Terminals"), ("pages", "repos", "Repos"), ("pages", "git", "Git Sites")]
 got = [(p["tab"], p["id"], p["label"]) for p in b.get("subpages", [])]
 if got != want:
@@ -121,6 +122,7 @@ PY
   if python3 "$WORK/check.py" "$d" "$d/server/ui/shell.html" "$d/build.json" "$REPO" >/dev/null 2>&1 && node "$WORK/pure.js" "$d/server/ui/shell.html" >/dev/null 2>&1; then fail "M: '$title' stayed GREEN"; else pass "M: '$title' goes red"; fi
 }
 mutate "a sub-page without its route"        server/src/app.rs '"/__app__/api/sub/api-ipc"' '"/__app__/api/sub/api-gone"'
+mutate "the Public Endpoints page is back"   build.json '{ "tab": "api", "id": "mesh", "label": "Mesh Endpoints", "route": "/__app__/api/sub/api-mesh" },' '{ "tab": "api", "id": "public", "label": "Public Endpoints", "route": "/__app__/api/sub/api-mesh" }, { "tab": "api", "id": "mesh", "label": "Mesh Endpoints", "route": "/__app__/api/sub/api-mesh" },'
 mutate "a mesh cidr that is public"          build.json '"10.1.0.0/24"' '"203.0.113.0/24"'
 mutate "a mesh bind on the wildcard"         server/src/meshlogs.rs 'pub fn start(m: Mesh, stop: Arc<std::sync::atomic::AtomicBool>) -> Result<(), String> {
     m.check_bind()?;' 'pub fn start(m: Mesh, stop: Arc<std::sync::atomic::AtomicBool>) -> Result<(), String> {

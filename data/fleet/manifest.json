@@ -94,6 +94,12 @@
       "consumers": [
         "*"
       ]
+    },
+    "device-access": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
     }
   },
   "apps": {

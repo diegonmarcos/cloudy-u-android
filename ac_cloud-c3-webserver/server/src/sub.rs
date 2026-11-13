@@ -36,13 +36,15 @@ pub fn api_mcp(_c: &Ctx, _r: &Req) -> Resp {
     ok(with_gateway(apis::mcp_page(apis::data())))
 }
 
-pub fn api_public(_c: &Ctx, _r: &Req) -> Resp {
-    ok(apis::public_page(apis::data()))
+/// #1718 THE device access model, whole: the dataset Cloud Store serves (data/fleet/device-access.json), compiled in. The native API
+/// section parses it with the shared model (libs:fleet-data-client DeviceAccess), the same one Cloud Store > Access draws.
+pub fn api_access(_c: &Ctx, _r: &Req) -> Resp {
+    ok(apis::data()["device_access"].clone())
 }
 
 pub fn api_mesh(_c: &Ctx, _r: &Req) -> Resp {
     match crate::meshlogs::Mesh::from_build(apis::build()) {
-        Ok(m) => ok(with_gateway(apis::mesh_page(apis::data(), &m, apis::apps()))),
+        Ok(m) => ok(with_gateway(apis::device_mesh_page(&m, apis::apps()))),
         Err(e) => err(500, &e),
     }
 }

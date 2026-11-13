@@ -20,7 +20,9 @@ class ApiProvidersTest {
 
     @Test
     fun `the AI and Scraper groups are declared and each provider sits in one of them`() {
-        assertEquals(listOf("AI", "Scraper"), decl.groups.map { it.label })
+        // #1718 the third group, C3 Endpoints, lists no provider: its page draws data/api_providers.json::fleet_endpoints (FleetEndpointsTest).
+        assertEquals(listOf("AI", "Scraper", "C3 Endpoints"), decl.groups.map { it.label })
+        assertTrue(decl.of(decl.groups[2]).isEmpty())
         assertTrue(decl.providers.all { p -> decl.groups.any { it.id == p.group } })
         assertEquals(setOf("OpenRouter", "Claude (Anthropic API)"), decl.of(decl.groups[0]).map { it.label }.toSet())
         assertEquals(setOf("Apify", "Cloudy Crawlee", "Cloudflare Browser Run"), decl.of(decl.groups[1]).map { it.label }.toSet())

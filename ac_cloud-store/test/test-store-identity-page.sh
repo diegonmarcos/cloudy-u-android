@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Cloud Store > Access > Identity: libs:appstore's FleetIdentityPage (the page SuperApp > Configs > Apps Mesh > Identity draws).
-#   I1 build.json::ui access.pages are exactly mesh, mcpapi, ipc, identity, android, cloud, in that order ("Identity" labelled)
-#   I2 AccessPage routes PAGE_IDENTITY to the shared FleetIdentityPage
+#   I1 build.json::ui access.pages are exactly mcp, apis, ipc, identity, android, in that order ("Identity" labelled; #1718)
+#   I2 AccessPage routes PAGE_IDENTITY to IdentityAccessPage, whose Linux identity view is the shared FleetIdentityPage
 #   I3 one FleetIdentityPage in the fleet (no second copy)
 #   I4 build.json::ui._doc names the Identity tab
 #   I5/I6 ONE source (store-identity-guard.py): shared-uid groups only in data/fleet-identity.json; the Access tab
@@ -22,13 +22,13 @@ check() {  # check <root> -> number of failures
   local BJ="$R/ac_cloud-store/build.json" AP="$R/ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt"
   local FI="$R/ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/FleetIdentity.kt"
   for x in "$BJ" "$AP" "$FI"; do [ -f "$x" ] || { bad "missing ${x#$R/}"; return 1; }; done
-  python3 - "$BJ" <<'PY' && ok "I1 Access = mesh, mcpapi, ipc, identity, android, cloud" || bad "I1 Access pages are not mesh, mcpapi, ipc, identity, android, cloud in order"
+  python3 - "$BJ" <<'PY' && ok "I1 Access = mcp, apis, ipc, identity, android" || bad "I1 Access pages are not mcp, apis, ipc, identity, android in order"
 import json, sys
 s = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'access')
 ids = [p['id'] for p in s['pages']]
-sys.exit(0 if ids == ['mesh', 'mcpapi', 'ipc', 'identity', 'android', 'cloud'] and s['pages'][3]['label'] == 'Identity' else 1)
+sys.exit(0 if ids == ['mcp', 'apis', 'ipc', 'identity', 'android'] and s['pages'][3]['label'] == 'Identity' else 1)
 PY
-  grep -q 'const val PAGE_IDENTITY = "identity"' "$AP" && grep -q 'PAGE_IDENTITY -> FleetIdentityPage()' "$AP" \
+  grep -q 'const val PAGE_IDENTITY = "identity"' "$AP" && grep -q 'PAGE_IDENTITY -> IdentityAccessPage()' "$AP" && grep -q 'if (view == AccessPages.VIEW_UID) FleetIdentityPage() else DirectAccessPage()' "$AP" \
     && ok "I2 AccessPage routes identity to the shared FleetIdentityPage" || bad "I2 AccessPage does not route identity to FleetIdentityPage"
   local copies; copies="$(grep -rl --include=*.kt 'fun FleetIdentityPage(' "$R"/a[abc]_* 2>/dev/null | grep -v '/test/' | wc -l)"
   [ "$copies" -le 1 ] && ok "I3 at most one FleetIdentityPage in the checked tree" || bad "I3 $copies FleetIdentityPage definitions"
@@ -74,11 +74,12 @@ while IFS='|' read -r file expr; do
 done <<MUT
 ac_cloud-store/build.json|s.replace('"id": "identity"', '"id": "identity-x"')
 ac_cloud-store/build.json|s.replace('IPC | Identity | Android Perms', 'IPC | Android Perms')
-ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('PAGE_IDENTITY -> FleetIdentityPage()', 'PAGE_IDENTITY -> PermsList(cloud = true)')
+ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('PAGE_IDENTITY -> IdentityAccessPage()', 'PAGE_IDENTITY -> AndroidPermsPage()')
+ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('if (view == AccessPages.VIEW_UID) FleetIdentityPage() else DirectAccessPage()', 'DirectAccessPage()')
 ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('const val PAGE_IDENTITY = "identity"', 'const val PAGE_IDENTITY = "identity2"')
-ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('const val PAGE_CLOUD = "cloud"', 'const val PAGE_CLOUD = "cloud"\nconst val PAGE_X = "x"')
-ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('const val PAGE_CLOUD = "cloud"', 'const val PAGE_CLOUD = "cloud"\nval TABS = listOf(PAGE_MESH, PAGE_IPC, PAGE_IDENTITY)')
-ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('const val PAGE_CLOUD = "cloud"', 'const val PAGE_CLOUD = "cloud"\nval UID = "cld.termux.shared"')
+ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('const val PAGE_ANDROID = "android"', 'const val PAGE_ANDROID = "android"\nconst val PAGE_X = "x"')
+ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('const val PAGE_ANDROID = "android"', 'const val PAGE_ANDROID = "android"\nval TABS = listOf(PAGE_MCP, PAGE_IPC, PAGE_IDENTITY)')
+ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt|s.replace('const val PAGE_ANDROID = "android"', 'const val PAGE_ANDROID = "android"\nval UID = "cld.termux.shared"')
 ac_cloud-store/build.json|s.replace('"ui": {', '"ui": {"shared_user_id": "cld.rogue", ', 1)
 ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/FleetIdentity.kt|s.replace('fillMaxSize().verticalScroll(rememberScrollState()).padding(KitDensity.medium),', 'fillMaxSize().padding(KitDensity.medium),')
 ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/FleetIdentity.kt|s.replace('override fun Content() {\n        FleetIdentityPage()', 'override fun Content() {\n        Column(Modifier.verticalScroll(rememberScrollState())) { FleetIdentityPage() }')
