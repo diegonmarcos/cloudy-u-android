@@ -122,7 +122,7 @@ class KeyboardNavPagesTest {
         assertEquals(false, u.data[CornerSwipe.PREF])
         // the Dev theme always has its number row on letters and on symbols
         val sv = File("src/main/java/helium314/keyboard/latin/settings/SettingsValues.java").readText()
-        assertTrue(sv.contains("mShowsNumberRow = devTheme ||") && sv.contains("mShowsNumberRowInSymbols = devTheme ||"))
+        assertTrue(sv.contains("mShowsNumberRow = !unexpectedTheme && (devTheme ||") && sv.contains("mShowsNumberRowInSymbols = devTheme ||"))
     }
 
     @Test fun everyFormerAllSettingsPageHasExactlyOneHome() {

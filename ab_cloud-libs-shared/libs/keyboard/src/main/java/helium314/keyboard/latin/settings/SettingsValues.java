@@ -207,9 +207,8 @@ public class SettingsValues {
         final boolean devTheme = prefs.getBoolean(helium314.keyboard.keyboard.CornerSwipe.PREF, helium314.keyboard.keyboard.CornerSwipe.DEFAULT);
         // the Unexpected theme's own layout carries its number row (1-0, or F1-F10 on the Fn layer), so the extra one is off
         final boolean unexpectedTheme = devTheme && prefs.getBoolean(helium314.keyboard.keyboard.UnexpectedKb.PREF, false);
-        mShowsNumberRow = devTheme || prefs.getBoolean(Settings.PREF_SHOW_NUMBER_ROW, Defaults.PREF_SHOW_NUMBER_ROW);
+        mShowsNumberRow = !unexpectedTheme && (devTheme || prefs.getBoolean(Settings.PREF_SHOW_NUMBER_ROW, Defaults.PREF_SHOW_NUMBER_ROW));
         mShowsNumberRowInSymbols = devTheme || prefs.getBoolean(Settings.PREF_SHOW_NUMBER_ROW_IN_SYMBOLS, Defaults.PREF_SHOW_NUMBER_ROW_IN_SYMBOLS);
-        if (unexpectedTheme) mShowsNumberRow = false;
         mLocalizedNumberRow = SubtypeUtilsKt.getHasLocalizedNumberRow(selectedSubtype, prefs);
         mShowNumberRowHints = prefs.getBoolean(Settings.PREF_SHOW_NUMBER_ROW_HINTS, Defaults.PREF_SHOW_NUMBER_ROW_HINTS);
         mShowsHints = prefs.getBoolean(Settings.PREF_SHOW_HINTS, Defaults.PREF_SHOW_HINTS);
