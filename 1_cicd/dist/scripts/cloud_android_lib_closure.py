@@ -1,4 +1,5 @@
 # ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud_android_lib_closure.py ───
+#!/usr/bin/env python3
 """
 cloud_android_lib_closure — #763: which shared library directories are really
 inputs of an application. ONE answer, imported by everything that asks:

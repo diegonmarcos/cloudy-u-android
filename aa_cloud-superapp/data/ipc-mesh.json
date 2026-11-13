@@ -25,7 +25,8 @@
     "level": "signature",
     "source": "libs:adb-shell-core/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbBridgeApi.kt",
     "callers": [
-     "aa_cloud-superapp"
+     "aa_cloud-superapp",
+     "c3-webserver"
     ]
    }
   ],
@@ -1073,6 +1074,7 @@
     "callers": [
      "aa_cloud-superapp",
      "account",
+     "c3-webserver",
      "drive",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
@@ -1183,7 +1185,8 @@
     "name": "AdbStatusProvider",
     "authority": "<pkg>.adbstatus",
     "callers": [
-     "aa_cloud-superapp"
+     "aa_cloud-superapp",
+     "c3-webserver"
     ]
    }
   ],
@@ -1670,10 +1673,13 @@
    "dir": "ac_cloud-c3-webserver",
    "door": true,
    "libs": [
+    "adb-shell-core",
     "core",
     "devtools",
     "fleetconfig-model",
-    "perms"
+    "perms",
+    "shell-broker",
+    "shizuku-adb-debug-tools"
    ],
    "endpoints": [
     {
