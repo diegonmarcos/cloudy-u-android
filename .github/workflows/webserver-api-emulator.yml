@@ -29,7 +29,7 @@ jobs:
           RUN="${{ inputs.webserver_run_id }}"; [ -n "$RUN" ] || RUN=$(gh run list -R "$REPO" --workflow ship-cloud-c3-webserver.yml --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
           [ -n "$RUN" ] || { echo "::error::no green ship run"; exit 1; }
           echo "ship run $RUN"; mkdir -p dl
-          gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq '.artifacts[] | select(.expired|not) | select(.name|test("x86_64|universal")) | .name' |
+          gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq '.artifacts[] | select(.expired|not) | select(.name|test("^Cloud-.*(x86_64|universal)")) | .name' |
           while read -r name; do gh run download "$RUN" -R "$REPO" -n "$name" -D "dl/$name"; done
           pick=$(find dl -name '*.apk' | sort | head -1); [ -n "$pick" ] || { echo "::error::no APK in run $RUN"; exit 1; }
           cp "$pick" webserver.apk
