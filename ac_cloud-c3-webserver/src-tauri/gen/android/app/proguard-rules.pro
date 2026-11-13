@@ -27,3 +27,16 @@
 -keepclassmembers class com.diegonmarcos.cloudwebserver.MainActivity { public void syncKeepAlive(); }
 # Core.nativeUiSections is bound by class and method name (Java_com_diegonmarcos_cloudwebserver_Core_nativeUiSections).
 -keepclasseswithmembernames class com.diegonmarcos.cloudwebserver.Core { native <methods>; }
+
+# #1682 the Webserver is the ADB owner: the owner libs (libs:shizuku-adb-debug-tools, shell-broker, adb-shell-core) bring the same optional
+# providers and binder stubs the SuperApp's rules cover (app/proguard-rules.pro of aa_cloud-superapp), so the same keeps apply here.
+-keep class * implements android.os.IInterface { *; }
+-keep class **.*$Stub { *; }
+-keep class **.*$Stub$Proxy { *; }
+-keep class rikka.shizuku.** { *; }
+-dontwarn rikka.shizuku.**
+-dontwarn org.conscrypt.**
+-dontwarn com.android.org.conscrypt.**
+-dontwarn org.apache.harmony.xnet.provider.jsse.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
