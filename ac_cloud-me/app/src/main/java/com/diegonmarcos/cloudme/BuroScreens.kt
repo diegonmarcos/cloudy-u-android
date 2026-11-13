@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,15 +21,11 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.colorResource
 
 /**
@@ -107,35 +102,24 @@ fun BackupScreen(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(8.dp))
         Button(onClick = { verifyOnly = true; passPrompt = { p -> pendingPass = p; open.launch(arrayOf("*/*")) } },
             modifier = Modifier.fillMaxWidth().testTag("me:backup:verify")) { Text("Verify a bundle only") }
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = { message = com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.openCredentials(ctx).orEmpty() },
+            modifier = Modifier.testTag("me:backup:set-passphrase")) { Text("Set the backup passphrase in Cloud Account") }
         if (message.isNotBlank()) { Spacer(Modifier.height(12.dp)); MeNote("", message) }
     }
 
+    // #1693 the backup passphrase is typed once in Cloud Account (App credentials) and read from there when an export / import asks for it.
     passPrompt?.let { cont ->
-        PassphraseDialog(onDismiss = { passPrompt = null }, onConfirm = { pw -> passPrompt = null; cont(pw) })
-    }
-}
-
-@Composable
-private fun PassphraseDialog(onDismiss: () -> Unit, onConfirm: (CharArray) -> Unit) {
-    var pw by remember { mutableStateOf("") }
-    Dialog(onDismissRequest = onDismiss) {
-        Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(colorResource(R.color.me_surface))
-                .border(1.dp, colorResource(R.color.me_outline), RoundedCornerShape(16.dp)).padding(18.dp),
-        ) {
-            Text("Backup passphrase", color = colorResource(R.color.me_text))
-            OutlinedTextField(value = pw, onValueChange = { pw = it }, singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp).testTag("me:backup:passphrase"))
-            Row(Modifier.fillMaxWidth().padding(top = 12.dp)) {
-                Spacer(Modifier.fillMaxWidth(0.5f))
-                TextButton(onClick = onDismiss) { Text("Cancel") }
-                TextButton(onClick = { if (pw.isNotEmpty()) onConfirm(pw.toCharArray()) },
-                    modifier = Modifier.testTag("me:backup:passphrase:ok")) { Text("OK") }
-            }
+        androidx.compose.runtime.LaunchedEffect(cont) {
+            val c = withContext(Dispatchers.IO) { com.diegonmarcos.superapp.fleetendpoints.android.AccountClient.credential(ctx, BURO_PASSPHRASE_ID, "The backup passphrase") }
+            passPrompt = null
+            if (c.present) cont(c.value.toCharArray()) else message = c.line
         }
     }
 }
+
+/** #1693 the App credentials id of the Buro backup passphrase (Cloud Account holds it). */
+const val BURO_PASSPHRASE_ID = "me.buro_backup_passphrase"
 
 private fun nowIso(): String =
     java.time.format.DateTimeFormatter.ISO_INSTANT.format(java.time.Instant.now())

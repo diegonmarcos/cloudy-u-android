@@ -103,6 +103,7 @@ class AppCredentialsProviderTest {
         assertTrue(v.grants.allow("com.diegonmarcos.superapp", "cred.mattermost.login"))
         assertTrue(v.grants.allow("com.diegonmarcos.superapp", "cred.dagu.token"))
         assertTrue(v.grants.allow("com.diegonmarcos.cloudc3", "cred.dagu.token"))
+        assertTrue(v.grants.allow("com.diegonmarcos.cloudme", "cred.me.buro_backup_passphrase"))
         assertFalse("Tasks is granted only its own", v.grants.allow("com.diegonmarcos.cloudagenda", "cred.git.github_token"))
         v.grants.revoke(AccountVault.DRIVE_PACKAGE, "cred.git.github_token"); v.seedDefaults()
         assertFalse(v.grants.allow(AccountVault.DRIVE_PACKAGE, "cred.git.github_token"))
