@@ -200,8 +200,14 @@ class WeatherFixStore(context: Context) : WeatherLocation.FixStore {
             body, prefs.getLong(K_BODY_MS, 0L))
     }
 
+    /** #1734 the day-timelines card's merged hourly cache (temperature + symbols, 48 h), kept beside the forecast in the same store. */
+    fun saveTimelines(json: String) { prefs.edit().putString(K_TL, json).commit() }
+
+    fun loadTimelines(): String? = prefs.getString(K_TL, null)
+
     companion object {
         const val PREFS = "weather_last_fix"
+        private const val K_TL = "timelines_cache"
         private const val K_LAT = "lat"; private const val K_LON = "lon"; private const val K_ACC = "acc"
         private const val K_TIME = "time"; private const val K_SRC = "src"
         private const val K_PLACE = "place"; private const val K_FLAT = "f_lat"; private const val K_FLON = "f_lon"

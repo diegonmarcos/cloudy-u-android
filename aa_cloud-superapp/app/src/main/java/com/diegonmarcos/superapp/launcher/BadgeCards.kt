@@ -296,6 +296,9 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         }
         if (d.badge.card.kind == "media") MediaHubLine(d.badge.id)
+        // #1734 the Weather badge's expanded view also carries the day timelines (the same composable the date dropdown draws).
+        if (d.badge.id == com.diegonmarcos.superapp.notificationcenter.WeatherBadgeService.BADGE_ID)
+            com.diegonmarcos.superapp.daytimelines.DayTimelinesCard(Modifier.padding(top = 10.dp), NotifCard.title, NotifCard.meta)
         ActionRow(d, accent, hostView)
         }
     }

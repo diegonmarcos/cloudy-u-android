@@ -138,6 +138,12 @@ object TasksPopup {
             val h = if (view == TasksPopupDecl.CALENDAR) decl.tableHeightDp else decl.tableHeightAgendaViewDp
             AgendaTable(decl, events, eventsError, today, picked, h) { picked = null }
             Spacer(Modifier.height(8.dp))
+            // #1734 the day timelines, right after the Agenda (the same composable the Weather badge expands to on the Notify page).
+            Column(Modifier.fillMaxWidth().background(Color(0x221A0033)).padding(6.dp).testTag("cal:table:timelines")) {
+                Text("Day timelines", color = LILAC, fontSize = 13.sp, fontFamily = MONO, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 4.dp))
+                com.diegonmarcos.superapp.daytimelines.DayTimelinesCard(Modifier, Color.White, DIM)
+            }
+            Spacer(Modifier.height(8.dp))
             TodoTable(decl, todos, todosError, h) {
                 if (decl.appOnRowTap.isNotBlank()) openApp(ctx, decl.appOnRowTap)
             }
