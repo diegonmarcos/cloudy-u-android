@@ -86,7 +86,7 @@ class SubPageIconGuardTest {
         assertTrue("Home is deleted", d.sections.none { it.id == "home" })
         val manage = d.sections.firstOrNull { it.id == "manage" } ?: throw AssertionError("ac_cloud-drive declares no manage section")
         assertEquals(listOf("overview", "local_apps", "local_data"), manage.allPages().map { it.id })
-        assertEquals(listOf("Overview", "Local-Apps", "Local-Data"), manage.allPages().map { it.label })
+        assertEquals(listOf("Overview", "Local Apps", "Local-Data"), manage.allPages().map { it.label })
         assertTrue("manage icon '${manage.icon}' is not in libs:ui-icons", com.diegonmarcos.superapp.uiicons.UiIcons.has(manage.icon))
         for (p in manage.allPages()) {
             assertTrue("manage/${p.id} icon '${p.icon}' is not in libs:ui-icons", com.diegonmarcos.superapp.uiicons.UiIcons.has(p.icon))
