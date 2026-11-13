@@ -80,11 +80,14 @@ class App : Application(), WorkManagerConfiguration.Provider {
         com.diegonmarcos.superapp.configs.AdbOwnerHost.errors = { engine, where, what -> com.diegonmarcos.superapp.xray.EngineProfiler.error(engine, where, what) }
         com.diegonmarcos.superapp.configs.AdbOwnerHost.plane = com.diegonmarcos.superapp.system.PrivilegedPlaneHost
         com.diegonmarcos.superapp.system.AdbReadiness.connector = { c -> com.diegonmarcos.superapp.configs.AdbCockpitOps.connect(c) }
-        com.diegonmarcos.superapp.system.AdbReadiness.hostOpener = { c ->
+        // #1682 P3 step 1: ONE in-frame opener for both: ShellActivity no longer implements the lib's AdbShellHost.
+        val adbInFrame: (android.content.Context) -> Boolean = { c ->
             val shell = generateSequence(c) { (it as? android.content.ContextWrapper)?.baseContext }
                 .firstOrNull { it is ShellActivity } as? ShellActivity
             if (shell != null) { shell.openSectionPage("config", "adb-shell"); true } else false
         }
+        com.diegonmarcos.superapp.system.AdbReadiness.hostOpener = adbInFrame
+        com.diegonmarcos.superapp.adbdebug.AdbShellLink.hostOpener = adbInFrame
         // extapp: install progress — listening before any resumed install worker publishes.
         com.diegonmarcos.superapp.extinstall.ExtAppInstalls.init(this)
         // The island's haptics are the lib's; "Vibration on tap" (Configs -> Launcher -> Others) still gates them.

@@ -33,6 +33,11 @@ interface AdbShellHost {
  * [AdbShellActivity].
  */
 object AdbShellLink {
+    /** #1682 P3 step 1: the host app's in-frame opener (installed once by its Application, like AdbReadiness.hostOpener): it opens the
+     *  page inside the host's own frame and returns true, or false when [ctx] is not its host. Replaces the host Activity having to
+     *  implement [AdbShellHost]; the interface still works for an app that has no Application hook. */
+    @Volatile var hostOpener: ((Context) -> Boolean)? = null
+
     /** #1442 A chip's tap: [ControlStatus.Action.OPEN_SETTINGS] lands on the Wireless debugging switch
      *  (falls back to the page); every other action (pair, reconnect, status) is the page. */
     fun open(ctx: Context, action: ControlStatus.Action?) {
@@ -46,6 +51,7 @@ object AdbShellLink {
     }
 
     fun open(ctx: Context) {
+        if (runCatching { hostOpener?.invoke(ctx) == true }.getOrDefault(false)) return
         var c: Context? = ctx
         while (c is android.content.ContextWrapper) {
             val host = c as? AdbShellHost

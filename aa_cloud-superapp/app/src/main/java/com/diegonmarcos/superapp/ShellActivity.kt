@@ -107,7 +107,6 @@ open class ShellActivity : AppCompatActivity(),
     MailHost,
     SearchOpener,
     com.diegonmarcos.superapp.apptabs.AppTabsHost,
-    com.diegonmarcos.superapp.adbdebug.AdbShellHost,
     com.diegonmarcos.superapp.perms.PermsHost,
     LauncherNavController.NavHost {
 
@@ -2010,8 +2009,8 @@ open class ShellActivity : AppCompatActivity(),
     fun openSectionPage(sectionId: String, pageId: String, args: Bundle? = null) =
         nav.openSectionPage(sectionId, pageId, args)
 
-    /** Every chip that opens the ADB Shell page (the embedded Store's bar, Permissions, Dev control) lands on Configs > ADB Shell, in the frame. */
-    override fun openAdbShellInFrame(): Boolean { openSectionPage("config", "adb-shell"); return true }
+    // Every chip that opens the ADB Shell page lands on Configs > ADB Shell, in the frame: App.onCreate installs
+    // AdbShellLink.hostOpener (#1682 P3 step 1), so this activity implements no ADB class.
 
     /** #1274 every feature banner's "Open Permissions" lands on Configs > Setup > Perms (PermsLink carries the highlight). */
     override fun openPermsPage(): Boolean { openSectionPage("config", "perms"); return true }

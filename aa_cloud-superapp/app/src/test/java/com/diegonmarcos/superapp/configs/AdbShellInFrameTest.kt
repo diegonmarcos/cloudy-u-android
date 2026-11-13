@@ -1,7 +1,6 @@
 package com.diegonmarcos.superapp.configs
 
 import com.diegonmarcos.superapp.ShellActivity
-import com.diegonmarcos.superapp.adbdebug.AdbShellHost
 import com.diegonmarcos.superapp.launcher.SectionPages
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -22,9 +21,12 @@ class AdbShellInFrameTest {
     private val java = File(System.getProperty("user.dir"), "src/main/java/com/diegonmarcos/superapp")
 
     @Test fun `the shell is the host of the page for every chip`() {
-        assertTrue(AdbShellHost::class.java.isAssignableFrom(ShellActivity::class.java))
-        val src = File(java, "ShellActivity.kt").readText()
-        assertTrue("it opens Configs > ADB Shell", Regex("override fun openAdbShellInFrame\\(\\)[^\\n]*openSectionPage\\(\"config\", \"adb-shell\"\\)").containsMatchIn(src))
+        // #1682 P3 step 1: the host is a hook the Application installs, the activity implements no ADB interface.
+        val shell = File(java, "ShellActivity.kt").readText()
+        assertTrue("ShellActivity implements no ADB class", !shell.contains("adbdebug") && !shell.contains("openAdbShellInFrame"))
+        val app = File(java, "App.kt").readText()
+        assertTrue("App installs the lib's in-frame opener", app.contains("AdbShellLink.hostOpener = adbInFrame"))
+        assertTrue("it opens Configs > ADB Shell", Regex("shell\\.openSectionPage\\(\"config\", \"adb-shell\"\)").containsMatchIn(app))
     }
 
     @Test fun `Configs ADB Shell is a strip over four tabs, each an AdbShellFragment, and All is the broker page`() {
