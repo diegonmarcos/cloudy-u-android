@@ -235,7 +235,12 @@ fun SettingsNavHost(
     val chrome = KeyboardSettingsExtras.chrome
     if (chrome == null) hostContent() else {
         val route by navController.currentBackStackEntryAsState()
-        chrome(route?.destination?.route, { r -> navController.navigate(r) { launchSingleTop = true } }, hostContent)
+        // #1698 a host page's destination route is the PATTERN "host/{id}": resolve it to "host/<id>" so the chrome finds its tab
+        // (Writer) and its strip; every other route is already literal
+        val shown = route?.destination?.route?.let { dest ->
+            if (dest == SettingsDestination.HostPage) route?.arguments?.getString("id")?.let { SettingsDestination.hostRoute(it) } ?: dest else dest
+        }
+        chrome(shown, { r -> navController.navigate(r) { launchSingleTop = true } }, hostContent)
     }
     if (target.value != SettingsDestination.Settings/* && target.value != navController.currentBackStackEntry?.destination?.route*/)
         navController.navigate(route = target.value)

@@ -275,8 +275,22 @@ for t in $TABS; do
         *) WANT="" ;;
     esac
     IFS='|' read -ra WL <<<"$WANT"
+    # a long strip (the Writer's ten pages) scrolls sideways: a tab off the screen is not in the dump, so swipe the strip
+    # left (up to four times) and look again before calling a tab missing
+    SEEN=""; cp "$OUT/nav-$t.xml" "$OUT/nav-$t-strip.xml"
+    for sw in 0 1 2 3 4; do
+        for w in "${WL[@]}"; do
+            case "|$SEEN|" in *"|$w|"*) continue ;; esac
+            grep -q "text=\"$w\"\|content-desc=\"$w\"" "$OUT/nav-$t-strip.xml" && SEEN="$SEEN|$w"
+        done
+        [ "$sw" -lt 4 ] || break
+        MISSING=0; for w in "${WL[@]}"; do case "|$SEEN|" in *"|$w|"*) ;; *) MISSING=1 ;; esac; done
+        [ "$MISSING" = 1 ] || break
+        adb shell input swipe $((SW * 85 / 100)) $((SH * 108 / 640)) $((SW * 15 / 100)) $((SH * 108 / 640)) 300; sleep 1
+        dumpui "$OUT/nav-$t-strip.xml" || true
+    done
     for w in "${WL[@]}"; do
-        grep -q "text=\"$w\"\|content-desc=\"$w\"" "$OUT/nav-$t.xml" && ok "$t top strip: $w" || bad "$t top strip has no $w tab"
+        case "|$SEEN|" in *"|$w|"*) ok "$t top strip: $w" ;; *) bad "$t top strip has no $w tab" ;; esac
     done
 done
 for e in $NP; do

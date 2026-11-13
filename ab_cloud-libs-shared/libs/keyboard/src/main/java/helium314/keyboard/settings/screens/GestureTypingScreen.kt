@@ -18,6 +18,7 @@ import helium314.keyboard.latin.utils.getActivity
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.settings.Setting
 import helium314.keyboard.settings.SearchSettingsScreen
+import helium314.keyboard.settings.SettingsWithoutKey
 import helium314.keyboard.settings.SettingsActivity
 import helium314.keyboard.settings.preferences.SliderPreference
 import helium314.keyboard.settings.preferences.SwitchPreference
@@ -52,10 +53,12 @@ fun GestureTypingScreen(
             (prefs.getBoolean(Settings.PREF_GESTURE_PREVIEW_TRAIL, Defaults.PREF_GESTURE_PREVIEW_TRAIL) || gestureFloatingPreviewEnabled))
             Settings.PREF_GESTURE_TRAIL_FADEOUT_DURATION else null
         )
+    // #1698 the gesture settings only exist with the gesture library loaded (SettingsContainer), so without it this
+    // page used to be EMPTY. It now offers the one thing that can be done there: load the library.
     SearchSettingsScreen(
         onClickBack = onClickBack,
         title = stringResource(R.string.settings_screen_gesture),
-        settings = items
+        settings = if (JniUtils.sHaveGestureLib) items else listOf(SettingsWithoutKey.LOAD_GESTURE_LIB)
     )
 }
 
