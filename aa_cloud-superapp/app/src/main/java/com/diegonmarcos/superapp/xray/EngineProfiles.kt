@@ -240,7 +240,7 @@ object EngineProfiles {
                 state(Kind.DEBUG, "threads", "Threads", source = "Thread.activeCount"),
             )),
         engine("xray", "X-Ray", "the profiler itself and the debug surface: this page, X-Ray Device, Export All, the Dev Control HTTP API, agents, logcat",
-            appDirs = listOf("xray", "devcontrol", "agents"), libs = listOf("libs:devtools"), libPackages = listOf("$APP.devtools"),
+            appDirs = listOf("xray", "devcontrol", "agents"), libs = listOf("libs:devtools", "libs:fleetconfigs-xray"), libPackages = listOf("$APP.devtools"),
             hotPaths = listOf(
                 HotPath("report", "Engine report", 400.0, "EngineProbes.collect + EngineProfiles.report (this page's own cost)"),
                 HotPath("http", "Dev Control request", 1_500.0, "DevControlServer.handle"),
