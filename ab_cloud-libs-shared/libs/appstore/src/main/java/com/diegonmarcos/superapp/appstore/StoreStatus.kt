@@ -43,6 +43,10 @@ internal object StoreStatus {
 
     fun invalidate() { cached = null; ppViaShell = null }
 
+    /** Tests only: forget the last answer AND the probe floor, so a suite that shares this JVM-wide state with an earlier one probes afresh (#1682: the
+     *  Phone Apps chip test waited 15 s on a 30 s floor left by whichever suite ran first, so its outcome depended on test order). */
+    fun forgetProbeHistoryForTest() { cached = null; ppViaShell = null; lastProbeAt = 0L }
+
     /**
      * Re-probe off the main thread (single flight), then [done] (call-site posts to the UI).
      *

@@ -53,6 +53,8 @@ class StorePhoneAppsTest : KitPageHarness() {
     private val ctx: Context = ApplicationProvider.getApplicationContext()
     private val pm get() = ctx.packageManager
 
+    @org.junit.Before fun freshChannelProbe() { com.diegonmarcos.superapp.appstore.StoreStatus.forgetProbeHistoryForTest() }
+
     @After fun resetHost() {
         AppStoreHost.classify = { _, _ -> emptyMap() }
     }
