@@ -199,6 +199,27 @@ pub fn list(cfg: &repos::Cfg, r: &Root, rel: &str) -> Result<Vec<(String, bool)>
     Ok(items)
 }
 
+/// The root on its OWN origin, where the shared fleet-webserver's full UI (folder tree, Markdown / JSON / YAML viewer, Eruda) runs
+/// with its absolute `/__api__` and `/__lib__` paths: a terminal's own my-webserver (loopback port) or, for a local source that is the
+/// emulated drive, this app's drive listener. (frame_url, drive_url): both null when the root has no such origin. drive_url is the
+/// same folder on the drive listener (Open folder: Drive + path); it is only set for the drive source.
+fn frame_urls(src: Option<&repos::Source>, r: &Root) -> (Value, Value) {
+    let path = if r.repo.is_empty() { "/".to_string() } else { format!("/{}/", repos::pct_encode(&r.repo)) };
+    match src.map(|s| &s.kind) {
+        Some(Kind::Terminal { port }) => (json!(format!("http://127.0.0.1:{}{}", port, path)), Value::Null),
+        Some(Kind::Local { root }) => {
+            let serve = apis::build()["runtime"]["serve_root"].as_str().unwrap_or("");
+            if !serve.is_empty() && root.to_string_lossy().trim_end_matches('/') == serve.trim_end_matches('/') {
+                let u = format!("http://127.0.0.1:{}{}", crate::serving::get().drive_port, path);
+                (json!(u.clone()), json!(u))
+            } else {
+                (Value::Null, Value::Null)
+            }
+        }
+        None => (Value::Null, Value::Null),
+    }
+}
+
 fn root_json(cfg: Option<&repos::Cfg>, r: &Root) -> Value {
     let src = cfg.and_then(|c| c.source(&r.source));
     let (status, reason) = match cfg {
@@ -214,12 +235,14 @@ fn root_json(cfg: Option<&repos::Cfg>, r: &Root) -> Value {
     } else {
         Value::Null
     };
+    let (frame, drive_url) = frame_urls(src, r);
     json!({
         "id": r.id, "label": r.label, "mode": r.mode.id(), "source": r.source,
         "source_label": src.map(|s| s.label.clone()).unwrap_or_else(|| r.source.clone()),
         "kind": if terminal { "terminal" } else { "local" },
         "repo": r.repo, "status": status, "reason": reason, "clone": r.clone, "note": r.note,
         "url": format!("{}/{}/", RAW, r.id),
+        "frame_url": frame, "drive_url": drive_url,
         "start_app": start_app,
         "perms": if status == "no_access" { json!({"post": "/__app__/api/configs-open", "body": {"page": "perms"}, "label": "Open Configs > Perms"}) } else { Value::Null }
     })
@@ -384,6 +407,23 @@ mod tests {
         assert_eq!(ex, ["termux", "nix", "emulated"]);
         assert_eq!(pg, ["git-repos-master", "front-html", "cloud-me-pvt-notes"]);
         assert!(d.index.iter().any(|n| n == "index.html"));
+    }
+
+    #[test]
+    fn a_root_on_its_own_origin_names_the_framework_url() {
+        // #1710 the File Explorer renders through the shared server's own UI: a terminal root on its my-webserver port, a drive root on the drive listener
+        let src = |kind| repos::Source { id: "x".into(), label: "X".into(), kind };
+        let root = |repo: &str| Root { id: "r".into(), label: "R".into(), mode: Mode::Explorer, source: "x".into(), repo: repo.into(), clone: String::new(), note: String::new() };
+        let (f, d) = frame_urls(Some(&src(Kind::Terminal { port: 8000 })), &root("git-repos-master"));
+        assert_eq!(f, json!("http://127.0.0.1:8000/git-repos-master/"));
+        assert!(d.is_null(), "a terminal root has no drive folder");
+        let serve = apis::build()["runtime"]["serve_root"].as_str().unwrap().to_string();
+        let (f, d) = frame_urls(Some(&src(Kind::Local { root: PathBuf::from(&serve) })), &root(""));
+        assert_eq!(f, d);
+        assert!(f.as_str().unwrap().ends_with("/"), "{}", f);
+        let (f, _) = frame_urls(Some(&src(Kind::Local { root: PathBuf::from("/somewhere/else") })), &root(""));
+        assert!(f.is_null(), "a local folder that is not the drive has no origin of its own");
+        assert!(frame_urls(None, &root("")).0.is_null());
     }
 
     #[test]

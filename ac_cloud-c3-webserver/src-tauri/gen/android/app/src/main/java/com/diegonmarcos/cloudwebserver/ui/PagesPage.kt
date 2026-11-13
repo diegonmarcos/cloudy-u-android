@@ -54,7 +54,7 @@ private val ROOT_STATUS = mapOf(
  * and the Git Sites rows below (rule 16).
  */
 @Composable
-fun PagesSection(sub: String) {
+fun PagesSection(sub: String, open: (String, String?) -> Unit = { _, _ -> }) {
     var openRoot by rememberSaveable(sub) { mutableStateOf<String?>(null) }
     val (tick, bump) = rememberTick()
     val roots = rememberObj(Api.ROOTS, tick)
@@ -76,7 +76,7 @@ fun PagesSection(sub: String) {
             }
         }
         if (sub == Decl.PAGE_ALL) {
-            ServedPages(tick, bump)
+            ServedPages(tick, bump, open)
             GitSites(tick, bump)
         }
     }
@@ -111,26 +111,42 @@ private fun RootList(title: String, rows: List<JSONObject>, empty: String, bump:
                     Text(clone, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 12.dp).testTag("c3_clone_${r.optString("id")}"))
                     Acts { Act("Copy command", "c3_copy_clone") { copyText(ctx, "clone", clone) } }
                 }
+                val ready = r.optString("status") == "ready"
+                val target = rootTarget(r)
                 Acts {
-                    if (r.optString("status") == "ready") Act(if (r.optString("mode") == "pages") "▶ Open page" else "▶ Explore", "c3_root_open_${r.optString("id")}") { open(r.optString("id")) }
+                    if (ready) Act(if (r.optString("mode") == "pages") "▶ Open page" else "▶ Explore", "c3_root_open_${r.optString("id")}") { open(r.optString("id")) }
                     r.optJSONObject("start_app")?.let { a -> Act("▶ Start app", "c3_root_start_app") { actions.run(a) } }
                     r.optJSONObject("perms")?.let { a -> ActButton(a, actions, "c3_root_perms") }
+                    if (ready) {
+                        Act("Open in Browser", "c3_root_browser") { actions.post(Api.OPEN, JSONObject().put("url", target)) { "Opening in cloud-browser" } }
+                        Act("Open Embedded", "c3_root_embedded") { Links.embedded = Links.embedUrl(target) }
+                        r.optString("drive_url").takeIf { it.isNotEmpty() && !r.isNull("drive_url") }?.let { d ->
+                            Act("Open Folder (Drive)", "c3_root_folder") { openLink(ctx, d, actions) }
+                            Act("Copy path", "c3_root_copy_path") { copyText(ctx, "path", "/storage/emulated/0/" + r.optString("repo")) }
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-/** The toolbar over an open root (renderRootBar): back to the list, the name, where it is, reload, open in cloud-browser. */
+/** The URL a root is opened at outside the in-app frame: its own origin (the shared server's full UI) when it has one, else the admin root path. */
+private fun rootTarget(r: JSONObject): String =
+    r.optString("frame_url").takeIf { it.isNotEmpty() && !r.isNull("frame_url") } ?: Api.url(Api.rootPath(r.optString("id"), ""))
+
+/** The toolbar over an open root (renderRootBar): back to the list, the name, where it is, reload, open in cloud-browser, open embedded, and the view switch. */
 @Composable
-private fun RootBar(r: JSONObject, path: String, handle: FrameHandle, close: () -> Unit) {
+private fun RootBar(r: JSONObject, path: String, handle: FrameHandle, close: () -> Unit, extUrl: String, view: (@Composable () -> Unit)? = null) {
     val actions = rememberActions {}
-    Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp).testTag("c3_rbar"), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp).horizontalScroll(rememberScrollState()).testTag("c3_rbar"), verticalAlignment = Alignment.CenterVertically) {
         Act("‹ Roots", "c3_root_close") { if (!handle.back()) close() }
         Text(r.str("label"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
-        Text(" /$path", style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).testTag("c3_rloc"))
+        Text(" /$path ", style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("c3_rloc"))
+        view?.invoke()
         Act("↻", "c3_root_reload") { handle.reload() }
-        Act("↗", "c3_root_ext") { actions.post(Api.OPEN, JSONObject().put("url", Api.url(Api.rootPath(r.optString("id"), path)))) { "Opening in cloud-browser" } }
+        Act("↗ Browser", "c3_root_ext") { actions.post(Api.OPEN, JSONObject().put("url", extUrl)) { "Opening in cloud-browser" } }
+        Act("⧉ Embedded", "c3_root_embed") { Links.embedded = Links.embedUrl(extUrl) }
         if (handle.view != null) LinkText("✕", "c3_root_exit") { close() }
     }
 }
@@ -141,21 +157,33 @@ private fun BrowserRoot(r: JSONObject, close: () -> Unit) {
     val handle = remember(r.optString("id")) { FrameHandle() }
     var path by remember(r.optString("id")) { mutableStateOf("") }
     var err by remember { mutableStateOf<String?>(null) }
+    val ctx = LocalContext.current
+    val actions = rememberActions {}
     val prefix = Api.url(Api.rootPath(r.optString("id"), ""))
     Column(Modifier.fillMaxSize().testTag("c3_browser_${r.optString("id")}")) {
-        RootBar(r, path, handle, close)
+        RootBar(r, path, handle, close, Api.url(Api.rootPath(r.optString("id"), path)))
         err?.let { ErrorNote(it) }
-        WebFrame(prefix, handle, Modifier.weight(1f), onLocation = { u -> path = java.net.URLDecoder.decode(u.removePrefix(prefix).substringBefore('?'), "UTF-8") }, onError = { err = it })
+        WebFrame(prefix, handle, Modifier.weight(1f), onLocation = { u -> path = java.net.URLDecoder.decode(u.removePrefix(prefix).substringBefore('?'), "UTF-8") }, onError = { err = it }, onLink = { openLink(ctx, it, actions) })
     }
 }
 
-/** File Explorer: the tree (folders lazily expanded through /__app__/api/roots/ls) and the selected file rendered beside it. */
+/**
+ * File Explorer, rendered by the webserver's own framework (#1710): the root opens on its own origin, where the shared fleet-webserver
+ * serves its full UI (folder tree, Markdown / JSON / YAML viewer, Eruda). Folder tree is the compact native view of the same root
+ * (folders lazily expanded through /__app__/api/roots/ls, the selected file rendered by the same server beside it); it is the view
+ * of a root that has no origin of its own and a switch away for the rest (rule 16: nothing of it is dropped).
+ */
 @Composable
 private fun ExplorerRoot(r: JSONObject, close: () -> Unit) {
     val id = r.optString("id")
+    val frameUrl = r.optString("frame_url").takeIf { it.isNotEmpty() && !r.isNull("frame_url") }
+    var framework by rememberSaveable(id) { mutableStateOf(frameUrl != null) }
     val tree = remember(id) { mutableStateMapOf<String, JSONObject>() }
     var sel by remember(id) { mutableStateOf("") }
-    val handle = remember(id) { FrameHandle() }
+    val handle = remember(id, framework) { FrameHandle() }
+    val ctx = LocalContext.current
+    val actions = rememberActions {}
+    var err by remember { mutableStateOf<String?>(null) }
     suspend fun ls(path: String) {
         tree[path] = when (val x = Api.get(Api.ROOTS_LS + "?root=" + Api.enc(id) + "&path=" + Api.enc(path))) {
             is Api.Reply.Ok -> (x.value as? JSONObject) ?: JSONObject().put("status", "error").put("reason", "not an object")
@@ -164,15 +192,21 @@ private fun ExplorerRoot(r: JSONObject, close: () -> Unit) {
     }
     var want by remember(id) { mutableStateOf<String?>("") }
     LaunchedEffect(want) { want?.let { if (!tree.containsKey(it)) ls(it) } }
+    val ext = if (framework && frameUrl != null) frameUrl else Api.url(Api.rootPath(id, sel))
     Column(Modifier.fillMaxSize().testTag("c3_explorer_$id")) {
-        RootBar(r, sel, handle, close)
-        Row(Modifier.fillMaxSize()) {
+        RootBar(r, if (framework) "" else sel, handle, close, ext, view = {
+            if (frameUrl != null) Act(if (framework) "Tree view" else "Framework view", "c3_root_view") { framework = !framework }
+        })
+        err?.let { ErrorNote(it) }
+        if (framework && frameUrl != null) {
+            WebFrame(frameUrl, handle, Modifier.weight(1f).testTag("c3_xframework"), onError = { err = it }, onLink = { openLink(ctx, it, actions) })
+        } else Row(Modifier.fillMaxSize()) {
             Column(Modifier.width(150.dp).fillMaxHeight().background(Tone.Card).verticalScroll(rememberScrollState()).testTag("c3_xtree")) {
                 TreeLevel(tree, "", 0, sel, onDir = { p -> if (tree.containsKey(p)) { tree.keys.filter { it == p || it.startsWith("$p/") }.forEach { tree.remove(it) } } else { want = p } }, onFile = { sel = it })
             }
             Box(Modifier.weight(1f).fillMaxHeight().testTag("c3_xprev")) {
                 if (sel.isEmpty()) Note("Select a file on the left: it renders here (Markdown and HTML rendered, other files as the server serves them).")
-                else WebFrame(Api.url(Api.rootPath(id, sel)), handle)
+                else WebFrame(Api.url(Api.rootPath(id, sel)), handle, onLink = { openLink(ctx, it, actions) })
             }
         }
     }
@@ -203,7 +237,7 @@ private fun TreeLevel(tree: Map<String, JSONObject>, path: String, depth: Int, s
 
 /** renderPages: the ONE served list (/__app__/api/served) with each page's status, metadata, source, links and actions, the add form and the undeclared checker. */
 @Composable
-fun ServedPages(tick: Int, bump: () -> Unit) {
+fun ServedPages(tick: Int, bump: () -> Unit, open: (String, String?) -> Unit = { _, _ -> }) {
     val served = rememberObj(Api.SERVED, tick)
     val actions = rememberActions(bump)
     val ctx = LocalContext.current
@@ -226,8 +260,14 @@ fun ServedPages(tick: Int, bump: () -> Unit) {
                     Acts {
                         r.optJSONObject("toggle")?.let { ActButton(it, actions, "c3_served_toggle") }
                         r.optJSONObject("start_app")?.let { a -> Act("▶ Start app", "c3_served_start_app") { actions.run(a) } }
-                        links.forEach { l -> LinkText(l.str("label") + " ↗", "c3_served_link") { openLink(ctx, l.optString("href"), actions) } }
+                        links.forEach { l ->
+                            LinkText(l.str("label") + " ↗", "c3_served_link") { openLink(ctx, l.optString("href"), actions) }
+                            LinkText("embedded", "c3_served_link_embedded") { Links.embedded = Links.embedUrl(Api.absolute(l.optString("href"))) }
+                        }
                         r.optString("source_open").takeIf { it.isNotEmpty() }?.let { u -> LinkText("source ↗", "c3_served_source") { openLink(ctx, u, actions) } }
+                        LinkText("⚙ edit config ›", "c3_served_config") {
+                            if (r.optString("config") == "form") toast(ctx, "the add form is below the list") else open(Decl.SECTION_CONFIGS, Decl.PAGE_SERVER)
+                        }
                         r.optJSONObject("remove")?.let { ActButton(it, actions, "c3_served_remove") }
                     }
                 }

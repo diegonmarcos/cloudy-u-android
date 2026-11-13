@@ -93,7 +93,7 @@ fun WebserverShell() {
 @Composable
 private fun SectionBody(section: String?, page: String?, open: (String, String?) -> Unit) {
     when (section) {
-        Decl.SECTION_PAGES -> PagesSection(page ?: Decl.PAGE_ALL)
+        Decl.SECTION_PAGES -> PagesSection(page ?: Decl.PAGE_ALL, open)
         Decl.SECTION_API -> ApiSection(page ?: Decl.PAGE_TOPOLOGY)
         Decl.SECTION_SSHD -> SshdPage()
         Decl.SECTION_ADB_SHELL -> WebAdbShellPage(open)

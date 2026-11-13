@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -38,7 +39,8 @@ class FrameHandle {
  * page the frame is on (links navigate inside the root), [onError] a main-frame failure; the frame never throws.
  */
 @Composable
-fun WebFrame(url: String, handle: FrameHandle, modifier: Modifier = Modifier, onLocation: (String) -> Unit = {}, onError: (String?) -> Unit = {}) {
+fun WebFrame(url: String, handle: FrameHandle, modifier: Modifier = Modifier, onLocation: (String) -> Unit = {}, onError: (String?) -> Unit = {}, onLink: ((String) -> Unit)? = null) {
+    val link by rememberUpdatedState(onLink)
     val bg = MaterialTheme.colorScheme.surface.toArgb()
     var loaded by remember { mutableStateOf<String?>(null) }
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).testTag("c3_frame")) {
@@ -49,6 +51,17 @@ fun WebFrame(url: String, handle: FrameHandle, modifier: Modifier = Modifier, on
                     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                     setBackgroundColor(bg)
                     webViewClient = object : CloudWebClient(WebProfile.APP_PAGE) {
+                        /** #1710 a tap that leaves the frame's origin goes to the declared link-open (Open in browser | Open embedded), as the web shell's link handler did for every frame. */
+                        override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                            val cb = link ?: return false
+                            val to = request?.url ?: return false
+                            if (request.isForMainFrame.not() || !request.hasGesture()) return false
+                            val from = runCatching { android.net.Uri.parse(view?.url ?: "") }.getOrNull() ?: return false
+                            if (to.scheme == from.scheme && to.host == from.host && to.port == from.port) return false
+                            cb(to.toString())
+                            return true
+                        }
+
                         override fun onPageStarted(view: WebView?, u: String?, favicon: Bitmap?) {
                             super.onPageStarted(view, u, favicon)
                             onError(null)
