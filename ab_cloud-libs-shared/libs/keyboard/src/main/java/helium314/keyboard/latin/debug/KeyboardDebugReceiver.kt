@@ -160,7 +160,8 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
                 val view = switcher.mainKeyboardView ?: return "no view"
                 val at = IntArray(2).also { view.getLocationOnScreen(it) }
                 val key = view.keyboard?.sortedKeys?.firstOrNull {
-                    if (arg == "space") it.code == 32 else if (arg == "delete") it.code == KeyCode.DELETE else it.label.equals(arg, ignoreCase = true)
+                    if (arg == "space") it.code == 32 else if (arg == "delete") it.code == KeyCode.DELETE else if (arg.startsWith("u+")) it.label?.let { l -> l.isNotEmpty() && l.codePointAt(0) == arg.substring(2).toIntOrNull(16) } == true
+                    else it.label.equals(arg, ignoreCase = true)
                 } ?: return "no key $arg"
                 "key=$arg ${at[0] + key.x + key.width / 2} ${at[1] + key.y + key.height / 2} ${key.width} ${key.height}"
             }

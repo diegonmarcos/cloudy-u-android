@@ -251,7 +251,7 @@ shot 37-unexpected-after-swipes
 kb fnlayer; sleep 3; kb themestate; D="$(last themestate)"; echo "$D"
 grep -q "fn=true" <<<"$D" && ok "Fn switched the Fn layer on" || bad "Fn layer not on: $D"
 shot 38-unexpected-fn
-tapkey "€"; kb themestate; D="$(last themestate)"; echo "$D"
+tapkey "u+20ac"; kb themestate; D="$(last themestate)"; echo "$D"
 grep -q "fn=false" <<<"$D" && ok "one key later the Fn layer is off again (Fn is one-shot)" || bad "Fn layer stayed on: $D"
 kb fieldtext; F2="$(last fieldtext)"; grep -q "€" <<<"$F2" && ok "the Fn layer typed the euro key" || bad "Fn layer key: $F2"
 shot 39-unexpected-after-fn-key
