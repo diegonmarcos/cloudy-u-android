@@ -185,7 +185,7 @@ t guest.shebang_noexec sh -c 'cd /sdcard/cloudprove/x && test "$(./s.sh)" = stor
 s guest.git git        sh -c 'git --version && rm -rf r && git init -q r && cd r && git -c user.name=ci -c user.email=ci@localhost commit -q --allow-empty -m probe && git log --oneline | grep -q probe'
 s guest.node node      node -e 'console.log(1 + 1)'
 s guest.node_spawn node node -e 'const r = require("child_process").spawnSync("sh", ["-c", "echo spawned"]); if (String(r.stdout).trim() !== "spawned") process.exit(1)'
-s guest.node_netif node node -e 'const n = require("os").networkInterfaces(); console.log(Object.keys(n).join(","))'
+s net.guest_node_netif node node -e 'const n = require("os").networkInterfaces(); console.log(Object.keys(n).join(","))'
 s guest.python python3 python3 -c 'import subprocess; print(subprocess.run(["sh", "-c", "echo py"], capture_output=True, text=True).stdout.strip())'
 s guest.ip_addr ip     sh -c 'ip -o addr | head -3'
 s guest.claude claude  claude --version
@@ -263,7 +263,8 @@ case "$act" in */*) ;; *) row meta.launcher FAIL "$PKG has no launcher activity 
 sh_ "am start -W -n $act" >/dev/null
 if wait_file "$PREFIX/bin/login" 90; then row meta.bootstrap ok "$PREFIX/bin/login is installed"; else row meta.bootstrap FAIL "no $PREFIX/bin/login 15 min after the first launch"; evidence bootstrap; finish; fi
 sleep 5
-ctx="$(sh_ "ps -AZ -o LABEL,NAME" | awk -v p="$PKG" '$2==p{print $1}' | head -1)"
+app_pid="$(sh_ "pidof $PKG" | awk '{print $1}')"
+ctx="$(sh_ "cat /proc/${app_pid:-0}/attr/current" | tr -d '\0')"
 [ "$MIN_TARGET" -ge 29 ] && legacy=FAIL || legacy=ok
 case "$ctx" in
   u:r:untrusted_app_27:*|u:r:untrusted_app_25:*) row meta.selinux_domain "$legacy" "$ctx: the legacy domain (targetSdk <= 28, may exec its data)$([ "$legacy" = FAIL ] && echo ", so this run proves nothing about targetSdk $MIN_TARGET")" ;;
