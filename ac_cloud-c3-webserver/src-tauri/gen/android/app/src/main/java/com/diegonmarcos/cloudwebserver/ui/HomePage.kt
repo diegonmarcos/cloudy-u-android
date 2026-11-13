@@ -148,7 +148,7 @@ fun ServedStrip(pg: JSONObject, goto: () -> Unit) {
 /** renderSshdStrip. */
 @Composable
 fun SshdStrip(d: JSONObject, goto: () -> Unit) {
-    DenseCard("SSHd engines · keep alive ${if (d.optBoolean("keep_alive")) "ON" else "OFF"}", "c3_home_sshd", trailing = { DLink("SSHd ›", "c3_home_goto_sshd", goto) }) {
+    DenseCard("SSHd engines", "c3_home_sshd", badges = { Badge("keep alive ${if (d.optBoolean("keep_alive")) "ON" else "OFF"}") }, trailing = { DLink("SSHd ›", "c3_home_goto_sshd", goto) }) {
         d.objs("doors").forEach { x ->
             val st = x.str("state")
             val ctl = x.optJSONObject("control")

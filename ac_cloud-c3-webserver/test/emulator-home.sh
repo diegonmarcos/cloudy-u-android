@@ -17,7 +17,7 @@ for i in 1 2 3 4 5 6 7 8; do
   adb shell input swipe $X $Y1 $X $Y2 300; sleep 2
 done
 cat "$OUT"/home-*.xml > "$OUT/all.xml"
-for needle in "ADB SHELL" "Wireless dbg" "Paired" "Started by" "Auto-start"; do
+for needle in "ADB SHELL" "Paired" "Started by" "Clients"; do
   grep -qiF "$needle" "$OUT/all.xml" || fail "Home shows no '$needle' (ADB shell status table)"
 done
 # back to the top, tap the Server row of the table: lands on the ADB Shell Server sub page

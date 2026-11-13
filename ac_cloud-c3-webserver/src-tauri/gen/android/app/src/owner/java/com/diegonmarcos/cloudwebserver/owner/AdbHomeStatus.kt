@@ -66,7 +66,7 @@ object AdbHomeModel {
             AdbHomeRow("auto_chain", "Auto-start", "$lastRun · ${stepsText(steps)}", null, Decl.PAGE_ADB_SERVER),
             AdbHomeRow("wireless", "Wireless dbg", yn(f?.wirelessDebug, "ON", "OFF"), f?.wirelessDebug, Decl.PAGE_ADB_STATUS),
             AdbHomeRow("paired", "Paired", if (f == null) "unknown" else if (f.adbPaired) "yes" + (f.adbEndpoint?.let { " ($it)" } ?: "") else "no", f?.adbPaired, Decl.PAGE_ADB_STATUS),
-            AdbHomeRow("clients", "Clients", clients?.let { if (it.isEmpty()) "none allowed yet" else "${it.size} allowed: " + it.joinToString(", ") } ?: "unknown", null, Decl.PAGE_ADB_PERMS),
+            AdbHomeRow("clients", "Clients", clients?.let { if (it.isEmpty()) "none allowed yet" else "${it.size} allowed: " + it.joinToString(", ") { c -> c.removePrefix("com.diegonmarcos.") } } ?: "unknown", null, Decl.PAGE_ADB_PERMS),
         )
     }
 }
