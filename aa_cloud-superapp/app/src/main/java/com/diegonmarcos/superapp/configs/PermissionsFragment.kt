@@ -49,12 +49,8 @@ import com.diegonmarcos.superapp.system.PermAskTracker
 import com.diegonmarcos.superapp.system.DeviceTuning
 import com.diegonmarcos.superapp.system.PrivilegedGrants
 import com.diegonmarcos.superapp.system.ScreenLocker
-import com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
-import com.diegonmarcos.superapp.adbdebug.ShizukuShellChannel
-import com.diegonmarcos.superapp.adbdebug.ShellChannel
-import com.diegonmarcos.superapp.adbdebug.LocalHotspot
-import com.diegonmarcos.superapp.adbdebug.PackageVerifier
-import com.diegonmarcos.superapp.adbdebug.WifiDirect
+import com.diegonmarcos.superapp.system.ShellPlane
+import com.diegonmarcos.superapp.system.PackageVerifier
 import android.content.pm.PackageManager
 
 /** Permissions page — runtime perms, special access, Health Connect,
@@ -77,18 +73,6 @@ class PermissionsFragment : KitComposeFragment() {
             Toast.makeText(requireContext(),
                 "Permissions: $granted granted, $denied denied", Toast.LENGTH_SHORT).show()
             rebuildFragment()
-        }
-
-    private val hotspotLocationLauncher =
-        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) { result ->
-            if (result[android.Manifest.permission.ACCESS_FINE_LOCATION] == true) startLocalHotspot() else Toast.makeText(requireContext(),
-                "Location is required by Android to create a local WiFi hotspot", Toast.LENGTH_LONG).show()
-        }
-
-    private val wifiDirectPermLauncher =
-        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) startWifiDirect() else Toast.makeText(requireContext(),
-                "That permission is required by Android to create a WiFi Direct group", Toast.LENGTH_LONG).show()
         }
 
     // ── #1274 catalogue section: the ONE place that asks for permissions ──
@@ -271,6 +255,11 @@ class PermissionsFragment : KitComposeFragment() {
         val act = requireActivity()
         val rows = remember(centerEpoch) { readPermRows(act, act) }
         val plane = remember(centerEpoch) { shellPlane() }
+        // the readiness state is a cached read: refresh it once when the page opens, then redraw
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { com.diegonmarcos.superapp.system.AdbReadiness.check(ctxAny()) } }
+            centerEpoch++
+        }
         androidx.compose.runtime.LaunchedEffect(Unit) {
             if (!autoStarted) { autoStarted = true; startAuto(force = false) }
         }
@@ -541,7 +530,7 @@ class PermissionsFragment : KitComposeFragment() {
         // section — indistinguishable from the bug where READ_LOGS silently
         // vanished because its build.json entry had no `apps` array.
         val priv = remember { PrivilegedGrants.resolve(ctxAny(), includeGranted = true) }
-        val plane: ShellChannel? = remember { shellPlane() }
+        val plane: ShellPlane? = remember { shellPlane() }
 
         // ── Tally ─────────────────────────────────────────────────────────
         val runtimeMissing = perms.filter { (_, perm) -> ctxAny().checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED }
@@ -596,34 +585,11 @@ class PermissionsFragment : KitComposeFragment() {
         // This screen keeps a status chip only. Every control that used to live here (Wireless debugging
         // toggle, Pair, Connect, the server row) is on the ADB Shell page, which every app that links
         // libs:shizuku-adb-debug-tools has; test-adb-shell-one-place.sh holds it to that.
-        KvRow("Privileged channel", plane?.let { "✓ ${it.name()}" } ?: "◯ no adb session (server: ${com.diegonmarcos.superapp.adbdebug.AdbShellBootstrap.bootstrapState(ctxAny())})")
+        KvRow("Privileged channel", plane?.let { "✓ ${it.name()}" } ?: "◯ no adb session (${com.diegonmarcos.superapp.system.AdbReadiness.state.value.why.ifBlank { "not checked yet" }})")
         PermButtonRow {
             PermButton("ADB Shell ›", null) { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) }
         }
-        // Pairing network helpers: Wireless debugging needs a Wi-Fi network, and these CREATE one (they
-        // are not channel controls). The connecting itself is on the ADB Shell page.
-        // Step ⓪ (optional): no external WiFi to join? Spin up a device-local
-        // hotspot so the radio is ON + attached to a network, which Wireless
-        // Debugging (adb over WiFi, API 30+) needs. Local-only, not internet-
-        // routed — any throwaway network works just as well if this fails.
-        val hotspotStatus = LocalHotspot.status()
-        PermButtonRow {
-            PermButton("⓪ Create local WiFi (for pairing)", hotspotStatus is LocalHotspot.Status.Active) { requestLocalHotspot() }
-        }
-        if (hotspotStatus is LocalHotspot.Status.Active) Small(
-            "Local WiFi up — SSID: ${hotspotStatus.ssid}  ·  password: ${hotspotStatus.passphrase}")
-        // Step ⓪b (fallback): some devices (certain Samsung builds) refuse
-        // LocalOnlyHotspot while Wireless Debugging is being enabled. WiFi
-        // Direct (WifiP2pManager) is a second self-created-WiFi path — this
-        // device becomes the P2P group owner, which behaves like a local AP
-        // (SSID always starts with "DIRECT-"), still no external network.
-        val wifiDirectStatus = WifiDirect.status()
-        PermButtonRow {
-            PermButton("⓪b Create WiFi Direct (for pairing)", wifiDirectStatus is WifiDirect.Status.Active) { requestWifiDirect() }
-        }
-        if (wifiDirectStatus is WifiDirect.Status.Active) Small(
-            "WiFi Direct up — SSID: ${wifiDirectStatus.ssid}  ·  password: ${wifiDirectStatus.passphrase}" +
-            (wifiDirectStatus.ownerIp?.let { "  ·  owner IP: $it" } ?: ""))
+        // #1682 P3 step 4e: the pairing network helpers (local Wi-Fi, Wi-Fi Direct) live on the owner's ADB Shell page (Perms tab, PairingHelpers).
         // ── Device tuning ────────────────────────────────────────────────
         // The shell-applied settings declared in data/device-tuning.json
         // (phantom-process killer off, ...) — the rows are the declared entries,
@@ -768,7 +734,7 @@ class PermissionsFragment : KitComposeFragment() {
         // could never receive the fix that would let it update: terminal, with
         // a human and a USB cable as the only exit. That does not scale to one
         // fleet, let alone thousands of users.
-        val playProtect = com.diegonmarcos.superapp.adbdebug.PackageVerifier.state(ctxAny()).on
+        val playProtect = com.diegonmarcos.superapp.system.PackageVerifier.state(ctxAny()).on
         KvRow("Play Protect scanning", if (playProtect) "✓ ON" else "◯ OFF")
         Small(
             "Recovery downloads the published build through the ordinary verified " +
@@ -816,115 +782,10 @@ class PermissionsFragment : KitComposeFragment() {
      *  each in order (measured 2026-09-03: WiFi radio off + location denied both
      *  hit at once). Apps CANNOT enable WiFi (deprecated no-op since Android 10)
      *  or the location toggle programmatically — deep-link to the right panel. */
-    private fun requestLocalHotspot() {
-        val ctx = ctxAny()
-        // 1. WiFi radio ON.
-        val wifi = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as? android.net.wifi.WifiManager
-        if (wifi?.isWifiEnabled != true) {
-            Toast.makeText(ctx, "Turn WiFi ON first, then tap again (the hotspot needs the WiFi radio up).", Toast.LENGTH_LONG).show()
-            runCatching { startActivity(android.content.Intent(android.provider.Settings.Panel.ACTION_WIFI)) }
-                .onFailure { runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_WIFI_SETTINGS)) } }
-            return
-        }
-        // 2. Device location SERVICES ON (separate from the permission).
-        val lm = ctx.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-        val locOff = lm != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P && !lm.isLocationEnabled
-        if (locOff) {
-            Toast.makeText(ctx, "Turn Location ON, then tap again (the platform requires it for a hotspot).", Toast.LENGTH_LONG).show()
-            runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
-            return
-        }
-        // 3. ACCESS_FINE_LOCATION permission.
-        val granted = ctx.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) ==
-            PackageManager.PERMISSION_GRANTED
-        if (granted) startLocalHotspot()
-        else hotspotLocationLauncher.launch(com.diegonmarcos.superapp.perms.PermsRequest.expand(listOf(android.Manifest.permission.ACCESS_FINE_LOCATION)).toTypedArray())
-    }
-
-    private fun startLocalHotspot() = runCatching {
-        LocalHotspot.start(ctxAny()) { status ->
-            val activity = activity ?: return@start
-            activity.runOnUiThread {
-                when (status) {
-                    is LocalHotspot.Status.Active -> {
-                        // Local-only hotspot: the phone's AP address is conventionally
-                        // 192.168.43.1 — auto-fill it so the pairing host is set.
-                        Toast.makeText(ctxAny(),
-                            "Local WiFi up — SSID: ${status.ssid} · pass: ${status.passphrase}. Now open ADB Shell and press Connect.", Toast.LENGTH_LONG).show()
-                    }
-                    is LocalHotspot.Status.Failed -> Toast.makeText(ctxAny(),
-                        "Couldn't create local WiFi (${status.reason}). Some devices (e.g. certain " +
-                        "Samsung builds) refuse Wireless Debugging while a local hotspot is active — " +
-                        "any throwaway WiFi network works too.", Toast.LENGTH_LONG).show()
-                    LocalHotspot.Status.Idle -> {}
-                }
-                rebuildFragment()
-            }
-        }
-    }.getOrElse {
-        Toast.makeText(ctxAny(), "Local WiFi failed: ${it.message}", Toast.LENGTH_LONG).show()
-    }
-
-    /** Same three platform preconditions as [requestLocalHotspot] (WiFi radio,
-     *  location services, then a permission) — Wi-Fi Direct's permission
-     *  changed on API 33+: NEARBY_WIFI_DEVICES replaced fine location as the
-     *  gate for discovering/creating P2P groups; below 33 it's still location. */
-    private fun requestWifiDirect() {
-        val ctx = ctxAny()
-        // 1. WiFi radio ON.
-        val wifi = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as? android.net.wifi.WifiManager
-        if (wifi?.isWifiEnabled != true) {
-            Toast.makeText(ctx, "Turn WiFi ON first, then tap again (WiFi Direct needs the WiFi radio up).", Toast.LENGTH_LONG).show()
-            runCatching { startActivity(android.content.Intent(android.provider.Settings.Panel.ACTION_WIFI)) }
-                .onFailure { runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_WIFI_SETTINGS)) } }
-            return
-        }
-        // 2. Device location SERVICES ON (separate from the permission).
-        val lm = ctx.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-        val locOff = lm != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P && !lm.isLocationEnabled
-        if (locOff) {
-            Toast.makeText(ctx, "Turn Location ON, then tap again (the platform requires it for WiFi Direct).", Toast.LENGTH_LONG).show()
-            runCatching { startActivity(android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
-            return
-        }
-        // 3. NEARBY_WIFI_DEVICES (33+) or ACCESS_FINE_LOCATION (below 33).
-        val perm = if (android.os.Build.VERSION.SDK_INT >= 33) "android.permission.NEARBY_WIFI_DEVICES"
-                   else android.Manifest.permission.ACCESS_FINE_LOCATION
-        val granted = ctx.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED
-        if (granted) startWifiDirect() else wifiDirectPermLauncher.launch(perm)
-    }
-
-    private fun startWifiDirect() = runCatching {
-        WifiDirect.start(ctxAny()) { status ->
-            val activity = activity ?: return@start
-            activity.runOnUiThread {
-                when (status) {
-                    is WifiDirect.Status.Active -> {
-                        // AUTO-COPY the group-owner IP into the pairing host field so
-                        // "Pair"/"Connect" work without retyping it — the Wireless
-                        // Debugging dialog shows this same IP (192.168.49.1). Then
-                        // enable Wireless Debugging (if we hold WRITE_SECURE_SETTINGS)
-                        // and open the pairing page: only the 6-digit code is left.
-                        Toast.makeText(ctxAny(),
-                            "WiFi Direct up (host ${status.ownerIp ?: "?"}). Now open ADB Shell and press Connect.",
-                            Toast.LENGTH_LONG).show()
-                        com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny())
-                    }
-                    is WifiDirect.Status.Failed -> Toast.makeText(ctxAny(),
-                        "Couldn't create WiFi Direct group (${status.reason}).", Toast.LENGTH_LONG).show()
-                    WifiDirect.Status.Idle -> {}
-                }
-                rebuildFragment()
-            }
-        }
-    }.getOrElse {
-        Toast.makeText(ctxAny(), "WiFi Direct failed: ${it.message}", Toast.LENGTH_LONG).show()
-    }
-
     /**
      * Play Protect install scanning, on or off.
      *
-     * [com.diegonmarcos.superapp.adbdebug.PackageVerifier] has been able to do
+     * [com.diegonmarcos.superapp.system.PackageVerifier] has been able to do
      * this the whole time and NOTHING on any screen called it — a capability
      * that exists in code with no way for the user to reach it is, from the
      * user's side, a capability that does not exist. It belongs here because
@@ -937,7 +798,7 @@ class PermissionsFragment : KitComposeFragment() {
     private fun togglePlayProtect(scan: Boolean) {
         val ctx = ctxAny().applicationContext
         kotlin.concurrent.thread(name = "play-protect-toggle") {
-            val r = com.diegonmarcos.superapp.adbdebug.PackageVerifier.setScanning(ctx, scan)
+            val r = com.diegonmarcos.superapp.system.PackageVerifier.setScanning(ctx, scan)
             view?.post {
                 Toast.makeText(ctxAny(),
                     (if (r.ok) "Play Protect scan ${if (scan) "ON" else "OFF"} via ${r.channel}"
@@ -985,7 +846,7 @@ class PermissionsFragment : KitComposeFragment() {
      * appop-backed permissions — `pm grant` alone reports success there while
      * access stays denied.
      */
-    private fun grantPrivileged(plane: ShellChannel, t: PrivilegedGrants.Target) {
+    private fun grantPrivileged(plane: ShellPlane, t: PrivilegedGrants.Target) {
         val out = PrivilegedGrants.grant(ctxAny(), t) { cmd -> plane.exec(ctxAny(), cmd) }
         Toast.makeText(ctxAny(), "grant ${t.pkg.substringAfterLast('.')} ${t.perm.substringAfterLast('.')}: " +
             (out?.trim()?.take(60) ?: "no output"), Toast.LENGTH_SHORT).show()
@@ -997,16 +858,14 @@ class PermissionsFragment : KitComposeFragment() {
             // #1513 through the shell broker (its allowlist), not a channel of this screen's own
             override fun up() = com.diegonmarcos.superapp.system.AdbReadiness.check(ctxAny()).usable
             override fun exec(command: String): String? =
-                (com.diegonmarcos.superapp.shellbroker.ShellBroker.exec(ctxAny(), com.diegonmarcos.superapp.shellbroker.ShellBroker.SELF, command)
+                (com.diegonmarcos.superapp.shellclient.ShellClient.exec(ctxAny(), command)
                     as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.let { it.stdout + it.stderr }
         },
         connect = { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctxAny()) },
     )
 
     /** The one channel-availability check for this screen; null = no shell. */
-    private fun shellPlane(): ShellChannel? =
-        listOf<ShellChannel>(EmbeddedAdbChannel, ShizukuShellChannel)
-            .firstOrNull { com.diegonmarcos.superapp.adbdebug.ShellChannels.modeUses(ctxAny(), it.name()) && it.isReady(ctxAny()) }
+    private fun shellPlane(): ShellPlane? = ShellPlane.current(ctxAny())
 
     /** A thing only a system page can grant: state + the page that opens it. */
     private class PageItem(val label: String, val granted: Boolean?, val state: String, val open: () -> Unit)

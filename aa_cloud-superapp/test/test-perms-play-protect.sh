@@ -39,7 +39,7 @@ GRADLE="$APP/app/build.gradle"
 # every other cross-module path in these testers.
 shzdir="$(jq -r '.modules["libs:shizuku-adb-debug-tools"].dir // empty' "$BJ")"
 [ -n "$shzdir" ] || { echo "ERROR: build.json::modules[libs:shizuku-adb-debug-tools].dir is not declared" >&2; exit 2; }
-PV="$APP/$shzdir/src/main/java/com/diegonmarcos/superapp/adbdebug/PackageVerifier.kt"
+PV="$APP/app/src/main/java/com/diegonmarcos/superapp/system/PackageVerifier.kt"   # #1682 P3 step 4e: moved from the owner lib to the SuperApp (it writes through the broker client)
 for f in "$FRAG" "$GRADLE" "$PV"; do
     [ -f "$f" ] || { echo "ERROR: not found: $f" >&2; exit 2; }
 done

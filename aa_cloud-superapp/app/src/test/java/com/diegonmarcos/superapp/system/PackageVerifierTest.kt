@@ -1,4 +1,4 @@
-package com.diegonmarcos.superapp.adbdebug
+package com.diegonmarcos.superapp.system
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

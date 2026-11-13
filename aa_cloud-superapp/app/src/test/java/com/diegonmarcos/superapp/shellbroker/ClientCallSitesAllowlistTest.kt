@@ -3,6 +3,7 @@ package com.diegonmarcos.superapp.shellbroker
 import com.diegonmarcos.superapp.battery.BatteryPrivileged
 import com.diegonmarcos.superapp.launcher.PermAccess
 import com.diegonmarcos.superapp.network.AlwaysOnVpn
+import com.diegonmarcos.superapp.system.PackageVerifier
 import com.diegonmarcos.superapp.system.QuickDisplay
 import com.diegonmarcos.superapp.xray.LocationUseView
 import org.junit.Assert.assertEquals
@@ -35,6 +36,8 @@ class ClientCallSitesAllowlistTest {
         allowed("settings put global private_dns_specifier dns.example.com")
         allowed("cmd uimode night yes"); allowed("cmd uimode night no")
     }
+    @Test fun playProtectCommandsAreAllowed() { for (scan in listOf(true, false)) PackageVerifier.commands(scan).forEach { allowed(it) } }
+    @Test fun wirelessDebuggingSwitchCommandIsAllowed() { allowed("settings put global adb_wifi_enabled 1"); allowed("settings put global adb_wifi_enabled 0") }
     @Test fun outputDoorKeepsTheInProcessBudget() = assertEquals(8 * 1024 * 1024, list.outCap(self))
     @Test fun auditGrantIsTheOwnerHostsOnly() {
         assertTrue(list.mayAudit(self))

@@ -109,7 +109,8 @@ def check(S):
     r.append(("M4e", "ShellChannels.modeUses(ctx, ChannelSelector.SHIZUKU)) exec(ctx, cmd)" in grant and
               # #1682 P3 step 4e: the logcat reader goes through the owner's broker (which applies the mode), no direct Shizuku call at all
               "ShizukuAdb" not in logcat and "ShellChannels" not in logcat and "BgHost.shell(ctx)" in logcat and
-              "modeUses(" in body(S[SA + "configs/PermissionsFragment.kt"], "private fun shellPlane("),
+              # #1682 P3 step 4e: the Perms plane line reads the owner broker's readiness (the broker applies the mode), no channel class
+              "ShellPlane.current(" in body(S[SA + "configs/PermissionsFragment.kt"], "private fun shellPlane(") and "adbdebug" not in S[SA + "configs/PermissionsFragment.kt"],
               "a direct Shizuku fallback (pm grant, logcat, the Perms plane line) asks the mode first"))
     return r
 

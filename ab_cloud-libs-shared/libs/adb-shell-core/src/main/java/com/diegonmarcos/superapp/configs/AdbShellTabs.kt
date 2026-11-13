@@ -82,7 +82,7 @@ fun AdbPermsTab() {
     val tick = resumeTick()
     LaunchedEffect(tick, bump) { rows = withContext(Dispatchers.IO) { runCatching { readAdbPrereqs(ctx) }.getOrDefault(emptyList()) } }
     val act: (AdbPrereqs.Action) -> Unit = { a -> scope.launch(Dispatchers.IO) { note = runCatching { runPrereqAction(ctx, a) }.getOrElse { "failed: ${it.message}" }; bump++ } }
-    AdbPermsChain(rows, note, act) { PermsLink.open(ctx, "adb-shell", emptyList()) }
+    AdbPermsChain(rows, note, act, { PermsLink.open(ctx, "adb-shell", emptyList()) }) { PairingHelpers() }
 }
 
 /** Real reads only: the channel facts (adb echo round trip, server probe) plus this app's own grants. Blocking. */
@@ -124,7 +124,7 @@ fun runPrereqAction(ctx: Context, a: AdbPrereqs.Action): String = when (a) {
 
 /** The chain as drawn (stateless: the test drives it with fixed rows). */
 @Composable
-fun AdbPermsChain(rows: List<AdbPrereqs.Row>?, note: String?, onAction: (AdbPrereqs.Action) -> Unit, onOpenAll: () -> Unit) {
+fun AdbPermsChain(rows: List<AdbPrereqs.Row>?, note: String?, onAction: (AdbPrereqs.Action) -> Unit, onOpenAll: () -> Unit, extra: @Composable () -> Unit = {}) {
     val p = LocalKitPalette.current
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("adb:tab:perms")) {
         if (rows == null) { KitStoreRowLine { KitStoreCaption("Checking ADB Shell prerequisites...", color = p.textSecondary) } }
@@ -158,6 +158,7 @@ fun AdbPermsChain(rows: List<AdbPrereqs.Row>?, note: String?, onAction: (AdbPrer
                 }
             }
         }
+        extra()
         KitStoreRowLine { KitStoreQuick("All permissions: Configs > Perms ›", KitStoreRow.BLUE_FILL, Modifier.testTag("adb:perms-open")) { onOpenAll() } }
     }
 }

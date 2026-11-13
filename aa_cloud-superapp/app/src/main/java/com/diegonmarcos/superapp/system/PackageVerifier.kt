@@ -1,9 +1,11 @@
-package com.diegonmarcos.superapp.adbdebug
+package com.diegonmarcos.superapp.system
 
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.Settings
+import com.diegonmarcos.superapp.shellclient.ShellClient
+import com.diegonmarcos.superapp.shellclient.ShellResult
 
 /**
  * Turns off the Play Protect install-time scan prompt — the
@@ -16,7 +18,7 @@ import android.provider.Settings
  * reads, and writing them needs WRITE_SECURE_SETTINGS — a signature
  * permission no sideloaded APK can hold. Hence the shell channel: the
  * SHELL uid (2000) holds it, so `settings put global …` through
- * [ShellChannels] does what the app itself cannot.
+ * the owner's broker (libs:shell-client) does what the app itself cannot.
  *
  * READING is unprivileged, so [state] works with no channel at all and the
  * UI can always show the truth. Only [setScanning] needs a channel.
@@ -73,20 +75,6 @@ object PackageVerifier {
     }
 
 
-    /** Unprivileged read that keeps "absent" distinct from a value. */
-    fun reading(ctx: Context): ControlStatus.Reading {
-        fun g(key: String) = runCatching { Settings.Global.getString(ctx.contentResolver, key) }
-            .getOrNull()?.let(ControlStatus::parseSetting)
-        return ControlStatus.Reading(g(CONSENT), g(ENABLE), g(ADB))
-    }
-
-    /** The same three values through a shell channel (`settings get global ...`), for
-     *  a build/ROM where the app's own provider read comes back empty. Blocking. */
-    fun readingViaShell(ctx: Context, channel: ShellChannel): ControlStatus.Reading {
-        fun g(key: String) = ControlStatus.parseSetting(channel.exec(ctx, "settings get global $key"))
-        return ControlStatus.Reading(g(CONSENT), g(ENABLE), g(ADB))
-    }
-
     fun state(ctx: Context): State {
         fun g(key: String, def: Int) =
             runCatching { Settings.Global.getInt(ctx.contentResolver, key, def) }.getOrDefault(def)
@@ -137,15 +125,14 @@ object PackageVerifier {
             // whose write did not take must fall back, not report success.
             if (after.on == scan) return Result(true, "self (WRITE_SECURE_SETTINGS)", out, after)
         }
-        val channel = ShellChannels.active(ctx)
+        val shell = runCatching { ShellClient.status(ctx.applicationContext) }.getOrNull()?.takeIf { it.armed }
             ?: return Result(false, "none",
-                "No shell channel. Pair/reconnect the embedded adb channel under Dev tools " +
-                "(or start Shizuku, if you run it), then retry.",
+                "No shell channel. Pair/reconnect the ADB shell on the owner's ADB Shell page, then retry.",
                 state(ctx))
         val out = commands(scan).joinToString("\n") { cmd ->
-            cmd + " → " + (channel.exec(ctx, cmd) ?: "no output").trim().ifBlank { "ok" }
+            cmd + " → " + ((ShellClient.exec(ctx.applicationContext, cmd) as? ShellResult.Ok)?.let { it.stdout + it.stderr } ?: "no output").trim().ifBlank { "ok" }
         }
         val after = state(ctx)
-        return Result(after.on == scan, channel.name(), out, after)
+        return Result(after.on == scan, shell.channel, out, after)
     }
 }
