@@ -60,7 +60,7 @@ DataStore / Room stores and declared files it cannot move yet.
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
-Module `aa_cloud-superapp`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-shell-core, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
+Module `aa_cloud-superapp`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-shell-core, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-xray, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -182,6 +182,7 @@ Module `aa_cloud-superapp`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-she
 | `Settings.Global/System uiMode (launcher_settings store=nightmode) and DeviceControls toggles (auto-rotate, brightness mode, airplane, adb_wifi)` | device | System-wide Android settings written via privileged shell/Settings; live in the OS, not app storage; apply via the device controls rather than copy. |
 | `shared pref file 'wd_keepalive' (key enabled)` | config | Wireless debugging keepalive enable toggle; present in code (WirelessDebugKeeper.kt:101) but not in the scanned list. |
 | `BuildConfig UI_* constants (UI_LAUNCHER_SETTINGS_B64, UI_PROFILE_*, UI_WG_*)` | config | Defaults baked into the APK from build.json; not device state but the fallback for unset prefs. |
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 | `filesDir/<KEYSTORE_FILE>` | device | This device's KDE Connect TLS identity keystore; never migrate, re-pair |
 
 Coverage: 58 covered, 0 gaps.
