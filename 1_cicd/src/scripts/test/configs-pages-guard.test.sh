@@ -139,10 +139,17 @@ mutate "an app without a name"                  "$APP/build.json" "$(J "d.pop('d
 mutate "an app whose sources stop drawing the scaffold" "$APPKT" "s=s.replace('NavBarTopFirstRowScaffold(','OwnScaffold(')" "G4 $APP: no source reaches Configs"
 # #1652 an app whose UI is a shared lib module: G4 reads the declared module, so the lib losing the scaffold is that app's finding
 UIAPP=ac_cloud-keyboard
-UIKT="$(cd "$BASE" && python3 -c "import json,os,sys; b=json.load(open('$UIAPP/build.json')); print('\n'.join(os.path.normpath(os.path.join('$UIAPP',d)) for d in b['android']['ui_module_dirs']))" | while IFS= read -r d; do grep -rl 'NavBarTopFirstRowScaffold(' "$d"; done)"
+REACH='NavBarTopFirstRowScaffold\(|FleetConfigsActivity\.intent\(|FleetConfigsMenu\(|FleetConfigsButtons\(|FleetConfigsEntries\.(addTo|addButtons|open)\('
+UIKT="$(cd "$BASE" && python3 -c "import json,os,sys; b=json.load(open('$UIAPP/build.json')); print('\n'.join(os.path.normpath(os.path.join('$UIAPP',d)) for d in b['android']['ui_module_dirs']))" | while IFS= read -r d; do grep -rlE "$REACH" "$d"; done)"
 if [ -z "$UIKT" ]; then fail "no scaffold call under $UIAPP's android.ui_module_dirs — the fixture moved"; else
+    # the keyboard's own shell (KeyboardChrome.kt) also names the scaffold: neutralise it first so only the UI lib can satisfy G4
+    OWNKT="$(cd "$BASE" && grep -rlE "$REACH" "$UIAPP/app" 2>/dev/null)"
     stage
-    for f in $UIKT; do sed -i 's/NavBarTopFirstRowScaffold(/OwnScaffold(/g' "$T/$f"; done
+    for f in $OWNKT; do sed -i -E "s/$REACH/OwnScaffold(/g" "$T/$f"; done
+    out="$(python3 "$GUARD" "$T")"; rc=$?
+    if [ "$rc" -eq 0 ]; then ok "the UI lib alone satisfies G4 while the app's own shell names no scaffold"
+    else fail "the UI lib alone did not satisfy G4 (rc=$rc)"; printf '%s\n' "$out" | tail -4; fi
+    for f in $UIKT; do sed -i -E "s/$REACH/OwnScaffold(/g" "$T/$f"; done
     out="$(python3 "$GUARD" "$T")"; rc=$?
     if [ "$rc" -eq 1 ] && grep -qF -- "G4 $UIAPP: no source reaches Configs" <<<"$out"; then ok "an app whose UI lib stops drawing the scaffold goes red (G4 $UIAPP)"
     else fail "an app whose UI lib stops drawing the scaffold stayed green or named the wrong thing (rc=$rc)"; printf '%s\n' "$out" | tail -4; fi
