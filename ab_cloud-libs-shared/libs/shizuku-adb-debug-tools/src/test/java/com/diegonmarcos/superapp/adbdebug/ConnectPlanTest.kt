@@ -17,7 +17,8 @@ class ConnectPlanTest {
     private val none = ChannelFacts(LOCAL_SERVER, 1L, serverPort = 38099)
 
     /** A device where each step's success flips the fact the next steps read; [failAt]/[waitAt] break one step. */
-    private class FakeDevice(var f: ChannelFacts, val failAt: StepId? = null, val waitAt: StepId? = null) : ConnectExecutor {
+    private class FakeDevice(var f: ChannelFacts, val failAt: StepId? = null, val waitAt: StepId? = null,
+                           val startFlipsShizuku: Boolean = true) : ConnectExecutor {
         val ran = ArrayList<StepId>()
         override fun facts() = f
         override fun run(step: StepId): StepResult {
@@ -32,7 +33,7 @@ class ConnectPlanTest {
                 StepId.SHIZUKU_RUNNING -> f.copy(shizukuInstalled = true, shizukuRunning = true)
                 StepId.SHIZUKU_PERMISSION -> f.copy(shizukuGranted = true)
                 StepId.VERIFY -> f
-                StepId.SHIZUKU_START -> f.copy(shizukuRunning = true)
+                StepId.SHIZUKU_START -> if (startFlipsShizuku) f.copy(shizukuRunning = true) else f
                 StepId.LAUNCH_SERVER -> f.copy(serverRunning = true)
                 StepId.CLOSE_EMBEDDED -> f.copy(adbConnected = false)
             }
@@ -160,7 +161,9 @@ class ConnectPlanTest {
             val plan = ConnectPlan.steps(mode, via)
             for ((i, step) in plan.withIndex()) {
                 if (step == StepId.PAIR) continue                                  // PAIR hands over to the person: its own test
-                val dev = FakeDevice(none, failAt = step)
+                // A started Shizuku service makes its "running" step already true (skipped by design); to prove that step's own
+                // stop-and-explain, the fake start does not bring the service up.
+                val dev = FakeDevice(none, failAt = step, startFlipsShizuku = step != StepId.SHIZUKU_RUNNING)
                 val out = ConnectPlan.run(mode, via, dev)
                 val tag = "$mode/$via fail@$step"
                 assertEquals(tag, ConnectStatus.FAILED, out.status)
