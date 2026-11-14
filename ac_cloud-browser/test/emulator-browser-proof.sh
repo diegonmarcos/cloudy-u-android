@@ -123,16 +123,21 @@ timeout 120 adb shell am start -W -a android.intent.action.VIEW -d "$IMGURI" -t 
 top > "$OUT/image-top.txt"; shot image-open
 if grep -q "$BPKG" "$OUT/image-top.txt"; then ok "I1 Open with Cloud Browser lands in the browser: $(cat "$OUT/image-top.txt" | tr -s ' ')"; else bad "I1 the picture did not open in Cloud Browser ($(cat "$OUT/image-top.txt"))"; fi
 grep -qE '[0-9]+ / [0-9]+|Info' "$OUT/image-open.xml" && ok "I1 the image page is showing (counter / Info control in the ui dump)" || echo "NOTE  I1 page text not in the ui dump (image-open.png)"
-# the print route: the page dropdown holds Convert to PDF; try the visible overflow control(s) until it is on screen
-for c in 'More options|Menu|Page menu|⋮' 'Page'; do
-  tap "$c" || true
+# the print route: the tab row's Browsing Tools sheet holds Convert to PDF (page tools); scroll the sheet until the row is on screen
+tap 'Browsing Tools' || true
+SW2=$(adb shell wm size | tr -d "\r" | grep -oE "[0-9]+x[0-9]+" | tail -1); SWX=$(( ${SW2%x*} / 2 )); SWH=${SW2#*x}
+for _ in 1 2 3 4 5 6 7 8; do
   dump _menu; grep -q 'Convert to PDF' "$OUT/_menu.xml" && break
+  adb shell input swipe "$SWX" $((SWH * 3 / 4)) "$SWX" $((SWH / 4)) 300; sleep 1
 done
+shot image-menu
 if tap 'Convert to PDF'; then
-  sleep 5; shot image-print; top > "$OUT/image-print-top.txt"
-  grep -qiE 'print|Save as PDF|PrintActivity' "$OUT/image-print-top.txt" "$OUT/image-print.xml" && ok "I1 Convert to PDF raised the system print dialog (image-print.png)" || echo "NOTE  I1 print dialog not detected: $(cat "$OUT/image-print-top.txt")"
-  adb shell input keyevent KEYCODE_BACK; sleep 2
-else echo "NOTE  I1 Convert to PDF row not reachable by the UI walk (image-menu.png)"; shot image-menu; fi
+  sleep 6; shot image-print; top > "$OUT/image-print-top.txt"
+  grep -qiE 'print|PrintActivity|Save as PDF' "$OUT/image-print-top.txt" "$OUT/image-print.xml" && ok "I1 Convert to PDF raised Android's print dialog (image-print.png)" || echo "NOTE  I1 print dialog not detected: $(cat "$OUT/image-print-top.txt")"
+else echo "NOTE  I1 Convert to PDF row not reachable by the UI walk (image-menu.png)"; fi
+# leave the app clean for the checks that follow: close the print dialog / sheet, start the browser again
+adb shell input keyevent KEYCODE_BACK; sleep 1; adb shell input keyevent KEYCODE_BACK; sleep 1
+adb shell am force-stop "$BPKG" >/dev/null 2>&1 || true
 
 # F1
 adb shell am start -W -n "$BPKG/.MainActivity" >/dev/null 2>&1 || adb shell monkey -p "$BPKG" 1 >/dev/null 2>&1

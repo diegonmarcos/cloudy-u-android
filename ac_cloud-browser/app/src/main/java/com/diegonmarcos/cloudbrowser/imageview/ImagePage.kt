@@ -66,10 +66,10 @@ object ImagePage {
 html,body{margin:0;height:100%;overflow:hidden;background:#101214;color:#e8e8e8;font:14px system-ui,sans-serif}
 #stage{position:fixed;inset:0;touch-action:none;overflow:hidden}
 #img{position:absolute;left:50%;top:50%;transform-origin:center center;max-width:none;user-select:none;-webkit-user-drag:none}
-#bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:4px;justify-content:center;align-items:center;padding:8px;background:rgba(20,22,24,.92);flex-wrap:wrap}
-#bar button{background:#23272b;color:#e8e8e8;border:1px solid #3a4046;border-radius:8px;padding:10px 12px;min-width:44px;font-size:14px}
+#bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:4px;justify-content:center;align-items:center;padding:6px;background:rgba(20,22,24,.92);flex-wrap:nowrap;overflow-x:auto}
+#bar button{background:#23272b;color:#e8e8e8;border:1px solid #3a4046;border-radius:8px;padding:8px 9px;min-width:40px;font-size:13px}
 #bar button:disabled{opacity:.35}
-#pos{padding:0 8px;opacity:.8}
+#pos{padding:0 6px;opacity:.8;white-space:nowrap}
 #msg{position:fixed;left:16px;right:16px;top:40%;text-align:center;display:none}
 #info{position:fixed;left:8px;right:8px;top:8px;max-height:60%;overflow:auto;background:rgba(20,22,24,.96);border:1px solid #3a4046;border-radius:10px;padding:10px 14px;display:none}
 #info table{border-collapse:collapse;width:100%}#info td{padding:3px 6px;vertical-align:top;border-bottom:1px solid #2c3136}
@@ -87,7 +87,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#101214;color:#e8e8e8;
 <script>
 var E=__ENTRIES__,idx=__INDEX__,S=1,tx=0,ty=0,rot=0,nw=0,nh=0;
 var img=document.getElementById('img'),st=document.getElementById('stage'),msg=document.getElementById('msg'),info=document.getElementById('info');
-function vw(){return st.clientWidth||window.innerWidth}function vh(){return (st.clientHeight||window.innerHeight)-56}
+function vw(){return st.clientWidth||window.innerWidth}function vh(){return (st.clientHeight||window.innerHeight)-52}
 function fitS(){var w=rot%180?nh:nw,h=rot%180?nw:nh;return Math.min(vw()/w,vh()/h,8)}
 function apply(){var f=fitS();img.style.transform='translate('+tx+'px,'+ty+'px) rotate('+rot+'deg) scale('+(f*S)+')'}
 function reset(){S=1;tx=0;ty=0;apply()}
