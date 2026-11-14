@@ -107,3 +107,18 @@ object ToPdf {
         return listOf(out)
     }
 }
+
+/** Convert… registry entry: image -> one-page PDF beside the source. */
+object ImageToPdf : Converter {
+    override val id = "image-pdf"
+    override val label = "PDF document"
+    override fun accepts(extension: String) = extension in ToPdf.IMAGE_EXT
+
+    override fun convert(source: File, destDir: File, progress: FileOps.Progress, cancelled: () -> Boolean): List<File> {
+        val out = Converters.output(source, destDir, "", "pdf")
+        progress.report(0L, 1L, source.name)
+        try { ToPdf.imageToPdf(source, out, cancelled) } catch (e: Throwable) { out.delete(); throw if (e is IOException) e else IOException(e.message ?: e.javaClass.simpleName) }
+        progress.report(1L, 1L, out.name)
+        return listOf(out)
+    }
+}
