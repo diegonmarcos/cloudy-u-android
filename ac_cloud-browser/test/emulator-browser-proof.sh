@@ -125,6 +125,7 @@ if grep -q "$BPKG" "$OUT/image-top.txt"; then ok "I1 Open with Cloud Browser lan
 grep -qE '[0-9]+ / [0-9]+|Info' "$OUT/image-open.xml" && ok "I1 the image page is showing (counter / Info control in the ui dump)" || echo "NOTE  I1 page text not in the ui dump (image-open.png)"
 # the print route: the tab row's Browsing Tools sheet holds Convert to PDF (page tools); scroll the sheet until the row is on screen
 tap 'Browsing Tools' || true
+tap '^Page Tools$' || true   # the sheet opens on Actions; Convert to PDF and Print... are Page Tools rows
 SW2=$(adb shell wm size | tr -d "\r" | grep -oE "[0-9]+x[0-9]+" | tail -1); SWX=$(( ${SW2%x*} / 2 )); SWH=${SW2#*x}
 for _ in 1 2 3 4 5 6 7 8; do
   dump _menu; grep -q 'Convert to PDF' "$OUT/_menu.xml" && break
