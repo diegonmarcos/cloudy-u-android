@@ -291,6 +291,13 @@ class StoreCloudFragment : KitComposeFragment() {
         // that is still pending again, then repaint the rows.
         context?.applicationContext?.let { c ->
             thread(name = "store-install-watch") {
+                // #1735 our stale installer sessions are reclaimed as the Store comes up, and harder when the budget is spent,
+                // so "Install all" never starts against a cap the last run filled.
+                runCatching {
+                    com.diegonmarcos.superapp.updater.install.InstallSessions.reapOwn(c,
+                        aggressive = com.diegonmarcos.superapp.updater.install.InstallSessions.openCount(c) >=
+                            com.diegonmarcos.superapp.updater.install.InstallSessions.BUDGET_CAP)
+                }
                 // Repaint only when a handover was resolved: the first resume
                 // must not jump ahead of #857's updates-first refresh.
                 if (runCatching { StoreInstallWatch.onForeground(c, fleet) }.getOrDefault(false))

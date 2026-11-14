@@ -16,6 +16,7 @@
             android:permission="android.permission.DUMP">
             <intent-filter>
                 <action android:name="com.diegonmarcos.cloud.action.TEST_UNPACK" />
+                <action android:name="com.diegonmarcos.cloud.action.TEST_SESSIONS" />
             </intent-filter>
         </receiver>
     </application>

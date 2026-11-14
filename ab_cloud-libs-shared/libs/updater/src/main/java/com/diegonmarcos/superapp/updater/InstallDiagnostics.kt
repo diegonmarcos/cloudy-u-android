@@ -80,9 +80,8 @@ object InstallDiagnostics {
         }.getOrDefault(false))
         // Android caps an installer at 50 concurrent sessions; leaked ones are
         // invisible and eventually make every install fail.
-        line("our open sessions", runCatching {
-            ctx.packageManager.packageInstaller.mySessions.size
-        }.getOrDefault(-1))
+        line("our open sessions", openSessions(ctx))
+        line("session budget", "${com.diegonmarcos.superapp.updater.install.InstallSessions.BUDGET_CAP} (Android's cap is 50)")
 
         sb.append("\n── installed copy ─────────────────────────────────\n")
         val info = runCatching { ctx.packageManager.getPackageInfo(pkg, 0) }.getOrNull()
@@ -117,6 +116,18 @@ object InstallDiagnostics {
         }.getOrElse { "(unavailable: ${it.message})\n" })
         sb.append("\nFull live log: Configs > About > Logcat (All | Errors, copy-all).\n")
         return sb.toString()
+    }
+
+    /** #1735 How many PackageInstaller sessions this app holds open (-1 unreadable). */
+    fun openSessions(ctx: Context): Int = com.diegonmarcos.superapp.updater.install.InstallSessions.openCount(ctx)
+
+    /** #1735 Reap on demand (the Diagnose button): returns "N open before, M abandoned, K now". Never throws. */
+    fun reapSessions(ctx: Context): String {
+        val before = openSessions(ctx)
+        val n = com.diegonmarcos.superapp.updater.install.InstallSessions.reapOwn(ctx, aggressive = true)
+        val msg = "open sessions: $before before, $n abandoned, ${openSessions(ctx)} now"
+        recordSession(ctx, ctx.packageName, "reaped", msg)
+        return msg
     }
 
     // ── #1675 the session log: what each install session did (silent / prompted / failed + Android's message) ──────────

@@ -322,3 +322,14 @@ jobs:
     uses: ./.github/workflows/test-store-unpack-cross-process.yml
     with:
       store_artifact_prefix: "Cloud-Store-x86_64-"
+
+  # #1735 40 installs on the real PackageInstaller leave zero open sessions (the phone hit Android's 50-session cap).
+  store_install_sessions:
+    needs: build_and_publish
+    if: ${{ !cancelled() && needs.build_and_publish.result == 'success' }}
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/test-store-install-sessions.yml
+    with:
+      store_artifact_prefix: "Cloud-Store-x86_64-"

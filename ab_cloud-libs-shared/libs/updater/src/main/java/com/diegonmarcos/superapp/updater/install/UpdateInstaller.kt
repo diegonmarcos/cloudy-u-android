@@ -150,11 +150,16 @@ internal class UpdateInstaller(private val context: Context) {
         if (verdict.reason == SilentReadiness.Reason.NEW_PERMISSION)
             UpdateProgress.update(UpdateProgress.State.Waiting("$targetPackage ${verdict.line}. Android will ask you to confirm it."))
         InstallDiagnostics.recordSession(context, targetPackage, "committing", verdict.line)
-        reapStaleSessions(installer)
         supersedeOlderSessions(installer, targetPackage)
-        val sessionId = installer.createSession(params)
-        SilentReadiness.markCommitted(targetPackage)
+        // #1735 reap our stale sessions, and on the platform's cap error reap harder and back off (never a blind retry).
+        val port = InstallSessions.AndroidPort(installer, params)
+        val sessionId = InstallSessions.open(port, keep = setOf(targetPackage),
+            onSuperseded = { SupersededSessions.add(context, it) }, onUndo = { SupersededSessions.consume(context, it) })
+        // #1735 committed or abandoned on EVERY path: the abandon is in a finally, so an exception, a timeout or a
+        // cancellation (thread interrupt) between create and commit cannot leave the session open.
+        var committed = false
         try {
+            SilentReadiness.markCommitted(targetPackage)
             installer.openSession(sessionId).use { session ->
                 // Declare the length ONCE and re-check it after the copy. The
                 // session is told to expect exactly this many bytes; if the file
@@ -221,20 +226,15 @@ internal class UpdateInstaller(private val context: Context) {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
                 )
                 session.commit(callback.intentSender)
+                committed = true
             }
-        } catch (t: Throwable) {
-            // Session.close() (what `use` does) only releases OUR handle - the
-            // session itself stays alive in the system until it is committed or
-            // abandoned, and survives reboots in /data/system/install_sessions.xml.
-            // So every failed install used to burn one of the 50 slots Android
-            // allows an installer without INSTALL_PACKAGES, permanently, until
-            // the whole fleet install died with "Too many active sessions for
-            // UID <uid>". Abandon on the way out; the throw still propagates so
-            // the caller reports Failed exactly as before.
-            runCatching { installer.abandonSession(sessionId) }
+        } finally {
+            if (!committed) runCatching { installer.abandonSession(sessionId) }
                 .onFailure { Log.w(tag, "could not abandon session $sessionId", it) }
-            throw t
         }
+        // Session.close() (what `use` does) only releases OUR handle - the session stays alive in the system until it is
+        // committed or abandoned, and survives reboots. The finally above is what keeps every failed install from burning
+        // one of the 50 slots Android allows an installer without INSTALL_PACKAGES ("Too many active sessions for UID").
         Log.i(tag, "PackageInstaller session $sessionId committed for ${apk.name}")
     }
 
@@ -351,85 +351,9 @@ internal class UpdateInstaller(private val context: Context) {
         return (NEAR_CAP - HEADROOM - held).coerceAtLeast(0)
     }
 
-    /**
-     * Abandon our own leftover sessions before opening a new one.
-     *
-     * Android caps an installer that lacks INSTALL_PACKAGES (signature|privileged
-     * - a sideloaded APK cannot hold it) at 50 concurrent sessions, then refuses
-     * every new one. The catch above stops NEW leaks; this clears the ones a
-     * device is already carrying, so an affected phone heals itself on the next
-     * install instead of needing `pm install-abandon` over adb.
-     *
-     * Only sessions we own are visible here (mySessions), so this can never
-     * disturb another installer's work.
-     */
+    /** #1735 Reap our stale sessions (policy and why: [InstallSessions]). Uncommitted leftovers only; the cap path is in [InstallSessions.open]. */
     private fun reapStaleSessions(installer: PackageInstaller) {
-        val mine = runCatching { installer.mySessions }.getOrNull().orEmpty()
-        if (mine.isEmpty()) return
-
-        // Never touch a session a client currently has open - that is a real
-        // install in flight. Everything else is ours to reclaim.
-        val idle = mine.filterNot { it.isActive }
-        if (idle.isEmpty()) return
-
-        val now = System.currentTimeMillis()
-        fun createdAt(info: PackageInstaller.SessionInfo): Long =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) info.createdMillis else 0L
-
-        val victims = when {
-            // AT THE CAP the cap IS the problem: createSession fails outright,
-            // so "wait until they are an hour old" means an hour of failed
-            // installs. That is exactly the state one "Install all" over the
-            // fleet produces - dozens of sessions held open by unanswered
-            // install prompts, none of them old. Oldest first, freeing enough
-            // slots to work in and keeping the newest, which is the one the
-            // user is most likely looking at right now. Losing a pending prompt
-            // is recoverable; a permanently stuck installer is not.
-            // BUDGET_CAP, not NEAR_CAP. freeSessionSlots hits zero at
-            // NEAR_CAP - HEADROOM held sessions, which is eight BELOW the
-            // number this branch used to wait for — so a device carrying 32
-            // to 39 unanswered prompts had a budget of zero while this reaper
-            // still considered it healthy and reclaimed nothing. Every pass
-            // then took no apps and reported "0 installable", permanently,
-            // with no way out but answering prompts by hand. Reaping at the
-            // number the budget actually uses makes the two agree by
-            // construction rather than by coincidence.
-            //
-            // #1551 and NEVER a COMMITTED one here either. A committed session is
-            // an install handed to Android and waiting on the user's tap (or on
-            // the system); abandoning it is what answered INSTALL_FAILED_ABORTED
-            // "Session was abandoned" for apps whose prompt was still pending,
-            // and that note then held them off every later pass. Only
-            // uncommitted leftovers are reclaimed at the cap; committed ones are
-            // bounded at ONE per package by [supersedeOlderSessions].
-            mine.size >= BUDGET_CAP ->
-                idle.filter { Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || !it.isCommitted }
-                    .sortedBy(::createdAt)
-                    .take((mine.size - BUDGET_CAP + HEADROOM).coerceAtLeast(1))
-
-            // Below the cap there is no urgency, so only reclaim sessions old
-            // enough that they cannot still be a prompt awaiting an answer.
-            //
-            // #588: and NEVER a COMMITTED one. A committed session is not
-            // `isActive` (the platform counts open handles, and commit closes
-            // ours), so "idle" included every install sitting behind a
-            // tap-to-finish notification. An hour later the next install
-            // abandoned it, and the user's tap on that notification answered
-            // INSTALL_FAILED_ABORTED "Session was abandoned" — the -115s on the
-            // phone. Only uncommitted leftovers (a write that died) are junk.
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
-                idle.filter { !it.isCommitted && now - it.createdMillis > STALE_SESSION_MS }
-
-            // createdMillis is API 29+. With no age to test, do nothing until
-            // the at-cap branch above takes over.
-            else -> emptyList()
-        }
-
-        var reaped = 0
-        for (info in victims) {
-            if (runCatching { installer.abandonSession(info.sessionId) }.isSuccess) reaped++
-        }
-        if (reaped > 0) Log.w(tag, "abandoned $reaped of ${mine.size} install session(s)")
+        InstallSessions.reap(InstallSessions.AndroidPort(installer), System.currentTimeMillis(), aggressive = false)
     }
 
     /**
@@ -455,18 +379,7 @@ internal class UpdateInstaller(private val context: Context) {
     }
 
     private companion object {
-        /** Android's own limit for an installer without INSTALL_PACKAGES is 50. */
-        const val NEAR_CAP = 40
-        /** Slots to free when we are already at the cap. */
-        const val HEADROOM = 8
-        /**
-         * The held-session count at which [freeSessionSlots] reports zero —
-         * the point where installs actually stop. Derived, never a second
-         * literal: the reaper and the budget must be talking about the same
-         * number, and when they were not, the eight-session gap between them
-         * was a state a device could never leave.
-         */
-        const val BUDGET_CAP = NEAR_CAP - HEADROOM
-        const val STALE_SESSION_MS = 60L * 60L * 1000L
+        const val NEAR_CAP = InstallSessions.NEAR_CAP
+        const val HEADROOM = InstallSessions.HEADROOM
     }
 }

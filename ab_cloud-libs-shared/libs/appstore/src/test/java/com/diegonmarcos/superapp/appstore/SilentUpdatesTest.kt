@@ -236,7 +236,9 @@ class SilentUpdatesTest {
         val u = "ab_cloud-libs-shared/libs/updater/src/main/java/com/diegonmarcos/superapp/updater/"
         assertTrue("Fleet.commit's session channel is the PackageInstaller session",
             repo(u + "install/InstallChannel.kt").readText().contains("UpdateInstaller(ctx).install(apk, app.pkg)"))
-        assertTrue(repo(u + "install/UpdateInstaller.kt").readText().contains("installer.createSession(params)"))
+        // #1735 the session is created through InstallSessions.open (reap + cap backoff), whose port is the one createSession call
+        assertTrue(repo(u + "install/UpdateInstaller.kt").readText().contains("InstallSessions.open(port"))
+        assertTrue(repo(u + "install/InstallSessions.kt").readText().contains("installer.createSession("))
     }
 
     @Test fun theSessionOutcomeIsLogged() {

@@ -23,6 +23,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -200,6 +201,13 @@ class UpdateOverlayFragment : Fragment() {
                 // that explains it.
                 if (st is UpdateProgress.State.Failed && !reportShown) {
                     OverlayButton("Diagnose", MaterialTheme.colorScheme.surfaceVariant, 12.dp) { showReport(ctx) }
+                }
+                // #1735 open installer sessions, and the way to free them: Android refuses new installs at 50.
+                if (st is UpdateProgress.State.Failed) {
+                    val open = remember(st) { InstallDiagnostics.openSessions(ctx) }
+                    OverlayButton("Free install sessions ($open open)", MaterialTheme.colorScheme.surfaceVariant, 8.dp) {
+                        Thread { val m = InstallDiagnostics.reapSessions(ctx.applicationContext); view?.post { toast(ctx, m) } }.start()
+                    }
                 }
                 // Copy / Save / Send, revealed with the report. Three because the phone
                 // that cannot reach the network is exactly the phone you most need the

@@ -1,0 +1,137 @@
+# ╔═══════════════════════════════════════════════════════════════════════╗
+# ║ Test → Store installer sessions never leak (emulator)                  ║
+# ║                                                                        ║
+# ║ #1735 on the phone: "Install all / Update all" failed 32 apps with     ║
+# ║ "Too many active sessions for UID": Android caps open PackageInstaller ║
+# ║ sessions per UID at 50 and the installer leaked them. This run's Store ║
+# ║ APK is installed on a clean emulator and told, by its adb-only         ║
+# ║ UnpackTestReceiver (action TEST_SESSIONS), to pre-leak 45 sessions and ║
+# ║ then run 40 installs through the production InstallSessions policy on  ║
+# ║ the REAL PackageInstaller (a quarter die before commit, the rest       ║
+# ║ commit a non-APK fixture the system answers with a failure). Required: ║
+# ║ files/session-stress-result.json ok:true, zero cap errors, zero open   ║
+# ║ sessions afterwards (the session table is also saved from dumpsys).     ║
+# ╚═══════════════════════════════════════════════════════════════════════╝
+name: "Test → Store installer sessions never leak (emulator, reusable)"
+
+on:
+  workflow_call:
+    inputs:
+      store_artifact_prefix:
+        description: "Name prefix of the x86_64 Cloud Store artifact the calling Ship run uploaded"
+        type: string
+        required: true
+      api_level:
+        type: string
+        default: "34"
+  workflow_dispatch:
+    inputs:
+      store_artifact_prefix: {type: string, default: "Cloud-Store-x86_64-"}
+      api_level: {type: string, default: "34"}
+      run_id:
+        description: "Store Ship run whose APK artifact to test"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  sessions:
+    name: "Store: 40 installs leave zero open sessions (API ${{ inputs.api_level }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Fetch this run's Store APK
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ inputs.store_artifact_prefix }}*
+          path: apk
+          run-id: ${{ inputs.run_id || github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Locate the APK
+        id: apk
+        run: |
+          set -eu
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          store=$(find apk -name '*.apk' 2>/dev/null | sort | head -1)
+          if [ -z "$store" ]; then
+            echo "No Store APK in this run (the publish gate skipped the build): nothing new to test."
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          cp "$store" store.apk
+          { echo "skip=false"; echo "store_pkg=$("$aapt2" dump packagename store.apk)"; } >> "$GITHUB_OUTPUT"
+
+      - name: Enable KVM
+        if: steps.apk.outputs.skip != 'true'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the probe
+        if: steps.apk.outputs.skip != 'true'
+        env:
+          STORE: ${{ steps.apk.outputs.store_pkg }}
+        run: |
+          printf "#!/bin/bash\nSTORE='%s'\n" "$STORE" > probe.sh
+          cat >> probe.sh <<'EOF'
+          set -u
+          mkdir -p out
+          adb root >/dev/null 2>&1 || true
+          sleep 3
+          adb wait-for-device
+          [ "$(adb shell id -u | tr -d '\r')" = 0 ] || { echo "::error::adb root is not available on this image"; exit 2; }
+          adb install -r -g store.apk || { echo "::error::Store APK install failed"; exit 2; }
+          D=/data/data/$STORE/files
+          adb shell "rm -f $D/session-stress-result.json"
+          adb logcat -c || true
+          adb shell cmd deviceidle whitelist +"$STORE" || true
+          adb shell am broadcast --include-stopped-packages -n "$STORE/com.diegonmarcos.superapp.appstore.UnpackTestReceiver" \
+            -a com.diegonmarcos.cloud.action.TEST_SESSIONS || { echo "::error::the Store test receiver did not take the broadcast"; exit 2; }
+          r=none
+          for i in $(seq 1 60); do
+            sleep 5
+            r=$(adb shell cat $D/session-stress-result.json 2>/dev/null | tr -d '\r' || true)
+            case "$r" in *'"ok":'*) break;; esac
+            r=none
+          done
+          echo "result: $r"
+          adb logcat -d -v threadtime > out/logcat.txt
+          echo "$r" > out/result.json
+          # From the outside: sessions the system still lists for the Store's uid.
+          adb shell dumpsys package "$STORE" | grep -i -E "session" > out/dumpsys-sessions.txt || true
+          fail=0
+          case "$r" in *'"ok":true'*) ;; *) echo "::error title=sessions::the 40-install run did not finish clean (result '$r')"; fail=1;; esac
+          grep -q '"open_after":0' out/result.json || { echo "::error title=sessions::open sessions remain after the run"; fail=1; }
+          if grep -q "Too many active sessions" out/logcat.txt; then echo "::warning::the platform cap was hit at least once (it was reaped and retried)"; fi
+          [ "$fail" = 0 ] || { grep -E "InstallSessions|$STORE|AndroidRuntime" out/logcat.txt | tail -60; exit 1; }
+          echo "40 installs finished with zero open sessions: $r"
+          EOF
+          chmod +x probe.sh
+
+      - name: Boot a clean emulator + probe
+        if: steps.apk.outputs.skip != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api_level }}
+          arch: x86_64
+          target: google_apis
+          disk-size: 8G
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -wipe-data -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./probe.sh
+
+      - name: Upload evidence
+        if: always() && steps.apk.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-install-sessions
+          path: out/
+          if-no-files-found: warn

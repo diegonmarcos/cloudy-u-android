@@ -154,6 +154,8 @@ android {
         unitTests {
             // The Compose tests render the real screens, which read this app's string resources.
             isIncludeAndroidResources = true
+            // #1735 the installer-session policy tests run on the JVM and call android.util.Log.
+            isReturnDefaultValues = true
         }
     }
 
