@@ -5492,7 +5492,7 @@
             "_doc": "#1737 PROXY - the SuperApp has no proxy page or setting of its own (searched: proxy, HTTP proxy, sing-box, socks: only the Store feed proxy, MediaProxy and the mesh transport, none user-facing), so this opens the system network settings (ShellActivity action open_proxy_settings: Settings > Network & internet, where the Wi-Fi network's Proxy field lives), else Settings.",
             "id": "proxy",
             "label": "Proxy",
-            "icon": "ic_link_tile",
+            "icon": "ic_ctl_mobile_data",
             "action": "action:open_proxy_settings",
             "group": "Network",
             "subgroup": ""
@@ -10959,7 +10959,7 @@
           "id": "launcher_icon_badge",
           "label": "Launcher icon badge",
           "subtitle": "The OS unread-count dot on this app's launcher icon, sourced from whichever channels are shows_badge=true.",
-          "icon": "ic_link_tile",
+          "icon": "ic_ctl_mobile_data",
           "surface": "launcher_icon_badge",
           "channel": "",
           "owner": "notificationcenter/PhoneNotificationListenerService.kt",
