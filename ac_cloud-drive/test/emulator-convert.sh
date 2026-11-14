@@ -45,7 +45,12 @@ for m in re.finditer(r"<node [^>]*>",x):
     if re.search(r"content-desc=\"More\"",n): mores.append((cx,cy))
 if ys is None or not mores: sys.exit(1)
 c=min(mores,key=lambda p:abs(p[1]-ys)); print(c[0],c[1])' "$1"; }
-open_menu() { local xy; xy=$(more_of "$1") || fail "no row/More for $1: $(texts)"; adb shell input tap $xy; sleep 2; }
+# the list pane is small: scroll it (up first, then back down) until the row is on screen
+open_menu() { local xy i; xy=$(more_of "$1")
+  for i in 1 2 3 4; do [ -n "$xy" ] && break; adb shell input swipe 160 470 160 320 300; sleep 1; xy=$(more_of "$1"); done
+  for i in 1 2 3 4 5 6 7 8; do [ -n "$xy" ] && break; adb shell input swipe 160 320 160 470 300; sleep 1; xy=$(more_of "$1"); done
+  [ -n "$xy" ] || fail "no row/More for $1: $(texts)"
+  adb shell input tap $xy; sleep 2; }
 close_menu() { adb shell input keyevent 4; sleep 1; }
 D=/storage/emulated/0/Xconv
 devhas() { adb shell "[ -s '$D/$1' ] && echo yes" | tr -d '\r' | grep -q yes; }
@@ -115,7 +120,7 @@ adb shell input tap $FIELD; sleep 1; adb shell input text Xconv; sleep 3
 adb shell dumpsys input_method | grep -q 'mInputShown=true' && { adb shell input keyevent 4; sleep 1; }
 tap '^Xconv/$' || fail "fixture folder not listed: $(texts)"
 sleep 3; shot 01-fixture-folder
-has photo.png || fail "fixtures not listed: $(texts)"
+has data.txt || fail "fixtures not listed: $(texts)"
 
 # 1. section move: Open vs Convert on a PDF row
 open_menu text.pdf; shot 02-menu-pdf
