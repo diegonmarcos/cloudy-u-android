@@ -65,6 +65,7 @@ jobs:
           aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
           PKG=$("$aapt2" dump packagename superapp.apk)
           adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW deny || true
+          adb shell appops set "$PKG" REQUEST_INSTALL_PACKAGES allow || true
           adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
           adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
           adb shell settings put global hide_error_dialogs 1 || true
