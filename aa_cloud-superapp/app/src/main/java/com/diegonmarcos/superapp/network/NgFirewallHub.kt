@@ -7,8 +7,8 @@ package com.diegonmarcos.superapp.network
  * wrapped behind the hub. Pure Kotlin (no Android types): the order, the targets and the "nothing was lost" claim are
  * testable on the JVM. Drawn by [NgFirewallHubFragment].
  *
- * Network group on the Configs page, in order: NG Firewall (this hub) | Wi-Fi, DNS, VPN | Firewall, OS Perms | Webserver,
- * Proxy (| Bluetooth, kept reachable: the owner's list did not name it and rule 16 forbids dropping a page).
+ * Network group on the Configs page, in order: NG Firewall (this hub) | Wi-Fi, Bluetooth, DNS, VPN | Firewall, OS Perms | Webserver,
+ * Proxy. Bluetooth sits right after Wi-Fi (the owner groups them as Wireless).
  */
 object NgFirewallHub {
     /** Page id of the hub in build.json::ui.sections[config]. */
@@ -16,6 +16,7 @@ object NgFirewallHub {
 
     /** Target grammar of the shell's one dispatcher (onTileClicked). */
     const val TARGET_WIFI = "page:config/wifi"
+    const val TARGET_BLUETOOTH = "page:config/bluetooth"
     const val TARGET_DNS = "page:config/dns"
     const val TARGET_VPN = "section:wg"
     const val TARGET_FIREWALL = "page:config/firewall"
@@ -31,6 +32,7 @@ object NgFirewallHub {
     data class Section(val title: String, val items: List<Item>)
 
     val WIFI = Item("wifi", "Wi-Fi", "ic_wifi", TARGET_WIFI, "wifi")
+    val BLUETOOTH = Item("bluetooth", "Bluetooth", "ic_bluetooth", TARGET_BLUETOOTH, "bluetooth")
     val DNS = Item("dns", "DNS", "ic_world", TARGET_DNS, "dns")
     val VPN = Item("vpn", "VPN", "ic_wg", TARGET_VPN, "wg")
     val FIREWALL = Item("firewall", "Firewall", "ic_lock", TARGET_FIREWALL, "firewall")
@@ -40,7 +42,7 @@ object NgFirewallHub {
 
     /** The hub's three headings and their icons, in the owner's order. */
     val SECTIONS: List<Section> = listOf(
-        Section("Connections", listOf(WIFI, DNS, VPN)),
+        Section("Connections", listOf(WIFI, BLUETOOTH, DNS, VPN)),
         Section("Firewalls", listOf(FIREWALL, PERMS)),
         Section("Servers", listOf(WEBSERVER, PROXY)),
     )
@@ -49,7 +51,7 @@ object NgFirewallHub {
 
     /** The visible pages of the Configs > Network group, in order (`|` = a separator page), as declared in build.json. */
     val CONFIGS_NETWORK_ORDER: List<String> = listOf(
-        "ng-firewall", "|", "wifi", "dns", "wg", "|", "firewall", "os-perms", "|", "webserver", "proxy", "|", "bluetooth",
+        "ng-firewall", "|", "wifi", "bluetooth", "dns", "wg", "|", "firewall", "os-perms", "|", "webserver", "proxy",
     )
 
     /**
@@ -63,7 +65,7 @@ object NgFirewallHub {
         "wg" to "VPN tile (formerly Cloud Mesh) on the Configs page and in the hub",
         "apps-access" to "OS Perms tile (Cloud Store > Access > Android Perms); the page stays declared, hidden",
         "wifi" to "Wi-Fi tile on the Configs page and in the hub",
-        "bluetooth" to "Bluetooth tile on the Configs page",
+        "bluetooth" to "Bluetooth tile on the Configs page and in the hub",
     )
 
     /** The page ids that left the grid on purpose (explicit owner removal #1719): their routes still resolve. */

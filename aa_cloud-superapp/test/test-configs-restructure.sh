@@ -155,10 +155,10 @@ check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 by = {p['id']: p for p in sec['pages']}
-net = [p['id'] for p in sec['pages'] if p.get('group') == 'Network' and p['id'] in ('ng-firewall','wifi','dns','wg','firewall','os-perms','webserver','proxy','bluetooth','apps-access','adb-shell')]   # #1737 declared order: individual icons plus the NG Firewall hub, OS Perms and Proxy
+net = [p['id'] for p in sec['pages'] if p.get('group') == 'Network' and p['id'] in ('ng-firewall','wifi','bluetooth','dns','wg','firewall','os-perms','webserver','proxy','apps-access','adb-shell')]   # #1737 declared order: individual icons plus the NG Firewall hub, OS Perms and Proxy
 tabs = by['bluetooth']['tabs']
 probs = []
-if net != ['ng-firewall', 'wifi', 'dns', 'wg', 'firewall', 'os-perms', 'webserver', 'proxy', 'bluetooth', 'apps-access', 'adb-shell']: probs.append('Network = %r' % net)
+if net != ['ng-firewall', 'wifi', 'bluetooth', 'dns', 'wg', 'firewall', 'os-perms', 'webserver', 'proxy', 'apps-access', 'adb-shell']: probs.append('Network = %r' % net)
 network = next(g for g in sec['groups'] if g['id'] == 'network')['pages']
 others = [i for g in sec['groups'] if g['id'] != 'network' for i in g['pages']]
 if not set(['bluetooth'] + tabs) <= set(network): probs.append('network group lacks bluetooth pages')

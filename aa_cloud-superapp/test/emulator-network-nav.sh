@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # #1737 Emulator proof of Configs > Network (individual icons on the Configs page) and of the NG Firewall hub:
 #   bash aa_cloud-superapp/test/emulator-network-nav.sh <superapp.apk> <out dir>
-# Opens the Configs main page and photographs the Network group (NG Firewall | Wi-Fi DNS VPN | Firewall OS Perms | Webserver Proxy), taps NG Firewall
+# Opens the Configs main page and photographs the Network group (NG Firewall | Wi-Fi Bluetooth DNS VPN | Firewall OS Perms | Webserver Proxy), taps NG Firewall
 # and photographs the hub (Connections / Firewalls / Servers with their icons), opens the Firewall (full screen, own nav Status | Apps | Rules, no
 # Back of its own: the shell arrow is the one) and returns. Fails on a missing label or heading, a unified Network tile, an ADB Shell icon, a
 # Firewall without its nav, or a crash. OS Perms, Webserver and Proxy leave the app: not tapped.
@@ -48,10 +48,10 @@ wake; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/nul
 wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:config" >/dev/null; sleep 8
 
 sleep 6; CUR=configs; cap configs-network-group-early; sleep 4; cap configs-network-group
-need "NG Firewall" "Wi-Fi" DNS VPN Firewall "OS Perms" Webserver Proxy
+need "NG Firewall" "Wi-Fi" Bluetooth DNS VPN Firewall "OS Perms" Webserver Proxy
 has "ADB Shell" && { echo "::error::the ADB Shell icon is back in Network"; fail=1; }
 tap "NG Firewall"; sleep 3; CUR=hub; cap ng-firewall-hub
-need Connections Firewalls Servers "Wi-Fi" DNS VPN Firewall "OS Perms" Webserver Proxy
+need Connections Firewalls Servers "Wi-Fi" Bluetooth DNS VPN Firewall "OS Perms" Webserver Proxy
 tap "Firewall"; sleep 3; CUR=fw; cap firewall-status
 need Status Apps Rules
 tap "Apps"; CUR=fw-apps; cap firewall-apps; need Status Apps Rules

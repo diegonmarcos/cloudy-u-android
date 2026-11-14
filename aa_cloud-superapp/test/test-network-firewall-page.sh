@@ -22,7 +22,7 @@ pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'
 print(','.join(('|' if p.get('separator') else p['label']) for p in pages if p.get('group') == 'Network' and not p.get('hidden')))
 PY
 )"
-[ "$got" = "NG Firewall,|,Wi-Fi,DNS,VPN,|,Firewall,OS Perms,|,Webserver,Proxy,|,Bluetooth" ] && ok "Network = $got" || bad "Network order is: $got"
+[ "$got" = "NG Firewall,|,Wi-Fi,Bluetooth,DNS,VPN,|,Firewall,OS Perms,|,Webserver,Proxy" ] && ok "Network = $got" || bad "Network order is: $got"
 
 echo "== F2: Firewall page hosts the controls =="
 grep -qE 'pageId == "firewall" +-> .*NgFirewallFragment\.newInstance\(\)' "$KT/launcher/SectionPages.kt" \

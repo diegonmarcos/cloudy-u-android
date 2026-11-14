@@ -62,15 +62,15 @@ echo "== D1: the page =="
 out="$(python3 - "$BJ" <<'EOF'
 import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
-mesh = [p['id'] for p in pages if p.get('group') == 'Network' and p['id'] in ('ng-firewall','wifi','dns','wg','firewall','os-perms','webserver','proxy','bluetooth','apps-access','adb-shell')]  # #1737 declared order  # #1623 Network is a top-level group (no subgroup)
+mesh = [p['id'] for p in pages if p.get('group') == 'Network' and p['id'] in ('ng-firewall','wifi','bluetooth','dns','wg','firewall','os-perms','webserver','proxy','apps-access','adb-shell')]  # #1737 declared order  # #1623 Network is a top-level group (no subgroup)
 dns = next((p for p in pages if p['id'] == 'dns'), {})
 print('MESH', ','.join(mesh))
 print('LABEL', dns.get('label'), dns.get('hidden', False))
 EOF
 )"
 echo "$out" | sed 's/^/    /'
-echo "$out" | grep -qE '^MESH ng-firewall,wifi,dns,wg,' && ok "DNS is the tile right after Wi-Fi, before VPN (was Cloud Mesh), in the Network group (#1737)" \
-  || bad "config/dns is not declared right after wifi and before wg in the Network group"
+echo "$out" | grep -qE '^MESH ng-firewall,wifi,bluetooth,dns,wg,' && ok "DNS is the tile right after Wi-Fi and Bluetooth, before VPN (was Cloud Mesh), in the Network group (#1737)" \
+  || bad "config/dns is not declared right after wifi, bluetooth and before wg in the Network group"
 echo "$out" | grep -qx 'LABEL DNS False' && ok "the page reads DNS and is a visible tile" \
   || bad "config/dns is missing, hidden or not labelled DNS"
 grep -qE 'pageId == "dns" +-> com\.diegonmarcos\.superapp\.network\.DnsFragment\.newInstance\(\)' "$PAGES" \

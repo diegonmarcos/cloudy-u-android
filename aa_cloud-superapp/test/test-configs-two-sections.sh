@@ -77,7 +77,7 @@ def members(g, s=''):
 want = {
     # #1623 one page, six top-level groups
     ('Launcher', ''): ['Quick Actions', 'UI', 'Folders', 'One-Hand', '|', 'Notify'],  # the | separates One-Hand from Notify
-    ('Network', ''):  ['NG Firewall', '|', 'Wi-Fi', 'DNS', 'VPN', '|', 'Firewall', 'OS Perms', '|', 'Webserver', 'Proxy', '|', 'Bluetooth'],  # #1737 individual icons again (the #1719 unified Network page is retired into the NG Firewall hub)
+    ('Network', ''):  ['NG Firewall', '|', 'Wi-Fi', 'Bluetooth', 'DNS', 'VPN', '|', 'Firewall', 'OS Perms', '|', 'Webserver', 'Proxy'],  # #1737 individual icons again (the #1719 unified Network page is retired into the NG Firewall hub)
     ('Apps', ''):     ['Store'],
     ('Connect', ''):  ['Account', 'Cloudy C3', 'Peer Control'],
     ('Tools', ''):    ['Watchdog', '|', 'X-Ray Device', 'Logcat Fleet', 'Agents'],  # Watchdog -> extapp:c3-watchdog; the | before the observability pair; Agents is the in-app hub (the owner's dual listing, kept once here)
@@ -87,7 +87,7 @@ problems = ['%s%s = %r' % (g, ' ▸ ' + s if s else '', members(g, s))
             for (g, s), exp in want.items() if members(g, s) != exp]
 print('; '.join(problems) or 'OK')
 PY
-)" "Launcher = Quick Actions/UI/Folders/One-Hand | Notify; Network = NG Firewall hub/Wi-Fi/DNS/VPN/Firewall/OS Perms/Webserver/Proxy/Bluetooth (#1737); Apps = Store; Connect = Account/Cloudy C3/Peer Control; Tools = Watchdog | X-Ray Device/Logcat Fleet/Agents; Configs = Perms/Logcat/X-Ray App/About (#1623)"
+)" "Launcher = Quick Actions/UI/Folders/One-Hand | Notify; Network = NG Firewall hub/Wi-Fi/Bluetooth/DNS/VPN/Firewall/OS Perms/Webserver/Proxy (#1737); Apps = Store; Connect = Account/Cloudy C3/Peer Control; Tools = Watchdog | X-Ray Device/Logcat Fleet/Agents; Configs = Perms/Logcat/X-Ray App/About (#1623)"
 
 echo "== T3: Store is the former Constellation, and Cloud Constellation is INSIDE it =="
 # #563 renamed the Constellation page Store; the word survives as the label of
@@ -231,9 +231,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 65 ] \
-  && ok "65 config pages declared (#1737: the #1719 Network page is retired; added the NG Firewall hub, OS Perms, Proxy and four Network separators) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
-  || bad "$COUNT config pages, expected 65 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 64 ] \
+  && ok "64 config pages declared (#1737: the #1719 Network page is retired; added the NG Firewall hub, OS Perms, Proxy and three Network separators) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
+  || bad "$COUNT config pages, expected 64 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS — the single shared row (#1610) =="
 # #1610 downgraded the ticket's two per-subpage Actions columns to ONE shared row
@@ -339,7 +339,7 @@ BEFORE = {'network', 'bluetooth-analyze', 'bluetooth-locate', 'presets', 'contro
           'sync-clipboard', 'saving-mode', 'focus-mode',  # #1610 added on purpose: the three Actions-row entries (Focus Mode opens the #1596 focus page)
           'focus',  # #1596 added on purpose: the hidden Focus Mode switch page (page:config/focus, FocusModeFragment)
           'tools-sep-1',  # #1623 added on purpose: the Tools group | separator (Watchdog | X-Ray Device, Logcat Fleet, Agents)
-          'ng-firewall', 'os-perms', 'proxy', 'network-sep-a', 'network-sep-b', 'network-sep-c', 'network-sep-d'}  # #1737 added on purpose: the NG Firewall hub, OS Perms (Store Access > Android Perms), Proxy (system network settings) and the four | separators of the Network group
+          'ng-firewall', 'os-perms', 'proxy', 'network-sep-a', 'network-sep-b', 'network-sep-c'}  # #1737 added on purpose: the NG Firewall hub, OS Perms (Store Access > Android Perms), Proxy (system network settings) and the three | separators of the Network group
 sec     = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
                if s['id'] == 'config')
 pages   = sec['pages']
@@ -432,8 +432,8 @@ for g, s, label, icon in tiles:
 want = ['H:LAUNCHER',
         'Quick Actions[ic_home]', 'UI[ic_ctl_brightness]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', '|[None]', 'Notify[ic_rss]',
         'H:NETWORK',
-        'NG Firewall[ic_act_shield]', '|[None]', 'Wi-Fi[ic_wifi]', 'DNS[ic_world]', 'VPN[ic_wg]', '|[None]',   # #1737 individual icons again; the NG Firewall hub opens a page listing them
-        'Firewall[ic_lock]', 'OS Perms[ic_act_key]', '|[None]', 'Webserver[ic_web]', 'Proxy[ic_ctl_mobile_data]', '|[None]', 'Bluetooth[ic_bluetooth]',   # the ADB Shell icon stays removed (#1719); Apps Access is hidden
+        'NG Firewall[ic_act_shield]', '|[None]', 'Wi-Fi[ic_wifi]', 'Bluetooth[ic_bluetooth]', 'DNS[ic_world]', 'VPN[ic_wg]', '|[None]',   # #1737 individual icons again; the NG Firewall hub opens a page listing them
+        'Firewall[ic_lock]', 'OS Perms[ic_act_key]', '|[None]', 'Webserver[ic_web]', 'Proxy[ic_ctl_mobile_data]',   # the ADB Shell icon stays removed (#1719); Apps Access is hidden
         'H:APPS',
         'Store[ic_storefront]',
         'H:CONNECT',
@@ -450,7 +450,7 @@ else:
     print('rendered != spec: ' + ' | '.join(l for l in difflib.unified_diff(want, out, lineterm='', n=0)
                                            if l[:1] in '+-' and l[:3] not in ('+++', '---')))
 PY
-)" "grid = LAUNCHER[Quick Actions,UI,Folders,One-Hand | Notify] NETWORK[NG Firewall | Wi-Fi,DNS,VPN | Firewall,OS Perms | Webserver,Proxy | Bluetooth] APPS[Store] CONNECT[Account,Cloudy C3,Peer Control] TOOLS[Watchdog | X-Ray Device,Logcat Fleet,Agents] CONFIGS[Perms,Logcat,X-Ray App,About] ACTIONS[Update All,KDE Connect,Animations,Sync Clipboard,Saving Mode,Focus Mode] (#1623)"
+)" "grid = LAUNCHER[Quick Actions,UI,Folders,One-Hand | Notify] NETWORK[NG Firewall | Wi-Fi,Bluetooth,DNS,VPN | Firewall,OS Perms | Webserver,Proxy] APPS[Store] CONNECT[Account,Cloudy C3,Peer Control] TOOLS[Watchdog | X-Ray Device,Logcat Fleet,Agents] CONFIGS[Perms,Logcat,X-Ray App,About] ACTIONS[Update All,KDE Connect,Animations,Sync Clipboard,Saving Mode,Focus Mode] (#1623)"
 
 echo "== T12: THE AI PAGE IS GONE, not hidden — no route, target or tile names it (#723) =="
 # Deleting a declaration and leaving its door behind is the dead-tile failure:

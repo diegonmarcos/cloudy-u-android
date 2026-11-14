@@ -53,9 +53,9 @@ class SubgroupHubTest : KitPageHarness() {
         assertEquals(listOf("X-Ray Device", "Logcat Fleet"),
             grp("Tools").filter { it.id == "xray" || it.id == "logcat-fleet" }.map { it.label })
         // #1737 the Network group shows the individual icons on the Configs page, in the owner's order, `|` between the sub-groups:
-        // NG Firewall (hub) | Wi-Fi DNS VPN | Firewall OS Perms | Webserver Proxy (| Bluetooth, kept reachable, rule 16).
-        assertEquals(listOf("ng-firewall", "wifi", "dns", "wg", "firewall", "os-perms", "webserver", "proxy", "bluetooth"), grp("Network").map { it.id })
-        assertEquals(listOf("NG Firewall", "Wi-Fi", "DNS", "VPN", "Firewall", "OS Perms", "Webserver", "Proxy", "Bluetooth"), grp("Network").map { it.label })
+        // NG Firewall (hub) | Wi-Fi Bluetooth DNS VPN | Firewall OS Perms | Webserver Proxy; Bluetooth right after Wi-Fi.
+        assertEquals(listOf("ng-firewall", "wifi", "bluetooth", "dns", "wg", "firewall", "os-perms", "webserver", "proxy"), grp("Network").map { it.id })
+        assertEquals(listOf("NG Firewall", "Wi-Fi", "Bluetooth", "DNS", "VPN", "Firewall", "OS Perms", "Webserver", "Proxy"), grp("Network").map { it.label })
         assertEquals(NgFirewallHub.CONFIGS_NETWORK_ORDER,
             config.allPages.filter { it.group == "Network" && !it.hidden }.map { if (it.separator) "|" else it.id })
         assertTrue("no unified Network page", config.allPages.none { it.id == "network" })
@@ -67,7 +67,7 @@ class SubgroupHubTest : KitPageHarness() {
         // #1623: agents-watchdog hubs the Network group (hub_sections name the group now that subgroups are flattened away).
         assertEquals(listOf("Network"), hub("agents-watchdog").map { it.title })
         // #1737 rule 16: the Agents hub lists the individual items (every old Network page except the removed ADB Shell), plus the NG Firewall hub tile.
-        assertEquals(listOf("ng-firewall", "wifi", "dns", "wg", "firewall", "os-perms", "webserver", "proxy", "bluetooth", "apps-access"),
+        assertEquals(listOf("ng-firewall", "wifi", "bluetooth", "dns", "wg", "firewall", "os-perms", "webserver", "proxy", "apps-access"),
             hub("agents-watchdog")[0].tiles.map { it.id })
     }
 

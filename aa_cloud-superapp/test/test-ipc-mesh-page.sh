@@ -15,7 +15,7 @@ check() {  # check <app dir> <page file>
   python3 - "$A/build.json" <<'PY' || { echo "  FAIL: R1 Configs must hold one Apps Access tile and no ipc / apps-mesh page of its own (2..8 Network tiles)"; f=$((f+1)); }
 import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
-net = [p['id'] for p in pages if p.get('group') == 'Network' and p['id'] in ('ng-firewall','wifi','dns','wg','firewall','os-perms','webserver','proxy','bluetooth','apps-access','adb-shell')]  # #1737 the Network group's declared pages (Apps Access hidden, reached from OS Perms)  # #1623 Network is a top-level group (no subgroup)
+net = [p['id'] for p in pages if p.get('group') == 'Network' and p['id'] in ('ng-firewall','wifi','bluetooth','dns','wg','firewall','os-perms','webserver','proxy','apps-access','adb-shell')]  # #1737 the Network group's declared pages (Apps Access hidden, reached from OS Perms)  # #1623 Network is a top-level group (no subgroup)
 ids = {p['id'] for p in pages}
 ok = 'apps-access' in net and not ({'ipc', 'apps-mesh', 'apps-mesh-members'} & ids) and 2 <= len([i for i in net if not next(p for p in pages if p['id'] == i).get('hidden')]) <= 9
 sys.exit(0 if ok else 1)

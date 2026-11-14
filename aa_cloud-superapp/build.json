@@ -5199,6 +5199,7 @@
               "ng-firewall",
               "network-sep-a",
               "wifi",
+              "bluetooth",
               "dns",
               "wg",
               "network-sep-b",
@@ -5207,8 +5208,6 @@
               "network-sep-c",
               "webserver",
               "proxy",
-              "network-sep-d",
-              "bluetooth",
               "apps-access",
               "adb-shell",
               "adb-status",
@@ -5429,6 +5428,23 @@
             "subgroup": ""
           },
           {
+            "_doc": "#1221 Configs ▸ Setup ▸ Network ▸ Bluetooth (moved from the Fleet group, now Cloudy C3; the id and its seven tabs are unchanged): the phone's Bluetooth as a page over libs:bluetooth (BluetoothFragment draws BluetoothPanel). Tabs, one shared stack so a connection survives a tab switch: Find (scan with name / service / RSSI filters, the device list, paired devices), Analyze, Locate, Connect (the selected device: connect, bond, GATT discovery, MTU, RSSI), Interact (the live dashboard and the GATT tree: read, write, notify, indicate, descriptors), Debug (the ATT event log, copy and export) and Dev (raw hex write, test payloads, notify stream, permissions, adb grant commands). The known services, characteristics, decoders, filter presets and payloads are DATA (libs/bluetooth assets/bluetooth/gatt-catalog.json). hidden tabs: reached through the Bluetooth strip.",
+            "id": "bluetooth",
+            "label": "Bluetooth",
+            "icon": "ic_bluetooth",
+            "tabs": [
+              "bluetooth-find",
+              "bluetooth-analyze",
+              "bluetooth-locate",
+              "bluetooth-connect",
+              "bluetooth-interact",
+              "bluetooth-debug",
+              "bluetooth-dev"
+            ],
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
             "_doc": "#740 DNS — the fleet's resolver, chosen once and applied at the SuperApp VPN (ui.dns is its declaration; network/DnsFragment.kt draws it). Sits right after Firewall (Webserver follows it) and before Cloud Mesh: Network reads C3, Peer Control, |, Firewall, DNS, Cloud Mesh, Apps Mesh.",
             "id": "dns",
             "label": "DNS",
@@ -5494,31 +5510,6 @@
             "label": "Proxy",
             "icon": "ic_ctl_mobile_data",
             "action": "action:open_proxy_settings",
-            "group": "Network",
-            "subgroup": ""
-          },
-          {
-            "_doc": "#1737 The | between Network sub-groups on the Configs main page: a CHARACTER, not a tile (`separator: true`).",
-            "id": "network-sep-d",
-            "label": "|",
-            "separator": true,
-            "group": "Network",
-            "subgroup": ""
-          },
-          {
-            "_doc": "#1221 Configs ▸ Setup ▸ Network ▸ Bluetooth (moved from the Fleet group, now Cloudy C3; the id and its seven tabs are unchanged): the phone's Bluetooth as a page over libs:bluetooth (BluetoothFragment draws BluetoothPanel). Tabs, one shared stack so a connection survives a tab switch: Find (scan with name / service / RSSI filters, the device list, paired devices), Analyze, Locate, Connect (the selected device: connect, bond, GATT discovery, MTU, RSSI), Interact (the live dashboard and the GATT tree: read, write, notify, indicate, descriptors), Debug (the ATT event log, copy and export) and Dev (raw hex write, test payloads, notify stream, permissions, adb grant commands). The known services, characteristics, decoders, filter presets and payloads are DATA (libs/bluetooth assets/bluetooth/gatt-catalog.json). hidden tabs: reached through the Bluetooth strip.",
-            "id": "bluetooth",
-            "label": "Bluetooth",
-            "icon": "ic_bluetooth",
-            "tabs": [
-              "bluetooth-find",
-              "bluetooth-analyze",
-              "bluetooth-locate",
-              "bluetooth-connect",
-              "bluetooth-interact",
-              "bluetooth-debug",
-              "bluetooth-dev"
-            ],
             "group": "Network",
             "subgroup": ""
           },

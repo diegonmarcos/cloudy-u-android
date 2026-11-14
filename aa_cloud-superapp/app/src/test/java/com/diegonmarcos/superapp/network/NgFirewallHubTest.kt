@@ -43,9 +43,9 @@ class NgFirewallHubTest {
 
     @Test fun `N1 the hub has the owner's three headings and icons in order`() {
         assertEquals(listOf("Connections", "Firewalls", "Servers"), NgFirewallHub.SECTIONS.map { it.title })
-        assertEquals(listOf(listOf("Wi-Fi", "DNS", "VPN"), listOf("Firewall", "OS Perms"), listOf("Webserver", "Proxy")),
+        assertEquals(listOf(listOf("Wi-Fi", "Bluetooth", "DNS", "VPN"), listOf("Firewall", "OS Perms"), listOf("Webserver", "Proxy")),
             NgFirewallHub.SECTIONS.map { s -> s.items.map { it.label } })
-        assertEquals(7, NgFirewallHub.ITEMS.size)
+        assertEquals(8, NgFirewallHub.ITEMS.size)
         assertEquals(NgFirewallHub.ITEMS.size, NgFirewallHub.ITEMS.map { it.id }.toSet().size)
     }
 
@@ -72,7 +72,7 @@ class NgFirewallHubTest {
         assertFalse("no unified Network page", pages().any { it.getString("id") == "network" })
         val visible = all.filter { !it.optBoolean("hidden") }.map { if (it.optBoolean("separator")) "|" else it.getString("id") }
         assertEquals(NgFirewallHub.CONFIGS_NETWORK_ORDER, visible)
-        assertEquals(listOf("NG Firewall", "|", "Wi-Fi", "DNS", "VPN", "|", "Firewall", "OS Perms", "|", "Webserver", "Proxy", "|", "Bluetooth"),
+        assertEquals(listOf("NG Firewall", "|", "Wi-Fi", "Bluetooth", "DNS", "VPN", "|", "Firewall", "OS Perms", "|", "Webserver", "Proxy"),
             all.filter { !it.optBoolean("hidden") }.map { it.getString("label") })
         // every previous page reaches a tile: its own, or (Apps Access) the OS Perms tile and the Agents hub listing
         for (id in listOf("firewall", "dns", "webserver", "wg", "wifi", "bluetooth")) assertFalse("$id is visible", byId.getValue(id).optBoolean("hidden"))

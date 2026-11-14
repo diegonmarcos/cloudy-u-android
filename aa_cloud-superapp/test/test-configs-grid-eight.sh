@@ -62,7 +62,7 @@ pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'
 print(','.join(('|' if p.get('separator') else p['label']) for p in pages if p.get('group') == 'Network' and not p.get('hidden')))   # #1737 the visible Network group, individual icons
 PY
 )"
-[ "$got" = "NG Firewall,|,Wi-Fi,DNS,VPN,|,Firewall,OS Perms,|,Webserver,Proxy,|,Bluetooth" ] && ok "Network = $got" || bad "Network is: $got"
+[ "$got" = "NG Firewall,|,Wi-Fi,Bluetooth,DNS,VPN,|,Firewall,OS Perms,|,Webserver,Proxy" ] && ok "Network = $got" || bad "Network is: $got"
 
 echo "== G5: Home row =="
 grep -q 'referenced.pages.filterNot { it.separator }' "$KT/Sections.kt" && ok "Home Configs row skips separator pages" || bad "Home row would draw the separator as a cell"
