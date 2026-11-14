@@ -53,7 +53,7 @@ class NavWalkSeedReceiver : BroadcastReceiver() {
                             id = "navwalk-m$i", accountId = id, mailboxId = "navwalk-inbox", threadId = "navwalk-t$i",
                             subject = "Seed message ${n - i + 1} of $n", preview = "Cached mail number ${n - i + 1}",
                             receivedAt = java.time.Instant.ofEpochMilli(now - i * 3_600_000L).toString(),
-                            fromName = "Sender ${i % 7}", fromEmail = "sender${i % 7}@navwalk.invalid",
+                            fromName = "Sender $i", fromEmail = "sender$i@d$i.example", fromDomain = "d$i.example",
                             seen = i % 3 != 0, flagged = false, hasAttachment = false, sortKey = now - i * 3_600_000L,
                         )
                     })
