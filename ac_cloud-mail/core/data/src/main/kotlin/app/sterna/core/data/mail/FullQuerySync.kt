@@ -12,15 +12,12 @@ internal suspend fun <P, R> fullQueryWriteThrough(
     spareIds: suspend () -> List<String>,
     // Given the walk's own answer too: IMAP resolves the folder to reconcile while walking.
     reconcile: suspend (walked: R, keepIds: Set<String>, spareIds: List<String>, evictableIds: Set<String>?) -> Unit,
-    // A walk can finish and still be a stale answer (#1752): false skips the reconcile, never the writes.
-    mayReconcile: suspend (walked: R, before: Set<String>?) -> Boolean = { _, _ -> true },
 ): R {
     // Before the walk, and nowhere else: [writePage] writes into this folder as the walk runs.
     val before = folderIds()
     val walked = walk(writePage)
     // Returning is necessary, not sufficient: the walk can return having learned nothing.
     val keep = keepIds(walked) ?: return walked
-    if (!mayReconcile(walked, before)) return walked
     val spare = spareIds()
     // [before] is the DELETE's bound, not an addition to [keep]: the reconcile re-reads (#165).
     reconcile(walked, keep, spare, before)

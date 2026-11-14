@@ -43,44 +43,6 @@ class CacheFirstSyncTest {
         assertEquals("chunk 1 stayed", before + server.ids.take(INITIAL_PAGE_LIMIT), cache)
     }
 
-    @Test fun `a stale walk that finished does not reconcile and an honest one does`() {
-        val cache = (1..100).map { "m$it" }.toMutableSet()
-        var reconciled = false
-        val keep = setOf("m90", "m91")
-        runBlocking {
-            fullQueryWriteThrough<List<String>, List<String>>(
-                folderIds = { cache.toSet() },
-                walk = { it(listOf("m90")); listOf("m90", "m91") },
-                writePage = { cache += it },
-                keepIds = { keep },
-                spareIds = { emptyList() },
-                reconcile = { _, _, _, _ -> reconciled = true },
-                mayReconcile = { _, _ -> reconcileAnswerIsCurrent(cachedNewestBefore = 2_000L, walkNewest = 1_000L) },
-            )
-        }
-        assertFalse("a walk older than the cache must never delete the newer mail", reconciled)
-        runBlocking {
-            fullQueryWriteThrough<List<String>, List<String>>(
-                folderIds = { cache.toSet() },
-                walk = { it(listOf("m90")); listOf("m90", "m91") },
-                writePage = { cache += it },
-                keepIds = { keep },
-                spareIds = { emptyList() },
-                reconcile = { _, _, _, _ -> reconciled = true },
-                mayReconcile = { _, _ -> reconcileAnswerIsCurrent(cachedNewestBefore = 1_000L, walkNewest = 2_000L) },
-            )
-        }
-        assertTrue(reconciled)
-    }
-
-    @Test fun `unknown dates never veto a reconcile`() {
-        assertTrue(reconcileAnswerIsCurrent(null, 5L))
-        assertTrue(reconcileAnswerIsCurrent(5L, null))
-        assertTrue(reconcileAnswerIsCurrent(0L, 0L))
-        assertTrue(reconcileAnswerIsCurrent(5L, 5L))
-        assertFalse(reconcileAnswerIsCurrent(6L, 5L))
-    }
-
     // -- folder switch does not refetch everything ---------------------------------------------------
 
     @Test fun `switching to a cached folder with three new mails asks one chunk and writes three rows`() {

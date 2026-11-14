@@ -77,19 +77,6 @@ internal suspend fun <E> catchUpNewestFirst(
 }
 
 /**
- * Whether a finished window walk may reconcile (delete) against the cache. The walk is newest
- * first, so a walk whose newest row is OLDER than the newest row the cache held before it is a
- * stale or degraded answer (an index behind, a gateway serving an old snapshot), not a folder that
- * lost its newest mail: reconciling against it deletes exactly the mail the reader saw the day
- * before. Unknown dates (null or 0) never veto. A skipped reconcile only postpones pruning.
- */
-internal fun reconcileAnswerIsCurrent(cachedNewestBefore: Long?, walkNewest: Long?): Boolean {
-    if (cachedNewestBefore == null || cachedNewestBefore <= 0L) return true
-    if (walkNewest == null || walkNewest <= 0L) return true
-    return walkNewest >= cachedNewestBefore
-}
-
-/**
  * When each Inbox may re-read the server's WHOLE id list ([walkAllIds], up to 200 000 ids). It used
  * to run on every refresh, so every switch to the Inbox cost a full listing before any delta. Now
  * once per process and then at most once per [minIntervalMs]; a refresh in between runs the delta

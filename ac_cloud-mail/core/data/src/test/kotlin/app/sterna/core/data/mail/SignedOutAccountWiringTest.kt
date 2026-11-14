@@ -386,12 +386,13 @@ class SignedOutAccountWiringTest {
         val body = DaoQuerySource.mailSource("MailRepository").lines()
         val sites = body.indices.filter { body[it].trim().startsWith("$guard(") }
         assertEquals(
-            "MailRepository no longer carries fifteen guard call sites — four entries and eleven " +
+            "MailRepository no longer carries sixteen guard call sites — four entries and twelve " +
                 "writes (the tenth is the IMAP backlog fetch, syncImapBacklog; the eleventh the JMAP " +
-                "Inbox backlog fetch in syncMailbox, #1527). If a path was added or " +
+                "Inbox backlog fetch in syncMailbox, #1527; the twelfth the cache-first catch-up " +
+                "chunk write in catchUpFolder, #1752, guarded directly above its upsert). If a path was added or " +
                 "removed, say so here:\n" +
                 sites.joinToString("\n") { body[it].trim() },
-            15, sites.size,
+            16, sites.size,
         )
         sites.forEach { site ->
             val open = openBlocksAt(body, site).filter { "try" in it || "runCatching" in it }

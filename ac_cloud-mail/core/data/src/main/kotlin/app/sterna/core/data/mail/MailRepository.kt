@@ -1224,7 +1224,6 @@ class MailRepository(
             keepIds = { reconcilableWindowIds(it) },
             spareIds = { recentlyMutatedIds(localAccountId) },
             reconcile = { _, keepIds, spare, evictable -> if (inboxServerIds != null) emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds + inboxServerIds, spare, evictableIds = evictable) },
-            mayReconcile = { walk, before -> walkIsCurrent(localAccountId, mailboxId, walk, before) },
         )
         android.util.Log.i(
             "MailSync",
@@ -1242,28 +1241,6 @@ class MailRepository(
         }
         // NO departures from a full query: it knows what the folder HOLDS, not what left it (#134).
         return MailboxSync(fetchedIds = walked.ids, departedIds = emptyList())
-    }
-
-    /** #1752: the walk's newest row against the newest the folder held BEFORE the walk
-     *  ([reconcileAnswerIsCurrent]). Reads sort keys only, in memory. */
-    private suspend fun walkIsCurrent(
-        localAccountId: String,
-        mailboxId: String,
-        walk: WindowWalk,
-        before: Set<String>?,
-    ): Boolean {
-        val newestWalked = walk.ids.firstOrNull() ?: return true
-        val rows = emailDao.retentionRows(localAccountId, mailboxId)
-        val cachedNewest = rows.filter { before == null || it.id in before }.maxOfOrNull { it.sortKey }
-        val walkNewest = rows.firstOrNull { it.id == newestWalked }?.sortKey
-        val current = reconcileAnswerIsCurrent(cachedNewest, walkNewest)
-        if (!current) {
-            android.util.Log.w(
-                "MailSync",
-                "stale answer $localAccountId/$mailboxId: walk newest $walkNewest < cached newest $cachedNewest, reconcile skipped",
-            )
-        }
-        return current
     }
 
     /**
