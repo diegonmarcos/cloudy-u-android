@@ -62,7 +62,8 @@ def src(rel):
 ti = src("app/src/main/java/com/diegonmarcos/cloudbrowser/textopen/TextIntents.kt")
 ma = src("app/src/main/java/com/diegonmarcos/cloudbrowser/MainActivity.kt")
 check(ti is not None and "fun open(" in ti and "fun isText(" in ti, "T5 TextIntents exists")
-check(ma is not None and ma.count("TextIntents.open(") >= 2, "T5 MainActivity opens a text intent in onCreate and onNewIntent")
+# #1741 the text opener now sits behind ONE shared chain (openIncoming: image page, then text, then saved page / link) that onCreate and onNewIntent both call
+check(ma is not None and ma.count("TextIntents.open(") >= 1 and ma.count("openIncoming(intent)") >= 2, "T5 MainActivity opens a text intent in onCreate and onNewIntent")
 check(ti is not None and "MAX_BYTES" in ti and "escape(" in ti, "T5 the text is size-capped and HTML-escaped, never run as markup")
 print("RESULT: %s" % ("RED" if fails else "GREEN"))
 sys.exit(1 if fails else 0)

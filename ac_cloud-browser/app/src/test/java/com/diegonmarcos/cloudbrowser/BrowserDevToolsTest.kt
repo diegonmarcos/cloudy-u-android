@@ -34,7 +34,7 @@ class BrowserDevToolsTest {
         val cats = cfg.menu.items.filter { it.section == "page_tools" && it.category != null }.groupBy { it.category }.mapValues { e -> e.value.map { it.id } }
         assertEquals(listOf("Reading", "Save & Export", "Find & Share", "View mode", "Autofill"), cats.keys.toList())
         assertEquals(listOf("reader", "translate", "zoom", "summarize_topics", "view_source"), cats["Reading"])
-        assertEquals(listOf("print", "download_page", "save_page", "save_site"), cats["Save & Export"])
+        assertEquals(listOf("print", "convert_pdf", "download_page", "save_page", "save_site"), cats["Save & Export"])
         assertEquals(listOf("find", "share"), cats["Find & Share"])
         assertEquals(listOf("desktop"), cats["View mode"])
         assertEquals(listOf("fill_profile"), cats["Autofill"])

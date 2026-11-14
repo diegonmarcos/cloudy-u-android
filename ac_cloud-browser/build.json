@@ -1,6 +1,17 @@
 {
   "launcher_icon": {"_doc": "The launcher icon, generated from this declaration by 1_cicd/src/scripts/cloud-android-launcher-icons.py (pattern + category colours + glyphs in 1_cicd/src/data/launcher-icons.json). Never edit the generated res files.", "glyph": "public", "category": "tools", "res": "app/src/main/res"},
   "pin_offline": ["floor796.com"],
+  "image_viewer": {
+    "_doc": "#1741 Cloud Browser is an image viewer: the manifest's VIEW and SEND filters on image/* (content:// and file://) are held equal to this declaration by ImageViewerManifestTest, and every extension here must be a type the fleet's FileTypeRouter (ab_cloud-libs-shared editor-types.json, viewer media, format image) already routes, so Cloud Drive's file-type routing and Android's Open with see the same set. The page is imagepage (ImagePage.kt) in the browser's own libs:web-core web view. convert_pdf_action is the fleet door for 'convert this file to PDF': a fleet app (Cloud Drive's Convert section) fires it with the file as data (image or HTML) and the browser opens it and raises the print framework (Save as PDF); it is signature-guarded like the agent door. Printing is the platform print path (PrintManager + WebView.createPrintDocumentAdapter), not an in-process renderer: one-pdf-engine-guard.json::print_path records it.",
+    "actions": ["android.intent.action.VIEW", "android.intent.action.SEND"],
+    "schemes": ["content", "file"],
+    "mime_types": ["image/*"],
+    "extensions": ["png", "jpg", "jpeg", "jpe", "jfif", "gif", "webp", "bmp", "svg", "heic", "heif", "avif", "ico", "wbmp"],
+    "features": ["fit", "zoom", "pan", "rotate", "next_previous", "info"],
+    "convert_pdf_action": "com.diegonmarcos.cloudbrowser.action.CONVERT_PDF",
+    "convert_pdf_extra": "com.diegonmarcos.cloudbrowser.extra.CONVERT_PDF",
+    "convert_pdf_types": ["image/*", "text/html"]
+  },
   "name": "cloud-browser",
   "display_name": "Cloud Browser",
   "description": "Diego's Cloud Browser — standalone WebView-based browser Android app. Lifted from Cloud SuperApp's libs:browser into its own focused APK. Multi-tab session persistence (BrowserTabPrefs), in-app URL bar, dark-chrome WebView host. Build via Nix devShell, one APK out.",
@@ -937,7 +948,16 @@
             "id": "print",
             "section": "page_tools",
             "category": "Save & Export",
-            "label": "Print / Save as PDF",
+            "label": "Print…",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "convert_pdf",
+            "section": "page_tools",
+            "category": "Save & Export",
+            "label": "Convert to PDF",
             "requires": [
               "page"
             ]

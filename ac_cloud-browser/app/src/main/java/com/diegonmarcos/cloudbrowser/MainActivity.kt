@@ -92,6 +92,33 @@ import com.diegonmarcos.superapp.updater.Updater
 class MainActivity : AppCompatActivity() {
 
     private val mhtml by lazy { MhtmlOpener(this) }
+    /** #1741 set by the fleet's Convert to PDF door (imageview/ConvertPdfActivity): print the page once it has loaded. */
+    private var convertPdfPending = false
+
+    companion object {
+        const val EXTRA_CONVERT_PDF = "com.diegonmarcos.cloudbrowser.extra.CONVERT_PDF"
+    }
+
+    /**
+     * #1741 what an incoming VIEW / SEND shows: a picture on the image page, an HTML file handed for conversion as the rendered page,
+     * a text file as text (#1642), anything else through the saved-page / link opener. [done] gets the url to show, or null for none.
+     */
+    private fun openIncoming(i: Intent?, done: (String?) -> Unit) {
+        val deliver: (String?) -> Unit = { u -> if (!isFinishing && !isDestroyed) done(u) }
+        val toHtml = i?.getBooleanExtra(EXTRA_CONVERT_PDF, false) == true
+        val afterHtml: (String?) -> Unit = { htmlUrl ->
+            if (htmlUrl != null) deliver(htmlUrl)
+            else com.diegonmarcos.cloudbrowser.textopen.TextIntents.open(this, i) { textUrl ->
+                if (textUrl != null) deliver(textUrl)
+                else mhtml.open(i) { url -> deliver(url?.takeIf { it.isNotBlank() }) }
+            }
+        }
+        com.diegonmarcos.cloudbrowser.imageview.ImageIntents.open(this, i) { imgUrl ->
+            if (imgUrl != null) deliver(imgUrl)
+            else if (toHtml) com.diegonmarcos.cloudbrowser.imageview.ImageIntents.openHtml(this, i, afterHtml)
+            else afterHtml(null)
+        }
+    }
 
     /** #1518 the max refresh rate, only while a WebGL / WebGPU canvas page is fullscreen (reverted otherwise, and under Super Saving). */
     private val refreshRate by lazy { com.diegonmarcos.cloudlib.web.GpuRefreshRate(this) }
@@ -132,7 +159,11 @@ class MainActivity : AppCompatActivity() {
                 f.onWebScroll = { d -> onWebScroll(d) }
                 // the page's touch and inner scrollers feed the same collapse (a held drag hides every bar, the release shrinks them)
                 f.onWebViewCreated = { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(it, chromeCollapse); refreshRate.watch(it) }
-                f.onWebPageFinished = { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(it, chromeCollapse); com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.inject(it) }
+                f.onWebPageFinished = {
+                    com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(it, chromeCollapse); com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.inject(it)
+                    // #1741 the fleet's Convert to PDF door: the page it handed has loaded, so raise the print framework once.
+                    if (convertPdfPending && (it.url?.startsWith("file://") == true || it.url?.startsWith("http") == true)) { convertPdfPending = false; it.postDelayed({ f.act("convert_pdf") }, 800) }
+                }
                 // #1531 the Tabs page's History link opens Domains > History, the one history page
                 f.onHistory = { openHistory() }
                 f.onOverlaysClosed = {
@@ -179,11 +210,10 @@ class MainActivity : AppCompatActivity() {
         // A magnet: link or a .torrent handed to the app is queued (and the Downloads page opens), never loaded as a page.
         val torrent = savedInstanceState == null && com.diegonmarcos.cloudbrowser.torrent.TorrentIntents.consume(this, intent)
         if (savedInstanceState != null || torrent) show(null)
-        else com.diegonmarcos.cloudbrowser.textopen.TextIntents.open(this, intent) { textUrl ->
-            // #1642 a text file (.txt .md .json .log ...) is shown as text; anything else goes to the saved-page / link opener.
-            if (isFinishing || isDestroyed) return@open
-            if (textUrl != null) show(textUrl)
-            else mhtml.open(intent) { url -> if (!isFinishing && !isDestroyed) show(url?.takeIf { it.isNotBlank() }) }
+        else {
+            convertPdfPending = intent?.getBooleanExtra(EXTRA_CONVERT_PDF, false) == true
+            // #1741 a picture shows on the image page, #1642 a text file as text; anything else goes to the saved-page / link opener.
+            openIncoming(intent) { url -> show(url) }
         }
 
         Updater.start(this)
@@ -360,10 +390,9 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
-        // #1642 a text file is shown as text first; anything else keeps the saved-page / link path unchanged.
-        com.diegonmarcos.cloudbrowser.textopen.TextIntents.open(this, intent) { textUrl ->
-            if (textUrl != null) load(textUrl) else mhtml.open(intent) { target -> load(target) }
-        }
+        // #1741 a picture first, #1642 a text file next; anything else keeps the saved-page / link path unchanged.
+        convertPdfPending = intent.getBooleanExtra(EXTRA_CONVERT_PDF, false)
+        openIncoming(intent) { target -> load(target) }
     }
 
     override fun onStart() {

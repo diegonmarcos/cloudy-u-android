@@ -46,11 +46,45 @@ object BrowserPageActions {
         wv.findAllAsync(q)
     }
 
-    fun print(wv: WebView) {
-        val pm = wv.context.getSystemService(Context.PRINT_SERVICE) as? PrintManager ?: return
-        val name = (wv.title ?: "page").take(60)
-        pm.print(name, wv.createPrintDocumentAdapter(name), null)
+    fun print(wv: WebView) { printJob(wv, null) }
+
+    /** A file-name-safe job name: the page title (else the host), no path or control characters, at most 60 chars. */
+    fun jobName(title: String?, url: String?): String {
+        val base = title?.takeIf { it.isNotBlank() } ?: url?.substringAfter("://", "")?.substringBefore('/')?.takeIf { it.isNotBlank() } ?: "page"
+        return base.map { if (it.isLetterOrDigit() || it in " ._-()") it else '_' }.joinToString("").trim().take(60).ifBlank { "page" }
     }
+
+    /** How a print job reaches the platform: the real one is [PrintManager.print]; a test hands its own to see the call. */
+    fun interface PrintLauncher { fun launch(jobName: String, adapter: android.print.PrintDocumentAdapter, attrs: android.print.PrintAttributes?) }
+
+    private fun platformLauncher(ctx: Context): PrintLauncher? {
+        val pm = ctx.getSystemService(Context.PRINT_SERVICE) as? PrintManager ?: return null
+        return PrintLauncher { n, a, attrs -> pm.print(n, a, attrs) }
+    }
+
+    /**
+     * #1741 hands the page to Android's print framework (PrintManager + the web view's own PrintDocumentAdapter). This is the
+     * "printer" path, not an in-process PDF renderer: the system print dialog's "Save as PDF" destination writes the file.
+     * [attrs] pre-sets the sheet (A4) for Convert to PDF; null keeps the dialog's defaults (Print...).
+     * Answers false when there is no print service (never throws).
+     */
+    fun printJob(wv: WebView, attrs: android.print.PrintAttributes?, launcher: PrintLauncher? = null): Boolean = runCatching {
+        val l = launcher ?: platformLauncher(wv.context) ?: return false
+        printWith(jobName(wv.title, wv.url), { n -> wv.createPrintDocumentAdapter(n) }, attrs, l)
+        true
+    }.getOrDefault(false)
+
+    /** The seam under [printJob]: the adapter is made for [name] and launched with [attrs]. */
+    fun printWith(name: String, adapterOf: (String) -> android.print.PrintDocumentAdapter, attrs: android.print.PrintAttributes?, launcher: PrintLauncher) {
+        launcher.launch(name, adapterOf(name), attrs)
+    }
+
+    /** The A4 sheet Convert to PDF asks for. */
+    fun a4(): android.print.PrintAttributes =
+        android.print.PrintAttributes.Builder().setMediaSize(android.print.PrintAttributes.MediaSize.ISO_A4).build()
+
+    /** #1741 Convert to PDF: the same print path with an A4 sheet; the person picks "Save as PDF" as the destination. */
+    fun convertToPdf(wv: WebView, launcher: PrintLauncher? = null): Boolean = printJob(wv, a4(), launcher)
 
     /** One client for the process: constructing one binds the text-tools service. */
     @Volatile private var tools: TextToolsClient? = null

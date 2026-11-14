@@ -9,6 +9,9 @@
 #   O1 a Google sign-in (mail.google.com -> accounts.google.com) leaves the WebView for a Custom Tab (another package
 #      on top), and coming back shows Cloud Browser again
 #   F1 Favourites: the chips under the title, the 8-column grid, a group collapsed by a header tap
+#   I1 (#1741) image viewer: a picture is put in MediaStore, opened with VIEW (the "Open with Cloud Browser" path) and
+#      must land in Cloud Browser on the image page; then its menu is tried for Convert to PDF / Print (best effort,
+#      the system print dialog's Save as PDF is screenshotted when it comes up)
 set -u
 APK="$1"; OUT="$2"; mkdir -p "$OUT"
 BPKG=com.diegonmarcos.cloudbrowser
@@ -98,6 +101,38 @@ else ok "O1 Google sign-in handed to: $(cat "$OUT/oauth-top.txt")"; fi
 adb shell input keyevent KEYCODE_BACK; sleep 2; adb shell input keyevent KEYCODE_BACK; sleep 4
 top > "$OUT/oauth-return.txt"; shot oauth-return
 grep -q "$BPKG" "$OUT/oauth-return.txt" && ok "O1 back returns to Cloud Browser" || echo "NOTE  O1 back landed on $(cat "$OUT/oauth-return.txt")"
+
+# I1 (#1741) open a picture with Cloud Browser, then Convert to PDF
+python3 - "$OUT/proof.png" <<'PY'
+import struct, sys, zlib
+w = h = 64
+raw = b"".join(b"\x00" + b"".join(bytes([(x * 4) % 256, (y * 4) % 256, 160]) for x in range(w)) for y in range(h))
+def ch(t, d): c = struct.pack(">I", len(d)) + t + d; return c + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+open(sys.argv[1], "wb").write(b"\x89PNG\r\n\x1a\n" + ch(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + ch(b"IDAT", zlib.compress(raw)) + ch(b"IEND", b""))
+PY
+adb push "$OUT/proof.png" /sdcard/Download/cloud-proof.png >/dev/null 2>&1 || true
+adb shell content insert --uri content://media/external/images/media --bind _display_name:s:cloud-proof.png --bind mime_type:s:image/png --bind relative_path:s:Pictures >/dev/null 2>&1 || true
+IMGID=$(adb shell content query --uri content://media/external/images/media --projection _id:_display_name 2>/dev/null | tr -d '\r' | grep 'cloud-proof.png' | tail -1 | sed -E 's/.*_id=([0-9]+).*/\1/')
+if [ -n "$IMGID" ]; then
+  adb shell "content write --uri content://media/external/images/media/$IMGID" < "$OUT/proof.png" >/dev/null 2>&1 || true
+  IMGURI="content://media/external/images/media/$IMGID"
+else IMGURI="file:///sdcard/Download/cloud-proof.png"; fi
+echo "$IMGURI" > "$OUT/image-uri.txt"
+adb shell am force-stop "$BPKG" >/dev/null 2>&1 || true
+timeout 120 adb shell am start -W -a android.intent.action.VIEW -d "$IMGURI" -t image/png --grant-read-uri-permission -p "$BPKG" >/dev/null 2>&1; sleep 8
+top > "$OUT/image-top.txt"; shot image-open
+if grep -q "$BPKG" "$OUT/image-top.txt"; then ok "I1 Open with Cloud Browser lands in the browser: $(cat "$OUT/image-top.txt" | tr -s ' ')"; else bad "I1 the picture did not open in Cloud Browser ($(cat "$OUT/image-top.txt"))"; fi
+grep -qE '[0-9]+ / [0-9]+|Info' "$OUT/image-open.xml" && ok "I1 the image page is showing (counter / Info control in the ui dump)" || echo "NOTE  I1 page text not in the ui dump (image-open.png)"
+# the print route: the page dropdown holds Convert to PDF; try the visible overflow control(s) until it is on screen
+for c in 'More options|Menu|Page menu|⋮' 'Page'; do
+  tap "$c" || true
+  dump _menu; grep -q 'Convert to PDF' "$OUT/_menu.xml" && break
+done
+if tap 'Convert to PDF'; then
+  sleep 5; shot image-print; top > "$OUT/image-print-top.txt"
+  grep -qiE 'print|Save as PDF|PrintActivity' "$OUT/image-print-top.txt" "$OUT/image-print.xml" && ok "I1 Convert to PDF raised the system print dialog (image-print.png)" || echo "NOTE  I1 print dialog not detected: $(cat "$OUT/image-print-top.txt")"
+  adb shell input keyevent KEYCODE_BACK; sleep 2
+else echo "NOTE  I1 Convert to PDF row not reachable by the UI walk (image-menu.png)"; shot image-menu; fi
 
 # F1
 adb shell am start -W -n "$BPKG/.MainActivity" >/dev/null 2>&1 || adb shell monkey -p "$BPKG" 1 >/dev/null 2>&1

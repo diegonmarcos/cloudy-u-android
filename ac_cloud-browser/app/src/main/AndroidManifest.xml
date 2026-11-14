@@ -185,12 +185,96 @@
                 <data android:pathPattern=".*\\..*\\.xml" />
                 <data android:pathPattern=".*\\..*\\..*\\.xml" />
             </intent-filter>
+            <!-- #1741 Cloud Browser is an image viewer (declared in build.json::image_viewer; ImageViewerManifestTest holds the two equal):
+                 Open with / Share of a picture, from content:// (FileProvider, SAF, MediaStore) and file://. Shown by imageview/ImageIntents. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <!-- #1741 pictures a file manager reports with a generic type (octet-stream or empty): matched by extension, one .* per extra dot in the name. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.png" />
+                <data android:pathPattern=".*\\..*\\.png" />
+                <data android:pathPattern=".*\\..*\\..*\\.png" />
+                <data android:pathPattern=".*\\.jpg" />
+                <data android:pathPattern=".*\\..*\\.jpg" />
+                <data android:pathPattern=".*\\..*\\..*\\.jpg" />
+                <data android:pathPattern=".*\\.jpeg" />
+                <data android:pathPattern=".*\\..*\\.jpeg" />
+                <data android:pathPattern=".*\\..*\\..*\\.jpeg" />
+                <data android:pathPattern=".*\\.jpe" />
+                <data android:pathPattern=".*\\..*\\.jpe" />
+                <data android:pathPattern=".*\\..*\\..*\\.jpe" />
+                <data android:pathPattern=".*\\.jfif" />
+                <data android:pathPattern=".*\\..*\\.jfif" />
+                <data android:pathPattern=".*\\..*\\..*\\.jfif" />
+                <data android:pathPattern=".*\\.gif" />
+                <data android:pathPattern=".*\\..*\\.gif" />
+                <data android:pathPattern=".*\\..*\\..*\\.gif" />
+                <data android:pathPattern=".*\\.webp" />
+                <data android:pathPattern=".*\\..*\\.webp" />
+                <data android:pathPattern=".*\\..*\\..*\\.webp" />
+                <data android:pathPattern=".*\\.bmp" />
+                <data android:pathPattern=".*\\..*\\.bmp" />
+                <data android:pathPattern=".*\\..*\\..*\\.bmp" />
+                <data android:pathPattern=".*\\.svg" />
+                <data android:pathPattern=".*\\..*\\.svg" />
+                <data android:pathPattern=".*\\..*\\..*\\.svg" />
+                <data android:pathPattern=".*\\.heic" />
+                <data android:pathPattern=".*\\..*\\.heic" />
+                <data android:pathPattern=".*\\..*\\..*\\.heic" />
+                <data android:pathPattern=".*\\.heif" />
+                <data android:pathPattern=".*\\..*\\.heif" />
+                <data android:pathPattern=".*\\..*\\..*\\.heif" />
+                <data android:pathPattern=".*\\.avif" />
+                <data android:pathPattern=".*\\..*\\.avif" />
+                <data android:pathPattern=".*\\..*\\..*\\.avif" />
+                <data android:pathPattern=".*\\.ico" />
+                <data android:pathPattern=".*\\..*\\.ico" />
+                <data android:pathPattern=".*\\..*\\..*\\.ico" />
+                <data android:pathPattern=".*\\.wbmp" />
+                <data android:pathPattern=".*\\..*\\.wbmp" />
+                <data android:pathPattern=".*\\..*\\..*\\.wbmp" />
+            </intent-filter>
             <!-- "Share" of a saved page. Not message/rfc822: every mail shared from any app would list this browser. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="multipart/related" />
                 <data android:mimeType="application/x-mimearchive" />
+            </intent-filter>
+        </activity>
+
+        <!-- #1741 THE FLEET "CONVERT TO PDF" DOOR (build.json::image_viewer.convert_pdf_action): a fleet app (Cloud Drive's Convert section)
+             hands an image or an HTML file as data; the browser opens it and raises Android's print framework, where "Save as PDF" writes
+             the file. Signature-guarded like the agent door; it has no UI and is never launched from a launcher. -->
+        <activity
+            android:name=".imageview.ConvertPdfActivity"
+            android:exported="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="com.diegonmarcos.cloudbrowser.action.CONVERT_PDF" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="text/html" />
             </intent-filter>
         </activity>
 

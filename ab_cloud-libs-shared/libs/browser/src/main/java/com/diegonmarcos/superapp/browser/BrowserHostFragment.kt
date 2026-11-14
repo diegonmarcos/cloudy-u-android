@@ -2539,6 +2539,11 @@ class BrowserHostFragment : Fragment() {
             }
             "open_external" -> { openInExternalBrowser(url); done(ok()) }
             "print" -> { BrowserPageActions.print(wv ?: return needPage()); done(ok()) }
+            // #1741 Convert to PDF: the print framework with an A4 sheet; "Save as PDF" is picked as the destination.
+            "convert_pdf" -> {
+                if (BrowserPageActions.convertToPdf(wv ?: return needPage())) done(ok().put("toast", "Choose \"Save as PDF\" as the printer"))
+                else done(ok().put("ok", false).put("error", "no print service on this device"))
+            }
             "desktop" -> {
                 browserSettings.put("desktop_mode", !desktopMode)
                 // #1141 really switch: UA + viewport onto the live WebView, then load the page again under them.
