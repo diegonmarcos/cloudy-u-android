@@ -113,7 +113,7 @@ for m in re.finditer(r"<node [^>]*>",x):
 [ -n "$FIELD" ] || fail "no search field"
 adb shell input tap $FIELD; sleep 1; adb shell input text Xconv; sleep 3
 adb shell dumpsys input_method | grep -q 'mInputShown=true' && { adb shell input keyevent 4; sleep 1; }
-tap '^Xconv$' || fail "fixture folder not listed: $(texts)"
+tap '^Xconv/$' || fail "fixture folder not listed: $(texts)"
 sleep 3; shot 01-fixture-folder
 has photo.png || fail "fixtures not listed: $(texts)"
 
