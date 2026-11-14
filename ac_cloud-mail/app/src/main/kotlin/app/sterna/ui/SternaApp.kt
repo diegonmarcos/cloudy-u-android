@@ -48,6 +48,7 @@ import app.sterna.ui.compose.IncognitoKeyboard
 import app.sterna.ui.connect.ConnectScreen
 import app.sterna.core.jmap.model.Email
 import app.sterna.ui.home.HomeScreen
+import app.sterna.ui.home.WebmailScreen
 import app.sterna.ui.home.openAgents
 import app.sterna.ui.home.openHermesAi
 import app.sterna.ui.home.openWorkflows
@@ -671,6 +672,7 @@ private fun MainNavHost(
                     onOpenOutbox = { entry.navigateOnce { nav.navigate("outbox") } },
                     onOpenMailBySender = { entry.navigateOnce { nav.navigate("bysender") } },
                     onOpenRss = { entry.navigateOnce { nav.navigate("rss") } },
+                    onOpenWebmail = { entry.navigateOnce { nav.navigate("webmail") } },
                     onOpenAgents = { leaveOnce { openAgents(homeContext) } },
                     onOpenWorkflows = { leaveOnce { openWorkflows(homeContext) } },
                     onOpenAi = { leaveOnce { openHermesAi(homeContext) } },
@@ -708,6 +710,9 @@ private fun MainNavHost(
                     entry.navigateOnce { nav.navigate("search?from=${Uri.encode(from)}") }
                 },
             )
+        }
+        composable("webmail") { entry ->
+            WebmailScreen(onBack = { entry.navigateOnce { nav.popBackStack() } })
         }
         composable("rss") { entry ->
             BottomNavBar(nav = nav, currentRoute = "rss") {

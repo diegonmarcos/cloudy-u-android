@@ -98,6 +98,12 @@
             "id": "home",
             "label": "Home",
             "icon": "home"
+          },
+          {
+            "id": "webmail",
+            "label": "Webmail",
+            "icon": "language",
+            "_doc": "#1751 Home subpage: the fleet webmail page in an embedded WebView (route `webmail`, opened from a Home quickmark, not a bottom-nav item). Its address is NOT declared here: app/build.gradle.kts resolves build.json::web.target (cloud-webmail) in ac_cloud-c3/data/infra_slice.json (tools.<target>.domain) into BuildConfig.WEBMAIL_URL."
           }
         ]
       },

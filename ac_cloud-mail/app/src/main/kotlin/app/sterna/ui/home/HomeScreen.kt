@@ -29,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.Schedule
@@ -101,6 +102,7 @@ fun HomeScreen(
     onOpenOutbox: () -> Unit,
     onOpenMailBySender: () -> Unit,
     onOpenRss: () -> Unit,
+    onOpenWebmail: () -> Unit,
     onOpenAgents: () -> Unit,
     onOpenWorkflows: () -> Unit,
     onOpenAi: () -> Unit,
@@ -123,6 +125,7 @@ fun HomeScreen(
                     HomeDestination.OUTBOX -> onOpenOutbox()
                     HomeDestination.BY_SENDER -> onOpenMailBySender()
                     HomeDestination.NEWS -> onOpenRss()
+                    HomeDestination.WEBMAIL -> onOpenWebmail()
                     HomeDestination.AGENTS -> onOpenAgents()
                     HomeDestination.WORKFLOWS -> onOpenWorkflows()
                     HomeDestination.AI -> onOpenAi()
@@ -214,6 +217,7 @@ internal enum class HomeDestination(val kind: Kind, val icon: ImageVector, @Stri
     OUTBOX(Kind.QUICKMARK, Icons.AutoMirrored.Filled.Send, R.string.inbox_outbox),
     BY_SENDER(Kind.QUICKMARK, Icons.Filled.Person, R.string.inbox_by_sender),
     NEWS(Kind.QUICKMARK, Icons.Filled.RssFeed, R.string.rss_title),
+    WEBMAIL(Kind.QUICKMARK, Icons.Filled.Language, R.string.home_webmail),
     ;
 
     enum class Kind { SHORTCUT, QUICKMARK }

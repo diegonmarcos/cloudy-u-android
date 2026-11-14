@@ -137,6 +137,7 @@
     <string name="inbox_folder_deleted">Deleting folder \"%1$s\"…</string>
     <string name="inbox_settings">Settings</string>
     <string name="home_workflows">Workflows</string>
+    <string name="home_webmail">Webmail</string>
     <string name="home_ai">AI</string>
     <string name="home_agents">Agents</string>
     <string name="home_agents_not_installed">Cloud C3 is not installed, so the Agents page cannot open</string>

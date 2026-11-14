@@ -140,6 +140,18 @@ val calEnginePackage: String = (((groovy.json.JsonSlurper()
 fun calEnginePlaceholder(calEnginePackage: String): Map<String, Any> = mapOf("calEnginePackage" to calEnginePackage)
 val mailCalEngineAction: String = (mailCalEngine["action"] as String).replace("{package}", calEnginePackage)
 
+// #1751 Home > Webmail: the WebView's address, from the fleet's own declaration and never typed in
+// here. build.json::web.target names the container; ac_cloud-c3/data/infra_slice.json holds its
+// public domain (tools.<target>.domain). An unknown target fails the build.
+@Suppress("UNCHECKED_CAST")
+val mailWebmailUrl: String = run {
+    val target = ((groovy.json.JsonSlurper().parse(rootProject.file("build.json")) as Map<String, Any>)["web"] as Map<String, Any>)["target"] as String
+    val tools = (groovy.json.JsonSlurper().parse(rootDir.resolve("../ac_cloud-c3/data/infra_slice.json")) as Map<String, Any>)["tools"] as Map<String, Any>
+    val domain = (tools[target] as Map<String, Any>?)?.get("domain") as String?
+        ?: error("build.json::web.target '$target' has no domain in ac_cloud-c3/data/infra_slice.json::tools.")
+    "https://$domain"
+}
+
 val mailAiRoutingB64: String = groovy.json.JsonOutput.toJson(mailAiRouting)
     .toByteArray(Charsets.UTF_8)
     // Base64, NOT java.util.Base64 — imported above and referred to by its simple
@@ -230,6 +242,7 @@ android {
         buildConfigField("String", "UI_BOTTOM_NAV", "\"$mailUiBottomNav\"")
         buildConfigField("String", "UI_SECTIONS_B64", "\"$mailUiSectionsB64\"")
         buildConfigField("String", "UI_DEFAULT_SECTION", "\"$mailUiDefaultSection\"")
+        buildConfigField("String", "WEBMAIL_URL", "\"$mailWebmailUrl\"")
         buildConfigField("String", "LIST_DEFAULT_GROUP", "\"${mailListDefaults["group"]}\"")
         buildConfigField("String", "LIST_DEFAULT_RANK", "\"${mailListDefaults["rank"]}\"")
         buildConfigField("String", "LIST_DEFAULT_FILTER", "\"${mailListDefaults["filter"]}\"")
