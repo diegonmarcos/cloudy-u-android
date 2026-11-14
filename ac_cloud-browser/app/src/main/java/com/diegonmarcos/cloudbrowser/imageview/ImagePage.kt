@@ -75,7 +75,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#101214;color:#e8e8e8;
 #info table{border-collapse:collapse;width:100%}#info td{padding:3px 6px;vertical-align:top;border-bottom:1px solid #2c3136}
 #info td:first-child{opacity:.7;white-space:nowrap}
 @media print{html,body{background:#fff;overflow:visible;height:auto}#bar,#info,#msg{display:none!important}
-#stage{position:static;overflow:visible}#img{position:static;transform:none!important;max-width:100%;max-height:96vh;display:block;margin:0 auto}}
+#stage{position:static;overflow:visible}#img{position:static;transform:none!important;width:100%!important;height:96vh!important;margin:0!important;object-fit:contain;display:block}}
 </style></head><body>
 <div id="stage"><img id="img" alt=""></div>
 <div id="msg"></div><div id="info"></div>
