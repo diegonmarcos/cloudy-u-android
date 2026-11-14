@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import app.sterna.container
+import app.sterna.core.data.db.EmailEntity
 import app.sterna.core.data.db.MailboxEntity
 import app.sterna.core.data.db.SternaDatabase
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,21 @@ class NavWalkSeedReceiver : BroadcastReceiver() {
                 db.mailboxDao().upsertAll(folders.mapIndexed { i, (role, name) ->
                     MailboxEntity(accountId = id, id = "navwalk-$role", name = name, role = role, sortOrder = i, totalEmails = 0, unreadEmails = 0)
                 })
+                // #1752: `--ei emails N` caches N Inbox messages, newest first by date, so the emulator proof can show the cached list
+                // (kept across the failed sync of the unresolvable host) and the 50-row chunks loading as the list is scrolled.
+                val n = intent.getIntExtra("emails", 0)
+                if (n > 0) {
+                    val now = System.currentTimeMillis()
+                    db.emailDao().upsertAll((1..n).map { i ->
+                        EmailEntity(
+                            id = "navwalk-m$i", accountId = id, mailboxId = "navwalk-inbox", threadId = "navwalk-t$i",
+                            subject = "Seed message ${n - i + 1} of $n", preview = "Cached mail number ${n - i + 1}",
+                            receivedAt = java.time.Instant.ofEpochMilli(now - i * 3_600_000L).toString(),
+                            fromName = "Sender ${i % 7}", fromEmail = "sender${i % 7}@navwalk.invalid",
+                            seen = i % 3 != 0, flagged = false, hasAttachment = false, sortKey = now - i * 3_600_000L,
+                        )
+                    })
+                }
             }
         } finally { db.close() }
         Log.i(TAG, "seeded: one offline account with ${folders.size} folders")

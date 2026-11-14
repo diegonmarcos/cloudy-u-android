@@ -1,0 +1,110 @@
+name: "Test -> Cloud Mail cache-first list (emulator screenshots: cached list kept across a failed sync, chunked scrolling)"
+
+# #1752: build the Cloud Mail test variant (-PtestApp, the only build that carries the offline seed receiver), seed one offline
+# account with 400 cached Inbox messages, open the list, wait for the sync against the unresolvable host to FAIL, and scroll to
+# the bottom in steps: the screenshots show the cache surviving the failed sync and the list loading further chunks as it is
+# scrolled. Dispatch only; nothing is published.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  mail-paging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build the test variant
+        run: |
+          set -eu
+          cd ac_cloud-mail
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:assembleDebug -PtestApp
+          apk=$(find app/build/outputs/apk/debug -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no APK built"; exit 1; }
+          cp "$apk" "$GITHUB_WORKSPACE/app-under-test.apk"
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          echo "PKG=$("$AAPT" dump packagename "$GITHUB_WORKSPACE/app-under-test.apk")" >> "$GITHUB_ENV"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the scene script
+        run: |
+          cat > walk.sh <<'SH'
+          #!/bin/bash
+          set -u
+          mkdir -p walk-out
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          adb logcat -v threadtime "*:W" MailSync:I NavWalkSeed:I > walk-out/logcat-stream.txt 2>&1 &
+          LP=$!
+          shot() { adb exec-out screencap -p > "walk-out/$1.png"; }
+          dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "walk-out/$1.xml"; \
+                   python3 -I - "walk-out/$1.xml" <<'PY' > "walk-out/$1.subjects.txt"
+          import re, sys
+          print("\n".join(re.findall(r'text="(Seed message [^"]*)"', open(sys.argv[1], encoding="utf-8").read())))
+          PY
+          }
+          adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --ei emails 400
+          sleep 3
+          adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
+          sleep 12
+          shot 01-list-first-open; dump 01-list-first-open
+          sleep 25 # the sync against mail.navwalk.invalid fails in this window
+          shot 02-list-after-failed-sync; dump 02-list-after-failed-sync
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            for j in 1 2 3 4 5 6; do adb shell input swipe 540 1800 540 600 150; done
+            sleep 2
+            n=$(printf '%02d' $((i + 2)))
+            shot "$n-scroll-$i"; dump "$n-scroll-$i"
+          done
+          timeout 60 adb logcat -d -v threadtime > walk-out/logcat.txt || true
+          kill "$LP" 2>/dev/null || true
+          # the proof, not only pictures: the first screen holds the newest message, the bottom holds a much older one, in order
+          first=$(head -1 walk-out/01-list-first-open.subjects.txt || true)
+          last=$(tail -1 walk-out/14-scroll-12.subjects.txt || true)
+          echo "first visible: $first | last visible after scrolling: $last" | tee walk-out/summary.txt
+          case "$first" in "Seed message 400 of 400"*) ;; *) echo "::error::the newest cached message is not first: $first"; exit 1;; esac
+          case "$(head -1 walk-out/02-list-after-failed-sync.subjects.txt)" in "Seed message 400 of 400"*) ;; *) echo "::error::the cached list did not survive the failed sync"; exit 1;; esac
+          num=$(echo "$last" | sed -n 's/^Seed message \([0-9]*\) of.*/\1/p')
+          [ -n "$num" ] && [ "$num" -lt 300 ] || { echo "::error::scrolling did not load further chunks (last: $last)"; exit 1; }
+          SH
+          chmod +x walk.sh
+
+      - name: Boot emulator + scenes
+        timeout-minutes: 40
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-paging-evidence
+          path: walk-out
+          if-no-files-found: warn
