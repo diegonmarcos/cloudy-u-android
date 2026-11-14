@@ -56,7 +56,7 @@ jobs:
           adb logcat -v threadtime "*:W" MailSync:I NavWalkSeed:I > walk-out/logcat-stream.txt 2>&1 &
           LP=$!
           shot() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "walk-out/$1.png"; }
-          dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "walk-out/$1.xml"; \
+          dump() { for t in 1 2 3 4 5 6; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "walk-out/$1.xml"; grep -q "<hierarchy" "walk-out/$1.xml" && break; sleep 3; done; \
                    python3 -I - "walk-out/$1.xml" <<'PY' > "walk-out/$1.subjects.txt"
           import re, sys
           print("\n".join(re.findall(r'text="(Seed message [^"]*)"', open(sys.argv[1], encoding="utf-8").read())))
