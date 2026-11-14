@@ -51,10 +51,11 @@ jobs:
           set -u
           mkdir -p walk-out
           adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          sleep 45 # let the launcher settle after boot: a Pixel Launcher ANR dialog covered run 43645543626
           adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
           adb logcat -v threadtime "*:W" MailSync:I NavWalkSeed:I > walk-out/logcat-stream.txt 2>&1 &
           LP=$!
-          shot() { adb exec-out screencap -p > "walk-out/$1.png"; }
+          shot() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "walk-out/$1.png"; }
           dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "walk-out/$1.xml"; \
                    python3 -I - "walk-out/$1.xml" <<'PY' > "walk-out/$1.subjects.txt"
           import re, sys
