@@ -305,7 +305,7 @@ class AccountMailStatsTest {
             HomeDestination.entries.filter { it.kind == HomeDestination.Kind.SHORTCUT }.map { it.name },
         )
         assertEquals(
-            listOf("STARRED", "SCHEDULED", "SNOOZED", "OUTBOX", "BY_SENDER", "NEWS"),
+            listOf("STARRED", "SCHEDULED", "SNOOZED", "OUTBOX", "BY_SENDER", "NEWS", "WEBMAIL"),
             HomeDestination.entries.filter { it.kind == HomeDestination.Kind.QUICKMARK }.map { it.name },
         )
         assertEquals("no two tiles share a label", HomeDestination.entries.size, HomeDestination.entries.map { it.label }.toSet().size)
