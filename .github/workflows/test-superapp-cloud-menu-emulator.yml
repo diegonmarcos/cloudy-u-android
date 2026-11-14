@@ -1,4 +1,4 @@
-# #1736 Cloud SuperApp > Cloud > Apps: a tap on an app opens the dropdown (Actions / Configs / Urls) and the list has no
+# #1736/#1739 Cloud SuperApp > Cloud > Apps: a TAP launches the app and a LONG-PRESS (hold) on an app opens the dropdown (Actions / Configs / Urls) and the list has no
 # retired Cloud Writer tile. Runs the x86_64 APK a Ship Cloud SuperApp run built, as the default home app.
 # Evidence (cloud-menu-evidence): menu-calc.png, menu-keyboard.png, list-top.png, list-*.png, ui dumps, result.txt.
 # The job FAILS when a group or row is missing from the opened menu, or when "Writer" is on the list.
@@ -101,8 +101,23 @@ jobs:
             done
             say "$app tile at: ${pos:-NOT FOUND}"
             [ -n "$pos" ] || { say "FAIL $app: tile not found"; FAIL=1; continue; }
-            adb shell input tap $pos; sleep 3
-            adb exec-out screencap -p > out/menu-$(echo $app | tr A-Z a-z).png
+            # #1739: a plain tap launches the app (no dropdown); the hold opens the dropdown
+            adb shell input tap $pos; sleep 4
+            adb exec-out screencap -p > out/tap-$(echo $app | tr A-Z a-z).png
+            dump out/ui-tap-$app.xml
+            if grep -q 'text="ACTIONS"' out/ui-tap-$app.xml; then say "FAIL $app: a tap opened the dropdown"; FAIL=1; else say "PASS $app: tap does not open the dropdown"; fi
+            cur=$(adb shell dumpsys window | grep -E 'mCurrentFocus' | head -1)
+            echo "$cur" | grep -q "$PKG/.HomeActivity" && { say "FAIL $app: tap did not leave the SuperApp home ($cur)"; FAIL=1; } || say "PASS $app: tap launched the app ($cur)"
+            adb shell am start -n "$PKG/.HomeActivity" --es shortcut_action section:cloud >/dev/null; awake; sleep 6
+            for i in 1 2 3 4 5 6; do
+              dump out/ui-refind-$app-$i.xml
+              pos=$(python3 find.py out/ui-refind-$app-$i.xml "$app" || true)
+              [ -n "$pos" ] && break
+              adb shell input swipe 540 1700 540 800 500; sleep 2
+            done
+            [ -n "$pos" ] || { say "FAIL $app: tile not found after the tap"; FAIL=1; continue; }
+            adb shell input swipe $pos $pos 1000; sleep 3
+            adb exec-out screencap -p > out/longpress-menu-$(echo $app | tr A-Z a-z).png
             dump out/ui-menu-$app.xml
             for row in ACTIONS CONFIGS URLS Open Uninstall Update "App Info" About "Repo URL" "Release APK URL"; do
               grep -q "text=\"$row" out/ui-menu-$app.xml && say "PASS $app menu: $row" || { say "FAIL $app menu: $row missing"; FAIL=1; }

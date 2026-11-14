@@ -16,7 +16,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * #1736 Cloud ▸ Apps tap menu: groups and items per app, URL resolution, the retired-app guard.
+ * #1736/#1739 Cloud ▸ Apps long-press menu: groups and items per app, URL resolution, the retired-app guard.
  *
  *   A1 every Cloud app tile resolves to a menu: Actions (Open first = the tile's own target), Configs, Urls, in order
  *   A2 Configs is exactly Uninstall, Update, App Info, About; Urls is Repo/Release, each with a Copy row
@@ -26,6 +26,7 @@ import org.robolectric.annotation.Config
  *   U2 only http(s) is ever offered
  *   R1 no Cloud tile opens a retired app; the cloud-writer tile is gone
  *   R2 the guard drops a tile whose app is retired, keeps separators and the other children of a folder
+ *   G1 (#1739) the menu opens on long-press only; a tap never opens it and launches the app
  *   R3 the retired list is readable at runtime and names Cloud Writer
  */
 @RunWith(RobolectricTestRunner::class)
@@ -118,6 +119,14 @@ class CloudAppMenuTest {
             assertEquals("${a.id} repo", CloudAppMenu.webUrl(a.repoUrl), r)
             assertTrue("${a.id} release", l == null || l.startsWith("https://"))
         }
+    }
+
+    @Test
+    fun `G1 long-press opens the menu and a tap does not`() {
+        assertTrue(CloudAppMenu.opensMenu(longPress = true, hasMenu = true))
+        assertFalse("a plain tap launches the app", CloudAppMenu.opensMenu(longPress = false, hasMenu = true))
+        assertFalse("a non-app tile has no menu", CloudAppMenu.opensMenu(longPress = true, hasMenu = false))
+        assertEquals("Open (the tap target) stays first in the menu", CloudAppMenu.Verb.OPEN, menuOf("extapp:cloud-calc").first().verb)
     }
 
     @Test

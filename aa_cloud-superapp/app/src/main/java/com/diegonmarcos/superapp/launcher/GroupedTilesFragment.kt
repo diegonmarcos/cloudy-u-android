@@ -20,6 +20,7 @@ import com.diegonmarcos.superapp.uikit.LocalKitPalette
 import android.content.Context
 import android.os.Bundle
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -249,10 +250,11 @@ internal fun TileStrip(tiles: List<Sections.AggTile>, click: (String) -> Unit, o
 private val TILE_CELL_ICON_CENTRE = 22.dp
 
 /** A tile in a strip. A `separator` is never passed here: [TileStrip] draws it as a divider on the previous tile's edge. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 internal fun TileCell(tile: Sections.AggTile, click: (String) -> Unit, openFolder: (Sections.AggTile) -> Unit, menu: Boolean = false) {
     val ctx = LocalContext.current
-    // #1736 Cloud ▸ Apps: a tap on a fleet app opens its dropdown (Actions / Configs / Urls); "Open" there is the old tap.
+    // #1736/#1739 Cloud ▸ Apps: a long-press on a fleet app opens its dropdown (Actions / Configs / Urls); "Open" there is the old tap.
     var menuItems by remember { mutableStateOf<List<CloudAppMenu.Item>?>(null) }
     val view = LocalView.current
     val p = LocalKitPalette.current
@@ -266,16 +268,23 @@ internal fun TileCell(tile: Sections.AggTile, click: (String) -> Unit, openFolde
     Column(
         // Fixed-width cells so the sideways row shows ~6 tiles at a time on a typical phone width.
         Modifier.width(TILE_CELL_WIDTH)
-            .clickable(enabled = !soon) {
+            .combinedClickable(
+                enabled = !soon,
+                // #1739: the dropdown is on TAP AND HOLD; a plain tap launches the app as before #1736.
+                onLongClick = if (menu && tile.children.isEmpty()) ({
+                    val items = runCatching { CloudAppMenu.forTarget(ctx, tile.target) }.getOrNull()
+                    if (CloudAppMenu.opensMenu(longPress = true, hasMenu = items != null)) {
+                        view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                        menuItems = items
+                    }
+                }) else null,
+            ) {
                 // A folder HOLDS destinations instead of being one, so it opens the popup and the entries inside
                 // dispatch. A folder opens a POPUP, which is not a tile click and reaches no dispatcher, so it buzzes
                 // for itself. A destination does not: onTileClicked IS the per-tap bookkeeping (log, haptic, drawer
                 // close, Recently-Used, App-Tabs) and #195 put it in one place so one tap could not pay for it twice.
                 if (tile.children.isNotEmpty()) { Haptics.tap(view); openFolder(tile) }
-                else {
-                    val items = if (menu) runCatching { CloudAppMenu.forTarget(ctx, tile.target) }.getOrNull() else null
-                    if (items != null) { Haptics.tap(view); menuItems = items } else click(tile.target)
-                }
+                else click(tile.target)
             }
             .extInstallRing(tile.target, 32.dp, iconTop = 6.dp)
             .padding(6.dp)

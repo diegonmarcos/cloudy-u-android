@@ -24,7 +24,7 @@ import com.diegonmarcos.superapp.appstore.RetiredApps
 import com.diegonmarcos.superapp.updater.Fleet
 
 /**
- * #1736 Cloud ▸ Apps: tapping a fleet app's tile opens this dropdown instead of launching at once.
+ * #1736 Cloud ▸ Apps: holding (long-press, #1739) a fleet app's tile opens this dropdown; a tap launches the app.
  *
  *  - Actions: "Open" first (what the tap did before, rule 16: the tile's own target), then the app's own actions,
  *    all DECLARED: `ui.external_apps[].actions` plus the app's deep-link tiles on the Cloud page
@@ -51,6 +51,9 @@ object CloudAppMenu {
 
     /** The fleet app a tile opens: its `ui.external_apps` id (null for a bare `app://` target), package, tile target. */
     class Ref(val extId: String?, val pkg: String, val openTarget: String)
+
+    /** #1739: the dropdown opens on a long-press of a fleet app's tile only; a tap (longPress=false) launches the app. */
+    fun opensMenu(longPress: Boolean, hasMenu: Boolean): Boolean = longPress && hasMenu
 
     /** The app behind [target] (`extapp:<id>[/fork][#deep]` or `app://<package>`), null for a page, an intent, a URL. */
     fun resolve(target: String, ext: List<Sections.ExternalApp>): Ref? {
