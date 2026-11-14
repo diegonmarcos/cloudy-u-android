@@ -62,9 +62,9 @@ class EntryMenuTest {
         }
     }
 
-    @Test fun theFourGroupsAreOrderedAndLabelledSections() {
+    @Test fun theFiveGroupsAreOrderedAndLabelledSections() {
         val s = sections("a.txt", dir = false, local = true, underGit = true)
-        assertEquals(listOf(EntryMenu.Group.OPEN, EntryMenu.Group.SHARE, EntryMenu.Group.META, EntryMenu.Group.GIT), s.map { it.group })
+        assertEquals(listOf(EntryMenu.Group.OPEN, EntryMenu.Group.CONVERT, EntryMenu.Group.SHARE, EntryMenu.Group.META, EntryMenu.Group.GIT), s.map { it.group })
     }
 
     @Test fun shareGroupCarriesTheNewActions() {
@@ -73,12 +73,23 @@ class EntryMenuTest {
         assertTrue(EntryMenu.Action.COPY_TO_DOWNLOADS in share)
         assertTrue(EntryMenu.Action.COPY_TO_CLIPBOARD in share)
         assertTrue(EntryMenu.Action.SHARE in share)
-        assertTrue(EntryMenu.Action.COMPRESS in share)
+        // Compress moved to the Convert group (zip); still reachable.
+        assertTrue(EntryMenu.Action.COMPRESS in sections("a.txt", dir = false, local = true).first { it.group == EntryMenu.Group.CONVERT }.actions)
+    }
+
+    @Test fun openKeepsOnlyOpeningActionsAndConvertHoldsTheRest() {
+        val s = sections("a.zip", dir = false, local = true, isPdf = false)
+        val open = s.first { it.group == EntryMenu.Group.OPEN }.actions
+        val conv = s.first { it.group == EntryMenu.Group.CONVERT }.actions
+        listOf(EntryMenu.Action.UNZIP, EntryMenu.Action.CONVERT, EntryMenu.Action.CONVERT_PDF, EntryMenu.Action.TO_PDF, EntryMenu.Action.COMPRESS).forEach { assertFalse("$it still in Open", it in open) }
+        assertTrue(EntryMenu.Action.UNZIP in conv && EntryMenu.Action.COMPRESS in conv && EntryMenu.Action.TO_PDF in conv)
+        val pdf = sections("a.pdf", dir = false, local = true, isPdf = true).first { it.group == EntryMenu.Group.CONVERT }.actions
+        assertTrue(EntryMenu.Action.CONVERT_PDF in pdf)
     }
 
     @Test fun compressShowsForFoldersToo_butClipboardAndShareDoNot() {
         val share = sections("folder", dir = true, local = true).first { it.group == EntryMenu.Group.SHARE }.actions
-        assertTrue(EntryMenu.Action.COMPRESS in share)
+        assertTrue(EntryMenu.Action.COMPRESS in sections("folder", dir = true, local = true).first { it.group == EntryMenu.Group.CONVERT }.actions)
         assertTrue(EntryMenu.Action.COPY_TO_DOWNLOADS in share)
         assertFalse(EntryMenu.Action.COPY_TO_CLIPBOARD in share)
         assertFalse(EntryMenu.Action.SHARE in share)
@@ -94,6 +105,7 @@ class EntryMenuTest {
         val s = sections("a.txt", dir = false, local = false)
         val share = s.first { it.group == EntryMenu.Group.SHARE }.actions
         assertEquals(listOf(EntryMenu.Action.COPY_PATH), share)
+        assertTrue(s.none { it.group == EntryMenu.Group.CONVERT })
         val meta = s.first { it.group == EntryMenu.Group.META }.actions
         assertEquals(listOf(EntryMenu.Action.PROPERTIES), meta)
     }

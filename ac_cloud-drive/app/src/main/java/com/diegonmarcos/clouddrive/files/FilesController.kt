@@ -65,6 +65,9 @@ class FilesController(
     /** One-line outcomes for the snackbar. */
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val messages: SharedFlow<String> get() = _messages
+    /** Convert ▸ a file a conversion just wrote: the screen offers to open it (snackbar action). */
+    private val _converted = MutableSharedFlow<File>(extraBufferCapacity = 8)
+    val converted: SharedFlow<File> get() = _converted
 
     val mimes = FileOps.MimeResolver { ext -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) }
     private val jobIds = AtomicLong(0)
@@ -367,17 +370,34 @@ class FilesController(
         startJob(title) { job, set ->
             val written = converter.convert(src, dir, progressOf(job, set)) { job.cancelRequested.get() }
             refreshShowing(Location.Local(dir.absolutePath))
+            written.firstOrNull { it.isFile }?.let { _converted.tryEmit(it) }
             true to ctx.getString(R.string.files_convert_saved, written.joinToString { it.name })
         }
     }
 
-    /** #458/#577 PDF → txt/md/html/csv beside the file, through the ONE PdfConversion path the reader also uses. */
+    /** Convert ▸ Convert to PDF…: any file; a type with no PDF form says why instead of failing. Cancellable job. */
+    fun toPdf(entry: FileOps.Entry) {
+        val src = entry.localFile ?: return
+        val dir = src.parentFile ?: return
+        com.diegonmarcos.clouddrive.files.convert.ToPdf.refusal(src.name)?.let { _messages.tryEmit(it); return }
+        val title = ctx.getString(R.string.files_job_convert, src.name, "PDF")
+        startJob(title) { job, set ->
+            val written = com.diegonmarcos.clouddrive.files.convert.ToPdf.convert(ctx, src, dir, progressOf(job, set)) { job.cancelRequested.get() }
+            refreshShowing(Location.Local(dir.absolutePath))
+            written.firstOrNull { it.isFile }?.let { _converted.tryEmit(it) }
+            true to ctx.getString(R.string.files_convert_saved, written.joinToString { it.name })
+        }
+    }
+
+    /** #458/#577 PDF → txt/md/html/csv/OCR text beside the file, through the ONE PdfConversion path the reader also uses; a cancellable job. */
     fun convertPdf(entry: FileOps.Entry, target: String) {
         val f = entry.localFile ?: return
-        scope.launch {
-            val r = withContext(Dispatchers.IO) { com.diegonmarcos.clouddrive.PdfConversion.convertPdf(ctx, f, target) }
-            r.onSuccess { out -> _messages.tryEmit(ctx.getString(R.string.files_convert_saved, out.name)) }.onFailure { _messages.tryEmit(it.message ?: it.toString()) }
-            refreshShowing(Location.Local(f.parentFile?.absolutePath ?: return@launch))
+        val title = ctx.getString(R.string.files_job_convert, f.name, target)
+        startJob(title) { job, set ->
+            val r = com.diegonmarcos.clouddrive.PdfConversion.convertPdf(ctx, f, target, progressOf(job, set), { job.cancelRequested.get() })
+            f.parentFile?.let { refreshShowing(Location.Local(it.absolutePath)) }
+            r.onSuccess { _converted.tryEmit(it) }
+            r.fold({ true to ctx.getString(R.string.files_convert_saved, it.name) }, { false to (it.message ?: it.toString()) })
         }
     }
 

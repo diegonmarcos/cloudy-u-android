@@ -15,11 +15,11 @@ package com.diegonmarcos.clouddrive.files
  */
 object EntryMenu {
 
-    enum class Group { OPEN, SHARE, META, GIT }
+    enum class Group { OPEN, CONVERT, SHARE, META, GIT }
 
     enum class Action {
         // OPEN
-        OPEN_WITH, EDIT, EDITOR, OPEN_OTHER_PANE, UNZIP, CONVERT, CONVERT_PDF,
+        OPEN_WITH, EDIT, EDITOR, OPEN_OTHER_PANE, UNZIP, CONVERT, CONVERT_PDF, TO_PDF,
         // SHARE
         COPY_PATH, COPY_TO_DOWNLOADS, COPY_TO_CLIPBOARD, SHARE, COMPRESS,
         // META
@@ -48,17 +48,21 @@ object EntryMenu {
             if (RowMenu.Item.OPEN_WITH in rowItems) add(Action.OPEN_WITH)
             if (canEdit) add(Action.EDIT)
             if (canEditor) add(Action.EDITOR)
-            if (RowMenu.Item.UNZIP in rowItems) add(Action.UNZIP)
-            if (RowMenu.Item.CONVERT in rowItems) add(Action.CONVERT)
-            if (isPdf) add(Action.CONVERT_PDF)
             if (isDirectory) add(Action.OPEN_OTHER_PANE)
+        }
+        // Convert (moved out of Open): archives, the registry converters, PDF from/to, zip.
+        val convert = buildList {
+            if (RowMenu.Item.UNZIP in rowItems) add(Action.UNZIP)
+            if (isLocal) add(Action.COMPRESS)
+            if (RowMenu.Item.CONVERT in rowItems) add(Action.CONVERT)
+            if (isLocal && !isDirectory) add(Action.TO_PDF)
+            if (isPdf) add(Action.CONVERT_PDF)
         }
         val share = buildList {
             add(Action.COPY_PATH)
             if (isLocal) add(Action.COPY_TO_DOWNLOADS)
             if (isLocal && !isDirectory) add(Action.COPY_TO_CLIPBOARD)
             if (isLocal && !isDirectory) add(Action.SHARE)
-            if (isLocal) add(Action.COMPRESS)
         }
         val meta = buildList {
             add(Action.PROPERTIES)
@@ -69,6 +73,7 @@ object EntryMenu {
         val git = buildList { if (isLocal && underGit) { add(Action.GIT_OPEN); add(Action.GIT_RENAME); add(Action.GIT_MOVE) } }
         return buildList {
             if (open.isNotEmpty()) add(Section(Group.OPEN, open))
+            if (convert.isNotEmpty()) add(Section(Group.CONVERT, convert))
             if (share.isNotEmpty()) add(Section(Group.SHARE, share))
             if (meta.isNotEmpty()) add(Section(Group.META, meta))
             if (git.isNotEmpty()) add(Section(Group.GIT, git))

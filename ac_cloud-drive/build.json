@@ -757,10 +757,14 @@
             {"id": "editor", "label": "Open in Editor"},
             {"id": "edit", "label": "Edit as text"},
             {"id": "open_with", "label": "Open with app…"},
-            {"id": "open_other_pane", "label": "Open in other pane"},
+            {"id": "open_other_pane", "label": "Open in other pane"}
+          ]},
+          {"id": "convert", "label": "Convert", "items": [
             {"id": "unzip", "label": "Unzip…"},
+            {"id": "compress", "label": "Zip / Compress (.zip / .tar.gz)…"},
             {"id": "convert", "label": "Convert…"},
-            {"id": "convert_pdf", "label": "Convert PDF…"}
+            {"id": "to_pdf", "label": "Convert to PDF…"},
+            {"id": "convert_pdf", "label": "Convert from PDF (text, MD, HTML, OCR)…"}
           ]},
           {"id": "share", "label": "Share", "items": [
             {"id": "copy_path", "label": "Copy path"},
@@ -772,7 +776,6 @@
             {"id": "rename", "label": "Rename"},
             {"id": "delete", "label": "Delete"},
             {"id": "properties", "label": "Properties"},
-            {"id": "compress", "label": "Compress (.zip / .tar.gz)…"},
             {"id": "bookmark", "label": "Bookmark folder"}
           ]},
           {"id": "git", "label": "Git", "git_only": true, "items": [

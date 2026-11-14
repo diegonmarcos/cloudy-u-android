@@ -51,7 +51,7 @@ object FileMenu {
 
     /** Ids this build can perform, per menu. Unknown ids resolve disabled. */
     val ITEM_IDS = setOf(
-        "open_with", "edit", "editor", "open_other_pane", "unzip", "convert", "convert_pdf",
+        "open_with", "edit", "editor", "open_other_pane", "unzip", "convert", "convert_pdf", "to_pdf",
         "copy_path", "copy_to_downloads", "copy_to_clipboard", "share",
         "rename", "delete", "properties", "compress", "bookmark",
         "git_versions", "git_rename", "git_move",
@@ -76,6 +76,7 @@ object FileMenu {
                 "unzip" -> c.canUnzip
                 "convert" -> c.canConvert
                 "convert_pdf" -> c.isPdf
+                "to_pdf" -> file
                 "copy_path", "properties" -> true
                 "copy_to_downloads", "rename", "delete", "compress" -> local
                 "copy_to_clipboard", "share" -> file

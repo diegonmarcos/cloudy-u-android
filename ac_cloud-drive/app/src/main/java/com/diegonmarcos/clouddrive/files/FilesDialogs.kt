@@ -156,8 +156,8 @@ fun ConvertPdfDialog(entry: FileOps.Entry, onDismiss: () -> Unit, onConvert: (St
             Column {
                 Text(entry.name, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(Modifier.padding(top = DriveMetrics.pad)) {
-                    com.diegonmarcos.clouddrive.PdfConvert.TARGETS.forEach { t ->
-                        TextButton(onClick = { onConvert(t) }) { Text(t) }
+                    com.diegonmarcos.clouddrive.PdfConvert.DIALOG_TARGETS.forEach { t ->
+                        TextButton(onClick = { onConvert(t) }) { Text(if (t == com.diegonmarcos.clouddrive.PdfConvert.OCR) "OCR" else t) }
                     }
                 }
                 Text(stringResource(R.string.files_convert_pdf_not_offered), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

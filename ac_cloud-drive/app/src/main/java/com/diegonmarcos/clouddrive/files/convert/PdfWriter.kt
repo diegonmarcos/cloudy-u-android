@@ -66,6 +66,51 @@ object PdfWriter {
         out.flush()
     }
 
+
+    /** One raster page: [jpeg] is a complete JPEG file of [width] x [height] pixels (embedded as is, DCTDecode). */
+    class ImagePage(val jpeg: ByteArray, val width: Int, val height: Int)
+
+    /** The A4 page (portrait, or landscape for a wide image) and the placement that fits [width] x [height] inside a 24 pt margin. */
+    internal fun fit(width: Int, height: Int): FloatArray {
+        val landscape = width > height
+        val pw = (if (landscape) PAGE_H else PAGE_W).toFloat()
+        val ph = (if (landscape) PAGE_W else PAGE_H).toFloat()
+        val box = 24f
+        val scale = minOf((pw - 2 * box) / maxOf(1, width), (ph - 2 * box) / maxOf(1, height))
+        val w = width * scale; val h = height * scale
+        return floatArrayOf(pw, ph, (pw - w) / 2, (ph - h) / 2, w, h)
+    }
+
+    /** Images to a PDF, one page each (no platform PDF class: the fleet keeps its ONE engine). Always at least one page is required. */
+    fun writeImages(pages: List<ImagePage>, out: OutputStream, cancelled: () -> Boolean = { false }) {
+        require(pages.isNotEmpty()) { "no image to write" }
+        val total = 2 + 3 * pages.size
+        val offsets = LongArray(total + 1)
+        var pos = 0L
+        fun put(b: ByteArray) { out.write(b); pos += b.size }
+        fun put(s: String) = put(s.toByteArray(Charsets.ISO_8859_1))
+        fun obj(n: Int, body: String) { offsets[n] = pos; put("$n 0 obj\n$body\nendobj\n") }
+        put("%PDF-1.4\n")
+        obj(1, "<< /Type /Catalog /Pages 2 0 R >>")
+        obj(2, "<< /Type /Pages /Count ${pages.size} /Kids [" + pages.indices.joinToString(" ") { "${3 + 3 * it} 0 R" } + "] >>")
+        pages.forEachIndexed { i, pg ->
+            if (cancelled()) throw java.io.IOException("cancelled")
+            val f = fit(pg.width, pg.height)
+            val base = 3 + 3 * i
+            obj(base, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${f[0].toInt()} ${f[1].toInt()}] /Resources << /XObject << /Im0 ${base + 1} 0 R >> >> /Contents ${base + 2} 0 R >>")
+            offsets[base + 1] = pos
+            put("${base + 1} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${pg.width} /Height ${pg.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${pg.jpeg.size} >>\nstream\n")
+            put(pg.jpeg); put("\nendstream\nendobj\n")
+            val content = "q ${num(f[4])} 0 0 ${num(f[5])} ${num(f[2])} ${num(f[3])} cm /Im0 Do Q"
+            obj(base + 2, "<< /Length ${content.length} >>\nstream\n$content\nendstream")
+        }
+        val xref = pos
+        put("xref\n0 ${total + 1}\n0000000000 65535 f \n")
+        for (n in 1..total) put(String.format(Locale.US, "%010d 00000 n \n", offsets[n]))
+        put("trailer\n<< /Size ${total + 1} /Root 1 0 R >>\nstartxref\n$xref\n%%EOF\n")
+        out.flush()
+    }
+
     private fun num(f: Float): String = String.format(Locale.US, "%.2f", f)
 
     /** [text] cut into pieces of at most [width] characters, at a space where there is one. An empty line stays one empty piece. */

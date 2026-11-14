@@ -33,12 +33,16 @@ class FileMenuTest {
 
     @Test fun itemMenuGroupsInOrder() {
         val g = FileMenu.resolve(FileMenu.ITEM, itemDecl, FileMenu.Context(underGit = true))
-        assertEquals(listOf("open", "share", "meta", "git"), g.map { it.id })
-        assertEquals(listOf("Open", "Share", "Meta", "Git"), g.map { it.label })
+        assertEquals(listOf("open", "convert", "share", "meta", "git"), g.map { it.id })
+        assertEquals(listOf("Open", "Convert", "Share", "Meta", "Git"), g.map { it.label })
         val share = g.first { it.id == "share" }.items.map { it.id }
         assertEquals(listOf("copy_path", "copy_to_downloads", "copy_to_clipboard", "share"), share)
         val meta = g.first { it.id == "meta" }.items.map { it.id }
-        assertTrue(meta.containsAll(listOf("rename", "delete", "properties", "compress")))
+        assertTrue(meta.containsAll(listOf("rename", "delete", "properties")))
+        // #1740 section move: Open keeps only opening actions; unzip / convert / PDF / zip live in Convert, none lost.
+        assertEquals(listOf("editor", "edit", "open_with", "open_other_pane"), g.first { it.id == "open" }.items.map { it.id })
+        assertEquals(listOf("unzip", "compress", "convert", "to_pdf", "convert_pdf"), g.first { it.id == "convert" }.items.map { it.id })
+        assertFalse("compress" in meta)
         assertTrue(g.first { it.id == "open" }.items.map { it.id }.containsAll(listOf("editor", "open_with")))
         assertEquals(listOf("git_rename", "git_move", "git_versions"), g.first { it.id == "git" }.items.map { it.id })
     }
@@ -56,7 +60,7 @@ class FileMenuTest {
         // Same component: same group type, same Share/Meta/Git group ids, both from one declaration block.
         val a = FileMenu.resolve(FileMenu.ITEM, itemDecl, FileMenu.Context(underGit = true)).map { it.id }
         val b = FileMenu.resolve(FileMenu.SELECTION, selDecl, FileMenu.Context(count = 1, underGit = true)).map { it.id }
-        assertEquals(a.drop(1), b.drop(1))
+        assertEquals(a.drop(2), b.drop(1))
         assertEquals(setOf(FileMenu.ITEM, FileMenu.SELECTION), files.menus.keys)
     }
 
@@ -124,5 +128,15 @@ class FileMenuTest {
         assertTrue(zip.length() > 0 && tgz.length() > 0)
         assertEquals(ArchiveExtractor.Kind.ZIP, ArchiveExtractor.kindOf(zip.name))
         assertEquals(ArchiveExtractor.Kind.TAR_GZ, ArchiveExtractor.kindOf(tgz.name))
+    }
+
+    /** #1740 field parity against the previous (pre-Convert) item menu: every id it declared is still declared. */
+    @Test fun convertSectionMoveParity() {
+        val before = listOf("editor", "edit", "open_with", "open_other_pane", "unzip", "convert", "convert_pdf",
+            "copy_path", "copy_to_downloads", "copy_to_clipboard", "share", "rename", "delete", "properties", "compress", "bookmark",
+            "git_rename", "git_move", "git_versions")
+        val now = itemDecl.flatMap { it.items.map { i -> i.id } }
+        before.forEach { assertTrue("lost $it", it in now) }
+        assertEquals(before.size + 1, now.size) // plus to_pdf only
     }
 }

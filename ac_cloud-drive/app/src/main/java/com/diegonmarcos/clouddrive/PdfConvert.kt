@@ -16,6 +16,10 @@ internal object PdfConvert {
     /** The four targets this app can honestly write. The page's convert menu mirrors this list. */
     val TARGETS = listOf("txt", "md", "html", "csv")
 
+    /** The dialog's targets: the four above plus OCR text of the rendered pages (written as `<name>.ocr.txt`). */
+    const val OCR = "ocr"
+    val DIALOG_TARGETS = TARGETS + OCR
+
     /** A scan has pages and no text. Four empty files would look like four successes. */
     const val NO_TEXT_LAYER_MESSAGE =
         "This PDF has no text layer, so a scan cannot be converted on the phone — nothing was written."
@@ -80,7 +84,7 @@ internal object PdfConvert {
 
     /** `report.pdf` + `md` → `report.md`. */
     fun preferredName(sourceName: String, target: String): String =
-        sourceName.replace(Regex("\\.pdf$", RegexOption.IGNORE_CASE), "") + "." + target
+        if (target == OCR) preferredName(sourceName, "ocr.txt") else sourceName.replace(Regex("\\.pdf$", RegexOption.IGNORE_CASE), "") + "." + target
 
     /**
      * The word around [index] in [text] — what a long press selects. Null when the press landed

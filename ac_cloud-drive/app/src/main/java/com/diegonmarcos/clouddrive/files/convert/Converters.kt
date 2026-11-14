@@ -24,6 +24,7 @@ object Converters {
         MarkdownToHtml,
         JsonPretty,
         TextToPdf,
+        ImageToPdf,
         ImageConverter("to-jpg", "JPG image", setOf("png", "webp"), "jpg"),
         ImageConverter("to-png", "PNG image", setOf("jpg", "jpeg", "webp"), "png"),
         ImageConverter("to-webp", "WebP image", setOf("png", "jpg", "jpeg"), "webp"),
@@ -118,7 +119,7 @@ class ImageConverter(override val id: String, override val label: String, privat
         val decoded = BitmapFactory.decodeFile(source.path, BitmapFactory.Options().apply { inSampleSize = sample })
             ?: throw IOException("${source.name} could not be decoded")
         if (cancelled()) { decoded.recycle(); throw IOException("cancelled") }
-        val upright = upright(decoded, source)
+        val upright = uprightBitmap(decoded, source)
         // JPEG has no alpha: flatten onto white rather than let transparency turn black.
         val flat = if (toExt == "jpg") {
             Bitmap.createBitmap(upright.width, upright.height, Bitmap.Config.ARGB_8888).also { b ->
@@ -148,8 +149,14 @@ class ImageConverter(override val id: String, override val label: String, privat
         else -> if (Build.VERSION.SDK_INT >= 30) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP
     }
 
-    /** A JPEG camera shot carries its rotation in EXIF; the converted file has none, so bake it in. */
-    private fun upright(bitmap: Bitmap, source: File): Bitmap {
+    private companion object {
+        const val QUALITY = 92
+        const val MAX_PIXELS = 36_000_000L
+    }
+}
+
+/** A JPEG camera shot carries its rotation in EXIF; the converted file has none, so bake it in. */
+internal fun uprightBitmap(bitmap: Bitmap, source: File): Bitmap {
         val degrees = try {
             when (ExifInterface(source.path).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
                 ExifInterface.ORIENTATION_ROTATE_90 -> 90f
@@ -162,18 +169,13 @@ class ImageConverter(override val id: String, override val label: String, privat
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, Matrix().apply { postRotate(degrees) }, true)
     }
 
-    private companion object {
-        const val QUALITY = 92
-        const val MAX_PIXELS = 36_000_000L
-    }
-}
 
 // ── txt / md → PDF (PdfWriter: a plain writer, so the fleet keeps its ONE PDF engine, the pdfium reader) ──
 
 object TextToPdf : Converter {
     override val id = "text-pdf"
     override val label = "PDF document"
-    override fun accepts(extension: String) = extension == "txt" || extension == "md" || extension == "markdown"
+    override fun accepts(extension: String) = extension in ToPdf.TEXT_EXT
 
     private val HEADING = Regex("^(#{1,6})\\s+(.*)$")
     private val ITEM = Regex("^(\\s*)([-*+]|\\d+[.)])\\s+(.*)$")

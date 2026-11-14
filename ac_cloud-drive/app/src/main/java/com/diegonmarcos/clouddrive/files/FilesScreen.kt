@@ -189,6 +189,8 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
     }
 
     LaunchedEffect(Unit) { controller.messages.collect { snackbar.showSnackbar(it) } }
+    // Convert: a freshly written file is offered to open (Editor tab: image, PDF, text, HTML all open there).
+    LaunchedEffect(Unit) { controller.converted.collect { f -> if (snackbar.showSnackbar(f.name, actionLabel = ctx.getString(R.string.files_convert_open)) == androidx.compose.material3.SnackbarResult.ActionPerformed) runCatching { com.diegonmarcos.clouddrive.editor.EditorHook.open(f.path) } } }
     LaunchedEffect(ui.a.location.key, ui.b.location.key) { controller.ensureLoaded(ui.a.location); controller.ensureLoaded(ui.b.location) }
 
     val canBack = hasAccess && (searching || dialog != null || FilesReducer.back(ui, ui.active) != null)
@@ -277,6 +279,7 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
                                 EntryAction.OPEN_OTHER_PANE -> { controller.open(ui.otherId, e.location); controller.activate(ui.otherId); null }
                                 EntryAction.BOOKMARK -> { (e.location as? Location.Local)?.let { controller.prefs.toggleBookmark(it.path) }; null }
                                 EntryAction.CONVERT_PDF -> FilesDialog.ConvertPdf(e)
+                                EntryAction.TO_PDF -> { controller.toPdf(e); null }
                                 EntryAction.COPY_PATH -> { copyPath(listOf(e.location)); null }
                                 EntryAction.COPY_TO_DOWNLOADS -> { (e.location as? Location.Local)?.let { actions.copyToDownload(listOf(it.path)) }; null }
                                 EntryAction.COPY_TO_CLIPBOARD -> { (e.location as? Location.Local)?.let { loc -> scope.launch { val text = withContext(Dispatchers.IO) { runCatching { File(loc.path).readText() }.getOrNull() }; if (text != null) { actions.copyText(text); snackbar.showSnackbar(ctx.getString(R.string.files_copied_to_clipboard, e.name)) } } }; null }
@@ -366,7 +369,7 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
 
 // ── one pane ─────────────────────────────────────────────────────────────
 
-private enum class EntryAction { RENAME, PROPERTIES, DELETE, SHARE, OPEN_WITH, EDIT, EDITOR, EXTRACT_HERE, UNZIP, CONVERT, OPEN_OTHER_PANE, BOOKMARK, CONVERT_PDF, COPY_PATH, COPY_TO_DOWNLOADS, COPY_TO_CLIPBOARD, COMPRESS, GIT_OPEN, GIT_RENAME, GIT_MOVE }
+private enum class EntryAction { RENAME, PROPERTIES, DELETE, SHARE, OPEN_WITH, EDIT, EDITOR, EXTRACT_HERE, UNZIP, CONVERT, OPEN_OTHER_PANE, BOOKMARK, CONVERT_PDF, COPY_PATH, COPY_TO_DOWNLOADS, COPY_TO_CLIPBOARD, COMPRESS, TO_PDF, GIT_OPEN, GIT_RENAME, GIT_MOVE }
 
 /** #1607 map the grouped data model's action onto the screen's dispatch enum (1:1 by name for the shared ones). */
 private fun EntryMenu.Action.toEntryAction(): EntryAction = when (this) {
@@ -377,6 +380,7 @@ private fun EntryMenu.Action.toEntryAction(): EntryAction = when (this) {
     EntryMenu.Action.UNZIP -> EntryAction.UNZIP
     EntryMenu.Action.CONVERT -> EntryAction.CONVERT
     EntryMenu.Action.CONVERT_PDF -> EntryAction.CONVERT_PDF
+    EntryMenu.Action.TO_PDF -> EntryAction.TO_PDF
     EntryMenu.Action.COPY_PATH -> EntryAction.COPY_PATH
     EntryMenu.Action.COPY_TO_DOWNLOADS -> EntryAction.COPY_TO_DOWNLOADS
     EntryMenu.Action.COPY_TO_CLIPBOARD -> EntryAction.COPY_TO_CLIPBOARD
@@ -394,6 +398,7 @@ private fun EntryMenu.Action.toEntryAction(): EntryAction = when (this) {
 /** The dropdown's group-header label; COPY_PATH keeps its declared label, the rest are string resources. */
 private fun EntryMenu.Group.labelRes(): Int = when (this) {
     EntryMenu.Group.OPEN -> R.string.files_menu_group_open
+    EntryMenu.Group.CONVERT -> R.string.files_menu_group_convert
     EntryMenu.Group.SHARE -> R.string.files_menu_group_share
     EntryMenu.Group.META -> R.string.files_menu_group_meta
     EntryMenu.Group.GIT -> R.string.files_menu_group_git
@@ -407,6 +412,7 @@ private fun EntryMenu.Action.labelRes(): Int = when (this) {
     EntryMenu.Action.UNZIP -> R.string.files_unzip
     EntryMenu.Action.CONVERT -> R.string.files_convert
     EntryMenu.Action.CONVERT_PDF -> R.string.files_convert_pdf
+    EntryMenu.Action.TO_PDF -> R.string.files_to_pdf
     EntryMenu.Action.COPY_PATH -> R.string.files_copy_to // unused: COPY_PATH renders via its declared action
     EntryMenu.Action.COPY_TO_DOWNLOADS -> R.string.files_copy_to_downloads
     EntryMenu.Action.COPY_TO_CLIPBOARD -> R.string.files_copy_to_clipboard

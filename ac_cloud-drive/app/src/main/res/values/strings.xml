@@ -107,6 +107,9 @@
     <string name="files_properties">Properties</string>
     <!-- #1607 per-item dropdown groups and the new actions -->
     <string name="files_menu_group_open">Open</string>
+    <string name="files_menu_group_convert">Convert</string>
+    <string name="files_to_pdf">Convert to PDF…</string>
+    <string name="files_convert_open">Open</string>
     <string name="files_menu_group_share">Share</string>
     <string name="files_menu_group_meta">Meta</string>
     <string name="files_menu_group_git">Git</string>
