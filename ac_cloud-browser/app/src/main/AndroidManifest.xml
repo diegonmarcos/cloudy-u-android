@@ -259,25 +259,6 @@
             </intent-filter>
         </activity>
 
-        <!-- #1741 THE FLEET "CONVERT TO PDF" DOOR (build.json::image_viewer.convert_pdf_action): a fleet app (Cloud Drive's Convert section)
-             hands an image or an HTML file as data; the browser opens it and raises Android's print framework, where "Save as PDF" writes
-             the file. Signature-guarded like the agent door; it has no UI and is never launched from a launcher. -->
-        <activity
-            android:name=".imageview.ConvertPdfActivity"
-            android:exported="true"
-            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
-            android:excludeFromRecents="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar">
-            <intent-filter>
-                <action android:name="com.diegonmarcos.cloudbrowser.action.CONVERT_PDF" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="content" />
-                <data android:scheme="file" />
-                <data android:mimeType="image/*" />
-                <data android:mimeType="text/html" />
-            </intent-filter>
-        </activity>
-
         <!-- #684 the auth-mission answerer: exported but GUARDED by the signature permission
              above, and reachable only through the declared action. A fleet app fires it FOR A
              RESULT and gets the capture back; it is never launched from a launcher. -->
@@ -322,6 +303,25 @@
             android:authorities="${applicationId}.lookup"
             android:exported="true"
             android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+
+        <!-- #1741 THE FLEET "CONVERT TO PDF" DOOR (build.json::image_viewer.convert_pdf_action): a fleet app (Cloud Drive's Convert section)
+             hands an image or an HTML file as data; the browser opens it and raises Android's print framework, where "Save as PDF" writes
+             the file. Signature-guarded like the agent door; it has no UI and is never launched from a launcher. -->
+        <activity
+            android:name=".imageview.ConvertPdfActivity"
+            android:exported="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="com.diegonmarcos.cloudbrowser.action.CONVERT_PDF" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="text/html" />
+            </intent-filter>
+        </activity>
 
         <!-- #802 registers /api/browser/* on the fleet debug server. Not exported, not a real provider. -->
         <provider
