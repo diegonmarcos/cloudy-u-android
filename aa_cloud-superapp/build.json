@@ -10959,7 +10959,7 @@
           "id": "launcher_icon_badge",
           "label": "Launcher icon badge",
           "subtitle": "The OS unread-count dot on this app's launcher icon, sourced from whichever channels are shows_badge=true.",
-          "icon": "ic_ctl_mobile_data",
+          "icon": "ic_link_tile",
           "surface": "launcher_icon_badge",
           "channel": "",
           "owner": "notificationcenter/PhoneNotificationListenerService.kt",
