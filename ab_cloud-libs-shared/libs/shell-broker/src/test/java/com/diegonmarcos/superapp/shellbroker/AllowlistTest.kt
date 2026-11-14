@@ -10,7 +10,7 @@ class AllowlistTest {
     private val json = """{"aliases":{"web.pkg":"mesh"},"callers":{
       "app.a":{"allow":[{"id":"r1","re":"^dumpsys battery$"},{"id":"r2","re":"^appops set [\\w.]+ [A-Z_]+ (allow|deny)$"},{"id":"p","re":"^ps -A( \\| grep \\w+)?$","meta":"|"}]},
       "mesh":{"allow":[{"id":"m","re":"^getprop( [\\w.]+)?$"}]},
-      "app.host":{"segments":true,"exact":["dumpsys alarm | head -5"],"allow":[{"id":"s1","re":"^cmd appops set [\\w.]+ [A-Z_]+ (allow|ignore)$"},{"id":"s2","re":"^am set-standby-bucket [\\w.]+ \\w+$"}]}}}"""
+      "app.host":{"segments":true,"exact":["dumpsys alarm | head -5"],"allow":[{"id":"s1","chain":true,"re":"^cmd appops set [\\w.]+ [A-Z_]+ (allow|ignore)$"},{"id":"s2","chain":true,"re":"^am set-standby-bucket [\\w.]+ \\w+$"},{"id":"s3","re":"^id$"}]}}}"""
     private val list = Allowlist.parse(json)
 
     @Test fun matchingRuleAllows() {
@@ -79,6 +79,10 @@ class AllowlistTest {
         assertTrue(list.decide("app.host", "cmd appops set a.b RUN_ANY allow\nam set-standby-bucket a.b active") is Decision.Allow)
         assertTrue(list.decide("app.host", "cmd appops set a.b RUN_ANY allow; rm -rf /x") is Decision.Deny)
         assertTrue(list.decide("app.host", "cmd appops set a.b RUN_ANY allow && id") is Decision.Deny)
+        // #1748 s3 is allowed alone but declares no `chain`: it never joins a chain
+        assertTrue(list.decide("app.host", "id") is Decision.Allow)
+        assertTrue(list.decide("app.host", "cmd appops set a.b RUN_ANY allow; id") is Decision.Deny)
+        assertTrue(list.decide("app.host", "id\ncmd appops set a.b RUN_ANY allow") is Decision.Deny)
     }
 
     @Test fun anExactLineIsAllowedWhole() {
