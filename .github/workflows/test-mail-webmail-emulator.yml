@@ -1,0 +1,118 @@
+name: "Test -> Cloud Mail Home Webmail subpage (emulator screenshots: Home, then the embedded webmail page)"
+
+# #1751: build the Cloud Mail test variant (-PtestApp, the build that carries the offline seed receiver), seed one offline
+# account, open Home, tap the Webmail quickmark and capture the embedded WebView page. The address under test is the one the
+# build baked from the fleet declaration (BuildConfig.WEBMAIL_URL); this workflow names none. Dispatch only; nothing is published.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  mail-webmail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build the test variant
+        run: |
+          set -eu
+          cd ac_cloud-mail
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:assembleDebug -PtestApp
+          apk=$(find app/build/outputs/apk/debug -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no APK built"; exit 1; }
+          cp "$apk" "$GITHUB_WORKSPACE/app-under-test.apk"
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          echo "PKG=$("$AAPT" dump packagename "$GITHUB_WORKSPACE/app-under-test.apk")" >> "$GITHUB_ENV"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the scene script
+        run: |
+          cat > walk.sh <<'SH'
+          #!/bin/bash
+          set -u
+          mkdir -p walk-out
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          sleep 45 # let the launcher settle after boot
+          adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          shot() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "walk-out/$1.png"; }
+          dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "walk-out/$1.xml"; }
+          # tap the centre of the first node whose text or content-desc equals $1; non-zero when absent
+          tap() {
+            dump tap-scan
+            xy=$(python3 -I - "$1" walk-out/tap-scan.xml <<'PY'
+          import re, sys
+          want, xml = sys.argv[1], open(sys.argv[2], encoding="utf-8").read()
+          for m in re.finditer(r'<node [^>]*>', xml):
+              n = m.group(0)
+              t = re.search(r' text="([^"]*)"', n); d = re.search(r' content-desc="([^"]*)"', n)
+              if want in ((t.group(1) if t else ""), (d.group(1) if d else "")):
+                  b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+                  x1, y1, x2, y2 = map(int, b.groups()); print((x1 + x2) // 2, (y1 + y2) // 2); break
+          PY
+            )
+            [ -n "$xy" ] || return 1
+            adb shell input tap $xy
+          }
+          adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --ei emails 5
+          sleep 3
+          adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
+          sleep 15
+          shot 01-first-open
+          tap "Home" || { echo "::error::no Home item in the bottom bar"; dump no-home; exit 1; }
+          sleep 4
+          shot 02-home
+          found=0
+          for i in 1 2 3 4; do
+            if tap "Webmail"; then found=1; break; fi
+            adb shell input swipe 700 1500 700 600 400; sleep 2
+          done
+          [ "$found" = 1 ] || { echo "::error::no Webmail tile on Home"; dump no-webmail; exit 1; }
+          sleep 20 # the page loads over the emulator's network
+          shot 03-webmail-page; dump 03-webmail-page
+          timeout 60 adb logcat -d -v threadtime "*:W" > walk-out/logcat.txt || true
+          # the proof: the Webmail top bar title is on screen, and the view is a WebView
+          grep -q 'text="Webmail"' walk-out/03-webmail-page.xml || { echo "::error::the Webmail page did not open"; exit 1; }
+          grep -q 'class="android.webkit.WebView"' walk-out/03-webmail-page.xml || { echo "::error::no WebView on the Webmail page"; exit 1; }
+          echo "Webmail page open with an embedded WebView" | tee walk-out/summary.txt
+          SH
+          chmod +x walk.sh
+
+      - name: Boot emulator + scenes
+        timeout-minutes: 40
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-webmail-evidence
+          path: walk-out
+          if-no-files-found: warn
