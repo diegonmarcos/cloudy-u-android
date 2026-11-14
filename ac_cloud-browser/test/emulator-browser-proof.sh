@@ -35,14 +35,14 @@ shot() { adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null || true; dump "$1
 top()  { adb shell dumpsys activity activities 2>/dev/null | grep -m1 -E "topResumedActivity|mResumedActivity" | tr -d '\r'; }
 # tap the first node whose text or content-desc matches the regex $1 in the current screen
 # tapid taps by resource-id (the shared bars' test tags: the title dropdown chevron, its entries, the AI icon)
-tapid() { TAP_ATTR=resource-id tap "$1"; }
+tapid() { tap "$1" resource-id; }
 tap() {
   dump _tap
   # the app's own updater can raise the system "install unknown apps" dialog over the page: cancel it, close the shade
   if grep -q "install unknown apps" "$OUT/_tap.xml"; then
     adb shell input keyevent KEYCODE_BACK; adb shell cmd statusbar collapse >/dev/null 2>&1 || true; sleep 2; dump _tap
   fi
-  local xy; xy=$(python3 - "$OUT/_tap.xml" "$1" "${TAP_ATTR:-}" <<'PY'
+  local xy; xy=$(python3 - "$OUT/_tap.xml" "$1" "${2:-}" <<'PY'
 import re, sys, xml.etree.ElementTree as ET
 try: root = ET.parse(sys.argv[1]).getroot()
 except Exception: sys.exit(0)
@@ -151,7 +151,7 @@ sleep 6
 onfav=0
 for _ in $(seq 1 10); do
   # the dropdown may already be open from the previous round: take the entry first, open the dropdown only when it is not there
-  tapid '^navtop1_entry_favourites$' || { tapid '^navtop1_more$' || true; tapid '^navtop1_entry_favourites$' || true; }
+  tapid '^navtop1_entry_favourites$' || { tapid '^navtop1_more$' || tapid '^topbar_title$' || true; tapid '^navtop1_entry_favourites$' || true; }
   dump _fav; grep -q 'text="Favourites"' "$OUT/_fav.xml" && { onfav=1; break; }
   sleep 3
 done
