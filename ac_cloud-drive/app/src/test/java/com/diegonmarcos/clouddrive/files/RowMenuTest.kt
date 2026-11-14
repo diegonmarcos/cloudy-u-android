@@ -59,7 +59,7 @@ class RowMenuTest {
         assertEquals(listOf("image-pdf", "to-png", "to-webp"), default.forName("p.jpg").map { it.id })
         assertEquals(listOf("image-pdf", "to-jpg", "to-png"), default.forName("p.webp").map { it.id })
         assertEquals(listOf("md-html", "text-pdf"), default.forName("p.md").map { it.id })
-        assertEquals(listOf("json-pretty"), default.forName("p.json").map { it.id })
+        assertEquals(listOf("json-pretty", "text-pdf"), default.forName("p.json").map { it.id })
         assertEquals(listOf("text-pdf"), default.forName("p.txt").map { it.id })
         assertEquals(default.converters.size, default.converters.map { it.id }.toSet().size)
     }
