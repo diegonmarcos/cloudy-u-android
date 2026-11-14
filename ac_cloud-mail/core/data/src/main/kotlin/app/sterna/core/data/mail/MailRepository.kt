@@ -1063,6 +1063,9 @@ class MailRepository(
         val departedIds: List<String>,
     )
 
+    /** #1752: when the Inbox may re-read the server's whole id list again. */
+    private val inboxSnapshots = InboxSnapshotSchedule()
+
     /**
      * #1527: the JMAP Inbox lists EVERY message the server holds, not the newest window. For the
      * Inbox the server's whole id list is read (ids only, paged), the window sync below keeps every
@@ -1081,7 +1084,7 @@ class MailRepository(
         val isInbox = client.inboxGuardOf(accountId)?.inboxId == mailboxId
         if (!isInbox) return syncMailboxWindow(session, accountId, auth, mailboxId, sizing, localAccountId, inboxServerIds = emptySet())
         // Null = the server's list could not be read: the window sync then deletes nothing this pass.
-        val serverIds: List<String>? = try {
+        val serverIds: List<String>? = if (!inboxSnapshots.claim(localAccountId, mailboxId)) null else try {
             walkAllIds(pageSize = session.getBatchSize().coerceAtLeast(JMAP_BACKLOG_CHUNK)) { position, limit ->
                 val page = client.queryEmailIds(session, accountId, mailboxId, limit, auth, position = position, calculateTotal = true)
                 page.ids to page.total
@@ -1089,6 +1092,7 @@ class MailRepository(
         } catch (c: kotlinx.coroutines.CancellationException) {
             throw c
         } catch (t: Throwable) {
+            inboxSnapshots.release(localAccountId, mailboxId)
             null
         }
         val window = syncMailboxWindow(session, accountId, auth, mailboxId, sizing, localAccountId, inboxServerIds = serverIds?.toHashSet())
@@ -1199,6 +1203,8 @@ class MailRepository(
                 return MailboxSync(fetchedIds = toFetch, departedIds = toRemove + swept)
             }
         }
+        // Cache present but no applicable delta: newest chunks only, never the whole window (#1752).
+        catchUpFolder(session, accountId, auth, mailboxId, localAccountId, key)?.let { return it }
         // Cold cache, or the server can't compute changes — full query.
         // ONE call, MANY writes, ONE delete: pages are upserted as they land and the DELETE runs
         // once at the end. [fullQueryWriteThrough] enforces that nothing is deleted unless the walk
@@ -1218,6 +1224,7 @@ class MailRepository(
             keepIds = { reconcilableWindowIds(it) },
             spareIds = { recentlyMutatedIds(localAccountId) },
             reconcile = { _, keepIds, spare, evictable -> if (inboxServerIds != null) emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds + inboxServerIds, spare, evictableIds = evictable) },
+            mayReconcile = { walk, before -> walkIsCurrent(localAccountId, mailboxId, walk, before) },
         )
         android.util.Log.i(
             "MailSync",
@@ -1235,6 +1242,85 @@ class MailRepository(
         }
         // NO departures from a full query: it knows what the folder HOLDS, not what left it (#134).
         return MailboxSync(fetchedIds = walked.ids, departedIds = emptyList())
+    }
+
+    /** #1752: the walk's newest row against the newest the folder held BEFORE the walk
+     *  ([reconcileAnswerIsCurrent]). Reads sort keys only, in memory. */
+    private suspend fun walkIsCurrent(
+        localAccountId: String,
+        mailboxId: String,
+        walk: WindowWalk,
+        before: Set<String>?,
+    ): Boolean {
+        val newestWalked = walk.ids.firstOrNull() ?: return true
+        val rows = emailDao.retentionRows(localAccountId, mailboxId)
+        val cachedNewest = rows.filter { before == null || it.id in before }.maxOfOrNull { it.sortKey }
+        val walkNewest = rows.firstOrNull { it.id == newestWalked }?.sortKey
+        val current = reconcileAnswerIsCurrent(cachedNewest, walkNewest)
+        if (!current) {
+            android.util.Log.w(
+                "MailSync",
+                "stale answer $localAccountId/$mailboxId: walk newest $walkNewest < cached newest $cachedNewest, reconcile skipped",
+            )
+        }
+        return current
+    }
+
+    /**
+     * #1752 cache-first delta for a folder that HAS cached rows but no applicable delta (cursor lost,
+     * `hasMoreChanges` on the account-wide Email/changes, a method error): fetch the newest chunks of
+     * [INITIAL_PAGE_LIMIT] until one touches the cache ([catchUpNewestFirst]), re-arm the cursor, and
+     * run the ghost sweep for deletions. Writes are upserts only; nothing is deleted here, so a failure
+     * leaves the cache as it was. Null = not applicable (cold cache, gap too long, anchor left): the
+     * caller runs its window walk.
+     */
+    private suspend fun catchUpFolder(
+        session: JmapSession,
+        accountId: String,
+        auth: JmapAuth,
+        mailboxId: String,
+        localAccountId: String,
+        key: String,
+    ): MailboxSync? {
+        val cached = emailDao.idsForMailbox(localAccountId, mailboxId).toHashSet()
+        if (cached.isEmpty()) return null
+        val result = catchUpNewestFirst<Email>(
+            cachedIds = cached,
+            idOf = { it.id },
+            fetchPage = { anchorId, limit ->
+                try {
+                    val page = client.queryEmailsPage(
+                        session, accountId, mailboxId, limit, auth,
+                        anchorId = anchorId, anchorOffset = if (anchorId != null) 1 else 0,
+                    )
+                    CatchUpPage(page.emails, page.queryState, page.emailState)
+                } catch (e: JmapException) {
+                    if (e.errorType != "anchorNotFound") throw e
+                    null
+                }
+            },
+            writePage = { fresh ->
+                checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
+                emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })
+            },
+        )
+        android.util.Log.i(
+            "MailSync",
+            "catch-up $localAccountId/$mailboxId: +${result.fetchedIds.size} in ${result.pages} chunk(s), reached=${result.reachedCached}",
+        )
+        val queryState = result.queryState
+        val emailState = result.emailState
+        if (!result.reachedCached || queryState == null || emailState == null) return null
+        putSyncState(key, SyncState(queryState, emailState))
+        val claim = ghostSweeps.claim(localAccountId, mailboxId, true, false)
+        val swept = if (claim.sweep) {
+            val ghosts = pruneGhostRows(session, accountId, auth, mailboxId, localAccountId)
+            if (ghosts == null) ghostSweeps.releaseFailed(localAccountId, mailboxId, claim)
+            ghosts.orEmpty()
+        } else {
+            emptyList()
+        }
+        return MailboxSync(fetchedIds = result.fetchedIds, departedIds = swept)
     }
 
     /**
