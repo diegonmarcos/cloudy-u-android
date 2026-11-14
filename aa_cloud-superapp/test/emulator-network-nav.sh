@@ -47,7 +47,7 @@ need() { local w; for w in "$@"; do has "$w" || { echo "::error::'$w' missing on
 wake; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 12
 wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:config" >/dev/null; sleep 8
 
-CUR=configs; cap configs-network-group
+sleep 6; CUR=configs; cap configs-network-group-early; sleep 4; cap configs-network-group
 need "NG Firewall" "Wi-Fi" DNS VPN Firewall "OS Perms" Webserver Proxy
 has "ADB Shell" && { echo "::error::the ADB Shell icon is back in Network"; fail=1; }
 tap "NG Firewall"; sleep 3; CUR=hub; cap ng-firewall-hub
