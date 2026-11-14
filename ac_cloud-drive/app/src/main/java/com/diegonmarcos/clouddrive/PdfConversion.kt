@@ -88,7 +88,7 @@ object PdfConversion {
                 PdfConvert.OCR -> PdfConvert.build(pages, "txt", source.name)
                 else -> PdfConvert.build(pages, target, source.name)
             }
-            FileOps.writeText(out, body)
+            FileOps.writeText(File(directory, name), body)
             Result.success(out)
         } catch (error: Exception) {
             Result.failure(IOException(if (error.message == "cancelled") "cancelled" else "cannot convert this PDF: " + (error.message ?: error.javaClass.simpleName)))
