@@ -101,7 +101,19 @@ sleep 2; tap '^Local$' || true; sleep 3
 dump >/dev/null
 if grep -q 'text="cannot open' "$OUT/ui.xml"; then tap '^emulated › 0$' || fail "no shared-storage pane: $(texts)"; sleep 3; fi
 # into the fixture folder: search narrows the long root listing to it
-tap '^Xconv$' || { tap '^Search$' && sleep 2 && adb shell input text Xconv && sleep 3 && adb shell input keyevent 4; sleep 1; tap '^Xconv$' || fail "fixture folder not listed: $(texts)"; }
+tap '^Search$' || fail "no search icon: $(texts)"
+sleep 2
+FIELD=$(dump | python3 -I -c '
+import re,sys
+x=sys.stdin.read()
+for m in re.finditer(r"<node [^>]*>",x):
+    n=m.group(0)
+    if "android.widget.EditText" in n:
+        b=list(map(int,re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"",n).groups())); print((b[0]+b[2])//2,(b[1]+b[3])//2); break')
+[ -n "$FIELD" ] || fail "no search field"
+adb shell input tap $FIELD; sleep 1; adb shell input text Xconv; sleep 3
+adb shell dumpsys input_method | grep -q 'mInputShown=true' && { adb shell input keyevent 4; sleep 1; }
+tap '^Xconv$' || fail "fixture folder not listed: $(texts)"
 sleep 3; shot 01-fixture-folder
 has photo.png || fail "fixtures not listed: $(texts)"
 
