@@ -1671,6 +1671,8 @@
       "magnet://"
      ],
      "callers": [
+      "aa_cloud-superapp",
+      "account",
       "lib-rootfs-nixdroid",
       "lib-rootfs-termux",
       "nix-on-droid",
