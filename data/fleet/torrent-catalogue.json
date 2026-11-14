@@ -197,18 +197,6 @@
    "source_page": "https://archive.org/details/Sintel"
   },
   {
-   "id": "bigbuckbunny-124",
-   "name": "Big Buck Bunny (Blender open movie)",
-   "category": "movies",
-   "publisher": "Internet Archive",
-   "licence": "CC BY 3.0",
-   "size_bytes": 441396871,
-   "info_hash": "b63eaa9720ee797667ef58ea35ef7d81ab5d1c16",
-   "magnet": "magnet:?xt=urn:btih:b63eaa9720ee797667ef58ea35ef7d81ab5d1c16&dn=BigBuckBunny_124&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
-   "torrent_url": "https://archive.org/download/BigBuckBunny_124/BigBuckBunny_124_archive.torrent",
-   "source_page": "https://archive.org/details/BigBuckBunny_124"
-  },
-  {
    "id": "elephantsdream",
    "name": "Elephants Dream (Blender open movie)",
    "category": "movies",

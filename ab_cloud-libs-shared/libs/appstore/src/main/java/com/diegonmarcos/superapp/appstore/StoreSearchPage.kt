@@ -409,6 +409,17 @@ object StoreSearchPage {
             val gen = generation
             for (s in d.sources) if (pageOf(s.id) != sub) continue else if (s.id in off) states[s.id] = SrcState.Off else runSource(c, d, s, q, gen)
         }
+        // The curated list is a fleet dataset the Store syncs at run time: while it is not served yet, ask again (a few times, a pause apart).
+        androidx.compose.runtime.LaunchedEffect(sub, phoneRecs?.apps?.isEmpty()) {
+            var left = 8
+            while (sub == PAGE_ANDROID && phoneRecs?.apps?.isEmpty() == true && left-- > 0) {
+                kotlinx.coroutines.delay(10_000)
+                val again = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    runCatching { StoreRecs.parsePhone(StoreRecs.dataset?.invoke(StoreRecs.DATASET_PHONE)) }.getOrNull()
+                }
+                if (again != null && again.apps.isNotEmpty()) phoneRecs = again
+            }
+        }
         // Switching the subpage re-asks the open query on that page's sources.
         androidx.compose.runtime.LaunchedEffect(sub) { if (asked.isNotEmpty()) run() }
 
