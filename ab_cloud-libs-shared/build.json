@@ -3139,7 +3139,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-11-13",
+        "pricing_as_of": "2026-11-14",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -3167,7 +3167,7 @@
             "params_b": 26,
             "quant": ["bf16", "fp4", "fp8"],
             "trained_for": ["academia", "marketing", "roleplay", "translation", "trivia"],
-            "prompt": 0.09, "completion": 0.3,
+            "prompt": 0.0675, "completion": 0.225,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -3222,7 +3222,7 @@
             "name": "DeepSeek V4 Flash 0731",
             "open": true,
             "quant": ["fp32", "fp4", "fp8", "nvfp4"],
-            "trained_for": ["academia", "finance", "health", "legal", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation", "trivia"],
+            "trained_for": ["academia", "finance", "health", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation", "trivia"],
             "prompt": 0.0434, "completion": 0.3,
             "note": "Ranked in all twelve categories at the second-lowest price here."
           },
@@ -3231,7 +3231,7 @@
             "name": "GLM 5.2",
             "open": true,
             "quant": ["fp4", "fp8", "nvfp4"],
-            "trained_for": ["academia", "legal", "programming", "roleplay"],
+            "trained_for": ["academia", "legal", "programming", "roleplay", "science"],
             "prompt": 0.007, "completion": 6.8,
             "note": "Ranked in ten categories including translation; the formal-register GLM."
           },
