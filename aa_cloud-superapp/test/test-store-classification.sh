@@ -223,11 +223,15 @@ else:
     ipc_keys = {"name", "actions", "id", "kind", "uris", "authority", "callers", "source", "permission", "level",
                 "methods", "interface", "members", "shared", "libs", "door", "pkg", "label", "endpoints", "component",
                 "method", "aidl", "groups", "apps"}
+    # #1749 StoreRecs reads the two served recommendation datasets (store-phone-recommendations, torrent-catalogue): their own schema
+    # keys (a category's id and label, an app's pkg/name/source/licence ...) are those files', not feed templates; exempt in that file only.
+    recs_keys = {"name", "id", "label", "pkg", "category", "source", "licence", "categories", "apps"}
     leaked = sorted({"%s: %r" % (fn, w) for fn, t in store_files.items()
                      for w in owned if '"%s"' % w in t
                      and not (fn == "SourceResolver.kt" and w in err_keys)
                      and not (fn == "FDroidIndex.kt" and w in index_keys)
-                     and not (fn == "IpcMesh.kt" and w in ipc_keys)})
+                     and not (fn == "IpcMesh.kt" and w in ipc_keys)
+                     and not (fn == "StoreRecs.kt" and w in recs_keys)})
     if owned and not leaked:
         ok("none of the %d declared feed strings is written in the store's code" % len(owned))
     else: bad("a feed string is hardcoded outside the one declaration: %s" % "; ".join(leaked[:6]))
