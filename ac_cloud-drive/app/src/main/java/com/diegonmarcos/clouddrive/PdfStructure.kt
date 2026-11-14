@@ -23,7 +23,7 @@ internal object PdfStructure {
 
     private fun looksLikeHeading(line: String, atBlockStart: Boolean, hasNext: Boolean): Boolean {
         val t = line.trim()
-        if (!atBlockStart || !hasNext || t.length < 2 || t.length > 70) return false
+        if (!atBlockStart || !hasNext || t.length < 2 || t.length > 70 || t.split(' ').size > 9) return false
         if (endsSentence(t) || BULLET.matches(t) || NUMBER.matches(t)) return false
         val c = t.first()
         return c.isUpperCase() || c.isDigit()

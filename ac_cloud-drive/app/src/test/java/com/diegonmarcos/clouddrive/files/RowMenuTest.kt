@@ -55,9 +55,9 @@ class RowMenuTest {
 
     @Test fun theDefaultRegistryOffersWhatTheTaskNames() {
         assertEquals(listOf("mhtml-html"), default.forName("p.mht").map { it.id })
-        assertEquals(listOf("to-jpg", "to-webp"), default.forName("p.png").map { it.id })
-        assertEquals(listOf("to-png", "to-webp"), default.forName("p.jpg").map { it.id })
-        assertEquals(listOf("to-jpg", "to-png"), default.forName("p.webp").map { it.id })
+        assertEquals(listOf("image-pdf", "to-jpg", "to-webp"), default.forName("p.png").map { it.id })
+        assertEquals(listOf("image-pdf", "to-png", "to-webp"), default.forName("p.jpg").map { it.id })
+        assertEquals(listOf("image-pdf", "to-jpg", "to-png"), default.forName("p.webp").map { it.id })
         assertEquals(listOf("md-html", "text-pdf"), default.forName("p.md").map { it.id })
         assertEquals(listOf("json-pretty"), default.forName("p.json").map { it.id })
         assertEquals(listOf("text-pdf"), default.forName("p.txt").map { it.id })
