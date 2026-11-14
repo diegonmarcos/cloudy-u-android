@@ -69,7 +69,7 @@ jobs:
           sleep 25 # the sync against mail.navwalk.invalid fails in this window
           shot 02-list-after-failed-sync; dump 02-list-after-failed-sync
           for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
-            for j in 1 2 3 4 5 6; do adb shell input swipe 540 1800 540 600 150; done
+            for j in 1 2 3 4 5 6; do adb shell input swipe 700 1400 700 450 400; done
             sleep 2
             n=$(printf '%02d' $((i + 2)))
             shot "$n-scroll-$i"; dump "$n-scroll-$i"
@@ -78,7 +78,7 @@ jobs:
           kill "$LP" 2>/dev/null || true
           # the proof, not only pictures: the first screen holds the newest message, the bottom holds a much older one, in order
           first=$(head -1 walk-out/01-list-first-open.subjects.txt || true)
-          last=$(tail -1 walk-out/14-scroll-12.subjects.txt || true)
+          last=$(cat walk-out/*-scroll-*.subjects.txt | grep . | tail -1 || true)
           echo "first visible: $first | last visible after scrolling: $last" | tee walk-out/summary.txt
           case "$first" in "Seed message 400 of 400"*) ;; *) echo "::error::the newest cached message is not first: $first"; exit 1;; esac
           case "$(head -1 walk-out/02-list-after-failed-sync.subjects.txt)" in "Seed message 400 of 400"*) ;; *) echo "::error::the cached list did not survive the failed sync"; exit 1;; esac
