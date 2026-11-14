@@ -1,0 +1,132 @@
+# #1738 Cloud SuperApp home > status-bar date/time dropdown (Calendar view): screenshot, no scrolling needed. Runs the x86_64 APK a Ship Cloud SuperApp run built, as the default home app.
+# Evidence (calendar-dropdown-evidence): menu-calc.png, menu-keyboard.png, list-top.png, list-*.png, ui dumps, result.txt.
+# The job FAILS when a group or row is missing from the opened menu, or when "Writer" is on the list.
+name: "Test -> SuperApp date/time dropdown (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      superapp_run_id:
+        description: "Ship Cloud SuperApp run id whose x86_64 APK artifact to test"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  menu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Fetch the Cloud SuperApp APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          W_RUN: ${{ inputs.superapp_run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          gh api "repos/$REPO/actions/runs/$W_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-SuperApp")) | .name' |
+          while read -r name; do gh run download "$W_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          pick=""
+          for want in x86_64 universal ''; do
+            pick=$(find apk -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no Cloud SuperApp APK"; exit 1; }
+          cp "$pick" superapp.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the script
+        run: |
+          cat > find.py <<'PY'
+          import re,sys
+          # usage: find.py ui.xml TEXT  -> "x y" centre of the first node whose text/content-desc == TEXT (exit 1 if none)
+          x=open(sys.argv[1],encoding='utf-8',errors='replace').read()
+          want=sys.argv[2]
+          for m in re.finditer(r'<node[^>]*>',x):
+              n=m.group(0)
+              t=re.search(r' text="([^"]*)"',n); d=re.search(r' content-desc="([^"]*)"',n)
+              if (t and t.group(1)==want) or (d and d.group(1)==want):
+                  b=re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',n)
+                  if b:
+                      a=list(map(int,b.groups())); print((a[0]+a[2])//2,(a[1]+a[3])//2); sys.exit(0)
+          sys.exit(1)
+          PY
+          cat > shoot.sh <<'EOF2'
+          set -u
+          mkdir -p out
+          adb install -r -g superapp.apk || exit 2
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          PKG=$("$aapt2" dump packagename superapp.apk)
+          adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW deny || true
+          adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+          adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+          adb shell settings put global hide_error_dialogs 1 || true
+          adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
+          adb shell locksettings set-disabled true || true
+          adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
+          awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; }
+          dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null || true; adb pull /sdcard/ui.xml "$1" >/dev/null || true; }
+          FAIL=0; : > out/result.txt
+          say() { echo "$1" | tee -a out/result.txt; }
+          awake
+          adb shell am force-stop "$PKG"
+          adb shell am start -W -n "$PKG/.HomeActivity" >/dev/null; sleep 12; awake
+          adb exec-out screencap -p > out/home.png
+          dump out/ui-home.xml
+          adb shell wm size > out/wm-size.txt; cat out/wm-size.txt | tee -a out/result.txt
+          # the status bar's date/time: the first node in the top 200 px whose text looks like a time
+          pos=$(python3 clockpos.py out/ui-home.xml || true)
+          say "clock at: ${pos:-NOT FOUND}"
+          [ -n "$pos" ] || pos="540 70"
+          for try in 1 2 3; do
+            adb shell input tap $pos; sleep 4
+            dump out/ui-popup.xml
+            grep -q 'Day timelines' out/ui-popup.xml && break
+            adb shell input keyevent KEYCODE_BACK; sleep 1
+          done
+          adb exec-out screencap -p > out/dropdown.png
+          grep -q 'text="Tasks"' out/ui-popup.xml && say "PASS popup opened" || { say "FAIL popup not opened"; FAIL=1; }
+          grep -q 'Day timelines' out/ui-popup.xml && say "PASS weather card visible without scrolling" || { say "FAIL weather card not visible"; FAIL=1; }
+          grep -q 'text="Agenda"' out/ui-popup.xml && say "PASS agenda visible" || { say "FAIL agenda not visible"; FAIL=1; }
+          timeout 60 adb logcat -d > out/logcat.txt || true
+          say "RESULT fail=$FAIL"
+          [ "$FAIL" = 0 ] || echo "dropdown check failed" > out/FAILED
+          EOF2
+          cat > clockpos.py <<'PY'
+          import re,sys
+          x=open(sys.argv[1],encoding='utf-8',errors='replace').read()
+          for m in re.finditer(r'<node[^>]*>',x):
+              n=m.group(0)
+              t=re.search(r' text="([^"]*)"',n); b=re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',n)
+              if t and b and re.search(r'\d{1,2}:\d{2}',t.group(1)):
+                  a=list(map(int,b.groups()))
+                  if a[1]<260: print((a[0]+a[2])//2,(a[1]+a[3])//2); sys.exit(0)
+          sys.exit(1)
+          PY
+          chmod +x shoot.sh
+      - name: Boot emulator and shoot
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_7
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash shoot.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: calendar-dropdown-evidence
+          path: out/
+          if-no-files-found: warn
+      - name: Fail when the dropdown check failed
+        run: |
+          cat out/result.txt || true
+          [ ! -e out/FAILED ] && grep -q 'RESULT fail=0' out/result.txt
