@@ -49,9 +49,14 @@ for fy in 28 32 36 24 40; do
 done
 [ "$opened" = 1 ] || echo "::warning::the date dropdown did not open from the taps tried (see calendar-dropdown screenshots)"
 cap calendar-dropdown-top
-adb shell input swipe $((W/2)) $((H*65/100)) $((W/2)) $((H*25/100)) 400; sleep 2; cap calendar-dropdown-agenda
-adb shell input swipe $((W/2)) $((H*65/100)) $((W/2)) $((H*25/100)) 400; sleep 6; cap calendar-dropdown-card
-grep -q "Temperature: " "$OUT/ui.xml" || grep -q "Day timelines" "$OUT/calendar-dropdown-agenda.xml" || { echo "::error::the card is not in the calendar dropdown"; fail=1; }
+# scroll INSIDE the popup (a swipe that starts outside it dismisses it): Agenda, then the card right after it
+inswipe() { adb shell input swipe $((W/2)) $((H*58/100)) $((W/2)) $((H*14/100)) 500; sleep 2; }
+inswipe; cap calendar-dropdown-agenda
+inswipe; sleep 6; cap calendar-dropdown-card
+grep -q "Temperature: " "$OUT/ui.xml" || grep -q "Day timelines" "$OUT/ui.xml" || { echo "::error::the card is not in the calendar dropdown"; fail=1; }
+# the Agenda view (tables alone): the card sits right under the Agenda table
+adb shell input tap $((W*66/100)) $((H*94/1000)); sleep 4; cap calendar-dropdown-agenda-view
+inswipe; sleep 3; cap calendar-dropdown-agenda-view-card
 
 adb logcat -d -s AndroidRuntime:E > "$OUT/crashes.txt" 2>&1 || true
 grep -A1 "FATAL EXCEPTION" "$OUT/crashes.txt" | grep -q "Process: $PKG" && { echo "::error::the app crashed"; fail=1; }
