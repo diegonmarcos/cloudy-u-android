@@ -35,6 +35,8 @@ class NavWalkSeedReceiver : BroadcastReceiver() {
         )
         // The folders a synced mailbox would have cached: the section's vertical side menu lists them, and without any it has nothing to draw.
         val folders = listOf("inbox" to "Inbox", "drafts" to "Drafts", "sent" to "Sent", "archive" to "Archive", "junk" to "Spam", "trash" to "Trash")
+        // The list scopes to the account's saved Inbox id: without it the seeded rows are never selected (#1752).
+        store.saveInboxMetaFor(id, "navwalk-inbox", "Inbox", "Nav walk", 0)
         val db = SternaDatabase.build(context)
         try {
             runBlocking(Dispatchers.IO) {
