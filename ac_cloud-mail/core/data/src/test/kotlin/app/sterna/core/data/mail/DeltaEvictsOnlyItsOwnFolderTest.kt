@@ -108,7 +108,15 @@ class DeltaEvictsOnlyItsOwnFolderTest {
         assertEquals(
             "the incremental branch must delete what the folder still holds (toDelete), not what " +
                 "the delta named (toRemove) — the latter reaches rows that have moved on",
-            listOf("if (toDelete.isNotEmpty()) emailDao.deleteByIds(localAccountId, toDelete)"),
+            // #1752 pin change: the delete is no longer a statement of its own; it travels with the fetched rows into
+            // EmailDao.applyDelta (one transaction, fetch first). The property pinned is unchanged: it receives
+            // `toDelete`, never `toRemove`.
+            listOf("emailDao.applyDelta(localAccountId, toDelete, fetched.map { it.toEntity(localAccountId, mailboxId) })"),
+            codeLinesNaming(body, "emailDao.applyDelta("),
+        )
+        assertEquals(
+            "no bare deleteByIds is left in the sync: every delete goes through the transaction",
+            emptyList<String>(),
             codeLinesNaming(body, "emailDao.deleteByIds("),
         )
         assertEquals(
@@ -141,15 +149,20 @@ class DeltaEvictsOnlyItsOwnFolderTest {
                 "the bound the write-through computed (evictableIds = evictable). A second call, " +
                 "or one that names its own keep set or drops the bound, deletes the mail that " +
                 "arrived while the walk ran and the cursor makes it permanent (#165)",
-            listOf(
-                "reconcile = { _, keepIds, spare, evictable -> if (inboxServerIds != null) emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds + inboxServerIds, spare, evictableIds = evictable) },",
-            ),
+            emptyList<String>(),
             codeLinesNaming(body, "emailDao.reconcileMailbox("),
+        )
+        // #1752 pin change: the JMAP sync no longer reconciles by absence at all (#165's bound is moot: nothing is
+        // deleted for not being in the walk). The only thing the write-through's reconcile may do is ask the server
+        // which cached ids are notFound.
+        assertEquals(
+            listOf("reconcile = { _, _, _, _ -> pruneGhostRows(session, accountId, auth, mailboxId, localAccountId) },"),
+            codeLinesNaming(body, "reconcile = {"),
         )
 
         val lines = body.lines().map { it.trim() }
         val gateRead = lines.indexOfFirst { it.startsWith("if (toRemove.isEmpty()) emptySet() else") }
-        val delete = lines.indexOfFirst { it == "if (toDelete.isNotEmpty()) emailDao.deleteByIds(localAccountId, toDelete)" }
+        val delete = lines.indexOfFirst { it.startsWith("emailDao.applyDelta(localAccountId, toDelete,") }
         val fetchRead = lines.indexOfFirst { it == "val cachedIds = emailDao.idsForMailbox(localAccountId, mailboxId).toSet()" }
         assertTrue("the gate's cache read is gone", gateRead >= 0)
         assertTrue("the bounded delete is gone", delete >= 0)
@@ -159,9 +172,13 @@ class DeltaEvictsOnlyItsOwnFolderTest {
                 "candidate is already gone from the comparison set, so nothing is ever spared",
             gateRead < delete,
         )
+        // #1752 pin change (was: deltaFetches' read AFTER the delete). The delete moved after the fetch, into the
+        // transaction. `toRemove` and `added` are disjoint and a destroyed id the server no longer has is a harmless
+        // notFound in the fetch, so reading the cache before the delete changes no decision; what matters now is that
+        // the cache read still precedes the delete, which it does.
         assertTrue(
-            "and deltaFetches' read must stay AFTER the delete, where its meaning was decided",
-            delete < fetchRead,
+            "deltaFetches' read must precede the transactional delete (fetch first, then one transaction)",
+            fetchRead < delete,
         )
     }
 

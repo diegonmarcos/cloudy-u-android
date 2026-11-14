@@ -136,4 +136,46 @@ class CacheFirstSyncTest {
         assertEquals(50, INITIAL_PAGE_LIMIT)
         assertEquals(50, pagingConfig().pageSize)
     }
+
+    // -- a short, stale or partial answer never deletes (#1752 follow-up) ----------------------------------
+
+    @Test fun `a short server answer leaves every cached row in place`() {
+        val cache = (1..100).map { "m$it" }.toMutableSet()
+        val before = cache.toSet()
+        // The server answers with 2 rows only (degraded index): neither the catch-up nor the sweep may delete.
+        val short = Server(listOf("m1", "m2"))
+        runBlocking {
+            catchUpNewestFirst<String>(cache.toSet(), { it }, short::page, { cache += it })
+        }
+        assertEquals(before, cache)
+        // The full-walk path: a walk of 2 ids finishes, its reconcile is the server's notFound word only.
+        val notFoundFromAShortAnswer: Set<String>? = emptySet()
+        assertTrue(ghostEvictions(before.toList(), notFoundFromAShortAnswer).isEmpty())
+        assertTrue("an unanswered question deletes nothing", ghostEvictions(before.toList(), null).isEmpty())
+        assertEquals(listOf("m5"), ghostEvictions(before.toList(), setOf("m5", "not-cached")))
+    }
+
+    @Test fun `the JMAP sync has no delete by absence left in it`() {
+        val body = DaoQuerySource.mailFunctionBody("MailRepository", "syncMailboxWindow")
+        assertFalse("a reconcile by absence is back in syncMailboxWindow", "emailDao.reconcileMailbox(" in body)
+        assertFalse("a bare delete is back in syncMailboxWindow", "emailDao.deleteByIds(" in body)
+        assertTrue("the delta no longer writes through the transaction", "emailDao.applyDelta(" in body)
+        val dao = DaoQuerySource.daoFunctionBody("EmailDao", "applyDelta")
+        assertTrue(dao.contains("deleteRowsAndIndexByIds(") && dao.contains("upsertAll("))
+        assertTrue("applyDelta must be one transaction", DaoQuerySource.isTransactional("EmailDao", "applyDelta"))
+    }
+
+    @Test fun `a cold folder fetches one chunk of 50 and stops, older mail waits for the scroll`() {
+        val server = Server((1..10_000).map { "n${10_001 - it}" })
+        val written = mutableListOf<String>()
+        val result = runBlocking {
+            catchUpNewestFirst<String>(emptySet(), { it }, server::page, { written += it }, maxPages = COLD_FIRST_SYNC_PAGES)
+        }
+        assertEquals(1, server.requests.size)
+        assertEquals(INITIAL_PAGE_LIMIT, written.size)
+        assertEquals(server.ids.take(INITIAL_PAGE_LIMIT), written)
+        assertEquals("q10000", result.queryState)
+        val body = DaoQuerySource.mailFunctionBody("MailRepository", "catchUpFolder")
+        assertTrue("the cold branch no longer caps the catch-up", "maxPages = if (cold) COLD_FIRST_SYNC_PAGES else CATCH_UP_MAX_PAGES" in body)
+    }
 }

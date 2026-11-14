@@ -107,11 +107,13 @@ class SignedOutAccountWiringTest {
         assertEquals(
             "the delta's own page write is no longer preceded by the guard.",
             listOf(
-                "val fetched = client.getEmailsByIds(session, accountId, toFetch, auth)",
+                // #1752 pin change: the fetch is conditional on there being ids to fetch, and the upsert is the
+                // transaction that also carries the delete. Order unchanged: fetch, guard, write.
+                "val fetched = if (toFetch.isNotEmpty()) client.getEmailsByIds(session, accountId, toFetch, auth) else emptyList()",
                 "$guard(localAccountId, accountStore.accounts().map { it.id })",
-                "emailDao.upsertAll(fetched.map { it.toEntity(localAccountId, mailboxId) })",
+                "emailDao.applyDelta(localAccountId, toDelete, fetched.map { it.toEntity(localAccountId, mailboxId) })",
             ),
-            block("syncMailboxWindow", "val fetched = client.getEmailsByIds(session, accountId, toFetch, auth)", 3),
+            block("syncMailboxWindow", "val fetched = if (toFetch.isNotEmpty()) client.getEmailsByIds(session, accountId, toFetch, auth) else emptyList()", 3),
         )
     }
 

@@ -239,6 +239,14 @@ interface EmailDao {
         }
     }
 
+    /** #1752: one incremental sync's writes as ONE transaction: the rows the server reported gone from this folder
+     *  and the rows it reported new or changed land together or not at all. The fetch happens BEFORE this. */
+    @Transaction
+    suspend fun applyDelta(accountId: String, deleteIds: List<String>, upserts: List<EmailEntity>) {
+        deleteIds.chunked(500).forEach { deleteRowsAndIndexByIds(accountId, it) }
+        if (upserts.isNotEmpty()) upsertAll(upserts)
+    }
+
     /** [deleteById]'s two halves as one all-or-nothing statement pair — see its comment for why
      *  nothing is caught in here. */
     @Transaction

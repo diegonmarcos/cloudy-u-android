@@ -1157,7 +1157,6 @@ class MailRepository(
                 val inThisMailbox =
                     if (toRemove.isEmpty()) emptySet() else emailDao.idsForMailbox(localAccountId, mailboxId).toSet()
                 val toDelete = mailboxScopedEvictions(toRemove, inThisMailbox)
-                if (toDelete.isNotEmpty()) emailDao.deleteByIds(localAccountId, toDelete)
                 // Every eviction the spare skipped; a `destroy` here is the one-shot loss [deltaEvictions] documents.
                 val spared = sparedEvictions(queryChanges.removed, added, changes.destroyed, isProtected)
                 if (spared.isNotEmpty()) {
@@ -1170,11 +1169,11 @@ class MailRepository(
                 }
                 val cachedIds = emailDao.idsForMailbox(localAccountId, mailboxId).toSet()
                 val toFetch = deltaFetches(added, cachedIds, changes.updated)
-                if (toFetch.isNotEmpty()) {
-                    val fetched = client.getEmailsByIds(session, accountId, toFetch, auth)
-                    checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
-                    emailDao.upsertAll(fetched.map { it.toEntity(localAccountId, mailboxId) })
-                }
+                // #1752: fetch FIRST, then delete and upsert in ONE transaction (EmailDao.applyDelta): a timeout
+                // in the fetch leaves the cache exactly as it was, and no crash can leave the delete without its rows.
+                val fetched = if (toFetch.isNotEmpty()) client.getEmailsByIds(session, accountId, toFetch, auth) else emptyList()
+                checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
+                emailDao.applyDelta(localAccountId, toDelete, fetched.map { it.toEntity(localAccountId, mailboxId) })
                 putSyncState(key, SyncState(queryChanges.newQueryState!!, changes.newState!!))
                 // Ghost sweep: a destroy can reach us through NEITHER delta (Stalwart omits a
                 // delegated account's), or be eaten by the recently-mutated spare while the cursors
@@ -1223,7 +1222,9 @@ class MailRepository(
             },
             keepIds = { reconcilableWindowIds(it) },
             spareIds = { recentlyMutatedIds(localAccountId) },
-            reconcile = { _, keepIds, spare, evictable -> if (inboxServerIds != null) emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds + inboxServerIds, spare, evictableIds = evictable) },
+            // #1752: absence from a walk is never a ground to delete (a short, stale or partial answer looks the same
+            // as a folder that lost mail). Only what the server explicitly reports notFound goes (pruneGhostRows).
+            reconcile = { _, _, _, _ -> pruneGhostRows(session, accountId, auth, mailboxId, localAccountId) },
         )
         android.util.Log.i(
             "MailSync",
@@ -1260,9 +1261,11 @@ class MailRepository(
         key: String,
     ): MailboxSync? {
         val cached = emailDao.idsForMailbox(localAccountId, mailboxId).toHashSet()
-        if (cached.isEmpty()) return null
+        // A cold folder fetches its FIRST chunk only; older mail comes on scroll (the mediator) and the capped Inbox backfill.
+        val cold = cached.isEmpty()
         val result = catchUpNewestFirst<Email>(
             cachedIds = cached,
+            maxPages = if (cold) COLD_FIRST_SYNC_PAGES else CATCH_UP_MAX_PAGES,
             idOf = { it.id },
             fetchPage = { anchorId, limit ->
                 try {
@@ -1287,7 +1290,7 @@ class MailRepository(
         )
         val queryState = result.queryState
         val emailState = result.emailState
-        if (!result.reachedCached || queryState == null || emailState == null) return null
+        if (!(result.reachedCached || cold) || queryState == null || emailState == null) return null
         putSyncState(key, SyncState(queryState, emailState))
         val claim = ghostSweeps.claim(localAccountId, mailboxId, true, false)
         val swept = if (claim.sweep) {

@@ -90,7 +90,11 @@ class FullQueryStreamingWiringTest {
         assertLine("MailRepository", "syncMailboxWindow", "spareIds = { recentlyMutatedIds(localAccountId) },")
         assertLine(
             "MailRepository", "syncMailboxWindow",
-            "reconcile = { _, keepIds, spare, evictable -> if (inboxServerIds != null) emailDao.reconcileMailbox(localAccountId, mailboxId, keepIds + inboxServerIds, spare, evictableIds = evictable) },",
+            // #1752 pin change: the reconcile no longer deletes by ABSENCE from the walk (a short, stale or partial answer
+            // is indistinguishable from a folder that lost mail, and it wiped the newer cached mail). It now asks the
+            // server which cached ids are notFound (pruneGhostRows) and deletes only those. keepIds/spare/evictable are
+            // unused on purpose; the walk still has to run to completion before the question is asked.
+            "reconcile = { _, _, _, _ -> pruneGhostRows(session, accountId, auth, mailboxId, localAccountId) },",
         )
     }
 

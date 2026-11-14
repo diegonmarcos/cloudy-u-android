@@ -11,6 +11,9 @@ internal const val INITIAL_PAGE_LIMIT = 50
  *  refresh. A gap longer than that falls back to the window walk, which is bounded by the window. */
 internal const val CATCH_UP_MAX_PAGES = 10
 
+/** Chunks a COLD folder (nothing cached) fetches on its first sync: one, of [INITIAL_PAGE_LIMIT] rows. */
+internal const val COLD_FIRST_SYNC_PAGES = 1
+
 /** One newest-first chunk as the catch-up consumes it. [rows] are in server order, newest first. */
 internal data class CatchUpPage<E>(
     val rows: List<E>,
