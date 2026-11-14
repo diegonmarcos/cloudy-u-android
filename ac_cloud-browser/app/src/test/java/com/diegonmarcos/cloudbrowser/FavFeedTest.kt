@@ -36,8 +36,8 @@ class FavFeedTest {
     @Test
     fun `a catalog filter carries its feed url`() {
         val s = FavSeed.parse(JSONObject("""{"version":4,"items":[{"title":"a","url":"https://a.b/","group":"g"}],
-            "filters":[{"id":"gh_pages","label":"GH Pages","feed":"https://raw.githubusercontent.com/diegonmarcos/front-html/main/pages.json"},{"id":"w","label":"W"}]}"""))
-        assertEquals("https://raw.githubusercontent.com/diegonmarcos/front-html/main/pages.json", s.filters[0].feed)
+            "filters":[{"id":"gh_pages","label":"GH Pages","feed":"https://raw.githubusercontent.com/diegonmarcos/_front-html___/main/pages.json"},{"id":"w","label":"W"}]}"""))
+        assertEquals("https://raw.githubusercontent.com/diegonmarcos/_front-html___/main/pages.json", s.filters[0].feed)
         assertEquals(null, s.filters[1].feed)
     }
 }

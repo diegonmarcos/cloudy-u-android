@@ -42,7 +42,7 @@ def check(root, ok):
     ok([p["id"] for p in secs["domains"]["pages"]] == ["headless_browsers", "files", "site_perms", "history", "visited"], "W2 Domains has Headless Browsers | Files | Perms&Actions | History | Visited")
     ok([a["id"] for a in ui["domains"]["actions"]] == ["cookies", "media", "cache", "storage", "reset_perms"], "W2 the five site actions are declared")
     ok(ui["domains"]["visited_sorts"][0]["id"] == "name" and ui["domains"]["visited_sorts"][1]["id"] == "last", "W2 Visited sorts by name or last visited")
-    ok(ui["cloudy"].get("pages_url", "").endswith("/front-html/main/pages.json"), "W2 the public Pages feed is declared")
+    ok(ui["cloudy"].get("pages_url", "").endswith("/_front-html___/main/pages.json"), "W2 the public Pages feed is declared")
     # W3
     ok(src, "W3 the sites code exists")
     for p, t in src.items():

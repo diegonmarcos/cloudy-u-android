@@ -771,7 +771,7 @@
         "catalog": "app/src/main/assets/favourites_catalog.json",
         "legacy_groups": ["Public", "Private (mesh)", "GitHub Pages"],
         "filters": [
-          { "id": "gh_pages", "label": "GH Pages", "from": "pages_hub", "feed": "https://raw.githubusercontent.com/diegonmarcos/front-html/main/pages.json" },
+          { "id": "gh_pages", "label": "GH Pages", "from": "pages_hub", "feed": "https://raw.githubusercontent.com/diegonmarcos/_front-html___/main/pages.json" },
           { "id": "cloudy_public", "label": "Cloudy Public", "from": "services_public" },
           { "id": "cloudy_private", "label": "Cloudy Private", "from": "services_private" },
           { "id": "webserver", "label": "Webserver", "from": "webserver_pages" },
@@ -2189,7 +2189,7 @@
     },
     "cloudy": {
       "_doc": "#1493 Cloudy. pages_url = front-html's Pages list (the owner's GitHub Pages, public ones, refreshed over the network and kept in the cloudy_cache prefs); the declared repos' Pages (ac_cloud-c3 data/repos_declared.json) and the Cloud-Webserver's serving map, Pages sub-pages and Repos store (ac_cloud-c3-webserver/build.json) are read by app/build.gradle. webserver_base_role = the serving endpoint the Webserver's own pages are served on.",
-      "pages_url": "https://raw.githubusercontent.com/diegonmarcos/front-html/main/pages.json",
+      "pages_url": "https://raw.githubusercontent.com/diegonmarcos/_front-html___/main/pages.json",
       "webserver_base_role": "drive",
       "timeout_ms": 1500,
       "private_scheme": "http://",

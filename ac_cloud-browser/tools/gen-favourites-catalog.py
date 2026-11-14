@@ -3,7 +3,7 @@
 
 Nothing is typed here. build.json::ui.browser.favourites.filters names the chips (label + `from`, in order); each `from`
 reads one declaration:
-  pages_hub        no links baked (#1458): the chip's `feed` (pages.json in diegonmarcos/front-html) is read at runtime by
+  pages_hub        no links baked (#1458): the chip's `feed` (pages.json in diegonmarcos/_front-html___) is read at runtime by
                    libs:browser FavFeed, with a cached fallback; the catalog carries the chip and its feed URL only
   services_public  aa_cloud-superapp/data/services_public.json (public_url); sub-folder = the category the SuperApp's
   services_private aa_cloud-superapp/data/services_private.json (private_dns, http/https + port only)   Cloud dashboard

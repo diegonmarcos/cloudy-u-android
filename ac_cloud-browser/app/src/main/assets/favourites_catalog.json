@@ -4,7 +4,7 @@
     {
       "id": "gh_pages",
       "label": "GH Pages",
-      "feed": "https://raw.githubusercontent.com/diegonmarcos/front-html/main/pages.json"
+      "feed": "https://raw.githubusercontent.com/diegonmarcos/_front-html___/main/pages.json"
     },
     {
       "id": "cloudy_public",

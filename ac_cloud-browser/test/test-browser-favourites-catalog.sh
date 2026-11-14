@@ -47,7 +47,7 @@ def check(root, ok):
     ok(all(i["group"].split("/")[0] in labels and "/" in i["group"] for i in items), "C2 every item sits in '<chip>/<sub-folder>'")
     def grp(label): return [i for i in items if i["group"].split("/")[0] == label]
     gh = [f for f in cat["filters"] if f["label"] == "GH Pages"]
-    ok(len(gh) == 1 and gh[0].get("feed", "").startswith("https://raw.githubusercontent.com/diegonmarcos/front-html/") and not grp("GH Pages"),
+    ok(len(gh) == 1 and gh[0].get("feed", "").startswith("https://raw.githubusercontent.com/diegonmarcos/_front-html___/") and not grp("GH Pages"),
        "C2 GH Pages carries the hub feed URL and no baked rows")
     cs = j(root, "aa_cloud-superapp/data/cloud_services.json")
     sub = {sg["label"] for g in cs["groups"] if g["id"] in ("infra", "user") for sg in g["subgroups"]} | {"Other"}

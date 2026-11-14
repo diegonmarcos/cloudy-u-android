@@ -19,7 +19,7 @@ import json, os, sys
 sys.path.insert(0, ".")
 from browser_tester import LIB, APP, kotlin, build_json, main
 
-FEED = "https://raw.githubusercontent.com/diegonmarcos/front-html/main/pages.json"
+FEED = "https://raw.githubusercontent.com/diegonmarcos/_front-html___/main/pages.json"
 
 def check(root, ok):
     fav = build_json(root)["ui"]["browser"]["favourites"]
