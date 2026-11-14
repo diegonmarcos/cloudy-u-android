@@ -62,7 +62,7 @@ object ImageIntents {
         add("Taken", android.media.ExifInterface.TAG_DATETIME_ORIGINAL)
         add("Exposure", android.media.ExifInterface.TAG_EXPOSURE_TIME)
         add("Aperture f/", android.media.ExifInterface.TAG_F_NUMBER)
-        add("ISO", android.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY)
+        add("ISO", "ISOSpeedRatings")
         add("Focal length", android.media.ExifInterface.TAG_FOCAL_LENGTH)
         add("Orientation", android.media.ExifInterface.TAG_ORIENTATION)
         rows
