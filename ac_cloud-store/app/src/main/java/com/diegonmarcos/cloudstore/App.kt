@@ -81,6 +81,10 @@ class App : Application() {
         // starts off the main thread, re-adds the remembered list, and keeps applying the seeding policy while no screen is open.
         // A device where libtorrent cannot load leaves the engine Unavailable with a reason: nothing here can crash the app.
         com.diegonmarcos.superapp.appstore.StoreTorrentHost.host = TorrentHost(this)
+        // Search > Phone's curated recommendations are a runtime fleet dataset (#1749); this app serves and reads it.
+        com.diegonmarcos.superapp.appstore.StoreRecs.dataset = { name ->
+            runCatching { com.diegonmarcos.superapp.fleetdata.FleetData.get(applicationContext, name) { it } }.getOrNull()
+        }
         Thread({
             runCatching {
                 val engine = com.diegonmarcos.superapp.torrent.TorrentEngines.get(this)

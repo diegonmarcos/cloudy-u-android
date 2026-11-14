@@ -2,6 +2,7 @@ package com.diegonmarcos.cloudstore
 
 import android.content.Context
 import android.net.Uri
+import com.diegonmarcos.superapp.appstore.StoreRecs
 import com.diegonmarcos.superapp.appstore.StoreTorrentHost
 import com.diegonmarcos.superapp.torrent.AddResult
 import com.diegonmarcos.superapp.torrent.TorrentEngines
@@ -28,7 +29,7 @@ class TorrentHost(private val app: Context) : StoreTorrentHost.Host {
 
     override fun search(sourceId: String, query: String): List<StoreTorrentHost.Hit> {
         val ix = registry.byId(sourceId) ?: error("unknown torrent source '$sourceId'")
-        return TorrentSearch.search(ix, query).map { StoreTorrentHost.Hit(ix.id, it.title, it.seeders, it.leechers, it.sizeBytes, it.addedAt, it.page, it, ix.label, it.category, it.files) }
+        return TorrentSearch.search(ix, query).map { StoreTorrentHost.Hit(ix.id, it.title, it.seeders, it.leechers, it.sizeBytes, it.addedAt, it.page, it, ix.label, it.category, it.files, it.infoHash) }
     }
 
     override fun download(hit: StoreTorrentHost.Hit): String {
@@ -41,6 +42,43 @@ class TorrentHost(private val app: Context) : StoreTorrentHost.Host {
     }
 
     override fun folderNote(): String = TorrentEngines.get(app).settings.saveDir.path
+
+    /** #1749 the declared catalogue (never the user's own entries) as the Torrent landing's recommendations. */
+    override fun recommendations(): List<StoreRecs.Rec>? {
+        val c = TorrentCatalogue.served(app) ?: return null
+        return c.entries.filter { !it.user }.map {
+            StoreRecs.Rec(it.id, it.name, it.category, it.sizeBytes, it.licence, it.publisher, it.sourcePage, it.torrentUrl, it.magnet, it.infoHash, it)
+        }
+    }
+
+    /**
+     * Live seeders / leechers: each recommendation is searched by name on the enabled sources and a hit counts only when its info-hash is
+     * the declared one, so a look-alike from an open index can never stand in for the catalogued file. A source that fails is skipped.
+     */
+    override fun liveStats(recs: List<StoreRecs.Rec>, onStat: (String, StoreRecs.Stat) -> Unit) {
+        val queue = java.util.concurrent.ConcurrentLinkedQueue(recs.filter { it.infoHash != null })
+        val sources = sources().map { it.id }
+        val workers = (1..4).map {
+            Thread({
+                while (true) {
+                    val r = queue.poll() ?: break
+                    val hash = r.infoHash!!.lowercase()
+                    val q = r.name.substringBefore('(').trim().ifEmpty { r.name }
+                    for (id in sources) {
+                        val hit = runCatching { search(id, q) }.getOrNull()?.firstOrNull { it.infoHash?.lowercase() == hash && it.seeders >= 0 } ?: continue
+                        onStat(hash, StoreRecs.Stat(hit.seeders, hit.leechers, hit.sourceLabel))
+                        break
+                    }
+                }
+            }, "store-torrent-live").also { it.start() }
+        }
+        workers.forEach { runCatching { it.join() } }
+    }
+
+    override fun downloadRec(rec: StoreRecs.Rec): String {
+        val e = rec.key as? TorrentCatalogue.Entry ?: return "This recommendation cannot be downloaded."
+        return TorrentCatalogue.download(TorrentEngines.get(app), e)
+    }
 }
 
 /** Adds what the system hands the app: a `magnet:` link, a .torrent file, or the files picked in Torrent / Configs > Torrent. */

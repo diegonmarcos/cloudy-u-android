@@ -95,6 +95,12 @@
         "*"
       ]
     },
+    "store-phone-recommendations": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ]
+    },
     "device-access": {
       "tier": 3,
       "consumers": [

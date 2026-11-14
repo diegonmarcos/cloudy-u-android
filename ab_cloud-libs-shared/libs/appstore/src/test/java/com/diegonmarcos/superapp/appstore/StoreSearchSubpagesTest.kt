@@ -12,13 +12,16 @@ class StoreSearchSubpagesTest {
     @Test fun theThreeSourceSubpagesAreCloudyAndroidTorrentInOrder() {
         assertEquals(listOf("search-cloudy", "search-android", "search-torrent"), StoreSearchPage.PAGES)
         assertEquals("search", StoreSearchPage.SECTION)
-        assertEquals(listOf("Cloudy", "Android", "Torrent"), StoreSearchPage.PAGES.map { StoreSearchPage.pageLabel(it) })
+        assertEquals(listOf("Cloudy", "Phone", "Torrent"), StoreSearchPage.PAGES.map { StoreSearchPage.pageLabel(it) })
     }
 
-    @Test fun ourReleasesAreCloudyAndEveryOtherApkSourceIsAndroid() {
+    @Test fun cloudyShowsOnlyTheFleetAndEveryOtherSourceIsPhone() {
         assertEquals("search-cloudy", StoreSearchPage.pageOf(StoreSearchPage.FLEET))
-        assertEquals("search-cloudy", StoreSearchPage.pageOf(StoreSearchPage.DECLARED))
-        for (id in listOf("fdroid", "izzy", StoreSearchPage.GITHUB, StoreSearchPage.PLAY)) assertEquals(id, "search-android", StoreSearchPage.pageOf(id))
+        // #1749: the declared (non-fleet) list moved from Cloudy to Phone; Cloudy is the fleet alone.
+        for (id in listOf(StoreSearchPage.DECLARED, "fdroid", "izzy", StoreSearchPage.GITHUB, StoreSearchPage.PLAY)) assertEquals(id, "search-android", StoreSearchPage.pageOf(id))
+        val map = JSONObject(File("src/main/assets/appstore-install-sources.json").readText())
+        val ids = map.getJSONObject("search").getJSONArray("sources").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
+        assertEquals("Cloudy searches the fleet and nothing else", listOf(StoreSearchPage.FLEET), ids.filter { StoreSearchPage.pageOf(it) == "search-cloudy" })
     }
 
     @Test fun cloudyAndAndroidResultsInstallAndTorrentResultsDownload() {

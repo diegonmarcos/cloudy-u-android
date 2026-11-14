@@ -105,10 +105,10 @@ PY
   printf '%s' "$lay" | has 'label(f).startsWith(it.second)' && ok "a folder joins its section by its label prefix" || bad "the shared layout does not join folders by prefix"
 
   # 3. our list, and only our list
-  local land; land="$(printf '%s\n' "$page" | sed -n '/^    fun landing(ctx: Context, cfg: SourceResolver.Config): Landing {/,/^    }/p')"
+  local land; land="$(printf '%s\n' "$page" | sed -n '/^    fun landing(ctx: Context, cfg: SourceResolver.Config, scope: Scope = Scope.BOTH): Landing {/,/^    }/p')"
   [ -n "$land" ] && ok "StoreSearchPage.landing exists" || bad "no StoreSearchPage.landing"
   printf '%s' "$land" | has -F 'fleetApps.filter { it.kind == FLEET_KIND_APP && !it.blocked }' && ok "the landing lists the fleet's own apps (the baked manifest)" || bad "the landing does not list the fleet's apps"
-  printf '%s' "$land" | has -F 'in declaredList(ctx, cfg))' && ok "the landing lists the declared apps (resolver.apps + DeclaredEdits)" || bad "the landing does not list the declared apps"
+  printf '%s' "$land" | has -F 'else declaredList(ctx, cfg)) {' && ok "the landing lists the declared apps (resolver.apps + DeclaredEdits)" || bad "the landing does not list the declared apps"
   printf '%s' "$land" | has -F 'PhoneTaxonomy.folderIdOf(it.pkg, it.label, ctx)' && printf '%s' "$land" | has -F 'PhoneSections.loadFromBuildConfig()' && printf '%s' "$land" | has -F 'PhoneTaxonomy.folders' \
     && ok "each app is filed by the shared PhoneTaxonomy, sections by PhoneSections" || bad "the landing files apps by something other than the shared taxonomy"
   ! printf '%s' "$land" | has -E 'FDroidIndex|PlayAnonFetcher|searchOne|getBody' && ok "no search source feeds the landing" || bad "the landing reads a search source: suggestions must come from our list"

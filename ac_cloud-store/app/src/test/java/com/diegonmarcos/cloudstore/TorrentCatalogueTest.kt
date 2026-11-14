@@ -48,7 +48,7 @@ class TorrentCatalogueTest {
         for (i in 0 until a.length()) {
             val o = a.getJSONObject(i)
             val id = o.getString("id")
-            assertTrue("$id category", o.getString("category") in setOf("os", "movies"))
+            assertTrue("$id category", o.getString("category") in ownerCategories)
             assertTrue("$id licence", o.optString("licence").isNotBlank())
             assertTrue("$id host", java.net.URI(o.getString("torrent_url")).host in publisherHosts)
             // the magnet names exactly the info-hash computed from the publisher's .torrent

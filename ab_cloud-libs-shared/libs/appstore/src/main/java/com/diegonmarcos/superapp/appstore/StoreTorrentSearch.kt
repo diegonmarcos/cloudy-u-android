@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Box
@@ -117,6 +119,7 @@ object StoreTorrentSearch {
                     color = p.textSecondary, fontSize = KitDensity.caption)
                 sources.forEach { Text("${it.label}${if (it.builtIn) "" else " (yours)"}: ${it.blurb}", color = p.textSecondary, fontSize = KitDensity.caption) }
                 Text("★ marks a source you added. Add, edit or remove sources in Configs > Torrent.", color = p.textSecondary, fontSize = KitDensity.caption)
+                Recommendations(ctx, host)
                 return@Column
             }
             val busy = states.values.count { it is St.Busy }
@@ -163,6 +166,78 @@ object StoreTorrentSearch {
                     }
                 }
                 notes?.let { Text(it, color = p.textSecondary, fontSize = KitDensity.caption, modifier = Modifier.testTag(NOTE_TAG)) }
+            }
+        }
+    }
+
+    const val TAG_RECS = "store-search:torrent:recs"
+    fun recCategoryTag(id: String) = "store-search:torrent:recs:cat:$id"
+    fun recRowTag(id: String) = "store-search:torrent:recs:row:$id"
+    fun recAddTag(id: String) = "store-search:torrent:recs:add:$id"
+
+    /**
+     * The landing before a query: the declared legitimate catalogue in the twelve categories, the top 10 of each by seeders (live
+     * from the enabled sources where they say, else unknown and last). Only allowlisted licence + source entries ever appear
+     * ([StoreRecs.top]); each row has name, size, S/L, source, licence and Add (the engine, into the configured folder).
+     */
+    @Composable
+    private fun Recommendations(ctx: Context, host: StoreTorrentHost.Host) {
+        val p = LocalKitPalette.current
+        val scope = rememberCoroutineScope()
+        var recs by remember(host) { mutableStateOf<List<StoreRecs.Rec>?>(null) }
+        var failed by remember(host) { mutableStateOf<String?>(null) }
+        val stats = remember(host) { mutableStateMapOf<String, StoreRecs.Stat>() }
+        var live by remember(host) { mutableStateOf(true) }
+        var note by remember(host) { mutableStateOf<String?>(null) }
+        LaunchedEffect(host) {
+            val got = withContext(Dispatchers.IO) { runCatching { host.recommendations() } }
+            got.onFailure { failed = it.message ?: it.javaClass.simpleName; live = false }.onSuccess { recs = it ?: emptyList() }
+            val ok = got.getOrNull()?.filter(StoreRecs::legit).orEmpty()
+            if (ok.isNotEmpty()) {
+                withContext(Dispatchers.IO) { runCatching { host.liveStats(ok) { h, st -> stats[h.lowercase()] = st } } }
+            }
+            live = false
+        }
+        Column(Modifier.fillMaxWidth().testTag(TAG_RECS), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
+            Text("Recommended: legitimately distributable only", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold)
+            Text("Public domain, Creative Commons, open-source and official free distributions, top ${StoreRecs.TOP} per category by seeders.",
+                color = p.textSecondary, fontSize = KitDensity.caption)
+            val r = recs
+            when {
+                failed != null -> KitStatusBanner("Recommendations unavailable: $failed", KitState.BAD, tag = "store-search:torrent:recs-failed")
+                r == null -> KitStatusBanner("Loading recommendations…", KitState.BUSY, tag = "store-search:torrent:recs-loading")
+                r.isEmpty() -> KitEmptyState("No recommendations yet", "The catalogue is served by Cloud Store and has not arrived. Search above still works.")
+                else -> {
+                    if (live) KitStatusBanner("Reading live seeders from the sources…", KitState.BUSY, tag = "store-search:torrent:recs-live")
+                    StoreRecs.top(r, stats).forEach { (c, rows) ->
+                        Text(c.label + " (" + rows.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = KitDensity.small).testTag(recCategoryTag(c.id)))
+                        if (rows.isEmpty()) Text("Nothing from a legitimate source yet.", color = p.textSecondary, fontSize = KitDensity.caption)
+                        rows.forEach { rec ->
+                            val st = rec.infoHash?.let { stats[it.lowercase()] }
+                            Column(Modifier.fillMaxWidth().testTag(recRowTag(rec.id))) {
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(rec.name, color = p.textPrimary, fontSize = KitDensity.body, fontWeight = FontWeight.Bold, maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                                    Text("Add", color = p.tileInk, fontSize = KitDensity.caption, fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(start = KitDensity.small).testTag(recAddTag(rec.id)).clip(RoundedCornerShape(KitDensity.corner))
+                                            .background(p.accent).clickable {
+                                                note = "adding…"
+                                                scope.launch {
+                                                    val msg = withContext(Dispatchers.IO) { runCatching { host.downloadRec(rec) }.getOrElse { it.message ?: it.javaClass.simpleName } }
+                                                    note = rec.name.take(40) + ": " + msg
+                                                    Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+                                                }
+                                            }.padding(horizontal = KitDensity.small, vertical = KitDensity.small / 4))
+                                }
+                                Text(StoreTorrentHost.sizeText(rec.sizeBytes) + "  ·  S " + StoreTorrentHost.seedText(st?.seeders ?: -1) + " / L " + StoreTorrentHost.seedText(st?.leechers ?: -1) +
+                                    "  ·  " + (st?.sourceLabel?.ifEmpty { null } ?: rec.publisher.ifEmpty { "catalogue" }) + "  ·  " + rec.licence,
+                                    color = p.textSecondary, fontSize = KitDensity.caption, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
+                    note?.let { Text(it, color = p.textSecondary, fontSize = KitDensity.caption, modifier = Modifier.testTag(NOTE_TAG)) }
+                }
             }
         }
     }

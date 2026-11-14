@@ -92,26 +92,26 @@ object StoreSearchPage {
     // ── the source subpages below Search ──────────────────────────────
     /** The Store section these subpages belong to (build.json::ui.sections[].id) and its pages, in strip order. */
     const val SECTION = "search"
-    /** Cloudy: our repo releases (the constellation fleet and the declared list). */
+    /** Cloudy: the constellation fleet's own cloud apps (our releases) and nothing else (#1749). */
     const val PAGE_CLOUDY = "search-cloudy"
-    /** Android: Aurora (Play, anonymous), F-Droid, IzzyOnDroid and GitHub APK sources. */
+    /** Phone (the id keeps its old name, search-android): Android apps that are NOT fleet apps: F-Droid, IzzyOnDroid, Aurora (Play, anonymous), GitHub and the declared list. */
     const val PAGE_ANDROID = "search-android"
     /** Torrent: the host's torrent indexers; a result is downloaded by the torrent engine, not installed. */
     const val PAGE_TORRENT = "search-torrent"
     val PAGES = listOf(PAGE_CLOUDY, PAGE_ANDROID, PAGE_TORRENT)
 
-    /** Which subpage an install-source search source belongs to: the fleet and the declared list are Cloudy, every other APK source is Android. */
-    fun pageOf(sourceId: String): String = if (sourceId == FLEET || sourceId == DECLARED) PAGE_CLOUDY else PAGE_ANDROID
+    /** Which subpage an install-source search source belongs to: only the fleet is Cloudy; the declared list and every other APK source are Phone (non-fleet apps). */
+    fun pageOf(sourceId: String): String = if (sourceId == FLEET) PAGE_CLOUDY else PAGE_ANDROID
 
     /** Where a result goes: Torrent results are downloaded by the torrent engine, the others are installed (or opened) by the APK path. */
     fun handlerOf(page: String): String = if (page == PAGE_TORRENT) "torrent-download" else "install"
 
-    fun pageLabel(page: String): String = when (page) { PAGE_CLOUDY -> "Cloudy"; PAGE_ANDROID -> "Android"; else -> "Torrent" }
+    fun pageLabel(page: String): String = when (page) { PAGE_CLOUDY -> "Cloudy"; PAGE_ANDROID -> "Phone"; else -> "Torrent" }
 
     /** What a subpage searches, in a sentence (the pre-query line of Android; Cloudy shows our list, Torrent its sources). */
     fun pageBlurb(page: String): String = when (page) {
-        PAGE_CLOUDY -> "Our repo releases: the Cloud constellation apps and the apps you declared."
-        PAGE_ANDROID -> "Android APK sources: Aurora (Google Play, anonymous), F-Droid, IzzyOnDroid and GitHub. Results install through the Store's install path."
+        PAGE_CLOUDY -> "Our repo releases: the Cloud constellation apps (the fleet)."
+        PAGE_ANDROID -> "Android apps that are not in the fleet: Aurora (Google Play, anonymous), F-Droid, IzzyOnDroid, GitHub and the apps you declared. Results install through the Store's install path."
         else -> "Torrent indexers. Results download with the Torrent engine."
     }
 
@@ -152,6 +152,8 @@ object StoreSearchPage {
 
     private val fleetApps: List<Fleet.App> by lazy { Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64) }
     private val fleetByPkg: Map<String, Fleet.App> by lazy { PhoneAppActions.fleetByPackage(fleetApps) }
+    /** Every constellation-fleet package (and its alternate id): the Phone page never recommends or lists these. */
+    internal val fleetPackages: Set<String> by lazy { fleetApps.flatMap { listOfNotNull(it.pkg, it.altId) }.toSet() }
     @Volatile private var sourcesMemo: JSONObject? = null
     @Volatile private var controlsMemo: StoreControls.Decl? = null
     @Volatile private var cfgMemo: SourceResolver.Config? = null
@@ -262,18 +264,21 @@ object StoreSearchPage {
             else cfg.kind(cfg.kind(src.kind)?.member)?.label ?: src.kind
         }.distinct()
 
+    /** Which of our apps a landing lists: the fleet (Cloudy), the declared non-fleet apps (Phone), or both. */
+    enum class Scope { FLEET, DECLARED, BOTH }
+
     /** OUR LIST, filed under the Phone taxonomy: the landing's sections, shelves and cards. */
-    fun landing(ctx: Context, cfg: SourceResolver.Config): Landing {
+    fun landing(ctx: Context, cfg: SourceResolver.Config, scope: Scope = Scope.BOTH): Landing {
         val sources = sourcesOf(ctx)
         val d = decl(sources, cfg)
         val pm = ctx.packageManager
         val cards = LinkedHashMap<String, Card>()
-        val ours = fleetApps.filter { it.kind == FLEET_KIND_APP && !it.blocked }
+        val ours = if (scope == Scope.DECLARED) emptyList() else fleetApps.filter { it.kind == FLEET_KIND_APP && !it.blocked }
         for (a in ours) {
             val installed = isInstalled(ctx, a.pkg) || a.altId?.let { isInstalled(ctx, it) } == true
             cards.putIfAbsent(a.pkg, Card(StoreSuggest.Suggestion(a.pkg, pmLabel(pm, a.pkg) ?: a.label, listOf(d.label(FLEET)), installed), a, null))
         }
-        for ((pkg, label) in declaredList(ctx, cfg)) {
+        for ((pkg, label) in if (scope == Scope.FLEET) emptyMap() else declaredList(ctx, cfg)) {
             if (pkg in fleetByPkg || pkg in cards) continue
             val ext = DeclaredEdits.apply(ctx, cfg, pkg, SourceResolver.resolve(cfg, pkg))
             // Undeclared on this phone, or no public source at all: nothing to suggest.
@@ -353,14 +358,20 @@ object StoreSearchPage {
         val lines = remember { mutableStateMapOf<String, String>() }
         var tick by remember { mutableStateOf(0) }
         var landingState by remember { mutableStateOf<Landing?>(null) }
+        var phoneLanding by remember { mutableStateOf<Landing?>(null) }
+        var phoneRecs by remember { mutableStateOf<StoreRecs.PhoneRecs?>(null) }
         var landingError by remember { mutableStateOf<String?>(null) }
         val open = remember { mutableStateMapOf<String, Boolean>() }
 
         fun loadLanding() {
             thread(name = "store-search-landing") {
-                val built = runCatching { resolveCfg(ctx, cfg).let { c -> decl(sourcesOf(ctx), c) to landing(ctx, c) } }
+                val built = runCatching { resolveCfg(ctx, cfg).let { c -> Triple(decl(sourcesOf(ctx), c), landing(ctx, c, Scope.FLEET), landing(ctx, c, Scope.DECLARED)) } }
+                // Phone's curated recommendations: the served fleet dataset, parsed defensively (never a crash, a reason instead).
+                val recs = runCatching { StoreRecs.parsePhone(StoreRecs.dataset?.invoke(StoreRecs.DATASET_PHONE)) }
+                    .getOrElse { StoreRecs.PhoneRecs(emptyList(), emptyList(), listOf(it.message ?: it.javaClass.simpleName)) }
                 main.post {
-                    built.onSuccess { (d, l) -> declState = d; landingState = l; landingError = null }
+                    phoneRecs = recs
+                    built.onSuccess { (d, l, dl) -> declState = d; landingState = l; phoneLanding = dl; landingError = null }
                         .onFailure { landingError = it.message ?: it.javaClass.simpleName }
                 }
             }
@@ -427,12 +438,17 @@ object StoreSearchPage {
             if (asked.isEmpty()) {
                 // Our list is the Cloudy landing; Android has no list of its own before a query, only the sources above.
                 if (sub == PAGE_CLOUDY) LandingView(ctx, cfg, landingState, landingError, lines, tick)
-                else Text(pageBlurb(sub), color = LocalKitPalette.current.textSecondary, fontSize = KitDensity.caption)
+                else {
+                    Text(pageBlurb(sub), color = LocalKitPalette.current.textSecondary, fontSize = KitDensity.caption)
+                    PhoneRecsView(ctx, cfg, d, phoneRecs, lines, open, tick) { tick++ }
+                    // The apps the user declared that are not fleet apps (they used to sit on the Cloudy list): still here, under the recommendations.
+                    if (phoneLanding?.sections?.isNotEmpty() == true) LandingView(ctx, cfg, phoneLanding, landingError, lines, tick)
+                }
             } else if (d != null) {
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                     Licence.values().forEach { l -> Pill(ctx.getString(l.label), licence == l, "store-search:licence:${l.name}") { licence = l } }
                 }
-                Results(ctx, cfg, d, asked, states, licence, lines, open, tick, { tick++ }) { id ->
+                Results(ctx, cfg, d, asked, states, licence, lines, open, tick, { tick++ }, hideFleet = sub == PAGE_ANDROID) { id ->
                     val c = runCatching { resolveCfg(ctx, cfg) }.getOrNull()
                     val s = d.sources.firstOrNull { it.id == id }
                     if (c != null && s != null) runSource(c, d, s, asked, generation)
@@ -445,11 +461,11 @@ object StoreSearchPage {
     private fun Results(
         ctx: Context, cfg: () -> SourceResolver.Config?, d: Decl, asked: String, states: Map<String, SrcState>,
         licence: Licence, lines: MutableMap<String, String>, open: MutableMap<String, Boolean>, tick: Int,
-        bump: () -> Unit, retry: (String) -> Unit,
+        bump: () -> Unit, hideFleet: Boolean = false, retry: (String) -> Unit,
     ) {
         val p = LocalKitPalette.current
         val hits = states.values.filterIsInstance<SrcState.Done>().flatMap { it.hits }
-        val merged = StoreSuggest.merge(d.order, hits).filter {
+        val merged = StoreSuggest.merge(d.order, hits).filter { !hideFleet || it.pkg !in fleetPackages }.filter {
             when (licence) { Licence.ALL -> true; Licence.FOSS -> it.foss; Licence.PRIVATE -> !it.foss }
         }
         val on = d.sources.count { states[it.id] !is SrcState.Off }
@@ -597,6 +613,39 @@ object StoreSearchPage {
                 reasons.forEach { StoreRow.Line(it) }
                 if (r.pkg.isEmpty()) StoreRow.Line(ctx.getString(R.string.store_search_repo_only))
                 StoreRow.Actions(verbs)
+            }
+        }
+    }
+
+    // ── Phone: curated recommendations ─────────────────────────────────
+
+    const val TAG_PHONE_RECS = "store-search:phone-recs"
+    fun recCategoryTag(id: String) = "store-search:phone-recs:cat:$id"
+
+    /** Each curated app as a search result the Store row installs: from the F-Droid index (or the app's declared source), never a fleet app. */
+    internal fun phoneRows(recs: StoreRecs.PhoneRecs): List<Pair<StoreRecs.Category, List<StoreSuggest.Result>>> =
+        StoreRecs.phoneByCategory(recs, StoreRecs.phoneApps(recs, fleetPackages)).map { (c, apps) ->
+            c to apps.map { a ->
+                StoreSuggest.Result("rec:${a.pkg}", a.pkg, a.name, a.licence, listOf(a.source.ifEmpty { SourceResolver.KIND_FDROID }), true, "", "")
+            }
+        }
+
+    @Composable
+    private fun PhoneRecsView(
+        ctx: Context, cfg: () -> SourceResolver.Config?, d: Decl?, recs: StoreRecs.PhoneRecs?,
+        lines: MutableMap<String, String>, open: MutableMap<String, Boolean>, tick: Int, bump: () -> Unit,
+    ) {
+        val p = LocalKitPalette.current
+        Column(Modifier.fillMaxWidth().testTag(TAG_PHONE_RECS), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
+            KitSectionHeader("Popular open-source apps", "Curated, not in the fleet. Install from the F-Droid index.")
+            when {
+                recs == null || d == null -> KitStatusBanner(ctx.getString(R.string.store_landing_loading), KitState.BUSY, tag = "store-search:phone-recs-loading")
+                recs.apps.isEmpty() -> KitEmptyState("No recommendations yet", "The curated list is served by Cloud Store (${recs.problems.firstOrNull() ?: "empty"}).")
+                else -> phoneRows(recs).forEach { (c, rows) ->
+                    Text(c.label + " (" + rows.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.testTag(recCategoryTag(c.id)))
+                    rows.forEach { r -> ResultRow(ctx, cfg, d, r, lines, open, tick, bump) }
+                }
             }
         }
     }

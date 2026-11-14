@@ -33,6 +33,8 @@ object StoreTorrentHost {
         val category: String? = null,
         /** -1 = the indexer does not say */
         val files: Int = -1,
+        /** the torrent's info-hash (40 hex) when the indexer says it, else null */
+        val infoHash: String? = null,
     )
 
     interface Host {
@@ -46,6 +48,12 @@ object StoreTorrentHost {
         fun download(hit: Hit): String
         /** Where downloads go, for the page's caption. */
         fun folderNote(): String
+        /** The declared legitimate catalogue (#1681) as recommendations, user entries excluded. Blocking. Null = nothing served yet. */
+        fun recommendations(): List<StoreRecs.Rec>? = null
+        /** Live seeders / leechers for [recs] from the enabled sources, keyed by lower-case info-hash. Blocking; [onStat] is called as each arrives. */
+        fun liveStats(recs: List<StoreRecs.Rec>, onStat: (String, StoreRecs.Stat) -> Unit) {}
+        /** Hands a recommendation to the engine (its magnet, else its .torrent) into the configured folder. Blocking; one sentence back. */
+        fun downloadRec(rec: StoreRecs.Rec): String = "This host cannot download."
     }
 
     @Volatile var host: Host? = null
