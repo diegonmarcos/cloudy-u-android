@@ -47,13 +47,17 @@ def apptargets(group):
 # T2 — field parity for #1627 (the old Tools Primary ∪ Data Apps targets)
 PRE_PRIMARY_DATA = {
     "extapp:cloud-browser", "extapp:cloud-nav", "extapp:cloud-camera", "extapp:cloud-calc",
-    "extapp:cloud-keyboard", "extapp:cloud-keyboard#page:writer", "extapp:cloud-wallet", "extapp:cloud-vault",
+    "extapp:cloud-keyboard", "extapp:cloud-wallet", "extapp:cloud-vault",
     "extapp:cloud-drive", "extapp:cloud-notes", "extapp:cloud-tasks", "extapp:cloud-gallery",
     "extapp:cloud-media-center", "extapp:cloud-office",
 }
 now = set()
 if "Primary" in by: now |= set(apptargets(by["Primary"]))
 if "Data" in by: now |= set(apptargets(by["Data"]))
+# #1736 the Writer tile left the list; its deep link must survive as the Keyboard app menu's declared action (rule 16).
+kb_actions = {a.get("target") for e in d["ui"].get("external_apps", []) if e.get("id") == "cloud-keyboard" for a in e.get("actions", [])}
+if "extapp:cloud-keyboard#page:writer" not in kb_actions:
+    emit("T2", "the Writer deep link is no longer reachable (ui.external_apps[cloud-keyboard].actions)")
 missing = PRE_PRIMARY_DATA - now
 if missing:
     emit("T2", "apps dropped from Primary∪Data vs the pre-#1627 quickmarks: %s" % ", ".join(sorted(missing)))
@@ -78,7 +82,7 @@ else:
 def row(group): return [(t.get("label"), t.get("separator", False), t.get("double", False), t.get("target", "")) for t in by[group]["tiles"]]
 if "Primary" in by:
     labels = [l for l, s, dbl, tg_ in row("Primary")]
-    if labels != ["Drive", "Browser", "|", "Calc", "Navigation", "Camera", "Keyboard", "Writer", "||", "Wallet"]:
+    if labels != ["Drive", "Browser", "|", "Calc", "Navigation", "Camera", "Keyboard", "||", "Wallet"]:
         emit("T4", "Primary row = %r" % labels)
 if "Data" in by:
     labels = [l for l, s, dbl, tg_ in row("Data")]

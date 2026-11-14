@@ -150,7 +150,13 @@ private class BelowFold(val all: AllApps, val recent: List<Sections.AggTile>)
 internal fun GroupedTilesPage(sectionId: String, click: (String) -> Unit) {
     val ctx = LocalContext.current
     val section = Sections.byId(sectionId)
-    val groups = section?.tileGroups.orEmpty()
+    val menu = sectionId == "cloud"
+    // #1736 a retired app (appstore-retired-apps.json) never appears in the Cloud list, whatever a declaration says.
+    val retired = remember(ctx) { if (menu) runCatching { CloudAppMenu.retiredPackages(ctx) }.getOrDefault(emptySet()) else emptySet() }
+    val groups = remember(section, retired) {
+        val ext = runCatching { Sections.externalApps() }.getOrDefault(emptyList())
+        section?.tileGroups.orEmpty().map { it.copy(tiles = CloudAppMenu.dropRetired(it.tiles, ext, retired)) }
+    }
     var folder by remember { mutableStateOf<Sections.AggTile?>(null) }
     var apps by remember { mutableStateOf<OpenFolder?>(null) }
     var epoch by remember { androidx.compose.runtime.mutableIntStateOf(0) }
@@ -170,7 +176,7 @@ internal fun GroupedTilesPage(sectionId: String, click: (String) -> Unit) {
             item(key = "g:$gi") {
                 Column {
                     GroupTitle(g.title)
-                    TileStrip(g.tiles, click, { folder = it })
+                    TileStrip(g.tiles, click, { folder = it }, menu = menu)
                 }
             }
         }
@@ -194,7 +200,7 @@ internal fun GroupedTilesPage(sectionId: String, click: (String) -> Unit) {
             item(key = "div:2") { PhoneSectionDivider() }
             item(key = "h:smart") { GroupTitle("Smart Folders") }
             item(key = "h:recent") { GroupTitle("Recently Used") }
-            if (b.recent.isNotEmpty()) item(key = "recent") { TileStrip(b.recent, click, { folder = it }) }
+            if (b.recent.isNotEmpty()) item(key = "recent") { TileStrip(b.recent, click, { folder = it }, menu = menu) }
             else item(key = "recent-empty") {
                 Text("Open a few Cloud tiles and they'll show up here", color = LocalKitPalette.current.textSecondary,
                     style = MaterialTheme.typography.bodySmall,
@@ -224,12 +230,12 @@ internal val TILE_CELL_WIDTH = 60.dp
  *  cells onto further lines (Configs, which has no sideways scrolling). One component, so the two cannot drift apart. */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-internal fun TileStrip(tiles: List<Sections.AggTile>, click: (String) -> Unit, openFolder: (Sections.AggTile) -> Unit, wrap: Boolean = false) {
+internal fun TileStrip(tiles: List<Sections.AggTile>, click: (String) -> Unit, openFolder: (Sections.AggTile) -> Unit, wrap: Boolean = false, menu: Boolean = false) {
     // A separator is no item: it rides on the right edge of the tile before it (zero width, so every tile keeps its slot).
     val shown = tiles.withIndex().filter { !it.value.separator }
     val cell: @Composable (Int, Sections.AggTile) -> Unit = { i, tile ->
         Box(Modifier.width(TILE_CELL_WIDTH)) {
-            TileCell(tile, click, openFolder)
+            TileCell(tile, click, openFolder, menu)
             tiles.getOrNull(i + 1)?.takeIf { it.separator }?.let {
                 TileDivider(tileSepTag(it.id), TILE_CELL_ICON_CENTRE, 0.5.dp, Modifier.align(Alignment.TopEnd), double = it.double)
             }
@@ -244,8 +250,10 @@ private val TILE_CELL_ICON_CENTRE = 22.dp
 
 /** A tile in a strip. A `separator` is never passed here: [TileStrip] draws it as a divider on the previous tile's edge. */
 @Composable
-internal fun TileCell(tile: Sections.AggTile, click: (String) -> Unit, openFolder: (Sections.AggTile) -> Unit) {
+internal fun TileCell(tile: Sections.AggTile, click: (String) -> Unit, openFolder: (Sections.AggTile) -> Unit, menu: Boolean = false) {
     val ctx = LocalContext.current
+    // #1736 Cloud ▸ Apps: a tap on a fleet app opens its dropdown (Actions / Configs / Urls); "Open" there is the old tap.
+    var menuItems by remember { mutableStateOf<List<CloudAppMenu.Item>?>(null) }
     val view = LocalView.current
     val p = LocalKitPalette.current
     // #571: an extapp tile whose app is not on the phone draws the #249 placeholder Phone ▸ Apps uses — same
@@ -263,7 +271,11 @@ internal fun TileCell(tile: Sections.AggTile, click: (String) -> Unit, openFolde
                 // dispatch. A folder opens a POPUP, which is not a tile click and reaches no dispatcher, so it buzzes
                 // for itself. A destination does not: onTileClicked IS the per-tap bookkeeping (log, haptic, drawer
                 // close, Recently-Used, App-Tabs) and #195 put it in one place so one tap could not pay for it twice.
-                if (tile.children.isNotEmpty()) { Haptics.tap(view); openFolder(tile) } else click(tile.target)
+                if (tile.children.isNotEmpty()) { Haptics.tap(view); openFolder(tile) }
+                else {
+                    val items = if (menu) runCatching { CloudAppMenu.forTarget(ctx, tile.target) }.getOrNull() else null
+                    if (items != null) { Haptics.tap(view); menuItems = items } else click(tile.target)
+                }
             }
             .extInstallRing(tile.target, 32.dp, iconTop = 6.dp)
             .padding(6.dp)
@@ -284,6 +296,12 @@ internal fun TileCell(tile: Sections.AggTile, click: (String) -> Unit, openFolde
         if (missing) {
             Text(stringResource(R.string.phone_app_not_installed), color = p.accent, fontSize = 9.sp, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+        }
+        menuItems?.let { items ->
+            CloudAppMenu.Menu(items, onDismiss = { menuItems = null }, onPick = { item ->
+                menuItems = null
+                CloudAppMenu.run(ctx, item, click)
+            })
         }
     }
 }

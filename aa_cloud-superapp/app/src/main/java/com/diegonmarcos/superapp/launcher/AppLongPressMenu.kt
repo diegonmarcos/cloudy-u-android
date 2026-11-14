@@ -200,7 +200,7 @@ object AppLongPressMenu {
      *  launches the confirm dialog and surfaces the outcome). Wrapped so a
      *  SecurityException (permission revoked) or a protected/system package
      *  can't crash the launcher. */
-    private fun requestUninstall(ctx: Context, pkg: String) {
+    internal fun requestUninstall(ctx: Context, pkg: String) {
         runCatching {
             val installer = ctx.packageManager.packageInstaller
             val intent = Intent(ctx, com.diegonmarcos.superapp.updater.PackageInstallerReceiver::class.java)
@@ -216,6 +216,14 @@ object AppLongPressMenu {
         }.onFailure {
             android.widget.Toast.makeText(ctx, "Can't uninstall: ${it.message}", android.widget.Toast.LENGTH_SHORT).show()
         }
+    }
+
+    /** #1736 Update [pkg] by its fleet row or its declared source ladder (the same path the long-press menu's Update runs). */
+    internal fun requestUpdateOf(ctx: Context, pkg: String) {
+        val resolver = runCatching { PhoneAppActions.resolver(PhoneAppActions.sources(ctx)) }.getOrNull()
+        val fleetApp = PhoneAppActions.fleetByPackage(Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64))[pkg]
+        if (fleetApp == null && resolver == null) { Toast.makeText(ctx, "No update source for this app", Toast.LENGTH_LONG).show(); return }
+        requestUpdate(ctx, fleetApp, resolver, pkg, fleetApp?.label ?: pkg)
     }
 
     /** Update [pkg] off the main thread. Blocking installers return the failure

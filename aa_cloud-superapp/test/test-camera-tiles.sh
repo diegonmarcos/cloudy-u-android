@@ -111,7 +111,7 @@ echo "== T1: Camera sits at the owner's declared place in Cloud ▸ Apps ▸ Pri
 # Account, the intentional duplicate, left this row for the Me group (test-me-account-tile.sh).
 # #1627 renamed the group to 'Primary' and set the order Drive, Browser | Calc, Navigation, Camera, Keyboard,
 # Writer || Wallet ('|' single separator, '||' double separator); Drive moved in from Data, Vault out to Data.
-WANT_ROW="Drive,Browser,|,Calc,Navigation,Camera,Keyboard,Writer,||,Wallet"
+WANT_ROW="Drive,Browser,|,Calc,Navigation,Camera,Keyboard,||,Wallet"
 GOT_ROW="$(jq -r '
   .ui.sections[] | select(.id == "cloud")
   | .tile_groups[] | select(.title == "Primary")

@@ -20,9 +20,9 @@ class HomeSwipeRouterTest {
             Entry.ExternalAppEntry("com.android.camera", "Camera", 30),
             Entry.PageEntry("cloud", "apps", "Apps", "ic", 25),
             Entry.ExternalAppEntry("com.diegonmarcos.cloudcalc", "Calc", 20),
-            Entry.ExternalAppEntry("com.diegonmarcos.cloudwriter", "Writer", 10),
+            Entry.ExternalAppEntry("com.diegonmarcos.cloudwallet", "Wallet", 10),
         )
-        val fleet = setOf("com.diegonmarcos.cloudcalc", "com.diegonmarcos.cloudwriter")
+        val fleet = setOf("com.diegonmarcos.cloudcalc", "com.diegonmarcos.cloudwallet")
         assertEquals("com.diegonmarcos.cloudcalc", HomeSwipeRouter.lastCloudApp(entries, fleet)!!.packageName)
         assertNull(HomeSwipeRouter.lastCloudApp(entries.take(2), fleet))
     }

@@ -178,6 +178,9 @@ class MainActivity : AppCompatActivity() {
     private fun tabFrom(i: Intent?): String? {
         // #570 an inventory handed over by Account (Apply list to Store): the Phone page consumes it on resume.
         i?.getStringExtra(StoreImport.EXTRA_IMPORT)?.let { StoreImport.pending = it }
+        // #1736 the SuperApp's Cloud app menu ▸ About: park the package, Store ▸ Cloud opens its About sheet.
+        i?.getStringExtra(com.diegonmarcos.superapp.appstore.StoreAbout.EXTRA)?.let { com.diegonmarcos.superapp.appstore.StoreAbout.park(it) }
+        if (i?.hasExtra(com.diegonmarcos.superapp.appstore.StoreAbout.EXTRA) == true && i.getStringExtra(EXTRA_TAB) == null) return TAB_CLOUD
         val tab = i?.getStringExtra(EXTRA_TAB)
         // #1719 a deep link to one Access page (SuperApp > Network > OS Perms asks for access + android): the page must be one of Access's.
         if (tab == TAB_ACCESS) i?.getStringExtra(EXTRA_PAGE)?.let { pg ->

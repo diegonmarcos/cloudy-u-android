@@ -1,0 +1,135 @@
+# #1736 Cloud SuperApp > Cloud > Apps: a tap on an app opens the dropdown (Actions / Configs / Urls) and the list has no
+# retired Cloud Writer tile. Runs the x86_64 APK a Ship Cloud SuperApp run built, as the default home app.
+# Evidence (cloud-menu-evidence): menu-calc.png, menu-keyboard.png, list-top.png, list-*.png, ui dumps, result.txt.
+# The job FAILS when a group or row is missing from the opened menu, or when "Writer" is on the list.
+name: "Test -> SuperApp Cloud app dropdown (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      superapp_run_id:
+        description: "Ship Cloud SuperApp run id whose x86_64 APK artifact to test"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  menu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Fetch the Cloud SuperApp APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          W_RUN: ${{ inputs.superapp_run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          gh api "repos/$REPO/actions/runs/$W_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-SuperApp")) | .name' |
+          while read -r name; do gh run download "$W_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          pick=""
+          for want in x86_64 universal ''; do
+            pick=$(find apk -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no Cloud SuperApp APK"; exit 1; }
+          cp "$pick" superapp.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the script
+        run: |
+          cat > find.py <<'PY'
+          import re,sys
+          # usage: find.py ui.xml TEXT  -> "x y" centre of the first node whose text/content-desc == TEXT (exit 1 if none)
+          x=open(sys.argv[1],encoding='utf-8',errors='replace').read()
+          want=sys.argv[2]
+          for m in re.finditer(r'<node[^>]*>',x):
+              n=m.group(0)
+              t=re.search(r' text="([^"]*)"',n); d=re.search(r' content-desc="([^"]*)"',n)
+              if (t and t.group(1)==want) or (d and d.group(1)==want):
+                  b=re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',n)
+                  if b:
+                      a=list(map(int,b.groups())); print((a[0]+a[2])//2,(a[1]+a[3])//2); sys.exit(0)
+          sys.exit(1)
+          PY
+          cat > shoot.sh <<'EOF2'
+          set -u
+          mkdir -p out
+          adb install -r -g superapp.apk || exit 2
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          PKG=$("$aapt2" dump packagename superapp.apk)
+          adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW deny || true
+          adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+          adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+          adb shell settings put global hide_error_dialogs 1 || true
+          adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
+          adb shell locksettings set-disabled true || true
+          adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
+          awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; }
+          dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null || true; adb pull /sdcard/ui.xml "$1" >/dev/null || true; }
+          FAIL=0; : > out/result.txt
+          say() { echo "$1" | tee -a out/result.txt; }
+          awake
+          adb shell am force-stop "$PKG"
+          adb shell am start -W -n "$PKG/.HomeActivity" >/dev/null; sleep 10; awake
+          adb shell am start -n "$PKG/.HomeActivity" --es shortcut_action section:cloud >/dev/null; awake; sleep 8
+          # the list, top to bottom: no Writer anywhere
+          adb exec-out screencap -p > out/list-top.png
+          for i in 1 2 3 4 5 6 7 8; do
+            dump out/ui-list-$i.xml
+            adb exec-out screencap -p > out/list-$i.png
+            adb shell input swipe 540 1700 540 700 500; sleep 2
+          done
+          if grep -qE 'text="(Writer|Cloud Writer|Cloud-Writer)"' out/ui-list-*.xml; then say "FAIL list: a Writer entry is on the Cloud list"; FAIL=1; else say "PASS list: no Writer / Cloud Writer on the Cloud list"; fi
+          grep -q 'text="Keyboard"' out/ui-list-*.xml && say "PASS list: Keyboard is listed" || { say "FAIL list: Keyboard missing"; FAIL=1; }
+          for app in Calc Keyboard; do
+            adb shell am start -n "$PKG/.HomeActivity" --es shortcut_action section:cloud >/dev/null; awake; sleep 6
+            pos=""
+            for i in 1 2 3 4 5 6; do
+              dump out/ui-find-$app-$i.xml
+              pos=$(python3 find.py out/ui-find-$app-$i.xml "$app" || true)
+              [ -n "$pos" ] && break
+              adb shell input swipe 540 1700 540 800 500; sleep 2
+            done
+            say "$app tile at: ${pos:-NOT FOUND}"
+            [ -n "$pos" ] || { say "FAIL $app: tile not found"; FAIL=1; continue; }
+            adb shell input tap $pos; sleep 3
+            adb exec-out screencap -p > out/menu-$(echo $app | tr A-Z a-z).png
+            dump out/ui-menu-$app.xml
+            for row in ACTIONS CONFIGS URLS Open Uninstall Update "App Info" About "Repo URL" "Release APK URL"; do
+              grep -q "text=\"$row" out/ui-menu-$app.xml && say "PASS $app menu: $row" || { say "FAIL $app menu: $row missing"; FAIL=1; }
+            done
+            [ "$app" = Keyboard ] && { grep -q 'text="Writer' out/ui-menu-Keyboard.xml && say "PASS Keyboard menu: Writer action" || { say "FAIL Keyboard menu: Writer action missing"; FAIL=1; }; }
+            adb shell input keyevent KEYCODE_BACK; sleep 1
+          done
+          timeout 60 adb logcat -d > out/logcat.txt || true
+          say "RESULT fail=$FAIL"
+          [ "$FAIL" = 0 ] || echo "menu check failed" > out/FAILED
+          EOF2
+          chmod +x shoot.sh
+      - name: Boot emulator and shoot
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_7
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash shoot.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cloud-menu-evidence
+          path: out/
+          if-no-files-found: warn
+      - name: Fail when the menu check failed
+        run: |
+          cat out/result.txt || true
+          [ ! -e out/FAILED ] && grep -q 'RESULT fail=0' out/result.txt

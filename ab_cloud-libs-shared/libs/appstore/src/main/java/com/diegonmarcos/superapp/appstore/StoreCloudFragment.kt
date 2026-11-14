@@ -287,6 +287,8 @@ class StoreCloudFragment : KitComposeFragment() {
         super.onResume()
         resume++
         context?.let { c -> runCatching { StoreAuto.onPending(c.applicationContext, 0) } }
+        // #1736 another fleet app asked for this app's About sheet (StoreAbout): open it over the page.
+        StoreAbout.appFor(fleet, StoreAbout.take())?.let { app -> details.add(app to states[app.id]) }
         // #858 back in front: resolve handed-over installs and show a prompt
         // that is still pending again, then repaint the rows.
         context?.applicationContext?.let { c ->

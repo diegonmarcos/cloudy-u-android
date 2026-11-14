@@ -137,7 +137,7 @@ def after(head, want, stop):
 # the '||' divider — note the Data 'Me' tile shares the Me group's header text, so Data stops at the header's sub-tile).
 headers = [h for h in ("Primary", "Communication", "Data", "Me") if h in seq]
 order_ok = headers == ["Primary", "Communication", "Data", "Me"]
-prim = after("Primary", {"Drive", "Browser", "Calc", "Navigation", "Camera", "Keyboard", "Writer", "Wallet"}, "Communication")
+prim = after("Primary", {"Drive", "Browser", "Calc", "Navigation", "Camera", "Keyboard", "Wallet"}, "Communication")
 com = after("Communication", {"Mail", "Chat", "Messenger", "Dialer", "C3-Bot", "Contacts"}, "Data")
 # Data ends on the 'Me' tile then Vault; the Me GROUP header is the 'Me' immediately followed by 'Me-Health'.
 data = after("Data", {"Notes", "Tasks", "Office", "Gallery", "Media Center"}, "Me-Health")

@@ -47,36 +47,20 @@ command -v jq >/dev/null 2>&1 || { echo "ERROR: jq required" >&2; exit 2; }
 GROUP='.ui.sections[] | select(.id == "cloud") | .tile_groups[]
        | select(.title == "Primary")'
 
-echo "== T1: the Writer tile is in Cloud ▸ Primary (renamed from 'Tools Primary', #1627) =="
+echo "== T1 (#1736): the Writer TILE is gone from Cloud > Primary; Writer is the Keyboard menu's action =="
 N="$(jq -r "[$GROUP] | length" "$BJ")"
 eq "exactly one Cloud/Primary group" "$N" "1"
-
-HIT="$(jq -r "[$GROUP | .tiles[] | select(.id == \"writer\")] | length" "$BJ")"
-eq "one tile with id 'writer' in that group" "$HIT" "1"
-
-LABEL="$(jq -r "$GROUP | .tiles[] | select(.id == \"writer\") | .label" "$BJ")"
-eq "its label is the owner's word" "$LABEL" "Writer"
-
-TARGET="$(jq -r "$GROUP | .tiles[] | select(.id == \"writer\") | .target" "$BJ")"
-eq "its target opens the keyboard's Writer page" "$TARGET" "extapp:cloud-keyboard#page:writer"
-
-# The negative half of the section assertion: the Phone page's identically
-# titled group must NOT have grown a Writer entry. Without this, a tile added
-# to BOTH pages still passes every check above — and the Phone group is a
-# `packages` list of quickmarks, where a Cloud tile does not belong.
+HIT="$(jq -r "[$GROUP | .tiles[] | select(.id == \"writer\" or .label == \"Writer\")] | length" "$BJ")"
+eq "no Writer tile in that group (it read as the retired Cloud Writer app)" "$HIT" "0"
+ACT="$(jq -r '.ui.external_apps[] | select(.id == "cloud-keyboard") | .actions[] | select(.label == "Writer") | .target' "$BJ")"
+eq "rule 16: Writer is a declared action of cloud-keyboard, same deep link the tile had" "$ACT" "extapp:cloud-keyboard#page:writer"
 PHONEHIT="$(jq -r '[.ui.sections[] | select(.id == "phone") | .phone_app_groups[]
                    | select(.title == "Tools Primary") | .packages[]
                    | tostring | select(test("cloudwriter|Writer"))] | length' "$BJ")"
-eq "the PHONE page's Tools Primary was not touched" "$PHONEHIT" "0"
+eq "the PHONE page's Tools Primary has no Writer" "$PHONEHIT" "0"
 
-echo "== T2: the icon it names exists as a drawable =="
-ICON="$(jq -r "$GROUP | .tiles[] | select(.id == \"writer\") | .icon" "$BJ")"
-eq "tile names an icon" "$ICON" "ic_writer"
-# Sections.iconResFor falls back to ic_link_tile IN SILENCE when a name
-# resolves to nothing, so a misspelt or missing icon is invisible at runtime.
-[ -f "$APP/app/src/main/res/drawable/$ICON.xml" ] \
-  && ok "res/drawable/$ICON.xml exists" \
-  || bad "res/drawable/$ICON.xml missing — iconResFor would silently fall back to ic_link_tile"
+echo "== T2 (#1736): the Writer icon drawable went with the tile =="
+[ ! -e "$APP/app/src/main/res/drawable/ic_writer.xml" ] && ok "ic_writer.xml is gone" || bad "ic_writer.xml is still there, unused"
 
 echo "== T3: (#1707) the Writer tile opens the KEYBOARD's Writer page; the standalone app is retired =="
 # The tile used to hand off to ac_cloud-writer. That app is gone (merged into Cloud Keyboard's Writer tab), so the tile

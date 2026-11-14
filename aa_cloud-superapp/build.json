@@ -3007,7 +3007,7 @@
         ],
         "tile_groups": [
           {
-            "_doc": "#1627 Primary (renamed from 'Tools Primary'). Order: Drive, Browser | Calc, Navigation, Camera, Keyboard, Writer || Wallet. Single '|' after Browser, DOUBLE '||' after Writer. Drive moved in from Data; Vault moved out to Data. Pinned by test-primary-tools-order.sh, test-calc-tile.sh, test-camera-tiles.sh, test-writer-tile.sh, test-me-account-tile.sh and test-quickmarks-field-parity.sh.",
+            "_doc": "#1627 Primary (renamed from 'Tools Primary'). Order: Drive, Browser | Calc, Navigation, Camera, Keyboard || Wallet. Single '|' after Browser, DOUBLE '||' after Keyboard (#1736: the Writer tile is gone, Writer is an Action of the Keyboard app menu, ui.external_apps[cloud-keyboard].actions). Drive moved in from Data; Vault moved out to Data. Pinned by test-primary-tools-order.sh, test-calc-tile.sh, test-camera-tiles.sh, test-writer-tile.sh, test-me-account-tile.sh and test-quickmarks-field-parity.sh.",
             "title": "Primary",
             "tiles": [
               {
@@ -3057,13 +3057,6 @@
                 "label": "Keyboard",
                 "icon": "ic_keyboard",
                 "target": "extapp:cloud-keyboard"
-              },
-              {
-                "_doc": "Writer \u2014 opens the Writer tab of Cloud Keyboard (#1707: the standalone Cloud Writer app was retired and merged into the keyboard). target=extapp:cloud-keyboard#page:writer \u2192 ShellActivity.launchExternalApp opens com.diegonmarcos.cloudkeyboard (ui.external_apps[id=cloud-keyboard]) with shortcut_action=page:writer, which the keyboard's SettingsActivity resolves through SettingsDestination.externalRoute(\"writer\") to the Writer tab; not installed \u2192 the keyboard's install offer.",
-                "id": "writer",
-                "label": "Writer",
-                "icon": "ic_writer",
-                "target": "extapp:cloud-keyboard#page:writer"
               },
               {
                 "_doc": "#1627 DOUBLE divider ('||'): a stronger group rule than the single '|'. `separator:true` + `double:true`; GroupedTilesFragment draws a bolder TileDivider on the previous tile's edge. Not clickable, not focusable, no target, dropped by TileGroup.destinations.",
@@ -9255,6 +9248,9 @@
         "folder": "sys_keyboards",
         "hub_package": "com.diegonmarcos.cloudkeyboard",
         "install_package": "com.diegonmarcos.cloudkeyboard",
+        "actions": [
+          {"label": "Writer", "target": "extapp:cloud-keyboard#page:writer", "_doc": "#1736 was the Cloud > Primary Writer tile (#1707: the Writer tab of the keyboard, the retired Cloud Writer app's successor). A tile on the Cloud list read as the retired app, so the entry point is now an Action of this app's tap menu (CloudAppMenu): target = the same deep link the tile had."}
+        ],
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Keyboard.apk",
         "forks": {}
       },

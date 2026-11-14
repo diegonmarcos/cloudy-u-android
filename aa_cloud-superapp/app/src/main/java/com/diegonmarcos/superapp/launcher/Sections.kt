@@ -672,7 +672,13 @@ object Sections {
         val installPackage: String,
         /** forkKey → fork applicationId (mail/chat/matrix). */
         val forks: Map<String, String>,
+        /** #1736 the app's own Actions in the Cloud tap menu (label + tile-grammar target), declared in
+         *  ui.external_apps[].actions; deep-link tiles of the app add theirs (CloudAppMenu.actionsOf). */
+        val actions: List<AppAction> = emptyList(),
     )
+
+    /** One declared app action: a [label] and the tile-grammar [target] it dispatches. */
+    data class AppAction(val label: String, val target: String)
 
     /** One row of the C3/Health private-services table. */
     data class PrivateService(
@@ -1805,6 +1811,13 @@ object Sections {
                 installApkUrl  = o.optString("install_apk_url", ""),
                 installPackage = o.optString("install_package", o.optString("hub_package", "")),
                 forks          = forks,
+                actions        = o.optJSONArray("actions")?.let { aa ->
+                    (0 until aa.length()).mapNotNull { k ->
+                        val x = aa.optJSONObject(k) ?: return@mapNotNull null
+                        val l = x.optString("label"); val t = x.optString("target")
+                        if (l.isBlank() || t.isBlank()) null else AppAction(l, t)
+                    }
+                }.orEmpty(),
             ))
         }
         cachedExtApps = out
