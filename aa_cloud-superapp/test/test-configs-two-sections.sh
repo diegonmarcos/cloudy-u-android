@@ -432,8 +432,8 @@ for g, s, label, icon in tiles:
 want = ['H:LAUNCHER',
         'Quick Actions[ic_home]', 'UI[ic_ctl_brightness]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', '|[None]', 'Notify[ic_rss]',
         'H:NETWORK',
-        'NG Firewall[ic_hub]', '|[None]', 'Wi-Fi[ic_wifi]', 'DNS[ic_world]', 'VPN[ic_wg]', '|[None]',   # #1737 individual icons again; the NG Firewall hub opens a page listing them
-        'Firewall[ic_lock]', 'OS Perms[ic_key]', '|[None]', 'Webserver[ic_web]', 'Proxy[ic_settings]', '|[None]', 'Bluetooth[ic_bluetooth]',   # the ADB Shell icon stays removed (#1719); Apps Access is hidden
+        'NG Firewall[ic_act_shield]', '|[None]', 'Wi-Fi[ic_wifi]', 'DNS[ic_world]', 'VPN[ic_wg]', '|[None]',   # #1737 individual icons again; the NG Firewall hub opens a page listing them
+        'Firewall[ic_lock]', 'OS Perms[ic_key]', '|[None]', 'Webserver[ic_web]', 'Proxy[ic_link_tile]', '|[None]', 'Bluetooth[ic_bluetooth]',   # the ADB Shell icon stays removed (#1719); Apps Access is hidden
         'H:APPS',
         'Store[ic_storefront]',
         'H:CONNECT',

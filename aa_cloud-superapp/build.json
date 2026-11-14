@@ -5399,7 +5399,7 @@
             "_doc": "#1737 NG FIREWALL HUB (replaces the #1719 unified Network tile and its bottom nav): one tile, first in the Network group, that opens a page listing the network items as icons under three headings: Connections (Wi-Fi, DNS, VPN), Firewalls (Firewall, OS Perms), Servers (Webserver, Proxy). The structure is network/NgFirewallHub (pure, tested) drawn by NgFirewallHubFragment; every item is also its own tile in this group. `reaches` names the pages kept declared (hidden) for deep links: ADB Shell (explicit owner removal of its icon, #1719; the page lives in Cloud C3 Webserver) and Apps Access (the Store's Access section, which OS Perms opens at Android Perms); `hub_pages` keeps Apps Access listed in the Agents hub next to the individual Network tiles.",
             "id": "ng-firewall",
             "label": "NG Firewall",
-            "icon": "ic_hub",
+            "icon": "ic_act_shield",
             "reaches": ["adb-shell", "apps-access"],
             "hub_pages": ["apps-access"],
             "group": "Network",
@@ -5492,7 +5492,7 @@
             "_doc": "#1737 PROXY - the SuperApp has no proxy page or setting of its own (searched: proxy, HTTP proxy, sing-box, socks: only the Store feed proxy, MediaProxy and the mesh transport, none user-facing), so this opens the system network settings (ShellActivity action open_proxy_settings: Settings > Network & internet, where the Wi-Fi network's Proxy field lives), else Settings.",
             "id": "proxy",
             "label": "Proxy",
-            "icon": "ic_settings",
+            "icon": "ic_link_tile",
             "action": "action:open_proxy_settings",
             "group": "Network",
             "subgroup": ""

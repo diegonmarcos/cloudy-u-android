@@ -36,7 +36,7 @@ object NgFirewallHub {
     val FIREWALL = Item("firewall", "Firewall", "ic_lock", TARGET_FIREWALL, "firewall")
     val PERMS = Item("perms", "OS Perms", "ic_key", TARGET_PERMS, "os-perms")
     val WEBSERVER = Item("webserver", "Webserver", "ic_web", TARGET_WEBSERVER, "webserver")
-    val PROXY = Item("proxy", "Proxy", "ic_settings", TARGET_PROXY, "proxy")
+    val PROXY = Item("proxy", "Proxy", "ic_link_tile", TARGET_PROXY, "proxy")
 
     /** The hub's three headings and their icons, in the owner's order. */
     val SECTIONS: List<Section> = listOf(
