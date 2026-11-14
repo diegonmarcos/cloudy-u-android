@@ -261,7 +261,7 @@ has_code "$UPD/Fleet.kt" "VersionOrder.isDowngrade(identity.versionCode, install
 # The refusal has to happen before the session is opened, or the phone has already
 # paid for the staging it was about to refuse.
 r_line=$(code "$INST" | grep -n "refuseDowngrade(apk, targetPackage)" | head -1 | cut -d: -f1)
-c_line=$(code "$INST" | grep -n "installer.createSession(params)" | head -1 | cut -d: -f1)
+c_line=$(code "$INST" | grep -n "InstallSessions.open(port" | head -1 | cut -d: -f1)
 [ -n "$r_line" ] && [ -n "$c_line" ] && [ "$r_line" -lt "$c_line" ] \
   && ok "D1 the refusal precedes createSession" \
   || bad "D1 the refusal happens after the session is opened (refuse=$r_line create=$c_line)"

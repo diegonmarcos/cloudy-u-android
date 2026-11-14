@@ -30,6 +30,8 @@ ROOT="${CLOUD_ANDROID_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$P
 U="$ROOT/ab_cloud-libs-shared/libs/updater/src/main/java/com/diegonmarcos/superapp/updater"
 WORKER="$U/UpdateWorker.kt"
 INSTALLER="$U/install/UpdateInstaller.kt"
+# #1735 the reap policy moved into InstallSessions (pure, unit-tested); UpdateInstaller reaps through it
+SESSIONS="$U/install/InstallSessions.kt"
 RECEIVER="$U/PackageInstallerReceiver.kt"
 
 FAILURES=0
@@ -41,7 +43,7 @@ _code() { grep -vE '^[[:space:]]*(\*|//|/\*)' "$1"; }
 # the body of `fun <name>` up to the next top-level-in-class `fun`/`companion`
 _fun() { _code "$1" | awk -v n="fun $2(" 'index($0,n){on=1} on&&/^    (private |internal )?(fun|companion)/&&!index($0,n){exit} on'; }
 
-for f in "$WORKER" "$INSTALLER" "$RECEIVER"; do
+for f in "$WORKER" "$INSTALLER" "$SESSIONS" "$RECEIVER"; do
     [ -f "$f" ] || { echo "ERROR missing source: $f — this tester is unrun, not passing"; exit 1; }
 done
 
@@ -63,7 +65,7 @@ t1() {
 }
 
 t2() {
-    [ "$(_fun "$1" reapStaleSessions | grep -cE 'idle\.filter \{ !it\.isCommitted && now - it\.createdMillis > STALE_SESSION_MS \}')" -eq 1 ] \
+    [ "$(_fun "$1" victims | grep -cE 'idle\.filter \{ !it\.committed && it\.createdMs > 0 && now - it\.createdMs > STALE_SESSION_MS \}')" -eq 1 ] \
         || { echo "    the stale branch can abandon a committed session awaiting the user"; return 1; }
 }
 
@@ -131,7 +133,7 @@ echo "── T1 the self-update tries the privileged shell before a session ─�
 t1 "$WORKER" && pass "doWork → installSelf → ShellInstall.shellInstall, then UpdateInstaller unless never-prompt" \
     || fail "a backgrounded self-update can only end at a confirm dialog"
 echo "── T2 the reaper spares committed sessions ──"
-t2 "$INSTALLER" && pass "stale reap is limited to uncommitted sessions" \
+t2 "$SESSIONS" && pass "stale reap is limited to uncommitted sessions" \
     || fail "a pending tap-to-finish session gets abandoned (-115)"
 echo "── T3 a confirmation nobody can see is reported ──"
 t3 "$RECEIVER" && pass "notifyConfirm reports visibility; hidden → ERROR surfaced" \
@@ -153,7 +155,7 @@ mut() {
 mut "self-update straight to a session" t1 "$WORKER" 's/^([[:space:]]+)installSelf\(apk\)$/\1UpdateInstaller(applicationContext).install(apk)/'
 mut "shell rung removed"               t1 "$WORKER" 's/ShellInstall\.shellInstall\(applicationContext, apk\)/null/'
 mut "never-prompt ignored"             t1 "$WORKER" 's/AutoUpdatePrefs\.requireSilent\(applicationContext\)/false/'
-mut "reaper takes committed sessions"  t2 "$INSTALLER" 's/!it\.isCommitted && //'
+mut "reaper takes committed sessions"  t2 "$SESSIONS" 's/!it\.committed && //'
 mut "visibility not checked"           t3 "$RECEIVER" 's/nm\.areNotificationsEnabled\(\) &&/true \&\&/'
 mut "hidden confirm stays silent"      t3 "$RECEIVER" 's/val shown = notifyConfirm\(/notifyConfirm(/'
 mut "-115 unnamed"                     t4 "$RECEIVER" '/^[[:space:]]+-115 -> /d'
