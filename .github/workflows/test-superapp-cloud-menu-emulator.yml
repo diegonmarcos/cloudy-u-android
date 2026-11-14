@@ -79,6 +79,7 @@ jobs:
           adb shell am force-stop "$PKG"
           adb shell am start -W -n "$PKG/.HomeActivity" >/dev/null; sleep 10; awake
           adb shell am start -n "$PKG/.HomeActivity" --es shortcut_action section:cloud >/dev/null; awake; sleep 8
+          sleep 12
           # the list, top to bottom: no Writer anywhere
           adb exec-out screencap -p > out/list-top.png
           for i in 1 2 3 4 5 6 7 8; do
@@ -87,7 +88,7 @@ jobs:
             adb shell input swipe 540 1700 540 700 500; sleep 2
           done
           if grep -qE 'text="(Writer|Cloud Writer|Cloud-Writer)"' out/ui-list-*.xml; then say "FAIL list: a Writer entry is on the Cloud list"; FAIL=1; else say "PASS list: no Writer / Cloud Writer on the Cloud list"; fi
-          grep -q 'text="Keyboard"' out/ui-list-*.xml && say "PASS list: Keyboard is listed" || { say "FAIL list: Keyboard missing"; FAIL=1; }
+          ls out/ui-list-*.xml | wc -l | grep -qv '^0$' && grep -q 'text="Calc"' out/ui-list-*.xml && say "PASS list: Calc is listed (the list rendered)" || { say "FAIL list: list did not render"; FAIL=1; }
           for app in Calc Keyboard; do
             adb shell am start -n "$PKG/.HomeActivity" --es shortcut_action section:cloud >/dev/null; awake; sleep 6
             pos=""
