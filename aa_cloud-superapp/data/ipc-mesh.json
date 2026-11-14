@@ -1645,6 +1645,20 @@
      "callers": []
     },
     {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-browser/app/src/main/AndroidManifest.xml",
+     "component": ".imageview.ConvertPdfActivity",
+     "id": "intent:.imageview.ConvertPdfActivity",
+     "kind": "intent",
+     "name": "ConvertPdfActivity",
+     "actions": [
+      "<pkg>.action.CONVERT_PDF"
+     ],
+     "uris": [],
+     "callers": []
+    },
+    {
      "permission": null,
      "level": "none",
      "source": "ac_cloud-browser/app/src/main/AndroidManifest.xml",
