@@ -34,7 +34,7 @@ object NgFirewallHub {
     val DNS = Item("dns", "DNS", "ic_world", TARGET_DNS, "dns")
     val VPN = Item("vpn", "VPN", "ic_wg", TARGET_VPN, "wg")
     val FIREWALL = Item("firewall", "Firewall", "ic_lock", TARGET_FIREWALL, "firewall")
-    val PERMS = Item("perms", "OS Perms", "ic_key", TARGET_PERMS, "os-perms")
+    val PERMS = Item("perms", "OS Perms", "ic_act_key", TARGET_PERMS, "os-perms")
     val WEBSERVER = Item("webserver", "Webserver", "ic_web", TARGET_WEBSERVER, "webserver")
     val PROXY = Item("proxy", "Proxy", "ic_ctl_mobile_data", TARGET_PROXY, "proxy")
 

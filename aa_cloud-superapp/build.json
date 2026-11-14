@@ -5466,7 +5466,7 @@
             "_doc": "#1737 OS PERMS - opens Cloud Store > Access > Android Perms (ShellActivity action open_os_perms -> CloudStoreHandoff.open(access, android)); Cloud Store absent: its install offer. Apps Access (the whole Access section) stays declared, hidden.",
             "id": "os-perms",
             "label": "OS Perms",
-            "icon": "ic_key",
+            "icon": "ic_act_key",
             "action": "action:open_os_perms",
             "group": "Network",
             "subgroup": ""
