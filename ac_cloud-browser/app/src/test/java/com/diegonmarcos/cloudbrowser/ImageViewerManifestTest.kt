@@ -32,7 +32,7 @@ class ImageViewerManifestTest {
         val data = f.kids("data")
         Filter(f.kids("action").map { it.attr("name") }.toSet(), f.kids("category").map { it.attr("name") }.toSet(),
             data.map { it.attr("scheme") }.filter { it.isNotEmpty() }.toSet(), data.map { it.attr("mimeType") }.filter { it.isNotEmpty() }.toSet(),
-            data.map { it.attr("pathPattern") }.filter { it.isNotEmpty() }.toSet())
+            data.map { it.attr("pathPattern").replace("\\\\", "\\") }.filter { it.isNotEmpty() }.toSet())
     }
 
     private fun strings(key: String) = decl.getJSONArray(key).let { a -> (0 until a.length()).map { a.getString(it) } }
