@@ -86,7 +86,13 @@ object TasksPopup {
     /** Under a Compose anchor whose window bounds are [rect], horizontally SCREEN-centered (the drop matches Battery/SysInfo). */
     fun show(host: View, rect: androidx.compose.ui.unit.IntRect) {
         TasksFeed.attach(host.context)
-        KitPopup.show(host, rect, KitPopup.Align.CENTER) { TasksBubble() }
+        // #1738 the height still free under the anchor: window height minus the bottom system inset, minus the anchor's bottom and a gap.
+        val dm = host.resources.displayMetrics
+        val bottomInset = androidx.core.view.ViewCompat.getRootWindowInsets(host)
+            ?.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())?.bottom ?: 0
+        val windowH = host.rootView.height.takeIf { it > 0 } ?: dm.heightPixels
+        val availDp = ((windowH - bottomInset - rect.bottom) / dm.density).toInt() - 16
+        KitPopup.show(host, rect, KitPopup.Align.CENTER) { TasksBubble(availableHeightDp = availDp) }
     }
 
     private val MONO = FontFamily.Monospace
@@ -99,6 +105,7 @@ object TasksPopup {
         source: TasksSource = TasksFeed,
         today: LocalDate = LocalDate.now(),
         decl: TasksPopupDeclaration = TasksPopupDecl.declared,
+        availableHeightDp: Int? = null,
     ) {
         val ctx = LocalContext.current
         var view by remember { mutableStateOf(decl.defaultView) }
@@ -116,7 +123,7 @@ object TasksPopup {
             }
         }
         val title = stringResource(R.string.tasks_label)
-        KitBubble(Modifier.width(decl.widthDp.dp).heightIn(max = decl.maxHeightDp.dp).testTag("cal:bubble"), scroll = rememberScrollState()) {
+        KitBubble(Modifier.width(decl.widthDp.dp).heightIn(max = TasksModel.bubbleMaxHeightDp(availableHeightDp, decl.maxHeightDp).dp).testTag("cal:bubble"), scroll = rememberScrollState()) {
             // Headline row — left: label + today's date; right: the stopwatch.
             Row(Modifier.fillMaxWidth()) {
                 Column(Modifier.weight(1f)) {
@@ -136,7 +143,9 @@ object TasksPopup {
                 Spacer(Modifier.height(8.dp))
             }
             val h = if (view == TasksPopupDecl.CALENDAR) decl.tableHeightDp else decl.tableHeightAgendaViewDp
-            AgendaTable(decl, events, eventsError, today, picked, h) { picked = null }
+            // #1738 Calendar view: the Agenda is today's items only (wrapping, so the whole view fits); the Agenda view keeps the full agenda.
+            val calView = view == TasksPopupDecl.CALENDAR
+            AgendaTable(decl, events, eventsError, today, picked, TasksModel.agendaDay(view, picked, today), if (calView) null else h) { picked = null }
             Spacer(Modifier.height(8.dp))
             // #1734 the day timelines, right after the Agenda (the same composable the Weather badge expands to on the Notify page).
             Column(Modifier.fillMaxWidth().background(Color(0x221A0033)).padding(6.dp).testTag("cal:table:timelines")) {
@@ -210,7 +219,7 @@ object TasksPopup {
 
     /** Table frame: its caption, a column header, and a body of the declared height that scrolls. */
     @Composable
-    private fun Table(tag: String, caption: String, columns: List<Pair<String, Float>>, heightDp: Int, trailing: @Composable () -> Unit = {}, body: @Composable () -> Unit) {
+    private fun Table(tag: String, caption: String, columns: List<Pair<String, Float>>, heightDp: Int?, trailing: @Composable () -> Unit = {}, body: @Composable () -> Unit) {
         Column(Modifier.fillMaxWidth().background(Color(0x221A0033)).padding(6.dp).testTag("cal:table:$tag")) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(caption, color = LILAC, fontSize = 13.sp, fontFamily = MONO, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -219,7 +228,7 @@ object TasksPopup {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
                 for ((c, w) in columns) Text(c, color = DIM, fontSize = 10.sp, fontFamily = MONO, modifier = Modifier.weight(w))
             }
-            Column(Modifier.fillMaxWidth().height(heightDp.dp).verticalScroll(rememberScrollState())) { body() }
+            Column(Modifier.fillMaxWidth().let { if (heightDp != null) it.height(heightDp.dp) else it.heightIn(max = 110.dp) }.verticalScroll(rememberScrollState())) { body() }
         }
     }
 
@@ -230,8 +239,8 @@ object TasksPopup {
 
     /** Agenda table: date, time, title. */
     @Composable
-    private fun AgendaTable(decl: TasksPopupDeclaration, events: List<TaskEvent>, error: String?, today: LocalDate, picked: LocalDate?, heightDp: Int, clear: () -> Unit) {
-        val rows = TasksModel.agenda(events, today, picked, decl.agendaWindowDays, decl.agendaMaxRows)
+    private fun AgendaTable(decl: TasksPopupDeclaration, events: List<TaskEvent>, error: String?, today: LocalDate, picked: LocalDate?, day: LocalDate?, heightDp: Int?, clear: () -> Unit) {
+        val rows = TasksModel.agenda(events, today, day, decl.agendaWindowDays, decl.agendaMaxRows)
         val dateFmt = remember { DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault()) }
         Table("agenda", decl.agendaLabel, listOf("date" to 1.4f, "time" to 0.9f, "title" to 2.2f), heightDp,
             trailing = {
@@ -239,7 +248,7 @@ object TasksPopup {
                     modifier = Modifier.clickable(onClick = clear).padding(2.dp).testTag("cal:filter"))
             }) {
             if (error != null) Note(error)
-            else if (rows.isEmpty()) Note(if (picked != null) "no events that day" else "no upcoming events")
+            else if (rows.isEmpty()) Note(if (day == today && picked == null) "no events today" else if (day != null) "no events that day" else "no upcoming events")
             rows.forEachIndexed { i, r ->
                 Row(Modifier.fillMaxWidth().padding(vertical = 2.dp).testTag("cal:agenda:row:$i")) {
                     Text(r.date.format(dateFmt), color = if (r.date == today) LILAC else Color(0xCCFFFFFF), fontSize = 11.sp, fontFamily = MONO, modifier = Modifier.weight(1.4f))

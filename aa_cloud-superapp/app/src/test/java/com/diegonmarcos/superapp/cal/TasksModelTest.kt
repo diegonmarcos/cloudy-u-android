@@ -87,6 +87,20 @@ class TasksModelTest {
     }
 
     @Test
+    fun `M5b popup height uses the available space and the agenda day is today in the Calendar view`() {
+        assertEquals(800, TasksModel.bubbleMaxHeightDp(800, 640))
+        assertEquals(640, TasksModel.bubbleMaxHeightDp(null, 640))
+        assertEquals(640, TasksModel.bubbleMaxHeightDp(0, 640))
+        assertEquals(240, TasksModel.bubbleMaxHeightDp(100, 640))
+        assertEquals(today, TasksModel.agendaDay("calendar", null, today))
+        assertEquals(today.plusDays(2), TasksModel.agendaDay("calendar", today.plusDays(2), today))
+        assertEquals(null, TasksModel.agendaDay("agenda", null, today))
+        val ev = listOf(TaskEvent("now", ms(today, 8), ms(today, 9), false), TaskEvent("later", ms(today.plusDays(3)), ms(today.plusDays(3), 10), false))
+        assertEquals(listOf("now"), TasksModel.agenda(ev, today, TasksModel.agendaDay("calendar", null, today), 60, 10, zone).map { it.title })
+        assertEquals(listOf("now", "later"), TasksModel.agenda(ev, today, TasksModel.agendaDay("agenda", null, today), 60, 10, zone).map { it.title })
+    }
+
+    @Test
     fun `M6 the todo table`() {
         val t = listOf(
             TaskTodo("undated", "NEEDS-ACTION", null), TaskTodo("done", "COMPLETED", 5L),

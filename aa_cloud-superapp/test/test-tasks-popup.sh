@@ -61,8 +61,8 @@ ok("TasksModel.agenda(events" in pc and "TasksModel.openTodos(todos" in pc and "
 ok("DataBackendClient(" in feed and "CONTRACT_KEY" in feed and "CalendarStore" not in feed + pc, "P4: the data is reached through the engine; no store of its own", "P4: the popup keeps its own store or skips the handshake")
 for k in ("width_dp", "max_height_dp", "month_cell_dp", "table_height_dp", "table_height_agenda_view_dp"):
     ok(k in tp.get("layout", {}), f"P5: layout.{k} declared", f"P5: layout.{k} missing")
-ok("decl.widthDp.dp" in pc and "decl.maxHeightDp.dp" in pc and "decl.monthCellDp" in pc and "decl.tableHeightDp" in pc and not re.search(r'width\(\d+\.dp\)\.testTag|KitBubble\(Modifier\.width\(\d', pc), "P5: the popup is sized by the declaration", "P5: a literal popup size is left")
-ok("onDay: (LocalDate) -> Unit" in pc and "picked = if (picked == d) null else d" in pc and "TasksModel.agenda(events, today, picked" in pc, "P6: tapping a day filters the Agenda (tap again clears)", "P6: the day tap does not filter the Agenda")
+ok("decl.widthDp.dp" in pc and "decl.maxHeightDp" in pc and "decl.monthCellDp" in pc and "decl.tableHeightDp" in pc and not re.search(r'width\(\d+\.dp\)\.testTag|KitBubble\(Modifier\.width\(\d', pc), "P5: the popup is sized by the declaration", "P5: a literal popup size is left")
+ok("onDay: (LocalDate) -> Unit" in pc and "picked = if (picked == d) null else d" in pc and "TasksModel.agenda(events, today, day" in pc and "TasksModel.agendaDay(view, picked, today)" in pc, "P6: tapping a day filters the Agenda (tap again clears)", "P6: the day tap does not filter the Agenda")
 ok(tb.get("todo", {}).get("complete") is False and "enabled = decl.todoComplete" in pc, "P6: the Todo checkbox follows the declared `complete`", "P6: the Todo checkbox ignores the declaration")
 ok("TASKS_POPUP_B64" in read("app/build.gradle"), "P6: the declaration is baked", "P6: TASKS_POPUP_B64 not baked")
 sys.exit(1 if fails else 0)

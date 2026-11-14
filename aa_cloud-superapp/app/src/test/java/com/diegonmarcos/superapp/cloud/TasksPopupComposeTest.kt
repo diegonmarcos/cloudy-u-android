@@ -75,7 +75,9 @@ class TasksPopupComposeTest : KitPageHarness() {
     fun `C3 the tables are fed and the event day has a dot`() {
         show()
         waitFor("cal:agenda:row:0")
-        compose.onNodeWithTag("cal:agenda:row:1").assertExists()
+        // #1738 the Calendar view's Agenda is today only; the full agenda is the Agenda view (C7)
+        compose.onNodeWithText("Dentist").assertExists()
+        compose.onNodeWithTag("cal:agenda:row:1").assertDoesNotExist()
         waitFor("cal:todo:row:0")
         compose.onNodeWithText("Buy milk").assertExists()
         compose.onNodeWithText("Done thing").assertDoesNotExist()
@@ -86,13 +88,24 @@ class TasksPopupComposeTest : KitPageHarness() {
     @Test
     fun `C4 a day tap filters the agenda to that day`() {
         show()
-        waitFor("cal:agenda:row:1")
+        waitFor("cal:agenda:row:0")
         compose.onNodeWithTag("cal:day:${today.plusDays(6)}").performScrollTo().performClick()
         compose.onNodeWithTag("cal:agenda:row:0").assertExists()
         compose.onNodeWithTag("cal:agenda:row:1").assertDoesNotExist()
         compose.onNodeWithText("Rent").assertExists()
         compose.onNodeWithTag("cal:filter").performScrollTo().performClick()
-        compose.onNodeWithTag("cal:agenda:row:1").assertExists()
+        compose.onNodeWithText("Dentist").assertExists()
+        compose.onNodeWithText("Rent").assertDoesNotExist()
+    }
+
+    @Test
+    fun `C7 the full agenda stays reachable in the Agenda view`() {
+        show()
+        waitFor("cal:agenda:row:0")
+        compose.onNodeWithTag("cal:tab:Agenda").performClick()
+        waitFor("cal:agenda:row:1")
+        compose.onNodeWithText("Dentist").assertExists()
+        compose.onNodeWithText("Rent").assertExists()
     }
 
     @Test

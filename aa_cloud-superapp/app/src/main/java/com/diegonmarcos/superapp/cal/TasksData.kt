@@ -30,6 +30,18 @@ interface TasksSource {
 /** The popup's pure logic: no Android, so a plain JVM test drives it. */
 object TasksModel {
 
+    /**
+     * #1738 the popup's max height: the screen height still free below the anchor (window insets already taken off by the caller),
+     * so the whole Calendar view fits without scrolling. Falls back to the declared [declMaxDp] when the space is unknown (null/<=0);
+     * it never goes under [minDp]. The popup scrolls only when its content truly exceeds this.
+     */
+    fun bubbleMaxHeightDp(availableDp: Int?, declMaxDp: Int, minDp: Int = 240): Int =
+        if (availableDp == null || availableDp <= 0) declMaxDp else maxOf(availableDp, minDp)
+
+    /** #1738 the day the Agenda is filtered to: the tapped day, else today in the Calendar view, else null (the full agenda, Agenda view). */
+    fun agendaDay(view: String, picked: LocalDate?, today: LocalDate): LocalDate? =
+        picked ?: if (view == "calendar") today else null
+
     /** The shown months in order: [before] months before [today]'s, its own, [after] months after: 3 for the declared 1 and 1. */
     fun months(today: LocalDate, before: Int, after: Int): List<YearMonth> =
         (-before..after).map { YearMonth.from(today).plusMonths(it.toLong()) }
