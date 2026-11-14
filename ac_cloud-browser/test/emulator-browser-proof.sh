@@ -34,19 +34,22 @@ dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell ca
 shot() { adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null || true; dump "$1"; }
 top()  { adb shell dumpsys activity activities 2>/dev/null | grep -m1 -E "topResumedActivity|mResumedActivity" | tr -d '\r'; }
 # tap the first node whose text or content-desc matches the regex $1 in the current screen
+# tapid taps by resource-id (the shared bars' test tags: the title dropdown chevron, its entries, the AI icon)
+tapid() { TAP_ATTR=resource-id tap "$1"; }
 tap() {
   dump _tap
   # the app's own updater can raise the system "install unknown apps" dialog over the page: cancel it, close the shade
   if grep -q "install unknown apps" "$OUT/_tap.xml"; then
     adb shell input keyevent KEYCODE_BACK; adb shell cmd statusbar collapse >/dev/null 2>&1 || true; sleep 2; dump _tap
   fi
-  local xy; xy=$(python3 - "$OUT/_tap.xml" "$1" <<'PY'
+  local xy; xy=$(python3 - "$OUT/_tap.xml" "$1" "${TAP_ATTR:-}" <<'PY'
 import re, sys, xml.etree.ElementTree as ET
 try: root = ET.parse(sys.argv[1]).getroot()
 except Exception: sys.exit(0)
 rx = re.compile(sys.argv[2])
+byid = sys.argv[3] == "resource-id"
 for n in root.iter("node"):
-    if rx.search(n.get("text", "")) or rx.search(n.get("content-desc", "")):
+    if (byid and rx.search(n.get("resource-id", ""))) or (not byid and (rx.search(n.get("text", "")) or rx.search(n.get("content-desc", "")))):
         a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds", "[0,0][0,0]")))
         print((a + c) // 2, (b + d) // 2); break
 PY
@@ -143,10 +146,12 @@ adb shell am force-stop "$BPKG" >/dev/null 2>&1 || true
 # F1
 adb shell am start -W -n "$BPKG/.MainActivity" >/dev/null 2>&1 || adb shell monkey -p "$BPKG" 1 >/dev/null 2>&1
 sleep 6
-# open Favourites and wait until its title is on screen (a first launch can show Tabs for a while); re-tap Fav each round
+# open Favourites and wait until its title is on screen (a first launch can show Tabs for a while). Favourites is an off-bar
+# section (ui.bottom_nav is Weby|Cloudy|Browser|Tabs|Domains): it is entered from the first row's title dropdown, entry navtop1_entry_favourites
 onfav=0
 for _ in $(seq 1 10); do
-  tap '^Fav$' || true
+  # the dropdown may already be open from the previous round: take the entry first, open the dropdown only when it is not there
+  tapid '^navtop1_entry_favourites$' || { tapid '^navtop1_more$' || true; tapid '^navtop1_entry_favourites$' || true; }
   dump _fav; grep -q 'text="Favourites"' "$OUT/_fav.xml" && { onfav=1; break; }
   sleep 3
 done
@@ -192,7 +197,7 @@ grep -qi 'Search tabs' "$OUT/tabs-search.xml" && ok "H1 the Tabs page has its se
 tap_edit && { adb shell input text git; sleep 3; shot tabs-filtered; }
 grep -qi 'github' "$OUT/tabs-filtered.xml" && ok "H1 typing filters to the matching tabs / history" || bad "H1 'git' shows no github match (tabs-filtered.png)"
 adb shell input keyevent KEYCODE_BACK; sleep 1
-tap '^Search$' || true; sleep 3
+tapid '^topbar_ai$' || true; sleep 3   # Search is an off-bar section: the first row's AI icon opens it
 tap_edit && { adb shell input text git; sleep 3; shot search-history; }
 grep -qi 'github' "$OUT/search-history.xml" && ok "H1 Search opens the history dropdown" || bad "H1 Search shows no history match for 'git' (search-history.png)"
 [ "$fails" -eq 0 ] || { echo "$fails check(s) failed"; exit 1; }
