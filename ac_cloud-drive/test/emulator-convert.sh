@@ -145,7 +145,7 @@ pick pack.zip 'Unzip…' pack/inner/hello.txt confirm 'Unzip…'; shot 08-unzip
 open_menu scan.pdf; tap 'Convert from PDF' ; sleep 2; tap '^OCR$'; sleep 12; shot 09-scan-ocr
 devhas scan.ocr.txt && echo "scan OCR wrote text" || echo "scan OCR: $(texts)" | tee "$OUT/scan-ocr-note.txt"
 # unsupported type: a reason
-open_menu report.docx; tap 'Convert to PDF…'; sleep 3; shot 10-docx-reason
+sleep 15; open_menu report.docx; tap 'Convert to PDF…'; sleep 3; shot 10-docx-reason
 has report.pdf && fail "docx produced a PDF"
 dump | grep -qi 'office' || fail "no reason shown for docx: $(texts)"
 

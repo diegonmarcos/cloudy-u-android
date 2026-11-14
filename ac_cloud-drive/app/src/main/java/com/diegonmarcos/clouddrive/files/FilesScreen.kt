@@ -190,7 +190,7 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
 
     LaunchedEffect(Unit) { controller.messages.collect { snackbar.showSnackbar(it) } }
     // Convert: a freshly written file is offered to open (Editor tab: image, PDF, text, HTML all open there).
-    LaunchedEffect(Unit) { controller.converted.collect { f -> if (snackbar.showSnackbar(f.name, actionLabel = ctx.getString(R.string.files_convert_open)) == androidx.compose.material3.SnackbarResult.ActionPerformed) runCatching { com.diegonmarcos.clouddrive.editor.EditorHook.open(f.path) } } }
+    LaunchedEffect(Unit) { controller.converted.collect { f -> if (snackbar.showSnackbar(f.name, actionLabel = ctx.getString(R.string.files_convert_open), duration = androidx.compose.material3.SnackbarDuration.Short) == androidx.compose.material3.SnackbarResult.ActionPerformed) runCatching { com.diegonmarcos.clouddrive.editor.EditorHook.open(f.path) } } }
     LaunchedEffect(ui.a.location.key, ui.b.location.key) { controller.ensureLoaded(ui.a.location); controller.ensureLoaded(ui.b.location) }
 
     val canBack = hasAccess && (searching || dialog != null || FilesReducer.back(ui, ui.active) != null)
