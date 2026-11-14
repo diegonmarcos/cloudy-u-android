@@ -24,6 +24,7 @@
     {"app": "Cloud Mail", "usage": "signature preview", "profile": "UNTRUSTED_HTML", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/settings/SignatureWebPreview.kt"},
     {"app": "Cloud Mail", "usage": "Authelia sign-in", "profile": "APP_PAGE", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/settings/AccountAuthSection.kt"},
     {"app": "Cloud Mail", "usage": "link mini browser", "profile": "BROWSER", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/browser/MiniBrowserActivity.kt"},
+    {"app": "Cloud Mail", "usage": "Home > Webmail (fleet webmail page, #1751)", "profile": "BROWSER", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/home/WebmailScreen.kt"},
     {"app": "Cloud Drive", "usage": "Convert HTML to PDF (offscreen, no script, #1740)", "profile": "UNTRUSTED_HTML", "file": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/files/convert/HtmlPdf.kt"},
     {"app": "Cloud Drive", "usage": "Git repository web page (#1395)", "profile": "BROWSER", "file": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/RepoWebViewer.kt"},
     {"app": "libs:mail (SuperApp, Account)", "usage": "Authelia sign-in", "profile": "APP_PAGE", "file": "ab_cloud-libs-shared/libs/mail/src/main/java/com/diegonmarcos/superapp/mail/MailAuthUi.kt"},
