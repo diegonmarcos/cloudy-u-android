@@ -535,7 +535,7 @@ object Sections {
         val hubSections: List<String> = emptyList(),
 
         /** `hub_pages` (#1719): ids of HIDDEN pages of the section that a hub still lists as tiles next to this page (the Agents hub's Network
-         *  section keeps its icons: Wi-Fi, Bluetooth, DNS, VPN, NG Firewall, Apps Access, Webserver, now reached through the Network page). */
+         *  section keeps listing Apps Access, a hidden page, next to the visible Network tiles; #1737). */
         val hubPages: List<String> = emptyList(),
     )
 

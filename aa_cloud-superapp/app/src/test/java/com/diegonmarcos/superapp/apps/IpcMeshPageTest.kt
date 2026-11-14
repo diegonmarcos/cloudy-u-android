@@ -70,12 +70,12 @@ class IpcMeshPageTest : KitPageHarness() {
 
     @Test
     fun `P3 IPC is Cloud Store Access only, Configs keeps one Apps Access tile and hosts the shared page`() {
-        val pages = Sections.byId("config")!!.allPages   // #1719 the Network pages are hidden behind the Network page
-        // #1719 the Network pages are declared hidden behind the one Network page; the declared Network group is the check
-        val net = pages.filter { it.group == "Network" && it.id in setOf("firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "bluetooth") }.map { it.id }
+        val pages = Sections.byId("config")!!.allPages   // #1737 Apps Access is declared hidden (OS Perms opens Store Access at Android Perms)
+        val net = pages.filter { it.group == "Network" && it.id in setOf("ng-firewall", "wifi", "dns", "wg", "firewall", "os-perms", "webserver", "proxy", "bluetooth", "apps-access", "adb-shell") }.map { it.id }
+        val tiles = pages.filter { it.group == "Network" && !it.hidden && !it.separator }
         assertTrue("Configs declares no ipc page: ${pages.map { it.id }}", pages.none { it.id == "ipc" || it.id == "apps-mesh" })
         assertTrue("Network holds the Apps Access tile: $net", "apps-access" in net)
-        assertTrue("Network keeps the 2-8 rule: $net", net.size in 2..8)
+        assertTrue("Network keeps its visible tile count (2..9, the owner's eight plus Bluetooth): ${tiles.map { it.id }}", tiles.size in 2..9)
         show(IpcMeshFragment())
         compose.onNodeWithTag(IpcMesh.TAG_SUMMARY, useUnmergedTree = true).assertExists()
     }

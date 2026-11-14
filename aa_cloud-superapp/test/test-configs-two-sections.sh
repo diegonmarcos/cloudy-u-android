@@ -77,7 +77,7 @@ def members(g, s=''):
 want = {
     # #1623 one page, six top-level groups
     ('Launcher', ''): ['Quick Actions', 'UI', 'Folders', 'One-Hand', '|', 'Notify'],  # the | separates One-Hand from Notify
-    ('Network', ''):  ['Network'],  # #1719 ONE page with its own bottom nav; the eight pages it held are declared hidden behind it (`reaches`)
+    ('Network', ''):  ['NG Firewall', '|', 'Wi-Fi', 'DNS', 'VPN', '|', 'Firewall', 'OS Perms', '|', 'Webserver', 'Proxy', '|', 'Bluetooth'],  # #1737 individual icons again (the #1719 unified Network page is retired into the NG Firewall hub)
     ('Apps', ''):     ['Store'],
     ('Connect', ''):  ['Account', 'Cloudy C3', 'Peer Control'],
     ('Tools', ''):    ['Watchdog', '|', 'X-Ray Device', 'Logcat Fleet', 'Agents'],  # Watchdog -> extapp:c3-watchdog; the | before the observability pair; Agents is the in-app hub (the owner's dual listing, kept once here)
@@ -87,7 +87,7 @@ problems = ['%s%s = %r' % (g, ' ▸ ' + s if s else '', members(g, s))
             for (g, s), exp in want.items() if members(g, s) != exp]
 print('; '.join(problems) or 'OK')
 PY
-)" "Launcher = Quick Actions/UI/Folders/One-Hand | Notify; Network = Network (one page, own bottom nav; the eight pages it held are hidden behind it); Apps = Store; Connect = Account/Cloudy C3/Peer Control; Tools = Watchdog | X-Ray Device/Logcat Fleet/Agents; Configs = Perms/Logcat/X-Ray App/About (#1623)"
+)" "Launcher = Quick Actions/UI/Folders/One-Hand | Notify; Network = NG Firewall hub/Wi-Fi/DNS/VPN/Firewall/OS Perms/Webserver/Proxy/Bluetooth (#1737); Apps = Store; Connect = Account/Cloudy C3/Peer Control; Tools = Watchdog | X-Ray Device/Logcat Fleet/Agents; Configs = Perms/Logcat/X-Ray App/About (#1623)"
 
 echo "== T3: Store is the former Constellation, and Cloud Constellation is INSIDE it =="
 # #563 renamed the Constellation page Store; the word survives as the label of
@@ -174,9 +174,9 @@ w = {p[k] for p in pages for k in ('group', 'subgroup') if p.get(k)}
 w |= {p['label'] for p in pages if not p.get('hidden') and not p.get('is_action')}
 print(len(w))
 ")
-[ "$WORDS" = 24 ] \
-  && ok "T4 derived 24 words from the declaration (#1623 one page, six groups: Launcher, Network, Apps, Connect, Tools, Configs; no subgroups; 26 visible page labels incl. the two | separators (one word), Agents (the relabelled hub) and Watchdog (the c3-watchdog launch); Cloudy C3 is the c3 page's label)" \
-  || bad "T4 derived $WORDS words, expected 24 — it is checking a different set than it claims"
+[ "$WORDS" = 33 ] \
+  && ok "T4 derived 33 words from the declaration (#1623 one page, six groups: Launcher, Network, Apps, Connect, Tools, Configs; no subgroups; 26 visible page labels incl. the two | separators (one word), Agents (the relabelled hub) and Watchdog (the c3-watchdog launch); Cloudy C3 is the c3 page's label)" \
+  || bad "T4 derived $WORDS words, expected 33 — it is checking a different set than it claims"
 
 # The ONE heading Kotlin may still name is the fallback for a section that
 # declares none, which is every section but this one. Pinned so it stays the only
@@ -231,9 +231,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 59 ] \
-  && ok "59 config pages declared (#1719 added the Network page) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
-  || bad "$COUNT config pages, expected 59 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 65 ] \
+  && ok "65 config pages declared (#1737: the #1719 Network page is retired; added the NG Firewall hub, OS Perms, Proxy and four Network separators) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
+  || bad "$COUNT config pages, expected 65 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS — the single shared row (#1610) =="
 # #1610 downgraded the ticket's two per-subpage Actions columns to ONE shared row
@@ -338,7 +338,8 @@ BEFORE = {'network', 'bluetooth-analyze', 'bluetooth-locate', 'presets', 'contro
           'c3-watchdog',  # #1610 added on purpose: Setup ▸ Configs ▸ Watchdog (the C3-Watchdog launch page -> extapp:c3-watchdog)
           'sync-clipboard', 'saving-mode', 'focus-mode',  # #1610 added on purpose: the three Actions-row entries (Focus Mode opens the #1596 focus page)
           'focus',  # #1596 added on purpose: the hidden Focus Mode switch page (page:config/focus, FocusModeFragment)
-          'tools-sep-1'}  # #1623 added on purpose: the Tools group | separator (Watchdog | X-Ray Device, Logcat Fleet, Agents)
+          'tools-sep-1',  # #1623 added on purpose: the Tools group | separator (Watchdog | X-Ray Device, Logcat Fleet, Agents)
+          'ng-firewall', 'os-perms', 'proxy', 'network-sep-a', 'network-sep-b', 'network-sep-c', 'network-sep-d'}  # #1737 added on purpose: the NG Firewall hub, OS Perms (Store Access > Android Perms), Proxy (system network settings) and the four | separators of the Network group
 sec     = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
                if s['id'] == 'config')
 pages   = sec['pages']
@@ -431,7 +432,8 @@ for g, s, label, icon in tiles:
 want = ['H:LAUNCHER',
         'Quick Actions[ic_home]', 'UI[ic_ctl_brightness]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', '|[None]', 'Notify[ic_rss]',
         'H:NETWORK',
-        'Network[ic_world]',   # #1719 ONE tile; Firewall, DNS, Webserver, VPN (was Cloud Mesh), Apps Access, WiFi, Bluetooth are its bottom nav and Home icons; the ADB Shell icon is removed
+        'NG Firewall[ic_hub]', '|[None]', 'Wi-Fi[ic_wifi]', 'DNS[ic_world]', 'VPN[ic_wg]', '|[None]',   # #1737 individual icons again; the NG Firewall hub opens a page listing them
+        'Firewall[ic_lock]', 'OS Perms[ic_key]', '|[None]', 'Webserver[ic_web]', 'Proxy[ic_settings]', '|[None]', 'Bluetooth[ic_bluetooth]',   # the ADB Shell icon stays removed (#1719); Apps Access is hidden
         'H:APPS',
         'Store[ic_storefront]',
         'H:CONNECT',
@@ -448,7 +450,7 @@ else:
     print('rendered != spec: ' + ' | '.join(l for l in difflib.unified_diff(want, out, lineterm='', n=0)
                                            if l[:1] in '+-' and l[:3] not in ('+++', '---')))
 PY
-)" "grid = LAUNCHER[Quick Actions,UI,Folders,One-Hand | Notify] NETWORK[Network] APPS[Store] CONNECT[Account,Cloudy C3,Peer Control] TOOLS[Watchdog | X-Ray Device,Logcat Fleet,Agents] CONFIGS[Perms,Logcat,X-Ray App,About] ACTIONS[Update All,KDE Connect,Animations,Sync Clipboard,Saving Mode,Focus Mode] (#1623)"
+)" "grid = LAUNCHER[Quick Actions,UI,Folders,One-Hand | Notify] NETWORK[NG Firewall | Wi-Fi,DNS,VPN | Firewall,OS Perms | Webserver,Proxy | Bluetooth] APPS[Store] CONNECT[Account,Cloudy C3,Peer Control] TOOLS[Watchdog | X-Ray Device,Logcat Fleet,Agents] CONFIGS[Perms,Logcat,X-Ray App,About] ACTIONS[Update All,KDE Connect,Animations,Sync Clipboard,Saving Mode,Focus Mode] (#1623)"
 
 echo "== T12: THE AI PAGE IS GONE, not hidden — no route, target or tile names it (#723) =="
 # Deleting a declaration and leaving its door behind is the dead-tile failure:

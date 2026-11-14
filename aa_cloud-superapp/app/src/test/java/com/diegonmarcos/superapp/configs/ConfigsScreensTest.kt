@@ -69,7 +69,7 @@ class ConfigsScreensTest(private val screen: String, private val fontScale: Floa
         /** The Configs grid and every page/tab under build.json::ui.sections[config] that opens IN this app. */
         val SCREENS = listOf(
             "grid", "perms", "controls", "presets", "panels", "panels-ui", "panels-tools", "onehand",
-            "network", "firewall", "dns", "adb-status", "adb-term", "adb-perms", "adb-all", "kde",  // ADB Shell is a strip over its four tabs; each tab is rendered as its own screen
+            "ng-firewall", "firewall", "dns", "adb-status", "adb-term", "adb-perms", "adb-all", "kde",  // ADB Shell is a strip over its four tabs; each tab is rendered as its own screen
             "xray", "xray-app", "logcat", "logcat-fleet", "app-about", "battery", "profile", "store-cloud", "store-phone",
         )
 
@@ -217,7 +217,7 @@ class ConfigsScreensTest(private val screen: String, private val fontScale: Floa
         if (fontScale == 1.0f) {
             val capped = screen !in NO_HEIGHT_CAP
             // #1719 the fleet's bottom nav island (libs:bottomnav, sized by BottomSpec and held by the nav-shape guard) is lib-owned chrome,
-            // not a page control: a page that draws its own nav (Network, NG Firewall) is measured on what it puts in the island's place.
+            // not a page control: a page that draws its own nav (Firewall) is measured on what it puts in the island's place.
             val tooTall = hits.filter { !it.name.contains("[bottomnav_item_") }.filter {
                 capped && (it.kind == "button" || it.kind == "view-button" || it.kind == "chip") && it.hDp > MAX_BUTTON_DP + 0.5f ||
                     capped && (it.kind == "row" || it.kind == "view-row" || it.kind == "tab") &&

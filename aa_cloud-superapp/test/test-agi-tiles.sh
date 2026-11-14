@@ -195,7 +195,7 @@ configs = [g for g in groups(bj["ui"]["sections"], "Configs")]
 check(len(configs) == 1, "exactly one Configs tile group under ui.sections (found %d)" % len(configs))
 if configs:
     row = [t.get("label") for t in configs[0]["tiles"]]
-    check(row == ["Quick Actions", "UI", "|", "NG Firewall", "WiFi", "|", "Store", "|", "Account", "C3", "|", "Watchdog", "|", "About"], "Configs row = Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About (#1628 owner order, supersedes #1611) (got %s)" % row)
+    check(row == ["Quick Actions", "UI", "|", "Firewall", "WiFi", "|", "Store", "|", "Account", "C3", "|", "Watchdog", "|", "About"], "Configs row = Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About (#1628 owner order, supersedes #1611) (got %s)" % row)
 lnk = [g for g in groups(bj["ui"]["sections"], "Lnktree")]
 if lnk:
     sa = lnk[0]["tiles"][0] if lnk[0]["tiles"] else {}

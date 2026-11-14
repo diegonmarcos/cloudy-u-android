@@ -17,7 +17,7 @@ out="$(python3 - "$ROOT/aa_cloud-superapp/build.json" <<'PY'
 import json, sys
 b = json.load(open(sys.argv[1]))
 pages = next(s for s in b['ui']['sections'] if s['id'] == 'config')['pages']
-net = [p['id'] for p in pages if p.get('group') == 'Network' and p['id'] in ('network','firewall','dns','webserver','wg','apps-access','adb-shell','wifi','bluetooth')]   # #1719 declared order; all hidden behind the Network page
+net = [p['id'] for p in pages if p.get('group') == 'Network' and p['id'] in ('ng-firewall','wifi','dns','wg','firewall','os-perms','webserver','proxy','bluetooth','apps-access','adb-shell')]   # #1737 declared order: the individual icons, the hub, OS Perms, Proxy; Apps Access and ADB Shell hidden
 by = {p['id']: p for p in pages}
 # Apps Access (Cloud Store > Access: Apps Mesh, IPC, Identity) is the one mesh tile; ADB Shell follows it
 mesh = [i for i in ('apps-access',) if i in net]

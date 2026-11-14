@@ -68,8 +68,8 @@ class PageTopInsetTest : KitPageHarness() {
         val root = File(System.getProperty("user.dir"), "src/main/java")
         val implementers = root.walkTopDown().filter { it.isFile && it.extension == "kt" }
             .filter { f -> Regex("[:,]\\s*ShellOverride\\b").containsMatchIn(f.readText()) }.map { it.name }.toList()
-        // #1719 the declared exception: Network and NG Firewall own the BOTTOM nav only (a page's own island replaces the shell's); the top row stays the shell's
-        val declared = setOf("NetworkNavFragment.kt", "NgFirewallFragment.kt")
+        // #1719 the declared exception: the Firewall page owns the BOTTOM nav only (#1737: the unified Network page is gone) (a page's own island replaces the shell's); the top row stays the shell's
+        val declared = setOf("NgFirewallFragment.kt")
         assertTrue("these pages take the chrome over and could draw under the top row: ${implementers - declared}", (implementers - declared).isEmpty())
         for (f in root.walkTopDown().filter { it.name in declared })
             assertTrue("${f.name} must not hide the top row", !f.readText().contains("fun ownsToolbar(): Boolean = true"))

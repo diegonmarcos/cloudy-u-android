@@ -1,6 +1,6 @@
-# #1719 Configs > Network bottom nav and NG Firewall full-screen takeover, on a real emulator:
-# aa_cloud-superapp/test/emulator-network-nav.sh photographs every tab (Home, Wireless, DNS, VPN), NG Firewall (its own nav and Back)
-# and the return, and fails on a missing bar item, an ADB Shell icon, a missing firewall nav/Back or a crash. Manual only.
+# #1737 Configs > Network individual icons and the NG Firewall hub, on a real emulator:
+# aa_cloud-superapp/test/emulator-network-nav.sh photographs the Configs page Network group, the NG Firewall hub, the Firewall (its own nav and Back)
+# and the return, and fails on a missing label or heading, an ADB Shell icon, a missing firewall nav or a crash. Manual only.
 name: "Test -> SuperApp Network nav (emulator)"
 
 on:

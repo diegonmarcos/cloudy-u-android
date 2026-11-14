@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# #1719 Emulator proof of Configs > Network and its bottom nav, and of NG Firewall taking over the screen:
+# #1737 Emulator proof of Configs > Network (individual icons on the Configs page) and of the NG Firewall hub:
 #   bash aa_cloud-superapp/test/emulator-network-nav.sh <superapp.apk> <out dir>
-# Opens page:config/network, photographs Home (default), Wireless, DNS, VPN, then NG Firewall (full screen: own nav Status | Apps | Rules and a
-# no Back control of its own: the shell arrow is the one, the SuperApp nav absent), its three views, and Back (the Network nav is restored). Fails when a label of the bar is missing,
-# NG Firewall lacks its own nav or Back, or Back does not restore the Network bar. OS Perms and Webserver are links out of the app: photographed
-# only (the apps they open are not on the emulator).
+# Opens the Configs main page and photographs the Network group (NG Firewall | Wi-Fi DNS VPN | Firewall OS Perms | Webserver Proxy), taps NG Firewall
+# and photographs the hub (Connections / Firewalls / Servers with their icons), opens the Firewall (full screen, own nav Status | Apps | Rules, no
+# Back of its own: the shell arrow is the one) and returns. Fails on a missing label or heading, a unified Network tile, an ADB Shell icon, a
+# Firewall without its nav, or a crash. OS Perms, Webserver and Proxy leave the app: not tapped.
 set -u
 APK=$1; OUT=$2; PKG=com.diegonmarcos.superapp
 mkdir -p "$OUT"; fail=0
@@ -45,32 +45,22 @@ tap() { dump; local xy; xy=$(centre "$1"); if [ -z "$xy" ]; then echo "::error::
 need() { local w; for w in "$@"; do has "$w" || { echo "::error::'$w' missing on $CUR"; fail=1; }; done; }
 
 wake; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 12
-wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "page:config/network" >/dev/null; sleep 8
+wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:config" >/dev/null; sleep 8
 
-CUR=home; cap network-home
-need Wireless DNS VPN Home "NG Firewall" "OS Perms" Webserver "Wi-Fi" Bluetooth
-# the SuperApp's own bottom nav is replaced by the Network nav while this page is open
-for w in Notify Boards Cloud Phone; do has "$w" && { echo "::error::the SuperApp bottom nav ($w) is still drawn under the Network nav"; fail=1; }; done
-has "ADB Shell" && { echo "::error::the ADB Shell icon is still in Network"; fail=1; }
-tap "Wireless"; CUR=wireless; cap network-wireless; need "Wi-Fi" Bluetooth
-tap "DNS"; sleep 3; CUR=dns; cap network-dns; need Wireless VPN
-tap "VPN"; sleep 3; CUR=vpn; cap network-vpn; need Wireless DNS
-tap "Home"; CUR=home2; cap network-home-again; need "Wi-Fi" Bluetooth
-tap "OS Perms"; sleep 3; cap network-os-perms-link
-adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "page:config/network" >/dev/null; sleep 6
-tap "Webserver"; sleep 3; cap network-webserver-link
-adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "page:config/network" >/dev/null; sleep 6
-tap "NG Firewall"; sleep 3; CUR=ngfw; cap ng-firewall-status
-need "NG Firewall" Status Apps Rules
-for w in Wireless DNS VPN "OS Perms" Webserver; do has "$w" && { echo "::error::SuperApp/Network nav still shown inside NG Firewall ($w)"; fail=1; }; done
-tap "Apps"; CUR=ngfw-apps; cap ng-firewall-apps; need "NG Firewall" Status Apps Rules
-tap "Rules"; CUR=ngfw-rules; cap ng-firewall-rules; need "NG Firewall" Status Apps Rules
-tap "Status"; CUR=ngfw-status2; cap ng-firewall-status-again
+CUR=configs; cap configs-network-group
+need "NG Firewall" "Wi-Fi" DNS VPN Firewall "OS Perms" Webserver Proxy
+has "ADB Shell" && { echo "::error::the ADB Shell icon is back in Network"; fail=1; }
+tap "NG Firewall"; sleep 3; CUR=hub; cap ng-firewall-hub
+need Connections Firewalls Servers "Wi-Fi" DNS VPN Firewall "OS Perms" Webserver Proxy
+tap "Firewall"; sleep 3; CUR=fw; cap firewall-status
+need Status Apps Rules
+tap "Apps"; CUR=fw-apps; cap firewall-apps; need Status Apps Rules
+tap "Rules"; CUR=fw-rules; cap firewall-rules; need Status Apps Rules
 read -r SW SH < <(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
-# the ONE Back control: the shell's top-right arrow (NG Firewall draws none of its own)
-adb shell input tap $((SW * 89 / 100)) $((SH * 9 / 100)); sleep 3; CUR=back; cap network-after-back
-need Wireless DNS VPN Home "NG Firewall" "OS Perms" Webserver
-has Rules && { echo "::error::NG Firewall is still shown after Back"; fail=1; }
+# the ONE Back control: the shell's top-right arrow (the Firewall draws none of its own)
+adb shell input tap $((SW * 89 / 100)) $((SH * 9 / 100)); sleep 3; CUR=back; cap hub-after-back
+need Connections Firewalls Servers
+has Rules && { echo "::error::the Firewall is still shown after Back"; fail=1; }
 adb logcat -d -s AndroidRuntime:E > "$OUT/crashes.txt" 2>&1 || true
 grep -q "Process: $PKG" "$OUT/crashes.txt" && { echo "::error::the app crashed"; fail=1; }
 exit $fail

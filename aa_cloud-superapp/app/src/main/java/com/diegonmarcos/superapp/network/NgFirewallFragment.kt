@@ -32,7 +32,7 @@ import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 
 /**
- * #1719 NG Firewall, taking the screen over below the shell's top row. It is a [ShellOverride] that owns the bottom nav: the
+ * #1719 Firewall, taking the screen over below the shell's top row. It is a [ShellOverride] that owns the bottom nav: the
  * SuperApp's own bottom nav is replaced by the firewall's own ([NgFirewallNav]: Status | Apps | Rules, libs:bottomnav's
  * island) and the shell's one Back arrow (routed here through [BackHandler]) closes it, the shell's back-stack listener then restores the SuperApp nav.
  * Every view is the engine's own screen ([FirewallDialog], one per section), so nothing the firewall page had is lost.
@@ -59,14 +59,14 @@ class NgFirewallFragment : KitComposeFragment(), ShellOverride, BackHandler {
         outState.putString(STATE_TAB, selected)
     }
 
-    /** The shell's top-row Back arrow (and the system Back) close NG Firewall: the one Back control of this page. */
+    /** The shell's top-row Back arrow (and the system Back) close Firewall: the one Back control of this page. */
     override fun tryHandleBack(): Boolean { close(); return true }
 
-    /** Close NG Firewall: pop it; the shell re-applies its chrome on the back-stack change. With nothing to pop, go to Network. */
+    /** Close Firewall: pop it; the shell re-applies its chrome on the back-stack change. With nothing to pop, go to Configs. */
     internal fun close() {
         val fm = parentFragmentManager
         if (fm.backStackEntryCount > 0) fm.popBackStack()
-        else (activity as? com.diegonmarcos.superapp.launcher.TileGridFragment.TileClickListener)?.onTileClicked("page:config/network")
+        else (activity as? com.diegonmarcos.superapp.launcher.TileGridFragment.TileClickListener)?.onTileClicked("section:config")
     }
 
     @Composable
@@ -75,13 +75,13 @@ class NgFirewallFragment : KitComposeFragment(), ShellOverride, BackHandler {
         val p = LocalKitPalette.current
         val items = remember {
             NgFirewallNav.TABS.map { (id, label) ->
-                BottomNavViewItem(id, label, NetworkNavFragment.drawable(ctx, NgFirewallNav.ICONS.getValue(id)))
+                BottomNavViewItem(id, label, NgFirewallHubFragment.drawable(ctx, NgFirewallNav.ICONS.getValue(id)))
             }
         }
         var shown by remember { mutableStateOf<String?>(null) }
         Column(Modifier.fillMaxSize().testTag(TAG_ROOT)) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("NG Firewall", color = p.textPrimary, fontSize = 18.sp)
+                Text("Firewall", color = p.textPrimary, fontSize = 18.sp)
             }
             AndroidView(
                 modifier = Modifier.weight(1f).fillMaxWidth().testTag(TAG_PANE),

@@ -24,12 +24,13 @@ class WebserverTileTest {
     private val app: Application get() = ApplicationProvider.getApplicationContext()
 
     @Test
-    fun `W1 the tile follows DNS and its icon is its own`() {
-        // #1719 the Network pages are declared hidden behind the one Network page; the declared Network group is the check
-        val pages = Sections.byId("config")!!.allPages.filter { it.group == "Network" && it.id in setOf("firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "bluetooth") }
+    fun `W1 the tile opens the Servers sub-group with Proxy and its icon is its own`() {
+        // #1737 the Network group shows individual icons again: ... Firewall, OS Perms | Webserver, Proxy | Bluetooth
+        val pages = Sections.byId("config")!!.allPages.filter { it.group == "Network" && !it.hidden }
         val i = pages.indexOfFirst { it.id == "webserver" }
         assertTrue("Webserver tile missing", i > 0)
-        assertEquals("dns", pages[i - 1].id)
+        assertEquals("network-sep-c", pages[i - 1].id)
+        assertEquals("proxy", pages[i + 1].id)
         assertEquals("Network", pages[i].group)
         assertEquals("", pages[i].subgroup)
         assertEquals("action:open_webserver", pages[i].action)

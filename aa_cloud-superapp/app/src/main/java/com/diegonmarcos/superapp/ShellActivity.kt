@@ -1957,6 +1957,14 @@ open class ShellActivity : AppCompatActivity(),
             actionType == "open_apps_access" -> {
                 if (!com.diegonmarcos.superapp.apps.CloudStoreHandoff.open(this, "access")) launchExternalApp("cloud-store")
             }
+            // #1737 Configs > Network > Proxy: the SuperApp has no proxy page, so the system network settings (the Wi-Fi network's Proxy field), else Settings.
+            actionType == "open_proxy_settings" -> {
+                val tries = listOf(android.provider.Settings.ACTION_WIRELESS_SETTINGS, android.provider.Settings.ACTION_SETTINGS)
+                tries.any { act ->
+                    runCatching { startActivity(android.content.Intent(act).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
+                }
+                Unit
+            }
             // Configs > Network > Webserver: the Cloud C3 Webserver app, else localhost in Cloud Browser.
             actionType == "open_webserver" -> {
                 if (com.diegonmarcos.superapp.launcher.WebserverLaunch.open(this) ==

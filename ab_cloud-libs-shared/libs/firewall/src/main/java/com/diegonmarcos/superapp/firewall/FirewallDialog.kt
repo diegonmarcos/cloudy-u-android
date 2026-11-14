@@ -131,7 +131,7 @@ class FirewallDialog : DialogFragment() {
         } else apps
         Column(Modifier.fillMaxSize().background(colorResource(R.color.fw_bg)).padding(20.dp)) {
           if (showHeader) {
-            Text("NG Firewall", color = p.textPrimary, fontSize = 20.sp)
+            Text("Firewall", color = p.textPrimary, fontSize = 20.sp)
             Text(
                 if (s == null) "" else
                     "${FirewallInfo.fmtState(s)} · ${s.blockedCount} blocked · ${s.transport}" +

@@ -3504,7 +3504,7 @@
               {
                 "_doc": "#1628 Configs row group 2a: Firewall -> the Network firewall page (page:config/firewall).",
                 "id": "configs-firewall",
-                "label": "NG Firewall",
+                "label": "Firewall",
                 "icon": "ic_lock",
                 "target": "page:config/firewall"
               },
@@ -5196,24 +5196,30 @@
             "label": "Network",
             "icon": "ic_settings",
             "pages": [
-              "network",
-              "firewall",
+              "ng-firewall",
+              "network-sep-a",
+              "wifi",
               "dns",
-              "webserver",
               "wg",
+              "network-sep-b",
+              "firewall",
+              "os-perms",
+              "network-sep-c",
+              "webserver",
+              "proxy",
+              "network-sep-d",
+              "bluetooth",
               "apps-access",
               "adb-shell",
               "adb-status",
               "adb-term",
               "adb-perms",
               "adb-all",
-              "wifi",
               "wifi-scan",
               "wifi-channels",
               "wifi-link",
               "wifi-tools",
               "wifi-log",
-              "bluetooth",
               "bluetooth-find",
               "bluetooth-analyze",
               "bluetooth-locate",
@@ -5277,6 +5283,9 @@
         "_doc_pages_order": "Order here is the single source of truth — it drives the Configs page-grid, its SECTION and SUBSECTION headings, and (via home_groups tiles_from_section: 'config') the Home Apps Configs row. TWO LEVELS, DECLARED PER PAGE (#649): `group` is the section heading a tile sits under and `subgroup` is the heading below it, both rendered verbatim by TileGridFragment — the words \"Launcher\", \"Setup\", \"Apps\", \"Network\" and \"Observability\" appear in no Kotlin file, which is the same contract `label` already keeps for a page name. There is deliberately no parallel group map: a run of consecutive pages carrying the same group/subgroup IS the group, so moving an entry in this array moves it on the screen and a group with no pages left simply stops being drawn. A page that declares no group falls under the default Pages heading, which is every other section in this file. #649 replaced the old flat shape (Account/WireGuard/KDE/AI/Permissions — Launcher — Store/About, held together by `row_break`): Launcher stopped being a page wearing four tabs and became the TITLE over its four subpages as direct tiles, and the rest became Setup ▸ Apps + Setup ▸ Observability. `row_break: true` still starts a fresh grid row at a tile without printing a heading; no page in this section needs it any more, because every row break here is now a group boundary. ACTIONS ARE UNCHANGED: the trailing `is_action` entries are the same three, rendered under the same Actions heading from the same flag, and they carry no group — the grid appends them last whatever their position in this array. #723 (#878 relabelled: group Watchdog is now Setup, subgroups Setup/Mesh are Apps/Network): OWNER REGROUP (Agents): the order is Launcher, Apps, Setup. Apps is a group with no subgroup and holds C3 · Peer Control · Agents (C3 and Peer Control moved out of Setup ▸ Network with their ids unchanged, so page:config/c3 and page:config/kde are the same links; the Network separator went with them, see removed_pages). Before that regroup, the Setup group had THREE sub-sections in this order — Apps (Account · Permissions · Store), Network (WireGuard · Peer Control) and Observability (About) — and the AI page is gone (see removed_pages). #REORG 2026-10: Configs is exactly THREE sections, in this order: Setup (subgroups Apps = Account/Permissions/Store, Launcher = Presets/Controls/One-Hand/Notify, Network), Fleet (the former Apps group: C3 · Peer Control · Agents) and Observability (About). No ids changed, so every page:config/<id> link is intact. #733: Network is Cloud Mesh (the wg page, relabelled) · Peer Control · Apps Mesh (the Store's mesh page, reached from here too).",
         "_doc_retired_pages": "#697. A config page id that no longer exists, mapped to the pages its content lives on now. The page set is guarded: test-configs-two-sections.sh T9 holds the ids as they stood before #649 regrouped this section and fails if any of them is missing from `pages` without being named here, or if a page named here is still declared, or if one of its successors is not. So a page cannot be dropped by a regroup — removing one is a declared act with a declared destination. `launcher` is the only entry: #649 dissolved the page that wore four tabs and made those four tabs direct pages under the Launcher heading. Read by the tester only; the app routes by `pages` and never needs to know what was retired.",
         "retired_pages": {
+          "network": [
+            "ng-firewall"
+          ],
           "launcher": [
             "controls",
             "onehand",
@@ -5305,6 +5314,7 @@
         },
         "_doc_page_aliases": "(`watchtower` and `agents-watchtower`, the removed Agents hub over Observability, land on X-Ray Device, the first page of the Watchtower - Obsv subgroup that replaced it.) Old config page ids still spoken by links (launcher shortcuts, App-Tabs history, other apps, the debug API open op): Sections.canonicalPage resolves each to the page that holds its content now. About became X-Ray (a new About is app-about); Diagnostics and Agents were folded into X-Ray.",
         "page_aliases": {
+          "network": "ng-firewall",
           "about": "xray",
           "diagnostics": "xray",
           "agents": "xray",
@@ -5386,21 +5396,35 @@
             "subgroup": ""
           },
           {
-            "_doc": "#1719 NETWORK — the one visible Network page, with its own bottom nav (libs:bottomnav island): Wireless | DNS | VPN | Home | NG Firewall | OS Perms | Webserver. Home (default) is the icon grid of every Network item; Wireless holds the Wi-Fi and Bluetooth icons (their pages open as before); DNS and VPN (formerly Cloud Mesh) host the existing pages; NG Firewall opens full screen with its own nav and Back; OS Perms opens Cloud Store > Access; Webserver opens Cloud C3 Webserver. The eight pages the Network group held are still declared below, now `hidden` (reached from this page; every page: route and deep link unchanged). The ADB Shell icon is not drawn here any more (explicit owner removal #1719: ADB Shell lives in Cloud C3 Webserver, whose link covers it); its page id still resolves. The structure is network/NetworkNav.kt (pure) and network/NetworkNavFragment.kt.",
-            "id": "network",
-            "label": "Network",
-            "icon": "ic_world",
-            "hub_pages": ["wifi", "bluetooth", "dns", "wg", "firewall", "apps-access", "webserver"],
-            "reaches": ["firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "bluetooth"],
+            "_doc": "#1737 NG FIREWALL HUB (replaces the #1719 unified Network tile and its bottom nav): one tile, first in the Network group, that opens a page listing the network items as icons under three headings: Connections (Wi-Fi, DNS, VPN), Firewalls (Firewall, OS Perms), Servers (Webserver, Proxy). The structure is network/NgFirewallHub (pure, tested) drawn by NgFirewallHubFragment; every item is also its own tile in this group. `reaches` names the pages kept declared (hidden) for deep links: ADB Shell (explicit owner removal of its icon, #1719; the page lives in Cloud C3 Webserver) and Apps Access (the Store's Access section, which OS Perms opens at Android Perms); `hub_pages` keeps Apps Access listed in the Agents hub next to the individual Network tiles.",
+            "id": "ng-firewall",
+            "label": "NG Firewall",
+            "icon": "ic_hub",
+            "reaches": ["adb-shell", "apps-access"],
+            "hub_pages": ["apps-access"],
             "group": "Network",
             "subgroup": ""
           },
           {
-            "_doc": "Firewall — the no-root per-app firewall (libs:firewall, firestack VPN) as a Network page. SectionPages embeds the engine's FirewallDialog (master switch, VPN consent, per-app rules) as the page; Configs ▸ Observability ▸ About keeps only a read-only status summary with a 'Manage in Network ▸ Firewall' link. First after the Watchdog hub in Network: it owns the one VPN slot the Cloud Mesh and DNS below depend on.",
-            "id": "firewall",
-            "label": "NG Firewall",
-            "icon": "ic_lock",
-            "hidden": true,
+            "_doc": "#1737 The | between Network sub-groups on the Configs main page: a CHARACTER, not a tile (`separator: true`).",
+            "id": "network-sep-a",
+            "label": "|",
+            "separator": true,
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1263 Configs ▸ Setup ▸ Network ▸ WiFi: the phone's Wi-Fi analyzer as a page over libs:wifi (WifiFragment draws WifiPanel), right after ADB Shell. Five tabs over one process-wide controller, so scans, the throttle window and running tools survive a tab switch: Scan (live AP list: SSID / BSSID / vendor from the IEEE OUI asset, smoothed RSSI + sparkline, band / channel / width / centre, 802.11 standard, security incl. WPA3 / OWE / Enterprise / PMF / WPS, hidden, 802.11mc / az RTT, Wi-Fi 7 MLO, age; filter, sort, search, group by SSID; the scan throttle state), Channels (spectrum per band, channel rating and best-channel recommendation per regulatory plan, congestion, RSSI over time), Link (the connected network: speeds, frequency, signal / quality / SNR estimate, IPv4 / IPv6 / gateway / DNS / DHCP lease / MTU, captive / validated / metered / private DNS, MAC randomization, roaming log), Tools (ping / jitter / loss, traceroute, DNS, bounded port scan, LAN discovery via NSD / SSDP / sweep / NetBIOS, throughput to build.json wifi_analyzer.throughput, RTT ranging, hot / cold locator) and Log (heatmap grid, events, CSV / JSON / PCAP export and share). Vendors, channel plans and defaults are DATA in the lib's assets; this app's overrides are build.json wifi_analyzer. hidden tabs: reached through the WiFi strip.",
+            "id": "wifi",
+            "label": "Wi-Fi",
+            "icon": "ic_wifi",
+            "tabs": [
+              "wifi-scan",
+              "wifi-channels",
+              "wifi-link",
+              "wifi-tools",
+              "wifi-log"
+            ],
             "group": "Network",
             "subgroup": ""
           },
@@ -5409,17 +5433,6 @@
             "id": "dns",
             "label": "DNS",
             "icon": "ic_world",
-            "hidden": true,
-            "group": "Network",
-            "subgroup": ""
-          },
-          {
-            "_doc": "Webserver - opens the Cloud C3 Webserver app (fleet id c3-webserver; the package is read from data/constellation-fleet.json at run time, WebserverLaunch.kt) through its explicit launch intent. If that app is not installed it opens http://localhost:8002 in Cloud Browser. Sits right after DNS.",
-            "id": "webserver",
-            "label": "Webserver",
-            "icon": "ic_web",
-            "action": "action:open_webserver",
-            "hidden": true,
             "group": "Network",
             "subgroup": ""
           },
@@ -5430,7 +5443,82 @@
             "label": "VPN",
             "icon": "ic_wg",
             "action": "section:wg",
-            "hidden": true,
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1737 The | between Network sub-groups on the Configs main page: a CHARACTER, not a tile (`separator: true`).",
+            "id": "network-sep-b",
+            "label": "|",
+            "separator": true,
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
+            "_doc": "Firewall — the no-root per-app firewall (libs:firewall, firestack VPN) as a Network page. SectionPages embeds the engine's FirewallDialog (master switch, VPN consent, per-app rules) as the page; Configs ▸ Observability ▸ About keeps only a read-only status summary with a 'Manage in Network ▸ Firewall' link. First after the Watchdog hub in Network: it owns the one VPN slot the Cloud Mesh and DNS below depend on.",
+            "id": "firewall",
+            "label": "Firewall",
+            "icon": "ic_lock",
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1737 OS PERMS - opens Cloud Store > Access > Android Perms (ShellActivity action open_os_perms -> CloudStoreHandoff.open(access, android)); Cloud Store absent: its install offer. Apps Access (the whole Access section) stays declared, hidden.",
+            "id": "os-perms",
+            "label": "OS Perms",
+            "icon": "ic_key",
+            "action": "action:open_os_perms",
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1737 The | between Network sub-groups on the Configs main page: a CHARACTER, not a tile (`separator: true`).",
+            "id": "network-sep-c",
+            "label": "|",
+            "separator": true,
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
+            "_doc": "Webserver - opens the Cloud C3 Webserver app (fleet id c3-webserver; the package is read from data/constellation-fleet.json at run time, WebserverLaunch.kt) through its explicit launch intent. If that app is not installed it opens http://localhost:8002 in Cloud Browser. Sits right after DNS.",
+            "id": "webserver",
+            "label": "Webserver",
+            "icon": "ic_web",
+            "action": "action:open_webserver",
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1737 PROXY - the SuperApp has no proxy page or setting of its own (searched: proxy, HTTP proxy, sing-box, socks: only the Store feed proxy, MediaProxy and the mesh transport, none user-facing), so this opens the system network settings (ShellActivity action open_proxy_settings: Settings > Network & internet, where the Wi-Fi network's Proxy field lives), else Settings.",
+            "id": "proxy",
+            "label": "Proxy",
+            "icon": "ic_settings",
+            "action": "action:open_proxy_settings",
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1737 The | between Network sub-groups on the Configs main page: a CHARACTER, not a tile (`separator: true`).",
+            "id": "network-sep-d",
+            "label": "|",
+            "separator": true,
+            "group": "Network",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1221 Configs ▸ Setup ▸ Network ▸ Bluetooth (moved from the Fleet group, now Cloudy C3; the id and its seven tabs are unchanged): the phone's Bluetooth as a page over libs:bluetooth (BluetoothFragment draws BluetoothPanel). Tabs, one shared stack so a connection survives a tab switch: Find (scan with name / service / RSSI filters, the device list, paired devices), Analyze, Locate, Connect (the selected device: connect, bond, GATT discovery, MTU, RSSI), Interact (the live dashboard and the GATT tree: read, write, notify, indicate, descriptors), Debug (the ATT event log, copy and export) and Dev (raw hex write, test payloads, notify stream, permissions, adb grant commands). The known services, characteristics, decoders, filter presets and payloads are DATA (libs/bluetooth assets/bluetooth/gatt-catalog.json). hidden tabs: reached through the Bluetooth strip.",
+            "id": "bluetooth",
+            "label": "Bluetooth",
+            "icon": "ic_bluetooth",
+            "tabs": [
+              "bluetooth-find",
+              "bluetooth-analyze",
+              "bluetooth-locate",
+              "bluetooth-connect",
+              "bluetooth-interact",
+              "bluetooth-debug",
+              "bluetooth-dev"
+            ],
             "group": "Network",
             "subgroup": ""
           },
@@ -5454,40 +5542,6 @@
               "adb-term",
               "adb-perms",
               "adb-all"
-            ],
-            "hidden": true,
-            "group": "Network",
-            "subgroup": ""
-          },
-          {
-            "_doc": "#1263 Configs ▸ Setup ▸ Network ▸ WiFi: the phone's Wi-Fi analyzer as a page over libs:wifi (WifiFragment draws WifiPanel), right after ADB Shell. Five tabs over one process-wide controller, so scans, the throttle window and running tools survive a tab switch: Scan (live AP list: SSID / BSSID / vendor from the IEEE OUI asset, smoothed RSSI + sparkline, band / channel / width / centre, 802.11 standard, security incl. WPA3 / OWE / Enterprise / PMF / WPS, hidden, 802.11mc / az RTT, Wi-Fi 7 MLO, age; filter, sort, search, group by SSID; the scan throttle state), Channels (spectrum per band, channel rating and best-channel recommendation per regulatory plan, congestion, RSSI over time), Link (the connected network: speeds, frequency, signal / quality / SNR estimate, IPv4 / IPv6 / gateway / DNS / DHCP lease / MTU, captive / validated / metered / private DNS, MAC randomization, roaming log), Tools (ping / jitter / loss, traceroute, DNS, bounded port scan, LAN discovery via NSD / SSDP / sweep / NetBIOS, throughput to build.json wifi_analyzer.throughput, RTT ranging, hot / cold locator) and Log (heatmap grid, events, CSV / JSON / PCAP export and share). Vendors, channel plans and defaults are DATA in the lib's assets; this app's overrides are build.json wifi_analyzer. hidden tabs: reached through the WiFi strip.",
-            "id": "wifi",
-            "label": "WiFi",
-            "icon": "ic_wifi",
-            "tabs": [
-              "wifi-scan",
-              "wifi-channels",
-              "wifi-link",
-              "wifi-tools",
-              "wifi-log"
-            ],
-            "hidden": true,
-            "group": "Network",
-            "subgroup": ""
-          },
-          {
-            "_doc": "#1221 Configs ▸ Setup ▸ Network ▸ Bluetooth (moved from the Fleet group, now Cloudy C3; the id and its seven tabs are unchanged): the phone's Bluetooth as a page over libs:bluetooth (BluetoothFragment draws BluetoothPanel). Tabs, one shared stack so a connection survives a tab switch: Find (scan with name / service / RSSI filters, the device list, paired devices), Analyze, Locate, Connect (the selected device: connect, bond, GATT discovery, MTU, RSSI), Interact (the live dashboard and the GATT tree: read, write, notify, indicate, descriptors), Debug (the ATT event log, copy and export) and Dev (raw hex write, test payloads, notify stream, permissions, adb grant commands). The known services, characteristics, decoders, filter presets and payloads are DATA (libs/bluetooth assets/bluetooth/gatt-catalog.json). hidden tabs: reached through the Bluetooth strip.",
-            "id": "bluetooth",
-            "label": "Bluetooth",
-            "icon": "ic_bluetooth",
-            "tabs": [
-              "bluetooth-find",
-              "bluetooth-analyze",
-              "bluetooth-locate",
-              "bluetooth-connect",
-              "bluetooth-interact",
-              "bluetooth-debug",
-              "bluetooth-dev"
             ],
             "hidden": true,
             "group": "Network",

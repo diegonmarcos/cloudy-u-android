@@ -136,10 +136,10 @@ object SectionPages {
         sectionId == "config" && pageId == "dns"            -> com.diegonmarcos.superapp.network.DnsFragment.newInstance()
         // Configs ▸ Network ▸ Firewall — the engine's own controls screen (master switch, VPN consent, per-app rules)
         // embedded as a page, no copy; About keeps a read-only summary.
-        // #1719 NG Firewall: full screen, its own nav (Status | Apps | Rules) and Back; each view is the engine's FirewallDialog.
+        // #1719 Firewall (#1737 named Firewall again): full screen, its own nav (Status | Apps | Rules) and Back; each view is the engine's FirewallDialog.
         sectionId == "config" && pageId == "firewall"       -> com.diegonmarcos.superapp.network.NgFirewallFragment.newInstance()
-        // #1719 Configs > Network: the page with its own bottom nav (Wireless | DNS | VPN | Home | NG Firewall | OS Perms | Webserver).
-        sectionId == "config" && pageId == "network"        -> com.diegonmarcos.superapp.network.NetworkNavFragment.newInstance()
+        // #1737 Configs > Network > NG Firewall: the hub page listing the network items under Connections / Firewalls / Servers.
+        sectionId == "config" && pageId == "ng-firewall"    -> com.diegonmarcos.superapp.network.NgFirewallHubFragment.newInstance()
         // "myfin" section is GONE — the dashboard moved to Cloud-Me (Buro > Fin)
         // and libs:fin left with it. The tile that deep-linked to it is gone too
         // (the owner dropped Projects Me ▸ MyFin), so nothing here targets

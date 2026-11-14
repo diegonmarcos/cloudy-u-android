@@ -101,10 +101,10 @@ class ShellTopInsetStaticGuardTest {
             "fragment_container" in swaps && swaps.all { it == "fragment_container" || it == "detail_container" || it == "drawer_content" })
         val implementers = java.walkTopDown().filter { it.isFile && it.extension == "kt" }
             .filter { Regex("[:,]\\s*ShellOverride\\b").containsMatchIn(text(it)) }.map { it.name }.toList()
-        // #1719 the one declared exception: Configs > Network replaces the shell's bottom nav with its own (libs:bottomnav island) and NG Firewall
+        // #1719 the one declared exception: the Firewall page (#1737: the unified Network page is gone) replaces the shell's bottom nav with its own (libs:bottomnav island) and
         // takes the whole screen (own nav + Back). Each is a named file and each still starts under the shell's padded container; any other
         // page taking the chrome over still fails here.
-        val declared = setOf("NetworkNavFragment.kt", "NgFirewallFragment.kt")
+        val declared = setOf("NgFirewallFragment.kt")
         assertEquals("only the declared #1719 pages may own chrome", declared, implementers.filter { it in declared }.toSet())
         // ...and they own the BOTTOM nav only: the top row is the shell's, so nothing can draw under it.
         // ...and, owning their own bottom nav, they answer the shell's Back arrow themselves (one Back control, #1719).

@@ -35,7 +35,7 @@ pages = {p['id']: p for p in next(s for s in json.load(open(sys.argv[1]))['ui'][
 probs = []
 b = pages.get('bluetooth')
 if not b: print('no bluetooth page'); sys.exit()
-if (b.get('group'), b.get('subgroup')) != ('Network', '') or b.get('label') != 'Bluetooth' or not b.get('hidden'): probs.append('page = %r' % b)   # #1719 hidden behind the Network page
+if (b.get('group'), b.get('subgroup')) != ('Network', '') or b.get('label') != 'Bluetooth' or b.get('hidden'): probs.append('page = %r' % b)   # #1737 a visible Network tile again
 want = ['bluetooth-find', 'bluetooth-analyze', 'bluetooth-locate', 'bluetooth-connect', 'bluetooth-interact', 'bluetooth-debug', 'bluetooth-dev']
 if b.get('tabs') != want: probs.append('tabs = %r' % b.get('tabs'))
 for t, label in zip(want, ['Find', 'Analyze', 'Locate', 'Connect', 'Interact', 'Debug', 'Dev']):
