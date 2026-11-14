@@ -214,8 +214,8 @@
     "kind": "receiver",
     "name": "UnpackTestReceiver",
     "actions": [
-     "com.diegonmarcos.cloud.action.TEST_UNPACK",
-     "com.diegonmarcos.cloud.action.TEST_SESSIONS"
+     "com.diegonmarcos.cloud.action.TEST_SESSIONS",
+     "com.diegonmarcos.cloud.action.TEST_UNPACK"
     ],
     "callers": [
      "aa_cloud-superapp",
