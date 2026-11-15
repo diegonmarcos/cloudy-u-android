@@ -17,7 +17,7 @@ public data class TitleNav(
     val currentDepth: Int,
     /**
      * #1758 the app's sections (the current one selected), always on offer: [related] already holds them at depth 0, but a section whose
-     * tab strip is shown has its selection moved to a page, so below depth 0 they are listed HERE (a "Sections" group after the pages).
+     * tab strip is shown has its selection moved to a page, so below depth 0 they are listed HERE (a "Sections" group after the pages and the page actions).
      */
     val sections: List<HierarchyEntry> = emptyList(),
 ) {

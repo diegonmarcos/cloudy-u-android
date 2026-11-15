@@ -306,8 +306,7 @@ public fun NavBarTopFirstRow(
                         }
                     }
                     if (nav.related.isNotEmpty()) HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_PAGES), color = colors.islandBorder)
-                    (nav.related.map { it to false } + nav.sections.map { it to true }).forEach { (e, isSection) ->
-                        if (isSection && e === nav.sections.first()) HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_SECTIONS), color = colors.islandBorder)
+                    nav.related.forEach { e ->
                         DropdownMenuItem(
                             text = {
                                 Text(
@@ -326,6 +325,24 @@ public fun NavBarTopFirstRow(
                         // The popup's column scrolls (infinite height), so a page's actions get a FINITE bound: its own verticalScroll /
                         // LazyColumn then measures instead of crashing, and the popup's scroll reaches all of it.
                         Column(Modifier.heightIn(max = TopFirstRowSpec.ACTIONS_MAX_HEIGHT).testTag(TopFirstRowTags.ACTIONS)) { extra { open = false } }
+                    }
+                    // #1758 below depth 0 the sections follow the pages and the page's actions, so nothing that was shown moves
+                    if (nav.sections.isNotEmpty()) {
+                        HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_SECTIONS), color = colors.islandBorder)
+                        nav.sections.forEach { e ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        e.label,
+                                        Modifier.padding(start = 16.dp * (e.depth - nav.currentDepth).coerceAtLeast(0)),
+                                        fontWeight = if (e.selected) FontWeight.Bold else FontWeight.Normal,
+                                        color = NavTokens().dropdownInk(dropdownEntryRole(e, nav.currentDepth)),
+                                    )
+                                },
+                                onClick = { open = false; onNavigate(e) },
+                                modifier = Modifier.testTag(TopFirstRowTags.entry(e.id)),
+                            )
+                        }
                     }
                     if (onConfigsUi != null || onConfigsAbout != null) HorizontalDivider(color = colors.islandBorder)
                     if (onConfigsUi != null) {
