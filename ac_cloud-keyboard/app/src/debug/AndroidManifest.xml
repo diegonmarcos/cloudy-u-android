@@ -9,7 +9,7 @@
     <application>
         <!-- #1754 debug builds only: the emulator walk (ci/grabber-shots.sh) starts Screen Selection straight from adb -->
         <activity android:name="com.diegonmarcos.cloudkeyboard.grabber.GrabberScreenActivity"
-            android:exported="true" tools:node="merge" />
+            android:exported="true" tools:replace="android:exported" />
         <activity
             android:name="com.diegonmarcos.cloudkeyboard.ShotActivity"
             android:exported="true"
