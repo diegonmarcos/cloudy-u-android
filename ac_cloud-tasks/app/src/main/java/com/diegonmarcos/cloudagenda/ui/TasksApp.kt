@@ -38,6 +38,7 @@ import com.diegonmarcos.cloudagenda.data.Attachment
 import com.diegonmarcos.cloudagenda.data.MockTask
 import com.diegonmarcos.cloudagenda.data.MockTasks
 import com.diegonmarcos.cloudagenda.data.NotesModel
+import com.diegonmarcos.cloudagenda.data.ProjectScopes
 import com.diegonmarcos.cloudagenda.data.Structure
 import com.diegonmarcos.cloudagenda.data.ThemeMode
 import com.diegonmarcos.superapp.ai.AiAgent
@@ -74,6 +75,8 @@ interface TasksEnv {
     fun consumePicked()
     /** The mock fixture (assets/mock-tasks.json, FAKE) behind the collection pages and the Calendar, Gantt, Kanban and Mindmap views. */
     val mock: List<MockTask>
+    /** #1757 Home's project selector: which projects feed Inbox, Backlog, Tasks and Library (committed prefs), and the per-project calendar config. */
+    val projectScope: ProjectScope
     /** Cloud Me's own structure for the Inboxes, Backlogs, Library and Projects tabs (data/Structure.kt); the mock items hang under its nodes. */
     val structure: Structure
     /** Inboxes > Notes: the card notes (data/Notes.kt), persisted in the prefs file declared by data/notes/notes.json. */
@@ -138,6 +141,10 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
     val page = if (tailTab) pageOf[section].orEmpty() else current?.page(pageOf[section])?.id.orEmpty()
     val onIsland = section in nav.bottomNav
     val today = remember { java.time.LocalDate.now() }
+    // #1757 the Home selector: the fixture rows (and, for the Calendar, the database's tasks) of the selected projects only.
+    val sel = env.projectScope.selection
+    val scoped = ProjectScopes.filter(env.mock, sel)
+    val known = ProjectScopes.names(env.mock, env.controller.snapshot)
 
     fun go(id: String) { section = id }
     BackHandler(enabled = section == Ids.SETTINGS) { go(returnTo) }
@@ -154,24 +161,38 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
                 when (section) {
                     // The collection sections list their rows in the Cloud Me Tasks layout (one page each).
                     // Inboxes is Notes | Synced: the card notes, then the synced inbox sources (what Inboxes showed before).
+                    // #1757 Inbox, Backlog, Tasks and Library read the Home selector: only the rows of the selected projects are listed.
                     Ids.INBOXES -> when (page) {
                         Ids.PAGE_NOTES -> NotesPage(env.notes)
-                        Ids.PAGE_SYNCED -> CollectionPage(Ids.INBOXES, env.structure, env.mock, today)
+                        Ids.PAGE_SYNCED -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.INBOXES, env.structure, scoped, today, Modifier.weight(1f)) }
                     }
-                    Ids.BACKLOGS -> CollectionPage(Ids.PAGE_BACKLOGS, env.structure, env.mock, today)
-                    Ids.LIBRARY -> CollectionPage(Ids.PAGE_LIBRARY, env.structure, env.mock, today)
-                    Ids.PROJECTS -> CollectionPage(Ids.PAGE_PROJECTS, env.structure, env.mock, today)
+                    Ids.BACKLOGS -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.PAGE_BACKLOGS, env.structure, scoped, today, Modifier.weight(1f)) }
+                    Ids.LIBRARY -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.PAGE_LIBRARY, env.structure, scoped, today, Modifier.weight(1f)) }
+                    // #1757 Home: Overview (the selector and the status cards) | Projects (the former Projects tab, in the selection too).
+                    Ids.HOME -> when (page) {
+                        Ids.PAGE_OVERVIEW -> HomePage(
+                            env.mock + MockTasks.fromSnapshot(env.controller.snapshot, today, includeUndated = true), env.controller.snapshot, env.projectScope, today,
+                            onDeleteProject = env.controller::deleteProject,
+                        )
+                        Ids.PAGE_PROJECTS -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.PAGE_PROJECTS, env.structure, scoped, today, Modifier.weight(1f)) }
+                    }
                     Ids.TASKS -> {
-                        if (page == Ids.PAGE_LIST) TasksScreen(env.controller, env.host, env.pickedLink, onPickedConsumed = env::consumePicked)
+                        if (page == Ids.PAGE_LIST) TasksScreen(env.controller, env.host, env.pickedLink, onPickedConsumed = env::consumePicked, selection = sel)
                         else {
                             SectionPagesDrawer(pages, page) { pageOf[section] = it.id }
-                            when (page) {
-                                Ids.PAGE_CALENDAR -> CalendarView(env.mock + MockTasks.fromSnapshot(env.controller.snapshot, today), today)
-                                Ids.PAGE_GANTT -> GanttView(env.mock, today)
-                                Ids.PAGE_KANBAN -> KanbanView(env.mock, today)
-                                Ids.PAGE_MINDMAP -> MindmapView(env.mock)
-                                // #1668 the fleet's one clock, shared BY REFERENCE: World clock, Alarms, Timers, Stopwatch, Interval, Bedtime.
-                                Ids.PAGE_CLOCK -> com.diegonmarcos.clocktools.ui.FullClock(Modifier.testTag("tasks:clock"))
+                            val dated = ProjectScopes.filter(env.mock + MockTasks.fromSnapshot(env.controller.snapshot, today), sel)
+                            Column(Modifier.fillMaxSize()) {
+                                if (page != Ids.PAGE_CLOCK) ScopeLine(sel)
+                                Box(Modifier.weight(1f).fillMaxWidth()) {
+                                    when (page) {
+                                        Ids.PAGE_CALENDAR -> CalendarView(dated, today, projects = env.projectScope, known = known)
+                                        Ids.PAGE_GANTT -> GanttView(ProjectScopes.filter(env.mock, sel), today)
+                                        Ids.PAGE_KANBAN -> KanbanView(ProjectScopes.filter(env.mock, sel), today)
+                                        Ids.PAGE_MINDMAP -> MindmapView(ProjectScopes.filter(env.mock, sel))
+                                        // #1668 the fleet's one clock, shared BY REFERENCE: World clock, Alarms, Timers, Stopwatch, Interval, Bedtime.
+                                        Ids.PAGE_CLOCK -> com.diegonmarcos.clocktools.ui.FullClock(Modifier.testTag("tasks:clock"))
+                                    }
+                                }
                             }
                         }
                     }

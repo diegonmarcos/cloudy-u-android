@@ -25,7 +25,8 @@ enum class AttachmentKind(val id: String, val label: String) {
     }
 }
 
-data class Project(val id: String, val name: String, val position: Int)
+/** [sample] = a seeded sample project (SampleProjects) the user can delete; the flag lives in the meta table, not in the schema. */
+data class Project(val id: String, val name: String, val position: Int, val sample: Boolean = false)
 
 data class TaskList(val id: String, val projectId: String, val name: String, val position: Int)
 

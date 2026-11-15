@@ -1,5 +1,5 @@
 {
- "_fake": "MOCK DATA - FAKE. Only the ITEMS below are invented: each one hangs on a REAL node named in `subject` (an inbox or Library folder of Cloud Me's vault-rows.json, or a project of the fleet registry repos.outline.json). The inbox list, the registry and the Library folders are never typed here. Days are offsets from today so the views always render. Read by data/MockTasks.kt.",
+ "_fake": "MOCK DATA - FAKE. Only the ITEMS below are invented: each one hangs on a REAL node named in `subject` (an inbox or Library folder of Cloud Me's vault-rows.json, or a project of the fleet registry repos.outline.json). The inbox list, the registry and the Library folders are never typed here. Days are offsets from today so the views always render. Read by data/MockTasks.kt. `project` (optional) names the project a non-task row belongs to (a Tasks row's subject is its project); the Home selector filters on it.",
  "kinds": [
   "inboxes",
   "backlogs",
@@ -144,7 +144,8 @@
    "status": "todo",
    "startDay": 1,
    "days": 1,
-   "detail": "From nobody@example.invalid"
+   "detail": "From nobody@example.invalid",
+   "project": "Cloudy"
   },
   {
    "id": "i2",
@@ -154,7 +155,8 @@
    "status": "todo",
    "startDay": 2,
    "days": 1,
-   "detail": "Proposed by the mock agent"
+   "detail": "Proposed by the mock agent",
+   "project": "Galaxy"
   },
   {
    "id": "i3",
@@ -163,7 +165,8 @@
    "subject": "Cloud-Mail Insights",
    "status": "todo",
    "startDay": 0,
-   "days": 1
+   "days": 1,
+   "project": "Cloudy"
   },
   {
    "id": "i4",
@@ -172,7 +175,8 @@
    "subject": "Cloud-Notes Insights",
    "status": "todo",
    "startDay": 5,
-   "days": 1
+   "days": 1,
+   "project": "Cloud-Me"
   },
   {
    "id": "b1",
@@ -181,7 +185,8 @@
    "subject": "Project-Proposals",
    "status": "todo",
    "startDay": 14,
-   "days": 1
+   "days": 1,
+   "project": "Cloud-Me"
   },
   {
    "id": "b2",
@@ -191,7 +196,8 @@
    "status": "todo",
    "startDay": 21,
    "days": 1,
-   "detail": "No date pressure."
+   "detail": "No date pressure.",
+   "project": "Cloud-Me"
   },
   {
    "id": "b3",
@@ -200,7 +206,8 @@
    "subject": "Learning-Queue",
    "status": "todo",
    "startDay": 30,
-   "days": 1
+   "days": 1,
+   "project": "Galaxy"
   },
   {
    "id": "b4",
@@ -209,7 +216,8 @@
    "subject": "U Cloudy",
    "status": "todo",
    "startDay": 35,
-   "days": 1
+   "days": 1,
+   "project": "Cloudy"
   },
   {
    "id": "l1",
@@ -217,28 +225,32 @@
    "title": "Mock reference: sample style guide",
    "subject": "Code-Snippets",
    "status": "done",
-   "detail": "Reading material, fake."
+   "detail": "Reading material, fake.",
+   "project": "Cloudy"
   },
   {
    "id": "l2",
    "kind": "library",
    "title": "Mock reference: example checklist",
    "subject": "Templates-Patterns",
-   "status": "done"
+   "status": "done",
+   "project": "Cloud-Me"
   },
   {
    "id": "l3",
    "kind": "library",
    "title": "Mock reference: dummy glossary",
    "subject": "Wisdom/Spirituality",
-   "status": "done"
+   "status": "done",
+   "project": "Galaxy"
   },
   {
    "id": "l4",
    "kind": "library",
    "title": "Mock reference: fake template pack",
    "subject": "Research-Dossiers",
-   "status": "done"
+   "status": "done",
+   "project": "Galaxy"
   },
   {
    "id": "p1",
@@ -248,7 +260,8 @@
    "status": "doing",
    "startDay": -10,
    "days": 20,
-   "progress": 45
+   "progress": 45,
+   "project": "Cloudy"
   },
   {
    "id": "p2",
@@ -258,7 +271,8 @@
    "status": "doing",
    "startDay": -4,
    "days": 12,
-   "progress": 30
+   "progress": 30,
+   "project": "Cloud-Me"
   },
   {
    "id": "p3",
@@ -267,7 +281,8 @@
    "subject": "CG/Galaxy",
    "status": "todo",
    "startDay": 5,
-   "days": 25
+   "days": 25,
+   "project": "Galaxy"
   },
   {
    "id": "b5",
@@ -276,7 +291,8 @@
    "subject": "RoadMaps/Backlog-General",
    "status": "todo",
    "startDay": 40,
-   "days": 1
+   "days": 1,
+   "project": "Cloudy"
   },
   {
    "id": "b6",
@@ -285,7 +301,8 @@
    "subject": "Due",
    "status": "todo",
    "startDay": 3,
-   "days": 1
+   "days": 1,
+   "project": "Cloudy"
   },
   {
    "id": "p4",
@@ -295,7 +312,8 @@
    "status": "doing",
    "startDay": -1,
    "days": 6,
-   "progress": 20
+   "progress": 20,
+   "project": "Cloudy"
   }
  ]
 }

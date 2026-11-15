@@ -81,7 +81,7 @@ class TasksPageTest {
         compose.onNodeWithTag(TopBarTags.AI).assertIsDisplayed()
         compose.onNodeWithTag(TopBarTags.ACCOUNT).assertIsDisplayed()
         compose.onNodeWithTag(TopBarTags.CONFIGS).assertIsDisplayed()
-        for (id in listOf("inboxes", "backlogs", "tasks", "library", "projects")) compose.onNodeWithTag(BottomNavTags.item(id)).assertIsDisplayed()
+        for (id in listOf("inboxes", "backlogs", "home", "tasks", "library")) compose.onNodeWithTag(BottomNavTags.item(id)).assertIsDisplayed()
         compose.onNodeWithTag(BottomNavTags.item("settings")).assertDoesNotExist()
         for (id in listOf("calendar", "list", "gantt", "kanban", "mindmap", "clock")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
         compose.onNodeWithTag(MockTags.page("calendar")).assertIsDisplayed()
@@ -180,10 +180,12 @@ class TasksPageTest {
             Triple("inboxes", "Mental-Models", "Mock screenshot: sample booking"), Triple("backlogs", "Due", "Mock due item: sample renewal"),
             Triple("library", "Research-Dossiers", "Mock reference: fake template pack"), Triple("projects", "Unix", "Mock family task: sample port"),
         )) {
-            compose.onNodeWithTag(BottomNavTags.item(id)).performClick()
+            // #1757 the former Projects tab is Home's second page.
+            compose.onNodeWithTag(BottomNavTags.item(if (id == "projects") "home" else id)).performClick()
             compose.waitForIdle()
             // Inboxes opens on Notes; its synced sources (the tree) are the Synced sub-page.
             if (id == "inboxes") { compose.onNodeWithTag(PageTabsTags.tab("synced")).performClick(); compose.waitForIdle() }
+            if (id == "projects") { compose.onNodeWithTag(PageTabsTags.tab("projects")).performClick(); compose.waitForIdle() }
             compose.onNodeWithTag(MockTags.page(id)).assertIsDisplayed()
             compose.onNodeWithTag(MockTags.tree(id) + ":dir:" + node).assertExists()
             compose.onNodeWithTag(MockTags.expand(id)).performClick()

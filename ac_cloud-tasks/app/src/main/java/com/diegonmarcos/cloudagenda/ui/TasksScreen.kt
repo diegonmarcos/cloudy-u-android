@@ -55,6 +55,8 @@ import com.diegonmarcos.cloudagenda.agent.MailItem
 import com.diegonmarcos.cloudagenda.agent.MailSource
 import com.diegonmarcos.cloudagenda.data.Attachment
 import com.diegonmarcos.cloudagenda.data.AttachmentKind
+import com.diegonmarcos.cloudagenda.data.ProjectScopes
+import com.diegonmarcos.cloudagenda.data.ProjectSelection
 import com.diegonmarcos.cloudagenda.data.Snapshot
 import com.diegonmarcos.cloudagenda.data.Task
 import com.diegonmarcos.cloudagenda.data.TaskFiltering
@@ -98,8 +100,9 @@ private val StringSetSaver = listSaver<Set<String>, String>(save = { it.toList()
  * [pickedLink] is a link a system picker returned while the editor was open; the page hands it to the editor once.
  */
 @Composable
-fun TasksScreen(controller: TasksController, host: TasksHost, pickedLink: Attachment?, onPickedConsumed: () -> Unit, modifier: Modifier = Modifier, today: LocalDate = remember { LocalDate.now() }) {
-    val snap = controller.snapshot
+fun TasksScreen(controller: TasksController, host: TasksHost, pickedLink: Attachment?, onPickedConsumed: () -> Unit, modifier: Modifier = Modifier, today: LocalDate = remember { LocalDate.now() }, selection: ProjectSelection = ProjectSelection.ALL) {
+    // #1757 the Home selector: the drawer and the list show the selected projects only (All = the whole database, as before).
+    val snap = ProjectScopes.filter(controller.snapshot, selection)
     val p = LocalKitPalette.current
     var expanded by rememberSaveable(stateSaver = StringSetSaver) { mutableStateOf(emptySet<String>()) }
     var request by remember { mutableStateOf<DrawerRequest?>(null) }
@@ -111,7 +114,7 @@ fun TasksScreen(controller: TasksController, host: TasksHost, pickedLink: Attach
 
     TopBarDrawer { close ->
         ProjectsDrawerContent(
-            snapshot = controller.snapshot, selectedListId = controller.selectedListId, expanded = expanded,
+            snapshot = snap, selectedListId = controller.selectedListId, expanded = expanded,
             onToggle = { id -> expanded = if (id in expanded) expanded - id else expanded + id },
             onSelectList = { l -> controller.selectList(l.id); close() },
             onRequest = { request = it },

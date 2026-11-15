@@ -19,6 +19,7 @@ import com.diegonmarcos.cloudagenda.data.MockTasks
 import com.diegonmarcos.cloudagenda.data.NotesDecl
 import com.diegonmarcos.cloudagenda.data.NotesModel
 import com.diegonmarcos.cloudagenda.data.PrefsNotesStore
+import com.diegonmarcos.cloudagenda.data.SampleProjects
 import com.diegonmarcos.cloudagenda.data.Structure
 import com.diegonmarcos.cloudagenda.data.ThemeMode
 import com.diegonmarcos.cloudagenda.data.TasksDb
@@ -50,7 +51,7 @@ class AppEnv(private val activity: ComponentActivity, private val launchPicker: 
     override var pickedLink by mutableStateOf<Attachment?>(null)
         private set
 
-    override val controller = TasksController(repo, prefs, activity.lifecycleScope).also { it.start() }
+    override val controller = TasksController(repo, prefs, activity.lifecycleScope, samples = SampleProjects.load(app)).also { it.start() }
 
     override val themeMode: ThemeMode get() = prefs.themeMode
     override fun saveThemeMode(mode: ThemeMode) { prefs.themeMode = mode }
@@ -70,6 +71,7 @@ class AppEnv(private val activity: ComponentActivity, private val launchPicker: 
     override fun consumePicked() { pickedLink = null }
 
     override val mock: List<MockTask> by lazy { MockTasks.load(app) }
+    override val projectScope: ProjectScope by lazy { ProjectScope(prefs.projectSelection, SampleProjects.loadConfigs(app)) { prefs.projectSelection = it } }
     override val structure: Structure by lazy { Structure.load(app) }
     override val notes: NotesModel by lazy { NotesDecl.load(app).let { NotesModel(PrefsNotesStore(app, it), it) } }
 

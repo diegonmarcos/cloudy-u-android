@@ -1,0 +1,226 @@
+{
+ "_doc": "Cloud Tasks project data. samples: projects seeded ONCE as sample data (TasksRepository.seedSamples: idempotent through a meta marker per sample id, flagged sample so the user can delete it, and never given back after a delete). Dates are day offsets from the day the sample is seeded (startOffset moves the whole trip), `days` is the length, so the trip always lies ahead and spans 2 to 3 weeks with overlapping stays, transport and events. configs: the per-project calendar config, matched by project name: calendar_mode is the mode the Calendar switches to when that project is the selection, lane_order the order of the category lanes (list names) of the Gantt Calendar; other categories follow alphabetically. Read by data/SampleProjects.kt.",
+ "configs": {
+  "Traveling": {
+   "calendar_mode": "gantt",
+   "lane_order": [
+    "Lodging",
+    "Transportation",
+    "Events"
+   ]
+  }
+ },
+ "samples": [
+  {
+   "id": "traveling",
+   "name": "Traveling",
+   "startOffset": 2,
+   "lists": [
+    {
+     "name": "Lodging",
+     "tasks": [
+      {
+       "name": "Hotel Avenida Palace",
+       "start": 0,
+       "days": 4,
+       "location": "Lisbon",
+       "status": "action",
+       "details": "Hotel, 4 nights, breakfast included."
+      },
+      {
+       "name": "Selina Porto Hostel",
+       "start": 4,
+       "days": 4,
+       "location": "Porto",
+       "status": "action",
+       "details": "Hostel, shared dorm then a private room."
+      },
+      {
+       "name": "Airbnb Chueca Loft",
+       "start": 8,
+       "days": 6,
+       "location": "Madrid",
+       "status": "waiting",
+       "details": "Airbnb, waiting for the host to confirm the late check-in."
+      },
+      {
+       "name": "Hostel Sants Rooms",
+       "start": 12,
+       "days": 2,
+       "location": "Barcelona",
+       "status": "action",
+       "details": "Hostel, 2 nights near the station, overlaps the Madrid checkout."
+      },
+      {
+       "name": "Hotel Gotic Barcelona",
+       "start": 13,
+       "days": 6,
+       "location": "Barcelona",
+       "status": "action",
+       "details": "Hotel, 6 nights in the old town."
+      }
+     ]
+    },
+    {
+     "name": "Transportation",
+     "tasks": [
+      {
+       "name": "Flight NYC to Lisbon",
+       "start": 0,
+       "days": 1,
+       "location": "JFK - LIS",
+       "status": "completed",
+       "details": "Overnight flight, ticket issued."
+      },
+      {
+       "name": "Airport transfer Lisbon",
+       "start": 0,
+       "days": 1,
+       "location": "LIS airport to hotel",
+       "status": "action",
+       "details": "Shared shuttle."
+      },
+      {
+       "name": "Train Lisbon to Sintra",
+       "start": 2,
+       "days": 1,
+       "location": "Rossio station",
+       "status": "action",
+       "details": "Day return."
+      },
+      {
+       "name": "Car rental Lisbon-Porto",
+       "start": 3,
+       "days": 2,
+       "location": "Lisbon",
+       "status": "action",
+       "details": "Compact car, drop off in Porto."
+      },
+      {
+       "name": "Bus Porto to Madrid",
+       "start": 7,
+       "days": 2,
+       "location": "Porto Campanha - Madrid",
+       "status": "action",
+       "details": "Overnight coach."
+      },
+      {
+       "name": "Train Madrid to Barcelona",
+       "start": 13,
+       "days": 1,
+       "location": "Atocha - Sants",
+       "status": "action",
+       "details": "High-speed train."
+      },
+      {
+       "name": "Flight Barcelona to NYC",
+       "start": 18,
+       "days": 1,
+       "location": "BCN - JFK",
+       "status": "completed",
+       "details": "Return flight, ticket issued."
+      },
+      {
+       "name": "Airport transfer Barcelona",
+       "start": 18,
+       "days": 1,
+       "location": "Hotel to BCN airport",
+       "status": "action",
+       "details": "Aerobus."
+      }
+     ]
+    },
+    {
+     "name": "Events",
+     "tasks": [
+      {
+       "name": "Fado concert",
+       "start": 2,
+       "days": 1,
+       "location": "Alfama, Lisbon",
+       "status": "action",
+       "details": "Evening concert."
+      },
+      {
+       "name": "Sintra palaces tour",
+       "start": 3,
+       "days": 1,
+       "location": "Sintra",
+       "status": "action",
+       "details": "Guided tour."
+      },
+      {
+       "name": "Douro wine tour",
+       "start": 5,
+       "days": 2,
+       "location": "Douro Valley",
+       "status": "action",
+       "details": "Two-day guided tour."
+      },
+      {
+       "name": "Client meeting",
+       "start": 9,
+       "days": 1,
+       "location": "Madrid",
+       "status": "action",
+       "details": "Meeting at the client's office."
+      },
+      {
+       "name": "Partner workshop",
+       "start": 10,
+       "days": 3,
+       "location": "Madrid",
+       "status": "waiting",
+       "details": "Three-day workshop, agenda not final."
+      },
+      {
+       "name": "Sagrada Familia tour",
+       "start": 14,
+       "days": 1,
+       "location": "Barcelona",
+       "status": "action",
+       "details": "Timed entry."
+      },
+      {
+       "name": "Jazz concert Palau",
+       "start": 15,
+       "days": 1,
+       "location": "Barcelona",
+       "status": "action",
+       "details": "Concert."
+      },
+      {
+       "name": "Gaudi walking tour",
+       "start": 16,
+       "days": 2,
+       "location": "Barcelona",
+       "status": "action",
+       "details": "Two-day walking tour."
+      }
+     ]
+    },
+    {
+     "name": "Admin",
+     "tasks": [
+      {
+       "name": "Travel insurance active",
+       "start": 0,
+       "days": 19,
+       "location": "",
+       "status": "completed",
+       "details": "Covers the whole trip."
+      },
+      {
+       "name": "Pack and check passports",
+       "start": -2,
+       "days": 2,
+       "location": "",
+       "status": "action",
+       "details": "Before leaving."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

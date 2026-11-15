@@ -13,12 +13,12 @@ class NavDeclTest {
 
     @Test fun `the declaration is valid and opens on Tasks`() {
         assertEquals(emptyList<String>(), nav.problems())
-        assertEquals(listOf("inboxes", "backlogs", "tasks", "library", "projects"), nav.bottomNav)
+        assertEquals(listOf("inboxes", "backlogs", "home", "tasks", "library"), nav.bottomNav)
         assertEquals(Ids.TASKS, nav.default()?.id)
     }
 
     @Test fun `every id Kotlin dispatches on is declared and every declared section is dispatched`() {
-        assertEquals(setOf(Ids.INBOXES, Ids.BACKLOGS, Ids.TASKS, Ids.LIBRARY, Ids.PROJECTS, Ids.SETTINGS), nav.sections.map { it.id }.toSet())
+        assertEquals(setOf(Ids.INBOXES, Ids.BACKLOGS, Ids.HOME, Ids.TASKS, Ids.LIBRARY, Ids.SETTINGS), nav.sections.map { it.id }.toSet())
         assertEquals(listOf(Ids.PAGE_CALENDAR, Ids.PAGE_LIST, Ids.PAGE_GANTT, Ids.PAGE_KANBAN, Ids.PAGE_MINDMAP, Ids.PAGE_CLOCK), nav.section(Ids.TASKS)!!.pages.map { it.id })
         assertEquals(
             listOf(Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT, Ids.PAGE_APPEARANCE, Ids.PAGE_AGENT, Ids.PAGE_INBOX, Ids.PAGE_FEEDS),
@@ -27,7 +27,7 @@ class NavDeclTest {
         assertEquals(listOf(Ids.PAGE_NOTES, Ids.PAGE_SYNCED), nav.section(Ids.INBOXES)!!.pages.map { it.id })
         assertEquals(listOf(Ids.PAGE_BACKLOGS), nav.section(Ids.BACKLOGS)!!.pages.map { it.id })
         assertEquals(listOf(Ids.PAGE_LIBRARY), nav.section(Ids.LIBRARY)!!.pages.map { it.id })
-        assertEquals(listOf(Ids.PAGE_PROJECTS), nav.section(Ids.PROJECTS)!!.pages.map { it.id })
+        assertEquals(listOf(Ids.PAGE_OVERVIEW, Ids.PAGE_PROJECTS), nav.section(Ids.HOME)!!.pages.map { it.id })
     }
 
     @Test fun `Inboxes has the sub-pages Notes then Synced, and opens on Notes`() {

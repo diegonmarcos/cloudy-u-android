@@ -13,7 +13,8 @@ object Ids {
     const val BACKLOGS = "backlogs"
     const val TASKS = "tasks"
     const val LIBRARY = "library"
-    const val PROJECTS = "projects"
+    /** #1757 the island's centre: the project selector and the status cards; the former Projects tab is its second page. */
+    const val HOME = "home"
     const val SETTINGS = "settings"
 
     const val PAGE_NOTES = "notes"
@@ -21,6 +22,7 @@ object Ids {
     const val PAGE_BACKLOGS = "backlogs"
     const val PAGE_LIBRARY = "library"
     const val PAGE_PROJECTS = "projects"
+    const val PAGE_OVERVIEW = "overview"
     const val PAGE_CALENDAR = "calendar"
     const val PAGE_LIST = "list"
     const val PAGE_GANTT = "gantt"

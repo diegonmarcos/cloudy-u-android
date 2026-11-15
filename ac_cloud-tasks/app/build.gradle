@@ -273,6 +273,7 @@ android {
             assets.srcDirs += file('../../ac_cloud-me/data/repos')
             assets.srcDirs += cloudMeDeclDir
             assets.srcDirs += file('../data/notes')   // #1535 notes.json: the Notes surface's declaration
+            assets.srcDirs += file('../data/projects') // #1757 projects.json: the sample projects (Traveling) and the per-project calendar config
         }
     }
 

@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.diegonmarcos.cloudagenda.data.AgentConfig
 import com.diegonmarcos.cloudagenda.data.Proposal
+import com.diegonmarcos.cloudagenda.data.SampleProject
 import com.diegonmarcos.cloudagenda.data.Snapshot
 import com.diegonmarcos.cloudagenda.data.Task
 import com.diegonmarcos.cloudagenda.data.TaskFilter
@@ -27,6 +28,8 @@ class TasksController(
     private val prefs: TasksPrefs,
     private val scope: CoroutineScope,
     private val io: CoroutineDispatcher = Dispatchers.IO,
+    /** Sample projects (data/projects/projects.json) seeded once, flagged, deletable. */
+    private val samples: List<SampleProject> = emptyList(),
 ) {
     var snapshot by mutableStateOf(Snapshot())
         private set
@@ -43,7 +46,7 @@ class TasksController(
 
     /** First run seeds (idempotent), then everything is read. Safe to call again. */
     fun start() {
-        scope.launch { withContext(io) { repo.seedIfEmpty() }; reload() }
+        scope.launch { withContext(io) { repo.seedIfEmpty(); repo.seedSamples(samples, java.time.LocalDate.now()) }; reload() }
     }
 
     private suspend fun reload() {

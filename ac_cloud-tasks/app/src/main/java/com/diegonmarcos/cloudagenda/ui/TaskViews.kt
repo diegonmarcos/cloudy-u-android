@@ -43,7 +43,19 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.LaunchedEffect
+import com.diegonmarcos.cloudagenda.data.BarEvent
+import com.diegonmarcos.cloudagenda.data.CalendarBars
+import com.diegonmarcos.cloudagenda.data.CalendarStyles
+import com.diegonmarcos.cloudagenda.data.WeekBars
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -92,9 +104,14 @@ object MockTags {
     fun ring(subject: String) = "mock_ring_$subject"
     fun node(label: String) = "mock_node_$label"
     fun mode(id: String) = "mock_mode_$id"
+    fun style(id: String) = "mock_style_$id"
+    fun week(iso: String) = "mock_week_$iso"
+    fun seg(id: String, weekIso: String) = "mock_seg_${id}_$weekIso"
+    fun lane(name: String) = "mock_lane_$name"
     fun yearMonth(month: Int) = "mock_year_month_$month"
     fun yearDay(iso: String) = "mock_year_day_$iso"
     fun pick(month: Int) = "mock_pick_$month"
+    const val BARS = "mock_bars"
     const val PREV_YEAR = "mock_prev_year"
     const val NEXT_YEAR = "mock_next_year"
     const val PREV_MONTH = "mock_prev_month"
@@ -121,7 +138,7 @@ private fun ringInk(i: Int): Color = RingInk[((i % RingInk.size) + RingInk.size)
 
 /** The one line that says the data is fake; every mock page opens with it. */
 @Composable
-private fun MockNotice() {
+internal fun MockNotice() {
     val p = LocalKitPalette.current
     Text("Mock data: only the items are fake (assets/mock-tasks.json); the structure is Cloud Me's.", color = p.textSecondary, fontSize = KitStoreRow.caption, modifier = Modifier.testTag(MockTags.NOTICE))
 }
@@ -160,7 +177,7 @@ fun CollectionPage(kind: String, structure: Structure, items: List<MockTask>, to
     }
 }
 
-private fun dayLabel(d: LocalDate): String =
+internal fun dayLabel(d: LocalDate): String =
     d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()) + " " + d.dayOfMonth + " " + d.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
 
 /** One task as a Store line: status glyph, name, subject, status. */
@@ -188,12 +205,20 @@ private val CellArcs = listOf(0f to 20f, 30f to 25f, 65f to 15f, 75f to 22f)
  * month grid whose days carry a coloured arc per project and the dial under it. [items] is the fixture plus the real tasks.
  */
 @Composable
-fun CalendarView(items: List<MockTask>, today: LocalDate, modifier: Modifier = Modifier) {
+fun CalendarView(items: List<MockTask>, today: LocalDate, modifier: Modifier = Modifier, projects: ProjectScope? = null, known: List<String> = emptyList()) {
     val p = LocalKitPalette.current
     val tasks = MockTasks.ofKind(items, "tasks")
     val rings = remember(tasks) { MockTasks.rings(tasks) }
     val modes = remember { CalendarMath.parseModes(BuildConfig.UI_CALENDAR_VIEWS).ifEmpty { listOf(CalendarMode(CalendarMath.MODE_MONTH, "Month"), CalendarMode(CalendarMath.MODE_YEAR, "Year")) } }
     var mode by rememberSaveable { mutableStateOf(CalendarMath.MODE_MONTH) }
+    // #1757 the style of the month: Circles Day (default) | Linear Bars | Gantt Calendar. A project config (projects.json: Traveling) switches it
+    // by itself when that project becomes the selection; the user's own pick stands until the selection changes again.
+    val auto = projects?.configs?.autoMode(projects.selection, known)
+    var style by rememberSaveable { mutableStateOf(CalendarStyles.of(auto)) }
+    LaunchedEffect(projects?.selection) { if (auto != null) { style = CalendarStyles.of(auto); mode = CalendarMath.MODE_MONTH } }
+    val laneConfig = projects?.configs?.laneOrder(projects.selection, known).orEmpty()
+    val events = remember(tasks, today) { CalendarBars.events(tasks, today) }
+    val allLanes = remember(events, laneConfig) { CalendarBars.laneOrder(events.map { it.lane }, laneConfig) }
     var year by rememberSaveable { mutableStateOf(today.year) }
     var picker by remember { mutableStateOf(false) }
     var selected by rememberSaveable { mutableStateOf(today.toString()) }
@@ -217,6 +242,16 @@ fun CalendarView(items: List<MockTask>, today: LocalDate, modifier: Modifier = M
                 )
             }
         }
+        if (!inYear) Row(Modifier.fillMaxWidth().padding(bottom = KitStoreRow.tight), horizontalArrangement = Arrangement.spacedBy(KitStoreRow.gap), verticalAlignment = Alignment.CenterVertically) {
+            for (m in CalendarStyles.ALL) {
+                val on = m.id == style
+                Text(
+                    m.label, color = if (on) p.tileInk else p.textPrimary, fontSize = KitStoreRow.body, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clip(RoundedCornerShape(KitDensity.small)).background(if (on) p.accent else p.surface).border(1.dp, if (on) p.accent else p.hairline, RoundedCornerShape(KitDensity.small))
+                        .clickable { style = m.id }.padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight).testTag(MockTags.style(m.id)),
+                )
+            }
+        }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             KitTextButton({ byYear(-1) }, Modifier.testTag(MockTags.PREV_YEAR)) { Text("«", color = p.accent) }
             if (!inYear) KitTextButton({ go(CalendarMath.shiftMonth(shown, -1)) }, Modifier.testTag(MockTags.PREV_MONTH)) { Text("‹", color = p.accent) }
@@ -229,10 +264,11 @@ fun CalendarView(items: List<MockTask>, today: LocalDate, modifier: Modifier = M
             KitTextButton({ byYear(1) }, Modifier.testTag(MockTags.NEXT_YEAR)) { Text("»", color = p.accent) }
         }
         if (inYear) {
-            YearView(year, tasks, rings, today, ::open, Modifier.weight(1f).fillMaxWidth())
+            YearView(year, tasks, rings, today, ::open, { byYear(it) }, Modifier.weight(1f).fillMaxWidth())
         } else {
             HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth().testTag(MockTags.PAGER)) { page ->
-                MonthPage(CalendarMath.monthOf(page), tasks, rings, today, selected) { selected = it }
+                if (style == CalendarStyles.CIRCLES) MonthPage(CalendarMath.monthOf(page), tasks, rings, today, selected) { selected = it }
+                else BarsMonthPage(CalendarMath.monthOf(page), events, allLanes, style == CalendarStyles.GANTT, tasks, today, selected) { selected = it }
             }
         }
     }
@@ -268,8 +304,18 @@ private fun MonthYearPicker(startYear: Int, onDismiss: () -> Unit, onPick: (Year
 
 /** The whole year on one screen, no scrolling: [CalendarMath.yearGrid] months, each a mini grid marked in the project colours. */
 @Composable
-private fun YearView(year: Int, tasks: List<MockTask>, rings: List<String>, today: LocalDate, onOpen: (YearMonth) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier.testTag(MockTags.YEAR)) {
+private fun YearView(year: Int, tasks: List<MockTask>, rings: List<String>, today: LocalDate, onOpen: (YearMonth) -> Unit, onYear: (Int) -> Unit, modifier: Modifier = Modifier) {
+    val threshold = with(LocalDensity.current) { 48.dp.toPx() }
+    // #1757 swipe left / up = next year, right / down = previous year (CalendarMath.swipeYear); a tap on a month still opens it.
+    Column(modifier.testTag(MockTags.YEAR).pointerInput(Unit) {
+        var dx = 0f
+        var dy = 0f
+        detectDragGestures(
+            onDragStart = { dx = 0f; dy = 0f },
+            onDrag = { change, d -> change.consume(); dx += d.x; dy += d.y },
+            onDragEnd = { val n = CalendarMath.swipeYear(dx, dy, threshold); if (n != 0) onYear(n) },
+        )
+    }) {
         for (row in CalendarMath.yearGrid(year)) Row(Modifier.weight(1f).fillMaxWidth()) {
             for (m in row) MiniMonth(m, tasks, rings, today, Modifier.weight(1f).fillMaxHeight().padding(KitStoreRow.tight).clip(RoundedCornerShape(KitDensity.small)).clickable { onOpen(m) }.testTag(MockTags.yearMonth(m.monthValue)))
         }
@@ -377,6 +423,94 @@ private fun MonthPage(month: YearMonth, tasks: List<MockTask>, rings: List<Strin
         Text(dayLabel(day), color = p.textPrimary, fontSize = KitStoreRow.title, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = KitStoreRow.padH, bottom = KitStoreRow.tight))
         val onDay = MockTasks.on(tasks, today, day)
         if (onDay.isEmpty()) Text("Nothing is due on this day.", color = p.textSecondary, fontSize = KitStoreRow.body) else onDay.forEach { TaskLine(it, today) }
+    }
+}
+
+// ── Tasks > Calendar: Linear Bars and Gantt Calendar ──────────────────────────────────────────────────────
+
+private val LaneLabelWidth = 62.dp
+private val BarHead = 18.dp
+private val BarRow = 17.dp
+
+/**
+ * #1757 Linear Bars (and, with [gantt], the Gantt Calendar): the month as week rows of big day boxes. A multi-day event is ONE continuous
+ * rectangle across its days that wraps onto the next week row (CalendarBars.week cuts it per week; a square end says it goes on). The Gantt
+ * Calendar is the same grid plus a left column of category names where every category is its own lane (the lane order is data-driven:
+ * CalendarBars.laneOrder over the project config). The selected day's tasks list under the grid, as in the circles view.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BarsMonthPage(month: YearMonth, events: List<BarEvent>, allLanes: List<String>, gantt: Boolean, tasks: List<MockTask>, today: LocalDate, selected: String, onSelect: (String) -> Unit) {
+    val p = LocalKitPalette.current
+    val inMonth = remember(events, month) { CalendarBars.inMonth(events, month) }
+    val lanes = remember(inMonth, allLanes, gantt) { allLanes.filter { l -> inMonth.any { it.lane == l } } }
+    val weeks = remember(month, inMonth, lanes, gantt) { CalendarBars.month(month, inMonth, if (gantt) lanes else null) }
+    val day = LocalDate.parse(selected)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).testTag(MockTags.BARS)) {
+        Row(Modifier.fillMaxWidth()) {
+            if (gantt) Spacer(Modifier.width(LaneLabelWidth))
+            for (d in java.time.DayOfWeek.values()) Text(d.getDisplayName(TextStyle.SHORT, Locale.getDefault()), color = p.textSecondary, fontSize = KitStoreRow.caption, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+        }
+        for (w in weeks) BarWeek(w, gantt, allLanes, today, day, onSelect)
+        if (inMonth.isEmpty()) Text("No dated task this month.", color = p.textSecondary, fontSize = KitStoreRow.body, modifier = Modifier.padding(vertical = KitStoreRow.gap))
+        else if (!gantt) FlowRow(Modifier.fillMaxWidth().padding(top = KitStoreRow.gap), horizontalArrangement = Arrangement.spacedBy(KitStoreRow.padH), verticalArrangement = Arrangement.spacedBy(KitStoreRow.tight)) {
+            for (l in lanes) Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.padding(end = KitStoreRow.tight).width(12.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(ringInk(allLanes.indexOf(l))))
+                Text(l, color = p.textSecondary, fontSize = KitStoreRow.caption)
+            }
+        }
+        Text(dayLabel(day), color = p.textPrimary, fontSize = KitStoreRow.title, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = KitStoreRow.padH, bottom = KitStoreRow.tight))
+        val onDay = MockTasks.on(tasks, today, day)
+        if (onDay.isEmpty()) Text("Nothing is due on this day.", color = p.textSecondary, fontSize = KitStoreRow.body) else onDay.forEach { TaskLine(it, today) }
+    }
+}
+
+/** One week row: seven big day boxes, the lane labels of the Gantt Calendar on the left, and the bar pieces laid over the boxes. */
+@Composable
+private fun BarWeek(w: WeekBars, gantt: Boolean, allLanes: List<String>, today: LocalDate, selected: LocalDate, onSelect: (String) -> Unit) {
+    val p = LocalKitPalette.current
+    val height = maxOf(76.dp, BarHead + BarRow * w.rows + 6.dp)
+    Row(Modifier.fillMaxWidth().height(height).testTag(MockTags.week(w.weekStart.toString()))) {
+        if (gantt) Column(Modifier.width(LaneLabelWidth).fillMaxHeight()) {
+            Spacer(Modifier.height(BarHead))
+            for ((lane, n) in w.laneRows) Box(Modifier.fillMaxWidth().height(BarRow * n), contentAlignment = Alignment.CenterStart) {
+                Text(lane, color = ringInk(allLanes.indexOf(lane)), fontSize = KitStoreRow.caption, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(end = 2.dp).testTag(MockTags.lane(lane)))
+            }
+        }
+        BoxWithConstraints(Modifier.weight(1f).fillMaxHeight()) {
+            val col = maxWidth / 7
+            Row(Modifier.fillMaxSize()) {
+                for (d in w.days) {
+                    val box = Modifier.weight(1f).fillMaxHeight().padding(1.dp)
+                    if (d == null) Spacer(box) else Box(
+                        box.testTag(MockTags.day(d.toString())).clip(RoundedCornerShape(KitDensity.small)).background(if (d == selected) p.surfaceSelected else p.surface.copy(alpha = 0.5f))
+                            .border(1.dp, if (d == today) p.accent else p.hairline.copy(alpha = 0.6f), RoundedCornerShape(KitDensity.small)).clickable { onSelect(d.toString()) },
+                    ) {
+                        Text(d.dayOfMonth.toString(), color = if (d == today) p.accent else p.textPrimary, fontSize = KitStoreRow.body, fontWeight = if (d == today) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.padding(start = 3.dp, top = 1.dp))
+                    }
+                }
+            }
+            // Gantt: a hairline between the lanes
+            if (gantt) Box(Modifier.fillMaxSize().drawBehind {
+                var y = BarHead.toPx()
+                for ((_, n) in w.laneRows) { y += BarRow.toPx() * n; drawLine(p.hairline, Offset(0f, y), Offset(size.width, y), 1.dp.toPx()) }
+            })
+            for (seg in w.segments) {
+                val r = 5.dp
+                val shape = RoundedCornerShape(
+                    topStart = if (seg.fromPrev) 0.dp else r, bottomStart = if (seg.fromPrev) 0.dp else r,
+                    topEnd = if (seg.toNext) 0.dp else r, bottomEnd = if (seg.toNext) 0.dp else r,
+                )
+                Box(
+                    Modifier.offset(col * seg.col0 + 1.dp, BarHead + BarRow * seg.row).width(col * (seg.col1 - seg.col0 + 1) - 2.dp).height(BarRow - 2.dp)
+                        .clip(shape).background(ringInk(allLanes.indexOf(seg.event.lane)).copy(alpha = if (seg.event.status == MockStatus.DONE) 0.5f else 0.92f))
+                        .testTag(MockTags.seg(seg.event.id, w.weekStart.toString())),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    Text(seg.event.title, color = p.tileInk, fontSize = KitStoreRow.caption, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Clip, softWrap = false, modifier = Modifier.padding(horizontal = 3.dp))
+                }
+            }
+        }
     }
 }
 

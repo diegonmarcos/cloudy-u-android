@@ -23,6 +23,9 @@ import com.diegonmarcos.cloudagenda.data.TasksDb
 import com.diegonmarcos.cloudagenda.data.TasksPrefs
 import com.diegonmarcos.cloudagenda.data.TasksRepository
 import com.diegonmarcos.cloudagenda.data.ThemeMode
+import com.diegonmarcos.cloudagenda.data.SampleProject
+import com.diegonmarcos.cloudagenda.data.SampleProjects
+import com.diegonmarcos.cloudagenda.ui.ProjectScope
 import com.diegonmarcos.cloudagenda.ui.TasksController
 import com.diegonmarcos.cloudagenda.ui.TasksEnv
 import com.diegonmarcos.cloudagenda.ui.TasksHost
@@ -75,12 +78,12 @@ class FakeAiHost : AiHost {
 }
 
 /** The shell's environment over an in-memory database, with everything recorded so a test can assert on it. */
-class FakeEnv(context: Context, seed: Boolean = true) : TasksEnv {
+class FakeEnv(context: Context, seed: Boolean = true, samples: List<SampleProject> = emptyList()) : TasksEnv {
     val repo = TasksRepository(TasksDb(context, null))
     val prefs = TasksPrefs(context.getSharedPreferences("tasks-test-" + System.nanoTime(), Context.MODE_PRIVATE))
     // A user who already has a project is never given the sample data (seeding runs only on an empty database).
     init { if (!seed) repo.addProject("Mine") }
-    override val controller = TasksController(repo, prefs, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined).also { it.start() }
+    override val controller = TasksController(repo, prefs, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, samples).also { it.start() }
 
     var savedAgent: AgentConfig? = null
     var savedSecret: String = ""
@@ -103,6 +106,7 @@ class FakeEnv(context: Context, seed: Boolean = true) : TasksEnv {
     // The fixture is the debug-only mock file read straight from the source tree: mock data is not in the release assets (#1547), so a test
     // never depends on what a build variant packages.
     override val mock = MockTasks.parse(java.io.File("src/debug/assets/mock-tasks.json").readText())
+    override val projectScope = ProjectScope(prefs.projectSelection, SampleProjects.loadConfigs(context)) { prefs.projectSelection = it }
     override val structure = Structure.load(context)
     override val notes = NotesModel(MemoryNotesStore(), NotesDecl.load(context))
     override val chat = AiChatState(FakeAiHost())

@@ -34,7 +34,17 @@ data class MockTask(
     val progress: Int,
     val parent: String?,
     val detail: String,
+    /** The project the row belongs to (blank = derived: a Tasks row's subject is its project). */
+    val project: String = "",
+    /** The calendar lane of the row (a list of the project: Lodging, Transportation, Events); blank = the project's own lane. */
+    val category: String = "",
 ) {
+    /** The project the Home selector filters on. */
+    val projectName: String get() = project.ifBlank { if (kind == "tasks") subject else "" }
+
+    /** The lane of the Gantt Calendar. */
+    val lane: String get() = category.ifBlank { projectName.ifBlank { subject.ifBlank { "Other" } } }
+
     fun start(today: LocalDate): LocalDate? = startDay?.let { today.plusDays(it.toLong()) }
     fun end(today: LocalDate): LocalDate? = start(today)?.plusDays((days.coerceAtLeast(1) - 1).toLong())
 }
@@ -57,7 +67,7 @@ object MockTasks {
                 id = o.getString("id"), kind = o.optString("kind"), title = o.optString("title"), subject = o.optString("subject"),
                 status = MockStatus.of(o.optString("status")), startDay = if (o.has("startDay")) o.optInt("startDay") else null,
                 days = o.optInt("days", 1), progress = o.optInt("progress", 0), parent = o.optString("parent").ifBlank { null },
-                detail = o.optString("detail"),
+                detail = o.optString("detail"), project = o.optString("project"), category = o.optString("category"),
             )
         }
     }
@@ -102,20 +112,27 @@ object MockTasks {
     }
 
     /** The real tasks of the database as dated rows, so the Calendar draws them next to the fixture: dated by target (else deadline) to deadline. */
-    fun fromSnapshot(snap: Snapshot, today: LocalDate): List<MockTask> = snap.tasks.mapNotNull { t ->
-        val start = (t.dateTarget ?: t.dateDeadline)?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return@mapNotNull null
+    fun fromSnapshot(snap: Snapshot, today: LocalDate, includeUndated: Boolean = false): List<MockTask> = snap.tasks.mapNotNull { t ->
+        val start = (t.dateTarget ?: t.dateDeadline)?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            ?: return@mapNotNull if (!includeUndated) null else MockTask(
+                id = "real_" + t.id, kind = "tasks", title = t.name, subject = snap.project(snap.list(t.listId)?.projectId)?.name ?: "",
+                status = realStatus(t.status), startDay = null, days = 1, progress = 0, parent = t.parentId?.let { "real_$it" }, detail = t.details,
+                category = snap.list(t.listId)?.name.orEmpty(),
+            )
         val end = t.dateDeadline?.let { runCatching { LocalDate.parse(it) }.getOrNull() }?.takeIf { !it.isBefore(start) } ?: start
         MockTask(
             id = "real_" + t.id, kind = "tasks", title = t.name, subject = snap.project(snap.list(t.listId)?.projectId)?.name ?: "",
-            status = when (t.status) {
-                TaskStatus.ACTION -> MockStatus.TODO
-                TaskStatus.WAITING -> MockStatus.DOING
-                TaskStatus.HOLD -> MockStatus.BLOCKED
-                TaskStatus.COMPLETED, TaskStatus.ARCHIVED -> MockStatus.DONE
-            },
+            status = realStatus(t.status),
             startDay = ChronoUnit.DAYS.between(today, start).toInt(), days = (ChronoUnit.DAYS.between(start, end) + 1).toInt(),
-            progress = 0, parent = t.parentId?.let { "real_$it" }, detail = t.details,
+            progress = 0, parent = t.parentId?.let { "real_$it" }, detail = t.details, category = snap.list(t.listId)?.name.orEmpty(),
         )
+    }
+
+    private fun realStatus(s: TaskStatus): MockStatus = when (s) {
+        TaskStatus.ACTION -> MockStatus.TODO
+        TaskStatus.WAITING -> MockStatus.DOING
+        TaskStatus.HOLD -> MockStatus.BLOCKED
+        TaskStatus.COMPLETED, TaskStatus.ARCHIVED -> MockStatus.DONE
     }
 
     /** The round Calendar's rings: one per subject that has a dated row, in start order (the earliest subject takes the outermost ring). */

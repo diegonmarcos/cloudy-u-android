@@ -40,8 +40,14 @@ class TasksPrefs(private val sp: SharedPreferences) {
         get() = sp.getString(LIST, "") ?: ""
         set(v) { sp.edit().putString(LIST, v).apply() }
 
+    /** The Home page's project selection (which projects feed Inbox, Backlog, Tasks and Library); it survives a restart. */
+    var projectSelection: ProjectSelection
+        get() = ProjectSelection.decode(sp.getString(PROJECTS, null))
+        set(v) { sp.edit().putString(PROJECTS, v.encode()).commit() }
+
     companion object {
         const val FILE = "tasks_prefs"
+        private const val PROJECTS = "home_projects"
         private const val THEME = "theme_mode"
         private const val FILTER = "filter"
         private const val LIST = "selected_list"

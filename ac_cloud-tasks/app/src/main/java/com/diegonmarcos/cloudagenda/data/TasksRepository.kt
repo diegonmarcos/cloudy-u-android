@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import com.diegonmarcos.cloudagenda.agent.AgentStore
+import java.time.LocalDate
 import java.util.UUID
 
 /**
@@ -17,8 +18,11 @@ class TasksRepository(private val dbh: TasksDb, private val clock: () -> Long = 
     // ── reading ─────────────────────────────────────────────────────────────────────────────────────────
 
     fun snapshot(): Snapshot {
+        val samples = db.rawQuery("SELECT key FROM meta WHERE key LIKE ?", arrayOf("$SAMPLE_FLAG%")).use { c ->
+            c.rows { c.getString(0).removePrefix(SAMPLE_FLAG) }.toSet()
+        }
         val projects = db.rawQuery("SELECT id, name, position FROM projects ORDER BY position, created_at, name", null).use { c ->
-            c.rows { Project(c.getString(0), c.getString(1), c.getInt(2)) }
+            c.rows { Project(c.getString(0), c.getString(1), c.getInt(2), c.getString(0) in samples) }
         }
         val lists = db.rawQuery("SELECT id, project_id, name, position FROM lists ORDER BY position, created_at, name", null).use { c ->
             c.rows { TaskList(c.getString(0), c.getString(1), c.getString(2), c.getInt(3)) }
@@ -70,6 +74,7 @@ class TasksRepository(private val dbh: TasksDb, private val clock: () -> Long = 
 
     fun deleteProject(id: String) {
         db.delete("projects", "id = ?", arrayOf(id))
+        db.delete("meta", "key = ?", arrayOf(SAMPLE_FLAG + id))
     }
 
     fun addList(projectId: String, name: String): TaskList {
@@ -183,6 +188,36 @@ class TasksRepository(private val dbh: TasksDb, private val clock: () -> Long = 
         true
     }
 
+    /**
+     * Seeds each sample project (data/projects/projects.json) once, flagged sample so the user can delete it. Idempotent: a meta marker
+     * per sample id is written with the project, so a second call changes nothing and a deleted sample is not given back. Unlike
+     * [seedIfEmpty] it also runs when the user already has projects. Dates are offsets from [today]. Returns the names it seeded.
+     */
+    fun seedSamples(samples: List<SampleProject>, today: LocalDate): List<String> = db.transaction {
+        val seeded = ArrayList<String>()
+        for (s in samples) {
+            val marker = SAMPLE_SEED + s.id
+            if (rawQuery("SELECT 1 FROM meta WHERE key = ?", arrayOf(marker)).use { it.moveToFirst() }) continue
+            val project = addProject(s.name)
+            val first = SampleProjects.firstDay(s, today)
+            for (l in s.lists) {
+                val list = addList(project.id, l.name)
+                l.tasks.forEachIndexed { i, t ->
+                    val start = first.plusDays(t.start.toLong())
+                    saveTask(Task(
+                        id = newId(), listId = list.id, name = t.name, details = t.details, dateTarget = start.toString(),
+                        dateDeadline = start.plusDays((t.days.coerceAtLeast(1) - 1).toLong()).toString(), location = t.location, status = t.status, position = i,
+                    ))
+                }
+            }
+            for (key in listOf(marker, SAMPLE_FLAG + project.id)) {
+                insertWithOnConflict("meta", null, ContentValues().apply { put("key", key); put("value", "1") }, SQLiteDatabase.CONFLICT_IGNORE)
+            }
+            seeded += s.name
+        }
+        seeded
+    }
+
     // ── the mail agent: declaration and proposals ───────────────────────────────────────────────────────
 
     override fun agentConfig(): AgentConfig = db.rawQuery(
@@ -291,6 +326,8 @@ class TasksRepository(private val dbh: TasksDb, private val clock: () -> Long = 
 
     companion object {
         const val SEED_KEY = "seed_project_zero"
+        const val SAMPLE_SEED = "seed_sample_"
+        const val SAMPLE_FLAG = "sample_project:"
         fun newId(): String = UUID.randomUUID().toString()
     }
 }

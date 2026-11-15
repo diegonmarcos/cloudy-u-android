@@ -1,0 +1,155 @@
+{
+ "_doc": "#1757 the navigation of Cloud Tasks BEFORE the Home reorganisation (build.json::ui at commit fdac2a5fb, #1456): the baseline test-tasks-nav-parity.sh holds the new navigation against. Frozen: never edit.",
+ "bottom_nav": [
+  "inboxes",
+  "backlogs",
+  "tasks",
+  "library",
+  "projects"
+ ],
+ "default_section": "tasks",
+ "calendar_views": [
+  {
+   "id": "month",
+   "label": "Month"
+  },
+  {
+   "id": "year",
+   "label": "Year"
+  }
+ ],
+ "sections": [
+  {
+   "id": "inboxes",
+   "label": "Inboxes",
+   "icon": "inbox",
+   "pages": [
+    {
+     "id": "notes",
+     "label": "Notes",
+     "icon": "edit_note"
+    },
+    {
+     "id": "synced",
+     "label": "Synced",
+     "icon": "sync"
+    }
+   ]
+  },
+  {
+   "id": "backlogs",
+   "label": "Backlogs",
+   "icon": "bookmark",
+   "pages": [
+    {
+     "id": "backlogs",
+     "label": "Backlogs",
+     "icon": "bookmark"
+    }
+   ]
+  },
+  {
+   "id": "tasks",
+   "label": "Tasks",
+   "icon": "tasks",
+   "pages": [
+    {
+     "id": "calendar",
+     "label": "Calendar",
+     "icon": "calendar_month"
+    },
+    {
+     "id": "list",
+     "label": "List",
+     "icon": "checklist"
+    },
+    {
+     "id": "gantt",
+     "label": "Gantt",
+     "icon": "timeline"
+    },
+    {
+     "id": "kanban",
+     "label": "Kanban",
+     "icon": "table_chart"
+    },
+    {
+     "id": "mindmap",
+     "label": "Mindmap",
+     "icon": "account_tree"
+    },
+    {
+     "id": "clock",
+     "label": "Clock",
+     "icon": "clock"
+    }
+   ]
+  },
+  {
+   "id": "library",
+   "label": "Library",
+   "icon": "folder_open",
+   "pages": [
+    {
+     "id": "library",
+     "label": "Library",
+     "icon": "folder_open"
+    }
+   ]
+  },
+  {
+   "id": "projects",
+   "label": "Projects",
+   "icon": "folder",
+   "pages": [
+    {
+     "id": "projects",
+     "label": "Projects",
+     "icon": "folder"
+    }
+   ]
+  },
+  {
+   "id": "settings",
+   "label": "Settings",
+   "icon": "settings",
+   "pages": [
+    {
+     "id": "general",
+     "label": "General",
+     "icon": "settings"
+    },
+    {
+     "id": "perms",
+     "label": "Perms",
+     "icon": "security"
+    },
+    {
+     "id": "about",
+     "label": "About",
+     "icon": "info"
+    },
+    {
+     "id": "appearance",
+     "label": "Appearance",
+     "icon": "palette"
+    },
+    {
+     "id": "agent",
+     "label": "Agent",
+     "icon": "smart_toy"
+    },
+    {
+     "id": "inbox",
+     "label": "Proposals",
+     "icon": "inbox"
+    },
+    {
+     "id": "feeds",
+     "label": "Feeds",
+     "icon": "rss_feed"
+    }
+   ]
+  }
+ ]
+}

@@ -34,6 +34,19 @@ object CalendarMath {
     /** The prev / next year controls: same month, [years] away, clamped to the reachable range. */
     fun shiftYear(m: YearMonth, years: Int): YearMonth = clamp(m.plusYears(years.toLong()))
 
+    /**
+     * Year view swipe: left or up = next year (+1), right or down = previous year (-1), by the dominant axis of the drag
+     * ([dx], [dy] in px; a drag shorter than [threshold] is a tap or a scroll and changes nothing, 0).
+     */
+    fun swipeYear(dx: Float, dy: Float, threshold: Float): Int {
+        val major = if (Math.abs(dx) >= Math.abs(dy)) dx else dy
+        return when {
+            Math.abs(major) < threshold -> 0
+            major < 0f -> 1
+            else -> -1
+        }
+    }
+
     fun shiftMonth(m: YearMonth, months: Int): YearMonth = clamp(m.plusMonths(months.toLong()))
 
     /** Year view layout: [YEAR_ROWS] rows of [YEAR_COLUMNS] months, January top-left, row-major. */

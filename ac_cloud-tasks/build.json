@@ -255,11 +255,37 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's ids, ui.sections the section each one opens, ui.default_section where the app opens. #1456 the island is Inboxes | Backlogs | Tasks | Library | Projects. The four collection sections list their items in the Cloud Me Tasks row layout from the mock fixture (assets/mock-tasks.json, FAKE data); Tasks has the sub-pages Calendar, List (the native database list with the projects drawer), Gantt, Kanban, Mindmap and (#1668) Clock: the full clock of libs:clock-tools (World clock with the #1667 converter and day bars, Alarms, Timers, Stopwatch, Interval, Bedtime), the same lib Cloud Calc and the SuperApp carry. Settings is NOT on the island: it opens from the top bar's Settings > Configs and follows the fleet Configs pattern, General | Perms | About (libs:ui-nav-bars fleetconfigs) first, then the app's own Appearance, Agent, Proposals (mail-agent review) and Feeds. Every section's `background` is `theme`.",
+    "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's ids, ui.sections the section each one opens, ui.default_section where the app opens. #1757 the island is Inbox | Backlog | Home | Tasks | Library (#1456 was Inboxes | Backlogs | Tasks | Library | Projects): Home is new (page Overview: the project selector and one status card per project; page Projects: the old Projects tab, unchanged) and carries the former Projects tab as its second page, so no page was removed (ui.nav_mapping holds the old-to-new map, test-tasks-nav-parity.sh holds it against test/data/previous-nav-1757.json). The Home selector decides which projects feed Inbox, Backlog, Tasks and Library. Tasks > Calendar has the styles ui.calendar_styles (Circles Day, the default; Linear Bars; Gantt Calendar) beside its Month | Year view. The four collection sections list their items in the Cloud Me Tasks row layout from the mock fixture (assets/mock-tasks.json, FAKE data); Tasks has the sub-pages Calendar, List (the native database list with the projects drawer), Gantt, Kanban, Mindmap and (#1668) Clock: the full clock of libs:clock-tools (World clock with the #1667 converter and day bars, Alarms, Timers, Stopwatch, Interval, Bedtime), the same lib Cloud Calc and the SuperApp carry. Settings is NOT on the island: it opens from the top bar's Settings > Configs and follows the fleet Configs pattern, General | Perms | About (libs:ui-nav-bars fleetconfigs) first, then the app's own Appearance, Agent, Proposals (mail-agent review) and Feeds. Every section's `background` is `theme`.",
     "calendar_views": [
       {"id": "month", "label": "Month"},
       {"id": "year", "label": "Year"}
     ],
+    "calendar_styles": [
+      {"id": "circles", "label": "Circles Day", "default": true},
+      {"id": "linear", "label": "Linear Bars"},
+      {"id": "gantt", "label": "Gantt Calendar"}
+    ],
+    "nav_mapping": {
+      "_doc": "#1757 every page of the previous navigation (#1456) and where it lives now: [old section, old page] -> [new section, new page]. Held by test-tasks-nav-parity.sh against test/data/previous-nav-1757.json (rule 16: nothing removed, only rearranged).",
+      "inboxes/notes": "inboxes/notes",
+      "inboxes/synced": "inboxes/synced",
+      "backlogs/backlogs": "backlogs/backlogs",
+      "tasks/calendar": "tasks/calendar",
+      "tasks/list": "tasks/list",
+      "tasks/gantt": "tasks/gantt",
+      "tasks/kanban": "tasks/kanban",
+      "tasks/mindmap": "tasks/mindmap",
+      "tasks/clock": "tasks/clock",
+      "library/library": "library/library",
+      "projects/projects": "home/projects",
+      "settings/general": "settings/general",
+      "settings/perms": "settings/perms",
+      "settings/about": "settings/about",
+      "settings/appearance": "settings/appearance",
+      "settings/agent": "settings/agent",
+      "settings/inbox": "settings/inbox",
+      "settings/feeds": "settings/feeds"
+    },
     "top_bar": {
       "_doc": "THE first row of the app (libs:bottomnav AppTopBar, declared once for the fleet): a hamburger that opens a side drawer the CURRENT page fills (the Tasks page: the projects and their lists; Calendar and Settings: their pages), the title, and two circular buttons: AI (libs:ai's chat in an anchored panel, one box for search and chat, history kept) and Settings (Account launches Cloud Account; Configs opens the Settings section: Appearance, Agent, Inbox, Feeds). No app draws its own copy of this row (cloud-android-top-bar-guard).",
       "drawer": true,
@@ -269,13 +295,13 @@
         "configs"
       ]
     },
-    "bottom_nav": ["inboxes", "backlogs", "tasks", "library", "projects"],
+    "bottom_nav": ["inboxes", "backlogs", "home", "tasks", "library"],
     "default_section": "tasks",
     "configs_ui": ["nav_ui"],
     "sections": [
       {
         "id": "inboxes",
-        "label": "Inboxes",
+        "label": "Inbox",
         "icon": "inbox",
         "background": "theme",
         "pages": [
@@ -293,7 +319,7 @@
       },
       {
         "id": "backlogs",
-        "label": "Backlogs",
+        "label": "Backlog",
         "icon": "bookmark",
         "background": "theme",
         "pages": [
@@ -301,6 +327,24 @@
             "id": "backlogs",
             "label": "Backlogs",
             "icon": "bookmark"
+          }
+        ]
+      },
+      {
+        "id": "home",
+        "label": "Home",
+        "icon": "home",
+        "background": "theme",
+        "pages": [
+          {
+            "id": "overview",
+            "label": "Overview",
+            "icon": "home"
+          },
+          {
+            "id": "projects",
+            "label": "Projects",
+            "icon": "folder"
           }
         ]
       },
@@ -352,19 +396,6 @@
             "id": "library",
             "label": "Library",
             "icon": "folder_open"
-          }
-        ]
-      },
-      {
-        "id": "projects",
-        "label": "Projects",
-        "icon": "folder",
-        "background": "theme",
-        "pages": [
-          {
-            "id": "projects",
-            "label": "Projects",
-            "icon": "folder"
           }
         ]
       },
