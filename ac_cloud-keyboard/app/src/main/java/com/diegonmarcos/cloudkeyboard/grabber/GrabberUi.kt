@@ -258,7 +258,7 @@ private fun SelectionBlock(model: GrabberModel) {
             Box(Modifier.clip(RoundedCornerShape(4.dp)).background(GC.kind(kind).copy(alpha = 0.16f)).padding(horizontal = 6.dp, vertical = 2.dp)) {
                 Text(kind.label, color = GC.kind(kind), fontFamily = Mono, fontSize = 9.sp, fontWeight = FontWeight.Bold)
             }
-            Caps("${text.length} CHARS · $words WORDS", GC.text3)
+            Caps("${text.length} ${if (text.length == 1) "CHAR" else "CHARS"} · $words ${if (words == 1) "WORD" else "WORDS"}", GC.text3)
             Spacer(Modifier.weight(1f))
             if (model.readOnly) Caps("READ-ONLY", GC.text3) else Caps("FIELD · REPLACES SELECTION", GC.ok)
         }

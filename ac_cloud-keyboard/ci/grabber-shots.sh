@@ -66,11 +66,15 @@ PY
 tap_text() { dumpui "$OUT/t.xml" || return 1; read -r X Y < <(centre "$OUT/t.xml" "$1"); [ -n "${X:-}" ] || return 1; adb shell input tap "$X" "$Y"; return 0; }
 
 menu() {   # $1 text, $2 readonly (true|false): what the selection menu sends (one string for the device shell, so spaces survive)
-    adb shell "am start -n $PKG/.grabber.GrabberActivity -a android.intent.action.PROCESS_TEXT -t text/plain --es android.intent.extra.PROCESS_TEXT '$1' --ez android.intent.extra.PROCESS_TEXT_READONLY $2" >/dev/null
+    adb shell "am start -f 0x10008000 -n $PKG/.grabber.GrabberActivity -a android.intent.action.PROCESS_TEXT -t text/plain --es android.intent.extra.PROCESS_TEXT '$1' --ez android.intent.extra.PROCESS_TEXT_READONLY $2" >/dev/null
 }
 # wait (up to $2 s) until the screen dump holds text $1
 waitfor() { local i; for i in $(seq 1 $(( ${2:-60} / 4 ))); do dumpui "$OUT/w.xml" && grep -q "$1" "$OUT/w.xml" && return 0; sleep 2; done; return 1; }
-scroll_sheet() { adb shell input swipe 540 1900 540 900 500; sleep 1.5; }
+read -r SW SH < <(adb shell wm size | sed -n 's/.*: *\([0-9]*\)x\([0-9]*\).*/\1 \2/p' | tail -1)
+SW=${SW:-1080}; SH=${SH:-1920}
+echo "swipe space: ${SW}x${SH}"
+# a drag inside the page or the sheet, well clear of the bottom gesture area (a swipe from the very bottom edge is Home)
+scroll_sheet() { adb shell input swipe $((SW / 2)) $((SH * 70 / 100)) $((SW / 2)) $((SH * 22 / 100)) 500; sleep 1.5; }
 settings_behind() { adb shell am start -a android.settings.SETTINGS >/dev/null; sleep 4; }
 
 # ── the tab ───────────────────────────────────────────────────────────────
@@ -84,6 +88,7 @@ if tap_text "Type or paste the text to grab"; then
     tap_text "Grab" || bad "no Grab key on the Text Selection page"
     waitfor "MS" 40 && ok "boxes B and C answered" || bad "the boxes never answered"
     shot 02-grabber-text-typed
+    scroll_sheet; shot 02b-grabber-text-boxes
 else bad "no text field on the Text Selection page"; fi
 adb shell input keyevent 4; adb shell input keyevent 4
 
@@ -110,13 +115,13 @@ adb shell input keyevent 4; sleep 2
 adb shell am start -f 0x10008000 -n "$PKG/helium314.keyboard.settings.SettingsActivity" --es open_at grabber_screen >/dev/null; sleep 8
 shot 20-screen-selection-page
 settings_behind
-adb shell am start -n "$PKG/.grabber.GrabberScreenActivity" --el grabber.delay_ms 1500 >/dev/null; sleep 5
+adb shell am start -f 0x10008000 -n "$PKG/.grabber.GrabberScreenActivity" --el grabber.delay_ms 1500 >/dev/null; sleep 5
 # a phone shows the system consent; the emulator walk answers it when the app-op did not
 for label in "Start now" "Share screen" "Next" "Start"; do tap_text "$label" && sleep 2; done
 sleep 6
 dumpui "$OUT/picker.xml" && grep -q 'Drag around the text' "$OUT/picker.xml" && ok "the picker draws over the captured screen" || bad "no picker: capture did not return a frame"
 shot 21-screen-picker
-adb shell input swipe 90 650 990 900 1800; sleep 4
+adb shell input swipe $((SW * 8 / 100)) $((SH * 33 / 100)) $((SW * 92 / 100)) $((SH * 47 / 100)) 1800; sleep 4
 shot 22-screen-reading
 waitfor "Copy" 150 && ok "the text read from the screen feeds the panel" || bad "no panel after the region (the text reader gave nothing in 150 s)"
 sleep 6

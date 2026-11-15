@@ -109,7 +109,7 @@ private fun Caps(text: String, color: Color = GC.text3, modifier: Modifier = Mod
 private fun Banner(title: String, blurb: String, readings: List<Triple<String, String, Color>>) {
     val shape = RoundedCornerShape(12.dp)
     Column(
-        Modifier.fillMaxWidth().clip(shape).background(Brush.horizontalGradient(listOf(GC.accent.copy(alpha = 0.16f), GC.box))).border(1.dp, GC.hairline, shape).padding(12.dp),
+        Modifier.fillMaxWidth().clip(shape).background(GC.box).background(Brush.horizontalGradient(listOf(GC.accent.copy(alpha = 0.18f), Color.Transparent))).border(1.dp, GC.hairline, shape).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -137,13 +137,13 @@ private fun menuEntryRegistered(ctx: Context): Boolean = runCatching {
 private fun TextSelectionPage(model: GrabberModel) {
     val ctx = LocalContext.current
     val registered = remember { menuEntryRegistered(ctx) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxSize().background(GC.bg).verticalScroll(rememberScrollState()).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Banner(
             "TEXT SELECTION",
-            "Select a word, a phrase or an address in any app, open the selection menu and pick Cloud Keyboard: this panel opens over that app. Here it takes typed or pasted text.",
+            "In any app select text, open the selection menu and pick Cloud Keyboard: this panel opens over that app. Here it takes typed or pasted text.",
             listOf(
-                Triple("MENU ENTRY", if (registered) "Cloud Keyboard · registered for text/plain" else "not registered on this device", if (registered) GC.ok else GC.bad),
-                Triple("RESULT", "editable field: the result replaces the selection", GC.accent),
+                Triple("MENU ENTRY", if (registered) "Cloud Keyboard · registered" else "not registered on this device", if (registered) GC.ok else GC.bad),
+                Triple("RESULT", "editable field: replaces the selection", GC.accent),
             ),
         )
         GrabberPanel(model, onReply = {})
@@ -155,13 +155,13 @@ private fun TextSelectionPage(model: GrabberModel) {
 private fun ScreenSelectionPage(model: GrabberModel) {
     val ctx = LocalContext.current
     val shot = GrabberBus.lastShot
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxSize().background(GC.bg).verticalScroll(rememberScrollState()).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Banner(
             "SCREEN SELECTION",
-            "Circle to search: capture the screen, drag around the text you want, and it is read on this phone and fed to the same panel. Start it here or from the Grabber tile in Quick Settings, over any app.",
+            "Circle to search: capture the screen, drag around the text, and it is read on this phone and fed to the same panel. Start it here or from the Grabber tile, over any app.",
             listOf(
                 Triple("CAPTURE", "MediaProjection · you confirm every capture", GC.ok),
-                Triple("TEXT READER", "ML Kit on device · Latin, Chinese, Devanagari, Japanese, Korean", GC.ok),
+                Triple("TEXT READER", "ML Kit on device · 5 scripts", GC.ok),
                 Triple("TILE", "Quick Settings > Edit > Grabber", GC.accent),
             ),
         )
