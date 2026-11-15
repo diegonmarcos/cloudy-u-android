@@ -75,7 +75,7 @@ SW=${SW:-1080}; SH=${SH:-1920}
 echo "swipe space: ${SW}x${SH}"
 # a drag inside the page or the sheet, well clear of the bottom gesture area (a swipe from the very bottom edge is Home)
 # DuckDuckGo may wall a runner's address for a moment: tap Retry once when box B says BLOCKED, then wait again
-retry_blocked() { if dumpui "$OUT/rb.xml" && grep -q 'BLOCKED' "$OUT/rb.xml"; then echo "box B blocked, retrying"; tap_text "Retry" && sleep 12; fi; }
+retry_blocked() { local i; for i in 1 2 3; do dumpui "$OUT/rb.xml" && grep -q 'BLOCKED' "$OUT/rb.xml" || return 0; echo "box B blocked, retry $i"; sleep 25; tap_text "Retry"; sleep 12; done; }
 scroll_sheet() { adb shell input swipe $((SW / 2)) $((SH * 70 / 100)) $((SW / 2)) $((SH * 22 / 100)) 500; sleep 1.5; }
 settings_behind() { adb shell am start -a android.settings.SETTINGS >/dev/null; sleep 4; }
 
@@ -102,7 +102,7 @@ for w in Clipboard Text Search AI Drive Writer; do grep -qi "text=\"$w\"" "$OUT/
 shot 10-sheet-word
 scroll_sheet; shot 10b-sheet-word-boxes
 adb shell input keyevent 4; sleep 2
-menu "Why is the sky blue during the day" true; waitfor "Copy link" 60; retry_blocked; shot 11-sheet-phrase
+menu "northern lights aurora borealis" true; waitfor "Copy link" 60; retry_blocked; shot 11-sheet-phrase
 scroll_sheet; shot 11b-sheet-phrase-boxes
 adb shell input keyevent 4; sleep 2
 menu "1600 Pennsylvania Avenue NW, Washington, DC 20500" true; waitfor "Open in maps" 75; shot 12-sheet-address-map
