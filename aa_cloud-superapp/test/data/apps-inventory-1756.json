@@ -1,0 +1,1998 @@
+{
+  "kind": "cloud-sa.app-inventory",
+  "schema": 1,
+  "apps": [
+    {
+      "package": "ai.perplexity.app.android",
+      "version_name": "2.100.0",
+      "version_code": 260662,
+      "origin_store": "com.sec.android.app.samsungapps",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "ai.perplexity.comet",
+      "version_name": "1.38.0",
+      "version_code": 13800,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "ai.x.grok",
+      "version_name": "1.2.57-release.01",
+      "version_code": 11257201,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "app.affine.pro",
+      "version_name": "0.27.4",
+      "version_code": 439,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "app.sterna",
+      "version_name": "1.6.3",
+      "version_code": 184,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Mail"
+    },
+    {
+      "package": "at.zuggabecka.radiofm4",
+      "version_name": "6.1.3",
+      "version_code": 2000946,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Music & Audio"
+    },
+    {
+      "package": "be.greifmatthias.wakaship",
+      "version_name": "2023.11.2 (20231114)",
+      "version_code": 156,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "br.gov.economia.receita.rfb",
+      "version_name": "5.0.0",
+      "version_code": 24863894,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Gov & ID"
+    },
+    {
+      "package": "br.gov.meugovbr",
+      "version_name": "3.9.0",
+      "version_code": 235,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Gov & ID"
+    },
+    {
+      "package": "br.jus.tse.eleitoral.etitulo",
+      "version_name": "2026.10.27",
+      "version_code": 746817101,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "cat.atm.tmobilitat",
+      "version_name": "1.19.1",
+      "version_code": 80,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Buro \/ Mobility"
+    },
+    {
+      "package": "ch.icoaching.typewise",
+      "version_name": "4.4.49",
+      "version_code": 3020332,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Keyboards"
+    },
+    {
+      "package": "ch.protonvpn.android",
+      "version_name": "5.20.74.0",
+      "version_code": 605207400,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Security"
+    },
+    {
+      "package": "chat.rocket.android",
+      "version_name": "4.78.1",
+      "version_code": 110165,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "cld.camera",
+      "version_name": "93 (sha-3b478a19)",
+      "version_code": 3456111,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "cld.termux",
+      "version_name": "0.118.4 (sha-93f95cc7)",
+      "version_code": 3457610,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ Terminals"
+    },
+    {
+      "package": "cld.termux.nix",
+      "version_name": "0.118.0_v0.3.12_nix (sha-93f95cc7)",
+      "version_code": 3457609,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ Terminals"
+    },
+    {
+      "package": "cld.termux.nix.boot",
+      "version_name": "1.0.0",
+      "version_code": 1,
+      "origin_store": "com.diegonmarcos.comms.mail",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ Terminals"
+    },
+    {
+      "package": "cn.com.aftershokz.app",
+      "version_name": "6.1.8",
+      "version_code": 259,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Music & Audio"
+    },
+    {
+      "package": "co.hinge.app",
+      "version_name": "10.12.1",
+      "version_code": 168201341,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Social"
+    },
+    {
+      "package": "co.mangotechnologies.clickup",
+      "version_name": "7.5.2",
+      "version_code": 54562,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Calendar & Tasks"
+    },
+    {
+      "package": "com.Slack",
+      "version_name": "26.11.20.0",
+      "version_code": 90016384,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.adobe.reader",
+      "version_name": "26.9.2.50367",
+      "version_code": 1932150367,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.airbnb.android",
+      "version_name": "26.43",
+      "version_code": 28026790,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "com.alphainventor.filemanager",
+      "version_name": "3.8.3",
+      "version_code": 2103083,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.amazon.avod.thirdpartyclient",
+      "version_name": "3.0.480.847",
+      "version_code": 480000847,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Video"
+    },
+    {
+      "package": "com.amazon.mShop.android.shopping",
+      "version_name": "32.20.2.100",
+      "version_code": 1243262206,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Others \/ Shopping"
+    },
+    {
+      "package": "com.android.chrome",
+      "version_name": "157.0.8103.78",
+      "version_code": 810307804,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Primary \/ Web"
+    },
+    {
+      "package": "com.android.settings",
+      "version_name": "17",
+      "version_code": 37,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Settings"
+    },
+    {
+      "package": "com.android.vending",
+      "version_name": "54.1.11-34 [0] [PR] 1016840738",
+      "version_code": 85411140,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · System \/ Stores"
+    },
+    {
+      "package": "com.anthropic.claude",
+      "version_name": "1.261113.19",
+      "version_code": 26111319,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "com.app.applistbackup",
+      "version_name": "3.1.3",
+      "version_code": 53,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.aspiro.tidal",
+      "version_name": "2.219.0",
+      "version_code": 10023,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Music & Audio"
+    },
+    {
+      "package": "com.aurora.store",
+      "version_name": "4.8.4",
+      "version_code": 76,
+      "origin_store": "com.google.android.packageinstaller",
+      "ours": false,
+      "category": "Tools · System \/ Stores"
+    },
+    {
+      "package": "com.azure.authenticator",
+      "version_name": "6.2611.7348",
+      "version_code": 202673483,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · System \/ Security"
+    },
+    {
+      "package": "com.beemdevelopment.aegis",
+      "version_name": "3.4.3",
+      "version_code": 82,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Security"
+    },
+    {
+      "package": "com.beeper.android",
+      "version_name": "4.64.0",
+      "version_code": 1744163566,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.bereal.ft",
+      "version_name": "3.97.1",
+      "version_code": 3599414,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Media \/ Social"
+    },
+    {
+      "package": "com.bodybike.bbsmartplus",
+      "version_name": "2.4.0",
+      "version_code": 20400,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": null
+    },
+    {
+      "package": "com.booking",
+      "version_name": "69.9",
+      "version_code": 31981,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "com.brave.browser",
+      "version_name": "1.98.60",
+      "version_code": 429806004,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Primary \/ Web"
+    },
+    {
+      "package": "com.btg.pactual.banking",
+      "version_name": "2.53.1",
+      "version_code": 588,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Money"
+    },
+    {
+      "package": "com.btg.pactual.digital.mobile",
+      "version_name": "9.6.210",
+      "version_code": 310696,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Money"
+    },
+    {
+      "package": "com.btg.pactual.homebroker.mobile",
+      "version_name": "10.15.1",
+      "version_code": 1000464,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Money"
+    },
+    {
+      "package": "com.bumble.app",
+      "version_name": "5.492.0",
+      "version_code": 4139,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Social"
+    },
+    {
+      "package": "com.checkitt",
+      "version_name": "4.32.2",
+      "version_code": 1187,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ News & Reading"
+    },
+    {
+      "package": "com.cloudflare.cloudflareoneagent",
+      "version_name": "2.5.8",
+      "version_code": 5721,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.cloudflare.onedotonedotonedotone",
+      "version_name": "6.38.11",
+      "version_code": 5703,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.codekarussell.rausgegangen",
+      "version_name": "9.5.0",
+      "version_code": 7274,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Others \/ Events"
+    },
+    {
+      "package": "com.collabora.libreoffice",
+      "version_name": "26.04.4.2",
+      "version_code": 937,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.comuto",
+      "version_name": "6.38.0",
+      "version_code": 340000603,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Mobility"
+    },
+    {
+      "package": "com.devolutions.remotedesktopmanager",
+      "version_name": "2026.3.0.21",
+      "version_code": 500928,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Network"
+    },
+    {
+      "package": "com.dgt.midgt",
+      "version_name": "1.19.7",
+      "version_code": 11907,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Gov & ID"
+    },
+    {
+      "package": "com.dhl.exp.dhlmobile",
+      "version_name": "6.2.0",
+      "version_code": 10163,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.diegonmarcos.capitalfinterm",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456109,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.diegonmarcos.cgomniverse",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456117,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.diegonmarcos.cloudaccount",
+      "version_name": "0.1.0-dev (sha-7a1b477e)",
+      "version_code": 3458699,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Settings"
+    },
+    {
+      "package": "com.diegonmarcos.cloudagenda",
+      "version_name": "0.3.0-dev (sha-fbef14e1)",
+      "version_code": 3456502,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Data Apps \/ Calendar & Tasks"
+    },
+    {
+      "package": "com.diegonmarcos.cloudbrowser",
+      "version_name": "0.2.0-dev (sha-e244ac74)",
+      "version_code": 3457850,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Primary \/ Web"
+    },
+    {
+      "package": "com.diegonmarcos.cloudc3",
+      "version_name": "0.3.0-dev (sha-fbef14e1)",
+      "version_code": 3456501,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Dev"
+    },
+    {
+      "package": "com.diegonmarcos.cloudcalc",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456137,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.diegonmarcos.cloudcontacts",
+      "version_name": "0.1.0-dev (sha-fbef14e1)",
+      "version_code": 3456496,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ Phone & Contacts"
+    },
+    {
+      "package": "com.diegonmarcos.clouddrive",
+      "version_name": "0.6.0-dev (sha-93f95cc7)",
+      "version_code": 3457622,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.diegonmarcos.cloudkeyboard",
+      "version_name": "1.1 (sha-dbcc8e0f)",
+      "version_code": 3458683,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Keyboards"
+    },
+    {
+      "package": "com.diegonmarcos.cloudkgstore",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456118,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "com.diegonmarcos.cloudme",
+      "version_name": "0.1.0-dev (sha-fbef14e1)",
+      "version_code": 3456499,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Settings"
+    },
+    {
+      "package": "com.diegonmarcos.cloudmediacenter",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456106,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Media \/ Video"
+    },
+    {
+      "package": "com.diegonmarcos.cloudnav",
+      "version_name": "0.1.0-dev (sha-fbef14e1)",
+      "version_code": 3456495,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Primary \/ Maps & Weather"
+    },
+    {
+      "package": "com.diegonmarcos.cloudnews",
+      "version_name": "0.4.1-dev (sha-fbef14e1)",
+      "version_code": 3456496,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ News & Reading"
+    },
+    {
+      "package": "com.diegonmarcos.cloudnotes",
+      "version_name": "0.27.5 (sha-36f11938)",
+      "version_code": 170,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.diegonmarcos.cloudoffice",
+      "version_name": "26.04.4.2 (sha-3b478a19)",
+      "version_code": 1,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.diegonmarcos.cloudsearch",
+      "version_name": "0.1.0-dev (sha-bf574932)",
+      "version_code": 3455011,
+      "origin_store": null,
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "com.diegonmarcos.cloudshopping",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456106,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Services · Others \/ Shopping"
+    },
+    {
+      "package": "com.diegonmarcos.cloudstore",
+      "version_name": "0.1.0-dev (sha-7a1b477e)",
+      "version_code": 3458701,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Stores"
+    },
+    {
+      "package": "com.diegonmarcos.cloudsuperintel",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456111,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "com.diegonmarcos.cloudtoolssmallllms",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456116,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "com.diegonmarcos.cloudvault",
+      "version_name": "2026.6.0 (sha-3b478a19)",
+      "version_code": 1,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Security"
+    },
+    {
+      "package": "com.diegonmarcos.cloudwallet",
+      "version_name": "0.1.0-dev (sha-fbef14e1)",
+      "version_code": 3456497,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Security"
+    },
+    {
+      "package": "com.diegonmarcos.cloudwebserver",
+      "version_name": "0.3.0-dev (sha-3719ac2c)",
+      "version_code": 3457736,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Dev"
+    },
+    {
+      "package": "com.diegonmarcos.code",
+      "version_name": "1.13.5 (sha-3b478a19)",
+      "version_code": 9,
+      "origin_store": null,
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ Terminals"
+    },
+    {
+      "package": "com.diegonmarcos.comms.chat",
+      "version_name": "2.40.0 (sha-3b478a19)",
+      "version_code": 749,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.diegonmarcos.comms.dialer",
+      "version_name": "1.11.1 (sha-fbef14e1)",
+      "version_code": 22,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ Phone & Contacts"
+    },
+    {
+      "package": "com.diegonmarcos.comms.mail",
+      "version_name": "1.5.4 (sha-d822fb44)",
+      "version_code": 3458606,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ Mail"
+    },
+    {
+      "package": "com.diegonmarcos.comms.matrix",
+      "version_name": "26.06.2 (sha-3b478a19)",
+      "version_code": 202606022,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.diegonmarcos.hardtechcad",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456107,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.diegonmarcos.hardtechsim2real",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456109,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.diegonmarcos.ide",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456112,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Dev"
+    },
+    {
+      "package": "com.diegonmarcos.mediacenter",
+      "version_name": "5.1.1 (sha-3b478a19)",
+      "version_code": 34561344,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · Media \/ Video"
+    },
+    {
+      "package": "com.diegonmarcos.morpheus",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456106,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Dev"
+    },
+    {
+      "package": "com.diegonmarcos.superapp",
+      "version_name": "0.1.1-dev (sha-4a35f39d)",
+      "version_code": 3458638,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Settings"
+    },
+    {
+      "package": "com.diegonmarcos.watchdog",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456111,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Dev"
+    },
+    {
+      "package": "com.diegonmarcos.watchtower",
+      "version_name": "0.1.0-dev (sha-3b478a19)",
+      "version_code": 3456116,
+      "origin_store": "com.diegonmarcos.cloudstore",
+      "ours": true,
+      "category": "Tools · System \/ Dev"
+    },
+    {
+      "package": "com.digibites.accubattery",
+      "version_name": "2.1.8",
+      "version_code": 201008,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Diagnostics"
+    },
+    {
+      "package": "com.downdogapp",
+      "version_name": "8.4.3",
+      "version_code": 521,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Health \/ Outdoor & Sport"
+    },
+    {
+      "package": "com.duckduckgo.mobile.android",
+      "version_name": "5.303.0",
+      "version_code": 53030000,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Primary \/ Web"
+    },
+    {
+      "package": "com.ebay.kleinanzeigen",
+      "version_name": "2026.46.0",
+      "version_code": 2026460003,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Others \/ Shopping"
+    },
+    {
+      "package": "com.esim.numero",
+      "version_name": "18.74",
+      "version_code": 334,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Telecom"
+    },
+    {
+      "package": "com.facebook.katana",
+      "version_name": "587.0.0.39.55",
+      "version_code": 707414481,
+      "origin_store": "com.facebook.system",
+      "ours": false,
+      "category": null
+    },
+    {
+      "package": "com.facebook.orca",
+      "version_name": "586.0.0.55.92",
+      "version_code": 347215363,
+      "origin_store": "com.facebook.system",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.fatsecret.android",
+      "version_name": "11.10.0.3",
+      "version_code": 809,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Health \/ Nutrition"
+    },
+    {
+      "package": "com.fitbit.FitbitMobile",
+      "version_name": "5.11.1.health-mobile-1104134730-1009077909",
+      "version_code": 1104134730,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Health \/ Outdoor & Sport"
+    },
+    {
+      "package": "com.flyersoft.moonreader",
+      "version_name": "10.8",
+      "version_code": 1008000,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ News & Reading"
+    },
+    {
+      "package": "com.foxdebug.acode",
+      "version_name": "1.13.5",
+      "version_code": 1011,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Terminals"
+    },
+    {
+      "package": "com.fusionmedia.investing",
+      "version_name": "6.53",
+      "version_code": 1663,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Money"
+    },
+    {
+      "package": "com.garmin.android.apps.connectmobile",
+      "version_name": "5.31",
+      "version_code": 11761,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Health \/ Outdoor & Sport"
+    },
+    {
+      "package": "com.garmin.android.apps.explore",
+      "version_name": "4.17.1",
+      "version_code": 1709299,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Health \/ Outdoor & Sport"
+    },
+    {
+      "package": "com.garmin.android.apps.messenger",
+      "version_name": "3.2.2",
+      "version_code": 1689920,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.garmin.connectiq",
+      "version_name": "2.51",
+      "version_code": 1045,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Health \/ Outdoor & Sport"
+    },
+    {
+      "package": "com.ghisler.android.TotalCommander",
+      "version_name": "3.62",
+      "version_code": 1493,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.github.android",
+      "version_name": "1.284.0",
+      "version_code": 955,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.google.android.apps.authenticator2",
+      "version_name": "7.2",
+      "version_code": 7002011,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · System \/ Security"
+    },
+    {
+      "package": "com.google.android.apps.bard",
+      "version_name": "1.0.995038376",
+      "version_code": 345,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "com.google.android.apps.docs",
+      "version_name": "2.26.447.0.all.alldpi",
+      "version_code": 214723026,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.google.android.apps.docs.editors.docs",
+      "version_name": "1.26.453.00.90",
+      "version_code": 220714334,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.google.android.apps.docs.editors.sheets",
+      "version_name": "1.26.453.01.90",
+      "version_code": 220714768,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.google.android.apps.fitness",
+      "version_name": "2026.10.22.02.arm64-v8a.release",
+      "version_code": 2027389421,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Health \/ Outdoor & Sport"
+    },
+    {
+      "package": "com.google.android.apps.labs.language.tailwind",
+      "version_name": "1.63.1.1002728510",
+      "version_code": 167700,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "com.google.android.apps.magazines",
+      "version_name": "5.168.0.982359681",
+      "version_code": 2022251726,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ News & Reading"
+    },
+    {
+      "package": "com.google.android.apps.maps",
+      "version_name": "26.46.00.1016872485",
+      "version_code": 1068880506,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Primary \/ Maps & Weather"
+    },
+    {
+      "package": "com.google.android.apps.messaging",
+      "version_name": "messages.android_20261027_00_RC00.phone_samsung_dynamic",
+      "version_code": 327255900,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Phone & Contacts"
+    },
+    {
+      "package": "com.google.android.apps.nbu.files",
+      "version_name": "1.13157.1011540316.0-release",
+      "version_code": 2081363,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.google.android.apps.photos",
+      "version_name": "8.0.0.1011730683",
+      "version_code": 52642432,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.google.android.apps.tachyon",
+      "version_name": "384.0.1015074705.duo.android_20261102.01_p4.s",
+      "version_code": 7795146,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.google.android.apps.tasks",
+      "version_name": "2026.11.09.1016944569.0-release",
+      "version_code": 2113633,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Calendar & Tasks"
+    },
+    {
+      "package": "com.google.android.apps.translate",
+      "version_name": "10.43.74.1015708864.6-release",
+      "version_code": 701119202,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.google.android.apps.walletnfcrel",
+      "version_name": "26.44.1009480308",
+      "version_code": 934023188,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Money"
+    },
+    {
+      "package": "com.google.android.apps.youtube.music",
+      "version_name": "9.45.51",
+      "version_code": 94551240,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Music & Audio"
+    },
+    {
+      "package": "com.google.android.calculator",
+      "version_name": "9.3 (967717812)",
+      "version_code": 85022643,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.google.android.calendar",
+      "version_name": "2026.43.1-1011998630-release",
+      "version_code": 2018374602,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Calendar & Tasks"
+    },
+    {
+      "package": "com.google.android.contacts",
+      "version_name": "4.91.20.1005370002",
+      "version_code": 3299667,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Phone & Contacts"
+    },
+    {
+      "package": "com.google.android.gm",
+      "version_name": "2026.11.02.1015914183.Release",
+      "version_code": 66160149,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Mail"
+    },
+    {
+      "package": "com.google.android.googlequicksearchbox",
+      "version_name": "17.74.21.ve.arm64",
+      "version_code": 301834658,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Primary \/ Web"
+    },
+    {
+      "package": "com.google.android.inputmethod.latin",
+      "version_name": "18.4.1.985164140-release-arm64-v8a",
+      "version_code": 176027078,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Keyboards"
+    },
+    {
+      "package": "com.google.android.videos",
+      "version_name": "4.39.5193.999139630.2-release",
+      "version_code": 439860671,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Video"
+    },
+    {
+      "package": "com.google.android.youtube",
+      "version_name": "21.40.165",
+      "version_code": 1561301449,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Video"
+    },
+    {
+      "package": "com.google.audio.hearing.visualization.accessibility.scribe",
+      "version_name": "9.1.1003586907",
+      "version_code": 210288,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.hostelworld.app",
+      "version_name": "9.111.0",
+      "version_code": 670911100,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "com.imaginecurve.curve.prd",
+      "version_name": "5.65.0",
+      "version_code": 56500002,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.instagram.android",
+      "version_name": "455.0.0.51.72",
+      "version_code": 386113986,
+      "origin_store": "com.facebook.system",
+      "ours": false,
+      "category": "Tools · Media \/ Social"
+    },
+    {
+      "package": "com.instagram.barcelona",
+      "version_name": "455.0.0.55.72",
+      "version_code": 512508400,
+      "origin_store": "com.facebook.system",
+      "ours": false,
+      "category": "Tools · Media \/ Social"
+    },
+    {
+      "package": "com.linkedin.android",
+      "version_name": "4.1.1272",
+      "version_code": 218000,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Others \/ Jobs"
+    },
+    {
+      "package": "com.lonelycatgames.Xplore",
+      "version_name": "4.50.05",
+      "version_code": 45005,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.mattermost.rn",
+      "version_name": "2.45.1",
+      "version_code": 6000832,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.medantapatient.app",
+      "version_name": "1.10",
+      "version_code": 12,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Health"
+    },
+    {
+      "package": "com.meetup",
+      "version_name": "2026.10.26.3095",
+      "version_code": 3095,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Social"
+    },
+    {
+      "package": "com.memrise.android.memrisecompanion",
+      "version_name": "2026.09.28.0",
+      "version_code": 209426065,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Health \/ Learning"
+    },
+    {
+      "package": "com.mi.earphone",
+      "version_name": "1.39.0i",
+      "version_code": 139000,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · System \/ Settings"
+    },
+    {
+      "package": "com.microsoft.office.onenote",
+      "version_name": "16.0.20430.20038",
+      "version_code": 1807338427,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.microsoft.office.outlook",
+      "version_name": "5.2639.2",
+      "version_code": 72639116,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Mail"
+    },
+    {
+      "package": "com.microsoft.skydrive",
+      "version_name": "7.64.2",
+      "version_code": 2027640302,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.microsoft.todos",
+      "version_name": "2.178.1020.02",
+      "version_code": 1022,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Calendar & Tasks"
+    },
+    {
+      "package": "com.mo2o.alsa",
+      "version_name": "9.11.0",
+      "version_code": 409,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "com.mobidia.android.mdm",
+      "version_name": "9.10.4",
+      "version_code": 2026100414,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Network"
+    },
+    {
+      "package": "com.mobillium.airalo",
+      "version_name": "2.29.0",
+      "version_code": 4167,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Buro \/ Telecom"
+    },
+    {
+      "package": "com.mobisystems.fileman",
+      "version_name": "10.7.54240",
+      "version_code": 54240,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.motosumo.app",
+      "version_name": "3.255.0",
+      "version_code": 20367,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": null
+    },
+    {
+      "package": "com.nomadmania.presentation",
+      "version_name": "2.0.63",
+      "version_code": 125,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "com.oceanwing.soundcore",
+      "version_name": "5.0.35",
+      "version_code": 435,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.oplayer.orunningplus",
+      "version_name": "2.3.9",
+      "version_code": 26102101,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": null
+    },
+    {
+      "package": "com.paypal.android.p2pmobile",
+      "version_name": "10.18.0",
+      "version_code": 1160090178,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Buro \/ Money"
+    },
+    {
+      "package": "com.phlox.simpleserver",
+      "version_name": "3.4.6",
+      "version_code": 83,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Network"
+    },
+    {
+      "package": "com.pinterest",
+      "version_name": "14.44.0",
+      "version_code": 14448030,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Social"
+    },
+    {
+      "package": "com.rarlab.rar",
+      "version_name": "7.23.build134",
+      "version_code": 134,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.revolut.revolut",
+      "version_name": "10.155",
+      "version_code": 1030155101,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Money"
+    },
+    {
+      "package": "com.rhmsoft.edit",
+      "version_name": "1.12.13",
+      "version_code": 286,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.ridedott.rider",
+      "version_name": "2.253.0",
+      "version_code": 13135,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Mobility"
+    },
+    {
+      "package": "com.rome2rio.www.rome2rio",
+      "version_name": "2026.10.19",
+      "version_code": 2077,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "com.rsupport.rs.activity.rsupport.aas2",
+      "version_name": "1.5 (build 454)",
+      "version_code": 454,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Settings"
+    },
+    {
+      "package": "com.ryanair.cheapflights",
+      "version_name": "3.244.0",
+      "version_code": 1055,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "com.samsung.android.app.contacts",
+      "version_name": "16.3.50.61",
+      "version_code": 1635061000,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Phone & Contacts"
+    },
+    {
+      "package": "com.samsung.android.app.find",
+      "version_name": "2.0.01.12",
+      "version_code": 200112000,
+      "origin_store": "com.sec.android.app.samsungapps",
+      "ours": false,
+      "category": null
+    },
+    {
+      "package": "com.samsung.android.bixby.agent",
+      "version_name": "4.1.25.2",
+      "version_code": 412502000,
+      "origin_store": "com.samsung.android.app.updatecenter",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ AI"
+    },
+    {
+      "package": "com.samsung.android.calendar",
+      "version_name": "12.8.01.0",
+      "version_code": 1280100000,
+      "origin_store": "com.samsung.android.app.updatecenter",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Calendar & Tasks"
+    },
+    {
+      "package": "com.samsung.android.dialer",
+      "version_name": "16.3.50.61",
+      "version_code": 1635061000,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Phone & Contacts"
+    },
+    {
+      "package": "com.samsung.android.email.provider",
+      "version_name": "6.2.13.1",
+      "version_code": 621300001,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Mail"
+    },
+    {
+      "package": "com.samsung.android.goodlock",
+      "version_name": "3.0.16.6",
+      "version_code": 301606000,
+      "origin_store": "com.sec.android.app.samsungapps",
+      "ours": false,
+      "category": null
+    },
+    {
+      "package": "com.samsung.android.oneconnect",
+      "version_name": "1.8.52.23",
+      "version_code": 185223010,
+      "origin_store": "com.samsung.android.app.updatecenter",
+      "ours": false,
+      "category": "Tools · System \/ Settings"
+    },
+    {
+      "package": "com.samsung.android.samsungpass",
+      "version_name": "5.2.10.10",
+      "version_code": 521010900,
+      "origin_store": "com.sec.android.app.samsungapps",
+      "ours": false,
+      "category": "Tools · System \/ Stores"
+    },
+    {
+      "package": "com.sec.android.app.camera",
+      "version_name": "17.0.00.80",
+      "version_code": 1700080100,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.sec.android.app.clockpackage",
+      "version_name": "12.6.05.23",
+      "version_code": 1260523100,
+      "origin_store": "com.samsung.android.app.updatecenter",
+      "ours": false,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.sec.android.app.myfiles",
+      "version_name": "15.6.02.11",
+      "version_code": 1560211000,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.sec.android.app.popupcalculator",
+      "version_name": "12.6.00.35",
+      "version_code": 1260035000,
+      "origin_store": "com.samsung.android.app.updatecenter",
+      "ours": false,
+      "category": "Tools · Primary \/ Utilities"
+    },
+    {
+      "package": "com.sec.android.app.samsungapps",
+      "version_name": "4.6.12.11",
+      "version_code": 461211100,
+      "origin_store": "com.sec.android.app.samsungapps",
+      "ours": false,
+      "category": "Tools · System \/ Stores"
+    },
+    {
+      "package": "com.sec.android.app.shealth",
+      "version_name": "7.1.3.005",
+      "version_code": 7013005,
+      "origin_store": "com.samsung.android.app.updatecenter",
+      "ours": false,
+      "category": "Tools · Health \/ Outdoor & Sport"
+    },
+    {
+      "package": "com.sec.android.easyMover",
+      "version_name": "3.7.74.7",
+      "version_code": 377407130,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · System \/ Settings"
+    },
+    {
+      "package": "com.sec.android.gallery3d",
+      "version_name": "15.9.00.50",
+      "version_code": 1590000050,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.sensorberg.oneaccess",
+      "version_name": "3.6.0",
+      "version_code": 105,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Home & Housing"
+    },
+    {
+      "package": "com.shazam.android",
+      "version_name": "16.62.1-261006",
+      "version_code": 1606210,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Media \/ Music & Audio"
+    },
+    {
+      "package": "com.shurgard.selfstorage",
+      "version_name": "2.4.0",
+      "version_code": 2026101201,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.skiplagged",
+      "version_name": "4.2.0",
+      "version_code": 554,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "com.smlnskgmail.jaman.hashchecker",
+      "version_name": "3.7.3",
+      "version_code": 99,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.spanishcoders.pepephone",
+      "version_name": "v22.26.2",
+      "version_code": 1788431786,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Telecom"
+    },
+    {
+      "package": "com.spotify.music",
+      "version_name": "9.2.0.2053",
+      "version_code": 148387875,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Music & Audio"
+    },
+    {
+      "package": "com.starfinanz.smob.android.sfinanzstatus",
+      "version_name": "8.3.4",
+      "version_code": 60615,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "com.strava",
+      "version_name": "484.10",
+      "version_code": 12399983,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Health \/ Outdoor & Sport"
+    },
+    {
+      "package": "com.termux",
+      "version_name": "0.118.3",
+      "version_code": 1002,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Terminals"
+    },
+    {
+      "package": "com.termux.nix",
+      "version_name": "0.118.0_v0.3.7_nix",
+      "version_code": 188037,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Terminals"
+    },
+    {
+      "package": "com.thetrainline",
+      "version_name": "438.1.0.184284",
+      "version_code": 1284284,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "com.tinder",
+      "version_name": "17.42.1",
+      "version_code": 17420105,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Social"
+    },
+    {
+      "package": "com.trafi.whitelabel.bvg",
+      "version_name": "5.40.0",
+      "version_code": 5400777,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Mobility"
+    },
+    {
+      "package": "com.transferwise.android",
+      "version_name": "9.50.0",
+      "version_code": 1748,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Money"
+    },
+    {
+      "package": "com.trello",
+      "version_name": "2026.21.4.88399",
+      "version_code": 26210499,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Calendar & Tasks"
+    },
+    {
+      "package": "com.trianguloy.openInWhatsapp",
+      "version_name": "5.4.1",
+      "version_code": 209,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.ubercab",
+      "version_name": "4.653.10004",
+      "version_code": 319956,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Buro \/ Mobility"
+    },
+    {
+      "package": "com.ubnt.usurvey",
+      "version_name": "2.14.0",
+      "version_code": 214000007,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Network"
+    },
+    {
+      "package": "com.urbandroid.sleep",
+      "version_name": "20261016",
+      "version_code": 2311729,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Health \/ Outdoor & Sport"
+    },
+    {
+      "package": "com.urbansportsclub",
+      "version_name": "7.13.1",
+      "version_code": 9824,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Health"
+    },
+    {
+      "package": "com.viber.voip",
+      "version_name": "29.0.1.0",
+      "version_code": 1290001,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.viscouspot.gitsync",
+      "version_name": "1.8.65",
+      "version_code": 18652,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Storage"
+    },
+    {
+      "package": "com.wbd.stream",
+      "version_name": "22.0.0.321",
+      "version_code": 1800026515,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Video"
+    },
+    {
+      "package": "com.werewolfapps.online",
+      "version_name": "2.7.183",
+      "version_code": 4194944,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Media \/ Games"
+    },
+    {
+      "package": "com.wggesucht.android",
+      "version_name": "2.0.40",
+      "version_code": 5082,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Home & Housing"
+    },
+    {
+      "package": "com.whatsapp",
+      "version_name": "2.26.44.90",
+      "version_code": 264409011,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.whatsapp.w4b",
+      "version_name": "2.26.44.74",
+      "version_code": 264407400,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "com.wikiloc.wikilocandroid",
+      "version_name": "3.64.8",
+      "version_code": 1460,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Health \/ Outdoor & Sport"
+    },
+    {
+      "package": "com.wireguard.android",
+      "version_name": "1.0.20260315",
+      "version_code": 519,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Security"
+    },
+    {
+      "package": "com.wizzair.WizzAirApp",
+      "version_name": "8.4.4",
+      "version_code": 2422,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "com.xe.currency",
+      "version_name": "8.0.8",
+      "version_code": 80008002,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Buro \/ Money"
+    },
+    {
+      "package": "de.bvg.ticket",
+      "version_name": "2.0.37",
+      "version_code": 20047,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": null
+    },
+    {
+      "package": "de.congstar.meincongstar",
+      "version_name": "6.23.0",
+      "version_code": 623000005,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Telecom"
+    },
+    {
+      "package": "de.dhl.paket",
+      "version_name": "10.1.0.44 (884b47487)",
+      "version_code": 921502244,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "de.eos.uptrade.android.fahrinfo.berlin",
+      "version_name": "8.16.3 (225)",
+      "version_code": 1002250,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Mobility"
+    },
+    {
+      "package": "de.eventim.mobile.app.Android",
+      "version_name": "6.18.0",
+      "version_code": 5043132,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Social"
+    },
+    {
+      "package": "de.flixbus.app",
+      "version_name": "9.87.0",
+      "version_code": 9870,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "de.is24.android",
+      "version_name": "31.3.0.1577-202610280912",
+      "version_code": 1577,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Home & Housing"
+    },
+    {
+      "package": "de.number26.android",
+      "version_name": "4.62",
+      "version_code": 202643001,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "dk.shelter.app",
+      "version_name": "3.0.13",
+      "version_code": 300013,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Others \/ Travel"
+    },
+    {
+      "package": "ee.mtakso.client",
+      "version_name": "CA.230.0",
+      "version_code": 4390,
+      "origin_store": null,
+      "ours": false,
+      "category": "Services · Buro \/ Mobility"
+    },
+    {
+      "package": "es.aeat.pin24h",
+      "version_name": "6.2.12",
+      "version_code": 296,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Gov & ID"
+    },
+    {
+      "package": "es.bancosantander.apps",
+      "version_name": "10.35.49",
+      "version_code": 100350049,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Money"
+    },
+    {
+      "package": "es.correos.app",
+      "version_name": "1.15.0",
+      "version_code": 152,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Gov & ID"
+    },
+    {
+      "package": "es.fnmtrcm.ceres.certificadoDigitalFNMT",
+      "version_name": "1.2.21",
+      "version_code": 196,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Gov & ID"
+    },
+    {
+      "package": "es.gob.interior.policia.midni",
+      "version_name": "1.0.4",
+      "version_code": 35,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Buro \/ Gov & ID"
+    },
+    {
+      "package": "eu.faircode.email",
+      "version_name": "1.2338",
+      "version_code": 2338,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Mail"
+    },
+    {
+      "package": "eu.faircode.netguard",
+      "version_name": "2.337",
+      "version_code": 2026080101,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Security"
+    },
+    {
+      "package": "im.vector.app",
+      "version_name": "1.6.66",
+      "version_code": 40106662,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "io.japp.blackscreen",
+      "version_name": "2.0.7",
+      "version_code": 97,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Diagnostics"
+    },
+    {
+      "package": "io.vicoach",
+      "version_name": "2.49.0",
+      "version_code": 539,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": null
+    },
+    {
+      "package": "juloo.keyboard2",
+      "version_name": "2.2.0",
+      "version_code": 57,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": null
+    },
+    {
+      "package": "md.obsidian",
+      "version_name": "1.14.4",
+      "version_code": 389,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "me.proton.android.drive",
+      "version_name": "3.2.0-beta (4731)",
+      "version_code": 47312,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Security"
+    },
+    {
+      "package": "moe.shizuku.privileged.api",
+      "version_name": "13.6.0.r1086.2650830c",
+      "version_code": 1086,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · System \/ Dev"
+    },
+    {
+      "package": "net.residentadvisor.raguide",
+      "version_name": "5.0.3",
+      "version_code": 210261658,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Services · Others \/ Events"
+    },
+    {
+      "package": "net.wordbit.deen",
+      "version_name": "1.7.5.26",
+      "version_code": 1070000526,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": null
+    },
+    {
+      "package": "no.nordicsemi.android.mcp",
+      "version_name": "4.29.1",
+      "version_code": 132,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Data Apps \/ Docs & Notes"
+    },
+    {
+      "package": "org.fdroid.fdroid",
+      "version_name": "2.0.1",
+      "version_code": 2000051,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Stores"
+    },
+    {
+      "package": "org.kde.kdeconnect_tp",
+      "version_name": "1.36.0",
+      "version_code": 13600,
+      "origin_store": null,
+      "ours": false,
+      "category": "Tools · System \/ Network"
+    },
+    {
+      "package": "org.telegram.messenger",
+      "version_name": "13.1.0",
+      "version_code": 72291,
+      "origin_store": "com.aurora.store",
+      "ours": false,
+      "category": "Tools · Inboxes & AI \/ Chat"
+    },
+    {
+      "package": "org.thoughtcrime.securesms",
+      "version_name": "8.33.2",
+      "version_code": 177201,
+      "origin_store": "com.android.vending",
+      "ours": false,
+      "category": "Tools · Media \/ Social"
+    }
+  ]
+}

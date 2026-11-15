@@ -43,30 +43,30 @@ class StoreShelvesTest {
     }
 
     @Test
-    fun `cloud-drive is shelved under Data Apps`() {
+    fun `cloud-drive is shelved under Data`() {
         val shelf = shelves[drive]
         assertNotNull("cloud-drive got no shelf at all — the Store would draw it unheaded. Got: $shelves", shelf)
         assertTrue("cloud-drive heading is '${shelf!!.heading}', not a Data Apps shelf",
-            shelf.heading.contains("Data Apps"))
+            shelf.heading.contains("Data"))
     }
 
     @Test
-    fun `WhatsApp is shelved under Tools Inboxes and AI, Chat`() {
+    fun `WhatsApp is shelved under Tools Communication, Messenger`() {
         val shelf = shelves[whatsapp]
         assertNotNull("WhatsApp got no shelf — got: $shelves", shelf)
         assertTrue("WhatsApp heading is '${shelf!!.heading}'",
-            shelf.heading.startsWith("Tools") && shelf.heading.contains("Inboxes & AI") &&
-                shelf.heading.endsWith("/ Chat"))
+            shelf.heading.startsWith("Tools") && shelf.heading.contains("Communication") &&
+                shelf.heading.endsWith("/ Messenger"))
     }
 
     @Test
     fun `shelves sort in the taxonomy's declared order`() {
-        // Data Apps precedes Inboxes & AI in ui.phone_sections (#312), so a
-        // store sorted by Shelf.order draws Data Apps first — the same order
-        // All Apps draws them in.
-        val dataApps = shelves.getValue(drive).order
-        val inboxes = shelves.getValue(whatsapp).order
-        assertTrue("Data Apps order '$dataApps' does not sort before Inboxes order '$inboxes'", dataApps < inboxes)
+        // Communication precedes Data in ui.phone_sections (#1756), so a
+        // store sorted by Shelf.order draws Communication first — the same
+        // order All Apps draws them in.
+        val data = shelves.getValue(drive).order
+        val comms = shelves.getValue(whatsapp).order
+        assertTrue("Communication order '$comms' does not sort before Data order '$data'", comms < data)
     }
 
     @Test

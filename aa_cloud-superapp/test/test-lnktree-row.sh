@@ -73,9 +73,9 @@ def problems(bj, lt, reg, panels, sections, targets, icons):
     # T1
     groups = cloud.get("tile_groups", [])
     titles = [g.get("title") for g in groups]
-    if "Lnktree" not in titles: out.append("T1 no tile group titled 'Lnktree'")
+    if "Projects" not in titles: out.append("T1 no tile group titled 'Projects' (the Lnktree row, renamed #1756)")
     if "Projects W" in titles: out.append("T1 the row is still called 'Projects W'")
-    row = next((g for g in groups if g.get("title") == "Lnktree"), {"tiles": []})
+    row = next((g for g in groups if g.get("title") == "Projects"), {"tiles": []})
     tiles = [t for t in row["tiles"] if not t.get("separator")]
     if [t.get("label") for t in tiles] != ["SuperApp", "Omniverse", "FinTerm", "CAD", "Sim2Real"]:
         out.append("T1 tiles are %r, want SuperApp Omniverse FinTerm CAD Sim2Real" % [t.get("label") for t in tiles])
@@ -149,7 +149,7 @@ def mut(name, tag, fn):
     fn(b, l, r, args)
     got = problems(b, l, r, args["p"], args["s"], args["t"], args["i"])
     check(any(p.startswith(tag + " ") for p in got), "mutation '%s' is caught by %s" % (name, tag))
-def row(b): return next(g for g in sec(b, "cloud")["tile_groups"] if g.get("title") == "Lnktree")
+def row(b): return next(g for g in sec(b, "cloud")["tile_groups"] if g.get("title") == "Projects")
 def ent(b, where, title):
     s, k = where.split("/"); return next(e for e in sec(b, s)["stack_" + k] if e.get("title") == title)
 def rename(b, l, r, a): row(b)["title"] = "Projects W"

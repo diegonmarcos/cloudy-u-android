@@ -79,13 +79,13 @@ def section_of(folder):
     return next((s["title"] for s in sections if folder["label"].startswith(s["prefix"])), None)
 drive = next((e for e in ui["external_apps"] if e.get("id") == "cloud-drive"), None)
 f = next((x for x in folders if drive and x["id"] == drive.get("folder")), None)
-if f and "Data Apps" in (section_of(f) or ""): ok("cloud-drive -> %s / %s" % (section_of(f), f["label"]))
-else: bad("cloud-drive does not classify into a Data Apps section (folder=%s)" % (f and f["label"]))
+if f and "Data" in (section_of(f) or ""): ok("cloud-drive -> %s / %s" % (section_of(f), f["label"]))
+else: bad("cloud-drive does not classify into a Tools · Data section (#1756) (folder=%s)" % (f and f["label"]))
 wa = [x for x in sorted(folders, key=lambda x: (x.get("order", "99"), x["id"]))
       if "pkg:com.whatsapp" in [k.lower() for k in x.get("match_keywords", [])]]
-if wa and "Inboxes & AI" in (section_of(wa[0]) or "") and wa[0]["label"].endswith("Chat"):
+if wa and "Communication" in (section_of(wa[0]) or "") and wa[0]["label"].endswith("Messenger"):
     ok("WhatsApp -> %s / %s" % (section_of(wa[0]), wa[0]["label"]))
-else: bad("WhatsApp is not Tools · Inboxes & AI / Chat (got %s)" % (wa and wa[0]["label"]))
+else: bad("WhatsApp is not Tools · Communication / Messenger (#1756) (got %s)" % (wa and wa[0]["label"]))
 
 print("== T4: Cloud ▸ Apps has Phone ▸ Apps' All Apps, mirrored over ONE package set ==")
 grouped = code(os.path.join(kt_dir, "launcher/GroupedTilesFragment.kt"))

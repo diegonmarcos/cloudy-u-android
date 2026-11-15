@@ -4,7 +4,7 @@
 # app/page it carried is still present after the reorg, while asserting the new order, renames and dividers.
 #
 #   T1  #1627 group order + renames: the cloud tile_groups read Primary, Communication, Data, Me,
-#       Weby Services & Markets, AGI, Lnktree, Configs; 'Tools Primary' and 'Data Apps' are gone.
+#       Services, AGI, Projects, Setup (#1756); 'Tools Primary' and 'Data Apps' are gone.
 #   T2  #1627 field parity: every app the old 'Tools Primary' ∪ 'Data Apps' launched is still launched by the
 #       new Primary ∪ Data (nothing dropped; Drive moved Data->Primary, Vault moved Primary->Data, Me added).
 #   T3  #1627 Communication is byte-for-byte unchanged (the six tiles, same ids and targets, same order).
@@ -34,7 +34,7 @@ def emit(t, msg): out.append("%s\t%s" % (t, msg))
 
 # T1
 titles = [g.get("title") for g in tg]
-want = ["Primary", "Communication", "Data", "Me", "Weby Services & Markets", "AGI", "Lnktree", "Setup"]
+want = ["Primary", "Communication", "Data", "Me", "Services", "AGI", "Projects", "Setup"]
 if titles != want:
     emit("T1", "group order is %r, want %r" % (titles, want))
 for gone in ("Tools Primary", "Data Apps"):
@@ -143,7 +143,7 @@ for t in T1 T2 T3 T4 T5; do
   lines="$(printf '%s\n' "$RES" | awk -F'\t' -v k="$t" '$1==k{print $2}')"
   if [ -z "$lines" ]; then
     case "$t" in
-      T1) ok "T1: #1627 group order Primary, Communication, Data, Me, Weby…, AGI, Lnktree, Setup (#1755, was Configs); old titles gone" ;;
+      T1) ok "T1: #1627 group order Primary, Communication, Data, Me, Services, AGI, Projects, Setup (#1756) (#1755, was Configs); old titles gone" ;;
       T2) ok "T2: #1627 field parity — every app the old Tools Primary ∪ Data Apps launched is still in Primary ∪ Data" ;;
       T3) ok "T3: #1627 Communication is unchanged (six tiles, same ids and targets)" ;;
       T4) ok "T4: #1627 dividers — single '|' and DOUBLE '||' placed per owner order, separators only" ;;

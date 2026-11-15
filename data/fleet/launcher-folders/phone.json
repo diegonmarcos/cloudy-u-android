@@ -3,256 +3,382 @@
   "_doc": "#1553 TABLE 1 - Phone-scope folder HIERARCHY for Configs > Launcher > Folders. The ids/labels/order are the launcher's own phone taxonomy (aa_cloud-superapp/build.json::ui.phone_folders, baked into PhoneFolders/PhoneAppClassifier), grouped here into sections so the page reads as sections -> folders. The ids match the grid's folder ids 1:1 so a user re-assignment on this page (a Phone-scope override) moves the app in the launcher grid via FolderGridBridge. The 'others' sink is synthesised at runtime and is never declared. Third-party installed apps that match no folder fall to Others until assigned - by design.",
   "folders": [
     {
-      "section": "Services & Buro",
-      "id": "svc_gov",
-      "label": "-Gov & ID",
+      "section": "Tools · Primary",
+      "id": "prod_web",
+      "label": "=Browser",
       "icon": "",
       "order": 110
     },
     {
-      "section": "Services & Buro",
-      "id": "svc_health",
-      "label": "-Health",
+      "section": "Tools · Primary",
+      "id": "prod_maps",
+      "label": "=Nav",
       "icon": "",
       "order": 120
     },
     {
-      "section": "Services & Buro",
-      "id": "svc_home",
-      "label": "-Home & Housing",
+      "section": "Tools · Primary",
+      "id": "prod_calc",
+      "label": "=Calc",
       "icon": "",
       "order": 130
     },
     {
-      "section": "Services & Buro",
-      "id": "svc_mobility",
-      "label": "-Mobility",
+      "section": "Tools · Primary",
+      "id": "prod_camera",
+      "label": "=Camera",
       "icon": "",
       "order": 140
     },
     {
-      "section": "Services & Buro",
-      "id": "svc_money",
-      "label": "-Money",
+      "section": "Tools · Primary",
+      "id": "sys_keyboards",
+      "label": "=Keyboard",
       "icon": "",
       "order": 150
     },
     {
-      "section": "Services & Buro",
-      "id": "svc_telecom",
-      "label": "-Telecom",
+      "section": "Tools · Primary",
+      "id": "prod_wallet",
+      "label": "=Wallet",
       "icon": "",
       "order": 160
     },
     {
-      "section": "Services & Buro",
-      "id": "svc_events",
-      "label": "+Events",
+      "section": "Tools · Primary",
+      "id": "prod_utils",
+      "label": "=Utilities",
+      "icon": "",
+      "order": 170
+    },
+    {
+      "section": "Tools · Communication",
+      "id": "prod_mail",
+      "label": "@Mail",
       "icon": "",
       "order": 210
     },
     {
-      "section": "Services & Buro",
-      "id": "svc_jobs",
-      "label": "+Jobs",
+      "section": "Tools · Communication",
+      "id": "prod_chat",
+      "label": "@Chat",
       "icon": "",
       "order": 220
     },
     {
-      "section": "Services & Buro",
-      "id": "svc_shopping",
-      "label": "+Shopping",
+      "section": "Tools · Communication",
+      "id": "prod_messenger",
+      "label": "@Messenger",
       "icon": "",
       "order": 230
     },
     {
-      "section": "Services & Buro",
-      "id": "svc_travel",
-      "label": "+Travel",
+      "section": "Tools · Communication",
+      "id": "prod_phone",
+      "label": "@Dialer",
       "icon": "",
       "order": 240
     },
     {
-      "section": "System & Fleet",
-      "id": "sys_dev",
-      "label": "_Dev",
+      "section": "Tools · Communication",
+      "id": "prod_contacts",
+      "label": "@Contacts",
+      "icon": "",
+      "order": 250
+    },
+    {
+      "section": "Tools · Communication",
+      "id": "media_social",
+      "label": "@Social",
+      "icon": "",
+      "order": 260
+    },
+    {
+      "section": "Tools · Data",
+      "id": "prod_storage",
+      "label": ".Drive",
       "icon": "",
       "order": 310
     },
     {
-      "section": "System & Fleet",
-      "id": "sys_diag",
-      "label": "_Diagnostics",
+      "section": "Tools · Data",
+      "id": "prod_docs",
+      "label": ".Notes",
       "icon": "",
       "order": 320
     },
     {
-      "section": "System & Fleet",
-      "id": "sys_keyboards",
-      "label": "_Keyboards",
+      "section": "Tools · Data",
+      "id": "prod_plan",
+      "label": ".Agenda",
       "icon": "",
       "order": 330
     },
     {
-      "section": "System & Fleet",
-      "id": "sys_network",
-      "label": "_Network",
+      "section": "Tools · Data",
+      "id": "prod_office",
+      "label": ".Office",
       "icon": "",
       "order": 340
     },
     {
-      "section": "System & Fleet",
-      "id": "sys_security",
-      "label": "_Security",
+      "section": "Tools · Data",
+      "id": "data_gallery",
+      "label": ".Gallery",
       "icon": "",
       "order": 350
     },
     {
-      "section": "System & Fleet",
-      "id": "sys_settings",
-      "label": "_Settings",
+      "section": "Tools · Data",
+      "id": "media_video",
+      "label": ".Media Center",
       "icon": "",
       "order": 360
     },
     {
-      "section": "System & Fleet",
-      "id": "sys_stores",
-      "label": "_Stores",
+      "section": "Tools · Data",
+      "id": "data_vault",
+      "label": ".Vault",
       "icon": "",
       "order": 370
     },
     {
-      "section": "Productivity",
-      "id": "prod_ai",
-      "label": "@AI",
-      "icon": "",
-      "order": 610
-    },
-    {
-      "section": "Communication",
-      "id": "prod_chat",
-      "label": "@Chat",
-      "icon": "",
-      "order": 620
-    },
-    {
-      "section": "Communication",
-      "id": "prod_mail",
-      "label": "@Mail",
-      "icon": "",
-      "order": 630
-    },
-    {
-      "section": "Media & News",
-      "id": "hlth_news",
-      "label": "@News & Reading",
-      "icon": "",
-      "order": 640
-    },
-    {
-      "section": "Communication",
-      "id": "prod_phone",
-      "label": "@Phone & Contacts",
-      "icon": "",
-      "order": 650
-    },
-    {
-      "section": "Productivity",
-      "id": "prod_terminals",
-      "label": "@Terminals",
-      "icon": "",
-      "order": 660
-    },
-    {
-      "section": "Productivity",
-      "id": "prod_plan",
-      "label": ".Calendar & Tasks",
+      "section": "Tools · Me",
+      "id": "me_me",
+      "label": "~Me",
       "icon": "",
       "order": 410
     },
     {
-      "section": "Productivity",
-      "id": "prod_docs",
-      "label": ".Docs & Notes",
+      "section": "Tools · Me",
+      "id": "svc_health",
+      "label": "~Health",
       "icon": "",
       "order": 420
     },
     {
-      "section": "Productivity",
-      "id": "prod_storage",
-      "label": ".Storage",
+      "section": "Tools · Me",
+      "id": "svc_gov",
+      "label": "~Gov & ID",
       "icon": "",
       "order": 430
     },
     {
-      "section": "Productivity",
-      "id": "prod_maps",
-      "label": "=Maps & Weather",
+      "section": "Tools · Me",
+      "id": "svc_telecom",
+      "label": "~Telecom",
+      "icon": "",
+      "order": 440
+    },
+    {
+      "section": "Tools · Me",
+      "id": "svc_home",
+      "label": "~Home & Housing",
+      "icon": "",
+      "order": 450
+    },
+    {
+      "section": "Tools · Me",
+      "id": "hlth_outdoor",
+      "label": "~Outdoor & Sport",
+      "icon": "",
+      "order": 460
+    },
+    {
+      "section": "Tools · Me",
+      "id": "hlth_nutrition",
+      "label": "~Nutrition",
+      "icon": "",
+      "order": 470
+    },
+    {
+      "section": "Tools · Me",
+      "id": "hlth_learning",
+      "label": "~Learning",
+      "icon": "",
+      "order": 480
+    },
+    {
+      "section": "Tools · Me",
+      "id": "media_games",
+      "label": "~Games",
+      "icon": "",
+      "order": 490
+    },
+    {
+      "section": "Services",
+      "id": "svc_search",
+      "label": "+Search",
       "icon": "",
       "order": 510
     },
     {
-      "section": "Productivity",
-      "id": "prod_utils",
-      "label": "=Utilities",
+      "section": "Services",
+      "id": "hlth_news",
+      "label": "+News",
       "icon": "",
       "order": 520
     },
     {
-      "section": "Productivity",
-      "id": "prod_web",
-      "label": "=Web",
+      "section": "Services",
+      "id": "svc_shopping",
+      "label": "+Shopping",
       "icon": "",
       "order": 530
     },
     {
-      "section": "Media & News",
-      "id": "media_games",
-      "label": ">Games",
+      "section": "Services",
+      "id": "svc_events",
+      "label": "+Events",
+      "icon": "",
+      "order": 540
+    },
+    {
+      "section": "Services",
+      "id": "svc_mobility",
+      "label": "+Mobility & Travel",
+      "icon": "",
+      "order": 550
+    },
+    {
+      "section": "Services",
+      "id": "svc_jobs",
+      "label": "+Jobs & Business",
+      "icon": "",
+      "order": 560
+    },
+    {
+      "section": "Services",
+      "id": "svc_realestate",
+      "label": "+Real Estate",
+      "icon": "",
+      "order": 570
+    },
+    {
+      "section": "Services",
+      "id": "svc_money",
+      "label": "+Money",
+      "icon": "",
+      "order": 580
+    },
+    {
+      "section": "Services",
+      "id": "svc_kgstore",
+      "label": "+KG Store",
+      "icon": "",
+      "order": 590
+    },
+    {
+      "section": "AGI",
+      "id": "prod_ai",
+      "label": "*AI",
+      "icon": "",
+      "order": 610
+    },
+    {
+      "section": "AGI",
+      "id": "prod_code",
+      "label": "*Code",
+      "icon": "",
+      "order": 620
+    },
+    {
+      "section": "AGI",
+      "id": "prod_terminals",
+      "label": "*Terminal",
+      "icon": "",
+      "order": 630
+    },
+    {
+      "section": "AGI",
+      "id": "agi_tools",
+      "label": "*Tools",
+      "icon": "",
+      "order": 640
+    },
+    {
+      "section": "Projects",
+      "id": "proj_superapp",
+      "label": "#SuperApp",
       "icon": "",
       "order": 710
     },
     {
-      "section": "Media & News",
-      "id": "media_audio",
-      "label": ">Music & Audio",
+      "section": "Projects",
+      "id": "proj_omniverse",
+      "label": "#Omniverse",
       "icon": "",
       "order": 720
     },
     {
-      "section": "Media & News",
-      "id": "media_social",
-      "label": ">Social",
+      "section": "Projects",
+      "id": "proj_finterm",
+      "label": "#FinTerm",
       "icon": "",
       "order": 730
     },
     {
-      "section": "Media & News",
-      "id": "media_video",
-      "label": ">Video",
+      "section": "Projects",
+      "id": "proj_cad",
+      "label": "#CAD",
       "icon": "",
       "order": 740
     },
     {
-      "section": "Health & Learning",
-      "id": "hlth_learning",
-      "label": "*Learning",
+      "section": "Projects",
+      "id": "proj_sim2real",
+      "label": "#Sim2Real",
+      "icon": "",
+      "order": 750
+    },
+    {
+      "section": "Setup",
+      "id": "sys_stores",
+      "label": "_Store",
       "icon": "",
       "order": 810
     },
     {
-      "section": "Health & Learning",
-      "id": "hlth_nutrition",
-      "label": "*Nutrition",
+      "section": "Setup",
+      "id": "sys_account",
+      "label": "_Account",
       "icon": "",
       "order": 820
     },
     {
-      "section": "Health & Learning",
-      "id": "hlth_outdoor",
-      "label": "*Outdoor & Sport",
+      "section": "Setup",
+      "id": "sys_dev",
+      "label": "_C3 & Dev",
       "icon": "",
       "order": 830
+    },
+    {
+      "section": "Setup",
+      "id": "sys_diag",
+      "label": "_Diagnostics",
+      "icon": "",
+      "order": 840
+    },
+    {
+      "section": "Setup",
+      "id": "sys_network",
+      "label": "_Network",
+      "icon": "",
+      "order": 850
+    },
+    {
+      "section": "Setup",
+      "id": "sys_security",
+      "label": "_Security",
+      "icon": "",
+      "order": 860
+    },
+    {
+      "section": "Setup",
+      "id": "sys_settings",
+      "label": "_Settings",
+      "icon": "",
+      "order": 870
     },
     {
       "section": "Others",

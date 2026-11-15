@@ -82,11 +82,22 @@ expect_seq() {  # $1 = what, $2 = expected (newline separated), $3 = actual
     fi
 }
 
+# #1756: groups were renamed (AI -> AGI, Inboxes -> Communication, Data Apps -> Data) and rebuilt as ONE tile per
+# All Apps subtype in All Apps order, so the owner's earlier rosters are now MEMBERSHIP rules: every app of the old
+# roster is still a tile of the group (or of the group the subtype moved to), in any position. The order itself is
+# pinned by test-quickmarks-categories-1756.sh.
+all_pkgs() { jq -r "$QUICKMARKS"'[] | (.packages[]?, (.folders[]?.packages[]?)) | if type == "string" then . else .pkg end' "$BUILD_JSON"; }
+expect_in() {  # $1 = what, $2 = group title, rest = packages that must be tiles of that group
+    local what="$1" g="$2"; shift 2; local have; have="$(pkgs_of_group "$g")"; local miss=""
+    for p in "$@"; do printf '%s\n' "$have" | grep -qx "$p" || miss="$miss $p"; done
+    if [ -z "$miss" ]; then ok "$what: every app of the owner's roster is still a tile of '$g'"; else bad "$what: missing from '$g':$miss"; fi
+}
+
 echo "== T1: each respecified section is a Quickmarks group, found by TITLE and unique =="
 # #249 inserts groups into this same array, so every index after an insertion
 # point shifts. Title is the only stable handle, and it is only a handle while
 # it is unique.
-for title in "AI" "Inboxes" "Data Apps"; do
+for title in "AGI" "Communication" "Data" "Services"; do
     n="$(jq -r --arg t "$title" "$QUICKMARKS"'[] | select(.title == $t) | .title' "$BUILD_JSON" | wc -l)"
     if [ "$n" -eq 1 ]; then
         ok "exactly one Quickmarks group is titled '$title'"
@@ -95,15 +106,8 @@ for title in "AI" "Inboxes" "Data Apps"; do
     fi
 done
 
-echo "== T2: AI holds Claude, Gemini, Termux, Nix and nothing else =="
-expect_seq "AI" "$(printf '%s\n' \
-    com.anthropic.claude \
-    com.google.android.apps.bard \
-    com.termux \
-    com.termux.nix)" "$(pkgs_of_group 'AI')"
-expect_seq "AI > Others" "$(printf '%s\n' \
-    com.foxdebug.acode \
-    com.rhmsoft.edit)" "$(pkgs_of_folder 'AI' 'Others')"
+echo "== T2: AGI holds Claude, Gemini, Termux, Nix, Acode, QuickEdit =="
+expect_in "AGI" "AGI" com.anthropic.claude com.google.android.apps.bard com.termux com.termux.nix com.foxdebug.acode com.rhmsoft.edit
 
 echo "== T3: no Quickmark curates one of the fleet's OWN apps =="
 # "Remove the Cloud Terminal apps" stays true only if it is checked as a rule.
@@ -125,43 +129,18 @@ else
     bad "the fleet's own package(s) are curated as Quickmarks: $(echo "$OURS" | tr '\n' ' ')-- Phone is the third-party half of the surface"
 fi
 
-echo "== T4: Inboxes holds the six the owner listed, and Others holds his six =="
-expect_seq "Inboxes" "$(printf '%s\n' \
-    com.google.android.gm \
-    com.Slack \
-    com.whatsapp.w4b \
-    com.linkedin.android \
-    com.instagram.android \
-    com.google.android.apps.magazines)" "$(pkgs_of_group 'Inboxes')"
-expect_seq "Inboxes > Others" "$(printf '%s\n' \
-    ch.protonmail.android \
-    app.sterna \
-    com.mattermost.rn \
-    com.beeper.android \
-    org.telegram.messenger \
-    com.devhd.feedly)" "$(pkgs_of_folder 'Inboxes' 'Others')"
+echo "== T4: Communication holds the inbox apps; LinkedIn, Google News and Feedly moved to Services =="
+expect_in "Communication" "Communication" com.google.android.gm com.Slack com.whatsapp.w4b com.instagram.android ch.protonmail.android app.sterna com.mattermost.rn com.beeper.android org.telegram.messenger com.google.android.contacts
+expect_in "Services" "Services" com.linkedin.android com.google.android.apps.magazines com.devhd.feedly
 
-echo "== T5: Data Apps holds the owner's list, and Others holds his six =="
-expect_seq "Data Apps" "$(printf '%s\n' \
-    com.google.android.apps.docs \
-    com.google.android.calendar \
-    com.google.android.contacts \
-    com.microsoft.office.onenote \
-    com.google.android.apps.photos \
-    com.aspiro.tidal)" "$(pkgs_of_group 'Data Apps')"
-expect_seq "Data Apps > Others" "$(printf '%s\n' \
-    com.sec.android.app.myfiles \
-    com.lonelycatgames.Xplore \
-    me.proton.android.drive \
-    md.obsidian \
-    com.x8bit.bitwarden \
-    com.viscouspot.gitsync)" "$(pkgs_of_folder 'Data Apps' 'Others')"
+echo "== T5: Data holds the owner's list =="
+expect_in "Data" "Data" com.google.android.apps.docs com.google.android.calendar com.microsoft.office.onenote com.google.android.apps.photos com.aspiro.tidal com.sec.android.app.myfiles com.lonelycatgames.Xplore me.proton.android.drive md.obsidian com.x8bit.bitwarden com.viscouspot.gitsync
 
 echo "== T6: every curated entry in these sections can caption a placeholder =="
 # A not-installed tile has no launcher label to borrow, so it draws the label
 # declared beside the package. An entry written as a bare string has none, and
 # its placeholder would caption itself with a raw package id.
-for title in "AI" "Inboxes" "Data Apps"; do
+for title in "AGI" "Communication" "Data" "Services"; do
     BARE="$(jq -r --arg t "$title" "$QUICKMARKS"'[] | select(.title == $t)
             | (.packages[]?, (.folders[]?.packages[]?))
             | select(type == "string")' "$BUILD_JSON")" \

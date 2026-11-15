@@ -1858,19 +1858,27 @@
               },
               {
                 "id": "_",
-                "label": "Sys"
+                "label": "Setup"
               },
               {
                 "id": "@",
-                "label": "Inboxes"
+                "label": "Communication"
               },
               {
                 "id": ".",
-                "label": "Data Apps"
+                "label": "Data"
               },
               {
-                "id": "=>*",
+                "id": "=~",
                 "label": "Tools"
+              },
+              {
+                "id": "*",
+                "label": "AGI"
+              },
+              {
+                "id": "#",
+                "label": "Projects"
               }
             ]
           },
@@ -1884,16 +1892,8 @@
                 "label": "All"
               },
               {
-                "id": "-+",
-                "label": "Services"
-              },
-              {
-                "id": "-",
-                "label": "Buro"
-              },
-              {
                 "id": "+",
-                "label": "Others"
+                "label": "Services"
               }
             ]
           },
@@ -2141,19 +2141,27 @@
               },
               {
                 "id": "_",
-                "label": "Sys"
+                "label": "Setup"
               },
               {
                 "id": "@",
-                "label": "Inboxes"
+                "label": "Communication"
               },
               {
                 "id": ".",
-                "label": "Data Apps"
+                "label": "Data"
               },
               {
-                "id": "=>*",
+                "id": "=~",
                 "label": "Tools"
+              },
+              {
+                "id": "*",
+                "label": "AGI"
+              },
+              {
+                "id": "#",
+                "label": "Projects"
               }
             ]
           },
@@ -2167,16 +2175,8 @@
                 "label": "All"
               },
               {
-                "id": "-+",
-                "label": "Services"
-              },
-              {
-                "id": "-",
-                "label": "Buro"
-              },
-              {
                 "id": "+",
-                "label": "Others"
+                "label": "Services"
               }
             ]
           },
@@ -2257,19 +2257,27 @@
               },
               {
                 "id": "_",
-                "label": "Sys"
+                "label": "Setup"
               },
               {
                 "id": "@",
-                "label": "Inboxes"
+                "label": "Communication"
               },
               {
                 "id": ".",
-                "label": "Data Apps"
+                "label": "Data"
               },
               {
-                "id": "=>*",
+                "id": "=~",
                 "label": "Tools"
+              },
+              {
+                "id": "*",
+                "label": "AGI"
+              },
+              {
+                "id": "#",
+                "label": "Projects"
               }
             ]
           },
@@ -2283,16 +2291,8 @@
                 "label": "All"
               },
               {
-                "id": "-+",
-                "label": "Services"
-              },
-              {
-                "id": "-",
-                "label": "Buro"
-              },
-              {
                 "id": "+",
-                "label": "Others"
+                "label": "Services"
               }
             ]
           },
@@ -2365,7 +2365,7 @@
           {
             "id": "tools",
             "label": "Source · Tools",
-            "default": "=>*",
+            "default": "=~",
             "options": [
               {
                 "id": "all",
@@ -2373,19 +2373,27 @@
               },
               {
                 "id": "_",
-                "label": "Sys"
+                "label": "Setup"
               },
               {
                 "id": "@",
-                "label": "Inboxes"
+                "label": "Communication"
               },
               {
                 "id": ".",
-                "label": "Data Apps"
+                "label": "Data"
               },
               {
-                "id": "=>*",
+                "id": "=~",
                 "label": "Tools"
+              },
+              {
+                "id": "*",
+                "label": "AGI"
+              },
+              {
+                "id": "#",
+                "label": "Projects"
               }
             ]
           },
@@ -2399,16 +2407,8 @@
                 "label": "All"
               },
               {
-                "id": "-+",
-                "label": "Services"
-              },
-              {
-                "id": "-",
-                "label": "Buro"
-              },
-              {
                 "id": "+",
-                "label": "Others"
+                "label": "Services"
               }
             ]
           },
@@ -2489,42 +2489,42 @@
               },
               {
                 "id": "_",
-                "label": "Sys"
+                "label": "Setup"
               },
               {
                 "id": "@",
-                "label": "Inboxes"
+                "label": "Communication"
               },
               {
                 "id": ".",
-                "label": "Data Apps"
+                "label": "Data"
               },
               {
-                "id": "=>*",
+                "id": "=~",
                 "label": "Tools"
+              },
+              {
+                "id": "*",
+                "label": "AGI"
+              },
+              {
+                "id": "#",
+                "label": "Projects"
               }
             ]
           },
           {
             "id": "services",
             "label": "Source · Services",
-            "default": "-+",
+            "default": "+",
             "options": [
               {
                 "id": "all",
                 "label": "All"
               },
               {
-                "id": "-+",
-                "label": "Services"
-              },
-              {
-                "id": "-",
-                "label": "Buro"
-              },
-              {
                 "id": "+",
-                "label": "Others"
+                "label": "Services"
               }
             ]
           },
@@ -2605,19 +2605,27 @@
               },
               {
                 "id": "_",
-                "label": "Sys"
+                "label": "Setup"
               },
               {
                 "id": "@",
-                "label": "Inboxes"
+                "label": "Communication"
               },
               {
                 "id": ".",
-                "label": "Data Apps"
+                "label": "Data"
               },
               {
-                "id": "=>*",
+                "id": "=~",
                 "label": "Tools"
+              },
+              {
+                "id": "*",
+                "label": "AGI"
+              },
+              {
+                "id": "#",
+                "label": "Projects"
               }
             ]
           },
@@ -2631,16 +2639,8 @@
                 "label": "All"
               },
               {
-                "id": "-+",
-                "label": "Services"
-              },
-              {
-                "id": "-",
-                "label": "Buro"
-              },
-              {
                 "id": "+",
-                "label": "Others"
+                "label": "Services"
               }
             ]
           },
@@ -3011,14 +3011,14 @@
             "title": "Primary",
             "tiles": [
               {
-                "_doc": "#1627 Drive leads the Primary group (moved here from Data). Drive, the leading tile of Data Apps. It used to be a `page:drive/connections` deep link into an in-app section; task 302/304 lifted those four tabs out into the standalone Cloud Drive APK (ac_cloud-drive, com.diegonmarcos.clouddrive), whose Files tab is a full native local file manager rather than a list of remote back ends. The tile now LAUNCHES that app through the `extapp:` resolver and ui.external_apps.cloud-drive. The tile id is unchanged because the Home tile rows address it by id. ICON \u2014 THIS TILE IS THE ONE PLACE THE DRIVE GLYPH IS DECLARED. The one-hand left-edge `down` sector carries no icon field of its own: libs/launcher-onehand/build.gradle derives action_catalogue from these tiles, canonicalising `extapp:cloud-drive` and `app:com.diegonmarcos.clouddrive` onto one key through ui.external_apps, and OneHandAccessibilityService.declaredIcon draws whatever this field names when the APK is not installed. Changing it here therefore changes the tile AND the edge sector, and there is deliberately no second field anywhere to disagree with it. It was ic_p_sol_cloud, a shared palette glyph four other entries also use and the mark the in-app Drive PAGE wore; task 404 made it ic_drive, which now holds Cloud Drive OWN launcher foreground copied verbatim from ac_cloud-drive/app/src/main/res/drawable/ic_launcher_foreground.xml \u2014 the same thing Writer, Camera and Nav already do for their extracted apps. Sections.iconResFor falls back to ic_link_tile in silence when a name resolves to nothing, so both the existence of that drawable and its provenance are pinned by test-onehand-app-sector-icon.sh rather than trusted.",
+                "_doc": "#1627 Drive leads the Primary group (moved here from Data). Drive, the leading tile of Data Apps. It used to be a `page:drive/connections` deep link into an in-app section; task 302/304 lifted those four tabs out into the standalone Cloud Drive APK (ac_cloud-drive, com.diegonmarcos.clouddrive), whose Files tab is a full native local file manager rather than a list of remote back ends. The tile now LAUNCHES that app through the `extapp:` resolver and ui.external_apps.cloud-drive. The tile id is unchanged because the Home tile rows address it by id. ICON — THIS TILE IS THE ONE PLACE THE DRIVE GLYPH IS DECLARED. The one-hand left-edge `down` sector carries no icon field of its own: libs/launcher-onehand/build.gradle derives action_catalogue from these tiles, canonicalising `extapp:cloud-drive` and `app:com.diegonmarcos.clouddrive` onto one key through ui.external_apps, and OneHandAccessibilityService.declaredIcon draws whatever this field names when the APK is not installed. Changing it here therefore changes the tile AND the edge sector, and there is deliberately no second field anywhere to disagree with it. It was ic_p_sol_cloud, a shared palette glyph four other entries also use and the mark the in-app Drive PAGE wore; task 404 made it ic_drive, which now holds Cloud Drive OWN launcher foreground copied verbatim from ac_cloud-drive/app/src/main/res/drawable/ic_launcher_foreground.xml — the same thing Writer, Camera and Nav already do for their extracted apps. Sections.iconResFor falls back to ic_link_tile in silence when a name resolves to nothing, so both the existence of that drawable and its provenance are pinned by test-onehand-app-sector-icon.sh rather than trusted.",
                 "id": "drive-conn",
                 "label": "Drive",
                 "icon": "ic_drive",
                 "target": "extapp:cloud-drive"
               },
               {
-                "_doc": "Cloud-Browser \u2014 the dedicated WebView browser app (ac_cloud-browser). libs:browser (BrowserHostFragment + BrowserTabPrefs) was MOVED out of the SuperApp into Cloud-Browser, so this tile no longer routes to an in-app section. target=extapp:cloud-browser \u2192 MainActivity.launchExternalApp opens com.diegonmarcos.cloudbrowser if installed, else downloads + installs ui.external_apps[id=cloud-browser].install_apk_url. Browser also handles http/https VIEW intents so other apps can open links in it. icon ic_world (globe) stays \u2014 visually distinct from the App Tabs tile (ic_mode_apps).",
+                "_doc": "Cloud-Browser — the dedicated WebView browser app (ac_cloud-browser). libs:browser (BrowserHostFragment + BrowserTabPrefs) was MOVED out of the SuperApp into Cloud-Browser, so this tile no longer routes to an in-app section. target=extapp:cloud-browser → MainActivity.launchExternalApp opens com.diegonmarcos.cloudbrowser if installed, else downloads + installs ui.external_apps[id=cloud-browser].install_apk_url. Browser also handles http/https VIEW intents so other apps can open links in it. icon ic_world (globe) stays — visually distinct from the App Tabs tile (ic_mode_apps).",
                 "id": "browser",
                 "label": "Browser",
                 "icon": "ic_world",
@@ -3031,28 +3031,28 @@
                 "separator": true
               },
               {
-                "_doc": "Calc \u2014 hands off to the standalone Cloud Calc app (ac_cloud-calc, com.diegonmarcos.cloudcalc, read from ITS android.application_id and app/build.gradle namespace). #772: the owner asked for it IMMEDIATELY BEFORE Writer in this row, and GroupedTilesFragment walks group.tiles in declared order with no sort, so array position is that placement and test-calc-tile.sh pins it as 'the tile right after calc is writer'. Same shape as Writer: target=extapp:cloud-calc \u2192 launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-calc].install_apk_url (ABI-resolved through the fleet assets map). icon ic_calc is Cloud Calc's own launcher foreground, cropped to its art like ic_writer.",
+                "_doc": "Calc — hands off to the standalone Cloud Calc app (ac_cloud-calc, com.diegonmarcos.cloudcalc, read from ITS android.application_id and app/build.gradle namespace). #772: the owner asked for it IMMEDIATELY BEFORE Writer in this row, and GroupedTilesFragment walks group.tiles in declared order with no sort, so array position is that placement and test-calc-tile.sh pins it as 'the tile right after calc is writer'. Same shape as Writer: target=extapp:cloud-calc → launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-calc].install_apk_url (ABI-resolved through the fleet assets map). icon ic_calc is Cloud Calc's own launcher foreground, cropped to its art like ic_writer.",
                 "id": "calc",
                 "label": "Calc",
                 "icon": "ic_calc",
                 "target": "extapp:cloud-calc"
               },
               {
-                "_doc": "Navigation \u2014 hands off to the dedicated Cloud-Nav app (ac_cloud-nav). libs:maps (MapLibre tracker + timeline + MyTrips) was MOVED out of the SuperApp into Cloud-Nav, so this tile no longer routes to an in-app section. target=extapp:cloud-nav \u2192 MainActivity.launchExternalApp opens com.diegonmarcos.cloudnav if installed, else downloads + installs ui.external_apps[id=cloud-nav].install_apk_url (Cloud-Nav.apk). icon ic_nav (ic_maps left with libs:maps). For the system Google Maps launcher use action:app://com.google.android.apps.maps from anywhere else.",
+                "_doc": "Navigation — hands off to the dedicated Cloud-Nav app (ac_cloud-nav). libs:maps (MapLibre tracker + timeline + MyTrips) was MOVED out of the SuperApp into Cloud-Nav, so this tile no longer routes to an in-app section. target=extapp:cloud-nav → MainActivity.launchExternalApp opens com.diegonmarcos.cloudnav if installed, else downloads + installs ui.external_apps[id=cloud-nav].install_apk_url (Cloud-Nav.apk). icon ic_nav (ic_maps left with libs:maps). For the system Google Maps launcher use action:app://com.google.android.apps.maps from anywhere else.",
                 "id": "maps",
                 "label": "Navigation",
                 "icon": "ic_nav",
                 "target": "extapp:cloud-nav"
               },
               {
-                "_doc": "Camera \u2014 the fleet's OWN camera (ac_cloud-camera, applicationId cld.camera, our signed build of GrapheneOS Camera), not a third-party one. The owner asked for it 'as last' in this row on 2026-09-10, and LAST HERE IS ARRAY POSITION: GroupedTilesFragment walks group.tiles in declared order and applies no sort of any kind, so appending is what makes it last and reordering this array is the only way to move it. There is no `order` field to set and none is wanted \u2014 a second way to express position is a second thing to disagree with the first. target=extapp:cloud-camera \u2192 MainActivity.launchExternalApp opens cld.camera if installed, else downloads + installs ui.external_apps[id=cloud-camera].install_apk_url. icon ic_camera is its own drawable rather than ic_photos, which the Gallery tile already carries; Sections.iconResFor falls back to ic_link_tile without complaining when a name resolves to nothing, so a shared or misspelt icon is a silent defect and test-camera-tiles.sh pins the file's existence.",
+                "_doc": "Camera — the fleet's OWN camera (ac_cloud-camera, applicationId cld.camera, our signed build of GrapheneOS Camera), not a third-party one. The owner asked for it 'as last' in this row on 2026-09-10, and LAST HERE IS ARRAY POSITION: GroupedTilesFragment walks group.tiles in declared order and applies no sort of any kind, so appending is what makes it last and reordering this array is the only way to move it. There is no `order` field to set and none is wanted — a second way to express position is a second thing to disagree with the first. target=extapp:cloud-camera → MainActivity.launchExternalApp opens cld.camera if installed, else downloads + installs ui.external_apps[id=cloud-camera].install_apk_url. icon ic_camera is its own drawable rather than ic_photos, which the Gallery tile already carries; Sections.iconResFor falls back to ic_link_tile without complaining when a name resolves to nothing, so a shared or misspelt icon is a silent defect and test-camera-tiles.sh pins the file's existence.",
                 "id": "camera",
                 "label": "Camera",
                 "icon": "ic_camera",
                 "target": "extapp:cloud-camera"
               },
               {
-                "_doc": "Keyboard \u2014 hands off to the standalone Cloud-Keyboard app (ac_cloud-keyboard, com.diegonmarcos.cloudkeyboard). Same target as the Configs \u25b8 Keyboard entry: extapp:cloud-keyboard \u2192 MainActivity.launchExternalApp opens Cloud-Keyboard's SettingsActivity if installed, else downloads + installs ui.external_apps[id=cloud-keyboard].install_apk_url. The keyboard is a first-class Cloud app like Browser/Wallet/Vault, so it belongs in Tools Primary and not only behind Configs.",
+                "_doc": "Keyboard — hands off to the standalone Cloud-Keyboard app (ac_cloud-keyboard, com.diegonmarcos.cloudkeyboard). Same target as the Configs ▸ Keyboard entry: extapp:cloud-keyboard → MainActivity.launchExternalApp opens Cloud-Keyboard's SettingsActivity if installed, else downloads + installs ui.external_apps[id=cloud-keyboard].install_apk_url. The keyboard is a first-class Cloud app like Browser/Wallet/Vault, so it belongs in Tools Primary and not only behind Configs.",
                 "id": "keyboard",
                 "label": "Keyboard",
                 "icon": "ic_keyboard",
@@ -3066,7 +3066,7 @@
                 "double": true
               },
               {
-                "_doc": "Cloud-Wallet \u2014 the dedicated cards/passes/tickets app (ac_cloud-wallet). libs:wallet (Compose deck) was MOVED out of the SuperApp into Cloud-Wallet, so this tile no longer routes to an in-app section. target=extapp:cloud-wallet \u2192 MainActivity.launchExternalApp opens com.diegonmarcos.cloudwallet if installed, else downloads + installs ui.external_apps[id=cloud-wallet].install_apk_url. For the system Google Wallet launcher use action:app://com.google.android.apps.walletnfcrel from anywhere else.",
+                "_doc": "Cloud-Wallet — the dedicated cards/passes/tickets app (ac_cloud-wallet). libs:wallet (Compose deck) was MOVED out of the SuperApp into Cloud-Wallet, so this tile no longer routes to an in-app section. target=extapp:cloud-wallet → MainActivity.launchExternalApp opens com.diegonmarcos.cloudwallet if installed, else downloads + installs ui.external_apps[id=cloud-wallet].install_apk_url. For the system Google Wallet launcher use action:app://com.google.android.apps.walletnfcrel from anywhere else.",
                 "id": "wallet",
                 "label": "Wallet",
                 "icon": "ic_wallet",
@@ -3094,24 +3094,24 @@
                 "label": "Messenger",
                 "icon": "ic_p_chat_matrix",
                 "target": "extapp:cloud-matrix",
-                "_doc": "Opens the standalone Cloud-Matrix app (ac_cloud-matrix, com.diegonmarcos.comms.matrix) via extapp:cloud-matrix \u2014 installed \u2192 launches; absent \u2192 install via Configs \u25b8 Constellation. The Cloud-Comms hub is decommissioned; the matrix fork is now its own constellation app. Replaces the old app://im.vector.app launcher."
+                "_doc": "Opens the standalone Cloud-Matrix app (ac_cloud-matrix, com.diegonmarcos.comms.matrix) via extapp:cloud-matrix — installed → launches; absent → install via Configs ▸ Constellation. The Cloud-Comms hub is decommissioned; the matrix fork is now its own constellation app. Replaces the old app://im.vector.app launcher."
               },
               {
                 "id": "dialer",
                 "label": "Dialer",
                 "icon": "ic_p_dialer",
                 "target": "extapp:cloud-dialer",
-                "_doc": "Opens the standalone Cloud-Dialer app (ac_cloud-dialer, com.diegonmarcos.comms.dialer, Fossify Phone) via extapp:cloud-dialer \u2014 installed \u2192 launches; absent \u2192 install via Configs \u25b8 Constellation. Its own constellation app now that the Cloud-Comms hub is decommissioned; same extapp mechanism as Mail / Chat / Messenger above."
+                "_doc": "Opens the standalone Cloud-Dialer app (ac_cloud-dialer, com.diegonmarcos.comms.dialer, Fossify Phone) via extapp:cloud-dialer — installed → launches; absent → install via Configs ▸ Constellation. Its own constellation app now that the Cloud-Comms hub is decommissioned; same extapp mechanism as Mail / Chat / Messenger above."
               },
               {
-                "_doc": "C3-Bot is a BOT, not an AI assistant, and the icon said otherwise. It shared ic_ai_chat with the three genuine AI tiles above it (Chat GPT / Claude / Gemini), so the one tile in this group that opens a Telegram automation read as a fourth chatbot. ic_robot is the glyph the rest of the fleet already uses for automation \u2014 Morpheus and the three Dagu tiles in ui.sections[13] carry it. Resolution is Sections.iconResFor's literal getIdentifier(name, \"drawable\", pkg) hit on res/drawable/ic_robot.xml; there is no icon allow-list, and a name that resolves to nothing does NOT fail the build \u2014 it silently falls back to ic_link_tile, which is why test-tile-icons-resolve.sh checks every ui icon against the drawable set rather than this one value.",
+                "_doc": "C3-Bot is a BOT, not an AI assistant, and the icon said otherwise. It shared ic_ai_chat with the three genuine AI tiles above it (Chat GPT / Claude / Gemini), so the one tile in this group that opens a Telegram automation read as a fourth chatbot. ic_robot is the glyph the rest of the fleet already uses for automation — Morpheus and the three Dagu tiles in ui.sections[13] carry it. Resolution is Sections.iconResFor's literal getIdentifier(name, \"drawable\", pkg) hit on res/drawable/ic_robot.xml; there is no icon allow-list, and a name that resolves to nothing does NOT fail the build — it silently falls back to ic_link_tile, which is why test-tile-icons-resolve.sh checks every ui icon against the drawable set rather than this one value.",
                 "id": "c3-bot",
                 "label": "C3-Bot",
                 "icon": "ic_robot",
                 "target": "intent://resolve?domain=Cloud_bot_C3_Infra_bot#Intent;scheme=tg;package=org.telegram.messenger;S.browser_fallback_url=https%3A%2F%2Ft.me%2FCloud_bot_C3_Infra_bot;end"
               },
               {
-                "_doc": "Opens the standalone Cloud-Contacts app (ac_cloud-contacts, com.diegonmarcos.cloudcontacts, native multi-channel people hub) via extapp:cloud-contacts \u2014 installed \u2192 launches; absent \u2192 install via Configs \u25b8 Constellation. Replaces the old Google Contacts launcher.",
+                "_doc": "Opens the standalone Cloud-Contacts app (ac_cloud-contacts, com.diegonmarcos.cloudcontacts, native multi-channel people hub) via extapp:cloud-contacts — installed → launches; absent → install via Configs ▸ Constellation. Replaces the old Google Contacts launcher.",
                 "id": "contacts",
                 "label": "Contacts",
                 "icon": "ic_p_sol_personal",
@@ -3124,7 +3124,7 @@
             "title": "Data",
             "tiles": [
               {
-                "_doc": "Cloud Notes (ac_cloud-notes, com.diegonmarcos.cloudnotes) \u2014 our own signed build of Cloud Notes, a local-first notes/whiteboard app. Formerly a Markor build in this same directory; #495 flipped the Cloud Notes build (vendored alongside it by #469 under com.diegonmarcos.cloud-notes) onto this identity and deleted the Markor tree. #522 put the DIRECTORY and the NAME back: the product is cloud-notes, Cloud Notes is only the upstream it is built from. Replaces the `obsidian://open` deep link this tile used to carry, back when it was added. Two things were wrong with that target and only one of them was about branding: it is a bare scheme URI, so ShellActivity.launchUri turns it into a plain ACTION_VIEW and it raises ActivityNotFoundException on any phone without Obsidian installed \u2014 the exact hazard test-drive-page-sections.sh T9 exists to contain, and a tile that fails AFTER the tap. `extapp:cloud-notes` resolves through ui.external_apps instead: installed \u2192 launches, absent \u2192 offers the install from the Constellation store. Obsidian itself is NOT removed from the phone or from this file \u2014 md.obsidian keeps its ui.phone_folders keyword and its place in the favourites picker (a favourite is what you can pick, not what you get), so nothing dangles.",
+                "_doc": "Cloud Notes (ac_cloud-notes, com.diegonmarcos.cloudnotes) — our own signed build of Cloud Notes, a local-first notes/whiteboard app. Formerly a Markor build in this same directory; #495 flipped the Cloud Notes build (vendored alongside it by #469 under com.diegonmarcos.cloud-notes) onto this identity and deleted the Markor tree. #522 put the DIRECTORY and the NAME back: the product is cloud-notes, Cloud Notes is only the upstream it is built from. Replaces the `obsidian://open` deep link this tile used to carry, back when it was added. Two things were wrong with that target and only one of them was about branding: it is a bare scheme URI, so ShellActivity.launchUri turns it into a plain ACTION_VIEW and it raises ActivityNotFoundException on any phone without Obsidian installed — the exact hazard test-drive-page-sections.sh T9 exists to contain, and a tile that fails AFTER the tap. `extapp:cloud-notes` resolves through ui.external_apps instead: installed → launches, absent → offers the install from the Constellation store. Obsidian itself is NOT removed from the phone or from this file — md.obsidian keeps its ui.phone_folders keyword and its place in the favourites picker (a favourite is what you can pick, not what you get), so nothing dangles.",
                 "id": "notes",
                 "label": "Notes",
                 "icon": "ic_notes",
@@ -3138,7 +3138,7 @@
                 "target": "extapp:cloud-tasks"
               },
               {
-                "_doc": "#380. This tile is the Data Apps entry for the application whose IDENTITY is cloud-office (ac_cloud-office, com.diegonmarcos.cloudoffice) and its label is \"Office\" \u2014 a caption for the tap target, not a name for the app. It printed the identity string \"cloud-office\" until #380; identity now lives only in `target`/ui.external_apps[cloud-office].id and the app's own build.json::name, and nothing about the package, the Cloud-Office.apk asset or the folder changed with this label. THE PREVIOUS _doc HERE WAS WRONG TWICE AND IS CORRECTED RATHER THAN KEPT. It said \"this tile label and ui.external_apps[cloud-office].label are the two names the fleet owns\": ui.external_apps carries NO label key on any of its 23 entries, and test-app-names-pattern.sh T3 forbids one outright (\"ui.external_apps shows the id and restates no name\") \u2014 so that sentence pointed a future editor at a second copy that does not exist and would have reddened the guard the moment they created it. It also said the rebrand waits on build.json::build.host \"and it is null\"; ac_cloud-office/build.json::build.host is ubuntu-latest and the source build has published Cloud-Office.apk. Android's own home screen is a SEPARATE surface from this tile and takes its label from the APK manifest, via --with-app-name = that app's build.json::name, which test-app-name-reaches-the-user.sh pins to the cloud-<x> pattern \u2014 deliberately NOT to this caption.",
+                "_doc": "#380. This tile is the Data Apps entry for the application whose IDENTITY is cloud-office (ac_cloud-office, com.diegonmarcos.cloudoffice) and its label is \"Office\" — a caption for the tap target, not a name for the app. It printed the identity string \"cloud-office\" until #380; identity now lives only in `target`/ui.external_apps[cloud-office].id and the app's own build.json::name, and nothing about the package, the Cloud-Office.apk asset or the folder changed with this label. THE PREVIOUS _doc HERE WAS WRONG TWICE AND IS CORRECTED RATHER THAN KEPT. It said \"this tile label and ui.external_apps[cloud-office].label are the two names the fleet owns\": ui.external_apps carries NO label key on any of its 23 entries, and test-app-names-pattern.sh T3 forbids one outright (\"ui.external_apps shows the id and restates no name\") — so that sentence pointed a future editor at a second copy that does not exist and would have reddened the guard the moment they created it. It also said the rebrand waits on build.json::build.host \"and it is null\"; ac_cloud-office/build.json::build.host is ubuntu-latest and the source build has published Cloud-Office.apk. Android's own home screen is a SEPARATE surface from this tile and takes its label from the APK manifest, via --with-app-name = that app's build.json::name, which test-app-name-reaches-the-user.sh pins to the cloud-<x> pattern — deliberately NOT to this caption.",
                 "id": "sheets",
                 "label": "Office",
                 "icon": "ic_sheets",
@@ -3151,14 +3151,14 @@
                 "separator": true
               },
               {
-                "_doc": "Gallery \u2014 the Data Apps tile for cloud-gallery (ac_cloud-gallery, applicationId com.diegonmarcos.mediacenter), our Google-Photos/Samsung-Gallery replacement (local gallery + PhotoPrism cloud library + backup). Registered in ui.external_apps[cloud-gallery]; this tile is what makes it VISIBLE in the launcher \u2014 an external_apps entry alone only makes an app installable/openable BY ID and shows nothing. The app was called cloud-media-center until 2026-10 and this tile's id was mediacenter; both were renamed to gallery so that the name cloud-media-center could go to the new Tauri media app (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter). The applicationId did NOT change, because the app is installed on phones and a new package id would be a different app to Android. The former sibling 'photos' tile (app://com.google.android.apps.photos) was removed 2026-08-30 \u2014 Gallery is the sole photo entry point.",
+                "_doc": "Gallery — the Data Apps tile for cloud-gallery (ac_cloud-gallery, applicationId com.diegonmarcos.mediacenter), our Google-Photos/Samsung-Gallery replacement (local gallery + PhotoPrism cloud library + backup). Registered in ui.external_apps[cloud-gallery]; this tile is what makes it VISIBLE in the launcher — an external_apps entry alone only makes an app installable/openable BY ID and shows nothing. The app was called cloud-media-center until 2026-10 and this tile's id was mediacenter; both were renamed to gallery so that the name cloud-media-center could go to the new Tauri media app (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter). The applicationId did NOT change, because the app is installed on phones and a new package id would be a different app to Android. The former sibling 'photos' tile (app://com.google.android.apps.photos) was removed 2026-08-30 — Gallery is the sole photo entry point.",
                 "id": "gallery",
                 "label": "Gallery",
                 "icon": "ic_photos",
                 "target": "extapp:cloud-gallery"
               },
               {
-                "_doc": "#1627 label is now 'Media Center' (was 'Media'); package/id unchanged. Media Center \u2014 the Data Apps tile for cloud-media-center (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter), the Tauri media hub: music (TIDAL playlists), videos, gallery (Pinterest boards), books, the feed, movies and documentaries. It REPLACES the old Music tile, which launched TIDAL itself (app://com.aspiro.tidal); TIDAL is not removed from the phone \u2014 every track in the Media Center's music page opens a TIDAL search through the system, so the app is still one tap away. Resolved through ui.external_apps[cloud-media-center]: installed launches it, absent offers the install. Not to be confused with cloud-gallery (the Gallery tile above, com.diegonmarcos.mediacenter), which held the name cloud-media-center until 2026-10.",
+                "_doc": "#1627 label is now 'Media Center' (was 'Media'); package/id unchanged. Media Center — the Data Apps tile for cloud-media-center (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter), the Tauri media hub: music (TIDAL playlists), videos, gallery (Pinterest boards), books, the feed, movies and documentaries. It REPLACES the old Music tile, which launched TIDAL itself (app://com.aspiro.tidal); TIDAL is not removed from the phone — every track in the Media Center's music page opens a TIDAL search through the system, so the app is still one tap away. Resolved through ui.external_apps[cloud-media-center]: installed launches it, absent offers the install. Not to be confused with cloud-gallery (the Gallery tile above, com.diegonmarcos.mediacenter), which held the name cloud-media-center until 2026-10.",
                 "id": "mediacenter",
                 "label": "Media Center",
                 "icon": "ic_music",
@@ -3172,7 +3172,7 @@
                 "double": true
               },
               {
-                "_doc": "#1627 Me \u2014 launches the Cloud-Me app (ac_cloud-me, extapp:cloud-me). Added to the Data group after the || divider, beside Vault, by owner order. A SECOND entry point for the same app that heads the separate 'Me' row below (an app on two surfaces is the normal case); own id 'data-me' because tile ids are unique.",
+                "_doc": "#1627 Me — launches the Cloud-Me app (ac_cloud-me, extapp:cloud-me). Added to the Data group after the || divider, beside Vault, by owner order. A SECOND entry point for the same app that heads the separate 'Me' row below (an app on two surfaces is the normal case); own id 'data-me' because tile ids are unique.",
                 "id": "data-me",
                 "label": "Me",
                 "icon": "ic_vcard",
@@ -3180,7 +3180,7 @@
                 "category_skip": true
               },
               {
-                "_doc": "#1627 Vault moved to the Data group (after the || divider, before none; last of Data). Cloud-Vault \u2014 the dedicated Vaultwarden client app (ac_cloud-vault). libs:vault (KeePassDX stub) was replaced by Cloud-Vault, a standalone constellation APK hosting vault.diegonmarcos.com (self-hosted Vaultwarden). target=extapp:cloud-vault \u2192 MainActivity.launchExternalApp opens com.diegonmarcos.cloudvault if installed, else downloads + installs ui.external_apps[id=cloud-vault].install_apk_url. Lives in Tools Primary (moved there from Data Apps by owner order, #1092).",
+                "_doc": "#1627 Vault moved to the Data group (after the || divider, before none; last of Data). Cloud-Vault — the dedicated Vaultwarden client app (ac_cloud-vault). libs:vault (KeePassDX stub) was replaced by Cloud-Vault, a standalone constellation APK hosting vault.diegonmarcos.com (self-hosted Vaultwarden). target=extapp:cloud-vault → MainActivity.launchExternalApp opens com.diegonmarcos.cloudvault if installed, else downloads + installs ui.external_apps[id=cloud-vault].install_apk_url. Lives in Tools Primary (moved there from Data Apps by owner order, #1092).",
                 "id": "vault",
                 "label": "Vault",
                 "icon": "ic_vault",
@@ -3205,21 +3205,21 @@
                 "separator": true
               },
               {
-                "_doc": "Me-Health \u2014 Cloud-Me's Health section, entered at its Index page (the MyHealth tile, renamed). Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
+                "_doc": "Me-Health — Cloud-Me's Health section, entered at its Index page (the MyHealth tile, renamed). Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
                 "id": "myhealth",
                 "label": "Me-Health",
                 "icon": "ic_heart",
                 "target": "extapp:cloud-me#page:health/home"
               },
               {
-                "_doc": "Experiences \u2014 Cloud-Me's top-level Experiences page (Work, Study, Personal Achieves), entered at its first tab Work; replaced the Me-Study and Me-Achieves tiles once Experiences and Tasks became top-level Cloud-Me pages. Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
+                "_doc": "Experiences — Cloud-Me's top-level Experiences page (Work, Study, Personal Achieves), entered at its first tab Work; replaced the Me-Study and Me-Achieves tiles once Experiences and Tasks became top-level Cloud-Me pages. Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
                 "id": "myexperiences",
                 "label": "Experienc.",
                 "icon": "ic_file_stack",
                 "target": "extapp:cloud-me#page:experiences/work"
               },
               {
-                "_doc": "Tasks (was RoadMap) \u2014 Cloud-Me's Tasks > RoadMaps subpage (the folder tree of the private notes vault; #1367 RoadMap and Duties merged into the top-level Tasks page). Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
+                "_doc": "Tasks (was RoadMap) — Cloud-Me's Tasks > RoadMaps subpage (the folder tree of the private notes vault; #1367 RoadMap and Duties merged into the top-level Tasks page). Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
                 "id": "myroadmap",
                 "label": "Tasks",
                 "icon": "ic_tree",
@@ -3232,21 +3232,21 @@
                 "separator": true
               },
               {
-                "_doc": "Me-Inventory (was Me-Duties) \u2014 Cloud-Me's Tasks > Backlogs subpage (Day, Subject and Calendar views over the calendar engine; #1367 the former Duties section). Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
+                "_doc": "Me-Inventory (was Me-Duties) — Cloud-Me's Tasks > Backlogs subpage (Day, Subject and Calendar views over the calendar engine; #1367 the former Duties section). Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
                 "id": "myduties",
                 "label": "Me-Invent.",
                 "icon": "ic_check_all",
                 "target": "extapp:cloud-me#page:tasks/backlogs"
               },
               {
-                "_doc": "Me-Buro \u2014 Cloud-Me's Buro section, entered at IDs & DD (the MyBuro tile, renamed; Buro has four row groups: IDs & DD, Docs, Financial Reports, Calendar). Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
+                "_doc": "Me-Buro — Cloud-Me's Buro section, entered at IDs & DD (the MyBuro tile, renamed; Buro has four row groups: IDs & DD, Docs, Financial Reports, Calendar). Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
                 "id": "myburo",
                 "label": "Me-Buro",
                 "icon": "ic_p_folder",
                 "target": "extapp:cloud-me#page:buro/ids"
               },
               {
-                "_doc": "Me-LLC \u2014 Cloud-Me's LLC section, the former Work, entered at Employed. Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
+                "_doc": "Me-LLC — Cloud-Me's LLC section, the former Work, entered at Employed. Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
                 "id": "myllc",
                 "label": "Me-LLC",
                 "icon": "ic_p_llc",
@@ -3270,7 +3270,7 @@
           },
           {
             "_doc": "#1473/#1476 Weby Services & Markets (was Services): the row after Me and before AGI. News moved here from Data Apps; Shopping (ac_cloud-shopping, com.diegonmarcos.cloudshopping, a deals and listings browser over mock data) joined it. Both open their own app through ui.external_apps; the Shopping glyph ic_shopping is generated from ac_cloud-shopping/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable). Events, Mobility and Jobs are coming_soon placeholders (no app yet). Search moved in before News Shopping and KG Store after them, with a declared separator between the sub-groups (#1476). Pinned by test-agi-tiles.sh (AGI follows Services) and test-services-row.sh.",
-            "title": "Weby Services & Markets",
+            "title": "Services",
             "tiles": [
               {
                 "_doc": "#1162 the caption was Research (Cloud Search renamed Cloud Research); the caption is Search again (renamed back to Cloud Search); id, package and extapp target stay search / cloud-search so installed copies update). #779 Search — hands off to the standalone Cloud Search app (ac_cloud-search, com.diegonmarcos.cloudsearch, read from ITS android.application_id and app/build.gradle namespace). #803: the owner moved SuperApp to the Configs row, so AGI now STARTS with Search: Search, AI Chat, Code, Tools, MyTerminal, Terminal (B-LLM and S-LLM removed, Tools in S-LLM's place, 2026-10-13). GroupedTilesFragment walks group.tiles in declared order with no sort, so array position is that placement, and test-agi-tiles.sh T1 pins the row. target=extapp:cloud-search → launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-search].install_apk_url (ABI-resolved through the fleet assets map). icon ic_cloud_search is Cloud Search's own launcher foreground, byte for byte (test-agi-tiles.sh T3) — #803 the Phosphor shooting-star in the mockup's .ai-nav-icon gradient (Cloud Search's app/tools/phosphor.json::launcher generates it; Phosphor is MIT, recorded in ac_cloud-search/NOTICE.md). `tint: false` keeps that gradient: every other tile glyph is drawn white, which would flatten this one to a silhouette (test-agi-tiles.sh T6).",
@@ -3357,7 +3357,9 @@
           {
             "title": "AGI",
             "_doc_store_apps": "#1704 Store-only members: apps with no tile on this row (Termux) that the Store files under AGI. Same group, no tile drawn.",
-            "store_apps": ["termux"],
+            "store_apps": [
+              "termux"
+            ],
             "tiles": [
               {
                 "_doc": "#1162 SI, Cloud SuperIntel (ac_cloud-superintel, com.diegonmarcos.cloudsuperintel): the Gemini-style chat app (sessions drawer, model picker, streaming, markdown) over the fleet AI contract. Opened through ui.external_apps[cloud-superintel]; not installed = the #249 placeholder and the tap installs it. First tile of the AGI row, right before AI (the Claude bot).",
@@ -3417,7 +3419,7 @@
           },
           {
             "_doc": "Lnktree (was 'Projects W'; owner 2026-10-30): led by the SuperApp tile (app://com.diegonmarcos.superapp, moved here from Configs 2026-10-30), then four tiles, each LAUNCHING a real app of the Lnktree family (#1335, extapp:cg-omniverse, capital-stack-finterminal, hardtech-cad, hardtech-sim2real; folders ad_*, 1_cicd/src/data/app-families.json). The pages live in the apps (their build.json::ui), no in-app page is left here. The three '|' rules are the owner's grouping: SuperApp | Omniverse | FinTerm | CAD Sim2Real. The row id stays 'Lnktree' = the title; the old project tiles (Lf.y/Nx.z/St.x repos) are gone.",
-            "title": "Lnktree",
+            "title": "Projects",
             "tiles": [
               {
                 "_doc": "Owner 2026-10-30: moved out of Configs to LEAD the Lnktree row (SuperApp | Omniverse | FinTerm | CAD Sim2Real; test-lnktree-row.sh); #803 had earlier moved it out of AGI into Configs. app:// resolves MAIN/LAUNCHER for the package and adds FLAG_ACTIVITY_NEW_TASK (see ShellActivity.handleTarget), which lands on .MainActivity — the app door, own taskAffinity, own Overview card. .HomeActivity (the launcher door) is a different task and is not reachable this way, which is the point. #1153 supersedes #1095: the tile launches the real app as its OWN task (app:// with NEW_TASK | LAUNCH_ADJACENT, ShellActivity.handleTarget; MainActivity is resizeableActivity), so split screen keeps this Cloud ▸ Apps page open beside it, instead of embedding a page in the launcher. test-dashboard-cross-app-deeplink.sh T7 and ConfigsTileDeepLinkTest pin it.",
@@ -3478,7 +3480,12 @@
             "_doc": "Configs (#324) - the surfaces that configure the fleet rather than being part of it, pulled out of Tools Primary so a config errand is one recognisable row instead of a hunt through the tool tiles. It sits LAST among the declared groups on purpose: GroupedTilesFragment appends a synthetic 'Actions' header after every data group it renders (see LauncherNavController.GROUP_ACTIONS), so 'after Lnktree and before Actions' is exactly this position and there is no Actions group in this array to sit before.",
             "title": "Setup",
             "_doc_store_apps": "#1704 Store-only members: c3 apps that have no tile on this row (the Cloud tab of the Store files every app by this declaration, never in an Others group). Same group, same category, no tile drawn. Parity: test-store-cloud-categories.sh.",
-            "store_apps": ["c3-webserver", "morpheus", "watchtower", "watchdog"],
+            "store_apps": [
+              "c3-webserver",
+              "morpheus",
+              "watchtower",
+              "watchdog"
+            ],
             "_doc_row_order": "#1628 OWNER ORDER (2026-11, supersedes #1611): the Cloud > Apps > Configs row reads exactly Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About (#1745 supersedes the #1628 Firewall, WiFi and Account placement) - seven tile groups divided by six '|' separators. Groups: [Quick Actions, UI] [Firewall, WiFi] [Store] [Account, C3] [Watchdog] [About]. Each tile maps to a real existing page/app id (no page invented): Quick Actions=page:config/controls, UI=page:config/panels-ui, Firewall=page:config/firewall, WiFi=page:config/wifi, Store=extapp:cloud-store, Account=extapp:cloud-account, C3=extapp:cloud-c3, Watchdog=extapp:c3-watchdog, About=page:config/app-about. #1611's five tiles (Quick Actions, Watchdog, Account, C3, Store) are all retained; UI, Firewall, WiFi, About added. test-c3-is-an-app.sh finds this group by its CONTENT (a group holding both Store and Quick Actions labels), so the reorder keeps it identifiable. Pinned by test-configs-apps-row.sh. #1755 the group heading is now Setup (title only; was Configs); (owner order) final row: Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About; Profile = extapp:cloud-account; Watchdog left the row and stays on the Configs page (Profiling group).",
             "tiles": [
               {
@@ -3650,185 +3657,289 @@
         ],
         "phone_app_groups": [
           {
-            "title": "AI",
-            "_doc_cloud_terminals_removed": "The owner asked to 'remove the Cloud Terminal apps from here keep only: Claude Gemini Termux Nix'. Those two clauses only look contradictory: the Cloud Terminal apps are cld.termux and cld.termux.nix, our own forks (ac_cloud-termux and ac_cloud-nix-on-droid both set applicationId cld.termux, and all three cld.termux* ids are in data/constellation-fleet.json), while the Termux and Nix he keeps are the UPSTREAM third-party builds com.termux and com.termux.nix. So the two that left are exactly the two fleet packages, which _doc_phone_app_groups above had already banned from this list, and the two that stayed are third-party. com.termux is NEW here — the group named only com.termux.nix before, so 'Termux' had no tile of its own at all.",
+            "title": "Primary",
+            "_doc_samsung_camera": "com.sec.android.app.camera is a QUICKMARK, which is what the owner asked for on 2026-09-10 and what two earlier attempts missed. Both of them read 'phone/apps/Tools Primary' as the identically-named grouping on the OTHER phone page: ui.phone_sections[prefix='='] 'Tools · Primary', the auto-classified All-apps taxonomy, whose members are ui.phone_folders and which no hand-written list feeds. This list is the curated one, read by SuitePhoneAppsFragment out of BuildConfig.UI_SUITE_PHONE_GROUPS_B64, and it is the only one an owner can add a shortcut to. Nothing is shared between the two, so a package in one says nothing about the other and a test that only asks 'is the string in build.json' cannot tell them apart. THIS IS AN ADDITION, NOT A MOVE: the same package is also a keyword of ui.phone_folders[prod_utils] and stays there, because All-apps classifies everything installed and Quickmarks is a shortlist — an app on both pages is the normal case, exactly as _doc_acode_is_in_two_places already records for Acode. APPENDED because the owner named no position: SuitePhoneAppsFragment maps this array in declared order and chunks it into rows with no sort anywhere, so array position IS render position. It is last of eight rather than last of seven because miDNI landed in this same list first, from a different request; with UI_PHONE_GRID_COLUMNS = 6 that puts the camera in row two, second tile, and moving it is a one-line reorder here.",
             "packages": [
               {
-                "pkg": "com.anthropic.claude",
-                "label": "Claude"
+                "pkg": "com.brave.browser",
+                "label": "Brave",
+                "subtype": "Browser"
               },
               {
-                "pkg": "com.google.android.apps.bard",
-                "label": "Gemini"
+                "pkg": "com.google.android.apps.maps",
+                "label": "Maps",
+                "subtype": "Nav"
               },
               {
-                "pkg": "com.termux",
-                "label": "Termux"
+                "pkg": "com.sec.android.app.popupcalculator",
+                "label": "Calculator",
+                "subtype": "Calc"
               },
               {
-                "pkg": "com.termux.nix",
-                "label": "Nix"
+                "pkg": "com.sec.android.app.camera",
+                "label": "Camera",
+                "subtype": "Camera"
+              },
+              {
+                "pkg": "com.google.android.inputmethod.latin",
+                "label": "Gboard",
+                "subtype": "Keyboard"
+              },
+              {
+                "pkg": "com.google.android.apps.walletnfcrel",
+                "label": "Google Wallet",
+                "subtype": "Wallet"
+              },
+              {
+                "pkg": "com.google.android.apps.translate",
+                "label": "Translate",
+                "subtype": "Utilities"
+              },
+              {
+                "pkg": "com.sec.android.app.clockpackage",
+                "label": "Clock",
+                "subtype": "Utilities"
               }
             ],
-            "_doc_folders": "Nested folders inside a phone_app_group — render as One-UI-style folder tiles in the same grid as plain packages (2×2 mini-icon preview, tap → modal dialog with the contents at 5 cols). SuitePhoneAppsFragment is the renderer. A folder is skipped only when it is EMPTY of declared entries; it is no longer skipped for having nothing installed, because its contents can now render as placeholders.",
-            "_doc_acode_is_in_two_places": "Acode is here AND in ui.phone_folders[prod_terminals] on the All-apps grid. Both are intended and neither is a copy of the other: Quickmarks is the owner's hand-written shortlist, the All-apps grid is the complete classification of everything installed. Do not 'fix' one to match the other.",
-            "folders": [
-              {
-                "label": "Others",
-                "packages": [
-                  {
-                    "pkg": "com.foxdebug.acode",
-                    "label": "Acode"
-                  },
-                  {
-                    "pkg": "com.rhmsoft.edit",
-                    "label": "QuickEdit"
-                  }
-                ]
-              }
-            ]
+            "_doc_subtypes_1756": "#1756 Phone quickmarks hold ONE tile per All Apps subtype (subtype = the Cloud app the phone app competes with), in the All Apps subtype order of the group's section. The tile is the app already in the previous quickmarks for that role, else the most obvious installed app; a subtype with no phone app is skipped. When two of the previous quickmark apps fall in one subtype both are kept (Mail, Chat, Messenger, Drive, Notes, AI, Terminal, Code, Store, News). The Projects group is unchanged. The full per-subtype lists live in All Apps. Pinned by test-quickmarks-categories-1756.sh."
           },
           {
-            "title": "Inboxes",
+            "title": "Communication",
             "_doc_mail_client": "app.sterna is Sterna Mail (codeberg.org/emon/sterna-mail), the UPSTREAM build — deliberately the upstream and not our cloud-mail rebrand, so this row shows the vanilla client alongside the third-party inboxes. It replaced eu.faircode.email (FairMail) and rs.ltt.android (ltt.rs), both dropped 2026-09-09. It is also what the owner's 'Sternal Mail' means: STERNA, not Stalwart. The fleet does run a Stalwart mail STORE (mail-stalwart.diegonmarcos.com, oci-mail) and that is a server with no Android client of its own, so the only Android app the phrase can name is the one already sitting in this group.",
+            "_doc_whatsapp": "'Whatsapp Bussines' is read as the SINGLE app WhatsApp Business (com.whatsapp.w4b), not as WhatsApp plus WhatsApp Business. w4b was already the only WhatsApp id in this group before this edit, consumer com.whatsapp is not declared anywhere in this file, and the owner's other visible rows are one app each.",
+            "_doc_dropped": "org.fossify.phone (Fossify Phone) was a visible tile here and is not in the owner's list, so it is gone from this group. It keeps its All-apps classification in ui.phone_folders[prod_phone] — dropping a Quickmark never unclassifies an app.",
             "packages": [
               {
                 "pkg": "com.google.android.gm",
-                "label": "Gmail"
+                "label": "Gmail",
+                "subtype": "Mail"
+              },
+              {
+                "pkg": "ch.protonmail.android",
+                "label": "Proton Mail",
+                "subtype": "Mail"
+              },
+              {
+                "pkg": "app.sterna",
+                "label": "Sterna Mail",
+                "subtype": "Mail"
               },
               {
                 "pkg": "com.Slack",
-                "label": "Slack"
+                "label": "Slack",
+                "subtype": "Chat"
+              },
+              {
+                "pkg": "com.mattermost.rn",
+                "label": "Mattermost",
+                "subtype": "Chat"
+              },
+              {
+                "pkg": "com.beeper.android",
+                "label": "Beeper",
+                "subtype": "Chat"
               },
               {
                 "pkg": "com.whatsapp.w4b",
-                "label": "WhatsApp Business"
+                "label": "WhatsApp Business",
+                "subtype": "Messenger"
               },
               {
-                "pkg": "com.linkedin.android",
-                "label": "LinkedIn"
+                "pkg": "org.telegram.messenger",
+                "label": "Telegram",
+                "subtype": "Messenger"
+              },
+              {
+                "pkg": "com.samsung.android.dialer",
+                "label": "Samsung Phone",
+                "subtype": "Dialer"
+              },
+              {
+                "pkg": "com.google.android.contacts",
+                "label": "Google Contacts",
+                "subtype": "Contacts"
               },
               {
                 "pkg": "com.instagram.android",
-                "label": "Instagram"
-              },
-              {
-                "pkg": "com.google.android.apps.magazines",
-                "label": "Google News"
-              }
-            ],
-            "_doc_whatsapp": "'Whatsapp Bussines' is read as the SINGLE app WhatsApp Business (com.whatsapp.w4b), not as WhatsApp plus WhatsApp Business. w4b was already the only WhatsApp id in this group before this edit, consumer com.whatsapp is not declared anywhere in this file, and the owner's other visible rows are one app each.",
-            "_doc_dropped": "org.fossify.phone (Fossify Phone) was a visible tile here and is not in the owner's list, so it is gone from this group. It keeps its All-apps classification in ui.phone_folders[prod_phone] — dropping a Quickmark never unclassifies an app.",
-            "folders": [
-              {
-                "label": "Others",
-                "packages": [
-                  {
-                    "pkg": "ch.protonmail.android",
-                    "label": "Proton Mail"
-                  },
-                  {
-                    "pkg": "app.sterna",
-                    "label": "Sterna Mail"
-                  },
-                  {
-                    "pkg": "com.mattermost.rn",
-                    "label": "Mattermost"
-                  },
-                  {
-                    "pkg": "com.beeper.android",
-                    "label": "Beeper"
-                  },
-                  {
-                    "pkg": "org.telegram.messenger",
-                    "label": "Telegram"
-                  },
-                  {
-                    "pkg": "com.devhd.feedly",
-                    "label": "Feedly"
-                  }
-                ]
+                "label": "Instagram",
+                "subtype": "Social"
               }
             ]
           },
           {
-            "title": "Data Apps",
+            "title": "Data",
             "_doc_readings": "Three of the owner's names needed resolving to a package. 'MS Notes' is Microsoft OneNote (com.microsoft.office.onenote, already classified in phone_folders[prod_docs]). 'Xplorer' is X-plore File Manager (com.lonelycatgames.Xplore, already in phone_folders[prod_storage]). 'Google Password' RESOLVES TO NO PACKAGE AT ALL and is recorded in sections[id=phone].quickmark_never_installable — see _doc_google_password below.",
             "_doc_google_password": "'Google Password' has NO TILE, and that is now a RESOLVED decision rather than an open question. Google Password Manager is not an installable Android application: it is a surface inside Google Play services, reached through Settings or through a shortcut Chrome creates, and it has no package id of its own to put in this list. Its host package com.google.android.gms is preinstalled and exposes no launch intent, so naming it here would produce a tile that never shows the placeholder and does nothing when tapped — which is why it is listed in sections[id=phone].quickmark_never_installable instead, together with the honest target (https://passwords.google.com) and what it would take to wire that up. The earlier note here asked the owner to 'name the app you meant, or say drop it'; #249 answered it by naming the deep link, so the question is closed and the entry is documented rather than silently absent.",
             "_doc_dropped": "com.sec.android.gallery3d (Samsung Gallery) and com.samsung.android.app.contacts (Samsung Contacts) were visible tiles here and are not in the owner's list — he named the Google equivalents (Google Photos, Google Contacts) instead. Both keep their All-apps classification. The old folder 'Files Editor (IDE)' is gone as a folder: the owner replaced it with 'Others', and its two editors (Acode, QuickEdit) moved to the AI group's Others folder.",
             "packages": [
               {
                 "pkg": "com.google.android.apps.docs",
-                "label": "Google Drive"
+                "label": "Google Drive",
+                "subtype": "Drive"
               },
               {
-                "pkg": "com.google.android.calendar",
-                "label": "Google Calendar"
+                "pkg": "com.sec.android.app.myfiles",
+                "label": "My Files",
+                "subtype": "Drive"
               },
               {
-                "pkg": "com.google.android.contacts",
-                "label": "Google Contacts"
+                "pkg": "com.lonelycatgames.Xplore",
+                "label": "X-plore",
+                "subtype": "Drive"
+              },
+              {
+                "pkg": "me.proton.android.drive",
+                "label": "Proton Drive",
+                "subtype": "Drive"
+              },
+              {
+                "pkg": "com.viscouspot.gitsync",
+                "label": "Git Sync",
+                "subtype": "Drive"
               },
               {
                 "pkg": "com.microsoft.office.onenote",
-                "label": "OneNote"
+                "label": "OneNote",
+                "subtype": "Notes"
+              },
+              {
+                "pkg": "md.obsidian",
+                "label": "Obsidian",
+                "subtype": "Notes"
+              },
+              {
+                "pkg": "com.google.android.calendar",
+                "label": "Google Calendar",
+                "subtype": "Agenda"
+              },
+              {
+                "pkg": "com.google.android.apps.docs.editors.docs",
+                "label": "Google Docs",
+                "subtype": "Office"
               },
               {
                 "pkg": "com.google.android.apps.photos",
-                "label": "Google Photos"
+                "label": "Google Photos",
+                "subtype": "Gallery"
               },
               {
                 "pkg": "com.aspiro.tidal",
-                "label": "Tidal"
-              }
-            ],
-            "folders": [
+                "label": "Tidal",
+                "subtype": "Media Center"
+              },
               {
-                "label": "Others",
-                "packages": [
-                  {
-                    "pkg": "com.sec.android.app.myfiles",
-                    "label": "My Files"
-                  },
-                  {
-                    "pkg": "com.lonelycatgames.Xplore",
-                    "label": "X-plore"
-                  },
-                  {
-                    "pkg": "me.proton.android.drive",
-                    "label": "Proton Drive"
-                  },
-                  {
-                    "pkg": "md.obsidian",
-                    "label": "Obsidian"
-                  },
-                  {
-                    "pkg": "com.x8bit.bitwarden",
-                    "label": "Bitwarden"
-                  },
-                  {
-                    "pkg": "com.viscouspot.gitsync",
-                    "label": "Git Sync"
-                  }
-                ]
+                "pkg": "com.x8bit.bitwarden",
+                "label": "Bitwarden",
+                "subtype": "Vault"
               }
             ]
           },
           {
-            "title": "Tools Primary",
-            "_doc_samsung_camera": "com.sec.android.app.camera is a QUICKMARK, which is what the owner asked for on 2026-09-10 and what two earlier attempts missed. Both of them read 'phone/apps/Tools Primary' as the identically-named grouping on the OTHER phone page: ui.phone_sections[prefix='='] 'Tools · Primary', the auto-classified All-apps taxonomy, whose members are ui.phone_folders and which no hand-written list feeds. This list is the curated one, read by SuitePhoneAppsFragment out of BuildConfig.UI_SUITE_PHONE_GROUPS_B64, and it is the only one an owner can add a shortcut to. Nothing is shared between the two, so a package in one says nothing about the other and a test that only asks 'is the string in build.json' cannot tell them apart. THIS IS AN ADDITION, NOT A MOVE: the same package is also a keyword of ui.phone_folders[prod_utils] and stays there, because All-apps classifies everything installed and Quickmarks is a shortlist — an app on both pages is the normal case, exactly as _doc_acode_is_in_two_places already records for Acode. APPENDED because the owner named no position: SuitePhoneAppsFragment maps this array in declared order and chunks it into rows with no sort anywhere, so array position IS render position. It is last of eight rather than last of seven because miDNI landed in this same list first, from a different request; with UI_PHONE_GRID_COLUMNS = 6 that puts the camera in row two, second tile, and moving it is a one-line reorder here.",
+            "title": "Me",
             "packages": [
-              "com.brave.browser",
-              "com.google.android.apps.maps",
-              "com.google.android.apps.walletnfcrel",
-              "com.google.android.apps.translate",
-              "com.sec.android.app.clockpackage",
-              "com.sec.android.app.popupcalculator",
+              {
+                "pkg": "com.sec.android.app.shealth",
+                "label": "Samsung Health",
+                "subtype": "Health"
+              },
               {
                 "pkg": "es.gob.interior.policia.midni",
-                "label": "miDNI"
+                "label": "miDNI",
+                "subtype": "Gov & ID"
               },
-              "com.sec.android.app.camera"
+              {
+                "pkg": "com.strava",
+                "label": "Strava",
+                "subtype": "Outdoor & Sport"
+              },
+              {
+                "pkg": "com.memrise.android.memrisecompanion",
+                "label": "Memrise",
+                "subtype": "Learning"
+              }
+            ]
+          },
+          {
+            "title": "Services",
+            "packages": [
+              {
+                "pkg": "com.google.android.googlequicksearchbox",
+                "label": "Google",
+                "subtype": "Search"
+              },
+              {
+                "pkg": "com.google.android.apps.magazines",
+                "label": "Google News",
+                "subtype": "News"
+              },
+              {
+                "pkg": "com.devhd.feedly",
+                "label": "Feedly",
+                "subtype": "News"
+              },
+              {
+                "pkg": "com.amazon.mShop.android.shopping",
+                "label": "Amazon",
+                "subtype": "Shopping"
+              },
+              {
+                "pkg": "de.eventim.mobile.app.Android",
+                "label": "Eventim",
+                "subtype": "Events"
+              },
+              {
+                "pkg": "com.ubercab",
+                "label": "Uber",
+                "subtype": "Mobility & Travel"
+              },
+              {
+                "pkg": "com.linkedin.android",
+                "label": "LinkedIn",
+                "subtype": "Jobs & Business"
+              },
+              {
+                "pkg": "de.is24.android",
+                "label": "ImmoScout24",
+                "subtype": "Real Estate"
+              }
+            ]
+          },
+          {
+            "title": "AGI",
+            "_doc_cloud_terminals_removed": "The owner asked to 'remove the Cloud Terminal apps from here keep only: Claude Gemini Termux Nix'. Those two clauses only look contradictory: the Cloud Terminal apps are cld.termux and cld.termux.nix, our own forks (ac_cloud-termux and ac_cloud-nix-on-droid both set applicationId cld.termux, and all three cld.termux* ids are in data/constellation-fleet.json), while the Termux and Nix he keeps are the UPSTREAM third-party builds com.termux and com.termux.nix. So the two that left are exactly the two fleet packages, which _doc_phone_app_groups above had already banned from this list, and the two that stayed are third-party. com.termux is NEW here — the group named only com.termux.nix before, so 'Termux' had no tile of its own at all.",
+            "_doc_folders": "Nested folders inside a phone_app_group — render as One-UI-style folder tiles in the same grid as plain packages (2×2 mini-icon preview, tap → modal dialog with the contents at 5 cols). SuitePhoneAppsFragment is the renderer. A folder is skipped only when it is EMPTY of declared entries; it is no longer skipped for having nothing installed, because its contents can now render as placeholders.",
+            "_doc_acode_is_in_two_places": "Acode is here AND in ui.phone_folders[prod_terminals] on the All-apps grid. Both are intended and neither is a copy of the other: Quickmarks is the owner's hand-written shortlist, the All-apps grid is the complete classification of everything installed. Do not 'fix' one to match the other.",
+            "packages": [
+              {
+                "pkg": "com.anthropic.claude",
+                "label": "Claude",
+                "subtype": "AI"
+              },
+              {
+                "pkg": "com.google.android.apps.bard",
+                "label": "Gemini",
+                "subtype": "AI"
+              },
+              {
+                "pkg": "com.foxdebug.acode",
+                "label": "Acode",
+                "subtype": "Code"
+              },
+              {
+                "pkg": "com.rhmsoft.edit",
+                "label": "QuickEdit",
+                "subtype": "Code"
+              },
+              {
+                "pkg": "com.termux",
+                "label": "Termux",
+                "subtype": "Terminal"
+              },
+              {
+                "pkg": "com.termux.nix",
+                "label": "Nix",
+                "subtype": "Terminal"
+              }
             ]
           },
           {
@@ -3837,6 +3948,7 @@
             "_doc_loose_tiles": "Five LOOSE packages and exactly one folder, because a quickmarks group can hold both — see the AI, Inboxes and Data Apps groups above, which each carry `packages` and `folders` together. The All-apps renderer cannot do this (PhoneAppsFragment.renderAllApps draws a section as subhead + folder grid, with no slot for an app belonging to no folder), which is why building this on that surface forced a folder named 'Projects' inside a section named 'Projects'. Nothing here needs a folder but Money.",
             "_doc_google_health": "com.google.android.apps.fitness is Google Fit, read as the owner's 'Google Health'. The other reading is Health Connect (com.google.android.apps.healthdata, known to this repo as libs/health HealthConnectGateway.PROVIDER_PACKAGE), which is a data broker with no interface to open rather than an app you work in. Swap the pkg if that was meant.",
             "_doc_clickup": "ClickUp ships under its parent company, Mango Technologies — co.mangotechnologies.clickup. The guessable com.clickup.android resolves to nothing, and since 149c5b9 an unresolved curated entry renders as a permanent 'Not installed' tile rather than hiding, so a wrong id here is furniture on the owner's screen.",
+            "_doc_folders": "'Folder.\"Money\"(all bank apps)'. This file's own answer to which packages are the bank apps is the -Money folder in ui.phone_folders (svc_money, Services · Buro), so this list is that folder's twelve exact package ids — its thirteenth keyword is the `pkg^com.btg.pactual.` family rule, which is a classifier pattern and not something a tile can launch. Curating them HERE is a copy, not a move: quickmarks and All apps are two pages, and an app appearing on both is how every other group in this array already works. -Money stays in Buro untouched.",
             "packages": [
               {
                 "pkg": "co.mangotechnologies.clickup",
@@ -3859,7 +3971,6 @@
                 "label": "NomadMania"
               }
             ],
-            "_doc_folders": "'Folder.\"Money\"(all bank apps)'. This file's own answer to which packages are the bank apps is the -Money folder in ui.phone_folders (svc_money, Services · Buro), so this list is that folder's twelve exact package ids — its thirteenth keyword is the `pkg^com.btg.pactual.` family rule, which is a classifier pattern and not something a tile can launch. Curating them HERE is a copy, not a move: quickmarks and All apps are two pages, and an app appearing on both is how every other group in this array already works. -Money stays in Buro untouched.",
             "folders": [
               {
                 "label": "Money",
@@ -3917,11 +4028,23 @@
             ]
           },
           {
-            "title": "Configs",
+            "title": "Setup",
             "packages": [
-              "com.android.vending",
-              "org.fdroid.fdroid",
-              "com.android.settings"
+              {
+                "pkg": "com.android.vending",
+                "label": "Play Store",
+                "subtype": "Store"
+              },
+              {
+                "pkg": "org.fdroid.fdroid",
+                "label": "F-Droid",
+                "subtype": "Store"
+              },
+              {
+                "pkg": "com.android.settings",
+                "label": "Settings",
+                "subtype": "Settings"
+              }
             ]
           }
         ],
@@ -6458,12 +6581,355 @@
         "catch_all": true
       }
     ],
-    "_doc_phone_folders": "Every launchable app is routed to exactly one folder by PhoneAppClassifier: folders are walked in `order`, and the first keyword that matches wins, so a lower order beats a higher one. Keyword forms: (1) `pkg:com.foo.bar` exact packageName; (2) `pkg^com.foo.` packageName.startsWith; (3) `lbl:name` exact case-insensitive label; (4) `lbl~frag` label contains (min 3 chars); (5) a bare string matches anywhere in \"packageName label\" (min 4 chars) — sweeping and collision-prone, so it is used sparingly. Every app installed at the 2026-09-07 rebuild is pinned with an exact `pkg:` rule, which is why the folder lists read as inventories; `pkg^` rules only cover families that will keep growing (our own com.diegonmarcos.cloudlib.*, com.termux.*, VPN vendors). An app no keyword claimed then goes through the METADATA pass before any sink: `match_metadata`, declared beside `match_keywords`, routes on what Android itself publishes about the package, so a newly installed app is placed without a keyword edit. Three rule forms: `cat:game` matches ApplicationInfo.category by the platform constant name lowercased (game, audio, video, image, social, news, maps, productivity, accessibility); `intent:android.intent.category.APP_EMAIL` matches a launcher intent category the package resolves for, i.e. a role the platform grants it; `perm:android.permission.BODY_SENSORS` matches a permission declared in its manifest. Precedence inside the pass is by SIGNAL STRENGTH, not by `order` — category (the app states its own genre) beats intent (the platform grants it a role) beats permission (we infer from what it asks for), and `order` only breaks ties within one signal; otherwise a storage permission on a game would beat cat:game purely because Storage sorts earlier. Keywords always win over metadata: the keyword lists are curated and correct, metadata only keeps an un-curated app off the sink pile. Two sinks, neither with any rules: `others` (order 930, sink=true) catches everything both passes missed and is the triage queue — an app landing there means it needs a rule; `misc` (order 910) is the manual exile, give it explicit keywords to push something there on purpose. Neither carries a section prefix, so both render last under the Other subhead. The `match_keywords` lists cover THIRD-PARTY packages only: a keyword for one of our own constellation apps is derived at load time from ui.external_apps[].folder and must not be written here as well, or the identity would have two copies again and they could disagree. Manufacturer (Google / Samsung / non-Play-Store) is metadata for Smart Folders (see phone_smart_folders below) — NOT a primary grouping criterion. Order is a three-digit string, one hundred-block per section in phone_sections order, folders alphabetical by label inside the block (110, 120, ...); it drives both render order and match precedence, so a new folder takes the next free number in its block.",
+    "_doc_phone_folders": "Every launchable app is routed to exactly one folder by PhoneAppClassifier: folders are walked in `order`, and the first keyword that matches wins, so a lower order beats a higher one. Keyword forms: (1) `pkg:com.foo.bar` exact packageName; (2) `pkg^com.foo.` packageName.startsWith; (3) `lbl:name` exact case-insensitive label; (4) `lbl~frag` label contains (min 3 chars); (5) a bare string matches anywhere in \"packageName label\" (min 4 chars) — sweeping and collision-prone, so it is used sparingly. Every app installed at the 2026-09-07 rebuild is pinned with an exact `pkg:` rule, which is why the folder lists read as inventories; `pkg^` rules only cover families that will keep growing (our own com.diegonmarcos.cloudlib.*, com.termux.*, VPN vendors). An app no keyword claimed then goes through the METADATA pass before any sink: `match_metadata`, declared beside `match_keywords`, routes on what Android itself publishes about the package, so a newly installed app is placed without a keyword edit. Three rule forms: `cat:game` matches ApplicationInfo.category by the platform constant name lowercased (game, audio, video, image, social, news, maps, productivity, accessibility); `intent:android.intent.category.APP_EMAIL` matches a launcher intent category the package resolves for, i.e. a role the platform grants it; `perm:android.permission.BODY_SENSORS` matches a permission declared in its manifest. Precedence inside the pass is by SIGNAL STRENGTH, not by `order` — category (the app states its own genre) beats intent (the platform grants it a role) beats permission (we infer from what it asks for), and `order` only breaks ties within one signal; otherwise a storage permission on a game would beat cat:game purely because Storage sorts earlier. Keywords always win over metadata: the keyword lists are curated and correct, metadata only keeps an un-curated app off the sink pile. Two sinks, neither with any rules: `others` (order 930, sink=true) catches everything both passes missed and is the triage queue — an app landing there means it needs a rule; `misc` (order 910) is the manual exile, give it explicit keywords to push something there on purpose. Neither carries a section prefix, so both render last under the Other subhead. The `match_keywords` lists cover THIRD-PARTY packages only: a keyword for one of our own constellation apps is derived at load time from ui.external_apps[].folder and must not be written here as well, or the identity would have two copies again and they could disagree. Manufacturer (Google / Samsung / non-Play-Store) is metadata for Smart Folders (see phone_smart_folders below) — NOT a primary grouping criterion. Order is a three-digit string, one hundred-block per section in phone_sections order, folders alphabetical by label inside the block (110, 120, ...); it drives both render order and match precedence, so a new folder takes the next free number in its block. #1756 REORGANISED: folders were re-blocked per the new sections in hundred-blocks (Primary 1xx, Communication 2xx, Data 3xx, Me 4xx, Services 5xx, AGI 6xx, Projects 7xx, Setup 8xx). Merges: svc_travel into svc_mobility (label Mobility & Travel); svc_jobs is Jobs & Business; svc_home stays Home & Housing and moved to Me, the listing apps (ImmoScout, WG-Gesucht) moved to the new svc_realestate (Services); svc_gov, svc_telecom, svc_health moved to Me. New folders: svc_realestate, svc_search, svc_kgstore (claimed by their Cloud apps through ui.external_apps[].folder) and proj_lnktree. Misfiled and uncategorised packages are pinned with exact pkg: rules (see test-quickmarks-categories-1756.sh and test/data/previous-layout-1756.json for the previous layout this was proven against).",
     "phone_folders": [
       {
-        "id": "svc_gov",
+        "id": "prod_web",
         "order": "110",
-        "label": "-Gov & ID",
+        "label": "=Browser",
+        "match_keywords": [
+          "pkg:com.android.chrome",
+          "pkg:com.brave.browser",
+          "pkg:com.duckduckgo.mobile.android",
+          "pkg:io.raindrop.raindropio"
+        ],
+        "match_metadata": [
+          "intent:android.intent.category.APP_BROWSER"
+        ]
+      },
+      {
+        "id": "prod_maps",
+        "order": "120",
+        "label": "=Nav",
+        "match_keywords": [
+          "pkg:aplicacion.tiempo",
+          "pkg:com.google.android.apps.maps",
+          "pkg:com.google.earth",
+          "pkg:com.mapswithme.maps.pro",
+          "pkg:cz.ackee.ventusky"
+        ],
+        "match_metadata": [
+          "cat:maps",
+          "intent:android.intent.category.APP_MAPS",
+          "intent:android.intent.category.APP_WEATHER"
+        ]
+      },
+      {
+        "id": "prod_calc",
+        "order": "130",
+        "label": "=Calc",
+        "match_keywords": [
+          "pkg:com.google.android.calculator",
+          "pkg:com.sec.android.app.popupcalculator"
+        ],
+        "match_metadata": [
+          "intent:android.intent.category.APP_CALCULATOR"
+        ]
+      },
+      {
+        "id": "prod_camera",
+        "order": "140",
+        "label": "=Camera",
+        "match_keywords": [
+          "pkg:com.sec.android.app.camera",
+          "pkg:pl.mobimax.cameraopus"
+        ]
+      },
+      {
+        "id": "sys_keyboards",
+        "order": "150",
+        "label": "=Keyboard",
+        "match_keywords": [
+          "pkg:ch.icoaching.typewise",
+          "pkg:com.gingersoftware.android.keyboard",
+          "pkg:com.google.android.inputmethod.latin",
+          "pkg:com.grammarly.android.keyboard",
+          "pkg:juloo.keyboard2"
+        ]
+      },
+      {
+        "id": "prod_wallet",
+        "order": "160",
+        "label": "=Wallet",
+        "match_keywords": [
+          "pkg:com.google.android.apps.walletnfcrel"
+        ]
+      },
+      {
+        "id": "prod_utils",
+        "order": "170",
+        "label": "=Utilities",
+        "match_keywords": [
+          "pkg:com.diotek.sec.lookup.dictionary",
+          "pkg:com.google.android.apps.translate",
+          "pkg:com.google.audio.hearing.visualization.accessibility.scribe",
+          "pkg:com.persapps.multitimer",
+          "pkg:com.samsung.android.ardrawing",
+          "pkg:com.sec.android.app.clockpackage",
+          "pkg:com.sec.android.app.voicenote"
+        ]
+      },
+      {
+        "id": "prod_mail",
+        "order": "210",
+        "label": "@Mail",
+        "match_keywords": [
+          "pkg:app.sterna",
+          "pkg:ch.protonmail.android",
+          "pkg:com.fsck.k9",
+          "pkg:com.google.android.gm",
+          "pkg:com.mailtemi.email",
+          "pkg:com.microsoft.office.outlook",
+          "pkg:com.samsung.android.email.provider",
+          "pkg:email.clean.android",
+          "pkg:eu.faircode.email",
+          "pkg:rs.ltt.android"
+        ],
+        "match_metadata": [
+          "intent:android.intent.category.APP_EMAIL"
+        ]
+      },
+      {
+        "id": "prod_chat",
+        "order": "220",
+        "label": "@Chat",
+        "match_keywords": [
+          "pkg:chat.rocket.android",
+          "pkg:com.Slack",
+          "pkg:com.beeper.android",
+          "pkg:com.mattermost.rn",
+          "pkg:com.mattermost.rnbeta",
+          "pkg:im.vector.app",
+          "pkg:io.heckel.ntfy"
+        ]
+      },
+      {
+        "id": "prod_messenger",
+        "order": "230",
+        "label": "@Messenger",
+        "match_keywords": [
+          "pkg:org.thoughtcrime.securesms",
+          "pkg:com.whatsapp",
+          "pkg:com.whatsapp.w4b",
+          "pkg:org.telegram.messenger",
+          "pkg:com.viber.voip",
+          "pkg:com.facebook.orca",
+          "pkg:com.garmin.android.apps.messenger",
+          "pkg:com.google.android.apps.tachyon",
+          "pkg:com.trianguloy.openInWhatsapp"
+        ],
+        "match_metadata": [
+          "intent:android.intent.category.APP_MESSAGING"
+        ]
+      },
+      {
+        "id": "prod_phone",
+        "order": "240",
+        "label": "@Dialer",
+        "match_keywords": [
+          "pkg:com.google.android.apps.messaging",
+          "pkg:com.samsung.android.dialer",
+          "pkg:com.samsung.android.messaging",
+          "pkg:org.fossify.phone"
+        ]
+      },
+      {
+        "id": "prod_contacts",
+        "order": "250",
+        "label": "@Contacts",
+        "match_keywords": [
+          "pkg:com.google.android.contacts",
+          "pkg:com.samsung.android.app.contacts",
+          "pkg:com.diegonmarcos.comms.contacts"
+        ],
+        "match_metadata": [
+          "intent:android.intent.category.APP_CONTACTS"
+        ]
+      },
+      {
+        "id": "media_social",
+        "order": "260",
+        "label": "@Social",
+        "match_keywords": [
+          "pkg:com.badoo.mobile",
+          "pkg:com.bereal.ft",
+          "pkg:com.bumble.app",
+          "pkg:com.instagram.android",
+          "pkg:com.instagram.barcelona",
+          "pkg:com.pinterest",
+          "pkg:com.tinder",
+          "pkg:co.hinge.app",
+          "pkg:com.facebook.katana"
+        ],
+        "match_metadata": [
+          "cat:social"
+        ]
+      },
+      {
+        "id": "prod_storage",
+        "order": "310",
+        "label": ".Drive",
+        "match_keywords": [
+          "pkg:com.google.android.apps.docs",
+          "pkg:com.google.android.apps.subscriptions.red",
+          "pkg:com.microsoft.skydrive",
+          "pkg:com.alphainventor.filemanager",
+          "pkg:com.amaze.filemanager",
+          "pkg:com.app.applistbackup",
+          "pkg:com.ghisler.android.TotalCommander",
+          "pkg:com.ghostsq.commander",
+          "pkg:com.lonelycatgames.Xplore",
+          "pkg:com.mobisystems.fileman",
+          "pkg:com.rarlab.rar",
+          "pkg:com.sec.android.app.myfiles",
+          "pkg:com.smlnskgmail.jaman.hashchecker",
+          "pkg:com.viscouspot.gitsync",
+          "pkg:dk.tacit.android.foldersync.lite",
+          "pkg:me.zhanghai.android.files",
+          "pkg:pl.solidexplorer2",
+          "pkg:me.proton.android.drive",
+          "pkg:com.google.android.apps.nbu.files"
+        ],
+        "match_metadata": [
+          "intent:android.intent.category.APP_FILES",
+          "perm:android.permission.MANAGE_EXTERNAL_STORAGE"
+        ]
+      },
+      {
+        "id": "prod_docs",
+        "order": "320",
+        "label": ".Notes",
+        "match_keywords": [
+          "pkg:com.adeeteya.markdown_editor",
+          "pkg:com.google.android.keep",
+          "pkg:com.journable.app",
+          "pkg:com.microsoft.lists.public",
+          "pkg:com.microsoft.office.onenote",
+          "pkg:com.samsung.android.app.notes",
+          "pkg:jp.sblo.pandora.jota.plus",
+          "pkg:md.obsidian",
+          "pkg:org.chromium.webapk.a64d263d6f7d935c4_v2",
+          "pkg:app.affine.pro"
+        ]
+      },
+      {
+        "id": "prod_plan",
+        "order": "330",
+        "label": ".Agenda",
+        "match_keywords": [
+          "pkg:co.mangotechnologies.clickup",
+          "pkg:com.gianlu.timeless",
+          "pkg:com.google.android.apps.tasks",
+          "pkg:com.google.android.calendar",
+          "pkg:com.microsoft.todos",
+          "pkg:com.samsung.android.app.reminder",
+          "pkg:com.samsung.android.calendar",
+          "pkg:com.toggl.giskard",
+          "pkg:com.trello",
+          "pkg:me.clockify.android",
+          "pkg:todolist.scheduleplanner.dailyplanner.todo.reminders"
+        ],
+        "match_metadata": [
+          "intent:android.intent.category.APP_CALENDAR"
+        ]
+      },
+      {
+        "id": "prod_office",
+        "order": "340",
+        "label": ".Office",
+        "match_keywords": [
+          "pkg:com.collabora.libreoffice",
+          "pkg:com.google.android.apps.docs.editors.docs",
+          "pkg:com.google.android.apps.docs.editors.sheets",
+          "pkg:com.adobe.reader"
+        ],
+        "match_metadata": [
+          "cat:productivity"
+        ]
+      },
+      {
+        "id": "data_gallery",
+        "order": "350",
+        "label": ".Gallery",
+        "match_keywords": [
+          "pkg:com.google.android.apps.photos",
+          "pkg:com.sec.android.gallery3d",
+          "pkg:com.musicvideo.photoeditor.squarefit"
+        ],
+        "match_metadata": [
+          "cat:image",
+          "intent:android.intent.category.APP_GALLERY"
+        ]
+      },
+      {
+        "id": "media_video",
+        "order": "360",
+        "label": ".Media Center",
+        "match_keywords": [
+          "pkg:com.amazon.avod.thirdpartyclient",
+          "pkg:com.google.android.videos",
+          "pkg:com.google.android.youtube",
+          "pkg:com.netflix.mediaclient",
+          "pkg:com.wbd.stream",
+          "pkg:tv.arte.plus7",
+          "pkg:at.zuggabecka.radiofm4",
+          "pkg:com.aspiro.tidal",
+          "pkg:com.earthflare.android.radioparadisewidget.gpv2",
+          "pkg:com.google.android.apps.youtube.music",
+          "pkg:com.shazam.android",
+          "pkg:com.spotify.music",
+          "pkg:com.ultimateguitar.tabs",
+          "pkg:de.deutschlandfunk.dlfaudiothek",
+          "pkg:ott.alanwatts",
+          "pkg:cn.com.aftershokz.app",
+          "pkg:com.oceanwing.soundcore",
+          "pkg:com.mi.earphone"
+        ],
+        "match_metadata": [
+          "cat:video",
+          "cat:audio",
+          "intent:android.intent.category.APP_MUSIC"
+        ]
+      },
+      {
+        "id": "data_vault",
+        "order": "370",
+        "label": ".Vault",
+        "match_keywords": [
+          "pkg:com.samsung.android.samsungpass",
+          "pkg:com.x8bit.bitwarden",
+          "pkg:com.beemdevelopment.aegis",
+          "pkg:com.azure.authenticator",
+          "pkg:com.google.android.apps.authenticator2",
+          "pkg:com.google.android.apps.credentialmanager",
+          "pkg:com.samsung.knox.securefolder",
+          "pkg^com.bitwarden.",
+          "pkg^com.kunzisoft.keepass"
+        ]
+      },
+      {
+        "id": "me_me",
+        "order": "410",
+        "label": "~Me",
+        "match_keywords": []
+      },
+      {
+        "id": "svc_health",
+        "order": "420",
+        "label": "~Health",
+        "match_keywords": [
+          "pkg:com.medantapatient.app",
+          "pkg:com.urbansportsclub",
+          "pkg:com.google.android.apps.fitness",
+          "pkg:com.fitbit.FitbitMobile",
+          "pkg:com.sec.android.app.shealth",
+          "pkg:com.oplayer.orunningplus"
+        ]
+      },
+      {
+        "id": "svc_gov",
+        "order": "430",
+        "label": "~Gov & ID",
         "match_keywords": [
           "pkg:br.com.vidaas.sp",
           "pkg:br.gov.economia.receita.rfb",
@@ -6477,33 +6943,160 @@
           "pkg:es.fnmtrcm.ceres.certificadoDigitalFNMT",
           "pkg:es.gob.interior.policia.midni",
           "pkg:nl.jool.isic",
-          "pkg^br.gov."
+          "pkg^br.gov.",
+          "pkg:br.jus.tse.eleitoral.etitulo"
         ]
       },
       {
-        "id": "svc_health",
-        "order": "120",
-        "label": "-Health",
+        "id": "svc_telecom",
+        "order": "440",
+        "label": "~Telecom",
         "match_keywords": [
-          "pkg:com.medantapatient.app",
-          "pkg:com.urbansportsclub"
+          "pkg:com.affinityclick.alosim",
+          "pkg:com.esim.numero",
+          "pkg:com.mobillium.airalo",
+          "pkg:com.saily.android",
+          "pkg:com.spanishcoders.pepephone",
+          "pkg:de.congstar.meincongstar",
+          "pkg:net.esim.twa"
         ]
       },
       {
         "id": "svc_home",
-        "order": "130",
-        "label": "-Home & Housing",
+        "order": "450",
+        "label": "~Home & Housing",
         "match_keywords": [
           "pkg:com.sensorberg.oneaccess",
-          "pkg:com.wggesucht.android",
-          "pkg:de.is24.android",
-          "pkg:de.nebenan.app"
+          "pkg:de.nebenan.app",
+          "pkg:com.shurgard.selfstorage"
+        ]
+      },
+      {
+        "id": "hlth_outdoor",
+        "order": "460",
+        "label": "~Outdoor & Sport",
+        "match_keywords": [
+          "pkg:com.alltrails.alltrails",
+          "pkg:com.downdogapp",
+          "pkg:com.garmin.android.apps.connectmobile",
+          "pkg:com.garmin.android.apps.dive",
+          "pkg:com.garmin.android.apps.explore",
+          "pkg:com.garmin.connectiq",
+          "pkg:com.outdooractive.Outdooractive",
+          "pkg:com.strava",
+          "pkg:com.urbandroid.sleep",
+          "pkg:com.wikiloc.wikilocandroid",
+          "pkg:de.komoot.android",
+          "pkg:com.bodybike.bbsmartplus",
+          "pkg:com.motosumo.app",
+          "pkg:io.vicoach"
+        ],
+        "match_metadata": [
+          "perm:android.permission.ACTIVITY_RECOGNITION",
+          "perm:android.permission.BODY_SENSORS"
+        ]
+      },
+      {
+        "id": "hlth_nutrition",
+        "order": "470",
+        "label": "~Nutrition",
+        "match_keywords": [
+          "pkg:com.fatsecret.android"
+        ]
+      },
+      {
+        "id": "hlth_learning",
+        "order": "480",
+        "label": "~Learning",
+        "match_keywords": [
+          "pkg:air.nn.mobile.app.main",
+          "pkg:com.duocards.app",
+          "pkg:com.fluentflix.fluentu",
+          "pkg:com.flutterflow.kards",
+          "pkg:com.hueber.huebermedia",
+          "pkg:com.lubosmikusiak.articuli.derdiedas",
+          "pkg:com.memrise.android.memrisecompanion",
+          "pkg:mobi.eup.easygerman",
+          "pkg:com.rype.go",
+          "pkg:com.simonandschuster.pimsleur.unified.android",
+          "pkg:com.softissimo.reverso.context",
+          "pkg:com.ted.android",
+          "pkg:de.digionline.webweavera2",
+          "pkg:net.wordbit.deen"
+        ]
+      },
+      {
+        "id": "media_games",
+        "order": "490",
+        "label": "~Games",
+        "match_keywords": [
+          "pkg:com.epicgames.portal",
+          "pkg:com.playdead.limbo.egs.full",
+          "pkg:com.samsung.android.game.gamehome",
+          "pkg:com.werewolfapps.online",
+          "pkg:org.faudroids.werewolf"
+        ],
+        "match_metadata": [
+          "cat:game"
+        ]
+      },
+      {
+        "id": "svc_search",
+        "order": "510",
+        "label": "+Search",
+        "match_keywords": [
+          "pkg:com.google.android.googlequicksearchbox"
+        ]
+      },
+      {
+        "id": "hlth_news",
+        "order": "520",
+        "label": "+News",
+        "match_keywords": [
+          "pkg:com.checkitt",
+          "pkg:com.devhd.feedly",
+          "pkg:com.flyersoft.moonreader",
+          "pkg:com.google.android.apps.magazines",
+          "pkg:com.rama.mako",
+          "pkg:com.samsung.android.app.spage",
+          "pkg:com.substack.app"
+        ],
+        "match_metadata": [
+          "cat:news"
+        ]
+      },
+      {
+        "id": "svc_shopping",
+        "order": "530",
+        "label": "+Shopping",
+        "match_keywords": [
+          "pkg:com.amazon.mShop.android.shopping",
+          "pkg:com.app.tgtg",
+          "pkg:com.backmarket",
+          "pkg:com.ebay.kleinanzeigen",
+          "pkg:com.wallapop",
+          "pkg:vivino.web.app",
+          "pkg:com.dhl.exp.dhlmobile",
+          "pkg:de.dhl.paket"
+        ]
+      },
+      {
+        "id": "svc_events",
+        "order": "540",
+        "label": "+Events",
+        "match_keywords": [
+          "pkg:com.codekarussell.rausgegangen",
+          "pkg:com.linearshift.broadcastoslo",
+          "pkg:fm.dice",
+          "pkg:net.residentadvisor.raguide",
+          "pkg:com.meetup",
+          "pkg:de.eventim.mobile.app.Android"
         ]
       },
       {
         "id": "svc_mobility",
-        "order": "140",
-        "label": "-Mobility",
+        "order": "550",
+        "label": "+Mobility & Travel",
         "match_keywords": [
           "pkg:cat.atm.tmobilitat",
           "pkg:com.comuto",
@@ -6518,81 +7111,7 @@
           "pkg:ee.mtakso.client",
           "pkg:no.ruter.reise",
           "pkg:ride.app",
-          "pkg:taxi.android.client"
-        ]
-      },
-      {
-        "id": "svc_money",
-        "order": "150",
-        "label": "-Money",
-        "match_keywords": [
-          "pkg:com.binance.dev",
-          "pkg:com.bitpanda.bitpanda",
-          "pkg:com.btg.pactual.banking",
-          "pkg:com.btg.pactual.digital.mobile",
-          "pkg:com.btg.pactual.homebroker.mobile",
-          "pkg:com.fusionmedia.investing",
-          "pkg:com.google.android.apps.walletnfcrel",
-          "pkg:com.paypal.android.p2pmobile",
-          "pkg:com.revolut.revolut",
-          "pkg:com.transferwise.android",
-          "pkg:com.xe.currency",
-          "pkg:es.bancosantander.apps",
-          "pkg^com.btg.pactual."
-        ]
-      },
-      {
-        "id": "svc_telecom",
-        "order": "160",
-        "label": "-Telecom",
-        "match_keywords": [
-          "pkg:com.affinityclick.alosim",
-          "pkg:com.esim.numero",
-          "pkg:com.mobillium.airalo",
-          "pkg:com.saily.android",
-          "pkg:com.spanishcoders.pepephone",
-          "pkg:de.congstar.meincongstar",
-          "pkg:net.esim.twa"
-        ]
-      },
-      {
-        "id": "svc_events",
-        "order": "210",
-        "label": "+Events",
-        "match_keywords": [
-          "pkg:com.codekarussell.rausgegangen",
-          "pkg:com.linearshift.broadcastoslo",
-          "pkg:fm.dice",
-          "pkg:net.residentadvisor.raguide"
-        ]
-      },
-      {
-        "id": "svc_jobs",
-        "order": "220",
-        "label": "+Jobs",
-        "match_keywords": [
-          "pkg:com.linkedin.android",
-          "pkg:com.otta.otta"
-        ]
-      },
-      {
-        "id": "svc_shopping",
-        "order": "230",
-        "label": "+Shopping",
-        "match_keywords": [
-          "pkg:com.amazon.mShop.android.shopping",
-          "pkg:com.app.tgtg",
-          "pkg:com.backmarket",
-          "pkg:com.ebay.kleinanzeigen",
-          "pkg:com.wallapop",
-          "pkg:vivino.web.app"
-        ]
-      },
-      {
-        "id": "svc_travel",
-        "order": "240",
-        "label": "+Travel",
-        "match_keywords": [
+          "pkg:taxi.android.client",
           "pkg:app.campy",
           "pkg:be.greifmatthias.wakaship",
           "pkg:com.airbnb.android",
@@ -6616,142 +7135,60 @@
           "pkg:eu.infobus.app",
           "pkg:fr.tramb.park4night",
           "pkg:net.skyscanner.android.main",
-          "pkg:travel.goki.app"
+          "pkg:travel.goki.app",
+          "pkg:de.bvg.ticket"
         ]
       },
       {
-        "id": "sys_dev",
-        "order": "310",
-        "_doc_label": "Renamed from '_Dev & Terminal' to '_Dev' on 2026-09-10, when every terminal left for prod_terminals below. THE LEADING UNDERSCORE IS LOAD-BEARING AND IS NOT PART OF THE NAME THE OWNER READS: ui._doc_phone_sections buckets a folder into a section by its label's FIRST CHARACTER, and '_' is Tools · System. Renaming this to a bare 'Dev' would not rename the folder, it would evict it — a label matching no declared prefix belongs to no section and renders last, down with the Misc and Others sinks. test-phone-taxonomy-prefixes.sh asserts this across every folder so the next rename cannot make the mistake quietly.",
-        "label": "_Dev",
-        "_doc_whats_left": "After the 2026-09-10 surgery this folder keeps MacroDroid, Google Admin, Google Analytics, Parallel Space, AutoClicker and Shizuku, plus our own com.diegonmarcos.cloudlib.*/ide.* families and the three constellation apps that name it from ui.external_apps (cloud-myterminal, c3-watchdog, c3-morpheus). It is thinner but it is not empty, so it was NOT deleted — that is the owner's call to make, not this commit's.",
+        "id": "svc_jobs",
+        "order": "560",
+        "label": "+Jobs & Business",
         "match_keywords": [
-          "pkg:com.arlosoft.macrodroid",
-          "pkg:com.diegonmarcos.cloudkeyboardlibs",
-          "pkg^com.diegonmarcos.ide.",
-          "pkg:com.google.android.apps.enterprise.cpanel",
-          "pkg:com.google.android.apps.giant",
-          "pkg:com.lbe.parallel.intl",
-          "pkg:com.truedevelopersstudio.automatictap.autoclicker",
-          "pkg:moe.shizuku.privileged.api",
-          "pkg^com.diegonmarcos.cloudlib."
+          "pkg:com.linkedin.android",
+          "pkg:com.otta.otta"
         ]
       },
       {
-        "id": "sys_diag",
-        "order": "320",
-        "label": "_Diagnostics",
+        "id": "svc_realestate",
+        "order": "570",
+        "label": "+Real Estate",
         "match_keywords": [
-          "pkg:com.digibites.accubattery",
-          "pkg:com.frequencygenerator.dogwhistle",
-          "pkg:com.insideinc.gcpu",
-          "pkg:com.jmaciak.dogwhistle",
-          "pkg:com.luxdelux.frequencygenerator",
-          "pkg:com.noise.sound.meter.decibel",
-          "pkg:com.skypaw.decibel",
-          "pkg:io.japp.blackscreen",
-          "pkg:me.biplobsd.rsm",
-          "pkg:org.intoorbit.spectrum"
+          "pkg:de.is24.android",
+          "pkg:com.wggesucht.android"
         ]
       },
       {
-        "id": "sys_keyboards",
-        "order": "330",
-        "label": "_Keyboards",
+        "id": "svc_money",
+        "order": "580",
+        "label": "+Money",
         "match_keywords": [
-          "pkg:ch.icoaching.typewise",
-          "pkg:com.gingersoftware.android.keyboard",
-          "pkg:com.google.android.inputmethod.latin",
-          "pkg:com.grammarly.android.keyboard"
+          "pkg:com.binance.dev",
+          "pkg:com.bitpanda.bitpanda",
+          "pkg:com.btg.pactual.banking",
+          "pkg:com.btg.pactual.digital.mobile",
+          "pkg:com.btg.pactual.homebroker.mobile",
+          "pkg:com.fusionmedia.investing",
+          "pkg:com.paypal.android.p2pmobile",
+          "pkg:com.revolut.revolut",
+          "pkg:com.transferwise.android",
+          "pkg:com.xe.currency",
+          "pkg:es.bancosantander.apps",
+          "pkg^com.btg.pactual.",
+          "pkg:com.imaginecurve.curve.prd",
+          "pkg:com.starfinanz.smob.android.sfinanzstatus",
+          "pkg:de.number26.android"
         ]
       },
       {
-        "id": "sys_network",
-        "order": "340",
-        "label": "_Network",
-        "match_keywords": [
-          "pkg:com.devolutions.remotedesktopmanager",
-          "pkg:com.ghisler.tcplugins.SFTP",
-          "pkg:com.mobidia.android.mdm",
-          "pkg:com.phlox.simpleserver",
-          "pkg:com.ubnt.usurvey",
-          "pkg:net.techet.netanalyzerlite.an",
-          "pkg:org.kde.kdeconnect_tp"
-        ]
-      },
-      {
-        "id": "sys_security",
-        "order": "350",
-        "label": "_Security",
-        "match_keywords": [
-          "pkg:ch.protonvpn.android",
-          "pkg:com.azure.authenticator",
-          "pkg:com.beemdevelopment.aegis",
-          "pkg:com.google.android.apps.authenticator2",
-          "pkg:com.google.android.apps.credentialmanager",
-          "pkg:com.opera.max.global",
-          "pkg:com.samsung.knox.securefolder",
-          "pkg:com.wireguard.android",
-          "pkg:com.x8bit.bitwarden",
-          "pkg:eu.faircode.netguard",
-          "pkg^com.bitwarden.",
-          "pkg^com.expressvpn.",
-          "pkg^com.kunzisoft.keepass",
-          "pkg^com.nordvpn.",
-          "pkg^com.protonvpn.",
-          "pkg^io.tailscale.",
-          "pkg^me.proton.",
-          "pkg^net.mullvad.",
-          "pkg^net.openvpn.",
-          "pkg^org.torproject."
-        ]
-      },
-      {
-        "id": "sys_settings",
-        "order": "360",
-        "label": "_Settings",
-        "match_keywords": [
-          "pkg:com.android.settings",
-          "pkg:com.binarysmith.webclipwidget.ad",
-          "pkg:com.diegonmarcos.superapp",
-          "pkg:com.mi.earphone",
-          "pkg:com.rsupport.rs.activity.rsupport.aas2",
-          "pkg:com.samsung.android.app.routines",
-          "pkg:com.samsung.android.app.watchmanager",
-          "pkg:com.samsung.android.lool",
-          "pkg:com.samsung.android.mdx",
-          "pkg:com.samsung.android.oneconnect",
-          "pkg:com.sec.android.easyMover",
-          "pkg:com.teslacoilsw.launcher",
-          "pkg:pub.hanks.appfolderwidget",
-          "pkg^com.samsung.android.app.aodservice",
-          "pkg^com.samsung.android.sidegesturepad",
-          "pkg^com.samsung.android.themecenter",
-          "pkg^com.samsung.android.themestore"
-        ]
-      },
-      {
-        "id": "sys_stores",
-        "order": "370",
-        "label": "_Stores",
-        "match_keywords": [
-          "pkg:com.android.vending",
-          "pkg:com.sec.android.app.samsungapps",
-          "pkg:com.uptodown",
-          "pkg:org.fdroid.fdroid",
-          "pkg^com.aurora.adroid",
-          "pkg^com.aurora.store",
-          "pkg^org.fdroid."
-        ],
-        "match_metadata": [
-          "intent:android.intent.category.APP_MARKET",
-          "perm:android.permission.REQUEST_INSTALL_PACKAGES"
-        ]
+        "id": "svc_kgstore",
+        "order": "590",
+        "label": "+KG Store",
+        "match_keywords": []
       },
       {
         "id": "prod_ai",
         "order": "610",
-        "label": "@AI",
+        "label": "*AI",
         "match_keywords": [
           "pkg:ai.perplexity.app.android",
           "pkg:ai.perplexity.comet",
@@ -6770,93 +7207,21 @@
         ]
       },
       {
-        "id": "prod_chat",
+        "id": "prod_code",
         "order": "620",
-        "label": "@Chat",
+        "label": "*Code",
         "match_keywords": [
-          "pkg:chat.rocket.android",
-          "pkg:com.Slack",
-          "pkg:com.beeper.android",
-          "pkg:com.facebook.orca",
-          "pkg:com.garmin.android.apps.messenger",
-          "pkg:com.google.android.apps.tachyon",
-          "pkg:com.mattermost.rn",
-          "pkg:com.mattermost.rnbeta",
-          "pkg:com.trianguloy.openInWhatsapp",
-          "pkg:com.viber.voip",
-          "pkg:com.whatsapp",
-          "pkg:com.whatsapp.w4b",
-          "pkg:im.vector.app",
-          "pkg:io.heckel.ntfy",
-          "pkg:org.telegram.messenger"
-        ],
-        "match_metadata": [
-          "intent:android.intent.category.APP_MESSAGING"
+          "pkg:com.foxdebug.acode",
+          "pkg:com.rhmsoft.edit",
+          "pkg:com.github.android"
         ]
       },
       {
-        "id": "prod_mail",
-        "order": "630",
-        "label": "@Mail",
-        "_doc_match_keywords": "This list is the CENTRAL classification: it is what puts a mail app in the \"@\" section, and therefore what makes its notifications survive the Notify ▸ Inboxes filter (PhoneTaxonomy.sectionPrefixOf → the first character of this folder's label). Any THIRD-PARTY package named as a mail client anywhere else in this file has to appear HERE too, or that other list is describing an app the taxonomy has never heard of (our own mail app is not in this list any more — it names this folder from ui.external_apps[cloud-mail].folder instead): app.sterna was added to sections[phone].phone_app_groups[Inboxes] on 2026-09-09 and not here, so upstream Sterna Mail fell to the `others` sink, came back prefix-less, and was pruned from every Notify tab except All. Keyed on package, never on label — the 2026-09-09 mail rename changed the product name and left every package id alone, which is exactly why this key survived it.",
-        "match_keywords": [
-          "pkg:app.sterna",
-          "pkg:ch.protonmail.android",
-          "pkg:com.fsck.k9",
-          "pkg:com.google.android.gm",
-          "pkg:com.mailtemi.email",
-          "pkg:com.microsoft.office.outlook",
-          "pkg:com.samsung.android.email.provider",
-          "pkg:email.clean.android",
-          "pkg:eu.faircode.email",
-          "pkg:rs.ltt.android"
-        ],
-        "match_metadata": [
-          "intent:android.intent.category.APP_EMAIL"
-        ]
-      },
-      {
-        "id": "hlth_news",
-        "order": "640",
-        "label": "@News & Reading",
-        "match_keywords": [
-          "pkg:com.checkitt",
-          "pkg:com.devhd.feedly",
-          "pkg:com.flyersoft.moonreader",
-          "pkg:com.google.android.apps.magazines",
-          "pkg:com.rama.mako",
-          "pkg:com.samsung.android.app.spage",
-          "pkg:com.substack.app"
-        ],
-        "match_metadata": [
-          "cat:news"
-        ]
-      },
-      {
-        "id": "prod_phone",
-        "order": "650",
-        "label": "@Phone & Contacts",
-        "match_keywords": [
-          "pkg:com.diegonmarcos.comms.contacts",
-          "pkg:com.google.android.apps.messaging",
-          "pkg:com.samsung.android.app.contacts",
-          "pkg:com.samsung.android.dialer",
-          "pkg:com.google.android.contacts",
-          "pkg:com.samsung.android.messaging",
-          "pkg:org.fossify.phone"
-        ],
-        "match_metadata": [
-          "intent:android.intent.category.APP_CONTACTS"
-        ]
-      },
-      {
-        "_doc": "Every terminal on the device, gathered out of sys_dev on 2026-09-10 at the owner's request ('move all Terminals inside a folder called Terminals in the section Tools Inboxes & AI'). WHAT COUNTS AS A TERMINAL was read off what sys_dev actually held rather than off the names: the seven exact ids below plus the two startsWith families are precisely the termux-lineage entries that were in it, in both the upstream (com.termux*) and the fleet-fork (cld.termux*) namespace. Acode joins them because the owner put it here explicitly — it is an editor, not a shell, and it is here because he said so.\n\nTHE TWO pkg^ RULES HAD TO COME TOO. 'pkg^com.termux.' and 'pkg^cld.termux.' are the startsWith families that catch a termux sibling nobody has declared yet (termux-api, termux-boot, a future addon). Leaving either behind in sys_dev — order 310, which is walked before this folder's 460 — would have kept every such app in _Dev while the seven named ones moved, and the folder would have looked correct in the diff and been wrong on the device. Note that pkg^com.termux. does NOT cover the bare 'com.termux', and pkg^cld.termux. does not cover 'cld.termux', so both exact ids are listed as well.\n\nThe cld.termux* ids are OUR forks and ui._doc_phone_folders says fleet packages belong in ui.external_apps[].folder rather than in a match_keywords list. #571 gave cld.termux that entry (ui.external_apps[cloud-terminal-termux], folder prod_terminals), so its exact pkg: keyword left this list and is derived from the entry instead. The #563 follow-up did the same for cld.termux.nix once ui.external_apps[cloud-terminal-nix] existed: its exact pkg: keyword left too, derived from that entry's folder prod_terminals. cld.termux.nix.boot has no external_apps entry (it is a lib, not an app the AGI row launches) and stays here verbatim.",
         "id": "prod_terminals",
-        "order": "660",
-        "label": "@Terminals",
+        "order": "630",
+        "label": "*Terminal",
         "match_keywords": [
           "pkg:cld.termux.nix.boot",
-          "pkg:com.foxdebug.acode",
           "pkg:com.termux",
           "pkg:com.termux.api",
           "pkg:com.termux.nix",
@@ -6866,258 +7231,159 @@
         ]
       },
       {
-        "id": "prod_plan",
-        "order": "410",
-        "label": ".Calendar & Tasks",
-        "match_keywords": [
-          "pkg:co.mangotechnologies.clickup",
-          "pkg:com.gianlu.timeless",
-          "pkg:com.google.android.apps.tasks",
-          "pkg:com.google.android.calendar",
-          "pkg:com.microsoft.todos",
-          "pkg:com.samsung.android.app.reminder",
-          "pkg:com.samsung.android.calendar",
-          "pkg:com.toggl.giskard",
-          "pkg:com.trello",
-          "pkg:me.clockify.android",
-          "pkg:todolist.scheduleplanner.dailyplanner.todo.reminders"
-        ],
-        "match_metadata": [
-          "intent:android.intent.category.APP_CALENDAR"
-        ]
+        "id": "agi_tools",
+        "order": "640",
+        "label": "*Tools",
+        "match_keywords": []
       },
       {
-        "_doc_match_keywords": "Keyed on package because that is the only thing that survives a rename. pkg:com.collabora.libreoffice WAS in this list and is now GONE. It was here for the reason prod_mail states for its own list — a third-party package named anywhere else in this file has to be classified HERE too, or it lands in the `others` sink, comes back prefix-less and is pruned from every Notify tab except All while the launcher grid files it under Docs & Notes from ui.external_apps.folder, the two surfaces disagreeing about the same app — and it could not arrive by metadata instead, because PhoneAppClassifier matches `cat:productivity` against ApplicationInfo.category and refuses CATEGORY_UNDEFINED while upstream's manifest declares no android:appCategory at all. NONE OF THAT HOLDS ANY MORE. As of 2026-09-16 this fleet builds and publishes its own Cloud-Office.apk and ui.external_apps[cloud-office] names com.diegonmarcos.cloudoffice, so com.collabora.libreoffice is no longer named anywhere in this file and nothing has to classify it. NO KEYWORD REPLACES IT AND NONE MAY BE ADDED: PhoneFolders derives the keyword for com.diegonmarcos.cloudoffice from that entry's `folder`, so a literal here would be a second copy of an ownership the entry already holds — which is what test-app-identity-resolves.sh T8b reported twice while this line stood.",
-        "id": "prod_docs",
-        "order": "420",
-        "label": ".Docs & Notes",
-        "match_keywords": [
-          "pkg:com.adeeteya.markdown_editor",
-          "pkg:com.google.android.apps.docs.editors.docs",
-          "pkg:com.google.android.apps.docs.editors.sheets",
-          "pkg:com.google.android.keep",
-          "pkg:com.journable.app",
-          "pkg:com.microsoft.lists.public",
-          "pkg:com.microsoft.office.onenote",
-          "pkg:com.rhmsoft.edit",
-          "pkg:com.samsung.android.app.notes",
-          "pkg:jp.sblo.pandora.jota.plus",
-          "pkg:md.obsidian",
-          "pkg:org.chromium.webapk.a64d263d6f7d935c4_v2"
-        ],
-        "match_metadata": [
-          "cat:productivity"
-        ]
-      },
-      {
-        "id": "prod_storage",
-        "order": "430",
-        "label": ".Storage",
-        "match_keywords": [
-          "pkg:com.google.android.apps.docs",
-          "pkg:com.google.android.apps.photos",
-          "pkg:com.google.android.apps.subscriptions.red",
-          "pkg:com.microsoft.skydrive",
-          "pkg:com.musicvideo.photoeditor.squarefit",
-          "pkg:com.sec.android.gallery3d",
-          "pkg:pl.mobimax.cameraopus",
-          "pkg:com.alphainventor.filemanager",
-          "pkg:com.amaze.filemanager",
-          "pkg:com.app.applistbackup",
-          "pkg:com.ghisler.android.TotalCommander",
-          "pkg:com.ghostsq.commander",
-          "pkg:com.github.android",
-          "pkg:com.lonelycatgames.Xplore",
-          "pkg:com.mobisystems.fileman",
-          "pkg:com.rarlab.rar",
-          "pkg:com.sec.android.app.myfiles",
-          "pkg:com.smlnskgmail.jaman.hashchecker",
-          "pkg:com.viscouspot.gitsync",
-          "pkg:dk.tacit.android.foldersync.lite",
-          "pkg:me.proton.android.drive",
-          "pkg:me.zhanghai.android.files",
-          "pkg:pl.solidexplorer2"
-        ],
-        "match_metadata": [
-          "cat:image",
-          "intent:android.intent.category.APP_GALLERY",
-          "intent:android.intent.category.APP_FILES",
-          "perm:android.permission.MANAGE_EXTERNAL_STORAGE"
-        ]
-      },
-      {
-        "id": "prod_maps",
-        "order": "510",
-        "label": "=Maps & Weather",
-        "match_keywords": [
-          "pkg:aplicacion.tiempo",
-          "pkg:com.google.android.apps.maps",
-          "pkg:com.google.earth",
-          "pkg:com.mapswithme.maps.pro",
-          "pkg:cz.ackee.ventusky"
-        ],
-        "match_metadata": [
-          "cat:maps",
-          "intent:android.intent.category.APP_MAPS",
-          "intent:android.intent.category.APP_WEATHER"
-        ]
-      },
-      {
-        "id": "prod_utils",
-        "order": "520",
-        "label": "=Utilities",
-        "match_keywords": [
-          "pkg:com.adobe.reader",
-          "pkg:com.diotek.sec.lookup.dictionary",
-          "pkg:com.google.android.apps.translate",
-          "pkg:com.google.android.calculator",
-          "pkg:com.google.audio.hearing.visualization.accessibility.scribe",
-          "pkg:com.persapps.multitimer",
-          "pkg:com.samsung.android.ardrawing",
-          "pkg:com.sec.android.app.camera",
-          "pkg:com.sec.android.app.clockpackage",
-          "pkg:com.sec.android.app.popupcalculator",
-          "pkg:com.sec.android.app.voicenote"
-        ],
-        "_doc_samsung_camera": "The Samsung stock camera (com.sec.android.app.camera) is HERE because the owner asked for it in Tools · Primary on 2026-09-10, and this is the general-purpose folder of that section — the same landing the last such request got, one entry below. IT IS A MOVE, NOT A COPY: it lived in .Storage (prod_storage, order 530) with the gallery and the two other camera apps until this commit, and prod_storage is walked BEFORE this folder, so leaving the old keyword behind would have kept it in .Storage while the diff read as done. Moving it back is one line — delete this keyword and restore pkg:com.sec.android.app.camera to prod_storage.match_keywords. NOTE WHAT DID NOT MOVE: pl.mobimax.cameraopus (Camera Opus, third-party) and cld.camera (our own Cloud Camera, whose classification now comes from ui.external_apps[id=cloud-camera].folder rather than from a keyword) both stay in .Storage. prod_storage still carries the metadata rules cat:image and intent:…APP_GALLERY, but the keyword pass runs across every folder BEFORE the metadata pass (PhoneAppClassifier.classify), so the keyword below is what decides and no gallery rule can pull the camera back.",
-        "_doc_midni": "miDNI (es.gob.interior.policia.midni) is the Spanish National Police's digital DNI, and by the Service/Tool split at the top of this file it is a SERVICE — it is worthless without the provider, and ui._doc_phone_sections names 'government and identity' as Buro's own territory; it lived in -Gov & ID until 2026-09-10. The owner asked for it in Tools · Primary and that is where it is. Recorded here rather than argued: identity you must produce on demand is something you reach for like a calculator, not something you file like a tax return, and where an app SITS is the owner's call. Moving it back is one line — delete this keyword and restore it to svc_gov.",
-        "match_metadata": [
-          "intent:android.intent.category.APP_CALCULATOR"
-        ]
-      },
-      {
-        "id": "prod_web",
-        "order": "530",
-        "label": "=Web",
-        "match_keywords": [
-          "pkg:com.android.chrome",
-          "pkg:com.brave.browser",
-          "pkg:com.duckduckgo.mobile.android",
-          "pkg:com.google.android.googlequicksearchbox",
-          "pkg:io.raindrop.raindropio"
-        ],
-        "match_metadata": [
-          "intent:android.intent.category.APP_BROWSER"
-        ]
-      },
-      {
-        "id": "media_games",
+        "id": "proj_superapp",
         "order": "710",
-        "label": ">Games",
+        "label": "#SuperApp",
         "match_keywords": [
-          "pkg:com.epicgames.portal",
-          "pkg:com.playdead.limbo.egs.full",
-          "pkg:com.samsung.android.game.gamehome",
-          "pkg:com.werewolfapps.online",
-          "pkg:org.faudroids.werewolf"
-        ],
-        "match_metadata": [
-          "cat:game"
+          "pkg:com.diegonmarcos.superapp"
         ]
       },
       {
-        "id": "media_audio",
+        "id": "proj_omniverse",
         "order": "720",
-        "label": ">Music & Audio",
-        "match_keywords": [
-          "pkg:at.zuggabecka.radiofm4",
-          "pkg:com.aspiro.tidal",
-          "pkg:com.earthflare.android.radioparadisewidget.gpv2",
-          "pkg:com.google.android.apps.youtube.music",
-          "pkg:com.shazam.android",
-          "pkg:com.spotify.music",
-          "pkg:com.ultimateguitar.tabs",
-          "pkg:de.deutschlandfunk.dlfaudiothek",
-          "pkg:ott.alanwatts"
-        ],
-        "match_metadata": [
-          "cat:audio",
-          "intent:android.intent.category.APP_MUSIC"
-        ]
+        "label": "#Omniverse",
+        "match_keywords": []
       },
       {
-        "id": "media_social",
+        "id": "proj_finterm",
         "order": "730",
-        "label": ">Social",
-        "match_keywords": [
-          "pkg:com.badoo.mobile",
-          "pkg:com.bereal.ft",
-          "pkg:com.bumble.app",
-          "pkg:com.instagram.android",
-          "pkg:com.instagram.barcelona",
-          "pkg:com.pinterest",
-          "pkg:com.tinder"
-        ],
-        "match_metadata": [
-          "cat:social"
-        ]
+        "label": "#FinTerm",
+        "match_keywords": []
       },
       {
-        "id": "media_video",
+        "id": "proj_cad",
         "order": "740",
-        "label": ">Video",
-        "match_keywords": [
-          "pkg:com.amazon.avod.thirdpartyclient",
-          "pkg:com.google.android.videos",
-          "pkg:com.google.android.youtube",
-          "pkg:com.netflix.mediaclient",
-          "pkg:com.wbd.stream",
-          "pkg:tv.arte.plus7"
-        ],
-        "match_metadata": [
-          "cat:video"
-        ]
+        "label": "#CAD",
+        "match_keywords": []
       },
       {
-        "id": "hlth_learning",
+        "id": "proj_sim2real",
+        "order": "750",
+        "label": "#Sim2Real",
+        "match_keywords": []
+      },
+      {
+        "id": "sys_stores",
         "order": "810",
-        "label": "*Learning",
+        "label": "_Store",
         "match_keywords": [
-          "pkg:air.nn.mobile.app.main",
-          "pkg:com.duocards.app",
-          "pkg:com.fluentflix.fluentu",
-          "pkg:com.flutterflow.kards",
-          "pkg:com.hueber.huebermedia",
-          "pkg:com.lubosmikusiak.articuli.derdiedas",
-          "pkg:com.memrise.android.memrisecompanion",
-          "pkg:mobi.eup.easygerman",
-          "pkg:com.rype.go",
-          "pkg:com.simonandschuster.pimsleur.unified.android",
-          "pkg:com.softissimo.reverso.context",
-          "pkg:com.ted.android",
-          "pkg:de.digionline.webweavera2"
-        ]
-      },
-      {
-        "id": "hlth_nutrition",
-        "order": "820",
-        "label": "*Nutrition",
-        "_doc_match_keywords": "The owner asked for a Nutrition folder under Tools · Health on 2026-09-10. FatSecret is the ONLY nutrition application this file declares — the whole keyword inventory was searched for the obvious siblings (MyFitnessPal, Yazio, Lifesum, Cronometer, a water tracker) and none of them is in it, and no device was reachable to enumerate what is actually installed. So this folder ships with one member rather than with a guess: an invented package id would render as a permanent 'Not installed' tile, and a folder with no rules at all is rejected by test-phone-taxonomy-prefixes T1. Name the others and they belong here. Google Fit stayed in *Outdoor & Sport: it counts steps, it does not count food.",
-        "match_keywords": [
-          "pkg:com.fatsecret.android"
-        ]
-      },
-      {
-        "id": "hlth_outdoor",
-        "order": "830",
-        "label": "*Outdoor & Sport",
-        "match_keywords": [
-          "pkg:com.alltrails.alltrails",
-          "pkg:com.downdogapp",
-          "pkg:com.garmin.android.apps.connectmobile",
-          "pkg:com.garmin.android.apps.dive",
-          "pkg:com.garmin.android.apps.explore",
-          "pkg:com.garmin.connectiq",
-          "pkg:com.google.android.apps.fitness",
-          "pkg:com.outdooractive.Outdooractive",
-          "pkg:com.strava",
-          "pkg:com.urbandroid.sleep",
-          "pkg:com.wikiloc.wikilocandroid",
-          "pkg:de.komoot.android"
+          "pkg:com.android.vending",
+          "pkg:com.sec.android.app.samsungapps",
+          "pkg:com.uptodown",
+          "pkg:org.fdroid.fdroid",
+          "pkg^com.aurora.adroid",
+          "pkg^com.aurora.store",
+          "pkg^org.fdroid.",
+          "pkg:com.aurora.store"
         ],
         "match_metadata": [
-          "perm:android.permission.ACTIVITY_RECOGNITION",
-          "perm:android.permission.BODY_SENSORS"
+          "intent:android.intent.category.APP_MARKET",
+          "perm:android.permission.REQUEST_INSTALL_PACKAGES"
+        ]
+      },
+      {
+        "id": "sys_account",
+        "order": "820",
+        "label": "_Account",
+        "match_keywords": []
+      },
+      {
+        "id": "sys_dev",
+        "order": "830",
+        "label": "_C3 & Dev",
+        "match_keywords": [
+          "pkg:com.arlosoft.macrodroid",
+          "pkg:com.diegonmarcos.cloudkeyboardlibs",
+          "pkg^com.diegonmarcos.ide.",
+          "pkg:com.google.android.apps.enterprise.cpanel",
+          "pkg:com.google.android.apps.giant",
+          "pkg:com.lbe.parallel.intl",
+          "pkg:com.truedevelopersstudio.automatictap.autoclicker",
+          "pkg:moe.shizuku.privileged.api",
+          "pkg^com.diegonmarcos.cloudlib."
+        ]
+      },
+      {
+        "id": "sys_diag",
+        "order": "840",
+        "label": "_Diagnostics",
+        "match_keywords": [
+          "pkg:com.digibites.accubattery",
+          "pkg:com.frequencygenerator.dogwhistle",
+          "pkg:com.insideinc.gcpu",
+          "pkg:com.jmaciak.dogwhistle",
+          "pkg:com.luxdelux.frequencygenerator",
+          "pkg:com.noise.sound.meter.decibel",
+          "pkg:com.skypaw.decibel",
+          "pkg:io.japp.blackscreen",
+          "pkg:me.biplobsd.rsm",
+          "pkg:org.intoorbit.spectrum",
+          "pkg:no.nordicsemi.android.mcp"
+        ]
+      },
+      {
+        "id": "sys_network",
+        "order": "850",
+        "label": "_Network",
+        "match_keywords": [
+          "pkg:com.devolutions.remotedesktopmanager",
+          "pkg:com.ghisler.tcplugins.SFTP",
+          "pkg:com.mobidia.android.mdm",
+          "pkg:com.phlox.simpleserver",
+          "pkg:com.ubnt.usurvey",
+          "pkg:net.techet.netanalyzerlite.an",
+          "pkg:org.kde.kdeconnect_tp",
+          "pkg:com.cloudflare.cloudflareoneagent",
+          "pkg:com.cloudflare.onedotonedotonedotone"
+        ]
+      },
+      {
+        "id": "sys_security",
+        "order": "860",
+        "label": "_Security",
+        "match_keywords": [
+          "pkg:ch.protonvpn.android",
+          "pkg:com.opera.max.global",
+          "pkg:com.wireguard.android",
+          "pkg:eu.faircode.netguard",
+          "pkg^com.expressvpn.",
+          "pkg^com.nordvpn.",
+          "pkg^com.protonvpn.",
+          "pkg^io.tailscale.",
+          "pkg^me.proton.",
+          "pkg^net.mullvad.",
+          "pkg^net.openvpn.",
+          "pkg^org.torproject.",
+          "pkg:com.samsung.android.app.find"
+        ]
+      },
+      {
+        "id": "sys_settings",
+        "order": "870",
+        "label": "_Settings",
+        "match_keywords": [
+          "pkg:com.android.settings",
+          "pkg:com.binarysmith.webclipwidget.ad",
+          "pkg:com.rsupport.rs.activity.rsupport.aas2",
+          "pkg:com.samsung.android.app.routines",
+          "pkg:com.samsung.android.app.watchmanager",
+          "pkg:com.samsung.android.lool",
+          "pkg:com.samsung.android.mdx",
+          "pkg:com.samsung.android.oneconnect",
+          "pkg:com.sec.android.easyMover",
+          "pkg:com.teslacoilsw.launcher",
+          "pkg:pub.hanks.appfolderwidget",
+          "pkg^com.samsung.android.app.aodservice",
+          "pkg^com.samsung.android.sidegesturepad",
+          "pkg^com.samsung.android.themecenter",
+          "pkg^com.samsung.android.themestore",
+          "pkg:com.samsung.android.goodlock"
         ]
       },
       {
@@ -7134,39 +7400,39 @@
         "sink": true
       }
     ],
-    "_doc_phone_sections": "Top-level section headers in the Home Apps/Phone tab. Folders are bucketed under a section by their label's first character: Services · Buro (-), Services · Others (+), Tools · System (_), Tools · Inboxes & AI (@), Tools · Data Apps (.), Tools · Primary (=), Tools · Media (>), Tools · Health (*). A folder whose label starts with none of those prefixes belongs to no section and renders last (that is where the Others and Misc sinks live). The split is Service vs Tool: a SERVICE is a client for one external provider you hold an account, contract or booking with, and is worthless without that provider (Santander, Ryanair, Uber, Airalo, ImmoScout24, Gov.br); a TOOL is software that operates on your own data or device and works with any provider or none (maps, file managers, notes, keyboards, browsers, media players). Entertainment clients are tools, not services: you reach for Netflix the way you reach for a media player. Tools · Inboxes & AI is everything that carries messages in and the assistants you talk to: AI, Chat, Mail, Phone & Contacts, News & Reading — it sits ahead of the other tool sections because it is what you open first and most. Tools · Data Apps holds the tools that own a body of your data (Calendar & Tasks, Docs & Notes, Storage); Tools · Primary holds the general-purpose ones that operate on whatever you point them at (Maps & Weather, Utilities, Web). Tools · Media is what you watch, listen to and play; Tools · Health is what you open to look after yourself — moving your body, learning something, staying informed. Services then split again by why you open them: BURO is the paperwork of being alive, the accounts you must keep in order (money, government and identity, telecom, housing, health, getting to work); OTHERS is discretionary, the services you open because you chose to (travel, shopping, events, jobs). Order = render order. Empty sections (every folder empty) are silently skipped. Phone tab renders one subhead per non-empty section + the folder grid below. PROJECTS IS NOT A SECTION HERE AND MUST NOT BECOME ONE. It was added as a '#' section on 2026-09-10 and removed the same day: the owner asked for it \"after Tools Primary and Before Configs\", and Configs exists only in sections[id=phone].phone_app_groups — the QUICKMARKS page — so the anchor named that array, never this one. It lives there now, at index 4. The difference is not cosmetic: a quickmarks group carries `packages` and `folders` together, so it can hold five loose applications beside one Money folder, while a section here is rendered as subhead + folder grid and has no slot for an app that belongs to no folder — which is what forced a folder called Projects inside a section called Projects, and what the owner objected to by name.",
+    "_doc_phone_sections": "Top-level section headers in the Home Apps/Phone tab and Cloud apps listing, ONE category system shared with the Quickmarks groups (#1756). Folders are bucketed under a section by their label's first character: Tools · Primary (=), Tools · Communication (@), Tools · Data (.), Tools · Me (~), Services (+), AGI (*), Projects (#), Setup (_). Order = render order = the Quickmarks group order Primary, Communication, Data, Me, Services, AGI, Projects, Setup. A folder whose label starts with none of those prefixes belongs to no section and renders last (the Others and Misc sinks). The split is Service vs Tool: a SERVICE is a client for one external provider you hold an account, contract or booking with (Search, Events, Shopping, Mobility & Travel, Jobs & Business, Real Estate, Money, KG Store). DECISIONS: Money stays in Services (one folder, no duplicate in Me): a bank or broker app is a client of one provider you hold an account with, and the owner listed Money under Services; Real Estate (housing SEARCH: ImmoScout, WG-Gesucht) stays in Services while Home & Housing (building access, neighbours, self-storage: the paperwork side) goes to Me; a TOOL operates on your own data or device. Tools · Primary: Maps & Weather, Utilities, Web. Tools · Communication: Chat, Mail, Phone & Contacts, Social, News & Reading. Tools · Data: Calendar & Tasks, Docs & Notes, Storage. Tools · Me: Gov & ID, Telecom, Health, Home & Housing (the Buro paperwork: ids, carrier accounts, health admin and trackers, access/neighbours/storage), Outdoor & Sport, Nutrition, Learning, i.e. everything personal. Every section is a set of subtype folders; no app sits loose outside a folder. AGI: AI and Terminals. Projects: Lnktree, our four project apps (Omniverse, FinTerm, CAD, Sim2Real). Setup absorbs the former System section (Dev, Diagnostics, Keyboards, Network, Security, Settings, Stores). Retired prefixes: '-' Buro and '>' Media and '*' Health ('*' is now AGI); the former Services · Others '+' is now Services. Folder ids are stable keys and did not change when the labels did, except svc_travel, which merged into svc_mobility (Mobility & Travel). Empty sections are silently skipped. PROJECTS IS A SECTION HERE since #1756: the earlier ban (2026-09-10) was about a Projects section holding a folder named Projects; the section now holds the Lnktree folder, and the Projects quickmark group is unchanged.",
     "phone_sections": [
-      {
-        "title": "Services · Buro",
-        "prefix": "-"
-      },
-      {
-        "title": "Services · Others",
-        "prefix": "+"
-      },
-      {
-        "title": "Tools · System",
-        "prefix": "_"
-      },
-      {
-        "title": "Tools · Data Apps",
-        "prefix": "."
-      },
       {
         "title": "Tools · Primary",
         "prefix": "="
       },
       {
-        "title": "Tools · Inboxes & AI",
+        "title": "Tools · Communication",
         "prefix": "@"
       },
       {
-        "title": "Tools · Media",
-        "prefix": ">"
+        "title": "Tools · Data",
+        "prefix": "."
       },
       {
-        "title": "Tools · Health",
+        "title": "Tools · Me",
+        "prefix": "~"
+      },
+      {
+        "title": "Services",
+        "prefix": "+"
+      },
+      {
+        "title": "AGI",
         "prefix": "*"
+      },
+      {
+        "title": "Projects",
+        "prefix": "#"
+      },
+      {
+        "title": "Setup",
+        "prefix": "_"
       }
     ],
     "_doc_phone_smart_folders": "Smart Folders rendered at the BOTTOM of the Home Apps/Phone tab — dynamic filters over the same LauncherApps.getActivityList enumeration the page uses. Apps still belong to their topical folder above; Smart Folders are an orthogonal cross-cut view by manufacturer / install-source. Rule types: pkg_prefix (any pkg starts-with one of values); pkg_eq (any pkg equals one of values); fleet_kind (any pkg that is a constellation-fleet member whose kind — 'app' or 'lib', taken from the CENTRAL classification data/regen.sh → constellation-fleet.json → BuildConfig.CONSTELLATION_FLEET_B64 — is one of values; splits OUR OWN APKs from the companion libraries off the registry, never a hand-maintained package list); install_source_in (the app's install-source-of-record — installingPackageName OR initiatingPackageName from PackageManager.getInstallSourceInfo — IS one of values; use this to bucket apps by the store/installer that owns their updates); install_source_not (install source NOT in values — legacy catch-all for 'anything outside the official stores'); recently_installed (ranking rule: newest firstInstallTime first, capped at `limit`); recent_used (ranking: most-recently-used first via UsageStatsManager.lastTimeUsed, capped at `limit`); active_since (ranking: apps used within the last `window_h` hours, most-recent first, optional `limit`); most_opened (ranking: launch count via MOVE_TO_FOREGROUND events over 7d, capped at `limit`); top_network (ranking: total bytes rx+tx via NetworkStatsManager over 7d, capped at `limit`); top_battery (ranking: estimated mAh via libs:battery EnergyWatchdog.perAppEstimate, capped at `limit`). The five usage/network/battery ranking rules read through libs:datamanager (usage+network) / libs:battery (energy) and ALL need the PACKAGE_USAGE_STATS usage-access grant — without it each degrades to an empty (hidden) folder. The install-source values are real installer package names — verified on-device via /api/phone/classify (which dumps installing/initiating/system per app): com.android.vending=Google Play, com.sec.android.app.samsungapps=Galaxy Store, com.uptodown=Uptodown, org.fdroid.fdroid=F-Droid, com.google.android.packageinstaller=manual sideload (raw APK, no store), com.epicgames.portal=Epic, com.facebook.system=Meta's own installer.",
@@ -9209,7 +9475,7 @@
         "_doc": "Cloud Contacts — standalone NATIVE multi-channel people hub (ac_cloud-contacts, WebView/Tailwind, cloud-news pattern — NOT a Fossify fork). Merges device (local + Gmail) contacts with LinkedIn/Instagram imports; the person screen is a channel switchboard (WhatsApp/Telegram/Matrix/Cloud Chat/Cloud Mail/SMS/Cloud Dialer/LinkedIn/Instagram) driven by build.json::channels — no default call action. install_apk_url mirrors ac_cloud-contacts/build.json::release.gh_release (asset Cloud-Contacts.apk, published by ship-cloud-contacts.yml). Signs with the shared constellation key.",
         "id": "cloud-contacts",
         "service": "contacts-radicale",
-        "folder": "prod_phone",
+        "folder": "prod_contacts",
         "hub_package": "com.diegonmarcos.cloudcontacts",
         "install_package": "com.diegonmarcos.cloudcontacts",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Contacts.apk",
@@ -9237,7 +9503,7 @@
       {
         "id": "cloud-matrix",
         "service": "continuwuity",
-        "folder": "prod_chat",
+        "folder": "prod_messenger",
         "hub_package": "com.diegonmarcos.comms.matrix",
         "_doc_alt_package": "The store ships a resigned STOCK Element X, so the installed applicationId is io.element.android.x, not hub_package (same fact the fleet records as alt_id). Without this the Suite/Comms tile can't see the installed app and offers a fresh install of something already on the phone. Remove once the matrix fork is repackaged to hub_package.",
         "alt_package": "io.element.android.x",
@@ -9247,7 +9513,7 @@
       },
       {
         "id": "cloud-myterminal",
-        "folder": "sys_dev",
+        "folder": "prod_terminals",
         "hub_package": "com.diegonmarcos.ide",
         "install_package": "com.diegonmarcos.ide",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-MyTerminal.apk",
@@ -9279,7 +9545,7 @@
         "_doc": "#571. cloud-code (ac_cloud-code, our Acode build, applicationId com.diegonmarcos.code) — the AGI IDE tile. folder prod_terminals because the owner put upstream Acode (pkg:com.foxdebug.acode) in Terminals himself, and this is the same editor under our id.",
         "id": "cloud-code",
         "service": "code-server",
-        "folder": "prod_terminals",
+        "folder": "prod_code",
         "hub_package": "com.diegonmarcos.code",
         "install_package": "com.diegonmarcos.code",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Code.apk",
@@ -9328,7 +9594,11 @@
         "hub_package": "com.diegonmarcos.cloudkeyboard",
         "install_package": "com.diegonmarcos.cloudkeyboard",
         "actions": [
-          {"label": "Writer", "target": "extapp:cloud-keyboard#page:writer", "_doc": "#1736 was the Cloud > Primary Writer tile (#1707: the Writer tab of the keyboard, the retired Cloud Writer app's successor). A tile on the Cloud list read as the retired app, so the entry point is now an Action of this app's tap menu (CloudAppMenu): target = the same deep link the tile had."}
+          {
+            "label": "Writer",
+            "target": "extapp:cloud-keyboard#page:writer",
+            "_doc": "#1736 was the Cloud > Primary Writer tile (#1707: the Writer tab of the keyboard, the retired Cloud Writer app's successor). A tile on the Cloud list read as the retired app, so the entry point is now an Action of this app's tap menu (CloudAppMenu): target = the same deep link the tile had."
+          }
         ],
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Keyboard.apk",
         "forks": {}
@@ -9336,7 +9606,7 @@
       {
         "_doc": "Cloud-Wallet — standalone cards/passes/tickets app (ac_cloud-wallet). libs:wallet (Compose card-stack deck) was MOVED out of the SuperApp into this standalone APK; the Cloud 'Wallet' tile (target extapp:cloud-wallet) opens it if installed, else downloads + installs install_apk_url. Single app (no forks), so the forkless extapp:cloud-wallet resolves straight to hub_package. install_apk_url mirrors ac_cloud-wallet/build.json::release.gh_release (asset Cloud-Wallet.apk, published by ship-cloud-wallet.yml). Signs with the shared constellation key (vault Shared/Providers/D_TOOLS-DEVICES/d2-android/release.jks).",
         "id": "cloud-wallet",
-        "folder": "sys_security",
+        "folder": "prod_wallet",
         "hub_package": "com.diegonmarcos.cloudwallet",
         "install_package": "com.diegonmarcos.cloudwallet",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Wallet.apk",
@@ -9345,7 +9615,7 @@
       {
         "_doc": "Cloud-Me — the personal-administration app (ac_cloud-me): Buro / Agenda / Profile / Projects / Wallet, with Fin under Buro and Health under Projects. It owns what MyFin and MyHealth used to be here, which is why several tiles point at it: Tools 'Me' opens it plain, and every Projects Me tile carries a destination (page:buro/summary, page:projects/health, page:projects/studying, page:projects/trips). page:buro/fin is no longer among them — the owner dropped the MyFin tile, and Buro > Fin is now reached from inside Cloud-Me. Like cloud-wallet it is a standalone constellation APK with no forks, so extapp:cloud-me resolves straight to hub_package; the Cloud tile opens it when installed and otherwise downloads install_apk_url. install_apk_url mirrors ac_cloud-me/build.json::release.gh_release (asset Cloud-Me.apk, published by ship-cloud-me.yml). Shares the constellation signing key.",
         "id": "cloud-me",
-        "folder": "sys_settings",
+        "folder": "me_me",
         "hub_package": "com.diegonmarcos.cloudme",
         "install_package": "com.diegonmarcos.cloudme",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Me.apk",
@@ -9364,7 +9634,7 @@
         "_doc": "Cloud-Vault — standalone Vaultwarden client app (ac_cloud-vault). Hosts vault.diegonmarcos.com (self-hosted Vaultwarden) in a dedicated BrowserHostFragment APK; the Cloud 'Vault' tile (target extapp:cloud-vault) opens it if installed, else downloads + installs install_apk_url. install_apk_url mirrors ac_cloud-vault/build.json::release.gh_release (asset Cloud-Vault.apk, published by ship-cloud-vault.yml). Signs with the shared constellation key.",
         "id": "cloud-vault",
         "service": "vaultwarden",
-        "folder": "sys_security",
+        "folder": "data_vault",
         "hub_package": "com.diegonmarcos.cloudvault",
         "install_package": "com.diegonmarcos.cloudvault",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Vault.apk",
@@ -9399,7 +9669,7 @@
         "forks": {}
       },
       {
-        "_doc": "cloud-c3 (#648/#663) \u2014 the C3 surface is now its own APK, and Cloud \u25b8 Apps \u25b8 Configs opens it with extapp:cloud-c3 rather than page:c3/topology. Sections.externalApp() reads ONLY this array, so with no entry here that tile snacks 'Unknown app: cloud-c3' AFTER the tap instead of offering the APK \u2014 the same reason ac_c3-watchtower above has one. NO `label`: the id IS the application's one name (#351) and a caption beside a fleet package is the second copy #224 reverted; the launcher derives the displayed name by dropping the family prefix. install_apk_url mirrors ac_cloud-c3/build.json::release.gh_release.asset_name (Cloud-C3.apk, the arm64 rolling-latest asset, published and verified 2026-09-30). THE IN-APP C3 SECTION IS STILL HERE ON PURPOSE: its five live feeds, NTFY centre and three container dashboards are not ported into the new APK yet, whose Topology and Observ tabs still render a stated not-built placeholder \u2014 deleting the section before the port would replace a working ops surface with two empty screens. It is reached by ui.sections[cloud].pages[c3], tiles_labs and the one-hand node, so nothing here is orphaned.",
+        "_doc": "cloud-c3 (#648/#663) — the C3 surface is now its own APK, and Cloud ▸ Apps ▸ Configs opens it with extapp:cloud-c3 rather than page:c3/topology. Sections.externalApp() reads ONLY this array, so with no entry here that tile snacks 'Unknown app: cloud-c3' AFTER the tap instead of offering the APK — the same reason ac_c3-watchtower above has one. NO `label`: the id IS the application's one name (#351) and a caption beside a fleet package is the second copy #224 reverted; the launcher derives the displayed name by dropping the family prefix. install_apk_url mirrors ac_cloud-c3/build.json::release.gh_release.asset_name (Cloud-C3.apk, the arm64 rolling-latest asset, published and verified 2026-09-30). THE IN-APP C3 SECTION IS STILL HERE ON PURPOSE: its five live feeds, NTFY centre and three container dashboards are not ported into the new APK yet, whose Topology and Observ tabs still render a stated not-built placeholder — deleting the section before the port would replace a working ops surface with two empty screens. It is reached by ui.sections[cloud].pages[c3], tiles_labs and the one-hand node, so nothing here is orphaned.",
         "id": "cloud-c3",
         "folder": "sys_dev",
         "hub_package": "com.diegonmarcos.cloudc3",
@@ -9429,7 +9699,7 @@
         "_doc": "Cloud Gallery — standalone gallery app (ac_cloud-gallery, applicationId com.diegonmarcos.mediacenter), a Google-Photos/Samsung-Gallery replacement: on-device MediaStore gallery + PhotoPrism cloud library (WebDAV) + camera-roll auto-backup, plus YouTube (NewPipeExtractor) and mirrored-Instagram profiles. Single-app fork (forkless), so extapp:cloud-gallery resolves straight to hub_package. Built and published by ship-cloud-gallery.yml as cloud-gallery.apk (arm64) and cloud-gallery-x86_64.apk on the rolling latest release. RENAMED 2026-10 from cloud-media-center (directory, workflow, release assets, GHCR image, fork key and extapp id all moved); hub_package/install_package keep the original applicationId on purpose, so phones that already have it installed see the same app and update it in place. The name cloud-media-center now belongs to a different app, the Tauri media hub (ui.external_apps[cloud-media-center]).",
         "id": "cloud-gallery",
         "service": "photoprism_app",
-        "folder": "media_video",
+        "folder": "data_gallery",
         "hub_package": "com.diegonmarcos.mediacenter",
         "install_package": "com.diegonmarcos.mediacenter",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/cloud-gallery.apk",
@@ -9438,7 +9708,7 @@
       {
         "_doc": "Cloud Office (ac_cloud-office, com.diegonmarcos.cloudoffice) — OUR build, as of 2026-09-16, and THIS IS THE ONE EDIT THE PREVIOUS _doc SAID TO MAKE: \"WHEN THE SOURCE BUILD FIRST PUBLISHES: hub_package/install_package/install_apk_url move here in one edit\". Until run 35043058309 these three fields named com.collabora.libreoffice and Cloud-Sheets.apk, and that was correct — ac_cloud-office's build.host was null, ship-cloud-office.yml exited 1 rather than mirror an app it no longer described, and the only office artefact in existence was Collabora's own signed APK republished under our release name. That run built from source and published Cloud-Office.apk (266,888,676 bytes, 2026-09-16T01:16:19Z), the first time that asset has ever existed. Leaving these fields behind is now the failure the old _doc warned about with the signs reversed: hub_package is how the launcher decides whether the app is on the phone, and install_apk_url is what the tile downloads, so the Office tile would pull 267 MB of a third party's build over a metered connection and install a package nothing else in this fleet names. package read from ac_cloud-office/build.json::android.application_id and confirmed against the PUBLISHED artefact, not the source: its AndroidManifest.xml was pulled out of the ZIP by byte range, inflated, and com.diegonmarcos.cloudoffice found in the AXML string pool while com.collabora.libreoffice and org.collabora.app are both absent. install_apk_url mirrors ac_cloud-office/build.json::release.gh_release. THE OWNER'S PHONE KEEPS THE OLD COLLABORA OFFICE UNTIL HE UNINSTALLS IT BY HAND — a different package id is a different app to Android — which is also why Cloud-Sheets.apk stays on the release rather than being tidied away. folder=prod_docs is the taxonomy half of the same record: PhoneFolders derives the pkg: keyword from it, so NO literal keyword for com.diegonmarcos.cloudoffice may be added to ui.phone_folders, and test-app-identity-resolves.sh T8b fails on exactly that.",
         "id": "cloud-office",
-        "folder": "prod_docs",
+        "folder": "prod_office",
         "hub_package": "com.diegonmarcos.cloudoffice",
         "install_package": "com.diegonmarcos.cloudoffice",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Office.apk",
@@ -9447,14 +9717,14 @@
       {
         "_doc": "Cloud Camera — our own signed build of GrapheneOS Camera, renamed onto cld.camera so it can coexist with an officially-signed GrapheneOS build (ac_cloud-camera/build.json::android.application_id and app/build.gradle.kts both say cld.camera). Added so the Cloud ▸ Apps ▸ Tools Primary tile can use extapp:cloud-camera like every other tile in that row; with no entry here launchExternalApp has no package to open and no APK to offer, exactly the gap the c3-watchdog entry above was written to close. install_apk_url mirrors ac_cloud-camera/build.json::release.gh_release (asset Cloud-Camera.apk on the rolling `latest` release, published by ship-cloud-camera.yml) and was confirmed to answer 200 on 2026-09-10, so this tile offers a real install rather than a dead one. folder=prod_storage is NOT a new placement: cld.camera was already classified into .Storage by a literal `pkg:` keyword there, and that keyword was deleted in this same commit — for our own apps identity and taxonomy are ONE record (see _doc_external_apps, and test-app-identity-resolves.sh T8b, which fails on any keyword that restates a package this list owns).",
         "id": "cloud-camera",
-        "folder": "prod_storage",
+        "folder": "prod_camera",
         "hub_package": "cld.camera",
         "install_package": "cld.camera",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Camera.apk",
         "forks": {}
       },
       {
-        "_doc": "Cloud Notes \u2014 the standalone notes app (ac_cloud-notes, published by ship-cloud-notes.yml). It is built from a vendored clone (#469) and it replaced the Markor build that used to occupy the same directory and the same package (#495). #522 undid the one thing #495 left wrong: the app had been standing under the name cloud-notes, which is the UPSTREAM PROJECT, not the product. Cloud Notes is an implementation detail; the product is cloud-notes, and #351 allows exactly one spelling of it everywhere. So the directory is ac_cloud-notes again, ac_cloud-notes/build.json::name is cloud-notes, and this id follows it \u2014 T3 of test-app-names-pattern.sh requires this id to BE the fleet name (constellation-fleet.json, itself derived from build.json::.name), so restating anything else here would be a second, disagreeing declaration. The Cloud \u25b8 Data Apps 'Notes' tile above targets extapp:cloud-notes to match; with no entry here Sections.externalApp returns null and the tile snacks 'Unknown app: cloud-notes' \u2014 a tile that fails AFTER the tap, per test-app-identity-resolves.sh T1. package/install_package/install_apk_url are UNCHANGED across all of #495 and #522: the applicationId has been com.diegonmarcos.cloudnotes since #495 and the rolling asset has always been Cloud-Notes.apk, so nothing on the phone has to be reinstalled for the rename. package read from ac_cloud-notes/build.json::android.application_id, which app/build.gradle reads via JsonSlurper rather than a literal (ac_cloud-notes/test/test-identity.sh is what keeps them agreeing). install_apk_url mirrors ac_cloud-notes/build.json::release.gh_release. NO per-ABI variant exists and none is missing: ship-cloud-notes.yml builds ONE arm64-v8a APK by design (Cloud Notes's rust plugin builds a single CLOUD_NOTES_ANDROID_NATIVE_TARGET, and a second ABI leg would double a 40+ minute build), so this app publishes ONE universal Cloud-Notes.apk and data/regen.sh emits no `assets` map for it \u2014 unlike cloud-writer below, whose _doc_abi note does apply. folder=prod_docs ('.Docs & Notes') is the taxonomy half of the same record \u2014 PhoneFolders derives the pkg: keyword from it, so NO literal keyword for com.diegonmarcos.cloudnotes may be added to ui.phone_folders (T8b fails on exactly that).",
+        "_doc": "Cloud Notes — the standalone notes app (ac_cloud-notes, published by ship-cloud-notes.yml). It is built from a vendored clone (#469) and it replaced the Markor build that used to occupy the same directory and the same package (#495). #522 undid the one thing #495 left wrong: the app had been standing under the name cloud-notes, which is the UPSTREAM PROJECT, not the product. Cloud Notes is an implementation detail; the product is cloud-notes, and #351 allows exactly one spelling of it everywhere. So the directory is ac_cloud-notes again, ac_cloud-notes/build.json::name is cloud-notes, and this id follows it — T3 of test-app-names-pattern.sh requires this id to BE the fleet name (constellation-fleet.json, itself derived from build.json::.name), so restating anything else here would be a second, disagreeing declaration. The Cloud ▸ Data Apps 'Notes' tile above targets extapp:cloud-notes to match; with no entry here Sections.externalApp returns null and the tile snacks 'Unknown app: cloud-notes' — a tile that fails AFTER the tap, per test-app-identity-resolves.sh T1. package/install_package/install_apk_url are UNCHANGED across all of #495 and #522: the applicationId has been com.diegonmarcos.cloudnotes since #495 and the rolling asset has always been Cloud-Notes.apk, so nothing on the phone has to be reinstalled for the rename. package read from ac_cloud-notes/build.json::android.application_id, which app/build.gradle reads via JsonSlurper rather than a literal (ac_cloud-notes/test/test-identity.sh is what keeps them agreeing). install_apk_url mirrors ac_cloud-notes/build.json::release.gh_release. NO per-ABI variant exists and none is missing: ship-cloud-notes.yml builds ONE arm64-v8a APK by design (Cloud Notes's rust plugin builds a single CLOUD_NOTES_ANDROID_NATIVE_TARGET, and a second ABI leg would double a 40+ minute build), so this app publishes ONE universal Cloud-Notes.apk and data/regen.sh emits no `assets` map for it — unlike cloud-writer below, whose _doc_abi note does apply. folder=prod_docs ('.Docs & Notes') is the taxonomy half of the same record — PhoneFolders derives the pkg: keyword from it, so NO literal keyword for com.diegonmarcos.cloudnotes may be added to ui.phone_folders (T8b fails on exactly that).",
         "id": "cloud-notes",
         "folder": "prod_docs",
         "hub_package": "com.diegonmarcos.cloudnotes",
@@ -9465,7 +9735,7 @@
       {
         "_doc": "Cloud Calc (ac_cloud-calc, published by ship-cloud-calc.yml since #767). Added in #772 for the Cloud ▸ Tools Primary tile: every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ac_cloud-calc/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors ac_cloud-calc's arm64 release asset; x86_64 devices are resolved through the fleet assets map exactly as Cloud Writer's _doc_abi describes. folder=prod_utils ('=Utilities') is the taxonomy half of the same record — PhoneFolders derives the pkg: keyword from it, so NO literal keyword for com.diegonmarcos.cloudcalc may be added to ui.phone_folders.",
         "id": "cloud-calc",
-        "folder": "prod_utils",
+        "folder": "prod_calc",
         "hub_package": "com.diegonmarcos.cloudcalc",
         "install_package": "com.diegonmarcos.cloudcalc",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Calc.apk",
@@ -9474,7 +9744,7 @@
       {
         "_doc": "Cloud Search (ac_cloud-search, published by ship-cloud-search.yml since #779). Added for the Cloud ▸ Apps ▸ AGI tile: every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ac_cloud-search/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors ac_cloud-search's arm64 release asset; x86_64 devices are resolved through the fleet assets map. folder=prod_ai ('@AI') is the taxonomy half of the same record — PhoneFolders derives the pkg: keyword from it, so NO literal keyword for com.diegonmarcos.cloudsearch may be added to ui.phone_folders.",
         "id": "cloud-search",
-        "folder": "prod_ai",
+        "folder": "svc_search",
         "hub_package": "com.diegonmarcos.cloudsearch",
         "install_package": "com.diegonmarcos.cloudsearch",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Search.apk",
@@ -9492,7 +9762,7 @@
       {
         "_doc": "#1207 Cloud KG Store (ac_cloud-kg-store, published by ship-cloud-kg-store.yml). Added for the Cloud > Apps > AGI 'KG Store' tile: every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ac_cloud-kg-store/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors its arm64 release asset; x86_64 devices are resolved through the fleet assets map. folder=prod_ai ('@AI') is the taxonomy half of the same record, as for Cloud Search.",
         "id": "cloud-kg-store",
-        "folder": "prod_ai",
+        "folder": "svc_kgstore",
         "hub_package": "com.diegonmarcos.cloudkgstore",
         "install_package": "com.diegonmarcos.cloudkgstore",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-KG-Store.apk",
@@ -9501,7 +9771,7 @@
       {
         "_doc": "Cloud Tools Small LLMs (ac_cloud-tools-small-llms, published by ship-cloud-tools-small-llms.yml). Added for the Cloud > Apps > AGI 'Tools' tile: every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ac_cloud-tools-small-llms/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors its arm64 release asset; x86_64 devices are resolved through the fleet assets map. folder=prod_ai ('@AI') is the taxonomy half of the same record - PhoneFolders derives the pkg: keyword from it, so NO literal keyword for com.diegonmarcos.cloudtoolssmallllms may be added to ui.phone_folders.",
         "id": "cloud-tools-small-llms",
-        "folder": "prod_ai",
+        "folder": "agi_tools",
         "hub_package": "com.diegonmarcos.cloudtoolssmallllms",
         "install_package": "com.diegonmarcos.cloudtoolssmallllms",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Tools-Small-LLMs.apk",
@@ -9519,7 +9789,7 @@
       {
         "_doc": "#867 Cloud Account (ac_cloud-account, com.diegonmarcos.cloudaccount): the Account page split out of this app. The Configs Account entry launches it through extapp:cloud-account; when it is absent, install_apk_url is offered, so the first install needs no store. install_apk_url mirrors ac_cloud-account/build.json::release.gh_release.asset_name (arm64 rolling-latest; x86_64 is Cloud-Account-x86_64.apk). folder=sys_settings is the taxonomy half of the same record.",
         "id": "cloud-account",
-        "folder": "sys_settings",
+        "folder": "sys_account",
         "hub_package": "com.diegonmarcos.cloudaccount",
         "install_package": "com.diegonmarcos.cloudaccount",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Account.apk",
@@ -9537,7 +9807,7 @@
       {
         "_doc": "#1335 CG-Omniverse (ad_CG-Omniverse, published by ship-cg-omniverse.yml): the Lnktree family app (1_cicd/src/data/app-families.json) behind the Cloud > Lnktree tile of the same name; every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ad_CG-Omniverse/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors its arm64 release asset; x86_64 devices are resolved through the fleet assets map.",
         "id": "cg-omniverse",
-        "folder": "prod_utils",
+        "folder": "proj_omniverse",
         "hub_package": "com.diegonmarcos.cgomniverse",
         "install_package": "com.diegonmarcos.cgomniverse",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/CG-Omniverse.apk",
@@ -9546,7 +9816,7 @@
       {
         "_doc": "#1335 Capital-Stack-FinTerminal (ad_Capital-Stack-FinTerminal, published by ship-capital-stack-finterminal.yml): the Lnktree family app (1_cicd/src/data/app-families.json) behind the Cloud > Lnktree tile of the same name; every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ad_Capital-Stack-FinTerminal/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors its arm64 release asset; x86_64 devices are resolved through the fleet assets map.",
         "id": "capital-stack-finterminal",
-        "folder": "prod_utils",
+        "folder": "proj_finterm",
         "hub_package": "com.diegonmarcos.capitalfinterm",
         "install_package": "com.diegonmarcos.capitalfinterm",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Capital-Stack-FinTerminal.apk",
@@ -9555,7 +9825,7 @@
       {
         "_doc": "#1335 Hardtech-CAD (ad_Hardtech-CAD, published by ship-hardtech-cad.yml): the Lnktree family app (1_cicd/src/data/app-families.json) behind the Cloud > Lnktree tile of the same name; every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ad_Hardtech-CAD/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors its arm64 release asset; x86_64 devices are resolved through the fleet assets map.",
         "id": "hardtech-cad",
-        "folder": "prod_utils",
+        "folder": "proj_cad",
         "hub_package": "com.diegonmarcos.hardtechcad",
         "install_package": "com.diegonmarcos.hardtechcad",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Hardtech-CAD.apk",
@@ -9564,7 +9834,7 @@
       {
         "_doc": "#1335 Hardtech-Sim2Real (ad_Hardtech-Sim2Real, published by ship-hardtech-sim2real.yml): the Lnktree family app (1_cicd/src/data/app-families.json) behind the Cloud > Lnktree tile of the same name; every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ad_Hardtech-Sim2Real/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors its arm64 release asset; x86_64 devices are resolved through the fleet assets map.",
         "id": "hardtech-sim2real",
-        "folder": "prod_utils",
+        "folder": "proj_sim2real",
         "hub_package": "com.diegonmarcos.hardtechsim2real",
         "install_package": "com.diegonmarcos.hardtechsim2real",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Hardtech-Sim2Real.apk",
@@ -11543,7 +11813,7 @@
         "sec_connections": "SSH and sudo connections",
         "sec_yara": "YARA malware scanner"
       },
-      "_doc_taxon": "Section PREFIX per cloud publisher, in the same one-character vocabulary ui.phone_sections declares (\"_\" Sys, \"@\" Inboxes & AI, \".\" Data Apps, \"=\" Primary, \">\" Media, \"*\" Health, \"-\"/\"+\" Services). The Notify tabs narrow phone groups by running PhoneAppClassifier over each package, but a cloud message carries no package — only an ntfy topic or an in-app producer name — so there is nothing to classify and this map is the classification. Without it every cloud publisher passed the taxonomy filter untouched and the SuperApp updater appeared on all six tabs, listed under Inboxes and under Data Apps as readily as under Sys. A key that is NOT declared here shows on the All tab only: a publisher nobody has categorised must not silently claim a category. Keys are matched against the group key, which is the topic for a channel and NotificationStore.source for the in-app feed.",
+      "_doc_taxon": "Section PREFIX per cloud publisher, in the same one-character vocabulary ui.phone_sections declares (\"_\" Setup, \"@\" Communication, \".\" Data, \"=\" Primary, \"~\" Me, \"+\" Services, \"*\" AGI, \"#\" Projects; #1756). The Notify tabs narrow phone groups by running PhoneAppClassifier over each package, but a cloud message carries no package — only an ntfy topic or an in-app producer name — so there is nothing to classify and this map is the classification. Without it every cloud publisher passed the taxonomy filter untouched and the SuperApp updater appeared on all six tabs, listed under Inboxes and under Data Apps as readily as under Sys. A key that is NOT declared here shows on the All tab only: a publisher nobody has categorised must not silently claim a category. Keys are matched against the group key, which is the topic for a channel and NotificationStore.source for the in-app feed.",
       "taxon": {
         "Updater": "_",
         "Crash": "_",

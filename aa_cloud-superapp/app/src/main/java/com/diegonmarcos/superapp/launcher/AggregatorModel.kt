@@ -244,7 +244,7 @@ internal object AggregatorModel {
     // ── phone stream / taxonomy ───────────────────────────────────────
 
     /** The section prefixes the two taxonomy rows ask for, or null for "All". Their values are the prefix characters
-     *  declared in ui.phone_sections; an option id is a SET of prefixes ("-+"). */
+     *  declared in ui.phone_sections; an option id is a SET of prefixes ("=~"). */
     fun wantedPrefixes(toolsMode: String, servicesMode: String): String? = when {
         toolsMode != "all" -> toolsMode
         servicesMode != "all" -> servicesMode

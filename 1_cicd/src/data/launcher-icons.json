@@ -21,7 +21,7 @@
     "tools":   {"label": "Tools",   "tile_group": "Tools Primary", "start": "#7C3AED", "end": "#312E81"},
     "agi":     {"label": "AGI",     "tile_group": "AGI",           "start": "#C026D3", "end": "#4A044E"},
     "configs": {"label": "Configs", "tile_group": "Configs",       "start": "#475569", "end": "#1E1B4B"},
-    "lnktree": {"label": "Lnktree", "tile_group": "Lnktree",       "start": "#0F766E", "end": "#1E1B4B"},
+    "lnktree": {"label": "Lnktree", "tile_group": "Projects",       "start": "#0F766E", "end": "#1E1B4B"},
     "services": {"label": "Services", "tile_group": "Services",     "start": "#0369A1", "end": "#1E3A8A"}
   },
   "_doc_glyphs": "24dp glyph paths (Material Icons, Apache-2.0, unless noted; kg_graph is drawn for Cloud KG Store: three nodes and their edges; omniverse, finterm, cad and sim2real are drawn for the Lnktree apps: an orbit, candlesticks, a set square and rising steps). One glyph per app: the guard fails when two apps declare the same glyph or two glyphs draw the same path.",

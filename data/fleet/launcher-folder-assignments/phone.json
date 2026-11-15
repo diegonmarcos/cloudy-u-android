@@ -9,8 +9,8 @@
     },
     {
       "package": "com.diegonmarcos.cloudcontacts",
-      "folder": "prod_phone",
-      "order": 2
+      "folder": "prod_contacts",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.comms.chat",
@@ -24,28 +24,28 @@
     },
     {
       "package": "com.diegonmarcos.comms.matrix",
-      "folder": "prod_chat",
-      "order": 2
+      "folder": "prod_messenger",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.ide",
-      "folder": "sys_dev",
+      "folder": "prod_terminals",
       "order": 1
     },
     {
       "package": "cld.termux",
       "folder": "prod_terminals",
-      "order": 1
+      "order": 2
     },
     {
       "package": "cld.termux.nix",
       "folder": "prod_terminals",
-      "order": 2
+      "order": 3
     },
     {
       "package": "com.diegonmarcos.code",
-      "folder": "prod_terminals",
-      "order": 3
+      "folder": "prod_code",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.cloudnav",
@@ -74,12 +74,12 @@
     },
     {
       "package": "com.diegonmarcos.cloudwallet",
-      "folder": "sys_security",
+      "folder": "prod_wallet",
       "order": 1
     },
     {
       "package": "com.diegonmarcos.cloudme",
-      "folder": "sys_settings",
+      "folder": "me_me",
       "order": 1
     },
     {
@@ -89,33 +89,33 @@
     },
     {
       "package": "com.diegonmarcos.cloudvault",
-      "folder": "sys_security",
-      "order": 2
+      "folder": "data_vault",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.watchdog",
       "folder": "sys_dev",
-      "order": 2
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.morpheus",
       "folder": "sys_dev",
-      "order": 3
+      "order": 2
     },
     {
       "package": "com.diegonmarcos.watchtower",
       "folder": "sys_dev",
-      "order": 4
+      "order": 3
     },
     {
       "package": "com.diegonmarcos.cloudc3",
       "folder": "sys_dev",
-      "order": 5
+      "order": 4
     },
     {
       "package": "com.diegonmarcos.cloudwebserver",
       "folder": "sys_dev",
-      "order": 6
+      "order": 5
     },
     {
       "package": "com.diegonmarcos.cloudmediacenter",
@@ -124,48 +124,48 @@
     },
     {
       "package": "com.diegonmarcos.mediacenter",
-      "folder": "media_video",
-      "order": 2
+      "folder": "data_gallery",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.cloudoffice",
-      "folder": "prod_docs",
+      "folder": "prod_office",
       "order": 1
     },
     {
       "package": "cld.camera",
-      "folder": "prod_storage",
+      "folder": "prod_camera",
       "order": 1
     },
     {
       "package": "com.diegonmarcos.cloudnotes",
       "folder": "prod_docs",
-      "order": 2
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.cloudcalc",
-      "folder": "prod_utils",
+      "folder": "prod_calc",
       "order": 1
     },
     {
       "package": "com.diegonmarcos.cloudsearch",
-      "folder": "prod_ai",
+      "folder": "svc_search",
       "order": 1
     },
     {
       "package": "com.diegonmarcos.cloudsuperintel",
       "folder": "prod_ai",
-      "order": 2
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.cloudkgstore",
-      "folder": "prod_ai",
-      "order": 3
+      "folder": "svc_kgstore",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.cloudtoolssmallllms",
-      "folder": "prod_ai",
-      "order": 4
+      "folder": "agi_tools",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.cloudstore",
@@ -174,33 +174,33 @@
     },
     {
       "package": "com.diegonmarcos.cloudaccount",
-      "folder": "sys_settings",
-      "order": 2
+      "folder": "sys_account",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.clouddrive",
       "folder": "prod_storage",
-      "order": 2
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.cgomniverse",
-      "folder": "prod_utils",
-      "order": 2
+      "folder": "proj_omniverse",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.capitalfinterm",
-      "folder": "prod_utils",
-      "order": 3
+      "folder": "proj_finterm",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.hardtechcad",
-      "folder": "prod_utils",
-      "order": 4
+      "folder": "proj_cad",
+      "order": 1
     },
     {
       "package": "com.diegonmarcos.hardtechsim2real",
-      "folder": "prod_utils",
-      "order": 5
+      "folder": "proj_sim2real",
+      "order": 1
     }
   ]
 }

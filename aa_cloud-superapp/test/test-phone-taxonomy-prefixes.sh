@@ -78,8 +78,10 @@ fi
 
 SINKS_WITH_PREFIX="$(q '
   (.ui.phone_sections | map(.prefix)) as $prefixes
+  | (.ui.external_apps | map(.folder)) as $claimed
   | .ui.phone_folders[]
   | select(((.match_keywords // []) | length) == 0 and ((.match_metadata // []) | length) == 0)
+  | select(([.id] | inside($claimed)) | not)
   | (.label[0:1]) as $char
   | select(($prefixes | index($char)) != null)
   | "\(.id) label=\(.label)"' | grep -v '^$' || true)"
@@ -113,10 +115,10 @@ fi
 
 echo "== T3: the Terminals folder exists, in the right section =="
 TERM_LABEL="$(q '[.ui.phone_folders[] | select(.id=="prod_terminals") | .label] | join("")')"
-if [ "$TERM_LABEL" = "@Terminals" ]; then
-    ok "prod_terminals is labelled '@Terminals' (Tools · Inboxes & AI)"
+if [ "$TERM_LABEL" = "*Terminal" ]; then
+    ok "prod_terminals is labelled '*Terminal' (AGI, named after the Cloud Terminal app, #1756)"
 else
-    bad "prod_terminals label is '$TERM_LABEL', expected '@Terminals'"
+    bad "prod_terminals label is '$TERM_LABEL', expected '*Terminal'"
 fi
 
 echo "== T4: every terminal is in Terminals and none is left in _Dev =="
@@ -126,8 +128,7 @@ echo "== T4: every terminal is in Terminals and none is left in _Dev =="
 # named ones moved -- correct-looking in the diff, wrong on the device.
 for kw in "pkg:cld.termux" "pkg:cld.termux.nix" "pkg:cld.termux.nix.boot" \
           "pkg:com.termux" "pkg:com.termux.api" "pkg:com.termux.nix" \
-          "pkg:com.termux.nix.boot" "pkg^cld.termux." "pkg^com.termux." \
-          "pkg:com.foxdebug.acode"; do
+          "pkg:com.termux.nix.boot" "pkg^cld.termux." "pkg^com.termux."; do
     owner="$(q "[.ui.phone_folders[] | select((.match_keywords // []) | index(\"$kw\")) | .id] | join(\",\")")"
     # #571: a fleet package classifies through ui.external_apps[].folder, the
     # ONE record test-app-identity-resolves.sh T8b allows -- cld.termux moved
@@ -142,10 +143,10 @@ done
 
 echo "== T5: _Dev kept its underscore and lost its terminals =="
 DEV_LABEL="$(q '[.ui.phone_folders[] | select(.id=="sys_dev") | .label] | join("")')"
-if [ "$DEV_LABEL" = "_Dev" ]; then
-    ok "sys_dev is labelled '_Dev' -- renamed, prefix intact"
+if [ "$DEV_LABEL" = "_C3 & Dev" ]; then
+    ok "sys_dev is labelled '_C3 & Dev' -- renamed, prefix intact (#1756)"
 else
-    bad "sys_dev label is '$DEV_LABEL', expected '_Dev'"
+    bad "sys_dev label is '$DEV_LABEL', expected '_C3 & Dev'"
 fi
 LEFTOVER="$(q '
   .ui.phone_folders[] | select(.id=="sys_dev") | (.match_keywords // [])[]
@@ -158,9 +159,10 @@ else
 fi
 
 echo "== T6: the moved data apps landed where the owner put them =="
-for pair in "pkg:com.github.android prod_storage" \
+for pair in "pkg:com.github.android prod_code" \
+            "pkg:com.foxdebug.acode prod_code" \
             "pkg:com.viscouspot.gitsync prod_storage" \
-            "pkg:com.rhmsoft.edit prod_docs" \
+            "pkg:com.rhmsoft.edit prod_code" \
             "pkg:jp.sblo.pandora.jota.plus prod_docs"; do
     kw="${pair% *}"; want="${pair#* }"
     owner="$(q "[.ui.phone_folders[] | select((.match_keywords // []) | index(\"$kw\")) | .id] | join(\",\")")"
@@ -232,34 +234,18 @@ else
     echo "$BAD_PREFIX" | sed 's/^/        /'
 fi
 
-echo "== T9: Projects is a QUICKMARKS group and must not reappear as a section here =="
-# THE FAILURE THIS EXISTS TO KEEP FIXED, and it is the reverse of what stood
-# here on 2026-09-10. The owner asked for a Projects section "after Tools
-# Primary and Before Configs". Configs is a group in
-# sections[id=phone].phone_app_groups and exists NOWHERE in ui.phone_sections,
-# so the anchor named the quickmarks array and only the quickmarks array. It
-# was built here instead, in the All Apps taxonomy, and the owner rejected it.
-#
-# Both halves are asserted because only the pair says "wrong surface": a check
-# that Projects exists in phone_app_groups passes just as happily while a
-# second copy sits here, and that duplicate is exactly the shipped defect.
-# test-phone-projects-quickmark.sh owns the positive half; this owns the
-# negative, next to the prefix machinery that made the mistake possible.
+echo "== T9: Projects is a section here since #1756 (its Quickmarks group is unchanged) =="
 SECTION_PROJECTS="$(q '.ui.phone_sections[] | select(.title == "Projects") | .prefix' | grep -v '^$' || true)"
-if [ -z "$SECTION_PROJECTS" ]; then
-    ok "ui.phone_sections declares no 'Projects' section (it belongs to phone_app_groups)"
+if [ "$SECTION_PROJECTS" = "#" ]; then
+    ok "ui.phone_sections declares the 'Projects' section on prefix '#'"
 else
-    bad "ui.phone_sections declares a 'Projects' section on prefix '$SECTION_PROJECTS' — that is the All Apps page, not Quickmarks"
+    bad "ui.phone_sections 'Projects' prefix is '${SECTION_PROJECTS:-ABSENT}', expected '#'"
 fi
-# The prefix is the real membership token, so a leftover '#' folder would land
-# under the "Other" subhead rather than vanish -- visible, unexplained, and
-# invisible to the section check above.
-HASH_FOLDERS="$(q '.ui.phone_folders[] | select(.label | startswith("#")) | "\(.id) label=\(.label)"' | grep -v '^$' || true)"
-if [ -z "$HASH_FOLDERS" ]; then
-    ok "no folder label carries the retired '#' prefix"
+HASH_FOLDERS="$(q '[.ui.phone_folders[] | select(.label | startswith("#")) | .label] | join(",")')"
+if [ "$HASH_FOLDERS" = "#SuperApp,#Omniverse,#FinTerm,#CAD,#Sim2Real" ]; then
+    ok "the Projects section holds exactly SuperApp, Omniverse, FinTerm, CAD, Sim2Real"
 else
-    bad "folder(s) still labelled with the retired '#' prefix — they belong to no section and render under 'Other':"
-    echo "$HASH_FOLDERS" | sed 's/^/        /'
+    bad "the Projects section holds '$HASH_FOLDERS'"
 fi
 
 echo "== T10: the apps that section took are back in their topical folders =="
@@ -274,12 +260,12 @@ echo "== T10: the apps that section took are back in their topical folders =="
 # -- a task board, beside Todoist and Microsoft To Do in .Calendar & Tasks.
 for pair in "pkg:co.mangotechnologies.clickup prod_plan" \
             "pkg:com.fatsecret.android hlth_nutrition" \
-            "pkg:com.google.android.apps.fitness hlth_outdoor" \
-            "pkg:com.nomadmania.presentation svc_travel" \
+            "pkg:com.google.android.apps.fitness svc_health" \
+            "pkg:com.nomadmania.presentation svc_mobility" \
             "pkg:mobi.eup.easygerman hlth_learning" \
             "pkg:es.bancosantander.apps svc_money" \
             "pkg:com.revolut.revolut svc_money" \
-            "pkg:com.google.android.apps.walletnfcrel svc_money" \
+            "pkg:com.google.android.apps.walletnfcrel prod_wallet" \
             "pkg:es.gob.interior.policia.midni svc_gov"; do
     set -- $pair; kw="$1"; want="$2"
     owners="$(q "[.ui.phone_folders[] | select((.match_keywords // []) | index(\"$kw\")) | .id] | join(\",\")")"
@@ -294,11 +280,8 @@ done
 # behind. An orphaned proj_ folder would keep claiming these packages by
 # `order` while reading as dead data in the diff.
 MONEY="$(q '[.ui.phone_folders[] | select(.id == "svc_money") | .label] | join("")')"
-[ "$MONEY" = "-Money" ] && ok "svc_money is back in Services · Buro as '-Money'" \
-                        || bad "svc_money label is '${MONEY:-ABSENT}', expected '-Money'"
-PROJ="$(q '[.ui.phone_folders[] | select(.id | startswith("proj_")) | .id] | join(",")')"
-[ -z "$PROJ" ] && ok "no proj_* folder survives in ui.phone_folders" \
-               || bad "proj_* folder(s) still declared ($PROJ) — they belong to a section that no longer exists"
+[ "$MONEY" = "+Money" ] && ok "svc_money is the Money subtype of Services as '+Money' (#1756)" \
+                        || bad "svc_money label is '${MONEY:-ABSENT}', expected '+Money'"
 
 echo "== T11: every package keyword in the taxonomy is a well-formed package id =="
 # Since 149c5b9 an unresolved curated entry renders as a visible "Not

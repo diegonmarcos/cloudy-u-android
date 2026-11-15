@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
 class ConfigsTileDeepLinkTest {
 
     private fun superAppTile(): Sections.AggTile {
-        val row = Sections.byId("cloud")!!.tileGroups.first { it.title == "Lnktree" }
+        val row = Sections.byId("cloud")!!.tileGroups.first { it.title == "Projects" }
         assertEquals("SuperApp must lead the Lnktree row", "cloud-superapp", row.tiles.first().id)
         return row.tiles.first { it.id == "cloud-superapp" }
     }

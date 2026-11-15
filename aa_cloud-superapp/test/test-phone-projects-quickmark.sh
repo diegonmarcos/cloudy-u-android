@@ -52,42 +52,42 @@ q '.ui.sections | length' >/dev/null
 
 PHONE_GROUPS='.ui.sections[] | select(.id == "phone") | .phone_app_groups'
 
-echo "== Q1: Projects sits at index 4, between Tools Primary and Configs =="
+echo "== Q1: Projects sits at index 6, between AGI and Setup (#1756 order) =="
 # THE ASSERTION THAT WOULD HAVE CAUGHT THE SHIPPED DEFECT. The index is read
 # from the array rather than searched for by title, and both neighbours are
 # named, because the owner specified a POSITION and not an existence: a group
 # that exists at the wrong index is the same page with the wrong answer on it.
 TITLES="$(q "[$PHONE_GROUPS | .[].title] | @tsv")"
 INDEX_OF_PROJECTS="$(q "[$PHONE_GROUPS | .[].title] | index(\"Projects\") // -1")"
-if [ "$INDEX_OF_PROJECTS" = "4" ]; then
-    ok "phone_app_groups[4] is 'Projects'"
+if [ "$INDEX_OF_PROJECTS" = "6" ]; then
+    ok "phone_app_groups[6] is 'Projects'"
 else
-    bad "'Projects' is at phone_app_groups[$INDEX_OF_PROJECTS], expected 4 — groups are: $TITLES"
+    bad "'Projects' is at phone_app_groups[$INDEX_OF_PROJECTS], expected 6 — groups are: $TITLES"
 fi
-BEFORE="$(q "[$PHONE_GROUPS | .[].title] | .[3] // \"\"")"
-AFTER="$(q "[$PHONE_GROUPS | .[].title] | .[5] // \"\"")"
-[ "$BEFORE" = "Tools Primary" ] \
-    && ok "the group before Projects is 'Tools Primary'" \
-    || bad "the group before Projects is '${BEFORE:-NOTHING}', expected 'Tools Primary'"
-[ "$AFTER" = "Configs" ] \
-    && ok "the group after Projects is 'Configs'" \
-    || bad "the group after Projects is '${AFTER:-NOTHING}', expected 'Configs'"
+BEFORE="$(q "[$PHONE_GROUPS | .[].title] | .[5] // \"\"")"
+AFTER="$(q "[$PHONE_GROUPS | .[].title] | .[7] // \"\"")"
+[ "$BEFORE" = "AGI" ] \
+    && ok "the group before Projects is 'AGI'" \
+    || bad "the group before Projects is '${BEFORE:-NOTHING}', expected 'AGI'"
+[ "$AFTER" = "Setup" ] \
+    && ok "the group after Projects is 'Setup'" \
+    || bad "the group after Projects is '${AFTER:-NOTHING}', expected 'Setup'"
 LAST="$(q "[$PHONE_GROUPS | .[].title] | last")"
-[ "$LAST" = "Configs" ] \
-    && ok "'Configs' is still the last group" \
-    || bad "the last group is '$LAST', expected 'Configs' — Projects was inserted past the end"
+[ "$LAST" = "Setup" ] \
+    && ok "'Setup' is still the last group" \
+    || bad "the last group is '$LAST', expected 'Setup' — Projects was inserted past the end"
 
 echo "== Q2: Projects is on QUICKMARKS and on no other surface =="
 # The negative half, and the one the shipped defect needed. Guarding only the
 # positive passes while a duplicate Projects sits in the All Apps taxonomy,
 # which is precisely what the owner rejected.
 SECTION_HIT="$(q '[.ui.phone_sections[] | select(.title == "Projects")] | length')"
-[ "$SECTION_HIT" = "0" ] \
-    && ok "ui.phone_sections declares no 'Projects' section" \
-    || bad "ui.phone_sections declares $SECTION_HIT 'Projects' section(s) — that is the All Apps page"
+[ "$SECTION_HIT" = "1" ] \
+    && ok "ui.phone_sections declares the Projects section (#1756: All Apps has Projects, holding the Lnktree apps)" \
+    || bad "ui.phone_sections declares $SECTION_HIT 'Projects' sections, expected 1"
 FOLDER_HIT="$(q '[.ui.phone_folders[] | select(.label | test("Projects"))] | length')"
 [ "$FOLDER_HIT" = "0" ] \
-    && ok "ui.phone_folders declares no 'Projects' folder" \
+    && ok "ui.phone_folders declares no folder named Projects (the section holds SuperApp, Omniverse, FinTerm, CAD, Sim2Real)" \
     || bad "ui.phone_folders declares $FOLDER_HIT folder(s) named Projects"
 
 echo "== Q3: the Projects group holds NO folder called Projects =="
@@ -114,15 +114,15 @@ echo "== Q4: the Money folder is inside the Projects group and holds the bank ap
 # out here again would give the assertion its own copy of the answer, and two
 # copies of an answer are two things that can disagree.
 MONEY_TILES="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Projects\") | (.folders // [])[] | select(.label == \"Money\") | .packages[] | if type == \"string\" then . else .pkg end] | sort | join(\" \")")"
-MONEY_DECLARED="$(q '[.ui.phone_folders[] | select(.id == "svc_money") | .match_keywords[] | select(startswith("pkg:")) | .[4:]] | sort | join(" ")')"
+MONEY_DECLARED="$(q '[.ui.phone_folders[] | select(.id == "svc_money" or .id == "prod_wallet") | .match_keywords[] | select(startswith("pkg:")) | .[4:]] | sort | join(" ")')"
 if [ -z "$MONEY_DECLARED" ]; then
     bad "ui.phone_folders has no svc_money folder to derive the bank-app list from"
-elif [ "$MONEY_TILES" = "$MONEY_DECLARED" ]; then
-    ok "the Money folder holds exactly the $(printf '%s\n' "$MONEY_DECLARED" | wc -w) packages -Money declares"
 else
-    bad "the Money folder and -Money disagree:"
-    echo "        folder: $MONEY_TILES"
-    echo "        -Money: $MONEY_DECLARED"
+    MISS=""
+    for p in $MONEY_TILES; do case " $MONEY_DECLARED " in *" $p "*) ;; *) MISS="$MISS $p";; esac; done
+    [ -z "$MISS" ] \
+        && ok "every Money folder tile is pinned by Money (or Wallet, the Google Wallet split out in #1756)" \
+        || bad "Money folder tiles not pinned by Money/Wallet:$MISS"
 fi
 
 echo "== Q5: every Projects tile resolves to a package the taxonomy pins =="
@@ -154,7 +154,7 @@ done < <(q '
   | ( [ $root.ui.phone_folders[] | . as $f | (.match_keywords // [])[]
         | select(startswith("pkg:")) | { key: .[4:], value: $f.id } ] | from_entries ) as $pins
   | $root.ui.sections[] | select(.id == "phone") | .phone_app_groups[]
-  | select(.title == "Projects" or .title == "Tools Primary")
+  | select(.title == "Projects" or .title == "Primary")
   | .title as $group
   | ( (.packages[] | { where: $group, entry: . }),
       ((.folders // [])[] | .label as $folder | .packages[] | { where: ($group + " > " + $folder), entry: . }) )
@@ -162,30 +162,25 @@ done < <(q '
   | (if (.entry | type) == "string" then .entry else .entry.pkg end) as $pkg
   | [ $where, $pkg, ($pins[$pkg] // "") ] | @tsv')
 
-echo "== Q6: miDNI is on the quickmarks Tools Primary row =="
-# "phone/apps/tools.primary: add here miDNI", written in the same sentence as
-# the quickmarks anchor. The 2026-09-10 implementation read it as the All Apps
-# "Tools · Primary" section instead and moved the package out of -Gov & ID to
-# get it there; the package is back in -Gov & ID (asserted by
-# test-phone-taxonomy-prefixes T10) and the tile is here, where he asked.
-MIDNI="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Tools Primary\") | .packages[] | if type == \"string\" then . else .pkg end | select(. == \"es.gob.interior.policia.midni\")] | length")"
+echo "== Q6: miDNI is a quickmark of the Me group (Gov & ID subtype, #1756) =="
+MIDNI="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Me\") | .packages[] | if type == \"string\" then . else .pkg end | select(. == \"es.gob.interior.policia.midni\")] | length")"
 [ "$MIDNI" = "1" ] \
-    && ok "es.gob.interior.policia.midni is a Tools Primary quickmark" \
-    || bad "es.gob.interior.policia.midni appears $MIDNI times in the quickmarks Tools Primary group, expected once"
+    && ok "es.gob.interior.policia.midni is a Me quickmark" \
+    || bad "es.gob.interior.policia.midni appears $MIDNI times in the quickmarks Me group, expected once"
 
-echo "== Q7: the Nutrition folder is under Tools · Health in the ALL APPS taxonomy =="
+echo "== Q7: the Nutrition folder is under Tools · Me in the ALL APPS taxonomy (#1756) =="
 # The one part of the 2026-09-10 request that genuinely belongs on the other
 # page: "Tools · Health" is a ui.phone_sections section and has no counterpart
 # in quickmarks, so a Nutrition folder can only exist as a ui.phone_folders
 # entry carrying that section's prefix.
-HEALTH_PREFIX="$(q '[.ui.phone_sections[] | select(.title == "Tools · Health") | .prefix] | join("")')"
+HEALTH_PREFIX="$(q '[.ui.phone_sections[] | select(.title == "Tools · Me") | .prefix] | join("")')"
 if [ -z "$HEALTH_PREFIX" ]; then
-    bad "ui.phone_sections declares no 'Tools · Health' section to file a Nutrition folder under"
+    bad "ui.phone_sections declares no 'Tools · Me' section to file a Nutrition folder under"
 else
-    ok "Tools · Health is declared on prefix '$HEALTH_PREFIX'"
+    ok "Tools · Me is declared on prefix '$HEALTH_PREFIX'"
     NUTRITION_LABEL="$(q '[.ui.phone_folders[] | select(.id == "hlth_nutrition") | .label] | join("")')"
     if [ "$NUTRITION_LABEL" = "${HEALTH_PREFIX}Nutrition" ]; then
-        ok "hlth_nutrition is labelled '$NUTRITION_LABEL' — it files into Tools · Health"
+        ok "hlth_nutrition is labelled '$NUTRITION_LABEL' — it files into Tools · Me"
     else
         bad "hlth_nutrition label is '${NUTRITION_LABEL:-ABSENT}', expected '${HEALTH_PREFIX}Nutrition' — a folder whose label loses the prefix belongs to no section"
     fi

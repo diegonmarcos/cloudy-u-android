@@ -110,7 +110,7 @@ class SelfTileTest {
         assertTrue("launchUri routes the own package", route >= 0)
         assertTrue("only in launcher mode", branch.substring(0, route).substringAfterLast("if (").startsWith("pkg != null && isDefaultLauncher()"))
         assertTrue("before the launch intent is built", route < branch.indexOf("getLaunchIntentForPackage"))
-        val app = Sections.byId("cloud")!!.tileGroups.first { it.title == "Lnktree" }.tiles.first { it.id == "cloud-superapp" }
+        val app = Sections.byId("cloud")!!.tileGroups.first { it.title == "Projects" }.tiles.first { it.id == "cloud-superapp" }
         assertEquals("app://com.diegonmarcos.superapp", app.target)
     }
 }

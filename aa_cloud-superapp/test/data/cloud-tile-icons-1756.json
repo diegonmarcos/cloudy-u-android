@@ -1,0 +1,285 @@
+{
+ "_doc": "#1756 Cloud quickmark tiles BEFORE the reorg (origin/main 3786a0796): tile id -> icon drawable. The reorg must not change any Cloud quickmark icon.",
+ "tiles": {
+  "drive-conn": {
+   "icon": "ic_drive",
+   "label": "Drive",
+   "tint": null
+  },
+  "browser": {
+   "icon": "ic_world",
+   "label": "Browser",
+   "tint": null
+  },
+  "calc": {
+   "icon": "ic_calc",
+   "label": "Calc",
+   "tint": null
+  },
+  "maps": {
+   "icon": "ic_nav",
+   "label": "Navigation",
+   "tint": null
+  },
+  "camera": {
+   "icon": "ic_camera",
+   "label": "Camera",
+   "tint": null
+  },
+  "keyboard": {
+   "icon": "ic_keyboard",
+   "label": "Keyboard",
+   "tint": null
+  },
+  "wallet": {
+   "icon": "ic_wallet",
+   "label": "Wallet",
+   "tint": null
+  },
+  "mail": {
+   "icon": "ic_mail",
+   "label": "Mail",
+   "tint": null
+  },
+  "mattermost": {
+   "icon": "ic_p_chat_mattermost",
+   "label": "Chat",
+   "tint": null
+  },
+  "element": {
+   "icon": "ic_p_chat_matrix",
+   "label": "Messenger",
+   "tint": null
+  },
+  "dialer": {
+   "icon": "ic_p_dialer",
+   "label": "Dialer",
+   "tint": null
+  },
+  "c3-bot": {
+   "icon": "ic_robot",
+   "label": "C3-Bot",
+   "tint": null
+  },
+  "contacts": {
+   "icon": "ic_p_sol_personal",
+   "label": "Contacts",
+   "tint": null
+  },
+  "notes": {
+   "icon": "ic_notes",
+   "label": "Notes",
+   "tint": null
+  },
+  "calendar": {
+   "icon": "ic_calendar",
+   "label": "Tasks",
+   "tint": null
+  },
+  "sheets": {
+   "icon": "ic_sheets",
+   "label": "Office",
+   "tint": null
+  },
+  "gallery": {
+   "icon": "ic_photos",
+   "label": "Gallery",
+   "tint": null
+  },
+  "mediacenter": {
+   "icon": "ic_music",
+   "label": "Media Center",
+   "tint": null
+  },
+  "data-me": {
+   "icon": "ic_vcard",
+   "label": "Me",
+   "tint": null
+  },
+  "vault": {
+   "icon": "ic_vault",
+   "label": "Vault",
+   "tint": null
+  },
+  "me": {
+   "icon": "ic_vcard",
+   "label": "Me",
+   "tint": null
+  },
+  "myhealth": {
+   "icon": "ic_heart",
+   "label": "Me-Health",
+   "tint": null
+  },
+  "myexperiences": {
+   "icon": "ic_file_stack",
+   "label": "Experienc.",
+   "tint": null
+  },
+  "myroadmap": {
+   "icon": "ic_tree",
+   "label": "Tasks",
+   "tint": null
+  },
+  "myduties": {
+   "icon": "ic_check_all",
+   "label": "Me-Invent.",
+   "tint": null
+  },
+  "myburo": {
+   "icon": "ic_p_folder",
+   "label": "Me-Buro",
+   "tint": null
+  },
+  "myllc": {
+   "icon": "ic_p_llc",
+   "label": "Me-LLC",
+   "tint": null
+  },
+  "tools-account": {
+   "icon": "ic_p_identities",
+   "label": "Profile",
+   "tint": null
+  },
+  "search": {
+   "icon": "ic_cloud_search",
+   "label": "Search",
+   "tint": false
+  },
+  "news": {
+   "icon": "ic_rss",
+   "label": "News",
+   "tint": null
+  },
+  "events": {
+   "icon": "ic_p_cal_month",
+   "label": "Events",
+   "tint": null
+  },
+  "shopping": {
+   "icon": "ic_shopping",
+   "label": "Shopping",
+   "tint": null
+  },
+  "mobility": {
+   "icon": "ic_ctl_airplane",
+   "label": "Mobility & Travel",
+   "tint": null
+  },
+  "jobs": {
+   "icon": "ic_suite",
+   "label": "Jobs & Business",
+   "tint": null
+  },
+  "real-estate": {
+   "icon": "ic_map_pin",
+   "label": "Real Estate",
+   "tint": null
+  },
+  "money": {
+   "icon": "ic_storefront",
+   "label": "Money",
+   "tint": null
+  },
+  "kg-store": {
+   "icon": "ic_kgs",
+   "label": "KG Store",
+   "tint": null
+  },
+  "si": {
+   "icon": "ic_si",
+   "label": "SI",
+   "tint": null
+  },
+  "ai-chat": {
+   "icon": "ic_ai_chat",
+   "label": "AI",
+   "tint": null
+  },
+  "code": {
+   "icon": "ic_ide",
+   "label": "Code",
+   "tint": null
+  },
+  "tools-small-llms": {
+   "icon": "ic_tools_small_llms",
+   "label": "Tools",
+   "tint": null
+  },
+  "drive": {
+   "icon": "ic_code",
+   "label": "MyTerm.",
+   "tint": null
+  },
+  "ai-tmx": {
+   "icon": "ic_terminal",
+   "label": "Terminal",
+   "tint": null
+  },
+  "cloud-superapp": {
+   "icon": "ic_superapp_d",
+   "label": "SuperApp",
+   "tint": null
+  },
+  "omniverse": {
+   "icon": "ic_p_sol_other",
+   "label": "Omniverse",
+   "tint": null
+  },
+  "finterm": {
+   "icon": "ic_p_markets_terminal",
+   "label": "FinTerm",
+   "tint": null
+  },
+  "cad": {
+   "icon": "ic_p_sol_pro",
+   "label": "CAD",
+   "tint": null
+  },
+  "sim2real": {
+   "icon": "ic_p_sol_tools",
+   "label": "Sim2Real",
+   "tint": null
+  },
+  "configs-controls": {
+   "icon": "ic_home",
+   "label": "Quick Actions",
+   "tint": null
+  },
+  "configs-ui": {
+   "icon": "ic_ctl_brightness",
+   "label": "UI",
+   "tint": null
+  },
+  "configs-ng-firewall": {
+   "icon": "ic_act_shield",
+   "label": "NG Firewall",
+   "tint": null
+  },
+  "configs-store": {
+   "icon": "ic_refresh",
+   "label": "Store",
+   "tint": null
+  },
+  "configs-account": {
+   "icon": "ic_p_accounts",
+   "label": "Account",
+   "tint": null
+  },
+  "c3": {
+   "icon": "ic_cloud_control",
+   "label": "C3",
+   "tint": null
+  },
+  "configs-profile": {
+   "icon": "ic_person",
+   "label": "Profile",
+   "tint": null
+  },
+  "configs-about": {
+   "icon": "ic_info",
+   "label": "About",
+   "tint": null
+  }
+ }
+}
