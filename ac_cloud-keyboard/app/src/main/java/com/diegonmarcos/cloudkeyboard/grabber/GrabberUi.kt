@@ -250,7 +250,7 @@ fun GrabberPanel(model: GrabberModel, onReply: (ProcessTextReply) -> Unit, modif
 @Composable
 private fun SelectionBlock(model: GrabberModel) {
     val kind = model.kind
-    val text = model.field.text
+    val text = model.draft.text
     val words = text.trim().split(Regex("""\s+""")).count { it.isNotEmpty() }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -266,8 +266,8 @@ private fun SelectionBlock(model: GrabberModel) {
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).clip(shape).background(GC.box).border(1.dp, GC.hairline, shape), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.width(3.dp).fillMaxHeight().background(GC.kind(kind)))
             BasicTextField(
-                value = model.field,
-                onValueChange = { model.field = it },
+                value = model.draft,
+                onValueChange = { model.draft = it },
                 modifier = Modifier.weight(1f).padding(horizontal = 10.dp, vertical = 9.dp),
                 textStyle = TextStyle(color = GC.text, fontSize = 15.sp, fontWeight = FontWeight.Medium),
                 cursorBrush = SolidColor(GC.accent),

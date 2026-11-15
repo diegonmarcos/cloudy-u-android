@@ -29,10 +29,10 @@ class LogLine(val time: String, val what: String, val outcome: String, val ok: B
 
 /**
  * The state of one Grabber panel (the sheet over another app, the Text Selection page, the Screen Selection page).
- * [field] is the working text; the search box (B) and the media box (C) load from it in PARALLEL, each into its own [Load].
+ * [draft] is the working text; the search box (B) and the media box (C) load from it in PARALLEL, each into its own [Load].
  */
 class GrabberModel(private val app: Context, private val scope: CoroutineScope, val source: String) {
-    var field by mutableStateOf(TextFieldValue(""))
+    var draft by mutableStateOf(TextFieldValue(""))
     /** True when the text was selected in a field that cannot be edited (EXTRA_PROCESS_TEXT_READONLY), or on a page with no field. */
     var readOnly by mutableStateOf(true)
     var search by mutableStateOf<Load<SearchHit>>(Load.Idle)
@@ -45,10 +45,10 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
     private var generation = 0
     private var runner: WriterToolRunner? = null
 
-    val kind: SelectionKind get() = GrabberClassifier.classify(field.text)
+    val kind: SelectionKind get() = GrabberClassifier.classify(draft.text)
 
     fun setText(text: String, selectAll: Boolean = false) {
-        field = TextFieldValue(text, if (selectAll) TextRange(0, text.length) else TextRange(text.length))
+        draft = TextFieldValue(text, if (selectAll) TextRange(0, text.length) else TextRange(text.length))
     }
 
     private fun say(what: String, outcome: String, ok: Boolean = true) {
@@ -57,11 +57,11 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
     }
 
     /** The text an action works on: the selected range of the working text when there is one, else all of it. */
-    fun target(): String = if (field.selection.collapsed) field.text else field.text.substring(field.selection.min, field.selection.max)
+    fun target(): String = if (draft.selection.collapsed) draft.text else draft.text.substring(draft.selection.min, draft.selection.max)
 
     /** Load boxes B and C for the working text, both at once; a newer grab cancels the older one. */
     fun grab(remember: Boolean = true) {
-        val text = field.text
+        val text = draft.text
         val query = GrabberClassifier.query(text)
         val kind = GrabberClassifier.classify(text)
         searchJob?.cancel(); mediaJob?.cancel()
@@ -113,8 +113,8 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
         if (text.isBlank()) { say(action.id, "nothing selected", false); return }
         when (val route = GrabberRouter.route(action, text)) {
             is GrabberRoute.SelectAll -> {
-                field = field.copy(selection = TextRange(0, field.text.length))
-                say(action.id, "${field.text.length} chars selected")
+                draft = draft.copy(selection = TextRange(0, draft.text.length))
+                say(action.id, "${draft.text.length} chars selected")
             }
             is GrabberRoute.Clipboard -> {
                 val cm = app.getSystemService(ClipboardManager::class.java)
@@ -135,10 +135,10 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
             onReply(reply)
         } else {
             // read-only selection (or a page with no field): the result replaces the selected range of the working text instead
-            val f = field
+            val f = draft
             val sel = if (f.selection.collapsed) TextRange(0, f.text.length) else f.selection
             val next = f.text.substring(0, sel.min) + result + f.text.substring(sel.max)
-            field = TextFieldValue(next, TextRange(sel.min, sel.min + result.length))
+            draft = TextFieldValue(next, TextRange(sel.min, sel.min + result.length))
             say(action.id, "${result.length} chars, shown here (read-only)")
         }
     }
