@@ -87,12 +87,15 @@ class StoreAdoptTest {
         assertTrue("Store in the pass", src("StoreAdopt.kt").contains("(pkgs + STORE).distinct()"))
         val bar = src("StoreBar.kt")
         val rows = bar.substringAfter("Column(modifier.testTag(TAG)) {").substringBefore("if (verbs.disabledReason").split("            Row {").drop(1)
-        assertEquals(3, rows.size)
+        assertEquals(2, rows.size)
         fun has(r: String, vararg items: String) = items.forEach { assertTrue("$it in row", r.contains("Item.$it")) }
         has(rows[0], "CHECK", "INSTALL", "DOWNLOAD", "UPDATE")
-        assertTrue("Auto update is not on the batch row", !rows[0].contains("AUTO_UPDATE"))
-        has(rows[1], "AUTO_UPDATE", "WIFI_ONLY"); assertTrue(rows[1].contains("ChannelButton("))
-        has(rows[2], "PLAY_PROTECT", "ADOPT_ALL")
+        assertTrue("batch row keeps its order", listOf("CHECK", "INSTALL", "DOWNLOAD", "UPDATE").map { rows[0].indexOf("Item.$it") }.let { it == it.sorted() })
+        // row 2, in the owner's order: Auto update, Up Wifi only, Play Protect, Adopt all, ADB
+        has(rows[1], "AUTO_UPDATE", "WIFI_ONLY", "PLAY_PROTECT", "ADOPT_ALL"); assertTrue(rows[1].contains("ChannelButton("))
+        assertTrue("row 2 order", listOf("Item.AUTO_UPDATE", "Item.WIFI_ONLY", "Item.PLAY_PROTECT", "Item.ADOPT_ALL", "ChannelButton(").map { rows[1].indexOf(it) }.let { it == it.sorted() })
+        assertTrue("Adopt all is omitted where the page has none", rows[1].contains("verbs.adoptAll?.let"))
+        assertTrue("Adopt all keeps its full name as description", rows[1].contains("R.string.store_bar_adopt_all)"))
         assertTrue("ADB detail is not drawn on the page", !bar.contains("ADB_DETAIL") && !bar.contains("StoreCaption(ctx.getString(R.string.store_bar_adb"))
         assertTrue("ADB detail stays reachable: description + long-press sheet to the ADB Status page",
             bar.contains("description = detail") && bar.contains("val detail = ch?.let { ControlStatus.label(it) }") && bar.contains("onLongClick = detail?.let") &&

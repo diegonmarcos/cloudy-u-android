@@ -226,10 +226,6 @@ object StoreBar {
                         toast(ctx, ctx.getString(R.string.store_bar_wifi_only_toast, onOff(ctx, !wifiOnly)))
                         tick++
                     }, Modifier.weight(1f), itemTag(Item.WIFI_ONLY))
-                // The privileged channel itself (see ChannelButton): ON / OFF only on the button, the detail below the bar.
-                ChannelButton(Modifier.weight(1f), onChange = { chan++ })
-            }
-            Row {
                 // Play Protect's per-INSTALL scan prompt. The label is what the device STORES
                 // (ON / OFF / unknown when no key can be read), never a default. Tap toggles
                 // through the shell channel (or WRITE_SECURE_SETTINGS); when that is absent or
@@ -240,7 +236,7 @@ object StoreBar {
                     ControlStatus.Tri.UNKNOWN -> ctx.getString(R.string.store_unknown_state)
                 }
                 Button(ctx.getString(R.string.store_bar_play_protect, ppLabel),
-                    when (pp) { ControlStatus.Tri.ON -> Ink.GREY_FILL; ControlStatus.Tri.OFF -> Ink.GREEN_FILL; else -> AMBER },
+                    Ink.GREEN_FILL,   // green base; the real state is the label (ON / OFF / unknown)
                     {
                         if (pp == ControlStatus.Tri.UNKNOWN) openPlayProtect(ctx)
                         else {
@@ -258,8 +254,11 @@ object StoreBar {
                             }
                         }
                     }, Modifier.weight(1f), itemTag(Item.PLAY_PROTECT))
-                // #1744 Adopt all (installer of record) shares the Play Protect row.
-                verbs.adoptAll?.let { Button(ctx.getString(R.string.store_bar_adopt_all), Ink.BLUE_FILL, it, Modifier.weight(1f), itemTag(Item.ADOPT_ALL)) }
+                // #1744 Adopt all (installer of record): row 2 omits it where the page has no fleet to adopt. The full name is its description.
+                verbs.adoptAll?.let { Button(ctx.getString(R.string.store_bar_adopt_all_short), Ink.GREEN_FILL, it, Modifier.weight(1f), itemTag(Item.ADOPT_ALL),
+                    description = ctx.getString(R.string.store_bar_adopt_all)) }
+                // The privileged channel itself (see ChannelButton): ON / OFF only on the button, the detail on long press.
+                ChannelButton(Modifier.weight(1f), onChange = { chan++ })
             }
             if (verbs.disabledReason != 0 && (verbs.installAll == null || verbs.updateAll == null))
                 StoreCaption(ctx.getString(verbs.disabledReason))
@@ -314,6 +313,7 @@ object StoreBar {
         val detail = ch?.let { ControlStatus.label(it) }
         Box(modifier) {
             Button(chLabel,
+                // green when the real verdict is ON (#1550: green only on a real adb round trip); amber / red / grey otherwise; the label says ON / OFF too
                 when (ControlStatus.ink(ch)) { ControlStatus.Ink.GREEN -> Ink.GREEN_FILL; ControlStatus.Ink.AMBER -> AMBER
                     ControlStatus.Ink.RED -> RED_FILL; ControlStatus.Ink.GREY -> Ink.GREY_FILL },
                 { StoreShell.arm(ctx) }, Modifier.fillMaxWidth(), itemTag(Item.WIRELESS_DEBUG), description = detail,
