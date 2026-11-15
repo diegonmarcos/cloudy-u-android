@@ -28,7 +28,7 @@ class TasksController(
     private val prefs: TasksPrefs,
     private val scope: CoroutineScope,
     private val io: CoroutineDispatcher = Dispatchers.IO,
-    /** Sample projects (data/projects/projects.json) seeded once, flagged, deletable. */
+    /** Sample projects (assets/projects.json) seeded once, flagged, deletable. */
     private val samples: List<SampleProject> = emptyList(),
 ) {
     var snapshot by mutableStateOf(Snapshot())

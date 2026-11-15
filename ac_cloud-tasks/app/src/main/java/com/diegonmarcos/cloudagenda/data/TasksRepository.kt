@@ -189,7 +189,7 @@ class TasksRepository(private val dbh: TasksDb, private val clock: () -> Long = 
     }
 
     /**
-     * Seeds each sample project (data/projects/projects.json) once, flagged sample so the user can delete it. Idempotent: a meta marker
+     * Seeds each sample project (assets/projects.json) once, flagged sample so the user can delete it. Idempotent: a meta marker
      * per sample id is written with the project, so a second call changes nothing and a deleted sample is not given back. Unlike
      * [seedIfEmpty] it also runs when the user already has projects. Dates are offsets from [today]. Returns the names it seeded.
      */

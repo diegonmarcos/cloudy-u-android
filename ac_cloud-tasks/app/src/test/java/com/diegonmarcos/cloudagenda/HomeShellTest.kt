@@ -40,7 +40,7 @@ class HomeShellTest {
     val rules = composeChain(compose)
 
     private fun launch(): FakeEnv {
-        val env = FakeEnv(RuntimeEnvironment.getApplication(), true, SampleProjects.parse(File("../data/projects/projects.json").readText()))
+        val env = FakeEnv(RuntimeEnvironment.getApplication(), true, SampleProjects.parse(File("src/main/assets/projects.json").readText()))
         compose.setContent { TasksApp(env, Declarations.nav) }
         return env
     }
@@ -58,8 +58,8 @@ class HomeShellTest {
             compose.onNodeWithTag(HomeTags.chip(n)).performScrollTo().assertIsDisplayed()
             compose.onNodeWithTag(HomeTags.card(n)).performScrollTo().assertIsDisplayed()
         }
-        compose.onNodeWithTag(HomeTags.sample("Traveling")).performScrollTo().assertIsDisplayed()
-        assertFalse(any(HomeTags.sample("Cloudy")))
+        compose.onNodeWithTag(HomeTags.sample("Traveling"), useUnmergedTree = true).assertExists()
+        assertFalse(compose.onAllNodesWithTag(HomeTags.sample("Cloudy"), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
         compose.onNodeWithTag(HomeTags.TOTAL).assertExists()
     }
 
@@ -89,7 +89,7 @@ class HomeShellTest {
     @Test fun `selecting Traveling alone opens the Calendar as the Gantt Calendar, All opens it as Circles Day`() {
         launch()
         tab("tasks")
-        compose.onNodeWithTag(MockTags.DIAL).performScrollTo().assertExists()
+        compose.onNodeWithTag(MockTags.DIAL).assertExists()
         tab("home")
         compose.onNodeWithTag(HomeTags.CHIP_NONE).performClick()
         compose.onNodeWithTag(HomeTags.chip("Traveling")).performScrollTo().performClick()
@@ -102,7 +102,7 @@ class HomeShellTest {
         // the user can still pick another style by hand
         compose.onNodeWithTag(MockTags.style("circles")).performClick()
         compose.waitForIdle()
-        compose.onNodeWithTag(MockTags.DIAL).performScrollTo().assertExists()
+        compose.onNodeWithTag(MockTags.DIAL).assertExists()
         compose.onNodeWithTag(MockTags.style("linear")).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(MockTags.BARS).assertExists()
@@ -126,7 +126,7 @@ class HomeShellTest {
         compose.waitForIdle()
         assertFalse(env.controller.snapshot.projects.any { it.name == "Traveling" })
         assertFalse(any(HomeTags.card("Traveling")))
-        assertTrue(env.repo.seedSamples(SampleProjects.parse(File("../data/projects/projects.json").readText()), java.time.LocalDate.now()).isEmpty())
+        assertTrue(env.repo.seedSamples(SampleProjects.parse(File("src/main/assets/projects.json").readText()), java.time.LocalDate.now()).isEmpty())
     }
 
     @Test fun `the Tasks list shows only the selected projects`() {

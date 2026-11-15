@@ -9,7 +9,7 @@ data class SampleTask(val name: String, val start: Int, val days: Int, val locat
 
 data class SampleList(val name: String, val tasks: List<SampleTask>)
 
-/** A project seeded once as sample data (data/projects/projects.json): the user can delete it, and it is never given back. */
+/** A project seeded once as sample data (assets/projects.json): the user can delete it, and it is never given back. */
 data class SampleProject(val id: String, val name: String, val startOffset: Int, val lists: List<SampleList>)
 
 /** The project data file: the sample projects and the per-project calendar configs. Pure parsing. */

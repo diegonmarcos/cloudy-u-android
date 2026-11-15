@@ -19,7 +19,7 @@ import java.time.LocalDate
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class SampleProjectsTest {
-    private val samples = SampleProjects.parse(File("../data/projects/projects.json").readText())
+    private val samples = SampleProjects.parse(File("src/main/assets/projects.json").readText())
     private val today = LocalDate.of(2026, 11, 15)
     private fun repo() = TasksRepository(TasksDb(RuntimeEnvironment.getApplication(), null))
 

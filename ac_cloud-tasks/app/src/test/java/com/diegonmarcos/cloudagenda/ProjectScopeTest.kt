@@ -25,7 +25,7 @@ import java.time.LocalDate
 class ProjectScopeTest {
     private val items = MockTasks.parse(File("src/debug/assets/mock-tasks.json").readText())
     private val today = LocalDate.of(2026, 11, 4)
-    private val configs = SampleProjects.parseConfigs(File("../data/projects/projects.json").readText())
+    private val configs = SampleProjects.parseConfigs(File("src/main/assets/projects.json").readText())
     private fun ids(l: List<com.diegonmarcos.cloudagenda.data.MockTask>) = l.map { it.id }
 
     // ── the filter merge ────────────────────────────────────────────────────────────────────────────────
