@@ -1,4 +1,4 @@
-# #1745 Emulator proof of the Cloud > Apps > Configs row and the Configs page Account | Perms group: aa_cloud-superapp/test/emulator-configs-rows.sh. Manual only.
+# #1745 / #1755 Emulator proof of the Cloud > Apps > Configs row, the Configs page groups and the Launcher hub page: aa_cloud-superapp/test/emulator-configs-rows.sh. Manual only.
 name: "Test -> SuperApp Configs rows (emulator)"
 
 on:

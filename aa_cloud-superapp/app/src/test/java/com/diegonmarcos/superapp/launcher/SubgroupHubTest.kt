@@ -21,7 +21,8 @@ import org.robolectric.annotation.Config
  *   H2 the Agents hub shows one titled section, Network, derived from the nav (hub_sections name a group now that subgroups are gone)
  *   H3 routing: in-app pages are page:config/<id>; apps / sections / Cloud Store hand-offs keep their declared action
  *   H4 the hub routes to SubgroupHubFragment (not the C3 APKs) and draws a section heading and a Cloud ▸ Apps tile per entry
- *   H5 Cloud ▸ Apps ▸ Configs row = Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About (#1745, was #1628); Watchdog launches extapp:c3-watchdog
+ *   H5 Cloud ▸ Apps ▸ Configs row = Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About (#1755, was #1745); Watchdog stays on Configs ▸ Profiling
+ *   H6 the Launcher hub (#1755) lists every visible Launcher page, and the #1755 reorg lost no Configs page or Cloud Apps Configs row item (field parity)
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -37,21 +38,25 @@ class SubgroupHubTest : KitPageHarness() {
         // #1623: one page, six flat top-level groups (the #1610 Device/Setup split removed).
         val runs = config.pages.filter { !it.isAction }.map { it.group to it.subgroup }.distinct()
         assertEquals(listOf(
-            "Launcher" to "", "Network" to "", "Apps" to "", "Connect" to "", "Tools" to "", "Configs" to ""), runs)
+            "Launcher" to "", "Network" to "", "Apps" to "", "Connect" to "", "Profiling" to "", "Configs" to ""), runs)
         // Connect carries Cloudy C3 and Peer Control (#1745: Account moved to the Configs group).
         assertEquals(listOf("Cloudy C3", "Peer Control"), grp("Connect").map { it.label })
-        // Agents is the in-app agents-watchdog hub, in the Tools group (the owner's dual listing kept once, beside the observability pages).
-        assertEquals(listOf("agents-watchdog"), config.pages.filter { it.hubSections.isNotEmpty() }.map { it.id })
-        assertEquals("Tools" to "", config.pages.first { it.id == "agents-watchdog" }.let { it.group to it.subgroup })
+        // #1755 Agents is the in-app agents-watchdog hub, now in the Configs group between Perms and Logcat app (the Tools group is Profiling);
+        // the Launcher hub (launcher-hub) is the second hub page.
+        assertEquals(listOf("launcher-hub", "agents-watchdog"), config.pages.filter { it.hubSections.isNotEmpty() }.map { it.id })
+        assertEquals("Configs" to "", config.pages.first { it.id == "agents-watchdog" }.let { it.group to it.subgroup })
         // Watchdog is the extapp:c3-watchdog tile, also in Tools.
         assertEquals("extapp:c3-watchdog", config.pages.first { it.id == "c3-watchdog" }.action)
-        assertEquals("Tools" to "", config.pages.first { it.id == "c3-watchdog" }.let { it.group to it.subgroup })
+        assertEquals("Profiling" to "", config.pages.first { it.id == "c3-watchdog" }.let { it.group to it.subgroup })
         // The groups as declared.
-        assertEquals(listOf("controls", "panels-ui", "app-folders", "onehand", "notify"), grp("Launcher").map { it.id })
-        assertEquals(listOf("c3-watchdog", "xray", "logcat-fleet", "agents-watchdog"), grp("Tools").map { it.id })
-        assertEquals(listOf("profile", "perms", "logcat", "xray-app", "app-about"), grp("Configs").map { it.id })
+        assertEquals(listOf("launcher-hub", "controls", "panels-ui", "app-folders", "onehand", "notify"), grp("Launcher").map { it.id })
+        assertEquals(listOf("store", "profile"), grp("Apps").map { it.id })
+        assertEquals(listOf("c3-watchdog", "xray", "logcat-fleet"), grp("Profiling").map { it.id })
+        assertEquals(listOf("profile-app", "perms", "agents-watchdog", "logcat", "xray-app", "app-about"), grp("Configs").map { it.id })
+        assertEquals(listOf("Profile", "Perms", "Agents", "Logcat app", "X-Ray App", "About"), grp("Configs").map { it.label })
+        assertEquals("extapp:cloud-account", config.pages.first { it.id == "profile-app" }.action)
         assertEquals(listOf("X-Ray Device", "Logcat Fleet"),
-            grp("Tools").filter { it.id == "xray" || it.id == "logcat-fleet" }.map { it.label })
+            grp("Profiling").filter { it.id == "xray" || it.id == "logcat-fleet" }.map { it.label })
         // #1737 the Network group shows the individual icons on the Configs page, in the owner's order, `|` between the sub-groups:
         // NG Firewall (hub) | Wi-Fi Bluetooth DNS VPN | Firewall OS Perms | Webserver Proxy; Bluetooth right after Wi-Fi.
         assertEquals(listOf("ng-firewall", "wifi", "bluetooth", "dns", "wg", "firewall", "os-perms", "webserver", "proxy"), grp("Network").map { it.id })
@@ -106,18 +111,39 @@ class SubgroupHubTest : KitPageHarness() {
     }
 
     @Test
-    fun `H5 Cloud Apps Configs row reads Quick Actions, UI, NG Firewall, Store, C3, Watchdog, Account, About (1745)`() {
+    fun `H5 Cloud Apps Configs row reads Quick Actions, UI, NG Firewall, Store, Account, C3, Profile, About (1755)`() {
         // #1628 redefined the Cloud > Apps > Configs row (supersedes #1611): Quick Actions, UI | Firewall, WiFi |
         // Store | Account, C3 | Watchdog | About. Watchdog now launches the C3-Watchdog APK (extapp:c3-watchdog)
         // and a Firewall tile (page:config/firewall) is present. The config-section Agents hub page is a separate surface.
         val row = Sections.all().flatMap { it.tileGroups }.single { it.title == "Configs" }.tiles.filter { !it.separator }
         assertEquals(
-            listOf("Quick Actions", "UI", "NG Firewall", "Store", "C3", "Watchdog", "Account", "About"),
+            listOf("Quick Actions", "UI", "NG Firewall", "Store", "Account", "C3", "Profile", "About"),
             row.map { it.label })
-        assertTrue("Watchdog launches the C3-Watchdog app", row.any { it.label == "Watchdog" && it.target == "extapp:c3-watchdog" })
+        // #1755 Watchdog left this row (owner order) and stays visible on the Configs page, Profiling group (rule 16).
+        assertTrue("Watchdog launches the C3-Watchdog app from Configs > Profiling", config.pages.any { it.id == "c3-watchdog" && !it.hidden && it.group == "Profiling" && it.action == "extapp:c3-watchdog" })
+        assertTrue("Profile and Account launch the Cloud Account app", row.filter { it.label == "Profile" || it.label == "Account" }.all { it.target == "extapp:cloud-account" })
         assertTrue("NG Firewall opens the hub", row.any { it.label == "NG Firewall" && it.target == "page:config/ng-firewall" })
         // Rule 16: Firewall and Wi-Fi left this row but stay declared and visible (hub + Configs Network group).
         val ids = Sections.all().single { it.id == "config" }.allPages.filter { !it.hidden }.map { it.id }
         assertTrue(ids.containsAll(listOf("firewall", "wifi", "ng-firewall")))
+    }
+
+    @Test
+    fun `H6 the Launcher hub lists every Launcher icon and the 1755 reorg lost no item`() {
+        // The Launcher hub is derived (hub_sections), so it shows exactly the visible pages of the group, one tile each, none dropped.
+        assertEquals(listOf("Launcher"), hub("launcher-hub").map { it.title })
+        assertEquals(listOf("controls", "panels-ui", "app-folders", "onehand", "notify"), hub("launcher-hub")[0].tiles.map { it.id })
+        assertEquals(listOf("Quick Actions", "UI", "Folders", "One-Hand", "Notify"), hub("launcher-hub")[0].tiles.map { it.label })
+        assertEquals("page:config/controls", hub("launcher-hub")[0].tiles[0].target)
+        // Field parity against the pre-#1755 layout: every visible Configs-page label of that layout is still visible (Logcat is now Logcat app,
+        // Tools is Profiling), each in a group; every pre-#1755 Cloud Apps Configs row item is still on the row or on the Configs page (Watchdog).
+        val visible = config.pages.filter { !it.hidden && !it.separator && !it.isAction }.map { it.label }.toSet()
+        val before = listOf("Quick Actions", "UI", "Folders", "One-Hand", "Notify", "NG Firewall", "Wi-Fi", "Bluetooth", "DNS", "VPN", "Firewall", "OS Perms",
+            "Webserver", "Proxy", "Store", "Cloudy C3", "Peer Control", "Watchdog", "X-Ray Device", "Logcat Fleet", "Agents", "Account", "Perms", "Logcat app",
+            "X-Ray App", "About")
+        assertTrue("lost: ${before - visible}", visible.containsAll(before))
+        val row = Sections.all().flatMap { it.tileGroups }.single { it.title == "Configs" }.tiles.filter { !it.separator }.map { it.label }.toSet()
+        for (old in listOf("Quick Actions", "UI", "NG Firewall", "Store", "C3", "Watchdog", "Account", "About"))
+            assertTrue("$old is neither on the row nor on the Configs page", old in row || old in visible)
     }
 }

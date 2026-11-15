@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# #1745 Emulator proof of the two Configs rows: Cloud > Apps > Configs (Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About)
-# and the Configs page Connect / Configs groups (Account | Perms, Logcat, X-Ray App, About). Photographs both and opens the NG Firewall tile.
+# #1745 / #1755 Emulator proof of the Configs surfaces: Cloud > Apps > Configs (Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About)
+# and the Configs page groups Launcher (Launcher | Quick Actions ...), Apps (Store | Account), Profiling (Watchdog | X-Ray Device, Logcat Fleet),
+# Configs (Profile | Perms, Agents, Logcat app, X-Ray App, About). Photographs each, opens the Launcher hub and the NG Firewall tile.
 #   bash aa_cloud-superapp/test/emulator-configs-rows.sh <superapp.apk> <out dir>
 set -u
 APK=$1; OUT=$2; PKG=com.diegonmarcos.superapp
@@ -47,20 +48,24 @@ wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:c
 CUR=cloud-apps; cap cloud-apps-top
 for i in 1 2 3 4 5 6; do dump; has "NG Firewall" && break; swipe_up; done
 cap cloud-apps-configs-row
-need "Quick Actions" UI "NG Firewall" Store C3 Watchdog
+need "Quick Actions" UI "NG Firewall" Store
 # the row scrolls sideways: swipe it left (on the NG Firewall tile's line) to bring Account | About into view
 read -r NX NY < <(centre "NG Firewall"); read -r W H < <(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
 adb shell input swipe $((W*85/100)) "$NY" $((W*5/100)) "$NY" 500; sleep 2; dump; cap cloud-apps-configs-row-scrolled
-need Watchdog Account About
+need Account C3 Profile About
 has "Firewall" && { echo "::error::a separate Firewall tile is still on the row"; fail=1; }
 has "WiFi" && { echo "::error::a separate WiFi tile is still on the row"; fail=1; }
 # 2) Configs page groups
 wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:config" >/dev/null; sleep 10
 CUR=configs; cap configs-top
-need "NG Firewall" "Cloudy C3" "Peer Control"
+need Launcher "Quick Actions" "NG Firewall" Store Account "Cloudy C3" "Peer Control"
 for i in 1 2 3 4; do swipe_up; dump; has "X-Ray App" && break; done
 cap configs-bottom
-need Account Perms Logcat "X-Ray App" About
+need Profiling Watchdog "X-Ray Device" "Logcat Fleet" Profile Perms Agents "Logcat app" "X-Ray App" About
+# 2b) the Launcher hub page lists every Launcher icon (#1755)
+wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:config" >/dev/null; sleep 8
+dump; tap Launcher; sleep 3; CUR=launcher-hub; cap launcher-hub
+need "Quick Actions" UI Folders One-Hand Notify
 # 3) the NG Firewall tile still reaches Firewall and Wi-Fi
 wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:config" >/dev/null; sleep 8
 tap "NG Firewall"; sleep 3; CUR=hub; cap ng-firewall-hub

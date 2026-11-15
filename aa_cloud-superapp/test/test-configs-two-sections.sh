@@ -58,10 +58,10 @@ for p in pages:
     if p.get('hidden') or p.get('is_action'): continue
     key = (p.get('group', ''), p.get('subgroup', ''))
     if key != last: shape.append(key); last = key
-want = [('Launcher', ''), ('Network', ''), ('Apps', ''), ('Connect', ''), ('Tools', ''), ('Configs', '')]  # #1623 one page, six top-level groups, each a horizontal_two_rows group
+want = [('Launcher', ''), ('Network', ''), ('Apps', ''), ('Connect', ''), ('Profiling', ''), ('Configs', '')]  # #1755 Tools renamed Profiling; #1623 one page, six top-level groups, each a horizontal_two_rows group
 print('OK' if shape == want else 'heading runs = %r' % (shape,))
 PY
-)" "Launcher, Network, Apps, Connect, Tools, Configs — one page of six groups, each heading appearing ONCE (#1623)"
+)" "Launcher, Network, Apps, Connect, Profiling, Configs — one page of six groups, each heading appearing ONCE (#1623)"
 
 echo "== T2: each heading holds exactly the pages the owner named =="
 check "$(python3 - "$BJ" <<'PY'
@@ -76,18 +76,18 @@ def members(g, s=''):
             and p.get('group', '') == g and p.get('subgroup', '') == s]
 want = {
     # #1623 one page, six top-level groups
-    ('Launcher', ''): ['Quick Actions', 'UI', 'Folders', 'One-Hand', '|', 'Notify'],  # the | separates One-Hand from Notify
+    ('Launcher', ''): ['Launcher', '|', 'Quick Actions', 'UI', 'Folders', 'One-Hand', '|', 'Notify'],  # the | separates One-Hand from Notify
     ('Network', ''):  ['NG Firewall', '|', 'Wi-Fi', 'Bluetooth', 'DNS', 'VPN', '|', 'Firewall', 'OS Perms', '|', 'Webserver', 'Proxy'],  # #1737 individual icons again (the #1719 unified Network page is retired into the NG Firewall hub)
-    ('Apps', ''):     ['Store'],
+    ('Apps', ''):     ['Store', '|', 'Account'],  # #1755 Account moved here from Configs
     ('Connect', ''):  ['Cloudy C3', 'Peer Control'],  # #1745 Account moved to Configs
-    ('Tools', ''):    ['Watchdog', '|', 'X-Ray Device', 'Logcat Fleet', 'Agents'],  # Watchdog -> extapp:c3-watchdog; the | before the observability pair; Agents is the in-app hub (the owner's dual listing, kept once here)
-    ('Configs', ''):  ['Account', '|', 'Perms', 'Logcat', 'X-Ray App', 'About'],  # #1745 Account | Perms, Logcat, X-Ray App, About
+    ('Profiling', ''): ['Watchdog', '|', 'X-Ray Device', 'Logcat Fleet'],  # #1755 Tools renamed Profiling, Agents moved to Configs; Watchdog -> extapp:c3-watchdog; the | before the observability pair; Agents is the in-app hub (the owner's dual listing, kept once here)
+    ('Configs', ''):  ['Profile', '|', 'Perms', 'Agents', 'Logcat app', 'X-Ray App', 'About'],  # #1755 Profile | Perms, Agents, Logcat app, X-Ray App, About
 }
 problems = ['%s%s = %r' % (g, ' ▸ ' + s if s else '', members(g, s))
             for (g, s), exp in want.items() if members(g, s) != exp]
 print('; '.join(problems) or 'OK')
 PY
-)" "Launcher = Quick Actions/UI/Folders/One-Hand | Notify; Network = NG Firewall hub/Wi-Fi/Bluetooth/DNS/VPN/Firewall/OS Perms/Webserver/Proxy (#1737); Apps = Store; Connect = Cloudy C3/Peer Control; Tools = Watchdog | X-Ray Device/Logcat Fleet/Agents; Configs = Account | Perms/Logcat/X-Ray App/About (#1623, #1745)"
+)" "Launcher = Launcher hub | Quick Actions/UI/Folders/One-Hand | Notify (#1755); Network = NG Firewall hub/Wi-Fi/Bluetooth/DNS/VPN/Firewall/OS Perms/Webserver/Proxy (#1737); Apps = Store | Account; Connect = Cloudy C3/Peer Control; Profiling = Watchdog | X-Ray Device/Logcat Fleet; Configs = Profile | Perms/Agents/Logcat app/X-Ray App/About (#1623, #1745, #1755)"
 
 echo "== T3: Store is the former Constellation, and Cloud Constellation is INSIDE it =="
 # #563 renamed the Constellation page Store; the word survives as the label of
@@ -174,9 +174,9 @@ w = {p[k] for p in pages for k in ('group', 'subgroup') if p.get(k)}
 w |= {p['label'] for p in pages if not p.get('hidden') and not p.get('is_action')}
 print(len(w))
 ")
-[ "$WORDS" = 33 ] \
-  && ok "T4 derived 33 words from the declaration (#1623 one page, six groups: Launcher, Network, Apps, Connect, Tools, Configs; no subgroups; 26 visible page labels incl. the two | separators (one word), Agents (the relabelled hub) and Watchdog (the c3-watchdog launch); Cloudy C3 is the c3 page's label)" \
-  || bad "T4 derived $WORDS words, expected 33 — it is checking a different set than it claims"
+[ "$WORDS" = 34 ] \
+  && ok "T4 derived 34 words from the declaration (#1755: Tools renamed Profiling, Logcat -> Logcat app, Profile added) (#1623 one page, six groups: Launcher, Network, Apps, Connect, Tools, Configs; no subgroups; 26 visible page labels incl. the two | separators (one word), Agents (the relabelled hub) and Watchdog (the c3-watchdog launch); Cloudy C3 is the c3 page's label)" \
+  || bad "T4 derived $WORDS words, expected 34 — it is checking a different set than it claims"
 
 # The ONE heading Kotlin may still name is the fallback for a section that
 # declares none, which is every section but this one. Pinned so it stays the only
@@ -231,9 +231,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 65 ] \
-  && ok "65 config pages declared (#1745 added the configs-sep-a separator after Account) (#1737: the #1719 Network page is retired; added the NG Firewall hub, OS Perms, Proxy and three Network separators) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
-  || bad "$COUNT config pages, expected 65 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 69 ] \
+  && ok "69 config pages declared (#1755 added launcher-hub, launcher-sep-0, apps-sep-1 and profile-app) (#1745 added the configs-sep-a separator after Account) (#1737: the #1719 Network page is retired; added the NG Firewall hub, OS Perms, Proxy and three Network separators) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
+  || bad "$COUNT config pages, expected 69 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS — the single shared row (#1610) =="
 # #1610 downgraded the ticket's two per-subpage Actions columns to ONE shared row
@@ -340,6 +340,7 @@ BEFORE = {'network', 'bluetooth-analyze', 'bluetooth-locate', 'presets', 'contro
           'focus',  # #1596 added on purpose: the hidden Focus Mode switch page (page:config/focus, FocusModeFragment)
           'tools-sep-1',  # #1623 added on purpose: the Tools group | separator (Watchdog | X-Ray Device, Logcat Fleet, Agents)
           'ng-firewall', 'os-perms', 'proxy', 'network-sep-a', 'network-sep-b', 'network-sep-c',
+          'launcher-hub', 'launcher-sep-0', 'apps-sep-1', 'profile-app',  # #1755 added on purpose: the Launcher hub item + its |, the | after Store (Apps), and Profile (Cloud Account launch tile) in the Configs group
           'configs-sep-a'}  # #1745 added on purpose: the | after Account in the Configs group; #1737 added on purpose: the NG Firewall hub, OS Perms (Store Access > Android Perms), Proxy (system network settings) and the three | separators of the Network group
 sec     = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
                if s['id'] == 'config')
@@ -431,18 +432,18 @@ for g, s, label, icon in tiles:
     if s and s != s0: out.append('S:' + s.upper()); s0 = s
     out.append('%s[%s]' % (label, icon))
 want = ['H:LAUNCHER',
-        'Quick Actions[ic_home]', 'UI[ic_ctl_brightness]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', '|[None]', 'Notify[ic_rss]',
+        'Launcher[ic_settings]', '|[None]', 'Quick Actions[ic_home]', 'UI[ic_ctl_brightness]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', '|[None]', 'Notify[ic_rss]',
         'H:NETWORK',
         'NG Firewall[ic_act_shield]', '|[None]', 'Wi-Fi[ic_wifi]', 'Bluetooth[ic_bluetooth]', 'DNS[ic_world]', 'VPN[ic_wg]', '|[None]',   # #1737 individual icons again; the NG Firewall hub opens a page listing them
         'Firewall[ic_lock]', 'OS Perms[ic_act_key]', '|[None]', 'Webserver[ic_web]', 'Proxy[ic_ctl_mobile_data]',   # the ADB Shell icon stays removed (#1719); Apps Access is hidden
         'H:APPS',
-        'Store[ic_storefront]',
+        'Store[ic_storefront]', '|[None]', 'Account[ic_person]',
         'H:CONNECT',
         'Cloudy C3[ic_cloud_control]', 'Peer Control[ic_hub]',
-        'H:TOOLS',
-        'Watchdog[ic_watchtower]', '|[None]', 'X-Ray Device[ic_monitor_heart]', 'Logcat Fleet[ic_p_logs]', 'Agents[ic_p_watchdog]',
+        'H:PROFILING',
+        'Watchdog[ic_watchtower]', '|[None]', 'X-Ray Device[ic_monitor_heart]', 'Logcat Fleet[ic_p_logs]',
         'H:CONFIGS',
-        'Account[ic_person]', '|[None]', 'Perms[ic_key]', 'Logcat[ic_subject]', 'X-Ray App[ic_p_c3_health]', 'About[ic_info]',
+        'Profile[ic_person]', '|[None]', 'Perms[ic_key]', 'Agents[ic_p_watchdog]', 'Logcat app[ic_subject]', 'X-Ray App[ic_p_c3_health]', 'About[ic_info]',
         'H:ACTIONS',
         'Update All[ic_system_update]', 'KDE Connect[ic_devices]', 'Animations[ic_animation]', 'Sync Clipboard[ic_copy]', 'Saving Mode[ic_settings]', 'Focus Mode[ic_nav_dnd]']
 if out == want: print('OK')
@@ -451,7 +452,7 @@ else:
     print('rendered != spec: ' + ' | '.join(l for l in difflib.unified_diff(want, out, lineterm='', n=0)
                                            if l[:1] in '+-' and l[:3] not in ('+++', '---')))
 PY
-)" "grid = LAUNCHER[Quick Actions,UI,Folders,One-Hand | Notify] NETWORK[NG Firewall | Wi-Fi,Bluetooth,DNS,VPN | Firewall,OS Perms | Webserver,Proxy] APPS[Store] CONNECT[Cloudy C3,Peer Control] TOOLS[Watchdog | X-Ray Device,Logcat Fleet,Agents] CONFIGS[Account | Perms,Logcat,X-Ray App,About] ACTIONS[Update All,KDE Connect,Animations,Sync Clipboard,Saving Mode,Focus Mode] (#1623)"
+)" "grid = LAUNCHER[Launcher | Quick Actions,UI,Folders,One-Hand | Notify] NETWORK[NG Firewall | Wi-Fi,Bluetooth,DNS,VPN | Firewall,OS Perms | Webserver,Proxy] APPS[Store | Account] CONNECT[Cloudy C3,Peer Control] PROFILING[Watchdog | X-Ray Device,Logcat Fleet] CONFIGS[Profile | Perms,Agents,Logcat app,X-Ray App,About] ACTIONS[Update All,KDE Connect,Animations,Sync Clipboard,Saving Mode,Focus Mode] (#1623)"
 
 echo "== T12: THE AI PAGE IS GONE, not hidden — no route, target or tile names it (#723) =="
 # Deleting a declaration and leaving its door behind is the dead-tile failure:
@@ -500,19 +501,19 @@ check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 configs = [p['id'] for p in sec['pages'] if p.get('group') == 'Configs' and not p.get('hidden') and not p.get('is_action')]
-tools   = [p['id'] for p in sec['pages'] if p.get('group') == 'Tools' and not p.get('hidden')]
+tools   = [p['id'] for p in sec['pages'] if p.get('group') == 'Profiling' and not p.get('hidden')]
 cgrp = [i for i in next(g for g in sec['groups'] if g['id'] == 'configs')['pages'] if i in configs]
 tgrp = [i for i in next(g for g in sec['groups'] if g['id'] == 'tools')['pages'] if i in tools]
 probs = []
-if configs != ['profile', 'configs-sep-a', 'perms', 'logcat', 'xray-app', 'app-about']: probs.append('Configs group = %r' % (configs,))
-if tools != ['c3-watchdog', 'tools-sep-1', 'xray', 'logcat-fleet', 'agents-watchdog']: probs.append('Tools group = %r' % (tools,))
+if configs != ['profile-app', 'configs-sep-a', 'perms', 'agents-watchdog', 'logcat', 'xray-app', 'app-about']: probs.append('Configs group = %r' % (configs,))
+if tools != ['c3-watchdog', 'tools-sep-1', 'xray', 'logcat-fleet']: probs.append('Profiling group = %r' % (tools,))
 if 'logcat' not in configs: probs.append('the app Logcat left the Configs group')
 if 'logcat-fleet' not in tools: probs.append('Logcat Fleet left the Tools group')
 if cgrp != configs: probs.append('groups[configs] order %r != grid order %r' % (cgrp, configs))
 if tgrp != tools: probs.append('groups[tools] order %r != grid order %r' % (tgrp, tools))
 print('; '.join(probs) or 'OK')
 PY
-)" "Configs group = Account, |, Perms, Logcat, X-Ray App, About; Tools = Watchdog | X-Ray Device, Logcat Fleet, Agents; the app Logcat lives in Configs and Logcat Fleet in Tools; same order in build.json groups[]"
+)" "Configs group = Profile, |, Perms, Agents, Logcat app, X-Ray App, About; Profiling (was Tools) = Watchdog | X-Ray Device, Logcat Fleet; the app Logcat lives in Configs and Logcat Fleet in Tools; same order in build.json groups[]"
 grep -qE 'sectionId == "config" && pageId == "logcat" +-> .*LogcatFragment' "$PAGES" \
   && ok "SectionPages routes config/logcat to LogcatFragment" \
   || bad "config/logcat does not resolve to LogcatFragment — the Logcat tab opens a placeholder"

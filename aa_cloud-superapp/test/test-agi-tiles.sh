@@ -26,8 +26,8 @@
 #       is a folder any more
 #   T4  a not-installed extapp tile draws the #249 placeholder, with strings in
 #       every locale, and the install snack is a string resource
-#   T5  the Configs row reads Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About
-#       (#1745 owner order, supersedes #1628) —
+#   T5  the Configs row reads Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About
+#       (#1755 owner order, supersedes #1745) —
 #       and SuperApp is declared in exactly one tile group under ui.sections
 #   T6  (#803) the Search tile declares tint:false (its glyph is the mockup's gradient), the
 #       tile parser reads `tint`, and tileCell tints only a missing or tint:true tile
@@ -190,12 +190,12 @@ for d in locales:
               "phone_install_downloading", "phone_install_no_source"):
         check('name="%s"' % s in xml, "%s/strings.xml defines %s" % (d, s))
 
-print("== T5: the Configs row reads Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About (#1628) ==")
+print("== T5: the Configs row reads Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About (#1628) ==")
 configs = [g for g in groups(bj["ui"]["sections"], "Configs")]
 check(len(configs) == 1, "exactly one Configs tile group under ui.sections (found %d)" % len(configs))
 if configs:
     row = [t.get("label") for t in configs[0]["tiles"]]
-    check(row == ["Quick Actions", "UI", "|", "NG Firewall", "|", "Store", "|", "C3", "|", "Watchdog", "|", "Account", "|", "About"], "Configs row = Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About (#1745 owner order, supersedes #1628) (got %s)" % row)
+    check(row == ["Quick Actions", "UI", "|", "NG Firewall", "|", "Store", "Account", "|", "C3", "|", "Profile", "About"], "Configs row = Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About (#1755 owner order, supersedes #1745) (got %s)" % row)
 lnk = [g for g in groups(bj["ui"]["sections"], "Lnktree")]
 if lnk:
     sa = lnk[0]["tiles"][0] if lnk[0]["tiles"] else {}

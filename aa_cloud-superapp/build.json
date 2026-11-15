@@ -3479,7 +3479,7 @@
             "title": "Configs",
             "_doc_store_apps": "#1704 Store-only members: c3 apps that have no tile on this row (the Cloud tab of the Store files every app by this declaration, never in an Others group). Same group, same category, no tile drawn. Parity: test-store-cloud-categories.sh.",
             "store_apps": ["c3-webserver", "morpheus", "watchtower"],
-            "_doc_row_order": "#1628 OWNER ORDER (2026-11, supersedes #1611): the Cloud > Apps > Configs row reads exactly Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About (#1745 supersedes the #1628 Firewall, WiFi and Account placement) - seven tile groups divided by six '|' separators. Groups: [Quick Actions, UI] [Firewall, WiFi] [Store] [Account, C3] [Watchdog] [About]. Each tile maps to a real existing page/app id (no page invented): Quick Actions=page:config/controls, UI=page:config/panels-ui, Firewall=page:config/firewall, WiFi=page:config/wifi, Store=extapp:cloud-store, Account=extapp:cloud-account, C3=extapp:cloud-c3, Watchdog=extapp:c3-watchdog, About=page:config/app-about. #1611's five tiles (Quick Actions, Watchdog, Account, C3, Store) are all retained; UI, Firewall, WiFi, About added. test-c3-is-an-app.sh finds this group by its CONTENT (a group holding both Store and Quick Actions labels), so the reorder keeps it identifiable. Pinned by test-configs-apps-row.sh.",
+            "_doc_row_order": "#1628 OWNER ORDER (2026-11, supersedes #1611): the Cloud > Apps > Configs row reads exactly Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About (#1745 supersedes the #1628 Firewall, WiFi and Account placement) - seven tile groups divided by six '|' separators. Groups: [Quick Actions, UI] [Firewall, WiFi] [Store] [Account, C3] [Watchdog] [About]. Each tile maps to a real existing page/app id (no page invented): Quick Actions=page:config/controls, UI=page:config/panels-ui, Firewall=page:config/firewall, WiFi=page:config/wifi, Store=extapp:cloud-store, Account=extapp:cloud-account, C3=extapp:cloud-c3, Watchdog=extapp:c3-watchdog, About=page:config/app-about. #1611's five tiles (Quick Actions, Watchdog, Account, C3, Store) are all retained; UI, Firewall, WiFi, About added. test-c3-is-an-app.sh finds this group by its CONTENT (a group holding both Store and Quick Actions labels), so the reorder keeps it identifiable. Pinned by test-configs-apps-row.sh. #1755 (owner order) final row: Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About; Profile = extapp:cloud-account; Watchdog left the row and stays on the Configs page (Profiling group).",
             "tiles": [
               {
                 "_doc": "#1628 Configs row group 1a: Quick Actions -> the merged Controls page (page:config/controls).",
@@ -3496,7 +3496,7 @@
                 "target": "page:config/panels-ui"
               },
               {
-                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About.",
+                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About.",
                 "id": "configs-sep-1",
                 "label": "|",
                 "separator": true
@@ -3509,7 +3509,7 @@
                 "target": "page:config/ng-firewall"
               },
               {
-                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About.",
+                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About.",
                 "id": "configs-sep-2",
                 "label": "|",
                 "separator": true
@@ -3522,7 +3522,14 @@
                 "target": "extapp:cloud-store"
               },
               {
-                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About.",
+                "_doc": "#1628 Configs row group 6: Account -> the Cloud Account app (extapp:cloud-account).",
+                "id": "configs-account",
+                "label": "Account",
+                "icon": "ic_p_accounts",
+                "target": "extapp:cloud-account"
+              },
+              {
+                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About.",
                 "id": "configs-sep-3",
                 "label": "|",
                 "separator": true
@@ -3535,36 +3542,17 @@
                 "target": "extapp:cloud-c3"
               },
               {
-                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About.",
+                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About.",
                 "id": "configs-sep-4",
                 "label": "|",
                 "separator": true
               },
               {
-                "_doc": "#1628 Configs row group 5: Watchdog -> the C3-Watchdog app (extapp:c3-watchdog, com.diegonmarcos.watchdog). #1628 retargeted this tile from the in-app page:config/agents-watchdog to the published APK.",
-                "id": "configs-watchdog",
-                "label": "Watchdog",
-                "icon": "ic_p_watchdog",
-                "target": "extapp:c3-watchdog"
-              },
-              {
-                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About.",
-                "id": "configs-sep-5",
-                "label": "|",
-                "separator": true
-              },
-              {
-                "_doc": "#1628 Configs row group 6: Account -> the Cloud Account app (extapp:cloud-account).",
-                "id": "configs-account",
-                "label": "Account",
-                "icon": "ic_p_accounts",
+                "_doc": "#1755 Configs row group 5: Profile -> the Cloud Account app (extapp:cloud-account), same package as the Account tile; one app, two entry labels as ordered. Watchdog left this row (#1755) and stays on the Configs page, Profiling group (c3-watchdog, extapp:c3-watchdog).",
+                "id": "configs-profile",
+                "label": "Profile",
+                "icon": "ic_person",
                 "target": "extapp:cloud-account"
-              },
-              {
-                "_doc": "#1745 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About.",
-                "id": "configs-sep-6",
-                "label": "|",
-                "separator": true
               },
               {
                 "_doc": "#1628 Configs row group 6: About -> the in-app About page (page:config/app-about). Restored to this row by #1628; the page itself was always reachable from the Configs grid.",
@@ -5168,7 +5156,7 @@
         "module": null,
         "_doc_grid_columns": "Icons per row of the Configs page grid: a fixed 8, declared here, NOT the Cloud/Phone stepper (GridColumns.cloud). 8 is GridColumns.MAX; at 360 dp a cell is 45 dp, the icon is 27 dp (cell minus 18 dp of margin, padding and the inline separator) and labels autosize 9 sp and end-ellipsize. A `separator` page takes no cell: it is a wrap_content character between tiles, as in Data Apps.",
         "grid_columns": 8,
-        "_doc_nav_mode": "#1623 Configs is ONE page with SIX groups (the #1610 Device/Setup split removed). Groups, in order: Launcher (Quick Actions, UI, Folders, One-Hand | Notify) | Network (Firewall, DNS, Webserver, Cloud Mesh, Apps Access, ADB Shell, WiFi, Bluetooth) | Apps (Store) | Connect (Account, Cloudy C3, Peer Control) | Tools (Watchdog -> extapp:c3-watchdog | X-Ray Device, Logcat Fleet, Agents hub) | Configs (Perms, Logcat, X-Ray App, About). A single shared Actions row follows (is_action): Update All, KDE Connect, Animations, Sync Clipboard, Saving Mode, Focus Mode. The owner listed 'Agents' in both Tools and Configs; both resolve to the one agents-watchdog hub page, so it is kept once, in Tools, grouped with the observability pages (X-Ray Device, Logcat Fleet). UI (panels-ui) is promoted out of Quick Actions to its own Launcher tile. Grid headings come from each page's group (TileGridFragment); groups[] drives the home second-row groups.",
+        "_doc_nav_mode": "#1623 Configs is ONE page with SIX groups (the #1610 Device/Setup split removed). Groups, in order: Launcher (Quick Actions, UI, Folders, One-Hand | Notify) | Network (Firewall, DNS, Webserver, Cloud Mesh, Apps Access, ADB Shell, WiFi, Bluetooth) | Apps (Store) | Connect (Account, Cloudy C3, Peer Control) | Tools (Watchdog -> extapp:c3-watchdog | X-Ray Device, Logcat Fleet, Agents hub) | Configs (Perms, Logcat, X-Ray App, About). A single shared Actions row follows (is_action): Update All, KDE Connect, Animations, Sync Clipboard, Saving Mode, Focus Mode. The owner listed 'Agents' in both Tools and Configs; both resolve to the one agents-watchdog hub page, so it is kept once, in Tools, grouped with the observability pages (X-Ray Device, Logcat Fleet). UI (panels-ui) is promoted out of Quick Actions to its own Launcher tile. Grid headings come from each page's group (TileGridFragment); groups[] drives the home second-row groups. #1755 reorg (rule 16, nothing removed; parity pinned by test-configs-1755-parity.sh): Launcher is led by a Launcher hub item (launcher-hub, hub_sections [Launcher]) and a |; Apps = Store | Account (id profile); Tools is renamed Profiling (Watchdog | X-Ray Device, Logcat Fleet); Agents (agents-watchdog) moved into Configs between Perms and Logcat app; Configs = Profile (profile-app, extapp:cloud-account) | Perms, Agents, Logcat app, X-Ray App, About.",
         "nav_mode": "horizontal_two_rows",
         "groups": [
           {
@@ -5176,6 +5164,8 @@
             "label": "Launcher",
             "icon": "ic_settings",
             "pages": [
+              "launcher-hub",
+              "launcher-sep-0",
               "controls",
               "panels-ui",
               "app-folders",
@@ -5233,6 +5223,8 @@
             "icon": "ic_settings",
             "pages": [
               "store",
+              "apps-sep-1",
+              "profile",
               "store-cloud",
               "store-phone"
             ]
@@ -5248,14 +5240,13 @@
           },
           {
             "id": "tools",
-            "label": "Tools",
+            "label": "Profiling",
             "icon": "ic_settings",
             "pages": [
               "c3-watchdog",
               "tools-sep-1",
               "xray",
-              "logcat-fleet",
-              "agents-watchdog"
+              "logcat-fleet"
             ]
           },
           {
@@ -5263,9 +5254,10 @@
             "label": "Configs",
             "icon": "ic_settings",
             "pages": [
-              "profile",
+              "profile-app",
               "configs-sep-a",
               "perms",
+              "agents-watchdog",
               "logcat",
               "xray-app",
               "app-about",
@@ -5338,6 +5330,23 @@
           "network-sep-1": "the Setup ▸ Network separator divided C3 and Peer Control from the network engines; both moved to the Configs ▸ Fleet group (then named Apps), so it had nothing left to divide"
         },
         "pages": [
+          {
+            "_doc": "#1755 Configs ▸ Launcher: the hub of the Launcher group, first in the group. It opens a page listing every icon of the group as its own titled grid (Quick Actions, UI, Folders, One-Hand, Notify), derived from this array like the Agents hub (hub_sections), so a Launcher page added here shows up there with no second list. The id is not `launcher`, which is a retired page id (retired_pages).",
+            "id": "launcher-hub",
+            "label": "Launcher",
+            "icon": "ic_settings",
+            "hub_sections": ["Launcher"],
+            "group": "Launcher",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1755 The | between the Launcher hub item and Quick Actions: a CHARACTER, not a tile.",
+            "id": "launcher-sep-0",
+            "label": "|",
+            "separator": true,
+            "group": "Launcher",
+            "subgroup": ""
+          },
           {
             "_doc": "Tab 2 of Launcher — the CONTROLS (#574): ONE producer, LauncherConfigFragment, drawing the device/fleet switchboard (the Samsung-style icon grid declared in ui.control_panel and implemented in configs/DeviceControls.kt, formerly Configs ▸ Panel ▸ Control) followed by the launcher's own screensaver, switches, sliders and set-as-default-launcher. The theme picker that used to open this tab moved to Presets ▸ Themes — the SAME LauncherThemes.apply, not a copy. Nothing persisted moves with it: LauncherSettingsPrefs keys off fixed store names, never off the page id. hidden = reached through the strip, not as its own Configs tile.",
             "_doc_ui_promoted": "#1621: the Quick Actions strip now reads Presets | UI | Panels — UI was promoted out of Panels to sit as a sibling of Presets and Panels. It is the SAME page (panels-ui, LauncherConfigFragment scope ui); only its parent moved from `panels` to `controls`, so page:config/panels-ui still resolves and nothing persisted moved. Panels keeps its union All view (which still unions UI + Battery Hungers + Tools) plus Battery Hungers and Tools — the UI content is therefore still reachable under Panels ▸ All, it is no longer a second nested tab there.",
@@ -5550,6 +5559,25 @@
             "subgroup": ""
           },
           {
+            "_doc": "#1755 The | after Store in the Apps group on the Configs main page: a CHARACTER, not a tile.",
+            "id": "apps-sep-1",
+            "label": "|",
+            "separator": true,
+            "group": "Apps",
+            "subgroup": ""
+          },
+          {
+            "_doc": "Profile now owns config import. The old `import` page entry (action:import_configs) was REMOVED from this list and its two entries live inside ProfileFragment instead: 'Import · file · paste' (re-fires action:import_configs through MainActivity, so the launcher shortcut in res/xml/shortcuts.xml and the radial menu still reach ImportConfigsFragment unchanged) and 'OWebAuth Authelia · Auto Import Configs' (paste a bearer, fetch ui.config_source, apply via ConfigAutoImport).",
+            "_doc_label": "#626 RENAMED Profile → Account. This is the ONE declaration of the words: the Configs tile, the Home-Apps Configs row entry and the page title all read `label`, so the rename is this string and nothing else. The `id` deliberately stays `profile` — it is the page's IDENTITY, not a user-visible label (#380/#381/#499 is the rule that an identity string must not sit in a label, not that the two must be spelled the same). Renaming it would break three things that name it and have no reason to change: SectionPages.kt's route, the launcher-shortcut deep link, and ac_cloud-drive/build.json::…personal_auth.target = `page:config/profile`, which is another SHIPPED app's cross-app contract.",
+            "id": "profile",
+            "label": "Account",
+            "icon": "ic_person",
+            "action": "extapp:cloud-account",
+            "_doc_867": "#867 Account is its own app (ac_cloud-account, com.diegonmarcos.cloudaccount). This entry opens it: its action extapp:cloud-account is the tile's target. Not is_action, so the tile keeps its place under Setup > Apps instead of moving to the Actions row, and when it is not installed ui.external_apps[id=cloud-account].install_apk_url is offered. The page itself stays, hidden, for page: routes; AccountHandoff shows Open Cloud Account on it once the app is installed and the page itself (libs:account) until then.",
+            "group": "Apps",
+            "subgroup": ""
+          },
+          {
             "_doc": "C3 — the Cloud Control Center app (ac_cloud-c3), reached from Configs ▸ Fleet (it moved there from Setup ▸ Network; the id `c3` did not change, so page:config/c3 and every existing link still land on it) like Store is from Setup ▸ Apps: action extapp:cloud-c3 opens the app or offers the install through ui.external_apps[id=cloud-c3]. Same target as the C3 tile of the Cloud ▸ Apps Configs group; no second C3.",
             "id": "c3",
             "label": "Cloudy C3",
@@ -5572,14 +5600,14 @@
             "label": "Watchdog",
             "icon": "ic_watchtower",
             "action": "extapp:c3-watchdog",
-            "group": "Tools",
+            "group": "Profiling",
             "subgroup": ""
           },
           {
             "id": "tools-sep-1",
             "label": "|",
             "separator": true,
-            "group": "Tools",
+            "group": "Profiling",
             "subgroup": ""
           },
           {
@@ -5587,7 +5615,7 @@
             "id": "xray",
             "label": "X-Ray Device",
             "icon": "ic_monitor_heart",
-            "group": "Tools",
+            "group": "Profiling",
             "subgroup": ""
           },
           {
@@ -5595,28 +5623,15 @@
             "id": "logcat-fleet",
             "label": "Logcat Fleet",
             "icon": "ic_p_logs",
-            "group": "Tools",
+            "group": "Profiling",
             "subgroup": ""
           },
           {
-            "_doc": "#1545 #1548 #1552 Watchdog - the only Agents page (it was first in Setup > Network); canonical id agents-watchdog (unique across the app, N12; page:config/watchdog is a page_alias for the old route): an in-app hub page, not the C3-Watchdog APK (that stays extapp:c3-watchdog on the C3 strip). `hub_sections` lists the subgroups of this section it shows, each as its own titled section of the grid, in this order: Network, then Watchtower - Obsv. The tiles are DERIVED from this array (Sections.hubSections: every visible page of this section in that subgroup, in declaration order), each carrying the page's own target - its `action` when it has one (an app, a section or a Cloud Store hand-off), else page:config/<id>, an in-app page. Adding a page to a subgroup adds its tile; there is no second list. SubgroupHubFragment draws it with GroupTitle + TileStrip/TileCell, the Cloud > Apps heading and tile components. The former Watchtower hub page (agents-watchtower, a hub over Observability only) is gone: the Watchtower concept is the Watchtower - Obsv subgroup (X-Ray Device, Logcat Fleet) and this hub shows it as its second section.",
-            "id": "agents-watchdog",
-            "label": "Agents",
-            "icon": "ic_p_watchdog",
-            "hub_sections": [
-              "Network"
-            ],
-            "group": "Tools",
-            "subgroup": ""
-          },
-          {
-            "_doc": "Profile now owns config import. The old `import` page entry (action:import_configs) was REMOVED from this list and its two entries live inside ProfileFragment instead: 'Import · file · paste' (re-fires action:import_configs through MainActivity, so the launcher shortcut in res/xml/shortcuts.xml and the radial menu still reach ImportConfigsFragment unchanged) and 'OWebAuth Authelia · Auto Import Configs' (paste a bearer, fetch ui.config_source, apply via ConfigAutoImport).",
-            "_doc_label": "#626 RENAMED Profile → Account. This is the ONE declaration of the words: the Configs tile, the Home-Apps Configs row entry and the page title all read `label`, so the rename is this string and nothing else. The `id` deliberately stays `profile` — it is the page's IDENTITY, not a user-visible label (#380/#381/#499 is the rule that an identity string must not sit in a label, not that the two must be spelled the same). Renaming it would break three things that name it and have no reason to change: SectionPages.kt's route, the launcher-shortcut deep link, and ac_cloud-drive/build.json::…personal_auth.target = `page:config/profile`, which is another SHIPPED app's cross-app contract.",
-            "id": "profile",
-            "label": "Account",
+            "_doc": "#1755 Configs ▸ Profile: a thin launch tile for the Cloud Account app (com.diegonmarcos.cloudaccount), the same extapp:cloud-account the Account tile (id profile, now in the Apps group) dispatches; opens the app or offers the install via ui.external_apps[id=cloud-account]. It takes Account's old first place in the Configs group.",
+            "id": "profile-app",
+            "label": "Profile",
             "icon": "ic_person",
             "action": "extapp:cloud-account",
-            "_doc_867": "#867 Account is its own app (ac_cloud-account, com.diegonmarcos.cloudaccount). This entry opens it: its action extapp:cloud-account is the tile's target. Not is_action, so the tile keeps its place under Setup > Apps instead of moving to the Actions row, and when it is not installed ui.external_apps[id=cloud-account].install_apk_url is offered. The page itself stays, hidden, for page: routes; AccountHandoff shows Open Cloud Account on it once the app is installed and the page itself (libs:account) until then.",
             "group": "Configs",
             "subgroup": ""
           },
@@ -5637,9 +5652,20 @@
             "subgroup": ""
           },
           {
+            "_doc": "#1545 #1548 #1552 Watchdog - the only Agents page (it was first in Setup > Network); canonical id agents-watchdog (unique across the app, N12; page:config/watchdog is a page_alias for the old route): an in-app hub page, not the C3-Watchdog APK (that stays extapp:c3-watchdog on the C3 strip). `hub_sections` lists the subgroups of this section it shows, each as its own titled section of the grid, in this order: Network, then Watchtower - Obsv. The tiles are DERIVED from this array (Sections.hubSections: every visible page of this section in that subgroup, in declaration order), each carrying the page's own target - its `action` when it has one (an app, a section or a Cloud Store hand-off), else page:config/<id>, an in-app page. Adding a page to a subgroup adds its tile; there is no second list. SubgroupHubFragment draws it with GroupTitle + TileStrip/TileCell, the Cloud > Apps heading and tile components. The former Watchtower hub page (agents-watchtower, a hub over Observability only) is gone: the Watchtower concept is the Watchtower - Obsv subgroup (X-Ray Device, Logcat Fleet) and this hub shows it as its second section.",
+            "id": "agents-watchdog",
+            "label": "Agents",
+            "icon": "ic_p_watchdog",
+            "hub_sections": [
+              "Network"
+            ],
+            "group": "Configs",
+            "subgroup": ""
+          },
+          {
             "_doc": "Configs ▸ Setup ▸ Launcher ▸ Logcat: the DEDICATED single-app logcat (LogcatFragment). It streams this app's lines (com.diegonmarcos.superapp, its own uid) online by default, with two separate control rows: FILTERS (level, tag, search, autoscroll) and ACTIONS (clear, pause/resume, copy, export, share). The all-app / one-app / multi-app reader that used to be this page moved to Setup ▸ Watchtower - Obsv ▸ Logcat Fleet (page logcat-fleet); id logcat unchanged.",
             "id": "logcat",
-            "label": "Logcat",
+            "label": "Logcat app",
             "icon": "ic_subject",
             "group": "Configs",
             "subgroup": ""
