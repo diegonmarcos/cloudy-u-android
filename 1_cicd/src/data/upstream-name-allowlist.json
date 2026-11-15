@@ -96,7 +96,9 @@
       "paths": [
         "a0_tasks/upstream-apps-s21.json",
         "a0_docs/eng-specs/store-upstream-sources.md",
-        "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-install-sources.json"
+        "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-install-sources.json",
+        "aa_cloud-superapp/build.json",
+        "aa_cloud-superapp/test/data/apps-inventory-1756.json"
       ],
       "patterns": [
         "app\\.affine\\.pro"
