@@ -362,7 +362,7 @@ class GrabberCoreTest {
     private companion object {
         // GrabberNet touches android classes on load; its two map constants are restated and pinned by the source test below
         const val GrabberNet_MAP_W = 480
-        const val GrabberNet_MAP_H = 270
+        const val GrabberNet_MAP_H = 240
     }
 
     @Test fun theRestatedMapSizeIsTheNetworkLayersOne() {

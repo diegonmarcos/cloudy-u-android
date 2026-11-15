@@ -188,6 +188,7 @@
              Grabber page and the Quick Settings tile only. -->
         <activity android:name=".grabber.GrabberScreenActivity"
             android:theme="@style/Theme.CloudGrabber"
+            android:taskAffinity=""
             android:exported="false"
             android:excludeFromRecents="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" />

@@ -178,12 +178,12 @@ fun KeyChip(
             .background(if (accent) GC.accent.copy(alpha = if (pressed) 0.34f else 0.20f) else if (pressed) GC.keyHi else GC.key)
             .border(1.dp, if (accent) GC.accent.copy(alpha = 0.55f) else GC.hairline, shape)
             .clickable(interactionSource = src, indication = null, enabled = enabled, onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 7.dp),
+            .padding(horizontal = 9.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         if (dot != null) Box(Modifier.size(7.dp).clip(CircleShape).background(dot))
-        Text(label, style = style, color = if (accent) GC.accent else GC.text, fontSize = 12.sp, maxLines = 1)
+        Text(label, style = style, color = if (accent) GC.accent else GC.text, fontSize = 11.5.sp, maxLines = 1)
     }
 }
 
@@ -287,10 +287,11 @@ private fun SelectionBlock(model: GrabberModel) {
 private fun ActionsBox(model: GrabberModel, onReply: (ProcessTextReply) -> Unit) {
     val busy = model.busy
     ConsoleBox("ACTIONS", if (busy != null) GC.warn else GC.accent, pulse = busy != null, reading = busy?.let { "RUNNING · ${it.uppercase()}" } ?: "${GrabberAction.entries.size} ACTIONS") {
-        Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             GrabberGroup.entries.forEach { g ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Caps(g.label.uppercase(), GC.group(g), Modifier.width(66.dp))
+                    Box(Modifier.weight(1f)) {
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                         GrabberAction.of(g).forEach { a ->
                             val style = when (a) {
@@ -303,6 +304,9 @@ private fun ActionsBox(model: GrabberModel, onReply: (ProcessTextReply) -> Unit)
                             KeyChip(a.label, dot = GC.dot(a) ?: if (g == GrabberGroup.DRIVE || g == GrabberGroup.WRITER) GC.group(g) else null,
                                 enabled = busy == null, style = style) { model.run(a, onReply) }
                         }
+                    }
+                    // a fade on the right edge says the row scrolls
+                    Box(Modifier.align(Alignment.CenterEnd).size(width = 22.dp, height = 30.dp).background(Brush.horizontalGradient(listOf(Color.Transparent, GC.box))))
                     }
                 }
             }
@@ -370,7 +374,7 @@ private fun SkeletonLines() {
 
 @Composable
 private fun SkeletonImage() {
-    Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(8.dp)).background(shimmer()))
+    Box(Modifier.fillMaxWidth().aspectRatio(2f).clip(RoundedCornerShape(8.dp)).background(shimmer()))
 }
 
 private fun open(ctx: Context, intent: Intent) {
@@ -420,9 +424,9 @@ private fun MediaCard(m: MediaResult) {
     val ctx = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         when (m) {
-            is MediaResult.MapView -> MapCanvas(m, Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(8.dp)))
+            is MediaResult.MapView -> MapCanvas(m, Modifier.fillMaxWidth().aspectRatio(2f).clip(RoundedCornerShape(8.dp)))
             is MediaResult.Photo -> Image(m.image, contentDescription = m.caption, contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(8.dp)).background(GC.skel))
+                modifier = Modifier.fillMaxWidth().aspectRatio(2f).clip(RoundedCornerShape(8.dp)).background(GC.skel))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.weight(1f)) {
@@ -491,7 +495,7 @@ fun GrabberSheet(model: GrabberModel, onReply: (ProcessTextReply) -> Unit, onClo
     BackHandler { dismiss() }
     LaunchedEffect(state.currentState, state.isIdle) { if (state.isIdle && !state.currentState) onClose() }
     val scrim by animateFloatAsState(if (state.targetState) 0.62f else 0f, tween(280), label = "scrim")
-    val maxH = (LocalConfiguration.current.screenHeightDp * 0.8f).dp
+    val maxH = (LocalConfiguration.current.screenHeightDp * 0.92f).dp
     Box(Modifier.fillMaxSize()) {
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = scrim)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { dismiss() })
         AnimatedVisibility(

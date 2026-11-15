@@ -36,6 +36,16 @@ adb shell appops set "$PKG" PROJECT_MEDIA allow >/dev/null 2>&1 || true
 adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW allow >/dev/null 2>&1 || true
 adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true
 
+# the keyboard must be the enabled, current input method or Settings opens its welcome wizard instead of the pages
+IME="$PKG/helium314.keyboard.latin.LatinIME"
+for _ in $(seq 1 15); do
+    adb shell ime enable "$IME" >/dev/null 2>&1; adb shell ime set "$IME" >/dev/null 2>&1
+    [ "$(adb shell settings get secure default_input_method | tr -d '\r')" = "$IME" ] && break
+    sleep 4
+done
+echo "input method: $(adb shell settings get secure default_input_method | tr -d '\r')"
+adb shell settings put secure show_ime_with_hard_keyboard 1
+
 dumpui() {
     for _ in 1 2 3 4 5; do
         adb shell uiautomator dump /sdcard/gr.xml >/dev/null 2>&1 && adb pull /sdcard/gr.xml "$1" >/dev/null 2>&1 && grep -q "<node" "$1" && return 0
@@ -55,10 +65,12 @@ PY
 }
 tap_text() { dumpui "$OUT/t.xml" || return 1; read -r X Y < <(centre "$OUT/t.xml" "$1"); [ -n "${X:-}" ] || return 1; adb shell input tap "$X" "$Y"; return 0; }
 
-menu() {   # $1 text, $2 readonly (true|false): what the selection menu sends
-    adb shell am start -n "$PKG/.grabber.GrabberActivity" -a android.intent.action.PROCESS_TEXT -t text/plain \
-        --es android.intent.extra.PROCESS_TEXT "$1" --ez android.intent.extra.PROCESS_TEXT_READONLY "$2" >/dev/null
+menu() {   # $1 text, $2 readonly (true|false): what the selection menu sends (one string for the device shell, so spaces survive)
+    adb shell "am start -n $PKG/.grabber.GrabberActivity -a android.intent.action.PROCESS_TEXT -t text/plain --es android.intent.extra.PROCESS_TEXT '$1' --ez android.intent.extra.PROCESS_TEXT_READONLY $2" >/dev/null
 }
+# wait (up to $2 s) until the screen dump holds text $1
+waitfor() { local i; for i in $(seq 1 $(( ${2:-60} / 4 ))); do dumpui "$OUT/w.xml" && grep -q "$1" "$OUT/w.xml" && return 0; sleep 2; done; return 1; }
+scroll_sheet() { adb shell input swipe 540 1900 540 900 500; sleep 1.5; }
 settings_behind() { adb shell am start -a android.settings.SETTINGS >/dev/null; sleep 4; }
 
 # ── the tab ───────────────────────────────────────────────────────────────
@@ -68,24 +80,29 @@ grep -q 'Screen Selection' "$OUT/tab.xml" && ok "Screen Selection is the second 
 grep -q 'text="Grabber"' "$OUT/tab.xml" && ok "Grabber is on the bottom bar" || bad "no Grabber on the bottom bar"
 shot 01-grabber-tab
 if tap_text "Type or paste the text to grab"; then
-    sleep 1; adb shell input text "serendipity"; sleep 1; adb shell input keyevent 66; sleep 12
+    sleep 1; adb shell input text "serendipity"; sleep 1; adb shell input keyevent 4; sleep 1
+    tap_text "Grab" || bad "no Grab key on the Text Selection page"
+    waitfor "MS" 40 && ok "boxes B and C answered" || bad "the boxes never answered"
     shot 02-grabber-text-typed
 else bad "no text field on the Text Selection page"; fi
 adb shell input keyevent 4; adb shell input keyevent 4
 
 # ── the sheet over another app ────────────────────────────────────────────
 settings_behind
-menu "serendipity" true; sleep 14
+menu "serendipity" true; waitfor "Copy link" 60
 dumpui "$OUT/sheet-word.xml" && grep -q 'text="Copy"' "$OUT/sheet-word.xml" && ok "the sheet shows the actions toolbar" || bad "no actions toolbar on the sheet"
 for w in Clipboard Text Search AI Drive Writer; do grep -qi "text=\"$w\"" "$OUT/sheet-word.xml" && ok "group $w" || bad "group $w missing"; done
 shot 10-sheet-word
+scroll_sheet; shot 10b-sheet-word-boxes
 adb shell input keyevent 4; sleep 2
-menu "Why is the sky blue during the day" true; sleep 14; shot 11-sheet-phrase
+menu "Why is the sky blue during the day" true; waitfor "Copy link" 60; shot 11-sheet-phrase
+scroll_sheet; shot 11b-sheet-phrase-boxes
 adb shell input keyevent 4; sleep 2
-menu "1600 Pennsylvania Avenue NW, Washington, DC 20500" true; sleep 16; shot 12-sheet-address-map
+menu "1600 Pennsylvania Avenue NW, Washington, DC 20500" true; waitfor "Open in maps" 75; shot 12-sheet-address-map
+scroll_sheet; shot 12b-sheet-address-map-box
 dumpui "$OUT/sheet-address.xml" && grep -q 'MEDIA · MAP' "$OUT/sheet-address.xml" && ok "an address gets the map box" || bad "no map box for the address"
 adb shell input keyevent 4; sleep 2
-menu "teh quick brwn fox" false; sleep 14; shot 13-sheet-editable-word
+menu "teh quick brwn fox" false; waitfor "Copy link" 60; shot 13-sheet-editable-word
 dumpui "$OUT/sheet-editable.xml" && grep -q 'FIELD · REPLACES SELECTION' "$OUT/sheet-editable.xml" && ok "an editable field says the result replaces the selection" || bad "no editable marker"
 adb shell input keyevent 4; sleep 2
 
@@ -93,15 +110,18 @@ adb shell input keyevent 4; sleep 2
 adb shell am start -f 0x10008000 -n "$PKG/helium314.keyboard.settings.SettingsActivity" --es open_at grabber_screen >/dev/null; sleep 8
 shot 20-screen-selection-page
 settings_behind
-adb shell am start -n "$PKG/.grabber.GrabberScreenActivity" --el grabber.delay_ms 1200 >/dev/null; sleep 5
+adb shell am start -n "$PKG/.grabber.GrabberScreenActivity" --el grabber.delay_ms 1500 >/dev/null; sleep 5
 # a phone shows the system consent; the emulator walk answers it when the app-op did not
 for label in "Start now" "Share screen" "Next" "Start"; do tap_text "$label" && sleep 2; done
 sleep 6
 dumpui "$OUT/picker.xml" && grep -q 'Drag around the text' "$OUT/picker.xml" && ok "the picker draws over the captured screen" || bad "no picker: capture did not return a frame"
 shot 21-screen-picker
-adb shell input swipe 90 520 990 700 600; sleep 9
-dumpui "$OUT/result.xml" && grep -q 'Copy' "$OUT/result.xml" && ok "the text read from the screen feeds the panel" || bad "no panel after the region"
-shot 22-screen-result
+adb shell input swipe 90 650 990 900 1800; sleep 4
+shot 22-screen-reading
+waitfor "Copy" 150 && ok "the text read from the screen feeds the panel" || bad "no panel after the region (the text reader gave nothing in 150 s)"
+sleep 6
+shot 23-screen-result
+scroll_sheet; shot 23b-screen-result-boxes
 
 adb logcat -d > "$OUT/logcat.txt" 2>/dev/null
 adb logcat -d | grep -q "FATAL EXCEPTION" && { bad "a crash is in the log"; adb logcat -d | grep -A14 "FATAL EXCEPTION" | head -40; } || ok "no crash in the log"

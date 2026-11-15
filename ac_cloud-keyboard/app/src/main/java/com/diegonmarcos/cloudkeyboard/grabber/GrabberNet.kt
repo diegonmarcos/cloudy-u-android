@@ -52,7 +52,7 @@ class LoadedTile(val tile: TileMath.Tile, val image: ImageBitmap?)
 object GrabberNet {
     private const val UA = "Mozilla/5.0 (Linux; Android 14) CloudKeyboard-Grabber/1.0 (+https://github.com/diegonmarcos/cloudy-u-android)"
     const val MAP_W = 480
-    const val MAP_H = 270
+    const val MAP_H = 240
 
     fun online(ctx: Context): Boolean {
         val cm = ctx.getSystemService(ConnectivityManager::class.java) ?: return true
