@@ -117,9 +117,10 @@ class StorePhoneAppsTest : KitPageHarness() {
         val phone = barOf(StorePhoneFragment())
         assertEquals("the Cloud bar lost controls", StoreBar.Item.values().toSet(), cloud.controls.keys)
         // #784 Download all fills the fleet cache, which only the Cloud tab owns:
-        // a null verb draws no button at all, so it is the one control Phone lacks.
+        // a null verb draws no button at all, so it is the one control Phone lacks. #1744 Adopt all (the fleet's installer of
+        // record) is the same: it needs the Cloud tab's fleet, so it is Cloud-only.
         assertEquals("Phone Apps does not draw the same controls",
-            cloud.controls.keys - StoreBar.Item.DOWNLOAD, phone.controls.keys)
+            cloud.controls.keys - StoreBar.Item.DOWNLOAD - StoreBar.Item.ADOPT_ALL, phone.controls.keys)
         for ((item, seen) in phone.controls)
             // the chip says when it was checked ("(checked 14:18:45)"): two tabs read a second apart must still be the same label
             assertEquals("$item label differs between the tabs", cloud.controls.getValue(item).text.withoutCheckedAt(), seen.text.withoutCheckedAt())
