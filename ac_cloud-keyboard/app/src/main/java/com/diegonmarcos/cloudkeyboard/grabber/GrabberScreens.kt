@@ -176,6 +176,12 @@ private fun ScreenSelectionPage(model: GrabberModel) {
     }
 }
 
+/** "JUST NOW" under a minute, else the system's relative span ("5 minutes ago"). */
+private fun ago(at: Long): String {
+    val now = System.currentTimeMillis()
+    return if (now - at < DateUtils.MINUTE_IN_MILLIS) "JUST NOW" else DateUtils.getRelativeTimeSpanString(at, now, DateUtils.MINUTE_IN_MILLIS).toString().uppercase()
+}
+
 private fun startCapture(ctx: Context, path: String?) {
     val i = Intent(ctx, GrabberScreenActivity::class.java).putExtra(GrabberScreenActivity.EXTRA_DELAY, 500L)
     if (path != null) i.putExtra(GrabberScreenActivity.EXTRA_PATH, path)
@@ -204,7 +210,7 @@ private fun LastShot(shot: ShotInfo?) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Image(thumb, null, Modifier.height(96.dp).clip(RoundedCornerShape(6.dp)).border(1.dp, GC.hairline, RoundedCornerShape(6.dp)), contentScale = ContentScale.Fit)
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(DateUtils.getRelativeTimeSpanString(shot.at, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString(), color = GC.text, fontSize = 12.sp)
+                    Text(ago(shot.at).lowercase().replaceFirstChar { it.uppercase() }, color = GC.text, fontSize = 12.sp)
                     Caps("${shot.width} × ${shot.height} PX", GC.text3)
                     Text("Kept in this app's cache only.", color = GC.text3, fontSize = 11.sp)
                 }
@@ -225,7 +231,7 @@ private fun RecentsBox(list: List<Recent>, title: String = "RECENT GRABS", onPic
                         Text(r.kind.ifEmpty { "TEXT" }, color = GC.kind(runCatching { SelectionKind.valueOf(r.kind) }.getOrDefault(SelectionKind.PHRASE)), fontFamily = Mono, fontSize = 8.sp, fontWeight = FontWeight.Bold)
                     }
                     Text(r.text, color = GC.text, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    Caps(DateUtils.getRelativeTimeSpanString(r.at, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString().uppercase(), GC.text3)
+                    Caps(ago(r.at), GC.text3)
                     Text("×", color = GC.text3, fontSize = 16.sp, modifier = Modifier.clickable { GrabberStore.remove(ctx, r.text) }.padding(horizontal = 6.dp))
                 }
             }
