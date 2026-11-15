@@ -35,4 +35,13 @@ object PhoneTaxonomyLayout {
         val out = bySection.filterValues { it.isNotEmpty() }.map { (s, fs) -> Group(s.first, s.second, fs.toList()) }
         return if (other.isEmpty()) out else out + Group(null, "", other.toList())
     }
+
+    /**
+     * The folder label as DRAWN: the section prefix character ("=Browser" -> "Browser") is the section key
+     * in the data and stays there; the screen shows the name only. A label no prefix claims is unchanged.
+     */
+    fun displayLabel(label: String, prefixes: List<String>): String {
+        val p = prefixes.firstOrNull { it.isNotEmpty() && label.startsWith(it) } ?: return label
+        return label.removePrefix(p).trimStart()
+    }
 }

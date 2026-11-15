@@ -149,12 +149,15 @@ internal fun LazyListScope.folderGridItems(
 ) {
     val cell = folderCellDp(ctx, cellDp, columns)
     val labelSp = GridColumns.labelSp(GridColumns.phone(ctx))
+    val prefixes = PhoneSections.loadFromBuildConfig().map { it.prefix }
     folders.chunked(columns).forEachIndexed { i, row ->
         item(key = "$keyPrefix:$i") {
             Row(Modifier.fillMaxWidth()) {
                 for (f in row) {
                     val apps = grouped[f.id].orEmpty()
-                    FolderCard(f.label, apps, cell, labelSp, Modifier.weight(1f), folderTag(f.id)) { onOpen(OpenFolder(f.label, apps)) }
+                    // the section prefix is the data key, never drawn (displayLabel)
+                    val shown = PhoneTaxonomyLayout.displayLabel(f.label, prefixes)
+                    FolderCard(shown, apps, cell, labelSp, Modifier.weight(1f), folderTag(f.id)) { onOpen(OpenFolder(shown, apps)) }
                 }
                 for (k in row.size until columns) Spacer(Modifier.weight(1f))
             }
