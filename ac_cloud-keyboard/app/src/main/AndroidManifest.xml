@@ -41,10 +41,25 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- #1754 Grabber > Screen Selection: the one frame of the screen is taken by a foreground service of type mediaProjection
+         (Android 14 refuses the projection without it). A normal permission, granted at install. The capture itself needs no
+         permission to declare: the system's screen-capture consent is asked on every capture and cannot be pre-granted. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+
     <!-- Android 11+ package visibility: declare the companion libs package so
          PackageManager resolves it and bindService() succeeds. -->
     <queries>
         <package android:name="com.diegonmarcos.cloudkeyboardlibs" />
+        <!-- #1754 Grabber's Ask and Drive actions hand the text to these apps by intent (GrabberRouter.PACKAGES) -->
+        <package android:name="com.google.android.apps.bard" />
+        <package android:name="com.anthropic.claude" />
+        <package android:name="com.diegonmarcos.cloudsuperintel" />
+        <package android:name="com.diegonmarcos.cloudnotes" />
+        <package android:name="com.diegonmarcos.cloudagenda" />
+        <intent><action android:name="android.intent.action.SEND" /><data android:mimeType="text/plain" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="geo" /></intent>
+        <intent><action android:name="android.intent.action.INSERT" /><data android:mimeType="vnd.android.cursor.dir/event" /></intent>
     </queries>
 
     <!-- WorkManager on-demand init: HeliBoard's manifest merge drops the default
@@ -151,6 +166,43 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+
+        <!-- #1754 Grabber: the text-selection menu entry. Every app's selection toolbar lists activities that filter ACTION_PROCESS_TEXT; this
+             one opens the Grabber bottom sheet over that app and, for an editable field, returns the result as EXTRA_PROCESS_TEXT. The
+             Writer entry above stays. -->
+        <activity android:name=".grabber.GrabberActivity"
+            android:theme="@style/Theme.CloudGrabber"
+            android:exported="true"
+            android:label="@string/grabber_menu_label"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- #1754 Grabber > Screen Selection: capture consent, region drag, on-device text read, then the same panel. Started by the
+             Grabber page and the Quick Settings tile only. -->
+        <activity android:name=".grabber.GrabberScreenActivity"
+            android:theme="@style/Theme.CloudGrabber"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" />
+        <service android:name=".grabber.GrabberCaptureService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+        <service android:name=".grabber.GrabberTileService"
+            android:exported="true"
+            android:icon="@android:drawable/ic_menu_crop"
+            android:label="@string/grabber_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
 
         <!-- #1707 Writer OCR: Take picture writes the photo into this app's cache through this provider (no CAMERA permission). -->
         <provider

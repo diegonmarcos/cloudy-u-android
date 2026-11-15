@@ -23,4 +23,7 @@
     <string name="translate">Translate</string>
     <!-- #1707 the Writer entry in the share sheet and the text-selection menu (was the standalone Cloud Writer's label). -->
     <string name="writer_share_label">Writer</string>
+    <!-- #1754 Grabber: the entry in the text-selection menu of every app, and the Quick Settings tile. -->
+    <string name="grabber_menu_label">Cloud Keyboard</string>
+    <string name="grabber_tile_label">Grabber</string>
 </resources>

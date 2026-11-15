@@ -1,0 +1,74 @@
+name: "Shots -> Cloud Keyboard Grabber (emulator screenshots: tab, text selection sheet, screen selection)"
+
+# #1754 dispatch only: screenshots of the Grabber (Grabber tab, the text-selection sheet for a word, a phrase and an address with its map,
+# Screen Selection) from the APK a Ship Cloud Keyboard run built. 1_cicd/../ac_cloud-keyboard/ci/grabber-shots.sh does the walk.
+# Never runs on a push: an emulator walk costs minutes of runner time (c3-infra ci rules). `run` pins the Ship run to take the APK from;
+# empty = the latest successful run of ship-cloud-keyboard.yml on main.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: 'Ship Cloud Keyboard run id to take the debug APK from (optional; default: latest green run on main)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout (the walk script only)
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ac_cloud-keyboard/ci
+
+      - name: Fetch the debug APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ inputs.run }}
+        run: |
+          set -eu
+          if [ -z "$RUN" ]; then
+            RUN=$(gh run list -R "$REPO" --workflow ship-cloud-keyboard.yml --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
+          fi
+          [ -n "$RUN" ] || { echo "::error::no green Ship Cloud Keyboard run on main to take the APK from"; exit 1; }
+          echo "APK from ship-cloud-keyboard.yml run $RUN"
+          mkdir -p apk
+          gh run download "$RUN" -R "$REPO" -p 'Cloud-Keyboard-debug-*' -D apk
+          pick=$(find apk -name '*.apk' | sort | head -1)
+          [ -n "$pick" ] || { echo "::error::run $RUN uploaded no debug APK (its publish gate skipped the build?)"; exit 1; }
+          cp "$pick" app.apk
+          ls -la app.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot the emulator and take the screenshots
+        timeout-minutes: 30
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: false
+          script: bash ac_cloud-keyboard/ci/grabber-shots.sh app.apk grabber-shots
+
+      - name: Upload the screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grabber-screenshots
+          path: grabber-shots
+          if-no-files-found: warn
+          retention-days: 30

@@ -50,7 +50,10 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // #1651 the fleet default top + bottom nav bars around the settings pages, and the keyboard's own tab of the standard
         // Configs strip ({app tabs} | Agents, Perms, Logcat, X-Ray App, About; the tail tabs register from the linked fleetconfigs libs).
         helium314.keyboard.settings.KeyboardSettingsExtras.chrome = { route, open, content -> KeyboardChrome.Draw(route, open, content) }
-        helium314.keyboard.settings.KeyboardSettingsExtras.hostPage = { id -> WriterHost.Page(id) }
+        // #1754 the Grabber tab's two pages (grabber.text, grabber.screen) are drawn by GrabberHost; every other host page is a Writer page
+        helium314.keyboard.settings.KeyboardSettingsExtras.hostPage = { id ->
+            if (id.startsWith("grabber.")) com.diegonmarcos.cloudkeyboard.grabber.GrabberHost.Page(id) else WriterHost.Page(id)
+        }
         // the Autocomplete user-data tables (Writer > Configs Writer > Autocomplete): the declared encrypted store `autocomplete_userdata` (fleet-config.json)
         helium314.keyboard.settings.KeyboardSettingsExtras.userDataPrefs = { ctx -> com.diegonmarcos.superapp.crash.SafeEncryptedPrefs.prefs(ctx, "autocomplete_userdata") }
         com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.register(

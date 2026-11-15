@@ -264,6 +264,9 @@ case "$CMD" in
     # writer-core logic suite and the shared libs:decisions suite, each followed by its PIT mutation gate (threshold 80).
     log "Running libs:writer-core and libs:decisions JVM unit tests + PIT…"
     _gradle :libs:writer-core:test :libs:decisions:test
+    # #1754 the Grabber's JVM tests (classifier, action routing, the PROCESS_TEXT result for editable fields, parsers, tiles)
+    log "Running the app's Grabber JVM unit tests…"
+    _gradle :app:testDebugUnitTest
     ;;
   clean)
     _gradle clean

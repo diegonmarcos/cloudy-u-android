@@ -155,10 +155,18 @@ dependencies {
     implementation project(':libs:media')
     implementation project(':libs:translate')
     implementation project(':libs:voice')
+    // #1754 Grabber > Screen Selection reads the region on the device (ML Kit, already in this app's module graph through libs:writer-ui)
+    implementation project(':libs:ml-l-image-ocr')
     // #1698 WriterSettingsActivity (the Tools shells in com.diegonmarcos.cloudwriter) extends AppCompatActivity
     implementation 'androidx.appcompat:appcompat:1.7.0'
     // #1707 WriterShareActivity.setContent (the Writer's share / PROCESS_TEXT / deep-link entry)
     implementation 'androidx.activity:activity-compose:1.9.3'
+    // #1754 the Grabber's panel animates (sheet, skeletons, state changes)
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.animation:animation'
+    // #1754 JVM tests of the Grabber (classifier, action routing, PROCESS_TEXT result); the real org.json, android.jar's copy is a stub
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
     // Debug-only screenshot host (ShotActivity), same BOM as the superapp.
     debugImplementation platform('androidx.compose:compose-bom:2025.11.01')
     debugImplementation 'androidx.activity:activity-compose:1.9.3'

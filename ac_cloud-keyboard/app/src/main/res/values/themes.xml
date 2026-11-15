@@ -5,4 +5,15 @@
     <style name="Theme.KeyboardWriterTools" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35" xmlns:tools="http://schemas.android.com/tools">true</item>
     </style>
+
+    <!-- #1754 the Grabber sheet and the Screen Selection picker: a translucent window over the app underneath, drawn edge to edge by
+         Compose (the scrim, the rounded sheet and the drag are the activity's own). -->
+    <style name="Theme.CloudGrabber" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
 </resources>

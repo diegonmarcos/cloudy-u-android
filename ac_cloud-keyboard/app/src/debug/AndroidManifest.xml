@@ -4,8 +4,12 @@
   (ac_cloud-keyboard/ci/keyboard-screenshots.sh). A plain text field that asks for the keyboard
   the moment it opens, so the job needs no other app on the emulator.
 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <application>
+        <!-- #1754 debug builds only: the emulator walk (ci/grabber-shots.sh) starts Screen Selection straight from adb -->
+        <activity android:name="com.diegonmarcos.cloudkeyboard.grabber.GrabberScreenActivity"
+            android:exported="true" tools:node="merge" />
         <activity
             android:name="com.diegonmarcos.cloudkeyboard.ShotActivity"
             android:exported="true"

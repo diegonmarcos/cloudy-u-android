@@ -17,8 +17,25 @@ class KeyboardNavChromeTest {
 
     private fun tab(t: KbTab) = t.allPages.map { it.label }
 
-    @Test fun theFourBottomTabsAreInOrder() {
-        assertEquals(listOf("Keyboard", "Writer", "Mediaboards", "Textboards"), KbTab.entries.map { it.label })
+    @Test fun theBottomTabsAreInOrder() {
+        // #1754 Grabber sits right after Writer; the four tabs that existed keep their relative order
+        assertEquals(listOf("Keyboard", "Writer", "Grabber", "Mediaboards", "Textboards"), KbTab.entries.map { it.label })
+        assertEquals(listOf("Keyboard", "Writer", "Mediaboards", "Textboards"), KbTab.entries.map { it.label }.filter { it != "Grabber" })
+    }
+
+    /** #1754 the Grabber tab: Text Selection and Screen Selection, each a host page the app draws (GrabberHost), and the Writer tab loses nothing. */
+    @Test fun grabberTabHasTextAndScreenSelectionAndWriterIsUntouched() {
+        assertEquals(listOf("Text Selection", "Screen Selection"), KbTab.GRABBER.pages.map { it.label })
+        assertEquals(listOf("grabber_text", "grabber_screen"), KbTab.GRABBER.pages.map { it.id })
+        assertEquals(listOf(SettingsDestination.hostRoute("grabber.text"), SettingsDestination.hostRoute("grabber.screen")), KbTab.GRABBER.pages.map { it.route })
+        assertEquals(KbTab.GRABBER.route, SettingsDestination.externalRoute("grabber"))
+        assertEquals(KbTab.GRABBER.pages[1].route, SettingsDestination.externalRoute("grabber_screen"))
+        assertEquals(KbTab.GRABBER, KbTab.forRoute(SettingsDestination.hostRoute("grabber.screen")))
+        assertEquals(KbTab.WRITER, KbTab.forRoute(SettingsDestination.hostRoute("enhancer")))
+        assertEquals(KbTab.WRITER, KbHome.WRITER.tab)
+        assertEquals(KbTab.GRABBER, KbHome.GRABBER.tab)
+        // the host app draws both ids (App.kt hostPage) next to the Writer pages
+        assertTrue(appFile("app/src/main/java/com/diegonmarcos/cloudkeyboard/App.kt").contains("GrabberHost.Page("))
     }
 
     @Test fun keyboardHasThemesDefaultDevSettingsLanguagesAndToolbarInside() {

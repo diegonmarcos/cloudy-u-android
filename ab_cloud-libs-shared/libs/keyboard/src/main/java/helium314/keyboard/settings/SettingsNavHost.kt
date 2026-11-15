@@ -332,7 +332,9 @@ object SettingsDestination {
         // #1707 the Writer: any fleet app that used to open the standalone Cloud Writer opens the keyboard's Writer tab (its landing page).
         // Resolved at call time, not in [external]: KbTab's pages are built from this object's routes, so naming it in the map's initialiser
         // would make the two initialise each other.
-        external[it] ?: if (it == "writer") KbTab.WRITER.route else if (it == "writer_configs") hostRoute("settings") else null
+        external[it] ?: if (it == "writer") KbTab.WRITER.route else if (it == "writer_configs") hostRoute("settings")
+        else if (it == "grabber") KbTab.GRABBER.route /* #1754 the Grabber tab's landing page, Text Selection */
+        else if (it == "grabber_screen") hostRoute("grabber.screen") /* #1754 Grabber > Screen Selection */ else null
     }
 
 

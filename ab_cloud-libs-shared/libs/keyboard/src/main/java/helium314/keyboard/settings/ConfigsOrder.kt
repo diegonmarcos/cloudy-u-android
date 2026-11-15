@@ -63,8 +63,8 @@ enum class AllSettingsPage(val section: HomeGroup) {
     }
 }
 
-/** #1665 the homes of the app's nav: the four bottom tabs plus Configs (the top bar's Configs icon, fleet default page). */
-enum class KbHome { KEYBOARD, WRITER, MEDIABOARDS, TEXTBOARDS, CONFIGS;
+/** #1665 the homes of the app's nav: the bottom tabs (#1754 five, Grabber after Writer) plus Configs (the top bar's Configs icon, fleet default page). */
+enum class KbHome { KEYBOARD, WRITER, GRABBER, MEDIABOARDS, TEXTBOARDS, CONFIGS;
     /** The bottom tab of this home; null for Configs. */
     val tab: KbTab? get() = KbTab.entries.firstOrNull { it.name == name }
 }
@@ -78,8 +78,8 @@ class NavPageDecl(val id: String, val label: String, val route: String, val chil
 }
 
 /**
- * #1653 the settings' nav, declared once: FOUR bottom tabs in order, Keyboard / Writer / Mediaboards / Textboards (supersedes the
- * #1651 five). Each tab's [pages] are its sub-pages, reached from the fleet top bar; every page opens an existing screen, so
+ * #1653 the settings' nav, declared once: the bottom tabs in order, Keyboard / Writer / Grabber / Mediaboards / Textboards (#1754 added
+ * Grabber right after Writer; supersedes the #1651 five). Each tab's [pages] are its sub-pages, reached from the fleet top bar; every page opens an existing screen, so
  * nothing is removed, only re-homed. [icon] is a libs:ui-icons catalog key. The Writer tab holds the keyboard's own writing tools
  * from libs:writer-ui (cloud-writer's pages, #1652), plus Voice Transcription and Dictionary.
  */
@@ -136,6 +136,11 @@ enum class KbTab(val id: String, val label: String, val icon: String, val pages:
                 NavPageDecl("personal_dictionary", "Personal dictionary", SettingsDestination.PersonalDictionaries))),
             // topic: AI routing
             NavPageDecl("kb_ai_routing", "AI routing", SettingsDestination.AiRouting))),
+    )),
+    // #1754 Grabber: the text-selection toolbar entry (ACTION_PROCESS_TEXT) and the screen selection, drawn by the host app's GrabberHost
+    GRABBER("grabber", "Grabber", "search", listOf(
+        NavPageDecl("grabber_text", "Text Selection", SettingsDestination.hostRoute("grabber.text")),
+        NavPageDecl("grabber_screen", "Screen Selection", SettingsDestination.hostRoute("grabber.screen")),
     )),
     MEDIABOARDS("mediaboards", "Mediaboards", "layers", listOf(
         // #1665 three pages of their own: emoji settings, the GIF source + live search, the sticker packs

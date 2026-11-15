@@ -40,7 +40,7 @@ import helium314.keyboard.latin.utils.AndroidKeyboardSettings
 /**
  * #1651 the keyboard's settings chrome: the fleet DEFAULT top bar (NavBarTopFirstRowScaffold) and the fleet default bottom bar
  * (NavBarBottom) from libs:ui-nav-bars, around the existing settings pages. Registered in App.kt as KeyboardSettingsExtras.chrome.
- * #1653 the four bottom tabs are [KbTab] (Keyboard, Writer, Mediaboards, Textboards), their sub-pages the top bar dropdown; the top bar's Configs icon opens the standard Configs page (default tail + the
+ * #1653 the bottom tabs are [KbTab] (Keyboard, Writer, Grabber (#1754), Mediaboards, Textboards), their sub-pages the top bar dropdown; the top bar's Configs icon opens the standard Configs page (default tail + the
  * keyboard's own tab, see KeyboardConfigsTab), which reaches the grouped All settings (#1650).
  */
 object KeyboardChrome {

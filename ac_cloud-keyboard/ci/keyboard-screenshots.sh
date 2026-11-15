@@ -304,7 +304,7 @@ kb navpages; NP="$(last navpages | sed 's/.*navpages -> //')"
 NPAGES=$(wc -w <<<"$NP"); echo "declared nav pages: $NPAGES"
 [ "$NPAGES" -ge 20 ] && ok "the APK declares $NPAGES nav pages" || bad "navpages: $(last navpages)"
 TABS="$(for e in $NP; do echo "${e%%/*}"; done | awk '!s[$0]++')"
-LABELS="Keyboard|Writer|Mediaboards|Textboards|Cloud Keyboard|Configs|Account|Search|More options|Back|Navigate up|Overview|Themes|Default|Dev|Settings|Appearance|Advanced|Preferences|Gesture typing|Gesture data|Languages|Secondary layouts|Toolbar|Enhancer|Drafter|Translator|Grammar|Tools|Voice Transcription|Configs Writer|Text enhancement|Draft Answer|Summarise|Translation|Grammar Check|Voice transcription settings|Dictionary|Personal dictionary|AI routing|Emojis|GIF|Stickers|Autocomplete|Text correction|Clipboard"
+LABELS="Keyboard|Writer|Grabber|Text Selection|Screen Selection|Mediaboards|Textboards|Cloud Keyboard|Configs|Account|Search|More options|Back|Navigate up|Overview|Themes|Default|Dev|Settings|Appearance|Advanced|Preferences|Gesture typing|Gesture data|Languages|Secondary layouts|Toolbar|Enhancer|Drafter|Translator|Grammar|Tools|Voice Transcription|Configs Writer|Text enhancement|Draft Answer|Summarise|Translation|Grammar Check|Voice transcription settings|Dictionary|Personal dictionary|AI routing|Emojis|GIF|Stickers|Autocomplete|Text correction|Clipboard"
 n=0
 for t in $TABS; do
     lbl="$(tr '[:lower:]' '[:upper:]' <<<"${t:0:1}")${t:1}"
@@ -319,6 +319,7 @@ for t in $TABS; do
     case "$t" in
         keyboard) WANT="Themes|Settings|Languages|Toolbar" ;;
         writer) WANT="Enhancer|Drafter|Translator|Grammar|Tools|Voice Transcription|Configs Writer" ;;
+        grabber) WANT="Text Selection|Screen Selection" ;;
         mediaboards) WANT="Emojis|GIF|Stickers" ;;
         textboards) WANT="Clipboard" ;;
         *) WANT="" ;;
