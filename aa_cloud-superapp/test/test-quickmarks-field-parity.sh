@@ -11,7 +11,7 @@
 #   T4  #1627 dividers: Primary = Drive, Browser | Calc, Navigation, Camera, Keyboard, Writer || Wallet and
 #       Data = Note(s), Tasks, Office | Gallery, Media Center || Me, Vault, with single '|' (separator:true) and
 #       DOUBLE '||' (separator:true + double:true) tiles, neither carrying a target.
-#   T5  #1628 Configs row = Quick Actions, UI | NG Firewall | Store | C3 | Watchdog | Account | About, every
+#   T5  #1755 Configs row = Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About, every
 #       tile on a real page/app id, and the five #1611 tiles (Quick Actions, Watchdog, Account, C3, Store) retained.
 #   T6  the renderer learned the double divider: Sections parses "double" and TileDivider takes a double flag.
 set -u
@@ -106,7 +106,7 @@ for grp in ("Primary", "Data"):
 if "Configs" in by:
     ct = by["Configs"]["tiles"]
     labels = [t.get("label") for t in ct]
-    WANT = ["Quick Actions", "UI", "|", "NG Firewall", "|", "Store", "|", "C3", "|", "Watchdog", "|", "Account", "|", "About"]
+    WANT = ["Quick Actions", "UI", "|", "NG Firewall", "|", "Store", "Account", "|", "C3", "|", "Profile", "About"]   # #1755 owner order
     if labels != WANT:
         emit("T5", "Configs row = %r" % labels)
     bytgt = {t.get("label"): t.get("target") for t in ct if not t.get("separator")}
@@ -114,7 +114,7 @@ if "Configs" in by:
         "Quick Actions": "page:config/controls", "UI": "page:config/panels-ui",
         "NG Firewall": "page:config/ng-firewall",
         "Store": "extapp:cloud-store", "Account": "extapp:cloud-account",
-        "C3": "extapp:cloud-c3", "Watchdog": "extapp:c3-watchdog", "About": "page:config/app-about",
+        "C3": "extapp:cloud-c3", "Profile": "extapp:cloud-account", "About": "page:config/app-about",
     }
     for lab, tgt in EXP.items():
         if bytgt.get(lab) != tgt:
@@ -126,7 +126,10 @@ if "Configs" in by:
     for pid in ("firewall", "wifi", "ng-firewall"):
         if pid not in cpid or cpid[pid].get("hidden"):
             emit("T5", "page %r must stay declared and visible (reachable via the NG Firewall hub)" % pid)
-    for retained in ("Quick Actions", "Watchdog", "Account", "C3", "Store"):
+    # #1755 Watchdog left this row; rule 16: it stays visible on the Configs page (Profiling group) on the same target.
+    if not (cpid.get("c3-watchdog", {}).get("action") == "extapp:c3-watchdog" and not cpid["c3-watchdog"].get("hidden")):
+        emit("T5", "#1755 Watchdog left the row and is not visible on the Configs page")
+    for retained in ("Quick Actions", "Account", "C3", "Store"):
         if retained not in labels:
             emit("T5", "#1611 Configs tile %r was dropped (field parity)" % retained)
 else:

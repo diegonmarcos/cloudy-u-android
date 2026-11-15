@@ -51,10 +51,10 @@ by     = {p['id']: p for p in pages}
 labels = [p['label'] for p in pages if p.get('group') == 'Launcher' and not p.get('hidden') and not p.get('separator')]  # #1623 the Launcher group tiles
 tabs   = [by[i]['label'] for i in by['controls'].get('tabs', [])]
 sub    = [by[i]['label'] for i in by['panels'].get('tabs', [])]
-print('OK' if (labels, tabs, sub) == (['Quick Actions', 'UI', 'Folders', 'One-Hand', 'Notify'], ['Presets', 'Panels'], ['All', 'Battery Hungers', 'Tools'])
+print('OK' if (labels, tabs, sub) == (['Launcher', 'Quick Actions', 'UI', 'Folders', 'One-Hand', 'Notify'], ['Presets', 'Panels'], ['All', 'Battery Hungers', 'Tools'])
       else 'labels = %r, Controls tabs = %r, Panels tabs = %r' % (labels, tabs, sub))
 PY
-)" "Launcher = Quick Actions, UI, Folders, One-Hand | Notify (#1623 UI promoted out of Quick Actions; Controls tabs Presets | Panels ▸ All | Battery Hungers | Tools)"
+)" "Launcher = Launcher hub | Quick Actions, UI, Folders, One-Hand | Notify (#1755 hub; #1623 UI promoted out of Quick Actions; Controls tabs Presets | Panels ▸ All | Battery Hungers | Tools)"
 
 echo "== T2: Presets declares Sandboxes · Themes · Modes, in order =="
 check "$(python3 - "$BJ" <<'PY'
