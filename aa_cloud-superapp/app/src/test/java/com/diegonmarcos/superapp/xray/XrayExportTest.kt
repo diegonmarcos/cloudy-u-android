@@ -90,7 +90,7 @@ class XrayExportTest {
         // XrayTree.PAGES is the X-Ray-internal walk order, still the one source of truth for what is walked.
         val pages = find(root)!!.getJSONArray("pages")
         val declared = (0 until pages.length()).map { pages.getJSONObject(it) }
-            .filter { it.optString("group") in setOf("Tools", "Configs") && it.optString("action").isEmpty() &&
+            .filter { it.optString("group") in setOf("Profiling", "Configs") && it.optString("action").isEmpty() &&
                 !it.optBoolean("separator", false) && !it.has("hub_sections") }
             .map { it.getString("id") }
         assertEquals(XrayTree.PAGES.toSet(), declared.toSet())

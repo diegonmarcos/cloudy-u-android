@@ -5334,7 +5334,7 @@
             "_doc": "#1755 Configs ▸ Launcher: the hub of the Launcher group, first in the group. It opens a page listing every icon of the group as its own titled grid (Quick Actions, UI, Folders, One-Hand, Notify), derived from this array like the Agents hub (hub_sections), so a Launcher page added here shows up there with no second list. The id is not `launcher`, which is a retired page id (retired_pages).",
             "id": "launcher-hub",
             "label": "Launcher",
-            "icon": "ic_settings",
+            "icon": "ic_apps",
             "hub_sections": ["Launcher"],
             "group": "Launcher",
             "subgroup": ""
@@ -5630,7 +5630,7 @@
             "_doc": "#1755 Configs ▸ Profile: a thin launch tile for the Cloud Account app (com.diegonmarcos.cloudaccount), the same extapp:cloud-account the Account tile (id profile, now in the Apps group) dispatches; opens the app or offers the install via ui.external_apps[id=cloud-account]. It takes Account's old first place in the Configs group.",
             "id": "profile-app",
             "label": "Profile",
-            "icon": "ic_person",
+            "icon": "ic_p_accounts",
             "action": "extapp:cloud-account",
             "group": "Configs",
             "subgroup": ""

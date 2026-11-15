@@ -432,7 +432,7 @@ for g, s, label, icon in tiles:
     if s and s != s0: out.append('S:' + s.upper()); s0 = s
     out.append('%s[%s]' % (label, icon))
 want = ['H:LAUNCHER',
-        'Launcher[ic_settings]', '|[None]', 'Quick Actions[ic_home]', 'UI[ic_ctl_brightness]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', '|[None]', 'Notify[ic_rss]',
+        'Launcher[ic_apps]', '|[None]', 'Quick Actions[ic_home]', 'UI[ic_ctl_brightness]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', '|[None]', 'Notify[ic_rss]',
         'H:NETWORK',
         'NG Firewall[ic_act_shield]', '|[None]', 'Wi-Fi[ic_wifi]', 'Bluetooth[ic_bluetooth]', 'DNS[ic_world]', 'VPN[ic_wg]', '|[None]',   # #1737 individual icons again; the NG Firewall hub opens a page listing them
         'Firewall[ic_lock]', 'OS Perms[ic_act_key]', '|[None]', 'Webserver[ic_web]', 'Proxy[ic_ctl_mobile_data]',   # the ADB Shell icon stays removed (#1719); Apps Access is hidden
@@ -443,7 +443,7 @@ want = ['H:LAUNCHER',
         'H:PROFILING',
         'Watchdog[ic_watchtower]', '|[None]', 'X-Ray Device[ic_monitor_heart]', 'Logcat Fleet[ic_p_logs]',
         'H:CONFIGS',
-        'Profile[ic_person]', '|[None]', 'Perms[ic_key]', 'Agents[ic_p_watchdog]', 'Logcat app[ic_subject]', 'X-Ray App[ic_p_c3_health]', 'About[ic_info]',
+        'Profile[ic_p_accounts]', '|[None]', 'Perms[ic_key]', 'Agents[ic_p_watchdog]', 'Logcat app[ic_subject]', 'X-Ray App[ic_p_c3_health]', 'About[ic_info]',
         'H:ACTIONS',
         'Update All[ic_system_update]', 'KDE Connect[ic_devices]', 'Animations[ic_animation]', 'Sync Clipboard[ic_copy]', 'Saving Mode[ic_settings]', 'Focus Mode[ic_nav_dnd]']
 if out == want: print('OK')
