@@ -96,7 +96,7 @@ class StoreAdoptTest {
         assertTrue("ADB detail is not drawn on the page", !bar.contains("ADB_DETAIL") && !bar.contains("StoreCaption(ctx.getString(R.string.store_bar_adb"))
         assertTrue("ADB detail stays reachable: description + long-press sheet to the ADB Status page",
             bar.contains("description = ch?.let { ControlStatus.label(it) }") && bar.contains("onLongClick = ch?.let") &&
-            bar.contains("showAdbDetail(ctx, ControlStatus.label(c))") && bar.contains("store_bar_adb_status_page") && bar.contains("StoreShell.arm(ctx)"))
+            bar.contains("showAdbDetail(ctx, ControlStatus.label(c))") && bar.contains("store_bar_adb_status_page") && bar.contains("StoreShell.arm(ctx.applicationContext)"))
         assertTrue("no full-width Adopt row any more", !src("StoreCloudFragment.kt").contains("StoreBar.Button(\"Adopt all"))
     }
 }

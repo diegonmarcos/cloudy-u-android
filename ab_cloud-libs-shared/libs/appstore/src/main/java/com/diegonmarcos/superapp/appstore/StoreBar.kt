@@ -320,7 +320,7 @@ object StoreBar {
         val act = generateSequence(ctx) { (it as? android.content.ContextWrapper)?.baseContext }.firstOrNull { it is android.app.Activity }
         if (act == null) { Toast.makeText(ctx, detail, Toast.LENGTH_LONG).show(); return }
         android.app.AlertDialog.Builder(act).setTitle(ctx.getString(R.string.store_bar_adb_detail_title)).setMessage(detail)
-            .setPositiveButton(ctx.getString(R.string.store_bar_adb_status_page)) { _, _ -> StoreShell.arm(ctx) }
+            .setPositiveButton(ctx.getString(R.string.store_bar_adb_status_page)) { _, _ -> StoreShell.arm(ctx.applicationContext) }
             .setNegativeButton(android.R.string.cancel, null).show()
     }
 
