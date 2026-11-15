@@ -453,6 +453,24 @@ object GrabberParsers {
         return null
     }
 
+    /** The first organic result of lite.duckduckgo.com/lite, the page DuckDuckGo serves when the html one is walled; sponsored rows are skipped. */
+    fun firstLiteResult(html: String): SearchHit? {
+        val anchor = Regex("""<a\b([^>]*)>(.*?)</a>""", RegexOption.DOT_MATCHES_ALL)
+        val snippet = Regex("""<td[^>]*class=["']result-snippet["'][^>]*>(.*?)</td>""", RegexOption.DOT_MATCHES_ALL)
+        for (m in anchor.findAll(html)) {
+            val attrs = m.groupValues[1]
+            if (!Regex("""class=["']result-link["']""").containsMatchIn(attrs)) continue
+            val href = Regex("""href=["']([^"']+)["']""").find(attrs)?.groupValues?.get(1) ?: continue
+            val url = target(href)
+            if (url.isBlank() || url.contains("duckduckgo.com/y.js")) continue
+            val title = clean(m.groupValues[2])
+            if (title.isEmpty()) continue
+            val sn = snippet.find(html, m.range.last)?.groupValues?.get(1).orEmpty()
+            return SearchHit(title, clean(sn), url, "DuckDuckGo lite")
+        }
+        return null
+    }
+
     /** api.duckduckgo.com instant answer: the abstract, else the first related topic. */
     fun instantAnswer(json: String): SearchHit? = runCatching {
         val o = org.json.JSONObject(json)

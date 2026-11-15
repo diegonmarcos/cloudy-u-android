@@ -292,6 +292,25 @@ class GrabberCoreTest {
         assertEquals("en.wikipedia.org", hit.host)
     }
 
+    private val lite = """
+        <table><tr><td valign="top">1.&nbsp;</td><td><a rel="nofollow" href="//duckduckgo.com/y.js?ad_provider=x" class='result-link'>Sponsored</a></td></tr>
+        <tr><td valign="top">2.&nbsp;</td><td><a rel="nofollow" href="https://en.wikipedia.org/wiki/Rayleigh_scattering" class='result-link'>Rayleigh scattering - <b>Wikipedia</b></a></td></tr>
+        <tr><td>&nbsp;</td><td class='result-snippet'>Rayleigh scattering is the scattering &amp; redirection of light.</td></tr></table>
+    """.trimIndent()
+
+    @Test fun firstLiteResultIsTheFallbackWhenTheHtmlPageIsWalled() {
+        val hit = GrabberParsers.firstLiteResult(lite)
+        assertNotNull(hit)
+        assertEquals("Rayleigh scattering - Wikipedia", hit!!.title)
+        assertEquals("https://en.wikipedia.org/wiki/Rayleigh_scattering", hit.url)
+        assertEquals("Rayleigh scattering is the scattering & redirection of light.", hit.snippet)
+        assertNull(GrabberParsers.firstLiteResult("<html>no results</html>"))
+        // the network layer tries html, then lite, then the instant answer
+        val net = File("src/main/java/com/diegonmarcos/cloudkeyboard/grabber/GrabberNet.kt").readText()
+        assertTrue(net.indexOf("html.duckduckgo.com/html") < net.indexOf("lite.duckduckgo.com/lite"))
+        assertTrue(net.indexOf("lite.duckduckgo.com/lite") < net.indexOf("api.duckduckgo.com"))
+    }
+
     @Test fun anHtmlPageWithoutResultsIsNull() {
         assertNull(GrabberParsers.firstHtmlResult("<html><body>If this error persists, please let us know</body></html>"))
         assertNull(GrabberParsers.firstHtmlResult(""))

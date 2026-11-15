@@ -107,15 +107,22 @@ object GrabberNet {
         return BitmapFactory.decodeByteArray(b, 0, b.size)
     }
 
-    /** Box B: the first DuckDuckGo result. html endpoint first, the instant answer when the html one is walled. */
+    /** Box B: the first DuckDuckGo result. The html page first, the lite page when that one is walled, the instant answer last. */
     suspend fun firstResult(query: String): SearchHit = withContext(Dispatchers.IO) {
         val q = GrabberRouter.enc(query)
         var walled: GrabberNetException? = null
-        val html = try { text("https://html.duckduckgo.com/html/?q=$q", "https://duckduckgo.com/") } catch (e: GrabberNetException) {
-            if (e.reason == FailReason.OFFLINE) throw e
-            walled = e; null
+        val pages = listOf<Pair<String, (String) -> SearchHit?>>(
+            "https://html.duckduckgo.com/html/?q=$q" to GrabberParsers::firstHtmlResult,
+            "https://lite.duckduckgo.com/lite/?q=$q" to GrabberParsers::firstLiteResult,
+        )
+        for ((url, parse) in pages) {
+            try {
+                parse(text(url, "https://duckduckgo.com/"))?.let { return@withContext it }
+            } catch (e: GrabberNetException) {
+                if (e.reason == FailReason.OFFLINE) throw e
+                walled = e
+            }
         }
-        GrabberParsers.firstHtmlResult(html.orEmpty())?.let { return@withContext it }
         val instant = try { text("https://api.duckduckgo.com/?q=$q&format=json&no_html=1&skip_disambig=1&t=cloudkeyboard") } catch (e: GrabberNetException) {
             if (e.reason == FailReason.OFFLINE) throw e
             throw walled ?: e
