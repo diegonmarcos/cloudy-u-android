@@ -93,7 +93,10 @@ class StoreAdoptTest {
         assertTrue("Auto update is not on the batch row", !rows[0].contains("AUTO_UPDATE"))
         has(rows[1], "AUTO_UPDATE", "WIFI_ONLY"); assertTrue(rows[1].contains("ChannelButton("))
         has(rows[2], "PLAY_PROTECT", "ADOPT_ALL")
-        assertTrue("ADB detail stays reachable", bar.contains("store_bar_adb_detail") && bar.contains("ControlStatus.label(it)"))
+        assertTrue("ADB detail is not drawn on the page", !bar.contains("ADB_DETAIL") && !bar.contains("StoreCaption(ctx.getString(R.string.store_bar_adb"))
+        assertTrue("ADB detail stays reachable: description + long-press sheet to the ADB Status page",
+            bar.contains("description = ch?.let { ControlStatus.label(it) }") && bar.contains("onLongClick = ch?.let") &&
+            bar.contains("showAdbDetail(ctx, ControlStatus.label(c))") && bar.contains("store_bar_adb_status_page") && bar.contains("StoreShell.arm(ctx)"))
         assertTrue("no full-width Adopt row any more", !src("StoreCloudFragment.kt").contains("StoreBar.Button(\"Adopt all"))
     }
 }

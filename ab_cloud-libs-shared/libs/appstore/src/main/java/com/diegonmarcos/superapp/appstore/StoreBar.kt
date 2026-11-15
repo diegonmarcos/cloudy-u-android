@@ -8,7 +8,9 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,8 +96,11 @@ internal fun rememberStoreControls(): StoreControls.Decl {
 }
 
 /** A plain tap target, without the ripple the dense store rows never use. */
-internal fun Modifier.tap(onClick: (() -> Unit)?): Modifier =
-    if (onClick == null) this else this.clickable(interactionSource = null, indication = null, onClick = onClick)
+@OptIn(ExperimentalFoundationApi::class)
+internal fun Modifier.tap(onClick: (() -> Unit)?, onLongClick: (() -> Unit)? = null): Modifier =
+    if (onClick == null) this
+    else if (onLongClick == null) this.clickable(interactionSource = null, indication = null, onClick = onClick)
+    else this.combinedClickable(interactionSource = null, indication = null, onClick = onClick, onLongClick = onLongClick)
 
 internal fun Modifier.tagged(tag: String?): Modifier = if (tag == null) this else this.testTag(tag)
 
@@ -260,8 +265,6 @@ object StoreBar {
                 ControlStatus.Tri.UNKNOWN -> R.string.store_bar_play_protect_unknown
                 ControlStatus.Tri.OFF -> R.string.store_bar_play_protect_off
                 ControlStatus.Tri.ON -> R.string.store_bar_play_protect_on }))
-            // Rule 16: the long status the ADB button used to carry (route, local-server round trip, shell broker, checked-at) stays here.
-            ch?.let { StoreCaption(ctx.getString(R.string.store_bar_adb_detail, ControlStatus.label(it)), tag = "$TAG:ADB_DETAIL") }
             StoreCaption(ctx.getString(when (ch?.state) {
                 ControlStatus.Channel.UP -> R.string.store_bar_channel_up_caption
                 ControlStatus.Channel.DOWN -> R.string.store_bar_channel_down_caption
@@ -307,7 +310,18 @@ object StoreBar {
         Button(chLabel,
             when (ControlStatus.ink(ch)) { ControlStatus.Ink.GREEN -> Ink.GREEN_FILL; ControlStatus.Ink.AMBER -> AMBER
                 ControlStatus.Ink.RED -> RED_FILL; ControlStatus.Ink.GREY -> Ink.GREY_FILL },
-            { StoreShell.arm(ctx) }, modifier, itemTag(Item.WIRELESS_DEBUG), description = ch?.let { ControlStatus.label(it) })
+            { StoreShell.arm(ctx) }, modifier, itemTag(Item.WIRELESS_DEBUG), description = ch?.let { ControlStatus.label(it) },
+            // Rule 16: the long status is not drawn on the page; a long press shows it, with the ADB Status page as the target.
+            onLongClick = ch?.let { c -> { showAdbDetail(ctx, ControlStatus.label(c)) } })
+    }
+
+    /** The ADB detail sheet: the full status text, and "ADB Status" opens the page the button's tap opens (Cloud C3 Webserver's ADB page). */
+    private fun showAdbDetail(ctx: Context, detail: String) {
+        val act = generateSequence(ctx) { (it as? android.content.ContextWrapper)?.baseContext }.firstOrNull { it is android.app.Activity }
+        if (act == null) { Toast.makeText(ctx, detail, Toast.LENGTH_LONG).show(); return }
+        android.app.AlertDialog.Builder(act).setTitle(ctx.getString(R.string.store_bar_adb_detail_title)).setMessage(detail)
+            .setPositiveButton(ctx.getString(R.string.store_bar_adb_status_page)) { _, _ -> StoreShell.arm(ctx) }
+            .setNegativeButton(android.R.string.cancel, null).show()
     }
 
     private const val RED_FILL = 0xFFC53030.toInt()
@@ -345,7 +359,7 @@ object StoreBar {
     fun Button(
         label: String, fill: Int?, onClick: (() -> Unit)?, modifier: Modifier = Modifier, tag: String? = null,
         style: StoreControls.Style = rememberStoreControls().action, alpha: Float? = null, live: Boolean = true,
-        description: String? = null,
+        description: String? = null, onLongClick: (() -> Unit)? = null,
     ) {
         val on = onClick != null && live
         val look = "${StoreDensity.T_META} p${StoreDensity.S8},${StoreDensity.S6} r${style.radiusDp}"
@@ -361,7 +375,7 @@ object StoreBar {
                     if (description != null) contentDescription = description
                     if (!on) disabled()
                 }
-                .tap(if (on) onClick else null)
+                .tap(if (on) onClick else null, if (on) onLongClick else null)
                 .padding(horizontal = sdp(StoreDensity.S8), vertical = sdp(StoreDensity.S6)),
             contentAlignment = Alignment.Center,
         ) {
