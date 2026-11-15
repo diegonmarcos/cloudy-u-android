@@ -41,6 +41,34 @@ internal object StoreAdopt {
         }
     }
 
+    /**
+     * Pure: the REAL cause line of a failed `pm set-installer`. The shell prints a header ("Exception occurred while executing
+     * 'set-installer':") and the cause on the next line (java.lang.SecurityException: ...), so the first line alone says nothing:
+     * take the first line naming an exception class with its message, else the lines after the header joined, else the first line.
+     */
+    fun causeOf(out: String): String {
+        val lines = out.lineSequence().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("at ") }.toList()
+        val cause = lines.firstOrNull { Regex("^(Caused by: )?[\\w.$]+(Exception|Error)\\b.*").matches(it) }?.removePrefix("Caused by: ")
+        val tail = lines.filterNot { it.startsWith("Exception occurred while executing") }.joinToString(" ").trim()
+        return (cause ?: tail.ifEmpty { lines.firstOrNull().orEmpty() }).take(200)
+    }
+
+    /** Pure: why Android refused, as a per-package reason (what it is and who can change it), from the cause text. */
+    fun classifyRefusal(cause: String): String {
+        val low = cause.lowercase()
+        return when {
+            "update owner" in low || "updateowner" in low || "update ownership" in low || "ownership" in low ->
+                "another installer holds update ownership of this package (Android 14+); only that installer or the user can hand it over: $cause"
+            "system app" in low || "is a system" in low || "privileged" in low || "cannot set" in low && "system" in low ->
+                "system or privileged package: the installer of record of a system app cannot be changed from the shell: $cause"
+            "securityexception" in low || "not allowed" in low || "permission denial" in low || "not the installer" in low || "caller" in low ->
+                "Android refuses the shell (uid 2000) to change this package's installer (it belongs to another installer or signature): $cause"
+            "not installed" in low || "unknown package" in low || "no such package" in low || "illegalargument" in low ->
+                "Android rejected the request for this package or for Cloud Store as installer: $cause"
+            else -> cause
+        }
+    }
+
     /** Pure: the outcome of one `pm set-installer` call from its output. Null state = success (still verified by the read-back). */
     fun parseSetResult(out: String?): Pair<State?, String> {
         if (out == null) return State.ADB_DOWN to "no armed ADB shell (Cloud C3 Webserver is not installed or its shell is down)"
@@ -50,14 +78,20 @@ internal object StoreAdopt {
             low.startsWith("denied by the shell broker") -> State.FAILED to t
             "unknown command" in low || "no shell command implementation" in low || "unknown option" in low ->
                 State.UNSUPPORTED to "this Android build has no pm set-installer (${t.lineSequence().firstOrNull().orEmpty().take(120)})"
-            "securityexception" in low || "not allowed" in low || "permission denial" in low ->
-                State.FAILED to "refused by Android: ${t.lineSequence().firstOrNull().orEmpty().take(160)}"
-            "unknown package" in low || "not installed" in low || "no such package" in low -> State.FAILED to "package not installed"
-            "exception" in low || low.startsWith("error") || low.startsWith("fail") ->
-                State.FAILED to t.lineSequence().firstOrNull().orEmpty().take(160)
+            "unknown package" in low || "no such package" in low || ("not installed" in low && "exception" !in low) ->
+                State.FAILED to "package not installed"
+            "exception" in low || "not allowed" in low || "permission denial" in low || low.startsWith("error") || low.startsWith("fail") ->
+                State.FAILED to classifyRefusal(causeOf(t))
             else -> null to (t.ifBlank { "ok" })
         }
     }
+
+    /** Pure: one line per refused package for the Cloud page (never truncated to one toast). */
+    fun failureLines(rs: Collection<Result>): List<String> =
+        rs.filter { it.state == State.FAILED || it.state == State.UNSUPPORTED }.sortedBy { it.pkg }.map { "${it.pkg}: ${it.reason}" }
+
+    /** The failure lines of the last Adopt all run, kept for the Cloud page. */
+    @Volatile var lastReport: List<String> = emptyList()
 
     /** Pure: the final result from a set output and the installer read back afterwards. */
     fun resolve(pkg: String, before: String?, setOut: String?, after: String?): Result {
@@ -100,7 +134,8 @@ internal object StoreAdopt {
      * package gets an ADB_DOWN result with the reason. The installer is read back after the calls.
      */
     fun adopt(ctx: Context, pkgs: Collection<String>): List<Result> = runCatching {
-        val installed = pkgs.distinct().filter { runCatching { ctx.packageManager.getPackageInfo(it, 0); true }.getOrDefault(false) }
+        // Cloud Store itself is always part of the pass, so its own self-update is silent too.
+        val installed = (pkgs + STORE).distinct().filter { runCatching { ctx.packageManager.getPackageInfo(it, 0); true }.getOrDefault(false) }
         val status = runCatching { StoreShell.status(ctx) }.getOrNull()
         if (status == null || !status.armed) {
             val why = status?.line() ?: "ADB shell state unknown"

@@ -530,10 +530,12 @@ class StoreCloudFragment : KitComposeFragment() {
             installAll = { installMissing(ctx) },
             updateAll = { updateAll(ctx, "the whole fleet", fleet) },
             downloadAll = { downloadAll(ctx, fleet) },
+            adoptAll = { adoptAll(ctx) },
         ), resume = resume)
         // #1744 Adopt all: make Cloud Store the installer of record of every fleet package installed elsewhere (pm set-installer
         // through the ADB owner), so they stop prompting. Never crashes with ADB down: the reason lands in each detail view.
-        StoreBar.Button("Adopt all (installer of record)", Ink.BLUE_FILL, { adoptAll(ctx) }, Modifier.fillMaxWidth(), "store-adopt-all")
+        // (the button itself is on the Play Protect row of the bar above.) The last run's per-package refusals, never truncated:
+        remember(adoptTick) { StoreAdopt.lastReport }.forEach { StoreCaption("Adopt refused - $it", tag = "store-adopt-failure") }
         // Feed moved into Cloud: Commits and CI-CD are two buttons with the action buttons, above the status row; each opens its own
         // page (StoreFeedPanels.Page, the Store's declared feeds). The Feed bottom-nav destination is gone.
         StoreFeedPanels.Buttons { feedOpen = it }
@@ -993,10 +995,13 @@ class StoreCloudFragment : KitComposeFragment() {
         thread(name = "fleet-adopt-all") {
             val rs = StoreAdopt.adopt(ctx, fleet.map { it.pkg })
             val ok = rs.count { it.state == StoreAdopt.State.ADOPTED || it.state == StoreAdopt.State.ALREADY }
-            val why = rs.firstOrNull { it.state != StoreAdopt.State.ADOPTED && it.state != StoreAdopt.State.ALREADY }?.reason
+            val bad = StoreAdopt.failureLines(rs)
+            StoreAdopt.lastReport = bad
+            val why = rs.firstOrNull { it.state != StoreAdopt.State.ADOPTED && it.state != StoreAdopt.State.ALREADY }
             main.post {
                 adoptTick++
-                Toast.makeText(ctx, "Adopt: $ok of ${rs.size} are Cloud Store's" + (why?.let { " - $it" } ?: ""), Toast.LENGTH_LONG).show()
+                Toast.makeText(ctx, "Adopt: $ok of ${rs.size} are Cloud Store's" +
+                    (if (bad.isNotEmpty()) "; ${bad.size} refused, listed under the bar (${bad.first().substringBefore(':')}: ${why?.state})" else why?.let { " - ${it.reason}" } ?: ""), Toast.LENGTH_LONG).show()
             }
         }
     }

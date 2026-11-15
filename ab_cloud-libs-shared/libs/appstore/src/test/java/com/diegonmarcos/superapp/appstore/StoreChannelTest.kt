@@ -70,4 +70,21 @@ class StoreChannelTest {
         assertEquals(AdbLink.UNREACHABLE, amber)
         assertEquals(ControlStatus.Ink.AMBER, ControlStatus.ink(ControlStatus.fromBroker(ShellStatus(true, true, "local-server", "armed", 5_000L, "", amber))))
     }
+
+    /** The ADB button says only ON / OFF, from the same verdict as the colour; the long status stays in [ControlStatus.label]. */
+    @Test fun adbButtonIsOnOffOnlyAndTheDetailIsKept() {
+        fun st(armed: Boolean, adb: AdbLink, installed: Boolean = true) =
+            ControlStatus.fromBroker(ShellStatus(installed, armed, "local-server", "armed", 5_000L, "", adb, "local-server round trip ok; embedded session closed after launch"))
+        assertEquals("ADB: ON", ControlStatus.buttonLabel(st(true, AdbLink.CONNECTED)))
+        assertEquals("ADB: OFF", ControlStatus.buttonLabel(st(true, AdbLink.WIRELESS_OFF)))
+        assertEquals("ADB: OFF", ControlStatus.buttonLabel(st(true, AdbLink.UNREACHABLE)))
+        assertEquals("ADB: OFF", ControlStatus.buttonLabel(st(false, AdbLink.UNKNOWN, installed = false)))
+        assertEquals("ADB: checking...", ControlStatus.buttonLabel(st(true, AdbLink.UNKNOWN)))
+        val full = ControlStatus.label(st(true, AdbLink.CONNECTED))
+        assertTrue(full, full.contains("local-server round trip ok") && full.contains("Shell: Cloud C3 Webserver") && full.contains("checked"))
+        for (a in AdbLink.values()) for (armed in listOf(true, false)) {   // ON exactly when the colour is green
+            val s = st(armed, a)
+            assertEquals(ControlStatus.ink(s) == ControlStatus.Ink.GREEN, ControlStatus.buttonLabel(s) == "ADB: ON")
+        }
+    }
 }

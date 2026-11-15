@@ -65,6 +65,14 @@ internal object ControlStatus {
     /** The chip's one line: green says the route, the others say why and what a tap does. */
     private fun adbPart(s: ChannelStatus): String = s.adb.label + if (s.adbDetail.isNotBlank()) " (${s.adbDetail})" else ""
 
+    /** The ADB button's text: only its state, from the same verdict as [ink] (green = ON, amber / red = OFF, grey = still checking). */
+    fun buttonLabel(s: ChannelStatus): String = when (ink(s)) {
+        Ink.GREEN -> "ADB: ON"
+        Ink.AMBER, Ink.RED -> "ADB: OFF"
+        Ink.GREY -> "ADB: checking..."
+    }
+
+    /** The full status (route, detail, broker, checked-at): the "ADB detail" line under the bar and the button's description. */
     fun label(s: ChannelStatus): String = when (s.state) {
         Channel.UP -> "${adbPart(s)} · Shell: Cloud C3 Webserver (${s.via ?: "armed"})${s.at}"
         Channel.DOWN -> "${adbPart(s)} · Shell broker: ${s.reason ?: "not armed"} - Arm in Cloud C3 Webserver${s.at}"

@@ -143,7 +143,7 @@ object StoreBar {
 
     const val TAG = "store-bar"
 
-    enum class Item { CHECK, INSTALL, DOWNLOAD, UPDATE, AUTO_UPDATE, WIFI_ONLY, PLAY_PROTECT, WIRELESS_DEBUG }
+    enum class Item { CHECK, INSTALL, DOWNLOAD, UPDATE, AUTO_UPDATE, WIFI_ONLY, PLAY_PROTECT, WIRELESS_DEBUG, ADOPT_ALL }
 
     /** The test tag of a bar control. */
     fun itemTag(item: Item) = "$TAG:${item.name}"
@@ -158,6 +158,8 @@ object StoreBar {
          *  Cloud tab owns a fleet cache to fill, so null here draws NO button
          *  (rather than a disabled one with nothing to explain). */
         val downloadAll: (() -> Unit)? = null,
+        /** #1744 Adopt all (installer of record), drawn on the Play Protect row. Only the Cloud tab has a fleet to adopt. */
+        val adoptAll: (() -> Unit)? = null,
     )
 
     private val MAIN = Handler(Looper.getMainLooper())
@@ -194,6 +196,8 @@ object StoreBar {
                 }
                 Button(ctx.getString(R.string.store_bar_update_all), Ink.BLUE_FILL, verbs.updateAll,
                     Modifier.weight(1f), itemTag(Item.UPDATE))
+            }
+            Row {
                 Button(ctx.getString(R.string.store_bar_auto_update, onOff(ctx, autoOn)),
                     if (autoOn) Ink.GREEN_FILL else Ink.GREY_FILL,
                     {
@@ -205,8 +209,6 @@ object StoreBar {
                         toast(ctx, ctx.getString(R.string.store_bar_auto_update_toast, onOff(ctx, !autoOn)))
                         tick++
                     }, Modifier.weight(1f), itemTag(Item.AUTO_UPDATE))
-            }
-            Row {
                 // Only gates the UNATTENDED passes: the buttons above are the user
                 // asking, so they download on any network regardless of this.
                 Button(ctx.getString(R.string.store_bar_wifi_only, onOff(ctx, wifiOnly)),
@@ -216,6 +218,10 @@ object StoreBar {
                         toast(ctx, ctx.getString(R.string.store_bar_wifi_only_toast, onOff(ctx, !wifiOnly)))
                         tick++
                     }, Modifier.weight(1f), itemTag(Item.WIFI_ONLY))
+                // The privileged channel itself (see ChannelButton): ON / OFF only on the button, the detail below the bar.
+                ChannelButton(Modifier.weight(1f), onChange = { chan++ })
+            }
+            Row {
                 // Play Protect's per-INSTALL scan prompt. The label is what the device STORES
                 // (ON / OFF / unknown when no key can be read), never a default. Tap toggles
                 // through the shell channel (or WRITE_SECURE_SETTINGS); when that is absent or
@@ -244,10 +250,8 @@ object StoreBar {
                             }
                         }
                     }, Modifier.weight(1f), itemTag(Item.PLAY_PROTECT))
-                // The privileged channel itself: a cached live `id` round trip (uid 2000) over the
-                // embedded adb or Shizuku, probed off the main thread. NOT the system "wireless
-                // debugging" switch - that can be on while the channel is dead.
-                ChannelButton(Modifier.weight(1f), onChange = { chan++ })
+                // #1744 Adopt all (installer of record) shares the Play Protect row.
+                verbs.adoptAll?.let { Button(ctx.getString(R.string.store_bar_adopt_all), Ink.BLUE_FILL, it, Modifier.weight(1f), itemTag(Item.ADOPT_ALL)) }
             }
             if (verbs.disabledReason != 0 && (verbs.installAll == null || verbs.updateAll == null))
                 StoreCaption(ctx.getString(verbs.disabledReason))
@@ -256,6 +260,8 @@ object StoreBar {
                 ControlStatus.Tri.UNKNOWN -> R.string.store_bar_play_protect_unknown
                 ControlStatus.Tri.OFF -> R.string.store_bar_play_protect_off
                 ControlStatus.Tri.ON -> R.string.store_bar_play_protect_on }))
+            // Rule 16: the long status the ADB button used to carry (route, local-server round trip, shell broker, checked-at) stays here.
+            ch?.let { StoreCaption(ctx.getString(R.string.store_bar_adb_detail, ControlStatus.label(it)), tag = "$TAG:ADB_DETAIL") }
             StoreCaption(ctx.getString(when (ch?.state) {
                 ControlStatus.Channel.UP -> R.string.store_bar_channel_up_caption
                 ControlStatus.Channel.DOWN -> R.string.store_bar_channel_down_caption
@@ -296,11 +302,12 @@ object StoreBar {
             val stop = com.diegonmarcos.superapp.shellclient.AdbWatch.observe(ctx) { tick++ }
             onDispose { stop() }
         }
-        val chLabel = ch?.let { ControlStatus.label(it) } ?: ctx.getString(R.string.store_bar_channel_checking)
+        val chLabel = ch?.let { ControlStatus.buttonLabel(it) } ?: ctx.getString(R.string.store_bar_channel_checking)
+        // the full status is the button's description and the "ADB detail" line under the bar
         Button(chLabel,
             when (ControlStatus.ink(ch)) { ControlStatus.Ink.GREEN -> Ink.GREEN_FILL; ControlStatus.Ink.AMBER -> AMBER
                 ControlStatus.Ink.RED -> RED_FILL; ControlStatus.Ink.GREY -> Ink.GREY_FILL },
-            { StoreShell.arm(ctx) }, modifier, itemTag(Item.WIRELESS_DEBUG))
+            { StoreShell.arm(ctx) }, modifier, itemTag(Item.WIRELESS_DEBUG), description = ch?.let { ControlStatus.label(it) })
     }
 
     private const val RED_FILL = 0xFFC53030.toInt()

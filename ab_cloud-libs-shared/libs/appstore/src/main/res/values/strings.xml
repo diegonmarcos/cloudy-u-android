@@ -41,6 +41,8 @@
     <string name="store_phone_why_no_host">This build has no Cloud store page to open.</string>
 
     <!-- #565: the shared Store bar (StoreBar), export/import (AppInventory, StoreImport). -->
+    <string name="store_bar_adopt_all">Adopt all (installer of record)</string>
+    <string name="store_bar_adb_detail">ADB detail: %1$s</string>
     <string name="store_bar_auto_update">Auto update: %1$s</string>
     <string name="store_bar_auto_update_toast">Auto-update %1$s</string>
     <string name="store_bar_check_all">↻  Check all</string>
