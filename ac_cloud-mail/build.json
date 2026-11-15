@@ -411,7 +411,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-11-14",
+        "pricing_as_of": "2026-11-15",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -572,9 +572,9 @@
             "trained_for": [
               "academia",
               "legal",
+              "marketing/seo",
               "programming",
-              "roleplay",
-              "science"
+              "roleplay"
             ],
             "prompt": 0.007,
             "completion": 6.8,
