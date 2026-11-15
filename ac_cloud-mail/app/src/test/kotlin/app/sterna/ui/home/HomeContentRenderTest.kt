@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -281,6 +282,22 @@ class HomeContentRenderTest {
             compose.onAllNodesWithTag(QUICKMARK_TAG)[it].performSemanticsAction(SemanticsActions.OnClick)
         }
         assertEquals("each tile opens the destination it was declared for, in declaration order", shortcuts + quickmarks, opened)
+    }
+
+    @Test
+    fun `1751 Webmail is a full-width Home subpage row that is displayed, not only a chip in the scrolling row`() {
+        show(knownMailbox(), batterySaver = true)
+        val subpages = HomeDestination.entries.filter { it.subpage }
+        assertEquals("Webmail is declared as a subpage", listOf(HomeDestination.WEBMAIL), subpages)
+        compose.onAllNodesWithTag(SUBPAGE_TAG).assertCountEquals(subpages.size)
+        compose.onAllNodesWithTag(SUBPAGE_TAG)[0].assertIsDisplayed()
+        // nothing removed: the chip is still in the quickmarks row.
+        compose.onAllNodesWithTag(QUICKMARK_TAG).assertCountEquals(
+            HomeDestination.entries.count { it.kind == HomeDestination.Kind.QUICKMARK },
+        )
+        opened.clear()
+        compose.onAllNodesWithTag(SUBPAGE_TAG)[0].performClick()
+        assertEquals(listOf(HomeDestination.WEBMAIL), opened)
     }
 
     // ── animation: the ticket's hard constraint ─────────────────────────────────────────────────

@@ -160,6 +160,10 @@ internal fun HomeContent(ui: HomeUi, onOpen: (HomeDestination) -> Unit, modifier
         Hero(ui.accounts, motionOn)
         ShortcutsRow(actionsOf(HomeDestination.Kind.SHORTCUT, onOpen))
         QuickmarksRow(actionsOf(HomeDestination.Kind.QUICKMARK, onOpen))
+        // Home subpages: full-width rows that are always on screen. A destination that is ONLY a chip
+        // in the sideways-scrolling quickmarks row can sit past the right edge of a phone and never be
+        // seen (Webmail did, #1751); a subpage is a row the reader cannot miss.
+        SubpagesList(subpagesOf(onOpen))
         ui.accounts.forEachIndexed { index, account ->
             // A rule between accounts and none before the first: the divider is what says "these
             // numbers stop belonging to the account above", which this page must never leave ambiguous.
@@ -204,7 +208,13 @@ private fun NoAccounts(modifier: Modifier) {
  * "most used" list: usage is not recorded anywhere in this app, and recording it would be a new
  * data store for a convenience the drawer already gives in one tap.
  */
-internal enum class HomeDestination(val kind: Kind, val icon: ImageVector, @StringRes val label: Int) {
+internal enum class HomeDestination(
+    val kind: Kind,
+    val icon: ImageVector,
+    @StringRes val label: Int,
+    /** Also drawn as a full-width row under the quickmarks (never off-screen), in addition to its chip. */
+    val subpage: Boolean = false,
+) {
     COMPOSE(Kind.SHORTCUT, Icons.Filled.Create, R.string.inbox_compose),
     SEARCH(Kind.SHORTCUT, Icons.Filled.Search, R.string.inbox_search),
     SETTINGS(Kind.SHORTCUT, Icons.Filled.Settings, R.string.inbox_settings),
@@ -217,7 +227,7 @@ internal enum class HomeDestination(val kind: Kind, val icon: ImageVector, @Stri
     OUTBOX(Kind.QUICKMARK, Icons.AutoMirrored.Filled.Send, R.string.inbox_outbox),
     BY_SENDER(Kind.QUICKMARK, Icons.Filled.Person, R.string.inbox_by_sender),
     NEWS(Kind.QUICKMARK, Icons.Filled.RssFeed, R.string.rss_title),
-    WEBMAIL(Kind.QUICKMARK, Icons.Filled.Language, R.string.home_webmail),
+    WEBMAIL(Kind.QUICKMARK, Icons.Filled.Language, R.string.home_webmail, subpage = true),
     ;
 
     enum class Kind { SHORTCUT, QUICKMARK }
@@ -227,6 +237,12 @@ internal enum class HomeDestination(val kind: Kind, val icon: ImageVector, @Stri
 @Composable
 private fun actionsOf(kind: HomeDestination.Kind, onOpen: (HomeDestination) -> Unit): List<HomeAction> =
     HomeDestination.entries.filter { it.kind == kind }
+        .map { destination -> HomeAction(destination.icon, stringResource(destination.label)) { onOpen(destination) } }
+
+/** The destinations declared as Home subpages, as [SubpagesList] draws them. */
+@Composable
+private fun subpagesOf(onOpen: (HomeDestination) -> Unit): List<HomeAction> =
+    HomeDestination.entries.filter { it.subpage }
         .map { destination -> HomeAction(destination.icon, stringResource(destination.label)) { onOpen(destination) } }
 
 /** One tile as a row draws it: an icon, its label, and what a tap does. */
@@ -298,6 +314,31 @@ private fun QuickmarksRow(actions: List<HomeAction>) {
         }
     }
 }
+
+/** Subpages: one full-width, tappable row per declared subpage, always visible without scrolling. */
+@Composable
+internal fun SubpagesList(actions: List<HomeAction>) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s4)) {
+        actions.forEach { action ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .testTag(SUBPAGE_TAG)
+                    .clip(RoundedCornerShape(MailMetrics.s12))
+                    .border(MailMetrics.hair, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(MailMetrics.s12))
+                    .clickable(role = Role.Button, onClick = action.onClick)
+                    .padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s12),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(action.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(MailMetrics.s12))
+                Text(action.label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+internal const val SUBPAGE_TAG = "home_subpage"
 
 /** How long a number takes to climb to its value, and the head start each row after the first gives
  *  the one above it — a cascade, not a wall of simultaneous tickers. */

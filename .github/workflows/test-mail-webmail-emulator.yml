@@ -78,7 +78,11 @@ jobs:
           shot 01-first-open
           tap "Home" || { echo "::error::no Home item in the bottom bar"; dump no-home; exit 1; }
           sleep 4
-          shot 02-home
+          shot 02-home; dump 02-home
+          # #1751: Webmail is a full-width Home subpage row, on screen at first draw, with NO sideways scroll
+          grep -q 'text="Webmail"' walk-out/02-home.xml || { echo "::error::Webmail is not visible on Home without scrolling"; exit 1; }
+          adb shell input swipe 540 1700 540 700 400; sleep 2; shot 02b-home-scrolled
+          adb shell input swipe 540 700 540 1700 400; sleep 2
           found=0
           for i in 1 2 3 4 5 6; do
             if tap "Webmail"; then found=1; break; fi
