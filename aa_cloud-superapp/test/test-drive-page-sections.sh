@@ -171,10 +171,10 @@ else:
                    "tagged release hijacks that route into a flapping 404")
     if "/download/" not in url:
         emit("T3", "cloud-drive's APK url %r does not name a release asset" % url)
-    folders = {e.get("folder") for e in ui.get("external_apps", []) if e.get("id") != "cloud-drive"}
+    folders = {f.get("id") for f in ui.get("phone_folders", [])}
     if drive.get("folder") not in folders:
-        emit("T3", "cloud-drive sits in folder %r, which no other external app uses — "
-                   "the launcher has nowhere to file it" % drive.get("folder"))
+        emit("T3", "cloud-drive sits in folder %r, which ui.phone_folders does not declare — "
+                   "the launcher has nowhere to file it (#1756: the Drive subtype is prod_storage)" % drive.get("folder"))
 
 # ── T4 / T5 ───────────────────────────────────────────────────────────────────
 prefixes = [p for p in os.environ.get("DISPATCH_PREFIXES", "").split("\n") if p]

@@ -24,8 +24,8 @@ IDS="$(jq -r "[$GROUP | .tiles[].id] | join(\",\")" "$BJ")"
 NEXT="$(jq -r "[$GROUP | .tiles[].id] as \$t | (\$t | index(\"calc\")) as \$i | if \$i == null then \"\" else \$t[\$i+1] end" "$BJ")"
 eq "the tile right after calc is maps/Navigation (#1627 order: $IDS)" "$NEXT" "maps"
 eq "its target hands off to the app" "$(jq -r "$GROUP | .tiles[] | select(.id == \"calc\") | .target" "$BJ")" "extapp:cloud-calc"
-eq "the PHONE page's Tools Primary was not touched" \
-   "$(jq -r '[.ui.sections[] | select(.id == "phone") | .phone_app_groups[] | select(.title == "Tools Primary") | .packages[] | tostring | select(test("cloudcalc"))] | length' "$BJ")" "0"
+eq "the PHONE page's Primary was not touched" \
+   "$(jq -r '[.ui.sections[] | select(.id == "phone") | .phone_app_groups[] | select(.title == "Primary") | .packages[] | tostring | select(test("cloudcalc"))] | length' "$BJ")" "0"
 
 echo "== T2: the icon exists =="
 ICON="$(jq -r "$GROUP | .tiles[] | select(.id == \"calc\") | .icon" "$BJ")"

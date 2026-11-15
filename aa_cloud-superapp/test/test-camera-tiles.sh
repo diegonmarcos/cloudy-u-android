@@ -232,15 +232,15 @@ echo "== T6: the Samsung camera left its old folder, and the other cameras did n
 # narrower fact that the OLD home specifically let go.
 OLD="$(jq -r --arg p "pkg:$SAMSUNG_PKG" '
   [ .ui.phone_folders[] | select((.match_keywords // []) | index($p)) | .id ] | join(",")' "$BJ")"
-[ "$OLD" = "prod_utils" ] \
-  && ok "pkg:$SAMSUNG_PKG is declared by exactly one folder, prod_utils" \
-  || bad "pkg:$SAMSUNG_PKG is declared by '$OLD' — it must be exactly prod_utils, or the move is a copy"
+[ "$OLD" = "prod_camera" ] \
+  && ok "pkg:$SAMSUNG_PKG is declared by exactly one folder, prod_camera (the Camera subtype, #1756)" \
+  || bad "pkg:$SAMSUNG_PKG is declared by '$OLD' — it must be exactly prod_camera, or the move is a copy"
 
 OPUS="$(jq -r --arg p "pkg:$OPUS_PKG" '
   [ .ui.phone_folders[] | select((.match_keywords // []) | index($p)) | .id ] | join(",")' "$BJ")"
-[ "$OPUS" = "prod_storage" ] \
-  && ok "$OPUS_PKG (Camera Opus, third-party) stayed in prod_storage" \
-  || bad "$OPUS_PKG moved to '$OPUS' — it is not part of this change and belongs in prod_storage"
+[ "$OPUS" = "prod_camera" ] \
+  && ok "$OPUS_PKG (Camera Opus, third-party) sits in prod_camera next to the Samsung camera (#1756 Camera subtype)" \
+  || bad "$OPUS_PKG moved to '$OPUS' — it is not part of this change and belongs in prod_camera"
 
 echo "== T7: neither camera appears on the other one's page =="
 # The single assertion that would have caught the whole task being done
@@ -279,7 +279,7 @@ echo "== T9: the Samsung camera is a QUICKMARK of Phone ▸ Apps ▸ Tools Prima
 # written here would be describing yesterday's file. app/build.gradle finds the
 # section the same way (`sections.find { it.id == "phone" }`), so this reads the
 # document along the path the APK is actually baked from.
-QUICKMARK_GROUP="Tools Primary"
+QUICKMARK_GROUP="Primary"
 # An entry is either a bare package string or {"pkg","label"} — parseEntries()
 # in SuitePhoneAppsFragment accepts both, so both are unwrapped here rather
 # than assuming the shape this group happens to use today.

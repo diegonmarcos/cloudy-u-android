@@ -55,7 +55,7 @@ eq "no Writer tile in that group (it read as the retired Cloud Writer app)" "$HI
 ACT="$(jq -r '.ui.external_apps[] | select(.id == "cloud-keyboard") | .actions[] | select(.label == "Writer") | .target' "$BJ")"
 eq "rule 16: Writer is a declared action of cloud-keyboard, same deep link the tile had" "$ACT" "extapp:cloud-keyboard#page:writer"
 PHONEHIT="$(jq -r '[.ui.sections[] | select(.id == "phone") | .phone_app_groups[]
-                   | select(.title == "Tools Primary") | .packages[]
+                   | select(.title == "Primary") | .packages[]
                    | tostring | select(test("cloudwriter|Writer"))] | length' "$BJ")"
 eq "the PHONE page's Tools Primary has no Writer" "$PHONEHIT" "0"
 

@@ -154,7 +154,7 @@ ROWS = {
     # boards; with the list gone there are no longer two kinds of destination in
     # the row for it to divide, so it went with them rather than floating at the
     # head of a row whose every tile is now the same kind of tile.
-    "Lnktree":  ["cloud-superapp", "lnktree-sep-0", "omniverse", "lnktree-sep-1", "finterm", "lnktree-sep-2", "cad", "sim2real"],  # owner 2026-10-30: SuperApp leads (moved from Configs); #1331 owner order: Omniverse | FinTerm | CAD Sim2Real (was Projects W, #1212)
+    "Projects":  ["cloud-superapp", "lnktree-sep-0", "omniverse", "lnktree-sep-1", "finterm", "lnktree-sep-2", "cad", "sim2real"],  # owner 2026-10-30: SuperApp leads (moved from Configs); #1331 owner order: Omniverse | FinTerm | CAD Sim2Real (was Projects W, #1212)
 }
 
 # Every target, spelled the way the ROUTER resolves it and not the way the tile
@@ -294,8 +294,8 @@ import json, os, re, sys
 d = json.load(open(sys.argv[1]))
 app = sys.argv[2]
 cloud = next(s for s in d["ui"]["sections"] if s["id"] == "cloud")
-row = next(g for g in cloud["tile_groups"] if g["title"] == "Lnktree")
-assert row["tiles"][0].get("id") == "cloud-superapp", "SuperApp must LEAD the Lnktree row"
+row = next(g for g in cloud["tile_groups"] if g["title"] == "Projects")
+assert row["tiles"][0].get("id") == "cloud-superapp", "SuperApp must LEAD the Projects (Lnktree) row"
 tile = next(t for t in row["tiles"] if t.get("id") == "cloud-superapp")
 assert tile["label"] == "SuperApp", tile
 own = "app://" + d["android"]["application_id"]
