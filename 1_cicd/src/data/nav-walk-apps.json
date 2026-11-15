@@ -599,7 +599,23 @@
       "app": "ac_cloud-tasks",
       "ship": "ship-cloud-tasks.yml",
       "artifact": "Cloud-Tasks-",
-      "asset": "Cloud-Tasks"
+      "asset": "Cloud-Tasks",
+      "scene_themes": ["dark", "light"],
+      "scenes": [
+        {"name": "01-home-selector", "steps": [["tap", "bottomnav_item_home"]]},
+        {"name": "02-home-projects-page", "steps": [["tap", "bottomnav_item_home"], ["tap", "pagetabs_tab_projects"]]},
+        {"name": "03-tab-inbox", "steps": [["tap", "bottomnav_item_inboxes"]]},
+        {"name": "04-tab-inbox-synced", "steps": [["tap", "bottomnav_item_inboxes"], ["tap", "pagetabs_tab_synced"]]},
+        {"name": "05-tab-backlog", "steps": [["tap", "bottomnav_item_backlogs"]]},
+        {"name": "06-tab-tasks-circles-day", "steps": [["tap", "bottomnav_item_tasks"]]},
+        {"name": "07-tab-library", "steps": [["tap", "bottomnav_item_library"]]},
+        {"name": "08-calendar-year-view", "steps": [["tap", "mock_mode_year"]]},
+        {"name": "09-calendar-linear-bars", "steps": [["tap", "mock_style_linear"]]},
+        {"name": "10-calendar-gantt-calendar", "steps": [["tap", "mock_style_gantt"]]},
+        {"name": "11-traveling-gantt", "steps": [["tap", "bottomnav_item_home"], ["tap", "home_chip_none"], ["tap", "home_chip_Traveling"], ["tap", "bottomnav_item_tasks"]]},
+        {"name": "12-traveling-home-card", "steps": [["tap", "bottomnav_item_home"], ["tap", "home_chip_none"], ["tap", "home_chip_Traveling"]]},
+        {"name": "99-reset-all-projects", "steps": [["tap", "bottomnav_item_home"], ["tap", "home_chip_all"]]}
+      ]
     },
     {
       "app": "ac_cloud-drive",
