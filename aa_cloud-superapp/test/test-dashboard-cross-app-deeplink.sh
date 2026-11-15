@@ -282,7 +282,7 @@ assert g["Me"] == ["Me", "|", "Me-Health", "Experienc.", "Tasks", "|", "Me-Inven
 assert g["Primary"][-2:] == ["||", "Wallet"] and "Account" not in g["Primary"] and "Vault" not in g["Primary"], g["Primary"]
 assert "Vault" in g["Data"] and "Me" in g["Data"], g["Data"]  # #1627 Vault and a Me tile close the Data row (after '||')
 assert "Me" not in g["Primary"], g["Primary"]
-assert "Account" in g["Configs"], "Account must stay in Configs (intentional duplicate)"
+assert "Account" in g["Setup"], "Account must stay in Setup (was Configs, #1755; intentional duplicate)"
 ids = [t["id"] for x in cloud["tile_groups"] for t in x["tiles"] if t.get("id")]
 assert len(ids) == len(set(ids)), "tile ids must stay unique"
 assert "Me" in [t["label"] for t in cloud["tiles_shared"]], "the Home index label follows the row name"
