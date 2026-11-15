@@ -25,7 +25,7 @@ pages = next(s for s in secs if s['id'] == 'config')['pages']
 ag = [p for p in pages if p['id'] == 'agents-watchdog']  # #1610 the hub is relabelled Agents and lives under Device ▸ Configs
 print('AGENTS', ' '.join('%s:%s:%r:%s' % (p['id'], p['label'], p.get('action', ''), ','.join(p.get('hub_sections', []))) for p in ag))
 print('NETWORK', ','.join(p['id'] for p in pages if p.get('subgroup') == 'Network' and not p.get('hidden')))
-rows = [g for s in secs for g in s.get('tile_groups', []) if g.get('title') == 'Configs']
+rows = [g for s in secs for g in s.get('tile_groups', []) if g.get('title') == 'Setup']
 tiles = rows[0]['tiles'] if rows else []
 print('CFGWD', ','.join('%s=%s' % (p['id'], p.get('action', '')) for p in pages if p['id'] == 'c3-watchdog' and p.get('group') == 'Profiling' and not p.get('hidden')))
 print('ROW', '|'.join('%s=%s' % (t.get('label'), t.get('target', '')) for t in tiles if not t.get('separator')))

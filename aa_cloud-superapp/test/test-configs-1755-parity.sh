@@ -72,7 +72,7 @@ if launcher != ['controls', 'panels-ui', 'app-folders', 'onehand', 'notify']: pr
 # Profile launches the Cloud Account app
 if by.get('profile-app', {}).get('action') != 'extapp:cloud-account': probs.append('profile-app does not launch extapp:cloud-account')
 # the Cloud > Apps > Configs row
-row = next(g for s in secs for g in s.get('tile_groups', []) if g.get('title') == 'Configs')['tiles']
+row = next(g for s in secs for g in s.get('tile_groups', []) if g.get('title') == 'Setup')['tiles']
 labels = [t['label'] for t in row]
 want = ['Quick Actions', 'UI', '|', 'NG Firewall', '|', 'Store', 'Account', '|', 'C3', '|', 'Profile', 'About']
 if labels != want: probs.append('row = %r' % labels)

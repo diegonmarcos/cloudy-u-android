@@ -191,7 +191,7 @@ for d in locales:
         check('name="%s"' % s in xml, "%s/strings.xml defines %s" % (d, s))
 
 print("== T5: the Configs row reads Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About (#1628) ==")
-configs = [g for g in groups(bj["ui"]["sections"], "Configs")]
+configs = [g for g in groups(bj["ui"]["sections"], "Setup")]
 check(len(configs) == 1, "exactly one Configs tile group under ui.sections (found %d)" % len(configs))
 if configs:
     row = [t.get("label") for t in configs[0]["tiles"]]

@@ -63,7 +63,7 @@ if len(members) < 2:
 configs = None
 for section in bj["ui"]["sections"]:
     for group in section.get("tile_groups") or section.get("groups") or []:
-        if group.get("title") == "Configs":
+        if group.get("title") == "Setup":
             configs = group
 # tile groups live wherever the Cloud section keeps them; find the Configs group anywhere under ui
 def walk(node):
@@ -74,10 +74,10 @@ def walk(node):
         for v in node: yield from walk(v)
 if configs is None:
     for node in walk(bj["ui"]):
-        if node.get("title") == "Configs" and isinstance(node.get("tiles"), list):
+        if node.get("title") == "Setup" and isinstance(node.get("tiles"), list):
             configs = node; break
 if configs is None:
-    bad.append("no tile group titled 'Configs' with tiles under ui — Cloud > Apps > Configs is where the family is linked")
+    bad.append("no tile group titled 'Setup' with tiles under ui — Cloud > Apps > Setup is where the family is linked")
 by_label = {}
 for row in fleet:
     by_label.setdefault(row.get("label"), []).append(row)
@@ -179,7 +179,7 @@ import json,sys; p=sys.argv[1]; d=json.load(open(p)); n=0
 def walk(x):
     global n
     if isinstance(x,dict):
-        if x.get("title")=="Configs" and isinstance(x.get("tiles"),list) and any(t.get("target")=="extapp:cloud-c3" for t in x["tiles"]):
+        if x.get("title")=="Setup" and isinstance(x.get("tiles"),list) and any(t.get("target")=="extapp:cloud-c3" for t in x["tiles"]):
             x["tiles"].append({"id":"c3-webserver","label":"Web Server","icon":"ic_p_watchdog","target":"extapp:cloud-c3-webserver"}); n+=1
         for v in x.values(): walk(v)
     elif isinstance(x,list):

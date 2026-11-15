@@ -65,7 +65,7 @@ out="$(check "$FLEET")" && ok "app_categories == tile_groups: same names, same o
   || bad "app_categories differ from the tile groups - rerun aa_cloud-superapp/data/regen.sh --constellation-only: $out"
 # 1704 there is NO Other: every app of the tab is filed by a tile group (or its store_apps)
 [ "$(jq -r '[.app_categories[] | select(.id == "other" or .label == "Other" or .label == "Others")] | length' "$FLEET")" = 0 ] && ok "no Other / Others category" || bad "an Other category is back"
-for pair in "c3-webserver:Configs" "c3:Configs" "morpheus:Configs" "watchtower:Configs" "watchdog:Configs" "termux:AGI"; do
+for pair in "c3-webserver:Setup" "c3:Setup" "morpheus:Setup" "watchtower:Setup" "watchdog:Setup" "termux:AGI"; do
   a="${pair%%:*}"; c="${pair##*:}"
   [ "$(jq -r --arg a "$a" '.app_categories[] | select(.members | index($a)) | .label' "$FLEET")" = "$c" ] && ok "$a is filed under $c" || bad "$a is not under $c"
 done

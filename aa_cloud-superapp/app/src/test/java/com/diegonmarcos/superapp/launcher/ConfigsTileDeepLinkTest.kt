@@ -43,7 +43,7 @@ class ConfigsTileDeepLinkTest {
 
     @Test
     fun `C3 the Configs row has no app launch tile any more, its tiles open pages or constellation apps`() {
-        val row = Sections.byId("cloud")!!.tileGroups.first { it.title == "Configs" }.tiles.filter { !it.separator }
+        val row = Sections.byId("cloud")!!.tileGroups.first { it.title == "Setup" }.tiles.filter { !it.separator }
         assertEquals(emptyList<String>(), row.filter { it.target.startsWith("app://") }.map { it.id })
         assertTrue("a Configs tile has an empty target: ${row.filter { it.target.isBlank() }.map { it.id }}", row.none { it.target.isBlank() })
     }

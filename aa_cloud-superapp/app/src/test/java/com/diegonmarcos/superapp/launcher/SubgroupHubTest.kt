@@ -115,7 +115,7 @@ class SubgroupHubTest : KitPageHarness() {
         // #1628 redefined the Cloud > Apps > Configs row (supersedes #1611): Quick Actions, UI | Firewall, WiFi |
         // Store | Account, C3 | Watchdog | About. Watchdog now launches the C3-Watchdog APK (extapp:c3-watchdog)
         // and a Firewall tile (page:config/firewall) is present. The config-section Agents hub page is a separate surface.
-        val row = Sections.all().flatMap { it.tileGroups }.single { it.title == "Configs" }.tiles.filter { !it.separator }
+        val row = Sections.all().flatMap { it.tileGroups }.single { it.title == "Setup" }.tiles.filter { !it.separator }
         assertEquals(
             listOf("Quick Actions", "UI", "NG Firewall", "Store", "Account", "C3", "Profile", "About"),
             row.map { it.label })
@@ -142,7 +142,7 @@ class SubgroupHubTest : KitPageHarness() {
             "Webserver", "Proxy", "Store", "Cloudy C3", "Peer Control", "Watchdog", "X-Ray Device", "Logcat Fleet", "Agents", "Account", "Perms", "Logcat app",
             "X-Ray App", "About")
         assertTrue("lost: ${before - visible}", visible.containsAll(before))
-        val row = Sections.all().flatMap { it.tileGroups }.single { it.title == "Configs" }.tiles.filter { !it.separator }.map { it.label }.toSet()
+        val row = Sections.all().flatMap { it.tileGroups }.single { it.title == "Setup" }.tiles.filter { !it.separator }.map { it.label }.toSet()
         for (old in listOf("Quick Actions", "UI", "NG Firewall", "Store", "C3", "Watchdog", "Account", "About"))
             assertTrue("$old is neither on the row nor on the Configs page", old in row || old in visible)
     }
