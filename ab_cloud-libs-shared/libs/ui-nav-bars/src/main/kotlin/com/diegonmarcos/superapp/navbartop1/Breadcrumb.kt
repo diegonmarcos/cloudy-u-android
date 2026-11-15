@@ -11,7 +11,16 @@ public data class Crumb(val label: String, val target: HierarchyEntry?)
  * path: the SIBLINGS of the current page, then its CHILDREN (each tappable). [currentDepth] is the current page's depth in
  * [HierarchyEntry] terms (0 = a bottom section), so a row can indent the children.
  */
-public data class TitleNav(val crumbs: List<Crumb>, val related: List<HierarchyEntry>, val currentDepth: Int) {
+public data class TitleNav(
+    val crumbs: List<Crumb>,
+    val related: List<HierarchyEntry>,
+    val currentDepth: Int,
+    /**
+     * #1758 the app's sections (the current one selected), always on offer: [related] already holds them at depth 0, but a section whose
+     * tab strip is shown has its selection moved to a page, so below depth 0 they are listed HERE (a "Sections" group after the pages).
+     */
+    val sections: List<HierarchyEntry> = emptyList(),
+) {
     /** The path as the title shows it, left to right. */
     public val labels: List<String> get() = crumbs.map { it.label }
 }
@@ -29,7 +38,11 @@ public fun titleNav(
     leaf: String? = null,
 ): TitleNav {
     val section = hierarchy.firstOrNull { it.depth == 0 }
-    val sectionPeers = sections.map { HierarchyEntry(it.id, it.label, 0, it.id, selected = it.id == section?.sectionId) }
+    val declared = sections.map { HierarchyEntry(it.id, it.label, 0, it.id, selected = it.id == section?.sectionId) }
+    // a section the app did not hand in (e.g. Settings, opened from the top bar, not from the island) is still a peer of the others
+    val sectionPeers = if (declared.isNotEmpty() && section != null && declared.none { it.id == section.sectionId }) {
+        declared + HierarchyEntry(section.sectionId, section.label, 0, section.sectionId, selected = true)
+    } else declared
     val root = sectionPeers.firstOrNull() ?: section
     val crumbs = ArrayList<Crumb>()
     crumbs += Crumb(appName, root)
@@ -66,7 +79,7 @@ public fun titleNav(
         if (hierarchy[i].depth == depth + 1) children += hierarchy[i]
         i++
     }
-    return TitleNav(crumbs, siblings + children, depth)
+    return TitleNav(crumbs, siblings + children, depth, if (depth == 0) emptyList() else sectionPeers)
 }
 
 /**

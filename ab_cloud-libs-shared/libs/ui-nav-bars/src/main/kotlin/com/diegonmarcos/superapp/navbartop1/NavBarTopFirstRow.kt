@@ -137,6 +137,8 @@ public object TopFirstRowTags {
     /** The chevron that opens the dropdown when a tap on the title does something else (onTitleClick). */
     public const val MORE: String = "navtop1_more"
     public const val SEPARATOR_PAGES: String = "navtop1_sep_pages"
+    /** #1758 the divider above the "Sections" group (below depth 0 the sections follow the pages). */
+    public const val SEPARATOR_SECTIONS: String = "navtop1_sep_sections"
     public const val SEPARATOR_ACTIONS: String = "navtop1_sep_actions"
     public const val ACTIONS: String = "navtop1_actions"
     /** The shared "Configs > General" entry at the end of the dropdown (the nav UI card is a section of General). */
@@ -304,7 +306,8 @@ public fun NavBarTopFirstRow(
                         }
                     }
                     if (nav.related.isNotEmpty()) HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_PAGES), color = colors.islandBorder)
-                    nav.related.forEach { e ->
+                    (nav.related.map { it to false } + nav.sections.map { it to true }).forEach { (e, isSection) ->
+                        if (isSection && e === nav.sections.first()) HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_SECTIONS), color = colors.islandBorder)
                         DropdownMenuItem(
                             text = {
                                 Text(
