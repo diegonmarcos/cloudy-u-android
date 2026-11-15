@@ -47,6 +47,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -112,6 +113,7 @@ object MockTags {
     fun yearDay(iso: String) = "mock_year_day_$iso"
     fun pick(month: Int) = "mock_pick_$month"
     const val BARS = "mock_bars"
+    const val PEEK = "mock_bar_peek"
     const val PREV_YEAR = "mock_prev_year"
     const val NEXT_YEAR = "mock_next_year"
     const val PREV_MONTH = "mock_prev_month"
@@ -446,12 +448,21 @@ private fun BarsMonthPage(month: YearMonth, events: List<BarEvent>, allLanes: Li
     val lanes = remember(inMonth, allLanes, gantt) { allLanes.filter { l -> inMonth.any { it.lane == l } } }
     val weeks = remember(month, inMonth, lanes, gantt) { CalendarBars.month(month, inMonth, if (gantt) lanes else null) }
     val day = LocalDate.parse(selected)
+    // a tap or long-press on a bar shows its whole title, lane and dates here (a bar too short for its title keeps an ellipsis)
+    var peek by remember { mutableStateOf<BarEvent?>(null) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).testTag(MockTags.BARS)) {
         Row(Modifier.fillMaxWidth()) {
             if (gantt) Spacer(Modifier.width(LaneLabelWidth))
             for (d in java.time.DayOfWeek.values()) Text(d.getDisplayName(TextStyle.SHORT, Locale.getDefault()), color = p.textSecondary, fontSize = KitStoreRow.caption, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
         }
-        for (w in weeks) BarWeek(w, gantt, allLanes, today, day, onSelect)
+        for (w in weeks) BarWeek(w, gantt, allLanes, today, day, onSelect) { peek = it }
+        peek?.let { e ->
+            Text(
+                e.title + "  ·  " + e.lane + "  ·  " + dayLabel(e.start) + (if (e.end != e.start) " to " + dayLabel(e.end) else ""),
+                color = p.textPrimary, fontSize = KitStoreRow.body, fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth().padding(top = KitStoreRow.gap).clip(RoundedCornerShape(KitDensity.small)).background(p.surface).padding(KitStoreRow.gap).testTag(MockTags.PEEK),
+            )
+        }
         if (inMonth.isEmpty()) Text("No dated task this month.", color = p.textSecondary, fontSize = KitStoreRow.body, modifier = Modifier.padding(vertical = KitStoreRow.gap))
         else if (!gantt) FlowRow(Modifier.fillMaxWidth().padding(top = KitStoreRow.gap), horizontalArrangement = Arrangement.spacedBy(KitStoreRow.padH), verticalArrangement = Arrangement.spacedBy(KitStoreRow.tight)) {
             for (l in lanes) Row(verticalAlignment = Alignment.CenterVertically) {
@@ -467,13 +478,15 @@ private fun BarsMonthPage(month: YearMonth, events: List<BarEvent>, allLanes: Li
 
 /** One week row: seven big day boxes, the lane labels of the Gantt Calendar on the left, and the bar pieces laid over the boxes. */
 @Composable
-private fun BarWeek(w: WeekBars, gantt: Boolean, allLanes: List<String>, today: LocalDate, selected: LocalDate, onSelect: (String) -> Unit) {
+private fun BarWeek(w: WeekBars, gantt: Boolean, allLanes: List<String>, today: LocalDate, selected: LocalDate, onSelect: (String) -> Unit, onPeek: (BarEvent) -> Unit) {
     val p = LocalKitPalette.current
-    val height = maxOf(76.dp, BarHead + BarRow * w.rows + 6.dp)
+    // a week with no event collapses to a compact strip (no tall empty lanes)
+    val empty = w.segments.isEmpty()
+    val height = if (empty) 44.dp else maxOf(76.dp, BarHead + BarRow * w.rows + 6.dp)
     Row(Modifier.fillMaxWidth().height(height).testTag(MockTags.week(w.weekStart.toString()))) {
         if (gantt) Column(Modifier.width(LaneLabelWidth).fillMaxHeight()) {
             Spacer(Modifier.height(BarHead))
-            for ((lane, n) in w.laneRows) Box(Modifier.fillMaxWidth().height(BarRow * n), contentAlignment = Alignment.CenterStart) {
+            if (!empty) for ((lane, n) in w.laneRows) Box(Modifier.fillMaxWidth().height(BarRow * n), contentAlignment = Alignment.CenterStart) {
                 Text(lane, color = ringInk(allLanes.indexOf(lane)), fontSize = KitStoreRow.caption, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(end = 2.dp).testTag(MockTags.lane(lane)))
             }
         }
@@ -491,7 +504,7 @@ private fun BarWeek(w: WeekBars, gantt: Boolean, allLanes: List<String>, today: 
                 }
             }
             // Gantt: a hairline between the lanes
-            if (gantt) Box(Modifier.fillMaxSize().drawBehind {
+            if (gantt && !empty) Box(Modifier.fillMaxSize().drawBehind {
                 var y = BarHead.toPx()
                 for ((_, n) in w.laneRows) { y += BarRow.toPx() * n; drawLine(p.hairline, Offset(0f, y), Offset(size.width, y), 1.dp.toPx()) }
             })
@@ -504,10 +517,12 @@ private fun BarWeek(w: WeekBars, gantt: Boolean, allLanes: List<String>, today: 
                 Box(
                     Modifier.offset(col * seg.col0 + 1.dp, BarHead + BarRow * seg.row).width(col * (seg.col1 - seg.col0 + 1) - 2.dp).height(BarRow - 2.dp)
                         .clip(shape).background(ringInk(allLanes.indexOf(seg.event.lane)).copy(alpha = if (seg.event.status == MockStatus.DONE) 0.5f else 0.92f))
+                        .pointerInput(seg.event.id) { detectTapGestures(onTap = { onPeek(seg.event) }, onLongPress = { onPeek(seg.event) }) }
                         .testTag(MockTags.seg(seg.event.id, w.weekStart.toString())),
                     contentAlignment = Alignment.CenterStart,
                 ) {
-                    Text(seg.event.title, color = p.tileInk, fontSize = KitStoreRow.caption, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Clip, softWrap = false, modifier = Modifier.padding(horizontal = 3.dp))
+                    // the title sits on the first piece of a bar only, ellipsised at a glyph boundary; the rest of a wrapped bar stays plain colour
+                    if (!seg.fromPrev) Text(seg.event.title, color = p.tileInk, fontSize = KitStoreRow.caption, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 3.dp))
                 }
             }
         }
