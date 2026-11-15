@@ -309,22 +309,26 @@ object StoreBar {
             onDispose { stop() }
         }
         val chLabel = ch?.let { ControlStatus.buttonLabel(it) } ?: ctx.getString(R.string.store_bar_channel_checking)
-        // the full status is the button's description and the "ADB detail" line under the bar
-        Button(chLabel,
-            when (ControlStatus.ink(ch)) { ControlStatus.Ink.GREEN -> Ink.GREEN_FILL; ControlStatus.Ink.AMBER -> AMBER
-                ControlStatus.Ink.RED -> RED_FILL; ControlStatus.Ink.GREY -> Ink.GREY_FILL },
-            { StoreShell.arm(ctx) }, modifier, itemTag(Item.WIRELESS_DEBUG), description = ch?.let { ControlStatus.label(it) },
-            // Rule 16: the long status is not drawn on the page; a long press shows it, with the ADB Status page as the target.
-            onLongClick = ch?.let { c -> { showAdbDetail(ctx, ControlStatus.label(c)) } })
-    }
-
-    /** The ADB detail sheet: the full status text, and "ADB Status" opens the page the button's tap opens (Cloud C3 Webserver's ADB page). */
-    private fun showAdbDetail(ctx: Context, detail: String) {
-        val act = generateSequence(ctx) { (it as? android.content.ContextWrapper)?.baseContext }.firstOrNull { it is android.app.Activity }
-        if (act == null) { Toast.makeText(ctx, detail, Toast.LENGTH_LONG).show(); return }
-        android.app.AlertDialog.Builder(act).setTitle(ctx.getString(R.string.store_bar_adb_detail_title)).setMessage(detail)
-            .setPositiveButton(ctx.getString(R.string.store_bar_adb_status_page)) { _, _ -> StoreShell.arm(ctx.applicationContext) }
-            .setNegativeButton(android.R.string.cancel, null).show()
+        // the full status is the button's description and, on a long press, a sheet (a Popup) with the ADB Status page as its target
+        var sheet by remember { androidx.compose.runtime.mutableStateOf(false) }
+        val detail = ch?.let { ControlStatus.label(it) }
+        Box(modifier) {
+            Button(chLabel,
+                when (ControlStatus.ink(ch)) { ControlStatus.Ink.GREEN -> Ink.GREEN_FILL; ControlStatus.Ink.AMBER -> AMBER
+                    ControlStatus.Ink.RED -> RED_FILL; ControlStatus.Ink.GREY -> Ink.GREY_FILL },
+                { StoreShell.arm(ctx) }, Modifier.fillMaxWidth(), itemTag(Item.WIRELESS_DEBUG), description = detail,
+                // Rule 16: the long status is not drawn on the page; a long press shows it, with the ADB Status page as the target.
+                onLongClick = detail?.let { { sheet = true } })
+            if (sheet && detail != null) androidx.compose.ui.window.Popup(alignment = Alignment.BottomCenter,
+                onDismissRequest = { sheet = false }, properties = androidx.compose.ui.window.PopupProperties(focusable = true)) {
+                Column(Modifier.background(Color(0xFF1E2430)).padding(sdp(StoreDensity.S8)).testTag("$TAG:ADB_SHEET")) {
+                    Text(ctx.getString(R.string.store_bar_adb_detail_title), color = Color.White, fontSize = StoreDensity.T_META.sp, fontWeight = FontWeight.Bold)
+                    Text(detail, color = Color(Ink.DIM), fontSize = StoreDensity.T_META.sp)
+                    Button(ctx.getString(R.string.store_bar_adb_status_page), Ink.BLUE_FILL, { sheet = false; StoreShell.arm(ctx.applicationContext) },
+                        Modifier.fillMaxWidth(), "$TAG:ADB_STATUS_PAGE")
+                }
+            }
+        }
     }
 
     private const val RED_FILL = 0xFFC53030.toInt()
