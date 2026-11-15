@@ -445,11 +445,11 @@
     },
     "ac_cloud-tasks": {
       "first_test": "COVERED NOW: app/src/test holds the JVM suite - the tasks database (ordered additive migrations, a v1 file with data upgrading intact, first-run seed and its idempotency, tags many-to-many, subtasks with every task field), the filter logic (status and tags, persisted, pruned), the mail agent (extraction wire, one pass of the runner, backend probe, scheduler floor) and Robolectric Compose layout-tree tests of the chrome (top row, page-managed drawer, island, filter bar, task editor fields, Settings > Appearance / Agent, AI panel). test/test-tasks-nav.sh diffs build.json::ui against the Kotlin ids both ways and holds the shell to the fleet's pieces; test-agents-parser.sh runs the screenshot parser. NOT COVERED: the legacy tasks.html pages (Events, Calendar, Invites, Feeds) beyond the parser; nothing drives a real WebView, Cloud Mail's provider, the system document picker or the live AI gateway, so the agent's extraction against a real model and the Cloud Drive / Cloud Mail hand-offs are unverified on hardware.",
-      "shell_testers": 4,
+      "shell_testers": 5,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 14,
+      "unit_test_sources": 18,
       "workflow": "ship-cloud-tasks.yml"
     },
     "ac_cloud-termux": {
