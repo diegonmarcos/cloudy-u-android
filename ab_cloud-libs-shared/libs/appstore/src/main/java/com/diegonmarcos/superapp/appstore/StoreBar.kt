@@ -96,10 +96,13 @@ internal fun rememberStoreControls(): StoreControls.Decl {
 }
 
 /** A plain tap target, without the ripple the dense store rows never use. */
+internal fun Modifier.tap(onClick: (() -> Unit)?): Modifier =
+    if (onClick == null) this else this.clickable(interactionSource = null, indication = null, onClick = onClick)
+
+/** [tap] plus a long press (the ADB button's detail sheet). */
 @OptIn(ExperimentalFoundationApi::class)
-internal fun Modifier.tap(onClick: (() -> Unit)?, onLongClick: (() -> Unit)? = null): Modifier =
-    if (onClick == null) this
-    else if (onLongClick == null) this.clickable(interactionSource = null, indication = null, onClick = onClick)
+internal fun Modifier.tapOrHold(onClick: (() -> Unit)?, onLongClick: (() -> Unit)?): Modifier =
+    if (onClick == null || onLongClick == null) tap(onClick)
     else this.combinedClickable(interactionSource = null, indication = null, onClick = onClick, onLongClick = onLongClick)
 
 internal fun Modifier.tagged(tag: String?): Modifier = if (tag == null) this else this.testTag(tag)
@@ -375,7 +378,7 @@ object StoreBar {
                     if (description != null) contentDescription = description
                     if (!on) disabled()
                 }
-                .tap(if (on) onClick else null, if (on) onLongClick else null)
+                .tapOrHold(if (on) onClick else null, if (on) onLongClick else null)
                 .padding(horizontal = sdp(StoreDensity.S8), vertical = sdp(StoreDensity.S6)),
             contentAlignment = Alignment.Center,
         ) {
