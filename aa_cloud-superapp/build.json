@@ -7026,21 +7026,6 @@
         ]
       },
       {
-        "id": "media_games",
-        "order": "490",
-        "label": "~Games",
-        "match_keywords": [
-          "pkg:com.epicgames.portal",
-          "pkg:com.playdead.limbo.egs.full",
-          "pkg:com.samsung.android.game.gamehome",
-          "pkg:com.werewolfapps.online",
-          "pkg:org.faudroids.werewolf"
-        ],
-        "match_metadata": [
-          "cat:game"
-        ]
-      },
-      {
         "id": "svc_search",
         "order": "510",
         "label": "+Search",
@@ -7184,6 +7169,21 @@
         "order": "590",
         "label": "+KG Store",
         "match_keywords": []
+      },
+      {
+        "id": "media_games",
+        "order": "595",
+        "label": "+Games",
+        "match_keywords": [
+          "pkg:com.epicgames.portal",
+          "pkg:com.playdead.limbo.egs.full",
+          "pkg:com.samsung.android.game.gamehome",
+          "pkg:com.werewolfapps.online",
+          "pkg:org.faudroids.werewolf"
+        ],
+        "match_metadata": [
+          "cat:game"
+        ]
       },
       {
         "id": "prod_ai",
@@ -7400,7 +7400,7 @@
         "sink": true
       }
     ],
-    "_doc_phone_sections": "Top-level section headers in the Home Apps/Phone tab and Cloud apps listing, ONE category system shared with the Quickmarks groups (#1756). Folders are bucketed under a section by their label's first character: Tools · Primary (=), Tools · Communication (@), Tools · Data (.), Tools · Me (~), Services (+), AGI (*), Projects (#), Setup (_). Order = render order = the Quickmarks group order Primary, Communication, Data, Me, Services, AGI, Projects, Setup. A folder whose label starts with none of those prefixes belongs to no section and renders last (the Others and Misc sinks). The split is Service vs Tool: a SERVICE is a client for one external provider you hold an account, contract or booking with (Search, Events, Shopping, Mobility & Travel, Jobs & Business, Real Estate, Money, KG Store). DECISIONS: Money stays in Services (one folder, no duplicate in Me): a bank or broker app is a client of one provider you hold an account with, and the owner listed Money under Services; Real Estate (housing SEARCH: ImmoScout, WG-Gesucht) stays in Services while Home & Housing (building access, neighbours, self-storage: the paperwork side) goes to Me; a TOOL operates on your own data or device. Tools · Primary: Maps & Weather, Utilities, Web. Tools · Communication: Chat, Mail, Phone & Contacts, Social, News & Reading. Tools · Data: Calendar & Tasks, Docs & Notes, Storage. Tools · Me: Gov & ID, Telecom, Health, Home & Housing (the Buro paperwork: ids, carrier accounts, health admin and trackers, access/neighbours/storage), Outdoor & Sport, Nutrition, Learning, i.e. everything personal. Every section is a set of subtype folders; no app sits loose outside a folder. AGI: AI and Terminals. Projects: Lnktree, our four project apps (Omniverse, FinTerm, CAD, Sim2Real). Setup absorbs the former System section (Dev, Diagnostics, Keyboards, Network, Security, Settings, Stores). Retired prefixes: '-' Buro and '>' Media and '*' Health ('*' is now AGI); the former Services · Others '+' is now Services. Folder ids are stable keys and did not change when the labels did, except svc_travel, which merged into svc_mobility (Mobility & Travel). Empty sections are silently skipped. PROJECTS IS A SECTION HERE since #1756: the earlier ban (2026-09-10) was about a Projects section holding a folder named Projects; the section now holds the Lnktree folder, and the Projects quickmark group is unchanged.",
+    "_doc_phone_sections": "Top-level section headers in the Home Apps/Phone tab and Cloud apps listing, ONE category system shared with the Quickmarks groups (#1756). Folders are bucketed under a section by their label's first character: Tools · Primary (=), Tools · Communication (@), Tools · Data (.), Tools · Me (~), Services (+), AGI (*), Projects (#), Setup (_). Order = render order = the Quickmarks group order Primary, Communication, Data, Me, Services, AGI, Projects, Setup. A folder whose label starts with none of those prefixes belongs to no section and renders last (the Others and Misc sinks). The split is Service vs Tool: a SERVICE is a client for one external provider you hold an account, contract or booking with (Search, Events, Shopping, Mobility & Travel, Jobs & Business, Real Estate, Money, KG Store, Games). DECISIONS: Games (media_games, was under Me) moved to Services, every app in it stays; Money stays in Services (one folder, no duplicate in Me): a bank or broker app is a client of one provider you hold an account with, and the owner listed Money under Services; Real Estate (housing SEARCH: ImmoScout, WG-Gesucht) stays in Services while Home & Housing (building access, neighbours, self-storage: the paperwork side) goes to Me; a TOOL operates on your own data or device. Tools · Primary: Maps & Weather, Utilities, Web. Tools · Communication: Chat, Mail, Phone & Contacts, Social, News & Reading. Tools · Data: Calendar & Tasks, Docs & Notes, Storage. Tools · Me: Gov & ID, Telecom, Health, Home & Housing (the Buro paperwork: ids, carrier accounts, health admin and trackers, access/neighbours/storage), Outdoor & Sport, Nutrition, Learning, i.e. everything personal. Every section is a set of subtype folders; no app sits loose outside a folder. AGI: AI and Terminals. Projects: Lnktree, our four project apps (Omniverse, FinTerm, CAD, Sim2Real). Setup absorbs the former System section (Dev, Diagnostics, Keyboards, Network, Security, Settings, Stores). Retired prefixes: '-' Buro and '>' Media and '*' Health ('*' is now AGI); the former Services · Others '+' is now Services. Folder ids are stable keys and did not change when the labels did, except svc_travel, which merged into svc_mobility (Mobility & Travel). Empty sections are silently skipped. PROJECTS IS A SECTION HERE since #1756: the earlier ban (2026-09-10) was about a Projects section holding a folder named Projects; the section now holds the Lnktree folder, and the Projects quickmark group is unchanged.",
     "phone_sections": [
       {
         "title": "Tools · Primary",

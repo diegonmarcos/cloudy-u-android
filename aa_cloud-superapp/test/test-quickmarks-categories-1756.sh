@@ -69,8 +69,8 @@ want = {
  '=': ['Browser', 'Nav', 'Calc', 'Camera', 'Keyboard', 'Wallet', 'Utilities'],
  '@': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts', 'Social'],
  '.': ['Drive', 'Notes', 'Agenda', 'Office', 'Gallery', 'Media Center', 'Vault'],
- '~': ['Me', 'Health', 'Gov & ID', 'Telecom', 'Home & Housing', 'Outdoor & Sport', 'Nutrition', 'Learning', 'Games'],
- '+': ['Search', 'News', 'Shopping', 'Events', 'Mobility & Travel', 'Jobs & Business', 'Real Estate', 'Money', 'KG Store'],
+ '~': ['Me', 'Health', 'Gov & ID', 'Telecom', 'Home & Housing', 'Outdoor & Sport', 'Nutrition', 'Learning'],
+ '+': ['Search', 'News', 'Shopping', 'Events', 'Mobility & Travel', 'Jobs & Business', 'Real Estate', 'Money', 'KG Store', 'Games'],
  '*': ['AI', 'Code', 'Terminal', 'Tools'], '#': ['SuperApp', 'Omniverse', 'FinTerm', 'CAD', 'Sim2Real'],
  '_': ['Store', 'Account', 'C3 & Dev', 'Diagnostics', 'Network', 'Security', 'Settings'],
 }

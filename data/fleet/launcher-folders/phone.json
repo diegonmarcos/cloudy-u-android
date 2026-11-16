@@ -199,13 +199,6 @@
       "order": 480
     },
     {
-      "section": "Tools · Me",
-      "id": "media_games",
-      "label": "~Games",
-      "icon": "",
-      "order": 490
-    },
-    {
       "section": "Services",
       "id": "svc_search",
       "label": "+Search",
@@ -267,6 +260,13 @@
       "label": "+KG Store",
       "icon": "",
       "order": 590
+    },
+    {
+      "section": "Services",
+      "id": "media_games",
+      "label": "+Games",
+      "icon": "",
+      "order": 595
     },
     {
       "section": "AGI",
