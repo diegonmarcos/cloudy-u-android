@@ -146,8 +146,10 @@ xy=$(more_of '2 selected') || fail "no selection-bar More: $(texts)"
 adb shell input tap $xy; sleep 2; shot 11a-menu-multi
 for t in 'Convert' 'Convert…' 'Convert to PDF…' 'Delete all' 'Select all'; do dump | grep -q "$t" || fail "multi menu lacks '$t': $(texts)"; done
 tap '^Convert…$' || fail "multi Convert… not found: $(texts)"; sleep 2; shot 11b-menu-multi-convert-expanded
-dump | grep -q 'JPG image' || fail "expanded Convert lists no targets: $(texts)"
+dump | grep -q 'HTML page' || fail "expanded Convert lists no targets: $(texts)"
 dump | grep -q 'not available for' || fail "mixed png+txt shows no unavailable reason: $(texts)"
+# the rest of the targets (image targets, PDF, from-PDF) are below the fold of this small screen: scroll the menu and shoot again
+adb shell input swipe 200 520 200 120 400; sleep 1; shot 11c-menu-multi-convert-targets-scrolled
 close_menu; tap 'Clear selection' || true; sleep 1
 
 # 2. conversions
