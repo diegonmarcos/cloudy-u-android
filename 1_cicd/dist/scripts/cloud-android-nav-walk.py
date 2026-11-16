@@ -97,6 +97,7 @@ class Node:
         self.l, self.t, self.r, self.b = (int(x) for x in m.groups()) if m else (0, 0, 0, 0)
         self.scrollable, self.clickable = a.get("scrollable") == "true", a.get("clickable") == "true"
         self.pkg, self.cls = a.get("package", ""), a.get("class", "")
+        self.selected = a.get("selected") == "true"
 
     @property
     def cx(self): return (self.l + self.r) // 2
@@ -261,6 +262,7 @@ class Walk:
         self.a = a
         self.pkg = a.pkg
         self.out = a.out
+        self.deadline = time.time() + a.budget_min * 60  # the walk's own budget (--budget-min): what is left after it is reported failed
         self.shots = set(x for x in (a.shots or "").split(",") if x)
         os.makedirs(os.path.join(self.out, "shots"), exist_ok=True)
         os.makedirs(os.path.join(self.out, "dumps"), exist_ok=True)
@@ -566,6 +568,21 @@ class Walk:
                 if tab is not None:
                     tap(tab)
                     settle(1.6)
+                    # #1760 a tap on a second-row tab that the page did not take (Cloud C3 Ops > Orchestration, Health, Observability: the strip
+                    # stayed on Mail for 40 minutes of retries) is repeated on the tab's label and icon, then the tab again, before it is
+                    # given up; the tab is "selected" in the hierarchy once the page took it
+                    for part in ("pagetabs_label_", "pagetabs_icon_", TAB):
+                        now = dump() or []
+                        t2 = find(now, TAB + pid)
+                        if t2 is None or t2.selected:
+                            return True
+                        tgt = find(now, part + pid) if part != TAB else t2
+                        tap(tgt or t2)
+                        settle(2.0)
+                    now = dump() or []
+                    t2 = find(now, TAB + pid)
+                    if t2 is not None and not t2.selected:
+                        self.evidence("strip_tab_%s" % pid.replace("/", "_"))
                     return True
                 strips = findall(nodes, STRIP)
                 if not strips:
@@ -1134,6 +1151,10 @@ class Walk:
         # the section itself (its first page is what it opens on)
         self.run_page(sid, sid, sec.get("label", sid), False)
         for pid, label, launch, up in pages:
+            if time.time() > self.deadline:
+                self.results.append({"section": sid, "page": pid, "label": label, "status": "FAIL", "checks": {}, "seconds": 0,
+                                     "failures": ["walk budget of %d min exhausted before this page: shard the app (nav-walk-apps.json shard)" % self.a.budget_min]})
+                continue
             if launch:
                 self.results.append({"section": sid, "page": pid, "label": label, "status": "SKIP", "checks": {"note": "launch hand-off to another app, not a page"},
                                      "failures": [], "seconds": 0})
@@ -1178,9 +1199,8 @@ class Walk:
             shard_i, shard_n = (int(x) for x in self.a.shard.split("/"))
             if shard_n > 1:
                 order = shard_sections(order, {x: 1 + len(pages_of(self.sections.get(x) or {})) for x in order}, shard_i, shard_n)
-            deadline = time.time() + self.a.budget_min * 60
             for sid in order:
-                if time.time() > deadline:
+                if time.time() > self.deadline:
                     # the job's own budget, kept under the runner's step timeout: what is left is REPORTED as failed (the report and the
                     # evidence of everything walked still upload), never lost to a killed step
                     self.results.append({"section": sid, "page": "-", "label": sid, "status": "FAIL", "checks": {},
