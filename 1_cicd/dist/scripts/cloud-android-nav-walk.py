@@ -300,11 +300,21 @@ class Walk:
         else:
             shell("am start -W -n %s" % act, timeout=120)
         deadline = time.time() + 150  # a first-run wizard (Cloud Gallery: five steps) is tapped through
+        prepared = False
         while time.time() < deadline:
             nodes = dump(2)
             if nodes and any(n.rid.startswith(ITEM) for n in nodes):
                 settle(1.5)
                 return nodes
+            # #1717 an app that starts in its own full-screen shell (Cloud Notes: the vault) declares `launch_ready` (a text, description or
+            # resource id of that shell) and `launch_prepare` (scene steps that bring the shared bars up, once): the section walk then
+            # starts from the bars exactly as for every other app.
+            ready = self.cfg.get("launch_ready")
+            if nodes and ready and not prepared and self.find_any(nodes, ready) is not None:
+                prepared = True
+                for st in self.cfg.get("launch_prepare", []):
+                    self.scene_step(st)
+                continue
             if nodes and clear_blockers(nodes):
                 settle(1.5)
                 continue
@@ -1235,6 +1245,19 @@ class Walk:
             shell(str(arg).replace("{pkg}", self.pkg)); return True
         if kind == "key":
             shell("input keyevent %s" % arg); settle(1.0); return True
+        if kind == "stop":  # #1717 kill the app (a swipe-away / process death): its tabs and prefs must come back from storage
+            shell("am force-stop %s" % self.pkg); settle(2); return True
+        if kind == "start":  # #1717 launch it again from the launcher and wait [arg] seconds for it to boot
+            shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % self.pkg); settle(float(arg or self.cfg.get("scene_boot_s", 8))); return True
+        if kind == "shot":  # #1717 an extra screenshot inside a scene: <scene name>_<arg>
+            self.evidence("%s_%s" % (self.scene_name, arg)); return True
+        if kind == "expect":  # #1717 a node (resource id, text or description) must be on screen within 10 s; a miss fails the scene
+            deadline = time.time() + 10
+            while time.time() < deadline:
+                if self.find_any(dump(2), arg) is not None:
+                    return True
+                settle(1.0)
+            return False
         if kind == "view":  # #1401 open the deterministic local test page (start_page) in the app, as a VIEW intent
             uri = self.start_page()
             if not uri:
@@ -1275,6 +1298,7 @@ class Walk:
                     self.scene_step(st)
                 for sc in scenes:
                     name, t0 = "scene_%s_%s" % (theme, sc["name"]), time.time()
+                    self.scene_name = name
                     shell("am force-stop %s" % self.pkg)
                     shell("monkey -p %s -c android.intent.category.LAUNCHER 1" % self.pkg)
                     settle(float(self.cfg.get("scene_boot_s", 8)))
@@ -1282,9 +1306,9 @@ class Walk:
                     settle(1.5)
                     self.evidence(name)
                     self.results.append({"section": "scene", "page": "%s/%s" % (theme, sc["name"]), "label": sc["name"],
-                                         "status": "SKIP" if missed else "PASS",
+                                         "status": ("FAIL" if sc.get("assert") else "SKIP") if missed else "PASS",
                                          "checks": {"note": ("step found nothing: %r" % (missed,)) if missed else "shots/%s.png" % name},
-                                         "failures": [], "seconds": int(time.time() - t0)})
+                                         "failures": ["step found nothing: %r" % (missed,)] if missed and sc.get("assert") else [], "seconds": int(time.time() - t0)})
         finally:
             shell("cmd uimode night no")
             shell("settings put global cloud_nav_ui_mode classic")
