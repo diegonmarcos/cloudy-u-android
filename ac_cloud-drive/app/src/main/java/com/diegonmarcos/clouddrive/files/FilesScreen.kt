@@ -752,7 +752,7 @@ private fun EntryRow(
                     canEdit = canEdit, canEditor = canEditor, isPdf = isPdf,
                     canUnzip = RowMenu.Item.UNZIP in rowItems, canConvert = RowMenu.Item.CONVERT in rowItems,
                 ))
-                if (groups.isNotEmpty()) GroupedFileMenu(groups) { id -> menu = false; itemMenuAction(id)?.let(onMenu) }
+                if (groups.isNotEmpty()) GroupedFileMenu(groups, onPick = { id -> menu = false; itemMenuAction(id)?.let(onMenu) })
                 val sections = if (groups.isNotEmpty()) emptyList() else EntryMenu.sectionsFor(entry.isDirectory, local != null, rowItems, canEdit, canEditor, isPdf, underGit)
                 sections.forEachIndexed { i, section ->
                     if (i > 0) HorizontalDivider()
