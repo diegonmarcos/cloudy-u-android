@@ -67,6 +67,7 @@ import app.sterna.core.data.db.MailboxDao
 import app.sterna.core.data.db.MailboxIdRole
 import app.sterna.core.data.db.MailboxUnread
 import app.sterna.core.data.getOrElseUnlessCancelled
+import app.sterna.core.data.rethrowIfCancelled
 import app.sterna.core.data.pgp.PgpEngine
 import app.sterna.core.data.settings.SettingsRepository
 import app.sterna.core.data.settings.SortOrder
