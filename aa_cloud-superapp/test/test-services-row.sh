@@ -22,7 +22,7 @@ check() {
   eq "Search and KG Store left AGI" "$(jq -r "$G | select(.title == \"AGI\") | [.tiles[] | select(.label == \"Search\" or .label == \"KG Store\")] | length" "$bj")" "0"
   eq "News left Data (renamed from 'Data Apps', #1627)" "$(jq -r "$G | select(.title == \"Data\") | [.tiles[] | select(.label == \"News\")] | length" "$bj")" "0"
   eq "the Shopping app resolves in ui.external_apps" "$(jq -r '[.ui.external_apps[] | select(.id == "cloud-shopping") | .install_package] | join(",")' "$bj")" "com.diegonmarcos.cloudshopping"
-  eq "Store > Cloud > Apps groups Search, News, Shopping, KG Store under Services" "$(jq -r '.app_categories[] | select(.label == "Services") | .members | join(",")' "$fleet")" "search,news,shopping,kg-store"
+  eq "Store > Cloud > Apps groups Search, News, Media Center, Shopping, KG Store under Services" "$(jq -r '.app_categories[] | select(.label == "Services") | .members | join(",")' "$fleet")" "search,news,media-center,shopping,kg-store"
   eq "Data (renamed from 'Data Apps', #1627) no longer lists news in the Store" "$(jq -r '.app_categories[] | select(.label == "Data") | .members | index("news")' "$fleet")" "null"
 }
 echo "[services-row] the real tree"; check "$BJ" "$FLEET"
