@@ -133,8 +133,14 @@ open_menu photo.png; shot 02b-menu-single-png
 for t in 'Convert…' 'Convert to PDF…' 'Delete' 'Properties'; do dump | grep -q "$t" || fail "single menu lacks '$t': $(texts)"; done
 close_menu
 xy=$(where '^photo.png$') || fail "no photo.png row: $(texts)"
-adb shell input swipe $xy $xy 900 2>/dev/null || adb shell input swipe ${xy% *} ${xy#* } ${xy% *} ${xy#* } 900
-sleep 2; tap '^data.txt$' || fail "no data.txt row to add to the selection: $(texts)"; sleep 2
+X=${xy% *}; Y=${xy#* }
+for drag in "$X $Y $X $Y 1200" "$X $Y $((X+1)) $Y 1500" "$X $Y $X $((Y+1)) 2000"; do
+  adb shell input swipe $drag; sleep 2
+  dump | grep -q '1 selected' && break
+done
+shot 10c-after-long-press
+dump | grep -q '1 selected' || fail "long-press did not start a selection: $(texts)"
+sleep 1; tap '^data.txt$'  || fail "no data.txt row to add to the selection: $(texts)"; sleep 2
 dump | grep -q '2 selected' || fail "two files are not selected: $(texts)"
 xy=$(more_of '2 selected') || fail "no selection-bar More: $(texts)"
 adb shell input tap $xy; sleep 2; shot 11a-menu-multi
