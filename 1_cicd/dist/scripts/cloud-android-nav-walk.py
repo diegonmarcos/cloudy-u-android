@@ -1088,12 +1088,13 @@ class Walk:
                     else:
                         seen = []
                         for f in FC_ABOUT_FIELDS:
-                            if self.find_scrolling(FC_ABOUT + f) is None:
+                            # frames: Cloud Me's Permissions card (every runtime and special permission it holds) is longer than 8 swipes
+                            if self.find_scrolling(FC_ABOUT + f, frames=30) is None:
                                 fails.append("C5 About has no %s card" % f)
                             else:
                                 seen.append(f)
                         for btn in ("fleetcfg_open_store", "fleetcfg_open_superapp"):
-                            if self.find_scrolling(btn) is None:
+                            if self.find_scrolling(btn, frames=30) is None:
                                 fails.append("C5 About has no %s button" % btn)
                         checks["fields"] = "%d/%d" % (len(seen), len(FC_ABOUT_FIELDS))
                         for _ in range(8):
