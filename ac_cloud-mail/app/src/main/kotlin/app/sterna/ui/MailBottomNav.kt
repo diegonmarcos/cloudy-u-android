@@ -90,11 +90,11 @@ fun BottomNavBar(nav: NavController, currentRoute: String, content: @Composable 
 }
 
 /**
- * The section that declares [route] as one of its pages when [route] is not that section's own root page (a sub-page opened from inside it,
+ * The section that declares [route] as one of its pages when [route] is not that section's first page (the page its bar item opens) (a sub-page opened from inside it,
  * Home > Webmail); null for a section root or an undeclared route. [pagesBySection] is ui.sections' id to page ids.
  */
 internal fun subpageSection(route: String, pagesBySection: Map<String, List<String>>): String? =
-    pagesBySection.entries.firstOrNull { (sec, pages) -> sec != route && route in pages }?.key
+    pagesBySection.entries.firstOrNull { (_, pages) -> route in pages.drop(1) }?.key
 
 /** One item tapped. A destination navigates, and a launch hands off without moving the selection. */
 private fun onItemTap(
