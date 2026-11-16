@@ -115,12 +115,12 @@ class SyncCursorDropWiringTest {
         // FullQueryStreamingWiringTest and executed by FullQueryWriteThroughTest. What this test
         // still owns is the sizing reaching the wire.
         assertLine("syncMailboxWindow", "val full = fullQuerySizing(")
-        assertLine("syncMailboxWindow", "accountStore.account(localAccountId)?.syncWindow?.limit,")
+        assertLine("syncMailboxWindow", "accountStore.account(localAccountId)?.syncWindow?.walkLimit,")
         assertLine("syncMailboxWindow", "sizing.windowTarget,")
         assertLine("syncMailboxWindow", "session.getBatchSize(),")
         assertLine(
             "syncMailboxWindow",
-            "walk = { onPage -> client.queryEmailsWindow(session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage) },",
+            "walk = { onPage -> client.queryEmailsWindow(session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage, ageCutoff) },",
         )
     }
 

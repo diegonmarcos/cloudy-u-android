@@ -285,9 +285,20 @@ class BoundedFolderReadsSqlTest {
         }
     }
 
-    @Test fun `the body prefetch asks for PREFETCH_COUNT ids and nothing else`() {
-        assertLine("prefetchInboxBodies", "val newest = emailDao.newestIds(credentials.id, mailboxId, PREFETCH_COUNT)")
+    @Test fun `the body prefetch reads a bounded number of ids in the statement and nothing else`() {
+        // #1763: the prefetch covers the offline window, not 20 messages, so the read is `newestWithoutBody(.., limit)` with the
+        // limit taken from the budget; the bound is still the statement's (a LIMIT), never a Kotlin `take` on a folder read.
+        assertTrue(
+            "the prefetch read must still be handed its limit",
+            bodyLines("bodyPrefetchPort").any { it.startsWith("emailDao.newestWithoutBody(") },
+        )
+        assertTrue("the statement carries the LIMIT", "LIMIT :limit" in DaoQuerySource.emailDaoQuery("newestWithoutBody"))
+        assertNoUnboundedRead("bodyPrefetchPort")
         assertNoUnboundedRead("prefetchInboxBodies")
+        for (trigger in PrefetchTrigger.entries) {
+            val budget = prefetchBudget(PrefetchConditions.UNRESTRICTED, trigger)
+            assertTrue("a prefetch pass is bounded (${budget.maxIds} ids)", budget.maxIds <= 5_000)
+        }
     }
 
     @Test fun `the unread fallback carries the same bound as the server walk beside it`() {
@@ -339,11 +350,8 @@ class BoundedFolderReadsSqlTest {
     @Test fun `the memory nets stay the size of memory nets`() {
         // Order of magnitude, not the exact figure: these two are the ONLY thing standing between
         // a deep folder and an OutOfMemoryError once the sync window is unpinned, and both are
-        val prefetch = Regex("""private const val PREFETCH_COUNT = (\d[\d_]*)""")
-            .find(DaoQuerySource.mailSource("MailRepository"))
-            ?.groupValues?.get(1)?.replace("_", "")?.toInt()
-            ?: error("PREFETCH_COUNT is no longer declared as a private const in MailRepository")
-        assertTrue("PREFETCH_COUNT is $prefetch — that is a folder read, not a prefetch", prefetch <= 100)
+        // #1763: the prefetch net is PREFETCH_PASS_MAX_IDS (ids per pass, ids only, read with a LIMIT); it replaced PREFETCH_COUNT = 20.
+        assertTrue("PREFETCH_PASS_MAX_IDS is $PREFETCH_PASS_MAX_IDS — that is a folder read, not a prefetch", PREFETCH_PASS_MAX_IDS <= 5_000)
         assertTrue("NOTIFY_CANDIDATE_MAX is $NOTIFY_CANDIDATE_MAX rows in a push service", NOTIFY_CANDIDATE_MAX <= 2_000)
     }
 

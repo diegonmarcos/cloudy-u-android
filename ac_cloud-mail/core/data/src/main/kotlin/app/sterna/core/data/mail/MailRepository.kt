@@ -67,9 +67,7 @@ import app.sterna.core.data.db.MailboxDao
 import app.sterna.core.data.db.MailboxIdRole
 import app.sterna.core.data.db.MailboxUnread
 import app.sterna.core.data.getOrElseUnlessCancelled
-import app.sterna.core.data.rethrowIfCancelled
 import app.sterna.core.data.pgp.PgpEngine
-import app.sterna.core.data.rethrowIfCancelled
 import app.sterna.core.data.settings.SettingsRepository
 import app.sterna.core.data.settings.SortOrder
 import app.sterna.core.jmap.BasicAuth
@@ -1212,14 +1210,11 @@ class MailRepository(
             sizing.windowTarget,
             session.getBatchSize(),
         )
+        // The walk ends on the first page that reaches mail older than the window (null = a count window, no age).
+        val ageCutoff = accountStore.account(localAccountId)?.syncWindow?.walkCutoffMillis(System.currentTimeMillis())
         val walked = fullQueryWriteThrough<List<Email>, WindowWalk>(
             folderIds = { emailDao.idsForMailbox(localAccountId, mailboxId).toSet() },
-            walk = { onPage ->
-                client.queryEmailsWindow(
-                    session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage,
-                    stopBeforeMillis = accountStore.account(localAccountId)?.syncWindow?.walkCutoffMillis(System.currentTimeMillis()),
-                )
-            },
+            walk = { onPage -> client.queryEmailsWindow(session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage, ageCutoff) },
             writePage = { fresh ->
                 checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
                 emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })
@@ -2985,7 +2980,13 @@ class MailRepository(
             try {
                 do {
                     prefetchAgain.remove(key)
-                    runCatching { prefetchFolderBodies(credentials, mailboxId) }.rethrowIfCancelled()
+                    try {
+                        prefetchFolderBodies(credentials, mailboxId)
+                    } catch (c: CancellationException) {
+                        throw c
+                    } catch (_: Throwable) {
+                        // best-effort: a failed pass is retried by the next sync chunk
+                    }
                 } while (prefetchAgain.containsKey(key))
             } finally {
                 prefetchRunning.remove(key)
@@ -3024,11 +3025,11 @@ class MailRepository(
     fun prefetchNeighbours(credentials: AccountCredentials, emailId: String) {
         if (credentials.protocol == MailProtocol.IMAP) return
         bgScope.launch {
-            runCatching {
-                val mailboxId = emailDao.mailboxOf(credentials.id, emailId) ?: return@runCatching
+            try {
+                val mailboxId = emailDao.mailboxOf(credentials.id, emailId) ?: return@launch
                 // Inbox only, same rule as the list prefetch (an unopened neighbour must not plant a key).
-                if (mailboxDao.roleForId(credentials.id, mailboxId) != "inbox") return@runCatching
-                val key = emailDao.sortKeyOf(credentials.id, emailId) ?: return@runCatching
+                if (mailboxDao.roleForId(credentials.id, mailboxId) != "inbox") return@launch
+                val key = emailDao.sortKeyOf(credentials.id, emailId) ?: return@launch
                 val older = emailDao.olderIds(credentials.id, mailboxId, key, PREFETCH_NEIGHBOURS_EACH_SIDE)
                 val newer = emailDao.newerIds(credentials.id, mailboxId, key, PREFETCH_NEIGHBOURS_EACH_SIDE)
                 // Nearest first, alternating after / before, so a budget cut keeps the closest ones.
@@ -3042,22 +3043,28 @@ class MailRepository(
                     "neighbours of $emailId requested=${result.requested} " +
                         "skipped=${result.skipped} ms=${(System.nanoTime() - t0) / 1_000_000}",
                 )
-            }.rethrowIfCancelled()
+            } catch (c: CancellationException) {
+                throw c
+            } catch (_: Throwable) {
+                // best-effort
+            }
         }
     }
 
-    private fun bodyPrefetchPort(credentials: AccountCredentials, mailboxId: String) = object : BodyPrefetchPort {
-        override suspend fun missingNewest(limit: Int): List<String> =
-            emailDao.newestWithoutBody(
-                credentials.id, mailboxId, offlineWindow.cutoffMillis(System.currentTimeMillis()) ?: Long.MIN_VALUE, limit,
-            )
+    private fun bodyPrefetchPort(credentials: AccountCredentials, mailboxId: String): BodyPrefetchPort {
+        return object : BodyPrefetchPort {
+            override suspend fun missingNewest(limit: Int): List<String> =
+                emailDao.newestWithoutBody(
+                    credentials.id, mailboxId, offlineWindow.cutoffMillis(System.currentTimeMillis()) ?: Long.MIN_VALUE, limit,
+                )
 
-        override suspend fun missingAmong(ids: List<String>): List<String> {
-            val have = ids.chunked(500).flatMap { emailBodyDao.cachedIds(credentials.id, it) }.toSet()
-            return ids.filter { it !in have }
+            override suspend fun missingAmong(ids: List<String>): List<String> {
+                val have = ids.chunked(500).flatMap { emailBodyDao.cachedIds(credentials.id, it) }.toSet()
+                return ids.filter { it !in have }
+            }
+
+            override suspend fun fetchAndStore(ids: List<String>) = fetchAndStoreBodies(credentials, ids)
         }
-
-        override suspend fun fetchAndStore(ids: List<String>) = fetchAndStoreBodies(credentials, ids)
     }
 
     /** One batched Email/get for [ids] and every body written to the cache (the prefetch's only fetch). */

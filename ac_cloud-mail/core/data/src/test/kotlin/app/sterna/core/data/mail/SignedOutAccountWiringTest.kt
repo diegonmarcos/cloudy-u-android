@@ -55,9 +55,11 @@ class SignedOutAccountWiringTest {
                 "writePage = { fresh ->",
                 "$guard(localAccountId, accountStore.accounts().map { it.id })",
                 "emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })",
+                // #1763: AFTER the guarded write, a landed chunk asks for its bodies (inbox only, throttled).
+                "onSyncChunkLanded(localAccountId, mailboxId)",
                 "},",
             ),
-            block("syncMailboxWindow", "writePage = { fresh ->", 4),
+            block("syncMailboxWindow", "writePage = { fresh ->", 5),
         )
     }
 

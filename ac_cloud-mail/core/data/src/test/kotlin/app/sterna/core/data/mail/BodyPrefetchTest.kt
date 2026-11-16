@@ -88,7 +88,7 @@ class BodyPrefetchTest {
         assertFalse(b(false, true, false, near).allowed)
         // Wi-Fi: the whole window, capped concurrency.
         val wifiBudget = b(true, true, false, list)
-        assertEquals(Int.MAX_VALUE, wifiBudget.maxIds)
+        assertEquals(PREFETCH_PASS_MAX_IDS, wifiBudget.maxIds)
         assertEquals(PREFETCH_MAX_CONCURRENCY, wifiBudget.concurrency)
         assertEquals(PREFETCH_BATCH, wifiBudget.batchSize)
         // Metered: only the newest batch, one call at a time.
@@ -207,7 +207,7 @@ class BodyPrefetchTest {
             "a prefetched body hands the sender's key to OpenKeychain: only the inbox is ever warmed",
             """mailboxDao.roleForId(credentials.id, mailboxId) != "inbox") return""" in bodyOf("prefetchFolderBodies"),
         )
-        assertTrue("""!= "inbox") return@runCatching""" in bodyOf("prefetchNeighbours"))
+        assertTrue("""!= "inbox") return@launch""" in bodyOf("prefetchNeighbours"))
     }
 
     @Test fun `the open is timed phase by phase`() {

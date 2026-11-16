@@ -75,7 +75,7 @@ class FullQueryStreamingWiringTest {
         )
         assertLine(
             "MailRepository", "syncMailboxWindow",
-            "walk = { onPage -> client.queryEmailsWindow(session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage) },",
+            "walk = { onPage -> client.queryEmailsWindow(session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage, ageCutoff) },",
         )
         // writePage became a block when the sign-out guard moved into it: the page is refused
         // when the account is no longer configured. The guard line and its position inside the

@@ -41,6 +41,10 @@ internal const val PREFETCH_MAX_CONCURRENCY = 2
 /** What a metered link may spend on the list: one batch (the newest messages), one call at a time. */
 internal const val PREFETCH_METERED_MAX_IDS = 25
 
+/** Ids one list pass reads and fetches at most, newest first: the read is bounded in the statement, and the next
+ *  sync chunk's pass continues with what is still missing. */
+internal const val PREFETCH_PASS_MAX_IDS = 2_000
+
 /** Neighbours prefetched on each side of the open mail. */
 internal const val PREFETCH_NEIGHBOURS_EACH_SIDE = 2
 
@@ -57,7 +61,7 @@ fun prefetchBudget(c: PrefetchConditions, trigger: PrefetchTrigger): PrefetchBud
     }
     c.batterySaver -> PrefetchBudget.NONE
     !c.unmetered -> PrefetchBudget(PREFETCH_METERED_MAX_IDS, PREFETCH_BATCH, 1)
-    else -> PrefetchBudget(Int.MAX_VALUE, PREFETCH_BATCH, PREFETCH_MAX_CONCURRENCY)
+    else -> PrefetchBudget(PREFETCH_PASS_MAX_IDS, PREFETCH_BATCH, PREFETCH_MAX_CONCURRENCY)
 }
 
 /** The two storage/network operations a prefetch needs; the repository implements them over Room and JMAP. */
