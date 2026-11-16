@@ -11,6 +11,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import android.webkit.WebView
+import com.diegonmarcos.superapp.bottomnav.ChromeWebScroll
+import com.diegonmarcos.superapp.bottomnav.LocalNavChromeCollapse
+import kotlinx.coroutines.delay
 import app.sterna.BuildConfig
 import app.sterna.R
 import app.sterna.ui.components.Icon
@@ -44,6 +48,17 @@ fun WebmailScreen(onBack: () -> Unit) {
         if (wv != null && wv.canGoBack()) wv.goBack() else onBack()
     }
 
+    // #1760 the page's scroll feeds the shared chrome (the first row and the bars collapse while reading down, come back reading up). The
+    // WebView's own offset is attached; the page's inner scroller (a single-page webmail scrolls a container, not the document) is
+    // reported by ChromeWebScroll.SCRIPT, injected again while the screen is up (it is idempotent, and the page can navigate on its own).
+    val collapse = LocalNavChromeCollapse.current
+    LaunchedEffect(webView) {
+        while (true) {
+            webView?.evaluateJavascript(ChromeWebScroll.SCRIPT, null)
+            delay(1500)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -65,6 +80,7 @@ fun WebmailScreen(onBack: () -> Unit) {
                         loadUrl(BuildConfig.WEBMAIL_URL)
                     }
                 },
+                update = { ChromeWebScroll.attach(it, collapse) },
                 onRelease = { it.destroy(); if (webView === it) webView = null },
             )
         }

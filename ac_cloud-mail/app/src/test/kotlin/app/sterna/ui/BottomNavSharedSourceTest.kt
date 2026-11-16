@@ -56,6 +56,20 @@ class BottomNavSharedSourceTest {
         )
     }
 
+    @Test
+    fun `Home Webmail is drawn on the shared chrome and its WebView feeds the chrome's scroll`() {
+        val sternaApp = codeLines("app/src/main/kotlin/app/sterna/ui/SternaApp.kt")
+        assertTrue(
+            "the webmail route must draw the shared bars (BottomNavBar with currentRoute = \"webmail\"): a declared page is on the shared chrome (#1760)",
+            sternaApp.any { it.startsWith("BottomNavBar(nav = nav, currentRoute = \"webmail\"") },
+        )
+        val webmail = codeLines("app/src/main/kotlin/app/sterna/ui/home/WebmailScreen.kt")
+        assertTrue(
+            "the Webmail WebView's scroll must reach the chrome's collapse (ChromeWebScroll.attach with LocalNavChromeCollapse), or reading down never hides the bars (#1760)",
+            webmail.any { it.contains("ChromeWebScroll.attach(") } && webmail.any { it.contains("LocalNavChromeCollapse.current") },
+        )
+    }
+
     // ── instrument (copied from HomeDestinationWiringTest) ───────────────────────────────
 
     /** [relPath]'s code lines: trimmed, comment-only lines dropped so no rule is satisfied by prose. */
