@@ -130,13 +130,6 @@
     },
     {
       "section": "Tools · Data",
-      "id": "media_video",
-      "label": ".Media Center",
-      "icon": "",
-      "order": 360
-    },
-    {
-      "section": "Tools · Data",
       "id": "data_vault",
       "label": ".Vault",
       "icon": "",
@@ -225,6 +218,13 @@
       "label": "+Events",
       "icon": "",
       "order": 540
+    },
+    {
+      "section": "Services",
+      "id": "media_video",
+      "label": "+Media Center",
+      "icon": "",
+      "order": 545
     },
     {
       "section": "Services",

@@ -140,17 +140,17 @@ order_ok = headers == ["Primary", "Communication", "Data", "Me"]
 prim = after("Primary", {"Drive", "Browser", "Calc", "Navigation", "Camera", "Keyboard", "Wallet"}, "Communication")
 com = after("Communication", {"Mail", "Chat", "Messenger", "Dialer", "C3-Bot", "Contacts"}, "Data")
 # Data ends on the 'Me' tile then Vault; the Me GROUP header is the 'Me' immediately followed by 'Me-Health'.
-data = after("Data", {"Notes", "Tasks", "Office", "Gallery", "Media Center"}, "Me-Health")
+data = after("Data", {"Notes", "Tasks", "Office", "Gallery"}, "Me-Health")
 print("Primary:", prim); print("Communication:", com); print("Data:", data)
 right = re.findall(r' text="([^"]+)"', open(sys.argv[3], encoding="utf-8", errors="ignore").read())
 # #1627 the Data row holds 7 app tiles (Notes, Tasks, Office, Gallery, Media Center, Me, Vault); Vault is the overflow
 # tile past the sixth, reached by swiping the row left — the swipe above centres on Gallery and drags its row.
 vault_revealed = "Vault" in right
-print("Data swiped (overflow):", [t for t in right if t in {"Media Center", "Me", "Vault"}])
+print("Data swiped (overflow):", [t for t in right if t in {"Me", "Vault"}])
 ok = (order_ok
       and prim is not None and prim[:1] == ["Drive"]
       and com is not None and "Contacts" in com
-      and data is not None and data[:5] == ["Notes", "Tasks", "Office", "Gallery", "Media Center"]
+      and data is not None and data[:4] == ["Notes", "Tasks", "Office", "Gallery"]
       and vault_revealed)
 if not ok: print("::error::Cloud > Apps groups are not as declared (#1380/#1627)")
 sys.exit(0 if ok else 1)

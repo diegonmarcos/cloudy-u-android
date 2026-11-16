@@ -3120,7 +3120,7 @@
             ]
           },
           {
-            "_doc": "#1627 Data (renamed from 'Data Apps'). Order: Note, Tasks, Office | Gallery, Media Center || Me, Vault. Single '|' after Office, DOUBLE '||' after Media Center. Drive moved out to Primary; Me (data-me) and Vault moved in. Pinned by test-drive-page-sections.sh, test-services-row.sh and test-quickmarks-field-parity.sh.",
+            "_doc": "#1627 Data (renamed from 'Data Apps'). Order: Note, Tasks, Office | Gallery || Me, Vault (Media Center moved to Services, #1764). Single '|' after Office, DOUBLE '||' after Media Center. Drive moved out to Primary; Me (data-me) and Vault moved in. Pinned by test-drive-page-sections.sh, test-services-row.sh and test-quickmarks-field-parity.sh.",
             "title": "Data",
             "tiles": [
               {
@@ -3156,13 +3156,6 @@
                 "label": "Gallery",
                 "icon": "ic_photos",
                 "target": "extapp:cloud-gallery"
-              },
-              {
-                "_doc": "#1627 label is now 'Media Center' (was 'Media'); package/id unchanged. Media Center — the Data Apps tile for cloud-media-center (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter), the Tauri media hub: music (TIDAL playlists), videos, gallery (Pinterest boards), books, the feed, movies and documentaries. It REPLACES the old Music tile, which launched TIDAL itself (app://com.aspiro.tidal); TIDAL is not removed from the phone — every track in the Media Center's music page opens a TIDAL search through the system, so the app is still one tap away. Resolved through ui.external_apps[cloud-media-center]: installed launches it, absent offers the install. Not to be confused with cloud-gallery (the Gallery tile above, com.diegonmarcos.mediacenter), which held the name cloud-media-center until 2026-10.",
-                "id": "mediacenter",
-                "label": "Media Center",
-                "icon": "ic_music",
-                "target": "extapp:cloud-media-center"
               },
               {
                 "_doc": "#1627 DOUBLE divider ('||'): a stronger group rule than the single '|'. `separator:true` + `double:true`; GroupedTilesFragment draws a bolder TileDivider on the previous tile's edge. Not clickable, not focusable, no target, dropped by TileGroup.destinations.",
@@ -3298,6 +3291,13 @@
                 "label": "Events",
                 "icon": "ic_p_cal_month",
                 "coming_soon": true
+              },
+              {
+                "_doc": "#1764 moved from Data to Services after Events (the News Events Games block); #1627 label is now 'Media Center' (was 'Media'); package/id unchanged. Media Center — the Data Apps tile for cloud-media-center (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter), the Tauri media hub: music (TIDAL playlists), videos, gallery (Pinterest boards), books, the feed, movies and documentaries. It REPLACES the old Music tile, which launched TIDAL itself (app://com.aspiro.tidal); TIDAL is not removed from the phone — every track in the Media Center's music page opens a TIDAL search through the system, so the app is still one tap away. Resolved through ui.external_apps[cloud-media-center]: installed launches it, absent offers the install. Not to be confused with cloud-gallery (the Gallery tile above, com.diegonmarcos.mediacenter), which held the name cloud-media-center until 2026-10.",
+                "id": "mediacenter",
+                "label": "Media Center",
+                "icon": "ic_music",
+                "target": "extapp:cloud-media-center"
               },
               {
                 "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services & Markets reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
@@ -3823,11 +3823,6 @@
                 "subtype": "Gallery"
               },
               {
-                "pkg": "com.aspiro.tidal",
-                "label": "Tidal",
-                "subtype": "Media Center"
-              },
-              {
                 "pkg": "com.x8bit.bitwarden",
                 "label": "Bitwarden",
                 "subtype": "Vault"
@@ -3886,6 +3881,11 @@
                 "pkg": "de.eventim.mobile.app.Android",
                 "label": "Eventim",
                 "subtype": "Events"
+              },
+              {
+                "pkg": "com.aspiro.tidal",
+                "label": "Tidal",
+                "subtype": "Media Center"
               },
               {
                 "pkg": "com.ubercab",
@@ -6862,36 +6862,6 @@
         ]
       },
       {
-        "id": "media_video",
-        "order": "360",
-        "label": ".Media Center",
-        "match_keywords": [
-          "pkg:com.amazon.avod.thirdpartyclient",
-          "pkg:com.google.android.videos",
-          "pkg:com.google.android.youtube",
-          "pkg:com.netflix.mediaclient",
-          "pkg:com.wbd.stream",
-          "pkg:tv.arte.plus7",
-          "pkg:at.zuggabecka.radiofm4",
-          "pkg:com.aspiro.tidal",
-          "pkg:com.earthflare.android.radioparadisewidget.gpv2",
-          "pkg:com.google.android.apps.youtube.music",
-          "pkg:com.shazam.android",
-          "pkg:com.spotify.music",
-          "pkg:com.ultimateguitar.tabs",
-          "pkg:de.deutschlandfunk.dlfaudiothek",
-          "pkg:ott.alanwatts",
-          "pkg:cn.com.aftershokz.app",
-          "pkg:com.oceanwing.soundcore",
-          "pkg:com.mi.earphone"
-        ],
-        "match_metadata": [
-          "cat:video",
-          "cat:audio",
-          "intent:android.intent.category.APP_MUSIC"
-        ]
-      },
-      {
         "id": "data_vault",
         "order": "370",
         "label": ".Vault",
@@ -7076,6 +7046,36 @@
           "pkg:net.residentadvisor.raguide",
           "pkg:com.meetup",
           "pkg:de.eventim.mobile.app.Android"
+        ]
+      },
+      {
+        "id": "media_video",
+        "order": "545",
+        "label": "+Media Center",
+        "match_keywords": [
+          "pkg:com.amazon.avod.thirdpartyclient",
+          "pkg:com.google.android.videos",
+          "pkg:com.google.android.youtube",
+          "pkg:com.netflix.mediaclient",
+          "pkg:com.wbd.stream",
+          "pkg:tv.arte.plus7",
+          "pkg:at.zuggabecka.radiofm4",
+          "pkg:com.aspiro.tidal",
+          "pkg:com.earthflare.android.radioparadisewidget.gpv2",
+          "pkg:com.google.android.apps.youtube.music",
+          "pkg:com.shazam.android",
+          "pkg:com.spotify.music",
+          "pkg:com.ultimateguitar.tabs",
+          "pkg:de.deutschlandfunk.dlfaudiothek",
+          "pkg:ott.alanwatts",
+          "pkg:cn.com.aftershokz.app",
+          "pkg:com.oceanwing.soundcore",
+          "pkg:com.mi.earphone"
+        ],
+        "match_metadata": [
+          "cat:video",
+          "cat:audio",
+          "intent:android.intent.category.APP_MUSIC"
         ]
       },
       {

@@ -54,6 +54,7 @@ PRE_PRIMARY_DATA = {
 now = set()
 if "Primary" in by: now |= set(apptargets(by["Primary"]))
 if "Data" in by: now |= set(apptargets(by["Data"]))
+if "Services" in by: now |= set(apptargets(by["Services"]))  # #1764 Media Center moved from Data to Services
 # #1736 the Writer tile left the list; its deep link must survive as the Keyboard app menu's declared action (rule 16).
 kb_actions = {a.get("target") for e in d["ui"].get("external_apps", []) if e.get("id") == "cloud-keyboard" for a in e.get("actions", [])}
 if "extapp:cloud-keyboard#page:writer" not in kb_actions:
@@ -86,7 +87,7 @@ if "Primary" in by:
         emit("T4", "Primary row = %r" % labels)
 if "Data" in by:
     labels = [l for l, s, dbl, tg_ in row("Data")]
-    if labels != ["Notes", "Tasks", "Office", "|", "Gallery", "Media Center", "||", "Me", "Vault"]:
+    if labels != ["Notes", "Tasks", "Office", "|", "Gallery", "||", "Me", "Vault"]:
         emit("T4", "Data row = %r" % labels)
 for grp in ("Primary", "Data"):
     if grp not in by: continue

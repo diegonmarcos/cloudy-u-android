@@ -131,10 +131,10 @@ fi
 
 echo "== T4: Communication holds the inbox apps; LinkedIn, Google News and Feedly moved to Services =="
 expect_in "Communication" "Communication" com.google.android.gm com.Slack com.whatsapp.w4b com.instagram.android ch.protonmail.android app.sterna com.mattermost.rn com.beeper.android org.telegram.messenger com.google.android.contacts
-expect_in "Services" "Services" com.linkedin.android com.google.android.apps.magazines com.devhd.feedly
+expect_in "Services" "Services" com.linkedin.android com.google.android.apps.magazines com.devhd.feedly com.aspiro.tidal
 
 echo "== T5: Data holds the owner's list =="
-expect_in "Data" "Data" com.google.android.apps.docs com.google.android.calendar com.microsoft.office.onenote com.google.android.apps.photos com.aspiro.tidal com.sec.android.app.myfiles com.lonelycatgames.Xplore me.proton.android.drive md.obsidian com.x8bit.bitwarden com.viscouspot.gitsync
+expect_in "Data" "Data" com.google.android.apps.docs com.google.android.calendar com.microsoft.office.onenote com.google.android.apps.photos com.sec.android.app.myfiles com.lonelycatgames.Xplore me.proton.android.drive md.obsidian com.x8bit.bitwarden com.viscouspot.gitsync
 
 echo "== T6: every curated entry in these sections can caption a placeholder =="
 # A not-installed tile has no launcher label to borrow, so it draws the label
