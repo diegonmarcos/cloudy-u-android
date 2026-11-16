@@ -160,11 +160,6 @@
           "url": "https://photos.google.com"
         },
         {
-          "pkg": "com.aspiro.tidal",
-          "label": "Tidal",
-          "url": "https://listen.tidal.com"
-        },
-        {
           "pkg": "com.x8bit.bitwarden",
           "label": "Bitwarden",
           "url": "https://vault.bitwarden.com"
@@ -223,6 +218,11 @@
           "pkg": "de.eventim.mobile.app.Android",
           "label": "Eventim",
           "url": "https://www.eventim.de"
+        },
+        {
+          "pkg": "com.aspiro.tidal",
+          "label": "Tidal",
+          "url": "https://listen.tidal.com"
         },
         {
           "pkg": "com.ubercab",
