@@ -4,7 +4,8 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.PowerManager
-import android.webkit.WebView
+import com.diegonmarcos.cloudlib.web.CloudWeb
+import com.diegonmarcos.cloudlib.web.WebProfile
 import app.sterna.core.data.mail.MailTiming
 import app.sterna.core.data.mail.PrefetchConditions
 
@@ -33,7 +34,7 @@ object WebViewWarmUp {
         val app = context.applicationContext
         android.os.Looper.getMainLooper().queue.addIdleHandler {
             val t0 = System.nanoTime()
-            runCatching { WebView(app).destroy() }
+            runCatching { CloudWeb.create(app, WebProfile.UNTRUSTED_HTML).destroy() }
             MailTiming.log("-", "webview-warmup", (System.nanoTime() - t0) / 1_000_000)
             false
         }
