@@ -19,7 +19,7 @@ object ChromeScrollHooks {
      * #1760 a RecyclerView reports onScrolled for its own layout too: the pager keeps the neighbouring pages' lists alive, and when the
      * chrome comes back the content area shrinks, those lists re-lay out and report a positive dy while the restoring finger is down, which
      * hid the bars again inside the very gesture that restored them (Home never came back on the walk). Only a list the reader is dragging
-     * or that is settling from a fling is a scroll.
+     * or that is settling from a fling is a scroll (the walk's nav-walk P3 holds it).
      */
     fun countsAsScroll(scrollState: Int, dy: Int): Boolean = dy != 0 && scrollState != RecyclerView.SCROLL_STATE_IDLE
 
