@@ -1,10 +1,7 @@
 package org.fossify.phone.nav
 
-import android.content.Context
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.ScrollView
 import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.RecyclerView
@@ -52,34 +49,5 @@ object ChromeScrollHooks {
             }
         }
         hook(content)
-    }
-}
-
-/**
- * #1760 the finger of the Fossify View pages, fed into the same collapse connection as their scroll. A scroll alone cannot restore the
- * bars once a held drag has carried the page back to its top (Home): a new downward swipe there moves nothing, so no scroll event arrives.
- * The Compose and WebView hosts restore from the finger's own downward travel (BottomNavCollapse.onGestureUp, per gesture); this feeds the
- * View pages the same three signals, with the touch thresholds of libs:bottomnav's ChromeWebScroll.
- */
-class ChromeTouchFeed(private val onFinger: (Boolean) -> Unit, private val onGestureUp: () -> Unit, private val onRelease: () -> Unit) {
-    private var lastY = 0f
-
-    fun onTouch(action: Int, y: Float) {
-        when (action) {
-            MotionEvent.ACTION_DOWN -> { onFinger(true); lastY = y }
-            // the finger travelled DOWN the screen: it reads up the page, the bars come back (unless this same gesture hid them)
-            MotionEvent.ACTION_MOVE -> { if (y - lastY > SLOP) onGestureUp(); lastY = y }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> { onFinger(false); onRelease() }
-        }
-    }
-
-    companion object { const val SLOP = 12f }
-}
-
-/** The page root that watches every touch below it (children included) and hands it to a [ChromeTouchFeed]; it never consumes one. */
-class ChromeTouchFrame(context: Context, private val feed: ChromeTouchFeed) : FrameLayout(context) {
-    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        feed.onTouch(ev.actionMasked, ev.y)
-        return super.dispatchTouchEvent(ev)
     }
 }

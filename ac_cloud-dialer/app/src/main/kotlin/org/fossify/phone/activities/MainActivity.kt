@@ -477,15 +477,7 @@ class MainActivity : SimpleActivity() {
                         // The shell's chrome owns the window insets (status bar above, nav bar below), so the Fossify pages get none.
                         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, _ -> WindowInsetsCompat.CONSUMED }
                         ChromeScrollHooks.install(binding.root) { delta -> collapseTarget?.onScrollDelta(delta) }
-                        // #1760 the finger too: a swipe down at the top of the page moves no scroll, and only the finger can bring the bars back
-                        val touch = org.fossify.phone.nav.ChromeTouchFeed(
-                            onFinger = { collapseTarget?.onFinger(it) },
-                            onGestureUp = { collapseTarget?.onGestureUp() },
-                            onRelease = { collapseTarget?.onRelease() },
-                        )
-                        org.fossify.phone.nav.ChromeTouchFrame(binding.root.context, touch).apply {
-                            addView(binding.root, android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT))
-                        }
+                        binding.root
                     },
                     modifier = Modifier.fillMaxSize(),
                 )
