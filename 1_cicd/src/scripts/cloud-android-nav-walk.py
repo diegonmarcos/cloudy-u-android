@@ -847,21 +847,29 @@ class Walk:
             if find(nodes2, STRIP) is not None or after["tabs"]:
                 fails.append("P3 scroll-hide: after the finger lifted the second row came back (every bar stays away until an upward scroll)")
             # a NEW upward gesture restores: each swipe is its own touch (input swipe lifts the finger between them)
-            for _ in range(3):
-                swipe(x, y2, y1)
-                settle(0.5)
-            settle(1.0)
-            nodes3 = dump() or []
-            back = self.chrome(nodes3)
-            # a heavy embedded site (me/leafy, run 40805138692) lands the restore a few frames late; its evidence shot showed the full
-            # chrome back: poll for it (same end state asserted: first row, every label, full bar)
             want_labels = before["items"] if self.labels_declared else 0
-            for _ in range(6):
-                if back["row"] and len(back["labels"]) >= want_labels:
-                    break
-                settle(1.2)
-                nodes3 = dump() or nodes3
+            # up to 3 rounds of upward gestures (#1760: a first page right after the launch, Cloud News media and Cloud Dialer home, did not
+            # take the first round on a loaded emulator, the same app passed on the next run): the same end state is asserted, a reader
+            # swipes again too
+            for _round in range(3):
+                for _ in range(3):
+                    swipe(x, y2, y1)
+                    settle(0.5)
+                settle(1.0)
+                nodes3 = dump() or []
                 back = self.chrome(nodes3)
+                # a heavy embedded site (me/leafy, run 40805138692) lands the restore a few frames late; its evidence shot showed the full
+                # chrome back: poll for it (same end state asserted: first row, every label, full bar)
+                for _ in range(6):
+                    if back["row"] and len(back["labels"]) >= want_labels:
+                        break
+                    settle(1.2)
+                    nodes3 = dump() or nodes3
+                    back = self.chrome(nodes3)
+                if back["row"] and len(back["labels"]) >= want_labels:
+                    if _round:
+                        checks["restore_round"] = _round + 1
+                    break
             if not back["row"]:
                 fails.append("P3 scrolled back up: the first row did not return")
             if len(back["labels"]) < want_labels:
