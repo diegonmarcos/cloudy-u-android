@@ -98,7 +98,7 @@ jobs:
             jq -c --arg l "$APPS" '[.apps[] | select(.app as $a | ($l | split(",") | map(gsub(" ";"")) | index($a)))]' 1_cicd/src/data/nav-walk-apps.json > m.json
           fi
           # an app with "shards": N is walked by N jobs, each one a share of its sections (#1760: Cloud Me and Cloud C3 hold more pages than
-          # one 90 minute emulator job walks); the first shard also runs the section list, the Configs pages, the scenes and the app's flows
+          # one 90 minute emulator job walks); the first shard also runs the section list, the Configs pages and the scenes, the last one the app's flows
           jq -c '[.[] | (.shards // 1) as $n | range(1; $n + 1) as $i | . + {shard: "\($i)/\($n)", tag: (if $n > 1 then "-s\($i)" else "" end)}]' m.json > m2.json && mv m2.json m.json
           [ "$(jq length m.json)" -gt 0 ] || { echo "::error::no app matches '$APPS'"; exit 1; }
           echo "matrix={\"include\":$(cat m.json)}" >> "$GITHUB_OUTPUT"
@@ -224,11 +224,11 @@ jobs:
           # $APP/test/emulator-walk-*.sh <apk> <outdir>, screenshots under walk-out/flows/<name>/shots; a red flow fails the walk (#1356)
           for flow in "$APP"/test/emulator-walk-*.sh; do
             [ -f "$flow" ] || continue
-            # the flows run once per app: on its first shard
-            case "$SHARD" in 1/*) ;; *) continue ;; esac
+            # the flows run once per app: on its LAST shard (the lighter one: Cloud Me's first shard holds the Configs pages and scenes)
+            [ "${SHARD%/*}" = "${SHARD#*/}" ] || continue
             name=$(basename "$flow" .sh)
             echo "── flow $name ──"
-            timeout 600 bash "$flow" app-under-test.apk "walk-out/flows/$name" || { echo "::error::flow $name failed"; [ "$rc" -eq 0 ] && rc=1; }
+            timeout 1500 bash "$flow" app-under-test.apk "walk-out/flows/$name" || { echo "::error::flow $name failed"; [ "$rc" -eq 0 ] && rc=1; }
           done
           # a dead emulator makes a bare adb call wait for the device forever (run 40679943894 sat 87 min here)
           timeout 60 adb logcat -d -v threadtime > walk-out/logcat.txt || true

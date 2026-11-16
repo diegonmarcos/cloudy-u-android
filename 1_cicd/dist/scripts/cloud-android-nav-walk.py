@@ -536,6 +536,17 @@ class Walk:
         else:
             listed = self.listed_entries()
             missing = [sid for sid in self.sections if sid not in listed]
+            # #1760 a list read while the dropdown was still being drawn on a loaded emulator (Cloud Me: 8 of 9 sections "missing" in one
+            # run, none in the next): read it again, twice at most, before it is called a missing section
+            for _ in range(2):
+                if not missing:
+                    break
+                self.back_if_dropdown()
+                settle(2.0)
+                if self.section_root() is None:
+                    break
+                listed = self.listed_entries()
+                missing = [sid for sid in self.sections if sid not in listed]
             if missing:
                 self.evidence("section_list")
                 fails.append("P6 the title dropdown's section list lacks %s (every declared section must be reachable from it)" % ", ".join(missing))
