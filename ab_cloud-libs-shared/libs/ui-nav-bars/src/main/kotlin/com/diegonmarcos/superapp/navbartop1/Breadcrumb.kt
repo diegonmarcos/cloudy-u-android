@@ -79,7 +79,10 @@ public fun titleNav(
         if (hierarchy[i].depth == depth + 1) children += hierarchy[i]
         i++
     }
-    return TitleNav(crumbs, siblings + children, depth, if (depth == 0) emptyList() else sectionPeers)
+    val related = siblings + children
+    // a section whose own page carries its id (Calc's Sheet) is already in the list under that id: one tag, one entry
+    val sectionList = if (depth == 0) emptyList() else sectionPeers.filter { p -> related.none { it.id == p.id && it.sectionId == p.id } }
+    return TitleNav(crumbs, related, depth, sectionList)
 }
 
 /**

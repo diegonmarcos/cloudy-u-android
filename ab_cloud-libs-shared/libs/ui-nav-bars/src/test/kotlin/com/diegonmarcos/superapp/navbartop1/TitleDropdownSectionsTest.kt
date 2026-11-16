@@ -43,4 +43,12 @@ class TitleDropdownSectionsTest {
         val h = hierarchyWithShown(titleHierarchy(strip, null), listOf("list"))
         assertTrue(titleNav("App", "Tasks", h).sections.isEmpty())
     }
+
+    @Test fun `a section whose only page carries its id is listed once`() {
+        val sheet = NavSection("sheet", "Sheet", "x", listOf(NavPage("sheet", "Sheet", "x")))
+        val n = titleNav("App", "Sheet", titleHierarchy(sheet, "sheet"), listOf(strip, sheet, settings))
+        val all = ids(n.related) + ids(n.sections)
+        assertEquals(all.distinct(), all)
+        assertEquals(setOf("tasks", "sheet", "settings"), all.toSet())
+    }
 }
