@@ -1237,6 +1237,15 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    /** Fetches the inline images of [emailId] after its text has been shown, then re-paints the row with them. */
+    private fun loadInlineImagesLater(credentials: AccountCredentials, emailId: String) {
+        viewModelScope.launch {
+            val images = runCatching { repo.inlineImagesFor(credentials, emailId) }.getOrNull().orEmpty()
+            if (images.isEmpty()) return@launch
+            _messages.value = _messages.value.map { if (it.id == emailId) it.copy(inlineImages = images) else it }
+        }
+    }
+
     /** Loads the conversation once per (id, account) pair, and ONLY for the page the pager has settled
      *  on. Does NOT mark read — [onActiveChanged] does that.
      *  screen (#92). */
@@ -1341,7 +1350,7 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
                 val credentials = credentials() ?: error(getApplication<Application>().getString(R.string.status_no_saved_account))
                 // The tapped message: cache-first body + its inline images, arriving together so the
                 // WebView renders once, complete. Not marked read here — see [onActiveChanged].
-                val opened = repo.openMessage(credentials, emailId, markRead = false)
+                val opened = repo.openMessage(credentials, emailId, markRead = false, lazyInlineImages = true)
                 // Stamp the owning account: the fetched body never carries one, and downstream
                 // actions route by it.
                 val anchor = opened.email.copy(accountId = opened.email.accountId ?: accountId)
@@ -1399,6 +1408,12 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
                 // A calendar invite (text/calendar part) is fetched + parsed off the body so the
                 // reader can show an event card above it.
                 loadCalendarFor(_messages.value.first())
+                // The text is on screen: the inline images follow (#1763), and the messages either side of this one
+                // are fetched in the background so a swipe opens them from disk.
+                if (opened.crypto == null && opened.inlineImages.isEmpty() && anchor.inlineImageParts().isNotEmpty()) {
+                    loadInlineImagesLater(credentials, anchor.id)
+                }
+                repo.prefetchNeighbours(credentials, anchor.id)
                 // If the page already settled before the body arrived, read it now.
                 maybeMarkRead()
                 // …and put the receipt question now that the body — the only fetch carrying

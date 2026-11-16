@@ -12,8 +12,21 @@ const val BODY_CACHE_ID_PREFIX_SQL: String =
 /** DELETE for [EmailBodyDao.deleteAll], shared with its JVM test. */
 const val BODY_CACHE_CLEAR_SQL: String = "DELETE FROM email_bodies"
 
+/** One cached body as the eviction plan sees it: [sortKey] is the message's receive time (the fetch time when the
+ *  list row is gone or undated), [bytes] its stored size. */
+data class BodyCacheRow(val id: String, val sortKey: Long, val bytes: Long)
+
 @Dao
 interface EmailBodyDao {
+
+    /** Every stored body of [accountId] with the facts [app.sterna.core.data.mail.planBodyEviction] decides on. */
+    @Query(
+        "SELECT b.id AS id, " +
+            "COALESCE(NULLIF((SELECT MAX(e.sortKey) FROM emails e WHERE e.accountId = b.accountId AND e.id = b.id), 0), b.fetchedAt) AS sortKey, " +
+            "(LENGTH(b.bodyJson) + LENGTH(b.inlineImagesJson)) AS bytes " +
+            "FROM email_bodies b WHERE b.accountId = :accountId",
+    )
+    suspend fun bodyRows(accountId: String): List<BodyCacheRow>
 
     @Query("DELETE FROM email_bodies WHERE accountId = :accountId AND id IN (:ids)")
     suspend fun deleteIds(accountId: String, ids: List<String>)

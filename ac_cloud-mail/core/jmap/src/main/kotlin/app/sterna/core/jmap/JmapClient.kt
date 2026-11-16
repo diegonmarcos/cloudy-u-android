@@ -271,6 +271,10 @@ class JmapClient internal constructor(
         pageSize: Int,
         auth: JmapAuth,
         onPage: suspend (List<Email>) -> Unit,
+        // Age window (#1763): the walk ends after the page that reaches mail received before this instant.
+        // Read off the rows, NOT a filter: a filtered query has another queryState, which the delta
+        // (Email/queryChanges, same filter as the cursor) could not continue.
+        stopBeforeMillis: Long? = null,
     ): WindowWalk = withContext(Dispatchers.IO) {
             // Ids in walk order, plus the set that de-duplicates them: pages can overlap after a
             // recovery, and a duplicate would be written and counted twice against the window.
@@ -330,6 +334,7 @@ class JmapClient internal constructor(
                     added = fresh.size,
                 ),
             )
+            if (stopBeforeMillis != null && walkReachedBefore(fresh, stopBeforeMillis)) limit = null
         }
         WindowWalk(
             ids = ids,
@@ -2894,4 +2899,11 @@ internal fun htmlOfPlainText(text: String): String {
     val unified = text.replace("\r\n", "\n").replace('\r', '\n')
     if (unified.isEmpty()) return "<div><br></div>"
     return "<div>" + unified.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>") + "</div>"
+}
+
+/** True when the OLDEST row of a newest-first [page] was received before [beforeMillis] (#1763). */
+internal fun walkReachedBefore(page: List<Email>, beforeMillis: Long): Boolean {
+    val oldest = page.lastOrNull()?.receivedAt ?: return false
+    val ms = runCatching { java.time.Instant.parse(oldest).toEpochMilli() }.getOrNull() ?: return false
+    return ms < beforeMillis
 }

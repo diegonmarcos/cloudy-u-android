@@ -96,7 +96,8 @@ class OriginalSenderWiringTest {
      * The prefetch: ONE grouped read for the window, and nothing persisted at all when it fails.
      */
     @Test fun `the prefetch reads the whole window at once and abandons it on failure`() {
-        val body = codeLines(bodyOf("prefetchInboxBodies"))
+        // The fetch moved out of `prefetchInboxBodies` into the one function every prefetch (list, neighbours) shares (#1763).
+        val body = codeLines(bodyOf("fetchAndStoreBodies"))
 
         assertEquals(
             "one grouped read for the ids the prefetch is about to cache",

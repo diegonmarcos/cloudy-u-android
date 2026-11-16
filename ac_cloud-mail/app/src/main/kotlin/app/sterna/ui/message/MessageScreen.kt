@@ -2307,11 +2307,13 @@ private fun ConversationBody(
                     noContent, quoteLabel, deceptiveLinkLabel,
                     translatedFragment,
                 ) {
-                    buildHtmlDocument(
-                        full, msg.inlineImages, emailTheme, topSpacerCss, bottomSpacerCss,
-                        noContent, quoteLabel, deceptiveLinkLabel,
-                        translatedFragment = translatedFragment,
-                    )
+                    app.sterna.core.data.mail.MailTiming.phase(msg.id, "html-build") {
+                        buildHtmlDocument(
+                            full, msg.inlineImages, emailTheme, topSpacerCss, bottomSpacerCss,
+                            noContent, quoteLabel, deceptiveLinkLabel,
+                            translatedFragment = translatedFragment,
+                        )
+                    }
                 }
                 EmailWebView(
                     html = html,
@@ -4565,6 +4567,11 @@ private fun EmailWebView(
     var restingMetrics by remember { mutableStateOf<BodyMetrics?>(null) }
     client.onContentHeight = { px, resting -> heightPx = px; restingMetrics = resting }
     val ready = heightPx > 0
+    // Timing (#1763): from this composition to the body being laid out = WebView creation + document load + layout.
+    val composedAt = remember { System.nanoTime() }
+    LaunchedEffect(ready) {
+        if (ready) app.sterna.core.data.mail.MailTiming.log("-", "webview-compose-to-ready", (System.nanoTime() - composedAt) / 1_000_000)
+    }
     // Keyed on the metrics too: a height that arrived from a fallback can still be followed by a real
     // measurement, and that measurement should still get to settle the bar.
     LaunchedEffect(ready, restingMetrics) { if (ready) onReady(restingMetrics) }

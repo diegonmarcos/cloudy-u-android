@@ -57,6 +57,30 @@ class NavWalkSeedReceiver : BroadcastReceiver() {
                             seen = i % 3 != 0, flagged = false, hasAttachment = false, sortKey = now - i * 3_600_000L,
                         )
                     })
+                    // #1763: `--ei bodies M` also stores the full BODY of the M newest seeded messages, as a prefetch would, so the
+                    // emulator proof can open one from disk (no network call is possible: the host is unresolvable).
+                    val bodies = intent.getIntExtra("bodies", 0).coerceAtMost(n)
+                    if (bodies > 0) {
+                        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+                        for (i in 1..bodies) {
+                            val email = app.sterna.core.jmap.model.Email(
+                                id = "navwalk-m$i", accountId = id, mailboxId = "navwalk-inbox", threadId = "navwalk-t$i",
+                                subject = "Seed message ${n - i + 1} of $n",
+                                receivedAt = java.time.Instant.ofEpochMilli(now - i * 3_600_000L).toString(),
+                                from = listOf(app.sterna.core.jmap.model.EmailAddress(name = "Sender $i", email = "sender$i@d$i.example")),
+                                keywords = mapOf("\$seen" to true),
+                                textBody = listOf(app.sterna.core.jmap.model.EmailBodyPart(partId = "text", type = "text/plain")),
+                                bodyValues = mapOf("text" to app.sterna.core.jmap.model.EmailBodyValue(value = "Cached body of seed message ${n - i + 1}.\n\n" + "Lorem ipsum dolor sit amet. ".repeat(40))),
+                            )
+                            db.emailBodyDao().upsert(
+                                app.sterna.core.data.db.EmailBodyEntity(
+                                    id = email.id, accountId = id,
+                                    bodyJson = json.encodeToString(app.sterna.core.jmap.model.Email.serializer(), email),
+                                    inlineImagesJson = "{}", fetchedAt = now,
+                                ),
+                            )
+                        }
+                    }
                 }
             }
         } finally { db.close() }

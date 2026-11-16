@@ -75,13 +75,19 @@ class OfflineCacheTest {
     // ---- Window setting ------------------------------------------------------------------------
 
     @Test
-    fun `the offline window defaults to six months`() {
-        assertEquals(OfflineWindow.SIX, OfflineWindow.DEFAULT)
-        assertEquals(OfflineWindow.SIX, OfflineWindow.from(null))
-        assertEquals(OfflineWindow.SIX, OfflineWindow.from("garbage"))
-        assertEquals(6, OfflineWindow.DEFAULT.months)
+    fun `the offline window defaults to 90 days and offers 30 90 180 365 and all`() {
+        assertEquals(OfflineWindow.THREE, OfflineWindow.DEFAULT)
+        assertEquals(OfflineWindow.THREE, OfflineWindow.from(null))
+        assertEquals(OfflineWindow.THREE, OfflineWindow.from("garbage"))
+        assertEquals(90, OfflineWindow.DEFAULT.days)
         assertEquals(listOf(1, 3, 6, 12, 0), OfflineWindow.entries.map { it.months })
+        assertEquals(listOf(30, 90, 180, 365, 0), OfflineWindow.entries.map { it.days })
         assertNull(OfflineWindow.ALL.cutoffMillis(1_000L))
+        // The persisted names keep their meaning: a stored choice is read back as the same window.
+        assertEquals(OfflineWindow.SIX, OfflineWindow.from("SIX"))
+        assertEquals(OfflineWindow.TWELVE, OfflineWindow.from("TWELVE"))
+        val day = 24L * 60 * 60 * 1000
+        assertEquals(1_000L * day - 365 * day, OfflineWindow.TWELVE.cutoffMillis(1_000L * day))
     }
 
     // ---- Sync ----------------------------------------------------------------------------------
@@ -118,15 +124,15 @@ class OfflineCacheTest {
         val port = FakePort(
             messages = mapOf(
                 "new1" to now - 1 * day,
-                "new2" to now - 100 * day,
-                "edge" to now - 179 * day,
+                "new2" to now - 60 * day,
+                "edge" to now - 89 * day,
                 "old1" to now - 200 * day,
                 "old2" to now - 400 * day,
             ),
             cached = setOf("new2", "old1", "old2"),
         )
         val result = OfflineSync(port, batch = 1).run(OfflineWindow.DEFAULT, OfflineAttachmentLimit.DEFAULT, now)
-        assertEquals(now - 180 * day, port.askedCutoff)
+        assertEquals(now - 90 * day, port.askedCutoff)
         assertEquals(setOf("new1", "edge"), port.fetched.toSet())
         assertEquals(setOf("new1", "new2", "edge"), port.stored)
         assertEquals(2, result.fetched)

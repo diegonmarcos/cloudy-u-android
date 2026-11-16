@@ -67,6 +67,7 @@ import app.sterna.core.data.db.MailboxDao
 import app.sterna.core.data.db.MailboxIdRole
 import app.sterna.core.data.db.MailboxUnread
 import app.sterna.core.data.getOrElseUnlessCancelled
+import app.sterna.core.data.rethrowIfCancelled
 import app.sterna.core.data.pgp.PgpEngine
 import app.sterna.core.data.rethrowIfCancelled
 import app.sterna.core.data.settings.SettingsRepository
@@ -158,9 +159,6 @@ private const val APPEND_THREAD_TARGET = 10
 /** ...but never more than this many pages per APPEND: one giant thread must not chain unbounded
  *  fetches. */
 private const val MAX_APPEND_FILL_PAGES = 4
-
-/** How many of the inbox's newest messages to prefetch (bodies) into the cache per sync. */
-private const val PREFETCH_COUNT = 20
 
 /** Upper bound of messages one offline-window sync asks the server for. */
 private const val OFFLINE_MAX_MESSAGES = 20_000
@@ -1208,17 +1206,24 @@ class MailRepository(
         // ONE call, MANY writes, ONE delete: pages are upserted as they land and the DELETE runs
         // once at the end. [fullQueryWriteThrough] enforces that nothing is deleted unless the walk
         // RAN TO COMPLETION. Sized on the ACCOUNT, not by its caller: this branch REPLACES the folder.
+        // #1763: an age window walks its whole age (cut off below by the rows), not 200 messages.
         val full = fullQuerySizing(
-            accountStore.account(localAccountId)?.syncWindow?.limit,
+            accountStore.account(localAccountId)?.syncWindow?.walkLimit,
             sizing.windowTarget,
             session.getBatchSize(),
         )
         val walked = fullQueryWriteThrough<List<Email>, WindowWalk>(
             folderIds = { emailDao.idsForMailbox(localAccountId, mailboxId).toSet() },
-            walk = { onPage -> client.queryEmailsWindow(session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage) },
+            walk = { onPage ->
+                client.queryEmailsWindow(
+                    session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage,
+                    stopBeforeMillis = accountStore.account(localAccountId)?.syncWindow?.walkCutoffMillis(System.currentTimeMillis()),
+                )
+            },
             writePage = { fresh ->
                 checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
                 emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })
+                onSyncChunkLanded(localAccountId, mailboxId)
             },
             keepIds = { reconcilableWindowIds(it) },
             spareIds = { recentlyMutatedIds(localAccountId) },
@@ -1282,6 +1287,7 @@ class MailRepository(
             writePage = { fresh ->
                 checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
                 emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })
+                onSyncChunkLanded(localAccountId, mailboxId)
             },
         )
         android.util.Log.i(
@@ -2604,7 +2610,15 @@ class MailRepository(
      * Open a message for display, body cache first: a cached body renders with no network round-trip, a miss
      * fetches and persists it. Inline images are resolved before returning. Marks read when [markRead].
      */
-    suspend fun openMessage(credentials: AccountCredentials, emailId: String, markRead: Boolean = true): MessageBody {
+    suspend fun openMessage(
+        credentials: AccountCredentials,
+        emailId: String,
+        markRead: Boolean = true,
+        // #1763: true = the text returns at once and the caller fetches the inline images afterwards
+        // ([inlineImagesFor]); false = they arrive with the body, as before.
+        lazyInlineImages: Boolean = false,
+    ): MessageBody {
+        val openStart = System.nanoTime()
         // A message decrypted earlier this process renders instantly (memory only, never persisted).
         decryptedCache.get(cryptoKey(credentials.id, emailId))?.let { entry ->
             // Read the row BEFORE the marking below is launched: this open reports the read state as
@@ -2619,7 +2633,8 @@ class MailRepository(
         // Offline-first: a stored body is rendered with NO network call; inline images missing from it
         // are filled in the background, never awaited.
         cachedMessage(credentials.id, emailId)?.let { cached ->
-            if (cached.email.inlineImageParts().isNotEmpty() && cached.inlineImages.isEmpty()) {
+            MailTiming.log(emailId, "open-from-cache", (System.nanoTime() - openStart) / 1_000_000)
+            if (!lazyInlineImages && cached.email.inlineImageParts().isNotEmpty() && cached.inlineImages.isEmpty()) {
                 bgScope.launch { runCatching { ensureInlineImages(credentials, emailId, cached) } }
             }
             if (markRead) bgScope.launch { runCatching { setRead(credentials, emailId, true) } }
@@ -2629,7 +2644,9 @@ class MailRepository(
             }
             return cached
         }
+        val fetchStart = System.nanoTime()
         val email = openEmail(credentials, emailId, markRead)
+        MailTiming.log(emailId, "fetch-email-get", (System.nanoTime() - fetchStart) / 1_000_000)
         cryptoKindOf(email)?.let { kind ->
             // Never persist crypto message bodies: the plaintext must not land in the Room cache.
             return MessageBody(email, emptyMap(), crypto = MessageCrypto.Locked(kind))
@@ -2638,13 +2655,26 @@ class MailRepository(
         // only this caller shows the line, and only it can act on a failed read, by not caching.
         val origin = originReadFor(credentials, emailId, email)
         val shown = email.copy(originalSender = origin.header)
-        val inline = fetchInlineImages(credentials, shown, emailId)
+        val imagesStart = System.nanoTime()
+        val inline = if (lazyInlineImages) emptyMap() else fetchInlineImages(credentials, shown, emailId)
+        MailTiming.log(emailId, "inline-images(${inline.size})", (System.nanoTime() - imagesStart) / 1_000_000)
         // The cache write is CONDITIONAL: a body cached after a failed read would say "no origin"
         // for the life of the install, since this cache is served before any network call.
         if (cachesBodyAfterOriginRead(credentials.protocol, origin.succeeded)) {
             persistBody(credentials.id, emailId, shown, inline)
         }
+        MailTiming.log(emailId, "open-from-network", (System.nanoTime() - openStart) / 1_000_000)
         return MessageBody(shown, inline)
+    }
+
+    /** The inline images of an opened message, fetched AFTER its text is on screen (#1763) and stored with the
+     *  cached body. Empty when there are none, the body is not cached (crypto) or a download failed. */
+    suspend fun inlineImagesFor(credentials: AccountCredentials, emailId: String): Map<String, String> {
+        val cached = cachedMessage(credentials.id, emailId) ?: return emptyMap()
+        val start = System.nanoTime()
+        val images = ensureInlineImages(credentials, emailId, cached).inlineImages
+        MailTiming.log(emailId, "inline-images-lazy(${images.size})", (System.nanoTime() - start) / 1_000_000)
+        return images
     }
 
     /**
@@ -2910,44 +2940,153 @@ class MailRepository(
         emailId: String,
         email: Email,
         inlineImages: Map<String, String>,
-    ) {
-        runCatching {
-            val bodyJson = cacheJson.encodeToString(Email.serializer(), email)
-            val inlineJson = cacheJson.encodeToString(inlineImagesSerializer, inlineImages)
-            if (!fitsBodyCache(bodyJson, inlineJson)) return
-            emailBodyDao.upsert(
-                EmailBodyEntity(
-                    id = emailId,
-                    accountId = accountId,
-                    bodyJson = bodyJson,
-                    inlineImagesJson = inlineJson,
-                    fetchedAt = System.currentTimeMillis(),
-                ),
-            )
-        }
-    }
+    ): Boolean = runCatching {
+        val bodyJson = cacheJson.encodeToString(Email.serializer(), email)
+        val inlineJson = cacheJson.encodeToString(inlineImagesSerializer, inlineImages)
+        if (!fitsBodyCache(bodyJson, inlineJson)) return@runCatching false
+        emailBodyDao.upsert(
+            EmailBodyEntity(
+                id = emailId,
+                accountId = accountId,
+                bodyJson = bodyJson,
+                inlineImagesJson = inlineJson,
+                fetchedAt = System.currentTimeMillis(),
+            ),
+        )
+        true
+    }.getOrDefault(false)
 
-    /** Prefetch the newest [PREFETCH_COUNT] inbox bodies. JMAP only; best-effort, never throws. */
-    private suspend fun prefetchInboxBodies(credentials: AccountCredentials, mailboxId: String) {
+    /** The "Keep mail offline for" window (#1763), pushed in by the app layer; 90 days until it says otherwise. */
+    @Volatile
+    var offlineWindow: OfflineWindow = OfflineWindow.DEFAULT
+
+    /** Wi-Fi / metered / battery saver, read by the app layer from the device. Unrestricted until it is wired. */
+    @Volatile
+    var prefetchConditions: () -> PrefetchConditions = { PrefetchConditions.UNRESTRICTED }
+
+    private val prefetchGate = kotlinx.coroutines.sync.Semaphore(PREFETCH_MAX_CONCURRENCY)
+    private val prefetchRunning = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    private val prefetchAgain = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
+    /**
+     * A list sync chunk landed in [mailboxId] (#1763): fetch the bodies of the window's messages in the
+     * background, newest first, throttled by [prefetchConditions]. Coalesced per folder: a pass already running
+     * is asked to go round once more, so a chunk landing mid-pass is not lost and passes never stack.
+     * JMAP only; best-effort, never throws.
+     */
+    private fun requestBodyPrefetch(credentials: AccountCredentials, mailboxId: String) {
         if (credentials.protocol == MailProtocol.IMAP) return
-        runCatching {
-            // Bounded in the statement, not with a `take`: `runCatching` does not catch an OutOfMemoryError.
-            val newest = emailDao.newestIds(credentials.id, mailboxId, PREFETCH_COUNT)
-            if (newest.isEmpty()) return
-            val already = emailBodyDao.cachedIds(credentials.id, newest).toSet()
-            val missing = newest.filter { it !in already }
-            if (missing.isEmpty()) return
-            val ctx = connect(credentials)
-            val emails = client.getEmailsWithBody(ctx.session, ctx.accountId, missing, ctx.auth)
-            // The origin header (#160) is posed here too, not only in `openEmail`. `?: return` — a window
-            // whose origin read failed is not persisted, or those bodies would say "no origin" for good.
-            val origins = originalSendersOf(ctx, emails) ?: return
-            for (email in emails) {
-                val withOrigin = email.copy(originalSender = origins[email.id])
-                persistBody(credentials.id, email.id, withOrigin, emptyMap())
+        val key = "${credentials.id}/$mailboxId"
+        if (prefetchRunning.putIfAbsent(key, true) != null) {
+            prefetchAgain[key] = true
+            return
+        }
+        bgScope.launch {
+            try {
+                do {
+                    prefetchAgain.remove(key)
+                    runCatching { prefetchFolderBodies(credentials, mailboxId) }.rethrowIfCancelled()
+                } while (prefetchAgain.containsKey(key))
+            } finally {
+                prefetchRunning.remove(key)
             }
         }
     }
+
+    /** Prefetch the inbox's window bodies (#1763: the whole window, newest first, throttled; formerly the newest 20).
+     *  JMAP only; best-effort, never throws. Its IMAP refusal stays first (defence in depth, pinned). */
+    private suspend fun prefetchInboxBodies(credentials: AccountCredentials, mailboxId: String) {
+        if (credentials.protocol == MailProtocol.IMAP) return
+        requestBodyPrefetch(credentials, mailboxId)
+    }
+
+    private fun onSyncChunkLanded(localAccountId: String, mailboxId: String) {
+        accountStore.credentials(localAccountId)?.let { requestBodyPrefetch(it, mailboxId) }
+    }
+
+    private suspend fun prefetchFolderBodies(credentials: AccountCredentials, mailboxId: String) {
+        // The INBOX only, as before (PrefetchStaysInTheInboxWiringTest): a prefetched body hands the sender's
+        // announced key to OpenKeychain, and an unopened Junk/Trash/Archive message must never plant one.
+        if (mailboxDao.roleForId(credentials.id, mailboxId) != "inbox") return
+        val t0 = System.nanoTime()
+        val result = BodyPrefetcher(bodyPrefetchPort(credentials, mailboxId), prefetchConditions, prefetchGate)
+            .run(PrefetchTrigger.LIST_SYNC)
+        android.util.Log.i(
+            "MailPrefetch",
+            "list ${credentials.id}/$mailboxId requested=${result.requested} " +
+                "batches=${result.batches} skipped=${result.skipped} ms=${(System.nanoTime() - t0) / 1_000_000}",
+        )
+        if (result.batches > 0) evictBodies(credentials.id)
+    }
+
+    /** The reader opened [emailId] (#1763): fetch the bodies of the messages just before and after it in its
+     *  folder, so swiping to them opens from disk. Fire-and-forget, throttled, JMAP only. */
+    fun prefetchNeighbours(credentials: AccountCredentials, emailId: String) {
+        if (credentials.protocol == MailProtocol.IMAP) return
+        bgScope.launch {
+            runCatching {
+                val mailboxId = emailDao.mailboxOf(credentials.id, emailId) ?: return@runCatching
+                // Inbox only, same rule as the list prefetch (an unopened neighbour must not plant a key).
+                if (mailboxDao.roleForId(credentials.id, mailboxId) != "inbox") return@runCatching
+                val key = emailDao.sortKeyOf(credentials.id, emailId) ?: return@runCatching
+                val older = emailDao.olderIds(credentials.id, mailboxId, key, PREFETCH_NEIGHBOURS_EACH_SIDE)
+                val newer = emailDao.newerIds(credentials.id, mailboxId, key, PREFETCH_NEIGHBOURS_EACH_SIDE)
+                // Nearest first, alternating after / before, so a budget cut keeps the closest ones.
+                val ids = newer.zip(older).flatMap { listOf(it.first, it.second) } +
+                    newer.drop(older.size) + older.drop(newer.size)
+                val t0 = System.nanoTime()
+                val result = BodyPrefetcher(bodyPrefetchPort(credentials, mailboxId), prefetchConditions, prefetchGate)
+                    .run(PrefetchTrigger.NEIGHBOUR, ids)
+                android.util.Log.i(
+                    "MailPrefetch",
+                    "neighbours of $emailId requested=${result.requested} " +
+                        "skipped=${result.skipped} ms=${(System.nanoTime() - t0) / 1_000_000}",
+                )
+            }.rethrowIfCancelled()
+        }
+    }
+
+    private fun bodyPrefetchPort(credentials: AccountCredentials, mailboxId: String) = object : BodyPrefetchPort {
+        override suspend fun missingNewest(limit: Int): List<String> =
+            emailDao.newestWithoutBody(
+                credentials.id, mailboxId, offlineWindow.cutoffMillis(System.currentTimeMillis()) ?: Long.MIN_VALUE, limit,
+            )
+
+        override suspend fun missingAmong(ids: List<String>): List<String> {
+            val have = ids.chunked(500).flatMap { emailBodyDao.cachedIds(credentials.id, it) }.toSet()
+            return ids.filter { it !in have }
+        }
+
+        override suspend fun fetchAndStore(ids: List<String>) = fetchAndStoreBodies(credentials, ids)
+    }
+
+    /** One batched Email/get for [ids] and every body written to the cache (the prefetch's only fetch). */
+    private suspend fun fetchAndStoreBodies(credentials: AccountCredentials, ids: List<String>) {
+        val ctx = connect(credentials)
+        val t0 = System.nanoTime()
+        val emails = client.getEmailsWithBody(ctx.session, ctx.accountId, ids, ctx.auth)
+        MailTiming.log(ids.first(), "prefetch-email-get(${ids.size})", (System.nanoTime() - t0) / 1_000_000)
+        // The origin header (#160) is posed here too, not only in `openEmail`. `?: return` — a batch
+        // whose origin read failed is not persisted, or those bodies would say "no origin" for good.
+        val origins = originalSendersOf(ctx, emails) ?: return
+        for (email in emails) {
+            val withOrigin = email.copy(originalSender = origins[email.id])
+            // Ciphertext is never cached (openMessage's rule): the open runs the decrypt flow.
+            if (cryptoKindOf(withOrigin) != null) continue
+            persistBody(credentials.id, email.id, withOrigin, emptyMap())
+        }
+    }
+
+    /** Drop the bodies outside the cache window and, past the per-account byte cap, the oldest ones (#1763).
+     *  Headers stay (#1752). Offline attachments of the dropped messages go with them. */
+    suspend fun evictBodies(accountId: String): Int = runCatching {
+        val cutoff = offlineWindow.cutoffMillis(System.currentTimeMillis())
+        val drop = planBodyEviction(emailBodyDao.bodyRows(accountId), cutoff)
+        drop.chunked(500).forEach { emailBodyDao.deleteIds(accountId, it) }
+        val accountDir = offlineAttachmentFile(accountId, "x", EmailBodyPart(blobId = "x"))?.parentFile?.parentFile
+        drop.forEach { id -> accountDir?.let { java.io.File(it, id.replace(Regex("[^A-Za-z0-9._-]"), "_")).deleteRecursively() } }
+        drop.size
+    }.getOrDefault(0)
 
     suspend fun setRead(credentials: AccountCredentials, emailId: String, seen: Boolean) {
         markRecentlyMutated(credentials.id, emailId)

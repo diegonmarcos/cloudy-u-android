@@ -148,6 +148,9 @@ class AppContainer(context: Context) {
         mailRepository.onMailboxRenumbered = { accountId, mailboxId ->
             app.sterna.push.NewMailNotifier.clear(appContext, accountId, mailboxId)
         }
+        // Body prefetch (#1763): throttled by the device (Wi-Fi, battery saver), windowed by "Keep mail offline for".
+        mailRepository.prefetchConditions = { app.sterna.mail.DevicePrefetchConditions.read(appContext) }
+        appScope.launch { settingsRepository.offlineWindow.collect { mailRepository.offlineWindow = it } }
         // Catch-up sweep of cached mail belonging to accounts that no longer exist (#121). The
         // account list is handed over as a READER, so an account created while the database was
         // opening (#31) cannot be mistaken for an orphan; an empty list sweeps nothing.
@@ -283,6 +286,8 @@ class SternaApplication : Application() {
         Updater.start(this)
         // Offline window sync (unmetered + charging); idempotent.
         app.sterna.mail.OfflineSyncWorker.ensureScheduled(this)
+        // Start the WebView provider once, when the main thread is idle, so the first mail opens without it.
+        app.sterna.mail.WebViewWarmUp.once(this)
     }
 }
 

@@ -4,19 +4,20 @@ import app.sterna.core.jmap.JmapException
 import kotlinx.coroutines.CancellationException
 
 /**
- * How far back every message is kept readable offline ("Keep mail offline for"). [months] = 0 is
- * "All". The default is [DEFAULT], six months.
+ * How far back every message body is kept readable offline ("Keep mail offline for"): 30, 90, 180, 365 days or
+ * all. [months] is the persisted-name scale (ONE..TWELVE keep their names), [days] the real span. The default is
+ * [DEFAULT], 90 days (#1763).
  */
-enum class OfflineWindow(val months: Int) {
-    ONE(1), THREE(3), SIX(6), TWELVE(12), ALL(0);
+enum class OfflineWindow(val months: Int, val days: Int) {
+    ONE(1, 30), THREE(3, 90), SIX(6, 180), TWELVE(12, 365), ALL(0, 0);
 
-    /** Epoch millis of the oldest message inside the window, or null for [ALL]. Months are 30 days. */
+    /** Epoch millis of the oldest message inside the window, or null for [ALL]. */
     fun cutoffMillis(nowMillis: Long): Long? =
-        if (months == 0) null else nowMillis - months * MONTH_MILLIS
+        if (days == 0) null else nowMillis - days * DAY_MILLIS
 
     companion object {
-        val DEFAULT = SIX
-        private const val MONTH_MILLIS = 30L * 24 * 60 * 60 * 1000
+        val DEFAULT = THREE
+        private const val DAY_MILLIS = 24L * 60 * 60 * 1000
 
         fun from(stored: String?): OfflineWindow =
             stored?.let { runCatching { valueOf(it) }.getOrNull() } ?: DEFAULT

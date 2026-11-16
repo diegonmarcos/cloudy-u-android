@@ -113,6 +113,34 @@ interface EmailDao {
     )
     suspend fun newestIds(accountId: String, mailboxId: String, limit: Int): List<String>
 
+    /** Body prefetch (#1763): the newest ids of one folder received at or after [cutoff] whose body is NOT
+     *  cached yet, newest first. The bound is the statement's. */
+    @Query(
+        "SELECT e.id FROM emails e WHERE e.accountId = :accountId AND e.mailboxId = :mailboxId " +
+            "AND e.sortKey >= :cutoff AND NOT EXISTS " +
+            "(SELECT 1 FROM email_bodies b WHERE b.accountId = e.accountId AND b.id = e.id) " +
+            "ORDER BY e.sortKey DESC, e.id DESC LIMIT :limit",
+    )
+    suspend fun newestWithoutBody(accountId: String, mailboxId: String, cutoff: Long, limit: Int): List<String>
+
+    /** The receive time a cached row sorts by, for locating its neighbours. */
+    @Query("SELECT sortKey FROM emails WHERE accountId = :accountId AND id = :id LIMIT 1")
+    suspend fun sortKeyOf(accountId: String, id: String): Long?
+
+    /** The [limit] rows just OLDER than [sortKey] in a folder, nearest first. */
+    @Query(
+        "SELECT id FROM emails WHERE accountId = :accountId AND mailboxId = :mailboxId AND sortKey < :sortKey " +
+            "ORDER BY sortKey DESC, id DESC LIMIT :limit",
+    )
+    suspend fun olderIds(accountId: String, mailboxId: String, sortKey: Long, limit: Int): List<String>
+
+    /** The [limit] rows just NEWER than [sortKey] in a folder, nearest first. */
+    @Query(
+        "SELECT id FROM emails WHERE accountId = :accountId AND mailboxId = :mailboxId AND sortKey > :sortKey " +
+            "ORDER BY sortKey ASC, id ASC LIMIT :limit",
+    )
+    suspend fun newerIds(accountId: String, mailboxId: String, sortKey: Long, limit: Int): List<String>
+
     /**
      * The account-qualified keys of a folder's unread messages, newest first, at most [limit].
      */

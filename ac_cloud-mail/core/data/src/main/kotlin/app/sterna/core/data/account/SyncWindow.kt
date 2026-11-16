@@ -58,7 +58,21 @@ enum class SyncWindow(val limit: Int, val maxAgeDays: Int?) {
      * permanently — [AccountBlobGate] holds records until a build that knows it again.
      */
     ALL(limit = 10_000, maxAgeDays = null),
+    ;
+
+    /**
+     * How many messages a JMAP full walk may read (#1763). A count window is its [limit]. An AGE window is
+     * bounded by its age ([walkCutoffMillis]), not by 200 messages: [limit] stays the retention floor and
+     * the IMAP size, and this is only a safety ceiling above any real mailbox's ninety days.
+     */
+    val walkLimit: Int get() = if (maxAgeDays != null) AGE_WINDOW_SAFETY_CEILING else limit
+
+    /** Epoch millis of the oldest mail an age window walks, or null for a count window. */
+    fun walkCutoffMillis(nowMillis: Long): Long? = maxAgeDays?.let { nowMillis - it.toLong() * 86_400_000L }
 }
+
+/** Messages an age window may walk at most; the age ends the walk long before this. */
+const val AGE_WINDOW_SAFETY_CEILING = 10_000
 
 /** Windows the row offers, in order. A WHITELIST, not `entries` minus something (see [SyncWindow.ALL]). */
 fun syncWindowChoices(): List<SyncWindow> = listOf(
