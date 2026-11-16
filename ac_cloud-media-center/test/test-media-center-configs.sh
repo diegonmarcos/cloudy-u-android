@@ -130,7 +130,7 @@ function mem() { const m = {}; return { getItem: (k) => (k in m ? m[k] : null), 
   const store = mem();
   const c = page('configs/index.html', store); await tick(); await tick();
   const chipIds = c.doc.querySelectorAll('.chip').map((b) => b.getAttribute('data-chip'));
-  ok(JSON.stringify(chipIds) === '["music","videos","gallery","books","feed","movies","apify","general","agents","perms","logcat","xray","about"]', 'configs: a section per tab (' + chipIds.join(', ') + ')');
+  ok(JSON.stringify(chipIds) === '["music","videos","gallery","books","feed","movies","library","apify","general","agents","perms","logcat","xray","about"]', 'configs: a section per tab (' + chipIds.join(', ') + ')');
   const kids = c.doc.querySelector('.chips').children, sep = kids.findIndex((k) => k.className === 'chipsep');
   ok(sep > 0 && kids[sep].textContent === '|' && kids[sep + 1].getAttribute('data-chip') === 'agents' && kids.filter((k) => k.className === 'chipsep').length === 1, 'configs: the | separator sits right before the fleet tail (Agents)');
   const nat = c.win.CmcConfig.nativeIntent('logcat');
@@ -138,7 +138,7 @@ function mem() { const m = {}; return { getItem: (k) => (k in m ? m[k] : null), 
   for (const id of chipIds.filter((i) => !['agents', 'logcat', 'xray'].includes(i))) {
     fire(c.doc.querySelector('.chip[data-chip="' + id + '"]'), 'click'); await tick();
     const fields = c.main.querySelectorAll('[data-key]');
-    ok(c.main.querySelector('.cfg[data-cfg="' + id + '"]') && (fields.length >= 1 || ['apify', 'general', 'perms', 'about'].includes(id)), 'configs: ' + id + ' renders its settings (' + fields.length + ' fields)');
+    ok(c.main.querySelector('.cfg[data-cfg="' + id + '"]') && (fields.length >= 1 || ["apify", "library", "general", 'perms', 'about'].includes(id)), 'configs: ' + id + ' renders its settings (' + fields.length + ' fields)');
   }
   fire(c.doc.querySelector('.chip[data-chip="movies"]'), 'click'); await tick();
   const secs = c.main.querySelectorAll('[data-msec]').map((s) => s.getAttribute('data-msec'));
