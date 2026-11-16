@@ -138,7 +138,8 @@ class SheetShellTest {
         compose.onNodeWithTag(DrawerTags.sheet("Sheet1")).assertExists()
         compose.onNodeWithTag(DrawerTags.sheet("Sheet2")).assertExists()
         compose.onNodeWithTag(DrawerTags.NEW_SHEET).assertExists()
-        assertTrue("the Sheet entries are the sheets', not the sections'", compose.onAllNodesWithTag(TopFirstRowTags.entry("measure")).fetchSemanticsNodes().isEmpty())
+        // #1758 the sheets are the page's own entries; the Sections group (every declared section, nav-walk P6) follows them
+        Declarations.nav.sections.forEach { compose.onNodeWithTag(TopFirstRowTags.entry(it.id)).assertExists() }
         compose.onNodeWithTag(DrawerTags.sheet("Sheet1")).performClick()
         compose.waitForIdle()
         assertEquals("Sheet1", st.sheet)
