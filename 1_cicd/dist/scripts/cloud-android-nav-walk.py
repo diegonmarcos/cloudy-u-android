@@ -424,23 +424,42 @@ class Walk:
         nodes = dump()
         if nodes is None:
             return False
-        for _ in range(6):
+        for _ in range(10):
             e = find(nodes, ENTRY + pid)
             if e is not None:
                 tap(e)
                 settle(1.6)
                 return True
-            entries = findall(nodes, ENTRY)
-            if not entries:
-                break
+            if not self.scroll_dropdown(nodes):
+                break  # the list did not move: that is all of it
+            nodes = dump() or nodes
+        return False
+
+    @staticmethod
+    def dropdown_sig(nodes):
+        """Everything the open dropdown shows (ids, texts, positions): equal before and after a swipe means it is at its end.
+        Entries alone are not enough: page actions between the pages and the sections can scroll under an unchanged entry set."""
+        box = find(nodes, DROPDOWN)
+        if box is None:
+            return None
+        return tuple((n.rid, n.text, n.t) for n in nodes if box.l <= n.cx <= box.r and box.t <= n.t < box.b)
+
+    def scroll_dropdown(self, nodes):
+        """One swipe up over the open dropdown (from its last entry on screen, else from its lower edge); False when nothing moved."""
+        box = find(nodes, DROPDOWN)
+        entries = findall(nodes, ENTRY)
+        if box is None and not entries:
+            return False
+        before = self.dropdown_sig(nodes) if box is not None else tuple(sorted((n.rid, n.t) for n in entries))
+        if entries:
             top, bottom = min(n.t for n in entries), max(n.b for n in entries)
             swipe(entries[0].cx, bottom - 20, max(top + 20, bottom - 500), 300)
-            settle(0.6)
-            again = dump() or nodes
-            if sorted(n.rid for n in findall(again, ENTRY)) == sorted(n.rid for n in entries):
-                break  # the list did not move: that is all of it
-            nodes = again
-        return False
+        else:
+            swipe(box.cx, box.b - 20, max(box.t + 20, box.b - 500), 300)
+        settle(0.6)
+        again = dump() or nodes
+        after = self.dropdown_sig(again) if box is not None else tuple(sorted((n.rid, n.t) for n in findall(again, ENTRY)))
+        return after != before
 
     def section_root(self):
         """Open the dropdown at the current section's root (its crumb), where the dropdown lists the app's sections as peers.
@@ -470,16 +489,12 @@ class Walk:
         """Every entry id of the open dropdown, scrolling it to its end."""
         nodes = dump() or []
         seen = set()
-        for _ in range(8):
-            entries = findall(nodes, ENTRY)
-            before = len(seen)
-            seen |= {n.rid[len(ENTRY):] for n in entries}
-            if not entries or (len(seen) == before and _ > 0):
+        for _ in range(10):
+            seen |= {n.rid[len(ENTRY):] for n in findall(nodes, ENTRY)}
+            if not self.scroll_dropdown(nodes):
                 break
-            top, bottom = min(n.t for n in entries), max(n.b for n in entries)
-            swipe(entries[0].cx, bottom - 20, max(top + 20, bottom - 500), 300)
-            settle(0.6)
             nodes = dump() or nodes
+        seen |= {n.rid[len(ENTRY):] for n in findall(nodes, ENTRY)}
         return seen
 
     def check_section_list(self):
