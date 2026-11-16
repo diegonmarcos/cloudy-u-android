@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -115,6 +116,7 @@ import com.diegonmarcos.clouddrive.ui.IslandAction
 import com.diegonmarcos.clouddrive.ui.LoadingState
 import com.diegonmarcos.clouddrive.ui.Pill
 import com.diegonmarcos.clouddrive.files.convert.ConverterRegistry
+import com.diegonmarcos.clouddrive.files.convert.ConvertTargets
 import com.diegonmarcos.clouddrive.ui.ProgressCard
 import com.diegonmarcos.clouddrive.ui.SectionHeader
 import com.diegonmarcos.superapp.bottomnav.bottomNavPillShape
@@ -326,6 +328,9 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
                         "move_to_other_pane" -> otherLocal?.let { controller.transferSelection(ui.active, it, move = true) }
                         "zip_all" -> dialog = FilesDialog.ZipName(ui.active)
                         "tar_all" -> dialog = FilesDialog.ZipName(ui.active, tarGz = true)
+                        "compress" -> dialog = FilesDialog.ZipName(ui.active)
+                        "unzip" -> entries.filter { ArchiveExtractor.kindOf(it.name) != null }.forEach { controller.extractHere(it) }
+                        "to_pdf" -> entries.filter { !it.isDirectory }.forEach { controller.toPdf(it) }
                         "copy_paths" -> copyPath(entries.map { it.location })
                         "copy_to_downloads" -> if (paths.isNotEmpty()) { actions.copyToDownload(paths); scope.launch { snackbar.showSnackbar(ctx.getString(R.string.files_copying_to_downloads, paths.size)) } }
                         "share" -> actions.share(entries.filter { !it.isDirectory }.mapNotNull { (it.location as? Location.Local)?.path })
@@ -779,19 +784,42 @@ private fun itemMenuAction(id: String): EntryAction? = when (id) {
  * per-item dropdown and the selection dropdown, so the two always look the same.
  */
 @Composable
-private fun GroupedFileMenu(groups: List<FileMenu.Group>, onPick: (String) -> Unit) {
+private fun GroupedFileMenu(groups: List<FileMenu.Group>, onPick: (String) -> Unit, extra: @Composable (String) -> Unit = {}) {
     val copyIcon = remember { Declarations.files.rowAction(COPY_PATH)?.icon }
+    // Dense rows (DriveMetrics.menuRow, not Material's 48dp): the fixed height wins over the item's own minimum; every item stays.
+    val dense = PaddingValues(horizontal = DriveMetrics.padWide, vertical = DriveMetrics.none)
     groups.forEachIndexed { i, g ->
         if (i > 0) HorizontalDivider()
-        DropdownMenuItem(enabled = false, modifier = Modifier.testTag("files_menu_group_" + g.id), text = { Text(g.label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }, onClick = {})
+        DropdownMenuItem(enabled = false, contentPadding = dense, modifier = Modifier.height(DriveMetrics.menuRow).testTag("files_menu_group_" + g.id), text = { Text(g.label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }, onClick = {})
         for (item in g.items) {
             val icon = if ((item.id == "copy_path" || item.id == "copy_paths") && copyIcon != null) copyIcon else null
             DropdownMenuItem(
-                text = { Text(item.label) }, enabled = item.enabled, modifier = Modifier.testTag("files_menu_item_" + item.id),
+                text = { Text(item.label, style = MaterialTheme.typography.bodyMedium) }, enabled = item.enabled, contentPadding = dense,
+                modifier = Modifier.height(DriveMetrics.menuRow).testTag("files_menu_item_" + item.id),
                 leadingIcon = if (icon != null) ({ Icon(IconCatalog.vectorOrDefault(icon), null, Modifier.size(DriveMetrics.icon)) }) else null,
                 onClick = { runCatching { onPick(item.id) } },
             )
         }
+        extra(g.id)
+    }
+}
+
+/** The expanded Convert targets of the selection menu: the SAME targets as the per-file Convert (ConvertTargets), unavailable ones with their reason. */
+@Composable
+private fun ConvertTargetRows(targets: List<ConvertTargets.Target>, onPick: (ConvertTargets.Target) -> Unit) {
+    val dense = PaddingValues(start = DriveMetrics.padWide + DriveMetrics.padWide, end = DriveMetrics.padWide, top = DriveMetrics.none, bottom = DriveMetrics.none)
+    targets.forEach { t ->
+        DropdownMenuItem(
+            enabled = t.enabled, contentPadding = dense,
+            modifier = Modifier.height(if (t.reason == null) DriveMetrics.menuRow else DriveMetrics.menuRowTwoLine).testTag("files_menu_target_" + t.key),
+            text = {
+                Column {
+                    Text(t.label, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    t.reason?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                }
+            },
+            onClick = { runCatching { onPick(t) } },
+        )
     }
 }
 
@@ -823,6 +851,7 @@ private fun SelectionBar(
     val inArchive = pane.location.isArchive
     val otherLocal = ui.otherPane.location as? Location.Local
     var more by remember { mutableStateOf(false) }
+    var convertOpen by remember { mutableStateOf(false) }
     Row(
         Modifier.fillMaxWidth().testTag(DriveTags.FILES_SELECTION_BAR).background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = DriveMetrics.pad, vertical = DriveMetrics.pad),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DriveMetrics.pad),
@@ -843,7 +872,7 @@ private fun SelectionBar(
         }
         Box {
             IconButton(onClick = { more = true }, Modifier.size(DriveMetrics.tap)) { Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.chrome_more)) }
-            DropdownMenu(expanded = more, onDismissRequest = { more = false }) {
+            DropdownMenu(expanded = more, onDismissRequest = { more = false; convertOpen = false }) {
                 val selected = controller.selectedEntries(ui.active)
                 val allUnderGit by produceState(false, selected) { value = withContext(Dispatchers.IO) { selected.isNotEmpty() && selected.all { e -> (e.location as? Location.Local)?.let { GitWorkTree.isUnderGit(it.path) } == true } } }
                 // #1680 the SAME grouped component as the per-item menu, declared in build.json ui.files.menus.selection.
@@ -851,16 +880,35 @@ private fun SelectionBar(
                     count = selected.size, isDirectory = selected.isNotEmpty() && selected.all { it.isDirectory },
                     isLocal = selected.all { it.location is Location.Local }, inArchive = inArchive, anyFile = selected.any { !it.isDirectory },
                     underGit = allUnderGit, otherPaneLocal = ui.dualPane && otherLocal != null,
+                    // Convert group: the same registry the per-file menu reads; an entry point is on when any selected file can use it.
+                    canUnzip = selected.any { ArchiveExtractor.kindOf(it.name) != null },
+                    canConvert = selected.any { !it.isDirectory && ConverterRegistry.default.forName(it.name).isNotEmpty() },
+                    isPdf = selected.any { !it.isDirectory && FileOps.extensionOf(it.name) == "pdf" },
                 ))
-                if (groups.isNotEmpty()) GroupedFileMenu(groups) { id ->
-                    more = false
+                val convertTargets = remember(selected) { ConvertTargets.forNames(selected.map { it.name }) }
+                if (groups.isNotEmpty()) GroupedFileMenu(groups, onPick = { id ->
+                    // Convert… / Convert from PDF… expand the target rows in place (the menu stays open); everything else closes it.
+                    if (id == "convert" || id == "convert_pdf") convertOpen = !convertOpen else more = false
                     when (id) {
+                        "convert", "convert_pdf" -> Unit
                         "select_all" -> controller.update { s -> FilesReducer.selectAll(s, s.active, allKeys(s, controller)) }
                         "invert_selection" -> controller.update { s -> FilesReducer.invert(s, s.active, allKeys(s, controller)) }
                         "clear_selection" -> controller.update { FilesReducer.clearSelection(it, it.active) }
                         else -> onMenuPick(id, selected)
                     }
-                }
+                }, extra = { gid ->
+                    if (gid == "convert" && convertOpen) ConvertTargetRows(convertTargets) { t ->
+                        more = false; convertOpen = false
+                        // Every file the target accepts gets its own job (own progress card and own result); the others were listed unavailable.
+                        selected.filter { it.name in t.accepting }.forEach { e ->
+                            when (t.kind) {
+                                ConvertTargets.Kind.CONVERTER -> ConverterRegistry.default.forName(e.name).firstOrNull { it.id == t.arg }?.let { controller.convert(e, it) }
+                                ConvertTargets.Kind.TO_PDF -> controller.toPdf(e)
+                                ConvertTargets.Kind.FROM_PDF -> controller.convertPdf(e, t.arg)
+                            }
+                        }
+                    }
+                })
                 // Fallback only when ui.files.menus.selection is not declared: the previous flat list, unchanged.
                 if (groups.isEmpty()) {
                 if (!inArchive) {

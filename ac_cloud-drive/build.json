@@ -797,6 +797,13 @@
             {"id": "invert_selection", "label": "Invert selection"},
             {"id": "select_all", "label": "Select all"}
           ]},
+          {"id": "convert", "label": "Convert", "items": [
+            {"id": "unzip", "label": "Unzip…"},
+            {"id": "compress", "label": "Zip / Compress (.zip / .tar.gz)…"},
+            {"id": "convert", "label": "Convert…"},
+            {"id": "to_pdf", "label": "Convert to PDF…"},
+            {"id": "convert_pdf", "label": "Convert from PDF (text, MD, HTML, OCR)…"}
+          ]},
           {"id": "share", "label": "Share", "items": [
             {"id": "copy_paths", "label": "Copy paths"},
             {"id": "copy_to_downloads", "label": "Copy to Downloads"},

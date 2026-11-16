@@ -42,6 +42,7 @@ object FileMenu {
         val underGit: Boolean = false,
         val canEdit: Boolean = false,
         val canEditor: Boolean = false,
+        /** Item menu: the file is a PDF. Selection menu: at least one selected entry is a PDF. */
         val isPdf: Boolean = false,
         val canUnzip: Boolean = false,
         val canConvert: Boolean = false,
@@ -59,6 +60,7 @@ object FileMenu {
     val SELECTION_IDS = setOf(
         "delete_all", "move_all", "copy_all", "copy_to_other_pane", "move_to_other_pane", "zip_all", "tar_all",
         "clear_selection", "invert_selection", "select_all",
+        "unzip", "compress", "convert", "to_pdf", "convert_pdf",
         "copy_paths", "copy_to_downloads", "share",
         "properties", "rename",
         "git_move_all", "git_rename",
@@ -88,6 +90,13 @@ object FileMenu {
                 "clear_selection", "invert_selection", "select_all" -> true
                 "copy_paths" -> c.count > 0
                 "copy_all" -> c.count > 0
+                // Convert group (same ids and labels as the item menu): an entry point is enabled when ANY selected file
+                // can use it; the per-target availability (all files must support a target) is ConvertTargets.
+                "unzip" -> c.count > 0 && local && c.canUnzip
+                "compress" -> c.count > 0 && local
+                "convert" -> c.count > 0 && local && c.canConvert
+                "to_pdf" -> c.count > 0 && local && c.anyFile
+                "convert_pdf" -> c.count > 0 && local && c.isPdf
                 "copy_to_other_pane" -> c.count > 0 && c.otherPaneLocal
                 "move_to_other_pane" -> c.count > 0 && c.otherPaneLocal && local
                 "delete_all", "move_all", "zip_all", "tar_all", "copy_to_downloads", "properties" -> c.count > 0 && local

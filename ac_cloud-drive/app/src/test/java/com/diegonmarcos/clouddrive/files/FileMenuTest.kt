@@ -49,7 +49,7 @@ class FileMenuTest {
 
     @Test fun selectionMenuGroupsInOrder() {
         val g = FileMenu.resolve(FileMenu.SELECTION, selDecl, FileMenu.Context(count = 2, underGit = true, otherPaneLocal = true))
-        assertEquals(listOf("actions", "share", "meta", "git"), g.map { it.id })
+        assertEquals(listOf("actions", "convert", "share", "meta", "git"), g.map { it.id })
         assertTrue(g.first { it.id == "actions" }.items.map { it.id }.containsAll(listOf("delete_all", "move_all", "copy_all", "zip_all", "tar_all", "clear_selection", "invert_selection", "select_all")))
         assertEquals(listOf("copy_paths", "copy_to_downloads", "share"), g.first { it.id == "share" }.items.map { it.id })
         assertTrue("properties" in g.first { it.id == "meta" }.items.map { it.id })
@@ -60,7 +60,7 @@ class FileMenuTest {
         // Same component: same group type, same Share/Meta/Git group ids, both from one declaration block.
         val a = FileMenu.resolve(FileMenu.ITEM, itemDecl, FileMenu.Context(underGit = true)).map { it.id }
         val b = FileMenu.resolve(FileMenu.SELECTION, selDecl, FileMenu.Context(count = 1, underGit = true)).map { it.id }
-        assertEquals(a.drop(2), b.drop(1))
+        assertEquals(a.drop(1), b.drop(1)) // Convert | Share | Meta | Git, now in both
         assertEquals(setOf(FileMenu.ITEM, FileMenu.SELECTION), files.menus.keys)
     }
 

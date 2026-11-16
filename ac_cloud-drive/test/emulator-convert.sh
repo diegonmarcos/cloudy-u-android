@@ -128,6 +128,22 @@ for t in 'Open' 'Convert' 'Convert to PDF…' 'Convert from PDF'; do dump | grep
 dump | grep -q 'Unzip…' || fail "Unzip… (disabled) is not listed: $(texts)"
 close_menu
 
+# 1b. menu evidence (Convert in the multi-selection dropdown, dense rows): single and multi, Convert expanded
+open_menu photo.png; shot 02b-menu-single-png
+for t in 'Convert…' 'Convert to PDF…' 'Delete' 'Properties'; do dump | grep -q "$t" || fail "single menu lacks '$t': $(texts)"; done
+close_menu
+xy=$(where '^photo.png$') || fail "no photo.png row: $(texts)"
+adb shell input swipe $xy $xy 900 2>/dev/null || adb shell input swipe ${xy% *} ${xy#* } ${xy% *} ${xy#* } 900
+sleep 2; tap '^data.txt$' || fail "no data.txt row to add to the selection: $(texts)"; sleep 2
+dump | grep -q '2 selected' || fail "two files are not selected: $(texts)"
+xy=$(more_of '2 selected') || fail "no selection-bar More: $(texts)"
+adb shell input tap $xy; sleep 2; shot 11a-menu-multi
+for t in 'Convert' 'Convert…' 'Convert to PDF…' 'Delete all' 'Select all'; do dump | grep -q "$t" || fail "multi menu lacks '$t': $(texts)"; done
+tap '^Convert…$' || fail "multi Convert… not found: $(texts)"; sleep 2; shot 11b-menu-multi-convert-expanded
+dump | grep -q 'JPG image' || fail "expanded Convert lists no targets: $(texts)"
+dump | grep -q 'not available for' || fail "mixed png+txt shows no unavailable reason: $(texts)"
+close_menu; tap 'Clear selection' || true; sleep 1
+
 # 2. conversions
 pick photo.png 'Convert to PDF…' photo.pdf; shot 03-image-pdf
 pick notes.md 'Convert to PDF…' notes.pdf; shot 04-md-pdf

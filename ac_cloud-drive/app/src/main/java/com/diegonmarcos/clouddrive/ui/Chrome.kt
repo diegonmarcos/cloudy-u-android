@@ -83,6 +83,9 @@ object DriveMetrics {
     val sectionInset = gutter + tight
     val islandHeight = 44.dp
     val rowHeight = 40.dp
+    /** Dropdown menu rows (the Explorer's item and selection menus): dense, not Material's 48dp; [menuRowTwoLine] holds a label plus a reason line. */
+    val menuRow = 28.dp
+    val menuRowTwoLine = 40.dp
     val tap = 36.dp
     val tapSmall = 24.dp
     val glyph = 28.dp
