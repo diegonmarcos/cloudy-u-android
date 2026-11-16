@@ -80,7 +80,7 @@ detail() { # <metric label> <ranges...>
   go "page:health/tracked"
   for _ in 1 2 3 4; do tap "^$label\$" && break; up; done
   sleep 3
-  dump | texts | grep -q "^< Tracked$" || { bad "the $label card opened no detail"; return; }
+  dump | texts | grep -q "^< Tracked$" || { adb exec-out screencap -p > "$OUT/shots/detail-fail-$(echo "$label" | tr 'A-Z ' 'a-z_').png"; dump > "$OUT/shots/detail-fail-$(echo "$label" | tr 'A-Z ' 'a-z_').xml"; bad "the $label card opened no detail"; return; }
   for r in "$@"; do
     tap "^$r\$" || { bad "$label detail has no $r toggle"; continue; }
     sleep 3; shoot "$(printf %02d $i)-detail-$(echo "$label" | tr 'A-Z ' 'a-z_')-$r" "^MIN$"; i=$((i + 1))
