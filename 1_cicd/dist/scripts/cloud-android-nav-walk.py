@@ -262,6 +262,7 @@ class Walk:
         self.a = a
         self.pkg = a.pkg
         self.out = a.out
+        self.unopened = set()  # pages that did not open from the dropdown (their descendants are reported behind them, not climbed to)
         self.deadline = time.time() + a.budget_min * 60  # the walk's own budget (--budget-min): what is left after it is reported failed
         self.shots = set(x for x in (a.shots or "").split(",") if x)
         os.makedirs(os.path.join(self.out, "shots"), exist_ok=True)
@@ -947,8 +948,13 @@ class Walk:
         if not self.foreground():  # an earlier page left the app (a stray Back, a death): come back before walking this one
             self.relaunch_to(section)
         self.ensure_chrome(section)
-        err = self.goto(pid, label, up) if via_dropdown else None
+        # a page behind an ancestor that could not be opened is not reachable either: reported (a failure, naming the ancestor) without the
+        # minutes of climbing that every such page cost (#1760: Cloud C3 Ops > Orchestration did not open, its six pages took 10 minutes each)
+        blocked = next((a for a in up if a in self.unopened), None)
+        err = ("%s is behind %s, which did not open (its own failure above)" % (pid, blocked)) if blocked else (self.goto(pid, label, up) if via_dropdown else None)
         checks, fails = ({}, [err]) if err else self.check_page(section, label, via_dropdown, pid)
+        if fails and not blocked and any(f.startswith(("P4 the title path does not end in", "the dropdown lists no entry", "the title dropdown did not open")) for f in fails):
+            self.unopened.add(pid)
         died = not self.alive()
         crashed, log = self.crashed()
         if died and not crashed and not retry and "dying proc com.google.android.gms" in shell("logcat -d -b events -v brief 2>/dev/null | grep am_kill | grep -F %s" % self.pkg, timeout=60):
