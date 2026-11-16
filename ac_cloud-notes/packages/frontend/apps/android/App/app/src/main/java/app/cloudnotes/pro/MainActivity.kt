@@ -92,6 +92,8 @@ class MainActivity : BridgeActivity(), CloudNotesThemePlugin.Callback {
     private fun captureViewIntent(intent: Intent?) {
         try {
             if (ExternalFilePlugin.capture(this, intent)) {
+                // #1717 every entry point lands in the vault shell: the file is handed to it as a new tab
+                shell?.host()?.showVault()
                 bridge.webView.post {
                     bridge.webView.evaluateJavascript(
                         "window.dispatchEvent(new Event('cloud-notes:view-intent'))",

@@ -81,6 +81,7 @@ import { MobileBack } from './plugins/mobile-back';
 import { NbStoreNativeDBApis } from './plugins/nbstore';
 import { Preview } from './plugins/preview';
 import './plugins/vault';
+import { pushExternalDoc } from '@cloud-notes/core/mobile/vault/external-open';
 import {
   authRequestProvider,
   clearEndpointSession,
@@ -570,12 +571,11 @@ const openPendingFile = async () => {
     });
     return;
   }
-  await importExternalFile({
-    content: pending.content,
-    name: pending.name ?? 'note.txt',
-    size: pending.size ?? pending.content.length,
-    path: '',
-  });
+  // #1717 every entry point lands in the vault shell: the file is a new tab there
+  pushExternalDoc({ name: pending.name ?? 'note.txt', content: pending.content });
+  window.dispatchEvent(
+    new CustomEvent('cloud-notes:nav', { detail: { section: 'pages', page: 'vault' } })
+  );
 };
 
 const importExternalFile = async (file: ExternalFileReadResult) => {

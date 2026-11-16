@@ -8,7 +8,7 @@ export const Component = () => {
   // TODO: replace with a mobile version
   return (
     <IndexComponent
-      defaultIndexRoute={'home'}
+      defaultIndexRoute={'vault'}
       fallback={<AppFallback />}
       createErrorFallback={(retry, cause) => (
         <AppFallback onRetry={retry} errorCause={cause} />

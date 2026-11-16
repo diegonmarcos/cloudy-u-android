@@ -43,6 +43,7 @@ import {
   type RecentVault,
   touchRecent,
 } from './recent-vaults';
+import { EXTERNAL_DOC_EVENT, EXTERNAL_PREFIX, isExternalPath, takeExternalDocs } from './external-open';
 import { INDEXED_EXT, type VaultIndex } from './vault-index';
 import { parentOf, type VaultEntry, type VaultFS, walkVault } from './vault-fs';
 
@@ -181,6 +182,7 @@ export function useVault(decl: VaultDecl, storage: KeyValueStore) {
       if (loading.current.has(path)) return;
       const have = buffersRef.current[path];
       if (have && (have.text !== null || have.error !== null)) return;
+      if (isExternalPath(path)) return;
       loading.current.add(path);
       const next: Buffer = { text: null, dirty: false, error: null };
       try {
@@ -271,9 +273,33 @@ export function useVault(decl: VaultDecl, storage: KeyValueStore) {
     if (last) void openRoot(last.root, last.name);
   }, [native, storage, openRoot]);
 
+  // Open with: a file another app handed over is a tab of the mounted vault (text kept in memory, never written back).
+  useEffect(() => {
+    if (!vault) return;
+    const take = () => {
+      for (const doc of takeExternalDocs()) {
+        const path = EXTERNAL_PREFIX + doc.name;
+        setBuffers(b => ({ ...b, [path]: { text: doc.content, dirty: false, error: null } }));
+        setTabState(s => openTab(s, decl, path, decl.layout.tab_max));
+      }
+    };
+    take();
+    window.addEventListener(EXTERNAL_DOC_EVENT, take);
+    return () => window.removeEventListener(EXTERNAL_DOC_EVENT, take);
+  }, [vault, decl]);
+
   // TabStore persistence: every change of the tabs of the mounted root is written.
   useEffect(() => {
-    if (vault) saveTabs(storage, vault.root, tabState);
+    if (!vault) return;
+    // an Open-with file lives in memory only: it is not a tab to restore
+    const tabs = tabState.tabs.filter(t => !isExternalPath(t.path));
+    const keep = (p: string) => !isExternalPath(p);
+    saveTabs(storage, vault.root, {
+      tabs,
+      active: tabState.active && keep(tabState.active) ? tabState.active : (tabs[tabs.length - 1]?.path ?? null),
+      back: tabState.back.filter(keep),
+      forward: tabState.forward.filter(keep),
+    });
   }, [vault, tabState, storage]);
 
   const setPrefs = useCallback(
@@ -461,7 +487,7 @@ export function useVault(decl: VaultDecl, storage: KeyValueStore) {
   const save = useCallback(
     async (path: string) => {
       const buf = buffersRef.current[path];
-      if (!vault || !buf || buf.text === null || !buf.dirty) return;
+      if (!vault || !buf || buf.text === null || !buf.dirty || isExternalPath(path)) return;
       const text = buf.text;
       try {
         await vault.fs.writeText(path, text);

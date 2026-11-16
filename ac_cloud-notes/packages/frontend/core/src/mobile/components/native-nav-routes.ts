@@ -73,7 +73,7 @@ export const NATIVE_NAV_TARGETS: Record<string, NativeNavTarget> = {
 /** First page of each section: what tapping the island item opens. */
 export const NATIVE_NAV_FIRST_PAGE: Record<string, string> = {
   home: 'recent',
-  pages: 'all',
+  pages: 'vault',
   canvas: 'boards',
   graph: 'global',
   search: 'search',

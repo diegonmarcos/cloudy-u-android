@@ -88,8 +88,12 @@ internal class NotesShell(
 
     fun setDark(dark: Boolean) { darkState = dark }
 
-    /** #1717 true while the Vault view is shown with its own bars: the content fills the screen, the shared bars are not drawn. */
-    private var vaultChrome by mutableStateOf(false)
+    /**
+     * #1717 true while the Vault view is shown with its own bars: the content fills the screen, the shared bars are not drawn.
+     * The app STARTS in the vault (build.json::ui.default_section is pages, whose first page is Vault), so this starts true: the
+     * old bars are never drawn for a frame before the web half reports. The web half clears it when it leaves the vault route.
+     */
+    private var vaultChrome by mutableStateOf(true)
 
     /** Configs > UI (the shared nav UI card) is open; its "All settings" opens the web half's own settings. */
     private var configsOpen by mutableStateOf(false)
@@ -119,6 +123,32 @@ internal class NotesShell(
         fun openSection(id: String) {
             vaultChrome = false
             nav.open(id)
+        }
+
+        /** #1717 the vault's App pages (gear, command palette, menu): open `<section>/<page>` exactly as the second row would. */
+        @JavascriptInterface
+        fun openPage(section: String, page: String) {
+            vaultChrome = false
+            nav.openPage(section, page)
+        }
+
+        /** #1717 the vault's App pages: the fleet Configs strip (General, Agents, Perms, Logcat, X-Ray App, About). */
+        @JavascriptInterface
+        fun openFleetConfigs() {
+            fleetConfigsOpen = true
+        }
+
+        /** #1717 the vault's App pages: Configs > UI (the shared nav card). */
+        @JavascriptInterface
+        fun openConfigsUi() {
+            configsOpen = true
+        }
+
+        /** #1717 an entry point (Open with, a deep link) lands in the vault: its own bars, the section state follows. */
+        @JavascriptInterface
+        fun showVault() {
+            vaultChrome = true
+            nav.openPage("pages", "vault")
         }
     }
 
