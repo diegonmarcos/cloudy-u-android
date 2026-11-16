@@ -3668,7 +3668,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.clouddrive",
-                  "label": "Cloud Drive"
+                  "label": "cloud-drive"
                 },
                 {
                   "pkg": "com.google.android.apps.docs",
@@ -3722,7 +3722,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudbrowser",
-                  "label": "Cloud Browser"
+                  "label": "cloud-browser"
                 },
                 {
                   "pkg": "com.brave.browser",
@@ -3744,7 +3744,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudcalc",
-                  "label": "Cloud Calc"
+                  "label": "cloud-calc"
                 },
                 {
                   "pkg": "com.sec.android.app.popupcalculator",
@@ -3770,7 +3770,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudnav",
-                  "label": "Cloud Nav"
+                  "label": "cloud-nav"
                 },
                 {
                   "pkg": "com.google.android.apps.maps",
@@ -3784,7 +3784,7 @@
               "packages": [
                 {
                   "pkg": "cld.camera",
-                  "label": "Cloud Camera"
+                  "label": "cloud-camera"
                 },
                 {
                   "pkg": "com.sec.android.app.camera",
@@ -3798,7 +3798,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudkeyboard",
-                  "label": "Cloud Keyboard"
+                  "label": "cloud-keyboard"
                 },
                 {
                   "pkg": "com.google.android.inputmethod.latin",
@@ -3820,7 +3820,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudwallet",
-                  "label": "Cloud Wallet"
+                  "label": "cloud-wallet"
                 },
                 {
                   "pkg": "com.google.android.apps.walletnfcrel",
@@ -3843,7 +3843,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.comms.mail",
-                  "label": "Cloud Mail"
+                  "label": "cloud-mail"
                 },
                 {
                   "pkg": "com.google.android.gm",
@@ -3877,7 +3877,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.comms.chat",
-                  "label": "Cloud Chat"
+                  "label": "cloud-chat"
                 },
                 {
                   "pkg": "com.Slack",
@@ -3907,7 +3907,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.comms.matrix",
-                  "label": "Cloud Matrix"
+                  "label": "cloud-matrix"
                 },
                 {
                   "pkg": "com.whatsapp",
@@ -3949,7 +3949,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.comms.dialer",
-                  "label": "Cloud Dialer"
+                  "label": "cloud-dialer"
                 },
                 {
                   "pkg": "com.samsung.android.dialer",
@@ -3963,7 +3963,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudcontacts",
-                  "label": "Cloud Contacts"
+                  "label": "cloud-contacts"
                 },
                 {
                   "pkg": "com.google.android.contacts",
@@ -3990,7 +3990,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudnotes",
-                  "label": "Cloud Notes"
+                  "label": "cloud-notes"
                 },
                 {
                   "pkg": "md.obsidian",
@@ -3999,10 +3999,6 @@
                 {
                   "pkg": "com.microsoft.office.onenote",
                   "label": "OneNote"
-                },
-                {
-                  "pkg": "app.affine.pro",
-                  "label": "AFFiNE"
                 },
                 {
                   "pkg": "com.rhmsoft.edit",
@@ -4016,7 +4012,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudagenda",
-                  "label": "Cloud Tasks"
+                  "label": "cloud-tasks"
                 },
                 {
                   "pkg": "com.google.android.calendar",
@@ -4050,7 +4046,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudoffice",
-                  "label": "Cloud Office"
+                  "label": "cloud-office"
                 },
                 {
                   "pkg": "com.google.android.apps.docs.editors.docs",
@@ -4076,7 +4072,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.mediacenter",
-                  "label": "Cloud Gallery"
+                  "label": "cloud-gallery"
                 },
                 {
                   "pkg": "com.google.android.apps.photos",
@@ -4094,7 +4090,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudvault",
-                  "label": "Cloud Vault"
+                  "label": "cloud-vault"
                 },
                 {
                   "pkg": "com.x8bit.bitwarden",
@@ -4130,7 +4126,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudme",
-                  "label": "Cloud Me"
+                  "label": "cloud-me"
                 },
                 {
                   "pkg": "com.sec.android.app.shealth",
@@ -4198,7 +4194,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudsearch",
-                  "label": "Cloud Search"
+                  "label": "cloud-search"
                 },
                 {
                   "pkg": "com.google.android.googlequicksearchbox",
@@ -4212,7 +4208,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudnews",
-                  "label": "Cloud News"
+                  "label": "cloud-news"
                 },
                 {
                   "pkg": "com.google.android.apps.magazines",
@@ -4259,7 +4255,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudmediacenter",
-                  "label": "Cloud Media Center"
+                  "label": "cloud-media-center"
                 },
                 {
                   "pkg": "com.aspiro.tidal",
@@ -4301,7 +4297,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudshopping",
-                  "label": "Cloud Shopping"
+                  "label": "cloud-shopping"
                 },
                 {
                   "pkg": "com.amazon.mShop.android.shopping",
@@ -4509,7 +4505,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.code",
-                  "label": "Cloud Code"
+                  "label": "cloud-code"
                 },
                 {
                   "pkg": "com.foxdebug.acode",
@@ -4527,7 +4523,7 @@
               "packages": [
                 {
                   "pkg": "cld.termux.nix",
-                  "label": "Cloud Terminal Nix"
+                  "label": "cloud-terminal-nix"
                 },
                 {
                   "pkg": "com.termux",
@@ -4614,7 +4610,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudstore",
-                  "label": "Cloud Store"
+                  "label": "cloud-store"
                 },
                 {
                   "pkg": "com.android.vending",
@@ -4640,7 +4636,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudc3",
-                  "label": "Cloud C3"
+                  "label": "cloud-c3"
                 },
                 {
                   "pkg": "moe.shizuku.privileged.api",

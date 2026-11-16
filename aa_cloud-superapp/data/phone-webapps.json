@@ -6,7 +6,7 @@
       "apps": [
         {
           "pkg": "com.diegonmarcos.clouddrive",
-          "label": "Cloud Drive",
+          "label": "cloud-drive",
           "url": null
         },
         {
@@ -66,7 +66,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudbrowser",
-          "label": "Cloud Browser",
+          "label": "cloud-browser",
           "url": null
         },
         {
@@ -86,7 +86,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudcalc",
-          "label": "Cloud Calc",
+          "label": "cloud-calc",
           "url": null
         },
         {
@@ -111,7 +111,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudnav",
-          "label": "Cloud Nav",
+          "label": "cloud-nav",
           "url": null
         },
         {
@@ -121,7 +121,7 @@
         },
         {
           "pkg": "cld.camera",
-          "label": "Cloud Camera",
+          "label": "cloud-camera",
           "url": null
         },
         {
@@ -131,7 +131,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudkeyboard",
-          "label": "Cloud Keyboard",
+          "label": "cloud-keyboard",
           "url": null
         },
         {
@@ -151,7 +151,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudwallet",
-          "label": "Cloud Wallet",
+          "label": "cloud-wallet",
           "url": null
         },
         {
@@ -166,7 +166,7 @@
       "apps": [
         {
           "pkg": "com.diegonmarcos.comms.mail",
-          "label": "Cloud Mail",
+          "label": "cloud-mail",
           "url": null
         },
         {
@@ -201,7 +201,7 @@
         },
         {
           "pkg": "com.diegonmarcos.comms.chat",
-          "label": "Cloud Chat",
+          "label": "cloud-chat",
           "url": null
         },
         {
@@ -231,7 +231,7 @@
         },
         {
           "pkg": "com.diegonmarcos.comms.matrix",
-          "label": "Cloud Matrix",
+          "label": "cloud-matrix",
           "url": null
         },
         {
@@ -276,7 +276,7 @@
         },
         {
           "pkg": "com.diegonmarcos.comms.dialer",
-          "label": "Cloud Dialer",
+          "label": "cloud-dialer",
           "url": null
         },
         {
@@ -286,7 +286,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudcontacts",
-          "label": "Cloud Contacts",
+          "label": "cloud-contacts",
           "url": null
         },
         {
@@ -306,7 +306,7 @@
       "apps": [
         {
           "pkg": "com.diegonmarcos.cloudnotes",
-          "label": "Cloud Notes",
+          "label": "cloud-notes",
           "url": null
         },
         {
@@ -320,18 +320,13 @@
           "url": "https://www.onenote.com"
         },
         {
-          "pkg": "app.affine.pro",
-          "label": "AFFiNE",
-          "url": null
-        },
-        {
           "pkg": "com.rhmsoft.edit",
           "label": "QuickEdit",
           "url": null
         },
         {
           "pkg": "com.diegonmarcos.cloudagenda",
-          "label": "Cloud Tasks",
+          "label": "cloud-tasks",
           "url": null
         },
         {
@@ -366,7 +361,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudoffice",
-          "label": "Cloud Office",
+          "label": "cloud-office",
           "url": null
         },
         {
@@ -391,7 +386,7 @@
         },
         {
           "pkg": "com.diegonmarcos.mediacenter",
-          "label": "Cloud Gallery",
+          "label": "cloud-gallery",
           "url": null
         },
         {
@@ -406,7 +401,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudvault",
-          "label": "Cloud Vault",
+          "label": "cloud-vault",
           "url": null
         },
         {
@@ -441,7 +436,7 @@
       "apps": [
         {
           "pkg": "com.diegonmarcos.cloudme",
-          "label": "Cloud Me",
+          "label": "cloud-me",
           "url": null
         },
         {
@@ -501,7 +496,7 @@
       "apps": [
         {
           "pkg": "com.diegonmarcos.cloudsearch",
-          "label": "Cloud Search",
+          "label": "cloud-search",
           "url": null
         },
         {
@@ -511,7 +506,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudnews",
-          "label": "Cloud News",
+          "label": "cloud-news",
           "url": null
         },
         {
@@ -556,7 +551,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudmediacenter",
-          "label": "Cloud Media Center",
+          "label": "cloud-media-center",
           "url": null
         },
         {
@@ -601,7 +596,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudshopping",
-          "label": "Cloud Shopping",
+          "label": "cloud-shopping",
           "url": null
         },
         {
@@ -816,7 +811,7 @@
         },
         {
           "pkg": "com.diegonmarcos.code",
-          "label": "Cloud Code",
+          "label": "cloud-code",
           "url": null
         },
         {
@@ -831,7 +826,7 @@
         },
         {
           "pkg": "cld.termux.nix",
-          "label": "Cloud Terminal Nix",
+          "label": "cloud-terminal-nix",
           "url": null
         },
         {
@@ -895,7 +890,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudstore",
-          "label": "Cloud Store",
+          "label": "cloud-store",
           "url": null
         },
         {
@@ -920,7 +915,7 @@
         },
         {
           "pkg": "com.diegonmarcos.cloudc3",
-          "label": "Cloud C3",
+          "label": "cloud-c3",
           "url": null
         },
         {
