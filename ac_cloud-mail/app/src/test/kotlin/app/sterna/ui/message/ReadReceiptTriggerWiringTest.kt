@@ -183,6 +183,12 @@ class ReadReceiptTriggerWiringTest {
             MESSAGE_VIEW_MODEL,
             listOf(
                 "loadCalendarFor(_messages.value.first())",
+                // #1763 put the inline-image load and the neighbour prefetch between the calendar and
+                // the settle; neither marks read nor offers a receipt (see the prefetch test below).
+                "if (opened.crypto == null && opened.inlineImages.isEmpty() && anchor.inlineImageParts().isNotEmpty()) {",
+                "loadInlineImagesLater(credentials, anchor.id)",
+                "}",
+                "repo.prefetchNeighbours(credentials, anchor.id)",
                 "maybeMarkRead()",
                 "maybeOfferReadReceipt()",
             ),
@@ -224,6 +230,41 @@ class ReadReceiptTriggerWiringTest {
             ),
             codeLines(MESSAGE_VIEW_MODEL)
                 .filter { "maybeOfferReadReceipt()" in it && !it.startsWith("private fun") },
+        )
+    }
+
+    /**
+     * A background body prefetch (#1763) is not an open: it must never mark mail read ($seen) and
+     * never reach the receipt decision. Pins the prefetch path of MailRepository.
+     */
+    @Test fun `prefetching a body never sends a read receipt or sets seen`() {
+        val repo = File(root, "core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt")
+        val text = repo.readText()
+        fun body(signature: String, until: String): List<String> {
+            val start = text.indexOf(signature)
+            check(start > 0) { "$signature is gone — teach this test the new shape" }
+            val end = text.indexOf(until, start)
+            check(end > start) { "$until no longer follows $signature" }
+            return text.substring(start, end).lines().map { it.trim() }
+                .filterNot { it.isEmpty() || it.startsWith("//") || it.startsWith("*") || it.startsWith("/*") }
+        }
+        val paths = listOf(
+            body("private suspend fun fetchAndStoreBodies(", "fun evictBodies("),
+            body("private fun requestBodyPrefetch(", "private fun bodyPrefetchPort("),
+        )
+        val forbidden = listOf(
+            "setRead(", "setReadAll(", "setSeen", "setFlag(", "\\Seen", "\$seen",
+            "markRead", "receipt", "Receipt", "Disposition", "mdn", "Mdn", "MDN",
+        )
+        paths.forEach { lines ->
+            assertTrue("the prefetch path is empty — this test lost its subject", lines.size > 10)
+            val hits = lines.filter { l -> forbidden.any { it in l } }
+            assertEquals("the body prefetch must never mark read or send a receipt. Lines:", emptyList<String>(), hits)
+        }
+        // The ViewModel's only prefetch call is a bare fire-and-forget; nothing is read from it.
+        assertEquals(
+            listOf("repo.prefetchNeighbours(credentials, anchor.id)"),
+            codeLines(MESSAGE_VIEW_MODEL).filter { "prefetchNeighbours(" in it },
         )
     }
 
