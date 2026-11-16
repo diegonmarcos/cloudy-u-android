@@ -455,8 +455,18 @@
       "group": "Services/Events"
     },
     {
+      "name": "eventim.de",
+      "url": "https://eventim.de/",
+      "group": "Services/Events"
+    },
+    {
       "name": "linearshift.com",
       "url": "https://linearshift.com/",
+      "group": "Services/Events"
+    },
+    {
+      "name": "meetup.com",
+      "url": "https://meetup.com/",
       "group": "Services/Events"
     },
     {
@@ -465,159 +475,204 @@
       "group": "Services/Events"
     },
     {
-      "name": "aeat.es",
-      "url": "https://aeat.es/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "atm.cat",
-      "url": "https://atm.cat/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "com.br",
-      "url": "https://com.br/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "correos.es",
-      "url": "https://correos.es/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "deutschepost.de",
-      "url": "https://deutschepost.de/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "dgt.com",
-      "url": "https://dgt.com/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "fnmtrcm.es",
-      "url": "https://fnmtrcm.es/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "gob.es",
-      "url": "https://gob.es/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "gov.br",
-      "url": "https://gov.br/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "governikus.com",
-      "url": "https://governikus.com/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "jool.nl",
-      "url": "https://jool.nl/",
-      "group": "Services/Gov & ID"
-    },
-    {
-      "name": "medantapatient.com",
-      "url": "https://medantapatient.com/",
-      "group": "Services/Health"
-    },
-    {
-      "name": "urbansportsclub.com",
-      "url": "https://urbansportsclub.com/",
-      "group": "Services/Health"
-    },
-    {
-      "name": "is24.de",
-      "url": "https://is24.de/",
-      "group": "Services/Home & Housing"
-    },
-    {
-      "name": "nebenan.de",
-      "url": "https://nebenan.de/",
-      "group": "Services/Home & Housing"
-    },
-    {
-      "name": "sensorberg.com",
-      "url": "https://sensorberg.com/",
-      "group": "Services/Home & Housing"
-    },
-    {
-      "name": "wggesucht.com",
-      "url": "https://wggesucht.com/",
-      "group": "Services/Home & Housing"
-    },
-    {
       "name": "linkedin.com",
       "url": "https://linkedin.com/",
-      "group": "Services/Jobs"
+      "group": "Services/Jobs & Business"
     },
     {
       "name": "otta.com",
       "url": "https://otta.com/",
-      "group": "Services/Jobs"
+      "group": "Services/Jobs & Business"
+    },
+    {
+      "name": "airbnb.com",
+      "url": "https://airbnb.com/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "alohacamp.com",
+      "url": "https://alohacamp.com/",
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "android.taxi",
       "url": "https://android.taxi/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "app.ride",
       "url": "https://app.ride/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "atm.cat",
+      "url": "https://atm.cat/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "booking.com",
+      "url": "https://booking.com/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "bvg.de",
+      "url": "https://bvg.de/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "campy.app",
+      "url": "https://campy.app/",
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "comuto.com",
       "url": "https://comuto.com/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "donkeyrepublic.com",
       "url": "https://donkeyrepublic.com/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "eos.de",
       "url": "https://eos.de/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "flixbus.de",
+      "url": "https://flixbus.de/",
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "geomobile.com",
       "url": "https://geomobile.com/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "getbybus.com",
+      "url": "https://getbybus.com/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "goeuro.com",
+      "url": "https://goeuro.com/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "goki.travel",
+      "url": "https://goki.travel/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "greifmatthias.be",
+      "url": "https://greifmatthias.be/",
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "hafas.de",
       "url": "https://hafas.de/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "hostel_hop_inc.com",
+      "url": "https://hostel_hop_inc.com/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "hostelworld.com",
+      "url": "https://hostelworld.com/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "infobus.eu",
+      "url": "https://infobus.eu/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "kautra.com",
+      "url": "https://kautra.com/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "mo2o.com",
+      "url": "https://mo2o.com/",
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "mtakso.ee",
       "url": "https://mtakso.ee/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "nomadmania.com",
+      "url": "https://nomadmania.com/",
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "ridedott.com",
       "url": "https://ridedott.com/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "rome2rio.com",
+      "url": "https://rome2rio.com/",
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "ruter.no",
       "url": "https://ruter.no/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "ryanair.com",
+      "url": "https://ryanair.com/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "shelter.dk",
+      "url": "https://shelter.dk/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "skiplagged.com",
+      "url": "https://skiplagged.com/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "skyscanner.net",
+      "url": "https://skyscanner.net/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "thetrainline.com",
+      "url": "https://thetrainline.com/",
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "trafi.com",
       "url": "https://trafi.com/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "tramb.fr",
+      "url": "https://tramb.fr/",
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "ubercab.com",
       "url": "https://ubercab.com/",
-      "group": "Services/Mobility"
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "wizzair.com",
+      "url": "https://wizzair.com/",
+      "group": "Services/Mobility & Travel"
+    },
+    {
+      "name": "workaway.com",
+      "url": "https://workaway.com/",
+      "group": "Services/Mobility & Travel"
     },
     {
       "name": "bancosantander.es",
@@ -645,8 +700,13 @@
       "group": "Services/Money"
     },
     {
-      "name": "google.com",
-      "url": "https://google.com/",
+      "name": "imaginecurve.com",
+      "url": "https://imaginecurve.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "number26.de",
+      "url": "https://number26.de/",
       "group": "Services/Money"
     },
     {
@@ -660,6 +720,11 @@
       "group": "Services/Money"
     },
     {
+      "name": "starfinanz.com",
+      "url": "https://starfinanz.com/",
+      "group": "Services/Money"
+    },
+    {
       "name": "transferwise.com",
       "url": "https://transferwise.com/",
       "group": "Services/Money"
@@ -668,6 +733,51 @@
       "name": "xe.com",
       "url": "https://xe.com/",
       "group": "Services/Money"
+    },
+    {
+      "name": "checkitt.com",
+      "url": "https://checkitt.com/",
+      "group": "Services/News"
+    },
+    {
+      "name": "devhd.com",
+      "url": "https://devhd.com/",
+      "group": "Services/News"
+    },
+    {
+      "name": "flyersoft.com",
+      "url": "https://flyersoft.com/",
+      "group": "Services/News"
+    },
+    {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Services/News"
+    },
+    {
+      "name": "rama.com",
+      "url": "https://rama.com/",
+      "group": "Services/News"
+    },
+    {
+      "name": "samsung.com",
+      "url": "https://samsung.com/",
+      "group": "Services/News"
+    },
+    {
+      "name": "substack.com",
+      "url": "https://substack.com/",
+      "group": "Services/News"
+    },
+    {
+      "name": "is24.de",
+      "url": "https://is24.de/",
+      "group": "Services/Real Estate"
+    },
+    {
+      "name": "wggesucht.com",
+      "url": "https://wggesucht.com/",
+      "group": "Services/Real Estate"
     },
     {
       "name": "amazon.com",
@@ -682,6 +792,16 @@
     {
       "name": "backmarket.com",
       "url": "https://backmarket.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "dhl.com",
+      "url": "https://dhl.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "dhl.de",
+      "url": "https://dhl.de/",
       "group": "Services/Shopping"
     },
     {
@@ -700,248 +820,73 @@
       "group": "Services/Shopping"
     },
     {
-      "name": "affinityclick.com",
-      "url": "https://affinityclick.com/",
-      "group": "Services/Telecom"
-    },
-    {
-      "name": "congstar.de",
-      "url": "https://congstar.de/",
-      "group": "Services/Telecom"
-    },
-    {
-      "name": "esim.com",
-      "url": "https://esim.com/",
-      "group": "Services/Telecom"
-    },
-    {
-      "name": "esim.net",
-      "url": "https://esim.net/",
-      "group": "Services/Telecom"
-    },
-    {
-      "name": "mobillium.com",
-      "url": "https://mobillium.com/",
-      "group": "Services/Telecom"
-    },
-    {
-      "name": "saily.com",
-      "url": "https://saily.com/",
-      "group": "Services/Telecom"
-    },
-    {
-      "name": "spanishcoders.com",
-      "url": "https://spanishcoders.com/",
-      "group": "Services/Telecom"
-    },
-    {
-      "name": "airbnb.com",
-      "url": "https://airbnb.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "alohacamp.com",
-      "url": "https://alohacamp.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "booking.com",
-      "url": "https://booking.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "campy.app",
-      "url": "https://campy.app/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "flixbus.de",
-      "url": "https://flixbus.de/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "getbybus.com",
-      "url": "https://getbybus.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "goeuro.com",
-      "url": "https://goeuro.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "goki.travel",
-      "url": "https://goki.travel/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "greifmatthias.be",
-      "url": "https://greifmatthias.be/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "hostel_hop_inc.com",
-      "url": "https://hostel_hop_inc.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "hostelworld.com",
-      "url": "https://hostelworld.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "infobus.eu",
-      "url": "https://infobus.eu/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "kautra.com",
-      "url": "https://kautra.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "mo2o.com",
-      "url": "https://mo2o.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "nomadmania.com",
-      "url": "https://nomadmania.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "rome2rio.com",
-      "url": "https://rome2rio.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "ryanair.com",
-      "url": "https://ryanair.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "shelter.dk",
-      "url": "https://shelter.dk/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "skiplagged.com",
-      "url": "https://skiplagged.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "skyscanner.net",
-      "url": "https://skyscanner.net/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "thetrainline.com",
-      "url": "https://thetrainline.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "tramb.fr",
-      "url": "https://tramb.fr/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "wizzair.com",
-      "url": "https://wizzair.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "workaway.com",
-      "url": "https://workaway.com/",
-      "group": "Services/Travel"
-    },
-    {
-      "name": "anthropic.com",
-      "url": "https://anthropic.com/",
-      "group": "Tools/AI"
-    },
-    {
-      "name": "chatboxapp.xyz",
-      "url": "https://chatboxapp.xyz/",
-      "group": "Tools/AI"
-    },
-    {
-      "name": "chromium.org",
-      "url": "https://chromium.org/",
-      "group": "Tools/AI"
-    },
-    {
-      "name": "deepseek.com",
-      "url": "https://deepseek.com/",
-      "group": "Tools/AI"
-    },
-    {
-      "name": "facebook.com",
-      "url": "https://facebook.com/",
-      "group": "Tools/AI"
-    },
-    {
-      "name": "microsoft.com",
-      "url": "https://microsoft.com/",
-      "group": "Tools/AI"
-    },
-    {
-      "name": "perplexity.ai",
-      "url": "https://perplexity.ai/",
-      "group": "Tools/AI"
-    },
-    {
-      "name": "samsung.com",
-      "url": "https://samsung.com/",
-      "group": "Tools/AI"
-    },
-    {
-      "name": "synthesia.com",
-      "url": "https://synthesia.com/",
-      "group": "Tools/AI"
-    },
-    {
-      "name": "x.ai",
-      "url": "https://x.ai/",
-      "group": "Tools/AI"
-    },
-    {
       "name": "clockify.me",
       "url": "https://clockify.me/",
-      "group": "Tools/Calendar & Tasks"
+      "group": "Tools/Agenda"
     },
     {
       "name": "gianlu.com",
       "url": "https://gianlu.com/",
-      "group": "Tools/Calendar & Tasks"
+      "group": "Tools/Agenda"
     },
     {
       "name": "mangotechnologies.co",
       "url": "https://mangotechnologies.co/",
-      "group": "Tools/Calendar & Tasks"
+      "group": "Tools/Agenda"
+    },
+    {
+      "name": "microsoft.com",
+      "url": "https://microsoft.com/",
+      "group": "Tools/Agenda"
     },
     {
       "name": "scheduleplanner.todolist",
       "url": "https://scheduleplanner.todolist/",
-      "group": "Tools/Calendar & Tasks"
+      "group": "Tools/Agenda"
     },
     {
       "name": "toggl.com",
       "url": "https://toggl.com/",
-      "group": "Tools/Calendar & Tasks"
+      "group": "Tools/Agenda"
     },
     {
       "name": "trello.com",
       "url": "https://trello.com/",
-      "group": "Tools/Calendar & Tasks"
+      "group": "Tools/Agenda"
+    },
+    {
+      "name": "android.com",
+      "url": "https://android.com/",
+      "group": "Tools/Browser"
+    },
+    {
+      "name": "brave.com",
+      "url": "https://brave.com/",
+      "group": "Tools/Browser"
+    },
+    {
+      "name": "duckduckgo.com",
+      "url": "https://duckduckgo.com/",
+      "group": "Tools/Browser"
+    },
+    {
+      "name": "raindrop.io",
+      "url": "https://raindrop.io/",
+      "group": "Tools/Browser"
+    },
+    {
+      "name": "sec.com",
+      "url": "https://sec.com/",
+      "group": "Tools/Calc"
+    },
+    {
+      "name": "mobimax.pl",
+      "url": "https://mobimax.pl/",
+      "group": "Tools/Camera"
     },
     {
       "name": "beeper.com",
       "url": "https://beeper.com/",
-      "group": "Tools/Chat"
-    },
-    {
-      "name": "garmin.com",
-      "url": "https://garmin.com/",
       "group": "Tools/Chat"
     },
     {
@@ -965,129 +910,89 @@
       "group": "Tools/Chat"
     },
     {
-      "name": "telegram.org",
-      "url": "https://telegram.org/",
-      "group": "Tools/Chat"
-    },
-    {
-      "name": "trianguloy.com",
-      "url": "https://trianguloy.com/",
-      "group": "Tools/Chat"
-    },
-    {
       "name": "vector.im",
       "url": "https://vector.im/",
       "group": "Tools/Chat"
     },
     {
-      "name": "viber.com",
-      "url": "https://viber.com/",
-      "group": "Tools/Chat"
-    },
-    {
-      "name": "whatsapp.com",
-      "url": "https://whatsapp.com/",
-      "group": "Tools/Chat"
-    },
-    {
-      "name": "arlosoft.com",
-      "url": "https://arlosoft.com/",
-      "group": "Tools/Dev"
-    },
-    {
       "name": "diegonmarcos.com",
       "url": "https://diegonmarcos.com/",
-      "group": "Tools/Dev"
+      "group": "Tools/Contacts"
     },
     {
-      "name": "lbe.com",
-      "url": "https://lbe.com/",
-      "group": "Tools/Dev"
+      "name": "fossify.org",
+      "url": "https://fossify.org/",
+      "group": "Tools/Dialer"
     },
     {
-      "name": "shizuku.moe",
-      "url": "https://shizuku.moe/",
-      "group": "Tools/Dev"
+      "name": "alphainventor.com",
+      "url": "https://alphainventor.com/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "truedevelopersstudio.com",
-      "url": "https://truedevelopersstudio.com/",
-      "group": "Tools/Dev"
+      "name": "amaze.com",
+      "url": "https://amaze.com/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "biplobsd.me",
-      "url": "https://biplobsd.me/",
-      "group": "Tools/Diagnostics"
+      "name": "ghisler.com",
+      "url": "https://ghisler.com/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "digibites.com",
-      "url": "https://digibites.com/",
-      "group": "Tools/Diagnostics"
+      "name": "ghostsq.com",
+      "url": "https://ghostsq.com/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "frequencygenerator.com",
-      "url": "https://frequencygenerator.com/",
-      "group": "Tools/Diagnostics"
+      "name": "lonelycatgames.com",
+      "url": "https://lonelycatgames.com/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "insideinc.com",
-      "url": "https://insideinc.com/",
-      "group": "Tools/Diagnostics"
+      "name": "mobisystems.com",
+      "url": "https://mobisystems.com/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "intoorbit.org",
-      "url": "https://intoorbit.org/",
-      "group": "Tools/Diagnostics"
+      "name": "proton.me",
+      "url": "https://proton.me/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "japp.io",
-      "url": "https://japp.io/",
-      "group": "Tools/Diagnostics"
+      "name": "rarlab.com",
+      "url": "https://rarlab.com/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "jmaciak.com",
-      "url": "https://jmaciak.com/",
-      "group": "Tools/Diagnostics"
+      "name": "smlnskgmail.com",
+      "url": "https://smlnskgmail.com/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "luxdelux.com",
-      "url": "https://luxdelux.com/",
-      "group": "Tools/Diagnostics"
+      "name": "solidexplorer2.pl",
+      "url": "https://solidexplorer2.pl/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "noise.com",
-      "url": "https://noise.com/",
-      "group": "Tools/Diagnostics"
+      "name": "tacit.dk",
+      "url": "https://tacit.dk/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "skypaw.com",
-      "url": "https://skypaw.com/",
-      "group": "Tools/Diagnostics"
+      "name": "viscouspot.com",
+      "url": "https://viscouspot.com/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "adeeteya.com",
-      "url": "https://adeeteya.com/",
-      "group": "Tools/Docs & Notes"
+      "name": "zhanghai.me",
+      "url": "https://zhanghai.me/",
+      "group": "Tools/Drive"
     },
     {
-      "name": "journable.com",
-      "url": "https://journable.com/",
-      "group": "Tools/Docs & Notes"
-    },
-    {
-      "name": "obsidian.md",
-      "url": "https://obsidian.md/",
-      "group": "Tools/Docs & Notes"
-    },
-    {
-      "name": "rhmsoft.com",
-      "url": "https://rhmsoft.com/",
-      "group": "Tools/Docs & Notes"
-    },
-    {
-      "name": "sblo.jp",
-      "url": "https://sblo.jp/",
-      "group": "Tools/Docs & Notes"
+      "name": "musicvideo.com",
+      "url": "https://musicvideo.com/",
+      "group": "Tools/Gallery"
     },
     {
       "name": "epicgames.com",
@@ -1110,19 +1015,114 @@
       "group": "Tools/Games"
     },
     {
+      "name": "aeat.es",
+      "url": "https://aeat.es/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "com.br",
+      "url": "https://com.br/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "correos.es",
+      "url": "https://correos.es/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "deutschepost.de",
+      "url": "https://deutschepost.de/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "dgt.com",
+      "url": "https://dgt.com/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "fnmtrcm.es",
+      "url": "https://fnmtrcm.es/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "gob.es",
+      "url": "https://gob.es/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "gov.br",
+      "url": "https://gov.br/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "governikus.com",
+      "url": "https://governikus.com/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "jool.nl",
+      "url": "https://jool.nl/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "jus.br",
+      "url": "https://jus.br/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "fitbit.com",
+      "url": "https://fitbit.com/",
+      "group": "Tools/Health"
+    },
+    {
+      "name": "medantapatient.com",
+      "url": "https://medantapatient.com/",
+      "group": "Tools/Health"
+    },
+    {
+      "name": "oplayer.com",
+      "url": "https://oplayer.com/",
+      "group": "Tools/Health"
+    },
+    {
+      "name": "urbansportsclub.com",
+      "url": "https://urbansportsclub.com/",
+      "group": "Tools/Health"
+    },
+    {
+      "name": "nebenan.de",
+      "url": "https://nebenan.de/",
+      "group": "Tools/Home & Housing"
+    },
+    {
+      "name": "sensorberg.com",
+      "url": "https://sensorberg.com/",
+      "group": "Tools/Home & Housing"
+    },
+    {
+      "name": "shurgard.com",
+      "url": "https://shurgard.com/",
+      "group": "Tools/Home & Housing"
+    },
+    {
       "name": "gingersoftware.com",
       "url": "https://gingersoftware.com/",
-      "group": "Tools/Keyboards"
+      "group": "Tools/Keyboard"
     },
     {
       "name": "grammarly.com",
       "url": "https://grammarly.com/",
-      "group": "Tools/Keyboards"
+      "group": "Tools/Keyboard"
     },
     {
       "name": "icoaching.ch",
       "url": "https://icoaching.ch/",
-      "group": "Tools/Keyboards"
+      "group": "Tools/Keyboard"
+    },
+    {
+      "name": "keyboard2.juloo",
+      "url": "https://keyboard2.juloo/",
+      "group": "Tools/Keyboard"
     },
     {
       "name": "digionline.de",
@@ -1190,6 +1190,11 @@
       "group": "Tools/Learning"
     },
     {
+      "name": "wordbit.net",
+      "url": "https://wordbit.net/",
+      "group": "Tools/Learning"
+    },
+    {
       "name": "clean.email",
       "url": "https://clean.email/",
       "group": "Tools/Mail"
@@ -1225,119 +1230,154 @@
       "group": "Tools/Mail"
     },
     {
-      "name": "ackee.cz",
-      "url": "https://ackee.cz/",
-      "group": "Tools/Maps & Weather"
-    },
-    {
-      "name": "mapswithme.com",
-      "url": "https://mapswithme.com/",
-      "group": "Tools/Maps & Weather"
-    },
-    {
-      "name": "tiempo.aplicacion",
-      "url": "https://tiempo.aplicacion/",
-      "group": "Tools/Maps & Weather"
-    },
-    {
       "name": "alanwatts.ott",
       "url": "https://alanwatts.ott/",
-      "group": "Tools/Music & Audio"
+      "group": "Tools/Media Center"
+    },
+    {
+      "name": "arte.tv",
+      "url": "https://arte.tv/",
+      "group": "Tools/Media Center"
     },
     {
       "name": "aspiro.com",
       "url": "https://aspiro.com/",
-      "group": "Tools/Music & Audio"
+      "group": "Tools/Media Center"
+    },
+    {
+      "name": "com.cn",
+      "url": "https://com.cn/",
+      "group": "Tools/Media Center"
     },
     {
       "name": "deutschlandfunk.de",
       "url": "https://deutschlandfunk.de/",
-      "group": "Tools/Music & Audio"
+      "group": "Tools/Media Center"
     },
     {
       "name": "earthflare.com",
       "url": "https://earthflare.com/",
-      "group": "Tools/Music & Audio"
+      "group": "Tools/Media Center"
+    },
+    {
+      "name": "mi.com",
+      "url": "https://mi.com/",
+      "group": "Tools/Media Center"
+    },
+    {
+      "name": "netflix.com",
+      "url": "https://netflix.com/",
+      "group": "Tools/Media Center"
+    },
+    {
+      "name": "oceanwing.com",
+      "url": "https://oceanwing.com/",
+      "group": "Tools/Media Center"
     },
     {
       "name": "shazam.com",
       "url": "https://shazam.com/",
-      "group": "Tools/Music & Audio"
+      "group": "Tools/Media Center"
     },
     {
       "name": "spotify.com",
       "url": "https://spotify.com/",
-      "group": "Tools/Music & Audio"
+      "group": "Tools/Media Center"
     },
     {
       "name": "ultimateguitar.com",
       "url": "https://ultimateguitar.com/",
-      "group": "Tools/Music & Audio"
+      "group": "Tools/Media Center"
+    },
+    {
+      "name": "wbd.com",
+      "url": "https://wbd.com/",
+      "group": "Tools/Media Center"
     },
     {
       "name": "zuggabecka.at",
       "url": "https://zuggabecka.at/",
-      "group": "Tools/Music & Audio"
+      "group": "Tools/Media Center"
     },
     {
-      "name": "devolutions.com",
-      "url": "https://devolutions.com/",
-      "group": "Tools/Network"
+      "name": "facebook.com",
+      "url": "https://facebook.com/",
+      "group": "Tools/Messenger"
     },
     {
-      "name": "ghisler.com",
-      "url": "https://ghisler.com/",
-      "group": "Tools/Network"
+      "name": "garmin.com",
+      "url": "https://garmin.com/",
+      "group": "Tools/Messenger"
     },
     {
-      "name": "kde.org",
-      "url": "https://kde.org/",
-      "group": "Tools/Network"
+      "name": "telegram.org",
+      "url": "https://telegram.org/",
+      "group": "Tools/Messenger"
     },
     {
-      "name": "mobidia.com",
-      "url": "https://mobidia.com/",
-      "group": "Tools/Network"
+      "name": "thoughtcrime.org",
+      "url": "https://thoughtcrime.org/",
+      "group": "Tools/Messenger"
     },
     {
-      "name": "phlox.com",
-      "url": "https://phlox.com/",
-      "group": "Tools/Network"
+      "name": "trianguloy.com",
+      "url": "https://trianguloy.com/",
+      "group": "Tools/Messenger"
     },
     {
-      "name": "techet.net",
-      "url": "https://techet.net/",
-      "group": "Tools/Network"
+      "name": "viber.com",
+      "url": "https://viber.com/",
+      "group": "Tools/Messenger"
     },
     {
-      "name": "ubnt.com",
-      "url": "https://ubnt.com/",
-      "group": "Tools/Network"
+      "name": "whatsapp.com",
+      "url": "https://whatsapp.com/",
+      "group": "Tools/Messenger"
     },
     {
-      "name": "checkitt.com",
-      "url": "https://checkitt.com/",
-      "group": "Tools/News & Reading"
+      "name": "ackee.cz",
+      "url": "https://ackee.cz/",
+      "group": "Tools/Nav"
     },
     {
-      "name": "devhd.com",
-      "url": "https://devhd.com/",
-      "group": "Tools/News & Reading"
+      "name": "mapswithme.com",
+      "url": "https://mapswithme.com/",
+      "group": "Tools/Nav"
     },
     {
-      "name": "flyersoft.com",
-      "url": "https://flyersoft.com/",
-      "group": "Tools/News & Reading"
+      "name": "tiempo.aplicacion",
+      "url": "https://tiempo.aplicacion/",
+      "group": "Tools/Nav"
     },
     {
-      "name": "rama.com",
-      "url": "https://rama.com/",
-      "group": "Tools/News & Reading"
+      "name": "adeeteya.com",
+      "url": "https://adeeteya.com/",
+      "group": "Tools/Notes"
     },
     {
-      "name": "substack.com",
-      "url": "https://substack.com/",
-      "group": "Tools/News & Reading"
+      "name": "affine.app",
+      "url": "https://affine.app/",
+      "group": "Tools/Notes"
+    },
+    {
+      "name": "chromium.org",
+      "url": "https://chromium.org/",
+      "group": "Tools/Notes"
+    },
+    {
+      "name": "journable.com",
+      "url": "https://journable.com/",
+      "group": "Tools/Notes"
+    },
+    {
+      "name": "obsidian.md",
+      "url": "https://obsidian.md/",
+      "group": "Tools/Notes"
+    },
+    {
+      "name": "sblo.jp",
+      "url": "https://sblo.jp/",
+      "group": "Tools/Notes"
     },
     {
       "name": "fatsecret.com",
@@ -1345,8 +1385,23 @@
       "group": "Tools/Nutrition"
     },
     {
+      "name": "adobe.com",
+      "url": "https://adobe.com/",
+      "group": "Tools/Office"
+    },
+    {
+      "name": "collabora.com",
+      "url": "https://collabora.com/",
+      "group": "Tools/Office"
+    },
+    {
       "name": "alltrails.com",
       "url": "https://alltrails.com/",
+      "group": "Tools/Outdoor & Sport"
+    },
+    {
+      "name": "bodybike.com",
+      "url": "https://bodybike.com/",
       "group": "Tools/Outdoor & Sport"
     },
     {
@@ -1357,6 +1412,11 @@
     {
       "name": "komoot.de",
       "url": "https://komoot.de/",
+      "group": "Tools/Outdoor & Sport"
+    },
+    {
+      "name": "motosumo.com",
+      "url": "https://motosumo.com/",
       "group": "Tools/Outdoor & Sport"
     },
     {
@@ -1375,79 +1435,14 @@
       "group": "Tools/Outdoor & Sport"
     },
     {
-      "name": "wikiloc.com",
-      "url": "https://wikiloc.com/",
+      "name": "vicoach.io",
+      "url": "https://vicoach.io/",
       "group": "Tools/Outdoor & Sport"
     },
     {
-      "name": "fossify.org",
-      "url": "https://fossify.org/",
-      "group": "Tools/Phone & Contacts"
-    },
-    {
-      "name": "azure.com",
-      "url": "https://azure.com/",
-      "group": "Tools/Security"
-    },
-    {
-      "name": "beemdevelopment.com",
-      "url": "https://beemdevelopment.com/",
-      "group": "Tools/Security"
-    },
-    {
-      "name": "opera.com",
-      "url": "https://opera.com/",
-      "group": "Tools/Security"
-    },
-    {
-      "name": "protonvpn.ch",
-      "url": "https://protonvpn.ch/",
-      "group": "Tools/Security"
-    },
-    {
-      "name": "wireguard.com",
-      "url": "https://wireguard.com/",
-      "group": "Tools/Security"
-    },
-    {
-      "name": "x8bit.com",
-      "url": "https://x8bit.com/",
-      "group": "Tools/Security"
-    },
-    {
-      "name": "android.com",
-      "url": "https://android.com/",
-      "group": "Tools/Settings"
-    },
-    {
-      "name": "binarysmith.com",
-      "url": "https://binarysmith.com/",
-      "group": "Tools/Settings"
-    },
-    {
-      "name": "hanks.pub",
-      "url": "https://hanks.pub/",
-      "group": "Tools/Settings"
-    },
-    {
-      "name": "mi.com",
-      "url": "https://mi.com/",
-      "group": "Tools/Settings"
-    },
-    {
-      "name": "rsupport.com",
-      "url": "https://rsupport.com/",
-      "group": "Tools/Settings"
-    },
-    {
-      "name": "sec.com",
-      "url": "https://sec.com/",
-      "group": "Tools/Settings"
-    },
-    {
-      "name": "teslacoilsw.com",
-      "url": "https://teslacoilsw.com/",
-      "group": "Tools/Settings"
+      "name": "wikiloc.com",
+      "url": "https://wikiloc.com/",
+      "group": "Tools/Outdoor & Sport"
     },
     {
       "name": "badoo.com",
@@ -1462,6 +1457,11 @@
     {
       "name": "bumble.com",
       "url": "https://bumble.com/",
+      "group": "Tools/Social"
+    },
+    {
+      "name": "hinge.co",
+      "url": "https://hinge.co/",
       "group": "Tools/Social"
     },
     {
@@ -1480,109 +1480,39 @@
       "group": "Tools/Social"
     },
     {
-      "name": "alphainventor.com",
-      "url": "https://alphainventor.com/",
-      "group": "Tools/Storage"
+      "name": "affinityclick.com",
+      "url": "https://affinityclick.com/",
+      "group": "Tools/Telecom"
     },
     {
-      "name": "amaze.com",
-      "url": "https://amaze.com/",
-      "group": "Tools/Storage"
+      "name": "congstar.de",
+      "url": "https://congstar.de/",
+      "group": "Tools/Telecom"
     },
     {
-      "name": "ghostsq.com",
-      "url": "https://ghostsq.com/",
-      "group": "Tools/Storage"
+      "name": "esim.com",
+      "url": "https://esim.com/",
+      "group": "Tools/Telecom"
     },
     {
-      "name": "github.com",
-      "url": "https://github.com/",
-      "group": "Tools/Storage"
+      "name": "esim.net",
+      "url": "https://esim.net/",
+      "group": "Tools/Telecom"
     },
     {
-      "name": "lonelycatgames.com",
-      "url": "https://lonelycatgames.com/",
-      "group": "Tools/Storage"
+      "name": "mobillium.com",
+      "url": "https://mobillium.com/",
+      "group": "Tools/Telecom"
     },
     {
-      "name": "mobimax.pl",
-      "url": "https://mobimax.pl/",
-      "group": "Tools/Storage"
+      "name": "saily.com",
+      "url": "https://saily.com/",
+      "group": "Tools/Telecom"
     },
     {
-      "name": "mobisystems.com",
-      "url": "https://mobisystems.com/",
-      "group": "Tools/Storage"
-    },
-    {
-      "name": "musicvideo.com",
-      "url": "https://musicvideo.com/",
-      "group": "Tools/Storage"
-    },
-    {
-      "name": "proton.me",
-      "url": "https://proton.me/",
-      "group": "Tools/Storage"
-    },
-    {
-      "name": "rarlab.com",
-      "url": "https://rarlab.com/",
-      "group": "Tools/Storage"
-    },
-    {
-      "name": "smlnskgmail.com",
-      "url": "https://smlnskgmail.com/",
-      "group": "Tools/Storage"
-    },
-    {
-      "name": "solidexplorer2.pl",
-      "url": "https://solidexplorer2.pl/",
-      "group": "Tools/Storage"
-    },
-    {
-      "name": "tacit.dk",
-      "url": "https://tacit.dk/",
-      "group": "Tools/Storage"
-    },
-    {
-      "name": "viscouspot.com",
-      "url": "https://viscouspot.com/",
-      "group": "Tools/Storage"
-    },
-    {
-      "name": "zhanghai.me",
-      "url": "https://zhanghai.me/",
-      "group": "Tools/Storage"
-    },
-    {
-      "name": "fdroid.org",
-      "url": "https://fdroid.org/",
-      "group": "Tools/Stores"
-    },
-    {
-      "name": "uptodown.com",
-      "url": "https://uptodown.com/",
-      "group": "Tools/Stores"
-    },
-    {
-      "name": "foxdebug.com",
-      "url": "https://foxdebug.com/",
-      "group": "Tools/Terminals"
-    },
-    {
-      "name": "termux.cld",
-      "url": "https://termux.cld/",
-      "group": "Tools/Terminals"
-    },
-    {
-      "name": "termux.com",
-      "url": "https://termux.com/",
-      "group": "Tools/Terminals"
-    },
-    {
-      "name": "adobe.com",
-      "url": "https://adobe.com/",
-      "group": "Tools/Utilities"
+      "name": "spanishcoders.com",
+      "url": "https://spanishcoders.com/",
+      "group": "Tools/Telecom"
     },
     {
       "name": "diotek.com",
@@ -1595,34 +1525,19 @@
       "group": "Tools/Utilities"
     },
     {
-      "name": "arte.tv",
-      "url": "https://arte.tv/",
-      "group": "Tools/Video"
+      "name": "azure.com",
+      "url": "https://azure.com/",
+      "group": "Tools/Vault"
     },
     {
-      "name": "netflix.com",
-      "url": "https://netflix.com/",
-      "group": "Tools/Video"
+      "name": "beemdevelopment.com",
+      "url": "https://beemdevelopment.com/",
+      "group": "Tools/Vault"
     },
     {
-      "name": "wbd.com",
-      "url": "https://wbd.com/",
-      "group": "Tools/Video"
-    },
-    {
-      "name": "brave.com",
-      "url": "https://brave.com/",
-      "group": "Tools/Web"
-    },
-    {
-      "name": "duckduckgo.com",
-      "url": "https://duckduckgo.com/",
-      "group": "Tools/Web"
-    },
-    {
-      "name": "raindrop.io",
-      "url": "https://raindrop.io/",
-      "group": "Tools/Web"
+      "name": "x8bit.com",
+      "url": "https://x8bit.com/",
+      "group": "Tools/Vault"
     }
   ]
 }

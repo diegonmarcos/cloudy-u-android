@@ -99,6 +99,7 @@ class SearchShellTest {
     private val savedFleetRead = com.diegonmarcos.cloudsearch.data.FleetBearer.reader
 
     @Before fun offline() {
+        seedServedComposer(RuntimeEnvironment.getApplication())
         services = Services(RuntimeEnvironment.getApplication(), http)
         Services.install(services)
         state = SearchState(services)

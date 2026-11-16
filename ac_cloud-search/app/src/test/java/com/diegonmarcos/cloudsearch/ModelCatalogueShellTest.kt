@@ -78,6 +78,7 @@ class ModelCatalogueShellTest {
     private lateinit var savedReader: (Context, String) -> Account.Token
 
     @Before fun offline() {
+        seedServedComposer(RuntimeEnvironment.getApplication())
         services = Services(RuntimeEnvironment.getApplication(), http)
         Services.install(services)
         state = SearchState(services)

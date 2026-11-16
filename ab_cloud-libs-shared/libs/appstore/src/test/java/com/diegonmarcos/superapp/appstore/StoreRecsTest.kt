@@ -92,8 +92,8 @@ class StoreRecsTest {
         assertFalse(StoreRecs.legit(rec("d", name = "Photoshop 2026 cracked + keygen")))
         assertFalse(StoreRecs.legit(rec("e", name = "Game FitGirl repack", lic = "GPL-3.0")))
         assertFalse("pre-activated", StoreRecs.legit(rec("f", name = "Windows pre-activated", lic = "CC BY 4.0")))
-        assertFalse("a free-looking licence on a pirate host", StoreRecs.legit(rec("g", page = "https://thepiratebay.org/torrent/1", url = null).let {
-            StoreRecs.Rec(it.id, it.name, it.category, 1, "CC BY 4.0", "x", "https://thepiratebay.org/torrent/1", null, "magnet:?xt=urn:btih:" + "a".repeat(40), "a".repeat(40)) }))
+        assertFalse("a free-looking licence on an unlisted indexer host (the legal guard keeps denied domains out of this file)", StoreRecs.legit(rec("g", page = "https://tracker.example.net/torrent/1", url = null).let {
+            StoreRecs.Rec(it.id, it.name, it.category, 1, "CC BY 4.0", "x", "https://tracker.example.net/torrent/1", null, "magnet:?xt=urn:btih:" + "a".repeat(40), "a".repeat(40)) }))
         assertFalse("an unknown host is refused", StoreRecs.legit(rec("h", url = "https://example.com/x.torrent")))
         assertFalse("no licence word match inside another word", StoreRecs.legit(rec("i", lic = "Permitted by studio")))
         assertTrue(StoreRecs.legit(rec("j", lic = "Public domain")))
