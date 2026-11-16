@@ -142,10 +142,13 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
      *  It exists because a placeholder has no launcher label to borrow. */
     internal data class Entry(val pkg: String, val label: String)
     internal data class Folder(val label: String, val entries: List<Entry>)
+    /** #1764 A web-shortcut tile (build.json `links`): opens [url] in Cloud Browser, else the default browser. [icon] is a drawable name. */
+    internal data class Link(val label: String, val url: String, val icon: String)
     internal data class Group(
         val title: String,
         val entries: List<Entry>,
         val folders: List<Folder>,
+        val links: List<Link> = emptyList(),
     )
     /** Resolved app payload — populated after LauncherApps lookup so
      *  both the plain-grid tile and the folder-dialog tile can launch
@@ -175,6 +178,8 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
         fun groupTag(title: String) = "suitephone:group:$title"
         fun strip(title: String) = "suitephone:strip:$title"
         fun tileTag(pkg: String) = "suitephone:tile:$pkg"
+        fun linkTag(label: String) = "suitephone:link:$label"
+        const val BROWSER_PACKAGE = "com.diegonmarcos.cloudbrowser"
         fun folderTileTag(label: String) = "suitephone:foldertile:$label"
         const val TAG_NONE_DECLARED = "suitephone:none-declared"
 
@@ -206,7 +211,18 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
                         if (fEntries.isNotEmpty()) folderList.add(Folder(fLabel, fEntries))
                     }
                 }
-                out.add(Group(title, entryList, folderList))
+                val linkList = mutableListOf<Link>()
+                val linksArr = o.optJSONArray("links")
+                if (linksArr != null) {
+                    for (k in 0 until linksArr.length()) {
+                        val lo = linksArr.optJSONObject(k) ?: continue
+                        val url = lo.optString("url").trim()
+                        val label = lo.optString("label").trim()
+                        if (url.isBlank() || label.isBlank()) continue
+                        linkList.add(Link(label, url, lo.optString("icon").ifBlank { "ic_link_tile" }))
+                    }
+                }
+                out.add(Group(title, entryList, folderList, linkList))
             }
             out
         }.getOrDefault(emptyList())
@@ -369,7 +385,7 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
             val folderTiles = group.folders.map { folder ->
                 folder to folder.entries.map(::curated)
             }.filter { (_, contents) -> contents.isNotEmpty() }
-            if (packageTiles.isEmpty() && folderTiles.isEmpty()) continue
+            if (packageTiles.isEmpty() && folderTiles.isEmpty() && group.links.isEmpty()) continue
             anyRendered = true
             item(key = "g:${group.title}") {
                 Column {
@@ -377,6 +393,7 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
                     // Packages first, then folder tiles, on ONE line — so the folder cards flow naturally as the
                     // next cell after the last app.
                     TileStrip(SuitePhoneAppsFragment.strip(group.title)) {
+                        for (l in group.links) item(key = "l:${l.label}") { LinkTile(l) }
                         for (a in packageTiles) item(key = "t:${a.pkg}") { AppTile(a) }
                         for ((folder, contents) in folderTiles) item(key = "f:${folder.label}") {
                             FolderTile(folder.label, contents) { open = SuiteOpen(folder.label, contents) }
@@ -529,6 +546,31 @@ private fun AppTile(app: AppInfo) {
             Text(stringResource(R.string.phone_app_not_installed), color = p.accent, fontSize = 9.sp, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
+    }
+}
+
+/** #1764 A web-shortcut tile: same fixed cell as an app tile; a tap opens the url in Cloud Browser, falling back to the default browser. */
+@Composable
+private fun LinkTile(link: SuitePhoneAppsFragment.Link) {
+    val ctx = LocalContext.current
+    val p = LocalKitPalette.current
+    val cell = cellWidth(ctx)
+    val res = remember(link.icon) { ctx.resources.getIdentifier(link.icon, "drawable", ctx.packageName).takeIf { it != 0 } ?: R.drawable.ic_link_tile }
+    Column(
+        Modifier.width(cell)
+            .clickable {
+                val view = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link.url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                runCatching { ctx.startActivity(Intent(view).setPackage(SuitePhoneAppsFragment.BROWSER_PACKAGE)) }
+                    .onFailure { runCatching { ctx.startActivity(view) } }
+            }
+            .padding(6.dp)
+            .semantics { contentDescription = link.label }
+            .testTag(SuitePhoneAppsFragment.linkTag(link.label)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(painterResource(res), contentDescription = null, tint = p.textPrimary, modifier = Modifier.size(52.dp))
+        Text(link.label, color = p.textPrimary, fontSize = 11.sp, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
     }
 }
 

@@ -150,6 +150,11 @@
           "url": "https://calendar.google.com"
         },
         {
+          "pkg": "co.mangotechnologies.clickup",
+          "label": "ClickUp",
+          "url": "https://app.clickup.com"
+        },
+        {
           "pkg": "com.google.android.apps.docs.editors.docs",
           "label": "Google Docs",
           "url": "https://docs.google.com"
@@ -163,6 +168,26 @@
           "pkg": "com.x8bit.bitwarden",
           "label": "Bitwarden",
           "url": "https://vault.bitwarden.com"
+        },
+        {
+          "pkg": "com.beemdevelopment.aegis",
+          "label": "Aegis",
+          "url": null
+        },
+        {
+          "pkg": "com.azure.authenticator",
+          "label": "Authenticator",
+          "url": null
+        },
+        {
+          "pkg": "com.samsung.android.samsungpass",
+          "label": "Samsung Pass",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.authenticator2",
+          "label": "Google Authenticator",
+          "url": null
         }
       ]
     },
@@ -172,6 +197,11 @@
         {
           "pkg": "com.sec.android.app.shealth",
           "label": "Samsung Health",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.fitness",
+          "label": "Google Fit",
           "url": null
         },
         {
@@ -185,9 +215,19 @@
           "url": "https://www.strava.com"
         },
         {
+          "pkg": "com.fatsecret.android",
+          "label": "FatSecret",
+          "url": "https://www.fatsecret.com"
+        },
+        {
           "pkg": "com.memrise.android.memrisecompanion",
           "label": "Memrise",
           "url": "https://www.memrise.com"
+        },
+        {
+          "pkg": "mobi.eup.easygerman",
+          "label": "Todaii German",
+          "url": null
         }
       ]
     },
@@ -230,6 +270,11 @@
           "url": "https://www.uber.com"
         },
         {
+          "pkg": "com.nomadmania.presentation",
+          "label": "NomadMania",
+          "url": "https://nomadmania.com"
+        },
+        {
           "pkg": "com.linkedin.android",
           "label": "LinkedIn",
           "url": "https://www.linkedin.com"
@@ -238,71 +283,6 @@
           "pkg": "de.is24.android",
           "label": "ImmoScout24",
           "url": "https://www.immobilienscout24.de"
-        }
-      ]
-    },
-    {
-      "title": "AGI",
-      "apps": [
-        {
-          "pkg": "com.anthropic.claude",
-          "label": "Claude",
-          "url": "https://claude.ai"
-        },
-        {
-          "pkg": "com.google.android.apps.bard",
-          "label": "Gemini",
-          "url": "https://gemini.google.com"
-        },
-        {
-          "pkg": "com.foxdebug.acode",
-          "label": "Acode",
-          "url": null
-        },
-        {
-          "pkg": "com.rhmsoft.edit",
-          "label": "QuickEdit",
-          "url": null
-        },
-        {
-          "pkg": "com.termux",
-          "label": "Termux",
-          "url": null
-        },
-        {
-          "pkg": "com.termux.nix",
-          "label": "Nix",
-          "url": null
-        }
-      ]
-    },
-    {
-      "title": "Projects",
-      "apps": [
-        {
-          "pkg": "co.mangotechnologies.clickup",
-          "label": "ClickUp",
-          "url": "https://app.clickup.com"
-        },
-        {
-          "pkg": "com.google.android.apps.fitness",
-          "label": "Google Fit",
-          "url": null
-        },
-        {
-          "pkg": "com.fatsecret.android",
-          "label": "FatSecret",
-          "url": "https://www.fatsecret.com"
-        },
-        {
-          "pkg": "mobi.eup.easygerman",
-          "label": "Todaii German",
-          "url": null
-        },
-        {
-          "pkg": "com.nomadmania.presentation",
-          "label": "NomadMania",
-          "url": "https://nomadmania.com"
         },
         {
           "pkg": "es.bancosantander.apps",
@@ -362,6 +342,45 @@
       ]
     },
     {
+      "title": "AGI",
+      "apps": [
+        {
+          "pkg": "com.anthropic.claude",
+          "label": "Claude",
+          "url": "https://claude.ai"
+        },
+        {
+          "pkg": "com.google.android.apps.bard",
+          "label": "Gemini",
+          "url": "https://gemini.google.com"
+        },
+        {
+          "pkg": "com.foxdebug.acode",
+          "label": "Acode",
+          "url": null
+        },
+        {
+          "pkg": "com.rhmsoft.edit",
+          "label": "QuickEdit",
+          "url": null
+        },
+        {
+          "pkg": "com.termux",
+          "label": "Termux",
+          "url": null
+        },
+        {
+          "pkg": "com.termux.nix",
+          "label": "Nix",
+          "url": null
+        }
+      ]
+    },
+    {
+      "title": "Projects",
+      "apps": []
+    },
+    {
       "title": "Setup",
       "apps": [
         {
@@ -375,8 +394,78 @@
           "url": "https://f-droid.org"
         },
         {
+          "pkg": "com.aurora.store",
+          "label": "Aurora Store",
+          "url": null
+        },
+        {
+          "pkg": "com.sec.android.app.samsungapps",
+          "label": "Galaxy Store",
+          "url": null
+        },
+        {
+          "pkg": "moe.shizuku.privileged.api",
+          "label": "Shizuku",
+          "url": null
+        },
+        {
+          "pkg": "com.digibites.accubattery",
+          "label": "AccuBattery",
+          "url": null
+        },
+        {
+          "pkg": "com.cloudflare.cloudflareoneagent",
+          "label": "Cloudflare One",
+          "url": null
+        },
+        {
+          "pkg": "com.cloudflare.onedotonedotonedotone",
+          "label": "1.1.1.1 WARP",
+          "url": null
+        },
+        {
+          "pkg": "org.kde.kdeconnect_tp",
+          "label": "KDE Connect",
+          "url": null
+        },
+        {
+          "pkg": "com.mobidia.android.mdm",
+          "label": "Data Monitor",
+          "url": null
+        },
+        {
+          "pkg": "com.ubnt.usurvey",
+          "label": "WiFiman",
+          "url": null
+        },
+        {
+          "pkg": "eu.faircode.netguard",
+          "label": "NetGuard",
+          "url": null
+        },
+        {
+          "pkg": "com.wireguard.android",
+          "label": "WireGuard",
+          "url": null
+        },
+        {
+          "pkg": "ch.protonvpn.android",
+          "label": "Proton VPN",
+          "url": null
+        },
+        {
           "pkg": "com.android.settings",
           "label": "Settings",
+          "url": null
+        },
+        {
+          "pkg": "com.samsung.android.goodlock",
+          "label": "Good Lock",
+          "url": null
+        },
+        {
+          "pkg": "com.samsung.android.oneconnect",
+          "label": "SmartThings",
           "url": null
         }
       ]

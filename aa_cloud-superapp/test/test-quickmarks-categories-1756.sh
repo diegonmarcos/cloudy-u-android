@@ -123,9 +123,9 @@ def cls(p):
     return None
 for g in phone:
     if g['title'] == 'Projects':
-        check(len(g['packages']) >= 5 and any(f['label'] == 'Money' for f in g['folders']), 'Projects is unchanged (loose tiles plus its Money folder)')
+        check(not g['packages'] and not g.get('folders') and [l['label'] for l in g['links']] == ['Linktree'] and g['links'][0]['url'] == 'https://linktree.diegonmarcos.com', 'Projects (#1764) holds only the Linktree web shortcut')
         continue
-    check(not g.get('folders'), '%s holds tiles only, no folders' % g['title'])
+    check(not g.get('folders') or (g['title'] == 'Services' and [f['label'] for f in g['folders']] == ['Money']), '%s holds tiles only, no folders (#1764: Services also holds the Money folder)' % g['title'])
     last = -1; ok = True; subs = []
     for t in g['packages']:
         fid = cls(t['pkg'])
@@ -135,6 +135,13 @@ for g in phone:
         if not good: print('        bad tile', g['title'], t)
         subs.append(lab)
     check(ok, '%s: every tile sits in its subtype, group and All Apps order (%s)' % (g['title'], ', '.join(dict.fromkeys(subs))))
+setup_have = {t['pkg'] for g in phone if g['title'] == 'Setup' for t in g['packages']}
+setup_want = {'com.android.vending', 'org.fdroid.fdroid', 'com.android.settings', 'com.aurora.store', 'com.sec.android.app.samsungapps', 'moe.shizuku.privileged.api', 'com.digibites.accubattery',
+ 'com.cloudflare.cloudflareoneagent', 'com.cloudflare.onedotonedotonedotone', 'org.kde.kdeconnect_tp', 'com.mobidia.android.mdm', 'com.ubnt.usurvey', 'eu.faircode.netguard',
+ 'com.wireguard.android', 'ch.protonvpn.android', 'com.samsung.android.goodlock', 'com.samsung.android.oneconnect'}
+check(setup_want <= setup_have, '#1764 Phone Setup carries the store, dev, diagnostics, network, VPN/firewall and settings apps (missing %s)' % sorted(setup_want - setup_have))
+vault_have = {t['pkg'] for g in phone if g['title'] == 'Data' for t in g['packages'] if t.get('subtype') == 'Vault'}
+check({'com.beemdevelopment.aegis', 'com.azure.authenticator', 'com.samsung.android.samsungpass', 'com.google.android.apps.authenticator2', 'com.x8bit.bitwarden'} <= vault_have, '#1764 the authenticators sit in Data > Vault with Bitwarden')
 prev_apps = {p for gt, pl in prev['quickmarks'].items() for p in pl}
 check(all(any(t['pkg'] == p for g in phone for t in g['packages']) or any(p == pk(x) for g in phone for f in g.get('folders', []) for x in f['packages']) for p in prev_apps), 'every app of the previous phone quickmarks still appears')
 want_pick = {'Mail': ['com.google.android.gm'], 'Chat': ['com.Slack'], 'Messenger': ['com.whatsapp.w4b'], 'Drive': ['com.google.android.apps.docs'], 'Browser': ['com.brave.browser'], 'Nav': ['com.google.android.apps.maps']}

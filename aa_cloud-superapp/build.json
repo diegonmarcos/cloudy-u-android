@@ -3813,6 +3813,11 @@
                 "subtype": "Agenda"
               },
               {
+                "pkg": "co.mangotechnologies.clickup",
+                "label": "ClickUp",
+                "subtype": "Agenda"
+              },
+              {
                 "pkg": "com.google.android.apps.docs.editors.docs",
                 "label": "Google Docs",
                 "subtype": "Office"
@@ -3826,6 +3831,26 @@
                 "pkg": "com.x8bit.bitwarden",
                 "label": "Bitwarden",
                 "subtype": "Vault"
+              },
+              {
+                "pkg": "com.beemdevelopment.aegis",
+                "label": "Aegis",
+                "subtype": "Vault"
+              },
+              {
+                "pkg": "com.azure.authenticator",
+                "label": "Authenticator",
+                "subtype": "Vault"
+              },
+              {
+                "pkg": "com.samsung.android.samsungpass",
+                "label": "Samsung Pass",
+                "subtype": "Vault"
+              },
+              {
+                "pkg": "com.google.android.apps.authenticator2",
+                "label": "Google Authenticator",
+                "subtype": "Vault"
               }
             ]
           },
@@ -3835,6 +3860,11 @@
               {
                 "pkg": "com.sec.android.app.shealth",
                 "label": "Samsung Health",
+                "subtype": "Health"
+              },
+              {
+                "pkg": "com.google.android.apps.fitness",
+                "label": "Google Fit",
                 "subtype": "Health"
               },
               {
@@ -3848,8 +3878,18 @@
                 "subtype": "Outdoor & Sport"
               },
               {
+                "pkg": "com.fatsecret.android",
+                "label": "FatSecret",
+                "subtype": "Nutrition"
+              },
+              {
                 "pkg": "com.memrise.android.memrisecompanion",
                 "label": "Memrise",
+                "subtype": "Learning"
+              },
+              {
+                "pkg": "mobi.eup.easygerman",
+                "label": "Todaii German",
                 "subtype": "Learning"
               }
             ]
@@ -3893,6 +3933,11 @@
                 "subtype": "Mobility & Travel"
               },
               {
+                "pkg": "com.nomadmania.presentation",
+                "label": "NomadMania",
+                "subtype": "Mobility & Travel"
+              },
+              {
                 "pkg": "com.linkedin.android",
                 "label": "LinkedIn",
                 "subtype": "Jobs & Business"
@@ -3901,74 +3946,6 @@
                 "pkg": "de.is24.android",
                 "label": "ImmoScout24",
                 "subtype": "Real Estate"
-              }
-            ]
-          },
-          {
-            "title": "AGI",
-            "_doc_cloud_terminals_removed": "The owner asked to 'remove the Cloud Terminal apps from here keep only: Claude Gemini Termux Nix'. Those two clauses only look contradictory: the Cloud Terminal apps are cld.termux and cld.termux.nix, our own forks (ac_cloud-termux and ac_cloud-nix-on-droid both set applicationId cld.termux, and all three cld.termux* ids are in data/constellation-fleet.json), while the Termux and Nix he keeps are the UPSTREAM third-party builds com.termux and com.termux.nix. So the two that left are exactly the two fleet packages, which _doc_phone_app_groups above had already banned from this list, and the two that stayed are third-party. com.termux is NEW here — the group named only com.termux.nix before, so 'Termux' had no tile of its own at all.",
-            "_doc_folders": "Nested folders inside a phone_app_group — render as One-UI-style folder tiles in the same grid as plain packages (2×2 mini-icon preview, tap → modal dialog with the contents at 5 cols). SuitePhoneAppsFragment is the renderer. A folder is skipped only when it is EMPTY of declared entries; it is no longer skipped for having nothing installed, because its contents can now render as placeholders.",
-            "_doc_acode_is_in_two_places": "Acode is here AND in ui.phone_folders[prod_terminals] on the All-apps grid. Both are intended and neither is a copy of the other: Quickmarks is the owner's hand-written shortlist, the All-apps grid is the complete classification of everything installed. Do not 'fix' one to match the other.",
-            "packages": [
-              {
-                "pkg": "com.anthropic.claude",
-                "label": "Claude",
-                "subtype": "AI"
-              },
-              {
-                "pkg": "com.google.android.apps.bard",
-                "label": "Gemini",
-                "subtype": "AI"
-              },
-              {
-                "pkg": "com.foxdebug.acode",
-                "label": "Acode",
-                "subtype": "Code"
-              },
-              {
-                "pkg": "com.rhmsoft.edit",
-                "label": "QuickEdit",
-                "subtype": "Code"
-              },
-              {
-                "pkg": "com.termux",
-                "label": "Termux",
-                "subtype": "Terminal"
-              },
-              {
-                "pkg": "com.termux.nix",
-                "label": "Nix",
-                "subtype": "Terminal"
-              }
-            ]
-          },
-          {
-            "title": "Projects",
-            "_doc_surface": "QUICKMARKS, and that is the whole point of this group. The owner asked for it 'after Tools Primary and Before Configs', and Configs exists on no other surface — ui.phone_sections (the All Apps taxonomy) has no such section — so the anchor named this array and only this array. It was first built on 2026-09-10 as a '#' section in ui.phone_sections instead, which is the page the owner was not talking about; that section is gone and the folders it held went back where they came from. Position is meaning here: this group sits at index 4, between Tools Primary and Configs, and SuitePhoneAppsFragment.parseGroups preserves array order with no sort anywhere, so the index in this file is the order on the screen.",
-            "_doc_loose_tiles": "Five LOOSE packages and exactly one folder, because a quickmarks group can hold both — see the AI, Inboxes and Data Apps groups above, which each carry `packages` and `folders` together. The All-apps renderer cannot do this (PhoneAppsFragment.renderAllApps draws a section as subhead + folder grid, with no slot for an app belonging to no folder), which is why building this on that surface forced a folder named 'Projects' inside a section named 'Projects'. Nothing here needs a folder but Money.",
-            "_doc_google_health": "com.google.android.apps.fitness is Google Fit, read as the owner's 'Google Health'. The other reading is Health Connect (com.google.android.apps.healthdata, known to this repo as libs/health HealthConnectGateway.PROVIDER_PACKAGE), which is a data broker with no interface to open rather than an app you work in. Swap the pkg if that was meant.",
-            "_doc_clickup": "ClickUp ships under its parent company, Mango Technologies — co.mangotechnologies.clickup. The guessable com.clickup.android resolves to nothing, and since 149c5b9 an unresolved curated entry renders as a permanent 'Not installed' tile rather than hiding, so a wrong id here is furniture on the owner's screen.",
-            "_doc_folders": "'Folder.\"Money\"(all bank apps)'. This file's own answer to which packages are the bank apps is the -Money folder in ui.phone_folders (svc_money, Services · Buro), so this list is that folder's twelve exact package ids — its thirteenth keyword is the `pkg^com.btg.pactual.` family rule, which is a classifier pattern and not something a tile can launch. Curating them HERE is a copy, not a move: quickmarks and All apps are two pages, and an app appearing on both is how every other group in this array already works. -Money stays in Buro untouched.",
-            "packages": [
-              {
-                "pkg": "co.mangotechnologies.clickup",
-                "label": "ClickUp"
-              },
-              {
-                "pkg": "com.google.android.apps.fitness",
-                "label": "Google Fit"
-              },
-              {
-                "pkg": "com.fatsecret.android",
-                "label": "FatSecret"
-              },
-              {
-                "pkg": "mobi.eup.easygerman",
-                "label": "Todaii German"
-              },
-              {
-                "pkg": "com.nomadmania.presentation",
-                "label": "NomadMania"
               }
             ],
             "folders": [
@@ -4028,6 +4005,60 @@
             ]
           },
           {
+            "title": "AGI",
+            "_doc_cloud_terminals_removed": "The owner asked to 'remove the Cloud Terminal apps from here keep only: Claude Gemini Termux Nix'. Those two clauses only look contradictory: the Cloud Terminal apps are cld.termux and cld.termux.nix, our own forks (ac_cloud-termux and ac_cloud-nix-on-droid both set applicationId cld.termux, and all three cld.termux* ids are in data/constellation-fleet.json), while the Termux and Nix he keeps are the UPSTREAM third-party builds com.termux and com.termux.nix. So the two that left are exactly the two fleet packages, which _doc_phone_app_groups above had already banned from this list, and the two that stayed are third-party. com.termux is NEW here — the group named only com.termux.nix before, so 'Termux' had no tile of its own at all.",
+            "_doc_folders": "Nested folders inside a phone_app_group — render as One-UI-style folder tiles in the same grid as plain packages (2×2 mini-icon preview, tap → modal dialog with the contents at 5 cols). SuitePhoneAppsFragment is the renderer. A folder is skipped only when it is EMPTY of declared entries; it is no longer skipped for having nothing installed, because its contents can now render as placeholders.",
+            "_doc_acode_is_in_two_places": "Acode is here AND in ui.phone_folders[prod_terminals] on the All-apps grid. Both are intended and neither is a copy of the other: Quickmarks is the owner's hand-written shortlist, the All-apps grid is the complete classification of everything installed. Do not 'fix' one to match the other.",
+            "packages": [
+              {
+                "pkg": "com.anthropic.claude",
+                "label": "Claude",
+                "subtype": "AI"
+              },
+              {
+                "pkg": "com.google.android.apps.bard",
+                "label": "Gemini",
+                "subtype": "AI"
+              },
+              {
+                "pkg": "com.foxdebug.acode",
+                "label": "Acode",
+                "subtype": "Code"
+              },
+              {
+                "pkg": "com.rhmsoft.edit",
+                "label": "QuickEdit",
+                "subtype": "Code"
+              },
+              {
+                "pkg": "com.termux",
+                "label": "Termux",
+                "subtype": "Terminal"
+              },
+              {
+                "pkg": "com.termux.nix",
+                "label": "Nix",
+                "subtype": "Terminal"
+              }
+            ]
+          },
+          {
+            "title": "Projects",
+            "_doc_surface": "QUICKMARKS, and that is the whole point of this group. The owner asked for it 'after Tools Primary and Before Configs', and Configs exists on no other surface — ui.phone_sections (the All Apps taxonomy) has no such section — so the anchor named this array and only this array. It was first built on 2026-09-10 as a '#' section in ui.phone_sections instead, which is the page the owner was not talking about; that section is gone and the folders it held went back where they came from. Position is meaning here: this group sits at index 4, between Tools Primary and Configs, and SuitePhoneAppsFragment.parseGroups preserves array order with no sort anywhere, so the index in this file is the order on the screen.",
+            "_doc_loose_tiles": "#1764 The Projects group holds ONE web-shortcut tile, Linktree (`links`, not `packages`): a link entry {label, url, icon} that opens in Cloud Browser and falls back to the default browser. Every app that used to be listed here moved to its real group, none dropped: ClickUp to Data (Agenda), Google Fit to Me (Health), FatSecret to Me (Nutrition), Todaii German to Me (Learning), NomadMania to Services (Mobility & Travel) and the Money folder to Services. `packages` stays declared and empty so every reader keeps its shape.",
+            "packages": [],
+            "_doc_google_health": "com.google.android.apps.fitness is Google Fit, read as the owner's 'Google Health'. The other reading is Health Connect (com.google.android.apps.healthdata, known to this repo as libs/health HealthConnectGateway.PROVIDER_PACKAGE), which is a data broker with no interface to open rather than an app you work in. Swap the pkg if that was meant.",
+            "_doc_clickup": "ClickUp ships under its parent company, Mango Technologies — co.mangotechnologies.clickup. The guessable com.clickup.android resolves to nothing, and since 149c5b9 an unresolved curated entry renders as a permanent 'Not installed' tile rather than hiding, so a wrong id here is furniture on the owner's screen.",
+            "_doc_folders": "'Folder.\"Money\"(all bank apps)'. This file's own answer to which packages are the bank apps is the -Money folder in ui.phone_folders (svc_money, Services · Buro), so this list is that folder's twelve exact package ids — its thirteenth keyword is the `pkg^com.btg.pactual.` family rule, which is a classifier pattern and not something a tile can launch. Curating them HERE is a copy, not a move: quickmarks and All apps are two pages, and an app appearing on both is how every other group in this array already works. -Money stays in Buro untouched.",
+            "links": [
+              {
+                "label": "Linktree",
+                "url": "https://linktree.diegonmarcos.com",
+                "icon": "ic_link_tile"
+              }
+            ]
+          },
+          {
             "title": "Setup",
             "packages": [
               {
@@ -4041,8 +4072,78 @@
                 "subtype": "Store"
               },
               {
+                "pkg": "com.aurora.store",
+                "label": "Aurora Store",
+                "subtype": "Store"
+              },
+              {
+                "pkg": "com.sec.android.app.samsungapps",
+                "label": "Galaxy Store",
+                "subtype": "Store"
+              },
+              {
+                "pkg": "moe.shizuku.privileged.api",
+                "label": "Shizuku",
+                "subtype": "C3 & Dev"
+              },
+              {
+                "pkg": "com.digibites.accubattery",
+                "label": "AccuBattery",
+                "subtype": "Diagnostics"
+              },
+              {
+                "pkg": "com.cloudflare.cloudflareoneagent",
+                "label": "Cloudflare One",
+                "subtype": "Network"
+              },
+              {
+                "pkg": "com.cloudflare.onedotonedotonedotone",
+                "label": "1.1.1.1 WARP",
+                "subtype": "Network"
+              },
+              {
+                "pkg": "org.kde.kdeconnect_tp",
+                "label": "KDE Connect",
+                "subtype": "Network"
+              },
+              {
+                "pkg": "com.mobidia.android.mdm",
+                "label": "Data Monitor",
+                "subtype": "Network"
+              },
+              {
+                "pkg": "com.ubnt.usurvey",
+                "label": "WiFiman",
+                "subtype": "Network"
+              },
+              {
+                "pkg": "eu.faircode.netguard",
+                "label": "NetGuard",
+                "subtype": "Security"
+              },
+              {
+                "pkg": "com.wireguard.android",
+                "label": "WireGuard",
+                "subtype": "Security"
+              },
+              {
+                "pkg": "ch.protonvpn.android",
+                "label": "Proton VPN",
+                "subtype": "Security"
+              },
+              {
                 "pkg": "com.android.settings",
                 "label": "Settings",
+                "subtype": "Settings"
+              },
+              {
+                "pkg": "com.samsung.android.goodlock",
+                "label": "Good Lock",
+                "subtype": "Settings"
+              },
+              {
+                "pkg": "com.samsung.android.oneconnect",
+                "label": "SmartThings",
                 "subtype": "Settings"
               }
             ]

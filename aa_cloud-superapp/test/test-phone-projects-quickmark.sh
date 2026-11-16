@@ -101,11 +101,16 @@ SELF_FOLDER="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Projects\") | (.fold
     && ok "no folder inside the Projects group repeats the group's own name" \
     || bad "the Projects group contains a folder called 'Projects' — the apps belong loose in the group"
 LOOSE="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Projects\") | .packages[]] | length")"
-[ "$LOOSE" -ge 5 ] \
-    && ok "the Projects group carries $LOOSE loose application tiles" \
-    || bad "the Projects group carries $LOOSE loose tiles, expected the five the owner listed"
+LINKS="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Projects\") | .links[] | select(.label == \"Linktree\" and .url == \"https://linktree.diegonmarcos.com\")] | length")"
+[ "$LOOSE" = "0" ] && [ "$LINKS" = "1" ] \
+    && ok "#1764: the Projects group carries no apps and exactly one web shortcut, Linktree" \
+    || bad "the Projects group carries $LOOSE app tiles and $LINKS Linktree links, expected 0 and 1 (#1764)"
+MOVED="$(q "[$PHONE_GROUPS | .[] | .packages[]? | select(.pkg == \"co.mangotechnologies.clickup\" or .pkg == \"com.google.android.apps.fitness\" or .pkg == \"com.fatsecret.android\" or .pkg == \"mobi.eup.easygerman\" or .pkg == \"com.nomadmania.presentation\")] | length")"
+[ "$MOVED" = "5" ] \
+    && ok "#1764: ClickUp, Google Fit, FatSecret, Todaii German and NomadMania all kept, in their real groups" \
+    || bad "#1764: $MOVED of the five former Projects apps are in a group, expected 5"
 
-echo "== Q4: the Money folder is inside the Projects group and holds the bank apps =="
+echo "== Q4: the Money folder is inside the Services group (#1764, was Projects) and holds the bank apps =="
 # DERIVED, never a second hand-written list. This file's own answer to "which
 # packages are the bank apps" is the -Money folder in ui.phone_folders, so the
 # expected set is read from there -- exact `pkg:` rules only, because the
@@ -113,7 +118,7 @@ echo "== Q4: the Money folder is inside the Projects group and holds the bank ap
 # classifier pattern is not something a tile can launch. Writing the twelve ids
 # out here again would give the assertion its own copy of the answer, and two
 # copies of an answer are two things that can disagree.
-MONEY_TILES="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Projects\") | (.folders // [])[] | select(.label == \"Money\") | .packages[] | if type == \"string\" then . else .pkg end] | sort | join(\" \")")"
+MONEY_TILES="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Services\") | (.folders // [])[] | select(.label == \"Money\") | .packages[] | if type == \"string\" then . else .pkg end] | sort | join(\" \")")"
 MONEY_DECLARED="$(q '[.ui.phone_folders[] | select(.id == "svc_money" or .id == "prod_wallet") | .match_keywords[] | select(startswith("pkg:")) | .[4:]] | sort | join(" ")')"
 if [ -z "$MONEY_DECLARED" ]; then
     bad "ui.phone_folders has no svc_money folder to derive the bank-app list from"
@@ -154,7 +159,7 @@ done < <(q '
   | ( [ $root.ui.phone_folders[] | . as $f | (.match_keywords // [])[]
         | select(startswith("pkg:")) | { key: .[4:], value: $f.id } ] | from_entries ) as $pins
   | $root.ui.sections[] | select(.id == "phone") | .phone_app_groups[]
-  | select(.title == "Projects" or .title == "Primary")
+  | select(.title == "Services" or .title == "Primary")
   | .title as $group
   | ( (.packages[] | { where: $group, entry: . }),
       ((.folders // [])[] | .label as $folder | .packages[] | { where: ($group + " > " + $folder), entry: . }) )
