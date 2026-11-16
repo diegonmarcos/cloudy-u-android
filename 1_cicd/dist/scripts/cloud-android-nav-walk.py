@@ -586,7 +586,11 @@ class Walk:
                     now = dump() or []
                     t2 = find(now, TAB + pid)
                     if t2 is not None and not t2.selected:
+                        # the strip did not take any of the taps: say so (False), so the caller reaches the page the other way, through the
+                        # path crumb and the dropdown of the section (the way every other Ops page was opened), instead of reading a page
+                        # that never changed as the page asked for
                         self.evidence("strip_tab_%s" % pid.replace("/", "_"))
+                        return False
                     return True
                 strips = findall(nodes, STRIP)
                 if not strips:
