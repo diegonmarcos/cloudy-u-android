@@ -50,7 +50,9 @@ walk() { # walk <section> <prefix> <steps>
 walk cloud cloud 9
 walk phone phone 12
 # open one All Apps folder on the Phone page (best effort: the emulator has few third-party apps)
-for l in Messenger Browser Chat Mail; do dump; if has "$l"; then tap "$l"; cap phone-folder-open; break; fi; done
+# #1764 Phone quickmarks are folders mirroring the Cloud apps: go back to the top and open the Drive folder first.
+wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:phone" >/dev/null; sleep 10
+for l in Drive Browser Messenger Chat Mail; do dump; if has "$l"; then tap "$l"; cap phone-folder-open; break; fi; done
 adb logcat -d -s AndroidRuntime:E > "$OUT/crashes.txt" 2>&1 || true
 grep -q "Process: $PKG" "$OUT/crashes.txt" && { echo "::error::the app crashed"; fail=1; }
 exit $fail
