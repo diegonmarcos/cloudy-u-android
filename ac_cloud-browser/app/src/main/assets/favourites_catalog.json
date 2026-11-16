@@ -780,6 +780,11 @@
       "group": "Services/Real Estate"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Services/Search"
+    },
+    {
       "name": "amazon.com",
       "url": "https://amazon.com/",
       "group": "Services/Shopping"
@@ -830,6 +835,11 @@
       "group": "Tools/Agenda"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Agenda"
+    },
+    {
       "name": "mangotechnologies.co",
       "url": "https://mangotechnologies.co/",
       "group": "Tools/Agenda"
@@ -837,6 +847,11 @@
     {
       "name": "microsoft.com",
       "url": "https://microsoft.com/",
+      "group": "Tools/Agenda"
+    },
+    {
+      "name": "samsung.com",
+      "url": "https://samsung.com/",
       "group": "Tools/Agenda"
     },
     {
@@ -875,6 +890,11 @@
       "group": "Tools/Browser"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Calc"
+    },
+    {
       "name": "sec.com",
       "url": "https://sec.com/",
       "group": "Tools/Calc"
@@ -882,6 +902,11 @@
     {
       "name": "mobimax.pl",
       "url": "https://mobimax.pl/",
+      "group": "Tools/Camera"
+    },
+    {
+      "name": "sec.com",
+      "url": "https://sec.com/",
       "group": "Tools/Camera"
     },
     {
@@ -920,8 +945,28 @@
       "group": "Tools/Contacts"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Contacts"
+    },
+    {
+      "name": "samsung.com",
+      "url": "https://samsung.com/",
+      "group": "Tools/Contacts"
+    },
+    {
       "name": "fossify.org",
       "url": "https://fossify.org/",
+      "group": "Tools/Dialer"
+    },
+    {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Dialer"
+    },
+    {
+      "name": "samsung.com",
+      "url": "https://samsung.com/",
       "group": "Tools/Dialer"
     },
     {
@@ -935,6 +980,11 @@
       "group": "Tools/Drive"
     },
     {
+      "name": "app.com",
+      "url": "https://app.com/",
+      "group": "Tools/Drive"
+    },
+    {
       "name": "ghisler.com",
       "url": "https://ghisler.com/",
       "group": "Tools/Drive"
@@ -945,8 +995,18 @@
       "group": "Tools/Drive"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Drive"
+    },
+    {
       "name": "lonelycatgames.com",
       "url": "https://lonelycatgames.com/",
+      "group": "Tools/Drive"
+    },
+    {
+      "name": "microsoft.com",
+      "url": "https://microsoft.com/",
       "group": "Tools/Drive"
     },
     {
@@ -962,6 +1022,11 @@
     {
       "name": "rarlab.com",
       "url": "https://rarlab.com/",
+      "group": "Tools/Drive"
+    },
+    {
+      "name": "sec.com",
+      "url": "https://sec.com/",
       "group": "Tools/Drive"
     },
     {
@@ -990,8 +1055,18 @@
       "group": "Tools/Drive"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Gallery"
+    },
+    {
       "name": "musicvideo.com",
       "url": "https://musicvideo.com/",
+      "group": "Tools/Gallery"
+    },
+    {
+      "name": "sec.com",
+      "url": "https://sec.com/",
       "group": "Tools/Gallery"
     },
     {
@@ -1010,6 +1085,11 @@
       "group": "Tools/Games"
     },
     {
+      "name": "samsung.com",
+      "url": "https://samsung.com/",
+      "group": "Tools/Games"
+    },
+    {
       "name": "werewolfapps.com",
       "url": "https://werewolfapps.com/",
       "group": "Tools/Games"
@@ -1017,6 +1097,11 @@
     {
       "name": "aeat.es",
       "url": "https://aeat.es/",
+      "group": "Tools/Gov & ID"
+    },
+    {
+      "name": "atm.cat",
+      "url": "https://atm.cat/",
       "group": "Tools/Gov & ID"
     },
     {
@@ -1075,6 +1160,11 @@
       "group": "Tools/Health"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Health"
+    },
+    {
       "name": "medantapatient.com",
       "url": "https://medantapatient.com/",
       "group": "Tools/Health"
@@ -1082,6 +1172,11 @@
     {
       "name": "oplayer.com",
       "url": "https://oplayer.com/",
+      "group": "Tools/Health"
+    },
+    {
+      "name": "sec.com",
+      "url": "https://sec.com/",
       "group": "Tools/Health"
     },
     {
@@ -1107,6 +1202,11 @@
     {
       "name": "gingersoftware.com",
       "url": "https://gingersoftware.com/",
+      "group": "Tools/Keyboard"
+    },
+    {
+      "name": "google.com",
+      "url": "https://google.com/",
       "group": "Tools/Keyboard"
     },
     {
@@ -1210,6 +1310,11 @@
       "group": "Tools/Mail"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Mail"
+    },
+    {
       "name": "ltt.rs",
       "url": "https://ltt.rs/",
       "group": "Tools/Mail"
@@ -1220,8 +1325,18 @@
       "group": "Tools/Mail"
     },
     {
+      "name": "microsoft.com",
+      "url": "https://microsoft.com/",
+      "group": "Tools/Mail"
+    },
+    {
       "name": "protonmail.ch",
       "url": "https://protonmail.ch/",
+      "group": "Tools/Mail"
+    },
+    {
+      "name": "samsung.com",
+      "url": "https://samsung.com/",
       "group": "Tools/Mail"
     },
     {
@@ -1232,6 +1347,11 @@
     {
       "name": "alanwatts.ott",
       "url": "https://alanwatts.ott/",
+      "group": "Tools/Media Center"
+    },
+    {
+      "name": "amazon.com",
+      "url": "https://amazon.com/",
       "group": "Tools/Media Center"
     },
     {
@@ -1257,6 +1377,11 @@
     {
       "name": "earthflare.com",
       "url": "https://earthflare.com/",
+      "group": "Tools/Media Center"
+    },
+    {
+      "name": "google.com",
+      "url": "https://google.com/",
       "group": "Tools/Media Center"
     },
     {
@@ -1310,6 +1435,11 @@
       "group": "Tools/Messenger"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Messenger"
+    },
+    {
       "name": "telegram.org",
       "url": "https://telegram.org/",
       "group": "Tools/Messenger"
@@ -1340,6 +1470,11 @@
       "group": "Tools/Nav"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Nav"
+    },
+    {
       "name": "mapswithme.com",
       "url": "https://mapswithme.com/",
       "group": "Tools/Nav"
@@ -1365,13 +1500,28 @@
       "group": "Tools/Notes"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Notes"
+    },
+    {
       "name": "journable.com",
       "url": "https://journable.com/",
       "group": "Tools/Notes"
     },
     {
+      "name": "microsoft.com",
+      "url": "https://microsoft.com/",
+      "group": "Tools/Notes"
+    },
+    {
       "name": "obsidian.md",
       "url": "https://obsidian.md/",
+      "group": "Tools/Notes"
+    },
+    {
+      "name": "samsung.com",
+      "url": "https://samsung.com/",
       "group": "Tools/Notes"
     },
     {
@@ -1395,6 +1545,11 @@
       "group": "Tools/Office"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Office"
+    },
+    {
       "name": "alltrails.com",
       "url": "https://alltrails.com/",
       "group": "Tools/Outdoor & Sport"
@@ -1407,6 +1562,11 @@
     {
       "name": "downdogapp.com",
       "url": "https://downdogapp.com/",
+      "group": "Tools/Outdoor & Sport"
+    },
+    {
+      "name": "garmin.com",
+      "url": "https://garmin.com/",
       "group": "Tools/Outdoor & Sport"
     },
     {
@@ -1457,6 +1617,11 @@
     {
       "name": "bumble.com",
       "url": "https://bumble.com/",
+      "group": "Tools/Social"
+    },
+    {
+      "name": "facebook.com",
+      "url": "https://facebook.com/",
       "group": "Tools/Social"
     },
     {
@@ -1520,8 +1685,23 @@
       "group": "Tools/Utilities"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Utilities"
+    },
+    {
       "name": "persapps.com",
       "url": "https://persapps.com/",
+      "group": "Tools/Utilities"
+    },
+    {
+      "name": "samsung.com",
+      "url": "https://samsung.com/",
+      "group": "Tools/Utilities"
+    },
+    {
+      "name": "sec.com",
+      "url": "https://sec.com/",
       "group": "Tools/Utilities"
     },
     {
@@ -1535,9 +1715,24 @@
       "group": "Tools/Vault"
     },
     {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Vault"
+    },
+    {
+      "name": "samsung.com",
+      "url": "https://samsung.com/",
+      "group": "Tools/Vault"
+    },
+    {
       "name": "x8bit.com",
       "url": "https://x8bit.com/",
       "group": "Tools/Vault"
+    },
+    {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Tools/Wallet"
     }
   ]
 }

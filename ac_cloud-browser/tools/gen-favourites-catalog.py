@@ -122,9 +122,11 @@ def derive(bj, read):
             raise ValueError("unknown favourites filter source %r" % kind)
         filters.append(entry)
         for name, url, sub in sorted(rows, key=lambda r: (r[2].lower(), r[0].lower())):
-            if url in urls:
+            # a link is listed once per chip, except the Phone > Apps chips: every folder keeps its own sites (Search and Wallet both keep google.com), so those dedupe inside one folder only
+            key = (url, sub, label) if kind == "phone_section" else url
+            if key in urls:
                 continue
-            urls.add(url)
+            urls.add(key)
             items.append({"name": name, "url": url, "group": "%s/%s" % (label, sub)})
     return {"_generated": "DO NOT EDIT: tools/gen-favourites-catalog.py derives this file from the registries (#1422)",
             "filters": filters, "items": items}
