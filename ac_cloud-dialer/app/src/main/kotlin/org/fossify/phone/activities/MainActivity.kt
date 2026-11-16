@@ -476,7 +476,15 @@ class MainActivity : SimpleActivity() {
                     factory = {
                         // The shell's chrome owns the window insets (status bar above, nav bar below), so the Fossify pages get none.
                         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, _ -> WindowInsetsCompat.CONSUMED }
-                        ChromeScrollHooks.install(binding.root) { delta -> collapseTarget?.onScrollDelta(delta) }
+                        ChromeScrollHooks.install(
+                            binding.root,
+                            { delta -> collapseTarget?.onScrollDelta(delta) },
+                            org.fossify.phone.nav.ChromeTouchFeed(
+                                onFinger = { collapseTarget?.onFinger(it) },
+                                onGestureUp = { collapseTarget?.onGestureUp() },
+                                onRelease = { collapseTarget?.onRelease() },
+                            ),
+                        )
                         binding.root
                     },
                     modifier = Modifier.fillMaxSize(),
