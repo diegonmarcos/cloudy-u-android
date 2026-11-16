@@ -33,4 +33,15 @@ class BottomNavSevenItemsTest {
         assertEquals("launch:com.diegonmarcos.cloudagenda", sections.getValue("tasks").jsonObject["pages"]!!.jsonArray[0].jsonObject["action"]!!.jsonPrimitive.content)
         assertEquals("launch:com.diegonmarcos.cloudcontacts", sections.getValue("contacts").jsonObject["pages"]!!.jsonArray[0].jsonObject["action"]!!.jsonPrimitive.content)
     }
+
+    /** #1760 Home > Webmail is a declared page with a route of its own: it belongs to Home, so the shared chrome (title path, pill) is drawn for it. */
+    @Test fun `a declared sub-page that is not a bar item belongs to its section`() {
+        val pagesBySection = ui["sections"]!!.jsonArray.associate { sec ->
+            sec.jsonObject["id"]!!.jsonPrimitive.content to (sec.jsonObject["pages"]?.jsonArray ?: emptyList()).map { it.jsonObject["id"]!!.jsonPrimitive.content }
+        }
+        assertEquals("home", subpageSection("webmail", pagesBySection))
+        assertEquals(null, subpageSection("home", pagesBySection))
+        assertEquals(null, subpageSection("inbox", pagesBySection))
+        assertEquals(null, subpageSection("no-such-route", pagesBySection))
+    }
 }

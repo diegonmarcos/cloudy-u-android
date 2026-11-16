@@ -146,7 +146,7 @@ def dismiss_emulator_prompt(nodes):
         tap(wait)
         time.sleep(3.0)
         return True
-    if nodes and "packageinstaller" in nodes[0].pkg:  # an app's own self-update asking for "install unknown apps" (Cloud Mail's test build): decline it wherever it lands
+    if any("packageinstaller" in n.pkg for n in nodes or []):  # an app's own self-update asking for "install unknown apps" (Cloud Mail's test build): decline it wherever it lands
         cancel = find(nodes, "button2")
         if cancel is not None:
             tap(cancel)
@@ -186,7 +186,7 @@ def clear_blockers(nodes):
     if wait is not None:  # "<app> isn't responding": a slow start on a shared emulator is given the chance to finish; a hang still fails the launch
         tap(wait)
         return True
-    if nodes and "packageinstaller" in nodes[0].pkg:  # an app's own self-update asking for "install unknown apps": not the page under test, decline it
+    if any("packageinstaller" in n.pkg for n in nodes or []):  # an app's own self-update asking for "install unknown apps": not the page under test, decline it
         cancel = find(nodes, "button2")
         if cancel is not None:
             tap(cancel)
@@ -242,6 +242,17 @@ def pages_of(section):
 
     walk(section.get("pages"), [])
     return out
+
+
+def shard_sections(order, weights, index, count):
+    """The sections shard [index] (1-based) of [count] walks: heaviest first onto the lightest shard (page counts as weights), so a big app
+    (Cloud Me, Cloud C3: more pages than one 90 minute emulator job holds) is split across jobs by sections. Deterministic; in [order]'s order."""
+    loads, mine = [0] * count, {i: [] for i in range(count)}
+    for sid in sorted(order, key=lambda x: (-weights[x], order.index(x))):
+        k = loads.index(min(loads))
+        loads[k] += weights[sid]
+        mine[k].append(sid)
+    return [sid for sid in order if sid in mine[index - 1]]
 
 
 class Walk:
@@ -387,7 +398,7 @@ class Walk:
             swipe(x, int(self.h * 0.3), int(self.h * 0.8))
             settle(0.4)
 
-    def open_dropdown(self):
+    def open_dropdown(self, _retry=True):
         """Open the first row's title dropdown. A host whose title is an input (Cloud Browser) opens it from the chevron."""
         nodes = dump()
         if nodes is None:
@@ -409,6 +420,11 @@ class Walk:
         if self.ime_up():
             shell("input keyevent KEYCODE_BACK")
             settle(0.6)
+        # the Store's own background installs raise the system "install unknown apps" prompt over the app at any moment (it is not always
+        # the first window of the hierarchy): decline it and open the dropdown once more
+        if dismiss_emulator_prompt(dump() or []) and _retry:
+            settle(1.0)
+            return self.open_dropdown(False)
         return None
 
     def close_dropdown(self):
@@ -1128,14 +1144,29 @@ class Walk:
 
             signal.signal(signal.SIGALRM, _alarm)
             signal.alarm(SECTION_BUDGET)
+            first = self.a.shard.split("/")[0] == "1" and not self.a.sections
             try:
-                self.check_section_list()
+                if first:
+                    self.check_section_list()
             except Exception as ex:  # a driver fault must show as a failed check, never as silence
                 self.results.append({"section": "-", "page": "sections", "label": "Section list", "status": "FAIL", "checks": {},
                                      "failures": ["driver error: %r" % ex], "seconds": 0})
             finally:
                 signal.alarm(0)
-            for sid in self.bottom + [s for s in self.sections if s not in self.bottom]:
+            order = self.bottom + [s for s in self.sections if s not in self.bottom]
+            if self.a.sections:  # an explicit list (a debug walk of one section)
+                order = [s for s in order if s in set(self.a.sections.split(","))]
+            shard_i, shard_n = (int(x) for x in self.a.shard.split("/"))
+            if shard_n > 1:
+                order = shard_sections(order, {x: 1 + len(pages_of(self.sections.get(x) or {})) for x in order}, shard_i, shard_n)
+            deadline = time.time() + self.a.budget_min * 60
+            for sid in order:
+                if time.time() > deadline:
+                    # the job's own budget, kept under the runner's step timeout: what is left is REPORTED as failed (the report and the
+                    # evidence of everything walked still upload), never lost to a killed step
+                    self.results.append({"section": sid, "page": "-", "label": sid, "status": "FAIL", "checks": {},
+                                         "failures": ["walk budget of %d min exhausted before this section: shard the app (nav-walk-apps.json shard)" % self.a.budget_min], "seconds": 0})
+                    continue
                 if not emulator_alive():
                     self.results.append({"section": sid, "page": "-", "label": sid, "status": "FAIL", "checks": {},
                                          "failures": ["emulator unresponsive (adb or system_server gone): remaining sections not walked"], "seconds": 0})
@@ -1154,7 +1185,7 @@ class Walk:
                         pass
                 finally:
                     signal.alarm(0)
-            if emulator_alive():
+            if first and emulator_alive():
                 signal.alarm(max(SECTION_BUDGET, PAGE_BUDGET * 4))
                 try:
                     self.visit_configs_pages()
@@ -1163,7 +1194,7 @@ class Walk:
                                          "failures": ["driver error: %r" % ex], "seconds": 0})
                 finally:
                     signal.alarm(0)
-            if emulator_alive() and self.cfg.get("scenes"):
+            if first and emulator_alive() and self.cfg.get("scenes"):
                 signal.alarm(max(SECTION_BUDGET, 90 * len(self.cfg["scenes"]) * len(self.cfg.get("scene_themes", ["dark", "light"]))))
                 try:
                     self.run_scenes()
@@ -1272,4 +1303,7 @@ if __name__ == "__main__":
     p.add_argument("--pkg", required=True)
     p.add_argument("--out", required=True)
     p.add_argument("--shots", default="", help="comma list of section ids whose passing pages are photographed too")
+    p.add_argument("--shard", default="1/1", help="i/n: walk only the i-th of n section shards (Configs pages, the section list and scenes run in shard 1)")
+    p.add_argument("--sections", default="", help="comma list of section ids: walk only these (debugging one section)")
+    p.add_argument("--budget-min", type=int, default=75, help="minutes after which the sections not yet walked are reported failed instead of the step being killed")
     Walk(p.parse_args()).run()

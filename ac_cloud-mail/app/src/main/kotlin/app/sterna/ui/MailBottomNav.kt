@@ -44,9 +44,11 @@ fun BottomNavBar(nav: NavController, currentRoute: String, content: @Composable 
     val leaveOnce = rememberLeaveOnce()
     // Resolved here, in the composable's scope, and handed to the tap handler already resolved.
     val missing = bottomNavItems.associateWith { item -> context.getString(missingResource(item.id)) }
+    // A declared sub-page that is not a bar item (Home > Webmail, #1751) belongs to its section: the bar keeps that section's pill and the
+    // first row shows its path, so the page is drawn on the shared chrome like every other page.
     val selected = bottomNavItems.firstOrNull {
         it.action == BottomNavAction.DESTINATION && it.route == currentRoute
-    }?.id
+    }?.id ?: subpageSection(currentRoute, mailNav.sections.associate { sec -> sec.id to sec.pages.map { it.id } })
     val tap: (BottomNavEntry) -> Unit = { entry ->
         val item = bottomNavItems.first { it.id == entry.id }
         onItemTap(context, nav, item, currentRoute, leaveOnce, missing[item] ?: "")
@@ -64,7 +66,12 @@ fun BottomNavBar(nav: NavController, currentRoute: String, content: @Composable 
         title = stringResource(itemDescription(selected ?: "home")),
         hierarchy = openSection?.let { sec -> titleHierarchy(sec, sec.pages.firstOrNull { it.id == currentRoute }?.id) }.orEmpty(),
         sections = mailNav.sections,  // #1483 every declared section, bar and off-bar
-        onNavigate = { e -> entries.firstOrNull { it.id == e.sectionId }?.let(tap) },
+        // a page entry of the dropdown that is a route of its own (Home > Webmail) opens that route; any other entry opens its section
+        onNavigate = { e ->
+            if (e.id != e.sectionId && subpageSection(e.id, mailNav.sections.associate { sec -> sec.id to sec.pages.map { it.id } }) == e.sectionId) {
+                if (e.id != currentRoute) nav.currentBackStackEntry?.navigateOnce { nav.navigate(e.id) }
+            } else entries.firstOrNull { it.id == e.sectionId }?.let(tap)
+        },
         onAccount = account,
         onConfigs = { fleetConfigsOpen = true },
         onAi = ai,
@@ -81,6 +88,13 @@ fun BottomNavBar(nav: NavController, currentRoute: String, content: @Composable 
         )
     }
 }
+
+/**
+ * The section that declares [route] as one of its pages when [route] is not that section's own root page (a sub-page opened from inside it,
+ * Home > Webmail); null for a section root or an undeclared route. [pagesBySection] is ui.sections' id to page ids.
+ */
+internal fun subpageSection(route: String, pagesBySection: Map<String, List<String>>): String? =
+    pagesBySection.entries.firstOrNull { (sec, pages) -> sec != route && route in pages }?.key
 
 /** One item tapped. A destination navigates, and a launch hands off without moving the selection. */
 private fun onItemTap(

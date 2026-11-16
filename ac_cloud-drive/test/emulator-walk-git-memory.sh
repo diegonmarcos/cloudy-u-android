@@ -68,7 +68,7 @@ adb shell "mkdir -p /sdcard/git/emulated-fixture/.git && echo 'ref: refs/heads/m
 pick() { ensure_git; tap "$1" && sleep 1 && tap "$2" && sleep 4 && dump >/dev/null && has "$3"; }
 step "Emulated does not run the Git page on /sdcard/git" pick '^Cloud-Store \(Termux\)$' '^Emulated$' 'emulated-fixture'
 shot 00c-storage-emulated
-has 'Check' || fail "Emulated lost the Git page's top nav: $(texts)"
+has 'Refresh' || fail "Emulated lost the Git page's top nav: $(texts)"
 step "External Drive with no drive shows no empty state" pick '^Emulated$' '^External Drive$' 'No drive attached'
 shot 00d-storage-external
 step "Cloud-Store does not come back" pick '^External Drive$' '^Cloud-Store \(Termux\)$' "$NAME"

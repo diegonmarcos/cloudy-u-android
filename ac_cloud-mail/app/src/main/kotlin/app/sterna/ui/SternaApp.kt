@@ -712,7 +712,9 @@ private fun MainNavHost(
             )
         }
         composable("webmail") { entry ->
-            WebmailScreen(onBack = { entry.navigateOnce { nav.popBackStack() } })
+            BottomNavBar(nav = nav, currentRoute = "webmail") {
+                WebmailScreen(onBack = { entry.navigateOnce { nav.popBackStack() } })
+            }
         }
         composable("rss") { entry ->
             BottomNavBar(nav = nav, currentRoute = "rss") {

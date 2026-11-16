@@ -29,6 +29,10 @@ on:
         description: "Apps to walk: 'all' or a comma list of directory names (ac_cloud-calc,ac_cloud-drive)"
         required: false
         default: "all"
+      sections:
+        description: "Section ids to walk (a comma list, e.g. ops) instead of every section; the section list, Configs pages and scenes are then skipped (debugging one section)"
+        required: false
+        default: ""
       shots:
         description: "Section ids whose passing pages are photographed too, top plus scrolled frames (e.g. configs); empty = failures only"
         required: false
@@ -93,12 +97,15 @@ jobs:
           else
             jq -c --arg l "$APPS" '[.apps[] | select(.app as $a | ($l | split(",") | map(gsub(" ";"")) | index($a)))]' 1_cicd/src/data/nav-walk-apps.json > m.json
           fi
+          # an app with "shards": N is walked by N jobs, each one a share of its sections (#1760: Cloud Me and Cloud C3 hold more pages than
+          # one 90 minute emulator job walks); the first shard also runs the section list, the Configs pages, the scenes and the app's flows
+          jq -c '[.[] | (.shards // 1) as $n | range(1; $n + 1) as $i | . + {shard: "\($i)/\($n)", tag: (if $n > 1 then "-s\($i)" else "" end)}]' m.json > m2.json && mv m2.json m.json
           [ "$(jq length m.json)" -gt 0 ] || { echo "::error::no app matches '$APPS'"; exit 1; }
           echo "matrix={\"include\":$(cat m.json)}" >> "$GITHUB_OUTPUT"
 
   walk:
     needs: plan
-    name: "Walk ${{ matrix.app }}"
+    name: "Walk ${{ matrix.app }}${{ matrix.tag }}"
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -212,11 +219,13 @@ jobs:
           adb logcat -v threadtime "*:W" ActivityManager:I chromium:I WindowManager:I > walk-out/logcat-stream.txt 2>&1 &
           LOGCAT_PID=$!
           rc=0
-          python3 1_cicd/src/scripts/cloud-android-nav-walk.py --app "$APP" --build-json "$APP/build.json" --pkg "$PKG" --out walk-out --shots "$SHOTS" || rc=$?
+          python3 1_cicd/src/scripts/cloud-android-nav-walk.py --app "$APP" --build-json "$APP/build.json" --pkg "$PKG" --out walk-out --shots "$SHOTS" --shard "$SHARD" --sections "$SECTIONS" || rc=$?
           # an app's own flows on the same APK (a state that has to survive navigation, a multi-step journey): every
           # $APP/test/emulator-walk-*.sh <apk> <outdir>, screenshots under walk-out/flows/<name>/shots; a red flow fails the walk (#1356)
           for flow in "$APP"/test/emulator-walk-*.sh; do
             [ -f "$flow" ] || continue
+            # the flows run once per app: on its first shard
+            case "$SHARD" in 1/*) ;; *) continue ;; esac
             name=$(basename "$flow" .sh)
             echo "── flow $name ──"
             timeout 600 bash "$flow" app-under-test.apk "walk-out/flows/$name" || { echo "::error::flow $name failed"; [ "$rc" -eq 0 ] && rc=1; }
@@ -235,6 +244,8 @@ jobs:
         env:
           APP: ${{ matrix.app }}
           SHOTS: ${{ github.event_name == 'workflow_dispatch' && inputs.shots || '' }}
+          SHARD: ${{ matrix.shard }}
+          SECTIONS: ${{ github.event_name == 'workflow_dispatch' && inputs.sections || '' }}
         with:
           api-level: 34
           arch: x86_64
@@ -260,7 +271,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nav-walk-${{ matrix.app }}
+          name: nav-walk-${{ matrix.app }}${{ matrix.tag }}
           path: walk-out
           if-no-files-found: warn
           retention-days: 30

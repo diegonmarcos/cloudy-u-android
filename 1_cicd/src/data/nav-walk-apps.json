@@ -560,6 +560,7 @@
     },
     {
       "app": "ac_cloud-me",
+      "shards": 2,
       "ship": "ship-cloud-me.yml",
       "artifact": "Cloud-Me-",
       "asset": "Cloud-Me",
@@ -591,6 +592,7 @@
     },
     {
       "app": "ac_cloud-c3",
+      "shards": 2,
       "ship": "ship-cloud-c3.yml",
       "artifact": "Cloud-C3-",
       "asset": "Cloud-C3"
