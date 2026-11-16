@@ -86,7 +86,7 @@ def emulator_alive():
 
 
 class Node:
-    __slots__ = ("rid", "text", "desc", "l", "t", "r", "b", "scrollable", "clickable", "pkg", "cls")
+    __slots__ = ("rid", "text", "desc", "l", "t", "r", "b", "scrollable", "clickable", "pkg", "cls", "selected")
 
     def __init__(self, e):
         a = e.attrib
