@@ -29,7 +29,9 @@ front() { adb shell dumpsys activity activities 2>/dev/null | grep -E "mResumedA
 # a permission sheet (Health Connect's own, or the start-up walk) is answered "no" so the page underneath is what is shot
 unblock() { for _ in 1 2 3; do front && return 0; tap "^(Cancel|Don.t allow|Deny|Not now|No thanks)$" || adb shell input keyevent 4; sleep 2; done; front; }
 act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
-go() { timeout 60 adb shell am start -W -n "$act" --es shortcut_action "$1" >/dev/null 2>&1; sleep 4; unblock; sleep 1; }
+# a fresh process per page (#1760): a running app keeps the scroll of the page it already shows, so the next page's first frame (and Tracked's markers
+# after the previous shoot scrolled it to the bottom) was read at the bottom of the page instead of its top
+go() { adb shell am force-stop "$PKG"; sleep 1; timeout 60 adb shell am start -W -n "$act" --es shortcut_action "$1" >/dev/null 2>&1; sleep 4; unblock; sleep 1; }
 crashes() { adb logcat -d -b crash 2>/dev/null | grep -c "Process: $PKG" || true; }
 W=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); SW=${W%x*}; SH=${W#*x}
 up() { adb shell input swipe $((SW / 2)) $((SH * 3 / 4)) $((SW / 2)) $((SH / 3)) 450; sleep 2; }
