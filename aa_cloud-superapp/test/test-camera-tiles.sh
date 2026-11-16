@@ -286,7 +286,7 @@ QUICKMARK_GROUP="Primary"
 QUICKMARK_PKGS='
   .ui.sections[] | select(.id == "phone")
   | .phone_app_groups[] | select(.title == $t)
-  | .packages[] | if type == "object" then (.pkg // "") else . end'
+  | (.packages[]?, (.folders[]?.packages[]?)) | if type == "object" then (.pkg // "") else . end'  # #1764: folders hold the apps
 
 TITLED="$(jq -r --arg t "$QUICKMARK_GROUP" '
   [ .ui.sections[] | select(.id == "phone")
@@ -331,8 +331,9 @@ echo "== T11: T9 reads the QUICKMARK, and is not satisfied by the other two page
 # is asserted too rather than assumed.
 MUTATED="$(jq --arg t "$QUICKMARK_GROUP" --arg p "$SAMSUNG_PKG" '
   ( .ui.sections[] | select(.id == "phone")
-    | .phone_app_groups[] | select(.title == $t) | .packages )
-  |= map(select((if type == "object" then (.pkg // "") else . end) != $p))' "$BJ")"
+    | .phone_app_groups[] | select(.title == $t) )
+  |= ( .packages |= map(select((if type == "object" then (.pkg // "") else . end) != $p))
+       | .folders |= map(.packages |= map(select((if type == "object" then (.pkg // "") else . end) != $p))) )' "$BJ")"
 
 DECOYS="$(printf '%s' "$MUTATED" | jq -r --arg p "$SAMSUNG_PKG" '
   ( [ .ui.phone_folders[] | (.match_keywords // [])[] | select(. == "pkg:" + $p) ] | length )
