@@ -22,6 +22,7 @@
     {"app": "Cloud Mail", "usage": "html fragment (quoted part)", "profile": "UNTRUSTED_HTML", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/message/HtmlFragmentView.kt"},
     {"app": "Cloud Mail", "usage": "compose editor (sandboxed JS)", "profile": "UNTRUSTED_HTML", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/compose/HtmlBodyEditor.kt"},
     {"app": "Cloud Mail", "usage": "signature preview", "profile": "UNTRUSTED_HTML", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/settings/SignatureWebPreview.kt"},
+    {"app": "Cloud Mail", "usage": "WebView provider warm-up (created and destroyed, #1763)", "profile": "UNTRUSTED_HTML", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/mail/DevicePrefetchConditions.kt"},
     {"app": "Cloud Mail", "usage": "Authelia sign-in", "profile": "APP_PAGE", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/settings/AccountAuthSection.kt"},
     {"app": "Cloud Mail", "usage": "link mini browser", "profile": "BROWSER", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/browser/MiniBrowserActivity.kt"},
     {"app": "Cloud Mail", "usage": "Home > Webmail (fleet webmail page, #1751)", "profile": "BROWSER", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/home/WebmailScreen.kt"},
