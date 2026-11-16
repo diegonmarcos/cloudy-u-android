@@ -1081,6 +1081,12 @@ class Walk:
         tap(opener)
         settle(1.6)
         if not on_bar:
+            # an app whose gear opens the fleet Configs screen (Cloud Search, #1697) covers the whole shell with it, the title dropdown
+            # included: leave it by its own back arrow first, the section is then entered from the dropdown of the page underneath
+            cfg_back = find(dump() or [], "fleetcfg_back")
+            if cfg_back is not None:
+                tap(cfg_back)
+                settle(1.6)
             # #1483 an off-bar section is reached the way a user reaches it: the gear opens the app, then the title dropdown's section
             # list (every declared section is a peer there, P6) opens the section itself; its pages are then walked from its own root
             err = self.enter_section(sid)
