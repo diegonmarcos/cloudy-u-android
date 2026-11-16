@@ -572,13 +572,16 @@ class Walk:
                     # #1760 a tap on a second-row tab that the page did not take (Cloud C3 Ops > Orchestration, Health, Observability: the strip
                     # stayed on Mail for 40 minutes of retries) is repeated on the tab's label and icon, then the tab again, before it is
                     # given up; the tab is "selected" in the hierarchy once the page took it
-                    for part in ("pagetabs_label_", "pagetabs_icon_", TAB):
+                    for part in ("pagetabs_label_", "pagetabs_icon_", TAB, "press"):
                         now = dump() or []
                         t2 = find(now, TAB + pid)
                         if t2 is None or t2.selected:
                             return True
-                        tgt = find(now, part + pid) if part != TAB else t2
-                        tap(tgt or t2)
+                        tgt = find(now, part + pid) if part not in (TAB, "press") else t2
+                        if part == "press":  # a press held for 150 ms (a tap is down and up within a few ms)
+                            shell("input swipe %d %d %d %d 150" % (t2.cx, t2.cy, t2.cx, t2.cy))
+                        else:
+                            tap(tgt or t2)
                         settle(2.0)
                     now = dump() or []
                     t2 = find(now, TAB + pid)
