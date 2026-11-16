@@ -105,7 +105,7 @@ LINKS="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Projects\") | .links[] | s
 [ "$LOOSE" = "0" ] && [ "$LINKS" = "1" ] \
     && ok "#1764: the Projects group carries no apps and exactly one web shortcut, Linktree" \
     || bad "the Projects group carries $LOOSE app tiles and $LINKS Linktree links, expected 0 and 1 (#1764)"
-MOVED="$(q "[$PHONE_GROUPS | .[] | .packages[]? | select(.pkg == \"co.mangotechnologies.clickup\" or .pkg == \"com.google.android.apps.fitness\" or .pkg == \"com.fatsecret.android\" or .pkg == \"mobi.eup.easygerman\" or .pkg == \"com.nomadmania.presentation\")] | length")"
+MOVED="$(q "[$PHONE_GROUPS | .[] | (.packages[]?, (.folders[]?.packages[]?)) | select(.pkg == \"co.mangotechnologies.clickup\" or .pkg == \"com.google.android.apps.fitness\" or .pkg == \"com.fatsecret.android\" or .pkg == \"mobi.eup.easygerman\" or .pkg == \"com.nomadmania.presentation\")] | length")"
 [ "$MOVED" = "5" ] \
     && ok "#1764: ClickUp, Google Fit, FatSecret, Todaii German and NomadMania all kept, in their real groups" \
     || bad "#1764: $MOVED of the five former Projects apps are in a group, expected 5"
@@ -161,14 +161,15 @@ done < <(q '
   | $root.ui.sections[] | select(.id == "phone") | .phone_app_groups[]
   | select(.title == "Services" or .title == "Primary")
   | .title as $group
-  | ( (.packages[] | { where: $group, entry: . }),
+  | ( (.packages[]? | { where: $group, entry: . }),
       ((.folders // [])[] | .label as $folder | .packages[] | { where: ($group + " > " + $folder), entry: . }) )
   | .where as $where
   | (if (.entry | type) == "string" then .entry else .entry.pkg end) as $pkg
+  | select(([$root.ui.external_apps[].hub_package] | index($pkg)) | not)
   | [ $where, $pkg, ($pins[$pkg] // "") ] | @tsv')
 
 echo "== Q6: miDNI is a quickmark of the Me group (Gov & ID subtype, #1756) =="
-MIDNI="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Me\") | .packages[] | if type == \"string\" then . else .pkg end | select(. == \"es.gob.interior.policia.midni\")] | length")"
+MIDNI="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Me\") | (.packages[]?, (.folders[]?.packages[]?)) | if type == \"string\" then . else .pkg end | select(. == \"es.gob.interior.policia.midni\")] | length")"
 [ "$MIDNI" = "1" ] \
     && ok "es.gob.interior.policia.midni is a Me quickmark" \
     || bad "es.gob.interior.policia.midni appears $MIDNI times in the quickmarks Me group, expected once"

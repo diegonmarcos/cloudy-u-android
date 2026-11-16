@@ -121,32 +121,47 @@ def cls(p):
         for k in f['match_keywords']:
             if (k.startswith('pkg:') and k[4:] == p) or (k.startswith('pkg^') and p.startswith(k[4:])): return f['id']
     return None
+# #1764 Phone quickmarks MIRROR the Cloud quickmarks: one folder per Cloud app tile (same group, same order), our Cloud app first, then every
+# phone app that does the same job; a Cloud tile with no phone equivalent has no folder. Apps that did the same job are never split in two tiles.
 for g in phone:
     if g['title'] == 'Projects':
         check(not g['packages'] and not g.get('folders') and [l['label'] for l in g['links']] == ['Linktree'] and g['links'][0]['url'] == 'https://linktree.diegonmarcos.com', 'Projects (#1764) holds only the Linktree web shortcut')
         continue
-    check(not g.get('folders') or (g['title'] == 'Services' and [f['label'] for f in g['folders']] == ['Money']), '%s holds tiles only, no folders (#1764: Services also holds the Money folder)' % g['title'])
-    last = -1; ok = True; subs = []
-    for t in g['packages']:
-        fid = cls(t['pkg'])
-        pre, lab = sub_of.get(fid, ('?', '?'))
-        good = GROUP.get(pre) == g['title'] and lab == t.get('subtype') and fold_order[fid] >= last
-        ok &= good; last = fold_order[fid] if fid else last
-        if not good: print('        bad tile', g['title'], t)
-        subs.append(lab)
-    check(ok, '%s: every tile sits in its subtype, group and All Apps order (%s)' % (g['title'], ', '.join(dict.fromkeys(subs))))
-setup_have = {t['pkg'] for g in phone if g['title'] == 'Setup' for t in g['packages']}
-setup_want = {'com.android.vending', 'org.fdroid.fdroid', 'com.android.settings', 'com.aurora.store', 'com.sec.android.app.samsungapps', 'moe.shizuku.privileged.api', 'com.digibites.accubattery',
- 'com.cloudflare.cloudflareoneagent', 'com.cloudflare.onedotonedotonedotone', 'org.kde.kdeconnect_tp', 'com.mobidia.android.mdm', 'com.ubnt.usurvey', 'eu.faircode.netguard',
- 'com.wireguard.android', 'ch.protonvpn.android', 'com.samsung.android.goodlock', 'com.samsung.android.oneconnect'}
-check(setup_want <= setup_have, '#1764 Phone Setup carries the store, dev, diagnostics, network, VPN/firewall and settings apps (missing %s)' % sorted(setup_want - setup_have))
-vault_have = {t['pkg'] for g in phone if g['title'] == 'Data' for t in g['packages'] if t.get('subtype') == 'Vault'}
-check({'com.beemdevelopment.aegis', 'com.azure.authenticator', 'com.samsung.android.samsungpass', 'com.google.android.apps.authenticator2', 'com.x8bit.bitwarden'} <= vault_have, '#1764 the authenticators sit in Data > Vault with Bitwarden')
+    check(not g['packages'] and g.get('folders'), '%s holds folders only (#1764): one folder per Cloud app tile' % g['title'])
+WANT_FOLDERS = {
+ 'Primary': ['Drive', 'Browser', 'Calc', 'Nav', 'Camera', 'Keyboard', 'Wallet'],
+ 'Communication': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts'],
+ 'Data': ['Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
+ 'Me': ['Me-Health', 'Experiences', 'Me-Buro'],
+ 'Services': ['Search', 'News', 'Events', 'Media Center', 'Shopping', 'Mobility & Travel', 'Jobs & Business', 'Real Estate', 'Money'],
+ 'AGI': ['AI', 'Code', 'Terminal'],
+ 'Setup': ['Quick Actions', 'UI', 'NG Firewall', 'Store', 'C3', 'About'],
+}
+CLOUD_LABEL = {'Nav': 'Navigation', 'Agenda': 'Tasks', 'Me-Health': 'Me-Health', 'Experiences': 'Experienc.', 'Me-Buro': 'Me-Buro'}
+for g in phone:
+    if g['title'] not in WANT_FOLDERS: continue
+    labs = [f['label'] for f in g['folders']]
+    check(labs == WANT_FOLDERS[g['title']], '%s folders are exactly %s, in Cloud order' % (g['title'], WANT_FOLDERS[g['title']]))
+    cg = [c for c in cloud if c['title'] == g['title']][0]
+    ctiles = [CLOUD_LABEL.get(l, l) for l in labs]
+    pos = [[t.get('label') for t in cg['tiles']].index(c) if c in [t.get('label') for t in cg['tiles']] else -1 for c in ctiles]
+    check(all(i >= 0 for i in pos) and pos == sorted(pos), '%s folder order follows the Cloud %s row (%s)' % (g['title'], g['title'], pos))
+    for f in g['folders']:
+        ip = f.get('icon_pkg')
+        if ip:
+            ids = {e['hub_package'] for e in bj['external_apps']}
+            check(ip in ids, '%s / %s icon_pkg %s is a Cloud app' % (g['title'], f['label'], ip))
+        own = [t['pkg'] for t in f['packages'] if t['pkg'] in {e['hub_package'] for e in bj['external_apps']}]
+        check(not own or f['packages'][0]['pkg'] == own[0] == ip, '%s / %s: our Cloud app comes first' % (g['title'], f['label']))
+allq = [t['pkg'] for g in phone for f in g.get('folders', []) for t in f['packages']] + [t['pkg'] for g in phone for t in g['packages']]
+check(len(allq) == len(set(allq)), 'no app sits in two phone folders (apps that do the same job share one folder)')
+before = json.load(open(A + 'test/data/phone-quickmarks-before-1764.json'))['packages']
+check(set(before) <= set(allq), 'every app of the Phone quickmarks before #1764 still lands in a folder (missing %s)' % sorted(set(before) - set(allq)))
 prev_apps = {p for gt, pl in prev['quickmarks'].items() for p in pl}
-check(all(any(t['pkg'] == p for g in phone for t in g['packages']) or any(p == pk(x) for g in phone for f in g.get('folders', []) for x in f['packages']) for p in prev_apps), 'every app of the previous phone quickmarks still appears')
+check(all(p in allq for p in prev_apps), 'every app of the previous phone quickmarks still appears')
 want_pick = {'Mail': ['com.google.android.gm'], 'Chat': ['com.Slack'], 'Messenger': ['com.whatsapp.w4b'], 'Drive': ['com.google.android.apps.docs'], 'Browser': ['com.brave.browser'], 'Nav': ['com.google.android.apps.maps']}
 for st, pl in want_pick.items():
-    got = [t['pkg'] for g in phone for t in g['packages'] if t.get('subtype') == st]
+    got = [t['pkg'] for g in phone for f in g.get('folders', []) if f['label'] == st for t in f['packages']]
     check(all(p in got for p in pl), 'subtype %s keeps today\'s app %s (tiles: %s)' % (st, pl, got))
 
 print('== C: Cloud quickmark icons are unchanged from origin/main ==')

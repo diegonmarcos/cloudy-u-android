@@ -62,7 +62,7 @@ QUICKMARKS='.ui.sections[] | select(.id == "phone") | .phone_app_groups'
 # are legal input to the fragment, so both are normalised here rather than one
 # being declared the wrong one.
 pkgs_of_group() {  # $1 = group title
-    jq -r --arg t "$1" "$QUICKMARKS"'[] | select(.title == $t) | .packages[]
+    jq -r --arg t "$1" "$QUICKMARKS"'[] | select(.title == $t) | (.packages[]?, (.folders[]?.packages[]?))
            | if type == "string" then . else .pkg end' "$BUILD_JSON"
 }
 pkgs_of_folder() { # $1 = group title, $2 = folder label
@@ -107,8 +107,10 @@ for title in "AGI" "Communication" "Data" "Services"; do
 done
 
 echo "== T2: AGI holds Claude, Gemini, Termux, Nix, Acode, QuickEdit =="
-expect_in "AGI" "AGI" com.anthropic.claude com.google.android.apps.bard com.termux com.termux.nix com.foxdebug.acode com.rhmsoft.edit
+expect_in "AGI" "AGI" com.anthropic.claude com.google.android.apps.bard com.termux com.termux.nix com.foxdebug.acode
 
+# #1764: QuickEdit is a notes editor and sits in the Data > Notes folder.
+expect_in "Data" "Data" com.rhmsoft.edit
 echo "== T3: no Quickmark curates one of the fleet's OWN apps =="
 # "Remove the Cloud Terminal apps" stays true only if it is checked as a rule.
 # The fleet's packages are cld.* and com.diegonmarcos.* -- the Cloud Terminals
@@ -118,15 +120,14 @@ echo "== T3: no Quickmark curates one of the fleet's OWN apps =="
 # "absent" built out of a jq that failed is the vacuous pass this whole file is
 # written to avoid, and "no results" and "the query broke" look identical once
 # both are the empty string.
-OURS_RAW="$(jq -r "$QUICKMARKS"'[] | (.packages[]?, (.folders[]?.packages[]?))
-        | if type == "string" then . else .pkg end
-        | select(startswith("cld.") or startswith("com.diegonmarcos."))' "$BUILD_JSON")" \
+# #1764 the owner's folder model: a folder mirrors a Cloud app and holds OUR app first, so a fleet package is legal ONLY as the folder's own `icon_pkg`.
+OURS_RAW="$(jq -r "$QUICKMARKS"'[] | (.folders[]? | .icon_pkg as $ip | .packages[] | .pkg | select((startswith("cld.") or startswith("com.diegonmarcos.")) and . != $ip)), (.packages[]? | if type == "string" then . else .pkg end | select(startswith("cld.") or startswith("com.diegonmarcos.")))' "$BUILD_JSON")" \
     || { echo "FATAL: the Quickmarks query failed -- refusing to read its silence as a pass"; exit 2; }
 OURS="$(printf '%s' "$OURS_RAW" | sort -u)"
 if [ -z "$OURS" ]; then
-    ok "no cld.* or com.diegonmarcos.* package is curated into any Quickmarks group"
+    ok "a cld.* / com.diegonmarcos.* package is curated only as the first member (icon_pkg) of its Cloud-app folder (#1764)"
 else
-    bad "the fleet's own package(s) are curated as Quickmarks: $(echo "$OURS" | tr '\n' ' ')-- Phone is the third-party half of the surface"
+    bad "fleet package(s) curated outside their own folder's icon_pkg: $(echo "$OURS" | tr '\n' ' ')"
 fi
 
 echo "== T4: Communication holds the inbox apps; LinkedIn, Google News and Feedly moved to Services =="
@@ -134,8 +135,10 @@ expect_in "Communication" "Communication" com.google.android.gm com.Slack com.wh
 expect_in "Services" "Services" com.linkedin.android com.google.android.apps.magazines com.devhd.feedly com.aspiro.tidal
 
 echo "== T5: Data holds the owner's list =="
-expect_in "Data" "Data" com.google.android.apps.docs com.google.android.calendar com.microsoft.office.onenote com.google.android.apps.photos com.sec.android.app.myfiles com.lonelycatgames.Xplore me.proton.android.drive md.obsidian com.x8bit.bitwarden com.viscouspot.gitsync
+expect_in "Data" "Data" com.google.android.calendar com.microsoft.office.onenote com.google.android.apps.photos md.obsidian com.x8bit.bitwarden
 
+# #1764: the Drive folder (Cloud Drive tile) lives in Primary.
+expect_in "Primary" "Primary" com.google.android.apps.docs com.sec.android.app.myfiles com.lonelycatgames.Xplore me.proton.android.drive com.viscouspot.gitsync
 echo "== T6: every curated entry in these sections can caption a placeholder =="
 # A not-installed tile has no launcher label to borrow, so it draws the label
 # declared beside the package. An entry written as a bare string has none, and

@@ -3644,7 +3644,7 @@
             "_doc": "Android's own settings screens (tiles_configs) plus THE Configs section's Actions underneath — the same Update All / KDE Connect / Animations the Configs grid and the star show, borrowed by `actions_from_section` rather than listed a third time."
           }
         ],
-        "_doc_phone_app_groups": "Curated phone apps for Phone ▸ Apps ▸ Quickmarks. THIRD-PARTY ONLY: anything the constellation already offers a way into is reached from Cloud ▸ Apps, and SuitePhoneAppsFragment filters those out of this page's enumerated sections (All Apps, Smart Folders, Active Apps), so keep our own packages out of it here. On 2026-09-10 the two Cloud Terminal forks (cld.termux, cld.termux.nix) left the AI group, which is what that rule had been asking for since it was written — they were the only fleet packages in here. Group order = render order; each renders as a subhead + UI_PHONE_GRID_COLUMNS-col grid.\n\nA MISSING PACKAGE IS NO LONGER HIDDEN, AND THAT IS THE POINT. This doc used to end 'Missing packages are silently hidden', and the sentence before it justified the third-party rule with 'a curated entry that never renders is worse than no entry'. Both described the same behaviour: resolve() returned null for an uninstalled package and mapNotNull dropped it, so a tile the owner had deliberately curated simply was not there and nothing said why. That is inverted as of 2026-09-10. A curated entry for a package that is not installed now renders as a PLACEHOLDER tile — outlined glyph, 'Not installed' caption, tap to install — so the list you wrote is the list you see. The old rule survives only where it was always right: the ENUMERATED sections (All Apps, Smart Folders, Active Apps) are built from what the device actually has, and a not-installed placeholder in a list enumerated from the device would be nonsense, so those still show installed apps only.\n\nENTRY SHAPE. An entry is either a bare package string or {\"pkg\", \"label\"}. `label` is the NOT-INSTALLED FALLBACK ONLY: an installed app always draws its own PackageManager label, so the two can never disagree on a real device. It exists because a placeholder has no launcher label to borrow and 'ch.protonmail.android' is not a name anybody recognises. Omit it and the tile falls back to the prettified last meaningful segment of the package id.",
+        "_doc_phone_app_groups": "#1764 FOLDER MODEL: the Phone quickmarks mirror the Cloud quickmarks. Every group holds `folders`, one per Cloud app tile in the same order (`packages` stays empty); a folder carries `icon_pkg` (our Cloud app, drawn as the folder face) and lists our app first, then every phone app that does the same job; apps with the same job never get separate tiles, a Cloud tile with no phone equivalent has no folder, and phone apps with no Cloud counterpart live in All Apps only. Projects holds one `links` entry, Linktree. Pinned by test-quickmarks-categories-1756.sh (order, parity with test/data/phone-quickmarks-before-1764.json). Curated phone apps for Phone ▸ Apps ▸ Quickmarks. THIRD-PARTY ONLY: anything the constellation already offers a way into is reached from Cloud ▸ Apps, and SuitePhoneAppsFragment filters those out of this page's enumerated sections (All Apps, Smart Folders, Active Apps), so keep our own packages out of it here. On 2026-09-10 the two Cloud Terminal forks (cld.termux, cld.termux.nix) left the AI group, which is what that rule had been asking for since it was written — they were the only fleet packages in here. Group order = render order; each renders as a subhead + UI_PHONE_GRID_COLUMNS-col grid.\n\nA MISSING PACKAGE IS NO LONGER HIDDEN, AND THAT IS THE POINT. This doc used to end 'Missing packages are silently hidden', and the sentence before it justified the third-party rule with 'a curated entry that never renders is worse than no entry'. Both described the same behaviour: resolve() returned null for an uninstalled package and mapNotNull dropped it, so a tile the owner had deliberately curated simply was not there and nothing said why. That is inverted as of 2026-09-10. A curated entry for a package that is not installed now renders as a PLACEHOLDER tile — outlined glyph, 'Not installed' caption, tap to install — so the list you wrote is the list you see. The old rule survives only where it was always right: the ENUMERATED sections (All Apps, Smart Folders, Active Apps) are built from what the device actually has, and a not-installed placeholder in a list enumerated from the device would be nonsense, so those still show installed apps only.\n\nENTRY SHAPE. An entry is either a bare package string or {\"pkg\", \"label\"}. `label` is the NOT-INSTALLED FALLBACK ONLY: an installed app always draws its own PackageManager label, so the two can never disagree on a real device. It exists because a placeholder has no launcher label to borrow and 'ch.protonmail.android' is not a name anybody recognises. Omit it and the tile falls back to the prettified last meaningful segment of the package id.",
         "_doc_quickmark_never_installable": "Packages that a curated entry must NOT name, because neither of the two outcomes a tile has is available for them. A curated entry resolves to a launchable app or to a placeholder offering to install it; these packages offer a third thing that does not exist — they are preinstalled so they never render the placeholder, and they expose no launch intent so the tile is a tap that does nothing. #249 asked what happens to an entry that can never be installed and this is the answer: it is not an entry. Each record below carries the honest alternative so the next reader does not re-derive it, and so that 'why is this missing' has a written answer instead of becoming a silent re-add. Asserted by test-phone-quickmark-placeholders.sh T10.",
         "quickmark_never_installable": [
           {
@@ -3656,499 +3656,1022 @@
           }
         ],
         "phone_app_groups": [
-          {
-            "title": "Primary",
-            "_doc_samsung_camera": "com.sec.android.app.camera is a QUICKMARK, which is what the owner asked for on 2026-09-10 and what two earlier attempts missed. Both of them read 'phone/apps/Tools Primary' as the identically-named grouping on the OTHER phone page: ui.phone_sections[prefix='='] 'Tools · Primary', the auto-classified All-apps taxonomy, whose members are ui.phone_folders and which no hand-written list feeds. This list is the curated one, read by SuitePhoneAppsFragment out of BuildConfig.UI_SUITE_PHONE_GROUPS_B64, and it is the only one an owner can add a shortcut to. Nothing is shared between the two, so a package in one says nothing about the other and a test that only asks 'is the string in build.json' cannot tell them apart. THIS IS AN ADDITION, NOT A MOVE: the same package is also a keyword of ui.phone_folders[prod_utils] and stays there, because All-apps classifies everything installed and Quickmarks is a shortlist — an app on both pages is the normal case, exactly as _doc_acode_is_in_two_places already records for Acode. APPENDED because the owner named no position: SuitePhoneAppsFragment maps this array in declared order and chunks it into rows with no sort anywhere, so array position IS render position. It is last of eight rather than last of seven because miDNI landed in this same list first, from a different request; with UI_PHONE_GRID_COLUMNS = 6 that puts the camera in row two, second tile, and moving it is a one-line reorder here.",
-            "packages": [
-              {
-                "pkg": "com.brave.browser",
-                "label": "Brave",
-                "subtype": "Browser"
-              },
-              {
-                "pkg": "com.google.android.apps.maps",
-                "label": "Maps",
-                "subtype": "Nav"
-              },
-              {
-                "pkg": "com.sec.android.app.popupcalculator",
-                "label": "Calculator",
-                "subtype": "Calc"
-              },
-              {
-                "pkg": "com.sec.android.app.camera",
-                "label": "Camera",
-                "subtype": "Camera"
-              },
-              {
-                "pkg": "com.google.android.inputmethod.latin",
-                "label": "Gboard",
-                "subtype": "Keyboard"
-              },
-              {
-                "pkg": "com.google.android.apps.walletnfcrel",
-                "label": "Google Wallet",
-                "subtype": "Wallet"
-              },
-              {
-                "pkg": "com.google.android.apps.translate",
-                "label": "Translate",
-                "subtype": "Utilities"
-              },
-              {
-                "pkg": "com.sec.android.app.clockpackage",
-                "label": "Clock",
-                "subtype": "Utilities"
-              }
-            ],
-            "_doc_subtypes_1756": "#1756 Phone quickmarks hold ONE tile per All Apps subtype (subtype = the Cloud app the phone app competes with), in the All Apps subtype order of the group's section. The tile is the app already in the previous quickmarks for that role, else the most obvious installed app; a subtype with no phone app is skipped. When two of the previous quickmark apps fall in one subtype both are kept (Mail, Chat, Messenger, Drive, Notes, AI, Terminal, Code, Store, News). The Projects group is unchanged. The full per-subtype lists live in All Apps. Pinned by test-quickmarks-categories-1756.sh."
-          },
-          {
-            "title": "Communication",
-            "_doc_mail_client": "app.sterna is Sterna Mail (codeberg.org/emon/sterna-mail), the UPSTREAM build — deliberately the upstream and not our cloud-mail rebrand, so this row shows the vanilla client alongside the third-party inboxes. It replaced eu.faircode.email (FairMail) and rs.ltt.android (ltt.rs), both dropped 2026-09-09. It is also what the owner's 'Sternal Mail' means: STERNA, not Stalwart. The fleet does run a Stalwart mail STORE (mail-stalwart.diegonmarcos.com, oci-mail) and that is a server with no Android client of its own, so the only Android app the phrase can name is the one already sitting in this group.",
-            "_doc_whatsapp": "'Whatsapp Bussines' is read as the SINGLE app WhatsApp Business (com.whatsapp.w4b), not as WhatsApp plus WhatsApp Business. w4b was already the only WhatsApp id in this group before this edit, consumer com.whatsapp is not declared anywhere in this file, and the owner's other visible rows are one app each.",
-            "_doc_dropped": "org.fossify.phone (Fossify Phone) was a visible tile here and is not in the owner's list, so it is gone from this group. It keeps its All-apps classification in ui.phone_folders[prod_phone] — dropping a Quickmark never unclassifies an app.",
-            "packages": [
-              {
-                "pkg": "com.google.android.gm",
-                "label": "Gmail",
-                "subtype": "Mail"
-              },
-              {
-                "pkg": "ch.protonmail.android",
-                "label": "Proton Mail",
-                "subtype": "Mail"
-              },
-              {
-                "pkg": "app.sterna",
-                "label": "Sterna Mail",
-                "subtype": "Mail"
-              },
-              {
-                "pkg": "com.Slack",
-                "label": "Slack",
-                "subtype": "Chat"
-              },
-              {
-                "pkg": "com.mattermost.rn",
-                "label": "Mattermost",
-                "subtype": "Chat"
-              },
-              {
-                "pkg": "com.beeper.android",
-                "label": "Beeper",
-                "subtype": "Chat"
-              },
-              {
-                "pkg": "com.whatsapp.w4b",
-                "label": "WhatsApp Business",
-                "subtype": "Messenger"
-              },
-              {
-                "pkg": "org.telegram.messenger",
-                "label": "Telegram",
-                "subtype": "Messenger"
-              },
-              {
-                "pkg": "com.samsung.android.dialer",
-                "label": "Samsung Phone",
-                "subtype": "Dialer"
-              },
-              {
-                "pkg": "com.google.android.contacts",
-                "label": "Google Contacts",
-                "subtype": "Contacts"
-              },
-              {
-                "pkg": "com.instagram.android",
-                "label": "Instagram",
-                "subtype": "Social"
-              }
-            ]
-          },
-          {
-            "title": "Data",
-            "_doc_readings": "Three of the owner's names needed resolving to a package. 'MS Notes' is Microsoft OneNote (com.microsoft.office.onenote, already classified in phone_folders[prod_docs]). 'Xplorer' is X-plore File Manager (com.lonelycatgames.Xplore, already in phone_folders[prod_storage]). 'Google Password' RESOLVES TO NO PACKAGE AT ALL and is recorded in sections[id=phone].quickmark_never_installable — see _doc_google_password below.",
-            "_doc_google_password": "'Google Password' has NO TILE, and that is now a RESOLVED decision rather than an open question. Google Password Manager is not an installable Android application: it is a surface inside Google Play services, reached through Settings or through a shortcut Chrome creates, and it has no package id of its own to put in this list. Its host package com.google.android.gms is preinstalled and exposes no launch intent, so naming it here would produce a tile that never shows the placeholder and does nothing when tapped — which is why it is listed in sections[id=phone].quickmark_never_installable instead, together with the honest target (https://passwords.google.com) and what it would take to wire that up. The earlier note here asked the owner to 'name the app you meant, or say drop it'; #249 answered it by naming the deep link, so the question is closed and the entry is documented rather than silently absent.",
-            "_doc_dropped": "com.sec.android.gallery3d (Samsung Gallery) and com.samsung.android.app.contacts (Samsung Contacts) were visible tiles here and are not in the owner's list — he named the Google equivalents (Google Photos, Google Contacts) instead. Both keep their All-apps classification. The old folder 'Files Editor (IDE)' is gone as a folder: the owner replaced it with 'Others', and its two editors (Acode, QuickEdit) moved to the AI group's Others folder.",
-            "packages": [
-              {
-                "pkg": "com.google.android.apps.docs",
-                "label": "Google Drive",
-                "subtype": "Drive"
-              },
-              {
-                "pkg": "com.sec.android.app.myfiles",
-                "label": "My Files",
-                "subtype": "Drive"
-              },
-              {
-                "pkg": "com.lonelycatgames.Xplore",
-                "label": "X-plore",
-                "subtype": "Drive"
-              },
-              {
-                "pkg": "me.proton.android.drive",
-                "label": "Proton Drive",
-                "subtype": "Drive"
-              },
-              {
-                "pkg": "com.viscouspot.gitsync",
-                "label": "Git Sync",
-                "subtype": "Drive"
-              },
-              {
-                "pkg": "com.microsoft.office.onenote",
-                "label": "OneNote",
-                "subtype": "Notes"
-              },
-              {
-                "pkg": "md.obsidian",
-                "label": "Obsidian",
-                "subtype": "Notes"
-              },
-              {
-                "pkg": "com.google.android.calendar",
-                "label": "Google Calendar",
-                "subtype": "Agenda"
-              },
-              {
-                "pkg": "co.mangotechnologies.clickup",
-                "label": "ClickUp",
-                "subtype": "Agenda"
-              },
-              {
-                "pkg": "com.google.android.apps.docs.editors.docs",
-                "label": "Google Docs",
-                "subtype": "Office"
-              },
-              {
-                "pkg": "com.google.android.apps.photos",
-                "label": "Google Photos",
-                "subtype": "Gallery"
-              },
-              {
-                "pkg": "com.x8bit.bitwarden",
-                "label": "Bitwarden",
-                "subtype": "Vault"
-              },
-              {
-                "pkg": "com.beemdevelopment.aegis",
-                "label": "Aegis",
-                "subtype": "Vault"
-              },
-              {
-                "pkg": "com.azure.authenticator",
-                "label": "Authenticator",
-                "subtype": "Vault"
-              },
-              {
-                "pkg": "com.samsung.android.samsungpass",
-                "label": "Samsung Pass",
-                "subtype": "Vault"
-              },
-              {
-                "pkg": "com.google.android.apps.authenticator2",
-                "label": "Google Authenticator",
-                "subtype": "Vault"
-              }
-            ]
-          },
-          {
-            "title": "Me",
-            "packages": [
-              {
-                "pkg": "com.sec.android.app.shealth",
-                "label": "Samsung Health",
-                "subtype": "Health"
-              },
-              {
-                "pkg": "com.google.android.apps.fitness",
-                "label": "Google Fit",
-                "subtype": "Health"
-              },
-              {
-                "pkg": "es.gob.interior.policia.midni",
-                "label": "miDNI",
-                "subtype": "Gov & ID"
-              },
-              {
-                "pkg": "com.strava",
-                "label": "Strava",
-                "subtype": "Outdoor & Sport"
-              },
-              {
-                "pkg": "com.fatsecret.android",
-                "label": "FatSecret",
-                "subtype": "Nutrition"
-              },
-              {
-                "pkg": "com.memrise.android.memrisecompanion",
-                "label": "Memrise",
-                "subtype": "Learning"
-              },
-              {
-                "pkg": "mobi.eup.easygerman",
-                "label": "Todaii German",
-                "subtype": "Learning"
-              }
-            ]
-          },
-          {
-            "title": "Services",
-            "packages": [
-              {
-                "pkg": "com.google.android.googlequicksearchbox",
-                "label": "Google",
-                "subtype": "Search"
-              },
-              {
-                "pkg": "com.google.android.apps.magazines",
-                "label": "Google News",
-                "subtype": "News"
-              },
-              {
-                "pkg": "com.devhd.feedly",
-                "label": "Feedly",
-                "subtype": "News"
-              },
-              {
-                "pkg": "com.amazon.mShop.android.shopping",
-                "label": "Amazon",
-                "subtype": "Shopping"
-              },
-              {
-                "pkg": "de.eventim.mobile.app.Android",
-                "label": "Eventim",
-                "subtype": "Events"
-              },
-              {
-                "pkg": "com.aspiro.tidal",
-                "label": "Tidal",
-                "subtype": "Media Center"
-              },
-              {
-                "pkg": "com.ubercab",
-                "label": "Uber",
-                "subtype": "Mobility & Travel"
-              },
-              {
-                "pkg": "com.nomadmania.presentation",
-                "label": "NomadMania",
-                "subtype": "Mobility & Travel"
-              },
-              {
-                "pkg": "com.linkedin.android",
-                "label": "LinkedIn",
-                "subtype": "Jobs & Business"
-              },
-              {
-                "pkg": "de.is24.android",
-                "label": "ImmoScout24",
-                "subtype": "Real Estate"
-              }
-            ],
-            "folders": [
-              {
-                "label": "Money",
-                "packages": [
-                  {
-                    "pkg": "es.bancosantander.apps",
-                    "label": "Santander"
-                  },
-                  {
-                    "pkg": "com.revolut.revolut",
-                    "label": "Revolut"
-                  },
-                  {
-                    "pkg": "com.transferwise.android",
-                    "label": "Wise"
-                  },
-                  {
-                    "pkg": "com.paypal.android.p2pmobile",
-                    "label": "PayPal"
-                  },
-                  {
-                    "pkg": "com.google.android.apps.walletnfcrel",
-                    "label": "Google Wallet"
-                  },
-                  {
-                    "pkg": "com.btg.pactual.banking",
-                    "label": "BTG Banking"
-                  },
-                  {
-                    "pkg": "com.btg.pactual.digital.mobile",
-                    "label": "BTG Pactual"
-                  },
-                  {
-                    "pkg": "com.btg.pactual.homebroker.mobile",
-                    "label": "BTG Home Broker"
-                  },
-                  {
-                    "pkg": "com.binance.dev",
-                    "label": "Binance"
-                  },
-                  {
-                    "pkg": "com.bitpanda.bitpanda",
-                    "label": "Bitpanda"
-                  },
-                  {
-                    "pkg": "com.fusionmedia.investing",
-                    "label": "Investing.com"
-                  },
-                  {
-                    "pkg": "com.xe.currency",
-                    "label": "XE Currency"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "title": "AGI",
-            "_doc_cloud_terminals_removed": "The owner asked to 'remove the Cloud Terminal apps from here keep only: Claude Gemini Termux Nix'. Those two clauses only look contradictory: the Cloud Terminal apps are cld.termux and cld.termux.nix, our own forks (ac_cloud-termux and ac_cloud-nix-on-droid both set applicationId cld.termux, and all three cld.termux* ids are in data/constellation-fleet.json), while the Termux and Nix he keeps are the UPSTREAM third-party builds com.termux and com.termux.nix. So the two that left are exactly the two fleet packages, which _doc_phone_app_groups above had already banned from this list, and the two that stayed are third-party. com.termux is NEW here — the group named only com.termux.nix before, so 'Termux' had no tile of its own at all.",
-            "_doc_folders": "Nested folders inside a phone_app_group — render as One-UI-style folder tiles in the same grid as plain packages (2×2 mini-icon preview, tap → modal dialog with the contents at 5 cols). SuitePhoneAppsFragment is the renderer. A folder is skipped only when it is EMPTY of declared entries; it is no longer skipped for having nothing installed, because its contents can now render as placeholders.",
-            "_doc_acode_is_in_two_places": "Acode is here AND in ui.phone_folders[prod_terminals] on the All-apps grid. Both are intended and neither is a copy of the other: Quickmarks is the owner's hand-written shortlist, the All-apps grid is the complete classification of everything installed. Do not 'fix' one to match the other.",
-            "packages": [
-              {
-                "pkg": "com.anthropic.claude",
-                "label": "Claude",
-                "subtype": "AI"
-              },
-              {
-                "pkg": "com.google.android.apps.bard",
-                "label": "Gemini",
-                "subtype": "AI"
-              },
-              {
-                "pkg": "com.foxdebug.acode",
-                "label": "Acode",
-                "subtype": "Code"
-              },
-              {
-                "pkg": "com.rhmsoft.edit",
-                "label": "QuickEdit",
-                "subtype": "Code"
-              },
-              {
-                "pkg": "com.termux",
-                "label": "Termux",
-                "subtype": "Terminal"
-              },
-              {
-                "pkg": "com.termux.nix",
-                "label": "Nix",
-                "subtype": "Terminal"
-              }
-            ]
-          },
-          {
-            "title": "Projects",
-            "_doc_surface": "QUICKMARKS, and that is the whole point of this group. The owner asked for it 'after Tools Primary and Before Configs', and Configs exists on no other surface — ui.phone_sections (the All Apps taxonomy) has no such section — so the anchor named this array and only this array. It was first built on 2026-09-10 as a '#' section in ui.phone_sections instead, which is the page the owner was not talking about; that section is gone and the folders it held went back where they came from. Position is meaning here: this group sits at index 4, between Tools Primary and Configs, and SuitePhoneAppsFragment.parseGroups preserves array order with no sort anywhere, so the index in this file is the order on the screen.",
-            "_doc_loose_tiles": "#1764 The Projects group holds ONE web-shortcut tile, Linktree (`links`, not `packages`): a link entry {label, url, icon} that opens in Cloud Browser and falls back to the default browser. Every app that used to be listed here moved to its real group, none dropped: ClickUp to Data (Agenda), Google Fit to Me (Health), FatSecret to Me (Nutrition), Todaii German to Me (Learning), NomadMania to Services (Mobility & Travel) and the Money folder to Services. `packages` stays declared and empty so every reader keeps its shape.",
-            "packages": [],
-            "_doc_google_health": "com.google.android.apps.fitness is Google Fit, read as the owner's 'Google Health'. The other reading is Health Connect (com.google.android.apps.healthdata, known to this repo as libs/health HealthConnectGateway.PROVIDER_PACKAGE), which is a data broker with no interface to open rather than an app you work in. Swap the pkg if that was meant.",
-            "_doc_clickup": "ClickUp ships under its parent company, Mango Technologies — co.mangotechnologies.clickup. The guessable com.clickup.android resolves to nothing, and since 149c5b9 an unresolved curated entry renders as a permanent 'Not installed' tile rather than hiding, so a wrong id here is furniture on the owner's screen.",
-            "_doc_folders": "'Folder.\"Money\"(all bank apps)'. This file's own answer to which packages are the bank apps is the -Money folder in ui.phone_folders (svc_money, Services · Buro), so this list is that folder's twelve exact package ids — its thirteenth keyword is the `pkg^com.btg.pactual.` family rule, which is a classifier pattern and not something a tile can launch. Curating them HERE is a copy, not a move: quickmarks and All apps are two pages, and an app appearing on both is how every other group in this array already works. -Money stays in Buro untouched.",
-            "links": [
-              {
-                "label": "Linktree",
-                "url": "https://linktree.diegonmarcos.com",
-                "icon": "ic_link_tile"
-              }
-            ]
-          },
-          {
-            "title": "Setup",
-            "packages": [
-              {
-                "pkg": "com.android.vending",
-                "label": "Play Store",
-                "subtype": "Store"
-              },
-              {
-                "pkg": "org.fdroid.fdroid",
-                "label": "F-Droid",
-                "subtype": "Store"
-              },
-              {
-                "pkg": "com.aurora.store",
-                "label": "Aurora Store",
-                "subtype": "Store"
-              },
-              {
-                "pkg": "com.sec.android.app.samsungapps",
-                "label": "Galaxy Store",
-                "subtype": "Store"
-              },
-              {
-                "pkg": "moe.shizuku.privileged.api",
-                "label": "Shizuku",
-                "subtype": "C3 & Dev"
-              },
-              {
-                "pkg": "com.digibites.accubattery",
-                "label": "AccuBattery",
-                "subtype": "Diagnostics"
-              },
-              {
-                "pkg": "com.cloudflare.cloudflareoneagent",
-                "label": "Cloudflare One",
-                "subtype": "Network"
-              },
-              {
-                "pkg": "com.cloudflare.onedotonedotonedotone",
-                "label": "1.1.1.1 WARP",
-                "subtype": "Network"
-              },
-              {
-                "pkg": "org.kde.kdeconnect_tp",
-                "label": "KDE Connect",
-                "subtype": "Network"
-              },
-              {
-                "pkg": "com.mobidia.android.mdm",
-                "label": "Data Monitor",
-                "subtype": "Network"
-              },
-              {
-                "pkg": "com.ubnt.usurvey",
-                "label": "WiFiman",
-                "subtype": "Network"
-              },
-              {
-                "pkg": "eu.faircode.netguard",
-                "label": "NetGuard",
-                "subtype": "Security"
-              },
-              {
-                "pkg": "com.wireguard.android",
-                "label": "WireGuard",
-                "subtype": "Security"
-              },
-              {
-                "pkg": "ch.protonvpn.android",
-                "label": "Proton VPN",
-                "subtype": "Security"
-              },
-              {
-                "pkg": "com.android.settings",
-                "label": "Settings",
-                "subtype": "Settings"
-              },
-              {
-                "pkg": "com.samsung.android.goodlock",
-                "label": "Good Lock",
-                "subtype": "Settings"
-              },
-              {
-                "pkg": "com.samsung.android.oneconnect",
-                "label": "SmartThings",
-                "subtype": "Settings"
-              }
-            ]
-          }
-        ],
+        {
+          "title": "Primary",
+          "_doc_samsung_camera": "com.sec.android.app.camera is a QUICKMARK, which is what the owner asked for on 2026-09-10 and what two earlier attempts missed. Both of them read 'phone/apps/Tools Primary' as the identically-named grouping on the OTHER phone page: ui.phone_sections[prefix='='] 'Tools · Primary', the auto-classified All-apps taxonomy, whose members are ui.phone_folders and which no hand-written list feeds. This list is the curated one, read by SuitePhoneAppsFragment out of BuildConfig.UI_SUITE_PHONE_GROUPS_B64, and it is the only one an owner can add a shortcut to. Nothing is shared between the two, so a package in one says nothing about the other and a test that only asks 'is the string in build.json' cannot tell them apart. THIS IS AN ADDITION, NOT A MOVE: the same package is also a keyword of ui.phone_folders[prod_utils] and stays there, because All-apps classifies everything installed and Quickmarks is a shortlist — an app on both pages is the normal case, exactly as _doc_acode_is_in_two_places already records for Acode. APPENDED because the owner named no position: SuitePhoneAppsFragment maps this array in declared order and chunks it into rows with no sort anywhere, so array position IS render position. It is last of eight rather than last of seven because miDNI landed in this same list first, from a different request; with UI_PHONE_GRID_COLUMNS = 6 that puts the camera in row two, second tile, and moving it is a one-line reorder here.",
+          "_doc_subtypes_1756": "#1756 Phone quickmarks hold ONE tile per All Apps subtype (subtype = the Cloud app the phone app competes with), in the All Apps subtype order of the group's section. The tile is the app already in the previous quickmarks for that role, else the most obvious installed app; a subtype with no phone app is skipped. When two of the previous quickmark apps fall in one subtype both are kept (Mail, Chat, Messenger, Drive, Notes, AI, Terminal, Code, Store, News). The Projects group is unchanged. The full per-subtype lists live in All Apps. Pinned by test-quickmarks-categories-1756.sh.",
+          "packages": [],
+          "folders": [
+            {
+              "label": "Drive",
+              "icon_pkg": "com.diegonmarcos.clouddrive",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.clouddrive",
+                  "label": "Cloud Drive"
+                },
+                {
+                  "pkg": "com.google.android.apps.docs",
+                  "label": "Google Drive"
+                },
+                {
+                  "pkg": "com.lonelycatgames.Xplore",
+                  "label": "X-plore"
+                },
+                {
+                  "pkg": "me.proton.android.drive",
+                  "label": "Proton Drive"
+                },
+                {
+                  "pkg": "com.sec.android.app.myfiles",
+                  "label": "My Files"
+                },
+                {
+                  "pkg": "com.viscouspot.gitsync",
+                  "label": "Git Sync"
+                },
+                {
+                  "pkg": "com.google.android.apps.nbu.files",
+                  "label": "Files by Google"
+                },
+                {
+                  "pkg": "com.microsoft.skydrive",
+                  "label": "OneDrive"
+                },
+                {
+                  "pkg": "com.ghisler.android.TotalCommander",
+                  "label": "Total Commander"
+                },
+                {
+                  "pkg": "com.rarlab.rar",
+                  "label": "RAR"
+                },
+                {
+                  "pkg": "com.alphainventor.filemanager",
+                  "label": "File Manager"
+                },
+                {
+                  "pkg": "com.mobisystems.fileman",
+                  "label": "File Commander"
+                }
+              ]
+            },
+            {
+              "label": "Browser",
+              "icon_pkg": "com.diegonmarcos.cloudbrowser",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudbrowser",
+                  "label": "Cloud Browser"
+                },
+                {
+                  "pkg": "com.brave.browser",
+                  "label": "Brave"
+                },
+                {
+                  "pkg": "com.android.chrome",
+                  "label": "Chrome"
+                },
+                {
+                  "pkg": "com.duckduckgo.mobile.android",
+                  "label": "DuckDuckGo"
+                }
+              ]
+            },
+            {
+              "label": "Calc",
+              "icon_pkg": "com.diegonmarcos.cloudcalc",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudcalc",
+                  "label": "Cloud Calc"
+                },
+                {
+                  "pkg": "com.sec.android.app.popupcalculator",
+                  "label": "Calculator"
+                },
+                {
+                  "pkg": "com.google.android.calculator",
+                  "label": "Google Calculator"
+                },
+                {
+                  "pkg": "com.google.android.apps.translate",
+                  "label": "Translate"
+                },
+                {
+                  "pkg": "com.sec.android.app.clockpackage",
+                  "label": "Clock"
+                }
+              ]
+            },
+            {
+              "label": "Nav",
+              "icon_pkg": "com.diegonmarcos.cloudnav",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudnav",
+                  "label": "Cloud Nav"
+                },
+                {
+                  "pkg": "com.google.android.apps.maps",
+                  "label": "Maps"
+                }
+              ]
+            },
+            {
+              "label": "Camera",
+              "icon_pkg": "cld.camera",
+              "packages": [
+                {
+                  "pkg": "cld.camera",
+                  "label": "Cloud Camera"
+                },
+                {
+                  "pkg": "com.sec.android.app.camera",
+                  "label": "Camera"
+                }
+              ]
+            },
+            {
+              "label": "Keyboard",
+              "icon_pkg": "com.diegonmarcos.cloudkeyboard",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudkeyboard",
+                  "label": "Cloud Keyboard"
+                },
+                {
+                  "pkg": "com.google.android.inputmethod.latin",
+                  "label": "Gboard"
+                },
+                {
+                  "pkg": "ch.icoaching.typewise",
+                  "label": "Typewise"
+                },
+                {
+                  "pkg": "juloo.keyboard2",
+                  "label": "Unexpected Keyboard"
+                }
+              ]
+            },
+            {
+              "label": "Wallet",
+              "icon_pkg": "com.diegonmarcos.cloudwallet",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudwallet",
+                  "label": "Cloud Wallet"
+                },
+                {
+                  "pkg": "com.google.android.apps.walletnfcrel",
+                  "label": "Google Wallet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Communication",
+          "_doc_mail_client": "app.sterna is Sterna Mail (codeberg.org/emon/sterna-mail), the UPSTREAM build — deliberately the upstream and not our cloud-mail rebrand, so this row shows the vanilla client alongside the third-party inboxes. It replaced eu.faircode.email (FairMail) and rs.ltt.android (ltt.rs), both dropped 2026-09-09. It is also what the owner's 'Sternal Mail' means: STERNA, not Stalwart. The fleet does run a Stalwart mail STORE (mail-stalwart.diegonmarcos.com, oci-mail) and that is a server with no Android client of its own, so the only Android app the phrase can name is the one already sitting in this group.",
+          "_doc_whatsapp": "'Whatsapp Bussines' is read as the SINGLE app WhatsApp Business (com.whatsapp.w4b), not as WhatsApp plus WhatsApp Business. w4b was already the only WhatsApp id in this group before this edit, consumer com.whatsapp is not declared anywhere in this file, and the owner's other visible rows are one app each.",
+          "_doc_dropped": "org.fossify.phone (Fossify Phone) was a visible tile here and is not in the owner's list, so it is gone from this group. It keeps its All-apps classification in ui.phone_folders[prod_phone] — dropping a Quickmark never unclassifies an app.",
+          "packages": [],
+          "folders": [
+            {
+              "label": "Mail",
+              "icon_pkg": "com.diegonmarcos.comms.mail",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.comms.mail",
+                  "label": "Cloud Mail"
+                },
+                {
+                  "pkg": "com.google.android.gm",
+                  "label": "Gmail"
+                },
+                {
+                  "pkg": "com.microsoft.office.outlook",
+                  "label": "Outlook"
+                },
+                {
+                  "pkg": "com.samsung.android.email.provider",
+                  "label": "Samsung Email"
+                },
+                {
+                  "pkg": "eu.faircode.email",
+                  "label": "FairEmail"
+                },
+                {
+                  "pkg": "ch.protonmail.android",
+                  "label": "Proton Mail"
+                },
+                {
+                  "pkg": "app.sterna",
+                  "label": "Sterna Mail"
+                }
+              ]
+            },
+            {
+              "label": "Chat",
+              "icon_pkg": "com.diegonmarcos.comms.chat",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.comms.chat",
+                  "label": "Cloud Chat"
+                },
+                {
+                  "pkg": "com.Slack",
+                  "label": "Slack"
+                },
+                {
+                  "pkg": "com.mattermost.rn",
+                  "label": "Mattermost"
+                },
+                {
+                  "pkg": "chat.rocket.android",
+                  "label": "Rocket.Chat"
+                },
+                {
+                  "pkg": "com.beeper.android",
+                  "label": "Beeper"
+                },
+                {
+                  "pkg": "im.vector.app",
+                  "label": "Element"
+                }
+              ]
+            },
+            {
+              "label": "Messenger",
+              "icon_pkg": "com.diegonmarcos.comms.matrix",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.comms.matrix",
+                  "label": "Cloud Matrix"
+                },
+                {
+                  "pkg": "com.whatsapp",
+                  "label": "WhatsApp"
+                },
+                {
+                  "pkg": "com.whatsapp.w4b",
+                  "label": "WhatsApp Business"
+                },
+                {
+                  "pkg": "org.telegram.messenger",
+                  "label": "Telegram"
+                },
+                {
+                  "pkg": "org.thoughtcrime.securesms",
+                  "label": "Signal"
+                },
+                {
+                  "pkg": "com.viber.voip",
+                  "label": "Viber"
+                },
+                {
+                  "pkg": "com.facebook.orca",
+                  "label": "Messenger"
+                },
+                {
+                  "pkg": "com.google.android.apps.tachyon",
+                  "label": "Google Meet"
+                },
+                {
+                  "pkg": "com.instagram.android",
+                  "label": "Instagram"
+                }
+              ]
+            },
+            {
+              "label": "Dialer",
+              "icon_pkg": "com.diegonmarcos.comms.dialer",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.comms.dialer",
+                  "label": "Cloud Dialer"
+                },
+                {
+                  "pkg": "com.samsung.android.dialer",
+                  "label": "Samsung Phone"
+                }
+              ]
+            },
+            {
+              "label": "Contacts",
+              "icon_pkg": "com.diegonmarcos.cloudcontacts",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudcontacts",
+                  "label": "Cloud Contacts"
+                },
+                {
+                  "pkg": "com.google.android.contacts",
+                  "label": "Google Contacts"
+                },
+                {
+                  "pkg": "com.samsung.android.app.contacts",
+                  "label": "Samsung Contacts"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Data",
+          "_doc_readings": "Three of the owner's names needed resolving to a package. 'MS Notes' is Microsoft OneNote (com.microsoft.office.onenote, already classified in phone_folders[prod_docs]). 'Xplorer' is X-plore File Manager (com.lonelycatgames.Xplore, already in phone_folders[prod_storage]). 'Google Password' RESOLVES TO NO PACKAGE AT ALL and is recorded in sections[id=phone].quickmark_never_installable — see _doc_google_password below.",
+          "_doc_google_password": "'Google Password' has NO TILE, and that is now a RESOLVED decision rather than an open question. Google Password Manager is not an installable Android application: it is a surface inside Google Play services, reached through Settings or through a shortcut Chrome creates, and it has no package id of its own to put in this list. Its host package com.google.android.gms is preinstalled and exposes no launch intent, so naming it here would produce a tile that never shows the placeholder and does nothing when tapped — which is why it is listed in sections[id=phone].quickmark_never_installable instead, together with the honest target (https://passwords.google.com) and what it would take to wire that up. The earlier note here asked the owner to 'name the app you meant, or say drop it'; #249 answered it by naming the deep link, so the question is closed and the entry is documented rather than silently absent.",
+          "_doc_dropped": "com.sec.android.gallery3d (Samsung Gallery) and com.samsung.android.app.contacts (Samsung Contacts) were visible tiles here and are not in the owner's list — he named the Google equivalents (Google Photos, Google Contacts) instead. Both keep their All-apps classification. The old folder 'Files Editor (IDE)' is gone as a folder: the owner replaced it with 'Others', and its two editors (Acode, QuickEdit) moved to the AI group's Others folder.",
+          "packages": [],
+          "folders": [
+            {
+              "label": "Notes",
+              "icon_pkg": "com.diegonmarcos.cloudnotes",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudnotes",
+                  "label": "Cloud Notes"
+                },
+                {
+                  "pkg": "md.obsidian",
+                  "label": "Obsidian"
+                },
+                {
+                  "pkg": "com.microsoft.office.onenote",
+                  "label": "OneNote"
+                },
+                {
+                  "pkg": "app.affine.pro",
+                  "label": "AFFiNE"
+                },
+                {
+                  "pkg": "com.rhmsoft.edit",
+                  "label": "QuickEdit"
+                }
+              ]
+            },
+            {
+              "label": "Agenda",
+              "icon_pkg": "com.diegonmarcos.cloudagenda",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudagenda",
+                  "label": "Cloud Tasks"
+                },
+                {
+                  "pkg": "com.google.android.calendar",
+                  "label": "Google Calendar"
+                },
+                {
+                  "pkg": "com.samsung.android.calendar",
+                  "label": "Samsung Calendar"
+                },
+                {
+                  "pkg": "com.google.android.apps.tasks",
+                  "label": "Google Tasks"
+                },
+                {
+                  "pkg": "com.microsoft.todos",
+                  "label": "Microsoft To Do"
+                },
+                {
+                  "pkg": "com.trello",
+                  "label": "Trello"
+                },
+                {
+                  "pkg": "co.mangotechnologies.clickup",
+                  "label": "ClickUp"
+                }
+              ]
+            },
+            {
+              "label": "Office",
+              "icon_pkg": "com.diegonmarcos.cloudoffice",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudoffice",
+                  "label": "Cloud Office"
+                },
+                {
+                  "pkg": "com.google.android.apps.docs.editors.docs",
+                  "label": "Google Docs"
+                },
+                {
+                  "pkg": "com.google.android.apps.docs.editors.sheets",
+                  "label": "Google Sheets"
+                },
+                {
+                  "pkg": "com.collabora.libreoffice",
+                  "label": "LibreOffice"
+                },
+                {
+                  "pkg": "com.adobe.reader",
+                  "label": "Adobe Acrobat"
+                }
+              ]
+            },
+            {
+              "label": "Gallery",
+              "icon_pkg": "com.diegonmarcos.mediacenter",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.mediacenter",
+                  "label": "Cloud Gallery"
+                },
+                {
+                  "pkg": "com.google.android.apps.photos",
+                  "label": "Google Photos"
+                },
+                {
+                  "pkg": "com.sec.android.gallery3d",
+                  "label": "Samsung Gallery"
+                }
+              ]
+            },
+            {
+              "label": "Vault",
+              "icon_pkg": "com.diegonmarcos.cloudvault",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudvault",
+                  "label": "Cloud Vault"
+                },
+                {
+                  "pkg": "com.x8bit.bitwarden",
+                  "label": "Bitwarden"
+                },
+                {
+                  "pkg": "com.beemdevelopment.aegis",
+                  "label": "Aegis"
+                },
+                {
+                  "pkg": "com.azure.authenticator",
+                  "label": "Authenticator"
+                },
+                {
+                  "pkg": "com.samsung.android.samsungpass",
+                  "label": "Samsung Pass"
+                },
+                {
+                  "pkg": "com.google.android.apps.authenticator2",
+                  "label": "Google Authenticator"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Me",
+          "packages": [],
+          "folders": [
+            {
+              "label": "Me-Health",
+              "icon_pkg": "com.diegonmarcos.cloudme",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudme",
+                  "label": "Cloud Me"
+                },
+                {
+                  "pkg": "com.sec.android.app.shealth",
+                  "label": "Samsung Health"
+                },
+                {
+                  "pkg": "com.google.android.apps.fitness",
+                  "label": "Google Fit"
+                },
+                {
+                  "pkg": "com.strava",
+                  "label": "Strava"
+                },
+                {
+                  "pkg": "com.fatsecret.android",
+                  "label": "FatSecret"
+                },
+                {
+                  "pkg": "com.fitbit.FitbitMobile",
+                  "label": "Fitbit"
+                },
+                {
+                  "pkg": "com.garmin.android.apps.connectmobile",
+                  "label": "Garmin Connect"
+                },
+                {
+                  "pkg": "com.urbandroid.sleep",
+                  "label": "Sleep as Android"
+                }
+              ]
+            },
+            {
+              "label": "Experiences",
+              "icon_pkg": "com.diegonmarcos.cloudme",
+              "packages": [
+                {
+                  "pkg": "com.memrise.android.memrisecompanion",
+                  "label": "Memrise"
+                },
+                {
+                  "pkg": "mobi.eup.easygerman",
+                  "label": "Todaii German"
+                }
+              ]
+            },
+            {
+              "label": "Me-Buro",
+              "icon_pkg": "com.diegonmarcos.cloudme",
+              "packages": [
+                {
+                  "pkg": "es.gob.interior.policia.midni",
+                  "label": "miDNI"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Services",
+          "packages": [],
+          "folders": [
+            {
+              "label": "Search",
+              "icon_pkg": "com.diegonmarcos.cloudsearch",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudsearch",
+                  "label": "Cloud Search"
+                },
+                {
+                  "pkg": "com.google.android.googlequicksearchbox",
+                  "label": "Google"
+                }
+              ]
+            },
+            {
+              "label": "News",
+              "icon_pkg": "com.diegonmarcos.cloudnews",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudnews",
+                  "label": "Cloud News"
+                },
+                {
+                  "pkg": "com.google.android.apps.magazines",
+                  "label": "Google News"
+                },
+                {
+                  "pkg": "com.devhd.feedly",
+                  "label": "Feedly"
+                },
+                {
+                  "pkg": "com.checkitt",
+                  "label": "Checkit"
+                },
+                {
+                  "pkg": "com.flyersoft.moonreader",
+                  "label": "Moon+ Reader"
+                }
+              ]
+            },
+            {
+              "label": "Events",
+              "packages": [
+                {
+                  "pkg": "de.eventim.mobile.app.Android",
+                  "label": "Eventim"
+                },
+                {
+                  "pkg": "com.codekarussell.rausgegangen",
+                  "label": "Rausgegangen"
+                },
+                {
+                  "pkg": "com.meetup",
+                  "label": "Meetup"
+                },
+                {
+                  "pkg": "net.residentadvisor.raguide",
+                  "label": "Resident Advisor"
+                }
+              ]
+            },
+            {
+              "label": "Media Center",
+              "icon_pkg": "com.diegonmarcos.cloudmediacenter",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudmediacenter",
+                  "label": "Cloud Media Center"
+                },
+                {
+                  "pkg": "com.aspiro.tidal",
+                  "label": "Tidal"
+                },
+                {
+                  "pkg": "com.spotify.music",
+                  "label": "Spotify"
+                },
+                {
+                  "pkg": "com.google.android.youtube",
+                  "label": "YouTube"
+                },
+                {
+                  "pkg": "com.google.android.apps.youtube.music",
+                  "label": "YouTube Music"
+                },
+                {
+                  "pkg": "com.google.android.videos",
+                  "label": "Google TV"
+                },
+                {
+                  "pkg": "com.amazon.avod.thirdpartyclient",
+                  "label": "Prime Video"
+                },
+                {
+                  "pkg": "com.wbd.stream",
+                  "label": "Max"
+                },
+                {
+                  "pkg": "com.shazam.android",
+                  "label": "Shazam"
+                }
+              ]
+            },
+            {
+              "label": "Shopping",
+              "icon_pkg": "com.diegonmarcos.cloudshopping",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudshopping",
+                  "label": "Cloud Shopping"
+                },
+                {
+                  "pkg": "com.amazon.mShop.android.shopping",
+                  "label": "Amazon"
+                },
+                {
+                  "pkg": "com.dhl.exp.dhlmobile",
+                  "label": "DHL Express"
+                },
+                {
+                  "pkg": "de.dhl.paket",
+                  "label": "DHL Paket"
+                },
+                {
+                  "pkg": "com.ebay.kleinanzeigen",
+                  "label": "Kleinanzeigen"
+                }
+              ]
+            },
+            {
+              "label": "Mobility & Travel",
+              "packages": [
+                {
+                  "pkg": "com.ubercab",
+                  "label": "Uber"
+                },
+                {
+                  "pkg": "com.nomadmania.presentation",
+                  "label": "NomadMania"
+                },
+                {
+                  "pkg": "com.airbnb.android",
+                  "label": "Airbnb"
+                },
+                {
+                  "pkg": "com.booking",
+                  "label": "Booking.com"
+                },
+                {
+                  "pkg": "com.thetrainline",
+                  "label": "Trainline"
+                },
+                {
+                  "pkg": "com.ryanair.cheapflights",
+                  "label": "Ryanair"
+                },
+                {
+                  "pkg": "com.wizzair.WizzAirApp",
+                  "label": "Wizz Air"
+                },
+                {
+                  "pkg": "com.skiplagged",
+                  "label": "Skiplagged"
+                },
+                {
+                  "pkg": "com.rome2rio.www.rome2rio",
+                  "label": "Rome2Rio"
+                },
+                {
+                  "pkg": "com.hostelworld.app",
+                  "label": "Hostelworld"
+                },
+                {
+                  "pkg": "com.comuto",
+                  "label": "BlaBlaCar"
+                },
+                {
+                  "pkg": "com.mo2o.alsa",
+                  "label": "ALSA"
+                },
+                {
+                  "pkg": "com.trafi.whitelabel.bvg",
+                  "label": "BVG Fahrinfo"
+                },
+                {
+                  "pkg": "cat.atm.tmobilitat",
+                  "label": "T-mobilitat"
+                }
+              ]
+            },
+            {
+              "label": "Jobs & Business",
+              "packages": [
+                {
+                  "pkg": "com.linkedin.android",
+                  "label": "LinkedIn"
+                }
+              ]
+            },
+            {
+              "label": "Real Estate",
+              "packages": [
+                {
+                  "pkg": "de.is24.android",
+                  "label": "ImmoScout24"
+                },
+                {
+                  "pkg": "com.wggesucht.android",
+                  "label": "WG-Gesucht"
+                }
+              ]
+            },
+            {
+              "label": "Money",
+              "packages": [
+                {
+                  "pkg": "es.bancosantander.apps",
+                  "label": "Santander"
+                },
+                {
+                  "pkg": "com.revolut.revolut",
+                  "label": "Revolut"
+                },
+                {
+                  "pkg": "com.transferwise.android",
+                  "label": "Wise"
+                },
+                {
+                  "pkg": "com.paypal.android.p2pmobile",
+                  "label": "PayPal"
+                },
+                {
+                  "pkg": "com.btg.pactual.banking",
+                  "label": "BTG Banking"
+                },
+                {
+                  "pkg": "com.btg.pactual.digital.mobile",
+                  "label": "BTG Pactual"
+                },
+                {
+                  "pkg": "com.btg.pactual.homebroker.mobile",
+                  "label": "BTG Home Broker"
+                },
+                {
+                  "pkg": "com.binance.dev",
+                  "label": "Binance"
+                },
+                {
+                  "pkg": "com.bitpanda.bitpanda",
+                  "label": "Bitpanda"
+                },
+                {
+                  "pkg": "com.fusionmedia.investing",
+                  "label": "Investing.com"
+                },
+                {
+                  "pkg": "com.xe.currency",
+                  "label": "XE Currency"
+                },
+                {
+                  "pkg": "de.number26.android",
+                  "label": "N26"
+                },
+                {
+                  "pkg": "com.imaginecurve.curve.prd",
+                  "label": "Curve"
+                },
+                {
+                  "pkg": "com.starfinanz.smob.android.sfinanzstatus",
+                  "label": "Sparkasse"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "AGI",
+          "_doc_cloud_terminals_removed": "The owner asked to 'remove the Cloud Terminal apps from here keep only: Claude Gemini Termux Nix'. Those two clauses only look contradictory: the Cloud Terminal apps are cld.termux and cld.termux.nix, our own forks (ac_cloud-termux and ac_cloud-nix-on-droid both set applicationId cld.termux, and all three cld.termux* ids are in data/constellation-fleet.json), while the Termux and Nix he keeps are the UPSTREAM third-party builds com.termux and com.termux.nix. So the two that left are exactly the two fleet packages, which _doc_phone_app_groups above had already banned from this list, and the two that stayed are third-party. com.termux is NEW here — the group named only com.termux.nix before, so 'Termux' had no tile of its own at all.",
+          "_doc_folders": "Nested folders inside a phone_app_group — render as One-UI-style folder tiles in the same grid as plain packages (2×2 mini-icon preview, tap → modal dialog with the contents at 5 cols). SuitePhoneAppsFragment is the renderer. A folder is skipped only when it is EMPTY of declared entries; it is no longer skipped for having nothing installed, because its contents can now render as placeholders.",
+          "_doc_acode_is_in_two_places": "Acode is here AND in ui.phone_folders[prod_terminals] on the All-apps grid. Both are intended and neither is a copy of the other: Quickmarks is the owner's hand-written shortlist, the All-apps grid is the complete classification of everything installed. Do not 'fix' one to match the other.",
+          "packages": [],
+          "folders": [
+            {
+              "label": "AI",
+              "packages": [
+                {
+                  "pkg": "com.anthropic.claude",
+                  "label": "Claude"
+                },
+                {
+                  "pkg": "com.google.android.apps.bard",
+                  "label": "Gemini"
+                },
+                {
+                  "pkg": "ai.perplexity.app.android",
+                  "label": "Perplexity"
+                },
+                {
+                  "pkg": "ai.perplexity.comet",
+                  "label": "Comet"
+                },
+                {
+                  "pkg": "ai.x.grok",
+                  "label": "Grok"
+                },
+                {
+                  "pkg": "com.samsung.android.bixby.agent",
+                  "label": "Bixby"
+                }
+              ]
+            },
+            {
+              "label": "Code",
+              "icon_pkg": "com.diegonmarcos.code",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.code",
+                  "label": "Cloud Code"
+                },
+                {
+                  "pkg": "com.foxdebug.acode",
+                  "label": "Acode"
+                },
+                {
+                  "pkg": "com.github.android",
+                  "label": "GitHub"
+                }
+              ]
+            },
+            {
+              "label": "Terminal",
+              "icon_pkg": "cld.termux.nix",
+              "packages": [
+                {
+                  "pkg": "cld.termux.nix",
+                  "label": "Cloud Terminal Nix"
+                },
+                {
+                  "pkg": "com.termux",
+                  "label": "Termux"
+                },
+                {
+                  "pkg": "com.termux.nix",
+                  "label": "Nix"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Projects",
+          "_doc_surface": "QUICKMARKS, and that is the whole point of this group. The owner asked for it 'after Tools Primary and Before Configs', and Configs exists on no other surface — ui.phone_sections (the All Apps taxonomy) has no such section — so the anchor named this array and only this array. It was first built on 2026-09-10 as a '#' section in ui.phone_sections instead, which is the page the owner was not talking about; that section is gone and the folders it held went back where they came from. Position is meaning here: this group sits at index 4, between Tools Primary and Configs, and SuitePhoneAppsFragment.parseGroups preserves array order with no sort anywhere, so the index in this file is the order on the screen.",
+          "_doc_loose_tiles": "#1764 The Projects group holds ONE web-shortcut tile, Linktree (`links`, not `packages`): a link entry {label, url, icon} that opens in Cloud Browser and falls back to the default browser. Every app that used to be listed here moved to its real group, none dropped: ClickUp to Data (Agenda), Google Fit to Me (Health), FatSecret to Me (Nutrition), Todaii German to Me (Learning), NomadMania to Services (Mobility & Travel) and the Money folder to Services. `packages` stays declared and empty so every reader keeps its shape.",
+          "_doc_google_health": "com.google.android.apps.fitness is Google Fit, read as the owner's 'Google Health'. The other reading is Health Connect (com.google.android.apps.healthdata, known to this repo as libs/health HealthConnectGateway.PROVIDER_PACKAGE), which is a data broker with no interface to open rather than an app you work in. Swap the pkg if that was meant.",
+          "_doc_clickup": "ClickUp ships under its parent company, Mango Technologies — co.mangotechnologies.clickup. The guessable com.clickup.android resolves to nothing, and since 149c5b9 an unresolved curated entry renders as a permanent 'Not installed' tile rather than hiding, so a wrong id here is furniture on the owner's screen.",
+          "_doc_folders": "'Folder.\"Money\"(all bank apps)'. This file's own answer to which packages are the bank apps is the -Money folder in ui.phone_folders (svc_money, Services · Buro), so this list is that folder's twelve exact package ids — its thirteenth keyword is the `pkg^com.btg.pactual.` family rule, which is a classifier pattern and not something a tile can launch. Curating them HERE is a copy, not a move: quickmarks and All apps are two pages, and an app appearing on both is how every other group in this array already works. -Money stays in Buro untouched.",
+          "packages": [],
+          "links": [
+            {
+              "label": "Linktree",
+              "url": "https://linktree.diegonmarcos.com",
+              "icon": "ic_link_tile"
+            }
+          ]
+        },
+        {
+          "title": "Setup",
+          "packages": [],
+          "folders": [
+            {
+              "label": "Quick Actions",
+              "packages": [
+                {
+                  "pkg": "com.android.settings",
+                  "label": "Settings"
+                },
+                {
+                  "pkg": "com.samsung.android.oneconnect",
+                  "label": "SmartThings"
+                }
+              ]
+            },
+            {
+              "label": "UI",
+              "packages": [
+                {
+                  "pkg": "com.samsung.android.goodlock",
+                  "label": "Good Lock"
+                }
+              ]
+            },
+            {
+              "label": "NG Firewall",
+              "packages": [
+                {
+                  "pkg": "eu.faircode.netguard",
+                  "label": "NetGuard"
+                },
+                {
+                  "pkg": "com.wireguard.android",
+                  "label": "WireGuard"
+                },
+                {
+                  "pkg": "ch.protonvpn.android",
+                  "label": "Proton VPN"
+                },
+                {
+                  "pkg": "com.cloudflare.cloudflareoneagent",
+                  "label": "Cloudflare One"
+                },
+                {
+                  "pkg": "com.cloudflare.onedotonedotonedotone",
+                  "label": "1.1.1.1 WARP"
+                }
+              ]
+            },
+            {
+              "label": "Store",
+              "icon_pkg": "com.diegonmarcos.cloudstore",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudstore",
+                  "label": "Cloud Store"
+                },
+                {
+                  "pkg": "com.android.vending",
+                  "label": "Play Store"
+                },
+                {
+                  "pkg": "org.fdroid.fdroid",
+                  "label": "F-Droid"
+                },
+                {
+                  "pkg": "com.aurora.store",
+                  "label": "Aurora Store"
+                },
+                {
+                  "pkg": "com.sec.android.app.samsungapps",
+                  "label": "Galaxy Store"
+                }
+              ]
+            },
+            {
+              "label": "C3",
+              "icon_pkg": "com.diegonmarcos.cloudc3",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudc3",
+                  "label": "Cloud C3"
+                },
+                {
+                  "pkg": "moe.shizuku.privileged.api",
+                  "label": "Shizuku"
+                },
+                {
+                  "pkg": "org.kde.kdeconnect_tp",
+                  "label": "KDE Connect"
+                },
+                {
+                  "pkg": "com.mobidia.android.mdm",
+                  "label": "Data Monitor"
+                },
+                {
+                  "pkg": "com.ubnt.usurvey",
+                  "label": "WiFiman"
+                }
+              ]
+            },
+            {
+              "label": "About",
+              "packages": [
+                {
+                  "pkg": "com.digibites.accubattery",
+                  "label": "AccuBattery"
+                }
+              ]
+            }
+          ]
+        }
+      ],
         "_doc_tile_groups": "Themed sub-groups for the Suite. tile_groups is the canonical schema, read by three surfaces: (1) bottom-nav Suite SECTION page → GroupedTilesFragment renders one titled row per group; (2) Home Apps Suite card → flattens all groups into a single horizontal scroll strip (home_groups entry has no group_explode); (3) aggregatorTilesFor flat fallback if anything else asks. Single source of truth — edit here, all surfaces update.",
         "tabs": true,
         "_doc_label": "Bottom-nav slot 5. What is left of the old Suite section once its Cloud half moved to sections[cloud]: the installed-Android-apps surface. Keeps phone_app_groups + active_apps, which app/build.gradle bakes into BuildConfig by looking the section up as id=='phone'. tabs stays true with a single page so adding a second one needs no code change.",

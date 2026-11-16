@@ -288,13 +288,18 @@ echo "== T9: the curated lists stay THIRD-PARTY only =="
 # only fleet packages in here and they left on 2026-09-10.
 FLEET="$(q '.ui.external_apps[] | (.hub_package // ""), (.install_package // "")' \
   | grep -v '^$' | sort -u)"
+# #1764 owner's folder model: a Phone folder mirrors one Cloud app and holds that app FIRST, so a fleet package is allowed when it is the
+# folder's own icon_pkg (the folder tile wears the Cloud app's icon); any other fleet package is still rejected.
+ICONS="$(q '.ui.sections[] | select(.id=="phone") | .phone_app_groups[] | (.folders // [])[] | (.icon_pkg // empty)' | sort -u)"
 OURS=""
 for pkg in $ENTRIES; do
+    printf '%s\n' "$ICONS" | grep -qxF "$pkg" && continue
     printf '%s\n' "$FLEET" | grep -qxF "$pkg" && OURS="$OURS $pkg"
 done
 # cld.termux* are fleet packages that live in phone_folders rather than in
 # external_apps, so name them from the fleet manifest as well.
 for pkg in $ENTRIES; do
+    printf '%s\n' "$ICONS" | grep -qxF "$pkg" && continue
     case "$pkg" in cld.*) OURS="$OURS $pkg";; esac
 done
 if [ -z "$OURS" ]; then

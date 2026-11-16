@@ -141,7 +141,8 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
      *  PackageManager label, so the two cannot disagree on a real device.
      *  It exists because a placeholder has no launcher label to borrow. */
     internal data class Entry(val pkg: String, val label: String)
-    internal data class Folder(val label: String, val entries: List<Entry>)
+    /** [iconPkg] (#1764, build.json `icon_pkg`): the Cloud app the folder mirrors; its launcher icon is the folder tile's face when installed. */
+    internal data class Folder(val label: String, val entries: List<Entry>, val iconPkg: String = "")
     /** #1764 A web-shortcut tile (build.json `links`): opens [url] in Cloud Browser, else the default browser. [icon] is a drawable name. */
     internal data class Link(val label: String, val url: String, val icon: String)
     internal data class Group(
@@ -208,7 +209,7 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
                         val fLabel = fo.optString("label")
                         if (fLabel.isBlank()) continue
                         val fEntries = parseEntries(fo.optJSONArray("packages"))
-                        if (fEntries.isNotEmpty()) folderList.add(Folder(fLabel, fEntries))
+                        if (fEntries.isNotEmpty()) folderList.add(Folder(fLabel, fEntries, fo.optString("icon_pkg").trim()))
                     }
                 }
                 val linkList = mutableListOf<Link>()
@@ -396,7 +397,7 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
                         for (l in group.links) item(key = "l:${l.label}") { LinkTile(l) }
                         for (a in packageTiles) item(key = "t:${a.pkg}") { AppTile(a) }
                         for ((folder, contents) in folderTiles) item(key = "f:${folder.label}") {
-                            FolderTile(folder.label, contents) { open = SuiteOpen(folder.label, contents) }
+                            FolderTile(folder.label, contents, folder.iconPkg.takeIf { it.isNotBlank() }?.let { resolve(it) }) { open = SuiteOpen(folder.label, contents) }
                         }
                     }
                 }
@@ -578,7 +579,7 @@ private fun LinkTile(link: SuitePhoneAppsFragment.Link) {
  *  Shows a 2×2 preview of the first four members (a not-installed member shows the placeholder glyph rather than a
  *  blank slot, which would claim the folder has fewer than four apps); a tap opens the sheet with every app. */
 @Composable
-private fun FolderTile(label: String, contents: List<AppInfo>, onOpen: () -> Unit) {
+private fun FolderTile(label: String, contents: List<AppInfo>, cover: AppInfo? = null, onOpen: () -> Unit) {
     val ctx = LocalContext.current
     val p = LocalKitPalette.current
     val cell = 52.dp
@@ -588,7 +589,7 @@ private fun FolderTile(label: String, contents: List<AppInfo>, onOpen: () -> Uni
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(cell).clip(RoundedCornerShape(16.dp)).background(p.surface)
             .border(1.dp, p.hairline, RoundedCornerShape(16.dp)).padding(5.dp)) {
-            Column {
+            if (cover?.icon != null) AppIcon(cover.icon, cell - 10.dp) else Column {
                 for (r in 0..1) Row {
                     for (c in 0..1) {
                         val member = contents.getOrNull(r * 2 + c)

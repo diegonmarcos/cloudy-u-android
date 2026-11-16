@@ -5,14 +5,89 @@
       "title": "Primary",
       "apps": [
         {
+          "pkg": "com.diegonmarcos.clouddrive",
+          "label": "Cloud Drive",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.docs",
+          "label": "Google Drive",
+          "url": "https://drive.google.com"
+        },
+        {
+          "pkg": "com.lonelycatgames.Xplore",
+          "label": "X-plore",
+          "url": null
+        },
+        {
+          "pkg": "me.proton.android.drive",
+          "label": "Proton Drive",
+          "url": "https://drive.proton.me"
+        },
+        {
+          "pkg": "com.sec.android.app.myfiles",
+          "label": "My Files",
+          "url": null
+        },
+        {
+          "pkg": "com.viscouspot.gitsync",
+          "label": "Git Sync",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.nbu.files",
+          "label": "Files by Google",
+          "url": null
+        },
+        {
+          "pkg": "com.microsoft.skydrive",
+          "label": "OneDrive",
+          "url": null
+        },
+        {
+          "pkg": "com.ghisler.android.TotalCommander",
+          "label": "Total Commander",
+          "url": null
+        },
+        {
+          "pkg": "com.rarlab.rar",
+          "label": "RAR",
+          "url": null
+        },
+        {
+          "pkg": "com.alphainventor.filemanager",
+          "label": "File Manager",
+          "url": null
+        },
+        {
+          "pkg": "com.mobisystems.fileman",
+          "label": "File Commander",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudbrowser",
+          "label": "Cloud Browser",
+          "url": null
+        },
+        {
           "pkg": "com.brave.browser",
           "label": "Brave",
           "url": null
         },
         {
-          "pkg": "com.google.android.apps.maps",
-          "label": "Maps",
-          "url": "https://maps.google.com"
+          "pkg": "com.android.chrome",
+          "label": "Chrome",
+          "url": null
+        },
+        {
+          "pkg": "com.duckduckgo.mobile.android",
+          "label": "DuckDuckGo",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudcalc",
+          "label": "Cloud Calc",
+          "url": null
         },
         {
           "pkg": "com.sec.android.app.popupcalculator",
@@ -20,19 +95,9 @@
           "url": null
         },
         {
-          "pkg": "com.sec.android.app.camera",
-          "label": "Camera",
+          "pkg": "com.google.android.calculator",
+          "label": "Google Calculator",
           "url": null
-        },
-        {
-          "pkg": "com.google.android.inputmethod.latin",
-          "label": "Gboard",
-          "url": null
-        },
-        {
-          "pkg": "com.google.android.apps.walletnfcrel",
-          "label": "Google Wallet",
-          "url": "https://wallet.google.com"
         },
         {
           "pkg": "com.google.android.apps.translate",
@@ -43,6 +108,56 @@
           "pkg": "com.sec.android.app.clockpackage",
           "label": "Clock",
           "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudnav",
+          "label": "Cloud Nav",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.maps",
+          "label": "Maps",
+          "url": "https://maps.google.com"
+        },
+        {
+          "pkg": "cld.camera",
+          "label": "Cloud Camera",
+          "url": null
+        },
+        {
+          "pkg": "com.sec.android.app.camera",
+          "label": "Camera",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudkeyboard",
+          "label": "Cloud Keyboard",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.inputmethod.latin",
+          "label": "Gboard",
+          "url": null
+        },
+        {
+          "pkg": "ch.icoaching.typewise",
+          "label": "Typewise",
+          "url": null
+        },
+        {
+          "pkg": "juloo.keyboard2",
+          "label": "Unexpected Keyboard",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudwallet",
+          "label": "Cloud Wallet",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.walletnfcrel",
+          "label": "Google Wallet",
+          "url": "https://wallet.google.com"
         }
       ]
     },
@@ -50,9 +165,29 @@
       "title": "Communication",
       "apps": [
         {
+          "pkg": "com.diegonmarcos.comms.mail",
+          "label": "Cloud Mail",
+          "url": null
+        },
+        {
           "pkg": "com.google.android.gm",
           "label": "Gmail",
           "url": "https://mail.google.com"
+        },
+        {
+          "pkg": "com.microsoft.office.outlook",
+          "label": "Outlook",
+          "url": null
+        },
+        {
+          "pkg": "com.samsung.android.email.provider",
+          "label": "Samsung Email",
+          "url": null
+        },
+        {
+          "pkg": "eu.faircode.email",
+          "label": "FairEmail",
+          "url": null
         },
         {
           "pkg": "ch.protonmail.android",
@@ -62,6 +197,11 @@
         {
           "pkg": "app.sterna",
           "label": "Sterna Mail",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.comms.chat",
+          "label": "Cloud Chat",
           "url": null
         },
         {
@@ -75,8 +215,28 @@
           "url": null
         },
         {
+          "pkg": "chat.rocket.android",
+          "label": "Rocket.Chat",
+          "url": null
+        },
+        {
           "pkg": "com.beeper.android",
           "label": "Beeper",
+          "url": null
+        },
+        {
+          "pkg": "im.vector.app",
+          "label": "Element",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.comms.matrix",
+          "label": "Cloud Matrix",
+          "url": null
+        },
+        {
+          "pkg": "com.whatsapp",
+          "label": "WhatsApp",
           "url": null
         },
         {
@@ -90,8 +250,43 @@
           "url": "https://web.telegram.org"
         },
         {
+          "pkg": "org.thoughtcrime.securesms",
+          "label": "Signal",
+          "url": null
+        },
+        {
+          "pkg": "com.viber.voip",
+          "label": "Viber",
+          "url": null
+        },
+        {
+          "pkg": "com.facebook.orca",
+          "label": "Messenger",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.tachyon",
+          "label": "Google Meet",
+          "url": null
+        },
+        {
+          "pkg": "com.instagram.android",
+          "label": "Instagram",
+          "url": "https://www.instagram.com"
+        },
+        {
+          "pkg": "com.diegonmarcos.comms.dialer",
+          "label": "Cloud Dialer",
+          "url": null
+        },
+        {
           "pkg": "com.samsung.android.dialer",
           "label": "Samsung Phone",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudcontacts",
+          "label": "Cloud Contacts",
           "url": null
         },
         {
@@ -100,9 +295,9 @@
           "url": "https://contacts.google.com"
         },
         {
-          "pkg": "com.instagram.android",
-          "label": "Instagram",
-          "url": "https://www.instagram.com"
+          "pkg": "com.samsung.android.app.contacts",
+          "label": "Samsung Contacts",
+          "url": null
         }
       ]
     },
@@ -110,28 +305,13 @@
       "title": "Data",
       "apps": [
         {
-          "pkg": "com.google.android.apps.docs",
-          "label": "Google Drive",
-          "url": "https://drive.google.com"
-        },
-        {
-          "pkg": "com.sec.android.app.myfiles",
-          "label": "My Files",
+          "pkg": "com.diegonmarcos.cloudnotes",
+          "label": "Cloud Notes",
           "url": null
         },
         {
-          "pkg": "com.lonelycatgames.Xplore",
-          "label": "X-plore",
-          "url": null
-        },
-        {
-          "pkg": "me.proton.android.drive",
-          "label": "Proton Drive",
-          "url": "https://drive.proton.me"
-        },
-        {
-          "pkg": "com.viscouspot.gitsync",
-          "label": "Git Sync",
+          "pkg": "md.obsidian",
+          "label": "Obsidian",
           "url": null
         },
         {
@@ -140,8 +320,18 @@
           "url": "https://www.onenote.com"
         },
         {
-          "pkg": "md.obsidian",
-          "label": "Obsidian",
+          "pkg": "app.affine.pro",
+          "label": "AFFiNE",
+          "url": null
+        },
+        {
+          "pkg": "com.rhmsoft.edit",
+          "label": "QuickEdit",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudagenda",
+          "label": "Cloud Tasks",
           "url": null
         },
         {
@@ -150,9 +340,34 @@
           "url": "https://calendar.google.com"
         },
         {
+          "pkg": "com.samsung.android.calendar",
+          "label": "Samsung Calendar",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.tasks",
+          "label": "Google Tasks",
+          "url": null
+        },
+        {
+          "pkg": "com.microsoft.todos",
+          "label": "Microsoft To Do",
+          "url": null
+        },
+        {
+          "pkg": "com.trello",
+          "label": "Trello",
+          "url": null
+        },
+        {
           "pkg": "co.mangotechnologies.clickup",
           "label": "ClickUp",
           "url": "https://app.clickup.com"
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudoffice",
+          "label": "Cloud Office",
+          "url": null
         },
         {
           "pkg": "com.google.android.apps.docs.editors.docs",
@@ -160,9 +375,39 @@
           "url": "https://docs.google.com"
         },
         {
+          "pkg": "com.google.android.apps.docs.editors.sheets",
+          "label": "Google Sheets",
+          "url": null
+        },
+        {
+          "pkg": "com.collabora.libreoffice",
+          "label": "LibreOffice",
+          "url": null
+        },
+        {
+          "pkg": "com.adobe.reader",
+          "label": "Adobe Acrobat",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.mediacenter",
+          "label": "Cloud Gallery",
+          "url": null
+        },
+        {
           "pkg": "com.google.android.apps.photos",
           "label": "Google Photos",
           "url": "https://photos.google.com"
+        },
+        {
+          "pkg": "com.sec.android.gallery3d",
+          "label": "Samsung Gallery",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudvault",
+          "label": "Cloud Vault",
+          "url": null
         },
         {
           "pkg": "com.x8bit.bitwarden",
@@ -195,6 +440,11 @@
       "title": "Me",
       "apps": [
         {
+          "pkg": "com.diegonmarcos.cloudme",
+          "label": "Cloud Me",
+          "url": null
+        },
+        {
           "pkg": "com.sec.android.app.shealth",
           "label": "Samsung Health",
           "url": null
@@ -202,11 +452,6 @@
         {
           "pkg": "com.google.android.apps.fitness",
           "label": "Google Fit",
-          "url": null
-        },
-        {
-          "pkg": "es.gob.interior.policia.midni",
-          "label": "miDNI",
           "url": null
         },
         {
@@ -220,6 +465,21 @@
           "url": "https://www.fatsecret.com"
         },
         {
+          "pkg": "com.fitbit.FitbitMobile",
+          "label": "Fitbit",
+          "url": null
+        },
+        {
+          "pkg": "com.garmin.android.apps.connectmobile",
+          "label": "Garmin Connect",
+          "url": null
+        },
+        {
+          "pkg": "com.urbandroid.sleep",
+          "label": "Sleep as Android",
+          "url": null
+        },
+        {
           "pkg": "com.memrise.android.memrisecompanion",
           "label": "Memrise",
           "url": "https://www.memrise.com"
@@ -228,6 +488,11 @@
           "pkg": "mobi.eup.easygerman",
           "label": "Todaii German",
           "url": null
+        },
+        {
+          "pkg": "es.gob.interior.policia.midni",
+          "label": "miDNI",
+          "url": null
         }
       ]
     },
@@ -235,9 +500,19 @@
       "title": "Services",
       "apps": [
         {
+          "pkg": "com.diegonmarcos.cloudsearch",
+          "label": "Cloud Search",
+          "url": null
+        },
+        {
           "pkg": "com.google.android.googlequicksearchbox",
           "label": "Google",
           "url": "https://www.google.com"
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudnews",
+          "label": "Cloud News",
+          "url": null
         },
         {
           "pkg": "com.google.android.apps.magazines",
@@ -250,9 +525,14 @@
           "url": "https://feedly.com"
         },
         {
-          "pkg": "com.amazon.mShop.android.shopping",
-          "label": "Amazon",
-          "url": "https://www.amazon.com"
+          "pkg": "com.checkitt",
+          "label": "Checkit",
+          "url": null
+        },
+        {
+          "pkg": "com.flyersoft.moonreader",
+          "label": "Moon+ Reader",
+          "url": null
         },
         {
           "pkg": "de.eventim.mobile.app.Android",
@@ -260,9 +540,89 @@
           "url": "https://www.eventim.de"
         },
         {
+          "pkg": "com.codekarussell.rausgegangen",
+          "label": "Rausgegangen",
+          "url": null
+        },
+        {
+          "pkg": "com.meetup",
+          "label": "Meetup",
+          "url": null
+        },
+        {
+          "pkg": "net.residentadvisor.raguide",
+          "label": "Resident Advisor",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudmediacenter",
+          "label": "Cloud Media Center",
+          "url": null
+        },
+        {
           "pkg": "com.aspiro.tidal",
           "label": "Tidal",
           "url": "https://listen.tidal.com"
+        },
+        {
+          "pkg": "com.spotify.music",
+          "label": "Spotify",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.youtube",
+          "label": "YouTube",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.youtube.music",
+          "label": "YouTube Music",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.videos",
+          "label": "Google TV",
+          "url": null
+        },
+        {
+          "pkg": "com.amazon.avod.thirdpartyclient",
+          "label": "Prime Video",
+          "url": null
+        },
+        {
+          "pkg": "com.wbd.stream",
+          "label": "Max",
+          "url": null
+        },
+        {
+          "pkg": "com.shazam.android",
+          "label": "Shazam",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudshopping",
+          "label": "Cloud Shopping",
+          "url": null
+        },
+        {
+          "pkg": "com.amazon.mShop.android.shopping",
+          "label": "Amazon",
+          "url": "https://www.amazon.com"
+        },
+        {
+          "pkg": "com.dhl.exp.dhlmobile",
+          "label": "DHL Express",
+          "url": null
+        },
+        {
+          "pkg": "de.dhl.paket",
+          "label": "DHL Paket",
+          "url": null
+        },
+        {
+          "pkg": "com.ebay.kleinanzeigen",
+          "label": "Kleinanzeigen",
+          "url": null
         },
         {
           "pkg": "com.ubercab",
@@ -275,6 +635,66 @@
           "url": "https://nomadmania.com"
         },
         {
+          "pkg": "com.airbnb.android",
+          "label": "Airbnb",
+          "url": null
+        },
+        {
+          "pkg": "com.booking",
+          "label": "Booking.com",
+          "url": null
+        },
+        {
+          "pkg": "com.thetrainline",
+          "label": "Trainline",
+          "url": null
+        },
+        {
+          "pkg": "com.ryanair.cheapflights",
+          "label": "Ryanair",
+          "url": null
+        },
+        {
+          "pkg": "com.wizzair.WizzAirApp",
+          "label": "Wizz Air",
+          "url": null
+        },
+        {
+          "pkg": "com.skiplagged",
+          "label": "Skiplagged",
+          "url": null
+        },
+        {
+          "pkg": "com.rome2rio.www.rome2rio",
+          "label": "Rome2Rio",
+          "url": null
+        },
+        {
+          "pkg": "com.hostelworld.app",
+          "label": "Hostelworld",
+          "url": null
+        },
+        {
+          "pkg": "com.comuto",
+          "label": "BlaBlaCar",
+          "url": null
+        },
+        {
+          "pkg": "com.mo2o.alsa",
+          "label": "ALSA",
+          "url": null
+        },
+        {
+          "pkg": "com.trafi.whitelabel.bvg",
+          "label": "BVG Fahrinfo",
+          "url": null
+        },
+        {
+          "pkg": "cat.atm.tmobilitat",
+          "label": "T-mobilitat",
+          "url": null
+        },
+        {
           "pkg": "com.linkedin.android",
           "label": "LinkedIn",
           "url": "https://www.linkedin.com"
@@ -283,6 +703,11 @@
           "pkg": "de.is24.android",
           "label": "ImmoScout24",
           "url": "https://www.immobilienscout24.de"
+        },
+        {
+          "pkg": "com.wggesucht.android",
+          "label": "WG-Gesucht",
+          "url": null
         },
         {
           "pkg": "es.bancosantander.apps",
@@ -338,6 +763,21 @@
           "pkg": "com.xe.currency",
           "label": "XE Currency",
           "url": "https://www.xe.com"
+        },
+        {
+          "pkg": "de.number26.android",
+          "label": "N26",
+          "url": null
+        },
+        {
+          "pkg": "com.imaginecurve.curve.prd",
+          "label": "Curve",
+          "url": null
+        },
+        {
+          "pkg": "com.starfinanz.smob.android.sfinanzstatus",
+          "label": "Sparkasse",
+          "url": null
         }
       ]
     },
@@ -355,13 +795,43 @@
           "url": "https://gemini.google.com"
         },
         {
+          "pkg": "ai.perplexity.app.android",
+          "label": "Perplexity",
+          "url": null
+        },
+        {
+          "pkg": "ai.perplexity.comet",
+          "label": "Comet",
+          "url": null
+        },
+        {
+          "pkg": "ai.x.grok",
+          "label": "Grok",
+          "url": null
+        },
+        {
+          "pkg": "com.samsung.android.bixby.agent",
+          "label": "Bixby",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.code",
+          "label": "Cloud Code",
+          "url": null
+        },
+        {
           "pkg": "com.foxdebug.acode",
           "label": "Acode",
           "url": null
         },
         {
-          "pkg": "com.rhmsoft.edit",
-          "label": "QuickEdit",
+          "pkg": "com.github.android",
+          "label": "GitHub",
+          "url": null
+        },
+        {
+          "pkg": "cld.termux.nix",
+          "label": "Cloud Terminal Nix",
           "url": null
         },
         {
@@ -384,6 +854,51 @@
       "title": "Setup",
       "apps": [
         {
+          "pkg": "com.android.settings",
+          "label": "Settings",
+          "url": null
+        },
+        {
+          "pkg": "com.samsung.android.oneconnect",
+          "label": "SmartThings",
+          "url": null
+        },
+        {
+          "pkg": "com.samsung.android.goodlock",
+          "label": "Good Lock",
+          "url": null
+        },
+        {
+          "pkg": "eu.faircode.netguard",
+          "label": "NetGuard",
+          "url": null
+        },
+        {
+          "pkg": "com.wireguard.android",
+          "label": "WireGuard",
+          "url": null
+        },
+        {
+          "pkg": "ch.protonvpn.android",
+          "label": "Proton VPN",
+          "url": null
+        },
+        {
+          "pkg": "com.cloudflare.cloudflareoneagent",
+          "label": "Cloudflare One",
+          "url": null
+        },
+        {
+          "pkg": "com.cloudflare.onedotonedotonedotone",
+          "label": "1.1.1.1 WARP",
+          "url": null
+        },
+        {
+          "pkg": "com.diegonmarcos.cloudstore",
+          "label": "Cloud Store",
+          "url": null
+        },
+        {
           "pkg": "com.android.vending",
           "label": "Play Store",
           "url": "https://play.google.com/store"
@@ -404,23 +919,13 @@
           "url": null
         },
         {
+          "pkg": "com.diegonmarcos.cloudc3",
+          "label": "Cloud C3",
+          "url": null
+        },
+        {
           "pkg": "moe.shizuku.privileged.api",
           "label": "Shizuku",
-          "url": null
-        },
-        {
-          "pkg": "com.digibites.accubattery",
-          "label": "AccuBattery",
-          "url": null
-        },
-        {
-          "pkg": "com.cloudflare.cloudflareoneagent",
-          "label": "Cloudflare One",
-          "url": null
-        },
-        {
-          "pkg": "com.cloudflare.onedotonedotonedotone",
-          "label": "1.1.1.1 WARP",
           "url": null
         },
         {
@@ -439,33 +944,8 @@
           "url": null
         },
         {
-          "pkg": "eu.faircode.netguard",
-          "label": "NetGuard",
-          "url": null
-        },
-        {
-          "pkg": "com.wireguard.android",
-          "label": "WireGuard",
-          "url": null
-        },
-        {
-          "pkg": "ch.protonvpn.android",
-          "label": "Proton VPN",
-          "url": null
-        },
-        {
-          "pkg": "com.android.settings",
-          "label": "Settings",
-          "url": null
-        },
-        {
-          "pkg": "com.samsung.android.goodlock",
-          "label": "Good Lock",
-          "url": null
-        },
-        {
-          "pkg": "com.samsung.android.oneconnect",
-          "label": "SmartThings",
+          "pkg": "com.digibites.accubattery",
+          "label": "AccuBattery",
           "url": null
         }
       ]
