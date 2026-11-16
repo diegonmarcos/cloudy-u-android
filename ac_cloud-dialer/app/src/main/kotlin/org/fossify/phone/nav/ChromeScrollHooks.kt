@@ -1,6 +1,5 @@
 package org.fossify.phone.nav
 
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ScrollView
@@ -16,7 +15,15 @@ import java.util.WeakHashMap
  * pager swaps in later are picked up on the next layout. It only observes; nothing is consumed.
  */
 object ChromeScrollHooks {
-    fun install(content: ViewGroup, onDelta: (Float) -> Unit, touch: ChromeTouchFeed? = null) {
+    /**
+     * #1760 a RecyclerView reports onScrolled for its own layout too: the pager keeps the neighbouring pages' lists alive, and when the
+     * chrome comes back the content area shrinks, those lists re-lay out and report a positive dy while the restoring finger is down, which
+     * hid the bars again inside the very gesture that restored them (Home never came back on the walk). Only a list the reader is dragging
+     * or that is settling from a fling is a scroll.
+     */
+    fun countsAsScroll(scrollState: Int, dy: Int): Boolean = dy != 0 && scrollState != RecyclerView.SCROLL_STATE_IDLE
+
+    fun install(content: ViewGroup, onDelta: (Float) -> Unit) {
         val seen: MutableSet<View> = Collections.newSetFromMap(WeakHashMap())
         var lastScrollViews = 0
 
@@ -25,16 +32,11 @@ object ChromeScrollHooks {
                 if (seen.add(v)) {
                     v.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                         override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                            if (dy != 0) onDelta(dy.toFloat())
+                            if (countsAsScroll(recyclerView.scrollState, dy)) onDelta(dy.toFloat())
                         }
                     })
                 }
             } else if (v is ViewGroup) {
-                // #1760 a (Nested)ScrollView page (Home) reports its own touches to the chrome: a swipe down at the page's top moves no scroll,
-                // so only the finger can bring the bars back there (the Compose watcher loses the Fossify pager's stream). Never consumes.
-                if (touch != null && (v is ScrollView || v is NestedScrollView) && seen.add(v)) {
-                    v.setOnTouchListener { _, e -> touch.onTouch(e.actionMasked, e.y); false }
-                }
                 for (i in 0 until v.childCount) hook(v.getChildAt(i))
             }
         }
@@ -56,22 +58,4 @@ object ChromeScrollHooks {
         }
         hook(content)
     }
-}
-
-/**
- * #1760 the finger of a View page as the three signals of BottomNavCollapse (onFinger, onGestureUp on a downward travel, onRelease), with the
- * touch thresholds of libs:bottomnav's ChromeWebScroll. Plain Kotlin: it holds no View.
- */
-class ChromeTouchFeed(private val onFinger: (Boolean) -> Unit, private val onGestureUp: () -> Unit, private val onRelease: () -> Unit) {
-    private var lastY = 0f
-
-    fun onTouch(action: Int, y: Float) {
-        when (action) {
-            MotionEvent.ACTION_DOWN -> { onFinger(true); lastY = y }
-            MotionEvent.ACTION_MOVE -> { if (y - lastY > SLOP) onGestureUp(); lastY = y }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> { onFinger(false); onRelease() }
-        }
-    }
-
-    companion object { const val SLOP = 12f }
 }
