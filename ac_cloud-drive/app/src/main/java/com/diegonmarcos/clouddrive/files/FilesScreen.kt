@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.rememberScrollState
@@ -858,16 +859,19 @@ private fun SelectionBar(
     ) {
         IconButton(onClick = { controller.update { FilesReducer.clearSelection(it, it.active) } }, Modifier.size(DriveMetrics.tap)) { Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.files_clear_selection)) }
         Text(stringResource(if (inArchive) R.string.files_selected_readonly else R.string.files_selected, pane.selection.size), Modifier.weight(1f), style = MaterialTheme.typography.labelLarge, maxLines = 2)
-        when {
-            inArchive && ui.dualPane && otherLocal != null -> Pill(stringResource(R.string.files_extract_to_other), { controller.transferSelection(ui.active, otherLocal, move = false) }, filled = true)
-            inArchive -> Pill(stringResource(R.string.files_copy_to), { onPickDestination(false) }, filled = true)
-            ui.dualPane && otherLocal != null -> {
-                Pill(stringResource(R.string.files_copy_to_other), { controller.transferSelection(ui.active, otherLocal, move = false) }, filled = true)
-                Pill(stringResource(R.string.files_move_to_other), { controller.transferSelection(ui.active, otherLocal, move = true) })
-            }
-            else -> {
-                Pill(stringResource(R.string.files_copy_to), { onPickDestination(false) }, filled = true)
-                Pill(stringResource(R.string.files_move_to), { onPickDestination(true) })
+        // The pills scroll sideways inside their own share of the bar, so on a narrow phone the label and the More menu stay on screen.
+        Row(Modifier.weight(1f, fill = false).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.pad)) {
+            when {
+                inArchive && ui.dualPane && otherLocal != null -> Pill(stringResource(R.string.files_extract_to_other), { controller.transferSelection(ui.active, otherLocal, move = false) }, filled = true)
+                inArchive -> Pill(stringResource(R.string.files_copy_to), { onPickDestination(false) }, filled = true)
+                ui.dualPane && otherLocal != null -> {
+                    Pill(stringResource(R.string.files_copy_to_other), { controller.transferSelection(ui.active, otherLocal, move = false) }, filled = true)
+                    Pill(stringResource(R.string.files_move_to_other), { controller.transferSelection(ui.active, otherLocal, move = true) })
+                }
+                else -> {
+                    Pill(stringResource(R.string.files_copy_to), { onPickDestination(false) }, filled = true)
+                    Pill(stringResource(R.string.files_move_to), { onPickDestination(true) })
+                }
             }
         }
         Box {
