@@ -27,7 +27,7 @@
   var START = { type: 'text', key: 'start', label: 'Open on filter (chip name, empty = All)', def: '' };
 
   // THE order of this app's Configs (#1469, allowed for this app only by 1_cicd/src/data/configs-pages.json::tabs.app_order):
-  // the media areas first, then Apify, then General, then (#1630) `|` and the fleet tail Agents, Perms, Logcat, X-Ray App, About. `area` = a source tab (Apify | Direct subsections,
+  // the media areas first, then (#1765, moved here from the bottom bar) Library, then Apify, then General, then (#1630) `|` and the fleet tail Agents, Perms, Logcat, X-Ray App, About. `area` = a source tab (Apify | Direct subsections,
   // rows from data/media-sources.json); `special` = drawn by renderSpecial. Movies draws from the shared MOVIE_CONFIG instead.
   var TABS = [
     { id: 'music', label: 'Music', icon: '♪', area: 'music', fields: [
@@ -41,6 +41,7 @@
     { id: 'feed', label: 'Feed', icon: '≡', fields: [
       { type: 'bool', key: 'expand', label: 'Open articles expanded', def: false }, START] },
     { id: 'movies', label: 'Movies', icon: '◉', movies: true },
+    { id: 'library', label: 'Library', icon: '☰', special: true },
     { id: 'apify', label: 'Apify', icon: '⚡', special: true },
     { id: 'general', label: 'General', icon: '⚙', special: true },
     { id: 'agents', label: 'Agents', icon: '✦', special: true, native: true, sep: true },
@@ -152,6 +153,16 @@
         '<label>' + esc(b.label) + (cf ? (rest ? ' API token (' : ' Worker bearer (') : b.api ? ' API token (' : ' bearer (') + (ctx.has(tkey) ? 'saved, encrypted' : 'not set') + ')<input type="password" data-secret="' + esc(tkey) + '" placeholder="Paste to replace" autocomplete="off"></label>' +
         '<button type="button" class="btn" data-secret-clear="' + esc(tkey) + '">Remove token</button><div class="cfg__umsg" role="status"></div></section>';
     }
+    if (id === 'library') {
+      var ls = ctx.libSt || {}, lib = ctx.lib || { updated: 0, playlists: [] }, areas = d.areas || [];
+      return '<section class="cfg__sec" data-tsec="library"><h3>Library</h3>' + n + 'Your synced playlists, boards and video lists. Turn a source on in its tab, then Sync now; a schedule is in General.</p>' +
+        '<div class="syncbar"><button class="btn btn--accent" type="button" data-lib-sync>Sync now</button><span class="syncbar__msg" role="status">' +
+        esc(ctx.libMsg || (lib.updated ? 'Synced ' + new Date(lib.updated).toLocaleString() : 'Not synced yet')) + ' · schedule: ' + esc((ctx.sync || {}).schedule || 'off') + '</span></div>' +
+        '<input class="search" type="search" data-lib-q autocomplete="off" aria-label="Search" placeholder="Search the library" value="' + esc(ls.q || '') + '">' +
+        '<div class="chips" role="toolbar" aria-label="Filter"><button class="chip" data-lib-area="" aria-pressed="' + !ls.area + '">All</button>' + areas.map(function (a) {
+          return '<button class="chip" data-lib-area="' + esc(a.id) + '" aria-pressed="' + (ls.area === a.id) + '">' + esc(a.icon + ' ' + a.label) + '</button>';
+        }).join('') + '</div><div data-lib-rows>' + S.renderLibrary(lib, ls) + '</div></section>';
+    }
     if (id === 'general') {
       return '<section class="cfg__sec" data-tsec="general"><h3>Playlist sync</h3>' + n + 'Sync is on demand (Library, Sync now). A schedule also syncs when the app is opened and the last sync is older than the interval.</p>' +
         '<label>Schedule<select data-sched>' + [['off', 'Off, on demand only'], ['daily', 'Daily'], ['weekly', 'Weekly']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === ctx.sync.schedule ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label></section>';
@@ -220,8 +231,8 @@
   function bootConfigs(doc) {
     var main = doc.querySelector('main'), chips = doc.querySelector('.chips');
     var hash = (root.location.hash || '').slice(1), tab = tabSpec(hash) ? hash : 'music', decl = null, users = loadUsers();
-    var msrc = null, sub = 'apify', secrets = S.SecretStore(store()), BK = 'cmc_apify.backend', UK = 'cmc_apify.self.url', CM = 'cmc_cloudflare.mode', CW = 'cmc_cloudflare.worker_url';
-    function ctx() { return msrc && { msrc: msrc, srcCfg: S.loadSourceCfg(), has: function (n) { return secrets.has(n); }, backend: getItem(BK) || msrc.default_backend, selfUrl: getItem(UK) || '', cfMode: getItem(CM) === 'rest' ? 'rest' : 'worker', workerUrl: getItem(CW) || '', sync: S.loadSync(), sub: sub }; }
+    var msrc = null, sub = 'apify', libSt = { q: '', area: '', open: '' }, libMsg = '', music = null, secrets = S.SecretStore(store()), BK = 'cmc_apify.backend', UK = 'cmc_apify.self.url', CM = 'cmc_cloudflare.mode', CW = 'cmc_cloudflare.worker_url';
+    function ctx() { return msrc && { msrc: msrc, srcCfg: S.loadSourceCfg(), has: function (n) { return secrets.has(n); }, backend: getItem(BK) || msrc.default_backend, selfUrl: getItem(UK) || '', cfMode: getItem(CM) === 'rest' ? 'rest' : 'worker', workerUrl: getItem(CW) || '', sync: S.loadSync(), sub: sub, lib: S.loadLibrary(), libSt: libSt, libMsg: libMsg }; }
     chips.innerHTML = chipsHtml(tab);
     function draw() {
       main.innerHTML = renderConfigs(tab, loadTab(tab), decl, users, ctx());
@@ -260,7 +271,18 @@
       if (i.hasAttribute('data-uname')) storeU(L.updateUserSource(users, i.getAttribute('data-uname'), { name: i.value }));
       if (i.hasAttribute('data-uurl')) storeU(L.updateUserSource(users, i.getAttribute('data-uurl'), { url: i.value }));
     });
+    function libRows() { var r = main.querySelector('[data-lib-rows]'); if (r) r.innerHTML = S.renderLibrary(S.loadLibrary(), libSt); }
+    main.addEventListener('input', function (e) { if (e.target.hasAttribute('data-lib-q')) { libSt.q = e.target.value.trim(); libRows(); } });
     main.addEventListener('click', function (e) {
+      var la = e.target.closest('[data-lib-area]'); if (la) { libSt.area = la.getAttribute('data-lib-area'); draw(); return; }
+      var lo = e.target.closest('[data-open]'); if (lo && main.querySelector('[data-lib-rows]')) { libSt.open = libSt.open === lo.getAttribute('data-open') ? '' : lo.getAttribute('data-open'); libRows(); return; }
+      var ls = e.target.closest('[data-lib-sync]');
+      if (ls && msrc) {
+        ls.disabled = true; libMsg = 'Syncing…'; draw();
+        S.syncNow(msrc, secrets, music).then(function (l) { var bad = l.report.filter(function (r) { return !r.ok; }); libMsg = bad.length ? bad.map(function (r) { return r.id + ': ' + r.error; }).join(' · ') : ''; draw(); },
+          function (er) { libMsg = 'Sync failed: ' + er; draw(); });
+        return;
+      }
       var sb = e.target.closest('[data-sub]'); if (sb) { sub = sb.getAttribute('data-sub'); draw(); return; }
       var sc = e.target.closest('[data-secret-clear]'); if (sc) { secrets.remove(sc.getAttribute('data-secret-clear')).then(function () { draw(); note('Token removed.'); }); return; }
       var d = e.target.closest('[data-udel]');
@@ -272,6 +294,7 @@
     });
     draw();
     fetch('../data/media-sources.json').then(function (r) { return r.json(); }).then(function (j) { msrc = S.parseSources(j); draw(); }).catch(function () {});
+    fetch('../data/music.json').then(function (r) { return r.json(); }).then(function (j) { music = j; }).catch(function () {});
     fetch('../data/sources.json').then(function (r) { return r.json(); }).then(function (j) { decl = L.parseSources(j); if (tab === 'movies') draw(); }).catch(function () {});
   }
   function bootProfile(doc) {

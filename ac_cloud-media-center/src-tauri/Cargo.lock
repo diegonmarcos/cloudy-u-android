@@ -440,6 +440,8 @@ dependencies = [
 name = "cloud-media-center"
 version = "0.1.0"
 dependencies = [
+ "jni",
+ "ndk-context",
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",

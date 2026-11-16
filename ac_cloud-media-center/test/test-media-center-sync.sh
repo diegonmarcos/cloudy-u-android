@@ -123,10 +123,10 @@ const raw = fs.readFileSync(path.join(web, 'data/media-sources.json'), 'utf8');
   /* 8. Configs: order, subsections, Apify backend, token flow */
   const C = require(path.join(web, 'assets/configs.js'));
   const ids = C.TABS.map((t) => t.id);
-  ok(JSON.stringify(ids) === '["music","videos","gallery","books","feed","movies","apify","general","agents","perms","logcat","xray","about"]'
+  ok(JSON.stringify(ids) === '["music","videos","gallery","books","feed","movies","library","apify","general","agents","perms","logcat","xray","about"]'
     && JSON.stringify(C.TABS.filter((t) => t.sep).map((t) => t.id)) === '["agents"]'
     && C.TABS.filter((t) => t.id === 'xray')[0].label === 'X-Ray App',
-    'configs: media areas, then Apify, then General, then | Agents, Perms, Logcat, X-Ray App, About (#1630; ' + C.TABS.map((t) => (t.sep ? '| ' : '') + t.id).join(', ') + ')');
+    'configs: media areas, then Library (#1765), then Apify, then General, then | Agents, Perms, Logcat, X-Ray App, About (#1630; ' + C.TABS.map((t) => (t.sep ? '| ' : '') + t.id).join(', ') + ')');
   const ctx = { msrc: d, srcCfg: { spotify: { enabled: true } }, has: (n) => n === 'apify.token', backend: 'cloud', sync: { schedule: 'off' }, sub: 'apify' };
   const music = C.renderConfigs('music', C.normalizeTab('music', {}), null, [], ctx);
   ok(/data-sub="apify"/.test(music) && /data-sub="direct"/.test(music) && /data-subsec="apify"/.test(music) && /data-src="soundcloud"/.test(music) && /data-src="spotify"/.test(music), 'configs: Music has Apify | Direct subsections with its sources');
@@ -141,7 +141,7 @@ const raw = fs.readFileSync(path.join(web, 'data/media-sources.json'), 'utf8');
   const ap4 = C.renderConfigs('apify', {}, null, [], Object.assign({}, ctx, { backend: 'cloudflare', cfMode: 'rest' }));
   ok(ap4.includes('data-secret="cloudflare.account_id"') && ap4.includes('data-secret="cloudflare.api_token"') && !ap4.includes('data-cf-worker'), 'configs/apify: REST API mode asks for an account id and an API token');
   ok(C.renderConfigs('general', {}, null, [], ctx).includes('data-sched') && C.renderConfigs('perms', {}, null, [], ctx).includes('Internet') && C.renderConfigs('about', {}, null, [], ctx).includes('DRM'), 'configs: General (schedule), Perms and About render');
-  ok(fs.existsSync(path.join(web, 'library/index.html')) && require(path.join(web, 'assets/pages.js')).tabsHtml('music', '../').includes('library/index.html'), 'library: page exists and is on the bottom bar');
+  ok(fs.existsSync(path.join(web, 'library/index.html')) && !require(path.join(web, 'assets/pages.js')).tabsHtml('music', '../').includes('library/index.html') && C.TABS.some((t) => t.id === 'library'), 'library: the page still exists, left the bottom bar (#1765) and is a Configs tab');
   process.exit(fails.length ? 1 : 0);
 })().catch((e) => { console.log('  FAIL ' + (e.stack || e)); process.exit(1); });
 JS

@@ -22,6 +22,14 @@ tauri = { version = "=2.12.1", default-features = false, features = ["wry"] }
 # webview.
 tauri-plugin-opener = "=2.7.1"
 
+# #1765 Games > installed detection: the web page asks the Rust side which
+# game packages are on the phone (PackageManager.getLaunchIntentForPackage
+# through JNI), so no Kotlin is added. Both crates are already in the tree
+# through tauri / wry; the versions are the locked ones.
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "=0.21.1"
+ndk-context = "=0.1.1"
+
 [profile.release]
 # The library is the APK: size, not speed, is what a phone downloads.
 opt-level = "s"

@@ -398,7 +398,7 @@
   var api = { parseSources: parseSources, effective: effective, runnable: runnable, backendOf: backendOf, apiBase: apiBase, validToken: validToken, masked: masked, actorUrl: actorUrl, SecretStore: SecretStore, Match: Match, matchPlaylist: matchPlaylist,
     localTracks: localTracks, mapSpotifyPlaylists: mapSpotifyPlaylists, mapSpotifyTracks: mapSpotifyTracks, mapYouTubePlaylists: mapYouTubePlaylists, mapYouTubeItems: mapYouTubeItems, mapDeezerPlaylists: mapDeezerPlaylists,
     mapDeezerTracks: mapDeezerTracks, mapPinterest: mapPinterest, mapApifyTracks: mapApifyTracks, mapApify: mapApify, fillInput: fillInput, syncAll: syncAll, dueForSync: dueForSync, renderLibrary: renderLibrary,
-    loadSourceCfg: loadSourceCfg, saveSourceCfg: saveSourceCfg, loadSync: loadSync, saveSync: saveSync, loadLibrary: loadLibrary, boot: boot, METHODS: METHODS };
+    syncNow: syncNow, loadSourceCfg: loadSourceCfg, saveSourceCfg: saveSourceCfg, loadSync: loadSync, saveSync: saveSync, loadLibrary: loadLibrary, boot: boot, METHODS: METHODS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else { root.MediaSync = api; if (root.document) root.document.addEventListener('DOMContentLoaded', boot); }
 })(typeof window !== 'undefined' ? window : this);
