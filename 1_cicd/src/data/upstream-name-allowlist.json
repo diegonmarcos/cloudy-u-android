@@ -106,6 +106,17 @@
       "reason": "Google Play package id of the upstream app as installed on the test phone (store-source data about a third-party app): an external identifier."
     },
     {
+      "id": "upstream-store-host-favourite",
+      "category": "external-identifier",
+      "paths": [
+        "ac_cloud-browser/app/src/main/assets/favourites_catalog.json"
+      ],
+      "patterns": [
+        "affine\\.app"
+      ],
+      "reason": "tools/gen-favourites-catalog.py derives a favourite site from each Phone > Apps package id (pkg:app.affine.pro, itself allowlisted above); the derived host is the third-party app's own site, not a name used by Cloud Notes."
+    },
+    {
       "id": "three-js-api",
       "category": "third-party",
       "paths": [
