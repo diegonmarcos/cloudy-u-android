@@ -65,18 +65,19 @@ object EventIntents {
     const val EXTRA_ORGANIZER = "organizer"
 
     fun isInsert(i: Intent): Boolean = (i.action == Intent.ACTION_INSERT || i.action == Intent.ACTION_EDIT) &&
-        (i.type?.endsWith("/event") == true || i.data?.let { it.scheme == "content" && it.authority == "com.android.calendar" } == true)
+        (i.type?.endsWith("/event") == true || i.data?.path?.startsWith("/events") == true && i.data?.authority == "com.android.calendar" || i.data?.let { it.scheme == "content" && it.authority == "com.android.calendar" } == true)
 
     /** [defaultZone] reads a timed event with no eventTimezone extra (the phone's zone). A missing end is one hour (a day when all-day). */
     fun fromIntent(i: Intent, defaultZone: ZoneId = ZoneId.systemDefault()): ImportedEvent? {
         if (!isInsert(i)) return null
         val ex = i.extras
-        val allDay = i.getBooleanExtra(EXTRA_ALL_DAY, false)
+        val allDay = when (val v = ex?.get(EXTRA_ALL_DAY)) { is Boolean -> v; is String -> v.equals("true", true); is Number -> v.toInt() != 0; else -> false }
+        fun millis(k: String, d: Long): Long = when (val v = ex?.get(k)) { is Number -> v.toLong(); is String -> v.trim().toLongOrNull() ?: d; else -> d }
         val zone = if (allDay) ZoneOffset.UTC else ex?.getString(EXTRA_TZ)?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: defaultZone
         val title = ex?.getString(EXTRA_TITLE).orEmpty().ifBlank { ex?.getString(Intent.EXTRA_SUBJECT).orEmpty() }
         val now = System.currentTimeMillis()
-        val b = if (i.hasExtra(EXTRA_BEGIN)) ex?.getLong(EXTRA_BEGIN, now) ?: now else now
-        val e = if (i.hasExtra(EXTRA_END)) ex?.getLong(EXTRA_END, b) ?: b else b + if (allDay) 86_400_000L else 3_600_000L
+        val b = millis(EXTRA_BEGIN, now)
+        val e = if (i.hasExtra(EXTRA_END)) millis(EXTRA_END, b) else b + if (allDay) 86_400_000L else 3_600_000L
         val start = LocalDateTime.ofInstant(Instant.ofEpochMilli(b), zone)
         var end = LocalDateTime.ofInstant(Instant.ofEpochMilli(maxOf(e, b)), zone)
         // An all-day end is the midnight AFTER the last day (CalendarContract): the last day is the day before.

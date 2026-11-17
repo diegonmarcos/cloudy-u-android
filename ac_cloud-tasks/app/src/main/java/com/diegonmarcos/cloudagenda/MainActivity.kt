@@ -46,8 +46,9 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         // A project deep link while the app is open: select it, then rebuild so the page reads the new selection.
-        if (openProject(intent)) recreate()
-        else if (::env.isInitialized) offerImport(intent)
+        setIntent(intent)
+        val offered = ::env.isInitialized && offerImport(intent)
+        if (openProject(intent) && !offered) recreate()
     }
 
     /**
@@ -69,12 +70,14 @@ class MainActivity : ComponentActivity() {
      * to the New event sheet. A calendar VIEW (an event or a moment of the calendar provider) just opens the app: with no calendar
      * permission there is nothing to read behind it.
      */
-    private fun offerImport(intent: Intent?) {
-        if (intent == null) return
+    private fun offerImport(intent: Intent?): Boolean {
+        if (intent == null) return false
         val events = runCatching {
             EventIntents.fromIntent(intent)?.let { listOf(it) } ?: icsOf(intent)?.let { Ics.parse(it) }.orEmpty()
         }.getOrDefault(emptyList())
-        if (events.isNotEmpty()) { env.controller.offerImport(events); intent.action = Intent.ACTION_MAIN }
+        if (events.isEmpty()) return false
+        env.controller.offerImport(events); intent.action = Intent.ACTION_MAIN
+        return true
     }
 
     @Suppress("DEPRECATION")
