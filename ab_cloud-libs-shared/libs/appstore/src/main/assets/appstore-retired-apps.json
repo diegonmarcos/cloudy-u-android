@@ -8,6 +8,14 @@
       "replacement_label": "Cloud Keyboard > Writer",
       "replacement_package": "com.diegonmarcos.cloudkeyboard",
       "reason": "Merged into Cloud Keyboard: its Writer tab has every page of the former app. No update is published any more."
+    },
+    {
+      "package": "com.diegonmarcos.hardtechsim2real",
+      "label": "Hardtech-Sim2Real",
+      "retired": "2026-11-17",
+      "replacement_label": "Hardtech-BioMed",
+      "replacement_package": "com.diegonmarcos.hardtechbiomed",
+      "reason": "Rebranded as Hardtech-BioMed; the simulation pages moved into Hardtech-CAD under Sim2Real. No update is published any more."
     }
   ]
 }
