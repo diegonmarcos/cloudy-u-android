@@ -1,0 +1,39 @@
+// libs:location-client - the fleet's ONE way to read a location (#1770): Cloud Nav is the only app that starts a location fix; every
+// other app reads Nav's last known fix over the fleet IPC door (`tracker/location`, contract v1) through NavLocationClient. It returns the
+// cached fix with its age and accuracy and NEVER triggers a fix: this module imports no android.location class and no Play Services
+// (LocationClientNeverLocatesTest and the location-owner guard enforce it). Dependency-free (the provider call is plain
+// ContentResolver, like libs:fleet-data-client). Shared BY REFERENCE; installs nothing (lib-apks build.json::lib_apks.exclude).
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android' apply false
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.locationclient'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    testOptions { unitTests.returnDefaultValues = true }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}
