@@ -49,5 +49,19 @@ sub open "Open source" 'Popular open-source apps' newpipe
 sub closed "Non open source" 'Search Google Play' chase
 sub integrity "Play Integrity" 'Device \(|Basic \(' chase
 sub games "Games" 'Action \(|Racing \(|\(' minecraft
+# #1776 Games split: Open source 2D (the default), Open source 3D, Non open source (2D). Counts come from the catalogue.
+games_shot() {  # name, pill label (regex-free, exact), scroll?
+  tap_text "$2" || { echo "::error::no $2 pill"; rc=1; return; }
+  sleep 6; shoot "$1"; dump "$1"
+  read -r W H < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
+  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H*3/10)) 250; sleep 3; shoot "$1-scrolled"
+  adb shell input swipe $((W/2)) $((H*3/10)) $((W/2)) $((H*4/5)) 100; adb shell input swipe $((W/2)) $((H*3/10)) $((W/2)) $((H*4/5)) 100; sleep 2
+}
+tap_text "Games" || true; sleep 8
+games_shot games-open-2d "Open source \\([0-9]+\\)"
+games_shot games-open-3d "3D \\([0-9]+\\)"
+tap_text "Non open source \\([0-9]+\\)" || { echo "::error::no Non open source pill"; rc=1; }
+sleep 3; tap_text "2D \\([0-9]+\\)" || true
+games_shot games-non-open "Non open source \\([0-9]+\\)"
 adb logcat -d -t 400 > "$OUT/logcat.txt" 2>/dev/null || true
 exit $rc
