@@ -10,8 +10,8 @@ import com.diegonmarcos.cloudcanvas.draw.PngEncoder
 import com.diegonmarcos.cloudcanvas.draw.Pt
 import com.diegonmarcos.cloudcanvas.draw.RecentColors
 import com.diegonmarcos.cloudcanvas.draw.Tool
-import java.io.ByteArrayInputStream
-import javax.imageio.ImageIO
+import java.util.zip.CRC32
+import java.util.zip.Inflater
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -172,13 +172,44 @@ class DrawTest {
     }
 
     // ── PNG export path ────────────────────────────────────────────────────
+    /** A minimal PNG reader (8-bit RGBA, filter 0): checks every chunk CRC, inflates the IDAT and returns width, height and ARGB pixels. */
+    private class Decoded(val width: Int, val height: Int, val px: IntArray) {
+        fun getRGB(x: Int, y: Int) = px[y * width + x]
+    }
+
+    private fun decode(b: ByteArray): Decoded {
+        fun i32(at: Int) = ((b[at].toInt() and 0xFF) shl 24) or ((b[at + 1].toInt() and 0xFF) shl 16) or ((b[at + 2].toInt() and 0xFF) shl 8) or (b[at + 3].toInt() and 0xFF)
+        var at = 8
+        var w = 0; var h = 0
+        val idat = java.io.ByteArrayOutputStream()
+        while (at < b.size) {
+            val len = i32(at)
+            val type = String(b, at + 4, 4, Charsets.US_ASCII)
+            val crc = CRC32(); crc.update(b, at + 4, 4 + len)
+            assertEquals("crc of $type", crc.value.toInt(), i32(at + 8 + len))
+            if (type == "IHDR") { w = i32(at + 8); h = i32(at + 12); assertEquals(8, b[at + 16].toInt()); assertEquals(6, b[at + 17].toInt()) }
+            if (type == "IDAT") idat.write(b, at + 8, len)
+            at += 12 + len
+        }
+        val raw = ByteArray(h * (1 + w * 4))
+        val inf = Inflater(); inf.setInput(idat.toByteArray()); assertEquals(raw.size, inf.inflate(raw)); inf.end()
+        val px = IntArray(w * h)
+        for (y in 0 until h) {
+            assertEquals(0, raw[y * (1 + w * 4)].toInt())
+            for (x in 0 until w) {
+                val o = y * (1 + w * 4) + 1 + x * 4
+                px[y * w + x] = ((raw[o + 3].toInt() and 0xFF) shl 24) or ((raw[o].toInt() and 0xFF) shl 16) or ((raw[o + 1].toInt() and 0xFF) shl 8) or (raw[o + 2].toInt() and 0xFF)
+            }
+        }
+        return Decoded(w, h, px)
+    }
     @Test fun pngRoundTripsThroughAnImageDecoder() {
         val w = 5; val h = 3
         val px = IntArray(w * h) { if (it % 2 == 0) red else 0x80003300.toInt() }
         val bytes = PngEncoder.encode(w, h, px)
         assertEquals(0x89, bytes[0].toInt() and 0xFF)
         assertEquals("PNG", String(bytes, 1, 3, Charsets.US_ASCII))
-        val img = ImageIO.read(ByteArrayInputStream(bytes))
+        val img = decode(bytes)
         assertEquals(w, img.width); assertEquals(h, img.height)
         assertEquals(red, img.getRGB(0, 0))
         assertEquals(0x80003300.toInt(), img.getRGB(1, 0))
@@ -187,7 +218,7 @@ class DrawTest {
     @Test fun exportedPngIsTheFlattenedLayers() {
         val layers = listOf(Pixels.LayerPixels(intArrayOf(red, 0), true, 1f), Pixels.LayerPixels(intArrayOf(0, blue), true, 1f))
         val flat = Pixels.composite(2, 1, layers)
-        val img = ImageIO.read(ByteArrayInputStream(PngEncoder.encode(2, 1, flat)))
+        val img = decode(PngEncoder.encode(2, 1, flat))
         assertEquals(red, img.getRGB(0, 0))
         assertEquals(blue, img.getRGB(1, 0))
     }
