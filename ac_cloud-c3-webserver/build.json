@@ -222,11 +222,11 @@
     ]
   },
   "power": {
-    "_doc": "#1502 THE TWO MASTER CONTROLS (Home and Configs > General, server/src/power.rs, KeepAliveService.kt). Server ON/OFF: OFF stops every CONTENT listener (diagnostics, DNS, mesh listener, every Repos site, sshd) and makes the drive answer 503 for everything but /__app__; the ADMIN surface (:8002 /__app__ + /api/power, `admin` true in every row) is never unbound, so the web UI can always switch the server back on; ON starts them and the Repos sites enabled. Keep alive ON/OFF (default ON since #1775): OFF means no foreground service, no sticky restart, no boot receiver and no scheduled wake, so the server runs while the app process does and nothing revives it; ON runs the foreground service (notification with a Stop action) and the boot autostart, only while Server is ON. `store` is read by both the Rust crate and the Kotlin glue. `matrix` is the decision table; power.rs::plan is held equal to it by a test. Any other app's start request (SuperApp wake, MCP phone tools, log export, Cloud Browser) is honoured by the service only in the one row where `service` is true. `off_url` is the Tauri-bundled page shown while the server is off (a backstop only: the web UI at /__app__ stays up while OFF and is the primary way back to ON).",
+    "_doc": "#1502 THE TWO MASTER CONTROLS (Home and Configs > General, server/src/power.rs, KeepAliveService.kt). Server ON/OFF: OFF stops every CONTENT listener (diagnostics, DNS, mesh listener, every Repos site, sshd) and makes the drive answer 503 for everything but /__app__; the ADMIN surface (:8002 /__app__ + /api/power, `admin` true in every row) is never unbound, so the web UI can always switch the server back on; ON starts them and the Repos sites enabled. Keep alive ON/OFF (default OFF): OFF means no foreground service, no sticky restart, no boot receiver and no scheduled wake, so the server runs while the app process does and nothing revives it; ON runs the foreground service (notification with a Stop action) and the boot autostart, only while Server is ON. `store` is read by both the Rust crate and the Kotlin glue. `matrix` is the decision table; power.rs::plan is held equal to it by a test. Any other app's start request (SuperApp wake, MCP phone tools, log export, Cloud Browser) is honoured by the service only in the one row where `service` is true. `off_url` is the Tauri-bundled page shown while the server is off (a backstop only: the web UI at /__app__ stays up while OFF and is the primary way back to ON).",
     "store": "/storage/emulated/0/Android/data/com.diegonmarcos.cloudwebserver/files/power.json",
     "default": {
       "server": true,
-      "keep_alive": true
+      "keep_alive": false
     },
     "off_url": "http://tauri.localhost/index.html",
     "matrix": [
@@ -468,13 +468,13 @@
     "direct": {
       "_doc": "#1615 the Git Sites sub-page (Pages > Git Sites, server/src/sub.rs::page_git): repositories offered for ONE-CLICK direct serving over this webserver, through the same repos.rs host / fleet-webserver render path as any repo site (md + html rendered, every other file downloadable, loopback or mesh only, never public). Each entry names a `source` declared under `sources` above and a `repo` (path/folder relative to that source). The Termux home git dir lives in another app's uid/home and is NOT resolvable from this app's process, so the Termux git-area repos are DECLARED here (configurable) rather than scanned; serving a `termux`/`nix` source still needs that terminal's own my-webserver answering. Local (emulated) git repos are additionally auto-discovered on the page.",
       "repos": [
-        { "label": "_front-html___", "source": "termux", "repo": "git/front-html" },
+        { "label": "front-html", "source": "termux", "repo": "git-repos-master/front-html" },
         { "label": "git-repos-master", "source": "termux", "repo": "git-repos-master" }
       ]
     }
   },
   "roots": {
-    "_doc": "#1677 the Pages tab roots (server/src/roots.rs): Pages > File Explorer shows each `explorer` root as a two-column explorer (tree left, the selected file rendered right); Pages > Pages serves each `pages` root like a browser (the folder's index, the first of `index` it holds, opens and its links navigate inside the root); Pages > All lists every root, each opening in its own mode. A root is a `source` of repos.sources (local: read from disk; terminal: that terminal's own my-webserver on loopback) and a `repo` folder relative to it (empty = the source's top). Files are served same-origin under /__app__/root/<id>/<path> through the repos serving paths (traversal-guarded, GET only). #1775 LOCAL FOLDER DECISION: the repo was renamed `_front-html___` (#1750) and the declared name follows it, but the clone on the phone lives in Termux at ~/git/front-html, so the local folder keeps the short name `front-html` (the root id stays `front-html` too, so URLs and shortcuts do not move); the clone command writes exactly that folder. A missing clone is a 'clone it' state (`clone` is the command shown), a closed terminal offers Start app, missing storage access routes to Configs > Perms; nothing is an error screen.",
+    "_doc": "#1677 the Pages tab roots (server/src/roots.rs): Pages > File Explorer shows each `explorer` root as a two-column explorer (tree left, the selected file rendered right); Pages > Pages serves each `pages` root like a browser (the folder's index, the first of `index` it holds, opens and its links navigate inside the root); Pages > All lists every root, each opening in its own mode. A root is a `source` of repos.sources (local: read from disk; terminal: that terminal's own my-webserver on loopback) and a `repo` folder relative to it (empty = the source's top). Files are served same-origin under /__app__/root/<id>/<path> through the repos serving paths (traversal-guarded, GET only). A missing clone is a 'clone it' state (`clone` is the command shown), a closed terminal offers Start app, missing storage access routes to Configs > Perms; nothing is an error screen.",
     "explorer": [
       { "id": "termux", "label": "Cloud Termux", "source": "termux", "repo": "", "note": "Cloud Termux's ~/ (read through its own my-webserver)" },
       { "id": "nix", "label": "Cloud Nix (Nix-on-Droid)", "source": "nix", "repo": "", "note": "Nix-on-Droid's ~/ (read through its own my-webserver)" },
@@ -482,7 +482,7 @@
     ],
     "pages": [
       { "id": "git-repos-master", "label": "git-repos-master", "source": "termux", "repo": "git-repos-master", "clone": "git clone https://github.com/diegonmarcos/git-repos-master ~/git-repos-master" },
-      { "id": "front-html", "label": "_front-html___", "source": "termux", "repo": "git/front-html", "clone": "mkdir -p ~/git && git clone https://github.com/diegonmarcos/_front-html___ ~/git/front-html" },
+      { "id": "front-html", "label": "front-html", "source": "termux", "repo": "git-repos-master/front-html", "clone": "cd ~/git-repos-master && git clone https://github.com/diegonmarcos/_front-html___ front-html" },
       { "id": "cloud-me-pvt-notes", "label": "cloud-me-pvt-notes", "source": "termux", "repo": "git-repos-master/cloud-me-pvt-notes", "clone": "cd ~/git-repos-master && git clone https://github.com/diegonmarcos/cloud-me-pvt-notes" }
     ],
     "index": ["index.html", "index.htm", "README.md", "index.md"]

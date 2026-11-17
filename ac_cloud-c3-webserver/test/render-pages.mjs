@@ -95,7 +95,7 @@ await until(`document.querySelectorAll('.served .pg').length >= 4`);
 const subnav = await evalJs(`[...document.querySelectorAll('main .seg button, main [data-sub]')].map((b) => b.innerText.trim())`);
 check('G1', JSON.stringify(subnav) === JSON.stringify(['All', 'File Explorer', 'Pages']), `#1677 Pages sub-nav is All | File Explorer | Pages, no Served pages | Git Sites split, no Drive|Terminals|Repos (${JSON.stringify(subnav)})`);
 const gitRows = await evalJs(`[...document.querySelectorAll('main .sub .row .head')].map((h) => h.innerText.trim())`);
-check('G1b', ['_front-html___', 'git-repos-master'].every((n) => gitRows.includes(n)), `All keeps the Git Sites rows (rule 16): ${JSON.stringify(gitRows)}`);
+check('G1b', ['front-html', 'git-repos-master'].every((n) => gitRows.includes(n)), `All keeps the Git Sites rows (rule 16): ${JSON.stringify(gitRows)}`);
 const allRoots = await evalJs(`[...document.querySelectorAll('.roots [data-root]')].map((r) => ({ id: r.getAttribute('data-root'), mode: r.getAttribute('data-mode'), status: r.getAttribute('data-status') }))`);
 check('R1', ['termux', 'nix', 'emulated'].every((i) => allRoots.some((r) => r.id === i && r.mode === 'explorer')) && ['git-repos-master', 'front-html', 'cloud-me-pvt-notes'].every((i) => allRoots.some((r) => r.id === i && r.mode === 'pages')),
   `All lists every root of both kinds, each with its mode: ${JSON.stringify(allRoots)}`);

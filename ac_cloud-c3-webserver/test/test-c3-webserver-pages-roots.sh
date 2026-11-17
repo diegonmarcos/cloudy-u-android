@@ -118,7 +118,7 @@ const roots = { roots: [
   { id: 'termux', label: 'Cloud Termux', mode: 'explorer', source: 'termux', source_label: 'Termux', status: 'offline', reason: 'closed', start_app: { post: '/__app__/api/served', body: { op: 'start_app', id: 'termux' } } },
   { id: 'emulated', label: 'Emulated storage', mode: 'explorer', source: 'emulated', status: 'no_access', reason: 'grant', perms: { post: '/__app__/api/configs-open', body: { page: 'perms' }, label: 'Open Configs > Perms' } },
   { id: 'nix', label: 'Cloud Nix', mode: 'explorer', source: 'nix', status: 'ready' },
-  { id: 'front-html', label: '_front-html___', mode: 'pages', source: 'termux', status: 'ready', repo: 'git/front-html' },
+  { id: 'front-html', label: 'front-html', mode: 'pages', source: 'termux', status: 'ready', repo: 'git-repos-master/front-html' },
   { id: 'cloud-me-pvt-notes', label: '<n>', mode: 'pages', source: 'termux', status: 'missing', repo: 'git-repos-master/cloud-me-pvt-notes', clone: 'git clone x' }] };
 // R5
 const all = S.renderRootsAll(roots, '<div class="served">SERVED</div>', '<div class="sub">GIT</div>');

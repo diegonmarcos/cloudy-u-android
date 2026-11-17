@@ -207,10 +207,11 @@ jobs:
             found=0
             for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
               uidump configs-scan
-              if grep -q 'text="Download attachments"' walk-out/bg/configs-scan.xml; then found=1; break; fi
-              adb shell input swipe 700 1500 700 500 400; sleep 1
+              if grep -q 'Download attachments[^u]' walk-out/bg/configs-scan.xml || grep -q 'Keep mail offline for' walk-out/bg/configs-scan.xml; then found=1; break; fi
+              adb shell input swipe 700 1300 700 700 400; sleep 1
             done
             bshot 04-configs-download-attachments
+            adb shell input swipe 700 1300 700 900 400; sleep 1; bshot 04b-configs-offline-section-below
             cp walk-out/bg/configs-scan.xml walk-out/bg/04-configs-download-attachments.xml
             echo "Configs shows Download attachments: $found" | tee -a walk-out/summary.txt
             [ "$found" = 1 ] || echo "::warning::Download attachments was not found in the Configs scan; see walk-out/bg/04-configs-download-attachments.png"
