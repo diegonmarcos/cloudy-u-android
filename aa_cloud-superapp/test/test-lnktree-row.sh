@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Tester (#1331, #1335): Cloud > Apps > Lnktree (was "Projects W") is SuperApp | Omniverse | FinTerm | CAD BioMed (owner 2026-10-30:
-# the SuperApp tile, app://<own package>, #1153, moved here from Configs to lead the row). #1335: each tile now LAUNCHES a real
+# Tester (#1331, #1335, #1778): Cloud > Apps > Projects (the Lnktree row, was "Projects W") is Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse
+# (#1778: Wiki, the new Cloud Wiki app, leads; BioMed now precedes CAD; Circusverse closes the row as a greyed-out coming_soon tile. Owner 2026-10-30:
+# the SuperApp tile, app://<own package>, #1153, moved here from Configs into the row). #1335: each tile now LAUNCHES a real
 # app of the Lnktree family (extapp:, the constellation mechanism) and the temporary in-app pages are gone; the pages live in the apps
 # (ad_*/build.json::ui, held by their test/test-lnktree-app.sh). The generic `kind: entry` panel renderer and LnktreeTargets stay
 # (T5/T6) for any page that declares entries.
 #
-#   T1  the row is titled "Lnktree" (no "Projects W" row left); its tiles, separators aside, are exactly SuperApp, Omniverse, FinTerm,
-#       CAD, BioMed, in that order (SuperApp = app://<own package>, the rest extapp:), with drawable icons (unique on the Cloud page) and an extapp: target each
+#   T1  the row is titled "Projects" (no "Projects W" row left); its tiles, separators included, read Wiki | SuperApp Omniverse | FinTerm BioMed CAD |
+#       Circusverse, in that order (SuperApp = app://<own package>, the live rest extapp:), with drawable icons (unique on the Cloud page); Circusverse is
+#       the one disabled tile: coming_soon true, no target, no external app, no fleet app (#1778)
 #   T2  the content moved out: the SuperApp holds no stack_omniverse / stack_cad / stack_biomed, no hidden omniverse / cad / biomed
 #       page and no finterm section; each tile's extapp id is an ui.external_apps entry whose package is the app's own
 #       application_id, an app of the constellation fleet, and a build.json::name the Lnktree family accepts
@@ -77,11 +79,20 @@ def problems(bj, lt, reg, panels, sections, targets, icons):
     if "Projects W" in titles: out.append("T1 the row is still called 'Projects W'")
     row = next((g for g in groups if g.get("title") == "Projects"), {"tiles": []})
     tiles = [t for t in row["tiles"] if not t.get("separator")]
-    if [t.get("label") for t in tiles] != ["SuperApp", "Omniverse", "FinTerm", "CAD", "BioMed"]:
-        out.append("T1 tiles are %r, want SuperApp Omniverse FinTerm CAD BioMed" % [t.get("label") for t in tiles])
-    want_t = {"SuperApp": "app://" + bj["android"]["application_id"], "Omniverse": "extapp:cg-omniverse", "FinTerm": "extapp:capital-stack-finterminal", "CAD": "extapp:hardtech-cad", "BioMed": "extapp:hardtech-biomed"}
+    if [t.get("label") for t in tiles] != ["Wiki", "SuperApp", "Omniverse", "FinTerm", "BioMed", "CAD", "Circusverse"]:
+        out.append("T1 tiles are %r, want Wiki SuperApp Omniverse FinTerm BioMed CAD Circusverse" % [t.get("label") for t in tiles])
+    shape = " ".join("|" if t.get("separator") else t.get("label", "?") for t in row["tiles"])
+    if shape != "Wiki | SuperApp Omniverse | FinTerm BioMed CAD | Circusverse": out.append("T1 the row reads %r, want 'Wiki | SuperApp Omniverse | FinTerm BioMed CAD | Circusverse'" % shape)
+    want_t = {"Wiki": "extapp:cloud-wiki", "SuperApp": "app://" + bj["android"]["application_id"], "Omniverse": "extapp:cg-omniverse", "FinTerm": "extapp:capital-stack-finterminal", "CAD": "extapp:hardtech-cad", "BioMed": "extapp:hardtech-biomed"}
     for t in tiles:
+        if t.get("label") == "Circusverse":
+            if t.get("coming_soon") is not True: out.append("T1 Circusverse is not a coming_soon tile")
+            if t.get("target"): out.append("T1 Circusverse (disabled) carries a target %r" % t.get("target"))
+            continue
+        if t.get("coming_soon"): out.append("T1 tile %s is coming_soon, only Circusverse is" % t.get("label"))
         if t.get("target") != want_t.get(t.get("label")): out.append("T1 tile %s targets %r" % (t.get("label"), t.get("target")))
+    if any("circus" in str(e.get("id", "")).lower() for e in bj["ui"].get("external_apps", [])) or any("circus" in str(a.get("id", "")).lower() and a.get("id") != "circus" for a in json.load(open(os.path.join(root, "aa_cloud-superapp/data/constellation-fleet.json")))["apps"]):
+        out.append("T1 Circusverse has an external app or a fleet app: it is a placeholder, there is no app yet")
     for t in tiles:
         if not os.path.isfile(os.path.join(res_dir, t.get("icon", "") + ".xml")): out.append("T1 tile icon %r of %s has no drawable" % (t.get("icon"), t.get("id")))
     icons_seen = [t.get("icon") for g in groups for t in g.get("tiles", []) if t.get("icon")]
@@ -101,12 +112,13 @@ def problems(bj, lt, reg, panels, sections, targets, icons):
         name = target.split(":", 1)[1]
         e = ext.get(name)
         if not e: out.append("T2 %s is not an ui.external_apps entry" % name); continue
-        folder = next((d for d in sorted(os.listdir(root)) if d.startswith("ad_") and os.path.isfile(os.path.join(root, d, "build.json"))
+        folder = next((d for d in sorted(os.listdir(root)) if d[:3] in ("ad_", "ac_") and os.path.isfile(os.path.join(root, d, "build.json"))
                        and json.load(open(os.path.join(root, d, "build.json"))).get("name") == name), None)
-        if not folder: out.append("T2 no ad_* app has build.json::name %s" % name); continue
+        if not folder: out.append("T2 no ad_* / ac_* app has build.json::name %s" % name); continue
         pkg = json.load(open(os.path.join(root, folder, "build.json")))["android"]["application_id"]
         if e.get("hub_package") != pkg or e.get("install_package") != pkg: out.append("T2 external app %s names package %r, the app declares %r" % (name, e.get("hub_package"), pkg))
-        if name not in fleet_ids: out.append("T2 %s is not in constellation-fleet.json" % name)
+        fid = name[len("cloud-"):] if folder.startswith("ac_") and name.startswith("cloud-") else name  # the Cloud family's fleet id drops "cloud-" (ac_cloud-wiki is "wiki")
+        if fid not in fleet_ids: out.append("T2 %s is not in constellation-fleet.json" % name)
     # T5 renderer
     pc, tc, sc = code(panels), code(targets), code(sections)
     m = re.search(r"private fun PageEntry\(.*?\n}\n", pc, re.S)
@@ -154,8 +166,20 @@ def ent(b, where, title):
     s, k = where.split("/"); return next(e for e in sec(b, s)["stack_" + k] if e.get("title") == title)
 def rename(b, l, r, a): row(b)["title"] = "Projects W"
 mut("row renamed back to Projects W", "T1", rename)
-def swap(b, l, r, a): t = row(b)["tiles"]; t[0], t[2] = t[2], t[0]
+def swap(b, l, r, a): t = row(b)["tiles"]; t[4], t[6] = t[6], t[4]
 mut("Omniverse and FinTerm swapped", "T1", swap)
+def bioafter(b, l, r, a): t = row(b)["tiles"]; i = next(k for k, x in enumerate(t) if x.get("label") == "BioMed"); j = next(k for k, x in enumerate(t) if x.get("label") == "CAD"); t[i], t[j] = t[j], t[i]
+mut("BioMed and CAD back in the old order", "T1", bioafter)
+def circuslive(b, l, r, a): next(x for x in row(b)["tiles"] if x.get("label") == "Circusverse")["coming_soon"] = False
+mut("Circusverse made live", "T1", circuslive)
+def circustarget(b, l, r, a): next(x for x in row(b)["tiles"] if x.get("label") == "Circusverse")["target"] = "extapp:circusverse"
+mut("Circusverse given a target", "T1", circustarget)
+def circusapp(b, l, r, a): b["ui"]["external_apps"].append({"id": "circusverse", "hub_package": "x", "install_package": "x"})
+mut("Circusverse given an external app", "T1", circusapp)
+def nowiki(b, l, r, a): row(b)["tiles"] = [x for x in row(b)["tiles"] if x.get("label") != "Wiki"]
+mut("Wiki tile dropped", "T1", nowiki)
+def wikiext(b, l, r, a): b["ui"]["external_apps"] = [e for e in b["ui"]["external_apps"] if e.get("id") != "cloud-wiki"]
+mut("Wiki missing from ui.external_apps", "T2", wikiext)
 def fifth(b, l, r, a): row(b)["tiles"].append({"id": "x", "label": "Extra", "icon": "ic_robot", "target": "page:cloud/cad"})
 mut("a fifth tile", "T1", fifth)
 def baticon(b, l, r, a): row(b)["tiles"][0]["icon"] = "ic_not_in_catalog"

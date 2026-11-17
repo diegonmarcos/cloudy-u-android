@@ -1,0 +1,40 @@
+// libs:graph-view: the fleet's Obsidian-style graph (#1778): pages as nodes, edges from explicit links and from shared tags,
+// a force-directed layout, pan and zoom, tap to open. The model and the layout are pure Kotlin (GraphModel.kt, ForceLayout.kt) so the
+// consuming app's JVM suite covers them; GraphView.kt is the Compose canvas. Shared by reference so Cloud Wiki and Cloud Notes draw
+// the one graph.
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.graphview'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api platform('androidx.compose:compose-bom:2025.11.01')
+    api 'androidx.compose.ui:ui'
+    api 'androidx.compose.foundation:foundation'
+}

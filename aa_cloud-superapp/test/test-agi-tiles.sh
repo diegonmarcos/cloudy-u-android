@@ -198,7 +198,7 @@ if configs:
     check(row == ["Quick Actions", "UI", "|", "NG Firewall", "|", "Store", "Account", "|", "C3", "|", "Profile", "About"], "Configs row = Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About (#1755 owner order, supersedes #1745) (got %s)" % row)
 lnk = [g for g in groups(bj["ui"]["sections"], "Projects")]
 if lnk:
-    sa = lnk[0]["tiles"][0] if lnk[0]["tiles"] else {}
+    sa = next((t for t in lnk[0]["tiles"] if t.get("id") == "cloud-superapp"), {})  # #1778 Wiki now leads the row; SuperApp leads its group
     # #1153 (supersedes #1095): the tile launches the real app as its own task (app://<own package>,
     # NEW_TASK | LAUNCH_ADJACENT in ShellActivity), so split screen keeps the Cloud > Apps page open beside it. It leads the Lnktree row.
     check(sa.get("id") == "cloud-superapp" and sa.get("target") == "app://" + bj["android"]["application_id"],

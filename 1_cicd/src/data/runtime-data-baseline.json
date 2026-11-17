@@ -8,7 +8,7 @@
  },
  "json_max": 94,
  "gradle_max": 22,
- "b64_max": 302,
+ "b64_max": 303,
  "mock_files": [
   "shop.json",
   "mock-tasks.json"
@@ -458,6 +458,7 @@
   "ac_cloud-tools-small-llms/app/build.gradle": 3,
   "ac_cloud-vault/app/build.gradle.kts": 1,
   "ac_cloud-wallet/app/build.gradle": 7,
+  "ac_cloud-wiki/app/build.gradle": 1,
   "ad_CG-Omniverse/app/build.gradle": 5,
   "ad_Capital-Stack-FinTerminal/app/build.gradle": 6,
   "ad_Hardtech-CAD/app/build.gradle": 4,

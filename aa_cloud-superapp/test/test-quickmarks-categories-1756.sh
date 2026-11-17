@@ -207,6 +207,14 @@ for tid, o in snap.items():
     if tid not in now: check(False, 'Cloud tile %s is gone' % tid)
     elif now[tid] != o['icon']: check(False, 'Cloud tile %s icon changed %s -> %s' % (tid, o['icon'], now[tid]))
 check(all(now.get(tid) == o['icon'] for tid, o in snap.items()), 'all %d Cloud tile icons are identical to origin/main' % len(snap))
+# #1778 the Projects row reads Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse: Wiki and Circusverse are new, Circusverse is a greyed-out
+# coming_soon tile (no target, no fleet app), and every tile that was there keeps its icon (checked above).
+proj = [g for g in cloud if g['title'] == 'Projects'][0]['tiles']
+check(' '.join('|' if t.get('separator') else t['label'] for t in proj) == 'Wiki | SuperApp Omniverse | FinTerm BioMed CAD | Circusverse', 'the Projects row reads Wiki | SuperApp Omniverse | FinTerm BioMed CAD | Circusverse (#1778)')
+check(now.get('wiki') == snap['wiki']['icon'] == 'ic_wiki' and now.get('circusverse') == snap['circusverse']['icon'], 'the two new Projects tiles keep their pinned icons (#1778)')
+circ = [t for t in proj if t.get('id') == 'circusverse'][0]
+check(circ.get('coming_soon') is True and not circ.get('target') and not circ.get('separator'), 'Circusverse is a disabled coming_soon tile with no target (#1778)')
+check(not [e for e in bj['external_apps'] if 'circus' in e['id']], 'Circusverse has no external app entry (#1778)')
 # #1771 the Cloud Me row renames (Me -> Lnktree, Tasks -> Socials) change labels only: the snapshot pins both.
 lab = {t['id']: t.get('label') for g in cloud for t in g['tiles'] if not t.get('separator')}
 check(lab.get('me') == snap['me']['label'] == 'Lnktree' and lab.get('myroadmap') == snap['myroadmap']['label'] == 'Socials', 'Cloud Me row tiles me and myroadmap read Lnktree and Socials (#1771)')

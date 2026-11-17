@@ -2639,6 +2639,50 @@
    ]
   },
   {
+   "id": "wiki",
+   "pkg": "com.diegonmarcos.cloudwiki",
+   "label": "Cloud Wiki",
+   "kind": "app",
+   "door": true,
+   "port": 38246,
+   "engines": [],
+   "ops": [
+    "diagnostics/crashes",
+    "diagnostics/logcat",
+    "docs",
+    "fleet/peers",
+    "fleet/wake",
+    "fleetalert/raise",
+    "net/dns",
+    "net/resolve",
+    "system/info",
+    "system/ping"
+   ],
+   "routes": [],
+   "declared": {},
+   "ipc": [
+    {
+     "route": "logs",
+     "path": "/ipc/wiki/logs",
+     "method": "GET",
+     "kind": "provider",
+     "authority": "com.diegonmarcos.cloudwiki.logexport",
+     "methods": [
+      "meta",
+      "logs",
+      "crashes",
+      "export"
+     ],
+     "acl": "logs.read",
+     "status": "active",
+     "mcp_tool": "obs.debug.phone_logs",
+     "legacy_route": "/logs/<app>",
+     "class": "fleet",
+     "what": "the app's recent logcat and crash ring, as JSON"
+    }
+   ]
+  },
+  {
    "id": "cg-omniverse",
    "pkg": "com.diegonmarcos.cgomniverse",
    "label": "CG-Omniverse",

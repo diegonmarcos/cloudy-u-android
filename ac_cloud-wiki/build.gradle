@@ -1,0 +1,10 @@
+// Root build.gradle — plugin versions only.
+plugins {
+    id 'com.android.application' version '8.7.3' apply false
+    id 'com.android.library'     version '8.7.3' apply false
+    id 'org.jetbrains.kotlin.android'            version '2.3.20' apply false
+    id 'org.jetbrains.kotlin.plugin.compose'     version '2.3.20' apply false
+    // :tools-core and libs:decisions are plain JVM Kotlin, mutation-tested by PIT.
+    id 'org.jetbrains.kotlin.jvm'                version '2.3.20' apply false
+    id 'info.solidsoft.pitest'                   version '1.19.0' apply false
+}

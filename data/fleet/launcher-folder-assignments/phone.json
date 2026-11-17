@@ -143,6 +143,11 @@
       "order": 1
     },
     {
+      "package": "com.diegonmarcos.cloudwiki",
+      "folder": "hlth_learning",
+      "order": 1
+    },
+    {
       "package": "com.diegonmarcos.cloudcalc",
       "folder": "prod_calc",
       "order": 1

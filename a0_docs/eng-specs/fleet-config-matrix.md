@@ -49,6 +49,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-vault | `com.diegonmarcos.cloudvault` | 5 | 1 | 83% |
 | cloud-wallet | `com.diegonmarcos.cloudwallet` | 8 | 0 | 100% |
 | cloud-shopping | `com.diegonmarcos.cloudshopping` | 4 | 0 | 100% |
+| cloud-wiki | `com.diegonmarcos.cloudwiki` | 4 | 0 | 100% |
 | cloud-superintel | `com.diegonmarcos.cloudsuperintel` | 6 | 2 | 75% |
 | cloud-kg-store | `com.diegonmarcos.cloudkgstore` | 8 | 3 | 72% |
 | cloud-tools-small-llms | `com.diegonmarcos.cloudtoolssmallllms` | 12 | 2 | 85% |
@@ -56,7 +57,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-biomed | `com.diegonmarcos.hardtechbiomed` | 4 | 0 | 100% |
-| **fleet** | | **436** | **57** | **88%** |
+| **fleet** | | **440** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -1397,6 +1398,29 @@ Coverage: 8 covered, 0 gaps.
 ## cloud-shopping — `com.diegonmarcos.cloudshopping`
 
 Module `ac_cloud-shopping`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
+
+| store | kind | class | migrates | doc |
+|---|---|---|---|---|
+| `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
+| `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
+| `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
+| `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
+| `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
+| `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
+| `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
+| `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
+
+| file | class | doc |
+|---|---|---|
+| `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
+
+Coverage: 4 covered, 0 gaps.
+
+## cloud-wiki — `com.diegonmarcos.cloudwiki`
+
+Module `ac_cloud-wiki`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-graph-view, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

@@ -33,6 +33,7 @@
     "fleet-endpoints": "ac_cloud-account",
     "fleet-endpoints-android": "ac_cloud-account",
     "fleetconfig-model": "aa_cloud-superapp",
+    "graph-view": "ac_cloud-wiki",
     "health": "aa_cloud-superapp",
     "mail": "aa_cloud-superapp",
     "media": "ac_cloud-keyboard",

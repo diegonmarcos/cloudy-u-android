@@ -28,6 +28,7 @@
     { "package": "com.diegonmarcos.cloudagenda",         "folder": "tasks",     "order": 1 },
 
     { "package": "com.diegonmarcos.cloudnotes",          "folder": "notes",     "order": 1 },
+    { "package": "com.diegonmarcos.cloudwiki",           "folder": "notes",     "order": 2 },
 
     { "package": "com.diegonmarcos.cloudoffice",         "folder": "writer",    "order": 2 },
 

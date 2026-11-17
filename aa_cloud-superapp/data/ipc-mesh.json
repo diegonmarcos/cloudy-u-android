@@ -3313,6 +3313,21 @@
    "endpoints": []
   },
   {
+   "id": "wiki",
+   "pkg": "com.diegonmarcos.cloudwiki",
+   "label": "cloud-wiki",
+   "kind": "app",
+   "dir": "ac_cloud-wiki",
+   "door": true,
+   "libs": [
+    "core",
+    "devtools",
+    "fleetconfig-model",
+    "perms"
+   ],
+   "endpoints": []
+  },
+  {
    "id": "cg-omniverse",
    "pkg": "com.diegonmarcos.cgomniverse",
    "label": "cg-omniverse",

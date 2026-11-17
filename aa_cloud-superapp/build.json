@@ -3262,21 +3262,28 @@
             ]
           },
           {
-            "_doc": "Lnktree (was 'Projects W'; owner 2026-10-30): led by the SuperApp tile (app://com.diegonmarcos.superapp, moved here from Configs 2026-10-30), then four tiles, each LAUNCHING a real app of the Lnktree family (#1335, extapp:cg-omniverse, capital-stack-finterminal, hardtech-cad, hardtech-biomed; folders ad_*, 1_cicd/src/data/app-families.json). The pages live in the apps (their build.json::ui), no in-app page is left here. The three '|' rules are the owner's grouping: SuperApp | Omniverse | FinTerm | CAD BioMed. The row id stays 'Lnktree' = the title; the old project tiles (Lf.y/Nx.z/St.x repos) are gone.",
+            "_doc": "Lnktree (was 'Projects W'; owner 2026-10-30), reshaped by #1778 to Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse. Wiki (ac_cloud-wiki, com.diegonmarcos.cloudwiki, the encyclopedia with a graph) leads; then the SuperApp tile (app://com.diegonmarcos.superapp, moved here from Configs 2026-10-30) with Omniverse; then FinTerm, BioMed and CAD; Circusverse closes the row as a greyed-out coming_soon tile (no app yet). Each live tile LAUNCHES a real app (#1335, extapp:cg-omniverse, capital-stack-finterminal, hardtech-biomed, hardtech-cad, cloud-wiki; folders ad_* for the Lnktree family, 1_cicd/src/data/app-families.json, ac_* for Wiki). The pages live in the apps (their build.json::ui), no in-app page is left here. The three '|' rules group the row: Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse. The row id stays 'Lnktree' = the title; the old project tiles (Lf.y/Nx.z/St.x repos) are gone. Pinned by test-lnktree-row.sh and test-projects-row-1778.sh.",
             "title": "Projects",
             "tiles": [
               {
-                "_doc": "Owner 2026-10-30: moved out of Configs to LEAD the Lnktree row (SuperApp | Omniverse | FinTerm | CAD BioMed; test-lnktree-row.sh); #803 had earlier moved it out of AGI into Configs. app:// resolves MAIN/LAUNCHER for the package and adds FLAG_ACTIVITY_NEW_TASK (see ShellActivity.handleTarget), which lands on .MainActivity — the app door, own taskAffinity, own Overview card. .HomeActivity (the launcher door) is a different task and is not reachable this way, which is the point. #1153 supersedes #1095: the tile launches the real app as its OWN task (app:// with NEW_TASK | LAUNCH_ADJACENT, ShellActivity.handleTarget; MainActivity is resizeableActivity), so split screen keeps this Cloud ▸ Apps page open beside it, instead of embedding a page in the launcher. test-dashboard-cross-app-deeplink.sh T7 and ConfigsTileDeepLinkTest pin it.",
+                "_doc": "#1778 Wiki: Cloud Wiki (ac_cloud-wiki, com.diegonmarcos.cloudwiki), the new Library-Wiki app: Markdown pages in thirteen topics with tag chips and an Obsidian-style graph. Opens its own app through ui.external_apps (extapp:cloud-wiki); the glyph ic_wiki is generated from ac_cloud-wiki/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable).",
+                "id": "wiki",
+                "label": "Wiki",
+                "icon": "ic_wiki",
+                "target": "extapp:cloud-wiki"
+              },
+              {
+                "_doc": "Group divider (#1778: Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse): a bare character, not a control.",
+                "id": "lnktree-sep-0",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "Owner 2026-10-30: moved out of Configs into the Lnktree row (test-lnktree-row.sh); #803 had earlier moved it out of AGI into Configs. app:// resolves MAIN/LAUNCHER for the package and adds FLAG_ACTIVITY_NEW_TASK (see ShellActivity.handleTarget), which lands on .MainActivity — the app door, own taskAffinity, own Overview card. .HomeActivity (the launcher door) is a different task and is not reachable this way, which is the point. #1153 supersedes #1095: the tile launches the real app as its OWN task (app:// with NEW_TASK | LAUNCH_ADJACENT, ShellActivity.handleTarget; MainActivity is resizeableActivity), so split screen keeps this Cloud ▸ Apps page open beside it, instead of embedding a page in the launcher. test-dashboard-cross-app-deeplink.sh T7 and ConfigsTileDeepLinkTest pin it.",
                 "id": "cloud-superapp",
                 "label": "SuperApp",
                 "icon": "ic_superapp_d",
                 "target": "app://com.diegonmarcos.superapp"
-              },
-              {
-                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD BioMed): a bare character, not a control.",
-                "id": "lnktree-sep-0",
-                "label": "|",
-                "separator": true
               },
               {
                 "_doc": "Omniverse: page:cloud/omniverse (Galaxy, Game Store, VR Store).",
@@ -3286,7 +3293,7 @@
                 "target": "extapp:cg-omniverse"
               },
               {
-                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD BioMed): a bare character, not a control.",
+                "_doc": "Group divider (#1778: Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse): a bare character, not a control.",
                 "id": "lnktree-sep-1",
                 "label": "|",
                 "separator": true
@@ -3299,10 +3306,11 @@
                 "target": "extapp:capital-stack-finterminal"
               },
               {
-                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD BioMed): a bare character, not a control.",
-                "id": "lnktree-sep-2",
-                "label": "|",
-                "separator": true
+                "_doc": "BioMed: Hardtech-BioMed (Physiology, BioChem, BioMech, Anatomy, Genetic, Neuro, Immuno); its former SAP2000, MATLAB and Ansys pages are under Hardtech-CAD > Sim2Real. It points at the package the app declares TODAY (ad_Hardtech-BioMed/build.json::android.application_id, com.diegonmarcos.hardtechbiomed). TODO after the Sim2Real to BioMed rename (#1777) lands: re-check this tile's extapp id, the ui.external_apps entry and the fleet package against the renamed app, and update them if they moved.",
+                "id": "biomed",
+                "label": "BioMed",
+                "icon": "ic_p_sol_tools",
+                "target": "extapp:hardtech-biomed"
               },
               {
                 "_doc": "CAD: page:cloud/cad (MCAD, BIM, SolWrk).",
@@ -3312,11 +3320,17 @@
                 "target": "extapp:hardtech-cad"
               },
               {
-                "_doc": "BioMed: Hardtech-BioMed (Physiology, BioChem, BioMech, Anatomy, Genetic, Neuro, Immuno); its former SAP2000, MATLAB and Ansys pages are under Hardtech-CAD > Sim2Real.",
-                "id": "biomed",
-                "label": "BioMed",
-                "icon": "ic_p_sol_tools",
-                "target": "extapp:hardtech-biomed"
+                "_doc": "Group divider (#1778: Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse): a bare character, not a control.",
+                "id": "lnktree-sep-2",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "#1778 declared placeholder (coming_soon): Circusverse is not an app yet. Drawn gray and disabled, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists. Its icon is its own (unique on the Cloud page; the Circus lab tile keeps ic_solutions).",
+                "id": "circusverse",
+                "label": "Circusverse",
+                "icon": "ic_p_sol_cloud",
+                "coming_soon": true
               }
             ]
           },
@@ -9913,6 +9927,15 @@
         "hub_package": "com.diegonmarcos.cloudshopping",
         "install_package": "com.diegonmarcos.cloudshopping",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Shopping.apk",
+        "forks": {}
+      },
+      {
+        "_doc": "#1778 Cloud Wiki (ac_cloud-wiki, published by ship-cloud-wiki.yml). Added for the Cloud > Apps > Projects 'Wiki' tile: every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ac_cloud-wiki/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors its arm64 release asset; x86_64 devices are resolved through the fleet assets map. folder hlth_learning: the phone launcher files it under ~Learning.",
+        "id": "cloud-wiki",
+        "folder": "hlth_learning",
+        "hub_package": "com.diegonmarcos.cloudwiki",
+        "install_package": "com.diegonmarcos.cloudwiki",
+        "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Wiki.apk",
         "forks": {}
       },
       {

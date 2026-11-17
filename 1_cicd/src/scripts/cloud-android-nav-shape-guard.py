@@ -9,7 +9,7 @@ DECLARATION  1_cicd/src/data/nav-shape.json (the rules, the forbidden widgets, a
 
   N0  libs:bottomnav still ships NavDecl, PageTabs and PageTabsView
   N11 libs:ui-nav-bars is the ONE nav-bars lib (first row, second row, side menu, bottom nav); the retired per-bar libs stay gone and unnamed
-  N1  ui.bottom_nav is min_bottom..max_bottom ids (2..8, or exactly 1 for an app named in nav-shape.json::single_bottom, whose default_section may then be any section; the owner lifted the old cap of 5,
+  N1  ui.bottom_nav is min_bottom..max_bottom ids (2..8, exactly 1 for an app named in nav-shape.json::single_bottom, or empty for an app named in no_bottom, whose default_section may then be any section; the owner lifted the old cap of 5,
       and the island never scrolls: a crowded bar widens and scales down so every item fits,
       8 on a 360dp phone being 44dp cells), each one a ui.sections id;
       ui.default_section is one of them
@@ -308,6 +308,16 @@ def check_n1(app, ui, spec, bad):
     bar = ui.get("bottom_nav")
 
     # N1
+    # no_bottom: an app the owner asked to have NO bottom nav (the side menu is its navigation): ui.bottom_nav is declared and EMPTY, the
+    # app opens on a ui.sections id, and there is no bar to hold to min/max.
+    if app in (spec.get("no_bottom") or {}):
+        if bar != []:
+            bad.append(f"N1 {app}: declared in {DATA}::no_bottom but ui.bottom_nav is {bar!r} (a no_bottom app declares it empty)")
+        if not sections:
+            bad.append(f"N1 {app}: build.json ui.sections is missing or empty")
+        if ui.get("default_section") not in ids:
+            bad.append(f"N1 {app}: ui.default_section {ui.get('default_section')!r} is not one of ui.sections")
+        return sections, ids
     if not isinstance(bar, list) or not bar:
         bad.append(f"N1 {app}: build.json ui.bottom_nav is missing or empty")
         bar = []

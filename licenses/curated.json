@@ -446,6 +446,12 @@
    "what": "Cloud Wallet app",
    "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
   },
+  "ac_cloud-wiki": {
+   "licence": "LicenseRef-NoLicenseGranted",
+   "kind": "own",
+   "what": "Cloud Wiki app (a small encyclopedia of Markdown pages with tag chips and an Obsidian-style graph; its pages are the runtime dataset data/fleet/app/com.diegonmarcos.cloudwiki/wiki.json, neutral educational text written for this app)",
+   "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
+  },
   "b_infra": {
    "licence": "LicenseRef-NoLicenseGranted",
    "kind": "own",

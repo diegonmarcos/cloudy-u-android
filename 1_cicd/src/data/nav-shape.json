@@ -179,6 +179,10 @@
     "_doc": "N1 apps whose bottom nav is deliberately ONE item (min_bottom does not apply: ui.bottom_nav has exactly one id, and ui.default_section may be a section that is not on the bar). Needs the owner's explicit request, named in the reason.",
     "ac_cloud-shopping": "Cloud Shopping (#1473): the owner asked for exactly one bottom item, a search icon with no label; every page is reached through the collapsed left side menu (section shop, vertical_side_menu), so the bar holds only the Search verb."
   },
+  "no_bottom": {
+    "_doc": "N1 apps with NO bottom nav at all: ui.bottom_nav is declared and EMPTY (the first row and the collapsed left side menu are the navigation) and ui.default_section is any ui.sections id. Needs the owner's explicit request, named in the reason.",
+    "ac_cloud-wiki": "Cloud Wiki (#1778): the owner asked for no bottom nav, a left side menu plus top subpage tabs; every topic and the graph are pages of the one wiki section (vertical_side_menu), so there is no bar to hold."
+  },
   "backgrounds": ["dark", "light", "theme"],
   "min_reason_chars": 30,
   "id_calls": [

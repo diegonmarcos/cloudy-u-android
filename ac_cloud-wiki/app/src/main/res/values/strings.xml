@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- English is the fleet's base language (#299). app_name comes from build.json::display_name. -->
+    <string name="overview">Overview</string>
+    <string name="loading">Loading the wiki. Its pages are served by Cloud Store; open Cloud Store once if nothing appears.</string>
+    <string name="no_match">No page carries all of these tags.</string>
+    <string name="clear_tags">Clear tags</string>
+    <string name="pages_count">%1$d pages</string>
+    <string name="graph_hint">Drag to pan, pinch to zoom, tap a page to open it.</string>
+    <string name="graph_legend">%1$d pages, %2$d links, %3$d shared-tag edges</string>
+    <string name="tag_filter">Filtered by</string>
+    <string name="related">Related</string>
+</resources>

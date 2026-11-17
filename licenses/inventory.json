@@ -19,7 +19,7 @@
    "(MIT OR Apache-2.0) AND Unicode-3.0": 1
   },
   "dir": {
-   "LicenseRef-NoLicenseGranted": 53,
+   "LicenseRef-NoLicenseGranted": 54,
    "GPL-3.0-only": 6,
    "MIT": 3,
    "Apache-2.0": 2,
@@ -1071,6 +1071,26 @@
     "ab_cloud-libs-shared/libs/ui-nav-bars",
     "ab_cloud-libs-shared/libs/updater",
     "ab_cloud-libs-shared/libs/wallet"
+   ]
+  },
+  "ac_cloud-wiki": {
+   "app_licence": "LicenseRef-NoLicenseGranted",
+   "links_shared_modules": [
+    "ab_cloud-libs-shared/libs/bottomnav",
+    "ab_cloud-libs-shared/libs/core",
+    "ab_cloud-libs-shared/libs/crash",
+    "ab_cloud-libs-shared/libs/devtools",
+    "ab_cloud-libs-shared/libs/fleet-data-client",
+    "ab_cloud-libs-shared/libs/fleetconfig-model",
+    "ab_cloud-libs-shared/libs/fleetconfigs-agents",
+    "ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+    "ab_cloud-libs-shared/libs/fleetconfigs-xray",
+    "ab_cloud-libs-shared/libs/graph-view",
+    "ab_cloud-libs-shared/libs/perms",
+    "ab_cloud-libs-shared/libs/theme-background",
+    "ab_cloud-libs-shared/libs/ui-icons",
+    "ab_cloud-libs-shared/libs/ui-kit",
+    "ab_cloud-libs-shared/libs/ui-nav-bars"
    ]
   },
   "ad_CG-Omniverse": {
@@ -4023,6 +4043,14 @@
    "licence": "LicenseRef-NoLicenseGranted",
    "licence_source": "licenses/curated.json"
   },
+  "dir:ac_cloud-wiki": {
+   "kind": "dir",
+   "declared_in": [
+    "(tree)"
+   ],
+   "licence": "LicenseRef-NoLicenseGranted",
+   "licence_source": "licenses/curated.json"
+  },
   "dir:ad_CG-Omniverse": {
    "kind": "dir",
    "declared_in": [
@@ -4182,6 +4210,7 @@
     "ac_cloud-tools-small-llms/app/build.gradle",
     "ac_cloud-vault/gradle/libs.versions.toml",
     "ac_cloud-wallet/app/build.gradle",
+    "ac_cloud-wiki/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
@@ -4515,6 +4544,7 @@
     "ab_cloud-libs-shared/libs/fleetconfigs-xray/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
     "ab_cloud-libs-shared/libs/git-ui/build.gradle",
+    "ab_cloud-libs-shared/libs/graph-view/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
     "ab_cloud-libs-shared/libs/json-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
@@ -4572,6 +4602,7 @@
     "ac_cloud-termux/app/build.gradle",
     "ac_cloud-tools-small-llms/app/build.gradle",
     "ac_cloud-wallet/app/build.gradle",
+    "ac_cloud-wiki/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
@@ -4716,6 +4747,7 @@
     "ac_cloud-termux/app/build.gradle",
     "ac_cloud-tools-small-llms/app/build.gradle",
     "ac_cloud-vault/gradle/libs.versions.toml",
+    "ac_cloud-wiki/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
@@ -4798,6 +4830,7 @@
     "ac_cloud-store/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tools-small-llms/app/build.gradle",
+    "ac_cloud-wiki/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
@@ -4862,6 +4895,7 @@
     "ab_cloud-libs-shared/libs/fleetconfigs-xray/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
     "ab_cloud-libs-shared/libs/git-ui/build.gradle",
+    "ab_cloud-libs-shared/libs/graph-view/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
     "ab_cloud-libs-shared/libs/json-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
@@ -4922,6 +4956,7 @@
     "ac_cloud-tools-small-llms/app/build.gradle",
     "ac_cloud-vault/gradle/libs.versions.toml",
     "ac_cloud-wallet/app/build.gradle",
+    "ac_cloud-wiki/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
@@ -5100,6 +5135,7 @@
     "ab_cloud-libs-shared/libs/fleetconfigs-xray/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
     "ab_cloud-libs-shared/libs/git-ui/build.gradle",
+    "ab_cloud-libs-shared/libs/graph-view/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
     "ab_cloud-libs-shared/libs/json-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
@@ -5163,6 +5199,7 @@
     "ac_cloud-tools-small-llms/app/build.gradle",
     "ac_cloud-vault/gradle/libs.versions.toml",
     "ac_cloud-wallet/app/build.gradle",
+    "ac_cloud-wiki/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
@@ -5329,6 +5366,7 @@
     "ac_cloud-tools-small-llms/app/build.gradle",
     "ac_cloud-vault/gradle/libs.versions.toml",
     "ac_cloud-wallet/app/build.gradle",
+    "ac_cloud-wiki/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
@@ -6995,6 +7033,7 @@
     "ac_cloud-termux/termux-shared/build.gradle",
     "ac_cloud-tools-small-llms/app/build.gradle",
     "ac_cloud-wallet/app/build.gradle",
+    "ac_cloud-wiki/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
@@ -8980,6 +9019,7 @@
     "ac_cloud-tasks/app/build.gradle",
     "ac_cloud-tools-small-llms/app/build.gradle",
     "ac_cloud-vault/gradle/libs.versions.toml",
+    "ac_cloud-wiki/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
@@ -9157,6 +9197,7 @@
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
     "ac_cloud-tools-small-llms/core/build.gradle",
+    "ac_cloud-wiki/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",

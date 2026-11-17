@@ -1,0 +1,81 @@
+# ╔═════════════════════════════════════════════════════════════════
+# ║ Cloud Wiki screenshots (emulator, dispatch only) (#1778)               ║
+# ║ Installs the published SuperApp and Cloud Wiki (x86_64) on a Pixel 7   ║
+# ║ emulator, seeds Wiki's runtime dataset from data/fleet and captures    ║
+# ║ the Projects row, a topic page with its tags, a tag filter and the     ║
+# ║ graph. Script: ac_cloud-wiki/test/emulator-wiki-screens.sh. Evidence:  ║
+# ║ the `wiki-screens` artifact. Not a gate: a screenshot job, run on      ║
+# ║ request only (rules/ci.md cost budget).                                ║
+# ╚═════════════════════════════════════════════════════════════════
+name: "Test → Cloud Wiki screenshots (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release the SuperApp and Cloud Wiki x86_64 APKs are downloaded from"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+
+jobs:
+  screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ac_cloud-wiki/test
+            data/fleet/app/com.diegonmarcos.cloudwiki
+      - name: Fetch the published APKs (x86_64)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -eu
+          gh release download "${TAG:-latest}" -R "$GITHUB_REPOSITORY" -p 'Cloud-SuperApp-x86_64.apk' -D apk
+          gh release download "${TAG:-latest}" -R "$GITHUB_REPOSITORY" -p 'Cloud-Wiki-x86_64.apk' -D apk
+          ls -l apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot the emulator and capture (attempt 1)
+        id: try1
+        continue-on-error: true
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-wiki/test/emulator-wiki-screens.sh apk/Cloud-SuperApp-x86_64.apk apk/Cloud-Wiki-x86_64.apk data/fleet/app/com.diegonmarcos.cloudwiki/wiki.json out
+      # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
+      - name: Boot the emulator and capture (attempt 2)
+        if: steps.try1.outcome != 'success'
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-wiki/test/emulator-wiki-screens.sh apk/Cloud-SuperApp-x86_64.apk apk/Cloud-Wiki-x86_64.apk data/fleet/app/com.diegonmarcos.cloudwiki/wiki.json out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wiki-screens
+          path: out
+          if-no-files-found: warn

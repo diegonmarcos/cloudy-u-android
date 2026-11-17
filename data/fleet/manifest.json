@@ -155,6 +155,9 @@
       "composer",
       "kg"
     ],
+    "com.diegonmarcos.cloudwiki": [
+      "wiki"
+    ],
     "cld.termux": [
       "terminal-selftest"
     ],

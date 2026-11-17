@@ -1,5 +1,5 @@
 {
- "_doc": "#1756 Cloud quickmark tiles BEFORE the reorg (origin/main 3786a0796): tile id -> icon drawable. The reorg must not change any Cloud quickmark icon.",
+ "_doc": "#1756 Cloud quickmark tiles BEFORE the reorg (origin/main 3786a0796): tile id -> icon drawable. The reorg must not change any Cloud quickmark icon. #1778 adds the two tiles the Projects row gained (Wiki and Circusverse): their icons are pinned here too, and test-quickmarks-categories-1756.sh pins the row order Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse.",
  "tiles": {
   "drive-conn": {
    "icon": "ic_drive",
@@ -279,6 +279,16 @@
   "configs-about": {
    "icon": "ic_info",
    "label": "About",
+   "tint": null
+  },
+  "wiki": {
+   "icon": "ic_wiki",
+   "label": "Wiki",
+   "tint": null
+  },
+  "circusverse": {
+   "icon": "ic_p_sol_cloud",
+   "label": "Circusverse",
    "tint": null
   }
  }

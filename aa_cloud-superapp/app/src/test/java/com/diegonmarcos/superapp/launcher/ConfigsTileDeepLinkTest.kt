@@ -21,7 +21,8 @@ class ConfigsTileDeepLinkTest {
 
     private fun superAppTile(): Sections.AggTile {
         val row = Sections.byId("cloud")!!.tileGroups.first { it.title == "Projects" }
-        assertEquals("SuperApp must lead the Lnktree row", "cloud-superapp", row.tiles.first().id)
+        // #1778: Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse: Wiki leads the row, SuperApp leads its group (right after the first rule)
+        assertEquals("SuperApp must lead its group of the Projects row", listOf("wiki", "lnktree-sep-0", "cloud-superapp"), row.tiles.take(3).map { it.id })
         return row.tiles.first { it.id == "cloud-superapp" }
     }
 
@@ -39,6 +40,20 @@ class ConfigsTileDeepLinkTest {
         val manifest = java.io.File(root, "aa_cloud-superapp/app/src/main/AndroidManifest.xml").readText()
         val main = manifest.substringAfter("android:name=\".MainActivity\"").substringBefore(">")
         assertTrue("MainActivity must be resizeable for split screen", "android:resizeableActivity=\"true\"" in main)
+    }
+
+    @Test
+    fun `C4 the Projects row reads Wiki, SuperApp Omniverse, FinTerm BioMed CAD, Circusverse and Circusverse is a disabled placeholder`() {
+        val row = Sections.byId("cloud")!!.tileGroups.first { it.title == "Projects" }.tiles
+        assertEquals(
+            "Wiki | SuperApp Omniverse | FinTerm BioMed CAD | Circusverse",
+            row.joinToString(" ") { if (it.separator) "|" else it.label },
+        )
+        val soon = row.first { it.label == "Circusverse" }
+        assertTrue("Circusverse is coming_soon", soon.comingSoon)
+        assertTrue("Circusverse has no target", soon.target.isBlank())
+        assertEquals("extapp:cloud-wiki", row.first { it.label == "Wiki" }.target)
+        assertEquals(emptyList<String>(), row.filter { it.label != "Circusverse" && !it.separator && it.comingSoon }.map { it.id })
     }
 
     @Test

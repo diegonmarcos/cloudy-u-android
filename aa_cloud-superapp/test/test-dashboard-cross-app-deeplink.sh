@@ -154,8 +154,10 @@ ROWS = {
     # boards; with the list gone there are no longer two kinds of destination in
     # the row for it to divide, so it went with them rather than floating at the
     # head of a row whose every tile is now the same kind of tile.
-    "Projects":  ["cloud-superapp", "lnktree-sep-0", "omniverse", "lnktree-sep-1", "finterm", "lnktree-sep-2", "cad", "biomed"],  # owner 2026-10-30: SuperApp leads (moved from Configs); #1331 owner order: Omniverse | FinTerm | CAD BioMed (was Projects W, #1212)
+    "Projects":  ["wiki", "lnktree-sep-0", "cloud-superapp", "omniverse", "lnktree-sep-1", "finterm", "biomed", "cad", "lnktree-sep-2", "circusverse"],  # #1778: Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse; was SuperApp | Omniverse | FinTerm | CAD BioMed;  # owner 2026-10-30: SuperApp leads (moved from Configs); #1331 owner order: Omniverse | FinTerm | CAD BioMed (was Projects W, #1212)
 }
+
+ROWS_SOON = {"circusverse"}   # #1778 the coming_soon placeholders of the rows pinned above
 
 # Every target, spelled the way the ROUTER resolves it and not the way the tile
 # reads on screen. MyStudy and MyTrips are the reason this table exists: their
@@ -170,6 +172,7 @@ TARGETS = {
     # #1335: the Lnktree row's tiles LAUNCH the Lnktree family apps (test-lnktree-row.sh pins the row, ad_*/test/test-lnktree-app.sh the pages).
     # owner 2026-10-30: SuperApp leads Lnktree (moved from Configs); #1153 app:// own-task launch, T7 pins the mechanics.
     "cloud-superapp": "app://com.diegonmarcos.superapp",
+    "wiki": "extapp:cloud-wiki",   # #1778 Cloud Wiki leads the row; Circusverse (coming_soon, no target) is skipped by the target checks
     "omniverse": "extapp:cg-omniverse",
     "finterm": "extapp:capital-stack-finterminal",
     "cad": "extapp:hardtech-cad",
@@ -188,8 +191,10 @@ def kind(tile):
     it; an http tile opens a web page. Mixing the two inside one run is what
     makes a row unreadable, because two neighbouring icons then behave nothing
     alike."""
+    if tile.get("coming_soon"):
+        return "a disabled placeholder"   # #1778 Circusverse: drawn gray, no tap
     target = tile["target"]
-    if target.startswith("extapp:"):
+    if target.startswith(("extapp:", "app://")):   # app:// (the SuperApp's own package, #1153) also launches an app as its own task
         return "another app on this phone"
     if target.startswith(("http://", "https://")):
         return "a web page"
@@ -245,6 +250,9 @@ for title, want_order in ROWS.items():
         if t.get("separator"):
             continue
         tid, target = t.get("id"), t.get("target", "")
+        if t.get("coming_soon"):   # #1778 a declared placeholder: disabled, so it must carry NO target and still an icon and a pinned row slot
+            assert not target and t.get("icon") and tid in ROWS_SOON, f"{title}: coming_soon tile {tid} must have no target, an icon and a place in ROWS_SOON"
+            continue
         assert target, f"{title}: tile {tid} has no target — it would be a dead tap"
         assert t.get("icon"), f"{title}: tile {tid} has no icon"
         assert tid in TARGETS, f"{title}: tile {tid} is not in the pinned target table"
@@ -295,7 +303,7 @@ d = json.load(open(sys.argv[1]))
 app = sys.argv[2]
 cloud = next(s for s in d["ui"]["sections"] if s["id"] == "cloud")
 row = next(g for g in cloud["tile_groups"] if g["title"] == "Projects")
-assert row["tiles"][0].get("id") == "cloud-superapp", "SuperApp must LEAD the Projects (Lnktree) row"
+assert [t.get("id") for t in row["tiles"]][:3] == ["wiki", "lnktree-sep-0", "cloud-superapp"], "SuperApp must LEAD its group of the Projects (Lnktree) row, right after Wiki and the first rule (#1778)"
 tile = next(t for t in row["tiles"] if t.get("id") == "cloud-superapp")
 assert tile["label"] == "SuperApp", tile
 own = "app://" + d["android"]["application_id"]
