@@ -412,10 +412,10 @@ EOF
 _doc_files() {
     _cfg="$ROOT/1_cicd/src/data/identity-exclusions.json"
     [ -f "$_cfg" ] || return 0
-    _scope="$(jq -r '.doc_glob_scope // empty' "$_cfg" 2>/dev/null)"
+    _scope="$(jq -r '.doc_glob_scope // empty' "$_cfg" 2>/dev/null || true)"
     [ -n "$_scope" ] || return 0
     case "$1" in "$_scope"*) ;; *) return 0 ;; esac
-    _keep="$(jq -r '(.doc_glob_keep_under // [])[]' "$_cfg" 2>/dev/null)"
+    _keep="$(jq -r '(.doc_glob_keep_under // [])[]' "$_cfg" 2>/dev/null || true)"
     jq -r '(.doc_globs // [])[]' "$_cfg" 2>/dev/null | while IFS= read -r g; do
         ext="${g#\*}"
         git -C "$ROOT" ls-tree -r --name-only HEAD -- "$1" 2>/dev/null | while IFS= read -r f; do
@@ -455,7 +455,8 @@ EOF
 # every hashed tree (_drop_manifest) and replaced by ONE line: the whole doc-stripped
 # manifest for the planners (and for a --paths-from scope), the app's slice for the rest.
 _manifest() {
-    jq -r '(.normalized_json // [])[0] // empty' "$ROOT/1_cicd/src/data/identity-exclusions.json" 2>/dev/null
+    [ -f "$ROOT/1_cicd/src/data/identity-exclusions.json" ] || return 0   # a fixture without the data file: no manifest handling
+    jq -r '(.normalized_json // [])[0] // empty' "$ROOT/1_cicd/src/data/identity-exclusions.json" 2>/dev/null || true
 }
 
 _drop_manifest() {

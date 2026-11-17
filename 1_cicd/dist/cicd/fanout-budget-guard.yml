@@ -1,0 +1,49 @@
+name: "fan-out budget guard — a push starts at most 5 app ships; doc-only edits publish nothing; assets are swapped, never missing"
+
+# #1783 (owner approved P1-P5). Three testers and one live check, each proven red by its own mutants:
+#   P2  fanout-budget-guard: this push's changed paths start at most 5 per-app ship workflows, unless the paths
+#       are on 1_cicd/src/data/fanout-budget.json with a reason (a genuine shared-lib edit)
+#   P3  publish-identity-doc-only: a doc-only manifest/README/test edit moves no publish identity
+#   P4  release-swap: a release asset is uploaded under a temp name and renamed, never delete-then-upload
+# Its OWN workflow (not a step of mesh-membership-guard) so a red neighbour cannot hide it. EVERY PUSH, NO PATH
+# FILTER: the commit that fans out can touch any path.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: fanout-budget-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  fanout-budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The fan-out budget guard still fails on each way the budget is dodged (#1783 P2)
+        run: bash 1_cicd/src/scripts/test/fanout-budget-guard.test.sh
+
+      - name: This push starts at most 5 app ships, allowlisted shared-lib edits aside (#1783 P2)
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          git fetch --no-tags --depth=100 origin "$GITHUB_SHA" >/dev/null 2>&1 || true
+          if ! printf '%s' "$BEFORE" | grep -qE '^0+$' && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then R="$BEFORE..$GITHUB_SHA"; else R="$GITHUB_SHA^..$GITHUB_SHA"; fi
+          echo "range $R"
+          python3 1_cicd/src/scripts/cloud-android-fanout-budget-guard.py --range "$R"
+
+      - name: Doc-only and other-app edits publish nothing; real edits still do (#1783 P3)
+        run: bash 1_cicd/src/scripts/test/publish-identity-doc-only.test.sh
+
+      - name: A release asset is never missing while bytes are in transit (#1783 P4)
+        run: bash 1_cicd/src/scripts/test/release-swap.test.sh
