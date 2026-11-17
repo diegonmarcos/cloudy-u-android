@@ -123,6 +123,29 @@ WANT="$(awk -v d="${D:-1}" 'BEGIN { printf "%d", 95 * d + 0.5 }')"
 if [ -n "$H" ] && [ "$H" -ge $((WANT - 3)) ] && [ "$H" -le $((WANT + 3)) ]; then ok "the results box is ${H}px = 95dp (half of the old 190dp) at density $D"; else bad "the results box is ${H:-?}px, wanted $WANT (95dp at density $D)"; fi
 kb code ALPHA
 
+# ── Last panel memory: numpad, hide, kill the IME process, refocus -> the numpad is back ──
+kb code NUMPAD; sleep 1
+state | grep -q "numpad=true" && ok "the numpad is open" || bad "the numpad did not open: $(last state)"
+shot 41-lastpanel-numpad-open
+adb shell input keyevent 4; sleep 2
+shown && bad "the keyboard is still shown after Back" || ok "the keyboard is hidden"
+shot 42-lastpanel-hidden
+OLDPID="$(adb shell pidof "$PKG" | tr -d '\r')"
+adb shell kill "$OLDPID"; sleep 3
+NEWPID="$(adb shell pidof "$PKG" | tr -d '\r')"
+[ -z "$NEWPID" ] || [ "$NEWPID" != "$OLDPID" ] && ok "the IME process was killed (was $OLDPID, now ${NEWPID:-none})" || bad "the process $OLDPID is still alive"
+for attempt in 1 2 3; do
+    adb shell am start -n "$PKG/.ShotActivity" >/dev/null
+    for _ in $(seq 1 25); do shown && break; sleep 1; done
+    shown && break
+done
+sleep 4
+shown && ok "the keyboard is back after the refocus" || bad "the keyboard did not come back"
+kb state; last state
+last state | grep -q "numpad=true" && ok "the numpad is showing again after the process restart" || bad "the numpad was not restored: $(last state)"
+shot 43-lastpanel-numpad-restored
+kb code ALPHA; state | grep -q "lastPanel=LETTERS" && ok "ABC updates the memory back to letters" || bad "memory after ABC: $(last state)"
+
 # ── Configs ───────────────────────────────────────────────────────────────
 adb shell am start -n "$PKG/helium314.keyboard.settings.SettingsActivity" >/dev/null; sleep 3
 shot 14-configs-top

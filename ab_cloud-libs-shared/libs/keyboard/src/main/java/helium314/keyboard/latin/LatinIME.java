@@ -1316,6 +1316,8 @@ public class LatinIME extends InputMethodService implements
             // Space state must be updated before calling updateShiftState
             switcher.requestUpdatingShiftState(getCurrentAutoCapsState(), getCurrentRecapitalizeState());
         }
+        if (!restarting) // reopen the panel the user was last on (the field's own type wins)
+            switcher.restoreLastPanel(editorInfo, getCurrentAutoCapsState(), getCurrentRecapitalizeState());
         // Set neutral suggestions and show the toolbar if the "Auto show toolbar" setting is enabled.
         if (!mHandler.hasPendingResumeSuggestions()) {
             mHandler.cancelUpdateSuggestionStrip();

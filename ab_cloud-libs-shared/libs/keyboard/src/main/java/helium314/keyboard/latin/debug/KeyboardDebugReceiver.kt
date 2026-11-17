@@ -93,7 +93,9 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
                 val ac = switcher.autocompleteView
                 "mode=${switcher.viewMode} grammar=${GrammarMode.read(ime.prefs()).id} autocompletePage=${ac.currentPage.id} " +
                     "rows=${ac.rowCount} emojiBarActive=${ime.isEmojiSearchBarActive} emojiBarHeightPx=${ime.emojiSearchBarHeightPx} " +
-                    "density=${ime.resources.displayMetrics.density}"
+                    "density=${ime.resources.displayMetrics.density} " +
+                    "numpad=${switcher.isShowingKeyboardId(helium314.keyboard.keyboard.KeyboardId.ELEMENT_NUMPAD)} " +
+                    "lastPanel=${helium314.keyboard.keyboard.LastPanelMemory(ime.prefs()).remembered()}"
             }
             // Grammar Check ▸ Highlight popup (CI screenshots): set the mode, move the cursor, press the popup's actions.
             // The Grammar ENGINE ("off" | "local" | "remote" | "ai"); unset it reads as off, so Highlight would mark nothing.

@@ -33,6 +33,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import helium314.keyboard.event.Event;
+import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode;
 import helium314.keyboard.keyboard.KeyboardLayoutSet.KeyboardLayoutSetException;
 import helium314.keyboard.keyboard.autocomplete.AutocompleteView;
 import helium314.keyboard.keyboard.clipboard.ClipboardHistoryView;
@@ -261,11 +262,13 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
     public void onReleaseKey(final int code, final boolean withSliding,
             final int currentAutoCapsState, @Nullable final RecapitalizeMode currentRecapitalizeState) {
         mState.onReleaseKey(code, withSliding, currentAutoCapsState, currentRecapitalizeState);
+        if (withSliding && code == KeyCode.NUMPAD) rememberPanelAfterManualSwitch();
     }
 
     public void onFinishSlidingInput(final int currentAutoCapsState,
             @Nullable final RecapitalizeMode currentRecapitalizeState) {
         mState.onFinishSlidingInput(currentAutoCapsState, currentRecapitalizeState);
+        rememberPanelAfterManualSwitch();
     }
 
     // Implements {@link KeyboardState.SwitchActions}.
@@ -547,6 +550,7 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
                 setKeyboard(toggleState.mKeyboardId, toggleState);
             }
         }
+        rememberPanelAfterManualSwitch();
     }
 
     // Future method for requesting an updating to the shift state.
@@ -730,6 +734,41 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
     public void onEvent(final Event event, final int currentAutoCapsState,
             @Nullable final RecapitalizeMode currentRecapitalizeState) {
         mState.onEvent(event, currentAutoCapsState, currentRecapitalizeState);
+        final int code = event.isFunctionalKeyEvent() ? event.getKeyCode() : event.getCodePoint();
+        if (code == KeyCode.ALPHA || code == KeyCode.CLIPBOARD || code == KeyCode.AUTOCOMPLETE || code == KeyCode.NUMPAD)
+            rememberPanelAfterManualSwitch();
+    }
+
+    // Last-panel memory: only the user's own switches write it (never a programmatic reset or restore).
+    private LastPanelMemory mLastPanelMemory;
+
+    private LastPanelMemory lastPanelMemory() {
+        if (mLastPanelMemory == null) mLastPanelMemory = new LastPanelMemory(KtxKt.prefs(mLatinIME));
+        return mLastPanelMemory;
+    }
+
+    private void rememberPanelAfterManualSwitch() {
+        final LastPanelMemory.Panel panel;
+        if (mViewState.isPanel(KeyboardViewState.PanelKind.CLIPBOARD)) panel = LastPanelMemory.Panel.CLIPBOARD;
+        else if (mViewState.isPanel(KeyboardViewState.PanelKind.AUTOCOMPLETE)) panel = LastPanelMemory.Panel.AUTOCOMPLETE;
+        else if (mViewState.isPanel()) return; // emoji: not a remembered panel
+        else if (isShowingKeyboardId(KeyboardId.ELEMENT_NUMPAD)) panel = LastPanelMemory.Panel.NUMPAD;
+        else if (isShowingKeyboardId(KeyboardId.ELEMENT_ALPHABET, KeyboardId.ELEMENT_ALPHABET_MANUAL_SHIFTED,
+                KeyboardId.ELEMENT_ALPHABET_AUTOMATIC_SHIFTED, KeyboardId.ELEMENT_ALPHABET_SHIFT_LOCKED,
+                KeyboardId.ELEMENT_ALPHABET_SHIFT_LOCK_SHIFTED)) panel = LastPanelMemory.Panel.LETTERS;
+        else return; // symbols: not a remembered panel
+        lastPanelMemory().remember(panel);
+    }
+
+    /** Reopens the remembered panel on a fresh input start; a numeric/phone/password field keeps its own layout. */
+    public void restoreLastPanel(@NonNull final EditorInfo editorInfo, final int autoCapsFlags,
+            @Nullable final RecapitalizeMode recapitalizeMode) {
+        final LastPanelMemory.Panel panel = lastPanelMemory().panelToRestore(editorInfo.inputType);
+        if (panel == null || panel == LastPanelMemory.Panel.LETTERS) return;
+        final int code = panel == LastPanelMemory.Panel.NUMPAD ? KeyCode.NUMPAD
+                : panel == LastPanelMemory.Panel.CLIPBOARD ? KeyCode.CLIPBOARD : KeyCode.AUTOCOMPLETE;
+        // through the state machine, but not through onEvent() above: a restore is not a manual switch
+        mState.onEvent(Event.createSoftwareKeypressEvent(code, 0, 0, 0, false), autoCapsFlags, recapitalizeMode);
     }
 
     public boolean isShowingKeyboardId(@NonNull int... keyboardIds) {
