@@ -273,8 +273,8 @@ routes.add("page:tasks/backlogs")
 routes.add("page:experiences/geo")
 routes.add("page:experiences/work")
 routes.add("page:tasks/roadmaps")
-routes.add("page:socials/socials-professional")  # #1771 the Cloud SA Socials tile
-routes.add("page:socials/socials-personal")
+routes.add("page:socials/professional")  # #1771 the Cloud SA Socials tile
+routes.add("page:socials/personal")
 routes.add("page:inventory/housing")
 routes.add("page:inventory/utilities")
 routes.add("page:inventory/leisure")

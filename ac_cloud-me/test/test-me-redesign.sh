@@ -250,10 +250,10 @@ if [p["id"] for p in secs.get("tasks", {}).get("pages", [])] != ["roadmaps", "ba
     bad("pages", "Tasks is not RoadMaps then Backlogs, Backlogs drawing the tasks view (the former Duties)")
 # #1771 Socials: the bar slot Tasks held is Socials, the pre-Lnktree "Me" section (cf24a39a1): the two tabs Professional and Personal drawing
 # the mysocials web pages; Tasks stays declared off the bar with every page, so nothing is dropped.
-if [p["id"] for p in secs.get("socials", {}).get("pages", [])] != ["socials-professional", "socials-personal"] or \
+if [p["id"] for p in secs.get("socials", {}).get("pages", [])] != ["professional", "personal"] or \
    [p["label"] for p in secs.get("socials", {}).get("pages", [])] != ["Professional", "Personal"]:
     bad("pages", "Socials is not the two tabs Professional, Personal")
-for _pg, _url in (("socials-professional", "mysocials/linkedin.html"), ("socials-personal", "mysocials/instagram-diegocnmarcos_.html")):
+for _pg, _url in (("professional", "mysocials/linkedin.html"), ("personal", "mysocials/instagram-diegocnmarcos_.html")):
     _sf = os.path.join(app, f"data/ui/socials/{_pg}.json")
     _sj = json.load(open(_sf, encoding="utf-8")) if os.path.exists(_sf) else [{}]
     if _sj[0].get("kind") != "fragment" or _sj[0].get("id") != "web" or _sj[0].get("url") != _url or not os.path.exists(os.path.join(app, "data/web", _url)):
@@ -515,7 +515,7 @@ mutant settings "the top bar loses its inline actions" "sed -i 's/inlineActions 
 mutant pages "the Home section is back" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'home','label':'Home','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant pages "Backlogs dropped from Tasks" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'].pop() for s in d['ui']['sections'] if s['id']=='tasks'];json.dump(d,open('build.json','w'))\""
 mutant pages "Personal dropped from Socials" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'].pop() for s in d['ui']['sections'] if s['id']=='socials'];json.dump(d,open('build.json','w'))\""
-mutant pages "Socials Professional draws another page" "sed -i 's#mysocials/linkedin.html#mysocials/social.html#' data/ui/socials/socials-professional.json"
+mutant pages "Socials Professional draws another page" "sed -i 's#mysocials/linkedin.html#mysocials/social.html#' data/ui/socials/professional.json"
 mutant pages "Tasks section dropped with the bar slot" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections']=[s for s in d['ui']['sections'] if s['id']!='tasks'];json.dump(d,open('build.json','w'))\""
 mutant pages "the Duties section comes back" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'duties','label':'Duties','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant nav-order "Inventory and Tasks swapped" "python3 -c \"import json;d=json.load(open('build.json'));b=d['ui']['bottom_nav'];b[2],b[4]=b[4],b[2];json.dump(d,open('build.json','w'))\""

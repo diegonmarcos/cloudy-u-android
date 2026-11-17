@@ -17,7 +17,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 287,
+      "unit_test_sources": 288,
       "workflow": "ship-cloud-superapp.yml"
     },
     "ab_cloud-libs-shared/keyboard-engines": {
@@ -188,7 +188,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 19,
+      "unit_test_sources": 20,
       "workflow": "ship-cloud-dialer.yml"
     },
     "ac_cloud-dialer/web": {
@@ -251,7 +251,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 855,
+      "unit_test_sources": 859,
       "workflow": "ship-cloud-mail.yml"
     },
     "ac_cloud-matrix": {
@@ -283,7 +283,7 @@
     },
     "ac_cloud-media-center": {
       "first_test": "Born Tauri 2 (Rust + static web/), shaped like ac_cloud-c3-webserver. Three shell testers. test/test-media-center-pages.sh: node runs web/assets/pages.js's pure render half against the committed web/data \u2014 the page table is build.json::data.pages, each of the seven pages has its index.html and renders content, every data file is stamped with the pinned diegonmarcos.github.io commit, music carries every TIDAL track and links a TIDAL search for 'artist title', video ids are 11-character YouTube ids parsed from thumbnails, Pinterest board URLs follow main.ts's slug rule, books open Open Library, the feed is newest first, movie shelves name only existing titles and the detail sheet links IMDb, documentaries are the whole 'Docs' playlist plus every Documentary-genre title, links out go through tauri-plugin-opener; the Tauri wiring (identifier and productName = build.json, frontendDist = tauri.web_dir, the opener plugin registered and granted opener:default, NOT the gallery's applicationId). 7 mutations red. test/test-media-center-no-kotlin.sh: the only Kotlin is the three Tauri template glue files pinned by sha256 in build.json::tauri.glue. test/test-fleet-setup.sh: the shared fleet-setup contract.",
-      "shell_testers": 6,
+      "shell_testers": 7,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
@@ -440,7 +440,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 16,
+      "unit_test_sources": 17,
       "workflow": "ship-cloud-superintel.yml"
     },
     "ac_cloud-tasks": {
@@ -449,7 +449,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 18,
+      "unit_test_sources": 19,
       "workflow": "ship-cloud-tasks.yml"
     },
     "ac_cloud-termux": {

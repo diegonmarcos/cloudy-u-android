@@ -20,8 +20,8 @@ shot() { sleep "${2:-6}"; $T adb exec-out screencap -p > "$OUT/$1.png"; $T adb s
 
 # first start runs Cloud Me's start-up permission walk; come back on top of it
 open_page "$ME" "page:configs/general"; sleep 12; $T adb shell input keyevent KEYCODE_BACK; sleep 2
-open_page "$ME" "page:socials/socials-professional"; shot me-socials-professional 10
-open_page "$ME" "page:socials/socials-personal"; shot me-socials-personal 10
+open_page "$ME" "page:socials/professional"; shot me-socials-professional 10
+open_page "$ME" "page:socials/personal"; shot me-socials-personal 10
 
 $T adb shell appops set "$SA" SYSTEM_ALERT_WINDOW deny
 open_page "$SA" "page:cloud/apps"; sleep 10
