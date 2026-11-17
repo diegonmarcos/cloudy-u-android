@@ -254,7 +254,8 @@ class StorePhoneSearchTest {
             assertEquals(s.size, sec.sumOf { it.second.size })
         }
         assertEquals("Strategy & Management", StorePhoneSearch.sections(g, o2).first().first)
-        assertTrue(StorePhoneSearch.sections(g, c2).map { it.first }.containsAll(listOf("Action", "Puzzle", "Board / Card")))
+        assertTrue(StorePhoneSearch.sections(g, c2).map { it.first }.containsAll(listOf("Puzzle", "Board / Card")))
+        assertTrue(StorePhoneSearch.sections(g, c3).map { it.first }.containsAll(listOf("Action", "Racing")))
     }
 
     @Test fun theGamesViewDrawsTheSplitAndKeepsTheGrid() {
