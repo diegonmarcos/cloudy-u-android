@@ -27,6 +27,8 @@ object RunningApps {
     const val SRC_ADB_ACTIVITIES = "ADB shell: dumpsys activity activities"
     const val SRC_ADB_RECENTS = "ADB shell: dumpsys activity recents"
     const val SRC_USAGE = "usage events (ADB down)"
+    /** UsageEvents.Event.ACTIVITY_DESTROYED is hidden API; its value is 24. */
+    const val ACTIVITY_DESTROYED = 24
 
     data class Result(val packages: List<String>, val source: String, val note: String = "") {
         /** The line shown under the section heading. */
@@ -86,7 +88,7 @@ object RunningApps {
             when (e.type) {
                 UsageEvents.Event.ACTIVITY_RESUMED -> open["a:$key"] = e.ts
                 UsageEvents.Event.ACTIVITY_PAUSED -> open["a:$key"] = e.ts
-                UsageEvents.Event.ACTIVITY_STOPPED, UsageEvents.Event.ACTIVITY_DESTROYED -> open.remove("a:$key")
+                UsageEvents.Event.ACTIVITY_STOPPED, ACTIVITY_DESTROYED -> open.remove("a:$key")
                 UsageEvents.Event.FOREGROUND_SERVICE_START -> open["s:$key"] = e.ts
                 UsageEvents.Event.FOREGROUND_SERVICE_STOP -> open.remove("s:$key")
                 UsageEvents.Event.DEVICE_SHUTDOWN, UsageEvents.Event.DEVICE_STARTUP -> open.clear()
