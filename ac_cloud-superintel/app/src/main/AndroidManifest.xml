@@ -50,5 +50,50 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+
+        <!-- Ask AI: Cloud SI in the open-with chooser (VIEW of any mime, content:// and file://), the share sheet (SEND, SEND_MULTIPLE
+             of any file or text) and the text selection toolbar (PROCESS_TEXT). The intent's own URI grant is the only access: no
+             storage permission. AskAiActivity copies the content into the cache and opens a new SI chat with it attached. -->
+        <activity
+            android:name=".AskAiActivity"
+            android:exported="true"
+            android:label="@string/ask_ai_label"
+            android:launchMode="standard"
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.CloudSuperIntel">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- English is the fleet's base language (#299). app_name comes from build.json::display_name. -->
+    <string name="ask_ai_label">Ask AI · Cloud SI</string>
     <string name="chat_hello">Hi, I\'m SI</string>
     <string name="chat_hello_sub">Ask anything. Task, agent, model, mode and MCPs are under the input; your chats are in the menu on the left.</string>
     <string name="chat_hint">Ask SI…</string>
