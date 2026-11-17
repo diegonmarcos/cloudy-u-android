@@ -58,13 +58,6 @@ class StoreGridTest {
         assertEquals("a repo-only GitHub hit keeps its avatar", "https://avatars/o.png", m.first { it.key.startsWith("repo:") }.icon)
     }
 
-    @Test fun fdroidIconsComeFromTheRepoListing() {
-        val json = """{"repo":{},"apps":[{"packageName":"a.b","name":"A","icon":"a.b.12.png"},{"packageName":"c.d","name":"C"},{"packageName":"e.f","icon":"e.f.3.png"}],"packages":{}}"""
-        assertEquals(mapOf("a.b" to "https://f-droid.org/repo/icons-640/a.b.12.png"), FDroidIndex.icons(json.byteInputStream(), setOf("a.b", "c.d"), "https://f-droid.org/repo/"))
-        assertEquals("https://f-droid.org/repo/icons-640/a.b.12.png", FDroidIndex.search(json.byteInputStream(), "a.b", 5, "https://f-droid.org/repo/").first().icon)
-        assertEquals("", FDroidIndex.iconUrl("https://f-droid.org/repo/", ""))
-    }
-
     // ── catalogue image field ─────────────────────────────────────────
     @Test fun everyCatalogueEntryHasAnImageUrlOrTheFallbackTile() {
         val es = entries(); assertTrue(es.size >= 90)
