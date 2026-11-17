@@ -157,4 +157,110 @@ class StorePhoneSearchTest {
         assertTrue(StorePhoneSearch.matchGames(g.games, first.name.take(4)).any { it.pkg == first.pkg })
         assertTrue(StorePhoneSearch.matchGames(g.games, "  ").isEmpty())
     }
+
+    // ── #1776 Games split by licence and graphics ─────────────────────
+    private fun catalogue() = StorePhoneSearch.parseGames(repoFile("data/fleet/games-catalogue.json").readText())
+    private fun raw() = JSONObject(repoFile("data/fleet/games-catalogue.json").readText()).getJSONArray("games")
+
+    /** Every package of the catalogue before the split (#1765, 97 rows): nothing may be dropped (rule 16). */
+    private val before = listOf(
+        "com.activision.callofduty.shooter", "com.dts.freefireth", "com.dts.freefiremax",
+        "com.tencent.ig", "com.supercell.brawlstars", "com.netease.mrzhna",
+        "com.mojang.minecraftpe", "com.nianticlabs.pokemongo", "com.ustwo.monumentvalley2",
+        "com.chucklefish.stardewvalley", "com.noodlecake.altosodyssey", "com.noodlecake.altosadventure",
+        "com.tgc.sky.android", "com.playdead.limbo.full", "com.ustwo.monumentvalley",
+        "com.king.candycrushsaga", "com.playrix.gardenscapes", "com.block.juggle",
+        "com.dreamgames.royalmatch", "nz.co.codepoint.minimetro", "com.zeptolab.ctr.ads",
+        "com.rovio.baba", "com.supercell.clashofclans", "com.supercell.clashroyale",
+        "com.ea.game.pvz2_row", "com.ninjakiwi.bloonstd6", "com.lilithgame.roc.gp",
+        "com.ironhidegames.android.kingdomrush", "com.miHoYo.GenshinImpact", "com.HoYoverse.hkrpgoversea",
+        "com.plarium.raidlegends", "com.lilithgame.hgame.gp", "com.blizzard.diablo.immortal",
+        "com.jagex.oldscape.android", "com.netmarble.sololv", "com.gameloft.android.ANMP.GloftA9HM",
+        "com.gameloft.android.ANMP.GloftA8HM", "com.naturalmotion.customstreetracer2", "com.fingersoft.hillclimb",
+        "com.fingersoft.hcr2", "com.nintendo.zaka", "com.vectorunit.red",
+        "jp.konami.pesam", "com.ea.gp.fifamobile", "com.playdemic.golf.android",
+        "com.miniclip.eightballpool", "com.firsttouchgames.dls7", "com.kiloo.subwaysurf",
+        "com.imangi.templerun2", "com.yodo1.crossyroad", "com.halfbrick.jetpackjoyride",
+        "com.halfbrick.fruitninjafree", "com.robtopx.geometryjump", "com.sega.sonicdash",
+        "com.kitkagames.fallbuddies", "com.innersloth.spacemafia", "net.peakgames.toonblast",
+        "com.playrix.homescapes", "com.roblox.client", "com.moonactive.coinmaster",
+        "com.playrix.township", "com.king.farmheroessaga", "com.candywriter.bitlife",
+        "com.ea.game.simcitymobile_row", "com.supercell.hayday", "com.maleo.bussimulatorid",
+        "com.ludo.king", "com.chess", "com.blizzard.wtcg.hearthstone",
+        "com.nvsgames.snap", "com.mobilityware.solitaire", "com.scopely.monopolygo",
+        "jp.pokemon.pokemontcgp", "com.exozet.android.catan", "com.humble.SlayTheSpire",
+        "com.zynga.words3", "com.matteljv.uno", "com.cdprojektred.gwent",
+        "org.supertuxkart.stk", "net.minetest.minetest", "io.anuke.mindustry",
+        "com.shatteredpixel.shatteredpixeldungeon", "org.wesnoth.Wesnoth", "org.develz.crawl",
+        "com.gpl.rpg.AndorsTrail", "org.artsoft.rocksndiamonds", "de.saschahlusiak.freebloks",
+        "name.boyle.chris.sgtpuzzles", "com.dozingcatsoftware.bouncy", "de.tobiasbielefeld.solitaire",
+        "org.secuso.privacyfriendlyminesweeper", "com.agateau.tinywheels.android", "net.nullsum.freedoom",
+        "de.sesu8642.feudaltactics", "com.drodin.tuxrider", "org.lufebe16.freecell",
+        "org.broguece.game")
+
+    @Test fun everyEntryCarriesOpenSourceAndDimension() {
+        val a = raw()
+        for (i in 0 until a.length()) {
+            val o = a.getJSONObject(i)
+            assertTrue("${o.getString("pkg")} has open_source", o.has("open_source") && o.get("open_source") is Boolean)
+            assertTrue("${o.getString("pkg")} has dimension 2d|3d", o.optString("dimension") in listOf("2d", "3d"))
+            if (o.getString("source") == "play") assertFalse("a Play-only listing is not tagged open source", o.getBoolean("open_source"))
+            else assertTrue("F-Droid / GitHub rows are open source", o.getBoolean("open_source"))
+        }
+    }
+
+    @Test fun nothingWasRemovedFromTheCatalogue() {
+        val g = catalogue()
+        assertTrue(g.problems.isEmpty())
+        assertEquals(97, before.size); assertEquals(before.size, before.toSet().size)
+        assertTrue("dropped: " + before.filter { p -> g.games.none { it.pkg == p } }, before.all { p -> g.games.any { it.pkg == p } })
+        assertEquals(103, g.games.size)
+        assertEquals(12, g.categories.size)
+    }
+
+    @Test fun theOwnersTenOpenSourceGamesArePresentWithRealPackages() {
+        val g = catalogue()
+        val want = mapOf(
+            "io.anuke.mindustry" to ("2d" to "Strategy & Management"), "com.unciv.app" to ("2d" to "Strategy & Management"),
+            "org.openttd.fdroid" to ("2d" to "Strategy & Management"), "com.shatteredpixel.shatteredpixeldungeon" to ("2d" to "RPG & Roguelike"),
+            "com.cleverraven.cataclysmdda" to ("2d" to "RPG & Roguelike"), "sh.ppy.osulazer" to ("2d" to "Rhythm & Puzzle/Board"),
+            "org.lichess.mobileV2" to ("2d" to "Rhythm & Puzzle/Board"), "net.minetest.minetest" to ("3d" to "Sandbox & Voxel"),
+            "org.supertuxkart.stk" to ("3d" to "Racing"), "org.stjr.srb2" to ("3d" to "Platformer"))
+        val pkgRe = Regex("^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$")
+        for ((pkg, dg) in want) {
+            val x = g.games.firstOrNull { it.pkg == pkg } ?: error("$pkg missing")
+            assertTrue(pkg, pkgRe.matches(pkg) && x.openSource && x.dimension == dg.first && x.genre == dg.second)
+            assertTrue("$pkg source", x.source in listOf("fdroid", "github"))
+            assertTrue("$pkg store icon", x.icon.startsWith("https://"))
+            assertTrue("$pkg listing", if (x.source == "fdroid") x.storeUrl == "https://f-droid.org/packages/$pkg/" else x.storeUrl.startsWith("https://github.com/"))
+        }
+        assertEquals(StorePhoneSearch.GENRES.toSet(), want.values.map { it.second }.toSet())
+        assertTrue(g.games.first { it.pkg == "sh.ppy.osulazer" }.apk.endsWith("/sh.ppy.osulazer.apk"))
+        assertEquals("github", g.games.first { it.pkg == "org.stjr.srb2" }.source)
+    }
+
+    @Test fun theSplitsAndTheirCounts() {
+        val g = catalogue(); val l = g.games
+        assertEquals(25, l.count { it.openSource }); assertEquals(78, l.count { !it.openSource })
+        val o2 = StorePhoneSearch.split(l, true, "2d"); val o3 = StorePhoneSearch.split(l, true, "3d")
+        val c2 = StorePhoneSearch.split(l, false, "2d"); val c3 = StorePhoneSearch.split(l, false, "3d")
+        assertEquals(19, o2.size); assertEquals(6, o3.size); assertEquals(38, c2.size); assertEquals(40, c3.size)
+        assertEquals(l.size, o2.size + o3.size + c2.size + c3.size)
+        assertTrue(o3.map { it.pkg }.containsAll(listOf("net.minetest.minetest", "org.supertuxkart.stk", "org.stjr.srb2")))
+        // sections inside a split: the owner's genres first, then the existing categories; every game of the split sits in exactly one
+        for (s in listOf(o2, o3, c2, c3)) {
+            val sec = StorePhoneSearch.sections(g, s)
+            assertEquals(s.map { it.pkg }.toSet(), sec.flatMap { it.second }.map { it.pkg }.toSet())
+            assertEquals(s.size, sec.sumOf { it.second.size })
+        }
+        assertEquals("Strategy & Management", StorePhoneSearch.sections(g, o2).first().first)
+        assertTrue(StorePhoneSearch.sections(g, c2).map { it.first }.containsAll(listOf("Action", "Puzzle", "Board / Card")))
+    }
+
+    @Test fun theGamesViewDrawsTheSplitAndKeepsTheGrid() {
+        val src = page()
+        for (t in listOf("TAG_GAMES + \":lic:\"", "TAG_GAMES + \":dim:\"", "StorePhoneSearch.split(list, openSrc, dim)", "StorePhoneSearch.sections(data, shown)")) assertTrue(t, t in src)
+        assertTrue("the Games subpage keeps the #1772 icon grid", "ResultGrid(ctx, cfg, d, gs.map(StorePhoneSearch::gameResult)" in src)
+        assertTrue("GitHub is a Games source", StoreSearchPage.GITHUB in StorePhoneSearch.sources(StorePhoneSearch.GAMES))
+    }
 }

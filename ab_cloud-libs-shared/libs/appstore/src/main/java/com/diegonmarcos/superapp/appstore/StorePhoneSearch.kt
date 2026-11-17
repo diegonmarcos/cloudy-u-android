@@ -35,7 +35,7 @@ object StorePhoneSearch {
         OPEN -> setOf(StoreSearchPage.DECLARED, SourceResolver.KIND_FDROID, SourceResolver.KIND_IZZY, StoreSearchPage.GITHUB)
         CLOSED -> setOf(StoreSearchPage.DECLARED, StoreSearchPage.PLAY)
         INTEGRITY -> setOf(StoreSearchPage.PLAY)
-        else -> setOf(StoreSearchPage.DECLARED, SourceResolver.KIND_FDROID, SourceResolver.KIND_IZZY, StoreSearchPage.PLAY)
+        else -> setOf(StoreSearchPage.DECLARED, SourceResolver.KIND_FDROID, SourceResolver.KIND_IZZY, StoreSearchPage.GITHUB, StoreSearchPage.PLAY)
     }
 
     private val OPEN_SOURCES = setOf(SourceResolver.KIND_FDROID, SourceResolver.KIND_IZZY, StoreSearchPage.GITHUB)
@@ -115,8 +115,23 @@ object StorePhoneSearch {
 
     // ── Games ─────────────────────────────────────────────────────────
 
-    class Game(val pkg: String, val name: String, val developer: String, val desc: String, val category: String, val source: String, val icon: String)
+    class Game(val pkg: String, val name: String, val developer: String, val desc: String, val category: String, val source: String, val icon: String,
+        /** #1776 free software (not "was found on F-Droid": a GitHub-release game is open source too). */
+        val openSource: Boolean = source != StoreSearchPage.PLAY,
+        /** "2d" | "3d". */
+        val dimension: String = DIM_2D,
+        /** The section inside a split when the row names one (the owner's genres); blank = its category's label. */
+        val genre: String = "",
+        val storeUrl: String = "", val apk: String = "")
     class Games(val categories: List<StoreRecs.Category>, val games: List<Game>, val problems: List<String> = emptyList())
+
+    const val DIM_2D = "2d"
+    const val DIM_3D = "3d"
+    val DIMS = listOf(DIM_2D, DIM_3D)
+    fun dimLabel(dim: String) = if (dim == DIM_3D) "3D" else "2D"
+    fun licenceLabel(open: Boolean) = if (open) "Open source" else "Non open source"
+    /** The owner's genres, in his order; other sections follow. */
+    val GENRES = listOf("Strategy & Management", "RPG & Roguelike", "Rhythm & Puzzle/Board", "Sandbox & Voxel", "Racing", "Platformer")
 
     fun parseGames(text: String?): Games {
         if (text.isNullOrBlank()) return Games(emptyList(), emptyList(), listOf("not served yet"))
@@ -130,7 +145,9 @@ object StorePhoneSearch {
             val pkg = o.optString("pkg").trim()
             if (pkg.isEmpty() || games.any { it.pkg == pkg }) { problems += "entry ${i + 1}: no package or duplicate"; continue }
             games += Game(pkg, o.optString("name").ifBlank { pkg }, o.optString("developer"), o.optString("desc"), o.optString("category").ifBlank { "other" },
-                o.optString("source").ifBlank { StoreSearchPage.PLAY }, o.optString("icon"))
+                o.optString("source").ifBlank { StoreSearchPage.PLAY }, o.optString("icon"),
+                if (o.has("open_source")) o.optBoolean("open_source") else o.optString("source").ifBlank { StoreSearchPage.PLAY } != StoreSearchPage.PLAY,
+                if (o.optString("dimension").lowercase() == DIM_3D) DIM_3D else DIM_2D, o.optString("genre"), o.optString("store_url"), o.optString("apk"))
         } }
         return Games(cats, games, problems)
     }
@@ -147,9 +164,22 @@ object StorePhoneSearch {
         }
     }
 
+    /** #1776 the games of one split: licence (open source or not) and graphics (2d | 3d). */
+    fun split(list: List<Game>, open: Boolean, dim: String): List<Game> = list.filter { it.openSource == open && it.dimension == dim }
+
+    /** A split's sections: the owner's genres first (his order), then the declared categories in order, then any other; a row with a genre sits in it. */
+    fun sections(g: Games, list: List<Game>): List<Pair<String, List<Game>>> {
+        fun label(x: Game) = x.genre.ifBlank { g.categories.firstOrNull { it.id == x.category }?.label ?: x.category.replaceFirstChar { it.uppercase() } }
+        val labels = list.map(::label).distinct()
+        val order = GENRES + g.categories.map { it.label } + labels
+        return order.distinct().filter { it in labels }.map { l -> l to list.filter { label(it) == l } }
+    }
+
+    fun sectionTag(label: String) = label.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
+
     /** A catalogue game as a result: its catalogue source (play | fdroid) with the store icon. */
     fun gameResult(g: Game): StoreSuggest.Result =
-        StoreSuggest.Result("game:${g.pkg}", g.pkg, g.name, g.developer, listOf(g.source), g.source == SourceResolver.KIND_FDROID, "", "", g.icon)
+        StoreSuggest.Result("game:${g.pkg}", g.pkg, g.name, g.developer, listOf(g.source), g.openSource, g.storeUrl, g.apk.ifBlank { g.storeUrl }, g.icon)
 
     /** Catalogue games whose name, developer or package matches [query] (case-insensitive). */
     fun matchGames(list: List<Game>, query: String): List<Game> {

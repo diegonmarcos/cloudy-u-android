@@ -512,7 +512,7 @@ object StoreSearchPage {
         val gamePkgs = remember(catalogue) { catalogue.map { it.pkg }.toSet() }
         // The Games subpage also answers from the catalogue itself (name, developer, package), so a listed game is found with no network.
         val extra = if (phoneSub == StorePhoneSearch.GAMES) StorePhoneSearch.matchGames(catalogue, asked).map {
-            StoreSuggest.Hit(it.source, it.pkg, it.name, it.developer, foss = it.source == SourceResolver.KIND_FDROID, icon = it.icon)
+            StoreSuggest.Hit(it.source, it.pkg, it.name, it.developer, foss = it.openSource, icon = it.icon)
         } else emptyList()
         val hits = states.values.filterIsInstance<SrcState.Done>().flatMap { it.hits } + extra.filter { h -> d.sources.any { it.id == h.source } }
         val merged = StoreSuggest.merge(d.order, hits).filter { !hideFleet || it.pkg !in fleetPackages }.filter {
@@ -585,7 +585,12 @@ object StoreSearchPage {
     private fun ladderOf(ctx: Context, c: SourceResolver.Config, r: StoreSuggest.Result): SourceResolver.External {
         val ext = DeclaredEdits.apply(ctx, c, r.pkg, SourceResolver.resolve(c, r.pkg))
         if (ext.declared) return ext
+        // #1776 a GitHub-release game installs from its direct asset URL through the vendor rung (https, identity-checked like any vendor APK).
+        val gh = r.link.takeIf { GITHUB in r.sources && it.startsWith("https://") && it.endsWith(".apk") }?.let {
+            SourceResolver.Source.Vendor(apk = it, abis = emptyMap(), feed = null, versionName = null, versionCode = null, apkKey = null, sha256Key = null, sha256 = null, versionRe = null)
+        }
         val found = listOfNotNull(
+            gh,
             SourceResolver.Source.FDroid.takeIf { SourceResolver.KIND_FDROID in r.sources },
             SourceResolver.Source.Izzy.takeIf { SourceResolver.KIND_IZZY in r.sources },
             SourceResolver.Source.PlayAnon.takeIf { PLAY in r.sources },
@@ -793,6 +798,9 @@ object StoreSearchPage {
         lines: MutableMap<String, String>, open: MutableMap<String, Boolean>, tick: Int, bump: () -> Unit,
     ) {
         val p = LocalKitPalette.current
+        // #1776 the split: licence (Open source | Non open source) then graphics (2D | 3D); the genre / category sections sit inside it.
+        var openSrc by remember { mutableStateOf(true) }
+        var dim by remember { mutableStateOf(StorePhoneSearch.DIM_2D) }
         Column(Modifier.fillMaxWidth().testTag(TAG_GAMES), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
             when {
                 data == null || d == null -> KitStatusBanner(ctx.getString(R.string.store_landing_loading), KitState.BUSY, tag = "store-search:phone-recs-loading")
@@ -800,9 +808,22 @@ object StoreSearchPage {
                 else -> {
                     val list = StorePhoneSearch.games(data, fleetPackages)
                     val icons = list.associate { it.pkg to it.icon }
-                    StorePhoneSearch.gamesByCategory(data, list).forEach { (c, gs) ->
-                        Text(c.label + " (" + gs.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
-                            modifier = Modifier.testTag(gameCategoryTag(c.id)))
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                        listOf(true, false).forEach { o ->
+                            Pill(StorePhoneSearch.licenceLabel(o) + " (" + list.count { it.openSource == o } + ")", openSrc == o, TAG_GAMES + ":lic:" + if (o) "open" else "closed") { openSrc = o }
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                        StorePhoneSearch.DIMS.forEach { x ->
+                            Pill(StorePhoneSearch.dimLabel(x) + " (" + StorePhoneSearch.split(list, openSrc, x).size + ")", dim == x, TAG_GAMES + ":dim:" + x) { dim = x }
+                        }
+                    }
+                    val shown = StorePhoneSearch.split(list, openSrc, dim)
+                    if (shown.isEmpty()) Text("No " + StorePhoneSearch.dimLabel(dim) + " " + StorePhoneSearch.licenceLabel(openSrc).lowercase() + " games in the catalogue yet.",
+                        color = p.textSecondary, fontSize = KitDensity.caption)
+                    StorePhoneSearch.sections(data, shown).forEach { (label, gs) ->
+                        Text(label + " (" + gs.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
+                            modifier = Modifier.testTag(gameCategoryTag(StorePhoneSearch.sectionTag(label))))
                         ResultGrid(ctx, cfg, d, gs.map(StorePhoneSearch::gameResult), icons, lines, open, tick, bump)
                     }
                 }
