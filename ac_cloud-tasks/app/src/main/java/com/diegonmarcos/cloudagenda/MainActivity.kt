@@ -5,7 +5,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
 import com.diegonmarcos.cloudagenda.data.AttachmentKind
+import com.diegonmarcos.cloudagenda.data.EventIntents
+import com.diegonmarcos.cloudagenda.data.Ics
 import com.diegonmarcos.cloudagenda.data.ProjectSummaries
 import com.diegonmarcos.cloudagenda.data.TasksDb
 import com.diegonmarcos.cloudagenda.data.TasksPrefs
@@ -35,6 +38,7 @@ class MainActivity : ComponentActivity() {
         env = AppEnv(this) { kind ->
             documentPicker.launch(if (kind == AttachmentKind.IMAGE) arrayOf("image/*") else arrayOf("*/*"))
         }
+        offerImport(intent)
         setContent { TasksApp(env) }
         Updater.start(this)
     }
@@ -43,6 +47,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         // A project deep link while the app is open: select it, then rebuild so the page reads the new selection.
         if (openProject(intent)) recreate()
+        else if (::env.isInitialized) offerImport(intent)
     }
 
     /**
@@ -59,7 +64,36 @@ class MainActivity : ComponentActivity() {
         return true
     }
 
+    /**
+     * #1766 an "Add to calendar" Intent (title, beginTime, ... extras) or an .ics file (VIEW / SEND, file or content URI): the events go
+     * to the New event sheet. A calendar VIEW (an event or a moment of the calendar provider) just opens the app: with no calendar
+     * permission there is nothing to read behind it.
+     */
+    private fun offerImport(intent: Intent?) {
+        if (intent == null) return
+        val events = runCatching {
+            EventIntents.fromIntent(intent)?.let { listOf(it) } ?: icsOf(intent)?.let { Ics.parse(it) }.orEmpty()
+        }.getOrDefault(emptyList())
+        if (events.isNotEmpty()) { env.controller.offerImport(events); intent.action = Intent.ACTION_MAIN }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun icsOf(intent: Intent): String? {
+        val uri: Uri? = when (intent.action) {
+            Intent.ACTION_VIEW -> intent.data
+            Intent.ACTION_SEND -> if (android.os.Build.VERSION.SDK_INT >= 33) intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                else intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+            else -> null
+        }
+        if (uri != null) {
+            if (uri.scheme == "content" && uri.authority == "com.android.calendar") return null
+            return contentResolver.openInputStream(uri)?.use { it.bufferedReader().readText().take(MAX_ICS) }
+        }
+        return intent.getStringExtra(Intent.EXTRA_TEXT)?.takeIf { it.contains("BEGIN:VCALENDAR", true) }
+    }
+
     private companion object {
+        const val MAX_ICS = 2_000_000
         const val EXTRA_TARGET = "shortcut_action"
         const val PROJECT_PREFIX = "project:"
     }

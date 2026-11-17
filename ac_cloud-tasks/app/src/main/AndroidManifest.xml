@@ -47,6 +47,59 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- #1766 a calendar app: the launcher's APP_CALENDAR slot. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.APP_CALENDAR" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <!-- #1766 "Add to calendar" (CalendarContract.Events): title, beginTime, endTime, eventLocation, description, allDay, guests. -->
+            <intent-filter>
+                <action android:name="android.intent.action.INSERT" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="vnd.android.cursor.dir/event" />
+                <data android:mimeType="vnd.android.cursor.item/event" />
+            </intent-filter>
+            <!-- #1766 view an event / a moment of the calendar provider. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="com.android.calendar" android:pathPrefix="/events" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="time/epoch" />
+                <data android:scheme="content" android:host="com.android.calendar" android:pathPrefix="/time" />
+            </intent-filter>
+            <!-- #1766 an iCalendar file (.ics) opened or shared, from a file or a content URI. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="text/calendar" />
+                <data android:mimeType="text/x-vcalendar" />
+                <data android:mimeType="application/ics" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:pathPattern=".*\\.ics" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/calendar" />
+                <data android:mimeType="text/x-vcalendar" />
+                <data android:mimeType="application/ics" />
+            </intent-filter>
         </activity>
 
         <receiver

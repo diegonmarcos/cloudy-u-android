@@ -162,6 +162,42 @@ class TasksRepository(private val dbh: TasksDb, private val clock: () -> Long = 
         db.delete("tags", "id = ?", arrayOf(id))
     }
 
+    // ── #1766 calendar import ───────────────────────────────────────────────────────────────────────────
+
+    /** The task an earlier import of [uid] made (meta key `ical:<uid>`), or null when none or it was deleted since. */
+    fun taskForUid(uid: String): Task? {
+        if (uid.isBlank()) return null
+        val id = db.rawQuery("SELECT value FROM meta WHERE key = ?", arrayOf(ICAL_KEY + uid)).use { c -> if (c.moveToFirst()) c.getString(0) else null } ?: return null
+        return snapshot().task(id)
+    }
+
+    /** The list an import lands in by default: the first list of the project named Inbox (made, with a list Inbox, when absent). */
+    fun inboxListId(): String {
+        val s = snapshot()
+        val project = s.projects.firstOrNull { it.name.equals("Inbox", true) } ?: addProject("Inbox")
+        return s.listsOf(project.id).firstOrNull()?.id ?: addList(project.id, "Inbox").id
+    }
+
+    /** The first list of [projectId] (a list Events is made when the project has none). */
+    fun firstListOf(projectId: String): String = snapshot().listsOf(projectId).firstOrNull()?.id ?: addList(projectId, "Events").id
+
+    /**
+     * Saves [events] as dated tasks of [listId]. An event whose UID was imported before is changed in place (its list, status and
+     * tags kept) with [DuplicateChoice.UPDATE] and left alone with SKIP. One transaction; returns (added, updated, skipped).
+     */
+    fun importEvents(events: List<ImportedEvent>, listId: String, choice: DuplicateChoice): Triple<Int, Int, Int> = db.transaction {
+        var added = 0; var updated = 0; var skipped = 0
+        for (e in events) {
+            val old = taskForUid(e.uid)
+            if (old != null && choice == DuplicateChoice.SKIP) { skipped++; continue }
+            val t = e.toTask(old?.id ?: newId(), old?.listId ?: listId, old)
+            saveTask(t)
+            if (e.uid.isNotBlank()) insertWithOnConflict("meta", null, ContentValues().apply { put("key", ICAL_KEY + e.uid); put("value", t.id) }, SQLiteDatabase.CONFLICT_REPLACE)
+            if (old != null) updated++ else added++
+        }
+        Triple(added, updated, skipped)
+    }
+
     // ── first-run seed ──────────────────────────────────────────────────────────────────────────────────
 
     /**
@@ -328,6 +364,7 @@ class TasksRepository(private val dbh: TasksDb, private val clock: () -> Long = 
         const val SEED_KEY = "seed_project_zero"
         const val SAMPLE_SEED = "seed_sample_"
         const val SAMPLE_FLAG = "sample_project:"
+        const val ICAL_KEY = "ical:"
         fun newId(): String = UUID.randomUUID().toString()
     }
 }

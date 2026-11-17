@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -202,6 +203,18 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
                     }
                 }
             }
+        }
+    }
+
+    // #1766 events handed over by another app: the New event sheet, then the saved events on the Calendar.
+    ImportSheet(env.controller)
+    val importNote = env.controller.lastImport
+    val ctx = LocalContext.current
+    LaunchedEffect(importNote) {
+        if (importNote != null) {
+            section = Ids.TASKS; pageOf[Ids.TASKS] = Ids.PAGE_CALENDAR
+            android.widget.Toast.makeText(ctx, importNote, android.widget.Toast.LENGTH_LONG).show()
+            env.controller.clearImportNote()
         }
     }
 

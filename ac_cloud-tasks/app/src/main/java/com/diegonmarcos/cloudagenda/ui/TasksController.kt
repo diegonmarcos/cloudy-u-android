@@ -4,6 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.diegonmarcos.cloudagenda.data.AgentConfig
+import com.diegonmarcos.cloudagenda.data.DuplicateChoice
+import com.diegonmarcos.cloudagenda.data.ImportedEvent
 import com.diegonmarcos.cloudagenda.data.Proposal
 import com.diegonmarcos.cloudagenda.data.SampleProject
 import com.diegonmarcos.cloudagenda.data.Snapshot
@@ -42,6 +44,12 @@ class TasksController(
     var proposals by mutableStateOf<List<Proposal>>(emptyList())
         private set
     var loaded by mutableStateOf(false)
+        private set
+
+    /** #1766 events other apps handed over (Add to calendar, an .ics file) waiting in the New event sheet; empty = no sheet. */
+    var incoming by mutableStateOf<List<ImportedEvent>>(emptyList())
+        private set
+    var lastImport by mutableStateOf<String?>(null)
         private set
 
     /** First run seeds (idempotent), then everything is read. Safe to call again. */
@@ -93,6 +101,28 @@ class TasksController(
     fun renameTag(id: String, name: String) = write { it.renameTag(id, name) }
     fun recolorTag(id: String, color: Long) = write { it.recolorTag(id, color) }
     fun deleteTag(id: String) = write { it.deleteTag(id) }
+
+    // ── #1766 calendar import ───────────────────────────────────────────────────────────────────────────
+
+    fun offerImport(events: List<ImportedEvent>) { if (events.isNotEmpty()) incoming = events }
+    fun dismissImport() { incoming = emptyList() }
+    fun clearImportNote() { lastImport = null }
+
+    /** How many of [events] were imported before (same UID): the sheet then asks update or skip. */
+    fun duplicateCount(events: List<ImportedEvent>): Int = events.count { repo.taskForUid(it.uid) != null }
+
+    /** Saves the pending events into [projectId] (null = Inbox). */
+    fun importIncoming(projectId: String?, choice: DuplicateChoice, events: List<ImportedEvent> = incoming) {
+        incoming = emptyList()
+        scope.launch {
+            val (a, u, k) = withContext(io) {
+                val list = if (projectId == null) repo.inboxListId() else repo.firstListOf(projectId)
+                repo.importEvents(events, list, choice)
+            }
+            lastImport = "Calendar: $a added, $u updated, $k skipped"
+            reload()
+        }
+    }
 
     // ── the mail agent ──────────────────────────────────────────────────────────────────────────────────
 
