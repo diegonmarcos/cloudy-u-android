@@ -14,3 +14,10 @@ A paint app and a music mixer (#1780). Tile `Canvas` sits in Cloud > Apps > Prim
 * `test/test-canvas-app.sh` (static, each rule with a planted mutation): navigation, no WebView, permissions, no audio asset, the suites exist.
 * `app/src/test`: `DrawTest` (stroke/undo, layers, fill, compositing, PNG), `PlayTest` (mute/solo, pan law, loop timing, WAV, offline mix), `NavShapeTest`.
 * `test/emulator-canvas-screens.sh` + `.github/workflows/canvas-screens-emulator.yml` (dispatch only): screenshots of Draw with a drawing, Draw layers, Play instruments and the Play mixer.
+
+## Draw Enhancer and Configs > AI (#1782)
+
+* Bottom nav is Draw | Play | Draw Enhancer | Music Enhancer. Music Enhancer is a coming-soon placeholder (its entry is veiled grey).
+* **Draw Enhancer**: input an uploaded picture or the current drawing; pick a preset (Simple enhance, Convert to 3D, Photorealistic, Line art clean-up, Colourize) or write a prompt. Each preset expands to a long professional prompt, shown in an expandable, per-run editable panel. The presets, qualities, sizes and limits are the runtime dataset `data/fleet/app/com.diegonmarcos.cloudcanvas/enhance-presets.json` (served by Cloud Store, read through libs:fleet-data-client), not code. The request (prompt plus image as one multimodal message) goes to OpenRouter through libs:ai's contract and HTTP; the result shows beside the original with Save PNG (SAF) and Send back to Draw (a new layer). Progress, errors, offline and a per-run cost cap are handled.
+* **Configs > AI** (an own tab of the fleet Configs strip): the OpenRouter key (own override in `canvas_ai_secret`, EncryptedSharedPreferences; otherwise the fleet Account's key through libs:text-tools; masked, never logged or exported), a model per task from the fleet catalogue's image models (libs:model-catalogue), output quality, size and the cost cap.
+* Tests: `EnhanceTest` (preset expansion, per-task model persistence, key masking and a no-log source scan, request builder and answer parser, cost cap), `NavShapeTest`.

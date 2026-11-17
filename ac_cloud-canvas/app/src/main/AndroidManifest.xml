@@ -2,7 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- No network and no storage or microphone permission: files go through the Storage Access Framework, sounds are synthesized, loops are recorded as notes. Cloud Account is opened by a package-pinned intent. -->
+    <!-- Network only for the Draw Enhancer's OpenRouter call. No storage or microphone permission: files go through the Storage Access Framework, sounds are synthesized, loops are recorded as notes. Cloud Account is opened by a package-pinned intent. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <queries>
         <package android:name="com.diegonmarcos.cloudaccount" />
     </queries>

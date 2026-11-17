@@ -8,7 +8,7 @@
   },
   "name": "cloud-canvas",
   "display_name": "Cloud Canvas",
-  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), and Play, a music mixer with a piano, drum pads and a synth (all synthesized, low-latency AudioTrack), a 4 to 8 track mixer with loop recording and WAV export. Bottom nav Draw | Play.",
+  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), and Play, a music mixer with a piano, drum pads and a synth (all synthesized, low-latency AudioTrack), a 4 to 8 track mixer with loop recording and WAV export. Draw Enhancer sends a picture and a preset prompt to an image model through OpenRouter (key from Configs > AI or the fleet Account); Music Enhancer is a coming-soon placeholder. Bottom nav Draw | Play | Draw Enhancer | Music Enhancer.",
   "category": "android",
   "android": {
     "application_id": "com.diegonmarcos.cloudcanvas",
@@ -120,7 +120,11 @@
         "libs:fleetconfigs-logcat",
         "libs:fleetconfigs-xray",
         "libs:theme-background",
-        "libs:ui-kit"
+        "libs:ui-kit",
+        "libs:ai",
+        "libs:model-catalogue",
+        "libs:text-tools",
+        "libs:fleet-data-client"
       ]
     },
     "libs:core": {
@@ -187,6 +191,21 @@
       "_doc": "2026-10-16 owner decision: all apps are Compose. The fleet's Compose kit (CloudKitTheme, KitPalette, KitCard, KitSettingsRow, KitButton), shared BY REFERENCE.",
       "dir": "../ab_cloud-libs-shared/libs/ui-kit",
       "type": "library"
+    },
+    "libs:ai": {
+      "_doc": "#1782 the fleet's AI contract (assets/ai/ai.json: the OpenRouter endpoint and referer) and its HTTP (AiUrlHttp), used by the Draw Enhancer; no chat page of this app. The key is never read by the lib.",
+      "dir": "../ab_cloud-libs-shared/libs/ai",
+      "type": "library"
+    },
+    "libs:model-catalogue": {
+      "_doc": "#1782 the fleet model catalogue (assets models/catalogue.json): Configs > AI lists its image models per task.",
+      "dir": "../ab_cloud-libs-shared/libs/model-catalogue",
+      "type": "library"
+    },
+    "libs:text-tools": {
+      "_doc": "#1782 the ITextTools binder: the OpenRouter key the fleet Account manages is read on use through TextToolsClient.revealAiKey; this app keeps no copy of the fleet key.",
+      "dir": "../ab_cloud-libs-shared/libs/text-tools",
+      "type": "library"
     }
   },
   "tests": {
@@ -204,10 +223,12 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Canvas (#1780): bottom nav Draw | Play, the app opens on Draw. Each section holds one page; the Draw tools and the Play instruments / mixer views are drawn inside the page, not declared as strips.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Canvas (#1780, #1782): bottom nav Draw | Play | Draw Enhancer | Music Enhancer, the app opens on Draw. Each section holds one page; the Draw tools, the Play views and the Enhancer's panels are drawn inside the page. Music Enhancer is a coming-soon placeholder whose entry is greyed out.",
     "bottom_nav": [
       "draw",
-      "play"
+      "play",
+      "enhance",
+      "music"
     ],
     "default_section": "draw",
     "configs_ui": [
@@ -235,6 +256,30 @@
             "id": "play",
             "label": "Play",
             "icon": "music_note"
+          }
+        ]
+      },
+      {
+        "id": "enhance",
+        "label": "Draw Enhancer",
+        "icon": "auto_awesome",
+        "pages": [
+          {
+            "id": "enhance",
+            "label": "Draw Enhancer",
+            "icon": "auto_awesome"
+          }
+        ]
+      },
+      {
+        "id": "music",
+        "label": "Music Enhancer",
+        "icon": "graphic_eq",
+        "pages": [
+          {
+            "id": "music",
+            "label": "Music Enhancer",
+            "icon": "graphic_eq"
           }
         ]
       }

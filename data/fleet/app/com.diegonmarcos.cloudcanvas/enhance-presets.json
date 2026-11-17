@@ -1,0 +1,89 @@
+{
+ "schemaVersion": 1,
+ "_doc": "THE PRESET LIBRARY of Cloud Canvas > Draw Enhancer (#1782): a runtime dataset served by Cloud Store (data/fleet/manifest.json::apps), never an APK asset. Each preset's prompt is the long professional prompt the preset expands to; {size} and {quality} are filled from the user's Configs > AI choices. qualities[] and sizes[] are the Configs presets (sizes in pixels on the long side). Prompts are neutral, original text written for this app.",
+ "presets": [
+  {
+   "id": "simple",
+   "label": "Simple enhance",
+   "summary": "Cleaner, sharper, better balanced, nothing invented.",
+   "prompt": "Enhance this image the way a careful professional retoucher would. Increase apparent resolution and fine detail, restore crisp edges and clean contours, remove compression artefacts, noise and colour banding, and correct exposure, contrast and white balance so the colours look natural and harmonious. Preserve every element of the original drawing or photograph: do not add, remove or restyle objects, and keep the original artistic style, palette intent and framing. Output a single finished image at {size}, quality target: {quality}. Keep the composition, proportions and subject identity of the input image exactly; do not add text, captions, watermarks, logos or borders; avoid blur, banding, noise, JPEG blocking, halos, warped hands or faces, duplicated limbs and any other generation artefacts.",
+   "task": "draw_enhance"
+  },
+  {
+   "id": "convert_3d",
+   "label": "Convert to 3D",
+   "summary": "Render the picture as a polished 3D scene.",
+   "prompt": "Re-render this image as a high-quality three-dimensional computer-graphics scene while keeping the exact layout, silhouettes and subject of the original. Give every object believable volume with smooth bevels and subtle subsurface and specular response; use physically based materials (matte plastic, brushed metal, soft fabric, translucent glass as appropriate to each element); light the scene with a soft key light, a gentle rim light and ambient occlusion in the contact areas, with soft shadows and a shallow, natural depth of field. Use a clean studio or an environment that fits the subject, a coherent colour palette taken from the original, and a stylised-realistic finish similar to a modern animated feature film render. Output a single finished image at {size}, quality target: {quality}. Keep the composition, proportions and subject identity of the input image exactly; do not add text, captions, watermarks, logos or borders; avoid blur, banding, noise, JPEG blocking, halos, warped hands or faces, duplicated limbs and any other generation artefacts.",
+   "task": "convert_3d"
+  },
+  {
+   "id": "photoreal",
+   "label": "Photorealistic",
+   "summary": "Turn a sketch or painting into a photograph.",
+   "prompt": "Transform this image into a photorealistic photograph of the same scene and subject. Interpret every shape of the input as a real object with accurate anatomy, perspective and scale; use true-to-life materials and textures (skin pores, fabric weave, wood grain, metal reflections, foliage detail); apply natural lighting consistent with a single believable light source, with correct shadows, reflections and global illumination; simulate a professional full-frame camera with an 85mm lens at f/2.8, natural colour science and a very slight film grain. Keep the colours, arrangement and mood of the input. Output a single finished image at {size}, quality target: {quality}. Keep the composition, proportions and subject identity of the input image exactly; do not add text, captions, watermarks, logos or borders; avoid blur, banding, noise, JPEG blocking, halos, warped hands or faces, duplicated limbs and any other generation artefacts.",
+   "task": "draw_enhance"
+  },
+  {
+   "id": "lineart",
+   "label": "Line art clean-up",
+   "summary": "Crisp, even ink lines on a clean background.",
+   "prompt": "Clean up this drawing into finished line art. Trace the existing strokes as confident, continuous ink lines with a consistent weight and gentle tapering at the ends; close small gaps, remove stray marks, smudges, paper texture and background noise, and straighten wobbly lines without changing the shapes. Use solid black lines on a pure white background, no shading, no grey fill and no colour, and keep every detail of the original sketch, including small features and hatching intent, at a uniform professional inking standard. Output a single finished image at {size}, quality target: {quality}. Keep the composition, proportions and subject identity of the input image exactly; do not add text, captions, watermarks, logos or borders; avoid blur, banding, noise, JPEG blocking, halos, warped hands or faces, duplicated limbs and any other generation artefacts.",
+   "task": "draw_enhance"
+  },
+  {
+   "id": "colourize",
+   "label": "Colourize",
+   "summary": "Add harmonious colour, light and shading.",
+   "prompt": "Colourize this image into a finished, fully coloured illustration. Keep the original line work and shapes untouched and add flat base colours first, then cel or soft shading, highlights and ambient light. Choose a harmonious, appealing palette with sensible local colours (natural skin tones, sky, foliage, materials), consistent light direction and temperature, subtle colour variation within large areas, coloured shadows rather than grey ones, and clean colour boundaries that never bleed over the lines. The result should look like the work of a professional digital colourist. Output a single finished image at {size}, quality target: {quality}. Keep the composition, proportions and subject identity of the input image exactly; do not add text, captions, watermarks, logos or borders; avoid blur, banding, noise, JPEG blocking, halos, warped hands or faces, duplicated limbs and any other generation artefacts.",
+   "task": "draw_enhance"
+  }
+ ],
+ "qualities": [
+  {
+   "id": "fast",
+   "label": "Fast",
+   "hint": "good enough, quickest and cheapest"
+  },
+  {
+   "id": "balanced",
+   "label": "Balanced",
+   "hint": "high quality with moderate cost"
+  },
+  {
+   "id": "max",
+   "label": "Maximum",
+   "hint": "the best detail the model can give; slowest and dearest"
+  }
+ ],
+ "sizes": [
+  {
+   "id": "s1024",
+   "label": "1024 px",
+   "max_px": 1024
+  },
+  {
+   "id": "s1536",
+   "label": "1536 px",
+   "max_px": 1536
+  },
+  {
+   "id": "s2048",
+   "label": "2048 px",
+   "max_px": 2048
+  }
+ ],
+ "limits": {
+  "max_input_px": 2048,
+  "max_input_bytes": 6000000,
+  "cost_caps_usd": [
+   0.05,
+   0.25,
+   1.0
+  ],
+  "default_cost_cap_usd": 0.25
+ },
+ "defaults": {
+  "quality": "balanced",
+  "size": "s1024"
+ }
+}

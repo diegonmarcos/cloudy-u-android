@@ -164,6 +164,9 @@
     "com.diegonmarcos.cloudwiki": [
       "wiki"
     ],
+    "com.diegonmarcos.cloudcanvas": [
+      "enhance-presets"
+    ],
     "cld.termux": [
       "terminal-selftest"
     ],

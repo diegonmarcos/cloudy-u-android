@@ -2725,6 +2725,22 @@
       "used_by": [
         "ac_cloud-canvas"
       ]
+    },
+    "canvas_ai": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "#1782 Cloud Canvas Configs > AI: the model chosen per task (Draw Enhance, Convert to 3D, Music Enhance), the output quality and size and the per-run cost cap. Part of the app's settings, so it migrates.",
+      "used_by": [
+        "ac_cloud-canvas"
+      ]
+    },
+    "canvas_ai_secret": {
+      "kind": "encrypted",
+      "class": "secret",
+      "doc": "#1782 Cloud Canvas Configs > AI: the app's own OpenRouter key (the per-app override of the fleet Account's key), in EncryptedSharedPreferences through SafeEncryptedPrefs. Masked on screen, never logged, migrates only through the vault.",
+      "used_by": [
+        "ac_cloud-canvas"
+      ]
     }
   },
   "bundle": {
@@ -3556,15 +3572,19 @@
       "module": "ac_cloud-canvas",
       "schema_version": 1,
       "libs": [
+        "lib-ai",
         "lib-bottomnav",
         "lib-core",
         "lib-crash",
         "lib-devtools",
+        "lib-fleet-data-client",
         "lib-fleetconfig-model",
         "lib-fleetconfigs-agents",
         "lib-fleetconfigs-logcat",
         "lib-fleetconfigs-xray",
+        "lib-model-catalogue",
         "lib-perms",
+        "lib-text-tools",
         "lib-theme-background",
         "lib-ui-icons",
         "lib-ui-kit",

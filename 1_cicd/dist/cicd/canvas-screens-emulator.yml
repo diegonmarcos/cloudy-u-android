@@ -1,8 +1,8 @@
 # ╔═════════════════════════════════════════════════════════════════
 # ║ Cloud Canvas screenshots (emulator, dispatch only) (#1780)               ║
 # ║ Installs the published Cloud Canvas (x86_64) on a Pixel 7 emulator and   ║
-# ║ captures Draw with a drawing, Draw layers, Play instruments and the Play ║
-# ║ mixer. Script: ac_cloud-canvas/test/emulator-canvas-screens.sh. Evidence: ║
+# ║ captures Draw with a drawing, Draw layers, Play instruments, the Play   ║
+# ║ mixer, the Draw Enhancer, Configs > AI and the Music placeholder. Script: ac_cloud-canvas/test/emulator-canvas-screens.sh. Evidence: ║
 # ║ the `canvas-screens` artifact. Not a gate: a screenshot job, run on      ║
 # ║ request only (rules/ci.md cost budget).                                  ║
 # ╚═════════════════════════════════════════════════════════════════
@@ -29,6 +29,7 @@ jobs:
         with:
           sparse-checkout: |
             ac_cloud-canvas/test
+            data/fleet/app/com.diegonmarcos.cloudcanvas
       - name: Fetch the published APK (x86_64)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -55,7 +56,7 @@ jobs:
           ram-size: 4096M
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash ac_cloud-canvas/test/emulator-canvas-screens.sh apk/Cloud-Canvas-x86_64.apk out
+          script: bash ac_cloud-canvas/test/emulator-canvas-screens.sh apk/Cloud-Canvas-x86_64.apk data/fleet/app/com.diegonmarcos.cloudcanvas/enhance-presets.json out
       # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
       - name: Boot the emulator and capture (attempt 2)
         if: steps.try1.outcome != 'success'
@@ -69,7 +70,7 @@ jobs:
           ram-size: 4096M
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash ac_cloud-canvas/test/emulator-canvas-screens.sh apk/Cloud-Canvas-x86_64.apk out
+          script: bash ac_cloud-canvas/test/emulator-canvas-screens.sh apk/Cloud-Canvas-x86_64.apk data/fleet/app/com.diegonmarcos.cloudcanvas/enhance-presets.json out
       - uses: actions/upload-artifact@v4
         if: always()
         with:

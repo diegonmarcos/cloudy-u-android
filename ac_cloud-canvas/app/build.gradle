@@ -133,6 +133,12 @@ dependencies {
     implementation project(':libs:theme-background')
     // The fleet's tokens and kit: CloudKitTheme, KitPalette, KitCard, KitSettingsRow, KitButton (libs:ui-kit).
     implementation project(':libs:ui-kit')
+    // #1782 the Draw Enhancer: the fleet AI contract and HTTP (libs:ai), the model catalogue, the fleet Account's key (libs:text-tools) and the
+    // runtime dataset reader (the presets are served by Cloud Store, #1547).
+    implementation project(':libs:ai')
+    implementation project(':libs:model-catalogue')
+    implementation project(':libs:text-tools')
+    implementation project(':libs:fleet-data-client')
     implementation platform('androidx.compose:compose-bom:2025.11.01')
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.foundation:foundation'

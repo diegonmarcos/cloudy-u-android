@@ -44,6 +44,7 @@ on:
       # fleet-refresh.yml (schedule only) ships the app for a moved cross-app dir.
       #   input: "1_cicd/src/cicd/ship-cloud-canvas.yml"
       # ── end MANAGED-PATHS-HEADER ──
+      - "ab_cloud-libs-shared/libs/ai/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
       - "ab_cloud-libs-shared/libs/core/**"
       - "ab_cloud-libs-shared/libs/crash/**"
@@ -53,7 +54,9 @@ on:
       - "ab_cloud-libs-shared/libs/fleetconfigs-agents/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**"
+      - "ab_cloud-libs-shared/libs/model-catalogue/**"
       - "ab_cloud-libs-shared/libs/perms/**"
+      - "ab_cloud-libs-shared/libs/text-tools/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"
       - "ab_cloud-libs-shared/libs/ui-icons/**"
       - "ab_cloud-libs-shared/libs/ui-kit/**"

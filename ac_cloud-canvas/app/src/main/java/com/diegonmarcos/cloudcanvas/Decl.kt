@@ -3,8 +3,8 @@ package com.diegonmarcos.cloudcanvas
 import com.diegonmarcos.superapp.bottomnav.NavDecl
 
 /**
- * The navigation declaration app/build.gradle bakes from build.json::ui (bottom_nav Draw | Play, sections, default_section), decoded once through
- * libs:bottomnav's NavDecl. The two section ids below are the only ids Kotlin dispatches on; test-canvas-app.sh diffs them against build.json::ui.
+ * The navigation declaration app/build.gradle bakes from build.json::ui (bottom_nav Draw | Play | Draw Enhancer | Music Enhancer, sections, default_section), decoded once through
+ * libs:bottomnav's NavDecl. The four section ids below are the only ids Kotlin dispatches on; test-canvas-app.sh diffs them against build.json::ui.
  */
 object Decl {
     val nav: NavDecl by lazy {
@@ -13,4 +13,6 @@ object Decl {
 
     const val SECTION_DRAW = "draw"
     const val SECTION_PLAY = "play"
+    const val SECTION_ENHANCE = "enhance"
+    const val SECTION_MUSIC = "music"
 }

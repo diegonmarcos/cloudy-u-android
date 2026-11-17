@@ -9,4 +9,5 @@
     <color name="app_outline">#FF2A4650</color>
     <color name="app_accent">#FF2DD4BF</color>
     <color name="app_on_accent">#FF042F2E</color>
+    <color name="app_error">#FFFF8A80</color>
 </resources>

@@ -1,6 +1,8 @@
 package com.diegonmarcos.cloudcanvas.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -15,7 +17,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
+import com.diegonmarcos.cloudcanvas.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import com.diegonmarcos.cloudcanvas.CanvasStart
@@ -34,6 +39,8 @@ object Tags {
     const val SHELL = "canvas_shell"
     const val DRAW = "canvas_draw"
     const val PLAY = "canvas_play"
+    const val ENHANCE = "canvas_enhance"
+    const val MUSIC = "canvas_music"
 }
 
 /**
@@ -49,6 +56,7 @@ fun CanvasShell(start: CanvasStart = CanvasStart()) {
     val section = decl.section(selected) ?: return
     val draw = remember { DrawController(ctx.applicationContext) }
     val play = remember { PlayController(ctx.applicationContext, start.demo) }
+    val enhance = remember { EnhanceController(ctx.applicationContext, draw) }
 
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
         Column(Modifier.fillMaxSize()) {
@@ -63,17 +71,27 @@ fun CanvasShell(start: CanvasStart = CanvasStart()) {
                     dark = true,
                 ) {
                     Box(Modifier.fillMaxSize().testTag(Tags.SHELL)) {
-                        if (selected == Decl.SECTION_PLAY) PlayScreen(play, start, Modifier.testTag(Tags.PLAY))
-                        else DrawScreen(draw, start, Modifier.testTag(Tags.DRAW))
+                        when (selected) {
+                            Decl.SECTION_PLAY -> PlayScreen(play, start, Modifier.testTag(Tags.PLAY))
+                            Decl.SECTION_ENHANCE -> EnhanceScreen(enhance, start, Modifier.testTag(Tags.ENHANCE))
+                            Decl.SECTION_MUSIC -> MusicScreen(Modifier.testTag(Tags.MUSIC))
+                            else -> DrawScreen(draw, start, Modifier.testTag(Tags.DRAW))
+                        }
                     }
                 }
             }
-            NavBarBottom(
-                entries = decl.islandEntries(),
-                selectedId = selected,
-                onSelect = { e -> selected = e.id },
-                dark = true,
-            )
+            Box {
+                NavBarBottom(
+                    entries = decl.islandEntries(),
+                    selectedId = selected,
+                    onSelect = { e -> selected = e.id },
+                    dark = true,
+                )
+                // Music Enhancer is a placeholder: its entry (the last one) is greyed out with a veil; a tap still opens its coming-soon page
+                if (decl.bottomNav.lastOrNull() == Decl.SECTION_MUSIC) {
+                    Box(Modifier.align(Alignment.CenterEnd).fillMaxWidth(0.22f).fillMaxHeight().background(colorResource(R.color.app_background).copy(alpha = 0.6f)))
+                }
+            }
         }
     }
 }

@@ -27,7 +27,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-c3 | `com.diegonmarcos.cloudc3` | 13 | 0 | 100% |
 | cloud-calc | `com.diegonmarcos.cloudcalc` | 18 | 0 | 100% |
 | cloud-camera | `cld.camera` | 11 | 0 | 100% |
-| cloud-canvas | `com.diegonmarcos.cloudcanvas` | 5 | 0 | 100% |
+| cloud-canvas | `com.diegonmarcos.cloudcanvas` | 7 | 0 | 100% |
 | cloud-chat | `com.diegonmarcos.comms.chat` | 8 | 0 | 100% |
 | cloud-code | `com.diegonmarcos.code` | 12 | 5 | 70% |
 | cloud-contacts | `com.diegonmarcos.cloudcontacts` | 8 | 2 | 80% |
@@ -58,7 +58,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-biomed | `com.diegonmarcos.hardtechbiomed` | 5 | 0 | 100% |
-| **fleet** | | **446** | **57** | **88%** |
+| **fleet** | | **448** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -593,10 +593,12 @@ Coverage: 11 covered, 0 gaps.
 
 ## cloud-canvas — `com.diegonmarcos.cloudcanvas`
 
-Module `ac_cloud-canvas`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
+Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
+| `canvas_ai` | prefs | config | yes | #1782 Cloud Canvas Configs > AI: the model chosen per task (Draw Enhance, Convert to 3D, Music Enhance), the output quality and size and the per-run cost cap. Part of the app's settings, so it migrates. |
+| `canvas_ai_secret` | encrypted | secret | yes | #1782 Cloud Canvas Configs > AI: the app's own OpenRouter key (the per-app override of the fleet Account's key), in EncryptedSharedPreferences through SafeEncryptedPrefs. Masked on screen, never logged, migrates only through the vault. |
 | `canvas_draw` | prefs | config | yes | #1780 Cloud Canvas Draw: the recent colours of the colour picker (a comma list of ARGB hex values, most recent first). Part of the app's settings, so it migrates. |
 | `canvas_folders` | prefs | device | no | #1780 Cloud Canvas: the export folders (PNG and WAV) the user chose through the Storage Access Framework, as tree Uris. The grant is per phone, so it does not migrate. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |

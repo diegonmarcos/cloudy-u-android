@@ -189,6 +189,19 @@ class DrawController(private val ctx: Context) {
         return PngEncoder.encode(st.width, st.height, renderer.flatten(st))
     }
 
+    /** The flattened picture as a bitmap (the Draw Enhancer's input). */
+    fun flattenBitmap(): android.graphics.Bitmap {
+        val st = model.state
+        return android.graphics.Bitmap.createBitmap(renderer.flatten(st), st.width, st.height, android.graphics.Bitmap.Config.ARGB_8888)
+    }
+
+    /** Adds a picture (the Enhancer's result) as a new layer on top, in one undoable step. */
+    fun addImageLayer(name: String, bmp: android.graphics.Bitmap) {
+        model.addLayer(name, listOf(Op.Image(bmp, bmp.width, bmp.height)))
+        sync()
+        message = "Added as layer $name."
+    }
+
     fun exportTo(tree: Uri) {
         val name = ExportNames.png(System.currentTimeMillis() / 1000)
         val out = Folders.write(ctx, tree, name, "image/png", png())
