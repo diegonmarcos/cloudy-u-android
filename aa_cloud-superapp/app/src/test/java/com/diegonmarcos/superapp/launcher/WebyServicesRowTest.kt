@@ -32,9 +32,10 @@ class WebyServicesRowTest {
     @Test fun `AGI reads SI AI | Code Tools | MyTerminal Terminal`() =
         assertEquals("SI AI | Code Tools | MyTerm. Terminal", row("AGI"))
 
-    @Test fun `Services sits between Me and AGI and no Services group is left`() {
+    @Test fun `Services sits between Projects and AGI (Projects follows Me, #1769) and no Services group is left`() {
         val titles = Sections.byId("cloud")!!.tileGroups.map { it.title }
-        assertEquals(titles.indexOf("Me") + 1, titles.indexOf("Services"))
+        assertEquals(titles.indexOf("Me") + 1, titles.indexOf("Projects"))
+        assertEquals(titles.indexOf("Projects") + 1, titles.indexOf("Services"))
         assertEquals(titles.indexOf("Services") + 1, titles.indexOf("AGI"))
         assertEquals(false, "Weby Services & Markets" in titles || "Weby Services" in titles)
     }
