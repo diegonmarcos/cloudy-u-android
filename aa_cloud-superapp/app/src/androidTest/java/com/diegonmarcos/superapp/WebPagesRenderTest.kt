@@ -216,7 +216,7 @@ class WebPagesRenderTest {
         sh("cmd uimode night ${if (night) "yes" else "no"}"); SystemClock.sleep(1500)
         val log = Collections.synchronizedList(mutableListOf<String>())
         WebPageFragment.probe = { log += it }
-        sh("input keyevent KEYCODE_WAKEUP"); sh("wm dismiss-keyguard"); sh("logcat -c")
+        sh("svc power stayon true"); sh("input keyevent KEYCODE_WAKEUP"); sh("wm dismiss-keyguard"); sh("logcat -c")
         val ctx = inst.targetContext
         ctx.startActivity(Intent().setClassName(ctx.packageName, "${ctx.packageName}.MainActivity")
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
@@ -297,6 +297,8 @@ class WebPagesRenderTest {
                 for (attempt in 0 until 8) {
                     walk(ua.rootInActiveWindow)
                     if (seen.size == wanted.size) break
+                    // The night run can find the emulator back on the lock screen (run 44160086196: 3 of 4 labels, then the clock face).
+                    sh("input keyevent KEYCODE_WAKEUP"); sh("wm dismiss-keyguard")
                     clearPrompt(); SystemClock.sleep(1000)
                 }
                 stripTabs = seen.size
