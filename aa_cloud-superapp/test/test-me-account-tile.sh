@@ -19,7 +19,7 @@ eq "Profile tile opens Cloud Me's profile page (#1440)" "$(jq -r "$G | select(.t
 eq "Primary (renamed from 'Tools Primary', #1627) has no Account tile" "$(jq -r "$G | select(.title == \"Primary\") | [.tiles[] | select(.label == \"Account\")] | length" "$BJ")" "0"
 eq "Primary now ends with Wallet (#1627 moved Vault out to Data; the '||' divider precedes Wallet)" "$(jq -r "$G | select(.title == \"Primary\") | .tiles[-1].label" "$BJ")" "Wallet"
 eq "Lnktree tile (id me) opens the Cloud Me app on its default Lnktree section (#1771)" "$(jq -r "$G | select(.title == \"Me\") | .tiles[0] | [.id, .target, .icon] | join(\" \")" "$BJ")" "me extapp:cloud-me ic_vcard"
-eq "Socials tile (id myroadmap, was Tasks) deep-links Cloud Me's Socials tab, icon kept (#1771)" "$(jq -r "$G | select(.title == \"Me\") | .tiles[] | select(.label == \"Socials\") | [.id, .target, .icon] | join(\" \")" "$BJ")" "myroadmap extapp:cloud-me#page:socials/professional ic_tree"
+eq "Socials tile (id myroadmap, was Tasks) deep-links Cloud Me's Socials tab, icon kept (#1771)" "$(jq -r "$G | select(.title == \"Me\") | .tiles[] | select(.label == \"Socials\") | [.id, .target, .icon] | join(\" \")" "$BJ")" "myroadmap extapp:cloud-me#page:socials/socials-professional ic_tree"
 eq "no Me row tile is still labelled Me or Tasks (#1771)" "$(jq -r "$G | select(.title == \"Me\") | [.tiles[] | select(.label == \"Me\" or .label == \"Tasks\")] | length" "$BJ")" "0"
 echo; echo "== RESULT: $PASS passed, $FAIL failed =="
 [ "$FAIL" -eq 0 ]

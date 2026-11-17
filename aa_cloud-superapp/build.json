@@ -3216,7 +3216,7 @@
                 "id": "myroadmap",
                 "label": "Socials",
                 "icon": "ic_tree",
-                "target": "extapp:cloud-me#page:socials/professional"
+                "target": "extapp:cloud-me#page:socials/socials-professional"
               },
               {
                 "_doc": "Second rule of the Me row, between Me-Health Experiences Tasks and Me-Inventory Me-Buro Me-LLC, like the AGI row. NOT a tile: declares no target; GroupedTilesFragment draws it as a bare non-clickable '|'. test-me-account-tile.sh pins the row.",

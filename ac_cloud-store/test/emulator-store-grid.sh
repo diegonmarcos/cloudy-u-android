@@ -39,12 +39,6 @@ if [ -n "$b" ]; then
 else echo "::error::no search field"; rc=1; fi
 # Torrent: the catalogue categories as image grids
 adb shell input keyevent KEYCODE_BACK; sleep 1
-# the query is shared by the subpages: empty the field so Torrent shows its category recommendations, not the typed search
-if [ -n "$b" ]; then
-  adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 )); sleep 1
-  adb shell input keyevent KEYCODE_MOVE_END; for i in $(seq 1 12); do adb shell input keyevent KEYCODE_DEL; done
-  adb shell input keyevent KEYCODE_BACK; sleep 2
-fi
 tap_text Torrent || { echo "::error::no Torrent subpage"; rc=1; }
 for i in $(seq 1 12); do dump torrent; grep -q 'Movies (' "$OUT/torrent.xml" && break; sleep 8; done
 sleep 15; shoot torrent-1
