@@ -195,7 +195,8 @@ class FullSync(
         bodyLoop@ for (folder in folders) {
             val attempted = HashSet<String>()
             while (true) {
-                halted()?.let { stop = it; break@bodyLoop }
+                val h = halted()
+                if (h != null) { stop = h; break@bodyLoop }
                 if (remaining <= 0) {
                     stop = FullSyncStop.BUDGET
                     if (c0.unmetered && port.missingBodies(folder, 1).isNotEmpty()) pending = true
