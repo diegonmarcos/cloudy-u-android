@@ -125,7 +125,9 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                     }
 
                     override fun shouldInterceptRequest(view: WebView?, request: android.webkit.WebResourceRequest?): android.webkit.WebResourceResponse? =
-                        if (cached && request != null) LnktreeCache.intercept(ctx, pageId, url, request) else super.shouldInterceptRequest(view, request)
+                        // #1771 the script-blocking font stylesheet of the bundled pages is answered at once (FontSheetGate)
+                        if (request != null && FontSheetGate.blocks(request.url.host, request.url.path)) FontSheetGate.emptySheet()
+                        else if (cached && request != null) LnktreeCache.intercept(ctx, pageId, url, request) else super.shouldInterceptRequest(view, request)
 
                     override fun onPageFinished(view: WebView?, url: String?) {
                         refreshing = false
