@@ -291,7 +291,7 @@ def build(specs, el, fjn, zf, out, gen, only_within=None):
     with ThreadPoolExecutor(8) as ex:
         for item, (vs_all, tris_all) in zip(plan, ex.map(work, plan)):
             sp, base, side, fl = item
-            nid = (sp["id"] + "." + base if sp["split"] else base) + ("." + side if side else "")
+            nid = (sp["id"] + "_" + base if sp["split"] else base) + ("_" + side if side else "")   # no . : / [ ] in a node name: three.js GLTFLoader strips them
             label = sp["label"] if not sp["split"] else base.replace("_", " ").title()
             if glb.add(nid, vs_all, tris_all, sp["color"], sp["alpha"], {"label": label, "system": sp["system"], "side": side}):
                 stats["nodes"] += 1; stats["tris"] += len(tris_all); report.append((nid, len(fl), len(tris_all)))

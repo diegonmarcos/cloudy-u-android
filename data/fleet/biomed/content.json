@@ -4,14 +4,14 @@
  "models": {
   "body": {
    "file": "body.glb",
-   "sha256": "37c78edeae77135d7fd67a8ac0397798c0802034c217defd6578f15486162848",
+   "sha256": "d682b2128f81a76a541b54064c2a6fc2700adb98107dbdcc1126eaec2946c5ba",
    "size": 5270608,
    "licence": "CC BY-SA 2.1 JP",
    "credit": "BodyParts3D, (c) The Database Center for Life Science, CC BY-SA 2.1 Japan (lifesciencedb.jp/bp3d). Parts regrouped and simplified for this app; this derived model is shared under the same licence."
   },
   "brain": {
    "file": "brain.glb",
-   "sha256": "6dc959db45285640c339824edd06f05193aab107384a8a20c196cf2b5f6dc62a",
+   "sha256": "3a424a45d7e5c856c5d6c145da4ef5273da013d91636464c85973806f9631bec",
    "size": 2708084,
    "licence": "CC BY-SA 2.1 JP",
    "credit": "BodyParts3D, (c) The Database Center for Life Science, CC BY-SA 2.1 Japan (lifesciencedb.jp/bp3d). Parts regrouped and simplified for this app; this derived model is shared under the same licence."
@@ -808,10 +808,10 @@
         "scapula",
         "clavicle",
         "humerus",
-        "m.supraspinatus",
-        "m.infraspinatus",
-        "m.subscapularis",
-        "m.teres"
+        "m_supraspinatus",
+        "m_infraspinatus",
+        "m_subscapularis",
+        "m_teres"
        ],
        "isolate": false
       },
@@ -823,10 +823,10 @@
         "humerus",
         "radius",
         "ulna",
-        "m.brachialis",
-        "m.brachioradialis",
-        "m.supinator",
-        "m.anconeus"
+        "m_brachialis",
+        "m_brachioradialis",
+        "m_supinator",
+        "m_anconeus"
        ],
        "isolate": false
       },
@@ -838,10 +838,10 @@
         "radius",
         "ulna",
         "hand_bones",
-        "m.flexor_digitorum",
-        "m.extensor_digitorum",
-        "m.flexor_pollicis",
-        "m.extensor_pollicis"
+        "m_flexor_digitorum",
+        "m_extensor_digitorum",
+        "m_flexor_pollicis",
+        "m_extensor_pollicis"
        ],
        "isolate": false
       },
@@ -852,10 +852,10 @@
        "highlight": [
         "hip_bone",
         "femur",
-        "m.gluteus",
-        "m.iliacus",
-        "m.psoas",
-        "m.piriformis"
+        "m_gluteus",
+        "m_iliacus",
+        "m_psoas",
+        "m_piriformis"
        ],
        "isolate": false
       },
@@ -868,9 +868,9 @@
         "tibia",
         "patella",
         "fibula",
-        "m.rectus_femoris",
-        "m.vastus",
-        "m.popliteus"
+        "m_rectus_femoris",
+        "m_vastus",
+        "m_popliteus"
        ],
        "isolate": false
       },
@@ -882,9 +882,9 @@
         "tibia",
         "fibula",
         "foot_bones",
-        "m.tibialis",
-        "m.fibularis",
-        "m.soleus"
+        "m_tibialis",
+        "m_fibularis",
+        "m_soleus"
        ],
        "isolate": false
       },
@@ -911,8 +911,8 @@
        "title": "Quadriceps",
        "text": "The rectus femoris and the three vastus muscles on the front of the thigh straighten the knee; the rectus femoris also bends the hip. They absorb impact when landing and take the load in standing up and stair climbing.",
        "highlight": [
-        "m.rectus_femoris",
-        "m.vastus"
+        "m_rectus_femoris",
+        "m_vastus"
        ],
        "isolate": false
       },
@@ -921,8 +921,8 @@
        "title": "Hamstrings",
        "text": "The semitendinosus and the semimembranosus at the back of the thigh bend the knee and extend the hip; they work against the quadriceps in running and in controlling the knee.",
        "highlight": [
-        "m.semitendinosus",
-        "m.semimembranosus"
+        "m_semitendinosus",
+        "m_semimembranosus"
        ],
        "isolate": false
       },
@@ -931,7 +931,7 @@
        "title": "Gluteal muscles",
        "text": "The gluteus maximus is the largest muscle of the body and extends the hip (standing up, climbing); the gluteus medius and minimus hold the pelvis level when walking on one leg.",
        "highlight": [
-        "m.gluteus"
+        "m_gluteus"
        ],
        "isolate": false
       },
@@ -940,14 +940,14 @@
        "title": "Calf and shin",
        "text": "The soleus and the plantaris (with the gastrocnemius, not part of the open dataset) lift the heel through the Achilles tendon; the tibialis anterior lifts the foot; the tibialis posterior and the fibularis muscles support the arch and turn the foot.",
        "highlight": [
-        "m.soleus",
-        "m.plantaris",
-        "m.tibialis",
-        "m.fibularis",
-        "m.extensor_digitorum_longus",
-        "m.extensor_hallucis",
-        "m.flexor_digitorum_longus",
-        "m.flexor_hallucis"
+        "m_soleus",
+        "m_plantaris",
+        "m_tibialis",
+        "m_fibularis",
+        "m_extensor_digitorum_longus",
+        "m_extensor_hallucis",
+        "m_flexor_digitorum_longus",
+        "m_flexor_hallucis"
        ],
        "isolate": false
       },
@@ -956,11 +956,11 @@
        "title": "Inner thigh and hip flexors",
        "text": "The gracilis, the pectineus, the sartorius and the iliopsoas (iliacus and psoas major) bend and rotate the hip and bring the thigh towards the midline.",
        "highlight": [
-        "m.gracilis",
-        "m.pectineus",
-        "m.sartorius",
-        "m.iliacus",
-        "m.psoas"
+        "m_gracilis",
+        "m_pectineus",
+        "m_sartorius",
+        "m_iliacus",
+        "m_psoas"
        ],
        "isolate": false
       },
@@ -969,12 +969,12 @@
        "title": "Rotator cuff and shoulder blade",
        "text": "The supraspinatus, the infraspinatus, the teres minor and the subscapularis hold the head of the humerus in the socket and rotate the arm; the rhomboids and the levator scapulae position the shoulder blade.",
        "highlight": [
-        "m.supraspinatus",
-        "m.infraspinatus",
-        "m.teres",
-        "m.subscapularis",
-        "m.rhomboid",
-        "m.levator_scapulae"
+        "m_supraspinatus",
+        "m_infraspinatus",
+        "m_teres",
+        "m_subscapularis",
+        "m_rhomboid",
+        "m_levator_scapulae"
        ],
        "isolate": false
       },
@@ -983,9 +983,9 @@
        "title": "Chest wall",
        "text": "The pectoralis major and minor and the serratus anterior move the arm and the shoulder blade forward; the subclavius steadies the clavicle. The ribs also move with breathing.",
        "highlight": [
-        "m.pectoralis",
-        "m.serratus_anterior",
-        "m.subclavius"
+        "m_pectoralis",
+        "m_serratus_anterior",
+        "m_subclavius"
        ],
        "isolate": false
       },
@@ -994,16 +994,16 @@
        "title": "Forearm",
        "text": "Flexors on the palm side bend the wrist and the fingers; extensors on the back straighten them. The pronators and the supinator turn the forearm.",
        "highlight": [
-        "m.flexor_carpi",
-        "m.flexor_digitorum",
-        "m.flexor_pollicis",
-        "m.extensor_carpi",
-        "m.extensor_digit",
-        "m.extensor_indicis",
-        "m.extensor_pollicis",
-        "m.pronator",
-        "m.supinator",
-        "m.palmaris"
+        "m_flexor_carpi",
+        "m_flexor_digitorum",
+        "m_flexor_pollicis",
+        "m_extensor_carpi",
+        "m_extensor_digit",
+        "m_extensor_indicis",
+        "m_extensor_pollicis",
+        "m_pronator",
+        "m_supinator",
+        "m_palmaris"
        ],
        "isolate": false
       },
@@ -1012,14 +1012,14 @@
        "title": "Trunk and neck",
        "text": "The external oblique and the other abdominal muscles flex and rotate the trunk and raise pressure in the abdomen; the sternocleidomastoid, the scalenes and the splenius muscles turn and tilt the head and neck.",
        "highlight": [
-        "m.external_oblique",
-        "m.sternocleidomastoid",
-        "m.scalenus",
-        "m.splenius",
-        "m.iliocostalis",
-        "m.longissimus",
-        "m.spinalis",
-        "m.platysma"
+        "m_external_oblique",
+        "m_sternocleidomastoid",
+        "m_scalenus",
+        "m_splenius",
+        "m_iliocostalis",
+        "m_longissimus",
+        "m_spinalis",
+        "m_platysma"
        ],
        "isolate": false
       }
@@ -1055,11 +1055,11 @@
        "title": "Walking",
        "text": "Each step moves through a stance phase, in which the foot carries the weight, and a swing phase. The hip extensors, the quadriceps, the calf muscles and the foot dorsiflexors act in turn, while the gluteus medius keeps the pelvis level.",
        "highlight": [
-        "m.gluteus",
-        "m.rectus_femoris",
-        "m.vastus",
-        "m.soleus",
-        "m.tibialis",
+        "m_gluteus",
+        "m_rectus_femoris",
+        "m_vastus",
+        "m_soleus",
+        "m_tibialis",
         "femur",
         "tibia"
        ],

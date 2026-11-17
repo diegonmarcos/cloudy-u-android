@@ -69,7 +69,12 @@ class BioContentTest {
         val len = b.getInt(12)
         val json = JSONObject(String(f.readBytes(), 20, len, Charsets.UTF_8))
         val arr = json.getJSONArray("nodes")
-        return (0 until arr.length()).map { i -> val n = arr.getJSONObject(i); n.optString("name") to (n.optJSONObject("extras")?.optString("system") ?: "") }
+        return (0 until arr.length()).map { i ->
+            val n = arr.getJSONObject(i); val name = n.optString("name")
+            // three.js GLTFLoader strips [ ] . : / and turns spaces into _ from a node name: a name that carries one is not the name the viewer sees
+            assertFalse("node name '$name' carries a character three.js GLTFLoader strips", name.any { it in "[]./: \t" })
+            name to (n.optJSONObject("extras")?.optString("system") ?: "")
+        }
     }
 
     private fun hits(spec: String, nodes: List<Pair<String, String>>): Int =
