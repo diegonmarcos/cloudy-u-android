@@ -1,0 +1,671 @@
+{
+ "_doc": "#1769 capability -> phone app per Phone Quickmarks folder: the smallest set of phone apps that together replace what the Cloud app does, one per capability. suggested=true: not a quickmark before, offered as a missing-app tile (greyed, Install).",
+ "folders": {
+  "Drive": [
+   {
+    "capability": "cloud storage",
+    "pkg": "com.google.android.apps.docs",
+    "label": "Google Drive",
+    "suggested": false
+   },
+   {
+    "capability": "local filesystem",
+    "pkg": "com.sec.android.app.myfiles",
+    "label": "My Files",
+    "suggested": false
+   },
+   {
+    "capability": "archives (zip/rar)",
+    "pkg": "com.rarlab.rar",
+    "label": "RAR",
+    "suggested": false
+   },
+   {
+    "capability": "git sync",
+    "pkg": "com.viscouspot.gitsync",
+    "label": "Git Sync",
+    "suggested": false
+   }
+  ],
+  "Browser": [
+   {
+    "capability": "web browser",
+    "pkg": "com.brave.browser",
+    "label": "Brave",
+    "suggested": false
+   }
+  ],
+  "Calc": [
+   {
+    "capability": "calculator",
+    "pkg": "com.sec.android.app.popupcalculator",
+    "label": "Calculator",
+    "suggested": false
+   },
+   {
+    "capability": "world clock and timers",
+    "pkg": "com.sec.android.app.clockpackage",
+    "label": "Clock",
+    "suggested": false
+   },
+   {
+    "capability": "translation and conversion",
+    "pkg": "com.google.android.apps.translate",
+    "label": "Translate",
+    "suggested": false
+   }
+  ],
+  "Nav": [
+   {
+    "capability": "online maps and navigation",
+    "pkg": "com.google.android.apps.maps",
+    "label": "Maps",
+    "suggested": false
+   },
+   {
+    "capability": "offline maps",
+    "pkg": "app.organicmaps",
+    "label": "Organic Maps",
+    "suggested": true
+   }
+  ],
+  "Camera": [
+   {
+    "capability": "camera",
+    "pkg": "com.sec.android.app.camera",
+    "label": "Camera",
+    "suggested": false
+   }
+  ],
+  "Keyboard": [
+   {
+    "capability": "keyboard",
+    "pkg": "com.google.android.inputmethod.latin",
+    "label": "Gboard",
+    "suggested": false
+   }
+  ],
+  "Wallet": [
+   {
+    "capability": "payments and passes",
+    "pkg": "com.google.android.apps.walletnfcrel",
+    "label": "Google Wallet",
+    "suggested": false
+   }
+  ],
+  "Mail": [
+   {
+    "capability": "mail client",
+    "pkg": "com.google.android.gm",
+    "label": "Gmail",
+    "suggested": false
+   }
+  ],
+  "Chat": [
+   {
+    "capability": "team chat",
+    "pkg": "com.Slack",
+    "label": "Slack",
+    "suggested": false
+   }
+  ],
+  "Messenger": [
+   {
+    "capability": "mainstream messaging",
+    "pkg": "com.whatsapp.w4b",
+    "label": "WhatsApp Business",
+    "suggested": false
+   },
+   {
+    "capability": "bots and channels",
+    "pkg": "org.telegram.messenger",
+    "label": "Telegram",
+    "suggested": false
+   },
+   {
+    "capability": "end-to-end encrypted messaging",
+    "pkg": "org.thoughtcrime.securesms",
+    "label": "Signal",
+    "suggested": false
+   },
+   {
+    "capability": "video calls",
+    "pkg": "com.google.android.apps.tachyon",
+    "label": "Google Meet",
+    "suggested": false
+   }
+  ],
+  "Dialer": [
+   {
+    "capability": "phone calls",
+    "pkg": "com.samsung.android.dialer",
+    "label": "Samsung Phone",
+    "suggested": false
+   }
+  ],
+  "Contacts": [
+   {
+    "capability": "contacts",
+    "pkg": "com.google.android.contacts",
+    "label": "Google Contacts",
+    "suggested": false
+   }
+  ],
+  "Notes": [
+   {
+    "capability": "markdown notes",
+    "pkg": "md.obsidian",
+    "label": "Obsidian",
+    "suggested": false
+   },
+   {
+    "capability": "plain-text and code editing",
+    "pkg": "com.rhmsoft.edit",
+    "label": "QuickEdit",
+    "suggested": false
+   }
+  ],
+  "Agenda": [
+   {
+    "capability": "calendar",
+    "pkg": "com.google.android.calendar",
+    "label": "Google Calendar",
+    "suggested": false
+   },
+   {
+    "capability": "to-do tasks",
+    "pkg": "com.google.android.apps.tasks",
+    "label": "Google Tasks",
+    "suggested": false
+   },
+   {
+    "capability": "project boards",
+    "pkg": "co.mangotechnologies.clickup",
+    "label": "ClickUp",
+    "suggested": false
+   }
+  ],
+  "Office": [
+   {
+    "capability": "documents",
+    "pkg": "com.google.android.apps.docs.editors.docs",
+    "label": "Google Docs",
+    "suggested": false
+   },
+   {
+    "capability": "spreadsheets",
+    "pkg": "com.google.android.apps.docs.editors.sheets",
+    "label": "Google Sheets",
+    "suggested": false
+   },
+   {
+    "capability": "presentations",
+    "pkg": "com.google.android.apps.docs.editors.slides",
+    "label": "Google Slides",
+    "suggested": true
+   },
+   {
+    "capability": "PDF",
+    "pkg": "com.adobe.reader",
+    "label": "Adobe Acrobat",
+    "suggested": false
+   }
+  ],
+  "Gallery": [
+   {
+    "capability": "photos and gallery",
+    "pkg": "com.google.android.apps.photos",
+    "label": "Google Photos",
+    "suggested": false
+   }
+  ],
+  "Vault": [
+   {
+    "capability": "passwords",
+    "pkg": "com.x8bit.bitwarden",
+    "label": "Bitwarden",
+    "suggested": false
+   },
+   {
+    "capability": "2FA codes",
+    "pkg": "com.beemdevelopment.aegis",
+    "label": "Aegis",
+    "suggested": false
+   }
+  ],
+  "Me-Health": [
+   {
+    "capability": "health hub",
+    "pkg": "com.sec.android.app.shealth",
+    "label": "Samsung Health",
+    "suggested": false
+   },
+   {
+    "capability": "activity tracking",
+    "pkg": "com.strava",
+    "label": "Strava",
+    "suggested": false
+   },
+   {
+    "capability": "nutrition",
+    "pkg": "com.fatsecret.android",
+    "label": "FatSecret",
+    "suggested": false
+   },
+   {
+    "capability": "sleep",
+    "pkg": "com.urbandroid.sleep",
+    "label": "Sleep as Android",
+    "suggested": false
+   },
+   {
+    "capability": "wearable",
+    "pkg": "com.garmin.android.apps.connectmobile",
+    "label": "Garmin Connect",
+    "suggested": false
+   }
+  ],
+  "Experiences": [
+   {
+    "capability": "vocabulary learning",
+    "pkg": "com.memrise.android.memrisecompanion",
+    "label": "Memrise",
+    "suggested": false
+   },
+   {
+    "capability": "German reading",
+    "pkg": "mobi.eup.easygerman",
+    "label": "Todaii German",
+    "suggested": false
+   }
+  ],
+  "Socials": [
+   {
+    "capability": "photo sharing",
+    "pkg": "com.instagram.android",
+    "label": "Instagram",
+    "suggested": false
+   },
+   {
+    "capability": "microblogging",
+    "pkg": "com.instagram.barcelona",
+    "label": "Threads",
+    "suggested": false
+   },
+   {
+    "capability": "social network",
+    "pkg": "com.facebook.katana",
+    "label": "Facebook",
+    "suggested": false
+   },
+   {
+    "capability": "professional network",
+    "pkg": "com.linkedin.android",
+    "label": "LinkedIn",
+    "suggested": false
+   },
+   {
+    "capability": "pinboards",
+    "pkg": "com.pinterest",
+    "label": "Pinterest",
+    "suggested": false
+   },
+   {
+    "capability": "daily photo",
+    "pkg": "com.bereal.ft",
+    "label": "BeReal",
+    "suggested": false
+   },
+   {
+    "capability": "dating",
+    "pkg": "com.tinder",
+    "label": "Tinder",
+    "suggested": false
+   },
+   {
+    "capability": "dating",
+    "pkg": "com.bumble.app",
+    "label": "Bumble",
+    "suggested": false
+   },
+   {
+    "capability": "dating",
+    "pkg": "co.hinge.app",
+    "label": "Hinge",
+    "suggested": false
+   }
+  ],
+  "Me-Buro": [
+   {
+    "capability": "national ID",
+    "pkg": "es.gob.interior.policia.midni",
+    "label": "miDNI",
+    "suggested": false
+   }
+  ],
+  "Search": [
+   {
+    "capability": "web search",
+    "pkg": "com.google.android.googlequicksearchbox",
+    "label": "Google",
+    "suggested": false
+   }
+  ],
+  "News": [
+   {
+    "capability": "curated news",
+    "pkg": "com.google.android.apps.magazines",
+    "label": "Google News",
+    "suggested": false
+   },
+   {
+    "capability": "RSS feeds",
+    "pkg": "com.devhd.feedly",
+    "label": "Feedly",
+    "suggested": false
+   }
+  ],
+  "Events": [
+   {
+    "capability": "tickets",
+    "pkg": "de.eventim.mobile.app.Android",
+    "label": "Eventim",
+    "suggested": false
+   },
+   {
+    "capability": "local event discovery",
+    "pkg": "com.codekarussell.rausgegangen",
+    "label": "Rausgegangen",
+    "suggested": false
+   },
+   {
+    "capability": "community meetups",
+    "pkg": "com.meetup",
+    "label": "Meetup",
+    "suggested": false
+   }
+  ],
+  "Media Center": [
+   {
+    "capability": "music streaming",
+    "pkg": "com.spotify.music",
+    "label": "Spotify",
+    "suggested": false
+   },
+   {
+    "capability": "video",
+    "pkg": "com.google.android.youtube",
+    "label": "YouTube",
+    "suggested": false
+   },
+   {
+    "capability": "films and series",
+    "pkg": "com.amazon.avod.thirdpartyclient",
+    "label": "Prime Video",
+    "suggested": false
+   },
+   {
+    "capability": "music recognition",
+    "pkg": "com.shazam.android",
+    "label": "Shazam",
+    "suggested": false
+   }
+  ],
+  "Shopping": [
+   {
+    "capability": "marketplace",
+    "pkg": "com.amazon.mShop.android.shopping",
+    "label": "Amazon",
+    "suggested": false
+   },
+   {
+    "capability": "parcel tracking",
+    "pkg": "de.dhl.paket",
+    "label": "DHL Paket",
+    "suggested": false
+   },
+   {
+    "capability": "classifieds",
+    "pkg": "com.ebay.kleinanzeigen",
+    "label": "Kleinanzeigen",
+    "suggested": false
+   }
+  ],
+  "Mobility & Travel": [
+   {
+    "capability": "ride hailing",
+    "pkg": "com.ubercab",
+    "label": "Uber",
+    "suggested": false
+   },
+   {
+    "capability": "accommodation",
+    "pkg": "com.booking",
+    "label": "Booking.com",
+    "suggested": false
+   },
+   {
+    "capability": "trains",
+    "pkg": "com.thetrainline",
+    "label": "Trainline",
+    "suggested": false
+   },
+   {
+    "capability": "flights",
+    "pkg": "com.ryanair.cheapflights",
+    "label": "Ryanair",
+    "suggested": false
+   },
+   {
+    "capability": "multimodal routes",
+    "pkg": "com.rome2rio.www.rome2rio",
+    "label": "Rome2Rio",
+    "suggested": false
+   },
+   {
+    "capability": "carpooling",
+    "pkg": "com.comuto",
+    "label": "BlaBlaCar",
+    "suggested": false
+   },
+   {
+    "capability": "local transit",
+    "pkg": "com.trafi.whitelabel.bvg",
+    "label": "BVG Fahrinfo",
+    "suggested": false
+   },
+   {
+    "capability": "travel log",
+    "pkg": "com.nomadmania.presentation",
+    "label": "NomadMania",
+    "suggested": false
+   }
+  ],
+  "Jobs & Business": [
+   {
+    "capability": "job search",
+    "pkg": "com.indeed.android.jobsearch",
+    "label": "Indeed",
+    "suggested": true
+   }
+  ],
+  "Real Estate": [
+   {
+    "capability": "property listings",
+    "pkg": "de.is24.android",
+    "label": "ImmoScout24",
+    "suggested": false
+   },
+   {
+    "capability": "shared flats",
+    "pkg": "com.wggesucht.android",
+    "label": "WG-Gesucht",
+    "suggested": false
+   }
+  ],
+  "Money": [
+   {
+    "capability": "bank account",
+    "pkg": "es.bancosantander.apps",
+    "label": "Santander",
+    "suggested": false
+   },
+   {
+    "capability": "multi-currency account and transfers",
+    "pkg": "com.revolut.revolut",
+    "label": "Revolut",
+    "suggested": false
+   },
+   {
+    "capability": "online payments",
+    "pkg": "com.paypal.android.p2pmobile",
+    "label": "PayPal",
+    "suggested": false
+   },
+   {
+    "capability": "crypto",
+    "pkg": "com.binance.dev",
+    "label": "Binance",
+    "suggested": false
+   },
+   {
+    "capability": "brokerage",
+    "pkg": "com.btg.pactual.digital.mobile",
+    "label": "BTG Pactual",
+    "suggested": false
+   },
+   {
+    "capability": "market data",
+    "pkg": "com.fusionmedia.investing",
+    "label": "Investing.com",
+    "suggested": false
+   },
+   {
+    "capability": "exchange rates",
+    "pkg": "com.xe.currency",
+    "label": "XE Currency",
+    "suggested": false
+   }
+  ],
+  "AI": [
+   {
+    "capability": "assistant",
+    "pkg": "com.anthropic.claude",
+    "label": "Claude",
+    "suggested": false
+   },
+   {
+    "capability": "web answer engine",
+    "pkg": "ai.perplexity.app.android",
+    "label": "Perplexity",
+    "suggested": false
+   }
+  ],
+  "Code": [
+   {
+    "capability": "code editor",
+    "pkg": "com.foxdebug.acode",
+    "label": "Acode",
+    "suggested": false
+   },
+   {
+    "capability": "repositories",
+    "pkg": "com.github.android",
+    "label": "GitHub",
+    "suggested": false
+   }
+  ],
+  "Terminal": [
+   {
+    "capability": "terminal",
+    "pkg": "com.termux",
+    "label": "Termux",
+    "suggested": false
+   }
+  ],
+  "Quick Actions": [
+   {
+    "capability": "system settings",
+    "pkg": "com.android.settings",
+    "label": "Settings",
+    "suggested": false
+   },
+   {
+    "capability": "smart home",
+    "pkg": "com.samsung.android.oneconnect",
+    "label": "SmartThings",
+    "suggested": false
+   }
+  ],
+  "UI": [
+   {
+    "capability": "launcher and UI tuning",
+    "pkg": "com.samsung.android.goodlock",
+    "label": "Good Lock",
+    "suggested": false
+   }
+  ],
+  "NG Firewall": [
+   {
+    "capability": "app firewall",
+    "pkg": "eu.faircode.netguard",
+    "label": "NetGuard",
+    "suggested": false
+   },
+   {
+    "capability": "VPN",
+    "pkg": "com.wireguard.android",
+    "label": "WireGuard",
+    "suggested": false
+   }
+  ],
+  "Store": [
+   {
+    "capability": "main store",
+    "pkg": "com.android.vending",
+    "label": "Play Store",
+    "suggested": false
+   },
+   {
+    "capability": "open-source store",
+    "pkg": "org.fdroid.fdroid",
+    "label": "F-Droid",
+    "suggested": false
+   }
+  ],
+  "C3": [
+   {
+    "capability": "privileged ADB",
+    "pkg": "moe.shizuku.privileged.api",
+    "label": "Shizuku",
+    "suggested": false
+   },
+   {
+    "capability": "phone to desktop link",
+    "pkg": "org.kde.kdeconnect_tp",
+    "label": "KDE Connect",
+    "suggested": false
+   },
+   {
+    "capability": "data usage",
+    "pkg": "com.mobidia.android.mdm",
+    "label": "Data Monitor",
+    "suggested": false
+   },
+   {
+    "capability": "network scan",
+    "pkg": "com.ubnt.usurvey",
+    "label": "WiFiman",
+    "suggested": false
+   }
+  ],
+  "About": [
+   {
+    "capability": "battery health",
+    "pkg": "com.digibites.accubattery",
+    "label": "AccuBattery",
+    "suggested": false
+   }
+  ]
+ }
+}

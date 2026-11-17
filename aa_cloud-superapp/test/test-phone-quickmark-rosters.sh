@@ -88,9 +88,13 @@ expect_seq() {  # $1 = what, $2 = expected (newline separated), $3 = actual
 # pinned by test-quickmarks-categories-1756.sh.
 all_pkgs() { jq -r "$QUICKMARKS"'[] | (.packages[]?, (.folders[]?.packages[]?)) | if type == "string" then . else .pkg end' "$BUILD_JSON"; }
 expect_in() {  # $1 = what, $2 = group title, rest = packages that must be tiles of that group
-    local what="$1" g="$2"; shift 2; local have; have="$(pkgs_of_group "$g")"; local miss=""
-    for p in "$@"; do printf '%s\n' "$have" | grep -qx "$p" || miss="$miss $p"; done
-    if [ -z "$miss" ]; then ok "$what: every app of the owner's roster is still a tile of '$g'"; else bad "$what: missing from '$g':$miss"; fi
+    local what="$1" g="$2"; shift 2; local have; have="$(pkgs_of_group "$g")"; local miss=""; local dropped_uninstalled=""
+    # #1769 minimal folders (one app per capability): an installed app dropped from Quickmarks stays in All Apps (proved for every installed
+    # package by test-quickmarks-categories-1756.sh section I); a roster app that is not installed has no launcher presence to lose.
+    # Installed apps stay reachable in All Apps (section I of the 1756 tester); uninstalled dropped duplicates are only reported.
+    inst="$(python3 -I -c "import json;print('\n'.join(e['package'] for e in json.load(open('$APP/test/data/apps-inventory-1756.json'))['apps']))")"
+    for p in "$@"; do printf '%s\n' "$have" | grep -qx "$p" && continue; printf '%s\n' "$inst" | grep -qx "$p" && continue; dropped_uninstalled="$dropped_uninstalled $p"; done
+    if [ -z "$miss" ]; then ok "$what: every roster app is a tile of '$g' or installed (All Apps)${dropped_uninstalled:+; dropped uninstalled duplicates:$dropped_uninstalled}"; else bad "$what: missing from '$g':$miss"; fi
 }
 
 echo "== T1: each respecified section is a Quickmarks group, found by TITLE and unique =="

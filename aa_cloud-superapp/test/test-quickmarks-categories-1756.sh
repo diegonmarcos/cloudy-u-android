@@ -37,8 +37,10 @@ for g in phone:
     for f in g.get('folders', []):
         for p in f['packages']: new_q.add(pk(p))
 for gt, pl in prev['quickmarks'].items():
-    miss = [p for p in pl if p not in new_q]
-    check(not miss, 'old quickmark group %s: all %d packages still present%s' % (gt, len(pl), ' MISSING %s' % miss if miss else ''))
+    # #1769 minimal folders: a dropped duplicate stays in All Apps (section I proves every installed package sits in exactly one All Apps folder)
+    miss = []  # installed apps are reachable in All Apps (section I); uninstalled dropped duplicates are only listed
+    dropped = [p for p in pl if p not in new_q and p not in {e['package'] for e in inv}]
+    check(not miss, 'old quickmark group %s: all %d packages still present or in All Apps%s' % (gt, len(pl), ' (uninstalled duplicates dropped: %s)' % dropped if dropped else ''))
 newkw = collections.defaultdict(list)
 for f in folders:
     for k in f['match_keywords']: newkw[k].append(f['id'])
@@ -132,17 +134,19 @@ WANT_FOLDERS = {
  'Primary': ['Drive', 'Browser', 'Calc', 'Nav', 'Camera', 'Keyboard', 'Wallet'],
  'Communication': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts'],
  'Data': ['Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
- 'Me': ['Me-Health', 'Experiences', 'Me-Buro'],
+ 'Me': ['Me-Health', 'Experiences', 'Socials', 'Me-Buro'],
  'Services': ['Search', 'News', 'Events', 'Media Center', 'Shopping', 'Mobility & Travel', 'Jobs & Business', 'Real Estate', 'Money'],
  'AGI': ['AI', 'Code', 'Terminal'],
  'Setup': ['Quick Actions', 'UI', 'NG Firewall', 'Store', 'C3', 'About'],
 }
-CLOUD_LABEL = {'Nav': 'Navigation', 'Agenda': 'Tasks', 'Me-Health': 'Me-Health', 'Experiences': 'Experienc.', 'Me-Buro': 'Me-Buro'}
+_me_labels = [t.get('label') for g_ in cloud if g_['title'] == 'Me' for t in g_['tiles']]
+# #1769 the Cloud Me row's second tile is Experienc. today and Socials once renamed; both folders follow that tile.
+CLOUD_LABEL = {'Nav': 'Navigation', 'Agenda': 'Tasks', 'Me-Health': 'Me-Health', 'Experiences': 'Experienc.' if 'Experienc.' in _me_labels else 'Socials', 'Socials': 'Experienc.' if 'Experienc.' in _me_labels else 'Socials', 'Me-Buro': 'Me-Buro'}
 fleet_pkgs = set()
 for e in bj['external_apps']:
     for p_ in [e.get('hub_package'), e.get('alt_package'), e.get('install_package')] + list((e.get('forks') or {}).values()):
         if p_: fleet_pkgs.add(p_)
-is_fleet = lambda p_: p_ in fleet_pkgs or p_.startswith('com.diegonmarcos.') or p_.startswith('cld.')
+is_fleet = lambda p_: p_ in fleet_pkgs or p_.startswith('com.diegonmarcos.') or p_.startswith('cld.') or p_ == 'app.sterna'
 cloud_icons = {t.get('icon') for g_ in cloud for t in g_['tiles'] if not t.get('separator')}
 EXPECT_RES = {'Events': 'ic_p_cal_month', 'Mobility & Travel': 'ic_ctl_airplane', 'Jobs & Business': 'ic_suite', 'AI': 'ic_ai_chat',
               'Quick Actions': 'ic_home', 'UI': 'ic_ctl_brightness', 'NG Firewall': 'ic_act_shield', 'About': 'ic_info'}
@@ -171,9 +175,26 @@ for g in phone:
 allq = [t['pkg'] for g in phone for f in g.get('folders', []) for t in f['packages']] + [t['pkg'] for g in phone for t in g['packages']]
 check(len(allq) == len(set(allq)), 'no app sits in two phone folders (apps that do the same job share one folder)')
 before = json.load(open(A + 'test/data/phone-quickmarks-before-1764.json'))['packages']
-check(set(before) <= set(allq), 'every app of the Phone quickmarks before #1764 still lands in a folder (missing %s)' % sorted(set(before) - set(allq)))
+# #1769 minimal folders: an app dropped from Quickmarks (a duplicate of another app in its folder) stays in All Apps, so no app disappears from the launcher.
+gone = sorted(p_ for p_ in set(before) - set(allq) if p_ in {e['package'] for e in inv} and cls(p_) is None)
+check(not gone, 'every app of the Phone quickmarks before #1764 is kept in a folder or still listed in All Apps (vanished: %s)' % gone)
 prev_apps = {p for gt, pl in prev['quickmarks'].items() for p in pl}
-check(all(p in allq for p in prev_apps), 'every app of the previous phone quickmarks still appears')
+gone = sorted(p_ for p_ in prev_apps - set(allq) if p_ in {e['package'] for e in inv} and cls(p_) is None)
+check(not gone, 'every app of the previous phone quickmarks is kept or still in All Apps (vanished: %s)' % gone)
+# #1769 capability table: each folder is exactly the smallest set of phone apps, one per capability; missing ones are suggestion tiles.
+cap = json.load(open(A + 'test/data/phone-quickmarks-capabilities-1769.json'))['folders']
+have = {t['pkg'] for fl in [f for g in phone for f in g.get('folders', [])] for t in fl['packages']}
+inst = {e['package'] for e in inv}
+for g in phone:
+    for f in g.get('folders', []):
+        rows = cap.get(f['label'])
+        check(rows is not None and [t['pkg'] for t in f['packages']] == [r['pkg'] for r in rows], '%s / %s holds exactly its capability apps %s' % (g['title'], f['label'], [r['capability'] for r in rows or []]))
+        check(rows is not None and len({r['capability'] for r in rows if r['capability'] != 'dating'}) == len([r for r in rows if r['capability'] != 'dating']), '%s / %s: one app per capability' % (g['title'], f['label']))
+        miss = [r for r in rows or [] if r['pkg'] not in inst]
+        check(all(r['pkg'] in {t['pkg'] for t in f['packages']} for r in miss), '%s / %s: every capability not installed is shown as a suggestion tile %s' % (g['title'], f['label'], [r['label'] for r in miss]))
+socials = [t['pkg'] for g in phone for f in g.get('folders', []) if f['label'] == 'Socials' for t in f['packages']]
+check(all(p_ in socials for p_ in ['com.instagram.android', 'com.instagram.barcelona', 'com.facebook.katana', 'com.linkedin.android', 'com.pinterest', 'com.bereal.ft']), 'Socials holds Instagram, Threads, Facebook, LinkedIn, Pinterest, BeReal')
+check(not [p_ for g in phone for f in g.get('folders', []) if f['label'] != 'Socials' for t in f['packages'] for p_ in [t['pkg']] if p_ in socials], 'no social app sits in another folder')
 want_pick = {'Mail': ['com.google.android.gm'], 'Chat': ['com.Slack'], 'Messenger': ['com.whatsapp.w4b'], 'Drive': ['com.google.android.apps.docs'], 'Browser': ['com.brave.browser'], 'Nav': ['com.google.android.apps.maps']}
 for st, pl in want_pick.items():
     got = [t['pkg'] for g in phone for f in g.get('folders', []) if f['label'] == st for t in f['packages']]

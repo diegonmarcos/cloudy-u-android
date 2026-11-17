@@ -3671,44 +3671,16 @@
                   "label": "Google Drive"
                 },
                 {
-                  "pkg": "com.lonelycatgames.Xplore",
-                  "label": "X-plore"
-                },
-                {
-                  "pkg": "me.proton.android.drive",
-                  "label": "Proton Drive"
-                },
-                {
                   "pkg": "com.sec.android.app.myfiles",
                   "label": "My Files"
-                },
-                {
-                  "pkg": "com.viscouspot.gitsync",
-                  "label": "Git Sync"
-                },
-                {
-                  "pkg": "com.google.android.apps.nbu.files",
-                  "label": "Files by Google"
-                },
-                {
-                  "pkg": "com.microsoft.skydrive",
-                  "label": "OneDrive"
-                },
-                {
-                  "pkg": "com.ghisler.android.TotalCommander",
-                  "label": "Total Commander"
                 },
                 {
                   "pkg": "com.rarlab.rar",
                   "label": "RAR"
                 },
                 {
-                  "pkg": "com.alphainventor.filemanager",
-                  "label": "File Manager"
-                },
-                {
-                  "pkg": "com.mobisystems.fileman",
-                  "label": "File Commander"
+                  "pkg": "com.viscouspot.gitsync",
+                  "label": "Git Sync"
                 }
               ],
               "icon_res": "ic_drive"
@@ -3720,14 +3692,6 @@
                 {
                   "pkg": "com.brave.browser",
                   "label": "Brave"
-                },
-                {
-                  "pkg": "com.android.chrome",
-                  "label": "Chrome"
-                },
-                {
-                  "pkg": "com.duckduckgo.mobile.android",
-                  "label": "DuckDuckGo"
                 }
               ],
               "icon_res": "ic_world"
@@ -3741,16 +3705,12 @@
                   "label": "Calculator"
                 },
                 {
-                  "pkg": "com.google.android.calculator",
-                  "label": "Google Calculator"
+                  "pkg": "com.sec.android.app.clockpackage",
+                  "label": "Clock"
                 },
                 {
                   "pkg": "com.google.android.apps.translate",
                   "label": "Translate"
-                },
-                {
-                  "pkg": "com.sec.android.app.clockpackage",
-                  "label": "Clock"
                 }
               ],
               "icon_res": "ic_calc"
@@ -3762,6 +3722,10 @@
                 {
                   "pkg": "com.google.android.apps.maps",
                   "label": "Maps"
+                },
+                {
+                  "pkg": "app.organicmaps",
+                  "label": "Organic Maps"
                 }
               ],
               "icon_res": "ic_nav"
@@ -3784,14 +3748,6 @@
                 {
                   "pkg": "com.google.android.inputmethod.latin",
                   "label": "Gboard"
-                },
-                {
-                  "pkg": "ch.icoaching.typewise",
-                  "label": "Typewise"
-                },
-                {
-                  "pkg": "juloo.keyboard2",
-                  "label": "Unexpected Keyboard"
                 }
               ],
               "icon_res": "ic_keyboard"
@@ -3823,26 +3779,6 @@
                 {
                   "pkg": "com.google.android.gm",
                   "label": "Gmail"
-                },
-                {
-                  "pkg": "com.microsoft.office.outlook",
-                  "label": "Outlook"
-                },
-                {
-                  "pkg": "com.samsung.android.email.provider",
-                  "label": "Samsung Email"
-                },
-                {
-                  "pkg": "eu.faircode.email",
-                  "label": "FairEmail"
-                },
-                {
-                  "pkg": "ch.protonmail.android",
-                  "label": "Proton Mail"
-                },
-                {
-                  "pkg": "app.sterna",
-                  "label": "Sterna Mail"
                 }
               ],
               "icon_res": "ic_mail"
@@ -3854,22 +3790,6 @@
                 {
                   "pkg": "com.Slack",
                   "label": "Slack"
-                },
-                {
-                  "pkg": "com.mattermost.rn",
-                  "label": "Mattermost"
-                },
-                {
-                  "pkg": "chat.rocket.android",
-                  "label": "Rocket.Chat"
-                },
-                {
-                  "pkg": "com.beeper.android",
-                  "label": "Beeper"
-                },
-                {
-                  "pkg": "im.vector.app",
-                  "label": "Element"
                 }
               ],
               "icon_res": "ic_p_chat_mattermost"
@@ -3878,10 +3798,6 @@
               "label": "Messenger",
               "icon_pkg": "com.diegonmarcos.comms.matrix",
               "packages": [
-                {
-                  "pkg": "com.whatsapp",
-                  "label": "WhatsApp"
-                },
                 {
                   "pkg": "com.whatsapp.w4b",
                   "label": "WhatsApp Business"
@@ -3895,20 +3811,8 @@
                   "label": "Signal"
                 },
                 {
-                  "pkg": "com.viber.voip",
-                  "label": "Viber"
-                },
-                {
-                  "pkg": "com.facebook.orca",
-                  "label": "Messenger"
-                },
-                {
                   "pkg": "com.google.android.apps.tachyon",
                   "label": "Google Meet"
-                },
-                {
-                  "pkg": "com.instagram.android",
-                  "label": "Instagram"
                 }
               ],
               "icon_res": "ic_p_chat_matrix"
@@ -3931,10 +3835,6 @@
                 {
                   "pkg": "com.google.android.contacts",
                   "label": "Google Contacts"
-                },
-                {
-                  "pkg": "com.samsung.android.app.contacts",
-                  "label": "Samsung Contacts"
                 }
               ],
               "icon_res": "ic_p_sol_personal"
@@ -3957,10 +3857,6 @@
                   "label": "Obsidian"
                 },
                 {
-                  "pkg": "com.microsoft.office.onenote",
-                  "label": "OneNote"
-                },
-                {
                   "pkg": "com.rhmsoft.edit",
                   "label": "QuickEdit"
                 }
@@ -3976,20 +3872,8 @@
                   "label": "Google Calendar"
                 },
                 {
-                  "pkg": "com.samsung.android.calendar",
-                  "label": "Samsung Calendar"
-                },
-                {
                   "pkg": "com.google.android.apps.tasks",
                   "label": "Google Tasks"
-                },
-                {
-                  "pkg": "com.microsoft.todos",
-                  "label": "Microsoft To Do"
-                },
-                {
-                  "pkg": "com.trello",
-                  "label": "Trello"
                 },
                 {
                   "pkg": "co.mangotechnologies.clickup",
@@ -4011,8 +3895,8 @@
                   "label": "Google Sheets"
                 },
                 {
-                  "pkg": "com.collabora.libreoffice",
-                  "label": "LibreOffice"
+                  "pkg": "com.google.android.apps.docs.editors.slides",
+                  "label": "Google Slides"
                 },
                 {
                   "pkg": "com.adobe.reader",
@@ -4028,10 +3912,6 @@
                 {
                   "pkg": "com.google.android.apps.photos",
                   "label": "Google Photos"
-                },
-                {
-                  "pkg": "com.sec.android.gallery3d",
-                  "label": "Samsung Gallery"
                 }
               ],
               "icon_res": "ic_photos"
@@ -4047,18 +3927,6 @@
                 {
                   "pkg": "com.beemdevelopment.aegis",
                   "label": "Aegis"
-                },
-                {
-                  "pkg": "com.azure.authenticator",
-                  "label": "Authenticator"
-                },
-                {
-                  "pkg": "com.samsung.android.samsungpass",
-                  "label": "Samsung Pass"
-                },
-                {
-                  "pkg": "com.google.android.apps.authenticator2",
-                  "label": "Google Authenticator"
                 }
               ],
               "icon_res": "ic_vault"
@@ -4078,10 +3946,6 @@
                   "label": "Samsung Health"
                 },
                 {
-                  "pkg": "com.google.android.apps.fitness",
-                  "label": "Google Fit"
-                },
-                {
                   "pkg": "com.strava",
                   "label": "Strava"
                 },
@@ -4090,16 +3954,12 @@
                   "label": "FatSecret"
                 },
                 {
-                  "pkg": "com.fitbit.FitbitMobile",
-                  "label": "Fitbit"
+                  "pkg": "com.urbandroid.sleep",
+                  "label": "Sleep as Android"
                 },
                 {
                   "pkg": "com.garmin.android.apps.connectmobile",
                   "label": "Garmin Connect"
-                },
-                {
-                  "pkg": "com.urbandroid.sleep",
-                  "label": "Sleep as Android"
                 }
               ],
               "icon_res": "ic_heart"
@@ -4118,6 +3978,49 @@
                 }
               ],
               "icon_res": "ic_file_stack"
+            },
+            {
+              "label": "Socials",
+              "icon_pkg": "com.diegonmarcos.cloudme",
+              "icon_res": "ic_file_stack",
+              "packages": [
+                {
+                  "pkg": "com.instagram.android",
+                  "label": "Instagram"
+                },
+                {
+                  "pkg": "com.instagram.barcelona",
+                  "label": "Threads"
+                },
+                {
+                  "pkg": "com.facebook.katana",
+                  "label": "Facebook"
+                },
+                {
+                  "pkg": "com.linkedin.android",
+                  "label": "LinkedIn"
+                },
+                {
+                  "pkg": "com.pinterest",
+                  "label": "Pinterest"
+                },
+                {
+                  "pkg": "com.bereal.ft",
+                  "label": "BeReal"
+                },
+                {
+                  "pkg": "com.tinder",
+                  "label": "Tinder"
+                },
+                {
+                  "pkg": "com.bumble.app",
+                  "label": "Bumble"
+                },
+                {
+                  "pkg": "co.hinge.app",
+                  "label": "Hinge"
+                }
+              ]
             },
             {
               "label": "Me-Buro",
@@ -4158,14 +4061,6 @@
                 {
                   "pkg": "com.devhd.feedly",
                   "label": "Feedly"
-                },
-                {
-                  "pkg": "com.checkitt",
-                  "label": "Checkit"
-                },
-                {
-                  "pkg": "com.flyersoft.moonreader",
-                  "label": "Moon+ Reader"
                 }
               ],
               "icon_res": "ic_rss"
@@ -4184,10 +4079,6 @@
                 {
                   "pkg": "com.meetup",
                   "label": "Meetup"
-                },
-                {
-                  "pkg": "net.residentadvisor.raguide",
-                  "label": "Resident Advisor"
                 }
               ],
               "icon_res": "ic_p_cal_month"
@@ -4197,10 +4088,6 @@
               "icon_pkg": "com.diegonmarcos.cloudmediacenter",
               "packages": [
                 {
-                  "pkg": "com.aspiro.tidal",
-                  "label": "Tidal"
-                },
-                {
                   "pkg": "com.spotify.music",
                   "label": "Spotify"
                 },
@@ -4209,20 +4096,8 @@
                   "label": "YouTube"
                 },
                 {
-                  "pkg": "com.google.android.apps.youtube.music",
-                  "label": "YouTube Music"
-                },
-                {
-                  "pkg": "com.google.android.videos",
-                  "label": "Google TV"
-                },
-                {
                   "pkg": "com.amazon.avod.thirdpartyclient",
                   "label": "Prime Video"
-                },
-                {
-                  "pkg": "com.wbd.stream",
-                  "label": "Max"
                 },
                 {
                   "pkg": "com.shazam.android",
@@ -4238,10 +4113,6 @@
                 {
                   "pkg": "com.amazon.mShop.android.shopping",
                   "label": "Amazon"
-                },
-                {
-                  "pkg": "com.dhl.exp.dhlmobile",
-                  "label": "DHL Express"
                 },
                 {
                   "pkg": "de.dhl.paket",
@@ -4262,14 +4133,6 @@
                   "label": "Uber"
                 },
                 {
-                  "pkg": "com.nomadmania.presentation",
-                  "label": "NomadMania"
-                },
-                {
-                  "pkg": "com.airbnb.android",
-                  "label": "Airbnb"
-                },
-                {
                   "pkg": "com.booking",
                   "label": "Booking.com"
                 },
@@ -4282,36 +4145,20 @@
                   "label": "Ryanair"
                 },
                 {
-                  "pkg": "com.wizzair.WizzAirApp",
-                  "label": "Wizz Air"
-                },
-                {
-                  "pkg": "com.skiplagged",
-                  "label": "Skiplagged"
-                },
-                {
                   "pkg": "com.rome2rio.www.rome2rio",
                   "label": "Rome2Rio"
-                },
-                {
-                  "pkg": "com.hostelworld.app",
-                  "label": "Hostelworld"
                 },
                 {
                   "pkg": "com.comuto",
                   "label": "BlaBlaCar"
                 },
                 {
-                  "pkg": "com.mo2o.alsa",
-                  "label": "ALSA"
-                },
-                {
                   "pkg": "com.trafi.whitelabel.bvg",
                   "label": "BVG Fahrinfo"
                 },
                 {
-                  "pkg": "cat.atm.tmobilitat",
-                  "label": "T-mobilitat"
+                  "pkg": "com.nomadmania.presentation",
+                  "label": "NomadMania"
                 }
               ],
               "icon_res": "ic_ctl_airplane"
@@ -4320,8 +4167,8 @@
               "label": "Jobs & Business",
               "packages": [
                 {
-                  "pkg": "com.linkedin.android",
-                  "label": "LinkedIn"
+                  "pkg": "com.indeed.android.jobsearch",
+                  "label": "Indeed"
                 }
               ],
               "icon_res": "ic_suite"
@@ -4352,32 +4199,16 @@
                   "label": "Revolut"
                 },
                 {
-                  "pkg": "com.transferwise.android",
-                  "label": "Wise"
-                },
-                {
                   "pkg": "com.paypal.android.p2pmobile",
                   "label": "PayPal"
-                },
-                {
-                  "pkg": "com.btg.pactual.banking",
-                  "label": "BTG Banking"
-                },
-                {
-                  "pkg": "com.btg.pactual.digital.mobile",
-                  "label": "BTG Pactual"
-                },
-                {
-                  "pkg": "com.btg.pactual.homebroker.mobile",
-                  "label": "BTG Home Broker"
                 },
                 {
                   "pkg": "com.binance.dev",
                   "label": "Binance"
                 },
                 {
-                  "pkg": "com.bitpanda.bitpanda",
-                  "label": "Bitpanda"
+                  "pkg": "com.btg.pactual.digital.mobile",
+                  "label": "BTG Pactual"
                 },
                 {
                   "pkg": "com.fusionmedia.investing",
@@ -4386,18 +4217,6 @@
                 {
                   "pkg": "com.xe.currency",
                   "label": "XE Currency"
-                },
-                {
-                  "pkg": "de.number26.android",
-                  "label": "N26"
-                },
-                {
-                  "pkg": "com.imaginecurve.curve.prd",
-                  "label": "Curve"
-                },
-                {
-                  "pkg": "com.starfinanz.smob.android.sfinanzstatus",
-                  "label": "Sparkasse"
                 }
               ],
               "icon_res": "ic_storefront"
@@ -4419,24 +4238,8 @@
                   "label": "Claude"
                 },
                 {
-                  "pkg": "com.google.android.apps.bard",
-                  "label": "Gemini"
-                },
-                {
                   "pkg": "ai.perplexity.app.android",
                   "label": "Perplexity"
-                },
-                {
-                  "pkg": "ai.perplexity.comet",
-                  "label": "Comet"
-                },
-                {
-                  "pkg": "ai.x.grok",
-                  "label": "Grok"
-                },
-                {
-                  "pkg": "com.samsung.android.bixby.agent",
-                  "label": "Bixby"
                 }
               ],
               "icon_res": "ic_ai_chat"
@@ -4463,10 +4266,6 @@
                 {
                   "pkg": "com.termux",
                   "label": "Termux"
-                },
-                {
-                  "pkg": "com.termux.nix",
-                  "label": "Nix"
                 }
               ],
               "icon_res": "ic_terminal"
@@ -4527,18 +4326,6 @@
                 {
                   "pkg": "com.wireguard.android",
                   "label": "WireGuard"
-                },
-                {
-                  "pkg": "ch.protonvpn.android",
-                  "label": "Proton VPN"
-                },
-                {
-                  "pkg": "com.cloudflare.cloudflareoneagent",
-                  "label": "Cloudflare One"
-                },
-                {
-                  "pkg": "com.cloudflare.onedotonedotonedotone",
-                  "label": "1.1.1.1 WARP"
                 }
               ],
               "icon_res": "ic_act_shield"
@@ -4554,14 +4341,6 @@
                 {
                   "pkg": "org.fdroid.fdroid",
                   "label": "F-Droid"
-                },
-                {
-                  "pkg": "com.aurora.store",
-                  "label": "Aurora Store"
-                },
-                {
-                  "pkg": "com.sec.android.app.samsungapps",
-                  "label": "Galaxy Store"
                 }
               ],
               "icon_res": "ic_refresh"
@@ -7158,6 +6937,7 @@
         "match_keywords": [
           "pkg:aplicacion.tiempo",
           "pkg:com.google.android.apps.maps",
+          "pkg:app.organicmaps",
           "pkg:com.google.earth",
           "pkg:com.mapswithme.maps.pro",
           "pkg:cz.ackee.ventusky"
@@ -7395,6 +7175,7 @@
           "pkg:com.collabora.libreoffice",
           "pkg:com.google.android.apps.docs.editors.docs",
           "pkg:com.google.android.apps.docs.editors.sheets",
+          "pkg:com.google.android.apps.docs.editors.slides",
           "pkg:com.adobe.reader"
         ],
         "match_metadata": [
@@ -7684,7 +7465,8 @@
         "label": "+Jobs & Business",
         "match_keywords": [
           "pkg:com.linkedin.android",
-          "pkg:com.otta.otta"
+          "pkg:com.otta.otta",
+          "pkg:com.indeed.android.jobsearch"
         ]
       },
       {
