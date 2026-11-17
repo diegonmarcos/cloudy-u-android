@@ -111,7 +111,7 @@ jobs:
           echo "open of a cached message: open-from-cache ${cached_ms:-missing} ms (tap to screenshot window ~4 s incl. render); phases:" | tee -a walk-out/summary.txt
           cat walk-out/open-timing.txt | tee -a walk-out/summary.txt
           [ -n "$cached_ms" ] || { echo "::error::no open-from-cache timing for the seeded message: it did not open from the cached body"; exit 1; }
-          [ "$cached_ms" -le 300 ] || { echo "::error::opening a cached body took $cached_ms ms (limit 300)"; exit 1; }
+          TIMING_FAIL=""; [ "$cached_ms" -le 300 ] || { echo "::error::opening a cached body took $cached_ms ms (limit 300)"; TIMING_FAIL=1; } # still fails the job, at the end, so the offline evidence below is always produced
           if grep -E "id=navwalk-m1 phase=(fetch-email-get|open-from-network)" walk-out/open-timing.txt; then echo "::error::the cached message went to the network"; exit 1; fi
           echo "first visible: $first | last visible after scrolling: $last" | tee -a walk-out/summary.txt
           case "$first" in "Seed message 400 of 400"*) ;; *) echo "::error::the newest cached message is not first: $first"; exit 1;; esac
@@ -221,6 +221,7 @@ jobs:
             echo "::warning::the Configs entry was not found to tap"; bshot 04-configs-not-found
           fi
           kill "$BP" 2>/dev/null || true
+          [ -z "$TIMING_FAIL" ] || exit 1
           SH
           chmod +x walk.sh
 
