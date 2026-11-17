@@ -103,4 +103,32 @@ class StoreAdoptTest {
         assertTrue("the sheet is Compose (no dialog, no View UI)", !Regex("AlertDialog|setPositiveButton|Dialog\\(").containsMatchIn(bar))
         assertTrue("no full-width Adopt row any more", !src("StoreCloudFragment.kt").contains("StoreBar.Button(\"Adopt all"))
     }
+
+    /** #1774 Adopt all adopts the fleet LIB APKs too: they are fleet apps of kind "lib" in the same baked manifest the pass reads. */
+    @Test fun adoptAllCoversEveryInstallableLibApk() {
+        fun repo(rel: String) = listOf(rel, "../$rel", "../../$rel", "../../../$rel", "../../../../$rel", "../../../../../$rel").map(::File).first { it.exists() }
+        val fleet = org.json.JSONObject(repo("aa_cloud-superapp/data/constellation-fleet.json").readText())
+        val apps = fleet.getJSONArray("apps").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
+        val pkgOf = apps.associate { it.getString("id") to it.getString("package") }
+        val kind = apps.associate { it.getString("id") to it.optString("kind", "app") }
+        val groups = fleet.getJSONArray("groups").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.associateBy { it.getString("id") }
+        fun members(id: String) = groups.getValue(id).getJSONArray("members").let { a -> (0 until a.length()).map { a.getString(it) } }
+        val libs = members("libs")
+        assertEquals("the 16 Libs", 16, libs.size)
+        for (id in libs) assertTrue("$id is an installable lib APK in the manifest", kind[id] == "lib" && pkgOf.getValue(id).isNotEmpty())
+        // Lite-ML: the members that are real modules (in the manifest) are installable; the rest are reference rows with no package.
+        val liteInstallable = members("libs-l-ml").filter { it in pkgOf }
+        assertTrue(liteInstallable.isNotEmpty()); for (id in liteInstallable) assertEquals("lib", kind[id])
+        assertTrue("Tiny-ML has no installable package", members("libs-t-ml").none { it in pkgOf })
+        // The pass reads the WHOLE baked fleet (every kind), not one tab, and adopts exactly what is installed.
+        val frag = listOf("src/main/java/com/diegonmarcos/superapp/appstore/StoreCloudFragment.kt",
+            "ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreCloudFragment.kt").map(::File).first { it.isFile }.readText()
+        assertTrue(frag.contains("StoreAdopt.adopt(ctx, fleet.map { it.pkg })"))
+        assertTrue(frag.contains("private val fleet by lazy { Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64) }"))
+        val adopt = listOf("src/main/java/com/diegonmarcos/superapp/appstore/StoreAdopt.kt",
+            "ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreAdopt.kt").map(::File).first { it.isFile }.readText()
+        assertTrue("no kind filter in the pass", !adopt.contains(".kind") && !adopt.contains("\"lib\""))
+        // and every lib package is a legal `pm set-installer` target
+        for (id in libs + liteInstallable) assertEquals("pm set-installer ${pkgOf.getValue(id)} $store", StoreAdopt.command(pkgOf.getValue(id)))
+    }
 }
