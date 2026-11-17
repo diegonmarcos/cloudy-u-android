@@ -7351,7 +7351,7 @@
    "declared_in": [
     "ac_cloud-keyboard/app/build.gradle"
    ],
-   "version": "18.1.0",
+   "version": "19.0.0",
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
