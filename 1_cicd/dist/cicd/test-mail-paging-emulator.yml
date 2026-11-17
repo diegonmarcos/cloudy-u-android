@@ -204,12 +204,6 @@ jobs:
           bshot 04a-drawer; uidump 04a-drawer
           if uitap "Settings" exact || uitap "Configs" exact; then
             sleep 4
-            # the Offline section (Keep mail offline for, Download attachments) is on the Reading and writing page
-            for i in 1 2 3 4 5 6 7 8 9 10; do
-              uitap "Reading and writing" && break
-              adb shell input swipe 700 1500 700 700 400; sleep 1
-            done
-            sleep 3
             found=0
             for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
               uidump configs-scan

@@ -15,7 +15,7 @@
   var CACHE_KEY = 'cmc_games_v1';
   var STORE_PKG = 'com.diegonmarcos.cloudstore';
   var CATEGORIES = ['action', 'adventure', 'puzzle', 'strategy', 'rpg', 'racing', 'sports', 'arcade', 'casual', 'simulation', 'board_card', 'opensource'];
-  var SOURCES = ['play', 'fdroid', 'github'];
+  var SOURCES = ['play', 'fdroid'];
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function norm(s) { return String(s || '').toLowerCase(); }

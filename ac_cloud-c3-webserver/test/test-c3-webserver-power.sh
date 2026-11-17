@@ -2,10 +2,10 @@
 # test-c3-webserver-power.sh — #1502 guard: the Server / Keep alive switches stay the only way anything starts this app's servers.
 #
 # THE FAILURE THIS EXISTS FOR. A keep-alive foreground service that restarts itself, starts at boot and answers every outside
-# start request held fleet apps awake for hours (#1487). Server OFF must free every port; Keep alive (default ON since #1775) must be the
+# start request held fleet apps awake for hours (#1487). Server OFF must free every port; Keep alive (default OFF) must be the
 # only reason a service, a sticky restart or a boot receiver exists. Checks, all from the declaration and the sources:
 #   P1 build.json::power.matrix has the four states, service/boot/sticky only for Server ON + Keep alive ON, wake never,
-#      listeners == Server, admin (the :8002 shell + /api/power) true in EVERY row, and the default is Keep alive ON (#1775)
+#      listeners == Server, admin (the :8002 shell + /api/power) true in EVERY row, and the default is Keep alive OFF
 #   P2 no alarm, job, work or wake-lock API anywhere in the app's Kotlin or Rust (no scheduled wake)
 #   P3 the service, the boot receiver and MainActivity all go through PowerState.serviceAllowed; START_STICKY follows the gate
 #   P4 the boot receiver is declared disabled in the manifest (enabled only by MainActivity.syncKeepAlive)
@@ -29,8 +29,8 @@ for r in m:
     on = r["server"] and r["keep_alive"]
     if (r["service"], r["boot"], r["sticky"]) != (on, on, on) or r["wake"] or r["listeners"] != r["server"] or r.get("admin") is not True:
         bad.append("P1 row %r breaks the rules" % r)
-if pw["default"]["keep_alive"] is not True:
-    bad.append("P1 Keep alive must default to ON (#1775)")
+if pw["default"]["keep_alive"] is not False:
+    bad.append("P1 Keep alive must default to OFF")
 banned = re.compile(r"AlarmManager|setExactAndAllowWhileIdle|setRepeating|JobScheduler|JobService|WorkManager|PeriodicWorkRequest|WakeLock|newWakeLock")
 for root in (os.path.join(app, "src-tauri"), os.path.join(app, "core"), os.path.join(app, "server/src")):
     for d, dirs, files in os.walk(root):

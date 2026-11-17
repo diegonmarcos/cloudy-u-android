@@ -89,15 +89,12 @@ object StoreSuggest {
     class Hit(
         val source: String, val pkg: String, val title: String, val by: String = "",
         val foss: Boolean = false, val repo: String = "", val link: String = "", val icon: String = "",
-        /** Play listing price ("Free", a formatted amount, or "" when the source said nothing: never guessed). */
-        val price: String = "",
     )
 
     /** One result per package (or per unmatched repository): [sources] in declared order. */
     class Result(
         val key: String, val pkg: String, val title: String, val by: String,
         val sources: List<String>, val foss: Boolean, val repo: String, val link: String, val icon: String = "",
-        val price: String = "",
     ) {
         val primary: String get() = sources.first()
     }
@@ -132,7 +129,6 @@ object StoreSuggest {
             repo = hs.firstOrNull { it.repo.isNotBlank() }?.repo.orEmpty(),
             link = hs.firstOrNull { it.link.isNotBlank() }?.link.orEmpty(),
             icon = hs.firstOrNull { it.icon.isNotBlank() }?.icon.orEmpty(),
-            price = hs.firstOrNull { it.price.isNotBlank() }?.price.orEmpty(),
         )
         val merged = LinkedHashMap<String, MutableList<Hit>>()
         byPkg.forEach { (p, hs) -> merged[p] = hs }

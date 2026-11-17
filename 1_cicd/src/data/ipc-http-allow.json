@@ -5,10 +5,6 @@
    "max": 1,
    "why": "#1682 P1 the native Compose UI reads its OWN process's Rust core over the core's loopback admin API (/__app__/api/*, build.json::runtime.port) - the same routes the web shell reads; one app, one process, never another fleet app"
   },
-  "ac_cloud-c3-webserver/src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/ui/StatusPage.kt": {
-   "max": 1,
-   "why": "#1775 Status page lists the Rust core's own served loopback rows (http://127.0.0.1:<port>/ role) as display text read from the same process's /__app__/api/status; a label, not a client: one app, one process, never another fleet app"
-  },
     "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/MeshGateway.kt": {
       "max": 1,
       "why": "the gateway's own address in /api/fleet/apps, for external callers; a label"

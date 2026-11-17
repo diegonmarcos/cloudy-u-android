@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -94,7 +93,6 @@ fun PagesSection(sub: String, open: (String, String?) -> Unit = { _, _ -> }) {
 private fun RootList(title: String, rows: List<JSONObject>, empty: String, bump: () -> Unit, open: (String) -> Unit) {
     val actions = rememberActions(bump)
     val ctx = LocalContext.current
-    val expandedRoots = remember { mutableStateListOf<String>() }
     Card("$title · ${rows.size}", "c3_roots") {
         if (rows.isEmpty()) Note(empty)
         rows.forEachIndexed { i, r ->
@@ -103,29 +101,13 @@ private fun RootList(title: String, rows: List<JSONObject>, empty: String, bump:
             val ready = r.optString("status") == "ready"
             val pages = r.optString("mode") == "pages"
             val target = rootTarget(r)
-            val rid = r.optString("id")
-            val expanded = rid in expandedRoots
-            Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp).testTag("c3_root_$rid"), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                // #1775 ONE row for All, File Explorer and Pages: tap to expand; the chips are real probes (page = app on AND page served, app, serving)
-                Row(Modifier.fillMaxWidth().clickable { if (expanded) expandedRoots.remove(rid) else expandedRoots.add(rid) }.testTag("c3_root_toggle_$rid"), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp).testTag("c3_root_${r.optString("id")}"), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Dot(ready)
                     Spacer(Modifier.width(7.dp))
                     Text(r.str("label"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     Badge(if (pages) "Pages" else "File Explorer")
                     Badge(words, tone)
-                    Text(if (expanded) " ▾" else " ▸", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                val on = r.optBoolean("page_on"); val appOn = r.optBoolean("app_on")
-                val serv = if (r.has("serving") && !r.isNull("serving")) r.optBoolean("serving") else null
-                Row(Modifier.horizontalScroll(rememberScrollState()).testTag("c3_root_chips_$rid")) {
-                    Badge("page " + if (on) "on" else "off", if (on) Tone.Up else Tone.Down)
-                    Badge("app " + if (appOn) "on" else "off", if (appOn) Tone.Up else Tone.Down)
-                    Badge("serving " + (when (serv) { true -> "on"; false -> "off"; null -> "n/a" }), if (serv == true) Tone.Up else if (serv == false) Tone.Down else MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                if (expanded) {
-                    val port = if (r.has("port") && !r.isNull("port")) r.str("port") else "-"
-                    Text("path ~/${r.optString("repo")}  ·  port $port  ·  url ${rootTarget(r)}", style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurface, maxLines = 4, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("c3_root_serving_$rid"))
-                    Text("Config: " + if (UiMode.edit) "Edit" else "View only", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("c3_root_mode_$rid"))
                 }
                 val where = when {
                     r.has("repo") && !r.isNull("repo") && r.optString("repo").isNotEmpty() -> "~/" + r.str("repo")
@@ -142,16 +124,10 @@ private fun RootList(title: String, rows: List<JSONObject>, empty: String, bump:
                 }
                 val perms = r.optJSONObject("perms"); val startApp = r.optJSONObject("start_app")
                 val drive = r.optString("drive_url").takeIf { it.isNotEmpty() && !r.isNull("drive_url") }
-                fun edit(go: () -> Unit) { if (UiMode.edit) go() else toast(ctx, "View only: switch Mode to Edit to change this") }
-                if (expanded) ChipRow(inset = false) {
-                    if (ready) Chip("▶ Open page", "c3_root_open_page_$rid", primary = true) { open(rid) }
-                    if (drive != null) Chip("Open app/folder", "c3_root_open_app_$rid") { openLink(ctx, drive, actions) }
-                    else if (r.optString("kind") == "terminal") Chip("Open app/folder", "c3_root_open_app_$rid") { edit { actions.post(Api.SERVED, JSONObject().put("op", "start_app").put("id", r.optString("source"))) { "Opening the app" } } }
-                }
-                if (expanded) ChipRow(inset = false) {
+                ChipRow(inset = false) {
                     if (ready) Chip(if (pages) "▶ Open page" else "▶ Explore", "c3_root_open_${r.optString("id")}", primary = true) { open(r.optString("id")) }
-                    if (startApp != null) Chip("▶ Start app", "c3_root_start_app", primary = !ready) { edit { actions.run(startApp) } }
-                    if (perms != null) Chip(perms.optString("label", "Perms"), "c3_root_perms") { edit { actions.run(perms) } }
+                    if (startApp != null) Chip("▶ Start app", "c3_root_start_app", primary = !ready) { actions.run(startApp) }
+                    if (perms != null) Chip(perms.optString("label", "Perms"), "c3_root_perms") { actions.run(perms) }
                     if (r.optString("status") == "missing" && clone.isNotEmpty()) Chip("Copy command", "c3_copy_clone") { copyText(ctx, "clone", clone) }
                     if (ready) {
                         Chip("Open in Browser", "c3_root_browser") { actions.post(Api.OPEN, JSONObject().put("url", target)) { "Opening in cloud-browser" } }

@@ -12,7 +12,7 @@ sz=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); SW=${sz%x*}; SH=${
 adb shell am force-stop "$W"; adb shell input keyevent KEYCODE_HOME
 adb shell am start -W -n "$W/.MainActivity" >/dev/null; sleep 10
 # Home is the default section: ADB shell rows may need a scroll
-for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+for i in 1 2 3 4 5 6 7 8; do
   shoot "home-$i"; dump "home-$i"
   adb shell input swipe $X $Y1 $X $Y2 300; sleep 2
 done
@@ -21,7 +21,7 @@ for needle in "ADB SHELL" "Paired" "Started by" "Clients"; do
   grep -qiF "$needle" "$OUT/all.xml" || fail "Home shows no '$needle' (ADB shell status table)"
 done
 # back to the top, tap the Server row of the table: lands on the ADB Shell Server sub page
-for i in 1 2 3 4 5 6 7 8 9 10 11 12 13; do adb shell input swipe $X $Y2 $X $Y1 200; done; sleep 1
+for i in 1 2 3 4 5 6 7; do adb shell input swipe $X $Y2 $X $Y1 200; done; sleep 1
 for i in 1 2 3 4; do
   dump cur
   b=$(grep -B0 -oE "content-desc=\"\"[^>]*resource-id=\"c3_home_adb_state\"[^>]*bounds=\"\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]\"|resource-id=\"c3_home_adb_state\"[^>]*bounds=\"\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]\"" "$OUT/cur.xml" | head -1 | grep -oE '[0-9]+' | tail -4 | tr '\n' ' ')

@@ -107,12 +107,6 @@
         "*"
       ]
     },
-    "store-play-integrity": {
-      "tier": 4,
-      "consumers": [
-        "*"
-      ]
-    },
     "device-access": {
       "tier": 3,
       "consumers": [

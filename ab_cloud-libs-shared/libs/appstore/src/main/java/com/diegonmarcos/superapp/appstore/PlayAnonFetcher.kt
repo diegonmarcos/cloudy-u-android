@@ -207,7 +207,7 @@ object PlayAnonFetcher {
     }
 
     /** One app in Play's catalogue, as search returns it. */
-    class Hit(val pkg: String, val title: String, val creator: String, val versionCode: Long?, val icon: String = "", val price: String = "")
+    class Hit(val pkg: String, val title: String, val creator: String, val versionCode: Long?, val icon: String = "")
 
     /** Play's catalogue search, as Aurora does it (`search?c=3&q=`): every app document in the answer,
      *  found by walking it (the list nesting changes between Play versions; the document does not). */
@@ -218,9 +218,7 @@ object PlayAnonFetcher {
             Hit(pkg, Proto.get(d, 5)?.decodeToString() ?: pkg, Proto.get(d, 6)?.decodeToString().orEmpty(),
                 Proto.get(d, 13, 1)?.let { Proto.varint(it, 3) },
                 // DocV2.image (10): imageType 4 = the app icon, imageUrl = field 5.
-                Proto.all(d, 10).firstOrNull { Proto.varint(it, 1) == 4L }?.let { Proto.get(it, 5)?.decodeToString() }.orEmpty(),
-                // DocV2.offer (8): micros (1) 0 = free; formattedAmount (3). No offer in the document = the price is not said.
-                Proto.get(d, 8)?.let { o -> Proto.varint(o, 1)?.let { m -> if (m == 0L) "Free" else Proto.get(o, 3)?.decodeToString()?.takeIf { it.isNotBlank() } ?: "Paid" } }.orEmpty())
+                Proto.all(d, 10).firstOrNull { Proto.varint(it, 1) == 4L }?.let { Proto.get(it, 5)?.decodeToString() }.orEmpty())
         }.distinctBy { it.pkg }
     }
 
