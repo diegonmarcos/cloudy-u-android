@@ -1439,6 +1439,11 @@
     <string name="settings_offline_attachments_100">100 MB</string>
     <string name="settings_offline_status">Pamięć offline: %1$s · Ostatnia synchronizacja: %2$s</string>
     <string name="settings_offline_never">nigdy</string>
+    <string name="settings_offline_attach_policy_title">Pobieraj załączniki</string>
+    <string name="settings_offline_attach_policy_always">Zawsze</string>
+    <string name="settings_offline_attach_policy_wifi">Tylko przez Wi-Fi (domyślnie)</string>
+    <string name="settings_offline_attach_policy_off">Wyłączone (tylko po dotknięciu)</string>
+    <string name="settings_offline_attach_storage">Zapisane załączniki dla %1$s: %2$s</string>
     <string name="message_sign_in_required">Logowanie wygasło. Zaloguj się ponownie, aby wczytać tę wiadomość.</string>
     <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
     <string name="settings_alert_accounts_title">Konta alertów (RSS)</string>

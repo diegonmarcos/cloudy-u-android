@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import app.sterna.core.data.mail.AttachmentPolicy
 import app.sterna.core.data.mail.OfflineAttachmentLimit
 import app.sterna.core.data.mail.OfflineWindow
 import androidx.datastore.preferences.core.stringSetPreferencesKey
@@ -263,6 +264,13 @@ class SettingsRepository(context: Context) {
 
     suspend fun setOfflineAttachmentLimit(limit: OfflineAttachmentLimit) {
         dataStore.edit { it[KEY_OFFLINE_ATTACHMENTS] = limit.name }
+    }
+
+    /** "Download attachments" (#1768): which attachments the background sync fetches. Wi-Fi only until the user says otherwise. */
+    val attachmentPolicy: Flow<AttachmentPolicy> = dataStore.data.map(::attachmentPolicyFrom)
+
+    suspend fun setAttachmentPolicy(policy: AttachmentPolicy) {
+        dataStore.edit { it[KEY_OFFLINE_ATTACHMENT_POLICY] = policy.name }
     }
 
     /** Epoch millis of the last completed offline sync; 0 = never. */
@@ -548,6 +556,7 @@ class SettingsRepository(context: Context) {
         private val KEY_MESSAGE_TEXT_SIZE = stringPreferencesKey("message_text_size")
         private val KEY_OFFLINE_WINDOW = stringPreferencesKey("offline_window")
         private val KEY_OFFLINE_ATTACHMENTS = stringPreferencesKey("offline_attachment_limit")
+        private val KEY_OFFLINE_ATTACHMENT_POLICY = stringPreferencesKey(OFFLINE_ATTACHMENT_POLICY_KEY)
         private val KEY_OFFLINE_LAST_SYNC = longPreferencesKey("offline_last_sync")
         private val KEY_CONTACT_SUGGESTIONS = booleanPreferencesKey("contact_suggestions")
         private val KEY_HAS_SEEN_WELCOME = booleanPreferencesKey("has_seen_welcome")
@@ -651,3 +660,10 @@ const val QUOTED_DATES_UTC_DEFAULT = false
 /** Whether outgoing quoted/forwarded dates are written in UTC, read from the stored preferences. */
 internal fun quotedDatesUtcFrom(prefs: Preferences): Boolean =
     prefs[KEY_QUOTED_DATES_UTC] ?: QUOTED_DATES_UTC_DEFAULT
+
+/** The DataStore key of "Download attachments"; declared for the new-phone migration in the fleet config manifest. */
+const val OFFLINE_ATTACHMENT_POLICY_KEY = "offline_attachment_policy"
+
+/** The stored "Download attachments" choice; an absent or unknown value reads as Wi-Fi only (#1768). */
+internal fun attachmentPolicyFrom(prefs: androidx.datastore.preferences.core.Preferences): AttachmentPolicy =
+    AttachmentPolicy.from(prefs[androidx.datastore.preferences.core.stringPreferencesKey(OFFLINE_ATTACHMENT_POLICY_KEY)])

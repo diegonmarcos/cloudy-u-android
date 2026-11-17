@@ -285,7 +285,7 @@ class SternaApplication : Application() {
         // first. See ui/settings/UpdateScreen.kt for what the owner sees.
         Updater.start(this)
         // Offline window sync (unmetered + charging); idempotent.
-        app.sterna.mail.OfflineSyncWorker.ensureScheduled(this)
+        app.sterna.mail.OfflineSyncWorker.ensureScheduled(this, hasPush = app.sterna.push.PushService.isRunning)
         // Start the WebView provider once, when the main thread is idle, so the first mail opens without it.
         app.sterna.mail.WebViewWarmUp.once(this)
     }

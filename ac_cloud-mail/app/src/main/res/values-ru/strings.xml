@@ -1442,6 +1442,11 @@
     <string name="settings_offline_attachments_100">100 МБ</string>
     <string name="settings_offline_status">Офлайн-кэш: %1$s · Последняя синхронизация: %2$s</string>
     <string name="settings_offline_never">никогда</string>
+    <string name="settings_offline_attach_policy_title">Загружать вложения</string>
+    <string name="settings_offline_attach_policy_always">Всегда</string>
+    <string name="settings_offline_attach_policy_wifi">Только по Wi-Fi (по умолчанию)</string>
+    <string name="settings_offline_attach_policy_off">Выкл. (только по нажатию)</string>
+    <string name="settings_offline_attach_storage">Вложения, сохранённые для %1$s: %2$s</string>
     <string name="message_sign_in_required">Срок входа истёк. Войдите снова, чтобы загрузить это письмо.</string>
     <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
     <string name="settings_alert_accounts_title">Учётные записи оповещений (RSS)</string>

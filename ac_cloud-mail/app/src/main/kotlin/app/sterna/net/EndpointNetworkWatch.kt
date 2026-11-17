@@ -13,6 +13,10 @@ import com.diegonmarcos.superapp.fleetendpoints.FleetTransport
 object EndpointNetworkWatch {
     fun start(ctx: Context) {
         FleetHttpInstall.install() // libs below the transport (core's Telemetry) ride it through FleetHttpSeam
-        NetworkChangeWatch.start(ctx) { FleetTransport.router.onNetworkChanged() }
+        NetworkChangeWatch.start(ctx) {
+            FleetTransport.router.onNetworkChanged()
+            // #1768: connectivity regained (or a new network): the full sync tops the window up; WorkManager waits for a link.
+            runCatching { app.sterna.mail.OfflineSyncWorker.runNow(ctx) }
+        }
     }
 }

@@ -33,6 +33,7 @@ import app.sterna.core.data.filter.VACATION_SCRIPT_NAME
 import app.sterna.core.data.filter.enabledRuleCount
 import app.sterna.core.data.filter.loadedFilterRules
 import app.sterna.core.data.db.AccountMailboxRole
+import app.sterna.core.data.db.BodyCacheRow
 import app.sterna.core.data.unsubscribe.UnsubscribeClient
 import app.sterna.core.data.unsubscribe.UnsubscribeResult
 import app.sterna.core.data.db.EmailDao
@@ -146,6 +147,13 @@ internal const val MAX_CHANGES = 200
 private const val RECENT_MUTATION_MS = 45_000L
 
 private const val PAGE_SIZE = 50
+
+/** Messages per header page of the background full sync's backfill (#1768). */
+private const val FULL_SYNC_PAGE = 100
+
+/** How many messages with attachments one attachment scan reads per query, and in total per call. */
+private const val FULL_SYNC_ATTACHMENT_SCAN_PAGE = 100
+private const val FULL_SYNC_ATTACHMENT_SCAN_MAX = 2_000
 
 /** The per-id SetError type meaning the id does not exist in the account (RFC 8620 §5.3). Action
  *  paths receiving it prune the cached row. */
@@ -6091,6 +6099,178 @@ class MailRepository(
         limit: OfflineAttachmentLimit,
         nowMillis: Long = System.currentTimeMillis(),
     ): OfflineSyncResult = OfflineSync(offlinePort(credentials)).run(window, limit, nowMillis)
+
+    // ---- Background full sync (#1768) -------------------------------------------------------
+
+    /**
+     * One background pass for a JMAP account: headers (Email/changes, then older chunks to the window's edge), full
+     * bodies of EVERY folder in the window, attachments by [policy]; see [FullSync]. Never throws but cancellation.
+     */
+    suspend fun fullSync(
+        credentials: AccountCredentials,
+        window: OfflineWindow,
+        limit: OfflineAttachmentLimit,
+        policy: AttachmentPolicy,
+        conditions: () -> PrefetchConditions,
+        stopRequested: () -> Boolean = { false },
+        nowMillis: Long = System.currentTimeMillis(),
+    ): FullSyncResult {
+        val port = fullSyncPort(credentials, window, limit)
+        return FullSync(port, conditions, policy, stopRequested = stopRequested).run(window, nowMillis)
+    }
+
+    /** Bytes of downloaded attachments one account holds (Configs shows it per account). */
+    fun offlineAttachmentBytes(accountId: String): Long {
+        val dir = attachmentAccountDir(accountId) ?: return 0L
+        return dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+    }
+
+    private fun attachmentAccountDir(accountId: String): java.io.File? =
+        offlineAttachmentFile(accountId, "x", EmailBodyPart(blobId = "x"))?.parentFile?.parentFile
+
+    private fun fullSyncPort(credentials: AccountCredentials, window: OfflineWindow, limit: OfflineAttachmentLimit) = object : FullSyncPort {
+        private fun cutoff(): Long? = window.cutoffMillis(System.currentTimeMillis())
+
+        override suspend fun folders(): List<FullSyncFolder> =
+            resolve(credentials).mailboxes.map { FullSyncFolder(it.id, inbox = it.role == "inbox") }
+
+        override suspend fun syncHeaders(folder: FullSyncFolder) {
+            val sync = accountStore.syncWindow(credentials.id)
+            refresh(credentials, folder.id, sync.limit, pruneBeforeMillis = null)
+        }
+
+        override suspend fun backfillHeaders(folder: FullSyncFolder, cutoffMillis: Long?): Boolean {
+            val oldest = emailDao.oldestSortKey(credentials.id, folder.id)
+            if (cutoffMillis != null && oldest != null && oldest < cutoffMillis) return true
+            val ctx = connect(credentials)
+            val anchorId = emailDao.oldestRepresentativeEmailId(credentials.id, folder.id)
+            val page = try {
+                client.queryEmailsPage(
+                    ctx.session, ctx.accountId, folder.id, FULL_SYNC_PAGE, ctx.auth,
+                    calculateTotal = true, anchorId = anchorId, anchorOffset = if (anchorId != null) 1 else 0,
+                )
+            } catch (e: JmapException) {
+                if (e.errorType != "anchorNotFound") throw e
+                client.queryEmailsPage(
+                    ctx.session, ctx.accountId, folder.id, FULL_SYNC_PAGE, ctx.auth,
+                    position = emailDao.countForMailbox(credentials.id, folder.id), calculateTotal = true,
+                )
+            }
+            if (page.emails.isNotEmpty()) {
+                checkAccountStillConfigured(credentials.id, accountStore.accounts().map { it.id })
+                emailDao.upsertAll(page.emails.map { it.toEntity(credentials.id, folder.id) })
+            }
+            val newOldest = emailDao.oldestSortKey(credentials.id, folder.id)
+            val count = emailDao.countForMailbox(credentials.id, folder.id)
+            val total = page.total
+            return page.emails.isEmpty() || (total != null && count >= total) ||
+                (cutoffMillis != null && newOldest != null && newOldest < cutoffMillis)
+        }
+
+        override suspend fun missingBodies(folder: FullSyncFolder, limit: Int): List<String> =
+            emailDao.newestWithoutBody(credentials.id, folder.id, cutoff() ?: Long.MIN_VALUE, limit)
+
+        // The inbox keeps the #1763 path whole (its key handling is pinned); every other folder is stored RAW with no
+        // key import at all (fetchAndStoreRawBodies).
+        override suspend fun fetchBodies(folder: FullSyncFolder, ids: List<String>) {
+            if (folder.inbox) fetchAndStoreBodies(credentials, ids) else fetchAndStoreRawBodies(credentials, ids)
+        }
+
+        override suspend fun missingAttachments(limit: Int): List<AttachmentJob> {
+            val out = mutableListOf<AttachmentJob>()
+            var offset = 0
+            while (out.size < limit && offset < FULL_SYNC_ATTACHMENT_SCAN_MAX) {
+                val ids = emailDao.idsWithAttachmentAndBody(credentials.id, cutoff() ?: Long.MIN_VALUE, FULL_SYNC_ATTACHMENT_SCAN_PAGE, offset)
+                if (ids.isEmpty()) break
+                for (id in ids) {
+                    val email = storedEmail(id) ?: continue
+                    if (cryptoKindOf(email) != null) continue
+                    for (part in downloadableParts(email)) {
+                        val file = offlineAttachmentFile(credentials.id, id, part) ?: continue
+                        if (file.isFile) continue
+                        out += AttachmentJob(id, part.blobId ?: part.partId ?: continue, part.size)
+                        if (out.size >= limit) return out
+                    }
+                }
+                offset += ids.size
+            }
+            return out
+        }
+
+        private fun downloadableParts(email: Email): List<EmailBodyPart> = email.attachments.filter {
+            it.size > 0 && it.size <= limit.bytes && it.partId?.startsWith("pgp:") != true
+        }
+
+        private suspend fun storedEmail(id: String): Email? {
+            val row = emailBodyDao.byId(credentials.id, id) ?: return null
+            return runCatching { cacheJson.decodeFromString(Email.serializer(), row.bodyJson) }.getOrNull()
+        }
+
+        override suspend fun fetchAttachment(job: AttachmentJob) {
+            val email = storedEmail(job.emailId) ?: return
+            val part = downloadableParts(email).firstOrNull { (it.blobId ?: it.partId) == job.partKey } ?: return
+            val file = offlineAttachmentFile(credentials.id, job.emailId, part) ?: return
+            if (file.isFile) return
+            val bytes = downloadAttachment(credentials, part, job.emailId, limit.bytes)
+            file.parentFile?.mkdirs()
+            val tmp = java.io.File(file.path + ".part")
+            tmp.writeBytes(bytes)
+            if (!tmp.renameTo(file)) tmp.delete()
+        }
+
+        override suspend fun bodyBytes(): Long = emailBodyDao.bytesForAccount(credentials.id)
+
+        override suspend fun attachmentBytes(): Long = offlineAttachmentBytes(credentials.id)
+
+        override suspend fun evict(): Int {
+            val dropped = evictBodies(credentials.id)
+            evictAttachments(credentials.id)
+            return dropped
+        }
+    }
+
+    /** Past the per-account attachment cap the files of the OLDEST messages go (and any left outside the window). */
+    private suspend fun evictAttachments(accountId: String) {
+        runCatching {
+            val dir = attachmentAccountDir(accountId) ?: return
+            val rows = (dir.listFiles() ?: return).filter { it.isDirectory }.map { d ->
+                BodyCacheRow(
+                    id = d.name,
+                    sortKey = emailDao.sortKeyOf(accountId, d.name) ?: d.lastModified(),
+                    bytes = d.walkBottomUp().filter { it.isFile }.sumOf { it.length() },
+                )
+            }
+            val cutoff = offlineWindow.cutoffMillis(System.currentTimeMillis())
+            planBodyEviction(rows, cutoff, ATTACHMENT_CACHE_MAX_BYTES_PER_ACCOUNT).forEach { java.io.File(dir, it).deleteRecursively() }
+        }
+    }
+
+    /**
+     * Bodies of a NON-inbox folder, stored raw (#1768): one Email/get with bodies and one for the headers (only the
+     * origin header is read from them). Ciphertext is kept as received. By design this function never names the
+     * OpenPGP engine nor the key-import helper: an unopened message in Junk, Trash or Archive must not plant a key
+     * in OpenKeychain; the key is read when the user opens the message.
+     */
+    private suspend fun fetchAndStoreRawBodies(credentials: AccountCredentials, ids: List<String>) {
+        val ctx = connect(credentials)
+        val t0 = System.nanoTime()
+        val emails = client.getEmailsWithBody(ctx.session, ctx.accountId, ids, ctx.auth)
+        MailTiming.log(ids.first(), "fullsync-email-get(${ids.size})", (System.nanoTime() - t0) / 1_000_000)
+        val headers = try {
+            client.getEmailsHeaders(ctx.session, ctx.accountId, emails.map { it.id }, ctx.auth)
+        } catch (c: CancellationException) {
+            throw c
+        } catch (t: Throwable) {
+            // An unreadable origin is "unknown", never cached as "none": drop the batch, the next run asks again.
+            android.util.Log.w("MailRepository", "origin headers of ${emails.size} synced messages unreadable", t)
+            return
+        }
+        storeRawBodies(
+            emails, headers,
+            originOf = { h -> originalSenderHeaderOf(h.map { it.name to it.value }) },
+            persist = { email -> persistBody(credentials.id, email.id, email, emptyMap()) },
+        )
+    }
 
     private fun offlinePort(credentials: AccountCredentials) = object : OfflineSyncPort {
         override suspend fun idsInWindow(cutoffMillis: Long?): List<String> {

@@ -517,6 +517,33 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /** "Download attachments" (#1768): Always / Wi-Fi only / Off; Wi-Fi only until the user changes it. */
+    val attachmentPolicy = settings.attachmentPolicy.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = app.sterna.core.data.mail.AttachmentPolicy.DEFAULT,
+    )
+
+    fun setAttachmentPolicy(policy: app.sterna.core.data.mail.AttachmentPolicy) {
+        viewModelScope.launch {
+            settings.setAttachmentPolicy(policy)
+            app.sterna.mail.OfflineSyncWorker.runNow(getApplication())
+        }
+    }
+
+    /** Attachment bytes held offline per account (name to bytes), for the Configs line under the policy row. */
+    private val _attachmentStorage = MutableStateFlow<List<Pair<String, Long>>>(emptyList())
+    val attachmentStorage = _attachmentStorage.asStateFlow()
+
+    fun refreshAttachmentStorage() {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val container = getApplication<Application>().container
+            _attachmentStorage.value = runCatching {
+                container.accountStore.accounts().map { it.accountName.ifBlank { it.username } to container.mailRepository.offlineAttachmentBytes(it.id) }
+            }.getOrDefault(emptyList())
+        }
+    }
+
     val offlineLastSync = settings.offlineLastSync.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

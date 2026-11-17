@@ -51,6 +51,18 @@ interface EmailDao {
     @Query("SELECT DISTINCT id FROM emails WHERE accountId = :accountId AND sortKey >= :cutoff")
     suspend fun idsSince(accountId: String, cutoff: Long): List<String>
 
+    /** Background full sync (#1768): the oldest receive time cached in one folder, null when it holds nothing. */
+    @Query("SELECT MIN(sortKey) FROM emails WHERE accountId = :accountId AND mailboxId = :mailboxId")
+    suspend fun oldestSortKey(accountId: String, mailboxId: String): Long?
+
+    /** Background full sync (#1768): ids with attachments whose body is stored, inside the window, newest first. */
+    @Query(
+        "SELECT e.id FROM emails e WHERE e.accountId = :accountId AND e.hasAttachment = 1 AND e.sortKey >= :cutoff " +
+            "AND EXISTS (SELECT 1 FROM email_bodies b WHERE b.accountId = e.accountId AND b.id = e.id) " +
+            "ORDER BY e.sortKey DESC, e.id DESC LIMIT :limit OFFSET :offset",
+    )
+    suspend fun idsWithAttachmentAndBody(accountId: String, cutoff: Long, limit: Int, offset: Int): List<String>
+
     /** Offline window: ids of an account's messages received before [cutoff]. */
     @Query("SELECT DISTINCT id FROM emails WHERE accountId = :accountId AND sortKey < :cutoff")
     suspend fun idsBefore(accountId: String, cutoff: Long): List<String>

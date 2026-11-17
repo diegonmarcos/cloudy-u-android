@@ -202,6 +202,18 @@ outbox-bearing tables migrate additively.
 - **Outbox & scheduled send:** sends are persisted Room rows delivered by
   WorkManager jobs (network constraint, backoff, undo-send hold-back), so a
   send survives process death and offline spells.
+- **Background full sync (#1768):** `OfflineSyncWorker` (WorkManager, exponential
+  backoff) keeps the whole "Keep mail offline for" window (90 days by default)
+  downloaded: Email/changes per folder, older header chunks to the window's edge,
+  full bodies of every folder, and attachments by the "Download attachments"
+  setting (Always / Wi-Fi only (default) / Off; a tap always downloads). Every 15
+  minutes without push, on a push state change when there is push, on connectivity
+  regain, after an app update and on app open. Battery saver stops it, a metered
+  link takes the newest batch only, and it stops filling at 90% of the 250 MB
+  per-account caps (bodies and attachments are capped separately; the oldest go
+  first past the cap). Encrypted bodies of folders other than the inbox are stored
+  raw and never import the sender's key until the message is opened. The engine is
+  `core/data` `FullSync`; the opening of a stored mail makes no network call.
 - **Snooze:** a Room table filtered out of every list query, plus a WorkManager
   job that resurfaces the message at its time.
 - **Settings backup:** a portable JSON snapshot of preferences + account

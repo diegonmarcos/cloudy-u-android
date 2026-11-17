@@ -990,7 +990,7 @@
     "datastore:settings": {
       "kind": "datastore",
       "class": "config",
-      "doc": "Mail (sterna) settings: theme, app_style (CLOUD_DARK default, GMAIL_DARK, CLOUD_EINK - the whole-app look), density, swipe actions, signature, PGP provider, notification content, quiet hours, image allowlist, RSS feeds. Same file name used by gallery.",
+      "doc": "Mail (sterna) settings: theme, app_style (CLOUD_DARK default, GMAIL_DARK, CLOUD_EINK - the whole-app look), density, swipe actions, signature, PGP provider, notification content, quiet hours, image allowlist, RSS feeds, and the offline settings (offline_window: how long mail is kept offline, default 90 days; offline_attachment_limit: largest attachment downloaded; offline_attachment_policy: Download attachments Always / Wi-Fi only / Off, default Wi-Fi only; all follow the user to a new phone as config, offline_last_sync is a device clock and is re-derived). Same file name used by gallery.",
       "used_by": [
         "ac_cloud-mail",
         "ac_cloud-gallery"

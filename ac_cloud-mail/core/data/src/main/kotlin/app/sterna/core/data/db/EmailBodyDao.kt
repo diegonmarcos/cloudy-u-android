@@ -38,6 +38,10 @@ interface EmailBodyDao {
     )
     suspend fun fetchedBefore(accountId: String, cutoff: Long): List<String>
 
+    /** Stored body bytes of one account (the per-account cap of #1763 counts these). */
+    @Query("SELECT COALESCE(SUM(LENGTH(bodyJson) + LENGTH(inlineImagesJson)), 0) FROM email_bodies WHERE accountId = :accountId")
+    suspend fun bytesForAccount(accountId: String): Long
+
     @Query("SELECT COALESCE(SUM(LENGTH(bodyJson) + LENGTH(inlineImagesJson)), 0) FROM email_bodies")
     suspend fun totalBytes(): Long
 

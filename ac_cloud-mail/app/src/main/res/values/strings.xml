@@ -1528,6 +1528,11 @@
     <string name="settings_offline_attachments_100">100 MB</string>
     <string name="settings_offline_status">Offline cache: %1$s · Last sync: %2$s</string>
     <string name="settings_offline_never">never</string>
+    <string name="settings_offline_attach_policy_title">Download attachments</string>
+    <string name="settings_offline_attach_policy_always">Always</string>
+    <string name="settings_offline_attach_policy_wifi">Wi-Fi only (default)</string>
+    <string name="settings_offline_attach_policy_off">Off (on tap only)</string>
+    <string name="settings_offline_attach_storage">Attachments stored for %1$s: %2$s</string>
     <string name="message_sign_in_required">Your sign-in has expired. Sign in again to load this message.</string>
     <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
     <string name="settings_alert_accounts_title">Alert (RSS) accounts</string>

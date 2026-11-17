@@ -2979,8 +2979,13 @@ private fun OfflineSection(viewModel: SettingsViewModel) {
     val limit by viewModel.offlineAttachmentLimit.collectAsStateWithLifecycle()
     val lastSync by viewModel.offlineLastSync.collectAsStateWithLifecycle()
     val bytes by viewModel.offlineCacheBytes.collectAsStateWithLifecycle()
+    val attachmentPolicy by viewModel.attachmentPolicy.collectAsStateWithLifecycle()
+    val attachmentStorage by viewModel.attachmentStorage.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    androidx.compose.runtime.LaunchedEffect(lastSync) { viewModel.refreshOfflineCacheSize() }
+    androidx.compose.runtime.LaunchedEffect(lastSync) {
+        viewModel.refreshOfflineCacheSize()
+        viewModel.refreshAttachmentStorage()
+    }
     SettingsSection(stringResource(R.string.settings_offline_section)) {
         SettingChoiceRow(
             title = stringResource(R.string.settings_offline_window_title),
@@ -2989,6 +2994,26 @@ private fun OfflineSection(viewModel: SettingsViewModel) {
             optionLabel = { offlineWindowLabel(context, it) },
             onSelect = viewModel::setOfflineWindow,
         )
+        // #1768: which attachments the background sync downloads (a tap always downloads).
+        SettingChoiceRow(
+            title = stringResource(R.string.settings_offline_attach_policy_title),
+            options = app.sterna.core.data.mail.AttachmentPolicy.entries.toList(),
+            selected = attachmentPolicy,
+            optionLabel = { attachmentPolicyLabel(context, it) },
+            onSelect = viewModel::setAttachmentPolicy,
+        )
+        attachmentStorage.forEach { (name, used) ->
+            Text(
+                stringResource(
+                    R.string.settings_offline_attach_storage,
+                    name,
+                    android.text.format.Formatter.formatShortFileSize(context, used),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s8),
+            )
+        }
         SettingChoiceRow(
             title = stringResource(R.string.settings_offline_attachments_title),
             options = app.sterna.core.data.mail.OfflineAttachmentLimit.entries.toList(),
@@ -3020,6 +3045,12 @@ private fun offlineWindowLabel(context: Context, w: app.sterna.core.data.mail.Of
     app.sterna.core.data.mail.OfflineWindow.SIX -> context.getString(R.string.settings_offline_window_6)
     app.sterna.core.data.mail.OfflineWindow.TWELVE -> context.getString(R.string.settings_offline_window_12)
     app.sterna.core.data.mail.OfflineWindow.ALL -> context.getString(R.string.settings_offline_window_all)
+}
+
+private fun attachmentPolicyLabel(context: Context, p: app.sterna.core.data.mail.AttachmentPolicy): String = when (p) {
+    app.sterna.core.data.mail.AttachmentPolicy.ALWAYS -> context.getString(R.string.settings_offline_attach_policy_always)
+    app.sterna.core.data.mail.AttachmentPolicy.WIFI_ONLY -> context.getString(R.string.settings_offline_attach_policy_wifi)
+    app.sterna.core.data.mail.AttachmentPolicy.OFF -> context.getString(R.string.settings_offline_attach_policy_off)
 }
 
 private fun offlineAttachmentLabel(context: Context, l: app.sterna.core.data.mail.OfflineAttachmentLimit): String = when (l) {

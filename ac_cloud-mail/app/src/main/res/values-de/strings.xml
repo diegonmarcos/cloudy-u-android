@@ -1419,6 +1419,11 @@
     <string name="settings_offline_attachments_100">100 MB</string>
     <string name="settings_offline_status">Offline-Speicher: %1$s · Letzte Synchronisierung: %2$s</string>
     <string name="settings_offline_never">nie</string>
+    <string name="settings_offline_attach_policy_title">Anhänge herunterladen</string>
+    <string name="settings_offline_attach_policy_always">Immer</string>
+    <string name="settings_offline_attach_policy_wifi">Nur im WLAN (Standard)</string>
+    <string name="settings_offline_attach_policy_off">Aus (nur beim Antippen)</string>
+    <string name="settings_offline_attach_storage">Gespeicherte Anhänge für %1$s: %2$s</string>
     <string name="message_sign_in_required">Deine Anmeldung ist abgelaufen. Melde dich erneut an, um diese Nachricht zu laden.</string>
     <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
     <string name="settings_alert_accounts_title">Warnungen-Konten (RSS)</string>

@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import app.sterna.container
+import app.sterna.mail.OfflineSyncWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,6 +26,11 @@ class BootReceiver : BroadcastReceiver() {
             return
         }
         val app = context.applicationContext as? Application ?: return
+        // #1768: right after an app update the window is brought up to date at once (the periodic work survives updates,
+        // but waits for its next slot).
+        if (intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            runCatching { OfflineSyncWorker.runNow(app) }
+        }
         // Off the main thread, but still inside the broadcast: the decision reads the account store
         // and DataStore, and at boot the disk is cold and contended. goAsync() keeps the process at
         // receiver importance until finish(), which every path below reaches.

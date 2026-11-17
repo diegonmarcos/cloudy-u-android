@@ -1425,6 +1425,11 @@
     <string name="settings_offline_attachments_100">100 MB</string>
     <string name="settings_offline_status">Cache offline: %1$s · Ultima sincronizzazione: %2$s</string>
     <string name="settings_offline_never">mai</string>
+    <string name="settings_offline_attach_policy_title">Scarica gli allegati</string>
+    <string name="settings_offline_attach_policy_always">Sempre</string>
+    <string name="settings_offline_attach_policy_wifi">Solo con Wi-Fi (predefinito)</string>
+    <string name="settings_offline_attach_policy_off">Disattivato (solo al tocco)</string>
+    <string name="settings_offline_attach_storage">Allegati memorizzati per %1$s: %2$s</string>
     <string name="message_sign_in_required">L’accesso è scaduto. Accedi di nuovo per caricare questo messaggio.</string>
     <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
     <string name="settings_alert_accounts_title">Account Avvisi (RSS)</string>

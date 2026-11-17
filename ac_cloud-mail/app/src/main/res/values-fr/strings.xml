@@ -1431,6 +1431,11 @@
     <string name="settings_offline_attachments_100">100 Mo</string>
     <string name="settings_offline_status">Cache hors ligne : %1$s · Dernière synchro : %2$s</string>
     <string name="settings_offline_never">jamais</string>
+    <string name="settings_offline_attach_policy_title">Télécharger les pièces jointes</string>
+    <string name="settings_offline_attach_policy_always">Toujours</string>
+    <string name="settings_offline_attach_policy_wifi">Wi-Fi uniquement (par défaut)</string>
+    <string name="settings_offline_attach_policy_off">Désactivé (au toucher seulement)</string>
+    <string name="settings_offline_attach_storage">Pièces jointes stockées pour %1$s : %2$s</string>
     <string name="message_sign_in_required">Votre connexion a expiré. Reconnectez-vous pour charger ce message.</string>
     <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
     <string name="settings_alert_accounts_title">Comptes d\'alertes (RSS)</string>

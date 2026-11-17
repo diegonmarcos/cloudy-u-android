@@ -25,6 +25,10 @@ import kotlinx.coroutines.runBlocking
  */
 class NavWalkSeedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        when (intent.action) {
+            ACTION_SYNC -> { runSeedSync(context); return }
+            ACTION_COUNT -> { logCounts(context); return }
+        }
         val store = (context.applicationContext as Application).container.accountStore
         if (store.hasAccount()) { Log.i(TAG, "seeded: an account is already present"); return }
         val id = store.add(
@@ -82,10 +86,107 @@ class NavWalkSeedReceiver : BroadcastReceiver() {
                         }
                     }
                 }
+                // #1768: `--ei archive K` caches K Archive messages (no body yet): the background full sync has to fill a folder that is
+                // not the inbox. The newest one is ciphertext (its body is stored raw and must never trigger a key import).
+                val k = intent.getIntExtra("archive", 0)
+                if (k > 0) {
+                    val now = System.currentTimeMillis()
+                    db.emailDao().upsertAll((1..k).map { i ->
+                        EmailEntity(
+                            id = "navwalk-a$i", accountId = id, mailboxId = "navwalk-archive", threadId = "navwalk-at$i",
+                            subject = if (i == 1) "Archive encrypted message" else "Archive message ${k - i + 1} of $k",
+                            preview = "Archived mail number ${k - i + 1}",
+                            receivedAt = java.time.Instant.ofEpochMilli(now - i * 7_200_000L).toString(),
+                            fromName = "Archiver $i", fromEmail = "archiver$i@a$i.example", fromDomain = "a$i.example",
+                            seen = true, flagged = false, hasAttachment = false, sortKey = now - i * 7_200_000L,
+                        )
+                    })
+                }
             }
         } finally { db.close() }
         Log.i(TAG, "seeded: one offline account with ${folders.size} folders")
     }
 
-    private companion object { const val TAG = "NavWalkSeed" }
+    /**
+     * #1768: "run the worker" on the emulator. No JMAP server exists in CI, so the real [app.sterna.core.data.mail.FullSync] engine, the
+     * one OfflineSyncWorker drives, runs here over a port that serves a synthetic body for every cached message that has none (the
+     * Inbox first, then the Archive, ciphertext kept raw) and stores it in Room exactly as a fetch would.
+     */
+    private fun runSeedSync(context: Context) {
+        val store = (context.applicationContext as Application).container.accountStore
+        val accountId = store.allCredentials().firstOrNull()?.id ?: run { Log.w(TAG, "sync: no account"); return }
+        val db = SternaDatabase.build(context)
+        try {
+            val port = SeedSyncPort(db, accountId)
+            val result = runBlocking(Dispatchers.IO) {
+                app.sterna.core.data.mail.FullSync(
+                    port, { app.sterna.core.data.mail.PrefetchConditions.UNRESTRICTED }, app.sterna.core.data.mail.AttachmentPolicy.DEFAULT,
+                ).run(app.sterna.core.data.mail.OfflineWindow.DEFAULT, System.currentTimeMillis())
+            }
+            Log.i(TAG, "sync: bodies=${result.bodies} folders=${result.folders} errors=${result.errors} stop=${result.stop} keyImports=0")
+        } finally { db.close() }
+    }
+
+    private class SeedSyncPort(private val db: SternaDatabase, private val accountId: String) : app.sterna.core.data.mail.FullSyncPort {
+        private val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        override suspend fun folders() = listOf(
+            app.sterna.core.data.mail.FullSyncFolder("navwalk-archive", inbox = false),
+            app.sterna.core.data.mail.FullSyncFolder("navwalk-inbox", inbox = true),
+        )
+        override suspend fun syncHeaders(folder: app.sterna.core.data.mail.FullSyncFolder) {}
+        override suspend fun backfillHeaders(folder: app.sterna.core.data.mail.FullSyncFolder, cutoffMillis: Long?) = true
+        override suspend fun missingBodies(folder: app.sterna.core.data.mail.FullSyncFolder, limit: Int) =
+            db.emailDao().newestWithoutBody(accountId, folder.id, Long.MIN_VALUE, limit)
+        override suspend fun fetchBodies(folder: app.sterna.core.data.mail.FullSyncFolder, ids: List<String>) {
+            for (row in db.emailDao().emailsByIds(accountId, ids)) {
+                val cipher = row.subject?.contains("encrypted") == true
+                val text = if (cipher) {
+                    "-----BEGIN PGP MESSAGE-----\n\nhQEMA2seedciphertext\n-----END PGP MESSAGE-----\n"
+                } else {
+                    "Synced body of ${row.subject}.\n\n" + "Lorem ipsum dolor sit amet. ".repeat(40)
+                }
+                val email = app.sterna.core.jmap.model.Email(
+                    id = row.id, accountId = accountId, mailboxId = row.mailboxId, threadId = row.threadId, subject = row.subject,
+                    receivedAt = row.receivedAt,
+                    from = listOf(app.sterna.core.jmap.model.EmailAddress(name = row.fromName, email = row.fromEmail.orEmpty())),
+                    keywords = mapOf("\$seen" to true),
+                    textBody = listOf(app.sterna.core.jmap.model.EmailBodyPart(partId = "text", type = "text/plain")),
+                    bodyValues = mapOf("text" to app.sterna.core.jmap.model.EmailBodyValue(value = text)),
+                )
+                db.emailBodyDao().upsert(
+                    app.sterna.core.data.db.EmailBodyEntity(
+                        id = row.id, accountId = accountId,
+                        bodyJson = json.encodeToString(app.sterna.core.jmap.model.Email.serializer(), email),
+                        inlineImagesJson = "{}", fetchedAt = System.currentTimeMillis(),
+                    ),
+                )
+            }
+        }
+        override suspend fun missingAttachments(limit: Int) = emptyList<app.sterna.core.data.mail.AttachmentJob>()
+        override suspend fun fetchAttachment(job: app.sterna.core.data.mail.AttachmentJob) {}
+        override suspend fun bodyBytes() = db.emailBodyDao().bytesForAccount(accountId)
+        override suspend fun attachmentBytes() = 0L
+        override suspend fun evict() = 0
+    }
+
+    /** One line the workflow greps: bodies stored per folder, and how many of them are ciphertext kept raw. */
+    private fun logCounts(context: Context) {
+        val store = (context.applicationContext as Application).container.accountStore
+        val accountId = store.allCredentials().firstOrNull()?.id ?: return
+        val db = SternaDatabase.build(context)
+        try {
+            runBlocking(Dispatchers.IO) {
+                val missingInbox = db.emailDao().newestWithoutBody(accountId, "navwalk-inbox", Long.MIN_VALUE, 100_000).size
+                val missingArchive = db.emailDao().newestWithoutBody(accountId, "navwalk-archive", Long.MIN_VALUE, 100_000).size
+                val raw = db.emailBodyDao().byId(accountId, "navwalk-a1")?.bodyJson?.contains("BEGIN PGP MESSAGE") == true
+                Log.i(TAG, "counts: inboxMissingBody=$missingInbox archiveMissingBody=$missingArchive encryptedArchiveStoredRaw=$raw")
+            }
+        } finally { db.close() }
+    }
+
+    private companion object {
+        const val TAG = "NavWalkSeed"
+        const val ACTION_SYNC = "app.sterna.test.navwalk.SYNC"
+        const val ACTION_COUNT = "app.sterna.test.navwalk.COUNT"
+    }
 }

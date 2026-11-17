@@ -41,6 +41,8 @@ class PushService : Service() {
         super.onCreate()
         instance = this
         isRunning = true
+        // #1768: a held push connection triggers the full sync on each state change; the periodic run relaxes to a safety net.
+        runCatching { app.sterna.mail.OfflineSyncWorker.ensureScheduled(this, hasPush = true) }
         Notifications.ensureChannels(this)
         // specialUse, not dataSync: Android 15+ budgets dataSync foreground services and then
         // forcibly stops them, which silently killed push on newer devices (#11).
@@ -220,6 +222,8 @@ class PushService : Service() {
                 includeExtras = credentials.protocol != MailProtocol.IMAP,
             )
         }.onFailure { Log.e(TAG, "onAccountChanged failed", it) }
+        // #1768: the JMAP state changed: bring the whole window up to date (Email/changes, then the new bodies).
+        runCatching { app.sterna.mail.OfflineSyncWorker.runNow(this) }
         refreshBadge()
     }
 
@@ -228,6 +232,8 @@ class PushService : Service() {
     override fun onDestroy() {
         instance = null
         isRunning = false
+        // #1768: no push any more: the full sync is back to every 15 minutes.
+        runCatching { app.sterna.mail.OfflineSyncWorker.ensureScheduled(this, hasPush = false) }
         connections.values.forEach { runCatching { it.close() } }
         connections.clear()
         carriedBy.clear()
