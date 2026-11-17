@@ -40,8 +40,17 @@ fun HomePage(open: (String, String?) -> Unit) {
     val served = rememberObj(Api.SERVED, tick)
     val sshd = rememberObj(Api.SSHD, tick)
     val about = rememberArr(Api.ABOUT, tick)
+    val roots = rememberObj(Api.ROOTS, tick)
+    val adb = rememberObj(Api.ADB_SHELL, tick)
+    val mcp = rememberObj("/__app__/api/sub/api-mcp", tick)
+    val mesh = rememberObj("/__app__/api/sub/api-mesh", tick)
     DensePage("c3_home") {
         DActs { DAct("Refresh", "c3_home_refresh") { bump() } }
+        // #1775 organised by category (rule 16: every card of before is kept, only regrouped): Summary, Server, Pages, API, SSHD, ADB Shell, Endpoints, Device
+        DLoaded(power, "power") { pw ->
+            StatusTop(pw, (health as? Load.Ok)?.value, (served as? Load.Ok)?.value, (sshd as? Load.Ok)?.value, (adb as? Load.Ok)?.value, bump)
+        }
+        SectionBand("server", "Server", "status, and one switch for the API, the sshds and the pages")
         DLoaded(power, "power") { pw ->
             val sv = (serving as? Load.Ok)?.value
             HealthCard(pw, (health as? Load.Ok)?.value, health is Load.Err, sv)
@@ -49,15 +58,25 @@ fun HomePage(open: (String, String?) -> Unit) {
         }
         // #1724 each requirement of the keep-alive service, real state + fix (its own section, independent of the server round trips)
         KeepAliveHealthCard(tick, open)
-        // #1723 the ADB shell status table (the owner side reads the real server; the shipped stand-in names the owner)
-        com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.HomeStatus(tick, open)
+        SectionBand("pages", "Pages")
+        PagesStatus((roots as? Load.Ok)?.value, (served as? Load.Ok)?.value, open)
         DLoaded(served, "served pages") { ServedStrip(it) { open(Decl.SECTION_PAGES, Decl.PAGE_ALL) } }
-        DLoaded(sshd, "sshd") { SshdStrip(it) { open(Decl.SECTION_SSHD, null) } }
-        DLoaded(serving, "serving") { PortsStrip(it) }
-        DLoaded(about, "device") { DeviceStrip(it) { open(Decl.SECTION_CONFIGS, Decl.PAGE_DEVICE) } }
+        SectionBand("api", "API")
+        ApiStatus((health as? Load.Ok)?.value, (mcp as? Load.Ok)?.value, open)
         DenseCard("API topology", "c3_home_topology") {
             DRow("Topology", "Open the API topology (MCP → API → IPC)", tag = "c3_home_goto_api") { open(Decl.SECTION_API, Decl.PAGE_TOPOLOGY) }
         }
+        SectionBand("sshd", "SSHD")
+        DLoaded(sshd, "sshd") { SshdStrip(it) { open(Decl.SECTION_SSHD, null) } }
+        SectionBand("adb", "ADB Shell")
+        // #1723 the ADB shell status table (the owner side reads the real server; the shipped stand-in names the owner)
+        com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.HomeStatus(tick, open)
+        AdbProbe((adb as? Load.Ok)?.value)
+        SectionBand("endpoints", "Endpoints", "URLs, IPs and ports")
+        EndpointsList((served as? Load.Ok)?.value, (sshd as? Load.Ok)?.value, (about as? Load.Ok)?.value, (mesh as? Load.Ok)?.value, (mcp as? Load.Ok)?.value, (adb as? Load.Ok)?.value)
+        DLoaded(serving, "serving") { PortsStrip(it) }
+        SectionBand("device", "Device")
+        DLoaded(about, "device") { DeviceStrip(it) { open(Decl.SECTION_CONFIGS, Decl.PAGE_DEVICE) } }
         DLoaded(about, "about") { AboutGroups(it) }
     }
 }
@@ -112,7 +131,8 @@ fun SwitchRow(label: String, on: Boolean, note: String, tag: String, onSet: (Boo
     Column {
         Row(Modifier.fillMaxWidth().padding(horizontal = KitDensity.rowPadH, vertical = Dense.ROW_V), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f)) { DRow2(label, if (on) "ON" else "OFF", on) }
-            DAct(if (on) "Turn OFF" else "Turn ON", tag) { onSet(!on) }
+            val ctx = LocalContext.current
+            DAct(if (on) "Turn OFF" else "Turn ON", tag) { if (UiMode.edit) onSet(!on) else toast(ctx, "View only: switch Mode to Edit to change this") }
         }
         DNote(note)
     }
