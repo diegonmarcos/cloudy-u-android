@@ -355,7 +355,8 @@
      "vault",
      "wallet",
      "watchdog",
-     "watchtower"
+     "watchtower",
+     "wiki"
     ]
    }
   ],
@@ -591,7 +592,8 @@
      "vault",
      "wallet",
      "watchdog",
-     "watchtower"
+     "watchtower",
+     "wiki"
     ]
    },
    {
@@ -730,7 +732,8 @@
      "vault",
      "wallet",
      "watchdog",
-     "watchtower"
+     "watchtower",
+     "wiki"
     ]
    }
   ],
@@ -1034,7 +1037,8 @@
      "vault",
      "wallet",
      "watchdog",
-     "watchtower"
+     "watchtower",
+     "wiki"
     ]
    }
   ],
@@ -1151,7 +1155,8 @@
      "vault",
      "wallet",
      "watchdog",
-     "watchtower"
+     "watchtower",
+     "wiki"
     ]
    }
   ],
@@ -1386,7 +1391,8 @@
       "vault",
       "wallet",
       "watchdog",
-      "watchtower"
+      "watchtower",
+      "wiki"
      ]
     },
     {
@@ -1531,7 +1537,8 @@
       "vault",
       "wallet",
       "watchdog",
-      "watchtower"
+      "watchtower",
+      "wiki"
      ]
     },
     {
@@ -2985,7 +2992,8 @@
       "vault",
       "wallet",
       "watchdog",
-      "watchtower"
+      "watchtower",
+      "wiki"
      ]
     },
     {
