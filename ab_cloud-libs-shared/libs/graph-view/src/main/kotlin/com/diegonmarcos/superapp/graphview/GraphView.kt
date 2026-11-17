@@ -62,7 +62,7 @@ fun GraphView(
     val degree = remember(nodes, edges) { GraphBuilder.degrees(nodes, edges) }
     val byId = remember(nodes) { nodes.associateBy { it.id } }
     var frame by remember(layout) { mutableIntStateOf(0) }
-    var scale by remember { mutableFloatStateOf(1f) }
+    var scale by remember { mutableFloatStateOf(1.8f) }
     var pan by remember { mutableStateOf(Offset.Zero) }
     val measurer = rememberTextMeasurer()
     val style = remember(labelColor) { TextStyle(color = labelColor, fontSize = 10.sp) }
@@ -85,7 +85,7 @@ fun GraphView(
             .pointerInput(layout) {
                 detectTransformGestures { centroid, panChange, zoom, _ ->
                     val c = Offset(size.width / 2f, size.height / 2f)
-                    val ns = (scale * zoom).coerceIn(0.3f, 4f)
+                    val ns = (scale * zoom).coerceIn(0.4f, 6f)
                     // keep the world point under the fingers fixed while zooming, then follow the pan
                     val k = ns / scale
                     pan = Offset(centroid.x - c.x - (centroid.x - c.x - pan.x) * k, centroid.y - c.y - (centroid.y - c.y - pan.y) * k) + panChange
@@ -120,7 +120,7 @@ fun GraphView(
             val r = (5f + 1.5f * (degree[node.id] ?: 0).coerceAtMost(8)) * scale.coerceIn(0.6f, 1.6f)
             drawCircle(nodeColor(node), r, p)
             if (node.id == selectedId) drawCircle(labelColor, r + 4f, p, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f))
-            if (scale >= 0.7f || node.id == selectedId) {
+            if (scale >= 2.4f || node.id == selectedId) {
                 drawText(measurer, node.label, Offset(p.x + r + 3f, p.y - 7f), style)
             }
         }
