@@ -207,7 +207,7 @@ jobs:
             gh release create "$TAG" --title "$TAG" --target "$GITHUB_SHA" \
               --notes "Rolling release — overwritten on every main push." --latest
           fi
-          gh release upload "$TAG" "$ASSET" "$ASSET.sha256" --clobber
+          sh 1_cicd/dist/scripts/cloud-android-release-swap.sh "$TAG" "$ASSET" "$ASSET.sha256"   # #1783 P4
           local_size="$(wc -c <"$ASSET")"
           remote_size="$(gh release view "$TAG" --json assets --jq ".assets[] | select(.name==\"$(basename "$ASSET")\") | .size")"
           names="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
