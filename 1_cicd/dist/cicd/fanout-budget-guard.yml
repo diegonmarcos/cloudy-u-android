@@ -55,3 +55,15 @@ jobs:
 
       - name: Every app's version code is deterministic or pending, and monotonic above the floor (#1783 P5)
         run: python3 1_cicd/src/scripts/cloud-android-versioncode-guard.py check
+
+      # #1783 P1: the fleet-config.json fan-out is held by the rebuild ratchet and the isolation guard (also run in
+      # mesh-membership-guard; repeated here so a red step ahead of them there cannot hide them from this change).
+      - name: What one change rebuilds does not widen (#796 ratchet, fleet-config.json now starts only its planners)
+        run: bash 1_cicd/src/scripts/test/rebuild-fanout.test.sh
+
+      - name: The rebuild-isolation guard fails on each way isolation breaks, the manifest rule included (#870, #1783)
+        run: bash 1_cicd/src/scripts/test/rebuild-isolation-guard.test.sh
+
+      - name: Every app ships on what it owns and every scenario is isolated (#870)
+        run: python3 1_cicd/src/scripts/cloud-android-rebuild-isolation-guard.py --scenarios 1_cicd/src/data/rebuild-scenarios.json
+
