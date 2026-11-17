@@ -131,11 +131,13 @@ adb shell input keyevent 4; sleep 2
 shown && bad "the keyboard is still shown after Back" || ok "the keyboard is hidden"
 shot 42-lastpanel-hidden
 OLDPID="$(adb shell pidof "$PKG" | tr -d '\r')"
-adb shell kill "$OLDPID"; sleep 3
+# the shell user may not kill an app's process: run-as takes the app's uid (the CI build is debuggable)
+adb shell run-as "$PKG" kill "$OLDPID" >/dev/null 2>&1 || adb shell kill "$OLDPID" >/dev/null 2>&1; sleep 3
 NEWPID="$(adb shell pidof "$PKG" | tr -d '\r')"
 [ -z "$NEWPID" ] || [ "$NEWPID" != "$OLDPID" ] && ok "the IME process was killed (was $OLDPID, now ${NEWPID:-none})" || bad "the process $OLDPID is still alive"
+# refocus: a clear-task start re-creates the test screen, so its field takes focus and the keyboard shows (no force-stop: it would drop the input method)
 for attempt in 1 2 3; do
-    adb shell am start -n "$PKG/.ShotActivity" >/dev/null
+    adb shell am start -f 0x10008000 -n "$PKG/.ShotActivity" >/dev/null
     for _ in $(seq 1 25); do shown && break; sleep 1; done
     shown && break
 done
@@ -145,6 +147,37 @@ kb state; last state
 last state | grep -q "numpad=true" && ok "the numpad is showing again after the process restart" || bad "the numpad was not restored: $(last state)"
 shot 43-lastpanel-numpad-restored
 kb code ALPHA; state | grep -q "lastPanel=LETTERS" && ok "ABC updates the memory back to letters" || bad "memory after ABC: $(last state)"
+
+# ── #1781 HandWrite: the toolbar's last page with the pen icon, the panel, a model download and a recognised word ──
+# the toolbar: back to page one, then forward to the last page (HandWrite is the very last key, after Dev Keyboard)
+for _ in 1 2 3; do adb shell input swipe "$X2" "$Y" "$X1" "$Y" 250; done; sleep 1
+for _ in 1 2; do adb shell input swipe "$X1" "$Y" "$X2" "$Y" 250; done; sleep 1
+shot 44-handwrite-toolbar-last-page
+# the model download (the only network use): en-US, polled for up to 3 minutes
+kb hwdownload en-US; last hwdownload | grep -q "started" && ok "the en-US model download started" || bad "download: $(last hwdownload)"
+for _ in $(seq 1 36); do kb hwstate; last hwstate | grep -q "download=\(ok\|failed\)" && break; sleep 5; done
+last hwstate | grep -q "download=ok" && ok "the en-US handwriting model is downloaded" || bad "model download: $(last hwstate)"
+kb hwdelay 10000
+kb code HANDWRITE; sleep 2
+state | grep -q "mode=PANEL(HANDWRITE)" && ok "the HandWrite key opened the handwriting panel" || bad "not in the HandWrite panel: $(last state)"
+shot 45-handwrite-panel-empty
+kb hwpad; PAD="$(last hwpad | sed -n 's/.*pad=\([0-9,]*\).*/\1/p')"; IFS=, read -r PL PT PR PB <<<"$PAD"
+if [ -n "${PB:-}" ]; then
+    CW=$(( (PR - PL) / 4 )); LH=$(( (PB - PT) * 6 / 10 )); TOP=$(( PT + (PB - PT) / 5 )); BOT=$(( TOP + LH )); MID=$(( TOP + LH / 2 )); W=$(( CW * 6 / 10 ))
+    HX0=$(( PL + CW / 5 )); HX1=$(( HX0 + CW )); HX2=$(( HX1 + CW )); HX3=$(( HX2 + CW ))
+    sw() { adb shell input swipe "$1" "$2" "$3" "$4" 120; }
+    # L I F T, straight strokes only, one input call after the other (the auto-commit delay is 10 s here)
+    sw $HX0 $TOP $HX0 $BOT; sw $HX0 $BOT $((HX0 + W)) $BOT
+    sw $((HX1 + W / 2)) $TOP $((HX1 + W / 2)) $BOT
+    sw $HX2 $TOP $HX2 $BOT; sw $HX2 $TOP $((HX2 + W)) $TOP; sw $HX2 $MID $((HX2 + W * 7 / 10)) $MID
+    sw $HX3 $TOP $((HX3 + W)) $TOP; sw $((HX3 + W / 2)) $TOP $((HX3 + W / 2)) $BOT
+    sleep 3; kb hwstate; echo "$(last hwstate)"
+    shot 46-handwrite-recognised
+    last hwstate | grep -q "recognition=Candidates" && last hwstate | grep -q "candidates=[^ ]" && ok "the pad recognised a word: $(last hwstate | sed -n 's/.*candidates=\([^ ]*\).*/\1/p')" || bad "nothing recognised: $(last hwstate)"
+    kb hwcommit; sleep 1; kb fieldtext; last fieldtext | grep -q "field=\[.\+\]" && ok "the candidate was committed to the field: $(last fieldtext)" || bad "nothing committed: $(last fieldtext)"
+    shot 47-handwrite-committed
+else bad "no pad bounds: $(last hwpad)"; fi
+kb code ALPHA; state | grep -q "mode=TYPING" && ok "ABC leaves the HandWrite panel" || bad "still in the panel: $(last state)"
 
 # ── Configs ───────────────────────────────────────────────────────────────
 adb shell am start -n "$PKG/helium314.keyboard.settings.SettingsActivity" >/dev/null; sleep 3
@@ -327,10 +360,10 @@ kb navpages; NP="$(last navpages | sed 's/.*navpages -> //')"
 NPAGES=$(wc -w <<<"$NP"); echo "declared nav pages: $NPAGES"
 [ "$NPAGES" -ge 20 ] && ok "the APK declares $NPAGES nav pages" || bad "navpages: $(last navpages)"
 TABS="$(for e in $NP; do echo "${e%%/*}"; done | awk '!s[$0]++')"
-LABELS="Keyboard|Writer|Grabber|Text Selection|Screen Selection|Mediaboards|Textboards|Cloud Keyboard|Configs|Account|Search|More options|Back|Navigate up|Overview|Themes|Default|Dev|Settings|Appearance|Advanced|Preferences|Gesture typing|Gesture data|Languages|Secondary layouts|Toolbar|Enhancer|Drafter|Translator|Grammar|Tools|Voice Transcription|Configs Writer|Text enhancement|Draft Answer|Summarise|Translation|Grammar Check|Voice transcription settings|Dictionary|Personal dictionary|AI routing|Emojis|GIF|Stickers|Autocomplete|Text correction|Clipboard"
+LABELS="Keyboard|HandWrite|Handwriting|Practice pad|Writer|Grabber|Text Selection|Screen Selection|Mediaboards|Textboards|Cloud Keyboard|Configs|Account|Search|More options|Back|Navigate up|Overview|Themes|Default|Dev|Settings|Appearance|Advanced|Preferences|Gesture typing|Gesture data|Languages|Secondary layouts|Toolbar|Enhancer|Drafter|Translator|Grammar|Tools|Voice Transcription|Configs Writer|Text enhancement|Draft Answer|Summarise|Translation|Grammar Check|Voice transcription settings|Dictionary|Personal dictionary|AI routing|Emojis|GIF|Stickers|Autocomplete|Text correction|Clipboard"
 n=0
 for t in $TABS; do
-    lbl="$(tr '[:lower:]' '[:upper:]' <<<"${t:0:1}")${t:1}"
+    lbl="$(tr '[:lower:]' '[:upper:]' <<<"${t:0:1}")${t:1}"; [ "$t" = handwrite ] && lbl="HandWrite"
     dumpui "$OUT/nav-tabbar.xml" || true
     read -r TX TY < <(centre "$OUT/nav-tabbar.xml" "$lbl")
     if [ -n "${TX:-}" ]; then adb shell input tap "$TX" "$TY"; sleep 3; ok "tapped the $lbl bottom tab"
@@ -342,6 +375,7 @@ for t in $TABS; do
     case "$t" in
         keyboard) WANT="Themes|Settings|Languages|Toolbar" ;;
         writer) WANT="Enhancer|Drafter|Translator|Grammar|Tools|Voice Transcription|Configs Writer" ;;
+        handwrite) WANT="Handwriting|Practice pad" ;;
         grabber) WANT="Text Selection|Screen Selection" ;;
         mediaboards) WANT="Emojis|GIF|Stickers" ;;
         textboards) WANT="Clipboard" ;;

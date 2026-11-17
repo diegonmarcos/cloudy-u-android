@@ -45,7 +45,8 @@ class KbReorgParityTest {
 
     @Test fun noPageWasAddedThatIsNotAGroupOrAnExistingScreen() {
         // the reorg adds structure, not pages; #1754 added exactly the two Grabber pages (a new feature, nothing re-homed)
-        assertEquals(setOf("grabber_text", "grabber_screen"), after.keys - before.keys)
+        // #1781 added exactly the two HandWrite pages
+        assertEquals(setOf("grabber_text", "grabber_screen", "handwrite_settings", "handwrite_practice"), after.keys - before.keys)
     }
 
     @Test fun autocompleteAndTextCorrectionLiveUnderConfigsWriter() {

@@ -82,6 +82,21 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
                 helium314.keyboard.latin.utils.SubtypeSettings.addEnabledSubtype(ime.prefs(), st)
                 ime.switchToSubtype(st); "ok"
             }
+            // #1781 HandWrite (CI scene): the pad's bounds, the download of a language model, what the panel holds.
+            "hwpad" -> switcher.handwriteView.padBounds().joinToString(",", "pad=")
+            "hwdownload" -> {
+                val e = helium314.keyboard.keyboard.handwrite.Handwriting.engine ?: return "no engine"
+                hwDownload = "running"
+                e.download(arg) { ok, why -> hwDownload = (if (ok) "ok " else "failed ") + why }
+                "started"
+            }
+            "hwcommit" -> { switcher.handwriteView.controller.commitCandidate(0); "ok" }
+            "hwdelay" -> { ime.prefs().edit().putInt(helium314.keyboard.keyboard.handwrite.HandwriteSettings.PREF_AUTOCOMMIT_MS, arg.toInt()).commit(); "ok" }
+            "hwstate" -> {
+                val c = switcher.handwriteView.controller
+                "hw download=$hwDownload candidates=${c.candidates.joinToString("|")} recognition=${c.recognition?.javaClass?.simpleName ?: "none"} " +
+                    "strokes=${c.capture.strokes.size} mode=${switcher.viewMode}"
+            }
             "devkb" -> "on=${helium314.keyboard.keyboard.CornerSwipe.enabled} layout=${
                 helium314.keyboard.latin.RichInputMethodManager.getInstance().currentSubtype.rawSubtype.let { helium314.keyboard.latin.utils.LayoutType.getMainLayoutFromExtraValue(it.extraValue) }}"
             "geometry" -> {
@@ -185,6 +200,7 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
         "EMOJI" -> KeyCode.EMOJI
         "EMOJI_SEARCH" -> KeyCode.EMOJI_SEARCH
         "AUTOCOMPLETE" -> KeyCode.AUTOCOMPLETE
+        "HANDWRITE" -> KeyCode.HANDWRITE
         "ANSWER_BAR" -> KeyCode.ANSWER_BAR
         "GRAMMAR_MODE" -> KeyCode.GRAMMAR_MODE
         "CLIPBOARD" -> KeyCode.CLIPBOARD
@@ -192,6 +208,8 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
         "DEV_KEYBOARD" -> KeyCode.DEV_KEYBOARD
         else -> error("unknown key $name")
     }
+
+    private var hwDownload = "-"
 
     companion object {
         const val ACTION = "com.diegonmarcos.cloudkeyboard.debug.CMD"

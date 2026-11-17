@@ -7346,6 +7346,18 @@
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "nix-on-droid"
   },
+  "maven:com.google.mlkit:digital-ink-recognition": {
+   "kind": "maven",
+   "declared_in": [
+    "ac_cloud-keyboard/app/build.gradle"
+   ],
+   "version": "18.1.0",
+   "scope": "shipped",
+   "licence": "LicenseRef-Google-MLKit-Terms",
+   "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
+  },
   "maven:com.google.mlkit:face-detection": {
    "kind": "maven",
    "declared_in": [

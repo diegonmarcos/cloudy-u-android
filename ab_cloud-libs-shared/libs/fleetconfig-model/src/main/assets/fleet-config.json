@@ -23,7 +23,7 @@
     "<default>": {
       "kind": "prefs",
       "class": "config",
-      "doc": "The app's default SharedPreferences (<package>_preferences): HeliBoard keyboard settings (libs:keyboard; last_keyboard_panel is the panel Cloud Keyboard reopens: letters, numpad, clipboard or autocomplete, device), translate settings (libs:translate), the vault's bwPreferencesStorage keys, and the terminals' settings (Termux TermuxAppSharedPreferences: fontsize, log_level, extra keys, soft keyboard, screen-on; the session cursor, notification id and per-boot counters are device). Element X keeps only DI scaffolding here (device). bg_startup_tracing is the WebView's own startup-tracing flag, written into any app that hosts a WebView (device). Device for apps whose current code reads none of it: mail (the FairEmail-era settings the Sterna clone, 8b7ca107d, never reads — migrating them would only plant dead keys), notes (an intro-shown marker only) and office (the asset-extraction commit marker only).",
+      "doc": "The app's default SharedPreferences (<package>_preferences): HeliBoard keyboard settings (libs:keyboard; last_keyboard_panel is the panel Cloud Keyboard reopens: letters, numpad, clipboard, autocomplete or handwrite; handwrite_* are the HandWrite languages, auto-commit delay and stroke width; all device), translate settings (libs:translate), the vault's bwPreferencesStorage keys, and the terminals' settings (Termux TermuxAppSharedPreferences: fontsize, log_level, extra keys, soft keyboard, screen-on; the session cursor, notification id and per-boot counters are device). Element X keeps only DI scaffolding here (device). bg_startup_tracing is the WebView's own startup-tracing flag, written into any app that hosts a WebView (device). Device for apps whose current code reads none of it: mail (the FairEmail-era settings the Sterna clone, 8b7ca107d, never reads — migrating them would only plant dead keys), notes (an intro-shown marker only) and office (the asset-extraction commit marker only).",
       "used_by": [
         "ac_cloud-matrix",
         "ac_cloud-nix-on-droid",
@@ -44,6 +44,10 @@
         "crashLoggingEnabled": "device",
         "createActionCount": "device",
         "current_session": "device",
+        "handwrite_active_language": "device",
+        "handwrite_autocommit_ms": "device",
+        "handwrite_languages": "device",
+        "handwrite_stroke_width_dp": "device",
         "hasShownAccessibilityDisclaimer": "device",
         "hasUserLoggedInOrCreatedAccount": "device",
         "isVaultRegisteredForExport": "device",

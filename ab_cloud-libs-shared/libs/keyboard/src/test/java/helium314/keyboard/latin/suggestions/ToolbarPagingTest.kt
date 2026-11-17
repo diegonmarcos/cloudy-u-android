@@ -99,13 +99,13 @@ class ToolbarPagingTest {
         assertEquals(11, layout.perPage) // 1188 / 108
         val perPage = sortedMapOf<Int, MutableList<ToolbarKey>>()
         keys.forEachIndexed { i, key -> perPage.getOrPut(layout.keyStart[i] / layout.page) { mutableListOf() }.add(key) }
-        assertEquals(listOf(11, 11, 3), perPage.values.map { it.size }) // #1413: 25 keys (Dev Keyboard); #1384: 24 keys (Draft Answer); #1103: 11 / 11 / 1
+        assertEquals(listOf(11, 11, 4), perPage.values.map { it.size }) // #1781: 26 keys (HandWrite); #1413: 25 keys (Dev Keyboard); #1384: 24 keys (Draft Answer); #1103: 11 / 11 / 1
         assertEquals(ToolbarKey.ANDROID_SETTINGS, perPage.values.first().last())
         assertEquals(ToolbarKey.VAULT, perPage.values.drop(1).first().first())
         // #1384: Draft Answer on page one where Emoji was; Emoji is now the last key but one, Dev Keyboard last (#1413)
         assertTrue(ToolbarKey.ANSWER in perPage.values.first())
         assertFalse(ToolbarKey.EMOJI in perPage.values.first())
-        assertEquals(listOf(ToolbarKey.EMOJI, ToolbarKey.DEV_KEYBOARD), keys.takeLast(2))
+        assertEquals(listOf(ToolbarKey.EMOJI, ToolbarKey.DEV_KEYBOARD, ToolbarKey.HANDWRITE), keys.takeLast(3)) // #1781 HandWrite last
         assertEquals(3, layout.pages)
     }
 

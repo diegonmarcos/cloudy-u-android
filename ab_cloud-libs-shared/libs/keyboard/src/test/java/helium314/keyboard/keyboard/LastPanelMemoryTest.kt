@@ -44,4 +44,16 @@ class LastPanelMemoryTest {
         LastPanelMemory(disk).remember(Panel.NUMPAD)
         assertEquals(Panel.NUMPAD, LastPanelMemory(disk).panelToRestore(text))
     }
+
+    /** #1781 HandWrite plugs into the same memory as the other panels. */
+    @Test fun handWritePanelIsRememberedLikeTheOthers() {
+        val disk = FakePrefs()
+        LastPanelMemory(disk).remember(Panel.HANDWRITE)
+        assertEquals(Panel.HANDWRITE, LastPanelMemory(disk).panelToRestore(text)) // across a process restart
+        assertNull(LastPanelMemory(disk).panelToRestore(phone))                    // the field's own type still wins
+        assertEquals(Panel.HANDWRITE, LastPanelMemory(disk).remembered())          // and leaves the memory alone
+        val src = java.io.File("src/main/java/helium314/keyboard/keyboard/KeyboardSwitcher.java").readText()
+        assertTrue(src.contains("PanelKind.HANDWRITE)) panel = LastPanelMemory.Panel.HANDWRITE")) // a manual switch to it writes the memory
+        assertTrue(src.contains("code == KeyCode.HANDWRITE"))
+    }
 }

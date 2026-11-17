@@ -19,8 +19,22 @@ class KeyboardNavChromeTest {
 
     @Test fun theBottomTabsAreInOrder() {
         // #1754 Grabber sits right after Writer; the four tabs that existed keep their relative order
-        assertEquals(listOf("Keyboard", "Writer", "Grabber", "Mediaboards", "Textboards"), KbTab.entries.map { it.label })
-        assertEquals(listOf("Keyboard", "Writer", "Mediaboards", "Textboards"), KbTab.entries.map { it.label }.filter { it != "Grabber" })
+        // #1781 HandWrite sits between Keyboard and Writer
+        assertEquals(listOf("Keyboard", "HandWrite", "Writer", "Grabber", "Mediaboards", "Textboards"), KbTab.entries.map { it.label })
+        assertEquals(listOf("Keyboard", "Writer", "Mediaboards", "Textboards"), KbTab.entries.map { it.label }.filter { it != "Grabber" && it != "HandWrite" })
+    }
+
+    /** #1781 the HandWrite tab: its settings (languages, auto-commit delay, stroke width, model download) and the practice pad, both host pages. */
+    @Test fun handWriteTabSitsBetweenKeyboardAndWriterWithItsTwoHostPages() {
+        val order = KbTab.entries.toList()
+        assertEquals(KbTab.HANDWRITE, order[order.indexOf(KbTab.KEYBOARD) + 1])
+        assertEquals(KbTab.WRITER, order[order.indexOf(KbTab.HANDWRITE) + 1])
+        assertEquals(listOf("handwrite_settings", "handwrite_practice"), KbTab.HANDWRITE.pages.map { it.id })
+        assertEquals(listOf(SettingsDestination.hostRoute("handwrite.settings"), SettingsDestination.hostRoute("handwrite.practice")), KbTab.HANDWRITE.pages.map { it.route })
+        assertEquals(KbTab.HANDWRITE.route, SettingsDestination.externalRoute("handwrite"))
+        assertEquals(KbTab.HANDWRITE, KbHome.HANDWRITE.tab)
+        assertEquals(KbHome.entries.map { it.name }.filter { it != "CONFIGS" }, KbTab.entries.map { it.name })
+        assertTrue(appFile("app/src/main/java/com/diegonmarcos/cloudkeyboard/App.kt").contains("HandWriteHost.Page("))
     }
 
     /** #1754 the Grabber tab: Text Selection and Screen Selection, each a host page the app draws (GrabberHost), and the Writer tab loses nothing. */

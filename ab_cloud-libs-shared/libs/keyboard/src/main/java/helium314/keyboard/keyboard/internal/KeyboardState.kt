@@ -37,6 +37,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
         fun setEmojiKeyboard()
         fun setClipboardKeyboard()
         fun setAutocompleteKeyboard()
+        fun setHandwriteKeyboard()
         fun setNumpadKeyboard()
         fun toggleNumpad(withSliding: Boolean, autoCapsFlags: Int, recapitalizeMode: RecapitalizeMode?, forceReturnToAlpha: Boolean)
         fun setSymbolsKeyboard()
@@ -151,6 +152,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
             Mode.EMOJI -> setEmojiKeyboard()
             Mode.CLIPBOARD -> setClipboardKeyboard()
             Mode.AUTOCOMPLETE -> setAutocompleteKeyboard()
+            Mode.HANDWRITE -> setHandwriteKeyboard()
             // don't overwrite toggle state if reloading from orientation change, etc.
             Mode.NUMPAD -> setNumpadKeyboard(false, false, false)
         }
@@ -318,6 +320,18 @@ class KeyboardState(private val switchActions: SwitchActions) {
         switchActions.setAutocompleteKeyboard()
     }
 
+    /** #1781: the HandWrite panel, its own view and engine. */
+    private fun setHandwriteKeyboard() {
+        if (DebugFlags.DEBUG_ENABLED) {
+            Log.d(TAG, "setHandwriteKeyboard")
+        }
+        mode = Mode.HANDWRITE
+        recapitalizeMode = null
+        prevMainKeyboardWasShiftLocked = alphabetShiftState.isShiftLocked
+        alphabetShiftState.setShiftLocked(false)
+        switchActions.setHandwriteKeyboard()
+    }
+
     private fun setNumpadKeyboard(withSliding: Boolean, forceReturnToAlpha: Boolean, rememberState: Boolean) {
         if (DebugFlags.DEBUG_ENABLED) {
             Log.d(TAG, "setNumpadKeyboard")
@@ -369,6 +383,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
             Mode.EMOJI -> setEmojiKeyboard()
             Mode.CLIPBOARD -> setClipboardKeyboard()
             Mode.AUTOCOMPLETE -> setAutocompleteKeyboard()
+            Mode.HANDWRITE -> setHandwriteKeyboard()
             Mode.NUMPAD -> {}
         }
         if (withSliding) switchState = SwitchState.MOMENTARY_FROM_NUMPAD
@@ -423,7 +438,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
             KeyCode.NUMPAD       -> {
                 // if no sliding, toggling is instead handled by onEvent to accommodate toolbar key.
                 // also prevent sliding to clipboard layout, which isn't supported yet.
-                if (withSliding) setNumpadKeyboard(true, modeBeforeNumpad == Mode.CLIPBOARD || modeBeforeNumpad == Mode.AUTOCOMPLETE, true)
+                if (withSliding) setNumpadKeyboard(true, modeBeforeNumpad == Mode.CLIPBOARD || modeBeforeNumpad == Mode.AUTOCOMPLETE || modeBeforeNumpad == Mode.HANDWRITE, true)
             }
         }
     }
@@ -625,7 +640,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
                     prevSymbolsKeyboardWasShifted = false
                 }
             SwitchState.SYMBOL_BEGIN ->
-                if (mode == Mode.EMOJI || mode == Mode.CLIPBOARD || mode == Mode.AUTOCOMPLETE) {
+                if (mode == Mode.EMOJI || mode == Mode.CLIPBOARD || mode == Mode.AUTOCOMPLETE || mode == Mode.HANDWRITE) {
                     // When in the Emoji keyboard or clipboard one, we don't want to switch back to the main layout even
                     // after the user hits an emoji letter followed by an enter or a space.
                 } else if (!isSpaceOrEnter(code) && (Constants.isLetterCode(code) || code == KeyCode.MULTIPLE_CODE_POINTS)) {
@@ -668,6 +683,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
             KeyCode.CLIPBOARD -> if (Settings.getValues().mClipboardHistoryEnabled) setClipboardKeyboard()
             // #1103: Autocomplete is its own engine and its own panel; nothing of the clipboard is asked for
             KeyCode.AUTOCOMPLETE -> setAutocompleteKeyboard()
+            KeyCode.HANDWRITE -> setHandwriteKeyboard() // #1781
             KeyCode.NUMPAD -> toggleNumpad(false, autoCapsFlags, recapitalizeMode, false, true)
             KeyCode.SYMBOL -> setSymbolsKeyboard()
             KeyCode.TOGGLE_ONE_HANDED_MODE -> switchActions.setOneHandedModeEnabled(!Settings.getValues().mOneHandedModeEnabled)
@@ -710,6 +726,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
         EMOJI,
         CLIPBOARD,
         AUTOCOMPLETE,
+        HANDWRITE,
         NUMPAD,
     }
 

@@ -12,7 +12,7 @@ import helium314.keyboard.latin.utils.InputTypeUtils
  * wins for that session and leaves the memory untouched; only a manual switch rewrites it.
  */
 class LastPanelMemory(private val prefs: SharedPreferences) {
-    enum class Panel { LETTERS, NUMPAD, CLIPBOARD, AUTOCOMPLETE }
+    enum class Panel { LETTERS, NUMPAD, CLIPBOARD, AUTOCOMPLETE, HANDWRITE }
 
     fun remembered(): Panel =
         Panel.entries.firstOrNull { it.name == prefs.getString(KEY, null) } ?: Panel.LETTERS

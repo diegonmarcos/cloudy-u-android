@@ -1583,6 +1583,11 @@ New dictionary:
     <string name="answer_bar_done">Draft ready: Insert, Regenerate or Copy</string>
     <string name="answer_bar_inserted">Inserted at the cursor</string>
     <!-- #1413 Configs toggle -->
+    <string name="handwrite">HandWrite</string>
+    <string name="handwrite_hint">Write with a finger or a stylus</string>
+    <string name="handwrite_nothing">Nothing recognised, try again</string>
+    <string name="handwrite_no_model">The %1$s handwriting model is not downloaded yet. Open Cloud Keyboard > HandWrite and download it.</string>
+    <string name="handwrite_no_engine">Handwriting recognition is not available in this build</string>
     <string name="dev_keyboard">Dev Keyboard</string>
     <string name="dev_keyboard_summary">Swipe-corner keys (Esc, Tab, Ctrl, Alt, arrows, symbols) on the Unexpected layout</string>
     <!-- #1622 Home Page (icon grid) and Themes picker -->

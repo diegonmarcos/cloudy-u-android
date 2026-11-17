@@ -64,7 +64,7 @@ enum class AllSettingsPage(val section: HomeGroup) {
 }
 
 /** #1665 the homes of the app's nav: the bottom tabs (#1754 five, Grabber after Writer) plus Configs (the top bar's Configs icon, fleet default page). */
-enum class KbHome { KEYBOARD, WRITER, GRABBER, MEDIABOARDS, TEXTBOARDS, CONFIGS;
+enum class KbHome { KEYBOARD, HANDWRITE, WRITER, GRABBER, MEDIABOARDS, TEXTBOARDS, CONFIGS;
     /** The bottom tab of this home; null for Configs. */
     val tab: KbTab? get() = KbTab.entries.firstOrNull { it.name == name }
 }
@@ -100,6 +100,12 @@ enum class KbTab(val id: String, val label: String, val icon: String, val pages:
         NavPageDecl("languages", "Languages", SettingsDestination.Languages, listOf(
             NavPageDecl("secondary_layouts", "Secondary layouts", SettingsDestination.Layouts))),
         NavPageDecl("toolbar", "Toolbar", SettingsDestination.Toolbar),
+    )),
+    // #1781 HandWrite: handwriting input (ML Kit Digital Ink). Its two pages are drawn by the host app (HandWriteHost): the settings with the
+    // per-language model download, and the practice pad. Sits between Keyboard and Writer.
+    HANDWRITE("handwrite", "HandWrite", "edit", listOf(
+        NavPageDecl("handwrite_settings", "Handwriting", SettingsDestination.hostRoute("handwrite.settings")),
+        NavPageDecl("handwrite_practice", "Practice pad", SettingsDestination.hostRoute("handwrite.practice")),
     )),
     WRITER("writer", "Writer", "edit", listOf(
         // #1652 cloud-writer's own pages (libs:writer-ui WriterSurface.Page): its former bottom nav, then Tools and dictation

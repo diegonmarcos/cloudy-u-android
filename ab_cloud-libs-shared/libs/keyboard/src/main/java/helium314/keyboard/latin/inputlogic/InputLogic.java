@@ -787,6 +787,9 @@ public final class InputLogic {
                 // #1413: TAP -> Dev Keyboard on/off (corner swipes + corner labels).
                 helium314.keyboard.keyboard.CornerSwipe.toggle(mLatinIME);
                 break;
+            case KeyCode.HANDWRITE:
+                // #1781: opening the HandWrite panel is KeyboardState's job.
+                break;
             case KeyCode.VAULT:
                 // cloud-keyboard: TAP → hand over to Cloud Vault. Nothing to do to the field.
                 mLatinIME.launchCloudVault();

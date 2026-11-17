@@ -29,7 +29,7 @@ package helium314.keyboard.keyboard
 class KeyboardViewState {
 
     /** AUTOCOMPLETE (#1103) is its own panel: it shares the clipboard's strip and bottom row, nothing of its content. */
-    enum class PanelKind { EMOJI, CLIPBOARD, AUTOCOMPLETE }
+    enum class PanelKind { EMOJI, CLIPBOARD, AUTOCOMPLETE, HANDWRITE }
 
     sealed class Mode {
         object Typing : Mode() { override fun toString() = "TYPING" }
@@ -39,7 +39,7 @@ class KeyboardViewState {
     /** The views applyViewState() owns. Nothing outside it may change their visibility. */
     enum class Piece {
         MAIN_FRAME, KEYBOARD_WRAPPER, MAIN_KEYBOARD, STRIP_CONTAINER, SUGGESTION_STRIP,
-        EMOJI_TAB_STRIP, CLIPBOARD_STRIP, EMOJI_PALETTES, CLIPBOARD_HISTORY, AUTOCOMPLETE_VIEW,
+        EMOJI_TAB_STRIP, CLIPBOARD_STRIP, EMOJI_PALETTES, CLIPBOARD_HISTORY, AUTOCOMPLETE_VIEW, HANDWRITE_VIEW,
     }
 
     enum class Exit {
@@ -68,10 +68,11 @@ class KeyboardViewState {
                 PanelKind.CLIPBOARD -> Piece.CLIPBOARD_HISTORY
                 PanelKind.AUTOCOMPLETE -> Piece.AUTOCOMPLETE_VIEW
                 PanelKind.EMOJI -> Piece.EMOJI_PALETTES
+                PanelKind.HANDWRITE -> Piece.HANDWRITE_VIEW
             }
             if (shows(Piece.MAIN_FRAME) && shows(Piece.KEYBOARD_WRAPPER) && shows(panelView))
                 out.add(Exit.BOTTOM_ROW_ALPHA)
-            if (panel.kind != PanelKind.EMOJI && shows(Piece.STRIP_CONTAINER) && shows(Piece.CLIPBOARD_STRIP))
+            if (panel.kind != PanelKind.EMOJI && panel.kind != PanelKind.HANDWRITE && shows(Piece.STRIP_CONTAINER) && shows(Piece.CLIPBOARD_STRIP))
                 out.add(Exit.PANEL_CLOSE_KEY)
             return out
         }
@@ -153,6 +154,8 @@ class KeyboardViewState {
                             v.add(Piece.CLIPBOARD_STRIP)
                             v.add(Piece.STRIP_CONTAINER)
                         }
+                        // #1781: the HandWrite panel carries its own candidate row and bottom row (ABC, language, space, backspace)
+                        PanelKind.HANDWRITE -> v.add(Piece.HANDWRITE_VIEW)
                     }
                 }
             }
