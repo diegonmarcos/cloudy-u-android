@@ -1,6 +1,6 @@
 package com.diegonmarcos.cloudkeyboard.handwrite
 
-import com.google.mlkit.vision.digitalink.Ink
+import com.google.mlkit.vision.digitalink.recognition.Ink
 import helium314.keyboard.keyboard.handwrite.InkStroke
 
 /** #1781 the captured strokes of the HandWrite pad as an ML Kit [Ink]: one stroke per pen-down, one point per touch sample. */
