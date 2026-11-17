@@ -295,10 +295,6 @@ class Walk:
         # still found, in the events log (app_anr), and fails its page with the emulator's load beside it.
         shell("settings put global hide_error_dialogs 1")
         shell("settings put global cloud_nav_ui_mode classic")
-        # #1760 the Store installs the fleet on its own (Auto update ON) and the system raised "isn't allowed to install unknown apps from
-        # this source" over whatever page was walked, at a moment no dump saw (General's anchors, the settings entry): the walk poses the
-        # install-source permission of the app under test (the emulator's state, no check of the app is touched) so the prompt never rises
-        shell("appops set %s REQUEST_INSTALL_PACKAGES allow" % self.pkg)
         shell("logcat -b all -c")
         self.seed()
         view = self.start_page()
@@ -526,11 +522,15 @@ class Walk:
 
     def enter_section(self, sid):
         """#1483 Open section [sid] from the dropdown's section list; an error string when it is not listed there."""
-        if self.section_root() is None:
-            return "the title dropdown did not open (to reach section %s)" % sid
-        if self.pick(sid):
-            return None
-        self.back_if_dropdown()
+        # #1760 the section list is read again once before a section is called missing (Cloud C3 Configs: the crumb tap had left the page's
+        # own dropdown state on screen in one run and the list was read from a closed popup); the same entry is required
+        for _attempt in range(2):
+            if self.section_root() is None:
+                return "the title dropdown did not open (to reach section %s)" % sid
+            if self.pick(sid):
+                return None
+            self.back_if_dropdown()
+            settle(1.5)
         return "P6 the title dropdown's section list has no entry for section %s (every declared section must be reachable from it)" % sid
 
     def listed_entries(self):
