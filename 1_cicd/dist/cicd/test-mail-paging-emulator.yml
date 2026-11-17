@@ -156,6 +156,7 @@ jobs:
           # the real worker too: opening the app enqueues OfflineSyncWorker (the host is unresolvable, so it runs and backs off)
           adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
           sleep 15
+          if uitap "Skip" exact; then sleep 4; fi # the welcome pager shows after a data clear
           bshot 00-online-seeded-list
           adb shell cmd connectivity airplane-mode enable || true
           adb shell svc wifi disable || true
@@ -167,6 +168,7 @@ jobs:
           adb shell am force-stop "$PKG"
           adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
           sleep 14
+          if uitap "Skip" exact; then sleep 4; fi
           bshot 01-offline-list-after-sync; uidump 01-offline-list
           grep -o 'text="Seed message [^"]*"' walk-out/bg/01-offline-list.xml | head -3 | tee walk-out/bg/offline-first-rows.txt
           grep -q 'Seed message 120 of 120' walk-out/bg/offline-first-rows.txt || { echo "::error::the offline list does not show the synced mail"; exit 1; }
