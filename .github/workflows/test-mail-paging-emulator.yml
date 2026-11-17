@@ -198,14 +198,12 @@ jobs:
             if grep -E "id=$id phase=(fetch-email-get|open-from-network)" walk-out/bg/open-offline.txt; then echo "::error::$id went to the network"; exit 1; fi
           done
           grep -E "OfflineSyncWorker" walk-out/bg/logcat-stream.txt | head -5 | tee walk-out/bg/worker-log.txt || true
-          # Configs: the Download attachments setting (the section is Mail's own settings, General > App)
-          if uitap "Configs"; then
-            sleep 3
-            # scroll the General page to its end, where "Open Cloud Mail configs" sits (centre 318,1269 on the 1080x2340 emulator)
-            for k in 1 2 3; do adb shell input swipe 700 1800 700 400 300; sleep 1; done
-            adb shell input tap 318 1269; sleep 5
-            bshot 04a-after-open-configs-tap
-            sleep 3
+          # Configs: the Download attachments setting. Mail's own settings screen is the "settings" route, reached from the drawer.
+          adb shell am force-stop "$PKG"; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1; sleep 12
+          adb shell input swipe 5 1200 800 1200 250; sleep 2
+          bshot 04a-drawer; uidump 04a-drawer
+          if uitap "Settings" exact || uitap "Configs" exact; then
+            sleep 4
             found=0
             for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
               uidump configs-scan
@@ -217,7 +215,7 @@ jobs:
             echo "Configs shows Download attachments: $found" | tee -a walk-out/summary.txt
             [ "$found" = 1 ] || echo "::warning::Download attachments was not found in the Configs scan; see walk-out/bg/04-configs-download-attachments.png"
           else
-            echo "::warning::the Configs entry was not found to tap"; bshot 04-configs-not-found
+            echo "::warning::no Settings entry in the drawer"; bshot 04-configs-not-found
           fi
           kill "$BP" 2>/dev/null || true
           [ -z "$TIMING_FAIL" ] || exit 1
