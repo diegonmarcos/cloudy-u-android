@@ -1,6 +1,6 @@
 {
  "schemaVersion": 1,
- "_doc": "Cloud Store > Torrent catalogue (#1681), served at runtime as shared/torrent-catalogue (never baked into an APK). (#1749: Search > Torrent recommends the top 10 per category from here, after the licence and source allowlist in StoreRecs; archive.org items are the open collections of public-domain, Creative Commons and open-source works.) ONLY legitimately distributable items: each entry's info_hash was computed from the publisher's own official .torrent at torrent_url, and its magnet carries that hash plus the publisher's trackers. Categories keep the owner's structure so more legitimate entries can be added; a category with no entry is drawn as empty. Copyrighted or cracked content is never listed here. Users add their own entries in Configs > Torrent (kept on the device).",
+ "_doc": "Cloud Store > Torrent catalogue (#1681), served at runtime as shared/torrent-catalogue (never baked into an APK). (#1749: Search > Torrent recommends the top 10 per category from here, after the licence and source allowlist in StoreRecs; archive.org items are the open collections of public-domain, Creative Commons and open-source works.) ONLY legitimately distributable items: each entry's info_hash was computed from the publisher's own official .torrent at torrent_url, and its magnet carries that hash plus the publisher's trackers. Categories keep the owner's structure so more legitimate entries can be added; a category with no entry is drawn as empty. Copyrighted or cracked content is never listed here. Each entry carries an image URL (#1772: archive.org item thumbnail, the distro logo, a poster) loaded at runtime for the Search > Torrent icon grid; the Store draws a category-coloured initial tile when it is missing or fails. Users add their own entries in Configs > Torrent (kept on the device).",
  "categories": [
   {
    "id": "movies",
@@ -62,7 +62,8 @@
    "info_hash": "5b1e0d988fc7a0c9e99bd852071681a59974b39f",
    "magnet": "magnet:?xt=urn:btih:5b1e0d988fc7a0c9e99bd852071681a59974b39f&dn=ubuntu-26.04.1-desktop-amd64.iso&tr=https%3A%2F%2Ftorrent.ubuntu.com%2Fannounce&tr=https%3A%2F%2Fipv6.torrent.ubuntu.com%2Fannounce",
    "torrent_url": "https://releases.ubuntu.com/26.04.1/ubuntu-26.04.1-desktop-amd64.iso.torrent",
-   "source_page": "https://releases.ubuntu.com/26.04.1/"
+   "source_page": "https://releases.ubuntu.com/26.04.1/",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo-ubuntu_cof-orange-hex.svg?width=256"
   },
   {
    "id": "ubuntu-26.04.1-server-amd64",
@@ -74,7 +75,8 @@
    "info_hash": "e4f19cf636409b72571766c2ae89c98fc21a109d",
    "magnet": "magnet:?xt=urn:btih:e4f19cf636409b72571766c2ae89c98fc21a109d&dn=ubuntu-26.04.1-live-server-amd64.iso&tr=https%3A%2F%2Ftorrent.ubuntu.com%2Fannounce&tr=https%3A%2F%2Fipv6.torrent.ubuntu.com%2Fannounce",
    "torrent_url": "https://releases.ubuntu.com/26.04.1/ubuntu-26.04.1-live-server-amd64.iso.torrent",
-   "source_page": "https://releases.ubuntu.com/26.04.1/"
+   "source_page": "https://releases.ubuntu.com/26.04.1/",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo-ubuntu_cof-orange-hex.svg?width=256"
   },
   {
    "id": "debian-13.7.0-amd64-dvd1",
@@ -86,7 +88,8 @@
    "info_hash": "793a0e3d7ac28fa964512bca6954f459538629cd",
    "magnet": "magnet:?xt=urn:btih:793a0e3d7ac28fa964512bca6954f459538629cd&dn=debian-13.7.0-amd64-DVD-1.iso&tr=http%3A%2F%2Fbttracker.debian.org%3A6969%2Fannounce",
    "torrent_url": "https://cdimage.debian.org/debian-cd/current/amd64/bt-dvd/debian-13.7.0-amd64-DVD-1.iso.torrent",
-   "source_page": "https://cdimage.debian.org/debian-cd/current/amd64/bt-dvd/"
+   "source_page": "https://cdimage.debian.org/debian-cd/current/amd64/bt-dvd/",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Debian-OpenLogo.svg?width=256"
   },
   {
    "id": "debian-13.7.0-amd64-netinst",
@@ -98,7 +101,8 @@
    "info_hash": "7acf8fb590b2060dd9c3146ef770169d593433b0",
    "magnet": "magnet:?xt=urn:btih:7acf8fb590b2060dd9c3146ef770169d593433b0&dn=debian-13.7.0-amd64-netinst.iso&tr=http%3A%2F%2Fbttracker.debian.org%3A6969%2Fannounce",
    "torrent_url": "https://cdimage.debian.org/debian-cd/current/amd64/bt-cd/debian-13.7.0-amd64-netinst.iso.torrent",
-   "source_page": "https://cdimage.debian.org/debian-cd/current/amd64/bt-cd/"
+   "source_page": "https://cdimage.debian.org/debian-cd/current/amd64/bt-cd/",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Debian-OpenLogo.svg?width=256"
   },
   {
    "id": "fedora-workstation-45-x86_64",
@@ -110,7 +114,8 @@
    "info_hash": "a59398317beeeae3ab57039338a8811c86b892c7",
    "magnet": "magnet:?xt=urn:btih:a59398317beeeae3ab57039338a8811c86b892c7&dn=Fedora-Workstation-Live-x86_64-45&tr=http%3A%2F%2Ftorrent.fedoraproject.org%3A6969%2Fannounce",
    "torrent_url": "https://torrent.fedoraproject.org/torrents/Fedora-Workstation-Live-x86_64-45.torrent",
-   "source_page": "https://torrent.fedoraproject.org/"
+   "source_page": "https://torrent.fedoraproject.org/",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Fedora_logo.svg?width=256"
   },
   {
    "id": "linuxmint-22.3-cinnamon-64bit",
@@ -122,7 +127,8 @@
    "info_hash": "2fee37827d0b6dc81372a7affcd1e3dcb4110e64",
    "magnet": "magnet:?xt=urn:btih:2fee37827d0b6dc81372a7affcd1e3dcb4110e64&dn=linuxmint-22.3-cinnamon-64bit.iso&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce",
    "torrent_url": "https://www.linuxmint.com/torrents/linuxmint-22.3-cinnamon-64bit.iso.torrent",
-   "source_page": "https://linuxmint.com/download.php"
+   "source_page": "https://linuxmint.com/download.php",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Linux_Mint_logo_without_wordmark.svg?width=256"
   },
   {
    "id": "linuxmint-22.3-xfce-64bit",
@@ -134,7 +140,8 @@
    "info_hash": "feb1bcec2a7c7ea288d0d8542796261cdd13cb61",
    "magnet": "magnet:?xt=urn:btih:feb1bcec2a7c7ea288d0d8542796261cdd13cb61&dn=linuxmint-22.3-xfce-64bit.iso&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce",
    "torrent_url": "https://www.linuxmint.com/torrents/linuxmint-22.3-xfce-64bit.iso.torrent",
-   "source_page": "https://linuxmint.com/download.php"
+   "source_page": "https://linuxmint.com/download.php",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Linux_Mint_logo_without_wordmark.svg?width=256"
   },
   {
    "id": "archlinux-2026.11.01-x86_64",
@@ -146,7 +153,8 @@
    "info_hash": "ed0f013475535f19b5410d68fd20f627e4950b1f",
    "magnet": "magnet:?xt=urn:btih:ed0f013475535f19b5410d68fd20f627e4950b1f&dn=archlinux-2026.11.01-x86_64.iso",
    "torrent_url": "https://archlinux.org/releng/releases/2026.11.01/torrent/",
-   "source_page": "https://archlinux.org/releng/releases/"
+   "source_page": "https://archlinux.org/releng/releases/",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Arch_Linux_%22Crystal%22_icon.svg?width=256"
   },
   {
    "id": "kali-linux-2026.3-installer-amd64",
@@ -158,7 +166,8 @@
    "info_hash": "cc15c0be1a8732fedcc0c1ccd42e27246a14854b",
    "magnet": "magnet:?xt=urn:btih:cc15c0be1a8732fedcc0c1ccd42e27246a14854b&dn=kali-linux-2026.3-installer-amd64.iso&tr=http%3A%2F%2Fbittorrent.kali.org%2Fannounce&tr=http%3A%2F%2Fbittorrent.kali.org%3A6969%2Fannounce",
    "torrent_url": "https://cdimage.kali.org/kali-2026.3/kali-linux-2026.3-installer-amd64.iso.torrent",
-   "source_page": "https://www.kali.org/get-kali/"
+   "source_page": "https://www.kali.org/get-kali/",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Kali-dragon-icon.svg?width=256"
   },
   {
    "id": "kali-linux-2026.3-live-amd64",
@@ -170,7 +179,8 @@
    "info_hash": "32765844ad2436f2ad5574f2a36885489d35a983",
    "magnet": "magnet:?xt=urn:btih:32765844ad2436f2ad5574f2a36885489d35a983&dn=kali-linux-2026.3-live-amd64.iso&tr=http%3A%2F%2Fbittorrent.kali.org%2Fannounce&tr=http%3A%2F%2Fbittorrent.kali.org%3A6969%2Fannounce",
    "torrent_url": "https://cdimage.kali.org/kali-2026.3/kali-linux-2026.3-live-amd64.iso.torrent",
-   "source_page": "https://www.kali.org/get-kali/"
+   "source_page": "https://www.kali.org/get-kali/",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Kali-dragon-icon.svg?width=256"
   },
   {
    "id": "big-buck-bunny",
@@ -182,7 +192,8 @@
    "info_hash": "b63eaa9720ee797667ef58ea35ef7d81ab5d1c16",
    "magnet": "magnet:?xt=urn:btih:b63eaa9720ee797667ef58ea35ef7d81ab5d1c16&dn=BigBuckBunny_124&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/BigBuckBunny_124/BigBuckBunny_124_archive.torrent",
-   "source_page": "https://archive.org/details/BigBuckBunny_124"
+   "source_page": "https://archive.org/details/BigBuckBunny_124",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Big_buck_bunny_poster_big.jpg?width=256"
   },
   {
    "id": "sintel",
@@ -194,7 +205,8 @@
    "info_hash": "5301d943b64fa79bc6e1ab36fae18dec67995bfb",
    "magnet": "magnet:?xt=urn:btih:5301d943b64fa79bc6e1ab36fae18dec67995bfb&dn=Sintel&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/Sintel/Sintel_archive.torrent",
-   "source_page": "https://archive.org/details/Sintel"
+   "source_page": "https://archive.org/details/Sintel",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Sintel_poster.jpg?width=256"
   },
   {
    "id": "elephantsdream",
@@ -206,7 +218,8 @@
    "info_hash": "acb47ba3958759fdf09f36eeb80fe51c45c1abc9",
    "magnet": "magnet:?xt=urn:btih:acb47ba3958759fdf09f36eeb80fe51c45c1abc9&dn=ElephantsDream&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/ElephantsDream/ElephantsDream_archive.torrent",
-   "source_page": "https://archive.org/details/ElephantsDream"
+   "source_page": "https://archive.org/details/ElephantsDream",
+   "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Elephants_Dream_s5_both.jpg?width=256"
   },
   {
    "id": "cosmoslaundromatfirstcycle",
@@ -218,7 +231,8 @@
    "info_hash": "e18c25b65d3fae31e163cf493d96bc11fea0c3e6",
    "magnet": "magnet:?xt=urn:btih:e18c25b65d3fae31e163cf493d96bc11fea0c3e6&dn=CosmosLaundromatFirstCycle&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/CosmosLaundromatFirstCycle/CosmosLaundromatFirstCycle_archive.torrent",
-   "source_page": "https://archive.org/details/CosmosLaundromatFirstCycle"
+   "source_page": "https://archive.org/details/CosmosLaundromatFirstCycle",
+   "image": "https://archive.org/services/img/CosmosLaundromatFirstCycle"
   },
   {
    "id": "tears-of-steel",
@@ -230,7 +244,8 @@
    "info_hash": "6017b98802e817efe25792f247dac599b10db96a",
    "magnet": "magnet:?xt=urn:btih:6017b98802e817efe25792f247dac599b10db96a&dn=Tears-of-Steel&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/Tears-of-Steel/Tears-of-Steel_archive.torrent",
-   "source_page": "https://archive.org/details/Tears-of-Steel"
+   "source_page": "https://archive.org/details/Tears-of-Steel",
+   "image": "https://archive.org/services/img/Tears-of-Steel"
   },
   {
    "id": "night-of-the-living-dead-dvd",
@@ -242,7 +257,8 @@
    "info_hash": "6bc1af23a17fd62156ab2f0e41d3c86769c2c66c",
    "magnet": "magnet:?xt=urn:btih:6bc1af23a17fd62156ab2f0e41d3c86769c2c66c&dn=night_of_the_living_dead_dvd&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/night_of_the_living_dead_dvd/night_of_the_living_dead_dvd_archive.torrent",
-   "source_page": "https://archive.org/details/night_of_the_living_dead_dvd"
+   "source_page": "https://archive.org/details/night_of_the_living_dead_dvd",
+   "image": "https://archive.org/services/img/night_of_the_living_dead_dvd"
   },
   {
    "id": "charlie-chaplin-film-fest",
@@ -254,7 +270,8 @@
    "info_hash": "4a639b6f32f2bf65c9735c86ea855caec417adc5",
    "magnet": "magnet:?xt=urn:btih:4a639b6f32f2bf65c9735c86ea855caec417adc5&dn=charlie_chaplin_film_fest&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/charlie_chaplin_film_fest/charlie_chaplin_film_fest_archive.torrent",
-   "source_page": "https://archive.org/details/charlie_chaplin_film_fest"
+   "source_page": "https://archive.org/details/charlie_chaplin_film_fest",
+   "image": "https://archive.org/services/img/charlie_chaplin_film_fest"
   },
   {
    "id": "his-girl-friday",
@@ -266,7 +283,8 @@
    "info_hash": "3514d8e28544179d35e8bbc10de6f29108375b7a",
    "magnet": "magnet:?xt=urn:btih:3514d8e28544179d35e8bbc10de6f29108375b7a&dn=his_girl_friday&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/his_girl_friday/his_girl_friday_archive.torrent",
-   "source_page": "https://archive.org/details/his_girl_friday"
+   "source_page": "https://archive.org/details/his_girl_friday",
+   "image": "https://archive.org/services/img/his_girl_friday"
   },
   {
    "id": "house-on-haunted-hill-ipod",
@@ -278,7 +296,8 @@
    "info_hash": "08a6efa3791e86c6146c88c66ba54bf65dac7b3f",
    "magnet": "magnet:?xt=urn:btih:08a6efa3791e86c6146c88c66ba54bf65dac7b3f&dn=house_on_haunted_hill_ipod&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/house_on_haunted_hill_ipod/house_on_haunted_hill_ipod_archive.torrent",
-   "source_page": "https://archive.org/details/house_on_haunted_hill_ipod"
+   "source_page": "https://archive.org/details/house_on_haunted_hill_ipod",
+   "image": "https://archive.org/services/img/house_on_haunted_hill_ipod"
   },
   {
    "id": "junglebook",
@@ -290,7 +309,8 @@
    "info_hash": "9e8e8564775a984246f9701b2f9bb1b751344ee9",
    "magnet": "magnet:?xt=urn:btih:9e8e8564775a984246f9701b2f9bb1b751344ee9&dn=JungleBook&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/JungleBook/JungleBook_archive.torrent",
-   "source_page": "https://archive.org/details/JungleBook"
+   "source_page": "https://archive.org/details/JungleBook",
+   "image": "https://archive.org/services/img/JungleBook"
   },
   {
    "id": "theloneranger-201705",
@@ -302,7 +322,8 @@
    "info_hash": "7cd1aec90eb432ec08be3d04e789d615ba604240",
    "magnet": "magnet:?xt=urn:btih:7cd1aec90eb432ec08be3d04e789d615ba604240&dn=theloneranger_201705&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/theloneranger_201705/theloneranger_201705_archive.torrent",
-   "source_page": "https://archive.org/details/theloneranger_201705"
+   "source_page": "https://archive.org/details/theloneranger_201705",
+   "image": "https://archive.org/services/img/theloneranger_201705"
   },
   {
    "id": "sherlockholmes1954",
@@ -314,7 +335,8 @@
    "info_hash": "beacc82d91bdb8b0d35c18451687ecb78a413c93",
    "magnet": "magnet:?xt=urn:btih:beacc82d91bdb8b0d35c18451687ecb78a413c93&dn=SherlockHolmes1954&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/SherlockHolmes1954/SherlockHolmes1954_archive.torrent",
-   "source_page": "https://archive.org/details/SherlockHolmes1954"
+   "source_page": "https://archive.org/details/SherlockHolmes1954",
+   "image": "https://archive.org/services/img/SherlockHolmes1954"
   },
   {
    "id": "enter-the-lone-ranger",
@@ -326,7 +348,8 @@
    "info_hash": "d020f75354a369c518d67fe1d3fa7ccd63b56302",
    "magnet": "magnet:?xt=urn:btih:d020f75354a369c518d67fe1d3fa7ccd63b56302&dn=enter_the_lone_ranger&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/enter_the_lone_ranger/enter_the_lone_ranger_archive.torrent",
-   "source_page": "https://archive.org/details/enter_the_lone_ranger"
+   "source_page": "https://archive.org/details/enter_the_lone_ranger",
+   "image": "https://archive.org/services/img/enter_the_lone_ranger"
   },
   {
    "id": "the-dick-van-dyke-show",
@@ -338,7 +361,8 @@
    "info_hash": "7bc82e613ecba4648c869defe7f8a630154b4d65",
    "magnet": "magnet:?xt=urn:btih:7bc82e613ecba4648c869defe7f8a630154b4d65&dn=The_Dick_van_Dyke_Show&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/The_Dick_van_Dyke_Show/The_Dick_van_Dyke_Show_archive.torrent",
-   "source_page": "https://archive.org/details/The_Dick_van_Dyke_Show"
+   "source_page": "https://archive.org/details/The_Dick_van_Dyke_Show",
+   "image": "https://archive.org/services/img/The_Dick_van_Dyke_Show"
   },
   {
    "id": "theadventuresofflashgordon",
@@ -350,7 +374,8 @@
    "info_hash": "0aada06dfb4c2f91b685ecfe00f7af062fea8caa",
    "magnet": "magnet:?xt=urn:btih:0aada06dfb4c2f91b685ecfe00f7af062fea8caa&dn=TheAdventuresOfFlashGordon&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/TheAdventuresOfFlashGordon/TheAdventuresOfFlashGordon_archive.torrent",
-   "source_page": "https://archive.org/details/TheAdventuresOfFlashGordon"
+   "source_page": "https://archive.org/details/TheAdventuresOfFlashGordon",
+   "image": "https://archive.org/services/img/TheAdventuresOfFlashGordon"
   },
   {
    "id": "pinky-lee-show",
@@ -362,7 +387,8 @@
    "info_hash": "fe36364d591818478dd6c05064c5292b58754385",
    "magnet": "magnet:?xt=urn:btih:fe36364d591818478dd6c05064c5292b58754385&dn=Pinky_Lee_Show&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/Pinky_Lee_Show/Pinky_Lee_Show_archive.torrent",
-   "source_page": "https://archive.org/details/Pinky_Lee_Show"
+   "source_page": "https://archive.org/details/Pinky_Lee_Show",
+   "image": "https://archive.org/services/img/Pinky_Lee_Show"
   },
   {
    "id": "ellery-queen-dumont",
@@ -374,7 +400,8 @@
    "info_hash": "19c9c830c419377798c67cbca384c616f5eb7c13",
    "magnet": "magnet:?xt=urn:btih:19c9c830c419377798c67cbca384c616f5eb7c13&dn=Ellery_Queen_DuMont&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/Ellery_Queen_DuMont/Ellery_Queen_DuMont_archive.torrent",
-   "source_page": "https://archive.org/details/Ellery_Queen_DuMont"
+   "source_page": "https://archive.org/details/Ellery_Queen_DuMont",
+   "image": "https://archive.org/services/img/Ellery_Queen_DuMont"
   },
   {
    "id": "cavalcade-of-stars",
@@ -386,7 +413,8 @@
    "info_hash": "82019b18372a60de30c51e5780277fee1b1de4eb",
    "magnet": "magnet:?xt=urn:btih:82019b18372a60de30c51e5780277fee1b1de4eb&dn=Cavalcade_Of_Stars&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/Cavalcade_Of_Stars/Cavalcade_Of_Stars_archive.torrent",
-   "source_page": "https://archive.org/details/Cavalcade_Of_Stars"
+   "source_page": "https://archive.org/details/Cavalcade_Of_Stars",
+   "image": "https://archive.org/services/img/Cavalcade_Of_Stars"
   },
   {
    "id": "you-bet-your-life-groucho",
@@ -398,7 +426,8 @@
    "info_hash": "8fb1a0c0810de74d5507ff242d6d4fc517bcda4c",
    "magnet": "magnet:?xt=urn:btih:8fb1a0c0810de74d5507ff242d6d4fc517bcda4c&dn=You_Bet_Your_Life_Groucho&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/You_Bet_Your_Life_Groucho/You_Bet_Your_Life_Groucho_archive.torrent",
-   "source_page": "https://archive.org/details/You_Bet_Your_Life_Groucho"
+   "source_page": "https://archive.org/details/You_Bet_Your_Life_Groucho",
+   "image": "https://archive.org/services/img/You_Bet_Your_Life_Groucho"
   },
   {
    "id": "0ad-0-0-25-alpha",
@@ -410,7 +439,8 @@
    "info_hash": "d24e382ca57948ec1e8d364cc937f42ee26d0b69",
    "magnet": "magnet:?xt=urn:btih:d24e382ca57948ec1e8d364cc937f42ee26d0b69&dn=0ad-0.0.25-alpha&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/0ad-0.0.25-alpha/0ad-0.0.25-alpha_archive.torrent",
-   "source_page": "https://archive.org/details/0ad-0.0.25-alpha"
+   "source_page": "https://archive.org/details/0ad-0.0.25-alpha",
+   "image": "https://archive.org/services/img/0ad-0.0.25-alpha"
   },
   {
    "id": "xonotic-0-8-5",
@@ -422,7 +452,8 @@
    "info_hash": "b3a90f204f8178553ce34eb938587e3ded705640",
    "magnet": "magnet:?xt=urn:btih:b3a90f204f8178553ce34eb938587e3ded705640&dn=xonotic-0.8.5&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/xonotic-0.8.5/xonotic-0.8.5_archive.torrent",
-   "source_page": "https://archive.org/details/xonotic-0.8.5"
+   "source_page": "https://archive.org/details/xonotic-0.8.5",
+   "image": "https://archive.org/services/img/xonotic-0.8.5"
   },
   {
    "id": "openttd-12-0",
@@ -434,7 +465,8 @@
    "info_hash": "1560ecb501d6b54038a36fd3ceb1ab13ecbb5f6d",
    "magnet": "magnet:?xt=urn:btih:1560ecb501d6b54038a36fd3ceb1ab13ecbb5f6d&dn=openttd-12.0&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/openttd-12.0/openttd-12.0_archive.torrent",
-   "source_page": "https://archive.org/details/openttd-12.0"
+   "source_page": "https://archive.org/details/openttd-12.0",
+   "image": "https://archive.org/services/img/openttd-12.0"
   },
   {
    "id": "openttd-1-10-3",
@@ -446,7 +478,8 @@
    "info_hash": "30723fa8b1728340ffceff1ee6e82a194f36c926",
    "magnet": "magnet:?xt=urn:btih:30723fa8b1728340ffceff1ee6e82a194f36c926&dn=openttd-1.10.3&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/openttd-1.10.3/openttd-1.10.3_archive.torrent",
-   "source_page": "https://archive.org/details/openttd-1.10.3"
+   "source_page": "https://archive.org/details/openttd-1.10.3",
+   "image": "https://archive.org/services/img/openttd-1.10.3"
   },
   {
    "id": "minetest-5-9-0",
@@ -458,7 +491,8 @@
    "info_hash": "20835ba021a5873901fc1966f9fbc7507b89758d",
    "magnet": "magnet:?xt=urn:btih:20835ba021a5873901fc1966f9fbc7507b89758d&dn=minetest-5.9.0&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/minetest-5.9.0/minetest-5.9.0_archive.torrent",
-   "source_page": "https://archive.org/details/minetest-5.9.0"
+   "source_page": "https://archive.org/details/minetest-5.9.0",
+   "image": "https://archive.org/services/img/minetest-5.9.0"
   },
   {
    "id": "minetest-5-0-0",
@@ -470,7 +504,8 @@
    "info_hash": "244fcac6313b6c1d2226b6de8b39c80effceae9d",
    "magnet": "magnet:?xt=urn:btih:244fcac6313b6c1d2226b6de8b39c80effceae9d&dn=minetest-5.0.0&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/minetest-5.0.0/minetest-5.0.0_archive.torrent",
-   "source_page": "https://archive.org/details/minetest-5.0.0"
+   "source_page": "https://archive.org/details/minetest-5.0.0",
+   "image": "https://archive.org/services/img/minetest-5.0.0"
   },
   {
    "id": "warzone2100-3-2-3",
@@ -482,7 +517,8 @@
    "info_hash": "ad9e5a997d1b1988bd99ef6e5b1473f2d3e37372",
    "magnet": "magnet:?xt=urn:btih:ad9e5a997d1b1988bd99ef6e5b1473f2d3e37372&dn=warzone2100-3.2.3&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/warzone2100-3.2.3/warzone2100-3.2.3_archive.torrent",
-   "source_page": "https://archive.org/details/warzone2100-3.2.3"
+   "source_page": "https://archive.org/details/warzone2100-3.2.3",
+   "image": "https://archive.org/services/img/warzone2100-3.2.3"
   },
   {
    "id": "momotaro-no-umiwashi-1943",
@@ -494,7 +530,8 @@
    "info_hash": "1f7c609a4e447c7f2b4f5f1d565533d6d182de84",
    "magnet": "magnet:?xt=urn:btih:1f7c609a4e447c7f2b4f5f1d565533d6d182de84&dn=momotaro-no-umiwashi-1943&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/momotaro-no-umiwashi-1943/momotaro-no-umiwashi-1943_archive.torrent",
-   "source_page": "https://archive.org/details/momotaro-no-umiwashi-1943"
+   "source_page": "https://archive.org/details/momotaro-no-umiwashi-1943",
+   "image": "https://archive.org/services/img/momotaro-no-umiwashi-1943"
   },
   {
    "id": "momotaro-umi-no-shinpei-1945",
@@ -506,7 +543,8 @@
    "info_hash": "886cfb474917c697c9c65c0c78e91e7eb7f20b6f",
    "magnet": "magnet:?xt=urn:btih:886cfb474917c697c9c65c0c78e91e7eb7f20b6f&dn=momotaro-umi-no-shinpei-1945&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/momotaro-umi-no-shinpei-1945/momotaro-umi-no-shinpei-1945_archive.torrent",
-   "source_page": "https://archive.org/details/momotaro-umi-no-shinpei-1945"
+   "source_page": "https://archive.org/details/momotaro-umi-no-shinpei-1945",
+   "image": "https://archive.org/services/img/momotaro-umi-no-shinpei-1945"
   },
   {
    "id": "momotaro-1918",
@@ -518,7 +556,8 @@
    "info_hash": "365d05bef6a0dcf0cbdd8a467d5bc482a90d2f6a",
    "magnet": "magnet:?xt=urn:btih:365d05bef6a0dcf0cbdd8a467d5bc482a90d2f6a&dn=momotaro-1918&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/momotaro-1918/momotaro-1918_archive.torrent",
-   "source_page": "https://archive.org/details/momotaro-1918"
+   "source_page": "https://archive.org/details/momotaro-1918",
+   "image": "https://archive.org/services/img/momotaro-1918"
   },
   {
    "id": "failedsamurai1917krazytoonsprint",
@@ -530,7 +569,8 @@
    "info_hash": "6300f1c04e9425196417c6b0310bea8c575f6ebc",
    "magnet": "magnet:?xt=urn:btih:6300f1c04e9425196417c6b0310bea8c575f6ebc&dn=failedsamurai1917krazytoonsprint&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/failedsamurai1917krazytoonsprint/failedsamurai1917krazytoonsprint_archive.torrent",
-   "source_page": "https://archive.org/details/failedsamurai1917krazytoonsprint"
+   "source_page": "https://archive.org/details/failedsamurai1917krazytoonsprint",
+   "image": "https://archive.org/services/img/failedsamurai1917krazytoonsprint"
   },
   {
    "id": "momotaro-sacred-sailors",
@@ -542,7 +582,8 @@
    "info_hash": "62f707f60b01135678e99089ae03156260f218a7",
    "magnet": "magnet:?xt=urn:btih:62f707f60b01135678e99089ae03156260f218a7&dn=momotaro-sacred-sailors&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/momotaro-sacred-sailors/momotaro-sacred-sailors_archive.torrent",
-   "source_page": "https://archive.org/details/momotaro-sacred-sailors"
+   "source_page": "https://archive.org/details/momotaro-sacred-sailors",
+   "image": "https://archive.org/services/img/momotaro-sacred-sailors"
   },
   {
    "id": "audacity302",
@@ -554,7 +595,8 @@
    "info_hash": "bfbfca78795a7fcc4b45e9d914f9a68221c17795",
    "magnet": "magnet:?xt=urn:btih:bfbfca78795a7fcc4b45e9d914f9a68221c17795&dn=audacity302&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/audacity302/audacity302_archive.torrent",
-   "source_page": "https://archive.org/details/audacity302"
+   "source_page": "https://archive.org/details/audacity302",
+   "image": "https://archive.org/services/img/audacity302"
   },
   {
    "id": "audacity-win-2-2-2",
@@ -566,7 +608,8 @@
    "info_hash": "9451a998a8e8e4032455b76af8e655327281c786",
    "magnet": "magnet:?xt=urn:btih:9451a998a8e8e4032455b76af8e655327281c786&dn=audacity-win-2.2.2&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/audacity-win-2.2.2/audacity-win-2.2.2_archive.torrent",
-   "source_page": "https://archive.org/details/audacity-win-2.2.2"
+   "source_page": "https://archive.org/details/audacity-win-2.2.2",
+   "image": "https://archive.org/services/img/audacity-win-2.2.2"
   },
   {
    "id": "inkscape-1-0",
@@ -578,7 +621,8 @@
    "info_hash": "a1232f8d5f282665dd07e67a933250504275a432",
    "magnet": "magnet:?xt=urn:btih:a1232f8d5f282665dd07e67a933250504275a432&dn=inkscape-1.0&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/inkscape-1.0/inkscape-1.0_archive.torrent",
-   "source_page": "https://archive.org/details/inkscape-1.0"
+   "source_page": "https://archive.org/details/inkscape-1.0",
+   "image": "https://archive.org/services/img/inkscape-1.0"
   },
   {
    "id": "vlc3-0-13-201903",
@@ -590,7 +634,8 @@
    "info_hash": "2c8aab7d71024e01148f841a4f599d3f8e79bc8f",
    "magnet": "magnet:?xt=urn:btih:2c8aab7d71024e01148f841a4f599d3f8e79bc8f&dn=VLC3.0.13_201903&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/VLC3.0.13_201903/VLC3.0.13_201903_archive.torrent",
-   "source_page": "https://archive.org/details/VLC3.0.13_201903"
+   "source_page": "https://archive.org/details/VLC3.0.13_201903",
+   "image": "https://archive.org/services/img/VLC3.0.13_201903"
   },
   {
    "id": "blender-4-0-2",
@@ -602,7 +647,8 @@
    "info_hash": "4ed8b0d1f4f020e3f5baa17add2138457fc174be",
    "magnet": "magnet:?xt=urn:btih:4ed8b0d1f4f020e3f5baa17add2138457fc174be&dn=blender-4.0.2&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/blender-4.0.2/blender-4.0.2_archive.torrent",
-   "source_page": "https://archive.org/details/blender-4.0.2"
+   "source_page": "https://archive.org/details/blender-4.0.2",
+   "image": "https://archive.org/services/img/blender-4.0.2"
   },
   {
    "id": "blender360",
@@ -614,7 +660,8 @@
    "info_hash": "6f144b386736bae8a50abb0a3d5867ff9ca234a9",
    "magnet": "magnet:?xt=urn:btih:6f144b386736bae8a50abb0a3d5867ff9ca234a9&dn=blender360&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/blender360/blender360_archive.torrent",
-   "source_page": "https://archive.org/details/blender360"
+   "source_page": "https://archive.org/details/blender360",
+   "image": "https://archive.org/services/img/blender360"
   },
   {
    "id": "prideandprejudic01342gut",
@@ -626,7 +673,8 @@
    "info_hash": "4b087aff0fd767a17f65fbcfd957abb12048259d",
    "magnet": "magnet:?xt=urn:btih:4b087aff0fd767a17f65fbcfd957abb12048259d&dn=prideandprejudic01342gut&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/prideandprejudic01342gut/prideandprejudic01342gut_archive.torrent",
-   "source_page": "https://archive.org/details/prideandprejudic01342gut"
+   "source_page": "https://archive.org/details/prideandprejudic01342gut",
+   "image": "https://archive.org/services/img/prideandprejudic01342gut"
   },
   {
    "id": "frankensteinorth41445gut",
@@ -638,7 +686,8 @@
    "info_hash": "fac037b48f6584b65877b36ba5e8cdf2765c147f",
    "magnet": "magnet:?xt=urn:btih:fac037b48f6584b65877b36ba5e8cdf2765c147f&dn=frankensteinorth41445gut&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/frankensteinorth41445gut/frankensteinorth41445gut_archive.torrent",
-   "source_page": "https://archive.org/details/frankensteinorth41445gut"
+   "source_page": "https://archive.org/details/frankensteinorth41445gut",
+   "image": "https://archive.org/services/img/frankensteinorth41445gut"
   },
   {
    "id": "dracula00345gut",
@@ -650,7 +699,8 @@
    "info_hash": "d547aff994277975eab52795d21cc26b66be60d2",
    "magnet": "magnet:?xt=urn:btih:d547aff994277975eab52795d21cc26b66be60d2&dn=dracula00345gut&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/dracula00345gut/dracula00345gut_archive.torrent",
-   "source_page": "https://archive.org/details/dracula00345gut"
+   "source_page": "https://archive.org/details/dracula00345gut",
+   "image": "https://archive.org/services/img/dracula00345gut"
   },
   {
    "id": "mobydickorthewha28794gut",
@@ -662,7 +712,8 @@
    "info_hash": "bdf13f688ac9eb7116158b049dcfc919a2ed95a3",
    "magnet": "magnet:?xt=urn:btih:bdf13f688ac9eb7116158b049dcfc919a2ed95a3&dn=mobydickorthewha28794gut&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/mobydickorthewha28794gut/mobydickorthewha28794gut_archive.torrent",
-   "source_page": "https://archive.org/details/mobydickorthewha28794gut"
+   "source_page": "https://archive.org/details/mobydickorthewha28794gut",
+   "image": "https://archive.org/services/img/mobydickorthewha28794gut"
   },
   {
    "id": "adventuresofsher48320gut",
@@ -674,7 +725,8 @@
    "info_hash": "408c263db3058fe9e87f5d32d86602a4e4db99a3",
    "magnet": "magnet:?xt=urn:btih:408c263db3058fe9e87f5d32d86602a4e4db99a3&dn=adventuresofsher48320gut&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/adventuresofsher48320gut/adventuresofsher48320gut_archive.torrent",
-   "source_page": "https://archive.org/details/adventuresofsher48320gut"
+   "source_page": "https://archive.org/details/adventuresofsher48320gut",
+   "image": "https://archive.org/services/img/adventuresofsher48320gut"
   },
   {
    "id": "greatexpectation01400gut",
@@ -686,7 +738,8 @@
    "info_hash": "59dafaffa6116257c143ad9ad017ae2762249f8a",
    "magnet": "magnet:?xt=urn:btih:59dafaffa6116257c143ad9ad017ae2762249f8a&dn=greatexpectation01400gut&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/greatexpectation01400gut/greatexpectation01400gut_archive.torrent",
-   "source_page": "https://archive.org/details/greatexpectation01400gut"
+   "source_page": "https://archive.org/details/greatexpectation01400gut",
+   "image": "https://archive.org/services/img/greatexpectation01400gut"
   },
   {
    "id": "treasureisland27780gut",
@@ -698,7 +751,8 @@
    "info_hash": "8d31d746683d642295745b04a837ba1523e6910f",
    "magnet": "magnet:?xt=urn:btih:8d31d746683d642295745b04a837ba1523e6910f&dn=treasureisland27780gut&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/treasureisland27780gut/treasureisland27780gut_archive.torrent",
-   "source_page": "https://archive.org/details/treasureisland27780gut"
+   "source_page": "https://archive.org/details/treasureisland27780gut",
+   "image": "https://archive.org/services/img/treasureisland27780gut"
   },
   {
    "id": "thetimemachine00035gut",
@@ -710,7 +764,8 @@
    "info_hash": "0656e9d37601aec4132ff237c4630e3cc3f83d84",
    "magnet": "magnet:?xt=urn:btih:0656e9d37601aec4132ff237c4630e3cc3f83d84&dn=thetimemachine00035gut&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/thetimemachine00035gut/thetimemachine00035gut_archive.torrent",
-   "source_page": "https://archive.org/details/thetimemachine00035gut"
+   "source_page": "https://archive.org/details/thetimemachine00035gut",
+   "image": "https://archive.org/services/img/thetimemachine00035gut"
   },
   {
    "id": "ulysses04300gut",
@@ -722,7 +777,8 @@
    "info_hash": "e12e4e35d7218cdc95b0dd62150591bbdd66e4d5",
    "magnet": "magnet:?xt=urn:btih:e12e4e35d7218cdc95b0dd62150591bbdd66e4d5&dn=ulysses04300gut&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/ulysses04300gut/ulysses04300gut_archive.torrent",
-   "source_page": "https://archive.org/details/ulysses04300gut"
+   "source_page": "https://archive.org/details/ulysses04300gut",
+   "image": "https://archive.org/services/img/ulysses04300gut"
   },
   {
    "id": "warandpeace02600gut",
@@ -734,7 +790,8 @@
    "info_hash": "61a75e27a712d84774c767fc27c8051eb2bf812c",
    "magnet": "magnet:?xt=urn:btih:61a75e27a712d84774c767fc27c8051eb2bf812c&dn=warandpeace02600gut&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/warandpeace02600gut/warandpeace02600gut_archive.torrent",
-   "source_page": "https://archive.org/details/warandpeace02600gut"
+   "source_page": "https://archive.org/details/warandpeace02600gut",
+   "image": "https://archive.org/services/img/warandpeace02600gut"
   },
   {
    "id": "art-of-war-librivox",
@@ -746,7 +803,8 @@
    "info_hash": "ab266059783ce5f0eee172fe8a7552e92f23cdd9",
    "magnet": "magnet:?xt=urn:btih:ab266059783ce5f0eee172fe8a7552e92f23cdd9&dn=art_of_war_librivox&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/art_of_war_librivox/art_of_war_librivox_archive.torrent",
-   "source_page": "https://archive.org/details/art_of_war_librivox"
+   "source_page": "https://archive.org/details/art_of_war_librivox",
+   "image": "https://archive.org/services/img/art_of_war_librivox"
   },
   {
    "id": "alice-in-wonderland-librivox",
@@ -758,7 +816,8 @@
    "info_hash": "603f7afe0174288bfee17e41399d066952d5251d",
    "magnet": "magnet:?xt=urn:btih:603f7afe0174288bfee17e41399d066952d5251d&dn=alice_in_wonderland_librivox&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/alice_in_wonderland_librivox/alice_in_wonderland_librivox_archive.torrent",
-   "source_page": "https://archive.org/details/alice_in_wonderland_librivox"
+   "source_page": "https://archive.org/details/alice_in_wonderland_librivox",
+   "image": "https://archive.org/services/img/alice_in_wonderland_librivox"
   },
   {
    "id": "tom-sawyer-librivox",
@@ -770,7 +829,8 @@
    "info_hash": "654e0b0d0eb0a779130e6b40bf82bee79e740ac2",
    "magnet": "magnet:?xt=urn:btih:654e0b0d0eb0a779130e6b40bf82bee79e740ac2&dn=tom_sawyer_librivox&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/tom_sawyer_librivox/tom_sawyer_librivox_archive.torrent",
-   "source_page": "https://archive.org/details/tom_sawyer_librivox"
+   "source_page": "https://archive.org/details/tom_sawyer_librivox",
+   "image": "https://archive.org/services/img/tom_sawyer_librivox"
   },
   {
    "id": "adventures-holmes",
@@ -782,7 +842,8 @@
    "info_hash": "bc1de193bd7c63a9b4036a014127dd07492faeae",
    "magnet": "magnet:?xt=urn:btih:bc1de193bd7c63a9b4036a014127dd07492faeae&dn=adventures_holmes&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/adventures_holmes/adventures_holmes_archive.torrent",
-   "source_page": "https://archive.org/details/adventures_holmes"
+   "source_page": "https://archive.org/details/adventures_holmes",
+   "image": "https://archive.org/services/img/adventures_holmes"
   },
   {
    "id": "moby-dick-librivox",
@@ -794,7 +855,8 @@
    "info_hash": "0e83947979a9bc3c0d569c93e4429b296943616c",
    "magnet": "magnet:?xt=urn:btih:0e83947979a9bc3c0d569c93e4429b296943616c&dn=moby_dick_librivox&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/moby_dick_librivox/moby_dick_librivox_archive.torrent",
-   "source_page": "https://archive.org/details/moby_dick_librivox"
+   "source_page": "https://archive.org/details/moby_dick_librivox",
+   "image": "https://archive.org/services/img/moby_dick_librivox"
   },
   {
    "id": "huck-finn-librivox",
@@ -806,7 +868,8 @@
    "info_hash": "20c10163a6eb1b2ea47351762db2c91f841442a2",
    "magnet": "magnet:?xt=urn:btih:20c10163a6eb1b2ea47351762db2c91f841442a2&dn=huck_finn_librivox&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/huck_finn_librivox/huck_finn_librivox_archive.torrent",
-   "source_page": "https://archive.org/details/huck_finn_librivox"
+   "source_page": "https://archive.org/details/huck_finn_librivox",
+   "image": "https://archive.org/services/img/huck_finn_librivox"
   },
   {
    "id": "audionautix-acoustic-9870",
@@ -818,7 +881,8 @@
    "info_hash": "20ba325076c92195886386008855f7c0db36c0b6",
    "magnet": "magnet:?xt=urn:btih:20ba325076c92195886386008855f7c0db36c0b6&dn=Audionautix_Acoustic-9870&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/Audionautix_Acoustic-9870/Audionautix_Acoustic-9870_archive.torrent",
-   "source_page": "https://archive.org/details/Audionautix_Acoustic-9870"
+   "source_page": "https://archive.org/details/Audionautix_Acoustic-9870",
+   "image": "https://archive.org/services/img/Audionautix_Acoustic-9870"
   },
   {
    "id": "classical-sampler-9615",
@@ -830,7 +894,8 @@
    "info_hash": "60c590d7a9d83409280995a8bcc25e73c532ce61",
    "magnet": "magnet:?xt=urn:btih:60c590d7a9d83409280995a8bcc25e73c532ce61&dn=Classical_Sampler-9615&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/Classical_Sampler-9615/Classical_Sampler-9615_archive.torrent",
-   "source_page": "https://archive.org/details/Classical_Sampler-9615"
+   "source_page": "https://archive.org/details/Classical_Sampler-9615",
+   "image": "https://archive.org/services/img/Classical_Sampler-9615"
   },
   {
    "id": "grab-bag-12446",
@@ -842,7 +907,8 @@
    "info_hash": "58cfa57ff21b19b3ff95d0f8de70522bd46c84de",
    "magnet": "magnet:?xt=urn:btih:58cfa57ff21b19b3ff95d0f8de70522bd46c84de&dn=Grab_Bag-12446&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/Grab_Bag-12446/Grab_Bag-12446_archive.torrent",
-   "source_page": "https://archive.org/details/Grab_Bag-12446"
+   "source_page": "https://archive.org/details/Grab_Bag-12446",
+   "image": "https://archive.org/services/img/Grab_Bag-12446"
   },
   {
    "id": "the-four-seasons-vivaldi-10361",
@@ -854,7 +920,8 @@
    "info_hash": "46376fc22f95ffb7d683f5e6d3c6816511bf2ddd",
    "magnet": "magnet:?xt=urn:btih:46376fc22f95ffb7d683f5e6d3c6816511bf2ddd&dn=The_Four_Seasons_Vivaldi-10361&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/The_Four_Seasons_Vivaldi-10361/The_Four_Seasons_Vivaldi-10361_archive.torrent",
-   "source_page": "https://archive.org/details/The_Four_Seasons_Vivaldi-10361"
+   "source_page": "https://archive.org/details/The_Four_Seasons_Vivaldi-10361",
+   "image": "https://archive.org/services/img/The_Four_Seasons_Vivaldi-10361"
   },
   {
    "id": "winter-sunshine-ep-8201",
@@ -866,7 +933,8 @@
    "info_hash": "6ac910623bc9e3d39171553648810199a7c2c180",
    "magnet": "magnet:?xt=urn:btih:6ac910623bc9e3d39171553648810199a7c2c180&dn=Winter_Sunshine_EP-8201&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/Winter_Sunshine_EP-8201/Winter_Sunshine_EP-8201_archive.torrent",
-   "source_page": "https://archive.org/details/Winter_Sunshine_EP-8201"
+   "source_page": "https://archive.org/details/Winter_Sunshine_EP-8201",
+   "image": "https://archive.org/services/img/Winter_Sunshine_EP-8201"
   },
   {
    "id": "back-to-the-sea-8076",
@@ -878,7 +946,8 @@
    "info_hash": "a68c55bb19cdffc0b983aaac164923206712821b",
    "magnet": "magnet:?xt=urn:btih:a68c55bb19cdffc0b983aaac164923206712821b&dn=Back_To_The_Sea-8076&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/Back_To_The_Sea-8076/Back_To_The_Sea-8076_archive.torrent",
-   "source_page": "https://archive.org/details/Back_To_The_Sea-8076"
+   "source_page": "https://archive.org/details/Back_To_The_Sea-8076",
+   "image": "https://archive.org/services/img/Back_To_The_Sea-8076"
   },
   {
    "id": "ns050",
@@ -890,7 +959,8 @@
    "info_hash": "cf9d3af94b5f5a0fa6d7e57d1b32c081e3b067ce",
    "magnet": "magnet:?xt=urn:btih:cf9d3af94b5f5a0fa6d7e57d1b32c081e3b067ce&dn=NS050&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/NS050/NS050_archive.torrent",
-   "source_page": "https://archive.org/details/NS050"
+   "source_page": "https://archive.org/details/NS050",
+   "image": "https://archive.org/services/img/NS050"
   },
   {
    "id": "dwk031",
@@ -902,7 +972,8 @@
    "info_hash": "5547dd43312784ccff170a0441a289844ad65866",
    "magnet": "magnet:?xt=urn:btih:5547dd43312784ccff170a0441a289844ad65866&dn=DWK031&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/DWK031/DWK031_archive.torrent",
-   "source_page": "https://archive.org/details/DWK031"
+   "source_page": "https://archive.org/details/DWK031",
+   "image": "https://archive.org/services/img/DWK031"
   },
   {
    "id": "mixg032",
@@ -914,7 +985,8 @@
    "info_hash": "4aedf4cf3594cc4ed8b78f7dc20b94f93481713a",
    "magnet": "magnet:?xt=urn:btih:4aedf4cf3594cc4ed8b78f7dc20b94f93481713a&dn=MIXG032&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/MIXG032/MIXG032_archive.torrent",
-   "source_page": "https://archive.org/details/MIXG032"
+   "source_page": "https://archive.org/details/MIXG032",
+   "image": "https://archive.org/services/img/MIXG032"
   },
   {
    "id": "dwk123",
@@ -926,7 +998,8 @@
    "info_hash": "ebc27194dc15f46f999549e02275c2efb0d2d619",
    "magnet": "magnet:?xt=urn:btih:ebc27194dc15f46f999549e02275c2efb0d2d619&dn=DWK123&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/DWK123/DWK123_archive.torrent",
-   "source_page": "https://archive.org/details/DWK123"
+   "source_page": "https://archive.org/details/DWK123",
+   "image": "https://archive.org/services/img/DWK123"
   },
   {
    "id": "littlenemo1905-1914bywinsormccay",
@@ -938,7 +1011,8 @@
    "info_hash": "909c61dd346492f52e01c30b713610c26d469325",
    "magnet": "magnet:?xt=urn:btih:909c61dd346492f52e01c30b713610c26d469325&dn=LittleNemo1905-1914ByWinsorMccay&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/LittleNemo1905-1914ByWinsorMccay/LittleNemo1905-1914ByWinsorMccay_archive.torrent",
-   "source_page": "https://archive.org/details/LittleNemo1905-1914ByWinsorMccay"
+   "source_page": "https://archive.org/details/LittleNemo1905-1914ByWinsorMccay",
+   "image": "https://archive.org/services/img/LittleNemo1905-1914ByWinsorMccay"
   },
   {
    "id": "rodcameroncomic01",
@@ -950,7 +1024,8 @@
    "info_hash": "ac72f79863fe23a6f991138afd19d3ea81285449",
    "magnet": "magnet:?xt=urn:btih:ac72f79863fe23a6f991138afd19d3ea81285449&dn=RodCameronComic01&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/RodCameronComic01/RodCameronComic01_archive.torrent",
-   "source_page": "https://archive.org/details/RodCameronComic01"
+   "source_page": "https://archive.org/details/RodCameronComic01",
+   "image": "https://archive.org/services/img/RodCameronComic01"
   },
   {
    "id": "20171104peppercarrotoctober2017artbook",
@@ -962,7 +1037,8 @@
    "info_hash": "0eda5ed24392dd8774c638e64888705e6cdf8cdd",
    "magnet": "magnet:?xt=urn:btih:0eda5ed24392dd8774c638e64888705e6cdf8cdd&dn=20171104PeppercarrotOctober2017Artbook&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/20171104PeppercarrotOctober2017Artbook/20171104PeppercarrotOctober2017Artbook_archive.torrent",
-   "source_page": "https://archive.org/details/20171104PeppercarrotOctober2017Artbook"
+   "source_page": "https://archive.org/details/20171104PeppercarrotOctober2017Artbook",
+   "image": "https://archive.org/services/img/20171104PeppercarrotOctober2017Artbook"
   },
   {
    "id": "20170627pixelartbydiamonddmgirl",
@@ -974,7 +1050,8 @@
    "info_hash": "1d40761e13dae4b0e9f8dbeccbaeba5a7336342e",
    "magnet": "magnet:?xt=urn:btih:1d40761e13dae4b0e9f8dbeccbaeba5a7336342e&dn=20170627PixelArtByDiamonddmgirl&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/20170627PixelArtByDiamonddmgirl/20170627PixelArtByDiamonddmgirl_archive.torrent",
-   "source_page": "https://archive.org/details/20170627PixelArtByDiamonddmgirl"
+   "source_page": "https://archive.org/details/20170627PixelArtByDiamonddmgirl",
+   "image": "https://archive.org/services/img/20170627PixelArtByDiamonddmgirl"
   },
   {
    "id": "mit6-0001f16",
@@ -986,7 +1063,8 @@
    "info_hash": "93955b1067a367db7b640124e63480a99b2498d6",
    "magnet": "magnet:?xt=urn:btih:93955b1067a367db7b640124e63480a99b2498d6&dn=MIT6.0001F16&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/MIT6.0001F16/MIT6.0001F16_archive.torrent",
-   "source_page": "https://archive.org/details/MIT6.0001F16"
+   "source_page": "https://archive.org/details/MIT6.0001F16",
+   "image": "https://archive.org/services/img/MIT6.0001F16"
   },
   {
    "id": "mit6-00scs11",
@@ -998,7 +1076,8 @@
    "info_hash": "c5f1f7e86c5f18636a4b64502299c3880d9085a8",
    "magnet": "magnet:?xt=urn:btih:c5f1f7e86c5f18636a4b64502299c3880d9085a8&dn=MIT6.00SCS11&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/MIT6.00SCS11/MIT6.00SCS11_archive.torrent",
-   "source_page": "https://archive.org/details/MIT6.00SCS11"
+   "source_page": "https://archive.org/details/MIT6.00SCS11",
+   "image": "https://archive.org/services/img/MIT6.00SCS11"
   },
   {
    "id": "mit-structure-of-computer-programs-1986",
@@ -1010,7 +1089,8 @@
    "info_hash": "a52deda41c2dd465f1ef33eb37c2dc335cabed82",
    "magnet": "magnet:?xt=urn:btih:a52deda41c2dd465f1ef33eb37c2dc335cabed82&dn=MIT_Structure_of_Computer_Programs_1986&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/MIT_Structure_of_Computer_Programs_1986/MIT_Structure_of_Computer_Programs_1986_archive.torrent",
-   "source_page": "https://archive.org/details/MIT_Structure_of_Computer_Programs_1986"
+   "source_page": "https://archive.org/details/MIT_Structure_of_Computer_Programs_1986",
+   "image": "https://archive.org/services/img/MIT_Structure_of_Computer_Programs_1986"
   },
   {
    "id": "sicp-4-ipod",
@@ -1022,7 +1102,8 @@
    "info_hash": "da2341c8e192147d683b7b4a0180fbb44633d2f3",
    "magnet": "magnet:?xt=urn:btih:da2341c8e192147d683b7b4a0180fbb44633d2f3&dn=SICP_4_ipod&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/SICP_4_ipod/SICP_4_ipod_archive.torrent",
-   "source_page": "https://archive.org/details/SICP_4_ipod"
+   "source_page": "https://archive.org/details/SICP_4_ipod",
+   "image": "https://archive.org/services/img/SICP_4_ipod"
   },
   {
    "id": "mitclassical-mech",
@@ -1034,7 +1115,8 @@
    "info_hash": "5cb7a328fab188d2c0deccd332c442545e84b642",
    "magnet": "magnet:?xt=urn:btih:5cb7a328fab188d2c0deccd332c442545e84b642&dn=MITclassical_mech&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/MITclassical_mech/MITclassical_mech_archive.torrent",
-   "source_page": "https://archive.org/details/MITclassical_mech"
+   "source_page": "https://archive.org/details/MITclassical_mech",
+   "image": "https://archive.org/services/img/MITclassical_mech"
   },
   {
    "id": "mit18-06s05-mp4",
@@ -1046,7 +1128,8 @@
    "info_hash": "cc23366d9249dfd192e7e6218ae9f223fe3aee84",
    "magnet": "magnet:?xt=urn:btih:cc23366d9249dfd192e7e6218ae9f223fe3aee84&dn=MIT18.06S05_MP4&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/MIT18.06S05_MP4/MIT18.06S05_MP4_archive.torrent",
-   "source_page": "https://archive.org/details/MIT18.06S05_MP4"
+   "source_page": "https://archive.org/details/MIT18.06S05_MP4",
+   "image": "https://archive.org/services/img/MIT18.06S05_MP4"
   },
   {
    "id": "mit7-01scf11",
@@ -1058,7 +1141,8 @@
    "info_hash": "9f6b60b3636594b0e76e517dc0679144806c50c8",
    "magnet": "magnet:?xt=urn:btih:9f6b60b3636594b0e76e517dc0679144806c50c8&dn=MIT7.01SCF11&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/MIT7.01SCF11/MIT7.01SCF11_archive.torrent",
-   "source_page": "https://archive.org/details/MIT7.01SCF11"
+   "source_page": "https://archive.org/details/MIT7.01SCF11",
+   "image": "https://archive.org/services/img/MIT7.01SCF11"
   },
   {
    "id": "mit18-650f16",
@@ -1070,7 +1154,8 @@
    "info_hash": "f16ba5ea4c8ecefcbbbed73999e28dbbe6a21b48",
    "magnet": "magnet:?xt=urn:btih:f16ba5ea4c8ecefcbbbed73999e28dbbe6a21b48&dn=MIT18.650F16&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/MIT18.650F16/MIT18.650F16_archive.torrent",
-   "source_page": "https://archive.org/details/MIT18.650F16"
+   "source_page": "https://archive.org/details/MIT18.650F16",
+   "image": "https://archive.org/services/img/MIT18.650F16"
   },
   {
    "id": "org-fdroid-fdroid-1012051",
@@ -1082,7 +1167,8 @@
    "info_hash": "829c2810c3fa52a1c85eeccaebbacf83736a134d",
    "magnet": "magnet:?xt=urn:btih:829c2810c3fa52a1c85eeccaebbacf83736a134d&dn=org.fdroid.fdroid_1012051&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/org.fdroid.fdroid_1012051/org.fdroid.fdroid_1012051_archive.torrent",
-   "source_page": "https://archive.org/details/org.fdroid.fdroid_1012051"
+   "source_page": "https://archive.org/details/org.fdroid.fdroid_1012051",
+   "image": "https://archive.org/services/img/org.fdroid.fdroid_1012051"
   },
   {
    "id": "org-fdroid-fdroid-1005050",
@@ -1094,7 +1180,8 @@
    "info_hash": "5f26470d20c02f0aef75c8b8ffd82998c83f044c",
    "magnet": "magnet:?xt=urn:btih:5f26470d20c02f0aef75c8b8ffd82998c83f044c&dn=org.fdroid.fdroid_1005050&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/org.fdroid.fdroid_1005050/org.fdroid.fdroid_1005050_archive.torrent",
-   "source_page": "https://archive.org/details/org.fdroid.fdroid_1005050"
+   "source_page": "https://archive.org/details/org.fdroid.fdroid_1005050",
+   "image": "https://archive.org/services/img/org.fdroid.fdroid_1005050"
   },
   {
    "id": "org-kiwix-kiwixmobile-230401",
@@ -1106,7 +1193,8 @@
    "info_hash": "a075e576e8fee20e8513640ea440b8f150cd6fa5",
    "magnet": "magnet:?xt=urn:btih:a075e576e8fee20e8513640ea440b8f150cd6fa5&dn=org.kiwix.kiwixmobile_230401&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/org.kiwix.kiwixmobile_230401/org.kiwix.kiwixmobile_230401_archive.torrent",
-   "source_page": "https://archive.org/details/org.kiwix.kiwixmobile_230401"
+   "source_page": "https://archive.org/details/org.kiwix.kiwixmobile_230401",
+   "image": "https://archive.org/services/img/org.kiwix.kiwixmobile_230401"
   },
   {
    "id": "org-kiwix-kiwixmobile-230301",
@@ -1118,7 +1206,8 @@
    "info_hash": "8288b845daf0a50eb9471d8d26eee1d34b08bd39",
    "magnet": "magnet:?xt=urn:btih:8288b845daf0a50eb9471d8d26eee1d34b08bd39&dn=org.kiwix.kiwixmobile_230301&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/org.kiwix.kiwixmobile_230301/org.kiwix.kiwixmobile_230301_archive.torrent",
-   "source_page": "https://archive.org/details/org.kiwix.kiwixmobile_230301"
+   "source_page": "https://archive.org/details/org.kiwix.kiwixmobile_230301",
+   "image": "https://archive.org/services/img/org.kiwix.kiwixmobile_230301"
   },
   {
    "id": "org-wikipedia-50330",
@@ -1130,7 +1219,8 @@
    "info_hash": "fff9051fc63a5dba299291755ba5c268cea0f15c",
    "magnet": "magnet:?xt=urn:btih:fff9051fc63a5dba299291755ba5c268cea0f15c&dn=org.wikipedia_50330&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/org.wikipedia_50330/org.wikipedia_50330_archive.torrent",
-   "source_page": "https://archive.org/details/org.wikipedia_50330"
+   "source_page": "https://archive.org/details/org.wikipedia_50330",
+   "image": "https://archive.org/services/img/org.wikipedia_50330"
   },
   {
    "id": "org-mozilla-fennec-fdroid-689400",
@@ -1142,7 +1232,8 @@
    "info_hash": "a94babf54345ea13256d53e076125705626454ab",
    "magnet": "magnet:?xt=urn:btih:a94babf54345ea13256d53e076125705626454ab&dn=org.mozilla.fennec_fdroid_689400&tr=http%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=http%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce",
    "torrent_url": "https://archive.org/download/org.mozilla.fennec_fdroid_689400/org.mozilla.fennec_fdroid_689400_archive.torrent",
-   "source_page": "https://archive.org/details/org.mozilla.fennec_fdroid_689400"
+   "source_page": "https://archive.org/details/org.mozilla.fennec_fdroid_689400",
+   "image": "https://archive.org/services/img/org.mozilla.fennec_fdroid_689400"
   }
  ]
 }
