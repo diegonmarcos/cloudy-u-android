@@ -1,0 +1,147 @@
+name: "Test -> Cloud SI Ask AI (emulator screenshots: the share target for an image and a PDF, the new chat with the attachment, PROCESS_TEXT)"
+
+# #1767: install an already built Cloud SuperIntel debug APK (the artifact of a Ship run, input run_id) on an x86_64 API-34 emulator,
+# put an image and a PDF in shared storage, and start the share the way another app's share sheet does (ACTION_SEND with a media content
+# URI and a read grant). Scenes: the resolver for the image share (what the share sheet / open-with lists), the Ask AI sheet, the chat
+# with the image attached, the chat with the PDF attached, and PROCESS_TEXT (the text selection toolbar's intent).
+# Dispatch only; nothing is published. The artifact holds PNGs and one text file.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Ship Cloud SuperIntel run whose x86_64 debug APK artifact is tested"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  si-askai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download the APK of the Ship run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir apk-in
+          gh run download "${{ inputs.run_id }}" --repo "$GITHUB_REPOSITORY" --pattern 'Cloud-SuperIntel-x86_64-debug-*' --dir apk-in
+          apk=$(find apk-in -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no x86_64 APK in run ${{ inputs.run_id }}"; exit 1; }
+          cp "$apk" app-under-test.apk
+
+      - name: Fixtures (a PNG and a text PDF, made here, no real data)
+        run: |
+          python3 -I - <<'PY'
+          import struct, zlib
+          w, h = 480, 320
+          rows = b""
+          for y in range(h):
+              rows += b"\x00" + b"".join(bytes((40 + x * 200 // w, 90 + y * 140 // h, 200 - x * 120 // w)) if not (160 < x < 320 and 100 < y < 220) else bytes((250, 200, 40)) for x in range(w))
+          def chunk(t, d): return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+          open("sample-photo.png", "wb").write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
+          lines = ["Quarterly report (sample)", "Revenue grew 12 percent over the last quarter.", "Costs were flat; the margin improved.", "Next step: review the plan on Friday."]
+          stream = "BT /F1 16 Tf 60 740 Td 22 TL " + " T* ".join("(%s) Tj" % l for l in lines) + " ET"
+          objs = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+                  "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+                  "<< /Length %d >>\nstream\n%s\nendstream" % (len(stream), stream), "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+          out = b"%PDF-1.4\n"; offs = []
+          for i, o in enumerate(objs, 1):
+              offs.append(len(out)); out += ("%d 0 obj\n%s\nendobj\n" % (i, o)).encode()
+          x = len(out)
+          out += ("xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1)).encode() + b"".join(("%010d 00000 n \n" % o).encode() for o in offs)
+          out += ("trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objs) + 1, x)).encode()
+          open("sample-report.pdf", "wb").write(out)
+          PY
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the scene script
+        run: |
+          cat > walk.sh <<'SH'
+          #!/bin/bash
+          set -u
+          mkdir -p walk-out/shots
+          PKG=com.diegonmarcos.cloudsuperintel
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          sleep 40
+          adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          shot() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "walk-out/shots/$1.png"; }
+          tap_text() { # tap the first node whose text starts with $1; 0 when found
+            for t in 1 2 3 4; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > walk-out/ui.xml; grep -q "<hierarchy" walk-out/ui.xml && break; sleep 2; done
+            xy=$(python3 -I - walk-out/ui.xml "$1" <<'PY'
+          import re, sys
+          x = open(sys.argv[1], encoding="utf-8").read()
+          for m in re.finditer(r'<node[^>]*?text="([^"]*)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x):
+              if m.group(1).startswith(sys.argv[2]):
+                  a, b, c, d = map(int, m.groups()[1:]); print((a + c) // 2, (b + d) // 2); break
+          PY
+          )
+            [ -n "$xy" ] && adb shell input tap $xy
+          }
+          adb push sample-photo.png /sdcard/Pictures/sample-photo.png
+          adb push sample-report.pdf /sdcard/Documents/sample-report.pdf
+          for f in /sdcard/Pictures/sample-photo.png /sdcard/Documents/sample-report.pdf; do adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://$f" >/dev/null; done
+          sleep 8
+          img=$(adb shell content query --uri content://media/external/file --projection _id --where "_display_name=\'sample-photo.png\'" | sed -n 's/.*_id=\([0-9]*\).*/\1/p' | head -1)
+          pdf=$(adb shell content query --uri content://media/external/file --projection _id --where "_display_name=\'sample-report.pdf\'" | sed -n 's/.*_id=\([0-9]*\).*/\1/p' | head -1)
+          echo "image id=$img pdf id=$pdf" | tee walk-out/summary.txt
+          { echo "--- activities that take SEND image/png"; adb shell cmd package query-activities --brief -a android.intent.action.SEND -t image/png;
+            echo "--- VIEW image/png"; adb shell cmd package query-activities --brief -a android.intent.action.VIEW -t image/png -d content://media/external/file/1;
+            echo "--- PROCESS_TEXT"; adb shell cmd package query-activities --brief -a android.intent.action.PROCESS_TEXT -t text/plain; } | tee -a walk-out/summary.txt
+
+          # 1) the share of an image: the resolver the share sheet shows (Ask AI · Cloud SI in it), then the Ask AI sheet
+          adb shell am start -a android.intent.action.SEND -t image/png --eu android.intent.extra.STREAM "content://media/external/file/$img" -f 0x1
+          sleep 6; shot 01-share-image-chooser
+          tap_text "Ask AI" ; sleep 6; shot 02-ask-ai-sheet-image
+          tap_text "Ask SI"; sleep 8; shot 03-chat-with-image
+          adb shell am force-stop $PKG
+          # 2) the share of a PDF straight to the activity (a share sheet pick resolves to the same component)
+          adb shell am start -n $PKG/.AskAiActivity -a android.intent.action.SEND -t application/pdf --eu android.intent.extra.STREAM "content://media/external/file/$pdf" -f 0x1
+          sleep 10; shot 04-ask-ai-sheet-pdf
+          tap_text "Ask SI"; sleep 8; shot 05-chat-with-pdf
+          adb shell am force-stop $PKG
+          # 3) the text selection toolbar's intent
+          adb shell am start -n $PKG/.AskAiActivity -a android.intent.action.PROCESS_TEXT -t text/plain --es android.intent.extra.PROCESS_TEXT "The margin improved because costs stayed flat." 
+          sleep 6; shot 06-process-text-sheet
+          tap_text "Summarize"; sleep 2; shot 07-process-text-summarize
+          tap_text "Ask SI"; sleep 8; shot 08-process-text-chat
+          timeout 60 adb logcat -d -v threadtime "*:E" > walk-out/logcat-errors.txt || true
+          SH
+          chmod +x walk.sh
+
+      - name: Boot emulator + scenes
+        timeout-minutes: 30
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+
+      - name: Upload the PNGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: si-askai-shots
+          path: |
+            walk-out/shots/*.png
+            walk-out/summary.txt
+          if-no-files-found: warn

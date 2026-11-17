@@ -43,12 +43,8 @@
                 <action android:name="com.diegonmarcos.cloudsuperintel.OPEN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-            <!-- Share > SI of plain text lands in the chat box; nothing is sent until the user does. -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
+            <!-- Share > SI of plain text moved to AskAiActivity (one entry in the share sheet): the text lands in a composer, nothing is
+                 sent until the user does. MainActivity.shared() still serves an explicit SEND intent. -->
         </activity>
 
         <!-- Ask AI: Cloud SI in the open-with chooser (VIEW of any mime, content:// and file://), the share sheet (SEND, SEND_MULTIPLE

@@ -104,6 +104,11 @@ class AskAiTest {
         assertTrue(has("PROCESS_TEXT", "text/plain"))
     }
 
+    @Test fun theShareSheetHasOneEntryMainActivityKeepsNoSendFilter() {
+        val main = manifest.substring(manifest.indexOf("android:name=\".MainActivity\""), manifest.indexOf("android:name=\".AskAiActivity\""))
+        assertTrue(!main.contains("android.intent.action.SEND"))
+    }
+
     @Test fun askAiAddsNoStoragePermission() {
         for (p in listOf("READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "MANAGE_EXTERNAL_STORAGE", "READ_MEDIA_VIDEO", "READ_MEDIA_AUDIO"))
             assertTrue(p, !manifest.contains("android.permission.$p"))
