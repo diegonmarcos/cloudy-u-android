@@ -1,0 +1,82 @@
+name: "anti-sweep guard — a commit never deletes or reverts another ticket's work"
+
+# WHY THIS EXISTS. On 2026-11-17 two commits tagged for other tickets (12083c125,
+# 0cb23c7ed) were built from a stale working tree and silently reverted about
+# 1,300 lines of tickets #1774, #1775 and #1776 (store phone search, the C3
+# Webserver status page, the games catalogue, the phone4 emulator, ...). The
+# restored tree was consistent, so no other guard noticed, and the restore was
+# itself swept the second time.
+#
+# On every push to main this fails when a commit removes 200 or more lines
+# from paths whose last ticket-tagged commit belongs to another ticket (the
+# `#NNNN` tags of the commit's own subject line are the only tags it owns).
+# Allowed: the commit message carries `revert-of:<sha>` naming an existing
+# commit (a deliberate revert), or the subject names every ticket it edits.
+# Regenerated artefacts (generated copies, catalogues) are exempt.
+#
+# Every commit of the push is judged, not only the tip. The tester plants each
+# red and green shape and then mutates the guard itself; a guard never seen
+# failing is worth nothing. The workflow also proves, on the real history, that
+# the guard flags the two commits it exists for.
+#
+# NO PATH FILTER: the commit it must catch can touch any path.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: sweep-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: The guard still fails on every shape it claims to catch, and every rule is killed by a mutation
+        run: bash 1_cicd/src/scripts/test/sweep-guard.test.sh
+
+      - name: The guard flags the two real sweeps it exists for
+        run: |
+          set -uo pipefail
+          for c in 12083c125 0cb23c7ed; do
+            if ! git cat-file -e "$c^{commit}" 2>/dev/null; then echo "::warning::$c not in history (shallow or rewritten): skipped"; continue; fi
+            if python3 1_cicd/src/scripts/cloud-android-sweep-guard.py --range "$c~1..$c" >/dev/null; then
+              echo "::error::the guard does not flag the real sweep $c"; exit 1
+            fi
+            echo "ok: $c is flagged"
+          done
+
+      - name: No commit in this push or pull request sweeps another ticket's work
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = pull_request ]; then
+            range="$PR_BASE..$PR_HEAD"
+          elif [ "$EVENT" = push ] && [ -n "${BEFORE:-}" ] \
+               && ! [[ "$BEFORE" =~ ^0+$ ]] \
+               && git cat-file -e "$BEFORE^{commit}" 2>/dev/null \
+               && git merge-base --is-ancestor "$BEFORE" "$AFTER"; then
+            range="$BEFORE..$AFTER"
+          else
+            # New branch, forced update or manual run: check the tip commit.
+            range="$AFTER~1..$AFTER"
+          fi
+          echo "checking $range"
+          python3 1_cicd/src/scripts/cloud-android-sweep-guard.py --range "$range"

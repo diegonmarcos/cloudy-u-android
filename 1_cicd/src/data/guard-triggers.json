@@ -36,6 +36,7 @@
     "update-ack-guard.yml": "scans every app's update routes (10k files traced)",
     "licence-inventory-guard.yml": "#805: the subjects it must catch are a new top-level directory, binary or vendored LICENSE anywhere in the tree; a filter would be 'everything'",
     "upstream-name-guard.yml": "#1091: the commit it must catch can add the upstream project's name to any file of any app, lib or document; the check is one git grep",
+    "sweep-guard.yml": "an anti-sweep guard reads the history of every path a commit removes lines from; the commit it must catch can touch any path of the repository",
     "commit-msg-guard.yml": "#670: checks commit messages, which every push carries whatever paths it touches",
     "publish-module-guard.yml": "scans every workflow, template and script in 1_cicd/src for hand-rolled ghcr/release pushes; the offending line can be anywhere",
     "shrink-keep-guard.yml": "scans every gradle script, every Kotlin/Java source and every res/raw keep file of every app and lib for by-name resource lookups in resource-shrinking modules; a filter would be a second list of every tree",
