@@ -164,7 +164,7 @@ parity() { # FILE NEEDLE
 }
 parity ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/ui/AppShell.kt 'onAppConfigs = { section = Decl.SECTION_ABOUT }'
 parity ad_Hardtech-CAD/app/src/main/java/com/diegonmarcos/hardtechcad/ui/AppShell.kt 'onAppConfigs = { section = Decl.SECTION_ABOUT }'
-parity ad_Hardtech-Sim2Real/app/src/main/java/com/diegonmarcos/hardtechsim2real/ui/AppShell.kt 'onAppConfigs = { section = Decl.SECTION_ABOUT }'
+parity ad_Hardtech-BioMed/app/src/main/java/com/diegonmarcos/hardtechbiomed/ui/AppShell.kt 'onAppConfigs = { section = Decl.SECTION_ABOUT }'
 parity ad_Capital-Stack-FinTerminal/app/src/main/java/com/diegonmarcos/capitalfinterm/ui/AppShell.kt 'onAppConfigs = { section = Decl.SECTION_CONFIG }'
 parity ac_cloud-search/app/src/main/java/com/diegonmarcos/cloudsearch/ui/SearchShell.kt 'onAppConfigs = { state.toggle(Menu.PROFILE) }'
 parity ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/shell/GalleryChrome.kt 'onAppConfigs = onConfigs'

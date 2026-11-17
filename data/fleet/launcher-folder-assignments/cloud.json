@@ -49,7 +49,7 @@
     { "package": "com.diegonmarcos.cloudwallet",         "folder": "wallet",    "order": 1 },
 
     { "package": "com.diegonmarcos.hardtechcad",         "folder": "cad",       "order": 1 },
-    { "package": "com.diegonmarcos.hardtechsim2real",    "folder": "cad",       "order": 2 },
+    { "package": "com.diegonmarcos.hardtechbiomed",    "folder": "cad",       "order": 2 },
 
     { "package": "com.diegonmarcos.cgomniverse",         "folder": "omniverse", "order": 1 },
 

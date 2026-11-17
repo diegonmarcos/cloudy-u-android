@@ -75,8 +75,8 @@
           "description": "HardTech area app (MCAD, BIM, SolidWorks) behind the SuperApp's Cloud > Lnktree row."
         },
         {
-          "name": "Hardtech-Sim2Real",
-          "path": "ad_Hardtech-Sim2Real",
+          "name": "Hardtech-BioMed",
+          "path": "ad_Hardtech-BioMed",
           "description": "HardTech area app (SAP2000, MATLAB, Ansys) behind the SuperApp's Cloud > Lnktree row."
         }
       ]

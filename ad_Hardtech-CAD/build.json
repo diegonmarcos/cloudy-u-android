@@ -7,7 +7,7 @@
   },
   "name": "hardtech-cad",
   "display_name": "Hardtech-CAD",
-  "description": "Hardtech-CAD: the HardTech area's CAD app behind the SuperApp's Cloud > Lnktree row. Three pages on the shared bottom nav: MCAD and BIM (their folders of the HardTech-Stack-CAD-Simulators repo, the address read at build time from the SuperApp's declarations) and SolidWorks (planned, greyed).",
+  "description": "Hardtech-CAD: the HardTech area's CAD and simulation app behind the SuperApp's Cloud > Lnktree row. Three sections on the shared bottom nav: Models (MCAD and BIM, their folders of the HardTech-Stack-CAD-Simulators repository, the address read at build time from the SuperApp's declarations, and SolidWorks, planned, greyed), Home (an overview that opens every page) and Sim2Real (SAP2000, MATLAB and Ansys, planned pages that describe how each tool is meant to connect).",
   "category": "android",
   "android": {
     "application_id": "com.diegonmarcos.hardtechcad",
@@ -114,7 +114,10 @@
         "libs:core",
         "libs:bottomnav",
         "libs:ui-icons",
-        "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray",
+        "libs:ui-nav-bars",
+        "libs:fleetconfigs-agents",
+        "libs:fleetconfigs-logcat",
+        "libs:fleetconfigs-xray",
         "libs:theme-background",
         "libs:ui-kit",
         "libs:web-core",
@@ -173,7 +176,10 @@
       "type": "library",
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
     },
-    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
+    "libs:fleet-data-client": {
+      "dir": "../ab_cloud-libs-shared/libs/fleet-data-client",
+      "type": "library"
+    },
     "libs:perms": {
       "dir": "../ab_cloud-libs-shared/libs/perms",
       "type": "library",
@@ -246,34 +252,66 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Hardtech-CAD: the sections on the bottom bar in order, and a hidden About behind the gear of the first row. #1335 ui.stacks[<section>] is the page of that section: a list of entries drawn by declared KIND (Pages.kt: entry, section_title, holdings, about, library, models). An `entry` has a title, a one-line subtitle and ONE declared source for its target: `site` (the label of a link of aa_cloud-superapp/data/linktree.json), `registry` (a code of aa_cloud-superapp/build.json ui.app_urls.registry_sites) or `repo` + `path` (a repo under ui.app_urls.repo_base); app/build.gradle resolves them at BUILD time from the SuperApp's own declarations (fails if one does not resolve) and bakes UI_TARGETS_B64, so no address is typed in this file or in Kotlin. A `planned` entry has a note and no source and is drawn greyed. No price, rate or chart is declared: nothing real to show yet.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Hardtech-CAD: the sections on the bottom bar in order (Models | Home | Sim2Real, #1777), their sub-pages (ui.sections[].pages, drawn as the shared second row), and a hidden About behind the gear of the first row. #1335 ui.stacks[<page id, or section id for a section without pages>] is the page of that section or sub-page: a list of entries drawn by declared KIND (Pages.kt: entry, section_title, holdings, about, library, models, info, nav). An `entry` has a title, a one-line subtitle and ONE declared source for its target: `site` (the label of a link of aa_cloud-superapp/data/linktree.json), `registry` (a code of aa_cloud-superapp/build.json ui.app_urls.registry_sites) or `repo` + `path` (a repo under ui.app_urls.repo_base); app/build.gradle resolves them at BUILD time from the SuperApp's own declarations (fails if one does not resolve) and bakes UI_TARGETS_B64, so no address is typed in this file or in Kotlin. A `planned` entry has a note and no source and is drawn greyed. No price, rate or chart is declared: nothing real to show yet. #1777 `info` is a card with a title and a description (no target, not greyed), `nav` is a card that opens another section and page of this app (section + page).",
     "bottom_nav": [
-      "mcad",
-      "bim",
-      "solidworks"
+      "models",
+      "home",
+      "sim2real"
     ],
-    "default_section": "mcad",
+    "default_section": "models",
     "configs_ui": [
       "nav_ui"
     ],
     "sections": [
       {
-        "id": "mcad",
-        "label": "MCAD",
-        "icon": "build",
-        "pages": []
-      },
-      {
-        "id": "bim",
-        "label": "BIM",
+        "id": "models",
+        "label": "Models",
         "icon": "layers",
+        "pages": [
+          {
+            "id": "mcad",
+            "label": "MCAD",
+            "icon": "build"
+          },
+          {
+            "id": "bim",
+            "label": "BIM",
+            "icon": "layers"
+          },
+          {
+            "id": "solidworks",
+            "label": "SolidWorks",
+            "icon": "inventory_2"
+          }
+        ]
+      },
+      {
+        "id": "home",
+        "label": "Home",
+        "icon": "home",
         "pages": []
       },
       {
-        "id": "solidworks",
-        "label": "SolidWorks",
-        "icon": "inventory_2",
-        "pages": []
+        "id": "sim2real",
+        "label": "Sim2Real",
+        "icon": "insights",
+        "pages": [
+          {
+            "id": "sap2000",
+            "label": "SAP2000",
+            "icon": "assessment"
+          },
+          {
+            "id": "matlab",
+            "label": "MATLAB",
+            "icon": "table_chart"
+          },
+          {
+            "id": "ansys",
+            "label": "Ansys",
+            "icon": "speed"
+          }
+        ]
       },
       {
         "id": "about",
@@ -331,6 +369,178 @@
       "about": [
         {
           "kind": "about"
+        }
+      ],
+      "home": [
+        {
+          "kind": "section_title",
+          "title": "Hardtech-CAD"
+        },
+        {
+          "kind": "info",
+          "title": "What this app is",
+          "subtitle": "Models and simulation entry points of the HardTech area: browse open CAD and BIM models in 3D on the phone, and see how each simulation tool is meant to connect to them."
+        },
+        {
+          "kind": "section_title",
+          "title": "Models"
+        },
+        {
+          "kind": "nav",
+          "title": "MCAD",
+          "subtitle": "Mechanical CAD: the models table, the model libraries and the FreeCAD / AutoCAD agents",
+          "section": "models",
+          "page": "mcad"
+        },
+        {
+          "kind": "nav",
+          "title": "BIM",
+          "subtitle": "Building information models: IFC and Bonsai agents",
+          "section": "models",
+          "page": "bim"
+        },
+        {
+          "kind": "nav",
+          "title": "SolidWorks",
+          "subtitle": "SolidWorks parametric CAD (planned)",
+          "section": "models",
+          "page": "solidworks"
+        },
+        {
+          "kind": "section_title",
+          "title": "Sim2Real"
+        },
+        {
+          "kind": "nav",
+          "title": "SAP2000",
+          "subtitle": "Structural analysis: how a model would be handed to SAP2000 and the results brought back (planned)",
+          "section": "sim2real",
+          "page": "sap2000"
+        },
+        {
+          "kind": "nav",
+          "title": "MATLAB",
+          "subtitle": "Numerical computing: scripted studies on a model's data (planned)",
+          "section": "sim2real",
+          "page": "matlab"
+        },
+        {
+          "kind": "nav",
+          "title": "Ansys",
+          "subtitle": "Finite element and fluid simulation: PyAnsys-driven runs on a licensed host (planned)",
+          "section": "sim2real",
+          "page": "ansys"
+        }
+      ],
+      "sap2000": [
+        {
+          "title": "SAP2000",
+          "subtitle": "Structural analysis and design of frames, shells and bridges",
+          "planned": true,
+          "note": "Planned: coming. No connector is shipped yet; this page describes the intended integration."
+        },
+        {
+          "kind": "section_title",
+          "title": "Planned integration"
+        },
+        {
+          "kind": "info",
+          "title": "Role in Sim2Real",
+          "subtitle": "Takes a structural model prepared under Models (an IFC building model or a STEP frame) and returns member forces, displacements and utilisation ratios, so a calculated result can be compared with measurements of the real structure."
+        },
+        {
+          "kind": "info",
+          "title": "How the tool is reached",
+          "subtitle": "SAP2000 is driven through its published programming interface (the Open Application Programming Interface) on a Windows host that holds the licence; a fleet agent on that host would run the analysis and hand back files. No licence or solver is bundled in the app and none is needed on the phone."
+        },
+        {
+          "kind": "info",
+          "title": "Inputs and outputs",
+          "subtitle": "In: geometry from IFC or STEP, sections, materials and load cases as JSON. Out: result tables as CSV and a mesh view as GLB for the 3D viewer used by Models."
+        },
+        {
+          "kind": "info",
+          "title": "Open-source alternative",
+          "subtitle": "OpenSees and Code_Aster cover comparable structural analysis without a licence and would be the first targets while the commercial connector is built."
+        },
+        {
+          "kind": "info",
+          "title": "Status",
+          "subtitle": "Planned. The HardTech-Stack-CAD-Simulators repository holds no connector for this tool yet; the page will switch to a live connection when one ships."
+        }
+      ],
+      "matlab": [
+        {
+          "title": "MATLAB",
+          "subtitle": "Numerical computing and simulation",
+          "planned": true,
+          "note": "Planned: coming. No connector is shipped yet; this page describes the intended integration."
+        },
+        {
+          "kind": "section_title",
+          "title": "Planned integration"
+        },
+        {
+          "kind": "info",
+          "title": "Role in Sim2Real",
+          "subtitle": "Runs scripted studies on the data of a model: parameter sweeps, signal processing of measurements and comparison of a simulated curve with a recorded one."
+        },
+        {
+          "kind": "info",
+          "title": "How the tool is reached",
+          "subtitle": "MATLAB offers an engine interface for Python and a batch mode; a fleet agent on a host with the licence would start a script with its inputs and return the figures and result files. No licence is bundled in the app and none is needed on the phone."
+        },
+        {
+          "kind": "info",
+          "title": "Inputs and outputs",
+          "subtitle": "In: parameters and measurement files (CSV, JSON). Out: result tables, plots as images and, for geometry studies, a mesh view as GLB."
+        },
+        {
+          "kind": "info",
+          "title": "Open-source alternative",
+          "subtitle": "GNU Octave runs most plain MATLAB scripts without a licence and would be the first target for scripts that do not need toolboxes."
+        },
+        {
+          "kind": "info",
+          "title": "Status",
+          "subtitle": "Planned. The HardTech-Stack-CAD-Simulators repository holds no connector for this tool yet; the page will switch to a live connection when one ships."
+        }
+      ],
+      "ansys": [
+        {
+          "title": "Ansys",
+          "subtitle": "Finite element and fluid simulation",
+          "planned": true,
+          "note": "Planned: coming. No connector is shipped yet; this page describes the intended integration."
+        },
+        {
+          "kind": "section_title",
+          "title": "Planned integration"
+        },
+        {
+          "kind": "info",
+          "title": "Role in Sim2Real",
+          "subtitle": "Runs finite element and flow simulations on a model brought from Models (a STEP solid) and returns stress, temperature or velocity fields for the 3D viewer, closing the loop between a design and its measured behaviour."
+        },
+        {
+          "kind": "info",
+          "title": "How the tool is reached",
+          "subtitle": "Ansys products are scripted through the open PyAnsys Python packages, which talk to the solver over gRPC on a licensed host; a fleet agent would start the session, run the study and hand back the result files. No licence or solver is bundled in the app and none is needed on the phone."
+        },
+        {
+          "kind": "info",
+          "title": "Inputs and outputs",
+          "subtitle": "In: STEP geometry, material and boundary-condition tables as JSON. Out: field results as VTK or GLB, and summary tables as CSV."
+        },
+        {
+          "kind": "info",
+          "title": "Open-source alternative",
+          "subtitle": "CalculiX and Elmer (finite element) and OpenFOAM (fluid flow) are open-source solvers that would be the first targets while the commercial connector is built."
+        },
+        {
+          "kind": "info",
+          "title": "Status",
+          "subtitle": "Planned. The HardTech-Stack-CAD-Simulators repository holds no connector for this tool yet; the page will switch to a live connection when one ships."
         }
       ]
     },
@@ -476,26 +686,30 @@
     },
     "about": {
       "tagline": "Mechanical and building models in your pocket",
-      "description": "Hardtech-CAD is the HardTech area's CAD app, opened from the SuperApp's Cloud ▸ Lnktree row. MCAD and BIM show the folders of the CAD and simulators repository, its address read at build time from the fleet's declarations; SolidWorks is planned and greyed. It exists so the area's models can be looked up on the phone, in the same shared navigation as every fleet app.",
+      "description": "Hardtech-CAD is the HardTech area's CAD and simulation app, opened from the SuperApp's Cloud ▸ Lnktree row. Models holds MCAD and BIM, which show the folders of the CAD and simulators repository, its address read at build time from the fleet's declarations, and SolidWorks, planned and greyed. Home is an overview that opens every page. Sim2Real holds SAP2000, MATLAB and Ansys: planned pages that state how each simulation tool is meant to connect to the models. It exists so the area's models can be looked up on the phone, in the same shared navigation as every fleet app.",
       "features": [
         "MCAD models",
         "BIM models",
         "SolidWorks (planned)",
+        "Home overview that opens every page",
+        "SAP2000 integration plan (planned)",
+        "MATLAB integration plan (planned)",
+        "Ansys integration plan (planned)",
         "Repository address read from the fleet's declarations",
         "Shared fleet navigation and Configs"
       ],
       "screens": [
         {
-          "name": "MCAD",
-          "what": "Mechanical models."
+          "name": "Models",
+          "what": "MCAD, BIM and SolidWorks pages."
         },
         {
-          "name": "BIM",
-          "what": "Building models."
+          "name": "Home",
+          "what": "Overview that opens every page."
         },
         {
-          "name": "SolidWorks",
-          "what": "Planned."
+          "name": "Sim2Real",
+          "what": "SAP2000, MATLAB and Ansys: how each tool is planned to connect."
         },
         {
           "name": "About",
@@ -503,9 +717,10 @@
         }
       ],
       "guide": [
-        "Open MCAD or BIM to browse the models.",
+        "Open Models, then MCAD or BIM, to browse the models.",
         "Tap a model to open it.",
-        "SolidWorks is greyed until it ships."
+        "Home lists every page; tap a card to open it.",
+        "Sim2Real pages are planned and say what the connection will be."
       ],
       "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. It calls no fleet service: its data stays on the phone.",
       "backends": [],
@@ -515,8 +730,8 @@
           "why": "Opens this app from Cloud ▸ Lnktree."
         },
         {
-          "app": "ad_Hardtech-Sim2Real",
-          "why": "The simulation side of the same area."
+          "app": "ad_Hardtech-BioMed",
+          "why": "The biology and medicine side of the same area."
         },
         {
           "app": "ac_cloud-store",

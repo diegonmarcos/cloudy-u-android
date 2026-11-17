@@ -236,9 +236,9 @@
    "label": "CAD",
    "tint": null
   },
-  "sim2real": {
+  "biomed": {
    "icon": "ic_p_sol_tools",
-   "label": "Sim2Real",
+   "label": "BioMed",
    "tint": null
   },
   "configs-controls": {

@@ -198,8 +198,8 @@
       "order": 1
     },
     {
-      "package": "com.diegonmarcos.hardtechsim2real",
-      "folder": "proj_sim2real",
+      "package": "com.diegonmarcos.hardtechbiomed",
+      "folder": "proj_biomed",
       "order": 1
     }
   ]

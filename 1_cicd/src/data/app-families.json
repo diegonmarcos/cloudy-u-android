@@ -20,7 +20,7 @@
       "display_pattern": "^(CG|Capital|Hardtech)-[A-Za-z0-9]+(-[A-Za-z0-9]+)*$",
       "id_strip": ["ad_"],
       "lowercase_id": true,
-      "_doc": "The Lnktree family (owner 2026-10-30): the apps behind the SuperApp's Cloud > Lnktree row, NOT cloud-<x>. The owner spells the folders and the apps CG-Omniverse, Capital-Stack-FinTerminal, Hardtech-CAD, Hardtech-Sim2Real; build.json::name is the lower-case slug (GHCR image names, workflow file names and fleet labels are lower-case) and build.json::display_name is the owner's spelling. The three leading words are the registry areas (0_registry/projects-repos.json): CG, Capital, HardTech (the registry spells the area HardTech, the owner's folders Hardtech). Fleet id = the folder without ad_, lower-cased.",
+      "_doc": "The Lnktree family (owner 2026-10-30): the apps behind the SuperApp's Cloud > Lnktree row, NOT cloud-<x>. The owner spells the folders and the apps CG-Omniverse, Capital-Stack-FinTerminal, Hardtech-CAD, Hardtech-BioMed; build.json::name is the lower-case slug (GHCR image names, workflow file names and fleet labels are lower-case) and build.json::display_name is the owner's spelling. The three leading words are the registry areas (0_registry/projects-repos.json): CG, Capital, HardTech (the registry spells the area HardTech, the owner's folders Hardtech). Fleet id = the folder without ad_, lower-cased.",
       "areas": {
         "cg": {"registry_area": "CG", "registry_code": "2"},
         "capital": {"registry_area": "Capital", "registry_code": "3"},

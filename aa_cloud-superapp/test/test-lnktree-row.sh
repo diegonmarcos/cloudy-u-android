@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Tester (#1331, #1335): Cloud > Apps > Lnktree (was "Projects W") is SuperApp | Omniverse | FinTerm | CAD Sim2Real (owner 2026-10-30:
+# Tester (#1331, #1335): Cloud > Apps > Lnktree (was "Projects W") is SuperApp | Omniverse | FinTerm | CAD BioMed (owner 2026-10-30:
 # the SuperApp tile, app://<own package>, #1153, moved here from Configs to lead the row). #1335: each tile now LAUNCHES a real
 # app of the Lnktree family (extapp:, the constellation mechanism) and the temporary in-app pages are gone; the pages live in the apps
 # (ad_*/build.json::ui, held by their test/test-lnktree-app.sh). The generic `kind: entry` panel renderer and LnktreeTargets stay
 # (T5/T6) for any page that declares entries.
 #
 #   T1  the row is titled "Lnktree" (no "Projects W" row left); its tiles, separators aside, are exactly SuperApp, Omniverse, FinTerm,
-#       CAD, Sim2Real, in that order (SuperApp = app://<own package>, the rest extapp:), with drawable icons (unique on the Cloud page) and an extapp: target each
-#   T2  the content moved out: the SuperApp holds no stack_omniverse / stack_cad / stack_sim2real, no hidden omniverse / cad / sim2real
+#       CAD, BioMed, in that order (SuperApp = app://<own package>, the rest extapp:), with drawable icons (unique on the Cloud page) and an extapp: target each
+#   T2  the content moved out: the SuperApp holds no stack_omniverse / stack_cad / stack_biomed, no hidden omniverse / cad / biomed
 #       page and no finterm section; each tile's extapp id is an ui.external_apps entry whose package is the app's own
 #       application_id, an app of the constellation fleet, and a build.json::name the Lnktree family accepts
 #   T5  the generic entry renderer still greys an unresolved entry and LnktreeTargets answers null for a planned one
@@ -45,7 +45,7 @@ TABS = [("fi", "FI"), ("eq", "EQ"), ("ex", "EX"), ("nw", "NW"), ("pm", "PM"), ("
 PAGES = {  # page -> (where its stack lives, the entry titles in order)
     "omniverse": ["Galaxy", "Game Store", "VR Store"],
     "cad": ["MCAD", "BIM", "SolWrk"],
-    "sim2real": ["SAP2000", "MATLAB", "Ansys"],
+    "biomed": ["Physiology", "BioChem", "BioMech", "Anatomy", "Genetic", "Neuro", "Immuno"],
 }
 FT = {
     "fi": ["Yield Curves", "Forward Rates", "World Interest Rate Probabilities", "World Bonds"],
@@ -77,9 +77,9 @@ def problems(bj, lt, reg, panels, sections, targets, icons):
     if "Projects W" in titles: out.append("T1 the row is still called 'Projects W'")
     row = next((g for g in groups if g.get("title") == "Projects"), {"tiles": []})
     tiles = [t for t in row["tiles"] if not t.get("separator")]
-    if [t.get("label") for t in tiles] != ["SuperApp", "Omniverse", "FinTerm", "CAD", "Sim2Real"]:
-        out.append("T1 tiles are %r, want SuperApp Omniverse FinTerm CAD Sim2Real" % [t.get("label") for t in tiles])
-    want_t = {"SuperApp": "app://" + bj["android"]["application_id"], "Omniverse": "extapp:cg-omniverse", "FinTerm": "extapp:capital-stack-finterminal", "CAD": "extapp:hardtech-cad", "Sim2Real": "extapp:hardtech-sim2real"}
+    if [t.get("label") for t in tiles] != ["SuperApp", "Omniverse", "FinTerm", "CAD", "BioMed"]:
+        out.append("T1 tiles are %r, want SuperApp Omniverse FinTerm CAD BioMed" % [t.get("label") for t in tiles])
+    want_t = {"SuperApp": "app://" + bj["android"]["application_id"], "Omniverse": "extapp:cg-omniverse", "FinTerm": "extapp:capital-stack-finterminal", "CAD": "extapp:hardtech-cad", "BioMed": "extapp:hardtech-biomed"}
     for t in tiles:
         if t.get("target") != want_t.get(t.get("label")): out.append("T1 tile %s targets %r" % (t.get("label"), t.get("target")))
     for t in tiles:
@@ -90,7 +90,7 @@ def problems(bj, lt, reg, panels, sections, targets, icons):
     for t in row["tiles"]:
         if t.get("separator") and t.get("target"): out.append("T1 a separator carries a target")
     # T2
-    for k in ("stack_omniverse", "stack_cad", "stack_sim2real"):
+    for k in ("stack_omniverse", "stack_cad", "stack_biomed"):
         if k in cloud: out.append("T2 the SuperApp still holds %s (the content lives in the app)" % k)
     for pid in PAGES:
         if any(p.get("id") == pid for p in cloud.get("pages", [])): out.append("T2 the SuperApp still declares the hidden page cloud/%s" % pid)

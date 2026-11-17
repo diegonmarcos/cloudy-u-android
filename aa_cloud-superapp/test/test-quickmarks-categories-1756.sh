@@ -73,7 +73,7 @@ want = {
  '.': ['Drive', 'Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
  '~': ['Me', 'Health', 'Gov & ID', 'Telecom', 'Home & Housing', 'Outdoor & Sport', 'Nutrition', 'Learning'],
  '+': ['Search', 'News', 'Shopping', 'Events', 'Media Center', 'Mobility & Travel', 'Jobs & Business', 'Real Estate', 'Money', 'KG Store', 'Games'],
- '*': ['AI', 'Code', 'Terminal', 'Tools'], '#': ['SuperApp', 'Omniverse', 'FinTerm', 'CAD', 'Sim2Real'],
+ '*': ['AI', 'Code', 'Terminal', 'Tools'], '#': ['SuperApp', 'Omniverse', 'FinTerm', 'CAD', 'BioMed'],
  '_': ['Store', 'Account', 'C3 & Dev', 'Diagnostics', 'Network', 'Security', 'Settings'],
 }
 for pre, labs in want.items():

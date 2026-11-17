@@ -154,7 +154,7 @@ ROWS = {
     # boards; with the list gone there are no longer two kinds of destination in
     # the row for it to divide, so it went with them rather than floating at the
     # head of a row whose every tile is now the same kind of tile.
-    "Projects":  ["cloud-superapp", "lnktree-sep-0", "omniverse", "lnktree-sep-1", "finterm", "lnktree-sep-2", "cad", "sim2real"],  # owner 2026-10-30: SuperApp leads (moved from Configs); #1331 owner order: Omniverse | FinTerm | CAD Sim2Real (was Projects W, #1212)
+    "Projects":  ["cloud-superapp", "lnktree-sep-0", "omniverse", "lnktree-sep-1", "finterm", "lnktree-sep-2", "cad", "biomed"],  # owner 2026-10-30: SuperApp leads (moved from Configs); #1331 owner order: Omniverse | FinTerm | CAD BioMed (was Projects W, #1212)
 }
 
 # Every target, spelled the way the ROUTER resolves it and not the way the tile
@@ -173,7 +173,7 @@ TARGETS = {
     "omniverse": "extapp:cg-omniverse",
     "finterm": "extapp:capital-stack-finterminal",
     "cad": "extapp:hardtech-cad",
-    "sim2real": "extapp:hardtech-sim2real",
+    "biomed": "extapp:hardtech-biomed",
     "myhealth":    "extapp:cloud-me#page:health/home",
     "myexperiences": "extapp:cloud-me#page:experiences/work",
     "myroadmap":   "extapp:cloud-me#page:socials/socials-professional",

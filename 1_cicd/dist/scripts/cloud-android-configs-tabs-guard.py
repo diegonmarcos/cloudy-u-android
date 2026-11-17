@@ -32,7 +32,7 @@ DECLARATION  1_cicd/src/data/configs-pages.json::tabs (the required first ids, t
       Configs entry opens it: its non-test sources open the strip (a tabs.reach.needles reference: FleetConfigsScreen( / FleetConfigsActivity /
       FleetConfigsEntries / FleetConfigsMenu( / FleetConfigsButtons(), or it is named in configs_pages.shortcut_reach (no native menu, the
       launcher shortcuts are its entry). The scaffold's own dropdown is not enough: its gear (onConfigs) is the host's, and an app whose gear
-      opens its own page showed no strip on the phone (CG-Omniverse, CAD, FinTerm, Sim2Real, Cloud Search, Cloud Gallery, Cloud Mail, Cloud Notes)
+      opens its own page showed no strip on the phone (CG-Omniverse, CAD, FinTerm, BioMed, Cloud Search, Cloud Gallery, Cloud Mail, Cloud Notes)
 
 USAGE  cloud-android-configs-tabs-guard.py [ROOT]      EXIT 0 ok · 1 at least one violation
 """

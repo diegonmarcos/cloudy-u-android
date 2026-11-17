@@ -33,9 +33,12 @@ import com.diegonmarcos.superapp.uikit.KitSectionHeader
 import com.diegonmarcos.superapp.uikit.KitSettingsRow
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 
-/** A section's page: its declared entries (ui.stacks[section]) drawn by kind. Nothing here is typed text: the words are build.json's. */
+/**
+ * A section's (or, for a section with sub-pages, a sub-page's) page: its declared entries (ui.stacks[id]) drawn by kind. Nothing here is
+ * typed text: the words are build.json's. [onNav] opens another section / sub-page (the `nav` kind of the Home overview).
+ */
 @Composable
-fun SectionPage(sectionId: String) {
+fun SectionPage(sectionId: String, onNav: (String, String) -> Unit = { _, _ -> }) {
     val ctx = LocalContext.current
     val entries = remember(sectionId) { Pages.entries(Decl.stacks, sectionId) }
     var openLibrary by rememberSaveable(sectionId) { mutableStateOf<String?>(null) }
@@ -55,6 +58,8 @@ fun SectionPage(sectionId: String) {
                 Pages.KIND_ABOUT -> AboutPanel()
                 Pages.KIND_MODELS -> ModelsPage(catalog) { openModel = it.id }
                 Pages.KIND_LIBRARY -> LibraryRow(e) { openLibrary = e.library }
+                Pages.KIND_INFO -> InfoCard(e)
+                Pages.KIND_NAV -> NavCard(e) { onNav(e.section, e.page) }
                 else -> EntryRow(e, Pages.resolve(e, Decl.targets)) { url -> openUrl(ctx, url) }
             }
         }
@@ -86,6 +91,25 @@ private fun EntryRow(e: Entry, url: String?, onOpen: (String) -> Unit) {
 /** #1404 a `library` entry: opens its model-library sub-page. */
 @Composable
 private fun LibraryRow(e: Entry, onOpen: () -> Unit) {
+    KitCard(Modifier.testTag(Tags.entry(e.title))) {
+        KitSettingsRow(
+            title = e.title,
+            subtitle = e.subtitle,
+            onClick = onOpen,
+            trailing = { Text(stringResource(R.string.entry_open), color = LocalKitPalette.current.accent) },
+        )
+    }
+}
+
+/** #1777 `info`: a title and its description, readable (not greyed). */
+@Composable
+private fun InfoCard(e: Entry) {
+    KitCard(Modifier.testTag(Tags.entry(e.title))) { KitSettingsRow(title = e.title, subtitle = e.subtitle) }
+}
+
+/** #1777 `nav`: opens another section / sub-page of this app. */
+@Composable
+private fun NavCard(e: Entry, onOpen: () -> Unit) {
     KitCard(Modifier.testTag(Tags.entry(e.title))) {
         KitSettingsRow(
             title = e.title,

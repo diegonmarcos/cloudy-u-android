@@ -20,6 +20,9 @@ data class Entry(
     val note: String,
     /** #1404 a `library` entry: the id of ui.libraries it opens. */
     val library: String = "",
+    /** #1777 a `nav` entry: the section and the sub-page of this app it opens. */
+    val section: String = "",
+    val page: String = "",
 )
 
 object Pages {
@@ -32,6 +35,10 @@ object Pages {
     const val KIND_LIBRARY = "library"
     /** #1542 the models table (filters, sortable rows) and the model page a row opens. */
     const val KIND_MODELS = "models"
+    /** #1777 a card with a title and a description: no target, not greyed (the planned-integration pages of Sim2Real). */
+    const val KIND_INFO = "info"
+    /** #1777 a card that opens another section / sub-page of this app (the Home overview). */
+    const val KIND_NAV = "nav"
 
     /** The entries declared for [sectionId] in the stacks JSON (empty when the section declares none). */
     fun entries(stacks: String, sectionId: String): List<Entry> {
@@ -48,6 +55,8 @@ object Pages {
                 planned = o.optBoolean("planned", false),
                 note = o.optString("note"),
                 library = o.optString("library"),
+                section = o.optString("section"),
+                page = o.optString("page"),
             )
         }
     }

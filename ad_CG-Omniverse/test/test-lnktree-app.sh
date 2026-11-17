@@ -4,7 +4,7 @@
 # ╚══════════════════════════════════════════════════════════════════╝
 #
 # #1335 THE SHARED TEMPLATE: 1_cicd/src/templates/test-lnktree-app.sh, copied verbatim to <app>/test/test-lnktree-app.sh
-# for CG-Omniverse, Capital-Stack-FinTerminal, Hardtech-CAD and Hardtech-Sim2Real (it derives the app from its own location, so the
+# for CG-Omniverse, Capital-Stack-FinTerminal, Hardtech-CAD and Hardtech-BioMed (it derives the app from its own location, so the
 # four copies are identical; aa_cloud-superapp/test/test-app-families.sh holds them to the template). Static, no build, no
 # network, no device. It certifies, for THIS app, from the sources alone:
 #   P1  the declaration: build.json parses; name is the lower-case slug the family pattern accepts, display_name is the
@@ -84,17 +84,25 @@ EXPECT = {
   },
   "ad_Hardtech-CAD": {
     "name": "hardtech-cad", "display": "Hardtech-CAD", "pkg": "com.diegonmarcos.hardtechcad",
-    "nav": [("mcad", "MCAD"), ("bim", "BIM"), ("solidworks", "SolidWorks")],
-    "pages": {"mcad": [("entry", "MCAD"), ("models", "Models"), ("section_title", "Model libraries"), ("library", "Boats"), ("library", "Architecture")], "bim": [("entry", "BIM")], "solidworks": [("entry", "SolidWorks")]},
+    "nav": [("models", "Models"), ("home", "Home"), ("sim2real", "Sim2Real")],
+    # #1777 a section with sub-pages: the stacks are keyed by the sub-page id (mcad, bim, solidworks under Models; sap2000, matlab, ansys under Sim2Real)
+    "pages": {"mcad": [("entry", "MCAD"), ("models", "Models"), ("section_title", "Model libraries"), ("library", "Boats"), ("library", "Architecture")], "bim": [("entry", "BIM")], "solidworks": [("entry", "SolidWorks")],
+              "home": [("section_title", "Hardtech-CAD"), ("info", "What this app is"), ("section_title", "Models"), ("nav", "MCAD"), ("nav", "BIM"), ("nav", "SolidWorks"),
+                       ("section_title", "Sim2Real"), ("nav", "SAP2000"), ("nav", "MATLAB"), ("nav", "Ansys")],
+              "sap2000": [("entry", "SAP2000"), ("section_title", "Planned integration"), ("info", "Role in Sim2Real"), ("info", "How the tool is reached"), ("info", "Inputs and outputs"), ("info", "Open-source alternative"), ("info", "Status")],
+              "matlab": [("entry", "MATLAB"), ("section_title", "Planned integration"), ("info", "Role in Sim2Real"), ("info", "How the tool is reached"), ("info", "Inputs and outputs"), ("info", "Open-source alternative"), ("info", "Status")],
+              "ansys": [("entry", "Ansys"), ("section_title", "Planned integration"), ("info", "Role in Sim2Real"), ("info", "How the tool is reached"), ("info", "Inputs and outputs"), ("info", "Open-source alternative"), ("info", "Status")]},
     "sources": {"MCAD": ("repo", "HardTech-Stack-CAD-Simulators"), "BIM": ("repo", "HardTech-Stack-CAD-Simulators")},
-    "planned": ["SolidWorks"],
+    "planned": ["SolidWorks", "SAP2000", "MATLAB", "Ansys"],
   },
-  "ad_Hardtech-Sim2Real": {
-    "name": "hardtech-sim2real", "display": "Hardtech-Sim2Real", "pkg": "com.diegonmarcos.hardtechsim2real",
-    "nav": [("sap2000", "SAP2000"), ("matlab", "MATLAB"), ("ansys", "Ansys")],
-    "pages": {"sap2000": [("entry", "SAP2000")], "matlab": [("entry", "MATLAB")], "ansys": [("entry", "Ansys")]},
+  "ad_Hardtech-BioMed": {
+    "name": "hardtech-biomed", "display": "Hardtech-BioMed", "pkg": "com.diegonmarcos.hardtechbiomed",
+    # #1777 the former simulation app, rebranded: one 3D scene per tab (kind scene), the content (topics, texts) is served at run time from data/fleet/biomed
+    "nav": [("physiology", "Physiology"), ("biochem", "BioChem"), ("biomech", "BioMech"), ("anatomy", "Anatomy"), ("genetic", "Genetic"), ("neuro", "Neuro"), ("immuno", "Immuno")],
+    "pages": {"physiology": [("scene", "Physiology")], "biochem": [("scene", "BioChem")], "biomech": [("scene", "BioMech")], "anatomy": [("scene", "Anatomy")],
+              "genetic": [("scene", "Genetic")], "neuro": [("scene", "Neuro")], "immuno": [("scene", "Immuno")]},
     "sources": {},
-    "planned": ["SAP2000", "MATLAB", "Ansys"],
+    "planned": [],
   },
 }
 exp = EXPECT.get(folder)
@@ -225,7 +233,7 @@ named_kinds = set(re.findall(r'KIND_\w+\s*=\s*"([^"]+)"', pages_kt))
 for k in sorted(declared_kinds - named_kinds): bad.append("P6 build.json declares the kind %r that Pages.kt does not name" % k)
 for k in sorted(named_kinds - declared_kinds - {"holdings", "section_title", "entry"}): bad.append("P6 Pages.kt names the kind %r that build.json never declares" % k)
 for k, const in (("section_title", "KIND_SECTION_TITLE"), ("holdings", "KIND_HOLDINGS"), ("about", "KIND_ABOUT"), ("dashboard", "KIND_DASHBOARD"), ("sources", "KIND_SOURCES"), ("pm_table", "KIND_PM_TABLE"),
-                 ("avatar", "KIND_AVATAR"), ("galaxy", "KIND_GALAXY"), ("store", "KIND_STORE")):
+                 ("avatar", "KIND_AVATAR"), ("galaxy", "KIND_GALAXY"), ("store", "KIND_STORE"), ("info", "KIND_INFO"), ("nav", "KIND_NAV"), ("scene", "KIND_SCENE")):
     if k in named_kinds and const not in page_kt: bad.append("P6 SectionPage does not draw %s" % const)
 if "about" not in by_id: bad.append("P6 ui.sections declares no hidden about section")
 elif "about" in ui.get("bottom_nav", []): bad.append("P6 the about section is on the bottom bar")

@@ -3262,18 +3262,18 @@
             ]
           },
           {
-            "_doc": "Lnktree (was 'Projects W'; owner 2026-10-30): led by the SuperApp tile (app://com.diegonmarcos.superapp, moved here from Configs 2026-10-30), then four tiles, each LAUNCHING a real app of the Lnktree family (#1335, extapp:cg-omniverse, capital-stack-finterminal, hardtech-cad, hardtech-sim2real; folders ad_*, 1_cicd/src/data/app-families.json). The pages live in the apps (their build.json::ui), no in-app page is left here. The three '|' rules are the owner's grouping: SuperApp | Omniverse | FinTerm | CAD Sim2Real. The row id stays 'Lnktree' = the title; the old project tiles (Lf.y/Nx.z/St.x repos) are gone.",
+            "_doc": "Lnktree (was 'Projects W'; owner 2026-10-30): led by the SuperApp tile (app://com.diegonmarcos.superapp, moved here from Configs 2026-10-30), then four tiles, each LAUNCHING a real app of the Lnktree family (#1335, extapp:cg-omniverse, capital-stack-finterminal, hardtech-cad, hardtech-biomed; folders ad_*, 1_cicd/src/data/app-families.json). The pages live in the apps (their build.json::ui), no in-app page is left here. The three '|' rules are the owner's grouping: SuperApp | Omniverse | FinTerm | CAD BioMed. The row id stays 'Lnktree' = the title; the old project tiles (Lf.y/Nx.z/St.x repos) are gone.",
             "title": "Projects",
             "tiles": [
               {
-                "_doc": "Owner 2026-10-30: moved out of Configs to LEAD the Lnktree row (SuperApp | Omniverse | FinTerm | CAD Sim2Real; test-lnktree-row.sh); #803 had earlier moved it out of AGI into Configs. app:// resolves MAIN/LAUNCHER for the package and adds FLAG_ACTIVITY_NEW_TASK (see ShellActivity.handleTarget), which lands on .MainActivity — the app door, own taskAffinity, own Overview card. .HomeActivity (the launcher door) is a different task and is not reachable this way, which is the point. #1153 supersedes #1095: the tile launches the real app as its OWN task (app:// with NEW_TASK | LAUNCH_ADJACENT, ShellActivity.handleTarget; MainActivity is resizeableActivity), so split screen keeps this Cloud ▸ Apps page open beside it, instead of embedding a page in the launcher. test-dashboard-cross-app-deeplink.sh T7 and ConfigsTileDeepLinkTest pin it.",
+                "_doc": "Owner 2026-10-30: moved out of Configs to LEAD the Lnktree row (SuperApp | Omniverse | FinTerm | CAD BioMed; test-lnktree-row.sh); #803 had earlier moved it out of AGI into Configs. app:// resolves MAIN/LAUNCHER for the package and adds FLAG_ACTIVITY_NEW_TASK (see ShellActivity.handleTarget), which lands on .MainActivity — the app door, own taskAffinity, own Overview card. .HomeActivity (the launcher door) is a different task and is not reachable this way, which is the point. #1153 supersedes #1095: the tile launches the real app as its OWN task (app:// with NEW_TASK | LAUNCH_ADJACENT, ShellActivity.handleTarget; MainActivity is resizeableActivity), so split screen keeps this Cloud ▸ Apps page open beside it, instead of embedding a page in the launcher. test-dashboard-cross-app-deeplink.sh T7 and ConfigsTileDeepLinkTest pin it.",
                 "id": "cloud-superapp",
                 "label": "SuperApp",
                 "icon": "ic_superapp_d",
                 "target": "app://com.diegonmarcos.superapp"
               },
               {
-                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD Sim2Real): a bare character, not a control.",
+                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD BioMed): a bare character, not a control.",
                 "id": "lnktree-sep-0",
                 "label": "|",
                 "separator": true
@@ -3286,7 +3286,7 @@
                 "target": "extapp:cg-omniverse"
               },
               {
-                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD Sim2Real): a bare character, not a control.",
+                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD BioMed): a bare character, not a control.",
                 "id": "lnktree-sep-1",
                 "label": "|",
                 "separator": true
@@ -3299,7 +3299,7 @@
                 "target": "extapp:capital-stack-finterminal"
               },
               {
-                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD Sim2Real): a bare character, not a control.",
+                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD BioMed): a bare character, not a control.",
                 "id": "lnktree-sep-2",
                 "label": "|",
                 "separator": true
@@ -3312,11 +3312,11 @@
                 "target": "extapp:hardtech-cad"
               },
               {
-                "_doc": "Sim2Real: page:cloud/sim2real (SAP2000, MATLAB, Ansys).",
-                "id": "sim2real",
-                "label": "Sim2Real",
+                "_doc": "BioMed: Hardtech-BioMed (Physiology, BioChem, BioMech, Anatomy, Genetic, Neuro, Immuno); its former SAP2000, MATLAB and Ansys pages are under Hardtech-CAD > Sim2Real.",
+                "id": "biomed",
+                "label": "BioMed",
                 "icon": "ic_p_sol_tools",
-                "target": "extapp:hardtech-sim2real"
+                "target": "extapp:hardtech-biomed"
               }
             ]
           },
@@ -7357,9 +7357,9 @@
         "match_keywords": []
       },
       {
-        "id": "proj_sim2real",
+        "id": "proj_biomed",
         "order": "550",
-        "label": "#Sim2Real",
+        "label": "#BioMed",
         "match_keywords": []
       },
       {
@@ -7736,7 +7736,7 @@
         "sink": true
       }
     ],
-    "_doc_phone_sections": "Top-level section headers in the Home Apps/Phone tab and Cloud apps listing, ONE category system shared with the Quickmarks groups (#1756). Folders are bucketed under a section by their label's first character: Tools · Primary (=), Tools · Communication (@), Tools · Data (.), Tools · Me (~), Services (+), AGI (*), Projects (#), Setup (_). Order = render order = the Quickmarks group order Primary, Communication, Data, Me, Services, AGI, Projects, Setup. A folder whose label starts with none of those prefixes belongs to no section and renders last (the Others and Misc sinks). The split is Service vs Tool: a SERVICE is a client for one external provider you hold an account, contract or booking with (Search, Events, Shopping, Mobility & Travel, Jobs & Business, Real Estate, Money, KG Store, Games). DECISIONS: Games (media_games, was under Me) moved to Services, every app in it stays; Money stays in Services (one folder, no duplicate in Me): a bank or broker app is a client of one provider you hold an account with, and the owner listed Money under Services; Real Estate (housing SEARCH: ImmoScout, WG-Gesucht) stays in Services while Home & Housing (building access, neighbours, self-storage: the paperwork side) goes to Me; a TOOL operates on your own data or device. Tools · Primary: Maps & Weather, Utilities, Web. Tools · Communication: Chat, Mail, Phone & Contacts, Social, News & Reading. Tools · Data: Calendar & Tasks, Docs & Notes, Storage. Tools · Me: Gov & ID, Telecom, Health, Home & Housing (the Buro paperwork: ids, carrier accounts, health admin and trackers, access/neighbours/storage), Outdoor & Sport, Nutrition, Learning, i.e. everything personal. Every section is a set of subtype folders; no app sits loose outside a folder. AGI: AI and Terminals. Projects: Lnktree, our four project apps (Omniverse, FinTerm, CAD, Sim2Real). Setup absorbs the former System section (Dev, Diagnostics, Keyboards, Network, Security, Settings, Stores). Retired prefixes: '-' Buro and '>' Media and '*' Health ('*' is now AGI); the former Services · Others '+' is now Services. Folder ids are stable keys and did not change when the labels did, except svc_travel, which merged into svc_mobility (Mobility & Travel). Empty sections are silently skipped. PROJECTS IS A SECTION HERE since #1756: the earlier ban (2026-09-10) was about a Projects section holding a folder named Projects; the section now holds the Lnktree folder, and the Projects quickmark group is unchanged.",
+    "_doc_phone_sections": "Top-level section headers in the Home Apps/Phone tab and Cloud apps listing, ONE category system shared with the Quickmarks groups (#1756). Folders are bucketed under a section by their label's first character: Tools · Primary (=), Tools · Communication (@), Tools · Data (.), Tools · Me (~), Services (+), AGI (*), Projects (#), Setup (_). Order = render order = the Quickmarks group order Primary, Communication, Data, Me, Services, AGI, Projects, Setup. A folder whose label starts with none of those prefixes belongs to no section and renders last (the Others and Misc sinks). The split is Service vs Tool: a SERVICE is a client for one external provider you hold an account, contract or booking with (Search, Events, Shopping, Mobility & Travel, Jobs & Business, Real Estate, Money, KG Store, Games). DECISIONS: Games (media_games, was under Me) moved to Services, every app in it stays; Money stays in Services (one folder, no duplicate in Me): a bank or broker app is a client of one provider you hold an account with, and the owner listed Money under Services; Real Estate (housing SEARCH: ImmoScout, WG-Gesucht) stays in Services while Home & Housing (building access, neighbours, self-storage: the paperwork side) goes to Me; a TOOL operates on your own data or device. Tools · Primary: Maps & Weather, Utilities, Web. Tools · Communication: Chat, Mail, Phone & Contacts, Social, News & Reading. Tools · Data: Calendar & Tasks, Docs & Notes, Storage. Tools · Me: Gov & ID, Telecom, Health, Home & Housing (the Buro paperwork: ids, carrier accounts, health admin and trackers, access/neighbours/storage), Outdoor & Sport, Nutrition, Learning, i.e. everything personal. Every section is a set of subtype folders; no app sits loose outside a folder. AGI: AI and Terminals. Projects: Lnktree, our four project apps (Omniverse, FinTerm, CAD, BioMed). Setup absorbs the former System section (Dev, Diagnostics, Keyboards, Network, Security, Settings, Stores). Retired prefixes: '-' Buro and '>' Media and '*' Health ('*' is now AGI); the former Services · Others '+' is now Services. Folder ids are stable keys and did not change when the labels did, except svc_travel, which merged into svc_mobility (Mobility & Travel). Empty sections are silently skipped. PROJECTS IS A SECTION HERE since #1756: the earlier ban (2026-09-10) was about a Projects section holding a folder named Projects; the section now holds the Lnktree folder, and the Projects quickmark group is unchanged.",
     "phone_sections": [
       {
         "title": "Tools · Primary",
@@ -10168,12 +10168,12 @@
         "forks": {}
       },
       {
-        "_doc": "#1335 Hardtech-Sim2Real (ad_Hardtech-Sim2Real, published by ship-hardtech-sim2real.yml): the Lnktree family app (1_cicd/src/data/app-families.json) behind the Cloud > Lnktree tile of the same name; every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ad_Hardtech-Sim2Real/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors its arm64 release asset; x86_64 devices are resolved through the fleet assets map.",
-        "id": "hardtech-sim2real",
-        "folder": "proj_sim2real",
-        "hub_package": "com.diegonmarcos.hardtechsim2real",
-        "install_package": "com.diegonmarcos.hardtechsim2real",
-        "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Hardtech-Sim2Real.apk",
+        "_doc": "#1335 Hardtech-BioMed (ad_Hardtech-BioMed, published by ship-hardtech-biomed.yml): the Lnktree family app (1_cicd/src/data/app-families.json) behind the Cloud > Lnktree tile of the same name; every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ad_Hardtech-BioMed/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors its arm64 release asset; x86_64 devices are resolved through the fleet assets map.",
+        "id": "hardtech-biomed",
+        "folder": "proj_biomed",
+        "hub_package": "com.diegonmarcos.hardtechbiomed",
+        "install_package": "com.diegonmarcos.hardtechbiomed",
+        "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Hardtech-BioMed.apk",
         "forks": {}
       }
     ],

@@ -42,6 +42,7 @@
     {"app": "CG-Omniverse", "usage": "Galaxy worlds", "profile": "WEB_WORLD", "file": "ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/ui/GalaxyPage.kt"},
     {"app": "CG-Omniverse", "usage": "Galaxy 3D model viewer", "profile": "WEB_WORLD", "file": "ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/ui/ModelPage.kt"},
     {"app": "Hardtech-CAD", "usage": "MCAD model viewer (three.js; occt, rhino3dm, web-ifc WASM)", "profile": "WEB_WORLD", "file": "ad_Hardtech-CAD/app/src/main/java/com/diegonmarcos/hardtechcad/ui/ModelViewer.kt"},
+    {"app": "Hardtech-BioMed", "usage": "3D anatomy, brain and DNA scenes (three.js through the libs:cad-core viewer)", "profile": "WEB_WORLD", "file": "ad_Hardtech-BioMed/app/src/main/java/com/diegonmarcos/hardtechbiomed/ui/BioViewer.kt"},
     {"app": "Cloud Notes", "usage": "Capacitor editor (vault HTML, canvas)", "profile": "APP_PAGE", "file": "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt"},
     {"app": "Cloud Me", "usage": "lnktree and profile pages", "profile": "APP_PAGE", "file": "ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt"},
     {"app": "Cloud Nav", "usage": "space view (three.js)", "profile": "WEB_WORLD", "file": "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/SpaceViewActivity.kt"},

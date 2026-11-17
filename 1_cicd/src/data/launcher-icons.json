@@ -24,7 +24,7 @@
     "lnktree": {"label": "Lnktree", "tile_group": "Projects",       "start": "#0F766E", "end": "#1E1B4B"},
     "services": {"label": "Services", "tile_group": "Services (not checked: KG Store keeps agi colours)",     "start": "#0369A1", "end": "#1E3A8A"}
   },
-  "_doc_glyphs": "24dp glyph paths (Material Icons, Apache-2.0, unless noted; kg_graph is drawn for Cloud KG Store: three nodes and their edges; omniverse, finterm, cad and sim2real are drawn for the Lnktree apps: an orbit, candlesticks, a set square and rising steps). One glyph per app: the guard fails when two apps declare the same glyph or two glyphs draw the same path.",
+  "_doc_glyphs": "24dp glyph paths (Material Icons, Apache-2.0, unless noted; kg_graph is drawn for Cloud KG Store: three nodes and their edges; omniverse, finterm, cad and biomed are drawn for the Lnktree apps: an orbit, candlesticks, a set square and rising steps). One glyph per app: the guard fails when two apps declare the same glyph or two glyphs draw the same path.",
   "glyphs": {
     "shopping_cart": "M7,18c-1.1,0 -1.99,0.9 -1.99,2S5.9,22 7,22s2,-0.9 2,-2 -0.9,-2 -2,-2zM1,2v2h2l3.6,7.59 -1.35,2.45c-0.16,0.28 -0.25,0.61 -0.25,0.96 0,1.1 0.9,2 2,2h12v-2L7.42,15c-0.14,0 -0.25,-0.11 -0.25,-0.25l0.03,-0.12 0.9,-1.63h7.45c0.75,0 1.41,-0.41 1.75,-1.03l3.58,-6.49c0.08,-0.14 0.12,-0.31 0.12,-0.48 0,-0.55 -0.45,-1 -1,-1L5.21,4l-0.94,-2L1,2zM17,18c-1.1,0 -1.99,0.9 -1.99,2s0.89,2 1.99,2 2,-0.9 2,-2 -0.9,-2 -2,-2z",
     "apps": "M4,8h4V4H4v4zM10,20h4v-4h-4v4zM4,20h4v-4H4v4zM4,14h4v-4H4v4zM10,14h4v-4h-4v4zM16,4v4h4V4h-4zM10,8h4V4h-4v4zM16,14h4v-4h-4v4zM16,20h4v-4h-4v4z",
@@ -32,7 +32,7 @@
     "omniverse": "M12,2a10,10 0 1,1 0,20a10,10 0 1,1 0,-20zM12,4.4a7.6,7.6 0 1,0 0,15.2a7.6,7.6 0 1,0 0,-15.2zM12,9a3,3 0 1,1 0,6a3,3 0 1,1 0,-6zM18.5,4.2a1.6,1.6 0 1,1 0,3.2a1.6,1.6 0 1,1 0,-3.2z",
     "finterm": "M4.5,12h3v8h-3zM5.7,8h0.6v4h-0.6zM5.7,20h0.6v2h-0.6zM10.5,6h3v9h-3zM11.7,3h0.6v3h-0.6zM11.7,15h0.6v3h-0.6zM16.5,10h3v8h-3zM17.7,7h0.6v3h-0.6zM17.7,18h0.6v2h-0.6z",
     "cad": "M3,3h5v13h13v5H3zM11,7l8,8h-8z",
-    "sim2real": "M3,15h3v6H3zM8,11h3v10H8zM13,7h3v14h-3zM18,3h3v18h-3zM3,3.5l5,3.5l5,-3l-0.5,-1.4l-4.4,2.6l-4.5,-3z",
+    "biomed": "M10,2h4v8h8v4h-8v8h-4v-8H2v-4h8z",
     "kg_graph": "M3,7a3,3 0 1,1 6,0a3,3 0 1,1 -6,0zM15,7a3,3 0 1,1 6,0a3,3 0 1,1 -6,0zM8.5,18a3.5,3.5 0 1,1 7,0a3.5,3.5 0 1,1 -7,0zM6,6.2h12v1.6h-12zM5.3,7.4L6.7,6.6L12.7,17.6L11.3,18.4zM12.7,18.4L11.3,17.6L17.3,6.6L18.7,7.4z",
     "smart_toy": "M20,9V7c0,-1.1 -0.9,-2 -2,-2h-3c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5H6c-1.1,0 -2,0.9 -2,2v2c-1.66,0 -3,1.34 -3,3s1.34,3 3,3v4c0,1.1 0.9,2 2,2h12c1.1,0 2,-0.9 2,-2v-4c1.66,0 3,-1.34 3,-3s-1.34,-3 -3,-3zM7.5,11.5C7.5,10.67 8.17,10 9,10s1.5,0.67 1.5,1.5S9.83,13 9,13s-1.5,-0.67 -1.5,-1.5zM16,17H8v-2h8v2zM15,13c-0.83,0 -1.5,-0.67 -1.5,-1.5S14.17,10 15,10s1.5,0.67 1.5,1.5S15.83,13 15,13z",
     "security": "M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zM12,11.99h7c-0.53,4.12 -3.28,7.79 -7,8.94V12H5V6.3l7,-3.11v8.8z",

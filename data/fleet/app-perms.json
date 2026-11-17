@@ -382,7 +382,7 @@
    "first_run": "libs:perms",
    "helpers": []
   },
-  "com.diegonmarcos.hardtechsim2real": {
+  "com.diegonmarcos.hardtechbiomed": {
    "needs": [],
    "first_run": "libs:perms",
    "helpers": []

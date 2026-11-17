@@ -242,8 +242,8 @@ else
     bad "ui.phone_sections 'Projects' prefix is '${SECTION_PROJECTS:-ABSENT}', expected '#'"
 fi
 HASH_FOLDERS="$(q '[.ui.phone_folders[] | select(.label | startswith("#")) | .label] | join(",")')"
-if [ "$HASH_FOLDERS" = "#SuperApp,#Omniverse,#FinTerm,#CAD,#Sim2Real" ]; then
-    ok "the Projects section holds exactly SuperApp, Omniverse, FinTerm, CAD, Sim2Real"
+if [ "$HASH_FOLDERS" = "#SuperApp,#Omniverse,#FinTerm,#CAD,#BioMed" ]; then
+    ok "the Projects section holds exactly SuperApp, Omniverse, FinTerm, CAD, BioMed"
 else
     bad "the Projects section holds '$HASH_FOLDERS'"
 fi

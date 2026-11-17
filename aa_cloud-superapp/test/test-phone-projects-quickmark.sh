@@ -87,7 +87,7 @@ SECTION_HIT="$(q '[.ui.phone_sections[] | select(.title == "Projects")] | length
     || bad "ui.phone_sections declares $SECTION_HIT 'Projects' sections, expected 1"
 FOLDER_HIT="$(q '[.ui.phone_folders[] | select(.label | test("Projects"))] | length')"
 [ "$FOLDER_HIT" = "0" ] \
-    && ok "ui.phone_folders declares no folder named Projects (the section holds SuperApp, Omniverse, FinTerm, CAD, Sim2Real)" \
+    && ok "ui.phone_folders declares no folder named Projects (the section holds SuperApp, Omniverse, FinTerm, CAD, BioMed)" \
     || bad "ui.phone_folders declares $FOLDER_HIT folder(s) named Projects"
 
 echo "== Q3: the Projects group holds NO folder called Projects =="

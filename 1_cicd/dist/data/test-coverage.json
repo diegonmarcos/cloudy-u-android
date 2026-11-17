@@ -533,23 +533,23 @@
       "unit_test_sources": 38,
       "workflow": "ship-capital-stack-finterminal.yml"
     },
+    "ad_Hardtech-BioMed": {
+      "first_test": "NEW APP (#1335, rebranded #1777 from the former simulation app). Has 5 shell testers: test-lnktree-app.sh (the declaration, the seven tabs Physiology | BioChem | BioMech | Anatomy | Genetic | Neuro | Immuno as scene pages, the shared bottom nav / kit / icons, no typed address, the declared kinds against the renderer, Compose only), test-biomed-nav.sh (nav shape and run-time-data wiring, 13 mutations proven red), test-no-sim2real.sh (no old identity outside the retirement records), test-assets-licensed.sh (every served asset is registered with an open licence) and test-fleet-setup.sh, plus a JVM suite (PagesTest, HoldingsTest, BioContentTest, ViewerHealthTest) run by the ship workflow; BioContentTest also checks that every topic of the served content lights real parts of its model.",
+      "shell_testers": 5,
+      "ship_has_published_nothing_guard": true,
+      "ship_runs_testers": true,
+      "unit_task_declared": true,
+      "unit_test_sources": 4,
+      "workflow": "ship-hardtech-biomed.yml"
+    },
     "ad_Hardtech-CAD": {
-      "first_test": "NEW APP (#1335, Lnktree family). Has 2 shell testers: test-lnktree-app.sh (the declaration, MCAD and BIM (repo folders) and SolidWorks (planned), the shared bottom nav / kit / icons, no typed address, planned entries honest, the declared kinds against the renderer, Compose only; 17 mutations proven red) and test-fleet-setup.sh, plus a JVM suite (PagesTest, HoldingsTest) run by the ship workflow.",
-      "shell_testers": 4,
+      "first_test": "NEW APP (#1335, Lnktree family). Has 5 shell testers: test-lnktree-app.sh (the declaration: bottom nav Models | Home | Sim2Real, the pages of every section and sub-page by kind, the shared bottom nav / kit / icons, no typed address, planned entries honest, the declared kinds against the renderer, Compose only; mutations proven red), test-nav-parity.sh (#1777: nothing of the former MCAD | BIM | SolidWorks and SAP2000 | MATLAB | Ansys navigations was dropped, against a frozen baseline; 14 mutations proven red), test-fleet-setup.sh and two more, plus a JVM suite (PagesTest, HoldingsTest) run by the ship workflow.",
+      "shell_testers": 5,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
       "unit_test_sources": 7,
       "workflow": "ship-hardtech-cad.yml"
-    },
-    "ad_Hardtech-Sim2Real": {
-      "first_test": "NEW APP (#1335, Lnktree family). Has 2 shell testers: test-lnktree-app.sh (the declaration, SAP2000, MATLAB and Ansys (all planned), the shared bottom nav / kit / icons, no typed address, planned entries honest, the declared kinds against the renderer, Compose only; 17 mutations proven red) and test-fleet-setup.sh, plus a JVM suite (PagesTest, HoldingsTest) run by the ship workflow.",
-      "shell_testers": 2,
-      "ship_has_published_nothing_guard": true,
-      "ship_runs_testers": true,
-      "unit_task_declared": true,
-      "unit_test_sources": 2,
-      "workflow": "ship-hardtech-sim2real.yml"
     },
     "c_devices/garmin-watchface": {
       "first_test": "Assert every design under faces/ is listed in build.json::build.designs and vice versa \u2014 a design not listed is never built and never noticed.",

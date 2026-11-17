@@ -2447,7 +2447,7 @@
       "used_by": [
         "ad_Capital-Stack-FinTerminal",
         "ad_Hardtech-CAD",
-        "ad_Hardtech-Sim2Real"
+        "ad_Hardtech-BioMed"
       ]
     },
     "worlds": {
@@ -4887,9 +4887,9 @@
       ],
       "items": []
     },
-    "hardtech-sim2real": {
-      "package": "com.diegonmarcos.hardtechsim2real",
-      "module": "ad_Hardtech-Sim2Real",
+    "hardtech-biomed": {
+      "package": "com.diegonmarcos.hardtechbiomed",
+      "module": "ad_Hardtech-BioMed",
       "schema_version": 1,
       "libs": [
         "lib-bottomnav",

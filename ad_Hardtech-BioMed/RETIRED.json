@@ -1,0 +1,20 @@
+{
+  "_doc": "#1777 retirement record of the former Hardtech-Sim2Real app. It was rebranded Hardtech-BioMed as a NEW app (new folder ad_Hardtech-BioMed, new application id) rather than renamed in place: the fleet's application id is com.diegonmarcos. + the app's name with its separators dropped (1_cicd/src/data/app-families.json), the Store, the SuperApp tile, the GHCR image, the release asset and the debug port are all keyed by that id or name, and a rename in place would have left the old package on the phone under the new label while the fleet declared a different one. Retiring the old id follows the cloud-writer retirement (#1707): its entry belongs in the Store's appstore-retired-apps.json (an installed copy shows as RETIRED with Uninstall), and its published release assets are retained until the owner deletes them (1_cicd/src/data/release-orphan-guard.json). The SAP2000 / MATLAB / Ansys pages of the old app live on under Hardtech-CAD > Sim2Real.",
+  "package": "com.diegonmarcos.hardtechsim2real",
+  "name": "Hardtech-Sim2Real",
+  "slug": "hardtech-sim2real",
+  "folder": "ad_Hardtech-Sim2Real",
+  "retired": "2026-11-17",
+  "replacement_package": "com.diegonmarcos.hardtechbiomed",
+  "replacement_name": "Hardtech-BioMed",
+  "replacement_label": "Hardtech-BioMed (and the simulation pages: Hardtech-CAD > Sim2Real)",
+  "reason": "Rebranded: the app became the human biology and medicine app Hardtech-BioMed; its SAP2000, MATLAB and Ansys pages moved into Hardtech-CAD under Sim2Real. No update is published under the old id any more.",
+  "store_entry": {
+    "package": "com.diegonmarcos.hardtechsim2real",
+    "label": "Hardtech-Sim2Real",
+    "retired": "2026-11-17",
+    "replacement_label": "Hardtech-BioMed",
+    "replacement_package": "com.diegonmarcos.hardtechbiomed",
+    "reason": "Rebranded as Hardtech-BioMed; the simulation pages moved into Hardtech-CAD under Sim2Real. No update is published any more."
+  }
+}

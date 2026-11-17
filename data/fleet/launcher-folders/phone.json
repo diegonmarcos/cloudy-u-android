@@ -221,8 +221,8 @@
     },
     {
       "section": "Projects",
-      "id": "proj_sim2real",
-      "label": "#Sim2Real",
+      "id": "proj_biomed",
+      "label": "#BioMed",
       "icon": "",
       "order": 550
     },

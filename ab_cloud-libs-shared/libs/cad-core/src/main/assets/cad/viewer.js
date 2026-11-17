@@ -175,6 +175,45 @@ window.cadParts = (open) => { const b = document.getElementById('parts-body'); i
 // #1695 the host (Compose) owns the touch surface of the viewer, so the DOM button could never be tapped: the host draws its own Parts panel and hides this one.
 window.cadHostParts = (on) => { partsBox.style.visibility = on ? 'hidden' : 'visible'; return !!on; };
 window.cadPartVisible = (i, on) => { const p = partsList[i]; if (!p) return false; p.o.visible = !!on; render(); return true; };
+// #1777 host-driven scenes (Hardtech-BioMed): the host highlights, focuses, shows or hides parts by a SPEC, a list of strings. A string is a
+// substring of a node's name, or `system:<id>` = a node whose glTF extras carry that system. Nothing here knows an anatomy: the model names its nodes.
+const specHit = (o, spec) => spec.some((s) => s.startsWith('system:') ? !!(o.userData && o.userData.system === s.slice(7)) : (o.name || '').includes(s));
+const meshesOf = () => { const a = []; if (current) current.traverse((o) => { if (o.isMesh) a.push(o); }); return a; };
+const keep = (o) => { const m = o.material; return o.userData.__o || (o.userData.__o = { t: m.transparent, op: m.opacity, dw: m.depthWrite, e: m.emissive ? m.emissive.getHex() : 0, v: o.visible }); };
+// mode 'dim' (default): matches lit, the rest nearly transparent; 'isolate': the rest hidden; an empty spec restores every part. Returns the match count.
+window.cadHighlight = (spec, mode) => {
+  const all = meshesOf(); let n = 0;
+  all.forEach((o) => {
+    const m = o.material; const k = keep(o);
+    if (!spec || !spec.length) { m.transparent = k.t; m.opacity = k.op; m.depthWrite = k.dw; if (m.emissive) m.emissive.setHex(k.e); o.visible = k.v; m.needsUpdate = true; return; }
+    if (specHit(o, spec)) { n++; m.transparent = k.t; m.opacity = k.op; m.depthWrite = k.dw; o.visible = true; if (m.emissive) m.emissive.copy(m.color).multiplyScalar(0.6); }
+    else if (mode === 'isolate') { o.visible = false; }
+    else { o.visible = k.v; m.transparent = true; m.opacity = 0.1; m.depthWrite = false; if (m.emissive) m.emissive.setHex(k.e); }
+    m.needsUpdate = true;
+  });
+  render(); return n;
+};
+// Layers: show or hide every part a spec matches (independent of the highlight); returns the match count.
+window.cadShow = (spec, on) => { let n = 0; meshesOf().forEach((o) => { if (specHit(o, spec || [])) { n++; keep(o); o.userData.__o.v = !!on; o.visible = !!on; } }); render(); return n; };
+// Frame the camera on the parts a spec matches (all visible parts when the spec is empty).
+window.cadFocus = (spec) => {
+  const box = new THREE.Box3(); let n = 0;
+  meshesOf().forEach((o) => { if ((!spec || !spec.length || specHit(o, spec)) && o.visible !== false) { box.expandByObject(o); n++; } });
+  if (!n || box.isEmpty()) return 0;
+  const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3()), r = Math.max(size.x, size.y, size.z) || 1;
+  const dir = camera.position.clone().sub(controls.target); if (dir.lengthSq() < 1e-12) dir.set(0, 0.2, 1); dir.normalize();
+  camera.near = r / 1000; camera.far = r * 200; camera.updateProjectionMatrix();
+  camera.position.copy(c).add(dir.multiplyScalar(r * 1.9)); controls.target.copy(c); controls.update(); render(); return n;
+};
+// The part under a point of the stage (x, y in 0..1 of the viewer): JSON {name, label, system} or '' for background. Hidden and dimmed parts are not hit.
+window.cadPick = (nx, ny) => {
+  if (!current) return '';
+  const rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2(nx * 2 - 1, 1 - ny * 2), camera);
+  const hit = rc.intersectObject(current, true).find((h) => h.object.visible && h.object.material && (h.object.material.opacity || 1) > 0.5);
+  if (!hit) return '';
+  const u = hit.object.userData || {};
+  return JSON.stringify({ name: hit.object.name || '', label: u.label || hit.object.name || '', system: u.system || '' });
+};
 // #1695 a long load (a 22 MB STEP read in the brep worker) reports its progress to the host and can be cancelled
 let loader = null;
 window.cadCancel = () => { if (loader && loader.cancel) { loader.cancel(); return true; } return false; };

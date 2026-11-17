@@ -73,7 +73,7 @@ for d in sorted(os.listdir(root)):
 if seen < 30: bad.append("F2 only %d app folders were examined - the detection matched too little" % seen)
 
 # F3
-LNK = {"ad_CG-Omniverse": "cg-omniverse", "ad_Capital-Stack-FinTerminal": "capital-stack-finterminal", "ad_Hardtech-CAD": "hardtech-cad", "ad_Hardtech-Sim2Real": "hardtech-sim2real"}
+LNK = {"ad_CG-Omniverse": "cg-omniverse", "ad_Capital-Stack-FinTerminal": "capital-stack-finterminal", "ad_Hardtech-CAD": "hardtech-cad", "ad_Hardtech-BioMed": "hardtech-biomed"}
 tpl = read("1_cicd/src/templates/test-lnktree-app.sh")
 for d, name in LNK.items():
     if not os.path.isfile(os.path.join(root, d, "build.json")): bad.append("F3 the Lnktree app folder %s does not exist" % d); continue
@@ -142,7 +142,7 @@ mutant "a family pattern stops compiling"     "$J;p='1_cicd/src/data/app-familie
 mutant "an app is named outside its family"   "$J;p='ad_Hardtech-CAD/build.json';d=json.load(open(p));d['name']='cloud-cad';json.dump(d,open(p,'w'))"                           "F2 ad_Hardtech-CAD name 'cloud-cad'"
 mutant "a display name leaves the pattern"    "$J;p='ad_Hardtech-CAD/build.json';d=json.load(open(p));d['display_name']='Hardtech CAD';json.dump(d,open(p,'w'))"                 "F2 ad_Hardtech-CAD display_name"
 mutant "the fleet label drifts from the app"  "$J;p='aa_cloud-superapp/data/constellation-fleet.json';d=json.load(open(p));[a.update(label='hardtech-cadx') for a in d['apps'] if a['id']=='hardtech-cad'];json.dump(d,open(p,'w'))" "F2 fleet row hardtech-cad is labelled"
-mutant "an app folder is missing"             "import shutil;shutil.rmtree('ad_Hardtech-Sim2Real')"                                                                                "F3 the Lnktree app folder ad_Hardtech-Sim2Real does not exist"
+mutant "an app folder is missing"             "import shutil;shutil.rmtree('ad_Hardtech-BioMed')"                                                                                "F3 the Lnktree app folder ad_Hardtech-BioMed does not exist"
 mutant "a tester copy drifts from the template" "open('ad_Hardtech-CAD/test/test-lnktree-app.sh','a').write('# drift\n')"                                                          "F3 ad_Hardtech-CAD/test/test-lnktree-app.sh is not the shared template"
 mutant "a guard spells the prefixes by hand"  "open('1_cicd/src/scripts/cloud-android-crash-default-guard.py','a').write('# glob a[ab]_*/x\n')"                                    "F4 1_cicd/src/scripts/cloud-android-crash-default-guard.py spells the folder class a[ab]_"
 mutant "the ratchet pattern rejects the ad_"  "$J;p='1_cicd/src/data/compose-migration.json';d=json.load(open(p));d['unit_dir_pattern']='^a[abc]_[a-z0-9-]+\$';json.dump(d,open(p,'w'))" "F4 compose-migration unit_dir_pattern"

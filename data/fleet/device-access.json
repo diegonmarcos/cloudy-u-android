@@ -2771,9 +2771,9 @@
    ]
   },
   {
-   "id": "hardtech-sim2real",
-   "pkg": "com.diegonmarcos.hardtechsim2real",
-   "label": "Hardtech-Sim2Real",
+   "id": "hardtech-biomed",
+   "pkg": "com.diegonmarcos.hardtechbiomed",
+   "label": "Hardtech-BioMed",
    "kind": "app",
    "door": true,
    "port": 38241,
@@ -2795,10 +2795,10 @@
    "ipc": [
     {
      "route": "logs",
-     "path": "/ipc/hardtech-sim2real/logs",
+     "path": "/ipc/hardtech-biomed/logs",
      "method": "GET",
      "kind": "provider",
-     "authority": "com.diegonmarcos.hardtechsim2real.logexport",
+     "authority": "com.diegonmarcos.hardtechbiomed.logexport",
      "methods": [
       "meta",
       "logs",

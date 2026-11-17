@@ -1,0 +1,262 @@
+{
+ "_doc": "#1777 the frozen BEFORE state of the two navigations this change reshapes (rule 16: a reorganisation drops nothing, and ships a parity test against the previous version). cad = Hardtech-CAD's ui at its last commit before the change (bottom nav MCAD | BIM | SolidWorks); simulation = the former simulation app's ui (bottom nav SAP2000 | MATLAB | Ansys) whose pages now live under Hardtech-CAD > Sim2Real. test-nav-parity.sh holds the new build.json to it.",
+ "cad": {
+  "bottom_nav": [
+   "mcad",
+   "bim",
+   "solidworks"
+  ],
+  "default_section": "mcad",
+  "sections": [
+   {
+    "id": "mcad",
+    "label": "MCAD",
+    "icon": "build",
+    "pages": []
+   },
+   {
+    "id": "bim",
+    "label": "BIM",
+    "icon": "layers",
+    "pages": []
+   },
+   {
+    "id": "solidworks",
+    "label": "SolidWorks",
+    "icon": "inventory_2",
+    "pages": []
+   },
+   {
+    "id": "about",
+    "label": "About",
+    "icon": "info",
+    "pages": []
+   }
+  ],
+  "stacks": {
+   "mcad": [
+    {
+     "title": "MCAD",
+     "subtitle": "Mechanical CAD: FreeCAD and AutoCAD agents (MCP)",
+     "repo": "HardTech-Stack-CAD-Simulators",
+     "path": "Structural-Designer/OpenCAD"
+    },
+    {
+     "kind": "models",
+     "title": "Models",
+     "subtitle": "Every model as one table: filter by category, extension and software; tap a row for the 3D view and the full data"
+    },
+    {
+     "kind": "section_title",
+     "title": "Model libraries"
+    },
+    {
+     "kind": "library",
+     "library": "boats",
+     "title": "Boats",
+     "subtitle": "Marine Engineering & Naval Architecture: STEP, IGES, 3DM, X_T, DXF"
+    },
+    {
+     "kind": "library",
+     "library": "architecture",
+     "title": "Architecture",
+     "subtitle": "Buildings, BIM & ArchViz: IFC, RVT, SKP, DWG/DXF, FBX/OBJ, glTF/GLB"
+    }
+   ],
+   "bim": [
+    {
+     "title": "BIM",
+     "subtitle": "Building information models: IFC and Bonsai agents (MCP)",
+     "repo": "HardTech-Stack-CAD-Simulators",
+     "path": "Structural-Designer/OpenBIM"
+    }
+   ],
+   "solidworks": [
+    {
+     "title": "SolidWorks",
+     "subtitle": "SolidWorks parametric CAD",
+     "planned": true,
+     "note": "Planned: coming"
+    }
+   ],
+   "about": [
+    {
+     "kind": "about"
+    }
+   ]
+  },
+  "libraries": {
+   "boats": {
+    "title": "Boats",
+    "subtitle": "Marine Engineering & Naval Architecture",
+    "default_model": "one-lilo",
+    "formats": [
+     {
+      "ext": [
+       "stp",
+       "step"
+      ],
+      "label": "STEP (.stp / .step)",
+      "purpose": "Solid hulls, assemblies and hardware: the neutral solid exchange."
+     },
+     {
+      "ext": [
+       "igs",
+       "iges"
+      ],
+      "label": "IGES (.igs)",
+      "purpose": "Lines plans, waterline splines and lofted hull surfaces."
+     },
+     {
+      "ext": [
+       "3dm"
+      ],
+      "label": "Rhino (.3dm)",
+      "purpose": "Freeform hull and deck surfacing."
+     },
+     {
+      "ext": [
+       "x_t"
+      ],
+      "label": "Parasolid (.x_t)",
+      "purpose": "Solid-modeler exchange for CNC and plate cutting."
+     },
+     {
+      "ext": [
+       "dxf"
+      ],
+      "label": "DXF (.dxf)",
+      "purpose": "2D sections, station offsets and nesting sheets."
+     }
+    ],
+    "core": {
+     "geometry": "Precise B-rep solids and NURBS surfaces (fair hulls)",
+     "need": "Engineering and manufacturing (CNC, plate cutting)",
+     "standards": "STEP / IGES"
+    }
+   },
+   "architecture": {
+    "title": "Architecture",
+    "subtitle": "Buildings, BIM & ArchViz",
+    "default_model": "campidoglio",
+    "formats": [
+     {
+      "ext": [
+       "ifc"
+      ],
+      "label": "IFC (.ifc)",
+      "purpose": "BIM: building elements with their data, open standard."
+     },
+     {
+      "ext": [
+       "rvt"
+      ],
+      "label": "Revit (.rvt)",
+      "purpose": "Native Autodesk BIM projects."
+     },
+     {
+      "ext": [
+       "skp"
+      ],
+      "label": "SketchUp (.skp)",
+      "purpose": "Conceptual massing and design models."
+     },
+     {
+      "ext": [
+       "dwg",
+       "dxf"
+      ],
+      "label": "DWG / DXF",
+      "purpose": "Plans, elevations and sections."
+     },
+     {
+      "ext": [
+       "fbx",
+       "obj"
+      ],
+      "label": "FBX / OBJ",
+      "purpose": "Rendering meshes with UVs and materials."
+     },
+     {
+      "ext": [
+       "gltf",
+       "glb"
+      ],
+      "label": "glTF / GLB",
+      "purpose": "Web real-time walkthroughs."
+     }
+    ],
+    "core": {
+     "geometry": "BIM objects with data, and polygon meshes for visuals",
+     "need": "Building information, coordination and rendering",
+     "standards": "IFC / FBX / DWG"
+    }
+   }
+  },
+  "model_repo": "hardtech-db-models"
+ },
+ "simulation": {
+  "bottom_nav": [
+   "sap2000",
+   "matlab",
+   "ansys"
+  ],
+  "sections": [
+   {
+    "id": "sap2000",
+    "label": "SAP2000",
+    "icon": "assessment",
+    "pages": []
+   },
+   {
+    "id": "matlab",
+    "label": "MATLAB",
+    "icon": "table_chart",
+    "pages": []
+   },
+   {
+    "id": "ansys",
+    "label": "Ansys",
+    "icon": "speed",
+    "pages": []
+   },
+   {
+    "id": "about",
+    "label": "About",
+    "icon": "info",
+    "pages": []
+   }
+  ],
+  "stacks": {
+   "sap2000": [
+    {
+     "title": "SAP2000",
+     "subtitle": "Structural analysis",
+     "planned": true,
+     "note": "Planned: coming"
+    }
+   ],
+   "matlab": [
+    {
+     "title": "MATLAB",
+     "subtitle": "Numerical computing and simulation",
+     "planned": true,
+     "note": "Planned: coming"
+    }
+   ],
+   "ansys": [
+    {
+     "title": "Ansys",
+     "subtitle": "Finite element simulation",
+     "planned": true,
+     "note": "Planned: coming"
+    }
+   ],
+   "about": [
+    {
+     "kind": "about"
+    }
+   ]
+  }
+ }
+}

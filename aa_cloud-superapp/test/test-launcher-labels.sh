@@ -31,7 +31,7 @@ import xml.etree.ElementTree as ET
 root = sys.argv[1]
 TITLE = re.compile(r"^Cloud( [A-Z][A-Za-z0-9]*)+$")
 # #1335 the launcher label of an app is its FAMILY's pattern (1_cicd/src/data/app-families.json::display_pattern): the Cloud family's
-# "Cloud " + Title Case words, the Lnktree family's CG-Omniverse / Capital-Stack-FinTerminal / Hardtech-CAD / Hardtech-Sim2Real.
+# "Cloud " + Title Case words, the Lnktree family's CG-Omniverse / Capital-Stack-FinTerminal / Hardtech-CAD / Hardtech-BioMed.
 FAMILIES = json.load(open(os.path.join(root, "1_cicd/src/data/app-families.json")))["families"]
 def label_pattern(d):
     fam = next((f for f in FAMILIES if d.startswith(f["folder_prefix"])), None)
