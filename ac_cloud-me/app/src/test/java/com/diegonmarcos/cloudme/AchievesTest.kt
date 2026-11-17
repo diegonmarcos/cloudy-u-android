@@ -140,9 +140,9 @@ class AchievesTest {
         assertTrue(BuroLlcTestData.text("data/ui/experiences/achieves/geo.json").contains("B3) International Experience"))
     }
 
-    @Test fun `the bar is Health Experiences Tasks Lnktree Inventory then the rest, and Experiences is Work Study Personal Achieves`() {
+    @Test fun `the bar is Health Experiences Socials Lnktree Inventory then the rest, and Experiences is Work Study Personal Achieves`() {
         val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
-        assertEquals(listOf("health", "experiences", "tasks", "lnktree", "inventory", "buro", "llc"), bar)
+        assertEquals(listOf("health", "experiences", "socials", "lnktree", "inventory", "buro", "llc"), bar)
         assertTrue(sections.none { it.getString("id") in setOf("study", "achieves") })
         assertEquals(listOf("work", "study", "achieves"), sub(experiences).map { it.getString("id") })
         assertEquals(listOf("Work", "Study", "Personal Achieves"), sub(experiences).map { it.getString("label") })

@@ -207,6 +207,9 @@ for tid, o in snap.items():
     if tid not in now: check(False, 'Cloud tile %s is gone' % tid)
     elif now[tid] != o['icon']: check(False, 'Cloud tile %s icon changed %s -> %s' % (tid, o['icon'], now[tid]))
 check(all(now.get(tid) == o['icon'] for tid, o in snap.items()), 'all %d Cloud tile icons are identical to origin/main' % len(snap))
+# #1771 the Cloud Me row renames (Me -> Lnktree, Tasks -> Socials) change labels only: the snapshot pins both.
+lab = {t['id']: t.get('label') for g in cloud for t in g['tiles'] if not t.get('separator')}
+check(lab.get('me') == snap['me']['label'] == 'Lnktree' and lab.get('myroadmap') == snap['myroadmap']['label'] == 'Socials', 'Cloud Me row tiles me and myroadmap read Lnktree and Socials (#1771)')
 
 print('== X: All Apps subtypes mirror the Cloud apps ==')
 sub = {f['id']: f['label'][1:] for f in folders}

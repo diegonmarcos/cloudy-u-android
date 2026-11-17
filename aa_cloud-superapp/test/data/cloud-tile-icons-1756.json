@@ -103,7 +103,7 @@
   },
   "me": {
    "icon": "ic_vcard",
-   "label": "Me",
+   "label": "Lnktree",
    "tint": null
   },
   "myhealth": {
@@ -118,7 +118,7 @@
   },
   "myroadmap": {
    "icon": "ic_tree",
-   "label": "Tasks",
+   "label": "Socials",
    "tint": null
   },
   "myduties": {

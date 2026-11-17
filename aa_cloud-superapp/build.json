@@ -3187,7 +3187,7 @@
             "tiles": [
               {
                 "id": "me",
-                "label": "Me",
+                "label": "Lnktree",
                 "icon": "ic_vcard",
                 "target": "extapp:cloud-me"
               },
@@ -3212,11 +3212,11 @@
                 "target": "extapp:cloud-me#page:experiences/work"
               },
               {
-                "_doc": "Tasks (was RoadMap) — Cloud-Me's Tasks > RoadMaps subpage (the folder tree of the private notes vault; #1367 RoadMap and Duties merged into the top-level Tasks page). Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
+                "_doc": "Socials (#1771, was Tasks, before that RoadMap) — Cloud-Me's Socials tab, entered at Professional (Professional | Personal, the mysocials pages); Cloud-Me's Tasks section (Tree, Due, vault rows) left the bar and stays reachable from the title dropdown. The tile id stays myroadmap: it is the tile's identity, pinned by the cross-app deep-link tester. Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
                 "id": "myroadmap",
-                "label": "Tasks",
+                "label": "Socials",
                 "icon": "ic_tree",
-                "target": "extapp:cloud-me#page:tasks/roadmaps"
+                "target": "extapp:cloud-me#page:socials/professional"
               },
               {
                 "_doc": "Second rule of the Me row, between Me-Health Experiences Tasks and Me-Inventory Me-Buro Me-LLC, like the AGI row. NOT a tile: declares no target; GroupedTilesFragment draws it as a bare non-clickable '|'. test-me-account-tile.sh pins the row.",

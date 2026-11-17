@@ -43,7 +43,7 @@ import org.robolectric.annotation.GraphicsMode
  *  - every tab is drawn as an icon; NO tab but the selected one draws its name;
  *  - a tap moves the name with the selection;
  *  - Settings is two visible entries, Lnktree and Configs, each opening its own section;
- *  - the bar reads Health, Experiences, Tasks, Lnktree, Inventory, Buro, LLC.
+ *  - the bar reads Health, Experiences, Socials, Lnktree, Inventory, Buro, LLC.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class, qualifiers = "w360dp-h800dp-xxhdpi")
@@ -129,11 +129,18 @@ class MeTabsTest {
     }
 
     @Test
-    fun `the bar reads Health, Experiences, Tasks, Lnktree, Inventory, Buro, LLC`() {
+    fun `the bar reads Health, Experiences, Socials, Lnktree, Inventory, Buro, LLC`() {
         assertEquals(
-            listOf("Health", "Experiences", "Tasks", "Lnktree", "Inventory", "Buro", "LLC"),
+            listOf("Health", "Experiences", "Socials", "Lnktree", "Inventory", "Buro", "LLC"),
             Sections.bottom().map { it.label },
         )
         assertTrue("a launch section is back on the bar", Sections.bottom().none { it.target.isNotBlank() })
+    }
+
+    @Test
+    fun `#1771 Socials shows both tabs, Professional and Personal, and Tasks is off the bar but still declared`() {
+        assertEquals(listOf("Professional", "Personal"), Sections.byId("socials")!!.pages.map { it.label })
+        assertTrue("Tasks left the bar", Sections.bottom().none { it.id == "tasks" })
+        assertEquals(listOf("roadmaps", "backlogs"), Sections.byId("tasks")!!.pages.map { it.id })
     }
 }

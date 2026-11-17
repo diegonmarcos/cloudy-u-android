@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tester (#1144, #1150, #1367): Cloud Me's seven-section bar (Health, Experiences, Tasks, Lnktree, Inventory, Buro, LLC), the Samsung Health page tabs, the fleet top bar (hamburger,
+# Tester (#1144, #1150, #1367): Cloud Me's seven-section bar (Health, Experiences, Socials, Lnktree, Inventory, Buro, LLC), the Samsung Health page tabs, the fleet top bar (hamburger,
 # AI, Profile, Configs), the Achieves text, the tap-only side menu (no edge-swipe), the Account launch and the removed
 # Wallet link, plus the LLC / Buro / Tasks page shapes, the Tasks redirects and the Inventory rows, seed and summary.
 # Structure and data only; the RENDERED strip, bar and top bar are measured by app/src/test/.../MeTabsTest.
@@ -47,8 +47,8 @@ def strings(o):
         for v in o: yield from strings(v)
 
 # ---- N1 nav order
-want_ids = ["health", "experiences", "tasks", "lnktree", "inventory", "buro", "llc"]
-want_labels = ["Health", "Experiences", "Tasks", "Lnktree", "Inventory", "Buro", "LLC"]
+want_ids = ["health", "experiences", "socials", "lnktree", "inventory", "buro", "llc"]
+want_labels = ["Health", "Experiences", "Socials", "Lnktree", "Inventory", "Buro", "LLC"]
 if ui.get("bottom_nav") != want_ids:
     bad("nav-order", f"ui.bottom_nav is {ui.get('bottom_nav')}, wanted {want_ids}")
 if [secs[i]["label"] for i in ui.get("bottom_nav", []) if i in secs] != want_labels:
@@ -248,6 +248,22 @@ _tb = os.path.join(app, "data/ui/tasks/backlogs.json")
 if [p["id"] for p in secs.get("tasks", {}).get("pages", [])] != ["roadmaps", "backlogs"] or \
    (json.load(open(_tb, encoding="utf-8")) if os.path.exists(_tb) else [{}])[0].get("id") != "tasks":
     bad("pages", "Tasks is not RoadMaps then Backlogs, Backlogs drawing the tasks view (the former Duties)")
+# #1771 Socials: the bar slot Tasks held is Socials, the pre-Lnktree "Me" section (cf24a39a1): the two tabs Professional and Personal drawing
+# the mysocials web pages; Tasks stays declared off the bar with every page, so nothing is dropped.
+if [p["id"] for p in secs.get("socials", {}).get("pages", [])] != ["professional", "personal"] or \
+   [p["label"] for p in secs.get("socials", {}).get("pages", [])] != ["Professional", "Personal"]:
+    bad("pages", "Socials is not the two tabs Professional, Personal")
+for _pg, _url in (("professional", "mysocials/linkedin.html"), ("personal", "mysocials/instagram-diegocnmarcos_.html")):
+    _sf = os.path.join(app, f"data/ui/socials/{_pg}.json")
+    _sj = json.load(open(_sf, encoding="utf-8")) if os.path.exists(_sf) else [{}]
+    if _sj[0].get("kind") != "fragment" or _sj[0].get("id") != "web" or _sj[0].get("url") != _url or not os.path.exists(os.path.join(app, "data/web", _url)):
+        bad("pages", f"Socials > {_pg} does not draw the mysocials page {_url}")
+if "tasks" in ui.get("bottom_nav", []) or "tasks" not in secs or [p["id"] for p in secs["tasks"].get("pages", [])] != ["roadmaps", "backlogs"] or \
+   [g["id"] for g in secs["tasks"].get("groups", [])] != ["backlogs", "roadmaps"]:
+    bad("pages", "Tasks left the bar but must stay a declared section with Tree and Due and its two groups (nothing dropped)")
+for _l in ("professional", "personal"):
+    if _l not in [p["id"] for p in secs.get("lnktree", {}).get("pages", [])]:
+        bad("pages", f"Lnktree lost its {_l} page")
 for _gone in ("roadmap", "duties"):
     if _gone in secs or os.path.isdir(os.path.join(app, f"data/ui/{_gone}")):
         bad("pages", f"the retired {_gone} section (or its data/ui folder) is back")
@@ -458,14 +474,14 @@ only() { # <check id>: nothing but that id is red in the real tree
   local r; r="$(check_tree "$APP" "$APP/../ab_cloud-libs-shared/libs" | cut -f1 | sort -u | grep -x "$1" || true)"
   [ -z "$r" ]
 }
-for t in "nav-order|the bar reads Health, Experiences, Tasks, Lnktree, Inventory, Buro, LLC" \
+for t in "nav-order|the bar reads Health, Experiences, Socials, Lnktree, Inventory, Buro, LLC" \
          "tab-style|page tabs show every name at rest and only the selected name when scrolled down (#1159)" \
          "settings|the top bar is the fleet AppTopBar: hamburger, AI, Profile, Configs, no dropdown" \
          "achieves|Experiences is Work, Study, Personal Achieves; Personal Achieves is Geo first then Endurance, Personal Growth, Community, By 30/40/50, keeping the owner's text (B1, B2, B3, region table with its link)" \
          "no-drawer|no swipe-to-open drawer handler anywhere (shell, the lib top bar, Profile page, resources)" \
          "account|Buro > Account launches Cloud Account through extapp, Vault is gone" \
          "no-wallet|the Wallet link is gone" \
-         "pages|Health, Experiences (Work, Study, Achieves tabs), Tasks (RoadMaps, Backlogs), LLC, Buro pages are declared with their data, House, Work, RoadMap and Duties are gone" \
+         "pages|Health, Experiences (Work, Study, Achieves tabs), Socials (Professional, Personal), Tasks (RoadMaps, Backlogs, off the bar), LLC, Buro pages are declared with their data, House, Work, RoadMap and Duties are gone" \
          "redirects|#1367 roadmap, roadmap/*, duties, duties/* and me/tasks land on Tasks > RoadMaps / Backlogs, every redirect target is declared" \
          "inventory|#1367 Inventory is three rows (City, Buro, Lifestyle with | separators) of ledger pages over inventory_user, each with a valid mock seed applied once and a summary header"; do
   id="${t%%|*}"; name="${t#*|}"
@@ -498,9 +514,12 @@ mutant no-drawer "a drag handler is back in the lib top bar" "echo 'val d = dete
 mutant settings "the top bar loses its inline actions" "sed -i 's/inlineActions = true/inlineActions = false/' app/src/main/java/com/diegonmarcos/cloudme/MeTopBar.kt"
 mutant pages "the Home section is back" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'home','label':'Home','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant pages "Backlogs dropped from Tasks" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'].pop() for s in d['ui']['sections'] if s['id']=='tasks'];json.dump(d,open('build.json','w'))\""
+mutant pages "Personal dropped from Socials" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'].pop() for s in d['ui']['sections'] if s['id']=='socials'];json.dump(d,open('build.json','w'))\""
+mutant pages "Socials Professional draws another page" "sed -i 's#mysocials/linkedin.html#mysocials/social.html#' data/ui/socials/professional.json"
+mutant pages "Tasks section dropped with the bar slot" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections']=[s for s in d['ui']['sections'] if s['id']!='tasks'];json.dump(d,open('build.json','w'))\""
 mutant pages "the Duties section comes back" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'duties','label':'Duties','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant nav-order "Inventory and Tasks swapped" "python3 -c \"import json;d=json.load(open('build.json'));b=d['ui']['bottom_nav'];b[2],b[4]=b[4],b[2];json.dump(d,open('build.json','w'))\""
-mutant nav-order "Tasks relabelled RoadMap" "python3 -c \"import json;d=json.load(open('build.json'));[s.update(label='RoadMap') for s in d['ui']['sections'] if s['id']=='tasks'];json.dump(d,open('build.json','w'))\""
+mutant nav-order "Socials relabelled RoadMap" "python3 -c \"import json;d=json.load(open('build.json'));[s.update(label='RoadMap') for s in d['ui']['sections'] if s['id']=='socials'];json.dump(d,open('build.json','w'))\""
 mutant redirects "duties no longer redirected" "sed -i '/\"duties\" to \"tasks\/backlogs\"/d' app/src/main/java/com/diegonmarcos/cloudme/LegacyRoutes.kt"
 mutant redirects "roadmap/* pages fall through (not retired)" "sed -i 's/\"house\", \"roadmap\", \"duties\"/\"house\", \"duties\"/' app/src/main/java/com/diegonmarcos/cloudme/LegacyRoutes.kt"
 mutant redirects "roadmap sent to Backlogs" "sed -i 's#\"roadmap\" to \"tasks/roadmaps\"#\"roadmap\" to \"tasks/backlogs\"#' app/src/main/java/com/diegonmarcos/cloudme/LegacyRoutes.kt"

@@ -24,15 +24,32 @@ class BuroLlcDeclTest {
     }
     private fun page(s: String, p: String) = JSONArray(BuroLlcTestData.text("data/ui/$s/$p.json"))
 
-    @Test fun `the bar is Health Experiences Tasks Lnktree Inventory Buro LLC and House, Work, RoadMap and Duties are gone`() {
+    @Test fun `the bar is Health Experiences Socials Lnktree Inventory Buro LLC and House, Work, RoadMap and Duties are gone`() {
         val ui = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui")
         val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
-        assertEquals(listOf("health", "experiences", "tasks", "lnktree", "inventory", "buro", "llc"), bar)
-        assertEquals(listOf("Health", "Experiences", "Tasks", "Lnktree", "Inventory", "Buro", "LLC"), bar.map { sections.getValue(it).getString("label") })
+        assertEquals(listOf("health", "experiences", "socials", "lnktree", "inventory", "buro", "llc"), bar)
+        assertEquals(listOf("Health", "Experiences", "Socials", "Lnktree", "Inventory", "Buro", "LLC"), bar.map { sections.getValue(it).getString("label") })
         assertFalse("house" in sections); assertFalse("work" in sections); assertFalse("roadmap" in sections); assertFalse("duties" in sections)
         assertEquals(listOf("professional", "leafy", "nexus", "stark", "personal", "social", "health", "dd", "astro", "lnktree-site", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"), ids(sections.getValue("lnktree").getJSONArray("pages")))
         assertEquals(listOf("roadmaps", "backlogs"), ids(sections.getValue("tasks").getJSONArray("pages")))
         assertEquals("tasks", page("tasks", "backlogs").getJSONObject(0).getString("id"))
+    }
+
+    @Test fun `#1771 Socials shows both tabs Professional and Personal on the mysocials pages, and Tasks stays declared off the bar`() {
+        val ui = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui")
+        val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
+        assertFalse("tasks" in bar)
+        val socials = sections.getValue("socials")
+        assertEquals("Socials", socials.getString("label"))
+        assertEquals(listOf("professional", "personal"), ids(socials.getJSONArray("pages")))
+        assertEquals(listOf("Professional", "Personal"), socials.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("label") } })
+        assertEquals("mysocials/linkedin.html", page("socials", "professional").getJSONObject(0).getString("url"))
+        assertEquals("mysocials/instagram-diegocnmarcos_.html", page("socials", "personal").getJSONObject(0).getString("url"))
+        for (p in listOf("professional", "personal")) assertEquals("web", page("socials", p).getJSONObject(0).getString("id"))
+        // nothing dropped: Lnktree keeps both pages, Tasks keeps Tree and Due with their groups
+        assertTrue(listOf("professional", "personal").all { it in ids(sections.getValue("lnktree").getJSONArray("pages")) })
+        assertEquals(listOf("roadmaps", "backlogs"), ids(sections.getValue("tasks").getJSONArray("pages")))
+        assertEquals(setOf("backlogs", "roadmaps"), groups("tasks").keys)
     }
 
     @Test fun `Buro follows the owner hierarchy ID&DD, Secrets Web, Secrets CLI, Configs, Financial, Portfolio, Events and Docs is gone`() {

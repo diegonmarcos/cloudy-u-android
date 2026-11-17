@@ -184,9 +184,9 @@ for s in secs:
 bar = [by_id[i] for i in bar_ids if i in by_id]
 
 # Mirror NavDecl.bottomSections() — the order is the declared order. Diego's
-# Owner order (#1367): Health, Experiences, Tasks, Lnktree, Inventory, Buro, LLC, left to right.
+# Owner order (#1367): Health, Experiences, Socials, Lnktree, Inventory, Buro, LLC, left to right.
 bar_order = [s.get("label") for s in bar]
-EXPECTED_BAR_ORDER = ["Health", "Experiences", "Tasks", "Lnktree", "Inventory", "Buro", "LLC"]
+EXPECTED_BAR_ORDER = ["Health", "Experiences", "Socials", "Lnktree", "Inventory", "Buro", "LLC"]
 if bar_order != EXPECTED_BAR_ORDER:
     bad.append(f"bottom bar order is {bar_order}, expected {EXPECTED_BAR_ORDER}")
 
@@ -273,6 +273,8 @@ routes.add("page:tasks/backlogs")
 routes.add("page:experiences/geo")
 routes.add("page:experiences/work")
 routes.add("page:tasks/roadmaps")
+routes.add("page:socials/professional")  # #1771 the Cloud SA Socials tile
+routes.add("page:socials/personal")
 routes.add("page:inventory/housing")
 routes.add("page:inventory/utilities")
 routes.add("page:inventory/leisure")

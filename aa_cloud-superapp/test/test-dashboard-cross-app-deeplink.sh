@@ -147,7 +147,7 @@ ROWS = {
     # #1092: the row is "Me" (was "Projects Me"), placed right after Data Apps. The Me app leads, one rule,
     # then MySocials, MyBuro, MyHealth, MyStudy, MyTrips as the owner ordered. Agenda left the row (it is
     # reachable inside the Me app); the old rules projects-me-sep-0/1/2 went with the old layout.
-    # Owner order (Cloud Me restructure): Me | Me-Health Experiences Tasks | Me-Inventory Me-Buro Me-LLC | Profile.
+    # Owner order (Cloud Me restructure): Lnktree | Me-Health Experiences Socials | Me-Inventory Me-Buro Me-LLC | Profile.
     "Me": ["me", "me-sep-1", "myhealth", "myexperiences", "myroadmap", "me-sep-2", "myduties", "myburo", "myllc", "me-sep-3", "tools-account"],
     # (#1331: the row is now Lnktree; before it held seven named boards (#1212), and task 311 had removed PM Boards, PM C3 and the
     # "|" between them. The rule had marked the board LIST off from the named
@@ -176,7 +176,7 @@ TARGETS = {
     "sim2real": "extapp:hardtech-sim2real",
     "myhealth":    "extapp:cloud-me#page:health/home",
     "myexperiences": "extapp:cloud-me#page:experiences/work",
-    "myroadmap":   "extapp:cloud-me#page:tasks/roadmaps",
+    "myroadmap":   "extapp:cloud-me#page:socials/professional",
     "myduties":    "extapp:cloud-me#page:tasks/backlogs",
     "myburo":      "extapp:cloud-me#page:buro/ids",
     "myllc":       "extapp:cloud-me#page:llc/employed",
@@ -276,7 +276,7 @@ titles = [g["title"] for g in cloud["tile_groups"]]
 want = [c["label"] for c in json.load(open(sys.argv[2]))["app_categories"] if c["id"] != "other"]
 assert titles == want, (titles, "!=", want, "regen: data/regen.sh --constellation-only")
 g = {x["title"]: [t.get("label") for t in x["tiles"]] for x in cloud["tile_groups"]}
-assert g["Me"] == ["Me", "|", "Me-Health", "Experienc.", "Tasks", "|", "Me-Invent.", "Me-Buro", "Me-LLC", "|", "Profile"], g["Me"]  # #1440 Account -> Profile (Cloud Me profile page)
+assert g["Me"] == ["Lnktree", "|", "Me-Health", "Experienc.", "Socials", "|", "Me-Invent.", "Me-Buro", "Me-LLC", "|", "Profile"], g["Me"]  # #1440 Account -> Profile (Cloud Me profile page)
 # #1627 renamed 'Tools Primary'->'Primary' and 'Data Apps'->'Data'; Drive moved Data->Primary, Vault moved Primary->Data,
 # and a second Me tile (data-me) was added to Data. Primary now ends Writer, '||', Wallet; Account stays out of Primary.
 assert g["Primary"][-2:] == ["||", "Wallet"] and "Account" not in g["Primary"] and "Vault" not in g["Primary"], g["Primary"]

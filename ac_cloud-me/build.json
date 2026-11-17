@@ -199,7 +199,7 @@
     }
   },
   "ui": {
-    "_doc": "Cloud Me's whole navigation is this block: seven bottom-nav sections (`ui.bottom_nav`, in order: Health, Experiences, Tasks, Lnktree, Inventory, Buro, LLC; #1367 Tasks merged RoadMap and Duties, Inventory took the Duties slot), the Settings entries at the top right (`ui.settings`: the sections the top bar's Profile and Configs icons open; the left side menu opens by tapping the hamburger only, there is no swipe gesture), and the page tabs of every section drawn as Samsung-Health icon pills (icon-only, the selected tab also shows its name). A section's `pages` are its tab strip, and a page may declare `pages` of its own. A page with an `action` is a launch tab: it hands that `extapp:`/`page:` target to MainActivity.onTarget instead of showing content (Buro > Account launches Cloud Account). Page CONTENT is not here: each page is a file at data/ui/<section>/<page>.json, shipped as an asset. The same `page:<section>/<page>` grammar arrives from OUTSIDE the app too: the SuperApp's Dashboard icons launch Cloud Me with a `shortcut_action` extra carrying one of these strings.",
+    "_doc": "Cloud Me's whole navigation is this block: seven bottom-nav sections (`ui.bottom_nav`, in order: Health, Experiences, Socials, Lnktree, Inventory, Buro, LLC; #1367 Tasks merged RoadMap and Duties, Inventory took the Duties slot; #1771 the Tasks bar slot became Socials and the Tasks section stays declared, off the bar, reachable from the title dropdown and every page:tasks/* route), the Settings entries at the top right (`ui.settings`: the sections the top bar's Profile and Configs icons open; the left side menu opens by tapping the hamburger only, there is no swipe gesture), and the page tabs of every section drawn as Samsung-Health icon pills (icon-only, the selected tab also shows its name). A section's `pages` are its tab strip, and a page may declare `pages` of its own. A page with an `action` is a launch tab: it hands that `extapp:`/`page:` target to MainActivity.onTarget instead of showing content (Buro > Account launches Cloud Account). Page CONTENT is not here: each page is a file at data/ui/<section>/<page>.json, shipped as an asset. The same `page:<section>/<page>` grammar arrives from OUTSIDE the app too: the SuperApp's Dashboard icons launch Cloud Me with a `shortcut_action` extra carrying one of these strings.",
     "permissions": {
       "_doc": "Configs > Perms, declared: EVERY permission Cloud Me needs. `entries` are ids of the shared libs:perms catalogue (ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json), which owns each one's label, kind (runtime dialog, special settings page, app-op, OEM guide), live check and settings intents; `why` is Cloud Me's reason, one line on the row; `icon` is a libs:ui-icons name; `used: false` marks a permission on the list that no feature uses yet, shown collapsed under Not used yet (still in Grant all). `install` are install-time permissions, listed as granted. `health` is the Health Connect set: `read` is the SuperApp's exact set (libs:health's manifest), `write` what Health > Tracked's manual entry writes. MePerms.kt holds no permission name. The start-up rule (MePermPlan.startup): runtime permissions never asked are asked, a denied one is asked again until Android stops showing its dialog (permanently denied: never again at start), Health Connect is asked until it has been declined twice (Health Connect's own limit), a special access is opened once on first launch and then only from the banner or Grant all. test/test-me-perms.sh pins this list to AndroidManifest.xml both ways.",
       "entries": [
@@ -334,7 +334,7 @@
     "bottom_nav": [
       "health",
       "experiences",
-      "tasks",
+      "socials",
       "lnktree",
       "inventory",
       "buro",
@@ -719,6 +719,16 @@
             "label": "Due",
             "icon": "checklist"
           }
+        ]
+      },
+      {
+        "_doc": "#1771 Socials: the section called Me before Lnktree (commit cf24a39a1, 2026-09-02, 'Profile splits into Professional and Personal'), restored in the bar slot Tasks held. Two tabs: Professional is the LinkedIn page, Personal is the Instagram page, both rendered from the mysocials web project (data/web/mysocials, front-diegonmarcos b-Media/mySocials) by the web fragment, the same pages Lnktree > Professional and Personal draw (those stay). The Tasks section (Tree, Due, the vault rows) left the bar and stays declared with every page and route; the title dropdown lists it, and page:tasks/* deep links open it.",
+        "id": "socials",
+        "label": "Socials",
+        "icon": "ic_nav_me",
+        "pages": [
+          {"id": "professional", "label": "Professional", "icon": "ic_nav_me"},
+          {"id": "personal", "label": "Personal", "icon": "ic_p_identities"}
         ]
       },
       {
