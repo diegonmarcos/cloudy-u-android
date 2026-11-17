@@ -74,9 +74,10 @@ jobs:
           adb shell am force-stop $PKG
           adb shell input keyevent KEYCODE_HOME; sleep 2
           b=$(( $(date +%s) * 1000 + 86400000 ))
-          # 1) cold start: Cloud Mail's Intent, no component (the system chooser, or the app directly when it is the only calendar)
-          adb shell am start -a android.intent.action.INSERT -d content://com.android.calendar/events \
-            --es title "Design review" --el beginTime $b --el endTime $((b + 3600000)) --es eventLocation "Room 4" --es description "Walk through the plan" --ez allDay false | tee -a walk-out/summary.txt
+          # adb shell re-splits its arguments: the whole command is ONE string with single-quoted values
+          ins() { adb shell "am start -a android.intent.action.INSERT $1 -d content://com.android.calendar/events --es title '$2' --el beginTime $3 --el endTime $(( $3 + 3600000 )) --es eventLocation 'Room 4' --es description 'Walk through the plan' --ez allDay false"; }
+          # 1) cold start, no component. With the type resolved as it is on a phone with a calendar provider both calendars match (the chooser)
+          ins "-t vnd.android.cursor.dir/event" "Design review" $b | tee -a walk-out/summary.txt
           sleep 8; shot tasks-01-add-to-calendar-chooser
           if has_text "Just once"; then tap_text "Cloud Tasks"; sleep 2; tap_text "Just once"; fi
           sleep 10; shot tasks-02-new-event-sheet-prefilled
@@ -85,8 +86,8 @@ jobs:
           tap_text "Save"; sleep 3; shot tasks-03-saved-toast
           sleep 4; shot tasks-04-saved-event-calendar
           # 3) the app is running: a second INSERT reaches the sheet through onNewIntent
-          adb shell am start -a android.intent.action.INSERT -d content://com.android.calendar/events -n $PKG/.MainActivity \
-            --es title "Second while running" --el beginTime $((b + 7200000)) --el endTime $((b + 10800000)) --ez allDay false
+          # 3) the app is running: the exact Cloud Mail form (data URI only, no type) reaches the sheet through onNewIntent
+          ins "" "Second while running" $((b + 7200000)) | tee -a walk-out/summary.txt
           sleep 8; shot tasks-05-running-app-sheet
           has_text "New event" && echo "RUNNING SHEET: shown" | tee -a walk-out/summary.txt || echo "RUNNING SHEET: MISSING" | tee -a walk-out/summary.txt
           timeout 60 adb logcat -d -v threadtime "*:E" > walk-out/logcat-errors.txt || true
