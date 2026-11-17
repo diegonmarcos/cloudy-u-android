@@ -13,7 +13,7 @@ Hard rules first, index last. Each rule has a one-line why in `rules/*.md` (read
 4. Number every question put to the owner. Ask only when truly blocked. Why: answer by number. Guard: none.
 5. Do only what was asked; explain/how/what-is questions are read-only. Why: scope creep costs trust. Guard: none.
 6. Reports are short: result, files touched, verification, blockers. Why: token budget. Guard: none.
-7. "New task" is a ticket: write it to the Product Backlog (repo cloudy-a-docs) first, build, test, push (rules/backlog.md). Why: single task ledger. Guard: test-backlog-metadata.sh.
+7. "New task" is a ticket: write it to the Product Backlog (repo cloud-me-pvt-tasks) first, build, test, push (rules/backlog.md). Why: single task ledger. NEVER use TaskCreate/TaskUpdate for tickets (they truncate the session store and delete tickets); tickets are files, never deleted or blanked. Guard: test-backlog-metadata.sh, hooks ticket-guard, backlog-session-start, backlog-stop-push.
 8. Builds run in CI only. No local Gradle, no npm/npx, never start servers; `build.sh build` after source edits. Why: runners are the only trusted builders. Guard: hook no-local-gradle.
 9. Android work is not done on green CI: the on-phone check stays pending on every close. Why: CI cannot see the device. Guard: none.
 10. One agent at a time, within about 14% of the daily token budget; Opus orchestrates, Sonnet workers. Why: the budget is shared across sessions. Guard: none.

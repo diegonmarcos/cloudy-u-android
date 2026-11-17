@@ -106,12 +106,26 @@
           {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/no-secrets-commit.sh"},
           {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/no-mass-delete.sh"}
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit|Bash|TaskCreate|TaskUpdate",
+        "hooks": [
+          {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/ticket-guard.sh"}
+        ]
       }
     ],
     "SessionStart": [
       {
         "hooks": [
-          {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/ai-usage-beacon.sh hook", "timeout": 5}
+          {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/ai-usage-beacon.sh hook", "timeout": 5},
+          {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/backlog-session-start.sh", "timeout": 20}
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/backlog-stop-push.sh", "timeout": 90}
         ]
       }
     ],

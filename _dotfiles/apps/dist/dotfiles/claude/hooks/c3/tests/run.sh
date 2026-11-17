@@ -50,4 +50,47 @@ git -C "$W" reset -q --soft HEAD~1; git -C "$W" commit -q --amend -m 'wipe [mass
 t no-mass-delete 0 "git -C $W push origin main"
 t no-mass-delete 0 'git status'
 rm -rf "$W"
+# ticket guard (#1585): tool-level cases via raw JSON
+g(){ # expect json
+  local out rc; out="$(printf '%s' "$2" | "$H/ticket-guard.sh" 2>&1)"; rc=$?; n=$((n+1))
+  [ "$rc" = "$1" ] || { echo "FAIL ticket-guard expected $1 got $rc: $2"; fail=$((fail+1)); }
+  if [ "$1" = 2 ] && ! printf '%s' "$out" | grep -q "BLOCKED by c3-infra hook ticket-guard"; then echo "FAIL ticket-guard no message: $2"; fail=$((fail+1)); fi; }
+gj(){ node -e 'process.stdout.write(JSON.stringify({tool_name:process.argv[1],tool_input:JSON.parse(process.argv[2])}))' "$1" "$2"; }
+TG="$(mktemp -d)"; mkdir -p "$TG/tasks/s1"; TK="$TG/tasks/s1/42.json"
+echo '{"id":"42","subject":"#42 x","status":"pending"}' > "$TK"
+g 2 "$(gj Write "{\"file_path\":\"$TK\",\"content\":\"\"}")"
+g 2 "$(gj Write "{\"file_path\":\"$TK\",\"content\":\"{broken\"}")"
+g 2 "$(gj Write "{\"file_path\":\"$TK\",\"content\":\"{}\"}")"
+g 0 "$(gj Write "{\"file_path\":\"$TK\",\"content\":\"{\\\"id\\\":\\\"42\\\",\\\"subject\\\":\\\"#42 y\\\",\\\"status\\\":\\\"completed\\\"}\"}")"
+g 0 "$(gj Write '{"file_path":"/tmp/other/notes.json","content":""}')"
+g 2 "$(gj Edit "{\"file_path\":\"$TK\",\"old_string\":\"{\\\"id\\\"\",\"new_string\":\"\"}")"
+g 0 "$(gj Edit "{\"file_path\":\"$TK\",\"old_string\":\"pending\",\"new_string\":\"in_progress\"}")"
+g 2 "$(gj TaskCreate '{"subject":"x"}')"; g 2 "$(gj TaskUpdate '{"taskId":"1","status":"completed"}')"
+g 2 "$(gj Bash '{"command":"rm tasks/s1/42.json"}')"; g 2 "$(gj Bash '{"command":"cd x && rm -f 1___BACKLOG___/1.1.Product-Backlog/tasks/abc/1585.json"}')"
+g 2 "$(gj Bash '{"command":"git rm tasks/s1/42.json"}')"; g 2 "$(gj Bash '{"command":"rm -rf tasks/s1/*"}')"
+g 2 "$(gj Bash '{"command":"truncate -s 0 tasks/s1/42.json"}')"; g 2 "$(gj Bash '{"command":": > tasks/s1/42.json"}')"
+g 2 "$(gj Bash '{"command":"> tasks/s1/42.json"}')"; g 2 "$(gj Bash '{"command":"cp /dev/null tasks/s1/42.json"}')"
+g 2 "$(gj Bash '{"command":"find tasks -name 42.json -delete"}')"; g 2 "$(gj Bash '{"command":"mv tasks/s1/42.json /tmp/"}')"
+g 0 "$(gj Bash '{"command":"cat tasks/s1/42.json"}')"; g 0 "$(gj Bash '{"command":"ls tasks/s1 | wc -l"}')"
+g 0 "$(gj Bash '{"command":"rm -rf build/tmp"}')"; g 0 "$(gj Bash '{"command":"mv tasks/s1/42.json tasks/s2/42.json"}')"
+g 0 "$(gj Bash '{"command":"node build.js && git add tasks/s1/42.json"}')"
+rm -rf "$TG"
+# session-start (#1585): open index injected, completed omitted; no checkout -> pointer message
+BR="$(mktemp -d)"; BT="$BR/1___BACKLOG___/1.1.Product-Backlog/tasks/s1"; mkdir -p "$BT"
+echo '{"id":"7","subject":"#7 open one","status":"pending"}' > "$BT/7.json"; echo '{"id":"8","subject":"#8 done one","status":"completed"}' > "$BT/8.json"
+o="$(cd /tmp && C3_BACKLOG_REPO="$BR" "$H/backlog-session-start.sh")"; n=$((n+1))
+printf '%s' "$o" | grep -q '7 | pending | #7 open one' && printf '%s' "$o" | grep -q 'additionalContext' && ! printf '%s' "$o" | grep -q 'done one' || { echo "FAIL backlog-session-start index: $o"; fail=$((fail+1)); }
+o="$(cd /tmp && HOME=/nonexistent CLAUDE_PROJECT_DIR=/nonexistent C3_BACKLOG_REPO=/nonexistent "$H/backlog-session-start.sh")"; n=$((n+1))
+printf '%s' "$o" | grep -q 'NOT CHECKED OUT' || { [ -d /home/user/cloud-me-pvt-tasks ] && true; } || { echo "FAIL backlog-session-start missing: $o"; fail=$((fail+1)); }
+T="$(mktemp -d)"; mkdir -p "$T/home/my-tasks/1___BACKLOG___/1.1.Product-Backlog/tasks"; n=$((n+1))
+o="$(cd /tmp && HOME="$T/home" CLAUDE_PROJECT_DIR=/nonexistent C3_BACKLOG_REPO= C3_BACKLOG_REPO_NAMES="nope my-tasks" sh -c '. "$0/_backlog.sh"; backlog_repo' "$H")"
+[ "$o" = "$T/home/my-tasks" ] || { echo "FAIL backlog_repo by C3_BACKLOG_REPO_NAMES: $o"; fail=$((fail+1)); }; rm -rf "$T"
+# stop-push (#1585): commits+pushes edits to a bare remote; refuses a blanked ticket
+RM="$(mktemp -d)"; git init -q --bare -b main "$RM/o.git"; git -C "$BR" init -q -b main; git -C "$BR" config user.email t@t; git -C "$BR" config user.name t
+git -C "$BR" remote add origin "$RM/o.git"; git -C "$BR" add -A; git -C "$BR" commit -qm init; git -C "$BR" push -q origin main; git -C "$BR" fetch -q
+echo '{"id":"9","subject":"#9 new","status":"pending"}' > "$BT/9.json"; (cd /tmp && C3_BACKLOG_REPO="$BR" "$H/backlog-stop-push.sh"); n=$((n+1))
+[ "$(git -C "$RM/o.git" ls-tree -r main --name-only | grep -c '9.json')" = 1 ] || { echo "FAIL backlog-stop-push did not push new ticket"; fail=$((fail+1)); }
+: > "$BT/9.json"; rm "$BT/7.json"; (cd /tmp && C3_BACKLOG_REPO="$BR" "$H/backlog-stop-push.sh" 2>/dev/null); n=$((n+1))
+{ git -C "$RM/o.git" show main:1___BACKLOG___/1.1.Product-Backlog/tasks/s1/7.json >/dev/null 2>&1 && [ -n "$(git -C "$RM/o.git" show main:1___BACKLOG___/1.1.Product-Backlog/tasks/s1/9.json)" ]; } || { echo "FAIL backlog-stop-push committed a delete/blank"; fail=$((fail+1)); }
+rm -rf "$BR" "$RM"
 echo "hook tests: $n cases, $fail failed"; [ "$fail" = 0 ]
