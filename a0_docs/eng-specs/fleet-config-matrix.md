@@ -517,7 +517,7 @@ Coverage: 13 covered, 0 gaps.
 
 ## cloud-calc — `com.diegonmarcos.cloudcalc`
 
-Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-decisions, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-light, lib-location-client, lib-ml-l-image, lib-ml-l-sound, lib-model-catalogue, lib-nfc, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-web-core, lib-wifi.
+Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-decisions, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-light, lib-ml-l-image, lib-ml-l-sound, lib-model-catalogue, lib-nfc, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-web-core, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -560,7 +560,7 @@ Coverage: 18 covered, 0 gaps.
 
 ## cloud-camera — `cld.camera`
 
-Module `ac_cloud-camera`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-location-client, lib-ml-l-image, lib-ml-l-sound, lib-ml-l-vision-mlkit, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-camera`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-ml-l-image, lib-ml-l-sound, lib-ml-l-vision-mlkit, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -868,7 +868,7 @@ Coverage: 13 covered, 2 gaps — datastore:settings, mail_signatures.
 
 ## cloud-matrix — `com.diegonmarcos.comms.matrix`
 
-Module `ac_cloud-matrix`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-location-client, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-matrix`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

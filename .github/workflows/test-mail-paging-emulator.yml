@@ -175,9 +175,9 @@ jobs:
           bshot 02-offline-body-newest
           adb shell input keyevent KEYCODE_BACK; sleep 2
           found=0
-          for j in $(seq 1 30); do
+          for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14; do
             if uitap "Seed message 80 of 120"; then found=1; break; fi
-            adb shell input swipe 700 1900 700 600 300; sleep 1
+            adb shell input swipe 700 1400 700 700 400; sleep 1
           done
           [ "$found" = 1 ] || { echo "::error::a message further down is not on screen offline"; exit 1; }
           sleep 4
