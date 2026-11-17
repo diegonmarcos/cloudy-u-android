@@ -7,7 +7,8 @@ APK="$1"; OUT="$2"; PKG=com.diegonmarcos.cloudstore
 mkdir -p "$OUT"
 adb install -r -g "$APK" >"$OUT/install.txt" 2>&1 || { cat "$OUT/install.txt"; exit 1; }
 ACT=$(adb shell cmd package resolve-activity --brief "$PKG" | tr -d '\r' | tail -1)
-shoot() { adb exec-out screencap -p > "$OUT/$1.png"; }
+hide_kb() { if adb shell dumpsys input_method 2>/dev/null | grep -q 'mInputShown=true'; then adb shell input keyevent KEYCODE_BACK; sleep 2; fi; }
+shoot() { hide_kb; adb exec-out screencap -p > "$OUT/$1.png"; }
 dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1; }
 tap_text() {
   dump cur
@@ -37,6 +38,9 @@ sub() {  # name, label, ready-regex, query
   tap_text "$2" || { echo "::error::no $2 pill"; rc=1; return; }
   for i in $(seq 1 10); do dump "$1"; grep -qE "$3" "$OUT/$1.xml" && break; sleep 8; done
   sleep 12; shoot "$1-1-browse"
+  read -r W H < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
+  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H*3/10)) 250; sleep 3; shoot "$1-1b-browse-scrolled"
+  adb shell input swipe $((W/2)) $((H*3/10)) $((W/2)) $((H*4/5)) 100; adb shell input swipe $((W/2)) $((H*3/10)) $((W/2)) $((H*4/5)) 100; sleep 2
   ask "$4"; sleep 25; shoot "$1-2-search"; dump "$1-search"
   # clear the query so the next page opens on its own landing
   adb shell input keyevent KEYCODE_MOVE_END; for i in $(seq 1 24); do adb shell input keyevent KEYCODE_DEL; done; sleep 2
