@@ -46,21 +46,43 @@ PY
     [ -n "$b" ] && $T adb shell input tap $b; sleep 4
 done
 shot home 3
-grep -o 'content-desc="Speed test[^"]*"' "$OUT/speed-home.xml" | head -1 || true
-p="$(python3 - "$OUT/speed-home.xml" <<'PY'
+# #1446 the speed test lives in the network popup: open it by the WiFi chip of the status strip (content-desc "Network status: WiFi")
+bounds() { # <xml> <attr> <value-regex>: print the centre of the first node whose attr matches
+python3 - "$1" "$2" "$3" <<'PY'
 import re, sys
 x = open(sys.argv[1], errors="ignore").read()
 for m in re.finditer(r'<node ([^>]*)>', x):
     a = m.group(1)
-    if 'content-desc="Speed test' in a:
+    if re.search(sys.argv[2] + r'="' + sys.argv[3] + '"', a):
         b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', a)
         l, t, r, d = map(int, b.groups()); print((l + r) // 2, (t + d) // 2); break
 PY
-)"
-if [ -z "$p" ]; then echo "FAIL: no speedmeter in the status strip"; rc=1; else
+}
+p="$(bounds "$OUT/speed-home.xml" content-desc 'Network status: WiFi')"
+if [ -z "$p" ]; then echo "FAIL: no network chip in the status strip"; rc=1; else
     $T adb shell input tap $p
-    shot testing 2
-    shot done 10
+    sleep 3; dump popup
+    # the popup scrolls: swipe up until the Speed test action is on screen
+    q=""
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        q="$(bounds "$OUT/popup.xml" text 'Speed test ›')"
+        [ -n "$q" ] && break
+        sz="$($T adb shell wm size | grep -o '[0-9]*x[0-9]*' | tail -1)"; w=${sz%x*}; h=${sz#*x}
+        $T adb shell input swipe $((w / 2)) $((h * 7 / 10)) $((w / 2)) $((h * 3 / 10)) 400; sleep 1; dump popup
+    done
+    if [ -z "$q" ]; then echo "FAIL: no Speed test action in the network popup"; rc=1; else
+        $T adb shell input tap $q
+        shot testing 2
+        # the result: the download row reads "<n> MB/s <n> Mbps" and the last-run row "... N in 24 h"; a failure reads "test failed: ..."
+        ok=0
+        for _ in $(seq 1 24); do
+            sleep 5; dump done
+            grep -q 'text="test failed' "$OUT/done.xml" && { echo "FAIL: speed test failed in the popup"; break; }
+            if grep -Eq 'text="[0-9.]+ MB/s +[0-9.]+ Mbps"' "$OUT/done.xml" && grep -q 'in 24 h"' "$OUT/done.xml"; then ok=1; break; fi
+        done
+        shot done 1
+        [ "$ok" = 1 ] && echo "OK: speed test ran and shows a result" || { echo "FAIL: no speed test result in the popup"; rc=1; }
+    fi
 fi
 $T adb logcat -d -t 3000 > "$OUT/speed-logcat.txt"
 grep -E "FATAL EXCEPTION" -A12 "$OUT/speed-logcat.txt" | grep -B2 -A12 "$PKG" | head -40 > "$OUT/speed-crash.txt" || true

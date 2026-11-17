@@ -963,7 +963,8 @@ private fun StripElementView(el: StatusElement, model: StatusStripModel, ctx: Co
         when (el.kind) {
             "network" -> {
                 val chip = model.chips[el.id] ?: return@Column
-                Tappable("strip:${el.id}", onTap = open) {
+                // The emulator driver opens the network popup by this label (a chip has no resource id).
+                Tappable("strip:${el.id}", onTap = open, modifier = Modifier.semantics { contentDescription = "Network status: ${el.label}" }) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconLabel(chip.label, chip.tint)
                         if (chip.peerDots != null) PeerDots(chip.peerDots, chip.peerDescription, name = el.id)
