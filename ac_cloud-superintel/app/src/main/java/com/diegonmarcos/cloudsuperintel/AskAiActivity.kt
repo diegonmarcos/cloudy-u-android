@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -65,7 +64,7 @@ class AskAiActivity : ComponentActivity() {
 
     @androidx.compose.runtime.Composable
     private fun Sheet() {
-        Surface(Modifier.fillMaxWidth().safeDrawingPadding(), color = MaterialTheme.colorScheme.background) {
+        Surface(Modifier.fillMaxWidth().padding(top = 40.dp, bottom = 24.dp), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Ask AI · Cloud SI", style = MaterialTheme.typography.titleLarge)
                 if (busy) Text("Copying into SI…")
