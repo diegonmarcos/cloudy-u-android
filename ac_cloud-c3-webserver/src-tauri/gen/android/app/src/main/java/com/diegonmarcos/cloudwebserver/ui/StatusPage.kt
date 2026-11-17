@@ -49,7 +49,7 @@ fun StatusTop(pw: JSONObject, health: JSONObject?, served: JSONObject?, sshd: JS
     val serverOn = pw.optBoolean("server")
     val apiOk = health?.optBoolean("ok") == true
     val adbUp = adb?.takeIf { it.has("server_up") && !it.isNull("server_up") }?.optBoolean("server_up")
-    DenseCard("Status summary", "c3_status_summary", badges = { Badge(if (serverOn && pw.optBoolean("running")) "ALL SYSTEMS" else if (serverOn) "STARTING" else "OFF", if (serverOn) Tone.Up else Tone.Down) }) {
+    DenseCard("Status summary", "c3_status_summary", badges = { Badge(if (!serverOn) "OFF" else if (!pw.optBoolean("running")) "STARTING" else if (apiOk && servingNow == rows.size && doorsUp == doors.size && adbUp != false) "ALL UP" else "ATTENTION", if (serverOn && pw.optBoolean("running") && apiOk && servingNow == rows.size && doorsUp == doors.size) Tone.Up else Tone.Down) }) {
         DRow("Server", if (serverOn) (if (pw.optBoolean("running")) "ON, running" else "ON, starting") else "OFF", up = serverOn && pw.optBoolean("running"))
         DRow("Pages", "$servingNow of ${rows.size} serving (connect probe per port)", up = rows.isNotEmpty() && servingNow == rows.size)
         DRow("API", if (health == null) "not answering" else if (apiOk) "health ok (:8003 answered)" else "health not ok", up = apiOk)
