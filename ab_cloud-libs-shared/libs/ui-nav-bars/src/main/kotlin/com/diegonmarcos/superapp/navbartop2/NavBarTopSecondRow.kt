@@ -188,6 +188,10 @@ public fun NavBarTopSecondRow(
         val target = shown.firstOrNull { it.holds(want) } ?: return@LaunchedEffect
         if (target.id == want) { requests?.consume(); if (target.id != selectedId) onSelect(target) }
         else if (target.id != selectedId) onSelect(target)
+        // #1760 the container is on screen: a container with a strip of its own (two or more pages) takes the request one level down, one
+        // that has a single page draws no strip below, so the request was never consumed and the next tab the reader tapped was snapped
+        // back to this container by it (Cloud C3 Ops: Orchestration, Health and Observability took no tap after Mail was picked)
+        else if (target.pages.size < 2) requests?.consume()
     }
     // Clean mode (NavUiMode): the second row is GONE, its pages live in the left drawer; the pick above is still answered.
     if (NavUiDecl.plan(currentNavUi().mode).secondRow.not()) return

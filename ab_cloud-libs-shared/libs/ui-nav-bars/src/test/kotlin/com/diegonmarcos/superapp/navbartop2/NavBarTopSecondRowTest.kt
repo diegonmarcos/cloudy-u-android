@@ -127,4 +127,22 @@ class NavBarTopSecondRowTest {
         assertEquals("the container holding the page is selected", listOf("box"), picked)
         assertEquals("the request waits for the strip one level down", "deep", requests.pending)
     }
+
+    @Test fun `a request for the only page of the selected container is consumed so a tapped tab stays selected`() {
+        val requests = SubPageRequests()
+        val tree = listOf(
+            NavPage("one", "One", "home", pages = listOf(NavPage("one_a", "A", "folder"))),
+            NavPage("two", "Two", "inventory_2", pages = listOf(NavPage("two_a", "A", "folder"), NavPage("two_b", "B", "folder"))),
+        )
+        val picked = mutableListOf<String>()
+        compose.setContent {
+            androidx.compose.runtime.CompositionLocalProvider(LocalSubPageRequests provides requests) {
+                NavBarTopSecondRow(tree, "one", { picked += it.id }, dark = true)
+            }
+        }
+        compose.runOnUiThread { requests.request("one_a") }
+        compose.waitForIdle()
+        assertEquals("a container with one page draws no strip below: nothing is left pending", null, requests.pending)
+        assertEquals(emptyList<String>(), picked)
+    }
 }

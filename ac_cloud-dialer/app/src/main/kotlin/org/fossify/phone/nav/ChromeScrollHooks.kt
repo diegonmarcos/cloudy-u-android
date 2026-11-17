@@ -1,5 +1,6 @@
 package org.fossify.phone.nav
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ScrollView
@@ -15,6 +16,8 @@ import java.util.WeakHashMap
  * pager swaps in later are picked up on the next layout. It only observes; nothing is consumed.
  */
 object ChromeScrollHooks {
+    private const val TAG = "ChromeScroll"
+
     /**
      * #1760 a RecyclerView reports onScrolled for its own layout too: the pager keeps the neighbouring pages' lists alive, and when the
      * chrome comes back the content area shrinks, those lists re-lay out and report a positive dy while the restoring finger is down, which
@@ -32,7 +35,7 @@ object ChromeScrollHooks {
                 if (seen.add(v)) {
                     v.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                         override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                            if (countsAsScroll(recyclerView.scrollState, dy)) onDelta(dy.toFloat())
+                            if (countsAsScroll(recyclerView.scrollState, dy)) { Log.d(TAG, "list dy=$dy state=${recyclerView.scrollState}"); onDelta(dy.toFloat()) }
                         }
                     })
                 }
@@ -52,6 +55,8 @@ object ChromeScrollHooks {
         content.viewTreeObserver.addOnScrollChangedListener {
             val now = scrollViewOffsets(content)
             if (now != lastScrollViews) {
+                // #1760 debug trace (the nav walk keeps it on a P3 failure): which ScrollView moved and by how much
+                Log.d(TAG, "scrollviews ${lastScrollViews}->$now")
                 onDelta((now - lastScrollViews).toFloat())
                 lastScrollViews = now
             }

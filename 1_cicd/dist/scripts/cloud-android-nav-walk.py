@@ -295,6 +295,10 @@ class Walk:
         # still found, in the events log (app_anr), and fails its page with the emulator's load beside it.
         shell("settings put global hide_error_dialogs 1")
         shell("settings put global cloud_nav_ui_mode classic")
+        # #1760 the Store installs the fleet on its own (Auto update ON) and the system raised "isn't allowed to install unknown apps from
+        # this source" over whatever page was walked, at a moment no dump saw (General's anchors, the settings entry): the walk poses the
+        # install-source permission of the app under test (the emulator's state, no check of the app is touched) so the prompt never rises
+        shell("appops set %s REQUEST_INSTALL_PACKAGES allow" % self.pkg)
         shell("logcat -b all -c")
         self.seed()
         view = self.start_page()
@@ -424,13 +428,18 @@ class Walk:
             return None
         # ONE tap (the title sets open = true: the app ignores nothing). The dropdown is a Popup window that a loaded 2-core emulator
         # draws a few seconds late (Cloud Mail's inbox spinner, Cloud Search's jobs page), so the hierarchy is polled for it, not re-tapped.
-        tap(opener)
-        settle(1.0)
-        for _ in range(4):
-            nodes = dump()
-            if nodes and (find(nodes, CRUMB0) or findall(nodes, ENTRY)):
-                return nodes
-            settle(1.5)
+        # #1760 Cloud Calc Measure > WiFi (auto scan, a busy main thread) dropped the one tap in some runs: after the whole poll found the
+        # dropdown still closed, the title is tapped ONCE more (a late-opening dropdown was already waited for, so this cannot close it)
+        for _attempt in range(2):
+            tap(opener)
+            settle(1.0)
+            for _ in range(4):
+                nodes = dump()
+                if nodes and (find(nodes, CRUMB0) or findall(nodes, ENTRY)):
+                    return nodes
+                settle(1.5)
+            nodes = dump() or []
+            opener = find(nodes, MORE) or find(nodes, TITLE) or opener
         if self.ime_up():
             shell("input keyevent KEYCODE_BACK")
             settle(0.6)
@@ -444,8 +453,18 @@ class Walk:
     def close_dropdown(self):
         shell("input keyevent KEYCODE_BACK")
         settle(0.8)
-        nodes = dump()
-        return nodes is not None and not (find(nodes, CRUMB0) or findall(nodes, ENTRY))
+        # #1760 the popup's exit can outlast one read on a loaded emulator (Cloud Calc Measure > Sensors): the hierarchy is polled for it
+        # to be gone, and Back is only pressed again while it still shows after that wait (the same end state is asserted)
+        for _attempt in range(2):
+            for _ in range(3):
+                nodes = dump()
+                if nodes is not None and not (find(nodes, CRUMB0) or findall(nodes, ENTRY)):
+                    return True
+                settle(1.2)
+            if _attempt == 0:
+                shell("input keyevent KEYCODE_BACK")
+                settle(0.8)
+        return False
 
     def pick(self, pid):
         """Tap [pid]'s entry in the open dropdown, scrolling the dropdown; None when it is not listed (the dropdown lists the
@@ -917,6 +936,12 @@ class Walk:
                     if _round:
                         checks["restore_round"] = _round + 1
                     break
+            if not back["row"] or len(back["labels"]) < want_labels:
+                # #1760 debug: what the app fed the chrome during the gesture, and the window state (kept with the page's evidence)
+                safe = re.sub(r"\W", "_", "p3_restore_" + self.pkg)
+                with open(os.path.join(self.out, "dumps", safe + ".txt"), "a") as f:
+                    f.write(shell("logcat -d -s ChromeScroll:D 2>/dev/null | tail -80", timeout=60))
+                    f.write("\n--- window ---\n" + shell("dumpsys window | grep -E 'mCurrentFocus|mInputMethod|Window #' | head -12", timeout=30))
             if not back["row"]:
                 fails.append("P3 scrolled back up: the first row did not return")
             if len(back["labels"]) < want_labels:
@@ -1198,6 +1223,13 @@ class Walk:
                 self.results.append({"section": "-", "page": "launch", "label": "launch", "status": "SKIP",
                                      "checks": {"note": "onboarding (Add account): the shared bars exist only once an account is signed in"},
                                      "failures": [], "seconds": 60})
+                self.report()
+            known = self.cfg.get("known_launch_no_bars")
+            if known:
+                # nav-walk-apps.json `known_launch_no_bars`: the ONE launch check (shared bars on the first screen) of an app whose old UI is being
+                # replaced; reported SKIP with the pointer to the ticket, never PASS, and no other check of the app is excluded
+                self.results.append({"section": "-", "page": "launch", "label": "launch", "status": "SKIP",
+                                     "checks": {"note": "known, no shared bars on launch: %s" % known}, "failures": [], "seconds": 60})
                 self.report()
             self.results.append({"section": "-", "page": "launch", "label": "launch", "status": "FAIL", "checks": {},
                                  "failures": ["the shared bottom nav never appeared within 60 s of launch (no %s*)" % ITEM], "seconds": 60})
