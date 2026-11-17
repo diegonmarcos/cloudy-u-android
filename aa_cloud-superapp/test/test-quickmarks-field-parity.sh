@@ -34,7 +34,7 @@ def emit(t, msg): out.append("%s\t%s" % (t, msg))
 
 # T1
 titles = [g.get("title") for g in tg]
-want = ["Primary", "Communication", "Data", "Me", "Services", "AGI", "Projects", "Setup"]
+want = ["Primary", "Communication", "Data", "Me", "Projects", "Services", "AGI", "Setup"]
 if titles != want:
     emit("T1", "group order is %r, want %r" % (titles, want))
 for gone in ("Tools Primary", "Data Apps"):

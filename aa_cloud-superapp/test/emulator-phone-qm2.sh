@@ -54,7 +54,14 @@ cat "$OUT/seed.txt"
 while read -r p; do adb shell monkey -p "$p" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 2; done < "$OUT/seed.txt"
 wake; adb shell input keyevent KEYCODE_HOME; sleep 2
 adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:phone" >/dev/null; sleep 10
-CUR=phone; cap qm2-00
+# #1769 Projects sits right after Me on Cloud and Phone: one Cloud walk shows the row order too.
+walk() { # walk <section> <prefix> <steps>
+  wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:$1" >/dev/null; sleep 10
+  local i; CUR=$2; cap "$2-00"
+  for i in $(seq 1 "$3"); do swipe_up; cap "$2-$(printf %02d "$i")"; done
+}
+walk cloud cloud-qm2 5
+CUR=phone; wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:phone" >/dev/null; sleep 10; cap qm2-00
 for i in $(seq 1 12); do swipe_up; cap "qm2-$(printf %02d "$i")"; done
 # Folders: scroll back to the top, tap a folder, capture, go back.
 for l in Events AI "NG Firewall"; do

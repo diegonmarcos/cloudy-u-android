@@ -17,9 +17,9 @@
 {"id":"communication","label":"Communication","members":["mail","chat","matrix","dialer","contacts"]},
 {"id":"data","label":"Data","members":["notes","tasks","office","gallery","vault"]},
 {"id":"me","label":"Me","members":["me"]},
+{"id":"projects","label":"Projects","members":["aa_cloud-superapp","cg-omniverse","capital-stack-finterminal","hardtech-cad","hardtech-sim2real"]},
 {"id":"services","label":"Services","members":["search","news","media-center","shopping","kg-store"]},
 {"id":"agi","label":"AGI","members":["superintel","code","tools-small-llms","myterminal","nix-on-droid","termux"]},
-{"id":"projects","label":"Projects","members":["aa_cloud-superapp","cg-omniverse","capital-stack-finterminal","hardtech-cad","hardtech-sim2real"]},
 {"id":"setup","label":"Setup","members":["store","account","c3","c3-webserver","morpheus","watchtower","watchdog"]}
 ],
 "apps":[

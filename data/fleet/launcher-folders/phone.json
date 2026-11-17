@@ -192,144 +192,144 @@
       "order": 480
     },
     {
-      "section": "Services",
-      "id": "svc_search",
-      "label": "+Search",
-      "icon": "",
-      "order": 510
-    },
-    {
-      "section": "Services",
-      "id": "hlth_news",
-      "label": "+News",
-      "icon": "",
-      "order": 520
-    },
-    {
-      "section": "Services",
-      "id": "svc_shopping",
-      "label": "+Shopping",
-      "icon": "",
-      "order": 530
-    },
-    {
-      "section": "Services",
-      "id": "svc_events",
-      "label": "+Events",
-      "icon": "",
-      "order": 540
-    },
-    {
-      "section": "Services",
-      "id": "media_video",
-      "label": "+Media Center",
-      "icon": "",
-      "order": 545
-    },
-    {
-      "section": "Services",
-      "id": "svc_mobility",
-      "label": "+Mobility & Travel",
-      "icon": "",
-      "order": 550
-    },
-    {
-      "section": "Services",
-      "id": "svc_jobs",
-      "label": "+Jobs & Business",
-      "icon": "",
-      "order": 560
-    },
-    {
-      "section": "Services",
-      "id": "svc_realestate",
-      "label": "+Real Estate",
-      "icon": "",
-      "order": 570
-    },
-    {
-      "section": "Services",
-      "id": "svc_money",
-      "label": "+Money",
-      "icon": "",
-      "order": 580
-    },
-    {
-      "section": "Services",
-      "id": "svc_kgstore",
-      "label": "+KG Store",
-      "icon": "",
-      "order": 590
-    },
-    {
-      "section": "Services",
-      "id": "media_games",
-      "label": "+Games",
-      "icon": "",
-      "order": 595
-    },
-    {
-      "section": "AGI",
-      "id": "prod_ai",
-      "label": "*AI",
-      "icon": "",
-      "order": 610
-    },
-    {
-      "section": "AGI",
-      "id": "prod_code",
-      "label": "*Code",
-      "icon": "",
-      "order": 620
-    },
-    {
-      "section": "AGI",
-      "id": "prod_terminals",
-      "label": "*Terminal",
-      "icon": "",
-      "order": 630
-    },
-    {
-      "section": "AGI",
-      "id": "agi_tools",
-      "label": "*Tools",
-      "icon": "",
-      "order": 640
-    },
-    {
       "section": "Projects",
       "id": "proj_superapp",
       "label": "#SuperApp",
       "icon": "",
-      "order": 710
+      "order": 510
     },
     {
       "section": "Projects",
       "id": "proj_omniverse",
       "label": "#Omniverse",
       "icon": "",
-      "order": 720
+      "order": 520
     },
     {
       "section": "Projects",
       "id": "proj_finterm",
       "label": "#FinTerm",
       "icon": "",
-      "order": 730
+      "order": 530
     },
     {
       "section": "Projects",
       "id": "proj_cad",
       "label": "#CAD",
       "icon": "",
-      "order": 740
+      "order": 540
     },
     {
       "section": "Projects",
       "id": "proj_sim2real",
       "label": "#Sim2Real",
       "icon": "",
-      "order": 750
+      "order": 550
+    },
+    {
+      "section": "Services",
+      "id": "svc_search",
+      "label": "+Search",
+      "icon": "",
+      "order": 610
+    },
+    {
+      "section": "Services",
+      "id": "hlth_news",
+      "label": "+News",
+      "icon": "",
+      "order": 620
+    },
+    {
+      "section": "Services",
+      "id": "svc_shopping",
+      "label": "+Shopping",
+      "icon": "",
+      "order": 630
+    },
+    {
+      "section": "Services",
+      "id": "svc_events",
+      "label": "+Events",
+      "icon": "",
+      "order": 640
+    },
+    {
+      "section": "Services",
+      "id": "media_video",
+      "label": "+Media Center",
+      "icon": "",
+      "order": 645
+    },
+    {
+      "section": "Services",
+      "id": "svc_mobility",
+      "label": "+Mobility & Travel",
+      "icon": "",
+      "order": 650
+    },
+    {
+      "section": "Services",
+      "id": "svc_jobs",
+      "label": "+Jobs & Business",
+      "icon": "",
+      "order": 660
+    },
+    {
+      "section": "Services",
+      "id": "svc_realestate",
+      "label": "+Real Estate",
+      "icon": "",
+      "order": 670
+    },
+    {
+      "section": "Services",
+      "id": "svc_money",
+      "label": "+Money",
+      "icon": "",
+      "order": 680
+    },
+    {
+      "section": "Services",
+      "id": "svc_kgstore",
+      "label": "+KG Store",
+      "icon": "",
+      "order": 690
+    },
+    {
+      "section": "Services",
+      "id": "media_games",
+      "label": "+Games",
+      "icon": "",
+      "order": 695
+    },
+    {
+      "section": "AGI",
+      "id": "prod_ai",
+      "label": "*AI",
+      "icon": "",
+      "order": 710
+    },
+    {
+      "section": "AGI",
+      "id": "prod_code",
+      "label": "*Code",
+      "icon": "",
+      "order": 720
+    },
+    {
+      "section": "AGI",
+      "id": "prod_terminals",
+      "label": "*Terminal",
+      "icon": "",
+      "order": 730
+    },
+    {
+      "section": "AGI",
+      "id": "agi_tools",
+      "label": "*Tools",
+      "icon": "",
+      "order": 740
     },
     {
       "section": "Setup",

@@ -3262,6 +3262,65 @@
             ]
           },
           {
+            "_doc": "Lnktree (was 'Projects W'; owner 2026-10-30): led by the SuperApp tile (app://com.diegonmarcos.superapp, moved here from Configs 2026-10-30), then four tiles, each LAUNCHING a real app of the Lnktree family (#1335, extapp:cg-omniverse, capital-stack-finterminal, hardtech-cad, hardtech-sim2real; folders ad_*, 1_cicd/src/data/app-families.json). The pages live in the apps (their build.json::ui), no in-app page is left here. The three '|' rules are the owner's grouping: SuperApp | Omniverse | FinTerm | CAD Sim2Real. The row id stays 'Lnktree' = the title; the old project tiles (Lf.y/Nx.z/St.x repos) are gone.",
+            "title": "Projects",
+            "tiles": [
+              {
+                "_doc": "Owner 2026-10-30: moved out of Configs to LEAD the Lnktree row (SuperApp | Omniverse | FinTerm | CAD Sim2Real; test-lnktree-row.sh); #803 had earlier moved it out of AGI into Configs. app:// resolves MAIN/LAUNCHER for the package and adds FLAG_ACTIVITY_NEW_TASK (see ShellActivity.handleTarget), which lands on .MainActivity — the app door, own taskAffinity, own Overview card. .HomeActivity (the launcher door) is a different task and is not reachable this way, which is the point. #1153 supersedes #1095: the tile launches the real app as its OWN task (app:// with NEW_TASK | LAUNCH_ADJACENT, ShellActivity.handleTarget; MainActivity is resizeableActivity), so split screen keeps this Cloud ▸ Apps page open beside it, instead of embedding a page in the launcher. test-dashboard-cross-app-deeplink.sh T7 and ConfigsTileDeepLinkTest pin it.",
+                "id": "cloud-superapp",
+                "label": "SuperApp",
+                "icon": "ic_superapp_d",
+                "target": "app://com.diegonmarcos.superapp"
+              },
+              {
+                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD Sim2Real): a bare character, not a control.",
+                "id": "lnktree-sep-0",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "Omniverse: page:cloud/omniverse (Galaxy, Game Store, VR Store).",
+                "id": "omniverse",
+                "label": "Omniverse",
+                "icon": "ic_p_sol_other",
+                "target": "extapp:cg-omniverse"
+              },
+              {
+                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD Sim2Real): a bare character, not a control.",
+                "id": "lnktree-sep-1",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "FinTerm: section:finterm, the FI | EQ | EX | NW | PM | MY-PM tab strip.",
+                "id": "finterm",
+                "label": "FinTerm",
+                "icon": "ic_p_markets_terminal",
+                "target": "extapp:capital-stack-finterminal"
+              },
+              {
+                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD Sim2Real): a bare character, not a control.",
+                "id": "lnktree-sep-2",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "CAD: page:cloud/cad (MCAD, BIM, SolWrk).",
+                "id": "cad",
+                "label": "CAD",
+                "icon": "ic_p_sol_pro",
+                "target": "extapp:hardtech-cad"
+              },
+              {
+                "_doc": "Sim2Real: page:cloud/sim2real (SAP2000, MATLAB, Ansys).",
+                "id": "sim2real",
+                "label": "Sim2Real",
+                "icon": "ic_p_sol_tools",
+                "target": "extapp:hardtech-sim2real"
+              }
+            ]
+          },
+          {
             "_doc": "#1473/#1476 Weby Services & Markets (was Services): the row after Me and before AGI. News moved here from Data Apps; Shopping (ac_cloud-shopping, com.diegonmarcos.cloudshopping, a deals and listings browser over mock data) joined it. Both open their own app through ui.external_apps; the Shopping glyph ic_shopping is generated from ac_cloud-shopping/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable). Events, Mobility and Jobs are coming_soon placeholders (no app yet). Search moved in before News Shopping and KG Store after them, with a declared separator between the sub-groups (#1476). Pinned by test-agi-tiles.sh (AGI follows Services) and test-services-row.sh.",
             "title": "Services",
             "tiles": [
@@ -3414,65 +3473,6 @@
                 "label": "Terminal",
                 "icon": "ic_terminal",
                 "target": "extapp:cloud-terminal-nix"
-              }
-            ]
-          },
-          {
-            "_doc": "Lnktree (was 'Projects W'; owner 2026-10-30): led by the SuperApp tile (app://com.diegonmarcos.superapp, moved here from Configs 2026-10-30), then four tiles, each LAUNCHING a real app of the Lnktree family (#1335, extapp:cg-omniverse, capital-stack-finterminal, hardtech-cad, hardtech-sim2real; folders ad_*, 1_cicd/src/data/app-families.json). The pages live in the apps (their build.json::ui), no in-app page is left here. The three '|' rules are the owner's grouping: SuperApp | Omniverse | FinTerm | CAD Sim2Real. The row id stays 'Lnktree' = the title; the old project tiles (Lf.y/Nx.z/St.x repos) are gone.",
-            "title": "Projects",
-            "tiles": [
-              {
-                "_doc": "Owner 2026-10-30: moved out of Configs to LEAD the Lnktree row (SuperApp | Omniverse | FinTerm | CAD Sim2Real; test-lnktree-row.sh); #803 had earlier moved it out of AGI into Configs. app:// resolves MAIN/LAUNCHER for the package and adds FLAG_ACTIVITY_NEW_TASK (see ShellActivity.handleTarget), which lands on .MainActivity — the app door, own taskAffinity, own Overview card. .HomeActivity (the launcher door) is a different task and is not reachable this way, which is the point. #1153 supersedes #1095: the tile launches the real app as its OWN task (app:// with NEW_TASK | LAUNCH_ADJACENT, ShellActivity.handleTarget; MainActivity is resizeableActivity), so split screen keeps this Cloud ▸ Apps page open beside it, instead of embedding a page in the launcher. test-dashboard-cross-app-deeplink.sh T7 and ConfigsTileDeepLinkTest pin it.",
-                "id": "cloud-superapp",
-                "label": "SuperApp",
-                "icon": "ic_superapp_d",
-                "target": "app://com.diegonmarcos.superapp"
-              },
-              {
-                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD Sim2Real): a bare character, not a control.",
-                "id": "lnktree-sep-0",
-                "label": "|",
-                "separator": true
-              },
-              {
-                "_doc": "Omniverse: page:cloud/omniverse (Galaxy, Game Store, VR Store).",
-                "id": "omniverse",
-                "label": "Omniverse",
-                "icon": "ic_p_sol_other",
-                "target": "extapp:cg-omniverse"
-              },
-              {
-                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD Sim2Real): a bare character, not a control.",
-                "id": "lnktree-sep-1",
-                "label": "|",
-                "separator": true
-              },
-              {
-                "_doc": "FinTerm: section:finterm, the FI | EQ | EX | NW | PM | MY-PM tab strip.",
-                "id": "finterm",
-                "label": "FinTerm",
-                "icon": "ic_p_markets_terminal",
-                "target": "extapp:capital-stack-finterminal"
-              },
-              {
-                "_doc": "Group divider (owner: SuperApp | Omniverse | FinTerm | CAD Sim2Real): a bare character, not a control.",
-                "id": "lnktree-sep-2",
-                "label": "|",
-                "separator": true
-              },
-              {
-                "_doc": "CAD: page:cloud/cad (MCAD, BIM, SolWrk).",
-                "id": "cad",
-                "label": "CAD",
-                "icon": "ic_p_sol_pro",
-                "target": "extapp:hardtech-cad"
-              },
-              {
-                "_doc": "Sim2Real: page:cloud/sim2real (SAP2000, MATLAB, Ansys).",
-                "id": "sim2real",
-                "label": "Sim2Real",
-                "icon": "ic_p_sol_tools",
-                "target": "extapp:hardtech-sim2real"
               }
             ]
           },
@@ -4036,6 +4036,22 @@
           ]
         },
         {
+          "title": "Projects",
+          "_doc_surface": "QUICKMARKS, and that is the whole point of this group. The owner asked for it 'after Tools Primary and Before Configs', and Configs exists on no other surface — ui.phone_sections (the All Apps taxonomy) has no such section — so the anchor named this array and only this array. It was first built on 2026-09-10 as a '#' section in ui.phone_sections instead, which is the page the owner was not talking about; that section is gone and the folders it held went back where they came from. Position is meaning here: this group sits at index 4, between Tools Primary and Configs, and SuitePhoneAppsFragment.parseGroups preserves array order with no sort anywhere, so the index in this file is the order on the screen.",
+          "_doc_loose_tiles": "#1764 The Projects group holds ONE web-shortcut tile, Linktree (`links`, not `packages`): a link entry {label, url, icon} that opens in Cloud Browser and falls back to the default browser. Every app that used to be listed here moved to its real group, none dropped: ClickUp to Data (Agenda), Google Fit to Me (Health), FatSecret to Me (Nutrition), Todaii German to Me (Learning), NomadMania to Services (Mobility & Travel) and the Money folder to Services. `packages` stays declared and empty so every reader keeps its shape.",
+          "_doc_google_health": "com.google.android.apps.fitness is Google Fit, read as the owner's 'Google Health'. The other reading is Health Connect (com.google.android.apps.healthdata, known to this repo as libs/health HealthConnectGateway.PROVIDER_PACKAGE), which is a data broker with no interface to open rather than an app you work in. Swap the pkg if that was meant.",
+          "_doc_clickup": "ClickUp ships under its parent company, Mango Technologies — co.mangotechnologies.clickup. The guessable com.clickup.android resolves to nothing, and since 149c5b9 an unresolved curated entry renders as a permanent 'Not installed' tile rather than hiding, so a wrong id here is furniture on the owner's screen.",
+          "_doc_folders": "'Folder.\"Money\"(all bank apps)'. This file's own answer to which packages are the bank apps is the -Money folder in ui.phone_folders (svc_money, Services · Buro), so this list is that folder's twelve exact package ids — its thirteenth keyword is the `pkg^com.btg.pactual.` family rule, which is a classifier pattern and not something a tile can launch. Curating them HERE is a copy, not a move: quickmarks and All apps are two pages, and an app appearing on both is how every other group in this array already works. -Money stays in Buro untouched.",
+          "packages": [],
+          "links": [
+            {
+              "label": "Linktree",
+              "url": "https://linktree.diegonmarcos.com",
+              "icon": "ic_link_tile"
+            }
+          ]
+        },
+        {
           "title": "Services",
           "packages": [],
           "folders": [
@@ -4269,22 +4285,6 @@
                 }
               ],
               "icon_res": "ic_terminal"
-            }
-          ]
-        },
-        {
-          "title": "Projects",
-          "_doc_surface": "QUICKMARKS, and that is the whole point of this group. The owner asked for it 'after Tools Primary and Before Configs', and Configs exists on no other surface — ui.phone_sections (the All Apps taxonomy) has no such section — so the anchor named this array and only this array. It was first built on 2026-09-10 as a '#' section in ui.phone_sections instead, which is the page the owner was not talking about; that section is gone and the folders it held went back where they came from. Position is meaning here: this group sits at index 4, between Tools Primary and Configs, and SuitePhoneAppsFragment.parseGroups preserves array order with no sort anywhere, so the index in this file is the order on the screen.",
-          "_doc_loose_tiles": "#1764 The Projects group holds ONE web-shortcut tile, Linktree (`links`, not `packages`): a link entry {label, url, icon} that opens in Cloud Browser and falls back to the default browser. Every app that used to be listed here moved to its real group, none dropped: ClickUp to Data (Agenda), Google Fit to Me (Health), FatSecret to Me (Nutrition), Todaii German to Me (Learning), NomadMania to Services (Mobility & Travel) and the Money folder to Services. `packages` stays declared and empty so every reader keeps its shape.",
-          "_doc_google_health": "com.google.android.apps.fitness is Google Fit, read as the owner's 'Google Health'. The other reading is Health Connect (com.google.android.apps.healthdata, known to this repo as libs/health HealthConnectGateway.PROVIDER_PACKAGE), which is a data broker with no interface to open rather than an app you work in. Swap the pkg if that was meant.",
-          "_doc_clickup": "ClickUp ships under its parent company, Mango Technologies — co.mangotechnologies.clickup. The guessable com.clickup.android resolves to nothing, and since 149c5b9 an unresolved curated entry renders as a permanent 'Not installed' tile rather than hiding, so a wrong id here is furniture on the owner's screen.",
-          "_doc_folders": "'Folder.\"Money\"(all bank apps)'. This file's own answer to which packages are the bank apps is the -Money folder in ui.phone_folders (svc_money, Services · Buro), so this list is that folder's twelve exact package ids — its thirteenth keyword is the `pkg^com.btg.pactual.` family rule, which is a classifier pattern and not something a tile can launch. Curating them HERE is a copy, not a move: quickmarks and All apps are two pages, and an app appearing on both is how every other group in this array already works. -Money stays in Buro untouched.",
-          "packages": [],
-          "links": [
-            {
-              "label": "Linktree",
-              "url": "https://linktree.diegonmarcos.com",
-              "icon": "ic_link_tile"
             }
           ]
         },
@@ -7331,8 +7331,40 @@
         ]
       },
       {
-        "id": "svc_search",
+        "id": "proj_superapp",
         "order": "510",
+        "label": "#SuperApp",
+        "match_keywords": [
+          "pkg:com.diegonmarcos.superapp"
+        ]
+      },
+      {
+        "id": "proj_omniverse",
+        "order": "520",
+        "label": "#Omniverse",
+        "match_keywords": []
+      },
+      {
+        "id": "proj_finterm",
+        "order": "530",
+        "label": "#FinTerm",
+        "match_keywords": []
+      },
+      {
+        "id": "proj_cad",
+        "order": "540",
+        "label": "#CAD",
+        "match_keywords": []
+      },
+      {
+        "id": "proj_sim2real",
+        "order": "550",
+        "label": "#Sim2Real",
+        "match_keywords": []
+      },
+      {
+        "id": "svc_search",
+        "order": "610",
         "label": "+Search",
         "match_keywords": [
           "pkg:com.google.android.googlequicksearchbox"
@@ -7340,7 +7372,7 @@
       },
       {
         "id": "hlth_news",
-        "order": "520",
+        "order": "620",
         "label": "+News",
         "match_keywords": [
           "pkg:com.checkitt",
@@ -7357,7 +7389,7 @@
       },
       {
         "id": "svc_shopping",
-        "order": "530",
+        "order": "630",
         "label": "+Shopping",
         "match_keywords": [
           "pkg:com.amazon.mShop.android.shopping",
@@ -7372,7 +7404,7 @@
       },
       {
         "id": "svc_events",
-        "order": "540",
+        "order": "640",
         "label": "+Events",
         "match_keywords": [
           "pkg:com.codekarussell.rausgegangen",
@@ -7385,7 +7417,7 @@
       },
       {
         "id": "media_video",
-        "order": "545",
+        "order": "645",
         "label": "+Media Center",
         "match_keywords": [
           "pkg:com.amazon.avod.thirdpartyclient",
@@ -7415,7 +7447,7 @@
       },
       {
         "id": "svc_mobility",
-        "order": "550",
+        "order": "650",
         "label": "+Mobility & Travel",
         "match_keywords": [
           "pkg:cat.atm.tmobilitat",
@@ -7461,7 +7493,7 @@
       },
       {
         "id": "svc_jobs",
-        "order": "560",
+        "order": "660",
         "label": "+Jobs & Business",
         "match_keywords": [
           "pkg:com.linkedin.android",
@@ -7471,7 +7503,7 @@
       },
       {
         "id": "svc_realestate",
-        "order": "570",
+        "order": "670",
         "label": "+Real Estate",
         "match_keywords": [
           "pkg:de.is24.android",
@@ -7480,7 +7512,7 @@
       },
       {
         "id": "svc_money",
-        "order": "580",
+        "order": "680",
         "label": "+Money",
         "match_keywords": [
           "pkg:com.binance.dev",
@@ -7502,13 +7534,13 @@
       },
       {
         "id": "svc_kgstore",
-        "order": "590",
+        "order": "690",
         "label": "+KG Store",
         "match_keywords": []
       },
       {
         "id": "media_games",
-        "order": "595",
+        "order": "695",
         "label": "+Games",
         "match_keywords": [
           "pkg:com.epicgames.portal",
@@ -7523,7 +7555,7 @@
       },
       {
         "id": "prod_ai",
-        "order": "610",
+        "order": "710",
         "label": "*AI",
         "match_keywords": [
           "pkg:ai.perplexity.app.android",
@@ -7544,7 +7576,7 @@
       },
       {
         "id": "prod_code",
-        "order": "620",
+        "order": "720",
         "label": "*Code",
         "match_keywords": [
           "pkg:com.foxdebug.acode",
@@ -7554,7 +7586,7 @@
       },
       {
         "id": "prod_terminals",
-        "order": "630",
+        "order": "730",
         "label": "*Terminal",
         "match_keywords": [
           "pkg:cld.termux.nix.boot",
@@ -7568,40 +7600,8 @@
       },
       {
         "id": "agi_tools",
-        "order": "640",
-        "label": "*Tools",
-        "match_keywords": []
-      },
-      {
-        "id": "proj_superapp",
-        "order": "710",
-        "label": "#SuperApp",
-        "match_keywords": [
-          "pkg:com.diegonmarcos.superapp"
-        ]
-      },
-      {
-        "id": "proj_omniverse",
-        "order": "720",
-        "label": "#Omniverse",
-        "match_keywords": []
-      },
-      {
-        "id": "proj_finterm",
-        "order": "730",
-        "label": "#FinTerm",
-        "match_keywords": []
-      },
-      {
-        "id": "proj_cad",
         "order": "740",
-        "label": "#CAD",
-        "match_keywords": []
-      },
-      {
-        "id": "proj_sim2real",
-        "order": "750",
-        "label": "#Sim2Real",
+        "label": "*Tools",
         "match_keywords": []
       },
       {
@@ -7755,16 +7755,16 @@
         "prefix": "~"
       },
       {
+        "title": "Projects",
+        "prefix": "#"
+      },
+      {
         "title": "Services",
         "prefix": "+"
       },
       {
         "title": "AGI",
         "prefix": "*"
-      },
-      {
-        "title": "Projects",
-        "prefix": "#"
       },
       {
         "title": "Setup",
