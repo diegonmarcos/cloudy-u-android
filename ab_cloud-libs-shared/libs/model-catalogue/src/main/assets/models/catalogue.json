@@ -655,18 +655,18 @@
       },
       {
        "provider": "StepFun",
-       "id": "stepfun/step-3.5-flash",
-       "name": "Step 3.5 Flash",
+       "id": "stepfun/step-3.7-flash",
+       "name": "Step 3.7 Flash",
        "params": "MoE 196B / 11B",
        "params_est": false,
        "license": "Apache-2.0",
        "license_est": true,
        "snapshot": {
         "unit": "tokens",
-        "in": 0.1,
-        "out": 0.3,
-        "floor_in": 0.1,
-        "floor_out": 0.3
+        "in": 0.2,
+        "out": 1.15,
+        "floor_in": 0.2,
+        "floor_out": 1.15
        }
       },
       {
@@ -921,27 +921,11 @@
       },
       {
        "provider": "NVIDIA",
-       "id": "nvidia/llama-nemotron-embed-vl-1b-v2:free",
-       "name": "Llama Nemotron Embed VL 1B V2",
+       "id": "nvidia/nemotron-3.5-embed-1b:free",
+       "name": "Nemotron 3.5 Embed 1B",
        "params": "Dense 1B",
        "params_est": false,
        "license": "NVIDIA Open Model",
-       "license_est": true,
-       "snapshot": {
-        "unit": "tokens",
-        "in": 0.0,
-        "out": 0.0,
-        "floor_in": 0.0,
-        "floor_out": 0.0
-       }
-      },
-      {
-       "provider": "Liquid",
-       "id": "liquid/lfm-2.5-embedding-350m:free",
-       "name": "LFM2.5-Embedding-350M",
-       "params": "Dense 350M",
-       "params_est": false,
-       "license": "LFM Open License",
        "license_est": true,
        "snapshot": {
         "unit": "tokens",
@@ -1107,9 +1091,9 @@
       },
       {
        "provider": "Liquid",
-       "id": "liquid/lfm-2.5-2.6b:free",
-       "name": "LFM2.5-2.6B",
-       "params": "Dense 2.6B",
+       "id": "liquid/lfm-3-1.7b:free",
+       "name": "LFM3-1.7B",
+       "params": "Dense 1.7B",
        "params_est": false,
        "license": "LFM Open License",
        "license_est": true,
