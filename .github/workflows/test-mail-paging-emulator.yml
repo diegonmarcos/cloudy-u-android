@@ -200,7 +200,7 @@ jobs:
           grep -E "OfflineSyncWorker" walk-out/bg/logcat-stream.txt | head -5 | tee walk-out/bg/worker-log.txt || true
           # Configs: the Download attachments setting. Mail's own settings screen is the "settings" route, reached from the drawer.
           adb shell am force-stop "$PKG"; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1; sleep 12
-          adb shell input swipe 5 1200 800 1200 250; sleep 2
+          adb shell input swipe 60 1200 900 1200 300; sleep 2
           bshot 04a-drawer; uidump 04a-drawer
           if uitap "Settings" exact || uitap "Configs" exact; then
             sleep 4
