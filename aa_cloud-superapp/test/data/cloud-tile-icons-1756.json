@@ -1,5 +1,5 @@
 {
- "_doc": "#1756 Cloud quickmark tiles BEFORE the reorg (origin/main 3786a0796): tile id -> icon drawable. The reorg must not change any Cloud quickmark icon. #1778 adds the two tiles the Projects row gained (Wiki and Circusverse): their icons are pinned here too, and test-quickmarks-categories-1756.sh pins the row order Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse.",
+ "_doc": "#1756 Cloud quickmark tiles BEFORE the reorg (origin/main 3786a0796): tile id -> icon drawable. The reorg must not change any Cloud quickmark icon. #1780 adds the Canvas tile (Primary, right after Camera). #1778 adds the two tiles the Projects row gained (Wiki and Circusverse): their icons are pinned here too, and test-quickmarks-categories-1756.sh pins the row order Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse.",
  "tiles": {
   "drive-conn": {
    "icon": "ic_drive",
@@ -24,6 +24,11 @@
   "camera": {
    "icon": "ic_camera",
    "label": "Camera",
+   "tint": null
+  },
+  "canvas": {
+   "icon": "ic_canvas",
+   "label": "Canvas",
    "tint": null
   },
   "keyboard": {

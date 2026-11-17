@@ -68,7 +68,7 @@ check(sorted(x['order'] for x in folders) == [x['order'] for x in folders] or Tr
 orders = [int(x['order']) for x in folders]
 check(orders == sorted(orders) and len(set(orders)) == len(orders), 'folder orders are unique and ascending (render order = section order)')
 want = {
- '=': ['Browser', 'Nav', 'Calc', 'Camera', 'Keyboard', 'Wallet', 'Utilities'],
+ '=': ['Browser', 'Nav', 'Calc', 'Camera', 'Canvas', 'Keyboard', 'Wallet', 'Utilities'],
  '@': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts', 'Social'],
  '.': ['Drive', 'Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
  '~': ['Me', 'Health', 'Gov & ID', 'Telecom', 'Home & Housing', 'Outdoor & Sport', 'Nutrition', 'Learning'],
@@ -131,7 +131,7 @@ for g in phone:
         continue
     check(not g['packages'] and g.get('folders'), '%s holds folders only (#1764): one folder per Cloud app tile' % g['title'])
 WANT_FOLDERS = {
- 'Primary': ['Drive', 'Browser', 'Calc', 'Nav', 'Camera', 'Keyboard', 'Wallet'],
+ 'Primary': ['Drive', 'Browser', 'Calc', 'Nav', 'Camera', 'Canvas', 'Keyboard', 'Wallet'],
  'Communication': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts'],
  'Data': ['Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
  'Me': ['Me-Health', 'Experiences', 'Socials', 'Me-Buro'],
@@ -212,6 +212,10 @@ check(all(now.get(tid) == o['icon'] for tid, o in snap.items()), 'all %d Cloud t
 proj = [g for g in cloud if g['title'] == 'Projects'][0]['tiles']
 check(' '.join('|' if t.get('separator') else t['label'] for t in proj) == 'Wiki | SuperApp Omniverse | FinTerm BioMed CAD | Circusverse', 'the Projects row reads Wiki | SuperApp Omniverse | FinTerm BioMed CAD | Circusverse (#1778)')
 check(now.get('wiki') == snap['wiki']['icon'] == 'ic_wiki' and now.get('circusverse') == snap['circusverse']['icon'], 'the two new Projects tiles keep their pinned icons (#1778)')
+# #1780 Cloud Canvas sits in Primary immediately after Camera, with its own icon.
+prim = [g for g in cloud if g['title'] == 'Primary'][0]['tiles']
+labels = [t['label'] for t in prim if not t.get('separator')]
+check(labels.index('Canvas') == labels.index('Camera') + 1 and now.get('canvas') == snap['canvas']['icon'] == 'ic_canvas', 'Canvas follows Camera in Primary and keeps its pinned icon (#1780)')
 circ = [t for t in proj if t.get('id') == 'circusverse'][0]
 check(circ.get('coming_soon') is True and not circ.get('target') and not circ.get('separator'), 'Circusverse is a disabled coming_soon tile with no target (#1778)')
 check(not [e for e in bj['external_apps'] if 'circus' in e['id']], 'Circusverse has no external app entry (#1778)')

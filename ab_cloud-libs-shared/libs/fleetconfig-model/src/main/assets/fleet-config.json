@@ -2705,6 +2705,22 @@
       "used_by": [
         "lib-updater"
       ]
+    },
+    "canvas_draw": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "#1780 Cloud Canvas Draw: the recent colours of the colour picker (a comma list of ARGB hex values, most recent first). Part of the app's settings, so it migrates.",
+      "used_by": [
+        "ac_cloud-canvas"
+      ]
+    },
+    "canvas_folders": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1780 Cloud Canvas: the export folders (PNG and WAV) the user chose through the Storage Access Framework, as tree Uris. The grant is per phone, so it does not migrate.",
+      "used_by": [
+        "ac_cloud-canvas"
+      ]
     }
   },
   "bundle": {
@@ -3530,6 +3546,27 @@
           "doc": "Optional offline voice model dir; engine not present, so nothing to move."
         }
       ]
+    },
+    "canvas": {
+      "package": "com.diegonmarcos.cloudcanvas",
+      "module": "ac_cloud-canvas",
+      "schema_version": 1,
+      "libs": [
+        "lib-bottomnav",
+        "lib-core",
+        "lib-crash",
+        "lib-devtools",
+        "lib-fleetconfig-model",
+        "lib-fleetconfigs-agents",
+        "lib-fleetconfigs-logcat",
+        "lib-fleetconfigs-xray",
+        "lib-perms",
+        "lib-theme-background",
+        "lib-ui-icons",
+        "lib-ui-kit",
+        "lib-ui-nav-bars"
+      ],
+      "items": []
     },
     "chat": {
       "package": "com.diegonmarcos.comms.chat",

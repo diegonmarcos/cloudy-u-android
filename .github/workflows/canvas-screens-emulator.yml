@@ -1,0 +1,78 @@
+# ╔═════════════════════════════════════════════════════════════════
+# ║ Cloud Canvas screenshots (emulator, dispatch only) (#1780)               ║
+# ║ Installs the published Cloud Canvas (x86_64) on a Pixel 7 emulator and   ║
+# ║ captures Draw with a drawing, Draw layers, Play instruments and the Play ║
+# ║ mixer. Script: ac_cloud-canvas/test/emulator-canvas-screens.sh. Evidence: ║
+# ║ the `canvas-screens` artifact. Not a gate: a screenshot job, run on      ║
+# ║ request only (rules/ci.md cost budget).                                  ║
+# ╚═════════════════════════════════════════════════════════════════
+name: "Test → Cloud Canvas screenshots (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release the Cloud Canvas x86_64 APK is downloaded from"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+
+jobs:
+  screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ac_cloud-canvas/test
+      - name: Fetch the published APK (x86_64)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -eu
+          gh release download "${TAG:-latest}" -R "$GITHUB_REPOSITORY" -p 'Cloud-Canvas-x86_64.apk' -D apk
+          ls -l apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot the emulator and capture (attempt 1)
+        id: try1
+        continue-on-error: true
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-canvas/test/emulator-canvas-screens.sh apk/Cloud-Canvas-x86_64.apk out
+      # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
+      - name: Boot the emulator and capture (attempt 2)
+        if: steps.try1.outcome != 'success'
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-canvas/test/emulator-canvas-screens.sh apk/Cloud-Canvas-x86_64.apk out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: canvas-screens
+          path: out
+          if-no-files-found: warn

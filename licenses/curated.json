@@ -271,6 +271,12 @@
    "upstream_module": "camera",
    "what": "GrapheneOS Camera fork"
   },
+  "ac_cloud-canvas": {
+   "licence": "LicenseRef-NoLicenseGranted",
+   "kind": "own",
+   "what": "Cloud Canvas app (Draw: a paint app on the Compose canvas; Play: a music mixer with a piano, drum pads and a synth, a multitrack mixer and WAV export; every sound is synthesized in code, no sample files, no third-party audio)",
+   "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
+  },
   "ac_cloud-chat": {
    "licence": "Apache-2.0",
    "kind": "upstream-fork",

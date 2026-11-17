@@ -2011,6 +2011,21 @@
    ]
   },
   {
+   "id": "canvas",
+   "pkg": "com.diegonmarcos.cloudcanvas",
+   "label": "cloud-canvas",
+   "kind": "app",
+   "dir": "ac_cloud-canvas",
+   "door": true,
+   "libs": [
+    "core",
+    "devtools",
+    "fleetconfig-model",
+    "perms"
+   ],
+   "endpoints": []
+  },
+  {
    "id": "chat",
    "pkg": "com.diegonmarcos.comms.chat",
    "label": "cloud-chat",

@@ -122,6 +122,7 @@
     "com.diegonmarcos.cloudlib.fleetconfigslogcat": 38244,
     "com.diegonmarcos.cloudlib.fleetconfigsxray": 38245,
     "com.diegonmarcos.cloudwiki": 38246,
+    "com.diegonmarcos.cloudcanvas": 38247,
     "com.diegonmarcos.cloudlib.accountui": 38090
   }
 }

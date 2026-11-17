@@ -8,7 +8,7 @@
  },
  "json_max": 94,
  "gradle_max": 22,
- "b64_max": 303,
+ "b64_max": 304,
  "mock_files": [
   "shop.json",
   "mock-tasks.json"
@@ -438,6 +438,7 @@
   "ac_cloud-c3/app/build.gradle": 22,
   "ac_cloud-calc/app/build.gradle": 10,
   "ac_cloud-camera/app/build.gradle.kts": 1,
+  "ac_cloud-canvas/app/build.gradle": 1,
   "ac_cloud-contacts/app/build.gradle": 5,
   "ac_cloud-dialer/app/build.gradle.kts": 1,
   "ac_cloud-drive/app/build.gradle": 27,

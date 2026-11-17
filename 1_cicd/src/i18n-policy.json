@@ -48,6 +48,9 @@
     "ac_cloud-wiki/app": {
       "base_language": "en"
     },
+    "ac_cloud-canvas/app": {
+      "base_language": "en"
+    },
     "ad_CG-Omniverse/app": {
       "base_language": "en"
     },

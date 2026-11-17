@@ -20,9 +20,9 @@ eq "no Cloud group is still titled 'Tools Primary'" "$(jq -r '[.ui.sections[] | 
 
 echo "== T1: the full row (tiles + dividers), in the owner's order =="
 GOT="$(jq -r "$GROUP | [.tiles[].label] | join(\",\")" "$BJ")"
-eq "full tile row incl. dividers" "$GOT" "Drive,Browser,|,Calc,Navigation,Camera,Keyboard,||,Wallet"
+eq "full tile row incl. dividers" "$GOT" "Drive,Browser,|,Calc,Navigation,Camera,Canvas,Keyboard,||,Wallet"
 APPS="$(jq -r "$GROUP | [.tiles[] | select(.separator != true) | .label] | join(\",\")" "$BJ")"
-eq "the seven tools, dividers removed" "$APPS" "Drive,Browser,Calc,Navigation,Camera,Keyboard,Wallet"
+eq "the seven tools, dividers removed" "$APPS" "Drive,Browser,Calc,Navigation,Camera,Canvas,Keyboard,Wallet"
 eq "single '|' divider sits after Browser" "$(jq -r "$GROUP | ([.tiles[].label] | index(\"|\")) as \$i | \"\(.tiles[\$i-1].label)>\(.tiles[\$i].separator)\"" "$BJ")" "Browser>true"
 eq "DOUBLE '||' divider sits after Keyboard, double:true" "$(jq -r "$GROUP | ([.tiles[].label] | index(\"||\")) as \$i | \"\(.tiles[\$i-1].label)>\(.tiles[\$i].double)\"" "$BJ")" "Keyboard>true"
 eq "exactly one Wallet tile, still an app hand-off" "$(jq -r "$GROUP | [.tiles[] | select(.label == \"Wallet\") | .target] | join(\",\")" "$BJ")" "extapp:cloud-wallet"

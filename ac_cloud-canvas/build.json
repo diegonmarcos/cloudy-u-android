@@ -1,0 +1,316 @@
+{
+  "launcher_icon": {
+    "_doc": "The launcher icon, generated from this declaration by 1_cicd/src/scripts/cloud-android-launcher-icons.py (pattern + category colours + glyphs in 1_cicd/src/data/launcher-icons.json). Never edit the generated res files.",
+    "glyph": "canvas",
+    "category": "tools",
+    "res": "app/src/main/res",
+    "tile": "ic_canvas"
+  },
+  "name": "cloud-canvas",
+  "display_name": "Cloud Canvas",
+  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), and Play, a music mixer with a piano, drum pads and a synth (all synthesized, low-latency AudioTrack), a 4 to 8 track mixer with loop recording and WAV export. Bottom nav Draw | Play.",
+  "category": "android",
+  "android": {
+    "application_id": "com.diegonmarcos.cloudcanvas",
+    "_doc_application_id": "The fleet name with its separator dropped, as cloudcalc / cloudsearch.",
+    "compile_sdk": 36,
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "version_code": 1,
+    "version_name": "0.1.0-dev",
+    "abi_filters": [
+      "arm64-v8a"
+    ]
+  },
+  "build": {
+    "type": "gradle",
+    "entry": "build.sh"
+  },
+  "signing": {
+    "_doc": "ONE shared Cloud-constellation signing key for ALL Android apps. KEY LOCATION: Shared/Providers/D_TOOLS-DEVICES/d2-android/release.jks (OU=Cloud Constellation) + Shared/Providers/D_TOOLS-DEVICES/d2-android/signing.secrets.yaml.",
+    "vault_keystore": "Shared/Providers/D_TOOLS-DEVICES/d2-android/release.jks",
+    "vault_secrets": "Shared/Providers/D_TOOLS-DEVICES/d2-android/signing.secrets.yaml"
+  },
+  "diagnostics": {
+    "log_sink_url": "",
+    "log_sink_stream": "cloud-canvas"
+  },
+  "release": {
+    "artifact": {
+      "debug": "Cloud-Canvas.apk",
+      "release": "Cloud-Canvas-release.apk"
+    },
+    "variants": [
+      {
+        "id": "arm64",
+        "abis": [
+          "arm64-v8a"
+        ],
+        "supported_abis": [
+          "arm64-v8a",
+          "armeabi-v7a"
+        ],
+        "artifact_debug": "Cloud-Canvas.apk",
+        "gh_asset": "Cloud-Canvas.apk",
+        "ghcr_tag_suffix": "",
+        "update_tag": "latest"
+      },
+      {
+        "id": "x86_64",
+        "abis": [
+          "x86_64"
+        ],
+        "supported_abis": [
+          "x86_64",
+          "x86"
+        ],
+        "artifact_debug": "Cloud-Canvas-x86_64.apk",
+        "gh_asset": "Cloud-Canvas-x86_64.apk",
+        "ghcr_tag_suffix": "-x86_64",
+        "update_tag": "latest-x86_64"
+      }
+    ],
+    "auto_update": {
+      "enabled": false,
+      "tag": "latest",
+      "interval_hours": 6,
+      "require_unmetered_network": true,
+      "require_charging": false,
+      "install_mode": "silent",
+      "_doc_max_installs_per_pass": "Most install sessions ONE unattended background pass may open. A background pass cannot show the system install dialog (Android 10+ blocks background activity starts), so each install it starts leaves a tap-to-install notification holding a PackageInstaller session until the user answers it. Unbounded, one pass over the 40-entry fleet opens 40 and the installer hits Android's 50-session cap - 'Too many active sessions for UID'. The remainder is picked up by the next pass. User-initiated 'Update all' is NOT capped: it runs in the foreground where the dialog appears and sessions resolve at once.",
+      "max_installs_per_pass": 3,
+      "_doc_enabled": "Off because this app compiles no libs:updater: the Store updates it, as it does Cloud Calc and Cloud Search."
+    },
+    "ghcr": {
+      "enabled": true,
+      "registry": "ghcr.io",
+      "namespace": "diegonmarcos",
+      "image": "cloud-canvas",
+      "media_type": "application/vnd.android.package-archive",
+      "tags": [
+        "latest",
+        "sha-{sha}",
+        "v{version_name}"
+      ]
+    },
+    "gh_release": {
+      "enabled": true,
+      "rolling_tag": "latest",
+      "asset_name": "Cloud-Canvas.apk",
+      "draft": false,
+      "prerelease": false,
+      "generate_release_notes": false
+    },
+    "phone_install": {
+      "default_tag": "latest",
+      "target_dir": "~/storage/downloads",
+      "asset_name": "Cloud-Canvas.apk"
+    }
+  },
+  "modules": {
+    "_doc": "Single source of truth for the Gradle module graph; settings.gradle iterates it. No `logic` lib is compiled in (lib-classes L4): the Store installs and updates this app, as it does Cloud Calc.",
+    "app": {
+      "type": "application",
+      "depends_on": [
+        "libs:core",
+        "libs:bottomnav",
+        "libs:ui-icons",
+        "libs:ui-nav-bars",
+        "libs:fleetconfigs-agents",
+        "libs:fleetconfigs-logcat",
+        "libs:fleetconfigs-xray",
+        "libs:theme-background",
+        "libs:ui-kit"
+      ]
+    },
+    "libs:core": {
+      "dir": "../ab_cloud-libs-shared/libs/core",
+      "type": "library"
+    },
+    "libs:devtools": {
+      "_doc_dir": "Not linked in app/build.gradle: libs:core pulls it in with an `api` dependency, which makes this app a fleet mesh member with the debug API.",
+      "dir": "../ab_cloud-libs-shared/libs/devtools",
+      "type": "library"
+    },
+    "libs:crash": {
+      "_doc": "#1122 libs:core `api`s this module (the default crash handler, the local crash sink and the generic crash screen); listed so settings.gradle resolves the path and the ship workflow's path triggers see it, not linked in the app's own gradle.",
+      "dir": "../ab_cloud-libs-shared/libs/crash",
+      "type": "library"
+    },
+    "libs:fleetconfig-model": {
+      "_doc": "#873 libs:core `api`s this module (the setup provider every app serves); listed so settings.gradle resolves the path.",
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
+      "type": "library"
+    },
+    "libs:bottomnav": {
+      "_doc": "#868 the fleet's NavDecl (ui.bottom_nav/ui.sections baked into BuildConfig), the top-bar scaffold's drawer and the scroll collapse, shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/bottomnav",
+      "type": "library"
+    },
+    "libs:ui-icons": {
+      "dir": "../ab_cloud-libs-shared/libs/ui-icons",
+      "type": "library",
+      "_doc": "#1160 the nav icon catalog (name to ImageVector, tinted or brand): every nav glyph of every app, shared BY REFERENCE; libs:bottomnav depends on it."
+    },
+    "libs:fleetconfigs-agents": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents",
+      "type": "library"
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library"
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
+      "type": "library"
+    },
+    "libs:ui-nav-bars": {
+      "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars",
+      "type": "library",
+      "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
+    },
+    "libs:fleet-data-client": {
+      "dir": "../ab_cloud-libs-shared/libs/fleet-data-client",
+      "type": "library"
+    },
+    "libs:perms": {
+      "dir": "../ab_cloud-libs-shared/libs/perms",
+      "type": "library",
+      "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."
+    },
+    "libs:theme-background": {
+      "dir": "../ab_cloud-libs-shared/libs/theme-background",
+      "type": "library",
+      "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
+    },
+    "libs:ui-kit": {
+      "_doc": "2026-10-16 owner decision: all apps are Compose. The fleet's Compose kit (CloudKitTheme, KitPalette, KitCard, KitSettingsRow, KitButton), shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/ui-kit",
+      "type": "library"
+    }
+  },
+  "tests": {
+    "_doc": "Read by 1_cicd/dist/scripts/cloud-android-test-engine.sh, which the ship workflow runs before it builds.",
+    "shell": {
+      "dir": "test",
+      "requires": [
+        "python3"
+      ]
+    },
+    "unit": {
+      "_doc": "This app's JVM suite in app/src/test: the stroke/undo model, layer ops, the PNG export path, the mixer mute/solo logic, the loop recorder timing model and the WAV encoder.",
+      "task": ":app:testDebugUnitTest",
+      "enabled": true
+    }
+  },
+  "ui": {
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Canvas (#1780): bottom nav Draw | Play, the app opens on Draw. Each section holds one page; the Draw tools and the Play instruments / mixer views are drawn inside the page, not declared as strips.",
+    "bottom_nav": [
+      "draw",
+      "play"
+    ],
+    "default_section": "draw",
+    "configs_ui": [
+      "nav_ui"
+    ],
+    "sections": [
+      {
+        "id": "draw",
+        "label": "Draw",
+        "icon": "edit",
+        "pages": [
+          {
+            "id": "draw",
+            "label": "Draw",
+            "icon": "edit"
+          }
+        ]
+      },
+      {
+        "id": "play",
+        "label": "Play",
+        "icon": "music_note",
+        "pages": [
+          {
+            "id": "play",
+            "label": "Play",
+            "icon": "music_note"
+          }
+        ]
+      }
+    ]
+  },
+  "configs_pages": {
+    "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",
+    "general": {
+      "sections": [
+        {
+          "id": "perms"
+        },
+        {
+          "id": "battery"
+        },
+        {
+          "id": "storage"
+        },
+        {
+          "id": "notifications"
+        },
+        {
+          "id": "ui"
+        },
+        {
+          "id": "language"
+        }
+      ]
+    },
+    "about": {
+      "tagline": "Paint and make music",
+      "description": "Cloud Canvas has two pages, picked in the bottom nav. Draw is a paint app with a brush, pencil, marker, eraser, fill, line, rectangle, ellipse, text and an eyedropper, a colour picker with recent colours, layers, undo and redo, pinch zoom and pan, canvas size presets and PNG export to a folder you choose. Play is a music mixer with a piano, drum pads and a synth, a multitrack mixer with loop recording and WAV export. Every sound is synthesized on the phone.",
+      "features": [
+        "Draw: brush, pencil, marker, eraser, fill, line, rectangle, ellipse, text, eyedropper",
+        "Layers with visibility, opacity and order; undo and redo; pinch zoom and pan",
+        "Canvas size presets; open a picture to paint over; export PNG to a folder you choose; share",
+        "Play: piano, drum pads, synth on a low-latency audio path",
+        "Mixer with 4 to 8 tracks: volume, pan, mute, solo, loop recording; tempo and metronome; WAV export"
+      ],
+      "screens": [
+        {
+          "name": "Draw",
+          "what": "The canvas with tools, colour, size, opacity and layers."
+        },
+        {
+          "name": "Instruments",
+          "what": "Piano, drum pads and synth."
+        },
+        {
+          "name": "Mixer",
+          "what": "Tracks with volume, pan, mute, solo and loops."
+        }
+      ],
+      "guide": [
+        "Pick a tool and draw; two fingers zoom and pan.",
+        "Export PNG asks for a folder once.",
+        "In Play, press Record and play: one loop pass is recorded on the selected track."
+      ],
+      "privacy": "No ads, no trackers, no network and no microphone: loops are recorded as notes. Files are written only to the folder you pick. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback.",
+      "backends": [],
+      "related": [
+        {
+          "app": "aa_cloud-superapp",
+          "why": "Opens this app from Cloud > Apps > Primary, after Camera."
+        },
+        {
+          "app": "ac_cloud-store",
+          "why": "Installs and updates this app."
+        }
+      ]
+    }
+  },
+  "perms": {
+    "_doc": "#1360 every grant this app needs, by libs:perms catalogue id (needs), and the fleet apps that do work for it with the grants THEY must hold (helpers). The ONE declaration: generated into assets/app-perms.json (cloud-android-perms-guard.py --write), drawn by Configs > General > Perms (libs:perms AppPermsSection) with live state, Grant / Open and Grant all, asked at first run (first_run), and reported as 'Missing permission X - Grant' when an operation fails (PermsGate). perms-guard fails when code uses a gated API or another app's engine that is not declared here, or when the manifest and this list disagree.",
+    "needs": [],
+    "helpers": [],
+    "first_run": "libs:perms"
+  }
+}

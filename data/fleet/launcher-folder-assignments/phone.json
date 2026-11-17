@@ -138,6 +138,11 @@
       "order": 1
     },
     {
+      "package": "com.diegonmarcos.cloudcanvas",
+      "folder": "prod_canvas",
+      "order": 1
+    },
+    {
       "package": "com.diegonmarcos.cloudnotes",
       "folder": "prod_docs",
       "order": 1

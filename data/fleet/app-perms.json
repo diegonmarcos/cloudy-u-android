@@ -94,6 +94,11 @@
    "first_run": "libs:perms",
    "helpers": []
   },
+  "com.diegonmarcos.cloudcanvas": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
   "com.diegonmarcos.cloudcontacts": {
    "needs": [
     "notifications",

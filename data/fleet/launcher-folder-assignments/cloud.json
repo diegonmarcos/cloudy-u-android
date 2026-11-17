@@ -24,6 +24,7 @@
     { "package": "com.diegonmarcos.mediacenter",         "folder": "gallery",   "order": 1 },
 
     { "package": "cld.camera",                           "folder": "camera",    "order": 1 },
+    { "package": "com.diegonmarcos.cloudcanvas",         "folder": "camera",    "order": 2 },
 
     { "package": "com.diegonmarcos.cloudagenda",         "folder": "tasks",     "order": 1 },
 

@@ -3052,6 +3052,13 @@
                 "target": "extapp:cloud-camera"
               },
               {
+                "_doc": "Canvas — hands off to the standalone Cloud Canvas app (ac_cloud-canvas, com.diegonmarcos.cloudcanvas, #1780): a paint app (Draw) and a music mixer (Play). The owner placed it IMMEDIATELY AFTER Camera in this row; array position is render position (GroupedTilesFragment applies no sort). Opens its own app through ui.external_apps (extapp:cloud-canvas); the glyph ic_canvas is generated from ac_cloud-canvas/build.json::launcher_icon.",
+                "id": "canvas",
+                "label": "Canvas",
+                "icon": "ic_canvas",
+                "target": "extapp:cloud-canvas"
+              },
+              {
                 "_doc": "Keyboard — hands off to the standalone Cloud-Keyboard app (ac_cloud-keyboard, com.diegonmarcos.cloudkeyboard). Same target as the Configs ▸ Keyboard entry: extapp:cloud-keyboard → MainActivity.launchExternalApp opens Cloud-Keyboard's SettingsActivity if installed, else downloads + installs ui.external_apps[id=cloud-keyboard].install_apk_url. The keyboard is a first-class Cloud app like Browser/Wallet/Vault, so it belongs in Tools Primary and not only behind Configs.",
                 "id": "keyboard",
                 "label": "Keyboard",
@@ -3754,6 +3761,17 @@
                 }
               ],
               "icon_res": "ic_camera"
+            },
+            {
+              "label": "Canvas",
+              "icon_pkg": "com.diegonmarcos.cloudcanvas",
+              "packages": [
+                {
+                  "pkg": "com.diegonmarcos.cloudcanvas",
+                  "label": "Cloud Canvas"
+                }
+              ],
+              "icon_res": "ic_canvas"
             },
             {
               "label": "Keyboard",
@@ -6984,6 +7002,14 @@
         ]
       },
       {
+        "id": "prod_canvas",
+        "order": "145",
+        "label": "=Canvas",
+        "match_keywords": [
+          "pkg:com.diegonmarcos.cloudcanvas"
+        ]
+      },
+      {
         "id": "sys_keyboards",
         "order": "150",
         "label": "=Keyboard",
@@ -10080,6 +10106,15 @@
         "hub_package": "cld.camera",
         "install_package": "cld.camera",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Camera.apk",
+        "forks": {}
+      },
+      {
+        "_doc": "#1780 Cloud Canvas (ac_cloud-canvas, published by ship-cloud-canvas.yml). Added for the Cloud > Apps > Primary 'Canvas' tile, right after Camera: every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ac_cloud-canvas/build.json::android.application_id and app/build.gradle::namespace.",
+        "id": "cloud-canvas",
+        "folder": "prod_canvas",
+        "hub_package": "com.diegonmarcos.cloudcanvas",
+        "install_package": "com.diegonmarcos.cloudcanvas",
+        "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Canvas.apk",
         "forks": {}
       },
       {
