@@ -94,10 +94,14 @@ def uiStacksB64  = b64(uiStacks)
 // source) and the Avatar configurator's declaration (data/avatar.json), baked as-is; Store.kt / Avatar.kt are the only decoders.
 def storeJson  = new groovy.json.JsonSlurper().parse(file('../data/store.json'))
 def avatarJson = new groovy.json.JsonSlurper().parse(file('../data/avatar.json'))
+// #1784 the Voxelverse tab's declaration (data/voxelverse.json), baked as-is; Voxelverse.kt is the only decoder.
+def voxelverseJson = new groovy.json.JsonSlurper().parse(file('../data/voxelverse.json'))
+if (!voxelverseJson.repo || !voxelverseJson.plan_path || !voxelverseJson.subpages) throw new GradleException("data/voxelverse.json declares no repo, no plan_path or no subpages")
 if (!storeJson.entries) throw new GradleException("data/store.json has no entries: run python3 data/gen-store.py")
 if (!avatarJson.categories || !avatarJson.default || !avatarJson.scene) throw new GradleException("data/avatar.json declares no categories, no default avatar or no scene")
 def storeB64  = b64(storeJson)
 def avatarB64 = b64(avatarJson)
+def voxelverseB64 = b64(voxelverseJson)
 // #1711 Galaxy's declared default tabs (build.json::galaxy_tabs, in tab order): every id must be a world of the catalogue.
 def galaxyTabs = (buildJson.galaxy_tabs ?: []).collect { it.toString() }
 def storeIds = storeJson.entries.collect { it.id.toString() } as Set
@@ -138,6 +142,7 @@ android {
         buildConfigField "String", "PIN_OFFLINE",        "\"${(buildJson.pin_offline ?: []).join(',')}\""
         buildConfigField "String", "GALAXY_TABS",        "\"${galaxyTabs.join(',')}\""
         buildConfigField "String", "AVATAR_B64",         "\"${avatarB64}\""
+        buildConfigField "String", "VOXELVERSE_B64",     "\"${voxelverseB64}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 

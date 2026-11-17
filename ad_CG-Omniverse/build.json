@@ -219,11 +219,12 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of CG-Omniverse: the sections on the bottom bar in order, and a hidden About behind the gear of the first row. #1335 ui.stacks[<section>] is the page of that section: a list of entries drawn by declared KIND (Pages.kt: avatar, galaxy and store own their whole page; entry, section_title and about stack in a column). An `entry` has a title, a one-line subtitle and ONE declared source for its target: `site` (the label of a link of aa_cloud-superapp/data/linktree.json), `registry` (a code of aa_cloud-superapp/build.json ui.app_urls.registry_sites) or `repo` + `path` (a repo under ui.app_urls.repo_base); app/build.gradle resolves them at BUILD time from the SuperApp's own declarations (fails if one does not resolve) and bakes UI_TARGETS_B64, so no address is typed in this file or in Kotlin. A `planned` entry has a note and no source and is drawn greyed. No price, rate or chart is declared: nothing real to show yet.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of CG-Omniverse: the sections on the bottom bar in order, and a hidden About behind the gear of the first row. #1335 ui.stacks[<section>] is the page of that section: a list of entries drawn by declared KIND (Pages.kt: avatar, galaxy, store and voxelverse (#1784, declared in data/voxelverse.json) own their whole page; entry, section_title and about stack in a column). An `entry` has a title, a one-line subtitle and ONE declared source for its target: `site` (the label of a link of aa_cloud-superapp/data/linktree.json), `registry` (a code of aa_cloud-superapp/build.json ui.app_urls.registry_sites) or `repo` + `path` (a repo under ui.app_urls.repo_base); app/build.gradle resolves them at BUILD time from the SuperApp's own declarations (fails if one does not resolve) and bakes UI_TARGETS_B64, so no address is typed in this file or in Kotlin. A `planned` entry has a note and no source and is drawn greyed. No price, rate or chart is declared: nothing real to show yet.",
     "bottom_nav": [
       "avatar",
       "galaxy",
-      "store"
+      "store",
+      "voxelverse"
     ],
     "default_section": "avatar",
     "configs_ui": [
@@ -246,6 +247,12 @@
         "id": "store",
         "label": "Store",
         "icon": "apps",
+        "pages": []
+      },
+      {
+        "id": "voxelverse",
+        "label": "Voxelverse",
+        "icon": "layers",
         "pages": []
       },
       {
@@ -272,6 +279,12 @@
         {
           "kind": "store",
           "title": "Store"
+        }
+      ],
+      "voxelverse": [
+        {
+          "kind": "voxelverse",
+          "title": "Voxelverse"
         }
       ],
       "about": [

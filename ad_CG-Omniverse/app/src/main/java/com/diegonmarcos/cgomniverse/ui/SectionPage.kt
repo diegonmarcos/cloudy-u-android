@@ -41,6 +41,7 @@ fun SectionPage(sectionId: String, galaxy: GalaxyTabs) {
         Pages.KIND_AVATAR -> return AvatarPage()
         Pages.KIND_GALAXY -> return GalaxyPage(galaxy.state, galaxy.select, galaxy.close, galaxy.add)
         Pages.KIND_STORE -> return StorePage(galaxy.open)
+        Pages.KIND_VOXELVERSE -> return VoxelversePage()
     }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp).testTag(Tags.PAGE),

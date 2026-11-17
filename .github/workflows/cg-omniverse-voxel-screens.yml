@@ -1,0 +1,133 @@
+name: "Proof → CG-Omniverse Voxelverse (emulator screenshots of the Plan and Viewer pages)"
+
+# #1784 on demand: installs the x86_64 APK of a Ship run (or the rolling release) on an emulator, opens the Voxelverse tab and
+# waits for the Plan page to read the vox-rust plan live from its repo (the status card says so, Goals and Milestones are
+# drawn); then the Viewer page. Fails when the plan never loads. Uploaded as `cg-omniverse-voxel-screens`.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ship_run_id:
+        description: "Ship → CG-Omniverse run whose x86_64 APK to walk (empty = the rolling release)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ad_CG-Omniverse
+      - name: Get the x86_64 APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN: ${{ inputs.ship_run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          if [ -n "$RUN" ]; then gh run download "$RUN" -R "$GITHUB_REPOSITORY" -p 'CG-Omniverse-x86_64-*' -D apk
+          else gh release download latest -R "$GITHUB_REPOSITORY" -p 'CG-Omniverse-x86_64.apk' -D apk; fi
+          pick=$(find apk -name '*.apk' | head -1); [ -n "$pick" ] || { echo "::error::no APK"; exit 1; }
+          cp "$pick" app.apk; ls -la app.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the walk
+        run: |
+          cat > walk.py <<'PY'
+          import re, subprocess, sys, time
+          OUT = "screens"
+          pkg = sys.argv[1]
+          def sh(*a): return subprocess.run(["adb", *a], capture_output=True, text=True, timeout=90)
+          def dump():
+              for _ in range(6):
+                  sh("shell", "uiautomator", "dump", "/sdcard/u.xml")
+                  x = sh("shell", "cat", "/sdcard/u.xml").stdout
+                  if "<hierarchy" in x: return x
+                  time.sleep(2)
+              return ""
+          def nodes(x):
+              for m in re.finditer(r'<node [^>]*>', x):
+                  n = m.group(0)
+                  t = re.search(r' text="([^"]*)"', n); d = re.search(r' content-desc="([^"]*)"', n)
+                  b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+                  if b: yield (t.group(1) if t else ""), (d.group(1) if d else ""), tuple(map(int, b.groups()))
+          def find(label):
+              return [b for t, d, b in nodes(dump()) if label in (t, d)]
+          def has(sub):
+              return any(sub in t or sub in d for t, d, b in nodes(dump()))
+          def tap(label):
+              hits = find(label)
+              if hits:
+                  x1, y1, x2, y2 = hits[-1]; sh("shell", "input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2)); time.sleep(2); return True
+              print("::warning::no '%s' on screen" % label); return False
+          def shot(name, wait=0):
+              time.sleep(wait)
+              png = b""
+              for _ in range(3):
+                  png = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
+                  if len(png) > 1000: break
+                  time.sleep(3)
+              with open("%s/%s.png" % (OUT, name), "wb") as f: f.write(png)
+              print("shot", name)
+          sh("shell", "monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1")
+          time.sleep(15)
+          shot("01-launch")
+          ok = tap("Voxelverse")
+          shot("02-voxelverse-tab", 3)
+          live = False
+          for _ in range(30):
+              if has("Read live from the repository"): live = True; break
+              time.sleep(3)
+          shot("03-plan-page", 2)
+          open("%s/03-plan.xml" % OUT, "w").write(dump())
+          sh("shell", "input", "swipe", "540", "1700", "540", "500", "400"); shot("04-plan-scrolled", 2)
+          sh("shell", "input", "swipe", "540", "1700", "540", "500", "400"); shot("05-plan-milestones", 2)
+          tap("Viewer"); shot("06-viewer-page", 3)
+          open("%s/06-viewer.xml" % OUT, "w").write(dump())
+          tap("Plan"); shot("07-back-to-plan", 2)
+          if not (ok and live):
+              print("::error::the Voxelverse tab or the live plan did not show (tab=%s live=%s)" % (ok, live)); sys.exit(5)
+          print("Voxelverse plan loaded live")
+          PY
+          cat > walk.sh <<'EOF'
+          #!/bin/bash
+          set -u
+          mkdir -p screens
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          adb install -r -g app.apk || exit 2
+          PKG=com.diegonmarcos.cgomniverse
+          adb logcat -v threadtime "*:W" > screens/logcat.txt 2>&1 &
+          python3 walk.py "$PKG"; rc=$?
+          adb shell dumpsys package "$PKG" | grep -E "versionName|codePath" > screens/package.txt || true
+          exit $rc
+          EOF
+          chmod +x walk.sh
+      - name: Boot emulator + walk
+        timeout-minutes: 30
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+      - name: Upload the screens
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cg-omniverse-voxel-screens
+          path: screens
+          retention-days: 30

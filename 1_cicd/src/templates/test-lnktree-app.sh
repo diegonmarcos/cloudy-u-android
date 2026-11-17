@@ -11,7 +11,7 @@
 #       owner's spelling and equals the folder without ad_, the application id is com.diegonmarcos.<slug without dashes> and
 #       agrees with the app's build script (namespace, applicationId) and the Kotlin package; the family is declared in
 #       1_cicd/src/data/app-families.json
-#   P2  the pages are the owner's: the bottom nav ids and labels in order (CG-Omniverse: Avatar | Galaxy | Store, each a page kind),
+#   P2  the pages are the owner's: the bottom nav ids and labels in order (CG-Omniverse: Avatar | Galaxy | Store | Voxelverse, each a page kind),
 #       the entries of each page (titles, kinds), the FX
 #       description verbatim, the PM model portfolios (bonds/equity 40/60 70/30 60/40 30/70 and DM/EM), MY-PM a holdings list
 #   P3  the shared design: bottom nav (libs:bottomnav, libs:ui-nav-bars), tokens and kit (libs:ui-kit), icons (libs:ui-icons)
@@ -50,8 +50,8 @@ def code(text):
 EXPECT = {
   "ad_CG-Omniverse": {
     "name": "cg-omniverse", "display": "CG-Omniverse", "pkg": "com.diegonmarcos.cgomniverse",
-    "nav": [("avatar", "Avatar"), ("galaxy", "Galaxy"), ("store", "Store")],
-    "pages": {"avatar": [("avatar", "Avatar")], "galaxy": [("galaxy", "Galaxy")], "store": [("store", "Store")]},
+    "nav": [("avatar", "Avatar"), ("galaxy", "Galaxy"), ("store", "Store"), ("voxelverse", "Voxelverse")],
+    "pages": {"avatar": [("avatar", "Avatar")], "galaxy": [("galaxy", "Galaxy")], "store": [("store", "Store")], "voxelverse": [("voxelverse", "Voxelverse")]},
     "sources": {},
     "planned": [],
   },
@@ -233,7 +233,7 @@ named_kinds = set(re.findall(r'KIND_\w+\s*=\s*"([^"]+)"', pages_kt))
 for k in sorted(declared_kinds - named_kinds): bad.append("P6 build.json declares the kind %r that Pages.kt does not name" % k)
 for k in sorted(named_kinds - declared_kinds - {"holdings", "section_title", "entry"}): bad.append("P6 Pages.kt names the kind %r that build.json never declares" % k)
 for k, const in (("section_title", "KIND_SECTION_TITLE"), ("holdings", "KIND_HOLDINGS"), ("about", "KIND_ABOUT"), ("dashboard", "KIND_DASHBOARD"), ("sources", "KIND_SOURCES"), ("pm_table", "KIND_PM_TABLE"),
-                 ("avatar", "KIND_AVATAR"), ("galaxy", "KIND_GALAXY"), ("store", "KIND_STORE"), ("info", "KIND_INFO"), ("nav", "KIND_NAV"), ("scene", "KIND_SCENE")):
+                 ("avatar", "KIND_AVATAR"), ("galaxy", "KIND_GALAXY"), ("store", "KIND_STORE"), ("voxelverse", "KIND_VOXELVERSE"), ("info", "KIND_INFO"), ("nav", "KIND_NAV"), ("scene", "KIND_SCENE")):
     if k in named_kinds and const not in page_kt: bad.append("P6 SectionPage does not draw %s" % const)
 if "about" not in by_id: bad.append("P6 ui.sections declares no hidden about section")
 elif "about" in ui.get("bottom_nav", []): bad.append("P6 the about section is on the bottom bar")

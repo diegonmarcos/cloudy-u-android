@@ -1,0 +1,40 @@
+{
+  "_doc": "#1784 THE declaration of the Voxelverse tab (Voxelverse.kt parses it, ui/VoxelversePage.kt draws it; Kotlin holds no address and no sentence). The Plan page is NOT copied into the app: it is read at run time from `plan_path` of `repo` (the source of truth, owner repo cg-voxel-rust) and cached on the device for offline use, so it cannot drift. `plan_sections` picks which `## ` headings of that document are drawn (heading = the exact heading, title = the label shown); the roadmap heading is the one whose numbered list becomes the milestones. The Viewer page is an engine-coming page while the repo has no engine (`engine_marker` is a root file of the repo that appears with the Rust workspace); it shows the repo's latest commit, its open GitHub milestones and the plan's phases. `viewer.artifact` stays null until the repo publishes a wasm or Android build; then it names the address to embed. Addresses are the three bases below plus the repo path.",
+  "repo": "diegonmarcos/cg-voxel-rust",
+  "branch": "main",
+  "plan_path": "docs/vox-rust_Agent-Driven_Voxel_World_Full_Build_Plan.md",
+  "raw_base": "https://raw.githubusercontent.com/",
+  "api_base": "https://api.github.com/repos/",
+  "web_base": "https://github.com/",
+  "engine_marker": "Cargo.toml",
+  "subpages": [
+    {"id": "plan", "label": "Plan"},
+    {"id": "viewer", "label": "Viewer"}
+  ],
+  "plan_sections": [
+    {"id": "goals", "heading": "Goals and non-goals", "title": "Goals"},
+    {"id": "architecture", "heading": "Architecture", "title": "Architecture"},
+    {"id": "risks", "heading": "Risks, open questions, rejected options", "title": "Risks"}
+  ],
+  "roadmap": {"heading": "Roadmap", "title": "Milestones"},
+  "viewer": {"artifact": null},
+  "text": {
+    "status": "Status",
+    "source": "Source of truth",
+    "open_source": "Open the full plan",
+    "refresh": "Refresh",
+    "loading": "Loading the plan from the repository...",
+    "live": "Read live from the repository",
+    "cached": "Offline: showing the copy saved on this device",
+    "unavailable": "The plan could not be read and no copy is saved yet. Check the connection and refresh.",
+    "last_commit": "Latest commit",
+    "no_commit": "Latest commit not available",
+    "plan_only": "Plan only: the repository has no Rust workspace yet",
+    "engine_present": "A Rust workspace is in the repository",
+    "viewer_title": "Voxelverse engine: coming",
+    "viewer_body": "The voxel engine is written in Rust (Bevy on wgpu; web client first, Android later through Bevy's mobile targets). No buildable wasm or Android artifact exists yet, so there is nothing to embed. This page shows the repository's state and will launch the viewer when a build is published.",
+    "github_milestones": "Open milestones on GitHub",
+    "no_milestones": "none declared on GitHub; the plan's phases are the milestones",
+    "gate": "Gate"
+  }
+}

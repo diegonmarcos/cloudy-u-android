@@ -27,6 +27,7 @@ object Pages {
     const val KIND_AVATAR = "avatar"
     const val KIND_GALAXY = "galaxy"
     const val KIND_STORE = "store"
+    const val KIND_VOXELVERSE = "voxelverse"
     const val KIND_ABOUT = "about"
 
     /** The entries declared for [sectionId] in the stacks JSON (empty when the section declares none). */
