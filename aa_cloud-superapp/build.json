@@ -3767,8 +3767,12 @@
               "icon_pkg": "com.diegonmarcos.cloudcanvas",
               "packages": [
                 {
-                  "pkg": "com.diegonmarcos.cloudcanvas",
-                  "label": "cloud-canvas"
+                  "pkg": "com.adsk.sketchbook",
+                  "label": "SketchBook"
+                },
+                {
+                  "pkg": "com.imageline.FLM",
+                  "label": "FL Studio Mobile"
                 }
               ],
               "icon_res": "ic_canvas"
@@ -7005,7 +7009,10 @@
         "id": "prod_canvas",
         "order": "145",
         "label": "=Canvas",
-        "match_keywords": []
+        "match_keywords": [
+          "pkg:com.adsk.sketchbook",
+          "pkg:com.imageline.FLM"
+        ]
       },
       {
         "id": "sys_keyboards",

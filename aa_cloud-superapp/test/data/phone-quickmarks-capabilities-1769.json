@@ -77,6 +77,20 @@
     "suggested": false
    }
   ],
+  "Canvas": [
+   {
+    "capability": "painting and sketching",
+    "pkg": "com.adsk.sketchbook",
+    "label": "SketchBook",
+    "suggested": true
+   },
+   {
+    "capability": "music making",
+    "pkg": "com.imageline.FLM",
+    "label": "FL Studio Mobile",
+    "suggested": true
+   }
+  ],
   "Keyboard": [
    {
     "capability": "keyboard",

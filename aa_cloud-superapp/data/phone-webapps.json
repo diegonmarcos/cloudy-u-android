@@ -60,6 +60,16 @@
           "url": null
         },
         {
+          "pkg": "com.adsk.sketchbook",
+          "label": "SketchBook",
+          "url": null
+        },
+        {
+          "pkg": "com.imageline.FLM",
+          "label": "FL Studio Mobile",
+          "url": null
+        },
+        {
           "pkg": "com.google.android.inputmethod.latin",
           "label": "Gboard",
           "url": null
