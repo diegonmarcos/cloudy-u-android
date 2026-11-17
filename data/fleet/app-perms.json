@@ -265,11 +265,6 @@
    "first_run": "libs:perms",
    "helpers": []
   },
-  "com.diegonmarcos.cloudwiki": {
-   "needs": [],
-   "first_run": "libs:perms",
-   "helpers": []
-  },
   "com.diegonmarcos.cloudwebserver": {
    "needs": [
     "notifications",
@@ -312,6 +307,11 @@
     "storage_write",
     "keep_unused"
    ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudwiki": {
+   "needs": [],
    "first_run": "libs:perms",
    "helpers": []
   },
@@ -382,12 +382,12 @@
    "first_run": "libs:perms",
    "helpers": []
   },
-  "com.diegonmarcos.hardtechcad": {
+  "com.diegonmarcos.hardtechbiomed": {
    "needs": [],
    "first_run": "libs:perms",
    "helpers": []
   },
-  "com.diegonmarcos.hardtechbiomed": {
+  "com.diegonmarcos.hardtechcad": {
    "needs": [],
    "first_run": "libs:perms",
    "helpers": []

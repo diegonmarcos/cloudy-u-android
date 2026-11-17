@@ -33,8 +33,9 @@ dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell ca
 
 # Cloud Wiki's dataset: the client's last-known-good file (key = route path with / as __), written as the app's own user
 KEY="app__${WPKG}__wiki"
-adb shell run-as "$WPKG" sh -c "mkdir -p files/fleetdata-lkg && cat > files/fleetdata-lkg/$KEY.json" < "$DATA" || echo "WARN: could not seed the dataset"
-adb shell run-as "$WPKG" ls -l files/fleetdata-lkg || true
+adb push "$DATA" /data/local/tmp/wiki-seed.json >/dev/null
+adb shell "run-as $WPKG mkdir -p files/fleetdata-lkg; cat /data/local/tmp/wiki-seed.json | run-as $WPKG sh -c 'cat > files/fleetdata-lkg/$KEY.json'" 2>&1 | tee "$OUT/seed.txt"
+adb shell "run-as $WPKG ls -l files/fleetdata-lkg" 2>&1 | tee -a "$OUT/seed.txt"
 wiki() { adb shell am force-stop "$WPKG"; adb shell am start -n "$WACT" "$@" >/dev/null; }
 
 wiki --es page eng --es tab eng.civil;                shot wiki-topic-page 9
