@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# emulator-me-socials (#1771) screenshots on a booted emulator: the SuperApp's Cloud > Apps Me row (Lnktree and Socials
+# tiles) and Cloud Me > Socials with its two tabs, Professional and Personal (deep link page:socials/<tab>).
+# Usage: emulator-me-socials.sh ME_APK SUPERAPP_APK OUT_DIR
+set -uo pipefail
+ME_APK="$1"; SA_APK="$2"; OUT="$3"; mkdir -p "$OUT"
+T="timeout 120"
+ME=com.diegonmarcos.cloudme; SA=com.diegonmarcos.superapp
+rc=0
+$T adb wait-for-device
+$T adb install -r -g "$ME_APK" || rc=1
+$T adb install -r -g "$SA_APK" || rc=1
+$T adb shell settings put global window_animation_scale 0
+$T adb shell locksettings set-disabled true; $T adb shell settings put system screen_off_timeout 1800000
+wake() { $T adb shell svc power stayon true; $T adb shell input keyevent KEYCODE_WAKEUP; $T adb shell wm dismiss-keyguard; }
+wake
+launcher() { $T adb shell cmd package resolve-activity --brief -c android.intent.category.LAUNCHER "$1" | tail -1 | tr -d '\r'; }
+open_page() { wake; local comp; comp="$(launcher "$1")"; $T adb shell am start -W -n "$comp" -f 0x14000000 --es shortcut_action "$2" >/dev/null; }
+shot() { sleep "${2:-6}"; $T adb exec-out screencap -p > "$OUT/$1.png"; $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1; echo "shot $1"; }
+
+# first start runs Cloud Me's start-up permission walk; come back on top of it
+open_page "$ME" "page:configs/general"; sleep 12; $T adb shell input keyevent KEYCODE_BACK; sleep 2
+open_page "$ME" "page:socials/professional"; shot me-socials-professional 10
+open_page "$ME" "page:socials/personal"; shot me-socials-personal 10
+
+$T adb shell appops set "$SA" SYSTEM_ALERT_WINDOW deny
+open_page "$SA" "page:cloud/apps"; sleep 10
+$T adb shell am force-stop "$SA"; $T adb shell appops set "$SA" SYSTEM_ALERT_WINDOW deny
+open_page "$SA" "page:cloud/apps"; sleep 10
+for i in 1 2; do
+    $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/.sa.xml" >/dev/null 2>&1
+    xy=$(python3 -c "import re,sys;x=open(sys.argv[1],errors='ignore').read();m=re.search(r'text=\"Unlock\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]',x);print('' if not m else '%d %d'%((int(m[1])+int(m[3]))//2,(int(m[2])+int(m[4]))//2))" "$OUT/.sa.xml" 2>/dev/null)
+    [ -n "$xy" ] || break
+    $T adb shell input tap $xy; sleep 4; open_page "$SA" "page:cloud/apps"; sleep 6
+done
+wh=$($T adb shell wm size | tr -d '\r' | sed 's/.*: //'); W=${wh%x*}; H=${wh#*x}
+for i in 1 2 3 4 5; do $T adb shell input tap $((W*61/100)) $((H*58/100)); sleep 2; done
+shot superapp-cloud-apps 3
+# the Me row (Lnktree first, Socials fifth) sits at ~80% height; scroll the page so it is fully in view
+$T adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*40/100)) 500; shot superapp-cloud-apps-me-row 3
+$T adb logcat -d > "$OUT/logcat.txt"
+ls -la "$OUT"
+exit $rc
