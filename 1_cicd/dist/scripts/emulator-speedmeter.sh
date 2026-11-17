@@ -33,10 +33,10 @@ PY
 )"
     [ -n "$b" ] && $T adb shell input tap $b; sleep 4
 done
-# the SuperApp's first-run install-source ask ("Install unknown apps": Skip | Allow) can sit over the home: Skip it
-for _ in 1 2; do
+# the SuperApp's first-run asks ("Install unknown apps", "Default home app (launcher)": Skip | Allow) can sit over the home: Skip it
+for _ in 1 2 3; do
     dump cur
-    grep -q 'text="Install unknown apps"' "$OUT/cur.xml" || break
+    grep -q -e 'text="Install unknown apps"' -e 'text="Default home app (launcher)"' "$OUT/cur.xml" || break
     b="$(python3 - "$OUT/cur.xml" <<'PY'
 import re, sys
 x = open(sys.argv[1], errors="ignore").read()
