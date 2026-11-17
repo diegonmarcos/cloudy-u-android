@@ -2727,50 +2727,6 @@
    ]
   },
   {
-   "id": "hardtech-cad",
-   "pkg": "com.diegonmarcos.hardtechcad",
-   "label": "Hardtech-CAD",
-   "kind": "app",
-   "door": true,
-   "port": 38240,
-   "engines": [],
-   "ops": [
-    "diagnostics/crashes",
-    "diagnostics/logcat",
-    "docs",
-    "fleet/peers",
-    "fleet/wake",
-    "fleetalert/raise",
-    "net/dns",
-    "net/resolve",
-    "system/info",
-    "system/ping"
-   ],
-   "routes": [],
-   "declared": {},
-   "ipc": [
-    {
-     "route": "logs",
-     "path": "/ipc/hardtech-cad/logs",
-     "method": "GET",
-     "kind": "provider",
-     "authority": "com.diegonmarcos.hardtechcad.logexport",
-     "methods": [
-      "meta",
-      "logs",
-      "crashes",
-      "export"
-     ],
-     "acl": "logs.read",
-     "status": "active",
-     "mcp_tool": "obs.debug.phone_logs",
-     "legacy_route": "/logs/<app>",
-     "class": "fleet",
-     "what": "the app's recent logcat and crash ring, as JSON"
-    }
-   ]
-  },
-  {
    "id": "hardtech-biomed",
    "pkg": "com.diegonmarcos.hardtechbiomed",
    "label": "Hardtech-BioMed",
@@ -2799,6 +2755,50 @@
      "method": "GET",
      "kind": "provider",
      "authority": "com.diegonmarcos.hardtechbiomed.logexport",
+     "methods": [
+      "meta",
+      "logs",
+      "crashes",
+      "export"
+     ],
+     "acl": "logs.read",
+     "status": "active",
+     "mcp_tool": "obs.debug.phone_logs",
+     "legacy_route": "/logs/<app>",
+     "class": "fleet",
+     "what": "the app's recent logcat and crash ring, as JSON"
+    }
+   ]
+  },
+  {
+   "id": "hardtech-cad",
+   "pkg": "com.diegonmarcos.hardtechcad",
+   "label": "Hardtech-CAD",
+   "kind": "app",
+   "door": true,
+   "port": 38240,
+   "engines": [],
+   "ops": [
+    "diagnostics/crashes",
+    "diagnostics/logcat",
+    "docs",
+    "fleet/peers",
+    "fleet/wake",
+    "fleetalert/raise",
+    "net/dns",
+    "net/resolve",
+    "system/info",
+    "system/ping"
+   ],
+   "routes": [],
+   "declared": {},
+   "ipc": [
+    {
+     "route": "logs",
+     "path": "/ipc/hardtech-cad/logs",
+     "method": "GET",
+     "kind": "provider",
+     "authority": "com.diegonmarcos.hardtechcad.logexport",
      "methods": [
       "meta",
       "logs",
