@@ -40,6 +40,9 @@ shoot 00-started
 for i in 1 2 3; do tap_re "Not now|Skip|Later|Dismiss|Cancel|Allow|While using" && sleep 2; done
 tap_re "Pages" L || fail "no Pages tab"; sleep 4
 shoot 01-pages-all; dump 01-pages-all
+# #1775 rows are collapsed: tap a root row to expand it (chips + serving details + actions)
+tap_scroll "Emulated storage" && sleep 2; shoot 01b-pages-row-expanded; dump 01b-pages-row-expanded
+has "Open page\|Open app/folder\|serving" || fail "All: an expanded row shows no actions or serving details"
 seen_scroll "Open in Browser" || fail "All: a root row has no Open in Browser"
 shoot 02-root-action-set
 has "Open Embedded" || fail "All: a root row has no Open Embedded"
@@ -53,6 +56,7 @@ for i in 1 2 3; do up; done; shoot 02b-pages-all-served
 # File Explorer: the list, then the framework view of Emulated storage
 top_; tap_re "File Explorer" 1 && sleep 3 || fail "no File Explorer sub page"
 shoot 04-explorer-roots
+tap_scroll "Emulated storage"; sleep 2
 tap_scroll "▶ Explore" || fail "no Explore chip on a ready root"; sleep 9
 shoot 05-explorer-framework; dump 05-explorer-framework
 has "Tree view" || fail "the explorer has no Tree view switch (framework view not the default)"

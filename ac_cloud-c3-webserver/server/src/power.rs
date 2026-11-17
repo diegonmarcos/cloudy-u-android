@@ -285,7 +285,7 @@ mod tests {
             let row = c.matrix.iter().find(|(m, _)| *m == s).unwrap_or_else(|| panic!("no matrix row for {:?}", s));
             assert_eq!(row.1, plan(s), "{:?}", s);
         }
-        assert!(!c.default.keep_alive, "keep alive defaults to OFF");
+        assert!(c.default.keep_alive, "keep alive defaults to ON (#1775)");
     }
 
     #[test]

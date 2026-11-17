@@ -49,7 +49,9 @@ names = sorted({s["title"] for s in sections} | {f["label"] for f in folders}
 literals = []
 for fname, text in list(store_files.items()) + [("StoreShelves.kt", shelves_kt)]:
     for lit in re.findall(r'"((?:[^"\\]|\\.)*)"', text):
-        if lit in names: literals.append("%s: %r" % (fname, lit))
+        # #1774 the Phone page's own fourth subpage is named "Games" (like Open source / Non open source); it is that page's label, not a shelf
+        # mapping, so that one word is exempt in StorePhoneSearch.kt only (a taxonomy name anywhere else, or any other word there, still fails).
+        if lit in names and not (fname == "StorePhoneSearch.kt" and lit == "Games"): literals.append("%s: %r" % (fname, lit))
 if not literals: ok("none of the %d taxonomy names is written in the store or its adapter" % len(names))
 else: bad("a taxonomy name is hardcoded (a second mapping): " + "; ".join(literals[:6]))
 leak = [f for f, t in store_files.items() if re.search(r"phone_folders|phone_sections|match_keywords", t)]
@@ -226,12 +228,16 @@ else:
     # #1749 StoreRecs reads the two served recommendation datasets (store-phone-recommendations, torrent-catalogue): their own schema
     # keys (a category's id and label, an app's pkg/name/source/licence ...) are those files', not feed templates; exempt in that file only.
     recs_keys = {"name", "id", "label", "pkg", "category", "source", "licence", "categories", "apps"}
+    # #1774 StorePhoneSearch reads the two served Phone datasets (store-play-integrity, games-catalogue): their own schema keys are those files',
+    # not feed templates; exempt in that file only.
+    phone_keys = {"name", "id", "label", "pkg", "category", "source", "icon", "apps", "tiers", "games", "categories", "verdict", "meaning", "tier", "basis", "note"}
     leaked = sorted({"%s: %r" % (fn, w) for fn, t in store_files.items()
                      for w in owned if '"%s"' % w in t
                      and not (fn == "SourceResolver.kt" and w in err_keys)
                      and not (fn == "FDroidIndex.kt" and w in index_keys)
                      and not (fn == "IpcMesh.kt" and w in ipc_keys)
-                     and not (fn == "StoreRecs.kt" and w in recs_keys)})
+                     and not (fn == "StoreRecs.kt" and w in recs_keys)
+                     and not (fn == "StorePhoneSearch.kt" and w in phone_keys)})
     if owned and not leaked:
         ok("none of the %d declared feed strings is written in the store's code" % len(owned))
     else: bad("a feed string is hardcoded outside the one declaration: %s" % "; ".join(leaked[:6]))

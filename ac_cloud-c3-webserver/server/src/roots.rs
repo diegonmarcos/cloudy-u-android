@@ -236,7 +236,18 @@ fn root_json(cfg: Option<&repos::Cfg>, r: &Root) -> Value {
         Value::Null
     };
     let (frame, drive_url) = frame_urls(src, r);
+    // #1775 REAL probes for the three chips: the port the root is served from (a terminal's own my-webserver, or this app's drive listener
+    // for the emulated drive) is connected to NOW. app_on: the app behind the root answers (a local source is this app, always on);
+    // serving: that port accepts a connection; page_on: the root's folder was really listed through it (status ready) = app on AND page served.
+    let port = match src.map(|s| &s.kind) {
+        Some(Kind::Terminal { port }) => Some(*port),
+        Some(Kind::Local { .. }) if !drive_url.is_null() => Some(crate::serving::get().drive_port),
+        _ => None,
+    };
+    let serving = port.map(crate::serving::is_up);
+    let app_on = if terminal { serving.unwrap_or(false) } else { true };
     json!({
+        "port": port, "serving": serving, "app_on": app_on, "page_on": status == "ready" && app_on,
         "id": r.id, "label": r.label, "mode": r.mode.id(), "source": r.source,
         "source_label": src.map(|s| s.label.clone()).unwrap_or_else(|| r.source.clone()),
         "kind": if terminal { "terminal" } else { "local" },
@@ -386,7 +397,9 @@ pub fn api_adb_shell(_c: &Ctx, req: &Req) -> Resp {
         Err(e) => return Resp::json(200, json!({"ok": false, "error": e}).to_string()),
     };
     if req.method != "POST" {
-        return ok(json!({"package": pkg, "extra": extra, "value": value, "label": apis::build()["adb_shell"]["label"].as_str().unwrap_or("ADB Shell")}));
+        // #1775 the loopback ADB shell server's port and a real connect probe of it (Status > ADB Shell and Endpoints)
+        let sp = apis::build()["shizuku_diagnostics"]["local_server"]["port"].as_u64().and_then(|p| u16::try_from(p).ok());
+        return ok(json!({"package": pkg, "extra": extra, "value": value, "label": apis::build()["adb_shell"]["label"].as_str().unwrap_or("ADB Shell"), "server_port": sp, "server_up": sp.map(crate::serving::is_up)}));
     }
     match crate::served::launch_with(&pkg, &extra, &value) {
         Ok(()) => Resp::json(200, format!("{{\"ok\":true,\"package\":{}}}", jstr(&pkg))),
