@@ -188,6 +188,9 @@ dependencies {
     // #1547 the VR filter declaration is read at RUNTIME from Cloud Store's provider, never baked into the APK (code only, no data).
     implementation(project(":libs:fleet-data-client"))
 
+    // #1770 geotagging reads the last fix from Cloud Nav (the fleet's one location owner); this app never asks the platform for a position.
+    implementation(project(":libs:location-client"))
+
     // Fleet mesh member: libs:core (+ devtools via `api`) merges the fleet
     // provider, receiver, <queries> and the signature permission into this APK.
     implementation(project(":libs:core"))

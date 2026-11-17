@@ -77,6 +77,8 @@ includeProjects(File(rootDir, "services"), ":services")
 // SuperApp and every sibling cannot see or reach this app. devtools is not
 // optional: core declares `api project(':libs:devtools')`, which resolves
 // against THIS settings file. Shared BY REFERENCE, same pair as media-center.
+include(":libs:location-client")
+project(":libs:location-client").projectDir = file("../ab_cloud-libs-shared/libs/location-client")
 include(":libs:core")
 project(":libs:core").projectDir = file("../ab_cloud-libs-shared/libs/core")
 include(":libs:devtools")

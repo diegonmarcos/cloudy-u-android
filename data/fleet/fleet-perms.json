@@ -161,8 +161,6 @@
    "label": "cloud-camera",
    "needs": [
     "notifications",
-    "fine_location",
-    "coarse_location",
     "camera",
     "microphone"
    ],

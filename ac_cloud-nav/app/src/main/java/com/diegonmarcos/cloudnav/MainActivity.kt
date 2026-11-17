@@ -74,6 +74,8 @@ class MainActivity : AppCompatActivity() {
         Updater.start(this)
         // Tracking engine: re-assert the periodic job (a no-op when the engine is off).
         com.diegonmarcos.cloudnav.tracker.EngineScheduler.apply(this)
+        // #1770 the Maps tracker's Start arms the same wake sources (Activity Recognition, geofence, significant motion) even with the engine off.
+        com.diegonmarcos.cloudnav.maps.LocationTrackerService.armWake = { com.diegonmarcos.cloudnav.tracker.WakeSources.arm(it) }
 
         if (savedInstanceState == null) {
             // A geo: launch (Cloud Nav declared as a maps app) opens straight on

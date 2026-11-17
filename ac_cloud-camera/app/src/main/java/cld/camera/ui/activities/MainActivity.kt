@@ -1929,58 +1929,9 @@ open class MainActivity : AppCompatActivity(),
         }
     }
 
-    /** #1515 back from Configs > Perms without the location grant (or asked already): geotagging goes off, as when the
-     *  system dialog was refused; with it, location updates start. */
-    private fun onLocationPermsResult() {
-        if (!application.shouldAskForLocationPermission()) {
-            application.requestLocationUpdates(false)
-        } else {
-            camConfig.requireLocation = false
-        }
-    }
-
+    /** #1770 geotagging reads the last fix from Cloud Nav (libs:location-client): no location grant is asked, none is held. */
     private fun requestLocation(reAttach: Boolean = false) {
-
-        when {
-            deniedOnce("fine_location", "coarse_location") -> {
-                MaterialAlertDialogBuilder(this).let {
-                    it.setTitle(R.string.location_permission_dialog_title)
-                    it.setMessage(R.string.location_permission_dialog_message)
-
-                    if (this !is SecureActivity) {
-                        // #1515 the location grants live in Configs > Perms: open it on those rows
-                        it.setPositiveButton(R.string.settings) { _, _ ->
-                            runCatching { com.diegonmarcos.superapp.perms.PermsLink.open(this, "Camera: geotag", listOf("fine_location", "coarse_location")) }
-                        }
-                    }
-
-                    it.setOnDismissListener {
-                        if (ContextCompat.checkSelfPermission(
-                                this, Manifest.permission.ACCESS_COARSE_LOCATION
-                            ) != PackageManager.PERMISSION_GRANTED
-                        ) {
-                            camConfig.requireLocation = false
-                        }
-                    }
-                }.showIgnoringShortEdgeMode()
-            }
-
-            (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED
-                    || ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-                    == PackageManager.PERMISSION_GRANTED) -> {
-                application.requestLocationUpdates(reAttach)
-            }
-            else -> {
-                // #1515 asked in Configs > Perms (once per screen); back here without it, geotagging stays off.
-                // The camera grant goes first: location is asked on the resume after it is held.
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) return
-                if (!openPerms("Camera: geotag", listOf("coarse_location", "fine_location"))) onLocationPermsResult()
-            }
-        }
+        application.readNavLocation(reAttach)
     }
 
     private fun resetAutoSleep() {

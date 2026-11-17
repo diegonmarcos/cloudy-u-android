@@ -111,12 +111,23 @@ object WakeSources {
     fun handle(ctx: Context, kind: WakeKind, now: Long = System.currentTimeMillis()) {
         val app = ctx.applicationContext
         val prefs = EnginePrefs(app)
-        if (!prefs.config.enabled) return
+        // #1770 the Maps tracker (user's Start) follows the same wake sources: its gate decides what to subscribe to
+        gateSignalOf(kind)?.let { sig -> runCatching { com.diegonmarcos.cloudnav.maps.LocationTrackerService.signal(app, sig) } }
+        if (!prefs.config.enabled) { runCatching { arm(app) }; return }   // engine off: still re-arm the one-shot sources for the tracker
         prefs.wake = WakePolicy.apply(prefs.wake, kind, now)
         // a geofence exit ends that fence: the next STILL arms a new one at the new STAY
         if (kind == WakeKind.GEOFENCE_EXIT) prefs.wake = prefs.wake.copy(fenceRadiusM = 0.0)
         WorkManager.getInstance(app).enqueueUniqueWork(WORK, ExistingWorkPolicy.REPLACE,
             OneTimeWorkRequestBuilder<EngineWorker>().setInputData(Data.Builder().putString(KEY_KIND, kind.name).build()).build())
+    }
+
+    /** What the Maps tracker's gate calls the same wake (null for the periodic tick, which is not an event). */
+    fun gateSignalOf(kind: WakeKind): com.diegonmarcos.cloudnav.maps.GateSignal? = when (kind) {
+        WakeKind.ACTIVITY_STILL -> com.diegonmarcos.cloudnav.maps.GateSignal.ACTIVITY_STILL
+        WakeKind.ACTIVITY_MOVING -> com.diegonmarcos.cloudnav.maps.GateSignal.ACTIVITY_MOVING
+        WakeKind.GEOFENCE_EXIT -> com.diegonmarcos.cloudnav.maps.GateSignal.GEOFENCE_EXIT
+        WakeKind.SIGNIFICANT_MOTION -> com.diegonmarcos.cloudnav.maps.GateSignal.SIGNIFICANT_MOTION
+        WakeKind.TICK -> null
     }
 
     /** The wake kinds an Activity Recognition result carries (the latest transition decides). */

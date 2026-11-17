@@ -39,6 +39,8 @@ dependencies {
     implementation(projects.services.analytics.api)
     implementation(projects.services.appnavstate.api)
     implementation(libs.accompanist.permission)
+    // #1770 the shared position comes from Cloud Nav (the fleet's one location owner), never from the platform.
+    implementation(project(":libs:location-client"))
     implementation(projects.libraries.uiStrings)
     implementation(projects.libraries.featureflag.api)
     implementation(projects.libraries.dateformatter.api)

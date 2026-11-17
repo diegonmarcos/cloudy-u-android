@@ -9,12 +9,17 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationManager
+import android.os.Handler
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationListenerCompat
+import androidx.core.location.LocationManagerCompat
+import androidx.core.location.LocationRequestCompat
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -30,7 +35,13 @@ import com.google.android.gms.location.Priority
  *     [MapsTrackerPrefs.lastFix*], drive the stop-detector.
  *   • stopService → tears down the callback + foreground notification.
  *
- * Battery: FusedLocationProvider does the heavy lifting (sensor
+ * #1770 EVENT-DRIVEN, no polling loop: the platform subscription follows [TrackGate]. STILL = only the PASSIVE listener (other apps'
+ * fixes, no radio of ours) and no fused request; MOVING (Activity Recognition, geofence exit, significant motion or the user's Start,
+ * signalled by Cloud Nav's WakeSources through [signal]) = ONE batched BALANCED_POWER fused request (interval 60 s, maxUpdateDelay 5 min,
+ * 25 m minimum displacement) until the hold lapses or activity STILL arrives. Fixes pass the gate's accuracy / age / displacement filter
+ * before they are stored. A place visit (Stop) is emitted when the phone has been still for the dwell time, closed when it leaves.
+ *
+ * Battery (older note): FusedLocationProvider does the heavy lifting (sensor
  * fusion + Doze-respect). We just feed it a `LocationRequest` built
  * from [MapsTrackingPrefs.intervalMovingMs]. The "tighten interval
  * while stopped" optimisation is handled by the provider itself
@@ -51,6 +62,14 @@ class LocationTrackerService : Service() {
 
     private val fused by lazy { LocationServices.getFusedLocationProviderClient(this) }
     private var callback: LocationCallback? = null
+
+    // ── #1770 the gate: platform subscription follows TrackGate, nothing polls ──
+    private val main = Handler(Looper.getMainLooper())
+    @Volatile private var gate = GateState()
+    private var passiveListener: LocationListenerCompat? = null
+    private var fusedParams: FusedParams? = null
+    private val expireRun = Runnable { val now = System.currentTimeMillis(); setGate(TrackGate.expire(gate, now), now) }
+    private val stopRun = Runnable { emitStopAtAnchor() }
 
     // ── Stop-detector state — see detectStop() ─────────────────────
     private val recentBuf = ArrayDeque<MapsDb.PointRow>()
@@ -146,8 +165,12 @@ class LocationTrackerService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        startForeground(NOTIF_ID, buildNotification("Tracking — waiting for GPS fix…"))
-        subscribeUpdates()
+        startForeground(NOTIF_ID, buildNotification("Tracking — passive, waiting for movement"))
+        instance = this
+        gate = GateState(lastAccepted = db.recentPoints(1).lastOrNull()?.let { GateFix(it.lat, it.lon, it.accuracy, it.ts) })
+        armWake?.invoke(applicationContext)
+        val now = System.currentTimeMillis()
+        setGate(TrackGate.signal(gate, GateSignal.USER_START, now), now)
         // #1666 START_NOT_STICKY: a killed tracker is NOT revived by Android (the old START_STICKY + watchdog revival kept a
         // location foreground service coming back in the background). The user presses Start again.
         return START_NOT_STICKY
@@ -155,45 +178,98 @@ class LocationTrackerService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (instance === this) instance = null
+        main.removeCallbacks(expireRun); main.removeCallbacks(stopRun)
         callback?.let { fused.removeLocationUpdates(it) }
         callback = null
+        passiveListener?.let { runCatching { (getSystemService(LOCATION_SERVICE) as LocationManager).removeUpdates(it) } }
+        passiveListener = null
     }
 
-    private fun subscribeUpdates() {
-        // Drop prior callback (idempotent re-subscribe).
+    /** The state machine moved: re-plan the subscription, keep the one expiry timer, close or schedule the place visit. */
+    private fun setGate(next: GateState, now: Long) {
+        val prev = gate
+        gate = next
+        applyPlan(TrackGate.plan(next))
+        main.removeCallbacks(expireRun)
+        if (next.mode == GateMode.MOVING) {
+            main.removeCallbacks(stopRun)
+            main.postDelayed(expireRun, (next.untilMs - now).coerceAtLeast(1_000L))
+        } else if (prev.mode == GateMode.MOVING) {
+            // went still: a visit begins once the phone has stayed still for the dwell time (one one-shot timer, no loop)
+            main.removeCallbacks(stopRun)
+            main.postDelayed(stopRun, trackingPrefs.stopsDwellMin * 60_000L)
+        }
+    }
+
+    /** A wake source (Cloud Nav's WakeSources) signalled [sig]. */
+    private fun onSignal(sig: GateSignal) {
+        val now = System.currentTimeMillis()
+        setGate(TrackGate.signal(gate, sig, now), now)
+    }
+
+    /** Passive listener always (it costs nothing); the batched balanced-power fused request only while the plan has one. */
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun applyPlan(plan: GatePlan) {
+        val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!fine) return
+        if (plan.passive && passiveListener == null) {
+            val l = LocationListenerCompat { loc -> offerFix(loc) }
+            val req = LocationRequestCompat.Builder(PASSIVE_MIN_INTERVAL_MS).setMinUpdateDistanceMeters(TrackGate.MIN_DISPLACEMENT_M.toFloat()).build()
+            com.diegonmarcos.superapp.perms.LocationUse.note(this, SITE, "LocationManager PASSIVE_PROVIDER (other apps' fixes, no request of ours)",
+                com.diegonmarcos.superapp.perms.LocationUse.Trigger.TRACKER)
+            val ok = runCatching {
+                LocationManagerCompat.requestLocationUpdates(getSystemService(LOCATION_SERVICE) as LocationManager, LocationManager.PASSIVE_PROVIDER, req,
+                    ContextCompat.getMainExecutor(this), l)
+            }.isSuccess
+            if (ok) passiveListener = l
+        }
+        val want = plan.fused
+        if (want == fusedParams) return
         callback?.let { fused.removeLocationUpdates(it) }
-        // setMinUpdateIntervalMillis is the FLOOR (fastest delivery
-        // rate), NOT the slow-mode interval. Passing intervalStoppedMs
-        // there (5 min) capped the provider to 5-min cadence even
-        // while moving — bufSize never filled within the dwell window,
-        // Stops never emitted. Correct usage:
-        //   - intervalMillis      = desired cadence (30s default)
-        //   - minUpdateIntervalMs = same, so provider doesn't deliver
-        //     faster than what we want (its default would be base/2)
-        // Dynamic moving/stopped switching needs activity-recognition
-        // re-subscribing on transitions; tracked separately. For now
-        // the tracker runs at intervalMovingMs constantly.
-        val req = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            trackingPrefs.intervalMovingMs.toLong(),
-        )
-            .setMinUpdateIntervalMillis(trackingPrefs.intervalMovingMs.toLong())
-            .setMinUpdateDistanceMeters(0f)
+        callback = null; fusedParams = want
+        if (want == null) return
+        val req = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, want.intervalMs)
+            .setMinUpdateIntervalMillis(want.minIntervalMs)
+            .setMaxUpdateDelayMillis(want.maxUpdateDelayMs)
+            .setMinUpdateDistanceMeters(want.minDistanceM)
             .build()
         val cb = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
-                for (loc in result.locations) ingest(loc)
+                for (loc in result.locations) offerFix(loc)
             }
         }
         callback = cb
-        // Manifest-declared permissions exist; runtime checked above
-        // in onStartCommand → safe to suppress lint.
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED) {
-            com.diegonmarcos.superapp.perms.LocationUse.note(this, SITE, "FusedLocationProviderClient.requestLocationUpdates (foreground service type location)",
-                com.diegonmarcos.superapp.perms.LocationUse.Trigger.TRACKER)
-            fused.requestLocationUpdates(req, cb, Looper.getMainLooper())
+        com.diegonmarcos.superapp.perms.LocationUse.note(this, SITE, "FusedLocationProviderClient.requestLocationUpdates (BALANCED_POWER, batched, only while moving)",
+            com.diegonmarcos.superapp.perms.LocationUse.Trigger.TRACKER)
+        fused.requestLocationUpdates(req, cb, Looper.getMainLooper())
+    }
+
+    /** One fix from either source goes through the gate; an accepted one is stored, may close the open visit and may wake the gate. */
+    private fun offerFix(loc: Location) {
+        val now = System.currentTimeMillis()
+        val f = GateFix(loc.latitude, loc.longitude, if (loc.hasAccuracy()) loc.accuracy else null, loc.time)
+        val o = TrackGate.offer(gate, f, now)
+        if (!o.accepted) return
+        ingest(loc)
+        val open = activeStop
+        if (open != null && TrackGate.leftStop(open.lat, open.lon, f, trackingPrefs.stopsRadiusM.toDouble())) {
+            if (activeStopId > 0) db.updateStopEndedAt(activeStopId, f.timeMs)
+            activeStop = null; activeStopId = -1L; trackerPrefs.activeStopId = -1L
         }
+        setGate(o.state, now)
+    }
+
+    /** Still for the whole dwell time: the place the phone stopped at becomes one Stop row (a place visit). */
+    private fun emitStopAtAnchor() {
+        val g = gate
+        val a = g.anchor ?: return
+        if (g.mode != GateMode.STILL || activeStop != null) return
+        val stop = MapsDb.StopRow(startedAt = a.timeMs, endedAt = null, lat = a.lat, lon = a.lon, accuracy = a.accuracyM)
+        activeStopId = db.insertStop(stop)
+        activeStop = stop
+        trackerPrefs.activeStopId = activeStopId
+        StopsEnricher.kickAsync(applicationContext)
     }
 
     /** Persist one GPS fix + update tracker prefs + run stop-detect. */
@@ -388,6 +464,20 @@ class LocationTrackerService : Service() {
         const val ACTION_USER_START = "com.diegonmarcos.cloudnav.maps.ACTION_USER_START"
         const val SITE = "libs:maps LocationTrackerService (Maps ▸ Start)"
         fun isUserStart(action: String?): Boolean = action == ACTION_USER_START
+
+        /** The passive listener's floor between deliveries: a passive fix costs nothing, this only bounds the wakeups. */
+        private const val PASSIVE_MIN_INTERVAL_MS = 60_000L
+
+        @Volatile private var instance: LocationTrackerService? = null
+
+        /** Cloud Nav hooks its wake sources here (WakeSources.arm) so the user's Start arms them even with the engine off. */
+        @Volatile var armWake: ((android.content.Context) -> Unit)? = null
+
+        /** #1770 a wake source (Activity Recognition transition, geofence exit, significant motion) tells the running tracker; no-op when it is not running. */
+        fun signal(@Suppress("UNUSED_PARAMETER") ctx: android.content.Context, sig: GateSignal) {
+            val i = instance ?: return
+            i.main.post { i.onSignal(sig) }
+        }
 
         /** Convenience starter — toggles [MapsTrackerPrefs.enabled],
          *  fires startForegroundService so the OS doesn't kill the

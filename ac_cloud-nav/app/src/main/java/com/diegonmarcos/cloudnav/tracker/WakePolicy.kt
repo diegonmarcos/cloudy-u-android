@@ -16,7 +16,7 @@ data class WakeState(val moving: Boolean = false, val untilMs: Long = 0L, val fe
 object WakePolicy {
     const val MOTION_HOLD_MS = 5 * 60_000L      // a significant-motion event alone is weak evidence
     const val MOVE_HOLD_MS = 30 * 60_000L       // activity / geofence exit: moving until STILL arrives or this lapses
-    const val MOVE_FIX_GAP_MS = 2 * 60_000L     // while moving, an accurate fix at most this often
+    const val MOVE_FIX_GAP_MS = 10 * 60_000L    // while moving, an engine accurate fix at most this often (#1770: was 2 min; the tracker's batched request follows the move)
     const val TICK_FALLBACK_MIN = 60L
     const val TICK_DEFAULT_MIN = 15L
     const val FENCE_MIN_M = 100.0

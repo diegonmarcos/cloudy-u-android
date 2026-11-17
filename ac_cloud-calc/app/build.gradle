@@ -242,6 +242,7 @@ android {
 
 dependencies {
     implementation project(':libs:web-core')   // #1371 the fleet's one web view (CloudWeb, WebProfile)
+    implementation project(":libs:location-client")   // #1770 the GPS card reads the last fix from Cloud Nav (the fleet's one location owner), never asks the platform
     implementation project(":libs:fleet-data-client")   // #1547 the world-clock and holiday datasets are read at RUNTIME from Cloud Store, never baked into the APK
     implementation project(':libs:core')
     implementation project(':libs:databackend')   // #825 DataBackendClient: this app binds an engine

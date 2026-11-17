@@ -24,6 +24,7 @@
     "perms": null,
     "ai-usage": "aa_cloud-superapp",
     "fleet-data-client": null,
+    "location-client": null,
     "fleet-data-provider": "ac_cloud-store",
     "fleet-data-ui": "ac_cloud-store",
     "databackend": "ac_cloud-contacts",

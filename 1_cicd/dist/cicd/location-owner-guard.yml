@@ -1,0 +1,36 @@
+name: "location owner guard — only Cloud Nav starts a location fix; every other app reads Nav's last fix"
+
+# WHY (#1770). The owner saw the phone ask for location about every minute. Cloud Nav is the only fleet app that may start
+# a location fix (and wake itself on activity / geofence / significant motion); every other app reads Nav's last known fix
+# over the fleet IPC door through libs:location-client, which never locates. This guard fails when any module other than
+# ac_cloud-nav and its libs:maps references a location-request API or play-services-location, when the client lib learns a
+# location permission or API, when its IPC wire drifts from libs:devtools, or when another app links libs:maps.
+#
+# Its own workflow and every push: the commit it has to catch can touch any app's or lib's source.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: location-owner-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  location-owner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The guard still fails on each way an app can start a location fix (mutants)
+        run: bash 1_cicd/src/scripts/test/location-owner-guard.test.sh
+
+      - name: No module other than Cloud Nav starts a location fix
+        run: python3 1_cicd/src/scripts/cloud-android-location-owner-guard.py .

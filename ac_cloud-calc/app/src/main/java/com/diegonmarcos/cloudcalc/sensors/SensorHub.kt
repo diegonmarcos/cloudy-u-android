@@ -14,8 +14,7 @@ import android.hardware.SensorManager
 import android.hardware.TriggerEvent
 import android.hardware.TriggerEventListener
 import android.location.GnssStatus
-import android.location.Location
-import android.location.LocationListener
+import com.diegonmarcos.superapp.locationclient.NavLocationClient
 import android.location.LocationManager
 import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
@@ -122,25 +121,16 @@ object SensorHub {
         return { sm.unregisterListener(l) }
     }
 
-    /** lat, lon, altitude, accuracy, speed, bearing, satellites used, satellites in view; NaN until known. */
+    /**
+     * lat, lon, altitude, accuracy, speed, bearing, satellites used, satellites in view; NaN until known.
+     * #1770 the position is Cloud Nav's last known fix read over the fleet IPC door (libs:location-client): this app starts no
+     * location fix. Altitude, speed and bearing are not part of that contract and stay NaN. The satellite counts come from the
+     * platform's GNSS status callback, a passive observer that starts nothing (it reports while Cloud Nav or any other app runs GNSS).
+     */
     @SuppressLint("MissingPermission") // the screen asks first; a SecurityException is caught below
-    @Suppress("DEPRECATION")
     private fun listenGnss(ctx: Context, onValues: (DoubleArray) -> Unit): () -> Unit {
         val lm = ctx.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val cur = DoubleArray(8) { Double.NaN }
-        val loc = object : LocationListener {
-            override fun onLocationChanged(l: Location) {
-                cur[0] = l.latitude; cur[1] = l.longitude
-                cur[2] = if (l.hasAltitude()) l.altitude else Double.NaN
-                cur[3] = if (l.hasAccuracy()) l.accuracy.toDouble() else Double.NaN
-                cur[4] = if (l.hasSpeed()) l.speed.toDouble() else Double.NaN
-                cur[5] = if (l.hasBearing()) l.bearing.toDouble() else Double.NaN
-                onValues(cur.copyOf())
-            }
-            override fun onProviderEnabled(provider: String) {}
-            override fun onProviderDisabled(provider: String) {}
-            override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
-        }
         val status = object : GnssStatus.Callback() {
             override fun onSatelliteStatusChanged(s: GnssStatus) {
                 var used = 0
@@ -150,15 +140,32 @@ object SensorHub {
             }
         }
         val handler = Handler(Looper.getMainLooper())
-        val ok = runCatching {
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 0f, loc, Looper.getMainLooper())
-            lm.registerGnssStatusCallback(status, handler)
-        }.isSuccess
-        if (!ok) return {}
-        // The last known fix is real data too, so the card is not blank until the first new one.
-        runCatching { lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let { loc.onLocationChanged(it) } }
-        return { runCatching { lm.removeUpdates(loc); lm.unregisterGnssStatusCallback(status) } }
+        val satellites = runCatching { lm.registerGnssStatusCallback(status, handler) }.getOrDefault(false)
+        val io = java.util.concurrent.Executors.newSingleThreadExecutor()
+        var on = true
+        val read = object : Runnable {
+            override fun run() {
+                if (!on) return
+                runCatching {
+                    io.execute {
+                        val a = NavLocationClient.ask(ctx)
+                        handler.post {
+                            if (on && a is NavLocationClient.Answer.Ok) {
+                                cur[0] = a.fix.lat; cur[1] = a.fix.lon; cur[3] = a.fix.accuracyM?.toDouble() ?: Double.NaN
+                                onValues(cur.copyOf())
+                            }
+                        }
+                    }
+                }
+                handler.postDelayed(this, NAV_READ_MS)
+            }
+        }
+        handler.post(read)
+        return { on = false; handler.removeCallbacks(read); io.shutdown(); if (satellites) runCatching { lm.unregisterGnssStatusCallback(status) } }
     }
+
+    /** How often the card re-reads Cloud Nav's last fix: a cached read, it never makes the phone locate. */
+    private const val NAV_READ_MS = 10_000L
 
     private fun listenBattery(ctx: Context, extra: String, onValues: (DoubleArray) -> Unit): () -> Unit {
         val r = object : BroadcastReceiver() {

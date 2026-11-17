@@ -4,8 +4,7 @@
 
     <uses-feature android:name="android.hardware.camera.any"/>
 
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <!-- #1770 no location permission: geotagging reads the last fix from Cloud Nav (libs:location-client), the fleet's one location owner. -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>

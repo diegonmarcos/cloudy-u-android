@@ -1,19 +1,16 @@
 package cld.camera
 
-import android.Manifest
 import android.app.Application
-import android.content.pm.PackageManager
 import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
-import android.os.Build
 import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.view.WindowManager
-import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import cld.camera.capturer.deleteStalePendingRecordings
 import cld.camera.ui.activities.MainActivity
+import com.diegonmarcos.superapp.locationclient.NavLocationClient
 import com.google.android.material.color.DynamicColors
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
@@ -23,35 +20,36 @@ class App : Application() {
     companion object {
         // Must stay above the ~10 min throttle the OS applies to coarse-only apps.
         private const val MAX_LOCATION_AGE = 15 * 60 * 1000L
+        private const val POLL_MS = 15_000L
     }
 
     private var activity: MainActivity? = null
     private var location: Location? = null
 
-    private var isLocationFetchInProgress = false
-
-    private val locationManager by lazy {
-        getSystemService(LocationManager::class.java)!!
+    /**
+     * #1770 geotagging reads the last known fix from Cloud Nav, the fleet's one location owner (libs:location-client). This app
+     * starts no location fix and holds no location permission: [poll] is a cached read over the fleet IPC door.
+     */
+    private var polling = false
+    private val ui = Handler(Looper.getMainLooper())
+    private val io by lazy { java.util.concurrent.Executors.newSingleThreadExecutor() }
+    private val poll = object : Runnable {
+        override fun run() {
+            if (!polling) return
+            io.execute {
+                val fix = NavLocationClient.lastKnown(this@App, MAX_LOCATION_AGE)
+                ui.post { if (polling && fix != null) location = toLocation(fix) }
+            }
+            ui.postDelayed(this, POLL_MS)
+        }
     }
 
-    private val locationListener: LocationListener by lazy {
-        object : LocationListener {
-            override fun onLocationChanged(changedLocation: Location) {
-                location = getOptimalLocation(listOf(location, changedLocation))
-            }
-
-            override fun onProviderDisabled(provider: String) {
-                if (!isAnyLocationProvideActive()) {
-                    activity?.indicateLocationProvidedIsDisabled()
-                }
-            }
-
-            override fun onLocationChanged(locations: MutableList<Location>) {
-                location = getOptimalLocation(locations + location)
-            }
-
-            override fun onProviderEnabled(provider: String) {}
-        }
+    private fun toLocation(f: NavLocationClient.Fix) = Location("cloud-nav").apply {
+        latitude = f.lat; longitude = f.lon
+        f.accuracyM?.let { accuracy = it }
+        time = f.timeMs
+        val ageMs = (System.currentTimeMillis() - f.timeMs).coerceAtLeast(0L)
+        elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos() - TimeUnit.MILLISECONDS.toNanos(ageMs)
     }
 
     private val autoSleepDuration: Long = 5 * 60 * 1000 // 5 minutes
@@ -73,15 +71,8 @@ class App : Application() {
         }
     }
 
-    fun isAnyLocationProvideActive(): Boolean {
-        if (!locationManager.isLocationEnabled) return false
-        val providers = locationManager.allProviders
-
-        providers.forEach {
-            if (locationManager.isProviderEnabled(it)) return true
-        }
-        return false
-    }
+    /** Cloud Nav answered its last fix at the latest read (the only "provider" this app has). */
+    fun isAnyLocationProvideActive(): Boolean = NavLocationClient.last is NavLocationClient.Answer.Ok
 
     override fun onCreate() {
         super.onCreate()
@@ -93,51 +84,16 @@ class App : Application() {
         }
     }
 
-    @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION])
-    fun requestLocationUpdates(reAttach: Boolean = false) {
-        if (!isLocationEnabled()) {
-            activity?.indicateLocationProvidedIsDisabled()
-        }
-        if (isLocationFetchInProgress) {
-            if (!reAttach) return
-            dropLocationUpdates()
-        }
-        isLocationFetchInProgress = true
-
-        val providers = locationProviders
-
-        val lastKnownLocations = providers.map {
-            locationManager.getLastKnownLocation(it)
-        }
-        location = getOptimalLocation(lastKnownLocations + location)
-
-        providers.forEach { provider ->
-            locationManager.requestLocationUpdates(
-                provider,
-                2000,
-                0f,
-                locationListener
-            )
-        }
+    fun readNavLocation(reAttach: Boolean = false) {
+        if (polling && !reAttach) return
+        polling = true
+        ui.removeCallbacks(poll)
+        ui.post(poll)
     }
 
-    private val locationProviders: List<String>
-        get() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                locationManager.hasProvider(LocationManager.FUSED_PROVIDER)
-            ) {
-                return listOf(LocationManager.FUSED_PROVIDER)
-            }
-            return locationManager.allProviders.filter {
-                it == LocationManager.GPS_PROVIDER ||
-                    it == LocationManager.NETWORK_PROVIDER ||
-                    it == LocationManager.PASSIVE_PROVIDER
-            }
-        }
-
     fun dropLocationUpdates() {
-        isLocationFetchInProgress = false
-        locationManager.removeUpdates(locationListener)
+        polling = false
+        ui.removeCallbacks(poll)
     }
 
     fun disableLocationFetching() {
@@ -157,11 +113,8 @@ class App : Application() {
         return location
     }
 
-    private fun isLocationEnabled(): Boolean = locationManager.isLocationEnabled
-
-    fun shouldAskForLocationPermission() =
-        checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+    /** No grant is needed: the position is read from Cloud Nav, never from the platform. */
+    fun shouldAskForLocationPermission() = false
 
     override fun onTerminate() {
         super.onTerminate()

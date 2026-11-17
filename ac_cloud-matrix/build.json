@@ -56,6 +56,7 @@
       "type": "library",
       "dir": "../ab_cloud-libs-shared/libs/core"
     },
+    "libs:location-client": {"dir": "../ab_cloud-libs-shared/libs/location-client", "type": "library", "_doc": "#1770 the one client of location: reads Cloud Nav's last fix over the fleet IPC door, never triggers a fix."},
     "libs:devtools": {
       "_doc_dir": "Pulled in by core's `api project(':libs:devtools')` (FleetTokenProvider, FleetMemberReceiver, MESH_MEMBER <queries>); not linked directly.",
       "type": "library",

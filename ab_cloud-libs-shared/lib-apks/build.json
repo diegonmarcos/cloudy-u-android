@@ -18,6 +18,7 @@
       "decisions-core": "#881 The PIT harness of the decisions engine's logic: it compiles libs:decisions-engine's own core package as plain JVM Kotlin, runs its suite and mutation-tests it. No component, nothing to install; the logic itself lives in the engine's directory so the publish gate republishes the engine when it changes, and no app may compile this module.",
       "decisions-link": "#881 The CONTRACT half of the decisions engine: the IDecisionsEngine wire (no credential anywhere in it), the DecisionsLink client with its handshake and the typed Verdict. It has no component and installs nothing; the engine it binds ships as Cloud-Lib-Decisions-Engine.apk, which compiles this module in. Apps compile this one and never libs:decisions-engine.",
       "ai-usage": "#1499 The read of the fleet AI usage table (AiUsageClient + AiUsageModel, plain JVM Kotlin) compiled into the Cloud SuperApp and Cloud SuperIntel. No component, nothing to install or bind.",
+      "location-client": "#1770 The fleet client of location: NavLocationClient reads Cloud Nav's last fix over the fleet IPC door and never triggers a fix; compiled into Calc, Camera and Matrix. No component, nothing to install or bind.",
       "fleet-data-client": "#1547 The fleet data framework's one client (FleetData.observe/get over the providers' openFile, routing table, last-known-good copy, schemaVersion check) compiled into every app that reads runtime data; no component, nothing to install or bind.",
       "fleet-data-provider": "#1547 The server half of the fleet data framework (store, access policy, sync, ContentProvider glue) compiled into Cloud Store and Cloud Account, the two providers; no component of its own, nothing to install or bind.",
       "fleet-data-ui": "#1547 The Data page of the two provider apps (dataset tree, JSON viewer, sync status, consumers, diff); no component of its own, nothing to install or bind.",
@@ -133,6 +134,7 @@
     "_doc_static_libs": "Section 2 of the Store Libs tab: one short description per shared lib that is NOT an engine (not installable). Which apps compile each lib in is never typed: 1_cicd/src/scripts/cloud-android-lib-consumers.py derives it from every app's build.json and regen.sh bakes it into constellation-fleet.json::lib_consumers. This map only says what the lib is; the lib-consumers guard fails when a non-engine lib has no entry here or an entry names a lib that is gone.",
     "static_libs": {
       "ai-usage": "The AI usage table read: the client of the fleet usage route and the parse into the card and cost words, shared by the SuperApp Notify AI badge and Cloud SuperIntel Cost (#1499).",
+      "location-client": "Location client: the last known fix from Cloud Nav with its age and accuracy; never starts a fix.",
       "fleet-data-client": "Fleet data client: FleetData.observe/get of a runtime dataset, with the last-known-good copy and a schemaVersion check.",
       "fleet-data-provider": "Fleet data provider engine: dataset store, access policy by caller, ETag sync and the ContentProvider glue.",
       "fleet-data-ui": "Fleet data page: dataset tree, JSON viewer, sync status, consumers and diff.",

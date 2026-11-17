@@ -7,107 +7,83 @@
 
 package io.element.android.features.location.impl.common
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
-import android.location.LocationManager
-import android.os.Handler
-import android.os.HandlerThread
-import androidx.annotation.RequiresPermission
+import android.location.Location as AndroidLocation
+import android.os.SystemClock
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.location.LocationListenerCompat
-import androidx.core.location.LocationManagerCompat
-import androidx.core.location.LocationRequestCompat
-import androidx.core.os.ExecutorCompat
+import com.diegonmarcos.superapp.locationclient.NavLocationClient
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import org.maplibre.compose.location.DesiredAccuracy
 import org.maplibre.compose.location.Location
 import org.maplibre.compose.location.LocationProvider
-import org.maplibre.compose.location.PermissionException
 import org.maplibre.compose.location.asMapLibreLocation
 import org.maplibre.spatialk.units.Length
 import org.maplibre.spatialk.units.extensions.inMeters
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
+/**
+ * #1770 the position this app shows and shares is Cloud Nav's last known fix (libs:location-client), the fleet's one location
+ * owner. This provider never asks the platform for a position: it re-reads Cloud Nav's cached fix every [updateInterval]
+ * (at least [MIN_POLL_MS]) and emits it when it moved at least [minDistance] from the one emitted before. Needs no location grant.
+ */
 @SuppressLint("InlinedApi")
 class PlatformLocationProvider(
     context: Context,
     private val updateInterval: Duration,
     private val minDistance: Length,
-    private val desiredAccuracy: DesiredAccuracy = DesiredAccuracy.High,
+    @Suppress("unused") private val desiredAccuracy: DesiredAccuracy = DesiredAccuracy.High,
     coroutineScope: CoroutineScope,
     sharingStarted: SharingStarted = SharingStarted.WhileSubscribed(stopTimeoutMillis = 1000),
 ) : LocationProvider {
     override val location: StateFlow<Location?>
 
     init {
-        if (!handlerThread.isAlive) handlerThread.start()
-        if (
-            context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-            context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
-        ) {
-            throw PermissionException()
-        }
-        val locationManager = context.getSystemService(LocationManager::class.java)
-        val provider = PROVIDERS_BY_PRIORITY.firstOrNull { LocationManagerCompat.hasProvider(locationManager, it) }
-        val locationFlow = if (provider != null) {
-            createProviderFlow(locationManager, provider)
-        } else {
-            emptyFlow()
-        }
-        location = locationFlow.stateIn(coroutineScope, sharingStarted, null)
+        val app = context.applicationContext
+        val pollMs = updateInterval.inWholeMilliseconds.coerceAtLeast(MIN_POLL_MS)
+        val minMeters = minDistance.inMeters.toFloat()
+        val navFlow = flow {
+            var last: AndroidLocation? = null
+            while (true) {
+                NavLocationClient.lastKnown(app, MAX_AGE_MS)?.let { fix ->
+                    val now = toAndroidLocation(fix)
+                    if (last == null || last!!.distanceTo(now) >= minMeters) {
+                        last = now
+                        emit(now.asMapLibreLocation())
+                    }
+                }
+                delay(pollMs)
+            }
+        }.flowOn(Dispatchers.IO)
+        location = navFlow.stateIn(coroutineScope, sharingStarted, null)
     }
 
-    @RequiresPermission(
-        anyOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION]
-    )
-    private fun createProviderFlow(locationManager: LocationManager, provider: String) = callbackFlow {
-        send(locationManager.getLastKnownLocation(provider)?.asMapLibreLocation())
-        val listener = LocationListenerCompat { trySend(it.asMapLibreLocation()) }
-        val request = LocationRequestCompat.Builder(updateInterval.inWholeMilliseconds)
-            .setQuality(desiredAccuracy.toLocationRequestQuality())
-            .setMinUpdateDistanceMeters(minDistance.inMeters.toFloat())
-            .build()
-        LocationManagerCompat.requestLocationUpdates(
-            locationManager,
-            provider,
-            request,
-            ExecutorCompat.create(Handler(handlerThread.looper)),
-            listener,
-        )
-        awaitClose { LocationManagerCompat.removeUpdates(locationManager, listener) }
+    private fun toAndroidLocation(f: NavLocationClient.Fix) = AndroidLocation("cloud-nav").apply {
+        latitude = f.lat; longitude = f.lon
+        f.accuracyM?.let { accuracy = it }
+        time = f.timeMs
+        val ageMs = (System.currentTimeMillis() - f.timeMs).coerceAtLeast(0L)
+        elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos() - TimeUnit.MILLISECONDS.toNanos(ageMs)
     }
 
     private companion object {
-        private val PROVIDERS_BY_PRIORITY = listOf(
-            LocationManager.FUSED_PROVIDER,
-            LocationManager.GPS_PROVIDER,
-            LocationManager.NETWORK_PROVIDER,
-        )
-        private val handlerThread by lazy { HandlerThread("PlatformLocationProvider") }
+        const val MIN_POLL_MS = 5_000L
+        const val MAX_AGE_MS = 15 * 60_000L
     }
 }
 
-private fun DesiredAccuracy.toLocationRequestQuality(): Int = when (this) {
-    DesiredAccuracy.Highest, DesiredAccuracy.High -> LocationRequestCompat.QUALITY_HIGH_ACCURACY
-    DesiredAccuracy.Balanced -> LocationRequestCompat.QUALITY_BALANCED_POWER_ACCURACY
-    DesiredAccuracy.Low, DesiredAccuracy.Lowest -> LocationRequestCompat.QUALITY_LOW_POWER
-}
-
 @Composable
-@RequiresPermission(
-    anyOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION]
-)
 fun rememberPlatformLocationProvider(
     updateInterval: Duration,
     minDistance: Length,

@@ -186,6 +186,7 @@
       "dir": "../ab_cloud-libs-shared/libs/light",
       "type": "library"
     },
+    "libs:location-client": {"dir": "../ab_cloud-libs-shared/libs/location-client", "type": "library", "_doc": "#1770 the one client of location: reads Cloud Nav's last fix over the fleet IPC door, never triggers a fix."},
     "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {
       "dir": "../ab_cloud-libs-shared/libs/perms",
