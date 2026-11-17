@@ -113,13 +113,13 @@ jobs:
             echo "--- PROCESS_TEXT"; adb shell cmd package query-activities --brief -a android.intent.action.PROCESS_TEXT -t text/plain; } | tee -a walk-out/summary.txt
 
           # 1) the share of an image: the resolver the share sheet shows (Ask AI · Cloud SI in it), then the Ask AI sheet
-          adb shell am start -a android.intent.action.SEND -t image/png --eu android.intent.extra.STREAM "content://media/external/file/$img" -f 0x1
+          adb shell am start -a android.intent.action.SEND -t image/png --eu android.intent.extra.STREAM "content://media/external/file/$img" -d "content://media/external/file/$img" -f 0x1
           sleep 6; shot 01-share-image-chooser
-          tap_text "Ask AI" ; sleep 6; shot 02-ask-ai-sheet-image
+          tap_text "Cloud SuperIntel"; sleep 2; tap_text "Just once"; sleep 8; shot 02-ask-ai-sheet-image
           tap_text "Ask SI"; sleep 8; shot 03-chat-with-image
           adb shell am force-stop $PKG
           # 2) the share of a PDF straight to the activity (a share sheet pick resolves to the same component)
-          adb shell am start -n $PKG/.AskAiActivity -a android.intent.action.SEND -t application/pdf --eu android.intent.extra.STREAM "content://media/external/file/$pdf" -f 0x1
+          adb shell am start -n $PKG/.AskAiActivity -a android.intent.action.SEND -t application/pdf --eu android.intent.extra.STREAM "content://media/external/file/$pdf" -d "content://media/external/file/$pdf" -f 0x1
           sleep 10; shot 04-ask-ai-sheet-pdf
           tap_text "Ask SI"; sleep 8; shot 05-chat-with-pdf
           adb shell am force-stop $PKG
@@ -136,8 +136,9 @@ jobs:
           b=$(( $(date +%s) * 1000 + 86400000 ))
           adb shell am start -a android.intent.action.INSERT -d content://com.android.calendar/events \
             --es title "Design review" --el beginTime $b --el endTime $((b + 3600000)) --es eventLocation "Room 4" --es description "Walk through the plan" --ez allDay false
-          sleep 6; shot tasks-01-add-to-calendar-chooser
-          tap_text "Cloud Tasks"; sleep 2; tap_text "Just once"; sleep 6; shot tasks-02-new-event-sheet-prefilled
+          sleep 14; shot tasks-01-add-to-calendar-chooser
+          tap_text "Cloud Tasks"; sleep 2; tap_text "Just once"; sleep 14; shot tasks-02-new-event-sheet-prefilled
+          sleep 10; shot tasks-03-new-event-sheet-later
           timeout 60 adb logcat -d -v threadtime "*:E" > walk-out/logcat-errors.txt || true
           SH
           chmod +x walk.sh
