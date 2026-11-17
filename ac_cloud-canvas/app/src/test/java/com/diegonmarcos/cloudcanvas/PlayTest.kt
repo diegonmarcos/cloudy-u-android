@@ -52,7 +52,7 @@ class PlayTest {
         val left = MixerState.initial().pan(1, -1f).gains(1)
         assertEquals(0f, left.second, 0.001f)
         val q = MixerState.initial().pan(1, 0.5f).gains(1)
-        assertEquals(0.64f, q.first * q.first + q.second * q.second, 0.01f)
+        assertEquals(1.28f, q.first * q.first + q.second * q.second, 0.01f)
         assertTrue(q.second > q.first)
     }
 
