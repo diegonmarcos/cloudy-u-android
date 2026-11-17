@@ -1,6 +1,9 @@
 name: "Ship → Hardtech-BioMed APK (build + push to GHCR via ORAS + attach to GH Release)"
 
 on:
+  # ── MANAGED-REFRESH-TRIGGER (#836): fleet-refresh.yml dispatches this app ──
+  repository_dispatch:
+    types: [fleet-refresh-ad_Hardtech-BioMed]
   workflow_dispatch:
     inputs:
       variant:
@@ -46,7 +49,9 @@ on:
       #   input: "ac_cloud-nav/app/src/main/assets/space/OrbitControls.js"
       #   input: "ac_cloud-nav/app/src/main/assets/space/three.core.min.js"
       #   input: "ac_cloud-nav/app/src/main/assets/space/three.module.min.js"
+      #   input: "data/fleet/biomed/**"
       # ── end MANAGED-PATHS-HEADER ──
+      # the served models and texts (read at run time, not built in): an edit runs the content test (BioContentTest) of this workflow
       - "ab_cloud-libs-shared/libs/bottomnav/**"
       - "ab_cloud-libs-shared/libs/cad-core/**"
       - "ab_cloud-libs-shared/libs/cad-mesh/**"
@@ -66,8 +71,6 @@ on:
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ab_cloud-libs-shared/libs/web-core/**"
       - "ad_Hardtech-BioMed/**"
-      # the served models and texts (read at run time, not built in): an edit runs the content test (BioContentTest) of this workflow
-      - "data/fleet/biomed/**"
 permissions:
   contents: write
   packages: write
