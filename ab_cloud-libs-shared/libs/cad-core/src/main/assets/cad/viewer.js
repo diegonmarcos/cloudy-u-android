@@ -179,16 +179,16 @@ window.cadPartVisible = (i, on) => { const p = partsList[i]; if (!p) return fals
 // substring of a node's name, or `system:<id>` = a node whose glTF extras carry that system. Nothing here knows an anatomy: the model names its nodes.
 const specHit = (o, spec) => spec.some((s) => s.startsWith('system:') ? !!(o.userData && o.userData.system === s.slice(7)) : (o.name || '').includes(s));
 const meshesOf = () => { const a = []; if (current) current.traverse((o) => { if (o.isMesh) a.push(o); }); return a; };
-const keep = (o) => { const m = o.material; return o.userData.__o || (o.userData.__o = { t: m.transparent, op: m.opacity, dw: m.depthWrite, e: m.emissive ? m.emissive.getHex() : 0, v: o.visible }); };
+const keep = (o) => { const m = o.material; return o.userData.__o || (o.userData.__o = { t: m.transparent, op: m.opacity, dw: m.depthWrite, e: m.emissive ? m.emissive.getHex() : 0, v: o.visible, c: m.color ? m.color.getHex() : 0xffffff }); };
 // mode 'dim' (default): matches lit, the rest nearly transparent; 'isolate': the rest hidden; an empty spec restores every part. Returns the match count.
 window.cadHighlight = (spec, mode) => {
   const all = meshesOf(); let n = 0;
   all.forEach((o) => {
     const m = o.material; const k = keep(o);
-    if (!spec || !spec.length) { m.transparent = k.t; m.opacity = k.op; m.depthWrite = k.dw; if (m.emissive) m.emissive.setHex(k.e); o.visible = k.v; m.needsUpdate = true; return; }
-    if (specHit(o, spec)) { n++; m.transparent = k.t; m.opacity = k.op; m.depthWrite = k.dw; o.visible = true; if (m.emissive) m.emissive.copy(m.color).multiplyScalar(0.6); }
+    if (!spec || !spec.length) { m.transparent = k.t; m.opacity = k.op; m.depthWrite = k.dw; if (m.emissive) m.emissive.setHex(k.e); if (m.color) m.color.setHex(k.c); o.userData.__dim = false; o.visible = k.v; m.needsUpdate = true; return; }
+    if (specHit(o, spec)) { n++; m.transparent = k.t; m.opacity = k.op; m.depthWrite = k.dw; o.visible = true; o.userData.__dim = false; if (m.color) m.color.setHex(k.c); if (m.emissive) m.emissive.copy(m.color).multiplyScalar(0.6); }
     else if (mode === 'isolate') { o.visible = false; }
-    else { o.visible = k.v; m.transparent = true; m.opacity = 0.1; m.depthWrite = false; if (m.emissive) m.emissive.setHex(k.e); }
+    else { o.visible = k.v; o.userData.__dim = true; if (m.color) m.color.setHex(k.c).multiplyScalar(0.16); if (m.emissive) m.emissive.setHex(0); }  // darkened, never transparent: blending 200 meshes starves a software GL
     m.needsUpdate = true;
   });
   render(); return n;
@@ -209,7 +209,7 @@ window.cadFocus = (spec) => {
 window.cadPick = (nx, ny) => {
   if (!current) return '';
   const rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2(nx * 2 - 1, 1 - ny * 2), camera);
-  const hit = rc.intersectObject(current, true).find((h) => h.object.visible && h.object.material && (h.object.material.opacity || 1) > 0.5);
+  const hit = rc.intersectObject(current, true).find((h) => h.object.visible && h.object.material && !h.object.userData.__dim);
   if (!hit) return '';
   const u = hit.object.userData || {};
   return JSON.stringify({ name: hit.object.name || '', label: u.label || hit.object.name || '', system: u.system || '' });
