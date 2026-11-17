@@ -107,6 +107,18 @@
         "*"
       ]
     },
+    "biomed/content": {
+      "tier": 4,
+      "consumers": [
+        "com.diegonmarcos.hardtechbiomed"
+      ]
+    },
+    "biomed/assets": {
+      "tier": 4,
+      "consumers": [
+        "com.diegonmarcos.hardtechbiomed"
+      ]
+    },
     "device-access": {
       "tier": 3,
       "consumers": [

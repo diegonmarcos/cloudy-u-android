@@ -159,7 +159,12 @@ class Glb:
 
 # ---- group specs ----------------------------------------------------------------------------------------------------
 # (id, label, system, colour, res, name-regex or exact-name list, restrict-to-concept (files must belong to it), sided)
-def C(h): return tuple(int(h[i:i + 2], 16) / 255 for i in (1, 3, 5))
+def _lin(c): return ((c + 0.055) / 1.055) ** 2.4 if c > 0.04045 else c / 12.92
+
+
+def C(h):
+    """A #rrggbb colour as the LINEAR factor glTF's baseColorFactor wants (the hex is sRGB)."""
+    return tuple(round(_lin(int(h[i:i + 2], 16) / 255), 5) for i in (1, 3, 5))
 
 BONE = C("#e6dcc3"); MUS = C("#b5483a"); ART = C("#d63b3b"); VEN = C("#3b6fd6")
 

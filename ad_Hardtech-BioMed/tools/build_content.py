@@ -271,6 +271,7 @@ def main(d):
     doc = {"schemaVersion": 1, "notice": NOTICE, "models": models, "tabs": tabs}
     json.dump(doc, open(os.path.join(d, "content.json"), "w"), indent=1, ensure_ascii=False); open(os.path.join(d, "content.json"), "a").write("\n")
     reg = {
+        "schemaVersion": 1,
         "_doc": "The licence register of every file served from data/fleet/biomed (#1777). Each file: its licence (an SPDX-style id), the source it comes from, the attribution it requires and its sha256. test-assets-licensed.sh holds the directory to this register.",
         "files": {
             "body.glb": {"licence": "CC-BY-SA-2.1-JP", "source": "https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/ (BodyParts3D 4.0, isa_BP3D_4.0_obj_99.zip)", "author": "The Database Center for Life Science (DBCLS)", "derived": "tools/build_models.py (vertex-clustering decimation, regrouped into named nodes); shared under the same licence", "sha256": models["body"]["sha256"]},

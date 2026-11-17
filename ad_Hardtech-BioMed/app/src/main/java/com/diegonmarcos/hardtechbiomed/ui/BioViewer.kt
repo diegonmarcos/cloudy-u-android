@@ -94,8 +94,11 @@ class BioViewerController {
     /** The last state line of the viewer, for the screen under it. */
     var status by mutableStateOf("")
         internal set
+    /** Bumped by every highlight: the viewer then writes a canvas snapshot of the new state (the emulator proof pulls it). */
+    var snapKey by mutableStateOf(0)
+        private set
     private fun run(js: String) { web?.post { web?.evaluateJavascript(js, null) } }
-    fun highlight(spec: List<String>, isolate: Boolean = false) = run(BioParse.highlightJs(spec, isolate))
+    fun highlight(spec: List<String>, isolate: Boolean = false) { snapKey++; run(BioParse.highlightJs(spec, isolate)) }
     fun focus(spec: List<String>) = run(BioParse.focusJs(spec))
     fun show(spec: List<String>, on: Boolean) = run(BioParse.showJs(spec, on))
     fun fit() = run("window.cadFit&&window.cadFit()")
@@ -221,6 +224,17 @@ fun BioViewer(
         if (state == ViewState.Loading) state = ViewState.Failed("still loading after $LOAD_TIMEOUT_S s" + if (stage.isNotBlank()) " (viewer stage: $stage)" else "")
     }
     LaunchedEffect(path, state) { while (state == ViewState.Loading) { kotlinx.coroutines.delay(1000); pollStage() } }
+    // the canvas after a highlight (a topic, a pick, or cleared): written next to the first snapshot as cad-snapshot-<model>-topic.png
+    LaunchedEffect(controller.snapKey) {
+        if (controller.snapKey == 0 || !controller.shown) return@LaunchedEffect
+        kotlinx.coroutines.delay(3000)
+        web?.evaluateJavascript("window.cadSnapshot&&window.cadSnapshot()") { v ->
+            runCatching {
+                val b64 = v.orEmpty().trim('"').substringAfter("base64,", "")
+                if (b64.isNotEmpty()) File(dir.parentFile, "cad-snapshot-" + name + "-topic.png").writeBytes(android.util.Base64.decode(b64, android.util.Base64.DEFAULT))
+            }
+        }
+    }
     // the page painted the model into its framebuffer: now measure what the SCREEN shows of it, and step to the next presentation when it shows none
     LaunchedEffect(path, paint) {
         val pt = paint ?: return@LaunchedEffect

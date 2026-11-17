@@ -1,4 +1,5 @@
 {
+ "schemaVersion": 1,
  "_doc": "The licence register of every file served from data/fleet/biomed (#1777). Each file: its licence (an SPDX-style id), the source it comes from, the attribution it requires and its sha256. test-assets-licensed.sh holds the directory to this register.",
  "files": {
   "body.glb": {
@@ -6,28 +7,28 @@
    "source": "https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/ (BodyParts3D 4.0, isa_BP3D_4.0_obj_99.zip)",
    "author": "The Database Center for Life Science (DBCLS)",
    "derived": "tools/build_models.py (vertex-clustering decimation, regrouped into named nodes); shared under the same licence",
-   "sha256": "7ff3fb0f3378aed85f75fa9478eb284c874c15d1e17e72fa8a97c9421c156dc2"
+   "sha256": "37c78edeae77135d7fd67a8ac0397798c0802034c217defd6578f15486162848"
   },
   "brain.glb": {
    "licence": "CC-BY-SA-2.1-JP",
    "source": "https://dbarchive.biosciencedbc.jp/data/bodyparts3d/LATEST/ (BodyParts3D 4.0, isa_BP3D_4.0_obj_99.zip)",
    "author": "The Database Center for Life Science (DBCLS)",
    "derived": "tools/build_models.py (brain parts only); shared under the same licence",
-   "sha256": "9cb2f60598d80111ce697800e90b976f313faf4a47546a0862950364477a6662"
+   "sha256": "6dc959db45285640c339824edd06f05193aab107384a8a20c196cf2b5f6dc62a"
   },
   "dna.glb": {
    "licence": "CC0-1.0",
    "source": "tools/build_models.py (generated, no third-party input)",
    "author": "Hardtech-BioMed",
    "derived": "",
-   "sha256": "c88f2e733582840e2da193818160c2dbac378d63a0c2629a959d619df77596b2"
+   "sha256": "31eb23ca5608f5e02cf1760ab1476a51a7596454a4a5e4539f63e60b6d87043c"
   },
   "content.json": {
    "licence": "CC0-1.0",
    "source": "tools/build_content.py (original educational text, no third-party input)",
    "author": "Hardtech-BioMed",
    "derived": "",
-   "sha256": "49142d8b6478a68856459ead2e9fec40e5e7035d6800441209c38e735f78eaa3"
+   "sha256": "90693d3f0b7e784dfb8e2fead469dbd5fca045538caf773cd5b35c46a4fd84d3"
   }
  }
 }

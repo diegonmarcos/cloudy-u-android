@@ -75,7 +75,7 @@ def settle(limit=300):
     return "timeout: no viewer state line after %ss" % limit
 
 
-def snapshot(model, name):
+def snapshot(model, name):   # model = the snapshot's id: body | brain | dna | <id>-topic
     r = subprocess.run(["adb", "exec-out", "run-as", pkg, "cat", "cache/cad-snapshot-%s.png" % model], capture_output=True, timeout=60)
     if len(r.stdout) > 1000: open("%s/%s-canvas.png" % (OUT, name), "wb").write(r.stdout); print("canvas", name, len(r.stdout))
 
@@ -105,7 +105,12 @@ else:
         open("%s/%s-state.txt" % (OUT, n), "w").write(state)
         if not state.startswith("Rendered:"): rc = 1
         shot(n + "-model"); snapshot(model, n)
-        if not tap(topic, 4, lowest=False): print("::warning::topic '%s' not found on %s" % (topic, tab))
-        time.sleep(3); shot(n + "-topic-" + re.sub(r"[^a-z0-9]+", "-", topic.lower()))
-        snapshot(model, n + "-topic")
+        found = False
+        for _ in range(4):
+            if tap(topic, 4, lowest=False): found = True; break
+            sh("shell", "input", "swipe", "540", "1800", "540", "700", "500"); time.sleep(2)   # the chips are below the viewer: scroll down to them
+        if not found: print("::warning::topic '%s' not found on %s" % (topic, tab))
+        for _ in range(4): sh("shell", "input", "swipe", "540", "600", "540", "1800", "400"); time.sleep(1)   # back to the top: the viewer with the lit parts
+        time.sleep(6); shot(n + "-topic-" + re.sub(r"[^a-z0-9]+", "-", topic.lower()))
+        snapshot(model + "-topic", n + "-topic")
 sys.exit(rc)

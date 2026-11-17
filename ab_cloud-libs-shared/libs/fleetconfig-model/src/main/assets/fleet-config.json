@@ -2681,6 +2681,14 @@
         "ad_Hardtech-CAD"
       ]
     },
+    "biomed_viewer": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1777 Hardtech-BioMed's 3D scenes: the presentation the viewer had to fall back to on this phone (webgl | 2d | host) and the build it was measured on, so the next model opens straight in it; a new build retries the GPU path. A measurement of this device's WebView: never migrates.",
+      "used_by": [
+        "ad_Hardtech-BioMed"
+      ]
+    },
     "install_sessions_prompted": {
       "kind": "prefs",
       "class": "device",
@@ -4893,6 +4901,9 @@
       "schema_version": 1,
       "libs": [
         "lib-bottomnav",
+        "lib-cad-core",
+        "lib-cad-mesh",
+        "lib-cgc-3d",
         "lib-core",
         "lib-crash",
         "lib-devtools",
@@ -4905,7 +4916,8 @@
         "lib-theme-background",
         "lib-ui-icons",
         "lib-ui-kit",
-        "lib-ui-nav-bars"
+        "lib-ui-nav-bars",
+        "lib-web-core"
       ],
       "items": []
     }
