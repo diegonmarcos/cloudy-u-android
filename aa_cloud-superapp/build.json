@@ -3768,7 +3768,7 @@
               "packages": [
                 {
                   "pkg": "com.diegonmarcos.cloudcanvas",
-                  "label": "Cloud Canvas"
+                  "label": "cloud-canvas"
                 }
               ],
               "icon_res": "ic_canvas"
@@ -7005,9 +7005,7 @@
         "id": "prod_canvas",
         "order": "145",
         "label": "=Canvas",
-        "match_keywords": [
-          "pkg:com.diegonmarcos.cloudcanvas"
-        ]
+        "match_keywords": []
       },
       {
         "id": "sys_keyboards",
