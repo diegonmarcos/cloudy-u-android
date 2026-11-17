@@ -10,8 +10,15 @@ import kotlin.math.sqrt
  * A force-directed layout (repulsion between every pair, springs along the edges, a weak pull to the centre) that cools as it runs.
  * Deterministic for a given seed. [x] and [y] hold the position of [ids] in the same order; call [step] per frame until it returns a small energy.
  */
-class ForceLayout(val ids: List<String>, edges: List<GEdge>, seed: Long = 7L) {
+class ForceLayout(val ids: List<String>, edges: List<GEdge>, seed: Long = 7L, groups: List<String> = emptyList()) {
     val n: Int = ids.size
+
+    /** The link distance grows with the node count (a bigger graph needs more room per link); repulsion follows it. */
+    val rest: Float = 30f + 9f * sqrt(n.toFloat())
+    private val repel: Float = REPEL_K * rest * rest
+    private val cutoff2: Float = (5f * rest) * (5f * rest)
+    private val grp = IntArray(n).also { g -> if (groups.size == n) { val m = LinkedHashMap<String, Int>(); groups.forEachIndexed { i, k -> g[i] = m.getOrPut(k) { m.size } } } else g.fill(-1) }
+    private val ng = (grp.maxOrNull() ?: -1) + 1
     val x = FloatArray(n)
     val y = FloatArray(n)
     private val vx = FloatArray(n)
@@ -29,11 +36,11 @@ class ForceLayout(val ids: List<String>, edges: List<GEdge>, seed: Long = 7L) {
         val kept = edges.filter { idx.containsKey(it.a) && idx.containsKey(it.b) && it.a != it.b }
         ea = IntArray(kept.size) { idx.getValue(kept[it].a) }
         eb = IntArray(kept.size) { idx.getValue(kept[it].b) }
-        ew = FloatArray(kept.size) { if (kept[it].kind == GEdge.Kind.LINK) 1f else 0.5f }
+        ew = FloatArray(kept.size) { if (kept[it].kind == GEdge.Kind.LINK) 1f else TAG_WEIGHT }
         val rnd = java.util.Random(seed)
         for (i in 0 until n) {
             val ang = 2.0 * PI * i / max(n, 1)
-            val rad = 80f + 160f * rnd.nextFloat()
+            val rad = rest + 2f * rest * rnd.nextFloat()
             x[i] = (cos(ang) * rad).toFloat()
             y[i] = (sin(ang) * rad).toFloat()
         }
@@ -46,9 +53,9 @@ class ForceLayout(val ids: List<String>, edges: List<GEdge>, seed: Long = 7L) {
             val dx = x[i] - x[j]
             val dy = y[i] - y[j]
             val d2 = dx * dx + dy * dy + 0.01f
-            if (d2 > CUTOFF2) continue
+            if (d2 > cutoff2) continue
             val d = sqrt(d2)
-            val f = REPEL * alpha / d2
+            val f = repel * alpha / d2
             val fx = f * dx / d
             val fy = f * dy / d
             vx[i] += fx; vy[i] += fy
@@ -60,11 +67,17 @@ class ForceLayout(val ids: List<String>, edges: List<GEdge>, seed: Long = 7L) {
             val dx = x[b] - x[a]
             val dy = y[b] - y[a]
             val d = sqrt(dx * dx + dy * dy + 0.01f)
-            val f = (d - REST) * SPRING * ew[k]
+            val f = (d - rest) * SPRING * ew[k]
             val fx = f * dx / d
             val fy = f * dy / d
             vx[a] += fx; vy[a] += fy
             vx[b] -= fx; vy[b] -= fy
+        }
+        if (ng > 0) {
+            // topic clusters: a gentle pull of every node to the centroid of its topic
+            val cx = FloatArray(ng); val cy = FloatArray(ng); val cn = IntArray(ng)
+            for (i in 0 until n) { val g = grp[i]; cx[g] += x[i]; cy[g] += y[i]; cn[g]++ }
+            for (i in 0 until n) { val g = grp[i]; vx[i] += (cx[g] / cn[g] - x[i]) * CLUSTER; vy[i] += (cy[g] / cn[g] - y[i]) * CLUSTER }
         }
         var energy = 0f
         for (i in 0 until n) {
@@ -89,13 +102,13 @@ class ForceLayout(val ids: List<String>, edges: List<GEdge>, seed: Long = 7L) {
 
     companion object {
         const val ALPHA_MIN = 0.02f
-        private const val REPEL = 2600f
+        private const val REPEL_K = 0.5f
         private const val SPRING = 0.04f
-        private const val REST = 70f
-        private const val GRAVITY = 0.012f
+        private const val TAG_WEIGHT = 0.15f
+        private const val CLUSTER = 0.01f
+        private const val GRAVITY = 0.01f
         private const val DAMP = 0.82f
         private const val COOL = 0.985f
         private const val MAX_V = 40f
-        private const val CUTOFF2 = 400f * 400f
     }
 }

@@ -17,6 +17,8 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -26,6 +28,16 @@ import androidx.compose.ui.unit.sp
 object GraphCamera {
     fun toScreen(wx: Float, wy: Float, center: Offset, pan: Offset, scale: Float) = Offset(center.x + pan.x + wx * scale, center.y + pan.y + wy * scale)
     fun toWorld(p: Offset, center: Offset, pan: Offset, scale: Float) = Offset((p.x - center.x - pan.x) / scale, (p.y - center.y - pan.y) / scale)
+
+    /** Scale and pan that fit every node of [layout] inside a [w] x [h] view with [margin] px around (the view is centred on the origin). */
+    fun fit(layout: ForceLayout, w: Float, h: Float, margin: Float = 24f): Pair<Float, Offset> {
+        if (layout.n == 0 || w <= 0f || h <= 0f) return 1f to Offset.Zero
+        var x0 = Float.MAX_VALUE; var x1 = -Float.MAX_VALUE; var y0 = Float.MAX_VALUE; var y1 = -Float.MAX_VALUE
+        for (i in 0 until layout.n) { x0 = minOf(x0, layout.x[i]); x1 = maxOf(x1, layout.x[i]); y0 = minOf(y0, layout.y[i]); y1 = maxOf(y1, layout.y[i]) }
+        val bw = maxOf(x1 - x0, 1f); val bh = maxOf(y1 - y0, 1f)
+        val sc = minOf((w - 2 * margin) / bw, (h - 2 * margin) / bh).coerceIn(0.1f, 6f)
+        return sc to Offset(-(x0 + x1) / 2f * sc, -(y0 + y1) / 2f * sc)
+    }
 
     /** The id of the node nearest to world point [w] within [radius] world units, or null. */
     fun hit(layout: ForceLayout, w: Offset, radius: Float): String? {
@@ -43,7 +55,9 @@ object GraphCamera {
 
 /**
  * The graph: [nodes] joined by [edges], laid out by [ForceLayout] while the view is on screen, drawn on a canvas that pans (one finger),
- * zooms (pinch) and opens a node on tap ([onOpen] gets its id). [selectedId] is drawn ringed and its neighbours' edges brighter. Colours come in
+ * zooms (pinch) and opens a node on tap ([onOpen] gets its id). It opens FITTED to the view, nodes cluster by [GNode.group], and labels stay
+ * off until the view is zoomed in, except the best-connected hubs, a node under the finger (the hover of a touch screen) and [selectedId]
+ * (drawn ringed, its edges brighter). Colours come in
  * from the caller ([nodeColor], [linkColor], [tagColor], [labelColor]); this module holds none.
  */
 @Composable
@@ -58,17 +72,28 @@ fun GraphView(
     modifier: Modifier = Modifier,
     selectedId: String? = null,
 ) {
-    val layout = remember(nodes, edges) { ForceLayout(nodes.map { it.id }, edges) }
+    val layout = remember(nodes, edges) { ForceLayout(nodes.map { it.id }, edges, groups = nodes.map { it.group }) }
+    val hubs = remember(nodes, edges) { GraphBuilder.degrees(nodes, edges).entries.sortedByDescending { it.value }.take(maxOf(3, nodes.size / 10)).map { it.key }.toSet() }
+    var viewSize by remember { mutableStateOf(IntSize.Zero) }
+    var fitScale by remember(layout) { mutableFloatStateOf(1f) }
+    var fitted by remember(layout) { mutableStateOf(false) }
+    var pressed by remember { mutableStateOf<String?>(null) }
     val degree = remember(nodes, edges) { GraphBuilder.degrees(nodes, edges) }
     val byId = remember(nodes) { nodes.associateBy { it.id } }
     var frame by remember(layout) { mutableIntStateOf(0) }
-    var scale by remember { mutableFloatStateOf(1.8f) }
+    var scale by remember { mutableFloatStateOf(1f) }
     var pan by remember { mutableStateOf(Offset.Zero) }
     val measurer = rememberTextMeasurer()
     val style = remember(labelColor) { TextStyle(color = labelColor, fontSize = 10.sp) }
 
+    // fit-to-screen on open: once the layout has settled enough to have its extent and the view has a size
+    LaunchedEffect(layout, viewSize) {
+        if (fitted || viewSize.width == 0) return@LaunchedEffect
+        layout.settle(steps = 400)
+        val (sc, pn) = GraphCamera.fit(layout, viewSize.width.toFloat(), viewSize.height.toFloat())
+        fitScale = sc; scale = sc; pan = pn; fitted = true
+    }
     LaunchedEffect(layout) {
-        layout.settle(steps = 60)
         var s = 0
         while (s < 900) {
             withFrameNanos { }
@@ -82,9 +107,10 @@ fun GraphView(
     Canvas(
         modifier
             .clipToBounds()
+            .onSizeChanged { viewSize = it }
             .pointerInput(layout) {
                 detectTransformGestures { centroid, panChange, zoom, _ ->
-                    val c = Offset(size.width / 2f, size.height / 2f)
+                    val c = Offset(this@pointerInput.size.width / 2f, this@pointerInput.size.height / 2f)
                     val ns = (scale * zoom).coerceIn(0.4f, 6f)
                     // keep the world point under the fingers fixed while zooming, then follow the pan
                     val k = ns / scale
@@ -93,10 +119,18 @@ fun GraphView(
                 }
             }
             .pointerInput(layout) {
-                detectTapGestures { tap ->
-                    val c = Offset(size.width / 2f, size.height / 2f)
-                    GraphCamera.hit(layout, GraphCamera.toWorld(tap, c, pan, scale), 28f / scale)?.let(onOpen)
-                }
+                detectTapGestures(
+                    onPress = { at ->
+                        val c = Offset(this@pointerInput.size.width / 2f, this@pointerInput.size.height / 2f)
+                        pressed = GraphCamera.hit(layout, GraphCamera.toWorld(at, c, pan, scale), 28f / scale)
+                        tryAwaitRelease()
+                        pressed = null
+                    },
+                    onTap = { tap ->
+                        val c = Offset(this@pointerInput.size.width / 2f, this@pointerInput.size.height / 2f)
+                        GraphCamera.hit(layout, GraphCamera.toWorld(tap, c, pan, scale), 28f / scale)?.let(onOpen)
+                    },
+                )
             },
     ) {
         @Suppress("UNUSED_VARIABLE") val tick = frame // reading the frame counter here redraws the canvas each layout step
@@ -117,10 +151,10 @@ fun GraphView(
         for (i in 0 until layout.n) {
             val node = byId[layout.ids[i]] ?: continue
             val p = GraphCamera.toScreen(layout.x[i], layout.y[i], c, pan, scale)
-            val r = (5f + 1.5f * (degree[node.id] ?: 0).coerceAtMost(8)) * scale.coerceIn(0.6f, 1.6f)
+            val r = (3f + 0.5f * (degree[node.id] ?: 0).coerceAtMost(10)) * (scale / fitScale).coerceIn(0.8f, 2.2f)
             drawCircle(nodeColor(node), r, p)
             if (node.id == selectedId) drawCircle(labelColor, r + 4f, p, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f))
-            if (scale >= 2.4f || node.id == selectedId) {
+            if (node.id == selectedId || node.id == pressed || node.id in hubs || scale >= fitScale * 2.2f) {
                 drawText(measurer, node.label, Offset(p.x + r + 3f, p.y - 7f), style)
             }
         }

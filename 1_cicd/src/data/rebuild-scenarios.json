@@ -7,10 +7,10 @@
         "ab_cloud-libs-shared/libs/core/src/main/java/com/diegonmarcos/superapp/core/FleetAlerts.kt"
       ],
       "expect": {
-        "apps": 42,
+        "apps": 43,
         "libs": 0,
         "rootfs": 0,
-        "ship": 43,
+        "ship": 44,
         "refresh": 0
       }
     },
@@ -20,10 +20,10 @@
         "ab_cloud-libs-shared/libs/devtools/src/main/java/com/diegonmarcos/superapp/devtools/AppDebugServer.kt"
       ],
       "expect": {
-        "apps": 42,
+        "apps": 43,
         "libs": 0,
         "rootfs": 0,
-        "ship": 43,
+        "ship": 44,
         "refresh": 0
       }
     },
@@ -60,10 +60,10 @@
         "ab_cloud-libs-shared/libs/bottomnav/src/main/java/com/diegonmarcos/superapp/bottomnav/BottomNav.kt"
       ],
       "expect": {
-        "apps": 41,
+        "apps": 42,
         "libs": 0,
         "rootfs": 0,
-        "ship": 42,
+        "ship": 43,
         "refresh": 0
       }
     },
@@ -218,10 +218,10 @@
         "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/java/com/diegonmarcos/superapp/fleetconfig/FleetPolicy.kt"
       ],
       "expect": {
-        "apps": 42,
+        "apps": 43,
         "libs": 0,
         "rootfs": 0,
-        "ship": 43,
+        "ship": 44,
         "refresh": 0
       }
     },
@@ -232,10 +232,10 @@
         "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
       ],
       "expect": {
-        "apps": 42,
+        "apps": 43,
         "libs": 0,
         "rootfs": 0,
-        "ship": 43,
+        "ship": 44,
         "refresh": 0
       }
     },
@@ -695,10 +695,10 @@
         "ab_cloud-libs-shared/libs/ui-kit/src/commonMain/kotlin/com/diegonmarcos/superapp/uikit/CloudKit.kt"
       ],
       "expect": {
-        "apps": 44,
+        "apps": 45,
         "libs": 0,
         "rootfs": 0,
-        "ship": 45,
+        "ship": 46,
         "refresh": 0
       }
     }

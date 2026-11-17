@@ -27,13 +27,38 @@ class GraphLayoutTest {
         assertTrue("settled", a.step() < 5f)
     }
 
-    @Test fun linkedPagesEndCloserThanUnrelatedOnesOnAverage() {
+    @Test fun topicsFormClustersAndLinkedPagesStayWithinTheLinkDistanceScale() {
+        val nodes = Wiki.nodes(d)
         val e = Wiki.edges(d)
-        val l = ForceLayout(Wiki.nodes(d).map { it.id }, e).also { it.settle(800) }
-        val links = e.filter { it.kind == GEdge.Kind.LINK }
-        val linked = links.map { dist(l, it.a, it.b) }.average()
-        val all = (0 until l.n).flatMap { i -> (i + 1 until l.n).map { j -> dist(l, l.ids[i], l.ids[j]) } }.average()
-        assertTrue("linked $linked < mean pair $all", linked < all)
+        val l = ForceLayout(nodes.map { it.id }, e, groups = nodes.map { it.group }).also { it.settle(800) }
+        val topic = nodes.associate { it.id to it.group }
+        var intra = 0.0; var ni = 0; var inter = 0.0; var nx = 0
+        for (i in 0 until l.n) for (j in i + 1 until l.n) {
+            val dd = dist(l, l.ids[i], l.ids[j])
+            if (topic[l.ids[i]] == topic[l.ids[j]]) { intra += dd; ni++ } else { inter += dd; nx++ }
+        }
+        assertTrue("pages of one topic sit closer (${intra / ni}) than pages of different topics (${inter / nx})", intra / ni < 0.9 * (inter / nx))
+        val links = e.filter { it.kind == GEdge.Kind.LINK }.map { dist(l, it.a, it.b) }.average()
+        assertTrue("linked pages average $links, the springs hold them near the link distance ${l.rest}", links < 1.6 * l.rest)
+    }
+
+    @Test fun theLinkDistanceGrowsWithTheNodeCount() {
+        val small = ForceLayout((0 until 10).map { "a$it" }, emptyList())
+        val big = ForceLayout((0 until 100).map { "a$it" }, emptyList())
+        assertTrue(big.rest > 1.5f * small.rest)
+    }
+
+    @Test fun theViewOpensFittedToTheScreenAndEveryNodeIsInside() {
+        val l = ForceLayout(Wiki.nodes(d).map { it.id }, Wiki.edges(d)).also { it.settle(800) }
+        val w = 1000f; val h = 1800f; val margin = 24f
+        val (sc, pan) = GraphCamera.fit(l, w, h, margin)
+        val c = Offset(w / 2f, h / 2f)
+        for (i in 0 until l.n) {
+            val p = GraphCamera.toScreen(l.x[i], l.y[i], c, pan, sc)
+            assertTrue("node ${l.ids[i]} at $p is inside the view", p.x >= margin - 0.5f && p.x <= w - margin + 0.5f && p.y >= margin - 0.5f && p.y <= h - margin + 0.5f)
+        }
+        assertTrue("the graph fills the narrow side", sc * (l.x.max() - l.x.min()) > 0.7f * w || sc * (l.y.max() - l.y.min()) > 0.7f * h)
+        assertEquals(1f to Offset.Zero, GraphCamera.fit(ForceLayout(emptyList(), emptyList()), w, h))
     }
 
     @Test fun nodesDoNotCollapseOntoEachOther() {
