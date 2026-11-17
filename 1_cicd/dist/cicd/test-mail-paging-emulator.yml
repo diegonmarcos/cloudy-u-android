@@ -1,9 +1,15 @@
-name: "Test -> Cloud Mail cache-first list (emulator screenshots: cached list kept across a failed sync, chunked scrolling)"
+name: "Test -> Cloud Mail cache-first list (emulator screenshots: cached list kept across a failed sync, chunked scrolling, a cached body opens at once, background full sync then offline open)"
 
 # #1752: build the Cloud Mail test variant (-PtestApp, the only build that carries the offline seed receiver), seed one offline
 # account with 400 cached Inbox messages, open the list, wait for the sync against the unresolvable host to FAIL, and scroll to
 # the bottom in steps: the screenshots show the cache surviving the failed sync and the list loading further chunks as it is
-# scrolled. Dispatch only; nothing is published.
+# scrolled. #1763: the newest 20 seeded messages also carry a cached BODY; the newest one is opened with the network unreachable and
+# the MailOpen timing log must show it came from disk (open-from-cache, no fetch-email-get) in well under a second.
+# #1768 background full sync: after the paging proof the app data is cleared and re-seeded (120 Inbox + 40 Archive messages, NO bodies),
+# the full-sync engine is run over the seeded rows (the worker's engine, a seed port serves the bodies: CI has no JMAP server), the emulator
+# goes offline (airplane mode, ping fails), the app is opened and the list, an Inbox body and a body from further down the list must show
+# from the cache with no fetch; the Configs "Download attachments" setting is screenshotted. Screenshots: walk-out/bg/.
+# Dispatch only; nothing is published.
 
 on:
   workflow_dispatch: {}
@@ -53,7 +59,7 @@ jobs:
           adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
           sleep 45 # let the launcher settle after boot: a Pixel Launcher ANR dialog covered run 43645543626
           adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
-          adb logcat -v threadtime "*:W" MailSync:I NavWalkSeed:I > walk-out/logcat-stream.txt 2>&1 &
+          adb logcat -v threadtime "*:W" MailSync:I NavWalkSeed:I MailOpen:I MailPrefetch:I > walk-out/logcat-stream.txt 2>&1 &
           LP=$!
           shot() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "walk-out/$1.png"; }
           dump() { for t in 1 2 3 4 5 6; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "walk-out/$1.xml"; grep -q "<hierarchy" "walk-out/$1.xml" && break; sleep 3; done; \
@@ -62,13 +68,34 @@ jobs:
           print("\n".join(re.findall(r'text="(Seed message [^"]*)"', open(sys.argv[1], encoding="utf-8").read())))
           PY
           }
-          adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --ei emails 400
+          adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --ei emails 400 --ei bodies 20
           sleep 3
           adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
           sleep 12
           shot 01-list-first-open; dump 01-list-first-open
           sleep 25 # the sync against mail.navwalk.invalid fails in this window
           shot 02-list-after-failed-sync; dump 02-list-after-failed-sync
+          # #1763: open the newest message (its body is cached; the host is unreachable) and time it from the app's own log
+          tap=$(python3 -I - walk-out/02-list-after-failed-sync.xml "Seed message 400 of 400" <<'PY'
+          import re, sys
+          x = open(sys.argv[1], encoding="utf-8").read()
+          for m in re.finditer(r'<node[^>]*?text="([^"]*)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x):
+              if m.group(1).startswith(sys.argv[2]):
+                  a, b, c, d = map(int, m.groups()[1:])
+                  print((a + c) // 2, (b + d) // 2)
+                  break
+          PY
+          )
+          echo "tap target for the newest message: $tap"
+          [ -n "$tap" ] || { echo "::error::the newest seeded message is not on screen to open"; exit 1; }
+          adb shell input tap $tap
+          sleep 4
+          shot open-1-cached-body
+          grep -E "MailOpen" walk-out/logcat-stream.txt > walk-out/open-timing.txt || true
+          cat walk-out/open-timing.txt
+          adb shell input keyevent KEYCODE_BACK
+          sleep 2
+          shot open-2-back-to-list
           for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
             for j in 1 2 3 4 5 6; do adb shell input swipe 700 1400 700 450 400; done
             sleep 2
@@ -80,11 +107,116 @@ jobs:
           # the proof, not only pictures: the first screen holds the newest message, the bottom holds a much older one, in order
           first=$(head -1 walk-out/01-list-first-open.subjects.txt || true)
           last=$(cat walk-out/*-scroll-*.subjects.txt | grep . | tail -1 || true)
-          echo "first visible: $first | last visible after scrolling: $last" | tee walk-out/summary.txt
+          cached_ms=$(sed -n 's/.*id=navwalk-m1 phase=open-from-cache ms=\([0-9]*\).*/\1/p' walk-out/open-timing.txt | head -1)
+          echo "open of a cached message: open-from-cache ${cached_ms:-missing} ms (tap to screenshot window ~4 s incl. render); phases:" | tee -a walk-out/summary.txt
+          cat walk-out/open-timing.txt | tee -a walk-out/summary.txt
+          [ -n "$cached_ms" ] || { echo "::error::no open-from-cache timing for the seeded message: it did not open from the cached body"; exit 1; }
+          [ "$cached_ms" -le 300 ] || { echo "::error::opening a cached body took $cached_ms ms (limit 300)"; exit 1; }
+          if grep -E "id=navwalk-m1 phase=(fetch-email-get|open-from-network)" walk-out/open-timing.txt; then echo "::error::the cached message went to the network"; exit 1; fi
+          echo "first visible: $first | last visible after scrolling: $last" | tee -a walk-out/summary.txt
           case "$first" in "Seed message 400 of 400"*) ;; *) echo "::error::the newest cached message is not first: $first"; exit 1;; esac
           case "$(head -1 walk-out/02-list-after-failed-sync.subjects.txt)" in "Seed message 400 of 400"*) ;; *) echo "::error::the cached list did not survive the failed sync"; exit 1;; esac
           num=$(echo "$last" | sed -n 's/^Seed message \([0-9]*\) of.*/\1/p')
           [ -n "$num" ] && [ "$num" -lt 300 ] || { echo "::error::scrolling did not load further chunks (last: $last)"; exit 1; }
+          # ---- #1768 background full sync, then offline -------------------------------------------------------------------
+          mkdir -p walk-out/bg
+          bshot() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "walk-out/bg/$1.png"; }
+          uidump() { for t in 1 2 3 4 5 6; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "walk-out/bg/$1.xml"; grep -q "<hierarchy" "walk-out/bg/$1.xml" && break; sleep 3; done; }
+          # tap the first node whose text or content-desc starts with $2 (exact when $3 = exact); prints the point; non-zero when absent
+          uitap() {
+            uidump tap-scan
+            pt=$(python3 -I - walk-out/bg/tap-scan.xml "$1" "${2:-prefix}" <<'PY'
+          import re, sys
+          x = open(sys.argv[1], encoding="utf-8").read()
+          want, mode = sys.argv[2], sys.argv[3]
+          for m in re.finditer(r'<node[^>]*?>', x):
+              n = m.group(0)
+              t = re.search(r' text="([^"]*)"', n); d = re.search(r'content-desc="([^"]*)"', n); b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+              for v in (t.group(1) if t else "", d.group(1) if d else ""):
+                  if b and v and ((v == want) if mode == "exact" else v.startswith(want)):
+                      a, bb, c, dd = map(int, b.groups())
+                      print((a + c) // 2, (bb + dd) // 2)
+                      sys.exit(0)
+          sys.exit(1)
+          PY
+            ) || return 1
+            adb shell input tap $pt
+          }
+          adb shell pm clear "$PKG" >/dev/null
+          adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS 2>/dev/null || true
+          adb logcat -c
+          adb logcat -v threadtime "*:W" MailSync:I NavWalkSeed:I MailOpen:I MailPrefetch:I OfflineSyncWorker:I FullSync:I > walk-out/bg/logcat-stream.txt 2>&1 &
+          BP=$!
+          RCV="$PKG/app.sterna.navwalk.NavWalkSeedReceiver"
+          adb shell am broadcast -n "$RCV" -a app.sterna.test.navwalk.SEED --ei emails 120 --ei archive 40
+          sleep 3
+          adb shell am broadcast -n "$RCV" -a app.sterna.test.navwalk.COUNT; sleep 2
+          adb shell am broadcast -n "$RCV" -a app.sterna.test.navwalk.SYNC; sleep 6
+          adb shell am broadcast -n "$RCV" -a app.sterna.test.navwalk.COUNT; sleep 2
+          # the real worker too: opening the app enqueues OfflineSyncWorker (the host is unresolvable, so it runs and backs off)
+          adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
+          sleep 15
+          if uitap "Skip" exact; then sleep 4; fi # the welcome pager shows after a data clear
+          bshot 00-online-seeded-list
+          adb shell cmd connectivity airplane-mode enable || true
+          adb shell svc wifi disable || true
+          adb shell svc data disable || true
+          sleep 8
+          if adb shell ping -c 1 -W 3 8.8.8.8 >/dev/null 2>&1; then echo "::error::the emulator is still online"; exit 1; fi
+          echo "offline: ping 8.8.8.8 fails" | tee -a walk-out/summary.txt
+          adb logcat -c
+          adb shell am force-stop "$PKG"
+          adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
+          sleep 14
+          if uitap "Skip" exact; then sleep 4; fi
+          bshot 01-offline-list-after-sync; uidump 01-offline-list
+          grep -o 'text="Seed message [^"]*"' walk-out/bg/01-offline-list.xml | head -3 | tee walk-out/bg/offline-first-rows.txt
+          grep -q 'Seed message 120 of 120' walk-out/bg/offline-first-rows.txt || { echo "::error::the offline list does not show the synced mail"; exit 1; }
+          uitap "Seed message 120 of 120" || { echo "::error::the newest message is not on screen offline"; exit 1; }
+          sleep 4
+          bshot 02-offline-body-newest
+          adb shell input keyevent KEYCODE_BACK; sleep 2
+          found=0
+          for j in $(seq 1 30); do
+            if uitap "Seed message 100 of 120"; then found=1; break; fi
+            adb shell input swipe 700 1900 700 600 300; sleep 1
+          done
+          [ "$found" = 1 ] || { echo "::error::a message further down is not on screen offline"; exit 1; }
+          sleep 4
+          bshot 03-offline-body-older
+          adb shell input keyevent KEYCODE_BACK; sleep 2
+          timeout 60 adb logcat -d -v threadtime > walk-out/bg/logcat-offline.txt || true
+          # the proofs from the app's own logs
+          grep -E "NavWalkSeed: (counts|sync):" walk-out/bg/logcat-stream.txt | tee walk-out/bg/sync-proof.txt
+          grep -q "counts: inboxMissingBody=120 archiveMissingBody=40" walk-out/bg/sync-proof.txt || { echo "::error::the seed did not start with 160 bodiless messages"; exit 1; }
+          grep -q "sync: bodies=160 .*errors=0.*keyImports=0" walk-out/bg/sync-proof.txt || { echo "::error::the full sync did not fill the Inbox and the Archive"; exit 1; }
+          grep -q "counts: inboxMissingBody=0 archiveMissingBody=0 encryptedArchiveStoredRaw=true" walk-out/bg/sync-proof.txt || { echo "::error::bodies missing after the sync, or the encrypted Archive body was not stored raw"; exit 1; }
+          grep -E "MailOpen" walk-out/bg/logcat-offline.txt > walk-out/bg/open-offline.txt || true
+          cat walk-out/bg/open-offline.txt | tee -a walk-out/summary.txt
+          for id in navwalk-m1 navwalk-m21; do
+            grep -q "id=$id phase=open-from-cache" walk-out/bg/open-offline.txt || { echo "::error::$id did not open from the cache offline"; exit 1; }
+            if grep -E "id=$id phase=(fetch-email-get|open-from-network)" walk-out/bg/open-offline.txt; then echo "::error::$id went to the network"; exit 1; fi
+          done
+          grep -E "OfflineSyncWorker" walk-out/bg/logcat-stream.txt | head -5 | tee walk-out/bg/worker-log.txt || true
+          # Configs: the Download attachments setting (the section is Mail's own settings, General > App)
+          if uitap "Configs"; then
+            sleep 3
+            for k in 1 2 3 4 5 6 7 8; do uitap "Open Cloud Mail configs" && break; adb shell input swipe 700 1500 700 600 300; sleep 1; done
+            sleep 3
+            found=0
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+              uidump configs-scan
+              if grep -q 'text="Download attachments"' walk-out/bg/configs-scan.xml; then found=1; break; fi
+              adb shell input swipe 700 1500 700 500 400; sleep 1
+            done
+            bshot 04-configs-download-attachments
+            cp walk-out/bg/configs-scan.xml walk-out/bg/04-configs-download-attachments.xml
+            echo "Configs shows Download attachments: $found" | tee -a walk-out/summary.txt
+            [ "$found" = 1 ] || echo "::warning::Download attachments was not found in the Configs scan; see walk-out/bg/04-configs-download-attachments.png"
+          else
+            echo "::warning::the Configs entry was not found to tap"; bshot 04-configs-not-found
+          fi
+          kill "$BP" 2>/dev/null || true
           SH
           chmod +x walk.sh
 

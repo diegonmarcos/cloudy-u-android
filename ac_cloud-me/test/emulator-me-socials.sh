@@ -19,9 +19,7 @@ open_page() { wake; local comp; comp="$(launcher "$1")"; $T adb shell am start -
 shot() { sleep "${2:-6}"; $T adb exec-out screencap -p > "$OUT/$1.png"; $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1; echo "shot $1"; }
 
 # first start runs Cloud Me's start-up permission walk; come back on top of it
-open_page "$ME" "page:configs/general"; sleep 12
-for i in 1 2 3 4 5 6 7 8; do $T adb shell input keyevent KEYCODE_BACK; sleep 2; done
-$T adb shell am force-stop "$ME"
+open_page "$ME" "page:configs/general"; sleep 12; $T adb shell input keyevent KEYCODE_BACK; sleep 2
 open_page "$ME" "page:socials/socials-professional"; shot me-socials-professional 10
 open_page "$ME" "page:socials/socials-personal"; shot me-socials-personal 10
 
@@ -36,7 +34,7 @@ for i in 1 2; do
     $T adb shell input tap $xy; sleep 4; open_page "$SA" "page:cloud/apps"; sleep 6
 done
 wh=$($T adb shell wm size | tr -d '\r' | sed 's/.*: //'); W=${wh%x*}; H=${wh#*x}
-for i in 1 2 3 4 5; do $T adb shell input tap $((W*61/100)) $((H*58/100)); sleep 2; $T adb shell input tap $((W*57/100)) $((H*62/100)); sleep 2; done
+for i in 1 2 3 4 5; do $T adb shell input tap $((W*61/100)) $((H*58/100)); sleep 2; done
 shot superapp-cloud-apps 3
 # the Me row (Lnktree first, Socials fifth) sits at ~80% height; scroll the page so it is fully in view
 $T adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*40/100)) 500; shot superapp-cloud-apps-me-row 3
