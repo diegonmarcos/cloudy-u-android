@@ -1,6 +1,7 @@
 package org.fossify.phone.nav
 
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ScrollView
@@ -25,6 +26,31 @@ object ChromeScrollHooks {
      * or that is settling from a fling is a scroll (the walk's nav-walk P3 holds it).
      */
     fun countsAsScroll(scrollState: Int, dy: Int): Boolean = dy != 0 && scrollState != RecyclerView.SCROLL_STATE_IDLE
+
+    /**
+     * #1760 (the walk's ChromeScroll trace, run 44156522605) a ScrollView's offset also moves by layout alone: the finger that drags DOWN to
+     * bring the bars back shrinks the content area, the Home pages re-lay out and their offset jumps UP by about 85 px and settles back to 0.
+     * That jump read as a scroll down and hid the bars again inside the very gesture that restored them (a touch that hid the bars cannot
+     * bring them back), so Home never came back. A positive offset delta while the finger is held and has moved DOWN the screen is not a
+     * reader scrolling down: it is not fed to the chrome.
+     */
+    const val DOWNWARD_SLOP_PX = 12f
+
+    fun countsAsOffsetScroll(delta: Int, fingerHeld: Boolean, fingerDy: Float): Boolean =
+        delta != 0 && !(delta > 0 && fingerHeld && fingerDy > DOWNWARD_SLOP_PX)
+
+    private var fingerHeld = false
+    private var fingerDownY = 0f
+    private var fingerY = 0f
+
+    /** The activity's touches (dispatchTouchEvent), read only: where the finger is relative to where it went down. */
+    fun onTouch(action: Int, y: Float) {
+        when (action) {
+            MotionEvent.ACTION_DOWN -> { fingerHeld = true; fingerDownY = y; fingerY = y }
+            MotionEvent.ACTION_MOVE -> fingerY = y
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> fingerHeld = false
+        }
+    }
 
     fun install(content: ViewGroup, onDelta: (Float) -> Unit) {
         val seen: MutableSet<View> = Collections.newSetFromMap(WeakHashMap())
@@ -56,8 +82,10 @@ object ChromeScrollHooks {
             val now = scrollViewOffsets(content)
             if (now != lastScrollViews) {
                 // #1760 debug trace (the nav walk keeps it on a P3 failure): which ScrollView moved and by how much
-                Log.d(TAG, "scrollviews ${lastScrollViews}->$now")
-                onDelta((now - lastScrollViews).toFloat())
+                val delta = now - lastScrollViews
+                val counted = countsAsOffsetScroll(delta, fingerHeld, fingerY - fingerDownY)
+                Log.d(TAG, "scrollviews ${lastScrollViews}->$now counted=$counted")
+                if (counted) onDelta(delta.toFloat())
                 lastScrollViews = now
             }
         }

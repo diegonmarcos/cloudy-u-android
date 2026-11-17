@@ -88,6 +88,13 @@ import org.greenrobot.eventbus.ThreadMode
  * inside it and their scroll feeds the one collapse connection ([ChromeScrollHooks]).
  */
 class MainActivity : SimpleActivity() {
+
+    // #1760 read only: the chrome hooks need to know the finger drags down the screen (ChromeScrollHooks.countsAsOffsetScroll)
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        ChromeScrollHooks.onTouch(ev.actionMasked, ev.rawY)
+        return super.dispatchTouchEvent(ev)
+    }
+
     override var isSearchBarEnabled = true
 
     /** The section the pager shows, and the sections whose page is on screen (Settings > Manage shown tabs). */
