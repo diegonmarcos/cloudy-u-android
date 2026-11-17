@@ -46,8 +46,6 @@ object TorrentCatalogue {
         val licence: String = "",
         val sourcePage: String = "",
         val user: Boolean = false,
-        /** Cover image URL (#1772), loaded at run time by Search > Torrent; empty = the generated category tile. */
-        val image: String = "",
     ) {
         /** The info-hash the magnet names, or null (a .torrent-only entry). */
         val infoHash: String? get() = magnet?.let { Magnet.infoHash(it) }
@@ -100,7 +98,7 @@ object TorrentCatalogue {
             if (why != null) { problems += "${id.ifEmpty { "entry ${i + 1}" }}: $why"; continue }
             if (out.any { it.id == id }) { problems += "$id: duplicate id"; continue }
             out += Entry(id, name, s("category").ifEmpty { OTHER }, magnet, url, o.optLong("size_bytes", -1L),
-                s("publisher"), s("licence"), s("source_page"), user, s("image"))
+                s("publisher"), s("licence"), s("source_page"), user)
         }
         return out
     }

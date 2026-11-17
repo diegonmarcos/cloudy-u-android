@@ -47,7 +47,7 @@ class TorrentHost(private val app: Context) : StoreTorrentHost.Host {
     override fun recommendations(): List<StoreRecs.Rec>? {
         val c = TorrentCatalogue.served(app) ?: return null
         return c.entries.filter { !it.user }.map {
-            StoreRecs.Rec(it.id, it.name, it.category, it.sizeBytes, it.licence, it.publisher, it.sourcePage, it.torrentUrl, it.magnet, it.infoHash, it, it.image)
+            StoreRecs.Rec(it.id, it.name, it.category, it.sizeBytes, it.licence, it.publisher, it.sourcePage, it.torrentUrl, it.magnet, it.infoHash, it)
         }
     }
 

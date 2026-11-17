@@ -200,22 +200,6 @@ class CalendarImportTest {
         assertTrue(has("MAIN", "android.intent.category.LAUNCHER"))
     }
 
-    @Test fun `the manifest declares the type-less Cloud Mail form and a singleTask activity`() {
-        for (a in listOf("INSERT", "EDIT")) assertTrue(a, has(a, "android:scheme=\"content\"", "android:host=\"com.android.calendar\"", "android:pathPrefix=\"/events\""))
-        assertTrue(manifest.contains("android:launchMode=\"singleTask\""))
-    }
-
-    @Test fun `a type-less insert as Cloud Mail sends it, and int or string extras, still read`() {
-        val b = 1_800_000_000_000L
-        val e = EventIntents.fromIntent(insert().putExtra("title", "Design review").putExtra("beginTime", b).putExtra("endTime", b + 3_600_000L)
-            .putExtra("eventLocation", "Room 4").putExtra("description", "Plan").putExtra("allDay", false), ZoneId.of("UTC"))!!
-        assertEquals("Design review", e.title); assertEquals("Room 4", e.location); assertEquals(false, e.allDay)
-        assertEquals(60L, java.time.Duration.between(e.start, e.end).toMinutes())
-        val s = EventIntents.fromIntent(insert().putExtra("beginTime", b.toString()).putExtra("allDay", "true"), ZoneId.of("UTC"))!!
-        assertTrue(s.allDay)
-        assertNotNull(EventIntents.fromIntent(insert().putExtra("beginTime", 1_000_000)))
-    }
-
     @Test fun `no calendar provider permission is declared`() {
         assertTrue(!manifest.contains("READ_CALENDAR") && !manifest.contains("WRITE_CALENDAR"))
     }

@@ -41,7 +41,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTask"
             android:label="@string/app_name"
             android:theme="@style/Theme.CloudTasks">
             <intent-filter>
@@ -61,14 +60,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="vnd.android.cursor.dir/event" />
                 <data android:mimeType="vnd.android.cursor.item/event" />
-            </intent-filter>
-            <!-- #1766 Cloud Mail's Intent carries only the data URI (CalendarContract.Events.CONTENT_URI), no type: without a calendar
-                 provider on the device the system cannot derive the type, so the URI form is declared too. -->
-            <intent-filter>
-                <action android:name="android.intent.action.INSERT" />
-                <action android:name="android.intent.action.EDIT" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="content" android:host="com.android.calendar" android:pathPrefix="/events" />
             </intent-filter>
             <!-- #1766 view an event / a moment of the calendar provider. -->
             <intent-filter>

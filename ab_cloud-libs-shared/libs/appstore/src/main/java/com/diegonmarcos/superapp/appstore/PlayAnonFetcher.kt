@@ -207,7 +207,7 @@ object PlayAnonFetcher {
     }
 
     /** One app in Play's catalogue, as search returns it. */
-    class Hit(val pkg: String, val title: String, val creator: String, val versionCode: Long?, val icon: String = "")
+    class Hit(val pkg: String, val title: String, val creator: String, val versionCode: Long?)
 
     /** Play's catalogue search, as Aurora does it (`search?c=3&q=`): every app document in the answer,
      *  found by walking it (the list nesting changes between Play versions; the document does not). */
@@ -216,9 +216,7 @@ object PlayAnonFetcher {
         Proto.appDocs(r).mapNotNull { d ->
             val pkg = Proto.get(d, 1)?.decodeToString() ?: return@mapNotNull null
             Hit(pkg, Proto.get(d, 5)?.decodeToString() ?: pkg, Proto.get(d, 6)?.decodeToString().orEmpty(),
-                Proto.get(d, 13, 1)?.let { Proto.varint(it, 3) },
-                // DocV2.image (10): imageType 4 = the app icon, imageUrl = field 5.
-                Proto.all(d, 10).firstOrNull { Proto.varint(it, 1) == 4L }?.let { Proto.get(it, 5)?.decodeToString() }.orEmpty())
+                Proto.get(d, 13, 1)?.let { Proto.varint(it, 3) })
         }.distinctBy { it.pkg }
     }
 

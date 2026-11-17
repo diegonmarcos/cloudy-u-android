@@ -73,8 +73,8 @@ tiles = agi[0]["tiles"]
 print("== T0: AGI sits right after the Services row, which sits right after Me (#1473) ==")
 cloud = [s for s in bj["ui"]["sections"] if s.get("id") == "cloud"][0]
 titles = [g.get("title") for g in cloud.get("tile_groups", [])]
-check("AGI" in titles and "Services" in titles and "Me" in titles and titles.index("AGI") == titles.index("Services") + 1 and titles.index("Services") == titles.index("Projects") + 1 and titles.index("Projects") == titles.index("Me") + 1,
-      "#1769 Projects sits right after Me, Services after Projects and AGI after Services (%s)" % titles)
+check("AGI" in titles and "Services" in titles and "Me" in titles and titles.index("AGI") == titles.index("Services") + 1 and titles.index("Services") == titles.index("Me") + 1,
+      "Services is the group immediately after Me and AGI the one after it (%s)" % titles)
 
 print("== T1: the AGI row is SI AI | Code Tools | MyTerminal Terminal (#1162, #1207, #1476), '|' being the group separators ==")
 got = [t.get("label") for t in tiles]
