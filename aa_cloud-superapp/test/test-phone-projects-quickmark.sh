@@ -52,26 +52,26 @@ q '.ui.sections | length' >/dev/null
 
 PHONE_GROUPS='.ui.sections[] | select(.id == "phone") | .phone_app_groups'
 
-echo "== Q1: Projects sits at index 6, between AGI and Setup (#1756 order) =="
+echo "== Q1: Projects sits at index 4, between Me and Services (#1769 order) =="
 # THE ASSERTION THAT WOULD HAVE CAUGHT THE SHIPPED DEFECT. The index is read
 # from the array rather than searched for by title, and both neighbours are
 # named, because the owner specified a POSITION and not an existence: a group
 # that exists at the wrong index is the same page with the wrong answer on it.
 TITLES="$(q "[$PHONE_GROUPS | .[].title] | @tsv")"
 INDEX_OF_PROJECTS="$(q "[$PHONE_GROUPS | .[].title] | index(\"Projects\") // -1")"
-if [ "$INDEX_OF_PROJECTS" = "6" ]; then
-    ok "phone_app_groups[6] is 'Projects'"
+if [ "$INDEX_OF_PROJECTS" = "4" ]; then
+    ok "phone_app_groups[4] is 'Projects'"
 else
-    bad "'Projects' is at phone_app_groups[$INDEX_OF_PROJECTS], expected 6 — groups are: $TITLES"
+    bad "'Projects' is at phone_app_groups[$INDEX_OF_PROJECTS], expected 4 — groups are: $TITLES"
 fi
-BEFORE="$(q "[$PHONE_GROUPS | .[].title] | .[5] // \"\"")"
-AFTER="$(q "[$PHONE_GROUPS | .[].title] | .[7] // \"\"")"
-[ "$BEFORE" = "AGI" ] \
-    && ok "the group before Projects is 'AGI'" \
-    || bad "the group before Projects is '${BEFORE:-NOTHING}', expected 'AGI'"
-[ "$AFTER" = "Setup" ] \
-    && ok "the group after Projects is 'Setup'" \
-    || bad "the group after Projects is '${AFTER:-NOTHING}', expected 'Setup'"
+BEFORE="$(q "[$PHONE_GROUPS | .[].title] | .[3] // \"\"")"
+AFTER="$(q "[$PHONE_GROUPS | .[].title] | .[5] // \"\"")"
+[ "$BEFORE" = "Me" ] \
+    && ok "the group before Projects is 'Me'" \
+    || bad "the group before Projects is '${BEFORE:-NOTHING}', expected 'Me'"
+[ "$AFTER" = "Services" ] \
+    && ok "the group after Projects is 'Services'" \
+    || bad "the group after Projects is '${AFTER:-NOTHING}', expected 'Services'"
 LAST="$(q "[$PHONE_GROUPS | .[].title] | last")"
 [ "$LAST" = "Setup" ] \
     && ok "'Setup' is still the last group" \
@@ -106,9 +106,9 @@ LINKS="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Projects\") | .links[] | s
     && ok "#1764: the Projects group carries no apps and exactly one web shortcut, Linktree" \
     || bad "the Projects group carries $LOOSE app tiles and $LINKS Linktree links, expected 0 and 1 (#1764)"
 MOVED="$(q "[$PHONE_GROUPS | .[] | (.packages[]?, (.folders[]?.packages[]?)) | select(.pkg == \"co.mangotechnologies.clickup\" or .pkg == \"com.google.android.apps.fitness\" or .pkg == \"com.fatsecret.android\" or .pkg == \"mobi.eup.easygerman\" or .pkg == \"com.nomadmania.presentation\")] | length")"
-[ "$MOVED" = "5" ] \
-    && ok "#1764: ClickUp, Google Fit, FatSecret, Todaii German and NomadMania all kept, in their real groups" \
-    || bad "#1764: $MOVED of the five former Projects apps are in a group, expected 5"
+[ "$MOVED" = "4" ] \
+    && ok "#1764: ClickUp, FatSecret, Todaii German and NomadMania kept in their real groups (#1769: Google Fit is a duplicate of Samsung Health, dropped from Quickmarks, still in All Apps)" \
+    || bad "#1764: $MOVED of the five former Projects apps are in a group, expected 4"
 
 echo "== Q4: the Money folder is inside the Services group (#1764, was Projects) and holds the bank apps =="
 # DERIVED, never a second hand-written list. This file's own answer to "which

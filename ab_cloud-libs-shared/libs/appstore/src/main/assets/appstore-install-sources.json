@@ -2522,7 +2522,8 @@
         "title": "{full_name}",
         "subtitle": "{description}",
         "repo": "{html_url}",
-        "link": "{html_url}/releases"
+        "link": "{html_url}/releases",
+        "icon": "{owner.avatar_url}"
       },
       {
         "id": "play",

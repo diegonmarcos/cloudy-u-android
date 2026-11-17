@@ -10,7 +10,7 @@ command -v jq >/dev/null 2>&1 || { echo "ERROR: jq required" >&2; exit 2; }
 check() {
   local bj="$1" fleet="$2" G='.ui.sections[] | select(.id == "cloud") | .tile_groups[]'
   local W="$G | select(.title == \"Services\")"
-  eq "group order Me, Services, AGI" "$(jq -r "[$G | .title] | join(\",\")" "$bj" | grep -o 'Me,Services,AGI')" "Me,Services,AGI"
+  eq "group order Me, Projects, Services, AGI (#1769)" "$(jq -r "[$G | .title] | join(\",\")" "$bj" | grep -o 'Me,Projects,Services,AGI')" "Me,Projects,Services,AGI"
   eq "no group keeps the old title Weby Services (no Markets)" "$(jq -r "[$G | select(.title == \"Weby Services\")] | length" "$bj")" "0"
   eq "no group keeps the old title Weby Services & Markets (now Services, #1756)" "$(jq -r "[$G | select(.title == \"Weby Services & Markets\")] | length" "$bj")" "0"
   eq "Services row reads Search | News Events Media Center | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (exact order, dividers declared)" "$(jq -r "$W | [.tiles[] | if .separator then \"|\" else .label end] | join(\" \")" "$bj")" "Search | News Events Media Center | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store"

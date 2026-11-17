@@ -23,7 +23,7 @@ class FullSyncWorkerWiringTest {
         val w = src("mail/OfflineSyncWorker.kt")
         assertTrue("periodic, period from the schedule (15 min without push)", "PeriodicWorkRequestBuilder<OfflineSyncWorker>(FullSyncSchedule.periodMinutes(hasPush), TimeUnit.MINUTES)" in w)
         assertTrue("an updated period replaces the old one in place", "ExistingPeriodicWorkPolicy.UPDATE" in w)
-        assertEquals("every request (periodic, now, continuation) backs off exponentially", 3, Regex("""BackoffPolicy\.EXPONENTIAL""").findAll(w).count())
+        assertEquals("every request (periodic, now, continuation) backs off exponentially", 3, Regex("""\.setBackoffCriteria\(BackoffPolicy\.EXPONENTIAL""").findAll(w).count())
         assertTrue("the policy, window and size limit reach the engine", "container.mailRepository.fullSync(" in w && "credentials, window, limit, policy," in w)
         assertTrue("battery saver and metered state are read from the device at each step", "DevicePrefetchConditions.read(applicationContext)" in w)
         assertTrue("a stop of the job ends the run safely", "stopRequested = { isStopped }" in w)

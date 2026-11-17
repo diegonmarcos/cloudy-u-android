@@ -141,6 +141,6 @@ class MeTabsTest {
     fun `#1771 Socials shows both tabs, Professional and Personal, and Tasks is off the bar but still declared`() {
         assertEquals(listOf("Professional", "Personal"), Sections.byId("socials")!!.pages.map { it.label })
         assertTrue("Tasks left the bar", Sections.bottom().none { it.id == "tasks" })
-        assertEquals(listOf("roadmaps", "backlogs"), Sections.byId("tasks")!!.pages.map { it.id }.take(2))  // the vault rows (v0-*, v1-*...) follow
+        assertEquals(listOf("roadmaps", "backlogs"), Sections.byId("tasks")!!.pages.map { it.id })
     }
 }

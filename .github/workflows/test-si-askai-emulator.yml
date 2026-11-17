@@ -13,11 +13,6 @@ on:
         description: "Ship Cloud SuperIntel run whose x86_64 debug APK artifact is tested"
         required: true
         type: string
-      tasks_run_id:
-        description: "Ship Cloud Tasks run whose x86_64 debug APK is tested for the Add to calendar scene (#1766)"
-        required: false
-        default: "44039428344"
-        type: string
 
 permissions:
   contents: read
@@ -41,11 +36,6 @@ jobs:
           apk=$(find apk-in -name '*.apk' | sort | head -1)
           [ -n "$apk" ] || { echo "::error::no x86_64 APK in run ${{ inputs.run_id }}"; exit 1; }
           cp "$apk" app-under-test.apk
-          mkdir tasks-in
-          gh run download "${{ inputs.tasks_run_id }}" --repo "$GITHUB_REPOSITORY" --pattern 'Cloud-Tasks-x86_64-debug-*' --dir tasks-in
-          tapk=$(find tasks-in -name '*.apk' | sort | head -1)
-          [ -n "$tapk" ] || { echo "::error::no x86_64 APK in run ${{ inputs.tasks_run_id }}"; exit 1; }
-          cp "$tapk" tasks-under-test.apk
 
       - name: Fixtures (a PNG and a text PDF, made here, no real data)
         run: |
@@ -128,17 +118,6 @@ jobs:
           sleep 6; shot 06-process-text-sheet
           tap_text "Summarize"; sleep 2; shot 07-process-text-summarize
           tap_text "Ask SI"; sleep 8; shot 08-process-text-chat
-          # 4) #1766 Cloud Mail's "Add to calendar": the same ACTION_INSERT intent (CalendarContract.Events, prefilled extras), Cloud Tasks installed
-          adb install -r -g tasks-under-test.apk || echo "::warning::tasks install failed"
-          adb shell cmd package query-activities --brief -a android.intent.action.INSERT -t vnd.android.cursor.dir/event | tee -a walk-out/summary.txt
-          adb shell am force-stop com.diegonmarcos.cloudagenda
-          adb shell input keyevent KEYCODE_HOME; sleep 2
-          b=$(( $(date +%s) * 1000 + 86400000 ))
-          adb shell am start -a android.intent.action.INSERT -d content://com.android.calendar/events \
-            --es title "Design review" --el beginTime $b --el endTime $((b + 3600000)) --es eventLocation "Room 4" --es description "Walk through the plan" --ez allDay false
-          sleep 14; shot tasks-01-add-to-calendar-chooser
-          tap_text "Cloud Tasks"; sleep 2; tap_text "Just once"; sleep 14; shot tasks-02-new-event-sheet-prefilled
-          sleep 10; shot tasks-03-new-event-sheet-later
           timeout 60 adb logcat -d -v threadtime "*:E" > walk-out/logcat-errors.txt || true
           SH
           chmod +x walk.sh

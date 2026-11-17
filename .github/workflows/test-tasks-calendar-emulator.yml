@@ -1,0 +1,119 @@
+name: "Test -> Cloud Tasks as a calendar app (emulator screenshots: chooser, prefilled New event sheet, saved event)"
+
+# #1766: install an already built Cloud Tasks x86_64 debug APK (artifact of a Ship run, input run_id) on an API-34 emulator and send the
+# exact ACTION_INSERT Cloud Mail's "Add to calendar" sends (data CalendarContract.Events.CONTENT_URI, no type; extras title, beginTime,
+# endTime, eventLocation, description, allDay as longs / boolean). Scenes: the chooser (or the direct open when Cloud Tasks is the only
+# calendar), the prefilled sheet on a cold start, the saved event, then a second INSERT while the app is running.
+# Dispatch only; nothing is published.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Ship Cloud Tasks run whose x86_64 debug APK artifact is tested"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  tasks-calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download the APK of the Ship run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir apk-in
+          gh run download "${{ inputs.run_id }}" --repo "$GITHUB_REPOSITORY" --pattern 'Cloud-Tasks-x86_64-debug-*' --dir apk-in
+          apk=$(find apk-in -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no x86_64 APK in run ${{ inputs.run_id }}"; exit 1; }
+          cp "$apk" app-under-test.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the scene script
+        run: |
+          cat > walk.sh <<'SH'
+          #!/bin/bash
+          set -u
+          mkdir -p walk-out/shots
+          PKG=com.diegonmarcos.cloudagenda
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          sleep 40
+          adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          shot() { adb exec-out screencap -p > "walk-out/shots/$1.png"; }
+          dump() { for t in 1 2 3 4; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > walk-out/ui.xml; grep -q "<hierarchy" walk-out/ui.xml && break; sleep 2; done; }
+          has_text() { dump; grep -q "text=\"$1" walk-out/ui.xml; }
+          tap_text() { # tap the first node whose text starts with $1
+            dump
+            xy=$(python3 -I - walk-out/ui.xml "$1" <<'PY'
+          import re, sys
+          x = open(sys.argv[1], encoding="utf-8").read()
+          for m in re.finditer(r'<node[^>]*?text="([^"]*)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x):
+              if m.group(1).startswith(sys.argv[2]):
+                  a, b, c, d = map(int, m.groups()[1:]); print((a + c) // 2, (b + d) // 2); break
+          PY
+          )
+            [ -n "$xy" ] && adb shell input tap $xy
+          }
+          { echo "--- activities that take INSERT dir/event"; adb shell cmd package query-activities --brief -a android.intent.action.INSERT -t vnd.android.cursor.dir/event
+            echo "--- INSERT with the data URI only"; adb shell cmd package query-activities --brief -a android.intent.action.INSERT -d content://com.android.calendar/events; } | tee walk-out/summary.txt
+          adb shell am force-stop $PKG
+          adb shell input keyevent KEYCODE_HOME; sleep 2
+          b=$(( $(date +%s) * 1000 + 86400000 ))
+          # 1) cold start: Cloud Mail's Intent, no component (the system chooser, or the app directly when it is the only calendar)
+          adb shell am start -a android.intent.action.INSERT -d content://com.android.calendar/events \
+            --es title "Design review" --el beginTime $b --el endTime $((b + 3600000)) --es eventLocation "Room 4" --es description "Walk through the plan" --ez allDay false | tee -a walk-out/summary.txt
+          sleep 8; shot tasks-01-add-to-calendar-chooser
+          if has_text "Just once"; then tap_text "Cloud Tasks"; sleep 2; tap_text "Just once"; fi
+          sleep 10; shot tasks-02-new-event-sheet-prefilled
+          has_text "New event" && echo "SHEET: shown" | tee -a walk-out/summary.txt || echo "SHEET: MISSING" | tee -a walk-out/summary.txt
+          # 2) save it: the event lands on the Calendar
+          tap_text "Save"; sleep 3; shot tasks-03-saved-toast
+          sleep 4; shot tasks-04-saved-event-calendar
+          # 3) the app is running: a second INSERT reaches the sheet through onNewIntent
+          adb shell am start -a android.intent.action.INSERT -d content://com.android.calendar/events -n $PKG/.MainActivity \
+            --es title "Second while running" --el beginTime $((b + 7200000)) --el endTime $((b + 10800000)) --ez allDay false
+          sleep 8; shot tasks-05-running-app-sheet
+          has_text "New event" && echo "RUNNING SHEET: shown" | tee -a walk-out/summary.txt || echo "RUNNING SHEET: MISSING" | tee -a walk-out/summary.txt
+          timeout 60 adb logcat -d -v threadtime "*:E" > walk-out/logcat-errors.txt || true
+          SH
+          chmod +x walk.sh
+
+      - name: Boot emulator + scenes
+        timeout-minutes: 30
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+
+      - name: Upload the PNGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tasks-calendar-shots
+          path: |
+            walk-out/shots/*.png
+            walk-out/summary.txt
+            walk-out/logcat-errors.txt
+          if-no-files-found: warn

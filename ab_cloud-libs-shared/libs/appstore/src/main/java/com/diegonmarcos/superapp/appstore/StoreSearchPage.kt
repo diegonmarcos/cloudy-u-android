@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -55,6 +56,8 @@ import com.diegonmarcos.superapp.uikit.KitStatePill
 import com.diegonmarcos.superapp.uikit.KitStatusBanner
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 import com.diegonmarcos.superapp.updater.Fleet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URLEncoder
 import kotlin.concurrent.thread
@@ -185,10 +188,10 @@ object StoreSearchPage {
                 }
             }
             SourceResolver.KIND_FDROID -> FDroidIndex.search(ctx, cfg.fdroid, query).map {
-                StoreSuggest.Hit(src.id, it.pkg, it.name, it.license, foss = true, repo = it.sourceCode)
+                StoreSuggest.Hit(src.id, it.pkg, it.name, it.license, foss = true, repo = it.sourceCode, icon = it.icon)
             }
             SourceResolver.KIND_IZZY -> FDroidIndex.search(ctx, SourceResolver.izzy(cfg), query).map {
-                StoreSuggest.Hit(src.id, it.pkg, it.name, it.license, foss = true, repo = it.sourceCode)
+                StoreSuggest.Hit(src.id, it.pkg, it.name, it.license, foss = true, repo = it.sourceCode, icon = it.icon)
             }
             GITHUB -> {
                 val t = src.decl
@@ -198,7 +201,7 @@ object StoreSearchPage {
                 (0 until items.length()).map { i ->
                     val item = items.getJSONObject(i)
                     StoreSuggest.Hit(GITHUB, "", FeedViewer.fill(t.getString("title"), item), FeedViewer.fill(t.optString("subtitle"), item),
-                        foss = foss, repo = FeedViewer.fill(t.getString("repo"), item), link = FeedViewer.fill(t.getString("link"), item))
+                        foss = foss, repo = FeedViewer.fill(t.getString("repo"), item), link = FeedViewer.fill(t.getString("link"), item), icon = FeedViewer.fill(t.optString("icon"), item))
                 }
             }
             PLAY -> {
@@ -207,7 +210,7 @@ object StoreSearchPage {
                 val fossSet = runCatching { FDroidIndex.packages(ctx, cfg.fdroid) }.getOrDefault(emptySet()) +
                     (cfg.izzy?.let { z -> runCatching { FDroidIndex.packages(ctx, z) }.getOrDefault(emptySet()) } ?: emptySet())
                 try {
-                    PlayAnonFetcher.search(ctx, pa, query).map { StoreSuggest.Hit(PLAY, it.pkg, it.title, it.creator, foss = it.pkg in fossSet) }
+                    PlayAnonFetcher.search(ctx, pa, query).map { StoreSuggest.Hit(PLAY, it.pkg, it.title, it.creator, foss = it.pkg in fossSet, icon = it.icon) }
                 } catch (e: PlayAnonFetcher.TokenUnavailable) {
                     error(ctx.getString(R.string.store_search_play_token))
                 }
@@ -512,9 +515,7 @@ object StoreSearchPage {
                 if (st is SrcState.Done && st.hits.isNotEmpty() && group.isEmpty()) {
                     Text(ctx.getString(R.string.store_search_merged_up, st.hits.size), color = p.textSecondary, fontSize = KitDensity.caption)
                 }
-                group.forEach { r ->
-                    ResultRow(ctx, cfg, d, r, lines, open, tick, bump)
-                }
+                ResultGrid(ctx, cfg, d, group, emptyMap(), lines, open, tick, bump)
             }
         }
     }
@@ -647,6 +648,14 @@ object StoreSearchPage {
         lines: MutableMap<String, String>, open: MutableMap<String, Boolean>, tick: Int, bump: () -> Unit,
     ) {
         val p = LocalKitPalette.current
+        // The curated list carries no icons: read them from the F-Droid index's own listing (cached), tiles show the initial until they arrive.
+        val icons = remember { mutableStateMapOf<String, String>() }
+        LaunchedEffect(recs?.apps?.size) {
+            val pkgs = recs?.apps?.map { it.pkg }?.toSet().orEmpty()
+            if (pkgs.isEmpty()) return@LaunchedEffect
+            val got = withContext(Dispatchers.IO) { runCatching { FDroidIndex.icons(ctx, resolveCfg(ctx, cfg).fdroid, pkgs) }.getOrDefault(emptyMap()) }
+            icons.putAll(got)
+        }
         Column(Modifier.fillMaxWidth().testTag(TAG_PHONE_RECS), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
             KitSectionHeader("Popular open-source apps", "Curated, not in the fleet. Install from the F-Droid index.")
             when {
@@ -655,10 +664,31 @@ object StoreSearchPage {
                 else -> phoneRows(recs).forEach { (c, rows) ->
                     Text(c.label + " (" + rows.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
                         modifier = Modifier.testTag(recCategoryTag(c.id)))
-                    rows.forEach { r -> ResultRow(ctx, cfg, d, r, lines, open, tick, bump) }
+                    ResultGrid(ctx, cfg, d, rows, icons, lines, open, tick, bump)
                 }
             }
         }
+    }
+
+    /**
+     * The results as the launcher's icon grid (#1772): each tile is the app's real icon, name and source badge. A tap opens the
+     * full Store row under the tile (Install / Open, declare, every fact and verb the list showed); a long-press opens an installed app.
+     */
+    @Composable
+    private fun ResultGrid(
+        ctx: Context, cfg: () -> SourceResolver.Config?, d: Decl, results: List<StoreSuggest.Result>, icons: Map<String, String>,
+        lines: MutableMap<String, String>, open: MutableMap<String, Boolean>, tick: Int, bump: () -> Unit,
+    ) {
+        StoreGrid.Grid(results, isOpen = { open[it.key] == true }, tag = "store-search:grid",
+            tile = { r, m ->
+                val installed = remember(r.pkg, tick) { r.pkg.isNotEmpty() && isInstalled(ctx, r.pkg) }
+                StoreGrid.TileView(StoreGrid.phoneTile(r, icons[r.pkg] ?: r.icon, d::label), m, "store-search:tile:${r.key}",
+                    onClick = { open[r.key] = open[r.key] != true },
+                    onLongClick = {
+                        if (installed) start(ctx, ctx.packageManager.getLaunchIntentForPackage(r.pkg), r.title) else open[r.key] = true
+                    })
+            },
+            detail = { r -> ResultRow(ctx, cfg, d, r, lines, open, tick, bump) })
     }
 
     // ── the landing's view ─────────────────────────────────────────────

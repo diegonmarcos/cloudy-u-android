@@ -189,6 +189,7 @@ object StoreTorrentSearch {
         val stats = remember(host) { mutableStateMapOf<String, StoreRecs.Stat>() }
         var live by remember(host) { mutableStateOf(true) }
         var note by remember(host) { mutableStateOf<String?>(null) }
+        val openRec = remember(host) { mutableStateMapOf<String, Boolean>() }
         LaunchedEffect(host) {
             val got = withContext(Dispatchers.IO) { runCatching { host.recommendations() } }
             got.onFailure { failed = it.message ?: it.javaClass.simpleName; live = false }.onSuccess { recs = it ?: emptyList() }
@@ -213,15 +214,15 @@ object StoreTorrentSearch {
                         Text(c.label + " (" + rows.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = KitDensity.small).testTag(recCategoryTag(c.id)))
                         if (rows.isEmpty()) Text("Nothing from a legitimate source yet.", color = p.textSecondary, fontSize = KitDensity.caption)
-                        rows.forEach { rec ->
-                            val st = rec.infoHash?.let { stats[it.lowercase()] }
-                            Column(Modifier.fillMaxWidth().testTag(recRowTag(rec.id))) {
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                    Text(rec.name, color = p.textPrimary, fontSize = KitDensity.body, fontWeight = FontWeight.Bold, maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                                    Text("Add", color = p.tileInk, fontSize = KitDensity.caption, fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(start = KitDensity.small).testTag(recAddTag(rec.id)).clip(RoundedCornerShape(KitDensity.corner))
-                                            .background(p.accent).clickable {
+                        // #1772 the icon grid: cover (or the category-coloured initial), name, size, S/L when known, Add; a tap opens the old row's line.
+                        StoreGrid.Grid(rows, isOpen = { openRec[it.id] == true }, tag = "store-search:torrent:grid:${c.id}",
+                            tile = { rec, m ->
+                                val st = rec.infoHash?.let { stats[it.lowercase()] }
+                                StoreGrid.TileView(StoreGrid.torrentTile(rec, st), m, recRowTag(rec.id), imageDp = StoreGrid.COVER_DP,
+                                    onClick = { openRec[rec.id] = openRec[rec.id] != true },
+                                    action = {
+                                        Text("Add", color = p.tileInk, fontSize = KitDensity.caption, fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.testTag(recAddTag(rec.id)).clip(RoundedCornerShape(KitDensity.corner)).background(p.accent).clickable {
                                                 note = "adding…"
                                                 scope.launch {
                                                     val msg = withContext(Dispatchers.IO) { runCatching { host.downloadRec(rec) }.getOrElse { it.message ?: it.javaClass.simpleName } }
@@ -229,12 +230,12 @@ object StoreTorrentSearch {
                                                     Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
                                                 }
                                             }.padding(horizontal = KitDensity.small, vertical = KitDensity.small / 4))
-                                }
-                                Text(StoreTorrentHost.sizeText(rec.sizeBytes) + "  ·  S " + StoreTorrentHost.seedText(st?.seeders ?: -1) + " / L " + StoreTorrentHost.seedText(st?.leechers ?: -1) +
-                                    "  ·  " + (st?.sourceLabel?.ifEmpty { null } ?: rec.publisher.ifEmpty { "catalogue" }) + "  ·  " + rec.licence,
-                                    color = p.textSecondary, fontSize = KitDensity.caption, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            }
-                        }
+                                    })
+                            },
+                            detail = { rec ->
+                                Text(rec.name + "  ·  " + StoreGrid.recLine(rec, rec.infoHash?.let { stats[it.lowercase()] }),
+                                    color = p.textSecondary, fontSize = KitDensity.caption, modifier = Modifier.fillMaxWidth().testTag(recRowTag(rec.id) + ":detail"))
+                            })
                     }
                     note?.let { Text(it, color = p.textSecondary, fontSize = KitDensity.caption, modifier = Modifier.testTag(NOTE_TAG)) }
                 }

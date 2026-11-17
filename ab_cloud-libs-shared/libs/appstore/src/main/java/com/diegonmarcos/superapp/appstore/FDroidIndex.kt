@@ -107,22 +107,22 @@ object FDroidIndex {
     /** One app of an F-Droid-format repo (the official one, IzzyOnDroid), as search returns it. Every
      *  one is free and open source. [sourceCode] is the app's declared source repository, which is
      *  how a GitHub result is matched to its package. */
-    class Hit(val pkg: String, val name: String, val summary: String, val license: String, val sourceCode: String = "")
+    class Hit(val pkg: String, val name: String, val summary: String, val license: String, val sourceCode: String = "", val icon: String = "")
 
     /** Search the signed index's apps by name, summary or package, case-insensitive; at most [limit]. */
     fun search(ctx: Context, cfg: JSONObject, query: String, limit: Int = 60): List<Hit> {
         val index = verifiedIndex(ctx, cfg.getString("repo") + cfg.getString("index"), cfg.getString("index_entry"), cfg.getString("cert_sha256"))
-        return search(index.inputStream(), query, limit)
+        return search(index.inputStream(), query, limit, cfg.getString("repo"))
     }
 
-    fun search(input: InputStream, query: String, limit: Int = 60): List<Hit> {
+    fun search(input: InputStream, query: String, limit: Int = 60, iconBase: String = ""): List<Hit> {
         val q = query.trim().lowercase(); if (q.isEmpty()) return emptyList()
         val out = ArrayList<Hit>()
         JsonReader(InputStreamReader(input, Charsets.UTF_8)).use { r ->
             r.beginObject()
             while (r.hasNext()) when (r.nextName()) {
                 "apps" -> { r.beginArray(); while (r.hasNext()) {
-                    var p = ""; var name = ""; var sum = ""; var lic = ""; var src = ""
+                    var p = ""; var name = ""; var sum = ""; var lic = ""; var src = ""; var ic = ""
                     r.beginObject()
                     while (r.hasNext()) when (r.nextName()) {
                         "packageName" -> p = r.str()
@@ -130,6 +130,7 @@ object FDroidIndex {
                         "summary" -> sum = r.str()
                         "license" -> lic = r.str()
                         "sourceCode" -> src = r.str()
+                        "icon" -> ic = r.str()
                         "localized" -> { r.beginObject(); while (r.hasNext()) { val loc = r.nextName(); r.beginObject()
                             while (r.hasNext()) when (r.nextName()) {
                                 "name" -> r.str().let { if (name.isEmpty() || loc.startsWith("en")) name = it }
@@ -140,13 +141,44 @@ object FDroidIndex {
                     }
                     r.endObject()
                     if (out.size < limit && (q in p.lowercase() || q in name.lowercase() || q in sum.lowercase()))
-                        out += Hit(p, name.ifEmpty { p }, sum, lic, src)
+                        out += Hit(p, name.ifEmpty { p }, sum, lic, src, iconUrl(iconBase, ic))
                 }; r.endArray() }
                 else -> r.skipValue()
             }
             r.endObject()
         }
         return out
+    }
+
+    /** The icon URL of an index-v1 app: the repo's `icons-640/<icon>` file; empty when the app has none or the repo base is unknown. */
+    fun iconUrl(repoBase: String, icon: String): String = if (icon.isBlank() || repoBase.isBlank()) "" else repoBase.trimEnd('/') + "/icons-640/" + icon
+
+    /** package -> icon URL for just [pkgs], streamed from the signed index (the recommendations carry no icon of their own). */
+    fun icons(input: InputStream, pkgs: Set<String>, iconBase: String): Map<String, String> {
+        val out = HashMap<String, String>()
+        JsonReader(InputStreamReader(input, Charsets.UTF_8)).use { r ->
+            r.beginObject()
+            while (r.hasNext()) when (r.nextName()) {
+                "apps" -> { r.beginArray(); while (r.hasNext()) {
+                    var p = ""; var ic = ""
+                    r.beginObject()
+                    while (r.hasNext()) when (r.nextName()) { "packageName" -> p = r.str(); "icon" -> ic = r.str(); else -> r.skipValue() }
+                    r.endObject()
+                    if (p in pkgs) iconUrl(iconBase, ic).takeIf { it.isNotEmpty() }?.let { out[p] = it }
+                }; r.endArray() }
+                else -> r.skipValue()
+            }
+            r.endObject()
+        }
+        return out
+    }
+
+    private val iconMemo = java.util.concurrent.ConcurrentHashMap<String, Map<String, String>>()
+
+    /** [icons] for a repo declaration, once per process per repo. */
+    fun icons(ctx: Context, cfg: JSONObject, pkgs: Set<String>): Map<String, String> = iconMemo.getOrPut(cfg.getString("repo")) {
+        val index = verifiedIndex(ctx, cfg.getString("repo") + cfg.getString("index"), cfg.getString("index_entry"), cfg.getString("cert_sha256"))
+        icons(index.inputStream(), pkgs, cfg.getString("repo"))
     }
 
     private val pkgCache = java.util.concurrent.ConcurrentHashMap<String, Set<String>>()

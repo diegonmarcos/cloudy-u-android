@@ -68,6 +68,8 @@ object StoreRecs {
     class Rec(
         val id: String, val name: String, val category: String, val sizeBytes: Long, val licence: String, val publisher: String,
         val sourcePage: String, val torrentUrl: String?, val magnet: String?, val infoHash: String?, val key: Any? = null,
+        /** Cover image URL from the catalogue (#1772), loaded at run time; empty = the generated category tile. */
+        val image: String = "",
     )
 
     /** Seeders / leechers read live from a source; -1 = no source said. */
