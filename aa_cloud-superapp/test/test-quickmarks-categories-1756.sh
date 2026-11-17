@@ -138,6 +138,14 @@ WANT_FOLDERS = {
  'Setup': ['Quick Actions', 'UI', 'NG Firewall', 'Store', 'C3', 'About'],
 }
 CLOUD_LABEL = {'Nav': 'Navigation', 'Agenda': 'Tasks', 'Me-Health': 'Me-Health', 'Experiences': 'Experienc.', 'Me-Buro': 'Me-Buro'}
+fleet_pkgs = set()
+for e in bj['external_apps']:
+    for p_ in [e.get('hub_package'), e.get('alt_package'), e.get('install_package')] + list((e.get('forks') or {}).values()):
+        if p_: fleet_pkgs.add(p_)
+is_fleet = lambda p_: p_ in fleet_pkgs or p_.startswith('com.diegonmarcos.') or p_.startswith('cld.')
+cloud_icons = {t.get('icon') for g_ in cloud for t in g_['tiles'] if not t.get('separator')}
+EXPECT_RES = {'Events': 'ic_p_cal_month', 'Mobility & Travel': 'ic_ctl_airplane', 'Jobs & Business': 'ic_suite', 'AI': 'ic_ai_chat',
+              'Quick Actions': 'ic_home', 'UI': 'ic_ctl_brightness', 'NG Firewall': 'ic_act_shield', 'About': 'ic_info'}
 for g in phone:
     if g['title'] not in WANT_FOLDERS: continue
     labs = [f['label'] for f in g['folders']]
@@ -151,8 +159,15 @@ for g in phone:
         if ip:
             ids = {e['hub_package'] for e in bj['external_apps']}
             check(ip in ids, '%s / %s icon_pkg %s is a Cloud app' % (g['title'], f['label'], ip))
-        own = [t['pkg'] for t in f['packages'] if t['pkg'] in {e['hub_package'] for e in bj['external_apps']}]
-        check(not own or f['packages'][0]['pkg'] == own[0] == ip, '%s / %s: our Cloud app comes first' % (g['title'], f['label']))
+        # #1769 a folder holds PHONE apps only: a fleet package is allowed as icon_pkg (the face), never as a member.
+        own = [t['pkg'] for t in f['packages'] if is_fleet(t['pkg'])]
+        check(not own, '%s / %s: no fleet (Cloud) app is a member (#1769)%s' % (g['title'], f['label'], ' FOUND %s' % own if own else ''))
+        check(f['packages'], '%s / %s: still holds phone apps' % (g['title'], f['label']))
+        # #1769 every folder wears a Cloud icon: the Cloud app's launcher icon (icon_pkg) and/or the drawable of the Cloud tile at that position (icon_res).
+        check(ip in fleet_pkgs or f.get('icon_res') in cloud_icons, '%s / %s has a Cloud-icon face (icon_pkg %s, icon_res %s)' % (g['title'], f['label'], ip, f.get('icon_res')))
+        check(f.get('icon_res') in cloud_icons, '%s / %s icon_res is a Cloud tile drawable' % (g['title'], f['label']))
+        if f['label'] in EXPECT_RES:
+            check(f.get('icon_res') == EXPECT_RES[f['label']] and not ip, '%s / %s wears the Cloud tile drawable %s' % (g['title'], f['label'], EXPECT_RES[f['label']]))
 allq = [t['pkg'] for g in phone for f in g.get('folders', []) for t in f['packages']] + [t['pkg'] for g in phone for t in g['packages']]
 check(len(allq) == len(set(allq)), 'no app sits in two phone folders (apps that do the same job share one folder)')
 before = json.load(open(A + 'test/data/phone-quickmarks-before-1764.json'))['packages']

@@ -3618,7 +3618,7 @@
         "last_apps": {
           "enabled": true,
           "title": "Last Apps",
-          "limit": 12
+          "limit": 21
         },
         "pages": [
           {
@@ -3667,10 +3667,6 @@
               "icon_pkg": "com.diegonmarcos.clouddrive",
               "packages": [
                 {
-                  "pkg": "com.diegonmarcos.clouddrive",
-                  "label": "cloud-drive"
-                },
-                {
                   "pkg": "com.google.android.apps.docs",
                   "label": "Google Drive"
                 },
@@ -3714,16 +3710,13 @@
                   "pkg": "com.mobisystems.fileman",
                   "label": "File Commander"
                 }
-              ]
+              ],
+              "icon_res": "ic_drive"
             },
             {
               "label": "Browser",
               "icon_pkg": "com.diegonmarcos.cloudbrowser",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudbrowser",
-                  "label": "cloud-browser"
-                },
                 {
                   "pkg": "com.brave.browser",
                   "label": "Brave"
@@ -3736,16 +3729,13 @@
                   "pkg": "com.duckduckgo.mobile.android",
                   "label": "DuckDuckGo"
                 }
-              ]
+              ],
+              "icon_res": "ic_world"
             },
             {
               "label": "Calc",
               "icon_pkg": "com.diegonmarcos.cloudcalc",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudcalc",
-                  "label": "cloud-calc"
-                },
                 {
                   "pkg": "com.sec.android.app.popupcalculator",
                   "label": "Calculator"
@@ -3762,44 +3752,35 @@
                   "pkg": "com.sec.android.app.clockpackage",
                   "label": "Clock"
                 }
-              ]
+              ],
+              "icon_res": "ic_calc"
             },
             {
               "label": "Nav",
               "icon_pkg": "com.diegonmarcos.cloudnav",
               "packages": [
                 {
-                  "pkg": "com.diegonmarcos.cloudnav",
-                  "label": "cloud-nav"
-                },
-                {
                   "pkg": "com.google.android.apps.maps",
                   "label": "Maps"
                 }
-              ]
+              ],
+              "icon_res": "ic_nav"
             },
             {
               "label": "Camera",
               "icon_pkg": "cld.camera",
               "packages": [
                 {
-                  "pkg": "cld.camera",
-                  "label": "cloud-camera"
-                },
-                {
                   "pkg": "com.sec.android.app.camera",
                   "label": "Camera"
                 }
-              ]
+              ],
+              "icon_res": "ic_camera"
             },
             {
               "label": "Keyboard",
               "icon_pkg": "com.diegonmarcos.cloudkeyboard",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudkeyboard",
-                  "label": "cloud-keyboard"
-                },
                 {
                   "pkg": "com.google.android.inputmethod.latin",
                   "label": "Gboard"
@@ -3812,21 +3793,19 @@
                   "pkg": "juloo.keyboard2",
                   "label": "Unexpected Keyboard"
                 }
-              ]
+              ],
+              "icon_res": "ic_keyboard"
             },
             {
               "label": "Wallet",
               "icon_pkg": "com.diegonmarcos.cloudwallet",
               "packages": [
                 {
-                  "pkg": "com.diegonmarcos.cloudwallet",
-                  "label": "cloud-wallet"
-                },
-                {
                   "pkg": "com.google.android.apps.walletnfcrel",
                   "label": "Google Wallet"
                 }
-              ]
+              ],
+              "icon_res": "ic_wallet"
             }
           ]
         },
@@ -3841,10 +3820,6 @@
               "label": "Mail",
               "icon_pkg": "com.diegonmarcos.comms.mail",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.comms.mail",
-                  "label": "cloud-mail"
-                },
                 {
                   "pkg": "com.google.android.gm",
                   "label": "Gmail"
@@ -3869,16 +3844,13 @@
                   "pkg": "app.sterna",
                   "label": "Sterna Mail"
                 }
-              ]
+              ],
+              "icon_res": "ic_mail"
             },
             {
               "label": "Chat",
               "icon_pkg": "com.diegonmarcos.comms.chat",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.comms.chat",
-                  "label": "cloud-chat"
-                },
                 {
                   "pkg": "com.Slack",
                   "label": "Slack"
@@ -3899,16 +3871,13 @@
                   "pkg": "im.vector.app",
                   "label": "Element"
                 }
-              ]
+              ],
+              "icon_res": "ic_p_chat_mattermost"
             },
             {
               "label": "Messenger",
               "icon_pkg": "com.diegonmarcos.comms.matrix",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.comms.matrix",
-                  "label": "cloud-matrix"
-                },
                 {
                   "pkg": "com.whatsapp",
                   "label": "WhatsApp"
@@ -3941,30 +3910,24 @@
                   "pkg": "com.instagram.android",
                   "label": "Instagram"
                 }
-              ]
+              ],
+              "icon_res": "ic_p_chat_matrix"
             },
             {
               "label": "Dialer",
               "icon_pkg": "com.diegonmarcos.comms.dialer",
               "packages": [
                 {
-                  "pkg": "com.diegonmarcos.comms.dialer",
-                  "label": "cloud-dialer"
-                },
-                {
                   "pkg": "com.samsung.android.dialer",
                   "label": "Samsung Phone"
                 }
-              ]
+              ],
+              "icon_res": "ic_p_dialer"
             },
             {
               "label": "Contacts",
               "icon_pkg": "com.diegonmarcos.cloudcontacts",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudcontacts",
-                  "label": "cloud-contacts"
-                },
                 {
                   "pkg": "com.google.android.contacts",
                   "label": "Google Contacts"
@@ -3973,7 +3936,8 @@
                   "pkg": "com.samsung.android.app.contacts",
                   "label": "Samsung Contacts"
                 }
-              ]
+              ],
+              "icon_res": "ic_p_sol_personal"
             }
           ]
         },
@@ -3989,10 +3953,6 @@
               "icon_pkg": "com.diegonmarcos.cloudnotes",
               "packages": [
                 {
-                  "pkg": "com.diegonmarcos.cloudnotes",
-                  "label": "cloud-notes"
-                },
-                {
                   "pkg": "md.obsidian",
                   "label": "Obsidian"
                 },
@@ -4004,16 +3964,13 @@
                   "pkg": "com.rhmsoft.edit",
                   "label": "QuickEdit"
                 }
-              ]
+              ],
+              "icon_res": "ic_notes"
             },
             {
               "label": "Agenda",
               "icon_pkg": "com.diegonmarcos.cloudagenda",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudagenda",
-                  "label": "cloud-tasks"
-                },
                 {
                   "pkg": "com.google.android.calendar",
                   "label": "Google Calendar"
@@ -4038,16 +3995,13 @@
                   "pkg": "co.mangotechnologies.clickup",
                   "label": "ClickUp"
                 }
-              ]
+              ],
+              "icon_res": "ic_calendar"
             },
             {
               "label": "Office",
               "icon_pkg": "com.diegonmarcos.cloudoffice",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudoffice",
-                  "label": "cloud-office"
-                },
                 {
                   "pkg": "com.google.android.apps.docs.editors.docs",
                   "label": "Google Docs"
@@ -4064,16 +4018,13 @@
                   "pkg": "com.adobe.reader",
                   "label": "Adobe Acrobat"
                 }
-              ]
+              ],
+              "icon_res": "ic_sheets"
             },
             {
               "label": "Gallery",
               "icon_pkg": "com.diegonmarcos.mediacenter",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.mediacenter",
-                  "label": "cloud-gallery"
-                },
                 {
                   "pkg": "com.google.android.apps.photos",
                   "label": "Google Photos"
@@ -4082,16 +4033,13 @@
                   "pkg": "com.sec.android.gallery3d",
                   "label": "Samsung Gallery"
                 }
-              ]
+              ],
+              "icon_res": "ic_photos"
             },
             {
               "label": "Vault",
               "icon_pkg": "com.diegonmarcos.cloudvault",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudvault",
-                  "label": "cloud-vault"
-                },
                 {
                   "pkg": "com.x8bit.bitwarden",
                   "label": "Bitwarden"
@@ -4112,7 +4060,8 @@
                   "pkg": "com.google.android.apps.authenticator2",
                   "label": "Google Authenticator"
                 }
-              ]
+              ],
+              "icon_res": "ic_vault"
             }
           ]
         },
@@ -4124,10 +4073,6 @@
               "label": "Me-Health",
               "icon_pkg": "com.diegonmarcos.cloudme",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudme",
-                  "label": "cloud-me"
-                },
                 {
                   "pkg": "com.sec.android.app.shealth",
                   "label": "Samsung Health"
@@ -4156,7 +4101,8 @@
                   "pkg": "com.urbandroid.sleep",
                   "label": "Sleep as Android"
                 }
-              ]
+              ],
+              "icon_res": "ic_heart"
             },
             {
               "label": "Experiences",
@@ -4170,7 +4116,8 @@
                   "pkg": "mobi.eup.easygerman",
                   "label": "Todaii German"
                 }
-              ]
+              ],
+              "icon_res": "ic_file_stack"
             },
             {
               "label": "Me-Buro",
@@ -4180,7 +4127,8 @@
                   "pkg": "es.gob.interior.policia.midni",
                   "label": "miDNI"
                 }
-              ]
+              ],
+              "icon_res": "ic_p_folder"
             }
           ]
         },
@@ -4193,23 +4141,16 @@
               "icon_pkg": "com.diegonmarcos.cloudsearch",
               "packages": [
                 {
-                  "pkg": "com.diegonmarcos.cloudsearch",
-                  "label": "cloud-search"
-                },
-                {
                   "pkg": "com.google.android.googlequicksearchbox",
                   "label": "Google"
                 }
-              ]
+              ],
+              "icon_res": "ic_cloud_search"
             },
             {
               "label": "News",
               "icon_pkg": "com.diegonmarcos.cloudnews",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudnews",
-                  "label": "cloud-news"
-                },
                 {
                   "pkg": "com.google.android.apps.magazines",
                   "label": "Google News"
@@ -4226,7 +4167,8 @@
                   "pkg": "com.flyersoft.moonreader",
                   "label": "Moon+ Reader"
                 }
-              ]
+              ],
+              "icon_res": "ic_rss"
             },
             {
               "label": "Events",
@@ -4247,16 +4189,13 @@
                   "pkg": "net.residentadvisor.raguide",
                   "label": "Resident Advisor"
                 }
-              ]
+              ],
+              "icon_res": "ic_p_cal_month"
             },
             {
               "label": "Media Center",
               "icon_pkg": "com.diegonmarcos.cloudmediacenter",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudmediacenter",
-                  "label": "cloud-media-center"
-                },
                 {
                   "pkg": "com.aspiro.tidal",
                   "label": "Tidal"
@@ -4289,16 +4228,13 @@
                   "pkg": "com.shazam.android",
                   "label": "Shazam"
                 }
-              ]
+              ],
+              "icon_res": "ic_music"
             },
             {
               "label": "Shopping",
               "icon_pkg": "com.diegonmarcos.cloudshopping",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudshopping",
-                  "label": "cloud-shopping"
-                },
                 {
                   "pkg": "com.amazon.mShop.android.shopping",
                   "label": "Amazon"
@@ -4315,7 +4251,8 @@
                   "pkg": "com.ebay.kleinanzeigen",
                   "label": "Kleinanzeigen"
                 }
-              ]
+              ],
+              "icon_res": "ic_shopping"
             },
             {
               "label": "Mobility & Travel",
@@ -4376,7 +4313,8 @@
                   "pkg": "cat.atm.tmobilitat",
                   "label": "T-mobilitat"
                 }
-              ]
+              ],
+              "icon_res": "ic_ctl_airplane"
             },
             {
               "label": "Jobs & Business",
@@ -4385,7 +4323,8 @@
                   "pkg": "com.linkedin.android",
                   "label": "LinkedIn"
                 }
-              ]
+              ],
+              "icon_res": "ic_suite"
             },
             {
               "label": "Real Estate",
@@ -4398,7 +4337,8 @@
                   "pkg": "com.wggesucht.android",
                   "label": "WG-Gesucht"
                 }
-              ]
+              ],
+              "icon_res": "ic_map_pin"
             },
             {
               "label": "Money",
@@ -4459,7 +4399,8 @@
                   "pkg": "com.starfinanz.smob.android.sfinanzstatus",
                   "label": "Sparkasse"
                 }
-              ]
+              ],
+              "icon_res": "ic_storefront"
             }
           ]
         },
@@ -4497,16 +4438,13 @@
                   "pkg": "com.samsung.android.bixby.agent",
                   "label": "Bixby"
                 }
-              ]
+              ],
+              "icon_res": "ic_ai_chat"
             },
             {
               "label": "Code",
               "icon_pkg": "com.diegonmarcos.code",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.code",
-                  "label": "cloud-code"
-                },
                 {
                   "pkg": "com.foxdebug.acode",
                   "label": "Acode"
@@ -4515,16 +4453,13 @@
                   "pkg": "com.github.android",
                   "label": "GitHub"
                 }
-              ]
+              ],
+              "icon_res": "ic_ide"
             },
             {
               "label": "Terminal",
               "icon_pkg": "cld.termux.nix",
               "packages": [
-                {
-                  "pkg": "cld.termux.nix",
-                  "label": "cloud-terminal-nix"
-                },
                 {
                   "pkg": "com.termux",
                   "label": "Termux"
@@ -4533,7 +4468,8 @@
                   "pkg": "com.termux.nix",
                   "label": "Nix"
                 }
-              ]
+              ],
+              "icon_res": "ic_terminal"
             }
           ]
         },
@@ -4568,7 +4504,8 @@
                   "pkg": "com.samsung.android.oneconnect",
                   "label": "SmartThings"
                 }
-              ]
+              ],
+              "icon_res": "ic_home"
             },
             {
               "label": "UI",
@@ -4577,7 +4514,8 @@
                   "pkg": "com.samsung.android.goodlock",
                   "label": "Good Lock"
                 }
-              ]
+              ],
+              "icon_res": "ic_ctl_brightness"
             },
             {
               "label": "NG Firewall",
@@ -4602,16 +4540,13 @@
                   "pkg": "com.cloudflare.onedotonedotonedotone",
                   "label": "1.1.1.1 WARP"
                 }
-              ]
+              ],
+              "icon_res": "ic_act_shield"
             },
             {
               "label": "Store",
               "icon_pkg": "com.diegonmarcos.cloudstore",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudstore",
-                  "label": "cloud-store"
-                },
                 {
                   "pkg": "com.android.vending",
                   "label": "Play Store"
@@ -4628,16 +4563,13 @@
                   "pkg": "com.sec.android.app.samsungapps",
                   "label": "Galaxy Store"
                 }
-              ]
+              ],
+              "icon_res": "ic_refresh"
             },
             {
               "label": "C3",
               "icon_pkg": "com.diegonmarcos.cloudc3",
               "packages": [
-                {
-                  "pkg": "com.diegonmarcos.cloudc3",
-                  "label": "cloud-c3"
-                },
                 {
                   "pkg": "moe.shizuku.privileged.api",
                   "label": "Shizuku"
@@ -4654,7 +4586,8 @@
                   "pkg": "com.ubnt.usurvey",
                   "label": "WiFiman"
                 }
-              ]
+              ],
+              "icon_res": "ic_cloud_control"
             },
             {
               "label": "About",
@@ -4663,11 +4596,12 @@
                   "pkg": "com.digibites.accubattery",
                   "label": "AccuBattery"
                 }
-              ]
+              ],
+              "icon_res": "ic_info"
             }
           ]
         }
-      ],
+        ],
         "_doc_tile_groups": "Themed sub-groups for the Suite. tile_groups is the canonical schema, read by three surfaces: (1) bottom-nav Suite SECTION page → GroupedTilesFragment renders one titled row per group; (2) Home Apps Suite card → flattens all groups into a single horizontal scroll strip (home_groups entry has no group_explode); (3) aggregatorTilesFor flat fallback if anything else asks. Single source of truth — edit here, all surfaces update.",
         "tabs": true,
         "_doc_label": "Bottom-nav slot 5. What is left of the old Suite section once its Cloud half moved to sections[cloud]: the installed-Android-apps surface. Keeps phone_app_groups + active_apps, which app/build.gradle bakes into BuildConfig by looking the section up as id=='phone'. tabs stays true with a single page so adding a second one needs no code change.",
