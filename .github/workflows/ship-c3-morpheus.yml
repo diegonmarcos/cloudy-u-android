@@ -102,6 +102,7 @@ on:
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ab_cloud-libs-shared/libs/web-core/**"
       - "ac_c3-morpheus/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write   # for gh release create + tag push reads
   packages: write   # for ghcr push (oras)

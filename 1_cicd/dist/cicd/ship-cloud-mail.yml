@@ -53,6 +53,7 @@ on:
       - "ab_cloud-libs-shared/libs/updater/**"
       - "ab_cloud-libs-shared/libs/web-core/**"
       - "ac_cloud-mail/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write   # gh release create (RSS feed entries)
   packages: write   # ghcr push (oras)

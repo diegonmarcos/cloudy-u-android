@@ -1,0 +1,9 @@
+{
+  "_doc": "#1783 P3: what can never change an APK's bytes, declared ONCE for the publish identity (cloud-android-source-identity.sh). (1) doc_globs: files under a shared lib that are documentation only (never under assets/ or res/, which can reach the APK). (2) normalized_json: a manifest baked into APKs whose identity is the canonical JSON with the doc keys removed, so a doc-only edit moves no identity; the per-app slice of it is cloud-android-fleet-slice.py. Test source sets (src/test, src/androidTest) are excluded by the identity script itself. The run still starts for such an edit (the tests execute); the gate skips the publish.",
+  "doc_globs": ["*.md"],
+  "doc_glob_scope": "ab_cloud-libs-shared/libs/",
+  "doc_glob_keep_under": ["/assets/", "/res/"],
+  "doc_keys": ["doc"],
+  "doc_key_prefixes": ["_doc"],
+  "normalized_json": ["ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"]
+}

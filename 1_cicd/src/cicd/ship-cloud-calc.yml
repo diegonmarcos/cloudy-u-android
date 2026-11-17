@@ -74,6 +74,7 @@ on:
       - "ab_cloud-libs-shared/libs/wifi/**"
       - "ac_cloud-calc/**"
       - "!ac_cloud-calc/web/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write
   packages: write

@@ -72,6 +72,7 @@ on:
       - "ab_cloud-libs-shared/libs/wysiwyg/**"
       - "ac_cloud-notes/**"
       - "!ac_cloud-notes/web/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write   # gh release upload (rolling 'latest')
   packages: write   # ghcr push (oras)

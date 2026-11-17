@@ -12,6 +12,10 @@
     "**/test-coverage.json"
   ],
   "_doc_manifests": "Shared generated/declared data. Hashed into an app that reads it, never watched, never a fleet-refresh reason (a baked-in copy goes stale until the app's next own-dir build; fresh data is a runtime fetch).",
+  "manifest_watchers": {
+    "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json": ["aa_cloud-superapp", "ac_cloud-account", "ab_cloud-libs-shared/lib-apks"]
+  },
+  "_doc_manifest_watchers": "#1783 P1: a manifest that lies INSIDE a static lib dir an app watches would start every consumer (fleet-config.json started 42 apps per push). Only the apps listed here (SuperApp and Cloud Account plan the whole fleet, lib-apks builds the engine APK) may watch it; every other ship workflow carries a `!` exclusion for it, and the publish identity of those apps hashes only their slice of it (cloud-android-fleet-slice.py). Enforced by cloud-android-rebuild-isolation-guard.py static.",
   "explicit_inputs": {
     "aa_cloud-superapp": ["ab_cloud-libs-shared/build.json"],
     "ab_cloud-libs-shared/keyboard-engines": ["ab_cloud-keyboard-libs/**"],

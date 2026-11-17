@@ -211,7 +211,7 @@ stamp)
     if ! _verify_source "$tmp/$ASSET.source"; then
         rm -rf "$tmp"; log "refusing to stamp $ASSET.source: it would name no real commit"; exit 1
     fi
-    gh release upload "$TAG" "$tmp/$ASSET.source" --clobber
+    sh "$ROOT/1_cicd/dist/scripts/cloud-android-release-swap.sh" "$TAG" "$tmp/$ASSET.source"   # #1783 P4: swap, never delete-then-upload
     rm -rf "$tmp"
     log "stamped $ASSET.source on $TAG = $IDENTITY @ $COMMIT"
     ;;

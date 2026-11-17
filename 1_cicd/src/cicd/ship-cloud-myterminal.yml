@@ -87,6 +87,7 @@ on:
       - "ab_cloud-libs-shared/libs/web-core/**"
       - "ac_cloud-myterminal/**"
       - "!ac_cloud-myterminal/web/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write   # for gh release create
   packages: write   # for ghcr push (oras)

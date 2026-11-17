@@ -98,6 +98,7 @@ on:
       - "ab_cloud-libs-shared/libs/wysiwyg/**"
       - "ac_cloud-drive/**"
       - "!ac_cloud-drive/web/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write
   packages: write

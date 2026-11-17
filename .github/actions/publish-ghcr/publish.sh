@@ -85,7 +85,8 @@ release)
     export GH_TOKEN="$P_TOKEN"
     gh release view "$P_TAG" >/dev/null 2>&1 || gh release create "$P_TAG" --latest=false --title "$P_TAG" --target "${P_SHA:-main}" --notes "$P_TAG"
     # shellcheck disable=SC2086
-    gh release upload "$P_TAG" $P_FILE --clobber
+    # #1783 P4: upload under a temporary name, then swap (no missing-asset window, unlike --clobber)
+    sh "${GITHUB_WORKSPACE:-.}/1_cicd/dist/scripts/cloud-android-release-swap.sh" "$P_TAG" $P_FILE
     ;;
 *) echo "::error::publish-ghcr: unknown kind '$P_KIND'" >&2; exit 2 ;;
 esac

@@ -74,6 +74,7 @@ on:
       - "ab_cloud-libs-shared/libs/usb-drive/**"
       - "ac_cloud-store/**"
       - "!ac_cloud-store/web/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write
   packages: write

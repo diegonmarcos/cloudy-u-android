@@ -82,4 +82,4 @@ jobs:
           gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --prerelease --latest=false \
             --title "$tag" --notes "#847 nix-on-droid bootstrap built from the bake's nixpkgs pin (${{ github.sha }})" \
             || gh release view "$tag" >/dev/null
-          gh release upload "$tag" "$RUNNER_TEMP/bootstrap-${{ matrix.arch }}.zip" "$RUNNER_TEMP/bootstrap-${{ matrix.arch }}.zip.sha256" --clobber
+          sh 1_cicd/dist/scripts/cloud-android-release-swap.sh "$tag" "$RUNNER_TEMP/bootstrap-${{ matrix.arch }}.zip" "$RUNNER_TEMP/bootstrap-${{ matrix.arch }}.zip.sha256"   # #1783 P4

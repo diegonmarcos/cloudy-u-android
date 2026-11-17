@@ -434,6 +434,20 @@ for wf in sorted(glob.glob(os.path.join(root, "1_cicd/src/cicd/*.yml"))):
     # cloud-android-source-identity.sh honours the same `!` entry.
     excluded = ["!%s/%s/**" % (app, config["web"]["dir"])] if isinstance(config.get("web"), dict) and config["web"].get("dir") else []
 
+    # ── #1783 P1: a fleet manifest inside a watched static lib starts no app but its planners ──
+    # fleet-config.json sits in libs/fleetconfig-model, which 42 apps compile, so one app's
+    # declaration started all of them. rebuild-isolation.json::manifest_watchers names the only
+    # workflows that may watch it; every other ship workflow that would match it carries a
+    # `!` exclusion (GitHub applies it last; the publish identity honours it too and hashes the
+    # app's slice of the manifest instead, cloud-android-fleet-slice.py).
+    if name.startswith("ship-"):
+        for _man, _who in json.load(open(os.path.join(root, "1_cicd/src/data/rebuild-isolation.json"))).get("manifest_watchers", {}).items():
+            if app in _who:
+                continue
+            _pos = [e.rstrip("*").rstrip("/") for e in derived if e != f"{app}/**"]
+            if any(_man == q or _man.startswith(q + "/") for q in _pos):
+                excluded.append("!" + _man)
+
     # Hand-written entries survive unless they are dead (a path a filter can
     # never match) or the workflow's own generated copy. Exclusions are derived
     # in full above, never kept.

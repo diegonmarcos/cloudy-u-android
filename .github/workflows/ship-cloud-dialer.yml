@@ -47,6 +47,7 @@ on:
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ac_cloud-dialer/**"
       - "!ac_cloud-dialer/web/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write   # gh release create (RSS feed entries)
   packages: write   # ghcr push (oras)

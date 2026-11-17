@@ -79,6 +79,7 @@ on:
       - "ab_cloud-libs-shared/libs/writer-core/**"
       - "ab_cloud-libs-shared/libs/writer-ui/**"
       - "ac_cloud-keyboard/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write
   packages: write

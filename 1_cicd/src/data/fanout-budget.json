@@ -1,0 +1,156 @@
+{
+  "_doc": "#1783 P2 THE FAN-OUT BUDGET: a push whose changed paths start more than `budget` per-app ship workflows fails CI (cloud-android-fanout-budget-guard.py), unless the paths that cause it are listed in `allow` with a reason. A path matching an `allow` glob is taken out of the change set before the count, so an allowlisted lib edit cannot hide an unrelated wide change in the same commit. Raising `budget` or adding an `allow` entry is an owner decision: every entry needs a `reason` and a `ticket`; test/fanout-budget-guard.test.sh pins the budget at 5 so a silent raise goes red.",
+  "budget": 5,
+  "allow": [
+    {
+      "glob": "ab_cloud-libs-shared/libs/ai/**",
+      "reason": "static lib compiled by 12 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/analytics/**",
+      "reason": "static lib compiled by 16 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/bottomnav/**",
+      "reason": "static lib compiled by 43 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/core/**",
+      "reason": "static lib compiled by 44 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/crash/**",
+      "reason": "static lib compiled by 44 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/databackend/**",
+      "reason": "static lib compiled by 9 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/decisions-link/**",
+      "reason": "static lib compiled by 14 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/devtools/**",
+      "reason": "static lib compiled by 44 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleet-data-client/**",
+      "reason": "static lib compiled by 44 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleet-endpoints-android/**",
+      "reason": "static lib compiled by 9 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleet-endpoints/**",
+      "reason": "static lib compiled by 10 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleet-notify/**",
+      "reason": "static lib compiled by 16 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/java/**",
+      "reason": "static lib compiled by 44 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer; the manifest src/main/assets/fleet-config.json is deliberately NOT allowlisted: it starts only its planners",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleetconfig-model/src/test/**",
+      "reason": "static lib compiled by 44 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer; the manifest src/main/assets/fleet-config.json is deliberately NOT allowlisted: it starts only its planners",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleetconfig-model/build.gradle",
+      "reason": "static lib compiled by 44 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer; the manifest src/main/assets/fleet-config.json is deliberately NOT allowlisted: it starts only its planners",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/AndroidManifest.xml",
+      "reason": "static lib compiled by 44 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer; the manifest src/main/assets/fleet-config.json is deliberately NOT allowlisted: it starts only its planners",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleetconfigs-agents/**",
+      "reason": "static lib compiled by 42 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**",
+      "reason": "static lib compiled by 42 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/fleetconfigs-xray/**",
+      "reason": "static lib compiled by 43 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/ml-l-image/**",
+      "reason": "static lib compiled by 6 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/model-catalogue/**",
+      "reason": "static lib compiled by 12 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/perms/**",
+      "reason": "static lib compiled by 44 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/text-tools/**",
+      "reason": "static lib compiled by 10 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/theme-background/**",
+      "reason": "static lib compiled by 43 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/ui-icons/**",
+      "reason": "static lib compiled by 43 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/ui-kit/**",
+      "reason": "static lib compiled by 29 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/ui-nav-bars/**",
+      "reason": "static lib compiled by 43 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/updater/**",
+      "reason": "static lib compiled by 13 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/libs/web-core/**",
+      "reason": "static lib compiled by 20 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "ticket": "#1783"
+    },
+    {
+      "glob": "ab_cloud-libs-shared/web/**",
+      "reason": "the shared Kotlin/Wasm web root is compiled by the 17 wasm page workflows",
+      "ticket": "#1783"
+    }
+  ]
+}

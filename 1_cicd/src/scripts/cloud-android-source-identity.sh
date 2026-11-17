@@ -150,7 +150,8 @@ fi
 # input set — the same failure one layer down.
 # Redirecting into a file keeps _paths in THIS shell, where exit means exit.
 PATHS_TMP="$(mktemp)"
-trap 'rm -f "$PATHS_TMP"' EXIT INT TERM
+RAW_TMP="$(mktemp)"
+trap 'rm -f "$PATHS_TMP" "$RAW_TMP"' EXIT INT TERM
 
 # ── the app's ship workflow ────────────────────────────────────────
 # Found by its declared WORK_DIR, not by filename: two lib aggregators build a
@@ -175,6 +176,7 @@ _paths() {
     # than falling back keeps a typo from silently widening the scope back to
     # the whole app, which would look like it worked.
     if [ -n "$PATHS_FROM" ]; then
+        grep -v '^[[:space:]]*$' "$PATHS_FROM" >"$RAW_TMP" || true
         grep -v '^[[:space:]]*$' "$PATHS_FROM" || true
         return 0
     fi
@@ -228,6 +230,7 @@ _paths() {
     excluded="$(printf '%s\n%s\n' "$_excl_marked" "$(_tests_dir)" \
                 | grep -v '^[[:space:]]*$' | _strip_glob)"
     list="$(printf '%s\n%s\n' "$APP" "$wf"; printf '%s\n' "$entries" | grep -v '^!' | _strip_glob)"
+    printf '%s\n' "$list" >"$RAW_TMP"   # #1783: before the exclusions, to know whether the fleet manifest is an input
     while IFS= read -r x; do
         [ -n "$x" ] || continue
         list="$(printf '%s\n' "$list" | while IFS= read -r p; do
@@ -401,6 +404,83 @@ EOF
     done
 }
 
+# ── #1783 P3: documentation inside a shared lib is not in the APK ──
+# Declared in 1_cicd/src/data/identity-exclusions.json (doc_globs under doc_glob_scope,
+# never under assets/ or res/). Same _without as the test sets: the run still starts,
+# the publish decision stops counting a README edit.
+_doc_files() {
+    _cfg="$ROOT/1_cicd/src/data/identity-exclusions.json"
+    [ -f "$_cfg" ] || return 0
+    _scope="$(jq -r '.doc_glob_scope // empty' "$_cfg" 2>/dev/null)"
+    [ -n "$_scope" ] || return 0
+    case "$1" in "$_scope"*) ;; *) return 0 ;; esac
+    _keep="$(jq -r '(.doc_glob_keep_under // [])[]' "$_cfg" 2>/dev/null)"
+    jq -r '(.doc_globs // [])[]' "$_cfg" 2>/dev/null | while IFS= read -r g; do
+        ext="${g#\*}"
+        git -C "$ROOT" ls-tree -r --name-only HEAD -- "$1" 2>/dev/null | while IFS= read -r f; do
+            case "$f" in *"$ext") ;; *) continue ;; esac
+            skip=0
+            while IFS= read -r k; do
+                [ -n "$k" ] || continue
+                case "/$f" in *"$k"*) skip=1 ;; esac
+            done <<EOK
+$_keep
+EOK
+            [ "$skip" -eq 1 ] || printf '%s\n' "$f"
+        done
+    done
+    return 0
+}
+
+_drop_docs() {
+    while IFS= read -r p; do
+        list="$p"
+        while IFS= read -r x; do
+            [ -n "$x" ] || continue
+            list="$(printf '%s\n' "$list" | while IFS= read -r q; do
+                        [ -n "$q" ] && _without "$q" "$x"
+                    done)"
+        done <<EOF
+$(_doc_files "$p")
+EOF
+        printf '%s\n' "$list"
+    done
+    return 0
+}
+
+# ── #1783 P1/P3: the fleet manifest is hashed as canonical JSON, per app slice ──
+# Its git blob moves on every declaration of every app (and on a doc string), which
+# made a one-line edit for one app a new version of 42. The manifest is taken out of
+# every hashed tree (_drop_manifest) and replaced by ONE line: the whole doc-stripped
+# manifest for the planners (and for a --paths-from scope), the app's slice for the rest.
+_manifest() {
+    jq -r '(.normalized_json // [])[0] // empty' "$ROOT/1_cicd/src/data/identity-exclusions.json" 2>/dev/null
+}
+
+_drop_manifest() {
+    _m="$(_manifest)"
+    while IFS= read -r p; do
+        if [ -n "$_m" ]; then _without "$p" "$_m"; else printf '%s\n' "$p"; fi
+    done
+    return 0
+}
+
+_fleet_identity() {
+    _m="$(_manifest)"
+    [ -n "$_m" ] || return 0
+    _cov=0
+    while IFS= read -r p; do
+        case "$_m" in "$p"|"$p"/*) _cov=1 ;; esac
+    done <"$RAW_TMP"
+    [ "$_cov" -eq 1 ] || return 0
+    _sc=""; [ -z "$PATHS_FROM" ] || _sc="--scoped"
+    python3 -I "$ROOT/1_cicd/src/scripts/cloud-android-fleet-slice.py" --root "$ROOT" --rev HEAD identity "$APP" $_sc 2>/dev/null || {
+        # fail towards publishing: a moving line, never a silently skipped update
+        echo "$APP: fleet slice identity failed - publishing" >&2
+        printf '%s  fleet-slice-failed\n' "$(date +%s%N)"
+    }
+}
+
 _explain() {
     # A pin identity describes the WHOLE app, so it cannot answer a question
     # scoped to one of its assets. Spelled as an `if` rather than folded into
@@ -411,13 +491,13 @@ _explain() {
         _pin_identity && return 0
     fi
     _paths >"$PATHS_TMP"
-    LC_ALL=C sort -u "$PATHS_TMP" | _drop_test_sets | LC_ALL=C sort -u | while IFS= read -r p; do
+    LC_ALL=C sort -u "$PATHS_TMP" | _drop_test_sets | _drop_docs | _drop_manifest | grep -v "^[[:space:]]*\$" | LC_ALL=C sort -u | while IFS= read -r p; do
         h="$(git -C "$ROOT" rev-parse "HEAD:$p" 2>/dev/null || printf 'missing')"
         printf '%s  %s\n' "$h" "$p"
     done
     # Sorted with the rest so the order of the declaration cannot change the
     # identity of an otherwise identical build.
-    _external | LC_ALL=C sort -u
+    { _external; _fleet_identity; } | LC_ALL=C sort -u
 }
 
 case "$CMD" in

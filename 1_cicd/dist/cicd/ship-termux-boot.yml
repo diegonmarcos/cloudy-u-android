@@ -274,11 +274,14 @@ jobs:
           # emit + hard-verify it.
           asset="dist/${{ steps.asset.outputs.name }}"
           sha256sum "$asset" | awk '{print $1}' > "$asset.sha256"
-          gh release upload latest "$asset" "$asset.sha256" --clobber \
-            || gh release create latest "$asset" "$asset.sha256" \
+          if gh release view latest >/dev/null 2>&1; then
+            sh 1_cicd/dist/scripts/cloud-android-release-swap.sh latest "$asset" "$asset.sha256"   # #1783 P4
+          else
+            gh release create latest "$asset" "$asset.sha256" \
                  --title "Cloud constellation (rolling)" \
                  --latest \
                  --notes "Auto-updated from main."
+          fi
           name="${{ steps.asset.outputs.name }}"
           local_size="$(wc -c <"$asset")"
           remote_size="$(gh release view latest --json assets --jq ".assets[] | select(.name==\"$name\") | .size")"

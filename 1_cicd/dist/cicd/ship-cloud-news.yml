@@ -66,6 +66,7 @@ on:
       - "ab_cloud-libs-shared/libs/web-core/**"
       - "ac_cloud-news/**"
       - "!ac_cloud-news/web/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write
   packages: write

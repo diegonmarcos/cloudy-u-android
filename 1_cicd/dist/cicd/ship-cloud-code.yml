@@ -69,6 +69,7 @@ on:
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ac_cloud-code/**"
       - "!ac_cloud-code/web/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write   # gh release upload (rolling 'latest')
   packages: write   # ghcr push (oras)

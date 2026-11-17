@@ -227,15 +227,15 @@
     },
     {
       "id": "fleet-config manifest (one app's store)",
-      "_doc": "#855 the manifest moved from the SuperApp's assets into libs:fleetconfig-model, so the engine that applies it ships it too: the SuperApp per push plus Cloud-Lib-Fleetconfig. #873 every app bakes it (setup provider describe): the other 30 apps pick it up at the scheduled refresh (33: 31 at #873, plus keyboard-engines and cloud-office declared the module in bae72bf03), never per push.",
+      "_doc": "#855 the manifest moved from the SuperApp's assets into libs:fleetconfig-model, so the engine that applies it ships it too. #873 every app bakes it (setup provider describe). #1783 P1 (owner approved 2026-11-17): the manifest is a shared manifest, so it starts only its planners (rebuild-isolation.json::manifest_watchers: SuperApp and Cloud Account plan the whole fleet; the lib builder gates the engine APK on its own module dirs, 0 lib APKs here). Every other ship workflow carries a `!` exclusion for the file and the publish identity of an app hashes only its slice (cloud-android-fleet-slice.py), so an app-specific declaration no longer starts 42 apps. Was apps 43 / ship 44 (raised at e32b28dab); restored to the real value.",
       "files": [
         "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
       ],
       "expect": {
-        "apps": 43,
+        "apps": 2,
         "libs": 0,
         "rootfs": 0,
-        "ship": 44,
+        "ship": 3,
         "refresh": 0
       }
     },

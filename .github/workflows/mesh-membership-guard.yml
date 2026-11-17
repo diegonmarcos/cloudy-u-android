@@ -96,6 +96,31 @@ jobs:
       - name: Every app ships on what it owns and every scenario is isolated (#870)
         run: python3 1_cicd/src/scripts/cloud-android-rebuild-isolation-guard.py --scenarios 1_cicd/src/data/rebuild-scenarios.json
 
+      # #1783 P2: no push starts more than 5 app ships unless the paths causing it are on the allowlist
+      # (1_cicd/src/data/fanout-budget.json, each with a reason). Every push, like the ratchet above.
+      # Tester first (mutants: no allowlist entry, no exclusion, an entry without a reason), then the push itself.
+      - name: The fan-out budget guard still fails on each way the budget is dodged (#1783 P2)
+        run: bash 1_cicd/src/scripts/test/fanout-budget-guard.test.sh
+
+      - name: This push starts at most 5 app ships, allowlisted shared-lib edits aside (#1783 P2)
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          git fetch --no-tags --depth=100 origin "$GITHUB_SHA" >/dev/null 2>&1 || true
+          if ! printf '%s' "$BEFORE" | grep -qE '^0+$' && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then R="$BEFORE..$GITHUB_SHA"; else R="$GITHUB_SHA^..$GITHUB_SHA"; fi
+          echo "range $R"
+          python3 1_cicd/src/scripts/cloud-android-fanout-budget-guard.py --range "$R"
+
+      # #1783 P3 + P1: a doc-only manifest edit, a README or a test edit moves no publish identity; another
+      # app's declaration moves only the planners; a real change still publishes. Real identity script, fixture repo.
+      - name: Doc-only and other-app edits publish nothing; real edits still do (#1783 P3)
+        run: bash 1_cicd/src/scripts/test/publish-identity-doc-only.test.sh
+
+      # #1783 P4: a release asset is replaced by upload-under-a-temp-name then rename, never delete-then-upload.
+      - name: A release asset is never missing while bytes are in transit (#1783 P4)
+        run: bash 1_cicd/src/scripts/test/release-swap.test.sh
+
       # #ipc (a0_docs/eng-specs/fleet-ipc.md): two fleet apps on one phone talk over
       # Android IPC (libs:devtools FleetIpc on content://<pkg>.fleet, providers, bound
       # services, intents), never over a loopback socket; HTTP is for callers off the

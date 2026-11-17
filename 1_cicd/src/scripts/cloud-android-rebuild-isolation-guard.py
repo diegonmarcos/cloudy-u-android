@@ -23,7 +23,7 @@ USAGE  cloud-android-rebuild-isolation-guard.py [--root R] [--wf DIR] static
        cloud-android-rebuild-isolation-guard.py [--root R] [--wf DIR] (--commit SHA | --range A..B | --files F... | --scenarios FILE)
 EXIT   0 isolated - 1 violation(s) - 2 usage
 """
-import fnmatch, glob, json, os, re, sys
+import fnmatch, glob, json, os, re, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -76,12 +76,28 @@ def owns(root, iso, owners, app, name, f):
     return bool(m and app in owners.get(m.group(1), ()))
 
 
+def lib_manifests(root, iso):
+    """#1783: tracked shared manifests that lie INSIDE the shared libs dir (a static lib an app watches)."""
+    try:
+        out = subprocess.run(["git", "-C", root, "ls-files", LIBS], capture_output=True, text=True, check=True).stdout.splitlines()
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    return [f for f in out if any(fnmatch.fnmatchcase(f, g) for g in iso.get("manifests", []))]
+
+
 def static_check(root, wf_dir):
     iso, owners, bad = isolation(root), static_owners(root, wf_dir), []
+    mans = lib_manifests(root, iso)
     for name, (app, w) in ship_workflows(wf_dir).items():
         if app in EXEMPT:
             continue
         kind, pats = fan.triggers(w)
+        # THE RULE ITSELF (#870 "a regenerated shared manifest never starts an app"): a manifest inside a
+        # watched lib dir is matched by that dir's glob, which the per-path loop below cannot see.
+        for man in mans:
+            if app not in iso.get("manifest_watchers", {}).get(man, []) and fan.fires(kind, pats, [man]):
+                bad.append(f"{name}: a push to the shared manifest {man} starts this app -- add `!{man}` to its push filter "
+                           f"(rebuild-isolation.json::manifest_watchers lists the only apps that may watch it)")
         for p in pats if kind == "paths" else []:
             if p.startswith("!"):
                 continue

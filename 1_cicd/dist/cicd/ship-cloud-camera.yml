@@ -75,6 +75,7 @@ on:
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ac_cloud-camera/**"
       - "!ac_cloud-camera/web/**"
+      - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
   contents: write
   packages: write

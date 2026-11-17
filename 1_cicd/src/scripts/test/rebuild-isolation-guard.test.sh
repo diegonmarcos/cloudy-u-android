@@ -32,6 +32,16 @@ red "an app watching a static lib it does not compile"            ship-cloud-new
 red "an app watching another app's dir"                           ship-cloud-news.yml   "ac_cloud-mail/**"                           static
 red "predicted rebuild of an app that owns no changed path (another app's dir edit fans to ship-cloud-myterminal.yml)" ship-cloud-myterminal.yml "ab_cloud-terminal-store/**" --files ab_cloud-terminal-store/x.kt
 
+# #1783: the manifest rule is enforced where the manifest lies inside a watched lib dir
+d="$(mktemp -d)"; cp -r 1_cicd/src/cicd/. "$d/"
+grep -q 'fleet-config.json"' "$d/ship-cloud-news.yml" || fail "ship-cloud-news.yml carries no fleet-config.json exclusion to mutate"
+sed -i '/"!ab_cloud-libs-shared\/libs\/fleetconfig-model\/src\/main\/assets\/fleet-config.json"/d' "$d/ship-cloud-news.yml"
+if python3 "$G" --wf "$d" static 2>&1 | grep -q "shared manifest .*fleet-config.json starts this app"; then ok "an app whose push filter lost the fleet-config.json exclusion goes red"; else fail "dropping the fleet-config.json exclusion stayed green (the manifest rule is not enforced)"; fi
+rm -rf "$d"
+d="$(mktemp -d)"; mut "$d" ship-cloud-superapp.yml "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+if python3 "$G" --wf "$d" static 2>&1 | grep -q "starts this app"; then fail "a planner (SuperApp) watching the manifest was flagged"; else ok "the planners named in manifest_watchers may watch the manifest"; fi
+rm -rf "$d"
+
 # a static lib must never be predicted as a lib APK, nor a lib change rebuild another lib
 d="$(mktemp -d)"; cp -r 1_cicd/src/cicd/. "$d/"
 cp ab_cloud-libs-shared/lib-apks/build.json "$d/.bj" 2>/dev/null
