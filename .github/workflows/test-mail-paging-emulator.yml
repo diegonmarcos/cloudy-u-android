@@ -201,11 +201,10 @@ jobs:
           # Configs: the Download attachments setting (the section is Mail's own settings, General > App)
           if uitap "Configs"; then
             sleep 3
-            for k in 1 2 3 4 5 6; do
-              if uitap "Open Cloud Mail configs"; then sleep 5; bshot "04a-after-open-tap-$k"; continue; fi
-              uitap "Download attachments" exact && break
-              adb shell input swipe 700 1500 700 600 300; sleep 1
-            done
+            # scroll the General page to its end, where "Open Cloud Mail configs" sits (centre 318,1269 on the 1080x2340 emulator)
+            for k in 1 2 3; do adb shell input swipe 700 1800 700 400 300; sleep 1; done
+            adb shell input tap 318 1269; sleep 5
+            bshot 04a-after-open-configs-tap
             sleep 3
             found=0
             for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
