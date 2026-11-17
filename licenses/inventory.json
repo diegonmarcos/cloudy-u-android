@@ -80,7 +80,8 @@
    "MIT": 5,
    "LicenseRef-NoLicenseGranted": 2,
    "MPL-2.0": 1,
-   "LicenseRef-PublicDomain AND CC-BY-4.0": 1
+   "LicenseRef-PublicDomain AND CC-BY-4.0": 1,
+   "CC-BY-SA-2.1-JP AND CC0-1.0": 1
   }
  },
  "upstream_modules": {
@@ -1139,7 +1140,7 @@
     "ab_cloud-libs-shared/libs/web-core"
    ]
   },
-  "ad_Hardtech-Sim2Real": {
+  "ad_Hardtech-BioMed": {
    "app_licence": "LicenseRef-NoLicenseGranted",
    "links_shared_modules": [
     "ab_cloud-libs-shared/libs/bottomnav",
@@ -4038,7 +4039,7 @@
    "licence": "LicenseRef-NoLicenseGranted",
    "licence_source": "licenses/curated.json"
   },
-  "dir:ad_Hardtech-CAD": {
+  "dir:ad_Hardtech-BioMed": {
    "kind": "dir",
    "declared_in": [
     "(tree)"
@@ -4046,7 +4047,7 @@
    "licence": "LicenseRef-NoLicenseGranted",
    "licence_source": "licenses/curated.json"
   },
-  "dir:ad_Hardtech-Sim2Real": {
+  "dir:ad_Hardtech-CAD": {
    "kind": "dir",
    "declared_in": [
     "(tree)"
@@ -4184,7 +4185,7 @@
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
-    "ad_Hardtech-Sim2Real/app/build.gradle"
+    "ad_Hardtech-BioMed/app/build.gradle"
    ],
    "version": "1.9.3",
    "scope": "shipped",
@@ -4574,7 +4575,7 @@
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
-    "ad_Hardtech-Sim2Real/app/build.gradle"
+    "ad_Hardtech-BioMed/app/build.gradle"
    ],
    "scope": "shipped",
    "version": "1.11.4",
@@ -4718,7 +4719,7 @@
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
-    "ad_Hardtech-Sim2Real/app/build.gradle"
+    "ad_Hardtech-BioMed/app/build.gradle"
    ],
    "scope": "shipped",
    "version": "1.5.0-alpha23",
@@ -4800,7 +4801,7 @@
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
-    "ad_Hardtech-Sim2Real/app/build.gradle"
+    "ad_Hardtech-BioMed/app/build.gradle"
    ],
    "scope": "shipped",
    "version": "1.7.8",
@@ -4924,7 +4925,7 @@
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
-    "ad_Hardtech-Sim2Real/app/build.gradle"
+    "ad_Hardtech-BioMed/app/build.gradle"
    ],
    "scope": "shipped",
    "version": "1.11.4",
@@ -5165,7 +5166,7 @@
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
-    "ad_Hardtech-Sim2Real/app/build.gradle"
+    "ad_Hardtech-BioMed/app/build.gradle"
    ],
    "version": "2025.11.01",
    "scope": "shipped",
@@ -5331,7 +5332,7 @@
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
-    "ad_Hardtech-Sim2Real/app/build.gradle"
+    "ad_Hardtech-BioMed/app/build.gradle"
    ],
    "version": "1.13.1",
    "scope": "shipped",
@@ -6997,7 +6998,7 @@
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
-    "ad_Hardtech-Sim2Real/app/build.gradle"
+    "ad_Hardtech-BioMed/app/build.gradle"
    ],
    "version": "1.12.0",
    "scope": "shipped",
@@ -8982,7 +8983,7 @@
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
-    "ad_Hardtech-Sim2Real/app/build.gradle"
+    "ad_Hardtech-BioMed/app/build.gradle"
    ],
    "version": "1.7.3",
    "scope": "shipped",
@@ -9159,7 +9160,7 @@
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",
-    "ad_Hardtech-Sim2Real/app/build.gradle"
+    "ad_Hardtech-BioMed/app/build.gradle"
    ],
    "version": "20240303",
    "scope": "test",
@@ -17476,6 +17477,14 @@
     "ac_cloud-search/NOTICE.md"
    ],
    "licence": "LicenseRef-NoLicenseGranted",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:data/fleet/biomed": {
+   "kind": "vendored",
+   "declared_in": [
+    "data/fleet/biomed/LICENSE.md"
+   ],
+   "licence": "CC-BY-SA-2.1-JP AND CC0-1.0",
    "licence_source": "licenses/curated.json"
   }
  }

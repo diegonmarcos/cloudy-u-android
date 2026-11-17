@@ -401,13 +401,13 @@
   "ad_Hardtech-CAD": {
    "licence": "LicenseRef-NoLicenseGranted",
    "kind": "own",
-   "what": "Hardtech-CAD app (MCAD, BIM, SolidWorks pages behind Cloud > Lnktree)",
+   "what": "Hardtech-CAD app (Models: MCAD, BIM, SolidWorks; Home; Sim2Real: SAP2000, MATLAB, Ansys, behind Cloud > Lnktree)",
    "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
   },
-  "ad_Hardtech-Sim2Real": {
+  "ad_Hardtech-BioMed": {
    "licence": "LicenseRef-NoLicenseGranted",
    "kind": "own",
-   "what": "Hardtech-Sim2Real app (SAP2000, MATLAB, Ansys pages behind Cloud > Lnktree)",
+   "what": "Hardtech-BioMed app (Physiology, BioChem, BioMech, Anatomy, Genetic, Neuro and Immuno 3D scenes behind Cloud > Lnktree; the former simulation app, rebranded #1777)",
    "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
   },
   "ac_cloud-shopping": {
@@ -508,6 +508,11 @@
    "licence": "MPL-2.0",
    "kind": "vendored-package",
    "what": "web-ifc 0.0.78 (ThatOpen Company), the IFC reader of libs:cad-ifc (#1404), IIFE build + WASM, unmodified; files stay MPL-2.0, see LICENSE.md."
+  },
+  "data/fleet/biomed": {
+   "licence": "CC-BY-SA-2.1-JP AND CC0-1.0",
+   "kind": "vendored-data",
+   "what": "Hardtech-BioMed's served 3D models and texts (#1777), read at run time: body.glb and brain.glb are derived from BodyParts3D 4.0 (DBCLS, CC BY-SA 2.1 Japan, shared under the same licence), dna.glb and content.json are original CC0 works; every file is in assets.json and held by ad_Hardtech-BioMed/test/test-assets-licensed.sh; see LICENSE.md."
   }
  },
  "assets": {
