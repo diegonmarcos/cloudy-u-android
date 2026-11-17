@@ -47,3 +47,11 @@ jobs:
 
       - name: A release asset is never missing while bytes are in transit (#1783 P4)
         run: bash 1_cicd/src/scripts/test/release-swap.test.sh
+
+      # #1783 P5: version codes come from the source commit time, floored above every published code, never the wall
+      # clock; apps still on the old block are listed in version-floor.json::pending and that list only shrinks.
+      - name: The version code guard still fails on each way a code turns non-deterministic or drops (#1783 P5)
+        run: bash 1_cicd/src/scripts/test/versioncode-guard.test.sh
+
+      - name: Every app's version code is deterministic or pending, and monotonic above the floor (#1783 P5)
+        run: python3 1_cicd/src/scripts/cloud-android-versioncode-guard.py check

@@ -1,0 +1,32 @@
+{
+  "_doc": "#1783 P5 deterministic versions. versionCode = max(floor, 3,000,000 + minutes since 2026-01-01 UTC of the SOURCE commit time) instead of the wall-clock build minute: the same commit always builds the same code, and a rebuild of unchanged inputs is no new version (the publish gate skips it on the unchanged input identity; the Store compares the sha256 sidecar). `floor` is 3,000,000 + the minutes to 2026-11-18T00:00Z, above every code published before the change, so an installed app is never offered a lower code. BUILD_TIMESTAMP is the source commit time and STACK_GRADLE_CONFIG_MS is 0 (no wall clock in BuildConfig). `pending` are the app gradle files still on the old wall-clock block; the guard (cloud-android-versioncode-guard.py) ratchets it down and the fan-out budget (5 apps per push) sets the batch size: apply with `cloud-android-versioncode-guard.py apply <file>...`. Not covered: the comms forks (matrix, chat, dialer, gallery, mail, termux, nix-on-droid) take COMMS_BUILD_TIMESTAMP from the workflow clock and name timestamped releases with it - an owner decision.",
+  "floor": 3462240,
+  "floor_utc": "2026-11-18T00:00:00Z",
+  "pending": [
+    "aa_cloud-superapp/app/build.gradle",
+    "ab_cloud-libs-shared/keyboard-engines/app/build.gradle",
+    "ac_c3-morpheus/app/build.gradle",
+    "ac_c3-watchdog/app/build.gradle",
+    "ac_c3-watchtower/app/build.gradle",
+    "ac_cloud-account/app/build.gradle",
+    "ac_cloud-browser/app/build.gradle",
+    "ac_cloud-c3/app/build.gradle",
+    "ac_cloud-canvas/app/build.gradle",
+    "ac_cloud-drive/app/build.gradle",
+    "ac_cloud-keyboard/app/build.gradle",
+    "ac_cloud-me/app/build.gradle",
+    "ac_cloud-myterminal/hub/build.gradle",
+    "ac_cloud-nav/app/build.gradle",
+    "ac_cloud-search/app/build.gradle",
+    "ac_cloud-store/app/build.gradle",
+    "ac_cloud-superintel/app/build.gradle",
+    "ac_cloud-tasks/app/build.gradle",
+    "ac_cloud-tools-small-llms/app/build.gradle",
+    "ac_cloud-wallet/app/build.gradle",
+    "ac_cloud-wiki/app/build.gradle",
+    "ad_CG-Omniverse/app/build.gradle",
+    "ad_Capital-Stack-FinTerminal/app/build.gradle",
+    "ad_Hardtech-BioMed/app/build.gradle",
+    "ad_Hardtech-CAD/app/build.gradle"
+  ]
+}
