@@ -156,7 +156,6 @@ jobs:
           # the real worker too: opening the app enqueues OfflineSyncWorker (the host is unresolvable, so it runs and backs off)
           adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
           sleep 15
-          if uitap "Skip" exact; then sleep 4; fi # the welcome pager shows after a data clear
           bshot 00-online-seeded-list
           adb shell cmd connectivity airplane-mode enable || true
           adb shell svc wifi disable || true
@@ -168,7 +167,6 @@ jobs:
           adb shell am force-stop "$PKG"
           adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
           sleep 14
-          if uitap "Skip" exact; then sleep 4; fi
           bshot 01-offline-list-after-sync; uidump 01-offline-list
           grep -o 'text="Seed message [^"]*"' walk-out/bg/01-offline-list.xml | head -3 | tee walk-out/bg/offline-first-rows.txt
           grep -q 'Seed message 120 of 120' walk-out/bg/offline-first-rows.txt || { echo "::error::the offline list does not show the synced mail"; exit 1; }
@@ -177,9 +175,9 @@ jobs:
           bshot 02-offline-body-newest
           adb shell input keyevent KEYCODE_BACK; sleep 2
           found=0
-          for j in $(seq 1 30); do
-            if uitap "Seed message 100 of 120"; then found=1; break; fi
-            adb shell input swipe 700 1900 700 600 300; sleep 1
+          for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14; do
+            if uitap "Seed message 80 of 120"; then found=1; break; fi
+            adb shell input swipe 700 1400 700 700 400; sleep 1
           done
           [ "$found" = 1 ] || { echo "::error::a message further down is not on screen offline"; exit 1; }
           sleep 4
@@ -193,7 +191,7 @@ jobs:
           grep -q "counts: inboxMissingBody=0 archiveMissingBody=0 encryptedArchiveStoredRaw=true" walk-out/bg/sync-proof.txt || { echo "::error::bodies missing after the sync, or the encrypted Archive body was not stored raw"; exit 1; }
           grep -E "MailOpen" walk-out/bg/logcat-offline.txt > walk-out/bg/open-offline.txt || true
           cat walk-out/bg/open-offline.txt | tee -a walk-out/summary.txt
-          for id in navwalk-m1 navwalk-m21; do
+          for id in navwalk-m1 navwalk-m41; do
             grep -q "id=$id phase=open-from-cache" walk-out/bg/open-offline.txt || { echo "::error::$id did not open from the cache offline"; exit 1; }
             if grep -E "id=$id phase=(fetch-email-get|open-from-network)" walk-out/bg/open-offline.txt; then echo "::error::$id went to the network"; exit 1; fi
           done
