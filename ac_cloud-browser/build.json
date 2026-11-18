@@ -56,6 +56,7 @@
       "type": "library"
     },
     "libs:decisions-link": {
+      "_doc": "#1801 the contract half of the fleet's AI-key owner engine: the Search add-on's chat hands its body to DecisionsLink.relay (use browser_search_ai) and the engine (Cloud-Lib-Decisions-Engine.apk, never compiled here) adds the OpenRouter key. libs:text-tools stays for the Translate page row.",
       "type": "library",
       "dir": "../ab_cloud-libs-shared/libs/decisions-link"
     },
@@ -133,11 +134,6 @@
     "libs:text-tools": {
       "_doc_dir": "#802 shared BY REFERENCE: the text-tools contract client (thin binder). libs:browser's Translate page row calls it; disabled with its reason when no app serves it.",
       "dir": "../ab_cloud-libs-shared/libs/text-tools"
-    },
-    "libs:decisions-link": {
-      "_doc": "#1801 the contract half of the fleet's AI-key owner engine: the Search add-on's chat hands its body to DecisionsLink.relay (use browser_search_ai) and the engine (Cloud-Lib-Decisions-Engine.apk, never compiled here) adds the OpenRouter key. libs:text-tools stays for the Translate page row.",
-      "dir": "../ab_cloud-libs-shared/libs/decisions-link",
-      "type": "library"
     },
     "libs:ai": {
       "_doc_dir": "#823 shared BY REFERENCE: the fleet's AI chat (renamed from libs:search-page). The Search add-on's Search & AI row draws its page over the browser, hosted by search/SearchPageScreen.kt (cloud-search's engines, the OpenRouter backend with the fleet Account's token, results opening as tabs) in the browser's kit palette; the assistant side panel and its consent card are its AiAssistantPanel, installed by search/AgentPanelScreen.kt.",
