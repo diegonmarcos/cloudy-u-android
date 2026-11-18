@@ -164,6 +164,8 @@ function inline(src: string): string {
   const stash: string[] = [];
   const hold = (html: string) => `\u0000${stash.push(html) - 1}\u0000`;
   let s = src;
+  // an escaped backtick is a literal one and never opens a code span
+  s = s.replace(/\\`/g, () => hold('`'));
   s = s.replace(/`([^`\n]+)`/g, (_m, c: string) => hold(`<code>${escapeHtml(c)}</code>`));
   // math before emphasis so `_` and `*` inside TeX survive
   s = s.replace(/\$\$([^$\n]+)\$\$/g, (_m, t: string) =>
@@ -172,6 +174,8 @@ function inline(src: string): string {
   s = s.replace(/(^|[^\\$\w])\$([^\s$][^$\n]*?[^\s$\\]|[^\s$])\$(?![\w$])/g, (_m, pre: string, t: string) =>
     pre + hold(`<span class="math" data-tex="${escapeHtml(t)}">${escapeHtml(t)}</span>`)
   );
+  // a backslash before punctuation keeps it literal (\* \_ \# \[ ...): held as an already-escaped character
+  s = s.replace(/\\([\\`*_{}[\]()#+\-.!~=|<>$^])/g, (_m, ch: string) => hold(escapeHtml(ch)));
   s = s.replace(WIKI, (m: string, bang: string, raw: string, alias?: string) => {
     const t = parseWikiTarget(raw);
     const label = alias?.trim() || (t.heading ? `${t.target} > ${t.heading}` : t.target);
@@ -204,7 +208,15 @@ function inline(src: string): string {
         `>${escapeHtml(label)}</a>`
     );
   });
+  // <https://x> and a bare https://x are links (the label is the address)
+  const auto = (u: string) => {
+    const href = safeHref(u);
+    return href === null ? escapeHtml(u) : hold(`<a class="external-link" href="${escapeHtml(href)}" rel="noopener noreferrer" target="_blank">${escapeHtml(u)}</a>`);
+  };
+  s = s.replace(/<(https?:\/\/[^\s>]+)>/g, (_m, u: string) => auto(u));
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<>)]*[^\s<>).,;:!?'"])/g, (_m, pre: string, u: string) => pre + auto(u));
   s = escapeHtml(s);
+  s = s.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
   s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/(^|[^\w*])\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, '$1<em>$2</em>');
   s = s.replace(/(^|[^\w])_(?!\s)(.+?)(?<!\s)_(?!\w)/g, '$1<em>$2</em>');
@@ -317,10 +329,17 @@ export function renderMarkdown(src: string, opts: RenderOptions = {}): string {
     if (li) {
       const ordered = /\d/.test(li[2]!);
       const base = li[1]!.length;
+      const start = ordered ? Number.parseInt(li[2]!, 10) : 1;
+      const MARK = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
       const items: string[] = [];
+      const next = (from: number): number => {
+        let k = from;
+        while (k < lines.length && isBlank(lines[k])) k++;
+        return k;
+      };
       while (i < lines.length) {
-        const m = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/.exec(lines[i]!);
-        if (!m || m[1]!.length < base || /\d/.test(m[2]!) !== ordered && m[1]!.length === base) break;
+        const m = MARK.exec(lines[i]!);
+        if (!m || m[1]!.length < base || (/\d/.test(m[2]!) !== ordered && m[1]!.length === base)) break;
         if (m[1]!.length > base) {
           // nested list: collect the deeper run and render it recursively into the previous item
           const nested: string[] = [];
@@ -331,21 +350,67 @@ export function renderMarkdown(src: string, opts: RenderOptions = {}): string {
           continue;
         }
         const task = /^\[(.)\]\s+(.*)$/.exec(m[3]!);
-        items.push(
-          task
-            ? `<li class="task-list-item" data-task="${task[1] === ' ' ? ' ' : 'x'}"><input type="checkbox" disabled${task[1] === ' ' ? '' : ' checked'}> ${inline(task[2]!)}`
-            : `<li>${inline(m[3]!)}`
-        );
+        const body = task ? task[2]! : m[3]!;
+        const head = task
+          ? `<li class="task-list-item" data-task="${task[1] === ' ' ? ' ' : 'x'}"><input type="checkbox" disabled${task[1] === ' ' ? '' : ' checked'}> ${inline(body)}`
+          : `<li>${inline(body)}`;
         i++;
+        // what belongs to this item beyond its first line: lazy continuation lines (indented, no blank before) and, after a blank
+        // line, indented blocks (a paragraph, a fenced code block); the indent of the item text is how far they are dedented
+        const width = m[1]!.length + m[0]!.length - m[1]!.length - m[3]!.length;
+        let item = head;
+        const extra: string[] = [];
+        for (;;) {
+          if (i >= lines.length) break;
+          const l = lines[i]!;
+          if (!isBlank(l) && !MARK.test(l) && l.search(/\S/) > base && extra.length === 0 && !startsBlock(l.trim())) {
+            item += ' ' + inline(l.trim());
+            i++;
+            continue;
+          }
+          if (isBlank(l)) {
+            const k = next(i);
+            if (k < lines.length && !MARK.test(lines[k]!) && lines[k]!.search(/\S/) > base) {
+              extra.push(...lines.slice(i, k), lines[k]!);
+              i = k + 1;
+              continue;
+            }
+            if (k < lines.length) {
+              const mm = MARK.exec(lines[k]!);
+              if (mm && mm[1]!.length >= base && !(mm[1]!.length === base && /\d/.test(mm[2]!) !== ordered)) i = k; // a loose list goes on
+            }
+            break;
+          }
+          if (extra.length > 0 && !MARK.test(l) && l.search(/\S/) > base) {
+            extra.push(l);
+            i++;
+            continue;
+          }
+          break;
+        }
+        if (extra.length) {
+          const dedented = extra.map(l => (isBlank(l) ? '' : l.slice(Math.min(width, l.search(/\S/)))));
+          item += renderMarkdown(dedented.join('\n'), { stripFrontmatter: false });
+        }
+        items.push(item);
       }
       const tag = ordered ? 'ol' : 'ul';
-      out.push(`<${tag}>${items.map(x => x + '</li>').join('')}</${tag}>`);
+      out.push(`<${tag}${ordered && start !== 1 ? ` start="${start}"` : ''}>${items.map(x => x + '</li>').join('')}</${tag}>`);
       continue;
     }
     const para: string[] = [line];
     i++;
-    while (i < lines.length && !isBlank(lines[i]) && !startsBlock(lines[i]!)) para.push(lines[i++]!);
-    out.push(`<p>${para.map(inline).join('<br>')}</p>`);
+    while (i < lines.length && !isBlank(lines[i]) && !startsBlock(lines[i]!) && !/^=+\s*$/.test(lines[i]!)) para.push(lines[i++]!);
+    // a setext heading: the paragraph above a line of = (level 1) or -- (level 2)
+    const under = i < lines.length ? /^(=+|-{2,})\s*$/.exec(lines[i]!) : null;
+    if (under) {
+      const level = under[1]!.startsWith('=') ? 1 : 2;
+      const text = para.map(l => l.trim()).join(' ');
+      out.push(`<h${level} data-anchor="${escapeHtml(text.toLowerCase())}">${inline(text)}</h${level}>`);
+      i++;
+      continue;
+    }
+    out.push(`<p>${para.map(l => inline(l.replace(/(?: {2,}|\\)$/, ''))).join('<br>')}</p>`);
   }
   return out.join('\n');
 }

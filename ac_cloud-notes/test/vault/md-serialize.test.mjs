@@ -30,6 +30,15 @@ const SAMPLES = {
   mdlinks: 'See [site](https://example.com), [rel](<My Note.md>) and ![img](pics/a.png).\n',
   tags: 'Tagged #alpha and #beta/gamma here.\n',
   specials: 'Tom & Jerry <b>x</b> and 1 < 2 > 0\n',
+  setext: 'Title\n=====\n\nSub\n-----\n\nafter\n',
+  autolinks: 'see <https://example.com> and https://bare.example.org/x, then [named](https://n.example.org).\n',
+  olstart: '3. three\n4. four\n',
+  loose: '- a\n\n- b\n\n- c\n',
+  continued: '- item one\n  continued line\n- two\n',
+  codeinlist: '- a\n\n  ```js\n  x < 1\n  ```\n\n- b\n',
+  hardbreak: 'a  \nb\\\nc\n',
+  escapes: 'not \\*bold\\* and \\[x\\]\n',
+  strongem: '***both*** and **bold** and *it*\n',
 };
 
 for (const [name, text] of Object.entries(SAMPLES)) {
@@ -83,4 +92,34 @@ test('what a contenteditable leaves: divs, b/i, nbsp, bare text and a toggled ch
 
 test('empty paragraphs and trailing spaces do not leak into the note', () => {
   assert.equal(back('<p>a   </p><p> </p><p>b</p>'), 'a\n\nb\n');
+});
+
+test('gaps closed: setext headings, autolinks, list start, loose lists, continuation, code inside an item, escapes, ***x***', () => {
+  assert.equal(render('Title\n=====\n\nSub\n-----\n'), '<h1 data-anchor="title">Title</h1>\n<h2 data-anchor="sub">Sub</h2>');
+  assert.match(render('<https://example.com> x'), /<a class="external-link" href="https:\/\/example.com"[^>]*>https:\/\/example.com<\/a>/);
+  assert.match(render('go to https://bare.example.org/x, ok'), /href="https:\/\/bare.example.org\/x"/);
+  assert.ok(!render('<javascript:alert(1)>').includes('<a '), 'only http(s) autolinks');
+  assert.equal(render('3. a\n4. b\n'), '<ol start="3"><li>a</li><li>b</li></ol>');
+  assert.equal(render('1. a\n2. b\n'), '<ol><li>a</li><li>b</li></ol>');
+  assert.equal(render('- a\n\n- b\n'), '<ul><li>a</li><li>b</li></ul>');
+  assert.equal(render('- one\n  more\n- two\n'), '<ul><li>one more</li><li>two</li></ul>');
+  assert.match(render('- a\n\n  ```js\n  x\n  ```\n'), /<li>a<pre><code class="language-js">x<\/code><\/pre><\/li>/);
+  assert.equal(render('not \\*bold\\*'), '<p>not *bold*</p>');
+  assert.equal(render('***both***'), '<p><strong><em>both</em></strong></p>');
+  assert.equal(render('a  \nb'), '<p>a<br>b</p>');
+});
+
+test('the serialiser keeps a list start, an item\'s code block and an autolink', () => {
+  assert.equal(loop('3. three\n4. four\n'), '3. three\n4. four\n');
+  assert.equal(loop('see <https://example.com> ok\n'), 'see <https://example.com> ok\n');
+  assert.match(loop('- a\n\n  ```js\n  x\n  ```\n'), /^- a\n\n  ```js\n  x\n  ```\n$/);
+});
+
+test('literal markup characters typed as text survive the loop; plain text is not sprinkled with backslashes', () => {
+  assert.equal(ser.escapeText('not *bold* here'), 'not \\*bold\\* here');
+  assert.equal(ser.escapeText('snake_case_name and 2 * 3 and [x] and a_b'), 'snake_case_name and 2 * 3 and [x] and a_b');
+  assert.equal(ser.escapeText('see [[Note]] and [a](b)'), 'see \\[\\[Note\\]\\] and \\[a\\](b)');
+  assert.equal(ser.escapeText('a `code` b'), 'a \\`code\\` b');
+  assert.equal(render(ser.escapeText('a `code` and *it* and [[W]]')), '<p>a `code` and *it* and [[W]]</p>');
+  assert.equal(loop('plain text with snake_case and 2 * 3 and [x]\n'), 'plain text with snake_case and 2 * 3 and [x]\n');
 });

@@ -42,8 +42,24 @@ function wrap(mark: string, inner: string): string {
   return core === '' ? inner : `${lead}${mark}${core}${mark}${trail}`;
 }
 
+/**
+ * Plain text that would turn into markup when read back is escaped (a backslash before the character); text that cannot is left
+ * alone, so a note is not sprinkled with backslashes the first time it is edited.
+ */
+export function escapeText(v: string): string {
+  let t = v;
+  if (/\*(?!\s)[^*]*?\*/.test(t)) t = t.replace(/\*/g, '\\*');
+  if (/(^|\W)_(?!\s).+?(?<!\s)_(?!\w)/.test(t)) t = t.replace(/_/g, '\\_');
+  if (/`[^`\n]+`/.test(t)) t = t.replace(/`/g, '\\`');
+  if (/\[\[|\]\]|\[[^\]\n]+\]\(/.test(t)) t = t.replace(/[[\]]/g, m => '\\' + m);
+  if (/~~.+?~~/.test(t)) t = t.replace(/~/g, '\\~');
+  if (/==.+?==/.test(t)) t = t.replace(/=/g, '\\=');
+  if (/<https?:\/\//.test(t)) t = t.replace(/</g, '\\<');
+  return t;
+}
+
 function inl(n: HNode): string {
-  if (n.t === 'text') return n.v.replace(/ /g, ' ');
+  if (n.t === 'text') return escapeText(n.v.replace(/ /g, ' '));
   switch (n.tag) {
     case 'br': return '\n';
     case 'strong': case 'b': return wrap('**', inline(n.kids));
@@ -67,7 +83,11 @@ function inl(n: HNode): string {
 function anchor(n: HEl): string {
   const label = text(n);
   if (cls(n, 'tag')) return `#${n.attrs['data-tag'] ?? label.replace(/^#/, '')}`;
-  if (cls(n, 'external-link')) return `[${label}](${dest(n.attrs.href ?? '')})`;
+  if (cls(n, 'external-link')) {
+    const href = n.attrs.href ?? '';
+    // a link whose label is its address is an autolink
+    return label === href ? `<${href}>` : `[${label}](${dest(href)})`;
+  }
   if (cls(n, 'internal-link')) {
     const target = n.attrs['data-target'] ?? '';
     if (n.attrs['data-href'] === '1') return `[${label}](${dest(target)})`;
@@ -142,22 +162,35 @@ function callout(n: HEl): string {
   return prefix('> ', body === '' ? head : `${head}\n${body}`);
 }
 
+const BLOCK_KID = new Set(['p', 'pre', 'blockquote', 'table', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr']);
+
 function list(n: HEl, depth: number): string {
   const ordered = n.tag === 'ol';
   const pad = '  '.repeat(depth);
   const lines: string[] = [];
-  let i = 0;
+  let i = (ordered ? Number.parseInt(n.attrs.start ?? '1', 10) : 1) - 1;
+  if (Number.isNaN(i)) i = 0;
   for (const li of n.kids) {
     if (!isEl(li) || li.tag !== 'li') continue;
     i++;
     const nested = li.kids.filter((k): k is HEl => isEl(k) && (k.tag === 'ul' || k.tag === 'ol'));
-    const own = li.kids.filter(k => !(isEl(k) && nested.includes(k)));
+    const rest = li.kids.filter(k => !(isEl(k) && nested.includes(k)));
+    // inline content first; block children (a paragraph, a fenced code block, a quote ...) hang under the item
+    const firstBlock = rest.findIndex(k => isEl(k) && BLOCK_KID.has(k.tag));
+    const own = firstBlock < 0 ? rest : rest.slice(0, firstBlock);
+    const blockKids = firstBlock < 0 ? [] : rest.slice(firstBlock);
     const box = own.find((k): k is HEl => isEl(k) && k.tag === 'input');
     const task = cls(li, 'task-list-item') || box !== undefined;
     // fromDom writes 'true' / 'false'; a plain `checked` attribute (the rendered HTML) is present with an empty value
     const done = box ? box.attrs.checked !== undefined && box.attrs.checked !== 'false' : li.attrs['data-task'] === 'x';
     const body = inline(own).replace(/^\s+|\s+$/g, '').replace(/\n+/g, ' ');
-    lines.push(`${pad}${ordered ? `${i}.` : '-'} ${task ? `[${done ? 'x' : ' '}] ` : ''}${body}`);
+    const marker = ordered ? `${i}.` : '-';
+    lines.push(`${pad}${marker} ${task ? `[${done ? 'x' : ' '}] ` : ''}${body}`);
+    if (blockKids.length) {
+      const inner = blocks(blockKids).join('\n\n');
+      const indent = pad + ' '.repeat(marker.length + 1);
+      lines.push('', ...inner.split('\n').map(l => (l === '' ? '' : indent + l)));
+    }
     for (const sub of nested) lines.push(list(sub, depth + 1));
   }
   return lines.join('\n');
