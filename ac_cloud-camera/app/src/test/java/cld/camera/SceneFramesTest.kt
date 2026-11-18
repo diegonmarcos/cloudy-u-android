@@ -68,7 +68,7 @@ class SceneFramesTest {
 
     @Test fun theRequestCarriesTheDeclaredSceneBlockAndRefusesAnUnknownDetector() {
         val decl = RecognitionConfig.json
-        assertEquals(listOf("efficientdet", "yolo11n"), Scene.detectors(decl).keys.toList())
+        assertEquals(setOf("efficientdet", "yolo11n"), Scene.detectors(decl).keys)
         assertTrue(Scene.defaultDetector(decl) in Scene.detectors(decl))
         val r = Scene.request("yolo11n", objects = true, text = true, ocr = false, frameId = 9)
         assertEquals("yolo11n", r.getString("detector"))
