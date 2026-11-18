@@ -151,6 +151,11 @@ export const JsonView = ({ tab }: { tab: Tab }) => {
       <div className="cnv-edit-bar">
         <input className="cnv-input" type="search" placeholder="Search keys and values" aria-label="Search" data-testid="json-search" value={query} onChange={e => setQuery(e.target.value)} />
       </div>
+      <div className="cnv-edit-bar" data-testid="json-copybar">
+        <span className="cnv-dim" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid="json-selected">{copied ?? sel?.path ?? 'Tap a line to select it'}</span>
+        <button type="button" className="cnv-chip" data-testid="json-copy-path" disabled={!sel} onClick={() => copy('path')}>Copy path</button>
+        <button type="button" className="cnv-chip" data-testid="json-copy-value" disabled={!sel} onClick={() => copy('value')}>Copy value</button>
+      </div>
       <div className="cnv-pane" style={{ fontFamily: 'var(--font-monospace)' }}>
         {rows.length === 0 && <div className="cnv-dim" data-testid="json-none" style={{ padding: 12 }}>Nothing matches.</div>}
         {rows.map(r => (
@@ -179,11 +184,6 @@ export const JsonView = ({ tab }: { tab: Tab }) => {
           </div>
         ))}
         <div style={{ height: 96 }} />
-      </div>
-      <div className="cnv-edit-bar" data-testid="json-copybar" style={{ borderTop: '1px solid var(--background-modifier-border)', borderBottom: 0 }}>
-        <span className="cnv-dim" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid="json-selected">{copied ?? sel?.path ?? 'Tap a line to select it'}</span>
-        <button type="button" className="cnv-chip" data-testid="json-copy-path" disabled={!sel} onClick={() => copy('path')}>Copy path</button>
-        <button type="button" className="cnv-chip" data-testid="json-copy-value" disabled={!sel} onClick={() => copy('value')}>Copy value</button>
       </div>
     </div>
   );

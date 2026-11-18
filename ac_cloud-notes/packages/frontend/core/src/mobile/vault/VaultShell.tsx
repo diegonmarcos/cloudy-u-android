@@ -323,8 +323,8 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
                 <span role="group" aria-label="View mode" data-testid="mode-switch" style={{ display: special === null ? 'inline-flex' : 'none', gap: 2 }}>
                   {decl.layout.modes.map(m => (
                     <button key={m.id} type="button" className="cnv-mode" data-mode-button={m.id} aria-pressed={mode === m.id} disabled={!tab || special !== null || !modes.includes(m.id)}
-                      title={`${m.label} mode`} onClick={() => tab && api.setMode(tab.path, m.id)}>
-                      <Icon name={m.icon} size={14} />{m.label}
+                      title={`${m.label} mode`} aria-label={m.label} onClick={() => tab && api.setMode(tab.path, m.id)}>
+                      <Icon name={m.icon} size={14} />{mode === m.id ? m.label : null}
                     </button>
                   ))}
                 </span>

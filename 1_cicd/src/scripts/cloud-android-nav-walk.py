@@ -1426,6 +1426,8 @@ class Walk:
                 for st in self.cfg.get("scene_theme_setup", []):
                     self.scene_step(st)
                 for sc in scenes:
+                    if "themes" in sc and theme not in sc["themes"]:  # a scene may be limited to some themes (nav-walk-apps.json scene `themes`)
+                        continue
                     name, t0 = "scene_%s_%s" % (theme, sc["name"]), time.time()
                     self.scene_name = name
                     shell("am force-stop %s" % self.pkg)

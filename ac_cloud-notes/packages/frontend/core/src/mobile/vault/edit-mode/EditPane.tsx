@@ -64,6 +64,8 @@ const MarkdownEditor = ({ tab, api }: { tab: Tab; api: VaultApi }) => {
     el.innerHTML = renderMarkdown(parseFrontmatter(text).body);
     // embeds, math and mermaid fences are shown as marks that cannot be typed into; they are written back as they were
     el.querySelectorAll('.embed, .math, pre.mermaid').forEach(n => n.setAttribute('contenteditable', 'false'));
+    // task boxes are live in Edit: ticking one is an edit like any other (the input event reaches the editor's onInput)
+    el.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(i => { i.disabled = false; });
     written.current = text;
   }, [text, tab.path]);
 

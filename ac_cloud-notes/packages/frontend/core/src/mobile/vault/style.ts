@@ -159,5 +159,10 @@ export const VAULT_CSS = `
 .cnv-edit-select{min-height:34px;margin:0 4px;padding:0 8px;border:1px solid var(--background-modifier-border);border-radius:var(--radius-s);background:var(--background-primary);color:var(--text-normal);font:inherit;font-size:var(--font-ui-small)}
 .cnv-editable{outline:none;min-height:60vh;caret-color:var(--interactive-accent)}
 .cnv-editable .embed,.cnv-editable .math,.cnv-editable pre.mermaid{user-select:none;opacity:.85}
+.cnv-note input[type=checkbox]{appearance:none;-webkit-appearance:none;display:inline-block;vertical-align:-.2em;width:1.1em;height:1.1em;margin:0 .5em 0 0;border:2px solid var(--text-muted);border-radius:4px;background:transparent;opacity:1}
+.cnv-note input[type=checkbox]:checked{background:var(--interactive-accent);border-color:var(--interactive-accent)}
+.cnv-note input[type=checkbox]:checked::after{content:"";display:block;width:.28em;height:.55em;margin:.02em 0 0 .26em;border:solid var(--text-on-accent);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.cnv-editable pre.mermaid{display:block;position:relative;margin:0 0 1em;padding:22px 10px 10px;white-space:pre;overflow:auto;text-align:left;font-family:var(--font-monospace);font-size:var(--font-ui-small);background:var(--background-primary-alt);border:1px solid var(--background-modifier-border);border-radius:var(--radius-s)}
+.cnv-editable pre.mermaid::before{content:"mermaid";position:absolute;top:4px;left:10px;font-size:var(--font-ui-smaller);color:var(--text-faint)}
 .cnv-xml-tag{color:var(--color-purple)}.cnv-xml-attr{color:var(--color-orange)}.cnv-xml-val{color:var(--color-green)}
 `;
