@@ -11,9 +11,9 @@
 #       The Compose strip takes one gap PER KEY from ToolbarPaging.gaps and nothing shared.
 #   T2  exactly one place computes the page-start gap of a toolbar key, and it is that alignment.
 #   T3  the geometry: page = as many whole keys as the viewport shows, and with the shipped
-#       key width on a 411dp portrait screen that is eleven, splitting the 26 default keys
-#       11 / 11 / 4 (#1781 HandWrite is the last key). Fails if the key width or the default row grows past the design.
-#   T4  #1103: Android keyboard settings sits right before Cloud Vault, Vault right after Switch language,
+#       key width on a 411dp portrait screen that is eleven, splitting the 27 default keys
+#       11 / 11 / 5 (#1793 Grabber added; Emoji is the last key). Fails if the key width or the default row grows past the design.
+#   T4  #1103: Android keyboard settings follows Switch language; #1793: Dev Keyboard, Grabber, HandWrite sit right before Cloud Vault,
 #       and no key is forced onto a page of its own any more.
 set -uo pipefail
 APP="$(cd "$(dirname "$0")/.." && pwd)"
@@ -82,16 +82,16 @@ per, starts, widths = layout(1188, key_dp * 3, 1.0)
 pages = {}
 for k, st in zip(keys, starts): pages.setdefault(st // 1188, []).append(k)
 counts = [len(pages[p]) for p in sorted(pages)]
-assert per == 11 and counts == [11, 11, 4], f'pages hold {counts}, the design is 11 / 11 / 4'
-assert pages[0][-1] == 'ANDROID_SETTINGS' and pages[1][0] == 'VAULT', f'page 1 ends {pages[0][-1]}, page 2 opens {pages[1][0]}'
-assert 'ANSWER' in pages[0] and 'EMOJI' not in pages[0] and keys[-3:] == ['EMOJI', 'DEV_KEYBOARD', 'HANDWRITE'], f'#1384: Draft Answer belongs on page 1; Emoji, Dev Keyboard (#1413), HandWrite (#1781) are the last three keys, got {pages[0]} / {keys[-3:]}'
+assert per == 11 and counts == [11, 11, 5], f'pages hold {counts}, the design is 11 / 11 / 5'
+assert pages[0][-1] == 'ANDROID_SETTINGS' and pages[1][:4] == ['DEV_KEYBOARD', 'GRABBER', 'HANDWRITE', 'VAULT'], f'page 1 ends {pages[0][-1]}, page 2 opens {pages[1][:4]}'
+assert 'ANSWER' in pages[0] and 'EMOJI' not in pages[0] and keys[-2:] == ['CUT', 'EMOJI'], f'#1384: Draft Answer belongs on page 1; #1793: Emoji is the last key, right after Cut, got {pages[0]} / {keys[-2:]}'
 print(f'{key_dp}dp keys, {per}/page, split {counts}')
 EOF
-then ok "T3 the page arithmetic gives 11 / 11 / 4 and holds at every scale"; else bad "T3 page arithmetic"; fi
+then ok "T3 the page arithmetic gives 11 / 11 / 5 and holds at every scale"; else bad "T3 page arithmetic"; fi
 
 # ── T4 Vault's place in the row ──────────────────────────────────────────────
 has "$TU" 'toolbarKeysOnOwnPage: Set<ToolbarKey> = emptySet()' "T4 no key is forced onto its own page"
-has "$TU" '^        ANDROID_SETTINGS, VAULT,$' "T4 Android keyboard settings, then Vault, follow Switch language"
+has "$TU" '^        ANDROID_SETTINGS, DEV_KEYBOARD, GRABBER, HANDWRITE, VAULT,$' "T4 #1793 Android keyboard settings, then Dev Keyboard, Grabber, HandWrite, then Vault, follow Switch language"
 
 echo
 echo "== $PASS ok, $FAIL failed =="
