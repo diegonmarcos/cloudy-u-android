@@ -104,7 +104,13 @@ jobs:
           }
           compose() {
             ok=0; for i in 1 2 3 4; do tap "Compose" && { ok=1; break; }; sleep 4; done
-            [ "$ok" = 1 ] || { echo "::error::Compose button not found"; exit 1; }
+            # the extended FAB exposes no text to uiautomator: tap its place, but ONLY on the list (a composer still open means
+            # the place is the keyboard, which is how "GT" got typed into a recipient before)
+            if [ "$ok" != 1 ]; then
+              dump fab-check
+              grep -q 'New mail' walk-out/fab-check.xml && { echo "::error::a composer is still open; not tapping blind"; exit 1; }
+              adb shell input tap 873 1922
+            fi
             sleep 8
           }
           adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --ei emails 1 --ez recipientcheck true
