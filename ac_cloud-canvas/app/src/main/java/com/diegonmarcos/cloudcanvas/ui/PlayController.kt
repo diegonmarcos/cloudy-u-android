@@ -115,7 +115,8 @@ class PlayController(private val ctx: Context, demo: Boolean) {
 
     /** What the instrument plays right now, for the line under the instrument chips. */
     fun soundLine(inst: Inst, wave: Wave = Wave.Sine): String {
-        @Suppress("UNUSED_VARIABLE") val tick = samplesReady
+        // samplesReady redraws it when Classic finishes decoding; sfStatus and outTick when the SoundFont engine is attached
+        @Suppress("UNUSED_VARIABLE") val tick = samplesReady + outTick + (sfStatus?.presetNames?.size ?: 0) + engineKind.ordinal
         val d = decl
         if (soundFontPlaying && d != null) {
             val p = GmMap.preset(d, inst, wave)
