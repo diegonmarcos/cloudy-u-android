@@ -1549,4 +1549,5 @@
     <string name="compose_recipient_check_syntax_domain_character">Il dominio contiene un carattere che un dominio non può avere</string>
     <string name="compose_recipient_check_syntax_tld">La terminazione del dominio non è valida</string>
     <string name="compose_recipient_check_syntax_format">L\'indirizzo non ha un formato valido</string>
+    <string name="compose_recipient_check_server_cached">Risposta dalle verifiche recenti del server</string>
 </resources>

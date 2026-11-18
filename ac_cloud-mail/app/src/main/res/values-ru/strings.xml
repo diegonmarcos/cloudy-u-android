@@ -1568,4 +1568,5 @@
     <string name="compose_recipient_check_syntax_domain_character">Домен содержит символ, недопустимый в домене</string>
     <string name="compose_recipient_check_syntax_tld">Окончание домена недопустимо</string>
     <string name="compose_recipient_check_syntax_format">Адрес имеет недопустимый формат</string>
+    <string name="compose_recipient_check_server_cached">Ответ из недавних проверок сервера</string>
 </resources>

@@ -66,6 +66,10 @@ data class RecipientStatus(
     val fromServer: Boolean = false,
     /** Why the server was not reached, when it was not (shown in the sheet); null otherwise. */
     val serverNote: String? = null,
+    /** The server's own one-line reason for its verdict, verbatim; null when it gave none. */
+    val serverReason: String? = null,
+    /** The server answered from its own cache rather than a fresh probe. */
+    val serverCached: Boolean = false,
 ) {
     fun check(kind: RecipientCheckKind): RecipientCheckItem = checks.first { it.kind == kind }
 }
@@ -206,6 +210,8 @@ fun mergeRecipientStatus(address: String, remote: RecipientStatus?, nowMillis: L
         checkedAtMillis = if (remote.checkedAtMillis > 0) remote.checkedAtMillis else nowMillis,
         fromServer = true,
         serverNote = serverNote,
+        serverReason = remote.serverReason,
+        serverCached = remote.serverCached,
     )
 }
 

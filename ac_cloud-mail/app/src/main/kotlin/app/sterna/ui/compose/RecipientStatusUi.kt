@@ -189,6 +189,16 @@ internal fun RecipientStatusSheet(
                     color = verdictColor(shown.verdict),
                 )
             }
+            shown.serverReason?.let {
+                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (shown.serverCached) {
+                Text(
+                    stringResource(R.string.compose_recipient_check_server_cached),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             HorizontalDivider()
             shown.checks.forEach { item ->
                 Row(horizontalArrangement = Arrangement.spacedBy(MailMetrics.s8)) {

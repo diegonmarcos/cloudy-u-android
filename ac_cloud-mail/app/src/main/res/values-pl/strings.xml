@@ -1565,4 +1565,5 @@
     <string name="compose_recipient_check_syntax_domain_character">Domena zawiera znak, którego domena nie może mieć</string>
     <string name="compose_recipient_check_syntax_tld">Końcówka domeny jest nieprawidłowa</string>
     <string name="compose_recipient_check_syntax_format">Adres ma nieprawidłowy format</string>
+    <string name="compose_recipient_check_server_cached">Odpowiedź z ostatnich sprawdzeń serwera</string>
 </resources>

@@ -1,0 +1,102 @@
+package app.sterna.fleet
+
+import app.sterna.ui.compose.CheckOutcome
+import app.sterna.ui.compose.RecipientCheckKind
+import app.sterna.ui.compose.RecipientVerdict
+import app.sterna.ui.compose.mergeRecipientStatus
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.io.File
+
+/** #1803 the wire mapping of POST /v1/recipients/check (DELIVERY-API.md, cloudy-u-containers cfcbd70). */
+class FleetRecipientCheckerTest {
+
+    private val body = """
+        {"results":[
+          {"address":"ok@ok.example","verdict":"ok","reason":"mailbox exists","cached":false,"checked_at":"2026-11-18T11:00:00Z",
+           "checks":{"syntax":{"state":"valid"},"domain_mx":{"state":"ok","hosts":["mx1.ok.example","mx2.ok.example"]},
+             "mailbox":{"state":"exists","host":"mx1.ok.example","code":250,"reason":"2.1.5 ok"},
+             "past_bounce":{"state":"none"},"disposable":false,"role":false,"size_limit":{"bytes":10485760}}},
+          {"address":"all@catch.example","verdict":"risky","reason":"accepts all","cached":true,"checked_at":"2026-11-18T10:59:00Z",
+           "checks":{"syntax":{"state":"valid"},"domain_mx":{"state":"ok","hosts":["mx.catch.example"]},
+             "mailbox":{"state":"accepts_all","host":"mx.catch.example","code":250},
+             "past_bounce":{"state":"none"},"disposable":{"state":"false"},"role":{"value":true},"size_limit":{"bytes":null}}},
+          {"address":"x@nomx.example","verdict":"fail","reason":"null MX",
+           "checks":{"syntax":{"state":"valid"},"domain_mx":{"state":"fail","hosts":[],"null_mx":true},
+             "mailbox":{"state":"not_checked"},"past_bounce":{"state":"bounced","at":"2026-11-10T08:00:00Z","reason":"550 5.1.1"}}},
+          {"address":"far@remote.example","verdict":"unknown","reason":"cannot reach mx.remote.example:25",
+           "checks":{"syntax":{"state":"valid"},"domain_mx":{"state":"ok","hosts":["mx.remote.example"],"implicit":true},
+             "mailbox":{"state":"unknown","host":"mx.remote.example","reason":"cannot reach mx.remote.example:25"},
+             "size_limit":{"bytes":1000}}}
+        ]}
+    """.trimIndent()
+
+    private val parsed = parseRecipientCheckResponse(body, messageSizeBytes = 2_000)
+
+    @Test fun `every verdict maps, fail to will-fail`() {
+        assertEquals(RecipientVerdict.OK, parsed.getValue("ok@ok.example").verdict)
+        assertEquals(RecipientVerdict.RISKY, parsed.getValue("all@catch.example").verdict)
+        assertEquals(RecipientVerdict.WILL_FAIL, parsed.getValue("x@nomx.example").verdict)
+    }
+
+    @Test fun `every check of a full answer is read, with the server's details`() {
+        val ok = parsed.getValue("ok@ok.example")
+        assertEquals(RecipientCheckKind.entries.toSet(), ok.checks.map { it.kind }.toSet())
+        assertTrue(ok.checks.all { it.outcome == CheckOutcome.PASS })
+        assertTrue(ok.check(RecipientCheckKind.DOMAIN).detail!!.contains("mx1.ok.example, mx2.ok.example"))
+        assertTrue(ok.check(RecipientCheckKind.MAILBOX).detail!!.contains("mx1.ok.example 250"))
+        assertEquals("mailbox exists", ok.serverReason)
+        assertEquals(java.time.Instant.parse("2026-11-18T11:00:00Z").toEpochMilli(), ok.checkedAtMillis)
+        assertFalse(ok.serverCached)
+    }
+
+    @Test fun `accepts-all is a warning with its flag, a role mailbox a hint, a missing limit unknown`() {
+        val all = parsed.getValue("all@catch.example")
+        assertEquals(CheckOutcome.WARN, all.check(RecipientCheckKind.MAILBOX).outcome)
+        assertTrue(all.check(RecipientCheckKind.MAILBOX).acceptsAll)
+        assertEquals(CheckOutcome.WARN, all.check(RecipientCheckKind.DISPOSABLE_ROLE).outcome)
+        assertTrue(all.check(RecipientCheckKind.DISPOSABLE_ROLE).detail!!.contains("role"))
+        assertEquals(CheckOutcome.UNKNOWN, all.check(RecipientCheckKind.SIZE_LIMIT).outcome)
+        assertTrue(all.serverCached)
+    }
+
+    @Test fun `null MX fails the domain, not-checked is unknown, a past bounce is a warning with its date`() {
+        val x = parsed.getValue("x@nomx.example")
+        assertEquals(CheckOutcome.FAIL, x.check(RecipientCheckKind.DOMAIN).outcome)
+        assertEquals(CheckOutcome.UNKNOWN, x.check(RecipientCheckKind.MAILBOX).outcome)
+        assertEquals(CheckOutcome.WARN, x.check(RecipientCheckKind.PAST_BOUNCE).outcome)
+        assertTrue(x.check(RecipientCheckKind.PAST_BOUNCE).detail!!.contains("2026-11-10"))
+        val merged = mergeRecipientStatus("x@nomx.example", x, 1)
+        assertEquals("checks the server left out are unknown after the merge", CheckOutcome.UNKNOWN, merged.check(RecipientCheckKind.SIZE_LIMIT).outcome)
+    }
+
+    @Test fun `an unreachable mailbox is unknown, never a failure, and the size limit is compared on the phone`() {
+        val far = parsed.getValue("far@remote.example")
+        assertEquals(CheckOutcome.UNKNOWN, far.check(RecipientCheckKind.MAILBOX).outcome)
+        assertTrue(far.check(RecipientCheckKind.DOMAIN).detail!!.contains("implicit"))
+        assertEquals(CheckOutcome.FAIL, far.check(RecipientCheckKind.SIZE_LIMIT).outcome)
+        assertEquals("a message over the limit fails whatever the server said", RecipientVerdict.WILL_FAIL, far.verdict)
+        val small = parseRecipientCheckResponse(body, messageSizeBytes = 500).getValue("far@remote.example")
+        assertEquals(CheckOutcome.PASS, small.check(RecipientCheckKind.SIZE_LIMIT).outcome)
+        assertEquals(RecipientVerdict.UNKNOWN, small.verdict)
+    }
+
+    @Test fun `errors carry the server's code, and an empty or odd answer yields nothing`() {
+        assertEquals("HTTP 429 · rate_limited · slow down", recipientCheckError(429, """{"error":"slow down","code":"rate_limited"}"""))
+        assertEquals("HTTP 502", recipientCheckError(502, "<html>bad gateway</html>"))
+        assertTrue(parseRecipientCheckResponse("""{"results":[]}""", null).isEmpty())
+        assertTrue(parseRecipientCheckResponse("""{}""", null).isEmpty())
+        assertTrue(parseRecipientCheckResponse("""{"results":[{"verdict":"ok"}]}""", null).isEmpty())
+    }
+
+    @Test fun `the client is bound at start, posts to the contract's path in batches of fifty, mesh first`() {
+        val app = listOf("src/main/kotlin/app/sterna/SternaApplication.kt", "app/src/main/kotlin/app/sterna/SternaApplication.kt")
+            .map(::File).first { it.exists() }.readText()
+        assertTrue(app.contains("RecipientChecks.checker = app.sterna.fleet.FleetRecipientChecker"))
+        assertEquals("/v1/recipients/check", FleetRecipientChecker.PATH)
+        assertEquals(50, FleetRecipientChecker.MAX_BATCH)
+        assertTrue(FleetRecipientChecker.MESH_BASE.endsWith(".mesh.diegonmarcos.com"))
+    }
+}

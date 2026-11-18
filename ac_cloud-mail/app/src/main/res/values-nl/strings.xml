@@ -1546,4 +1546,5 @@
     <string name="compose_recipient_check_syntax_domain_character">Het domein bevat een teken dat een domein niet kan hebben</string>
     <string name="compose_recipient_check_syntax_tld">De domeinextensie is ongeldig</string>
     <string name="compose_recipient_check_syntax_format">Het adres heeft geen geldig formaat</string>
+    <string name="compose_recipient_check_server_cached">Beantwoord uit de recente controles van de server</string>
 </resources>

@@ -1543,4 +1543,5 @@
     <string name="compose_recipient_check_syntax_domain_character">Die Domain enthält ein Zeichen, das eine Domain nicht haben kann</string>
     <string name="compose_recipient_check_syntax_tld">Die Domainendung ist ungültig</string>
     <string name="compose_recipient_check_syntax_format">Die Adresse hat kein gültiges Format</string>
+    <string name="compose_recipient_check_server_cached">Aus den letzten Prüfungen des Servers beantwortet</string>
 </resources>

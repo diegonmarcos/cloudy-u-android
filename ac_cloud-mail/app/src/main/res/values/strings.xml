@@ -1652,4 +1652,5 @@
     <string name="compose_recipient_check_syntax_domain_character">The domain contains a character a domain cannot have</string>
     <string name="compose_recipient_check_syntax_tld">The domain ending is not valid</string>
     <string name="compose_recipient_check_syntax_format">The address is not in a valid format</string>
+    <string name="compose_recipient_check_server_cached">Answered from the server\'s recent checks</string>
 </resources>
