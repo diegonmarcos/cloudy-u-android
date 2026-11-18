@@ -34,10 +34,12 @@ class SectionHomeTest {
     @Test fun theHomepageListsEverySubPageWithIconNameAndDescription() {
         for (s in bottom) {
             val entries = Pages.entries(stacks, s)
-            val subPages = entries.map { Pages.pageIdOf(it) }.filter { it.isNotEmpty() }
+            // #1786 a `home_grid` sub-page (PM > Index) IS the card grid, so it is not a card of itself
+            val grids = entries.filter { it.kind == Pages.KIND_HOME_GRID }.map { Pages.pageIdOf(it) }.toSet()
+            val subPages = entries.map { Pages.pageIdOf(it) }.filter { it.isNotEmpty() && it !in grids }
             val cards = Pages.homeCards(pages(s), entries)
             assertEquals(s, subPages, cards.map { it.pageId })
-            assertEquals(s, pages(s).drop(1).map { it.first }, cards.map { it.pageId })
+            assertEquals(s, pages(s).drop(1).map { it.first }.filter { it !in grids }, cards.map { it.pageId })
             for (c in cards) assertTrue("$s/${c.pageId}", c.icon.isNotBlank() && c.title.isNotBlank() && c.subtitle.isNotBlank())
         }
     }

@@ -41,7 +41,8 @@ class TablesTest {
         val http = Fake { u -> if (u.startsWith("http://mesh-base/v1/history?symbol=XLK")) v1Bars("2025-10-30" to 100.0, "2026-10-30" to 110.0) else null }
         val data = load("world_equity_indices", "dm_sectors", http)
         val xlk = data.rows.first { it[0] == "XLK Technology" }
-        assertEquals(listOf("Name", "Last") + Performance.COLUMNS, data.columns)
+        // #1786 the period set follows the Performance columns
+        assertEquals(listOf("Name", "Last") + Performance.COLUMNS + listOf("1D", "1W") + Cagr.LONG_PERIODS, data.columns)
         assertEquals("+10.00%", xlk[2 + Performance.COLUMNS.indexOf("1Y")])
         assertEquals(FinFormat.DASH, xlk[2 + Performance.COLUMNS.indexOf("10Y")])
         assertTrue(data.note, data.note.contains("Technology (XLK) ") && data.note.contains("history from 2025-10-30"))

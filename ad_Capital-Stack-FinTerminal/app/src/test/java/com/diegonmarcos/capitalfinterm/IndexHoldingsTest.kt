@@ -27,7 +27,8 @@ class IndexHoldingsTest {
         val p = titles.subList(perf + 1, data)
         assertEquals(listOf("Growth", "Value", "Quality", "Vol", "Top", "Cyclical", "Defensive", "Dividend", "Momentum", "Small", "World Indices Equity"), p)
         val d = titles.subList(data + 1, titles.size)
-        assertEquals(listOf("Commodities", "Commodity Prices", "Exchange Rates", "Fundamentals", "Earnings Calendar", "Quotes", "Watchlist"), d)
+        // #1786 Commodities, Commodity Prices and Exchange Rates moved to HG > Markets (Reorg1786ParityTest)
+        assertEquals(listOf("Fundamentals", "Earnings Calendar", "Quotes", "Watchlist"), d)
         assertTrue("DM / EM Equity are merged", titles.none { it == "DM Equity (US)" || it == "EM Equity" })
     }
 

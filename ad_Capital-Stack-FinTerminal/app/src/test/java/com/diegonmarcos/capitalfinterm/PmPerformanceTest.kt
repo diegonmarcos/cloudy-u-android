@@ -28,7 +28,8 @@ class PmPerformanceTest {
         assertEquals(listOf("Portfolio", "Vol", "Top 3", "See all"), decl.columns); assertEquals(3, decl.top)
         assertEquals(listOf("Portfolios DM vs EM", "Portfolios US Cyclicals"), decl.tables.map { it.title })
         val dmem = decl.portfolios.filter { it.table == "dm_em" }; val cyc = decl.portfolios.filter { it.table == "us_cyclicals" }
-        assertEquals(13, dmem.size); assertEquals(8, cyc.size)
+        // #1786 the US Cyclicals group: the eight profiles and the S&P 500 and Nasdaq benchmarks
+        assertEquals(13, dmem.size); assertEquals(10, cyc.size)
         val b = dmem.first { it.id == "mp_60_40" }
         assertEquals(listOf("DM Bonds" to 60.0, "DM Equity" to 40.0), b.legs.map { it.name to it.weight }); assertEquals("DM Bonds 60 · DM Equity 40", PmPortfolios.topText(b.legs, 3))
         assertEquals(listOf("AGG", "URTH"), b.legs.map { it.symbol })

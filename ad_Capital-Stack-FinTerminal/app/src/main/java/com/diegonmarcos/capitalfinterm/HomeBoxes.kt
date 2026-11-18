@@ -118,11 +118,10 @@ object HomeBoxes {
         return CbCell(s.hist[y], y.toString())
     }
 
-    /** The countries of a CB box in order: the declared majors ([HomeBoxesDecl.cbTop]) first, then every other country of [all] (aggregates left out). */
+    /** The countries of a CB box in order: the declared majors ([HomeBoxesDecl.cbTop]) first, then every other country of [all] in its declared order (the euro area and its members both listed, as on the CB page). */
     fun cbCountries(top: List<String>, all: List<CbCountry>): List<CbCountry> {
-        val real = all.filter { !it.aggregate }
-        val first = top.mapNotNull { id -> real.firstOrNull { it.id == id } }
-        return first + real.filter { it !in first }
+        val first = top.mapNotNull { id -> all.firstOrNull { it.id == id } }
+        return first + all.filter { it !in first }
     }
 
     /** A CB cell's text: the value with two decimals, or n/a. */

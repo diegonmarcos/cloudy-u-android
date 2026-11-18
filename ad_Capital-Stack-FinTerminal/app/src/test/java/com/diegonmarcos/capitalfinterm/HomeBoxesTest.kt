@@ -76,7 +76,7 @@ class HomeBoxesTest {
         for (b in decl.cbBoxes) for (c in b.columns) assertTrue("box ${b.id} reads the undeclared indicator ${c.indicator}", c.indicator in known)
         val order = HomeBoxes.cbCountries(decl.cbTop, cb.countries)
         assertEquals(listOf("US", "EA", "GB", "JP", "CN"), order.take(decl.top).map { it.id })
-        assertEquals("Show all lists every country", cb.countries.count { !it.aggregate }, order.size)
+        assertEquals("Show all lists every country", cb.countries.size, order.size)
         for (p in decl.cbBoxes.map { it.opens }) assertTrue("CB box opens $p, not a CB page", p in pagesOf("cb"))
     }
 

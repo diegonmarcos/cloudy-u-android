@@ -51,10 +51,12 @@ class Reorg1786ParityTest {
         val today = ui.getJSONObject("stacks").let { s -> s.keys().asSequence().toList().flatMap { k -> arr(s.optJSONArray(k)).map { k to it } } }
         for (b in olds) {
             val kind = b.getString("kind")
-            val hit = today.firstOrNull { (_, e) -> e.optString("kind") == kind && e.optString("title") == b.optString("title") && e.optString("page") == b.optString("page") && e.optString("dashboard") == b.optString("dashboard") }
+            val page = b.optString("page").ifEmpty { if (kind == Pages.KIND_DASHBOARD && !b.optBoolean("detail")) Pages.slugOf(b.optString("dashboard")) else "" }
+            // the same entry can be declared in two sections (About is in about and config): the one in the section it should be in counts
+            val hits = today.filter { (_, e) -> e.optString("kind") == kind && e.optString("title") == b.optString("title") && e.optString("page") == b.optString("page") && e.optString("dashboard") == b.optString("dashboard") }
+            val hit = hits.firstOrNull { it.first == now(b.getString("section"), page) } ?: hits.firstOrNull()
             assertNotNull("entry ${b.optString("title").ifEmpty { kind }} (${b.getString("section")}) is gone", hit)
             val (sec, e) = hit!!
-            val page = b.optString("page").ifEmpty { if (kind == Pages.KIND_DASHBOARD && !b.optBoolean("detail")) Pages.slugOf(b.optString("dashboard")) else "" }
             if (kind != Pages.KIND_SECTION_TITLE) assertEquals("entry ${b.optString("title")} is under $sec", now(b.getString("section"), page), sec)
             for (k in b.keys()) {
                 if (k == "section") continue

@@ -52,7 +52,8 @@ class PerfPortfoliosTest {
         assertEquals(listOf(PerfPortfolios.MODE_TABLE, PerfPortfolios.MODE_GRAPHIC), decl.modes)
         assertEquals(PerfPortfolios.MODE_TABLE, decl.defaultMode)
         assertEquals("Table", decl.word("table")); assertEquals("Graphic", decl.word("graphic")); assertEquals("See all", decl.word("see_all"))
-        assertEquals(listOf("1D", "1W", "1M", "YTD"), decl.periods)
+        // #1786 the period set: the old four first, then 12M and the CAGR windows
+        assertEquals(listOf("1D", "1W", "1M", "YTD", "12M", "CAGR 1m", "CAGR 12m", "CAGR 24m", "CAGR 36m"), decl.periods)
         assertTrue(decl.defaultPeriod in decl.periods && decl.bubbleX in decl.periods && decl.bubbleY in decl.periods)
         assertTrue(decl.defaultTop in decl.tops && 0 in decl.tops)
         assertTrue(decl.cardTop in 3..6)
