@@ -48,7 +48,18 @@ done
 # the status strip is drawn ONLY when the SuperApp is the default launcher (activity_main.xml: visibility gone until
 # applyLauncherChrome sees isDefaultLauncher), so make it the HOME role holder and bring it up with HOME, as a phone does.
 $T adb shell cmd role add-role-holder --user 0 android.app.role.HOME "$PKG" 0 >/dev/null 2>&1 || echo "note: could not take the HOME role"
+# The command can exit 0 without granting the role (e.g. a package that does not qualify), and the strip only draws when
+# HomeActivity resolves CATEGORY_HOME to this package: read the holder back and fail with that reason instead of a
+# missing chip later (run 44225173645 showed the system status bar, i.e. launcher mode never engaged).
+holders="$($T adb shell cmd role get-role-holders --user 0 android.app.role.HOME 2>/dev/null | tr -d '\r')"
+echo "HOME role holders: ${holders:-<none>}"
+resolved="$($T adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME 2>/dev/null | tr -d '\r' | tail -1)"
+echo "HOME resolves to: ${resolved:-<none>}"
+case "$holders" in *"$PKG"*) ;; *) echo "FAIL: $PKG is not the HOME role holder, so the launcher strip cannot draw"; rc=1;; esac
+# bring the launcher door up explicitly (HomeActivity, the CATEGORY_HOME activity), then HOME as a phone does
+$T adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.HOME -n "$PKG/.HomeActivity" >/dev/null 2>&1 || echo "note: could not start HomeActivity"
 $T adb shell input keyevent KEYCODE_HOME; sleep 8
+echo "resumed: $($T adb shell dumpsys activity activities 2>/dev/null | grep -m1 -E 'topResumedActivity|mResumedActivity' | tr -d '\r' | sed 's/^ *//')"
 # coming up as the launcher shows the screensaver overlay again (clock + Unlock): tap it away, then the home is on screen
 for _ in 1 2 3; do
     dump cur
