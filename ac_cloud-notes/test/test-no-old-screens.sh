@@ -19,7 +19,7 @@ gone = [
   M + '/pages/workspace/' + n for n in
   ('home.tsx', 'all.tsx', 'boards.tsx', 'journals.tsx', 'journals.css.ts', 'search.tsx', 'graph.tsx', 'trash.tsx',
    'collection', 'tag', 'detail')
-] + [M + '/views', M + '/components/app-tabs', M + '/components/navigation/virtual-scroller']
+] + [M + '/views', M + '/components/app-tabs', M + '/components/navigation/virtual-scroller', M + '/dialogs/setting']
 for g in gone:
     check(not os.path.exists(os.path.join(root, g)), 'removed: ' + g)
 
@@ -42,7 +42,7 @@ for d, _, fs in os.walk(os.path.join(root, 'packages/frontend')):
     for f in fs:
         if not f.endswith(('.ts', '.tsx', '.mts')): continue
         t = open(os.path.join(d, f), encoding='utf-8', errors='ignore').read()
-        if re.search(r"mobile/(views|pages/workspace/(detail|collection|tag))|mobile/components/app-tabs", t):
+        if re.search(r"mobile/(views|dialogs/setting|pages/workspace/(detail|collection|tag))|mobile/components/app-tabs", t):
             bad.append(os.path.relpath(os.path.join(d, f), root))
 check(not bad, 'no import of a removed screen folder ' + ', '.join(bad))
 print('FAIL' if fails else 'OK')

@@ -1,5 +1,4 @@
 import { usePageHelper } from '@cloud-notes/core/blocksuite/block-suite-page-list/utils';
-import { WorkspaceDialogService } from '@cloud-notes/core/modules/dialogs';
 import { DocsService } from '@cloud-notes/core/modules/doc';
 import { WorkbenchService } from '@cloud-notes/core/modules/workbench';
 import { WorkspaceService } from '@cloud-notes/core/modules/workspace';
@@ -12,7 +11,6 @@ import {
   drawerDocs,
   NATIVE_NAV_EVENT,
   NATIVE_OPEN_DOC_EVENT,
-  NATIVE_OPEN_SETTINGS_EVENT,
   type NativeNavDetail,
   resolveNativeNav,
   setLastDocId,
@@ -28,7 +26,6 @@ export const NativeNavBridge = () => {
   const workbench = useService(WorkbenchService).workbench;
   const workspace = useService(WorkspaceService).workspace;
   const pageHelper = usePageHelper(workspace.docCollection);
-  const dialogs = useService(WorkspaceDialogService);
   const docList = useService(DocsService).list;
 
   // The local graph follows the note that was open last.
@@ -39,19 +36,16 @@ export const NativeNavBridge = () => {
 
   // The top bar's Settings > Configs and a page picked in its drawer.
   useEffect(() => {
-    const openSettings = () =>
-      dialogs.open('setting', { activeTab: 'appearance' });
+    // Settings > Configs is the vault's own Settings screen (VaultShell listens for the same event); the AFFiNE dialog is gone
     const openDoc = (e: Event) => {
       const id = (e as CustomEvent<{ id?: string }>).detail?.id;
       if (id) workbench.openDoc(id);
     };
-    window.addEventListener(NATIVE_OPEN_SETTINGS_EVENT, openSettings);
     window.addEventListener(NATIVE_OPEN_DOC_EVENT, openDoc);
     return () => {
-      window.removeEventListener(NATIVE_OPEN_SETTINGS_EVENT, openSettings);
       window.removeEventListener(NATIVE_OPEN_DOC_EVENT, openDoc);
     };
-  }, [dialogs, workbench]);
+  }, [workbench]);
 
   // The drawer's page list: the native side cannot see the workspace, so the
   // web half pushes it whenever a title or a trash flag changes.

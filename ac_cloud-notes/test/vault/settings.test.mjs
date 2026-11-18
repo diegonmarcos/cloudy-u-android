@@ -34,3 +34,11 @@ test('reading typography: the note stylesheet states paragraph, list, heading, r
   }
   assert.match(css, /\.cnv-note\{max-width:700px;margin:0 auto;padding:12px 16px 0/);
 });
+
+test('the native top bar opens the vault Settings screen; the AFFiNE settings dialog is gone', () => {
+  assert.match(shell, /addEventListener\('cloud-notes:open-settings', open\)/);
+  assert.match(shell, /const open = \(\) => setSpecial\('configs'\)/);
+  const bridge = readFileSync(join(SRC, '..', 'components/native-nav-bridge.tsx'), 'utf8');
+  assert.ok(!bridge.includes("open('setting'"), 'the bridge no longer opens the dialog');
+  assert.ok(!readFileSync(join(SRC, '..', 'dialogs/index.tsx'), 'utf8').includes('SettingDialog'));
+});

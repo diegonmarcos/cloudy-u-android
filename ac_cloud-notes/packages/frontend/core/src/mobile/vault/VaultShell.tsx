@@ -166,6 +166,13 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
     }
   }, [api, tab, toggleMode, showLeft, setPrefs, decl.limits.skip_dirs]);
 
+  // the native top bar's Settings > Configs (and the command of the same name) open the Settings screen
+  useEffect(() => {
+    const open = () => setSpecial('configs');
+    window.addEventListener('cloud-notes:open-settings', open);
+    return () => window.removeEventListener('cloud-notes:open-settings', open);
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const cmd = decl.commands.find(c => c.hotkey && hotkeyMatches(c.hotkey, e));
