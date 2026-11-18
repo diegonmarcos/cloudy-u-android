@@ -22,9 +22,11 @@ echo "keyboard=$PKG engine=$EPKG_ENGINE"
 
 # Translate refuses with no target ("Pick a target under Language Output first", run 44318651005): seed Language Output =
 # german in Writer's own prefs (file text_tools, key enhance_language) through run-as; the ship builds are debuggable.
+# seeded_from_serving_app=true marks the one-time copy of the serving app's settings as done, or Writer's first start
+# overwrites the target with the keyboard's "keep" (run 44321070248).
 seed_target() {
   local f="$OUT/text_tools.xml"
-  printf '%s\n' "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" '<map>' '    <string name="enhance_language">german</string>' '</map>' > "$f"
+  printf '%s\n' "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>" '<map>' '    <string name="enhance_language">german</string>' '    <boolean name="seeded_from_serving_app" value="true" />' '</map>' > "$f"
   adb shell am force-stop "$PKG"
   adb push "$f" /data/local/tmp/text_tools.xml >/dev/null
   adb shell run-as "$PKG" mkdir -p shared_prefs
