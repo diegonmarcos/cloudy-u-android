@@ -2,6 +2,7 @@ package com.diegonmarcos.cloudcanvas.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -49,13 +50,14 @@ import java.io.File
 import org.json.JSONObject
 
 /**
- * Draw > Board (#1787): an infinite whiteboard. tldraw has no native Android SDK, so the page is the fleet's own tldraw build
- * (diegonmarcos/cloudy-h-webapps-desk c_Suite/tldraw) vendored offline in assets/board (pinned by assets/board/PIN.json,
- * tools/vendor-tldraw.py) and shown in the fleet web view (libs:web-core, profile APP_PAGE, hardware-accelerated). Every request is
- * answered from the APK: the dist over WebViewAssetLoader at https://appassets.androidplatform.net/tldraw/, and tldraw's CDN files
- * (fonts, icons, translations) from the pinned copy, so the page works with no network. Boards are saved to app storage
- * ([BoardStore]) through the web message listener `CloudBoard` (assets/board/tldraw/cloud-board-bridge.js), allowed for the asset
- * origin and the main frame only, so an embedded frame cannot read or write boards.
+ * Draw > Board (#1787): an infinite whiteboard in the fleet web view (libs:web-core, profile APP_PAGE, hardware-accelerated).
+ * The engine is Quickdraw (MIT, https://github.com/quickdrawjs/quickdraw), vendored offline in assets/board and pinned by
+ * assets/board/PIN.json (tools/vendor-board.py). The brief's first choice, the fleet's tldraw build, is kept pinned in
+ * vendor/tldraw but not shipped: tldraw 5.x replaces the whole editor after 5 s in a production build without a licence key.
+ * Every request is answered from the APK over WebViewAssetLoader at https://appassets.androidplatform.net/board/, so the page works
+ * with no network; a link that leaves the page (the Quickdraw mark) opens in the browser, never inside the board. Boards are saved
+ * to app storage ([BoardStore]) through the web message listener `CloudBoard` (assets/board/quickdraw/cloud-board-bridge.js),
+ * allowed for the asset origin and the main frame only.
  */
 class BoardController(ctx: Context) {
     val store = BoardStore(File(ctx.filesDir, "boards"))
@@ -63,6 +65,8 @@ class BoardController(ctx: Context) {
     var currentId by mutableStateOf(store.currentId())
     var message by mutableStateOf<String?>(null)
     private var reply: JavaScriptReplyProxy? = null
+    /** The tool the page opens with (launch extra `tool`: draw, geo, text, note...; the screenshot job draws with it). */
+    var startTool: String? = null
 
     init { boards = store.list() }
 
@@ -102,46 +106,29 @@ class BoardController(ctx: Context) {
     fun deleteCurrent() { store.delete(currentId); boards = store.list(); currentId = store.currentId(); sendLoad() }
 }
 
-/** The web view's client: the fleet base (render-process recovery) plus the offline answers for the dist and tldraw's CDN. */
+/** The web view's client: the fleet base (render-process recovery) plus the offline answers for the vendored engine. */
 private class BoardWebClient(ctx: Context, private val onRecover: (WebView) -> Unit) : CloudWebClient(WebProfile.APP_PAGE) {
     private val app = ctx.applicationContext
     private val bundled = WebViewAssetLoader.AssetsPathHandler(app)
     private val loader = WebViewAssetLoader.Builder()
-        .addPathHandler("/tldraw/") { path -> bundled.handle("board/tldraw/$path")?.also { it.responseHeaders = CORS } }
+        .addPathHandler("/board/") { path -> if (path.contains("..")) null else bundled.handle("board/$path") }
         .build()
 
-    override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
-        val url = request.url
-        if (url.host == CDN_HOST) return cdn(url)
-        return loader.shouldInterceptRequest(url)
-    }
+    override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
+        loader.shouldInterceptRequest(request.url)
 
-    /** cdn.tldraw.com/<version>/<file> from assets/board/cdn; a locale with no bundled file gets English (the app is English only). */
-    private fun cdn(url: Uri): WebResourceResponse {
-        val path = url.path.orEmpty().trimStart('/')
-        if (path.contains("..")) return notFound()
-        val open = { p: String -> runCatching { app.assets.open("board/cdn/$p") }.getOrNull() }
-        val stream = open(path) ?: if (Regex("[0-9.]+/translations/[^/]+\\.json").matches(path)) open(path.substringBefore("/translations/") + "/translations/en.json") else null
-        return if (stream == null) notFound() else WebResourceResponse(mime(path), null, 200, "OK", CORS, stream)
+    /** The board never navigates away: a link off the asset origin (the engine's corner mark) goes to the browser. */
+    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+        val url = request.url
+        if (url.host == CloudWeb.ASSET_HOST) return false
+        runCatching { view.context.startActivity(Intent(Intent.ACTION_VIEW, url).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        return true
     }
 
     override fun onRecovered(dead: WebView, fresh: WebView?) { if (fresh != null) onRecover(fresh) }
-
-    private fun notFound() = WebResourceResponse("text/plain", "utf-8", 404, "Not Found", CORS, java.io.ByteArrayInputStream(ByteArray(0)))
-
-    companion object {
-        const val CDN_HOST = "cdn.tldraw.com"
-        /** The fonts, the icon mask and fetch() of translations are cross-origin from the page: they need CORS on the answer. */
-        val CORS = mapOf("Access-Control-Allow-Origin" to "*", "Cache-Control" to "max-age=31536000")
-
-        fun mime(p: String): String = when (p.substringAfterLast('.', "").lowercase()) {
-            "woff2" -> "font/woff2"; "svg" -> "image/svg+xml"; "json" -> "application/json"; "png" -> "image/png"
-            "js" -> "text/javascript"; "css" -> "text/css"; else -> "application/octet-stream"
-        }
-    }
 }
 
-const val BOARD_URL = "https://${CloudWeb.ASSET_HOST}/tldraw/index.html"
+const val BOARD_URL = "https://${CloudWeb.ASSET_HOST}/board/quickdraw/index.html"
 
 @Composable
 fun BoardScreen(ctl: BoardController, modifier: Modifier = Modifier) {
@@ -203,6 +190,6 @@ private fun boardWebView(c: Context, ctl: BoardController): WebView {
     }
     wv.webViewClient = BoardWebClient(c) { fresh -> bridge(fresh) }
     bridge(wv)
-    wv.loadUrl(BOARD_URL)
+    wv.loadUrl(BOARD_URL + (ctl.startTool?.let { "?tool=" + Uri.encode(it) } ?: ""))
     return wv
 }

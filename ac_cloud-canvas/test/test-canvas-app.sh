@@ -13,9 +13,10 @@
 #   T5 the unit suites for stroke/undo, layers, PNG, mixer, loop timing, WAV, preset expansion, model selection, key hygiene, the request
 #      builder, the sampler (root map, voice, polyphony) and the board store exist
 #   T6 #1787 attribution: configs_pages.about.credits names Salamander Grand Piano, Alexander Holm, CC-BY 3.0, MuldjordKit, Lars Muldjord,
-#      CC-BY 4.0 and tldraw
-#   T7 #1787 the Board copy: tools/vendor-tldraw.py check passes (every pinned file present with its sha256, nothing unpinned), the page
-#      loads no analytics, and the manifest keeps hardware acceleration on
+#      CC-BY 4.0, Quickdraw and MIT
+#   T7 #1787 the Board copies: tools/vendor-board.py check passes (Quickdraw in assets/board and the kept tldraw copy in vendor/tldraw:
+#      every pinned file present with its sha256, nothing unpinned), the shipped page loads no analytics and nothing from the network,
+#      no tldraw file is in the APK's assets (it does not render without a licence key), and hardware acceleration stays on
 # Each rule is then proven red by a planted mutation in a scratch copy.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -82,6 +83,7 @@ for a in audio:
 for d in ("samples/piano", "samples/drums", "board"):
     if not os.path.isfile(os.path.join(assets, d, "NOTICE.md")): print("T4 assets/%s has no NOTICE.md" % d)
     if "ac_cloud-canvas/app/src/main/assets/" + d not in cur.get("directories", {}): print("T4 assets/%s is not a licences/curated.json directory" % d)
+if "ac_cloud-canvas/vendor/tldraw" not in cur.get("directories", {}): print("T4 vendor/tldraw is not a licences/curated.json directory")
 if ".ogg" not in cur.get("asset_extensions", []): print("T4 .ogg is not a licence-bearing asset extension")
 tests = ""
 for root, _, files in os.walk(os.path.join(app, "app/src/test")):
@@ -94,12 +96,15 @@ for name in ("undoAndRedoWalkTheHistory", "reorderMovesALayerAndClamps", "pngRou
              "createRenameDeleteKeepsAtLeastOneBoard", "writeIsAtomicAndRefusesForeignJson", "theIndexSurvivesAReopen"):
     if "fun " + name not in tests: print("T5 missing unit test " + name)
 cred = bj.get("configs_pages", {}).get("about", {}).get("credits", "")
-for w in ("Salamander Grand Piano", "Alexander Holm", "CC-BY 3.0", "MuldjordKit", "Lars Muldjord", "CC-BY 4.0", "tldraw"):
+for w in ("Salamander Grand Piano", "Alexander Holm", "CC-BY 3.0", "MuldjordKit", "Lars Muldjord", "CC-BY 4.0", "Quickdraw", "MIT"):
     if w not in cred: print("T6 configs_pages.about.credits does not name " + w)
-pin = subprocess.run([sys.executable, "-I", os.path.join(app, "tools/vendor-tldraw.py"), "check", app], capture_output=True, text=True)
-if pin.returncode != 0: print("T7 the pinned tldraw copy does not match PIN.json: " + pin.stdout.strip().replace("\n", "; ")[:300])
-idx = os.path.join(assets, "board/tldraw/index.html")
-if not os.path.isfile(idx) or re.search(r"matomo|umami|analytics", open(idx).read(), re.I): print("T7 the board page loads analytics (or is missing)")
+pin = subprocess.run([sys.executable, "-I", os.path.join(app, "tools/vendor-board.py"), "check", app], capture_output=True, text=True)
+if pin.returncode != 0: print("T7 a pinned board copy does not match its PIN.json: " + pin.stdout.strip().replace("\n", "; ")[:300])
+idx = os.path.join(assets, "board/quickdraw/index.html")
+page = open(idx).read() if os.path.isfile(idx) else ""
+if not page or re.search(r"matomo|umami|analytics|https?://", page, re.I): print("T7 the board page is missing, loads analytics or names a network address")
+if any("tldraw" in f.lower() for _, _, fs in os.walk(assets) for f in fs) or os.path.isdir(os.path.join(assets, "board/tldraw")): print("T7 a tldraw file is in the APK's assets")
+if "/board/quickdraw/index.html" not in board_src: print("T7 BoardScreen does not load the vendored Quickdraw page")
 if 'android:hardwareAccelerated="false"' in man_nc or man_nc.count('android:hardwareAccelerated="true"') < 2: print("T7 hardware acceleration is not declared on for the application and the activity")
 PY
 }
@@ -112,7 +117,7 @@ OUT="$(check "$APP" "$ROOT")"
 S="$(mktemp -d)"; trap 'rm -rf "$S"' EXIT
 mut() {  # $1 = label, $2 = rule prefix expected, $3.. = python edit of the scratch copy
   local label="$1" want="$2"; shift 2
-  rm -rf "$S/app" "$S/root"; mkdir -p "$S/app" "$S/root/licenses" "$S/root/1_cicd/src/data"; cp -r "$APP/build.json" "$APP/app" "$APP/tools" "$S/app/" 2>/dev/null; cp "$APP/build.json" "$S/app/build.json"
+  rm -rf "$S/app" "$S/root"; mkdir -p "$S/app" "$S/root/licenses" "$S/root/1_cicd/src/data"; cp -r "$APP/build.json" "$APP/app" "$APP/tools" "$APP/vendor" "$S/app/" 2>/dev/null; cp "$APP/build.json" "$S/app/build.json"
   cp "$ROOT/licenses/curated.json" "$S/root/licenses/"; cp "$ROOT/1_cicd/src/data/webview-guard.json" "$S/root/1_cicd/src/data/"
   ( cd "$S/app" && "$@" )
   if check "$S/app" "$S/root" | grep -q "^$want"; then ok "mutation '$label' is caught ($want)"; else bad "mutation '$label' went undetected"; fi
@@ -135,8 +140,10 @@ mut "notice dropped" T4 rm app/src/main/assets/samples/drums/NOTICE.md
 mut "sampler test removed" T5 sed -i 's/fun polyphonyIsCappedByStealingTheOldest/fun x/' app/src/test/java/com/diegonmarcos/cloudcanvas/SampleTest.kt
 mut "board test removed" T5 sed -i 's/fun writeIsAtomicAndRefusesForeignJson/fun x/' app/src/test/java/com/diegonmarcos/cloudcanvas/BoardTest.kt
 mut "attribution dropped" T6 python3 -I -c 'import json;d=json.load(open("build.json"));d["configs_pages"]["about"]["credits"]="";json.dump(d,open("build.json","w"))'
-mut "vendored bundle edited" T7 sh -c 'for f in app/src/main/assets/board/tldraw/assets/*.js; do echo "//x" >> "$f"; done'
-mut "analytics back" T7 sed -i 's#</head>#<script src="https://analytics.example/umami/script.js"></script></head>#' app/src/main/assets/board/tldraw/index.html
+mut "vendored engine edited" T7 sh -c 'echo "//x" >> app/src/main/assets/board/quickdraw/src/editor.js'
+mut "kept tldraw copy edited" T7 sh -c 'for f in vendor/tldraw/tldraw/assets/*.js; do echo "//x" >> "$f"; done'
+mut "tldraw shipped again" T7 sh -c 'mkdir -p app/src/main/assets/board/tldraw && cp vendor/tldraw/tldraw/index.html app/src/main/assets/board/tldraw/'
+mut "page reaches the network" T7 sed -i 's#</head>#<script src="https://cdn.example/x.js"></script></head>#' app/src/main/assets/board/quickdraw/index.html
 mut "acceleration off" T7 sed -i '0,/android:hardwareAccelerated="true"/s//android:hardwareAccelerated="false"/' app/src/main/AndroidManifest.xml
 
 echo "PASS=$PASS FAIL=$FAIL"

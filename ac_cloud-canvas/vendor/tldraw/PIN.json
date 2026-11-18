@@ -1,0 +1,191 @@
+{
+ "_doc": "#1787 the pinned copy of the fleet's tldraw web app, KEPT OUT OF THE APK: tldraw 5.x refuses to render an unlicensed production build (LicenseProvider, 'unlicensed-production', the editor is replaced after 5 s), so Board ships Quickdraw. Written by ac_cloud-canvas/tools/vendor-board.py fetch tldraw, checked by its check mode. Do not edit by hand.",
+ "engine": "tldraw",
+ "source": {
+  "repo": "diegonmarcos/cloudy-h-webapps-desk",
+  "path": "c_Suite/tldraw",
+  "published": "https://diegonmarcos.github.io/tldraw/"
+ },
+ "tldraw_version": "5.2.3",
+ "cdn": "https://cdn.tldraw.com/5.2.3/",
+ "licence": "LicenseRef-tldraw (tldraw licence: a production build needs a licence key; without one the editor does not render)",
+ "own": [
+  "tldraw/cloud-board-bridge.js",
+  "PIN.json",
+  "NOTICE.md"
+ ],
+ "files": {
+  "tldraw/index.html": {
+   "sha256": "22dd62db604015ac21146d2db84620316598cf45a37390f1ee542e4ab8165504",
+   "url": "https://diegonmarcos.github.io/tldraw/",
+   "upstream_sha256": "70756c10effbed570df523e38cb5a1cf890422e42b2a4548a8380a910832012e",
+   "patch": "analytics removed; cloud-board-bridge.js loaded"
+  },
+  "tldraw/assets/index-ChrGNWrH.js": {
+   "sha256": "f56c612582967fd98e6b14443fb0c983ce57352858220ca4d7218e3c278e4780",
+   "url": "https://diegonmarcos.github.io/tldraw/assets/index-ChrGNWrH.js",
+   "upstream_sha256": "2e653278d2c7a1f49483029cdad9751530eb3122739faf1c082dd0e80a9c07c9",
+   "patch": "persistence off (app storage through the bridge); editor published as window.tldrawEditor"
+  },
+  "tldraw/assets/index-BtttZd1G.css": {
+   "sha256": "4e1af7369dd54d22a8dc0e5608ee6729afcc48bf935b97f163f1960981c8bcdc",
+   "url": "https://diegonmarcos.github.io/tldraw/assets/index-BtttZd1G.css"
+  },
+  "cdn/5.2.3/fonts/IBMPlexMono-Bold.woff2": {
+   "sha256": "5788454f0ba4bd6300752c474215c4dd926682fa173ae1c6252d57828b6a235d",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-Bold.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexMono-BoldItalic.woff2": {
+   "sha256": "b0bfaa05c90c662c164ca0515ec42baddac93129eab1af067f8872d84f10df46",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-BoldItalic.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexMono-Medium.woff2": {
+   "sha256": "8c2c290cbd998fa1f647e4572aca6ebbd72589551b0f3f9f8bb8628fbb8219d5",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-Medium.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexMono-MediumItalic.woff2": {
+   "sha256": "c82b35693328411c756b51c7b5cb48b6cd1f4f24a0b1261857831b137e6202b5",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-MediumItalic.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexSans-Bold.woff2": {
+   "sha256": "fa7130d854a660b39a7fc9e6e0f2dc23dba5f1346e2adea3e1fe37b6d884133d",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-Bold.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexSans-BoldItalic.woff2": {
+   "sha256": "73d57000ee0fa7d6e1dd3a9fe5901c2d7c71904af9a935dbbc1d44abc9574c1f",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-BoldItalic.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexSans-Medium.woff2": {
+   "sha256": "5660f8a658f8bb50dbc005232f885eadffd2bc1c235c4f6fbb63469d1f9cde6d",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-Medium.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexSans-MediumItalic.woff2": {
+   "sha256": "16f11ab3543e3d1e2704407378aafa4ddb570ad11f6a476eeaa4ec6e67fc30e8",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-MediumItalic.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexSerif-Bold.woff2": {
+   "sha256": "1ba2fa015458f36efe822137627f75df1ee340e6d1c0d92c7ca5a3b423db75d9",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-Bold.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexSerif-BoldItalic.woff2": {
+   "sha256": "cf7e4359cdfc697d90ea785091a9fa289db8f064aed5c099001b08dba97c1805",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-BoldItalic.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexSerif-Medium.woff2": {
+   "sha256": "2eb75e035155ea1d0805fafaa012f7083e5034f935f17cfcc650b17bdf530c2d",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-Medium.woff2"
+  },
+  "cdn/5.2.3/fonts/IBMPlexSerif-MediumItalic.woff2": {
+   "sha256": "4e2f4abd7970ec8d957041100dac8eee78e70efb94bfe3e4356628b833e78a30",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-MediumItalic.woff2"
+  },
+  "cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold.woff2": {
+   "sha256": "d22b90388a4bd185d87b7a8d64dbf2cea3134d1060266c7c06a9d8f113bb7d82",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Bold.woff2"
+  },
+  "cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold_Italic.woff2": {
+   "sha256": "f238d9ed3e3f0337df368c70b4aee03ca59971028cf32370b296931f15e1f1be",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Bold_Italic.woff2"
+  },
+  "cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular.woff2": {
+   "sha256": "071f39874fcae274e7096eb85a5ac43975ba3dcdc2aa4929d734a13b31cffbba",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Regular.woff2"
+  },
+  "cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular_Italic.woff2": {
+   "sha256": "75451f6e8dcfa19aeaedaa5e794f72588c86be18c28bbf95bdabb21c10f18ac6",
+   "url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Regular_Italic.woff2"
+  },
+  "cdn/5.2.3/icons/icon/0_merged.svg": {
+   "sha256": "6e84552ff74ae518ef8c07bee8d655fead9f52febe92d80c632eab2501866e15",
+   "url": "https://cdn.tldraw.com/5.2.3/icons/icon/0_merged.svg"
+  },
+  "cdn/5.2.3/watermarks/watermark-track.svg": {
+   "sha256": "ffc9f5e4fdeea83920c171e2bd17577127c5d1a2c3c76f07440e10d387132280",
+   "url": "https://cdn.tldraw.com/5.2.3/watermarks/watermark-track.svg"
+  },
+  "cdn/5.2.3/translations/en.json": {
+   "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+   "url": "https://cdn.tldraw.com/5.2.3/translations/en.json"
+  },
+  "cdn/5.2.3/translations/languages.json": {
+   "sha256": "ecbefce801459cf082dd1f1b98dcb6b1fa7c08e1fda4ad5d5e54701e334bf101",
+   "url": "https://cdn.tldraw.com/5.2.3/translations/languages.json"
+  },
+  "cdn/5.2.3/embed-icons/canva.png": {
+   "sha256": "07d3fa4e9fdcc836a653bb93746091c7fe22e94f965cf1963d1005e6ff9ebe6e",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/canva.png"
+  },
+  "cdn/5.2.3/embed-icons/codepen.png": {
+   "sha256": "ec649b2e3797cb38df083364ecdf3d6fe3d4c8707d11b835796bf7dc01689a1b",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/codepen.png"
+  },
+  "cdn/5.2.3/embed-icons/codesandbox.png": {
+   "sha256": "e5880c4a9473d45ef186560360d6a578ffa1e43d2b2723c2fdc5fc5b110c99b0",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/codesandbox.png"
+  },
+  "cdn/5.2.3/embed-icons/desmos.png": {
+   "sha256": "d7ef10476c3bc13d2263da0d1852680141d38462788ace0d94b6f4e6cd383876",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/desmos.png"
+  },
+  "cdn/5.2.3/embed-icons/felt.png": {
+   "sha256": "8f2922ebc495cbf048b8fcaa36623a8f20dcd0dd3946882fc7f8af8375aae05d",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/felt.png"
+  },
+  "cdn/5.2.3/embed-icons/figma.png": {
+   "sha256": "56a3455c7ea12b755b4715d68593529d3beca2b289ba9d09fde314945b34da9b",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/figma.png"
+  },
+  "cdn/5.2.3/embed-icons/github_gist.png": {
+   "sha256": "819ea0c1eb8bbfcc718d40794133dfc8eaf919c27a2b64e6236fc1f9ff8e7fb4",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/github_gist.png"
+  },
+  "cdn/5.2.3/embed-icons/google_calendar.png": {
+   "sha256": "ae13bc34b3343b62c48fa906041c2d52ff12c520b961d86d0e9e19f5d560a879",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/google_calendar.png"
+  },
+  "cdn/5.2.3/embed-icons/google_maps.png": {
+   "sha256": "db60324a2f3e26c65289bcc469eb8ae5ca1797ecae2b534ac4db4a6032aef65f",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/google_maps.png"
+  },
+  "cdn/5.2.3/embed-icons/google_slides.png": {
+   "sha256": "cffce7f6e6dc6729d5cc79233169eed94a5fe01aa92fd1e8be1d8e894d4c8e56",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/google_slides.png"
+  },
+  "cdn/5.2.3/embed-icons/observable.png": {
+   "sha256": "fcfcea7f25260a3b6c5d1fd8b1eb9da4bd9684010676fed8fe5b0f25981ee8f6",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/observable.png"
+  },
+  "cdn/5.2.3/embed-icons/replit.png": {
+   "sha256": "38300169ecb5e6b5bbd1e04e6559c8a0915d158ddbe1e2d3d5c3cbac8dffa6f0",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/replit.png"
+  },
+  "cdn/5.2.3/embed-icons/scratch.png": {
+   "sha256": "f7e56912122fd9436b6132f46fe245c4fa71f1e27210e7447ca913452f54c836",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/scratch.png"
+  },
+  "cdn/5.2.3/embed-icons/spotify.png": {
+   "sha256": "7a82ed4815c581c6f4d741621e7202f422191636493fd41d3a0ee7ca5a582ac1",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/spotify.png"
+  },
+  "cdn/5.2.3/embed-icons/tldraw.png": {
+   "sha256": "5a92f8e6d02978cb6ec55615e3293ebc9371be49b7cf16e8e2bdcecec4333444",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/tldraw.png"
+  },
+  "cdn/5.2.3/embed-icons/val_town.png": {
+   "sha256": "b1ac407575c7f73c202619aacda738e3c33f7c4996db85699428252711d214f2",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/val_town.png"
+  },
+  "cdn/5.2.3/embed-icons/vimeo.png": {
+   "sha256": "78006cad29d790a277749fa7987e47e51659a55622bf62108a6167535288eb1c",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/vimeo.png"
+  },
+  "cdn/5.2.3/embed-icons/youtube.png": {
+   "sha256": "0b266ee441df322d1f0aa83bb855740bd4e75310d45c409e4c8bf3af9d590519",
+   "url": "https://cdn.tldraw.com/5.2.3/embed-icons/youtube.png"
+  },
+  "LICENSE.md": {
+   "sha256": "4575c72988945bb8fe9a205a096866cb1ccda2908b0fdee96a967c08e3bfd3dd",
+   "url": "https://registry.npmjs.org/tldraw/-/tldraw-5.2.3.tgz#package/LICENSE.md"
+  }
+ }
+}

@@ -1,0 +1,496 @@
+/* Quickdraw styles — self-contained, no preprocessor, importable raw.
+   All floating chrome (dock, actions, popovers) follows the board's theme
+   through the --qd-* custom properties below: dark glass on the dark paper,
+   light glass on the light one. Theme switches animate because the surfaces
+   transition background/color/border while the variables flip. */
+
+/* The text font (Libre Baskerville, a transitional serif, SIL OFL 1.1 — see fonts/OFL.txt).
+   Shipped with the engine so the default text looks the same on every machine
+   instead of falling back to whatever face the OS has. */
+@font-face {
+  font-family: 'Quickdraw Hand';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/libre-baskerville-latin-500.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Quickdraw Hand';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/libre-baskerville-latin-ext-500.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+.qd-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  outline: none;
+  background: #fbf9f4;
+  touch-action: none;
+  /* no iOS text selection, callout or tap flash on the board — a pencil drag
+     would otherwise select the whole canvas (the text editor opts back in) */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: inherit;
+  transition: background 320ms ease;
+  /* lets the watermark dodge the dock on narrow boards (see below) */
+  container-type: inline-size;
+
+  /* light-theme chrome */
+  --qd-bar-bg: rgba(255, 255, 255, 0.88);
+  --qd-pop-bg: rgba(255, 255, 255, 0.94);
+  --qd-border: rgba(28, 27, 24, 0.12);
+  --qd-bar-shadow: 0 4px 16px rgba(28, 27, 24, 0.14);
+  --qd-pop-shadow: 0 8px 28px rgba(28, 27, 24, 0.2);
+  --qd-ink: rgba(28, 27, 24, 0.82);
+  --qd-ink-strong: rgba(28, 27, 24, 0.94);
+  --qd-ink-soft: rgba(28, 27, 24, 0.55);
+  --qd-ink-faint: rgba(28, 27, 24, 0.4);
+  --qd-hover: rgba(28, 27, 24, 0.07);
+  --qd-hover-strong: rgba(28, 27, 24, 0.1);
+  --qd-active: rgba(28, 27, 24, 0.12);
+  --qd-on-bg: #211d14;
+  --qd-on-ink: #fbf9f4;
+  --qd-divider: rgba(28, 27, 24, 0.14);
+  --qd-menu-div: rgba(28, 27, 24, 0.1);
+  --qd-seg-bg: rgba(28, 27, 24, 0.07);
+  --qd-dot-ring: rgba(28, 27, 24, 0.12);
+}
+.qd-root[data-qd-theme='dark'] {
+  background: #191713;
+
+  /* dark-theme chrome: the original dark glass */
+  --qd-bar-bg: rgba(19, 17, 13, 0.72);
+  --qd-pop-bg: rgba(19, 17, 13, 0.85);
+  --qd-border: rgba(255, 255, 255, 0.14);
+  --qd-bar-shadow: 0 4px 16px rgba(10, 8, 4, 0.25);
+  --qd-pop-shadow: 0 8px 28px rgba(10, 8, 4, 0.35);
+  --qd-ink: rgba(255, 255, 255, 0.85);
+  --qd-ink-strong: rgba(255, 255, 255, 0.95);
+  --qd-ink-soft: rgba(255, 255, 255, 0.62);
+  --qd-ink-faint: rgba(255, 255, 255, 0.4);
+  --qd-hover: rgba(255, 255, 255, 0.1);
+  --qd-hover-strong: rgba(255, 255, 255, 0.12);
+  --qd-active: rgba(255, 255, 255, 0.22);
+  --qd-on-bg: rgba(255, 255, 255, 0.92);
+  --qd-on-ink: #211d14;
+  --qd-divider: rgba(255, 255, 255, 0.16);
+  --qd-menu-div: rgba(255, 255, 255, 0.1);
+  --qd-seg-bg: rgba(255, 255, 255, 0.08);
+  --qd-dot-ring: rgba(255, 255, 255, 0.12);
+}
+
+/* snapshot of the outgoing theme, faded out by the editor on setTheme() */
+.qd-theme-fade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20; /* over canvas + overlay, under the floating chrome */
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 320ms ease;
+}
+
+.qd-canvas, .qd-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.qd-overlay { pointer-events: none; }
+
+/* ---- floating chrome ---- */
+/* The theme switch rides these transitions; hovers use the same clock, which
+   at 140–320ms still reads as instant. */
+.qd-ui { position: absolute; inset: 0; pointer-events: none; z-index: 40; }
+.qd-ui.qd-hidden { display: none; }
+.qd-ui button { -webkit-tap-highlight-color: transparent; }
+
+.qd-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: var(--qd-bar-bg);
+  border: 1px solid var(--qd-border);
+  box-shadow: var(--qd-bar-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+  transition: background 320ms ease, border-color 320ms ease, box-shadow 320ms ease;
+}
+
+/* history + selection actions: a vertical pill hugging the left edge.
+   Hosts with their own chrome there can move it via the custom props. */
+.qd-actions {
+  position: absolute;
+  left: var(--qd-actions-left, 10px);
+  top: var(--qd-actions-top, 50%);
+  transform: translateY(var(--qd-actions-shift, -50%));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 999px;
+  background: var(--qd-bar-bg);
+  border: 1px solid var(--qd-border);
+  box-shadow: var(--qd-bar-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+  transition: background 320ms ease, border-color 320ms ease, box-shadow 320ms ease;
+}
+.qd-actions button svg { width: 17px; height: 17px; display: block; }
+.qd-actions .qd-div { width: 18px; height: 1px; margin: 3px 0; }
+.qd-actions button:hover { background: var(--qd-hover); }
+.qd-actions button:disabled { opacity: 0.32; pointer-events: none; }
+.qd-actions .qd-tool { width: 30px; height: 30px; }
+
+.qd-tool, .qd-dock button {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--qd-ink);
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease, color 140ms ease;
+}
+.qd-dock button svg { width: 19px; height: 19px; display: block; }
+.qd-dock button:hover { background: var(--qd-hover); }
+.qd-dock button.on { background: var(--qd-on-bg); color: var(--qd-on-ink); }
+.qd-dock button:disabled { opacity: 0.32; pointer-events: none; }
+.qd-div { width: 1px; height: 20px; margin: 0 3px; background: var(--qd-divider); flex: none; transition: background 320ms ease; }
+.qd-dock.qd-compact { gap: 2px; }
+
+.qd-geo-btn { position: relative; }
+.qd-geo-btn::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-bottom: 4px solid currentColor;
+  opacity: 0.65;
+}
+
+.qd-style-btn { position: relative; }
+.qd-style-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2.5px solid var(--qd-on-bg);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+  transition: border-color 320ms ease;
+}
+.qd-style-btn.on .qd-style-dot { border-color: var(--qd-on-ink); }
+
+/* ---- popovers ---- */
+.qd-popover {
+  position: absolute;
+  bottom: 54px;
+  left: 50%;
+  border-radius: 13px;
+  background: var(--qd-pop-bg);
+  border: 1px solid var(--qd-border);
+  box-shadow: var(--qd-pop-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: auto;
+  padding: 8px;
+  max-width: calc(100% - 16px);
+  box-sizing: border-box;
+  transition: background 320ms ease, border-color 320ms ease, box-shadow 320ms ease;
+  /* rise out of the dock: a short fade + lift + settle */
+  transform-origin: 50% 100%;
+  animation: qd-pop-in 160ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+@keyframes qd-pop-in {
+  from { opacity: 0; transform: translateY(7px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qd-popover { animation: none; }
+}
+
+/* every popover tool icon needs the explicit size — an unsized svg falls back
+   to its intrinsic 300×150 and overflows the 32px button (invisible on iOS) */
+.qd-popover .qd-tool svg { width: 19px; height: 19px; display: block; }
+
+.qd-geo-pop { display: flex; gap: 2px; flex-wrap: wrap; }
+.qd-geo-pop .qd-tool { color: var(--qd-ink); }
+
+/* overflow tools ("more" flyout / folded kit) */
+.qd-grid-pop { display: grid; grid-template-columns: repeat(4, 32px); gap: 2px; }
+.qd-grid-pop .qd-tool { color: var(--qd-ink); }
+.qd-grid-pop .qd-tool.on { background: var(--qd-on-bg); color: var(--qd-on-ink); }
+
+.qd-style-pop { width: 196px; }
+.qd-row { display: flex; align-items: center; justify-content: space-between; }
+.qd-row + .qd-row { margin-top: 7px; padding-top: 7px; border-top: 1px solid var(--qd-menu-div); }
+.qd-colors { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
+.qd-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease;
+}
+.qd-dot::before {
+  content: '';
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 0 1px var(--qd-dot-ring);
+}
+.qd-dot:hover { background: var(--qd-hover); }
+.qd-dot.on { background: var(--qd-active); }
+
+.qd-opt {
+  width: 40px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--qd-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease, color 140ms ease;
+}
+.qd-opt svg { width: 20px; height: 20px; }
+.qd-opt:hover { background: var(--qd-hover); }
+.qd-opt.on { background: var(--qd-on-bg); color: var(--qd-on-ink); }
+.qd-size-pip {
+  width: var(--pip);
+  height: var(--pip);
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.qd-menu-pop { display: flex; flex-direction: column; min-width: 232px; padding: 6px; }
+.qd-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: transparent;
+  color: var(--qd-ink-strong);
+  text-align: left;
+  font: 500 12.5px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+.qd-menu-item:hover { background: var(--qd-hover); }
+.qd-mi-ico { display: flex; flex: 0 0 16px; color: var(--qd-ink-soft); }
+.qd-mi-ico svg { width: 16px; height: 16px; }
+.qd-menu-item:hover .qd-mi-ico { color: inherit; }
+.qd-mi-label { flex: 1 1 auto; white-space: nowrap; }
+.qd-mi-key {
+  flex: 0 0 auto;
+  color: var(--qd-ink-faint);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.qd-menu-div { display: block; height: 1px; margin: 5px 4px; background: var(--qd-menu-div); }
+
+/* labelled rows of mutually exclusive icon buttons (grid, theme) */
+.qd-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 4px 10px;
+  color: var(--qd-ink-strong);
+  font: 500 12.5px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.qd-menu-row + .qd-menu-row { margin-top: 2px; }
+.qd-seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--qd-seg-bg);
+  transition: background 320ms ease;
+}
+.qd-seg-btn {
+  width: 30px;
+  height: 26px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--qd-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 120ms ease, color 120ms ease;
+}
+.qd-seg-btn svg { width: 16px; height: 16px; }
+.qd-seg-btn:hover { background: var(--qd-hover-strong); color: var(--qd-ink-strong); }
+.qd-seg-btn.on { background: var(--qd-on-bg); color: var(--qd-on-ink); }
+
+/* nested dropdown (grid backdrop): a flyout beside the parent row */
+.qd-mi-value { flex: 0 0 auto; color: var(--qd-ink-faint); font-size: 11.5px; }
+.qd-mi-chev, .qd-mi-check { flex: 0 0 14px; display: flex; color: var(--qd-ink-faint); }
+.qd-mi-chev svg, .qd-mi-check svg { width: 14px; height: 14px; }
+.qd-mi-check { color: var(--qd-ink); }
+.qd-has-sub { position: relative; }
+.qd-has-sub.sub-open { background: var(--qd-hover); }
+.qd-submenu {
+  position: absolute;
+  left: calc(100% + 2px);
+  top: -7px; /* first sub-row lines up with the parent row */
+  display: none;
+  flex-direction: column;
+  min-width: 148px;
+  padding: 6px;
+  border-radius: 13px;
+  background: var(--qd-pop-bg);
+  border: 1px solid var(--qd-border);
+  box-shadow: var(--qd-pop-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: qd-sub-in 130ms ease;
+}
+.qd-has-sub.sub-open .qd-submenu { display: flex; }
+.qd-submenu.qd-sub-left { left: auto; right: calc(100% + 2px); }
+@keyframes qd-sub-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.qd-submenu.qd-sub-left { animation-name: qd-sub-in-left; }
+@keyframes qd-sub-in-left {
+  from { opacity: 0; transform: translateX(4px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qd-submenu { animation: none; }
+}
+
+/* ---- watermark ---- */
+/* Quiet by default, legible on hover; sits under the chrome so popovers and
+   the dock always win. Theme-aware like the rest of the board. */
+.qd-watermark {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px 5px 7px;
+  border-radius: 999px;
+  color: rgba(28, 27, 24, 0.42);
+  font: 600 11.5px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 320ms ease, background 140ms ease;
+}
+.qd-watermark svg { width: 14px; height: 14px; display: block; }
+.qd-watermark:hover {
+  color: rgba(28, 27, 24, 0.85);
+  background: rgba(28, 27, 24, 0.06);
+}
+.qd-root[data-qd-theme='dark'] .qd-watermark { color: rgba(244, 242, 234, 0.38); }
+.qd-root[data-qd-theme='dark'] .qd-watermark:hover {
+  color: rgba(244, 242, 234, 0.85);
+  background: rgba(244, 242, 234, 0.08);
+}
+/* on narrow boards the centered dock reaches the corners — step above it */
+@container (max-width: 560px) {
+  .qd-watermark { bottom: 58px; }
+}
+
+/* ---- text editing ---- */
+.qd-text-edit {
+  position: absolute;
+  z-index: 30;
+  background: transparent;
+  border: none;
+  outline: 1.5px dashed rgba(110, 140, 200, 0.55);
+  outline-offset: 3px;
+  border-radius: 2px;
+  resize: none;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  white-space: pre-wrap;
+  caret-color: currentColor;
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+/* keyboard help overlay (press ?) */
+.qd-help-backdrop {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(0, 0, 0, 0.28);
+  pointer-events: auto; animation: qd-help-in 140ms ease;
+}
+.qd-help-panel {
+  width: min(440px, 100%); max-height: 82%; overflow: auto;
+  padding: 16px 18px 18px; border-radius: 14px;
+  background: var(--qd-pop-bg); color: var(--qd-ink);
+  border: 1px solid var(--qd-border); box-shadow: var(--qd-pop-shadow);
+  font: 500 13px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.qd-help-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.qd-help-title { font-size: 15px; font-weight: 600; color: var(--qd-ink-strong); }
+.qd-help-close {
+  display: flex; width: 26px; height: 26px; padding: 0;
+  align-items: center; justify-content: center; cursor: pointer;
+  border: 1px solid var(--qd-border); border-radius: 7px;
+  background: var(--qd-bar-bg); color: var(--qd-ink);
+}
+.qd-help-close:hover { background: var(--qd-hover); }
+.qd-help-close svg { width: 15px; height: 15px; }
+.qd-help-group { margin-bottom: 14px; }
+.qd-help-group:last-child { margin-bottom: 0; }
+.qd-help-glabel {
+  font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--qd-ink-faint); margin-bottom: 6px;
+}
+.qd-help-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.qd-help-name { color: var(--qd-ink); }
+.qd-help-keys {
+  font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--qd-ink-strong); padding: 2px 7px; border-radius: 6px;
+  background: var(--qd-bar-bg); border: 1px solid var(--qd-border); white-space: nowrap;
+}
+@keyframes qd-help-in { from { opacity: 0 } to { opacity: 1 } }

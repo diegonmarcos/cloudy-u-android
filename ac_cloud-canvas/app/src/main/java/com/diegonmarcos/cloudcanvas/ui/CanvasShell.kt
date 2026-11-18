@@ -64,7 +64,7 @@ fun CanvasShell(start: CanvasStart = CanvasStart()) {
     val draw = remember { DrawController(ctx.applicationContext) }
     val play = remember { PlayController(ctx.applicationContext, start.demo) }
     val enhance = remember { EnhanceController(ctx.applicationContext, draw) }
-    val board = remember { BoardController(ctx.applicationContext) }
+    val board = remember { BoardController(ctx.applicationContext).also { it.startTool = start.tool } }
 
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
         Column(Modifier.fillMaxSize()) {

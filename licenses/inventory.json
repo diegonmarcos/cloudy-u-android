@@ -7,6 +7,7 @@
    "MIT": 84,
    "OFL-1.1": 44,
    "NOASSERTION": 34,
+   "OFL-1.1": 28,
    "CC-BY-4.0": 27,
    "GPL-3.0-only": 11,
    "GPL-3.0": 3
@@ -83,9 +84,9 @@
    "LicenseRef-NoLicenseGranted": 2,
    "MPL-2.0": 1,
    "LicenseRef-PublicDomain AND CC-BY-4.0": 1,
-   "LicenseRef-tldraw": 1,
    "CC-BY-4.0": 1,
    "CC-BY-3.0": 1,
+   "LicenseRef-tldraw": 1,
    "CC-BY-SA-2.1-JP AND CC0-1.0": 1
   }
  },
@@ -1876,165 +1877,25 @@
    "licence_source": "Gradle wrapper (build tool, not packaged in an APK)",
    "within_upstream_module": "camera"
   },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-Bold.woff2": {
+  "asset:ac_cloud-canvas/app/src/main/assets/board/quickdraw/src/fonts/libre-baskerville-latin-500.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-Bold.woff2"
+    "ac_cloud-canvas/app/src/main/assets/board/quickdraw/src/fonts/libre-baskerville-latin-500.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-Bold.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+   "licence_source": "Libre Baskerville is published under the SIL Open Font License 1.1 (board/quickdraw/src/fonts/OFL.txt); shipped by @quickdrawjs/core 0.3.0, pinned in board/PIN.json",
+   "source_url": "https://registry.npmjs.org/@quickdrawjs/core/-/core-0.3.0.tgz#package/src/fonts/libre-baskerville-latin-500.woff2",
+   "attribution": "Libre Baskerville (Pablo Impallari, Rodrigo Fuenzalida), SIL OFL 1.1"
   },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-BoldItalic.woff2": {
+  "asset:ac_cloud-canvas/app/src/main/assets/board/quickdraw/src/fonts/libre-baskerville-latin-ext-500.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-BoldItalic.woff2"
+    "ac_cloud-canvas/app/src/main/assets/board/quickdraw/src/fonts/libre-baskerville-latin-ext-500.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-BoldItalic.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-Medium.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-Medium.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-Medium.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-MediumItalic.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-MediumItalic.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-MediumItalic.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-Bold.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-Bold.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-Bold.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-BoldItalic.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-BoldItalic.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-BoldItalic.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-Medium.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-Medium.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-Medium.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-MediumItalic.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-MediumItalic.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-MediumItalic.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-Bold.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-Bold.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-Bold.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-BoldItalic.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-BoldItalic.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-BoldItalic.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-Medium.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-Medium.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-Medium.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-MediumItalic.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-MediumItalic.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-MediumItalic.woff2",
-   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Bold.woff2",
-   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold_Italic.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold_Italic.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Bold_Italic.woff2",
-   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Regular.woff2",
-   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
-  },
-  "asset:ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular_Italic.woff2": {
-   "kind": "asset",
-   "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular_Italic.woff2"
-   ],
-   "licence": "OFL-1.1",
-   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
-   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Regular_Italic.woff2",
-   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
+   "licence_source": "Libre Baskerville is published under the SIL Open Font License 1.1 (board/quickdraw/src/fonts/OFL.txt); shipped by @quickdrawjs/core 0.3.0, pinned in board/PIN.json",
+   "source_url": "https://registry.npmjs.org/@quickdrawjs/core/-/core-0.3.0.tgz#package/src/fonts/libre-baskerville-latin-ext-500.woff2",
+   "attribution": "Libre Baskerville (Pablo Impallari, Rodrigo Fuenzalida), SIL OFL 1.1"
   },
   "asset:ac_cloud-canvas/app/src/main/assets/samples/drums/crash_v1.ogg": {
    "kind": "asset",
@@ -3205,6 +3066,166 @@
    "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
    "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
    "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexMono-Bold.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexMono-Bold.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-Bold.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexMono-BoldItalic.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexMono-BoldItalic.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-BoldItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexMono-Medium.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexMono-Medium.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-Medium.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexMono-MediumItalic.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexMono-MediumItalic.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-MediumItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSans-Bold.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSans-Bold.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-Bold.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSans-BoldItalic.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSans-BoldItalic.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-BoldItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSans-Medium.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSans-Medium.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-Medium.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSans-MediumItalic.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSans-MediumItalic.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-MediumItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSerif-Bold.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSerif-Bold.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-Bold.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSerif-BoldItalic.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSerif-BoldItalic.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-BoldItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSerif-Medium.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSerif-Medium.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-Medium.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSerif-MediumItalic.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexSerif-MediumItalic.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-MediumItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Bold.woff2",
+   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold_Italic.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold_Italic.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Bold_Italic.woff2",
+   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Regular.woff2",
+   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular_Italic.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular_Italic.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in vendor/tldraw/PIN.json (not shipped)",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Regular_Italic.woff2",
+   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
   },
   "asset:ac_cloud-chat/android/app/src/main/assets/fonts/Metropolis-Light.ttf": {
    "kind": "asset",
@@ -19140,10 +19161,10 @@
   "vendored:ac_cloud-canvas/app/src/main/assets/board": {
    "kind": "vendored",
    "declared_in": [
-    "ac_cloud-canvas/app/src/main/assets/board/LICENSE.md",
+    "ac_cloud-canvas/app/src/main/assets/board/LICENSE",
     "ac_cloud-canvas/app/src/main/assets/board/NOTICE.md"
    ],
-   "licence": "LicenseRef-tldraw",
+   "licence": "MIT",
    "licence_source": "licenses/curated.json"
   },
   "vendored:ac_cloud-canvas/app/src/main/assets/samples/drums": {
@@ -19160,6 +19181,15 @@
     "ac_cloud-canvas/app/src/main/assets/samples/piano/NOTICE.md"
    ],
    "licence": "CC-BY-3.0",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ac_cloud-canvas/vendor/tldraw": {
+   "kind": "vendored",
+   "declared_in": [
+    "ac_cloud-canvas/vendor/tldraw/LICENSE.md",
+    "ac_cloud-canvas/vendor/tldraw/NOTICE.md"
+   ],
+   "licence": "LicenseRef-tldraw",
    "licence_source": "licenses/curated.json"
   },
   "vendored:ac_cloud-search": {

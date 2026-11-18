@@ -10,7 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 
-/** #1787 the Board page's storage: boards in app storage as tldraw store snapshots, with an index of names and the open board. */
+/** #1787 the Board page's storage: boards in app storage as the engine's store snapshots, with an index of names and the open board. */
 class BoardTest {
     private fun dir(): File = Files.createTempDirectory("boards").toFile()
     private val snap = """{"store":{"page:page":{"id":"page:page","typeName":"page"}},"schema":{"schemaVersion":2}}"""
@@ -55,6 +55,16 @@ class BoardTest {
         val before = s.list().first { it.id == id }.updated
         s.write(id, snap)
         assertTrue(s.list().first { it.id == id }.updated > before)
+    }
+
+    /** The shipped engine (Quickdraw) writes {document: {store}}; the kept one (tldraw) {store, schema}: both are boards. */
+    @Test fun bothEngineSnapshotShapesAreAccepted() {
+        val s = BoardStore(dir())
+        val id = s.currentId()
+        val qd = """{"document":{"store":{"shape:a":{"id":"shape:a","type":"draw"}}}}"""
+        s.write(id, qd); assertEquals(qd, s.read(id))
+        s.write(id, snap); assertEquals(snap, s.read(id))
+        try { s.write(id, """{"document":{}}"""); fail("accepted a document without a store") } catch (e: IllegalArgumentException) { }
     }
 
     @Test fun theIndexSurvivesAReopen() {

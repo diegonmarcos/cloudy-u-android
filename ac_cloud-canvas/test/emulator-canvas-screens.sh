@@ -12,7 +12,7 @@
 #   play-piano        Play > Piano once the sampled grand piano is decoded (the sound line names Salamander Grand Piano)
 #   play-drums        Play > Drums, ten pads, the sampled kit (the sound line names MuldjordKit)
 #   corner-*          the bottom-right corner of Draw and Play (the old Music Enhancer veil drew a dark block there), cropped when ImageMagick is present
-#   board-empty       Draw > Board: the offline tldraw whiteboard
+#   board-empty       Draw > Board: the offline Quickdraw whiteboard
 #   board-drawn       Board after freehand strokes
 #   board-reloaded    Board after a force-stop and relaunch: the strokes come back from app storage (boards.txt holds the stored index)
 # usage: emulator-canvas-screens.sh <canvas.apk> <enhance-presets.json> <outdir>
@@ -101,12 +101,11 @@ shot play-drums 3
 dump > "$OUT/play-drums.xml"
 corner() { command -v convert >/dev/null && convert "$OUT/$1.png" -gravity SouthEast -crop "$((W*2/5))x$((H/5))+0+0" +repage "$OUT/corner-$1.png" && echo "cropped corner-$1"; }
 corner play-drums; corner draw-drawing
-start --es section draw --es page board
+start --es section draw --es page board --es tool draw
 sleep 8
 shot board-empty 4
 dump > "$OUT/board-empty.xml"
-# draw tool (tldraw's shortcut D after a tap focuses the page), then three strokes
-adb shell input tap $((W/2)) $((H/2)); adb shell input keyevent KEYCODE_D; sleep 1
+# the page opened with the pen (launch extra tool=draw): three strokes
 by=$((H*35/100))
 sw $((W/5)) $by $((W*4/5)) $((by+200)) 500; sw $((W/5)) $((by+400)) $((W*4/5)) $((by+300)) 500; sw $((W/2)) $((by-100)) $((W/2)) $((by+600)) 500
 sleep 3   # the bridge saves 0.8 s after the last change

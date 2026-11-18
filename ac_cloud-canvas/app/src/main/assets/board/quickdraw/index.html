@@ -1,0 +1,23 @@
+<!doctype html>
+<!-- #1787 Cloud Canvas > Draw > Board: own page around the vendored Quickdraw engine (src/, MIT, pinned in ../PIN.json). -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Board</title>
+    <link rel="stylesheet" href="./src/quickdraw.css" />
+    <style>html, body, #board { margin: 0; width: 100%; height: 100%; overflow: hidden; touch-action: none; }</style>
+  </head>
+  <body>
+    <div id="board"></div>
+    <script type="module">
+      import { createQuickdraw } from "./src/index.js";
+      const q = new URLSearchParams(location.search);
+      const board = createQuickdraw({ container: document.getElementById("board"), theme: q.get("theme") === "light" ? "light" : "dark", grid: "lines" });
+      if (q.get("tool")) board.editor.setTool(q.get("tool"));
+      window.quickdrawEditor = board.editor;
+      window.quickdrawReady = true;
+    </script>
+    <script src="./cloud-board-bridge.js"></script>
+  </body>
+</html>

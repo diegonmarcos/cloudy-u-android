@@ -8,8 +8,8 @@ import org.json.JSONObject
 data class BoardMeta(val id: String, val name: String, val updated: Long)
 
 /**
- * The Board page's storage (#1787): every whiteboard is a tldraw store snapshot (`{store, schema}` JSON, the shape tldraw's
- * `store.getStoreSnapshot()` writes and `store.loadStoreSnapshot()` reads) in app storage, `<dir>/<id>.tldr`, with an index
+ * The Board page's storage (#1787): every whiteboard is the engine's store snapshot in app storage, `<dir>/<id>.tldr`: Quickdraw's
+ * `{document: {store}}` (`editor.store.getSnapshot()`, the shipped engine) or tldraw's `{store, schema}` (the kept engine), with an index
  * `<dir>/boards.json` holding names, order and the open board. Files are written whole or not at all (temp file + rename), so a kill
  * mid-save keeps the previous version. Pure JVM: the page's JS bridge (BoardScreen) calls it, the unit suite drives it directly.
  */
@@ -61,7 +61,7 @@ class BoardStore(private val dir: File) {
         writeIndex(rest, if (cur == id) rest.first().id else cur)
     }
 
-    /** The snapshot JSON of [id], or null for a board never saved (tldraw then starts it empty). */
+    /** The snapshot JSON of [id], or null for a board never saved (the page then starts it empty). */
     @Synchronized fun read(id: String): String? {
         require(ID.matches(id)) { "bad board id" }
         return File(dir, "$id.tldr").takeIf { it.isFile }?.readText()
@@ -72,7 +72,7 @@ class BoardStore(private val dir: File) {
         require(ID.matches(id)) { "bad board id" }
         require(snapshot.length <= MAX_SNAPSHOT_CHARS) { "board too large" }
         val json = JSONObject(snapshot)
-        require(json.has("store")) { "not a tldraw store snapshot" }
+        require(json.has("store") || json.optJSONObject("document")?.has("store") == true) { "not a board store snapshot" }
         val (boards, cur) = readIndex()
         require(boards.any { it.id == id }) { "no board $id" }
         atomicWrite(File(dir, "$id.tldr"), snapshot)
