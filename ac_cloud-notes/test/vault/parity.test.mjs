@@ -6,7 +6,7 @@
 // reachable from the sidebar's Source section.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { APP, decl, fixture, src, SRC } from './helpers.mjs';
 
@@ -49,8 +49,18 @@ test('the vault API lost no member', () => {
   for (const k of base.api) assert.match(ret, new RegExp(`[\\s{,]${k}\\s*[,:}\\n]`), `api.${k}`);
 });
 
+// the owner ordered the VaultView start screen removed (#1717): its four ids go, and what they did is in the Source section.
+const START_SCREEN = ['vault-start', 'open-folder', 'path-input', 'vault-error'];
+test('the start screen is gone; its open, path and error roles live in the Source section and the status bar', () => {
+  for (const id of START_SCREEN) assert.ok(!ui.includes(`data-testid="${id}"`), `${id} is gone`);
+  assert.ok(!existsSync(join(SRC, 'VaultView.tsx')) || !readFileSync(join(SRC, 'VaultView.tsx'), 'utf8').includes('cnv-start'));
+  const panel = readFileSync(join(SRC, 'sidebar/SourcePanel.tsx'), 'utf8');
+  for (const id of ['source-pick', 'source-path-input', 'source-import']) assert.ok(panel.includes(`data-testid="${id}"`), id);
+  assert.match(panel, /api\.error &&/);
+});
+
 test('every test id, label and canvas tool of the previous UI is still rendered', () => {
-  for (const id of base.testids) {
+  for (const id of base.testids.filter(i => !START_SCREEN.includes(i))) {
     const dynamic = id.endsWith('-');
     assert.ok(dynamic ? ui.includes('data-testid={`' + id) || ui.includes(`data-testid="${id}`) : ui.includes(`data-testid="${id}"`), `test id ${id}`);
   }

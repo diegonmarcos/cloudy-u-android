@@ -65,7 +65,6 @@ export const VAULT_CSS = `
 .cnv-palette-box .cnv-row{padding:8px 16px;font-size:var(--font-ui-medium)}
 .cnv-palette-box .cnv-row[aria-current=true],.cnv-palette-box .cnv-row:hover{background:var(--background-modifier-hover)}
 .cnv-palette-foot{display:flex;gap:16px;padding:8px 16px;border-top:1px solid var(--background-modifier-border);color:var(--text-faint);font-size:var(--font-ui-smaller)}
-.cnv-start{max-width:34rem;margin:0 auto;padding:20px 16px 110px}
 .cnv-top{display:flex;align-items:center;gap:8px;padding:8px 12px;flex:none;position:relative;z-index:6}
 .cnv-round{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex:none;border:0;border-radius:999px;background:var(--background-secondary);color:var(--text-muted);cursor:pointer}
 .cnv-round:hover,.cnv-round[aria-pressed=true]{color:var(--text-normal);background:var(--background-modifier-hover)}

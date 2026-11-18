@@ -2,7 +2,7 @@
 // Termux home, Nix home, External drive) come from VaultSource; a root that cannot be opened
 // shows its reason and the action that grants it. Below them: a folder picked in the system
 // picker, the recent vaults, a typed path, and the import of a file or folder into the workspace
-// (the former floating button). The same panel is the body of the start screen.
+// (the former floating button).
 import { useState } from 'react';
 
 import type { VaultDecl } from '../decl-types';
@@ -14,13 +14,13 @@ import type { VaultApi } from '../use-vault';
 export const IMPORT_EVENT = 'cloud-notes:open-file';
 export const requestImport = () => window.dispatchEvent(new Event('cloud-notes:open-file'));
 
-export const SourcePanel = ({ api, decl, onMounted, rootsOnly }: { api: VaultApi; decl: VaultDecl; onMounted?: () => void; /** the start screen lists picked, recent and typed vaults itself */ rootsOnly?: boolean }) => {
+export const SourcePanel = ({ api, decl, onMounted }: { api: VaultApi; decl: VaultDecl; onMounted?: () => void }) => {
   const [typed, setTyped] = useState(decl.open.direct_roots[0] ?? '');
   const mounted = api.vault ? sourceOfRoot(api.sources, api.vault.root) : null;
   const after = (p: Promise<unknown>) => void p.then(() => onMounted?.()).catch(() => undefined);
 
   return (
-    <div className={rootsOnly ? 'cnv-source' : 'cnv-scroll cnv-source'} data-testid="source-panel">
+    <div className="cnv-scroll cnv-source" data-testid="source-panel">
       <div className="cnv-menu-title">Source: root to mount</div>
       {api.sources.length === 0 && <div className="cnv-dim">No roots are declared.</div>}
       {api.sources.map(r => (
@@ -95,7 +95,7 @@ export const SourcePanel = ({ api, decl, onMounted, rootsOnly }: { api: VaultApi
           <Icon name="close" size={16} /> Close this vault
         </button>
       )}
-      {api.error && !rootsOnly && <p style={{ color: 'var(--text-error)' }} onClick={() => api.setError(null)}>{api.error}</p>}
+      {api.error && <p style={{ color: 'var(--text-error)' }} onClick={() => api.setError(null)}>{api.error}</p>}
       <div style={{ height: 24 }} />
     </div>
   );
