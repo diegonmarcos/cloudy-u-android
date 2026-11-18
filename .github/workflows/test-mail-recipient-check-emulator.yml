@@ -99,8 +99,10 @@ jobs:
           shot 01-new; dump 01-new
           grep -q 'New mail' walk-out/01-new.xml || { echo "::error::New mail did not open"; exit 1; }
           # one recipient per verdict; each comma commits a chip, which starts its check
-          adb shell input text 'ok@ok.example,catchall@catchall.example,info@bounce.example,x@nomx.example,bad@nodot,who@unknown.example,'
-          sleep 0.5; shot 02-marks-checking; dump 02-marks-checking
+          # one address per input call (one long `input text` was cut off mid-address while the suggestion menu opened)
+          typeall() { for a in "$@"; do adb shell input text "$a"; sleep 1; adb shell input text ','; sleep 2; done; }
+          typeall ok@ok.example catchall@catchall.example info@bounce.example x@nomx.example bad@nodot who@unknown.example
+          sleep 0.3; shot 02-marks-checking; dump 02-marks-checking
           sleep 5; shot 03-marks-answered; dump 03-marks-answered
           for v in "Delivery check: Can receive" "Delivery check: Risky" "Delivery check: Will fail" "Delivery check: Unknown"; do has "$v" 03-marks-answered; done
           # the will-fail chip's detail (no MX), then the malformed address's (the phone's own syntax line)
@@ -124,7 +126,7 @@ jobs:
           leave
           # Send with a will-fail recipient: it asks first, and "Send anyway" is offered next to "Back"
           compose
-          adb shell input text 'ok@ok.example,x@nomx.example,'
+          typeall ok@ok.example x@nomx.example
           sleep 5; shot 07-send-ready; dump 07-send-ready
           tap "Send" || { echo "::error::no Send button"; exit 1; }
           sleep 3; shot 08-will-fail-question; dump 08-will-fail-question
