@@ -358,6 +358,7 @@ open class MainActivity : AppCompatActivity(),
     private fun consumeObjectsCheckIntent() {
         val image = intent?.getStringExtra(EXTRA_OBJECTS_IMAGE)
         val bench = intent?.getStringExtra(EXTRA_OBJECTS_BENCH)
+        val runs = intent?.getIntExtra(EXTRA_OBJECTS_BENCH_RUNS, 0)?.takeIf { it > 0 }
         if (image == null && bench == null) return
         intent?.removeExtra(EXTRA_OBJECTS_IMAGE)
         intent?.removeExtra(EXTRA_OBJECTS_BENCH)
@@ -365,7 +366,7 @@ open class MainActivity : AppCompatActivity(),
         window.decorView.postDelayed({
             finalizeMode(CameraMode.OBJECTS)
             image?.let { objects.openFile(file(it)) }
-            bench?.let { objects.bench(file(it)) }
+            bench?.let { objects.bench(file(it), runs = runs) }
         }, OBJECTS_CHECK_DELAY_MS)
     }
 
@@ -1569,6 +1570,7 @@ open class MainActivity : AppCompatActivity(),
         // #1805 the Objects check's intent extras, and how long the camera gets to bind before they run.
         const val EXTRA_OBJECTS_IMAGE = "objects_image"
         const val EXTRA_OBJECTS_BENCH = "objects_bench"
+        const val EXTRA_OBJECTS_BENCH_RUNS = "objects_bench_runs"
         private const val OBJECTS_CHECK_DELAY_MS = 2_500L
         private const val autoCenterFocusDuration = 2000L
         private val hexArray = "0123456789ABCDEF".toCharArray()

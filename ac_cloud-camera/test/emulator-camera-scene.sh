@@ -164,7 +164,8 @@ adb push "$OUT/scene-objects-text.png" "$EXT/scene-objects-text.png" >/dev/null
 adb push "$OUT/scene-document.png" "$EXT/scene-document.png" >/dev/null
 
 # ── B1/B2 the benchmark ──────────────────────────────────────────────────────────────────────────────────────
-start --es objects_bench "$EXT/scene-objects-text.png"
+# 12 timed runs per detector (and frames end to end): an emulator CPU is several times slower than a phone
+start --es objects_bench "$EXT/scene-objects-text.png" --ei objects_bench_runs 12
 sleep 8; shot bench-running 1; diag "benchmark started"
 if wait_log "bench {" 900 >/dev/null; then
   adb pull "$EXT/objects-bench.json" "$OUT/bench.json" >/dev/null 2>&1 || adb logcat -d -s ObjectsScene:I | grep -a "bench " | tail -1 | sed 's/^[^{]*//' > "$OUT/bench.json"
@@ -241,7 +242,9 @@ if [ -n "$CAM" ]; then
   adb shell input swipe "$hx" "$hy" $TX 900; sleep 1
   c3=$(adb logcat -d -s ObjectsScene:I | grep -a "copied " | tail -1)
   shot text-handles 1
-  case "$c3" in *'copied "CAMERA\nObjects'*|*'copied "CAMERA\\nObjects'*) ok "T3 the end handle extended the selection: ${c3#*copied }";; *) fail "T3 the handle drag copied: $c3";; esac
+  # the selection must run from CAMERA (where it started) through "text" (where the handle was dropped); whatever the
+  # OCR laid out between them in reading order is part of it
+  case "$c3" in *'copied "CAMERA'*'Objects and text"'*) ok "T3 the end handle extended the selection: ${c3#*copied }";; *) fail "T3 the handle drag copied: $c3";; esac
   n=$(adb logcat -d -s ObjectsScene:I | grep -ac "words \[")
   [ "$n" -le 1 ] && ok "T5 the frame's text was read once and reused for every selection" || fail "T5 the frame was read $n times"
 else

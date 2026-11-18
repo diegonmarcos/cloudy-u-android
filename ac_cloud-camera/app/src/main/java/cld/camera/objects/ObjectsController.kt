@@ -346,13 +346,16 @@ class ObjectsController(
 
     fun openFile(file: File) = open { decode(Uri.fromFile(file)) }
 
+    /** The live analysis stops (Resume goes back to it) without freezing a frame: nothing of the last live frame is read. */
+    private fun pauseLive() {
+        if (paused) return
+        paused = true
+        pauseButton.setText(R.string.objects_resume)
+        lifecycle.setPaused(true)
+    }
+
     private fun open(load: () -> Bitmap?) {
-        // The live analysis stops (Resume goes back to it); nothing of the last live frame is read.
-        if (!paused) {
-            paused = true
-            pauseButton.setText(R.string.objects_resume)
-            lifecycle.setPaused(true)
-        }
+        pauseLive()
         unfreeze()
         status.setText(R.string.objects_reading)
         io.execute {
@@ -459,13 +462,30 @@ class ObjectsController(
      * app's end-to-end frame loop (frame → JPEG → binder → detect → answer) per detector, as a live viewfinder runs it.
      * The JSON is logged (tag ObjectsScene, line "bench ") and written to files/objects-bench.json.
      */
-    fun bench(file: File, frames: Int = BENCH_FRAMES) {
+    fun bench(file: File, frames: Int = BENCH_FRAMES, runs: Int? = null) {
         status.setText(R.string.objects_bench_running)
+        // The live stream would compete with the benchmark for the same engine and CPU: it stops first.
+        pauseLive()
         io.execute {
             val out = JSONObject().put("image", file.name)
-            Log.i(TAG, "bench-progress engine bench starting on ${file.name}")
-            out.put("engine", runCatching { scanner.sceneBench(file, Scene.benchRequest()) }.getOrElse { JSONObject().put("error", it.message) })
-            Log.i(TAG, "bench-progress engine bench done: ${out.optJSONObject("engine")?.optString("error").orEmpty()}")
+            // One engine call per detector, then the OCR, so each lands (and is logged) on its own.
+            val engine = JSONObject()
+            val detectors = JSONObject()
+            for (d in Scene.detectors().keys) {
+                Log.i(TAG, "bench-progress engine $d")
+                val r = runCatching { scanner.sceneBench(file, Scene.benchRequest(runs).put("detectors", JSONArray().put(d)).put("ocr", false)) }
+                    .getOrElse { JSONObject().put("error", it.message) }
+                detectors.put(d, r.optJSONObject("detectors")?.optJSONObject(d) ?: JSONObject().put("error", r.optString("error", "no answer")))
+                engine.put("width", r.optInt("width")).put("height", r.optInt("height"))
+                Log.i(TAG, "bench-progress engine $d: ${detectors.getJSONObject(d).let { it.optString("error").ifBlank { "%.1f fps".format(it.optDouble("fps")) } }}")
+            }
+            engine.put("detectors", detectors)
+            Log.i(TAG, "bench-progress engine ocr")
+            runCatching { scanner.sceneBench(file, Scene.benchRequest(runs).put("detectors", JSONArray())) }
+                .onSuccess { engine.put("ocr", it.optJSONObject("ocr") ?: JSONObject().put("error", it.optString("error", "no answer"))) }
+                .onFailure { engine.put("ocr", JSONObject().put("error", it.message)) }
+            out.put("engine", engine)
+            Log.i(TAG, "bench-progress engine done")
             val bmp = runCatching { decode(Uri.fromFile(file)) }.getOrNull()
             val e2e = JSONObject()
             if (bmp != null) {
@@ -476,7 +496,7 @@ class ObjectsController(
                     var lastScene: Scene? = null
                     repeat(BENCH_WARMUP) { scanner.scene(live, Scene.request(d, objects = true, text = false, ocr = false)) }
                     val throttleB = SceneThrottle(sceneDecl.optLong("text_interval_ms", 300), Long.MAX_VALUE)
-                    repeat(frames) {
+                    repeat(runs ?: frames) {
                         val a = SystemClock.elapsedRealtime()
                         lastScene = scanner.scene(live, Scene.request(d, objects = true, text = throttleB.wantText(a), ocr = false))
                         ms += SystemClock.elapsedRealtime() - a

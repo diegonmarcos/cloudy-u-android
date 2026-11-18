@@ -34,7 +34,7 @@ permissions:
 jobs:
   scene:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -92,7 +92,7 @@ jobs:
       - name: Boot the emulator and prove (attempt 1)
         id: try1
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 38
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -107,7 +107,7 @@ jobs:
       # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
       - name: Boot the emulator and prove (attempt 2)
         if: steps.try1.outcome != 'success'
-        timeout-minutes: 20
+        timeout-minutes: 38
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
