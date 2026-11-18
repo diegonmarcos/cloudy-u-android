@@ -214,7 +214,8 @@ dependencies {
     implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
     // The fleet Account's OpenRouter token, read over the ITextTools binder (a contract lib).
-    implementation project(':libs:text-tools')
+    // #1801 the AI-key owner engine's client (the key is held there; this app never reads it).
+    implementation project(':libs:decisions-link')
     // Everything computed or parsed: plain JVM, mutation-tested on its own (core/build.gradle).
     implementation project(':search-core')
     // #823 the AI chat (the page, the backends, streaming, sessions, the consent card), shared with Cloud Browser,

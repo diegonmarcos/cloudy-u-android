@@ -8,11 +8,11 @@ import com.diegonmarcos.superapp.ai.AiGatewayBackend
 import com.diegonmarcos.superapp.ai.AiHost
 import com.diegonmarcos.superapp.ai.AiHttp
 import com.diegonmarcos.superapp.ai.AiModel
-import com.diegonmarcos.superapp.ai.AiOpenRouterBackend
+import com.diegonmarcos.superapp.ai.AiRelayBackend
+import com.diegonmarcos.superapp.ai.AiRelayed
+import com.diegonmarcos.superapp.ai.AiRelay
 import com.diegonmarcos.superapp.ai.AiPrefs
 import com.diegonmarcos.superapp.ai.AiStandardHost
-import com.diegonmarcos.superapp.ai.AiToken
-import com.diegonmarcos.superapp.ai.AiTokenSource
 
 /**
  * Cloud Search as the host of libs:ai (#823, renamed from libs:search-page): the chat is the lib's
@@ -44,10 +44,11 @@ object SearchAi {
                 get() = s.prefs.agent
                 set(v) { s.prefs.agent = v }
         }
-        val tokens = AiTokenSource { Account.token(s.app, cfg.accountProvider).let { AiToken(it.value, it.why) } }
+        // #1801 no key on this side: the chat body goes to the fleet's AI-key owner engine, which adds the key.
+        val relay = AiRelay { body -> Account.relay(s.app, body).let { r -> if (r.ok) AiRelayed(r.code, r.body) else AiRelayed(0, "", r.why) } }
         return AiStandardHost(
             cfg, s.sessions, prefs,
-            direct = AiOpenRouterBackend(cfg, s.cfg.ai.title, tokens, http),
+            direct = AiRelayBackend(cfg, relay),
             gateway = AiGatewayBackend(cfg, BuildConfig.AGENT_GATEWAY_URL, http),
             agents = AiAgents.load(s.app),
             modelSource = { s.models.models().map { AiModel(it.id, it.name, it.nativeWeb, it.free) } },

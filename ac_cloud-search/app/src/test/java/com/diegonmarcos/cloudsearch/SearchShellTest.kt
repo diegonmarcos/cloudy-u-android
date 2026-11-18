@@ -96,6 +96,7 @@ class SearchShellTest {
     private lateinit var services: Services
     private lateinit var state: SearchState
     private lateinit var savedReader: (android.content.Context, String) -> Account.Token
+    private lateinit var savedRelayer: (android.content.Context, String) -> com.diegonmarcos.superapp.decisions.link.RelayReply
     private val savedFleetRead = com.diegonmarcos.cloudsearch.data.FleetBearer.reader
 
     @Before fun offline() {
@@ -104,12 +105,16 @@ class SearchShellTest {
         Services.install(services)
         state = SearchState(services)
         savedReader = Account.reader
-        Account.reader = { _, _ -> Account.Token(null, "no token in this test") }
+        savedRelayer = Account.relayer
+        // #1801 no AI-key owner engine in this test: every relayed chat is refused with this sentence.
+        Account.relayer = { _, _ -> com.diegonmarcos.superapp.decisions.link.RelayReply(false, 0, "", "no_key", "no token in this test", "", null) }
+        Account.reader = { _, _ -> Account.Token(false, "no token in this test") }
     }
 
     @After fun online() {
         com.diegonmarcos.cloudsearch.data.FleetBearer.reader = savedFleetRead
         Account.reader = savedReader
+        Account.relayer = savedRelayer
         Services.install(null)
     }
 

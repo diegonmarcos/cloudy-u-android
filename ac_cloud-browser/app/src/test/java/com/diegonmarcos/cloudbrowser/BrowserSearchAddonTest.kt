@@ -1,5 +1,7 @@
 package com.diegonmarcos.cloudbrowser
 
+import com.diegonmarcos.superapp.ai.AiRelay
+import com.diegonmarcos.superapp.ai.AiRelayed
 import com.diegonmarcos.cloudbrowser.search.SearchAddon
 import com.diegonmarcos.cloudsearch.core.SearchConfig
 import com.diegonmarcos.superapp.browser.BrowserConfig
@@ -46,18 +48,18 @@ class BrowserSearchAddonTest {
     }
 
     @Test
-    fun `without a token the turn is recorded and answered with the reason, not sent`() {
+    fun `without a key in the engine the turn is recorded and answered with the engine's reason`() {
         var asked = 0
-        val o = addon.send(null, "hi", null, false) { asked++; null to "no openrouter token in the fleet Account" }
+        val o = addon.send(null, "hi", null, false, AiRelay { asked++; AiRelayed(0, "", "no openrouter key in the AI keys engine") })
         assertEquals(1, asked)
-        assertEquals("no openrouter token in the fleet Account", o.error)
+        assertEquals("no openrouter key in the AI keys engine", o.error)
         assertEquals(listOf("user"), o.session.messages.map { it.role })
         assertEquals(addon.ai.defaultModel, o.session.model)
         val j = addon.outcomeJson(o)
         assertFalse(j.getBoolean("ok"))
         assertTrue(j.isNull("message"))
         assertEquals(1, addon.sessionsJson().length())
-        val again = addon.send(o.session.id, "again", "m/x", false) { null to "none" }
+        val again = addon.send(o.session.id, "again", "m/x", false, AiRelay { AiRelayed(0, "", "none") })
         assertEquals(o.session.id, again.session.id)
         assertEquals(2, again.session.messages.size)
         assertEquals(1, addon.sessionsJson().length())

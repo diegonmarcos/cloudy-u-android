@@ -33,7 +33,7 @@ class AgentRunner(private val app: Context, private val search: SearchAddon, add
             override fun run(args: JSONObject): String = "executed by the agent loop"
         }
     }
-    private val backend = search.backend { SearchAddon.accountToken(app, search.ai.accountProvider) }
+    private val backend = search.backend(SearchAddon.relay(app))
     private val sessions = LinkedHashMap<String, AgentLoop>()
     /** #823 summarize_page on the user's route: `model` hands the page text to the model, `on_device` summarizes here. */
     private val summarizer = PageSummarizer.get(app, search, addon)

@@ -41,7 +41,7 @@ def check(root, ok):
     ok("PageSummary.extractive(text, sentences)" in sz, "where ML Kit cannot answer, the extractive summary does")
     for f in ('.put("route"', '.put("engine"', '.put("fell_back"', '.put("reason"', '.put("requested"'):
         ok(f in ps, "every answer names %s" % f.split('"')[1])
-    ok("SearchAddon.accountToken(app, ai.accountProvider)" in sz, "the token is the fleet Account's, read per call")
+    ok("search.backend(SearchAddon.relay(app))" in sz, "the model route goes through the AI-key owner engine (#1801), no key read here")
     ok(not re.search(r'put\("(token|authorization|key)"', sz + ps, re.I) and "Log." not in sz, "no answer or log carries the token")
     ok('Op("ai/summarize"' in api and '"ai/summarize" ->' in api, "route ai/summarize is documented and handled")
     ok('settings.string("summarize_route")' in api, "the route follows his setting")
@@ -57,7 +57,7 @@ main("summarize route", check, [
     ("a failed model is returned as is", LIBP + "PageSummary.kt", "if (m.ok || !fallback) return", "if (true) return", "falls back on device and says why"),
     ("ML Kit is never asked", APPP + "search/PageSummarizer.kt", "FeatureStatus.AVAILABLE -> {", "-1 -> {", "asks ML Kit"),
     ("the answer hides its route", LIBP + "PageSummary.kt", '.put("route", route)', '.put("rout", route)', "names route"),
-    ("the token leaks into the answer", APPP + "search/PageSummarizer.kt", 'return r.json().put("title"', 'return r.json().put("token", SearchAddon.accountToken(app, "openrouter").first).put("title"', "carries the token"),
+    ("the token leaks into the answer", APPP + "search/PageSummarizer.kt", 'return r.json().put("title"', 'return r.json().put("token", "x").put("title"', "carries the token"),
     ("the tool ignores the route", APPP + "search/AgentRunner.kt", 'c.name == "summarize_page" && route(', 'c.name == "never" && route(', "summarize_page tool"),
 ])
 PYEOF

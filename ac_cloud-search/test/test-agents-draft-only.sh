@@ -85,8 +85,8 @@ if 'const val SEARCH_TOOL = "cgc.octocode.search"' not in cgc_ or 'const val GRA
     bad.append("D2 the code indexes' MCP client calls a tool other than the two read-only search tools")
 sai = os.path.join(K, "data", "SearchAi.kt")
 sai_code = code(sai) if os.path.isfile(sai) else ""
-if "AiGatewayBackend(cfg, BuildConfig.AGENT_GATEWAY_URL, http)" not in sai_code or "direct = AiOpenRouterBackend(" not in sai_code:
-    bad.append("D2 the chat's POSTs do not go through libs:ai's two backends (OpenRouter, and the fleet gateway at the baked address)")
+if "AiGatewayBackend(cfg, BuildConfig.AGENT_GATEWAY_URL, http)" not in sai_code or "direct = AiRelayBackend(" not in sai_code:
+    bad.append("D2 the chat's POSTs do not go through libs:ai's two backends (OpenRouter through the AI-key owner engine #1801, and the fleet gateway at the baked address)")
 if os.path.isfile(os.path.join(C, "agents", "Llm.kt")) and '"tools"' in code(os.path.join(C, "agents", "Llm.kt")):
     bad.append("D2 the agents' model call carries tools — a model may only answer in text")
 
@@ -168,11 +168,11 @@ for kind in ("MAIL_QUERY", "MAIL_READ", "LINK_FOUND", "PAGE_READ", "LLM_CALL", "
 
 # D7
 holders = sorted(os.path.relpath(p, K) for p in glob.glob(os.path.join(K, "**", "*.kt"), recursive=True) if "revealAiKey" in code(p))
-if holders != ["data/Account.kt"]:
-    bad.append("D7 revealAiKey must be called by data/Account.kt alone, found in %s" % holders)
+if holders:
+    bad.append("D7 revealAiKey must be called by nothing in this app (#1801 the AI-key owner engine holds the key), found in %s" % holders)
 svc = code(os.path.join(K, "data", "AgentService.kt"))
-if "Account.token(" not in svc:
-    bad.append("D7 AgentService does not read the key from the fleet Account (Account.token)")
+if "Account.relay(" not in svc or "RelayLlm" not in svc:
+    bad.append("D7 AgentService does not relay the model call through the AI-key owner engine (Account.relay)")
 for p in agent_all:
     t = code(p)
     if re.search(r"\bLog\.[a-z]\(|println\(|printStackTrace", t):
@@ -253,7 +253,8 @@ mutate cost-not-recorded "$C/agents/Runner.kt" 's.replace("ledger.record(c); cos
 mutate audit-carries-body "$C/agents/Runner.kt" 's.replace("audit.add(clock(), AuditEvent.MAIL_READ, h.subject, \"id=${h.id} from=${h.fromEmail}\")", "audit.add(clock(), AuditEvent.MAIL_READ, h.subject, body.text)")' "D6 an audit line carries content"
 mutate audit-carries-page "$C/agents/Runner.kt" 's.replace("\"chars=${page.text.length} title=${page.title}\")", "page.text)")' "D6 an audit line carries content"
 mutate draft-not-audited "$C/agents/Runner.kt" 's.replace("AuditEvent.DRAFT", "AuditEvent.RUN_END")' "D6 the run does not audit DRAFT"
-mutate second-key-door "$J/ui/AgentsPages.kt" 's + "\nprivate fun k(c: com.diegonmarcos.superapp.texttools.TextToolsClient) = c.revealAiKey(\"openrouter\")\n"' "D7 revealAiKey must be called by data/Account.kt alone"
+mutate second-key-door "$J/ui/AgentsPages.kt" 's + "\nprivate fun k(c: com.diegonmarcos.superapp.texttools.TextToolsClient) = c.revealAiKey(\"openrouter\")\n"' "D7 revealAiKey must be called by nothing in this app"
+mutate agents-key-door "$J/data/AgentService.kt" 's.replace("Account.relay(s.app, body)", "Account.token(s.app, \"openrouter\").let { com.diegonmarcos.cloudsearch.data.Account.relay(s.app, body) }").replace("RelayLlm", "OpenRouterLlm")' "D7 AgentService does not relay"
 mutate key-logged "$J/data/AgentService.kt" 's.replace("val out = runner.run(", "android.util.Log.d(\"k\", \"x\"); val out = runner.run(")' "D7 AgentService.kt logs"
 mutate key-in-body "$C/agents/Llm.kt" 's.replace(".put(\"max_tokens\", req.maxTokens)", ".put(\"max_tokens\", req.maxTokens).put(\"key\", t)")' "D7 the key goes anywhere but Chat.headers"
 mutate key-stored "$J/data/AgentData.kt" 's.replace("fun resetTemplate(id: String)", "fun keep(token: String) = p.edit().putString(\"token\", token).apply()\n    fun resetTemplate(id: String)")' "D7 the key is stored"

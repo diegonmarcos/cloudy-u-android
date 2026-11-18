@@ -14,10 +14,12 @@
     <string name="fleet_account">Fleet Account</string>
     <string name="version">Cloud Search · build %1$s</string>
     <string name="token_title">OpenRouter token (for AI chat)</string>
-    <string name="token_blurb">Managed by the fleet Account (SuperApp ▸ Profile). Read when you send a message, never stored by this app.</string>
+    <string name="token_blurb">Held by the fleet\'s AI keys engine (Cloud Lib Decisions Engine ▸ AI keys), which adds it to each request. This app never reads or stores it.</string>
     <string name="token_check">Check</string>
     <string name="token_checking">Checking…</string>
-    <string name="token_present">Present in the fleet Account</string>
+    <string name="token_present">Held by the AI keys engine</string>
+    <string name="token_set">Set key</string>
+    <string name="token_no_engine">The AI keys engine is not installed — install Cloud Lib Decisions Engine from Store ▸ Libs</string>
     <string name="token_missing">Missing: %1$s</string>
     <string name="toggle_theme">Toggle Theme</string>
     <string name="city">City</string>

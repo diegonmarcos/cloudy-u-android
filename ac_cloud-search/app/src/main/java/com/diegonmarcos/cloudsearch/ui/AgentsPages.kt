@@ -67,6 +67,7 @@ object AgentTags {
     const val APPLY = "agents_apply"
     const val TOKEN = "agents_token_status"
     const val TOKEN_CHECK = "agents_token_check"
+    const val TOKEN_SET = "agents_token_set"
     const val STATUS = "agents_status"
     const val LIST = "agents_list"
     const val BACK = "agents_back"
@@ -510,8 +511,12 @@ fun AgentSettingsPage(state: SearchState) {
                         token = ctx.getString(R.string.token_checking)
                         scope.launch {
                             val t = withContext(Dispatchers.IO) { Account.token(ctx, state.cfg.ai.accountProvider) }
-                            token = if (t.value != null) ctx.getString(R.string.token_present) else ctx.getString(R.string.token_missing, t.why)
+                            token = if (t.present) ctx.getString(R.string.token_present) else ctx.getString(R.string.token_missing, t.why)
                         }
+                    }
+                    // #1801 the key is entered in the fleet's AI-key owner engine, not here: this opens its AI keys screen.
+                    Chip(stringResource(R.string.token_set), AgentTags.TOKEN_SET, icon = R.drawable.ph_key) {
+                        if (!Account.openSettings(ctx, state.cfg.ai.accountProvider)) token = ctx.getString(R.string.token_no_engine)
                     }
                     Text(token, Modifier.testTag(AgentTags.TOKEN), color = g.text, style = Type.style(Type.tiny))
                 }

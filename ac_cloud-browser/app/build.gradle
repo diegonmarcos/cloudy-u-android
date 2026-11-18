@@ -431,6 +431,8 @@ dependencies {
     implementation project(':libs:autofill')
     implementation project(':libs:updater')
     implementation project(':libs:text-tools')
+    // #1801 the AI-key owner engine's client: the Search add-on's chat is relayed there, the key is never read here.
+    implementation project(':libs:decisions-link')
     implementation project(':search-core')
     // #823 the AI chat (libs:ai: the page, the backends, the assistant panel and its consent card), drawn over the
     // browser in the kit palette (libs:ui-kit). It brings libs:model-catalogue along as an `api`.

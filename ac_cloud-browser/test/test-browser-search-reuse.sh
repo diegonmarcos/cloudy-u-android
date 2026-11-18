@@ -38,7 +38,10 @@ def check(root, ok):
     addon = src.get(os.path.join(APP, "search", "SearchAddon.kt"), "")
     ok(not re.search(r"put(String|StringSet)\([^)]*token", allkt, re.I), "no token is written to prefs")
     ok("Log." not in addon and "println" not in addon, "the search add-on logs nothing")
-    ok('"no $provider token in the fleet Account"' in addon, "the missing-token answer is cloud-search's wording")
+    # #1801 the key is the AI-key owner engine's: the chat is relayed there and its refusal is the turn's error.
+    ok("DecisionsLink.relay(ctx, USE, ENDPOINT, body)" in addon and "AiRelayed(0, \"\", r.why)" in addon,
+       "the chat is relayed to the AI-key owner engine and its refusal is the turn's error")
+    ok("revealAiKey" not in allkt and "TextToolsClient" not in addon, "the browser reads no key (no revealAiKey, no text-tools in the add-on)")
     ok(re.search(r'put\("[a-z_]+",\s*value\)', addon) is None and "outcomeJson" in addon, "the token never enters an answer")
     api = src.get(os.path.join(APP, "debugapi", "BrowserDebugApi.kt"), "")
     for op in ("search/engines", "search/open", "search/chat/sessions", "search/chat/send"):
@@ -52,8 +55,8 @@ def check(root, ok):
        and "implementation project(':libs:ai')" in gradle, "the app links libs:ai by reference")
     ok("AiChatPage(" in page and "engines = search.cfg.engines.map" in page and "query = { e, q -> search.searchUrl(q, e.id) }" in page,
        "the page is libs:ai's, on cloud-search's declared engines")
-    ok("search.host(app.applicationContext)" in page and "direct = backend { accountToken(app, ai.accountProvider) }" in addon,
-       "its chat is libs:ai's host on the add-on's backend, the token read per send")
+    ok("search.host(app.applicationContext)" in page and "direct = backend(relay(app))" in addon,
+       "its chat is libs:ai's host on the add-on's relay backend, the key held by the engine")
     ok("AI_CONFIG_B64" in gradle and "libs/ai/src/main/assets/ai/ai.json" in gradle and "AiConfig.parse(" in addon,
        "the endpoints and header names are libs:ai's shared contract, baked, never restated")
     panel = src.get(os.path.join(APP, "search", "AgentPanelScreen.kt"), "")
@@ -72,7 +75,8 @@ main("search reuse", check, [
     ("the gradle stops reading cloud-search", "ac_cloud-browser/app/build.gradle", "it.engines = searchDecl.engines", "it.engines = []", "reads cloud-search's declaration"),
     ("the page restates its own engines", APPP + "search/SearchPageScreen.kt", "engines = search.cfg.engines.map", "engines = emptyList<com.diegonmarcos.cloudsearch.core.SearchConfig.Engine>().map", "on cloud-search's declared engines"),
     ("a result replaces the page instead of a tab", "ab_cloud-libs-shared/libs/browser/src/main/java/com/diegonmarcos/superapp/browser/BrowserHostFragment.kt", "page({ url -> close(); openEntryUrl(url) }, close)", "page({ url -> close(); webView?.loadUrl(url) }, close)", "opens as a tab"),
-    ("the page reads a token of its own", APPP + "search/SearchAddon.kt", "direct = backend { accountToken(app, ai.accountProvider) }", "direct = backend { \"x\" to \"\" }", "the token read per send"),
+    ("the page bypasses the engine", APPP + "search/SearchAddon.kt", "direct = backend(relay(app))", "direct = backend(AiRelay { AiRelayed(0, \"\", \"x\") })", "the key held by the engine"),
+    ("the add-on reads the key again", APPP + "search/SearchAddon.kt", "const val ENDPOINT = \"chat\"", "const val ENDPOINT = \"chat\"\n        fun k(c: com.diegonmarcos.superapp.texttools.TextToolsClient) = c.revealAiKey(\"openrouter\")", "the browser reads no key"),
     ("the assistant panel is drawn by the browser again", APPP + "search/AgentPanelScreen.kt", "AiAssistantPanel(", "OwnPanel(", "the assistant side panel is libs:ai's"),
     ("the gradle stops baking the shared contract", "ac_cloud-browser/app/build.gradle", 'buildConfigField "String", "AI_CONFIG_B64",', 'buildConfigField "String", "AI_CONFIGX_B64",', "endpoints and header names are libs:ai's shared contract"),
     ("chat/send ignores the switch", APPP + "debugapi/BrowserDebugApi.kt", '"search/chat/send" -> if (!config.addons.enabled("search"', '"search/chat/send" -> if (false && !config.addons.enabled("searchx"', "refuse while the add-on is off"),

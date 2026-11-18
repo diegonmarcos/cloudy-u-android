@@ -258,9 +258,7 @@ object BrowserDebugApi {
             "search/chat/send" -> if (!config.addons.enabled("search", settings.stringSet("addons_enabled")))
                 JSONObject().put("ok", false).put("error", "the search add-on is off (addons/set?id=search&on=true)")
                 else need(q["text"].orEmpty(), "text") ?: SearchAddon.get(BuildConfig.SEARCH_CONFIG_B64).let { s ->
-                    s.outcomeJson(s.send(q["session"], q["text"].orEmpty(), q["model"], q["web"]?.lowercase() == "true") {
-                        SearchAddon.accountToken(app, s.ai.accountProvider)
-                    })
+                    s.outcomeJson(s.send(q["session"], q["text"].orEmpty(), q["model"], q["web"]?.lowercase() == "true", SearchAddon.relay(app)))
                 }
             "ai/tools", "ai/ask", "ai/sessions", "ai/summarize" -> {
                 val addon = config.addons["ai"]

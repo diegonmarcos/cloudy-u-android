@@ -58,7 +58,7 @@ class PageSummarizer(private val app: Context, private val search: SearchAddon, 
 
     private fun viaModel(title: String, text: String): PageSummary.Result {
         val ai = search.ai
-        val backend = search.backend { SearchAddon.accountToken(app, ai.accountProvider) }
+        val backend = search.backend(SearchAddon.relay(app))
         val ask = prompt.format(bullets) + "\n\n" + title + "\n\n" + text.take(inputCap)
         val r = backend.chat(AiRequest(model, listOf(AiMsg("user", ask)), stream = false)) {}
         val out = r.text?.takeIf { it.isNotBlank() } ?: return PageSummary.Result.failed(PageSummary.MODEL, PageSummary.ENGINE_MODEL,

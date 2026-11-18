@@ -3,6 +3,7 @@ package com.diegonmarcos.cloudbrowser.search
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -19,8 +20,8 @@ import com.diegonmarcos.superapp.uikit.LocalKitPalette
 /**
  * #823 the Search add-on's on-screen page: the fleet's AI page (libs:ai) over the browser, in the browser's kit
  * palette. Its engines are cloud-search's declaration (baked SEARCH_CONFIG_B64, never restated), a result opens
- * as a tab, and the chat is libs:ai's: OpenRouter with the fleet Account's token read per send, never stored or
- * shown ([SearchAddon.host]). The conversation outlives closing the page.
+ * as a tab, and the chat is libs:ai's: OpenRouter through the fleet's AI-key owner engine, which adds the key
+ * (#1801, [SearchAddon.host]); "AI key" opens that engine's AI keys screen. The conversation outlives closing the page.
  */
 object SearchPageScreen {
     @Volatile private var chat: AiChatState? = null
@@ -41,7 +42,11 @@ object SearchPageScreen {
                     query = { e, q -> search.searchUrl(q, e.id) },
                     sessionsList = true,
                 ) {
-                    TextButton(close, Modifier.testTag("browser:search:close")) { Text("✕ Close") }
+                    Row {
+                        // #1801 the key is set in the AI-key owner engine's own screen, never in this app.
+                        TextButton({ SearchAddon.openKeySettings(app, search.ai.accountProvider) }, Modifier.testTag("browser:search:ai_key")) { Text("AI key") }
+                        TextButton(close, Modifier.testTag("browser:search:close")) { Text("✕ Close") }
+                    }
                 }
             }
         }

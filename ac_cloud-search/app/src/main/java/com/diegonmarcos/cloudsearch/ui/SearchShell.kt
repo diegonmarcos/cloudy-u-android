@@ -211,6 +211,7 @@ object Tags {
     const val THEME = "search_theme_toggle"
     const val TOKEN = "search_token_status"
     const val TOKEN_CHECK = "search_token_check"
+    const val TOKEN_SET = "search_token_set"
     const val SEARCH_BOX = "search_box"
     const val MORE_FILTERS = "search_more_filters"
     const val APPLY_FILTERS = "search_apply_filters"
@@ -529,8 +530,12 @@ private fun ProfileMenu(state: SearchState) {
                     token = ctx.getString(R.string.token_checking)
                     scope.launch {
                         val t = withContext(Dispatchers.IO) { Account.token(ctx, state.cfg.ai.accountProvider) }
-                        token = if (t.value != null) ctx.getString(R.string.token_present) else ctx.getString(R.string.token_missing, t.why)
+                        token = if (t.present) ctx.getString(R.string.token_present) else ctx.getString(R.string.token_missing, t.why)
                     }
+                }
+                // #1801 the key is entered in the fleet's AI-key owner engine, not here: this opens its AI keys screen.
+                Chip(stringResource(R.string.token_set), Tags.TOKEN_SET, icon = R.drawable.ph_key) {
+                    if (!Account.openSettings(ctx, state.cfg.ai.accountProvider)) token = ctx.getString(R.string.token_no_engine)
                 }
                 Text(token ?: "", color = g.text, style = Type.style(Type.label), modifier = Modifier.weight(1f).testTag(Tags.TOKEN))
             }

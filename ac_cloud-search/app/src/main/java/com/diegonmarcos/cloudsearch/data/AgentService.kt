@@ -68,7 +68,10 @@ class AgentService(
             val a = s.cfg.agents ?: return null
             return AgentService(
                 s.app, s.http, s.cfg, a, s.models, BuildConfig.MAIL_PACKAGE, BuildConfig.BROWSER_PACKAGE,
-                tokenOf = { Account.token(s.app, s.cfg.ai.accountProvider).value },
+                // #1801 the run's completions go through the AI-key owner engine: no key is read here.
+                llmOverride = com.diegonmarcos.cloudsearch.core.agents.RelayLlm { body ->
+                    Account.relay(s.app, body).let { r -> com.diegonmarcos.cloudsearch.core.agents.RelayLlm.Relayed(r.code, r.body, if (r.ok) null else r.why) }
+                },
             )
         }
     }

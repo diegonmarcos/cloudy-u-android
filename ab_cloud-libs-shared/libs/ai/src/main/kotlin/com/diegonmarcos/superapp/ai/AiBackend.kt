@@ -167,8 +167,17 @@ class AiOpenRouterBackend(cfg: AiConfig, private val title: String, private val 
  * relayed chat reads exactly like the direct one; it answers whole (the relay does not stream). [refused] is the engine's
  * refusal (no engine, no key, ...) as the sentence the page shows, or null when the call was made.
  */
-class AiRelayBackend(cfg: AiConfig, private val relay: AiRelay) : AiChatBackend(cfg, RelayHttp(relay)) {
+class AiRelayBackend(cfg: AiConfig, relay: AiRelay) : AiChatBackend(cfg, RelayHttp(relay)) {
     override val id: String get() = cfg.openRouterId
+
+    /** A refusal is the engine's sentence as the reply's error, like a missing key was: not a transport failure. */
+    override fun chat(req: AiRequest, onDelta: (String) -> Unit): AiReply {
+        REFUSED.set(null)
+        val r = super.chat(req, onDelta)
+        val why = REFUSED.get()
+        REFUSED.set(null)
+        return if (why != null) AiReply(null, error = why) else r
+    }
     override val openRouter: Boolean get() = true
     override fun url(req: AiRequest) = cfg.chatUrl
     override fun headers(req: AiRequest): Map<String, String> = mapOf("Content-Type" to "application/json")
@@ -184,10 +193,14 @@ class AiRelayBackend(cfg: AiConfig, private val relay: AiRelay) : AiChatBackend(
         override fun get(url: String, headers: Map<String, String>, timeoutMs: Int): AiHttp.Response = AiUrlHttp.get(url, headers, timeoutMs)
         override fun post(url: String, headers: Map<String, String>, body: String, timeoutMs: Int, onChunk: ((String) -> Unit)?): AiHttp.Response {
             val r = relay.post(body)
-            // A refusal is not an HTTP answer: it surfaces as a transport failure carrying the engine's sentence.
-            r.refused?.let { throw IllegalStateException(it) }
+            // A refusal is not an HTTP answer: it is handed to chat() above, which reports it as the reply's error.
+            r.refused?.let { REFUSED.set(it); throw IllegalStateException(it) }
             return AiHttp.Response(r.code, r.body)
         }
+    }
+
+    private companion object {
+        val REFUSED = ThreadLocal<String?>()
     }
 }
 
