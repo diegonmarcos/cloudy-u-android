@@ -8,7 +8,6 @@ import org.libtorrent4j.SessionParams
 import org.libtorrent4j.SettingsPack
 import org.libtorrent4j.Sha1Hash
 import org.libtorrent4j.TorrentFlags
-import org.libtorrent4j.TorrentInfo
 import org.libtorrent4j.alerts.Alert
 import org.libtorrent4j.alerts.AlertType
 import org.libtorrent4j.swig.settings_pack
@@ -81,7 +80,7 @@ internal class LibtorrentBackend : TorrentBackend {
     @Synchronized override fun stop() {
         session?.let { runCatching { it.removeListener(listener) }; it.stop() }
         session = null
-        known.clear(); pendingPause.clear(); pendingResume.clear(); lastAlert.clear()
+        known.clear(); pendingPause.clear(); pendingResume.clear(); lastAlert.clear(); seedsOf.clear()
     }
 
     private fun s(): SessionManager = session ?: error("the BitTorrent session is not running")
@@ -92,11 +91,30 @@ internal class LibtorrentBackend : TorrentBackend {
         if (paused) pendingPause += id else pendingResume += id
     }
 
+    /**
+     * #1790 a .torrent goes in through libtorrent's own loader (load_torrent_file -> add_torrent_params), NEVER through
+     * SessionManager.download(TorrentInfo): that path only sets the torrent info, and libtorrent 2.1 reads a torrent's TRACKERS and
+     * WEB SEEDS from add_torrent_params, not from the info, so such a torrent ran with no tracker and no web seed (the emulator showed
+     * 0 peers and 0 bytes for 20 minutes on an Internet Archive torrent). The loader fills trackers, tiers and url seeds from the file.
+     * Its web seeds are also kept here ([seedsOf]) and added to the handle if it reports none.
+     */
     @Synchronized override fun addTorrent(id: String, file: File, saveDir: File, paused: Boolean) {
-        s().download(TorrentInfo(file), saveDir)
+        val sm = s()
+        if (sm.find(Sha1Hash.parseHex(id)) == null) {
+            val ec = org.libtorrent4j.swig.error_code()
+            val p = org.libtorrent4j.swig.libtorrent.load_torrent_file(file.absolutePath, ec, org.libtorrent4j.swig.load_torrent_limits())
+            if (ec.value() != 0) error("cannot read ${file.name}: ${ec.message()}")
+            p.setSave_path(saveDir.absolutePath)
+            p.setFlags(p.getFlags().and_(TorrentFlags.AUTO_MANAGED.inv()))
+            sm.swig().async_add_torrent(p)
+        }
+        seedsOf[id] = runCatching { Magnet.parseTorrent(file.readBytes())?.webSeeds.orEmpty() }.getOrDefault(emptyList())
         known += id
         if (paused) pendingPause += id else pendingResume += id
     }
+
+    /** #1790 the web seeds each .torrent declares (BEP 19 url-list), re-added to a handle that reports none. */
+    private val seedsOf = HashMap<String, List<String>>()
 
     private fun handle(id: String) = s().find(Sha1Hash.parseHex(id))
 
@@ -109,8 +127,14 @@ internal class LibtorrentBackend : TorrentBackend {
             if (id in pendingPause) { h.unsetFlags(TorrentFlags.AUTO_MANAGED); h.pause(); pendingPause -= id }
             // The add hands back a PAUSED torrent: without this it would sit at 0 bytes until a manual Resume.
             if (id in pendingResume) { h.unsetFlags(TorrentFlags.AUTO_MANAGED); h.resume(); pendingResume -= id }
+            var seeds = runCatching { h.urlSeeds().size }.getOrDefault(0)
+            if (seeds == 0) seedsOf[id]?.takeIf { it.isNotEmpty() }?.let { ws ->
+                ws.forEach { u -> runCatching { h.addUrlSeed(u) } }
+                Log.i(TAG, "added ${ws.size} web seed(s) to $id: $ws")
+                seeds = runCatching { h.urlSeeds().size }.getOrDefault(0)
+            }
             val st = h.status()
-            out[id] = raw(id, st, runCatching { h.urlSeeds().size }.getOrDefault(0))
+            out[id] = raw(id, st, seeds)
         }
         return out
     }
@@ -153,7 +177,7 @@ internal class LibtorrentBackend : TorrentBackend {
     }
 
     @Synchronized override fun remove(id: String, deleteFiles: Boolean) {
-        known -= id; pendingPause -= id; pendingResume -= id; lastAlert.remove(id)
+        known -= id; pendingPause -= id; pendingResume -= id; lastAlert.remove(id); seedsOf.remove(id)
         val h = handle(id) ?: return
         if (deleteFiles) s().remove(h, SessionHandle.DELETE_FILES) else s().remove(h)
     }

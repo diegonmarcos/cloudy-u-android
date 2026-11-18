@@ -49,6 +49,8 @@ grep -q 'Added to Torrent downloads\|Already in Torrent downloads' "$OUT/added.x
 start=$(date +%s); seen=0; last=0; done=0
 while [ $(( $(date +%s) - start )) -lt "$TIMEOUT" ]; do
   dump watch
+  # the Store's own background pass may raise Android's "install unknown apps" refusal over the page: dismiss it, read again
+  if grep -q "install unknown apps" "$OUT/watch.xml"; then cp "$OUT/watch.xml" "$OUT/dialog-dismissed.xml"; cp "$OUT/watch.xml" "$OUT/cur.xml"; tap_at "$(center 'text="Cancel"')" || adb shell input keyevent KEYCODE_BACK; sleep 2; dump watch; fi
   line=$(grep -oE 'text="(downloading|fetching metadata|checking files|queued|paused|error|completed|seeding)[^"]*"' "$OUT/watch.xml" | head -1)
   echo "[$(( $(date +%s) - start ))s] ${line:-no row yet}" | tee -a "$OUT/progress.log"
   if grep -q 'Completed (1)' "$OUT/watch.xml"; then done=1; break; fi
