@@ -684,8 +684,19 @@ fun ComposeScreen(
     // here, at the moment of use; the photo comes from the fleet camera (ACTION_IMAGE_CAPTURE) and is
     // decoded by the fleet's image-scan engine. Every outcome says what happened.
     var qrPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    // The outcome of a scan, in a dialog that stays until read: what was added, or why nothing was.
+    var qrMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    qrMessage?.let { msg ->
+        AlertDialog(
+            onDismissRequest = { qrMessage = null },
+            title = { Text(stringResource(R.string.compose_scan_qr)) },
+            text = { Text(msg) },
+            confirmButton = { TextButton(onClick = { qrMessage = null }) { Text(stringResource(android.R.string.ok)) } },
+        )
+    }
     fun applyQr(outcome: QrScanOutcome) {
-        when (outcome) {
+        android.util.Log.i("SternaCompose", "QR scan outcome: ${outcome::class.simpleName}")
+        qrMessage = when (outcome) {
             is QrScanOutcome.Found -> {
                 val r = outcome.recipients
                 fun add(field: String, more: List<String>): String {
@@ -698,15 +709,16 @@ fun ComposeScreen(
                 if (r.cc.isNotEmpty() || r.bcc.isNotEmpty()) { expanded = true; cc = add(cc, r.cc); bcc = add(bcc, r.bcc) }
                 if (!r.subject.isNullOrBlank() && subject.text.isBlank()) subject = TextFieldValue(r.subject, TextRange(r.subject.length))
                 if (!r.body.isNullOrBlank()) editor.insertText(r.body)
-                Toast.makeText(context, context.resources.getQuantityString(R.plurals.compose_scan_qr_added, r.count, r.count), Toast.LENGTH_LONG).show()
+                context.resources.getQuantityString(R.plurals.compose_scan_qr_added, r.count, r.count)
             }
-            QrScanOutcome.Unreadable -> Toast.makeText(context, context.getString(R.string.compose_scan_qr_unreadable), Toast.LENGTH_LONG).show()
-            is QrScanOutcome.NoAddress -> Toast.makeText(context, context.getString(R.string.compose_scan_qr_no_address), Toast.LENGTH_LONG).show()
-            is QrScanOutcome.EngineUnavailable -> Toast.makeText(context, context.getString(R.string.compose_scan_qr_engine, outcome.reason), Toast.LENGTH_LONG).show()
+            QrScanOutcome.Unreadable -> context.getString(R.string.compose_scan_qr_unreadable)
+            is QrScanOutcome.NoAddress -> context.getString(R.string.compose_scan_qr_no_address)
+            is QrScanOutcome.EngineUnavailable -> context.getString(R.string.compose_scan_qr_engine, outcome.reason)
         }
     }
     val qrCamera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
         val uri = qrPhoto?.let(android.net.Uri::parse)
+        android.util.Log.i("SternaCompose", "QR camera returned taken=$taken")
         if (taken && uri != null) {
             scope.launch {
                 applyQr(kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { scanQrRecipients(context, uri) })

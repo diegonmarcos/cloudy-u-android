@@ -133,7 +133,9 @@ jobs:
           adb shell input keyevent KEYCODE_CAMERA; sleep 4; shot 06c-qr-shutter; dump 06c-qr-shutter
           tap "Done" || echo "camera had no Done button" >> walk-out/summary.txt
           # the composer's answer is a toast: shoot it as it appears
-          for i in 1 2 3 4 5 6; do sleep 1; shot 06d-qr-result-$i; done; dump 06d-qr-result
+          for i in 1 2 3 4 5 6; do sleep 2; dump 06d-qr-result; grep -q 'Scan a QR code for recipients' walk-out/06d-qr-result.xml && grep -q 'android:id/message\|text="OK"' walk-out/06d-qr-result.xml && break; done
+          shot 06d-qr-result; echo "QR result dialog: $(grep -o 'text="[^"]*\(QR\|recipient\|scanner\|engine\)[^"]*"' walk-out/06d-qr-result.xml | tr '\n' ' ')" >> walk-out/summary.txt
+          taptext "OK" || true; sleep 1
           adb shell input keyevent KEYCODE_BACK; sleep 2
           dump after-qr; grep -q 'New mail' walk-out/after-qr.xml || adb shell input keyevent KEYCODE_BACK
           leave
@@ -142,14 +144,15 @@ jobs:
           [ "$ok" = 1 ] || { echo "::error::no seeded message in the list"; exit 1; }
           sleep 6
           shot 02a-reader; dump 02a-reader
-          ok=0; for i in 1 2 3; do tap "Reply" && { ok=1; break; }; sleep 3; done
+          # Reply and Forward live in the reader's More menu (the bar carries Reply all)
+          ok=0; for i in 1 2 3; do taptext "Reply" && { ok=1; break; }; tap "More"; sleep 2; done
           [ "$ok" = 1 ] || { echo "::error::no Reply action"; exit 1; }
           sleep 8
           shot 02-reply; dump 02-reply; sigcheck 02-reply
           leave
           sleep 2; dump back-in-reader
-          grep -q 'Forward' walk-out/back-in-reader.xml || { tap "Seed message 3 of 3" || true; sleep 6; }
-          ok=0; for i in 1 2 3; do tap "Forward" && { ok=1; break; }; sleep 3; done
+          grep -q 'Seed message 3 of 3' walk-out/back-in-reader.xml || { front; tap "Seed message 3 of 3" || true; sleep 6; }
+          ok=0; for i in 1 2 3; do taptext "Forward" && { ok=1; break; }; tap "More"; sleep 2; done
           [ "$ok" = 1 ] || { echo "::error::no Forward action"; exit 1; }
           sleep 8
           shot 03-forward; dump 03-forward; sigcheck 03-forward
