@@ -23,7 +23,7 @@ class QrRecipientsTest {
     }
 
     @Test fun `MATMSG with TO, SUB and BODY, escapes kept`() {
-        val r = parseQrRecipients("MATMSG:TO:ana@example.org;SUB:Offer\; v2;BODY:See you;;")!!
+        val r = parseQrRecipients("MATMSG:TO:ana@example.org;SUB:Offer\\; v2;BODY:See you;;")!!
         assertEquals(listOf("ana@example.org"), r.to)
         assertEquals("Offer; v2", r.subject)
         assertEquals("See you", r.body)
