@@ -1,5 +1,5 @@
 {
-  "_doc": "#1789 THE pin of the Chronos pages Cloud Wiki bakes into the APK. tools/regen-chronos.py reads this file, clones `url` at `commit`, copies every file of `source_dir` into `assets_dir`/<source_dir> (HTML rewritten so every CDN script, stylesheet and font named under `vendor` / `fonts` is answered from `assets_dir`/_vendor), and declares one nested page per index.html under build.json::ui wiki > chronos (ids from the directory numbers, labels the pages' own <title>). `--check` regenerates into a scratch dir and fails on any byte of drift; test/test-chronos.sh runs it in the ship workflow. Re-pin: tools/regen-chronos.py --pin <sha|main>, which also re-hashes the vendored files. `sha256` values are written by --pin and verified on every regeneration; never typed.",
+  "_doc": "#1789 THE pin of the Chronos pages Cloud Wiki bakes into the APK. tools/regen-chronos.py reads this file, clones `url` at `commit`, copies every file of `source_dir` into `assets_dir`/<source_dir> (HTML rewritten so every CDN script, stylesheet and font named under `vendor` / `fonts` is answered from `assets_dir`/vendor), and declares one nested page per index.html under build.json::ui wiki > chronos (ids from the directory numbers, labels the pages' own <title>). `--check` regenerates into a scratch dir and fails on any byte of drift; test/test-chronos.sh runs it in the ship workflow. Re-pin: tools/regen-chronos.py --pin <sha|main>, which also re-hashes the vendored files. `sha256` values are written by --pin and verified on every regeneration; never typed.",
   "repo": "diegonmarcos/lib-chronos",
   "url": "https://github.com/diegonmarcos/lib-chronos.git",
   "ref": "main",
@@ -29,10 +29,10 @@
       "match": "https://cdn.tailwindcss.com",
       "name": "Tailwind CSS Play CDN 3.4.17 (the version the unversioned URL serves)",
       "license": "MIT",
-      "rewrite": "_vendor/tailwindcss/3.4.17/tailwind.js",
+      "rewrite": "vendor/tailwindcss/3.4.17/tailwind.js",
       "files": [
         {
-          "path": "_vendor/tailwindcss/3.4.17/tailwind.js",
+          "path": "vendor/tailwindcss/3.4.17/tailwind.js",
           "url": "https://cdn.tailwindcss.com/3.4.17"
         }
       ]
@@ -41,14 +41,14 @@
       "match": "https://cdn.jsdelivr.net/npm/chart.js",
       "name": "Chart.js 4.6.1 (npm latest; the unversioned jsDelivr URL serves its UMD build)",
       "license": "MIT",
-      "rewrite": "_vendor/chart.js/4.6.1/chart.umd.min.js",
+      "rewrite": "vendor/chart.js/4.6.1/chart.umd.min.js",
       "files": [
         {
-          "path": "_vendor/chart.js/4.6.1/chart.umd.min.js",
+          "path": "vendor/chart.js/4.6.1/chart.umd.min.js",
           "url": "https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"
         },
         {
-          "path": "_vendor/chart.js/4.6.1/LICENSE.md",
+          "path": "vendor/chart.js/4.6.1/LICENSE.md",
           "url": "https://cdn.jsdelivr.net/npm/chart.js@4.6.1/LICENSE.md"
         }
       ]
@@ -57,49 +57,49 @@
       "match": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css",
       "name": "Font Awesome Free 6.4.0 (CSS and the webfonts it references)",
       "license": "Icons CC BY 4.0, fonts SIL OFL 1.1, code MIT",
-      "rewrite": "_vendor/font-awesome/6.4.0/css/all.min.css",
+      "rewrite": "vendor/font-awesome/6.4.0/css/all.min.css",
       "files": [
         {
-          "path": "_vendor/font-awesome/6.4.0/css/all.min.css",
+          "path": "vendor/font-awesome/6.4.0/css/all.min.css",
           "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         },
         {
-          "path": "_vendor/font-awesome/6.4.0/webfonts/fa-brands-400.woff2",
+          "path": "vendor/font-awesome/6.4.0/webfonts/fa-brands-400.woff2",
           "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-brands-400.woff2"
         },
         {
-          "path": "_vendor/font-awesome/6.4.0/webfonts/fa-brands-400.ttf",
+          "path": "vendor/font-awesome/6.4.0/webfonts/fa-brands-400.ttf",
           "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-brands-400.ttf"
         },
         {
-          "path": "_vendor/font-awesome/6.4.0/webfonts/fa-regular-400.woff2",
+          "path": "vendor/font-awesome/6.4.0/webfonts/fa-regular-400.woff2",
           "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff2"
         },
         {
-          "path": "_vendor/font-awesome/6.4.0/webfonts/fa-regular-400.ttf",
+          "path": "vendor/font-awesome/6.4.0/webfonts/fa-regular-400.ttf",
           "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.ttf"
         },
         {
-          "path": "_vendor/font-awesome/6.4.0/webfonts/fa-solid-900.woff2",
+          "path": "vendor/font-awesome/6.4.0/webfonts/fa-solid-900.woff2",
           "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2"
         },
         {
-          "path": "_vendor/font-awesome/6.4.0/webfonts/fa-solid-900.ttf",
+          "path": "vendor/font-awesome/6.4.0/webfonts/fa-solid-900.ttf",
           "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.ttf"
         },
         {
-          "path": "_vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.woff2",
+          "path": "vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.woff2",
           "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-v4compatibility.woff2"
         },
         {
-          "path": "_vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.ttf",
+          "path": "vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.ttf",
           "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-v4compatibility.ttf"
         }
       ]
     }
   ],
   "fonts": {
-    "_doc": "A Google Fonts css2 URL in a page (https://fonts.googleapis.com/css2?family=...) is answered by a generated stylesheet _vendor/fonts/<families>.css with one @font-face per family and weight, latin subset, from the pinned @fontsource packages (the same font files, SIL OFL 1.1). A family a page asks for that is not listed here fails the regeneration.",
+    "_doc": "A Google Fonts css2 URL in a page (https://fonts.googleapis.com/css2?family=...) is answered by a generated stylesheet vendor/fonts/<families>.css with one @font-face per family and weight, latin subset, from the pinned @fontsource packages (the same font files, SIL OFL 1.1). A family a page asks for that is not listed here fails the regeneration.",
     "match_prefix": "https://fonts.googleapis.com/css2?",
     "license": "SIL OFL 1.1",
     "url": "https://cdn.jsdelivr.net/npm/@fontsource/{slug}@{version}/files/{slug}-latin-{weight}-normal.woff2",
@@ -119,27 +119,27 @@
     }
   },
   "sha256": {
-    "_vendor/chart.js/4.6.1/LICENSE.md": "41a84aa2caba645f966a18d9c2056b73e6d3a81d80bc0046bc0011a2634d4cce",
-    "_vendor/chart.js/4.6.1/chart.umd.min.js": "87364cc2b2a76a6684929e7d6b80b18a897794db38400caff1fcf1791c6925d2",
-    "_vendor/font-awesome/6.4.0/css/all.min.css": "1edb1725a9ea8ca4dcf2f5508cee183218aa1685e47c1b23056717f754f58ebf",
-    "_vendor/font-awesome/6.4.0/webfonts/fa-brands-400.ttf": "20c4a58bc9d1d69e935d06f1528923646a715be5e218665655cade8f5f1b8c00",
-    "_vendor/font-awesome/6.4.0/webfonts/fa-brands-400.woff2": "748332090c4b8e20f95d0ff59f0be20fa9c889359d3b36d4b886d73376054207",
-    "_vendor/font-awesome/6.4.0/webfonts/fa-regular-400.ttf": "528d022dce6725f8a0811fd91d8e6513445c81ef33353a5c3234eab932551abf",
-    "_vendor/font-awesome/6.4.0/webfonts/fa-regular-400.woff2": "8e7e5ea1b15f62ab14dbd41768e8fbcd21cc859a4ea5da812457ee714299fb35",
-    "_vendor/font-awesome/6.4.0/webfonts/fa-solid-900.ttf": "67a65763c7f80903d81603bbeb9049fc2bf28508479b83ed011fe24c71fa950a",
-    "_vendor/font-awesome/6.4.0/webfonts/fa-solid-900.woff2": "7152a6933ee3d690ec2af3d09da9d701723d16aa3410a6d80f28ff8866f3b880",
-    "_vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.ttf": "0515a423f828ce4e6accf92a2ea0b03d19d31cc86d9af0373291e1fd4db5f348",
-    "_vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.woff2": "694a17c3d9d6c05f8aac63c544615552a4b220e9a4de863d87341a6bcfc1bc8d",
-    "_vendor/fonts/files/cinzel-latin-500-normal.woff2": "2864b2c9db377e10db43d3ca1ab268c0e10cf3ee94b1a325d104b8e4a74dc7da",
-    "_vendor/fonts/files/cinzel-latin-700-normal.woff2": "8efa224fe70fef188a39c095e218b81fd31061809f2752537e33a9ec7b9c2263",
-    "_vendor/fonts/files/cinzel-latin-900-normal.woff2": "87128561fd042f0283e7b852af5d074154779eff37b9ad8600b331ad0ce4a6b7",
-    "_vendor/fonts/files/inter-latin-300-normal.woff2": "be0276550393a72b94d673505567dceba801511d5e1ca5a87793190dc5d5a6ca",
-    "_vendor/fonts/files/inter-latin-400-normal.woff2": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc",
-    "_vendor/fonts/files/inter-latin-500-normal.woff2": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f",
-    "_vendor/fonts/files/inter-latin-600-normal.woff2": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a",
-    "_vendor/fonts/files/inter-latin-700-normal.woff2": "6f56409fd3d64bb85f7d070bce20749db2d66b6d63cec586cc22d1c761be2491",
-    "_vendor/fonts/files/jetbrains-mono-latin-400-normal.woff2": "14425ba9c695763c1547f48a206b7aa60350a33ae23de09f0407877f3fcd89eb",
-    "_vendor/fonts/files/jetbrains-mono-latin-600-normal.woff2": "400c6bfda18d5d14acad1c15d6dcb9f8e13c015e7286317e0b9a482539bef147",
-    "_vendor/tailwindcss/3.4.17/tailwind.js": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+    "vendor/chart.js/4.6.1/LICENSE.md": "41a84aa2caba645f966a18d9c2056b73e6d3a81d80bc0046bc0011a2634d4cce",
+    "vendor/chart.js/4.6.1/chart.umd.min.js": "87364cc2b2a76a6684929e7d6b80b18a897794db38400caff1fcf1791c6925d2",
+    "vendor/font-awesome/6.4.0/css/all.min.css": "1edb1725a9ea8ca4dcf2f5508cee183218aa1685e47c1b23056717f754f58ebf",
+    "vendor/font-awesome/6.4.0/webfonts/fa-brands-400.ttf": "20c4a58bc9d1d69e935d06f1528923646a715be5e218665655cade8f5f1b8c00",
+    "vendor/font-awesome/6.4.0/webfonts/fa-brands-400.woff2": "748332090c4b8e20f95d0ff59f0be20fa9c889359d3b36d4b886d73376054207",
+    "vendor/font-awesome/6.4.0/webfonts/fa-regular-400.ttf": "528d022dce6725f8a0811fd91d8e6513445c81ef33353a5c3234eab932551abf",
+    "vendor/font-awesome/6.4.0/webfonts/fa-regular-400.woff2": "8e7e5ea1b15f62ab14dbd41768e8fbcd21cc859a4ea5da812457ee714299fb35",
+    "vendor/font-awesome/6.4.0/webfonts/fa-solid-900.ttf": "67a65763c7f80903d81603bbeb9049fc2bf28508479b83ed011fe24c71fa950a",
+    "vendor/font-awesome/6.4.0/webfonts/fa-solid-900.woff2": "7152a6933ee3d690ec2af3d09da9d701723d16aa3410a6d80f28ff8866f3b880",
+    "vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.ttf": "0515a423f828ce4e6accf92a2ea0b03d19d31cc86d9af0373291e1fd4db5f348",
+    "vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.woff2": "694a17c3d9d6c05f8aac63c544615552a4b220e9a4de863d87341a6bcfc1bc8d",
+    "vendor/fonts/files/cinzel-latin-500-normal.woff2": "2864b2c9db377e10db43d3ca1ab268c0e10cf3ee94b1a325d104b8e4a74dc7da",
+    "vendor/fonts/files/cinzel-latin-700-normal.woff2": "8efa224fe70fef188a39c095e218b81fd31061809f2752537e33a9ec7b9c2263",
+    "vendor/fonts/files/cinzel-latin-900-normal.woff2": "87128561fd042f0283e7b852af5d074154779eff37b9ad8600b331ad0ce4a6b7",
+    "vendor/fonts/files/inter-latin-300-normal.woff2": "be0276550393a72b94d673505567dceba801511d5e1ca5a87793190dc5d5a6ca",
+    "vendor/fonts/files/inter-latin-400-normal.woff2": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc",
+    "vendor/fonts/files/inter-latin-500-normal.woff2": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f",
+    "vendor/fonts/files/inter-latin-600-normal.woff2": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a",
+    "vendor/fonts/files/inter-latin-700-normal.woff2": "6f56409fd3d64bb85f7d070bce20749db2d66b6d63cec586cc22d1c761be2491",
+    "vendor/fonts/files/jetbrains-mono-latin-400-normal.woff2": "14425ba9c695763c1547f48a206b7aa60350a33ae23de09f0407877f3fcd89eb",
+    "vendor/fonts/files/jetbrains-mono-latin-600-normal.woff2": "400c6bfda18d5d14acad1c15d6dcb9f8e13c015e7286317e0b9a482539bef147",
+    "vendor/tailwindcss/3.4.17/tailwind.js": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
   }
 }

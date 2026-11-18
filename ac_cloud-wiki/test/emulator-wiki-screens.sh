@@ -51,9 +51,11 @@ dump > "$OUT/wiki-graph.xml"
 # what renders is the APK's own copy)
 wiki --es page chronos.lib;                           shot wiki-chronos 15
 dump > "$OUT/wiki-chronos.xml"
-tb=$(grep -o 'resource-id="navside_toggle"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' "$OUT/wiki-chronos.xml" | head -1 | sed -n 's/.*bounds="\[\([0-9]*\),\([0-9]*\)\]\[\([0-9]*\),\([0-9]*\)\]".*/\1 \2 \3 \4/p')
-if [ -n "$tb" ]; then set -- $tb; adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 )); shot wiki-chronos-menu 4; dump > "$OUT/wiki-chronos-menu.xml"
-else echo "no navside_toggle in the dump: wiki-chronos-menu not captured"; fi
+# tap the side menu's toggle as a dump shows it (the expanded state is a saved preference, so it is tapped again to put the rail back)
+toggle() { local tb; tb=$(grep -o 'resource-id="navside_toggle"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' "$1" | head -1 | sed -n 's/.*bounds="\[\([0-9]*\),\([0-9]*\)\]\[\([0-9]*\),\([0-9]*\)\]".*/\1 \2 \3 \4/p')
+  [ -n "$tb" ] || { echo "no navside_toggle in $1"; return 1; }; set -- $tb; adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 )); }
+if toggle "$OUT/wiki-chronos.xml"; then shot wiki-chronos-menu 4; dump > "$OUT/wiki-chronos-menu.xml"; toggle "$OUT/wiki-chronos-menu.xml"; sleep 2
+else echo "wiki-chronos-menu not captured"; fi
 wiki --es page chronos.lib.3.1;                       shot wiki-chronos-deep 20
 dump > "$OUT/wiki-chronos-deep.xml"
 adb logcat -d | grep -E "chromium|CloudWeb|Console" | tail -200 > "$OUT/wiki-chronos-webview.txt" || true

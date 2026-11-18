@@ -7,7 +7,8 @@
 # tools/regen-chronos.py and declared as nested pages under build.json::ui wiki > chronos. This proves:
 #   C1  THE TREE GUARD: the pages build.json declares are exactly the page tree of the committed assets (one per index.html, the repo's
 #       hierarchy, ids from the directory numbers, labels the pages' own <title>, icons from the pin), and every declared asset exists
-#   C2  the vendored CDN files hash to their pins, nothing vendored is unpinned, and no page or stylesheet loads from the network
+#   C2  the vendored CDN files hash to their pins, nothing vendored is unpinned, no page or stylesheet loads from the network, and no
+#       path has a segment aapt's default ignoreAssetsPattern drops (`<dir>_*`, dot files): it would be committed but missing from the APK
 #   C3  the generated tree says what it is (GENERATED.md, DO NOT EDIT, the pinned commit)
 #   C4  THE DRIFT CHECK (network): regenerating from lib-chronos at the pin gives the committed assets and declaration byte for byte
 #       (regen-chronos.py --check); the repo moving past the pin is a warning, never a silent change
@@ -109,9 +110,10 @@ mutant "a label is retyped"         "python3 -c \"$DROP;c['pages'][0]['label']='
 mutant "the hierarchy is flattened" "python3 -c \"$DROP;r=c['pages'][0];q=r['pages'][3];r['pages']+=q.pop('pages');json.dump(d,open(p,'w'),indent=2)\"" "C1 build.json::ui chronos pages"
 mutant "a page appears by hand"     "mkdir -p $A/Chronos/5.Extra && printf '<title>Extra</title>' > $A/Chronos/5.Extra/index.html"           "C1 build.json::ui chronos pages"
 mutant "an asset goes missing"      "rm $A/Chronos/2.Milkwaysphere-Orbits/index.html"                                                       "C1"
-mutant "a vendored file is edited"  "echo '//x' >> $A/_vendor/tailwindcss/3.4.17/tailwind.js"                                              "C2 vendored file _vendor/tailwindcss/3.4.17/tailwind.js does not hash"
-mutant "an unpinned vendor file"    "echo x > $A/_vendor/extra.js"                                                                          "C2 vendored file _vendor/extra.js has no sha256"
+mutant "a vendored file is edited"  "echo '//x' >> $A/vendor/tailwindcss/3.4.17/tailwind.js"                                              "C2 vendored file vendor/tailwindcss/3.4.17/tailwind.js does not hash"
+mutant "an unpinned vendor file"    "echo x > $A/vendor/extra.js"                                                                          "C2 vendored file vendor/extra.js has no sha256"
 mutant "a page loads a CDN again"   "sed -i 's|</head>|<script src=\"https://cdn.example/x.js\"></script></head>|' $A/Chronos/index.html"   "C2 Chronos/index.html loads from the network"
+mutant "a packager-ignored dir"     "mkdir -p $A/_hidden && mv $A/vendor/tailwindcss $A/_hidden/"                                       "C2 _hidden/tailwindcss/3.4.17/tailwind.js has a path segment the Android asset packager ignores"
 mutant "the header is dropped"      "echo '# hand-made' > $A/GENERATED.md"                                                                  "C3 GENERATED.md is missing"
 mutant "the web view is hand-built" "sed -i 's/CloudWeb.create(/Foo(/' $KT/ui/ChronosPage.kt"                                               "C5 the Chronos page is not the fleet web view"
 mutant "off-origin requests pass"   "sed -i 's/if (!onOrigin(u)) return blocked()/if (false) return blocked()/' $KT/ui/ChronosPage.kt"     "C5 an off-origin request is not answered 403"

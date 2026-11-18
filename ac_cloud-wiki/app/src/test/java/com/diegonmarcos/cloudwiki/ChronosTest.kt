@@ -52,7 +52,7 @@ class ChronosTest {
         assertEquals("chronos.lib.3", tree.pageAt("/chronos/Chronos/3.Quantum-Cycles/index.html")?.id)
         assertEquals("chronos.lib.3", tree.pageAt("/chronos/Chronos/3.Quantum-Cycles")?.id)
         assertEquals("chronos.lib", tree.pageAt("/chronos/Chronos/")?.id)
-        assertNull(tree.pageAt("/chronos/_vendor/chart.js/4.6.1/chart.umd.min.js"))
+        assertNull(tree.pageAt("/chronos/vendor/chart.js/4.6.1/chart.umd.min.js"))
         assertNull(tree.pageAt("/assets/Chronos/"))
         assertNull(tree.pageAt(null))
     }
@@ -60,7 +60,7 @@ class ChronosTest {
     @Test fun aRequestPathNamesItsAssetAndNeverClimbsOut() {
         assertEquals("Chronos/index.html", Chronos.assetFor("Chronos/"))
         assertEquals("index.html", Chronos.assetFor(""))
-        assertEquals("_vendor/tailwindcss/3.4.17/tailwind.js", Chronos.assetFor("_vendor/tailwindcss/3.4.17/tailwind.js"))
+        assertEquals("vendor/tailwindcss/3.4.17/tailwind.js", Chronos.assetFor("vendor/tailwindcss/3.4.17/tailwind.js"))
         assertNull(Chronos.assetFor("Chronos/../../app-perms.json"))
         assertNull(Chronos.assetFor(".."))
     }

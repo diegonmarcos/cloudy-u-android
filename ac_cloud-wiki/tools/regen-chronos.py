@@ -12,7 +12,7 @@ regen-chronos — #1789 Cloud Wiki's Chronos pages, baked into the APK from dieg
 WHAT IS WRITTEN (APP = ac_cloud-wiki):
   APP/<assets_dir>/<source_dir>/**   every file of lib-chronos <source_dir> at the pin; HTML has each pinned CDN URL replaced by the
                                      path of its vendored copy (absolute, under serve_path), nothing else changed
-  APP/<assets_dir>/_vendor/**        the CDN files the pages load (tools/chronos-pin.json vendor + fonts), sha256-pinned
+  APP/<assets_dir>/vendor/**        the CDN files the pages load (tools/chronos-pin.json vendor + fonts), sha256-pinned
   APP/<assets_dir>/GENERATED.md      what this is, the pin, the vendored sources and their licences (DO NOT EDIT)
   APP/build.json                     ui.sections[nav.section].pages[nav.parent].pages = the page tree, one page per index.html in the
                                      repo's own hierarchy: {id, label (the page's <title>), icon, asset (path under assets_dir)}
@@ -160,13 +160,13 @@ def font_css(url, pin, files, sums, repin):
         weights = [w for w in axes.split("@", 1)[1].split(";")] if "@" in axes else ["400"]
         names.append(f["slug"])
         for w in weights:
-            rel = "_vendor/fonts/files/%s-latin-%s-normal.woff2" % (f["slug"], w)
+            rel = "vendor/fonts/files/%s-latin-%s-normal.woff2" % (f["slug"], w)
             if rel not in files:
                 files[rel] = vendored(rel, fonts["url"].format(slug=f["slug"], version=f["version"], weight=w), sums, repin)
             faces.append("@font-face{font-family:'%s';font-style:normal;font-display:swap;font-weight:%s;src:url(files/%s) format('woff2')}"
                          % (fam, w, os.path.basename(rel)))
     css = "/* %s\n   %s -> @fontsource (%s) */\n%s\n" % (HEADER, url, fonts["license"], "\n".join(faces))
-    rel = "_vendor/fonts/%s.css" % "_".join(names)
+    rel = "vendor/fonts/%s.css" % "_".join(names)
     files[rel] = css.encode()
     return rel
 
@@ -227,6 +227,9 @@ def generate(pin, commit, repin=False):
         unused = sorted(set(sums) - set(files))
         if unused:
             die("pinned but no longer used by any page: %s (re-pin with --pin)" % unused)
+    skipped = sorted(p for p in files if any(seg.startswith(("_", ".")) for seg in p.split("/")))
+    if skipped:
+        die("the Android asset packager ignores these paths (a segment starts with _ or .): %s" % skipped)
     lines = ["# Chronos pages (Cloud Wiki assets)", "", HEADER, "",
              "- source: %s@%s, %s/" % (pin["repo"], commit, pin["source_dir"]),
              "- served at: https://appassets.androidplatform.net%s (WebViewAssetLoader)" % pin["serve_path"],
@@ -235,7 +238,7 @@ def generate(pin, commit, repin=False):
     for v in pin["vendor"]:
         if any(f["path"] in files for f in v["files"]):
             lines.append("- %s, %s: %s" % (v["name"], v["license"], v["match"]))
-    fonts_used = sorted(p for p in files if p.startswith("_vendor/fonts/") and p.endswith(".css"))
+    fonts_used = sorted(p for p in files if p.startswith("vendor/fonts/") and p.endswith(".css"))
     if fonts_used:
         lines.append("- Google Fonts css2 answered from @fontsource, %s: %s" % (pin["fonts"]["license"], ", ".join(os.path.basename(p) for p in fonts_used)))
     files["GENERATED.md"] = ("\n".join(lines) + "\n").encode()
@@ -352,12 +355,16 @@ def guard(pin):
         elif sha(have[rel]) != h:
             bad.append("C2 vendored file %s does not hash to its pin" % rel)
     for rel in have:
-        if rel.startswith("_vendor/") and not (rel.startswith("_vendor/fonts/") and rel.endswith(".css")) and rel not in pin.get("sha256", {}):
+        if rel.startswith("vendor/") and not (rel.startswith("vendor/fonts/") and rel.endswith(".css")) and rel not in pin.get("sha256", {}):
             bad.append("C2 vendored file %s has no sha256 in the pin" % rel)
         if rel.endswith((".html", ".htm", ".css")):
             t = have[rel].decode("utf-8", errors="replace")
             if LOADS.search(t) or CSS_URL.search(t):
                 bad.append("C2 %s loads from the network" % rel)
+    for rel in have:
+        # aapt's default ignoreAssetsPattern drops `<dir>_*` directories and dot files: such a path would be committed but never packaged
+        if any(seg.startswith(("_", ".")) for seg in rel.split("/")):
+            bad.append("C2 %s has a path segment the Android asset packager ignores (leading _ or .): it would be missing from the APK" % rel)
     if HEADER not in have.get("GENERATED.md", b"").decode():
         bad.append("C3 GENERATED.md is missing or does not carry the DO NOT EDIT header")
     elif pin["commit"] not in have["GENERATED.md"].decode():

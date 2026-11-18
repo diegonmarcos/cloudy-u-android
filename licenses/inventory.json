@@ -33,7 +33,7 @@
   },
   "maven": {
    "Apache-2.0": 257,
-   "MIT": 31,
+   "MIT": 29,
    "LicenseRef-Google-MLKit-Terms": 14,
    "NOASSERTION": 9,
    "BSD-3-Clause": 6,
@@ -4510,149 +4510,149 @@
    "licence": "Apache-2.0",
    "licence_source": "Gradle wrapper (build tool, not packaged in an APK)"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-brands-400.ttf": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-brands-400.ttf": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-brands-400.ttf"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-brands-400.ttf"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-brands-400.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-brands-400.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-brands-400.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-brands-400.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-regular-400.ttf": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-regular-400.ttf": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-regular-400.ttf"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-regular-400.ttf"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-regular-400.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-regular-400.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-regular-400.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-regular-400.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-solid-900.ttf": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-solid-900.ttf": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-solid-900.ttf"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-solid-900.ttf"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-solid-900.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-solid-900.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-solid-900.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-solid-900.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.ttf": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.ttf": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.ttf"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.ttf"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts/fa-v4compatibility.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/font-awesome/6.4.0/webfonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/font-awesome/6.4.0/webfonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/cinzel-latin-500-normal.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/cinzel-latin-500-normal.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/cinzel-latin-500-normal.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/cinzel-latin-500-normal.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/cinzel-latin-700-normal.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/cinzel-latin-700-normal.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/cinzel-latin-700-normal.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/cinzel-latin-700-normal.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/cinzel-latin-900-normal.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/cinzel-latin-900-normal.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/cinzel-latin-900-normal.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/cinzel-latin-900-normal.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/inter-latin-300-normal.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/inter-latin-300-normal.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/inter-latin-300-normal.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/inter-latin-300-normal.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/inter-latin-400-normal.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/inter-latin-400-normal.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/inter-latin-400-normal.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/inter-latin-400-normal.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/inter-latin-500-normal.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/inter-latin-500-normal.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/inter-latin-500-normal.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/inter-latin-500-normal.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/inter-latin-600-normal.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/inter-latin-600-normal.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/inter-latin-600-normal.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/inter-latin-600-normal.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/inter-latin-700-normal.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/inter-latin-700-normal.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/inter-latin-700-normal.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/inter-latin-700-normal.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/jetbrains-mono-latin-400-normal.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/jetbrains-mono-latin-400-normal.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/jetbrains-mono-latin-400-normal.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/jetbrains-mono-latin-400-normal.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts"
   },
-  "asset:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/jetbrains-mono-latin-600-normal.woff2": {
+  "asset:ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/jetbrains-mono-latin-600-normal.woff2": {
    "kind": "asset",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts/files/jetbrains-mono-latin-600-normal.woff2"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts/files/jetbrains-mono-latin-600-normal.woff2"
    ],
    "licence": "OFL-1.1",
-   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/_vendor/fonts"
+   "licence_source": "inherits ac_cloud-wiki/app/src/main/assets/chronos/vendor/fonts"
   },
   "asset:ad_Capital-Stack-FinTerminal/app/src/main/res/font/ibm_plex_sans_condensed_medium.ttf": {
    "kind": "asset",
@@ -19170,10 +19170,10 @@
    "licence": "LicenseRef-NoLicenseGranted",
    "licence_source": "licenses/curated.json"
   },
-  "vendored:ac_cloud-wiki/app/src/main/assets/chronos/_vendor/chart.js/4.6.1": {
+  "vendored:ac_cloud-wiki/app/src/main/assets/chronos/vendor/chart.js/4.6.1": {
    "kind": "vendored",
    "declared_in": [
-    "ac_cloud-wiki/app/src/main/assets/chronos/_vendor/chart.js/4.6.1/LICENSE.md"
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/chart.js/4.6.1/LICENSE.md"
    ],
    "licence": "MIT",
    "licence_source": "licenses/curated.json"
