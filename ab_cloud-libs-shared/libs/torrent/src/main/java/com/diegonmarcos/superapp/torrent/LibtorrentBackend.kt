@@ -35,7 +35,10 @@ import java.io.File
  * as soon as libtorrent has its handle (a magnet's handle appears asynchronously). Errors the session raises (tracker, web
  * seed, file, metadata, listen) are kept per torrent as the last error sentence and logged under [TAG], so a stuck download says why.
  */
-internal class LibtorrentBackend : TorrentBackend {
+internal class LibtorrentBackend(
+    /** #1790 libtorrent's own session / torrent / peer log, every alert to logcat under [TAG]. Off unless the host asks (a debug flag file). */
+    private val verbose: Boolean = false,
+) : TorrentBackend {
     private var session: SessionManager? = null
     private val known = LinkedHashSet<String>()
     private val pendingPause = HashSet<String>()
@@ -49,8 +52,9 @@ internal class LibtorrentBackend : TorrentBackend {
     // without it must get EngineState.Unavailable from start()'s catch, never an error out of TorrentEngines.get(). So the listener
     // and the watched alert types are built on first use, inside start().
     private val listener: AlertListener by lazy { object : AlertListener {
-        override fun types(): IntArray = WATCHED.map { it.swig() }.toIntArray()
+        override fun types(): IntArray? = if (verbose) null else WATCHED.map { it.swig() }.toIntArray()
         override fun alert(a: Alert<*>) {
+            if (verbose) runCatching { Log.d(TAG, "[${a.type()}] ${a.message()}") }
             runCatching {
                 when (a.type()) {
                     AlertType.LISTEN_FAILED -> { listenError = a.message(); Log.w(TAG, a.message()) }
@@ -71,7 +75,7 @@ internal class LibtorrentBackend : TorrentBackend {
 
     @Synchronized override fun start() {
         if (session?.isRunning == true) return
-        val s = SessionManager()
+        val s = SessionManager(verbose)
         s.addListener(listener)
         s.start(SessionParams(pack()))
         session = s

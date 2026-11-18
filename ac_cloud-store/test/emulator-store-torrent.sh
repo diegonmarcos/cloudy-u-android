@@ -16,6 +16,9 @@ adb install -r -g "$APK" >"$OUT/install.txt" 2>&1 || { cat "$OUT/install.txt"; e
 adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow || true
 adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS 2>/dev/null || true
 adb shell cmd deviceidle whitelist +"$PKG" >/dev/null 2>&1 || true
+# libtorrent's own log for this run (TorrentEngines.DEBUG_FLAG), so a stuck download says why
+adb shell "mkdir -p /sdcard/Android/data/$PKG/files && touch /sdcard/Android/data/$PKG/files/torrent-debug" || true
+adb logcat -G 16M >/dev/null 2>&1 || true
 adb logcat -c || true
 ACT=$(adb shell cmd package resolve-activity --brief "$PKG" | tr -d '\r' | tail -1)
 n=0

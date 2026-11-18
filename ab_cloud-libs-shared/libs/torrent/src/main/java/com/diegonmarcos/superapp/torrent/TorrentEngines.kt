@@ -5,6 +5,9 @@ import java.io.File
 
 /** The process-wide engine on Android: libtorrent session, the app's private list, preference-backed settings. */
 object TorrentEngines {
+    /** #1790 the debug flag file (in getExternalFilesDir(null)): its presence turns on libtorrent's session/torrent/peer log in logcat. */
+    const val DEBUG_FLAG = "torrent-debug"
+
     @Volatile private var engine: TorrentEngine? = null
 
     /** The one engine. Constructing it starts nothing: [TorrentEngine.start] (or the first add) loads libtorrent. */
@@ -14,7 +17,9 @@ object TorrentEngines {
 
     private fun build(app: Context): TorrentEngine {
         val dir = File(app.filesDir, "torrent")
-        return TorrentEngine(LibtorrentBackend(), FileTorrentStore(File(dir, "torrents.json")), PrefsSettings(app), File(dir, "files"))
+        // #1790 a file named torrent-debug in the app's external files dir turns on libtorrent's own log (an emulator run creates it)
+        val verbose = runCatching { java.io.File(app.getExternalFilesDir(null), DEBUG_FLAG).exists() }.getOrDefault(false)
+        return TorrentEngine(LibtorrentBackend(verbose), FileTorrentStore(File(dir, "torrents.json")), PrefsSettings(app), File(dir, "files"))
     }
 
     @Volatile private var sources: TorrentSources? = null
