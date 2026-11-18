@@ -1020,8 +1020,13 @@
       "group": "Tools/Camera"
     },
     {
-      "name": "diegonmarcos.com",
-      "url": "https://diegonmarcos.com/",
+      "name": "adsk.com",
+      "url": "https://adsk.com/",
+      "group": "Tools/Canvas"
+    },
+    {
+      "name": "imageline.com",
+      "url": "https://imageline.com/",
       "group": "Tools/Canvas"
     },
     {

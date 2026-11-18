@@ -31,6 +31,7 @@ on:
       - "1_cicd/dist/scripts/**"
       - "1_cicd/src/cicd/publish-gate-guard.yml"
       - "1_cicd/src/cicd/ship-*.yml"
+      - "1_cicd/src/data/identity-exclusions.json"
       - "1_cicd/src/scripts/**"
       - "ab_cloud-libs-shared/lib-apks/**"
       - "ab_cloud-libs-shared/libs/*/build.gradle*"

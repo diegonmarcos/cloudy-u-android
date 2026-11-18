@@ -186,6 +186,7 @@
         "1_cicd/dist/scripts/**",
         "1_cicd/src/cicd/ship-*.yml",
         "1_cicd/src/scripts/**",
+        "1_cicd/src/data/identity-exclusions.json",
         "ab_cloud-libs-shared/lib-apks/**",
         "ab_cloud-libs-shared/libs/*/build.gradle*"
       ]
