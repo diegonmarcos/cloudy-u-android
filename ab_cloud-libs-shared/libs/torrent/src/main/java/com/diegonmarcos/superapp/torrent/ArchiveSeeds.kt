@@ -30,15 +30,33 @@ object ArchiveSeeds {
 
     /**
      * The web seeds an archive.org metadata document names for [identifier]: one `http://<server><parent>/` per live server, in
-     * the document's order, no duplicates. Empty when the document has no usable `dir` or no server.
+     * the document's order, no duplicates. The item's own servers (top-level `workable_servers`, else `d1` / `d2` / `server`) go
+     * with the TOP-LEVEL `dir`; `alternate_locations` (`workable`, else `servers`) carry their own `dir` each and are used only
+     * when the item lists no server of its own. Run 44298351157 showed why the pairing matters: the alternate's `/0/items` dir
+     * read against ia601607 / ia801607 made every file a redirect to `/19/items`, and the download stalled at 84.6%.
      */
     fun fromMetadata(json: String, identifier: String): List<String> {
-        val dir = str(json, "dir") ?: return emptyList()
-        if (!dir.startsWith("/") || ".." in dir) return emptyList()
-        val parent = dir.trimEnd('/').let { if (it.endsWith("/$identifier")) it.removeSuffix(identifier) else return emptyList() }
-        val hosts = (list(json, "workable_servers") + listOfNotNull(str(json, "d1"), str(json, "d2"), str(json, "server")))
-            .map { it.trim().lowercase() }.filter { HOST.matches(it) && (it == "archive.org" || it.endsWith(".archive.org")) }.distinct()
-        return hosts.map { "http://$it$parent" }
+        val doc = runCatching { Json(json).parse() }.getOrNull() as? Map<*, *> ?: return emptyList()
+        fun hostOk(h: String) = HOST.matches(h) && (h == "archive.org" || h.endsWith(".archive.org"))
+        fun parentOf(dir: Any?): String? {
+            val d = (dir as? String)?.trimEnd('/') ?: return null
+            if (!d.startsWith("/") || ".." in d || !d.endsWith("/$identifier")) return null
+            return d.removeSuffix(identifier)
+        }
+        val own = mutableListOf<String>()
+        parentOf(doc["dir"])?.let { parent ->
+            val listed = (doc["workable_servers"] as? List<*>).orEmpty().filterIsInstance<String>()
+            val hosts = listed.ifEmpty { listOf(doc["d1"], doc["d2"], doc["server"]).filterIsInstance<String>() }
+            hosts.map { it.trim().lowercase() }.filter(::hostOk).forEach { own += "http://$it$parent" }
+        }
+        if (own.isNotEmpty()) return own.distinct()
+        val alt = doc["alternate_locations"] as? Map<*, *> ?: return emptyList()
+        val locs = (alt["workable"] as? List<*>).orEmpty().ifEmpty { (alt["servers"] as? List<*>).orEmpty() }
+        return locs.mapNotNull { l ->
+            val m = l as? Map<*, *> ?: return@mapNotNull null
+            val h = (m["server"] as? String)?.trim()?.lowercase()?.takeIf(::hostOk) ?: return@mapNotNull null
+            parentOf(m["dir"])?.let { "http://$h$it" }
+        }.distinct()
     }
 
     /** [fromMetadata] for a torrent, fetching the metadata through [get] (an https GET returning the body or null). */
@@ -65,12 +83,57 @@ object ArchiveSeeds {
         } finally { c.disconnect() }
     }
 
-    // A tiny reader for the three top-level shapes used here (string, list of strings); the metadata is plain JSON from archive.org.
-    private fun str(json: String, key: String): String? =
-        Regex(""""${Regex.escape(key)}"\s*:\s*"((?:[^"\\]|\\.)*)"""").find(json)?.groupValues?.get(1)?.replace("\\/", "/")
-
-    private fun list(json: String, key: String): List<String> {
-        val body = Regex(""""${Regex.escape(key)}"\s*:\s*\[([^\]]*)]""").find(json)?.groupValues?.get(1) ?: return emptyList()
-        return Regex(""""((?:[^"\\]|\\.)*)"""").findAll(body).map { it.groupValues[1].replace("\\/", "/") }.toList()
+    /** A small strict JSON reader (objects, arrays, strings, numbers, true / false / null) for the metadata document. */
+    private class Json(private val t: String) {
+        private var i = 0
+        fun parse(): Any? { val v = value(); ws(); require(i == t.length) { "trailing data" }; return v }
+        private fun ws() { while (i < t.length && t[i].isWhitespace()) i++ }
+        private fun value(): Any? {
+            ws(); require(i < t.length) { "end of input" }
+            return when (t[i]) {
+                '{' -> obj(); '[' -> arr(); '"' -> str()
+                't' -> lit("true", true); 'f' -> lit("false", false); 'n' -> lit("null", null)
+                else -> num()
+            }
+        }
+        private fun lit(w: String, v: Any?): Any? { require(t.startsWith(w, i)) { "bad literal" }; i += w.length; return v }
+        private fun num(): Double {
+            val s = i
+            while (i < t.length && (t[i].isDigit() || t[i] in "+-.eE")) i++
+            return t.substring(s, i).toDouble()
+        }
+        private fun obj(): Map<String, Any?> {
+            val m = LinkedHashMap<String, Any?>(); i++; ws()
+            if (t[i] == '}') { i++; return m }
+            while (true) {
+                ws(); val k = str(); ws(); require(t[i] == ':') { "expected :" }; i++
+                m[k] = value(); ws()
+                when (t[i++]) { ',' -> continue; '}' -> return m; else -> error("expected , or }") }
+            }
+        }
+        private fun arr(): List<Any?> {
+            val l = ArrayList<Any?>(); i++; ws()
+            if (t[i] == ']') { i++; return l }
+            while (true) {
+                l += value(); ws()
+                when (t[i++]) { ',' -> continue; ']' -> return l; else -> error("expected , or ]") }
+            }
+        }
+        private fun str(): String {
+            require(t[i] == '"') { "expected string" }; i++
+            val sb = StringBuilder()
+            while (true) {
+                val c = t[i++]
+                when (c) {
+                    '"' -> return sb.toString()
+                    '\\' -> when (val e = t[i++]) {
+                        'n' -> sb.append('\n'); 't' -> sb.append('\t'); 'r' -> sb.append('\r'); 'b' -> sb.append('\b'); 'f' -> sb.append('\u000C')
+                        'u' -> { sb.append(t.substring(i, i + 4).toInt(16).toChar()); i += 4 }
+                        else -> sb.append(e)
+                    }
+                    else -> sb.append(c)
+                }
+            }
+        }
     }
 }
