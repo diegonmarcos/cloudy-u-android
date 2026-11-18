@@ -15,6 +15,15 @@ fun interface DeliveryStatusSource {
     suspend fun fetch(key: DeliveryKey): ServerDeliveryReport?
 }
 
+/**
+ * The test build's seam (src/navWalk only): a scripted source bound here answers instead of the
+ * fleet mail API, so the emulator proof can show every stage without a live server. Null in the
+ * real app, always.
+ */
+object DeliveryStatusBinding {
+    @Volatile var scripted: DeliveryStatusSource? = null
+}
+
 /** One sent message: the account it went from, and its RFC 5322 Message-ID (the server's key). */
 data class DeliveryKey(val accountId: String, val messageId: String)
 

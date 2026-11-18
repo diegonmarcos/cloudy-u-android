@@ -406,3 +406,14 @@ val MIGRATION_30_31 = object : Migration(30, 31) {
         db.execSQL("ALTER TABLE emails ADD COLUMN fromDomain TEXT")
     }
 }
+
+/**
+ * v31 -> v32 (#1802): the message's RFC 5322 Message-ID, so a Sent row can ask the fleet mail API for its delivery
+ * stages without opening the message. One nullable column, no rewrite: NULL means "not known yet", and the next
+ * sync of the folder fills it (every list fetch now asks for it).
+ */
+val MIGRATION_31_32 = object : Migration(31, 32) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE emails ADD COLUMN messageId TEXT")
+    }
+}

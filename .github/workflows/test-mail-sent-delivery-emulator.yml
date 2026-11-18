@@ -1,0 +1,141 @@
+name: "Test -> Cloud Mail Sent delivery ticker (emulator screenshots: Sent list at every stage incl. X, tap detail, reader timeline)"
+
+# #1802: build the Cloud Mail test variant (-PtestApp), seed one offline account with one Sent mail per delivery scene
+# (--ez sent true) and bind the SCRIPTED delivery-status source (--ez deliverystatus true; src/navWalk ScriptedDeliveryStatus
+# answers by Message-ID: delivered, accepted by relay, deferred, bounced, bad sender, refused at submission, no record).
+# Opens the Sent folder from the drawer and shoots the list (four marks after each sent time, an X on each failing stage),
+# taps the bounced row's ticker for the stage detail, then opens the bounced mail and shoots the reader's stage timeline.
+# Dispatch only; nothing is published, nothing is sent (the seeded account points at an unresolvable host).
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  mail-sent-delivery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build the test variant
+        run: |
+          set -eu
+          cd ac_cloud-mail
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:assembleDebug -PtestApp
+          apk=$(find app/build/outputs/apk/debug -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no APK built"; exit 1; }
+          cp "$apk" "$GITHUB_WORKSPACE/app-under-test.apk"
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          echo "PKG=$("$AAPT" dump packagename "$GITHUB_WORKSPACE/app-under-test.apk")" >> "$GITHUB_ENV"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the scene script
+        run: |
+          cat > walk.sh <<'SH'
+          set -u
+          mkdir -p walk-out
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          adb shell settings put secure screensaver_enabled 0 || true
+          adb shell svc power stayon true || true
+          sleep 45 # let the launcher settle after boot
+          adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          wake() { adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1; }
+          shot() { wake; adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "walk-out/$1.png"; }
+          dump() { wake; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "walk-out/$1.xml"; }
+          # tap <text> [sub]: the first node whose text or content-desc equals <text> (or contains it, with "sub").
+          tap() {
+            dump tap-scan
+            xy=$(python3 -I - "$1" "${2:-exact}" walk-out/tap-scan.xml <<'PY'
+          import re, sys
+          want, mode, xml = sys.argv[1], sys.argv[2], open(sys.argv[3], encoding="utf-8").read()
+          for m in re.finditer(r'<node [^>]*>', xml):
+              n = m.group(0)
+              t = re.search(r' text="([^"]*)"', n); d = re.search(r' content-desc="([^"]*)"', n)
+              vals = ((t.group(1) if t else ""), (d.group(1) if d else ""))
+              if (want in vals) if mode == "exact" else any(want in v for v in vals):
+                  b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+                  x1, y1, x2, y2 = map(int, b.groups()); print((x1 + x2) // 2, (y1 + y2) // 2); break
+          PY
+            )
+            [ -n "$xy" ] || return 1
+            adb shell input tap $xy
+          }
+          has() { grep -q "$1" "walk-out/$2.xml" && echo "$2 has: $1" >> walk-out/summary.txt || echo "$2 MISSING: $1" >> walk-out/summary.txt; }
+          adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --ez sent true --ez deliverystatus true
+          sleep 3
+          adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
+          sleep 15
+          # The scripted source lives in the process: bind it again in the running app.
+          adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --ez deliverystatus true
+          sleep 2
+          shot 00-inbox; dump 00-inbox
+          ok=0
+          for i in 1 2 3; do
+            adb shell input swipe 5 1200 900 1200 300; sleep 3
+            shot 01-drawer; dump 01-drawer
+            tap "Sent" && { ok=1; break; }
+            adb shell input keyevent KEYCODE_BACK; sleep 2
+          done
+          [ "$ok" = 1 ] || { echo "::error::no Sent folder in the drawer"; exit 1; }
+          sleep 8
+          shot 02-sent-list; dump 02-sent-list
+          for s in "Delivered to every recipient" "Accepted by the relay" "Deferred by the recipient" "Bounced: no such user" "Sender not authorised" "Refused at submission" "No server record yet"; do has "$s" 02-sent-list; done
+          for v in "Sent: done" "Sent: delayed" "Sent: failed" "Valid sender: failed" "Server received: failed" "Server received: pending" "Sent: not reached"; do has "$v" 02-sent-list; done
+          # The bounced row's X: its ticker opens the stage detail with the reason and the recipient's outcome.
+          tap "Sent: failed" sub || { echo "::error::no bounced X to tap"; exit 1; }
+          sleep 3; shot 03-bounced-detail; dump 03-bounced-detail
+          for s in "Delivery" "Bounced: nobody@example.net" "550 5.1.1 no such user" "SMTP 550" "mx.example.net" "Message ID: &lt;bounced@navwalk.invalid&gt;"; do has "$s" 03-bounced-detail; done
+          tap "Close" || adb shell input keyevent KEYCODE_BACK; sleep 2
+          # The relay row's detail: pending 4th mark with "accepted by relay".
+          tap "Accepted by the relay, awaiting confirmation" && true
+          adb shell input keyevent KEYCODE_BACK; sleep 2
+          # Open the bounced mail: the reader shows the stage timeline with timestamps under its header.
+          tap "Bounced: no such user" || { echo "::error::bounced row not found"; exit 1; }
+          sleep 6; shot 04-reader-timeline; dump 04-reader-timeline
+          for s in "Left the phone — done" "Server received — done" "Valid sender — done" "Sent — failed" "550 5.1.1 no such user"; do has "$s" 04-reader-timeline; done
+          adb shell input keyevent KEYCODE_BACK; sleep 3
+          shot 05-sent-list-again
+          timeout 60 adb logcat -d -v threadtime "*:W" > walk-out/logcat.txt || true
+          cat walk-out/summary.txt
+          ! grep -q "MISSING" walk-out/summary.txt || echo "::warning::some expected text was not in the dumps (see summary.txt and the screenshots)"
+          SH
+          chmod +x walk.sh
+
+      - name: Boot emulator + scenes
+        timeout-minutes: 40
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-sent-delivery-evidence
+          path: walk-out
+          if-no-files-found: warn

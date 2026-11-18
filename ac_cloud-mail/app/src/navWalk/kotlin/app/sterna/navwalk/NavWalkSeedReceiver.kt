@@ -35,6 +35,12 @@ class NavWalkSeedReceiver : BroadcastReceiver() {
             app.sterna.ui.compose.RecipientChecks.checker = ScriptedRecipientChecker
             Log.i(TAG, "recipient check: scripted checker bound")
         }
+        // #1802: `--ez deliverystatus true` binds the scripted delivery-status source (one scene per Sent mail, see
+        // ScriptedDeliveryStatus), before the already-seeded return so it can be sent on its own too.
+        if (intent.getBooleanExtra("deliverystatus", false)) {
+            app.sterna.send.delivery.DeliveryStatusBinding.scripted = ScriptedDeliveryStatus
+            Log.i(TAG, "delivery status: scripted source bound")
+        }
         val store = (context.applicationContext as Application).container.accountStore
         if (store.hasAccount()) { Log.i(TAG, "seeded: an account is already present"); return }
         val id = store.add(
@@ -110,6 +116,43 @@ class NavWalkSeedReceiver : BroadcastReceiver() {
                             )
                         }
                     }
+                }
+                // #1802: `--ez sent true` caches one Sent mail per ScriptedDeliveryStatus scene, each with its own Message-ID, so
+                // the Sent list shows the delivery ticker at every stage (and one X per failing stage).
+                if (intent.getBooleanExtra("sent", false)) {
+                    val now = System.currentTimeMillis()
+                    val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+                    db.emailDao().upsertAll(ScriptedDeliveryStatus.SCENES.mapIndexed { i, (scene, subject) ->
+                        EmailEntity(
+                            id = "navwalk-s$i", accountId = id, mailboxId = "navwalk-sent", threadId = "navwalk-st$i",
+                            subject = subject, preview = "Sent mail for the $scene stage scene",
+                            receivedAt = java.time.Instant.ofEpochMilli(now - (i + 1) * 600_000L).toString(),
+                            fromName = "Nav walk", fromEmail = "walk@navwalk.invalid", fromDomain = "navwalk.invalid",
+                            seen = true, flagged = false, hasAttachment = false, sortKey = now - (i + 1) * 600_000L,
+                            recipientsJson = app.sterna.core.data.db.EmailRecipients.encode(listOf(app.sterna.core.jmap.model.EmailAddress(name = "Robin", email = "robin@example.net"))),
+                            messageId = "<$scene@navwalk.invalid>",
+                        )
+                    })
+                    // The bounced one's body too, so the reader opens it offline and shows the stage timeline.
+                    val b = ScriptedDeliveryStatus.SCENES.indexOfFirst { it.first == "bounced" }
+                    val email = app.sterna.core.jmap.model.Email(
+                        id = "navwalk-s$b", accountId = id, mailboxId = "navwalk-sent", threadId = "navwalk-st$b",
+                        subject = ScriptedDeliveryStatus.SCENES[b].second,
+                        receivedAt = java.time.Instant.ofEpochMilli(now - (b + 1) * 600_000L).toString(),
+                        from = listOf(app.sterna.core.jmap.model.EmailAddress(name = "Nav walk", email = "walk@navwalk.invalid")),
+                        to = listOf(app.sterna.core.jmap.model.EmailAddress(name = "Robin", email = "robin@example.net")),
+                        messageId = listOf("<bounced@navwalk.invalid>"),
+                        keywords = mapOf("\$seen" to true),
+                        textBody = listOf(app.sterna.core.jmap.model.EmailBodyPart(partId = "text", type = "text/plain")),
+                        bodyValues = mapOf("text" to app.sterna.core.jmap.model.EmailBodyValue(value = "This one bounced: the timeline shows where.")),
+                    )
+                    db.emailBodyDao().upsert(
+                        app.sterna.core.data.db.EmailBodyEntity(
+                            id = email.id, accountId = id,
+                            bodyJson = json.encodeToString(app.sterna.core.jmap.model.Email.serializer(), email),
+                            inlineImagesJson = "{}", fetchedAt = now,
+                        ),
+                    )
                 }
                 // #1768: `--ei archive K` caches K Archive messages (no body yet): the background full sync has to fill a folder that is
                 // not the inbox. The newest one is ciphertext (its body is stored raw and must never trigger a key import).

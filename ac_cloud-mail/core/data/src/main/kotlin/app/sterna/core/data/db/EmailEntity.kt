@@ -51,4 +51,6 @@ data class EmailEntity(
     // Schema v31: the sender's registrable domain ("Group by Domain", [app.sterna.core.data.mail.SenderDomain]);
     // "" when the From address has none, NULL = not indexed yet.
     val fromDomain: String? = null,
+    /** Schema v32 (#1802): the RFC 5322 Message-ID, the key the fleet mail API files a SENT message under. NULL = not known. */
+    val messageId: String? = null,
 )

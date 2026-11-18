@@ -928,6 +928,8 @@ internal fun ImapMessage.toEntity(
         authClass = AuthIndex.indexed(subject, preview),
         // Schema v31: the sender's registrable domain, column for column with [EmailMapper].
         fromDomain = SenderDomain.indexed(fromEmail),
+        // Schema v32 (#1802): the envelope Message-ID, column for column with [EmailMapper].
+        messageId = messageId?.takeIf { it.isNotBlank() },
     )
 }
 

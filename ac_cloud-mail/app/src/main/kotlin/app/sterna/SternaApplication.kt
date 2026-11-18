@@ -94,9 +94,11 @@ class AppContainer(context: Context) {
     /** #1802 The Sent rows' delivery stages: the fleet mail API's own records, cached per message
      *  (mesh first, public hub path with the fleet bearer as fallback). */
     val deliveryStatus: app.sterna.send.delivery.DeliveryStatusRepository =
-        app.sterna.send.delivery.DeliveryStatusRepository(
-            app.sterna.send.delivery.FleetDeliveryStatusSource(com.diegonmarcos.superapp.fleetendpoints.FleetTransport.bearers),
-        )
+        app.sterna.send.delivery.FleetDeliveryStatusSource(com.diegonmarcos.superapp.fleetendpoints.FleetTransport.bearers).let { fleet ->
+            app.sterna.send.delivery.DeliveryStatusRepository({ key ->
+                (app.sterna.send.delivery.DeliveryStatusBinding.scripted ?: fleet).fetch(key)
+            })
+        }
 
     /** UnifiedPush transport state machine (issue #17); inert without a distributor. */
     val unifiedPushManager: UnifiedPushManager = UnifiedPushManager(

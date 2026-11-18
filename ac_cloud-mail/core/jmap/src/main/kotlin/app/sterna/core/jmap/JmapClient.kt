@@ -2605,6 +2605,8 @@ class JmapClient internal constructor(
             "id", "threadId", "subject", "preview",
             "receivedAt", "from", "replyTo", "to", "cc", "bcc",
             "hasAttachment", "keywords", "attachments",
+            // #1802: the Message-ID goes on the cached row (schema v32): a Sent row's delivery-status key.
+            "messageId",
         )
 
                 /**

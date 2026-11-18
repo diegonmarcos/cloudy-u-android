@@ -84,6 +84,8 @@ internal fun Email.toEntity(accountId: String, mailboxId: String): EmailEntity {
         authClass = AuthIndex.indexed(subject, preview),
         // Schema v31: the sender's registrable domain ("Group by Domain"), from the same address as fromEmail.
         fromDomain = SenderDomain.indexed(sender?.email),
+        // Schema v32 (#1802): the Message-ID, the fleet mail API's key for a sent message's delivery stages.
+        messageId = messageId.firstOrNull()?.takeIf { it.isNotBlank() },
     )
 }
 
@@ -101,6 +103,7 @@ internal fun EmailEntity.toEmail(): Email = Email(
         emptyList()
     },
     to = EmailRecipients.decode(recipientsJson),
+    messageId = listOfNotNull(messageId),
     // Persisted since v20: a row cached before the column existed, or a message with no
     // Reply-To at all, is NULL and decodes to an empty list — "no instruction, answer the sender".
     replyTo = EmailRecipients.decode(replyToJson),
