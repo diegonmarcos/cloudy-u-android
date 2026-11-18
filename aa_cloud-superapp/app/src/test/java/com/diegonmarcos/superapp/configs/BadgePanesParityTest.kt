@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.unit.DpRect
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
@@ -73,7 +75,8 @@ class BadgePanesParityTest : KitPageHarness() {
     }
 
     private fun has(tag: String) = compose.onAllNodesWithTag(tag, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-    private fun bounds(tag: String): Rect = compose.onAllNodesWithTag(tag, useUnmergedTree = true).fetchSemanticsNodes().first().boundsInRoot
+    /** Unclipped: a row below the test window still has its real place (boundsInRoot clips it to an empty rect). */
+    private fun bounds(tag: String): DpRect = compose.onAllNodesWithTag(tag, useUnmergedTree = true)[0].getUnclippedBoundsInRoot()
 
     @Test fun `the declared parity list is the pre-reorg pane, and only owner-ordered fields left it`() {
         assertEquals("BadgePanes.PREVIOUS_FIELDS must list every pre-#1794 field", PREVIOUS, BadgePanes.PREVIOUS_FIELDS)
@@ -113,7 +116,7 @@ class BadgePanesParityTest : KitPageHarness() {
         for (b in badges()) {
             val t = bounds("badge-title:${b.id}"); val s = bounds("badge-state:${b.id}")
             assertTrue("${b.id}: state not on the title's row ($t / $s)", s.top < t.bottom && t.top < s.bottom)
-            assertTrue("${b.id}: state not right of the title", s.left >= t.right - 1f)
+            assertTrue("${b.id}: state not right of the title", s.left >= t.right - 1.dp)
         }
     }
 
@@ -121,7 +124,7 @@ class BadgePanesParityTest : KitPageHarness() {
         render()
         val sections = badgeSections(ctx)
         assertTrue(sections.count { it.title.isNotBlank() } >= 2)
-        var lastTop = -1f
+        var lastTop = (-1).dp
         for (s in sections) {
             if (s.title.isNotBlank()) {
                 assertTrue("no header for ${s.id}", has("badge-setting-section:${s.id}"))
