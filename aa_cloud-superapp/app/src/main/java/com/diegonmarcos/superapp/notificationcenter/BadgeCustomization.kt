@@ -55,10 +55,21 @@ object BadgeCustomization {
     // themselves, so a typo in one of them is a badge that silently stops
     // coming back.
 
-    /** Owner switch. A badge switched off here is not posted and not
-     *  re-ensured after an update. #777: so is a badge whose GROUP is off. */
+    /**
+     * Owner switch ("Show this badge"). A badge switched off here is not posted and not re-ensured after an update.
+     *
+     * #1794 THE ONE SOURCE: the Configs switch draws this, the status line ([BadgeServices.status]) reads this and the
+     * posting decision ([BadgeServices.wanted], [BadgeServices.ensureAll], the producers) reads this. It used to AND in a
+     * per-group switch (`notify_groups:<group>.enabled`, #777) whose UI #1603b removed: a group switched off by an older
+     * build stayed off with no control left to turn it back on, so every member read "OFF · Switched off below" under an
+     * ON switch and nothing reached the shade. A group's on/off is now DERIVED from its members ([NotifyGroups.isEnabled])
+     * and the stale stored key is cleared ([NotifyGroups.clearStaleGroupSwitches]).
+     */
     fun isEnabled(ctx: Context, badge: Badge): Boolean =
-        badge.enabled && bool(ctx, badge, KEY_ENABLED) && NotifyGroups.allows(ctx, badge.id)
+        badge.enabled && bool(ctx, badge, KEY_ENABLED)
+
+    /** Write the owner switch. The caller applies it ([NotifyGroups.apply]); this only stores. */
+    fun setEnabled(ctx: Context, badge: Badge, on: Boolean) = set(ctx, badge, KEY_ENABLED, on)
 
     /**
      * Whether the badge holds its place in the shade when it has nothing to

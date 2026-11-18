@@ -26,10 +26,11 @@ import com.diegonmarcos.superapp.notificationcenter.BadgeDeclaration.Group
  * one bundle per group. Before this each badge carried a group of its own
  * ("nc_markets", "nc_kde", …), which Android draws as seven loose rows.
  *
- * What the owner sets per group — on/off and order — lives here. A group
- * switched off switches its members off ([BadgeCustomization.isEnabled] asks
- * [allows]), so the restart path, the Launch button and the producers all
- * obey it without knowing groups exist.
+ * What the owner sets per group is its order, stored here. #1794: a group's
+ * on/off is NOT stored any more: it is derived from its members' own switches
+ * ([isEnabled]), and switching a group writes those switches ([setEnabled]).
+ * One stored answer per badge, so the Configs switch, the status line and the
+ * posting decision cannot disagree.
  *
  * ORDER, honestly: Android ranks notifications across groups itself (by
  * importance, ongoing state and recency of the best member), and an app
@@ -55,15 +56,34 @@ object NotifyGroups {
     private fun prefs(ctx: Context) =
         ctx.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    fun isEnabled(ctx: Context, g: Group): Boolean = prefs(ctx).getBoolean("${g.id}.enabled", true)
+    /** The group's declared members that are badges, resolved against the declaration. */
+    private fun memberBadges(g: Group) = g.members.mapNotNull { id -> BadgeServices.declared.firstOrNull { it.id == id } }
 
+    /**
+     * #1794 derived, never stored: a group is on while at least one member's own switch is on. A group whose members
+     * are not badges of this declaration (nothing to switch) is on.
+     */
+    fun isEnabled(ctx: Context, g: Group): Boolean {
+        val m = memberBadges(g)
+        return m.isEmpty() || m.any { BadgeCustomization.isEnabled(ctx, it) }
+    }
+
+    /** Switch a whole group: writes every member's own switch (the one source), then applies it. */
     fun setEnabled(ctx: Context, g: Group, on: Boolean) {
-        prefs(ctx).edit().putBoolean("${g.id}.enabled", on).apply()
+        for (b in memberBadges(g)) BadgeCustomization.setEnabled(ctx, b, on)
         apply(ctx)
     }
 
-    /** Does [badgeId]'s group let it into the shade? A badge in no group: yes. */
-    fun allows(ctx: Context, badgeId: String): Boolean = groupOf(badgeId)?.let { isEnabled(ctx, it) } ?: true
+    /**
+     * #1794 drop the `<group>.enabled` keys the #777 group switches stored. Nothing reads them any more; removing them
+     * keeps the store holding only what is read (the order). Returns how many were removed. Idempotent.
+     */
+    fun clearStaleGroupSwitches(ctx: Context): Int {
+        val p = prefs(ctx)
+        val stale = p.all.keys.filter { it.endsWith(".enabled") }
+        if (stale.isNotEmpty()) p.edit().apply { stale.forEach { remove(it) } }.apply()
+        return stale.size
+    }
 
     /** The owner's order: saved ids first, then any group declared since, in
      *  declared order. A saved id no longer declared is simply skipped. */

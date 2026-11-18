@@ -1,0 +1,226 @@
+# #1794 Cloud SuperApp Notify badges on an emulator: the persistent badges reach the shade under their switches.
+# Runs the x86_64 APK a Ship Cloud SuperApp run built (debug build, run-as) and proves, with `dumpsys notification`
+# after each step and a screenshot of the pulled-down shade:
+#   0. the owner's stored state that broke it (every #777 group switch OFF, every badge switch ON) posts the badges;
+#   1. Notify > Configs "Turn all badges on / off" OFF takes every badge out of the shade;
+#   2. turned back ON puts them back;
+#   3. one badge's "Show this badge" OFF removes just that badge; ON posts it again.
+# Also shoots Notify > Configs (the grouped list, state on the title's row) and Notify > All with every badge row in each
+# of its three states (collapsed, first shade state, second shade state), driven by the rows' own right-side arrows.
+# Evidence: notify-badges-evidence (PNGs, dumpsys per step, uiautomator XML, verdict.txt). The job fails on a failed check.
+name: "Test -> SuperApp Notify badges in the shade (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      superapp_run_id:
+        description: "Ship Cloud SuperApp run id whose x86_64 APK artifact to test"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  shade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout the badge declaration
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: aa_cloud-superapp/build.json
+          sparse-checkout-cone-mode: false
+      - name: Fetch the Cloud SuperApp APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          W_RUN: ${{ inputs.superapp_run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          gh api "repos/$REPO/actions/runs/$W_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-SuperApp")) | .name' |
+          while read -r name; do gh run download "$W_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          pick=""
+          for want in x86_64 universal ''; do
+            pick=$(find apk -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no Cloud SuperApp APK"; exit 1; }
+          cp "$pick" superapp.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the scripts
+        run: |
+          # ui.py: find a node in a uiautomator dump and print its centre ("x y"), or the declared badges.
+          cat > ui.py <<'PY'
+          import json, re, sys
+          def nodes(path):
+              x = open(path, encoding="utf-8", errors="replace").read()
+              for m in re.finditer(r"<node [^>]*>", x):
+                  a = dict(re.findall(r'([\w-]+)="([^"]*)"', m.group(0)))
+                  b = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", a.get("bounds", ""))
+                  if b: a["_b"] = tuple(map(int, b.groups())); yield a
+          def centre(a): x1, y1, x2, y2 = a["_b"]; return "%d %d" % ((x1 + x2) // 2, (y1 + y2) // 2)
+          cmd = sys.argv[1]
+          if cmd == "text":          # ui.py text dump.xml "Label" [n]   -> n-th node whose text matches (case-insensitive)
+              want = sys.argv[3].lower(); n = int(sys.argv[4]) if len(sys.argv) > 4 else 0
+              hits = sorted((a for a in nodes(sys.argv[2]) if a.get("text", "").strip().lower() == want), key=lambda a: a["_b"][1])
+              print(centre(hits[n]) if len(hits) > n else "")
+          elif cmd == "below":       # ui.py below dump.xml "Anchor" "Label"  -> first Label node below the Anchor node
+              anchor = [a for a in nodes(sys.argv[2]) if a.get("text", "").strip() == sys.argv[3]]
+              if not anchor: print(""); sys.exit()
+              y0 = anchor[0]["_b"][1]
+              hits = sorted((a for a in nodes(sys.argv[2]) if a.get("text", "").strip() == sys.argv[4] and a["_b"][1] > y0), key=lambda a: a["_b"][1])
+              print(centre(hits[0]) if hits else "")
+          elif cmd == "desc":        # ui.py desc dump.xml "Expand" n  -> n-th node with that content-desc, top to bottom
+              hits = sorted((a for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3]), key=lambda a: a["_b"][1])
+              n = int(sys.argv[4]); print(centre(hits[n]) if len(hits) > n else "")
+          elif cmd == "count-desc":
+              print(sum(1 for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3]))
+          elif cmd == "badges":      # ui.py badges build.json -> "id<TAB>channel<TAB>label" per persistent badge
+              for p in json.load(open(sys.argv[2]))["ui"]["notification_center"]["producers"]:
+                  if p.get("badge") and p.get("channel"): print("%s\t%s\t%s" % (p["id"], p["channel"], p["label"]))
+          PY
+          # posted.py: the channels this package has in the shade right now, from `dumpsys notification --noredact`.
+          cat > posted.py <<'PY'
+          import re, sys
+          pkg = sys.argv[2]; out = set()
+          for l in open(sys.argv[1], encoding="utf-8", errors="replace"):
+              if "NotificationRecord(" in l and ("pkg=%s " % pkg) in l:
+                  m = re.search(r"channel=(\S+)", l)
+                  if m: out.add(m.group(1))
+          print(" ".join(sorted(out)))
+          PY
+          cat > shoot.sh <<'EOF2'
+          set -u
+          mkdir -p out
+          : > out/verdict.txt
+          fails=0
+          check() { if [ "$1" = ok ]; then echo "PASS $2" | tee -a out/verdict.txt; else echo "FAIL $2" | tee -a out/verdict.txt; fails=$((fails+1)); fi; }
+          adb install -r -g superapp.apk || exit 2
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          PKG=$("$aapt2" dump packagename superapp.apk)
+          ACT=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
+          adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+          adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+          adb shell settings put global hide_error_dialogs 1 || true
+          adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
+          adb shell locksettings set-disabled true || true
+          for p in POST_NOTIFICATIONS ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION; do adb shell pm grant "$PKG" android.permission.$p || true; done
+          adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW allow || true
+          awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; }
+          dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "out/$1.xml" >/dev/null 2>&1; }
+          shade() { adb shell cmd statusbar expand-notifications; sleep 3; adb exec-out screencap -p > "out/shade-$1.png"; adb shell cmd statusbar collapse; sleep 1; }
+          posted() { adb shell dumpsys notification --noredact > "out/dumpsys-$1.txt"; python3 posted.py "out/dumpsys-$1.txt" "$PKG"; }
+          tap() { [ -n "$1" ] && adb shell input tap $1; }
+          python3 ui.py badges aa_cloud-superapp/build.json > badges.tsv; cat badges.tsv
+          CHANNELS=$(cut -f2 badges.tsv | sort -u | tr '\n' ' ')
+          in_shade() { n=0; for c in $CHANNELS; do case " $1 " in *" $c "*) n=$((n+1));; esac; done; echo $n; }
+          awake
+
+          # 0. the owner's state: every group switch stored OFF by an older build (#777), no badge switch touched (= ON).
+          adb shell am force-stop "$PKG"
+          python3 - > groups.xml <<'PY'
+          import json
+          g = json.load(open("aa_cloud-superapp/build.json"))["ui"]["notification_center"]["groups"]
+          print('<?xml version="1.0" encoding="utf-8" standalone="yes" ?><map>' + "".join('<boolean name="%s.enabled" value="false" />' % x["id"] for x in g) + "</map>")
+          PY
+          adb push groups.xml /data/local/tmp/notify_groups.xml
+          adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/notify_groups.xml shared_prefs/notify_groups.xml && rm -f shared_prefs/badge_customization.xml'" || echo "run-as failed"
+          adb shell am start -W -n "$ACT" >/dev/null; sleep 25; awake
+          p0=$(posted start); n0=$(in_shade "$p0"); echo "start: $p0"
+          [ "$n0" -ge 3 ] && check ok "0 stale group switches OFF, badge switches ON: $n0 badge channels in the shade ($p0)" || check no "0 stale group switches: only $n0 badge channels in the shade ($p0)"
+          shade 0-start
+
+          # Configs on a tall display so the whole list is one screen.
+          adb shell wm size 1080x7600; sleep 4
+          adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 10; awake; sleep 2
+          adb exec-out screencap -p > out/configs-tall.png; dump configs-0
+
+          # 1. Turn all OFF.
+          tap "$(python3 ui.py text out/configs-0.xml 'Turn all badges on / off')"; sleep 10
+          p1=$(posted all-off); n1=$(in_shade "$p1"); echo "all off: $p1"
+          [ "$n1" -eq 0 ] && check ok "1 Turn all OFF: no badge in the shade" || check no "1 Turn all OFF: $n1 badge channels still in the shade ($p1)"
+          adb exec-out screencap -p > out/configs-all-off.png
+          adb shell wm size reset; sleep 3; shade 1-all-off; adb shell wm size 1080x7600; sleep 3
+
+          # 2. Turn all ON.
+          adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 6; dump configs-1
+          tap "$(python3 ui.py text out/configs-1.xml 'Turn all badges on / off')"; sleep 25
+          p2=$(posted all-on); n2=$(in_shade "$p2"); echo "all on: $p2"
+          [ "$n2" -ge 3 ] && check ok "2 Turn all ON: $n2 badge channels back in the shade ($p2)" || check no "2 Turn all ON: only $n2 badge channels in the shade ($p2)"
+          adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 8
+          adb exec-out screencap -p > out/configs-all-on.png; dump configs-2
+          adb shell wm size reset; sleep 3; shade 2-all-on; adb shell wm size 1080x7600; sleep 3
+
+          # 3. One badge: the first declared badge that is in the shade now.
+          tid=""; for row in $(cut -f1 badges.tsv); do ch=$(grep -P "^$row\t" badges.tsv | cut -f2); case " $p2 " in *" $ch "*) tid=$row; break;; esac; done
+          if [ -n "$tid" ]; then
+            tch=$(grep -P "^$tid\t" badges.tsv | cut -f2); tlabel=$(grep -P "^$tid\t" badges.tsv | cut -f3)
+            adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 6; dump configs-3
+            tap "$(python3 ui.py below out/configs-3.xml "$tlabel" 'Show this badge')"; sleep 10
+            p3=$(posted one-off); echo "$tid off: $p3"
+            case " $p3 " in *" $tch "*) check no "3 '$tlabel' Show this badge OFF: channel $tch still in the shade";; *) check ok "3 '$tlabel' Show this badge OFF: channel $tch left the shade";; esac
+            others=$(in_shade "$p3"); [ "$others" -ge 1 ] && check ok "3 the other badges stayed ($others)" || check no "3 switching one badge off took the others too"
+            adb shell wm size reset; sleep 3; shade 3-one-off; adb shell wm size 1080x7600; sleep 3
+            adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 6; dump configs-4
+            tap "$(python3 ui.py below out/configs-4.xml "$tlabel" 'Show this badge')"; sleep 20
+            p4=$(posted one-on); echo "$tid on: $p4"
+            case " $p4 " in *" $tch "*) check ok "3 '$tlabel' Show this badge ON: channel $tch back in the shade";; *) check no "3 '$tlabel' Show this badge ON: channel $tch not posted";; esac
+            adb shell wm size reset; sleep 3; shade 4-one-on; adb shell wm size 1080x7600; sleep 3
+          else check no "3 no badge was in the shade to switch"; fi
+          adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 8
+          adb exec-out screencap -p > out/configs-final-tall.png
+          adb shell wm size reset; sleep 3
+          adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 6
+          adb exec-out screencap -p > out/configs.png
+
+          # All: every badge row in each of its three states, moved by its own right-side arrow.
+          adb shell wm size 1080x7600; sleep 4
+          adb shell am start -n "$ACT" --es shortcut_action page:communication/my-rss >/dev/null; awake; sleep 10; awake; sleep 2
+          dump all-1; adb exec-out screencap -p > out/all-1-collapsed-tall.png
+          rows=$(python3 ui.py count-desc out/all-1.xml Expand); echo "All rows with an arrow: $rows"
+          [ "$rows" -ge 3 ] && check ok "All: $rows badge rows carry the expand arrow" || check no "All: only $rows expand arrows"
+          for stage in 2-first 3-second; do
+            i=0; while [ "$i" -lt "$rows" ]; do dump all-step; tap "$(python3 ui.py desc out/all-step.xml Expand "$i")"; sleep 2; i=$((i+1)); done
+            sleep 3; dump "all-$stage"; adb exec-out screencap -p > "out/all-$stage-tall.png"
+          done
+          left=$(python3 ui.py count-desc out/all-3-second.xml Expand); coll=$(python3 ui.py count-desc out/all-3-second.xml Collapse)
+          [ "$coll" -ge "$rows" ] && [ "$left" -eq 0 ] && check ok "All: every row reached its second state ($coll)" || check no "All: second state reached by $coll of $rows rows"
+          # one more arrow step folds a row back
+          tap "$(python3 ui.py desc out/all-3-second.xml Collapse 0)"; sleep 3; dump all-4
+          [ "$(python3 ui.py count-desc out/all-4.xml Expand)" -ge 1 ] && check ok "All: the arrow folds a row back to collapsed" || check no "All: the arrow did not fold the row"
+          adb shell wm size reset; sleep 3
+          # phone-size shots of the three states, a row at a time from the top
+          adb shell run-as "$PKG" rm -f shared_prefs/notify_all_badge_stage.xml || true
+          adb shell am force-stop "$PKG"; adb shell am start -n "$ACT" --es shortcut_action page:communication/my-rss >/dev/null; awake; sleep 12; awake
+          adb exec-out screencap -p > out/all-1-collapsed.png
+          for stage in 2-first 3-second; do
+            for i in 0 1 2; do dump all-p; tap "$(python3 ui.py desc out/all-p.xml Expand "$i")"; sleep 2; done
+            sleep 2; adb exec-out screencap -p > "out/all-$stage.png"
+          done
+          timeout 60 adb logcat -d > out/logcat.txt || true
+          cat out/verdict.txt
+          [ "$fails" -eq 0 ]
+          EOF2
+          chmod +x shoot.sh
+      - name: Boot emulator and prove
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_7
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash shoot.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: notify-badges-evidence
+          path: out/
+          if-no-files-found: warn

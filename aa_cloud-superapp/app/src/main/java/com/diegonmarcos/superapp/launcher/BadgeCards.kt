@@ -26,6 +26,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -77,6 +81,12 @@ internal object BadgeCardTags {
     /** #1672 one ongoing line of a badge in the All page's summary. */
     fun summary(id: String) = "badge-summary:$id"
     const val SUMMARY = "badge-summary"
+    /** #1794 the All page summary: a category subtitle, a badge's whole box, its arrow, and its two shade states. */
+    fun summarySection(groupId: String) = "badge-summary-section:$groupId"
+    fun summaryBox(id: String) = "badge-summary-box:$id"
+    fun summaryArrow(id: String) = "badge-summary-arrow:$id"
+    fun summaryFirst(id: String) = "badge-summary-first:$id"
+    fun summarySecond(id: String) = "badge-summary-second:$id"
     /** #1672 the Media badge's MediaHub session line. */
     fun mediaHub(id: String) = "badge-media-hub:$id"
 }
@@ -146,11 +156,17 @@ internal fun BadgeCards(summary: Boolean = false) {
             modifier = Modifier.padding(start = 4.dp, top = 2.dp).testTag(BadgeCardTags.TITLE))
         if (summary) {
             // #1672 the All page: the persistent badges as Android shows ongoing items - one line each, on top, in
-            // section order; the full cards are the Persistent Badges sub-page.
-            Column(Modifier.fillMaxWidth().clip(NotifCard.shape).background(NotifCard.surface).testTag(BadgeCardTags.SUMMARY)) {
-                for ((i, d) in sections.flatMap { it.second }.withIndex()) androidx.compose.runtime.key(d.badge.id) {
-                    if (i > 0) Box(Modifier.padding(horizontal = NotifCard.pad).fillMaxWidth().height(0.7.dp).background(NotifCard.divider))
-                    SummaryBadgeLine(d)
+            // section order; the full cards are the Persistent Badges sub-page. #1794 grouped under the same declared
+            // categories (a subtitle per section), and each line opens in two steps to the badge's two shade states.
+            Column(Modifier.fillMaxWidth().testTag(BadgeCardTags.SUMMARY), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                for ((s, cards) in sections) androidx.compose.runtime.key(s.id) {
+                    if (s.title.isNotBlank()) SectionHeader(s.title, BadgeCardTags.summarySection(s.id))
+                    Column(Modifier.fillMaxWidth().clip(NotifCard.shape).background(NotifCard.surface)) {
+                        for ((i, d) in cards.withIndex()) androidx.compose.runtime.key(d.badge.id) {
+                            if (i > 0) Box(Modifier.padding(horizontal = NotifCard.pad).fillMaxWidth().height(0.7.dp).background(NotifCard.divider))
+                            SummaryBadgeLine(d)
+                        }
+                    }
                 }
             }
             Box(Modifier.height(NotifCard.gap))
@@ -304,7 +320,11 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
     }
 }
 
-/** #1672 one ongoing line: tinted icon, name, key value, live dot. Tapping it does what the badge's notification does. */
+/**
+ * #1672 one ongoing line: tinted icon, name, key value, live dot. Tapping it does what the badge's notification does.
+ * #1794 three states ([BadgeExpansion]): this line alone (COLLAPSED), then the badge's first shade state under it, then
+ * its expanded shade state. Only the arrow on the right and a swipe down on the box move it; the line's tap is unchanged.
+ */
 @Composable
 private fun SummaryBadgeLine(d: BadgeCardData.Data) {
     val ctx = LocalContext.current
@@ -312,18 +332,91 @@ private fun SummaryBadgeLine(d: BadgeCardData.Data) {
     val accent = accentOf(d)
     val icon = remember(d.badge.icon) { Sections.iconResFor(ctx, d.badge.icon) }
     val tap = d.open
-    Row(
-        Modifier.fillMaxWidth().then(if (tap != null) Modifier.clickable { Haptics.tap(hostView); runCatching { tap.send() } } else Modifier)
-            .padding(start = NotifCard.pad, end = NotifCard.pad, top = 9.dp, bottom = 9.dp).testTag(BadgeCardTags.summary(d.badge.id)),
-        verticalAlignment = Alignment.CenterVertically,
+    var stage by androidx.compose.runtime.remember(d.badge.id) {
+        androidx.compose.runtime.mutableStateOf(BadgeExpansion.stage(ctx, d.badge.id))
+    }
+    val step: () -> Unit = {
+        Haptics.tap(hostView); stage = BadgeExpansion.next(stage); BadgeExpansion.set(ctx, d.badge.id, stage)
+    }
+    val swipePx = with(androidx.compose.ui.platform.LocalDensity.current) { 48.dp.toPx() }
+    Column(
+        Modifier.fillMaxWidth()
+            // A swipe DOWN on the box: watched on the Initial pass and never consumed, so the line's tap and the page's
+            // own scroll keep working; only a finished, mostly vertical, long enough downward drag takes the step.
+            .pointerInput(d.badge.id) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    var last = down.position
+                    while (true) {
+                        val ev = awaitPointerEvent(PointerEventPass.Initial)
+                        val c = ev.changes.firstOrNull { it.id == down.id } ?: break
+                        last = c.position
+                        if (!c.pressed) break
+                    }
+                    if (BadgeExpansion.isSwipeDown(last.y - down.position.y, last.x - down.position.x, swipePx)) step()
+                }
+            }
+            .testTag(BadgeCardTags.summaryBox(d.badge.id)),
     ) {
-        Icon(painterResource(icon), null, tint = accent, modifier = Modifier.size(NotifCard.headerIcon))
-        Text(d.appName, color = NotifCard.meta, fontSize = NotifCard.nameSp, fontFamily = NotifCard.font, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp).widthIn(max = 120.dp))
-        Text(d.headline.ifBlank { if (d.live) "live" else "not posted" }, color = NotifCard.title, fontSize = NotifCard.bodySp,
-            fontWeight = FontWeight.Medium, fontFamily = NotifCard.font, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).padding(start = 10.dp))
-        Box(Modifier.padding(start = 6.dp).size(8.dp).clip(CircleShape).background(if (d.live) accent else NotifCard.pill))
+        Row(
+            Modifier.fillMaxWidth().then(if (tap != null) Modifier.clickable { Haptics.tap(hostView); runCatching { tap.send() } } else Modifier)
+                .padding(start = NotifCard.pad, end = 10.dp, top = 9.dp, bottom = 9.dp).testTag(BadgeCardTags.summary(d.badge.id)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(painterResource(icon), null, tint = accent, modifier = Modifier.size(NotifCard.headerIcon))
+            Text(d.appName, color = NotifCard.meta, fontSize = NotifCard.nameSp, fontFamily = NotifCard.font, maxLines = 1,
+                overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp).widthIn(max = 120.dp))
+            Text(d.headline.ifBlank { if (d.live) "live" else "not posted" }, color = NotifCard.title, fontSize = NotifCard.bodySp,
+                fontWeight = FontWeight.Medium, fontFamily = NotifCard.font, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).padding(start = 10.dp))
+            Box(Modifier.padding(start = 6.dp).size(8.dp).clip(CircleShape).background(if (d.live) accent else NotifCard.pill))
+            StageArrow(d.badge.id, stage, step)
+        }
+        when (stage) {
+            BadgeExpansion.Stage.COLLAPSED -> Unit
+            BadgeExpansion.Stage.FIRST -> ShadeState(d, expanded = false, tag = BadgeCardTags.summaryFirst(d.badge.id))
+            BadgeExpansion.Stage.SECOND -> ShadeState(d, expanded = true, tag = BadgeCardTags.summarySecond(d.badge.id))
+        }
+    }
+}
+
+/** #1794 the right-side arrow of an All-page badge line: one step of [BadgeExpansion.next]. */
+@Composable
+private fun StageArrow(id: String, stage: BadgeExpansion.Stage, onClick: () -> Unit) {
+    Box(
+        Modifier.padding(start = 8.dp).size(28.dp).clip(CircleShape).background(NotifCard.pill)
+            .semantics { role = Role.Button; contentDescription = BadgeExpansion.describe(stage) }
+            .clickable(onClick = onClick).testTag(BadgeCardTags.summaryArrow(id)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(BadgeExpansion.glyph(stage), color = NotifCard.title, fontSize = 14.sp, fontFamily = NotifCard.font)
+    }
+}
+
+/**
+ * #1794 the badge AS THE NOTIFICATION CENTRE SHOWS IT: the platform's own template for the badge's posted notification
+ * ([BadgeServices.live] → [BadgeServices.view]), its collapsed content view for the first state and its expanded one for
+ * the second — the same RemoteViews the shade inflates, so this cannot drift from the shade. A badge with nothing posted
+ * has no template to show: its own data lines stand in, under a note saying it is not in the shade.
+ */
+@Composable
+private fun ShadeState(d: BadgeCardData.Data, expanded: Boolean, tag: String) {
+    val ctx = LocalContext.current
+    val live = remember(d.badge.id, d.live) { BadgeServices.live(ctx, d.badge) }
+    val rendered = remember(live, expanded) { live?.let { BadgeServices.view(ctx, it, null, expanded) } }
+    Column(Modifier.fillMaxWidth().padding(start = NotifCard.pad, end = NotifCard.pad, bottom = 10.dp).testTag(tag)) {
+        if (rendered != null) Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(NotifCard.pill)) {
+            androidx.compose.ui.viewinterop.AndroidView(modifier = Modifier.fillMaxWidth(), factory = { rendered })
+        } else {
+            Text(if (d.live) "Posted" else "Not in the shade right now", color = NotifCard.meta, fontSize = NotifCard.metaSp,
+                fontFamily = NotifCard.font, maxLines = 1)
+            val sub = d.sub.ifBlank { d.note }
+            if (sub.isNotBlank()) Text(sub, color = NotifCard.body, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font,
+                maxLines = if (expanded) 4 else 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+            if (expanded) for (l in d.lines) Text(listOf(l.label, l.value).filter { it.isNotBlank() }.joinToString("  "),
+                color = if (l.alert) BADGE_ALERT else NotifCard.body, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font,
+                maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+        }
     }
 }
 

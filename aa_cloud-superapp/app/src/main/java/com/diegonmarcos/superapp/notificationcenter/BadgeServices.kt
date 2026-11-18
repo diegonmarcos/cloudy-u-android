@@ -72,6 +72,8 @@ object BadgeServices {
     fun ensureAll(ctx: Context): List<String> {
         val app = ctx.applicationContext
         val started = mutableListOf<String>()
+        // #1794 a group switch an older build stored must not outlive the UI that set it.
+        runCatching { NotifyGroups.clearStaleGroupSwitches(app) }
         for (fqcn in BadgeDeclaration.restartServices(declared)) {
             // A service is ensured only if at least one badge it owns has its
             // grants. Starting FloatingNavService with no overlay permission
@@ -218,9 +220,11 @@ object BadgeServices {
      * badge looks like. The expanded layout, as that is what carries the
      * action row. Null if the platform cannot build one.
      */
-    fun view(ctx: Context, n: Notification, parent: ViewGroup?): View? = runCatching {
+    fun view(ctx: Context, n: Notification, parent: ViewGroup?, expanded: Boolean = true): View? = runCatching {
         val b = Notification.Builder.recoverBuilder(ctx, n)
-        (b.createBigContentView() ?: b.createContentView()).apply(ctx, parent)
+        // #1794 [expanded] = false is the badge's FIRST state in the shade (the collapsed row the platform draws before
+        // the owner pulls it open); true is its second, expanded state, the one that carries the action row.
+        (if (expanded) b.createBigContentView() ?: b.createContentView() else b.createContentView()).apply(ctx, parent)
     }.getOrNull()
 
     fun statuses(ctx: Context): List<Status> =
