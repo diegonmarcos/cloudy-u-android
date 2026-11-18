@@ -74,10 +74,28 @@ jobs:
             [ -n "$xy" ] || return 1
             adb shell input tap $xy
           }
-          # leave a composer: Back hides the keyboard, Back again asks, Discard drops it
+          # tap the first node whose TEXT (not content-desc) equals $1: the dialog's button, never the composer's X
+          taptext() {
+            dump tap-scan
+            xy=$(python3 -I - "$1" walk-out/tap-scan.xml <<'PY'
+          import re, sys
+          want, xml = sys.argv[1], open(sys.argv[2], encoding="utf-8").read()
+          for m in re.finditer(r'<node [^>]*>', xml):
+              n = m.group(0); t = re.search(r' text="([^"]*)"', n)
+              if t and t.group(1) == want:
+                  b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+                  x1, y1, x2, y2 = map(int, b.groups()); print((x1 + x2) // 2, (y1 + y2) // 2); break
+          PY
+            )
+            [ -n "$xy" ] || return 1
+            adb shell input tap $xy
+          }
+          # leave a composer: hide the keyboard, close with the X, then the dialog's Discard (by its text)
           leave() {
-            adb shell input keyevent KEYCODE_BACK; sleep 1; adb shell input keyevent KEYCODE_BACK; sleep 2
-            tap "Discard" || true; sleep 2
+            adb shell input keyevent KEYCODE_BACK; sleep 1
+            tap "Discard" || adb shell input keyevent KEYCODE_BACK; sleep 2
+            for i in 1 2 3; do taptext "Discard" && break; sleep 2; done
+            sleep 3
           }
           # the signature's words are on screen (the WebView exposes its text to the accessibility tree)
           sigcheck() { grep -q 'Whatsapp' "walk-out/$1.xml" && grep -q 'GitHub' "walk-out/$1.xml" && echo "$1: signature on screen" >> walk-out/summary.txt || echo "$1: signature words not in the accessibility dump (see the screenshot)" >> walk-out/summary.txt; }
@@ -108,8 +126,9 @@ jobs:
           tap "Scan a QR code for recipients"; sleep 6
           shot 06b-qr-camera; dump 06b-qr-camera
           adb shell input keyevent KEYCODE_CAMERA; sleep 4; shot 06c-qr-shutter; dump 06c-qr-shutter
-          for b in "Done" "OK" "Shutter done" "Done button"; do tap "$b" && break; done
-          sleep 3; shot 06d-qr-result; dump 06d-qr-result
+          tap "Done" || echo "camera had no Done button" >> walk-out/summary.txt
+          # the composer's answer is a toast: shoot it as it appears
+          for i in 1 2 3 4 5 6; do sleep 1; shot 06d-qr-result-$i; done; dump 06d-qr-result
           adb shell input keyevent KEYCODE_BACK; sleep 2
           dump after-qr; grep -q 'New mail' walk-out/after-qr.xml || adb shell input keyevent KEYCODE_BACK
           leave
