@@ -1217,6 +1217,25 @@ class Walk:
             self.run_page(sid, pid, label, True, up)
 
     def run(self):
+        if self.cfg.get("scenes_only"):
+            # nav-walk-apps.json `scenes_only` (#1717): an app whose whole UI is its own full-screen shell (Cloud Notes: the vault) has no
+            # shared bars, so there is no launch check, section walk or Configs walk: only its scenes are photographed (and a scene that
+            # finds nothing is reported, never silent).
+            import signal
+
+            def _alarm_scenes(_sig, _frm):
+                raise SectionTimeout("scenes exceeded their time budget")
+
+            signal.signal(signal.SIGALRM, _alarm_scenes)
+            signal.alarm(max(SECTION_BUDGET, 90 * len(self.cfg.get("scenes") or [1]) * len(self.cfg.get("scene_themes", ["dark", "light"]))))
+            try:
+                self.run_scenes()
+            except Exception as ex:  # evidence only: a driver fault is reported, never silent
+                self.results.append({"section": "scene", "page": "-", "label": "scenes", "status": "SKIP", "checks": {"note": "scene driver error: %r" % ex},
+                                     "failures": [], "seconds": 0})
+            finally:
+                signal.alarm(0)
+            self.report()
         if self.launch() is None:
             self.evidence("launch")
             seen = " ".join(n.text for n in (dump() or []) if n.text)
