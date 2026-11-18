@@ -7,10 +7,10 @@
         "ab_cloud-libs-shared/libs/core/src/main/java/com/diegonmarcos/superapp/core/FleetAlerts.kt"
       ],
       "expect": {
-        "apps": 43,
+        "apps": 44,
         "libs": 0,
         "rootfs": 0,
-        "ship": 44,
+        "ship": 45,
         "refresh": 0
       }
     },
@@ -20,10 +20,10 @@
         "ab_cloud-libs-shared/libs/devtools/src/main/java/com/diegonmarcos/superapp/devtools/AppDebugServer.kt"
       ],
       "expect": {
-        "apps": 43,
+        "apps": 44,
         "libs": 0,
         "rootfs": 0,
-        "ship": 44,
+        "ship": 45,
         "refresh": 0
       }
     },
@@ -55,15 +55,15 @@
     },
     {
       "id": "libs/bottomnav (39 consumers via libs:ui-nav-bars, #1360)",
-      "_doc": "#1630 40 -> 42 apps (ship ceiling 41 -> 43): Cloud Chat and Cloud Office link libs:ui-nav-bars for the fleet Configs tail (24e8e5a92, 1bb3090a8), and libs:ui-nav-bars compiles libs:bottomnav, so a bottom-nav edit now rebuilds those two as well. A static lib edit starts every app that compiles it: the count follows the consumers, it is not a widened trigger.",
+      "_doc": "#1630 40 -> 42 apps (ship ceiling 41 -> 43): Cloud Chat and Cloud Office link libs:ui-nav-bars for the fleet Configs tail (24e8e5a92, 1bb3090a8), and libs:ui-nav-bars compiles libs:bottomnav, so a bottom-nav edit now rebuilds those two as well. A static lib edit starts every app that compiles it: the count follows the consumers, it is not a widened trigger. #1780 +1 app (ship ceiling +1): the new Cloud Canvas app compiles this lib, a real consumer.",
       "files": [
         "ab_cloud-libs-shared/libs/bottomnav/src/main/java/com/diegonmarcos/superapp/bottomnav/BottomNav.kt"
       ],
       "expect": {
-        "apps": 42,
+        "apps": 43,
         "libs": 0,
         "rootfs": 0,
-        "ship": 43,
+        "ship": 44,
         "refresh": 0
       }
     },
@@ -213,15 +213,15 @@
     },
     {
       "id": "fleet-config policy (libs/fleetconfig-model, one source file)",
-      "_doc": "#825 the manifest parsing + migration policy: the engine APK and its one in-app reader, the SuperApp (it plans the fleet with it). Was every app. #873 libs:core now `api`s this module (the setup provider every app serves), so the other 30 apps compile it too: a push still ships ONE app (the primary consumer, lib-primary-consumers.json) and the rest are picked up by the scheduled fleet refresh (refresh 31 at #873, 33 once bae72bf03 gave keyboard-engines and cloud-office the module too), never per push.",
+      "_doc": "#825 the manifest parsing + migration policy: the engine APK and its one in-app reader, the SuperApp (it plans the fleet with it). Was every app. #873 libs:core now `api`s this module (the setup provider every app serves), so the other 30 apps compile it too: a push still ships ONE app (the primary consumer, lib-primary-consumers.json) and the rest are picked up by the scheduled fleet refresh (refresh 31 at #873, 33 once bae72bf03 gave keyboard-engines and cloud-office the module too), never per push. #1780 +1 app (ship ceiling +1): the new Cloud Canvas app compiles this lib, a real consumer.",
       "files": [
         "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/java/com/diegonmarcos/superapp/fleetconfig/FleetPolicy.kt"
       ],
       "expect": {
-        "apps": 43,
+        "apps": 44,
         "libs": 0,
         "rootfs": 0,
-        "ship": 44,
+        "ship": 45,
         "refresh": 0
       }
     },
