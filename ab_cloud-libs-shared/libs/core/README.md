@@ -65,3 +65,5 @@ namespace is `eu.faircode.email` but whose applicationId is
 all, so the override is silently skipped and the derived default is used
 instead. That is the intended degradation, not a bug: the derived default is
 always a reachable, correct endpoint.
+
+<!-- #1783 P3 proof: a documentation-only edit in a shared lib starts the ship runs but changes no publish identity. -->
