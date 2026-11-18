@@ -86,7 +86,9 @@ jobs:
           adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
           sleep 15
           shot 00-inbox; dump 00-inbox
-          tap "Compose" || { echo "::error::no Compose button"; exit 1; }
+          # the FAB animates in after the list: retry, then its known place (bottom-right) as the fallback
+          ok=0; for i in 1 2 3 4; do tap "Compose" && { ok=1; break; }; sleep 4; done
+          [ "$ok" = 1 ] || { echo "Compose not in the dump; tapping the FAB position" >> walk-out/summary.txt; adb shell input tap 910 1921; }
           sleep 8
           shot 01-new; dump 01-new; sigcheck 01-new
           grep -q 'New mail' walk-out/01-new.xml || { echo "::error::New mail did not open"; exit 1; }
@@ -111,16 +113,19 @@ jobs:
           adb shell input keyevent KEYCODE_BACK; sleep 2
           dump after-qr; grep -q 'New mail' walk-out/after-qr.xml || adb shell input keyevent KEYCODE_BACK
           leave
-          tap "Seed message 3 of 3" || { echo "::error::no seeded message in the list"; exit 1; }
+          ok=0; for i in 1 2 3; do tap "Seed message 3 of 3" && { ok=1; break; }; sleep 3; done
+          [ "$ok" = 1 ] || { echo "::error::no seeded message in the list"; exit 1; }
           sleep 6
           shot 02a-reader; dump 02a-reader
-          tap "Reply" || { echo "::error::no Reply action"; exit 1; }
+          ok=0; for i in 1 2 3; do tap "Reply" && { ok=1; break; }; sleep 3; done
+          [ "$ok" = 1 ] || { echo "::error::no Reply action"; exit 1; }
           sleep 8
           shot 02-reply; dump 02-reply; sigcheck 02-reply
           leave
           sleep 2; dump back-in-reader
           grep -q 'Forward' walk-out/back-in-reader.xml || { tap "Seed message 3 of 3" || true; sleep 6; }
-          tap "Forward" || { echo "::error::no Forward action"; exit 1; }
+          ok=0; for i in 1 2 3; do tap "Forward" && { ok=1; break; }; sleep 3; done
+          [ "$ok" = 1 ] || { echo "::error::no Forward action"; exit 1; }
           sleep 8
           shot 03-forward; dump 03-forward; sigcheck 03-forward
           # the formatting bar shows while the body has the focus: tap into the body and shoot the bar too
