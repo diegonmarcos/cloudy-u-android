@@ -476,7 +476,7 @@ class ImageEngineTest {
         assertTrue(img.budget.dailyUsdCap > 0)
         assertFalse(img.suppress.metered)
         assertTrue(img.suppress.offline)
-        assertEquals(2, Policy.CONTRACT)
+        assertEquals(3, Policy.CONTRACT)
         assertEquals(Policy.CONTRACT, Fixtures.realManifest().getInt("contract"))
     }
 }

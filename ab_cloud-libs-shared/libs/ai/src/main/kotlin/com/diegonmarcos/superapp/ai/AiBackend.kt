@@ -159,3 +159,39 @@ class AiOpenRouterBackend(cfg: AiConfig, private val title: String, private val 
         if (r.code !in 200..299) emptyList() else AiProtocol.parseModels(r.body, cfg.nativeWebParam)
     }.getOrDefault(emptyList())
 }
+
+/**
+ * #1801 OpenRouter WITHOUT a key on this side: every chat goes through [relay], which hands the body to the fleet's AI-key
+ * owner engine (DecisionsLink.relay in the app) and returns the provider's status code and body. The engine adds the key;
+ * this backend, the app and libs:ai never see it. The body, the parse and every error wording are [AiChatBackend]'s, so a
+ * relayed chat reads exactly like the direct one; it answers whole (the relay does not stream). [refused] is the engine's
+ * refusal (no engine, no key, ...) as the sentence the page shows, or null when the call was made.
+ */
+class AiRelayBackend(cfg: AiConfig, private val relay: AiRelay) : AiChatBackend(cfg, RelayHttp(relay)) {
+    override val id: String get() = cfg.openRouterId
+    override val openRouter: Boolean get() = true
+    override fun url(req: AiRequest) = cfg.chatUrl
+    override fun headers(req: AiRequest): Map<String, String> = mapOf("Content-Type" to "application/json")
+    override fun model(req: AiRequest): String? = req.model
+
+    /** The catalogue is public: listed straight from OpenRouter, no key. */
+    override fun models(): List<AiModel> = runCatching {
+        val r = AiUrlHttp.get(cfg.modelsUrl, emptyMap(), cfg.timeoutMs)
+        if (r.code !in 200..299) emptyList() else AiProtocol.parseModels(r.body, cfg.nativeWebParam)
+    }.getOrDefault(emptyList())
+
+    private class RelayHttp(private val relay: AiRelay) : AiHttp {
+        override fun get(url: String, headers: Map<String, String>, timeoutMs: Int): AiHttp.Response = AiUrlHttp.get(url, headers, timeoutMs)
+        override fun post(url: String, headers: Map<String, String>, body: String, timeoutMs: Int, onChunk: ((String) -> Unit)?): AiHttp.Response {
+            val r = relay.post(body)
+            // A refusal is not an HTTP answer: it surfaces as a transport failure carrying the engine's sentence.
+            r.refused?.let { throw IllegalStateException(it) }
+            return AiHttp.Response(r.code, r.body)
+        }
+    }
+}
+
+/** One relayed POST: the provider's [code] and [body], or [refused] (the engine's sentence) when the call was not made. */
+class AiRelayed(val code: Int, val body: String, val refused: String? = null)
+
+fun interface AiRelay { fun post(body: String): AiRelayed }

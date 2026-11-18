@@ -83,10 +83,13 @@ class Policy private constructor(
     /** #1799 the image block (decisions.json::image); null when it is absent or does not validate ([imageProblem] says why). */
     val image: ImagePolicy? = null,
     val imageProblem: String? = null,
+    /** #1801 the relay block (decisions.json::relay); null when it is absent or does not validate ([relayProblem] says why). */
+    val relay: RelayPolicy? = null,
+    val relayProblem: String? = null,
 ) {
     companion object {
-        /** #1799 2: the image method. Matches the service's CONTRACT meta-data. */
-        const val CONTRACT = 2
+        /** #1799 2: the image method. #1801 3: relay and keys (the engine holds the provider key). Matches the service's CONTRACT meta-data. */
+        const val CONTRACT = 3
 
         /** [d] is the whole decisions.json document. */
         fun parse(d: JSONObject): Policy {
@@ -123,11 +126,14 @@ class Policy private constructor(
             // #1799 an image block that does not validate serves no image use; the decisions are not affected.
             val imageBlock = d.optJSONObject("image")
             val image = imageBlock?.let { runCatching { ImagePolicy.parse(it, sensitive) } }
+            // #1801 likewise a relay block that does not validate serves no relay use.
+            val relay = d.optJSONObject("relay")?.let { runCatching { RelayPolicy.parse(it, sensitive) } }
             return Policy(
                 endpoint, model, provider, timeout, budget, suppress, breaker, redact,
                 d.optJSONArray("consent_setters").strings().toSet(), sensitive,
                 d.optInt("cache_max", 128), d.optInt("journal_max", 500), uses, rejected,
                 image?.getOrNull(), image?.exceptionOrNull()?.let { it.message ?: it.javaClass.simpleName },
+                relay?.getOrNull(), relay?.exceptionOrNull()?.let { it.message ?: it.javaClass.simpleName },
             )
         }
 

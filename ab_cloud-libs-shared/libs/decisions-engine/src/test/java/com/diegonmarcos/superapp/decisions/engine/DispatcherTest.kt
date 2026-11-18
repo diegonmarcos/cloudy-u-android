@@ -8,6 +8,8 @@ import com.diegonmarcos.superapp.decisions.core.Engine
 import com.diegonmarcos.superapp.decisions.core.Env
 import com.diegonmarcos.superapp.decisions.core.ImageEngine
 import com.diegonmarcos.superapp.decisions.core.Journal
+import com.diegonmarcos.superapp.decisions.core.KeyBook
+import com.diegonmarcos.superapp.decisions.core.RelayEngine
 import com.diegonmarcos.superapp.decisions.core.Ledger
 import com.diegonmarcos.superapp.decisions.core.MemorySink
 import com.diegonmarcos.superapp.decisions.core.MemoryStore
@@ -152,14 +154,69 @@ class DispatcherTest {
         assertTrue(u.getBoolean("consent"))
         assertFalse(JSONObject(di.status(self)).getJSONObject("image").getJSONObject("uses").getJSONObject("canvas_enhance").getBoolean("allowed_for_app"))
         assertFalse(JSONObject(d.status(canvas)).has("image"))
-        assertEquals(2, s.getInt("contract"))
+        assertEquals(3, s.getInt("contract"))
     }
 
     @Test fun theManifestDeclaresTheContractThePolicyServes() {
         val mf = File("src/main/AndroidManifest.xml").readText()
         assertTrue(mf.contains("android:name=\"com.diegonmarcos.cloud.engine.CONTRACT\"\n                android:value=\"${Policy.CONTRACT}\""))
         val svc = File("src/main/java/com/diegonmarcos/superapp/decisions/engine/DecisionsEngineService.kt").readText()
-        assertTrue(svc.contains("arrayOf(DECIDE, STATUS, CONSENT, OUTCOME, IMAGE)"))
+        assertTrue(svc.contains("arrayOf(DECIDE, STATUS, CONSENT, OUTCOME, IMAGE, RELAY, KEYS)"))
         assertTrue(svc.contains("const val IMAGE = \"image\""))
+        assertTrue(svc.contains("const val RELAY = \"relay\""))
+        assertTrue(svc.contains("const val KEYS = \"keys\""))
+        // #1801 the AI keys screen every consumer links to, under the action DecisionsLink opens.
+        assertTrue(mf.contains("android:name=\"com.diegonmarcos.superapp.decisions.engine.KeysActivity\""))
+        assertTrue(mf.contains("<action android:name=\"\${applicationId}.AI_KEYS\" />"))
+    }
+
+    // ── #1801 the relay and the key book ──
+
+    private val calc = "com.diegonmarcos.cloudcalc"
+    private val keyBook = KeyBook(MemoryStore())
+    private var relayToken: String? = null
+    private var relayUrl: String? = null
+    private val relayHttp = object : Http {
+        override fun send(url: String, token: String?, body: String?, timeoutMs: Int): Http.Response {
+            relayToken = token
+            relayUrl = url
+            return Http.Response(200, "{\"answers\":{}}")
+        }
+    }
+    private val relayEngine = RelayEngine(policy.relay, relayHttp, keyBook, env,
+        Ledger(MemoryStore(), policy.relay!!.budget, clock), CircuitBreaker(3, 1000, clock), consent, journal, clock)
+    private val dr = Dispatcher({ engine }, { images }, { relayEngine }, { keyBook })
+    private val jev = JSONObject().put("use", "calc_jev").put("endpoint", "decisions").toString()
+
+    @Test fun relayAddsTheKeyHeldHereForTheDeclaredAppOnly() {
+        assertEquals("no_key", dr.relay(calc, jev, "{}".toByteArray()).answer.getString("reason"))
+        keyBook.set("openrouter", "sk-test-0123456789abcdef")
+        val a = dr.relay(calc, jev, "{\"model\":\"m\"}".toByteArray())
+        assertTrue(a.answer.toString(), a.answer.getBoolean("ok"))
+        assertEquals(200, a.answer.getInt("code"))
+        assertEquals("sk-test-0123456789abcdef", relayToken)
+        assertEquals("https://openrouter.ai/api/alpha/decisions", relayUrl)
+        assertFalse(a.answer.toString().contains("sk-test"))
+        assertEquals("app_not_allowed", dr.relay("com.some.other.app", jev, "{}".toByteArray()).answer.getString("reason"))
+        assertEquals("bad_request", JSONObject(dr.relayWithoutFiles()).getString("reason"))
+        assertEquals("no_policy", di.relay(calc, jev, "{}".toByteArray()).answer.getString("reason"))
+        assertTrue(JSONObject(dr.status(calc)).getJSONObject("relay").getBoolean("served"))
+        assertFalse(JSONObject(di.status(calc)).has("relay"))
+    }
+
+    @Test fun keysSaysPresenceAndHintNeverTheKey() {
+        keyBook.set("openrouter", "sk-test-0123456789abcdef")
+        val k = JSONObject(dr.keys("pkg.AI_KEYS"))
+        assertTrue(k.getBoolean("ok"))
+        assertEquals("pkg.AI_KEYS", k.getString("settings_action"))
+        val p = k.getJSONArray("providers").getJSONObject(0)
+        assertEquals("openrouter", p.getString("id"))
+        assertEquals("OpenRouter", p.getString("label"))
+        assertTrue(p.getBoolean("key_present"))
+        assertEquals("cdef", p.getString("key_hint"))
+        assertFalse(k.toString().contains("sk-test"))
+        assertEquals("no_policy", JSONObject(di.keys("x")).getString("reason"))
+        val noRelay = JSONObject(Dispatcher({ engine }, { images }, { null }, { keyBook }).keys("x"))
+        assertEquals("openrouter", noRelay.getJSONArray("providers").getJSONObject(0).getString("id"))
     }
 }

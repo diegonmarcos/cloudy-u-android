@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- libs:decisions-engine — the DECISIONS ENGINE (#881), shipped only as Cloud-Lib-Decisions-Engine.apk.
      Apps compile libs:decisions-link (the contract half) and hand this service one decision request per
-     call; it asks the model from THIS process, with the Account's token it read here. -->
+     call; it asks the model from THIS process, with the key from its own key book (#1801: the fleet's AI
+     keys live here and nowhere else, entered on KeysActivity below). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- The call is this engine's whole job; apps keep none of it. ACCESS_NETWORK_STATE: nothing is sent
@@ -13,7 +14,8 @@
         <!-- Guarded by the constellation's signature-level permission: only APKs signed
              with the Cloud key can bind it. The action is how the handshaking client FINDS
              the service, and CONTRACT is the version it reads through PackageManager
-             before binding. #1799 contract 2 adds image (a picture and a prompt in, a picture out). -->
+             before binding. #1799 contract 2 adds image (a picture and a prompt in, a picture out).
+             #1801 contract 3 adds relay (an app's own provider request, the key added here) and keys. -->
         <service
             android:name="com.diegonmarcos.superapp.decisions.engine.DecisionsEngineService"
             android:exported="true"
@@ -23,8 +25,23 @@
             </intent-filter>
             <meta-data
                 android:name="com.diegonmarcos.cloud.engine.CONTRACT"
-                android:value="2" />
+                android:value="3" />
         </service>
+
+        <!-- #1801 the AI keys screen: the one place the fleet's provider keys are entered, revealed or cleared,
+             in this process. Every consumer's settings open it by this action (DecisionsLink.openKeySettings);
+             only Cloud-signed apps may (CONSTELLATION_DATA). Launchable from the home screen too, so the
+             owner can reach it without any app. -->
+        <activity
+            android:name="com.diegonmarcos.superapp.decisions.engine.KeysActivity"
+            android:exported="true"
+            android:label="AI keys"
+            android:theme="@android:style/Theme.Material.NoActionBar">
+            <intent-filter>
+                <action android:name="${applicationId}.AI_KEYS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <!-- Registers /api/decisions on the fleet's debug server (names and ✓/✗ only) before anything
              else runs in this process; not a real provider, not exported. -->

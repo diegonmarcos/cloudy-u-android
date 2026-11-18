@@ -330,10 +330,10 @@ python3 -c 'import sys; sys.exit(0 if "${decisionsEnginePackage}" not in open(sy
     && red "K8 #881 the decisions client stops querying its engine for every consumer" "K8"
 stage; js "$DEC/engine-client.json" 'd["engines"]["decisions"]["fleet"] = "lib-decisions-engine-renamed"'
 landed "$DEC/engine-client.json" 'lib-decisions-engine-renamed' && red "K1 #881 the decisions client names a Store row that does not exist" "K1"
-stage; js "$DEC/engine-client.json" 'd["engines"]["decisions"]["min_contract"] = 3'
-landed "$DEC/engine-client.json" '"min_contract": 3' && red "K3 #881 the decisions client needs a contract the engine does not declare" "K3"
-stage; js "$DEC/engine-client.json" 'd["engines"]["decisions"]["method_contracts"]["image"] = 3'
-landed "$DEC/engine-client.json" '"image": 3' && red "K3 #1799 the image call needs a contract above the one the decisions engine declares" "K3"
+stage; js "$DEC/engine-client.json" 'd["engines"]["decisions"]["min_contract"] = 4'
+landed "$DEC/engine-client.json" '"min_contract": 4' && red "K3 #881 the decisions client needs a contract the engine does not declare" "K3"
+stage; js "$DEC/engine-client.json" 'd["engines"]["decisions"]["method_contracts"]["image"] = 4'
+landed "$DEC/engine-client.json" '"image": 4' && red "K3 #1799 the image call needs a contract above the one the decisions engine declares" "K3"
 stage; js "$DRIVEBJ" 'd["modules"]["libs:decisions-engine"] = {"dir": "../ab_cloud-libs-shared/libs/decisions-engine", "type": "library"}'
 landed "$DRIVEBJ" '"libs:decisions-engine"' && red "K6 #881 an app declares the decisions engine's module (it would compile the token and the budget back in)" "K6"
 stage; js "$DRIVEBJ" 'd.pop("engines"); d["_planted"] = "no-engines"'

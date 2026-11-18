@@ -35,6 +35,11 @@ if (decisionsMinContract < 1) throw new GradleException("libs:decisions-link: en
 // #1799 the image call needs a newer engine than the decide/outcome floor every consumer needs.
 def decisionsImageContract = (engineDecl.method_contracts?.image ?: 0) as int
 if (decisionsImageContract < decisionsMinContract) throw new GradleException("libs:decisions-link: engines.decisions.method_contracts.image must be >= min_contract")
+// #1801 the relay and the keys status need a contract-3 engine (the one that holds the key).
+def decisionsRelayContract = (engineDecl.method_contracts?.relay ?: 0) as int
+if (decisionsRelayContract < decisionsMinContract) throw new GradleException("libs:decisions-link: engines.decisions.method_contracts.relay must be >= min_contract")
+def decisionsKeysContract = (engineDecl.method_contracts?.keys ?: 0) as int
+if (decisionsKeysContract < decisionsMinContract) throw new GradleException("libs:decisions-link: engines.decisions.method_contracts.keys must be >= min_contract")
 
 android {
     namespace 'com.diegonmarcos.superapp.decisions.link'
@@ -47,6 +52,8 @@ android {
         buildConfigField "String", "DECISIONS_ENGINE_ACTION",       "\"${decisionsAction}\""
         buildConfigField "int",    "DECISIONS_ENGINE_MIN_CONTRACT", "${decisionsMinContract}"
         buildConfigField "int",    "DECISIONS_IMAGE_CONTRACT",      "${decisionsImageContract}"
+        buildConfigField "int",    "DECISIONS_RELAY_CONTRACT",      "${decisionsRelayContract}"
+        buildConfigField "int",    "DECISIONS_KEYS_CONTRACT",       "${decisionsKeysContract}"
         // Resolved in THIS library's manifest, so every consumer's merged manifest queries the
         // engine: on Android 11+ an unqueried package reads exactly like "not installed".
         manifestPlaceholders = [decisionsEnginePackage: decisionsEnginePackage]

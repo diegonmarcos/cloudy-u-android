@@ -5,9 +5,11 @@
       "fleet": "lib-decisions-engine",
       "action": "{package}.ENGINE",
       "min_contract": 1,
-      "_doc_method_contracts": "#1799 image (a picture and a prompt in, a picture out, the key held by the engine) arrived in contract 2: only a call to it asks for it, so a decide-only consumer keeps working against a contract-1 engine.",
+      "_doc_method_contracts": "#1799 image (a picture and a prompt in, a picture out, the key held by the engine) arrived in contract 2: only a call to it asks for it, so a decide-only consumer keeps working against a contract-1 engine. #1801 relay (an app's own provider request in, the provider's answer out, the key added by the engine) and keys (which keys the engine holds: presence and last four characters) arrived in contract 3, asked for by those calls alone.",
       "method_contracts": {
-        "image": 2
+        "image": 2,
+        "relay": 3,
+        "keys": 3
       }
     }
   }

@@ -1,7 +1,8 @@
 // libs:decisions-engine — the DECISIONS ENGINE (#881, Jev wave 0), shipped only as
 // Cloud-Lib-Decisions-Engine.apk: the one place the fleet asks TypeSafe's Jev decision model (through
-// OpenRouter's Decisions API) anything. It holds the OpenRouter token IN ITS OWN PROCESS (read from the
-// Account vault through text-tools, never across the binder), the endpoint, the pinned model, the per-use
+// OpenRouter's Decisions API) anything. It holds the OpenRouter token IN ITS OWN PROCESS (#1801: its own
+// key book, entered on its own AI keys screen, never across a binder; it is the fleet's AI-key owner and
+// relays every other app's provider call), the endpoint, the pinned model, the per-use
 // declarations (src/main/assets/decisions.json), the answer cache, the spend ledger, the consent flags
 // and the journal. Every app that wants a decision compiles libs:decisions-link (the contract half) and
 // none compiles this module, so a change to what is asked, how often or at what price republishes this APK
@@ -18,6 +19,8 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    // #1801 the AI keys screen (KeysActivity) is Compose; the compiler is resolved from the consuming root build.
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 android {
@@ -27,6 +30,8 @@ android {
     defaultConfig {
         minSdk 26
     }
+
+    buildFeatures { compose = true }
 
     testOptions {
         unitTests {
@@ -59,8 +64,12 @@ dependencies {
     implementation project(':libs:decisions')
     // The wire (IDecisionsEngine) this service implements.
     implementation project(':libs:decisions-link')
-    // The fleet Account's OpenRouter token, over the ITextTools binder (a contract lib).
-    implementation project(':libs:text-tools')
+    // #1801 the AI keys screen. (The ITextTools edge is gone: the engine no longer reads the key from anyone.)
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.activity:activity-compose:1.9.3'
 
     // The PIT harness that runs this module's own logic as plain JVM (its suite, mutation-tested at 80). The
     // edge exists so the shelf's settings include the module; nothing of it ships.

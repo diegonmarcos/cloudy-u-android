@@ -22,6 +22,12 @@ interface Http {
     fun send(url: String, token: String?, body: String?, timeoutMs: Int): Response
 }
 
+/**
+ * #1801 an [Http] that does not need the token: it hands the request to the fleet's AI-key owner engine
+ * (DecisionsLink.relay), which adds the key in its own process. [Decisions.post] sends through it with no token.
+ */
+interface EngineKeyedHttp : Http
+
 object UrlHttp : Http {
     override fun send(url: String, token: String?, body: String?, timeoutMs: Int): Http.Response {
         val c = URL(url).openConnection() as HttpURLConnection
@@ -99,7 +105,7 @@ object Decisions {
     fun post(endpoint: String, timeoutMs: Int, http: Http, token: String?, model: String, state: Any, questions: JSONObject, clock: () -> Long = System::currentTimeMillis): Decision {
         val req = JSONObject().put("model", model).put("state", state).put("questions", questions)
         fun failed(status: Int, ms: Long, why: String) = Decision(model, req, null, status, ms, "", null, null, why)
-        if (token.isNullOrBlank()) return failed(0, 0, "no OpenRouter token — set one in Configs › Token")
+        if (token.isNullOrBlank() && http !is EngineKeyedHttp) return failed(0, 0, "no OpenRouter token — set one in Configs › Token")
         val t0 = clock()
         val res = runCatching { http.send(endpoint, token, req.toString(), timeoutMs) }
             .getOrElse { return failed(0, clock() - t0, "network: ${it.javaClass.simpleName}${it.message?.let { m -> ": $m" }.orEmpty()}") }
