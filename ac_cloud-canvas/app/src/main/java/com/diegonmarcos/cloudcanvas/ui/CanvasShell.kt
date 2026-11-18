@@ -2,6 +2,8 @@ package com.diegonmarcos.cloudcanvas.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -17,7 +19,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import com.diegonmarcos.cloudcanvas.R
@@ -89,7 +90,10 @@ fun CanvasShell(start: CanvasStart = CanvasStart()) {
                 )
                 // Music Enhancer is a placeholder: its entry (the last one) is greyed out with a veil; a tap still opens its coming-soon page
                 if (decl.bottomNav.lastOrNull() == Decl.SECTION_MUSIC) {
-                    Box(Modifier.align(Alignment.CenterEnd).fillMaxWidth(0.22f).fillMaxHeight().background(colorResource(R.color.app_background).copy(alpha = 0.6f)))
+                    Row(Modifier.matchParentSize()) {
+                        Spacer(Modifier.weight(0.78f))
+                        Box(Modifier.weight(0.22f).fillMaxHeight().background(colorResource(R.color.app_background).copy(alpha = 0.6f)))
+                    }
                 }
             }
         }
