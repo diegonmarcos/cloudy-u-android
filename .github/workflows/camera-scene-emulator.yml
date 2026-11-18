@@ -77,8 +77,11 @@ jobs:
 
       - name: Fixture tools (Pillow, fonts)
         run: |
-          python3 -m pip install --quiet pillow
-          sudo apt-get install -y -q fonts-dejavu-core fonts-noto-cjk >/dev/null 2>&1 || true
+          # System-wide: the fixture script runs isolated (python3 -I), which ignores a --user pip install.
+          sudo apt-get update -q >/dev/null
+          sudo apt-get install -y -q python3-pil fonts-dejavu-core >/dev/null
+          sudo apt-get install -y -q fonts-noto-cjk >/dev/null 2>&1 || true
+          python3 -I -c 'import PIL; print("Pillow", PIL.__version__)'
 
       - name: Enable KVM
         run: |
