@@ -46,7 +46,10 @@ internal class LibtorrentBackend : TorrentBackend {
     private val lastAlert = java.util.concurrent.ConcurrentHashMap<String, String>()
     @Volatile private var listenError: String? = null
 
-    private val listener = object : AlertListener {
+    // NOTHING NATIVE AT CONSTRUCTION: the first libtorrent4j class touched loads the native library, and a device (or a JVM test)
+    // without it must get EngineState.Unavailable from start()'s catch, never an error out of TorrentEngines.get(). So the listener
+    // and the watched alert types are built on first use, inside start().
+    private val listener: AlertListener by lazy { object : AlertListener {
         override fun types(): IntArray = WATCHED.map { it.swig() }.toIntArray()
         override fun alert(a: Alert<*>) {
             runCatching {
@@ -65,7 +68,7 @@ internal class LibtorrentBackend : TorrentBackend {
                 }
             }
         }
-    }
+    } }
 
     @Synchronized override fun start() {
         if (session?.isRunning == true) return
@@ -158,9 +161,9 @@ internal class LibtorrentBackend : TorrentBackend {
     companion object {
         const val TAG = "CloudTorrent"
 
-        private val WATCHED = listOf(AlertType.LISTEN_FAILED, AlertType.LISTEN_SUCCEEDED, AlertType.TRACKER_ERROR, AlertType.URL_SEED,
+        private val WATCHED by lazy { listOf(AlertType.LISTEN_FAILED, AlertType.LISTEN_SUCCEEDED, AlertType.TRACKER_ERROR, AlertType.URL_SEED,
             AlertType.FILE_ERROR, AlertType.METADATA_FAILED, AlertType.TORRENT_ERROR, AlertType.SAVE_RESUME_DATA_FAILED,
-            AlertType.TORRENT_FINISHED, AlertType.ADD_TORRENT, AlertType.METADATA_RECEIVED)
+            AlertType.TORRENT_FINISHED, AlertType.ADD_TORRENT, AlertType.METADATA_RECEIVED) }
 
         /** DHT, LSD, uTP in and out, listening on every interface (IPv4 and IPv6, any port): libtorrent's defaults made explicit. */
         fun pack(): SettingsPack = SettingsPack().apply {
