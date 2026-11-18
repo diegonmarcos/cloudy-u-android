@@ -10,14 +10,15 @@ import org.junit.Test
  * session uses, and the engine passes the session's count through.
  */
 class WebSeedTest {
+    /** A bencoded string: its byte length, a colon, the bytes (computed, never hand-counted). */
+    private fun b(v: String) = "${v.toByteArray(Charsets.UTF_8).size}:$v"
+
     private fun archiveLike(): ByteArray {
-        val f1 = "d6:lengthi5702577e4:pathl22:Rondo_alla_turca_2.mp3ee"
-        val f2 = "d6:lengthi1096e4:pathl29:RondoAllaTurca_201401_meta.xmlee"
-        val name = "RondoAllaTurca_201401"
-        val info = "d5:filesl${f1}${f2}e4:name${name.length}:${name}12:piece lengthi524288e6:pieces20:AAAAAAAAAAAAAAAAAAAAe"
-        val ws1 = "https://archive.org/download/"; val ws2 = "http://ia902704.us.archive.org/28/items/"
-        val tr = "http://bt1.archive.org:6969/announce"
-        return "d8:announce${tr.length}:${tr}4:info${info}8:url-listl${ws1.length}:${ws1}${ws2.length}:${ws2}ee".toByteArray(Charsets.ISO_8859_1)
+        val f1 = "d6:lengthi5702577e4:pathl${b("Rondo_alla_turca_2.mp3")}ee"
+        val f2 = "d6:lengthi1096e4:pathl${b("RondoAllaTurca_201401_meta.xml")}ee"
+        val info = "d5:filesl${f1}${f2}e4:name${b("RondoAllaTurca_201401")}12:piece lengthi524288e6:pieces20:AAAAAAAAAAAAAAAAAAAAe"
+        return "d8:announce${b("http://bt1.archive.org:6969/announce")}4:info${info}8:url-listl${b("https://archive.org/download/")}${b("http://ia902704.us.archive.org/28/items/")}ee"
+            .toByteArray(Charsets.ISO_8859_1)
     }
 
     @Test fun readsUrlListAndFiles() {
@@ -30,7 +31,7 @@ class WebSeedTest {
 
     @Test fun singleStringUrlListAndSingleFile() {
         val info = "d6:lengthi10e4:name5:a.mp312:piece lengthi16384e6:pieces20:AAAAAAAAAAAAAAAAAAAAe"
-        val m = Magnet.parseTorrent("d4:info${info}8:url-list12:http://x.y/ae".toByteArray(Charsets.ISO_8859_1))!!
+        val m = Magnet.parseTorrent("d4:info${info}8:url-list${b("http://x.y/a")}e".toByteArray(Charsets.ISO_8859_1))!!
         assertEquals(listOf("http://x.y/a"), m.webSeeds)
         assertEquals(listOf("a.mp3" to 10L), m.files)
     }
