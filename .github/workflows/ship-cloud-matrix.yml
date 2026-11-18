@@ -154,7 +154,8 @@ jobs:
       - name: Generate build stamp (baked into APK BuildConfig AND release tag)
         if: steps.gate.outputs.skip != 'true'
         run: |
-          echo "COMMS_BUILD_TIMESTAMP=$(date -u '+%Y%m%d.%H%M%S')" >> "$GITHUB_ENV"
+          # #1783 P5: the SOURCE commit time, not the wall clock: the same commit always builds the same version code and tag
+          echo "COMMS_BUILD_TIMESTAMP=$(TZ=UTC git show -s --date=format-local:'%Y%m%d.%H%M%S' --format=%cd HEAD)" >> "$GITHUB_ENV"
 
       - name: Build fork APK (fork's own gradle wrapper + constellation signing)
         if: steps.gate.outputs.skip != 'true'
@@ -212,6 +213,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="cloud-comms-matrix-${COMMS_BUILD_TIMESTAMP}"
+          gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1 && { echo "release $TAG exists (same source commit)"; exit 0; }
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
             --title "Cloud Matrix · ${{ env.COMMS_BUILD_TIMESTAMP }}" \
