@@ -86,14 +86,15 @@ jobs:
           adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --ez deliverystatus true
           sleep 2
           shot 00-inbox; dump 00-inbox
+          # The folder bar under the title lists the seeded folders by a short label ("Sen"); tap it, never an edge swipe
+          # (the edge is the system back gesture and leaves the app).
           ok=0
           for i in 1 2 3; do
-            adb shell input swipe 5 1200 900 1200 300; sleep 3
-            shot 01-drawer; dump 01-drawer
+            tap "Sen" && { ok=1; break; }
             tap "Sent" && { ok=1; break; }
-            adb shell input keyevent KEYCODE_BACK; sleep 2
+            sleep 4
           done
-          [ "$ok" = 1 ] || { echo "::error::no Sent folder in the drawer"; exit 1; }
+          [ "$ok" = 1 ] || { echo "::error::no Sent folder tab"; exit 1; }
           sleep 8
           shot 02-sent-list; dump 02-sent-list
           for s in "Delivered to every recipient" "Accepted by the relay" "Deferred by the recipient" "Bounced: no such user" "Sender not authorised" "Refused at submission" "No server record yet"; do has "$s" 02-sent-list; done

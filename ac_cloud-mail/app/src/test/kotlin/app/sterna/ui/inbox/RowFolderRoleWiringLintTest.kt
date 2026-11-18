@@ -116,6 +116,8 @@ class RowFolderRoleWiringLintTest {
             // Trusted because a child comes from the cache — search results never unfold.
             "unarchiveContextFor = { child -> isUnarchiveContext(rowFolderRole(child, ui, folderRoles, folderTrusted = true)) },",
             "trashContextFor = { child -> isTrashContext(rowFolderRole(child, ui, folderRoles, folderTrusted = true)) },",
+            // #1802: the delivery ticker is drawn on a row filed in Sent, by THAT child's own folder.
+            "sentDeliveryFor = { child -> isSentRole(rowFolderRole(child, ui, folderRoles, folderTrusted = true)) },",
             "performSwipe(action, child, viewModel, ui, rowFolderRole(child, ui, folderRoles, folderTrusted = true))",
             // The child tap asks the child's OWN folder, like its swipe; `rowRole` here is the defect.
             "when (childTapAction(rowFolderRole(child, ui, folderRoles, folderTrusted = true))) {",
