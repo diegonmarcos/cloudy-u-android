@@ -178,6 +178,12 @@ def findall(nodes, prefix):
     return [n for n in nodes if n.rid.startswith(prefix)]
 
 
+def dropdown_open(nodes):
+    """The title dropdown is on screen. #1760 its box counts, not only a crumb or an entry: Cloud C3's list scrolled to its end shows
+    drawer rows alone (no crumb, no entry), and a popup judged closed there stayed open over the bar for every later section."""
+    return bool(nodes) and (find(nodes, DROPDOWN) is not None or find(nodes, CRUMB0) is not None or bool(findall(nodes, ENTRY)))
+
+
 def texts_in(nodes, box):
     return " ".join(n.text for n in nodes if n.text and n.l >= box.l and n.r <= box.r and n.t >= box.t and n.b <= box.b) + " " + box.text + " " + box.desc
 
@@ -420,7 +426,7 @@ class Walk:
         nodes = dump()
         if nodes is None:
             return None
-        if find(nodes, CRUMB0) or findall(nodes, ENTRY):
+        if dropdown_open(nodes):
             return nodes
         opener = find(nodes, MORE) or find(nodes, TITLE)
         if opener is None:
@@ -434,7 +440,7 @@ class Walk:
             settle(1.0)
             for _ in range(4):
                 nodes = dump()
-                if nodes and (find(nodes, CRUMB0) or findall(nodes, ENTRY)):
+                if dropdown_open(nodes):
                     return nodes
                 settle(1.5)
             nodes = dump() or []
@@ -457,7 +463,7 @@ class Walk:
         for _attempt in range(2):
             for _ in range(3):
                 nodes = dump()
-                if nodes is not None and not (find(nodes, CRUMB0) or findall(nodes, ENTRY)):
+                if nodes is not None and not dropdown_open(nodes):
                     return True
                 settle(1.2)
             if _attempt == 0:
@@ -595,7 +601,7 @@ class Walk:
         #1760 the close is confirmed (close_dropdown polls for the popup to be gone, one more Back only while it still shows): Cloud Store's
         list stayed open after the section-list check and hid the bottom bar from the next two sections (P4 no bottomnav_item_cloud)."""
         nodes = dump() or []
-        if find(nodes, CRUMB0) or findall(nodes, ENTRY):
+        if dropdown_open(nodes):
             return self.close_dropdown()
         return True
 
@@ -1195,7 +1201,7 @@ class Walk:
         on_bar = sid in self.bottom
         self.hide_ime()
         nodes = dump() or []
-        if not any(n.rid.startswith(ITEM) for n in nodes) and (find(nodes, CRUMB0) or findall(nodes, ENTRY)):
+        if not any(n.rid.startswith(ITEM) for n in nodes) and dropdown_open(nodes):
             # #1760 a title dropdown still open from the step before is a popup window over the page: the dump holds it alone, never the bar
             self.back_if_dropdown()
             nodes = dump() or []

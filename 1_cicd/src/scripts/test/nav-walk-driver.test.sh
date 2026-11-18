@@ -12,6 +12,8 @@
 #      bottomnav_item_cloud on screen"). Mutation: the walker reads the bar with the popup still open.
 #   D4 the dropdown is scrolled over its box, never over the visible entries' span: Cloud C3's last page entry left as a 61 px
 #      sliver turned the swipe into a 21 px move, a TAP that re-opened the page and closed the dropdown. Mutation: the old span swipe.
+#   D5 a dropdown scrolled to its end (Cloud C3: drawer rows only, no crumb, no entry) is still seen open and closed before the
+#      bar is read. Mutation: only a crumb or an entry counts as open.
 #   D3 an app whose gear opens its OWN full-screen Configs (Cloud Dialer's DialerConfigsActivity, tag dialer_configs_back) is left
 #      by its back arrow before the off-bar section is entered from the dropdown ("the title dropdown did not open (to reach
 #      section favorites)"). Mutation: only fleetcfg_back is recognised.
@@ -111,6 +113,17 @@ k.visit_section("cloud")
 ok(not any(r["status"] == "FAIL" for r in k.results) and ("tap", w.ITEM + "cloud") in s.log,
    "D2 a dropdown left open is closed before the bottom bar is read")
 
+# D5: the dropdown scrolled to its end shows drawer rows only (no crumb, no entry): it is still open and is closed before the bar is read
+class EndScrolledDropdown(LingeringDropdown):
+    def nodes(self):
+        if self.open:
+            return [node(w.DROPDOWN, 136, 2184), node("navtop1_actions", 136, 1917), node("c3_drawer_page_observ_mesh", 1739, 1815)]
+        return super().nodes()
+s = EndScrolledDropdown(); s.install()
+k = walker(["cloud", "phone"], ["cloud", "phone"])
+k.visit_section("cloud")
+ok(not s.open and not any(r["status"] == "FAIL" for r in k.results), "D5 a dropdown scrolled past its crumbs and entries is still seen open and closed")
+
 # D3: the gear opens the app's own full-screen Configs; its back arrow returns to the shell; only then is the section entered
 class OwnConfigs(Screen):
     state = "main"
@@ -148,7 +161,8 @@ mutate() {  # $1 name, $2 python expression rewriting `s`
 }
 echo "── mutations"
 mutate "the dropdown is read 10 swipes deep" 's.replace("DROPDOWN_SWIPES = 40", "DROPDOWN_SWIPES = 10")'
-mutate "the bar is read with a dropdown open" 's.replace("if not any(n.rid.startswith(ITEM) for n in nodes) and (find(nodes, CRUMB0)", "if False and (find(nodes, CRUMB0)")'
+mutate "the bar is read with a dropdown open" 's.replace("if not any(n.rid.startswith(ITEM) for n in nodes) and dropdown_open(nodes):", "if False:")'
 mutate "only fleetcfg_back leaves a Configs screen" 's.replace("next((n for n in cfg_nodes if n.rid.endswith(\"_configs_back\")), None)", "None").replace("elif cfg_nodes and find(cfg_nodes, TITLE) is None", "elif False")'
 mutate "the swipe spans the visible entries" 's.replace("        if box is not None:\n            swipe(box.cx, box.b - 20, max(box.t + 20, box.b - 520), 300)", "        if entries:\n            top, bottom = min(n.t for n in entries), max(n.b for n in entries)\n            swipe(entries[0].cx, bottom - 20, max(top + 20, bottom - 500), 300)\n        elif box is not None:\n            swipe(box.cx, box.b - 20, max(box.t + 20, box.b - 520), 300)")'
-echo "nav-walk-driver: all cases passed, 4 mutations caught"
+mutate "only a crumb or an entry means the dropdown is open" 's.replace("find(nodes, DROPDOWN) is not None or ", "")'
+echo "nav-walk-driver: all cases passed, 5 mutations caught"
