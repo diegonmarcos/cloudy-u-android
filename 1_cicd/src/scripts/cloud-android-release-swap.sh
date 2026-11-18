@@ -12,6 +12,9 @@
 #   4. delete   <name>.old-<pid>
 # GitHub has no atomic asset swap; the remaining gap is steps 2-3, two API round trips.
 # Sidecars (<name>.sha256) are swapped the same way, the APK first and the sidecar last.
+# #1783 P5 EQUAL CONTENT IS NOT A NEW VERSION: a file whose sha256 equals the `digest` GitHub reports for the asset of that
+# name already on the release is not uploaded at all (the asset's updated_at does not move, so no phone is offered an update).
+# Fail-open: no digest on the old asset (or the lookup failing) means upload as before. SWAP_FORCE=1 uploads regardless.
 #
 # USAGE  cloud-android-release-swap.sh <tag> <file>...      (GH_TOKEN / gh auth as for `gh release upload`)
 # ENV    SWAP_REPO=<owner/repo> (default: the cwd repo)
@@ -23,11 +26,19 @@ TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT INT TERM
 SFX="$$"
 
 _id() { gh api "repos/$REPO/releases/tags/$TAG" --jq ".assets[] | select(.name==\"$1\") | .id" | head -n1; }
+_digest() { gh api "repos/$REPO/releases/tags/$TAG" --jq ".assets[] | select(.name==\"$1\") | .digest // empty" 2>/dev/null | head -n1 || true; }
 _rename() { gh api -X PATCH "repos/$REPO/releases/assets/$1" -f name="$2" >/dev/null; }
 
 for f in "$@"; do
     name="$(basename "$f")"; tmpn="$name.swap-$SFX"; oldn="$name.old-$SFX"
     [ -f "$f" ] || { echo "release-swap: no such file $f" >&2; exit 2; }
+    if [ "${SWAP_FORCE:-0}" != 1 ]; then
+        want="sha256:$(sha256sum "$f" | cut -d' ' -f1)"; have="$(_digest "$name")"
+        if [ -n "$have" ] && [ "$have" = "$want" ]; then
+            echo "release-swap: $name is unchanged on $TAG (same sha256): not uploaded"
+            continue
+        fi
+    fi
     cp "$f" "$TMP/$tmpn"
     gh release upload "$TAG" "$TMP/$tmpn"
     new_id="$(_id "$tmpn")"

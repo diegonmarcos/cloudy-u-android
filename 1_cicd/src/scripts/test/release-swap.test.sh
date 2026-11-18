@@ -29,6 +29,10 @@ elif a[0] == "api" and a[1] == "-X" and a[2] == "PATCH":
     st["assets"][i]["name"] = n; save(); log("RENAME %s" % n)
 elif a[0] == "api" and a[1] == "-X" and a[2] == "DELETE":
     del st["assets"][a[3].rsplit("/", 1)[1]]; save(); log("DELETE")
+elif a[0] == "api" and ".digest" in " ".join(a):
+    n = re.search(r'name==\\"([^"\\]+)\\"', " ".join(a)) or re.search(r'name=="([^"]+)"', " ".join(a))
+    for i, v in st["assets"].items():
+        if v["name"] == n.group(1) and v.get("digest"): print(v["digest"])
 elif a[0] == "api":
     n = re.search(r'name=="([^"]+)"', " ".join(a)).group(1)
     for i, v in st["assets"].items():
@@ -85,6 +89,24 @@ sh "$W/clobber.sh" "$W/app.apk" >/dev/null 2>&1 && fail "mock accepted --clobber
 # repo guard: no migrated publish path uses --clobber
 BAD="$(cd "$ROOT" && git grep -n -E 'gh release upload.*--clobber|release upload.*--clobber' -- 1_cicd/src/scripts/cloud-android-publish-gate.sh 1_cicd/src/actions/publish-ghcr/publish.sh 1_cicd/src/cicd/ship-cloud-office.yml 1_cicd/src/cicd/ship-termux-boot.yml 1_cicd/src/cicd/build-nixdroid-bootstrap.yml 2>/dev/null)"
 [ -z "$BAD" ] && ok "the publish gate, publish-ghcr and the office/termux-boot/bootstrap workflows no longer clobber" || fail "clobber remains: $BAD"
+
+# #1783 P5 equal content is not a new version
+DG="sha256:$(sha256sum "$W/app.apk" | cut -d' ' -f1)"; DS="sha256:$(sha256sum "$W/app.apk.sha256" | cut -d' ' -f1)"
+echo "{\"next\":10,\"assets\":{\"1\":{\"name\":\"app.apk\",\"body\":\"new-bytes\",\"digest\":\"$DG\"},\"2\":{\"name\":\"app.apk.sha256\",\"body\":\"new-sha\",\"digest\":\"$DS\"}}}" > "$W/state.json"; : > "$W/log"
+sh "$SW" tag "$W/app.apk" "$W/app.apk.sha256" >/dev/null 2>&1
+[ ! -s "$W/log" ] && ok "same bytes and same sidecar: nothing is uploaded, renamed or deleted" || fail "an unchanged publish touched the release: $(cat "$W/log")"
+echo "{\"next\":10,\"assets\":{\"1\":{\"name\":\"app.apk\",\"body\":\"new-bytes\",\"digest\":\"$DG\"},\"2\":{\"name\":\"app.apk.sha256\",\"body\":\"old-sha\",\"digest\":\"sha256:other\"}}}" > "$W/state.json"; : > "$W/log"
+sh "$SW" tag "$W/app.apk" "$W/app.apk.sha256" >/dev/null 2>&1
+[ "$(grep -c '^UPLOAD' "$W/log")" = 1 ] && [ "$(body app.apk.sha256)" = new-sha ] && grep -q 'UPLOAD app.apk.sha256' "$W/log" && ok "same bytes, changed sidecar: only the sidecar is replaced" || fail "partial unchanged case wrong: $(cat "$W/log")"
+echo '{"next":10,"assets":{"1":{"name":"app.apk","body":"old-bytes","digest":"sha256:different"}}}' > "$W/state.json"; : > "$W/log"
+sh "$SW" tag "$W/app.apk" >/dev/null 2>&1
+[ "$(body app.apk)" = new-bytes ] && ok "different bytes: the asset is replaced" || fail "changed bytes were skipped (a suppressed update)"
+echo '{"next":10,"assets":{"1":{"name":"app.apk","body":"old-bytes"}}}' > "$W/state.json"; : > "$W/log"
+sh "$SW" tag "$W/app.apk" >/dev/null 2>&1
+[ "$(body app.apk)" = new-bytes ] && ok "an old asset with no digest is replaced (fail-open)" || fail "a missing digest suppressed an upload"
+echo "{\"next\":10,\"assets\":{\"1\":{\"name\":\"app.apk\",\"body\":\"stale\",\"digest\":\"$DG\"}}}" > "$W/state.json"; : > "$W/log"
+SWAP_FORCE=1 sh "$SW" tag "$W/app.apk" >/dev/null 2>&1
+[ "$(body app.apk)" = new-bytes ] && ok "SWAP_FORCE=1 uploads even when the digest matches" || fail "SWAP_FORCE did not force"
 
 echo
 [ "$FAILURES" -eq 0 ] && { echo "== RESULT(#1783 atomic release swap): held =="; exit 0; }
