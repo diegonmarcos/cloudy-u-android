@@ -50,7 +50,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-vault | `com.diegonmarcos.cloudvault` | 5 | 1 | 83% |
 | cloud-wallet | `com.diegonmarcos.cloudwallet` | 8 | 0 | 100% |
 | cloud-shopping | `com.diegonmarcos.cloudshopping` | 4 | 0 | 100% |
-| cloud-wiki | `com.diegonmarcos.cloudwiki` | 4 | 0 | 100% |
+| cloud-wiki | `com.diegonmarcos.cloudwiki` | 5 | 0 | 100% |
 | cloud-superintel | `com.diegonmarcos.cloudsuperintel` | 6 | 2 | 75% |
 | cloud-kg-store | `com.diegonmarcos.cloudkgstore` | 8 | 3 | 72% |
 | cloud-tools-small-llms | `com.diegonmarcos.cloudtoolssmallllms` | 12 | 2 | 85% |
@@ -1453,7 +1453,7 @@ Coverage: 4 covered, 0 gaps.
 
 ## cloud-wiki — `com.diegonmarcos.cloudwiki`
 
-Module `ac_cloud-wiki`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-graph-view, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
+Module `ac_cloud-wiki`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-graph-view, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1466,13 +1466,14 @@ Module `ac_cloud-wiki`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, 
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 
 | file | class | doc |
 |---|---|---|
 | `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
-Coverage: 4 covered, 0 gaps.
+Coverage: 5 covered, 0 gaps.
 
 ## cloud-superintel — `com.diegonmarcos.cloudsuperintel`
 
