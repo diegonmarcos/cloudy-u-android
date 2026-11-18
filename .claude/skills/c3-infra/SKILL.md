@@ -37,6 +37,7 @@ Hard rules first, index last. Each rule has a one-line why in `rules/*.md` (read
 | rules/session-survival.md | dead shell recovery, disk, /tmp, worktrees |
 | rules/agents.md | orchestration, token budget, lean agents, tools |
 | rules/security.md | secrets, gitleaks, geo-fence, MCP auth |
+| rules/relay-inbox.md | c3-bot Telegram relay inbox, lease, reply routing, session tag |
 
 ## Delivery
 Source of truth: cloudy-u-linux `da_my-ai/data/claude/cloud-marketplace/c3-infra` (this plugin) and `agents/`. The former plugin repo `c3-infra-plugin` is archived (`z-archived_c3-infra-plugin`) and is not a source. Local sessions use the plugin via `cloud-marketplace` + `enabledPlugins`. Claude Code cloud sessions do NOT install plugins (docs: cloud-environments, "What carries over"), so the my-ai `dotfiles` engine (`da_my-ai/engines/dotfiles/deploy-dotfiles.sh`; cloud-infra `9_others/src/deploy-dotfiles.sh` is a wrapper) (defaults `_dotfiles/apps/src _dotfiles/apps/dist/dotfiles .`) refreshes the repo's `_dotfiles/apps/src/claude` from this SoT, renders `_dotfiles/apps/dist/dotfiles/claude`, and copies this skill to `<repo>/.claude/skills/c3-infra`, the hooks to `<repo>/.claude/hooks/c3`, the agents to `<repo>/.claude/agents`, and `settings.project.json` (hooks wired) to `<repo>/.claude/settings.json`. Edit upstream, never the repo copies.

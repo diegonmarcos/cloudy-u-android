@@ -118,7 +118,8 @@
       {
         "hooks": [
           {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/ai-usage-beacon.sh hook", "timeout": 5},
-          {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/backlog-session-start.sh", "timeout": 20}
+          {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/backlog-session-start.sh", "timeout": 20},
+          {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/relay-inbox.sh", "timeout": 5}
         ]
       }
     ],
@@ -153,6 +154,7 @@
       }
     ]
   },
+  "_relay_inbox_doc": "SessionStart -> relay-inbox.sh (#1795): every session gets the c3-bot Telegram relay inbox. Mesh host: lease claim + poll + routed owner messages as additionalContext; cloud container: an instruction to arm one self re-arming 10-minute send_later check through cloud-infra-mcp. Always exit 0, under 5 s, silent when nothing is new. Routing rules: skill c3-infra rules/relay-inbox.md.",
   "_jev_hooks_doc": "PermissionRequest + UserPromptSubmit -> jev-gate (restored: the 2026-10-29 mirror regeneration silently dropped them from cloudy-u-desktop, whose test-claude-jev-hooks.sh pins them). 2026-10-20 (#883 D1, Jev wave 2): the decision-model gate on the desktop Claude Code, the SAME jev-gate the agent containers run (cloud-u-containers/_shared/jev-gate; the binary is the nix package the Home-Manager flake installs). PermissionRequest: a confident 'safe and reversible' answers allow for Bash/Edit/Write; anything else prints nothing, so the normal prompt happens exactly as without the gate. It NEVER denies (gating-by-allow only); deny and ask rules are evaluated by Claude Code regardless of a hook's allow, and the gate's own static never_auto_approve list runs before Jev. UserPromptSubmit: Jev may route a prompt to a code-graph lookup whose size-capped result is injected as context. In a clone without the nix binary (CI, a container, the web) the guard below exits 0 with no output: no opinion, today's behaviour. With no OPENROUTER_API_KEY in the environment the gate itself is a no-op. Timeouts are above the gate's own 6 s call so it always answers for itself.",
 
   "_enabledPlugins_doc": "c3-infra lives in cloud-marketplace (this SoT). Skill and agents are also copied into <repo>/.claude/ by deploy-dotfiles, which is what cloud sessions load.",

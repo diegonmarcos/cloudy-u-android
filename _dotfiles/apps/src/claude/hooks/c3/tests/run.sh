@@ -93,4 +93,5 @@ echo '{"id":"9","subject":"#9 new","status":"pending"}' > "$BT/9.json"; (cd /tmp
 : > "$BT/9.json"; rm "$BT/7.json"; (cd /tmp && C3_BACKLOG_REPO="$BR" "$H/backlog-stop-push.sh" 2>/dev/null); n=$((n+1))
 { git -C "$RM/o.git" show main:1___BACKLOG___/1.1.Product-Backlog/tasks/s1/7.json >/dev/null 2>&1 && [ -n "$(git -C "$RM/o.git" show main:1___BACKLOG___/1.1.Product-Backlog/tasks/s1/9.json)" ]; } || { echo "FAIL backlog-stop-push committed a delete/blank"; fail=$((fail+1)); }
 rm -rf "$BR" "$RM"
+bash "$(dirname "$0")/relay-inbox.sh" || fail=$((fail+1)); n=$((n+1))
 echo "hook tests: $n cases, $fail failed"; [ "$fail" = 0 ]
