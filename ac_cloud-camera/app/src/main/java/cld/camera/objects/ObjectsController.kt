@@ -80,6 +80,8 @@ class ObjectsController(
     private val detector by lazy { EngineObjectDetector(scanner, RecognitionConfig.defaultDetectMode()) }
     private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val ocrExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    private val textExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    @Volatile private var textBusy = false
     private val io: ExecutorService = Executors.newSingleThreadExecutor()
     private val sceneDecl: JSONObject = Scene.decl()
     private val gate = AnalysisGate(
@@ -247,27 +249,43 @@ class ObjectsController(
         val id = frames.incrementAndGet()
         val now = SystemClock.elapsedRealtime()
         val live = fit(frame, sceneDecl.optInt("live_side", 480))
-        val wantText = throttle.wantText(now)
+        // The text check runs beside the detection, on its own thread, so the detection rate is the detector's alone.
+        val wantText = !textBusy && throttle.wantText(now)
+        if (wantText) {
+            textBusy = true
+            val pixels = if (live === frame) frame.copy(Bitmap.Config.ARGB_8888, false) else live
+            textExecutor.execute { checkText(id, pixels) }
+        }
         val s = try {
-            scanner.scene(live, Scene.request(detectorId, objects = true, text = wantText, ocr = false, frameId = id))
+            scanner.scene(live, Scene.request(detectorId, objects = true, text = false, ocr = false, frameId = id))
         } finally {
-            if (live !== frame) live.recycle()
+            if (live !== frame && !wantText) live.recycle()
         }
         if (!s.ok) { sceneError = s.error; return }
         sceneError = null
         fps.tick(SystemClock.elapsedRealtime())
         lastLatencyMs = s.latencyMs
         last = SceneFrames.objects(s)
-        if (wantText) {
-            lastText = SceneFrames.textRegions(s)
-            throttle.sawText(s.textPresent)
-        }
         // The frame a freeze would show, at the OCR's size (the live copy is too small to read from).
         val big = fit(frame, sceneDecl.optInt("ocr_side", 1280)).let { if (it === frame) frame.copy(Bitmap.Config.ARGB_8888, false) else it }
         lastFrameStill = id to big
         if (throttle.startOcr(now)) {
             val geo = SceneOverlayView.Geometry(big.width, big.height, 0, mirrored, cover = true)
             ocrExecutor.execute { readText(id, big, geo, live = true) }
+        }
+    }
+
+    /** The text regions of one live frame (the "Text" frames), at the text cadence; they also decide whether the OCR runs. */
+    private fun checkText(id: Long, pixels: Bitmap) {
+        try {
+            val t = scanner.scene(pixels, Scene.request(detectorId, objects = false, text = true, ocr = false, frameId = id))
+            if (t.ok) {
+                lastText = SceneFrames.textRegions(t)
+                throttle.sawText(t.textPresent)
+                activity.runOnUiThread { render() }
+            }
+        } finally {
+            textBusy = false
         }
     }
 
@@ -495,10 +513,9 @@ class ObjectsController(
                     val ms = ArrayList<Long>()
                     var lastScene: Scene? = null
                     repeat(BENCH_WARMUP) { scanner.scene(live, Scene.request(d, objects = true, text = false, ocr = false)) }
-                    val throttleB = SceneThrottle(sceneDecl.optLong("text_interval_ms", 300), Long.MAX_VALUE)
                     repeat(runs ?: frames) {
                         val a = SystemClock.elapsedRealtime()
-                        lastScene = scanner.scene(live, Scene.request(d, objects = true, text = throttleB.wantText(a), ocr = false))
+                        lastScene = scanner.scene(live, Scene.request(d, objects = true, text = false, ocr = false))
                         ms += SystemClock.elapsedRealtime() - a
                     }
                     val mean = ms.average()
@@ -506,6 +523,14 @@ class ObjectsController(
                         .put("fps", if (mean > 0) 1000.0 / mean else 0.0).put("ok", lastScene?.ok == true).put("error", lastScene?.error ?: JSONObject.NULL)
                         .put("objects", JSONArray().apply { lastScene?.objects?.forEach { put(JSONObject().put("cls", it.cls).put("label", it.label).put("p", it.p)) } }))
                 }
+                // the text check (Latin, the "Text" frames), as the live stream runs it beside the detection
+                Log.i(TAG, "bench-progress end-to-end text check")
+                val tms = (1..BENCH_TEXT_RUNS).map {
+                    val a = SystemClock.elapsedRealtime()
+                    scanner.scene(live, Scene.request(Scene.defaultDetector(), objects = false, text = true, ocr = false))
+                    SystemClock.elapsedRealtime() - a
+                }
+                e2e.put("text_check", JSONObject().put("runs", tms.size).put("mean_ms", tms.average()).put("p50_ms", tms.sorted()[tms.size / 2]))
                 if (live !== bmp) live.recycle()
                 bmp.recycle()
             }
@@ -563,6 +588,7 @@ class ObjectsController(
         private const val PREVIEW_CHARS = 160
         private const val BENCH_FRAMES = 40
         private const val BENCH_WARMUP = 5
+        private const val BENCH_TEXT_RUNS = 5
         /** Words logged per layout for a check to tap (a logcat line holds about 4 KB). */
         private const val LOG_WORDS = 24
     }

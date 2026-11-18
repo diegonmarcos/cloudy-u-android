@@ -189,6 +189,8 @@ md = ["| detector | model | engine mean ms | p50 | p90 | engine fps | end-to-end
 md += ["", "OCR (five scripts, %s): mean %.0f ms, p50 %s ms over %s runs; %s blocks, %s words; text regions (Latin) %s in %s ms; errors %s" % (
     ", ".join(o.get("scripts") or []), o.get("mean_ms", -1), o.get("p50_ms", "?"), o.get("runs", "?"), o.get("blocks", "?"), o.get("words", "?"),
     o.get("text_regions", "?"), o.get("text_regions_ms", "?"), json.dumps(o.get("errors") or {}))]
+t = e2e.get("text_check") or {}
+md += ["", "Text check end to end (Latin, beside the detection, every text_interval_ms): mean %.0f ms, p50 %s ms over %s runs" % (t.get("mean_ms", -1), t.get("p50_ms", "?"), t.get("runs", "?"))]
 md += ["", "Frame %sx%s (live_side); default detector %s; target %s fps; emulator x86_64, density %s." % (eng.get("width"), eng.get("height"), b.get("default_detector"), b.get("target_fps"), sys.argv[3])]
 fast = max(("efficientdet", "yolo11n"), key=lambda d: e2e.get(d, {}).get("fps", 0.0))
 both = all("person" in {x["label"] for x in dets.get(d, {}).get("detections", [])} for d in ("efficientdet", "yolo11n"))
