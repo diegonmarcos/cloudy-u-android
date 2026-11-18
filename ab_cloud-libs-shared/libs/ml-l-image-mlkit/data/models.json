@@ -9,11 +9,185 @@
       "asset": "models/efficientnet_lite0_int8.tflite",
       "labels_entry": "labels_without_background.txt",
       "classes": 1000,
-      "input": { "shape": [1, 224, 224, 3], "dtype": "uint8" },
-      "output": { "shape": [1, 1000], "dtype": "uint8" },
+      "input": {
+        "shape": [
+          1,
+          224,
+          224,
+          3
+        ],
+        "dtype": "uint8"
+      },
+      "output": {
+        "shape": [
+          1,
+          1000
+        ],
+        "dtype": "uint8"
+      },
       "licence": "Apache-2.0",
       "licence_source": "https://github.com/tensorflow/tpu/tree/master/models/official/efficientnet/lite (tensorflow/tpu, Apache License 2.0); class names are the ILSVRC-2012 (ImageNet) synset words",
       "source": "TensorFlow Lite Task Library image-classification example (tfhub tensorflow/lite-model/efficientnet/lite0/int8/2)"
+    },
+    "scene_efficientdet": {
+      "kind": "detector",
+      "runtime": "mediapipe",
+      "name": "EfficientDet-Lite0 int8 (COCO, 90 labels) on MediaPipe Tasks Object Detector",
+      "url": "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite",
+      "sha256": "0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb",
+      "bytes": 4602795,
+      "asset": "models/efficientdet_lite0_int8.tflite",
+      "labels_entry": "labels.txt",
+      "classes": 90,
+      "input": {
+        "shape": [
+          1,
+          320,
+          320,
+          3
+        ],
+        "dtype": "uint8"
+      },
+      "outputs": [
+        {
+          "shape": [
+            1,
+            19206,
+            4
+          ],
+          "dtype": "float32"
+        },
+        {
+          "shape": [
+            1,
+            19206,
+            90
+          ],
+          "dtype": "float32"
+        }
+      ],
+      "coco_map50_95": 25.69,
+      "licence": "Apache-2.0",
+      "licence_source": "https://github.com/google/automl/tree/master/efficientdet (google/automl, Apache License 2.0); the MediaPipe model card https://ai.google.dev/edge/mediapipe/solutions/vision/object_detector#efficientdet-lite0_model_recommended; COCO class names",
+      "source": "MediaPipe Tasks object_detector efficientdet_lite0 int8 v1 (the model MediaPipe recommends for the Object Detector task)"
+    },
+    "scene_yolo11n": {
+      "kind": "detector",
+      "runtime": "litert-yolo",
+      "name": "YOLO11n INT8 (COCO, 80 labels) on LiteRT",
+      "url": "https://huggingface.co/Arm/yolo11n-int8-litert-vivo-x300/resolve/main/yolo11n_android_litert_optimized.tflite",
+      "sha256": "3b1831fb137fa7b49d4aee92a01693f04c4a6c877035eee16c54807d5d47c1af",
+      "bytes": 4597296,
+      "asset": "models/yolo11n_int8.tflite",
+      "labels": [
+        "person",
+        "bicycle",
+        "car",
+        "motorcycle",
+        "airplane",
+        "bus",
+        "train",
+        "truck",
+        "boat",
+        "traffic light",
+        "fire hydrant",
+        "stop sign",
+        "parking meter",
+        "bench",
+        "bird",
+        "cat",
+        "dog",
+        "horse",
+        "sheep",
+        "cow",
+        "elephant",
+        "bear",
+        "zebra",
+        "giraffe",
+        "backpack",
+        "umbrella",
+        "handbag",
+        "tie",
+        "suitcase",
+        "frisbee",
+        "skis",
+        "snowboard",
+        "sports ball",
+        "kite",
+        "baseball bat",
+        "baseball glove",
+        "skateboard",
+        "surfboard",
+        "tennis racket",
+        "bottle",
+        "wine glass",
+        "cup",
+        "fork",
+        "knife",
+        "spoon",
+        "bowl",
+        "banana",
+        "apple",
+        "sandwich",
+        "orange",
+        "broccoli",
+        "carrot",
+        "hot dog",
+        "pizza",
+        "donut",
+        "cake",
+        "chair",
+        "couch",
+        "potted plant",
+        "bed",
+        "dining table",
+        "toilet",
+        "tv",
+        "laptop",
+        "mouse",
+        "remote",
+        "keyboard",
+        "cell phone",
+        "microwave",
+        "oven",
+        "toaster",
+        "sink",
+        "refrigerator",
+        "book",
+        "clock",
+        "vase",
+        "scissors",
+        "teddy bear",
+        "hair drier",
+        "toothbrush"
+      ],
+      "classes": 80,
+      "input": {
+        "shape": [
+          1,
+          3,
+          640,
+          640
+        ],
+        "dtype": "int8",
+        "layout": "nchw",
+        "letterbox_pad": 114
+      },
+      "outputs": [
+        {
+          "shape": [
+            1,
+            84,
+            8400
+          ],
+          "dtype": "float32"
+        }
+      ],
+      "coco_map50_95": 38.84,
+      "licence": "AGPL-3.0",
+      "licence_source": "https://huggingface.co/Arm/yolo11n-int8-litert-vivo-x300 (Arm's LiteRT INT8 export of Ultralytics YOLO11n, AGPL-3.0, as the original https://huggingface.co/Ultralytics/YOLO11); COCO class names",
+      "source": "Arm's post-training-quantised LiteRT export of Ultralytics YOLO11n (XNNPACK; boxes are centre x, y, w, h in input pixels, then 80 sigmoid class scores)"
     }
-  }
+  },
+  "_doc_1805": "#1805 Cloud Camera > Objects' scene detectors (the engine's scene method, contract 4). `kind: detector` models are whole-frame detectors, not a classifier: `runtime` says what runs them in this APK (mediapipe = MediaPipe Tasks Object Detector, whose LiteRT runtime decodes the model's own anchors and labels from its metadata; litert-yolo = the LiteRT Interpreter with this engine's own letterbox, decode and NMS, labels from `labels` because the export carries no metadata). `outputs` lists every output tensor (order-free). Both are staged by the same fetchModels into the same asset directory, so no new asset site exists (runtime-data guard D2). Which one is the default is recognition.json::scene.default_detector, decided by the emulator benchmark (ac_cloud-camera/test/emulator-camera-scene.sh); the other stays selectable."
 }

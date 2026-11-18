@@ -26,6 +26,9 @@
  * #798 live identification (IdentifyActivity) also comes through this door: detect asks the engine
  * for objects with a full-label classifier and tracking ids, labels, or text lines, always on
  * device; a saved snapshot is then identified on the user's route through recognize.
+ *
+ * #1805 Objects' scene (contract 4) too: objects from the chosen detector, text regions as the
+ * class "Text" and the five-script OCR layout, always on device.
  */
 package cld.camera.analyzer
 
@@ -91,6 +94,18 @@ class ImageContentScanner(context: Context) {
 
     /** #798 /api/image/detect: one file this app can read, as a single photo. */
     fun detect(file: File, mode: String): Recognition = engine.detect(file, RecognitionConfig.detectRequest(mode, live = false))
+
+    /** #1805 one frame's scene (Scene.request): objects, text regions, the OCR layout when asked; always on device. */
+    fun scene(frame: Bitmap, request: JSONObject): com.diegonmarcos.superapp.image.mlkit.Scene = engine.scene(frame, request)
+
+    /** #1805 an image file this app can read, as one scene. */
+    fun scene(file: File, request: JSONObject): com.diegonmarcos.superapp.image.mlkit.Scene = engine.scene(file, request)
+
+    /** #1805 the engine's benchmark of both detectors and the OCR over one image. */
+    fun sceneBench(file: File, request: JSONObject): JSONObject = engine.sceneBench(file, request)
+
+    /** Null when the engine answers scene, else what to do — the contract-4 handshake. */
+    fun sceneStatus(): String? = engine.check(com.diegonmarcos.superapp.image.BuildConfig.IMAGE_SCENE_CONTRACT)
 
     /** Null when the engine can detect, else what to do — the contract-3 handshake. */
     fun detectStatus(): String? = engine.check(com.diegonmarcos.superapp.image.BuildConfig.IMAGE_DETECT_CONTRACT)

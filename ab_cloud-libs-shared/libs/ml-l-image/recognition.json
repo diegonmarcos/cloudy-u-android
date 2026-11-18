@@ -32,6 +32,26 @@
     "labels_per_object": 3,
     "max_labels": 8
   },
+  "_doc_scene": "#1805 Cloud Camera > Objects (the engine's scene method, contract 4): always on device. `detectors` are the object detectors the engine carries (efficientdet = EfficientDet-Lite0 on MediaPipe Tasks Object Detector, yolo11n = YOLO11n INT8 on the LiteRT Interpreter; pins in libs:ml-l-image-mlkit/data/models.json); `default_detector` is the one the emulator benchmark found faster at comparable accuracy (ac_cloud-camera/test/emulator-camera-scene.sh, report in the ticket), the other stays selectable in Objects. A frame is sized to live_side for detection and to ocr_side for OCR (never upscaled); every box comes back in the detection frame's pixels. Text is a class: text regions are the Latin recognizer's blocks, labelled text_label. The camera asks for text regions at most every text_interval_ms and for the full OCR (all `scripts`, merged per region) at most every ocr_interval_ms and only while text is present; a frozen frame or an opened image is read once and its layout cached. min_frame_interval_ms spaces the detection frames (0 = as fast as the engine answers; keep-latest backpressure drops the rest). `bench` is what scene_bench runs.",
+  "scene": {
+    "detectors": {
+      "efficientdet": "EfficientDet-Lite0 (MediaPipe)",
+      "yolo11n": "YOLO11n (LiteRT)"
+    },
+    "default_detector": "efficientdet",
+    "live_side": 480,
+    "ocr_side": 1280,
+    "min_confidence": 0.35,
+    "max_objects": 10,
+    "nms_iou": 0.45,
+    "text_label": "Text",
+    "text_interval_ms": 300,
+    "ocr_interval_ms": 1200,
+    "min_frame_interval_ms": 0,
+    "target_fps": 10,
+    "scripts": ["latin", "chinese", "devanagari", "japanese", "korean"],
+    "bench": { "runs": 30, "warmup": 5, "ocr_runs": 3 }
+  },
   "colours": {
     "max": 5,
     "_doc_names": "The vocabulary a dominant colour is named in: the nearest by the redmean distance. Hex values are sRGB.",

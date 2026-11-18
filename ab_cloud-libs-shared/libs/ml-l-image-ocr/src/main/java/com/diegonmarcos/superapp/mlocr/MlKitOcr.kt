@@ -3,6 +3,7 @@ package com.diegonmarcos.superapp.mlocr
 import android.graphics.Bitmap
 import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
@@ -19,6 +20,11 @@ import java.util.concurrent.TimeUnit
  * the text read so far holds no letters of its own and the best read is the one with the most
  * letters and digits: a page in Hindi is not returned as the handful of Latin characters the Latin
  * model found on it. BLOCKING (Tasks.await): call it from a worker thread, never the main thread.
+ *
+ * #1805 [text] is one script's whole ML Kit answer (blocks, lines and words, each with its box and
+ * confidence), on the same recognizer singletons, for a caller that lays the text out itself: the
+ * image engine's scene method (Cloud Camera > Objects) reads every script and keeps, per region,
+ * the best read.
  */
 object MlKitOcr {
     enum class Script { LATIN, CHINESE, DEVANAGARI, JAPANESE, KOREAN }
@@ -42,6 +48,10 @@ object MlKitOcr {
 
     /** Characters a script's own model exists for; when the Latin read has none, the others are tried. */
     private fun nonLatinNeeded(latin: String): Boolean = score(latin) < 3 || latin.any { Character.UnicodeScript.of(it.code) != Character.UnicodeScript.LATIN && it.isLetter() }
+
+    /** #1805 [script]'s structured read of [bitmap]; the failure when its recognizer threw or timed out. */
+    fun text(bitmap: Bitmap, script: Script, timeoutSeconds: Long = 30): Result<Text> =
+        runCatching { Tasks.await(recognizer(script).process(InputImage.fromBitmap(bitmap, 0)), timeoutSeconds, TimeUnit.SECONDS) }
 
     fun read(bitmap: Bitmap, timeoutSeconds: Long = 30): Read {
         val image = InputImage.fromBitmap(bitmap, 0)

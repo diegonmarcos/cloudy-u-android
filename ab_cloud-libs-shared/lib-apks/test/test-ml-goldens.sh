@@ -26,6 +26,12 @@
 #       the engine's own rule (libs:sound-tags Signal.windows), and every window's scores
 #       equal to the recorded ones within the tolerance — so the JVM golden cannot drift
 #       from the model it stands for.
+#   G6  #1805 a `kind: detector` pin (the scene method's object detectors): its input and EVERY output tensor are
+#       the declared shapes and dtypes (order-free), its labels (`labels_entry` in the metadata zip, or the
+#       pin's own `labels` list) number `classes`, and — for a `litert-yolo` model, whose decode this tester
+#       replays (letterbox, quantise, best class per anchor) — every golden image's best detection is one of the
+#       declared labels. A `mediapipe` model's detections are MediaPipe's own decode and are proven on the
+#       emulator (ac_cloud-camera/test/emulator-camera-scene.sh); here its file, tensors and labels are.
 #   MUT each property broken on purpose (audio fed unnormalised, labels off by one, a wrong
 #       declared shape, a recorded score drifted, a wrong pin) turns the check red.
 #
@@ -71,10 +77,44 @@ def fetch(m):
         return None, path
     return data, path
 
-def labels_of(data, entry):
-    z = zipfile.ZipFile(io.BytesIO(data))
-    names = [l.strip() for l in z.read(entry).decode("utf-8").splitlines() if l.strip()]
+def labels_of(data, entry, inline=None):
+    if inline is not None:
+        names = list(inline)
+    else:
+        z = zipfile.ZipFile(io.BytesIO(data))
+        names = [l.strip() for l in z.read(entry).decode("utf-8").splitlines() if l.strip()]
     return names[1:] + names[:1] if mutate == "label_shift" else names
+
+def tensors(details):
+    return sorted((list(map(int, d["shape"])), np.dtype(d["dtype"]).name) for d in details)
+
+def yolo_best(interp, img_path, names, pad):
+    # The engine's own YOLO path (SceneOnDevice.Yolo + SceneMath.decodeYolo): letterbox into the square on grey `pad`,
+    # quantise as the input declares, NCHW or NHWC by its shape, best class per anchor.
+    inp, out = interp.get_input_details()[0], interp.get_output_details()[0]
+    nchw = inp["shape"][1] == 3
+    side = int(inp["shape"][2] if nchw else inp["shape"][1])
+    im = Image.open(img_path).convert("RGB"); w, h = im.size; s = min(side / w, side / h)
+    nw, nh = max(1, round(w * s)), max(1, round(h * s))
+    canvas = Image.new("RGB", (side, side), (pad, pad, pad)); canvas.paste(im.resize((nw, nh), Image.BILINEAR), ((side - nw) // 2, (side - nh) // 2))
+    x = np.asarray(canvas, np.float32) / 255.0
+    if nchw: x = x.transpose(2, 0, 1)
+    scale, zero = inp["quantization"]
+    dt = np.dtype(inp["dtype"])
+    if dt.kind in "iu":
+        info = np.iinfo(dt)
+        x = np.clip(np.round(x / scale + zero), info.min, info.max).astype(dt)
+    interp.set_tensor(inp["index"], x[None].astype(dt))
+    interp.invoke()
+    y = interp.get_tensor(out["index"]).astype(np.float64)
+    oscale, ozero = out["quantization"]
+    if oscale: y = (y - ozero) * oscale
+    y = y[0]
+    if y.shape[0] != len(names) + 4: y = y.T
+    scores = y[4:]
+    if scores.min() < 0 or scores.max() > 1: scores = 1 / (1 + np.exp(-scores))
+    best = scores.max(axis=0); cls = scores.argmax(axis=0); a = int(np.argmax(best))
+    return names[int(cls[a])], float(best[a])
 
 def run(interp, x):
     inp, out = interp.get_input_details()[0], interp.get_output_details()[0]
@@ -129,8 +169,28 @@ for module in modules:
         data, path = fetch(m)
         if data is None:
             no("G1 %s: %s does not match the pinned sha256 %s / %d bytes" % (where, m["url"], m["sha256"][:12], m["bytes"])); continue
-        # G2
         interp = Interpreter(model_path=path); interp.allocate_tensors()
+        if m.get("kind") == "detector":
+            # G6
+            dshape = list(m["input"]["shape"]) if mutate != "declared_shape" else [s + 1 for s in m["input"]["shape"]]
+            if tensors(interp.get_input_details()[:1]) != [(dshape, m["input"]["dtype"])]:
+                no("G6 %s: the model reads %s, the pin declares %s %s" % (where, tensors(interp.get_input_details()[:1]), dshape, m["input"]["dtype"]))
+            want = sorted((list(o["shape"]), o["dtype"]) for o in m["outputs"])
+            if tensors(interp.get_output_details()) != want:
+                no("G6 %s: the model answers %s, the pin declares %s" % (where, tensors(interp.get_output_details()), want))
+            names = labels_of(data, m.get("labels_entry"), m.get("labels") if not m.get("labels_entry") else None)
+            if len(names) != m["classes"]:
+                no("G6 %s: %d labels, the pin declares %d classes" % (where, len(names), m["classes"]))
+            for g in (x for x in gold.get("detections", []) if x["model"] == mid):
+                if m.get("runtime") != "litert-yolo":
+                    print("    G6 %s: %s is %s's own decode, proven on the emulator" % (where, g["file"], m.get("runtime"))); continue
+                label, p = yolo_best(interp, os.path.join(os.path.dirname(gpath), g["file"]), names, int(m["input"].get("letterbox_pad", 114)))
+                if label not in g["includes"] or p < g["min_score"]:
+                    no("G6 %s: %s's best detection is %r %.3f, not one of %s at %.2f" % (where, g["file"], label, p, g["includes"], g["min_score"]))
+                else:
+                    print("    G6 %s: %s -> %s %.3f" % (where, g["file"], label, p)); checked += 1
+            continue
+        # G2
         inp, out = interp.get_input_details()[0], interp.get_output_details()[0]
         dshape = list(m["input"]["shape"]) if mutate != "declared_shape" else [s + 1 for s in m["input"]["shape"]]
         if list(inp["shape"]) != dshape or np.dtype(inp["dtype"]).name != m["input"]["dtype"]:

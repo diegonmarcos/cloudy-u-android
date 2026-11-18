@@ -60,5 +60,41 @@ object FrameMapping {
         return Box(minOf(a.first, b.first), minOf(a.second, b.second), maxOf(a.first, b.first), maxOf(a.second, b.second))
     }
 
+    /**
+     * #1805 the inverse of [pointToView]: a point of the view (a tap) back in the sensor-oriented image's pixels, so a
+     * tap on the overlay is hit-tested against boxes in the frame's own coordinates. Off the image (the letterbox of a
+     * FIT_CENTER view) it lands outside 0..imageW / 0..imageH, which no box holds.
+     */
+    fun viewToImage(
+        vx: Float, vy: Float, imageW: Int, imageH: Int, rotationDegrees: Int, mirrored: Boolean,
+        viewW: Int, viewH: Int, cover: Boolean = true,
+    ): Pair<Float, Float> {
+        if (imageW <= 0 || imageH <= 0 || viewW <= 0 || viewH <= 0) return -1f to -1f
+        val (uw, uh) = uprightSize(imageW, imageH, rotationDegrees)
+        val sx = viewW.toFloat() / uw
+        val sy = viewH.toFloat() / uh
+        val scale = if (cover) maxOf(sx, sy) else minOf(sx, sy)
+        val dx = (viewW - uw * scale) / 2f
+        val dy = (viewH - uh * scale) / 2f
+        var ux = (vx - dx) / scale
+        val uy = (vy - dy) / scale
+        if (mirrored) ux = uw - ux
+        return when (norm(rotationDegrees)) {
+            90 -> uy to (imageH - ux)
+            180 -> (imageW - ux) to (imageH - uy)
+            270 -> (imageW - uy) to ux
+            else -> ux to uy
+        }
+    }
+
+    /** View pixels per image pixel: how far [px] view pixels reach in the image (a finger's slop). */
+    fun viewScale(imageW: Int, imageH: Int, rotationDegrees: Int, viewW: Int, viewH: Int, cover: Boolean = true): Float {
+        if (imageW <= 0 || imageH <= 0 || viewW <= 0 || viewH <= 0) return 1f
+        val (uw, uh) = uprightSize(imageW, imageH, rotationDegrees)
+        val sx = viewW.toFloat() / uw
+        val sy = viewH.toFloat() / uh
+        return if (cover) maxOf(sx, sy) else minOf(sx, sy)
+    }
+
     private fun norm(deg: Int): Int = ((deg % 360) + 360) % 360
 }

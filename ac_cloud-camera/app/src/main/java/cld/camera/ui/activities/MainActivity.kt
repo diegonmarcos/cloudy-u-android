@@ -166,6 +166,8 @@ open class MainActivity : AppCompatActivity(),
         get() = objectsController ?: ObjectsController(
             this, binding.objectsOverlay, binding.objectsPanel, binding.objectsStatus,
             binding.objectsPause, binding.objectsThreshold, binding.objectsThresholdValue,
+            binding.objectsStill, binding.objectsDetector, binding.objectsOpen, binding.objectsCopyAll,
+            binding.objectsShare, binding.objectsTextStatus,
         ).also { objectsController = it }
 
     val objectsIfStarted: ObjectsController? get() = objectsController
@@ -341,6 +343,30 @@ open class MainActivity : AppCompatActivity(),
         } else {
             showAudioPermissionDeniedDialog { videoCapturer.startRecording() }
         }
+    }
+
+    /** #1805 Objects > Open image: the picked image is detected and read once, then its text is selectable. */
+    val objectsImagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { objects.openUri(it) }
+    }
+
+    /**
+     * #1805 the emulator / on-device check's door into Objects, by intent extras on the launch: objects_image=<file>
+     * opens that image in Objects, objects_bench=<file> benchmarks both detectors over it. A path is under this app's
+     * files unless absolute. Consumed once, so a later resume does not repeat it.
+     */
+    private fun consumeObjectsCheckIntent() {
+        val image = intent?.getStringExtra(EXTRA_OBJECTS_IMAGE)
+        val bench = intent?.getStringExtra(EXTRA_OBJECTS_BENCH)
+        if (image == null && bench == null) return
+        intent?.removeExtra(EXTRA_OBJECTS_IMAGE)
+        intent?.removeExtra(EXTRA_OBJECTS_BENCH)
+        fun file(p: String) = if (p.startsWith("/")) java.io.File(p) else java.io.File(filesDir, p)
+        window.decorView.postDelayed({
+            finalizeMode(CameraMode.OBJECTS)
+            image?.let { objects.openFile(file(it)) }
+            bench?.let { objects.bench(file(it)) }
+        }, OBJECTS_CHECK_DELAY_MS)
     }
 
     // Used to request permission from the user
@@ -686,6 +712,8 @@ open class MainActivity : AppCompatActivity(),
                 camConfig.initializeCamera(true)
             }
         }
+
+        if (this !is SecureActivity) consumeObjectsCheckIntent()
     }
 
     val requiresVideoModeOnly: Boolean
@@ -1538,6 +1566,10 @@ open class MainActivity : AppCompatActivity(),
         // Long enough to let a code actually enter the frame, short enough that
         // a silent empty box never reads as availability.
         private const val NO_BARCODE_HINT_DELAY_MS = 3_000L
+        // #1805 the Objects check's intent extras, and how long the camera gets to bind before they run.
+        const val EXTRA_OBJECTS_IMAGE = "objects_image"
+        const val EXTRA_OBJECTS_BENCH = "objects_bench"
+        private const val OBJECTS_CHECK_DELAY_MS = 2_500L
         private const val autoCenterFocusDuration = 2000L
         private val hexArray = "0123456789ABCDEF".toCharArray()
 

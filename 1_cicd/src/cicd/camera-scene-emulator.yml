@@ -1,0 +1,132 @@
+# ╔═══════════════════════════════════════════════════════════════════════════╗
+# ║ Cloud Camera > Objects as a scene (emulator, dispatch only) (#1805)        ║
+# ║ Installs the image engine (Cloud-Lib-Ml-L-Image-Mlkit.apk, contract 4) and ║
+# ║ Cloud Camera on a Pixel 7 emulator, benchmarks EfficientDet-Lite0          ║
+# ║ (MediaPipe) against YOLO11n (LiteRT) and the five-script OCR, then opens   ║
+# ║ fixture images with objects and text: frames + labels, "Text" frames, the  ║
+# ║ read words, tap-to-select, the handles, Copy all, the live stream.         ║
+# ║ Script: ac_cloud-camera/test/emulator-camera-scene.sh. Evidence: the       ║
+# ║ `camera-scene-evidence` artifact (screens, bench.json, bench.md). Not a    ║
+# ║ gate: run on request only (rules/ci.md cost budget).                       ║
+# ╚═══════════════════════════════════════════════════════════════════════════╝
+name: "Test → Cloud Camera Objects scene + benchmark (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      camera_run_id:
+        description: "Ship Cloud Camera run id whose APK artifact to test (empty = release asset)"
+        required: false
+        default: ""
+      libs_run_id:
+        description: "Ship Cloud Libs run id whose engine APK artifact to test (empty = release asset)"
+        required: false
+        default: ""
+      release_tag:
+        description: "Release to download from when a run id is empty"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ac_cloud-camera/test
+            ab_cloud-libs-shared/libs/ml-l-image-mlkit/src/test/resources/golden
+
+      - name: Fetch the engine and Cloud Camera APKs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          C_RUN: ${{ inputs.camera_run_id }}
+          L_RUN: ${{ inputs.libs_run_id }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -eu
+          mkdir -p apk/cam apk/lib
+          if [ -n "$C_RUN" ]; then
+            gh api "repos/$REPO/actions/runs/$C_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-Camera-")) | .name' |
+            while read -r name; do gh run download "$C_RUN" -R "$REPO" -n "$name" -D "apk/cam/$name"; done
+          else
+            gh release download "${TAG:-latest}" -R "$REPO" -p 'Cloud-Camera*.apk' -D apk/cam
+          fi
+          if [ -n "$L_RUN" ]; then
+            gh api "repos/$REPO/actions/runs/$L_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-Libs-")) | .name' |
+            while read -r name; do gh run download "$L_RUN" -R "$REPO" -n "$name" -D "apk/lib/$name"; done
+          else
+            gh release download "${TAG:-latest}" -R "$REPO" -p 'Cloud-Lib-Ml-L-Image-Mlkit.apk' -D apk/lib
+          fi
+          cam=""
+          for want in x86_64 universal ''; do
+            cam=$(find apk/cam -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$cam" ] && break
+          done
+          eng=$(find apk/lib -name 'Cloud-Lib-Ml-L-Image-Mlkit*.apk' | head -1 || true)
+          [ -n "$cam" ] && [ -n "$eng" ] || { echo "::error::missing an APK (camera='$cam' engine='$eng')"; exit 1; }
+          cp "$cam" camera.apk; cp "$eng" engine.apk
+          ls -l camera.apk engine.apk
+
+      - name: Fixture tools (Pillow, fonts)
+        run: |
+          python3 -m pip install --quiet pillow
+          sudo apt-get install -y -q fonts-dejavu-core fonts-noto-cjk >/dev/null 2>&1 || true
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot the emulator and prove (attempt 1)
+        id: try1
+        continue-on-error: true
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-camera/test/emulator-camera-scene.sh engine.apk camera.apk ab_cloud-libs-shared/libs/ml-l-image-mlkit/src/test/resources/golden out
+      # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
+      - name: Boot the emulator and prove (attempt 2)
+        if: steps.try1.outcome != 'success'
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-camera/test/emulator-camera-scene.sh engine.apk camera.apk ab_cloud-libs-shared/libs/ml-l-image-mlkit/src/test/resources/golden out2
+
+      - name: Benchmark table in the run summary
+        if: always()
+        run: |
+          for d in out2 out; do [ -f "$d/bench.md" ] && { echo "## #1805 Objects benchmark (emulator)"; cat "$d/bench.md"; } >> "$GITHUB_STEP_SUMMARY" && break; done; true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: camera-scene-evidence
+          path: |
+            out
+            out2
+          if-no-files-found: warn

@@ -113,6 +113,23 @@ class ImageScanEngine(context: Context) {
     fun detect(bitmap: Bitmap, request: org.json.JSONObject): Recognition = detection(request) { descriptorOf(bitmap, Bitmap.CompressFormat.JPEG) }
     fun detect(file: File, request: org.json.JSONObject): Recognition = detection(request) { ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY) }
 
+    /**
+     * #1805 Cloud Camera > Objects (RecognitionConfig.sceneRequest): objects from the request's
+     * detector, text regions as the class "Text", and, when asked, the five-script OCR layout
+     * (blocks, lines, words with boxes), all on device, in one coordinate space. Never throws.
+     */
+    fun scene(bitmap: Bitmap, request: org.json.JSONObject): Scene = sceneOf(request) { descriptorOf(bitmap, Bitmap.CompressFormat.JPEG) }
+    fun scene(file: File, request: org.json.JSONObject): Scene = sceneOf(request) { ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY) }
+
+    /** #1805 the engine-side benchmark of both detectors and the OCR over one image: its JSON, or {"ok": false, "error"}. */
+    fun sceneBench(file: File, request: org.json.JSONObject): JSONObject =
+        runCatching { JSONObject(ask(SCENE_BENCH, { ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY) }, request.toString(), BuildConfig.IMAGE_SCENE_CONTRACT)) }
+            .getOrElse { JSONObject().put("ok", false).put("error", it.message ?: it.toString()) }
+
+    private fun sceneOf(request: org.json.JSONObject, open: () -> ParcelFileDescriptor?): Scene =
+        runCatching { Scene.parse(ask(SCENE, open, request.toString(), BuildConfig.IMAGE_SCENE_CONTRACT)) }
+            .getOrElse { Scene.failed(it.message ?: it.toString()) }
+
     private fun detection(request: org.json.JSONObject, open: () -> ParcelFileDescriptor?): Recognition =
         runCatching { Recognition.parse(ask(DETECT, open, request.toString(), BuildConfig.IMAGE_DETECT_CONTRACT), RecognitionConfig.ML) }
             .getOrElse { Recognition.failed(RecognitionConfig.ML, it.message ?: it.toString()) }
@@ -198,6 +215,8 @@ class ImageScanEngine(context: Context) {
         const val RECOGNIZE = "recognize"
         const val MODELS = "models"
         const val DETECT = "detect"
+        const val SCENE = "scene"
+        const val SCENE_BENCH = "scene_bench"
 
         const val BIND_TIMEOUT_MS = 4000L
 

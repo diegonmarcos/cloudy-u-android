@@ -4,7 +4,7 @@
     "image": {
       "fleet": "lib-ml-l-image-mlkit",
       "action": "{package}.ENGINE",
-      "min_contract": 1, "_doc_method_contracts": "#772 a method that needs a newer engine than the floor every consumer needs: recognize and models arrived in contract 2, so only a call to them asks for it and a barcode-only consumer keeps working against a contract-1 engine. #798 detect (live identification: objects with a full-label classifier and tracking ids, labels, text boxes) arrived in contract 3.", "method_contracts": { "recognize": 2, "detect": 3 }
+      "min_contract": 1, "_doc_method_contracts": "#772 a method that needs a newer engine than the floor every consumer needs: recognize and models arrived in contract 2, so only a call to them asks for it and a barcode-only consumer keeps working against a contract-1 engine. #798 detect (live identification: objects with a full-label classifier and tracking ids, labels, text boxes) arrived in contract 3. #1805 scene (objects + text regions + the five-script OCR layout) and scene_bench arrived in contract 4.", "method_contracts": { "recognize": 2, "detect": 3, "scene": 4 }
     }
   }
 }

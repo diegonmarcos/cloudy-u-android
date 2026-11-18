@@ -46,8 +46,23 @@
                     app:layout_constraintEnd_toEndOf="@id/preview"
                     app:layout_constraintBottom_toBottomOf="@id/preview" />
 
-                <!-- #1533 Objects: the live detection boxes, over exactly the preview's bounds. -->
-                <com.diegonmarcos.superapp.vision.DetectionOverlayView
+                <!-- #1805 Objects: a paused frame or an opened image, shown instead of the live stream, under the overlay. -->
+                <ImageView
+                    android:id="@+id/objects_still"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:background="@android:color/black"
+                    android:contentDescription="@string/objects_open"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="@id/preview"
+                    app:layout_constraintStart_toStartOf="@id/preview"
+                    app:layout_constraintEnd_toEndOf="@id/preview"
+                    app:layout_constraintBottom_toBottomOf="@id/preview" />
+
+                <!-- #1533 Objects: the live detection boxes, over exactly the preview's bounds.
+                     #1805 the scene overlay: the same boxes, labels, confidence and tracking ids, plus the "Text"
+                     frames, the read words and the selection with its handles. -->
+                <com.diegonmarcos.superapp.vision.SceneOverlayView
                     android:id="@+id/objects_overlay"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
@@ -260,6 +275,62 @@
                 android:textColor="@android:color/white"
                 android:textSize="13sp"
                 android:text="@string/objects_looking" />
+
+            <!-- #1805 the read text: what is read on the frame, the last selection copied. -->
+            <TextView
+                android:id="@+id/objects_text_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="4"
+                android:ellipsize="end"
+                android:textColor="#B3E5FC"
+                android:textSize="12sp" />
+
+            <!-- #1805 the detector, an opened image, and the text actions. -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <Button
+                    android:id="@+id/objects_detector"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:maxLines="2"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/objects_open"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:text="@string/objects_open" />
+
+                <Button
+                    android:id="@+id/objects_copy_all"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:text="@string/objects_copy_all" />
+
+                <Button
+                    android:id="@+id/objects_share"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:text="@string/objects_share" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

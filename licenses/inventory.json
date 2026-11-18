@@ -33,7 +33,7 @@
    "PolyForm-Noncommercial-1.0.0": 3
   },
   "maven": {
-   "Apache-2.0": 257,
+   "Apache-2.0": 258,
    "MIT": 29,
    "LicenseRef-Google-MLKit-Terms": 14,
    "NOASSERTION": 9,
@@ -8609,6 +8609,7 @@
   "maven:com.google.ai.edge.litert:litert": {
    "kind": "maven",
    "declared_in": [
+    "ab_cloud-libs-shared/libs/ml-l-image-mlkit/build.gradle",
     "ab_cloud-libs-shared/libs/ml-l-sound-yamnet/build.gradle"
    ],
    "version": "1.4.0",
@@ -8945,6 +8946,17 @@
    "licence_source": "POM 9999.0-empty-to-avoid-conflict-with-guava",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "nix-on-droid"
+  },
+  "maven:com.google.mediapipe:tasks-vision": {
+   "kind": "maven",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/ml-l-image-mlkit/build.gradle"
+   ],
+   "version": "0.10.35",
+   "scope": "shipped",
+   "licence": "Apache-2.0",
+   "licence_source": "POM 0.10.35",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:digital-ink-recognition": {
    "kind": "maven",

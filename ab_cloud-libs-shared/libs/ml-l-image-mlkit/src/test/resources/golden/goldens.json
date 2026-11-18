@@ -1,6 +1,33 @@
 {
   "_doc": "#798 what the pinned detect classifier (data/models.json::models.detect) must answer for the golden images here, checked against the REAL model through LiteRT's runtime by lib-apks/test/test-ml-goldens.sh. grace_hopper.jpg is the US Navy portrait of Commodore Grace M. Hopper (public domain, a work of the US federal government; File source: http://commons.wikimedia.org/wiki/File:Grace_Hopper.jpg, the copy TensorFlow's own label_image example uses). The image is resized to the model's input, as ML Kit does for each detected object's crop.",
   "images": [
-    { "file": "grace_hopper.jpg", "model": "detect", "top": 3, "includes": ["military uniform", "suit"] }
+    {
+      "file": "grace_hopper.jpg",
+      "model": "detect",
+      "top": 3,
+      "includes": [
+        "military uniform",
+        "suit"
+      ]
+    }
+  ],
+  "_doc_detections": "#1805 what the scene detectors (data/models.json kind detector) must find in the golden images: the best detection's label is one of `includes` at `min_score` or above. lib-apks/test/test-ml-goldens.sh G6 replays the engine's YOLO path through LiteRT; the MediaPipe model's own decode is proven on the emulator.",
+  "detections": [
+    {
+      "file": "grace_hopper.jpg",
+      "model": "scene_yolo11n",
+      "includes": [
+        "person"
+      ],
+      "min_score": 0.5
+    },
+    {
+      "file": "grace_hopper.jpg",
+      "model": "scene_efficientdet",
+      "includes": [
+        "person"
+      ],
+      "min_score": 0.5
+    }
   ]
 }

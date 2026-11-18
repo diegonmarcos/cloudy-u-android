@@ -101,6 +101,20 @@
     <string name="objects_saved">Saved the frame with its detections (JSON)</string>
     <string name="objects_save_failed">Could not save the frame: %1$s</string>
     <string name="objects_count">%1$d object(s)</string>
+    <!-- #1805 Objects: the scene (detector choice, text as a class, live OCR, selection, open image, benchmark) -->
+    <string name="objects_detector">Detector: %1$s</string>
+    <string name="objects_open">Open image</string>
+    <string name="objects_copy_all">Copy all</string>
+    <string name="objects_share">Share</string>
+    <string name="objects_reading">Reading the image…</string>
+    <string name="objects_open_failed">Could not open the image</string>
+    <string name="objects_text_regions">%1$d text region(s)</string>
+    <string name="objects_text_read">Text: %1$d block(s), %2$d line(s), %3$d word(s). Tap a word to select and copy it; tap again for its line, then its block; drag the handles to extend.</string>
+    <string name="objects_text_none">No text read on this frame</string>
+    <string name="objects_text_copied">Copied %1$d character(s)</string>
+    <string name="objects_text_clip">Cloud Camera text</string>
+    <string name="objects_bench_running">Benchmarking the detectors…</string>
+    <string name="objects_bench_done">Benchmark done (files/objects-bench.json)</string>
     <string name="aspect_ratio_16_9">16:9</string>
     <string name="aspect_ratio_4_3">4:3</string>
     <string name="share_media">Share Media</string>

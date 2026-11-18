@@ -150,10 +150,12 @@ stage; sub "$MF" '${applicationId}.ENGINE' '${applicationId}.ENGINE2'
 landed "$MF" 'ENGINE2' && red "K2 the engine answers a different action than the app looks for" "K2"
 stage; js "$DRIVEBJ" 'd["engines"]["gh"]["min_contract"] = 2'
 landed "$DRIVEBJ" '"min_contract": 2' && red "K3 the app needs a contract the engine does not declare" "K3"
-stage; js "$IMG/engine-client.json" 'd["engines"]["image"]["method_contracts"]["recognize"] = 4'
-landed "$IMG/engine-client.json" '"recognize": 4' && red "K3 a method needs a contract above the one the image engine declares" "K3"
-stage; js "$IMG/engine-client.json" 'd["engines"]["image"]["method_contracts"]["detect"] = 4'
-landed "$IMG/engine-client.json" '"detect": 4' && red "K3 #798 detect needs a contract above the one the image engine declares" "K3"
+stage; js "$IMG/engine-client.json" 'd["engines"]["image"]["method_contracts"]["recognize"] = 5'
+landed "$IMG/engine-client.json" '"recognize": 5' && red "K3 a method needs a contract above the one the image engine declares" "K3"
+stage; js "$IMG/engine-client.json" 'd["engines"]["image"]["method_contracts"]["detect"] = 5'
+landed "$IMG/engine-client.json" '"detect": 5' && red "K3 #798 detect needs a contract above the one the image engine declares" "K3"
+stage; js "$IMG/engine-client.json" 'd["engines"]["image"]["method_contracts"]["scene"] = 5'
+landed "$IMG/engine-client.json" '"scene": 5' && red "K3 #1805 scene needs a contract above the one the image engine declares (4)" "K3"
 stage; js "$IMG/engine-client.json" 'd["engines"]["image"]["method_contracts"]["recognize"] = 0'
 landed "$IMG/engine-client.json" '"recognize": 0' && red "K3 a per-method floor below the binding's own floor" "K3"
 stage; sub "$SVC" 'arrayOf(STATUS, REPO_LIST, CREDENTIAL, LOGIN_START, LOGIN_POLL)' 'arrayOf(STATUS, REPO_LIST, CREDENTIAL, LOGIN_START)'

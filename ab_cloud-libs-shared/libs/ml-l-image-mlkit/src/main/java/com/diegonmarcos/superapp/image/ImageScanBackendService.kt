@@ -31,6 +31,11 @@ import java.io.ByteArrayOutputStream
  *
  * #798 CONTRACT 3: detect (the [Detector]: objects with a full-label classifier and tracking ids,
  * image labels, or text lines with boxes; fully on device), through scanWith.
+ *
+ * #1805 CONTRACT 4: scene (the [SceneDetector]: objects from EfficientDet-Lite0 on MediaPipe or
+ * YOLO11n on LiteRT, text regions as the class "Text", and the five-script OCR layout of blocks,
+ * lines and words with boxes; fully on device) and scene_bench (the same backends timed over one
+ * image, for the emulator benchmark), through scanWith.
  */
 class ImageScanBackendService : Service() {
 
@@ -38,8 +43,9 @@ class ImageScanBackendService : Service() {
     private val onDevice by lazy { MlKitOnDevice() }
     private val recognizer by lazy { Recognizer(scanner, onDevice, UrlHttp, ::accountToken) }
     private val detector by lazy { Detector(scanner, onDevice) }
+    private val scene by lazy { SceneDetector(scanner, SceneOnDevice(applicationContext)) }
 
-    fun methodNames(): Array<String> = arrayOf(BARCODE, OCR, RECOGNIZE, MODELS, DETECT)
+    fun methodNames(): Array<String> = arrayOf(BARCODE, OCR, RECOGNIZE, MODELS, DETECT, SCENE, SCENE_BENCH)
 
     fun dispatch(method: String, image: ByteArray, request: String = "{}"): String = when (method) {
         BARCODE -> scanner.barcodeJson(image)
@@ -47,6 +53,8 @@ class ImageScanBackendService : Service() {
         RECOGNIZE -> recognizer.json(image, request)
         MODELS -> models(JSONObject(request))
         DETECT -> detector.json(image, request)
+        SCENE -> scene.json(image, request)
+        SCENE_BENCH -> scene.benchJson(image, request)
         else -> throw IllegalArgumentException("unknown method: $method")
     }
 
@@ -106,6 +114,8 @@ class ImageScanBackendService : Service() {
         const val RECOGNIZE = "recognize"
         const val MODELS = "models"
         const val DETECT = "detect"
+        const val SCENE = "scene"
+        const val SCENE_BENCH = "scene_bench"
 
         /** How long a first call waits for the text-tools bind before saying "no token". */
         const val ACCOUNT_WAIT_MS = 3000L
