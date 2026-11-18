@@ -50,3 +50,9 @@ test('the native top bar opens the vault Settings screen; the AFFiNE settings di
   assert.ok(!bridge.includes("open('setting'"), 'the bridge no longer opens the dialog');
   assert.ok(!readFileSync(join(SRC, '..', 'dialogs/index.tsx'), 'utf8').includes('SettingDialog'));
 });
+
+test('the old app bars (page drawer, section bottom nav) are never brought back by the vault: no menu entry, the chrome is always the vault', () => {
+  assert.ok(!shell.includes('@app-bars') && !shell.includes('@home') && !shell.includes('openSection'));
+  assert.match(shell, /setVaultChrome\?\.\(true\)/);
+  assert.ok(!shell.includes('setVaultChrome?.(!'), 'the chrome is not toggled by a user flag');
+});

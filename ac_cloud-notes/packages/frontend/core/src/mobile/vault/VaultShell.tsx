@@ -37,12 +37,10 @@ type Special = 'graph' | 'configs' | null;
 /** The native shell's bridge (NotesShell.Host); absent in a browser. */
 interface NotesHost {
   setVaultChrome?: (on: boolean) => void;
-  openSection?: (id: string) => void;
 }
 const host = (): NotesHost | undefined => (window as unknown as { CloudNotesHost?: NotesHost }).CloudNotesHost;
 
 const THEME_KEY = 'cloud-notes:vault:follow-theme';
-const APPBARS_KEY = 'cloud-notes:vault:app-bars';
 const flag = (key: string): boolean => {
   try { return localStorage.getItem(key) === '1'; } catch { return false; }
 };
@@ -83,7 +81,6 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
     try { localStorage.setItem(uiDecl.storage_key, serializeUiPrefs(next)); } catch { /* the setting still applies for this session */ }
   };
   const uiVars = useMemo(() => uiCssVars(uiPrefs, uiDecl), [uiPrefs, uiDecl]);
-  const [appBars, setAppBars] = useState(() => flag(APPBARS_KEY));
 
   useEffect(() => {
     const el = rootRef.current;
@@ -99,12 +96,12 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
     return () => ro.disconnect();
   }, [decl.layout.wide_breakpoint_px]);
 
-  // The vault draws its own top and bottom bars, so the app's bars step aside while it is shown
-  // (unless the user keeps them: menu > Show app navigation bars). They return when the vault closes.
+  // The vault draws its own top and bottom bars and is the only screen: the old app bars (page drawer, section bottom nav) are
+  // never shown while it is up (ticket 1717: no menu entry brings them back).
   useEffect(() => {
-    try { host()?.setVaultChrome?.(!appBars); } catch { /* no native shell */ }
+    try { host()?.setVaultChrome?.(true); } catch { /* no native shell */ }
     return () => { try { host()?.setVaultChrome?.(false); } catch { /* no native shell */ } };
-  }, [appBars]);
+  }, []);
 
   const tab = api.tabs.find(t => t.path === api.active) ?? null;
   const handler = tab ? handlerFor(decl, tab.path) : null;
@@ -285,26 +282,13 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
   ];
   const mainItems: MenuItem[] = [
     ...decl.commands.map(c => ({ id: c.id, label: c.label, hint: c.hotkey })),
-    { id: '@app-bars', label: 'Show app navigation bars', checked: appBars, divider: true, title: 'App' },
-    { id: '@home', label: 'Leave the vault view (Home)', icon: 'back' },
   ];
   const newItems: MenuItem[] = [
     { id: 'new-note', label: 'New note', icon: 'newFile' },
     { id: 'new-canvas', label: 'New canvas', icon: 'canvas' },
     { id: 'new-folder', label: 'New folder', icon: 'newFolder' },
   ];
-  const pickMain = (id: string) => {
-    if (id === '@app-bars') return setAppBars(v => { setFlag(APPBARS_KEY, !v); return !v; });
-    if (id === '@home') {
-      try {
-        const h = host();
-        if (h?.openSection) return h.openSection('home');
-      } catch { /* fall through to the web route */ }
-      window.dispatchEvent(new CustomEvent('cloud-notes:nav', { detail: { section: 'home', page: null } }));
-      return;
-    }
-    run(id);
-  };
+  const pickMain = (id: string) => run(id);
 
   const tabLabel = (path: string) => baseName(path);
 
