@@ -7,7 +7,7 @@ const up = await src('core/ui-prefs.ts');
 const ui = decl.configs.ui;
 
 test('the declaration has the shared fleet pages, then the app pages including UI', () => {
-  assert.deepEqual(decl.configs.pages.map(p => p.id), ['general', 'perms', 'agents', 'logcat', 'xray', 'about', 'notes', 'sources', 'ui', 'vault']);
+  assert.deepEqual(decl.configs.pages.map(p => p.id), ['notes', 'ui', 'sources', 'vault', 'general', 'perms', 'agents', 'logcat', 'xray', 'about']);
   assert.ok(decl.configs.pages.some(p => p.id === 'ui' && p.native === undefined));
   assert.ok(ui.font_families.length >= 3 && ui.font_families.every(f => f.id && f.label && f.stack));
 });

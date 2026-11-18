@@ -2,52 +2,9 @@ import { Button, SafeArea, Skeleton } from '@cloud-notes/component';
 import { useI18n } from '@cloud-notes/i18n';
 import { cssVarV2 } from '@cloud-notes/theme/v2';
 
-const SectionTitleFallback = () => {
-  return (
-    <div style={{ padding: '0 16px' }}>
-      <Skeleton
-        animation="wave"
-        style={{ height: 16, borderRadius: 4, width: 93 }}
-      />
-    </div>
-  );
-};
-const sectionRows = [127, 238, 191, 102];
-
-const Section = () => {
-  return (
-    <div style={{ marginBottom: 32 }}>
-      <SectionTitleFallback />
-      <div
-        style={{
-          padding: '0 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
-          marginTop: 24,
-        }}
-      >
-        {sectionRows.map((width, i) => {
-          return (
-            <div
-              style={{ display: 'flex', gap: 16, alignItems: 'center' }}
-              key={i}
-            >
-              <Skeleton
-                animation="wave"
-                style={{ width: 23, height: 23, borderRadius: 4 }}
-              />
-              <Skeleton
-                animation="wave"
-                style={{ width, height: 16, borderRadius: 4 }}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+// #1717 the loading placeholder is the vault's own shape (round sidebar button, the mode pill, a few lines of a note, the floating
+// bottom bar), not the old home page. The error panel below is unchanged.
+const lineWidths = ['62%', '90%', '78%', '84%', '55%'];
 
 export const AppFallback = ({
   onRetry,
@@ -65,49 +22,23 @@ export const AppFallback = ({
 
   return (
     <SafeArea top bottom style={{ height: '100dvh', overflow: 'hidden' }}>
-      {/* notification and setting */}
-      <div
-        style={{
-          padding: 10,
-          paddingTop: 0,
-          display: 'flex',
-          justifyContent: 'end',
-          gap: 10,
-        }}
-      >
-        <Skeleton
-          animation="wave"
-          style={{ width: 28, height: 28, borderRadius: 4 }}
-        />
-        <Skeleton
-          animation="wave"
-          style={{ width: 28, height: 28, borderRadius: 4 }}
-        />
+      {/* top: the round sidebar button and the Raw | Edit | View pill */}
+      <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Skeleton animation="wave" style={{ width: 44, height: 44, borderRadius: 22 }} />
+        <div style={{ flex: 1 }} />
+        <Skeleton animation="wave" style={{ width: 220, height: 44, borderRadius: 22 }} />
       </div>
-      {/* workspace card */}
-      <div style={{ padding: '4px 16px' }}>
-        <Skeleton
-          animation="wave"
-          style={{ width: 220, height: 40, borderRadius: 8 }}
-        />
-      </div>
-      {/* search */}
-      <div style={{ padding: '10px 16px 15px' }}>
-        <Skeleton animation="wave" style={{ height: 44, borderRadius: 10 }} />
-      </div>
-      {/* recent */}
-      <SectionTitleFallback />
-      <div style={{ padding: '16px 16px 32px 16px', display: 'flex', gap: 10 }}>
-        {[1, 2, 3].map(i => (
-          <Skeleton
-            key={i}
-            animation="wave"
-            style={{ width: 172, height: 210, borderRadius: 12 }}
-          />
+      {/* a note: a title and a few lines */}
+      <div style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <Skeleton animation="wave" style={{ width: '48%', height: 28, borderRadius: 6 }} />
+        {lineWidths.map((width, i) => (
+          <Skeleton key={i} animation="wave" style={{ width, height: 14, borderRadius: 4 }} />
         ))}
       </div>
-      <Section />
-      <Section />
+      {/* bottom: the floating bar */}
+      <div style={{ position: 'fixed', left: 14, right: 14, bottom: 24, display: 'flex', justifyContent: 'center' }}>
+        <Skeleton animation="wave" style={{ width: '100%', maxWidth: 420, height: 56, borderRadius: 28 }} />
+      </div>
       {onRetry ? (
         <div
           role="alert"

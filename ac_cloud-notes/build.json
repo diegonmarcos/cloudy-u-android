@@ -802,19 +802,19 @@
       }
     },
     "configs": {
-      "_doc": "#1717 the Configs screen of the vault: a strip of pages: the shared fleet Configs strip (General, Perms, Agents, Logcat, X-Ray App, About; each has a native start id and opens the Android shared Configs screen on that tab), then this app's own pages: Notes (vault settings), Sources (where it may read and write), UI (font family, size, scale) and Vault (what <vault>/.obsidian says). ui: the appearance settings the UI page offers, persisted under storage_key; font families are CSS stacks, size is the base text size in px, scale is the overall UI scale in percent.",
+      "_doc": "#1717 the Configs screen of the vault: a strip of pages: this app's own pages first (Notes = vault settings, UI = font family, size and scale, Sources = where it may read and write, Vault = what <vault>/.obsidian says), then the shared fleet Configs strip (General, Perms, Agents, Logcat, X-Ray App, About; each has a native start id and opens the Android shared Configs screen on that tab). ui: the appearance settings the UI page offers, persisted under storage_key; font families are CSS stacks, size is the base text size in px, scale is the overall UI scale in percent.",
       "default_page": "notes",
       "pages": [
+        {"id": "notes", "label": "Notes", "icon": "vault"},
+        {"id": "ui", "label": "UI", "icon": "edit"},
+        {"id": "sources", "label": "Sources", "icon": "smartphone"},
+        {"id": "vault", "label": "Vault", "icon": "folder"},
         {"id": "general", "label": "General", "icon": "gear", "native": "general"},
         {"id": "perms", "label": "Perms", "icon": "lock", "native": "perms"},
         {"id": "agents", "label": "Agents", "icon": "terminal", "native": "agents"},
         {"id": "logcat", "label": "Logcat", "icon": "file", "native": "logcat"},
         {"id": "xray", "label": "X-Ray App", "icon": "search", "native": "xray"},
-        {"id": "about", "label": "About", "icon": "file", "native": "about"},
-        {"id": "notes", "label": "Notes", "icon": "vault"},
-        {"id": "sources", "label": "Sources", "icon": "smartphone"},
-        {"id": "ui", "label": "UI", "icon": "edit"},
-        {"id": "vault", "label": "Vault", "icon": "folder"}
+        {"id": "about", "label": "About", "icon": "file", "native": "about"}
       ],
       "ui": {
         "storage_key": "cloud-notes:vault:ui-prefs",

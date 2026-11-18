@@ -320,7 +320,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
               </div>
               <div className="cnv-pill" data-testid="top-pill">
                 {/* the Raw | Edit | View switch: the active mode is always visible here */}
-                <span role="group" aria-label="View mode" data-testid="mode-switch" style={{ display: 'inline-flex', gap: 2 }}>
+                <span role="group" aria-label="View mode" data-testid="mode-switch" style={{ display: special === null ? 'inline-flex' : 'none', gap: 2 }}>
                   {decl.layout.modes.map(m => (
                     <button key={m.id} type="button" className="cnv-mode" data-mode-button={m.id} aria-pressed={mode === m.id} disabled={!tab || special !== null || !modes.includes(m.id)}
                       title={`${m.label} mode`} onClick={() => tab && api.setMode(tab.path, m.id)}>

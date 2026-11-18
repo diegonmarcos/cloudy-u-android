@@ -127,12 +127,12 @@ export const SettingsPane = ({ api, decl, ui, onUi, followTheme, onToggleTheme }
     <div className="cnv-pane" data-testid="configs-pane" data-page={page}>
       <div className="cnv-pagetabs" role="tablist" aria-label="Configs pages" data-testid="configs-tabs">
         {cfg.pages.map(p => (
-          <button key={p.id} type="button" role="tab" className="cnv-pagetab" aria-selected={p.id === page} data-page-tab={p.id} data-native={p.native ?? undefined} onClick={() => openPage(p)}>
+          <button key={p.id} type="button" role="tab" className="cnv-pagetab" ref={el => { if (el && p.id === page) el.scrollIntoView?.({ inline: 'nearest', block: 'nearest' }); }} aria-selected={p.id === page} data-page-tab={p.id} data-native={p.native ?? undefined} onClick={() => openPage(p)}>
             <Icon name={p.icon} size={14} />{p.label}
           </button>
         ))}
       </div>
-      <div className="cnv-note">
+      <div className="cnv-note cnv-settings">
         {nativeNote && <div className="cnv-banner" data-testid="settings-native-note">{nativeNote}</div>}
         {body()}
         <div style={{ height: 96 }} />

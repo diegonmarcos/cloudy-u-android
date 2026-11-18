@@ -150,6 +150,7 @@ export const VAULT_CSS = `
 .cnv-pagetabs{display:flex;gap:2px;padding:6px 8px;overflow-x:auto;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);flex:none}
 .cnv-pagetab{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:4px 12px;border:0;border-radius:999px;background:transparent;color:var(--text-muted);font:inherit;font-size:var(--font-ui-small);white-space:nowrap;cursor:pointer}
 .cnv-pagetab[aria-selected=true]{background:var(--interactive-accent);color:var(--text-on-accent)}
+.cnv-settings h3{margin:20px 0 4px;font-family:var(--font-interface);font-size:var(--font-ui-small);font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted)}
 .cnv-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--background-modifier-border);font-family:var(--font-interface);font-size:var(--font-ui-medium)}
 .cnv-setting-text{min-width:0}.cnv-setting-control{flex:none;max-width:55%;text-align:right;color:var(--text-muted)}
 .cnv-setting-control input[type=range]{width:160px;accent-color:var(--interactive-accent)}
