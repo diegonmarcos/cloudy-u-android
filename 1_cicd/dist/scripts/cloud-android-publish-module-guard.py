@@ -1,3 +1,4 @@
+# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-publish-module-guard.py ───
 #!/usr/bin/env python3
 """Every publish to ghcr.io / a GitHub release goes through ONE module.
 
