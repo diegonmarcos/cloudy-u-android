@@ -62,4 +62,18 @@ class ImageReplyTest {
         val client = File("src/main/java/com/diegonmarcos/superapp/decisions/link/DecisionsLink.kt").readText()
         assertTrue(client.contains("link.check(ctx, BuildConfig.DECISIONS_IMAGE_CONTRACT)"))
     }
+
+    @Test fun thePictureFilesArePrefixesTheJvmAccepts() {
+        // #1799 the emulator proof: createTempFile("in", ...) threw "Prefix string too short" before the engine was asked
+        val client = File("src/main/java/com/diegonmarcos/superapp/decisions/link/DecisionsLink.kt").readText()
+        val prefixes = Regex("""File\.createTempFile\("([^"]*)"""").findAll(client).map { it.groupValues[1] }.toList()
+        assertEquals(2, prefixes.size)
+        val dir = java.nio.file.Files.createTempDirectory("image-test").toFile()
+        try {
+            for (p in prefixes) {
+                assertTrue(p, p.length >= 3)
+                assertTrue(File.createTempFile(p, ".img", dir).delete())
+            }
+        } finally { dir.deleteRecursively() }
+    }
 }

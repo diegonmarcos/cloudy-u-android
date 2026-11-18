@@ -68,8 +68,9 @@ object DecisionsLink {
         val ctx = context.applicationContext
         val link = Conn()
         val dir = File(ctx.cacheDir, "decisions-image").apply { mkdirs() }
-        val src = File.createTempFile("in", ".img", dir)
-        val out = File.createTempFile("out", ".img", dir)
+        // createTempFile refuses a prefix under three characters (IllegalArgumentException).
+        val src = File.createTempFile("image-in", ".img", dir)
+        val out = File.createTempFile("image-out", ".img", dir)
         return try {
             src.writeBytes(picture)
             val why = link.check(ctx, BuildConfig.DECISIONS_IMAGE_CONTRACT)
