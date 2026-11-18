@@ -36,7 +36,7 @@ export const NativeNavBridge = () => {
 
   // The top bar's Settings > Configs and a page picked in its drawer.
   useEffect(() => {
-    // Settings > Configs is the vault's own Settings screen (VaultShell listens for the same event); the AFFiNE dialog is gone
+    // Settings > Configs is the vault's own Settings screen (VaultShell listens for the same event); the upstream editor dialog is gone
     const openDoc = (e: Event) => {
       const id = (e as CustomEvent<{ id?: string }>).detail?.id;
       if (id) workbench.openDoc(id);

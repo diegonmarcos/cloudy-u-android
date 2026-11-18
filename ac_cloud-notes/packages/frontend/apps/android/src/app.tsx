@@ -479,7 +479,7 @@ const AndroidBackAdapter = () => {
 
 // #1642 "Open with": a text file another app opened with this app (the manifest's VIEW/EDIT filters). The native side read it
 // (ExternalFilePlugin.takePendingOpen) and it lands as a new tab in the vault shell. #1717 the old file explorer that used to share
-// this component (the floating button's browser over the device storage, and its import into the AFFiNE workspace) is gone: the
+// this component (the floating button's browser over the device storage, and its import into the upstream editor workspace) is gone: the
 // vault's Source section mounts the same roots and browses them in the sidebar.
 const openPendingFile = async () => {
   let pending: Awaited<ReturnType<typeof ExternalFile.takePendingOpen>>;
