@@ -261,7 +261,7 @@ echo "== T10: the apps that section took are back in their topical folders =="
 for pair in "pkg:co.mangotechnologies.clickup prod_plan" \
             "pkg:com.fatsecret.android hlth_nutrition" \
             "pkg:com.google.android.apps.fitness svc_health" \
-            "pkg:com.nomadmania.presentation svc_mobility" \
+            "pkg:com.nomadmania.presentation svc_transports" \
             "pkg:mobi.eup.easygerman hlth_learning" \
             "pkg:es.bancosantander.apps svc_money" \
             "pkg:com.revolut.revolut svc_money" \

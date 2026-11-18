@@ -339,6 +339,11 @@
           "url": null
         },
         {
+          "pkg": "com.werewolfapps.online",
+          "label": "Werewolf Online",
+          "url": null
+        },
+        {
           "pkg": "com.amazon.mShop.android.shopping",
           "label": "Amazon",
           "url": "https://www.amazon.com"
@@ -354,46 +359,6 @@
           "url": null
         },
         {
-          "pkg": "com.ubercab",
-          "label": "Uber",
-          "url": "https://www.uber.com"
-        },
-        {
-          "pkg": "com.booking",
-          "label": "Booking.com",
-          "url": null
-        },
-        {
-          "pkg": "com.thetrainline",
-          "label": "Trainline",
-          "url": null
-        },
-        {
-          "pkg": "com.ryanair.cheapflights",
-          "label": "Ryanair",
-          "url": null
-        },
-        {
-          "pkg": "com.rome2rio.www.rome2rio",
-          "label": "Rome2Rio",
-          "url": null
-        },
-        {
-          "pkg": "com.comuto",
-          "label": "BlaBlaCar",
-          "url": null
-        },
-        {
-          "pkg": "com.trafi.whitelabel.bvg",
-          "label": "BVG Fahrinfo",
-          "url": null
-        },
-        {
-          "pkg": "com.nomadmania.presentation",
-          "label": "NomadMania",
-          "url": "https://nomadmania.com"
-        },
-        {
           "pkg": "com.indeed.android.jobsearch",
           "label": "Indeed",
           "url": "https://www.indeed.com"
@@ -407,6 +372,26 @@
           "pkg": "com.wggesucht.android",
           "label": "WG-Gesucht",
           "url": null
+        },
+        {
+          "pkg": "com.urbansportsclub",
+          "label": "Urban Sports Club",
+          "url": "https://urbansportsclub.com"
+        },
+        {
+          "pkg": "com.medantapatient.app",
+          "label": "Medanta",
+          "url": "https://www.medanta.org"
+        },
+        {
+          "pkg": "com.downdogapp",
+          "label": "Down Dog",
+          "url": "https://www.downdogapp.com"
+        },
+        {
+          "pkg": "com.motosumo.app",
+          "label": "Motosumo",
+          "url": "https://motosumo.com"
         },
         {
           "pkg": "es.bancosantander.apps",
@@ -442,6 +427,46 @@
           "pkg": "com.xe.currency",
           "label": "XE Currency",
           "url": "https://www.xe.com"
+        },
+        {
+          "pkg": "com.booking",
+          "label": "Booking.com",
+          "url": null
+        },
+        {
+          "pkg": "com.thetrainline",
+          "label": "Trainline",
+          "url": null
+        },
+        {
+          "pkg": "com.ryanair.cheapflights",
+          "label": "Ryanair",
+          "url": null
+        },
+        {
+          "pkg": "com.rome2rio.www.rome2rio",
+          "label": "Rome2Rio",
+          "url": null
+        },
+        {
+          "pkg": "com.comuto",
+          "label": "BlaBlaCar",
+          "url": null
+        },
+        {
+          "pkg": "com.nomadmania.presentation",
+          "label": "NomadMania",
+          "url": "https://nomadmania.com"
+        },
+        {
+          "pkg": "com.ubercab",
+          "label": "Uber",
+          "url": "https://www.uber.com"
+        },
+        {
+          "pkg": "com.trafi.whitelabel.bvg",
+          "label": "BVG Fahrinfo",
+          "url": null
         }
       ]
     },
