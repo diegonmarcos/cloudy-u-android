@@ -341,6 +341,13 @@ export const ssoLogin = async (serverUrl: string, serverDisplayName: string, ser
     return result;
 };
 
+// Cloud fleet #1804: sign in with a personal access token typed on the single login screen. The token is a
+// bearer session token like the one SSO hands back, so it rides the same completion (getMe, server database,
+// credentials saved by the client tracking layer); there is no CSRF cookie for it.
+export const tokenLogin = async (serverUrl: string, serverDisplayName: string, serverIdentifier: string, token: string, preauthSecret?: string): Promise<LoginActionResponse> => {
+    return ssoLogin(serverUrl, serverDisplayName, serverIdentifier, token.trim(), '', preauthSecret);
+};
+
 export const ssoLoginWithCodeExchange = async (serverUrl: string, serverDisplayName: string, serverIdentifier: string, loginCode: string, samlChallenge: Pick<SAMLChallenge, 'codeVerifier' | 'state'>, preauthSecret?: string): Promise<LoginActionResponse> => {
     const client = NetworkManager.getClient(serverUrl);
     const {token, csrf} = await client.exchangeSsoLoginCode(loginCode, samlChallenge.codeVerifier, samlChallenge.state);

@@ -23,8 +23,10 @@
           "[ -f android/app/debug.keystore ] || keytool -genkeypair -v -keystore android/app/debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Android Debug,O=Android,C=US'",
           "npm ci --ignore-scripts",
           "node_modules/.bin/patch-package",
-          "bash scripts/postinstall.sh"
+          "bash scripts/postinstall.sh",
+          "node_modules/.bin/jest --ci --runInBand app/screens/server/single_login.test.ts"
         ],
+        "_doc_prepare_jest": "#1804 the single login screen's tests (dropdown, custom-URL validation, default name, the sequential connect-then-login state machine with every failure keeping the data, field parity with the previous server + login forms). Run here, after npm ci, because this is the one CI step that has node_modules: a red test fails the Ship before anything is built.",
         "command": "node node_modules/.bin/react-native build-android --mode=release --tasks assembleRelease 2>&1",
         "apk_glob": "android/app/build/outputs/apk/release/*.apk",
         "resign_unsigned": true,

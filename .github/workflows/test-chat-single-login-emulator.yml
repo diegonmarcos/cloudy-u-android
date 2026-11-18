@@ -1,0 +1,66 @@
+name: "Test -> Cloud Chat single login screen (emulator screenshots: empty, filled, server error with data kept, success)"
+
+# #1804 the ONE login screen (server URL dropdown, optional name, Advanced open with Enter secret, Token / Login /
+# Password, one action that runs the server check then the login). Installs the APK of a Ship Cloud Chat run
+# (default: the latest green one on main; arm64-v8a, run through the image's ARM translation) and walks
+# ac_cloud-chat/test/emulator-single-login.sh. Dispatch only; nothing is published.
+on:
+  workflow_dispatch:
+    inputs:
+      ship_run_id: { description: 'Ship Cloud Chat run id (default: latest green on main)', required: false, default: '' }
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  walk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-chat/test
+
+      - name: Fetch the Cloud Chat APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -eu
+          RUN="${{ inputs.ship_run_id }}"
+          [ -n "$RUN" ] || RUN=$(gh run list -R "$REPO" --workflow ship-cloud-chat.yml --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
+          [ -n "$RUN" ] || { echo "::error::no green ship-cloud-chat run"; exit 1; }
+          echo "ship-cloud-chat run $RUN"; mkdir -p dl
+          gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq '.artifacts[] | select(.expired|not) | select(.name|startswith("cloud-comms-chat")) | .name' |
+          while read -r name; do gh run download "$RUN" -R "$REPO" -n "$name" -D "dl/$name"; done
+          pick=$(find dl -name '*.apk' | sort | head -1); [ -n "$pick" ] || { echo "::error::no APK in run $RUN"; exit 1; }
+          cp "$pick" chat.apk; ls -la chat.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + scenes
+        timeout-minutes: 40
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-chat/test/emulator-single-login.sh chat.apk out
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chat-single-login-evidence
+          path: out/
+          if-no-files-found: warn
