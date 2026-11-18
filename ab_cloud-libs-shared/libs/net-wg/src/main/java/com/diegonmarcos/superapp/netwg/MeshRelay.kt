@@ -41,6 +41,8 @@ class MeshRelay(
     private val verifyHost: (String, SSLSession) -> Boolean = { _, _ -> true },
     private val tlsFactory: () -> SSLSocketFactory = { SSLSocketFactory.getDefault() as SSLSocketFactory },
     private val clock: () -> Long = System::currentTimeMillis,
+    /** #1798 Whether this network routes an address's family; a test injects one (no IPv6 route on a v4-only Wi-Fi). */
+    private val hasRoute: (String) -> Boolean = HappyEyeballs::systemRoute,
 ) {
     private var spec: RelaySpec? = null
     private val legs = ArrayList<Leg>()
@@ -73,29 +75,60 @@ class MeshRelay(
         return RelayStatus(state, s.host, l).toJson()
     }
 
-    /** TCP, TLS and the upgrade against the first address of [s] that takes them, without carrying anything. */
+    /**
+     * TCP, TLS and the upgrade against the first address of [s] that takes them, without carrying anything.
+     * #1798 The addresses race (Happy Eyeballs, [HappyEyeballs]); [RelayProbe.attempts] lists every one tried or skipped.
+     */
     fun probe(s: RelaySpec): String {
         val remote = s.routes.firstOrNull()?.remote ?: return RelayProbe("", "", 0, 0, "the relay spec names no route").toJson()
-        var last = RelayProbe("", "", 0, 0, "no address for ${s.host}")
-        for (a in s.addrs) {
-            val t0 = clock()
-            var tls = ""
-            val sock = try { connect(s, a).also { tls = (it as? SSLSocket)?.session?.protocol ?: "none" } }
-                catch (e: Exception) { last = RelayProbe(a, "", 0, clock() - t0, why(e)); continue }
-            try {
-                WsTunnel.upgrade(sock, s.host, s.prefix, remote)
-                return RelayProbe(a, tls, 101, clock() - t0, "").toJson()
-            } catch (e: WsTunnel.Refused) {
-                return RelayProbe(a, tls, e.code, clock() - t0, why(e)).toJson()
-            } catch (e: Exception) {
-                last = RelayProbe(a, tls, 0, clock() - t0, why(e))
-            } finally { runCatching { sock.close() } }
+        val t0 = clock()
+        return try {
+            val (sock, a, log) = open(s, remote)
+            val tls = (sock as? SSLSocket)?.session?.protocol ?: "none"
+            runCatching { sock.close() }
+            RelayProbe(a, tls, 101, clock() - t0, "", HappyEyeballs.text(log)).toJson()
+        } catch (e: Opened) {
+            RelayProbe(e.addr, e.tls, e.code, clock() - t0, e.message.orEmpty(), HappyEyeballs.text(e.log)).toJson()
         }
-        return last.toJson()
     }
 
-    /** TCP (protected, by address: no DNS) and, unless [RelaySpec.tls] is off, a verified TLS session. */
-    private fun connect(s: RelaySpec, addr: String): Socket {
+    /** Why [open] gave up: the address and TLS it reached (if any), the server's refusal code (if any) and every attempt. */
+    private class Opened(msg: String, val addr: String, val tls: String, val code: Int, val log: List<HappyEyeballs.Attempt>) : IOException(msg)
+
+    /**
+     * #1798 A socket through which [remote] is tunnelled: race TCP over the routable addresses, then TLS and the upgrade on
+     * the winner; an address whose TLS or upgrade fails is dropped and the rest race again. A server refusal (4xx: the key
+     * or the route) ends it at once, since no other address changes that.
+     */
+    private fun open(s: RelaySpec, remote: String): Triple<Socket, String, List<HappyEyeballs.Attempt>> {
+        val (order, skipped) = HappyEyeballs.plan(s.addrs, hasRoute)
+        val log = ArrayList(skipped)
+        val left = order.toMutableList()
+        var lastAddr = ""; var lastTls = ""
+        while (left.isNotEmpty()) {
+            val (won, tried) = HappyEyeballs.race(left, { a -> tcp(s, a) }, clock = clock)
+            log += tried
+            if (won == null) break
+            val (raw, a) = won
+            left.removeAll(tried.filter { it.ok == false && !it.detail.startsWith("abandoned") }.map { it.addr }.toSet() + a)
+            lastAddr = a
+            try {
+                val sock = secure(s, raw, a)
+                lastTls = (sock as? SSLSocket)?.session?.protocol ?: "none"
+                try { WsTunnel.upgrade(sock, s.host, s.prefix, remote) }
+                catch (e: WsTunnel.Refused) { runCatching { sock.close() }; throw Opened(why(e), a, lastTls, e.code, log + HappyEyeballs.Attempt(a, false, 0, "relay refused: ${why(e)}")) }
+                catch (e: Exception) { runCatching { sock.close() }; throw e }
+                return Triple(sock, a, log)
+            } catch (e: Opened) { throw e } catch (e: Exception) {
+                log += HappyEyeballs.Attempt(a, false, 0, "TCP ok, then ${why(e)}")
+            }
+        }
+        val summary = if (log.isEmpty()) "no address for ${s.host}" else log.joinToString("; ") { it.line() }
+        throw Opened(summary, lastAddr, lastTls, 0, log)
+    }
+
+    /** TCP to [addr] (protected, by address: no DNS), bounded by [ATTEMPT_MS]. */
+    private fun tcp(s: RelaySpec, addr: String): Socket {
         val target = InetAddress.getByName(addr)
         val raw = Socket()
         try {
@@ -104,9 +137,19 @@ class MeshRelay(
             raw.bind(InetSocketAddress(InetAddress.getByName(if (target is Inet6Address) "::" else "0.0.0.0"), 0))
             runCatching { protect(raw) }
             raw.tcpNoDelay = true
-            raw.connect(InetSocketAddress(target, s.port), CONNECT_MS)
+            raw.connect(InetSocketAddress(target, s.port), ATTEMPT_MS)
             raw.soTimeout = CONNECT_MS
-            if (!s.tls) return raw
+            return raw
+        } catch (e: Exception) {
+            runCatching { raw.close() }
+            throw e
+        }
+    }
+
+    /** Unless [RelaySpec.tls] is off, a verified TLS session over [raw]. */
+    private fun secure(s: RelaySpec, raw: Socket, addr: String): Socket {
+        if (!s.tls) return raw
+        try {
             val ssl = tlsFactory().createSocket(raw, s.host, s.port, true) as SSLSocket
             ssl.sslParameters = ssl.sslParameters.apply {
                 serverNames = listOf(SNIHostName(s.host))
@@ -124,17 +167,9 @@ class MeshRelay(
     }
 
     /** A tunnelled socket to [remote] through the first address that completes the upgrade, and that address. */
-    private fun dial(s: RelaySpec, remote: String): Pair<Socket, String> {
-        var last: Exception = IOException("no address for ${s.host}")
-        for (a in s.addrs) {
-            try {
-                val sock = connect(s, a)
-                try { WsTunnel.upgrade(sock, s.host, s.prefix, remote) } catch (e: Exception) { runCatching { sock.close() }; throw e }
-                return sock to a
-            } catch (e: Exception) { last = IOException("$a: ${why(e)}", e) }
-        }
-        throw last
-    }
+    private fun dial(s: RelaySpec, remote: String): Pair<Socket, String> = try {
+        open(s, remote).let { it.first to it.second }
+    } catch (e: Opened) { throw IOException(e.message, e) }
 
     /** One route: the loopback UDP socket WireGuard sends to, and the tunnel that carries it. */
     private class Leg private constructor(val relay: MeshRelay, val spec: RelaySpec, val route: RelaySpec.Route, val udp: DatagramSocket?) {
@@ -228,6 +263,8 @@ class MeshRelay(
     companion object {
         const val LOOPBACK = "127.0.0.1"
         const val CONNECT_MS = 8_000
+        /** #1798 One TCP attempt of the race: short, so a dead family never holds the relay for 8 s. */
+        const val ATTEMPT_MS = 3_000
         /** No frame (data or the server's ping) for this long: the connection is dead; the next datagram re-dials. */
         const val IDLE_MS = 120_000
         const val RETRY_MS = 2_000L

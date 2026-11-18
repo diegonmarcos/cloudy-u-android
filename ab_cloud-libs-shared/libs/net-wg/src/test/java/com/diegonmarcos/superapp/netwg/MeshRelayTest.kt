@@ -118,6 +118,20 @@ class MeshRelayTest {
         assertTrue(!none.ok && none.error.isNotBlank())
     }
 
+    @Test fun anIpv6AddressWithNoRouteIsSkippedAndIpv4CarriesTheRelay() {
+        // #1798 the phone's case: DNS gives the v6 address first, the Wi-Fi has no IPv6 route. 2001:db8::1 stands in for it.
+        val r = MeshRelay(protect = { true }, hasRoute = { ':' !in it }).also { relays += it }
+        val p = RelayProbe.parse(r.probe(spec(freeUdpPort()).copy(addrs = listOf("2001:db8::1", "127.0.0.1"))))
+        assertTrue(p.error, p.ok)
+        assertEquals("127.0.0.1", p.addr)
+        assertTrue(p.attempts, p.attempts.contains("v6 2001:db8::1 skipped: no IPv6 route"))
+        assertTrue(p.attempts, p.attempts.contains("v4 127.0.0.1 ok"))
+        // and with nothing routable the probe says so for every address, never a bare last error
+        val none = RelayProbe.parse(MeshRelay(protect = { true }, hasRoute = { false }).also { relays += it }
+            .probe(spec(freeUdpPort()).copy(addrs = listOf("2001:db8::1", "127.0.0.1"))))
+        assertTrue(!none.ok && none.error.contains("v6 2001:db8::1 skipped") && none.error.contains("v4 127.0.0.1 skipped"))
+    }
+
     @Test fun theSocketIsBoundBeforeItIsProtected() {
         // VpnService.protect marks the socket's descriptor, which a bare Socket() does not have yet.
         val seen = ArrayList<Boolean>()

@@ -405,8 +405,8 @@ object MeshTransport {
                 if (w.via == null) Probe("relay", false, "$host: ${w.trail}")
                 else backend.probeRelay(RelaySpec(host, relay.port, addrs, key, listOf(route))).let { p ->
                     if (p.ok) Probe("relay", true, "wss://$host via ${p.addr} (${rungWord(w.via!!)}): ${p.tls}, upgrade 101 in ${p.ms} ms" +
-                        relayLine(ctx).let { if (it.isBlank()) "" else "; carrying: $it" })
-                    else Probe("relay", false, "${p.addr.ifBlank { addrs.joinToString(", ") }}: ${p.error.ifBlank { "HTTP ${p.code}" }}")
+                        relayLine(ctx).let { if (it.isBlank()) "" else "; carrying: $it" } + tried(p))
+                    else Probe("relay", false, "${p.addr.ifBlank { addrs.joinToString(", ") }}: ${p.error.ifBlank { "HTTP ${p.code}" }}" + tried(p))
                 }
             }
         }
@@ -437,6 +437,10 @@ object MeshTransport {
             if (key.isBlank()) "no relay key: paste the server's key in Controls > Fallbacks" else "a relay key is stored (${key.length} characters, never shown)")
         return out
     }
+
+    /** #1798 Every address the relay dialer tried or skipped (Happy Eyeballs); "" from an engine too old to report them. */
+    private fun tried(p: com.diegonmarcos.superapp.net.RelayProbe): String =
+        if (p.attempts.isBlank()) "" else "; tried: " + p.attempts.lines().joinToString(" | ")
 
     /** #1797 Direct UDP per peer: a fresh WireGuard handshake on that peer, when it is not behind the relay. */
     private fun udpPerPeer(ctx: Context): List<Probe> {

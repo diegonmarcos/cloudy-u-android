@@ -66,15 +66,19 @@ data class RelayStatus(val state: String, val host: String, val legs: List<Leg>)
 }
 
 /** One handshake against a relay: TCP to [addr], TLS ([tls] = negotiated protocol, "" = none), then the upgrade's HTTP [code]. */
-data class RelayProbe(val addr: String, val tls: String, val code: Int, val ms: Long, val error: String) {
+/**
+ * [attempts] (#1798): every address the dialer tried or skipped, in order, one per line ("v4 129.151.228.66 ok 41 ms",
+ * "v6 2603:... skipped: no route"). Optional on the wire: an older engine sends none and an older app ignores it.
+ */
+data class RelayProbe(val addr: String, val tls: String, val code: Int, val ms: Long, val error: String, val attempts: String = "") {
     /** 101: the relay took the tunnel. */
     val ok: Boolean get() = code == 101
 
-    fun toJson(): String = JSONObject().put("addr", addr).put("tls", tls).put("code", code).put("ms", ms).put("error", error).toString()
+    fun toJson(): String = JSONObject().put("addr", addr).put("tls", tls).put("code", code).put("ms", ms).put("error", error).put("attempts", attempts).toString()
 
     companion object {
         fun parse(json: String?): RelayProbe = runCatching {
-            JSONObject(json.orEmpty()).let { RelayProbe(it.optString("addr"), it.optString("tls"), it.optInt("code"), it.optLong("ms"), it.optString("error")) }
+            JSONObject(json.orEmpty()).let { RelayProbe(it.optString("addr"), it.optString("tls"), it.optInt("code"), it.optLong("ms"), it.optString("error"), it.optString("attempts")) }
         }.getOrElse { RelayProbe("", "", 0, 0, json.orEmpty().ifBlank { "no answer from the engine" }) }
     }
 }
