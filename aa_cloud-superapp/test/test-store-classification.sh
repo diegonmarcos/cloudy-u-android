@@ -229,7 +229,8 @@ else:
     # keys (a category's id and label, an app's pkg/name/source/licence ...) are those files', not feed templates; exempt in that file only.
     recs_keys = {"name", "id", "label", "pkg", "category", "source", "licence", "categories", "apps"}
     # #1774 StorePhoneSearch reads the two served Phone datasets (store-play-integrity, games-catalogue): their own schema keys are those files',
-    # not feed templates; exempt in that file only.
+    # not feed templates; exempt in that file only. #1791 StoreCatalogue reads the one central catalogue (assets/store-catalogue.json) with the same
+    # schema words (it is the successor of both datasets), exempt in that file too.
     phone_keys = {"name", "id", "label", "pkg", "category", "source", "icon", "apps", "tiers", "games", "categories", "verdict", "meaning", "tier", "basis", "note"}
     leaked = sorted({"%s: %r" % (fn, w) for fn, t in store_files.items()
                      for w in owned if '"%s"' % w in t
@@ -237,7 +238,7 @@ else:
                      and not (fn == "FDroidIndex.kt" and w in index_keys)
                      and not (fn == "IpcMesh.kt" and w in ipc_keys)
                      and not (fn == "StoreRecs.kt" and w in recs_keys)
-                     and not (fn == "StorePhoneSearch.kt" and w in phone_keys)})
+                     and not (fn in ("StorePhoneSearch.kt", "StoreCatalogue.kt") and w in phone_keys)})
     if owned and not leaked:
         ok("none of the %d declared feed strings is written in the store's code" % len(owned))
     else: bad("a feed string is hardcoded outside the one declaration: %s" % "; ".join(leaked[:6]))

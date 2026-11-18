@@ -1,0 +1,22 @@
+name: "Store catalogue icons (HEAD-check every icon URL; dispatch only)"
+
+# #1791 every row of libs:appstore assets/store-catalogue.json carries an https icon URL. The Ship run proves they are well-formed
+# (StoreCatalogueTest, test-store-catalogue.sh); this proves they still resolve. Network, so by dispatch only: never a gate that can flake.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  icons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ab_cloud-libs-shared/libs/appstore/src/main/assets/store-catalogue.json
+            ac_cloud-store/test/check-store-catalogue-icons.py
+          sparse-checkout-cone-mode: false
+      - run: python3 ac_cloud-store/test/check-store-catalogue-icons.py

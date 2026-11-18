@@ -1,4 +1,4 @@
-# #1774 Cloud Store Search > Phone four subpages on an emulator (dispatch only): Open source, Non open source, Play Integrity, Games. Screenshots.
+# #1774 Cloud Store Search > Phone four subpages on an emulator (dispatch only): Open source, Non open source, Play Integrity, Games; #1791 plus a screenshot per filter row and one combined. Screenshots.
 # Runs the APK a Ship Cloud Store run built (x86_64 artifact), else the latest release
 # asset. Evidence is uploaded as store-phone4-evidence.
 name: "Test -> Cloud Store Search Phone subpages (emulator)"

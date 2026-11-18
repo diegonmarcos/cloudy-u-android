@@ -30,13 +30,13 @@ for page in Cloudy Phone Torrent; do
   if ! tap_text "$page"; then echo "::error::no $page subpage on the Search strip"; rc=1; continue; fi
   sleep 5
   case "$page" in
-    Phone) want='Popular open-source apps' ;;
+    Phone) want='[0-9]+ / [0-9]+' ;;
     Torrent) want='Recommended: legitimately distributable only' ;;
     *) want='' ;;
   esac
   for i in $(seq 1 12); do
     dump "$page"
-    if [ -z "$want" ] || grep -q "$want" "$OUT/$page.xml"; then
+    if [ -z "$want" ] || grep -qE "$want" "$OUT/$page.xml"; then
       case "$page" in Phone) grep -q 'No recommendations yet\|Loading' "$OUT/$page.xml" || break ;; Torrent) grep -q 'Movies (' "$OUT/$page.xml" && break ;; *) break ;; esac
     fi
     sleep 8

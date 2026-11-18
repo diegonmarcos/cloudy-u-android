@@ -53,7 +53,7 @@ class StorePhoneSearchTest {
             "R.string.store_search_undeclare", "R.string.store_search_declare", "Kind.ORIGIN", "DeclaredEdits.declare(", "DeclaredEdits.undeclare(", "ExternalInstall.run(", "FleetInstall.run("))
             assertTrue("kept: $k", s.contains(k))
         // the surfaces the single Phone page drew
-        for (k in listOf("PhoneRecsView(ctx, cfg, d, phoneRecs", "LandingView(ctx, cfg, phoneLanding", "Licence.values()", "store-search:source:", "store-search:retry:",
+        for (k in listOf("CatalogueView(ctx, cfg, full, catalogue", "LandingView(ctx, cfg, phoneLanding", "Licence.values()", "store-search:source:", "store-search:retry:",
             "hideFleet = sub == PAGE_ANDROID", "StoreSearchPage.pageBlurb", "ResultGrid(", "store-search:licence:"))
             assertTrue("kept: ${k.removePrefix("StoreSearchPage.")}", s.contains(k.removePrefix("StoreSearchPage.")))
         assertEquals("one result row for every subpage", 1, Regex("""private fun ResultRow\(""").findAll(s).count())
@@ -258,10 +258,12 @@ class StorePhoneSearchTest {
         assertTrue(StorePhoneSearch.sections(g, c3).map { it.first }.containsAll(listOf("Action", "Racing")))
     }
 
-    @Test fun theGamesViewDrawsTheSplitAndKeepsTheGrid() {
+    @Test fun theCatalogueViewDrawsTheFilterRowsAndKeepsTheGrid() {
         val src = page()
-        for (t in listOf("TAG_GAMES + \":lic:\"", "TAG_GAMES + \":dim:\"", "StorePhoneSearch.split(list, openSrc, dim)", "StorePhoneSearch.sections(data, shown)")) assertTrue(t, t in src)
-        assertTrue("the Games subpage keeps the #1772 icon grid", "ResultGrid(ctx, cfg, d, gs.map(StorePhoneSearch::gameResult)" in src)
+        // #1791 the former Recommendations / Play Integrity / Games views are one filtered catalogue view with five chip rows
+        for (t in listOf("StorePhoneFilter.tag(row.id, v.id)", "filter.with(row.id, v.id)", "StorePhoneFilter.apply(cat, filter, fleetPackages)", "StorePhoneFilter.groupBy(cat, if (byTier)",
+            "StorePhoneFilter.matchesHit(cat, byPkg, it, filter", "StorePhoneFilter.sources(filter)", "filter = StorePhoneFilter.preset(ps)")) assertTrue(t, t in src)
+        assertTrue("the catalogue view keeps the #1772 icon grid", "ResultGrid(ctx, cfg, d, group.map(StorePhoneFilter::result)" in src)
         assertTrue("GitHub is a Games source", StoreSearchPage.GITHUB in StorePhoneSearch.sources(StorePhoneSearch.GAMES))
     }
 }

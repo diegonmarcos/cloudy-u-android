@@ -362,23 +362,20 @@ object StoreSearchPage {
         var tick by remember { mutableStateOf(0) }
         var landingState by remember { mutableStateOf<Landing?>(null) }
         var phoneLanding by remember { mutableStateOf<Landing?>(null) }
-        var phoneRecs by remember { mutableStateOf<StoreRecs.PhoneRecs?>(null) }
-        // #1774 Phone's four subpages and their runtime datasets (Play Integrity tiers, the games catalogue).
+        // #1774 Phone's four subpages, #1791 each a filtered view of the ONE central catalogue (assets/store-catalogue.json) through five filter rows.
         var phoneSub by remember { mutableStateOf(StorePhoneSearch.OPEN) }
-        var integrity by remember { mutableStateOf<StorePhoneSearch.Integrity?>(null) }
-        var games by remember { mutableStateOf<StorePhoneSearch.Games?>(null) }
+        var filter by remember { mutableStateOf(StorePhoneFilter.preset(StorePhoneSearch.OPEN)) }
+        var catalogue by remember { mutableStateOf<StoreCatalogue.Catalogue?>(null) }
         var landingError by remember { mutableStateOf<String?>(null) }
         val open = remember { mutableStateMapOf<String, Boolean>() }
 
         fun loadLanding() {
             thread(name = "store-search-landing") {
                 val built = runCatching { resolveCfg(ctx, cfg).let { c -> Triple(decl(sourcesOf(ctx), c), landing(ctx, c, Scope.FLEET), landing(ctx, c, Scope.DECLARED)) } }
-                // Phone's curated recommendations: the served fleet dataset, parsed defensively (never a crash, a reason instead).
-                val recs = runCatching { StoreRecs.parsePhone(StoreRecs.dataset?.invoke(StoreRecs.DATASET_PHONE)) }
-                    .getOrElse { StoreRecs.PhoneRecs(emptyList(), emptyList(), listOf(it.message ?: it.javaClass.simpleName)) }
-                val (ints, gms) = readPhoneDatasets()
+                // Phone's app catalogue: the bundled asset, parsed defensively (never a crash, a reason instead).
+                val cat = readCatalogue(ctx)
                 main.post {
-                    phoneRecs = recs; integrity = ints; games = gms
+                    catalogue = cat
                     built.onSuccess { (d, l, dl) -> declState = d; landingState = l; phoneLanding = dl; landingError = null }
                         .onFailure { landingError = it.message ?: it.javaClass.simpleName }
                 }
@@ -415,32 +412,11 @@ object StoreSearchPage {
             val c = runCatching { resolveCfg(ctx, cfg) }.getOrElse { landingError = it.message ?: it.javaClass.simpleName; asked = ""; return }
             val d = declState ?: decl(sourcesOf(ctx), c).also { declState = it }
             val gen = generation
-            for (s in d.sources) if (!runsOnPage(s.id, sub, phoneSub)) continue else if (s.id in off) states[s.id] = SrcState.Off else runSource(c, d, s, q, gen)
-        }
-        // The curated list is a fleet dataset the Store syncs at run time: while it is not served yet, ask again (a few times, a pause apart).
-        androidx.compose.runtime.LaunchedEffect(sub, phoneRecs?.apps?.isEmpty()) {
-            var left = 8
-            while (sub == PAGE_ANDROID && phoneRecs?.apps?.isEmpty() == true && left-- > 0) {
-                kotlinx.coroutines.delay(10_000)
-                val again = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    runCatching { StoreRecs.parsePhone(StoreRecs.dataset?.invoke(StoreRecs.DATASET_PHONE)) }.getOrNull()
-                }
-                if (again != null && again.apps.isNotEmpty()) phoneRecs = again
-            }
-        }
-        // The Play Integrity and Games subpages read their own datasets the same way: asked again while not served.
-        androidx.compose.runtime.LaunchedEffect(sub, phoneSub, integrity?.apps?.isEmpty(), games?.games?.isEmpty()) {
-            var left = 8
-            while (sub == PAGE_ANDROID && ((phoneSub == StorePhoneSearch.INTEGRITY && integrity?.apps?.isEmpty() != false) ||
-                    (phoneSub == StorePhoneSearch.GAMES && games?.games?.isEmpty() != false)) && left-- > 0) {
-                kotlinx.coroutines.delay(10_000)
-                val (i2, g2) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { readPhoneDatasets() }
-                if (i2.apps.isNotEmpty()) integrity = i2
-                if (g2.games.isNotEmpty()) games = g2
-            }
+            val phoneSources = StorePhoneFilter.sources(filter)
+            for (s in d.sources) if (!runsOnPage(s.id, sub, phoneSources)) continue else if (s.id in off) states[s.id] = SrcState.Off else runSource(c, d, s, q, gen)
         }
         // Switching the subpage re-asks the open query on that page's sources.
-        androidx.compose.runtime.LaunchedEffect(sub, phoneSub) { if (asked.isNotEmpty()) run() }
+        androidx.compose.runtime.LaunchedEffect(sub, phoneSub, filter) { if (asked.isNotEmpty()) run() }
 
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(KitDensity.small)) {
             if (!StorePages.hostDrawsStrip) {
@@ -452,14 +428,24 @@ object StoreSearchPage {
                 placeholder = ctx.getString(R.string.store_search_hint), clearLabel = ctx.getString(R.string.store_search_clear))
             val full = declState
             // This subpage's sources only; Results sees a declaration narrowed to them, so its counts and groups are the page's.
-            val d = full?.let { f -> Decl(f.sources.filter { runsOnPage(it.id, sub, phoneSub) }, f.foss) }
+            val d = full?.let { f -> Decl(f.sources.filter { runsOnPage(it.id, sub, StorePhoneFilter.sources(filter)) }, f.foss) }
             if (sub == PAGE_TORRENT) {
                 StoreTorrentSearch.Content(ctx, asked)
                 return@Column
             }
             // #1774 Phone's four subpages, each with the search bar above and the icon grid below.
             if (sub == PAGE_ANDROID) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag(TAG_PHONE_SUBS)) {
-                StorePhoneSearch.SUBS.forEach { ps -> Pill(StorePhoneSearch.label(ps), phoneSub == ps, StorePhoneSearch.tag(ps)) { phoneSub = ps } }
+                StorePhoneSearch.SUBS.forEach { ps -> Pill(StorePhoneSearch.label(ps), phoneSub == ps, StorePhoneSearch.tag(ps)) { phoneSub = ps; filter = StorePhoneFilter.preset(ps) } }
+            }
+            // #1791 the five filter rows, each starting with All, combined with AND.
+            if (sub == PAGE_ANDROID) catalogue?.let { cat ->
+                cat.rows.forEach { row ->
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag(TAG_PHONE_FILTER + row.id)) {
+                        (listOf(StoreCatalogue.Value(StorePhoneFilter.ALL, cat.allLabel)) + row.values).forEach { v ->
+                            Pill(v.label, filter.of(row.id) == v.id, StorePhoneFilter.tag(row.id, v.id)) { filter = filter.with(row.id, v.id) }
+                        }
+                    }
+                }
             }
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                 d?.sources?.forEach { s ->
@@ -475,23 +461,16 @@ object StoreSearchPage {
                 else {
                     Text(pageBlurb(sub), color = LocalKitPalette.current.textSecondary, fontSize = KitDensity.caption)
                     Text(StorePhoneSearch.blurb(phoneSub), color = LocalKitPalette.current.textSecondary, fontSize = KitDensity.caption)
-                    when (phoneSub) {
-                        StorePhoneSearch.OPEN -> {
-                            PhoneRecsView(ctx, cfg, d, phoneRecs, lines, open, tick) { tick++ }
-                            // The apps the user declared that are not fleet apps (they used to sit on the Cloudy list): still here, under the recommendations.
-                            if (phoneLanding?.sections?.isNotEmpty() == true) LandingView(ctx, cfg, phoneLanding, landingError, lines, tick)
-                        }
-                        StorePhoneSearch.CLOSED -> KitEmptyState("Search Google Play", "Type a name above: free and paid listings from Aurora's anonymous Play session and your declared list, each with its price badge.")
-                        StorePhoneSearch.INTEGRITY -> IntegrityView(ctx, cfg, d, integrity, lines, open, tick) { tick++ }
-                        else -> GamesView(ctx, cfg, d, games, lines, open, tick) { tick++ }
-                    }
+                    CatalogueView(ctx, cfg, full, catalogue, filter, phoneSub, lines, open, tick) { tick++ }
+                    // The apps the user declared that are not fleet apps (they used to sit on the Cloudy list): still here, under the catalogue.
+                    if (phoneSub == StorePhoneSearch.OPEN && phoneLanding?.sections?.isNotEmpty() == true) LandingView(ctx, cfg, phoneLanding, landingError, lines, tick)
                 }
             } else if (d != null) {
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                     Licence.values().forEach { l -> Pill(ctx.getString(l.label), licence == l, "store-search:licence:${l.name}") { licence = l } }
                 }
                 Results(ctx, cfg, d, asked, states, licence, lines, open, tick, { tick++ }, hideFleet = sub == PAGE_ANDROID,
-                    phoneSub = phoneSub.takeIf { sub == PAGE_ANDROID }, integrity = integrity, games = games) { id ->
+                    phoneSub = phoneSub.takeIf { sub == PAGE_ANDROID }, catalogue = catalogue, filter = filter) { id ->
                     val c = runCatching { resolveCfg(ctx, cfg) }.getOrNull()
                     val s = d.sources.firstOrNull { it.id == id }
                     if (c != null && s != null) runSource(c, d, s, asked, generation)
@@ -504,20 +483,20 @@ object StoreSearchPage {
     private fun Results(
         ctx: Context, cfg: () -> SourceResolver.Config?, d: Decl, asked: String, states: Map<String, SrcState>,
         licence: Licence, lines: MutableMap<String, String>, open: MutableMap<String, Boolean>, tick: Int,
-        bump: () -> Unit, hideFleet: Boolean = false, phoneSub: String? = null, integrity: StorePhoneSearch.Integrity? = null,
-        games: StorePhoneSearch.Games? = null, retry: (String) -> Unit,
+        bump: () -> Unit, hideFleet: Boolean = false, phoneSub: String? = null, catalogue: StoreCatalogue.Catalogue? = null,
+        filter: StorePhoneFilter.State = StorePhoneFilter.State(), retry: (String) -> Unit,
     ) {
         val p = LocalKitPalette.current
-        val catalogue = remember(games) { games?.let { StorePhoneSearch.games(it, fleetPackages) }.orEmpty() }
-        val gamePkgs = remember(catalogue) { catalogue.map { it.pkg }.toSet() }
-        // The Games subpage also answers from the catalogue itself (name, developer, package), so a listed game is found with no network.
-        val extra = if (phoneSub == StorePhoneSearch.GAMES) StorePhoneSearch.matchGames(catalogue, asked).map {
-            StoreSuggest.Hit(it.source, it.pkg, it.name, it.developer, foss = it.openSource, icon = it.icon)
+        val cat = catalogue ?: StoreCatalogue.EMPTY
+        val byPkg = remember(catalogue) { cat.entries.associateBy { it.pkg } }
+        // The Phone page also answers from the catalogue itself (name, developer, package), so a listed app is found with no network.
+        val extra = if (phoneSub != null) StorePhoneFilter.matchQuery(StorePhoneFilter.apply(cat, StorePhoneFilter.State(), fleetPackages), asked).map {
+            StoreSuggest.Hit(StorePhoneFilter.resultSource(it), it.pkg, it.name, it.developer, foss = it.get("licence") == "open", icon = it.icon, link = it.apk.ifBlank { it.storeUrl })
         } else emptyList()
         val hits = states.values.filterIsInstance<SrcState.Done>().flatMap { it.hits } + extra.filter { h -> d.sources.any { it.id == h.source } }
         val merged = StoreSuggest.merge(d.order, hits).filter { !hideFleet || it.pkg !in fleetPackages }.filter {
             when (licence) { Licence.ALL -> true; Licence.FOSS -> it.foss; Licence.PRIVATE -> !it.foss }
-        }.filter { phoneSub == null || StorePhoneSearch.keep(phoneSub, it, gamePkgs) }
+        }.filter { phoneSub == null || StorePhoneFilter.matchesHit(cat, byPkg, it, filter, StorePhoneSearch::isOpen) }
         val on = d.sources.count { states[it.id] !is SrcState.Off }
         val busy = d.sources.count { states[it.id] is SrcState.Busy }
         // Status first: what the search is doing, then what it found.
@@ -534,11 +513,14 @@ object StoreSearchPage {
                 KitStatusBanner(ctx.getString(R.string.store_search_failed, src.label, st.why), KitState.BAD, tag = "store-search:failed:${src.id}",
                     action = KitAction(ctx.getString(R.string.store_search_retry), "store-search:retry:${src.id}") { retry(src.id) })
             }
-            for ((tier, rows) in StorePhoneSearch.groupByTier(integrity, merged) { it.pkg }) {
+            val tiers = cat.tiers + StoreCatalogue.Value("", "Not rated")
+            for (tier in tiers) {
+                val rows = merged.filter { (byPkg[it.pkg]?.get("play_integrity") ?: "") == tier.id }
+                if (rows.isEmpty()) continue
                 Text(tier.label + " (" + rows.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
                     modifier = Modifier.testTag(TAG_TIER + tier.id))
-                if (rows.isNotEmpty()) ResultGrid(ctx, cfg, d, rows, emptyMap(), lines, open, tick, bump,
-                    badge = { tier.label }, extra = { StorePhoneSearch.tierLine(integrity, it.pkg) })
+                ResultGrid(ctx, cfg, d, rows, emptyMap(), lines, open, tick, bump,
+                    badge = { tier.label }, extra = { r -> byPkg[r.pkg]?.let { StorePhoneFilter.tierLine(cat, it) } })
             }
             return
         }
@@ -566,7 +548,7 @@ object StoreSearchPage {
                     Text(ctx.getString(R.string.store_search_merged_up, st.hits.size), color = p.textSecondary, fontSize = KitDensity.caption)
                 }
                 ResultGrid(ctx, cfg, d, group, emptyMap(), lines, open, tick, bump,
-                    badge = if (phoneSub == StorePhoneSearch.CLOSED) ({ r: StoreSuggest.Result -> StorePhoneSearch.closedBadge(r, d::label) }) else null)
+                    badge = if (phoneSub == StorePhoneSearch.CLOSED || filter.of("licence") == "closed") ({ r: StoreSuggest.Result -> StorePhoneSearch.closedBadge(r, d::label) }) else null)
             }
         }
     }
@@ -689,44 +671,8 @@ object StoreSearchPage {
     // ── Phone: curated recommendations ─────────────────────────────────
 
     const val TAG_PHONE_RECS = "store-search:phone-recs"
-    fun recCategoryTag(id: String) = "store-search:phone-recs:cat:$id"
 
     /** Each curated app as a search result the Store row installs: from the F-Droid index (or the app's declared source), never a fleet app. */
-    internal fun phoneRows(recs: StoreRecs.PhoneRecs): List<Pair<StoreRecs.Category, List<StoreSuggest.Result>>> =
-        StoreRecs.phoneByCategory(recs, StoreRecs.phoneApps(recs, fleetPackages)).map { (c, apps) ->
-            c to apps.map { a ->
-                StoreSuggest.Result("rec:${a.pkg}", a.pkg, a.name, a.licence, listOf(a.source.ifEmpty { SourceResolver.KIND_FDROID }), true, "", "")
-            }
-        }
-
-    @Composable
-    private fun PhoneRecsView(
-        ctx: Context, cfg: () -> SourceResolver.Config?, d: Decl?, recs: StoreRecs.PhoneRecs?,
-        lines: MutableMap<String, String>, open: MutableMap<String, Boolean>, tick: Int, bump: () -> Unit,
-    ) {
-        val p = LocalKitPalette.current
-        // The curated list carries no icons: read them from the F-Droid index's own listing (cached), tiles show the initial until they arrive.
-        val icons = remember { mutableStateMapOf<String, String>() }
-        LaunchedEffect(recs?.apps?.size) {
-            val pkgs = recs?.apps?.map { it.pkg }?.toSet().orEmpty()
-            if (pkgs.isEmpty()) return@LaunchedEffect
-            val got = withContext(Dispatchers.IO) { runCatching { FDroidIndex.icons(ctx, resolveCfg(ctx, cfg).fdroid, pkgs) }.getOrDefault(emptyMap()) }
-            icons.putAll(got)
-        }
-        Column(Modifier.fillMaxWidth().testTag(TAG_PHONE_RECS), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
-            KitSectionHeader("Popular open-source apps", "Curated, not in the fleet. Install from the F-Droid index.")
-            when {
-                recs == null || d == null -> KitStatusBanner(ctx.getString(R.string.store_landing_loading), KitState.BUSY, tag = "store-search:phone-recs-loading")
-                recs.apps.isEmpty() -> KitEmptyState("No recommendations yet", "The curated list is served by Cloud Store (${recs.problems.firstOrNull() ?: "empty"}).")
-                else -> phoneRows(recs).forEach { (c, rows) ->
-                    Text(c.label + " (" + rows.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.testTag(recCategoryTag(c.id)))
-                    ResultGrid(ctx, cfg, d, rows, icons, lines, open, tick, bump)
-                }
-            }
-        }
-    }
-
     /**
      * The results as the launcher's icon grid (#1772): each tile is the app's real icon, name and source badge. A tap opens the
      * full Store row under the tile (Install / Open, declare, every fact and verb the list showed); a long-press opens an installed app.
@@ -753,78 +699,50 @@ object StoreSearchPage {
     // ── Phone subpages: Play Integrity and Games before a query (#1774) ─
 
     const val TAG_PHONE_SUBS = "store-search:phone-subs"
+    const val TAG_PHONE_FILTER = "store-search:phone-filter-row:"
     const val TAG_TIER = "store-search:tier:"
-    const val TAG_GAMES = "store-search:games"
-    fun gameCategoryTag(id: String) = "store-search:games:cat:$id"
 
     /** Does [source] run on [page]; on Phone, only when the open Phone subpage [phoneSub] runs it. */
     internal fun runsOnPage(source: String, page: String, phoneSub: String): Boolean =
         pageOf(source) == page && (page != PAGE_ANDROID || source in StorePhoneSearch.sources(phoneSub))
 
-    /** Both runtime datasets of the Phone subpages, parsed defensively. */
-    private fun readPhoneDatasets(): Pair<StorePhoneSearch.Integrity, StorePhoneSearch.Games> =
-        runCatching { StorePhoneSearch.parseIntegrity(StoreRecs.dataset?.invoke(StorePhoneSearch.DATASET_INTEGRITY)) }
-            .getOrElse { StorePhoneSearch.Integrity(StorePhoneSearch.DEFAULT_TIERS, emptyList(), listOf(it.message ?: it.javaClass.simpleName)) } to
-        runCatching { StorePhoneSearch.parseGames(StoreRecs.dataset?.invoke(StorePhoneSearch.DATASET_GAMES)) }
-            .getOrElse { StorePhoneSearch.Games(emptyList(), emptyList(), listOf(it.message ?: it.javaClass.simpleName)) }
+    /** The Phone pages' bundled catalogue (assets/store-catalogue.json), parsed defensively. */
+    private fun readCatalogue(ctx: Context): StoreCatalogue.Catalogue =
+        runCatching { StoreCatalogue.parse(ctx.assets.open(StoreCatalogue.ASSET).bufferedReader().use { it.readText() }) }
+            .getOrElse { StoreCatalogue.Catalogue(emptyList(), emptyList(), "", emptyList(), listOf(it.message ?: it.javaClass.simpleName)) }
 
+    /** Does [source] run on [page]; on Phone, only when [sources] (the filter's) runs it. */
+    internal fun runsOnPage(source: String, page: String, sources: Set<String>): Boolean =
+        pageOf(source) == page && (page != PAGE_ANDROID || source in sources)
+
+    /**
+     * #1791 the Phone page before a query: the catalogue entries the filter rows leave, as the icon grid. Grouped by category, or by Play
+     * Integrity tier on the Play Integrity subpage. Every tile opens the same Store row (Install / Open, declare, facts).
+     */
     @Composable
-    private fun IntegrityView(
-        ctx: Context, cfg: () -> SourceResolver.Config?, d: Decl?, data: StorePhoneSearch.Integrity?,
+    private fun CatalogueView(
+        ctx: Context, cfg: () -> SourceResolver.Config?, d: Decl?, cat: StoreCatalogue.Catalogue?, filter: StorePhoneFilter.State, phoneSub: String,
         lines: MutableMap<String, String>, open: MutableMap<String, Boolean>, tick: Int, bump: () -> Unit,
     ) {
         val p = LocalKitPalette.current
-        Column(Modifier.fillMaxWidth().testTag(TAG_PHONE_RECS + ":integrity"), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
+        Column(Modifier.fillMaxWidth().testTag(TAG_PHONE_RECS), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
             when {
-                data == null || d == null -> KitStatusBanner(ctx.getString(R.string.store_landing_loading), KitState.BUSY, tag = "store-search:phone-recs-loading")
-                data.apps.isEmpty() -> KitEmptyState("No integrity tiers yet", "The tier dataset is served by Cloud Store (${data.problems.firstOrNull() ?: "empty"}).")
+                cat == null || d == null -> KitStatusBanner(ctx.getString(R.string.store_landing_loading), KitState.BUSY, tag = "store-search:phone-recs-loading")
+                cat.entries.isEmpty() -> KitEmptyState("No apps in the catalogue", "The app catalogue is bundled with Cloud Store (${cat.problems.firstOrNull() ?: "empty"}).")
                 else -> {
-                    val rows = StorePhoneSearch.integrityResults(data, fleetPackages)
-                    for ((tier, group) in StorePhoneSearch.groupByTier(data, rows) { it.pkg }) {
-                        Text(tier.label + " (" + group.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
-                            modifier = Modifier.testTag(TAG_TIER + tier.id))
-                        if (tier.meaning.isNotBlank()) Text(tier.meaning, color = p.textSecondary, fontSize = KitDensity.caption)
+                    val shown = StorePhoneFilter.apply(cat, filter, fleetPackages)
+                    val byTier = phoneSub == StorePhoneSearch.INTEGRITY
+                    Text(shown.size.toString() + " / " + cat.entries.size, color = p.textSecondary, fontSize = KitDensity.caption, modifier = Modifier.testTag("store-search:phone-count"))
+                    if (shown.isEmpty()) Text("No app matches these filters.", color = p.textSecondary, fontSize = KitDensity.caption)
+                    val groups = StorePhoneFilter.groupBy(cat, if (byTier) "play_integrity" else "category", shown, keepEmpty = byTier)
+                    for ((v, group) in groups) {
+                        Text(v.label + " (" + group.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
+                            modifier = Modifier.testTag(if (byTier) TAG_TIER + v.id else TAG_PHONE_RECS + ":cat:" + v.id))
+                        if (byTier) cat.tiers.firstOrNull { it.id == v.id }?.let { t -> if (t.meaning.isNotBlank()) Text(t.meaning, color = p.textSecondary, fontSize = KitDensity.caption) }
                         if (group.isEmpty()) Text("No app recorded at this tier yet.", color = p.textSecondary, fontSize = KitDensity.caption)
-                        else ResultGrid(ctx, cfg, d, group, emptyMap(), lines, open, tick, bump, badge = { tier.label }, extra = { StorePhoneSearch.tierLine(data, it.pkg) })
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun GamesView(
-        ctx: Context, cfg: () -> SourceResolver.Config?, d: Decl?, data: StorePhoneSearch.Games?,
-        lines: MutableMap<String, String>, open: MutableMap<String, Boolean>, tick: Int, bump: () -> Unit,
-    ) {
-        val p = LocalKitPalette.current
-        // #1776 the split: licence (Open source | Non open source) then graphics (2D | 3D); the genre / category sections sit inside it.
-        var openSrc by remember { mutableStateOf(true) }
-        var dim by remember { mutableStateOf(StorePhoneSearch.DIM_2D) }
-        Column(Modifier.fillMaxWidth().testTag(TAG_GAMES), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
-            when {
-                data == null || d == null -> KitStatusBanner(ctx.getString(R.string.store_landing_loading), KitState.BUSY, tag = "store-search:phone-recs-loading")
-                data.games.isEmpty() -> KitEmptyState("No games yet", "The games catalogue is served by Cloud Store (${data.problems.firstOrNull() ?: "empty"}).")
-                else -> {
-                    val list = StorePhoneSearch.games(data, fleetPackages)
-                    val icons = list.associate { it.pkg to it.icon }
-                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                        listOf(true, false).forEach { o ->
-                            Pill(StorePhoneSearch.licenceLabel(o) + " (" + list.count { it.openSource == o } + ")", openSrc == o, TAG_GAMES + ":lic:" + if (o) "open" else "closed") { openSrc = o }
-                        }
-                    }
-                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                        StorePhoneSearch.DIMS.forEach { x ->
-                            Pill(StorePhoneSearch.dimLabel(x) + " (" + StorePhoneSearch.split(list, openSrc, x).size + ")", dim == x, TAG_GAMES + ":dim:" + x) { dim = x }
-                        }
-                    }
-                    val shown = StorePhoneSearch.split(list, openSrc, dim)
-                    if (shown.isEmpty()) Text("No " + StorePhoneSearch.dimLabel(dim) + " " + StorePhoneSearch.licenceLabel(openSrc).lowercase() + " games in the catalogue yet.",
-                        color = p.textSecondary, fontSize = KitDensity.caption)
-                    StorePhoneSearch.sections(data, shown).forEach { (label, gs) ->
-                        Text(label + " (" + gs.size + ")", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold,
-                            modifier = Modifier.testTag(gameCategoryTag(StorePhoneSearch.sectionTag(label))))
-                        ResultGrid(ctx, cfg, d, gs.map(StorePhoneSearch::gameResult), icons, lines, open, tick, bump)
+                        val byPkg = group.associateBy { it.pkg }
+                        ResultGrid(ctx, cfg, d, group.map(StorePhoneFilter::result), group.associate { it.pkg to it.icon }, lines, open, tick, bump,
+                            extra = { r -> byPkg[r.pkg]?.let { StorePhoneFilter.tierLine(cat, it) } })
                     }
                 }
             }

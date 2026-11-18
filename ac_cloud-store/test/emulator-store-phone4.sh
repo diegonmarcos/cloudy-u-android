@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# #1774 Cloud Store Search > Phone as four subpages (Open source, Non open source, Play Integrity, Games) on an emulator.
+# #1774 Cloud Store Search > Phone as four subpages (Open source, Non open source, Play Integrity, Games) on an emulator, #1791 plus the five filter rows.
 # Per subpage: the page before a query, then a typed search; the search bar is on top, the icon grid below. Screenshots only.
 # Usage: emulator-store-phone4.sh STORE_APK OUT_DIR
 set -u
@@ -45,23 +45,36 @@ sub() {  # name, label, ready-regex, query
   # clear the query so the next page opens on its own landing
   adb shell input keyevent KEYCODE_MOVE_END; for i in $(seq 1 24); do adb shell input keyevent KEYCODE_DEL; done; sleep 2
 }
-sub open "Open source" 'Popular open-source apps' newpipe
-sub closed "Non open source" 'Search Google Play' chase
-sub integrity "Play Integrity" 'Device \(|Basic \(' chase
-sub games "Games" 'Action \(|Racing \(|\(' minecraft
-# #1776 Games split: Open source 2D (the default), Open source 3D, Non open source (2D). Counts come from the catalogue.
-games_shot() {  # name, pill label (regex-free, exact), scroll?
-  tap_text "$2" || { echo "::error::no $2 pill"; rc=1; return; }
-  sleep 6; shoot "$1"; dump "$1"
-  read -r W H < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
-  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H*3/10)) 250; sleep 3; shoot "$1-scrolled"
-  adb shell input swipe $((W/2)) $((H*3/10)) $((W/2)) $((H*4/5)) 100; adb shell input swipe $((W/2)) $((H*3/10)) $((W/2)) $((H*4/5)) 100; sleep 2
+# #1791 the pages are filtered views of ONE catalogue: the count line "n / total" is drawn once the catalogue is read
+sub open "Open source" '[0-9]+ / [0-9]+' newpipe
+sub closed "Non open source" '[0-9]+ / [0-9]+' chase
+sub integrity "Play Integrity" 'Play Mid \(|Play Basic \(' chase
+sub games "Games" '[0-9]+ / [0-9]+' minecraft
+# #1791 the five filter rows, one chip selected per row (a screenshot each), then one combined; every row starts with All.
+tap_nth() {  # exact text, n-th match on screen (1-based); a chip scrolled off its row is swiped in once
+  for try in 1 2; do
+    dump cur
+    b=$(grep -oE "(text|content-desc)=\"$1\"[^>]*bounds=\"\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]\"" "$OUT/cur.xml" | sed -n "$2p" | grep -oE '[0-9]+' | tail -4 | tr '\n' ' ')
+    if [ -n "$b" ]; then set -- $b; adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 )); sleep 3; return 0; fi
+    read -r W H < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
+    adb shell input swipe $((W*4/5)) $((H*3/10)) $((W/5)) $((H*3/10)) 200; sleep 1
+  done
+  return 1
 }
-tap_text "Games" || true; sleep 8
-games_shot games-open-2d "Open source \\([0-9]+\\)"
-games_shot games-open-3d "3D \\([0-9]+\\)"
-tap_text "Non open source \\([0-9]+\\)" || { echo "::error::no Non open source pill"; rc=1; }
-sleep 3; tap_text "2D \\([0-9]+\\)" || true
-games_shot games-non-open "Non open source \\([0-9]+\\)"
+chip() {  # scene name, row number 1..5, chip text, occurrence of that text on screen
+  tap_nth "$3" "$4" || { echo "::error::no chip $3 (row $2)"; rc=1; return; }
+  sleep 3; shoot "$1"; dump "$1"
+  tap_nth "All" "$2" || true   # back to All on that row
+}
+tap_text "Play Integrity" || { echo "::error::no Play Integrity pill"; rc=1; }
+sleep 4
+chip filter-row1-category 1 "Games" 2   # occurrence 1 is the Games subpage pill
+chip filter-row2-licence 2 "Closed" 1
+chip filter-row3-play-integrity 3 "Play Mid" 1
+chip filter-row4-game-dimension 4 "Games 3D" 1
+chip filter-row5-source 5 "Aurora" 1
+# combined: Games AND Closed AND Games 3D AND Aurora
+tap_nth "Games" 2 || rc=1; tap_nth "Closed" 1 || rc=1; tap_nth "Games 3D" 1 || rc=1; tap_nth "Aurora" 1 || rc=1
+sleep 4; shoot filter-combined; dump filter-combined
 adb logcat -d -t 400 > "$OUT/logcat.txt" 2>/dev/null || true
 exit $rc

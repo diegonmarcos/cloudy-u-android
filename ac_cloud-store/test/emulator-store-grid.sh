@@ -28,7 +28,7 @@ up() { for i in $(seq 1 8); do adb shell input swipe $X $Y2 $X $Y1 100; done; }
 rc=0
 # Phone: recommendations (wait for the dataset and the icon downloads), a scrolled page, then a typed search
 tap_text Phone || { echo "::error::no Phone subpage"; rc=1; }
-for i in $(seq 1 12); do dump phone; grep -q 'store-search:grid\|Popular open-source apps' "$OUT/phone.xml" && ! grep -q 'No recommendations yet\|Loading' "$OUT/phone.xml" && break; sleep 8; done
+for i in $(seq 1 12); do dump phone; grep -qE 'store-search:grid|[0-9]+ / [0-9]+' "$OUT/phone.xml" && ! grep -q 'No recommendations yet\|Loading' "$OUT/phone.xml" && break; sleep 8; done
 sleep 12; shoot phone-recs-1
 down 2; sleep 6; shoot phone-recs-2; up
 dump search; b=$(grep -oE 'class="android.widget.EditText"[^>]*bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' "$OUT/search.xml" | sed -n 1p | grep -oE '[0-9]+' | tail -4 | tr '\n' ' ')

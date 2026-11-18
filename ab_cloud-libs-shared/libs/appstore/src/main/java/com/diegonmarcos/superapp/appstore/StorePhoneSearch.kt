@@ -26,7 +26,7 @@ object StorePhoneSearch {
     fun blurb(sub: String): String = when (sub) {
         OPEN -> "Free-software apps: F-Droid, IzzyOnDroid and GitHub, plus the apps you declared that are open source. Not in the fleet."
         CLOSED -> "Apps that are not open source, free or paid, from Google Play through Aurora's anonymous session and your declared list. Each shows a Free or Paid badge when Play says so."
-        INTEGRITY -> "Google Play apps grouped by the Play Integrity tier they need: Basic, Device or Strong. Tiers come from a fleet dataset; Unknown means nobody has recorded one."
+        INTEGRITY -> "Every app of the Store's catalogue grouped by the Play Integrity tier it is known to need (the labels of the tier row below). The basis of each tier is on the app's row."
         else -> "Games from the games catalogue and the same sources. Results install through the Store's install path."
     }
 
