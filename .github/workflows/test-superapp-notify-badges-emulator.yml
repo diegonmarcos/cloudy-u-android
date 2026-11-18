@@ -116,10 +116,15 @@ jobs:
           for p in POST_NOTIFICATIONS ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION; do adb shell pm grant "$PKG" android.permission.$p || true; done
           adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW allow || true
           awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; }
-          dump() { awake; sleep 1; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "out/$1.xml" >/dev/null 2>&1; }
-          shade() { awake; adb shell cmd statusbar expand-notifications; sleep 3; adb exec-out screencap -p > "out/shade-$1.png"; adb shell cmd statusbar collapse; sleep 1; }
+          # The app's own Screensaver (a black overlay with the clock and one "Unlock" button, started by the shell's
+          # idle timer) covers the page between steps; take it down with its own button before reading or tapping.
+          uncover() { for _ in 1 2 3; do adb shell uiautomator dump /sdcard/u0.xml >/dev/null 2>&1; adb pull /sdcard/u0.xml u0.xml >/dev/null 2>&1
+            u=$(python3 ui.py text u0.xml Unlock); [ -z "$u" ] && return 0; adb shell input tap $u; sleep 2; done; }
+          dump() { awake; uncover; sleep 1; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "out/$1.xml" >/dev/null 2>&1; }
+          shade() { awake; uncover; adb shell cmd statusbar expand-notifications; sleep 3; adb exec-out screencap -p > "out/shade-$1.png"; adb shell cmd statusbar collapse; sleep 1; }
           posted() { adb shell dumpsys notification --noredact > "out/dumpsys-$1.txt"; python3 posted.py "out/dumpsys-$1.txt" "$PKG"; }
-          tap() { [ -n "$1" ] || { echo "tap: no target"; return 1; }; awake; adb shell input tap $1; }
+          tap() { [ -n "$1" ] || { echo "tap: no target"; return 1; }; awake; uncover; adb shell input tap $1; }
+          shot() { awake; uncover; sleep 1; adb exec-out screencap -p > "out/$1.png"; }
           python3 ui.py badges aa_cloud-superapp/build.json > badges.tsv; cat badges.tsv
           CHANNELS=$(cut -f2 badges.tsv | sort -u | tr '\n' ' ')
           in_shade() { n=0; for c in $CHANNELS; do case " $1 " in *" $c "*) n=$((n+1));; esac; done; echo $n; }
@@ -142,13 +147,13 @@ jobs:
           # Configs on a tall display so the whole list is one screen.
           adb shell wm size 1080x7600; sleep 4
           adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 10; awake; sleep 2
-          adb exec-out screencap -p > out/configs-tall.png; dump configs-0
+          shot configs-tall; dump configs-0
 
           # 1. Turn all OFF.
           tap "$(python3 ui.py text out/configs-0.xml 'Turn all badges on / off')"; sleep 10
           p1=$(posted all-off); n1=$(in_shade "$p1"); echo "all off: $p1"
           [ "$n1" -eq 0 ] && check ok "1 Turn all OFF: no badge in the shade" || check no "1 Turn all OFF: $n1 badge channels still in the shade ($p1)"
-          adb exec-out screencap -p > out/configs-all-off.png
+          shot configs-all-off
           adb shell wm size reset; sleep 3; shade 1-all-off; adb shell wm size 1080x7600; sleep 3
 
           # 2. Turn all ON.
@@ -157,7 +162,7 @@ jobs:
           p2=$(posted all-on); n2=$(in_shade "$p2"); echo "all on: $p2"
           [ "$n2" -ge 3 ] && check ok "2 Turn all ON: $n2 badge channels back in the shade ($p2)" || check no "2 Turn all ON: only $n2 badge channels in the shade ($p2)"
           adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 8
-          adb exec-out screencap -p > out/configs-all-on.png; dump configs-2
+          shot configs-all-on; dump configs-2
           adb shell wm size reset; sleep 3; shade 2-all-on; adb shell wm size 1080x7600; sleep 3
 
           # 3. One badge: the first declared badge that is in the shade now.
@@ -177,20 +182,20 @@ jobs:
             adb shell wm size reset; sleep 3; shade 4-one-on; adb shell wm size 1080x7600; sleep 3
           else check no "3 no badge was in the shade to switch"; fi
           adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 8
-          adb exec-out screencap -p > out/configs-final-tall.png
+          shot configs-final-tall
           adb shell wm size reset; sleep 3
           adb shell am start -n "$ACT" --es shortcut_action page:communication/notify-configs >/dev/null; awake; sleep 6
-          adb exec-out screencap -p > out/configs.png
+          shot configs
 
           # All: every badge row in each of its three states, moved by its own right-side arrow.
           adb shell wm size 1080x7600; sleep 4
           adb shell am start -n "$ACT" --es shortcut_action page:communication/my-rss >/dev/null; awake; sleep 10; awake; sleep 2
-          dump all-1; adb exec-out screencap -p > out/all-1-collapsed-tall.png
+          dump all-1; shot all-1-collapsed-tall
           rows=$(python3 ui.py count-desc out/all-1.xml Expand); echo "All rows with an arrow: $rows"
           [ "$rows" -ge 3 ] && check ok "All: $rows badge rows carry the expand arrow" || check no "All: only $rows expand arrows"
           for stage in 2-first 3-second; do
             i=0; while [ "$i" -lt "$rows" ]; do dump all-step; tap "$(python3 ui.py desc out/all-step.xml Expand "$i")"; sleep 2; i=$((i+1)); done
-            sleep 3; dump "all-$stage"; adb exec-out screencap -p > "out/all-$stage-tall.png"
+            sleep 3; dump "all-$stage"; shot "all-$stage-tall"
           done
           left=$(python3 ui.py count-desc out/all-3-second.xml Expand); coll=$(python3 ui.py count-desc out/all-3-second.xml Collapse)
           [ "$coll" -ge "$rows" ] && [ "$left" -eq 0 ] && check ok "All: every row reached its second state ($coll)" || check no "All: second state reached by $coll of $rows rows"
@@ -201,10 +206,10 @@ jobs:
           # phone-size shots of the three states, a row at a time from the top
           adb shell run-as "$PKG" rm -f shared_prefs/notify_all_badge_stage.xml || true
           adb shell am force-stop "$PKG"; adb shell am start -n "$ACT" --es shortcut_action page:communication/my-rss >/dev/null; awake; sleep 12; awake
-          adb exec-out screencap -p > out/all-1-collapsed.png
+          shot all-1-collapsed
           for stage in 2-first 3-second; do
             for i in 0 1 2; do dump all-p; tap "$(python3 ui.py desc out/all-p.xml Expand "$i")"; sleep 2; done
-            sleep 2; adb exec-out screencap -p > "out/all-$stage.png"
+            sleep 2; shot "all-$stage"
           done
           timeout 60 adb logcat -d > out/logcat.txt || true
           cat out/verdict.txt
