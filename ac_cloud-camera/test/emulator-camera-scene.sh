@@ -42,7 +42,21 @@ DENSITY=$(adb shell wm density | tr -d '\r' | sed -n 's/.*: \([0-9]*\)$/\1/p' | 
 FAILS=0
 ok()   { echo "ok     $1"; }
 fail() { echo "FAIL   $1"; FAILS=$((FAILS + 1)); }
-awake() { adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; }
+# a system "X isn't responding" dialog (seen on these runners: Pixel Launcher, run 44314218765) covers the app and
+# swallows every tap: answer "Wait"
+unanr() {
+  adb shell uiautomator dump /sdcard/anr.xml >/dev/null 2>&1
+  adb exec-out cat /sdcard/anr.xml 2>/dev/null | grep -q "isn't responding\|isn&apos;t responding" || return 0
+  xy=$(adb exec-out cat /sdcard/anr.xml | python3 -I -c '
+import re, sys
+for n in re.findall(r"<node [^>]*>", sys.stdin.read()):
+    if re.search(r" text=\"Wait\"", n):
+        b = re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", n)
+        if b:
+            a = list(map(int, b.groups())); print((a[0] + a[2]) // 2, (a[1] + a[3]) // 2); break')
+  [ -n "$xy" ] && { adb shell input tap $xy; echo "note   dismissed a system not-responding dialog"; sleep 2; }
+}
+awake() { adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; unanr; }
 shot() { awake; sleep "${2:-2}"; adb exec-out screencap -p > "$OUT/$1.png"; echo "captured $1"; }
 dump() {
   adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1
@@ -104,7 +118,7 @@ wait_log() {
   done
   return 1
 }
-start() { adb shell am force-stop "$PKG"; adb logcat -c; adb shell am start -n "$ACT" "$@" >/dev/null; }
+start() { unanr; adb shell am force-stop "$PKG"; adb logcat -c; adb shell am start -n "$ACT" "$@" >/dev/null; }
 
 # ── fixtures: objects + text, and a text document (generated, so nothing binary is committed twice) ──────────────
 python3 -I - "$GOLDEN/grace_hopper.jpg" "$OUT" <<'PY' || { echo "cannot build the fixtures"; exit 2; }
@@ -211,7 +225,7 @@ fi
 xy() { python3 -I -c 'import json,sys; w=json.loads(sys.argv[2]); m=[x for x in w if x["text"].upper()==sys.argv[1]]; print("%d %d" % (m[0]["x"], m[0]["y"]) if m else "")' "$1" "$words"; }
 CAM=$(xy CAMERA)
 if [ -n "$CAM" ]; then
-  adb shell input tap $CAM; sleep 1
+  awake; adb shell input tap $CAM; sleep 1
   c1=$(wait_log "copied " 10)
   shot text-selection 1
   case "$c1" in *'copied "CAMERA"'*) ok "T1 a tap on CAMERA copied exactly it";; *) fail "T1 the tap at $CAM copied: $c1"; diag "after the tap";; esac
