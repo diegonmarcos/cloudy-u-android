@@ -24,7 +24,16 @@ trigger() {   # $1 phase
   adb shell am force-stop "$PKG"
   adb shell am start -n "$PKG/.WriterShareActivity" -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "'Good morning, how are you today'" >/dev/null; sleep 8
   shot "writer-$1-editor" 1
-  tap_sub "Translate" 3 || { fail "$1 no Translate tool"; return 1; }
+  # The tools strip (Text Enhance, Grammar Check, Summary, ...) scrolls sideways; Translate is past the right edge.
+  local i xy y
+  dump > "$OUT/ui.xml"; xy=$(find_xy "Text Enhance" eq); [ -n "$xy" ] || xy=$(find_xy "Grammar Check" eq)
+  [ -n "$xy" ] || { fail "$1 no Writer tools strip"; return 1; }
+  y=${xy#* }
+  for i in 0 1 2 3 4 5; do
+    tap_sub "Translate" 0 && break
+    [ "$i" = 5 ] && { fail "$1 no Translate tool"; return 1; }
+    adb shell input swipe $((W*9/10)) "$y" $((W/10)) "$y" 400; sleep 1
+  done
   sleep 10
 }
 relay_phases writer "$PKG" writer_routes trigger '401|credential|unauthori|user not found|no auth|fallback|on-device|no token|Translat' 60
