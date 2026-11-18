@@ -146,8 +146,9 @@ private fun TextSelectionPage(model: GrabberModel) {
                 Triple("RESULT", "editable field: replaces the selection", GC.accent),
             ),
         )
-        OnSelectionBox()
         GrabberPanel(model, onReply = {})
+        // #1793 below the panel, so the text field stays the page's first control
+        OnSelectionBox()
         RecentsBox(GrabberBus.recents.filter { it.source != "screen" }, onPick = { model.setText(it.text); model.grab() })
     }
 }
