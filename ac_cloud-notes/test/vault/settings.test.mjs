@@ -26,3 +26,11 @@ test('the UI page drives family, size and scale, and the shell applies and persi
   const css = readFileSync(join(SRC, 'style.ts'), 'utf8');
   assert.match(css, /\.cnv-root\{zoom:var\(--cnv-scale,1\)/);
 });
+
+test('reading typography: the note stylesheet states paragraph, list, heading, rule and table spacing (the app reset zeroes margins)', () => {
+  const css = readFileSync(join(SRC, 'style.ts'), 'utf8');
+  for (const rule of ['.cnv-note p{margin:0 0 .9em}', '.cnv-note ul,.cnv-note ol{margin:0 0 .9em;padding-left:1.6em}', '.cnv-note hr{', '.cnv-note table{display:block', '.cnv-note pre.mermaid{']) {
+    assert.ok(css.includes(rule), rule);
+  }
+  assert.match(css, /\.cnv-note\{max-width:700px;margin:0 auto;padding:12px 16px 0/);
+});

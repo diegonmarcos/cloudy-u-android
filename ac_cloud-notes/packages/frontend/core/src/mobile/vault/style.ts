@@ -31,12 +31,29 @@ export const VAULT_CSS = `
 .cnv-input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--background-modifier-border);border-radius:var(--radius-s);background:var(--background-primary);color:var(--text-normal);font:inherit}
 .cnv-editor{width:100%;height:100%;min-height:50vh;box-sizing:border-box;padding:12px;border:0;outline:0;resize:none;background:transparent;color:inherit;font:var(--font-ui-small)/var(--line-height-normal) var(--font-monospace);tab-size:2}
 .cnv-status{display:flex;gap:14px;padding:4px 10px;border-top:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-muted);font-size:var(--font-ui-smaller);flex:none;overflow-x:auto;white-space:nowrap}
-.cnv-note{max-width:700px;margin:0 auto;font-family:var(--font-text);font-size:var(--font-text-size);line-height:var(--line-height-normal);overflow-wrap:anywhere}
+.cnv-note{max-width:700px;margin:0 auto;padding:12px 16px 0;box-sizing:border-box;font-family:var(--font-text);font-size:var(--font-text-size);line-height:var(--line-height-normal);overflow-wrap:anywhere}
+/* ticket 1717: reading typography (Obsidian reading view rhythm): the app reset zeroes every margin, so each block states its own */
+.cnv-note>*:first-child{margin-top:0}
+.cnv-note p{margin:0 0 .9em}
+.cnv-note h1,.cnv-note h2,.cnv-note h3,.cnv-note h4,.cnv-note h5,.cnv-note h6{margin:1.4em 0 .5em}
+.cnv-note h5{font-size:var(--h5-size)}.cnv-note h6{font-size:var(--h6-size)}
+.cnv-note ul,.cnv-note ol{margin:0 0 .9em;padding-left:1.6em}
+.cnv-note li{margin:.2em 0}.cnv-note li>ul,.cnv-note li>ol{margin:.2em 0 0}
+.cnv-note hr{margin:1.6em 0;border:0;border-top:1px solid var(--background-modifier-border)}
+.cnv-note pre{margin:0 0 1em}
+.cnv-note :not(pre)>code{padding:.1em .35em;border-radius:var(--radius-s);background:var(--background-primary-alt)}
+.cnv-note table{display:block;max-width:100%;margin:0 0 1em;overflow-x:auto}.cnv-note th{font-weight:600;text-align:left;background:var(--background-primary-alt)}
+.cnv-note blockquote{margin:0 0 .9em}.cnv-note blockquote>:last-child{margin-bottom:0}
+.cnv-note mark{padding:0 .15em;border-radius:3px;background:var(--text-highlight-bg);color:inherit}
+.cnv-note img{display:block;margin:0 0 .9em;height:auto}
+.cnv-note .callout>.callout-content>:last-child{margin-bottom:0}
+.cnv-note .math-display{margin:0 0 .9em;overflow-x:auto;text-align:center}
+.cnv-note pre.mermaid{display:flex;justify-content:center;background:transparent;border:0;padding:0;margin:0 0 1em}
 .cnv-note h1,.cnv-note h2,.cnv-note h3,.cnv-note h4{line-height:1.2;font-weight:700}.cnv-note h1{font-size:var(--h1-size)}.cnv-note h2{font-size:var(--h2-size)}.cnv-note h3{font-size:var(--h3-size)}.cnv-note h4{font-size:var(--h4-size)}
 .cnv-note pre{overflow:auto;padding:10px;border-radius:var(--radius-s);background:var(--background-primary-alt);border:1px solid var(--background-modifier-border)}
 .cnv-note code{font-family:var(--font-monospace);font-size:.875em}
 .cnv-note table{border-collapse:collapse}.cnv-note td,.cnv-note th{border:1px solid var(--background-modifier-border);padding:4px 8px}
-.cnv-note blockquote{margin:8px 0;padding:2px 12px;border-left:2px solid var(--blockquote-border-color)}
+.cnv-note blockquote{padding:2px 12px;border-left:2px solid var(--blockquote-border-color)}
 .cnv-note a,.cnv-note a.internal-link{color:var(--link-color);text-decoration:underline}
 .cnv-note a.tag{color:var(--tag-color);background:var(--tag-background);border-radius:2em;padding:1px 8px;font-size:.875em;text-decoration:none}
 .cnv-note .callout{margin:10px 0;padding:8px 12px;border-radius:var(--radius-s);border-left:4px solid var(--color-blue);background:var(--background-modifier-hover)}
