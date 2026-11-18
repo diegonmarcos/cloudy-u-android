@@ -134,6 +134,7 @@ class RelayAnswer(val answer: JSONObject, val body: ByteArray?)
  *
  *   no_relay_policy / misconfigured / unknown_use / app_not_allowed / disabled    the declaration
  *   bad_endpoint / bad_request / body_too_large                                   the request, before anything is sent
+ *                                                                                  (`method: GET` sends no body: a key-usage read)
  *   no_consent                                                                    the user's grant for this app and use
  *   offline / metered / battery_saver                                            the phone's state
  *   breaker_open                                                                  after repeated server or network failures
@@ -185,10 +186,13 @@ class RelayEngine(
         val endpoint = request.optString("endpoint")
         if (endpoint !in use.endpoints) return refuse(app, name, "bad_endpoint")
         val url = p.providers[use.provider]?.endpoints?.get(endpoint) ?: return refuse(app, name, "bad_endpoint")
-        if (body.isEmpty()) return refuse(app, name, "bad_request")
-        if (body.size > p.maxBodyBytes) return refuse(app, name, "body_too_large")
-        val text = body.toString(Charsets.UTF_8)
-        if (runCatching { JSONObject(text) }.isFailure) return refuse(app, name, "bad_request")
+        // A GET (a provider's key-usage read: Calc's Configs › Token › Test) sends no body; anything else is a JSON POST.
+        val get = request.optString("method") == "GET"
+        val text: String? = if (get) null else {
+            if (body.isEmpty()) return refuse(app, name, "bad_request")
+            if (body.size > p.maxBodyBytes) return refuse(app, name, "body_too_large")
+            body.toString(Charsets.UTF_8).also { t -> if (runCatching { JSONObject(t) }.isFailure) return refuse(app, name, "bad_request") }
+        }
         if (!consent.granted(app, use.asUse())) return refuse(app, name, "no_consent")
         if (!env.online() && p.suppress.offline) return refuse(app, name, "offline", NO_NETWORK)
         if (env.metered() && p.suppress.metered) return refuse(app, name, "metered")
@@ -202,12 +206,12 @@ class RelayEngine(
             http.send(url, key, text, p.timeoutMs)
         } catch (e: Exception) {
             breaker.failure()
-            val sizes = JSONObject().put("endpoint", endpoint).put("bytes_in", body.size).put("latency_ms", clock() - t0)
+            val sizes = JSONObject().put("endpoint", endpoint).put("bytes_in", text?.length ?: 0).put("latency_ms", clock() - t0)
             return refuse(app, name, "network", transport(e), sizes)
         }
         val latency = clock() - t0
         val out = res.body.toByteArray(Charsets.UTF_8)
-        val sizes = JSONObject().put("endpoint", endpoint).put("code", res.code).put("bytes_in", body.size).put("latency_ms", latency)
+        val sizes = JSONObject().put("endpoint", endpoint).put("code", res.code).put("bytes_in", if (get) 0 else body.size).put("latency_ms", latency)
         if (res.code >= 500) breaker.failure() else breaker.success()
         val cost = costOf(res.body)
         ledger.charge(cost)

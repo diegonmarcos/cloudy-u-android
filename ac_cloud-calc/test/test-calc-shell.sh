@@ -36,8 +36,8 @@
 #       build.json::ui.debug_api.clock_group, and never names an op `state` (GET /api/state's key).
 #   C11 #770 the Jev section: every routing tool in build.json::jev names a declared mode (and a
 #       form a mode declares), on_error's fallback_mode and every ask key are modes; the token
-#       is kept in ONE file (decide/JevStore.kt alone touches SafeEncryptedPrefs (#1106, the encrypted opener) and
-#       revealAiKey); nothing under decide/ or jev/ calls android.util.Log (a token must never
+#       is kept in ONE file (decide/JevStore.kt alone touches SafeEncryptedPrefs (#1106, the encrypted opener; #1801 only
+#       to retire the old override)); #1801 nothing calls revealAiKey (the AI-key owner engine holds the key); nothing under decide/ or jev/ calls android.util.Log (a token must never
 #       reach logcat); /api/<jev_group>/ documents and answers route and config.
 #   C12 #772 the Sound tools: /api/<sound_group>/ documents and answers generate, analyze and
 #       status and never names an op `state`; ONE microphone reader and ONE player
@@ -286,10 +286,16 @@ for k in (jev.get("ask") or {}):
     if not k.startswith("_") and k != "*" and k not in modes_by_id:
         bad.append("C11 jev ask.%s is not a declared mode" % k)
 dkts = [p for p in kts if os.sep + "decide" + os.sep in p]
-for needle in ("SafeEncryptedPrefs", "revealAiKey"):
-    holders = sorted(os.path.relpath(p, src) for p in kts + jkts if needle in code(p))
-    if holders != ["decide/JevStore.kt"]:
-        bad.append("C11 %s must be used by decide/JevStore.kt alone (the token's one store), found in %s" % (needle, holders))
+holders = sorted(os.path.relpath(p, src) for p in kts + jkts if "SafeEncryptedPrefs" in code(p))
+if holders != ["decide/JevStore.kt"]:
+    bad.append("C11 SafeEncryptedPrefs must be used by decide/JevStore.kt alone (the retired override's one store), found in %s" % holders)
+# #1801 the key is the AI-key owner engine's: nothing in this app reads it, every Jev call is relayed there.
+holders = sorted(os.path.relpath(p, src) for p in kts + jkts if "revealAiKey" in code(p))
+if holders:
+    bad.append("C11 revealAiKey must be called by nothing in this app (the AI-key owner engine holds the key), found in %s" % holders)
+jstore = code(os.path.join(src, "decide", "JevStore.kt"))
+if "object : EngineKeyedHttp" not in jstore or "DecisionsLink.relay(ctx, USE, endpoint, body, get)" not in jstore:
+    bad.append("C11 decide/JevStore.kt does not relay the Jev calls through the AI-key owner engine")
 for p in dkts + jkts:
     if re.search(r"\bLog\.[a-z]+\(|android\.util\.Log\b", code(p)):
         bad.append("C11 %s logs — nothing that holds the token may write to logcat" % os.path.basename(p))
@@ -613,7 +619,9 @@ mutate jev-tool-no-form build.json 's.replace("\"form\": \"dbsum\"", "\"form\": 
 mutate jev-fallback-mode build.json 's.replace("\"fallback_mode\": \"standard\"", "\"fallback_mode\": \"basic\"")' "C11 jev route.fallback_mode basic"
 mutate jev-ask-key build.json 's.replace("\"acoustics\": [", "\"acoustix\": [")' "C11 jev ask.acoustix"
 mutate token-second-store "$J/decide/JevFlow.kt" 's + "\nprivate val k = com.diegonmarcos.superapp.crash.SafeEncryptedPrefs\n"' "C11 SafeEncryptedPrefs must be used by decide/JevStore.kt alone"
-mutate token-logged "$J/decide/JevStore.kt" 's.replace("val r = c.revealAiKey(provider)", "val r = c.revealAiKey(provider)\n        android.util.Log.d(\"jev\", r.text.orEmpty())")' "C11 JevStore.kt logs"
+mutate token-logged "$J/decide/JevStore.kt" 's.replace("val k = DecisionsLink.keys(ctx)", "val k = DecisionsLink.keys(ctx)\n        android.util.Log.d(\"jev\", k.toString())")' "C11 JevStore.kt logs"
+mutate key-read-again "$J/decide/JevFlow.kt" 's + "\nprivate fun k(c: com.diegonmarcos.superapp.texttools.TextToolsClient) = c.revealAiKey(\"openrouter\")\n"' "C11 revealAiKey must be called by nothing in this app"
+mutate jev-not-relayed "$J/decide/JevStore.kt" 's.replace("DecisionsLink.relay(ctx, USE, endpoint, body, get)", "DecisionsLink.relay(ctx, \"other\", endpoint, body, get)")' "C11 decide/JevStore.kt does not relay"
 mutate jev-op-dropped "$J/debugapi/JevDebugApi.kt" 's.replace("\"config\" -> config(app).toString()", "")' "C11 /api/<jev_group>/config"
 mutate debug-op-dropped "$J/debugapi/CalcDebugApi.kt" 's.replace("\"modes\" -> modesJson()", "")' "C7 /api/<group>/modes"
 mutate no-use-exact-alarm app/src/main/AndroidManifest.xml 's.replace("<uses-permission android:name=\"android.permission.USE_EXACT_ALARM\" />", "")' "C8 the manifest does not declare android.permission.USE_EXACT_ALARM"

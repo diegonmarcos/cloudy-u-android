@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Base64
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.prefs
+import com.diegonmarcos.superapp.decisions.link.DecisionsLink
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -220,8 +221,79 @@ object AiRouter {
     }
     fun model(context: Context, p: Provider = provider(context)): String =
         context.prefs().getString(Settings.PREF_AI_MODEL_PREFIX + p.id, p.defaultModel)?.takeIf { it.isNotBlank() } ?: p.defaultModel
+    /**
+     * #1801 the OPTIONAL gateway token of a provider that needs no key (the mesh bridge, when reached through an
+     * authenticated gateway): still this keyboard's setting. A provider that NEEDS a key (OpenRouter) has none here: its
+     * key lives in the fleet's AI-key owner engine and [complete] relays through it, so this answers "" for it.
+     */
     fun token(context: Context, p: Provider = provider(context)): String =
-        context.prefs().getString(Settings.PREF_AI_TOKEN_PREFIX + p.id, "")?.trim() ?: ""
+        if (p.needsToken) "" else context.prefs().getString(Settings.PREF_AI_TOKEN_PREFIX + p.id, "")?.trim() ?: ""
+
+    /** The declared relay use (decisions.json::relay.uses) every key-needing call of this keyboard goes through. */
+    const val RELAY_USE = "keyboard_text_tools"
+
+    @Volatile private var keyCache: Pair<Long, Map<String, Pair<Boolean, String>>>? = null
+    @Volatile private var refreshing = false
+
+    /**
+     * #1801 whether a key is held for [p] and its last four characters: for a key-needing provider, the AI-key owner
+     * engine's `keys` status (presence and hint only, never the key), cached for a minute because it is a bind; for any
+     * other provider, this keyboard's optional gateway token. BLOCKS on a stale cache: call off the main thread.
+     */
+    fun keyState(context: Context, p: Provider): Pair<Boolean, String> {
+        if (!p.needsToken) return token(context, p).let { it.isNotEmpty() to it.takeLast(4) }
+        retireStoredKey(context, p)
+        val now = System.currentTimeMillis()
+        val cached = keyCache?.takeIf { now - it.first < KEY_CACHE_MS }?.second
+        val map = cached ?: run {
+            val k = DecisionsLink.keys(context)
+            val list = k.optJSONArray("providers")
+            val m = (0 until (list?.length() ?: 0)).mapNotNull { list?.optJSONObject(it) }
+                .associate { it.optString("id") to (it.optBoolean("key_present") to it.optString("key_hint")) }
+            if (k.optBoolean("ok")) keyCache = now to m
+            m
+        }
+        return map[p.id] ?: (false to "")
+    }
+
+    /**
+     * [keyState]'s presence WITHOUT blocking, for routing decisions taken on the main thread: the cached answer, refreshed
+     * on a worker when stale. Before the first answer it says true, so the request goes to the engine and the engine's own
+     * "no key" refusal is what the user reads (never a silent skip).
+     */
+    fun keyHeldNow(context: Context, p: Provider): Boolean {
+        if (!p.needsToken) return token(context, p).isNotEmpty()
+        val c = keyCache
+        if ((c == null || System.currentTimeMillis() - c.first >= KEY_CACHE_MS) && !refreshing) {
+            refreshing = true
+            val app = context.applicationContext
+            Thread({ try { runCatching { keyState(app, p) } } finally { refreshing = false } }, "ai-key-state").apply { isDaemon = true }.start()
+        }
+        return c?.second?.get(p.id)?.first ?: true
+    }
+
+    /**
+     * #1801 a key this keyboard stored for a key-needing provider before the AI-key owner engine held them is removed: the
+     * key lives in the engine only. The owner enters it again on the engine's AI keys screen (AI Routing ▸ API key).
+     */
+    fun retireStoredKey(context: Context, p: Provider): Boolean {
+        if (!p.needsToken) return false
+        val prefs = context.prefs()
+        if (!prefs.contains(Settings.PREF_AI_TOKEN_PREFIX + p.id)) return false
+        prefs.edit().remove(Settings.PREF_AI_TOKEN_PREFIX + p.id).apply()
+        return true
+    }
+
+    /** Forget the cached key status (the AI keys screen was opened; the next read asks the engine again). */
+    fun forgetKeyState() { keyCache = null }
+
+    /** The AI-key owner engine's AI keys screen for [p] (AI Routing ▸ API key). False with no engine installed. */
+    fun openKeySettings(context: Context, p: Provider): Boolean {
+        forgetKeyState()
+        return DecisionsLink.openKeySettings(context, p.id)
+    }
+
+    private const val KEY_CACHE_MS = 60_000L
 
     /**
      * WHICH provider and WHICH model one request goes to — the routing decision, split out from
@@ -413,12 +485,15 @@ object AiRouter {
     fun complete(context: Context, system: String, user: String): String =
         complete(context, system, user, route(context))
 
-    /** As above, to a route the caller chose. The token is still read HERE, from this app's store. */
+    /**
+     * As above, to a route the caller chose. #1801 a provider that needs a key is RELAYED: the same body goes to the
+     * fleet's AI-key owner engine (use keyboard_text_tools), which adds the key and returns the provider's code and body,
+     * read below exactly as a direct answer. An engine refusal for want of a key is [NoTokenException], as before.
+     */
     @JvmStatic
     fun complete(context: Context, system: String, user: String, route: Route): String {
         val p = route.provider
         val token = token(context, p)
-        if (p.needsToken && token.isEmpty()) throw NoTokenException(p)
         val body = JSONObject()
             .put("model", route.model)
             .put("temperature", 0.2)
@@ -427,6 +502,14 @@ object AiRouter {
                 .put(JSONObject().put("role", "system").put("content", system))
                 .put(JSONObject().put("role", "user").put("content", user)))
             .toString()
+        if (p.needsToken) {
+            val r = DecisionsLink.relay(context, RELAY_USE, "chat", body)
+            if (!r.ok) {
+                if (r.reason == "no_key") throw NoTokenException(p)
+                throw IllegalStateException("${p.label}: ${r.why} [model ${route.model}]")
+            }
+            return read(p, route, r.code, r.body)
+        }
         val conn = (URL(p.url).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             // The mesh bridge can take long (its own limit is 180 s); the keyboard caps
@@ -442,34 +525,40 @@ object AiRouter {
         try {
             conn.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
             val code = conn.responseCode
-            if (code != 200) {
-                val err = runCatching { conn.errorStream?.bufferedReader()?.use { it.readText() } }.getOrNull()
-                val error = runCatching { JSONObject(err ?: "").getJSONObject("error") }.getOrNull()
-                val msg = error?.optString("message")?.ifBlank { null }
-                // "Provider returned error" is OpenRouter saying the upstream model refused —
-                // useless on its own, and it was all the user ever saw. The why lives in
-                // error.metadata (provider_name + raw). Name the model too: the same failure
-                // reads completely differently depending on which one was routed to.
-                val detail = error?.optJSONObject("metadata")?.let { meta ->
-                    listOfNotNull(
-                        meta.optString("provider_name").ifBlank { null },
-                        meta.opt("raw")?.toString()?.take(300)?.ifBlank { null },
-                    ).joinToString(" — ").ifBlank { null }
-                }
-                throw IllegalStateException(
-                    "${p.label} HTTP $code${msg?.let { ": $it" } ?: ""}" +
-                        "${detail?.let { " ($it)" } ?: ""} [model ${route.model}]"
-                )
-            }
-            val reply = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
-            val choice = reply.getJSONArray("choices").getJSONObject(0)
-            // A reply that hit max_tokens is cut mid-text. Applied, it would replace the whole
-            // field with a fragment — the one outcome worse than no rewrite — so it is a failure.
-            if (choice.optString("finish_reason") == "length")
-                throw IllegalStateException("${p.label} cut the reply off at $maxTokens tokens — enhance a shorter selection [model ${route.model}]")
-            return choice.getJSONObject("message").getString("content").trim()
+            val text = if (code == 200) conn.inputStream.bufferedReader().use { it.readText() }
+                else runCatching { conn.errorStream?.bufferedReader()?.use { it.readText() } }.getOrNull().orEmpty()
+            return read(p, route, code, text)
         } finally {
             conn.disconnect()
         }
+    }
+
+    /** One answer, direct or relayed: the provider's error (with its metadata and the model) or the trimmed content. */
+    private fun read(p: Provider, route: Route, code: Int, text: String): String {
+        if (code != 200) {
+            val error = runCatching { JSONObject(text).getJSONObject("error") }.getOrNull()
+            val msg = error?.optString("message")?.ifBlank { null }
+            // "Provider returned error" is OpenRouter saying the upstream model refused —
+            // useless on its own, and it was all the user ever saw. The why lives in
+            // error.metadata (provider_name + raw). Name the model too: the same failure
+            // reads completely differently depending on which one was routed to.
+            val detail = error?.optJSONObject("metadata")?.let { meta ->
+                listOfNotNull(
+                    meta.optString("provider_name").ifBlank { null },
+                    meta.opt("raw")?.toString()?.take(300)?.ifBlank { null },
+                ).joinToString(" — ").ifBlank { null }
+            }
+            throw IllegalStateException(
+                "${p.label} HTTP $code${msg?.let { ": $it" } ?: ""}" +
+                    "${detail?.let { " ($it)" } ?: ""} [model ${route.model}]"
+            )
+        }
+        val reply = JSONObject(text)
+        val choice = reply.getJSONArray("choices").getJSONObject(0)
+        // A reply that hit max_tokens is cut mid-text. Applied, it would replace the whole
+        // field with a fragment — the one outcome worse than no rewrite — so it is a failure.
+        if (choice.optString("finish_reason") == "length")
+            throw IllegalStateException("${p.label} cut the reply off at $maxTokens tokens — enhance a shorter selection [model ${route.model}]")
+        return choice.getJSONObject("message").getString("content").trim()
     }
 }

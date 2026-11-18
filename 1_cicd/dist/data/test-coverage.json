@@ -89,7 +89,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 69,
+      "unit_test_sources": 70,
       "workflow": "ship-cloud-browser.yml"
     },
     "ac_cloud-browser/web": {
@@ -125,7 +125,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 40,
+      "unit_test_sources": 41,
       "workflow": "ship-cloud-calc.yml"
     },
     "ac_cloud-camera": {
@@ -260,7 +260,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 859,
+      "unit_test_sources": 871,
       "workflow": "ship-cloud-mail.yml"
     },
     "ac_cloud-matrix": {
@@ -404,7 +404,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 30,
+      "unit_test_sources": 31,
       "workflow": "ship-cloud-search.yml"
     },
     "ac_cloud-search/web": {
@@ -548,7 +548,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 41,
+      "unit_test_sources": 43,
       "workflow": "ship-capital-stack-finterminal.yml"
     },
     "ad_Hardtech-BioMed": {

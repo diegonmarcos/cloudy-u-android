@@ -6,6 +6,7 @@ import com.diegonmarcos.superapp.mail.JmapPrefs
 import com.diegonmarcos.superapp.settings.ConfigsPrefs
 import com.diegonmarcos.superapp.texttools.TextToolsClient
 import org.json.JSONArray
+import com.diegonmarcos.superapp.decisions.link.DecisionsLink
 import org.json.JSONObject
 
 /**
@@ -116,6 +117,18 @@ object AccountRuntime {
     /** `drive`: vault git item path → (ConfigsPrefs section, key). */
     fun drivePaths(): Map<String, Pair<String, String>> =
         VaultCockpit.DRIVE_SECRETS.mapKeys { (item, _) -> "git${AccountDrift.SEP}$item" }
+
+    /**
+     * #1801 which provider keys the AI-key owner engine holds: provider → (present, last four characters). Null when the
+     * engine does not answer. Never a key. BLOCKS (binder).
+     */
+    fun engineKeys(ctx: Context): Map<String, Pair<Boolean, String>>? {
+        val k = DecisionsLink.keys(ctx)
+        if (!k.optBoolean("ok")) return null
+        val list = k.optJSONArray("providers") ?: return emptyMap()
+        return (0 until list.length()).mapNotNull { list.optJSONObject(it) }
+            .associate { it.optString("id") to (it.optBoolean("key_present") to it.optString("key_hint")) }
+    }
 
     /** `ai`: vault token path → the device provider it feeds (cockpit ai_tokens). */
     fun aiPaths(tokens: Map<String, String>): Map<String, String> =
@@ -253,7 +266,8 @@ object AccountRuntime {
             return base.copy(status = Status.NOT_INSTALLED, detail = rt.servedBy)
         if (!rt.reports) return base.copy(status = Status.NOT_REPORTING, detail = rt.why.ifBlank { rt.servedBy })
         // The ITextTools serving app (the keyboard): binding starts it when stopped, so wait for it under the deadline.
-        val client = if (rt.servedBy == VaultCockpit.TEXT_TOOLS) tools(ctx) else null
+        // #1801 the AI section is the AI-key owner engine's (DecisionsLink.keys), not the text-tools serving app's.
+        val client = if (rt.servedBy == VaultCockpit.TEXT_TOOLS && section.apply != "ai") tools(ctx) else null
         if (client != null) {
             if (!client.isServingAppInstalled()) return base.copy(status = Status.NOT_INSTALLED, detail = "text tools")
             val until = SystemClock.elapsedRealtime() + deadlineMs
@@ -302,9 +316,26 @@ object AccountRuntime {
                 base.copy(detail = "$who · ${values.size} profiles · $status", values = values, roster = live,
                     readOnly = if (rt.writable) emptySet() else values.keys)
             }
-            "ai" -> base.copy(values = aiPaths(VaultCockpit.layout.aiTokens).mapValues { (_, provider) ->
-                client!!.revealAiKey(provider).text?.trim()?.ifBlank { null }
-            })
+            // #1801 the keys live in the AI-key owner engine and are never read here: its `keys` status says, per provider,
+            // whether one is held and its last four characters. A path whose declared vault value ends in that hint reads as
+            // the declared value (Drift: MATCH), another held key as its masked hint (DIFFERS), none as absent (ABSENT) —
+            // the same rule the cockpit's AI rows already apply. Read-only: Apply opens the engine's AI keys screen.
+            "ai" -> {
+                val held = engineKeys(ctx)
+                    ?: return base.copy(status = Status.NOT_REPORTING, detail = "the AI keys engine did not answer — install or update Cloud Lib Decisions Engine")
+                val leaves = AccountDrift.leaves(declared)
+                val values = aiPaths(VaultCockpit.layout.aiTokens).mapValues { (path, provider) ->
+                    val (present, hint) = held[provider] ?: (false to "")
+                    val declaredValue = (leaves[path] as? String)?.trim()
+                    when {
+                        !present -> null
+                        declaredValue != null && hint.isNotEmpty() && declaredValue.endsWith(hint) -> declaredValue
+                        else -> "•••• …$hint"
+                    }
+                }
+                base.copy(detail = held.entries.joinToString(" · ") { (p, s) -> p + if (s.first) " key …${s.second}" else " no key" } + " (AI keys engine)",
+                    values = values, readOnly = values.keys)
+            }
             // #781 the keyboard's autocomplete lists, live, over ITextTools.clipboardLists.
             "keyboard" -> {
                 val export = client!!.clipboardLists()?.let { runCatching { JSONObject(it) }.getOrNull() }
@@ -383,9 +414,11 @@ object AccountRuntime {
                 "✓ ${path.substringAfterLast(AccountDrift.SEP)}"
             }
             "ai" -> {
+                // #1801 a key is never pushed to an app: it is entered on the AI-key owner engine's own screen, opened here
+                // with the provider preselected (the option is kept; where the key goes is the engine).
                 val provider = aiPaths(VaultCockpit.layout.aiTokens)[path] ?: return "✗ $path: mapped to no provider"
-                val r = tools(ctx).setAiRouting(provider, apiKey = value.toString().trim())
-                if (r.ok) "✓ $provider" else "✗ $provider: ${r.error}"
+                if (DecisionsLink.openKeySettings(ctx, provider)) "→ $provider: set it in the AI keys engine (opened)"
+                else "✗ $provider: the AI keys engine is not installed (Store ▸ Libs ▸ Cloud Lib Decisions Engine)"
             }
             "mail" -> {
                 if (path.split(AccountDrift.SEP).getOrNull(1) == "endpoints") return "✗ $path: the JMAP server is not written from the vault"

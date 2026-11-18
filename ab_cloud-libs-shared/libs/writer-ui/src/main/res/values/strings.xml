@@ -266,7 +266,10 @@
     <string name="routes_refreshing">Reading the catalogue…</string>
     <string name="routes_refresh_failed">Could not read the catalogue: %1$s</string>
     <string name="routes_catalogue_count">%1$d speech models, %2$d text models</string>
-    <string name="routes_account_line">Fleet Account key: %1$s · On-device engine (%3$s) installed: %2$s</string>
+    <string name="routes_account_line">AI keys engine holds a key: %1$s · On-device engine (%3$s) installed: %2$s</string>
+    <string name="routes_ai_key">AI key</string>
+    <string name="routes_ai_key_summary">Held by the AI keys engine (Cloud Lib Decisions Engine), which adds it to every model request. Open its AI keys screen.</string>
+    <string name="routes_ai_key_no_engine">The AI keys engine is not installed: install Cloud Lib Decisions Engine from Store ▸ Libs.</string>
     <string name="routes_yes">yes</string>
     <string name="routes_no">no</string>
     <string name="routes_last_none">Not used yet in this session</string>

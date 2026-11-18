@@ -104,6 +104,24 @@ class VaultCockpitTest {
         VaultCockpit.aiRows(b, layout, present, "d", "u").forEach { assertTrue(it.declared, !it.declared.contains(token)) }
     }
 
+    @Test fun `ai apply opens the AI-key owner engine once per provider and pushes no key (#1801)`() {
+        val b = bundle()
+        val layout = VaultCockpit.parseLayout(JSONObject("""{"sections":[],"ai_tokens":{"openrouter_my_ai_api":"openrouter"}}"""))
+        val token = b.getJSONObject("ai").getJSONObject("tokens").getString("openrouter_my_ai_api")
+        val opened = ArrayList<String>()
+        val said = VaultCockpit.applyAi(b, layout) { opened.add(it); true }
+        assertEquals(listOf("openrouter"), opened)
+        assertTrue(said, said.contains("set it in the AI keys engine"))
+        assertTrue("the report carries no key", !said.contains(token))
+        val none = VaultCockpit.applyAi(b, layout) { false }
+        assertTrue(none, none.startsWith("✗") && none.contains("not installed"))
+        assertTrue(VaultCockpit.applyAi(JSONObject(), layout) { true }.contains("no ai.tokens"))
+        // The Runtime reader asks the engine (presence + hint), never ITextTools for a key.
+        val rt = java.io.File("../../ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountRuntime.kt").readText()
+        assertTrue(rt.contains("DecisionsLink.keys(ctx)") && rt.contains("DecisionsLink.openKeySettings(ctx, provider)"))
+        assertTrue(!rt.contains("revealAiKey(") && !rt.contains("setAiRouting("))
+    }
+
     @Test fun `the declared app set merges fleet packages and an inventory, pending contributes nothing`() {
         val b = bundle()
         val galaxy = VaultCockpit.devices(b).first { it.id == "galaxy" }

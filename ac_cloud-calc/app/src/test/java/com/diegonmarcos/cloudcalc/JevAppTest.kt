@@ -13,6 +13,7 @@ import com.diegonmarcos.clocktools.ClockEngine
 import com.diegonmarcos.cloudcalc.decide.JevFlow
 import com.diegonmarcos.cloudcalc.decide.JevStore
 import com.diegonmarcos.cloudcalc.engine.CalcApi
+import com.diegonmarcos.superapp.decisions.EngineKeyedHttp
 import com.diegonmarcos.superapp.decisions.Http
 import com.diegonmarcos.cloudcalc.jev.JevConfig
 import com.diegonmarcos.cloudcalc.ui.CalcShell
@@ -77,12 +78,17 @@ class JevAppTest {
         override fun fetchRates() = "{}"
     }
 
-    /** Records each request; answers what the test scripted per URL. */
-    private class FakeHttp : Http {
+    /**
+     * Records each request; answers what the test scripted per URL. #1801 it stands where the AI-key owner engine's relay
+     * stands (an EngineKeyedHttp: no token is handed to it), and with no key [held] in the engine every keyed call is refused.
+     */
+    private class FakeHttp : EngineKeyedHttp {
         val sent = mutableListOf<Triple<String, String?, String?>>()
         @Volatile var reply: (String, JSONObject?) -> Http.Response = { _, _ -> Http.Response(500, "{}") }
+        @Volatile var held: () -> Boolean = { true }
         override fun send(url: String, token: String?, body: String?, timeoutMs: Int): Http.Response {
             synchronized(sent) { sent += Triple(url, token, body) }
+            if (!held() && (body != null || url.contains("/api/v1/key"))) throw java.io.IOException("No OpenRouter key in the AI keys engine")
             return reply(url, body?.let { JSONObject(it) })
         }
     }
@@ -96,16 +102,26 @@ class JevAppTest {
     private val accountKey = fakeKey("account-0000aaaa")
     private val manualKey = fakeKey("manual-1111bbbb")
     private var accountToken: String? = accountKey
+    /** Whether the engine holds this app's per-app override (Configs › Token's manual override). */
+    private var manual = false
     private val plainSecrets by lazy { app.getSharedPreferences("test_secrets", Context.MODE_PRIVATE) }
 
     private lateinit var savedHttp: Http
-    private lateinit var savedAccount: (Context, String) -> Pair<String?, String>
+    private lateinit var savedAccount: (Context, String) -> JevStore.Token
     private lateinit var savedSecrets: (Context) -> android.content.SharedPreferences?
 
     @Before fun up() {
         savedHttp = JevStore.http; savedAccount = JevStore.account; savedSecrets = JevStore.secrets
         JevStore.http = http
-        JevStore.account = { _, provider -> (if (provider == "openrouter") accountToken else null) to "fleet Account: none" }
+        http.held = { accountToken != null || manual }
+        JevStore.account = { _, provider ->
+            when {
+                provider != "openrouter" -> JevStore.Token(false, "AI keys engine: no $provider provider")
+                manual -> JevStore.Token(true, JevStore.SOURCE_MANUAL)
+                accountToken != null -> JevStore.Token(true, JevStore.SOURCE_ACCOUNT)
+                else -> JevStore.Token(false, "AI keys engine: no openrouter key")
+            }
+        }
         JevStore.secrets = { plainSecrets }
     }
 
@@ -153,10 +169,10 @@ class JevAppTest {
         // The run block is a Column of Texts; its own node carries no text, so find the line itself.
         compose.onNodeWithText("= 42").assertExists()
         assertEquals(Logic.Entry("jev", "convert 3 ft to cm", "42"), state.history.first().copy(ts = 0L))
-        // The account token went out as the bearer, and nowhere into a body.
+        // #1801 no key leaves this app: the relay is handed no token (the engine adds it) and no body carries one.
         val (_, token, body) = http.sent.first()
-        assertEquals(accountKey, token)
-        assertFalse(body!!.contains("sk-or-account"))
+        assertNull(token)
+        assertFalse(body!!.contains("sk-or"))
     }
 
     @Test fun `low confidence offers candidates and a tap computes the picked one`() {
@@ -175,7 +191,8 @@ class JevAppTest {
         ask("convert 3 ft to cm")
         compose.onNodeWithTag(CalcTags.JEV_VERDICT).assertTextContains("unavailable", substring = true)
         assertTrue(evaluated("3 ft to cm"))
-        assertTrue(http.sent.none { it.first == decisionsUrl })
+        // #1801 the request reached the engine, which refused it for want of a key: nothing was answered by a model.
+        assertTrue(http.sent.all { it.second == null })
     }
 
     @Test fun `an HTTP error still answers offline, as typed`() {
@@ -239,26 +256,35 @@ class JevAppTest {
         assertEquals(emptyList<String>(), JevStore.appErrors(JevStore.defaults))
     }
 
-    @Test fun `the manual token overrides the Account's while set, and the screen masks it`() {
-        assertEquals(JevStore.Token(accountKey, JevStore.SOURCE_ACCOUNT), JevStore.token(app))
-        assertTrue(JevStore.setManualToken(app, "  $manualKey  "))
-        assertEquals(JevStore.Token(manualKey, JevStore.SOURCE_MANUAL), JevStore.token(app))
-        assertTrue(JevStore.setManualToken(app, null))
-        assertEquals(JevStore.SOURCE_ACCOUNT, JevStore.token(app).source)
+    @Test fun `the engine's per-app override is reported while held, the old in-app override is retired, and the screen says which`() {
+        assertEquals(JevStore.Token(true, JevStore.SOURCE_ACCOUNT), JevStore.token(app))
+        assertFalse(JevStore.hasOverride(app))
+        manual = true
+        assertEquals(JevStore.Token(true, JevStore.SOURCE_MANUAL), JevStore.token(app))
+        assertTrue(JevStore.hasOverride(app))
+        manual = false
         accountToken = null
-        assertNull(JevStore.token(app).value)
+        assertFalse(JevStore.token(app).present)
+        // #1801 an override this app kept in its own prefs before is removed on the first read: the key lives in the engine.
+        plainSecrets.edit().putString("openrouter_token", manualKey).commit()
+        JevStore.token(app)
+        assertFalse(plainSecrets.contains("openrouter_token"))
+        assertFalse(JevStore.retireOldOverride(app))
         JevStore.secrets = { null }
-        assertFalse(JevStore.setManualToken(app, "x"))
+        assertFalse(JevStore.retireOldOverride(app))
 
         JevStore.secrets = { plainSecrets }
-        JevStore.setManualToken(app, manualKey)
+        manual = true
         compose.setContent { CalcTheme { CalcShell(engine, state) } }
         val tokenMode = Declarations.modes.first { it.kind == "jev_token" }
         compose.runOnIdle { state.tab = tokenMode.tab; state.modeByTab[tokenMode.tab] = tokenMode.id }
         compose.waitUntil(10_000) {
-            runCatching { compose.onNodeWithTag(CalcTags.JEV_TOKEN).assertTextContains("sk-or-…bbbb", substring = true) }.isSuccess
+            runCatching { compose.onNodeWithTag(CalcTags.JEV_TOKEN).assertTextContains("held by the AI keys engine", substring = true) }.isSuccess
         }
         compose.onNodeWithTag(CalcTags.JEV_TOKEN).assertTextContains(JevStore.SOURCE_MANUAL, substring = true)
+        compose.onNodeWithTag(CalcTags.JEV_SET_OVERRIDE).assertExists()
+        compose.onNodeWithTag(CalcTags.JEV_SET_FLEET).assertExists()
+        compose.onNodeWithTag(CalcTags.JEV_TEST_TOKEN).assertExists()
     }
 
     @Test fun `Test reports what OpenRouter says about the key, never the key`() {
@@ -274,7 +300,7 @@ class JevAppTest {
         http.reply = { _, _ -> Http.Response(401, """{"error":{"message":"No auth credentials found"}}""") }
         assertTrue(JevFlow.testToken(app).contains("No auth credentials found"))
         accountToken = null
-        assertTrue(JevFlow.testToken(app).startsWith("No token"))
+        assertTrue(JevFlow.testToken(app).startsWith("No key"))
     }
 
     @Test fun `a result's follow-up question is scored and kept with it in history`() {

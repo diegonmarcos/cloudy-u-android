@@ -154,6 +154,8 @@ dependencies {
     implementation project(':libs:updater')           // Fleet
     implementation project(':libs:mail')              // JmapPrefs
     implementation project(':libs:text-tools')        // TextToolsClient
+    // #1801 the AI-key owner engine: Runtime ▸ AI reads which keys it holds (presence + hint), Apply opens its AI keys screen.
+    implementation project(':libs:decisions-link')
     implementation project(':libs:net')               // com.wireguard.config.Config: the mesh rows parse the vault's .conf
     implementation project(':libs:devtools')          // AppDebugServer
     // `api`: AccountHost's signatures expose KitPalette, and the host builds Compose views with it.

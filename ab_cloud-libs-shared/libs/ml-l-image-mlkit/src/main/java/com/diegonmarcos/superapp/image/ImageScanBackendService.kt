@@ -4,9 +4,10 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
-import android.os.SystemClock
+import com.diegonmarcos.superapp.decisions.EngineKeyedHttp
+import com.diegonmarcos.superapp.decisions.Http
 import com.diegonmarcos.superapp.decisions.UrlHttp
-import com.diegonmarcos.superapp.texttools.TextToolsClient
+import com.diegonmarcos.superapp.decisions.link.DecisionsLink
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 
@@ -28,6 +29,8 @@ import java.io.ByteArrayOutputStream
  * one result shape) and models (the live decision-model catalogue for the route's picker),
  * both through scanWith, which carries a JSON request. INTERNET is this APK's since: only the
  * OpenRouter route and the catalogue use it, through libs:decisions over Android's resolver.
+ * #1801 the OpenRouter route holds no key: its Decisions request goes to the fleet's AI-key owner
+ * engine ([relayHttp], DecisionsLink.relay, use image_scan_recognize), which adds the key.
  *
  * #798 CONTRACT 3: detect (the [Detector]: objects with a full-label classifier and tracking ids,
  * image labels, or text lines with boxes; fully on device), through scanWith.
@@ -41,7 +44,7 @@ class ImageScanBackendService : Service() {
 
     private val scanner by lazy { ImageScanner() }
     private val onDevice by lazy { MlKitOnDevice() }
-    private val recognizer by lazy { Recognizer(scanner, onDevice, UrlHttp, ::accountToken) }
+    private val recognizer by lazy { Recognizer(scanner, onDevice, relayHttp, { null }) }
     private val detector by lazy { Detector(scanner, onDevice) }
     private val scene by lazy { SceneDetector(scanner, SceneOnDevice(applicationContext)) }
 
@@ -81,16 +84,18 @@ class ImageScanBackendService : Service() {
         return JSONObject().put("models", Recognizer.catalogue(r.body)).toString()
     }
 
-    @Volatile private var tools: TextToolsClient? = null
-
-    /** The fleet Account's token, the one the SuperApp's Profile pushes to the text-tools service. */
-    private fun accountToken(provider: String): String? {
-        val c = tools ?: synchronized(this) { tools ?: TextToolsClient(applicationContext).also { tools = it } }
-        if (c.isServingAppInstalled()) {
-            val until = SystemClock.elapsedRealtime() + ACCOUNT_WAIT_MS
-            while (!c.isConnected() && SystemClock.elapsedRealtime() < until) Thread.sleep(100)
+    /**
+     * #1801 the OpenRouter route's transport: a POST (the Decisions request) goes to the AI-key owner engine, which adds
+     * the key; a GET goes straight out. An engine refusal (no engine, no key) is a transport failure with its reason, so the
+     * route falls back on device and the result says why, exactly as a missing token did.
+     */
+    private val relayHttp = object : EngineKeyedHttp {
+        override fun send(url: String, token: String?, body: String?, timeoutMs: Int): Http.Response {
+            if (body == null) return UrlHttp.send(url, null, null, timeoutMs)
+            val r = DecisionsLink.relay(applicationContext, RELAY_USE, "decisions", body)
+            if (!r.ok) throw java.io.IOException(r.why)
+            return Http.Response(r.code, r.body)
         }
-        return c.revealAiKey(provider).text?.takeIf { it.isNotBlank() }
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -117,8 +122,8 @@ class ImageScanBackendService : Service() {
         const val SCENE = "scene"
         const val SCENE_BENCH = "scene_bench"
 
-        /** How long a first call waits for the text-tools bind before saying "no token". */
-        const val ACCOUNT_WAIT_MS = 3000L
+        /** The declared relay use (decisions.json::relay.uses). */
+        const val RELAY_USE = "image_scan_recognize"
 
         /** ponytail: one whole image in memory; a phone photo is a few MB, 64 MB refuses a runaway stream. */
         const val MAX_IMAGE_BYTES = 64 * 1024 * 1024

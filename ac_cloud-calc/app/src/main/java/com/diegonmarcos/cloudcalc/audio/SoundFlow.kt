@@ -119,7 +119,7 @@ object SoundFlow {
     fun identifyRouted(ctx: Context, pcm: ShortArray, sampleRate: Int, r: Analysis.Result?, knobs: SoundStore.Knobs, route: String? = null): Identified {
         val chosen = route ?: SoundPrefs.route(ctx)
         var decision: Decision? = null
-        val hasToken = if (chosen == SoundConfig.OPENROUTER) JevStore.token(ctx).value != null else null
+        val hasToken = if (chosen == SoundConfig.OPENROUTER) JevStore.token(ctx).present else null
         val res = RecognitionRoutes.routed(RecognitionRoutes.SOUND, chosen, RecognitionRoutes.online(ctx), hasToken, SoundConfig.fallback(),
             onDevice = { identifyOnDevice(ctx, pcm, sampleRate) },
             model = { identify(ctx, pcm, sampleRate, r ?: analyze(pcm, sampleRate), knobs).also { decision = it }.let(::recognition) })
@@ -156,7 +156,7 @@ object SoundFlow {
      */
     fun identify(ctx: Context, pcm: ShortArray, sampleRate: Int, r: Analysis.Result, knobs: SoundStore.Knobs): Decision {
         val image = if (modelTakesImages(ctx)) Spectrogram.dataUrl(spectrogramImage(ctx, pcm, sampleRate)) else null
-        return JevRouter.identify(JevStore.config(ctx), JevStore.http, JevStore.token(ctx).value, model(ctx), SOUND_USE, summary(r, knobs), image)
+        return JevRouter.identify(JevStore.config(ctx), JevStore.http, null, model(ctx), SOUND_USE, summary(r, knobs), image)
     }
 
     /** A spectrogram of [pcm] (time across, log frequency up) at the declared image size. */

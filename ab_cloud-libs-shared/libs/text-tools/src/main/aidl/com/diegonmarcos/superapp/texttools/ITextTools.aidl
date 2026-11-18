@@ -124,11 +124,10 @@ interface ITextTools {
      * Read by cloud-superapp's Configs > AI > Tokens Fleet and by nothing else today.
      *
      * NO KEY IS IN IT. `key_present` says whether a provider holds one and `key_hint` carries at
-     * most its last four characters so the owner can tell two accounts apart; the key itself only
-     * ever leaves this process through revealAiKey(), which is a separate method precisely so that
-     * the one call that emits a secret is the one call an auditor has to read. Anything added to
-     * this object later has to pass that same test - see settingsSnapshot() above, which draws the
-     * same line for the same reason.
+     * most its last four characters so the owner can tell two accounts apart. #1801 for a provider
+     * that needs a key both come from the AI-key owner engine's `keys` status (the engine holds the
+     * key; nothing in this file ever carries it). Anything added to this object later has to pass
+     * that same test - see settingsSnapshot() above, which draws the same line for the same reason.
      *
      * IT CARRIES THE MODEL REGISTRY, and that is the main reason it exists rather than being three
      * smaller methods. A console that listed models from a copy of its own would be a second
@@ -153,49 +152,23 @@ interface ITextTools {
     String aiRoutingSnapshot();
 
     /**
-     * Set this app's provider key and/or chosen model - the write half of aiRoutingSnapshot().
+     * #1801 RETIRED SLOT (was setAiRouting, which carried the provider key INTO the serving app). The fleet's AI provider
+     * keys live in the AI-key owner engine (Cloud-Lib-Decisions-Engine, its AI keys screen) and nowhere else, so no
+     * ITextTools method takes or returns one (ac_cloud-mail/test/test-mail-text-tools.sh K1).
      *
-     * ONE METHOD FOR BOTH because they are one errand: the owner provisioning a peer sets the
-     * account and picks the model in the same breath, and two methods would be two round trips and
-     * two ways to half-succeed. A null or empty [apiKey] leaves the stored key untouched, and a
-     * null or empty [modelId] leaves the stored model untouched, so either can be sent alone.
-     *
-     * TO CLEAR A KEY, send [clearKey] true. That is a flag rather than the empty string because
-     * empty already means "do not touch", and a console that wiped the owner's credential every
-     * time it saved a model change would be the worst possible reading of a blank field.
-     *
-     * THE KEY TRAVELS IN A BINDER CALL AND NOWHERE ELSE. Not an Intent extra, not a broadcast:
-     * this transaction is point-to-point between two processes and the platform has already
-     * refused any caller not holding CONSTELLATION_DATA, which is signature-level. It is stored
-     * where the key already lives - the serving app's own preferences, the same slot its own
-     * settings screen writes - and no new store is created for it anywhere.
-     *
-     * [modelId] must be a model id the serving app's registry actually holds; an unknown id is
-     * refused rather than stored, because a stored id nothing can resolve is a route that fails at
-     * call time with nothing on screen having said so.
+     * THE SLOT IS KEPT, NOT DELETED, because a method's transaction code is its position: deleting it would renumber
+     * clipboardLists and every method after it, and an older client would reach the wrong call. It takes nothing and
+     * answers {"", reason}: an older console that still sends the four arguments gets that refusal (the arguments are
+     * left unread in its parcel), never a write. The model choice it also carried is the serving app's AI Routing screen.
      */
-    String[] setAiRouting(in String providerId, in String apiKey, in String modelId, boolean clearKey);
+    String[] retiredRoutingWrite();
 
     /**
-     * The provider's key IN PLAINTEXT - the only method in this file that emits a credential.
-     *
-     * IT IS SEPARATE ON PURPOSE. Folding it into aiRoutingSnapshot() would mean every status
-     * refresh carried the secret and the one dangerous call would be invisible among the harmless
-     * ones; as its own method it can be grepped for, asserted about, and read by whoever audits
-     * this next. Its caller is a deliberate reveal gesture by the owner, never a page load.
-     *
-     * WHAT THIS WIDENS, stated plainly because it is a real change: before this method the key
-     * could be read by exactly one process, the serving app's own. Now it can be read by any
-     * installed package holding CONSTELLATION_DATA - that is, any APK signed with the Cloud key,
-     * which is the owner's own fleet and nothing else. A hostile app cannot hold a signature
-     * permission and cannot be granted one by any user action, so the reachable set is the fleet.
-     * That is a wider set than one, and whoever changes the signing story must revisit this.
-     *
-     * NEVER LOG WHAT THIS RETURNS, on either side. This fleet ships a diagnostics path that reads
-     * logcat and uploads it (DevControlServer /diagnostics/bundle, DiagnosticsPush), so a key that
-     * reaches the log is a key that leaves the phone.
+     * #1801 RETIRED SLOT (was revealAiKey, the one method that emitted a credential). Kept for the same position reason;
+     * it takes nothing and answers {"", reason} naming the AI-key owner engine, where the key is revealed now (its own
+     * screen, in its own process). An older client that sends a provider id gets that refusal and no key.
      */
-    String[] revealAiKey(in String providerId);
+    String[] retiredRevealSlot();
 
     /**
      * #781 The serving app's clipboard lists (the keyboard's autocomplete pins) as ONE JSON
@@ -208,7 +181,7 @@ interface ITextTools {
      * serving app answers null (no transaction for it), which the caller reports as "not reporting".
      *
      * The lists can hold personal data and keys (the owner's "Cloud Keys" list); the same
-     * CONSTELLATION_DATA signature guard as revealAiKey applies, and neither side may log it.
+     * CONSTELLATION_DATA signature guard applies, and neither side may log it.
      */
     String clipboardLists();
 

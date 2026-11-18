@@ -13,6 +13,9 @@ import com.diegonmarcos.cloudcalc.decide.JevStore
 import com.diegonmarcos.cloudcalc.sheet.A1
 import com.diegonmarcos.cloudcalc.sheet.Area
 import com.diegonmarcos.cloudcalc.sheetui.SheetHub
+import com.diegonmarcos.superapp.ai.AiRelay
+import com.diegonmarcos.superapp.ai.AiRelayBackend
+import com.diegonmarcos.superapp.ai.AiRelayed
 import com.diegonmarcos.superapp.ai.AiAgents
 import com.diegonmarcos.superapp.ai.AiChatPage
 import com.diegonmarcos.superapp.ai.AiChatState
@@ -20,11 +23,8 @@ import com.diegonmarcos.superapp.ai.AiConfig
 import com.diegonmarcos.superapp.ai.AiFileSessions
 import com.diegonmarcos.superapp.ai.AiGatewayBackend
 import com.diegonmarcos.superapp.ai.AiMemoryPrefs
-import com.diegonmarcos.superapp.ai.AiOpenRouterBackend
 import com.diegonmarcos.superapp.ai.AiStandardHost
 import com.diegonmarcos.superapp.ai.AiTool
-import com.diegonmarcos.superapp.ai.AiToken
-import com.diegonmarcos.superapp.ai.AiTokenSource
 import com.diegonmarcos.superapp.ai.materialAiTheme
 import org.json.JSONObject
 import java.io.File
@@ -49,10 +49,11 @@ object CalcAi {
 
     private fun build(ctx: Context): AiChatState {
         val cfg = AiConfig.load(ctx)
-        val tokens = AiTokenSource { JevStore.token(ctx).let { AiToken(it.value, it.source) } }
+        // #1801 no key here: the chat body goes to the AI-key owner engine (use calc_jev, endpoint chat), which adds it.
+        val relay = AiRelay { body -> JevStore.relay(ctx.applicationContext, "chat", body, false).let { r -> if (r.ok) AiRelayed(r.code, r.body) else AiRelayed(0, "", r.why) } }
         return AiChatState(AiStandardHost(
             cfg, AiFileSessions(File(ctx.filesDir, "ai-sessions.json")), AiMemoryPrefs(cfg.defaultModel),
-            direct = AiOpenRouterBackend(cfg, "Cloud Calc", tokens),
+            direct = AiRelayBackend(cfg, relay),
             gateway = AiGatewayBackend(cfg, BuildConfig.AI_GATEWAY_URL),
             agents = AiAgents.load(ctx),
             tools = SheetTools.all(ctx),

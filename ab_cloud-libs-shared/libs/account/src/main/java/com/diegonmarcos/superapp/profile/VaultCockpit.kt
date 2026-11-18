@@ -653,15 +653,20 @@ object VaultCockpit {
         }.toList()
     }
 
-    /** Every mapped, non-pending token goes to its provider through the same
-     *  binder call the AI page's own "set key" uses. */
-    fun applyAi(bundle: JSONObject, layout: Layout, client: TextToolsClient): String {
+    /**
+     * #1801 Every mapped, non-pending token is entered in the fleet's AI-key owner engine, never pushed to an app: this
+     * opens the engine's AI keys screen ([open], DecisionsLink.openKeySettings in the caller) once per distinct provider
+     * and reports, per vault item, where its key goes. No key leaves the vault bundle here.
+     */
+    fun applyAi(bundle: JSONObject, layout: Layout, open: (provider: String) -> Boolean): String {
         val tokens = bundle.optJSONObject("ai")?.optJSONObject("tokens") ?: return "✗ no ai.tokens in the vault"
+        val opened = HashMap<String, Boolean>()
         val lines = layout.aiTokens.mapNotNull { (item, provider) ->
             val v = tokens.opt(item) as? String ?: return@mapNotNull null
             if (v.isBlank()) return@mapNotNull null
-            val r = client.setAiRouting(provider, apiKey = v.trim())
-            if (r.ok) "✓ $item → $provider" else "✗ $item → $provider: ${r.error}"
+            val ok = opened.getOrPut(provider) { open(provider) }
+            if (ok) "→ $item → $provider: set it in the AI keys engine (opened)"
+            else "✗ $item → $provider: the AI keys engine is not installed (Store ▸ Libs ▸ Cloud Lib Decisions Engine)"
         }
         return if (lines.isEmpty()) "✗ nothing to apply: every mapped token is pending" else lines.joinToString("\n")
     }

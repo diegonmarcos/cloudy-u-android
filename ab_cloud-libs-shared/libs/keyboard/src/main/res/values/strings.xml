@@ -298,6 +298,8 @@
     <string name="ai_provider_summary">Where AI requests go. Cloud = your own mesh bridge (no key on the mesh); OpenRouter = openrouter.ai with your key</string>
     <string name="ai_token_title">API key</string>
     <string name="ai_token_summary">Paste the provider\'s API key. Stored only in this keyboard\'s settings</string>
+    <string name="ai_token_engine_summary">Held by the AI keys engine (Cloud Lib Decisions Engine), which adds it to every request. Tap to set, reveal or clear it there</string>
+    <string name="ai_token_no_engine">The AI keys engine is not installed: install Cloud Lib Decisions Engine from Store ▸ Libs</string>
     <string name="ai_token_optional_summary">Optional — only if the bridge is reached through an authenticated gateway</string>
     <string name="ai_model_title">Model</string>
     <string name="ai_model_open_suffix"> (open)</string>

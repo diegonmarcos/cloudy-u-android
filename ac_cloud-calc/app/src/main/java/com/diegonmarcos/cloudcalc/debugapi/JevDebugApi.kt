@@ -60,6 +60,6 @@ object JevDebugApi {
                 }
             })
             .put("catalogue", JSONObject().put("models", JevStore.catalogue(ctx).size).put("fetched_at", JevStore.catalogueAt(ctx)))
-            .put("token", JSONObject().put("present", token.value != null).put("masked", Decisions.mask(token.value)).put("source", token.source))
+            .put("token", JSONObject().put("present", token.present).put("masked", if (token.present) "held by the AI keys engine" else Decisions.mask(null)).put("source", token.source))
     }
 }

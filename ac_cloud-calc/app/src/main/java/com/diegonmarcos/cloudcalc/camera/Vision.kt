@@ -37,7 +37,7 @@ object Vision {
 
     /** A recognize request on [route] (default: the user's choice) with the user's model. */
     fun request(ctx: Context, route: String? = null, context: String = ""): JSONObject =
-        RecognitionConfig.request(route ?: RecognitionPrefs.route(ctx), RecognitionPrefs.model(ctx), JevStore.manualToken(ctx), context)
+        RecognitionConfig.request(route ?: RecognitionPrefs.route(ctx), RecognitionPrefs.model(ctx), null, context)
 
     /** #799 on the user's route (Model (Jev) by default) with the fallback rule; offline asks on device at once. */
     fun recognize(ctx: Context, photo: File, route: String? = null, context: String = ""): Recognition =

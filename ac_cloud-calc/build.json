@@ -118,7 +118,7 @@
         "jev",
         "sound",
         "tools",
-        "libs:text-tools",
+        "libs:decisions-link",
         "libs:decisions",
         "measure",
         "libs:ml-l-image",
@@ -275,10 +275,10 @@
       "type": "library",
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
     },
-    "libs:text-tools": {
-      "_doc": "#770 the ITextTools binder (contract class in 1_cicd/src/data/lib-classes.json, so no L4 backlog edge), shared BY REFERENCE: the Jev section reads the OpenRouter token the fleet Account manages through TextToolsClient.revealAiKey(\"openrouter\") - the SuperApp's Profile pushes the vault's ai.tokens into the serving app over the same CONSTELLATION_DATA-guarded binder - so the token has one store and this app keeps no copy of it. A manual override lives only in this app's Keystore-backed EncryptedSharedPreferences.",
-      "type": "library",
-      "dir": "../ab_cloud-libs-shared/libs/text-tools"
+    "libs:decisions-link": {
+      "_doc": "#1801 the contract half of the fleet's AI-key owner engine: the Jev section's Decisions API request goes through DecisionsLink.relay (use calc_jev) and the engine (Cloud-Lib-Decisions-Engine.apk, never compiled here) adds the OpenRouter key, the per-app override first (what Configs › Token's manual override was); Configs › Token reads DecisionsLink.keys (presence only) and opens the engine's AI keys screen. Replaces libs:text-tools, whose revealAiKey was this app's only use of it.",
+      "dir": "../ab_cloud-libs-shared/libs/decisions-link",
+      "type": "library"
     }
   },
   "engines": {
@@ -297,7 +297,7 @@
     "key_url": "https://openrouter.ai/api/v1/key",
     "_key_url_doc": "Configs > Token's Test button: GET with the token, which answers the key's label and usage without spending anything.",
     "account_provider": "openrouter",
-    "_account_provider_doc": "The provider id the fleet Account's token is read under: Configs > Token reads it with libs:text-tools TextToolsClient.revealAiKey(account_provider) over the CONSTELLATION_DATA-guarded ITextTools binder, the path the SuperApp's Profile writes the vault's ai.tokens through (aa_cloud-superapp build.json ai_tokens: openrouter_my_ai_api -> openrouter). It is read on use and never stored by this app; a manual override, if the user sets one, lives only in this app's Keystore-backed EncryptedSharedPreferences and wins while set.",
+    "_account_provider_doc": "#1801 the provider id whose key the AI-key owner engine (Cloud-Lib-Decisions-Engine) spends for this app: every Jev request goes through DecisionsLink.relay (use calc_jev) and the engine adds that provider's key, this app's per-app override first. Configs > Token reads DecisionsLink.keys (presence only) and opens the engine's AI keys screen; this app never reads the key.",
     "timeout_ms": 8000,
     "catalog_ttl_hours": 24,
     "uses": {

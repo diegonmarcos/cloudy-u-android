@@ -128,6 +128,12 @@ class RoutesPage(activity: ComponentActivity) : WriterSettingsPage(activity) {
                 getString(R.string.routes_refresh_summary),
                 catalogueNote.value,
             ) { refreshCatalogue() }
+            // #1801 the model routes' key is held by the AI-key owner engine: set, reveal or clear it on its own screen.
+            SettingRow(
+                getString(R.string.routes_ai_key),
+                getString(R.string.routes_ai_key_summary),
+                null,
+            ) { if (!WriterRoutes.openKeySettings(activity)) accountNote.value = getString(R.string.routes_ai_key_no_engine) }
             accountNote.value?.let { Note(it) }
         }
     }

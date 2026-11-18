@@ -229,6 +229,19 @@ class RelayEngineTest {
     }
 
     @Test
+    fun `a GET sends no body and still adds the key`() {
+        val r = RRig(block { it.getJSONObject("relay").getJSONObject("uses").getJSONObject("chat").put("endpoints", org.json.JSONArray().put("chat").put("decisions")) })
+        val a = r.relay.run(app, JSONObject().put("use", "chat").put("endpoint", "decisions").put("method", "GET"), ByteArray(0))
+        assertTrue(a.answer.toString(), a.answer.getBoolean("ok"))
+        assertEquals(listOf<String?>(null), r.http.bodies)
+        assertEquals(listOf<String?>(Fixtures.TOKEN), r.http.tokens)
+        assertEquals(listOf("https://example.test/dec"), r.http.urls)
+        assertTrue(r.sink.lines.last().contains("\"bytes_in\":0"))
+        val post = r.relay.run(app, JSONObject().put("use", "chat").put("endpoint", "chat").put("method", "POST"), ByteArray(0))
+        assertEquals("bad_request", reason(post))
+    }
+
+    @Test
     fun `consent granted lets a required use through`() {
         val r = RRig()
         r.consent.set(app, "priv", true)
@@ -350,7 +363,7 @@ class RelayEngineTest {
         assertTrue(r.rejected.toString(), r.rejected.isEmpty())
         assertEquals(setOf("search_ai_chat", "browser_search_ai", "calc_jev", "writer_routes", "image_scan_recognize", "keyboard_text_tools"), r.uses.keys)
         assertTrue(r.uses.values.all { it.enabled && it.provider == "openrouter" })
-        assertEquals(setOf("decisions"), r.uses.getValue("calc_jev").endpoints)
+        assertEquals(setOf("decisions", "chat", "key"), r.uses.getValue("calc_jev").endpoints)
         assertEquals(setOf("decisions"), r.uses.getValue("image_scan_recognize").endpoints)
         assertTrue(r.providers.getValue("openrouter").endpoints.values.all { it.startsWith("https://openrouter.ai/") })
     }

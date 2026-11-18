@@ -249,29 +249,10 @@ class TextToolsClient(context: Context) {
     fun aiRoutingSnapshot(): String? =
         boundOrRebind()?.let { runCatching { it.aiRoutingSnapshot() }.getOrNull() }
 
-    /**
-     * Set the serving app's provider key and/or chosen model.
-     *
-     * Empty [apiKey] leaves the stored key alone and empty [modelId] leaves the stored model alone,
-     * so either can be sent by itself; [clearKey] is the only way to remove a key, because a blank
-     * field on a console must never be a command to delete a credential.
-     */
-    fun setAiRouting(
-        providerId: String,
-        apiKey: String = "",
-        modelId: String = "",
-        clearKey: Boolean = false,
-    ): TextTools.Result = call("setAiRouting") { it.setAiRouting(providerId, apiKey, modelId, clearKey) }
-
-    /**
-     * The serving app's key for [providerId], in plaintext — a deliberate reveal, never a page load.
-     *
-     * NEVER LOG OR TOAST WHAT THIS RETURNS. This fleet uploads logcat from its diagnostics screens,
-     * so a key that reaches the log leaves the phone; a toast outlives the screen that showed it and
-     * is readable over a shoulder. Put it on the widget that asked for it and nowhere else.
-     */
-    fun revealAiKey(providerId: String): TextTools.Result =
-        call("revealAiKey") { it.revealAiKey(providerId) }
+    // #1801 setAiRouting and revealAiKey are gone from this client and from ITextTools (their wire slots are retired,
+    // credential-free): the fleet's AI provider keys live in the AI-key owner engine. Set, reveal or clear one with
+    // DecisionsLink.openKeySettings (libs:decisions-link); spend one with DecisionsLink.relay; read whether one is held
+    // with DecisionsLink.keys or aiRoutingSnapshot's key_present.
 
     /**
      * #781 The serving app's clipboard lists as one JSON text ([ITextTools.clipboardLists]); null

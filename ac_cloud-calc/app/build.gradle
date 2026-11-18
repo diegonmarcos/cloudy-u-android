@@ -301,7 +301,8 @@ dependencies {
     implementation 'androidx.camera:camera-view:1.4.2'
     implementation 'com.google.ar:core:1.48.0'
     // #770 the fleet Account's OpenRouter token, read over the ITextTools binder (a contract lib).
-    implementation project(':libs:text-tools')
+    // #1801 the AI-key owner engine's client (the key is held there; this app never reads it).
+    implementation project(':libs:decisions-link')
     // #770 the manual token override: EncryptedSharedPreferences over an Android Keystore key.
     implementation 'androidx.security:security-crypto:1.1.0'
 

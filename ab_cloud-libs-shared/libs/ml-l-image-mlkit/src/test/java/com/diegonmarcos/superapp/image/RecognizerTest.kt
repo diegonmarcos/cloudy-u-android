@@ -198,11 +198,11 @@ class RecognizerTest {
         assertEquals("red", r.getJSONArray("colours").getJSONObject(0).getString("name"))
     }
 
-    @Test fun `a token in the request wins over the fleet Account`() {
+    @Test fun `a token in the request is never used (#1801 the key is the AI-key owner engine's)`() {
         reply = Triple(200, categoryAnswer(), 0)
         account = "acct-token-zzzz"
         recognizer.recognize(golden("blue_yellow.png"), request("openrouter", token = "caller-token-9999"))
-        assertEquals("Bearer caller-token-9999", auth.single())
+        assertEquals("Bearer acct-token-zzzz", auth.single())
     }
 
     @Test fun `no token - no call, the on-device route answers and says why`() {

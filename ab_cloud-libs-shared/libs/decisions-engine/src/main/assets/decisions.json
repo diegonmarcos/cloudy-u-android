@@ -327,7 +327,8 @@
     "label": "OpenRouter",
     "endpoints": {
      "chat": "https://openrouter.ai/api/v1/chat/completions",
-     "decisions": "https://openrouter.ai/api/alpha/decisions"
+     "decisions": "https://openrouter.ai/api/alpha/decisions",
+     "key": "https://openrouter.ai/api/v1/key"
     }
    }
   },
@@ -380,14 +381,16 @@
     "fallback_test": "ac_cloud-browser/app/src/test/java/com/diegonmarcos/cloudbrowser/search/SearchAddonRelayTest.kt::SearchAddonRelayTest"
    },
    "calc_jev": {
-    "_doc": "Cloud Calc's Jev section (Decide ▸ route and score): its own Decisions API request (model, state, questions), sent as it was, and its per-app key override kept as this engine's per-app slot.",
+    "_doc": "Cloud Calc's Jev section (Decide ▸ route and score, the sound and image identify routes) through the Decisions API, its AI chat page (libs:ai) through chat completions, and Configs › Token › Test through the key-usage read (a GET): each request sent as it was, and its per-app key override kept as this engine's per-app slot.",
     "enabled": true,
     "max_calls_per_hour": 240,
     "consent": "implicit",
     "content": "text",
     "provider": "openrouter",
     "endpoints": [
-     "decisions"
+     "decisions",
+     "chat",
+     "key"
     ],
     "apps": [
      "com.diegonmarcos.cloudcalc"
@@ -408,7 +411,7 @@
      "com.diegonmarcos.cloudkeyboard",
      "com.diegonmarcos.cloudkeyboardlibs"
     ],
-    "fallback_test": "ab_cloud-libs-shared/libs/writer-ui/src/test/java/com/diegonmarcos/cloudwriter/WriterRelayTest.kt::WriterRelayTest"
+    "fallback_test": "ab_cloud-libs-shared/libs/writer-core/src/test/kotlin/com/diegonmarcos/cloudwriter/core/WriterRelayTest.kt::WriterRelayTest"
    },
    "image_scan_recognize": {
     "_doc": "Cloud-Lib-Ml-L-Image-Mlkit's OpenRouter recognition route (Recognizer: a picture scored by a decision model through the Decisions API). The calling app asked for the scan.",

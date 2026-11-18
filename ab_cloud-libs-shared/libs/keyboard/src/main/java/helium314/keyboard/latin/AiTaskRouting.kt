@@ -94,7 +94,8 @@ object AiTaskRouting {
 
     val openRouter: AiRouter.Provider? get() = AiRouter.providers.firstOrNull { it.id == AiEngine.OPENROUTER.id }
 
-    fun hasKey(context: Context): Boolean = openRouter?.let { AiRouter.token(context, it).isNotEmpty() } ?: false
+    /** #1801 whether the AI-key owner engine holds the OpenRouter key (cached presence, never blocking, never the key). */
+    fun hasKey(context: Context): Boolean = openRouter?.let { AiRouter.keyHeldNow(context, it) } ?: false
 
     fun isOnline(context: Context): Boolean = runCatching {
         val cm = context.getSystemService(ConnectivityManager::class.java)

@@ -162,8 +162,14 @@ stage; plant "$MAILSITE" 'package x
 // c.revealAiKey("openrouter") is what this app must never do
 fun f() {}'
 green "a comment that names the forbidden call is not a call"
-stage; js "$DATA" 'd["key_readers"]["apps"].remove("ac_cloud-calc")'
-red "D5 a listed reader the list stops allowing" "D5 app ac_cloud-calc"
+# #1801 the list is empty: every former reader relays through the AI-key owner engine, so a former one reading
+# the key again is a NEW reader and goes red like any other.
+stage; plant "ac_cloud-calc/app/src/main/java/com/diegonmarcos/cloudcalc/decide/Planted.kt" 'package x
+fun f(c: TextToolsClient) = c.revealAiKey("openrouter")'
+red "D5 a former reader (Calc) that reads the key again" "D5 app ac_cloud-calc"
+stage; plant "ab_cloud-libs-shared/libs/keyboard/src/main/java/Planted.kt" 'package x
+fun f(c: TextToolsClient) = c.revealAiKey("openrouter")'
+red "D5 a former reader lib (keyboard) that reads the key again" "D5 lib keyboard"
 
 # D6 — not vacuous
 stage; js "$DECL" 'd["uses"] = {}'

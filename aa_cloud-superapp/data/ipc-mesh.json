@@ -410,7 +410,8 @@
       "methods": [
        "call",
        "image",
-       "methods"
+       "methods",
+       "relay"
       ]
      }
     ],
@@ -801,8 +802,8 @@
        "enhanceWith",
        "importClipboardLists",
        "providerLabelFor",
-       "revealAiKey",
-       "setAiRouting",
+       "retiredRevealSlot",
+       "retiredRoutingWrite",
        "settingsSnapshot",
        "summarise",
        "summariseWith",
@@ -815,13 +816,9 @@
      "aa_cloud-superapp",
      "account",
      "browser",
-     "calc",
      "code",
      "keyboard",
-     "lib-decisions-engine",
-     "lib-ml-l-image-mlkit",
      "mail",
-     "search",
      "tools-small-llms"
     ]
    }

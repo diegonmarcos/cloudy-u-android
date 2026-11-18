@@ -132,8 +132,8 @@ dependencies {
     implementation project(':libs:ml-l-image-ocr')
     // #772 the OpenRouter route speaks the fleet's one Decisions client (Cloud Calc's Jev uses it too),
     implementation project(':libs:decisions')
-    // and reads the fleet Account's OpenRouter token over the ITextTools binder (a contract lib).
-    implementation project(':libs:text-tools')
+    // and (#1801) hands that request to the fleet's AI-key owner engine, which adds the key (a contract lib).
+    implementation project(':libs:decisions-link')
 
     // CONSTELLATION_DATA (the signature permission guarding the service) is declared by core.
     implementation project(':libs:core')

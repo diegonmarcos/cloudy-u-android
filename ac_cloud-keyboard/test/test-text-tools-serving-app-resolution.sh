@@ -250,36 +250,33 @@ else
     printf '%s\n' "$HARD_DEP" | awk '{print "       " $0}'
 fi
 
-# ── T9 ── the revealed key is never logged, on either side ────────────────
-# revealAiKey is the one call in the whole contract that emits a credential.
-# Both its implementation and its client wrapper are checked, because either
-# side logging it puts the key in the same uploaded bundle.
-REVEAL_SERVICE="$(body "$SERVICE" 'override fun revealAiKey')"
-REVEAL_CLIENT="$(body "$CLIENT" 'fun revealAiKey')"
-if [ -z "$REVEAL_CLIENT" ]; then
-    REVEAL_CLIENT="$(grep -n 'fun revealAiKey' "$CLIENT" | head -1 | awk -F: '{print $1}')"
-    REVEAL_CLIENT="$(awk -v n="$REVEAL_CLIENT" 'NR>=n && NR<=n+2' "$CLIENT")"
-fi
-for pair in "service:$REVEAL_SERVICE" "client:$REVEAL_CLIENT"; do
-    side="${pair%%:*}"
-    text="${pair#*:}"
-    check_body "$text" "T9 revealAiKey ($side)" || continue
-    if grep -qE '\b(Log|Toast)\b' <<<"$text"; then
-        fail "T9 revealAiKey ($side) reaches a log or a toast — this fleet uploads logcat, so a key that reaches the log leaves the phone"
+# ── T9 ── #1801 no key crosses ITextTools, in either direction ───────────
+# The two credential methods (revealAiKey out, setAiRouting in) are retired: their
+# wire slots stay (a method's transaction code is its position) but take nothing and
+# answer a refusal, and the client no longer offers them. The fleet's AI provider
+# keys live in the AI-key owner engine (libs/decisions-engine) and nowhere else.
+for retired in 'override fun retiredRoutingWrite' 'override fun retiredRevealSlot'; do
+    text="$(body "$SERVICE" "$retired")"
+    check_body "$text" "T9 TextToolsService.${retired#override fun }()" || continue
+    if grep -qE 'prefs\(|putString|AiRouter\.token|ok\(' <<<"$text"; then
+        fail "T9 ${retired#override fun } reads, writes or answers something — a retired credential slot must only refuse"
     else
-        pass "T9 revealAiKey ($side) neither logs nor toasts the credential"
+        pass "T9 ${retired#override fun } only refuses: no key is read, written or answered"
     fi
 done
+if grep -qE 'fun (revealAiKey|setAiRouting)\(' "$CLIENT" "$SERVICE"; then
+    fail "T9 revealAiKey / setAiRouting are still offered — the key must not cross ITextTools"
+else
+    pass "T9 neither the client nor the service offers revealAiKey or setAiRouting"
+fi
 
-# ── T10 ── the one catch block holding a secret logs a class, not the error ─
-SET_ROUTING="$(body "$SERVICE" 'override fun setAiRouting')"
-if check_body "$SET_ROUTING" "T10 TextToolsService.setAiRouting()"; then
-    if grep -q 'e.javaClass.simpleName' <<<"$SET_ROUTING" \
-        && ! grep -qE 'Log\.[a-z]+\([^)]*\$\{?e\}?[,)]|Log\.[a-z]+\(.*e\.message|Log\.[a-z]+\(.*", e\)' <<<"$SET_ROUTING"; then
-        pass "T10 setAiRouting logs an exception class name, never the exception that was thrown over a secret"
-    else
-        fail "T10 setAiRouting must log e.javaClass.simpleName only — the value being written is an API key and an exception's own text can carry it"
-    fi
+# ── T10 ── #1801 a key-needing provider is relayed to the AI-key owner engine ─
+ROUTER="$(dirname "$SERVICE")/../../../../helium314/keyboard/latin/AiRouter.kt"
+[ -f "$ROUTER" ] || ROUTER="$(find "$(dirname "$SERVICE")/../../../.." -name AiRouter.kt | head -1)"
+if grep -q 'DecisionsLink.relay(context, RELAY_USE, "chat", body)' "$ROUTER" && grep -q 'if (p.needsToken) "" else' "$ROUTER"; then
+    pass "T10 AiRouter relays a key-needing provider through the engine and reads no key of its own for it"
+else
+    fail "T10 AiRouter must relay key-needing providers through DecisionsLink.relay and hold no key for them"
 fi
 
 echo "── ${FAILURES} failed ──"

@@ -22,7 +22,11 @@ import com.diegonmarcos.superapp.mlocr.MlKitOcr
 import com.diegonmarcos.superapp.mlocr.OcrImage
 import com.diegonmarcos.superapp.mlocr.VisionOcr
 import android.graphics.Bitmap
+import com.diegonmarcos.superapp.decisions.EngineKeyedHttp
+import com.diegonmarcos.superapp.decisions.Http
 import com.diegonmarcos.superapp.decisions.UrlHttp
+import com.diegonmarcos.superapp.decisions.link.DecisionsLink
+import com.diegonmarcos.superapp.decisions.link.RelayReply
 import com.diegonmarcos.superapp.texttools.TextToolsClient
 import org.json.JSONObject
 
@@ -37,10 +41,12 @@ import org.json.JSONObject
  * actually answered, and the last one per function is kept for the screen and /api/writer/route.
  * The decision and the fallback are core's [Routing]; this file is only the Android around it.
  *
- * THE TOKEN. Read on use from the fleet Account through ITextTools.revealAiKey (the key the
- * SuperApp's Profile pushes from the vault's ai.tokens into the serving app), passed to the one
- * request that needs it, and dropped. It is never written to a preference, never logged and never
- * put in a debug reply — the same handling Cloud Calc's JevStore and the image engine use.
+ * THE KEY IS NOT HERE (#1801). It lives in the fleet's AI-key owner engine (Cloud-Lib-Decisions-
+ * Engine, its AI keys screen) and nowhere else: every model request goes there through [relayHttp]
+ * (DecisionsLink.relay, use writer_routes), the engine adds the key and returns the provider's answer.
+ * What is known here is only whether the engine holds one ([accountHasKey]: DecisionsLink.keys), which
+ * is what the route's "no token" blocker reads — the same handling Cloud Calc's JevStore and the image
+ * engine use.
  *
  * Every call here BLOCKS (binder, network). Callers run it off the main thread.
  */
@@ -152,15 +158,38 @@ object WriterRoutes {
         return c
     }
 
-    /** The fleet Account's OpenRouter token for ONE request, or null. Never stored, never logged. */
-    private fun accountToken(context: Context): String? =
-        textTools(context).revealAiKey(openRouterBlock.optString("account_provider", "openrouter")).text?.takeIf { it.isNotBlank() }
+    /** The declared relay use (decisions.json::relay.uses). */
+    const val RELAY_USE = "writer_routes"
 
-    /** Whether the Account holds a key, from the snapshot's key_present — the token itself is not read. */
-    fun accountHasKey(context: Context): Boolean {
-        val raw = textTools(context).aiRoutingSnapshot() ?: return false
-        val provider = openRouterBlock.optString("account_provider", "openrouter")
-        val list = runCatching { JSONObject(raw).getJSONArray("providers") }.getOrNull() ?: return false
+    /** Tests replace the engine's answer for one relayed body. */
+    @Volatile var relayer: (Context, String) -> RelayReply = { ctx, body -> DecisionsLink.relay(ctx, RELAY_USE, "chat", body) }
+
+    /**
+     * #1801 every model request's transport: the body to the AI-key owner engine, which adds the key; a refusal (no engine,
+     * no key) is a transport failure with the engine's reason, so the route falls back on device and says why.
+     */
+    fun relayHttp(context: Context): Http = object : EngineKeyedHttp {
+        override fun send(url: String, token: String?, body: String?, timeoutMs: Int): Http.Response {
+            if (body == null) return UrlHttp.send(url, null, null, timeoutMs)
+            val r = relayer(context.applicationContext, body)
+            if (!r.ok) throw java.io.IOException(r.why)
+            return Http.Response(r.code, r.body)
+        }
+    }
+
+    /** Tests replace the engine's key status. */
+    @Volatile var keyStatus: (Context, String) -> Boolean = { ctx, provider -> engineHasKey(ctx, provider) }
+
+    /** Whether the AI-key owner engine holds a key for the route's provider (presence only; the key is never read here). */
+    fun accountHasKey(context: Context): Boolean = keyStatus(context, openRouterBlock.optString("account_provider", "openrouter"))
+
+    /** The engine's AI keys screen with the route's provider preselected (Routes ▸ AI key); false with no engine. */
+    fun openKeySettings(context: Context): Boolean =
+        DecisionsLink.openKeySettings(context, openRouterBlock.optString("account_provider", "openrouter"))
+
+    private fun engineHasKey(context: Context, provider: String): Boolean {
+        val k = DecisionsLink.keys(context)
+        val list = k.optJSONArray("providers") ?: return false
         return (0 until list.length()).any { list.optJSONObject(it)?.let { p -> p.optString("id") == provider && p.optBoolean("key_present") } == true }
     }
 
@@ -181,17 +210,15 @@ object WriterRoutes {
         val system = WriterRegistry.translatePrompt(languageId)
             ?: return Answer(null, null, requested, null, context.getString(R.string.run_translate_no_target)).also { lastTranslation = it }
         val modelId = model(context, Function.TRANSLATION)
-        var token: String? = null
         val blocker = if (requested == Route.MODEL) {
             val online = online(context)
-            if (online) token = accountToken(context)
-            Routing.modelBlocker(online, token != null, modelId)
+            Routing.modelBlocker(online, online && accountHasKey(context), modelId)
         } else null
         val tag = tagOf(languageId)
         val answer = Routing.run(
             requested,
             blocker,
-            model = { OpenRouter.translate(UrlHttp, openRouter, token, modelId, system, text) },
+            model = { OpenRouter.translate(relayHttp(context), openRouter, null, modelId, system, text) },
             ml = {
                 if (tag == null) Outcome.failed(context.getString(R.string.route_no_device_language, languageId))
                 else textTools(context).translate(text, tag).let { r -> r.text?.let { Outcome.ok(it) } ?: Outcome.failed(r.error ?: Routing.EMPTY) }
@@ -237,14 +264,12 @@ object WriterRoutes {
     fun ocr(context: Context, bitmap: Bitmap): Answer {
         val engine = ocrEngine(context)
         val modelId = ocrModel(context)
-        var token: String? = null
         val blocker = if (engine == OcrEngine.OPENROUTER) {
             val online = online(context)
-            if (online) token = accountToken(context)
-            Routing.modelBlocker(online, token != null, modelId)
+            Routing.modelBlocker(online, online && accountHasKey(context), modelId)
         } else null
         val vision = VisionOcr { model, prompt, jpeg ->
-            val o = OpenRouter.call(UrlHttp, openRouter, token, OpenRouter.visionBody(model, prompt, jpeg, "image/jpeg", openRouter.maxTokens))
+            val o = OpenRouter.call(relayHttp(context), openRouter, null, OpenRouter.visionBody(model, prompt, jpeg, "image/jpeg", openRouter.maxTokens))
             if (o.ok) Result.success(o.text!!) else Result.failure(IllegalStateException(o.error ?: Routing.EMPTY))
         }
         val answer = Ocr.run(
@@ -266,16 +291,14 @@ object WriterRoutes {
     fun transcribe(context: Context, pcm: ByteArray, blockerAtStart: String?, onDevice: () -> Outcome): Answer {
         val requested = route(context, Function.SPEECH)
         val modelId = model(context, Function.SPEECH)
-        var token: String? = null
         val blocker = blockerAtStart ?: if (requested == Route.MODEL) {
             val online = online(context)
-            if (online) token = accountToken(context)
-            Routing.modelBlocker(online, token != null, modelId)
+            Routing.modelBlocker(online, online && accountHasKey(context), modelId)
         } else null
         val answer = Routing.run(
             requested,
             blocker,
-            model = { OpenRouter.transcribe(UrlHttp, openRouter, token, modelId, speechPrompt(context), Wav.encode(pcm, sampleRate)) },
+            model = { OpenRouter.transcribe(relayHttp(context), openRouter, null, modelId, speechPrompt(context), Wav.encode(pcm, sampleRate)) },
             ml = onDevice,
         )
         lastSpeech = answer
@@ -287,7 +310,7 @@ object WriterRoutes {
     fun speechBlocker(context: Context): String? {
         if (route(context, Function.SPEECH) != Route.MODEL) return null
         val online = online(context)
-        return Routing.modelBlocker(online, online && accountToken(context) != null, model(context, Function.SPEECH))
+        return Routing.modelBlocker(online, online && accountHasKey(context), model(context, Function.SPEECH))
     }
 
     val sampleRate: Int get() = speech.optInt("sample_rate", 16000)

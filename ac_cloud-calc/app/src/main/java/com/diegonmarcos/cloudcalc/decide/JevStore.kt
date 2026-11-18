@@ -3,15 +3,16 @@ package com.diegonmarcos.cloudcalc.decide
 import com.diegonmarcos.superapp.crash.SafeEncryptedPrefs
 import android.content.Context
 import android.content.SharedPreferences
-import android.os.SystemClock
 import androidx.security.crypto.EncryptedSharedPreferences
 import com.diegonmarcos.cloudcalc.BuildConfig
 import com.diegonmarcos.cloudcalc.Declarations
 import com.diegonmarcos.superapp.decisions.Http
 import com.diegonmarcos.cloudcalc.jev.JevConfig
 import com.diegonmarcos.cloudcalc.jev.Models
+import com.diegonmarcos.superapp.decisions.EngineKeyedHttp
 import com.diegonmarcos.superapp.decisions.UrlHttp
-import com.diegonmarcos.superapp.texttools.TextToolsClient
+import com.diegonmarcos.superapp.decisions.link.DecisionsLink
+import com.diegonmarcos.superapp.decisions.link.RelayReply
 import org.json.JSONObject
 
 /**
@@ -19,9 +20,12 @@ import org.json.JSONObject
  *  - the routing declaration: build.json::jev as baked, or the user's edit of that same JSON
  *    (Configs › Routing), validated by [JevConfig.parse] AND against this app's modes first;
  *  - the per-use model choice and the cached decision-model catalogue;
- *  - the OpenRouter token: the fleet Account's, read on use through libs:text-tools and never
- *    stored here, unless the user sets a manual override, which lives only in Keystore-backed
- *    EncryptedSharedPreferences and is never logged, shown whole or sent anywhere but OpenRouter.
+ *  - #1801 NOT the OpenRouter key. It lives in the fleet's AI-key owner engine (Cloud-Lib-Decisions-
+ *    Engine, its AI keys screen) and nowhere else: every Jev call's request goes there through
+ *    [http] (DecisionsLink.relay, use calc_jev) and the engine adds the key, this app's per-app
+ *    override first (what Configs › Token's manual override was, now that engine's per-app slot),
+ *    then the fleet key. [token] says only whether one is held and which; the old override that
+ *    lived in this app's Keystore-backed prefs is retired on first read ([retireOldOverride]).
  *
  * Token and network calls BLOCK: call them off the main thread.
  */
@@ -33,20 +37,44 @@ object JevStore {
     private const val K_CATALOG_AT = "catalog_at"
     private const val K_MODEL = "model_"
     private const val K_TOKEN = "openrouter_token"
-    private const val ACCOUNT_WAIT_MS = 3000L
 
-    /** The transport every Jev call uses; the Robolectric suites swap in a fake. */
-    @Volatile var http: Http = UrlHttp
+    /** The app context the relay binds the engine from; set by [config], which every Jev path reads first. */
+    @Volatile private var app: Context? = null
 
-    /** The Keystore-backed store; null where no Keystore exists (Robolectric) — then no override can be kept. */
+    /**
+     * #1801 the transport every Jev call uses: an [EngineKeyedHttp], so [com.diegonmarcos.superapp.decisions.Decisions.post]
+     * sends with no token. A POST (the Decisions API, the chat) and the key-usage GET go to the AI-key owner engine, which
+     * adds the key; any other GET (the public model catalogue) goes straight out. The Robolectric suites swap in a fake.
+     */
+    @Volatile var http: Http = object : EngineKeyedHttp {
+        override fun send(url: String, token: String?, body: String?, timeoutMs: Int): Http.Response {
+            val keyRead = body == null && url.contains(KEY_PATH)
+            if (body == null && !keyRead) return UrlHttp.send(url, null, null, timeoutMs)
+            val ctx = app ?: throw java.io.IOException("the Jev section has not been opened")
+            val r = relay(ctx, RelayReply.endpointOf(url).let { if (keyRead) "key" else it }, body.orEmpty(), keyRead)
+            if (!r.ok) throw java.io.IOException(r.why)
+            return Http.Response(r.code, r.body)
+        }
+    }
+
+    /** One request through the AI-key owner engine; the suites swap in a fake. */
+    @Volatile var relay: (Context, String, String, Boolean) -> RelayReply = { ctx, endpoint, body, get ->
+        DecisionsLink.relay(ctx, USE, endpoint, body, get)
+    }
+
+    /** The declared relay use (decisions.json::relay.uses). */
+    const val USE = "calc_jev"
+    private const val KEY_PATH = "/api/v1/key"
+
+    /** The Keystore-backed store the retired override lived in; null where no Keystore exists (Robolectric). */
     @Volatile var secrets: (Context) -> SharedPreferences? = { ctx ->
         runCatching {
             SafeEncryptedPrefs.prefs(ctx, SECRET_PREFS)
         }.getOrNull()
     }
 
-    /** The fleet Account's token for a provider id; the suites swap in a fake. */
-    @Volatile var account: (Context, String) -> Pair<String?, String> = { ctx, provider -> readAccount(ctx, provider) }
+    /** Which key the engine holds for a provider (presence only, never the key); the suites swap in a fake. */
+    @Volatile var account: (Context, String) -> Token = { ctx, provider -> readStatus(ctx, provider) }
 
     private fun prefs(ctx: Context): SharedPreferences = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -60,8 +88,10 @@ object JevStore {
     fun isEdited(ctx: Context): Boolean = prefs(ctx).getString(K_CONFIG, null) != null
 
     /** The declaration in force: the user's edit if it still parses, else the baked default. */
-    fun config(ctx: Context): JevConfig =
-        prefs(ctx).getString(K_CONFIG, null)?.let { runCatching { JevConfig.parse(it) }.getOrNull() } ?: defaults
+    fun config(ctx: Context): JevConfig {
+        app = ctx.applicationContext
+        return prefs(ctx).getString(K_CONFIG, null)?.let { runCatching { JevConfig.parse(it) }.getOrNull() } ?: defaults
+    }
 
     fun configJson(ctx: Context): String = prefs(ctx).getString(K_CONFIG, null) ?: defaultJson
 
@@ -116,40 +146,50 @@ object JevStore {
     /** The model [use] actually runs on (Models.resolve over the cached catalogue). */
     fun model(ctx: Context, use: String): String = Models.resolve(modelChoice(ctx, use), catalogue(ctx), config(ctx).fallbackModel)
 
-    // ── the token ───────────────────────────────────────────────────────────────────────────
+    // ── the token (#1801: held by the AI-key owner engine; only whether and which is known here) ──────────
 
-    /** [value] null = none; [source] says where it came from, or why there is none. */
-    data class Token(val value: String?, val source: String)
+    /** [present] = the engine holds a key this app's calls spend; [source] says which, or why there is none. */
+    data class Token(val present: Boolean, val source: String)
 
-    fun manualToken(ctx: Context): String? = secrets(ctx)?.getString(K_TOKEN, null)?.takeIf { it.isNotBlank() }
+    /** Whether the engine holds this app's own override (Configs › Token's manual override, now in the engine). */
+    fun hasOverride(ctx: Context): Boolean = token(ctx).source == SOURCE_MANUAL
 
-    /** Keep (or with null/blank, drop) the manual override; false when no Keystore store exists. */
-    fun setManualToken(ctx: Context, token: String?): Boolean {
+    /** Which key this app's calls spend: the override while the engine holds one, else the fleet key. Blocks on the engine. */
+    fun token(ctx: Context): Token {
+        retireOldOverride(ctx)
+        return account(ctx, config(ctx).accountProvider)
+    }
+
+    /** The engine's AI keys screen: this app's override slot when [override], else the fleet key. False with no engine. */
+    fun openKeySettings(ctx: Context, override: Boolean): Boolean =
+        DecisionsLink.openKeySettings(ctx, config(ctx).accountProvider, if (override) ctx.packageName else null)
+
+    /**
+     * #1801 the override this app used to keep in its own Keystore-backed prefs is removed: the key lives in the engine
+     * only. The owner sets it again in the engine's per-app slot (Configs › Token › Set override), which this screen says.
+     */
+    fun retireOldOverride(ctx: Context): Boolean {
         val s = secrets(ctx) ?: return false
-        s.edit().apply { if (token.isNullOrBlank()) remove(K_TOKEN) else putString(K_TOKEN, token.trim()) }.apply()
+        if (!s.contains(K_TOKEN)) return false
+        s.edit().remove(K_TOKEN).apply()
         return true
     }
 
-    /** The override while one is set, else the fleet Account's. Blocks on the Account binder. */
-    fun token(ctx: Context): Token {
-        manualToken(ctx)?.let { return Token(it, SOURCE_MANUAL) }
-        val (value, why) = account(ctx, config(ctx).accountProvider)
-        return if (value.isNullOrBlank()) Token(null, why) else Token(value, SOURCE_ACCOUNT)
-    }
-
     const val SOURCE_MANUAL = "manual override"
-    const val SOURCE_ACCOUNT = "fleet Account"
+    const val SOURCE_ACCOUNT = "fleet key"
 
-    @Volatile private var tools: TextToolsClient? = null
-
-    /** TextToolsClient.revealAiKey: the token the SuperApp's Profile wrote from the vault's ai.tokens. */
-    private fun readAccount(ctx: Context, provider: String): Pair<String?, String> {
-        val c = tools ?: synchronized(this) { tools ?: TextToolsClient(ctx.applicationContext).also { tools = it } }
-        if (c.isServingAppInstalled()) {
-            val until = SystemClock.elapsedRealtime() + ACCOUNT_WAIT_MS
-            while (!c.isConnected() && SystemClock.elapsedRealtime() < until) Thread.sleep(100)
+    private fun readStatus(ctx: Context, provider: String): Token {
+        val k = DecisionsLink.keys(ctx)
+        if (!k.optBoolean("ok")) return Token(false, "AI keys engine: " + k.optString("detail").ifBlank { k.optString("reason", "no answer") })
+        val list = k.optJSONArray("providers")
+        val p = (0 until (list?.length() ?: 0)).mapNotNull { list?.optJSONObject(it) }.firstOrNull { it.optString("id") == provider }
+            ?: return Token(false, "AI keys engine: no $provider provider")
+        val over = p.optJSONArray("overrides")
+        val mine = (0 until (over?.length() ?: 0)).mapNotNull { over?.optJSONObject(it) }.any { it.optString("app") == ctx.packageName && it.optBoolean("key_present") }
+        return when {
+            mine -> Token(true, SOURCE_MANUAL)
+            p.optBoolean("key_present") -> Token(true, SOURCE_ACCOUNT)
+            else -> Token(false, "AI keys engine: no $provider key")
         }
-        val r = c.revealAiKey(provider)
-        return r.text to "fleet Account: ${r.error ?: "no token"}"
     }
 }

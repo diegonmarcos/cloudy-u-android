@@ -41,6 +41,7 @@ import helium314.keyboard.settings.Setting
 import helium314.keyboard.settings.SettingsActivity
 import helium314.keyboard.settings.initPreview
 import helium314.keyboard.settings.preferences.ListPreference
+import helium314.keyboard.settings.preferences.Preference
 import helium314.keyboard.settings.preferences.TextInputPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -88,8 +89,14 @@ fun createAiRoutingSettings(context: Context): List<Setting> = listOf(
 ) + AiRouter.providers.flatMap { p ->
     listOf(
         Setting(context, Settings.PREF_AI_TOKEN_PREFIX + p.id, context.titleFor("ai_token_", p.id, R.string.ai_token_title),
-            if (p.needsToken) R.string.ai_token_summary else R.string.ai_token_optional_summary) { setting ->
-            TextInputPreference(setting, "")
+            if (p.needsToken) R.string.ai_token_engine_summary else R.string.ai_token_optional_summary) { setting ->
+            // #1801 a provider that needs a key keeps it in the fleet's AI-key owner engine, never here: this row opens
+            // that engine's AI keys screen (set, reveal, clear). The mesh bridge's optional gateway token stays a field.
+            if (p.needsToken) {
+                val ctx = LocalContext.current
+                Preference(setting.title, { if (!AiRouter.openKeySettings(ctx, p)) android.widget.Toast.makeText(ctx, R.string.ai_token_no_engine, android.widget.Toast.LENGTH_LONG).show() },
+                    description = setting.description)
+            } else TextInputPreference(setting, "")
         },
         Setting(context, Settings.PREF_AI_MODEL_PREFIX + p.id, context.titleFor("ai_model_", p.id, R.string.ai_model_title)) { setting ->
             ListPreference(setting, p.models.sortedWith(byModelSize).map { context.labelFor(it) to it.id }, p.defaultModel)

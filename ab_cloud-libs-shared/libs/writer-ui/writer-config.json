@@ -729,7 +729,7 @@
     "openrouter": {
       "chat_url": "https://openrouter.ai/api/v1/chat/completions",
       "models_url": "https://openrouter.ai/api/v1/models",
-      "_doc_account_provider": "The fleet Account provider whose key the model route spends: read on use through ITextTools.revealAiKey (the key the SuperApp's Profile pushes from the vault's ai.tokens), held for the one request, never stored and never logged - the same reading Cloud Calc's JevStore and the image engine do.",
+      "_doc_account_provider": "#1801 the provider whose key the model routes spend, held by the fleet's AI-key owner engine (Cloud-Lib-Decisions-Engine): every model request goes through DecisionsLink.relay (use writer_routes) and the engine adds the key; Routes ▸ AI key opens its AI keys screen and the route's no-key blocker reads DecisionsLink.keys (presence only). The key is never read here.",
       "account_provider": "openrouter",
       "account_wait_ms": 3000,
       "timeout_ms": 30000,

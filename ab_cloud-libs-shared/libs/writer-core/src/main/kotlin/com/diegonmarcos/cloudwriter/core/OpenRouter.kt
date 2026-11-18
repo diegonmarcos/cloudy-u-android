@@ -1,6 +1,7 @@
 package com.diegonmarcos.cloudwriter.core
 
 import com.diegonmarcos.superapp.decisions.Decisions
+import com.diegonmarcos.superapp.decisions.EngineKeyedHttp
 import com.diegonmarcos.superapp.decisions.Http
 import org.json.JSONArray
 import org.json.JSONObject
@@ -52,7 +53,8 @@ object OpenRouter {
 
     /** POST [body]. Never throws: no token, transport, non-2xx and a reply without content all come back as a reason. */
     fun call(http: Http, cfg: OpenRouterConfig, token: String?, body: JSONObject): Outcome {
-        if (token.isNullOrBlank()) return Outcome.failed(Routing.NO_TOKEN)
+        // #1801 an EngineKeyedHttp hands the body to the fleet's AI-key owner engine, which adds the key: no token here.
+        if (token.isNullOrBlank() && http !is EngineKeyedHttp) return Outcome.failed(Routing.NO_TOKEN)
         val res = runCatching { http.send(cfg.chatUrl, token, body.toString(), cfg.timeoutMs) }
             .getOrElse { return Outcome.failed("network: " + it.javaClass.simpleName + (it.message?.let { m -> ": $m" } ?: "")) }
         if (res.code !in 200..299) return Outcome.failed("HTTP ${res.code}: " + Decisions.apiError(res.body))

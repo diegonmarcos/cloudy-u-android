@@ -95,10 +95,11 @@ object DecisionsLink {
      * #1801 one relayed provider call of the declared relay [use]: [body] is the request this app used to POST itself (an
      * OpenAI-shape chat body or a Decisions API request) to the [endpoint] NAME its provider declares ("chat", "decisions"),
      * and the reply carries the provider's status code and answer body untouched, so the app parses and words it as before.
+     * [get] true sends no body (a provider's key-usage read: Calc's Configs › Token › Test).
      * The ENGINE adds the key (contract 3): this app never holds, reads, stores or sends it. The body and the answer travel
      * as files in this app's cache, never in the binder buffer. Never throws; blocking.
      */
-    fun relay(context: Context, use: String, endpoint: String, body: String): RelayReply {
+    fun relay(context: Context, use: String, endpoint: String, body: String, get: Boolean = false): RelayReply {
         val ctx = context.applicationContext
         val link = Conn()
         val dir = File(ctx.cacheDir, "decisions-relay").apply { mkdirs() }
@@ -109,7 +110,7 @@ object DecisionsLink {
             val why = link.check(ctx, BuildConfig.DECISIONS_RELAY_CONTRACT)
             val r = link.remote
             if (why != null || r == null) return RelayReply.parse(fail(why ?: "the decisions engine is not ready"), null)
-            val request = JSONObject().put("use", use).put("endpoint", endpoint).toString()
+            val request = JSONObject().put("use", use).put("endpoint", endpoint).apply { if (get) put("method", "GET") }.toString()
             val answer = ParcelFileDescriptor.open(src, ParcelFileDescriptor.MODE_READ_ONLY).use { i ->
                 ParcelFileDescriptor.open(out, ParcelFileDescriptor.MODE_WRITE_ONLY or ParcelFileDescriptor.MODE_TRUNCATE).use { o -> r.relay(request, i, o) }
             }

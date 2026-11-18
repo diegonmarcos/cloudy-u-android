@@ -14,7 +14,7 @@ data class JevConfig(
     val endpoint: String,
     val modelsUrl: String,
     val keyUrl: String,
-    /** The provider id the fleet Account's token is read under (TextToolsClient.revealAiKey). */
+    /** The provider id whose key the AI-key owner engine spends for this app (#1801: DecisionsLink.relay; no key is read here). */
     val accountProvider: String,
     val timeoutMs: Int,
     val catalogTtlHours: Int,

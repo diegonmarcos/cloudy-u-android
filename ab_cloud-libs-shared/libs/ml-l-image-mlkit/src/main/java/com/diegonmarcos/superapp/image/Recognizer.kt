@@ -27,7 +27,7 @@ internal class Recognizer(
     private val scanner: ImageScanner,
     private val onDevice: OnDevice,
     private val http: Http,
-    /** The fleet Account's OpenRouter token for [provider], or null with nothing to say. */
+    /** A token for [provider], or null; #1801 the service passes none (its [http] is keyed by the AI-key owner engine). */
     private val accountToken: (provider: String) -> String?,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
@@ -91,7 +91,9 @@ internal class Recognizer(
         val o = req.optJSONObject("openrouter") ?: return failure(OPENROUTER, "the request carries no openrouter block")
         val endpoint = o.optString("endpoint")
         if (!endpoint.startsWith("https://")) return failure(OPENROUTER, "the openrouter endpoint is not https — the token would travel in clear")
-        val token = req.optString("token").ifBlank { null } ?: runCatching { accountToken(o.optString("account_provider", "openrouter")) }.getOrNull()
+        // #1801 a key never arrives in the request (a caller's "token" is ignored): the engine passes an EngineKeyedHttp, the
+        // fleet's AI-key owner adds the key, and [accountToken] answers null.
+        val token = runCatching { accountToken(o.optString("account_provider", "openrouter")) }.getOrNull()
         val model = req.optString("model").ifBlank { o.optString("default_model") }
         val d = Decisions.post(endpoint, o.optInt("timeout_ms", 15000), http, token, model, state(bmp, req, o), questions(o), clock)
         if (!d.ok) return failure(OPENROUTER, d.error).put("model", model).put("latency_ms", d.latencyMs)

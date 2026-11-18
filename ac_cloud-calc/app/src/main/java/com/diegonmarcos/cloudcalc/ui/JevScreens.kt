@@ -176,7 +176,7 @@ fun JevMode(mode: Declarations.Mode) {
                             val asked = o.request
                             scope.launch {
                                 busy = true
-                                picked = io { JevFlow.pick(ctx, api, JevStore.config(ctx), JevStore.token(ctx).value, t, asked, startTimer = true) }
+                                picked = io { JevFlow.pick(ctx, api, JevStore.config(ctx), null, t, asked, startTimer = true) }
                                 keep(asked, picked)
                                 busy = false
                             }
@@ -287,40 +287,31 @@ fun JevTokenMode(mode: Declarations.Mode) {
     val scope = rememberCoroutineScope()
     var token by remember { mutableStateOf<JevStore.Token?>(null) }
     var hasManual by remember { mutableStateOf(false) }
-    var manual by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     fun reload() = scope.launch {
         token = io { JevStore.token(ctx) }
-        hasManual = io { JevStore.manualToken(ctx) != null }
+        hasManual = io { JevStore.hasOverride(ctx) }
     }
     LaunchedEffect(mode.id) { reload() }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CalcMetrics.gutter)) {
         val t = token
         Text(
             if (t == null) stringResource(R.string.loading)
-            else stringResource(R.string.jev_token_in_use, Decisions.mask(t.value), t.source),
+            else stringResource(R.string.jev_token_in_use, stringResource(if (t.present) R.string.jev_token_held else R.string.jev_token_none), t.source),
             style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag(CalcTags.JEV_TOKEN),
         )
         Text(stringResource(R.string.jev_token_doc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        OutlinedTextField(
-            manual, { manual = it }, Modifier.fillMaxWidth().padding(vertical = CalcMetrics.gap),
-            label = { Text(stringResource(R.string.jev_token_manual)) }, singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(CalcMetrics.gap)) {
-            Button(enabled = manual.isNotBlank(), onClick = {
-                val v = manual; manual = ""
-                scope.launch {
-                    note = ctx.getString(if (io { JevStore.setManualToken(ctx, v) }) R.string.jev_token_saved else R.string.jev_token_no_keystore)
-                    reload()
-                }
-            }) { Text(stringResource(R.string.jev_token_save)) }
-            OutlinedButton(enabled = hasManual, onClick = {
-                scope.launch { io { JevStore.setManualToken(ctx, null) }; note = ctx.getString(R.string.jev_token_cleared); reload() }
-            }) { Text(stringResource(R.string.jev_token_clear)) }
+        // #1801 every option kept, the key entry moved: the override is this app's slot in the AI-key owner engine,
+        // the fleet key that engine's own; both open its AI keys screen, where the key is typed into the engine's process.
+        Row(Modifier.padding(vertical = CalcMetrics.gap), horizontalArrangement = Arrangement.spacedBy(CalcMetrics.gap)) {
+            Button(onClick = {
+                note = ctx.getString(if (JevStore.openKeySettings(ctx, override = true)) R.string.jev_token_opened else R.string.jev_token_no_engine)
+            }, modifier = Modifier.testTag(CalcTags.JEV_SET_OVERRIDE)) { Text(stringResource(if (hasManual) R.string.jev_token_change_override else R.string.jev_token_save)) }
+            OutlinedButton(onClick = {
+                note = ctx.getString(if (JevStore.openKeySettings(ctx, override = false)) R.string.jev_token_opened else R.string.jev_token_no_engine)
+            }, modifier = Modifier.testTag(CalcTags.JEV_SET_FLEET)) { Text(stringResource(R.string.jev_token_fleet)) }
         }
-        Button(onClick = { scope.launch { note = io { JevFlow.testToken(ctx) } } }, modifier = Modifier.padding(vertical = CalcMetrics.gap).testTag(CalcTags.JEV_TEST_TOKEN)) {
+        Button(onClick = { scope.launch { note = io { JevFlow.testToken(ctx) }; reload() } }, modifier = Modifier.padding(vertical = CalcMetrics.gap).testTag(CalcTags.JEV_TEST_TOKEN)) {
             Text(stringResource(R.string.jev_token_test))
         }
         if (note.isNotBlank()) Text(note, modifier = Modifier.testTag(CalcTags.JEV_NOTE))
@@ -470,7 +461,7 @@ fun JevTestMode(mode: Declarations.Mode) {
                 scope.launch {
                     busy = true
                     results = io {
-                        val tok = JevStore.token(ctx).value
+                        val tok: String? = null // #1801 the AI-key owner engine adds the key (JevStore.http)
                         chosen.map { m -> Decisions.call(cfg, JevStore.http, tok, m, JevRouter.state(p, img), JevRouter.questions(cfg)) }
                     }
                     busy = false

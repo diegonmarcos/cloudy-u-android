@@ -48,10 +48,10 @@ object JevFlow {
         val token = JevStore.token(ctx)
         val model = JevStore.model(ctx, ROUTE_USE)
         // Attachments ride along as content parts of the routing question; with none it is the unchanged route().
-        val o = if (attachments.isEmpty()) JevRouter.route(cfg, JevStore.http, token.value, model, request)
-        else JevRouter.interpret(cfg, request, Decisions.call(cfg, JevStore.http, token.value, model, Attachments.state(request, attachments), JevRouter.questions(cfg)))
+        val o = if (attachments.isEmpty()) JevRouter.route(cfg, JevStore.http, null, model, request)
+        else JevRouter.interpret(cfg, request, Decisions.call(cfg, JevStore.http, null, model, Attachments.state(request, attachments), JevRouter.questions(cfg)))
         val run = when {
-            o.tool != null -> pick(ctx, api, cfg, token.value, o.tool!!, request, startTimer)
+            o.tool != null -> pick(ctx, api, cfg, null, o.tool!!, request, startTimer)
             o.fallback != null -> execute(ctx, api, o.fallback!!, startTimer)
             else -> null
         }
@@ -104,7 +104,7 @@ object JevFlow {
     fun askAbout(ctx: Context, q: JevConfig.Question, mode: String, calculation: String, result: String, context: String): Decision {
         val cfg = JevStore.config(ctx)
         val state = JevRouter.resultState(Declarations.mode(mode)?.label ?: mode, calculation, result, context)
-        return JevRouter.ask(cfg, JevStore.http, JevStore.token(ctx).value, JevStore.model(ctx, SCORE_USE), q, state)
+        return JevRouter.ask(cfg, JevStore.http, null, JevStore.model(ctx, SCORE_USE), q, state)
     }
 
     /** The JSON a history entry keeps for a follow-up question: the question, the model, every option. */
@@ -130,9 +130,10 @@ object JevFlow {
      */
     fun testToken(ctx: Context): String {
         val t = JevStore.token(ctx)
-        val v = t.value ?: return "No token: ${t.source}"
+        if (!t.present) return "No key: ${t.source}"
         val cfg = JevStore.config(ctx)
-        val r = runCatching { JevStore.http.send(cfg.keyUrl, v, null, cfg.timeoutMs) }
+        // #1801 the key-usage read goes through the AI-key owner engine, which adds the key (JevStore.http).
+        val r = runCatching { JevStore.http.send(cfg.keyUrl, null, null, cfg.timeoutMs) }
             .getOrElse { return "network: ${it.message ?: it.javaClass.simpleName}" }
         if (r.code !in 200..299) return "Refused (${t.source}): HTTP ${r.code}: ${Decisions.apiError(r.body)}"
         val data = runCatching { JSONObject(r.body).getJSONObject("data") }.getOrNull() ?: JSONObject()

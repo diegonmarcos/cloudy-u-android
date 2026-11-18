@@ -74,10 +74,13 @@ class SoundAppTest {
     private val app: Context get() = RuntimeEnvironment.getApplication()
     private val sr get() = SoundDecl.config.sampleRate
 
-    private class FakeHttp : Http {
+    /** #1801 stands where the AI-key owner engine's relay stands; with no key [held] there, every keyed call is refused. */
+    private class FakeHttp : com.diegonmarcos.superapp.decisions.EngineKeyedHttp {
         val bodies = mutableListOf<JSONObject>()
         @Volatile var reply: Http.Response = Http.Response(500, "{}")
+        @Volatile var held = true
         override fun send(url: String, token: String?, body: String?, timeoutMs: Int): Http.Response {
+            if (!held && body != null) throw java.io.IOException("No OpenRouter key in the AI keys engine")
             synchronized(bodies) { body?.let { bodies += JSONObject(it) } }
             return reply
         }
@@ -85,12 +88,13 @@ class SoundAppTest {
 
     private val http = FakeHttp()
     private lateinit var savedHttp: Http
-    private lateinit var savedAccount: (Context, String) -> Pair<String?, String>
+    private lateinit var savedAccount: (Context, String) -> JevStore.Token
 
     @Before fun up() {
         savedHttp = JevStore.http; savedAccount = JevStore.account
         JevStore.http = http
-        JevStore.account = { _, _ -> listOf("sk", "or", "sound-0000").joinToString("-") to "fleet Account" }
+        http.held = true
+        JevStore.account = { _, _ -> JevStore.Token(true, JevStore.SOURCE_ACCOUNT) }
         SoundStore.lastGenerated = null
         // Robolectric's media stream starts at its maximum (7 of 7); a phone at a quiet setting is
         // the ordinary case, and the loud case is its own test below.
@@ -226,13 +230,14 @@ class SoundAppTest {
         assertEquals(0.8, j.getJSONObject("answers").getJSONArray(JevConfig.IDENTIFY_CLASS).getJSONObject(0).getDouble("p"), 0.0)
     }
 
-    @Test fun `what is it offline - no token makes no call and the reason is kept`() {
-        JevStore.account = { _, _ -> null to "fleet Account: none" }
+    @Test fun `what is it offline - no key in the engine answers nothing and the reason is kept`() {
+        JevStore.account = { _, _ -> JevStore.Token(false, "AI keys engine: no openrouter key") }
+        http.held = false
         val g = SoundFlow.generate(app, Generator.Spec(Generator.TONE, "sine", 440.0, 0.0, 0.5, 300), play = false)
         val d = SoundFlow.identify(app, g.pcm, g.sampleRate, SoundFlow.analyze(g.pcm, g.sampleRate), SoundStore.knobs(app))
         assertFalse(d.ok)
         assertTrue(http.bodies.isEmpty())
-        assertTrue(d.error.contains("token"))
+        assertTrue(d.error, d.error.contains("key"))
     }
 
     @Test fun `the spectrogram image has the declared size`() {

@@ -208,6 +208,8 @@ object CalcTags {
     const val JEV_VERDICT = "jev_verdict"
     const val JEV_TOKEN = "jev_token"
     const val JEV_TEST_TOKEN = "jev_test_token"
+    const val JEV_SET_OVERRIDE = "jev_set_override"
+    const val JEV_SET_FLEET = "jev_set_fleet"
     const val JEV_NOTE = "jev_note"
     const val JEV_ROUTING_JSON = "jev_routing_json"
     const val JEV_ROUTING_SAVE = "jev_routing_save"
