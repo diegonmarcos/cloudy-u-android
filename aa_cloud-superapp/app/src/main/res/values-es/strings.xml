@@ -537,8 +537,12 @@
     <string name="mesh_pgrp_route">IP permitidas / ruta</string>
     <string name="mesh_pgrp_handshake">Edad del handshake</string>
     <string name="mesh_pgrp_mtu">Sonda de MTU</string>
+    <string name="mesh_light_path">Ruta activa</string>
+    <string name="mesh_light_fallbacks_ready">Respaldo listo</string>
+    <string name="mesh_light_fb">Respaldos</string>
+    <string name="mesh_probe_relay_key">Clave del relé</string>
     <string name="mesh_row_reachability">Alcance</string>
-    <string name="mesh_reach_none">Aún sin ejecutar: se prueban %1$d URL privadas de la malla (DNS, TCP 443, HTTPS).</string>
+    <string name="mesh_reach_none">Aún sin ejecutar: se prueban %1$d URL privadas de la malla (DNS, TCP 443, emisor TLS y confianza, HTTPS).</string>
     <string name="mesh_ctl_status_copy_all">Copiar todo</string>
     <string name="mesh_ctl_status_export_all">Exportar todo</string>
     <string name="mesh_ctl_reach_run">Repetir</string>

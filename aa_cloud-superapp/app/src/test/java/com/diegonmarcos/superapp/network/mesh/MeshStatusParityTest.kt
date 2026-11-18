@@ -145,6 +145,15 @@ class MeshStatusParityTest : KitPageHarness() {
         for (p in s.snapshot!!.peers) { shows(p.cfg.endpoint); shows(p.cfg.allowedIps); shows(p.cfg.publicKey) }
         for (r in listOf("lights", "meshes", "peers", "profiler", "log")) has(MeshTags.row(r))
         for (l in listOf("tunnel", "handshake", "dns", "names", "ips", "reach")) has("mesh:light:$l")
+        // the fallback lights: the active path, fallbacks ready, one per Test fallbacks step, from the same run the Path section lists
+        has("mesh:light:path"); has("mesh:light:fallbacks_ready")
+        assertTrue(s.probes.isNotEmpty())
+        for (pr in s.probes) { has("mesh:light:fb:${pr.id}"); has("mesh:probe:${pr.id}") }
+        val lights = lightLines(s.snapshot!!, s.meshProfile, s.reach, s.probes, s.probesAtMs, s.transport)
+        for (pr in s.probes) assertEquals(pr.ok, lights.single { it.id == "fb:${pr.id}" }.ok)
+        assertTrue(lights.single { it.id == "fb:${s.probes.first().id}" }.detail.startsWith(s.probes.first().detail))
+        // every Reachability host with its label
+        for (h in decl.reachHosts) shows(decl.reachLabels.getValue(h) + " · " + h)
         for (m in decl.meshes) for (col in com.diegonmarcos.superapp.fleetxray.mesh.C3MeshProbe.COLUMNS) has("mesh:mesh:${m.id}:$col")
         // the complete Log, behind its switch: every entry once it is on
         compose.runOnUiThread { s.run("view.statusLog", "on") }

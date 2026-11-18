@@ -52,7 +52,14 @@ data class LightLine(val id: String, val ok: Boolean?, val word: String, val det
  * servers Android holds against the fleet's, names / IPs from the last Cloud C3 probe, Reachability from
  * its last run. A light that has nothing measured yet says so (null) instead of borrowing a verdict.
  */
-fun lightLines(s: MeshSnapshot, profile: C3MeshProbe.Report?, reach: List<MeshReach.Result>): List<LightLine> {
+fun lightLines(
+    s: MeshSnapshot,
+    profile: C3MeshProbe.Report?,
+    reach: List<MeshReach.Result>,
+    probes: List<ProbeLine> = emptyList(),
+    probesAtMs: Long = 0L,
+    transport: TransportView? = null,
+): List<LightLine> {
     val out = mutableListOf<LightLine>()
     out += LightLine("tunnel", when { !s.engineInstalled -> null; s.up -> s.light == Light.UP; else -> false },
         when { !s.engineInstalled -> "unknown"; !s.up -> "down"; s.light == Light.UP -> "up"; else -> "up, no fresh handshake" },
@@ -82,23 +89,46 @@ fun lightLines(s: MeshSnapshot, profile: C3MeshProbe.Report?, reach: List<MeshRe
     out += LightLine("reach", if (reach.isEmpty()) null else reach.all { it.ok },
         if (reach.isEmpty()) "not run" else "${reach.count { it.ok }} of ${reach.size} reachable",
         reach.joinToString(" · ") { r -> r.host + " " + (r.steps.firstOrNull { !it.ok }?.let { "${it.id} FAIL ${it.detail}" } ?: "PASS") }.ifBlank { "tap Run again" })
+    // #1797 the fallback ladder: the active path, whether a fallback is ready, then one light per Test fallbacks step
+    // (the same ProbeLines the Path section lists, from the same run; nothing re-measured or inferred here).
+    val path = transport?.path.orEmpty()
+    out += LightLine("path", when (path) { "" -> null; "none" -> false; else -> true },
+        when (path) { "" -> "unknown"; "direct" -> "Direct UDP"; "relay" -> "TLS-443 relay"; "none" -> "no path"; else -> path },
+        listOfNotNull(transport?.detail?.takeIf { it.isNotBlank() }, transport?.relay?.takeIf { it.isNotBlank() }, transport?.mode?.let { "mode $it" })
+            .joinToString(" · ").ifBlank { "no connect recorded yet" })
+    val at = if (probesAtMs > 0) " · tested ${MeshFormat.clock(probesAtMs)}" else ""
+    val relay = probes.firstOrNull { it.id == "relay" }
+    val key = probes.firstOrNull { it.id == "relay_key" }
+    out += LightLine("fallbacks_ready", if (probes.isEmpty()) null else relay?.ok == true && key?.ok != false,
+        when { probes.isEmpty() -> "not tested"; relay?.ok == true && key?.ok != false -> "relay ready"; else -> "no fallback ready" },
+        (if (probes.isEmpty()) "tap Test fallbacks" else probes.joinToString(" · ") { "${it.id} ${C3MeshProbe.verdict(it.ok).trim()}" }) + at)
+    if (probes.isEmpty()) out += LightLine("fb", null, "not tested", "tap Test fallbacks in Path to the hubs")
+    for (p in probes) out += LightLine("fb:${p.id}", p.ok, C3MeshProbe.verdict(p.ok).trim(), p.detail + at)
     return out
 }
 
 @Composable
 internal fun MeshLightsRow(store: MeshStore, s: MeshSnapshot, tag: String) {
     MHeader(stringResource(R.string.mesh_row_lights))
+    var open by remember { mutableStateOf<String?>(null) }
     Column(Modifier.testTag(tag)) {
-        for (l in lightLines(s, store.meshProfile, store.reach)) Row(
-            Modifier.testTag("mesh:light:${l.id}").padding(vertical = MeshDensity.dp(MeshDensity.S2)),
+        for (l in lightLines(s, store.meshProfile, store.reach, store.probes, store.probesAtMs, store.transport)) Row(
+            Modifier.testTag("mesh:light:${l.id}").clickable { open = if (open == l.id) null else l.id }
+                .padding(vertical = MeshDensity.dp(MeshDensity.S2)),
             horizontalArrangement = Arrangement.spacedBy(MeshDensity.dp(MeshDensity.S6)),
             verticalAlignment = Alignment.Top,
         ) {
             Light(stateOf(l.ok), l.word)
-            MText(declLabel("light", l.id, l.id), Modifier.width(MeshDensity.dp(MeshDensity.COLUMN)), size = MeshDensity.T_META, bold = true)
+            val name = if (l.id.startsWith("fb:")) l.id.removePrefix("fb:").let { id ->
+                val base = id.substringBefore(':')
+                val sub = if (':' in id) id.substringAfter(':') else ""
+                if (base == "doh" && sub.isNotEmpty()) sub else declLabel("probe", base, base) + if (sub.isNotEmpty()) " $sub" else ""
+            } else declLabel("light", l.id, l.id)
+            MText(name, Modifier.width(MeshDensity.dp(MeshDensity.COLUMN)), size = MeshDensity.T_META, bold = true)
             Column(Modifier.weight(1f)) {
                 MText(l.word, size = MeshDensity.T_META)
-                MText(l.detail, size = MeshDensity.T_MICRO, mono = true, muted = true)
+                // tap: the full detail; closed: two lines
+                MText(l.detail, size = MeshDensity.T_MICRO, mono = true, muted = true, maxLines = if (open == l.id) Int.MAX_VALUE else 2)
             }
         }
     }

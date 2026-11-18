@@ -363,7 +363,7 @@ object MeshTransport {
         val out = ArrayList<Probe>()
         out += udpProbe(ctx)
         val relay = boot.relay
-        if (relay == null) { out += Probe("relay", false, "no TLS-443 relay is declared in data/mesh.json"); return out }
+        if (relay == null) { out += Probe("relay", false, "no TLS-443 relay is declared in data/mesh.json"); out += udpPerPeer(ctx); return out }
         val host = relay.host
         val pin = boot.pinned[host].orEmpty()
         val sys = DnsLadder.walk(host, listOf(DnsLadder.Rung(RUNG_SYSTEM) { InetAddress.getAllByName(it).toList() }))
@@ -410,7 +410,53 @@ object MeshTransport {
                 }
             }
         }
+        // #1797 one line per fallback step for Status > lights. Additions only: the five lines above are unchanged.
+        out += udpPerPeer(ctx)
+        for ((label, ok, detail) in doh) out += Probe("doh:$label", ok, detail)
+        val blocked: String? = when {
+            key.isBlank() -> "no relay key"
+            !engine -> backend.relayMissing()
+            route == null -> "the relay declares no route"
+            else -> null
+        }
+        val w = if (blocked == null) DnsLadder.walk(host, rungs(host)) else null
+        val all = w?.addrs?.mapNotNull { it.hostAddress }.orEmpty()
+        for ((fam, ip6) in listOf("v4" to false, "v6" to true)) {
+            val addrs = all.filter { (':' in it) == ip6 }
+            out += when {
+                blocked != null -> Probe("relay:$fam", if (key.isBlank()) false else null, blocked)
+                w?.via == null -> Probe("relay:$fam", false, "$host: ${w?.trail.orEmpty()}")
+                addrs.isEmpty() -> Probe("relay:$fam", null, "$host has no IPv${if (ip6) 6 else 4} address (${all.joinToString(", ")})")
+                else -> backend.probeRelay(RelaySpec(host, relay.port, addrs, key, listOf(route!!))).let { p ->
+                    if (p.ok) Probe("relay:$fam", true, "wss://$host via ${p.addr}: ${p.tls}, upgrade 101 in ${p.ms} ms")
+                    else Probe("relay:$fam", false, "${p.addr.ifBlank { addrs.joinToString(", ") }}: ${p.error.ifBlank { "HTTP ${p.code}" }}")
+                }
+            }
+        }
+        out += Probe("relay_key", key.isNotBlank(),
+            if (key.isBlank()) "no relay key: paste the server's key in Controls > Fallbacks" else "a relay key is stored (${key.length} characters, never shown)")
         return out
+    }
+
+    /** #1797 Direct UDP per peer: a fresh WireGuard handshake on that peer, when it is not behind the relay. */
+    private fun udpPerPeer(ctx: Context): List<Probe> {
+        val backend = WgState.backend(ctx)
+        val up = runCatching { backend.getState(WgState.tunnel) == Tunnel.State.UP }.getOrDefault(false)
+        val relayed = plan(ctx)?.takeIf { it.path == Path.RELAY }?.endpoints?.keys.orEmpty()
+        val st = if (up) runCatching { backend.getStatistics(WgState.tunnel) }.getOrNull() else null
+        val stale = MeshDecl.baked.handshakeStaleS * 1000
+        val now = System.currentTimeMillis()
+        return WgState.prefs(ctx).peers().map { p ->
+            val id = "udp:" + p.name.ifBlank { p.publicKey.take(8) }
+            val hs = runCatching { st?.peer(Key.fromBase64(p.publicKey))?.latestHandshakeEpochMillis() ?: 0L }.getOrDefault(0L)
+            when {
+                !up -> Probe(id, null, "the tunnel is down")
+                p.publicKey in relayed -> Probe(id, null, "${p.endpoint}: this peer runs on the relay, so UDP is not what carries it")
+                hs > 0 && now - hs <= stale -> Probe(id, true, "handshake at ${p.endpoint}, ${(now - hs) / 1000} s ago")
+                hs > 0 -> Probe(id, false, "last handshake at ${p.endpoint} ${(now - hs) / 1000} s ago (stale after ${stale / 1000} s)")
+                else -> Probe(id, false, "no handshake at ${p.endpoint}")
+            }
+        }
     }
 
     /** UDP is proven only by a WireGuard handshake on a peer that is NOT behind the relay. */

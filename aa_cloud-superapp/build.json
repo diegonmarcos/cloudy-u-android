@@ -8335,7 +8335,9 @@
       "latency_every_ticks": 5,
       "latency_timeout_ms": 1200,
       "log_cap": 1000,
-      "reach_hosts": ["authelia.mesh.diegonmarcos.com", "gitea.mesh.diegonmarcos.com", "c3-infra-api.mesh.diegonmarcos.com"],
+      "_doc_reach_hosts": "#1797 Vault, Chat, Mail and Drive join the three #1153 probes at their fleet-declared mesh names: Vault ac_cloud-account build.json mesh_dns (vaultwarden), Chat and Mail ac_cloud-c3/data/containers_declared.json dns (mattermost, webmail), Drive the same file (filebrowser). `reach_labels` names each on the page beside its exact hostname.",
+      "reach_hosts": ["authelia.mesh.diegonmarcos.com", "gitea.mesh.diegonmarcos.com", "c3-infra-api.mesh.diegonmarcos.com", "vaultwarden.mesh.diegonmarcos.com", "mattermost.mesh.diegonmarcos.com", "webmail.mesh.diegonmarcos.com", "filebrowser.mesh.diegonmarcos.com"],
+      "reach_labels": {"authelia.mesh.diegonmarcos.com": "Authelia", "gitea.mesh.diegonmarcos.com": "Gitea", "c3-infra-api.mesh.diegonmarcos.com": "C3 Infra API", "vaultwarden.mesh.diegonmarcos.com": "Vault", "mattermost.mesh.diegonmarcos.com": "Chat", "webmail.mesh.diegonmarcos.com": "Mail", "filebrowser.mesh.diegonmarcos.com": "Drive"},
       "_doc_meshes": "#1797 The meshes Status > Meshes and Cloud C3's mesh profiler (libs:fleetconfigs-xray C3MeshProbe) probe, one table row each. `cidr`/`cidr6` are the mesh subnets the carrying peer's allowed IPs must cover; `hub`/`hub6` take TCP :53 (hickory-dns on gcp-proxy for wg0, unbound-dns64 on oci-analytics for wg-public, both listen on TCP and UDP 53); `resolver` must answer `name` (a mesh-namespace name, never a public TLD) with an A record; `service_url` is an HTTPS service on that mesh (blank = the hub's resolver port is the mesh's service). Mesh-2 has no service of its own: its only member on 10.1.0.0/24 is the hub.",
       "meshes": [
         { "id": "wg0", "label": "Mesh-1", "cidr": "10.0.0.0/24", "cidr6": "fd0c:1d00::/64", "hub": "10.0.0.1", "hub6": "fd0c:1d00::1", "resolver": "10.0.0.1", "name": "c3-infra-api.mesh.diegonmarcos.com", "service_url": "https://c3-infra-api.mesh.diegonmarcos.com/" },

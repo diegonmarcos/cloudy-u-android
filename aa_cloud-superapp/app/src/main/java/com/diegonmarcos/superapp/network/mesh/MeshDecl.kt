@@ -71,6 +71,8 @@ object MeshDecl {
         val cloudflare: com.diegonmarcos.superapp.network.CloudflareWarp.Decl = com.diegonmarcos.superapp.network.CloudflareWarp.Decl.parse(null),
         /** #1153 The private mesh hosts the Reachability test probes (DNS, TCP :443, HTTPS). */
         val reachHosts: List<String> = emptyList(),
+        /** #1797 host -> the name Status shows beside it (Vault, Chat, Mail, Drive ...). */
+        val reachLabels: Map<String, String> = emptyMap(),
         /** #1797 The meshes the per-mesh table and Cloud C3's profiler probe, one row each. */
         val meshes: List<com.diegonmarcos.superapp.fleetxray.mesh.C3MeshProbe.Target> = emptyList(),
         /** #1797 The IP packet sizes the profiler's MTU probe sends through the tunnel. */
@@ -103,6 +105,7 @@ object MeshDecl {
             latencyTimeoutMs = o.optInt("latency_timeout_ms", 1200).coerceAtLeast(100),
             logCap = o.optInt("log_cap", 200).coerceAtLeast(10),
             reachHosts = o.optJSONArray("reach_hosts").strings(),
+            reachLabels = o.optJSONObject("reach_labels").let { l -> if (l == null) emptyMap() else l.keys().asSequence().associateWith { l.getString(it) } },
             meshes = o.optJSONArray("meshes").let { a ->
                 if (a == null) emptyList() else (0 until a.length()).map { i ->
                     val m = a.getJSONObject(i)

@@ -124,7 +124,9 @@ class MeshDeclTest {
     @Test fun `#1153 Reachability follows DNS and probes three declared mesh URLs`() {
         val rows = d.page("status")!!.rows
         assertEquals(rows.indexOf("dns") + 1, rows.indexOf("reachability"))
-        assertEquals(3, d.reachHosts.size)
+        // #1153 three, #1797 plus Vault, Chat, Mail and Drive, each labelled
+        assertEquals(7, d.reachHosts.size)
+        assertEquals(listOf("Authelia", "Gitea", "C3 Infra API", "Vault", "Chat", "Mail", "Drive"), d.reachHosts.map { d.reachLabels[it] })
         assertTrue(d.reachHosts.all { it.endsWith(".mesh.diegonmarcos.com") })
         assertTrue("an auth service is probed", d.reachHosts.any { it.startsWith("auth") })
         assertEquals("reach.run", d.control("reach_run")!!.engine)

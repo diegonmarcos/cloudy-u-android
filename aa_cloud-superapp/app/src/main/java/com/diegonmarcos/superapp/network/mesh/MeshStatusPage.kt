@@ -50,7 +50,7 @@ private fun StatusRow(id: String, store: MeshStore, s: MeshSnapshot) {
             MHeader(stringResource(R.string.mesh_row_reachability))
             if (store.reach.isEmpty()) MText(stringResource(R.string.mesh_reach_none, store.decl.reachHosts.size), Modifier.testTag(tag), size = MeshDensity.T_META, muted = true)
             store.reach.forEachIndexed { i, r ->
-                MText(r.host, Modifier.testTag(if (i == 0) tag else "mesh:reach:${r.host}"), size = MeshDensity.T_BODY, bold = true, mono = true)
+                MText(store.decl.reachLabels[r.host]?.let { "$it · ${r.host}" } ?: r.host, Modifier.testTag(if (i == 0) tag else "mesh:reach:${r.host}"), size = MeshDensity.T_BODY, bold = true, mono = true)
                 for (st in r.steps) KvRow(st.id, stringResource(probeVerdict(st.ok)) + " · ${st.ms} ms · " + st.detail, tag = "mesh:reach:${r.host}:${st.id}")
             }
             store.decl.page("status")?.control("reach_run")?.let { c ->

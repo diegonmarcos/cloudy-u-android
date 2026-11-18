@@ -208,8 +208,11 @@ class MeshStoreTest {
         s.poll(); s.run("reach.run")
         assertEquals(MeshDecl.baked.reachHosts, s.reach.map { it.host })
         for (r in s.reach) { assertEquals(listOf("dns", "tcp", "https"), r.steps.map { it.id }); assertTrue(r.ok); assertTrue(r.steps.all { it.ms >= 0 }) }
-        assertEquals(3, s.journal.list().count { it.kind == "reach" })
-        assertTrue(s.notice.contains("3 of 3 reachable"))
+        // #1797 seven declared URLs (the #1153 three plus Vault, Chat, Mail, Drive)
+        val n = MeshDecl.baked.reachHosts.size
+        assertEquals(7, n)
+        assertEquals(n, s.journal.list().count { it.kind == "reach" })
+        assertTrue(s.notice, s.notice.contains("$n of $n reachable"))
     }
 
     @Test fun `a failing step is shown failed and the later steps are skipped, logged as a warning`() {

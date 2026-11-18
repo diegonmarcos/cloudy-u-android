@@ -67,6 +67,8 @@ class MeshStore(
     var transport by mutableStateOf<TransportView?>(null)
     var hasRelayKey by mutableStateOf(false)
     var probes by mutableStateOf<List<ProbeLine>>(emptyList())
+    /** #1797 When the last Test fallbacks ran (epoch ms; 0 = not yet): the lights show it beside each step. */
+    var probesAtMs by mutableStateOf(0L)
     /** A declared profile id whose diff / QR is open. */
     var diffFor by mutableStateOf<String?>(null)
     var qrFor by mutableStateOf<String?>(null)
@@ -246,6 +248,7 @@ class MeshStore(
             perform("test fallbacks") {
                 val r = port.testFallbacks()
                 probes = r
+                probesAtMs = clock()
                 for (pr in r) journal.add(LogEvent(clock(), if (pr.ok == false) "warn" else "probe",
                     "${pr.id} ${when (pr.ok) { true -> "pass"; false -> "FAIL"; null -> "n/a" }}: ${pr.detail}"))
                 "${r.count { it.ok == true }} of ${r.size} pass" + r.filter { it.ok == false }.joinToString("") { " · ${it.id} fails" }
