@@ -1,7 +1,7 @@
 {
  "_doc": "Ratchet for cloud-android-publish-module-guard.py: hand-rolled push/login/release lines still outside 1_cicd/src/actions/publish-ghcr, per file. Only ever goes DOWN (migrate the site, then `python3 1_cicd/src/scripts/cloud-android-publish-module-guard.py --write-baseline`). New files are not allowed to appear here.",
  "files": {
-  "1_cicd/src/cicd/build-nixdroid-bootstrap.yml": 3,
+  "1_cicd/src/cicd/build-nixdroid-bootstrap.yml": 2,
   "1_cicd/src/cicd/ship-c3-morpheus.yml": 2,
   "1_cicd/src/cicd/ship-c3-watchdog.yml": 2,
   "1_cicd/src/cicd/ship-c3-watchtower.yml": 2,
@@ -41,7 +41,7 @@
   "1_cicd/src/cicd/ship-cloud-notes-wasm.yml": 3,
   "1_cicd/src/cicd/ship-cloud-notes.yml": 2,
   "1_cicd/src/cicd/ship-cloud-office-wasm.yml": 3,
-  "1_cicd/src/cicd/ship-cloud-office.yml": 5,
+  "1_cicd/src/cicd/ship-cloud-office.yml": 4,
   "1_cicd/src/cicd/ship-cloud-search-wasm.yml": 3,
   "1_cicd/src/cicd/ship-cloud-search.yml": 1,
   "1_cicd/src/cicd/ship-cloud-store-wasm.yml": 3,
@@ -56,9 +56,9 @@
   "1_cicd/src/cicd/ship-cloud-wallet-wasm.yml": 3,
   "1_cicd/src/cicd/ship-cloud-wallet.yml": 1,
   "1_cicd/src/cicd/ship-garmin-watchface.yml": 2,
-  "1_cicd/src/cicd/ship-termux-boot.yml": 7,
-  "1_cicd/src/scripts/cloud-android-publish-gate.sh": 1,
+  "1_cicd/src/cicd/ship-termux-boot.yml": 6,
   "1_cicd/src/scripts/cloud-android-release-latest-audit.sh": 4,
+  "1_cicd/src/scripts/cloud-android-release-swap.sh": 1,
   "1_cicd/src/scripts/cloud-chat-fork-engine.sh": 9,
   "1_cicd/src/scripts/cloud-code-engine.sh": 4,
   "1_cicd/src/scripts/cloud-dialer-fork-engine.sh": 9,
@@ -68,7 +68,7 @@
   "1_cicd/src/scripts/cloud-nix-on-droid-fork-engine.sh": 9,
   "1_cicd/src/scripts/cloud-notes-engine.sh": 4,
   "1_cicd/src/scripts/cloud-termux-fork-engine.sh": 9,
-  "1_cicd/src/templates/ship-source-prebuilt-engine.yml.in": 5,
+  "1_cicd/src/templates/ship-source-prebuilt-engine.yml.in": 4,
   "1_cicd/src/templates/ship-wasm.yml.in": 3
  }
 }

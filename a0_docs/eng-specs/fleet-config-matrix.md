@@ -27,7 +27,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-c3 | `com.diegonmarcos.cloudc3` | 13 | 0 | 100% |
 | cloud-calc | `com.diegonmarcos.cloudcalc` | 18 | 0 | 100% |
 | cloud-camera | `cld.camera` | 11 | 0 | 100% |
-| cloud-canvas | `com.diegonmarcos.cloudcanvas` | 7 | 0 | 100% |
+| cloud-canvas | `com.diegonmarcos.cloudcanvas` | 9 | 0 | 100% |
 | cloud-chat | `com.diegonmarcos.comms.chat` | 8 | 0 | 100% |
 | cloud-code | `com.diegonmarcos.code` | 12 | 5 | 70% |
 | cloud-contacts | `com.diegonmarcos.cloudcontacts` | 8 | 2 | 80% |
@@ -58,7 +58,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-biomed | `com.diegonmarcos.hardtechbiomed` | 5 | 0 | 100% |
-| **fleet** | | **448** | **57** | **88%** |
+| **fleet** | | **450** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -597,6 +597,8 @@ Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
+| `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `canvas_ai` | prefs | config | yes | #1782 Cloud Canvas Configs > AI: the model chosen per task (Draw Enhance, Convert to 3D, Music Enhance), the output quality and size and the per-run cost cap. Part of the app's settings, so it migrates. |
 | `canvas_ai_secret` | encrypted | secret | yes | #1782 Cloud Canvas Configs > AI: the app's own OpenRouter key (the per-app override of the fleet Account's key), in EncryptedSharedPreferences through SafeEncryptedPrefs. Masked on screen, never logged, migrates only through the vault. |
 | `canvas_draw` | prefs | config | yes | #1780 Cloud Canvas Draw: the recent colours of the colour picker (a comma list of ARGB hex values, most recent first). Part of the app's settings, so it migrates. |
@@ -616,7 +618,7 @@ Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-
 |---|---|---|
 | `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
-Coverage: 5 covered, 0 gaps.
+Coverage: 9 covered, 0 gaps.
 
 ## cloud-chat — `com.diegonmarcos.comms.chat`
 
