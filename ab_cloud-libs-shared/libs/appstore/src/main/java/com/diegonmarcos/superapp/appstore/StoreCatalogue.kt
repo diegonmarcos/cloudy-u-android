@@ -10,7 +10,7 @@ import org.json.JSONObject
 object StoreCatalogue {
     const val ASSET = "store-catalogue.json"
 
-    class Value(val id: String, val label: String)
+    class Value(val id: String, val label: String, val meaning: String = "")
     /** One filter row: [field] is the entry attribute it tests; its chips are "all" then [values]. */
     class Row(val id: String, val field: String, val label: String, val values: List<Value>)
     class Entry(val attrs: Map<String, String>) {
@@ -44,7 +44,7 @@ object StoreCatalogue {
             entries += Entry(o.keys().asSequence().associateWith { k -> o.optString(k) })
         } }
         val tiers = ArrayList<Value>()
-        root.optJSONArray("play_integrity_tiers")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let { tiers += Value(it.optString("id"), it.optString("label")) } }
+        root.optJSONArray("play_integrity_tiers")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let { tiers += Value(it.optString("id"), it.optString("label"), it.optString("meaning")) } }
         return Catalogue(rows, entries, root.optString("all_label").ifBlank { "All" }, tiers, problems)
     }
 }
