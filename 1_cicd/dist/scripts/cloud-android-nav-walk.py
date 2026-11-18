@@ -466,21 +466,28 @@ class Walk:
                 settle(0.8)
         return False
 
-    def pick(self, pid):
+    def pick(self, pid, trace=False):
         """Tap [pid]'s entry in the open dropdown, scrolling the dropdown; None when it is not listed (the dropdown lists the
         siblings and children of the page shown, so a page elsewhere in the tree is reached through its ancestors)."""
         nodes = dump()
         if nodes is None:
             return False
-        for _ in range(DROPDOWN_SWIPES):
+        for i in range(DROPDOWN_SWIPES):
             e = find(nodes, ENTRY + pid)
             if e is not None:
                 tap(e)
                 settle(1.6)
                 return True
+            was_open = find(nodes, DROPDOWN) is not None
             if not self.scroll_dropdown(nodes):
+                if trace and was_open and find(dump() or [], DROPDOWN) is None:
+                    # #1760 Cloud C3: the popup was gone when the pick gave up; the swipe that closed it is photographed (the frame before is
+                    # pick_<pid>_<i-1>), so the cause is on record instead of being reported as a missing entry
+                    self.evidence("pick_%s_%d_vanished" % (pid, i))
                 break  # the list did not move: that is all of it
             nodes = dump() or nodes
+            if trace and i < 16:
+                self.evidence("pick_%s_%d" % (pid, i))
         return False
 
     @staticmethod
@@ -531,7 +538,7 @@ class Walk:
         for _attempt in range(2):
             if self.section_root() is None:
                 return "the title dropdown did not open (to reach section %s)" % sid
-            if self.pick(sid):
+            if self.pick(sid, trace=_attempt == 1):
                 return None
             # #1760 the open dropdown as the pick left it (scrolled to its end): what it listed instead of the section
             self.evidence("%s_dropdown_%d" % (sid, _attempt))
