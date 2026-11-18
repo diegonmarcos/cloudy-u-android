@@ -294,6 +294,11 @@ public class LatinIME extends InputMethodService implements
                         // If we were able to reset the caches, then we can reload the keyboard.
                         // Otherwise, we'll do it when we can.
                         latinIme.mKeyboardSwitcher.reloadMainKeyboard();
+                        // the deferred reload resets the layout to letters: reopen the remembered panel (#1779)
+                        final EditorInfo resetEditorInfo = latinIme.getCurrentInputEditorInfo();
+                        if (resetEditorInfo != null)
+                            latinIme.mKeyboardSwitcher.restoreLastPanel(resetEditorInfo,
+                                    latinIme.getCurrentAutoCapsState(), latinIme.getCurrentRecapitalizeState());
                     }
                     break;
                 case MSG_WAIT_FOR_DICTIONARY_LOAD:

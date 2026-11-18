@@ -406,6 +406,12 @@ for e in $NP; do
     grep -q "route=$route" <<<"$R" || { bad "nav $id: $R"; continue; }
     sleep 3
     if ! dumpui "$OUT/nav-$id.xml"; then bad "no screen dump for $t/$id"; continue; fi
+    # the Gesture data page opens a notice dialog ("Gesture data gathering phase will end at ...") for the last weeks of the phase: dismiss it, the page behind it is what is checked
+    if grep -q 'text="Gesture data gathering phase' "$OUT/nav-$id.xml"; then
+        read -r OX OY < <(centre "$OUT/nav-$id.xml" "OK")
+        if [ -n "${OX:-}" ]; then adb shell input tap "$OX" "$OY"; sleep 2; dumpui "$OUT/nav-$id.xml" || true; fi
+        OX=""; OY=""
+    fi
     shot "nav-$(printf '%02d' $n)-$t-$id"; n=$((n + 1))
     python3 "$CHK" "$OUT/nav-$id.xml" "$t/$id" "$route" "$SIGS" "$LABELS" || FAILS=$((FAILS + 1))
     if adb logcat -d | grep -q "FATAL EXCEPTION"; then bad "a crash after opening $t/$id"; break; fi

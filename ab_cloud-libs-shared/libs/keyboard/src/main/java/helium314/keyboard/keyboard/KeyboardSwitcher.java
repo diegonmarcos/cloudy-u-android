@@ -790,6 +790,10 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
             @Nullable final RecapitalizeMode recapitalizeMode) {
         final LastPanelMemory.Panel panel = lastPanelMemory().panelToRestore(editorInfo.inputType);
         if (panel == null || panel == LastPanelMemory.Panel.LETTERS) return;
+        // a restore may run twice (input start, then again after the deferred keyboard reload): never toggle a panel that is already open
+        if (panel == LastPanelMemory.Panel.NUMPAD ? isShowingKeyboardId(KeyboardId.ELEMENT_NUMPAD)
+                : mViewState.isPanel(panel == LastPanelMemory.Panel.CLIPBOARD ? KeyboardViewState.PanelKind.CLIPBOARD
+                : panel == LastPanelMemory.Panel.HANDWRITE ? KeyboardViewState.PanelKind.HANDWRITE : KeyboardViewState.PanelKind.AUTOCOMPLETE)) return;
         final int code = panel == LastPanelMemory.Panel.NUMPAD ? KeyCode.NUMPAD
                 : panel == LastPanelMemory.Panel.CLIPBOARD ? KeyCode.CLIPBOARD
                 : panel == LastPanelMemory.Panel.HANDWRITE ? KeyCode.HANDWRITE : KeyCode.AUTOCOMPLETE;
