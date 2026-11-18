@@ -44,8 +44,15 @@ if ! grep -qF "$URL" "$OUT/typed.xml"; then   # a dropped keystroke: clear and t
   for i in $(seq 1 120); do adb shell input keyevent KEYCODE_DEL; done; adb shell input text "$URL"; sleep 2; dump typed; shoot torrent-2-typed
   grep -qF "$URL" "$OUT/typed.xml" || echo "::warning::the field does not read back the address exactly"
 fi
+# a small item from archive.org's live servers completes in seconds: record the screen from before the tap, and take a burst of
+# progress shots straight after it, so the progress is on record even when the 5 s watch loop below only sees "Completed"
+adb shell screenrecord --time-limit 40 /sdcard/torrent-add.mp4 >/dev/null 2>&1 & REC=$!
+sleep 1
 tap_text Add || { echo "::error::no Add button"; exit 1; }
-sleep 8; dump added; shoot torrent-3-added
+for k in 1 2 3 4 5 6 7 8; do shoot "torrent-3-progress-$k"; sleep 1; done
+# hide the keyboard (it stays up after typing; a later swipe would land on it and type into the field)
+adb shell dumpsys input_method 2>/dev/null | grep -q "mInputShown=true" && adb shell input keyevent KEYCODE_BACK || true
+sleep 2; dump added; shoot torrent-3-added
 grep -oE 'text="[^"]*(Added to Torrent downloads|Could not|cannot|not a valid)[^"]*"' "$OUT/added.xml" | head -3
 grep -q 'Added to Torrent downloads\|Already in Torrent downloads' "$OUT/added.xml" || { echo "::error::the add did not report Added"; adb logcat -d > "$OUT/logcat.txt"; exit 1; }
 # watch it download: a shot at the first progress, then every ~60 s, until Completed (1)
@@ -64,6 +71,7 @@ while [ $(( $(date +%s) - start )) -lt "$TIMEOUT" ]; do
 done
 adb logcat -d -s CloudTorrent:V > "$OUT/logcat-torrent.txt" 2>/dev/null || true
 if [ $done -ne 1 ]; then shoot torrent-timeout; echo "::error::not complete after ${TIMEOUT}s: $(tail -1 "$OUT/progress.log")"; adb logcat -d > "$OUT/logcat.txt"; exit 1; fi
+wait $REC 2>/dev/null || true; adb pull /sdcard/torrent-add.mp4 "$OUT/torrent-add.mp4" >/dev/null 2>&1 || true
 sleep 3; dump finished; shoot torrent-5-finished
 X=$(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1); W=${X%x*}; H=${X#*x}
 adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 400; sleep 2; dump finished-2; shoot torrent-6-finished-files
