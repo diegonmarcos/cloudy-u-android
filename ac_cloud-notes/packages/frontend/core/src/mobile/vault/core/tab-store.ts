@@ -166,7 +166,7 @@ export function parseTabs(raw: string | null, decl: Pick<VaultDecl, 'file_types'
       const h = handlerFor(decl, t.path);
       // a tab stored before the Raw | Edit | View switch has no mode: its view says which one it was in
       const offered = modesFor(decl, t.path);
-      const legacy: ViewMode | null = t.view === 'source' ? 'raw' : t.view === 'canvas' ? 'edit' : null;
+      const legacy: ViewMode | null = typeof t.view !== 'string' || !h.views.includes(t.view) ? null : t.view === 'source' ? 'raw' : t.view === 'canvas' ? 'edit' : null;
       const stored = (t as { mode?: unknown }).mode;
       const mode: ViewMode = VIEW_MODES.includes(stored as ViewMode) && offered.includes(stored as ViewMode)
         ? (stored as ViewMode)

@@ -153,5 +153,10 @@ export const VAULT_CSS = `
 .cnv-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--background-modifier-border);font-family:var(--font-interface);font-size:var(--font-ui-medium)}
 .cnv-setting-text{min-width:0}.cnv-setting-control{flex:none;max-width:55%;text-align:right;color:var(--text-muted)}
 .cnv-setting-control input[type=range]{width:160px;accent-color:var(--interactive-accent)}
+.cnv-edit-bar{display:flex;align-items:center;gap:2px;padding:4px 8px;overflow-x:auto;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);flex:none}
+.cnv-edit-bar .cnv-btn{min-width:34px;min-height:34px;padding:2px}
+.cnv-edit-select{min-height:34px;margin:0 4px;padding:0 8px;border:1px solid var(--background-modifier-border);border-radius:var(--radius-s);background:var(--background-primary);color:var(--text-normal);font:inherit;font-size:var(--font-ui-small)}
+.cnv-editable{outline:none;min-height:60vh;caret-color:var(--interactive-accent)}
+.cnv-editable .embed,.cnv-editable .math,.cnv-editable pre.mermaid{user-select:none;opacity:.85}
 .cnv-xml-tag{color:var(--color-purple)}.cnv-xml-attr{color:var(--color-orange)}.cnv-xml-val{color:var(--color-green)}
 `;

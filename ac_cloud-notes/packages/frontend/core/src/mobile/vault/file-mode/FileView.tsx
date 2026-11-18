@@ -1,4 +1,4 @@
-// FILE PANE (#1717): the text / markdown / data side of the main pane, in Raw (the source) or View (rendered, read only). A note gets its
+// FILE PANE (#1717): the text / markdown / data side of the main pane: Raw (the source), Edit (the WYSIWYG editor of a note or page) or View (rendered, read only). A note gets its
 // Properties card and the rendered text; data and text files get their viewer or the editor.
 // Its own pane, its own toolbar (the view switch of the file: Reading / Source, Tree / Source ...).
 // This module never draws a canvas board: it shares only the TabStore, the LinkResolver and the
@@ -6,6 +6,7 @@
 import { useState } from 'react';
 
 import type { VaultDecl } from '../decl-types';
+import { EditPane } from '../edit-mode/EditPane';
 import { handlerFor } from '../file-types';
 import { Icon } from '../icons';
 import type { Tab, VaultApi } from '../use-vault';
@@ -66,6 +67,10 @@ export const FileView = ({ tab, api, decl }: { tab: Tab; api: VaultApi; decl: Va
   const source = tab.view === 'source';
   const hiddenNote = tab.path.startsWith(decl.config_dir + '/');
   const pane = () => {
+    // Edit: the WYSIWYG editor of a note and of a page (the other file types do not offer it)
+    if (tab.mode === 'edit' && (handler.handler === 'markdown' || handler.handler === 'html')) {
+      return <EditPane tab={tab} api={api} decl={decl} kind={handler.handler} />;
+    }
     switch (handler.handler) {
       case 'markdown':
         return source

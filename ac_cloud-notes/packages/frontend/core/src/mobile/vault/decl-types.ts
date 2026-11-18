@@ -37,6 +37,8 @@ export interface CommandRow {
 
 export interface HtmlDecl {
   sandbox: string;
+  /** #1717 the frame Edit mode uses: allow-same-origin, never allow-scripts */
+  edit_sandbox: string;
   csp_default: Record<string, string[]>;
   cdn: {
     default: boolean;

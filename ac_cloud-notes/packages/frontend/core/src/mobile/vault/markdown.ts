@@ -172,13 +172,15 @@ function inline(src: string): string {
   s = s.replace(/(^|[^\\$\w])\$([^\s$][^$\n]*?[^\s$\\]|[^\s$])\$(?![\w$])/g, (_m, pre: string, t: string) =>
     pre + hold(`<span class="math" data-tex="${escapeHtml(t)}">${escapeHtml(t)}</span>`)
   );
-  s = s.replace(WIKI, (_m, bang: string, raw: string, alias?: string) => {
+  s = s.replace(WIKI, (m: string, bang: string, raw: string, alias?: string) => {
     const t = parseWikiTarget(raw);
     const label = alias?.trim() || (t.heading ? `${t.target} > ${t.heading}` : t.target);
     const attrs =
       `data-target="${escapeHtml(t.target)}"` +
       (t.heading ? ` data-heading="${escapeHtml(t.heading)}"` : '') +
-      (alias ? ` data-alias="${escapeHtml(alias.trim())}"` : '');
+      (alias ? ` data-alias="${escapeHtml(alias.trim())}"` : '') +
+      // the link as written, so the Edit mode writes it back unchanged ([[Note#^block|alias]] keeps its block id)
+      ` data-raw="${escapeHtml(m)}"`;
     if (bang) {
       const kind = IMAGE_EXT.test(t.target) ? 'image' : 'note';
       return hold(`<span class="embed" data-embed="${kind}" ${attrs}>${escapeHtml(label)}</span>`);
@@ -290,7 +292,7 @@ export function renderMarkdown(src: string, opts: RenderOptions = {}): string {
         const title = co[3]!.trim() || type.charAt(0).toUpperCase() + type.slice(1);
         const known = CALLOUT_TYPES.includes(type) ? type : 'note';
         out.push(
-          `<div class="callout" data-callout="${escapeHtml(known)}"><div class="callout-title">${inline(title)}</div>` +
+          `<div class="callout" data-callout="${escapeHtml(known)}" data-fold="${escapeHtml(co[2]!)}"><div class="callout-title">${inline(title)}</div>` +
             `<div class="callout-content">${renderMarkdown(q.slice(1).join('\n'), { stripFrontmatter: false })}</div></div>`
         );
       } else {

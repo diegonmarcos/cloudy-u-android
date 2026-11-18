@@ -128,7 +128,8 @@ test('Raw | Edit | View: what each file type offers, and the view each mode show
   assert.deepEqual(ts.modesFor(decl, 'board.canvas'), ['raw', 'edit', 'view']);
   assert.deepEqual(ts.modesFor(decl, 'a.json'), ['raw', 'view']);
   assert.deepEqual(ts.modesFor(decl, 'a.xml'), ['raw', 'view']);
-  assert.deepEqual(ts.modesFor(decl, 'a.md'), ['raw', 'view']); // Edit (WYSIWYG) is added with the editor
+  assert.deepEqual(ts.modesFor(decl, 'a.md'), ['raw', 'edit', 'view']);
+  assert.deepEqual(ts.modesFor(decl, 'a.html'), ['raw', 'edit', 'view']);
   assert.deepEqual(ts.modesFor(decl, 'a.txt'), ['raw']);
   assert.deepEqual(ts.modesFor(decl, 'a.png'), ['view']);
   assert.deepEqual(ts.modesFor(decl, 'a.pdf'), []);

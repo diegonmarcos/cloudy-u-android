@@ -32,8 +32,8 @@ test('tags: body, nested, frontmatter; not in code, not headings', () => {
 test('render: wikilink, embed, callout, task list, mermaid fence, math, table', () => {
   const html = md.renderMarkdown(home);
   assert.match(html, /<a class="internal-link"[^>]*data-target="Ideas"[^>]*data-heading="Backlog"[^>]*>the backlog<\/a>/);
-  assert.match(html, /<span class="embed" data-embed="note" data-target="diagram.mmd">/);
-  assert.match(html, /<div class="callout" data-callout="tip"><div class="callout-title">Remember<\/div>/);
+  assert.match(html, /<span class="embed" data-embed="note" data-target="diagram.mmd" data-raw="!\[\[diagram.mmd\]\]">/);
+  assert.match(html, /<div class="callout" data-callout="tip" data-fold=""><div class="callout-title">Remember<\/div>/);
   assert.match(html, /<li class="task-list-item" data-task="x"><input type="checkbox" disabled checked>/);
   assert.match(html, /<pre class="mermaid" data-mermaid="graph TD\n  A\[Home\] --&gt; B\[Ideas\]">/);
   assert.match(html, /<span class="math" data-tex="e\^\{i\\pi\}\+1=0">/);
