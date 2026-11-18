@@ -157,7 +157,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-17",
+        "pricing_as_of": "2026-11-18",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -182,8 +182,8 @@
               "fp8",
               "bf16"
             ],
-            "prompt": 0.1,
-            "completion": 0.3,
+            "prompt": 0.075,
+            "completion": 0.2,
             "note": "24B open weights, no category ranking; cheap European-language rewriting."
           },
           {
@@ -200,8 +200,7 @@
               "academia",
               "marketing",
               "roleplay",
-              "translation",
-              "trivia"
+              "translation"
             ],
             "prompt": 0.09,
             "completion": 0.3,
@@ -219,7 +218,7 @@
               "marketing/seo"
             ],
             "prompt": 0.08,
-            "completion": 0.35,
+            "completion": 0.45,
             "note": "Ranked for marketing/SEO only; light and predictable on short rewrites."
           },
           {
@@ -315,8 +314,7 @@
             "open": true,
             "quant": [
               "fp4",
-              "fp8",
-              "nvfp4"
+              "fp8"
             ],
             "trained_for": [
               "academia",

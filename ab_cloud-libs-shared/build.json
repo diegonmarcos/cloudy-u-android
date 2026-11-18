@@ -3139,7 +3139,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-11-17",
+        "pricing_as_of": "2026-11-18",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -3157,7 +3157,7 @@
             "open": true,
             "params_b": 24,
             "quant": ["fp8", "bf16"],
-            "prompt": 0.1, "completion": 0.3,
+            "prompt": 0.075, "completion": 0.2,
             "note": "24B open weights, no category ranking; cheap European-language rewriting."
           },
           {
@@ -3166,7 +3166,7 @@
             "open": true,
             "params_b": 26,
             "quant": ["bf16", "fp4", "fp8"],
-            "trained_for": ["academia", "marketing", "roleplay", "translation", "trivia"],
+            "trained_for": ["academia", "marketing", "roleplay", "translation"],
             "prompt": 0.09, "completion": 0.3,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
@@ -3177,7 +3177,7 @@
             "params_b": 27,
             "quant": ["fp8"],
             "trained_for": ["marketing/seo"],
-            "prompt": 0.08, "completion": 0.35,
+            "prompt": 0.08, "completion": 0.45,
             "note": "Ranked for marketing/SEO only; light and predictable on short rewrites."
           },
           {
@@ -3230,7 +3230,7 @@
             "id": "z-ai/glm-5.2",
             "name": "GLM 5.2",
             "open": true,
-            "quant": ["fp4", "fp8", "nvfp4"],
+            "quant": ["fp4", "fp8"],
             "trained_for": ["academia", "legal", "marketing/seo", "programming", "roleplay"],
             "prompt": 0.007, "completion": 6.8,
             "note": "Ranked in ten categories including translation; the formal-register GLM."
