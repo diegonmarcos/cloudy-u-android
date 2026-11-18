@@ -275,7 +275,7 @@ jobs:
           asset="dist/${{ steps.asset.outputs.name }}"
           sha256sum "$asset" | awk '{print $1}' > "$asset.sha256"
           if gh release view latest >/dev/null 2>&1; then
-            sh 1_cicd/dist/scripts/cloud-android-release-swap.sh latest "$asset" "$asset.sha256"   # #1783 P4
+            sh "$GITHUB_WORKSPACE/1_cicd/dist/scripts/cloud-android-release-swap.sh" latest "$asset" "$asset.sha256"   # #1783 P4
           else
             gh release create latest "$asset" "$asset.sha256" \
                  --title "Cloud constellation (rolling)" \
