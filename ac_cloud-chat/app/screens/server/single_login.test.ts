@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 import {
+    MESH_ALT_SERVER_URL,
     MESH_SERVER_URL,
     NEW_FIELDS,
     PREVIOUS_FIELDS,
@@ -14,8 +15,10 @@ import {
     choiceForUrl,
     defaultServerName,
     effectiveServerName,
+    alternativeFor,
     initialFlow,
     loginMode,
+    portOf,
     resolveServerUrl,
     runConnectAndLogin,
     validateCustomUrl,
@@ -29,7 +32,6 @@ const messages: FlowMessages = {
     urlInvalid: (r) => `invalid:${r}`,
     credentialsIncomplete: 'incomplete',
     plainHttp: 'plain-http',
-    tlsOk: 'tls-ok',
     mfaRequired: 'mfa',
     connectedOnly: 'connected-only',
 };
@@ -43,9 +45,21 @@ const okDeps = (): FlowDeps<C, L> & {calls: string[]} => {
     const calls: string[] = [];
     return {
         calls,
+        dns: jest.fn(async (h: string) => {
+            calls.push(`dns:${h}`);
+            return {ok: true as const, detail: '10.0.0.6'};
+        }),
+        tls: jest.fn(async (h: string, port: number) => {
+            calls.push(`tls:${h}:${port}`);
+            return {ok: true as const, detail: 'issuer CN=Fleet CA'};
+        }),
         reach: jest.fn(async (u: string) => {
             calls.push(`reach:${u}`);
-            return {url: u, viaHttp: false};
+            return {url: u};
+        }),
+        ping: jest.fn(async (u: string) => {
+            calls.push(`ping:${u}`);
+            return {ok: true as const, detail: 'OK'};
         }),
         version: jest.fn(async (u: string) => {
             calls.push(`version:${u}`);
@@ -65,17 +79,21 @@ const filled = (): FlowInput => ({
 });
 
 describe('server URL dropdown', () => {
-    it('should offer exactly mesh, public and custom, in that order', () => {
-        expect(SERVER_URL_OPTIONS.map((o) => o.id)).toEqual(['mesh', 'public', 'custom']);
-        expect(SERVER_URL_OPTIONS[0].url).toBe('https://chat.mesh.diegonmarcos.com');
-        expect(SERVER_URL_OPTIONS[1].url).toBe('https://chat.diegonmarcos.com');
-        expect(SERVER_URL_OPTIONS[2].url).toBeUndefined();
-        expect(SERVER_URL_OPTIONS[2].defaultLabel).toBe('Enter your custom URL');
+    it('should offer chat.mesh, cloud-chat.mesh, public and custom, in that order', () => {
+        expect(SERVER_URL_OPTIONS.map((o) => o.id)).toEqual(['mesh', 'mesh_alt', 'public', 'custom']);
+        expect(SERVER_URL_OPTIONS.map((o) => o.url)).toEqual([
+            'https://chat.mesh.diegonmarcos.com',
+            'https://cloud-chat.mesh.diegonmarcos.com',
+            'https://chat.diegonmarcos.com',
+            undefined,
+        ]);
+        expect(SERVER_URL_OPTIONS[3].defaultLabel).toBe('Enter your custom URL');
     });
 
     it('should resolve the presets without looking at the custom text', () => {
         expect(resolveServerUrl('mesh', 'garbage')).toEqual({ok: true, url: MESH_SERVER_URL});
         expect(resolveServerUrl('public', '')).toEqual({ok: true, url: PUBLIC_SERVER_URL});
+        expect(resolveServerUrl('mesh_alt', '')).toEqual({ok: true, url: MESH_ALT_SERVER_URL});
         expect(resolveServerUrl('custom', 'https://a.example.org/')).toEqual({ok: true, url: 'https://a.example.org'});
     });
 
@@ -83,6 +101,7 @@ describe('server URL dropdown', () => {
         expect(choiceForUrl(undefined)).toEqual({choice: 'mesh', customText: ''});
         expect(choiceForUrl('https://chat.diegonmarcos.com/')).toEqual({choice: 'public', customText: ''});
         expect(choiceForUrl('https://CHAT.mesh.diegonmarcos.com')).toEqual({choice: 'mesh', customText: ''});
+        expect(choiceForUrl('https://cloud-chat.mesh.diegonmarcos.com')).toEqual({choice: 'mesh_alt', customText: ''});
         expect(choiceForUrl('http://mattermost.mesh.diegonmarcos.com:8065')).toEqual({choice: 'custom', customText: 'http://mattermost.mesh.diegonmarcos.com:8065'});
     });
 });
@@ -156,13 +175,22 @@ describe('connect then login, in sequence', () => {
         return {outcome, states, last: states[states.length - 1]};
     };
 
-    it('should run url, reach, version, tls, login in that order and log in', async () => {
+    it('should run url, dns, tls, reach, ping, version, login in that order and log in', async () => {
         const deps = okDeps();
         const {outcome, states, last} = await run(filled(), deps);
         expect(outcome.kind).toBe('logged_in');
-        expect(deps.calls).toEqual(['reach:https://chat.example.com', 'version:https://chat.example.com', 'login:password:https://chat.example.com']);
+        expect(deps.calls).toEqual([
+            'dns:chat.example.com',
+            'tls:chat.example.com:443',
+            'reach:https://chat.example.com',
+            'ping:https://chat.example.com',
+            'version:https://chat.example.com',
+            'login:password:https://chat.example.com',
+        ]);
         expect(last.phase).toBe('done');
-        expect(STEP_ORDER.map((s) => last.steps[s].status)).toEqual(['ok', 'ok', 'ok', 'ok', 'ok']);
+        expect(STEP_ORDER).toEqual(['url', 'dns', 'tls', 'reach', 'ping', 'version', 'login']);
+        expect(STEP_ORDER.map((s) => last.steps[s].status)).toEqual(['ok', 'ok', 'ok', 'ok', 'ok', 'ok', 'ok']);
+        expect(last.steps.tls.detail).toBe('issuer CN=Fleet CA');
         expect(last.steps.version.detail).toBe('10.5.0');
 
         // progress per step: each step is seen running before it is seen ok
@@ -176,7 +204,7 @@ describe('connect then login, in sequence', () => {
         const input = {...filled(), credentials: {token: 'pat', loginId: 'alice', password: 'x', mfaToken: ''}};
         const {outcome} = await run(input, deps);
         expect(outcome.kind).toBe('logged_in');
-        expect(deps.calls[2]).toBe('login:token:https://chat.example.com');
+        expect(deps.calls[deps.calls.length - 1]).toBe('login:token:https://chat.example.com');
     });
 
     it('should stop after the server check when no credentials are typed (the login screen follows)', async () => {
@@ -187,11 +215,59 @@ describe('connect then login, in sequence', () => {
         expect(last.steps.login).toEqual({status: 'skipped', detail: 'connected-only'});
     });
 
-    it('should mark TLS as a warning when only plain HTTP answered', async () => {
+    it('should mark TLS as a warning, without a handshake, for a plain-http custom URL', async () => {
         const deps = okDeps();
-        deps.reach = jest.fn(async () => ({url: 'http://chat.example.com', viaHttp: true}));
-        const {last} = await run(filled(), deps);
+        const {outcome, last} = await run({...filled(), customText: 'http://chat.example.com:8065'}, deps);
+        expect(outcome.kind).toBe('logged_in');
+        expect(deps.tls).not.toHaveBeenCalled();
         expect(last.steps.tls).toEqual({status: 'warn', detail: 'plain-http'});
+    });
+
+    it('should show a probe the platform cannot measure as skipped, and go on', async () => {
+        const deps = okDeps();
+        deps.dns = jest.fn(async () => ({skipped: 'not measured here'}));
+        const {outcome, last} = await run(filled(), deps);
+        expect(outcome.kind).toBe('logged_in');
+        expect(last.steps.dns).toEqual({status: 'skipped', detail: 'not measured here'});
+    });
+
+    it('should fail at DNS, keeping the data and offering cloud-chat.mesh', async () => {
+        const deps = okDeps();
+        deps.dns = jest.fn(async () => ({error: 'Unable to resolve host chat.mesh.diegonmarcos.com'}));
+        const {outcome, last} = await run({...filled(), choice: 'mesh'}, deps);
+        expect(outcome).toEqual({kind: 'failed', step: 'dns', message: 'Unable to resolve host chat.mesh.diegonmarcos.com', alternative: 'mesh_alt'});
+        expect(deps.tls).not.toHaveBeenCalled();
+        expect(last.alternative).toBe('mesh_alt');
+        expect(STEP_ORDER.map((s) => last.steps[s].status)).toEqual(['ok', 'error', 'skipped', 'skipped', 'skipped', 'skipped', 'skipped']);
+    });
+
+    it('should fail at TLS trust naming the issuer, keeping the data and offering cloud-chat.mesh', async () => {
+        const deps = okDeps();
+        deps.tls = jest.fn(async () => ({error: 'Not trusted (issuer CN=Fleet Private CA): Trust anchor not found'}));
+        const {outcome, last} = await run({...filled(), choice: 'public'}, deps);
+        expect(outcome).toMatchObject({kind: 'failed', step: 'tls', alternative: 'mesh_alt'});
+        expect(last.steps.tls.detail).toContain('CN=Fleet Private CA');
+        expect(deps.reach).not.toHaveBeenCalled();
+    });
+
+    it('should not offer cloud-chat.mesh when cloud-chat.mesh itself fails', async () => {
+        const deps = okDeps();
+        deps.tls = jest.fn(async () => ({error: 'untrusted'}));
+        const {outcome, last} = await run({...filled(), choice: 'mesh_alt'}, deps);
+        expect(outcome).toEqual({kind: 'failed', step: 'tls', message: 'untrusted'});
+        expect(last.alternative).toBeUndefined();
+    });
+
+    it('should offer the alternative only at dns, tls and ping', () => {
+        expect(STEP_ORDER.filter((s) => alternativeFor('mesh', s))).toEqual(['dns', 'tls', 'ping']);
+        expect(STEP_ORDER.filter((s) => alternativeFor('mesh_alt', s))).toEqual([]);
+    });
+
+    it('should use the URL port for the TLS handshake', () => {
+        expect(portOf('https://chat.example.com')).toBe(443);
+        expect(portOf('https://chat.example.com:8443/x')).toBe(8443);
+        expect(portOf('http://chat.example.com')).toBe(80);
+        expect(portOf('https://[fd00::1]:9443')).toBe(9443);
     });
 
     it('should fail at the url step on an invalid custom URL, before any network call, keeping the data', async () => {
@@ -200,7 +276,7 @@ describe('connect then login, in sequence', () => {
         expect(outcome).toEqual({kind: 'failed', step: 'url', message: 'invalid:scheme'});
         expect(deps.calls).toEqual([]);
         expect(last.failedStep).toBe('url');
-        expect(STEP_ORDER.map((s) => last.steps[s].status)).toEqual(['error', 'skipped', 'skipped', 'skipped', 'skipped']);
+        expect(STEP_ORDER.map((s) => last.steps[s].status)).toEqual(['error', 'skipped', 'skipped', 'skipped', 'skipped', 'skipped', 'skipped']);
     });
 
     it('should fail at the login step on half-typed credentials, before any network call, keeping the data', async () => {
@@ -216,19 +292,28 @@ describe('connect then login, in sequence', () => {
         deps.reach = jest.fn(async () => ({error: 'unreachable'}));
         const {outcome, last} = await run(filled(), deps);
         expect(outcome).toEqual({kind: 'failed', step: 'reach', message: 'unreachable'});
-        expect(deps.version).not.toHaveBeenCalled();
+        expect(deps.ping).not.toHaveBeenCalled();
         expect(deps.login).not.toHaveBeenCalled();
-        expect(STEP_ORDER.map((s) => last.steps[s].status)).toEqual(['ok', 'error', 'skipped', 'skipped', 'skipped']);
+        expect(STEP_ORDER.map((s) => last.steps[s].status)).toEqual(['ok', 'ok', 'ok', 'error', 'skipped', 'skipped', 'skipped']);
         expect(last.steps.reach.detail).toBe('unreachable');
     });
 
-    it('should fail at version on a bad secret and flag it as a preauth error, keeping the data', async () => {
+    it('should fail at ping on a bad secret, flag it as a preauth error and offer cloud-chat.mesh, keeping the data', async () => {
         const deps = okDeps();
-        deps.version = jest.fn(async () => ({error: 'bad secret', isPreauthError: true}));
-        const {outcome, last} = await run(filled(), deps);
-        expect(outcome).toMatchObject({kind: 'failed', step: 'version', message: 'bad secret', isPreauthError: true});
+        deps.ping = jest.fn(async () => ({error: 'bad secret', isPreauthError: true}));
+        const {outcome, last} = await run({...filled(), choice: 'mesh'}, deps);
+        expect(outcome).toMatchObject({kind: 'failed', step: 'ping', message: 'bad secret', isPreauthError: true, alternative: 'mesh_alt'});
+        expect(deps.version).not.toHaveBeenCalled();
         expect(deps.login).not.toHaveBeenCalled();
-        expect(last.failedStep).toBe('version');
+        expect(last.failedStep).toBe('ping');
+    });
+
+    it('should fail at version on a missing DiagnosticId, without an alternative, keeping the data', async () => {
+        const deps = okDeps();
+        deps.version = jest.fn(async () => ({error: 'no diagnostic id'}));
+        const {outcome} = await run({...filled(), choice: 'mesh'}, deps);
+        expect(outcome).toEqual({kind: 'failed', step: 'version', message: 'no diagnostic id', serverUrl: MESH_SERVER_URL});
+        expect(deps.login).not.toHaveBeenCalled();
     });
 
     it('should fail at login on wrong credentials, after a passed server check, keeping the data', async () => {
@@ -236,7 +321,7 @@ describe('connect then login, in sequence', () => {
         deps.login = jest.fn(async () => ({error: 'wrong password'}));
         const {outcome, last} = await run(filled(), deps);
         expect(outcome).toMatchObject({kind: 'failed', step: 'login', message: 'wrong password', serverUrl: 'https://chat.example.com'});
-        expect(STEP_ORDER.map((s) => last.steps[s].status)).toEqual(['ok', 'ok', 'ok', 'ok', 'error']);
+        expect(STEP_ORDER.map((s) => last.steps[s].status)).toEqual(['ok', 'ok', 'ok', 'ok', 'ok', 'ok', 'error']);
     });
 
     it('should ask for the MFA code when the server requires it, keeping the data', async () => {
@@ -253,12 +338,12 @@ describe('connect then login, in sequence', () => {
         let cancel = false;
         deps.reach = jest.fn(async (u: string) => {
             cancel = true;
-            return {url: u, viaHttp: false};
+            return {url: u};
         });
         const input = filled();
         const outcome = await runConnectAndLogin(input, deps, messages, () => undefined, () => cancel);
         expect(outcome).toEqual({kind: 'cancelled'});
-        expect(deps.version).not.toHaveBeenCalled();
+        expect(deps.ping).not.toHaveBeenCalled();
         expect(input).toEqual(filled());
     });
 

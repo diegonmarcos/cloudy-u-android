@@ -63,6 +63,7 @@ type Props = {
     flow: FlowState;
     hasCredentials: boolean;
     onForgotPassword?: () => void;
+    onTryAlternative?: () => void;
 };
 
 const getStyleSheet = makeStyleSheetFromTheme((theme: Theme) => ({
@@ -275,18 +276,23 @@ const messages = defineMessages({
         id: 'login.forgot',
         defaultMessage: 'Forgot your password?',
     },
+    tryAlternative: {id: 'mobile.server_login.try_alternative', defaultMessage: 'Try cloud-chat.mesh'},
     step_url: {id: 'mobile.server_login.step.url', defaultMessage: 'Server URL'},
+    step_dns: {id: 'mobile.server_login.step.dns', defaultMessage: 'DNS'},
+    step_tls: {id: 'mobile.server_login.step.tls', defaultMessage: 'TLS trust'},
     step_reach: {id: 'mobile.server_login.step.reach', defaultMessage: 'Reachability'},
+    step_ping: {id: 'mobile.server_login.step.ping', defaultMessage: 'Ping'},
     step_version: {id: 'mobile.server_login.step.version', defaultMessage: 'Server version'},
-    step_tls: {id: 'mobile.server_login.step.tls', defaultMessage: 'TLS'},
     step_login: {id: 'mobile.server_login.step.login', defaultMessage: 'Login'},
 });
 
 const STEP_LABEL: Record<StepId, keyof typeof messages> = {
     url: 'step_url',
-    reach: 'step_reach',
-    version: 'step_version',
+    dns: 'step_dns',
     tls: 'step_tls',
+    reach: 'step_reach',
+    ping: 'step_ping',
+    version: 'step_version',
     login: 'step_login',
 };
 
@@ -476,6 +482,7 @@ const ServerForm = ({
     flow,
     hasCredentials,
     onForgotPassword,
+    onTryAlternative,
 }: Props) => {
     const {formatMessage} = useIntl();
     const displayNameRef = useRef<FloatingTextInputRef>(null);
@@ -796,6 +803,18 @@ const ServerForm = ({
                     flow={flow}
                     theme={theme}
                 />
+            )}
+            {Boolean(onTryAlternative) && (
+                <View style={styles.connectButtonContainer}>
+                    <Button
+                        onPress={onTryAlternative}
+                        testID='server_form.try_alternative.button'
+                        size='lg'
+                        emphasis='tertiary'
+                        theme={theme}
+                        text={formatMessage(messages.tryAlternative)}
+                    />
+                </View>
             )}
         </View>
     );

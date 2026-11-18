@@ -6,9 +6,10 @@
 // can clear a value the user typed (URL choice, name, secret, token, login, password, MFA code).
 
 export const MESH_SERVER_URL = 'https://chat.mesh.diegonmarcos.com';
+export const MESH_ALT_SERVER_URL = 'https://cloud-chat.mesh.diegonmarcos.com';
 export const PUBLIC_SERVER_URL = 'https://chat.diegonmarcos.com';
 
-export type UrlChoice = 'mesh' | 'public' | 'custom';
+export type UrlChoice = 'mesh' | 'mesh_alt' | 'public' | 'custom';
 
 export type UrlOption = {
     id: UrlChoice;
@@ -19,6 +20,7 @@ export type UrlOption = {
 
 export const SERVER_URL_OPTIONS: readonly UrlOption[] = [
     {id: 'mesh', url: MESH_SERVER_URL, labelId: 'mobile.server_url.option.mesh', defaultLabel: 'Private (mesh)'},
+    {id: 'mesh_alt', url: MESH_ALT_SERVER_URL, labelId: 'mobile.server_url.option.mesh_alt', defaultLabel: 'Private (mesh, cloud-chat)'},
     {id: 'public', url: PUBLIC_SERVER_URL, labelId: 'mobile.server_url.option.public', defaultLabel: 'Public'},
     {id: 'custom', labelId: 'mobile.server_url.option.custom', defaultLabel: 'Enter your custom URL'},
 ];
@@ -139,7 +141,7 @@ export function loginMode(c: Credentials): LoginMode {
 
 // ── the sequential state machine ───────────────────────────────────────────────────────────────
 
-export const STEP_ORDER = ['url', 'reach', 'version', 'tls', 'login'] as const;
+export const STEP_ORDER = ['url', 'dns', 'tls', 'reach', 'ping', 'version', 'login'] as const;
 export type StepId = typeof STEP_ORDER[number];
 export type StepStatus = 'idle' | 'running' | 'ok' | 'warn' | 'error' | 'skipped';
 export type StepState = {status: StepStatus; detail?: string};
@@ -149,13 +151,14 @@ export type FlowState = {
     phase: FlowPhase;
     steps: Record<StepId, StepState>;
     failedStep?: StepId;
+    alternative?: UrlChoice;
 };
 
 export type FlowEvent =
     | {type: 'reset'}
     | {type: 'start'}
     | {type: 'step'; step: StepId; status: StepStatus; detail?: string}
-    | {type: 'finish'; phase: Exclude<FlowPhase, 'idle' | 'running'>; failedStep?: StepId};
+    | {type: 'finish'; phase: Exclude<FlowPhase, 'idle' | 'running'>; failedStep?: StepId; alternative?: UrlChoice};
 
 export function initialFlow(): FlowState {
     const steps = {} as Record<StepId, StepState>;
@@ -174,29 +177,43 @@ export function flowReducer(state: FlowState, ev: FlowEvent): FlowState {
         case 'step':
             return {...state, steps: {...state.steps, [ev.step]: {status: ev.status, detail: ev.detail}}};
         case 'finish':
-            return {...state, phase: ev.phase, failedStep: ev.failedStep};
+            return {...state, phase: ev.phase, failedStep: ev.failedStep, alternative: ev.alternative};
         default:
             return state;
     }
+}
+
+/**
+ * The mesh entry that already answers today (orchestrator, #1804): when another entry fails at DNS, TLS
+ * trust or ping, the screen offers it, keeping every value. Not offered for a failure of that entry itself.
+ */
+export const FALLBACK_CHOICE: UrlChoice = 'mesh_alt';
+const OFFER_FALLBACK_AT: readonly StepId[] = ['dns', 'tls', 'ping'];
+
+export function alternativeFor(choice: UrlChoice, step: StepId): UrlChoice | undefined {
+    return choice !== FALLBACK_CHOICE && OFFER_FALLBACK_AT.includes(step) ? FALLBACK_CHOICE : undefined;
 }
 
 export type FlowMessages = {
     urlInvalid: (reason: UrlInvalidReason) => string;
     credentialsIncomplete: string;
     plainHttp: string;
-    tlsOk: string;
     mfaRequired: string;
     connectedOnly: string;
 };
 
-export type ReachResult = {url: string; viaHttp: boolean} | {error: string};
-export type VersionResult<C, L> =
-    | {config: C; license: L; version?: string}
-    | {error: string; isPreauthError?: boolean};
+/** A probe step: passed (with what it saw), failed (inline error), or not measurable on this platform. */
+export type ProbeResult = {ok: true; detail?: string} | {error: string} | {skipped: string};
+export type ReachResult = {url: string} | {error: string};
+export type PingResult = {ok: true; detail?: string} | {error: string; isPreauthError?: boolean};
+export type VersionResult<C, L> = {config: C; license: L; version?: string} | {error: string};
 export type LoginResult = {ok: true} | {mfaRequired: true} | {error: string};
 
 export type FlowDeps<C, L> = {
+    dns: (host: string) => Promise<ProbeResult>;
+    tls: (host: string, port: number) => Promise<ProbeResult>;
     reach: (url: string) => Promise<ReachResult>;
+    ping: (url: string) => Promise<PingResult>;
     version: (url: string) => Promise<VersionResult<C, L>>;
     login: (url: string, mode: 'token' | 'password', creds: Credentials, config: C, license: L) => Promise<LoginResult>;
 };
@@ -211,12 +228,21 @@ export type FlowOutcome<C, L> =
     | {kind: 'logged_in'; serverUrl: string; config: C; license: L}
     | {kind: 'connected'; serverUrl: string; config: C; license: L}
     | {kind: 'mfa_required'; serverUrl: string; config: C; license: L}
-    | {kind: 'failed'; step: StepId; message: string; isPreauthError?: boolean; serverUrl?: string; config?: C; license?: L}
+    | {kind: 'failed'; step: StepId; message: string; isPreauthError?: boolean; alternative?: UrlChoice; serverUrl?: string; config?: C; license?: L}
     | {kind: 'cancelled'};
 
+export function portOf(url: string): number {
+    const m = (/^([a-z]+):\/\/(\[[^\]]+\]|[^/:?#]+)(?::(\d+))?/i).exec(url);
+    if (m?.[3]) {
+        return Number(m[3]);
+    }
+    return m?.[1].toLowerCase() === 'http' ? 80 : 443;
+}
+
 /**
- * Connect, then log in, one step after the other; `emit` gets every state change (progress per step).
- * Read-only on `input`: the caller's form values are never touched, whatever fails.
+ * Connect, then log in, one step after the other: URL, DNS, TLS trust, reachability, ping, version, login.
+ * `emit` gets every state change (progress per step). Read-only on `input`: the caller's form values are
+ * never touched, whatever fails.
  */
 export async function runConnectAndLogin<C, L>(
     input: Readonly<FlowInput>,
@@ -230,17 +256,28 @@ export async function runConnectAndLogin<C, L>(
         state = flowReducer(state, ev);
         emit(state);
     };
-    const fail = (step: StepId, message: string, extra: Partial<Extract<FlowOutcome<C, L>, {kind: 'failed'}>> = {}): FlowOutcome<C, L> => {
+    type Failed = Extract<FlowOutcome<C, L>, {kind: 'failed'}>;
+    const fail = (step: StepId, message: string, extra: Partial<Failed> = {}): FlowOutcome<C, L> => {
+        const alternative = alternativeFor(input.choice, step);
         put({type: 'step', step, status: 'error', detail: message});
         for (const s of STEP_ORDER.slice(STEP_ORDER.indexOf(step) + 1)) {
             put({type: 'step', step: s, status: 'skipped'});
         }
-        put({type: 'finish', phase: 'failed', failedStep: step});
-        return {kind: 'failed', step, message, ...extra};
+        put({type: 'finish', phase: 'failed', failedStep: step, alternative});
+        return {kind: 'failed', step, message, ...(alternative ? {alternative} : {}), ...extra};
     };
     const cancelled = (): FlowOutcome<C, L> => {
         put({type: 'finish', phase: 'cancelled'});
         return {kind: 'cancelled'};
+    };
+    const probe = async (step: StepId, run: () => Promise<ProbeResult>): Promise<string | undefined> => {
+        put({type: 'step', step, status: 'running'});
+        const r = await run();
+        if ('error' in r) {
+            return r.error;
+        }
+        put({type: 'step', step, status: 'ok' in r ? 'ok' : 'skipped', detail: 'ok' in r ? r.detail : r.skipped});
+        return undefined;
     };
     emit(state);
 
@@ -250,18 +287,41 @@ export async function runConnectAndLogin<C, L>(
     if (!resolved.ok) {
         return fail('url', messages.urlInvalid(resolved.reason));
     }
+    put({type: 'step', step: 'url', status: 'ok', detail: resolved.url});
     const mode = loginMode(input.credentials);
     if (mode === 'incomplete') {
         // caught before any network call, so a half-typed login never costs a round trip
-        put({type: 'step', step: 'url', status: 'ok', detail: resolved.url});
-        for (const s of ['reach', 'version', 'tls'] as const) {
+        for (const s of STEP_ORDER.slice(1, -1)) {
             put({type: 'step', step: s, status: 'skipped'});
         }
         return fail('login', messages.credentialsIncomplete);
     }
-    put({type: 'step', step: 'url', status: 'ok', detail: resolved.url});
+    const host = hostOf(resolved.url);
+    const https = (/^https:/i).test(resolved.url);
 
-    // 2. reachability (HEAD, redirects followed; https first, http only as the upstream fallback)
+    // 2. DNS
+    const dnsErr = await probe('dns', () => deps.dns(host));
+    if (isCancelled()) {
+        return cancelled();
+    }
+    if (dnsErr) {
+        return fail('dns', dnsErr);
+    }
+
+    // 3. TLS trust (issuer named, trusted or not); a plain-http custom URL has none, said so as a warning
+    if (https) {
+        const tlsErr = await probe('tls', () => deps.tls(host, portOf(resolved.url)));
+        if (isCancelled()) {
+            return cancelled();
+        }
+        if (tlsErr) {
+            return fail('tls', tlsErr);
+        }
+    } else {
+        put({type: 'step', step: 'tls', status: 'warn', detail: messages.plainHttp});
+    }
+
+    // 4. reachability (HEAD, redirects followed)
     put({type: 'step', step: 'reach', status: 'running'});
     const reach = await deps.reach(resolved.url);
     if (isCancelled()) {
@@ -272,23 +332,29 @@ export async function runConnectAndLogin<C, L>(
     }
     put({type: 'step', step: 'reach', status: 'ok', detail: reach.url});
 
-    // 3. version (ping + client config: DiagnosticId, Version, licence)
+    // 5. ping (GET /api/v4/system/ping, the secret header when one is set)
+    put({type: 'step', step: 'ping', status: 'running'});
+    const ping = await deps.ping(reach.url);
+    if (isCancelled()) {
+        return cancelled();
+    }
+    if ('error' in ping) {
+        return fail('ping', ping.error, {isPreauthError: ping.isPreauthError, serverUrl: reach.url});
+    }
+    put({type: 'step', step: 'ping', status: 'ok', detail: ping.detail});
+
+    // 6. version (client config: DiagnosticId, Version, licence, device security checks)
     put({type: 'step', step: 'version', status: 'running'});
     const ver = await deps.version(reach.url);
     if (isCancelled()) {
         return cancelled();
     }
     if ('error' in ver) {
-        return fail('version', ver.error, {isPreauthError: ver.isPreauthError, serverUrl: reach.url});
+        return fail('version', ver.error, {serverUrl: reach.url});
     }
     put({type: 'step', step: 'version', status: 'ok', detail: ver.version});
 
-    // 4. TLS: what the reach step really negotiated, never a guess
-    put({type: 'step', step: 'tls', status: 'running'});
-    const https = (/^https:/i).test(reach.url) && !reach.viaHttp;
-    put({type: 'step', step: 'tls', status: https ? 'ok' : 'warn', detail: https ? messages.tlsOk : messages.plainHttp});
-
-    // 5. login
+    // 7. login
     if (mode === 'none') {
         put({type: 'step', step: 'login', status: 'skipped', detail: messages.connectedOnly});
         put({type: 'finish', phase: 'done'});
@@ -352,9 +418,11 @@ export const SINGLE_SCREEN_FIELDS: Record<string, string> = {
 export const NEW_FIELDS = [
     'server_form.server_url.dropdown',
     'server_form.server_url.option.mesh',
+    'server_form.server_url.option.mesh_alt',
     'server_form.server_url.option.public',
     'server_form.server_url.option.custom',
     'server_form.token.input',
     'server_form.mfa.input',
     'server_form.progress',
+    'server_form.try_alternative.button',
 ] as const;

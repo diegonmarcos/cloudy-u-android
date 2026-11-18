@@ -69,8 +69,8 @@ top
 
 # 01 the dropdown open: three entries
 tap server_form.server_url.dropdown; scene 01-dropdown
-for id in server_form.server_url.option.mesh server_form.server_url.option.public server_form.server_url.option.custom \
-  'chat.diegonmarcos.com' 'Enter your custom URL'; do has "$id" 01-dropdown; done
+for id in server_form.server_url.option.mesh server_form.server_url.option.mesh_alt server_form.server_url.option.public \
+  server_form.server_url.option.custom 'cloud-chat.mesh.diegonmarcos.com' 'chat.diegonmarcos.com' 'Enter your custom URL'; do has "$id" 01-dropdown; done
 
 # 02 filled: custom URL (a host that does not resolve), name, secret, login, password
 tap server_form.server_url.option.custom
@@ -87,15 +87,23 @@ run_and_wait 60
 top; scene 03-error-kept
 has 'chat.nowhere.invalid' 03-error-kept; has 'KeptName' 03-error-kept; has 'server_form.server_url.option.custom\|Enter your custom URL' 03-error-kept
 adb shell input swipe 540 1500 540 600 300; sleep 1; scene 03b-error-kept-below
-has 'kept.user' 03b-error-kept-below; has 'server_form.progress.reach.error' 03b-error-kept-below
+has 'kept.user' 03b-error-kept-below; has 'server_form.progress.dns.error' 03b-error-kept-below
 has 'server_form.progress.login.skipped' 03b-error-kept-below
+
+# 03c the mesh entry from a runner off the mesh: fails at DNS / TLS trust / ping, data kept, "Try cloud-chat.mesh" offered
+top; tap server_form.server_url.dropdown; tap server_form.server_url.option.mesh
+run_and_wait 60
+adb shell input swipe 540 1500 540 600 300; sleep 1; scene 03c-mesh-error-alternative
+has 'server_form.try_alternative.button' 03c-mesh-error-alternative; has 'kept.user' 03c-mesh-error-alternative
+has 'server_form.progress.[a-z]*.error' 03c-mesh-error-alternative
 
 # 04 the public server: the server check passes (reach, version, TLS), then the login with made-up credentials fails, data kept
 top; tap server_form.server_url.dropdown; tap server_form.server_url.option.public
 clear_in server_form.preauth_secret.input
 run_and_wait 90
 adb shell input swipe 540 1500 540 600 300; sleep 1; scene 04-server-ok-login-error
-for id in server_form.progress.reach.ok server_form.progress.version.ok server_form.progress.tls.ok server_form.progress.login.error kept.user; do has "$id" 04-server-ok-login-error; done
+for id in server_form.progress.dns.ok server_form.progress.tls.ok server_form.progress.reach.ok server_form.progress.ping.ok \
+  server_form.progress.version.ok server_form.progress.login.error kept.user; do has "$id" 04-server-ok-login-error; done
 top; scene 04b-top; has 'KeptName' 04b-top
 
 # 05 success: the same public server with no credentials typed → connected, the existing login screen opens

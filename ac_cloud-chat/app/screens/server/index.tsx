@@ -4,7 +4,7 @@
 import {useManagedConfig} from '@mattermost/react-native-emm';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {defineMessages, useIntl} from 'react-intl';
-import {Alert, BackHandler, View} from 'react-native';
+import {Alert, BackHandler, NativeModules, Platform, View} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Navigation} from 'react-native-navigation';
 import Animated from 'react-native-reanimated';
@@ -40,6 +40,7 @@ import ServerHeader from './header';
 import {
     choiceForUrl,
     effectiveServerName,
+    FALLBACK_CHOICE,
     flowReducer,
     initialFlow,
     loginMode,
@@ -71,8 +72,13 @@ const flowMessages = defineMessages({
     urlSpaces: {id: 'mobile.server_login.url_spaces', defaultMessage: 'The URL cannot contain spaces'},
     urlHost: {id: 'mobile.server_login.url_host', defaultMessage: 'The URL needs a valid host name, e.g. https://chat.example.com'},
     credentialsIncomplete: {id: 'mobile.server_login.credentials_incomplete', defaultMessage: 'Enter both login and password, or a token'},
-    plainHttp: {id: 'mobile.server_login.plain_http', defaultMessage: 'HTTPS failed; connected over plain HTTP (no TLS)'},
-    tlsOk: {id: 'mobile.server_login.tls_ok', defaultMessage: 'HTTPS, certificate accepted'},
+    plainHttp: {id: 'mobile.server_login.plain_http', defaultMessage: 'Plain HTTP URL: no TLS'},
+    tlsTrusted: {id: 'mobile.server_login.tls_trusted', defaultMessage: 'Trusted, issuer {issuer}'},
+    tlsUntrusted: {id: 'mobile.server_login.tls_untrusted', defaultMessage: 'Certificate not trusted (issuer {issuer}): {error}'},
+    tlsFailed: {id: 'mobile.server_login.tls_failed', defaultMessage: 'TLS handshake failed: {error}'},
+    dnsFailed: {id: 'mobile.server_login.dns_failed', defaultMessage: 'DNS: {host} does not resolve ({error})'},
+    notMeasured: {id: 'mobile.server_login.not_measured', defaultMessage: 'Not measured on this platform'},
+    pingOk: {id: 'mobile.server_login.ping_ok', defaultMessage: '/api/v4/system/ping answered'},
     mfaRequired: {id: 'mobile.server_login.mfa_required', defaultMessage: 'This server requires an MFA code: enter it and run again'},
     connectedOnly: {id: 'mobile.server_login.connected_only', defaultMessage: 'No credentials typed: choose a login option next'},
     invalidCredentials: {id: 'login.invalid_credentials', defaultMessage: 'The email and password combination is incorrect'},
@@ -88,6 +94,13 @@ const URL_REASON: Record<UrlInvalidReason, keyof typeof flowMessages> = {
 const securityMessages = defineMessages({
     blocked: {id: 'mobile.server_login.security_blocked', defaultMessage: 'Stopped by this device\'s security check (jailbreak or biometrics)'},
 });
+
+// Android native module (ServerProbeModule.kt): the DNS and TLS-trust steps of the server check
+type ServerProbeNative = {
+    resolveHost: (host: string) => Promise<{ok: boolean; addresses?: string; error?: string}>;
+    checkTls: (host: string, port: number) => Promise<{trusted: boolean; issuer?: string; subject?: string; error?: string}>;
+};
+const serverProbe = Platform.OS === 'android' ? (NativeModules as {CloudServerProbe?: ServerProbeNative}).CloudServerProbe : undefined;
 
 const isMFAError = (loginError: unknown): boolean => {
     const serverError = getServerError(loginError);
@@ -401,7 +414,6 @@ const Server = ({
         urlInvalid: (reason) => formatMessage(flowMessages[URL_REASON[reason]]),
         credentialsIncomplete: formatMessage(flowMessages.credentialsIncomplete),
         plainHttp: formatMessage(flowMessages.plainHttp),
-        tlsOk: formatMessage(flowMessages.tlsOk),
         mfaRequired: formatMessage(flowMessages.mfaRequired),
         connectedOnly: formatMessage(flowMessages.connectedOnly),
     };
@@ -409,25 +421,37 @@ const Server = ({
     // The steps the flow runs, built from the checks the previous Connect button ran (same order, same
     // messages), plus the login the previous login screen ran.
     const flowDeps: FlowDeps<ClientConfig, ClientLicense> = {
-        reach: async (target) => {
-            const secret = preauthSecret.trim() || undefined;
-            const first = await getServerUrlAfterRedirect(target, false, secret);
-            if (first.url) {
-                return {url: first.url, viaHttp: false};
+        dns: async (host) => {
+            if (!serverProbe) {
+                return {skipped: formatMessage(flowMessages.notMeasured)};
             }
-            const second = await getServerUrlAfterRedirect(target.replace(/^https:/i, 'http:'), true, secret);
-            if (second.url) {
-                return {url: second.url, viaHttp: true};
-            }
-            return {error: getErrorMessage(first.error, intl)};
+            const r = await serverProbe.resolveHost(host);
+            return r.ok ? {ok: true, detail: r.addresses} : {error: formatMessage(flowMessages.dnsFailed, {host, error: r.error ?? ''})};
         },
-        version: async (target) => {
-            const secret = preauthSecret.trim() || undefined;
+        tls: async (host, port) => {
+            if (!serverProbe) {
+                return {skipped: formatMessage(flowMessages.notMeasured)};
+            }
+            const r = await serverProbe.checkTls(host, port);
+            if (r.trusted) {
+                return {ok: true, detail: formatMessage(flowMessages.tlsTrusted, {issuer: r.issuer ?? '?'})};
+            }
+            if (r.issuer) {
+                return {error: formatMessage(flowMessages.tlsUntrusted, {issuer: r.issuer, error: r.error ?? ''})};
+            }
+            return {error: formatMessage(flowMessages.tlsFailed, {error: r.error ?? ''})};
+        },
+        reach: async (target) => {
+            // the TLS step already judged https; a plain-http custom URL stays plain http
+            const head = await getServerUrlAfterRedirect(target, (/^http:/i).test(target), preauthSecret.trim() || undefined);
+            return head.url ? {url: head.url} : {error: getErrorMessage(head.error, intl)};
+        },
+        ping: async (target) => {
             const result = await doPing(
                 target,
                 true, // verifyPushProxy
                 managedConfig?.timeout ? parseInt(managedConfig?.timeout, 10) : undefined, // timeoutInterval
-                secret,
+                preauthSecret.trim() || undefined,
             );
             if (result.error) {
                 if (result.isPreauthError) {
@@ -441,8 +465,10 @@ const Server = ({
                 }
                 return {error: getErrorMessage(result.error, intl)};
             }
-
             canReceiveNotifications(target, result.canReceiveNotifications as string, intl);
+            return {ok: true, detail: formatMessage(flowMessages.pingOk)};
+        },
+        version: async (target) => {
             const data = await fetchConfigAndLicense(target, true);
             if (data.error) {
                 return {error: getErrorMessage(data.error, intl)};
@@ -548,6 +574,14 @@ const Server = ({
         }
     };
 
+    // #1804: an entry failed at DNS, TLS trust or ping → one tap switches to cloud-chat.mesh and runs again, every value kept
+    const onTryAlternative = () => {
+        setUrlChoice(FALLBACK_CHOICE);
+        setUrlError(undefined);
+        setPreauthSecretError(undefined);
+        connectAndLogin(FALLBACK_CHOICE, url);
+    };
+
     const forgotPasswordAllowed = Boolean(checkedConfig) &&
         (checkedConfig?.config.EnableSignInWithEmail === 'true' || checkedConfig?.config.EnableSignInWithUsername === 'true') &&
         checkedConfig?.config.PasswordEnableForgotLink !== 'false';
@@ -626,6 +660,7 @@ const Server = ({
                         flow={flow}
                         hasCredentials={hasCredentials}
                         onForgotPassword={forgotPasswordAllowed ? onForgotPassword : undefined}
+                        onTryAlternative={flow.phase === 'failed' && flow.alternative && !connecting ? onTryAlternative : undefined}
                     />
                     <View style={styles.appVersionContainer}>
                         <AppVersion
