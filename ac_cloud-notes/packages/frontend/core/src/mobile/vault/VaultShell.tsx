@@ -9,7 +9,7 @@
 // plus the tab strip and the ribbon on wide screens, the status bar, the command palette and quick
 // switcher, the graph and Configs > Vault. The commands, hotkeys, panes and file-type handlers all
 // come from build.json::vault.
-import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CanvasMode } from './canvas-mode/CanvasMode';
 import { collapseAll } from './core/file-index';
@@ -19,7 +19,9 @@ import { FILE_VIEW_LABEL, FileView } from './file-mode/FileView';
 import { baseName, handlerFor, stem } from './file-types';
 import { Icon } from './icons';
 import { wordCount } from './markdown';
-import { BacklinksPane, ConfigsPane, OutgoingPane, OutlinePane, TagsPane } from './panes';
+import { defaultUiPrefs, parseUiPrefs, serializeUiPrefs, type UiPrefs, uiCssVars } from './core/ui-prefs';
+import { BacklinksPane, OutgoingPane, OutlinePane, TagsPane } from './panes';
+import { SettingsPane } from './settings/SettingsPane';
 import { Palette } from './palette';
 import { Menu, type MenuItem } from './sidebar/Menu';
 import { Sidebar } from './sidebar/Sidebar';
@@ -72,6 +74,15 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
   const [menu, setMenu] = useState<'more' | 'main' | 'new' | null>(null);
   const [switcher, setSwitcher] = useState(false);
   const [followTheme, setFollowTheme] = useState(() => flag(THEME_KEY));
+  const uiDecl = decl.configs.ui;
+  const [uiPrefs, setUiPrefs] = useState<UiPrefs>(() => {
+    try { return parseUiPrefs(localStorage.getItem(uiDecl.storage_key), uiDecl); } catch { return defaultUiPrefs(uiDecl); }
+  });
+  const changeUi = (next: UiPrefs) => {
+    setUiPrefs(next);
+    try { localStorage.setItem(uiDecl.storage_key, serializeUiPrefs(next)); } catch { /* the setting still applies for this session */ }
+  };
+  const uiVars = useMemo(() => uiCssVars(uiPrefs, uiDecl), [uiPrefs, uiDecl]);
   const [appBars, setAppBars] = useState(() => flag(APPBARS_KEY));
 
   useEffect(() => {
@@ -199,7 +210,9 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
         ? <VaultGraph index={api.index} active={api.active} onOpen={openPath} />
         : <div className="cnv-pane cnv-dim">{api.indexing ? `Indexing ${api.indexing.parsed} / ${api.indexing.total}` : 'No index yet.'}</div>;
     }
-    if (special === 'configs') return <ConfigsPane config={api.config} decl={decl} vaultName={api.vault?.name ?? ''} />;
+    if (special === 'configs') {
+      return <SettingsPane api={api} decl={decl} ui={uiPrefs} onUi={changeUi} followTheme={followTheme} onToggleTheme={() => setFollowTheme(v => { setFlag(THEME_KEY, !v); return !v; })} />;
+    }
     if (!tab) {
       return (
         <div className="cnv-pane cnv-dim" data-testid="vault-empty">
@@ -288,7 +301,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
   const tabLabel = (path: string) => baseName(path);
 
   return (
-    <div className="cnv-root" ref={rootRef} data-testid="vault-shell" data-mode={mode ?? 'none'} {...(followTheme ? {} : { 'data-theme': 'dark' })}>
+    <div className="cnv-root" ref={rootRef} data-testid="vault-shell" data-mode={mode ?? 'none'} style={uiVars as CSSProperties} {...(followTheme ? {} : { 'data-theme': 'dark' })}>
       <div className="cnv-body" style={{ flexDirection: 'row' }}>
         {!narrow && <nav className="cnv-ribbon" aria-label="Ribbon" data-testid="ribbon">{ribbonButtons(false)}</nav>}
         <div style={{ display: 'flex', flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>

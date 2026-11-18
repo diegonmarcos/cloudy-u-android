@@ -2,6 +2,7 @@
 // are only its shape so the pure modules can take it as an argument.
 
 import type { SourcesDecl } from './core/vault-source';
+import type { UiDecl } from './core/ui-prefs';
 
 export type PluginStatus = 'builtin' | 'planned' | 'na';
 
@@ -74,6 +75,8 @@ export interface VaultDecl {
     /** #1717 the two view modes of the main pane */
     modes: { id: 'file' | 'canvas'; label: string; icon: string }[];
   };
+  /** #1717 the Configs screen: its page strip and the UI page's choices */
+  configs: { default_page: string; pages: { id: string; label: string; icon: string }[]; ui: UiDecl };
   commands: CommandRow[];
   file_types: FileTypeRow[];
   html: HtmlDecl;

@@ -2,7 +2,7 @@
 // Obsidian default-theme variable (component/src/theme/obsidian.gen.css, generated from data/obsidian-theme.json),
 // so the vault wears the app theme in light and dark. No literal colours here (test/test-obsidian-theme.sh).
 export const VAULT_CSS = `
-.cnv-root{display:flex;flex-direction:column;position:fixed;inset:0;z-index:1;min-height:0;font-size:var(--font-ui-medium);font-family:var(--font-interface);color:var(--text-normal);background:var(--background-primary);overflow:hidden}
+.cnv-root{zoom:var(--cnv-scale,1);display:flex;flex-direction:column;position:fixed;inset:0;z-index:1;min-height:0;font-size:var(--font-ui-medium);font-family:var(--font-interface);color:var(--text-normal);background:var(--background-primary);overflow:hidden}
 .cnv-body{display:flex;flex:1;min-height:0;position:relative}
 .cnv-ribbon{display:flex;flex-direction:column;gap:2px;padding:6px 4px;border-right:1px solid var(--background-modifier-border);background:var(--background-secondary);flex:none}
 .cnv-ribbon.cnv-narrow{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--background-modifier-border)}
@@ -130,4 +130,10 @@ export const VAULT_CSS = `
 .cnv-sheet-box{width:min(100%,640px);max-height:75%;display:flex;flex-direction:column;border-radius:var(--radius-l) var(--radius-l) 0 0;background:var(--background-primary);border:1px solid var(--background-modifier-border);overflow:hidden}
 .cnv-sheet-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-weight:700;border-bottom:1px solid var(--background-modifier-border)}
 .cnv-status.cnv-status-inline{border-top:0;background:transparent;padding:6px 8px;flex-wrap:wrap;white-space:normal}
+.cnv-pagetabs{display:flex;gap:2px;padding:6px 8px;overflow-x:auto;border-bottom:1px solid var(--background-modifier-border);background:var(--background-secondary);flex:none}
+.cnv-pagetab{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:4px 12px;border:0;border-radius:999px;background:transparent;color:var(--text-muted);font:inherit;font-size:var(--font-ui-small);white-space:nowrap;cursor:pointer}
+.cnv-pagetab[aria-selected=true]{background:var(--interactive-accent);color:var(--text-on-accent)}
+.cnv-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--background-modifier-border);font-family:var(--font-interface);font-size:var(--font-ui-medium)}
+.cnv-setting-text{min-width:0}.cnv-setting-control{flex:none;max-width:55%;text-align:right;color:var(--text-muted)}
+.cnv-setting-control input[type=range]{width:160px;accent-color:var(--interactive-accent)}
 `;

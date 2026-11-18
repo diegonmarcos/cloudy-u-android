@@ -769,6 +769,28 @@
         ]
       }
     },
+    "configs": {
+      "_doc": "#1717 the Configs screen of the vault: a strip of pages (the shared fleet Configs pages General, Perms and About, then UI, then Vault = what <vault>/.obsidian says). ui: the appearance settings the UI page offers, persisted under storage_key; font families are CSS stacks, size is the base text size in px, scale is the overall UI scale in percent.",
+      "default_page": "general",
+      "pages": [
+        {"id": "general", "label": "General", "icon": "gear"},
+        {"id": "perms", "label": "Perms", "icon": "smartphone"},
+        {"id": "about", "label": "About", "icon": "info"},
+        {"id": "ui", "label": "UI", "icon": "edit"},
+        {"id": "vault", "label": "Vault", "icon": "vault"}
+      ],
+      "ui": {
+        "storage_key": "cloud-notes:vault:ui-prefs",
+        "font_families": [
+          {"id": "system", "label": "System default", "stack": "ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Inter, \"Helvetica Neue\", Arial, sans-serif"},
+          {"id": "serif", "label": "Serif", "stack": "ui-serif, Georgia, Cambria, \"Times New Roman\", Times, serif"},
+          {"id": "mono", "label": "Monospace", "stack": "ui-monospace, SFMono-Regular, Menlo, Consolas, \"Liberation Mono\", monospace"},
+          {"id": "rounded", "label": "Rounded", "stack": "ui-rounded, \"SF Pro Rounded\", Nunito, system-ui, sans-serif"}
+        ],
+        "font_size": {"min": 12, "max": 24, "step": 1, "default": 16},
+        "scale": {"min": 80, "max": 150, "step": 5, "default": 100}
+      }
+    },
     "plugins_doc": "Obsidian plugin to Cloud Notes feature. status: builtin = delivered in the app now, planned = on the roadmap (the plugin is listed as not yet supported), na = not applicable (hosted service, desktop-only, or owned by another fleet app). The default set is the union of the core and community plugins enabled in cloud-me-pvt-notes and git-repos-master; test/test-vault.sh fails when a plugin enabled in either vault is missing here.",
     "plugins": [
       {
