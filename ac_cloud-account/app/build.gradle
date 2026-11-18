@@ -24,18 +24,28 @@ def buildJson  = new groovy.json.JsonSlurper().parse(file('../build.json'))
 // comparable: ~3.35M in Sep 2026, far above any version code in the field and
 // inside the 2^31 limit for centuries. COMMS_BUILD_TIMESTAMP is honoured when
 // CI provides one so the code matches the release tag; otherwise build time.
-def codeFinal = { ->
-    def base  = java.time.LocalDateTime.of(2026, 1, 1, 0, 0)
-    def built = java.time.LocalDateTime.now(java.time.ZoneOffset.UTC)
-    def stamp = System.getenv('COMMS_BUILD_TIMESTAMP')
+// #1783 P5: deterministic version. The SOURCE commit time (FLEET_SOURCE_TIME 'yyyyMMdd.HHmmss' UTC, else COMMS_BUILD_TIMESTAMP,
+// else the HEAD commit's committer time, else the wall clock for a local build): the same commit always builds the same code,
+// floored at 3462240 (1_cicd/src/data/version-floor.json, above every code published before) so an installed app is never offered a lower one.
+def fleetSourceTime = { ->
+    def fmt = java.time.format.DateTimeFormatter.ofPattern('yyyyMMdd.HHmmss')
+    def stamp = System.getenv('FLEET_SOURCE_TIME') ?: System.getenv('COMMS_BUILD_TIMESTAMP')
     if (stamp) {
-        try {
-            built = java.time.LocalDateTime.parse(stamp,
-                java.time.format.DateTimeFormatter.ofPattern('yyyyMMdd.HHmmss'))
-        } catch (ignored) { }
+        try { return java.time.LocalDateTime.parse(stamp, fmt) } catch (ignored) { }
     }
-    long mins = java.time.Duration.between(base, built).toMinutes()
-    return mins > 0 ? (int) (3000000L + mins) : 3000000
+    try {
+        def ct = providers.exec {
+            commandLine 'git', 'show', '-s', '--format=%ct', 'HEAD'
+            ignoreExitValue = true
+        }.standardOutput.asText.get().trim()
+        if (ct) return java.time.LocalDateTime.ofEpochSecond(Long.parseLong(ct), 0, java.time.ZoneOffset.UTC)
+    } catch (ignored) { }
+    return java.time.LocalDateTime.now(java.time.ZoneOffset.UTC)
+}()
+def codeFinal = { ->
+    def base = java.time.LocalDateTime.of(2026, 1, 1, 0, 0)
+    long mins = java.time.Duration.between(base, fleetSourceTime).toMinutes()
+    return (int) Math.max(3462240L, 3000000L + mins)
 }()
 def shortSha = (System.getenv('GITHUB_SHA')
                 ?: providers.exec {
@@ -45,7 +55,7 @@ def shortSha = (System.getenv('GITHUB_SHA')
                 .take(8)
 def buildTimestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss 'UTC'").with {
     setTimeZone(java.util.TimeZone.getTimeZone('UTC'))
-    format(new java.util.Date())
+    format(java.util.Date.from(fleetSourceTime.toInstant(java.time.ZoneOffset.UTC)))
 }
 def logSinkUrl    = (buildJson.diagnostics?.log_sink_url    ?: '')
 def logSinkStream = (buildJson.diagnostics?.log_sink_stream ?: 'cloud-account')
@@ -182,7 +192,7 @@ android {
         buildConfigField "String", "UI_STACK_LANGUAGES_JSON_B64",  "\"${stackLanguagesB64}\""
         buildConfigField "String", "UI_STACK_FRAMEWORKS_JSON_B64", "\"${stackFrameworksB64}\""
         buildConfigField "String", "UI_STACK_FOLDER_TREE_B64",     "\"${stackTreeB64}\""
-        buildConfigField "long",   "STACK_GRADLE_CONFIG_MS",  "${System.currentTimeMillis() - gradleScriptStartMs}L"
+        buildConfigField "long",   "STACK_GRADLE_CONFIG_MS",  "0L"
         buildConfigField "long",   "STACK_BUILD_AVG_SECS",    "${buildAvgSecs}L"
         buildConfigField "long",   "STACK_BUILD_LAST_SECS",   "${buildLastSecs}L"
         buildConfigField "int",    "STACK_BUILD_SAMPLE",      "${buildSampleSize}"

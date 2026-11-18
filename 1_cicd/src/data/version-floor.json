@@ -5,13 +5,8 @@
   "pending": [
     "aa_cloud-superapp/app/build.gradle",
     "ab_cloud-libs-shared/keyboard-engines/app/build.gradle",
-    "ac_cloud-account/app/build.gradle",
     "ac_cloud-canvas/app/build.gradle",
-    "ac_cloud-drive/app/build.gradle",
-    "ac_cloud-keyboard/app/build.gradle",
-    "ac_cloud-me/app/build.gradle",
     "ac_cloud-myterminal/hub/build.gradle",
-    "ac_cloud-nav/app/build.gradle",
     "ad_CG-Omniverse/app/build.gradle"
   ]
 }
