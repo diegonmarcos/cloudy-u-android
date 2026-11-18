@@ -32,10 +32,32 @@ check('OpenWithListener' in app and 'cloud-notes:view-intent' in app, 'open-with
 
 # 2. the workbench declares only the vault and the 404 fallback
 router = rd(M, 'workbench-router.ts')
-paths = re.findall(r"path:\s*'([^']*)'", router)
-check(paths == ['/vault', '*'], 'workbench routes are exactly /vault and * (found %s)' % paths)
-for old in ('home', 'all', 'boards', 'journals', 'collection', 'tag', 'trash', 'search', 'graph', ':pageId'):
-    check(("'/" + old) not in router and ("'/:" + old) not in router, 'no route /' + old)
+# the page routes are exactly /vault (the screen) and * (the 404 fallback); every removed path redirects to the vault
+check("path: '/vault'" in router and "path: '*'" in router, 'the vault route and the 404 fallback are declared')
+legacy = re.findall(r"^  '(/[^']*)',?$", router, re.M)
+check('/' in legacy and '/home' in legacy and '/all' in legacy and '/:pageId' in legacy, 'the index and the removed pages redirect: %s' % legacy)
+check("redirect('/vault')" in router and 'loader: toVault' in router, 'the redirect goes to /vault')
+check('Component:' not in router.replace('Component: Vault', ''), 'no other page component is mounted')
+
+def resolve(pattern, path):
+    pp = [x for x in pattern.split('/') if x]; xx = [x for x in path.split('/') if x]
+    if pattern == '/' : return path == '/'
+    return len(pp) == len(xx) and all(a.startswith(':') or a == b for a, b in zip(pp, xx))
+
+def route_for(path):
+    # first match wins, in declaration order: /vault, the redirects, then *
+    if resolve('/vault', path): return '/vault'
+    for l in legacy:
+        if resolve(l, path): return 'redirect:' + l
+    return '*'
+
+for p in ('/', '/home', '/all', '/boards', '/journals', '/trash', '/search', '/graph', '/graph/local', '/collection', '/collection/c1', '/tag', '/tag/t1', '/someDocId', '/vault'):
+    check(route_for(p) != '*', 'launch / legacy path %s does not fall to the 404 (%s)' % (p, route_for(p)))
+check(route_for('/a/b/c') == '*', 'a path that never was a route still reaches the 404 fallback')
+# every native-nav target resolves to the vault
+nav = rd(M, 'components/native-nav-routes.ts')
+for t in re.findall(r"to:\s*'([^']*)'", nav):
+    check(route_for(t) == '/vault', 'native nav target %s resolves to the vault' % t)
 
 # 3. nothing routes to an old path any more
 nav = rd(M, 'components/native-nav-routes.ts')
