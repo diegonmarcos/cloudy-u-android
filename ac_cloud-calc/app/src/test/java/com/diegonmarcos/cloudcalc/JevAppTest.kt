@@ -354,7 +354,10 @@ class JevAppTest {
         assertFalse(j.toString().contains("sk-or-account"))
         val c = com.diegonmarcos.cloudcalc.debugapi.JevDebugApi.config(app)
         assertFalse(c.toString().contains("sk-or-account"))
-        assertEquals("sk-or-…aaaa", c.getJSONObject("token").getString("masked"))
+        // #1801 no key is here to mask: the debug route says the engine holds one, and which slot.
+        assertEquals("held by the AI keys engine", c.getJSONObject("token").getString("masked"))
+        assertTrue(c.getJSONObject("token").getBoolean("present"))
+        assertEquals(JevStore.SOURCE_ACCOUNT, c.getJSONObject("token").getString("source"))
         assertTrue(c.getJSONObject("config").has("route"))
     }
 }
