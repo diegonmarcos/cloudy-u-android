@@ -54,6 +54,19 @@ _rc app skipped false false push && ok || bad "a leg the workflow deselects on a
 _rc app skipped false false workflow_dispatch \
   && bad "a dispatch that turned publishing off while the source had moved must be RED" || ok
 
+# #1783: a leg that never feeds the release is deselected by construction, on a dispatch too.
+_rc app skipped false false workflow_dispatch false && ok || bad "a dispatch must not redden a leg that never feeds the release (feeds=false)"
+_rc app skipped false false workflow_dispatch true \
+  && bad "a leg that feeds the release and was deselected by the dispatch input must stay RED (feeds=true)" || ok
+_rc app skipped false false workflow_dispatch \
+  && bad "the default of the feeds argument must stay strict (the 2026-09-05 deadlock)" || ok
+_rc app skipped false true workflow_dispatch false \
+  && bad "feeds=false must not excuse a SELECTED leg whose publish was skipped" || ok
+_rc app failure false true push false \
+  && bad "feeds=false must not excuse a FAILED publish" || ok
+_rc app skipped false false workflow_dispatch maybe \
+  && bad "an unreadable feeds value must be refused, not read as 'does not feed'" || ok
+
 # Selected, and it did not happen.
 _rc app skipped false true push && bad "a SKIPPED publish step with the source changed must be RED" || ok
 _rc app failure false true push && bad "a FAILED publish step must be RED" || ok

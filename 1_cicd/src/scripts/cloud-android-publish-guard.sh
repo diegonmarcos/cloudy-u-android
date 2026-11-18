@@ -19,7 +19,7 @@
 # single implementation all of them call — two copies of one idea is how #228
 # and #209 happened, and it is not being repeated here.
 #
-#   cloud-android-publish-guard.sh <app> <outcome> <gate-skip> <selected> <event>
+#   cloud-android-publish-guard.sh <app> <outcome> <gate-skip> <selected> <event> [feeds]
 #
 #     outcome    steps.publish.outcome — what the publish step actually did
 #     gate-skip  steps.gate.outputs.skip — the PUBLISH GATE's own answer to
@@ -30,6 +30,13 @@
 #                true/false. The workflow generator writes it here verbatim from
 #                that step, so there is exactly one copy of it in the file.
 #     event      github.event_name
+#     feeds      OPTIONAL (default true). Does THIS matrix leg feed the release at all?
+#                The generator renders it from the ABI term of the publish condition
+#                (`matrix.abi == 'arm64-v8a'`) and only for a workflow that has one. A leg that
+#                never feeds the release is deselected by construction, on a dispatch as on a
+#                push, so the dispatch-deadlock branch below must not fire on it (#1783): the
+#                x86_64 leg of ship-cloud-myterminal went red on a dispatch whose arm64 leg
+#                published. A leg that DOES feed the release keeps the strict behaviour.
 #
 # WHY `selected` IS DATA HERE AND NOT A CONDITION ON THIS STEP.
 # The obvious generalisation — put the publish step's `if:` on the guard too —
@@ -78,9 +85,10 @@ OUTCOME="${2:-}"
 GATE_SKIP="${3:-}"
 SELECTED="${4:-}"
 EVENT="${5:-}"
+FEEDS="${6:-true}"
 
 [ -n "$APP" ] || {
-    echo "usage: $(basename "$0") <app> <outcome> <gate-skip> <selected> <event>" >&2
+    echo "usage: $(basename "$0") <app> <outcome> <gate-skip> <selected> <event> [feeds]" >&2
     exit 2; }
 
 # Written to the run's front page as well as the step log. 400 lines into a step
@@ -97,6 +105,13 @@ _red() {  # _red <title> <detail> <summary-line>
 [ -n "$OUTCOME" ] || _red "Publish guard has no subject" \
   "steps.publish.outcome came back EMPTY — no step in this job carries \`id: publish\`, or the id is misspelt. This guard would be asserting about a step that does not exist, which is a guard that can never fire." \
   "PUBLISH-GUARD-BROKEN [$APP] — no step carries \`id: publish\`; the guard has no subject."
+
+case "$FEEDS" in
+    true|false) ;;
+    *) _red "Publish guard cannot tell whether this leg feeds the release" \
+         "the feeds argument rendered as '$FEEDS', which is neither true nor false. Treating an unreadable value as 'does not feed' would switch the dispatch-deadlock check off, so the guard stops instead." \
+         "PUBLISH-GUARD-BROKEN [$APP] — the feeds argument rendered as '$FEEDS'." ;;
+esac
 
 case "$SELECTED" in
     true|false) ;;
@@ -123,7 +138,7 @@ if [ "$GATE_SKIP" = "true" ]; then
     exit 0
 fi
 
-if [ "$SELECTED" = "false" ] && [ "$EVENT" = "workflow_dispatch" ]; then
+if [ "$SELECTED" = "false" ] && [ "$EVENT" = "workflow_dispatch" ] && [ "$FEEDS" = "true" ]; then
     _red "Dispatched with publishing turned off" \
       "the publish gate found this application's source CHANGED, and this manual run then turned publishing off, so it built an APK nobody can install and cancelled nothing into place. This is the 2026-09-05 deadlock exactly. Re-dispatch with the publish input on, or push." \
       "PUBLISHED-NOTHING [$APP] — dispatched with publishing turned off while the source had moved."

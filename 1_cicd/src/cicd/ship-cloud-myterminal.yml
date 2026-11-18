@@ -335,7 +335,7 @@ jobs:
       # Edit 1_cicd/src/scripts/cloud-android-publish-guard.sh, never this block.
       - name: A run that published nothing must not be green
         if: ${{ !cancelled() }}
-        run: sh 1_cicd/dist/scripts/cloud-android-publish-guard.sh "ac_cloud-myterminal" "${{ steps.publish.outcome }}" "${{ steps.gate.outputs.skip }}" "${{ steps.gate.outputs.skip != 'true' && (matrix.abi == 'arm64-v8a' && (github.event_name != 'workflow_dispatch' || inputs.create_release)) }}" "${{ github.event_name }}"
+        run: sh 1_cicd/dist/scripts/cloud-android-publish-guard.sh "ac_cloud-myterminal" "${{ steps.publish.outcome }}" "${{ steps.gate.outputs.skip }}" "${{ steps.gate.outputs.skip != 'true' && (matrix.abi == 'arm64-v8a' && (github.event_name != 'workflow_dispatch' || inputs.create_release)) }}" "${{ github.event_name }}" "${{ matrix.abi == 'arm64-v8a' }}"
       # ── end MANAGED-PUBLISH-GUARD ──
 
 

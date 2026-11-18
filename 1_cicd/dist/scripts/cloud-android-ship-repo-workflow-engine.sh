@@ -706,12 +706,16 @@ for wf in sorted(glob.glob(os.path.join(root, "1_cicd/src/cicd/ship-*.yml"))):
             if mo:
                 app = mo.group(1); break
 
+        # #1783: the ABI part of the publish condition says whether THIS leg feeds the release at all.
+        # Rendered only where the condition has one; every other workflow keeps the five-argument form.
+        mabi = re.search(r"matrix\.abi\s*==\s*'[^']+'", cond)
+        feeds = (' "${{ %s }}"' % mabi.group(0)) if mabi else ""
         guard = ["", BEG] + DOC + [
             "      - name: A run that published nothing must not be green",
             "        if: ${{ !cancelled() }}",
             "        run: sh 1_cicd/dist/scripts/cloud-android-publish-guard.sh"
             ' "%s" "${{ steps.publish.outcome }}" "%s"'
-            ' "${{ %s }}" "${{ github.event_name }}"' % (app, gate, cond),
+            ' "${{ %s }}" "${{ github.event_name }}"%s' % (app, gate, cond, feeds),
             END,
             "",
         ]
