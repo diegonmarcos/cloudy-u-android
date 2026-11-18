@@ -15,6 +15,13 @@
 #   board-empty       Draw > Board: the offline Quickdraw whiteboard
 #   board-drawn       Board after freehand strokes
 #   board-reloaded    Board after a force-stop and relaunch: the strokes come back from app storage (boards.txt holds the stored index)
+# #1808 Painter (the Interactive Hexagon Grid; launch extras shape/layout/mode/color are the page's overrides):
+#   painter-nav               Painter open; nav-order.txt lists the bottom-nav labels left to right (Draw, Painter, Play, ...)
+#   painter-<shape>-2d        hex, square, triangle, octagon in 2D, each with strokes painted by real touch swipes
+#   painter-<shape>-3d        the same shape on the 3D Sphere, painted
+#   painter-rubber            hex 2D after a Rubber stroke across the painted cells
+#   painter-view              hex 2D in View mode
+#   painter-reloaded          hex 2D after a force-stop and relaunch: the painting comes back from app storage (painter.txt holds the stored state)
 # usage: emulator-canvas-screens.sh <canvas.apk> <enhance-presets.json> <outdir>
 set -u
 APK="$1"; DATA="$2"; OUT="$3"
@@ -115,6 +122,50 @@ sleep 8
 shot board-reloaded 4
 dump > "$OUT/board-reloaded.xml"
 adb shell "run-as $PKG sh -c 'ls -l files/boards; cat files/boards/boards.json'" > "$OUT/boards.txt" 2>&1 || true
+# ── #1808 Painter ──
+pstart() { start --es section painter "$@"; sleep 6; }
+py=$((H*42/100))
+pstroke() { sw $((W/5)) $py $((W*4/5)) $((py+160)) 600; sw $((W/4)) $((py+260)) $((W*3/4)) $((py+200)) 600; }
+pstart --es shape hex --es layout 2d --es mode paint
+shot painter-nav 3
+dump > "$OUT/painter-nav.xml"
+python3 -I - "$OUT/painter-nav.xml" > "$OUT/nav-order.txt" <<'PY'
+import re, sys
+x = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+want = {"Draw", "Painter", "Play", "Draw Enhancer", "Music Enhancer"}
+seen = {}
+for m in re.finditer(r'<node [^>]*>', x):
+    n = m.group(0)
+    for attr in ("text", "content-desc"):
+        t = re.search(' %s="([^"]*)"' % attr, n)
+        b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+        if t and b and t.group(1) in want:
+            a = list(map(int, b.groups()))
+            if a[1] > seen.get(t.group(1), (0, -1))[1]: seen[t.group(1)] = (a[0], a[1])
+print(" | ".join(k for k, _ in sorted(seen.items(), key=lambda kv: kv[1][0])))
+PY
+echo "nav order: $(cat "$OUT/nav-order.txt")"
+colors="'#ef4444' '#22c55e' '#3b82f6' '#a855f7'"
+i=0
+for shape in hex square triangle octagon; do
+  i=$((i+1)); c=$(echo $colors | cut -d' ' -f$i)
+  pstart --es shape $shape --es layout 2d --es mode paint --es color "$c"
+  pstroke; sleep 1
+  shot painter-$shape-2d 2
+  pstart --es shape $shape --es layout 3d --es mode paint --es color "'#eab308'"
+  pstroke; sleep 1
+  shot painter-$shape-3d 2
+done
+pstart --es shape hex --es layout 2d --es mode rubber
+sw $((W/5)) $py $((W*4/5)) $((py+160)) 600; sleep 1
+shot painter-rubber 2
+pstart --es shape hex --es layout 2d --es mode view
+sw $((W/2)) $py $((W/3)) $((py+200)) 600; sleep 1
+shot painter-view 2
+sleep 2   # the page saves 0.5 s after the last change
+pstart --es shape hex --es layout 2d --es mode paint
+shot painter-reloaded 3
+adb shell "run-as $PKG sh -c 'ls -l files/painter; cat files/painter/painter.json'" > "$OUT/painter.txt" 2>&1 || true
 timeout 60 adb logcat -d > "$OUT/logcat.txt" || true
 grep -E "MediaCodec|chromium|CloudWeb" "$OUT/logcat.txt" | tail -40 > "$OUT/samples-and-board-log.txt" || true
 ls -l "$OUT"

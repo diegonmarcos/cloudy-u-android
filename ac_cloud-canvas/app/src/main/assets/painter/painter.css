@@ -1,0 +1,63 @@
+/* Cloud Canvas > Painter (#1808, own code). Plain hand-written CSS, the prototype's layout in the Canvas look: the fleet's dark
+   surfaces and teal accent (res/values/colors.xml), Inter bundled in vendor/inter (OFL 1.1). */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("vendor/inter/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap; src: url("vendor/inter/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 600; font-display: swap; src: url("vendor/inter/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap; src: url("vendor/inter/inter-latin-700-normal.woff2") format("woff2"); }
+
+:root {
+  --bg: #000000;
+  --surface: rgba(18, 34, 42, 0.86);      /* app_surface */
+  --raised: #1b323c;                       /* app_surface_raised */
+  --outline: #2a4650;                      /* app_outline */
+  --text: #e6f4f1;                         /* app_text */
+  --text-2: #9db8b5;                       /* app_text_secondary */
+  --accent: #2dd4bf;                       /* app_accent */
+  --on-accent: #042f2e;                    /* app_on_accent */
+  --danger: #ff8a80;                       /* app_error */
+  --gap: 8px;
+  --inset-top: env(safe-area-inset-top, 0px);
+  --inset-right: env(safe-area-inset-right, 0px);
+  --inset-bottom: env(safe-area-inset-bottom, 0px);
+  --inset-left: env(safe-area-inset-left, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
+  font-family: "Inter", system-ui, sans-serif; font-size: 13px; -webkit-user-select: none; user-select: none; }
+
+#stage { position: fixed; inset: 0; cursor: crosshair; touch-action: none; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+.panel { position: fixed; z-index: 2; background: var(--surface); border: 1px solid var(--outline); border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+
+#topbar { top: calc(var(--inset-top) + 10px); right: calc(var(--inset-right) + 10px); display: flex; align-items: center;
+  gap: var(--gap); padding: 6px; max-width: calc(100vw - 20px - var(--inset-left) - var(--inset-right)); flex-wrap: wrap; justify-content: flex-end; }
+
+#dock { left: 50%; transform: translateX(-50%); bottom: calc(var(--inset-bottom) + 10px); width: calc(100vw - 20px - var(--inset-left) - var(--inset-right));
+  max-width: 512px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+
+.row { display: flex; align-items: center; gap: var(--gap); }
+.row.wrap { flex-wrap: wrap; }
+.row-label { color: var(--text-2); font-weight: 500; white-space: nowrap; }
+.mono { font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; color: var(--text); font-weight: 600; }
+
+button { font: inherit; font-weight: 500; color: var(--text); background: var(--raised); border: 1px solid var(--outline);
+  border-radius: 10px; padding: 7px 11px; min-height: 34px; cursor: pointer; }
+button:active { filter: brightness(1.2); }
+button.danger { color: var(--danger); border-color: rgba(255, 138, 128, 0.45); }
+
+.seg { display: inline-flex; background: rgba(0, 0, 0, 0.35); border: 1px solid var(--outline); border-radius: 11px; padding: 2px; gap: 2px; }
+.seg button { border: 0; background: transparent; color: var(--text-2); border-radius: 9px; padding: 6px 10px; min-height: 30px; }
+.seg button.on { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+
+.stat { display: flex; flex-direction: column; align-items: center; padding: 0 6px; line-height: 1.1; }
+.stat-label { color: var(--text-2); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-value { font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; }
+
+input[type="range"] { flex: 1; accent-color: var(--accent); height: 28px; }
+
+.swatches { justify-content: center; gap: 12px; }
+.swatch { width: 30px; height: 30px; min-height: 30px; padding: 0; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.18); }
+.swatch.on { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }

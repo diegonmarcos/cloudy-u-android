@@ -5,9 +5,8 @@
    "CC-BY-3.0": 90,
    "Apache-2.0": 84,
    "MIT": 84,
-   "OFL-1.1": 44,
+   "OFL-1.1": 50,
    "NOASSERTION": 34,
-   "OFL-1.1": 28,
    "CC-BY-4.0": 27,
    "GPL-3.0-only": 11,
    "GPL-3.0": 3
@@ -80,10 +79,11 @@
    "0BSD": 1
   },
   "vendored": {
-   "MIT": 6,
+   "MIT": 8,
    "LicenseRef-NoLicenseGranted": 2,
    "MPL-2.0": 1,
    "LicenseRef-PublicDomain AND CC-BY-4.0": 1,
+   "OFL-1.1": 1,
    "CC-BY-4.0": 1,
    "CC-BY-3.0": 1,
    "LicenseRef-tldraw": 1,
@@ -462,6 +462,7 @@
     "ab_cloud-libs-shared/libs/crash",
     "ab_cloud-libs-shared/libs/databackend",
     "ab_cloud-libs-shared/libs/decisions",
+    "ab_cloud-libs-shared/libs/decisions-link",
     "ab_cloud-libs-shared/libs/devtools",
     "ab_cloud-libs-shared/libs/fleet-data-client",
     "ab_cloud-libs-shared/libs/fleetconfig-model",
@@ -475,7 +476,6 @@
     "ab_cloud-libs-shared/libs/model-catalogue",
     "ab_cloud-libs-shared/libs/nfc",
     "ab_cloud-libs-shared/libs/perms",
-    "ab_cloud-libs-shared/libs/text-tools",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
     "ab_cloud-libs-shared/libs/ui-nav-bars",
@@ -512,6 +512,7 @@
     "ab_cloud-libs-shared/libs/bottomnav",
     "ab_cloud-libs-shared/libs/core",
     "ab_cloud-libs-shared/libs/crash",
+    "ab_cloud-libs-shared/libs/decisions-link",
     "ab_cloud-libs-shared/libs/devtools",
     "ab_cloud-libs-shared/libs/fleet-data-client",
     "ab_cloud-libs-shared/libs/fleetconfig-model",
@@ -520,7 +521,6 @@
     "ab_cloud-libs-shared/libs/fleetconfigs-xray",
     "ab_cloud-libs-shared/libs/model-catalogue",
     "ab_cloud-libs-shared/libs/perms",
-    "ab_cloud-libs-shared/libs/text-tools",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
     "ab_cloud-libs-shared/libs/ui-kit",
@@ -681,6 +681,7 @@
     "ab_cloud-libs-shared/libs/fleetconfigs-logcat",
     "ab_cloud-libs-shared/libs/fleetconfigs-xray",
     "ab_cloud-libs-shared/libs/keyboard",
+    "ab_cloud-libs-shared/libs/location-client",
     "ab_cloud-libs-shared/libs/media",
     "ab_cloud-libs-shared/libs/ml-l-image-ocr",
     "ab_cloud-libs-shared/libs/perms",
@@ -916,6 +917,7 @@
     "ab_cloud-libs-shared/libs/bottomnav",
     "ab_cloud-libs-shared/libs/core",
     "ab_cloud-libs-shared/libs/crash",
+    "ab_cloud-libs-shared/libs/decisions-link",
     "ab_cloud-libs-shared/libs/devtools",
     "ab_cloud-libs-shared/libs/fleet-data-client",
     "ab_cloud-libs-shared/libs/fleetconfig-model",
@@ -924,7 +926,6 @@
     "ab_cloud-libs-shared/libs/fleetconfigs-xray",
     "ab_cloud-libs-shared/libs/model-catalogue",
     "ab_cloud-libs-shared/libs/perms",
-    "ab_cloud-libs-shared/libs/text-tools",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
     "ab_cloud-libs-shared/libs/ui-nav-bars",
@@ -1896,6 +1897,46 @@
    "licence_source": "Libre Baskerville is published under the SIL Open Font License 1.1 (board/quickdraw/src/fonts/OFL.txt); shipped by @quickdrawjs/core 0.3.0, pinned in board/PIN.json",
    "source_url": "https://registry.npmjs.org/@quickdrawjs/core/-/core-0.3.0.tgz#package/src/fonts/libre-baskerville-latin-ext-500.woff2",
    "attribution": "Libre Baskerville (Pablo Impallari, Rodrigo Fuenzalida), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/app/src/main/assets/painter/vendor/inter/inter-latin-400-normal.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/app/src/main/assets/painter/vendor/inter/inter-latin-400-normal.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "Inter is published under the SIL Open Font License 1.1 (painter/vendor/inter/LICENSE); from @fontsource/inter 5.3.0, pinned in painter/vendor/PIN.json",
+   "source_url": "https://registry.npmjs.org/@fontsource/inter/-/inter-5.3.0.tgz#package/files/inter-latin-400-normal.woff2",
+   "attribution": "Inter (The Inter Project Authors, https://github.com/rsms/inter), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/app/src/main/assets/painter/vendor/inter/inter-latin-500-normal.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/app/src/main/assets/painter/vendor/inter/inter-latin-500-normal.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "Inter is published under the SIL Open Font License 1.1 (painter/vendor/inter/LICENSE); from @fontsource/inter 5.3.0, pinned in painter/vendor/PIN.json",
+   "source_url": "https://registry.npmjs.org/@fontsource/inter/-/inter-5.3.0.tgz#package/files/inter-latin-500-normal.woff2",
+   "attribution": "Inter (The Inter Project Authors, https://github.com/rsms/inter), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/app/src/main/assets/painter/vendor/inter/inter-latin-600-normal.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/app/src/main/assets/painter/vendor/inter/inter-latin-600-normal.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "Inter is published under the SIL Open Font License 1.1 (painter/vendor/inter/LICENSE); from @fontsource/inter 5.3.0, pinned in painter/vendor/PIN.json",
+   "source_url": "https://registry.npmjs.org/@fontsource/inter/-/inter-5.3.0.tgz#package/files/inter-latin-600-normal.woff2",
+   "attribution": "Inter (The Inter Project Authors, https://github.com/rsms/inter), SIL OFL 1.1"
+  },
+  "asset:ac_cloud-canvas/app/src/main/assets/painter/vendor/inter/inter-latin-700-normal.woff2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/app/src/main/assets/painter/vendor/inter/inter-latin-700-normal.woff2"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "Inter is published under the SIL Open Font License 1.1 (painter/vendor/inter/LICENSE); from @fontsource/inter 5.3.0, pinned in painter/vendor/PIN.json",
+   "source_url": "https://registry.npmjs.org/@fontsource/inter/-/inter-5.3.0.tgz#package/files/inter-latin-700-normal.woff2",
+   "attribution": "Inter (The Inter Project Authors, https://github.com/rsms/inter), SIL OFL 1.1"
   },
   "asset:ac_cloud-canvas/app/src/main/assets/samples/drums/crash_v1.ogg": {
    "kind": "asset",
@@ -5803,6 +5844,7 @@
     "ab_cloud-libs-shared/libs/bottomnav/build.gradle",
     "ab_cloud-libs-shared/libs/clock-tools/build.gradle",
     "ab_cloud-libs-shared/libs/crash/build.gradle",
+    "ab_cloud-libs-shared/libs/decisions-engine/build.gradle",
     "ab_cloud-libs-shared/libs/fleet-data-ui/build.gradle",
     "ab_cloud-libs-shared/libs/fleetconfigs-xray/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
@@ -6174,6 +6216,7 @@
     "ab_cloud-libs-shared/libs/clock-tools/build.gradle",
     "ab_cloud-libs-shared/libs/crash/build.gradle",
     "ab_cloud-libs-shared/libs/datamanager/build.gradle",
+    "ab_cloud-libs-shared/libs/decisions-engine/build.gradle",
     "ab_cloud-libs-shared/libs/editor-core/build.gradle",
     "ab_cloud-libs-shared/libs/file-editor/build.gradle",
     "ab_cloud-libs-shared/libs/fin/build.gradle",
@@ -6320,6 +6363,7 @@
     "ab_cloud-libs-shared/libs/clock-tools/build.gradle",
     "ab_cloud-libs-shared/libs/crash/build.gradle",
     "ab_cloud-libs-shared/libs/datamanager/build.gradle",
+    "ab_cloud-libs-shared/libs/decisions-engine/build.gradle",
     "ab_cloud-libs-shared/libs/editor-core/build.gradle",
     "ab_cloud-libs-shared/libs/file-editor/build.gradle",
     "ab_cloud-libs-shared/libs/fin/build.gradle",
@@ -6533,6 +6577,7 @@
     "ab_cloud-libs-shared/libs/clock-tools/build.gradle",
     "ab_cloud-libs-shared/libs/crash/build.gradle",
     "ab_cloud-libs-shared/libs/datamanager/build.gradle",
+    "ab_cloud-libs-shared/libs/decisions-engine/build.gradle",
     "ab_cloud-libs-shared/libs/editor-core/build.gradle",
     "ab_cloud-libs-shared/libs/file-editor/build.gradle",
     "ab_cloud-libs-shared/libs/fin/build.gradle",
@@ -6778,6 +6823,7 @@
     "ab_cloud-libs-shared/libs/clock-tools/build.gradle",
     "ab_cloud-libs-shared/libs/crash/build.gradle",
     "ab_cloud-libs-shared/libs/datamanager/build.gradle",
+    "ab_cloud-libs-shared/libs/decisions-engine/build.gradle",
     "ab_cloud-libs-shared/libs/editor-core/build.gradle",
     "ab_cloud-libs-shared/libs/file-editor/build.gradle",
     "ab_cloud-libs-shared/libs/fin/build.gradle",
@@ -19175,6 +19221,22 @@
    "declared_in": [
     "ac_cloud-canvas/app/src/main/assets/board/LICENSE",
     "ac_cloud-canvas/app/src/main/assets/board/NOTICE.md"
+   ],
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ac_cloud-canvas/app/src/main/assets/painter/vendor/inter": {
+   "kind": "vendored",
+   "declared_in": [
+    "ac_cloud-canvas/app/src/main/assets/painter/vendor/inter/LICENSE"
+   ],
+   "licence": "OFL-1.1",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ac_cloud-canvas/app/src/main/assets/painter/vendor/three": {
+   "kind": "vendored",
+   "declared_in": [
+    "ac_cloud-canvas/app/src/main/assets/painter/vendor/three/LICENSE"
    ],
    "licence": "MIT",
    "licence_source": "licenses/curated.json"

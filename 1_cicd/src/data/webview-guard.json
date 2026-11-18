@@ -14,6 +14,7 @@
   "usages": [
     {"app": "Cloud Wiki", "usage": "Chronos pages: the lib-chronos simulators baked offline (assets/chronos, pinned by tools/chronos-pin.json), served by WebViewAssetLoader on the asset origin only, every other request answered 403 (#1789)", "profile": "APP_PAGE", "file": "ac_cloud-wiki/app/src/main/java/com/diegonmarcos/cloudwiki/ui/ChronosPage.kt"},
     {"app": "Cloud Canvas", "usage": "Draw > Board: the Quickdraw whiteboard (MIT) vendored offline (assets/board over WebViewAssetLoader, links leave for the browser), boards saved through a main-frame-only web message listener (#1787)", "profile": "APP_PAGE", "file": "ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt"},
+    {"app": "Cloud Canvas", "usage": "Painter: the Interactive Hexagon Grid cell painter (Three.js r128 + Inter vendored offline in assets/painter over WebViewAssetLoader, links leave for the browser), state saved through a main-frame-only web message listener (#1808)", "profile": "APP_PAGE", "file": "ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt"},
   {
    "app": "Cloud C3 Webserver",
    "usage": "Pages browser frame, File Explorer preview and Open embedded over the core's loopback /__app__/ (#1682)",

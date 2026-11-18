@@ -15,9 +15,11 @@ import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab
 /**
  * Where the app opens, from the launch intent's string extras (the fleet's deep-link shape): `section` draw | play, `page` draw | board (the
  * Draw section's sibling pages, #1787), `tool` the Board's starting tool (draw, geo, text, note...), `panel` layers (Draw),
- * `view` instruments | mixer (Play), `demo` true to fill the mixer with a sample beat, `configs` ai to open Configs > AI. All optional.
+ * `view` instruments | mixer (Play), `demo` true to fill the mixer with a sample beat, `configs` ai to open Configs > AI. #1808 `section painter`
+ * opens Painter; `shape` hex | square | triangle | octagon, `layout` 2d | 3d, `mode` paint | rubber | view, `color` #rrggbb and `scale` 15..100
+ * are handed to the Painter page as launch overrides (the screenshot job uses them). All optional.
  */
-data class CanvasStart(val section: String? = null, val panel: String? = null, val view: String? = null, val demo: Boolean = false, val configs: String? = null, val page: String? = null, val tool: String? = null) {
+data class CanvasStart(val section: String? = null, val panel: String? = null, val view: String? = null, val demo: Boolean = false, val configs: String? = null, val page: String? = null, val tool: String? = null, val painter: Map<String, String> = emptyMap()) {
     companion object {
         fun from(i: Intent?): CanvasStart = CanvasStart(
             i?.getStringExtra("section")?.takeIf { it.isNotBlank() },
@@ -27,7 +29,11 @@ data class CanvasStart(val section: String? = null, val panel: String? = null, v
             i?.getStringExtra("configs")?.takeIf { it.isNotBlank() },
             i?.getStringExtra("page")?.takeIf { it.isNotBlank() },
             i?.getStringExtra("tool")?.takeIf { it.isNotBlank() },
+            PAINTER_EXTRAS.mapNotNull { k -> i?.getStringExtra(k)?.takeIf { it.isNotBlank() }?.let { k to it } }.toMap(),
         )
+
+        /** The launch extras handed to the Painter page (its query string). */
+        val PAINTER_EXTRAS = listOf("shape", "layout", "mode", "color", "scale")
     }
 }
 

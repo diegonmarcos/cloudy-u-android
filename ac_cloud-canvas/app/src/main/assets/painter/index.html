@@ -1,0 +1,52 @@
+<!doctype html>
+<!-- Cloud Canvas > Painter (#1808, own code): the Interactive Hexagon Grid prototype, served from the APK over WebViewAssetLoader
+     on the app asset origin, path /painter/. Three.js r128 and Inter are vendored in vendor/ (tools/vendor-painter.py,
+     PIN.json); the page loads nothing from the network. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Painter</title>
+  <link rel="stylesheet" href="painter.css">
+</head>
+<body>
+  <div id="stage"></div>
+
+  <div id="topbar" class="panel ui">
+    <div class="seg" id="shapes" role="group" aria-label="Shape">
+      <button type="button" data-shape="hex">Hex</button>
+      <button type="button" data-shape="square">Square</button>
+      <button type="button" data-shape="triangle">Triangle</button>
+      <button type="button" data-shape="octagon">Octagon</button>
+    </div>
+    <div class="stat"><span class="stat-label">Active Cells</span><span id="active" class="stat-value">0</span></div>
+    <button type="button" id="clear" class="danger">Clear</button>
+  </div>
+
+  <div id="dock" class="panel ui">
+    <div class="row">
+      <label for="scale" class="row-label">Grid Scale</label>
+      <input id="scale" type="range" min="15" max="100" step="1" value="40">
+      <span id="scaleValue" class="mono">40px</span>
+    </div>
+    <div class="row wrap">
+      <div class="seg" id="modes" role="group" aria-label="Mode">
+        <button type="button" data-mode="paint">Paint</button>
+        <button type="button" data-mode="rubber">Rubber</button>
+        <button type="button" data-mode="view">View</button>
+      </div>
+      <div class="seg" id="layouts" role="group" aria-label="Layout">
+        <button type="button" data-layout="2d">2D</button>
+        <button type="button" data-layout="3d">3D Sphere</button>
+      </div>
+      <button type="button" id="center">Center</button>
+    </div>
+    <div class="row swatches" id="swatches" role="group" aria-label="Colour"></div>
+  </div>
+
+  <script src="vendor/three/three.min.js"></script>
+  <script src="vendor/three/OrbitControls.js"></script>
+  <script src="grid.js"></script>
+  <script src="painter.js"></script>
+</body>
+</html>

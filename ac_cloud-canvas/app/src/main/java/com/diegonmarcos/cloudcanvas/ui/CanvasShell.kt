@@ -44,6 +44,7 @@ object Tags {
     const val ENHANCE = "canvas_enhance"
     const val MUSIC = "canvas_music"
     const val BOARD = "canvas_board"
+    const val PAINTER = "canvas_painter"
 }
 
 /**
@@ -65,6 +66,7 @@ fun CanvasShell(start: CanvasStart = CanvasStart()) {
     val play = remember { PlayController(ctx.applicationContext, start.demo) }
     val enhance = remember { EnhanceController(ctx.applicationContext, draw) }
     val board = remember { BoardController(ctx.applicationContext).also { it.startTool = start.tool } }
+    val painter = remember { PainterController(ctx.applicationContext).also { it.query = start.painter } }
 
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
         Column(Modifier.fillMaxSize()) {
@@ -91,6 +93,7 @@ fun CanvasShell(start: CanvasStart = CanvasStart()) {
                         )
                         Box(Modifier.weight(1f).fillMaxWidth()) {
                             when (selected) {
+                                Decl.SECTION_PAINTER -> PainterScreen(painter, Modifier.testTag(Tags.PAINTER))
                                 Decl.SECTION_PLAY -> PlayScreen(play, start, Modifier.testTag(Tags.PLAY))
                                 Decl.SECTION_ENHANCE -> EnhanceScreen(enhance, start, Modifier.testTag(Tags.ENHANCE))
                                 Decl.SECTION_MUSIC -> MusicScreen(Modifier.testTag(Tags.MUSIC))

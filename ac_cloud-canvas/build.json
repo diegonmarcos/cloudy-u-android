@@ -8,7 +8,7 @@
   },
   "name": "cloud-canvas",
   "display_name": "Cloud Canvas",
-  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), with a sibling page Board, an infinite whiteboard (Quickdraw, MIT, vendored offline in a WebView, boards saved to app storage, #1787; the fleet's tldraw build is kept pinned but not shipped: tldraw 5 does not render without a licence key), and Play, a music mixer with a sampled grand piano (Salamander Grand Piano, CC-BY 3.0), a sampled acoustic drum kit (MuldjordKit, CC-BY 4.0) and a synth (low-latency AudioTrack, polyphony, velocity layers; the synthesized piano and kit stay as the fallback), a 4 to 8 track mixer with loop recording and WAV export. Draw Enhancer sends a picture and a preset prompt to an image model through OpenRouter (key from Configs > AI or the fleet Account); Music Enhancer is a coming-soon placeholder. Bottom nav Draw | Play | Draw Enhancer | Music Enhancer.",
+  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), with a sibling page Board, an infinite whiteboard (Quickdraw, MIT, vendored offline in a WebView, boards saved to app storage, #1787; the fleet's tldraw build is kept pinned but not shipped: tldraw 5 does not render without a licence key), and Play, a music mixer with a sampled grand piano (Salamander Grand Piano, CC-BY 3.0), a sampled acoustic drum kit (MuldjordKit, CC-BY 4.0) and a synth (low-latency AudioTrack, polyphony, velocity layers; the synthesized piano and kit stay as the fallback), a 4 to 8 track mixer with loop recording and WAV export. Draw Enhancer sends a picture and a preset prompt to an image model through OpenRouter (key from Configs > AI or the fleet Account); Music Enhancer is a coming-soon placeholder. #1808 Painter: the Interactive Hexagon Grid, a cell painter on hex, square, triangle and octagon grids in 2D or on a 3D sphere (Three.js r128 and Inter vendored offline in a WebView, state saved to app storage). Bottom nav Draw | Painter | Play | Draw Enhancer | Music Enhancer.",
   "category": "android",
   "android": {
     "application_id": "com.diegonmarcos.cloudcanvas",
@@ -219,19 +219,21 @@
     "shell": {
       "dir": "test",
       "requires": [
-        "python3"
+        "python3",
+        "node"
       ]
     },
     "unit": {
-      "_doc": "This app's JVM suite in app/src/test: the stroke/undo model, layer ops, the PNG export path, the mixer mute/solo logic, the loop recorder timing model and the WAV encoder. #1787: SampleTest (the piano root, layer and pitch-ratio map, the sample voice, polyphony, velocity from the touch point, the asset set on disk) and BoardTest (the board store: create, rename, delete, atomic save, index survival, refusals).",
+      "_doc": "This app's JVM suite in app/src/test: the stroke/undo model, layer ops, the PNG export path, the mixer mute/solo logic, the loop recorder timing model and the WAV encoder. #1787: SampleTest (the piano root, layer and pitch-ratio map, the sample voice, polyphony, velocity from the touch point, the asset set on disk) and BoardTest (the board store: create, rename, delete, atomic save, index survival, refusals). #1808: PainterTest (the Painter store: painted cells per shape and the colour, mode, scale and 2D/3D survive a restart, paint/erase/clear saved, atomic write, malformed states refused) and NavShapeTest.painterSitsRightAfterDrawAndNothingElseMoved (nav parity). The Painter page's own JS (grid generators, paint, erase, clear, strokes, persistence codec) is test/painter/grid.test.js, run with node by the shell tester test-painter.sh.",
       "task": ":app:testDebugUnitTest",
       "enabled": true
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Canvas (#1780, #1782): bottom nav Draw | Play | Draw Enhancer | Music Enhancer, the app opens on Draw. Each section holds one page; the Draw tools, the Play views and the Enhancer's panels are drawn inside the page. Music Enhancer is a coming-soon placeholder whose entry is greyed out. #1787 the Draw section holds two sibling pages, Draw (the paint canvas) and Board (an infinite whiteboard: Quickdraw in a WebView, offline), shown as the shared second row.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Canvas (#1780, #1782): bottom nav Draw | Play | Draw Enhancer | Music Enhancer, the app opens on Draw. Each section holds one page; the Draw tools, the Play views and the Enhancer's panels are drawn inside the page. Music Enhancer is a coming-soon placeholder whose entry is greyed out. #1787 the Draw section holds two sibling pages, Draw (the paint canvas) and Board (an infinite whiteboard: Quickdraw in a WebView, offline), shown as the shared second row. #1808 Painter (a hex/square/triangle/octagon cell painter, Three.js in a WebView, offline, 2D or 3D Sphere) is inserted right after Draw; nothing else moved: Draw | Painter | Play | Draw Enhancer | Music Enhancer.",
     "bottom_nav": [
       "draw",
+      "painter",
       "play",
       "enhance",
       "music"
@@ -255,6 +257,18 @@
             "id": "board",
             "label": "Board",
             "icon": "account_tree"
+          }
+        ]
+      },
+      {
+        "id": "painter",
+        "label": "Painter",
+        "icon": "palette",
+        "pages": [
+          {
+            "id": "painter",
+            "label": "Painter",
+            "icon": "palette"
           }
         ]
       },
@@ -322,14 +336,15 @@
     },
     "about": {
       "tagline": "Paint and make music",
-      "description": "Cloud Canvas has four sections, picked in the bottom nav. Draw holds two pages: Draw, a paint app with a brush, pencil, marker, eraser, fill, line, rectangle, ellipse, text and an eyedropper, a colour picker with recent colours, layers, undo and redo, pinch zoom and pan, canvas size presets and PNG export to a folder you choose; and Board, an infinite whiteboard (Quickdraw) that works offline and keeps every board on the phone. Play is a music mixer with a sampled grand piano, a sampled acoustic drum kit and a synth, a multitrack mixer with loop recording and WAV export. The piano and drum sounds are real recordings bundled in the app; the synth is computed on the phone.",
+      "description": "Cloud Canvas has five sections, picked in the bottom nav. Draw holds two pages: Draw, a paint app with a brush, pencil, marker, eraser, fill, line, rectangle, ellipse, text and an eyedropper, a colour picker with recent colours, layers, undo and redo, pinch zoom and pan, canvas size presets and PNG export to a folder you choose; and Board, an infinite whiteboard (Quickdraw) that works offline and keeps every board on the phone. Painter colours the cells of a hex, square, triangle or octagon grid, flat or wrapped on a sphere, and keeps each grid's painting on the phone. Play is a music mixer with a sampled grand piano, a sampled acoustic drum kit and a synth, a multitrack mixer with loop recording and WAV export. The piano and drum sounds are real recordings bundled in the app; the synth is computed on the phone.",
       "features": [
         "Draw: brush, pencil, marker, eraser, fill, line, rectangle, ellipse, text, eyedropper",
         "Layers with visibility, opacity and order; undo and redo; pinch zoom and pan",
         "Canvas size presets; open a picture to paint over; export PNG to a folder you choose; share",
         "Board: an infinite whiteboard (Quickdraw) with pen and highlighter ink, shapes, arrows, text, sticky notes, images and an eraser; several named boards saved on the phone; works with no network",
         "Play: a sampled grand piano (3 velocity layers, a sample every 3 semitones), a sampled acoustic drum kit (10 pads) and a synth, on a low-latency audio path with polyphony and touch velocity",
-        "Mixer with 4 to 8 tracks: volume, pan, mute, solo, loop recording; tempo and metronome; WAV export"
+        "Mixer with 4 to 8 tracks: volume, pan, mute, solo, loop recording; tempo and metronome; WAV export",
+        "Painter: paint or rub out the cells of a hex, square, triangle or octagon grid with six colours; grid scale; 2D or 3D Sphere view with pan, zoom and orbit; Active Cells count and Clear; each grid keeps its own painting on the phone; works with no network"
       ],
       "screens": [
         {
@@ -339,6 +354,10 @@
         {
           "name": "Board",
           "what": "The infinite whiteboard with the board picker (new, rename, delete)."
+        },
+        {
+          "name": "Painter",
+          "what": "The cell grid with the shape toggle, Active Cells and Clear on top, and grid scale, Paint | Rubber | View, 2D | 3D Sphere, Center and the colours below."
         },
         {
           "name": "Instruments",
@@ -354,9 +373,10 @@
         "Export PNG asks for a folder once.",
         "In Play, press Record and play: one loop pass is recorded on the selected track.",
         "In Draw, the second row switches between Draw and Board; a board saves itself as you draw.",
-        "On the piano and the pads, a hit near the bottom edge is louder than one near the top."
+        "On the piano and the pads, a hit near the bottom edge is louder than one near the top.",
+        "In Painter, drag across the grid to paint; Rubber clears cells; View lets you pan (2D) or orbit (3D Sphere), and Center brings the grid back."
       ],
-      "privacy": "No ads, no trackers and no microphone: loops are recorded as notes. Board is served from the app itself and needs no network; boards are stored only in the app's private storage. Files are written only to the folder you pick. The only network call is the Draw Enhancer's, when you run it. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback.",
+      "privacy": "No ads, no trackers and no microphone: loops are recorded as notes. Board and Painter are served from the app itself and need no network; boards and the Painter grids are stored only in the app's private storage. Files are written only to the folder you pick. The only network call is the Draw Enhancer's, when you run it. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback.",
       "backends": [],
       "related": [
         {
@@ -368,7 +388,7 @@
           "why": "Installs and updates this app."
         }
       ],
-      "credits": "Sampled instruments: Salamander Grand Piano V3 by Alexander Holm, licensed CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/), from https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html (archive.org/details/SalamanderGrandPianoV3), a subset (every 3 semitones, velocity layers 4, 9 and 14 of 16) mixed to mono, shortened and encoded as Ogg Vorbis. MuldjordKit by Lars Muldjord (drumgizmo.org), FreePats stereo edition by Roberto (FreePats project), licensed CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/), from https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html, three velocity layers of nine kit pieces mixed to mono, shortened and encoded as Ogg Vorbis. Board: Quickdraw (https://github.com/quickdrawjs/quickdraw, @quickdrawjs/core 0.3.0), MIT licence, Copyright (c) 2026 Quickdraw contributors, with the Libre Baskerville font (SIL OFL 1.1). The fleet's tldraw build was the first choice but tldraw 5 does not render without a licence key, so it is not shipped."
+      "credits": "Sampled instruments: Salamander Grand Piano V3 by Alexander Holm, licensed CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/), from https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html (archive.org/details/SalamanderGrandPianoV3), a subset (every 3 semitones, velocity layers 4, 9 and 14 of 16) mixed to mono, shortened and encoded as Ogg Vorbis. MuldjordKit by Lars Muldjord (drumgizmo.org), FreePats stereo edition by Roberto (FreePats project), licensed CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/), from https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html, three velocity layers of nine kit pieces mixed to mono, shortened and encoded as Ogg Vorbis. Board: Quickdraw (https://github.com/quickdrawjs/quickdraw, @quickdrawjs/core 0.3.0), MIT licence, Copyright (c) 2026 Quickdraw contributors, with the Libre Baskerville font (SIL OFL 1.1). The fleet's tldraw build was the first choice but tldraw 5 does not render without a licence key, so it is not shipped. Painter: three.js r128 (https://threejs.org, three@0.128.0, with its OrbitControls), MIT licence, Copyright (c) 2010-2021 three.js authors; the Inter typeface, Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter, @fontsource/inter 5.3.0), SIL OFL 1.1."
     }
   },
   "perms": {

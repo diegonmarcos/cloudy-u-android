@@ -17,6 +17,8 @@
 #   T7 #1787 the Board copies: tools/vendor-board.py check passes (Quickdraw in assets/board and the kept tldraw copy in vendor/tldraw:
 #      every pinned file present with its sha256, nothing unpinned), the shipped page loads no analytics and nothing from the network,
 #      no tldraw file is in the APK's assets (it does not render without a licence key), and hardware acceleration stays on
+#   #1808 Painter is inserted right after Draw (T1: Draw | Painter | Play | Draw Enhancer | Music Enhancer); its page (ui/PainterScreen.kt)
+#      is the second allowed WebView under the same rules as Board's (T2); the Painter page itself is tested by test-painter.sh
 # Each rule is then proven red by a planted mutation in a scratch copy.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -33,26 +35,28 @@ app, root = sys.argv[1], sys.argv[2]
 bj = json.load(open(os.path.join(app, "build.json")))
 ui = bj["ui"]
 sec = [s["id"] for s in ui["sections"]]
-if ui["bottom_nav"] != ["draw", "play", "enhance", "music"]: print("T1 bottom_nav is %r, want draw, play, enhance, music" % ui["bottom_nav"])
+if ui["bottom_nav"] != ["draw", "painter", "play", "enhance", "music"]: print("T1 bottom_nav is %r, want draw, painter, play, enhance, music" % ui["bottom_nav"])
 if any(b not in sec for b in ui["bottom_nav"]): print("T1 a bottom_nav id is not a section")
 if ui["default_section"] != "draw": print("T1 default_section is not draw")
 decl = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudcanvas/Decl.kt")).read()
 for want in ("SECTION_DRAW = \"draw\"", "SECTION_PLAY = \"play\"", "SECTION_ENHANCE = \"enhance\"", "SECTION_MUSIC = \"music\"",
-             "PAGE_DRAW = \"draw\"", "PAGE_BOARD = \"board\""):
+             "PAGE_DRAW = \"draw\"", "PAGE_BOARD = \"board\"", "SECTION_PAINTER = \"painter\"", "PAGE_PAINTER = \"painter\""):
     if want not in decl: print("T1 Decl.kt lacks " + want)
 drawsec = [x for x in ui["sections"] if x["id"] == "draw"]
 if not drawsec or [p["id"] for p in drawsec[0].get("pages", [])] != ["draw", "board"]: print("T1 the Draw section's pages are not draw, board")
 elif any(not p.get("label") or not p.get("icon") for p in drawsec[0]["pages"]): print("T1 a Draw page has no label or icon")
 src = ""
 board_src = ""
+painter_src = ""
 for r, _, files in os.walk(os.path.join(app, "app/src/main")):
     for f in files:
         if f.endswith(".kt") or f.endswith(".java"):
             t = open(os.path.join(r, f)).read()
             if f == "BoardScreen.kt": board_src = t
+            elif f == "PainterScreen.kt": painter_src = t
             else: src += t
 nc = lambda t: re.sub(r"//.*|/\*.*?\*/", "", t, flags=re.S)
-if re.search(r"\bWebView\b", nc(src)): print("T2 a WebView is used outside the Board page")
+if re.search(r"\bWebView\b", nc(src)): print("T2 a WebView is used outside the Board and Painter pages")
 if not board_src: print("T2 the Board page (ui/BoardScreen.kt) is missing")
 else:
     if "CloudWeb.create(c, WebProfile.APP_PAGE)" not in board_src: print("T2 the Board web view is not built by CloudWeb.create(.., WebProfile.APP_PAGE)")
@@ -60,6 +64,12 @@ else:
     if "if (isMainFrame)" not in board_src or 'setOf("https://${CloudWeb.ASSET_HOST}")' not in board_src: print("T2 the board bridge is not limited to the asset origin and the main frame")
 wg = open(os.path.join(root, "1_cicd/src/data/webview-guard.json")).read()
 if "ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt" not in wg: print("T2 BoardScreen.kt is not registered in webview-guard.json")
+if not painter_src: print("T2 the Painter page (ui/PainterScreen.kt) is missing")
+else:
+    if "CloudWeb.create(c, WebProfile.APP_PAGE)" not in painter_src: print("T2 the Painter web view is not built by CloudWeb.create(.., WebProfile.APP_PAGE)")
+    if re.search(r"(?<![\w.@<])WebView\(\s*(?!\))", nc(painter_src)): print("T2 the Painter page constructs a bare WebView")
+    if "if (isMainFrame)" not in painter_src or 'setOf("https://${CloudWeb.ASSET_HOST}")' not in painter_src: print("T2 the painter bridge is not limited to the asset origin and the main frame")
+if "ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt" not in wg: print("T2 PainterScreen.kt is not registered in webview-guard.json")
 man = open(os.path.join(app, "app/src/main/AndroidManifest.xml")).read()
 man_nc = re.sub(r"<!--.*?-->", "", man, flags=re.S)
 for p in ("RECORD_AUDIO", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "MANAGE_EXTERNAL_STORAGE"):
@@ -132,6 +142,11 @@ mut "wav test removed" T5 sed -i 's/fun wavHeaderAndSamples/fun x/' app/src/test
 mut "board page dropped" T1 python3 -I -c 'import json;d=json.load(open("build.json"));d["ui"]["sections"][0]["pages"]=d["ui"]["sections"][0]["pages"][:1];json.dump(d,open("build.json","w"))'
 mut "board built as a bare WebView" T2 sed -i 's/CloudWeb.create(c, WebProfile.APP_PAGE)/WebView(c)/' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt
 mut "bridge open to every frame" T2 sed -i 's/if (isMainFrame) //' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt
+# #1808
+mut "painter moved after play" T1 python3 -I -c 'import json;d=json.load(open("build.json"));b=d["ui"]["bottom_nav"];b.remove("painter");b.insert(2,"painter");json.dump(d,open("build.json","w"))'
+mut "painter built as a bare WebView" T2 sed -i 's/CloudWeb.create(c, WebProfile.APP_PAGE)/WebView(c)/' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt
+mut "painter bridge open to every frame" T2 sed -i 's/if (isMainFrame) //' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt
+mut "painter not registered" T2 sed -i 's#ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt#ac_cloud-canvas/y.kt#' ../root/1_cicd/src/data/webview-guard.json
 mut "board not registered" T2 sed -i 's#ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt#ac_cloud-canvas/x.kt#' ../root/1_cicd/src/data/webview-guard.json
 mut "unlicensed sound" T4 sh -c 'printf x > app/src/main/assets/samples/drums/clap_v1.ogg'
 mut "sample missing" T4 rm app/src/main/assets/samples/piano/060_v2.ogg

@@ -2,7 +2,7 @@
 # ║ Cloud Canvas screenshots (emulator, dispatch only) (#1780)               ║
 # ║ Installs the published Cloud Canvas (x86_64) on a Pixel 7 emulator and   ║
 # ║ captures Draw with a drawing, Draw layers, Play instruments, the Play   ║
-# ║ mixer, the Draw Enhancer, Configs > AI and the Music placeholder. Script: ac_cloud-canvas/test/emulator-canvas-screens.sh. Evidence: ║
+# ║ mixer, the Draw Enhancer, Configs > AI and the Music placeholder; #1808 Painter: every shape in 2D and 3D Sphere painted, Rubber, View, reload and the nav order. Script: ac_cloud-canvas/test/emulator-canvas-screens.sh. Evidence: ║
 # ║ the `canvas-screens` artifact. Not a gate: a screenshot job, run on      ║
 # ║ request only (rules/ci.md cost budget).                                  ║
 # ╚═════════════════════════════════════════════════════════════════
@@ -22,7 +22,7 @@ permissions:
 jobs:
   screens:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
       - name: Boot the emulator and capture (attempt 1)
         id: try1
         continue-on-error: true
-        timeout-minutes: 15
+        timeout-minutes: 20
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -60,7 +60,7 @@ jobs:
       # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
       - name: Boot the emulator and capture (attempt 2)
         if: steps.try1.outcome != 'success'
-        timeout-minutes: 15
+        timeout-minutes: 20
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
