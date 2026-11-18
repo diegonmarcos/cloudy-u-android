@@ -1,3 +1,4 @@
+# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-decisions-use-guard.py ───
 #!/usr/bin/env python3
 """cloud-android-decisions-use-guard.py -- #881 the fleet asks the Jev decision model through ONE engine,
 and every question it asks is declared.
