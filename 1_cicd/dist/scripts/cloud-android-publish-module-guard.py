@@ -1,4 +1,3 @@
-# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-publish-module-guard.py ───
 #!/usr/bin/env python3
 """Every publish to ghcr.io / a GitHub release goes through ONE module.
 
@@ -37,7 +36,9 @@ BASELINE = "1_cicd/src/data/publish-module-baseline.json"
 MODULE = "1_cicd/src/actions/publish-ghcr"
 SCAN = [("1_cicd/src/cicd", (".yml",)), ("1_cicd/src/templates", (".in", ".yml")),
         ("1_cicd/src/scripts", (".sh", ".py"))]
-SKIP = {"1_cicd/src/scripts/cloud-android-publish-module-guard.py"}
+# release-swap IS part of the publish module (#1783 P4): the one place that uploads release assets atomically.
+SKIP = {"1_cicd/src/scripts/cloud-android-publish-module-guard.py",
+        "1_cicd/src/scripts/cloud-android-release-swap.sh"}
 # Narrow exemption: dispatch-only, DELETE/GET-only workflows that need the PAT
 # (GHCR_TOKEN) because GITHUB_TOKEN cannot delete or list user packages. They may
 # mention GHCR_TOKEN only as `GH_TOKEN: ${{ secrets.GHCR_TOKEN }}` and may contain
