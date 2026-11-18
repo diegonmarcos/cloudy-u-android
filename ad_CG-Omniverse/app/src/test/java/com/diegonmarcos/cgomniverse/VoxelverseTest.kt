@@ -3,7 +3,6 @@ package com.diegonmarcos.cgomniverse
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -39,20 +38,27 @@ class VoxelverseTest {
         assertEquals("voxelverse", Pages.KIND_VOXELVERSE)
         val shell = file("src/main/java/com/diegonmarcos/cgomniverse/ui/SectionPage.kt", "app/src/main/java/com/diegonmarcos/cgomniverse/ui/SectionPage.kt").readText()
         assertTrue(shell.contains("Pages.KIND_VOXELVERSE -> return VoxelversePage()"))
-        val gradle = file("build.gradle", "app/build.gradle").readText()
-        assertTrue(gradle.contains("VOXELVERSE_B64") && gradle.contains("data/voxelverse.json"))
     }
 
-    private val decl = Voxelverse.parse(file("../data/voxelverse.json", "data/voxelverse.json").readText())
+    private val entry = ui.getJSONObject("stacks").getJSONArray("voxelverse").getJSONObject(0)
+    private val decl = Voxelverse.decl("https://github.com/diegonmarcos/cg-voxel-rust/tree/main/" + entry.getString("path"), entry.getString("path"),
+        mapOf("goals" to "Goals", "architecture" to "Architecture", "risks" to "Risks", "milestones" to "Milestones"))
 
     @Test fun theDeclarationPointsAtThePlanInItsRepo() {
-        assertEquals(listOf("plan", "viewer"), decl.subpages.map { it.id })
-        assertEquals("https://raw.githubusercontent.com/diegonmarcos/cg-voxel-rust/main/docs/vox-rust_Agent-Driven_Voxel_World_Full_Build_Plan.md", decl.planUrl)
-        assertTrue(decl.commitUrl.startsWith("https://api.github.com/repos/diegonmarcos/cg-voxel-rust/commits"))
+        // the stack entry names ONE source (repo + path, resolved through the SuperApp's repo_base); no address is typed in build.json::ui
+        assertEquals("cg-voxel-rust", entry.getString("repo"))
+        assertTrue(entry.getString("path").startsWith("docs/") && entry.getString("path").endsWith(".md"))
+        assertFalse(ui.toString().contains("http"))
+        assertEquals("https://github.com/diegonmarcos/cg-voxel-rust/raw/main/" + entry.getString("path"), decl.planUrl)
+        assertEquals("https://github.com/diegonmarcos/cg-voxel-rust/commits/main.atom", decl.commitUrl)
+        assertEquals("https://github.com/diegonmarcos/cg-voxel-rust/raw/main/Cargo.toml", decl.markerUrl)
+        assertEquals("diegonmarcos/cg-voxel-rust", decl.repoName)
         assertEquals(listOf("Goals", "Architecture", "Risks"), decl.sections.map { it.title })
         assertEquals("Milestones", decl.roadmapTitle)
-        assertTrue(decl.artifact == null)
-        for (k in listOf("loading", "live", "cached", "unavailable", "viewer_title", "last_commit")) assertTrue("text $k", decl.t(k).isNotBlank())
+        // the page's words are string resources, one per key the page reads
+        val res = file("src/main/res/values/strings.xml", "app/src/main/res/values/strings.xml").readText()
+        for (k in listOf("plan", "viewer", "goals", "architecture", "risks", "milestones", "status", "live", "cached", "unavailable", "viewer_title", "viewer_body", "last_commit"))
+            assertTrue("string vox_$k", res.contains("name=\"vox_$k\""))
     }
 
     /** The plan's shape (headings, bullets, numbered phases with a Gate), not its words: the real text is read at run time. */
@@ -109,13 +115,12 @@ class VoxelverseTest {
     }
 
     @Test fun theRepoStatusAnswersParse() {
-        val c = Voxelverse.commit("""[{"sha":"085009c8e52acc","commit":{"author":{"date":"2026-11-17T22:26:51Z"},"message":"first line\n\nbody"}}]""")
-        assertEquals(VoxCommit("085009c", "2026-11-17", "first line"), c)
-        assertEquals(null, Voxelverse.commit("not json"))
-        assertEquals(listOf(VoxMilestone("M1", 2, 1)), Voxelverse.milestones("""[{"title":"M1","open_issues":2,"closed_issues":1}]"""))
-        assertTrue(Voxelverse.milestones("[]").isEmpty())
-        assertTrue(Voxelverse.hasEngine("""[{"name":"Cargo.toml"},{"name":"docs"}]""", decl.engineMarker))
-        assertFalse(Voxelverse.hasEngine("""[{"name":"docs"}]""", decl.engineMarker))
-        assertNotNull(decl.engineMarker.takeIf { it.isNotEmpty() })
+        val atom = """<feed><title>Recent Commits</title><updated>2026-11-17T22:26:52Z</updated><entry>
+            <id>tag:github.com,2008:Grit::Commit/085009c8e52acc1469f9cb26914c1a242122c165</id><updated>2026-11-17T22:26:51Z</updated>
+            <title>
+              first line &amp; more
+            </title></entry><entry><id>tag:github.com,2008:Grit::Commit/1111111111</id><updated>2026-01-01T00:00:00Z</updated><title>old</title></entry></feed>"""
+        assertEquals(VoxCommit("085009c", "2026-11-17", "first line & more"), Voxelverse.commit(atom))
+        assertEquals(null, Voxelverse.commit("not a feed"))
     }
 }

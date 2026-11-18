@@ -27,11 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.cgomniverse.Voxelverse
 import com.diegonmarcos.cgomniverse.VoxelverseDecl
 import com.diegonmarcos.cgomniverse.Decl
+import com.diegonmarcos.cgomniverse.Pages
+import com.diegonmarcos.cgomniverse.R
 import com.diegonmarcos.superapp.uikit.GroupTitle
 import com.diegonmarcos.superapp.uikit.KitCard
 import com.diegonmarcos.superapp.uikit.KitOutlinedButton
@@ -52,7 +55,7 @@ object VoxTags {
 }
 
 /** What the page shows: the plan document and the repo's status, as fetched (or the device's saved copy when offline). */
-private class VoxState(val plan: String?, val commit: String?, val milestones: String?, val root: String?, val live: Boolean, val loading: Boolean)
+private class VoxState(val plan: String?, val commit: String?, val engine: Boolean?, val live: Boolean, val loading: Boolean)
 
 /** The reader: https only, bounded, a saved copy per document under filesDir/voxelverse so the page works offline. */
 private object VoxelverseRepo {
@@ -66,7 +69,7 @@ private object VoxelverseRepo {
         if (!url.startsWith("https://")) return null
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = 10_000; c.readTimeout = 10_000
-        c.setRequestProperty("Accept", "application/vnd.github+json, text/plain")
+        c.instanceFollowRedirects = true
         try {
             if (c.responseCode != 200) return null
             val bytes = c.inputStream.use { it.readBytes() }
@@ -85,36 +88,33 @@ private object VoxelverseRepo {
  * milestones until the repo publishes a build. Every word and address is the declaration's; the plan text is the repo's.
  */
 @Composable
-fun VoxelversePage(decl: VoxelverseDecl = Decl.voxelverse) {
+fun VoxelversePage() {
     val ctx = LocalContext.current
     val p = LocalKitPalette.current
-    var sub by rememberSaveable { mutableStateOf(decl.subpages.firstOrNull()?.id.orEmpty()) }
+    val decl = rememberDecl()
+    val subs = listOf("plan" to stringResource(R.string.vox_plan), "viewer" to stringResource(R.string.vox_viewer))
+    var sub by rememberSaveable { mutableStateOf("plan") }
     var tick by remember { mutableStateOf(0) }
-    var st by remember {
-        mutableStateOf(VoxState(VoxelverseRepo.saved(ctx, "plan.md"), VoxelverseRepo.saved(ctx, "commit.json"),
-            VoxelverseRepo.saved(ctx, "milestones.json"), VoxelverseRepo.saved(ctx, "root.json"), live = false, loading = true))
-    }
+    var st by remember { mutableStateOf(VoxState(VoxelverseRepo.saved(ctx, "plan.md"), VoxelverseRepo.saved(ctx, "commit.atom"), null, live = false, loading = true)) }
     LaunchedEffect(tick) {
-        st = VoxState(st.plan, st.commit, st.milestones, st.root, st.live, loading = true)
-        val r = withContext(Dispatchers.IO) {
+        st = VoxState(st.plan, st.commit, st.engine, st.live, loading = true)
+        st = withContext(Dispatchers.IO) {
             val plan = VoxelverseRepo.fetch(ctx, decl.planUrl, "plan.md")
-            val commit = VoxelverseRepo.fetch(ctx, decl.commitUrl, "commit.json")
-            val ms = VoxelverseRepo.fetch(ctx, decl.milestonesUrl, "milestones.json")
-            val root = VoxelverseRepo.fetch(ctx, decl.rootUrl, "root.json")
-            VoxState(plan ?: VoxelverseRepo.saved(ctx, "plan.md"), commit ?: VoxelverseRepo.saved(ctx, "commit.json"),
-                ms ?: VoxelverseRepo.saved(ctx, "milestones.json"), root ?: VoxelverseRepo.saved(ctx, "root.json"), live = plan != null, loading = false)
+            val commit = VoxelverseRepo.fetch(ctx, decl.commitUrl, "commit.atom")
+            val marker = VoxelverseRepo.fetch(ctx, decl.markerUrl, "marker.txt")
+            VoxState(plan ?: VoxelverseRepo.saved(ctx, "plan.md"), commit ?: VoxelverseRepo.saved(ctx, "commit.atom"),
+                if (marker != null) true else if (commit != null) false else null, live = plan != null, loading = false)
         }
-        st = r
     }
     Column(Modifier.fillMaxSize().testTag(VoxTags.PAGE)) {
         Row(Modifier.fillMaxWidth().background(p.surface).padding(horizontal = 8.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            decl.subpages.forEach { s ->
-                val on = s.id == sub
-                Text(s.label, style = MaterialTheme.typography.labelLarge, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+            subs.forEach { (id, label) ->
+                val on = id == sub
+                Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
                     color = if (on) p.textPrimary else p.textSecondary,
                     modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(if (on) p.surfaceSelected else p.surface)
                         .then(if (on) Modifier.border(1.dp, p.accent, RoundedCornerShape(10.dp)) else Modifier)
-                        .clickable { sub = s.id }.padding(horizontal = 16.dp, vertical = 8.dp).testTag(VoxTags.sub(s.id)))
+                        .clickable { sub = id }.padding(horizontal = 16.dp, vertical = 8.dp).testTag(VoxTags.sub(id)))
             }
         }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -127,7 +127,6 @@ fun VoxelversePage(decl: VoxelverseDecl = Decl.voxelverse) {
 private fun StatusCard(decl: VoxelverseDecl, st: VoxState, onRefresh: (() -> Unit)?) {
     val p = LocalKitPalette.current
     val c = st.commit?.let { Voxelverse.commit(it) }
-    val engine = st.root?.let { Voxelverse.hasEngine(it, decl.engineMarker) } ?: false
     KitCard(Modifier.testTag(VoxTags.STATUS)) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(decl.t("status"), style = MaterialTheme.typography.titleSmall, color = p.textPrimary)
@@ -135,8 +134,8 @@ private fun StatusCard(decl: VoxelverseDecl, st: VoxState, onRefresh: (() -> Uni
                 style = MaterialTheme.typography.bodySmall, color = p.textSecondary)
             Text(if (c != null) decl.t("last_commit") + ": " + c.sha + " " + c.date + " " + c.subject else decl.t("no_commit"),
                 style = MaterialTheme.typography.bodySmall, color = p.textSecondary)
-            if (st.root != null) Text(if (engine) decl.t("engine_present") else decl.t("plan_only"), style = MaterialTheme.typography.bodySmall, color = p.textSecondary)
-            Text(decl.t("source") + ": " + decl.repo + "/" + decl.planPath, style = MaterialTheme.typography.labelSmall, color = p.textSecondary)
+            if (st.engine != null) Text(if (st.engine) decl.t("engine_present") else decl.t("plan_only"), style = MaterialTheme.typography.bodySmall, color = p.textSecondary)
+            Text(decl.t("source") + ": " + decl.repoName + "/" + decl.planPath, style = MaterialTheme.typography.labelSmall, color = p.textSecondary)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 val ctx = LocalContext.current
                 KitOutlinedButton(onClick = { Web.openInBrowser(ctx, decl.planWebUrl) }) { Text(decl.t("open_source")) }
@@ -186,7 +185,6 @@ private fun Phases(decl: VoxelverseDecl, md: String) {
 @Composable
 private fun ViewerSubpage(decl: VoxelverseDecl, st: VoxState) {
     val p = LocalKitPalette.current
-    val ms = st.milestones?.let { Voxelverse.milestones(it) }.orEmpty()
     Column(Modifier.fillMaxWidth().testTag(VoxTags.VIEWER), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         KitCard {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -195,13 +193,21 @@ private fun ViewerSubpage(decl: VoxelverseDecl, st: VoxState) {
             }
         }
         StatusCard(decl, st, null)
-        GroupTitle(decl.t("github_milestones"))
-        KitCard {
-            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (ms.isEmpty()) Text(decl.t("no_milestones"), style = MaterialTheme.typography.bodySmall, color = p.textSecondary)
-                ms.forEach { Text("• ${it.title} (${it.open} open, ${it.closed} closed)", style = MaterialTheme.typography.bodySmall, color = p.textPrimary) }
-            }
-        }
         st.plan?.let { Phases(decl, it) }
+    }
+}
+
+/** The declaration of this page: the repo and plan path of build.json ui.stacks.voxelverse (resolved by Pages through the SuperApp's repo_base) and the string resources. */
+@Composable
+private fun rememberDecl(): VoxelverseDecl {
+    val keys = mapOf("goals" to R.string.vox_goals, "architecture" to R.string.vox_architecture, "risks" to R.string.vox_risks, "milestones" to R.string.vox_milestones,
+        "status" to R.string.vox_status, "source" to R.string.vox_source, "open_source" to R.string.vox_open_source, "refresh" to R.string.vox_refresh,
+        "loading" to R.string.vox_loading, "live" to R.string.vox_live, "cached" to R.string.vox_cached, "unavailable" to R.string.vox_unavailable,
+        "last_commit" to R.string.vox_last_commit, "no_commit" to R.string.vox_no_commit, "plan_only" to R.string.vox_plan_only,
+        "engine_present" to R.string.vox_engine_present, "viewer_title" to R.string.vox_viewer_title, "viewer_body" to R.string.vox_viewer_body, "gate" to R.string.vox_gate)
+    val text = keys.mapValues { stringResource(it.value) }
+    return remember(text) {
+        val e = Pages.entries(Decl.stacks, "voxelverse").first()
+        Voxelverse.decl(Pages.resolve(e, Decl.targets).orEmpty(), e.path, text)
     }
 }

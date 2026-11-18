@@ -43,4 +43,26 @@
     <string name="world_xr_ready">WebXR available</string>
     <string name="world_xr_browser">Open in the browser for VR</string>
     <string name="world_xr_note">This world supports VR. The in-app view has no WebXR here: tap the headset icon to open it in the browser for VR.</string>
+    <!-- #1784 Voxelverse: the page's words; the plan itself is read from its repo at run time -->
+    <string name="vox_plan">Plan</string>
+    <string name="vox_viewer">Viewer</string>
+    <string name="vox_goals">Goals</string>
+    <string name="vox_architecture">Architecture</string>
+    <string name="vox_risks">Risks</string>
+    <string name="vox_milestones">Milestones</string>
+    <string name="vox_status">Status</string>
+    <string name="vox_source">Source of truth</string>
+    <string name="vox_open_source">Open the full plan</string>
+    <string name="vox_refresh">Refresh</string>
+    <string name="vox_loading">Loading the plan from the repository...</string>
+    <string name="vox_live">Read live from the repository</string>
+    <string name="vox_cached">Offline: showing the copy saved on this device</string>
+    <string name="vox_unavailable">The plan could not be read and no copy is saved yet. Check the connection and refresh.</string>
+    <string name="vox_last_commit">Latest commit</string>
+    <string name="vox_no_commit">Latest commit not available</string>
+    <string name="vox_plan_only">Plan only: the repository has no Rust workspace yet</string>
+    <string name="vox_engine_present">A Rust workspace is in the repository</string>
+    <string name="vox_viewer_title">Voxelverse engine: coming</string>
+    <string name="vox_viewer_body">The voxel engine is written in Rust (Bevy on wgpu; web client first, Android later through Bevy\'s mobile targets). No buildable wasm or Android artifact exists yet, so there is nothing to embed. This page shows the repository\'s state and will launch the viewer when a build is published.</string>
+    <string name="vox_gate">Gate</string>
 </resources>
