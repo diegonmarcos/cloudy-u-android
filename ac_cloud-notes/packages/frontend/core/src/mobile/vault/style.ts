@@ -92,7 +92,7 @@ export const VAULT_CSS = `
 .cnv-crumbs .cnv-crumb-sep{color:var(--text-faint);flex:none}
 .cnv-pill{display:inline-flex;align-items:center;gap:2px;padding:0 6px;height:44px;flex:none;border-radius:999px;background:var(--background-secondary)}
 .cnv-pill .cnv-btn{min-width:36px;min-height:36px;border-radius:999px}
-.cnv-mode{display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:var(--text-muted);font:inherit;font-size:var(--font-ui-smaller);cursor:pointer}
+.cnv-mode{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:34px;min-width:40px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:var(--text-muted);font:inherit;font-size:var(--font-ui-smaller);cursor:pointer}
 .cnv-mode[aria-pressed=true]{background:var(--interactive-accent);color:var(--text-on-accent)}
 .cnv-mode:disabled{opacity:.35;cursor:default}
 .cnv-tabstrip{display:flex;gap:2px;padding:0 8px;flex:none;overflow-x:auto;border-bottom:1px solid var(--background-modifier-border)}

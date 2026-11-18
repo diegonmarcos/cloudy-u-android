@@ -79,6 +79,8 @@ export interface VaultDecl {
   };
   /** #1717 the Configs screen: its page strip and the UI page's choices */
   configs: { default_page: string; pages: { id: string; label: string; icon: string; /** the shared Configs strip tab (Android) this page opens */ native?: string }[]; ui: UiDecl };
+  /** ticket 1788 the folder every new file is created in, at the root of the mounted source */
+  new_file_dir: string;
   /** #1717 per handler, the tab view each mode shows; a mode that is missing is not offered */
   view_modes: Record<string, Partial<Record<'raw' | 'edit' | 'view', string>>>;
   commands: CommandRow[];

@@ -59,7 +59,7 @@ test('stored tabs that are malformed never throw and never restore garbage', () 
     assert.deepEqual(ts.parseTabs(raw, decl, 12), ts.EMPTY_TABS, String(raw));
   }
   const s = ts.parseTabs(JSON.stringify({ tabs: [{ path: 'a.md', view: 'canvas' }, { path: 'a.md' }, { path: 'b.canvas', view: 'zzz' }], active: 'gone.md' }), decl, 12);
-  assert.deepEqual(s.tabs, [{ path: 'a.md', view: 'preview', mode: 'view', cdn: false }, { path: 'b.canvas', view: 'canvas', mode: 'edit', cdn: false }]);
+  assert.deepEqual(s.tabs, [{ path: 'a.md', view: 'preview', mode: 'view', cdn: false, zoom: 1 }, { path: 'b.canvas', view: 'canvas', mode: 'edit', cdn: false, zoom: 1 }]);
   assert.equal(s.active, 'b.canvas');
   const many = { tabs: Array.from({ length: 40 }, (_, i) => ({ path: `n${i}.md` })), active: 'n39.md' };
   assert.equal(ts.parseTabs(JSON.stringify(many), decl, decl.layout.tab_max).tabs.length, decl.layout.tab_max);

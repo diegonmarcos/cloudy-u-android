@@ -3,11 +3,13 @@
 // Its own pane, its own toolbar (the view switch of the file: Reading / Source, Tree / Source ...).
 // This module never draws a canvas board: it shares only the TabStore, the LinkResolver and the
 // VaultSource (through the vault API) with Canvas mode.
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import type { VaultDecl } from '../decl-types';
 import { EditPane } from '../edit-mode/EditPane';
+import { TEXT_ZOOM } from '../core/zoom';
 import { handlerFor } from '../file-types';
+import { usePinch } from '../use-pinch';
 import { Icon } from '../icons';
 import type { Tab, VaultApi } from '../use-vault';
 import { HtmlView, ImageView, JsonView, MarkdownView, MermaidView, SourceEditor, XmlView } from '../viewers';
@@ -62,6 +64,11 @@ export const PropertiesCard = ({ tab, api }: { tab: Tab; api: VaultApi }) => {
 /** The file pane: what the tab's handler and view say, nothing else. */
 export const FileView = ({ tab, api, decl }: { tab: Tab; api: VaultApi; decl: VaultDecl }) => {
   const handler = handlerFor(decl, tab.path);
+  // ticket 1788: two-finger pinch scales the text of Raw and View (not Edit), remembered per tab
+  const box = useRef<HTMLDivElement>(null);
+  const [live, setLive] = useState<number | null>(null);
+  const zoomable = tab.mode !== 'edit';
+  usePinch(box, tab.zoom, TEXT_ZOOM, z => setLive(z), z => { setLive(null); api.patchTab(tab.path, { zoom: z }); });
   if (tab.error && tab.text === null) return <div className="cnv-pane" data-testid="tab-error" data-mode={tab.mode}>{tab.error}</div>;
   if (tab.text === null && handler.handler !== 'unsupported') return <div className="cnv-pane cnv-dim" data-testid="tab-loading" data-mode={tab.mode}>Opening {tab.path}</div>;
   const source = tab.view === 'source';
@@ -88,7 +95,7 @@ export const FileView = ({ tab, api, decl }: { tab: Tab; api: VaultApi; decl: Va
     }
   };
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }} data-testid="file-view" data-mode={tab.mode} data-handler={handler.handler}>
+    <div ref={box} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, touchAction: 'pan-x pan-y', ...(zoomable ? { zoom: live ?? tab.zoom } : {}) }} data-testid="file-view" data-mode={tab.mode} data-handler={handler.handler} data-zoom={zoomable ? (live ?? tab.zoom) : undefined}>
       {tab.error && <div className="cnv-banner" data-testid="tab-error">{tab.error}</div>}
       {pane()}
     </div>

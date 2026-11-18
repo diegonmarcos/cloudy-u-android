@@ -5,6 +5,7 @@
 import type { VaultDecl } from '../decl-types';
 import { handlerFor } from '../file-types';
 import type { KeyValueStore } from '../recent-vaults';
+import { CANVAS_ZOOM, storedZoom, TEXT_ZOOM } from './zoom';
 
 /** The three modes of the top-right switch (build.json::vault.view_modes says which a file type offers). */
 export type ViewMode = 'raw' | 'edit' | 'view';
@@ -18,6 +19,8 @@ export interface TabMeta {
   mode: ViewMode;
   /** HTML pages: the CDN toggle, per tab */
   cdn: boolean;
+  /** ticket 1788 pinch zoom, kept per tab: the text scale of a note or data file, the board zoom of a canvas (1 = untouched) */
+  zoom: number;
 }
 
 export interface TabState {
@@ -81,7 +84,7 @@ export function openTab(s: TabState, decl: Pick<VaultDecl, 'file_types' | 'html'
   if (existing) return activateTab(s, path);
   const h = handlerFor(decl, path);
   const mode = modeOfPath(decl, path);
-  const tab: TabMeta = { path, view: viewForMode(decl, path, mode) ?? h.default_view, mode, cdn: decl.html.cdn.default };
+  const tab: TabMeta = { path, view: viewForMode(decl, path, mode) ?? h.default_view, mode, cdn: decl.html.cdn.default, zoom: 1 };
   const tabs = [...s.tabs, tab].slice(-Math.max(1, max));
   return { tabs, active: path, back: pushHistory(s.back, s.active), forward: [] };
 }
@@ -150,7 +153,7 @@ export const tabsKey = (root: string) => `cloud-notes:vault:tabs:${root}`;
 export const LAST_VAULT_KEY = 'cloud-notes:vault:last';
 
 export function serializeTabs(s: TabState): string {
-  return JSON.stringify({ v: 1, tabs: s.tabs.map(t => ({ path: t.path, view: t.view, mode: t.mode, cdn: t.cdn })), active: s.active });
+  return JSON.stringify({ v: 1, tabs: s.tabs.map(t => ({ path: t.path, view: t.view, mode: t.mode, cdn: t.cdn, zoom: t.zoom })), active: s.active });
 }
 
 /** Stored tabs -> state. Anything malformed is dropped, never thrown; views are checked against the file type. */
@@ -171,7 +174,8 @@ export function parseTabs(raw: string | null, decl: Pick<VaultDecl, 'file_types'
       const mode: ViewMode = VIEW_MODES.includes(stored as ViewMode) && offered.includes(stored as ViewMode)
         ? (stored as ViewMode)
         : legacy && offered.includes(legacy) ? legacy : modeOfPath(decl, t.path);
-      tabs.push({ path: t.path, view: viewForMode(decl, t.path, mode) ?? h.default_view, mode, cdn: t.cdn === true });
+      const range = h.handler === 'canvas' ? CANVAS_ZOOM : TEXT_ZOOM;
+      tabs.push({ path: t.path, view: viewForMode(decl, t.path, mode) ?? h.default_view, mode, cdn: t.cdn === true, zoom: storedZoom((t as { zoom?: unknown }).zoom, range) });
     }
     const kept = tabs.slice(-Math.max(1, max));
     const active = typeof o.active === 'string' && kept.some(t => t.path === o.active) ? o.active : (kept[kept.length - 1]?.path ?? null);

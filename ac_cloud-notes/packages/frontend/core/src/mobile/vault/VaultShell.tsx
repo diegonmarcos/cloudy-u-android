@@ -14,6 +14,7 @@ import { type CSSProperties, type ReactElement, useCallback, useEffect, useMemo,
 import { CanvasMode } from './canvas-mode/CanvasMode';
 import { collapseAll } from './core/file-index';
 import { modeOfTab, modesFor, toggledMode, type ViewMode } from './core/tab-store';
+import { CANVAS_ZOOM, stepZoom, TEXT_ZOOM } from './core/zoom';
 import type { VaultDecl } from './decl-types';
 import { FileView } from './file-mode/FileView';
 import { baseName, handlerFor, stem } from './file-types';
@@ -124,6 +125,10 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
     return () => window.removeEventListener('cloud-notes:vault-search', onSearch);
   }, [showLeft]);
 
+  // ticket 1788 zoom: a note's text scale in Raw and View, a canvas's board zoom; Edit has none
+  const zoomRange = handler ? (handler.handler === 'canvas' ? CANVAS_ZOOM : TEXT_ZOOM) : null;
+  const canZoom = tab !== null && zoomRange !== null && mode !== 'edit' && special === null;
+
   const toggleMode = useCallback(() => {
     if (!tab) return;
     const next = toggledMode(decl, tab);
@@ -139,6 +144,9 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
       case 'new-canvas': return void api.newCanvas('');
       case 'new-folder': return void api.newFolder('');
       case 'save': return tab ? void api.save(tab.path) : undefined;
+      case 'zoom-in': case 'zoom-out': case 'zoom-reset':
+        if (tab && zoomRange) api.patchTab(tab.path, { zoom: id === 'zoom-reset' ? 1 : stepZoom(tab.zoom, id === 'zoom-in' ? 'in' : 'out', zoomRange) });
+        return;
       case 'toggle-mode': return toggleMode();
       case 'close-tab': return tab ? api.closeTab(tab.path) : undefined;
       case 'toggle-left': return setLeftOpen(v => !v);
@@ -161,7 +169,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
       case 'mode-view': return tab ? api.setMode(tab.path, 'view') : undefined;
       default: return undefined;
     }
-  }, [api, tab, toggleMode, showLeft, setPrefs, decl.limits.skip_dirs, narrow]);
+  }, [api, tab, toggleMode, showLeft, setPrefs, decl.limits.skip_dirs, narrow, zoomRange]);
 
   // nothing mounted yet (a first launch): the sidebar opens on its Source section so the way in is on screen, not behind a button
   useEffect(() => {
@@ -279,6 +287,9 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
 
   const moreItems: MenuItem[] = [
     { id: 'save', label: 'Save', icon: 'check', disabled: !tab?.dirty, hint: 'Ctrl+S' },
+    { id: 'zoom-in', label: 'Zoom in', icon: 'plus', disabled: !canZoom },
+    { id: 'zoom-out', label: 'Zoom out', icon: 'minus', disabled: !canZoom },
+    { id: 'zoom-reset', label: 'Reset zoom', icon: 'reset', disabled: !canZoom },
     { id: 'toggle-mode', label: mode ? `Toggle edit and preview (now ${MODE_LABEL[mode]})` : 'Toggle edit and preview', icon: 'edit', disabled: !tab || modes.length < 2 },
     { id: 'mode-raw', label: 'Raw: the source', icon: 'file', checked: mode === 'raw', disabled: !modes.includes('raw'), title: 'Mode', divider: true },
     { id: 'mode-edit', label: 'Edit: WYSIWYG', icon: 'edit', checked: mode === 'edit', disabled: !modes.includes('edit') },
@@ -324,13 +335,10 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
                   {decl.layout.modes.map(m => (
                     <button key={m.id} type="button" className="cnv-mode" data-mode-button={m.id} aria-pressed={mode === m.id} disabled={!tab || special !== null || !modes.includes(m.id)}
                       title={`${m.label} mode`} aria-label={m.label} onClick={() => tab && api.setMode(tab.path, m.id)}>
-                      <Icon name={m.icon} size={14} />{mode === m.id ? m.label : null}
+                      <Icon name={m.icon} size={18} />
                     </button>
                   ))}
                 </span>
-                {tab && mode && modes.length > 1 && special === null && handler?.handler !== 'canvas' && (
-                  <button type="button" className="cnv-btn" onClick={toggleMode} title={`Toggle edit and preview (now ${MODE_LABEL[mode]})`} aria-label="Toggle edit and preview" data-testid="mode-toggle" data-view={tab.view} aria-pressed={mode === 'raw'}><Icon name="edit" size={20} /></button>
-                )}
                 {special !== null && (
                   <button type="button" className="cnv-btn" title="Close" aria-label="Close" onClick={() => setSpecial(null)}><Icon name="close" size={20} /></button>
                 )}

@@ -55,6 +55,8 @@ test('the vault API lost no member', () => {
 
 // the owner ordered the VaultView start screen removed (#1717): its four ids go, and what they did is in the Source section.
 const START_SCREEN = ['vault-start', 'open-folder', 'path-input', 'vault-error'];
+// ticket 1788: the separate Pen icon (the Toggle edit and preview button) was removed at the owner's order; Edit in the Raw | Edit | View switch covers it
+const PEN_BUTTON = ['mode-toggle'];
 test('the start screen is gone; its open, path and error roles live in the Source section and the status bar', () => {
   for (const id of START_SCREEN) assert.ok(!ui.includes(`data-testid="${id}"`), `${id} is gone`);
   assert.ok(!existsSync(join(SRC, 'VaultView.tsx')) || !readFileSync(join(SRC, 'VaultView.tsx'), 'utf8').includes('cnv-start'));
@@ -64,7 +66,7 @@ test('the start screen is gone; its open, path and error roles live in the Sourc
 });
 
 test('every test id, label and canvas tool of the previous UI is still rendered', () => {
-  for (const id of base.testids.filter(i => !START_SCREEN.includes(i))) {
+  for (const id of base.testids.filter(i => !START_SCREEN.includes(i) && !PEN_BUTTON.includes(i))) {
     const dynamic = id.endsWith('-');
     assert.ok(dynamic ? ui.includes('data-testid={`' + id) || ui.includes(`data-testid="${id}`) : ui.includes(`data-testid="${id}"`), `test id ${id}`);
   }

@@ -729,6 +729,8 @@
         "editable": false
       }
     ],
+    "new_file_dir": "Notes-Inbox",
+    "_doc_new_file_dir": "Ticket 1788: New file always creates the note in this folder, at the root of the mounted source (created when missing), whatever folder the sidebar has focused.",
     "view_modes": {
       "_doc": "#1717 the top-right Raw | Edit | View switch. Per handler, the tab view each mode shows (a mode missing here is not offered for that file type and its button is disabled). Raw is the source text. Edit is the WYSIWYG editor of a note or page and the editable board of a canvas. View is the rendered, read-only result; a canvas in View is locked (nothing moves or changes), as Obsidian's lock mode. JSON and XML have no WYSIWYG: they offer Raw and View (the collapsible tree).",
       "markdown": {"raw": "source", "edit": "preview", "view": "preview"},

@@ -540,6 +540,8 @@
         {"name": "vault-html-edit", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "page.html"], ["wait", 3], ["tap", "Edit"], ["wait", 4]]},
         {"name": "vault-canvas-edit", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "board.canvas"], ["wait", 3]]},
         {"name": "vault-canvas-locked", "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "board.canvas"], ["wait", 3], ["tap", "View"], ["wait", 2]]},
+        {"name": "vault-md-zoomed", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Home.md"], ["wait", 3], ["tap", "More"], ["tap", "Zoom in"], ["tap", "More"], ["tap", "Zoom in"], ["wait", 2]]},
+        {"name": "vault-new-file-inbox", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "New file"], ["wait", 3], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Notes-Inbox"], ["wait", 2]]},
         {"name": "vault-tabs-restored", "themes": ["dark"], "steps": [["wait", 4], ["wait", 3], ["tap", "Tabs"], ["wait", 1]]},
         {"name": "vault-sidebar-recent", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Recent files"], ["wait", 1]]},
         {"name": "vault-sidebar-filter", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Recent files"], ["tap", "Filter"], ["tap", "Only canvases (.canvas)"], ["wait", 1]]},

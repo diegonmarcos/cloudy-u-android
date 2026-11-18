@@ -52,6 +52,8 @@ export const CanvasMode = ({ tab, api, locked = false }: { tab: Tab; api: VaultA
       <CanvasView
         text={text}
         locked={locked}
+        zoom={tab.zoom}
+        onZoom={k => api.patchTab(tab.path, { zoom: k })}
         onChange={change}
         onOpenFile={(target, subpath) => void api.followLink(target, tab.path, { heading: subpath?.replace(/^#/, '') })}
         onOpenLink={(target, opts) => void api.followLink(target, tab.path, opts)}

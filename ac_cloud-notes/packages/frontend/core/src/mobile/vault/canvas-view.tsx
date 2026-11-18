@@ -48,6 +48,10 @@ export interface CanvasViewProps {
   rail?: (ctl: CanvasControls) => ReactNode;
   /** #1717 View mode: nothing can be moved, resized, connected, added, edited or deleted (Obsidian's lock); pan, zoom and following links still work */
   locked?: boolean;
+  /** ticket 1788 the board zoom of this tab (kept per tab): the starting zoom, and what the menu's Zoom in / out sets */
+  zoom?: number;
+  /** reported (after a pause) whenever the zoom changes, to be remembered per tab */
+  onZoom?: (k: number) => void;
 }
 
 export interface CanvasControls {
@@ -93,10 +97,21 @@ const FileCard = ({ file, resolveFile, readDataUrl, readText }: Pick<CanvasViewP
 
 const PRESETS = [undefined, '1', '2', '3', '4', '5', '6'];
 
-export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile, readDataUrl, readText, rail, locked = false }: CanvasViewProps) => {
+export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile, readDataUrl, readText, rail, locked = false, zoom, onZoom }: CanvasViewProps) => {
   const parsed = useMemo(() => parseCanvas(text), [text]);
   const canvas = parsed.canvas;
-  const [view, setView] = useState<View>({ x: 40, y: 40, k: 1 });
+  const [view, setView] = useState<View>({ x: 40, y: 40, k: zoom ?? 1 });
+  // the zoom follows the tab's stored value when something else changes it (the menu); a gesture's own changes are reported back after a pause
+  const reported = useRef(zoom ?? 1);
+  useEffect(() => {
+    if (zoom !== undefined && Math.abs(zoom - reported.current) > 0.001 && Math.abs(zoom - view.k) > 0.001) setView(v => ({ ...v, k: zoom }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom]);
+  useEffect(() => {
+    if (!onZoom || Math.abs(view.k - reported.current) < 0.001) return;
+    const id = setTimeout(() => { reported.current = view.k; onZoom(view.k); }, 400);
+    return () => clearTimeout(id);
+  }, [view.k, onZoom]);
   const [selected, setSelected] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<string | null>(null);
   const [connectFrom, setConnectFrom] = useState<string | null>(null);

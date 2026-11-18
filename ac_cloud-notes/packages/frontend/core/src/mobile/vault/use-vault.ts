@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DEFAULT_PREFS, FileIndex, type IndexEntry, parsePrefs, prefsKey, type SidebarPrefs } from './core/file-index';
 import { LinkResolver } from './core/link-resolver';
+import { ensureInbox } from './core/new-file';
 import {
   activateTab,
   canGoBack,
@@ -462,9 +463,9 @@ export function useVault(decl: VaultDecl, storage: KeyValueStore) {
   /** Patch a tab: view and cdn belong to the TabStore, text / dirty / error to its buffer. */
   const patchTab = useCallback(
     (path: string, patch: Partial<Tab>) => {
-      const { view, cdn, text, dirty, error: err } = patch;
-      if (view !== undefined || cdn !== undefined) {
-        setTabState(s => patchTabState(s, path, { ...(view !== undefined ? { view } : {}), ...(cdn !== undefined ? { cdn } : {}) }));
+      const { view, cdn, zoom, text, dirty, error: err } = patch;
+      if (view !== undefined || cdn !== undefined || zoom !== undefined) {
+        setTabState(s => patchTabState(s, path, { ...(view !== undefined ? { view } : {}), ...(cdn !== undefined ? { cdn } : {}), ...(zoom !== undefined ? { zoom } : {}) }));
       }
       if (text !== undefined || dirty !== undefined || err !== undefined) {
         setBuffer(path, { ...(text !== undefined ? { text } : {}), ...(dirty !== undefined ? { dirty } : {}), ...(err !== undefined ? { error: err } : {}) });
@@ -550,7 +551,26 @@ export function useVault(decl: VaultDecl, storage: KeyValueStore) {
     [dirs, vault, loadDir]
   );
 
-  const newNote = useCallback(async (dir = '') => createFile(dir, await freeName(dir, 'Untitled', '.md')), [createFile, freeName]);
+  /**
+   * New file (ticket 1788): always in the Notes-Inbox folder (build.json::vault.new_file_dir) at the root of the mounted source, created when it
+   * is missing, whatever folder is focused; [_dir] is accepted for the callers' sake and ignored.
+   */
+  const newNote = useCallback(
+    async (_dir = '') => {
+      if (!vault) return null;
+      try {
+        const inbox = await ensureInbox(vault.fs, decl.new_file_dir);
+        if (inbox.created) {
+          setFolders(f => [...f.filter(x => x.path !== inbox.path), { path: inbox.path, name: decl.new_file_dir, isDir: true, size: 0, mtime: Date.now() }]);
+        }
+        return createFile(inbox.path, await freeName(inbox.path, 'Untitled', '.md'));
+      } catch (e) {
+        setError(errText(e));
+        return null;
+      }
+    },
+    [vault, decl.new_file_dir, createFile, freeName]
+  );
 
   const newCanvas = useCallback(
     async (dir = '') => createFile(dir, await freeName(dir, 'Untitled', '.canvas'), '{\n\t"nodes": [],\n\t"edges": []\n}'),
