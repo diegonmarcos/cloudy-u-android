@@ -79,6 +79,11 @@ jobs:
           elif cmd == "desc":        # ui.py desc dump.xml "Expand" n  -> n-th node with that content-desc, top to bottom
               hits = sorted((a for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3]), key=lambda a: a["_b"][1])
               n = int(sys.argv[4]); print(centre(hits[n]) if len(hits) > n else "")
+          elif cmd == "checked":     # ui.py checked dump.xml X Y  -> checked of the smallest checkable node holding the point
+              px, py = int(sys.argv[3]), int(sys.argv[4])
+              hit = [a for a in nodes(sys.argv[2]) if a.get("checkable") == "true" and a["_b"][0] <= px <= a["_b"][2] and a["_b"][1] <= py <= a["_b"][3]]
+              hit.sort(key=lambda a: (a["_b"][2] - a["_b"][0]) * (a["_b"][3] - a["_b"][1]))
+              print(hit[0].get("checked", "") if hit else "")
           elif cmd == "count-desc":
               print(sum(1 for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3]))
           elif cmd == "badges":      # ui.py badges build.json -> "id<TAB>channel<TAB>label" per persistent badge
@@ -119,7 +124,10 @@ jobs:
           # The app's own Screensaver (a black overlay with the clock and one "Unlock" button, started by the shell's
           # idle timer) covers the page between steps; take it down with its own button before reading or tapping.
           uncover() { for _ in 1 2 3; do adb shell uiautomator dump /sdcard/u0.xml >/dev/null 2>&1; adb pull /sdcard/u0.xml u0.xml >/dev/null 2>&1
-            u=$(python3 ui.py text u0.xml Unlock); [ -z "$u" ] && return 0; adb shell input tap $u; sleep 2; done; }
+            u=$(python3 ui.py text u0.xml Unlock)
+            # the first-start "Install unknown apps" ask covers the page after a restart: Skip it
+            [ -z "$u" ] && grep -q 'text="Install unknown apps"' u0.xml && u=$(python3 ui.py text u0.xml Skip)
+            [ -z "$u" ] && return 0; adb shell input tap $u; sleep 2; done; }
           dump() { awake; uncover; sleep 1; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "out/$1.xml" >/dev/null 2>&1; }
           shade() { awake; uncover; adb shell cmd statusbar expand-notifications; sleep 3; adb exec-out screencap -p > "out/shade-$1.png"; adb shell cmd statusbar collapse; sleep 1; }
           posted() { adb shell dumpsys notification --noredact > "out/dumpsys-$1.txt"; python3 posted.py "out/dumpsys-$1.txt" "$PKG"; }
@@ -148,38 +156,49 @@ jobs:
           # coordinates (the first runs tapped the wrong row). The tall display is for full-page screenshots, never taps.
           page() { adb shell am start -n "$ACT" --es shortcut_action "page:communication/$1" >/dev/null; awake; sleep 8; }
           totop() { for _ in 1 2 3 4 5 6; do adb shell input swipe 540 700 540 2100 150; done; sleep 1; }
-          # seek MODE A [B]: scroll down until ui.py MODE finds the target well inside the screen, then tap it.
+          # seek MODE A [B]: scroll down until ui.py MODE finds the target well inside the screen (above the bottom nav);
+          # prints its centre and leaves the page there.
           seek() { totop; for _ in $(seq 1 16); do dump seek; pos=$(python3 ui.py "$1" out/seek.xml "${@:2}")
-              if [ -n "$pos" ]; then y=${pos#* }; if [ "$y" -gt 300 ] && [ "$y" -lt 2100 ]; then tap "$pos"; return 0; fi; fi
-              adb shell input swipe 540 1800 540 1200 500; sleep 1; done; echo "seek: not found: $*"; return 1; }
+              if [ -n "$pos" ]; then y=${pos#* }; if [ "$y" -gt 300 ] && [ "$y" -lt 2000 ]; then echo "$pos"; return 0; fi; fi
+              adb shell input swipe 540 1800 540 1200 500 >/dev/null; sleep 1; done; return 1; }
+          # setsw WANT MODE A [B]: drive the switch row to WANT (true|false), reading its state back after every tap.
+          setsw() { want=$1; shift; pos=$(seek "$@") || { echo "setsw: not found: $*"; return 1; }; pos=$(printf "%s\n" "$pos" | tail -1)
+              for _ in 1 2 3 4; do dump sw; st=$(python3 ui.py checked out/sw.xml $pos); echo "switch $* at $pos: $st (want $want)"
+                [ "$st" = "$want" ] && return 0; tap "$pos"; sleep 4; done; return 1; }
+          # until_shade NAME TEST: poll the shade (dumpsys) up to 90 s until TEST "$posted" holds; prints the last read.
+          until_shade() { t0=$(date +%s); for _ in $(seq 1 18); do p=$(posted "$1"); if $2 "$p"; then break; fi; sleep 5; done
+              echo "$p"; echo "  $1 after $(( $(date +%s) - t0 ))s: $p" >&2; }
+          none_in() { [ "$(in_shade "$1")" -eq 0 ]; }
+          some_in() { [ "$(in_shade "$1")" -ge 3 ]; }
           tall() { adb shell wm size 1080x7600; sleep 3; page "$1"; shot "$2"; adb shell wm size reset; sleep 3; }
           stages() { adb shell "run-as $PKG cat shared_prefs/notify_all_badge_stage.xml" 2>/dev/null | grep -o ">$1<" | wc -l; }
 
           page notify-configs; shot configs-before; tall notify-configs configs-before-tall
 
           # 1. Turn all OFF.
-          page notify-configs; seek text 'Turn all badges on / off'; sleep 12
-          p1=$(posted all-off); n1=$(in_shade "$p1"); echo "all off: $p1"
+          page notify-configs; setsw false text 'Turn all badges on / off'
+          p1=$(until_shade all-off none_in); n1=$(in_shade "$p1"); echo "all off: $p1"
           [ "$n1" -eq 0 ] && check ok "1 Turn all OFF: no badge in the shade ($p1)" || check no "1 Turn all OFF: $n1 badge channels still in the shade ($p1)"
           page notify-configs; shot configs-all-off; shade 1-all-off
 
           # 2. Turn all ON.
-          page notify-configs; seek text 'Turn all badges on / off'; sleep 25
-          p2=$(posted all-on); n2=$(in_shade "$p2"); echo "all on: $p2"
+          page notify-configs; setsw true text 'Turn all badges on / off'
+          p2=$(until_shade all-on some_in); n2=$(in_shade "$p2"); echo "all on: $p2"
           [ "$n2" -ge 3 ] && check ok "2 Turn all ON: $n2 badge channels back in the shade ($p2)" || check no "2 Turn all ON: only $n2 badge channels in the shade ($p2)"
           page notify-configs; shot configs-all-on; shade 2-all-on
 
           # 3. One badge: the first declared badge that is in the shade now.
-          tid=""; for row in $(cut -f1 badges.tsv); do ch=$(grep -P "^$row\t" badges.tsv | cut -f2); case " $p2 " in *" $ch "*) tid=$row; break;; esac; done
+          tid=""; for row in battery_status network_data ai_usage presets_state $(cut -f1 badges.tsv); do ch=$(grep -P "^$row\t" badges.tsv | cut -f2); case " $p2 " in *" $ch "*) tid=$row; break;; esac; done
           if [ -n "$tid" ]; then
             tch=$(grep -P "^$tid\t" badges.tsv | cut -f2); tlabel=$(grep -P "^$tid\t" badges.tsv | cut -f3)
-            page notify-configs; seek below "$tlabel" 'Show this badge'; sleep 12
-            p3=$(posted one-off); echo "$tid off: $p3"
+            gone() { case " $1 " in *" $tch "*) return 1;; esac; return 0; }; back() { ! gone "$1"; }
+            page notify-configs; setsw false below "$tlabel" 'Show this badge'
+            p3=$(until_shade one-off gone); echo "$tid off: $p3"
             case " $p3 " in *" $tch "*) check no "3 '$tlabel' Show this badge OFF: channel $tch still in the shade";; *) check ok "3 '$tlabel' Show this badge OFF: channel $tch left the shade";; esac
             others=$(in_shade "$p3"); [ "$others" -ge 1 ] && check ok "3 the other badges stayed ($others)" || check no "3 switching one badge off took the others too"
             shot configs-one-off; shade 3-one-off
-            page notify-configs; seek below "$tlabel" 'Show this badge'; sleep 20
-            p4=$(posted one-on); echo "$tid on: $p4"
+            page notify-configs; setsw true below "$tlabel" 'Show this badge'
+            p4=$(until_shade one-on back); echo "$tid on: $p4"
             case " $p4 " in *" $tch "*) check ok "3 '$tlabel' Show this badge ON: channel $tch back in the shade";; *) check no "3 '$tlabel' Show this badge ON: channel $tch not posted";; esac
             shade 4-one-on
           else check no "3 no badge was in the shade to switch"; fi
