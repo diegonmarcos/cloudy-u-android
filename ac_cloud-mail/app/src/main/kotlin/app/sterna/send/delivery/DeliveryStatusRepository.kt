@@ -25,7 +25,12 @@ object DeliveryStatusBinding {
 }
 
 /** One sent message: the account it went from, and its RFC 5322 Message-ID (the server's key). */
-data class DeliveryKey(val accountId: String, val messageId: String)
+data class DeliveryKey(
+    val accountId: String,
+    val messageId: String,
+    /** The sending address, the server's `account` scope (`?account=`). */
+    val accountAddress: String? = null,
+)
 
 /** One cached answer: the report and when it was fetched; [error] holds a failed ask's text. */
 data class CachedDelivery(

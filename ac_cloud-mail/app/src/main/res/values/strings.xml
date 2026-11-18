@@ -1608,7 +1608,7 @@
     <string name="delivery_recipient_bounced">bounced</string>
     <string name="delivery_message_id">Message ID: %1$s</string>
     <string name="delivery_smtp_code">SMTP %1$d</string>
-    <string name="delivery_recipient_relay">accepted by relay, awaiting confirmation</string>
+    <string name="delivery_recipient_relay">sent, awaiting confirmation</string>
     <!-- #1803 recipient deliverability: chip marks, detail sheet, will-fail question -->
     <string name="compose_recipient_check_verdict_ok">Can receive</string>
     <string name="compose_recipient_check_verdict_risky">Risky</string>

@@ -134,4 +134,43 @@ class FleetDeliveryStatusSourceTest {
         val e = runCatching { source(meshUp = true).fetch(key) }.exceptionOrNull()
         assertTrue(e is IOException && e.message!!.contains("rate_limited"))
     }
+
+    // ── the server's client-shaped fields (cloudy-u-containers 07f51da) ─────────────────────────
+
+    private val flatJson = """
+      {"found":true,"account":"me@example.org","messageId":"<f1@fleet>","queueId":"Q9",
+       "submission":{"accepted":true,"at":"${iso(2_000)}","smtp_code":250,"message_id":"<f1@fleet>","text":"queued as Q9"},
+       "sender":{"may_use_from":true,"dkim_signed":true,"dkim_selector":"s2","spf_aligned":false,"dmarc_aligned":true,"at":"${iso(3_000)}","text":null},
+       "recipients":[
+         {"address":"a@x.org","state":"delivered","at":"${iso(4_000)}","smtp_code":250,"remote_mx":"mx.x.org","detail":"250 OK"},
+         {"address":"b@y.org","state":"pending","at":"${iso(5_000)}","smtp_code":250,"remote_mx":"relay.oci","detail":"accepted by relay"},
+         {"address":"c@z.org","state":"deferred","at":"${iso(6_000)}","smtp_code":451,"remote_mx":"mx.z.org","detail":"greylisted"}],
+       "stages":{"received":{"state":"failed"}}}
+    """.trimIndent()
+
+    @Test fun `the top-level fields win over stages and map one to one`() {
+        val r = DeliveryStatusJson.parse(JSONObject(flatJson))!!
+        assertEquals(ServerDeliveryReport.Submission(true, 2_000, 250, "<f1@fleet>", "queued as Q9"), r.submission)
+        assertEquals("s2", r.sender!!.dkimSelector); assertEquals(false, r.sender!!.spfAligned)
+        assertEquals(listOf(RecipientState.DELIVERED, RecipientState.PENDING, RecipientState.DEFERRED), r.recipients.map { it.state })
+        assertTrue(r.recipients[1].acceptedByRelay)
+        assertEquals(451, r.recipients[2].smtpCode)
+        val t = DeliveryStateMachine.timeline(PhoneDelivery(false, 1_000), r)
+        assertEquals(StageMark.Confirmed(2_000), t[DeliveryStage.SERVER_RECEIVED].mark)
+        assertEquals("SPF reported, not gating", StageMark.Confirmed(3_000), t[DeliveryStage.VALID_SENDER].mark)
+        assertTrue(t[DeliveryStage.SENT].mark is StageMark.Deferred)
+    }
+
+    @Test fun `unrecorded top-level fields stay pending`() {
+        val r = DeliveryStatusJson.parse(JSONObject("""{"found":true,"submission":{"accepted":null},
+            "sender":{"may_use_from":null,"dkim_signed":null,"spf_aligned":null,"dmarc_aligned":null},"recipients":[]}"""))!!
+        assertNull(r.submission)
+        assertEquals(StageMark.Pending, DeliveryStateMachine.validSender(r.sender))
+    }
+
+    @Test fun `the account scope rides along as a query parameter`() = runTest {
+        mesh.enqueue(MockResponse().setBody(flatJson))
+        source(meshUp = true).fetch(DeliveryKey("acct", "<f1@fleet>", accountAddress = "me+x@example.org"))
+        assertEquals("/v1/sent/%3Cf1%40fleet%3E/status?account=me%2Bx%40example.org", mesh.takeRequest().path)
+    }
 }

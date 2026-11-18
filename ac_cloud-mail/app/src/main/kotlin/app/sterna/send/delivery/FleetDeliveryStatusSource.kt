@@ -46,7 +46,9 @@ class FleetDeliveryStatusSource(
 
     override suspend fun fetch(key: DeliveryKey): ServerDeliveryReport? = withContext(Dispatchers.IO) {
         val id = URLEncoder.encode(key.messageId.trim(), "UTF-8").replace("+", "%20")
-        val req = Request.Builder().url("${publicBase.trimEnd('/')}/v1/sent/$id/status").get().build()
+        val account = key.accountAddress?.takeIf { it.isNotBlank() }
+            ?.let { "?account=" + URLEncoder.encode(it.trim(), "UTF-8").replace("+", "%20") }.orEmpty()
+        val req = Request.Builder().url("${publicBase.trimEnd('/')}/v1/sent/$id/status$account").get().build()
         client.newCall(req).execute().use { resp ->
             val body = resp.body?.string().orEmpty()
             when {
@@ -76,6 +78,8 @@ object DeliveryStatusJson {
 
     fun parse(o: JSONObject): ServerDeliveryReport? {
         if (o.has("found") && !o.optBoolean("found")) return null
+        // The server's own client-shaped fields (submission / sender / recipients) win; `stages{}` is the fallback.
+        if (o.has("submission") || o.has("sender") || o.has("recipients")) return flat(o)
         val stages = o.optJSONObject("stages") ?: return ServerDeliveryReport()
         return ServerDeliveryReport(
             submission = submission(o, stages.optJSONObject("submitted"), stages.optJSONObject("received")),
@@ -83,6 +87,53 @@ object DeliveryStatusJson {
             recipients = recipients(stages.optJSONObject("delivered")),
         )
     }
+
+    private fun flat(o: JSONObject): ServerDeliveryReport {
+        val sub = o.optJSONObject("submission")?.let { s ->
+            if (s.isNull("accepted")) null else ServerDeliveryReport.Submission(
+                accepted = s.optBoolean("accepted"),
+                atMillis = at(s),
+                smtpCode = int(s, "smtp_code"),
+                messageId = str(s, "message_id") ?: str(o, "messageId"),
+                detail = str(s, "text"),
+            )
+        }
+        val sender = o.optJSONObject("sender")?.let { s ->
+            ServerDeliveryReport.SenderAuth(
+                accountMayUseFrom = bool(s, "may_use_from"),
+                dkimSigned = bool(s, "dkim_signed"),
+                spfAligned = bool(s, "spf_aligned"),
+                dmarcAligned = bool(s, "dmarc_aligned"),
+                atMillis = at(s),
+                dkimSelector = str(s, "dkim_selector"),
+                detail = str(s, "text"),
+                spfGating = false,
+            )
+        }
+        val arr = o.optJSONArray("recipients") ?: JSONArray()
+        val rcpts = (0 until arr.length()).mapNotNull { i ->
+            val r = arr.optJSONObject(i) ?: return@mapNotNull null
+            RecipientDelivery(
+                address = str(r, "address") ?: str(r, "rcpt") ?: return@mapNotNull null,
+                state = when (r.optString("state").lowercase()) {
+                    "delivered", "ok" -> RecipientState.DELIVERED
+                    "bounced", "failed" -> RecipientState.BOUNCED
+                    "deferred" -> RecipientState.DEFERRED
+                    else -> RecipientState.PENDING
+                },
+                atMillis = at(r),
+                smtpCode = int(r, "smtp_code"),
+                remoteMx = str(r, "remote_mx") ?: str(r, "host"),
+                detail = str(r, "detail") ?: reason(r),
+                hop = str(r, "hop"),
+            )
+        }
+        return ServerDeliveryReport(sub, sender, rcpts)
+    }
+
+    private fun bool(o: JSONObject, k: String): Boolean? = if (!o.has(k) || o.isNull(k)) null else o.optBoolean(k)
+
+    private fun int(o: JSONObject, k: String): Int? = if (!o.has(k) || o.isNull(k)) null else (o.opt(k) as? Number)?.toInt()
 
     private fun submission(o: JSONObject, submitted: JSONObject?, received: JSONObject?): ServerDeliveryReport.Submission? {
         val failed = listOfNotNull(submitted, received).firstOrNull { state(it) == "failed" }

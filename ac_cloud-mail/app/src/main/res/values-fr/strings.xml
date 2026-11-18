@@ -1511,7 +1511,7 @@
     <string name="delivery_recipient_bounced">rejeté</string>
     <string name="delivery_message_id">ID du message : %1$s</string>
     <string name="delivery_smtp_code">SMTP %1$d</string>
-    <string name="delivery_recipient_relay">accepté par le relais, en attente de confirmation</string>
+    <string name="delivery_recipient_relay">envoyé, en attente de confirmation</string>
     <!-- #1803 recipient deliverability: chip marks, detail sheet, will-fail question -->
     <string name="compose_recipient_check_verdict_ok">Peut recevoir</string>
     <string name="compose_recipient_check_verdict_risky">Risqué</string>

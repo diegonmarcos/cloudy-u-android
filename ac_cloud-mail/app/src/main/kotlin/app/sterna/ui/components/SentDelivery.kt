@@ -22,7 +22,7 @@ internal fun isSentRole(role: String?): Boolean = role?.trim()?.lowercase() == "
 /** The key the fleet mail API files a sent message under: its account and RFC 5322 Message-ID. */
 internal fun deliveryKeyOf(email: Email): DeliveryKey? {
     val id = email.messageId.firstOrNull()?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    return DeliveryKey(email.accountId.orEmpty(), id)
+    return DeliveryKey(email.accountId.orEmpty(), id, accountAddress = email.from.firstOrNull()?.email)
 }
 
 internal fun sentAtMillis(email: Email): Long? = email.receivedAt?.let { iso ->

@@ -65,7 +65,9 @@ data class RecipientDelivery(
     val hop: String? = null,
 ) {
     /** The OCI relay accepted it and no DSN or remote answer has come back yet. */
-    val acceptedByRelay: Boolean get() = state == RecipientState.PENDING && hop == "relay"
+    val acceptedByRelay: Boolean
+        get() = state == RecipientState.PENDING &&
+            (hop == "relay" || listOfNotNull(remoteMx, detail).any { it.contains("relay", ignoreCase = true) })
 }
 
 /** What the phone itself knows: is the message still in the outbox, and did the outbox fail it. */
