@@ -222,7 +222,7 @@ class MeshStoreTest {
         val r = s.reach.first { it.host == bad }
         assertEquals(listOf(false, false, false), r.steps.map { it.ok })
         assertTrue(r.steps[1].detail.startsWith("skipped"))
-        assertEquals(2, s.reach.count { it.ok })
+        assertEquals("every other declared URL still passes", MeshDecl.baked.reachHosts.size - 1, s.reach.count { it.ok })
         assertTrue(s.journal.list().any { it.kind == "warn" && bad in it.text })
         assertEquals(MeshJournal.levelOf("warn"), "warn")
     }

@@ -20,6 +20,7 @@ import com.diegonmarcos.superapp.ui.KitPageHarness
 /**
  * #1120 Status > VPN row and Profile > Start-up, state by state: connected, disconnected by the owner, engine absent,
  * Always-on with and without the privileged channel, and the root-cause regression (the Start-up switches are usable).
+ * #1797 the status lights sit above the VPN row, so a tap scrolls to the button first, as a finger would.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -46,7 +47,7 @@ class MeshVpnControlsTest : KitPageHarness() {
 
     @Test fun `disconnected by the owner - Connect is live and the page says nothing reconnects`() {
         val port = FakePort(up = true); val store = show(port)
-        compose.onNodeWithTag(MeshTags.control("vpn_disconnect")).performClick()
+        compose.onNodeWithTag(MeshTags.control("vpn_disconnect")).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(listOf("disconnect"), port.calls); assertFalse(port.intentP.wanted)
         compose.onNodeWithTag(MeshTags.control("vpn_connect")).assertIsEnabled()
@@ -58,7 +59,7 @@ class MeshVpnControlsTest : KitPageHarness() {
     @Test fun `Connect re-arms the intent`() {
         val port = FakePort(up = false).also { it.intentP = MeshIntent.Policy(wanted = false) }
         show(port)
-        compose.onNodeWithTag(MeshTags.control("vpn_connect")).performClick()
+        compose.onNodeWithTag(MeshTags.control("vpn_connect")).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(listOf("connect"), port.calls); assertTrue(port.intentP.wanted)
         compose.onNodeWithTag("mesh:vpn:intent").assertTextContains("until you tap Disconnect", substring = true)
@@ -66,7 +67,7 @@ class MeshVpnControlsTest : KitPageHarness() {
 
     @Test fun `Reconnect restarts the tunnel through the port`() {
         val port = FakePort(up = true); show(port)
-        compose.onNodeWithTag(MeshTags.control("vpn_reconnect")).performClick()
+        compose.onNodeWithTag(MeshTags.control("vpn_reconnect")).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(listOf("reconnect"), port.calls)
     }
@@ -86,7 +87,7 @@ class MeshVpnControlsTest : KitPageHarness() {
 
     @Test fun `Always-on with a privileged channel - the switch changes Android's setting`() {
         val port = FakePort(up = true).also { it.channel = true }; val host = FakeHost(); val store = show(port, host)
-        compose.onNodeWithTag(MeshTags.control("vpn_always_on")).assertIsEnabled().performClick()
+        compose.onNodeWithTag(MeshTags.control("vpn_always_on")).assertIsEnabled().performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(listOf("alwayson=true"), port.calls); assertTrue(store.aoView.on == true)
         assertTrue("no deep link when the channel did it", host.events.none { it == "vpn" })
@@ -96,7 +97,7 @@ class MeshVpnControlsTest : KitPageHarness() {
         val port = FakePort(up = true); val host = FakeHost(); val store = show(port, host)
         compose.onNodeWithTag(MeshTags.control("vpn_always_on")).assertTextContains("No privileged shell", substring = true)
         compose.onNodeWithTag("mesh:vpn:settings").assertExists()
-        compose.onNodeWithTag(MeshTags.control("vpn_always_on")).performClick()
+        compose.onNodeWithTag(MeshTags.control("vpn_always_on")).performScrollTo().performClick()
         compose.waitForIdle()
         assertTrue(port.calls.isEmpty()); assertEquals(listOf("vpn"), host.events)
         assertTrue(store.notice.startsWith("Always-on: No privileged shell"))
