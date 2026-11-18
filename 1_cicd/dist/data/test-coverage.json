@@ -242,7 +242,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
-      "unit_test_sources": 2,
+      "unit_test_sources": 4,
       "workflow": "ship-cloud-keyboard.yml"
     },
     "ac_cloud-kg-store": {
