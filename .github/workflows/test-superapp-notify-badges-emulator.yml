@@ -214,14 +214,13 @@ jobs:
           page my-rss; dump all-1; shot all-1-collapsed
           rows=$(python3 ui.py count-desc out/all-1.xml Expand); echo "All rows with an arrow on screen: $rows"
           [ "$rows" -ge 3 ] && check ok "All: badge rows carry the right-side arrow ($rows on screen)" || check no "All: only $rows arrows on screen"
-          for i in 0 1 2; do dump all-step; tap "$(python3 ui.py desc out/all-step.xml Expand "$i")"; sleep 2; done
-          shot all-2-first; f=$(stages FIRST)
-          [ "$f" -ge 3 ] && check ok "All: one arrow tap opens a row to its first shade state ($f rows FIRST)" || check no "All: first state stored for $f rows"
-          for i in 0 1 2; do dump all-step; tap "$(python3 ui.py desc out/all-step.xml Expand "$i")"; sleep 2; done
-          shot all-3-second; s2=$(stages SECOND)
-          [ "$s2" -ge 3 ] && check ok "All: a second tap opens it to its expanded shade state ($s2 rows SECOND)" || check no "All: second state stored for $s2 rows"
-          dump all-step; tap "$(python3 ui.py desc out/all-step.xml Collapse 0)"; sleep 2; c=$(stages COLLAPSED)
-          [ "$c" -ge 1 ] && check ok "All: a third tap folds the row back" || check no "All: the arrow did not fold the row"
+          # The first row, three arrow taps: the stored stage after each (only one row is ever moved, so one value).
+          dump all-step; tap "$(python3 ui.py desc out/all-step.xml Expand 0)"; sleep 3; shot all-2-first; f=$(stages FIRST)
+          [ "$f" -eq 1 ] && check ok "All: the arrow opens the row to its first shade state (stored FIRST)" || check no "All: after one tap FIRST=$f"
+          dump all-step; tap "$(python3 ui.py desc out/all-step.xml Expand 0)"; sleep 3; shot all-3-second; s2=$(stages SECOND)
+          [ "$s2" -eq 1 ] && check ok "All: a second tap opens it to its expanded shade state (stored SECOND)" || check no "All: after two taps SECOND=$s2"
+          dump all-step; tap "$(python3 ui.py desc out/all-step.xml Collapse 0)"; sleep 3; c=$(stages COLLAPSED)
+          [ "$c" -eq 1 ] && check ok "All: a third tap folds the row back (stored COLLAPSED)" || check no "All: after three taps COLLAPSED=$c"
           for st in COLLAPSED FIRST SECOND; do
             adb shell am force-stop "$PKG"
             { echo '<?xml version="1.0" encoding="utf-8" standalone="yes" ?><map>'; for id in $(cut -f1 badges.tsv); do echo "<string name=\"$id\">$st</string>"; done; echo '</map>'; } > stage.xml

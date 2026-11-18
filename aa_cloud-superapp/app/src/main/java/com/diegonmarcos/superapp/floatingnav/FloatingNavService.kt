@@ -534,10 +534,52 @@ class FloatingNavService : Service() {
                 ).apply { description = "Cloud SuperApp floating nav + quick actions."; setShowBadge(false) })
             }
         }
-        return quickActionsNotification(this, cfg)
+        return foregroundNotification(this, cfg)
     }
 
     companion object {
+        /**
+         * #1794 the notification this service holds the foreground with. The Quick Actions badge while its own switch
+         * ("Show this badge") is on; with it off, the service may still have to run (the floating button is armed, or
+         * the Media badge it also hosts is on) and Android requires SOME notification for that, so it is a minimal
+         * "Floating button" notice on its own channel ([hostNotification]) instead of the badge. Before this the
+         * Quick Actions badge stayed in the shade under an OFF switch whenever the service ran for anything else.
+         */
+        internal fun foregroundNotification(ctx: Context, cfg: FloatingNavConfig): Notification =
+            if (quickActionsShown(ctx)) quickActionsNotification(ctx, cfg) else hostNotification(ctx)
+
+        /** The Quick Actions badge's own switch, read where every badge's is ([BadgeCustomization.isEnabled]). */
+        internal fun quickActionsShown(ctx: Context): Boolean =
+            com.diegonmarcos.superapp.notificationcenter.BadgeServices.declared
+                .firstOrNull { it.id == QUICK_ACTIONS_BADGE_ID }
+                ?.let { com.diegonmarcos.superapp.notificationcenter.BadgeCustomization.isEnabled(ctx, it) } ?: true
+
+        /** The bare running-service notice: no badge, no actions, lowest importance, its own channel. */
+        internal fun hostNotification(ctx: Context): Notification {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                if (nm.getNotificationChannel(HOST_CHANNEL_ID) == null) nm.createNotificationChannel(NotificationChannel(
+                    HOST_CHANNEL_ID, "Floating button", NotificationManager.IMPORTANCE_MIN,
+                ).apply { description = "Keeps the floating button running while the Quick Actions badge is off."; setShowBadge(false) })
+            }
+            val open = PendingIntent.getActivity(
+                ctx, 1,
+                (ctx.packageManager.getLaunchIntentForPackage(ctx.packageName) ?: Intent()).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP },
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            return NotificationCompat.Builder(ctx, HOST_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_stat_notify)
+                .setColor(0xFF0A0A0A.toInt())
+                .setContentTitle("Floating button")
+                .setContentText("Running. The Quick Actions badge is off.")
+                .setOnlyAlertOnce(true)
+                .setSilent(true)
+                .setContentIntent(open)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .build()
+        }
+
         /**
          * The Quick Actions notification, built from a Context alone so the Notify card and its parity test see the very
          * notification the service posts. System MediaStyle template (a custom RemoteViews falls back to a broken default
@@ -612,6 +654,8 @@ class FloatingNavService : Service() {
         }
 
         private const val CHANNEL_ID = "floating_nav"
+        /** #1794 the channel of [hostNotification] (not a badge channel: no badge is posted on it). */
+        internal const val HOST_CHANNEL_ID = "floating_nav_host"
         private const val NOTIF_ID = 0xF1
         /** The Quick Actions badge's id in build.json::ui.notification_center.producers. */
         private const val QUICK_ACTIONS_BADGE_ID = "floating_nav_quick_actions"

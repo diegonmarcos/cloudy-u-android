@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.diegonmarcos.superapp.configs.BadgePanes
+import com.diegonmarcos.superapp.floatingnav.FloatingNavConfig
+import com.diegonmarcos.superapp.floatingnav.FloatingNavService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -105,5 +107,20 @@ class BadgeSwitchOneSourceTest {
         BadgePanes.setShown(ctx, markets, false)
         assertFalse(BadgeServices.wanted(ctx, markets.service))
         assertNotEquals(BadgeServices.State.LIVE, BadgeServices.status(ctx, markets).state)
+    }
+
+    @Test fun `Quick Actions switched off leaves the shade even while its service must keep running`() {
+        // FloatingNavService also hosts the floating button and the Media badge, so it can outlive the Quick Actions
+        // switch; its foreground notification must then stop being the Quick Actions badge.
+        val qa = badges().first { b -> b.service == FloatingNavService::class.java.name && b.channel == "floating_nav" }
+        val cfg = FloatingNavConfig.get()
+        assertEquals(qa.channel, FloatingNavService.foregroundNotification(ctx, cfg).channelId)
+        BadgePanes.setShown(ctx, qa, false)
+        val host = FloatingNavService.foregroundNotification(ctx, cfg)
+        assertEquals(FloatingNavService.HOST_CHANNEL_ID, host.channelId)
+        assertTrue("the host notice is not a badge channel", badges().none { it.channel == host.channelId })
+        assertEquals(0, host.actions?.size ?: 0)
+        BadgePanes.setShown(ctx, qa, true)
+        assertEquals(qa.channel, FloatingNavService.foregroundNotification(ctx, cfg).channelId)
     }
 }
