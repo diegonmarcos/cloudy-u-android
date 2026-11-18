@@ -164,14 +164,21 @@ object JevStore {
     fun openKeySettings(ctx: Context, override: Boolean): Boolean =
         DecisionsLink.openKeySettings(ctx, config(ctx).accountProvider, if (override) ctx.packageName else null)
 
+    /** The one-time hand-over of the old override to the engine's per-app slot; the suites swap in a fake. */
+    @Volatile var handOver: (Context, String, String) -> Boolean = { ctx, provider, value -> DecisionsLink.handOver(ctx, provider, value, perApp = true) }
+
     /**
-     * #1801 the override this app used to keep in its own Keystore-backed prefs is removed: the key lives in the engine
-     * only. The owner sets it again in the engine's per-app slot (Configs › Token › Set override), which this screen says.
+     * #1801 THE ONE-TIME MIGRATION of the override this app kept in its own Keystore-backed prefs: handed to the engine's
+     * per-app slot for this app ([handOver]; the engine's own override wins when it has one), then cleared here
+     * (overwritten, then removed), so the owner re-enters nothing. While the engine cannot take it the copy stays, unused,
+     * and the next read tries again. Nothing is logged.
      */
     fun retireOldOverride(ctx: Context): Boolean {
         val s = secrets(ctx) ?: return false
         if (!s.contains(K_TOKEN)) return false
-        s.edit().remove(K_TOKEN).apply()
+        val v = s.getString(K_TOKEN, null)?.trim().orEmpty()
+        if (v.isNotEmpty() && !handOver(ctx, config(ctx).accountProvider, v)) return false
+        s.edit().putString(K_TOKEN, "").remove(K_TOKEN).commit()
         return true
     }
 

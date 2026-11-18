@@ -33,6 +33,17 @@ class AiRouterRelayTest {
         assertFalse(router.contains("revealAiKey"))
     }
 
+    @Test fun `a key stored here before is handed to the engine once, then cleared, never dropped`() {
+        val fn = router.substring(router.indexOf("fun retireStoredKey("))
+        val hand = fn.indexOf("DecisionsLink.handOver(context, p.id, v, perApp = false)")
+        val keep = fn.indexOf("if (v.isNotEmpty() && !handOver(v)) return false")
+        val clear = fn.indexOf(".remove(slot)")
+        assertTrue("handed over (fleet slot), kept on failure, cleared only after", hand in 0 until keep && keep < clear)
+        val log = fn.substring(0, fn.indexOf("return true"))
+        assertFalse("the migration log line carries no key", Regex("""Log\.\w\([^)]*\$\{?v\b""").containsMatchIn(log))
+        assertTrue(router.contains("if (p.needsToken) retireStoredKey(context, p)"))
+    }
+
     @Test fun `the settings row opens the engine for a key-needing provider and keeps the bridge's optional token`() {
         val screen = src("src/main/java/helium314/keyboard/settings/screens/AiRoutingScreen.kt")
         assertTrue(screen.contains("if (p.needsToken) {") && screen.contains("AiRouter.openKeySettings(ctx, p)"))

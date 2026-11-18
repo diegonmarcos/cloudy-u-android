@@ -142,6 +142,17 @@ object DecisionsLink {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             .apply { provider?.let { putExtra(EXTRA_PROVIDER, it) }; app?.let { putExtra(EXTRA_APP, it) } }
 
+    /**
+     * #1801 THE ONE-TIME MIGRATION: hand the engine the copy this app kept before the engine held the fleet's keys (the
+     * keyboard's AI Routing key: [perApp] false, the fleet slot; Calc's override: [perApp] true, this app's own slot). The
+     * engine's key wins when it already holds one. True when the engine took it or kept its own: the caller then clears
+     * its copy, so the owner re-enters nothing. False (engine absent, older, refused): keep the copy and try again later.
+     * The value never reaches a log on either side. Blocking.
+     */
+    fun handOver(context: Context, provider: String, value: String, perApp: Boolean): Boolean =
+        ask("import", context, JSONObject().put("provider", provider).put("value", value).put("scope", if (perApp) "app" else "fleet"),
+            BuildConfig.DECISIONS_KEYS_CONTRACT).optBoolean("ok", false)
+
     /** Open [keySettings]; false (and nothing opened) when no engine with the screen is installed. */
     fun openKeySettings(context: Context, provider: String? = null, app: String? = null): Boolean = runCatching {
         val i = keySettings(provider, app)

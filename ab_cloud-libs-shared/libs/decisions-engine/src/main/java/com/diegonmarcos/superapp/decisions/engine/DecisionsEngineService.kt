@@ -24,14 +24,15 @@ import java.io.InputStream
  * result or a log line.
  *
  * #1801 CONTRACT 3: relay (an app's own request body to a declared provider endpoint, the key added here) and keys
- * (which keys are held: presence and last four characters, never a key).
+ * (which keys are held: presence and last four characters, never a key), and import (the one-time migration of a
+ * former reader's own copy into the key book; the engine's key wins).
  *
  * A PUBLISHED CONTRACT: [methodNames] may only grow; an answer that changes shape ships under a new method
  * name and a higher CONTRACT in the manifest.
  */
 class DecisionsEngineService : Service() {
 
-    fun methodNames(): Array<String> = arrayOf(DECIDE, STATUS, CONSENT, OUTCOME, IMAGE, RELAY, KEYS)
+    fun methodNames(): Array<String> = arrayOf(DECIDE, STATUS, CONSENT, OUTCOME, IMAGE, RELAY, KEYS, IMPORT)
 
     fun dispatch(method: String, request: String, app: String): String = when (method) {
         DECIDE -> dispatcher.decide(app, request)
@@ -41,6 +42,7 @@ class DecisionsEngineService : Service() {
         IMAGE -> dispatcher.imageWithoutFiles()
         RELAY -> dispatcher.relayWithoutFiles()
         KEYS -> dispatcher.keys(KeysActivity.action(packageName))
+        IMPORT -> dispatcher.importKey(app, request, EngineHolder.holder(applicationContext)?.journal)
         else -> throw IllegalArgumentException("unknown method: $method")
     }
 
@@ -152,6 +154,7 @@ class DecisionsEngineService : Service() {
         const val IMAGE = "image"
         const val RELAY = "relay"
         const val KEYS = "keys"
+        const val IMPORT = "import"
         const val TAG = "DecisionsEngine"
     }
 }

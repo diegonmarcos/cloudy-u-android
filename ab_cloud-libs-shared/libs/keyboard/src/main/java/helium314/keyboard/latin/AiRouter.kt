@@ -273,14 +273,21 @@ object AiRouter {
     }
 
     /**
-     * #1801 a key this keyboard stored for a key-needing provider before the AI-key owner engine held them is removed: the
-     * key lives in the engine only. The owner enters it again on the engine's AI keys screen (AI Routing ▸ API key).
+     * #1801 THE ONE-TIME MIGRATION of a key this keyboard stored for a key-needing provider before the AI-key owner engine
+     * held them: handed to the engine's fleet slot (DecisionsLink.handOver; the engine's own key wins when it has one), then
+     * cleared here (overwritten, then removed), so the owner re-enters nothing. While the engine cannot take it (absent,
+     * older) the copy stays, unused, and the next read tries again. Logged without the key. BLOCKS (binder).
      */
-    fun retireStoredKey(context: Context, p: Provider): Boolean {
+    fun retireStoredKey(context: Context, p: Provider, handOver: (String) -> Boolean = { v -> DecisionsLink.handOver(context, p.id, v, perApp = false) }): Boolean {
         if (!p.needsToken) return false
         val prefs = context.prefs()
-        if (!prefs.contains(Settings.PREF_AI_TOKEN_PREFIX + p.id)) return false
-        prefs.edit().remove(Settings.PREF_AI_TOKEN_PREFIX + p.id).apply()
+        val slot = Settings.PREF_AI_TOKEN_PREFIX + p.id
+        if (!prefs.contains(slot)) return false
+        val v = prefs.getString(slot, "")?.trim().orEmpty()
+        if (v.isNotEmpty() && !handOver(v)) return false
+        prefs.edit().putString(slot, "").remove(slot).commit()
+        keyCache = null
+        helium314.keyboard.latin.utils.Log.i("AiRouter", "#1801 ${p.id} key moved to the AI keys engine and cleared from the keyboard")
         return true
     }
 
@@ -494,6 +501,7 @@ object AiRouter {
     fun complete(context: Context, system: String, user: String, route: Route): String {
         val p = route.provider
         val token = token(context, p)
+        if (p.needsToken) retireStoredKey(context, p)
         val body = JSONObject()
             .put("model", route.model)
             .put("temperature", 0.2)

@@ -161,10 +161,11 @@ class DispatcherTest {
         val mf = File("src/main/AndroidManifest.xml").readText()
         assertTrue(mf.contains("android:name=\"com.diegonmarcos.cloud.engine.CONTRACT\"\n                android:value=\"${Policy.CONTRACT}\""))
         val svc = File("src/main/java/com/diegonmarcos/superapp/decisions/engine/DecisionsEngineService.kt").readText()
-        assertTrue(svc.contains("arrayOf(DECIDE, STATUS, CONSENT, OUTCOME, IMAGE, RELAY, KEYS)"))
+        assertTrue(svc.contains("arrayOf(DECIDE, STATUS, CONSENT, OUTCOME, IMAGE, RELAY, KEYS, IMPORT)"))
         assertTrue(svc.contains("const val IMAGE = \"image\""))
         assertTrue(svc.contains("const val RELAY = \"relay\""))
         assertTrue(svc.contains("const val KEYS = \"keys\""))
+        assertTrue(svc.contains("const val IMPORT = \"import\""))
         // #1801 the AI keys screen every consumer links to, under the action DecisionsLink opens.
         assertTrue(mf.contains("android:name=\"com.diegonmarcos.superapp.decisions.engine.KeysActivity\""))
         assertTrue(mf.contains("<action android:name=\"\${applicationId}.AI_KEYS\" />"))
@@ -218,5 +219,28 @@ class DispatcherTest {
         assertEquals("no_policy", JSONObject(di.keys("x")).getString("reason"))
         val noRelay = JSONObject(Dispatcher({ engine }, { images }, { null }, { keyBook }).keys("x"))
         assertEquals("openrouter", noRelay.getJSONArray("providers").getJSONObject(0).getString("id"))
+    }
+
+    @Test fun importMigratesAFormerCopyOnceTheEngineKeyWinsAndTheJournalCarriesNoValue() {
+        val sink = MemorySink()
+        val j = Journal(sink, 50, clock)
+        val k = "sk-test-0123456789abcdef"
+        val fleet = JSONObject(dr.importKey("com.diegonmarcos.cloudkeyboard", JSONObject().put("provider", "openrouter").put("value", k).put("scope", "fleet").toString(), j))
+        assertTrue(fleet.getBoolean("ok")); assertEquals("stored", fleet.getString("result"))
+        assertEquals(k, keyBook.get("openrouter"))
+        val again = JSONObject(dr.importKey("com.diegonmarcos.cloudkeyboard", JSONObject().put("provider", "openrouter").put("value", "sk-other-0123456789abcdef").toString(), j))
+        assertEquals("kept_engine", again.getString("result"))
+        assertEquals(k, keyBook.get("openrouter"))
+        val mine = JSONObject(dr.importKey(calc, JSONObject().put("provider", "openrouter").put("value", "sk-calc-0123456789abcdef").put("scope", "app").toString(), j))
+        assertEquals("stored", mine.getString("result"))
+        assertEquals("sk-calc-0123456789abcdef", keyBook.get("openrouter", calc))
+        assertEquals(k, keyBook.get("openrouter", "com.some.other.app"))
+        assertEquals("unknown_provider", JSONObject(dr.importKey(calc, JSONObject().put("provider", "nobody").put("value", k).toString(), j)).getString("reason"))
+        assertEquals("app_not_allowed", JSONObject(dr.importKey("", JSONObject().put("provider", "openrouter").put("value", k).toString(), j)).getString("reason"))
+        assertEquals("bad_request", JSONObject(dr.importKey(calc, JSONObject().put("provider", "openrouter").put("value", k).put("scope", "x").toString(), j)).getString("reason"))
+        assertEquals("bad_request", JSONObject(dr.importKey(calc, JSONObject().put("provider", "openrouter").put("value", "").put("scope", "app").put("x", 1).toString(), j)).optString("reason", "kept"))
+        assertEquals("no_policy", JSONObject(di.importKey(calc, "{}", j)).getString("reason"))
+        assertTrue(sink.lines.isNotEmpty())
+        assertFalse("the journal never carries the value", sink.lines.any { it.contains("sk-") })
     }
 }

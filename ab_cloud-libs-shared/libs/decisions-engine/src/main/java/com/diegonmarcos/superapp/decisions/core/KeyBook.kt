@@ -42,6 +42,24 @@ class KeyBook(private val store: KvStore) {
 
     fun clear(provider: String, app: String? = null): Boolean = set(provider, null, app)
 
+    /** What a one-time [importOnce] did: stored the handed-over key, kept the engine's own, or refused a malformed one. */
+    enum class Import(val wire: String) { STORED("stored"), KEPT_ENGINE("kept_engine"), REFUSED("refused") }
+
+    /**
+     * #1801 the ONE-TIME MIGRATION of a key a former reader kept in its own store (the keyboard's AI Routing key, Calc's Jev
+     * override) into this book, so the owner re-enters nothing. The ENGINE'S KEY WINS: a slot that already holds one keeps
+     * it and the handed-over value is dropped. [app] non-null = that app's per-app override slot. A blank or oversized value
+     * is refused. The caller clears its own copy once this answers anything but [Import.REFUSED]. Never log [value].
+     */
+    @Synchronized
+    fun importOnce(provider: String, value: String?, app: String? = null): Import {
+        val v = value?.trim().orEmpty()
+        if (provider.isBlank() || v.isEmpty() || v.length > MAX_KEY_CHARS || v.any { it.isWhitespace() }) return Import.REFUSED
+        if (raw(provider, app) != null) return Import.KEPT_ENGINE
+        set(provider, v, app)
+        return Import.STORED
+    }
+
     /** Whether the slot itself holds a key (an override slot does not fall back to the fleet one here). */
     @Synchronized
     fun present(provider: String, app: String? = null): Boolean = raw(provider, app) != null
@@ -86,5 +104,7 @@ class KeyBook(private val store: KvStore) {
         const val HINT_CHARS = 4
         /** A key shorter than this shows no hint: four characters of an eight-character key are half of it. */
         const val MIN_FOR_HINT = 12
+        /** The longest value [import] accepts: a provider key is well under this; anything longer is not one. */
+        const val MAX_KEY_CHARS = 512
     }
 }

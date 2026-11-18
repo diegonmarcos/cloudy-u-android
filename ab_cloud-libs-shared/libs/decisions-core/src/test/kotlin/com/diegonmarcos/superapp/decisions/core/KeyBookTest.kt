@@ -139,4 +139,22 @@ class KeyBookTest {
         assertNull(b.get("openrouter"))
         assertFalse(b.present("openrouter"))
     }
+
+    @Test
+    fun `a one-time import stores into an empty slot, the engine's key wins, a malformed value is refused`() {
+        val b = KeyBook(MemoryStore())
+        assertEquals(KeyBook.Import.STORED, b.importOnce("openrouter", "  $key  "))
+        assertEquals(key, b.get("openrouter"))
+        assertEquals("the engine's key wins", KeyBook.Import.KEPT_ENGINE, b.importOnce("openrouter", other))
+        assertEquals(key, b.get("openrouter"))
+        assertEquals(KeyBook.Import.STORED, b.importOnce("openrouter", other, app))
+        assertEquals(other, b.get("openrouter", app))
+        assertEquals(KeyBook.Import.KEPT_ENGINE, b.importOnce("openrouter", key, app))
+        assertEquals(other, b.get("openrouter", app))
+        for (bad in listOf(null, "", "   ", "a b", "x".repeat(KeyBook.MAX_KEY_CHARS + 1))) assertEquals(KeyBook.Import.REFUSED, b.importOnce("p2", bad))
+        assertEquals(KeyBook.Import.REFUSED, b.importOnce("", key))
+        assertFalse(b.present("p2"))
+        assertEquals(KeyBook.Import.STORED, b.importOnce("p2", "x".repeat(KeyBook.MAX_KEY_CHARS)))
+        assertEquals("stored", KeyBook.Import.STORED.wire); assertEquals("kept_engine", KeyBook.Import.KEPT_ENGINE.wire); assertEquals("refused", KeyBook.Import.REFUSED.wire)
+    }
 }

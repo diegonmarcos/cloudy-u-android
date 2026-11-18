@@ -67,6 +67,27 @@ class Dispatcher(
         return book.status(labels).put("settings_action", settingsAction).toString()
     }
 
+    /**
+     * #1801 the one-time migration of a former reader's own copy ({provider, value, scope: "fleet"|"app"}): the fleet slot,
+     * or the CALLER's per-app slot ([app] comes from the binder, never the request). The engine's key wins. Answers
+     * {ok, result: stored|kept_engine} (the caller then clears its copy) or {ok:false, reason}; one journal line names
+     * the app, the provider, the scope and the result, never the value.
+     */
+    fun importKey(app: String, request: String, journal: com.diegonmarcos.superapp.decisions.core.Journal?): String {
+        val book = keys() ?: return noPolicy()
+        val r = JSONObject(request)
+        val provider = r.optString("provider")
+        val known = relay()?.providers()?.keys?.takeIf { it.isNotEmpty() } ?: setOf(DEFAULT_PROVIDER)
+        if (provider !in known) return JSONObject().put("ok", false).put("reason", "unknown_provider").toString()
+        if (app.isBlank()) return JSONObject().put("ok", false).put("reason", "app_not_allowed").toString()
+        val scope = r.optString("scope", "fleet")
+        if (scope != "fleet" && scope != "app") return JSONObject().put("ok", false).put("reason", "bad_request").toString()
+        val result = book.importOnce(provider, r.optString("value"), if (scope == "app") app else null)
+        journal?.record(app, "key_import", result.wire, JSONObject().put("kind", "key_import").put("provider", provider).put("scope", scope))
+        return if (result == KeyBook.Import.REFUSED) JSONObject().put("ok", false).put("reason", "bad_request").toString()
+        else JSONObject().put("ok", true).put("result", result.wire).toString()
+    }
+
     private companion object {
         const val DEFAULT_PROVIDER = "openrouter"
         const val DEFAULT_LABEL = "OpenRouter"

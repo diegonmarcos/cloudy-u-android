@@ -265,11 +265,21 @@ class JevAppTest {
         manual = false
         accountToken = null
         assertFalse(JevStore.token(app).present)
-        // #1801 an override this app kept in its own prefs before is removed on the first read: the key lives in the engine.
-        plainSecrets.edit().putString("openrouter_token", manualKey).commit()
-        JevStore.token(app)
-        assertFalse(plainSecrets.contains("openrouter_token"))
-        assertFalse(JevStore.retireOldOverride(app))
+        // #1801 an override this app kept in its own prefs before is handed to the engine's per-app slot once, then cleared;
+        // while the engine cannot take it, it stays and the next read tries again.
+        val handed = ArrayList<Pair<String, String>>()
+        val savedHandOver = JevStore.handOver
+        try {
+            JevStore.handOver = { _, provider, value -> handed.add(provider to value); false }
+            plainSecrets.edit().putString("openrouter_token", manualKey).commit()
+            JevStore.token(app)
+            assertTrue("kept while the engine cannot take it", plainSecrets.contains("openrouter_token"))
+            JevStore.handOver = { _, provider, value -> handed.add(provider to value); true }
+            JevStore.token(app)
+            assertFalse(plainSecrets.contains("openrouter_token"))
+            assertEquals(listOf("openrouter" to manualKey, "openrouter" to manualKey), handed)
+            assertFalse(JevStore.retireOldOverride(app))
+        } finally { JevStore.handOver = savedHandOver }
         JevStore.secrets = { null }
         assertFalse(JevStore.retireOldOverride(app))
 
