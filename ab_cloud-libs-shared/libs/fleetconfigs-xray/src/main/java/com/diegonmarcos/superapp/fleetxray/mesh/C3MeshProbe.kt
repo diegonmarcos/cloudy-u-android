@@ -65,6 +65,9 @@ object C3MeshProbe {
         val timeoutMs: Int = 2000,
         /** The private names Status > Reachability probes; each also gets TCP :443 here. */
         val names: List<String> = emptyList(),
+        /** #1798 The rung carrying the tunnel (direct | pinned | doh | relay | none; "" unknown) and its detail. */
+        val path: String = "",
+        val pathDetail: String = "",
     )
 
     /** One profiler step. [ok] null = not testable right now ([detail] says why). */
@@ -80,7 +83,7 @@ object C3MeshProbe {
 
     /** The per-mesh table's columns, in order. [OVERALL] is green only when every measured cell is. */
     const val OVERALL = "overall"
-    val COLUMNS = listOf(OVERALL, "inside", "route", "resolver", "system", "answered_by", "hub", "service", "ipv6", "latency", "last")
+    val COLUMNS = listOf(OVERALL, "inside", "path", "route", "resolver", "system", "answered_by", "hub", "service", "ipv6", "latency", "last")
     /** The groups of [Report.steps], in the order the profiler shows them. */
     val GROUPS = listOf("dns", "system", "tcp", "https", "route", "handshake", "mtu")
 
@@ -131,6 +134,14 @@ object C3MeshProbe {
                 peer.handshakeAgeS == null -> Cell(false, "no handshake", "${peer.name}: no handshake yet")
                 peer.handshakeAgeS > input.freshS -> Cell(false, "stale", "${peer.name}: handshake ${age(peer.handshakeAgeS)} ago (fresh is ≤ ${age(input.freshS)})")
                 else -> Cell(true, age(peer.handshakeAgeS), "${peer.name} ${peer.endpoint}: handshake ${age(peer.handshakeAgeS)} ago")
+            }
+
+            // #1798 path: which rung carries the tunnel to this mesh's hub (the engine's plan; switches are in the Log)
+            cells["path"] = when (input.path) {
+                "" -> Cell(null, "unknown", "no connect recorded the path yet")
+                "none" -> Cell(false, "none", "no rung handshook: ${input.pathDetail}")
+                else -> Cell(true, when (input.path) { "direct" -> "UDP"; "relay" -> "relay"; else -> input.path },
+                    "the tunnel's path to ${peer?.name ?: t.hub}: ${input.path}" + if (input.pathDetail.isNotBlank()) " · ${input.pathDetail}" else "")
             }
 
             // route: this mesh's subnets sit inside that peer's allowed IPs

@@ -179,7 +179,8 @@ jobs:
           for c in network.MeshSupervisorTest network.MeshAlwaysOnVpnTest network.MeshDownModelTest network.MeshIntentTest \
                    network.mesh.MeshDeclTest network.mesh.MeshStoreTest network.mesh.MeshPageComposeTest network.mesh.MeshVpnControlsTest \
                    network.mesh.MeshScreensShotTest notificationcenter.MeshDownAlertTest \
-                   network.mesh.C3MeshProbeTest network.mesh.MeshStatusParityTest network.mesh.MeshStatus1797ShotTest; do
+                   network.mesh.C3MeshProbeTest network.mesh.MeshStatusParityTest network.mesh.MeshStatus1797ShotTest \
+                   network.MeshFailoverTest; do
             f="$out/TEST-com.diegonmarcos.superapp.$c.xml"
             if [ ! -f "$f" ]; then echo "::error::no report for $c"; rc=1; continue; fi
             t=$(grep -o 'tests="[0-9]*"' "$f" | head -1 | tr -dc 0-9)

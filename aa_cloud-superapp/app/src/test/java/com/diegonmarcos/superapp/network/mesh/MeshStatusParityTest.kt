@@ -147,6 +147,8 @@ class MeshStatusParityTest : KitPageHarness() {
         for (l in listOf("tunnel", "handshake", "dns", "names", "ips", "reach")) has("mesh:light:$l")
         // the fallback lights: the active path, fallbacks ready, one per Test fallbacks step, from the same run the Path section lists
         has("mesh:light:path"); has("mesh:light:fallbacks_ready")
+        // #1798 one light per path of the Auto ladder
+        for (p in listOf("direct", "pinned", "doh", "relay")) has("mesh:light:path:$p")
         assertTrue(s.probes.isNotEmpty())
         for (pr in s.probes) { has("mesh:light:fb:${pr.id}"); has("mesh:probe:${pr.id}") }
         val lights = lightLines(s.snapshot!!, s.meshProfile, s.reach, s.probes, s.probesAtMs, s.transport)

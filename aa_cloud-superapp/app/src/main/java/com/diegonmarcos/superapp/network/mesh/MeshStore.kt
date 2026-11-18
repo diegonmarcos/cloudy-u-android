@@ -341,6 +341,8 @@ class MeshStore(
             targets = decl.meshes,
             mtuSizes = decl.mtuProbeSizes,
             names = decl.reachHosts,
+            path = transport?.path.orEmpty(),
+            pathDetail = transport?.detail.orEmpty(),
         )
         val r = C3MeshProbe.run(input, meshIo, clock)
         meshProfile = r

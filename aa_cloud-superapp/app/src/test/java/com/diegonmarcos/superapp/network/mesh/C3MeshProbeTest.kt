@@ -127,6 +127,15 @@ class C3MeshProbeTest {
         assertTrue(down.rows.all { it.cell("inside").ok == false && it.cell("inside").detail == "the tunnel is down" })
     }
 
+    @Test fun `the path column names the rung carrying the tunnel`() {
+        val relay = C3MeshProbe.run(input(fleet).copy(path = "relay", pathDetail = "vpn.diegonmarcos.com -> 129.151.228.66"), FakeMeshIo(wire, fixedAndroid), clock)
+        assertEquals("relay", relay.rows[0].cell("path").text); assertEquals(true, relay.rows[0].cell("path").ok)
+        assertTrue(relay.rows[0].cell("path").detail.contains("129.151.228.66"))
+        val none = C3MeshProbe.run(input(fleet).copy(path = "none", pathDetail = "UDP: no handshake in 8 s"), FakeMeshIo(wire, fixedAndroid), clock)
+        assertEquals(false, none.rows[0].cell("path").ok); assertEquals(false, none.rows[0].cell(C3MeshProbe.OVERALL).ok)
+        assertEquals("UDP", C3MeshProbe.run(input(fleet).copy(path = "direct"), FakeMeshIo(wire, fixedAndroid), clock).rows[1].cell("path").text)
+    }
+
     @Test fun `the MTU probe reports the largest padded query the path answers`() {
         val io = FakeMeshIo(wire, fixedAndroid, maxDnsBytes = 1380 - C3MeshProbe.IP_UDP_OVERHEAD)
         val r = C3MeshProbe.run(input(fleet), io, clock)

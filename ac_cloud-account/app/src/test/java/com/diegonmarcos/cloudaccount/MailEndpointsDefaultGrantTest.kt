@@ -17,7 +17,7 @@ import org.robolectric.RobolectricTestRunner
 class MailEndpointsDefaultGrantTest {
 
     @Test fun `seed v19 grants the mail app fleet endpoints and nothing else`() {
-        assertEquals(19, AccountVault.SEED_VERSION)
+        assertTrue("v19 is seeded (v20, #1798, came after it)", AccountVault.SEED_VERSION >= 19)
         assertEquals(
             mapOf(AccountVault.MAIL_PACKAGE to listOf(FleetEndpointsContract.GRANT_ENDPOINTS)),
             AccountVault.DEFAULT_GRANTS_BY_VERSION.getValue(19),

@@ -541,6 +541,11 @@
     <string name="mesh_light_fallbacks_ready">Respaldo listo</string>
     <string name="mesh_light_fb">Respaldos</string>
     <string name="mesh_probe_relay_key">Clave del relé</string>
+    <string name="mesh_light_path_direct">Ruta · UDP directo</string>
+    <string name="mesh_light_path_pinned">Ruta · IP fija</string>
+    <string name="mesh_light_path_doh">Ruta · DoH</string>
+    <string name="mesh_light_path_relay">Ruta · relé TLS-443</string>
+    <string name="mesh_col_path">Ruta</string>
     <string name="mesh_row_reachability">Alcance</string>
     <string name="mesh_reach_none">Aún sin ejecutar: se prueban %1$d URL privadas de la malla (DNS, TCP 443, emisor TLS y confianza, HTTPS).</string>
     <string name="mesh_ctl_status_copy_all">Copiar todo</string>

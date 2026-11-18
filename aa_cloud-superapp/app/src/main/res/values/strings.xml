@@ -640,6 +640,11 @@
     <string name="mesh_light_fallbacks_ready">Fallbacks ready</string>
     <string name="mesh_light_fb">Fallbacks</string>
     <string name="mesh_probe_relay_key">Relay key</string>
+    <string name="mesh_light_path_direct">Path · Direct UDP</string>
+    <string name="mesh_light_path_pinned">Path · Pinned IP</string>
+    <string name="mesh_light_path_doh">Path · DoH</string>
+    <string name="mesh_light_path_relay">Path · TLS-443 relay</string>
+    <string name="mesh_col_path">Path</string>
     <string name="mesh_row_reachability">Reachability</string>
     <string name="mesh_reach_none">Not run yet: %1$d private mesh URLs are tested (DNS, TCP 443, TLS issuer and trust, HTTPS).</string>
     <string name="mesh_ctl_status_copy_all">Copy all</string>

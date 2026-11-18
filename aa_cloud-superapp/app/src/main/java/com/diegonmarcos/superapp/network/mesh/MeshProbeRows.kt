@@ -102,6 +102,14 @@ fun lightLines(
     out += LightLine("fallbacks_ready", if (probes.isEmpty()) null else relay?.ok == true && key?.ok != false,
         when { probes.isEmpty() -> "not tested"; relay?.ok == true && key?.ok != false -> "relay ready"; else -> "no fallback ready" },
         (if (probes.isEmpty()) "tap Test fallbacks" else probes.joinToString(" · ") { "${it.id} ${C3MeshProbe.verdict(it.ok).trim()}" }) + at)
+    // #1798 one light per path of the Auto ladder, in the order it tries them: ready when its own steps last passed
+    fun ok(prefix: String) = probes.filter { it.id == prefix || it.id.startsWith("$prefix:") }.let { l -> if (l.isEmpty()) null else l.any { it.ok == true } }
+    val active = path.ifBlank { "?" }
+    for ((pid, steps) in listOf("direct" to listOf("udp"), "pinned" to listOf("pinned"), "doh" to listOf("doh"), "relay" to listOf("relay", "relay_key"))) {
+        val v = if (pid == "relay") ok("relay")?.let { it && key?.ok != false } else steps.mapNotNull { ok(it) }.let { if (it.isEmpty()) null else it.any { x -> x } }
+        out += LightLine("path:$pid", v, (if (active == pid) "active · " else "") + when (v) { true -> "ready"; false -> "not ready"; null -> "not tested" },
+            probes.filter { p -> steps.any { p.id == it || p.id.startsWith("$it:") } }.joinToString(" · ") { "${it.id} ${C3MeshProbe.verdict(it.ok).trim()}" }.ifBlank { "tap Test fallbacks" } + at)
+    }
     if (probes.isEmpty()) out += LightLine("fb", null, "not tested", "tap Test fallbacks in Path to the hubs")
     for (p in probes) out += LightLine("fb:${p.id}", p.ok, C3MeshProbe.verdict(p.ok).trim(), p.detail + at)
     return out
@@ -119,7 +127,7 @@ internal fun MeshLightsRow(store: MeshStore, s: MeshSnapshot, tag: String) {
             verticalAlignment = Alignment.Top,
         ) {
             Light(stateOf(l.ok), l.word)
-            val name = if (l.id.startsWith("fb:")) l.id.removePrefix("fb:").let { id ->
+            val name = if (l.id.startsWith("path:")) declLabel("light", "path_" + l.id.removePrefix("path:"), l.id) else if (l.id.startsWith("fb:")) l.id.removePrefix("fb:").let { id ->
                 val base = id.substringBefore(':')
                 val sub = if (':' in id) id.substringAfter(':') else ""
                 if (base == "doh" && sub.isNotEmpty()) sub else declLabel("probe", base, base) + if (sub.isNotEmpty()) " $sub" else ""

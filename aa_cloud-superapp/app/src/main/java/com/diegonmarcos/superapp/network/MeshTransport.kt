@@ -5,6 +5,8 @@ import android.util.Base64
 import com.diegonmarcos.superapp.BuildConfig
 import com.diegonmarcos.superapp.appstore.DnsLadder
 import com.diegonmarcos.superapp.net.RelaySpec
+import com.diegonmarcos.superapp.fleetendpoints.AppCredentialsContract
+import com.diegonmarcos.superapp.fleetendpoints.android.AccountClient
 import com.diegonmarcos.superapp.network.mesh.MeshDecl
 import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.Config
@@ -213,9 +215,61 @@ object MeshTransport {
 
     @Volatile private var ensured: Pair<Int, Long>? = null
 
+    // ── #1798 Auto failover while the tunnel is up ──────────────────────
+
+    enum class Failover { STAY, TO_FALLBACK, RETRY_UDP }
+
+    /** How long a relayed tunnel runs before Auto tries UDP again (the connect ladder tries UDP first). */
+    const val UDP_RETRY_MS = 15 * 60_000L
+    /** The rungs that carry WireGuard over UDP (the configured, pinned or DoH-resolved endpoint). */
+    val UDP_PATHS = setOf(Path.DIRECT.id, Path.PINNED.id, Path.DOH.id)
+
+    /**
+     * Pure: what Auto does with a tunnel that is UP. On Direct UDP with no peer handshaking within [staleS] (a network
+     * that started dropping UDP mid-session) it runs the ladder again, which falls to the relay. On the relay, every
+     * [UDP_RETRY_MS] it runs the ladder again, which goes back to UDP when UDP handshakes and stays on the relay when not.
+     * Direct and relay modes, a down tunnel and a NONE path (the ladder already found nothing) never trigger it.
+     */
+    fun failover(mode: String, up: Boolean, path: String, newestHandshakeAgeS: Long?, staleS: Long, onRelaySinceMs: Long, nowMs: Long): Failover = when {
+        mode != MODE_AUTO || !up -> Failover.STAY
+        path in UDP_PATHS && (newestHandshakeAgeS == null || newestHandshakeAgeS > staleS) -> Failover.TO_FALLBACK
+        path == Path.RELAY.id && onRelaySinceMs > 0 && nowMs - onRelaySinceMs >= UDP_RETRY_MS -> Failover.RETRY_UDP
+        else -> Failover.STAY
+    }
+
+    // ── #1798 the relay key: the fleet's, the manual paste as an override ───────
+
+    /** The key a relay dial uses and where it came from (or, with no key, the sentence naming the fix). Never logged. */
+    data class RelayKey(val value: String, val source: String) {
+        override fun toString() = "RelayKey(value=${if (value.isBlank()) "none" else "<redacted>"}, source=$source)"
+    }
+
+    const val RELAY_KEY_CREDENTIAL = "mesh.relay_key"
+    const val SOURCE_OVERRIDE = "the manual override (Controls > Fallbacks)"
+    const val SOURCE_FLEET = "the fleet (Cloud Account, filed from the vault)"
+
+    /** Pure: a pasted key wins (rule 16, the paste stays as an override); else the fleet's; else why there is none. */
+    fun pickRelayKey(manual: String, fleet: AppCredentialsContract.Credential): RelayKey = when {
+        manual.isNotBlank() -> RelayKey(manual.trim(), SOURCE_OVERRIDE)
+        fleet.present -> RelayKey(fleet.value.trim(), SOURCE_FLEET)
+        else -> RelayKey("", "not in Cloud Account (${fleet.line}); file it from the vault, or paste it in Controls > Fallbacks")
+    }
+
+    @Volatile private var fleetKey: Pair<AppCredentialsContract.Credential, Long>? = null
+
+    /** BLOCKS on Cloud Account's provider (cached 60 s): call off the main thread, as every dial already is. */
+    fun relayKey(ctx: Context): RelayKey {
+        val manual = WgState.prefs(ctx).relayKey
+        if (manual.isNotBlank()) return pickRelayKey(manual, AppCredentialsContract.Credential(RELAY_KEY_CREDENTIAL, "", ""))
+        val now = System.currentTimeMillis()
+        val cached = fleetKey?.takeIf { now - it.second < 60_000 }?.first
+        val c = cached ?: AccountClient.credential(ctx, RELAY_KEY_CREDENTIAL, "TLS-443 relay key").also { fleetKey = it to now }
+        return pickRelayKey(manual, c)
+    }
+
     /** The engine runs [p]'s relay (idempotent there; asked again at most every 15 s from here). */
     private fun ensureRelay(ctx: Context, p: Plan): Boolean {
-        val spec = p.relay?.copy(prefix = WgState.prefs(ctx).relayKey) ?: return false
+        val spec = p.relay?.copy(prefix = relayKey(ctx).value) ?: return false
         if (spec.prefix.isBlank()) return false
         val sig = spec.hashCode()
         val now = System.currentTimeMillis()
@@ -304,8 +358,9 @@ object MeshTransport {
     /** The relay plan, or null with the reason in [trail]. */
     private fun relayPlan(ctx: Context, peers: List<WireGuardPrefs.PeerData>, trail: MutableList<String>): Plan? {
         val relay = boot.relay ?: run { trail += "no TLS-443 relay is declared in data/mesh.json"; return null }
-        val key = WgState.prefs(ctx).relayKey
-        if (key.isBlank()) { trail += "the TLS-443 relay needs its key (Controls > Fallbacks > relay key)"; return null }
+        val rk = relayKey(ctx)
+        val key = rk.value
+        if (key.isBlank()) { trail += "the TLS-443 relay has no key: ${rk.source}"; return null }
         val backend = WgState.backend(ctx)
         if (!backend.hasRelay()) { trail += backend.relayMissing(); return null }
         val legs = relayLegs(peers.map { it.publicKey }, relay, decl.relayListenBase)
@@ -377,7 +432,8 @@ object MeshTransport {
             else -> Probe("dns", false, "$host -> ${sysIps.joinToString(", ")}, but the fleet pins ${pin.joinToString(", ")}: this network answers wrong")
         }
         val backend = WgState.backend(ctx)
-        val key = WgState.prefs(ctx).relayKey
+        val rk = relayKey(ctx)
+        val key = rk.value
         val route = relay.routes.firstOrNull()?.let { RelaySpec.Route(0, it.remote) }
         val engine = backend.hasRelay()
         out += when {
@@ -396,7 +452,7 @@ object MeshTransport {
         }
         out += Probe("doh", doh.any { it.second }, doh.joinToString("; ") { "${it.first}: ${it.third}" }.ifBlank { "no DoH endpoint declared" })
         out += when {
-            key.isBlank() -> Probe("relay", false, "no relay key: paste the server's key in Controls > Fallbacks")
+            key.isBlank() -> Probe("relay", false, "no relay key: ${rk.source}")
             !engine -> Probe("relay", null, backend.relayMissing())
             route == null -> Probe("relay", false, "the relay declares no route")
             else -> {
@@ -434,7 +490,7 @@ object MeshTransport {
             }
         }
         out += Probe("relay_key", key.isNotBlank(),
-            if (key.isBlank()) "no relay key: paste the server's key in Controls > Fallbacks" else "a relay key is stored (${key.length} characters, never shown)")
+            if (key.isBlank()) "no relay key: ${rk.source}" else "relay key from ${rk.source} (${key.length} characters, never shown)")
         return out
     }
 

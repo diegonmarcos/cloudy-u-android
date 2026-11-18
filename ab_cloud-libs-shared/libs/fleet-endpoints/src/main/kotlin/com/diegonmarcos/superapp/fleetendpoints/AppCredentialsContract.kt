@@ -48,6 +48,8 @@ object AppCredentialsContract {
         Entry("mattermost.login", "Mattermost email or username", "the account that signs in to the Mattermost server (SuperApp > Chat)", listOf(PKG_SUPERAPP), secret = false),
         Entry("mattermost.password", "Mattermost password", "the password of that Mattermost account", listOf(PKG_SUPERAPP)),
         Entry("dagu.token", "Dagu bearer token", "the Authelia bearer token of the Dagu server (SuperApp > C3 > Dagu, Cloud C3)", listOf(PKG_SUPERAPP, PKG_C3)),
+        // #1798 the TLS-443 relay's key: the wstunnel server's upgrade-path secret, filed from the vault bundle, never typed on the phone.
+        Entry("mesh.relay_key", "TLS-443 relay key", "the wstunnel server's upgrade-path secret (WSTUNNEL_PATH_PREFIX): the SuperApp's Cloud Mesh fallback when a network blocks WireGuard UDP", listOf(PKG_SUPERAPP)),
         Entry("me.buro_backup_passphrase", "Cloud Me Buro backup passphrase", "encrypts and decrypts the Buro backup bundle (Cloud Me > Buro > Import / Export)", listOf(PKG_ME)),
         // The YouTube Music device grant runs in Cloud Account; Cloud Browser's Music page takes the client and the tokens it filed.
         Entry("music.ytmusic.client_id", "YouTube Music client id", "the TVs and Limited Input OAuth client id (Google Cloud console)", listOf(PKG_BROWSER), secret = false),

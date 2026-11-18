@@ -18,6 +18,7 @@ import androidx.work.WorkerParameters
 import com.diegonmarcos.superapp.notificationcenter.MeshDownAlert
 import com.wireguard.android.backend.Tunnel
 import com.wireguard.crypto.Key
+import com.diegonmarcos.superapp.network.mesh.MeshDecl
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -217,6 +218,26 @@ object MeshSupervisorRunner {
         } else {
             note(ctx, MeshSupervisor.explain(d.why, holder))
             if (d.why == MeshSupervisor.Why.UP) s.edit().putInt("failures", 0).apply()
+        }
+
+        // #1798 Auto failover on a tunnel that is up: UDP stopped handshaking -> the ladder again (to the relay);
+        // on the relay for UDP_RETRY_MS -> the ladder again (back to UDP when it handshakes). Each switch is logged by
+        // MeshTransport.save ("path Direct UDP -> TLS-443 relay: ...") and shown on Status (lights, per-mesh path column).
+        if (!d.connect && up && d.why == MeshSupervisor.Why.UP) {
+            val path = MeshTransport.plan(ctx)?.path?.id.orEmpty()
+            if (path == MeshTransport.Path.RELAY.id) { if (s.getLong("relay_since", 0L) == 0L) s.edit().putLong("relay_since", now).apply() }
+            else if (s.getLong("relay_since", 0L) != 0L) s.edit().putLong("relay_since", 0L).apply()
+            val st = runCatching { backend.getStatistics(WgState.tunnel) }.getOrNull()
+            val newest = prefs.peers().maxOfOrNull { p -> runCatching { st?.peer(Key.fromBase64(p.publicKey))?.latestHandshakeEpochMillis() ?: 0L }.getOrDefault(0L) } ?: 0L
+            val age = if (newest <= 0L) null else ((now - newest) / 1000).coerceAtLeast(0)
+            val f = MeshTransport.failover(prefs.transportMode, up, path, age, MeshDecl.baked.handshakeStaleS, s.getLong("relay_since", 0L), now)
+            if (f != MeshTransport.Failover.STAY) {
+                s.edit().putLong("relay_since", 0L).apply()
+                val r = runCatching { MeshTransport.connect(ctx) { backend.setState(WgState.tunnel, Tunnel.State.UP, prefs.toTunnelConfig()) } }
+                val line = r.getOrElse { "failed: ${it.message ?: it.javaClass.simpleName}" }
+                note(ctx, (if (f == MeshTransport.Failover.TO_FALLBACK) "UDP stopped handshaking, auto failover: " else "auto: trying UDP again: ") + line)
+                com.diegonmarcos.superapp.network.mesh.MeshEventLog.log(ctx, "transport", "auto ${f.name.lowercase()}: $line")
+            }
         }
 
         // The mesh-down alert: debounced, with the hub / peers named, withdrawn by itself on recovery.
