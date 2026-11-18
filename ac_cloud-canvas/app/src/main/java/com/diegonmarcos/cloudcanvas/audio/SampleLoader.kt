@@ -4,7 +4,6 @@ import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
-import android.util.Log
 import java.io.ByteArrayOutputStream
 import java.nio.ByteOrder
 
@@ -14,8 +13,10 @@ import java.nio.ByteOrder
  * for the piano and 2 MB for the kit. Until it is done [SampleBank.current] is null and the synthesized voices play.
  */
 object SampleLoader {
-    private const val TAG = "CanvasSamples"
     @Volatile private var started = false
+    /** The last asset that could not be decoded (null when all decoded). */
+    @Volatile var lastFailure: String? = null
+        private set
 
     /** Starts the load once; [done] runs on the loader thread with the number of samples decoded and the number that failed. */
     fun loadAsync(ctx: Context, done: (ok: Int, failed: Int) -> Unit = { _, _ -> }) {
@@ -25,7 +26,8 @@ object SampleLoader {
         Thread({
             var ok = 0
             var failed = 0
-            fun one(path: String): Sample? = runCatching { decode(app, path) }.onFailure { Log.w(TAG, "cannot decode $path: $it") }.getOrNull()
+            // no log call (the app logs nothing, EnhanceTest); a failure is counted and the Play page says how many notes stay synthesized
+            fun one(path: String): Sample? = runCatching { decode(app, path) }.onFailure { lastFailure = path }.getOrNull()
                 .also { if (it != null) ok++ else failed++ }
             val drums = LinkedHashMap<Drum, Layered>()
             for (d in SampleBank.DRUM_FILES.keys) {
@@ -40,7 +42,6 @@ object SampleLoader {
                 if (layers.isNotEmpty()) piano[root] = Layered(layers)
             }
             SampleBank.current = SampleBank(piano, drums)
-            Log.i(TAG, "samples decoded: $ok, failed: $failed")
             done(ok, failed)
         }, "canvas-samples").apply { priority = Thread.NORM_PRIORITY - 1 }.start()
     }

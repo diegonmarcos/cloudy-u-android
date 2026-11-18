@@ -117,5 +117,5 @@ shot board-reloaded 4
 dump > "$OUT/board-reloaded.xml"
 adb shell "run-as $PKG sh -c 'ls -l files/boards; cat files/boards/boards.json'" > "$OUT/boards.txt" 2>&1 || true
 timeout 60 adb logcat -d > "$OUT/logcat.txt" || true
-grep -E "CanvasSamples|chromium|CloudWeb" "$OUT/logcat.txt" | tail -40 > "$OUT/samples-and-board-log.txt" || true
+grep -E "MediaCodec|chromium|CloudWeb" "$OUT/logcat.txt" | tail -40 > "$OUT/samples-and-board-log.txt" || true
 ls -l "$OUT"
