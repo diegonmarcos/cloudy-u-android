@@ -1288,6 +1288,7 @@
     <string name="compose_format_align_center">Centrer</string>
     <string name="compose_format_align_right">Aligner à droite</string>
     <string name="compose_format_source">Source HTML</string>
+    <string name="compose_format_plain_text">Texte brut</string>
     <string name="nav_bar_tasks">Tâches</string>
     <string name="nav_bar_contacts">Contacts</string>
     <string name="nav_tasks_not_installed">Cloud Tasks is not installed</string>

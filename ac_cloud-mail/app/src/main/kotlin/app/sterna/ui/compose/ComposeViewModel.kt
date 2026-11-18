@@ -55,6 +55,8 @@ import app.sterna.core.data.text.Span
 import app.sterna.core.data.text.draftHtmlIsLossy
 import app.sterna.core.data.text.cidsReferencedBy
 import app.sterna.core.data.text.composeOpeningHtml
+import app.sterna.core.data.text.composeSignatureHtml
+import app.sterna.core.data.text.signatureHtmlCandidates
 import app.sterna.core.data.text.draftHtmlToSave
 import app.sterna.core.data.text.editorBlock
 import app.sterna.core.data.text.htmlBodyFrom
@@ -189,6 +191,15 @@ sealed interface SignatureChange {
 
 class ComposeViewModel(application: Application) : AndroidViewModel(application) {
     private val store = application.container.accountStore
+
+    /**
+     * Plain-text compose (#1800): OFF on every compose. The editor is WYSIWYG by default; the owner can
+     * switch one message to plain text, which hides the formatting tools, inserts the signature as
+     * text and sends a formatting-free html part beside the text/plain one (still
+     * multipart/alternative). Switching back restores rich editing and the HTML signature.
+     */
+    private val _plainTextMode = MutableStateFlow(false)
+    val plainTextMode: StateFlow<Boolean> = _plainTextMode.asStateFlow()
     private val repo = application.container.mailRepository
     private val outbox = application.container.sendOutbox
     private val pgp = application.container.pgpEngine
@@ -453,9 +464,33 @@ class ComposeViewModel(application: Application) : AndroidViewModel(application)
     private fun signatureTextOf(identity: StoredIdentity?): String =
         activeSignature(identity)?.text.orEmpty()
 
-    /** The chosen signature's HTML source, empty when the owner wrote plain text. */
-    private fun signatureHtmlOf(identity: StoredIdentity?): String =
-        activeSignature(identity)?.html.orEmpty()
+    /**
+     * The chosen signature as the HTML the body opens with (#1800): its own HTML source, else the HTML
+     * twin stored for the same address on the sending account (an older text-only copy, or a manual
+     * identity shadowing the server's HTML one), else its text with every URL and address linked.
+     * Empty only in plain-text mode (the owner's opt-in, [plainTextMode]) or when there is no signature.
+     */
+    private fun signatureHtmlOf(identity: StoredIdentity?): String {
+        if (_plainTextMode.value) return ""
+        val signature = activeSignature(identity) ?: return ""
+        val account = _selectedFrom.value?.accountId?.let { store.account(it) }
+        return composeSignatureHtml(signature, signatureHtmlCandidates(account, identity?.email.orEmpty()))
+    }
+
+
+    /**
+     * Turn plain-text mode on or off, and report the signature block the body now needs (the same
+     * [SignatureChange] the pickers report, so the swap leaves the typed body alone), or null.
+     */
+    suspend fun setPlainTextMode(on: Boolean): SignatureChange? {
+        if (_plainTextMode.value == on) return null
+        _plainTextMode.value = on
+        val identity = selectedIdentity()
+        val text = signatureTextOf(identity)
+        if (text.isBlank()) return null
+        val delimiter = settings.signatureDelimiter.first()
+        return SignatureChange.Swap(text, text, delimiter, signatureEditorBlock(signatureHtmlOf(identity), text, delimiter))
+    }
 
     /**
      * Switch the signature mid-compose, and report what that asks of the body — the SAME
@@ -1865,6 +1900,8 @@ class ComposeViewModel(application: Application) : AndroidViewModel(application)
      */
     private fun bodiesForSend(userBody: RichBody): Pair<String, String> {
         val html = htmlForWire(userBody.html ?: toHtml(userBody))
+        // Plain-text mode (#1800, opt-in) only strips the formatting off the html part.
+        if (_plainTextMode.value) return composeSendBodies(html, plainTextMode = true)
         return htmlToPlainText(html) to html
     }
 

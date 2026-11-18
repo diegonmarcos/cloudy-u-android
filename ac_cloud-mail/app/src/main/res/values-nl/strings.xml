@@ -1279,6 +1279,7 @@
     <string name="compose_format_align_center">Centreren</string>
     <string name="compose_format_align_right">Rechts uitlijnen</string>
     <string name="compose_format_source">HTML-bron</string>
+    <string name="compose_format_plain_text">Platte tekst</string>
     <string name="nav_bar_tasks">Taken</string>
     <string name="nav_bar_contacts">Contacten</string>
     <string name="nav_tasks_not_installed">Cloud Tasks is not installed</string>

@@ -37,6 +37,25 @@ class NavWalkSeedReceiver : BroadcastReceiver() {
             password = "navwalk-placeholder",
             accountName = "Nav walk",
         )
+        // #1800: `--ez htmlsig true` gives the seeded identity an HTML signature with five links (the shape of the one reported as
+        // inserted as bare words) and turns "signature on replies" on, so the emulator proof can shoot New, Reply and Forward with it.
+        if (intent.getBooleanExtra("htmlsig", false)) {
+            val sig = app.sterna.core.data.account.StoredSignature.of(
+                id = "navwalk-sig", name = "Sincerely,",
+                source = "Sincerely,<br><b>Nav Walk</b><br>" +
+                    "<a href=\"https://linktree.example.org\">https://linktree.example.org</a><br>" +
+                    "<a href=\"https://wa.me/10000000000\">Whatsapp</a> | <a href=\"https://www.linkedin.com/in/navwalk\">LinkedIn</a> | " +
+                    "<a href=\"mailto:walk@navwalk.invalid\">E-mail</a> | <a href=\"https://github.com/navwalk\">GitHub</a>",
+            )
+            store.setIdentities(id, listOf(
+                app.sterna.core.data.account.StoredIdentity(
+                    id = "navwalk-identity", name = "Nav walk", email = "walk@navwalk.invalid",
+                    signatures = listOf(sig), defaultSignatureId = sig.id,
+                ),
+            ))
+            val settings = (context.applicationContext as Application).container.settingsRepository
+            runBlocking(Dispatchers.IO) { settings.setSignatureOnReplies(true) }
+        }
         // The folders a synced mailbox would have cached: the section's vertical side menu lists them, and without any it has nothing to draw.
         val folders = listOf("inbox" to "Inbox", "drafts" to "Drafts", "sent" to "Sent", "archive" to "Archive", "junk" to "Spam", "trash" to "Trash")
         // The list scopes to the account's saved Inbox id: without it the seeded rows are never selected (#1752).

@@ -634,6 +634,8 @@ fun ComposeScreen(
      * ONE implementation, reached by both the "From" picker and the signature picker. On a body that
      * was untouched the swap is not an edit: the next report from the page becomes the baseline.
      */
+    val plainTextMode by viewModel.plainTextMode.collectAsStateWithLifecycle()
+
     fun applySignatureChange(change: SignatureChange?) {
         if (change == null) return
         rebaseOnChange = !htmlIsDirty(bodyHtml, initialHtml)
@@ -1704,6 +1706,10 @@ fun ComposeScreen(
                 },
                 onInlineImage = { inlineImagePicker.launch("image/*") },
                 modifier = Modifier.weight(1f).fillMaxWidth(),
+                // #1800: rich by default; plain text is the owner's opt-in for this message, and the
+                // signature block follows the mode (HTML in rich, text in plain) without touching the body.
+                plainText = plainTextMode,
+                onPlainText = { on -> scope.launch { applySignatureChange(viewModel.setPlainTextMode(on)) } },
             )
         }
         }

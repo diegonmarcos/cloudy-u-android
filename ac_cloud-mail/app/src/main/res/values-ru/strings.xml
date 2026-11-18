@@ -1299,6 +1299,7 @@
     <string name="compose_format_align_center">По центру</string>
     <string name="compose_format_align_right">По правому краю</string>
     <string name="compose_format_source">HTML-код</string>
+    <string name="compose_format_plain_text">Обычный текст</string>
     <string name="nav_bar_tasks">Задачи</string>
     <string name="nav_bar_contacts">Контакты</string>
     <string name="nav_tasks_not_installed">Cloud Tasks is not installed</string>

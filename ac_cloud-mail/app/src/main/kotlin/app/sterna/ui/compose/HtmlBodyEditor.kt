@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.FormatStrikethrough
 import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.InsertPhoto
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -450,6 +451,9 @@ internal fun HtmlBodyPane(
     onSourceEdit: (String) -> Unit,
     onInlineImage: () -> Unit,
     modifier: Modifier = Modifier,
+    /** #1800: plain-text mode is the owner's opt-in for one message; rich (false) is the default. */
+    plainText: Boolean = false,
+    onPlainText: (Boolean) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     var source by remember { mutableStateOf("") }
@@ -480,6 +484,8 @@ internal fun HtmlBodyPane(
         if (controller.focused || controller.sourceMode) {
             HtmlFormattingBar(
                 controller = controller,
+                plainText = plainText,
+                onPlainText = onPlainText,
                 onLink = { linkDialog = true },
                 onInlineImage = onInlineImage,
                 onSource = {
@@ -574,6 +580,8 @@ private fun HtmlLinkDialog(
 @Composable
 private fun HtmlFormattingBar(
     controller: HtmlEditorController,
+    plainText: Boolean,
+    onPlainText: (Boolean) -> Unit,
     onLink: () -> Unit,
     onInlineImage: () -> Unit,
     onSource: () -> Unit,
@@ -589,7 +597,12 @@ private fun HtmlFormattingBar(
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = MailMetrics.s4),
     ) {
+        // Plain text (#1800): every formatting tool stays on the bar in rich mode, the default; in
+        // plain-text mode they are put away, and this toggle brings them back.
         if (!source) {
+            BarButton(Icons.Filled.TextFields, R.string.compose_format_plain_text, plainText) { onPlainText(!plainText) }
+        }
+        if (!source && !plainText) {
             BarButton(Icons.Filled.FormatBold, R.string.compose_format_bold, f.bold) { controller.exec("bold") }
             BarButton(Icons.Filled.FormatItalic, R.string.compose_format_italic, f.italic) { controller.exec("italic") }
             BarButton(Icons.Filled.FormatUnderlined, R.string.compose_format_underline, f.underline) { controller.exec("underline") }
@@ -668,7 +681,7 @@ private fun HtmlFormattingBar(
             BarButton(Icons.Filled.Link, R.string.compose_format_link, f.link != null, onLink)
             BarButton(Icons.Filled.FormatClear, R.string.compose_format_clear, false) { controller.exec("removeFormat") }
         }
-        BarButton(Icons.Filled.Code, R.string.compose_format_source, source, onSource)
+        if (!plainText) BarButton(Icons.Filled.Code, R.string.compose_format_source, source, onSource)
     }
 }
 
