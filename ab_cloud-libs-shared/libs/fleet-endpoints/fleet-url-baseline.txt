@@ -97,4 +97,6 @@ ac_cloud-wallet/build.json	analytics.matomo.endpoint	pending	request endpoint re
 ac_cloud-wallet/build.json	analytics.umami.endpoint	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 ac_cloud-wallet/build.json	diagnostics.log_sink_url	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 aa_cloud-superapp/build.json	ui.dns.test_names.mesh	link	a mesh name the DNS page test lookup resolves; no HTTP request is made to it
+aa_cloud-superapp/build.json	ui.mesh_page.meshes.*.name	link	#1797 the private name each mesh's resolver must answer in the Status per-mesh table and Cloud C3's mesh profiler (DNS probes); a probe, not an app request
+aa_cloud-superapp/build.json	ui.mesh_page.meshes.*.service_url	link	#1797 the HTTPS service the per-mesh table probes on that mesh (TCP + TLS + any HTTP answer below 500); a probe, not an app request
 aa_cloud-superapp/build.json	ui.mesh_page.reach_hosts.*	link	the mesh hosts the Cloud-mesh Reachability test probes (DNS, TCP 443, HTTPS status); a probe, not an app request
