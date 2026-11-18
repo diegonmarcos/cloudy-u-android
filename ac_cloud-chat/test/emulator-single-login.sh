@@ -12,7 +12,7 @@ fail=0
 wake() { adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1; }
 shot() { wake; adb exec-out screencap -p > "$OUT/$1.png"; }
 dump() { wake; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "$OUT/$1.xml"; }
-scene() { shot "$1"; dump "$1"; }
+scene() { dump "$1"; shot "$1"; }
 has() { if grep -q -- "$1" "$OUT/$2.xml"; then echo "OK   $2 has: $1" >> "$S"; else echo "FAIL $2 missing: $1" >> "$S"; fail=1; fi; }
 hasnt() { if grep -q -- "$1" "$OUT/$2.xml"; then echo "FAIL $2 has: $1" >> "$S"; fail=1; else echo "OK   $2 has not: $1" >> "$S"; fi; }
 kbd_hide() { adb shell dumpsys input_method | grep -q 'mInputShown=true' && adb shell input keyevent KEYCODE_BACK; sleep 1; }
@@ -47,7 +47,11 @@ clear_in() { tap "$1" && { adb shell input keyevent KEYCODE_MOVE_END; adb shell 
 top() { for _ in 1 2 3; do adb shell input swipe 540 600 540 1700 200; done; sleep 1; }
 run_and_wait() { # press the one action, wait for the flow to end (no step left running), max $1 s
   tap server_form.connect.button || return
-  for _ in $(seq "$1"); do sleep 1; dump wait; grep -q 'server_form.progress.[a-z]*.running' "$OUT/wait.xml" || break; done
+  # done = the step list is on screen AND no step is running (the list appears a frame after the tap)
+  for _ in $(seq "$1"); do sleep 1; dump wait
+    grep -q 'server_form.progress.url' "$OUT/wait.xml" && ! grep -q 'server_form.progress.[a-z]*.running' "$OUT/wait.xml" && break
+    grep -q 'server_form.server_url.dropdown' "$OUT/wait.xml" || break  # left the screen (connected)
+  done
   sleep 2
 }
 

@@ -298,7 +298,7 @@ const STEP_LABEL: Record<StepId, keyof typeof messages> = {
 
 const STEP_ICON: Record<StepStatus, string> = {
     idle: 'circle-outline',
-    running: 'loading',
+    running: 'sync',
     ok: 'check-circle',
     warn: 'alert-outline',
     error: 'alert-circle-outline',
