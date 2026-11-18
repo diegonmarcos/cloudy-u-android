@@ -11,6 +11,20 @@ $T adb install -r -g "$APK" || { echo "FAIL install"; exit 1; }
 $T adb shell settings put global window_animation_scale 0
 $T adb shell svc power stayon true; $T adb shell input keyevent KEYCODE_WAKEUP; $T adb shell wm dismiss-keyguard
 $T adb logcat -c || true
+# The launcher's screensaver (build.json::launcher_settings.screensaver_timeout, default 10 s idle) covers the home and
+# the network popup while this script waits on uiautomator dumps (runs 44246477193 / 44246998958: chip found, then the
+# clock + Unlock overlay over the popup). Turn it off for the run as a user would in Configs → Launcher (0 = off): write
+# the app's own launcher_settings prefs before its first start, as root, owned by the app (the image is google_apis,
+# adb root works; emulator-terminal-target-sdk.sh uses it too).
+if $T adb root >/dev/null 2>&1; then
+    $T adb wait-for-device
+    d="/data/data/$PKG"; uid="$($T adb shell stat -c %u "$d" 2>/dev/null | tr -d '\r')"
+    $T adb shell "mkdir -p $d/shared_prefs && printf '%s\n' \"<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\" '<map>' '    <int name=\"screensaver_timeout\" value=\"0\" />' '</map>' > $d/shared_prefs/launcher_settings.xml && chown -R $uid:$uid $d/shared_prefs && chmod 771 $d/shared_prefs && chmod 660 $d/shared_prefs/launcher_settings.xml && restorecon -R $d/shared_prefs" \
+        && echo "screensaver off for the run (launcher_settings.screensaver_timeout=0, uid $uid)" \
+        || echo "note: could not preset launcher_settings; the overlay-dismiss retry below still applies"
+else
+    echo "note: adb root unavailable; the overlay-dismiss retry below still applies"
+fi
 dump() { $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1; }
 shot() { sleep "${2:-4}"; $T adb exec-out screencap -p > "$OUT/speed-$1.png"; dump "speed-$1"; echo "shot speed-$1"; }
 $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
