@@ -96,8 +96,10 @@ jobs:
     outputs:
       stamp: ${{ steps.stamp.outputs.stamp }}
     steps:
+      - uses: actions/checkout@v4
       - id: stamp
-        run: echo "stamp=$(date -u '+%Y%m%d.%H%M%S')" >> "$GITHUB_OUTPUT"
+        # #1783 P5: the SOURCE commit time, not the wall clock (same commit, same version code)
+        run: echo "stamp=$(TZ=UTC git show -s --date=format-local:'%Y%m%d.%H%M%S' --format=%cd HEAD)" >> "$GITHUB_OUTPUT"
 
   build_and_publish:
     name: "Build + publish (${{ matrix.abi }})"
