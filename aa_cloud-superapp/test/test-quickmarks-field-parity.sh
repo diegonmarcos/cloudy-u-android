@@ -8,7 +8,7 @@
 #   T2  #1627 field parity: every app the old 'Tools Primary' ∪ 'Data Apps' launched is still launched by the
 #       new Primary ∪ Data (nothing dropped; Drive moved Data->Primary, Vault moved Primary->Data, Me added).
 #   T3  #1627 Communication is byte-for-byte unchanged (the six tiles, same ids and targets, same order).
-#   T4  #1627 dividers: Primary = Drive, Browser | Calc, Navigation, Camera, Keyboard, Writer || Wallet and
+#   T4  #1627 dividers: Primary = Drive, Browser | Calc, Navigation, Camera, Canvas (#1780), Keyboard, Writer || Wallet and
 #       Data = Note(s), Tasks, Office | Gallery, Media Center || Me, Vault, with single '|' (separator:true) and
 #       DOUBLE '||' (separator:true + double:true) tiles, neither carrying a target.
 #   T5  #1755 Configs row = Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About, every
@@ -83,7 +83,7 @@ else:
 def row(group): return [(t.get("label"), t.get("separator", False), t.get("double", False), t.get("target", "")) for t in by[group]["tiles"]]
 if "Primary" in by:
     labels = [l for l, s, dbl, tg_ in row("Primary")]
-    if labels != ["Drive", "Browser", "|", "Calc", "Navigation", "Camera", "Keyboard", "||", "Wallet"]:
+    if labels != ["Drive", "Browser", "|", "Calc", "Navigation", "Camera", "Canvas", "Keyboard", "||", "Wallet"]:
         emit("T4", "Primary row = %r" % labels)
 if "Data" in by:
     labels = [l for l, s, dbl, tg_ in row("Data")]
