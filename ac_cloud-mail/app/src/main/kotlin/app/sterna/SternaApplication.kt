@@ -268,9 +268,9 @@ class AppContainer(context: Context) {
 
 class SternaApplication : Application() {
     lateinit var container: AppContainer
+        private set
     /** Whether [container] is built (a test host never builds it). */
     val isContainerReady: Boolean get() = ::container.isInitialized
-        private set
 
     override fun onCreate() {
         super.onCreate()
