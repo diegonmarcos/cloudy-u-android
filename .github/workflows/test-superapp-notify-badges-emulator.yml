@@ -110,13 +110,16 @@ jobs:
           adb shell settings put global hide_error_dialogs 1 || true
           adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
           adb shell locksettings set-disabled true || true
+          # no Android screensaver (the charging clock dream took over the screen mid-run and ate every tap)
+          for k in screensaver_enabled screensaver_activate_on_sleep screensaver_activate_on_dock; do adb shell settings put secure $k 0 || true; done
+          adb shell settings put global stay_on_while_plugged_in 7 || true
           for p in POST_NOTIFICATIONS ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION; do adb shell pm grant "$PKG" android.permission.$p || true; done
           adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW allow || true
           awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; }
-          dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "out/$1.xml" >/dev/null 2>&1; }
-          shade() { adb shell cmd statusbar expand-notifications; sleep 3; adb exec-out screencap -p > "out/shade-$1.png"; adb shell cmd statusbar collapse; sleep 1; }
+          dump() { awake; sleep 1; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "out/$1.xml" >/dev/null 2>&1; }
+          shade() { awake; adb shell cmd statusbar expand-notifications; sleep 3; adb exec-out screencap -p > "out/shade-$1.png"; adb shell cmd statusbar collapse; sleep 1; }
           posted() { adb shell dumpsys notification --noredact > "out/dumpsys-$1.txt"; python3 posted.py "out/dumpsys-$1.txt" "$PKG"; }
-          tap() { [ -n "$1" ] && adb shell input tap $1; }
+          tap() { [ -n "$1" ] || { echo "tap: no target"; return 1; }; awake; adb shell input tap $1; }
           python3 ui.py badges aa_cloud-superapp/build.json > badges.tsv; cat badges.tsv
           CHANNELS=$(cut -f2 badges.tsv | sort -u | tr '\n' ' ')
           in_shade() { n=0; for c in $CHANNELS; do case " $1 " in *" $c "*) n=$((n+1));; esac; done; echo $n; }
