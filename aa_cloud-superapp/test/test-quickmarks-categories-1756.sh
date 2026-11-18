@@ -48,9 +48,9 @@ lost = [(i, k) for i, o in prev['folders'].items() for k in o['keywords'] if k n
 check(not lost, 'every old folder keyword is still declared by some folder (%d keywords)%s' % (sum(len(o['keywords']) for o in prev['folders'].values()), ' LOST %s' % lost if lost else ''))
 dup = {k: v for k, v in newkw.items() if len(v) > 1}
 check(not dup, 'no keyword is declared by two folders %s' % dup)
-check(all(i in {f['id'] for f in folders} or i in ('svc_travel', 'media_audio') for i in prev['folders']), 'every old folder id survives (svc_travel merged into svc_mobility, media_audio into media_video)')
-check(all(k in newkw for k in prev['folders']['svc_travel']['keywords']) and all('svc_mobility' in newkw[k] for k in prev['folders']['svc_travel']['keywords']),
-      'every Travel keyword now lives in Mobility & Travel')
+check(all(i in {f['id'] for f in folders} or i in ('svc_travel', 'media_audio', 'hlth_outdoor') for i in prev['folders']), 'every old folder id survives (svc_travel merged into svc_mobility, media_audio into media_video, #1806 hlth_outdoor into svc_health)')
+check(all(k in newkw for k in prev['folders']['svc_travel']['keywords']) and all(newkw[k][0] in ('svc_mobility', 'svc_transports', 'svc_hotels') for k in prev['folders']['svc_travel']['keywords']),
+      'every Travel keyword now lives in City Mobility, Transports or Hotels (#1806 split of Mobility & Travel)')
 oldq_titles = set(prev['quickmarks'])
 check(all(any(t == n for n in ORDER) or t in ('AI', 'Inboxes', 'Data Apps', 'Tools Primary', 'Configs') for t in oldq_titles), 'old group names are all accounted for')
 
@@ -71,8 +71,8 @@ want = {
  '=': ['Browser', 'Nav', 'Calc', 'Camera', 'Canvas', 'Keyboard', 'Wallet', 'Utilities'],
  '@': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts', 'Social'],
  '.': ['Drive', 'Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
- '~': ['Me', 'Health', 'Gov & ID', 'Telecom', 'Home & Housing', 'Outdoor & Sport', 'Nutrition', 'Learning'],
- '+': ['Search', 'News', 'Shopping', 'Events', 'Media Center', 'Mobility & Travel', 'Jobs & Business', 'Real Estate', 'Money', 'KG Store', 'Games'],
+ '~': ['Me', 'Health Trackers', 'Gov & ID', 'Telecom', 'Home & Housing', 'Nutrition', 'Learning'],  # #1806 Health + Outdoor & Sport = Health Trackers
+ '+': ['Search', 'News', 'Events', 'Media Center', 'Games', 'Shopping', 'Jobs & Business', 'Real Estate', 'Health', 'Money', 'Hotels', 'Transports', 'City Mobility', 'KG Store'],  # #1806 ui.services_order
  '*': ['AI', 'Code', 'Terminal', 'Tools'], '#': ['SuperApp', 'Omniverse', 'FinTerm', 'CAD', 'BioMed'],
  '_': ['Store', 'Account', 'C3 & Dev', 'Diagnostics', 'Network', 'Security', 'Settings'],
 }
@@ -103,9 +103,9 @@ check(not bad, 'all %d inventory packages are claimed by exactly one folder%s' %
 ids = {f['id'] for f in folders}
 check(all(fid in ids for v in claims.values() for fid in v), 'every claim names a declared folder')
 exp = {
- 'com.bodybike.bbsmartplus': 'hlth_outdoor', 'com.facebook.katana': 'media_social', 'com.motosumo.app': 'hlth_outdoor', 'de.bvg.ticket': 'svc_mobility',
+ 'com.bodybike.bbsmartplus': 'svc_healthcare', 'com.facebook.katana': 'media_social', 'com.motosumo.app': 'svc_healthcare', 'de.bvg.ticket': 'svc_mobility',
  'juloo.keyboard2': 'sys_keyboards', 'com.samsung.android.goodlock': 'sys_settings', 'com.samsung.android.app.find': 'sys_security',
- 'io.vicoach': 'hlth_outdoor', 'net.wordbit.deen': 'hlth_learning', 'com.oplayer.orunningplus': 'svc_health',
+ 'io.vicoach': 'svc_health', 'net.wordbit.deen': 'hlth_learning', 'com.oplayer.orunningplus': 'svc_health',
  'com.cloudflare.cloudflareoneagent': 'sys_network', 'com.cloudflare.onedotonedotonedotone': 'sys_network',
  'com.dhl.exp.dhlmobile': 'svc_shopping', 'de.dhl.paket': 'svc_shopping', 'de.number26.android': 'svc_money', 'com.imaginecurve.curve.prd': 'svc_money',
  'com.oceanwing.soundcore': 'media_video', 'com.shurgard.selfstorage': 'svc_home', 'de.is24.android': 'svc_realestate', 'com.sensorberg.oneaccess': 'svc_home', 'cld.camera': 'prod_camera', 'org.thoughtcrime.securesms': 'prod_messenger',
@@ -135,7 +135,7 @@ WANT_FOLDERS = {
  'Communication': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts'],
  'Data': ['Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
  'Me': ['Me-Health', 'Experiences', 'Socials', 'Me-Buro'],
- 'Services': ['Search', 'News', 'Events', 'Media Center', 'Shopping', 'Mobility & Travel', 'Jobs & Business', 'Real Estate', 'Money'],
+ 'Services': ['Search', 'News', 'Events', 'Media Center', 'Games', 'Shopping', 'Jobs & Business', 'Real Estate', 'Health', 'Money', 'Hotels', 'Transports', 'City Mobility'],  # #1806
  'AGI': ['AI', 'Code', 'Terminal'],
  'Setup': ['Quick Actions', 'UI', 'NG Firewall', 'Store', 'C3', 'About'],
 }
@@ -148,7 +148,7 @@ for e in bj['external_apps']:
         if p_: fleet_pkgs.add(p_)
 is_fleet = lambda p_: p_ in fleet_pkgs or p_.startswith('com.diegonmarcos.') or p_.startswith('cld.') or p_ == 'app.sterna'
 cloud_icons = {t.get('icon') for g_ in cloud for t in g_['tiles'] if not t.get('separator')}
-EXPECT_RES = {'Events': 'ic_p_cal_month', 'Mobility & Travel': 'ic_ctl_airplane', 'Jobs & Business': 'ic_suite', 'AI': 'ic_ai_chat',
+EXPECT_RES = {'Events': 'ic_p_cal_month', 'Transports': 'ic_ctl_airplane', 'City Mobility': 'ic_city_bus', 'Hotels': 'ic_hotel', 'Games': 'ic_device_gamepad', 'Health': 'ic_monitor_heart', 'Jobs & Business': 'ic_suite', 'AI': 'ic_ai_chat',
               'Quick Actions': 'ic_home', 'UI': 'ic_ctl_brightness', 'NG Firewall': 'ic_act_shield', 'About': 'ic_info'}
 for g in phone:
     if g['title'] not in WANT_FOLDERS: continue

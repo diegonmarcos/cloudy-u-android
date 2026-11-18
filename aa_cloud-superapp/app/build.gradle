@@ -11,6 +11,10 @@ plugins {
 def gradleScriptStartMs = System.currentTimeMillis()
 
 def buildJson  = new groovy.json.JsonSlurper().parse(file('../build.json'))
+// #1806 the Services order is declared once (ui.services_order) and re-applied here, before ui.sections is baked:
+// the Cloud Services row and the Phone Services quickmarks follow it (libs:appstore applies it to ui.phone_folders).
+apply from: '../../ab_cloud-libs-shared/libs/appstore/services-order.gradle'
+applyServicesOrder(buildJson.ui)
 
 // Version code: minutes since 2026-01-01 UTC over a 3,000,000 base.
 //

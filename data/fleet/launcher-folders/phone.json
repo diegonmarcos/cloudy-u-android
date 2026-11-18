@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "_doc": "#1553 TABLE 1 - Phone-scope folder HIERARCHY for Configs > Launcher > Folders. The ids/labels/order are the launcher's own phone taxonomy (aa_cloud-superapp/build.json::ui.phone_folders, baked into PhoneFolders/PhoneAppClassifier), grouped here into sections so the page reads as sections -> folders. The ids match the grid's folder ids 1:1 so a user re-assignment on this page (a Phone-scope override) moves the app in the launcher grid via FolderGridBridge. The 'others' sink is synthesised at runtime and is never declared. Third-party installed apps that match no folder fall to Others until assigned - by design.",
+  "_doc": "#1553 TABLE 1 - Phone-scope folder HIERARCHY for Configs > Launcher > Folders. The ids/labels/order are the launcher's own phone taxonomy (aa_cloud-superapp/build.json::ui.phone_folders, baked into PhoneFolders/PhoneAppClassifier), grouped here into sections so the page reads as sections -> folders. The ids match the grid's folder ids 1:1 so a user re-assignment on this page (a Phone-scope override) moves the app in the launcher grid via FolderGridBridge. The 'others' sink is synthesised at runtime and is never declared. Third-party installed apps that match no folder fall to Others until assigned - by design. #1806: Services (+) folders follow ui.services_order (Search | News Events Media Center Games | Shopping Jobs & Business Real Estate Health | Money | Hotels Transports City Mobility | KG Store); ~Health and ~Outdoor & Sport are one ~Health Trackers (svc_health).",
   "folders": [
     {
       "section": "Tools · Primary",
@@ -152,7 +152,7 @@
     {
       "section": "Tools · Me",
       "id": "svc_health",
-      "label": "~Health",
+      "label": "~Health Trackers",
       "icon": "",
       "order": 420
     },
@@ -176,13 +176,6 @@
       "label": "~Home & Housing",
       "icon": "",
       "order": 450
-    },
-    {
-      "section": "Tools · Me",
-      "id": "hlth_outdoor",
-      "label": "~Outdoor & Sport",
-      "icon": "",
-      "order": 460
     },
     {
       "section": "Tools · Me",
@@ -245,70 +238,91 @@
       "id": "hlth_news",
       "label": "+News",
       "icon": "",
-      "order": 620
-    },
-    {
-      "section": "Services",
-      "id": "svc_shopping",
-      "label": "+Shopping",
-      "icon": "",
-      "order": 630
+      "order": 615
     },
     {
       "section": "Services",
       "id": "svc_events",
       "label": "+Events",
       "icon": "",
-      "order": 640
+      "order": 620
     },
     {
       "section": "Services",
       "id": "media_video",
       "label": "+Media Center",
       "icon": "",
-      "order": 645
-    },
-    {
-      "section": "Services",
-      "id": "svc_mobility",
-      "label": "+Mobility & Travel",
-      "icon": "",
-      "order": 650
-    },
-    {
-      "section": "Services",
-      "id": "svc_jobs",
-      "label": "+Jobs & Business",
-      "icon": "",
-      "order": 660
-    },
-    {
-      "section": "Services",
-      "id": "svc_realestate",
-      "label": "+Real Estate",
-      "icon": "",
-      "order": 670
-    },
-    {
-      "section": "Services",
-      "id": "svc_money",
-      "label": "+Money",
-      "icon": "",
-      "order": 680
-    },
-    {
-      "section": "Services",
-      "id": "svc_kgstore",
-      "label": "+KG Store",
-      "icon": "",
-      "order": 690
+      "order": 625
     },
     {
       "section": "Services",
       "id": "media_games",
       "label": "+Games",
       "icon": "",
-      "order": 695
+      "order": 630
+    },
+    {
+      "section": "Services",
+      "id": "svc_shopping",
+      "label": "+Shopping",
+      "icon": "",
+      "order": 635
+    },
+    {
+      "section": "Services",
+      "id": "svc_jobs",
+      "label": "+Jobs & Business",
+      "icon": "",
+      "order": 640
+    },
+    {
+      "section": "Services",
+      "id": "svc_realestate",
+      "label": "+Real Estate",
+      "icon": "",
+      "order": 645
+    },
+    {
+      "section": "Services",
+      "id": "svc_healthcare",
+      "label": "+Health",
+      "icon": "",
+      "order": 650
+    },
+    {
+      "section": "Services",
+      "id": "svc_money",
+      "label": "+Money",
+      "icon": "",
+      "order": 655
+    },
+    {
+      "section": "Services",
+      "id": "svc_hotels",
+      "label": "+Hotels",
+      "icon": "",
+      "order": 660
+    },
+    {
+      "section": "Services",
+      "id": "svc_transports",
+      "label": "+Transports",
+      "icon": "",
+      "order": 665
+    },
+    {
+      "section": "Services",
+      "id": "svc_mobility",
+      "label": "+City Mobility",
+      "icon": "",
+      "order": 670
+    },
+    {
+      "section": "Services",
+      "id": "svc_kgstore",
+      "label": "+KG Store",
+      "icon": "",
+      "order": 675
     },
     {
       "section": "AGI",

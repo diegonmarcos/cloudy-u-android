@@ -1,0 +1,2119 @@
+{
+ "_doc": "#1806 Services and Me layout BEFORE the reorg (origin/main fa8a6fec): Cloud and Phone quickmarks, All Apps folders (+ Services, ~ Me), the Configs > Launcher > Folders dataset and the browser favourites under Services/ and Tools/. test-services-order-1806.sh proves the new layout is a superset (rule 16: nothing removed).",
+ "cloud_tile_groups": {
+  "Me": [
+   {
+    "id": "me",
+    "label": "Lnktree",
+    "icon": "ic_vcard",
+    "target": "extapp:cloud-me",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "me-sep-1",
+    "label": "|",
+    "icon": null,
+    "target": null,
+    "separator": true,
+    "coming_soon": false
+   },
+   {
+    "id": "myhealth",
+    "label": "Me-Health",
+    "icon": "ic_heart",
+    "target": "extapp:cloud-me#page:health/home",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "myexperiences",
+    "label": "Experienc.",
+    "icon": "ic_file_stack",
+    "target": "extapp:cloud-me#page:experiences/work",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "myroadmap",
+    "label": "Socials",
+    "icon": "ic_tree",
+    "target": "extapp:cloud-me#page:socials/socials-professional",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "me-sep-2",
+    "label": "|",
+    "icon": null,
+    "target": null,
+    "separator": true,
+    "coming_soon": false
+   },
+   {
+    "id": "myduties",
+    "label": "Me-Invent.",
+    "icon": "ic_check_all",
+    "target": "extapp:cloud-me#page:tasks/backlogs",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "myburo",
+    "label": "Me-Buro",
+    "icon": "ic_p_folder",
+    "target": "extapp:cloud-me#page:buro/ids",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "myllc",
+    "label": "Me-LLC",
+    "icon": "ic_p_llc",
+    "target": "extapp:cloud-me#page:llc/employed",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "me-sep-3",
+    "label": "|",
+    "icon": null,
+    "target": null,
+    "separator": true,
+    "coming_soon": false
+   },
+   {
+    "id": "tools-account",
+    "label": "Profile",
+    "icon": "ic_p_identities",
+    "target": "extapp:cloud-me#page:profile/profile",
+    "separator": false,
+    "coming_soon": false
+   }
+  ],
+  "Services": [
+   {
+    "id": "search",
+    "label": "Search",
+    "icon": "ic_cloud_search",
+    "target": "extapp:cloud-search",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "weby-sep-1",
+    "label": "|",
+    "icon": null,
+    "target": null,
+    "separator": true,
+    "coming_soon": false
+   },
+   {
+    "id": "news",
+    "label": "News",
+    "icon": "ic_rss",
+    "target": "extapp:cloud-news",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "events",
+    "label": "Events",
+    "icon": "ic_p_cal_month",
+    "target": null,
+    "separator": false,
+    "coming_soon": true
+   },
+   {
+    "id": "mediacenter",
+    "label": "Media Center",
+    "icon": "ic_music",
+    "target": "extapp:cloud-media-center",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "weby-sep-2",
+    "label": "|",
+    "icon": null,
+    "target": null,
+    "separator": true,
+    "coming_soon": false
+   },
+   {
+    "id": "shopping",
+    "label": "Shopping",
+    "icon": "ic_shopping",
+    "target": "extapp:cloud-shopping",
+    "separator": false,
+    "coming_soon": false
+   },
+   {
+    "id": "mobility",
+    "label": "Mobility & Travel",
+    "icon": "ic_ctl_airplane",
+    "target": null,
+    "separator": false,
+    "coming_soon": true
+   },
+   {
+    "id": "jobs",
+    "label": "Jobs & Business",
+    "icon": "ic_suite",
+    "target": null,
+    "separator": false,
+    "coming_soon": true
+   },
+   {
+    "id": "real-estate",
+    "label": "Real Estate",
+    "icon": "ic_map_pin",
+    "target": null,
+    "separator": false,
+    "coming_soon": true
+   },
+   {
+    "id": "money",
+    "label": "Money",
+    "icon": "ic_storefront",
+    "target": null,
+    "separator": false,
+    "coming_soon": true
+   },
+   {
+    "id": "weby-sep-3",
+    "label": "|",
+    "icon": null,
+    "target": null,
+    "separator": true,
+    "coming_soon": false
+   },
+   {
+    "id": "kg-store",
+    "label": "KG Store",
+    "icon": "ic_kgs",
+    "target": "extapp:cloud-kg-store",
+    "separator": false,
+    "coming_soon": false
+   }
+  ]
+ },
+ "phone_app_groups": {
+  "Me": [
+   {
+    "label": "Me-Health",
+    "icon_pkg": "com.diegonmarcos.cloudme",
+    "icon_res": "ic_heart",
+    "packages": [
+     "com.sec.android.app.shealth",
+     "com.strava",
+     "com.fatsecret.android",
+     "com.urbandroid.sleep",
+     "com.garmin.android.apps.connectmobile"
+    ]
+   },
+   {
+    "label": "Experiences",
+    "icon_pkg": "com.diegonmarcos.cloudme",
+    "icon_res": "ic_file_stack",
+    "packages": [
+     "com.memrise.android.memrisecompanion",
+     "mobi.eup.easygerman"
+    ]
+   },
+   {
+    "label": "Socials",
+    "icon_pkg": "com.diegonmarcos.cloudme",
+    "icon_res": "ic_file_stack",
+    "packages": [
+     "com.instagram.android",
+     "com.instagram.barcelona",
+     "com.facebook.katana",
+     "com.linkedin.android",
+     "com.pinterest",
+     "com.bereal.ft",
+     "com.tinder",
+     "com.bumble.app",
+     "co.hinge.app"
+    ]
+   },
+   {
+    "label": "Me-Buro",
+    "icon_pkg": "com.diegonmarcos.cloudme",
+    "icon_res": "ic_p_folder",
+    "packages": [
+     "es.gob.interior.policia.midni"
+    ]
+   }
+  ],
+  "Services": [
+   {
+    "label": "Search",
+    "icon_pkg": "com.diegonmarcos.cloudsearch",
+    "icon_res": "ic_cloud_search",
+    "packages": [
+     "com.google.android.googlequicksearchbox"
+    ]
+   },
+   {
+    "label": "News",
+    "icon_pkg": "com.diegonmarcos.cloudnews",
+    "icon_res": "ic_rss",
+    "packages": [
+     "com.google.android.apps.magazines",
+     "com.devhd.feedly"
+    ]
+   },
+   {
+    "label": "Events",
+    "icon_pkg": null,
+    "icon_res": "ic_p_cal_month",
+    "packages": [
+     "de.eventim.mobile.app.Android",
+     "com.codekarussell.rausgegangen",
+     "com.meetup"
+    ]
+   },
+   {
+    "label": "Media Center",
+    "icon_pkg": "com.diegonmarcos.cloudmediacenter",
+    "icon_res": "ic_music",
+    "packages": [
+     "com.spotify.music",
+     "com.google.android.youtube",
+     "com.amazon.avod.thirdpartyclient",
+     "com.shazam.android"
+    ]
+   },
+   {
+    "label": "Shopping",
+    "icon_pkg": "com.diegonmarcos.cloudshopping",
+    "icon_res": "ic_shopping",
+    "packages": [
+     "com.amazon.mShop.android.shopping",
+     "de.dhl.paket",
+     "com.ebay.kleinanzeigen"
+    ]
+   },
+   {
+    "label": "Mobility & Travel",
+    "icon_pkg": null,
+    "icon_res": "ic_ctl_airplane",
+    "packages": [
+     "com.ubercab",
+     "com.booking",
+     "com.thetrainline",
+     "com.ryanair.cheapflights",
+     "com.rome2rio.www.rome2rio",
+     "com.comuto",
+     "com.trafi.whitelabel.bvg",
+     "com.nomadmania.presentation"
+    ]
+   },
+   {
+    "label": "Jobs & Business",
+    "icon_pkg": null,
+    "icon_res": "ic_suite",
+    "packages": [
+     "com.indeed.android.jobsearch"
+    ]
+   },
+   {
+    "label": "Real Estate",
+    "icon_pkg": null,
+    "icon_res": "ic_map_pin",
+    "packages": [
+     "de.is24.android",
+     "com.wggesucht.android"
+    ]
+   },
+   {
+    "label": "Money",
+    "icon_pkg": null,
+    "icon_res": "ic_storefront",
+    "packages": [
+     "es.bancosantander.apps",
+     "com.revolut.revolut",
+     "com.paypal.android.p2pmobile",
+     "com.binance.dev",
+     "com.btg.pactual.digital.mobile",
+     "com.fusionmedia.investing",
+     "com.xe.currency"
+    ]
+   }
+  ]
+ },
+ "phone_folders": [
+  {
+   "id": "me_me",
+   "order": "410",
+   "label": "~Me",
+   "match_keywords": [],
+   "match_metadata": []
+  },
+  {
+   "id": "svc_health",
+   "order": "420",
+   "label": "~Health",
+   "match_keywords": [
+    "pkg:com.medantapatient.app",
+    "pkg:com.urbansportsclub",
+    "pkg:com.google.android.apps.fitness",
+    "pkg:com.fitbit.FitbitMobile",
+    "pkg:com.sec.android.app.shealth",
+    "pkg:com.oplayer.orunningplus"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "svc_gov",
+   "order": "430",
+   "label": "~Gov & ID",
+   "match_keywords": [
+    "pkg:br.com.vidaas.sp",
+    "pkg:br.gov.economia.receita.rfb",
+    "pkg:br.gov.meugovbr",
+    "pkg:cat.atm.cartera",
+    "pkg:com.dgt.midgt",
+    "pkg:com.governikus.ausweisapp2",
+    "pkg:de.deutschepost.postident",
+    "pkg:es.aeat.pin24h",
+    "pkg:es.correos.app",
+    "pkg:es.fnmtrcm.ceres.certificadoDigitalFNMT",
+    "pkg:es.gob.interior.policia.midni",
+    "pkg:nl.jool.isic",
+    "pkg^br.gov.",
+    "pkg:br.jus.tse.eleitoral.etitulo"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "svc_telecom",
+   "order": "440",
+   "label": "~Telecom",
+   "match_keywords": [
+    "pkg:com.affinityclick.alosim",
+    "pkg:com.esim.numero",
+    "pkg:com.mobillium.airalo",
+    "pkg:com.saily.android",
+    "pkg:com.spanishcoders.pepephone",
+    "pkg:de.congstar.meincongstar",
+    "pkg:net.esim.twa"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "svc_home",
+   "order": "450",
+   "label": "~Home & Housing",
+   "match_keywords": [
+    "pkg:com.sensorberg.oneaccess",
+    "pkg:de.nebenan.app",
+    "pkg:com.shurgard.selfstorage"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "hlth_outdoor",
+   "order": "460",
+   "label": "~Outdoor & Sport",
+   "match_keywords": [
+    "pkg:com.alltrails.alltrails",
+    "pkg:com.downdogapp",
+    "pkg:com.garmin.android.apps.connectmobile",
+    "pkg:com.garmin.android.apps.dive",
+    "pkg:com.garmin.android.apps.explore",
+    "pkg:com.garmin.connectiq",
+    "pkg:com.outdooractive.Outdooractive",
+    "pkg:com.strava",
+    "pkg:com.urbandroid.sleep",
+    "pkg:com.wikiloc.wikilocandroid",
+    "pkg:de.komoot.android",
+    "pkg:com.bodybike.bbsmartplus",
+    "pkg:com.motosumo.app",
+    "pkg:io.vicoach"
+   ],
+   "match_metadata": [
+    "perm:android.permission.ACTIVITY_RECOGNITION",
+    "perm:android.permission.BODY_SENSORS"
+   ]
+  },
+  {
+   "id": "hlth_nutrition",
+   "order": "470",
+   "label": "~Nutrition",
+   "match_keywords": [
+    "pkg:com.fatsecret.android"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "hlth_learning",
+   "order": "480",
+   "label": "~Learning",
+   "match_keywords": [
+    "pkg:air.nn.mobile.app.main",
+    "pkg:com.duocards.app",
+    "pkg:com.fluentflix.fluentu",
+    "pkg:com.flutterflow.kards",
+    "pkg:com.hueber.huebermedia",
+    "pkg:com.lubosmikusiak.articuli.derdiedas",
+    "pkg:com.memrise.android.memrisecompanion",
+    "pkg:mobi.eup.easygerman",
+    "pkg:com.rype.go",
+    "pkg:com.simonandschuster.pimsleur.unified.android",
+    "pkg:com.softissimo.reverso.context",
+    "pkg:com.ted.android",
+    "pkg:de.digionline.webweavera2",
+    "pkg:net.wordbit.deen"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "svc_search",
+   "order": "610",
+   "label": "+Search",
+   "match_keywords": [
+    "pkg:com.google.android.googlequicksearchbox"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "hlth_news",
+   "order": "620",
+   "label": "+News",
+   "match_keywords": [
+    "pkg:com.checkitt",
+    "pkg:com.devhd.feedly",
+    "pkg:com.flyersoft.moonreader",
+    "pkg:com.google.android.apps.magazines",
+    "pkg:com.rama.mako",
+    "pkg:com.samsung.android.app.spage",
+    "pkg:com.substack.app"
+   ],
+   "match_metadata": [
+    "cat:news"
+   ]
+  },
+  {
+   "id": "svc_shopping",
+   "order": "630",
+   "label": "+Shopping",
+   "match_keywords": [
+    "pkg:com.amazon.mShop.android.shopping",
+    "pkg:com.app.tgtg",
+    "pkg:com.backmarket",
+    "pkg:com.ebay.kleinanzeigen",
+    "pkg:com.wallapop",
+    "pkg:vivino.web.app",
+    "pkg:com.dhl.exp.dhlmobile",
+    "pkg:de.dhl.paket"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "svc_events",
+   "order": "640",
+   "label": "+Events",
+   "match_keywords": [
+    "pkg:com.codekarussell.rausgegangen",
+    "pkg:com.linearshift.broadcastoslo",
+    "pkg:fm.dice",
+    "pkg:net.residentadvisor.raguide",
+    "pkg:com.meetup",
+    "pkg:de.eventim.mobile.app.Android"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "media_video",
+   "order": "645",
+   "label": "+Media Center",
+   "match_keywords": [
+    "pkg:com.amazon.avod.thirdpartyclient",
+    "pkg:com.google.android.videos",
+    "pkg:com.google.android.youtube",
+    "pkg:com.netflix.mediaclient",
+    "pkg:com.wbd.stream",
+    "pkg:tv.arte.plus7",
+    "pkg:at.zuggabecka.radiofm4",
+    "pkg:com.aspiro.tidal",
+    "pkg:com.earthflare.android.radioparadisewidget.gpv2",
+    "pkg:com.google.android.apps.youtube.music",
+    "pkg:com.shazam.android",
+    "pkg:com.spotify.music",
+    "pkg:com.ultimateguitar.tabs",
+    "pkg:de.deutschlandfunk.dlfaudiothek",
+    "pkg:ott.alanwatts",
+    "pkg:cn.com.aftershokz.app",
+    "pkg:com.oceanwing.soundcore",
+    "pkg:com.mi.earphone"
+   ],
+   "match_metadata": [
+    "cat:video",
+    "cat:audio",
+    "intent:android.intent.category.APP_MUSIC"
+   ]
+  },
+  {
+   "id": "svc_mobility",
+   "order": "650",
+   "label": "+Mobility & Travel",
+   "match_keywords": [
+    "pkg:cat.atm.tmobilitat",
+    "pkg:com.comuto",
+    "pkg:com.donkeyrepublic.bike.android",
+    "pkg:com.geomobile.tmbmobile",
+    "pkg:com.ridedott.rider",
+    "pkg:com.trafi.android.tr",
+    "pkg:com.trafi.whitelabel.bvg",
+    "pkg:com.ubercab",
+    "pkg:de.eos.uptrade.android.fahrinfo.berlin",
+    "pkg:de.hafas.android.db",
+    "pkg:ee.mtakso.client",
+    "pkg:no.ruter.reise",
+    "pkg:ride.app",
+    "pkg:taxi.android.client",
+    "pkg:app.campy",
+    "pkg:be.greifmatthias.wakaship",
+    "pkg:com.airbnb.android",
+    "pkg:com.alohacamp.release",
+    "pkg:com.booking",
+    "pkg:com.getbybus.mobile",
+    "pkg:com.goeuro.rosie",
+    "pkg:com.hostel_hop_inc.hostel_hop_mobile",
+    "pkg:com.hostelworld.app",
+    "pkg:com.kautra.android.autobusubilietai",
+    "pkg:com.mo2o.alsa",
+    "pkg:com.nomadmania.presentation",
+    "pkg:com.rome2rio.www.rome2rio",
+    "pkg:com.ryanair.cheapflights",
+    "pkg:com.skiplagged",
+    "pkg:com.thetrainline",
+    "pkg:com.wizzair.WizzAirApp",
+    "pkg:com.workaway.app",
+    "pkg:de.flixbus.app",
+    "pkg:dk.shelter.app",
+    "pkg:eu.infobus.app",
+    "pkg:fr.tramb.park4night",
+    "pkg:net.skyscanner.android.main",
+    "pkg:travel.goki.app",
+    "pkg:de.bvg.ticket"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "svc_jobs",
+   "order": "660",
+   "label": "+Jobs & Business",
+   "match_keywords": [
+    "pkg:com.linkedin.android",
+    "pkg:com.otta.otta",
+    "pkg:com.indeed.android.jobsearch"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "svc_realestate",
+   "order": "670",
+   "label": "+Real Estate",
+   "match_keywords": [
+    "pkg:de.is24.android",
+    "pkg:com.wggesucht.android"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "svc_money",
+   "order": "680",
+   "label": "+Money",
+   "match_keywords": [
+    "pkg:com.binance.dev",
+    "pkg:com.bitpanda.bitpanda",
+    "pkg:com.btg.pactual.banking",
+    "pkg:com.btg.pactual.digital.mobile",
+    "pkg:com.btg.pactual.homebroker.mobile",
+    "pkg:com.fusionmedia.investing",
+    "pkg:com.paypal.android.p2pmobile",
+    "pkg:com.revolut.revolut",
+    "pkg:com.transferwise.android",
+    "pkg:com.xe.currency",
+    "pkg:es.bancosantander.apps",
+    "pkg^com.btg.pactual.",
+    "pkg:com.imaginecurve.curve.prd",
+    "pkg:com.starfinanz.smob.android.sfinanzstatus",
+    "pkg:de.number26.android"
+   ],
+   "match_metadata": []
+  },
+  {
+   "id": "svc_kgstore",
+   "order": "690",
+   "label": "+KG Store",
+   "match_keywords": [],
+   "match_metadata": []
+  },
+  {
+   "id": "media_games",
+   "order": "695",
+   "label": "+Games",
+   "match_keywords": [
+    "pkg:com.epicgames.portal",
+    "pkg:com.playdead.limbo.egs.full",
+    "pkg:com.samsung.android.game.gamehome",
+    "pkg:com.werewolfapps.online",
+    "pkg:org.faudroids.werewolf"
+   ],
+   "match_metadata": [
+    "cat:game"
+   ]
+  }
+ ],
+ "launcher_folders_dataset": [
+  {
+   "section": "Tools · Me",
+   "id": "me_me",
+   "label": "~Me",
+   "icon": "",
+   "order": 410
+  },
+  {
+   "section": "Tools · Me",
+   "id": "svc_health",
+   "label": "~Health",
+   "icon": "",
+   "order": 420
+  },
+  {
+   "section": "Tools · Me",
+   "id": "svc_gov",
+   "label": "~Gov & ID",
+   "icon": "",
+   "order": 430
+  },
+  {
+   "section": "Tools · Me",
+   "id": "svc_telecom",
+   "label": "~Telecom",
+   "icon": "",
+   "order": 440
+  },
+  {
+   "section": "Tools · Me",
+   "id": "svc_home",
+   "label": "~Home & Housing",
+   "icon": "",
+   "order": 450
+  },
+  {
+   "section": "Tools · Me",
+   "id": "hlth_outdoor",
+   "label": "~Outdoor & Sport",
+   "icon": "",
+   "order": 460
+  },
+  {
+   "section": "Tools · Me",
+   "id": "hlth_nutrition",
+   "label": "~Nutrition",
+   "icon": "",
+   "order": 470
+  },
+  {
+   "section": "Tools · Me",
+   "id": "hlth_learning",
+   "label": "~Learning",
+   "icon": "",
+   "order": 480
+  },
+  {
+   "section": "Services",
+   "id": "svc_search",
+   "label": "+Search",
+   "icon": "",
+   "order": 610
+  },
+  {
+   "section": "Services",
+   "id": "hlth_news",
+   "label": "+News",
+   "icon": "",
+   "order": 620
+  },
+  {
+   "section": "Services",
+   "id": "svc_shopping",
+   "label": "+Shopping",
+   "icon": "",
+   "order": 630
+  },
+  {
+   "section": "Services",
+   "id": "svc_events",
+   "label": "+Events",
+   "icon": "",
+   "order": 640
+  },
+  {
+   "section": "Services",
+   "id": "media_video",
+   "label": "+Media Center",
+   "icon": "",
+   "order": 645
+  },
+  {
+   "section": "Services",
+   "id": "svc_mobility",
+   "label": "+Mobility & Travel",
+   "icon": "",
+   "order": 650
+  },
+  {
+   "section": "Services",
+   "id": "svc_jobs",
+   "label": "+Jobs & Business",
+   "icon": "",
+   "order": 660
+  },
+  {
+   "section": "Services",
+   "id": "svc_realestate",
+   "label": "+Real Estate",
+   "icon": "",
+   "order": 670
+  },
+  {
+   "section": "Services",
+   "id": "svc_money",
+   "label": "+Money",
+   "icon": "",
+   "order": 680
+  },
+  {
+   "section": "Services",
+   "id": "svc_kgstore",
+   "label": "+KG Store",
+   "icon": "",
+   "order": 690
+  },
+  {
+   "section": "Services",
+   "id": "media_games",
+   "label": "+Games",
+   "icon": "",
+   "order": 695
+  }
+ ],
+ "favourites": [
+  {
+   "name": "codekarussell.com",
+   "url": "https://codekarussell.com/",
+   "group": "Services/Events"
+  },
+  {
+   "name": "dice.fm",
+   "url": "https://dice.fm/",
+   "group": "Services/Events"
+  },
+  {
+   "name": "eventim.de",
+   "url": "https://eventim.de/",
+   "group": "Services/Events"
+  },
+  {
+   "name": "linearshift.com",
+   "url": "https://linearshift.com/",
+   "group": "Services/Events"
+  },
+  {
+   "name": "meetup.com",
+   "url": "https://meetup.com/",
+   "group": "Services/Events"
+  },
+  {
+   "name": "residentadvisor.net",
+   "url": "https://residentadvisor.net/",
+   "group": "Services/Events"
+  },
+  {
+   "name": "epicgames.com",
+   "url": "https://epicgames.com/",
+   "group": "Services/Games"
+  },
+  {
+   "name": "faudroids.org",
+   "url": "https://faudroids.org/",
+   "group": "Services/Games"
+  },
+  {
+   "name": "playdead.com",
+   "url": "https://playdead.com/",
+   "group": "Services/Games"
+  },
+  {
+   "name": "samsung.com",
+   "url": "https://samsung.com/",
+   "group": "Services/Games"
+  },
+  {
+   "name": "werewolfapps.com",
+   "url": "https://werewolfapps.com/",
+   "group": "Services/Games"
+  },
+  {
+   "name": "indeed.com",
+   "url": "https://indeed.com/",
+   "group": "Services/Jobs & Business"
+  },
+  {
+   "name": "linkedin.com",
+   "url": "https://linkedin.com/",
+   "group": "Services/Jobs & Business"
+  },
+  {
+   "name": "otta.com",
+   "url": "https://otta.com/",
+   "group": "Services/Jobs & Business"
+  },
+  {
+   "name": "alanwatts.ott",
+   "url": "https://alanwatts.ott/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "amazon.com",
+   "url": "https://amazon.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "arte.tv",
+   "url": "https://arte.tv/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "aspiro.com",
+   "url": "https://aspiro.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "com.cn",
+   "url": "https://com.cn/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "deutschlandfunk.de",
+   "url": "https://deutschlandfunk.de/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "earthflare.com",
+   "url": "https://earthflare.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "mi.com",
+   "url": "https://mi.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "netflix.com",
+   "url": "https://netflix.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "oceanwing.com",
+   "url": "https://oceanwing.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "shazam.com",
+   "url": "https://shazam.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "spotify.com",
+   "url": "https://spotify.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "ultimateguitar.com",
+   "url": "https://ultimateguitar.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "wbd.com",
+   "url": "https://wbd.com/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "zuggabecka.at",
+   "url": "https://zuggabecka.at/",
+   "group": "Services/Media Center"
+  },
+  {
+   "name": "airbnb.com",
+   "url": "https://airbnb.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "alohacamp.com",
+   "url": "https://alohacamp.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "android.taxi",
+   "url": "https://android.taxi/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "app.ride",
+   "url": "https://app.ride/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "atm.cat",
+   "url": "https://atm.cat/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "booking.com",
+   "url": "https://booking.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "bvg.de",
+   "url": "https://bvg.de/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "campy.app",
+   "url": "https://campy.app/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "comuto.com",
+   "url": "https://comuto.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "donkeyrepublic.com",
+   "url": "https://donkeyrepublic.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "eos.de",
+   "url": "https://eos.de/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "flixbus.de",
+   "url": "https://flixbus.de/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "geomobile.com",
+   "url": "https://geomobile.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "getbybus.com",
+   "url": "https://getbybus.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "goeuro.com",
+   "url": "https://goeuro.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "goki.travel",
+   "url": "https://goki.travel/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "greifmatthias.be",
+   "url": "https://greifmatthias.be/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "hafas.de",
+   "url": "https://hafas.de/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "hostel_hop_inc.com",
+   "url": "https://hostel_hop_inc.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "hostelworld.com",
+   "url": "https://hostelworld.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "infobus.eu",
+   "url": "https://infobus.eu/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "kautra.com",
+   "url": "https://kautra.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "mo2o.com",
+   "url": "https://mo2o.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "mtakso.ee",
+   "url": "https://mtakso.ee/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "nomadmania.com",
+   "url": "https://nomadmania.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "ridedott.com",
+   "url": "https://ridedott.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "rome2rio.com",
+   "url": "https://rome2rio.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "ruter.no",
+   "url": "https://ruter.no/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "ryanair.com",
+   "url": "https://ryanair.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "shelter.dk",
+   "url": "https://shelter.dk/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "skiplagged.com",
+   "url": "https://skiplagged.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "skyscanner.net",
+   "url": "https://skyscanner.net/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "thetrainline.com",
+   "url": "https://thetrainline.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "trafi.com",
+   "url": "https://trafi.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "tramb.fr",
+   "url": "https://tramb.fr/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "ubercab.com",
+   "url": "https://ubercab.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "wizzair.com",
+   "url": "https://wizzair.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "workaway.com",
+   "url": "https://workaway.com/",
+   "group": "Services/Mobility & Travel"
+  },
+  {
+   "name": "bancosantander.es",
+   "url": "https://bancosantander.es/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "binance.com",
+   "url": "https://binance.com/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "bitpanda.com",
+   "url": "https://bitpanda.com/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "btg.com",
+   "url": "https://btg.com/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "fusionmedia.com",
+   "url": "https://fusionmedia.com/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "imaginecurve.com",
+   "url": "https://imaginecurve.com/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "number26.de",
+   "url": "https://number26.de/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "paypal.com",
+   "url": "https://paypal.com/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "revolut.com",
+   "url": "https://revolut.com/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "starfinanz.com",
+   "url": "https://starfinanz.com/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "transferwise.com",
+   "url": "https://transferwise.com/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "xe.com",
+   "url": "https://xe.com/",
+   "group": "Services/Money"
+  },
+  {
+   "name": "checkitt.com",
+   "url": "https://checkitt.com/",
+   "group": "Services/News"
+  },
+  {
+   "name": "devhd.com",
+   "url": "https://devhd.com/",
+   "group": "Services/News"
+  },
+  {
+   "name": "flyersoft.com",
+   "url": "https://flyersoft.com/",
+   "group": "Services/News"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Services/News"
+  },
+  {
+   "name": "rama.com",
+   "url": "https://rama.com/",
+   "group": "Services/News"
+  },
+  {
+   "name": "samsung.com",
+   "url": "https://samsung.com/",
+   "group": "Services/News"
+  },
+  {
+   "name": "substack.com",
+   "url": "https://substack.com/",
+   "group": "Services/News"
+  },
+  {
+   "name": "is24.de",
+   "url": "https://is24.de/",
+   "group": "Services/Real Estate"
+  },
+  {
+   "name": "wggesucht.com",
+   "url": "https://wggesucht.com/",
+   "group": "Services/Real Estate"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Services/Search"
+  },
+  {
+   "name": "amazon.com",
+   "url": "https://amazon.com/",
+   "group": "Services/Shopping"
+  },
+  {
+   "name": "app.com",
+   "url": "https://app.com/",
+   "group": "Services/Shopping"
+  },
+  {
+   "name": "backmarket.com",
+   "url": "https://backmarket.com/",
+   "group": "Services/Shopping"
+  },
+  {
+   "name": "dhl.com",
+   "url": "https://dhl.com/",
+   "group": "Services/Shopping"
+  },
+  {
+   "name": "dhl.de",
+   "url": "https://dhl.de/",
+   "group": "Services/Shopping"
+  },
+  {
+   "name": "ebay.com",
+   "url": "https://ebay.com/",
+   "group": "Services/Shopping"
+  },
+  {
+   "name": "wallapop.com",
+   "url": "https://wallapop.com/",
+   "group": "Services/Shopping"
+  },
+  {
+   "name": "web.vivino",
+   "url": "https://web.vivino/",
+   "group": "Services/Shopping"
+  },
+  {
+   "name": "clockify.me",
+   "url": "https://clockify.me/",
+   "group": "Tools/Agenda"
+  },
+  {
+   "name": "gianlu.com",
+   "url": "https://gianlu.com/",
+   "group": "Tools/Agenda"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Agenda"
+  },
+  {
+   "name": "mangotechnologies.co",
+   "url": "https://mangotechnologies.co/",
+   "group": "Tools/Agenda"
+  },
+  {
+   "name": "microsoft.com",
+   "url": "https://microsoft.com/",
+   "group": "Tools/Agenda"
+  },
+  {
+   "name": "samsung.com",
+   "url": "https://samsung.com/",
+   "group": "Tools/Agenda"
+  },
+  {
+   "name": "scheduleplanner.todolist",
+   "url": "https://scheduleplanner.todolist/",
+   "group": "Tools/Agenda"
+  },
+  {
+   "name": "toggl.com",
+   "url": "https://toggl.com/",
+   "group": "Tools/Agenda"
+  },
+  {
+   "name": "trello.com",
+   "url": "https://trello.com/",
+   "group": "Tools/Agenda"
+  },
+  {
+   "name": "android.com",
+   "url": "https://android.com/",
+   "group": "Tools/Browser"
+  },
+  {
+   "name": "brave.com",
+   "url": "https://brave.com/",
+   "group": "Tools/Browser"
+  },
+  {
+   "name": "duckduckgo.com",
+   "url": "https://duckduckgo.com/",
+   "group": "Tools/Browser"
+  },
+  {
+   "name": "raindrop.io",
+   "url": "https://raindrop.io/",
+   "group": "Tools/Browser"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Calc"
+  },
+  {
+   "name": "sec.com",
+   "url": "https://sec.com/",
+   "group": "Tools/Calc"
+  },
+  {
+   "name": "mobimax.pl",
+   "url": "https://mobimax.pl/",
+   "group": "Tools/Camera"
+  },
+  {
+   "name": "sec.com",
+   "url": "https://sec.com/",
+   "group": "Tools/Camera"
+  },
+  {
+   "name": "adsk.com",
+   "url": "https://adsk.com/",
+   "group": "Tools/Canvas"
+  },
+  {
+   "name": "imageline.com",
+   "url": "https://imageline.com/",
+   "group": "Tools/Canvas"
+  },
+  {
+   "name": "beeper.com",
+   "url": "https://beeper.com/",
+   "group": "Tools/Chat"
+  },
+  {
+   "name": "heckel.io",
+   "url": "https://heckel.io/",
+   "group": "Tools/Chat"
+  },
+  {
+   "name": "mattermost.com",
+   "url": "https://mattermost.com/",
+   "group": "Tools/Chat"
+  },
+  {
+   "name": "rocket.chat",
+   "url": "https://rocket.chat/",
+   "group": "Tools/Chat"
+  },
+  {
+   "name": "slack.com",
+   "url": "https://slack.com/",
+   "group": "Tools/Chat"
+  },
+  {
+   "name": "vector.im",
+   "url": "https://vector.im/",
+   "group": "Tools/Chat"
+  },
+  {
+   "name": "diegonmarcos.com",
+   "url": "https://diegonmarcos.com/",
+   "group": "Tools/Contacts"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Contacts"
+  },
+  {
+   "name": "samsung.com",
+   "url": "https://samsung.com/",
+   "group": "Tools/Contacts"
+  },
+  {
+   "name": "fossify.org",
+   "url": "https://fossify.org/",
+   "group": "Tools/Dialer"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Dialer"
+  },
+  {
+   "name": "samsung.com",
+   "url": "https://samsung.com/",
+   "group": "Tools/Dialer"
+  },
+  {
+   "name": "alphainventor.com",
+   "url": "https://alphainventor.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "amaze.com",
+   "url": "https://amaze.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "app.com",
+   "url": "https://app.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "ghisler.com",
+   "url": "https://ghisler.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "ghostsq.com",
+   "url": "https://ghostsq.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "lonelycatgames.com",
+   "url": "https://lonelycatgames.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "microsoft.com",
+   "url": "https://microsoft.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "mobisystems.com",
+   "url": "https://mobisystems.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "proton.me",
+   "url": "https://proton.me/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "rarlab.com",
+   "url": "https://rarlab.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "sec.com",
+   "url": "https://sec.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "smlnskgmail.com",
+   "url": "https://smlnskgmail.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "solidexplorer2.pl",
+   "url": "https://solidexplorer2.pl/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "tacit.dk",
+   "url": "https://tacit.dk/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "viscouspot.com",
+   "url": "https://viscouspot.com/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "zhanghai.me",
+   "url": "https://zhanghai.me/",
+   "group": "Tools/Drive"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Gallery"
+  },
+  {
+   "name": "musicvideo.com",
+   "url": "https://musicvideo.com/",
+   "group": "Tools/Gallery"
+  },
+  {
+   "name": "sec.com",
+   "url": "https://sec.com/",
+   "group": "Tools/Gallery"
+  },
+  {
+   "name": "aeat.es",
+   "url": "https://aeat.es/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "atm.cat",
+   "url": "https://atm.cat/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "com.br",
+   "url": "https://com.br/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "correos.es",
+   "url": "https://correos.es/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "deutschepost.de",
+   "url": "https://deutschepost.de/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "dgt.com",
+   "url": "https://dgt.com/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "fnmtrcm.es",
+   "url": "https://fnmtrcm.es/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "gob.es",
+   "url": "https://gob.es/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "gov.br",
+   "url": "https://gov.br/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "governikus.com",
+   "url": "https://governikus.com/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "jool.nl",
+   "url": "https://jool.nl/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "jus.br",
+   "url": "https://jus.br/",
+   "group": "Tools/Gov & ID"
+  },
+  {
+   "name": "fitbit.com",
+   "url": "https://fitbit.com/",
+   "group": "Tools/Health"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Health"
+  },
+  {
+   "name": "medantapatient.com",
+   "url": "https://medantapatient.com/",
+   "group": "Tools/Health"
+  },
+  {
+   "name": "oplayer.com",
+   "url": "https://oplayer.com/",
+   "group": "Tools/Health"
+  },
+  {
+   "name": "sec.com",
+   "url": "https://sec.com/",
+   "group": "Tools/Health"
+  },
+  {
+   "name": "urbansportsclub.com",
+   "url": "https://urbansportsclub.com/",
+   "group": "Tools/Health"
+  },
+  {
+   "name": "nebenan.de",
+   "url": "https://nebenan.de/",
+   "group": "Tools/Home & Housing"
+  },
+  {
+   "name": "sensorberg.com",
+   "url": "https://sensorberg.com/",
+   "group": "Tools/Home & Housing"
+  },
+  {
+   "name": "shurgard.com",
+   "url": "https://shurgard.com/",
+   "group": "Tools/Home & Housing"
+  },
+  {
+   "name": "gingersoftware.com",
+   "url": "https://gingersoftware.com/",
+   "group": "Tools/Keyboard"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Keyboard"
+  },
+  {
+   "name": "grammarly.com",
+   "url": "https://grammarly.com/",
+   "group": "Tools/Keyboard"
+  },
+  {
+   "name": "icoaching.ch",
+   "url": "https://icoaching.ch/",
+   "group": "Tools/Keyboard"
+  },
+  {
+   "name": "keyboard2.juloo",
+   "url": "https://keyboard2.juloo/",
+   "group": "Tools/Keyboard"
+  },
+  {
+   "name": "digionline.de",
+   "url": "https://digionline.de/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "duocards.com",
+   "url": "https://duocards.com/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "eup.mobi",
+   "url": "https://eup.mobi/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "fluentflix.com",
+   "url": "https://fluentflix.com/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "flutterflow.com",
+   "url": "https://flutterflow.com/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "hueber.com",
+   "url": "https://hueber.com/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "lubosmikusiak.com",
+   "url": "https://lubosmikusiak.com/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "memrise.com",
+   "url": "https://memrise.com/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "nn.air",
+   "url": "https://nn.air/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "rype.com",
+   "url": "https://rype.com/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "simonandschuster.com",
+   "url": "https://simonandschuster.com/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "softissimo.com",
+   "url": "https://softissimo.com/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "ted.com",
+   "url": "https://ted.com/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "wordbit.net",
+   "url": "https://wordbit.net/",
+   "group": "Tools/Learning"
+  },
+  {
+   "name": "clean.email",
+   "url": "https://clean.email/",
+   "group": "Tools/Mail"
+  },
+  {
+   "name": "faircode.eu",
+   "url": "https://faircode.eu/",
+   "group": "Tools/Mail"
+  },
+  {
+   "name": "fsck.com",
+   "url": "https://fsck.com/",
+   "group": "Tools/Mail"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Mail"
+  },
+  {
+   "name": "ltt.rs",
+   "url": "https://ltt.rs/",
+   "group": "Tools/Mail"
+  },
+  {
+   "name": "mailtemi.com",
+   "url": "https://mailtemi.com/",
+   "group": "Tools/Mail"
+  },
+  {
+   "name": "microsoft.com",
+   "url": "https://microsoft.com/",
+   "group": "Tools/Mail"
+  },
+  {
+   "name": "protonmail.ch",
+   "url": "https://protonmail.ch/",
+   "group": "Tools/Mail"
+  },
+  {
+   "name": "samsung.com",
+   "url": "https://samsung.com/",
+   "group": "Tools/Mail"
+  },
+  {
+   "name": "sterna.app",
+   "url": "https://sterna.app/",
+   "group": "Tools/Mail"
+  },
+  {
+   "name": "facebook.com",
+   "url": "https://facebook.com/",
+   "group": "Tools/Messenger"
+  },
+  {
+   "name": "garmin.com",
+   "url": "https://garmin.com/",
+   "group": "Tools/Messenger"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Messenger"
+  },
+  {
+   "name": "telegram.org",
+   "url": "https://telegram.org/",
+   "group": "Tools/Messenger"
+  },
+  {
+   "name": "thoughtcrime.org",
+   "url": "https://thoughtcrime.org/",
+   "group": "Tools/Messenger"
+  },
+  {
+   "name": "trianguloy.com",
+   "url": "https://trianguloy.com/",
+   "group": "Tools/Messenger"
+  },
+  {
+   "name": "viber.com",
+   "url": "https://viber.com/",
+   "group": "Tools/Messenger"
+  },
+  {
+   "name": "whatsapp.com",
+   "url": "https://whatsapp.com/",
+   "group": "Tools/Messenger"
+  },
+  {
+   "name": "ackee.cz",
+   "url": "https://ackee.cz/",
+   "group": "Tools/Nav"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Nav"
+  },
+  {
+   "name": "mapswithme.com",
+   "url": "https://mapswithme.com/",
+   "group": "Tools/Nav"
+  },
+  {
+   "name": "organicmaps.app",
+   "url": "https://organicmaps.app/",
+   "group": "Tools/Nav"
+  },
+  {
+   "name": "tiempo.aplicacion",
+   "url": "https://tiempo.aplicacion/",
+   "group": "Tools/Nav"
+  },
+  {
+   "name": "adeeteya.com",
+   "url": "https://adeeteya.com/",
+   "group": "Tools/Notes"
+  },
+  {
+   "name": "affine.app",
+   "url": "https://affine.app/",
+   "group": "Tools/Notes"
+  },
+  {
+   "name": "chromium.org",
+   "url": "https://chromium.org/",
+   "group": "Tools/Notes"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Notes"
+  },
+  {
+   "name": "journable.com",
+   "url": "https://journable.com/",
+   "group": "Tools/Notes"
+  },
+  {
+   "name": "microsoft.com",
+   "url": "https://microsoft.com/",
+   "group": "Tools/Notes"
+  },
+  {
+   "name": "obsidian.md",
+   "url": "https://obsidian.md/",
+   "group": "Tools/Notes"
+  },
+  {
+   "name": "samsung.com",
+   "url": "https://samsung.com/",
+   "group": "Tools/Notes"
+  },
+  {
+   "name": "sblo.jp",
+   "url": "https://sblo.jp/",
+   "group": "Tools/Notes"
+  },
+  {
+   "name": "fatsecret.com",
+   "url": "https://fatsecret.com/",
+   "group": "Tools/Nutrition"
+  },
+  {
+   "name": "adobe.com",
+   "url": "https://adobe.com/",
+   "group": "Tools/Office"
+  },
+  {
+   "name": "collabora.com",
+   "url": "https://collabora.com/",
+   "group": "Tools/Office"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Office"
+  },
+  {
+   "name": "alltrails.com",
+   "url": "https://alltrails.com/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "bodybike.com",
+   "url": "https://bodybike.com/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "downdogapp.com",
+   "url": "https://downdogapp.com/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "garmin.com",
+   "url": "https://garmin.com/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "komoot.de",
+   "url": "https://komoot.de/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "motosumo.com",
+   "url": "https://motosumo.com/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "outdooractive.com",
+   "url": "https://outdooractive.com/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "strava.com",
+   "url": "https://strava.com/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "urbandroid.com",
+   "url": "https://urbandroid.com/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "vicoach.io",
+   "url": "https://vicoach.io/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "wikiloc.com",
+   "url": "https://wikiloc.com/",
+   "group": "Tools/Outdoor & Sport"
+  },
+  {
+   "name": "badoo.com",
+   "url": "https://badoo.com/",
+   "group": "Tools/Social"
+  },
+  {
+   "name": "bereal.com",
+   "url": "https://bereal.com/",
+   "group": "Tools/Social"
+  },
+  {
+   "name": "bumble.com",
+   "url": "https://bumble.com/",
+   "group": "Tools/Social"
+  },
+  {
+   "name": "facebook.com",
+   "url": "https://facebook.com/",
+   "group": "Tools/Social"
+  },
+  {
+   "name": "hinge.co",
+   "url": "https://hinge.co/",
+   "group": "Tools/Social"
+  },
+  {
+   "name": "instagram.com",
+   "url": "https://instagram.com/",
+   "group": "Tools/Social"
+  },
+  {
+   "name": "pinterest.com",
+   "url": "https://pinterest.com/",
+   "group": "Tools/Social"
+  },
+  {
+   "name": "tinder.com",
+   "url": "https://tinder.com/",
+   "group": "Tools/Social"
+  },
+  {
+   "name": "affinityclick.com",
+   "url": "https://affinityclick.com/",
+   "group": "Tools/Telecom"
+  },
+  {
+   "name": "congstar.de",
+   "url": "https://congstar.de/",
+   "group": "Tools/Telecom"
+  },
+  {
+   "name": "esim.com",
+   "url": "https://esim.com/",
+   "group": "Tools/Telecom"
+  },
+  {
+   "name": "esim.net",
+   "url": "https://esim.net/",
+   "group": "Tools/Telecom"
+  },
+  {
+   "name": "mobillium.com",
+   "url": "https://mobillium.com/",
+   "group": "Tools/Telecom"
+  },
+  {
+   "name": "saily.com",
+   "url": "https://saily.com/",
+   "group": "Tools/Telecom"
+  },
+  {
+   "name": "spanishcoders.com",
+   "url": "https://spanishcoders.com/",
+   "group": "Tools/Telecom"
+  },
+  {
+   "name": "diotek.com",
+   "url": "https://diotek.com/",
+   "group": "Tools/Utilities"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Utilities"
+  },
+  {
+   "name": "persapps.com",
+   "url": "https://persapps.com/",
+   "group": "Tools/Utilities"
+  },
+  {
+   "name": "samsung.com",
+   "url": "https://samsung.com/",
+   "group": "Tools/Utilities"
+  },
+  {
+   "name": "sec.com",
+   "url": "https://sec.com/",
+   "group": "Tools/Utilities"
+  },
+  {
+   "name": "azure.com",
+   "url": "https://azure.com/",
+   "group": "Tools/Vault"
+  },
+  {
+   "name": "beemdevelopment.com",
+   "url": "https://beemdevelopment.com/",
+   "group": "Tools/Vault"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Vault"
+  },
+  {
+   "name": "samsung.com",
+   "url": "https://samsung.com/",
+   "group": "Tools/Vault"
+  },
+  {
+   "name": "x8bit.com",
+   "url": "https://x8bit.com/",
+   "group": "Tools/Vault"
+  },
+  {
+   "name": "google.com",
+   "url": "https://google.com/",
+   "group": "Tools/Wallet"
+  }
+ ]
+}

@@ -121,7 +121,10 @@ def derive(bj, read):
         else:
             raise ValueError("unknown favourites filter source %r" % kind)
         filters.append(entry)
-        for name, url, sub in sorted(rows, key=lambda r: (r[2].lower(), r[0].lower())):
+        # #1806 the Services sub-folders follow ui.services_order (declared once in the SuperApp build.json); every other sub-folder stays alphabetical
+        so = sa.get("services_order") or {}
+        rank = {so["categories"][k]["label"]: i for i, k in enumerate(k for g in so.get("groups", []) for k in g)} if kind == "phone_section" and so else {}
+        for name, url, sub in sorted(rows, key=lambda r: (rank.get(r[2], len(rank)), r[2].lower(), r[0].lower())):
             # a link is listed once per chip, except the Phone > Apps chips: every folder keeps its own sites (Search and Wallet both keep google.com), so those dedupe inside one folder only
             key = (url, sub, label) if kind == "phone_section" else url
             if key in urls:

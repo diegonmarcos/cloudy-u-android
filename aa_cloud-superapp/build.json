@@ -3342,7 +3342,7 @@
             ]
           },
           {
-            "_doc": "#1473/#1476 Weby Services & Markets (was Services): the row after Me and before AGI. News moved here from Data Apps; Shopping (ac_cloud-shopping, com.diegonmarcos.cloudshopping, a deals and listings browser over mock data) joined it. Both open their own app through ui.external_apps; the Shopping glyph ic_shopping is generated from ac_cloud-shopping/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable). Events, Mobility and Jobs are coming_soon placeholders (no app yet). Search moved in before News Shopping and KG Store after them, with a declared separator between the sub-groups (#1476). Pinned by test-agi-tiles.sh (AGI follows Services) and test-services-row.sh.",
+            "_doc": "#1473/#1476 Weby Services & Markets (was Services): the row after Me and before AGI. News moved here from Data Apps; Shopping (ac_cloud-shopping, com.diegonmarcos.cloudshopping, a deals and listings browser over mock data) joined it. Both open their own app through ui.external_apps; the Shopping glyph ic_shopping is generated from ac_cloud-shopping/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable). Events, Mobility and Jobs are coming_soon placeholders (no app yet). Search moved in before News Shopping and KG Store after them, with a declared separator between the sub-groups (#1476). Pinned by test-agi-tiles.sh (AGI follows Services) and test-services-row.sh. #1806 the row now reads Search | News Events Media Center Games | Shopping Jobs & Business Real Estate Health | Money | Hotels Transports City Mobility | KG Store, in the order declared once in ui.services_order (Games, Health, Hotels and City Mobility are new coming_soon placeholders; Mobility & Travel became Transports and its in-city and accommodation entries moved to City Mobility and Hotels). Pinned by test-services-order-1806.sh.",
             "title": "Services",
             "tiles": [
               {
@@ -3354,7 +3354,7 @@
                 "target": "extapp:cloud-search"
               },
               {
-                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services & Markets reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): #1806 Services reads Search | News Events Media Center Games | Shopping Jobs & Business Real Estate Health | Money | Hotels Transports City Mobility | KG Store; the groups come from ui.services_order (declared once) and the build re-applies that order (services-order.gradle). test-services-order-1806.sh pins it.",
                 "id": "weby-sep-1",
                 "label": "|",
                 "separator": true
@@ -3380,7 +3380,14 @@
                 "target": "extapp:cloud-media-center"
               },
               {
-                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services & Markets reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "_doc": "#1806 declared placeholder (coming_soon): Games is not an app yet (the All Apps Games folder media_games holds the phone games). Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
+                "id": "games",
+                "label": "Games",
+                "icon": "ic_device_gamepad",
+                "coming_soon": true
+              },
+              {
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): #1806 Services reads Search | News Events Media Center Games | Shopping Jobs & Business Real Estate Health | Money | Hotels Transports City Mobility | KG Store; the groups come from ui.services_order (declared once) and the build re-applies that order (services-order.gradle). test-services-order-1806.sh pins it.",
                 "id": "weby-sep-2",
                 "label": "|",
                 "separator": true
@@ -3390,13 +3397,6 @@
                 "label": "Shopping",
                 "icon": "ic_shopping",
                 "target": "extapp:cloud-shopping"
-              },
-              {
-                "_doc": "#1476 declared placeholder (coming_soon): Mobility & Travel is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
-                "id": "mobility",
-                "label": "Mobility & Travel",
-                "icon": "ic_ctl_airplane",
-                "coming_soon": true
               },
               {
                 "_doc": "#1476 declared placeholder (coming_soon): Jobs & Business is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
@@ -3413,6 +3413,19 @@
                 "coming_soon": true
               },
               {
+                "_doc": "#1806 declared placeholder (coming_soon): Health (NEW Services category) is not an app yet: service-type health apps - gyms, medical care, classes (yoga, indoor cycling). Personal trackers stay under Me > Health Trackers. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
+                "id": "svc-health",
+                "label": "Health",
+                "icon": "ic_monitor_heart",
+                "coming_soon": true
+              },
+              {
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): #1806 Services reads Search | News Events Media Center Games | Shopping Jobs & Business Real Estate Health | Money | Hotels Transports City Mobility | KG Store; the groups come from ui.services_order (declared once) and the build re-applies that order (services-order.gradle). test-services-order-1806.sh pins it.",
+                "id": "weby-sep-3",
+                "label": "|",
+                "separator": true
+              },
+              {
                 "_doc": "#1476 declared placeholder (coming_soon): Money is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
                 "id": "money",
                 "label": "Money",
@@ -3420,8 +3433,35 @@
                 "coming_soon": true
               },
               {
-                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services & Markets reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
-                "id": "weby-sep-3",
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): #1806 Services reads Search | News Events Media Center Games | Shopping Jobs & Business Real Estate Health | Money | Hotels Transports City Mobility | KG Store; the groups come from ui.services_order (declared once) and the build re-applies that order (services-order.gradle). test-services-order-1806.sh pins it.",
+                "id": "weby-sep-4",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "#1806 declared placeholder (coming_soon): Hotels is not an app yet: accommodation (hotels, hostels, rentals, camping), re-homed from Mobility & Travel. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
+                "id": "hotels",
+                "label": "Hotels",
+                "icon": "ic_hotel",
+                "coming_soon": true
+              },
+              {
+                "_doc": "#1806 Transports (was Mobility & Travel; id `mobility` and its icon kept, so a saved pin and the pinned icon stay): intercity travel - trains, long-distance buses, flights. In-city transport moved to City Mobility, accommodation to Hotels. #1476 declared placeholder (coming_soon): not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
+                "id": "mobility",
+                "label": "Transports",
+                "icon": "ic_ctl_airplane",
+                "coming_soon": true
+              },
+              {
+                "_doc": "#1806 declared placeholder (coming_soon): City Mobility (NEW) is not an app yet: in-city transport - city buses and metro, bike rental, scooters, taxis and ride hailing, re-homed from Mobility & Travel. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
+                "id": "city-mobility",
+                "label": "City Mobility",
+                "icon": "ic_city_bus",
+                "coming_soon": true
+              },
+              {
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): #1806 Services reads Search | News Events Media Center Games | Shopping Jobs & Business Real Estate Health | Money | Hotels Transports City Mobility | KG Store; the groups come from ui.services_order (declared once) and the build re-applies that order (services-order.gradle). test-services-order-1806.sh pins it.",
+                "id": "weby-sep-5",
                 "label": "|",
                 "separator": true
               },
@@ -4159,6 +4199,16 @@
               "icon_res": "ic_music"
             },
             {
+              "label": "Games",
+              "packages": [
+                {
+                  "pkg": "com.werewolfapps.online",
+                  "label": "Werewolf Online"
+                }
+              ],
+              "icon_res": "ic_device_gamepad"
+            },
+            {
               "label": "Shopping",
               "icon_pkg": "com.diegonmarcos.cloudshopping",
               "packages": [
@@ -4176,44 +4226,6 @@
                 }
               ],
               "icon_res": "ic_shopping"
-            },
-            {
-              "label": "Mobility & Travel",
-              "packages": [
-                {
-                  "pkg": "com.ubercab",
-                  "label": "Uber"
-                },
-                {
-                  "pkg": "com.booking",
-                  "label": "Booking.com"
-                },
-                {
-                  "pkg": "com.thetrainline",
-                  "label": "Trainline"
-                },
-                {
-                  "pkg": "com.ryanair.cheapflights",
-                  "label": "Ryanair"
-                },
-                {
-                  "pkg": "com.rome2rio.www.rome2rio",
-                  "label": "Rome2Rio"
-                },
-                {
-                  "pkg": "com.comuto",
-                  "label": "BlaBlaCar"
-                },
-                {
-                  "pkg": "com.trafi.whitelabel.bvg",
-                  "label": "BVG Fahrinfo"
-                },
-                {
-                  "pkg": "com.nomadmania.presentation",
-                  "label": "NomadMania"
-                }
-              ],
-              "icon_res": "ic_ctl_airplane"
             },
             {
               "label": "Jobs & Business",
@@ -4238,6 +4250,28 @@
                 }
               ],
               "icon_res": "ic_map_pin"
+            },
+            {
+              "label": "Health",
+              "packages": [
+                {
+                  "pkg": "com.urbansportsclub",
+                  "label": "Urban Sports Club"
+                },
+                {
+                  "pkg": "com.medantapatient.app",
+                  "label": "Medanta"
+                },
+                {
+                  "pkg": "com.downdogapp",
+                  "label": "Down Dog"
+                },
+                {
+                  "pkg": "com.motosumo.app",
+                  "label": "Motosumo"
+                }
+              ],
+              "icon_res": "ic_monitor_heart"
             },
             {
               "label": "Money",
@@ -4272,6 +4306,56 @@
                 }
               ],
               "icon_res": "ic_storefront"
+            },
+            {
+              "label": "Hotels",
+              "packages": [
+                {
+                  "pkg": "com.booking",
+                  "label": "Booking.com"
+                }
+              ],
+              "icon_res": "ic_hotel"
+            },
+            {
+              "label": "Transports",
+              "packages": [
+                {
+                  "pkg": "com.thetrainline",
+                  "label": "Trainline"
+                },
+                {
+                  "pkg": "com.ryanair.cheapflights",
+                  "label": "Ryanair"
+                },
+                {
+                  "pkg": "com.rome2rio.www.rome2rio",
+                  "label": "Rome2Rio"
+                },
+                {
+                  "pkg": "com.comuto",
+                  "label": "BlaBlaCar"
+                },
+                {
+                  "pkg": "com.nomadmania.presentation",
+                  "label": "NomadMania"
+                }
+              ],
+              "icon_res": "ic_ctl_airplane"
+            },
+            {
+              "label": "City Mobility",
+              "packages": [
+                {
+                  "pkg": "com.ubercab",
+                  "label": "Uber"
+                },
+                {
+                  "pkg": "com.trafi.whitelabel.bvg",
+                  "label": "BVG Fahrinfo"
+                }
+              ],
+              "icon_res": "ic_city_bus"
             }
           ]
         },
@@ -6950,7 +7034,124 @@
         "catch_all": true
       }
     ],
-    "_doc_phone_folders": "Every launchable app is routed to exactly one folder by PhoneAppClassifier: folders are walked in `order`, and the first keyword that matches wins, so a lower order beats a higher one. Keyword forms: (1) `pkg:com.foo.bar` exact packageName; (2) `pkg^com.foo.` packageName.startsWith; (3) `lbl:name` exact case-insensitive label; (4) `lbl~frag` label contains (min 3 chars); (5) a bare string matches anywhere in \"packageName label\" (min 4 chars) — sweeping and collision-prone, so it is used sparingly. Every app installed at the 2026-09-07 rebuild is pinned with an exact `pkg:` rule, which is why the folder lists read as inventories; `pkg^` rules only cover families that will keep growing (our own com.diegonmarcos.cloudlib.*, com.termux.*, VPN vendors). An app no keyword claimed then goes through the METADATA pass before any sink: `match_metadata`, declared beside `match_keywords`, routes on what Android itself publishes about the package, so a newly installed app is placed without a keyword edit. Three rule forms: `cat:game` matches ApplicationInfo.category by the platform constant name lowercased (game, audio, video, image, social, news, maps, productivity, accessibility); `intent:android.intent.category.APP_EMAIL` matches a launcher intent category the package resolves for, i.e. a role the platform grants it; `perm:android.permission.BODY_SENSORS` matches a permission declared in its manifest. Precedence inside the pass is by SIGNAL STRENGTH, not by `order` — category (the app states its own genre) beats intent (the platform grants it a role) beats permission (we infer from what it asks for), and `order` only breaks ties within one signal; otherwise a storage permission on a game would beat cat:game purely because Storage sorts earlier. Keywords always win over metadata: the keyword lists are curated and correct, metadata only keeps an un-curated app off the sink pile. Two sinks, neither with any rules: `others` (order 930, sink=true) catches everything both passes missed and is the triage queue — an app landing there means it needs a rule; `misc` (order 910) is the manual exile, give it explicit keywords to push something there on purpose. Neither carries a section prefix, so both render last under the Other subhead. The `match_keywords` lists cover THIRD-PARTY packages only: a keyword for one of our own constellation apps is derived at load time from ui.external_apps[].folder and must not be written here as well, or the identity would have two copies again and they could disagree. Manufacturer (Google / Samsung / non-Play-Store) is metadata for Smart Folders (see phone_smart_folders below) — NOT a primary grouping criterion. Order is a three-digit string, one hundred-block per section in phone_sections order, folders alphabetical by label inside the block (110, 120, ...); it drives both render order and match precedence, so a new folder takes the next free number in its block. #1756 REORGANISED: folders were re-blocked per the new sections in hundred-blocks (Primary 1xx, Communication 2xx, Data 3xx, Me 4xx, Services 5xx, AGI 6xx, Projects 7xx, Setup 8xx). Merges: svc_travel into svc_mobility (label Mobility & Travel); svc_jobs is Jobs & Business; svc_home stays Home & Housing and moved to Me, the listing apps (ImmoScout, WG-Gesucht) moved to the new svc_realestate (Services); svc_gov, svc_telecom, svc_health moved to Me. New folders: svc_realestate, svc_search, svc_kgstore (claimed by their Cloud apps through ui.external_apps[].folder) and proj_lnktree. Misfiled and uncategorised packages are pinned with exact pkg: rules (see test-quickmarks-categories-1756.sh and test/data/previous-layout-1756.json for the previous layout this was proven against).",
+    "_doc_services_order": "#1806 THE Services order, declared once. `groups` is the order and the grouping (a '|' divider between groups on the Cloud row): Search | News Events Media Center Games | Shopping Jobs & Business Real Estate Health | Money | Hotels Transports City Mobility | KG Store. `categories` names each category's entry on every surface: `cloud_tile` = the tile id in sections[cloud].tile_groups[Services], `quickmark` = the folder label in sections[phone].phone_app_groups[Services] (null = no phone quickmark), `folder` = the All Apps folder id in ui.phone_folders (its +Label). Every consumer reads it: services-order.gradle re-applies it when app/build.gradle bakes ui.sections (Cloud row, Phone quickmarks) and when libs:appstore bakes ui.phone_folders (the + folder orders are reassigned in this order), and ac_cloud-browser/tools/gen-favourites-catalog.py lists the Services favourites in it. A surface entry no category names fails the build. Health is a NEW category (gyms, medical care, classes); Transports = intercity travel (trains, buses, flights); City Mobility is NEW (city buses, bike rental, scooters); Hotels = accommodation. KG Store is not in the owner's list; it keeps its own last group so nothing is lost (rule 16). Pinned by test-services-order-1806.sh.",
+    "services_order": {
+      "groups": [
+        [
+          "search"
+        ],
+        [
+          "news",
+          "events",
+          "mediacenter",
+          "games"
+        ],
+        [
+          "shopping",
+          "jobs",
+          "real-estate",
+          "health"
+        ],
+        [
+          "money"
+        ],
+        [
+          "hotels",
+          "transports",
+          "city-mobility"
+        ],
+        [
+          "kg-store"
+        ]
+      ],
+      "categories": {
+        "search": {
+          "label": "Search",
+          "cloud_tile": "search",
+          "quickmark": "Search",
+          "folder": "svc_search"
+        },
+        "news": {
+          "label": "News",
+          "cloud_tile": "news",
+          "quickmark": "News",
+          "folder": "hlth_news"
+        },
+        "events": {
+          "label": "Events",
+          "cloud_tile": "events",
+          "quickmark": "Events",
+          "folder": "svc_events"
+        },
+        "mediacenter": {
+          "label": "Media Center",
+          "cloud_tile": "mediacenter",
+          "quickmark": "Media Center",
+          "folder": "media_video"
+        },
+        "games": {
+          "label": "Games",
+          "cloud_tile": "games",
+          "quickmark": "Games",
+          "folder": "media_games"
+        },
+        "shopping": {
+          "label": "Shopping",
+          "cloud_tile": "shopping",
+          "quickmark": "Shopping",
+          "folder": "svc_shopping"
+        },
+        "jobs": {
+          "label": "Jobs & Business",
+          "cloud_tile": "jobs",
+          "quickmark": "Jobs & Business",
+          "folder": "svc_jobs"
+        },
+        "real-estate": {
+          "label": "Real Estate",
+          "cloud_tile": "real-estate",
+          "quickmark": "Real Estate",
+          "folder": "svc_realestate"
+        },
+        "health": {
+          "label": "Health",
+          "cloud_tile": "svc-health",
+          "quickmark": "Health",
+          "folder": "svc_healthcare"
+        },
+        "money": {
+          "label": "Money",
+          "cloud_tile": "money",
+          "quickmark": "Money",
+          "folder": "svc_money"
+        },
+        "hotels": {
+          "label": "Hotels",
+          "cloud_tile": "hotels",
+          "quickmark": "Hotels",
+          "folder": "svc_hotels"
+        },
+        "transports": {
+          "label": "Transports",
+          "cloud_tile": "mobility",
+          "quickmark": "Transports",
+          "folder": "svc_transports"
+        },
+        "city-mobility": {
+          "label": "City Mobility",
+          "cloud_tile": "city-mobility",
+          "quickmark": "City Mobility",
+          "folder": "svc_mobility"
+        },
+        "kg-store": {
+          "label": "KG Store",
+          "cloud_tile": "kg-store",
+          "quickmark": null,
+          "folder": "svc_kgstore"
+        }
+      }
+    },
+    "_doc_phone_folders": "Every launchable app is routed to exactly one folder by PhoneAppClassifier: folders are walked in `order`, and the first keyword that matches wins, so a lower order beats a higher one. Keyword forms: (1) `pkg:com.foo.bar` exact packageName; (2) `pkg^com.foo.` packageName.startsWith; (3) `lbl:name` exact case-insensitive label; (4) `lbl~frag` label contains (min 3 chars); (5) a bare string matches anywhere in \"packageName label\" (min 4 chars) — sweeping and collision-prone, so it is used sparingly. Every app installed at the 2026-09-07 rebuild is pinned with an exact `pkg:` rule, which is why the folder lists read as inventories; `pkg^` rules only cover families that will keep growing (our own com.diegonmarcos.cloudlib.*, com.termux.*, VPN vendors). An app no keyword claimed then goes through the METADATA pass before any sink: `match_metadata`, declared beside `match_keywords`, routes on what Android itself publishes about the package, so a newly installed app is placed without a keyword edit. Three rule forms: `cat:game` matches ApplicationInfo.category by the platform constant name lowercased (game, audio, video, image, social, news, maps, productivity, accessibility); `intent:android.intent.category.APP_EMAIL` matches a launcher intent category the package resolves for, i.e. a role the platform grants it; `perm:android.permission.BODY_SENSORS` matches a permission declared in its manifest. Precedence inside the pass is by SIGNAL STRENGTH, not by `order` — category (the app states its own genre) beats intent (the platform grants it a role) beats permission (we infer from what it asks for), and `order` only breaks ties within one signal; otherwise a storage permission on a game would beat cat:game purely because Storage sorts earlier. Keywords always win over metadata: the keyword lists are curated and correct, metadata only keeps an un-curated app off the sink pile. Two sinks, neither with any rules: `others` (order 930, sink=true) catches everything both passes missed and is the triage queue — an app landing there means it needs a rule; `misc` (order 910) is the manual exile, give it explicit keywords to push something there on purpose. Neither carries a section prefix, so both render last under the Other subhead. The `match_keywords` lists cover THIRD-PARTY packages only: a keyword for one of our own constellation apps is derived at load time from ui.external_apps[].folder and must not be written here as well, or the identity would have two copies again and they could disagree. Manufacturer (Google / Samsung / non-Play-Store) is metadata for Smart Folders (see phone_smart_folders below) — NOT a primary grouping criterion. Order is a three-digit string, one hundred-block per section in phone_sections order, folders alphabetical by label inside the block (110, 120, ...); it drives both render order and match precedence, so a new folder takes the next free number in its block. #1756 REORGANISED: folders were re-blocked per the new sections in hundred-blocks (Primary 1xx, Communication 2xx, Data 3xx, Me 4xx, Services 5xx, AGI 6xx, Projects 7xx, Setup 8xx). Merges: svc_travel into svc_mobility (label Mobility & Travel); svc_jobs is Jobs & Business; svc_home stays Home & Housing and moved to Me, the listing apps (ImmoScout, WG-Gesucht) moved to the new svc_realestate (Services); svc_gov, svc_telecom, svc_health moved to Me. New folders: svc_realestate, svc_search, svc_kgstore (claimed by their Cloud apps through ui.external_apps[].folder) and proj_lnktree. Misfiled and uncategorised packages are pinned with exact pkg: rules (see test-quickmarks-categories-1756.sh and test/data/previous-layout-1756.json for the previous layout this was proven against). #1806: the Services (+) folders follow ui.services_order (orders 610..675 in steps of 5, reassigned from it at build time); svc_mobility is City Mobility, svc_transports and svc_hotels took the intercity and accommodation entries, svc_healthcare is the new +Health; hlth_outdoor merged into svc_health (~Health Trackers).",
     "phone_folders": [
       {
         "id": "prod_web",
@@ -7264,16 +7465,30 @@
         "match_keywords": []
       },
       {
+        "_doc": "#1806 Health Trackers: the former ~Health and ~Outdoor & Sport folders in one (hlth_outdoor merged in; this id kept): personal trackers, wearables, logs and sports/outdoor trackers. Service-type entries (gyms, medical care, classes: Urban Sports Club, Medanta, Down Dog, Motosumo, Body Bike) moved to +Health (svc_healthcare). The tracker permissions (ACTIVITY_RECOGNITION, BODY_SENSORS) came along from Outdoor & Sport.",
         "id": "svc_health",
         "order": "420",
-        "label": "~Health",
+        "label": "~Health Trackers",
         "match_keywords": [
-          "pkg:com.medantapatient.app",
-          "pkg:com.urbansportsclub",
           "pkg:com.google.android.apps.fitness",
           "pkg:com.fitbit.FitbitMobile",
           "pkg:com.sec.android.app.shealth",
-          "pkg:com.oplayer.orunningplus"
+          "pkg:com.oplayer.orunningplus",
+          "pkg:com.alltrails.alltrails",
+          "pkg:com.garmin.android.apps.connectmobile",
+          "pkg:com.garmin.android.apps.dive",
+          "pkg:com.garmin.android.apps.explore",
+          "pkg:com.garmin.connectiq",
+          "pkg:com.outdooractive.Outdooractive",
+          "pkg:com.strava",
+          "pkg:com.urbandroid.sleep",
+          "pkg:com.wikiloc.wikilocandroid",
+          "pkg:de.komoot.android",
+          "pkg:io.vicoach"
+        ],
+        "match_metadata": [
+          "perm:android.permission.ACTIVITY_RECOGNITION",
+          "perm:android.permission.BODY_SENSORS"
         ]
       },
       {
@@ -7319,31 +7534,6 @@
           "pkg:com.sensorberg.oneaccess",
           "pkg:de.nebenan.app",
           "pkg:com.shurgard.selfstorage"
-        ]
-      },
-      {
-        "id": "hlth_outdoor",
-        "order": "460",
-        "label": "~Outdoor & Sport",
-        "match_keywords": [
-          "pkg:com.alltrails.alltrails",
-          "pkg:com.downdogapp",
-          "pkg:com.garmin.android.apps.connectmobile",
-          "pkg:com.garmin.android.apps.dive",
-          "pkg:com.garmin.android.apps.explore",
-          "pkg:com.garmin.connectiq",
-          "pkg:com.outdooractive.Outdooractive",
-          "pkg:com.strava",
-          "pkg:com.urbandroid.sleep",
-          "pkg:com.wikiloc.wikilocandroid",
-          "pkg:de.komoot.android",
-          "pkg:com.bodybike.bbsmartplus",
-          "pkg:com.motosumo.app",
-          "pkg:io.vicoach"
-        ],
-        "match_metadata": [
-          "perm:android.permission.ACTIVITY_RECOGNITION",
-          "perm:android.permission.BODY_SENSORS"
         ]
       },
       {
@@ -7417,7 +7607,7 @@
       },
       {
         "id": "hlth_news",
-        "order": "620",
+        "order": "615",
         "label": "+News",
         "match_keywords": [
           "pkg:com.checkitt",
@@ -7433,23 +7623,8 @@
         ]
       },
       {
-        "id": "svc_shopping",
-        "order": "630",
-        "label": "+Shopping",
-        "match_keywords": [
-          "pkg:com.amazon.mShop.android.shopping",
-          "pkg:com.app.tgtg",
-          "pkg:com.backmarket",
-          "pkg:com.ebay.kleinanzeigen",
-          "pkg:com.wallapop",
-          "pkg:vivino.web.app",
-          "pkg:com.dhl.exp.dhlmobile",
-          "pkg:de.dhl.paket"
-        ]
-      },
-      {
         "id": "svc_events",
-        "order": "640",
+        "order": "620",
         "label": "+Events",
         "match_keywords": [
           "pkg:com.codekarussell.rausgegangen",
@@ -7462,7 +7637,7 @@
       },
       {
         "id": "media_video",
-        "order": "645",
+        "order": "625",
         "label": "+Media Center",
         "match_keywords": [
           "pkg:com.amazon.avod.thirdpartyclient",
@@ -7491,54 +7666,38 @@
         ]
       },
       {
-        "id": "svc_mobility",
-        "order": "650",
-        "label": "+Mobility & Travel",
+        "id": "media_games",
+        "order": "630",
+        "label": "+Games",
         "match_keywords": [
-          "pkg:cat.atm.tmobilitat",
-          "pkg:com.comuto",
-          "pkg:com.donkeyrepublic.bike.android",
-          "pkg:com.geomobile.tmbmobile",
-          "pkg:com.ridedott.rider",
-          "pkg:com.trafi.android.tr",
-          "pkg:com.trafi.whitelabel.bvg",
-          "pkg:com.ubercab",
-          "pkg:de.eos.uptrade.android.fahrinfo.berlin",
-          "pkg:de.hafas.android.db",
-          "pkg:ee.mtakso.client",
-          "pkg:no.ruter.reise",
-          "pkg:ride.app",
-          "pkg:taxi.android.client",
-          "pkg:app.campy",
-          "pkg:be.greifmatthias.wakaship",
-          "pkg:com.airbnb.android",
-          "pkg:com.alohacamp.release",
-          "pkg:com.booking",
-          "pkg:com.getbybus.mobile",
-          "pkg:com.goeuro.rosie",
-          "pkg:com.hostel_hop_inc.hostel_hop_mobile",
-          "pkg:com.hostelworld.app",
-          "pkg:com.kautra.android.autobusubilietai",
-          "pkg:com.mo2o.alsa",
-          "pkg:com.nomadmania.presentation",
-          "pkg:com.rome2rio.www.rome2rio",
-          "pkg:com.ryanair.cheapflights",
-          "pkg:com.skiplagged",
-          "pkg:com.thetrainline",
-          "pkg:com.wizzair.WizzAirApp",
-          "pkg:com.workaway.app",
-          "pkg:de.flixbus.app",
-          "pkg:dk.shelter.app",
-          "pkg:eu.infobus.app",
-          "pkg:fr.tramb.park4night",
-          "pkg:net.skyscanner.android.main",
-          "pkg:travel.goki.app",
-          "pkg:de.bvg.ticket"
+          "pkg:com.epicgames.portal",
+          "pkg:com.playdead.limbo.egs.full",
+          "pkg:com.samsung.android.game.gamehome",
+          "pkg:com.werewolfapps.online",
+          "pkg:org.faudroids.werewolf"
+        ],
+        "match_metadata": [
+          "cat:game"
+        ]
+      },
+      {
+        "id": "svc_shopping",
+        "order": "635",
+        "label": "+Shopping",
+        "match_keywords": [
+          "pkg:com.amazon.mShop.android.shopping",
+          "pkg:com.app.tgtg",
+          "pkg:com.backmarket",
+          "pkg:com.ebay.kleinanzeigen",
+          "pkg:com.wallapop",
+          "pkg:vivino.web.app",
+          "pkg:com.dhl.exp.dhlmobile",
+          "pkg:de.dhl.paket"
         ]
       },
       {
         "id": "svc_jobs",
-        "order": "660",
+        "order": "640",
         "label": "+Jobs & Business",
         "match_keywords": [
           "pkg:com.linkedin.android",
@@ -7548,7 +7707,7 @@
       },
       {
         "id": "svc_realestate",
-        "order": "670",
+        "order": "645",
         "label": "+Real Estate",
         "match_keywords": [
           "pkg:de.is24.android",
@@ -7556,8 +7715,21 @@
         ]
       },
       {
+        "_doc": "#1806 Health (NEW Services category): service-type health apps - gyms, medical care, classes (yoga, indoor cycling). Re-homed from ~Health and ~Outdoor & Sport; the trackers stayed in ~Health Trackers.",
+        "id": "svc_healthcare",
+        "order": "650",
+        "label": "+Health",
+        "match_keywords": [
+          "pkg:com.medantapatient.app",
+          "pkg:com.urbansportsclub",
+          "pkg:com.downdogapp",
+          "pkg:com.motosumo.app",
+          "pkg:com.bodybike.bbsmartplus"
+        ]
+      },
+      {
         "id": "svc_money",
-        "order": "680",
+        "order": "655",
         "label": "+Money",
         "match_keywords": [
           "pkg:com.binance.dev",
@@ -7578,25 +7750,73 @@
         ]
       },
       {
-        "id": "svc_kgstore",
-        "order": "690",
-        "label": "+KG Store",
-        "match_keywords": []
+        "_doc": "#1806 Hotels (NEW, re-homed from Mobility & Travel): accommodation - hotels, hostels, rentals, camping and work-stays.",
+        "id": "svc_hotels",
+        "order": "660",
+        "label": "+Hotels",
+        "match_keywords": [
+          "pkg:app.campy",
+          "pkg:com.airbnb.android",
+          "pkg:com.alohacamp.release",
+          "pkg:com.booking",
+          "pkg:com.hostel_hop_inc.hostel_hop_mobile",
+          "pkg:com.hostelworld.app",
+          "pkg:com.workaway.app",
+          "pkg:dk.shelter.app",
+          "pkg:fr.tramb.park4night",
+          "pkg:travel.goki.app"
+        ]
       },
       {
-        "id": "media_games",
-        "order": "695",
-        "label": "+Games",
+        "_doc": "#1806 Transports (NEW, re-homed from Mobility & Travel): intercity travel - trains, long-distance buses, flights, ferries, carpooling, route planners and the travel log.",
+        "id": "svc_transports",
+        "order": "665",
+        "label": "+Transports",
         "match_keywords": [
-          "pkg:com.epicgames.portal",
-          "pkg:com.playdead.limbo.egs.full",
-          "pkg:com.samsung.android.game.gamehome",
-          "pkg:com.werewolfapps.online",
-          "pkg:org.faudroids.werewolf"
-        ],
-        "match_metadata": [
-          "cat:game"
+          "pkg:be.greifmatthias.wakaship",
+          "pkg:com.comuto",
+          "pkg:com.getbybus.mobile",
+          "pkg:com.goeuro.rosie",
+          "pkg:com.kautra.android.autobusubilietai",
+          "pkg:com.mo2o.alsa",
+          "pkg:com.nomadmania.presentation",
+          "pkg:com.rome2rio.www.rome2rio",
+          "pkg:com.ryanair.cheapflights",
+          "pkg:com.skiplagged",
+          "pkg:com.thetrainline",
+          "pkg:com.wizzair.WizzAirApp",
+          "pkg:de.flixbus.app",
+          "pkg:de.hafas.android.db",
+          "pkg:eu.infobus.app",
+          "pkg:net.skyscanner.android.main"
         ]
+      },
+      {
+        "_doc": "#1806 City Mobility (was Mobility & Travel; this id kept): in-city transport - city buses and metro (BVG, TMB, Ruter, T-mobilitat), bike rental, scooters, taxis and ride hailing. Intercity travel moved to +Transports (svc_transports), accommodation to +Hotels (svc_hotels).",
+        "id": "svc_mobility",
+        "order": "670",
+        "label": "+City Mobility",
+        "match_keywords": [
+          "pkg:cat.atm.tmobilitat",
+          "pkg:com.donkeyrepublic.bike.android",
+          "pkg:com.geomobile.tmbmobile",
+          "pkg:com.ridedott.rider",
+          "pkg:com.trafi.android.tr",
+          "pkg:com.trafi.whitelabel.bvg",
+          "pkg:com.ubercab",
+          "pkg:de.eos.uptrade.android.fahrinfo.berlin",
+          "pkg:ee.mtakso.client",
+          "pkg:no.ruter.reise",
+          "pkg:ride.app",
+          "pkg:taxi.android.client",
+          "pkg:de.bvg.ticket"
+        ]
+      },
+      {
+        "id": "svc_kgstore",
+        "order": "675",
+        "label": "+KG Store",
+        "match_keywords": []
       },
       {
         "id": "prod_ai",

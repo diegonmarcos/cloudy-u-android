@@ -1,5 +1,5 @@
 {
- "_doc": "#1769 capability -> phone app per Phone Quickmarks folder: the smallest set of phone apps that together replace what the Cloud app does, one per capability. suggested=true: not a quickmark before, offered as a missing-app tile (greyed, Install).",
+ "_doc": "#1769 capability -> phone app per Phone Quickmarks folder: the smallest set of phone apps that together replace what the Cloud app does, one per capability. suggested=true: not a quickmark before, offered as a missing-app tile (greyed, Install). #1806 Mobility & Travel split into Hotels, Transports and City Mobility (rows re-homed, none dropped); Games and Health are new Services folders.",
  "folders": {
   "Drive": [
    {
@@ -445,56 +445,6 @@
     "suggested": false
    }
   ],
-  "Mobility & Travel": [
-   {
-    "capability": "ride hailing",
-    "pkg": "com.ubercab",
-    "label": "Uber",
-    "suggested": false
-   },
-   {
-    "capability": "accommodation",
-    "pkg": "com.booking",
-    "label": "Booking.com",
-    "suggested": false
-   },
-   {
-    "capability": "trains",
-    "pkg": "com.thetrainline",
-    "label": "Trainline",
-    "suggested": false
-   },
-   {
-    "capability": "flights",
-    "pkg": "com.ryanair.cheapflights",
-    "label": "Ryanair",
-    "suggested": false
-   },
-   {
-    "capability": "multimodal routes",
-    "pkg": "com.rome2rio.www.rome2rio",
-    "label": "Rome2Rio",
-    "suggested": false
-   },
-   {
-    "capability": "carpooling",
-    "pkg": "com.comuto",
-    "label": "BlaBlaCar",
-    "suggested": false
-   },
-   {
-    "capability": "local transit",
-    "pkg": "com.trafi.whitelabel.bvg",
-    "label": "BVG Fahrinfo",
-    "suggested": false
-   },
-   {
-    "capability": "travel log",
-    "pkg": "com.nomadmania.presentation",
-    "label": "NomadMania",
-    "suggested": false
-   }
-  ],
   "Jobs & Business": [
    {
     "capability": "job search",
@@ -679,6 +629,94 @@
     "pkg": "com.digibites.accubattery",
     "label": "AccuBattery",
     "suggested": false
+   }
+  ],
+  "Hotels": [
+   {
+    "capability": "accommodation",
+    "pkg": "com.booking",
+    "label": "Booking.com",
+    "suggested": false
+   }
+  ],
+  "Transports": [
+   {
+    "capability": "trains",
+    "pkg": "com.thetrainline",
+    "label": "Trainline",
+    "suggested": false
+   },
+   {
+    "capability": "flights",
+    "pkg": "com.ryanair.cheapflights",
+    "label": "Ryanair",
+    "suggested": false
+   },
+   {
+    "capability": "multimodal routes",
+    "pkg": "com.rome2rio.www.rome2rio",
+    "label": "Rome2Rio",
+    "suggested": false
+   },
+   {
+    "capability": "carpooling",
+    "pkg": "com.comuto",
+    "label": "BlaBlaCar",
+    "suggested": false
+   },
+   {
+    "capability": "travel log",
+    "pkg": "com.nomadmania.presentation",
+    "label": "NomadMania",
+    "suggested": false
+   }
+  ],
+  "City Mobility": [
+   {
+    "capability": "ride hailing",
+    "pkg": "com.ubercab",
+    "label": "Uber",
+    "suggested": false
+   },
+   {
+    "capability": "local transit",
+    "pkg": "com.trafi.whitelabel.bvg",
+    "label": "BVG Fahrinfo",
+    "suggested": false
+   }
+  ],
+  "Games": [
+   {
+    "capability": "games",
+    "pkg": "com.werewolfapps.online",
+    "label": "Werewolf Online",
+    "suggested": true
+   }
+  ],
+  "Health": [
+   {
+    "capability": "gym access",
+    "pkg": "com.urbansportsclub",
+    "label": "Urban Sports Club",
+    "suggested": true
+   },
+   {
+    "capability": "medical care",
+    "pkg": "com.medantapatient.app",
+    "label": "Medanta",
+    "suggested": true
+   },
+   {
+    "capability": "yoga classes",
+    "pkg": "com.downdogapp",
+    "label": "Down Dog",
+    "suggested": true
+   },
+   {
+    "capability": "indoor cycling classes",
+    "pkg": "com.motosumo.app",
+    "label": "Motosumo",
+    "suggested": true
    }
   ]
  }

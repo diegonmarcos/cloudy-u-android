@@ -101,6 +101,9 @@ def taxonomyFile = [
 ].find { it.exists() && new groovy.json.JsonSlurper().parse(it).ui?.phone_folders }
 if (taxonomyFile == null) throw new GradleException("libs:appstore: no build.json with ui.phone_folders under ${rootDir} or aa_cloud-superapp — refusing to bake an empty taxonomy")
 def taxonomyUi = new groovy.json.JsonSlurper().parse(taxonomyFile).ui
+// #1806 the All Apps Services folders take their order from ui.services_order (declared once in the taxonomy's build.json).
+apply from: "${projectDir}/services-order.gradle"
+applyServicesOrder(taxonomyUi)
 // #1405 the Ventoy tab: declared by the CONSUMING app's build.json `ventoy` block (Cloud Store declares it after
 // Tiny-ML); a host that declares none bakes an empty group and draws no Ventoy tab.
 def ventoyDeclFile = file("${rootDir}/build.json")
