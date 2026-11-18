@@ -58,7 +58,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-biomed | `com.diegonmarcos.hardtechbiomed` | 5 | 0 | 100% |
-| **fleet** | | **452** | **57** | **88%** |
+| **fleet** | | **454** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
