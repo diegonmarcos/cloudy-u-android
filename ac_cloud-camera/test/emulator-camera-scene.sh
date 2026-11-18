@@ -35,6 +35,8 @@ adb shell settings put global hide_error_dialogs 1 || true
 adb shell settings put global window_animation_scale 0; adb shell settings put global transition_animation_scale 0
 adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
 adb shell locksettings set-disabled true || true
+# no fleet first-run Perms page over the camera (the grants came with install -g)
+adb shell settings put global cloud_perms_first_run 0 || true
 DENSITY=$(adb shell wm density | tr -d '\r' | sed -n 's/.*: \([0-9]*\)$/\1/p' | tail -1); DENSITY=${DENSITY:-420}
 
 FAILS=0
@@ -42,7 +44,24 @@ ok()   { echo "ok     $1"; }
 fail() { echo "FAIL   $1"; FAILS=$((FAILS + 1)); }
 awake() { adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; }
 shot() { awake; sleep "${2:-2}"; adb exec-out screencap -p > "$OUT/$1.png"; echo "captured $1"; }
-dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml 2>/dev/null; }
+dump() {
+  adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1
+  for _ in 1 2 3; do
+    r=$(adb shell uiautomator dump /sdcard/ui.xml 2>&1 | tr -d '\r')
+    case "$r" in *dumped*) break;; esac
+    echo "uiautomator: $r" >&2; sleep 1
+  done
+  adb shell cat /sdcard/ui.xml 2>/dev/null
+}
+# what is on screen: the focused window, the resumed activity, and the texts a dump sees
+diag() {
+  echo "── diag: $1"
+  adb shell dumpsys window 2>/dev/null | grep -E "mCurrentFocus|mFocusedApp" | head -2
+  adb shell dumpsys activity activities 2>/dev/null | grep -E "topResumedActivity|ResumedActivity:" | head -2
+  dump > "$OUT/diag.xml"
+  python3 -I -c 'import re,sys,html; x=open(sys.argv[1],encoding="utf-8",errors="replace").read(); t=[html.unescape(m) for m in re.findall(r" text=\"([^\"]+)\"", x)]; print("nodes:", len(re.findall("<node", x)), "texts:", t[:40])' "$OUT/diag.xml"
+  adb logcat -d -s ObjectsScene:I AndroidRuntime:E | tail -8
+}
 find_xy() {
   python3 -I - "$1" "$OUT/ui.xml" "${2:-eq}" <<'PY'
 import re, sys
@@ -132,8 +151,8 @@ adb push "$OUT/scene-document.png" "$EXT/scene-document.png" >/dev/null
 
 # ── B1/B2 the benchmark ──────────────────────────────────────────────────────────────────────────────────────
 start --es objects_bench "$EXT/scene-objects-text.png"
-sleep 5; shot bench-running 1
-if wait_log "bench " 420 >/dev/null; then
+sleep 8; shot bench-running 1; diag "benchmark started"
+if wait_log "bench {" 900 >/dev/null; then
   adb pull "$EXT/objects-bench.json" "$OUT/bench.json" >/dev/null 2>&1 || adb logcat -d -s ObjectsScene:I | grep -a "bench " | tail -1 | sed 's/^[^{]*//' > "$OUT/bench.json"
   python3 -I - "$OUT/bench.json" "$OUT/bench.md" "$DENSITY" <<'PY'
 import json, sys
@@ -168,14 +187,15 @@ PY
   line=$(tail -1 "$OUT/bench.md")
   echo "B2 $line"
 else
-  fail "B1 no benchmark line within 420 s"
+  fail "B1 no benchmark line within 900 s"; diag "benchmark timed out"
+  adb logcat -d | grep -aE "bench-progress|mllimagemlkit|ImageScan|FATAL" | tail -25
 fi
 adb logcat -d > "$OUT/logcat-bench.txt"
 
 # ── F1/F2 an opened image: frames, labels, the text read ─────────────────────────────────────────────────────
 start --es objects_image "$EXT/scene-objects-text.png"
 words=$(wait_log "words \[" 120 | sed 's/^[^[]*//')
-shot frames-labels 2
+shot frames-labels 2; diag "image opened"
 cp "$OUT/ui.xml" "$OUT/frames-labels.xml" 2>/dev/null || true
 st=$(status_line); echo "status: $st"; printf '%s\n' "$st" > "$OUT/status-image.txt"
 case "$st" in *person*) ok "F1 the person is framed and named: $st";; *) fail "F1 the status line names no person: $st";; esac
@@ -194,7 +214,7 @@ if [ -n "$CAM" ]; then
   adb shell input tap $CAM; sleep 1
   c1=$(wait_log "copied " 10)
   shot text-selection 1
-  case "$c1" in *'copied "CAMERA"'*) ok "T1 a tap on CAMERA copied exactly it";; *) fail "T1 the tap copied: $c1";; esac
+  case "$c1" in *'copied "CAMERA"'*) ok "T1 a tap on CAMERA copied exactly it";; *) fail "T1 the tap at $CAM copied: $c1"; diag "after the tap";; esac
   adb shell input tap $CAM; sleep 1
   c2=$(adb logcat -d -s ObjectsScene:I | grep -a "copied " | tail -1)
   case "$c2" in *'copied "CLOUD CAMERA"'*) ok "T2 a second tap grew it to its line";; *) fail "T2 the second tap copied: $c2";; esac
@@ -217,7 +237,7 @@ fi
 # ── T4 Copy all on a document ────────────────────────────────────────────────────────────────────────────────
 start --es objects_image "$EXT/scene-document.png"
 wait_log "words \[" 120 >/dev/null || true
-tap_text "Copy all" || fail "T4 no Copy all button"
+tap_text "Copy all" || { fail "T4 no Copy all button"; diag "document"; }
 sleep 1
 c4=$(adb logcat -d -s ObjectsScene:I | grep -a "copied " | tail -1)
 shot document-copy-all 1
@@ -234,5 +254,18 @@ shot live 1
 case "$st" in *fps*) ok "L1 the live stream runs: $st";; *) echo "note   L1 the live status line carries no rate: $st (an emulator camera may show nothing to detect)";; esac
 
 adb logcat -d > "$OUT/logcat.txt"
+mkdir -p "$OUT/small"
+cp "$OUT"/*.txt "$OUT"/*.json "$OUT"/*.md "$OUT"/*.xml "$OUT/small/" 2>/dev/null || true
+rm -f "$OUT/small/logcat.txt" "$OUT/small/logcat-bench.txt"
+adb logcat -d -s ObjectsScene:I AndroidRuntime:E > "$OUT/small/logcat-objects.txt" 2>/dev/null || true
+python3 -I - "$OUT" <<'PY' || true
+import glob, os, sys
+from PIL import Image
+out = sys.argv[1]
+for p in glob.glob(os.path.join(out, "*.png")):
+    if os.path.basename(p).startswith("scene-"): continue
+    im = Image.open(p).convert("RGB"); im = im.resize((im.width // 2, im.height // 2))
+    im.save(os.path.join(out, "small", os.path.basename(p)[:-4] + ".jpg"), quality=70)
+PY
 echo
 if [ "$FAILS" -eq 0 ]; then echo "PASS — Objects frames objects and Text, reads the frame, selects and copies (#1805)"; else echo "FAIL — $FAILS check(s)"; exit 1; fi

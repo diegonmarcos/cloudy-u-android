@@ -463,12 +463,15 @@ class ObjectsController(
         status.setText(R.string.objects_bench_running)
         io.execute {
             val out = JSONObject().put("image", file.name)
+            Log.i(TAG, "bench-progress engine bench starting on ${file.name}")
             out.put("engine", runCatching { scanner.sceneBench(file, Scene.benchRequest()) }.getOrElse { JSONObject().put("error", it.message) })
+            Log.i(TAG, "bench-progress engine bench done: ${out.optJSONObject("engine")?.optString("error").orEmpty()}")
             val bmp = runCatching { decode(Uri.fromFile(file)) }.getOrNull()
             val e2e = JSONObject()
             if (bmp != null) {
                 val live = fit(bmp, sceneDecl.optInt("live_side", 480))
                 for (d in Scene.detectors().keys) {
+                    Log.i(TAG, "bench-progress end-to-end $d")
                     val ms = ArrayList<Long>()
                     var lastScene: Scene? = null
                     repeat(BENCH_WARMUP) { scanner.scene(live, Scene.request(d, objects = true, text = false, ocr = false)) }
