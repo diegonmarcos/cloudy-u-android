@@ -25,7 +25,9 @@ class FakePort(
 
     private fun rec(s: String): String { calls += s; failWith?.let { error(it) }; return "ok:$s" }
 
-    override fun config() = ConfigView("wg-mesh", "10.0.0.9/24", "PUBKEY", "10.0.0.1, 10.1.0.1", mtu, "", "", "Private only · 10.0.0.1", peers.toList())
+    /** #1797 The DNS line the engine reports (Android's servers for the tunnel), settable to replay a phone. */
+    var dnsInEffect = "Private only · 10.0.0.1"
+    override fun config() = ConfigView("wg-mesh", "10.0.0.9/24", "PUBKEY", "10.0.0.1, 10.1.0.1", mtu, "", "", dnsInEffect, peers.toList())
     override fun engineInstalled() = engine
     override fun sample(nowMs: Long) = Sample(nowMs, engine, engine && up, if (engine && up) peers.map { PeerCounters(it.publicKey, 1000, 500, hs) } else emptyList())
     override fun probeLatency(cfg: ConfigView, timeoutMs: Int, nowMs: Long) = LatencyReading(nowMs, 12, peers.associate { it.publicKey to 20 })

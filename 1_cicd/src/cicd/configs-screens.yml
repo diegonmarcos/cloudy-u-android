@@ -178,7 +178,8 @@ jobs:
           rc=0
           for c in network.MeshSupervisorTest network.MeshAlwaysOnVpnTest network.MeshDownModelTest network.MeshIntentTest \
                    network.mesh.MeshDeclTest network.mesh.MeshStoreTest network.mesh.MeshPageComposeTest network.mesh.MeshVpnControlsTest \
-                   network.mesh.MeshScreensShotTest notificationcenter.MeshDownAlertTest; do
+                   network.mesh.MeshScreensShotTest notificationcenter.MeshDownAlertTest \
+                   network.mesh.C3MeshProbeTest network.mesh.MeshStatusParityTest network.mesh.MeshStatus1797ShotTest; do
             f="$out/TEST-com.diegonmarcos.superapp.$c.xml"
             if [ ! -f "$f" ]; then echo "::error::no report for $c"; rc=1; continue; fi
             t=$(grep -o 'tests="[0-9]*"' "$f" | head -1 | tr -dc 0-9)
@@ -186,7 +187,8 @@ jobs:
             echo "$c tests=$t ${bad:-failures=0 errors=0 skipped=0}"
             { [ "${t:-0}" -ge 1 ] && [ -z "$bad" ]; } || rc=1
           done
-          for p in mesh-status-connected mesh-status-disconnected mesh-status-no-engine mesh-profile-startup mesh-profile-startup-no-channel; do
+          for p in mesh-status-connected mesh-status-disconnected mesh-status-no-engine mesh-profile-startup mesh-profile-startup-no-channel \
+                   mesh-status-1797-before mesh-status-1797-after; do
             [ -s "app/build/configs-screens/$p.png" ] || { echo "::error::no screenshot $p.png"; rc=1; }
           done
           exit $rc

@@ -148,25 +148,28 @@ object FleetDns {
     fun splitServers(csv: String): List<String> = csv.split(',', ' ', '\n', '\t').map { it.trim() }.filter { it.isNotEmpty() }
 
     /**
-     * The ordered DNS server list the VPN carries for [presetId] while the mesh
-     * is up. Mirror and the public presets lead with the fleet resolvers (#1152:
-     * mesh names are NXDOMAIN publicly); Mirror alone is otherwise empty, which
-     * leaves Android on the underlying network's resolver. Private presets put the
-     * fleet resolver first and — only when the preset allows it — the user's
-     * ordered fallbacks after it; an unavailable or non-public fallback is
-     * never used. A private preset with no fleet resolver THROWS: an empty list
-     * would silently become Mirror, and Private-only must fail loudly instead.
+     * The DNS server list the VPN carries for [presetId] while the mesh is up.
+     *
+     * #1797 While a mesh tunnel is up the VPN carries the fleet resolvers ONLY, whatever the preset.
+     * #1152 put them first and kept the preset's public servers after them, assuming Android asks in
+     * order. It does not. With Private DNS on Automatic, Android sends every lookup over DoT to the
+     * servers that pass DoT validation (1.1.1.1 and 8.8.8.8 do, the hubs do not), so the fleet
+     * resolver is never asked. With Private DNS Off it ranks servers by measured latency, and an
+     * anycast public resolver beats a hub reached through the tunnel. In both cases the public
+     * NXDOMAIN for the mesh zone is a final answer and no other server is tried, so every
+     * `*.mesh.diegonmarcos.com` name failed with "No address associated with hostname" while the
+     * tunnel and both handshakes were up. The hub resolvers forward every non-mesh name upstream
+     * (hickory's root forwarder, and unbound to it), so public names still resolve. The preset's
+     * own servers apply while the mesh is down ([meshDownServers]). Mirror with no fleet resolver
+     * stays empty (Android's own); a private preset with none still throws.
      */
     fun vpnServers(d: Decl, presetId: String?, fallbacks: List<String>, fleetResolvers: List<String>): List<String> {
-        val p = effective(d, presetId)
-        return when (p.kind) {
-            // #1152 Public DNS answers NXDOMAIN for the mesh namespace, so while the mesh is up
-            // Mirror and the public presets still carry the fleet resolvers first (routed through
-            // the tunnel; hickory forwards every other name upstream). Mesh-down is unchanged.
-            KIND_MIRROR, KIND_PUBLIC -> fleetResolvers + presetServers(d, presetId, fallbacks, fleetResolvers)
-            else -> presetServers(d, presetId, fallbacks, fleetResolvers)
-        }.distinct()
+        val own = presetServers(d, presetId, fallbacks, fleetResolvers) // validates the kind; a private preset with no fleet resolver throws
+        return (if (fleetResolvers.isNotEmpty()) fleetResolvers else own).distinct()
     }
+
+    /** #1797 The servers in [actual] that are not fleet resolvers: each one can answer a mesh name with a public NXDOMAIN. */
+    fun nonFleet(actual: List<String>, fleetResolvers: List<String>): List<String> = actual.filter { it !in fleetResolvers }
 
     /** What the preset alone names (no fleet resolver forced in): the mesh-down list's base. */
     private fun presetServers(d: Decl, presetId: String?, fallbacks: List<String>, fleetResolvers: List<String>): List<String> {
@@ -375,6 +378,10 @@ object FleetDns {
                 bad("Android's Private DNS (${d.modeLabel(android.mode)}) is in use on the VPN: every lookup goes over DoT to a " +
                     "validated public server before the fleet resolver is asked — ${p.label} is bypassed. " +
                     "The device tuning sets it to ${d.modeLabel(d.privatePresetsRequire)}.")
+            meshUp && fleet.isNotEmpty() && android.onVpn && nonFleet(actual, fleet).isNotEmpty() ->
+                bad("${p.label} is NOT in effect: with the mesh up Android also holds ${nonFleet(actual, fleet).joinToString(", ")}, " +
+                    "which answers mesh names NXDOMAIN; Android asks whichever server it prefers, so private names fail. " +
+                    "Reconnect so the tunnel carries the fleet resolvers only (${fleet.joinToString(", ")}).")
             android.onVpn && actual.toSet() == want.toSet() ->
                 Verdict(true, false, want, actual, "${p.label} is in effect: Android resolves with $now")
             needsConsent ->

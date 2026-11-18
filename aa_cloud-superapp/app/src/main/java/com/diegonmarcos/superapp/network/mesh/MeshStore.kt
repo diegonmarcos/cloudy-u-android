@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import com.diegonmarcos.superapp.network.AlwaysOnVpn
 import com.diegonmarcos.superapp.network.MeshIntent
 import com.diegonmarcos.superapp.network.WireGuardProfiles
+import com.diegonmarcos.superapp.fleetxray.mesh.C3MeshProbe
 import java.util.concurrent.Executors
 
 /** Why a control that the engine CAN honour cannot be used right now. */
@@ -30,6 +31,10 @@ class MeshStore(
     /** #1153 The persisted, process-shared journal file; null keeps the journal in memory (tests). */
     journalFile: java.io.File? = null,
     private val reachIo: MeshReach.Io = MeshReach.SystemIo,
+    /** #1797 Cloud C3's mesh probes (libs:fleetconfigs-xray); a test hands a scripted network. */
+    private val meshIo: C3MeshProbe.Io = C3MeshProbe.SystemIo,
+    /** #1797 Probe the meshes once when Status first reads an UP tunnel (the app's page; tests drive it by hand). */
+    private val autoProbe: Boolean = false,
 ) {
     // ── observable state ──
     var snapshot by mutableStateOf<MeshSnapshot?>(null)
@@ -75,6 +80,9 @@ class MeshStore(
     /** #1153 The last Reachability run, and the Logs level filter (all | warn | error). */
     var reach by mutableStateOf<List<MeshReach.Result>>(emptyList())
     var logLevel by mutableStateOf("all")
+    /** #1797 The last Cloud C3 mesh profile: the per-mesh table and every profiler step. Null = not probed yet. */
+    var meshProfile by mutableStateOf<C3MeshProbe.Report?>(null)
+    private var autoProbed = false
     private var seenStatic = false
     private var lastAo: Boolean? = null
     private var lastPath = ""
@@ -100,6 +108,10 @@ class MeshStore(
         snapshot = snap
         refreshStatic()
         logChanges(snap)
+        if (autoProbe && !autoProbed && snap.up && tab == "status" && decl.meshes.isNotEmpty()) {
+            autoProbed = true
+            perform("mesh probe") { probeNow() }
+        }
     }
 
     /** #1153 What changed in the engine's surroundings since the last poll: Always-on, the transport rung, the DNS in effect. */
@@ -240,6 +252,18 @@ class MeshStore(
             }
         },
         "reach.run" to { _, _ -> perform("reachability") { reachNow() } },
+        "mesh.probe" to { _, _ -> perform("mesh probe") { probeNow() } },
+        "profiler.copy" to { _, _ ->
+            val r = meshProfile
+            if (r == null) notice = "copy profile: no mesh profile yet - tap Probe meshes"
+            else { host.copy("mesh profile", MeshReport.redact(C3MeshProbe.text(r))); notice = "mesh profile copied (${r.steps.size} steps)" }
+        },
+        "profiler.export" to { _, _ ->
+            val r = meshProfile
+            if (r == null) notice = "export profile: no mesh profile yet - tap Probe meshes"
+            else host.exportText("cloud-mesh-profile.txt", MeshReport.redact(C3MeshProbe.text(r)))
+        },
+        "view.statusLog" to { a, _ -> view["status_log_open"] = a },
         "clipboard.all" to { _, _ -> host.copy("mesh status", reportText()); notice = "whole status copied (private keys are never included)" },
         "export.all" to { _, _ -> host.exportText("cloud-mesh-status.txt", reportText()) },
         "log.level" to { a, _ -> logLevel = if (a in setOf("all", "warn", "error")) a else "all"; journalRev++ },
@@ -294,8 +318,36 @@ class MeshStore(
         return "${r.count { it.ok }} of ${r.size} reachable"
     }
 
-    /** #1153 The whole Status page as text (Copy all / Export all). */
-    fun reportText(): String = MeshReport.build(snapshot, dnsPreset, provider, transport, probes, reach, journal.list(), clock())
+    /**
+     * #1797 Cloud C3's mesh profile: the per-mesh table (overall, inside the mesh, route, the mesh's resolver,
+     * Android's resolver, which resolver answered, hub, service, IPv6, latency) and the profiler's steps. Every
+     * failing mesh lands in the journal as a warning, so a mesh that stops resolving is in the Log too.
+     */
+    private fun probeNow(): String {
+        check(decl.meshes.isNotEmpty()) { "no meshes are declared" }
+        val s = snapshot
+        val cfg = s?.cfg ?: port.config()
+        val input = C3MeshProbe.Input(
+            tunnelUp = s?.up == true,
+            peers = s?.peers?.map { C3MeshProbe.Peer(it.cfg.name, it.cfg.publicKey, it.cfg.endpoint, it.cfg.allowedIps, it.handshakeAgeS) }
+                ?: cfg.peers.map { C3MeshProbe.Peer(it.name, it.publicKey, it.endpoint, it.allowedIps, null) },
+            resolvers = ipLiterals(cfg.dnsInEffect),
+            fleetResolvers = ipLiterals(cfg.dns),
+            interfaceMtu = cfg.mtu,
+            freshS = decl.handshakeFreshS,
+            targets = decl.meshes,
+            mtuSizes = decl.mtuProbeSizes,
+            names = decl.reachHosts,
+        )
+        val r = C3MeshProbe.run(input, meshIo, clock)
+        meshProfile = r
+        for (row in r.rows) journal.add(LogEvent(clock(), if (row.cell(C3MeshProbe.OVERALL).ok == true) "probe" else "warn",
+            "${row.target.label} (${row.target.cidr}): " + C3MeshProbe.COLUMNS.joinToString(" | ") { "$it ${row.cell(it).text}" }))
+        return "${r.rows.count { it.cell(C3MeshProbe.OVERALL).ok == true }} of ${r.rows.size} meshes pass"
+    }
+
+    /** #1153 The whole Status page as text (Copy all / Export all); #1797 adds the per-mesh table and the profile. */
+    fun reportText(): String = MeshReport.build(snapshot, dnsPreset, provider, transport, probes, reach, journal.list(), clock(), profile = meshProfile)
 
     /** The Cloud preset after the owner confirmed replacing their settings. */
     fun confirmCloudPreset() { confirmCloud = false; perform("provider") { port.applyCloudPreset() } }
@@ -311,6 +363,9 @@ class MeshStore(
     fun profileText(id: String): String? = WireGuardProfiles.byId(id)?.let { WireGuardProfiles.render(it) }
 
     companion object {
+        private val IP = Regex("(?<![\\w:.])((?:\\d{1,3}\\.){3}\\d{1,3}|[0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){2,7})(?![\\w:.])")
+        /** #1797 The IP literals in a DNS line such as "Public open: 10.0.0.1, 1.1.1.1 via VPN", in order. */
+        fun ipLiterals(s: String): List<String> = IP.findAll(s).map { it.groupValues[1] }.filter { (it.count { c -> c == ':' } >= 2 && it.any { c -> c.isLetterOrDigit() }) || C3MeshProbe.isV4(it) }.distinct().toList()
         private val ENGINE_BOUND = setOf("state.set", "state.connect", "state.disconnect", "state.reconnect", "fleetdns.preset", "alwayson.set", "lockdown.set")
         private val NEEDS_KEY = setOf("state.set", "state.connect", "state.reconnect")
         val defaultExec: (Runnable) -> Unit = Executors.newSingleThreadExecutor { r -> Thread(r, "mesh-page").apply { isDaemon = true } }::execute

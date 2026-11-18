@@ -44,9 +44,10 @@ class FleetDnsTest {
         for (p in publics) {
             assertTrue("${p.id} declares no primary", p.servers.isNotEmpty())
             assertTrue("${p.id} declares no fallback", p.fallback.isNotEmpty())
-            // #1152 the fleet resolvers lead (mesh names are NXDOMAIN publicly), then the preset's own
-            assertEquals(p.id, (FLEET + p.servers + p.fallback).distinct(), servers(p.id))
-            assertEquals(p.id, FLEET, servers(p.id).take(FLEET.size))
+            // #1797 mesh up: the fleet resolvers ONLY (Android does not ask in order, a public NXDOMAIN won)
+            assertEquals(p.id, FLEET, servers(p.id))
+            assertTrue(p.id, FleetDns.nonFleet(servers(p.id), FLEET).isEmpty())
+            // mesh down: the preset's own servers, primary then fallback
             assertEquals(p.id, (p.servers + p.fallback).distinct(), down(p.id))
         }
     }
@@ -56,22 +57,22 @@ class FleetDnsTest {
         assertEquals(FLEET, servers(m.id))
         // no fleet resolver declared: Mirror stays empty (Android's own)
         assertEquals(emptyList<String>(), servers(m.id, fleet = emptyList()))
-        // control: the same call on a public preset is not empty
-        assertTrue(servers(publics.first().id).isNotEmpty())
+        // control: the same call on a public preset with no fleet resolver is its own servers
+        assertTrue(servers(publics.first().id, fleet = emptyList()).isNotEmpty())
     }
 
     @Test fun privateOnlyIsTheFleetResolverAndNothingElse() {
         val everyFallback = publics.map { it.id }
         assertEquals(FLEET, servers(privateOnly.id, everyFallback))
-        // control: the fallback preset given the same choices DOES add them
-        assertNotEquals(FLEET, servers(privateFb.id, everyFallback))
+        // control: the fallback preset given the same choices DOES add them once the mesh is down
+        assertNotEquals(FLEET, down(privateFb.id, everyFallback))
     }
 
     @Test fun privateWithFallbacksIsFleetFirstThenTheChosenFallbackInOrder() {
         val first = publics.first()
-        val got = servers(privateFb.id, listOf(first.id))
-        assertEquals(FLEET, got.take(FLEET.size))
-        assertEquals((first.servers + first.fallback).distinct(), got.drop(FLEET.size))
+        // #1797 mesh up: the fleet resolvers only; the chosen fallbacks are the mesh-down list, in order
+        assertEquals(FLEET, servers(privateFb.id, listOf(first.id)))
+        assertEquals((first.servers + first.fallback).distinct(), down(privateFb.id, listOf(first.id)))
         // no fallback ticked = fleet only (it never invents one)
         assertEquals(FLEET, servers(privateFb.id, emptyList()))
     }
@@ -96,7 +97,7 @@ class FleetDnsTest {
 
     @Test fun meshNamesGoToTheFleetResolverWhileTheMeshIsUp() {
         assertTrue(d.meshZones.isNotEmpty())
-        val preset = servers(publics.first().id)
+        val preset = down(publics.first().id) // #1797 the preset's own list (mesh up carries the fleet resolvers only)
         for (z in d.meshZones) {
             val name = "probe.$z"
             assertEquals(name, FLEET, FleetDns.upstreamsFor(d, name, true, preset, FLEET))
@@ -242,10 +243,14 @@ class FleetDnsTest {
         assertTrue(up.why, up.ok)
         assertEquals(FLEET, up.promised)
         assertFalse(verdict(privateOnly.id, false, true, "STANDBY", android(NET, false)).ok)
-        // #1152 a public preset with the mesh up promises the fleet resolvers first, so it is only in effect carrying them
+        // #1797 a public preset with the mesh up promises the fleet resolvers only, so it is only in effect carrying them
         val pubUp = verdict(pub, true, true, "UP", android(servers(pub), true))
-        assertTrue(pubUp.why, pubUp.ok); assertEquals(servers(pub), pubUp.promised)
+        assertTrue(pubUp.why, pubUp.ok); assertEquals(FLEET, pubUp.promised)
         assertFalse("public servers alone no longer satisfy the promise", verdict(pub, true, true, "UP", android(down(pub), true)).ok)
+        // #1797 the phone's reported state: fleet resolvers FIRST but public ones beside them is NOT in effect, and says why
+        val mixed = verdict(pub, true, true, "UP", android(FLEET + down(pub), true))
+        assertFalse(mixed.why, mixed.ok)
+        assertTrue(mixed.why, "NXDOMAIN" in mixed.why && down(pub).first() in mixed.why)
     }
 
     @Test fun onlyMissingConsentAsksForConsent() {

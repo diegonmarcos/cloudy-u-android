@@ -15,7 +15,8 @@ import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.superapp.R
 
 /**
- * #877 Status: the tunnel at a glance. The rows and their ORDER are `ui.mesh_page.pages[status].rows`;
+ * #877 Status: the tunnel at a glance. The rows and their ORDER are `ui.mesh_page.pages[status].rows`
+ * (#1797: lights first, then the per-mesh table, then the full breakdown, then the profiler and the Log);
  * [StatusRow] draws one by id, and an id it has no drawing for says so on the page rather than vanishing.
  */
 @Composable
@@ -167,6 +168,13 @@ private fun StatusRow(id: String, store: MeshStore, s: MeshSnapshot) {
             KvRow(stringResource(R.string.mesh_k_cf_warp), stringResource(if (store.cf.warp) R.string.mesh_cf_registered else R.string.mesh_cf_not_registered))
             KvRow(stringResource(R.string.mesh_k_cf_one), oneStateText(store))
         }
+        // #1797 additions (MeshProbeRows.kt): the lights on top, the per-mesh table, every peer field,
+        // Cloud C3's profiler and the complete Log. Nothing above was removed or shortened.
+        "lights" -> MeshLightsRow(store, s, tag)
+        "meshes" -> MeshTableRow(store, tag)
+        "peers" -> MeshPeersRow(store, s, tag)
+        "profiler" -> MeshProfilerRow(store, tag)
+        "log" -> MeshStatusLogRow(store, tag)
         else -> MText(stringResource(R.string.mesh_row_unknown, id), Modifier.testTag(tag), size = MeshDensity.T_META, muted = true)
     }
 }

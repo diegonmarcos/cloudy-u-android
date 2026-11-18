@@ -40,7 +40,8 @@ class WireGuardFragment : KitComposeFragment() {
 
     private val store: MeshStore by lazy {
         MeshStore(AndroidMeshPort(requireContext()), MeshDecl.baked, host,
-            journalFile = com.diegonmarcos.superapp.network.mesh.MeshEventLog.file(requireContext())).also { s ->
+            journalFile = com.diegonmarcos.superapp.network.mesh.MeshEventLog.file(requireContext()),
+            autoProbe = true).also { s ->
             arguments?.getString(ARG_PAGE)?.let { a -> (s.decl.tab(a) ?: s.decl.tabOf(a))?.let { s.tab = it.id } }
         }
     }

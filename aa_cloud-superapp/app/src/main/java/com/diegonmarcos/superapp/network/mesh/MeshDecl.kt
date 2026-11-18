@@ -71,6 +71,10 @@ object MeshDecl {
         val cloudflare: com.diegonmarcos.superapp.network.CloudflareWarp.Decl = com.diegonmarcos.superapp.network.CloudflareWarp.Decl.parse(null),
         /** #1153 The private mesh hosts the Reachability test probes (DNS, TCP :443, HTTPS). */
         val reachHosts: List<String> = emptyList(),
+        /** #1797 The meshes the per-mesh table and Cloud C3's profiler probe, one row each. */
+        val meshes: List<com.diegonmarcos.superapp.fleetxray.mesh.C3MeshProbe.Target> = emptyList(),
+        /** #1797 The IP packet sizes the profiler's MTU probe sends through the tunnel. */
+        val mtuProbeSizes: List<Int> = emptyList(),
     ) {
         fun tab(id: String?): Tab? = tabs.firstOrNull { it.id == id }
         /** The tab the strip opens on: the declared default, else the first. */
@@ -99,6 +103,19 @@ object MeshDecl {
             latencyTimeoutMs = o.optInt("latency_timeout_ms", 1200).coerceAtLeast(100),
             logCap = o.optInt("log_cap", 200).coerceAtLeast(10),
             reachHosts = o.optJSONArray("reach_hosts").strings(),
+            meshes = o.optJSONArray("meshes").let { a ->
+                if (a == null) emptyList() else (0 until a.length()).map { i ->
+                    val m = a.getJSONObject(i)
+                    com.diegonmarcos.superapp.fleetxray.mesh.C3MeshProbe.Target(
+                        id = m.getString("id"), label = m.optString("label", m.getString("id")),
+                        cidr = m.optString("cidr"), cidr6 = m.optString("cidr6"),
+                        hub = m.getString("hub"), hub6 = m.optString("hub6"),
+                        resolver = m.optString("resolver", m.getString("hub")), name = m.getString("name"),
+                        serviceUrl = m.optString("service_url"),
+                    )
+                }
+            },
+            mtuProbeSizes = o.optJSONArray("mtu_probe_sizes").let { a -> if (a == null) emptyList() else (0 until a.length()).map { a.getInt(it) } },
             handshakeFreshS = hs.optLong("fresh_s", 150L),
             handshakeStaleS = hs.optLong("stale_s", 300L),
             nat64Marker = o.optString("nat64_marker"),

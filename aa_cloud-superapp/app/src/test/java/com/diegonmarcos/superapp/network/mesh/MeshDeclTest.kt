@@ -82,9 +82,15 @@ class MeshDeclTest {
     }
 
     @Test fun `#1120 Status opens with the VPN row - Connect, Disconnect, Reconnect and the Always-on switch`() {
-        // #1153 Copy all / Export all sit above the VPN row
-        assertEquals(listOf("export", "vpn"), d.page("status")!!.rows.take(2))
-        assertEquals(listOf("status_copy_all", "status_export_all", "reach_run", "vpn_connect", "vpn_disconnect", "vpn_reconnect", "vpn_always_on"), d.page("status")!!.controls.map { it.id })
+        // #1797 the lights lead, then the tunnel state and the VPN row; Copy all / Export all (#1153) sit above the breakdown
+        val rows = d.page("status")!!.rows
+        assertEquals(listOf("lights", "state", "vpn"), rows.take(3))
+        assertTrue(rows.indexOf("export") < rows.indexOf("interface"))
+        // every #1120 / #1153 control, in its order, then the #1797 additions
+        val cids = d.page("status")!!.controls.map { it.id }
+        assertEquals(listOf("status_copy_all", "status_export_all", "reach_run"), cids.take(3))
+        assertEquals(listOf("vpn_connect", "vpn_disconnect", "vpn_reconnect", "vpn_always_on"), cids.takeLast(4))
+        assertEquals(setOf("reach_meshes_run", "status_profiler_copy", "status_profiler_export", "status_log_open"), (cids - cids.take(3).toSet() - cids.takeLast(4).toSet()).toSet())
         assertEquals("alwayson.set", d.control("vpn_always_on")!!.engine)
         assertEquals("switch", d.control("vpn_always_on")!!.kind)
     }

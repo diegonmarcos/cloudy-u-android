@@ -23,6 +23,8 @@ object MeshReport {
         journal: List<LogEvent>,
         nowMs: Long,
         tz: TimeZone = TimeZone.getDefault(),
+        /** #1797 Cloud C3's mesh profile: the per-mesh table and the profiler's steps; null = not probed yet. */
+        profile: com.diegonmarcos.superapp.fleetxray.mesh.C3MeshProbe.Report? = null,
     ): String {
         val out = StringBuilder()
         fun line(t: String = "") { out.append(t).append('\n') }
@@ -50,6 +52,10 @@ object MeshReport {
             line("== Traffic")
             kv("down", MeshFormat.bytes(s.rx)); kv("up", MeshFormat.bytes(s.tx)); kv("hub latency", MeshFormat.latency(s.hubLatencyMs))
         }
+        // #1797 additions: the per-mesh table and Cloud C3's profile (every step, every detail)
+        line("== Meshes")
+        if (profile == null) line("(not probed)")
+        else line(com.diegonmarcos.superapp.fleetxray.mesh.C3MeshProbe.text(profile))
         line("== Reachability")
         if (reach.isEmpty()) line("(not run)") else line(MeshReach.text(reach))
         line("== Log (${journal.size})")

@@ -8288,6 +8288,7 @@
           "how": "only the mesh's own bootstrap names (the relay host): the pinned answer from data/mesh.json and DoH by IP (ui.mesh_transport.doh) when the system resolver fails or disagrees with the pin; every other name stays on the preset"
         }
       ],
+      "_doc_mesh_up": "#1797 While a mesh tunnel is UP the VPN carries the fleet resolvers ONLY (the profile's DNS field), whatever the preset: FleetDns.vpnServers. #1152 listed them first and the preset's public servers after them, but Android does not ask in list order (Private DNS Automatic sends every lookup over DoT to the servers that validate, i.e. 1.1.1.1 / 8.8.8.8 and never the hubs; Private DNS Off ranks servers by latency), and a public NXDOMAIN for the mesh zone is final, so every *.mesh.diegonmarcos.com name failed with the tunnel up. The hubs forward every other name upstream (hickory-dns root forwarder 1.1.1.1 / 8.8.8.8; unbound-dns64 forwards to hickory), so public names still resolve. A preset's own servers apply while the mesh is down.",
       "_doc_mesh_down": "#751 The choice also holds while Cloud Mesh is DOWN. The WireGuard engine (Cloud-Lib-Net-Wg) owns the phone's one VPN slot; when no mesh tunnel is up it carries the choice as a PEERLESS tunnel named `tunnel_name`: these addresses, the preset's DNS servers, no route, so every app's lookups go to the chosen resolver and all other traffic falls through to the underlying network exactly as it does outside a split mesh. The fleet resolver is unreachable without the mesh, so Private with fallbacks uses its fallbacks alone, and Private only keeps the fleet resolver with a route to nowhere: lookups fail, none leaks to the local network. Mirror releases the slot.",
       "mesh_down": {
         "tunnel_name": "fleet-dns",
@@ -8335,6 +8336,13 @@
       "latency_timeout_ms": 1200,
       "log_cap": 1000,
       "reach_hosts": ["authelia.mesh.diegonmarcos.com", "gitea.mesh.diegonmarcos.com", "c3-infra-api.mesh.diegonmarcos.com"],
+      "_doc_meshes": "#1797 The meshes Status > Meshes and Cloud C3's mesh profiler (libs:fleetconfigs-xray C3MeshProbe) probe, one table row each. `cidr`/`cidr6` are the mesh subnets the carrying peer's allowed IPs must cover; `hub`/`hub6` take TCP :53 (hickory-dns on gcp-proxy for wg0, unbound-dns64 on oci-analytics for wg-public, both listen on TCP and UDP 53); `resolver` must answer `name` (a mesh-namespace name, never a public TLD) with an A record; `service_url` is an HTTPS service on that mesh (blank = the hub's resolver port is the mesh's service). Mesh-2 has no service of its own: its only member on 10.1.0.0/24 is the hub.",
+      "meshes": [
+        { "id": "wg0", "label": "Mesh-1", "cidr": "10.0.0.0/24", "cidr6": "fd0c:1d00::/64", "hub": "10.0.0.1", "hub6": "fd0c:1d00::1", "resolver": "10.0.0.1", "name": "c3-infra-api.mesh.diegonmarcos.com", "service_url": "https://c3-infra-api.mesh.diegonmarcos.com/" },
+        { "id": "wg-public", "label": "Mesh-2", "cidr": "10.1.0.0/24", "cidr6": "fd0c:1d01::/64", "hub": "10.1.0.1", "hub6": "fd0c:1d01::1", "resolver": "10.1.0.1", "name": "maddy.mesh.diegonmarcos.com", "service_url": "" }
+      ],
+      "_doc_mtu_probe_sizes": "#1797 IP packet sizes (bytes) of the profiler's MTU probe: EDNS0-padded DNS queries to the first mesh's resolver through the tunnel; the largest answered size is reported beside the interface MTU.",
+      "mtu_probe_sizes": [576, 1200, 1280, 1340, 1380, 1420],
       "handshake": {
         "fresh_s": 150,
         "stale_s": 300
@@ -8380,26 +8388,37 @@
           "id": "status",
           "label": "Status",
           "icon": "ic_wg",
+          "_doc_rows": "#1797 REORGANISED, nothing removed (owner rule 16): the light indicators first (one summary line each), then the per-mesh table (one row per `meshes` entry, every cell a Cloud C3 probe), then the full breakdown in reading order (profile, interface, public key, transport, endpoints, every peer field, handshakes, traffic, latency, DNS directly followed by its reachability test (#1153), Cloudflare), then Cloud C3's mesh profiler and the complete Log. `previous_rows` is every row the page drew before; MeshStatusParityTest fails if one of them is missing from `rows`.",
+          "previous_rows": ["export", "vpn", "state", "interface", "pubkey", "endpoint", "transport", "handshake", "traffic", "latency", "dns", "reachability", "profile", "cloudflare"],
           "rows": [
-            "export",
-            "vpn",
+            "lights",
             "state",
+            "vpn",
+            "meshes",
+            "export",
+            "profile",
             "interface",
             "pubkey",
-            "endpoint",
             "transport",
+            "endpoint",
+            "peers",
             "handshake",
             "traffic",
             "latency",
             "dns",
             "reachability",
-            "profile",
-            "cloudflare"
+            "cloudflare",
+            "profiler",
+            "log"
           ],
           "controls": [
             { "id": "status_copy_all", "kind": "action", "label": "Copy all", "engine": "clipboard.all" },
             { "id": "status_export_all", "kind": "action", "label": "Export all", "engine": "export.all" },
             { "id": "reach_run", "kind": "action", "label": "Run again", "engine": "reach.run" },
+            { "id": "reach_meshes_run", "kind": "action", "label": "Probe meshes", "engine": "mesh.probe" },
+            { "id": "status_profiler_copy", "kind": "action", "label": "Copy report", "engine": "profiler.copy" },
+            { "id": "status_profiler_export", "kind": "action", "label": "Export report", "engine": "profiler.export" },
+            { "id": "status_log_open", "kind": "switch", "label": "Show the full log here", "default": "off", "engine": "view.statusLog" },
             { "id": "vpn_connect", "kind": "action", "label": "Connect", "engine": "state.connect" },
             { "id": "vpn_disconnect", "kind": "action", "label": "Disconnect", "engine": "state.disconnect" },
             { "id": "vpn_reconnect", "kind": "action", "label": "Reconnect", "engine": "state.reconnect" },
