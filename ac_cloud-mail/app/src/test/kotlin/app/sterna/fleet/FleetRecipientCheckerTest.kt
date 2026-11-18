@@ -91,13 +91,22 @@ class FleetRecipientCheckerTest {
         assertTrue(parseRecipientCheckResponse("""{"results":[{"verdict":"ok"}]}""", null).isEmpty())
     }
 
-    @Test fun `the client is bound at start, posts to the contract's path in batches of fifty, mesh first`() {
+    @Test fun `the client is bound at start, posts to the contract's path in batches of fifty, its endpoints declared once`() {
         val app = listOf("src/main/kotlin/app/sterna/SternaApplication.kt", "app/src/main/kotlin/app/sterna/SternaApplication.kt")
             .map(::File).first { it.exists() }.readText()
         assertTrue(app.contains("RecipientChecks.checker = app.sterna.fleet.FleetRecipientChecker"))
         assertEquals("/v1/recipients/check", FleetRecipientChecker.PATH)
         assertEquals(50, FleetRecipientChecker.MAX_BATCH)
-        assertTrue(FleetRecipientChecker.MESH_BASE.endsWith(".mesh.diegonmarcos.com"))
+        assertTrue(app.contains("app.sterna.fleet.FleetRecipientChecker.bind(this)"))
+        assertEquals("communication-mcp", FleetRecipientChecker.SERVICE_ID)
+        // the service is declared once, in Cloud Account's fleet_endpoints, and Mail's cleartext mesh list is generated from it
+        val root = generateSequence(File("").absoluteFile) { it.parentFile }.first { File(it, "ac_cloud-account/build.json").isFile }
+        val decl = org.json.JSONObject(File(root, "ac_cloud-account/build.json").readText()).getJSONObject("fleet_endpoints").getJSONArray("services")
+        val svc = (0 until decl.length()).map { decl.getJSONObject(it) }.single { it.getString("id") == FleetRecipientChecker.SERVICE_ID }
+        assertEquals("cloudy-apps-communication-mcp.mesh.diegonmarcos.com", svc.getString("mesh_dns"))
+        assertTrue(svc.getJSONArray("route_paths").toString().contains("/v1"))
+        val nsc = File(root, "ac_cloud-mail/app/src/main/res/xml/network_security_config.xml").readText()
+        assertTrue(nsc.contains(">cloudy-apps-communication-mcp.mesh.diegonmarcos.com<"))
     }
 
     // -- the current shape (cloudy-u-containers 07f51da): checks as a list, in the client's own terms ---------------

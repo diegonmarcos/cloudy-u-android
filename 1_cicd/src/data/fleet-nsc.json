@@ -7,7 +7,7 @@
     {"nsc": "ac_cloud-kg-store/app/src/main/res/xml/network_security_config.xml", "services": ["ai-gateway", "embeddings-api", "c3-infra-api", "cloud-me-api", "c3-public-api", "cgc-pub-mcp", "cgc-pvt-mcp"]},
     {"nsc": "ac_cloud-tools-small-llms/app/src/main/res/xml/network_security_config.xml", "services": ["ai-gateway", "embeddings-api", "ollama"]},
     { "nsc": "ac_cloud-account/app/src/main/res/xml/network_security_config.xml", "services": "*" },
-    { "nsc": "ac_cloud-mail/app/src/main/res/xml/network_security_config.xml", "services": ["jmap"] },
+    { "nsc": "ac_cloud-mail/app/src/main/res/xml/network_security_config.xml", "services": ["jmap", "communication-mcp"] },
     { "nsc": "ac_cloud-vault/app/src/main/res/xml/network_security_config.xml", "services": [] },
     { "nsc": "ac_cloud-news/app/src/main/res/xml/network_security_config.xml", "services": ["news", "git-proxy-api"] },
     { "nsc": "ac_cloud-search/app/src/main/res/xml/network_security_config.xml", "services": ["cgc-pub-mcp", "cgc-pvt-mcp"] },

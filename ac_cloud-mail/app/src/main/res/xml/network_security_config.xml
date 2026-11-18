@@ -23,6 +23,7 @@
 
     <domain-config cleartextTrafficPermitted="true">
         <!-- BEGIN fleet-mesh-cleartext (generated from ac_cloud-account/build.json::fleet_endpoints by 1_cicd/src/scripts/cloud-android-fleet-nsc.py; do not edit) -->
+        <domain includeSubdomains="false">cloudy-apps-communication-mcp.mesh.diegonmarcos.com</domain>
         <domain includeSubdomains="false">stalwart.mesh.diegonmarcos.com</domain>
         <!-- END fleet-mesh-cleartext -->
     </domain-config>

@@ -8,7 +8,10 @@ import app.sterna.ui.compose.RecipientCheckRequest
 import app.sterna.ui.compose.RecipientChecker
 import app.sterna.ui.compose.RecipientStatus
 import app.sterna.ui.compose.RecipientVerdict
+import android.content.Context
+import com.diegonmarcos.superapp.fleetendpoints.FleetEndpointsContract
 import com.diegonmarcos.superapp.fleetendpoints.FleetHttp
+import com.diegonmarcos.superapp.fleetendpoints.android.FleetEndpointsClient
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
@@ -18,16 +21,50 @@ import java.util.concurrent.TimeUnit
  * #1803 The fleet client behind [app.sterna.ui.compose.RecipientChecks.checker]: POST /v1/recipients/check on the communication
  * MCP's delivery API (cloudy-u-containers infra-api_cloudy-apps-communication-mcp/DELIVERY-API.md).
  *
- * Addressing: the WG-mesh name first (no bearer there), the public path as the fallback, both through [FleetHttp] so the fleet
- * route and bearer interceptors apply exactly as for every other fleet request. At most [MAX_BATCH] addresses per request;
- * a 429 stops the round and says when to retry; any other error is reported with the server's own code. An address the server
- * did not answer is left out, and the composer shows it as unknown.
+ * Addressing (#1093): nothing is typed in here. The service's two endpoints come from Cloud Account's published
+ * fleet_endpoints (declared once in ac_cloud-account/build.json as [SERVICE_ID]), pulled with [FleetEndpointsClient] and kept
+ * for [ENDPOINTS_TTL_MILLIS]. The mesh endpoint is asked first (no bearer there); off the mesh, and unless the service is
+ * mesh-only, the public one with the fleet bearer when Cloud Account granted it (`fleet.bearer`), on that origin alone.
+ * Cloud Mail needs the `fleet.endpoints` grant for any of this; without it every check reads unknown, and says why.
+ *
+ * At most [MAX_BATCH] addresses per request; a non-2xx answer (429 rate_limited included) stops the round with the server's
+ * own code as the note. An address the server did not answer is left out, and the composer shows it as unknown.
  */
 object FleetRecipientChecker : RecipientChecker {
-    const val MESH_BASE = "https://cloudy-apps-communication-mcp.mesh.diegonmarcos.com"
-    const val PUBLIC_BASE = "https://mcp.diegonmarcos.com/cloudy-apps-communication-mcp"
+    const val SERVICE_ID = "communication-mcp"
     const val PATH = "/v1/recipients/check"
     const val MAX_BATCH = 50
+    const val ENDPOINTS_TTL_MILLIS = 10 * 60_000L
+
+    @Volatile private var context: Context? = null
+
+    /** Called once at app start: the context the endpoint pull asks Cloud Account through. */
+    fun bind(app: Context) {
+        context = app.applicationContext
+    }
+
+    private class Endpoints(val mesh: String, val public: String, val meshOnly: Boolean, val bearer: String, val at: Long)
+
+    @Volatile private var endpoints: Endpoints? = null
+
+    private fun endpoints(): Endpoints {
+        val now = System.currentTimeMillis()
+        endpoints?.takeIf { now - it.at < ENDPOINTS_TTL_MILLIS }?.let { return it }
+        val ctx = context ?: throw IOException("recipient check not bound")
+        val pulled = when (val o = FleetEndpointsClient.pull(ctx)) {
+            is FleetEndpointsClient.Outcome.Pulled -> o.published
+            FleetEndpointsClient.Outcome.AccountMissing -> throw IOException("Cloud Account is not installed")
+            is FleetEndpointsClient.Outcome.Refused -> throw IOException("Cloud Account: ${o.why} (fleet.endpoints)")
+        }
+        val e = pulled.entries.firstOrNull { it.service == SERVICE_ID }
+            ?: throw IOException("Cloud Account declares no $SERVICE_ID endpoint")
+        return Endpoints(
+            mesh = e.mesh, public = e.public,
+            meshOnly = e.policy == FleetEndpointsContract.POLICY_MESH_ONLY,
+            bearer = if (e.auth == FleetEndpointsContract.AUTH_BEARER) pulled.bearer else "",
+            at = now,
+        ).also { endpoints = it }
+    }
 
     private val meshClient by lazy {
         FleetHttp.shared.newBuilder().connectTimeout(3, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).build()
@@ -37,26 +74,31 @@ object FleetRecipientChecker : RecipientChecker {
     }
 
     override suspend fun check(request: RecipientCheckRequest): Map<String, RecipientStatus> {
+        val ends = endpoints()
         val out = LinkedHashMap<String, RecipientStatus>()
         for (batch in request.addresses.chunked(MAX_BATCH)) {
             val body = JSONObject().put("addresses", JSONArray(batch))
                 .also { o -> request.messageSizeBytes?.let { o.put("message_size_bytes", it) } }
                 .toString()
-            val (code, text) = post(body)
+            val (code, text) = post(ends, body)
             if (code !in 200..299) throw IOException(recipientCheckError(code, text))
             out += parseRecipientCheckResponse(text, request.messageSizeBytes)
         }
         return out
     }
 
-    /** The mesh first; on a transport failure there (off the mesh), the public path. */
-    private fun post(body: String): Pair<Int, String> {
+    /** The mesh first; on a transport failure there (off the mesh), the public path unless the service is mesh-only. */
+    private fun post(ends: Endpoints, body: String): Pair<Int, String> {
         val headers = mapOf("Accept" to "application/json")
-        return try {
-            FleetHttp.call(meshClient, "POST", MESH_BASE + PATH, headers, body)
+        val meshFailure: IOException = try {
+            if (ends.mesh.isNotEmpty()) return FleetHttp.call(meshClient, "POST", ends.mesh + PATH, headers, body)
+            IOException("no mesh endpoint")
         } catch (mesh: IOException) {
-            FleetHttp.call(publicClient, "POST", PUBLIC_BASE + PATH, headers, body)
+            mesh
         }
+        if (ends.meshOnly || ends.public.isEmpty()) throw IOException("mesh only, not reached: ${meshFailure.message ?: meshFailure.javaClass.simpleName}")
+        val auth = if (ends.bearer.isNotEmpty()) mapOf("Authorization" to "Bearer ${ends.bearer}") else emptyMap()
+        return FleetHttp.call(publicClient, "POST", ends.public + PATH, headers + auth, body)
     }
 }
 

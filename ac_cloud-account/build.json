@@ -509,6 +509,21 @@
           "policy": "mesh_only",
           "health": "/health"
         },
+        {
+          "id": "communication-mcp",
+          "kind": "mcp",
+          "source": "cloud-u-containers/infra-api_cloudy-apps-communication-mcp/build.json",
+          "_doc": "#1803 The communication MCP's delivery API (DELIVERY-API.md): Cloud Mail's compose recipient check posts /v1/recipients/check here. containers.app port 3103, mesh dns cloudy-apps-communication-mcp.mesh.diegonmarcos.com; the hub route mcp.diegonmarcos.com/cloudy-apps-communication-mcp. Mesh first, then the public route with the fleet bearer.",
+          "mesh_dns": "cloudy-apps-communication-mcp.mesh.diegonmarcos.com",
+          "mesh_port": 3103,
+          "mesh_scheme": "http",
+          "public_domain": "mcp.diegonmarcos.com",
+          "public_path": "/cloudy-apps-communication-mcp",
+          "public_scheme": "https",
+          "route_paths": ["/v1"],
+          "policy": "mesh_first",
+          "health": "/health"
+        },
       {
         "id": "languagetool",
         "kind": "tools",

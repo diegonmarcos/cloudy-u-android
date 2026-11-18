@@ -275,7 +275,8 @@ class SternaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
-        // #1803 the compose recipient check answers from the fleet delivery API (mesh first, public fallback).
+        // #1803 the compose recipient check answers from the fleet delivery API; its endpoints come from Cloud Account.
+        app.sterna.fleet.FleetRecipientChecker.bind(this)
         app.sterna.ui.compose.RecipientChecks.checker = app.sterna.fleet.FleetRecipientChecker
         // The vault's mail section, when the fleet config contract left it in the account prefs
         // (the migration / Fleet Setup restarted us for it): accounts in, keys out, once.

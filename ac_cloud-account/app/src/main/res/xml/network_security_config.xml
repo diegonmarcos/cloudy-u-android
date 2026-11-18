@@ -38,6 +38,7 @@
         <domain includeSubdomains="false">cloud-cgc-pub-mcp.mesh.diegonmarcos.com</domain>
         <domain includeSubdomains="false">cloud-cgc-pvt-mcp.mesh.diegonmarcos.com</domain>
         <domain includeSubdomains="false">cloud-me-api.mesh.diegonmarcos.com</domain>
+        <domain includeSubdomains="false">cloudy-apps-communication-mcp.mesh.diegonmarcos.com</domain>
         <domain includeSubdomains="false">embeddings-api.mesh.diegonmarcos.com</domain>
         <domain includeSubdomains="false">git-proxy-api.mesh.diegonmarcos.com</domain>
         <domain includeSubdomains="false">gitea.mesh.diegonmarcos.com</domain>
