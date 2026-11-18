@@ -1176,7 +1176,10 @@ class Walk:
         opener = find(nodes, ITEM + sid) if on_bar else find(nodes, CONFIGS)
         if opener is None:
             self.results.append({"section": sid, "page": "-", "label": sec.get("label", sid), "status": "FAIL", "checks": {},
-                                 "failures": ["P4 no %s on screen to open the section" % ((ITEM + sid) if on_bar else CONFIGS)], "seconds": 0})
+                                 "failures": ["P4 no %s on screen to open the section (items on screen: %s; foreground: %s)" % (
+                                     (ITEM + sid) if on_bar else CONFIGS,
+                                     ", ".join(sorted(n.rid.split("/")[-1] for n in nodes if n.rid.startswith(ITEM))) or "none",
+                                     "yes" if self.foreground() else "no")], "seconds": 0})
             self.evidence("%s_no_opener" % sid)
             return
         tap(opener)
