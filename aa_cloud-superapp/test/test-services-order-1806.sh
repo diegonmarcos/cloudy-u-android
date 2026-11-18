@@ -99,7 +99,7 @@ def run(bj, ds, fav):
     check(all(f['id'] in dsid or f['id'] == 'hlth_outdoor' for f in PREV['launcher_folders_dataset']), 'every previous Configs dataset folder survives (hlth_outdoor merged)')
     furl = {i['url'] for i in fav['items']}
     gone = [i['url'] for i in PREV['favourites'] if i['url'] not in furl]
-    check(not gone, 'every previous Services/Tools favourite is still listed (%d)%s' % (len(PREV['favourites']), ' GONE %s' % gone[:5] if gone else ''))
+    check(not gone, 'every previous Services and Health / Outdoor & Sport favourite is still listed (%d)%s' % (len(PREV['favourites']), ' GONE %s' % gone[:5] if gone else ''))
     mt = {k for f in PREV['phone_folders'] if f['id'] == 'svc_mobility' for k in f['match_keywords']}
     home = {k: nowkw[k][0] for k in mt if k in nowkw}
     check(set(home.values()) == {'svc_hotels', 'svc_transports', 'svc_mobility'} and len(home) == len(mt), 'every Mobility & Travel entry is re-homed to Hotels, Transports or City Mobility')
