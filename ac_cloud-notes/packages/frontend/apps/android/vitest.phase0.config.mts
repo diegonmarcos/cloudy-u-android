@@ -4,7 +4,6 @@
 // whole Cloud Notes workspace, which keeps this check in seconds instead of minutes.
 //   nbstore/index.spec.ts          Phase 0 storage adapter round trip
 //   native-nav-routes.spec.ts      the nav routes + the top bar's drawer list
-//   boards/boards.spec.ts          Phase 3: Canvas > Boards lists the edgeless docs
 //   vault-import.spec.ts           Phase 1: the folder walk behind "Import vault"
 //   graph/__tests__/graph.spec.ts  Phase 4: graph builder, local BFS, force layout
 import { fileURLToPath } from 'node:url';
@@ -18,7 +17,6 @@ export default defineConfig({
     include: [
       'packages/frontend/apps/android/src/plugins/nbstore/index.spec.ts',
       'packages/frontend/core/src/mobile/components/native-nav-routes.spec.ts',
-      'packages/frontend/core/src/mobile/views/boards/boards.spec.ts',
       'packages/frontend/apps/android/src/vault-import.spec.ts',
       'blocksuite/cloud-notes/graph/src/__tests__/graph.spec.ts',
     ],

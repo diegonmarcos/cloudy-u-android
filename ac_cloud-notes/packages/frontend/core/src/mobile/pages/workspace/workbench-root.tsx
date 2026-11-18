@@ -4,15 +4,12 @@ import {
 } from '@cloud-notes/core/modules/workbench';
 import { ViewRoot } from '@cloud-notes/core/modules/workbench/view/view-root';
 import { WorkspaceService } from '@cloud-notes/core/modules/workspace';
-import { FrameworkScope, useLiveData, useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import {
   type PropsWithChildren,
   useEffect,
-  useLayoutEffect,
   useRef,
-  useState,
 } from 'react';
-import * as React from 'react';
 import { type RouteObject, useLocation } from 'react-router-dom';
 
 import {
@@ -20,11 +17,6 @@ import {
   MobileBackCoordinator,
   type MobileDestinationKind,
 } from '../../modules/back-coordinator';
-import { Component as Home } from './home';
-
-const Activity = Reflect.get(React, 'Activity') as React.ComponentType<
-  PropsWithChildren<{ mode: 'visible' | 'hidden' }>
->;
 
 declare global {
   interface WindowEventMap {
@@ -32,17 +24,7 @@ declare global {
   }
 }
 
-const destinationKind = (pathname: string): MobileDestinationKind => {
-  if (pathname === '/home') return 'home';
-  if (pathname === '/all') return 'all-docs';
-  if (pathname === '/collection') return 'all-collections';
-  if (pathname === '/tag') return 'all-tags';
-  if (pathname === '/journals') return 'journal';
-  if (pathname === '/search') return 'search';
-  if (pathname.startsWith('/collection/')) return 'collection';
-  if (pathname.startsWith('/tag/')) return 'tag';
-  return 'doc';
-};
+const destinationKind = (_pathname: string): MobileDestinationKind => 'home';
 
 export const MobileWorkbenchRoot = ({ routes }: { routes: RouteObject[] }) => {
   const workbench = useService(WorkbenchService).workbench;
@@ -52,11 +34,6 @@ export const MobileWorkbenchRoot = ({ routes }: { routes: RouteObject[] }) => {
   const view = views[0];
   const viewLocation = useLiveData(view.location$);
   const backCoordinator = useService(MobileBackCoordinator);
-  const isHome = viewLocation.pathname === '/home';
-  const [homeCache, setHomeCache] = useState({ workspaceId, cached: isHome });
-  const homeCached =
-    homeCache.workspaceId === workspaceId ? homeCache.cached : isHome;
-  const homeRootRef = useRef<HTMLDivElement>(null);
   const previousLocation = useRef({
     index: view.history.index,
     location: `${viewLocation.pathname}${viewLocation.search}${viewLocation.hash}`,
@@ -111,52 +88,9 @@ export const MobileWorkbenchRoot = ({ routes }: { routes: RouteObject[] }) => {
             return true;
           }
         : undefined,
-      up: () => view.replace('/home'),
+      up: () => view.replace('/vault'),
     });
   }, [backCoordinator, view, viewLocation, workspaceId]);
 
-  useEffect(() => {
-    setHomeCache(current => {
-      if (current.workspaceId !== workspaceId) {
-        return { workspaceId, cached: isHome };
-      }
-      return isHome && !current.cached
-        ? { workspaceId, cached: true }
-        : current;
-    });
-  }, [isHome, workspaceId]);
-
-  useLayoutEffect(() => {
-    if (
-      !isHome &&
-      document.activeElement instanceof HTMLElement &&
-      homeRootRef.current?.contains(document.activeElement)
-    ) {
-      document.activeElement.blur();
-    }
-  }, [isHome]);
-
-  useEffect(() => {
-    const evict = () => {
-      if (!isHome) setHomeCache({ workspaceId, cached: false });
-    };
-    window.addEventListener('cloud-notes:memory-pressure', evict);
-    return () => window.removeEventListener('cloud-notes:memory-pressure', evict);
-  }, [isHome, workspaceId]);
-
-  const root = (
-    <>
-      {(homeCached || isHome) && (
-        <Activity key={workspaceId} mode={isHome ? 'visible' : 'hidden'}>
-          <FrameworkScope scope={view.scope}>
-            <div ref={homeRootRef}>
-              <Home />
-            </div>
-          </FrameworkScope>
-        </Activity>
-      )}
-      {!isHome && <ViewRoot routes={routes} view={view} />}
-    </>
-  );
-  return root;
+  return <ViewRoot routes={routes} view={view} />;
 };

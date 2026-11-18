@@ -1,6 +1,5 @@
 import { WorkbenchService } from '@cloud-notes/core/modules/workbench';
 import { useLiveData, useService } from '@toeverything/infra';
-import { cssVarV2 } from '@cloud-notes/theme/v2';
 import {
   createContext,
   type PropsWithChildren,
@@ -11,9 +10,7 @@ import {
 } from 'react';
 
 import { MobileBackCoordinator } from '../modules/back-coordinator';
-import { AppTabs } from './app-tabs';
 import { NativeNavBridge } from './native-nav-bridge';
-import { hasNativeNav } from './native-nav-routes';
 import { MobileNavigationMenuHost } from './navigation/menu-host';
 
 type TabsMetadata = {
@@ -54,13 +51,6 @@ export const MobileShellHost = ({ children }: PropsWithChildren) => {
     <TabsMetadataContext.Provider value={value}>
       <MobileNavigationMenuHost>{children}</MobileNavigationMenuHost>
       <NativeNavBridge />
-      <AppTabs
-        background={
-          metadata?.background ?? cssVarV2('layer/background/mobile/primary')
-        }
-        // the Compose shell's island replaces these tabs (cloud-notes-hybrid)
-        hidden={metadata?.hidden || hasNativeNav()}
-      />
     </TabsMetadataContext.Provider>
   );
 };

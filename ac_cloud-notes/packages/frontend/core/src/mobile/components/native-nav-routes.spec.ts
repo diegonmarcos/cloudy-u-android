@@ -12,11 +12,11 @@ describe('native nav routes', () => {
   test('a section tap resolves to its first page', () => {
     expect(resolveNativeNav({ section: 'home' })).toEqual({
       kind: 'route',
-      to: '/home',
+      to: '/vault',
     });
     expect(resolveNativeNav({ section: 'search', page: null })).toEqual({
       kind: 'route',
-      to: '/search',
+      to: '/vault',
     });
   });
 
@@ -29,11 +29,11 @@ describe('native nav routes', () => {
   test('A4.4: Graph global/local are routes, Ask is a native page, nothing toasts', () => {
     expect(NATIVE_NAV_TARGETS['graph/global']).toEqual({
       kind: 'route',
-      to: '/graph',
+      to: '/vault',
     });
     expect(NATIVE_NAV_TARGETS['graph/local']).toEqual({
       kind: 'route',
-      to: '/graph/local',
+      to: '/vault',
     });
     expect(NATIVE_NAV_TARGETS['search/ask'].kind).toBe('native');
     const kinds = new Set(Object.values(NATIVE_NAV_TARGETS).map(t => t.kind));

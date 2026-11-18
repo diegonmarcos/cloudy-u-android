@@ -3,7 +3,7 @@
 import { buildGraph, filterGraph, forceLayout, type GraphNode, localGraph } from '@blocksuite/cloud-notes-graph';
 import { type CSSProperties, useMemo, useState } from 'react';
 
-import { GraphCanvas } from '../views/graph/graph-canvas';
+import { GraphCanvas } from './graph-canvas';
 import { stem } from './file-types';
 import type { VaultIndex } from './vault-index';
 

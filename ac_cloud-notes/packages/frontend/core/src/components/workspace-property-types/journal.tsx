@@ -5,7 +5,6 @@ import {
   MenuItem,
   PropertyValue,
 } from '@cloud-notes/component';
-import { MobileJournalConflictList } from '@cloud-notes/core/mobile/pages/workspace/detail/menu/journal-conflicts';
 import type { FilterParams } from '@cloud-notes/core/modules/collection-rules';
 import { DocService } from '@cloud-notes/core/modules/doc';
 import { JournalService } from '@cloud-notes/core/modules/journal';
@@ -156,17 +155,7 @@ export const JournalValue = ({ readonly }: PropertyValueProps) => {
         ) : null}
 
         {checked && conflict ? (
-          BUILD_CONFIG.isMobileEdition ? (
-            <Menu items={<MobileJournalConflictList date={selectedDate} />}>
-              <div
-                data-testid="conflict-tag"
-                className={styles.duplicateTag}
-                onClick={stopPropagation}
-              >
-                {t['com.cloud-notes.page-properties.property.journal-duplicated']()}
-              </div>
-            </Menu>
-          ) : (
+          (
             <div
               data-testid="conflict-tag"
               className={styles.duplicateTag}

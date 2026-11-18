@@ -53,20 +53,21 @@ export type NativeNavTarget =
   | { kind: 'native'; what: string };
 
 /** key = `<section>/<page>`; every build.json::ui page id has exactly one row. */
+// #1717: the old workspace pages are deleted; every route row lands in the vault (the ids stay until the Compose bar is replaced).
 export const NATIVE_NAV_TARGETS: Record<string, NativeNavTarget> = {
-  'home/recent': { kind: 'route', to: '/home' },
-  'home/daily': { kind: 'route', to: '/journals' },
-  'pages/all': { kind: 'route', to: '/all' },
-  'pages/tags': { kind: 'route', to: '/tag' },
+  'home/recent': { kind: 'route', to: '/vault' },
+  'home/daily': { kind: 'route', to: '/vault' },
+  'pages/all': { kind: 'route', to: '/vault' },
+  'pages/tags': { kind: 'route', to: '/vault' },
   'pages/vault': { kind: 'route', to: '/vault' },
-  'pages/collections': { kind: 'route', to: '/collection' },
+  'pages/collections': { kind: 'route', to: '/vault' },
   'pages/new': { kind: 'action', action: 'new-page' },
-  'canvas/boards': { kind: 'route', to: '/boards' },
+  'canvas/boards': { kind: 'route', to: '/vault' },
   'canvas/new': { kind: 'action', action: 'new-board' },
-  'graph/global': { kind: 'route', to: '/graph' },
-  'graph/local': { kind: 'route', to: '/graph/local' },
-  'graph/tags': { kind: 'route', to: '/tag' },
-  'search/search': { kind: 'route', to: '/search' },
+  'graph/global': { kind: 'route', to: '/vault' },
+  'graph/local': { kind: 'route', to: '/vault' },
+  'graph/tags': { kind: 'route', to: '/vault' },
+  'search/search': { kind: 'route', to: '/vault' },
   'search/ask': { kind: 'native', what: 'AI chat (libs:ai)' },
 };
 

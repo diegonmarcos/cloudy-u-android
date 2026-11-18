@@ -18,9 +18,6 @@ globalStyle('body', {
   minHeight: '100dvh',
   overflowY: 'unset',
 });
-globalStyle('body:has(>#app-tabs):not(:has(cloud-notes-keyboard-toolbar))', {
-  paddingBottom: globalVars.appTabSafeArea,
-});
 globalStyle('body:has(cloud-notes-keyboard-toolbar)', {
   paddingBottom: `calc(${globalVars.appTabSafeArea} + 46px)`,
 });
@@ -52,9 +49,6 @@ globalStyle('cloud-notes-keyboard-toolbar .keyboard-toolbar icon-button svg', {
 });
 globalStyle('cloud-notes-keyboard-toolbar .keyboard-toolbar .divider', {
   borderColor: 'var(--background-modifier-border)',
-});
-globalStyle('body:has(>#app-tabs) edgeless-toolbar-widget', {
-  bottom: globalVars.appTabSafeArea,
 });
 
 globalStyle('html', {
