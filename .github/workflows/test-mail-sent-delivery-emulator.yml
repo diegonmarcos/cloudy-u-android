@@ -96,7 +96,15 @@ jobs:
           done
           [ "$ok" = 1 ] || { echo "::error::no Sent folder tab"; exit 1; }
           sleep 8
+          shot 02a-sent-collapsed; dump 02a-sent-collapsed
+          # The list groups the seven seeded mails into one conversation ("Conversation, 7 messages"): unfold it, so every
+          # scene shows its own row and ticker (the unfolded children are the per-child ticker path).
+          tap "Conversation," sub && sleep 4 || echo "no conversation pill to unfold" >> walk-out/summary.txt
           shot 02-sent-list; dump 02-sent-list
+          adb shell input swipe 540 1600 540 900 400; sleep 2
+          shot 02b-sent-list-scrolled; dump 02b-sent-list-scrolled
+          cat walk-out/02b-sent-list-scrolled.xml >> walk-out/02-sent-list.xml
+          adb shell input swipe 540 900 540 1600 400; sleep 2
           for s in "Delivered to every recipient" "Accepted by the relay" "Deferred by the recipient" "Bounced: no such user" "Sender not authorised" "Refused at submission" "No server record yet"; do has "$s" 02-sent-list; done
           for v in "Sent: done" "Sent: delayed" "Sent: failed" "Valid sender: failed" "Server received: failed" "Server received: pending" "Sent: not reached"; do has "$v" 02-sent-list; done
           # The bounced row's X: its ticker opens the stage detail with the reason and the recipient's outcome.
