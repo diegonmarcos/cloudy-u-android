@@ -54,7 +54,7 @@ def shortSha  = (System.getenv('GITHUB_SHA')
                     }.standardOutput.asText.get().trim())
                 .take(8)
 def buildTimestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss 'UTC'").with {
-    setTimeZone(java.util.TimeZone.getTimeZone('UTC')); format(new java.util.Date())
+    setTimeZone(java.util.TimeZone.getTimeZone('UTC')); format(java.util.Date.from(fleetSourceTime.toInstant(java.time.ZoneOffset.UTC)))
 }
 
 // Every navigation surface in the app is baked from build.json::ui here and
