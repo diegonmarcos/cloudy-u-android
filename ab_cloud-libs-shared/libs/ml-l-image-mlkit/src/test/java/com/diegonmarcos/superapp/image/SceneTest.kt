@@ -191,7 +191,8 @@ class SceneTest {
     }
 
     @Test fun `the benchmark times every detector and the OCR`() {
-        val o = scene.bench(golden("grace_hopper.jpg"), JSONObject(request().toString()).put("runs", 4).put("warmup", 1).put("ocr_runs", 2))
+        // Scene.benchRequest's shape: the OCR is timed too (ocr: true)
+        val o = scene.bench(golden("grace_hopper.jpg"), request(ocr = true).put("runs", 4).put("warmup", 1).put("ocr_runs", 2))
         assertTrue(o.toString(), o.getBoolean("ok"))
         for (d in SceneDetector.DETECTORS) {
             val r = o.getJSONObject("detectors").getJSONObject(d)
@@ -203,6 +204,10 @@ class SceneTest {
         assertEquals("1 warm-up + 4 timed runs", 5, fake.calls.count { it.startsWith("objects efficientdet") })
         val ocr = o.getJSONObject("ocr")
         assertEquals(2, ocr.getInt("runs")); assertEquals(1, ocr.getInt("blocks")); assertEquals(2, ocr.getInt("words")); assertEquals(1, ocr.getInt("text_regions"))
+        // a bench that asks for no OCR times none
+        val noOcr = scene.bench(golden("grace_hopper.jpg"), request(ocr = false).put("runs", 1).put("warmup", 0))
+        assertTrue(noOcr.getBoolean("ok"))
+        assertFalse(noOcr.has("ocr"))
     }
 
     @Test fun `refusals are answers - an unknown detector, an undecodable image, broken JSON`() {
