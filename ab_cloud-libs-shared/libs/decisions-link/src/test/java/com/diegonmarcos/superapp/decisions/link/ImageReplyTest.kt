@@ -59,6 +59,10 @@ class ImageReplyTest {
         val decl = JSONObject(File("engine-client.json").readText()).getJSONObject("engines").getJSONObject("decisions")
         assertEquals(1, decl.getInt("min_contract"))
         assertEquals(2, decl.getJSONObject("method_contracts").getInt("image"))
+        // #1801 relay and keys arrived in contract 3; relay is appended after image
+        assertEquals(3, decl.getJSONObject("method_contracts").getInt("relay"))
+        assertEquals(3, decl.getJSONObject("method_contracts").getInt("keys"))
+        assertTrue(aidl.indexOf("String image(") < aidl.indexOf("String relay("))
         val client = File("src/main/java/com/diegonmarcos/superapp/decisions/link/DecisionsLink.kt").readText()
         assertTrue(client.contains("link.check(ctx, BuildConfig.DECISIONS_IMAGE_CONTRACT)"))
     }
@@ -67,7 +71,8 @@ class ImageReplyTest {
         // #1799 the emulator proof: createTempFile("in", ...) threw "Prefix string too short" before the engine was asked
         val client = File("src/main/java/com/diegonmarcos/superapp/decisions/link/DecisionsLink.kt").readText()
         val prefixes = Regex("""File\.createTempFile\("([^"]*)"""").findAll(client).map { it.groupValues[1] }.toList()
-        assertEquals(2, prefixes.size)
+        // #1799 image's two files and #1801 relay's two files
+        assertEquals(4, prefixes.size)
         val dir = java.nio.file.Files.createTempDirectory("image-test").toFile()
         try {
             for (p in prefixes) {

@@ -103,8 +103,8 @@ object DecisionsLink {
         val ctx = context.applicationContext
         val link = Conn()
         val dir = File(ctx.cacheDir, "decisions-relay").apply { mkdirs() }
-        val src = File.createTempFile("in", ".json", dir)
-        val out = File.createTempFile("out", ".json", dir)
+        val src = File.createTempFile("relay-in", ".json", dir)
+        val out = File.createTempFile("relay-out", ".json", dir)
         return try {
             src.writeText(body)
             val why = link.check(ctx, BuildConfig.DECISIONS_RELAY_CONTRACT)
