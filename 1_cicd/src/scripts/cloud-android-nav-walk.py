@@ -68,6 +68,10 @@ def shell(cmd, timeout=90):
 
 
 PAGE_BUDGET = 240  # seconds per page in a section's budget
+# #1760 the swipes one dropdown read may take before its end: the list ends when nothing moves (dropdown_sig), this only bounds a list that
+# never settles. Cloud C3's dropdown carries its whole drawer tree (every section and page, up to ACTIONS_MAX_HEIGHT = 2000 dp) above the
+# #1758 Sections group of a page below depth 0, about 12 swipes of 500 px: the former bound of 10 stopped above Configs and called it missing.
+DROPDOWN_SWIPES = 40
 SECTION_BUDGET = 900  # seconds one section may take; a wedged emulator must fail the section, not hold the job to its 120 minute limit
 
 
@@ -467,7 +471,7 @@ class Walk:
         nodes = dump()
         if nodes is None:
             return False
-        for _ in range(10):
+        for _ in range(DROPDOWN_SWIPES):
             e = find(nodes, ENTRY + pid)
             if e is not None:
                 tap(e)
@@ -536,7 +540,7 @@ class Walk:
         """Every entry id of the open dropdown, scrolling it to its end."""
         nodes = dump() or []
         seen = set()
-        for _ in range(10):
+        for _ in range(DROPDOWN_SWIPES):
             seen |= {n.rid[len(ENTRY):] for n in findall(nodes, ENTRY)}
             if not self.scroll_dropdown(nodes):
                 break
@@ -574,11 +578,13 @@ class Walk:
                              "failures": fails, "seconds": int(time.time() - t0)})
 
     def back_if_dropdown(self):
-        """Close the title dropdown with Back only while it is open: a Back on the page itself leaves the app."""
+        """Close the title dropdown with Back only while it is open: a Back on the page itself leaves the app.
+        #1760 the close is confirmed (close_dropdown polls for the popup to be gone, one more Back only while it still shows): Cloud Store's
+        list stayed open after the section-list check and hid the bottom bar from the next two sections (P4 no bottomnav_item_cloud)."""
         nodes = dump() or []
         if find(nodes, CRUMB0) or findall(nodes, ENTRY):
-            shell("input keyevent KEYCODE_BACK")
-            settle(0.8)
+            return self.close_dropdown()
+        return True
 
     def strip_tab(self, pid):
         """Tap page [pid]'s tab on a second-row strip (scrolling the strip sideways): how a reader reaches a page the dropdown cannot list
@@ -1170,6 +1176,10 @@ class Walk:
         on_bar = sid in self.bottom
         self.hide_ime()
         nodes = dump() or []
+        if not any(n.rid.startswith(ITEM) for n in nodes) and (find(nodes, CRUMB0) or findall(nodes, ENTRY)):
+            # #1760 a title dropdown still open from the step before is a popup window over the page: the dump holds it alone, never the bar
+            self.back_if_dropdown()
+            nodes = dump() or []
         if not any(n.rid.startswith(ITEM) for n in nodes) and clear_blockers(nodes):
             settle(1.5)
             nodes = dump() or []
@@ -1187,9 +1197,15 @@ class Walk:
         if not on_bar:
             # an app whose gear opens the fleet Configs screen (Cloud Search, #1697) covers the whole shell with it, the title dropdown
             # included: leave it by its own back arrow first, the section is then entered from the dropdown of the page underneath
-            cfg_back = find(dump() or [], "fleetcfg_back")
+            # #1760 an app with ONE Configs of its own (Cloud Dialer's DialerConfigsActivity, onConfigsPage) opens that full screen instead:
+            # it is left by its own back arrow (tag <app>_configs_back), else by system Back, which the screen documents as closing it
+            cfg_nodes = dump() or []
+            cfg_back = find(cfg_nodes, FC_BACK) or next((n for n in cfg_nodes if n.rid.endswith("_configs_back")), None)
             if cfg_back is not None:
                 tap(cfg_back)
+                settle(1.6)
+            elif cfg_nodes and find(cfg_nodes, TITLE) is None and find(cfg_nodes, MORE) is None and self.foreground():
+                shell("input keyevent KEYCODE_BACK")
                 settle(1.6)
             # #1483 an off-bar section is reached the way a user reaches it: the gear opens the app, then the title dropdown's section
             # list (every declared section is a peer there, P6) opens the section itself; its pages are then walked from its own root

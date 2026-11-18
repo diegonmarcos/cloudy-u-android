@@ -42,6 +42,7 @@ on:
     paths:
       - "1_cicd/src/cicd/test-nav-runtime.yml"
       - "1_cicd/src/scripts/cloud-android-nav-walk.py"
+      - "1_cicd/src/scripts/test/nav-walk-driver.test.sh"
       - "1_cicd/src/data/nav-walk-apps.json"
       # the shared nav libs
       - "ab_cloud-libs-shared/libs/bottomnav/**"
@@ -76,6 +77,8 @@ jobs:
       matrix: ${{ steps.m.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
+      - name: The walker's driver holds offline (#1760 deep dropdown, lingering dropdown, an app's own Configs screen)
+        run: bash 1_cicd/src/scripts/test/nav-walk-driver.test.sh
       - name: The walked apps are exactly the apps ChromeScrollGuardTest holds
         run: |
           set -eu
