@@ -9,7 +9,7 @@ import type { VaultDecl } from './decl-types';
 import { enhanceMarkdown, renderMermaidInto } from './enhance';
 import { Icon } from './icons';
 import { buildSandboxFrame } from './html-sandbox';
-import { jsonRows, parseJson } from './json-tree';
+import { copyText, parseJson, searchRows, valueAtPointer } from './json-tree';
 import { renderMarkdown } from './markdown';
 import type { Tab, VaultApi } from './use-vault';
 
@@ -106,42 +106,85 @@ export const MermaidView = ({ tab }: { tab: Tab }) => {
   );
 };
 
+const copyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // a WebView without the async clipboard: the old selection route
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  }
+};
+
+/** JSON in View mode: the collapsible tree with syntax colour, search, and copy of the selected path or value (the fleet viewer's feature set). */
 export const JsonView = ({ tab }: { tab: Tab }) => {
   const parsed = useMemo(() => parseJson(tab.text ?? ''), [tab.text]);
   const [open, setOpen] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   if (!parsed.ok) {
     return (
       <div className="cnv-pane">
-        <div className="cnv-banner" data-testid="json-error">Not valid JSON: {parsed.error}. Fix it in the Source view.</div>
+        <div className="cnv-banner" data-testid="json-error">Not valid JSON: {parsed.error}. Fix it in Raw mode.</div>
       </div>
     );
   }
-  const rows = jsonRows(parsed.value, open);
+  const rows = searchRows(parsed.value, open, query);
+  const sel = rows.find(r => r.pointer === selected) ?? null;
+  const copy = (what: 'path' | 'value') => {
+    if (!sel) return;
+    const text = what === 'path' ? sel.path : copyText(valueAtPointer(parsed.value, sel.pointer));
+    void copyToClipboard(text).then(ok => setCopied(ok ? `Copied the ${what}` : 'Copy is not available'));
+  };
+  const colour = (k: string) => (k === 'string' ? 'var(--color-green)' : k === 'number' ? 'var(--color-orange)' : k === 'boolean' || k === 'null' ? 'var(--color-purple)' : undefined);
   return (
-    <div className="cnv-pane" data-testid="json-tree">
-      {rows.map(r => (
-        <div
-          key={r.pointer || '$'}
-          className="cnv-tree-row"
-          style={{ paddingLeft: r.depth * 16, cursor: r.expandable ? 'pointer' : 'default' }}
-          onClick={() => {
-            if (!r.expandable) return;
-            setOpen(prev => {
-              const next = new Set(prev);
-              if (next.has(r.pointer)) next.delete(r.pointer);
-              else next.add(r.pointer);
-              return next;
-            });
-          }}
-        >
-          <span style={{ width: 12 }}>{r.expandable ? (r.expanded ? 'v' : '>') : ''}</span>
-          <span style={{ opacity: 0.75 }}>{r.key}</span>
-          <span style={{ color: r.kind === 'string' ? 'var(--color-green)' : r.kind === 'number' ? 'var(--color-orange)' : r.kind === 'boolean' || r.kind === 'null' ? 'var(--color-purple)' : undefined }}>
-            {r.preview}
-          </span>
-        </div>
-      ))}
-      <div style={{ height: 96 }} />
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }} data-testid="json-tree">
+      <div className="cnv-edit-bar">
+        <input className="cnv-input" type="search" placeholder="Search keys and values" aria-label="Search" data-testid="json-search" value={query} onChange={e => setQuery(e.target.value)} />
+      </div>
+      <div className="cnv-pane" style={{ fontFamily: 'var(--font-monospace)' }}>
+        {rows.length === 0 && <div className="cnv-dim" data-testid="json-none" style={{ padding: 12 }}>Nothing matches.</div>}
+        {rows.map(r => (
+          <div
+            key={r.pointer || '$'}
+            className="cnv-tree-row"
+            data-json-path={r.path}
+            aria-current={r.pointer === selected}
+            style={{ paddingLeft: 8 + r.depth * 16, cursor: 'pointer' }}
+            onClick={() => {
+              setSelected(r.pointer);
+              setCopied(null);
+              if (!r.expandable || query.trim() !== '') return;
+              setOpen(prev => {
+                const next = new Set(prev);
+                if (next.has(r.pointer)) next.delete(r.pointer);
+                else next.add(r.pointer);
+                return next;
+              });
+            }}
+          >
+            <span className="cnv-chev" data-open={r.expanded} style={{ opacity: r.expandable ? 1 : 0 }}><Icon name="chevron" size={14} /></span>
+            <span style={{ color: 'var(--color-blue)' }}>{r.key}</span>
+            <span className="cnv-dim">:</span>
+            <span style={{ color: colour(r.kind), overflowWrap: 'anywhere' }}>{r.preview}</span>
+          </div>
+        ))}
+        <div style={{ height: 96 }} />
+      </div>
+      <div className="cnv-edit-bar" data-testid="json-copybar" style={{ borderTop: '1px solid var(--background-modifier-border)', borderBottom: 0 }}>
+        <span className="cnv-dim" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid="json-selected">{copied ?? sel?.path ?? 'Tap a line to select it'}</span>
+        <button type="button" className="cnv-chip" data-testid="json-copy-path" disabled={!sel} onClick={() => copy('path')}>Copy path</button>
+        <button type="button" className="cnv-chip" data-testid="json-copy-value" disabled={!sel} onClick={() => copy('value')}>Copy value</button>
+      </div>
     </div>
   );
 };
