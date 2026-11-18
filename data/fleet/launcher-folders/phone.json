@@ -32,6 +32,13 @@
     },
     {
       "section": "Tools · Primary",
+      "id": "prod_canvas",
+      "label": "=Canvas",
+      "icon": "",
+      "order": 145
+    },
+    {
+      "section": "Tools · Primary",
       "id": "sys_keyboards",
       "label": "=Keyboard",
       "icon": "",
