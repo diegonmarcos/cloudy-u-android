@@ -10,7 +10,21 @@ S="$OUT/summary.txt"; : > "$S"
 fail=0
 
 wake() { adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1; }
-shot() { wake; adb exec-out screencap -p > "$OUT/$1.png"; }
+# a system "X isn't responding" dialog (seen: Pixel Launcher, run 44314218765) covers the app: answer "Wait"
+unanr() {
+  adb shell uiautomator dump /sdcard/anr.xml >/dev/null 2>&1
+  adb exec-out cat /sdcard/anr.xml 2>/dev/null | grep -q "isn't responding\|isn&apos;t responding" || return 0
+  xy=$(adb exec-out cat /sdcard/anr.xml | python3 -I -c '
+import re, sys
+xml = sys.stdin.read()
+for m in re.finditer(r"<node [^>]*>", xml):
+    n = m.group(0)
+    if re.search(r" text=\"Wait\"", n):
+        x1, y1, x2, y2 = map(int, re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", n).groups()); print((x1 + x2) // 2, (y1 + y2) // 2); break
+')
+  [ -n "$xy" ] && { adb shell input tap $xy; echo "note: dismissed a system not-responding dialog" >> "$S"; sleep 2; }
+}
+shot() { wake; unanr; adb exec-out screencap -p > "$OUT/$1.png"; }
 dump() { wake; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "$OUT/$1.xml"; }
 scene() { dump "$1"; shot "$1"; }
 has() { if grep -q -- "$1" "$OUT/$2.xml"; then echo "OK   $2 has: $1" >> "$S"; else echo "FAIL $2 missing: $1" >> "$S"; fail=1; fi; }
@@ -18,6 +32,7 @@ hasnt() { if grep -q -- "$1" "$OUT/$2.xml"; then echo "FAIL $2 has: $1" >> "$S";
 kbd_hide() { adb shell dumpsys input_method | grep -q 'mInputShown=true' && adb shell input keyevent KEYCODE_BACK; sleep 1; }
 # centre of the first node whose resource-id ends with $1 (RN testID), or whose text equals $1
 find_xy() {
+  unanr
   dump scan
   python3 -I - "$1" "$OUT/scan.xml" <<'PY'
 import re, sys
@@ -58,6 +73,7 @@ run_and_wait() { # press the one action, wait for the flow to end (no step left 
 }
 
 adb shell settings put secure screensaver_enabled 0 || true
+adb shell settings put global hide_error_dialogs 1 || true
 adb shell svc power stayon true || true
 adb shell wm dismiss-keyguard || true
 sleep 30
