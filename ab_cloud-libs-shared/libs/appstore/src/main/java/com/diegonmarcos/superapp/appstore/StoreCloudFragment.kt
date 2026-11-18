@@ -993,7 +993,8 @@ class StoreCloudFragment : KitComposeFragment() {
     private fun adoptAll(ctx: Context) {
         Toast.makeText(ctx, "Adopting fleet packages (installer of record)…", Toast.LENGTH_SHORT).show()
         thread(name = "fleet-adopt-all") {
-            val rs = StoreAdopt.adopt(ctx, fleet.map { it.pkg })
+            // #1792 a refused, fleet-signed package is reinstalled in place from its release (Cloud Store's own session)
+            val rs = StoreAdopt.adopt(ctx, fleet.map { it.pkg }) { p -> fleet.firstOrNull { it.pkg == p } }
             val ok = rs.count { it.state == StoreAdopt.State.ADOPTED || it.state == StoreAdopt.State.ALREADY }
             val bad = StoreAdopt.failureLines(rs)
             StoreAdopt.lastReport = bad

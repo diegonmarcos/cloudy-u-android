@@ -717,6 +717,32 @@ object Fleet {
     }
 
     /**
+     * #1792 ADOPT FALLBACK: reinstall [pkg] IN PLACE from [apk] (the current release, same signature) through THIS app's own
+     * PackageInstaller session, never the shell: the session's installer becomes this app (Cloud Store), so it is the installer
+     * of record afterwards, and an update keeps the app's data. Used by Cloud Store's Adopt when `pm set-installer` is refused.
+     * A release older than the installed build is refused here (a reinstall must never be a downgrade). Returns null once the
+     * session is committed (the outcome lands at PackageInstallerReceiver; the caller reads the installer back), else the reason.
+     */
+    fun reinstallViaSession(ctx: Context, pkg: String, apk: VerifiedApk): String? {
+        val identity = ApkIntegrity.identify(ctx, apk.file)
+        if (identity != null && identity.pkg != pkg) return "the release APK is ${identity.pkg}, not $pkg"
+        val installedCode = runCatching {
+            val pi = ctx.packageManager.getPackageInfo(pkg, 0)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) pi.longVersionCode else @Suppress("DEPRECATION") pi.versionCode.toLong()
+        }.getOrNull() ?: return "$pkg is not installed"
+        if (identity != null && VersionOrder.isDowngrade(identity.versionCode, installedCode))
+            return "the release (versionCode ${identity.versionCode}) is older than the installed build ($installedCode): a reinstall would be a downgrade"
+        return try {
+            com.diegonmarcos.superapp.updater.install.UpdateInstaller(ctx).install(apk, pkg)
+            null
+        } catch (h: com.diegonmarcos.superapp.updater.install.HandedToStore) {
+            h.message ?: "handed to Cloud Store"
+        } catch (t: Throwable) {
+            t.message ?: t.javaClass.simpleName
+        }
+    }
+
+    /**
      * A candidate APK's real pkg/versionCode, read straight out of its own
      * manifest WITHOUT installing it — the exact fact [commit] reads before
      * every downgrade decision, now public so a caller can show it BEFORE

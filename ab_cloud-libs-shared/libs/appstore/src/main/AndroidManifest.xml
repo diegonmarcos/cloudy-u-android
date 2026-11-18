@@ -17,6 +17,7 @@
             <intent-filter>
                 <action android:name="com.diegonmarcos.cloud.action.TEST_UNPACK" />
                 <action android:name="com.diegonmarcos.cloud.action.TEST_SESSIONS" />
+                <action android:name="com.diegonmarcos.cloud.action.TEST_ADOPT" />
             </intent-filter>
         </receiver>
     </application>

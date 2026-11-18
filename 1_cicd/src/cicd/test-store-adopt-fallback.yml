@@ -1,0 +1,79 @@
+# #1792 Adopt's fallback on an emulator: when Android refuses `pm set-installer` for a fleet-signed package (another app is its
+# installer of record), Cloud Store reinstalls it in place from its release APK through its own PackageInstaller session and reads
+# the installer back. The target is the Termux:Boot fork (cld.termux.nix.boot, release asset Cloud-Unix-Termux-Boot.apk), the
+# package the phone refused. Evidence: store-adopt-fallback (set-installer output, result.json, dumpsys, screenshots, logcat).
+name: "Test -> Cloud Store Adopt fallback (emulator, in-place reinstall)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Ship Cloud Store run whose x86_64 APK artifact to test (empty = latest release asset)"
+        required: false
+        default: ""
+      target_asset:
+        description: "Fleet release asset to install through adb with another installer of record"
+        required: false
+        default: "Cloud-Unix-Termux-Boot.apk"
+      api_level:
+        required: false
+        default: "34"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  adopt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-store/test
+
+      - name: Fetch the Store APK and the target release APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          W_RUN: ${{ inputs.run_id }}
+          ASSET: ${{ inputs.target_asset }}
+        run: |
+          set -eu
+          mkdir -p apk
+          if [ -n "$W_RUN" ]; then
+            gh api "repos/$REPO/actions/runs/$W_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-Store-x86_64")) | .name' |
+            while read -r name; do gh run download "$W_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          else
+            gh release download latest -R "$REPO" -p 'Cloud-Store*x86_64*.apk' -D apk || gh release download latest -R "$REPO" -p 'Cloud-Store*.apk' -D apk
+          fi
+          store=$(find apk -name '*.apk' | sort | head -1); [ -n "$store" ] || { echo "::error::no Store APK"; exit 1; }
+          cp "$store" store.apk
+          gh release download latest -R "$REPO" -p "$ASSET" -O target.apk
+          ls -la store.apk target.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot a clean emulator + prove the fallback
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api_level }}
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -wipe-data -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-store/test/emulator-store-adopt-fallback.sh store.apk target.apk out
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-adopt-fallback
+          path: out/
+          if-no-files-found: warn

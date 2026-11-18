@@ -1,7 +1,12 @@
 package com.diegonmarcos.superapp.appstore
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import com.diegonmarcos.superapp.updater.Fleet
+import com.diegonmarcos.superapp.updater.apk.VerifiedApk
 import com.diegonmarcos.superapp.updater.install.SilentReadiness
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -11,6 +16,15 @@ import java.util.concurrent.ConcurrentHashMap
  * API 29+ and so on 34-37; an older or stripped build answers "Unknown command", reported as a reason, never a crash).
  * The result is never assumed: the installer is READ BACK (`pm list packages -i`, falling back to PackageManager) and that real
  * state drives the row marker. Everything parsing text is pure so the unit suite drives every branch.
+ *
+ * #1792 FALLBACK. Android refuses `pm set-installer` from the shell for a package whose current installer of record is another
+ * app (the shell is not signed like that installer: "Caller does not have same cert as old installer package ...") or whose
+ * update ownership another installer holds (Android 14+). When that happens AND the installed APK is signed with the fleet
+ * release certificate (this app's own signer: one key signs the whole constellation), Adopt reinstalls the package IN PLACE
+ * from its current release APK through Cloud Store's OWN PackageInstaller session ([Fleet.reinstallViaSession]): same signature,
+ * data kept, and the session makes Cloud Store the installer of record (and, on 14+, the update owner). The installer is then
+ * read back exactly as for set-installer. A package signed with another certificate stays FAILED, with that reason added.
+ * [decide] is the pure decision.
  */
 internal object StoreAdopt {
 
@@ -50,7 +64,8 @@ internal object StoreAdopt {
         val lines = out.lineSequence().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("at ") }.toList()
         val cause = lines.firstOrNull { Regex("^(Caused by: )?[\\w.$]+(Exception|Error)\\b.*").matches(it) }?.removePrefix("Caused by: ")
         val tail = lines.filterNot { it.startsWith("Exception occurred while executing") }.joinToString(" ").trim()
-        return (cause ?: tail.ifEmpty { lines.firstOrNull().orEmpty() }).take(200)
+        // #1792 kept whole enough to name the package Android compared against (the old installer), never cut mid-sentence on a phone
+        return (cause ?: tail.ifEmpty { lines.firstOrNull().orEmpty() }).take(400)
     }
 
     /** Pure: why Android refused, as a per-package reason (what it is and who can change it), from the cause text. */
@@ -113,6 +128,78 @@ internal object StoreAdopt {
     fun needing(installers: Map<String, String?>, fleetPkgs: Collection<String>): List<String> =
         fleetPkgs.filter { it in installers && installers[it] != STORE }.distinct().sorted()
 
+    // ── #1792 the reinstall fallback ────────────────────────────────────────────────────────────────────────
+
+    /** What Adopt does with a package set-installer did not adopt. */
+    enum class Fallback { REINSTALL, NONE }
+    data class Decision(val fallback: Fallback, val reason: String)
+
+    /**
+     * Pure: was this a REFUSAL by Android (the only case the fallback answers)? A set-installer that raised, or ran and did not
+     * stick on read-back. Not: ADB down, no set-installer on this build, the shell broker's own denial, a package not installed.
+     */
+    fun isRefusal(r: Result, setOut: String?): Boolean {
+        if (r.state != State.FAILED || setOut == null || r.installer == STORE) return false
+        val low = setOut.trim().lowercase()
+        if (low.startsWith("denied by the shell broker") || r.reason == "package not installed" || low.startsWith("failure: not a package id")) return false
+        return true
+    }
+
+    /**
+     * Pure: the fallback for [r]. Reinstall only when Android refused, both certificate sets are known and EQUAL (the installed
+     * package is fleet-signed) and a release APK of the package exists; otherwise NONE, with the reason it stays as it is.
+     */
+    fun decide(r: Result, refused: Boolean, installedSigners: Set<String>?, fleetSigners: Set<String>?, hasRelease: Boolean): Decision = when {
+        !refused -> Decision(Fallback.NONE, r.reason)
+        installedSigners.isNullOrEmpty() -> Decision(Fallback.NONE, "${r.reason}; its signing certificate cannot be read, so it is not reinstalled")
+        fleetSigners.isNullOrEmpty() -> Decision(Fallback.NONE, "${r.reason}; the fleet release certificate cannot be read, so it is not reinstalled")
+        installedSigners != fleetSigners -> Decision(Fallback.NONE,
+            "${r.reason}; it is signed with a different certificate (SHA-256 ${installedSigners.joinToString { it.take(16) }}…, the fleet's is " +
+                "${fleetSigners.joinToString { it.take(16) }}…), so Cloud Store cannot reinstall it in place")
+        !hasRelease -> Decision(Fallback.NONE, "${r.reason}; it is fleet-signed but has no release APK in the fleet list to reinstall from")
+        else -> Decision(Fallback.REINSTALL, "pm set-installer was refused (${r.reason}); same certificate as the fleet release, so it is reinstalled in place through Cloud Store's own PackageInstaller session")
+    }
+
+    /** Pure: the result after a reinstall: the read-back decides, as for set-installer. */
+    fun afterReinstall(pkg: String, refusal: String, commitError: String?, after: String?): Result = when {
+        commitError != null -> Result(pkg, State.FAILED, "$refusal; the in-place reinstall did not start: $commitError", after)
+        after == STORE -> Result(pkg, State.ADOPTED, "installer of record set to Cloud Store by an in-place reinstall through its own PackageInstaller session (data kept, same signature; read back) after pm set-installer was refused", after)
+        else -> Result(pkg, State.FAILED, "$refusal; the in-place reinstall was committed but the installer reads back as ${after ?: "none"} (the confirmation was not accepted, or Android refused the update)", after)
+    }
+
+    /** SHA-256 (hex) of the certificate(s) [pkg] is signed with now (a rotated key: its current signer), or null when unreadable. */
+    fun signers(ctx: Context, pkg: String): Set<String>? = runCatching {
+        val pm = ctx.packageManager
+        val certs = if (Build.VERSION.SDK_INT >= 28) {
+            val si = pm.getPackageInfo(pkg, PackageManager.GET_SIGNING_CERTIFICATES).signingInfo ?: return null
+            if (si.hasMultipleSigners()) si.apkContentsSigners?.toList() else listOfNotNull(si.signingCertificateHistory?.lastOrNull())
+        } else @Suppress("DEPRECATION") pm.getPackageInfo(pkg, PackageManager.GET_SIGNATURES).signatures?.toList()
+        certs.orEmpty().map { c -> MessageDigest.getInstance("SHA-256").digest(c.toByteArray()).joinToString("") { "%02x".format(it) } }.toSet().ifEmpty { null }
+    }.getOrNull()
+
+    /** How long the read-back waits for the reinstall's outcome (the session may show Android's one confirmation). */
+    @Volatile var reinstallWaitMs = 120_000L
+
+    /**
+     * The fallback for one refused package: [apk] fetches the current release (verified), the session commits it, then the
+     * installer is read back until it is Cloud Store or [reinstallWaitMs] runs out. Blocking. Never throws.
+     */
+    fun reinstall(ctx: Context, pkg: String, refusal: String, apk: () -> VerifiedApk): Result {
+        val err = runCatching { Fleet.reinstallViaSession(ctx, pkg, apk()) }.getOrElse { "the release APK could not be fetched: ${it.message ?: it.javaClass.simpleName}" }
+        if (err != null) return afterReinstall(pkg, refusal, err, SilentReadiness.installerOf(ctx, pkg))
+        val until = System.currentTimeMillis() + reinstallWaitMs
+        var after = SilentReadiness.installerOf(ctx, pkg)
+        while (after != STORE && System.currentTimeMillis() < until) { Thread.sleep(2_000); after = SilentReadiness.installerOf(ctx, pkg) }
+        return afterReinstall(pkg, refusal, null, after)
+    }
+
+    /** Decide and, when it says so, reinstall: the outcome of the fallback for [r] (which set-installer answered with [setOut]). */
+    fun fallback(ctx: Context, r: Result, setOut: String?, release: Fleet.App?): Result {
+        val d = decide(r, isRefusal(r, setOut), signers(ctx, r.pkg), signers(ctx, ctx.packageName), release != null)
+        if (d.fallback != Fallback.REINSTALL || release == null) return if (d.reason == r.reason) r else r.copy(reason = d.reason)
+        return reinstall(ctx, r.pkg, r.reason) { Fleet.download(ctx, release) }
+    }
+
     // ── state, last real outcome per package ─────────────────────────────────────────────────────────────────
 
     private val last = ConcurrentHashMap<String, Result>()
@@ -133,7 +220,7 @@ internal object StoreAdopt {
      * Adopt every package of [pkgs] installed from another source. Blocking, off the main thread. Never throws: with ADB down every
      * package gets an ADB_DOWN result with the reason. The installer is read back after the calls.
      */
-    fun adopt(ctx: Context, pkgs: Collection<String>): List<Result> = runCatching {
+    fun adopt(ctx: Context, pkgs: Collection<String>, release: (String) -> Fleet.App? = { null }): List<Result> = runCatching {
         // Cloud Store itself is always part of the pass, so its own self-update is silent too.
         val installed = (pkgs + STORE).distinct().filter { runCatching { ctx.packageManager.getPackageInfo(it, 0); true }.getOrDefault(false) }
         val status = runCatching { StoreShell.status(ctx) }.getOrNull()
@@ -148,7 +235,9 @@ internal object StoreAdopt {
         val after = if (todo.isEmpty()) null else parseInstallers(StoreShell.exec(ctx, READ_BACK).orEmpty()).ifEmpty { null }
         installed.map { p ->
             val a = after?.get(p) ?: SilentReadiness.installerOf(ctx, p)
-            resolve(p, inst(p), outs[p], a).also { last[p] = it }
+            val r = resolve(p, inst(p), outs[p], a)
+            // #1792 refused by Android: a fleet-signed package is reinstalled in place through Cloud Store's own session
+            (if (r.state == State.FAILED && p != STORE) fallback(ctx, r, outs[p], release(p)) else r).also { last[p] = it }
         }
     }.getOrElse { e -> pkgs.map { Result(it, State.FAILED, "adopt could not run (${e.javaClass.simpleName})", null) } }
 

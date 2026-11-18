@@ -15,6 +15,7 @@ import android.os.Looper
 class UnpackTestReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_SESSIONS) { SessionStress.start(context, goAsync()); return }
+        if (intent.action == ACTION_ADOPT) { AdoptFallbackProbe.start(context, intent, goAsync()); return }
         if (intent.action != ACTION) return
         val pkg = intent.getStringExtra("pkg") ?: return
         // Keep the process (and so the reply binder) alive until the terminal has answered.
@@ -27,6 +28,8 @@ class UnpackTestReceiver : BroadcastReceiver() {
         const val ACTION = "com.diegonmarcos.cloud.action.TEST_UNPACK"
         /** #1735 emulator test: 40 real PackageInstaller sessions through [InstallSessions], result in files/session-stress-result.json. */
         const val ACTION_SESSIONS = "com.diegonmarcos.cloud.action.TEST_SESSIONS"
+        /** #1792 emulator test: the Adopt fallback for one package whose `pm set-installer` the test saw refused; result in files/adopt-fallback-result.json. */
+        const val ACTION_ADOPT = "com.diegonmarcos.cloud.action.TEST_ADOPT"
         private const val HOLD_MS = 45_000L   // under the 60 s broadcast limit: a longer goAsync hold is an ANR of the Store
     }
 }
@@ -93,5 +96,42 @@ internal object SessionStress {
         }
         val ok = capErrors == 0 && failures == 0 && left == 0
         return """{"ok":$ok,"installs":$INSTALLS,"leaked_before":$LEAKED,"open_before":$before,"peak":$peak,"committed":$committed,"cap_errors":$capErrors,"unexpected_failures":$failures,"open_after":$left}"""
+    }
+}
+
+/**
+ * #1792 The emulator half of the Adopt fallback proof. The test installs a fleet-signed package through adb with ANOTHER app as
+ * its installer of record, runs `pm set-installer <pkg> <store>` itself (Android refuses it), then sends that refusal text
+ * (`setout`, base64) and the release APK it pushed into the Store's external files dir (`apk`). This runs the production path
+ * from there: [StoreAdopt.resolve] on the refusal, then [StoreAdopt.decide] on the real certificates, then the in-place
+ * reinstall through the Store's own PackageInstaller session and the read-back ([StoreAdopt.reinstall]). The outcome is written
+ * to files/adopt-fallback-result.json. Only the release download is replaced by the pushed file (no network fetch on the runner).
+ */
+internal object AdoptFallbackProbe {
+    fun start(ctx: Context, intent: Intent, pending: BroadcastReceiver.PendingResult) {
+        val pkg = intent.getStringExtra("pkg"); val apkPath = intent.getStringExtra("apk")
+        val setOut = intent.getStringExtra("setout")?.let { runCatching { String(android.util.Base64.decode(it, android.util.Base64.DEFAULT)) }.getOrNull() }
+        pending.finish()   // the reinstall waits for a confirmation: far beyond a broadcast's budget, so the work runs detached
+        Thread {
+            val out = java.io.File(ctx.filesDir, "adopt-fallback-result.json"); out.delete()
+            val json = org.json.JSONObject()
+            runCatching {
+                require(pkg != null && apkPath != null && setOut != null) { "pkg, apk and setout extras are required" }
+                val before = com.diegonmarcos.superapp.updater.install.SilentReadiness.installerOf(ctx, pkg)
+                val r = StoreAdopt.resolve(pkg, before, setOut, before)
+                val refused = StoreAdopt.isRefusal(r, setOut)
+                val mine = StoreAdopt.signers(ctx, pkg); val fleet = StoreAdopt.signers(ctx, ctx.packageName)
+                val d = StoreAdopt.decide(r, refused, mine, fleet, hasRelease = true)
+                json.put("pkg", pkg).put("installer_before", before ?: "null").put("refusal", r.reason).put("refused", refused)
+                    .put("same_cert", mine != null && mine == fleet).put("decision", d.fallback.name)
+                val res = if (d.fallback == StoreAdopt.Fallback.REINSTALL) StoreAdopt.reinstall(ctx, pkg, r.reason) {
+                    val f = java.io.File(apkPath)
+                    com.diegonmarcos.superapp.updater.apk.VerifiedApk.bySize(f, f.length()) ?: error("cannot read $apkPath")
+                } else r.copy(reason = d.reason)
+                json.put("state", res.state.name).put("reason", res.reason).put("installer_after", res.installer ?: "null")
+                    .put("ok", res.state == StoreAdopt.State.ADOPTED && res.installer == StoreAdopt.STORE)
+            }.onFailure { json.put("ok", false).put("error", "${it.javaClass.simpleName}: ${it.message}") }
+            out.writeText(json.toString())
+        }.start()
     }
 }

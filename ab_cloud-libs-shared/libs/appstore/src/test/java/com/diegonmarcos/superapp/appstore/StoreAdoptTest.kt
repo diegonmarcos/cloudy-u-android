@@ -131,4 +131,58 @@ class StoreAdoptTest {
         // and every lib package is a legal `pm set-installer` target
         for (id in libs + liteInstallable) assertEquals("pm set-installer ${pkgOf.getValue(id)} $store", StoreAdopt.command(pkgOf.getValue(id)))
     }
+
+    // ── #1792 the in-place reinstall fallback ──
+    private val refusalOut = "Exception occurred while executing 'set-installer':\njava.lang.SecurityException: Caller does not have same cert as old installer package com.google.android.packageinstaller\n\tat com.android.server.pm.PackageManagerService.setInstallerPackageName"
+    private val fleet = setOf("a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90")
+    private fun refused(): StoreAdopt.Result = StoreAdopt.resolve("cld.termux.nix.boot", "com.google.android.packageinstaller", refusalOut, "com.google.android.packageinstaller")
+
+    @Test fun theOldInstallerCertRefusalIsReadWhole() {
+        val r = refused()
+        assertEquals(State.FAILED, r.state)
+        assertTrue(r.reason, r.reason.contains("old installer package com.google.android.packageinstaller"))
+        assertTrue(StoreAdopt.isRefusal(r, refusalOut))
+    }
+
+    @Test fun onlyAnAndroidRefusalTriggersTheFallback() {
+        assertTrue(!StoreAdopt.isRefusal(StoreAdopt.resolve("p.q", "x", null, "x"), null))                                   // ADB down
+        assertTrue(!StoreAdopt.isRefusal(StoreAdopt.resolve("p.q", "x", "Unknown command: set-installer", "x"), "Unknown command: set-installer"))
+        val broker = "denied by the shell broker: no rule"
+        assertTrue(!StoreAdopt.isRefusal(StoreAdopt.resolve("p.q", "x", broker, "x"), broker))
+        val gone = "Failure [unknown package]"
+        assertTrue(!StoreAdopt.isRefusal(StoreAdopt.resolve("p.q", "x", gone, "x"), gone))
+        assertTrue(!StoreAdopt.isRefusal(StoreAdopt.resolve("p.q", store, "", store), ""))                                     // already ours
+        assertTrue("ran but did not stick", StoreAdopt.isRefusal(StoreAdopt.resolve("p.q", "x", "", "x"), ""))
+    }
+
+    @Test fun sameCertificateAndAReleaseReinstalls() {
+        val d = StoreAdopt.decide(refused(), true, fleet, fleet, hasRelease = true)
+        assertEquals(StoreAdopt.Fallback.REINSTALL, d.fallback)
+        assertTrue(d.reason.contains("reinstalled in place through Cloud Store's own PackageInstaller session"))
+    }
+
+    @Test fun aDifferentSignatureStaysFailedWithThatReason() {
+        val other = setOf("ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000")
+        val d = StoreAdopt.decide(refused(), true, other, fleet, hasRelease = true)
+        assertEquals(StoreAdopt.Fallback.NONE, d.fallback)
+        assertTrue(d.reason, d.reason.contains("signed with a different certificate") && d.reason.contains("old installer package"))
+    }
+
+    @Test fun unknownCertificatesNoReleaseOrNoRefusalDoNothing() {
+        assertEquals(StoreAdopt.Fallback.NONE, StoreAdopt.decide(refused(), true, null, fleet, true).fallback)
+        assertEquals(StoreAdopt.Fallback.NONE, StoreAdopt.decide(refused(), true, fleet, null, true).fallback)
+        assertEquals(StoreAdopt.Fallback.NONE, StoreAdopt.decide(refused(), true, fleet, fleet, hasRelease = false).fallback)
+        assertTrue(StoreAdopt.decide(refused(), true, fleet, fleet, false).reason.contains("no release APK"))
+        val r = refused()
+        assertEquals(r.reason, StoreAdopt.decide(r, false, fleet, fleet, true).reason)
+    }
+
+    @Test fun theReinstallIsJudgedByTheReadBack() {
+        val why = refused().reason
+        assertEquals(State.ADOPTED, StoreAdopt.afterReinstall("p.q", why, null, store).state)
+        val pending = StoreAdopt.afterReinstall("p.q", why, null, "com.google.android.packageinstaller")
+        assertEquals(State.FAILED, pending.state); assertTrue(pending.reason.contains("reads back as com.google.android.packageinstaller"))
+        val noStart = StoreAdopt.afterReinstall("p.q", why, "the release (versionCode 1) is older", null)
+        assertEquals(State.FAILED, noStart.state); assertTrue(noStart.reason.contains("did not start"))
+    }
 }
