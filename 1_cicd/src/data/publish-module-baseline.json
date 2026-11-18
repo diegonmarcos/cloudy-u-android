@@ -58,7 +58,6 @@
   "1_cicd/src/cicd/ship-garmin-watchface.yml": 2,
   "1_cicd/src/cicd/ship-termux-boot.yml": 6,
   "1_cicd/src/scripts/cloud-android-release-latest-audit.sh": 4,
-  "1_cicd/src/scripts/cloud-android-release-swap.sh": 1,
   "1_cicd/src/scripts/cloud-chat-fork-engine.sh": 9,
   "1_cicd/src/scripts/cloud-code-engine.sh": 4,
   "1_cicd/src/scripts/cloud-dialer-fork-engine.sh": 9,
