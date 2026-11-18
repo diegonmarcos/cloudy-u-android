@@ -1509,6 +1509,7 @@
     <string name="delivery_recipient_bounced">devolvido</string>
     <string name="delivery_message_id">ID da mensagem: %1$s</string>
     <string name="delivery_smtp_code">SMTP %1$d</string>
+    <string name="delivery_recipient_relay">aceite pelo relay, a aguardar confirmação</string>
     <!-- #1803 recipient deliverability: chip marks, detail sheet, will-fail question -->
     <string name="compose_recipient_check_verdict_ok">Pode receber</string>
     <string name="compose_recipient_check_verdict_risky">Arriscado</string>

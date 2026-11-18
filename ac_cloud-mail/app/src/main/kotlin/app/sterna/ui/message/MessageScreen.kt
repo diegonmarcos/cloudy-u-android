@@ -1,5 +1,9 @@
 package app.sterna.ui.message
 
+import app.sterna.send.delivery.DeliveryTimeline
+import app.sterna.ui.components.DeliveryTimelineView
+import app.sterna.ui.components.isSentRole
+import app.sterna.ui.components.rememberSentDeliveryTimeline
 import com.diegonmarcos.cloudlib.web.CloudWeb
 import com.diegonmarcos.cloudlib.web.CloudWebClient
 import com.diegonmarcos.cloudlib.web.WebProfile
@@ -1763,6 +1767,10 @@ private fun MessageContent(
     val ownMessage by viewModel.ownMessage.collectAsStateWithLifecycle()
     val deliveredTo by viewModel.deliveredTo.collectAsStateWithLifecycle()
     val crypto by viewModel.crypto.collectAsStateWithLifecycle()
+    // #1802: the message's own folder decides; a Sent message polls the fleet mail API's records.
+    val readerFolderRole by viewModel.mailboxRole.collectAsStateWithLifecycle()
+    val deliveryEmail = (state as? MessageState.Loaded)?.email
+    val deliveryTimeline = deliveryEmail?.let { rememberSentDeliveryTimeline(it, isSentRole(readerFolderRole)) }
     val unsubscribe by viewModel.unsubscribe.collectAsStateWithLifecycle()
     val unsubscribeState by viewModel.unsubscribeState.collectAsStateWithLifecycle()
     // The read-receipt question (#148) and where an accepted one got to. The OFFER decides whether
@@ -2124,6 +2132,7 @@ private fun MessageContent(
                 readingActions = readingActions,
                 translatedFragment = translation.fragmentFor(readerFragment),
                 translating = translation.running,
+                deliveryTimeline = deliveryTimeline,
             )
         }
     }
@@ -2191,6 +2200,8 @@ private fun ConversationBody(
     translatedFragment: String? = null,
     /** An in-place translation is running: a thin bar at the top of the page says so. */
     translating: Boolean = false,
+    /** #1802: the delivery stages when this message is filed in Sent; null draws nothing. */
+    deliveryTimeline: DeliveryTimeline? = null,
 ) {
     val msg = messages.firstOrNull() ?: return
     val full = msg.body
@@ -2357,6 +2368,7 @@ private fun ConversationBody(
                 .onSizeChanged { headerHeightPx = it.height }
                 .background(MaterialTheme.colorScheme.surface),
         ) {
+            Column {
             MessageHeader(
                 msg, full, attachmentStatus, onOpenAttachment, onScanAttachment, onSaveAttachment, calendar, onRespondToInvite,
                 onComposeTo, senderRule, showRecipients, deliveredTo, crypto, onCryptoAction,
@@ -2376,6 +2388,12 @@ private fun ConversationBody(
                 details = details,
                 readingActions = readingActions,
             )
+            // #1802: a Sent message's delivery stages, as a timeline with timestamps, under the
+            // header (the same view the Sent row's ticker opens on tap).
+            deliveryTimeline?.let {
+                DeliveryTimelineView(it, Modifier.fillMaxWidth().padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s8))
+            }
+            }
         }
         // The translation is in flight: a thin bar across the top, over the header, until the text
         // is swapped. Nothing else on the page moves.

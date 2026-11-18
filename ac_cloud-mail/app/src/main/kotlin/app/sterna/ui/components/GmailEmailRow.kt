@@ -153,7 +153,7 @@ internal fun GmailEmailRow(
     onOpenAttachment: ((EmailBodyPart) -> Unit)?,
     openingAttachmentKey: String?,
     onLoadMessage: (suspend (Email) -> Email)?,
-    deliveryTimeline: DeliveryTimeline? = null,
+    deliveryTimeline: DeliveryTimeline?,
 ) {
     val scheme = MaterialTheme.colorScheme
     val palette = LocalMailListPalette.current

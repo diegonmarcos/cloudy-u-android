@@ -1524,6 +1524,7 @@
     <string name="delivery_recipient_bounced">возвращено</string>
     <string name="delivery_message_id">ID письма: %1$s</string>
     <string name="delivery_smtp_code">SMTP %1$d</string>
+    <string name="delivery_recipient_relay">принято ретранслятором, ожидает подтверждения</string>
     <!-- #1803 recipient deliverability: chip marks, detail sheet, will-fail question -->
     <string name="compose_recipient_check_verdict_ok">Может получить</string>
     <string name="compose_recipient_check_verdict_risky">Рискованно</string>

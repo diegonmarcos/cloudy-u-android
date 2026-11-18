@@ -91,6 +91,13 @@ class AppContainer(context: Context) {
     val messageTextCache = dataLayer.messageTextCache
     val appLock: AppLock = AppLock(accountStore)
 
+    /** #1802 The Sent rows' delivery stages: the fleet mail API's own records, cached per message
+     *  (mesh first, public hub path with the fleet bearer as fallback). */
+    val deliveryStatus: app.sterna.send.delivery.DeliveryStatusRepository =
+        app.sterna.send.delivery.DeliveryStatusRepository(
+            app.sterna.send.delivery.FleetDeliveryStatusSource(com.diegonmarcos.superapp.fleetendpoints.FleetTransport.bearers),
+        )
+
     /** UnifiedPush transport state machine (issue #17); inert without a distributor. */
     val unifiedPushManager: UnifiedPushManager = UnifiedPushManager(
         context.applicationContext,
@@ -259,6 +266,8 @@ class AppContainer(context: Context) {
 
 class SternaApplication : Application() {
     lateinit var container: AppContainer
+    /** Whether [container] is built (a test host never builds it). */
+    val isContainerReady: Boolean get() = ::container.isInitialized
         private set
 
     override fun onCreate() {

@@ -203,6 +203,8 @@ import app.sterna.core.data.account.StoredIdentity
 import app.sterna.R
 import app.sterna.ui.canSnoozeIn
 import app.sterna.ui.components.EmailListItem
+import app.sterna.ui.components.isSentRole
+import app.sterna.ui.components.rememberSentDeliveryTimeline
 import app.sterna.ui.components.EmptyArt
 import app.sterna.ui.components.EmptyState
 import app.sterna.ui.components.LoadingRing
@@ -1342,6 +1344,8 @@ fun InboxScreen(
                     // The row's Resume / Copy Code act on the MESSAGE, which a row does not carry
                     // (#514). This is the fetch, and it is the reader's own.
                     onLoadMessage = viewModel::messageWithBody,
+                    // #1802: the row's OWN folder is Sent (the unread and unified views span several).
+                    sentDelivery = !fromSearch && isSentRole(rowRole),
                     showDraftBadge = if (fromSearch) email.isDraft else showsDraftBadge(
                         isDraft = email.isDraft,
                         accountId = email.accountId,
@@ -1431,6 +1435,7 @@ fun InboxScreen(
                         leftAction = swipe.left,
                         unarchiveContextFor = { child -> isUnarchiveContext(rowFolderRole(child, ui, folderRoles, folderTrusted = true)) },
                         trashContextFor = { child -> isTrashContext(rowFolderRole(child, ui, folderRoles, folderTrusted = true)) },
+                        sentDeliveryFor = { child -> isSentRole(rowFolderRole(child, ui, folderRoles, folderTrusted = true)) },
                         // Per child, through the SAME decision as the top-level row and the reader,
                         // on the child's OWN folder: an unfolded conversation spans the viewed
                         // folder(s) plus Sent, so your own reply there keeps its "To: …" (#69) while
@@ -2343,6 +2348,8 @@ private fun SwipeableEmailRow(
      *  defaulted at the call sites: a row carries no body, and a list that cannot fetch one must
      *  say so by passing null rather than letting the actions answer about the preview. */
     onLoadMessage: (suspend (Email) -> Email)? = null,
+    // #1802: this row is filed in Sent, so it shows the four delivery marks after its time.
+    sentDelivery: Boolean = false,
     onSwipe: (SwipeAction) -> Unit,
     onClick: () -> Unit,
     // Nullable so inline conversation children can omit long-press selection and the star.
@@ -2665,6 +2672,7 @@ private fun SwipeableEmailRow(
                 onOpenAttachment = onOpenAttachment,
                 openingAttachmentKey = openingAttachmentKey,
                 onLoadMessage = onLoadMessage,
+                deliveryTimeline = rememberSentDeliveryTimeline(email, sentDelivery),
             )
         }
     }
@@ -2892,6 +2900,7 @@ private fun ThreadChildren(
     trashContextFor: (Email) -> Boolean,
     /** Decided per child so a self reply in an incoming conversation shows "To: …" (Codeberg #69). */
     showRecipientsFor: (Email) -> Boolean,
+    sentDeliveryFor: (Email) -> Boolean = { false },
     /** Decided per child too: the "(Draft)" chip reads the child's own folder, not the one on
      *  screen — an unfolded conversation spans the viewed folder(s) plus Sent. */
     showDraftBadgeFor: (Email) -> Boolean,
@@ -2956,6 +2965,7 @@ private fun ThreadChildren(
                             onOpenAttachment = { part -> onOpenAttachment(child, part) },
                             openingAttachmentKey = openingAttachmentKey,
                             onLoadMessage = onLoadMessage,
+                            sentDelivery = sentDeliveryFor(child),
                             onSwipe = { action -> onSwipeChild(action, child) },
                             // Children join multi-select like top-level rows.
                             onClick = { if (selectionActive) onToggleSelectChild(child) else onOpenChild(child) },

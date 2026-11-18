@@ -214,7 +214,7 @@ private fun StageLine(view: StageView, ink: Color) {
 private fun RecipientLine(r: RecipientDelivery) {
     val parts = listOfNotNull(
         r.address,
-        recipientStateWord(r.state),
+        if (r.acceptedByRelay) stringResource(R.string.delivery_recipient_relay) else recipientStateWord(r.state),
         r.smtpCode?.let { stringResource(R.string.delivery_smtp_code, it) },
         r.remoteMx,
         stamp(r.atMillis),

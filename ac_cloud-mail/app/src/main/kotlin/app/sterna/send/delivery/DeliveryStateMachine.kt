@@ -12,8 +12,9 @@ package app.sterna.send.delivery
  *  2. Stage 1 (left the phone): confirmed once the message is no longer queued in the outbox and
  *     the outbox did not fail it; failed when the outbox gave up.
  *  3. Stage 2 (server received): the submission log. accepted -> confirmed; refused -> X.
- *  4. Stage 3 (valid sender): confirmed only when ALL four checks are recorded true; any recorded
- *     false -> X naming every false check; any still unrecorded -> pending.
+ *  4. Stage 3 (valid sender): confirmed only when every GATING check is recorded true (all four,
+ *     or three when the server reports SPF without gating on it); any recorded false, or the
+ *     server's own failed verdict -> X naming every false check; any still unrecorded -> pending.
  *  5. Stage 4 (sent): per recipient. Any bounce -> X (bounces win over deferrals); otherwise any
  *     deferral -> deferred mark with the reason; otherwise every recipient delivered -> confirmed
  *     at the latest delivery time; otherwise (none reported, or some still pending) -> pending.
@@ -56,10 +57,11 @@ object DeliveryStateMachine {
 
     internal fun validSender(auth: ServerDeliveryReport.SenderAuth?): StageMark {
         if (auth == null) return StageMark.Pending
-        val answers = SenderCheck.entries.associateWith { auth.answer(it) }
+        val answers = auth.gatingChecks.associateWith { auth.answer(it) }
         val failed = answers.filterValues { it == false }.keys.toList()
         return when {
-            failed.isNotEmpty() -> StageMark.Failed(auth.atMillis, DeliveryReason.SenderRejected(failed, auth.detail))
+            failed.isNotEmpty() || auth.serverFailed ->
+                StageMark.Failed(auth.atMillis, DeliveryReason.SenderRejected(failed, auth.detail))
             answers.values.any { it == null } -> StageMark.Pending
             else -> StageMark.Confirmed(auth.atMillis)
         }

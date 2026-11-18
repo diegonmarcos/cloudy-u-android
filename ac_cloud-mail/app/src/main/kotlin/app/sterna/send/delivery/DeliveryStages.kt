@@ -61,7 +61,12 @@ data class RecipientDelivery(
     val smtpCode: Int? = null,
     val remoteMx: String? = null,
     val detail: String? = null,
-)
+    /** Which hop recorded this outcome: relay, mx, local, dsn or queue. A relay 250 is NOT delivery. */
+    val hop: String? = null,
+) {
+    /** The OCI relay accepted it and no DSN or remote answer has come back yet. */
+    val acceptedByRelay: Boolean get() = state == RecipientState.PENDING && hop == "relay"
+}
 
 /** What the phone itself knows: is the message still in the outbox, and did the outbox fail it. */
 data class PhoneDelivery(
@@ -98,7 +103,15 @@ data class ServerDeliveryReport(
         val atMillis: Long? = null,
         val dkimSelector: String? = null,
         val detail: String? = null,
+        /** Whether SPF gates the stage. The fleet server reports SPF but does not gate on it. */
+        val spfGating: Boolean = true,
+        /** The server itself recorded the stage as failed (its verdict wins over the checks). */
+        val serverFailed: Boolean = false,
     ) {
+        /** The checks the stage is judged on. */
+        val gatingChecks: List<SenderCheck>
+            get() = SenderCheck.entries.filter { spfGating || it != SenderCheck.SPF_ALIGNED }
+
         fun answer(check: SenderCheck): Boolean? = when (check) {
             SenderCheck.ACCOUNT_MAY_USE_FROM -> accountMayUseFrom
             SenderCheck.DKIM_SIGNED -> dkimSigned
