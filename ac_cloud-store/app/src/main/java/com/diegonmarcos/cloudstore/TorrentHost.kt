@@ -96,6 +96,45 @@ object TorrentIntake {
         }
     }
 
+    /** #1790 the most a .torrent fetched from a web address may weigh (a real one is kilobytes; this stops a page or a file being read as one). */
+    const val MAX_TORRENT_BYTES = 8L * 1024 * 1024
+
+    /**
+     * #1790 the Torrent page's one field: a magnet link goes to the engine as is; an http(s) address is fetched as a .torrent (an
+     * Internet Archive item's `https://archive.org/download/<item>/<item>_archive.torrent`, an indexer's download link) and added.
+     * Returns the sentence to show and whether a torrent is now in the list (added or already there). Blocking, never throws.
+     */
+    fun addLink(ctx: Context, text: String): Pair<String, Boolean> {
+        val t = text.trim()
+        val engine = TorrentEngines.get(ctx)
+        if (t.startsWith("magnet:", true)) return engine.addMagnet(t).let { it.sentence() to (it.idOrNull != null) }
+        if (!(t.startsWith("https://", true) || t.startsWith("http://", true))) return "Paste a magnet link (magnet:?xt=urn:btih:…) or the web address of a .torrent." to false
+        val bytes = runCatching { fetchTorrent(t) }.getOrElse { return "Could not fetch the .torrent: ${it.message ?: it.javaClass.simpleName}" to false }
+        val label = Uri.parse(t).lastPathSegment?.substringAfterLast('/')?.ifBlank { null } ?: "link.torrent"
+        return engine.addTorrentBytes(label, bytes).let { "$label: " + it.sentence() to (it.idOrNull != null) }
+    }
+
+    /** GET [url] (redirects followed, 20 s timeouts) and return at most [MAX_TORRENT_BYTES]; a non-2xx answer throws with its code. */
+    fun fetchTorrent(url: String): ByteArray {
+        val c = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+        c.instanceFollowRedirects = true; c.connectTimeout = 20_000; c.readTimeout = 20_000
+        c.setRequestProperty("Accept", "application/x-bittorrent, */*")
+        try {
+            val code = c.responseCode
+            if (code !in 200..299) error("HTTP $code")
+            val out = java.io.ByteArrayOutputStream()
+            c.inputStream.use { ins ->
+                val buf = ByteArray(16 * 1024)
+                while (true) {
+                    val n = ins.read(buf); if (n < 0) break
+                    out.write(buf, 0, n)
+                    if (out.size() > MAX_TORRENT_BYTES) error("larger than ${MAX_TORRENT_BYTES / (1024 * 1024)} MB, not a .torrent")
+                }
+            }
+            return out.toByteArray()
+        } finally { c.disconnect() }
+    }
+
     /** True when [intent] carried a magnet link or a .torrent and it was handed to the engine. */
     fun handle(ctx: Context, intent: android.content.Intent?): Boolean {
         if (intent == null || intent.action != android.content.Intent.ACTION_VIEW) return false

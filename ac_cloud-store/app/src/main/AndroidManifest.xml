@@ -128,6 +128,16 @@
             tools:node="merge"
             tools:replace="android:foregroundServiceType" />
     
+        <!-- #1790 Torrent > Open: a finished download is handed to the phone's viewer as a content:// uri with a one-off read grant. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.torrentfiles"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/torrent_file_paths" />
+        </provider>
         <!-- #1547 The fleet data provider: tiers 3-4 (app defaults, reference data) served at runtime, never baked into an APK. Routes
              app/<pkg>/<dataset>, shared/<dataset>, index; access by callingPackage plus the served manifest; signature permission
              CONSTELLATION_DATA; openFile streams (no Binder size limit). Only openFile does anything. -->

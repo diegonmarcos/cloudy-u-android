@@ -16,9 +16,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,7 +48,6 @@ import com.diegonmarcos.superapp.torrent.TorrentFormat
 import com.diegonmarcos.superapp.torrent.TorrentPaths
 import com.diegonmarcos.superapp.torrent.TorrentState
 import com.diegonmarcos.superapp.torrent.TorrentStatus
-import com.diegonmarcos.superapp.torrent.sentence
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -62,6 +64,18 @@ object TorrentTags {
     const val ACTIVE = "torrent:active"
     const val COMPLETED = "torrent:completed"
     const val OFFLINE = "torrent:offline"
+    /** #1790 the sentence the last add / import said. */
+    const val NOTE = "torrent:note"
+    const val PAUSE_ALL = "torrent:pause-all"
+    const val RESUME_ALL = "torrent:resume-all"
+    /** #1790 the session's last complaint under a row (tracker, web seed, file). */
+    fun note(id: String) = "torrent:note:$id"
+    /** #1790 the row's place in the download queue (1 = first). */
+    fun queue(id: String) = "torrent:queue:$id"
+    /** #1790 Open the finished download (its main file), and the per-file list with an Open per file. */
+    fun open(id: String) = "torrent:open:$id"
+    fun files(id: String) = "torrent:files:$id"
+    fun file(id: String, i: Int) = "torrent:file:$id:$i"
     fun row(id: String) = "torrent:row:$id"
     fun pause(id: String) = "torrent:pause:$id"
     fun resume(id: String) = "torrent:resume:$id"
@@ -77,13 +91,16 @@ internal fun online(ctx: Context): Boolean = runCatching {
 }.getOrDefault(false)
 
 /**
- * The Torrent destination (bottom nav, where Feed was): add a magnet or import a .torrent, then every torrent with its
- * progress, rates, seeds and peers, Pause / Resume / Remove and the per-torrent seed switch, in two lists: Active (downloading,
- * fetching metadata, checking, queued, paused, errors) and Completed (finished: seeding or done). The BitTorrent engine is libs:torrent; this
- * page only polls [TorrentEngine.refresh] about once a second while it is shown (the engine's own ticker applies the seeding policy
- * while it is not). The engine being unavailable, no network and an unusable folder are each said in words.
- * Between the status and the lists: the CATALOGUE (#1681, [catalogueItems]): the declared torrent-catalogue dataset by category, plus
- * the user's own entries, each handed to the engine or to the user's torrent app.
+ * The Torrent destination (bottom nav, where Feed was), a DOWNLOAD MANAGER (#1790): add a magnet link or a .torrent web address
+ * (the one field takes either), or import a .torrent file, then every torrent with its progress, rates, ETA, seeds, peers and web
+ * seeds, Pause / Resume / Remove and the per-torrent seed switch, in two lists: Active, the download QUEUE in the order the torrents
+ * were added, each row numbered (downloading, fetching metadata, checking, queued, paused, errors), and Completed (finished: seeding
+ * or done), where each row OPENS its file and lists its files with an Open each. Pause all / Resume all act on the whole queue. The
+ * BitTorrent engine is libs:torrent; this page only polls [TorrentEngine.refresh] about once a second while it is shown (the engine's
+ * own ticker applies the seeding policy while it is not). The engine being unavailable, no network, an unusable folder and the
+ * session's last complaint about a torrent (tracker, web seed, file) are each said in words.
+ * #1790 the suggested-torrent list (the #1681 catalogue section) was removed from this page at the owner's order; the catalogue data,
+ * Search > Torrent's recommendations and Configs > Torrent's own entries are untouched.
  */
 @Composable
 fun TorrentPage() {
@@ -96,12 +113,6 @@ fun TorrentPage() {
     var magnet by remember { mutableStateOf("") }
     var note by remember { mutableStateOf<String?>(null) }
     var armed by remember { mutableStateOf<String?>(null) }
-    // #1681 the declared catalogue (runtime dataset shared/torrent-catalogue) + the user's own entries from Configs > Torrent.
-    var catalogue by remember { mutableStateOf(CatalogueView()) }
-    LaunchedEffect(Unit) {
-        val (c, served) = withContext(Dispatchers.IO) { runCatching { TorrentCatalogue.load(ctx) }.getOrDefault(TorrentCatalogue.EMPTY to false) }
-        catalogue = catalogue.copy(catalogue = c, served = served, loaded = true)
-    }
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) { torrents.start() }
         while (true) {
@@ -125,29 +136,36 @@ fun TorrentPage() {
             Column(verticalArrangement = Arrangement.spacedBy(gap)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(gap)) {
                     OutlinedTextField(magnet, { magnet = it }, Modifier.weight(1f).testTag(TorrentTags.MAGNET_FIELD), singleLine = true,
-                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = StoreDensity.T_BODY.sp), placeholder = { Text("magnet:?xt=urn:btih:…", fontSize = StoreDensity.T_CAPTION.sp) })
+                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = StoreDensity.T_BODY.sp), placeholder = { Text("magnet:?xt=urn:btih:… or https://…/file.torrent", fontSize = StoreDensity.T_CAPTION.sp) })
                     Button({
                         val m = magnet.trim()
                         if (m.isNotEmpty()) scope.launch {
-                            val r = withContext(Dispatchers.IO) { torrents.addMagnet(m) }
-                            note = r.sentence(); if (r.idOrNull != null) magnet = ""
+                            val (said, added) = withContext(Dispatchers.IO) { TorrentIntake.addLink(ctx, m) }
+                            note = said; if (added) magnet = ""
                         }
                     }, Modifier.testTag(TorrentTags.ADD)) { Text("Add", fontSize = StoreDensity.T_BODY.sp) }
                     Button({ pick.launch(TorrentIntake.PICK_TYPES) }, Modifier.testTag(TorrentTags.IMPORT)) {
                         Text("Import .torrent", fontSize = StoreDensity.T_BODY.sp)
                     }
                 }
-                note?.let { Text(it, fontSize = StoreDensity.T_CAPTION.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                note?.let { Text(it, Modifier.testTag(TorrentTags.NOTE), fontSize = StoreDensity.T_CAPTION.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 StatusLine(ctx, torrents, engineState, net, list)
             }
         }
-        catalogueItems(ctx, torrents, catalogue, { catalogue = it }, { note = it }, scope)
-        item { Heading("Active (${active.size})", TorrentTags.ACTIVE) }
-        if (active.isEmpty()) item { Dim("Nothing downloading. Paste a magnet link, import a .torrent, or search the Torrent sources in Search.") }
-        items(active, key = { it.id }) { t -> TorrentRow(torrents, t, armed, { armed = it }, scope) }
+        item {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(gap)) {
+                Box(Modifier.weight(1f)) { Heading("Active (${active.size})", TorrentTags.ACTIVE) }
+                if (active.isNotEmpty()) {
+                    OutlinedButton({ scope.launch(Dispatchers.IO) { torrents.pauseAll() } }, Modifier.testTag(TorrentTags.PAUSE_ALL)) { Text("Pause all", fontSize = StoreDensity.T_CAPTION.sp) }
+                    OutlinedButton({ scope.launch(Dispatchers.IO) { active.forEach { torrents.resume(it.id) } } }, Modifier.testTag(TorrentTags.RESUME_ALL)) { Text("Resume all", fontSize = StoreDensity.T_CAPTION.sp) }
+                }
+            }
+        }
+        if (active.isEmpty()) item { Dim("Nothing downloading. Paste a magnet link or a .torrent web address, import a .torrent, or search the Torrent sources in Search.") }
+        itemsIndexed(active, key = { _, t -> t.id }) { i, t -> TorrentRow(ctx, torrents, t, armed, { armed = it }, scope, queuePos = i + 1, onNote = { note = it }) }
         item { Heading("Completed (${done.size})", TorrentTags.COMPLETED) }
-        if (done.isEmpty()) item { Dim("Finished torrents appear here, seeding or done.") }
-        items(done, key = { it.id }) { t -> TorrentRow(torrents, t, armed, { armed = it }, scope) }
+        if (done.isEmpty()) item { Dim("Finished torrents appear here, seeding or done, each with Open and its files.") }
+        items(done, key = { it.id }) { t -> TorrentRow(ctx, torrents, t, armed, { armed = it }, scope, queuePos = 0, onNote = { note = it }) }
     }
 }
 
@@ -176,17 +194,24 @@ private fun StatusLine(ctx: Context, torrents: TorrentEngine, state: EngineState
 }
 
 @Composable
-private fun TorrentRow(torrents: TorrentEngine, t: TorrentStatus, armed: String?, arm: (String?) -> Unit, scope: kotlinx.coroutines.CoroutineScope) {
+private fun TorrentRow(ctx: Context, torrents: TorrentEngine, t: TorrentStatus, armed: String?, arm: (String?) -> Unit, scope: kotlinx.coroutines.CoroutineScope,
+    queuePos: Int, onNote: (String) -> Unit) {
     val bad = t.state == TorrentState.ERROR
     val h = StoreDensity.dpValue(StoreDensity.S12).dp
     val v = StoreDensity.dpValue(StoreDensity.S6).dp
     Column(Modifier.fillMaxWidth().testTag(TorrentTags.row(t.id)).background(Color(0xFF1C1C24)).padding(h, v), verticalArrangement = Arrangement.spacedBy(StoreDensity.dpValue(StoreDensity.S2).dp)) {
-        Text(t.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = StoreDensity.T_BODY.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(StoreDensity.dpValue(StoreDensity.S4).dp)) {
+            if (queuePos > 0) Text("#$queuePos", Modifier.testTag(TorrentTags.queue(t.id)), color = Color(0xFF90CDF4), fontWeight = FontWeight.Bold, fontSize = StoreDensity.T_BODY.sp)
+            Text(t.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = StoreDensity.T_BODY.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
         if (!t.finished) TorrentBar(t.progress)
         Text(TorrentFormat.line(t), fontSize = StoreDensity.T_CAPTION.sp, color = if (bad) Color(0xFFF56565) else Color(0x99FFFFFF))
         if (t.error != null) Text(t.error!!, fontSize = StoreDensity.T_CAPTION.sp, color = Color(0xFFF56565))
+        if (t.error == null && !t.finished && t.note != null) Text(t.note!!, Modifier.testTag(TorrentTags.note(t.id)), fontSize = StoreDensity.T_MICRO.sp, color = Color(0xFFF6AD55), maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(t.savePath, fontSize = StoreDensity.T_MICRO.sp, color = Color(0x66FFFFFF), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (t.finished) FinishedFiles(ctx, t, onNote)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(StoreDensity.dpValue(StoreDensity.S4).dp)) {
+            if (t.finished) Button({ onNote(TorrentOpen.open(ctx, t)) }, Modifier.testTag(TorrentTags.open(t.id))) { Text("Open", fontSize = StoreDensity.T_CAPTION.sp) }
             if (t.state == TorrentState.PAUSED || t.state == TorrentState.COMPLETED || t.state == TorrentState.ERROR)
                 Button({ scope.launch(Dispatchers.IO) { torrents.resume(t.id) } }, Modifier.testTag(TorrentTags.resume(t.id))) { Text(if (t.finished || t.state == TorrentState.COMPLETED) "Seed" else "Resume", fontSize = StoreDensity.T_CAPTION.sp) }
             else Button({ scope.launch(Dispatchers.IO) { torrents.pause(t.id) } }, Modifier.testTag(TorrentTags.pause(t.id))) { Text("Pause", fontSize = StoreDensity.T_CAPTION.sp) }
@@ -197,6 +222,22 @@ private fun TorrentRow(torrents: TorrentEngine, t: TorrentStatus, armed: String?
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                 Text("seed", fontSize = StoreDensity.T_CAPTION.sp, color = Color(0x99FFFFFF), modifier = Modifier.padding(end = StoreDensity.dpValue(StoreDensity.S4).dp))
                 Switch(t.seedEnabled, { on -> scope.launch(Dispatchers.IO) { torrents.setSeeding(t.id, on) } }, Modifier.testTag(TorrentTags.seed(t.id)))
+            }
+        }
+    }
+}
+
+/** #1790 a finished torrent's files on disk (path inside the torrent and size), each with Open. */
+@Composable
+private fun FinishedFiles(ctx: Context, t: TorrentStatus, onNote: (String) -> Unit) {
+    val files = remember(t.id, t.savePath, t.name) { TorrentOpen.files(t) }
+    Column(Modifier.fillMaxWidth().testTag(TorrentTags.files(t.id))) {
+        if (files.isEmpty()) Text("The downloaded files are not in ${t.savePath} any more.", fontSize = StoreDensity.T_MICRO.sp, color = Color(0xFFF6AD55))
+        files.forEachIndexed { i, f ->
+            Row(Modifier.fillMaxWidth().testTag(TorrentTags.file(t.id, i)), verticalAlignment = Alignment.CenterVertically) {
+                Text(f.relative, Modifier.weight(1f), fontSize = StoreDensity.T_MICRO.sp, color = Color(0xCCFFFFFF), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(TorrentFormat.bytes(f.file.length()), fontSize = StoreDensity.T_MICRO.sp, color = Color(0x99FFFFFF), modifier = Modifier.padding(horizontal = StoreDensity.dpValue(StoreDensity.S4).dp))
+                TextButton({ onNote(TorrentOpen.openFile(ctx, f.file)) }) { Text("Open", fontSize = StoreDensity.T_MICRO.sp) }
             }
         }
     }

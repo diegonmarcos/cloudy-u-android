@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #1790 TorrentOpen: the folders a finished torrent can sit in, shared read-only (one grant per Open) with the viewer the user
+     picks. Shared storage (Downloads/Cloudy-store/Torrent or any folder chosen in Configs > Torrent), the app's own fallback folder,
+     and other volumes (an SD card or USB drive at /storage/<id>). -->
+<paths>
+    <external-path name="shared" path="." />
+    <external-files-path name="app" path="." />
+    <files-path name="private" path="." />
+    <root-path name="volumes" path="storage" />
+</paths>
