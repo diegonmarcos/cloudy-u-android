@@ -643,6 +643,18 @@ export function useVault(decl: VaultDecl, storage: KeyValueStore) {
     [vault]
   );
 
+  // The native shell fires this when the app goes to the background (MainActivity / iOS view controller). #1717: the old home
+  // cache that used to listen is gone; the vault releases what it can rebuild: cached text of large notes that are not open
+  // in a tab (content search skips them until the index is rebuilt; open tabs and small notes keep their text).
+  useEffect(() => {
+    const onPressure = () => {
+      const open = new Set(tabStateRef.current.tabs.map(t => t.path));
+      for (const [p, t] of texts.current) if (t.length > 262144 && !open.has(p)) texts.current.delete(p);
+    };
+    window.addEventListener('cloud-notes:memory-pressure', onPressure);
+    return () => window.removeEventListener('cloud-notes:memory-pressure', onPressure);
+  }, []);
+
   const noteTexts = texts;
   const activeTab = tabs.find(t => t.path === active) ?? null;
 
