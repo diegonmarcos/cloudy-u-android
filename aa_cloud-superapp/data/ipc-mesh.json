@@ -409,6 +409,7 @@
       "interface": "IDecisionsEngine",
       "methods": [
        "call",
+       "image",
        "methods"
       ]
      }
@@ -815,7 +816,6 @@
      "account",
      "browser",
      "calc",
-     "canvas",
      "code",
      "keyboard",
      "lib-decisions-engine",
