@@ -5,12 +5,7 @@
   "pending": [
     "aa_cloud-superapp/app/build.gradle",
     "ab_cloud-libs-shared/keyboard-engines/app/build.gradle",
-    "ac_c3-morpheus/app/build.gradle",
-    "ac_c3-watchdog/app/build.gradle",
-    "ac_c3-watchtower/app/build.gradle",
     "ac_cloud-account/app/build.gradle",
-    "ac_cloud-browser/app/build.gradle",
-    "ac_cloud-c3/app/build.gradle",
     "ac_cloud-canvas/app/build.gradle",
     "ac_cloud-drive/app/build.gradle",
     "ac_cloud-keyboard/app/build.gradle",

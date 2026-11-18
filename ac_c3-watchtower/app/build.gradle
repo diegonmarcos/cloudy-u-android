@@ -15,18 +15,28 @@ def a = buildJson.android
 // Wall clock only moves forward and is identical for every workflow, runner and
 // trigger. COMMS_BUILD_TIMESTAMP is honoured when CI provides one so the code
 // matches the release tag; otherwise build time.
-def codeFinal = { ->
-    def base  = java.time.LocalDateTime.of(2026, 1, 1, 0, 0)
-    def built = java.time.LocalDateTime.now(java.time.ZoneOffset.UTC)
-    def stamp = System.getenv('COMMS_BUILD_TIMESTAMP')
+// #1783 P5: deterministic version. The SOURCE commit time (FLEET_SOURCE_TIME 'yyyyMMdd.HHmmss' UTC, else COMMS_BUILD_TIMESTAMP,
+// else the HEAD commit's committer time, else the wall clock for a local build): the same commit always builds the same code,
+// floored at 3462240 (1_cicd/src/data/version-floor.json, above every code published before) so an installed app is never offered a lower one.
+def fleetSourceTime = { ->
+    def fmt = java.time.format.DateTimeFormatter.ofPattern('yyyyMMdd.HHmmss')
+    def stamp = System.getenv('FLEET_SOURCE_TIME') ?: System.getenv('COMMS_BUILD_TIMESTAMP')
     if (stamp) {
-        try {
-            built = java.time.LocalDateTime.parse(stamp,
-                java.time.format.DateTimeFormatter.ofPattern('yyyyMMdd.HHmmss'))
-        } catch (ignored) { }
+        try { return java.time.LocalDateTime.parse(stamp, fmt) } catch (ignored) { }
     }
-    long mins = java.time.Duration.between(base, built).toMinutes()
-    return mins > 0 ? (int) (3000000L + mins) : 3000000
+    try {
+        def ct = providers.exec {
+            commandLine 'git', 'show', '-s', '--format=%ct', 'HEAD'
+            ignoreExitValue = true
+        }.standardOutput.asText.get().trim()
+        if (ct) return java.time.LocalDateTime.ofEpochSecond(Long.parseLong(ct), 0, java.time.ZoneOffset.UTC)
+    } catch (ignored) { }
+    return java.time.LocalDateTime.now(java.time.ZoneOffset.UTC)
+}()
+def codeFinal = { ->
+    def base = java.time.LocalDateTime.of(2026, 1, 1, 0, 0)
+    long mins = java.time.Duration.between(base, fleetSourceTime).toMinutes()
+    return (int) Math.max(3462240L, 3000000L + mins)
 }()
 
 // The whole analytics block travels to the app as ONE base64 blob, not as a
