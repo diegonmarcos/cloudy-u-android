@@ -82,13 +82,16 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
   };
   const uiVars = useMemo(() => uiCssVars(uiPrefs, uiDecl), [uiPrefs, uiDecl]);
 
+  const mounted = useRef(false);
+  mounted.current = api.vault !== null;
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
     const measure = () => {
       const isNarrow = el.clientWidth < decl.layout.wide_breakpoint_px;
       setNarrow(isNarrow);
-      if (isNarrow) { setLeftOpen(false); setRightOpen(false); }
+      // a narrow screen starts with the drawers closed, except while nothing is mounted: then the sidebar (Source) stays up
+      if (isNarrow) { if (mounted.current) setLeftOpen(false); setRightOpen(false); }
     };
     measure();
     const ro = new ResizeObserver(() => setNarrow(el.clientWidth < decl.layout.wide_breakpoint_px));
@@ -141,8 +144,8 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
       case 'toggle-left': return setLeftOpen(v => !v);
       case 'toggle-right': return setRightOpen(v => !v);
       case 'search-in-files': return showLeft('search');
-      case 'open-graph': return setSpecial('graph');
-      case 'vault-configs': return setSpecial('configs');
+      case 'open-graph': setSpecial('graph'); if (narrow) setLeftOpen(false); return;
+      case 'vault-configs': setSpecial('configs'); if (narrow) setLeftOpen(false); return;
       case 'toggle-hidden': return api.toggleHidden();
       case 'toggle-cdn': return tab && handler?.handler === 'html' ? api.patchTab(tab.path, { cdn: !tab.cdn }) : undefined;
       case 'reindex': return api.rebuildIndex();
@@ -158,7 +161,12 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
       case 'mode-view': return tab ? api.setMode(tab.path, 'view') : undefined;
       default: return undefined;
     }
-  }, [api, tab, toggleMode, showLeft, setPrefs, decl.limits.skip_dirs]);
+  }, [api, tab, toggleMode, showLeft, setPrefs, decl.limits.skip_dirs, narrow]);
+
+  // nothing mounted yet (a first launch): the sidebar opens on its Source section so the way in is on screen, not behind a button
+  useEffect(() => {
+    if (!api.vault) setLeftOpen(true);
+  }, [api.vault]);
 
   // the native top bar's Settings > Configs (and the command of the same name) open the Settings screen
   useEffect(() => {

@@ -204,7 +204,7 @@ def chk_K_keyboard_toolbar(f):
 
 def chk_G_vault_scene(f):
     w = read(f, 'walk')
-    return w.count('appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow') >= 2 and '"scene_theme_setup"' in w and '"name": "editor-toolbar"' in w
+    return w.count('appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow') >= 2 and '"scene_theme_setup"' in w and '"name": "vault-md-edit"' in w
 
 CHECKS = [
     ('T1 generated sheet and tokens equal data/obsidian-theme.json', chk_T_data_matches_generated,

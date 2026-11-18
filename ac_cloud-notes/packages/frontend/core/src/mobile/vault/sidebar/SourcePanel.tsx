@@ -74,7 +74,7 @@ export const SourcePanel = ({ api, decl, onMounted }: { api: VaultApi; decl: Vau
       <p className="cnv-dim" style={{ margin: '0 0 6px' }}>A folder on the phone, or a clone in the fleet store as <code>store:{decl.open.store.git_subdir}/&lt;repo&gt;</code>.</p>
       <div style={{ display: 'flex', gap: 6 }}>
         <input className="cnv-input" value={typed} onChange={e => setTyped(e.target.value)} aria-label="Vault path" data-testid="source-path-input" />
-        <button type="button" className="cnv-chip cnv-primary" disabled={api.busy} onClick={() => after(api.openTyped(typed))}>Open</button>
+        <button type="button" className="cnv-chip cnv-primary" disabled={api.busy} aria-label="Open typed path" data-testid="source-open-typed" onClick={() => after(api.openTyped(typed))}>Open</button>
       </div>
 
 
