@@ -146,7 +146,10 @@ jobs:
           print('<?xml version="1.0" encoding="utf-8" standalone="yes" ?><map>' + "".join('<boolean name="%s.enabled" value="false" />' % x["id"] for x in g) + "</map>")
           PY
           adb push groups.xml /data/local/tmp/notify_groups.xml
-          adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/notify_groups.xml shared_prefs/notify_groups.xml && rm -f shared_prefs/badge_customization.xml'" || echo "run-as failed"
+          # the app's own idle Screensaver (black cover, 10 s default) off for the run: launcher_settings.screensaver_timeout 0 = never
+          echo '<?xml version="1.0" encoding="utf-8" standalone="yes" ?><map><int name="screensaver_timeout" value="0" /></map>' > ls.xml
+          adb push ls.xml /data/local/tmp/launcher_settings.xml
+          adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/notify_groups.xml shared_prefs/notify_groups.xml && cp /data/local/tmp/launcher_settings.xml shared_prefs/launcher_settings.xml && rm -f shared_prefs/badge_customization.xml'" || echo "run-as failed"
           adb shell am start -W -n "$ACT" >/dev/null; sleep 25; awake
           p0=$(posted start); n0=$(in_shade "$p0"); echo "start: $p0"
           [ "$n0" -ge 3 ] && check ok "0 stale group switches OFF, badge switches ON: $n0 badge channels in the shade ($p0)" || check no "0 stale group switches: only $n0 badge channels in the shade ($p0)"
