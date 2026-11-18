@@ -1,5 +1,6 @@
 package app.sterna.ui.components
 
+import app.sterna.send.delivery.DeliveryTimeline
 import android.widget.Toast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -152,7 +153,7 @@ internal fun GmailEmailRow(
     onOpenAttachment: ((EmailBodyPart) -> Unit)?,
     openingAttachmentKey: String?,
     onLoadMessage: (suspend (Email) -> Email)?,
-    deliveryTimeline: app.sterna.send.delivery.DeliveryTimeline? = null,
+    deliveryTimeline: DeliveryTimeline? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     val palette = LocalMailListPalette.current

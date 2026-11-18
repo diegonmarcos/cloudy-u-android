@@ -1,5 +1,6 @@
 package app.sterna.ui.components
 
+import app.sterna.send.delivery.DeliveryTimeline
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -190,7 +191,7 @@ fun EmailListItem(
     onLoadMessage: (suspend (Email) -> Email)? = null,
     // #1802: a SENT message's four delivery marks, drawn right after the time. Null (every other
     // folder, and a Sent row with no record yet bound) draws nothing: the row is unchanged.
-    deliveryTimeline: app.sterna.send.delivery.DeliveryTimeline? = null,
+    deliveryTimeline: DeliveryTimeline? = null,
 ) {
     // Gmail Dark draws Gmail's own conversation row (GmailEmailRow.kt), handed every parameter as it
     // came; Cloud Dark and Cloud E-ink go on below, unchanged.
