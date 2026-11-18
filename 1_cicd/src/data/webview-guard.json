@@ -12,6 +12,7 @@
   ],
   "pending": [],
   "usages": [
+    {"app": "Cloud Wiki", "usage": "Chronos pages: the lib-chronos simulators baked offline (assets/chronos, pinned by tools/chronos-pin.json), served by WebViewAssetLoader on the asset origin only, every other request answered 403 (#1789)", "profile": "APP_PAGE", "file": "ac_cloud-wiki/app/src/main/java/com/diegonmarcos/cloudwiki/ui/ChronosPage.kt"},
     {"app": "Cloud Canvas", "usage": "Draw > Board: the fleet's tldraw whiteboard vendored offline (assets/board, WebViewAssetLoader + tldraw CDN answered from the APK), boards saved through a main-frame-only web message listener (#1787)", "profile": "APP_PAGE", "file": "ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt"},
   {
    "app": "Cloud C3 Webserver",

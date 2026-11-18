@@ -42,6 +42,10 @@ object Tags {
     const val RESULTS = "wiki_results"
     const val GRAPH = "wiki_graph"
     const val LOADING = "wiki_loading"
+    /** #1789 a Chronos page: the column, its child-page tabs and the web view. */
+    const val CHRONOS = "wiki_chronos"
+    const val CHRONOS_TABS = "wiki_chronos_tabs"
+    const val CHRONOS_WEB = "wiki_chronos_web"
     fun chip(tag: String): String = "wiki_chip:$tag"
     fun result(id: String): String = "wiki_result:$id"
 }
@@ -50,7 +54,9 @@ object Tags {
  * The shell: the shared first row (Profile opens Cloud Account, the gear opens the fleet's Configs General | Perms | About) over ONE collapsed left
  * side menu for every page (libs:ui-nav-bars NavSectionLayout over the `wiki` section, vertical_side_menu, four groups). There is NO bottom nav.
  * Which topics and groups exist is build.json::ui, read through [Decl.nav]; a topic's subpage tabs, the pages and the tags are the runtime dataset
- * wiki (served by Cloud Store), drawn by [WikiPage].
+ * wiki (served by Cloud Store), drawn by [WikiPage]. #1789 the Chronos pages of diegonmarcos/lib-chronos are declared as nested pages under
+ * Chronos (build.json::ui, the repo's own hierarchy, indented in the side menu and listed in the title dropdown): picking one shows it
+ * in a web view, baked into the APK ([Decl.chronos], [ChronosSimPage]).
  */
 @Composable
 fun WikiShell(start: WikiStart = WikiStart()) {
@@ -66,7 +72,8 @@ fun WikiShell(start: WikiStart = WikiStart()) {
             .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout).union(WindowInsets.navigationBars)),
     ) {
         NavBarTopFirstRowScaffold(
-            title = wiki.pages.firstOrNull { it.id == pageId }?.label ?: stringResource(R.string.app_name),
+            // a nested page (a Chronos page) titles itself like a topic: its declared label
+            title = wiki.allPages().firstOrNull { it.id == pageId }?.label ?: stringResource(R.string.app_name),
             hierarchy = titleHierarchy(wiki, pageId),
             // #1483 every declared section is a peer in the title dropdown: a user reaches every page from it
             sections = Decl.nav.sections,

@@ -8,7 +8,7 @@
   },
   "name": "cloud-wiki",
   "display_name": "Cloud Wiki",
-  "description": "Cloud Wiki (#1778): a small encyclopedia of Markdown pages. No bottom nav: a collapsed left side menu (libs:ui-nav-bars vertical_side_menu) holds the topics in four groups, Sciences (Math, Computer Science, Physics, Astronomy, Engineering, Medicine), Humanities (Anthropology, Human Belief Systems, Chronos), Arts (Art, Theater, Music, Movies) and Explore (Graph), and each topic has its subpages as top tabs after an Overview tab (Engineering: one subpage per major field). A page is a short, neutral, educational Markdown explanation with tag chips; tapping a chip filters every page by that tag. Graph is an Obsidian-style force-directed graph (libs:graph-view, shared with Cloud Notes) joining pages by their [[links]] and shared tags, with pan, zoom and tap to open. The content is the runtime dataset wiki (data/fleet/app/com.diegonmarcos.cloudwiki/wiki.json) served by Cloud Store, never an APK asset. Configs are the fleet's General | Perms | About. Declares no network permission of its own.",
+  "description": "Cloud Wiki (#1778): a small encyclopedia of Markdown pages. No bottom nav: a collapsed left side menu (libs:ui-nav-bars vertical_side_menu) holds the topics in four groups, Sciences (Math, Computer Science, Physics, Astronomy, Engineering, Medicine), Humanities (Anthropology, Human Belief Systems, Chronos), Arts (Art, Theater, Music, Movies) and Explore (Graph), and each topic has its subpages as top tabs after an Overview tab (Engineering: one subpage per major field). A page is a short, neutral, educational Markdown explanation with tag chips; tapping a chip filters every page by that tag. Graph is an Obsidian-style force-directed graph (libs:graph-view, shared with Cloud Notes) joining pages by their [[links]] and shared tags, with pan, zoom and tap to open. The content is the runtime dataset wiki (data/fleet/app/com.diegonmarcos.cloudwiki/wiki.json) served by Cloud Store, never an APK asset. Configs are the fleet's General | Perms | About. Declares no network permission of its own. #1789 Chronos also holds the interactive simulators of diegonmarcos/lib-chronos: one nested page per Chronos page of the repo, in its hierarchy and with its titles, shown in the fleet web view (libs:web-core, APP_PAGE) and served offline from APK assets (assets/chronos, WebViewAssetLoader on the asset origin; every other request is answered 403). They are baked at build time from a pinned commit (tools/chronos-pin.json, tools/regen-chronos.py, drift-checked by test/test-chronos.sh), the one exception to the runtime dataset.",
   "category": "android",
   "android": {
     "application_id": "com.diegonmarcos.cloudwiki",
@@ -121,7 +121,8 @@
         "libs:fleetconfigs-xray",
         "libs:theme-background",
         "libs:ui-kit",
-        "libs:graph-view"
+        "libs:graph-view",
+        "libs:web-core"
       ]
     },
     "libs:core": {
@@ -193,6 +194,11 @@
       "dir": "../ab_cloud-libs-shared/libs/graph-view",
       "type": "library",
       "_doc": "#1778 the Obsidian-style graph (model, force layout, Compose canvas), shared BY REFERENCE so Cloud Notes can draw the same graph."
+    },
+    "libs:web-core": {
+      "_doc": "#1789 THE embedded web view (CloudWeb.create(ctx, WebProfile.APP_PAGE), render-process recovery, WebViewAssetLoader) for the Chronos pages baked from diegonmarcos/lib-chronos, shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/web-core",
+      "type": "library"
     }
   },
   "tests": {
@@ -200,17 +206,20 @@
     "shell": {
       "dir": "test",
       "requires": [
-        "python3"
-      ]
+        "python3",
+        "git",
+        "curl"
+      ],
+      "_doc": "test-wiki-app.sh, test-fleet-setup.sh and test-chronos.sh (#1789: the Chronos tree guard, the vendored hashes, the drift check against lib-chronos at the pin, which needs the network)."
     },
     "unit": {
-      "_doc": "This app's JVM suite in app/src/test: the dataset against the declared topics, tags and the tag filter, the Markdown blocks, the graph edges built from links and shared tags, and the force layout.",
+      "_doc": "This app's JVM suite in app/src/test: the dataset against the declared topics, tags and the tag filter, the Markdown blocks, the graph edges built from links and shared tags, and the force layout. ChronosTest: the nested Chronos declaration as the app reads it, the asset-origin paths both ways, every declared asset in the APK assets and each label its page's title.",
       "task": ":app:testDebugUnitTest",
       "enabled": true
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Wiki. ui.bottom_nav is EMPTY: the app has no bottom nav (owner request, declared in nav-shape.json::no_bottom). The pages are the ONE section `wiki`, default_section, drawn in vertical_side_menu mode (the collapsed rail; libs:ui-nav-bars NavSectionLayout) with four groups. Each topic page has its subpages as top tabs (the runtime dataset wiki.json, topics[id].pages), after an Overview tab; the Graph page draws every page as a node. test-wiki-app.sh holds the topic ids in step with the dataset both ways.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Wiki. ui.bottom_nav is EMPTY: the app has no bottom nav (owner request, declared in nav-shape.json::no_bottom). The pages are the ONE section `wiki`, default_section, drawn in vertical_side_menu mode (the collapsed rail; libs:ui-nav-bars NavSectionLayout) with four groups. Each topic page has its subpages as top tabs (the runtime dataset wiki.json, topics[id].pages), after an Overview tab; the Graph page draws every page as a node. test-wiki-app.sh holds the topic ids in step with the dataset both ways. #1789 the Chronos page holds NESTED pages (written by tools/regen-chronos.py from lib-chronos at the pin, never typed): one per index.html of the repo's Chronos/ tree, in its hierarchy, label = the page's <title>, `asset` = its file under assets/chronos (Decl.chronos reads it; NavDecl ignores the key). The side menu indents them under Chronos and the title dropdown lists them, so the nav walk covers them; test-chronos.sh C1 holds the declaration equal to the baked tree.",
     "bottom_nav": [],
     "default_section": "wiki",
     "configs_ui": [
@@ -266,7 +275,61 @@
           {
             "id": "chronos",
             "label": "Chronos",
-            "icon": "timeline"
+            "icon": "timeline",
+            "pages": [
+              {
+                "id": "chronos.lib",
+                "label": "Chronos - Cycles Across Scales",
+                "icon": "timeline",
+                "asset": "Chronos/index.html",
+                "pages": [
+                  {
+                    "id": "chronos.lib.0",
+                    "label": "Humansphere - Circadian - Chronos",
+                    "icon": "bedtime",
+                    "asset": "Chronos/0.Humansphere-Circadian/index.html"
+                  },
+                  {
+                    "id": "chronos.lib.1",
+                    "label": "Earthsphere - Cycles - Chronos",
+                    "icon": "public",
+                    "asset": "Chronos/1.Earthsphere-Cycles/index.html"
+                  },
+                  {
+                    "id": "chronos.lib.2",
+                    "label": "Milkwaysphere - Orbits - Chronos",
+                    "icon": "language",
+                    "asset": "Chronos/2.Milkwaysphere-Orbits/index.html"
+                  },
+                  {
+                    "id": "chronos.lib.3",
+                    "label": "Quantum Cycles - Chronos",
+                    "icon": "hub",
+                    "asset": "Chronos/3.Quantum-Cycles/index.html",
+                    "pages": [
+                      {
+                        "id": "chronos.lib.3.0",
+                        "label": "Decoherence Cycle - ( Cells repair & Memory) - Quantum Mechanics",
+                        "icon": "schedule",
+                        "asset": "Chronos/3.Quantum-Cycles/3.0.Quantum-Decoherence-Cycle/index.html"
+                      },
+                      {
+                        "id": "chronos.lib.3.1",
+                        "label": "Black Hole Cycle (Birth & Death) - Quantum Gravity",
+                        "icon": "rocket_launch",
+                        "asset": "Chronos/3.Quantum-Cycles/3.1.Quantum-Gravity-Cycle/index.html"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "chronos.lib.4",
+                    "label": "Celestial Alignments | 3-Tier System",
+                    "icon": "auto_awesome",
+                    "asset": "Chronos/4.Astronomy-Astrological-sphere/index.html"
+                  }
+                ]
+              }
+            ]
           },
           {
             "id": "art",
@@ -367,13 +430,14 @@
     },
     "about": {
       "tagline": "A small encyclopedia with a graph",
-      "description": "Cloud Wiki is a small encyclopedia of short, neutral, educational pages in thirteen topics. A collapsed side menu groups the topics, each topic has its subpages as top tabs, every page carries tag chips that filter the whole wiki, and the Graph page joins pages by their links and shared tags. The pages are served at runtime by Cloud Store; nothing is baked into the app.",
+      "description": "Cloud Wiki is a small encyclopedia of short, neutral, educational pages in thirteen topics. A collapsed side menu groups the topics, each topic has its subpages as top tabs, every page carries tag chips that filter the whole wiki, and the Graph page joins pages by their links and shared tags. The pages are served at runtime by Cloud Store; nothing else is baked into the app but the Chronos simulators, which run offline from the app's own copy of the lib-chronos repository.",
       "features": [
         "Sciences: Math, Computer Science, Physics, Astronomy, Engineering, Medicine",
         "Humanities: Anthropology, Human Belief Systems, Chronos",
         "Arts: Art, Theater, Music, Movies",
         "Tag chips that filter every page",
-        "Graph: force-directed, pan, zoom, tap to open"
+        "Graph: force-directed, pan, zoom, tap to open",
+        "Chronos simulators: every page of the lib-chronos repository, interactive, offline, in its own hierarchy"
       ],
       "screens": [
         {
@@ -387,12 +451,17 @@
         {
           "name": "Graph",
           "what": "Pages as nodes, joined by links and shared tags."
+        },
+        {
+          "name": "Chronos simulator",
+          "what": "A lib-chronos page in a web view, its sub-pages as tabs; links inside it move the menu along."
         }
       ],
       "guide": [
         "Open the side menu for a topic.",
         "Pick a subpage tab at the top.",
-        "Tap a tag chip to filter, a node in the graph to open its page."
+        "Tap a tag chip to filter, a node in the graph to open its page.",
+        "Open Chronos in the side menu, then a simulator below it."
       ],
       "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. The pages are read from Cloud Store's local data provider; the app contacts no server itself.",
       "backends": [],

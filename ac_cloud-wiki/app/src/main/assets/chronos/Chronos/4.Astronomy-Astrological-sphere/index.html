@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Celestial Alignments | 3-Tier System</title>
+  <script src="/chronos/_vendor/tailwindcss/3.4.17/tailwind.js"></script>
+  <link rel="stylesheet" href="/chronos/_vendor/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('/chronos/_vendor/fonts/cinzel_inter_jetbrains-mono.css');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #06080d;
+      color: #e2e8f0;
+    }
+    .font-cinzel { font-family: 'Cinzel', serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    
+    /* Glow highlights */
+    .glow-cyan { box-shadow: 0 0 35px -10px rgba(6, 182, 212, 0.4); }
+    .glow-mars { box-shadow: 0 0 35px -10px rgba(239, 68, 68, 0.4); }
+    .glow-purple { box-shadow: 0 0 35px -10px rgba(168, 85, 247, 0.4); }
+    .glow-gold { box-shadow: 0 0 35px -10px rgba(245, 158, 11, 0.4); }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    /* Page transition */
+    .page-section {
+      display: none;
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+    .page-section.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Sidebar collapse transitions */
+    .sidebar-collapsed {
+      width: 5rem !important;
+    }
+    .sidebar-collapsed .sidebar-text {
+      opacity: 0;
+      width: 0;
+      display: none;
+    }
+    .sidebar-collapsed #sidebar-icon {
+      transform: rotate(180deg);
+    }
+  </style>
+</head>
+<body class="bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDYwODBkIj48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDBMMCA0TDEgNEwxIDBaIiBmaWxsPSIjMGIxMDFhIj48L3BhdGg+Cjwvc3ZnPg==')] text-slate-200 h-screen overflow-hidden flex flex-col md:flex-row bg-[#06080d]">
+
+  <!-- Mobile Header -->
+  <header class="md:hidden border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl flex items-center px-4 py-3 shrink-0 z-40 gap-4">
+    <button onclick="toggleSidebarMobile()" class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 flex items-center justify-center hover:bg-slate-800 transition shrink-0">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-slate-700 to-slate-900 border border-slate-700 flex items-center justify-center text-white shadow-lg">
+        <i class="fa-solid fa-layer-group text-xs"></i>
+      </div>
+      <h1 class="font-cinzel font-bold text-sm text-slate-100 tracking-wider">CELESTIAL TIERS</h1>
+    </div>
+  </header>
+
+  <!-- Left Sidebar Navigation -->
+  <aside id="sidebar" class="absolute md:relative z-50 w-64 md:w-72 h-full shrink-0 border-r border-slate-800/80 bg-slate-950/95 backdrop-blur-xl flex flex-col transition-all duration-300 -translate-x-full md:translate-x-0">
+    
+    <!-- Top Header / Logo -->
+    <div class="p-4 border-b border-slate-800/80 flex items-center justify-between min-h-[73px]">
+      <div class="flex items-center gap-3 sidebar-text overflow-hidden whitespace-nowrap">
+        <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-slate-700 to-slate-900 border border-slate-700 flex items-center justify-center text-white shadow-lg">
+          <i class="fa-solid fa-layer-group text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-cinzel font-bold text-lg text-slate-100 tracking-wider">CELESTIAL</h1>
+          <p class="text-[9px] text-slate-400 font-mono uppercase tracking-widest">Alignment System</p>
+        </div>
+      </div>
+      <!-- Desktop Collapse Toggle -->
+      <button onclick="toggleSidebar()" class="hidden md:flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 border border-slate-700 text-slate-400 hover:text-white shrink-0 absolute -right-3.5 top-5 shadow-lg transition-colors hover:bg-slate-800 z-50">
+        <i class="fa-solid fa-chevron-left text-[10px] transition-transform duration-300" id="sidebar-icon"></i>
+      </button>
+      <!-- Mobile Close Toggle -->
+      <button onclick="toggleSidebarMobile()" class="md:hidden items-center justify-center w-8 h-8 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-white flex shrink-0">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+    </div>
+    
+    <!-- Navigation Links -->
+    <nav class="flex-1 overflow-y-auto p-4 flex flex-col gap-2.5 hide-scrollbar">
+      <button onclick="switchPage('page-moon')" id="nav-moon" class="nav-btn flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-cyan-900/40 text-cyan-300 border border-cyan-500/50 glow-cyan group overflow-hidden">
+        <i class="fa-solid fa-moon w-6 text-center shrink-0 transition-transform group-hover:scale-110"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Moon - 27.3 days</span>
+      </button>
+
+      <button class="flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900/30 text-slate-500 border border-slate-800/30 cursor-not-allowed group overflow-hidden" title="Coming Soon">
+        <i class="fa-solid fa-wind w-6 text-center shrink-0"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Mercury - 88 days</span>
+      </button>
+      
+      <button onclick="switchPage('page-venus')" id="nav-venus" class="nav-btn flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800 group overflow-hidden">
+        <i class="fa-solid fa-venus w-6 text-center shrink-0 transition-transform group-hover:scale-110"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Venus - 225 days</span>
+      </button>
+      
+      <button onclick="switchPage('page-mars')" id="nav-mars" class="nav-btn flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800 group overflow-hidden">
+        <i class="fa-solid fa-fire w-6 text-center shrink-0 transition-transform group-hover:scale-110"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Mars - 2 years</span>
+      </button>
+
+      <!-- Additional Planetary Synodic Cycles (Placeholders) -->
+      <button class="flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900/30 text-slate-500 border border-slate-800/30 cursor-not-allowed group overflow-hidden" title="Coming Soon">
+        <i class="fa-solid fa-bolt w-6 text-center shrink-0"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Jupiter - 12 years</span>
+      </button>
+      <button class="flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900/30 text-slate-500 border border-slate-800/30 cursor-not-allowed group overflow-hidden" title="Coming Soon">
+        <i class="fa-solid fa-ring w-6 text-center shrink-0"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Saturn - 29.5 years</span>
+      </button>
+      <button class="flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900/30 text-slate-500 border border-slate-800/30 cursor-not-allowed group overflow-hidden" title="Coming Soon">
+        <i class="fa-solid fa-satellite w-6 text-center shrink-0"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Uranus - 84 years</span>
+      </button>
+      <button class="flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900/30 text-slate-500 border border-slate-800/30 cursor-not-allowed group overflow-hidden" title="Coming Soon">
+        <i class="fa-solid fa-water w-6 text-center shrink-0"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Neptune - 165 years</span>
+      </button>
+      <button class="flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900/30 text-slate-500 border border-slate-800/30 cursor-not-allowed group overflow-hidden" title="Coming Soon">
+        <i class="fa-solid fa-snowflake w-6 text-center shrink-0"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Pluto - 248 years</span>
+      </button>
+      
+      <button onclick="switchPage('page-jupiter')" id="nav-jupiter" class="nav-btn flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800 group overflow-hidden mt-2">
+        <i class="fa-solid fa-hourglass-half w-6 text-center shrink-0 transition-transform group-hover:scale-110"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Jupiter-Saturn - 20 years</span>
+      </button>
+      
+      <div class="h-px bg-slate-800/80 my-2 shrink-0"></div>
+      
+      <button onclick="switchPage('page-all')" id="nav-all" class="nav-btn flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800 group overflow-hidden">
+        <i class="fa-solid fa-calendar-days w-6 text-center shrink-0 transition-transform group-hover:scale-110"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Master Calendar</span>
+      </button>
+
+      <button onclick="switchPage('page-cycles')" id="nav-cycles" class="nav-btn flex items-center w-full px-4 py-3 rounded-xl text-sm font-mono font-medium transition bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800 group overflow-hidden mt-2">
+        <i class="fa-solid fa-rotate w-6 text-center shrink-0 transition-transform group-hover:scale-110 text-slate-400"></i> 
+        <span class="sidebar-text whitespace-nowrap ml-3 transition-opacity">Planetary Cycles</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Mobile Overlay Backdrop -->
+  <div id="mobile-overlay" onclick="toggleSidebarMobile()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden md:hidden"></div>
+
+  <!-- Main Content Area -->
+  <div class="flex-1 flex flex-col relative overflow-hidden h-full">
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+      <div class="max-w-6xl mx-auto">
+        <!-- ========================================== -->
+        <!-- PAGE 1: EARTH - MOON - SUN (Tier 1)        -->
+        <section id="page-moon" class="page-section active space-y-8">
+          
+          <div class="text-center max-w-3xl mx-auto mb-8">
+            <h2 class="font-cinzel text-3xl md:text-4xl font-bold text-cyan-400 mb-4">Lunar Cadence (29.5 Days)</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Quarter Moon Diagram -->
+            <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex flex-col items-center text-center hover:border-cyan-500/30 transition">
+              <h3 class="font-cinzel text-xl text-slate-200 mb-1">Quarter Moon</h3>
+              <span class="text-xs font-mono text-cyan-500 mb-6">Square (90°)</span>
+              <div class="w-full h-40 bg-slate-950 rounded-xl flex items-center justify-center border border-slate-800/80 mb-6 relative overflow-hidden">
+                <svg class="w-full h-full" viewBox="0 0 300 120">
+              </g>
+              <!-- Moon -->
+              <g transform="translate(240, 25)">
+                <path d="M 0,-12 A 12,12 0 0,0 0,12 Z" fill="#e2e8f0"/>
+                <path d="M 0,-12 A 12,12 0 0,1 0,12 Z" fill="#0f172a"/>
+                <circle r="12" fill="none" stroke="#475569" stroke-width="1"/>
+                <text x="-20" y="3" text-anchor="end" fill="#94a3b8" font-size="10" font-family="sans-serif">Half Lit</text>
+              </g>
+            </svg>
+          </div>
+          <p class="text-xs text-slate-400 font-mono leading-relaxed">
+            The Moon forms a 90° square aspect to the Earth-Sun line. We see exactly half of the lunar disc illuminated. Represents astrological tension and turning points.
+          </p>
+        </div>
+
+        <!-- Full Moon Diagram -->
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex flex-col items-center text-center hover:border-cyan-500/30 transition">
+          <h3 class="font-cinzel text-xl text-slate-200 mb-1">Full Moon</h3>
+          <span class="text-xs font-mono text-cyan-500 mb-6">Opposition (180°) • Sun-Earth-Moon</span>
+          
+          <div class="w-full h-40 bg-slate-950 rounded-xl flex items-center justify-center border border-slate-800/80 mb-6 relative overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 300 120">
+              <line x1="20" y1="60" x2="280" y2="60" stroke="#1e293b" stroke-width="1" stroke-dasharray="4,4" />
+              <!-- Sun -->
+              <g transform="translate(50, 60)">
+                <circle r="30" fill="url(#sunGlow)"/>
+                <circle r="20" fill="#fbbf24"/>
+                <text y="35" text-anchor="middle" fill="#fcd34d" font-size="10" font-family="sans-serif">Sun</text>
+              </g>
+              <!-- Earth -->
+              <g transform="translate(150, 60)">
+                <circle r="16" fill="#0ea5e9"/>
+                <text y="30" text-anchor="middle" fill="#7dd3fc" font-size="10" font-family="sans-serif">Earth</text>
+              </g>
+              <!-- Moon -->
+              <g transform="translate(250, 60)">
+                <circle r="12" fill="#f8fafc" class="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"/>
+                <text y="-20" text-anchor="middle" fill="#f1f5f9" font-size="10" font-family="sans-serif">Moon (Bright)</text>
+              </g>
+            </svg>
+          </div>
+          <p class="text-xs text-slate-400 font-mono leading-relaxed">
+            Earth sits directly between the Sun and the Moon. Looking away from the Sun reveals the fully illuminated lunar surface. Peak culmination and revelation.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Eclipse Section -->
+      <div class="mt-8 bg-slate-950 border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-900/20 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        <h3 class="font-cinzel text-xl text-slate-200 mb-2">Eclipses: The Nodal Alignments</h3>
+        <p class="text-sm text-slate-400 font-mono max-w-3xl mb-4">
+          A New or Full Moon does not always cause an eclipse due to the Moon's 5° orbital tilt. An eclipse only occurs when the alignment happens exactly on the <strong>Lunar Nodes</strong> (where the orbital planes intersect).
+        </p>
+        <div class="flex gap-4">
+          <span class="px-3 py-1 bg-cyan-900/30 border border-cyan-700/50 text-cyan-300 text-xs font-mono rounded-lg">New Moon + Node = Solar Eclipse</span>
+          <span class="px-3 py-1 bg-indigo-900/30 border border-indigo-700/50 text-indigo-300 text-xs font-mono rounded-lg">Full Moon + Node = Lunar Eclipse</span>
+        </div>
+      </div>
+
+      <!-- Lunar Cycle Calendar (Restored) -->
+      <div class="mt-12 border-t border-slate-800/80 pt-10">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+          <div>
+            <h3 class="font-cinzel text-2xl text-cyan-400 font-bold">2026 Earth–Moon–Sun Almanac</h3>
+            <p class="text-xs text-slate-400 font-mono mt-1">Key Lunar phases and alignments across the zodiac.</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/70 shadow-2xl">
+          <table class="w-full text-left text-xs font-mono min-w-[760px]">
+            <thead class="text-slate-300 bg-slate-900/90 border-b border-slate-800 uppercase tracking-wider text-[11px]">
+              <tr>
+                <th class="p-3.5 pl-4">Date (UTC)</th>
+                <th class="p-3.5">Event</th>
+                <th class="p-3.5">Sun Sign</th>
+                <th class="p-3.5">Moon Sign</th>
+                <th class="p-3.5">Visual Symbolism</th>
+                <th class="p-3.5 pr-4">Meaning / Phrase</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-slate-300">
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-cyan-300 whitespace-nowrap">Jan 3, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-200 text-slate-900 font-bold">Full Moon</span></td>
+                <td class="p-3.5 text-amber-300">Capricorn</td>
+                <td class="p-3.5 text-cyan-100">Cancer</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A stone mountain peak illuminated over calm ocean tides</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Balancing professional ambition with domestic comfort and emotional roots.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-400 whitespace-nowrap">Jan 18, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-600 font-bold">New Moon</span></td>
+                <td class="p-3.5 text-amber-300">Capricorn</td>
+                <td class="p-3.5 text-slate-400">Capricorn</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A solitary tree taking deep root into rocky soil</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Laying deliberate, disciplined foundations for long-term mastery.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-cyan-300 whitespace-nowrap">Feb 1, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-200 text-slate-900 font-bold">Full Moon</span></td>
+                <td class="p-3.5 text-amber-300">Aquarius</td>
+                <td class="p-3.5 text-cyan-100">Leo</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A spotlight glowing brightly over an open crowd</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Reconciling personal creative pride with collective community belonging.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-indigo-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-indigo-300 whitespace-nowrap">Feb 17, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-indigo-900 border border-indigo-500/50 text-indigo-200 font-bold">New Moon (Solar Eclipse)</span></td>
+                <td class="p-3.5 text-amber-300">Aquarius</td>
+                <td class="p-3.5 text-indigo-300">Aquarius</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A glowing circuit pattern dissolving into a starry sky</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Planting radical seeds for social reform, innovation, and individuality.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-indigo-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-indigo-300 whitespace-nowrap">Mar 3, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-indigo-900 border border-indigo-500/50 text-indigo-200 font-bold">Full Moon (Lunar Eclipse)</span></td>
+                <td class="p-3.5 text-amber-300">Pisces</td>
+                <td class="p-3.5 text-indigo-300">Virgo</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">Precision clockwork resting inside flowing misty water</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Harmonizing practical analytical routines with intuitive, spiritual surrender.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- NEW PAGE: EARTH - VENUS - SUN              -->
+    <!-- ========================================== -->
+    <section id="page-venus" class="page-section space-y-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-10">
+        <h2 class="font-cinzel text-3xl md:text-4xl font-bold text-emerald-400 mb-4">The Venusian Rose Cycle</h2>
+        <p class="text-slate-400 font-mono text-sm leading-relaxed">
+          The 584-day (19.2 month) synodic alignment between Earth, Venus, and the Sun. As an interior planet, Venus never forms an opposition (180°) to the Sun; instead, it alternates between an <strong>Inferior Conjunction</strong> (between Earth and Sun) and a <strong>Superior Conjunction</strong> (behind the Sun), forming a 5-petaled pentagram over an 8-year span.
+        </p>
+      </div>
+
+      <!-- Drawings of each cycle phase -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Inferior Conjunction Diagram -->
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex flex-col items-center text-center hover:border-emerald-500/30 transition">
+          <h3 class="font-cinzel text-xl text-slate-200 mb-1">Inferior Conjunction ("New Venus")</h3>
+          <span class="text-xs font-mono text-emerald-400 mb-6">Alignment: Sun — Venus — Earth • Retrograde Cazimi</span>
+          
+          <div class="w-full h-44 bg-slate-950 rounded-xl flex items-center justify-center border border-slate-800/80 mb-6 relative overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 320 120">
+              <line x1="20" y1="60" x2="300" y2="60" stroke="#1e293b" stroke-width="1" stroke-dasharray="4,4" />
+              <!-- Sun -->
+              <g transform="translate(60, 60)">
+                <circle r="30" fill="url(#sunGlow)"/>
+                <circle r="20" fill="#fbbf24"/>
+                <text y="35" text-anchor="middle" fill="#fcd34d" font-size="10" font-family="sans-serif">Sun ☉</text>
+              </g>
+              <!-- Venus (Inferior / Close to Earth) -->
+              <g transform="translate(170, 60)">
+                <circle r="14" fill="#10b981" class="drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]"/>
+                <text y="-20" text-anchor="middle" fill="#6ee7b7" font-size="10" font-family="sans-serif">Venus ♀ (Closest / Rx)</text>
+              </g>
+              <!-- Earth -->
+              <g transform="translate(260, 60)">
+                <circle r="16" fill="#0ea5e9"/>
+                <text y="30" text-anchor="middle" fill="#7dd3fc" font-size="10" font-family="sans-serif">Earth ♁</text>
+              </g>
+            </svg>
+          </div>
+          <p class="text-xs text-slate-400 font-mono leading-relaxed">
+            Venus passes directly between Earth and the Sun during the peak of its retrograde cycle. Closest point to Earth. Transits from the <strong>Evening Star (Hesperus)</strong> to the <strong>Morning Star (Lucifer)</strong>. Symbolic heart-reset and value purge.
+          </p>
+        </div>
+
+        <!-- Superior Conjunction Diagram -->
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex flex-col items-center text-center hover:border-emerald-500/30 transition">
+          <h3 class="font-cinzel text-xl text-slate-200 mb-1">Superior Conjunction ("Full Venus")</h3>
+          <span class="text-xs font-mono text-emerald-400 mb-6">Alignment: Venus — Sun — Earth • Direct Motion Apex</span>
+          
+          <div class="w-full h-44 bg-slate-950 rounded-xl flex items-center justify-center border border-slate-800/80 mb-6 relative overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 320 120">
+              <line x1="20" y1="60" x2="300" y2="60" stroke="#1e293b" stroke-width="1" stroke-dasharray="4,4" />
+              <!-- Venus (Far behind Sun) -->
+              <g transform="translate(50, 60)">
+                <circle r="10" fill="#34d399"/>
+                <text y="-18" text-anchor="middle" fill="#a7f3d0" font-size="10" font-family="sans-serif">Venus ♀ (Far / Full)</text>
+              </g>
+              <!-- Sun -->
+              <g transform="translate(150, 60)">
+                <circle r="30" fill="url(#sunGlow)"/>
+                <circle r="20" fill="#fbbf24"/>
+                <text y="35" text-anchor="middle" fill="#fcd34d" font-size="10" font-family="sans-serif">Sun ☉</text>
+              </g>
+              <!-- Earth -->
+              <g transform="translate(260, 60)">
+                <circle r="16" fill="#0ea5e9"/>
+                <text y="30" text-anchor="middle" fill="#7dd3fc" font-size="10" font-family="sans-serif">Earth ♁</text>
+              </g>
+            </svg>
+          </div>
+          <p class="text-xs text-slate-400 font-mono leading-relaxed">
+            Venus reaches the far side of the Sun, fully illuminated like a Full Moon, but obscured by solar glare. Transits from the <strong>Morning Star</strong> to the <strong>Evening Star</strong>. Represents peak social manifestation, externalized harmony, and relational realization.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Geometry Rose of Venus Note -->
+      <div class="bg-slate-950 border border-emerald-900/50 rounded-2xl p-6 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-900/10 blur-3xl rounded-full pointer-events-none"></div>
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 class="font-cinzel text-xl text-emerald-300 mb-1">The 8-Year Pentagram of Venus</h3>
+            <p class="text-xs text-slate-400 font-mono max-w-3xl leading-relaxed">
+              Every 8 years, Earth and Venus complete 5 synodic cycles (5 × 584 = 2,920 days = 8 Earth years). Plotted geocentrically against the zodiac wheel, the 5 inferior conjunctions trace an exact, near-perfect 5-pointed geometric star known as the <em>Rose of Venus</em>.
+            </p>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-3 py-1.5 rounded-lg bg-emerald-950 border border-emerald-500/40 text-emerald-300 font-mono text-xs">
+              584.0 Synodic Days
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Complete Venus Synodic Almanac Table -->
+      <div class="border-t border-slate-800/80 pt-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+          <div>
+            <h3 class="font-cinzel text-2xl text-emerald-400 font-bold">2026–2028 Earth–Venus–Sun Synodic Almanac</h3>
+            <p class="text-xs text-slate-400 font-mono mt-1">Full 584-day cycle from the 2026 Superior Conjunction to the 2028 Inferior Conjunction.</p>
+          </div>
+          <span class="text-[11px] font-mono px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 shrink-0 self-start sm:self-auto">
+            Sun-Venus Synodic Sequence (UTC)
+          </span>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/70 shadow-2xl">
+          <table class="w-full text-left text-xs font-mono min-w-[760px]">
+            <thead class="text-slate-300 bg-slate-900/90 border-b border-slate-800 uppercase tracking-wider text-[11px]">
+              <tr>
+                <th class="p-3.5 pl-4">Date (UTC)</th>
+                <th class="p-3.5">Event</th>
+                <th class="p-3.5">Sun Sign</th>
+                <th class="p-3.5">Venus Sign</th>
+                <th class="p-3.5">Visual Symbolism</th>
+                <th class="p-3.5 pr-4">Meaning / Phrase</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-slate-300">
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-emerald-300 whitespace-nowrap">Jan 6, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-300 font-semibold">Superior Conjunction ("Full Venus")</span></td>
+                <td class="p-3.5 text-amber-300">Capricorn ♑ (16°)</td>
+                <td class="p-3.5 text-emerald-300 font-semibold">Capricorn ♑ (16°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A gold locket hidden behind the radiant corona of the midday sun</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Full illumination behind the Sun: values and relationships are aligned with long-term, mature societal structures. Transits to Evening Star.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Aug 15, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Greatest Elongation East (46°)</span></td>
+                <td class="p-3.5 text-amber-300">Leo ♌</td>
+                <td class="p-3.5 text-emerald-400">Virgo ♍</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A dazzling emerald lamp burning bright in the western sky at twilight</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Peak evening visibility: high social charisma and aesthetic expression before Venus begins slowing down toward Earth.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-emerald-950/10">
+                <td class="p-3.5 pl-4 font-semibold text-orange-400 whitespace-nowrap">Aug 31, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-orange-500/20 border border-orange-500/40 text-orange-300 font-semibold">Pre-Shadow Entry</span></td>
+                <td class="p-3.5 text-amber-300">Virgo ♍</td>
+                <td class="p-3.5 text-emerald-400">Libra ♎ (22°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A dancer pausing mid-stride as an intricate mirror begins to hairline crack</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Entering the retrograde shadow zone: partnerships and financial agreements formed now will soon face reassessment.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-orange-300 whitespace-nowrap">Oct 3, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-orange-600/30 border border-orange-500/60 text-orange-200 font-bold">Station Retrograde ℞</span></td>
+                <td class="p-3.5 text-amber-300">Libra ♎</td>
+                <td class="p-3.5 text-orange-200 font-semibold">Scorpio ♏ (8°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A queen lowering her veil and stepping backward into a darkened private sanctuary</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Venus stops and begins backward trek. Social surfaces give way to psychological audits, emotional depth, and uncovering buried secrets.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-emerald-950/30">
+                <td class="p-3.5 pl-4 font-semibold text-emerald-300 whitespace-nowrap">Oct 24, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-600/30 border border-emerald-500/70 text-emerald-200 font-bold shadow-[0_0_12px_rgba(16,185,129,0.4)]">Inferior Conjunction ("New Venus")</span></td>
+                <td class="p-3.5 text-amber-300">Scorpio ♏ (0°)</td>
+                <td class="p-3.5 text-emerald-300 font-bold">Scorpio ♏ (0°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A golden chalice sinking into dark, regenerative underworld waters</td>
+                <td class="p-3.5 pr-4 text-slate-200 font-sans text-xs">The Seed Point: Venus between Sun and Earth at 0° Scorpio. Complete rebirth of desire, values, and intimacy. Becomes Morning Star.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-orange-300 whitespace-nowrap">Nov 14, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-orange-600/30 border border-orange-500/60 text-orange-200 font-bold">Station Direct ☿</span></td>
+                <td class="p-3.5 text-amber-300">Scorpio ♏</td>
+                <td class="p-3.5 text-orange-200 font-semibold">Libra ♎ (22°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A polished bronze balance regaining stillness after a violent tremor</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Direct motion resumes: relational discord stabilizes with renewed clarity, boundaries, and mutual aesthetic commitment.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-slate-900/30">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Dec 15, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">Post-Shadow Exit</span></td>
+                <td class="p-3.5 text-amber-300">Sagittarius ♐</td>
+                <td class="p-3.5 text-emerald-400">Scorpio ♏ (8°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A lotus blossom opening completely above clarified, peaceful water</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Shadow cleared: integration of all relationship and value updates completed. Smooth sailing.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Jan 3, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Greatest Elongation West (47°)</span></td>
+                <td class="p-3.5 text-amber-300">Capricorn ♑</td>
+                <td class="p-3.5 text-emerald-400">Sagittarius ♐</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">The Morning Star blazing proudly in the east just before the winter dawn</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Peak Morning Star brilliance: clear-headed, inspiring, and spiritually driven vision of relational truth.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-emerald-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-emerald-300 whitespace-nowrap">Aug 12, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-300 font-semibold">Superior Conjunction ("Full Venus")</span></td>
+                <td class="p-3.5 text-amber-300">Leo ♌ (19°)</td>
+                <td class="p-3.5 text-emerald-300 font-semibold">Leo ♌ (19°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A gold ring polished to blinding luster beneath a blazing midday sun</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Midpoint apex in royal Leo: celebrating love, art, creative pride, and dramatic generosity.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Mar 22, 2028</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Greatest Elongation East (46°)</span></td>
+                <td class="p-3.5 text-amber-300">Aries ♈</td>
+                <td class="p-3.5 text-emerald-400">Taurus ♉</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A lush spring garden crowned by an evening star on the western horizon</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Sensual grounding in Taurus: material enjoyment, financial consolidation, and romantic presence.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-emerald-950/30">
+                <td class="p-3.5 pl-4 font-semibold text-emerald-300 whitespace-nowrap">Jun 1, 2028</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-600/30 border border-emerald-500/70 text-emerald-200 font-bold shadow-[0_0_12px_rgba(16,185,129,0.4)]">Next Inferior Conjunction ("New Venus")</span></td>
+                <td class="p-3.5 text-amber-300">Gemini ♊ (11°)</td>
+                <td class="p-3.5 text-emerald-300 font-bold">Gemini ♊ (11°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">Two golden bees buzzing inside a blooming honeysuckle flower</td>
+                <td class="p-3.5 pr-4 text-slate-200 font-sans text-xs">Cycle Complete (584 Days): The next petal of the Venus Rose forms at 11° Gemini. Rebirth of communication, social ties, and mental rapport.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PAGE 2: EARTH - MARS - SUN (Tier 2)        -->
+    <!-- ========================================== -->
+    <section id="page-mars" class="page-section space-y-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-10">
+        <h2 class="font-cinzel text-3xl md:text-4xl font-bold text-rose-500 mb-4">Outer Planet Alignments</h2>
+        <p class="text-slate-400 font-mono text-sm leading-relaxed">
+          The macro rhythms of Earth aligning with exterior planets. Mars rules the 26-month cycle of ambition and tactical action.
+        </p>
+      </div>
+
+      <!-- Placeholders for Earth-X-Sun as requested -->
+      <div class="flex flex-wrap justify-center gap-3 mb-8">
+        <button class="px-4 py-2 rounded-xl bg-rose-900/40 border border-rose-500/50 text-rose-300 text-sm font-mono glow-mars shadow-lg shadow-rose-900/20">Earth-Mars-Sun (Active)</button>
+        <button class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-500 text-sm font-mono opacity-50 cursor-not-allowed"><i class="fa-solid fa-lock mr-2"></i>Earth-Jupiter-Sun</button>
+        <button class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-500 text-sm font-mono opacity-50 cursor-not-allowed"><i class="fa-solid fa-lock mr-2"></i>Earth-Saturn-Sun</button>
+      </div>
+
+      <div class="mt-12 border-t border-slate-800/80 pt-10">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+          <div>
+            <h3 class="font-cinzel text-2xl text-rose-500 font-bold">2026–2028 Earth–Mars Synodic Cycle Almanac</h3>
+            <p class="text-xs text-slate-400 font-mono mt-1">Full 26-month journey from the Capricorn Conjunction seed point to the Aries Rebirth.</p>
+          </div>
+          <span class="text-[11px] font-mono px-3 py-1 rounded-full bg-rose-950/80 border border-rose-500/30 text-rose-300 shrink-0 self-start sm:self-auto">
+            780-Day Synodic Arc (UTC)
+          </span>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/70 shadow-2xl">
+          <table class="w-full text-left text-xs font-mono min-w-[760px]">
+            <thead class="text-slate-300 bg-slate-900/90 border-b border-slate-800 uppercase tracking-wider text-[11px]">
+              <tr>
+                <th class="p-3.5 pl-4">Date (UTC)</th>
+                <th class="p-3.5">Event</th>
+                <th class="p-3.5">Sun Sign</th>
+                <th class="p-3.5">Mars Sign</th>
+                <th class="p-3.5">Visual Symbolism</th>
+                <th class="p-3.5 pr-4">Meaning / Phrase</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-slate-300">
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-rose-300 whitespace-nowrap">Jan 9, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-950 border border-rose-500/40 text-rose-300 font-semibold">New Mars (Conjunction 0°)</span></td>
+                <td class="p-3.5 text-amber-300">Capricorn ♑</td>
+                <td class="p-3.5 text-rose-400 font-semibold">Capricorn ♑ (19°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A master builder laying a heavy granite keystone in winter snow</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">The 26-month seed point: committing to disciplined, long-range ambitions and strategic endurance.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Jan 23, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Aquarius ♒</td>
+                <td class="p-3.5 text-rose-400">Aquarius ♒</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A sudden blue electric charge racing through an iron transmission tower</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Directing drive into collective reforms, technological breakthroughs, and unconventional alliances.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Mar 2, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Pisces ♓</td>
+                <td class="p-3.5 text-rose-400">Pisces ♓</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A submersible vessel maneuvering quietly through deep, luminescent trenches</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Willpower channeled through creative intuition, spiritual defense, and subtle, non-linear maneuvers.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Apr 9, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Domicile Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Aries ♈</td>
+                <td class="p-3.5 text-rose-400 font-semibold">Aries ♈ (Home)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A wild stallion galloping freely across a cracked canyon ridge at sunrise</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Maximum raw momentum: uninhibited courage, unapologetic initiative, and fearless forward thrust.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">May 18, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Taurus ♉</td>
+                <td class="p-3.5 text-rose-400">Taurus ♉</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A heavy bronze plow breaking open sun-baked earth with unrelenting force</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Stubborn, deliberate execution: anchoring actions in tangible material security and physical resilience.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Jun 28, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Cancer ♋</td>
+                <td class="p-3.5 text-rose-400">Gemini ♊</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">Two rapid fencing foils clashing with sparks in a crowded courtyard</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Tactical dexterity: debates, strategic multitasking, and sharp, swift information maneuvers.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Aug 11, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Fall Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Leo ♌</td>
+                <td class="p-3.5 text-rose-400">Cancer ♋</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A mother bear defending her cave entrance amid rising coastal floodwaters</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Fierce protective instinct: emotional volatility, territorial guarding, and fighting for tribal roots.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Sep 28, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Libra ♎</td>
+                <td class="p-3.5 text-rose-400">Leo ♌</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A gladiator stepping into the sunlit colosseum with a golden shield aloft</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Creative sovereignty: bold theatrical self-expression, pride, and unapologetic leadership.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/10">
+                <td class="p-3.5 pl-4 font-semibold text-orange-400 whitespace-nowrap">Nov 5, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-orange-500/20 border border-orange-500/40 text-orange-300 font-bold">Pre-Shadow Entry</span></td>
+                <td class="p-3.5 text-amber-300">Scorpio ♏</td>
+                <td class="p-3.5 text-orange-300">Leo ♌ (20°56')</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A runner noticing the first friction drag along a dusty stadium track</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Entering the retrograde shadow zone: actions taken now will undergo scrutiny and tactical revision later.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Nov 24, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Sagittarius ♐</td>
+                <td class="p-3.5 text-rose-400">Virgo ♍</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A precision surgeon sharpening scalpels under bright operating lamps</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Channelling energy into analytical scrutiny, technical mastery, and operational adjustments.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-orange-300 whitespace-nowrap">Jan 10, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-orange-600/30 border border-orange-500/60 text-orange-200 font-bold">Station Retrograde ℞</span></td>
+                <td class="p-3.5 text-amber-300">Capricorn ♑</td>
+                <td class="p-3.5 text-orange-200 font-semibold">Virgo ♍ (10°26')</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A speeding carriage halting at the edge of a washed-out mountain pass</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Forward progress halts: turn inward to repair worn machinery, address fatigue, and audit strategy.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-rose-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-rose-300 whitespace-nowrap">Feb 19, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-600/30 border border-rose-500/70 text-rose-200 font-bold shadow-[0_0_12px_rgba(244,63,94,0.3)]">Full Mars (Opposition 180°)</span></td>
+                <td class="p-3.5 text-amber-300">Aquarius ♒ (0°)</td>
+                <td class="p-3.5 text-rose-300 font-bold">Leo ♌ (0°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A blazing red torch held high against midnight darkness, illuminating both armies</td>
+                <td class="p-3.5 pr-4 text-slate-200 font-sans text-xs">The Apex Climax: Earth sits between Sun and Mars. Peak brilliance, maximum confrontation, and unavoidable reality checks.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-orange-300 whitespace-nowrap">Apr 1, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-orange-600/30 border border-orange-500/60 text-orange-200 font-bold">Station Direct ☿</span></td>
+                <td class="p-3.5 text-amber-300">Aries ♈</td>
+                <td class="p-3.5 text-orange-200 font-semibold">Leo ♌ (20°56')</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">An iron gate unlocking slowly as sunlight floods back across an open courtyard</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">The crucible breaks: Mars resumes forward motion. Unclogging delayed initiatives with upgraded wisdom.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-slate-900/30">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Jun 7, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">Post-Shadow Exit</span></td>
+                <td class="p-3.5 text-amber-300">Gemini ♊</td>
+                <td class="p-3.5 text-rose-400">Virgo ♍ (10°26')</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A traveler crossing the finish line of a rocky detour, returning to open highways</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Full clearance: past delays and bottlenecks resolve, restoring unobstructed momentum.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Jun 25, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Detriment Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Cancer ♋</td>
+                <td class="p-3.5 text-rose-400">Libra ♎</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">Two diplomats bargaining across a polished mahogany conference table</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Negotiation warfare: learning to balance assertiveness with tact, diplomacy, and justice.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Aug 10, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Domicile Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Leo ♌</td>
+                <td class="p-3.5 text-rose-400 font-semibold">Scorpio ♏ (Home)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A coiled black snake waiting motionless in shadows beside a warm stone</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Underground potency: laser-focused stamina, investigative rigor, psychological courage, and invulnerability.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Sep 23, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Libra ♎</td>
+                <td class="p-3.5 text-rose-400">Sagittarius ♐</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A flaming brand hurled over a fortress wall toward the open desert stars</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Crusading zeal: pursuing broad philosophical truths, adventurous frontiers, and ideological campaigns.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Nov 4, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Exaltation Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Scorpio ♏</td>
+                <td class="p-3.5 text-rose-400 font-semibold">Capricorn ♑ (Exalted)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">An iron fortress built atop an Alpine pass weathering a blizzard unharmed</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Supreme operational discipline: patient, structured execution with zero wasted movement.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Dec 15, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Sagittarius ♐</td>
+                <td class="p-3.5 text-rose-400">Aquarius ♒</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A network of synchronized beacons illuminating mountain summits in sequence</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Organizing future-facing systems: decentralized coordination and intellectual campaigns.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Jan 24, 2028</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">Ingress</span></td>
+                <td class="p-3.5 text-amber-300">Aquarius ♒</td>
+                <td class="p-3.5 text-rose-400">Pisces ♓</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">An ocean current quietly eroding the base of a towering sea cliff</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-xs">Dissolving obsolete ambitions: surrendering ego battles before the new cycle sparks.</td>
+              </tr>
+              <tr class="hover:bg-slate-900/50 transition bg-rose-950/30">
+                <td class="p-3.5 pl-4 font-semibold text-rose-300 whitespace-nowrap">Mar 21, 2028</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-600/30 border border-rose-500/60 text-rose-200 font-bold shadow-[0_0_10px_rgba(244,63,94,0.3)]">Next New Mars (Conjunction 0°)</span></td>
+                <td class="p-3.5 text-amber-300">Aries ♈ (1°)</td>
+                <td class="p-3.5 text-rose-300 font-bold">Aries ♈ (1°)</td>
+                <td class="p-3.5 text-slate-400 font-sans italic text-[11px]">A single bolt of lightning striking an altar on the vernal equinox</td>
+                <td class="p-3.5 pr-4 text-slate-200 font-sans text-xs">Cycle Complete: Sun meets Mars at the World Axis (0° Aries). The initiation of the next 780-day cycle in its home sign.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PAGE 4: CONSOLIDATED MASTER CALENDAR       -->
+    <!-- ========================================== -->
+    <section id="page-all" class="page-section space-y-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-10">
+        <h2 class="font-cinzel text-3xl md:text-4xl font-bold text-amber-400 mb-4">Consolidated Master Almanac</h2>
+        <p class="text-slate-400 font-mono text-sm leading-relaxed">
+          A chronologically interleaved timeline of all major celestial alignments across Tier 1 (Moon), Venus, Tier 2 (Mars), and Macro Cycles. See how the different orbital gears interlock.
+        </p>
+      </div>
+
+      <div class="border-t border-slate-800/80 pt-10">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+          <div>
+            <h3 class="font-cinzel text-2xl text-amber-400 font-bold">Full 2026–2028 Interlocked Syzygy Timeline</h3>
+            <p class="text-xs text-slate-400 font-mono mt-1">Complete cycle showing the overlap of lunar eclipses, venusian phases, and the full Mars arc.</p>
+          </div>
+          <span class="text-[11px] font-mono px-3 py-1 rounded-full bg-amber-950/80 border border-amber-500/40 text-amber-300 shrink-0 self-start sm:self-auto">
+            Multi-Tier Chronology (UTC)
+          </span>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/70 shadow-2xl">
+          <table class="w-full text-left text-xs font-mono min-w-[800px]">
+            <thead class="text-slate-300 bg-slate-900/90 border-b border-slate-800 uppercase tracking-wider text-[11px]">
+              <tr>
+                <th class="p-3.5 pl-4">Date (UTC)</th>
+                <th class="p-3.5">Tier / Body</th>
+                <th class="p-3.5">Event Aspect</th>
+                <th class="p-3.5">Sun Sign</th>
+                <th class="p-3.5">Target Sign</th>
+                <th class="p-3.5 pr-4">Synthesized Meaning</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-slate-300">
+              
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Jan 3, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-cyan-900/40 border border-cyan-500/30 text-cyan-300 font-semibold">Tier 1: Moon</span></td>
+                <td class="p-3.5 text-slate-200 font-bold">Full Moon (180°)</td>
+                <td class="p-3.5 text-amber-300">Capricorn ♑</td>
+                <td class="p-3.5 text-cyan-200">Cancer ♋</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Emotional culmination pulling focus to home/roots just before major long-term structural resets kick off.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-emerald-950/10">
+                <td class="p-3.5 pl-4 font-semibold text-emerald-300 whitespace-nowrap">Jan 6, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-emerald-300 font-bold">Superior Conjunction</td>
+                <td class="p-3.5 text-amber-300">Capricorn ♑</td>
+                <td class="p-3.5 text-emerald-300">Capricorn ♑</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Relationships and values align firmly behind mature, structural Capricorn goals. Venus moves to Evening Star.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-rose-950/10">
+                <td class="p-3.5 pl-4 font-semibold text-rose-300 whitespace-nowrap">Jan 9, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-rose-400 font-bold">New Mars (0°)</td>
+                <td class="p-3.5 text-amber-300">Capricorn ♑</td>
+                <td class="p-3.5 text-rose-400">Capricorn ♑</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">The 26-month ambition reset. With Venus already here, a major multi-year foundation of disciplined action is set.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-400 whitespace-nowrap">Jan 18, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-cyan-900/40 border border-cyan-500/30 text-cyan-300 font-semibold">Tier 1: Moon</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">New Moon (0°)</td>
+                <td class="p-3.5 text-amber-300">Capricorn ♑</td>
+                <td class="p-3.5 text-slate-400">Capricorn ♑</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">The lunar emotional seed point locks in the heavy Capricorn focus established by Venus and Mars days prior.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Jan 23, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Sign Ingress</td>
+                <td class="p-3.5 text-amber-300">Aquarius ♒</td>
+                <td class="p-3.5 text-rose-400">Aquarius ♒</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Mars breaks out of heavy earth into Air. The structural plans now demand innovative, collective action.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-cyan-300 whitespace-nowrap">Feb 1, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-cyan-900/40 border border-cyan-500/30 text-cyan-300 font-semibold">Tier 1: Moon</span></td>
+                <td class="p-3.5 text-slate-200 font-bold">Full Moon (180°)</td>
+                <td class="p-3.5 text-amber-300">Aquarius ♒</td>
+                <td class="p-3.5 text-cyan-200">Leo ♌</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">A surge of creative, individualistic pride (Leo) challenges the new group-focused (Aquarius) initiatives.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-indigo-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-indigo-300 whitespace-nowrap">Feb 17, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-cyan-900/40 border border-cyan-500/30 text-cyan-300 font-semibold">Tier 1: Moon</span></td>
+                <td class="p-3.5 text-indigo-300 font-bold">Solar Eclipse (0°)</td>
+                <td class="p-3.5 text-amber-300">Aquarius ♒</td>
+                <td class="p-3.5 text-indigo-300">Aquarius ♒</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">A radical reset of the collective status quo. A major leap forward in technological or social organization.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Mar 2, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Sign Ingress</td>
+                <td class="p-3.5 text-amber-300">Pisces ♓</td>
+                <td class="p-3.5 text-rose-400">Pisces ♓</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Ambition turns inward. Actions become less direct and more intuitive, defending spiritual or unseen boundaries.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-indigo-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-indigo-300 whitespace-nowrap">Mar 3, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-cyan-900/40 border border-cyan-500/30 text-cyan-300 font-semibold">Tier 1: Moon</span></td>
+                <td class="p-3.5 text-indigo-300 font-bold">Lunar Eclipse (180°)</td>
+                <td class="p-3.5 text-amber-300">Pisces ♓</td>
+                <td class="p-3.5 text-indigo-300">Virgo ♍</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">An emotional climax shedding light on the friction between mystical surrender (Pisces) and rigid analytical habits (Virgo).</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Apr 9, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Domicile Ingress</td>
+                <td class="p-3.5 text-amber-300">Aries ♈</td>
+                <td class="p-3.5 text-rose-400">Aries ♈</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Mars enters its home sign. A massive surge in primal, uninhibited momentum sweeping away the Piscean fog.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">May 18, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Sign Ingress</td>
+                <td class="p-3.5 text-amber-300">Taurus ♉</td>
+                <td class="p-3.5 text-rose-400">Taurus ♉</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">The fiery momentum of Aries is forced to slow down and anchor into stubborn material reality.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Jun 28, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Sign Ingress</td>
+                <td class="p-3.5 text-amber-300">Cancer ♋</td>
+                <td class="p-3.5 text-rose-400">Gemini ♊</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Strategic multitasking and rapid communication become the primary vehicles for asserting willpower.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Aug 11, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Fall Ingress</td>
+                <td class="p-3.5 text-amber-300">Leo ♌</td>
+                <td class="p-3.5 text-rose-400">Cancer ♋</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Mars enters Cancer just before a massive solar eclipse, bringing volatile defensive and tribal instincts to the surface.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-indigo-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-indigo-300 whitespace-nowrap">Aug 12, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-cyan-900/40 border border-cyan-500/30 text-cyan-300 font-semibold">Tier 1: Moon</span></td>
+                <td class="p-3.5 text-indigo-300 font-bold">Total Solar Eclipse</td>
+                <td class="p-3.5 text-amber-300">Leo ♌</td>
+                <td class="p-3.5 text-indigo-300">Leo ♌</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">A dark reset in the sign of kings. Massive leadership and creative shifts while Mars triggers emotional guarding in Cancer.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-200 whitespace-nowrap">Aug 15, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-slate-300 font-bold">Greatest Elongation East</td>
+                <td class="p-3.5 text-amber-300">Leo ♌</td>
+                <td class="p-3.5 text-emerald-400">Virgo ♍</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Peak evening visibility for Venus, bringing high social charisma and aesthetic focus before slowing down.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/10">
+                <td class="p-3.5 pl-4 font-semibold text-orange-400 whitespace-nowrap">Aug 31, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-orange-300 font-bold">Pre-Shadow Entry</td>
+                <td class="p-3.5 text-amber-300">Virgo ♍</td>
+                <td class="p-3.5 text-emerald-400">Libra ♎</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Entering the retrograde shadow zone: partnerships and financial agreements formed now will soon face reassessment.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Sep 28, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Sign Ingress</td>
+                <td class="p-3.5 text-amber-300">Libra ♎</td>
+                <td class="p-3.5 text-rose-400">Leo ♌</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Mars steps into Leo, asserting the pride and leadership ignited by the recent Solar Eclipse.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-orange-300 whitespace-nowrap">Oct 3, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-orange-300 font-bold">Station Retrograde</td>
+                <td class="p-3.5 text-amber-300">Libra ♎</td>
+                <td class="p-3.5 text-orange-200">Scorpio ♏</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Venus stops and begins its backward trek. Social surfaces give way to deep psychological audits and emotional secrets.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-emerald-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-emerald-300 whitespace-nowrap">Oct 24, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-emerald-300 font-bold">Inferior Conjunction</td>
+                <td class="p-3.5 text-amber-300">Scorpio ♏</td>
+                <td class="p-3.5 text-emerald-300">Scorpio ♏</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Venus begins its new cycle in deep Scorpio, completely purging desires and values right before Mars hits its retrograde shadow.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/10">
+                <td class="p-3.5 pl-4 font-semibold text-orange-300 whitespace-nowrap">Nov 5, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-orange-300 font-bold">Pre-Shadow Entry</td>
+                <td class="p-3.5 text-amber-300">Scorpio ♏</td>
+                <td class="p-3.5 text-rose-400">Leo ♌</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">The 26-month campaign hits friction. Mars enters the zone it will later backtrack over; strategies begin to drag.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/10">
+                <td class="p-3.5 pl-4 font-semibold text-orange-200 whitespace-nowrap">Nov 14, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-orange-200 font-bold">Station Direct</td>
+                <td class="p-3.5 text-amber-300">Scorpio ♏</td>
+                <td class="p-3.5 text-orange-200">Libra ♎</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Venus resumes direct motion: relational discord stabilizes with renewed clarity just as Mars starts slowing down.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Nov 24, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Sign Ingress</td>
+                <td class="p-3.5 text-amber-300">Sagittarius ♐</td>
+                <td class="p-3.5 text-rose-400">Virgo ♍</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Channeling energy into analytical scrutiny and technical mastery as operations naturally demand adjustment.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Dec 15, 2026</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Post-Shadow Exit</td>
+                <td class="p-3.5 text-amber-300">Sagittarius ♐</td>
+                <td class="p-3.5 text-emerald-400">Scorpio ♏</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Venus shadow completely cleared. Smooth sailing for relationships while Mars braces for its upcoming retrograde.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Jan 3, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-slate-300 font-bold">Greatest Elongation West</td>
+                <td class="p-3.5 text-amber-300">Capricorn ♑</td>
+                <td class="p-3.5 text-emerald-400">Sagittarius ♐</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Peak Morning Star brilliance: clear-headed, inspiring vision of relational truth before the Mars storm hits.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-orange-400 whitespace-nowrap">Jan 10, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-orange-400 font-bold">Station Retrograde</td>
+                <td class="p-3.5 text-amber-300">Capricorn ♑</td>
+                <td class="p-3.5 text-orange-400">Virgo ♍</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Mars halts and reverses course. The universe demands a complete tactical audit of everything built since Jan 2026.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-rose-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-rose-300 whitespace-nowrap">Feb 19, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-rose-400 font-bold glow-mars">Opposition (180°)</td>
+                <td class="p-3.5 text-amber-300">Aquarius ♒</td>
+                <td class="p-3.5 text-rose-400">Leo ♌</td>
+                <td class="p-3.5 pr-4 text-slate-200 font-sans text-[11px] leading-relaxed font-semibold">THE APEX. Mars closest to Earth, glowing blazing red. Peak confrontation between group structures (Aquarius) and ego (Leo).</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-orange-950/10">
+                <td class="p-3.5 pl-4 font-semibold text-orange-300 whitespace-nowrap">Apr 1, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-orange-300 font-bold">Station Direct</td>
+                <td class="p-3.5 text-amber-300">Aries ♈</td>
+                <td class="p-3.5 text-orange-300">Leo ♌</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">The retrograde crucible breaks. Forward momentum cautiously resumes with newly tested wisdom.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Jun 7, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Post-Shadow Exit</td>
+                <td class="p-3.5 text-amber-300">Gemini ♊</td>
+                <td class="p-3.5 text-rose-400">Virgo ♍</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Clearance. Mars exits the shadow zone in Virgo. Operations run smoothly and efficiently once again.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Jun 25, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Detriment Ingress</td>
+                <td class="p-3.5 text-amber-300">Cancer ♋</td>
+                <td class="p-3.5 text-rose-400">Libra ♎</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Negotiation warfare: learning to balance aggressive momentum with diplomacy and fairness.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-indigo-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-indigo-300 whitespace-nowrap">Aug 2, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-cyan-900/40 border border-cyan-500/30 text-cyan-300 font-semibold">Tier 1: Moon</span></td>
+                <td class="p-3.5 text-indigo-300 font-bold">Total Solar Eclipse</td>
+                <td class="p-3.5 text-amber-300">Leo ♌</td>
+                <td class="p-3.5 text-indigo-300">Leo ♌</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">The monumental 6-minute Egyptian eclipse. A massive creative and sovereign reset.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Aug 10, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Domicile Ingress</td>
+                <td class="p-3.5 text-amber-300">Leo ♌</td>
+                <td class="p-3.5 text-rose-400">Scorpio ♏</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Mars enters its second home right after the Eclipse. Extreme focus, psychological courage, and unyielding stamina.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-emerald-950/10">
+                <td class="p-3.5 pl-4 font-semibold text-emerald-300 whitespace-nowrap">Aug 12, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-emerald-300 font-bold">Superior Conjunction</td>
+                <td class="p-3.5 text-amber-300">Leo ♌</td>
+                <td class="p-3.5 text-emerald-300">Leo ♌</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Venus peaks in Leo days after the eclipse. Externalized harmony, wealth, and love bathed in the Sun's full glare.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Sep 23, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Sign Ingress</td>
+                <td class="p-3.5 text-amber-300">Libra ♎</td>
+                <td class="p-3.5 text-rose-400">Sagittarius ♐</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Pursuing broad philosophical truths, adventurous frontiers, and ideological campaigns.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Nov 4, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Exaltation Ingress</td>
+                <td class="p-3.5 text-amber-300">Scorpio ♏</td>
+                <td class="p-3.5 text-rose-400">Capricorn ♑</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Mars returns to where the cycle began in Jan 2026, executing the final structures of the campaign with cold precision.</td>
+              </tr>
+              
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Dec 15, 2027</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Sign Ingress</td>
+                <td class="p-3.5 text-amber-300">Sagittarius ♐</td>
+                <td class="p-3.5 text-rose-400">Aquarius ♒</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Organizing future-facing systems: decentralized coordination and intellectual campaigns.</td>
+              </tr>
+              
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Jan 24, 2028</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-slate-400 font-bold">Sign Ingress</td>
+                <td class="p-3.5 text-amber-300">Aquarius ♒</td>
+                <td class="p-3.5 text-rose-400">Pisces ♓</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Dissolving obsolete ambitions: surrendering ego battles before the new cycle sparks.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-rose-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-rose-300 whitespace-nowrap">Mar 21, 2028</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-rose-900/40 border border-rose-500/30 text-rose-300 font-semibold">Tier 2: Mars</span></td>
+                <td class="p-3.5 text-rose-400 font-bold">Next New Mars (0°)</td>
+                <td class="p-3.5 text-amber-300">Aries ♈</td>
+                <td class="p-3.5 text-rose-400">Aries ♈</td>
+                <td class="p-3.5 pr-4 text-slate-200 font-sans text-[11px] leading-relaxed font-semibold">CYCLE COMPLETE. The Sun catches Mars exactly on the Equinox point. A brand new 780-day era of ambition detonates.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition">
+                <td class="p-3.5 pl-4 font-semibold text-slate-300 whitespace-nowrap">Mar 22, 2028</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-slate-300 font-bold">Greatest Elongation East</td>
+                <td class="p-3.5 text-amber-300">Aries ♈</td>
+                <td class="p-3.5 text-emerald-400">Taurus ♉</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed">Just one day after the Mars reset, Venus hits peak evening brightness in its sensual home of Taurus.</td>
+              </tr>
+
+              <tr class="hover:bg-slate-900/50 transition bg-emerald-950/20">
+                <td class="p-3.5 pl-4 font-semibold text-emerald-300 whitespace-nowrap">Jun 1, 2028</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-semibold">Venus Cycle</span></td>
+                <td class="p-3.5 text-emerald-300 font-bold">Next Inferior Conj.</td>
+                <td class="p-3.5 text-amber-300">Gemini ♊</td>
+                <td class="p-3.5 text-emerald-300">Gemini ♊</td>
+                <td class="p-3.5 pr-4 text-slate-300 font-sans text-[11px] leading-relaxed font-semibold">VENUS CYCLE COMPLETE (584 Days). The next petal of the Venus Rose forms. Rebirth of communication and mental rapport.</td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PAGE 5: PLANETARY CYCLES                   -->
+    <!-- ========================================== -->
+    <section id="page-cycles" class="page-section space-y-8">
+      
+      <div class="text-center max-w-4xl mx-auto mb-10">
+        <h2 class="font-cinzel text-3xl md:text-4xl font-bold text-slate-200 mb-4">Planetary Cycle Data</h2>
+        <p class="text-slate-400 font-mono text-sm leading-relaxed mb-3">
+          In astrology, a planet's "period" refers to how long it takes to travel through all 12 signs of the Zodiac from Earth's perspective. Because astrology is geocentric (meaning it looks at the sky from Earth), these astrological periods are heavily based on a planet's actual astronomical orbit, but viewed differently.
+        </p>
+        <p class="text-slate-400 font-mono text-sm leading-relaxed">
+          Here is how the true astronomical measurements compare side-by-side with how astrology tracks them.
+        </p>
+      </div>
+
+      <div class="border-t border-slate-800/80 pt-10">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+          <div>
+            <h3 class="font-cinzel text-2xl text-slate-200 font-bold">Astronomy vs Astrology Clocks</h3>
+            <p class="text-xs text-slate-400 font-mono mt-1">Comparison of rotational, sidereal, synodic, and zodiac cycles.</p>
+          </div>
+          <span class="text-[11px] font-mono px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 shrink-0 self-start sm:self-auto">
+            Astronomical Averages
+          </span>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/70 shadow-2xl">
+          <table class="w-full text-left text-xs font-mono min-w-[900px]">
+        <!-- ========================================== -->
+        <!-- PAGE 5: PLANETARY CYCLES                   -->
+        <!-- ========================================== -->
+        <section id="page-cycles" class="page-section space-y-8">
+          <div class="max-w-5xl mx-auto">
+            <p class="text-slate-400 font-mono text-sm leading-relaxed mb-4">
+              In astrology, a planet's "period" refers to how long it takes to travel through all 12 signs of the Zodiac from Earth's perspective. Because astrology is geocentric (meaning it looks at the sky from Earth), these astrological periods are heavily based on a planet's actual astronomical orbit, but viewed differently.
+            </p>
+            <p class="text-slate-400 font-mono text-sm leading-relaxed mb-6">
+              Here is how the true astronomical measurements compare side-by-side with how astrology tracks them.
+            </p>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/70 shadow-2xl">
+              <table class="w-full text-left text-xs font-mono min-w-[900px]">
+                <thead class="text-slate-300 bg-slate-900/90 border-b border-slate-800 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="p-4 pl-6">Planet</th>
+                    <th class="p-4">Astronomy: Rotational Period (1 Day)</th>
+                    <th class="p-4">Astronomy: Sidereal Period (1 Year)</th>
+                    <th class="p-4">Astronomy: Synodic Period (Earth Lap)</th>
+                    <th class="p-4 pr-6">Astrology: Zodiac Cycle (Time to cross 12 signs)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                  <tr class="hover:bg-slate-900/50 transition">
+                    <td class="p-4 pl-6 font-semibold text-slate-300">Mercury</td>
+                    <td class="p-4 text-slate-400">58.6 Earth days</td>
+                    <td class="p-4 text-slate-400">88 Earth days</td>
+                    <td class="p-4 text-slate-400">115.9 Earth days</td>
+                    <td class="p-4 pr-6 text-slate-300">~88 days (spends ~2 to 3 weeks in each sign)</td>
+                  </tr>
+                  <tr class="hover:bg-slate-900/50 transition">
+                    <td class="p-4 pl-6 font-semibold text-slate-300">Venus</td>
+                    <td class="p-4 text-slate-400">243 Earth days</td>
+                    <td class="p-4 text-slate-400">225 Earth days</td>
+                    <td class="p-4 text-slate-400">583.9 Earth days</td>
+                    <td class="p-4 pr-6 text-slate-300">~225 days (spends ~3 to 4 weeks in each sign)</td>
+                  </tr>
+                  <tr class="hover:bg-slate-900/50 transition">
+                    <td class="p-4 pl-6 font-semibold text-slate-300">Earth / Sun</td>
+                    <td class="p-4 text-slate-400">24 hours</td>
+                    <td class="p-4 text-slate-400">365.2 Earth days</td>
+                    <td class="p-4 text-slate-400">N/A (Baseline)</td>
+                    <td class="p-4 pr-6 text-slate-300">1 year (Astrology tracks the Sun, which spends ~30 days in each sign)</td>
+                  </tr>
+                  <tr class="hover:bg-slate-900/50 transition">
+                    <td class="p-4 pl-6 font-semibold text-slate-300">Mars</td>
+                    <td class="p-4 text-slate-400">24.6 hours</td>
+                    <td class="p-4 text-slate-400">1.88 Earth years</td>
+                    <td class="p-4 text-slate-400">779.9 Earth days</td>
+                    <td class="p-4 pr-6 text-slate-300">~2 years (spends ~2 months in each sign)</td>
+                  </tr>
+                  <tr class="hover:bg-slate-900/50 transition">
+                    <td class="p-4 pl-6 font-semibold text-slate-300">Jupiter</td>
+                    <td class="p-4 text-slate-400">9.9 hours</td>
+                    <td class="p-4 text-slate-400">11.86 Earth years</td>
+                    <td class="p-4 text-slate-400">398.9 Earth days</td>
+                    <td class="p-4 pr-6 text-slate-300">~12 years (spends ~1 year in each sign)</td>
+                  </tr>
+                  <tr class="hover:bg-slate-900/50 transition">
+                    <td class="p-4 pl-6 font-semibold text-slate-300">Saturn</td>
+                    <td class="p-4 text-slate-400">10.7 hours</td>
+                    <td class="p-4 text-slate-400">29.4 Earth years</td>
+                    <td class="p-4 text-slate-400">378.1 Earth days</td>
+                    <td class="p-4 pr-6 text-slate-300">~29.5 years (spends ~2.5 years in each sign)</td>
+                  </tr>
+                  <tr class="hover:bg-slate-900/50 transition">
+                    <td class="p-4 pl-6 font-semibold text-slate-300">Uranus</td>
+                    <td class="p-4 text-slate-400">17.2 hours</td>
+                    <td class="p-4 text-slate-400">84 Earth years</td>
+                    <td class="p-4 text-slate-400">369.7 Earth days</td>
+                    <td class="p-4 pr-6 text-slate-300">84 years (spends ~7 years in each sign)</td>
+                  </tr>
+                  <tr class="hover:bg-slate-900/50 transition">
+                    <td class="p-4 pl-6 font-semibold text-slate-300">Neptune</td>
+                    <td class="p-4 text-slate-400">16.1 hours</td>
+                    <td class="p-4 text-slate-400">164.8 Earth years</td>
+                    <td class="p-4 text-slate-400">367.5 Earth days</td>
+                    <td class="p-4 pr-6 text-slate-300">~165 years (spends ~14 years in each sign)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="mt-6 border-l-4 border-slate-600 pl-4 py-2 bg-slate-900/30 rounded-r-xl">
+              <p class="text-xs font-mono text-slate-400 leading-relaxed italic">
+                > Why the Earth row says "Sun" in astrology: Because we live on Earth, we don't see Earth moving against the background stars. Instead, we see the Sun appearing to move through the sky over the course of our 365-day year. That is why your "Zodiac Sign" (Sun sign) changes roughly every 30 days.
+              </p>
+            </div>
+
+            <!-- ZODIAC RULERSHIP WHEEL (added: classical planetary rulership, masculine/feminine alternation) -->
+            <div class="mt-12 border-t border-slate-800/80 pt-10">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                <div>
+                  <h3 class="font-cinzel text-2xl text-slate-200 font-bold">The Rulership Wheel</h3>
+                  <p class="text-xs text-slate-400 font-mono mt-1">One sign in each half &mdash; the signs alternate masculine and feminine all the way around.</p>
+                </div>
+                <span class="text-[11px] font-mono px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 shrink-0 self-start sm:self-auto">
+                  Classical / Traditional Rulers
+                </span>
+              </div>
+              <div class="rounded-2xl border border-slate-800 bg-slate-950/70 shadow-2xl p-4 sm:p-8">
+                <svg viewBox="0 0 600 600" width="100%" style="max-width:620px;margin:0 auto;display:block;font-family:'Cinzel',serif" role="img" aria-label="Zodiac rulership wheel: twelve signs with classical planetary rulers, alternating masculine (filled) and feminine (open), mirrored across the Cancer-Leo axis.">
+                <circle cx="300" cy="300" r="289" fill="#070b14"/>
+                <circle cx="300" cy="300" r="289" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+                <circle cx="300" cy="300" r="212.0" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+                <path d="M300.0 88.0 L300.0 12.0 A288.0 288.0 0 0 1 444.0 50.6 L406.0 116.4 A212.0 212.0 0 0 0 300.0 88.0 Z" fill="#0f1830" stroke="#24314d" stroke-width="1"/>
+                <path d="M406.0 116.4 L444.0 50.6 A288.0 288.0 0 0 1 549.4 156.0 L483.6 194.0 A212.0 212.0 0 0 0 406.0 116.4 Z" fill="#0b1220" stroke="#24314d" stroke-width="1"/>
+                <path d="M483.6 194.0 L549.4 156.0 A288.0 288.0 0 0 1 588.0 300.0 L512.0 300.0 A212.0 212.0 0 0 0 483.6 194.0 Z" fill="#0f1830" stroke="#24314d" stroke-width="1"/>
+                <path d="M512.0 300.0 L588.0 300.0 A288.0 288.0 0 0 1 549.4 444.0 L483.6 406.0 A212.0 212.0 0 0 0 512.0 300.0 Z" fill="#0b1220" stroke="#24314d" stroke-width="1"/>
+                <path d="M483.6 406.0 L549.4 444.0 A288.0 288.0 0 0 1 444.0 549.4 L406.0 483.6 A212.0 212.0 0 0 0 483.6 406.0 Z" fill="#0f1830" stroke="#24314d" stroke-width="1"/>
+                <path d="M406.0 483.6 L444.0 549.4 A288.0 288.0 0 0 1 300.0 588.0 L300.0 512.0 A212.0 212.0 0 0 0 406.0 483.6 Z" fill="#0b1220" stroke="#24314d" stroke-width="1"/>
+                <path d="M300.0 512.0 L300.0 588.0 A288.0 288.0 0 0 1 156.0 549.4 L194.0 483.6 A212.0 212.0 0 0 0 300.0 512.0 Z" fill="#0f1830" stroke="#24314d" stroke-width="1"/>
+                <path d="M194.0 483.6 L156.0 549.4 A288.0 288.0 0 0 1 50.6 444.0 L116.4 406.0 A212.0 212.0 0 0 0 194.0 483.6 Z" fill="#0b1220" stroke="#24314d" stroke-width="1"/>
+                <path d="M116.4 406.0 L50.6 444.0 A288.0 288.0 0 0 1 12.0 300.0 L88.0 300.0 A212.0 212.0 0 0 0 116.4 406.0 Z" fill="#0f1830" stroke="#24314d" stroke-width="1"/>
+                <path d="M88.0 300.0 L12.0 300.0 A288.0 288.0 0 0 1 50.6 156.0 L116.4 194.0 A212.0 212.0 0 0 0 88.0 300.0 Z" fill="#0b1220" stroke="#24314d" stroke-width="1"/>
+                <path d="M116.4 194.0 L50.6 156.0 A288.0 288.0 0 0 1 156.0 50.6 L194.0 116.4 A212.0 212.0 0 0 0 116.4 194.0 Z" fill="#0f1830" stroke="#24314d" stroke-width="1"/>
+                <path d="M194.0 116.4 L156.0 50.6 A288.0 288.0 0 0 1 300.0 12.0 L300.0 88.0 A212.0 212.0 0 0 0 194.0 116.4 Z" fill="#0b1220" stroke="#24314d" stroke-width="1"/>
+                <line x1="300" y1="12" x2="300" y2="588" stroke="#2a3a5c" stroke-width="1" stroke-dasharray="3 5"/>
+                <line x1="261.2" y1="155.1" x2="338.8" y2="155.1" stroke="#334769" stroke-width="1.2"/>
+                <text x="300" y="148.1" text-anchor="middle" fill="#64748b" font-size="12" font-style="italic" font-family="Georgia,serif" letter-spacing="1">Sun / Moon</text>
+                <line x1="193.9" y1="193.9" x2="406.1" y2="193.9" stroke="#334769" stroke-width="1.2"/>
+                <text x="300" y="186.9" text-anchor="middle" fill="#64748b" font-size="12" font-style="italic" font-family="Georgia,serif" letter-spacing="1">Mercury</text>
+                <line x1="155.1" y1="261.2" x2="444.9" y2="261.2" stroke="#334769" stroke-width="1.2"/>
+                <text x="300" y="254.2" text-anchor="middle" fill="#64748b" font-size="12" font-style="italic" font-family="Georgia,serif" letter-spacing="1">Venus</text>
+                <line x1="155.1" y1="338.8" x2="444.9" y2="338.8" stroke="#334769" stroke-width="1.2"/>
+                <text x="300" y="331.8" text-anchor="middle" fill="#64748b" font-size="12" font-style="italic" font-family="Georgia,serif" letter-spacing="1">Mars</text>
+                <line x1="193.9" y1="406.1" x2="406.1" y2="406.1" stroke="#334769" stroke-width="1.2"/>
+                <text x="300" y="399.1" text-anchor="middle" fill="#64748b" font-size="12" font-style="italic" font-family="Georgia,serif" letter-spacing="1">Jupiter</text>
+                <line x1="261.2" y1="444.9" x2="338.8" y2="444.9" stroke="#334769" stroke-width="1.2"/>
+                <text x="300" y="437.9" text-anchor="middle" fill="#64748b" font-size="12" font-style="italic" font-family="Georgia,serif" letter-spacing="1">Saturn</text>
+                <circle cx="338.8" cy="155.1" r="12" fill="#f59e0b" stroke="#f8fafc" stroke-width="1.5"/>
+                <text x="338.8" y="159.6" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#0b1220">☉︎</text>
+                <text x="369.4" y="50.1" text-anchor="middle" font-size="26" fill="#e2e8f0">♌︎</text>
+                <text x="361.1" y="72.0" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(15.0 361.1 72.0)" dominant-baseline="middle">LEO</text>
+                <circle cx="351.2" cy="108.7" r="4" fill="#c9a227"/>
+                <circle cx="406.1" cy="193.9" r="12" fill="#070b14" stroke="#34d399" stroke-width="2.5"/>
+                <text x="406.1" y="198.4" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#34d399">☿︎</text>
+                <text x="489.5" y="119.5" text-anchor="middle" font-size="26" fill="#e2e8f0">♍︎</text>
+                <text x="466.9" y="133.1" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(45.0 466.9 133.1)" dominant-baseline="middle">VIRGO</text>
+                <circle cx="440.0" cy="160.0" r="4" fill="none" stroke="#c9a227" stroke-width="1.6"/>
+                <circle cx="444.9" cy="261.2" r="12" fill="#f9a8d4" stroke="#f8fafc" stroke-width="1.5"/>
+                <text x="444.9" y="265.7" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#0b1220">♀︎</text>
+                <text x="558.9" y="239.6" text-anchor="middle" font-size="26" fill="#e2e8f0">♎︎</text>
+                <text x="528.0" y="238.9" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(75.0 528.0 238.9)" dominant-baseline="middle">LIBRA</text>
+                <circle cx="491.3" cy="248.8" r="4" fill="#c9a227"/>
+                <circle cx="444.9" cy="338.8" r="12" fill="#070b14" stroke="#ef4444" stroke-width="2.5"/>
+                <text x="444.9" y="343.3" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#ef4444">♂︎</text>
+                <text x="558.9" y="378.4" text-anchor="middle" font-size="26" fill="#e2e8f0">♏︎</text>
+                <text x="528.0" y="361.1" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(-75.0 528.0 361.1)" dominant-baseline="middle">SCORPIO</text>
+                <circle cx="491.3" cy="351.2" r="4" fill="none" stroke="#c9a227" stroke-width="1.6"/>
+                <circle cx="406.1" cy="406.1" r="12" fill="#eab308" stroke="#f8fafc" stroke-width="1.5"/>
+                <text x="406.1" y="410.6" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#0b1220">♃︎</text>
+                <text x="489.5" y="498.5" text-anchor="middle" font-size="26" fill="#e2e8f0">♐︎</text>
+                <text x="466.9" y="466.9" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(-45.0 466.9 466.9)" dominant-baseline="middle">SAGITTARIUS</text>
+                <circle cx="440.0" cy="440.0" r="4" fill="#c9a227"/>
+                <circle cx="338.8" cy="444.9" r="12" fill="#070b14" stroke="#60a5fa" stroke-width="2.5"/>
+                <text x="338.8" y="449.4" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#60a5fa">♄︎</text>
+                <text x="369.4" y="567.9" text-anchor="middle" font-size="26" fill="#e2e8f0">♑︎</text>
+                <text x="361.1" y="528.0" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(-15.0 361.1 528.0)" dominant-baseline="middle">CAPRICORN</text>
+                <circle cx="351.2" cy="491.3" r="4" fill="none" stroke="#c9a227" stroke-width="1.6"/>
+                <circle cx="261.2" cy="444.9" r="12" fill="#60a5fa" stroke="#f8fafc" stroke-width="1.5"/>
+                <text x="261.2" y="449.4" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#0b1220">♄︎</text>
+                <text x="230.6" y="567.9" text-anchor="middle" font-size="26" fill="#e2e8f0">♒︎</text>
+                <text x="238.9" y="528.0" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(15.0 238.9 528.0)" dominant-baseline="middle">AQUARIUS</text>
+                <circle cx="248.8" cy="491.3" r="4" fill="#c9a227"/>
+                <circle cx="193.9" cy="406.1" r="12" fill="#070b14" stroke="#eab308" stroke-width="2.5"/>
+                <text x="193.9" y="410.6" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#eab308">♃︎</text>
+                <text x="110.5" y="498.5" text-anchor="middle" font-size="26" fill="#e2e8f0">♓︎</text>
+                <text x="133.1" y="466.9" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(45.0 133.1 466.9)" dominant-baseline="middle">PISCES</text>
+                <circle cx="160.0" cy="440.0" r="4" fill="none" stroke="#c9a227" stroke-width="1.6"/>
+                <circle cx="155.1" cy="338.8" r="12" fill="#ef4444" stroke="#f8fafc" stroke-width="1.5"/>
+                <text x="155.1" y="343.3" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#0b1220">♂︎</text>
+                <text x="41.1" y="378.4" text-anchor="middle" font-size="26" fill="#e2e8f0">♈︎</text>
+                <text x="72.0" y="361.1" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(75.0 72.0 361.1)" dominant-baseline="middle">ARIES</text>
+                <circle cx="108.7" cy="351.2" r="4" fill="#c9a227"/>
+                <circle cx="155.1" cy="261.2" r="12" fill="#070b14" stroke="#f9a8d4" stroke-width="2.5"/>
+                <text x="155.1" y="265.7" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#f9a8d4">♀︎</text>
+                <text x="41.1" y="239.6" text-anchor="middle" font-size="26" fill="#e2e8f0">♉︎</text>
+                <text x="72.0" y="238.9" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(285.0 72.0 238.9)" dominant-baseline="middle">TAURUS</text>
+                <circle cx="108.7" cy="248.8" r="4" fill="none" stroke="#c9a227" stroke-width="1.6"/>
+                <circle cx="193.9" cy="193.9" r="12" fill="#34d399" stroke="#f8fafc" stroke-width="1.5"/>
+                <text x="193.9" y="198.4" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#0b1220">☿︎</text>
+                <text x="110.5" y="119.5" text-anchor="middle" font-size="26" fill="#e2e8f0">♊︎</text>
+                <text x="133.1" y="133.1" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(315.0 133.1 133.1)" dominant-baseline="middle">GEMINI</text>
+                <circle cx="160.0" cy="160.0" r="4" fill="#c9a227"/>
+                <circle cx="261.2" cy="155.1" r="12" fill="#070b14" stroke="#dfe6f0" stroke-width="2.5"/>
+                <text x="261.2" y="159.6" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#dfe6f0">☽︎</text>
+                <text x="230.6" y="50.1" text-anchor="middle" font-size="26" fill="#e2e8f0">♋︎</text>
+                <text x="238.9" y="72.0" text-anchor="middle" font-size="12.5" fill="#94a3b8" letter-spacing="1.5" transform="rotate(345.0 238.9 72.0)" dominant-baseline="middle">CANCER</text>
+                <circle cx="248.8" cy="108.7" r="4" fill="none" stroke="#c9a227" stroke-width="1.6"/>
+                <circle cx="300" cy="300" r="2.5" fill="#64748b"/>
+                </svg>
+                <div class="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 mt-6 font-mono text-xs text-slate-400">
+                  <span class="inline-flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-full" style="background:#c9a227"></span>Masculine (fire &amp; air)</span>
+                  <span class="inline-flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-full" style="border:2px solid #c9a227"></span>Feminine (earth &amp; water)</span>
+                </div>
+              </div>
+              <div class="mt-6 border-l-4 border-slate-600 pl-4 py-2 bg-slate-900/30 rounded-r-xl">
+                <p class="text-xs font-mono text-slate-400 leading-relaxed italic">
+                  &gt; The two lights sit at the top: the Sun rules Leo and the Moon rules Cancer. Reading outward from them, each of the five classical planets rules one sign on the solar (right) half and its mirror on the lunar (left) half &mdash; Mercury (Gemini/Virgo), Venus (Taurus/Libra), Mars (Aries/Scorpio), Jupiter (Pisces/Sagittarius) and Saturn (Aquarius/Capricorn) &mdash; which is why each planet&#39;s pair falls on one horizontal line across the wheel.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Global SVG Definitions used across pages -->
+  <svg width="0" height="0" class="hidden">
+    <defs>
+      <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+  </svg>
+
+  <script>
+    // Simple SPA Navigation Logic
+    function switchPage(pageId) {
+      // 1. Hide all pages
+      document.querySelectorAll('.page-section').forEach(page => {
+        page.classList.remove('active');
+      });
+      
+      // 2. Reset all nav buttons styling
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        // Remove active styles
+        btn.classList.remove('bg-cyan-900/40', 'text-cyan-300', 'border-cyan-500/50', 'glow-cyan');
+        btn.classList.remove('bg-emerald-900/40', 'text-emerald-300', 'border-emerald-500/50');
+        btn.classList.remove('bg-rose-900/40', 'text-rose-300', 'border-rose-500/50', 'glow-mars');
+        btn.classList.remove('bg-purple-900/40', 'text-purple-300', 'border-purple-500/50', 'glow-purple');
+        btn.classList.remove('bg-amber-900/40', 'text-amber-300', 'border-amber-500/50', 'glow-gold');
+        // Add inactive styles
+        btn.classList.add('bg-slate-900', 'text-slate-400', 'border-slate-800', 'hover:bg-slate-800');
+      });
+
+      // 3. Show selected page
+      const targetPage = document.getElementById(pageId);
+      if (targetPage) {
+        targetPage.classList.add('active');
+      }
+
+      // 4. Highlight active button based on selected page
+      const activeBtn = document.getElementById(pageId.replace('page-', 'nav-'));
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-900', 'text-slate-400', 'border-slate-800', 'hover:bg-slate-800');
+        if(pageId === 'page-moon') {
+          activeBtn.classList.add('bg-cyan-900/40', 'text-cyan-300', 'border-cyan-500/50', 'glow-cyan');
+        } else if (pageId === 'page-venus') {
+          activeBtn.classList.add('bg-emerald-900/40', 'text-emerald-300', 'border-emerald-500/50');
+        } else if (pageId === 'page-mars') {
+          activeBtn.classList.add('bg-rose-900/40', 'text-rose-300', 'border-rose-500/50', 'glow-mars');
+        } else if (pageId === 'page-jupiter') {
+          activeBtn.classList.add('bg-purple-900/40', 'text-purple-300', 'border-purple-500/50', 'glow-purple');
+        } else if (pageId === 'page-all') {
+          activeBtn.classList.add('bg-amber-900/40', 'text-amber-300', 'border-amber-500/50', 'glow-gold');
+        } else if (pageId === 'page-cycles') {
+          activeBtn.classList.add('bg-slate-800', 'text-slate-200', 'border-slate-600', 'glow-cyan');
+        }
+      }
+      
+      // Auto close mobile sidebar on navigation
+      if(window.innerWidth < 768) {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+      }
+    }
+
+    // Sidebar Toggle Logic (Desktop)
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('sidebar-collapsed');
+    }
+
+    // Sidebar Toggle Logic (Mobile)
+    function toggleSidebarMobile() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobile-overlay');
+      
+      if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        overlay.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        sidebar.classList.remove('translate-x-0');
+        overlay.classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+</html>

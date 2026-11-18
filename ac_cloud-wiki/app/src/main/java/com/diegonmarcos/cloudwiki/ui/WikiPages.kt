@@ -68,10 +68,12 @@ class WikiNav {
     companion object { const val OVERVIEW = "overview" }
 }
 
-/** One side-menu page: the graph, or a topic (its subpage tabs over the Overview or a page). [onTopic] switches the side menu to another topic. */
+/** One side-menu page: a Chronos page (#1789), the graph, or a topic (its subpage tabs over the Overview or a page). [onTopic] switches the side menu to another topic. */
 @Composable
 fun WikiPage(data: WikiData?, wiki: NavSection, pageId: String, nav: WikiNav, onTopic: (String) -> Unit) {
     val p = LocalKitPalette.current
+    // #1789 a Chronos page is baked into the APK: it shows whether or not Cloud Store has served the dataset yet
+    Decl.chronos.page(pageId)?.let { ChronosSimPage(Decl.chronos, it, onOpen = onTopic); return }
     if (data == null || data.topics.isEmpty()) {
         KitStoreCaption(stringResource(R.string.loading), Modifier.fillMaxWidth().padding(KitStoreRow.padH).testTag(Tags.LOADING), color = p.textSecondary, align = TextAlign.Center)
         return

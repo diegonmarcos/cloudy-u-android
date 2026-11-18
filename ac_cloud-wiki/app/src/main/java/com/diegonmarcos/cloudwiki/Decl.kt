@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudwiki
 
+import android.util.Base64
 import com.diegonmarcos.superapp.bottomnav.NavDecl
 
 /**
@@ -10,6 +11,14 @@ import com.diegonmarcos.superapp.bottomnav.NavDecl
 object Decl {
     val nav: NavDecl by lazy {
         NavDecl.fromBuildConfig(BuildConfig.UI_SECTIONS_B64, BuildConfig.UI_BOTTOM_NAV, BuildConfig.UI_DEFAULT_SECTION)
+    }
+
+    /**
+     * #1789 the Chronos pages (diegonmarcos/lib-chronos at the pin, tools/chronos-pin.json): the nested pages build.json::ui declares under
+     * wiki > chronos with their `asset`, read from the same baked ui.sections (NavDecl keeps no `asset`).
+     */
+    val chronos: ChronosTree by lazy {
+        Chronos.parse(runCatching { String(Base64.decode(BuildConfig.UI_SECTIONS_B64, Base64.DEFAULT), Charsets.UTF_8) }.getOrDefault("[]"))
     }
 
     /** The one section holding every page (the collapsed side menu). */

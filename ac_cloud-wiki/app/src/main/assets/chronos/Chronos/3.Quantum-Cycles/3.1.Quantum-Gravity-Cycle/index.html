@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Hole Cycle (Birth & Death) - Quantum Gravity</title>
+    <script src="/chronos/_vendor/tailwindcss/3.4.17/tailwind.js"></script>
+    <script src="/chronos/_vendor/chart.js/4.6.1/chart.umd.min.js"></script>
+    <link href="/chronos/_vendor/fonts/inter.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #030712; color: #f8fafc; overflow: hidden; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details summary::before { content: '▶'; display: inline-block; width: 1.2em; font-size: 0.8em; transition: transform 0.2s ease-in-out; color: #6b7280; }
+        details[open] summary::before { transform: rotate(90deg); }
+        .glass-panel { background: rgba(17, 24, 39, 0.95); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .range-slider::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #a855f7; cursor: pointer; }
+        .range-slider { appearance: none; width: 100%; height: 3px; border-radius: 2px; background: #374151; outline: none; }
+        .data-table th { background-color: #111827; position: sticky; top: 0; z-index: 10; }
+        .data-table tr:nth-child(even) { background-color: rgba(255,255,255,0.01); }
+        .data-table tr:hover { background-color: rgba(168, 85, 247, 0.1); }
+    </style>
+</head>
+<body class="h-screen w-full flex text-sm overflow-hidden bg-gray-950 relative">
+
+    <div id="mobileOverlay" class="fixed inset-0 bg-black/80 z-30 hidden md:hidden" onclick="toggleMenu()"></div>
+
+    <!-- Sidebar Inputs -->
+    <aside id="sidebar" class="absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 w-80 sm:w-80 w-[85%] flex-shrink-0 bg-gray-900 border-r border-gray-800 h-full overflow-y-auto flex flex-col z-40 transition-transform duration-300 ease-in-out">
+        <div class="p-4 border-b border-gray-800 sticky top-0 bg-gray-900 z-20 flex justify-between items-center">
+            <div>
+                <h1 class="text-lg font-bold text-purple-500 tracking-wide">Quantum Gravity Cycle</h1>
+                <p class="text-xs text-gray-400 mt-1">Information Reset Simulator</p>
+            </div>
+            <button onclick="toggleMenu()" class="md:hidden text-gray-400 hover:text-white p-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div class="flex-1 pb-10">
+            <details open class="border-b border-gray-800">
+                <summary class="cursor-pointer p-4 bg-gray-800/30 hover:bg-gray-800 font-semibold text-gray-200 select-none">
+                    1. Cosmic Initial Conditions
+                </summary>
+                <div class="px-2 pb-2">
+                    
+                    <!-- Stellar Mass -->
+                    <details open class="mt-1">
+                        <summary class="cursor-pointer p-2 text-gray-300 hover:text-white text-xs font-medium uppercase tracking-wider select-none">
+                            1.0 Stellar Progenitor Mass
+                        </summary>
+                        <div class="pl-6 pr-4 pb-3 space-y-3 border-l border-gray-800 ml-3">
+                            <div>
+                                <label class="flex justify-between text-[10px] text-gray-400 mb-1">
+                                    <span>Solar Masses (M☉)</span>
+                                    <span id="massVal" class="text-yellow-400">10</span>
+                                </label>
+                                <input type="range" id="stellarMass" min="5" max="50" step="1" value="10" class="range-slider bg-yellow-900/50">
+                                <p class="text-[9px] text-gray-500 mt-1">Higher mass = faster star burn, larger Event Horizon.</p>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Holographic Principle -->
+                    <details open class="mt-1">
+                        <summary class="cursor-pointer p-2 text-gray-300 hover:text-white text-xs font-medium uppercase tracking-wider select-none">
+                            1.1 Spacetime Geometry
+                        </summary>
+                        <div class="pl-6 pr-4 pb-3 space-y-3 border-l border-gray-800 ml-3">
+                            <div>
+                                <label class="block text-[10px] text-gray-400 mb-1">Entanglement Topology</label>
+                                <select id="entanglement" class="w-full bg-gray-950 text-white border border-gray-700 rounded p-1 text-xs focus:ring-1 focus:ring-purple-500">
+                                    <option value="standard" selected>Standard (ER=EPR)</option>
+                                    <option value="dense">Dense Network (String Theory Bulk)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </details>
+
+            <details open class="border-b border-gray-800">
+                <summary class="cursor-pointer p-4 bg-gray-800/30 hover:bg-gray-800 font-semibold text-gray-200 select-none">
+                    2. Output Visualizations
+                </summary>
+                <div class="px-4 py-3 space-y-2">
+                    <div class="flex space-x-2 bg-gray-950 p-1 rounded mb-4">
+                        <button id="viewGraphBtn" class="flex-1 py-1.5 px-2 bg-purple-700 text-white rounded shadow text-xs font-medium transition-colors">Graphics</button>
+                        <button id="viewTableBtn" class="flex-1 py-1.5 px-2 bg-transparent text-gray-400 hover:text-white rounded text-xs font-medium transition-colors">Data Matrix</button>
+                    </div>
+                    
+                    <label class="flex items-center space-x-2 cursor-pointer group">
+                        <input type="checkbox" checked class="model-toggle rounded border-gray-600 bg-gray-900 text-purple-500" data-target="cModel1">
+                        <span class="text-xs text-gray-300 group-hover:text-white">2.0 Mass & Lifespan Cycle</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer group">
+                        <input type="checkbox" checked class="model-toggle rounded border-gray-600 bg-gray-900 text-purple-500" data-target="cModel2">
+                        <span class="text-xs text-gray-300 group-hover:text-white">2.1 Holographic Information (Area vs Volume)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer group">
+                        <input type="checkbox" checked class="model-toggle rounded border-gray-600 bg-gray-900 text-purple-500" data-target="cModel3">
+                        <span class="text-xs text-gray-300 group-hover:text-white">2.2 Hawking Radiation Leak</span>
+                    </label>
+                </div>
+            </details>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 h-full overflow-y-auto bg-black relative">
+        <header class="md:hidden flex items-center p-4 bg-gray-900 border-b border-gray-800 sticky top-0 z-10">
+            <button onclick="toggleMenu()" class="text-gray-300 hover:text-white mr-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <h2 class="text-lg font-bold text-gray-100 truncate">Black Hole Cycle</h2>
+        </header>
+
+        <div class="p-4 md:p-6">
+            <header class="mb-6 pb-4 border-b border-gray-800 hidden md:block">
+                <h2 class="text-2xl font-light text-gray-100">Black Hole Cycle (Birth & Death) - Quantum Gravity</h2>
+                <p class="text-gray-400 mt-1">Simulating the lifecycle of information from a Star, to a Black Hole, to Hawking Evaporation.</p>
+            </header>
+
+            <div id="graphsContainer" class="space-y-6">
+                
+                <!-- Model 1: Mass Cycle -->
+                <section id="cModel1" class="glass-panel p-4 md:p-5 rounded-xl transition-all">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-lg font-medium text-gray-200">2.0 Mass & Lifespan Evolution</h3>
+                        <span class="text-[10px] font-mono bg-yellow-900/30 text-yellow-500 px-2 py-0.5 rounded border border-yellow-800">General Relativity</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-4">Normalized Epochs (0-100). Star burns (flat mass) -> Supernova Collapse -> Black Hole phase -> Evaporation.</p>
+                    <div class="h-64 w-full relative"><canvas id="chartC1"></canvas></div>
+                </section>
+
+                <!-- Model 2: Holographic Principle -->
+                <section id="cModel2" class="glass-panel p-4 md:p-5 rounded-xl transition-all">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-lg font-medium text-gray-200">2.1 The Holographic Principle</h3>
+                        <span class="text-[10px] font-mono bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded border border-blue-800">Data Storage</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-4">Classical 3D volume entropy is compressed perfectly onto the 2D surface area (Event Horizon) upon collapse.</p>
+                    <div class="h-64 w-full relative"><canvas id="chartC2"></canvas></div>
+                </section>
+
+                <!-- Model 3: Hawking Radiation -->
+                <section id="cModel3" class="glass-panel p-4 md:p-5 rounded-xl transition-all">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-lg font-medium text-gray-200">2.2 Hawking Radiation Leak</h3>
+                        <span class="text-[10px] font-mono bg-purple-900/30 text-purple-400 px-2 py-0.5 rounded border border-purple-800">Quantum Fluctuations</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-4">As mass decreases over trillions of years, black hole temperature rises, causing a massive spike in radiation and information release at the end.</p>
+                    <div class="h-64 w-full relative"><canvas id="chartC3"></canvas></div>
+                </section>
+
+            </div>
+
+            <div id="tableContainer" class="hidden space-y-6">
+                 <div class="glass-panel p-5 rounded-xl h-[calc(100vh-140px)] flex flex-col">
+                    <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                        <h3 class="text-lg font-medium text-gray-200">Cosmic Epoch Matrix</h3>
+                    </div>
+                    <div class="flex-1 overflow-auto rounded border border-gray-800">
+                        <table class="w-full text-left border-collapse data-table text-xs whitespace-nowrap">
+                            <thead>
+                                <tr class="text-gray-300">
+                                    <th class="p-3 border-b border-gray-800 bg-gray-900">Epoch Phase</th>
+                                    <th class="p-3 border-b border-gray-800">System Mass (M☉)</th>
+                                    <th class="p-3 border-b border-gray-800 text-blue-400">Surface Area Data</th>
+                                    <th class="p-3 border-b border-gray-800">Hawking Temp (K)</th>
+                                    <th class="p-3 border-b border-gray-800 text-purple-400">Radiation Output</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cDataTableBody" class="text-gray-400 font-mono"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let cData = [];
+        const charts = {};
+
+        const DOM = {
+            mass: document.getElementById('stellarMass'),
+            massVal: document.getElementById('massVal'),
+            ent: document.getElementById('entanglement'),
+            graphBtn: document.getElementById('viewGraphBtn'),
+            tableBtn: document.getElementById('viewTableBtn'),
+            graphCont: document.getElementById('graphsContainer'),
+            tableCont: document.getElementById('tableContainer')
+        };
+
+        const toggleMenu = () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('mobileOverlay').classList.toggle('hidden');
+        };
+
+        const attachListeners = () => {
+            document.querySelectorAll('#sidebar input, #sidebar select').forEach(el => {
+                el.addEventListener('input', runSim);
+                el.addEventListener('change', runSim);
+            });
+            DOM.graphBtn.addEventListener('click', () => {
+                DOM.graphBtn.className = 'flex-1 py-1.5 px-2 bg-purple-700 text-white rounded shadow text-xs font-medium transition-colors';
+                DOM.tableBtn.className = 'flex-1 py-1.5 px-2 bg-transparent text-gray-400 hover:text-white rounded text-xs font-medium transition-colors';
+                DOM.graphCont.classList.remove('hidden'); DOM.tableCont.classList.add('hidden');
+            });
+            DOM.tableBtn.addEventListener('click', () => {
+                DOM.tableBtn.className = 'flex-1 py-1.5 px-2 bg-purple-700 text-white rounded shadow text-xs font-medium transition-colors';
+                DOM.graphBtn.className = 'flex-1 py-1.5 px-2 bg-transparent text-gray-400 hover:text-white rounded text-xs font-medium transition-colors';
+                DOM.tableCont.classList.remove('hidden'); DOM.graphCont.classList.add('hidden');
+                renderTable();
+            });
+            document.querySelectorAll('.model-toggle').forEach(t => t.addEventListener('change', e => {
+                document.getElementById(e.target.dataset.target).style.display = e.target.checked ? 'block' : 'none';
+            }));
+        };
+
+        const initCharts = () => {
+            Chart.defaults.color = '#6b7280'; Chart.defaults.font.family = 'Inter'; Chart.defaults.font.size = 10;
+            const opt = { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, elements: { point: { radius: 0 } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } } } };
+
+            charts.c1 = new Chart(document.getElementById('chartC1').getContext('2d'), { type: 'line', data: { labels: [], datasets: [] }, options: { ...opt, scales: { ...opt.scales, y: { title: {display:true, text:'Mass (M☉)'}, min: 0, grid: {color: 'rgba(255,255,255,0.05)'} } } } });
+            charts.c2 = new Chart(document.getElementById('chartC2').getContext('2d'), { type: 'line', data: { labels: [], datasets: [] }, options: { ...opt, scales: { ...opt.scales, y: { title: {display:true, text:'Information (Arbitrary Qubits)'}, min: 0 } } } });
+            charts.c3 = new Chart(document.getElementById('chartC3').getContext('2d'), { type: 'line', data: { labels: [], datasets: [] }, options: { ...opt, scales: { ...opt.scales, y: { title: {display:true, text:'Radiation Intensity'}, min: 0 } } } });
+        };
+
+        const runSim = () => {
+            DOM.massVal.innerText = DOM.mass.value;
+            let initMass = parseFloat(DOM.mass.value);
+            
+            cData = []; const labels = [];
+            const dMass = [], dVolData = [], dSurfData = [], dTemp = [], dRad = [];
+
+            // Normalized timescale 0 to 100 epochs
+            for (let t = 0; t <= 100; t++) {
+                labels.push(`Ep ${t}`);
+                
+                let mass = 0;
+                let volData = 0;
+                let surfData = 0;
+                let temp = 0;
+                let rad = 0;
+
+                if (t < 20) {
+                    // Star Phase
+                    mass = initMass - (t * 0.05); // slight burn off
+                    volData = mass * 10; // classical 3D volume
+                    surfData = 0; // No event horizon
+                } else if (t === 20) {
+                    // Supernova Collapse
+                    mass = initMass * 0.8; // loses mass in explosion
+                    volData = 0; // Collapsed
+                    surfData = mass * mass * 5; // Holographic principle (Area prop to M^2)
+                } else {
+                    // Black Hole Phase (t=21 to 100)
+                    // Evaporation accelerates over time. Math simulated for curve effect.
+                    let timeRemaining = 100 - t;
+                    mass = (initMass * 0.8) * Math.pow(timeRemaining / 80, 0.4); 
+                    
+                    volData = 0;
+                    surfData = mass * mass * 5; 
+                    
+                    // Temp inverse to mass, Radiation inverse to Mass^2
+                    if(mass > 0.1) {
+                        temp = 10 / mass;
+                        rad = 100 / (mass * mass);
+                    } else {
+                        temp = 100; // Spike at end
+                        rad = 10000;
+                    }
+                }
+
+                dMass.push(mass);
+                dVolData.push(volData);
+                dSurfData.push(surfData);
+                dTemp.push(temp);
+                dRad.push(rad);
+
+                if(t % 10 === 0 || t === 20 || t === 99) {
+                    let phase = t < 20 ? "Star" : (t === 20 ? "Collapse" : "Evaporating");
+                    cData.push({ phase: phase, m: mass.toFixed(2), surf: surfData.toFixed(1), temp: temp.toFixed(2), rad: rad.toFixed(2) });
+                }
+            }
+
+            charts.c1.data.labels = labels;
+            charts.c1.data.datasets = [
+                { label: 'System Mass', data: dMass, borderColor: '#eab308', backgroundColor: 'rgba(234, 179, 8, 0.1)', borderWidth: 2, fill: true, tension: 0.1 }
+            ];
+            charts.c1.update();
+
+            charts.c2.data.labels = labels;
+            charts.c2.data.datasets = [
+                { label: '3D Volume Entropy (Pre-Collapse)', data: dVolData, borderColor: '#9ca3af', borderDash: [4,4], borderWidth: 2, tension: 0.1 },
+                { label: '2D Boundary Surface Area (Hologram)', data: dSurfData, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.15)', borderWidth: 2, fill: true, tension: 0.1 }
+            ];
+            charts.c2.update();
+
+            charts.c3.data.labels = labels;
+            charts.c3.data.datasets = [
+                { label: 'Hawking Radiation Output', data: dRad, borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.3)', borderWidth: 2, fill: true, tension: 0.4 }
+            ];
+            charts.c3.update();
+        };
+
+        const renderTable = () => {
+            const tbody = document.getElementById('cDataTableBody');
+            tbody.innerHTML = '';
+            cData.forEach(r => {
+                let colorClass = r.phase === 'Star' ? 'text-yellow-400' : (r.phase === 'Collapse' ? 'text-red-400' : 'text-purple-400');
+                tbody.innerHTML += `<tr><td class="p-3 border-b border-gray-800 ${colorClass} font-bold">${r.phase}</td><td class="p-3 border-b border-gray-800 text-white">${r.m}</td><td class="p-3 border-b border-gray-800 text-blue-400 bg-blue-900/10">${r.surf}</td><td class="p-3 border-b border-gray-800 text-orange-300">${r.temp}</td><td class="p-3 border-b border-gray-800 text-purple-400">${r.rad}</td></tr>`;
+            });
+        };
+
+        window.onload = () => { initCharts(); attachListeners(); runSim(); };
+    </script>
+</body>
+</html>
