@@ -54,7 +54,7 @@ for l in open(sys.argv[1]):
         sys.exit(1)
 PY
 ups="$(grep -c '^UPLOAD' "$W/log")"; [ "$ups" = 2 ] && ok "each file is uploaded once, under a temporary name" || fail "unexpected uploads: $ups"
-grep '^UPLOAD' "$W/log" | grep -q 'swap-' && ok "uploads use the .swap- temporary name" || fail "upload used the live name"
+grep -q 'swap-' <<<"$(grep '^UPLOAD' "$W/log")" && ok "uploads use the .swap- temporary name" || fail "upload used the live name"
 
 # gap length: between the rename that frees app.apk and the rename that restores it there is no upload/delete
 python3 - "$W/log" <<'PY' && ok "no upload or delete happens inside the gap" || fail "an operation ran inside the gap"

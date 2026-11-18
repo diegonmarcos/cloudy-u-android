@@ -36,11 +36,10 @@ red "predicted rebuild of an app that owns no changed path (another app's dir ed
 d="$(mktemp -d)"; cp -r 1_cicd/src/cicd/. "$d/"
 grep -q 'fleet-config.json"' "$d/ship-cloud-news.yml" || fail "ship-cloud-news.yml carries no fleet-config.json exclusion to mutate"
 sed -i '/"!ab_cloud-libs-shared\/libs\/fleetconfig-model\/src\/main\/assets\/fleet-config.json"/d' "$d/ship-cloud-news.yml"
-out="$(python3 "$G" --wf "$d" static 2>&1 || true)"  # the guard exits 1 on a violation: capture, do not pipe under pipefail
-if printf '%s\n' "$out" | grep -q "shared manifest .*fleet-config.json starts this app"; then ok "an app whose push filter lost the fleet-config.json exclusion goes red"; else fail "dropping the fleet-config.json exclusion stayed green (the manifest rule is not enforced)"; fi
+if grep -q "shared manifest .*fleet-config.json starts this app" <<<"$(python3 "$G" --wf "$d" static 2>&1 || true)"; then ok "an app whose push filter lost the fleet-config.json exclusion goes red"; else fail "dropping the fleet-config.json exclusion stayed green (the manifest rule is not enforced)"; fi
 rm -rf "$d"
 d="$(mktemp -d)"; mut "$d" ship-cloud-superapp.yml "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
-if python3 "$G" --wf "$d" static 2>&1 | grep -q "starts this app"; then fail "a planner (SuperApp) watching the manifest was flagged"; else ok "the planners named in manifest_watchers may watch the manifest"; fi
+if grep -q "starts this app" <<<"$(python3 "$G" --wf "$d" static 2>&1 || true)"; then fail "a planner (SuperApp) watching the manifest was flagged"; else ok "the planners named in manifest_watchers may watch the manifest"; fi
 rm -rf "$d"
 
 # a static lib must never be predicted as a lib APK, nor a lib change rebuild another lib
