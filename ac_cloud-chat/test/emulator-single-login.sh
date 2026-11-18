@@ -50,7 +50,7 @@ run_and_wait() { # press the one action, wait for the flow to end (no step left 
   # done = the step list is on screen AND no step is running (the list appears a frame after the tap)
   for _ in $(seq "$1"); do sleep 1; dump wait
     grep -q 'server_form.progress.url' "$OUT/wait.xml" && ! grep -q 'server_form.progress.[a-z]*.running' "$OUT/wait.xml" && break
-    grep -q 'server_form.server_url.dropdown' "$OUT/wait.xml" || break  # left the screen (connected)
+    grep -q 'resource-id="server_form\.' "$OUT/wait.xml" || break  # no server_form node at all: left the screen (connected)
   done
   sleep 2
 }
