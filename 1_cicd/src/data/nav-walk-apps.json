@@ -530,7 +530,7 @@
       "scene_theme_setup": [["shell", "pm clear {pkg}"], ["shell", "appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow"]],
       "scene_setup": [["shell", "mkdir -p /sdcard/Documents"], ["push", "../ac_cloud-notes/test/fixtures/vault/sample", "/sdcard/Documents/sample-vault"], ["shell", "appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow"]],
       "scenes": [
-        {"name": "vault", "steps": [["wait", 30], ["tap", "/storage/emulated/0/"], ["key", "KEYCODE_MOVE_END"], ["type", "Documents/sample-vault"], ["tap", "Open typed path"], ["wait", 5]]},
+        {"name": "vault", "steps": [["wait", 45], ["tap", "/storage/emulated/0/"], ["key", "KEYCODE_MOVE_END"], ["type", "Documents/sample-vault"], ["key", "KEYCODE_BACK"], ["tap", "Open typed path"], ["wait", 6]]},
         {"name": "vault-sidebar-tree", "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "notes"], ["wait", 1]]},
         {"name": "vault-md-view", "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Home.md"], ["wait", 3]]},
         {"name": "vault-md-raw", "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Home.md"], ["wait", 3], ["tap", "Raw"], ["wait", 2]]},
