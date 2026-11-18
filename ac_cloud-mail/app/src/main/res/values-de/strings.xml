@@ -1471,4 +1471,32 @@
     <string name="cloud_secret_take">Aus Cloud Account übernehmen</string>
     <string name="cloud_secret_set">In Cloud Account festlegen</string>
     <string name="connect_oauth_cloud_account">Die OAuth-Anmeldung übernimmt Cloud Account: installieren Sie es und versuchen Sie es erneut</string>
+    <!-- #1802 Sent delivery ticker -->
+    <string name="delivery_stage_left_phone">Hat das Telefon verlassen</string>
+    <string name="delivery_stage_server_received">Vom Server empfangen</string>
+    <string name="delivery_stage_valid_sender">Gültiger Absender</string>
+    <string name="delivery_stage_sent">Gesendet</string>
+    <string name="delivery_mark_confirmed">erledigt</string>
+    <string name="delivery_mark_pending">ausstehend</string>
+    <string name="delivery_mark_not_reached">nicht erreicht</string>
+    <string name="delivery_mark_deferred">verzögert</string>
+    <string name="delivery_mark_failed">fehlgeschlagen</string>
+    <string name="delivery_mark_a11y">%1$s: %2$s</string>
+    <string name="delivery_title">Zustellung</string>
+    <string name="delivery_close">Schließen</string>
+    <string name="delivery_reason_phone">Der Postausgang konnte sie nicht senden</string>
+    <string name="delivery_reason_refused">Der Server hat die Nachricht abgelehnt</string>
+    <string name="delivery_reason_sender">Der Server hat diesen Absender nicht akzeptiert</string>
+    <string name="delivery_check_from">das Konto darf nicht mit dieser Adresse senden</string>
+    <string name="delivery_check_dkim">keine DKIM-Signatur</string>
+    <string name="delivery_check_spf">SPF nicht ausgerichtet</string>
+    <string name="delivery_check_dmarc">DMARC nicht ausgerichtet</string>
+    <string name="delivery_reason_bounced">Unzustellbar</string>
+    <string name="delivery_reason_deferred">Vom Server des Empfängers verzögert, wird erneut versucht</string>
+    <string name="delivery_recipient_pending">wartet</string>
+    <string name="delivery_recipient_delivered">zugestellt</string>
+    <string name="delivery_recipient_deferred">verzögert</string>
+    <string name="delivery_recipient_bounced">unzustellbar</string>
+    <string name="delivery_message_id">Nachrichten-ID: %1$s</string>
+    <string name="delivery_smtp_code">SMTP %1$d</string>
 </resources>

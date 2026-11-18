@@ -1527,4 +1527,32 @@
     <string name="cloud_secret_take">Tomarlo de Cloud Account</string>
     <string name="cloud_secret_set">Definirlo en Cloud Account</string>
     <string name="connect_oauth_cloud_account">El inicio de sesión OAuth lo ejecuta Cloud Account: instálalo e inténtalo de nuevo</string>
+    <!-- #1802 Sent delivery ticker -->
+    <string name="delivery_stage_left_phone">Salió del teléfono</string>
+    <string name="delivery_stage_server_received">Recibido por el servidor</string>
+    <string name="delivery_stage_valid_sender">Remitente válido</string>
+    <string name="delivery_stage_sent">Enviado</string>
+    <string name="delivery_mark_confirmed">hecho</string>
+    <string name="delivery_mark_pending">pendiente</string>
+    <string name="delivery_mark_not_reached">no alcanzado</string>
+    <string name="delivery_mark_deferred">retrasado</string>
+    <string name="delivery_mark_failed">fallido</string>
+    <string name="delivery_mark_a11y">%1$s: %2$s</string>
+    <string name="delivery_title">Entrega</string>
+    <string name="delivery_close">Cerrar</string>
+    <string name="delivery_reason_phone">La bandeja de salida no pudo enviarlo</string>
+    <string name="delivery_reason_refused">El servidor rechazó el mensaje</string>
+    <string name="delivery_reason_sender">El servidor no aceptó este remitente</string>
+    <string name="delivery_check_from">la cuenta no puede enviar como esta dirección</string>
+    <string name="delivery_check_dkim">sin firma DKIM</string>
+    <string name="delivery_check_spf">SPF no alineado</string>
+    <string name="delivery_check_dmarc">DMARC no alineado</string>
+    <string name="delivery_reason_bounced">Rebotado</string>
+    <string name="delivery_reason_deferred">Retrasado por el servidor del destinatario, se sigue intentando</string>
+    <string name="delivery_recipient_pending">esperando</string>
+    <string name="delivery_recipient_delivered">entregado</string>
+    <string name="delivery_recipient_deferred">retrasado</string>
+    <string name="delivery_recipient_bounced">rebotado</string>
+    <string name="delivery_message_id">ID del mensaje: %1$s</string>
+    <string name="delivery_smtp_code">SMTP %1$d</string>
 </resources>

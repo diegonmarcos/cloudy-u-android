@@ -1483,4 +1483,32 @@
     <string name="cloud_secret_take">Le reprendre depuis Cloud Account</string>
     <string name="cloud_secret_set">Le définir dans Cloud Account</string>
     <string name="connect_oauth_cloud_account">La connexion OAuth est assurée par Cloud Account : installez-le puis réessayez</string>
+    <!-- #1802 Sent delivery ticker -->
+    <string name="delivery_stage_left_phone">A quitté le téléphone</string>
+    <string name="delivery_stage_server_received">Reçu par le serveur</string>
+    <string name="delivery_stage_valid_sender">Expéditeur valide</string>
+    <string name="delivery_stage_sent">Envoyé</string>
+    <string name="delivery_mark_confirmed">fait</string>
+    <string name="delivery_mark_pending">en attente</string>
+    <string name="delivery_mark_not_reached">non atteint</string>
+    <string name="delivery_mark_deferred">retardé</string>
+    <string name="delivery_mark_failed">échec</string>
+    <string name="delivery_mark_a11y">%1$s : %2$s</string>
+    <string name="delivery_title">Distribution</string>
+    <string name="delivery_close">Fermer</string>
+    <string name="delivery_reason_phone">La boîte d\'envoi n\'a pas pu l\'envoyer</string>
+    <string name="delivery_reason_refused">Le serveur a refusé le message</string>
+    <string name="delivery_reason_sender">Le serveur n\'a pas accepté cet expéditeur</string>
+    <string name="delivery_check_from">le compte ne peut pas envoyer avec cette adresse</string>
+    <string name="delivery_check_dkim">aucune signature DKIM</string>
+    <string name="delivery_check_spf">SPF non aligné</string>
+    <string name="delivery_check_dmarc">DMARC non aligné</string>
+    <string name="delivery_reason_bounced">Rejeté</string>
+    <string name="delivery_reason_deferred">Retardé par le serveur du destinataire, nouvel essai en cours</string>
+    <string name="delivery_recipient_pending">en attente</string>
+    <string name="delivery_recipient_delivered">distribué</string>
+    <string name="delivery_recipient_deferred">retardé</string>
+    <string name="delivery_recipient_bounced">rejeté</string>
+    <string name="delivery_message_id">ID du message : %1$s</string>
+    <string name="delivery_smtp_code">SMTP %1$d</string>
 </resources>

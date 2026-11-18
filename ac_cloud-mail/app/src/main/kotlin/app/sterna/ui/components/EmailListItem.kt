@@ -188,6 +188,9 @@ fun EmailListItem(
     // the message passes this; one that cannot (search hits, which come from the FTS table) passes
     // null and the actions fall back to the row as it stands.
     onLoadMessage: (suspend (Email) -> Email)? = null,
+    // #1802: a SENT message's four delivery marks, drawn right after the time. Null (every other
+    // folder, and a Sent row with no record yet bound) draws nothing: the row is unchanged.
+    deliveryTimeline: app.sterna.send.delivery.DeliveryTimeline? = null,
 ) {
     // Gmail Dark draws Gmail's own conversation row (GmailEmailRow.kt), handed every parameter as it
     // came; Cloud Dark and Cloud E-ink go on below, unchanged.
@@ -215,6 +218,7 @@ fun EmailListItem(
             onOpenAttachment = onOpenAttachment,
             openingAttachmentKey = openingAttachmentKey,
             onLoadMessage = onLoadMessage,
+            deliveryTimeline = deliveryTimeline,
         )
         return
     }
@@ -351,6 +355,7 @@ fun EmailListItem(
                     // bright on an unread row and dimmed on a read one.
                     color = listTextInk.color,
                 )
+                deliveryTimeline?.let { DeliveryTicker(it, ink = listTextInk.color) }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(

@@ -1474,4 +1474,32 @@
     <string name="cloud_secret_take">Overnemen uit Cloud Account</string>
     <string name="cloud_secret_set">Instellen in Cloud Account</string>
     <string name="connect_oauth_cloud_account">De OAuth-aanmelding wordt door Cloud Account uitgevoerd: installeer het en probeer opnieuw</string>
+    <!-- #1802 Sent delivery ticker -->
+    <string name="delivery_stage_left_phone">Heeft de telefoon verlaten</string>
+    <string name="delivery_stage_server_received">Ontvangen door server</string>
+    <string name="delivery_stage_valid_sender">Geldige afzender</string>
+    <string name="delivery_stage_sent">Verzonden</string>
+    <string name="delivery_mark_confirmed">klaar</string>
+    <string name="delivery_mark_pending">in afwachting</string>
+    <string name="delivery_mark_not_reached">niet bereikt</string>
+    <string name="delivery_mark_deferred">vertraagd</string>
+    <string name="delivery_mark_failed">mislukt</string>
+    <string name="delivery_mark_a11y">%1$s: %2$s</string>
+    <string name="delivery_title">Bezorging</string>
+    <string name="delivery_close">Sluiten</string>
+    <string name="delivery_reason_phone">Het postvak UIT kon het niet verzenden</string>
+    <string name="delivery_reason_refused">De server heeft het bericht geweigerd</string>
+    <string name="delivery_reason_sender">De server heeft deze afzender niet geaccepteerd</string>
+    <string name="delivery_check_from">het account mag niet met dit adres verzenden</string>
+    <string name="delivery_check_dkim">geen DKIM-handtekening</string>
+    <string name="delivery_check_spf">SPF niet uitgelijnd</string>
+    <string name="delivery_check_dmarc">DMARC niet uitgelijnd</string>
+    <string name="delivery_reason_bounced">Onbestelbaar</string>
+    <string name="delivery_reason_deferred">Vertraagd door de server van de ontvanger, wordt opnieuw geprobeerd</string>
+    <string name="delivery_recipient_pending">wacht</string>
+    <string name="delivery_recipient_delivered">bezorgd</string>
+    <string name="delivery_recipient_deferred">vertraagd</string>
+    <string name="delivery_recipient_bounced">onbestelbaar</string>
+    <string name="delivery_message_id">Bericht-ID: %1$s</string>
+    <string name="delivery_smtp_code">SMTP %1$d</string>
 </resources>

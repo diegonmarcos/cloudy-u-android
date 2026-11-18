@@ -1493,4 +1493,32 @@
     <string name="cloud_secret_take">Pobierz z Cloud Account</string>
     <string name="cloud_secret_set">Ustaw w Cloud Account</string>
     <string name="connect_oauth_cloud_account">Logowanie OAuth obsługuje Cloud Account: zainstaluj go i spróbuj ponownie</string>
+    <!-- #1802 Sent delivery ticker -->
+    <string name="delivery_stage_left_phone">Opuściła telefon</string>
+    <string name="delivery_stage_server_received">Odebrana przez serwer</string>
+    <string name="delivery_stage_valid_sender">Prawidłowy nadawca</string>
+    <string name="delivery_stage_sent">Wysłana</string>
+    <string name="delivery_mark_confirmed">gotowe</string>
+    <string name="delivery_mark_pending">oczekuje</string>
+    <string name="delivery_mark_not_reached">nieosiągnięte</string>
+    <string name="delivery_mark_deferred">opóźnione</string>
+    <string name="delivery_mark_failed">niepowodzenie</string>
+    <string name="delivery_mark_a11y">%1$s: %2$s</string>
+    <string name="delivery_title">Doręczenie</string>
+    <string name="delivery_close">Zamknij</string>
+    <string name="delivery_reason_phone">Skrzynka nadawcza nie mogła jej wysłać</string>
+    <string name="delivery_reason_refused">Serwer odrzucił wiadomość</string>
+    <string name="delivery_reason_sender">Serwer nie zaakceptował tego nadawcy</string>
+    <string name="delivery_check_from">konto nie może wysyłać z tego adresu</string>
+    <string name="delivery_check_dkim">brak podpisu DKIM</string>
+    <string name="delivery_check_spf">SPF niezgodny</string>
+    <string name="delivery_check_dmarc">DMARC niezgodny</string>
+    <string name="delivery_reason_bounced">Odrzucona</string>
+    <string name="delivery_reason_deferred">Opóźniona przez serwer odbiorcy, ponawianie</string>
+    <string name="delivery_recipient_pending">czeka</string>
+    <string name="delivery_recipient_delivered">doręczona</string>
+    <string name="delivery_recipient_deferred">opóźniona</string>
+    <string name="delivery_recipient_bounced">odrzucona</string>
+    <string name="delivery_message_id">ID wiadomości: %1$s</string>
+    <string name="delivery_smtp_code">SMTP %1$d</string>
 </resources>

@@ -152,6 +152,7 @@ internal fun GmailEmailRow(
     onOpenAttachment: ((EmailBodyPart) -> Unit)?,
     openingAttachmentKey: String?,
     onLoadMessage: (suspend (Email) -> Email)?,
+    deliveryTimeline: app.sterna.send.delivery.DeliveryTimeline? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     val palette = LocalMailListPalette.current
@@ -270,6 +271,7 @@ internal fun GmailEmailRow(
                     maxLines = 1,
                     modifier = Modifier.testTag(GmailRowTags.TIME),
                 )
+                deliveryTimeline?.let { DeliveryTicker(it, ink = ink.color) }
                 if (unread) {
                     Spacer(Modifier.width(MailMetrics.gmailDotGap))
                     Box(

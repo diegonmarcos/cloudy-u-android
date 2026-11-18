@@ -1477,4 +1477,32 @@
     <string name="cloud_secret_take">Prendilo da Cloud Account</string>
     <string name="cloud_secret_set">Impostalo in Cloud Account</string>
     <string name="connect_oauth_cloud_account">L\'accesso OAuth è gestito da Cloud Account: installalo e riprova</string>
+    <!-- #1802 Sent delivery ticker -->
+    <string name="delivery_stage_left_phone">Ha lasciato il telefono</string>
+    <string name="delivery_stage_server_received">Ricevuto dal server</string>
+    <string name="delivery_stage_valid_sender">Mittente valido</string>
+    <string name="delivery_stage_sent">Inviato</string>
+    <string name="delivery_mark_confirmed">fatto</string>
+    <string name="delivery_mark_pending">in attesa</string>
+    <string name="delivery_mark_not_reached">non raggiunto</string>
+    <string name="delivery_mark_deferred">in ritardo</string>
+    <string name="delivery_mark_failed">non riuscito</string>
+    <string name="delivery_mark_a11y">%1$s: %2$s</string>
+    <string name="delivery_title">Consegna</string>
+    <string name="delivery_close">Chiudi</string>
+    <string name="delivery_reason_phone">La posta in uscita non è riuscita a inviarlo</string>
+    <string name="delivery_reason_refused">Il server ha rifiutato il messaggio</string>
+    <string name="delivery_reason_sender">Il server non ha accettato questo mittente</string>
+    <string name="delivery_check_from">l\'account non può inviare con questo indirizzo</string>
+    <string name="delivery_check_dkim">nessuna firma DKIM</string>
+    <string name="delivery_check_spf">SPF non allineato</string>
+    <string name="delivery_check_dmarc">DMARC non allineato</string>
+    <string name="delivery_reason_bounced">Respinto</string>
+    <string name="delivery_reason_deferred">Ritardato dal server del destinatario, nuovo tentativo in corso</string>
+    <string name="delivery_recipient_pending">in attesa</string>
+    <string name="delivery_recipient_delivered">consegnato</string>
+    <string name="delivery_recipient_deferred">in ritardo</string>
+    <string name="delivery_recipient_bounced">respinto</string>
+    <string name="delivery_message_id">ID messaggio: %1$s</string>
+    <string name="delivery_smtp_code">SMTP %1$d</string>
 </resources>

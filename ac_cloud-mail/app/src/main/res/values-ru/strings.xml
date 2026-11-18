@@ -1496,4 +1496,32 @@
     <string name="cloud_secret_take">Взять из Cloud Account</string>
     <string name="cloud_secret_set">Задать в Cloud Account</string>
     <string name="connect_oauth_cloud_account">Вход через OAuth выполняет Cloud Account: установите его и повторите попытку</string>
+    <!-- #1802 Sent delivery ticker -->
+    <string name="delivery_stage_left_phone">Покинуло телефон</string>
+    <string name="delivery_stage_server_received">Получено сервером</string>
+    <string name="delivery_stage_valid_sender">Отправитель подтверждён</string>
+    <string name="delivery_stage_sent">Отправлено</string>
+    <string name="delivery_mark_confirmed">готово</string>
+    <string name="delivery_mark_pending">ожидание</string>
+    <string name="delivery_mark_not_reached">не достигнуто</string>
+    <string name="delivery_mark_deferred">задержано</string>
+    <string name="delivery_mark_failed">ошибка</string>
+    <string name="delivery_mark_a11y">%1$s: %2$s</string>
+    <string name="delivery_title">Доставка</string>
+    <string name="delivery_close">Закрыть</string>
+    <string name="delivery_reason_phone">Исходящие не смогли отправить письмо</string>
+    <string name="delivery_reason_refused">Сервер отклонил письмо</string>
+    <string name="delivery_reason_sender">Сервер не принял этого отправителя</string>
+    <string name="delivery_check_from">аккаунт не может отправлять с этого адреса</string>
+    <string name="delivery_check_dkim">нет подписи DKIM</string>
+    <string name="delivery_check_spf">SPF не согласован</string>
+    <string name="delivery_check_dmarc">DMARC не согласован</string>
+    <string name="delivery_reason_bounced">Возвращено</string>
+    <string name="delivery_reason_deferred">Задержано сервером получателя, повторная попытка</string>
+    <string name="delivery_recipient_pending">ожидает</string>
+    <string name="delivery_recipient_delivered">доставлено</string>
+    <string name="delivery_recipient_deferred">задержано</string>
+    <string name="delivery_recipient_bounced">возвращено</string>
+    <string name="delivery_message_id">ID письма: %1$s</string>
+    <string name="delivery_smtp_code">SMTP %1$d</string>
 </resources>

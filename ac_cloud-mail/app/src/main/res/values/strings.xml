@@ -1580,4 +1580,32 @@
     <string name="cloud_secret_take">Take it from Cloud Account</string>
     <string name="cloud_secret_set">Set it in Cloud Account</string>
     <string name="connect_oauth_cloud_account">The OAuth sign-in is run by Cloud Account: install it, then try again</string>
+    <!-- #1802 Sent delivery ticker -->
+    <string name="delivery_stage_left_phone">Left the phone</string>
+    <string name="delivery_stage_server_received">Server received</string>
+    <string name="delivery_stage_valid_sender">Valid sender</string>
+    <string name="delivery_stage_sent">Sent</string>
+    <string name="delivery_mark_confirmed">done</string>
+    <string name="delivery_mark_pending">pending</string>
+    <string name="delivery_mark_not_reached">not reached</string>
+    <string name="delivery_mark_deferred">delayed</string>
+    <string name="delivery_mark_failed">failed</string>
+    <string name="delivery_mark_a11y">%1$s: %2$s</string>
+    <string name="delivery_title">Delivery</string>
+    <string name="delivery_close">Close</string>
+    <string name="delivery_reason_phone">The outbox could not send it</string>
+    <string name="delivery_reason_refused">The server refused the message</string>
+    <string name="delivery_reason_sender">The server did not accept this sender</string>
+    <string name="delivery_check_from">the account may not send as this address</string>
+    <string name="delivery_check_dkim">no DKIM signature</string>
+    <string name="delivery_check_spf">SPF not aligned</string>
+    <string name="delivery_check_dmarc">DMARC not aligned</string>
+    <string name="delivery_reason_bounced">Bounced</string>
+    <string name="delivery_reason_deferred">Delayed by the recipient\'s server, still trying</string>
+    <string name="delivery_recipient_pending">waiting</string>
+    <string name="delivery_recipient_delivered">delivered</string>
+    <string name="delivery_recipient_deferred">delayed</string>
+    <string name="delivery_recipient_bounced">bounced</string>
+    <string name="delivery_message_id">Message ID: %1$s</string>
+    <string name="delivery_smtp_code">SMTP %1$d</string>
 </resources>
