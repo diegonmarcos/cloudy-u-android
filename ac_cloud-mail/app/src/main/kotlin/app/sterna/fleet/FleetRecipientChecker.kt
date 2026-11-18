@@ -39,7 +39,9 @@ object FleetRecipientChecker : RecipientChecker {
     override suspend fun check(request: RecipientCheckRequest): Map<String, RecipientStatus> {
         val out = LinkedHashMap<String, RecipientStatus>()
         for (batch in request.addresses.chunked(MAX_BATCH)) {
-            val body = JSONObject().put("addresses", JSONArray(batch)).toString()
+            val body = JSONObject().put("addresses", JSONArray(batch))
+                .also { o -> request.messageSizeBytes?.let { o.put("message_size_bytes", it) } }
+                .toString()
             val (code, text) = post(body)
             if (code !in 200..299) throw IOException(recipientCheckError(code, text))
             out += parseRecipientCheckResponse(text, request.messageSizeBytes)
@@ -71,7 +73,7 @@ private fun JSONObject.str(name: String): String? = if (has(name) && !isNull(nam
 private fun verdictOf(wire: String?): RecipientVerdict = when (wire?.lowercase()) {
     "ok" -> RecipientVerdict.OK
     "risky" -> RecipientVerdict.RISKY
-    "fail" -> RecipientVerdict.WILL_FAIL
+    "fail", "will_fail" -> RecipientVerdict.WILL_FAIL
     else -> RecipientVerdict.UNKNOWN
 }
 
@@ -177,8 +179,60 @@ private fun sizeItem(o: JSONObject?, messageSizeBytes: Long?): RecipientCheckIte
 private fun checkedAt(s: String?): Long =
     s?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() ?: it.toLongOrNull()?.let { n -> if (n < 10_000_000_000L) n * 1000 else n } } ?: 0L
 
+/** The wire names of a check's entry in `check_details`. */
+private fun detailKeys(kind: RecipientCheckKind): List<String> = when (kind) {
+    RecipientCheckKind.SYNTAX -> listOf("syntax")
+    RecipientCheckKind.DOMAIN -> listOf("domain", "domain_mx")
+    RecipientCheckKind.MAILBOX -> listOf("mailbox")
+    RecipientCheckKind.PAST_BOUNCE -> listOf("past_bounce")
+    RecipientCheckKind.DISPOSABLE_ROLE -> listOf("disposable_role", "disposable", "role")
+    RecipientCheckKind.SIZE_LIMIT -> listOf("size_limit")
+}
+
+/** One `check_details` value as a line: a string as is, an object as "key: value" pairs (arrays joined), nulls left out. */
+private fun detailLine(v: Any?): String? = when (v) {
+    null, JSONObject.NULL -> null
+    is JSONObject -> v.keys().asSequence().mapNotNull { k ->
+        when (val x = v.opt(k)) {
+            null, JSONObject.NULL -> null
+            is JSONArray -> "$k: " + (0 until x.length()).joinToString(", ") { x.opt(it).toString() }
+            else -> "$k: $x"
+        }
+    }.joinToString(" · ").takeIf { it.isNotBlank() }
+    is JSONArray -> (0 until v.length()).joinToString(", ") { v.opt(it).toString() }
+    else -> v.toString().takeIf { it.isNotBlank() }
+}
+
+/** The item's detail with whatever `check_details` adds for its kind (nothing the server sent is dropped, rule 16). */
+private fun withCheckDetails(item: RecipientCheckItem, details: JSONObject): String? {
+    val extra = detailKeys(item.kind).mapNotNull { k -> if (details.has(k)) detailLine(details.opt(k)) else null }
+    return (listOfNotNull(item.detail) + extra).distinct().joinToString("\n").takeIf { it.isNotBlank() }
+}
+
+/** The current shape (cloudy-u-containers 07f51da): checks:[{check, outcome, detail?, accepts_all?}], one per kind. */
+private fun listItems(a: JSONArray): List<RecipientCheckItem> = (0 until a.length()).mapNotNull { i ->
+    val c = a.optJSONObject(i) ?: return@mapNotNull null
+    val kind = when (c.str("check")?.lowercase()) {
+        "syntax" -> RecipientCheckKind.SYNTAX
+        "domain", "domain_mx" -> RecipientCheckKind.DOMAIN
+        "mailbox" -> RecipientCheckKind.MAILBOX
+        "past_bounce" -> RecipientCheckKind.PAST_BOUNCE
+        "disposable_role", "disposable", "role" -> RecipientCheckKind.DISPOSABLE_ROLE
+        "size_limit" -> RecipientCheckKind.SIZE_LIMIT
+        else -> return@mapNotNull null
+    }
+    val outcome = when (c.str("outcome")?.lowercase()) {
+        "pass" -> CheckOutcome.PASS
+        "warn" -> CheckOutcome.WARN
+        "fail" -> CheckOutcome.FAIL
+        else -> CheckOutcome.UNKNOWN
+    }
+    item(kind, outcome, c.str("detail"), acceptsAll = c.optBoolean("accepts_all", false))
+}.distinctBy { it.kind }
+
 /**
- * {"results":[{address, verdict, reason, checks:{…}, cached, checked_at}]} → one [RecipientStatus] per address, keyed by the
+ * {"results":[{address, verdict, reason, checks, cached, checked_at}]}, `checks` either the current list shape or the first
+ * object shape (checks:{syntax, domain_mx, mailbox, past_bounce, disposable, role, size_limit}); both are read. → one [RecipientStatus] per address, keyed by the
  * address as the server returned it. A check the server left out is absent here (the merge marks it unknown). A size limit
  * the message exceeds makes the verdict a will-fail even when the server (which cannot know the size) said otherwise.
  */
@@ -188,8 +242,9 @@ internal fun parseRecipientCheckResponse(body: String, messageSizeBytes: Long?):
     for (i in 0 until results.length()) {
         val r = results.optJSONObject(i) ?: continue
         val address = r.str("address") ?: continue
+        val list = r.optJSONArray("checks")
         val checks = r.optJSONObject("checks") ?: JSONObject()
-        val items = listOfNotNull(
+        val items = if (list != null) listItems(list) else listOfNotNull(
             syntaxItem(checks.optJSONObject("syntax")),
             domainItem(checks.optJSONObject("domain_mx")),
             mailboxItem(checks.optJSONObject("mailbox")),
@@ -197,12 +252,14 @@ internal fun parseRecipientCheckResponse(body: String, messageSizeBytes: Long?):
             disposableRoleItem(checks),
             sizeItem(checks.optJSONObject("size_limit"), messageSizeBytes),
         )
+        val details = r.optJSONObject("check_details")
+        val withDetails = if (details == null) items else items.map { it.copy(detail = withCheckDetails(it, details)) }
         var verdict = verdictOf(r.str("verdict"))
         if (items.any { it.kind == RecipientCheckKind.SIZE_LIMIT && it.outcome == CheckOutcome.FAIL }) verdict = RecipientVerdict.WILL_FAIL
         out[address] = RecipientStatus(
             address = address,
             verdict = verdict,
-            checks = items,
+            checks = withDetails,
             checkedAtMillis = checkedAt(r.str("checked_at")),
             fromServer = true,
             serverReason = r.str("reason"),

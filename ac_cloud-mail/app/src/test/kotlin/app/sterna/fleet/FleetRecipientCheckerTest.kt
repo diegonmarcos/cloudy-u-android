@@ -99,4 +99,50 @@ class FleetRecipientCheckerTest {
         assertEquals(50, FleetRecipientChecker.MAX_BATCH)
         assertTrue(FleetRecipientChecker.MESH_BASE.endsWith(".mesh.diegonmarcos.com"))
     }
+
+    // -- the current shape (cloudy-u-containers 07f51da): checks as a list, in the client's own terms ---------------
+
+    private val listBody = """
+        {"results":[
+          {"address":"a@b.example","verdict":"will_fail","reason":"domain has no mail server","cached":true,
+           "checked_at":"2026-11-18T11:20:00Z",
+           "checks":[{"check":"syntax","outcome":"pass"},
+                     {"check":"domain","outcome":"fail","detail":"no MX and no A record"},
+                     {"check":"mailbox","outcome":"unknown","detail":"cannot reach mx:25"},
+                     {"check":"past_bounce","outcome":"pass"},
+                     {"check":"disposable_role","outcome":"warn","detail":"role mailbox"},
+                     {"check":"size_limit","outcome":"unknown"},
+                     {"check":"something_new","outcome":"pass"}],
+           "check_details":{"domain":{"hosts":[],"null_mx":false},"mailbox":"probe host has outbound 25 blocked"}},
+          {"address":"c@d.example","verdict":"risky",
+           "checks":[{"check":"mailbox","outcome":"warn","accepts_all":true}]}
+        ]}
+    """.trimIndent()
+
+    @Test fun `the list shape maps verdict, each check, its detail and the accepts-all flag`() {
+        val out = parseRecipientCheckResponse(listBody, messageSizeBytes = 100)
+        val a = out.getValue("a@b.example")
+        assertEquals(RecipientVerdict.WILL_FAIL, a.verdict)
+        assertEquals(RecipientCheckKind.entries.toSet(), a.checks.map { it.kind }.toSet())
+        assertEquals(CheckOutcome.FAIL, a.check(RecipientCheckKind.DOMAIN).outcome)
+        assertEquals(CheckOutcome.UNKNOWN, a.check(RecipientCheckKind.MAILBOX).outcome)
+        assertEquals(CheckOutcome.WARN, a.check(RecipientCheckKind.DISPOSABLE_ROLE).outcome)
+        assertTrue(a.check(RecipientCheckKind.DOMAIN).detail!!.startsWith("no MX and no A record"))
+        assertTrue("check_details are kept", a.check(RecipientCheckKind.DOMAIN).detail!!.contains("null_mx: false"))
+        assertTrue(a.check(RecipientCheckKind.MAILBOX).detail!!.contains("outbound 25 blocked"))
+        assertTrue(a.serverCached)
+        assertEquals("domain has no mail server", a.serverReason)
+        val c = out.getValue("c@d.example")
+        assertEquals(RecipientVerdict.RISKY, c.verdict)
+        assertTrue(c.check(RecipientCheckKind.MAILBOX).acceptsAll)
+        val merged = mergeRecipientStatus("c@d.example", c, 1)
+        assertEquals(RecipientCheckKind.entries, merged.checks.map { it.kind })
+        assertEquals(RecipientVerdict.RISKY, merged.verdict)
+    }
+
+    @Test fun `the request carries the message size`() {
+        val src = listOf("src/main/kotlin/app/sterna/fleet/FleetRecipientChecker.kt", "app/src/main/kotlin/app/sterna/fleet/FleetRecipientChecker.kt")
+            .map(::File).first { it.exists() }.readText()
+        assertTrue(src.contains("o.put(\"message_size_bytes\", it)"))
+    }
 }
