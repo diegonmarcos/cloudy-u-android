@@ -1717,7 +1717,7 @@
     "notify_groups": {
       "kind": "prefs",
       "class": "config",
-      "doc": "Per-notification-group enabled flags and group order.",
+      "doc": "Per-notification-group order. #1794: a group's on/off is derived from its members' badge switches (badge_customization) and no longer stored; stale <group>.enabled keys from older builds are cleared on start.",
       "used_by": [
         "aa_cloud-superapp"
       ]
@@ -2664,6 +2664,14 @@
       "kind": "prefs",
       "class": "config",
       "doc": "Cloud SuperApp Notification Center's per-app notification choices: push allowed (key push.<pkg>) and keep-alive (key keep.<pkg>) for each app the user toggled. A user-facing notification policy, so it migrates with the app's settings.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
+    "notify_all_badge_stage": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "Cloud SuperApp Notify > All page's per-badge expansion stage (BadgeExpansion, key = badge id, value COLLAPSED | FIRST | SECOND, #1794): the one-line summary, the badge's first shade state, or its expanded shade state. A user-facing display preference, so it migrates with the app's settings.",
       "used_by": [
         "aa_cloud-superapp"
       ]
