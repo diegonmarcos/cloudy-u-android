@@ -23,7 +23,7 @@ class ImageEngineTest {
     private fun imageOk(bytes: ByteArray = out, cost: Double? = 0.04, mime: String = "image/png"): String {
         val o = JSONObject().put("choices", org.json.JSONArray().put(JSONObject().put("message", JSONObject()
             .put("images", org.json.JSONArray().put(JSONObject().put("image_url", JSONObject()
-                .put("url", "data:$mime;base64," + Base64.getEncoder().encodeToString(bytes)))))))
+                .put("url", "data:$mime;base64," + Base64.getEncoder().encodeToString(bytes))))))))
         cost?.let { o.put("usage", JSONObject().put("cost", it)) }
         return o.toString()
     }
