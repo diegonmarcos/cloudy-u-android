@@ -1,6 +1,7 @@
 package app.sterna.ui.components
 
 import android.app.Application
+import app.sterna.util.MailDates
 import android.content.ComponentName
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Column
@@ -164,7 +165,7 @@ class SentRowDeliveryTickerParityTest {
             .assertIsDisplayed()
     }
 
-    private fun sentTime() = app.sterna.util.MailDates.formatListDate(sent.receivedAt)
+    private fun sentTime() = MailDates.formatListDate(sent.receivedAt)
 
     private fun stageRes(s: DeliveryStage) = when (s) {
         DeliveryStage.LEFT_PHONE -> R.string.delivery_stage_left_phone
