@@ -1,0 +1,85 @@
+{
+ "_doc": "#1786 test fixture of GET /v1/rates/sovereign-curves?countries=GB,JP,CN&tenors=2,5,10,30: the 2Y and 10Y points of the 2026-11-18 live sample (BoE 16 Nov, MoF 17 Nov, ChinaBond 18 Nov); the 5Y and 30Y points are left out of this fixture (missing_tenors).",
+ "as_of": "2026-11-18",
+ "generated_at": "2026-11-18T10:42:00Z",
+ "tenors": [
+  "2",
+  "5",
+  "10",
+  "30"
+ ],
+ "curves": {
+  "GB": {
+   "2": {
+    "value": 4.771,
+    "date": "2026-11-16",
+    "source": "Bank of England"
+   },
+   "10": {
+    "value": 5.334,
+    "date": "2026-11-16",
+    "source": "Bank of England"
+   }
+  },
+  "JP": {
+   "2": {
+    "value": 1.878,
+    "date": "2026-11-17",
+    "source": "Ministry of Finance Japan"
+   },
+   "10": {
+    "value": 2.925,
+    "date": "2026-11-17",
+    "source": "Ministry of Finance Japan"
+   }
+  },
+  "CN": {
+   "2": {
+    "value": 1.2301,
+    "date": "2026-11-18",
+    "source": "ChinaBond"
+   },
+   "10": {
+    "value": 1.5892,
+    "date": "2026-11-18",
+    "source": "ChinaBond"
+   }
+  }
+ },
+ "unavailable": {},
+ "meta": {
+  "GB": {
+   "source": "boe",
+   "name": "Bank of England",
+   "licence": "OGL",
+   "fetched_at": "2026-11-18T10:41:00Z",
+   "stale": false,
+   "missing_tenors": [
+    "5",
+    "30"
+   ]
+  },
+  "JP": {
+   "source": "mof",
+   "name": "Ministry of Finance Japan",
+   "licence": "PDL 1.0",
+   "fetched_at": "2026-11-18T10:41:00Z",
+   "stale": false,
+   "missing_tenors": [
+    "5",
+    "30"
+   ]
+  },
+  "CN": {
+   "source": "chinabond",
+   "name": "ChinaBond",
+   "licence": "public",
+   "fetched_at": "2026-11-18T10:41:00Z",
+   "stale": false,
+   "missing_tenors": [
+    "5",
+    "30"
+   ]
+  }
+ }
+}

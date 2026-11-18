@@ -1,0 +1,450 @@
+{
+ "_doc": "#1786 rule 16 baseline of the CB Homepage BEFORE the live sovereign curves (frozen from data/home-boxes.json and data/cb-indicators.json at the parent commit): every CB box with its title, function, page, unit and columns in order, the major-economy order, the top count, every ui word, every indicator a box reads with every source rule in order, and every declared source. Reorg1786CbHomeParityTest requires all of it to stay; rules and sources may only be added.",
+ "top": 5,
+ "cb_top": [
+  "US",
+  "EA",
+  "GB",
+  "JP",
+  "CN",
+  "DE"
+ ],
+ "ui": {
+  "instrument": "Instrument",
+  "show_all": "Show all",
+  "show_less": "Show top",
+  "last": "Last",
+  "na": "n/a",
+  "overview": "Overview",
+  "loading": "Asking the quote source…",
+  "asof": "as of",
+  "cb_note": "Latest print: the year to date where the source is monthly or daily, else the last annual actual; Fcst = the current-year forecast (IMF / OECD)."
+ },
+ "cb_boxes": [
+  {
+   "id": "cb-yields",
+   "title": "Yield curves",
+   "fn": "YCOV",
+   "opens": "yield-curves",
+   "columns": [
+    {
+     "indicator": "yield_2y",
+     "label": "2Y"
+    },
+    {
+     "indicator": "yield_5y",
+     "label": "5Y"
+    },
+    {
+     "indicator": "yield_10y",
+     "label": "10Y"
+    },
+    {
+     "indicator": "yield_30y",
+     "label": "30Y"
+    }
+   ],
+   "unit": "%"
+  },
+  {
+   "id": "cb-inflation",
+   "title": "Inflation (CPI y/y)",
+   "fn": "CPOV",
+   "opens": "cb-countries",
+   "columns": [
+    {
+     "indicator": "cpi_headline",
+     "label": "CPI"
+    },
+    {
+     "indicator": "cpi_core",
+     "label": "Core"
+    },
+    {
+     "indicator": "cpi_headline",
+     "label": "Fcst",
+     "mode": "fc0"
+    }
+   ],
+   "unit": "% y/y"
+  },
+  {
+   "id": "cb-gdp",
+   "title": "Real GDP growth",
+   "fn": "GDOV",
+   "opens": "cb-countries",
+   "columns": [
+    {
+     "indicator": "real_gdp",
+     "label": "Last"
+    },
+    {
+     "indicator": "real_gdp",
+     "label": "Fcst",
+     "mode": "fc0"
+    },
+    {
+     "indicator": "potential_gdp",
+     "label": "Pot."
+    }
+   ],
+   "unit": "% y/y"
+  },
+  {
+   "id": "cb-policy",
+   "title": "Policy rate",
+   "fn": "PROV",
+   "opens": "cb-countries",
+   "columns": [
+    {
+     "indicator": "policy_rate",
+     "label": "Rate"
+    },
+    {
+     "indicator": "yield_3m",
+     "label": "3M"
+    },
+    {
+     "indicator": "inflation_expectations_1y",
+     "label": "Infl. exp."
+    }
+   ],
+   "unit": "%"
+  }
+ ],
+ "indicators": {
+  "cpi_core": {
+   "id": "cpi_core",
+   "name": "Core CPI",
+   "unit": "% y/y",
+   "frequency": "monthly",
+   "sources": [
+    {
+     "src": "oecd_eo",
+     "series": "PCORE_YTYPCT",
+     "countries": "*"
+    },
+    {
+     "src": "fred",
+     "series": "CPILFESL",
+     "countries": [
+      "US"
+     ],
+     "transform": "yoy",
+     "agg": "avg"
+    },
+    {
+     "src": "fred",
+     "series": "JCXFEMD",
+     "countries": [
+      "US"
+     ],
+     "role": "cb_projection",
+     "label": "Fed SEP median (core PCE)"
+    }
+   ]
+  },
+  "cpi_headline": {
+   "id": "cpi_headline",
+   "name": "Headline CPI",
+   "unit": "% y/y",
+   "frequency": "monthly",
+   "sources": [
+    {
+     "src": "imf",
+     "series": "PCPIPCH",
+     "countries": "*"
+    },
+    {
+     "src": "oecd_eo",
+     "series": "CPI_YTYPCT",
+     "countries": "*"
+    },
+    {
+     "src": "wb",
+     "series": "FP.CPI.TOTL.ZG",
+     "countries": "*"
+    },
+    {
+     "src": "fred",
+     "series": "CPIAUCSL",
+     "countries": [
+      "US"
+     ],
+     "transform": "yoy",
+     "agg": "avg"
+    },
+    {
+     "src": "ecb_mpd",
+     "series": "HIC",
+     "countries": [
+      "EA"
+     ],
+     "role": "cb_projection",
+     "label": "ECB staff projections (HICP)"
+    },
+    {
+     "src": "fred",
+     "series": "PCECTPICTM",
+     "countries": [
+      "US"
+     ],
+     "role": "cb_projection",
+     "label": "Fed SEP median (PCE inflation)"
+    }
+   ]
+  },
+  "inflation_expectations_1y": {
+   "id": "inflation_expectations_1y",
+   "name": "1Y Inflation Expectations",
+   "unit": "%",
+   "frequency": "monthly",
+   "sources": [
+    {
+     "src": "fred",
+     "series": "MICH",
+     "countries": [
+      "US"
+     ],
+     "agg": "avg"
+    }
+   ]
+  },
+  "policy_rate": {
+   "id": "policy_rate",
+   "name": "Policy Rate",
+   "unit": "% (year end)",
+   "frequency": "monthly",
+   "sources": [
+    {
+     "src": "bis",
+     "series": "WS_CBPOL",
+     "countries": "*",
+     "agg": "last"
+    },
+    {
+     "src": "oecd_eo",
+     "series": "IRCB",
+     "countries": "*"
+    },
+    {
+     "src": "fred",
+     "series": "FEDTARMD",
+     "countries": [
+      "US"
+     ],
+     "role": "cb_projection",
+     "label": "Fed SEP median (year-end)"
+    }
+   ]
+  },
+  "potential_gdp": {
+   "id": "potential_gdp",
+   "name": "Potential GDP",
+   "unit": "% y/y (potential growth)",
+   "frequency": "annual",
+   "sources": [
+    {
+     "src": "oecd_eo",
+     "series": "GDPVTR_ANNPCT",
+     "countries": "*"
+    },
+    {
+     "src": "fred",
+     "series": "GDPPOT",
+     "countries": [
+      "US"
+     ],
+     "transform": "yoy",
+     "agg": "avg"
+    }
+   ]
+  },
+  "real_gdp": {
+   "id": "real_gdp",
+   "name": "Real GDP",
+   "unit": "% y/y",
+   "frequency": "annual",
+   "sources": [
+    {
+     "src": "imf",
+     "series": "NGDP_RPCH",
+     "countries": "*"
+    },
+    {
+     "src": "oecd_eo",
+     "series": "GDPV_ANNPCT",
+     "countries": "*"
+    },
+    {
+     "src": "wb",
+     "series": "NY.GDP.MKTP.KD.ZG",
+     "countries": "*"
+    },
+    {
+     "src": "fred",
+     "series": "GDPC1",
+     "countries": [
+      "US"
+     ],
+     "transform": "yoy",
+     "agg": "avg"
+    },
+    {
+     "src": "fred",
+     "series": "GDPC1MD",
+     "countries": [
+      "US"
+     ],
+     "role": "cb_projection",
+     "label": "Fed SEP median"
+    },
+    {
+     "src": "ecb_mpd",
+     "series": "YER",
+     "countries": [
+      "EA"
+     ],
+     "role": "cb_projection",
+     "label": "ECB staff projections"
+    }
+   ]
+  },
+  "yield_10y": {
+   "id": "yield_10y",
+   "name": "10Y Government Yield",
+   "unit": "%",
+   "frequency": "daily",
+   "sources": [
+    {
+     "src": "oecd_eo",
+     "series": "IRL",
+     "countries": "*"
+    },
+    {
+     "src": "fred",
+     "series": "DGS10",
+     "countries": [
+      "US"
+     ],
+     "agg": "avg"
+    },
+    {
+     "src": "ecb_yc",
+     "series": "SR_10Y",
+     "countries": [
+      "EA"
+     ],
+     "agg": "avg",
+     "note": "#1786 ECB AAA euro area curve, daily spot rate"
+    }
+   ]
+  },
+  "yield_2y": {
+   "id": "yield_2y",
+   "name": "2Y Government Yield",
+   "unit": "%",
+   "frequency": "daily",
+   "sources": [
+    {
+     "src": "fred",
+     "series": "DGS2",
+     "countries": [
+      "US"
+     ],
+     "agg": "avg"
+    },
+    {
+     "src": "ecb_yc",
+     "series": "SR_2Y",
+     "countries": [
+      "EA"
+     ],
+     "agg": "avg",
+     "note": "#1786 ECB AAA euro area curve, daily spot rate"
+    }
+   ]
+  },
+  "yield_30y": {
+   "id": "yield_30y",
+   "name": "30Y Government Yield",
+   "unit": "%",
+   "frequency": "daily",
+   "sources": [
+    {
+     "src": "fred",
+     "series": "DGS30",
+     "countries": [
+      "US"
+     ],
+     "agg": "avg"
+    },
+    {
+     "src": "ecb_yc",
+     "series": "SR_30Y",
+     "countries": [
+      "EA"
+     ],
+     "agg": "avg",
+     "note": "#1786 ECB AAA euro area curve, daily spot rate"
+    }
+   ]
+  },
+  "yield_3m": {
+   "id": "yield_3m",
+   "name": "3M Treasury/Bill Yield",
+   "unit": "%",
+   "frequency": "daily",
+   "sources": [
+    {
+     "src": "oecd_eo",
+     "series": "IRS",
+     "countries": "*",
+     "note": "Short-term interest rate"
+    },
+    {
+     "src": "fred",
+     "series": "DTB3",
+     "countries": [
+      "US"
+     ],
+     "agg": "avg"
+    }
+   ]
+  },
+  "yield_5y": {
+   "id": "yield_5y",
+   "name": "5Y Government Yield",
+   "unit": "%",
+   "frequency": "daily",
+   "sources": [
+    {
+     "src": "fred",
+     "series": "DGS5",
+     "countries": [
+      "US"
+     ],
+     "agg": "avg"
+    },
+    {
+     "src": "ecb_yc",
+     "series": "SR_5Y",
+     "countries": [
+      "EA"
+     ],
+     "agg": "avg",
+     "note": "#1786 ECB AAA euro area curve, daily spot rate"
+    }
+   ]
+  }
+ },
+ "sources": [
+  "bis",
+  "ecb_mpd",
+  "ecb_yc",
+  "fred",
+  "imf",
+  "oecd_eo",
+  "wb"
+ ]
+}

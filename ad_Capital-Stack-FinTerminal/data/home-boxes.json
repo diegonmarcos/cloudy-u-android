@@ -27,5 +27,5 @@
  ],
  "cb_top": ["US", "EA", "GB", "JP", "CN", "DE"],
  "_doc_cb_top": "the major economies first (US, euro area, UK, Japan, China, then Germany); the box shows the first `top` of them, Show all every country of the snapshot.",
- "ui": {"instrument": "Instrument", "show_all": "Show all", "show_less": "Show top", "last": "Last", "na": "n/a", "overview": "Overview", "loading": "Asking the quote source…", "asof": "as of", "cb_note": "Latest print: the year to date where the source is monthly or daily, else the last annual actual; Fcst = the current-year forecast (IMF / OECD)."}
+ "ui": {"instrument": "Instrument", "show_all": "Show all", "show_less": "Show top", "last": "Last", "na": "n/a", "overview": "Overview", "loading": "Asking the quote source…", "asof": "as of", "cb_note": "Latest print: the year to date where the source is monthly or daily, else the last annual actual; Fcst = the current-year forecast (IMF / OECD). Yield curves: GB, JP and CN read the FinTerm API sovereign curves live (the day and publisher under each value), else the snapshot.", "live_stale": "stale", "live_missing": "no", "live_off_mesh": "live curves not reachable (off the mesh): snapshot shown", "live_no_answer": "live curves: no answer from the FinTerm API: snapshot shown"}
 }

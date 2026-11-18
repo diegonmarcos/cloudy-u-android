@@ -1,0 +1,53 @@
+{
+ "_doc": "#1786 test fixture: the degraded answers of the sovereign curves route (a stale curve, an unavailable country, a null value, a malformed point).",
+ "as_of": "2026-11-18",
+ "generated_at": "2026-11-18T10:42:00Z",
+ "tenors": [
+  "2Y",
+  "10Y"
+ ],
+ "curves": {
+  "GB": {
+   "2Y": {
+    "value": 4.771,
+    "date": "2026-11-16",
+    "source": "Bank of England"
+   },
+   "10Y": {
+    "value": null,
+    "date": null,
+    "source": null
+   }
+  },
+  "JP": {
+   "2": {
+    "value": 1.878,
+    "date": "2026-11-10",
+    "source": "Ministry of Finance Japan"
+   },
+   "10": "not a point"
+  }
+ },
+ "unavailable": {
+  "CN": "ChinaBond did not answer (HTTP 503)"
+ },
+ "meta": {
+  "GB": {
+   "source": "boe",
+   "name": "Bank of England",
+   "licence": "OGL",
+   "fetched_at": "2026-11-18T10:41:00Z",
+   "stale": false
+  },
+  "JP": {
+   "source": "mof",
+   "name": "Ministry of Finance Japan",
+   "licence": "PDL 1.0",
+   "fetched_at": "2026-11-12T09:00:00Z",
+   "stale": true,
+   "missing_tenors": [
+    "10"
+   ]
+  }
+ }
+}

@@ -42,6 +42,9 @@ import com.diegonmarcos.capitalfinterm.Quote
 import com.diegonmarcos.capitalfinterm.QuoteBox
 import com.diegonmarcos.capitalfinterm.QuotesDecl
 import com.diegonmarcos.capitalfinterm.QuotesStore
+import com.diegonmarcos.capitalfinterm.SovCurvesApi
+import com.diegonmarcos.capitalfinterm.SovCurvesStore
+import com.diegonmarcos.capitalfinterm.SovLive
 import com.diegonmarcos.capitalfinterm.ui.fin.FinDim
 import com.diegonmarcos.capitalfinterm.ui.fin.FinPanelHead
 import com.diegonmarcos.capitalfinterm.ui.fin.FinType
@@ -133,21 +136,32 @@ fun CbOverview(onOpen: (String) -> Unit) {
     val decl = remember { HomeBoxesStore.decl(ctx) } ?: return
     var cbDecl by remember { mutableStateOf<CbDecl?>(null) }
     var snap by remember { mutableStateOf<CbSnapshot?>(null) }
+    var live by remember { mutableStateOf<SovLive?>(null) }
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) { runCatching { cbDecl = CbStore.decl(ctx); snap = CbStore.snapshot(ctx) } }
     }
+    // #1786 the live sources of the boxes (the FinTerm API sovereign curves), asked once the declaration is read; the snapshot shows meanwhile
+    LaunchedEffect(cbDecl) {
+        val d = cbDecl ?: return@LaunchedEffect
+        val wanted = decl.cbBoxes.flatMap { b -> b.columns.map { it.indicator } }
+        if (SovCurvesApi.liveRules(d, wanted).isEmpty()) return@LaunchedEffect
+        live = withContext(Dispatchers.IO) { runCatching { SovCurvesStore.load(ctx, d, wanted, decl.word("live_off_mesh"), decl.word("live_no_answer")) }.getOrNull() }
+    }
     val p = LocalFinPalette.current
     Column(Modifier.fillMaxWidth().testTag(CB_OVERVIEW), verticalArrangement = Arrangement.spacedBy(FinDim.gap)) {
-        decl.cbBoxes.forEach { b -> CbBoxPanel(b, decl, cbDecl, snap) { onOpen(b.opens) } }
-        Text(decl.word("cb_note") + (snap?.generated?.let { "  ·  snapshot $it" } ?: ""), color = p.text3, style = FinType.caption)
+        decl.cbBoxes.forEach { b -> CbBoxPanel(b, decl, cbDecl, snap, live) { onOpen(b.opens) } }
+        Text(decl.word("cb_note") + (snap?.generated?.let { "  ·  snapshot $it" } ?: "") + (live?.curves?.generatedAt?.takeIf { it.isNotEmpty() }?.let { "  ·  live curves $it" } ?: ""), color = p.text3, style = FinType.caption)
     }
 }
 
 @Composable
-private fun CbBoxPanel(b: CbBox, decl: HomeBoxesDecl, cbDecl: CbDecl?, snap: CbSnapshot?, onOpen: () -> Unit) {
+private fun CbBoxPanel(b: CbBox, decl: HomeBoxesDecl, cbDecl: CbDecl?, snap: CbSnapshot?, live: SovLive?, onOpen: () -> Unit) {
     val p = LocalFinPalette.current
     var all by rememberSaveable(b.id) { mutableStateOf(false) }
     val countries = remember(cbDecl) { cbDecl?.let { HomeBoxes.cbCountries(decl.cbTop, it.countries) }.orEmpty() }
+    // #1786 a box with a live source (the yield curves) shows each value's date and source under it, and the live source's status per country
+    val indicators = b.columns.map { it.indicator }
+    val liveBox = remember(cbDecl) { cbDecl?.let { SovCurvesApi.liveRules(it, indicators).isNotEmpty() } == true }
     val shown = if (all) countries else countries.take(decl.top)
     Column(Modifier.fillMaxWidth().heightIn(min = 120.dp).background(p.canvas).border(1.dp, p.hairline).padding(1.dp).testTag(CB_BOX + b.id)) {
         Box(Modifier.fillMaxWidth().clickable(onClick = onOpen)) { FinPanelHead(b.fn, b.title, meta = b.unit) }
@@ -159,12 +173,29 @@ private fun CbBoxPanel(b: CbBox, decl: HomeBoxesDecl, cbDecl: CbDecl?, snap: CbS
             }
             if (snap == null || cbDecl == null) Text(decl.word("loading"), color = p.text3, style = FinType.caption)
             shown.forEach { c ->
-                val cells = b.columns.map { col -> HomeBoxes.cbCell(snap?.of(c.id, col.indicator), col.mode, snap?.currentYear ?: 0) }
+                val cells = b.columns.map { col -> HomeBoxes.cbResolve(cbDecl, snap, live?.curves, c.id, col) }
                 Row(Modifier.fillMaxWidth().height(20.dp).testTag(CB_BOX + b.id + ":" + c.id), verticalAlignment = Alignment.CenterVertically) {
                     Text(c.id, Modifier.width(30.dp), color = p.accent, style = FinType.symbol, maxLines = 1)
                     Text(c.name, Modifier.weight(1f), color = p.text2, style = FinType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    cells.forEach { cell -> Text(HomeBoxes.cbText(cell), Modifier.width(CB_COL), color = if (cell.value == null) p.text3 else p.text, style = FinType.numStrong, maxLines = 1, textAlign = TextAlign.End) }
+                    cells.forEach { cell -> Text(HomeBoxes.cbText(cell), Modifier.width(CB_COL), color = if (cell.value == null) p.text3 else if (cell.stale) p.amber else p.text, style = FinType.numStrong, maxLines = 1, textAlign = TextAlign.End) }
                     Text(cells.firstOrNull { it.value != null }?.asOf.orEmpty(), Modifier.width(CB_ASOF), color = p.text3, style = FinType.caption, maxLines = 1, textAlign = TextAlign.End)
+                }
+                if (liveBox) {
+                    // each value's day under it, the sources of the row on the left; a stale value is amber and says so
+                    val sources = cells.mapNotNull { it.source.takeIf { s -> s.isNotEmpty() && it.value != null } }.distinct()
+                    val stale = cells.any { it.stale && it.value != null }
+                    Row(Modifier.fillMaxWidth().height(14.dp).testTag(CB_BOX + b.id + ":" + c.id + ":where"), verticalAlignment = Alignment.CenterVertically) {
+                        Text(sources.joinToString(" / ") + (if (stale) "  · " + decl.word("live_stale") else ""), Modifier.weight(1f).padding(start = 30.dp), color = if (stale) p.amber else p.text3, style = FinType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        cells.forEach { cell -> Text(HomeBoxes.cbShortDate(cell.asOf).takeIf { cell.value != null }.orEmpty(), Modifier.width(CB_COL), color = if (cell.stale) p.amber else p.text3, style = FinType.caption, maxLines = 1, textAlign = TextAlign.End) }
+                        Text("", Modifier.width(CB_ASOF))
+                    }
+                    val status = if (cbDecl != null && live != null && SovCurvesApi.covers(cbDecl, indicators, c.id))
+                        SovCurvesApi.status(live.curves, c.id, live.why, decl.word("live_stale"), decl.word("live_missing")) else null
+                    if (status != null) {
+                        val lc = live?.curves
+                        val bad = lc == null || lc.unavailable.containsKey(c.id) || lc.stale(c.id)
+                        Text(status, Modifier.fillMaxWidth().padding(start = 30.dp).testTag(CB_BOX + b.id + ":" + c.id + ":status"), color = if (bad) p.amber else p.text3, style = FinType.caption, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
                 }
             }
             if (countries.size > decl.top) {

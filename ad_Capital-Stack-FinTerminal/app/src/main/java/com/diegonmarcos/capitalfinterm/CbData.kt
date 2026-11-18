@@ -23,7 +23,8 @@ data class CbGroup(val id: String, val label: String, val items: List<CbIndicato
 data class CbSimpleItem(val id: String, val name: String, val refs: List<String>)
 data class CbSimpleGroup(val id: String, val label: String, val items: List<CbSimpleItem>)
 data class CbWeight(val id: String, val label: String, val series: String)
-data class CbSource(val id: String, val label: String, val url: String, val userAgent: String)
+/** [fleetSource] / [live] (#1786): a source the CB Homepage asks live on the fleet (data/sources.json id), skipped by the snapshot and the refresh. */
+data class CbSource(val id: String, val label: String, val url: String, val userAgent: String, val fleetSource: String = "", val live: Boolean = false)
 
 /** The Taylor-rule parameters of data/cb-countries.json `model.taylor` and the page's own words (`ui`). */
 data class CbModelDecl(val inflationWeight: Double, val gapWeight: Double, val holdBandPp: Double, val neutral: String, val inflation: String, val gap: String, val policy: String, val predictions: List<String>)
@@ -54,7 +55,7 @@ data class CbDecl(
             val wa = wo.getJSONArray("options")
             val weights = (0 until wa.length()).map { wa.getJSONObject(it) }.map { CbWeight(it.getString("id"), it.getString("label"), it.getString("series")) }
             val so = i.getJSONObject("sources")
-            val sources = so.keys().asSequence().associateWith { k -> so.getJSONObject(k).let { CbSource(k, it.getString("label"), it.optString("url"), it.optString("user_agent")) } }
+            val sources = so.keys().asSequence().associateWith { k -> so.getJSONObject(k).let { CbSource(k, it.getString("label"), it.optString("url"), it.optString("user_agent"), it.optString("fleet_source"), it.optBoolean("live", false)) } }
             val fg = i.getJSONObject("full").getJSONArray("groups")
             val full = (0 until fg.length()).map { fg.getJSONObject(it) }.map { g ->
                 val items = g.getJSONArray("items")

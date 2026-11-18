@@ -16,8 +16,11 @@ data class CbBoxCol(val indicator: String, val label: String, val mode: String)
 /** #1786 one CB overview box: its id, title, function mnemonic, the sub-page a tap opens, its columns and unit. */
 data class CbBox(val id: String, val title: String, val fn: String, val opens: String, val columns: List<CbBoxCol>, val unit: String)
 
-/** #1786 one value of a CB box: the figure (null = n/a) and what it is (the year, or the month the year to date runs through; "2026f" a forecast). */
-data class CbCell(val value: Double?, val asOf: String)
+/**
+ * #1786 one value of a CB box: the figure (null = n/a) and what it is (the year, or the month the year to date runs through; "2026f" a forecast; the
+ * day of a live print), who published it, whether its curve is stale and whether it came from a live source (data/cb-indicators.json `live`).
+ */
+data class CbCell(val value: Double?, val asOf: String, val source: String = "", val stale: Boolean = false, val live: Boolean = false)
 
 /** #1786 data/home-boxes.json. */
 data class HomeBoxesDecl(val top: Int, val quoteBoxes: Map<String, QuoteBox>, val cbBoxes: List<CbBox>, val cbTop: List<String>, val ui: Map<String, String>) {
@@ -123,6 +126,24 @@ object HomeBoxes {
         val first = top.mapNotNull { id -> all.firstOrNull { it.id == id } }
         return first + all.filter { it !in first }
     }
+
+    /**
+     * The cell a CB box shows for [country] and [col]: a live rule's print when the live source answered with a figure (its own day and publisher,
+     * stale marked), else the snapshot's latest print with the snapshot series' source. Missing everywhere = n/a.
+     */
+    fun cbResolve(decl: CbDecl?, snap: CbSnapshot?, live: SovCurves?, country: String, col: CbBoxCol): CbCell {
+        if (col.mode != MODE_FC0 && decl != null) SovCurvesApi.cell(decl, live, country, col.indicator)?.let { return it }
+        val s = snap?.of(country, col.indicator)
+        val c = cbCell(s, col.mode, snap?.currentYear ?: 0)
+        return if (c.value == null || s == null) c else c.copy(source = s.source)
+    }
+
+    /** A CB cell's date and source under its figure ("2026-11-16 · Bank of England", "stale" appended); "" for n/a. */
+    fun cbWhere(c: CbCell, staleWord: String): String =
+        if (c.value == null) "" else listOf(c.asOf, c.source, if (c.stale) staleWord else "").filter { it.isNotEmpty() }.joinToString(" · ")
+
+    /** A CB cell's day under its figure: a full date shows its month and day ("11-16"), a month or a year stays as it is. */
+    fun cbShortDate(asOf: String): String = if (Regex("""\d{4}-\d{2}-\d{2}.*""").matches(asOf)) asOf.substring(5, 10) else asOf
 
     /** A CB cell's text: the value with two decimals, or n/a. */
     fun cbText(c: CbCell): String = c.value?.takeIf { it.isFinite() }?.let { String.format(Locale.ROOT, "%.2f", it) } ?: Cagr.NA

@@ -1,5 +1,5 @@
 {
- "_doc": "THE INDICATORS of the Central Bank (CB) page. `simple` (the default view) is 5 groups of columns, each item naming the full indicators (`refs`, the first is the column, the rest are in the country detail) it is read from; `full` is the full list in 7 groups (Real Output and Expenditure 25, Labor Market 16, Prices and Inflation 16, Financial Markets and Interest Rates 22, Income, Wealth, and Fiscal Policy 15, International and Open Economy 11, Latent Variables and Structural Shocks (DSGE) 9). Every full indicator has an id, a group, a unit, the native `frequency` of its release (the snapshot is annual) and `sources`: the ordered source mapping per country. A rule is {src, series, countries ('*' = every country the source answers for, or a list of country ids), transform (yoy = percent change of the annual value), agg (avg | last, how a sub-annual series becomes a year), scale, note, role}. The first rule that has data for a country supplies its history and forecast; role cb_projection rules add the bank's own published projection beside it. An indicator with no rule for a country is shown as 'n/a (no free source)'; the DSGE latent variables are model-derived and shown only where a source publishes them, else 'model-only'. Sources: imf = IMF WEO DataMapper API, oecd_eo = OECD Economic Outlook SDMX API, wb = World Bank API, bis = BIS statistics API, fred = FRED (fredgraph.csv, includes the Fed SEP series), ecb_mpd = ECB staff macroeconomic projections (data-api), ecb_yc = the ECB euro area AAA yield curve (data-api, daily spot rates; #1786). scripts/gen-cb-snapshot.py reads this file and data/cb-countries.json and writes data/cb-snapshot.json; the app's refresh follows the same rules.",
+ "_doc": "THE INDICATORS of the Central Bank (CB) page. `simple` (the default view) is 5 groups of columns, each item naming the full indicators (`refs`, the first is the column, the rest are in the country detail) it is read from; `full` is the full list in 7 groups (Real Output and Expenditure 25, Labor Market 16, Prices and Inflation 16, Financial Markets and Interest Rates 22, Income, Wealth, and Fiscal Policy 15, International and Open Economy 11, Latent Variables and Structural Shocks (DSGE) 9). Every full indicator has an id, a group, a unit, the native `frequency` of its release (the snapshot is annual) and `sources`: the ordered source mapping per country. A rule is {src, series, countries ('*' = every country the source answers for, or a list of country ids), transform (yoy = percent change of the annual value), agg (avg | last, how a sub-annual series becomes a year), scale, note, role}. The first rule that has data for a country supplies its history and forecast; role cb_projection rules add the bank's own published projection beside it. An indicator with no rule for a country is shown as 'n/a (no free source)'; the DSGE latent variables are model-derived and shown only where a source publishes them, else 'model-only'. Sources: imf = IMF WEO DataMapper API, oecd_eo = OECD Economic Outlook SDMX API, wb = World Bank API, bis = BIS statistics API, fred = FRED (fredgraph.csv, includes the Fed SEP series), ecb_mpd = ECB staff macroeconomic projections (data-api), ecb_yc = the ECB euro area AAA yield curve (data-api, daily spot rates; #1786). scripts/gen-cb-snapshot.py reads this file and data/cb-countries.json and writes data/cb-snapshot.json; the app's refresh follows the same rules. finterm_sov = the FinTerm API's sovereign curves route (#1786, /v1/rates/sovereign-curves on the fleet source `fleet_source`, read over the private mesh like every other finterm-api call): a `live` source, so the snapshot generator and the in-app refresh skip it and the CB Homepage asks it directly; its `series` is the tenor in years. On the CB Homepage a live rule that answers supplies the cell (with its own date and source) ahead of the annual snapshot; a stale curve is marked and an unavailable country shows the reason the route gives.",
  "sources": {
   "imf": {
    "label": "IMF World Economic Outlook (DataMapper)",
@@ -36,6 +36,13 @@
    "label": "ECB euro area yield curve (AAA government bonds, spot rates)",
    "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.{series}?format=csvdata&startPeriod={from}-01-01",
    "note": "public, no key; the same ECB data API as ecb_mpd. #1786 the euro area's 2Y / 5Y / 10Y / 30Y points of the CB overview's yield curves"
+  },
+  "finterm_sov": {
+   "label": "FinTerm API sovereign curves (BoE / MoF / ChinaBond)",
+   "url": "/v1/rates/sovereign-curves?countries={countries}&tenors={tenors}",
+   "fleet_source": "cloud_fincept",
+   "live": true,
+   "note": "#1786 the fleet container's route (finterm-api, private mesh, same base and auth as /v1/curves/ust_par and /v1/curves/EA): {as_of, generated_at, tenors, curves:{CC:{tenor:{value,date,source}}}, unavailable:{CC:reason}, meta:{CC:{source,name,licence,fetched_at,stale,missing_tenors}}}. GB from the Bank of England, JP from the Ministry of Finance, CN from ChinaBond; US and EA keep their own rules (FRED / the ECB curve)."
   }
  },
  "simple": {
@@ -1461,6 +1468,17 @@
         ],
         "agg": "avg",
         "note": "#1786 ECB AAA euro area curve, daily spot rate"
+       },
+       {
+        "src": "finterm_sov",
+        "series": "2",
+        "countries": [
+         "GB",
+         "JP",
+         "CN"
+        ],
+        "agg": "last",
+        "note": "#1786 FinTerm API sovereign curve, latest daily print (BoE / MoF / ChinaBond)"
        }
       ]
      },
@@ -1486,6 +1504,17 @@
         ],
         "agg": "avg",
         "note": "#1786 ECB AAA euro area curve, daily spot rate"
+       },
+       {
+        "src": "finterm_sov",
+        "series": "5",
+        "countries": [
+         "GB",
+         "JP",
+         "CN"
+        ],
+        "agg": "last",
+        "note": "#1786 FinTerm API sovereign curve, latest daily print (BoE / MoF / ChinaBond)"
        }
       ]
      },
@@ -1516,6 +1545,17 @@
         ],
         "agg": "avg",
         "note": "#1786 ECB AAA euro area curve, daily spot rate"
+       },
+       {
+        "src": "finterm_sov",
+        "series": "10",
+        "countries": [
+         "GB",
+         "JP",
+         "CN"
+        ],
+        "agg": "last",
+        "note": "#1786 FinTerm API sovereign curve, latest daily print (BoE / MoF / ChinaBond)"
        }
       ]
      },
@@ -1541,6 +1581,17 @@
         ],
         "agg": "avg",
         "note": "#1786 ECB AAA euro area curve, daily spot rate"
+       },
+       {
+        "src": "finterm_sov",
+        "series": "30",
+        "countries": [
+         "GB",
+         "JP",
+         "CN"
+        ],
+        "agg": "last",
+        "note": "#1786 FinTerm API sovereign curve, latest daily print (BoE / MoF / ChinaBond)"
        }
       ]
      },
