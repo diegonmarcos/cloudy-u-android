@@ -1,5 +1,6 @@
 package app.sterna.send.delivery
 
+import com.diegonmarcos.superapp.fleetendpoints.EndpointPolicy
 import com.diegonmarcos.superapp.fleetendpoints.EndpointRouter
 import com.diegonmarcos.superapp.fleetendpoints.FleetBearers
 import com.diegonmarcos.superapp.fleetendpoints.FleetHeaders
@@ -99,12 +100,9 @@ class FleetDeliveryStatusSourceTest {
     private fun source(meshUp: Boolean): FleetDeliveryStatusSource {
         val bearers = FleetBearers().apply { set("localhost", "tok-test") }
         val router = EndpointRouter(probe = MeshProbe { _, _, _ -> meshUp }, requireHttpsPublic = false)
-        return FleetDeliveryStatusSource(
-            bearers = bearers,
-            router = router,
-            publicBase = "http://localhost:${pub.port}/cloudy-apps-communication-mcp",
-            meshBase = "http://127.0.0.1:${mesh.port}",
-        )
+        val publicBase = "http://localhost:${pub.port}/cloudy-apps-communication-mcp"
+        router.set(publicBase, "http://127.0.0.1:${mesh.port}", EndpointPolicy.MESH_FIRST, listOf("/v1"))
+        return FleetDeliveryStatusSource(bearers = bearers, router = router, baseUrl = { publicBase })
     }
 
     private val key = DeliveryKey("acct", "<m1@fleet>")
@@ -172,5 +170,12 @@ class FleetDeliveryStatusSourceTest {
         mesh.enqueue(MockResponse().setBody(flatJson))
         source(meshUp = true).fetch(DeliveryKey("acct", "<f1@fleet>", accountAddress = "me+x@example.org"))
         assertEquals("/v1/sent/%3Cf1%40fleet%3E/status?account=me%2Bx%40example.org", mesh.takeRequest().path)
+    }
+
+    @Test fun `an endpoint that cannot be had is a failure to ask, never a guess`() = runTest {
+        val e = runCatching {
+            FleetDeliveryStatusSource(FleetBearers(), EndpointRouter(), baseUrl = { throw IOException("Cloud Account: not granted") }).fetch(key)
+        }.exceptionOrNull()
+        assertTrue(e is IOException)
     }
 }

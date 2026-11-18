@@ -1,6 +1,5 @@
 package app.sterna.send.delivery
 
-import com.diegonmarcos.superapp.fleetendpoints.EndpointPolicy
 import com.diegonmarcos.superapp.fleetendpoints.EndpointRouteInterceptor
 import com.diegonmarcos.superapp.fleetendpoints.EndpointRouter
 import com.diegonmarcos.superapp.fleetendpoints.FleetBearerInterceptor
@@ -18,20 +17,25 @@ import org.json.JSONObject
 
 /**
  * #1802: the fleet mail API's per-message delivery status (cloudy-apps-communication-mcp,
- * `GET /v1/sent/{messageId}/status`). Addressing follows the fleet rule: the WireGuard mesh first
- * (no bearer), the public MCP hub path as fallback with the fleet bearer in `X-Fleet-Authorization`,
- * both through the shared [EndpointRouter] / [FleetBearerInterceptor], so the bearer never reaches
- * the mesh host and is never logged here.
+ * `GET /v1/sent/{messageId}/status`). Its endpoint pair comes from the fleet declaration
+ * (MailFleetServices, never a literal here). Addressing follows the fleet rule: the WireGuard mesh
+ * first (no bearer), the public MCP hub path as fallback with the fleet bearer in
+ * `X-Fleet-Authorization`, both through the shared [EndpointRouter] / [FleetBearerInterceptor], so
+ * the bearer never reaches the mesh host and is never logged here.
  *
  * 200 -> the parsed report; 404 `not_found` (or `found:false`) -> null (no record: every server
  * stage stays pending); anything else throws, so the cache keeps its last good answer.
  */
 class FleetDeliveryStatusSource(
     bearers: FleetBearers,
-    router: EndpointRouter = EndpointRouter(),
+    /** The router [publicBase]'s pair is registered on (MailFleetServices.communicationMcpBase does it for the app). */
+    router: EndpointRouter,
+    /**
+     * The service base URL to address, resolved per request (app: MailFleetServices.communicationMcpBase, which pulls
+     * Cloud Account's published pair and registers it on [router]); it throws when the pair cannot be had.
+     */
+    private val baseUrl: () -> String,
     base: OkHttpClient = OkHttpClient(),
-    private val publicBase: String = PUBLIC_BASE,
-    meshBase: String = MESH_BASE,
 ) : DeliveryStatusSource {
 
     private val client: OkHttpClient = base.newBuilder()
@@ -40,11 +44,8 @@ class FleetDeliveryStatusSource(
         .addNetworkInterceptor(FleetBearerInterceptor(router, bearers))
         .build()
 
-    init {
-        router.set(publicBase, meshBase, EndpointPolicy.MESH_FIRST)
-    }
-
     override suspend fun fetch(key: DeliveryKey): ServerDeliveryReport? = withContext(Dispatchers.IO) {
+        val publicBase = baseUrl()
         val id = URLEncoder.encode(key.messageId.trim(), "UTF-8").replace("+", "%20")
         val account = key.accountAddress?.takeIf { it.isNotBlank() }
             ?.let { "?account=" + URLEncoder.encode(it.trim(), "UTF-8").replace("+", "%20") }.orEmpty()
@@ -60,11 +61,6 @@ class FleetDeliveryStatusSource(
     }
 
     private fun errorCode(body: String): String? = runCatching { JSONObject(body).optString("code").ifEmpty { null } }.getOrNull()
-
-    companion object {
-        const val MESH_BASE = "https://cloudy-apps-communication-mcp.mesh.diegonmarcos.com"
-        const val PUBLIC_BASE = "https://mcp.diegonmarcos.com/cloudy-apps-communication-mcp"
-    }
 }
 
 /**

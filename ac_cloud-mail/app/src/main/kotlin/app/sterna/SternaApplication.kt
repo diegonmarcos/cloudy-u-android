@@ -94,7 +94,11 @@ class AppContainer(context: Context) {
     /** #1802 The Sent rows' delivery stages: the fleet mail API's own records, cached per message
      *  (mesh first, public hub path with the fleet bearer as fallback). */
     val deliveryStatus: app.sterna.send.delivery.DeliveryStatusRepository =
-        app.sterna.send.delivery.FleetDeliveryStatusSource(com.diegonmarcos.superapp.fleetendpoints.FleetTransport.bearers).let { fleet ->
+        app.sterna.send.delivery.FleetDeliveryStatusSource(
+            bearers = com.diegonmarcos.superapp.fleetendpoints.FleetTransport.bearers,
+            router = com.diegonmarcos.superapp.fleetendpoints.FleetTransport.router,
+            baseUrl = { app.sterna.fleet.MailFleetServices.communicationMcpBase() },
+        ).let { fleet ->
             app.sterna.send.delivery.DeliveryStatusRepository({ key ->
                 (app.sterna.send.delivery.DeliveryStatusBinding.scripted ?: fleet).fetch(key)
             })
@@ -277,6 +281,8 @@ class SternaApplication : Application() {
         container = AppContainer(this)
         // #1803 the compose recipient check answers from the fleet delivery API; its endpoints come from Cloud Account.
         app.sterna.fleet.FleetRecipientChecker.bind(this)
+        // #1802 the Sent delivery status asks Cloud Account for the same fleet mail API pair.
+        app.sterna.fleet.MailFleetServices.bind(this)
         app.sterna.ui.compose.RecipientChecks.checker = app.sterna.fleet.FleetRecipientChecker
         // The vault's mail section, when the fleet config contract left it in the account prefs
         // (the migration / Fleet Setup restarted us for it): accounts in, keys out, once.
