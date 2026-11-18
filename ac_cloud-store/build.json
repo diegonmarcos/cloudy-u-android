@@ -41,7 +41,7 @@
       "type": "library",
       "dir": "../ab_cloud-libs-shared/libs/decisions-link"
     },
-    "libs:torrent": {"dir": "../ab_cloud-libs-shared/libs/torrent", "type": "library", "depends_on": [], "comment": "#1600 the BitTorrent engine (libtorrent through jlibtorrent), the declarative torrent search sources and the Downloads/Cloudy-store/Torrent folder rule, as code only: the Torrent destination, Search > Torrent and Configs > Torrent drive it. Only this app links it, so no other app carries libtorrent's native library."},
+    "libs:torrent": {"dir": "../ab_cloud-libs-shared/libs/torrent", "type": "library", "depends_on": [], "comment": "#1600 the BitTorrent engine (libtorrent 2.1 through libtorrent4j, #1790), the declarative torrent search sources and the Downloads/Cloudy-store/Torrent folder rule, as code only: the Torrent destination, Search > Torrent and Configs > Torrent drive it. Only this app links it, so no other app carries libtorrent's native library."},
     "_doc": "Single source of truth for the Gradle module graph. settings.gradle iterates this list. Every lib is shared BY REFERENCE from ab_cloud-libs-shared/libs, the same directories cloud-superapp builds, so the store code exists once.",
     "app": {
       "type": "application",

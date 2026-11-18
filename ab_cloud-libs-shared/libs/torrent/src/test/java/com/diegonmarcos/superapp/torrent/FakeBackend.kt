@@ -3,7 +3,7 @@ package com.diegonmarcos.superapp.torrent
 import java.io.File
 
 /** A session with no peers: tests set each torrent's raw status by hand and read back what the engine asked of it. */
-/** [startsPaused] mimics jlibtorrent: SessionManager.download() adds the torrent PAUSED until it is resumed. */
+/** [startsPaused] mimics libtorrent (libtorrent4j): SessionManager.download() adds the torrent PAUSED until it is resumed. */
 class FakeBackend(var failStart: Throwable? = null, val startsPaused: Boolean = false) : TorrentBackend {
     val raw = LinkedHashMap<String, RawStatus>()
     val calls = ArrayList<String>()

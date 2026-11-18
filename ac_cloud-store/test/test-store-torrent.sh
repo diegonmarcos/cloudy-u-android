@@ -12,7 +12,7 @@
 #      app/build.gradle, in lib-consumers.json (consumed by ac_cloud-store only), watched by the Store ship workflow, classified
 #      and categorised, and the lib is CODE ONLY (no assets, no res, no BuildConfig data)
 #   L2 the engine API: TorrentEngine add / refresh / pause / resume / remove / setSeeding / settings.saveDir, a TorrentBackend seam and
-#      a jlibtorrent backend on arm64 (prebuilt libtorrent, 64 KB aligned), unit-tested with a fake session
+#      a libtorrent4j backend on arm64 AND x86_64 (prebuilt libtorrent 2.1, 16 KB aligned; #1790 replaced jlibtorrent), unit-tested with a fake session
 #   S1 Search has the Cloudy | Android | Torrent source subpages; Cloudy/Android results install, Torrent results go to the torrent
 #      engine; the torrent indexers are a declared list with at least two public sources
 #   C1 Configs > Torrent: download folder default Downloads/Cloudy-store/Torrent (created if missing), external drive volumes,
@@ -35,7 +35,7 @@ FILES="ac_cloud-store/build.json ac_cloud-store/app/build.gradle ac_cloud-store/
 $CS/MainActivity.kt $CS/TorrentPage.kt $CS/TorrentConfigPage.kt $CS/TorrentHost.kt $CS/ConfigsPage.kt $CS/App.kt
 $AS/StoreCloudFragment.kt $AS/StoreFeedPanels.kt $AS/StoreSearchPage.kt $AS/StoreTorrentSearch.kt $AS/StoreTorrentHost.kt
 ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-feeds.json
-$TL/build.gradle $TL/src/main/AndroidManifest.xml $TLK/TorrentEngine.kt $TLK/TorrentModels.kt $TLK/TorrentPaths.kt $TLK/TorrentSearch.kt $TLK/JlibtorrentBackend.kt
+$TL/build.gradle $TL/src/main/AndroidManifest.xml $TLK/TorrentEngine.kt $TLK/TorrentModels.kt $TLK/TorrentPaths.kt $TLK/TorrentSearch.kt $TLK/LibtorrentBackend.kt
 aa_cloud-superapp/data/lib-consumers.json .github/workflows/ship-cloud-store.yml 1_cicd/src/data/lib-classes.json 1_cicd/src/data/lib-categories.json"
 
 # check <root> -> prints PASS/FAIL lines, returns the number of failures
@@ -93,10 +93,15 @@ ok(all(x in fp for x in ("e.ref", "e.title", "e.subtitle", "e.link", "e.state", 
 
 # T1
 tp = rd(CS + "/TorrentPage.kt")
-ok(tp is not None and all(x in strip(tp) for x in ("torrents.addMagnet(", "OpenMultipleDocuments", "torrents.pause(", "torrents.resume(", "torrents.remove(", "torrents.setSeeding(",
+ok(tp is not None and all(x in strip(tp) for x in ("TorrentIntake.addLink(", "OpenMultipleDocuments", "torrents.pause(", "torrents.resume(", "torrents.remove(", "torrents.setSeeding(",
         "Active", "Completed", "TorrentFormat.line(", "EngineState.Unavailable", "online(ctx)", "TorrentBar(")),
    "T1 the Torrent page adds magnets, imports .torrent files, lists Active and Completed with progress/rates/seeds/peers, pauses, resumes, removes, switches seeding, and says engine-unavailable / offline",
    "T1 the Torrent page lost a capability")
+th = strip(rd(CS + "/TorrentHost.kt") or "")
+ok(tp is not None and "engine.addMagnet(t)" in th and "engine.addTorrentBytes(label, bytes)" in th and all(x in strip(tp) for x in ("TorrentTags.open(", "TorrentTags.queue(", "TorrentTags.PAUSE_ALL"))
+   and "catalogueItems(" not in strip(tp),
+   "T2 (#1790) the Torrent page is a download manager: magnet or .torrent address, queue positions, Pause all, Open; the suggested-torrent list removed at the owner's order",
+   "T2 (#1790) the Torrent page lost a download-manager part, or the suggested-torrent list is back")
 
 # L1
 mods = bj["modules"]; app = mods["app"]["depends_on"]
@@ -127,10 +132,10 @@ ok(os.path.isdir(base) and not stray and "buildConfigField" not in lg and "asset
    "L1 the lib bakes data: %s" % stray)
 
 # L2
-te = strip(rd(TLK + "/TorrentEngine.kt") or ""); tm = strip(rd(TLK + "/TorrentModels.kt") or ""); jb = rd(TLK + "/JlibtorrentBackend.kt") or ""
+te = strip(rd(TLK + "/TorrentEngine.kt") or ""); tm = strip(rd(TLK + "/TorrentModels.kt") or ""); jb = rd(TLK + "/LibtorrentBackend.kt") or ""
 ok(all(("fun %s(" % f) in te for f in ("addMagnet", "addTorrentFile", "addTorrentBytes", "refresh", "pause", "resume", "remove", "setSeeding", "start", "stop"))
-   and "settings" in te and "interface TorrentBackend" in tm and "SessionManager" in jb and "jlibtorrent-android-arm64" in (rd(TL + "/build.gradle") or ""),
-   "L2 the engine API (add magnet / .torrent, progress, pause, resume, remove, seed, save path) sits on a TorrentBackend seam with a real libtorrent (jlibtorrent arm64) backend",
+   and "settings" in te and "interface TorrentBackend" in tm and "SessionManager" in jb and all(a in (rd(TL + "/build.gradle") or "") for a in ("libtorrent4j-android-arm64", "libtorrent4j-android-x86_64")),
+   "L2 the engine API (add magnet / .torrent, progress, pause, resume, remove, seed, save path) sits on a TorrentBackend seam with a real libtorrent (libtorrent4j arm64 + x86_64) backend",
    "L2 the engine API or the libtorrent backend is incomplete")
 tests = os.path.join(R, TL, "src/test/java/com/diegonmarcos/superapp/torrent")
 names = os.listdir(tests) if os.path.isdir(tests) else []
@@ -224,6 +229,8 @@ mutate "panels ignore the Sources switch" "$AS/StoreFeedPanels.kt" 'StoreSourceP
 mutate "panel row loses the link" "$AS/StoreFeedPanels.kt" 'e.link' 'e.title'
 mutate "Torrent page not hosted" "$CS/MainActivity.kt" 'if (selected == TAB_TORRENT) TorrentPage()' ''
 mutate "Torrent page loses import" "$CS/TorrentPage.kt" 'OpenMultipleDocuments' 'OpenDocument'
+mutate "Torrent page loses Open" "$CS/TorrentPage.kt" 'TorrentTags.open(t.id)' 'TorrentTags.row(t.id)'
+mutate "magnet no longer reaches the engine" "$CS/TorrentHost.kt" 'engine.addMagnet(t)' 'Unit'
 mutate "lib leaves the module list" ac_cloud-store/build.json '"libs:torrent": {"dir"' '"libs:torrentx": {"dir"'
 mutate "app stops linking the lib" ac_cloud-store/app/build.gradle "project(':libs:torrent')" "project(':libs:core')"
 mutate "ship stops watching the lib" .github/workflows/ship-cloud-store.yml 'ab_cloud-libs-shared/libs/torrent/**' 'ab_cloud-libs-shared/libs/torrentx/**'

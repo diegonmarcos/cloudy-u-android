@@ -46,7 +46,7 @@ class TorrentDownloadPathTest {
         assertEquals("hash-only results get public trackers", h, Magnet.infoHash(seen.magnet!!))
         assertTrue(seen.magnet!!.contains("tr="))
         val i = b.calls.indexOfFirst { it.startsWith("addMagnet:") }
-        assertTrue("the session is told to run it right after the add (jlibtorrent adds paused)", b.calls.drop(i).contains("resume:$h"))
+        assertTrue("the session is told to run it right after the add (libtorrent adds paused)", b.calls.drop(i).contains("resume:$h"))
         // libtorrent then writes under that folder; the finished torrent is reported at the same path
         b.progress(h, "Debian 12 netinst", Phase.DOWNLOADING, 0.5f, 400, down = 50, seeds = 5, peers = 9)
         val landed = b.land(h, "debian-12-netinst.iso", 16)

@@ -168,11 +168,11 @@ class TorrentEngineTest {
     }
 
     @Test fun missingNativeLibraryIsAStateNotACrash() {
-        val dead = FakeBackend(failStart = UnsatisfiedLinkError("no jlibtorrent for this ABI"))
+        val dead = FakeBackend(failStart = UnsatisfiedLinkError("no libtorrent4j for this ABI"))
         val e = engine(dead)
         val r = e.addMagnet(magnet)
         assertTrue(r is AddResult.Unavailable)
-        assertTrue((r as AddResult.Unavailable).reason.contains("no jlibtorrent"))
+        assertTrue((r as AddResult.Unavailable).reason.contains("no libtorrent4j"))
         assertTrue(e.state is EngineState.Unavailable)
         assertTrue(e.refresh().isEmpty())
         e.stop()

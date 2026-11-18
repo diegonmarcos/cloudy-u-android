@@ -27,6 +27,10 @@ data class TorrentStatus(
     val seedEnabled: Boolean,
     val addedAt: Long,
     val error: String?,
+    /** #1790 web seeds (BEP 19) the session is using for this torrent; an Internet Archive torrent has archive.org's own. */
+    val webSeeds: Int = 0,
+    /** #1790 the session's last complaint (tracker, web seed, file), shown under a row that is not moving. */
+    val note: String? = null,
 ) {
     val finished: Boolean get() = state == TorrentState.SEEDING || state == TorrentState.COMPLETED
     val active: Boolean get() = state == TorrentState.DOWNLOADING || state == TorrentState.METADATA || state == TorrentState.CHECKING || state == TorrentState.QUEUED
@@ -80,9 +84,13 @@ data class RawStatus(
     val uploaded: Long,
     val downloaded: Long,
     val error: String? = null,
+    /** #1790 web seeds (BEP 19 `url-list`, HTTP seeds) the session holds for this torrent. */
+    val webSeeds: Int = 0,
+    /** #1790 the session's last complaint about this torrent (a tracker, web seed or file error), not an error state by itself. */
+    val note: String? = null,
 )
 
-/** The session under the engine. The real one is [JlibtorrentBackend]; tests hand the engine a fake. */
+/** The session under the engine. The real one is [LibtorrentBackend] (libtorrent4j); tests hand the engine a fake. */
 interface TorrentBackend {
     /** Start the session. Throws (any Throwable, an UnsatisfiedLinkError included) when it cannot; the engine turns that into [EngineState.Unavailable]. */
     fun start()

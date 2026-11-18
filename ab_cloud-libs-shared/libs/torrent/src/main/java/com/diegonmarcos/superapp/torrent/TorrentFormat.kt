@@ -43,6 +43,7 @@ object TorrentFormat {
         if (t.state == TorrentState.DOWNLOADING) { add("↓ ${rate(t.downRate)}"); add("ETA ${eta(t.etaSeconds)}") }
         if (t.state == TorrentState.DOWNLOADING || t.state == TorrentState.SEEDING) add("↑ ${rate(t.upRate)}")
         if (t.active || t.state == TorrentState.SEEDING) add("${t.seeds} seeds · ${t.peers} peers")
+        if (t.active && t.webSeeds > 0) add("${t.webSeeds} web seed" + if (t.webSeeds == 1) "" else "s")
         if (t.finished && t.uploaded > 0) add("ratio ${String.format(Locale.US, "%.2f", t.ratio)}")
     }.joinToString(" · ")
 }

@@ -14,7 +14,7 @@ class NoDataInAarTest {
         assertFalse("assets/", File(main, "assets").exists())
         assertFalse("res/", File(main, "res").exists())
         assertFalse("resources/", File(main, "resources").exists())
-        assertFalse("jniLibs/ (the native half comes from the jlibtorrent artifacts)", File(main, "jniLibs").exists())
+        assertFalse("jniLibs/ (the native half comes from the libtorrent4j artifacts)", File(main, "jniLibs").exists())
     }
 
     @Test fun onlyKotlinAndTheManifestLiveInMain() {

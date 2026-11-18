@@ -14,7 +14,7 @@ object TorrentEngines {
 
     private fun build(app: Context): TorrentEngine {
         val dir = File(app.filesDir, "torrent")
-        return TorrentEngine(JlibtorrentBackend(), FileTorrentStore(File(dir, "torrents.json")), PrefsSettings(app), File(dir, "files"))
+        return TorrentEngine(LibtorrentBackend(), FileTorrentStore(File(dir, "torrents.json")), PrefsSettings(app), File(dir, "files"))
     }
 
     @Volatile private var sources: TorrentSources? = null

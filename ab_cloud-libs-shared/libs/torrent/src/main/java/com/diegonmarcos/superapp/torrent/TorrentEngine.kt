@@ -93,7 +93,7 @@ class TorrentEngine(
                 e.torrentFile != null && File(e.torrentFile).isFile -> backend.addTorrent(e.id, File(e.torrentFile), dir, paused)
                 else -> { errors[e.id] = "The .torrent file is gone; remove the entry and add it again."; return }
             }
-            // A session may add a torrent paused (jlibtorrent does): one that is meant to run is started explicitly.
+            // A session may add a torrent paused (libtorrent does): one that is meant to run is started explicitly.
             if (!paused) backend.resume(e.id)
         } catch (t: Throwable) { errors[e.id] = t.message ?: t.javaClass.simpleName }
     }
@@ -131,7 +131,7 @@ class TorrentEngine(
         if (!prep.ok) return AddResult.Failed(prep.why.orEmpty())
         try {
             if (magnet != null) backend.addMagnet(id, magnet, dir, paused) else backend.addTorrent(id, File(file!!), dir, paused)
-            // A session may add a torrent paused (jlibtorrent does): one that is meant to run is started explicitly, no manual Resume.
+            // A session may add a torrent paused (libtorrent does): one that is meant to run is started explicitly, no manual Resume.
             if (!paused) backend.resume(id)
         } catch (t: Throwable) {
             return AddResult.Failed(t.message ?: t.javaClass.simpleName)
@@ -211,6 +211,8 @@ class TorrentEngine(
             uploaded = r?.uploaded ?: 0L, downloaded = r?.downloaded ?: 0L,
             savePath = e.savePath, magnet = e.magnet, seedEnabled = e.seed, addedAt = e.addedAt,
             error = err ?: if (st == TorrentState.ERROR) un else null,
+            webSeeds = r?.webSeeds ?: 0,
+            note = r?.note,
         )
     }
 

@@ -8212,28 +8212,6 @@
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "matrix"
   },
-  "maven:com.frostwire:jlibtorrent": {
-   "kind": "maven",
-   "declared_in": [
-    "ab_cloud-libs-shared/libs/torrent/build.gradle"
-   ],
-   "version": "1.2.0.18",
-   "scope": "shipped",
-   "licence": "MIT",
-   "licence_source": "POM 1.2.0.18",
-   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
-  },
-  "maven:com.frostwire:jlibtorrent-android-arm64": {
-   "kind": "maven",
-   "declared_in": [
-    "ab_cloud-libs-shared/libs/torrent/build.gradle"
-   ],
-   "version": "1.2.0.18",
-   "scope": "shipped",
-   "licence": "MIT",
-   "licence_source": "POM 1.2.0.18",
-   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
-  },
   "maven:com.gemalto.jp2:jp2-android": {
    "kind": "maven",
    "declared_in": [
@@ -10729,6 +10707,7 @@
   "maven:org.libtorrent4j:libtorrent4j": {
    "kind": "maven",
    "declared_in": [
+    "ab_cloud-libs-shared/libs/torrent/build.gradle",
     "ac_cloud-browser/app/build.gradle"
    ],
    "version": "2.1.0-39",
@@ -10740,6 +10719,7 @@
   "maven:org.libtorrent4j:libtorrent4j-android-arm64": {
    "kind": "maven",
    "declared_in": [
+    "ab_cloud-libs-shared/libs/torrent/build.gradle",
     "ac_cloud-browser/app/build.gradle"
    ],
    "version": "2.1.0-39",
@@ -10751,6 +10731,7 @@
   "maven:org.libtorrent4j:libtorrent4j-android-x86_64": {
    "kind": "maven",
    "declared_in": [
+    "ab_cloud-libs-shared/libs/torrent/build.gradle",
     "ac_cloud-browser/app/build.gradle"
    ],
    "version": "2.1.0-39",

@@ -53,7 +53,11 @@ object Magnet {
     )
 
     /** A .torrent file read down to what the engine needs. */
-    class MetaInfo(val infoHash: String, val name: String, val totalBytes: Long)
+    class MetaInfo(val infoHash: String, val name: String, val totalBytes: Long,
+        /** #1790 the torrent's web seeds (BEP 19 `url-list`, a string or a list): libtorrent downloads from them like from a peer. */
+        val webSeeds: List<String> = emptyList(),
+        /** #1790 the files (path inside the torrent, bytes); a single-file torrent lists its name. */
+        val files: List<Pair<String, Long>> = emptyList())
 
     /** Reads a bencoded .torrent: the info-hash is the SHA-1 of the `info` dictionary's exact bytes. Null when it is not a torrent file. */
     fun parseTorrent(bytes: ByteArray): MetaInfo? = runCatching {
@@ -61,22 +65,33 @@ object Magnet {
         if (bytes.isEmpty() || bytes[0] != 'd'.code.toByte()) return null
         var pos = 1
         var info: MetaInfo? = null
+        val seeds = ArrayList<String>()
         while (pos < bytes.size && bytes[pos] != 'e'.code.toByte()) {
             val (key, afterKey) = r.string(pos); pos = afterKey
             val start = pos
             val end = r.skip(pos)
+            if (String(key, Charsets.ISO_8859_1) == "url-list") {
+                when (val v = r.value(start).first) {
+                    is ByteArray -> seeds += String(v, Charsets.UTF_8)
+                    is List<*> -> v.forEach { (it as? ByteArray)?.let { b -> seeds += String(b, Charsets.UTF_8) } }
+                }
+            }
             if (String(key, Charsets.ISO_8859_1) == "info") {
                 val digest = MessageDigest.getInstance("SHA-1").digest(bytes.copyOfRange(start, end))
                 val d = r.dict(start)
                 val name = (d["name.utf-8"] ?: d["name"])?.let { String(it as ByteArray, Charsets.UTF_8) } ?: ""
                 var total = (d["length"] as? Long) ?: 0L
+                var files = if (d["length"] is Long) listOf(name to total) else emptyList()
                 @Suppress("UNCHECKED_CAST")
-                (d["files"] as? List<Map<String, Any?>>)?.let { fs -> total = fs.sumOf { (it["length"] as? Long) ?: 0L } }
-                info = MetaInfo(digest.joinToString("") { "%02x".format(it) }, name, total)
+                (d["files"] as? List<Map<String, Any?>>)?.let { fs ->
+                    total = fs.sumOf { (it["length"] as? Long) ?: 0L }
+                    files = fs.map { f -> ((f["path.utf-8"] ?: f["path"]) as? List<*>).orEmpty().joinToString("/") { String(it as ByteArray, Charsets.UTF_8) } to ((f["length"] as? Long) ?: 0L) }
+                }
+                info = MetaInfo(digest.joinToString("") { "%02x".format(it) }, name, total, emptyList(), files)
             }
             pos = end
         }
-        info
+        info?.let { MetaInfo(it.infoHash, it.name, it.totalBytes, seeds.filter { u -> u.isNotBlank() }, it.files) }
     }.getOrNull()
 
     /** A small bencode reader: [skip] finds where a value ends, [dict] reads one level (dicts and lists nest, strings are ByteArray, ints Long). */
