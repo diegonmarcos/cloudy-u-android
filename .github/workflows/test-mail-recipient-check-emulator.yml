@@ -125,12 +125,14 @@ jobs:
           shot 01-new; dump 01-new
           grep -q 'New mail' walk-out/01-new.xml || { echo "::error::New mail did not open"; exit 1; }
           # scene 1: one recipient per verdict; each comma commits a chip, which starts its check
-          typeall ok@ok.example catchall@catchall.example info@bounce.example x@nomx.example bad@nodot who@unknown.example
-          sleep 0.3; shot 02-marks-checking; dump 02-marks-checking
-          sleep 4; shot 03-marks-answered; dump 03-marks-answered
-          # the chip area scrolls: every verdict is looked for across the scrolled-to-top and bottom dumps
-          adb shell input swipe 400 300 400 420 200; sleep 1; dump 03b-marks-top; shot 03b-marks-top
-          cat walk-out/03-marks-answered.xml walk-out/03b-marks-top.xml > walk-out/03-all.xml
+          # the chip area scrolls to follow the newest chip: each chip's mark is dumped (and shot) while it is the newest
+          i=0; for a in ok@ok.example catchall@catchall.example info@bounce.example x@nomx.example bad@nodot who@unknown.example; do
+            i=$((i+1)); adb shell input text "$a"; sleep 1; adb shell input text ','; sleep 0.3
+            [ "$i" = 1 ] && { shot 02-marks-checking; dump 02-marks-checking; }
+            sleep 3; shot "03-chip-$i"; dump "03-chip-$i"
+          done
+          shot 03-marks-answered; dump 03-marks-answered
+          cat walk-out/03-chip-*.xml walk-out/03-marks-answered.xml > walk-out/03-all.xml
           for v in "Delivery check: Can receive" "Delivery check: Risky" "Delivery check: Will fail" "Delivery check: Unknown"; do has "$v" 03-all; done
           leave
           # scene 2: two chips (nothing scrolls); the will-fail mark opens the sheet, then Send asks first
