@@ -49,6 +49,19 @@ done
 # applyLauncherChrome sees isDefaultLauncher), so make it the HOME role holder and bring it up with HOME, as a phone does.
 $T adb shell cmd role add-role-holder --user 0 android.app.role.HOME "$PKG" 0 >/dev/null 2>&1 || echo "note: could not take the HOME role"
 $T adb shell input keyevent KEYCODE_HOME; sleep 8
+# coming up as the launcher shows the screensaver overlay again (clock + Unlock): tap it away, then the home is on screen
+for _ in 1 2 3; do
+    dump cur
+    grep -q 'text="Unlock"' "$OUT/cur.xml" || break
+    b="$(python3 - "$OUT/cur.xml" <<'PY'
+import re, sys
+x = open(sys.argv[1], errors="ignore").read()
+m = re.search(r'text="Unlock"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)
+if m: l, t, r, d = map(int, m.groups()); print((l + r) // 2, (t + d) // 2)
+PY
+)"
+    [ -n "$b" ] && $T adb shell input tap $b; sleep 5
+done
 shot home 3
 # #1446 the speed test lives in the network popup: open it by the WiFi chip of the status strip (content-desc "Network status: WiFi")
 bounds() { # <xml> <attr> <value-regex>: print the centre of the first node whose attr matches
