@@ -114,6 +114,21 @@ class CagrTest {
         assertEquals(listOf(5.0, 6.0, 5.0, 7.0, 8.0), Cagr.LONG_PERIODS.map { IndexHoldings.perf(full, it) })
     }
 
+    @Test fun theDashboardTablesReadThePeriodSetToo() {
+        // 1 000 daily closes rising 0.05 % a day (about 2.7 years), as fractions
+        val cl = (0 until 1000).map { asOf.minusDays((999 - it).toLong()) to 100.0 * Math.pow(1.0005, it.toDouble()) }
+        near(0.0005, Tables.periodColumn("1D", cl), 1e-12)
+        near(Math.pow(1.0005, 7.0) - 1.0, Tables.periodColumn("1W", cl), 1e-12)
+        near(Tables.periodColumn("12M", cl)!!, Tables.periodColumn("CAGR 12m", cl), 1e-12)
+        assertTrue(Tables.periodColumn("CAGR 24m", cl) != null)
+        assertNull("1 000 days do not reach 36 months", Tables.periodColumn("CAGR 36m", cl))
+        assertEquals("n/a", Tables.fmt("CAGR 36m", null))
+        assertNull(Tables.periodColumn("1D", emptyList()))
+        // World Indices Equity's performance tables carry the whole period set after their own columns
+        val wei = Dashboards.byId(Dashboards.parse(DataFiles.dashboardsJson), "world_equity_indices")!!
+        for (p in wei.panels.filter { it.derive == "performance" }) assertTrue(p.id, p.columns.containsAll(listOf("1D", "1W") + Cagr.LONG_PERIODS))
+    }
+
     @Test fun everyEqAndFiPageDeclaresTheFullPeriodSet() {
         val decl = PerfPortfolios.parseDecl(DataFiles.portfoliosJson)!!
         assertEquals(listOf("1D", "1W", "1M", "YTD", "12M", "CAGR 1m", "CAGR 12m", "CAGR 24m", "CAGR 36m"), decl.periods)

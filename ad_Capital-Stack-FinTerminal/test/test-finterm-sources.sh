@@ -201,11 +201,15 @@ for d in dash["dashboards"]:
         web = [own] + [byid.get(fb.get("source"), {}) for fb in f.get("fallbacks", [])]
         if p.get("alerts") not in (None, "price", "event"): bad.append("S7 panel %s alerts %r is not price or event" % (where, p.get("alerts")))
 
-# S9 per-item tables (Tables.kt / engine.ts): performance columns come from Performance.COLUMNS (or whole-year CAGR NY, Vol 1Y, MaxDD 1Y);
+# S9 per-item tables (Tables.kt / engine.ts): performance columns come from Performance.COLUMNS (or whole-year CAGR NY, Vol 1Y, MaxDD 1Y, and the #1786 period set of Cagr.kt);
 # every item has a label and every symbol_map key is an item; a matrix has a tenor column per declared tenor, DM/EM inside its items and a GDP weight each
 perf_kt = ktf("Performance.kt")
 pcols = re.search(r'COLUMNS = listOf\(([^)]*)\)', perf_kt)
 PCOLS = re.findall(r'"([^"]+)"', pcols.group(1)) if pcols else []
+# #1786 the period set Tables.periodColumn reads: 1D, 1W and the long windows Cagr.kt declares (12M, CAGR 1m / 12m / 24m / 36m)
+cagr_kt = ktf("Cagr.kt")
+PCOLS += ["1D", "1W"] + re.findall(r'const val P(?:12M|CAGR_\d+M) = "([^"]+)"', cagr_kt)
+if "periodColumn(" not in ktf("Tables.kt"): bad.append("S9 Tables.kt does not read the #1786 period columns")
 for d in dash["dashboards"]:
     for p in d["panels"]:
         f = p.get("fetch") or {}

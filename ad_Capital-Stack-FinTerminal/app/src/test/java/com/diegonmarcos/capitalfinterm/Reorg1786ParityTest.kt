@@ -89,7 +89,8 @@ class Reorg1786ParityTest {
                 assertEquals(bp.getString("title"), p!!.title)
                 assertEquals(bp.getString("source"), p.source)
                 assertEquals(bp.getString("view"), p.view)
-                assertEquals("panel ${d.id}/${p.id} lost a column", strs(bp.getJSONArray("columns")), p.columns)
+                // a column may only be added after the old ones (#1786 the period set on World Indices Equity), never dropped or reordered
+                assertEquals("panel ${d.id}/${p.id} lost a column", strs(bp.getJSONArray("columns")), p.columns.take(bp.getJSONArray("columns").length()))
                 assertEquals("panel ${d.id}/${p.id} lost an instrument", strs(bp.getJSONArray("each")), strs(p.fetch?.optJSONArray("each")))
                 panels++
             }

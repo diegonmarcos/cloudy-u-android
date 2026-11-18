@@ -443,9 +443,27 @@ object Tables {
         return when {
             col == COL_VOL -> vol1y(closes)
             col == COL_MDD -> maxDrawdown1y(closes)
+            // #1786 the EQ period set: 1D, 1W, the 12-month change and the CAGR over 1 / 12 / 24 / 36 months (Cagr.kt), as fractions like the others
+            col == "1D" || col == "1W" || Cagr.isLong(col) -> periodColumn(col, closes)
             col.endsWith("Y") && col.dropLast(1).toIntOrNull() != null -> Performance.trailing(closes, col.dropLast(1).toInt())
             else -> null
         }
+    }
+
+    /**
+     * #1786 one column of the period set on a daily close series, as a fraction (0.05 = +5 %): 1D = the last close over the one before, 1W = over the
+     * last close on or before as-of minus 7 days, 12M = the 12-month change, CAGR Nm = [Cagr.cagr]; null without enough history (shown n/a).
+     */
+    fun periodColumn(col: String, closes: List<Pair<LocalDate, Double>>): Double? {
+        val s = closes.filter { it.second.isFinite() && it.second > 0.0 }.sortedBy { it.first }
+        val (asOf, last) = s.lastOrNull() ?: return null
+        val pct: Double? = when (col) {
+            "1D" -> Cagr.change(s.getOrNull(s.size - 2)?.second, last)
+            "1W" -> Cagr.change(s.lastOrNull { !it.first.isAfter(asOf.minusDays(7)) }?.second, last)
+            Cagr.P12M -> Cagr.change(Cagr.base(s, asOf, 12), last)
+            else -> Cagr.CAGR_MONTHS[col]?.let { Cagr.cagr(s, last, asOf, it) }
+        }
+        return pct?.let { it / 100.0 }
     }
 
     /** Annualised volatility of daily log returns over the last year (fraction); null with fewer than 20 returns. */
@@ -472,7 +490,8 @@ object Tables {
     fun closes(g: Got): List<Pair<LocalDate, Double>> = g.bars.mapNotNull { b -> runCatching { LocalDate.parse(b.date.take(10)) }.getOrNull()?.let { it to b.c } }
         .distinctBy { it.first }.sortedBy { it.first }
 
-    fun fmt(col: String, v: Double?): String = if (col == COL_VOL && v != null && v.isFinite()) String.format(Locale.US, "%.2f%%", v * 100.0) else Performance.format(v)
+    fun fmt(col: String, v: Double?): String = if (col == COL_VOL && v != null && v.isFinite()) String.format(Locale.US, "%.2f%%", v * 100.0)
+        else if (Cagr.isLong(col) && (v == null || !v.isFinite())) Cagr.NA else Performance.format(v)
 
     /** Rows: the declared label (full name, ticker in the detail) and last close, then each declared return column. */
     fun performance(panel: Panel, f: JSONObject, got: Map<String, ItemGot>): PanelData {
