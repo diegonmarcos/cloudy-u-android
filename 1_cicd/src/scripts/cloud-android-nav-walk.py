@@ -505,11 +505,15 @@ class Walk:
         if box is None and not entries:
             return False
         before = self.dropdown_sig(nodes) if box is not None else tuple(sorted((n.rid, n.t) for n in entries))
-        if entries:
-            top, bottom = min(n.t for n in entries), max(n.b for n in entries)
-            swipe(entries[0].cx, bottom - 20, max(top + 20, bottom - 500), 300)
+        # #1760 the swipe runs over the dropdown box, 500 px up from its lower edge. It used to run over the visible entries' span: with
+        # one entry left as a sliver at the top (Cloud C3: Plugins, 61 px, above its whole drawer tree) that was a 21 px move, under
+        # the touch slop, so it TAPPED the entry, which re-opened the page and closed the dropdown before the Sections group came up.
+        if box is not None:
+            swipe(box.cx, box.b - 20, max(box.t + 20, box.b - 520), 300)
         else:
-            swipe(box.cx, box.b - 20, max(box.t + 20, box.b - 500), 300)
+            top, bottom = min(n.t for n in entries), max(n.b for n in entries)
+            y1 = max(bottom - 20, top + 520)
+            swipe(entries[0].cx, y1, y1 - 500, 300)
         settle(0.6)
         again = dump() or nodes
         after = self.dropdown_sig(again) if box is not None else tuple(sorted((n.rid, n.t) for n in findall(again, ENTRY)))

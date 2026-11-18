@@ -10,6 +10,8 @@
 #      in the #1758 Sections group of a page below depth 0; "P6 ... no entry for section configs"). Mutation: DROPDOWN_SWIPES = 10.
 #   D2 a title dropdown left open by the step before is closed before the bottom bar is read (Cloud Store: "P4 no
 #      bottomnav_item_cloud on screen"). Mutation: the walker reads the bar with the popup still open.
+#   D4 the dropdown is scrolled over its box, never over the visible entries' span: Cloud C3's last page entry left as a 61 px
+#      sliver turned the swipe into a 21 px move, a TAP that re-opened the page and closed the dropdown. Mutation: the old span swipe.
 #   D3 an app whose gear opens its OWN full-screen Configs (Cloud Dialer's DialerConfigsActivity, tag dialer_configs_back) is left
 #      by its back arrow before the off-bar section is entered from the dropdown ("the title dropdown did not open (to reach
 #      section favorites)"). Mutation: only fleetcfg_back is recognised.
@@ -74,6 +76,27 @@ s = LongDropdown(); s.install()
 k = walker(["home"], ["home"])
 ok(k.pick("configs") and ("tap", w.ENTRY + "configs") in s.log, "D1 an entry 12 swipes down the dropdown is reached and tapped")
 
+# D4: Cloud C3's shape: the one page entry left is a 61 px sliver at the top of the box, the drawer tree (no entries) fills the
+# rest; a swipe under the touch slop is a TAP on what is under it (the sliver: the page re-opens and the dropdown closes)
+class SliverDropdown(Screen):
+    open, moved = True, 0
+    def nodes(self):
+        if not self.open:
+            return [node(w.TITLE, 100), node(w.ITEM + "home", 2000)]
+        out = [node(w.DROPDOWN, 136, 2184), node(w.ENTRY + "plugins", 136, 197)]
+        out.append(node("c3_drawer_row_%d" % (self.moved // 500), 300, 380))   # the drawer tree moves under the swipes
+        if self.moved >= 6000:
+            out.append(node(w.ENTRY + "configs", 1900, 2000))
+        return out
+    def on_swipe(self, dy):
+        self.log.append(("swipe", dy))
+        if dy < 48: self.open = False   # a tap on the sliver
+        else: self.moved += dy
+s = SliverDropdown(); s.install()
+k = walker(["home"], ["home"])
+ok(k.pick("configs") and s.open and min(d for _, d in [x for x in s.log if x[0] == "swipe"]) >= 300,
+   "D4 the dropdown is scrolled over its box, never by a sub-slop drag over a sliver entry (that taps it)")
+
 # D2: the section-list popup is still open; Back closes it; then the bar shows
 class LingeringDropdown(Screen):
     open = True
@@ -127,4 +150,5 @@ echo "── mutations"
 mutate "the dropdown is read 10 swipes deep" 's.replace("DROPDOWN_SWIPES = 40", "DROPDOWN_SWIPES = 10")'
 mutate "the bar is read with a dropdown open" 's.replace("if not any(n.rid.startswith(ITEM) for n in nodes) and (find(nodes, CRUMB0)", "if False and (find(nodes, CRUMB0)")'
 mutate "only fleetcfg_back leaves a Configs screen" 's.replace("next((n for n in cfg_nodes if n.rid.endswith(\"_configs_back\")), None)", "None").replace("elif cfg_nodes and find(cfg_nodes, TITLE) is None", "elif False")'
-echo "nav-walk-driver: all cases passed, 3 mutations caught"
+mutate "the swipe spans the visible entries" 's.replace("        if box is not None:\n            swipe(box.cx, box.b - 20, max(box.t + 20, box.b - 520), 300)", "        if entries:\n            top, bottom = min(n.t for n in entries), max(n.b for n in entries)\n            swipe(entries[0].cx, bottom - 20, max(top + 20, bottom - 500), 300)\n        elif box is not None:\n            swipe(box.cx, box.b - 20, max(box.t + 20, box.b - 520), 300)")'
+echo "nav-walk-driver: all cases passed, 4 mutations caught"
