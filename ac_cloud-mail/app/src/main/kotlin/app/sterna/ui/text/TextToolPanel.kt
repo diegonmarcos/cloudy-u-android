@@ -194,12 +194,14 @@ fun TextToolInPlaceBar(
     canUndo: Boolean,
     onUndo: () -> Unit,
     onPick: (TextTool) -> Unit,
+    /** #1800: also draw the surface's Translate icon after the in-place tools (it opens its dialog). */
+    withTranslate: Boolean = false,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = MailMetrics.s8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        surface.tools.filter { it.appliesInPlace }.forEach { tool ->
+        surface.tools.filter { it.appliesInPlace || (withTranslate && it == TextTool.TRANSLATE) }.forEach { tool ->
             IconButton(enabled = enabled && running == null, onClick = { onPick(tool) }) {
                 Icon(tool.icon, contentDescription = stringResource(tool.label))
             }

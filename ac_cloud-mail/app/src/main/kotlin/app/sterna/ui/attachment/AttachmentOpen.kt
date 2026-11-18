@@ -100,6 +100,15 @@ object AttachmentOpen {
          * fleet's auto-update gate chose -- being wrong towards "ask first" costs a dialog, being
          * wrong the other way costs the owner's data allowance.
          */
+    /**
+     * #1800 the content:// target the fleet camera writes a QR photo into (ACTION_IMAGE_CAPTURE), from
+     * this app's own cache: the one FileProvider door, used here for a file coming IN.
+     */
+    fun cameraCaptureUri(context: Context, name: String): android.net.Uri {
+        val dir = java.io.File(context.cacheDir, "attachments").apply { mkdirs() }
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", java.io.File(dir, name))
+    }
+
     fun isMetered(context: Context): Boolean = runCatching {
         val manager = context.getSystemService(ConnectivityManager::class.java) ?: return true
         // `isActiveNetworkMetered` and not a capability check: it already honours the user's own

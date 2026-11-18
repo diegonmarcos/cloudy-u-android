@@ -135,4 +135,64 @@ class ComposeOptionsParityTest {
         val pane = src("HtmlBodyEditor.kt")
         assertTrue(pane.contains("plainText: Boolean = false,"))
     }
+
+    /** The overflow (⋮) block of the compose screen: from its DropdownMenu to the schedule presets. */
+    private fun overflowMenu(): String {
+        val screen = src("ComposeScreen.kt")
+        val start = screen.indexOf("expanded = moreMenu,")
+        val end = screen.indexOf("DropdownMenu(expanded = scheduleMenu", start)
+        assertTrue("the overflow menu block was found", start in 0 until end)
+        return screen.substring(start, end)
+    }
+
+    /** Every entry the flat overflow had before #1800 sectioned it. */
+    private val overflowBefore = listOf(
+        "R.string.compose_save_draft",
+        "R.string.compose_schedule_send",
+        "R.string.compose_delete_draft",
+        "R.string.compose_request_receipt",
+        "TextToolNamedItems(textTools.surface",
+        "TextToolIconRow(textTools.surface, enabled = !sending, skip = { it.appliesInPlace })",
+    )
+
+    @Test fun `every overflow entry from before the sections is still reachable in the overflow`() {
+        val menu = overflowMenu()
+        assertEquals("missing from the sectioned overflow", emptyList<String>(), overflowBefore.filter { it !in menu })
+    }
+
+    @Test fun `the overflow is sectioned Actions, Text, Signature, Templates, Compose, in that order`() {
+        val menu = overflowMenu()
+        val order = listOf("actions", "text", "signature", "templates", "compose")
+            .map { menu.indexOf("ComposeMenuSection(R.string.compose_menu_section_$it") }
+        assertTrue("every section is drawn: $order", order.all { it >= 0 })
+        assertEquals("sections in order", order.sorted(), order)
+        // each old entry sits in the section it fits
+        fun sectionOf(needle: String): Int = order.indexOfLast { it < menu.indexOf(needle) }
+        assertEquals(0, sectionOf("R.string.compose_save_draft"))
+        assertEquals(0, sectionOf("R.string.compose_request_receipt"))
+        assertEquals(1, sectionOf("TextToolNamedItems(textTools.surface"))
+        assertEquals(1, sectionOf("runTextTool(TextTool.TRANSLATE)"))
+        assertEquals(2, sectionOf("R.string.compose_signature_add"))
+        assertEquals(3, sectionOf("R.string.compose_templates_manage"))
+        assertEquals(4, sectionOf("R.string.compose_mode_wysiwyg"))
+    }
+
+    @Test fun `the icon row under Subject keeps its three tools and gains Translate`() {
+        val screen = src("ComposeScreen.kt")
+        val bar = screen.substring(screen.indexOf("TextToolInPlaceBar("), screen.indexOf("compose_pgp_subject_note"))
+        assertTrue(bar.contains("withTranslate = true"))
+        val panel = File(File(src0()).parentFile.parentFile, "text/TextToolPanel.kt").readText()
+        assertTrue("the in-place tools are still drawn", panel.contains("it.appliesInPlace || (withTranslate && it == TextTool.TRANSLATE)"))
+    }
+
+    @Test fun `the To field keeps its Cc-Bcc toggle and gains the QR button`() {
+        val screen = src("ComposeScreen.kt")
+        val qr = screen.indexOf("R.string.compose_scan_qr)")
+        val toggle = screen.indexOf("R.string.compose_hide_cc_bcc else R.string.compose_show_cc_bcc")
+        assertTrue(qr in 0 until toggle)
+    }
+
+    private fun src0(): String =
+        listOf("src/main/kotlin/app/sterna/ui/compose/ComposeScreen.kt", "app/src/main/kotlin/app/sterna/ui/compose/ComposeScreen.kt")
+            .first { File(it).exists() }
 }

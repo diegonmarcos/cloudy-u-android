@@ -520,6 +520,35 @@ class ComposeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     /**
+     * Add a signature to the sending identity from the composer's Signature section ("Add…", #1800),
+     * then pick it, reporting the body swap the same way the picker does. The identity is stored as a
+     * manual identity (a server identity is copied, its signatures carried over), so the new signature
+     * survives the next server refresh. Null when no identity is selected.
+     */
+    suspend fun addSignature(name: String, source: String, makeDefault: Boolean): SignatureChange? {
+        val from = _selectedFrom.value ?: return null
+        val account = store.account(from.accountId) ?: return null
+        val key = from.identity.email.trim().lowercase()
+        val base = account.identities.firstOrNull { it.email.trim().lowercase() == key } ?: from.identity
+        val existing = base.resolvedSignatures()
+        val added = StoredSignature.of("sig-" + java.util.UUID.randomUUID().toString().take(8), name, source)
+        val updated = base.copy(
+            signatures = existing + added,
+            defaultSignatureId = if (makeDefault || existing.isEmpty()) added.id else base.defaultSignatureId,
+        )
+        val manual = if (account.identities.any { it.email.trim().lowercase() == key }) {
+            account.identities.map { if (it.email.trim().lowercase() == key) updated else it }
+        } else {
+            account.identities + updated
+        }
+        store.setIdentities(from.accountId, manual)
+        val option = FromOption(from.accountId, updated)
+        _fromOptions.value = _fromOptions.value.map { if (it.accountId == from.accountId && it.identity.email.trim().lowercase() == key) option else it }
+        _selectedFrom.value = option
+        return selectSignature(added)
+    }
+
+    /**
      * The body every opening starts from, AS HTML: the owner's first line (the reader's suggested reply
      * or a mailto: link's body, else an empty line to type on), the signature block per the three
      * signature settings, and [quoteBlock] - the reply's quoted original or the forwarded one - with

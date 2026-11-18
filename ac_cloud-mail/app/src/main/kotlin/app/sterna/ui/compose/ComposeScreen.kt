@@ -47,6 +47,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.QrCodeScanner
+import app.sterna.core.data.account.StoredSignature
+import app.sterna.ui.settings.SignatureEditorDialog
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.LocalContentColor
 import app.sterna.core.data.pgp.PgpMode
@@ -635,6 +641,10 @@ fun ComposeScreen(
      * was untouched the swap is not an edit: the next report from the page becomes the baseline.
      */
     val plainTextMode by viewModel.plainTextMode.collectAsStateWithLifecycle()
+    // #1800 the overflow's Signature "Add…" and Templates sections.
+    var addingSignature by rememberSaveable { mutableStateOf(false) }
+    var managingTemplates by rememberSaveable { mutableStateOf(false) }
+    var templates by remember { mutableStateOf(ComposeTemplateStore.load(context)) }
 
     fun applySignatureChange(change: SignatureChange?) {
         if (change == null) return
@@ -644,6 +654,76 @@ fun ComposeScreen(
             change.blockHtml,
             belowQuote = (change as? SignatureChange.Insert)?.belowQuote ?: false,
         )
+    }
+
+    if (addingSignature) {
+        // The SAME full-screen HTML signature editor as Settings, opened from the composer (#1800).
+        SignatureEditorDialog(
+            signature = StoredSignature(id = "compose-new"),
+            isDefault = signatureOptions.isEmpty(),
+            delimiter = true,
+            onSave = { name, source, makeDefault ->
+                scope.launch { applySignatureChange(viewModel.addSignature(name, source, makeDefault)) }
+            },
+            onClose = { addingSignature = false },
+        )
+    }
+    if (managingTemplates) {
+        ComposeTemplatesDialog(
+            templates = templates,
+            onChange = { list -> templates = list; ComposeTemplateStore.save(context, list) },
+            onInsert = { t -> managingTemplates = false; editor.insertText(t.text) },
+            onClose = { managingTemplates = false },
+        )
+    }
+    // #1800 the To field's QR button: the camera permission (declared once in the manifest) is asked
+    // here, at the moment of use; the photo comes from the fleet camera (ACTION_IMAGE_CAPTURE) and is
+    // decoded by the fleet's image-scan engine. Every outcome says what happened.
+    var qrPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    fun applyQr(outcome: QrScanOutcome) {
+        when (outcome) {
+            is QrScanOutcome.Found -> {
+                val r = outcome.recipients
+                fun add(field: String, more: List<String>): String {
+                    if (more.isEmpty()) return field
+                    val (chips, input) = splitRecipients(field)
+                    val all = (chips + listOfNotNull(input.trim().ifBlank { null }) + more).distinctBy { it.trim().lowercase() }
+                    return joinRecipients(all, "")
+                }
+                to = add(to, r.to)
+                if (r.cc.isNotEmpty() || r.bcc.isNotEmpty()) { expanded = true; cc = add(cc, r.cc); bcc = add(bcc, r.bcc) }
+                if (!r.subject.isNullOrBlank() && subject.text.isBlank()) subject = TextFieldValue(r.subject, TextRange(r.subject.length))
+                if (!r.body.isNullOrBlank()) editor.insertText(r.body)
+                Toast.makeText(context, context.resources.getQuantityString(R.plurals.compose_scan_qr_added, r.count, r.count), Toast.LENGTH_LONG).show()
+            }
+            QrScanOutcome.Unreadable -> Toast.makeText(context, context.getString(R.string.compose_scan_qr_unreadable), Toast.LENGTH_LONG).show()
+            is QrScanOutcome.NoAddress -> Toast.makeText(context, context.getString(R.string.compose_scan_qr_no_address), Toast.LENGTH_LONG).show()
+            is QrScanOutcome.EngineUnavailable -> Toast.makeText(context, context.getString(R.string.compose_scan_qr_engine, outcome.reason), Toast.LENGTH_LONG).show()
+        }
+    }
+    val qrCamera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
+        val uri = qrPhoto?.let(android.net.Uri::parse)
+        if (taken && uri != null) {
+            scope.launch {
+                applyQr(kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { scanQrRecipients(context, uri) })
+            }
+        }
+    }
+    fun openQrCamera() {
+        val uri = app.sterna.ui.attachment.AttachmentOpen.cameraCaptureUri(context, "qr-scan.jpg")
+        qrPhoto = uri.toString()
+        runCatching { qrCamera.launch(uri) }.onFailure {
+            Toast.makeText(context, context.getString(R.string.compose_scan_qr_no_camera), Toast.LENGTH_LONG).show()
+        }
+    }
+    val qrPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) openQrCamera()
+        else Toast.makeText(context, context.getString(R.string.compose_scan_qr_camera_denied), Toast.LENGTH_LONG).show()
+    }
+    fun scanQr() {
+        val have = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (have) openQrCamera() else qrPermission.launch(android.Manifest.permission.CAMERA)
     }
 
     // Land in the recipient field with the keyboard up, unless the recipients are already filled — a
@@ -1278,6 +1358,10 @@ fun ComposeScreen(
                             onDismissRequest = { moreMenu = false },
                             shape = MaterialTheme.shapes.medium,
                         ) {
+                            // #1800 the overflow in SECTIONS — Actions, Text, Signature, Templates, Compose.
+                            // Reorganised, nothing removed: every entry the flat menu had is still here,
+                            // in the section it fits (ComposeOptionsParityTest pins them).
+                            ComposeMenuSection(R.string.compose_menu_section_actions, first = true)
                             // Encrypting can't carry plaintext to the server: no draft, no schedule.
                             // Same rule, same function as the leave dialog above (#35).
                             if (draftSaveAllowed(pgpMode)) {
@@ -1315,6 +1399,7 @@ fun ComposeScreen(
                                 trailingIcon = { Checkbox(checked = requestReceipt, onCheckedChange = null) },
                                 onClick = { moreMenu = false; requestReceipt = !requestReceipt },
                             )
+                            ComposeMenuSection(R.string.compose_menu_section_text)
                             // The in-place tools as NAMED items, so the overflow spells out what the toolbar icons do.
                             TextToolNamedItems(textTools.surface, enabled = !sending && textTools.busy == null) { tool ->
                                 moreMenu = false
@@ -1340,6 +1425,66 @@ fun ComposeScreen(
                             TextToolIconRow(textTools.surface, enabled = !sending, skip = { it.appliesInPlace }) { tool ->
                                 moreMenu = false
                                 runTextTool(tool)
+                            }
+                            // Translate as a NAMED item too, beside Grammar Check and Text Enhance (#1800): the
+                            // icon row above keeps it; this spells it out in the Text section.
+                            if (TextTool.TRANSLATE in textTools.surface.tools) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(TextTool.TRANSLATE.label)) },
+                                    leadingIcon = { Icon(TextTool.TRANSLATE.icon, contentDescription = null) },
+                                    enabled = !sending && textTools.busy == null,
+                                    onClick = { moreMenu = false; runTextTool(TextTool.TRANSLATE) },
+                                )
+                            }
+                            ComposeMenuSection(R.string.compose_menu_section_signature)
+                            // Every signature of the sending identity, the one in use ticked; picking one
+                            // goes through the SAME swap as the picker under From.
+                            val inUse = signatureOptions.firstOrNull { it.id == selectedSignature?.id } ?: signatureOptions.firstOrNull { it.id == selectedFrom?.identity?.defaultSignature()?.id }
+                            signatureOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(signatureMenuLabel(option), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                    trailingIcon = { if (option.id == inUse?.id) Icon(Icons.Filled.Check, contentDescription = null) },
+                                    enabled = !sending,
+                                    onClick = {
+                                        moreMenu = false
+                                        scope.launch { applySignatureChange(viewModel.selectSignature(option)) }
+                                    },
+                                )
+                            }
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.compose_signature_add)) },
+                                leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                                enabled = !sending && selectedFrom != null,
+                                onClick = { moreMenu = false; addingSignature = true },
+                            )
+                            ComposeMenuSection(R.string.compose_menu_section_templates)
+                            if (templates.isEmpty()) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.compose_templates_none)) }, enabled = false, onClick = {})
+                            }
+                            templates.forEach { t ->
+                                DropdownMenuItem(
+                                    text = { Text(t.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                    leadingIcon = { Icon(Icons.Filled.ContentPaste, contentDescription = null) },
+                                    enabled = !sending,
+                                    onClick = { moreMenu = false; editor.insertText(t.text) },
+                                )
+                            }
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.compose_templates_manage)) },
+                                leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                                onClick = { moreMenu = false; managingTemplates = true },
+                            )
+                            ComposeMenuSection(R.string.compose_menu_section_compose)
+                            // WYSIWYG (the default) | Plain text — the same switch as the formatting bar's.
+                            listOf(false to R.string.compose_mode_wysiwyg, true to R.string.compose_format_plain_text).forEach { (plain, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(label)) },
+                                    trailingIcon = { if (plainTextMode == plain) Icon(Icons.Filled.Check, contentDescription = null) },
+                                    onClick = {
+                                        moreMenu = false
+                                        scope.launch { applySignatureChange(viewModel.setPlainTextMode(plain)) }
+                                    },
+                                )
                             }
                         }
                         // The presets, anchored to this same Box as the overflow: the two menus are
@@ -1556,6 +1701,9 @@ fun ComposeScreen(
                 autoFocus = initialFocus == ComposeFocus.RECIPIENTS,
                 missingKey = missingKeyFor,
                 trailing = {
+                    IconButton(onClick = { scanQr() }, enabled = !sending) {
+                        Icon(Icons.Filled.QrCodeScanner, contentDescription = stringResource(R.string.compose_scan_qr))
+                    }
                     IconButton(onClick = { expanded = !expanded }) {
                         Icon(
                             if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
@@ -1595,6 +1743,8 @@ fun ComposeScreen(
                     textToolUndo = null
                 },
                 onPick = ::runTextTool,
+                // #1800 Translate beside Enhance and Grammar under Subject: the same engine as Text > Translate.
+                withTranslate = true,
             )
             // Only when the body is actually being encrypted to someone, so a fresh encrypt-by-default
             // compose with no recipients doesn't claim it yet (#35).

@@ -8,6 +8,10 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Optional: recipient autocomplete from device contacts (off by default; opt-in in Settings). -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- #1800 the To field's QR button: declared once, asked at the moment of use (ComposeScreen.scanQr). The photo
+         itself is taken by the fleet camera through ACTION_IMAGE_CAPTURE; no camera is required to install. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- Normal permission (granted at install, nothing asked of the user): lets the app hear

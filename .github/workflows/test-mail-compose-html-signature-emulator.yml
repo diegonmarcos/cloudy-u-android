@@ -1,8 +1,10 @@
-name: "Test -> Cloud Mail compose HTML signature (emulator screenshots: New, Reply, Forward)"
+name: "Test -> Cloud Mail compose (emulator screenshots: New, Reply, Forward with the HTML signature; sectioned menu; QR button)"
 
 # #1800: build the Cloud Mail test variant (-PtestApp, the build that carries the offline seed receiver), seed one offline
 # account whose identity has an HTML signature with five links (--ez htmlsig true, which also turns "signature on replies" on),
-# then open New mail, Reply and Forward and capture each composer: the rich editor with the HTML signature in it.
+# then open New mail, Reply and Forward and capture each composer: the rich editor with the HTML signature in it; then the
+# composer's sectioned overflow menu (scrolled through), the To field's QR button, the camera it opens and what the
+# composer says when the picture comes back (the CI emulator has no image-scan engine, so that is its own message).
 # Dispatch only; nothing is published.
 
 on:
@@ -88,6 +90,26 @@ jobs:
           sleep 8
           shot 01-new; dump 01-new; sigcheck 01-new
           grep -q 'New mail' walk-out/01-new.xml || { echo "::error::New mail did not open"; exit 1; }
+          # the sectioned overflow: Actions, Text, Signature, Templates, Compose (scrolled to see all of it)
+          tap "More" || { echo "::error::no overflow button"; exit 1; }
+          sleep 2; shot 05-menu-top; dump 05-menu-top
+          adb shell input swipe 540 1500 540 600 400; sleep 2; shot 05-menu-middle; dump 05-menu-middle
+          adb shell input swipe 540 1500 540 600 400; sleep 2; shot 05-menu-bottom; dump 05-menu-bottom
+          cat walk-out/05-menu-*.xml > walk-out/05-menu-all.xml
+          for s in Actions Text Signature Templates Compose WYSIWYG "Plain text" "Save draft" "Add…"; do
+            grep -q "text=\"$s\"" walk-out/05-menu-all.xml && echo "menu has: $s" >> walk-out/summary.txt || echo "menu MISSING: $s" >> walk-out/summary.txt
+          done
+          adb shell input keyevent KEYCODE_BACK; sleep 2
+          # the To field's QR button, the camera it opens, and the composer's answer to the picture
+          shot 06-qr-button; dump 06-qr-button
+          grep -q 'Scan a QR code for recipients' walk-out/06-qr-button.xml || { echo "::error::no QR button on the To field"; exit 1; }
+          tap "Scan a QR code for recipients"; sleep 6
+          shot 06b-qr-camera; dump 06b-qr-camera
+          adb shell input keyevent KEYCODE_CAMERA; sleep 4; shot 06c-qr-shutter; dump 06c-qr-shutter
+          for b in "Done" "OK" "Shutter done" "Done button"; do tap "$b" && break; done
+          sleep 3; shot 06d-qr-result; dump 06d-qr-result
+          adb shell input keyevent KEYCODE_BACK; sleep 2
+          dump after-qr; grep -q 'New mail' walk-out/after-qr.xml || adb shell input keyevent KEYCODE_BACK
           leave
           tap "Seed message 3 of 3" || { echo "::error::no seeded message in the list"; exit 1; }
           sleep 6
