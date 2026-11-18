@@ -29,6 +29,12 @@ class NavWalkSeedReceiver : BroadcastReceiver() {
             ACTION_SYNC -> { runSeedSync(context); return }
             ACTION_COUNT -> { logCounts(context); return }
         }
+        // #1803: `--ez recipientcheck true` binds the scripted deliverability checker (verdicts by domain, see
+        // ScriptedRecipientChecker), before the already-seeded return so it can be sent on its own too.
+        if (intent.getBooleanExtra("recipientcheck", false)) {
+            app.sterna.ui.compose.RecipientChecks.checker = ScriptedRecipientChecker
+            Log.i(TAG, "recipient check: scripted checker bound")
+        }
         val store = (context.applicationContext as Application).container.accountStore
         if (store.hasAccount()) { Log.i(TAG, "seeded: an account is already present"); return }
         val id = store.add(

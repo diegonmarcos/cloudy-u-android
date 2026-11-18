@@ -332,6 +332,102 @@ class ComposeViewModel(application: Application) : AndroidViewModel(application)
         _pendingManyRecipients.value = false
     }
 
+    // -- #1803 recipient deliverability ----------------------------------------------------------
+
+    /** Every recipient's deliverability, keyed by [recipientKey]; the chips read their mark from it. */
+    private val _recipientStatus = MutableStateFlow<Map<String, RecipientStatus>>(emptyMap())
+    val recipientStatus: StateFlow<Map<String, RecipientStatus>> = _recipientStatus.asStateFlow()
+
+    private var recipientCheckJob: Job? = null
+
+    /** The message's size so far, for the size-limit line: the staged attachments plus [bodyBytes]. */
+    private fun messageSizeBytes(bodyBytes: Long): Long = _attachments.value.sumOf { it.size } + bodyBytes
+
+    /** Store [fresh] over what is known, dropping addresses no longer on the message. */
+    private fun publishRecipientStatus(addresses: List<String>, fresh: Map<String, RecipientStatus>) {
+        val keep = addresses.map(::recipientKey).toSet()
+        _recipientStatus.value = (_recipientStatus.value + fresh).filterKeys { it in keep }
+    }
+
+    /**
+     * Check the committed recipients (#1803): what the cache answers is shown at once, the rest shows
+     * "checking" until the checker answers. Called whenever a chip is added or removed; a newer call
+     * cancels an older one still waiting.
+     */
+    fun checkRecipients(addresses: List<String>, bodyBytes: Long) {
+        val size = messageSizeBytes(bodyBytes)
+        val cache = RecipientChecks.cache
+        val now = System.currentTimeMillis()
+        val ask = recipientsToAsk(addresses, cache, now, size).map(::recipientKey).toSet()
+        publishRecipientStatus(
+            addresses,
+            addresses.map { it.trim() }.filter { it.isNotEmpty() }.associate { a ->
+                val key = recipientKey(a)
+                key to (cache.get(a, now, size) ?: localRecipientStatus(a, pending = key in ask, nowMillis = now))
+            },
+        )
+        if (ask.isEmpty()) return
+        recipientCheckJob?.cancel()
+        recipientCheckJob = viewModelScope.launch {
+            val answers = withContext(Dispatchers.IO) {
+                runRecipientCheck(addresses, size, RecipientChecks.checker, cache, System::currentTimeMillis)
+            }
+            publishRecipientStatus(addresses, answers)
+        }
+    }
+
+    /** The detail sheet's "Check again": forget the cached answer and ask once more. */
+    fun recheckRecipient(address: String, addresses: List<String>, bodyBytes: Long) {
+        RecipientChecks.cache.invalidate(address)
+        checkRecipients(addresses, bodyBytes)
+    }
+
+    /**
+     * The check before Send: answers older than [SEND_RECHECK_MAX_AGE_MILLIS] are asked again, for at
+     * most [SEND_RECHECK_TIMEOUT_MILLIS] (Send never waits longer, and never fails because of this).
+     * Returns the recipients that will fail.
+     */
+    suspend fun recheckBeforeSend(addresses: List<String>, bodyBytes: Long): List<String> {
+        recipientCheckJob?.cancel()
+        val size = messageSizeBytes(bodyBytes)
+        val answers = kotlinx.coroutines.withTimeoutOrNull(SEND_RECHECK_TIMEOUT_MILLIS) {
+            withContext(Dispatchers.IO) {
+                runRecipientCheck(
+                    addresses, size, RecipientChecks.checker, RecipientChecks.cache, System::currentTimeMillis,
+                    maxAgeMillis = SEND_RECHECK_MAX_AGE_MILLIS,
+                )
+            }
+        }
+        if (answers != null) publishRecipientStatus(addresses, answers)
+        return willFailRecipients(addresses, _recipientStatus.value)
+    }
+
+    /** The recipients the "some recipients will not receive this" question names; empty = not up. */
+    private val _pendingUndeliverable = MutableStateFlow<List<String>>(emptyList())
+    val pendingUndeliverable: StateFlow<List<String>> = _pendingUndeliverable.asStateFlow()
+
+    /** Raise the will-fail question. Only ever asks — Send stays possible from it. */
+    fun askUndeliverable(recipients: List<String>) {
+        _pendingUndeliverable.value = recipients
+    }
+
+    /** Close it (Back to the message, a tap outside, or just before the send goes out). */
+    fun clearUndeliverable() {
+        _pendingUndeliverable.value = emptyList()
+    }
+
+    /** The recipient whose detail sheet is open (the mark on its chip was tapped); null = closed. */
+    private val _recipientDetail = MutableStateFlow<String?>(null)
+    val recipientDetail: StateFlow<String?> = _recipientDetail.asStateFlow()
+
+    fun showRecipientDetail(address: String) {
+        _recipientDetail.value = address
+    }
+
+    fun clearRecipientDetail() {
+        _recipientDetail.value = null
+    }
+
     /**
      * Whether the "pick date and time" CALENDAR is up (#161). HERE for [pendingDraftDelete]'s
      * reason. The two halves are CHAINED, never up together, and must not be merged.

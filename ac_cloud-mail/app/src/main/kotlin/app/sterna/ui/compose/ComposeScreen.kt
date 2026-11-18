@@ -272,6 +272,10 @@ fun ComposeScreen(
     val showDiscard by viewModel.pendingDiscard.collectAsStateWithLifecycle()
     val showForgotAttachment by viewModel.pendingForgotAttachment.collectAsStateWithLifecycle()
     val showManyRecipients by viewModel.pendingManyRecipients.collectAsStateWithLifecycle()
+    // #1803 the will-fail question (its recipients; empty = not up), each chip's mark, the open sheet.
+    val undeliverable by viewModel.pendingUndeliverable.collectAsStateWithLifecycle()
+    val recipientStatus by viewModel.recipientStatus.collectAsStateWithLifecycle()
+    val recipientDetail by viewModel.recipientDetail.collectAsStateWithLifecycle()
     // The "pick date and time" pair (#161): the calendar, then the clock, and the day chosen between
     // the two. All three are the ViewModel's for the reason above — and the DAY especially: a
     // rotation between the two dialogs would lose it and bring the clock back over nothing.
@@ -866,11 +870,32 @@ fun ComposeScreen(
     val recipientCount = listOf(to, cc, bcc).sumOf { field -> field.split(',', ';').count { it.isNotBlank() } }
     // Can send only with at least one To recipient and every entered address valid.
     val allRecipients = listOf(to, cc, bcc).flatMap { recipientTokens(it) }
+    // #1803 the committed chips of all three fields: checked whenever one is added or removed.
+    val committedRecipients = remember(to, cc, bcc) { listOf(to, cc, bcc).flatMap { splitRecipients(it).first } }
+    LaunchedEffect(committedRecipients) {
+        viewModel.checkRecipients(committedRecipients, body.text.length.toLong())
+    }
     // When encrypting, every recipient must have a resolvable key (false = known-missing; absent = not
     // yet checked, allowed — the send resolves keys and reports precisely).
     val keysReady = !pgpMode.encrypts || allRecipients.none { recipientKeys[it] == false }
     val canSend = recipientTokens(to).isNotEmpty() && allRecipients.all(::isValidEmail) && keysReady
-    val sendNow: () -> Unit = { scope.launch { viewModel.send(to, cc, bcc, subject.text, freshRich(), requestReceipt) } }
+    val sendChecked: () -> Unit = { scope.launch { viewModel.send(to, cc, bcc, subject.text, freshRich(), requestReceipt) } }
+    // #1803 the last pre-send guard: the recipients are checked again (briefly; Send never waits on it
+    // for long), and a will-fail one makes Send ask first. Sending stays possible from that question.
+    var recheckingSend by remember { mutableStateOf(false) }
+    val sendNow: () -> Unit = {
+        if (!recheckingSend) {
+            recheckingSend = true
+            scope.launch {
+                val failing = try {
+                    viewModel.recheckBeforeSend(allRecipients, body.text.length.toLong())
+                } finally {
+                    recheckingSend = false
+                }
+                if (failing.isEmpty()) sendChecked() else viewModel.askUndeliverable(failing)
+            }
+        }
+    }
     val proceedAfterAttachment = {
         if (recipientCount >= MANY_RECIPIENTS) viewModel.askManyRecipients() else sendNow()
     }
@@ -917,6 +942,32 @@ fun ComposeScreen(
                     Text(stringResource(R.string.compose_forgot_attachment_back))
                 }
             },
+        )
+    }
+
+    if (undeliverable.isNotEmpty()) {
+        UndeliverableRecipientsDialog(
+            recipients = undeliverable,
+            statuses = recipientStatus,
+            onSendAnyway = {
+                viewModel.clearUndeliverable()
+                sendChecked()
+            },
+            onBack = { viewModel.clearUndeliverable() },
+            onDetail = { address ->
+                viewModel.clearUndeliverable()
+                viewModel.showRecipientDetail(address)
+            },
+        )
+    }
+
+    recipientDetail?.let { address ->
+        RecipientStatusSheet(
+            address = address,
+            status = recipientStatus[recipientKey(address)],
+            checkerBound = RecipientChecks.bound,
+            onCheckAgain = { viewModel.recheckRecipient(address, committedRecipients, body.text.length.toLong()) },
+            onDismiss = { viewModel.clearRecipientDetail() },
         )
     }
 
@@ -1685,6 +1736,7 @@ fun ComposeScreen(
             val missingKeyFor: (String) -> Boolean = { addr ->
                 pgpMode.encrypts && recipientKeys[addr] == false
             }
+            val recipientStatusFor: (String) -> RecipientStatus? = { addr -> recipientStatus[recipientKey(addr)] }
             RecipientChipsField(
                 label = stringResource(R.string.compose_to),
                 value = to,
@@ -1700,6 +1752,8 @@ fun ComposeScreen(
                 // focuses the first field it left empty (#83).
                 autoFocus = initialFocus == ComposeFocus.RECIPIENTS,
                 missingKey = missingKeyFor,
+                status = recipientStatusFor,
+                onStatusTap = viewModel::showRecipientDetail,
                 trailing = {
                     IconButton(onClick = { scanQr() }, enabled = !sending) {
                         Icon(Icons.Filled.QrCodeScanner, contentDescription = stringResource(R.string.compose_scan_qr))
@@ -1718,10 +1772,12 @@ fun ComposeScreen(
                 RecipientChipsField(
                     stringResource(R.string.compose_cc), cc, { cc = it }, suggestions,
                     viewModel::suggest, viewModel::clearSuggestions, missingKey = missingKeyFor,
+                    status = recipientStatusFor, onStatusTap = viewModel::showRecipientDetail,
                 )
                 RecipientChipsField(
                     stringResource(R.string.compose_bcc), bcc, { bcc = it }, suggestions,
                     viewModel::suggest, viewModel::clearSuggestions, missingKey = missingKeyFor,
+                    status = recipientStatusFor, onStatusTap = viewModel::showRecipientDetail,
                 )
             }
             // Subject has no fixed label: the localized string is the in-field placeholder, so the
@@ -2012,6 +2068,10 @@ private fun RecipientChipsField(
     trailing: (@Composable () -> Unit)? = null,
     /** When encrypting, flags a recipient with no available public key. */
     missingKey: (String) -> Boolean = { false },
+    /** #1803 each chip's deliverability (null: not checked yet), drawn as a mark at its start. */
+    status: (String) -> RecipientStatus? = { null },
+    /** #1803 a tap on that mark opens the detail sheet; a tap on the chip still edits it (#94). */
+    onStatusTap: (String) -> Unit = {},
     /**
      * Never fold the chips into a "+N" summary, however many there are.
      *
@@ -2106,6 +2166,10 @@ private fun RecipientChipsField(
                     modifier = Modifier.weight(1f).padding(vertical = MailMetrics.s14),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    // #1803 folded chips keep their marks summed up: the worst verdict among them.
+                    worstVerdict(chips.map(status))?.let {
+                        VerdictGlyph(it, modifier = Modifier.padding(end = MailMetrics.s6))
+                    }
                     Text(
                         chips.first(),
                         style = MaterialTheme.typography.bodyLarge,
@@ -2150,6 +2214,9 @@ private fun RecipientChipsField(
                             runCatching { focus.requestFocus() }
                         },
                         label = { Text(chip, maxLines = 1) },
+                        leadingIcon = {
+                            RecipientStatusMark(status(chip), onClick = { onStatusTap(chip) })
+                        },
                         trailingIcon = {
                             Icon(
                                 Icons.Filled.Close,

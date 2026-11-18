@@ -1,0 +1,161 @@
+name: "Test -> Cloud Mail recipient check (emulator screenshots: chip marks, detail sheet, will-fail question on Send)"
+
+# #1803: build the Cloud Mail test variant (-PtestApp), seed one offline account and bind the SCRIPTED deliverability checker
+# (--ez recipientcheck true; src/navWalk ScriptedRecipientChecker answers by domain), then open New mail and type one recipient
+# per verdict: ok, catch-all (risky), role + past bounce (risky), no MX (will fail), a malformed address (phone syntax check)
+# and an unknown domain (no answer). Shoots the marks while checking and once answered, the detail sheet of the will-fail chip
+# and of the malformed one, then a second composer with ok + no-MX where Send asks first; "Back" leaves it unsent.
+# Dispatch only; nothing is published, nothing is sent (the seeded account points at an unresolvable host).
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  mail-recipient-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build the test variant
+        run: |
+          set -eu
+          cd ac_cloud-mail
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:assembleDebug -PtestApp
+          apk=$(find app/build/outputs/apk/debug -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no APK built"; exit 1; }
+          cp "$apk" "$GITHUB_WORKSPACE/app-under-test.apk"
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          echo "PKG=$("$AAPT" dump packagename "$GITHUB_WORKSPACE/app-under-test.apk")" >> "$GITHUB_ENV"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the scene script
+        run: |
+          cat > walk.sh <<'SH'
+          #!/bin/bash
+          set -u
+          mkdir -p walk-out
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          adb shell settings put secure screensaver_enabled 0 || true
+          adb shell svc power stayon true || true
+          sleep 45 # let the launcher settle after boot
+          adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          wake() { adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1; }
+          shot() { wake; adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "walk-out/$1.png"; }
+          dump() { wake; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "walk-out/$1.xml"; }
+          # tap the centre of the first node whose text or content-desc equals $1; non-zero when absent
+          tap() {
+            dump tap-scan
+            xy=$(python3 -I - "$1" walk-out/tap-scan.xml <<'PY'
+          import re, sys
+          want, xml = sys.argv[1], open(sys.argv[2], encoding="utf-8").read()
+          for m in re.finditer(r'<node [^>]*>', xml):
+              n = m.group(0)
+              t = re.search(r' text="([^"]*)"', n); d = re.search(r' content-desc="([^"]*)"', n)
+              if want in ((t.group(1) if t else ""), (d.group(1) if d else "")):
+                  b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+                  x1, y1, x2, y2 = map(int, b.groups()); print((x1 + x2) // 2, (y1 + y2) // 2); break
+          PY
+            )
+            [ -n "$xy" ] || return 1
+            adb shell input tap $xy
+          }
+          has() { grep -q "$1" "walk-out/$2.xml" && echo "$2 has: $1" >> walk-out/summary.txt || echo "$2 MISSING: $1" >> walk-out/summary.txt; }
+          leave() {
+            adb shell input keyevent KEYCODE_BACK; sleep 1; adb shell input keyevent KEYCODE_BACK; sleep 2
+            tap "Discard" || true; sleep 2
+          }
+          compose() {
+            ok=0; for i in 1 2 3 4; do tap "Compose" && { ok=1; break; }; sleep 4; done
+            [ "$ok" = 1 ] || { echo "Compose not in the dump; tapping the FAB position" >> walk-out/summary.txt; adb shell input tap 910 1921; }
+            sleep 8
+          }
+          adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --ei emails 1 --ez recipientcheck true
+          sleep 3
+          adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
+          sleep 15
+          # the process may have been restarted by the launch: bind the scripted checker again into the running one
+          adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --ez recipientcheck true
+          sleep 2
+          shot 00-inbox; dump 00-inbox
+          compose
+          shot 01-new; dump 01-new
+          grep -q 'New mail' walk-out/01-new.xml || { echo "::error::New mail did not open"; exit 1; }
+          # one recipient per verdict; each comma commits a chip, which starts its check
+          adb shell input text 'ok@ok.example,catchall@catchall.example,info@bounce.example,x@nomx.example,bad@nodot,who@unknown.example,'
+          sleep 0.5; shot 02-marks-checking; dump 02-marks-checking
+          sleep 5; shot 03-marks-answered; dump 03-marks-answered
+          for v in "Delivery check: Can receive" "Delivery check: Risky" "Delivery check: Will fail" "Delivery check: Unknown"; do has "$v" 03-marks-answered; done
+          # the will-fail chip's detail (no MX), then the malformed address's (the phone's own syntax line)
+          tap "Delivery check: Will fail" || { echo "::error::no will-fail mark to tap"; exit 1; }
+          sleep 3; shot 04-sheet-nomx; dump 04-sheet-nomx
+          for s in "Delivery check" "Address format" "Domain accepts mail" "Mailbox" "Past bounces" "Disposable or role address" "Message size limit" "Check again" "no MX and no A record"; do has "$s" 04-sheet-nomx; done
+          adb shell input swipe 540 1800 540 900 300; sleep 2; shot 04b-sheet-nomx-scrolled
+          adb shell input keyevent KEYCODE_BACK; sleep 2
+          tap "Delivery check: Risky" && { sleep 3; shot 05-sheet-risky; dump 05-sheet-risky; has "accepts every address" 05-sheet-risky; adb shell input keyevent KEYCODE_BACK; sleep 2; }
+          # the malformed chip is the second will-fail one: tap its mark by position from the dump
+          dump 06-before-bad
+          xy=$(python3 -I - walk-out/06-before-bad.xml <<'PY'
+          import re, sys
+          xml = open(sys.argv[1], encoding="utf-8").read()
+          hits = [m.group(0) for m in re.finditer(r'<node [^>]*>', xml) if 'content-desc="Delivery check: Will fail"' in m.group(0)]
+          if len(hits) > 1:
+              x1, y1, x2, y2 = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', hits[1]).groups()); print((x1 + x2) // 2, (y1 + y2) // 2)
+          PY
+          )
+          if [ -n "$xy" ]; then adb shell input tap $xy; sleep 3; shot 06-sheet-syntax; dump 06-sheet-syntax; has "Checked on this phone" 06-sheet-syntax; adb shell input keyevent KEYCODE_BACK; sleep 2; else echo "second will-fail mark not found" >> walk-out/summary.txt; fi
+          leave
+          # Send with a will-fail recipient: it asks first, and "Send anyway" is offered next to "Back"
+          compose
+          adb shell input text 'ok@ok.example,x@nomx.example,'
+          sleep 5; shot 07-send-ready; dump 07-send-ready
+          tap "Send" || { echo "::error::no Send button"; exit 1; }
+          sleep 3; shot 08-will-fail-question; dump 08-will-fail-question
+          for s in "Some recipients will not receive this" "x@nomx.example" "Send anyway" "Back"; do has "$s" 08-will-fail-question; done
+          tap "Back" || true; sleep 2; shot 09-back-unsent; dump 09-back-unsent
+          has "New mail" 09-back-unsent
+          leave
+          timeout 60 adb logcat -d -v threadtime "*:W" > walk-out/logcat.txt || true
+          cat walk-out/summary.txt
+          ! grep -q "MISSING" walk-out/summary.txt || echo "::warning::some expected text was not in the dumps (see summary.txt and the screenshots)"
+          SH
+          chmod +x walk.sh
+
+      - name: Boot emulator + scenes
+        timeout-minutes: 40
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-recipient-check-evidence
+          path: walk-out
+          if-no-files-found: warn
