@@ -78,11 +78,13 @@ export const SourcePanel = ({ api, decl, onMounted }: { api: VaultApi; decl: Vau
       </div>
 
 
-      <div className="cnv-menu-title">Workspace</div>
       {api.vault && (
-        <button type="button" className="cnv-row" onClick={api.closeVault} data-testid="source-close">
-          <Icon name="close" size={16} /> Close this vault
-        </button>
+        <>
+          <div className="cnv-menu-title">Workspace</div>
+          <button type="button" className="cnv-row" onClick={api.closeVault} data-testid="source-close">
+            <Icon name="close" size={16} /> Close this vault
+          </button>
+        </>
       )}
       {api.error && <p style={{ color: 'var(--text-error)' }} onClick={() => api.setError(null)}>{api.error}</p>}
       <div style={{ height: 24 }} />
