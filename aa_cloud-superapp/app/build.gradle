@@ -29,18 +29,28 @@ def buildJson  = new groovy.json.JsonSlurper().parse(file('../build.json'))
 // comparable: ~3.35M in Sep 2026, far above any version code in the field and
 // inside the 2^31 limit for centuries. COMMS_BUILD_TIMESTAMP is honoured when
 // CI provides one so the code matches the release tag; otherwise build time.
-def codeFinal = { ->
-    def base  = java.time.LocalDateTime.of(2026, 1, 1, 0, 0)
-    def built = java.time.LocalDateTime.now(java.time.ZoneOffset.UTC)
-    def stamp = System.getenv('COMMS_BUILD_TIMESTAMP')
+// #1783 P5: deterministic version. The SOURCE commit time (FLEET_SOURCE_TIME 'yyyyMMdd.HHmmss' UTC, else COMMS_BUILD_TIMESTAMP,
+// else the HEAD commit's committer time, else the wall clock for a local build): the same commit always builds the same code,
+// floored at 3462240 (1_cicd/src/data/version-floor.json, above every code published before) so an installed app is never offered a lower one.
+def fleetSourceTime = { ->
+    def fmt = java.time.format.DateTimeFormatter.ofPattern('yyyyMMdd.HHmmss')
+    def stamp = System.getenv('FLEET_SOURCE_TIME') ?: System.getenv('COMMS_BUILD_TIMESTAMP')
     if (stamp) {
-        try {
-            built = java.time.LocalDateTime.parse(stamp,
-                java.time.format.DateTimeFormatter.ofPattern('yyyyMMdd.HHmmss'))
-        } catch (ignored) { }
+        try { return java.time.LocalDateTime.parse(stamp, fmt) } catch (ignored) { }
     }
-    long mins = java.time.Duration.between(base, built).toMinutes()
-    return mins > 0 ? (int) (3000000L + mins) : 3000000
+    try {
+        def ct = providers.exec {
+            commandLine 'git', 'show', '-s', '--format=%ct', 'HEAD'
+            ignoreExitValue = true
+        }.standardOutput.asText.get().trim()
+        if (ct) return java.time.LocalDateTime.ofEpochSecond(Long.parseLong(ct), 0, java.time.ZoneOffset.UTC)
+    } catch (ignored) { }
+    return java.time.LocalDateTime.now(java.time.ZoneOffset.UTC)
+}()
+def codeFinal = { ->
+    def base = java.time.LocalDateTime.of(2026, 1, 1, 0, 0)
+    long mins = java.time.Duration.between(base, fleetSourceTime).toMinutes()
+    return (int) Math.max(3462240L, 3000000L + mins)
 }()
 // Short git sha for the welcome text — visible proof the update worked.
 def shortSha = (System.getenv('GITHUB_SHA')
@@ -52,14 +62,14 @@ def shortSha = (System.getenv('GITHUB_SHA')
 // you can tell at a glance how stale the installed APK is.
 def buildDate = new java.text.SimpleDateFormat('yyyy-MM-dd').with {
     setTimeZone(java.util.TimeZone.getTimeZone('UTC'))
-    format(new java.util.Date())
+    format(java.util.Date.from(fleetSourceTime.toInstant(java.time.ZoneOffset.UTC)))
 }
 // Full build timestamp — date + time with seconds, UTC. Rendered on the
 // SECOND line of the drawer header (separate from versionName which is
 // already long enough on one line).
 def buildTimestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss 'UTC'").with {
     setTimeZone(java.util.TimeZone.getTimeZone('UTC'))
-    format(new java.util.Date())
+    format(java.util.Date.from(fleetSourceTime.toInstant(java.time.ZoneOffset.UTC)))
 }
 // Diagnostics cloud sink — DevControlServer/DiagnosticsPush POSTs the log
 // bundle here (our OpenObserve / Loki-equivalent, via the public collector).
@@ -978,7 +988,7 @@ android {
         // Wall-clock elapsed for app/build.gradle's config phase. Only a
         // partial picture (assemble runs after this gets baked), but a
         // reasonable proxy for "is the build getting slower over time".
-        buildConfigField "long",   "STACK_GRADLE_CONFIG_MS",         "${System.currentTimeMillis() - gradleScriptStartMs}L"
+        buildConfigField "long",   "STACK_GRADLE_CONFIG_MS",         "0L"
         // Build-time history pulled from `gh run list` at config phase.
         // -1 means "no data" (gh missing / not authed / no network).
         buildConfigField "long",   "STACK_BUILD_AVG_SECS",           "${buildAvgSecs}L"
