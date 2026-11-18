@@ -8,6 +8,7 @@ import com.diegonmarcos.superapp.decisions.core.AnswerCache
 import com.diegonmarcos.superapp.decisions.core.CircuitBreaker
 import com.diegonmarcos.superapp.decisions.core.ConsentBook
 import com.diegonmarcos.superapp.decisions.core.Engine
+import com.diegonmarcos.superapp.decisions.core.ImageEngine
 import com.diegonmarcos.superapp.decisions.core.Journal
 import com.diegonmarcos.superapp.decisions.core.Ledger
 import com.diegonmarcos.superapp.decisions.core.Policy
@@ -26,9 +27,12 @@ object EngineHolder {
 
     @Volatile private var built: Holder? = null
 
-    class Holder(val engine: Engine, val journal: Journal, val self: String)
+    class Holder(val engine: Engine, val images: ImageEngine, val journal: Journal, val self: String)
 
     fun get(context: Context): Engine? = holder(context)?.engine
+
+    /** #1799 the image half, built with the same consent book and journal as the decisions. */
+    fun images(context: Context): ImageEngine? = holder(context)?.images
 
     fun holder(context: Context): Holder? {
         built?.let { return it }
@@ -43,9 +47,12 @@ object EngineHolder {
             return null
         }
         if (policy.rejected.isNotEmpty()) Log.w(TAG, "uses not served: ${policy.rejected}")
+        policy.imageProblem?.let { Log.w(TAG, "image block not served: $it") }
+        policy.image?.rejected?.takeIf { it.isNotEmpty() }?.let { Log.w(TAG, "image uses not served: $it") }
         val dir = File(ctx.filesDir, "decisions")
         val clock = System::currentTimeMillis
         val journal = Journal(FileSink(File(dir, "journal.jsonl")), policy.journalMax, clock)
+        val consent = ConsentBook(FileKv(File(dir, "consent.json")))
         val engine = Engine(
             policy = policy,
             http = UrlHttp,
@@ -54,11 +61,24 @@ object EngineHolder {
             ledger = Ledger(FileKv(File(dir, "ledger.json")), policy.budget, clock),
             cache = AnswerCache(FileKv(File(dir, "cache.json")), policy.cacheMax, clock),
             breaker = CircuitBreaker(policy.breaker.failures, policy.breaker.openS * 1000, clock),
-            consent = ConsentBook(FileKv(File(dir, "consent.json"))),
+            consent = consent,
             journal = journal,
             clock = clock,
         )
-        return Holder(engine, journal, ctx.packageName)
+        // #1799 its own ledger and breaker (an image costs a hundred decisions); the same token, consent and journal.
+        val img = policy.image
+        val images = ImageEngine(
+            policy = img,
+            http = UrlHttp,
+            token = { accountToken(ctx, policy.provider) },
+            env = AndroidEnv(ctx),
+            ledger = img?.let { Ledger(FileKv(File(dir, "image-ledger.json")), it.budget, clock) },
+            breaker = img?.let { CircuitBreaker(it.breaker.failures, it.breaker.openS * 1000, clock) },
+            consent = consent,
+            journal = journal,
+            clock = clock,
+        )
+        return Holder(engine, images, journal, ctx.packageName)
     }
 
     @Volatile private var tools: TextToolsClient? = null

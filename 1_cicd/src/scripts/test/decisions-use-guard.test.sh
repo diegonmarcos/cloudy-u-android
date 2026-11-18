@@ -33,7 +33,8 @@ WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 stage() {
     rm -rf "$WORK/t"; mkdir -p "$WORK/t"
     (cd "$ROOT" && { printf '%s\n' "$DATA" "$DECL" "$FLEET"; ls a[acd]_*/build.json; find "$LINK" -type f -not -path '*/build/*';
-        grep -rl 'revealAiKey(' --include=*.kt --include=*.java a[acd]_* ab_cloud-libs-shared/libs 2>/dev/null | grep -v '/build/'; } | sort -u | xargs -d '\n' cp --parents -t "$WORK/t")
+        grep -rl 'revealAiKey(' --include=*.kt --include=*.java a[acd]_* ab_cloud-libs-shared/libs 2>/dev/null | grep -v '/build/';
+        python3 -c "import json,sys; d=json.load(open(sys.argv[1])); [print(u['fallback_test'].split('::')[0]) for u in (d.get('image') or {}).get('uses', {}).values() if isinstance(u, dict) and u.get('fallback_test')]" "$DECL"; } | sort -u | xargs -d '\n' cp --parents -t "$WORK/t")
 }
 guard() { python3 "$GUARD" "$WORK/t" >"$WORK/out" 2>&1; }
 sub() { python3 -c "import sys; p=sys.argv[1]; s=open(p).read(); assert sys.argv[2] in s, 'anchor not found'; open(p,'w').write(s.replace(sys.argv[2], sys.argv[3], 1))" "$WORK/t/$1" "$2" "$3"; }
@@ -109,6 +110,36 @@ fun f() {}'
 green "a commented-out call is not a call site"
 stage; js "$CALC/build.json" 'del d["android"]["application_id"]'; plant "$CALCSITE" "$SITE_OK"
 red "D3 an app whose id cannot be read cannot be checked" "D3 $CALCSITE:2: cannot resolve ac_cloud-calc"
+
+# #1799 D3 for image call sites, D2 for image uses
+CANVAS=ac_cloud-canvas
+CANVASSITE=$CANVAS/app/src/main/java/com/diegonmarcos/cloudcanvas/enhance/EngineRoute.kt
+stage; plant "$CALCSITE" 'package x
+fun f(ctx: Context) { DecisionsLink.image(ctx, "canvas_enhance", m, p, b) }'
+red "D3 an app calls an image use it is not listed for" "D3 $CALCSITE:2"
+stage; plant "$CALCSITE" 'package x
+fun f(ctx: Context) { DecisionsLink.image(ctx, "planted_image_use", m, p, b) }'
+red "D3 an app calls an image use nobody declared" "D3 $CALCSITE:2: image use 'planted_image_use' is not declared"
+stage; plant "$CALCSITE" 'package x
+fun f(ctx: Context) { DecisionsLink.image(ctx, USE, m, p, b) }'
+red "D3 an image call whose use is not a string literal" "D3 $CALCSITE:2"
+stage; plant "$CALCSITE" 'package x
+fun f(ctx: Context) { DecisionsLink.image(ctx, "probe", m, p, b) }'
+red "D3 a decision use is not an image use" "D3 $CALCSITE:2: image use 'probe' is not declared"
+stage; js "$DECL" 'd["image"]["uses"]["canvas_enhance"]["apps"] = []'
+red "D2 an image use no app may call" "D2 image use canvas_enhance: apps"
+stage; js "$DECL" 'd["image"]["uses"]["canvas_enhance"]["max_calls_per_hour"] = 0'
+red "D2 an image use with no hourly allowance" "D2 image use canvas_enhance: max_calls_per_hour"
+stage; js "$DECL" 'd["image"]["uses"]["canvas_enhance"].update({"content": "mail", "consent": "implicit"})'
+red "D2 an image use of mail content with consent on by default" "D2 image use canvas_enhance: content mail"
+stage; js "$DECL" 'd["image"]["uses"]["canvas_enhance"]["apps"] = ["com.example.notinthefleet"]'
+red "D2 an image use that lists an app the fleet does not have" "D2 image use canvas_enhance: app"
+stage; js "$DECL" 'del d["image"]["uses"]["canvas_enhance"]["fallback_test"]'; plant "$CANVASSITE" 'package x
+fun f(ctx: Context) { DecisionsLink.image(ctx, "canvas_enhance", m, p, b) }'
+red "D4 a called image use with no fallback test" "D4 use 'canvas_enhance' is called"
+stage; plant "$CANVASSITE" 'package x
+fun f(ctx: Context) { DecisionsLink.image(ctx, "canvas_enhance", m, p, b) }'
+green "Canvas calling its declared image use passes (an image use has no class or threshold)"
 
 # D4 — a called use proves its fallback
 stage; js "$DECL" 'd["uses"]["probe"]["apps"].append("com.diegonmarcos.cloudcalc")'; plant "$CALCSITE" "$SITE_OK"

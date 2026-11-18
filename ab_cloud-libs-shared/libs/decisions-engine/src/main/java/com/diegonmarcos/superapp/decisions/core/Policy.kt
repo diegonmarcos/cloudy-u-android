@@ -80,9 +80,13 @@ class Policy private constructor(
     val journalMax: Int,
     val uses: Map<String, UseDecl>,
     val rejected: Map<String, String>,
+    /** #1799 the image block (decisions.json::image); null when it is absent or does not validate ([imageProblem] says why). */
+    val image: ImagePolicy? = null,
+    val imageProblem: String? = null,
 ) {
     companion object {
-        const val CONTRACT = 1
+        /** #1799 2: the image method. Matches the service's CONTRACT meta-data. */
+        const val CONTRACT = 2
 
         /** [d] is the whole decisions.json document. */
         fun parse(d: JSONObject): Policy {
@@ -116,10 +120,14 @@ class Policy private constructor(
                 val problem = if (u == null) "is not an object" else check(u, sensitive)
                 if (problem != null) rejected[name] = problem else uses[name] = decl(name, u!!)
             }
+            // #1799 an image block that does not validate serves no image use; the decisions are not affected.
+            val imageBlock = d.optJSONObject("image")
+            val image = imageBlock?.let { runCatching { ImagePolicy.parse(it, sensitive) } }
             return Policy(
                 endpoint, model, provider, timeout, budget, suppress, breaker, redact,
                 d.optJSONArray("consent_setters").strings().toSet(), sensitive,
                 d.optInt("cache_max", 128), d.optInt("journal_max", 500), uses, rejected,
+                image?.getOrNull(), image?.exceptionOrNull()?.let { it.message ?: it.javaClass.simpleName },
             )
         }
 

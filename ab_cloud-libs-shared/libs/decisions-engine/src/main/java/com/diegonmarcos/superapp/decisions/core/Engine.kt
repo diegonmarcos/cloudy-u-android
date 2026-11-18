@@ -109,7 +109,8 @@ class Engine(
         val app = request.optString("app")
         val name = request.optString("use")
         if (caller !in policy.consentSetters) return refuse(caller, name, null, "not_a_consent_setter")
-        val use = policy.uses[name] ?: return refuse(caller, name, null, "unknown_use")
+        // #1799 an image use's grant is kept in the same book, so the same switch host records it.
+        val use = policy.uses[name] ?: policy.image?.uses?.get(name)?.asUse() ?: return refuse(caller, name, null, "unknown_use")
         if (app !in use.apps) return refuse(caller, name, use, "app_not_allowed")
         if (!request.has("granted") || request.opt("granted") !is Boolean) return refuse(caller, name, use, "bad_request")
         val granted = request.getBoolean("granted")

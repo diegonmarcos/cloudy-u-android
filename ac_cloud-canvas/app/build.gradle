@@ -148,11 +148,12 @@ dependencies {
     implementation project(':libs:theme-background')
     // The fleet's tokens and kit: CloudKitTheme, KitPalette, KitCard, KitSettingsRow, KitButton (libs:ui-kit).
     implementation project(':libs:ui-kit')
-    // #1782 the Draw Enhancer: the fleet AI contract and HTTP (libs:ai), the model catalogue, the fleet Account's key (libs:text-tools) and the
+    // #1782 the Draw Enhancer: the fleet AI contract and HTTP (libs:ai, for an own key), the model catalogue, the fleet's decisions engine
+    // (#1799 libs:decisions-link: the run without an own key, the fleet Account's key held by the engine, never read here) and the
     // runtime dataset reader (the presets are served by Cloud Store, #1547).
     implementation project(':libs:ai')
     implementation project(':libs:model-catalogue')
-    implementation project(':libs:text-tools')
+    implementation project(':libs:decisions-link')
     implementation project(':libs:fleet-data-client')
     // #1787 Draw > Board: the fleet's one embedded web view (CloudWeb, WebProfile.APP_PAGE, render-process recovery) and androidx.webkit
     // (WebViewAssetLoader, the web message listener of the board bridge), shared BY REFERENCE.

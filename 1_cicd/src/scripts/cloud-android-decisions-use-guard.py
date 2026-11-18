@@ -14,9 +14,11 @@ holds the rules every later wave must keep, from the sources alone:
   D2  every use in the declaration validates: a class from the vocabulary; threshold in (0, 1]; a
       background use declares ttl_s (it caches and never re-asks); max_calls_per_hour >= 1; at least one
       app; consent required or implicit, and required for any use whose content is mail or git; every
-      app is a fleet package or the engine itself.
+      app is a fleet package or the engine itself. #1799 every image use (image.uses) too: max_calls_per_hour,
+      apps, consent and content hold the same rules (an image use has no class or threshold).
   D3  every DecisionsLink.decide / .outcome call site names its use as a STRING LITERAL (so this check can
-      see it), the use is declared, and the application it is compiled into is one the use lists.
+      see it), the use is declared, and the application it is compiled into is one the use lists. #1799 the same
+      for every DecisionsLink.image call site, against the declaration's image.uses.
   D4  a use with a call site names `fallback_test` (path::Name): a file that exists and mentions both Name
       and the use, the test that proves the app does today's behaviour when there is no verdict.
   D5  nothing outside data::key_readers calls revealAiKey(: no NEW app or lib reads the OpenRouter key.
@@ -98,6 +100,7 @@ def check(root):
         return ["D6 %s is missing: the engine has no declaration, so nothing below can be checked" % cfg["declaration"]]
     decl = json.load(open(decl_path, encoding="utf-8"))
     uses = {k: v for k, v in (decl.get("uses") or {}).items() if not k.startswith("_")}
+    image_uses = {k: v for k, v in ((decl.get("image") or {}).get("uses") or {}).items() if not k.startswith("_")}
     if not uses:
         bad.append("D6 %s declares no use: this guard checked nothing" % cfg["declaration"])
     for needed in (link + "/src/main/aidl", link + "/build.gradle", link + "/engine-client.json"):
@@ -131,15 +134,19 @@ def check(root):
     # D2 every declared use validates
     fleet = {a.get("package") for a in json.load(open(os.path.join(root, cfg["fleet"]), encoding="utf-8"))["apps"] if a.get("package")}
     fleet.add(cfg["engine_package"])
-    for name, u in sorted(uses.items()):
-        w = "D2 use %s" % name
+    for name, u, image in sorted([(n, u, False) for n, u in uses.items()] + [(n, u, True) for n, u in image_uses.items()]):
+        w = ("D2 image use %s" if image else "D2 use %s") % name
         if not isinstance(u, dict):
             bad.append("%s is not an object" % w)
             continue
-        if u.get("class") not in cfg["classes"]:
+        if image:
+            pass
+        elif u.get("class") not in cfg["classes"]:
             bad.append("%s: class %r is not one of %s" % (w, u.get("class"), "/".join(cfg["classes"])))
         t = u.get("threshold")
-        if not isinstance(t, (int, float)) or isinstance(t, bool) or not 0 < t <= 1:
+        if image:
+            pass
+        elif not isinstance(t, (int, float)) or isinstance(t, bool) or not 0 < t <= 1:
             bad.append("%s: threshold %r must be in (0, 1]" % (w, t))
         if u.get("class") == "background" and not (isinstance(u.get("ttl_s"), (int, float)) and u["ttl_s"] > 0):
             bad.append("%s: a background use declares ttl_s (it caches and never re-asks)" % w)
@@ -162,7 +169,7 @@ def check(root):
                    % (decl.get("sensitive_content"), cfg["sensitive_content"]))
 
     # D3 call sites
-    call = re.compile(r"\bDecisionsLink\s*\.\s*(decide|outcome)\s*\(")
+    call = re.compile(r"\bDecisionsLink\s*\.\s*(decide|outcome|image)\s*\(")
     app_ids = {}
     for bj in glob.glob(os.path.join(root, cfg["app_roots"], "build.json")):
         app = os.path.basename(os.path.dirname(bj))
@@ -189,24 +196,26 @@ def check(root):
                                % (where, m.group(1), args[1] if len(args) > 1 else "nothing"))
                     continue
                 use = lit.group(1)
-                sites.setdefault(use, []).append(where)
-                if use not in uses:
-                    bad.append("D3 %s: use %r is not declared in %s" % (where, use, cfg["declaration"]))
+                table = image_uses if m.group(1) == "image" else uses
+                sites.setdefault((use, m.group(1) == "image"), []).append(where)
+                if use not in table:
+                    bad.append("D3 %s: %suse %r is not declared in %s" % (where, "image " if table is image_uses else "", use, cfg["declaration"]))
                     continue
                 if kind == "app":
                     app = rel.split("/")[0]
                     aid = app_ids.get(app)
                     if not aid:
                         bad.append("D3 %s: cannot resolve %s's application id (build.json android.application_id)" % (where, app))
-                    elif aid not in (uses[use].get("apps") or []):
+                    elif aid not in (table[use].get("apps") or []):
                         bad.append("D3 %s: %s (%s) is not in use %r's apps %s -- the engine would answer app_not_allowed"
-                                   % (where, app, aid, use, uses[use].get("apps")))
+                                   % (where, app, aid, use, table[use].get("apps")))
 
     # D4 a called use proves its fallback
-    for use, where in sorted(sites.items()):
-        if use not in uses:
+    for (use, image), where in sorted(sites.items()):
+        table = image_uses if image else uses
+        if use not in table:
             continue
-        ft = uses[use].get("fallback_test")
+        ft = table[use].get("fallback_test")
         if not isinstance(ft, str) or "::" not in ft:
             bad.append("D4 use %r is called (%s) but declares no fallback_test (path::Name): the test that proves today's behaviour runs when there is no verdict"
                        % (use, where[0]))

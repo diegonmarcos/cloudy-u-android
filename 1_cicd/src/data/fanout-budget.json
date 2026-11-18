@@ -34,7 +34,7 @@
     },
     {
       "glob": "ab_cloud-libs-shared/libs/decisions-link/**",
-      "reason": "static lib compiled by 14 app ship workflows (measured 2026-11-17): a genuine code edit ships every consumer",
+      "reason": "static lib compiled by 14 app ship workflows (measured 2026-11-17; 15 with Cloud Canvas, #1799): a genuine code edit ships every consumer",
       "ticket": "#1783"
     },
     {

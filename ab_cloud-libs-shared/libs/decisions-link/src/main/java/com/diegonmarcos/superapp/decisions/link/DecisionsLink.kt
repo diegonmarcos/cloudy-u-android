@@ -6,7 +6,9 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.IBinder
+import android.os.ParcelFileDescriptor
 import org.json.JSONObject
+import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -58,6 +60,36 @@ object DecisionsLink {
     fun setConsent(context: Context, app: String, use: String, granted: Boolean): JSONObject =
         ask("consent", context, JSONObject().put("app", app).put("use", use).put("granted", granted))
 
+    /**
+     * #1799 one image call of the declared image [use]: [picture] and [prompt] to [model], a picture back, with the key
+     * held by the engine (contract 2). The pictures travel as files in this app's cache, never in the binder buffer.
+     */
+    fun image(context: Context, use: String, model: String, prompt: String, picture: ByteArray): ImageReply {
+        val ctx = context.applicationContext
+        val link = Conn()
+        val dir = File(ctx.cacheDir, "decisions-image").apply { mkdirs() }
+        val src = File.createTempFile("in", ".img", dir)
+        val out = File.createTempFile("out", ".img", dir)
+        return try {
+            src.writeBytes(picture)
+            val why = link.check(ctx, BuildConfig.DECISIONS_IMAGE_CONTRACT)
+            val r = link.remote
+            if (why != null || r == null) return ImageReply.parse(fail(why ?: "the decisions engine is not ready"), null)
+            val request = JSONObject().put("use", use).put("model", model).put("prompt", prompt).toString()
+            val answer = ParcelFileDescriptor.open(src, ParcelFileDescriptor.MODE_READ_ONLY).use { i ->
+                ParcelFileDescriptor.open(out, ParcelFileDescriptor.MODE_WRITE_ONLY or ParcelFileDescriptor.MODE_TRUNCATE).use { o -> r.image(request, i, o) }
+            }
+            val reply = answer?.let { runCatching { JSONObject(it) }.getOrNull() } ?: fail("the decisions engine answered image with something that is not JSON")
+            ImageReply.parse(reply, if (reply.optBoolean("ok")) out.readBytes() else null)
+        } catch (e: Exception) {
+            ImageReply.parse(fail(e.message ?: e.javaClass.simpleName), null)
+        } finally {
+            link.release(ctx)
+            src.delete()
+            out.delete()
+        }
+    }
+
     private fun ask(method: String, context: Context, request: JSONObject): JSONObject {
         val ctx = context.applicationContext
         val link = Conn()
@@ -87,11 +119,10 @@ object DecisionsLink {
         }
         override fun onServiceDisconnected(name: ComponentName?) { remote = null }
 
-        /** Null when the engine is ready (and bound), else the sentence that says what to do. */
-        fun check(ctx: Context): String? {
+        /** Null when an engine serving contract [needed] is ready (and bound), else the sentence that says what to do. */
+        fun check(ctx: Context, needed: Int = BuildConfig.DECISIONS_ENGINE_MIN_CONTRACT): String? {
             val pm = ctx.packageManager
             val pkg = BuildConfig.DECISIONS_ENGINE_PACKAGE
-            val needed = BuildConfig.DECISIONS_ENGINE_MIN_CONTRACT
             val service = pm.resolveService(Intent(BuildConfig.DECISIONS_ENGINE_ACTION).setPackage(pkg), PackageManager.GET_META_DATA)
                 ?.serviceInfo
             if (service == null) {

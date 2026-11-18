@@ -11,6 +11,7 @@ import com.diegonmarcos.cloudcanvas.draw.ExportNames
 import com.diegonmarcos.cloudcanvas.enhance.AiSettings
 import com.diegonmarcos.cloudcanvas.enhance.EnhanceClient
 import com.diegonmarcos.cloudcanvas.enhance.EnhanceRequest
+import com.diegonmarcos.cloudcanvas.enhance.EngineRoute
 import com.diegonmarcos.cloudcanvas.enhance.PresetLibrary
 import com.diegonmarcos.cloudcanvas.enhance.PromptExpander
 import com.diegonmarcos.cloudcanvas.enhance.Task
@@ -18,7 +19,12 @@ import com.diegonmarcos.superapp.modelcatalogue.ModelCatalogue
 import java.io.ByteArrayOutputStream
 
 /** The state of the Draw Enhancer page, held by the shell: the input picture, the chosen preset, the editable expanded prompt, the run and its result. */
-class EnhanceController(private val ctx: Context, private val draw: DrawController) {
+class EnhanceController(
+    private val ctx: Context,
+    private val draw: DrawController,
+    /** #1799 the image call without an own key: the fleet's decisions engine. */
+    private val engine: EngineRoute.Engine = EngineRoute.link(ctx),
+) {
     val settings = AiSettings(ctx)
 
     var input by mutableStateOf<Bitmap?>(null)
@@ -93,20 +99,19 @@ class EnhanceController(private val ctx: Context, private val draw: DrawControll
         val prompt = promptText
         running = true; error = null; note = null
         Thread {
-            val key = settings.resolve()
-            if (key.key == null) {
-                error = "No OpenRouter key. Add one in Configs > AI, or sign in to the fleet Account."; running = false
-            } else {
-                val bytes = EnhanceClient.prepare(src, maxPx, lib?.maxInputBytes ?: 6_000_000)
-                when (val r = EnhanceClient.run(ctx, key.key, row.id, prompt, bytes)) {
-                    is EnhanceRequest.Result.Image -> {
-                        val bmp = EnhanceClient.decode(r.bytes)
-                        if (bmp == null) error = "The returned image could not be read." else { result = bmp; resultBytes = r.bytes }
-                    }
-                    is EnhanceRequest.Result.Failure -> error = r.message
+            // #1799 the app's own key (Configs > AI) runs the call here, as before; without one the fleet's decisions engine
+            // runs it with the fleet Account's key, which this app never reads. A missing key is the engine's no_key, shown as before.
+            val own = settings.ownKey()
+            val bytes = EnhanceClient.prepare(src, maxPx, lib?.maxInputBytes ?: 6_000_000)
+            val r = if (own != null) EnhanceClient.run(ctx, own, row.id, prompt, bytes) else EngineRoute.run(engine, row.id, prompt, bytes)
+            when (r) {
+                is EnhanceRequest.Result.Image -> {
+                    val bmp = EnhanceClient.decode(r.bytes)
+                    if (bmp == null) error = "The returned image could not be read." else { result = bmp; resultBytes = r.bytes }
                 }
-                running = false
+                is EnhanceRequest.Result.Failure -> error = r.message
             }
+            running = false
         }.start()
     }
 

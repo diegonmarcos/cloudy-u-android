@@ -32,6 +32,9 @@ def decisionsEnginePackage = engineFleet.package.toString()
 def decisionsAction        = engineDecl.action.toString().replace('{package}', decisionsEnginePackage)
 def decisionsMinContract   = engineDecl.min_contract as int
 if (decisionsMinContract < 1) throw new GradleException("libs:decisions-link: engines.decisions.min_contract must be >= 1")
+// #1799 the image call needs a newer engine than the decide/outcome floor every consumer needs.
+def decisionsImageContract = (engineDecl.method_contracts?.image ?: 0) as int
+if (decisionsImageContract < decisionsMinContract) throw new GradleException("libs:decisions-link: engines.decisions.method_contracts.image must be >= min_contract")
 
 android {
     namespace 'com.diegonmarcos.superapp.decisions.link'
@@ -43,6 +46,7 @@ android {
         buildConfigField "String", "DECISIONS_ENGINE_PACKAGE",      "\"${decisionsEnginePackage}\""
         buildConfigField "String", "DECISIONS_ENGINE_ACTION",       "\"${decisionsAction}\""
         buildConfigField "int",    "DECISIONS_ENGINE_MIN_CONTRACT", "${decisionsMinContract}"
+        buildConfigField "int",    "DECISIONS_IMAGE_CONTRACT",      "${decisionsImageContract}"
         // Resolved in THIS library's manifest, so every consumer's merged manifest queries the
         // engine: on Android 11+ an unqueried package reads exactly like "not installed".
         manifestPlaceholders = [decisionsEnginePackage: decisionsEnginePackage]

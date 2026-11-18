@@ -1,0 +1,80 @@
+# ╔═════════════════════════════════════════════════════════════════
+# ║ Cloud Canvas Draw Enhancer through the decisions engine (emulator, dispatch only) (#1799) ║
+# ║ Installs the published Cloud-Lib-Decisions-Engine.apk (contract 2, the image method) and  ║
+# ║ Cloud Canvas (x86_64) on a Pixel 7 emulator, runs the Enhancer with no own key and proves  ║
+# ║ the run reached the engine (its fleet log line), that Canvas surfaced the engine's answer  ║
+# ║ as the Enhancer always did, and that Configs > AI reads the key line from the engine.      ║
+# ║ Script: ac_cloud-canvas/test/emulator-canvas-enhance-engine.sh. Evidence: the               ║
+# ║ `canvas-enhance-engine` artifact. Not a gate: run on request only (rules/ci.md cost budget). ║
+# ╚═════════════════════════════════════════════════════════════════
+name: "Test → Cloud Canvas Enhancer through the decisions engine (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release both APKs are downloaded from"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+
+jobs:
+  enhance-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ac_cloud-canvas/test
+            data/fleet/app/com.diegonmarcos.cloudcanvas
+      - name: Fetch the published APKs (engine + Canvas x86_64)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -eu
+          gh release download "${TAG:-latest}" -R "$GITHUB_REPOSITORY" -p 'Cloud-Canvas-x86_64.apk' -p 'Cloud-Lib-Decisions-Engine.apk' -D apk
+          ls -l apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot the emulator and prove (attempt 1)
+        id: try1
+        continue-on-error: true
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-canvas/test/emulator-canvas-enhance-engine.sh apk/Cloud-Lib-Decisions-Engine.apk apk/Cloud-Canvas-x86_64.apk data/fleet/app/com.diegonmarcos.cloudcanvas/enhance-presets.json out
+      # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
+      - name: Boot the emulator and prove (attempt 2)
+        if: steps.try1.outcome != 'success'
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-canvas/test/emulator-canvas-enhance-engine.sh apk/Cloud-Lib-Decisions-Engine.apk apk/Cloud-Canvas-x86_64.apk data/fleet/app/com.diegonmarcos.cloudcanvas/enhance-presets.json out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: canvas-enhance-engine
+          path: out
+          if-no-files-found: warn

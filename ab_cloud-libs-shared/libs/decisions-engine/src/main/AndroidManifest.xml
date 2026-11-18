@@ -13,7 +13,7 @@
         <!-- Guarded by the constellation's signature-level permission: only APKs signed
              with the Cloud key can bind it. The action is how the handshaking client FINDS
              the service, and CONTRACT is the version it reads through PackageManager
-             before binding. -->
+             before binding. #1799 contract 2 adds image (a picture and a prompt in, a picture out). -->
         <service
             android:name="com.diegonmarcos.superapp.decisions.engine.DecisionsEngineService"
             android:exported="true"
@@ -23,7 +23,7 @@
             </intent-filter>
             <meta-data
                 android:name="com.diegonmarcos.cloud.engine.CONTRACT"
-                android:value="1" />
+                android:value="2" />
         </service>
 
         <!-- Registers /api/decisions on the fleet's debug server (names and ✓/✗ only) before anything

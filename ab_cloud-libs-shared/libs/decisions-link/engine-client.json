@@ -4,7 +4,11 @@
     "decisions": {
       "fleet": "lib-decisions-engine",
       "action": "{package}.ENGINE",
-      "min_contract": 1
+      "min_contract": 1,
+      "_doc_method_contracts": "#1799 image (a picture and a prompt in, a picture out, the key held by the engine) arrived in contract 2: only a call to it asks for it, so a decide-only consumer keeps working against a contract-1 engine.",
+      "method_contracts": {
+        "image": 2
+      }
     }
   }
 }

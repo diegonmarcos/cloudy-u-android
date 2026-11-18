@@ -123,7 +123,7 @@
         "libs:ui-kit",
         "libs:ai",
         "libs:model-catalogue",
-        "libs:text-tools",
+        "libs:decisions-link",
         "libs:fleet-data-client",
         "libs:web-core"
       ]
@@ -203,9 +203,9 @@
       "dir": "../ab_cloud-libs-shared/libs/model-catalogue",
       "type": "library"
     },
-    "libs:text-tools": {
-      "_doc": "#1782 the ITextTools binder: the OpenRouter key the fleet Account manages is read on use through TextToolsClient.revealAiKey; this app keeps no copy of the fleet key.",
-      "dir": "../ab_cloud-libs-shared/libs/text-tools",
+    "libs:decisions-link": {
+      "_doc": "#1799 the contract half of the fleet's decisions engine: the Draw Enhancer's run without an own key is DecisionsLink.image (the picture, the prompt and the model in, a picture out); the engine (Cloud-Lib-Decisions-Engine.apk, never compiled here) holds the fleet Account's OpenRouter key, so this app never reads it. Replaces libs:text-tools (#1782), whose revealAiKey the decisions-use guard D5 forbids here.",
+      "dir": "../ab_cloud-libs-shared/libs/decisions-link",
       "type": "library"
     },
     "libs:web-core": {

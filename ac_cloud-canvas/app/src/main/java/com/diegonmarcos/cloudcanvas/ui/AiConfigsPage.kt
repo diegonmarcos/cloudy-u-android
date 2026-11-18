@@ -63,7 +63,7 @@ fun AiConfigsPage() {
             val r = settings.resolve()
             when (r.source) {
                 AiSettings.Source.OWN -> "Using this app's own key " + r.key
-                AiSettings.Source.FLEET -> "Using the fleet Account's OpenRouter key"
+                AiSettings.Source.FLEET -> "Using the fleet Account's OpenRouter key (held by the fleet's AI engine; this app never reads it)"
                 AiSettings.Source.NONE -> "No key yet (" + r.why + ")"
             }
         }
