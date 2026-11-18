@@ -6,7 +6,8 @@ The fleet's BitTorrent engine, as code only (no assets, no resources, no BuildCo
   and `lib/x86_64/libtorrent4j.so`, both 16 KB LOAD-aligned. Nothing is cross-compiled in CI. It replaced jlibtorrent 1.2.0.18 (libtorrent 1.2.0.0,
   2019), whose x86_64 build was 4 KB-aligned (the emulator APK had no engine, so downloads were never testable end to end) and whose 2019
   interface enumeration predates Android 11's netlink limits for apps targeting API 30+. Web seeds (BEP 19 `url-list`) are libtorrent's own;
-  `Magnet.parseTorrent` reads them and every row reports how many the session uses. The emulator proof is `store-torrent-emulator.yml`
+  `Magnet.parseTorrent` reads them and every row reports how many the session uses. An Internet Archive torrent's baked data-server seed goes stale when
+  the item moves, so `ArchiveSeeds` adds the item's live servers from archive.org/metadata as plain-HTTP web seeds. The emulator proof is `store-torrent-emulator.yml`
   (a public-domain Mozart item from the Internet Archive, downloaded to completion and hash-checked against archive.org's metadata).
 - **API** (`TorrentEngine`, one per process via `TorrentEngines.get(ctx)`):
   `start()` / `stop()` / `startPolling()`; `addMagnet(uri)`, `addTorrentFile(file)`, `addTorrentBytes(label, bytes)` -> `AddResult`;

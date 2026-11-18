@@ -84,7 +84,7 @@ internal class LibtorrentBackend(
     @Synchronized override fun stop() {
         session?.let { runCatching { it.removeListener(listener) }; it.stop() }
         session = null
-        known.clear(); pendingPause.clear(); pendingResume.clear(); lastAlert.clear(); seedsOf.clear()
+        known.clear(); pendingPause.clear(); pendingResume.clear(); lastAlert.clear(); seedsOf.clear(); seeded.clear()
     }
 
     private fun s(): SessionManager = session ?: error("the BitTorrent session is not running")
@@ -112,13 +112,23 @@ internal class LibtorrentBackend(
             p.setFlags(p.getFlags().and_(TorrentFlags.AUTO_MANAGED.inv()))
             sm.swig().async_add_torrent(p)
         }
-        seedsOf[id] = runCatching { Magnet.parseTorrent(file.readBytes())?.webSeeds.orEmpty() }.getOrDefault(emptyList())
+        val meta = runCatching { Magnet.parseTorrent(file.readBytes()) }.getOrNull()
+        seedsOf[id] = meta?.webSeeds.orEmpty().filter { it.startsWith("http://") || it.startsWith("https://") }
+        // An Internet Archive torrent's baked data-server seed goes stale when the item moves: ask archive.org for the live
+        // servers (off the session lock; the next snapshot adds them). See ArchiveSeeds.
+        if (meta != null && ArchiveSeeds.identifier(meta) != null) Thread({
+            val fresh = runCatching { ArchiveSeeds.resolve(meta) }.getOrDefault(emptyList())
+            if (fresh.isNotEmpty()) { seedsOf.merge(id, fresh) { a, b -> (b + a).distinct() }; Log.i(TAG, "archive.org live web seeds for $id: $fresh") }
+            else Log.w(TAG, "archive.org metadata gave no live web seed for $id")
+        }, "torrent-archive-seeds").apply { isDaemon = true }.start()
         known += id
         if (paused) pendingPause += id else pendingResume += id
     }
 
-    /** #1790 the web seeds each .torrent declares (BEP 19 url-list), re-added to a handle that reports none. */
-    private val seedsOf = HashMap<String, List<String>>()
+    /** #1790 the web seeds each torrent should have: the .torrent's own (BEP 19 url-list) plus archive.org's live servers. */
+    private val seedsOf = java.util.concurrent.ConcurrentHashMap<String, List<String>>()
+    /** The seeds already handed to each handle, so a seed libtorrent drops is not re-added on every snapshot. */
+    private val seeded = HashMap<String, MutableSet<String>>()
 
     private fun handle(id: String) = s().find(Sha1Hash.parseHex(id))
 
@@ -131,12 +141,14 @@ internal class LibtorrentBackend(
             if (id in pendingPause) { h.unsetFlags(TorrentFlags.AUTO_MANAGED); h.pause(); pendingPause -= id }
             // The add hands back a PAUSED torrent: without this it would sit at 0 bytes until a manual Resume.
             if (id in pendingResume) { h.unsetFlags(TorrentFlags.AUTO_MANAGED); h.resume(); pendingResume -= id }
-            var seeds = runCatching { h.urlSeeds().size }.getOrDefault(0)
-            if (seeds == 0) seedsOf[id]?.takeIf { it.isNotEmpty() }?.let { ws ->
-                ws.forEach { u -> runCatching { h.addUrlSeed(u) } }
-                Log.i(TAG, "added ${ws.size} web seed(s) to $id: $ws")
-                seeds = runCatching { h.urlSeeds().size }.getOrDefault(0)
+            val have = runCatching { h.urlSeeds().toSet() }.getOrDefault(emptySet())
+            val done = seeded.getOrPut(id) { HashSet(have) }
+            val missing = seedsOf[id].orEmpty().filter { it !in have && it !in done }
+            if (missing.isNotEmpty()) {
+                missing.forEach { u -> runCatching { h.addUrlSeed(u) }; done += u }
+                Log.i(TAG, "added ${missing.size} web seed(s) to $id: $missing")
             }
+            val seeds = runCatching { h.urlSeeds().size }.getOrDefault(0)
             val st = h.status()
             out[id] = raw(id, st, seeds)
         }
@@ -181,7 +193,7 @@ internal class LibtorrentBackend(
     }
 
     @Synchronized override fun remove(id: String, deleteFiles: Boolean) {
-        known -= id; pendingPause -= id; pendingResume -= id; lastAlert.remove(id); seedsOf.remove(id)
+        known -= id; pendingPause -= id; pendingResume -= id; lastAlert.remove(id); seedsOf.remove(id); seeded.remove(id)
         val h = handle(id) ?: return
         if (deleteFiles) s().remove(h, SessionHandle.DELETE_FILES) else s().remove(h)
     }
