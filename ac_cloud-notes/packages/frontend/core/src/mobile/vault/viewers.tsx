@@ -7,6 +7,7 @@ import { type MouseEvent as RMouseEvent, type ReactNode, useEffect, useMemo, use
 
 import type { VaultDecl } from './decl-types';
 import { enhanceMarkdown, renderMermaidInto } from './enhance';
+import { Icon } from './icons';
 import { buildSandboxFrame } from './html-sandbox';
 import { jsonRows, parseJson } from './json-tree';
 import { renderMarkdown } from './markdown';
@@ -175,4 +176,53 @@ export const ImageView = ({ tab, api }: { tab: Tab; api: VaultApi }) => {
     };
   }, [tab.path, api.readDataUrl]);
   return <div className="cnv-pane">{url ? <img src={url} alt={tab.path} style={{ maxWidth: '100%' }} /> : <span className="cnv-dim">Loading image</span>}</div>;
+};
+
+/** XML in View mode: a collapsible element tree (name, attributes, text), built by the browser's own XML parser. */
+export const XmlView = ({ tab }: { tab: Tab }) => {
+  const parsed = useMemo(() => {
+    const doc = new DOMParser().parseFromString(tab.text ?? '', 'application/xml');
+    const err = doc.querySelector('parsererror');
+    return err ? { ok: false as const, error: (err.textContent ?? 'Not valid XML').split('\n')[0]! } : { ok: true as const, root: doc.documentElement };
+  }, [tab.text]);
+  if (!parsed.ok) {
+    return (
+      <div className="cnv-pane">
+        <div className="cnv-banner" data-testid="xml-error">Not valid XML: {parsed.error}. Fix it in Raw mode.</div>
+      </div>
+    );
+  }
+  return (
+    <div className="cnv-pane" data-testid="xml-tree">
+      <XmlNode el={parsed.root} depth={0} />
+    </div>
+  );
+};
+
+const XmlNode = ({ el, depth }: { el: Element; depth: number }) => {
+  const [open, setOpen] = useState(depth < 2);
+  const kids = [...el.childNodes].filter(n => n.nodeType === 1 || (n.nodeType === 3 && (n.textContent ?? '').trim() !== '') || n.nodeType === 4 || n.nodeType === 8);
+  const onlyText = kids.length === 1 && kids[0]!.nodeType === 3;
+  const attrs = [...el.attributes];
+  const head = (
+    <span>
+      <span className="cnv-xml-tag">&lt;{el.nodeName}</span>
+      {attrs.map(a => <span key={a.name}> <span className="cnv-xml-attr">{a.name}</span>=<span className="cnv-xml-val">&quot;{a.value}&quot;</span></span>)}
+      <span className="cnv-xml-tag">{kids.length === 0 ? ' /&gt;' : '&gt;'}</span>
+      {onlyText && <> <span>{kids[0]!.textContent!.trim()}</span> <span className="cnv-xml-tag">&lt;/{el.nodeName}&gt;</span></>}
+    </span>
+  );
+  if (kids.length === 0 || onlyText) return <div className="cnv-tree-row" style={{ paddingLeft: depth * 16 }}>{head}</div>;
+  return (
+    <div>
+      <div className="cnv-tree-row" style={{ paddingLeft: depth * 16, cursor: 'pointer' }} data-xml-node={el.nodeName} aria-expanded={open} onClick={() => setOpen(v => !v)}>
+        <span className="cnv-chev" data-open={open}><Icon name="chevron" size={14} /></span>{head}
+        {!open && <span className="cnv-dim"> {kids.length} items</span>}
+      </div>
+      {open && kids.map((n, i) => n.nodeType === 1
+        ? <XmlNode key={i} el={n as Element} depth={depth + 1} />
+        : <div key={i} className="cnv-tree-row cnv-dim" style={{ paddingLeft: (depth + 1) * 16 }}>{n.nodeType === 8 ? `<!--${n.textContent}-->` : (n.textContent ?? '').trim()}</div>)}
+      {open && <div className="cnv-tree-row" style={{ paddingLeft: depth * 16 }}><span className="cnv-xml-tag">&lt;/{el.nodeName}&gt;</span></div>}
+    </div>
+  );
 };

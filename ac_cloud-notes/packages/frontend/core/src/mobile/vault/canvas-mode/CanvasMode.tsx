@@ -1,4 +1,4 @@
-// CANVAS MODE (#1717): the .canvas board side of the main pane. Its own pane (the dotted board
+// CANVAS (#1717): the .canvas board side of the main pane (Edit: editable; View: locked, nothing moves or changes). Its own pane (the dotted board
 // with groups, cards, images, embedded notes and edges) and its own toolbar: the control rail on
 // the right edge (settings; zoom in, reset, fit, zoom out; undo, redo). This module never renders
 // a note or a data file: it shares only the TabStore, the LinkResolver and the VaultSource
@@ -11,7 +11,7 @@ import { Menu, type MenuItem } from '../sidebar/Menu';
 import type { Tab, VaultApi } from '../use-vault';
 import { canRedo, canUndo, type CanvasHistory, EMPTY_HISTORY, recordChange, redo, undo } from './canvas-history';
 
-export const CanvasMode = ({ tab, api }: { tab: Tab; api: VaultApi }) => {
+export const CanvasMode = ({ tab, api, locked = false }: { tab: Tab; api: VaultApi; /** View mode: the board is read only */ locked?: boolean }) => {
   const [settings, setSettings] = useState(false);
   // undo / redo of this board; a new tab starts a new history
   const history = useRef<{ path: string; h: CanvasHistory }>({ path: tab.path, h: EMPTY_HISTORY });
@@ -41,16 +41,17 @@ export const CanvasMode = ({ tab, api }: { tab: Tab; api: VaultApi }) => {
   if (tab.text === null) return <div className="cnv-pane cnv-dim" data-testid="tab-loading" data-mode="canvas">Opening {tab.path}</div>;
 
   const items: MenuItem[] = [
-    { id: 'source', label: 'Show the canvas as JSON (File mode)', icon: 'file' },
+    { id: 'source', label: 'Show the canvas as JSON (Raw mode)', icon: 'file' },
     { id: 'save', label: 'Save now', icon: 'check', disabled: !tab.dirty },
     { id: 'reindex', label: 'Rebuild the vault index', icon: 'reset' },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative' }} data-testid="canvas-mode" data-mode="canvas">
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative' }} data-testid="canvas-mode" data-mode="canvas" data-locked={locked}>
       {tab.error && <div className="cnv-banner" data-testid="tab-error">{tab.error}</div>}
       <CanvasView
         text={text}
+        locked={locked}
         onChange={change}
         onOpenFile={(target, subpath) => void api.followLink(target, tab.path, { heading: subpath?.replace(/^#/, '') })}
         onOpenLink={(target, opts) => void api.followLink(target, tab.path, opts)}
@@ -66,16 +67,16 @@ export const CanvasMode = ({ tab, api }: { tab: Tab; api: VaultApi }) => {
               <button type="button" className="cnv-btn" title="Fit to screen" aria-label="Fit to screen" data-rail="fit" onClick={ctl.fit}><Icon name="fit" size={20} /></button>
               <button type="button" className="cnv-btn" title="Zoom out" aria-label="Zoom out" data-rail="zoom-out" onClick={ctl.zoomOut}><Icon name="minus" size={20} /></button>
             </div>
-            <div className="cnv-rail-pill">
+            {!locked && <div className="cnv-rail-pill">
               <button type="button" className="cnv-btn" title="Undo" aria-label="Undo" data-rail="undo" disabled={!canUndo(h)} onClick={() => step(undo)}><Icon name="undo" size={20} /></button>
               <button type="button" className="cnv-btn" title="Redo" aria-label="Redo" data-rail="redo" disabled={!canRedo(h)} onClick={() => step(redo)}><Icon name="redo" size={20} /></button>
-            </div>
+            </div>}
           </>
         )}
       />
       {settings && (
         <Menu testId="canvas-settings" items={items} style={{ top: 56, right: 56 }} onClose={() => setSettings(false)}
-          onPick={id => (id === 'source' ? api.setMode(tab.path, 'file') : id === 'save' ? void api.save(tab.path) : api.rebuildIndex())} />
+          onPick={id => (id === 'source' ? api.setMode(tab.path, 'raw') : id === 'save' ? void api.save(tab.path) : api.rebuildIndex())} />
       )}
     </div>
   );

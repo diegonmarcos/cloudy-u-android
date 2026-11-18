@@ -2,7 +2,7 @@
 // panes and routes commands; every piece of state is one of the four models behind the vault API
 // (VaultSource, FileIndex, TabStore, LinkResolver).
 //   left    the sidebar (sidebar/Sidebar.tsx): files tree, action row, view picker, Source, vault footer
-//   top     round sidebar toggle | breadcrumb | pill: File / Canvas mode switch, edit, overflow menu
+//   top     round sidebar toggle | breadcrumb | pill: Raw | Edit | View switch, overflow menu
 //   main    the active tab in its mode: FILE (file-mode/FileView.tsx) or CANVAS (canvas-mode/CanvasMode.tsx)
 //   right   outline, backlinks, outgoing links, tags
 //   bottom  the floating pill: back, forward, search, new, tab count (tab switcher), menu
@@ -13,7 +13,7 @@ import { type CSSProperties, type ReactElement, useCallback, useEffect, useMemo,
 
 import { CanvasMode } from './canvas-mode/CanvasMode';
 import { collapseAll } from './core/file-index';
-import { modesFor, type ViewMode } from './core/tab-store';
+import { modeOfTab, modesFor, toggledMode, type ViewMode } from './core/tab-store';
 import type { VaultDecl } from './decl-types';
 import { FILE_VIEW_LABEL, FileView } from './file-mode/FileView';
 import { baseName, handlerFor, stem } from './file-types';
@@ -61,6 +61,8 @@ function hotkeyMatches(hotkey: string, e: KeyboardEvent): boolean {
     e.key.toLowerCase() === key
   );
 }
+
+const MODE_LABEL: Record<ViewMode, string> = { raw: 'Raw', edit: 'Edit', view: 'View' };
 
 export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) => {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -125,10 +127,10 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
   }, [showLeft]);
 
   const toggleMode = useCallback(() => {
-    if (!tab || !handler || handler.views.length < 2) return;
-    const next = handler.views[(handler.views.indexOf(tab.view) + 1) % handler.views.length]!;
-    api.patchTab(tab.path, { view: next });
-  }, [tab, handler, api]);
+    if (!tab) return;
+    const next = toggledMode(decl, tab);
+    api.setMode(tab.path, next);
+  }, [tab, decl, api]);
 
   const run = useCallback((id: string) => {
     switch (id) {
@@ -156,12 +158,13 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
       case 'tab-switcher': return setSwitcher(true);
       case 'go-back': setSpecial(null); return api.goBack();
       case 'go-forward': setSpecial(null); return api.goForward();
-      case 'mode-file': return tab ? api.setMode(tab.path, 'file') : undefined;
-      case 'mode-canvas': return tab ? api.setMode(tab.path, 'canvas') : undefined;
+      case 'mode-raw': return tab ? api.setMode(tab.path, 'raw') : undefined;
+      case 'mode-edit': return tab ? api.setMode(tab.path, 'edit') : undefined;
+      case 'mode-view': return tab ? api.setMode(tab.path, 'view') : undefined;
       case 'import-file': return requestImport();
       default: return undefined;
     }
-  }, [api, tab, handler, toggleMode, showLeft, setPrefs, decl.limits.skip_dirs]);
+  }, [api, tab, toggleMode, showLeft, setPrefs, decl.limits.skip_dirs]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -198,7 +201,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
   const status = (inline: boolean) => (
     <div className={inline ? 'cnv-status cnv-status-inline' : 'cnv-status'} data-testid="status-bar">
       {decl.layout.status.map(id => <span key={id}>{statusItem(id)}</span>)}
-      {mode && <span data-testid="status-mode">{mode === 'canvas' ? 'Canvas mode' : 'File mode'}</span>}
+      {mode && <span data-testid="status-mode">{MODE_LABEL[mode]} mode</span>}
       {api.indexing && <span>indexing {api.indexing.parsed}/{api.indexing.total}</span>}
       {api.error && <span style={{ color: 'var(--text-error)' }} onClick={() => api.setError(null)}>{api.error}</span>}
     </div>
@@ -222,7 +225,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
       );
     }
     // the two view modes: each its own module, pane and toolbar
-    return mode === 'canvas' ? <CanvasMode tab={tab} api={api} /> : <FileView tab={tab} api={api} decl={decl} />;
+    return handler?.handler === 'canvas' && mode !== 'raw' ? <CanvasMode tab={tab} api={api} locked={mode === 'view'} /> : <FileView tab={tab} api={api} decl={decl} />;
   };
 
   const rightBody = rightPane === 'outline' ? <OutlinePane api={api} />
@@ -267,9 +270,10 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
 
   const moreItems: MenuItem[] = [
     { id: 'save', label: 'Save', icon: 'check', disabled: !tab?.dirty, hint: 'Ctrl+S' },
-    { id: 'toggle-mode', label: tab && handler && handler.views.length > 1 ? `Toggle edit and preview (now ${VIEW_LABEL[tab.view] ?? tab.view})` : 'Toggle edit and preview', icon: 'edit', disabled: !handler || handler.views.length < 2 },
-    { id: 'mode-file', label: 'File mode', icon: 'file', checked: mode === 'file', disabled: !modes.includes('file'), title: 'View mode', divider: true },
-    { id: 'mode-canvas', label: 'Canvas mode', icon: 'canvas', checked: mode === 'canvas', disabled: !modes.includes('canvas') },
+    { id: 'toggle-mode', label: mode ? `Toggle edit and preview (now ${MODE_LABEL[mode]})` : 'Toggle edit and preview', icon: 'edit', disabled: !tab || modes.length < 2 },
+    { id: 'mode-raw', label: 'Raw: the source', icon: 'file', checked: mode === 'raw', disabled: !modes.includes('raw'), title: 'Mode', divider: true },
+    { id: 'mode-edit', label: 'Edit: WYSIWYG', icon: 'edit', checked: mode === 'edit', disabled: !modes.includes('edit') },
+    { id: 'mode-view', label: 'View: rendered, read only', icon: 'eye', checked: mode === 'view', disabled: !modes.includes('view') },
     ...(handler?.handler === 'html' ? [{ id: 'toggle-cdn', label: decl.html.cdn.label, checked: tab?.cdn === true }] : []),
     { id: 'toggle-right', label: 'Outline, backlinks, links and tags', icon: 'panelRight', checked: rightOpen, divider: true },
     { id: 'search-in-files', label: 'Search in files', icon: 'search' },
@@ -319,7 +323,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
                 ))}
               </div>
               <div className="cnv-pill" data-testid="top-pill">
-                {/* the File / Canvas mode switch: the active mode is always visible here */}
+                {/* the Raw | Edit | View switch: the active mode is always visible here */}
                 <span role="group" aria-label="View mode" data-testid="mode-switch" style={{ display: 'inline-flex', gap: 2 }}>
                   {decl.layout.modes.map(m => (
                     <button key={m.id} type="button" className="cnv-mode" data-mode-button={m.id} aria-pressed={mode === m.id} disabled={!tab || special !== null || !modes.includes(m.id)}
@@ -328,8 +332,8 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
                     </button>
                   ))}
                 </span>
-                {tab && handler && handler.views.length > 1 && special === null && mode === 'file' && handler.handler !== 'canvas' && (
-                  <button type="button" className="cnv-btn" onClick={toggleMode} title={`Toggle edit and preview (now ${VIEW_LABEL[tab.view] ?? tab.view})`} aria-label="Toggle edit and preview" data-testid="mode-toggle" data-view={tab.view} aria-pressed={tab.view === 'source'}><Icon name="edit" size={20} /></button>
+                {tab && mode && modes.length > 1 && special === null && handler?.handler !== 'canvas' && (
+                  <button type="button" className="cnv-btn" onClick={toggleMode} title={`Toggle edit and preview (now ${MODE_LABEL[mode]})`} aria-label="Toggle edit and preview" data-testid="mode-toggle" data-view={tab.view} aria-pressed={mode === 'raw'}><Icon name="edit" size={20} /></button>
                 )}
                 {special !== null && (
                   <button type="button" className="cnv-btn" title="Close" aria-label="Close" onClick={() => setSpecial(null)}><Icon name="close" size={20} /></button>
@@ -383,7 +387,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
                     onClick={() => { setSpecial(null); api.setActive(t.path); setSwitcher(false); }}>
                     <Icon name={handlerFor(decl, t.path).handler === 'canvas' ? 'canvas' : 'file'} size={16} />
                     <span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{tabLabel(t.path)}{t.dirty ? ' *' : ''}<br /><span className="cnv-dim">{t.path}</span></span>
-                    <span className="cnv-dim">{handlerFor(decl, t.path).handler === 'canvas' && t.view !== 'source' ? 'Canvas' : 'File'}</span>
+                    <span className="cnv-dim">{MODE_LABEL[modeOfTab(decl, t) ?? 'view']}</span>
                   </button>
                   <button type="button" className="cnv-btn" aria-label="Move tab up" disabled={i === 0} onClick={() => api.moveTab(i, i - 1)}><span style={{ display: 'inline-flex', transform: 'rotate(-90deg)' }}><Icon name="chevron" size={14} /></span></button>
                   <button type="button" className="cnv-btn" aria-label={`Close ${t.path}`} onClick={() => api.closeTab(t.path)}><Icon name="close" size={14} /></button>

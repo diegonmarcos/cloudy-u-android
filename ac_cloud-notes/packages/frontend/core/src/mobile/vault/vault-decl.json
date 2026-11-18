@@ -224,14 +224,19 @@
     ],
     "modes": [
       {
-        "id": "file",
-        "label": "File",
+        "id": "raw",
+        "label": "Raw",
         "icon": "file"
       },
       {
-        "id": "canvas",
-        "label": "Canvas",
-        "icon": "canvas"
+        "id": "edit",
+        "label": "Edit",
+        "icon": "edit"
+      },
+      {
+        "id": "view",
+        "label": "View",
+        "icon": "eye"
       }
     ]
   },
@@ -340,12 +345,16 @@
       "label": "Go forward"
     },
     {
-      "id": "mode-file",
-      "label": "Switch to File mode"
+      "id": "mode-raw",
+      "label": "Switch to Raw mode (the source)"
     },
     {
-      "id": "mode-canvas",
-      "label": "Switch to Canvas mode"
+      "id": "mode-edit",
+      "label": "Switch to Edit mode (WYSIWYG)"
+    },
+    {
+      "id": "mode-view",
+      "label": "Switch to View mode (rendered, read only)"
     },
     {
       "id": "import-file",
@@ -454,7 +463,6 @@
         "yml",
         "yaml",
         "csv",
-        "xml",
         "toml",
         "ini",
         "sh",
@@ -468,6 +476,20 @@
       "editable": true
     },
     {
+      "handler": "xml",
+      "label": "XML",
+      "ext": [
+        "xml",
+        "svgz"
+      ],
+      "views": [
+        "tree",
+        "source"
+      ],
+      "default_view": "tree",
+      "editable": true
+    },
+    {
       "handler": "unsupported",
       "label": "Not supported yet",
       "ext": [
@@ -478,6 +500,41 @@
       "editable": false
     }
   ],
+  "view_modes": {
+    "_doc": "#1717 the top-right Raw | Edit | View switch. Per handler, the tab view each mode shows (a mode missing here is not offered for that file type and its button is disabled). Raw is the source text. Edit is the WYSIWYG editor of a note or page and the editable board of a canvas. View is the rendered, read-only result; a canvas in View is locked (nothing moves or changes), as Obsidian's lock mode. JSON and XML have no WYSIWYG: they offer Raw and View (the collapsible tree).",
+    "markdown": {
+      "raw": "source",
+      "view": "preview"
+    },
+    "html": {
+      "raw": "source",
+      "view": "render"
+    },
+    "canvas": {
+      "raw": "source",
+      "edit": "canvas",
+      "view": "canvas"
+    },
+    "json": {
+      "raw": "source",
+      "view": "tree"
+    },
+    "xml": {
+      "raw": "source",
+      "view": "tree"
+    },
+    "mermaid": {
+      "raw": "source",
+      "view": "render"
+    },
+    "text": {
+      "raw": "source"
+    },
+    "image": {
+      "view": "image"
+    },
+    "unsupported": {}
+  },
   "html": {
     "_doc": "A page renders in an iframe with an opaque origin: sandbox has allow-scripts only (no same-origin, forms, popups, top navigation, downloads), and a CSP inside the document. Offline by default: default-src none, so a CDN script or font is blocked. cdn.default false; the toggle (per tab, never remembered across vaults) adds ONLY the hosts listed here, for scripts, styles and fonts. The vault's book (2.1.1) loads Tailwind from cdn.tailwindcss.com and Inter from Google Fonts; both are listed.",
     "sandbox": "allow-scripts",

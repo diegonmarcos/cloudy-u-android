@@ -25,7 +25,7 @@ test('tabs open in order, the last opened is active, reopening activates without
 test('persistence: tabs, their order, views and the active tab survive a restart', () => {
   const st = store();
   let s = open(ts.EMPTY_TABS, 'notes/a.md', 'board.canvas', 'data.json', 'page.html');
-  s = ts.patchTab(s, 'notes/a.md', { view: 'source' });
+  s = ts.patchTab(s, 'notes/a.md', { view: 'source', mode: 'raw' });
   s = ts.patchTab(s, 'page.html', { cdn: true });
   s = ts.moveTab(s, 3, 0);
   s = ts.activateTab(s, 'board.canvas');
@@ -35,6 +35,8 @@ test('persistence: tabs, their order, views and the active tab survive a restart
   assert.deepEqual(paths(back), ['page.html', 'notes/a.md', 'board.canvas', 'data.json']);
   assert.equal(back.active, 'board.canvas');
   assert.equal(back.tabs.find(t => t.path === 'notes/a.md').view, 'source');
+  assert.equal(back.tabs.find(t => t.path === 'notes/a.md').mode, 'raw');
+  assert.equal(back.tabs.find(t => t.path === 'board.canvas').mode, 'edit');
   assert.equal(back.tabs.find(t => t.path === 'page.html').cdn, true);
   assert.equal(back.tabs.find(t => t.path === 'data.json').view, 'tree');
   // each root keeps its own tabs
@@ -57,7 +59,7 @@ test('stored tabs that are malformed never throw and never restore garbage', () 
     assert.deepEqual(ts.parseTabs(raw, decl, 12), ts.EMPTY_TABS, String(raw));
   }
   const s = ts.parseTabs(JSON.stringify({ tabs: [{ path: 'a.md', view: 'canvas' }, { path: 'a.md' }, { path: 'b.canvas', view: 'zzz' }], active: 'gone.md' }), decl, 12);
-  assert.deepEqual(s.tabs, [{ path: 'a.md', view: 'preview', cdn: false }, { path: 'b.canvas', view: 'canvas', cdn: false }]);
+  assert.deepEqual(s.tabs, [{ path: 'a.md', view: 'preview', mode: 'view', cdn: false }, { path: 'b.canvas', view: 'canvas', mode: 'edit', cdn: false }]);
   assert.equal(s.active, 'b.canvas');
   const many = { tabs: Array.from({ length: 40 }, (_, i) => ({ path: `n${i}.md` })), active: 'n39.md' };
   assert.equal(ts.parseTabs(JSON.stringify(many), decl, decl.layout.tab_max).tabs.length, decl.layout.tab_max);
@@ -96,54 +98,88 @@ test('history: back and forward walk the tabs that were active', () => {
   assert.equal(ts.goForward(s), s);
 });
 
-test('modes: .md opens in File mode, .canvas in Canvas mode', () => {
-  assert.equal(ts.modeOfPath(decl, 'notes/a.md'), 'file');
-  assert.equal(ts.modeOfPath(decl, 'board.canvas'), 'canvas');
-  for (const p of ['d.json', 't.csv', 'c.yaml', 'p.html', 'g.mmd', 'i.png', 'x.txt', 'u.pdf']) assert.equal(ts.modeOfPath(decl, p), 'file', p);
+test('modes: .md and the data files open in View, a canvas in Edit, a source-only file in Raw', () => {
+  assert.equal(ts.modeOfPath(decl, 'notes/a.md'), 'view');
+  assert.equal(ts.modeOfPath(decl, 'board.canvas'), 'edit');
+  for (const p of ['d.json', 'p.html', 'g.mmd', 'i.png', 'x.xml']) assert.equal(ts.modeOfPath(decl, p), 'view', p);
+  for (const p of ['t.csv', 'c.yaml', 'x.txt']) assert.equal(ts.modeOfPath(decl, p), 'raw', p);
   const s = open(ts.EMPTY_TABS, 'notes/a.md', 'board.canvas');
   const tab = p => s.tabs.find(t => t.path === p);
-  assert.equal(ts.modeOfTab(decl, tab('notes/a.md')), 'file');
-  assert.equal(ts.modeOfTab(decl, tab('board.canvas')), 'canvas');
+  assert.equal(ts.modeOfTab(decl, tab('notes/a.md')), 'view');
+  assert.equal(ts.modeOfTab(decl, tab('board.canvas')), 'edit');
   assert.equal(ts.modeOfTab(decl, null), null);
-  assert.deepEqual(decl.layout.modes.map(m => m.id), ['file', 'canvas']);
+  assert.deepEqual(decl.layout.modes.map(m => m.id), ['raw', 'edit', 'view']);
+  assert.deepEqual(decl.layout.modes.map(m => m.label), ['Raw', 'Edit', 'View']);
 });
 
 test('modes: switching tabs switches the mode', () => {
   let s = open(ts.EMPTY_TABS, 'notes/a.md', 'board.canvas', 'data.json');
   const mode = () => ts.modeOfTab(decl, s.tabs.find(t => t.path === s.active));
-  assert.equal(mode(), 'file');
+  assert.equal(mode(), 'view');
   s = ts.activateTab(s, 'board.canvas');
-  assert.equal(mode(), 'canvas');
+  assert.equal(mode(), 'edit');
   s = ts.activateTab(s, 'notes/a.md');
-  assert.equal(mode(), 'file');
+  assert.equal(mode(), 'view');
   s = ts.goBack(s);
-  assert.equal(mode(), 'canvas');
+  assert.equal(mode(), 'edit');
 });
 
-test('the mode switch: a canvas can be shown as its JSON (File mode) and back; a note has no Canvas mode', () => {
-  assert.deepEqual(ts.modesFor(decl, 'board.canvas'), ['canvas', 'file']);
-  assert.deepEqual(ts.modesFor(decl, 'a.md'), ['file']);
-  assert.equal(ts.viewForMode(decl, 'board.canvas', 'file'), 'source');
-  assert.equal(ts.viewForMode(decl, 'board.canvas', 'canvas'), 'canvas');
-  assert.equal(ts.viewForMode(decl, 'a.md', 'canvas'), null);
-  let s = open(ts.EMPTY_TABS, 'board.canvas');
-  s = ts.patchTab(s, 'board.canvas', { view: ts.viewForMode(decl, 'board.canvas', 'file') });
-  assert.equal(ts.modeOfTab(decl, s.tabs[0]), 'file');
+test('Raw | Edit | View: what each file type offers, and the view each mode shows', () => {
+  assert.deepEqual(ts.modesFor(decl, 'board.canvas'), ['raw', 'edit', 'view']);
+  assert.deepEqual(ts.modesFor(decl, 'a.json'), ['raw', 'view']);
+  assert.deepEqual(ts.modesFor(decl, 'a.xml'), ['raw', 'view']);
+  assert.deepEqual(ts.modesFor(decl, 'a.md'), ['raw', 'view']); // Edit (WYSIWYG) is added with the editor
+  assert.deepEqual(ts.modesFor(decl, 'a.txt'), ['raw']);
+  assert.deepEqual(ts.modesFor(decl, 'a.png'), ['view']);
+  assert.deepEqual(ts.modesFor(decl, 'a.pdf'), []);
+  assert.equal(ts.viewForMode(decl, 'board.canvas', 'raw'), 'source');
+  assert.equal(ts.viewForMode(decl, 'a.json', 'view'), 'tree');
+  assert.equal(ts.viewForMode(decl, 'a.xml', 'view'), 'tree');
+  assert.equal(ts.viewForMode(decl, 'a.json', 'edit'), null);
+  let t = open(ts.EMPTY_TABS, 'board.canvas').tabs[0];
+  t = ts.withMode(decl, t, 'raw');
+  assert.deepEqual([t.mode, t.view], ['raw', 'source']);
+  t = ts.withMode(decl, t, 'view');
+  assert.deepEqual([t.mode, t.view], ['view', 'canvas']);
+  assert.equal(ts.withMode(decl, t, 'edit').mode, 'edit');
+  assert.equal(ts.withMode(decl, open(ts.EMPTY_TABS, 'a.json').tabs[0], 'edit').mode, 'view'); // not offered: unchanged
 });
 
-test('the two modes are separate modules that share only the vault API', () => {
+test('the toggle (Ctrl+E) swaps View and Edit, and a Raw file goes to View', () => {
+  const t = (p, mode) => ({ path: p, view: '', mode, cdn: false });
+  assert.equal(ts.toggledMode(decl, t('b.canvas', 'view')), 'edit');
+  assert.equal(ts.toggledMode(decl, t('b.canvas', 'edit')), 'view');
+  assert.equal(ts.toggledMode(decl, t('b.canvas', 'raw')), 'view');
+  assert.equal(ts.toggledMode(decl, t('a.json', 'view')), 'raw');
+  assert.equal(ts.toggledMode(decl, t('a.json', 'raw')), 'view');
+  assert.equal(ts.toggledMode(decl, t('a.txt', 'raw')), 'raw');
+});
+
+test('tabs stored before the Raw | Edit | View switch (no mode) restore into the matching mode', () => {
+  const old = JSON.stringify({ v: 1, tabs: [{ path: 'a.md', view: 'source' }, { path: 'b.canvas', view: 'canvas' }, { path: 'c.canvas', view: 'source' }, { path: 'd.json', view: 'tree' }], active: 'a.md' });
+  const s = ts.parseTabs(old, decl, 12);
+  assert.deepEqual(s.tabs.map(x => [x.path, x.mode, x.view]), [['a.md', 'raw', 'source'], ['b.canvas', 'edit', 'canvas'], ['c.canvas', 'raw', 'source'], ['d.json', 'view', 'tree']]);
+});
+
+test('the raw/rendered panes are separate modules; the canvas is locked in View and nothing can change it', () => {
   const rd = f => readFileSync(join(SRC, f), 'utf8');
   const imports = f => [...rd(f).matchAll(/from '([^']+)'/g)].map(m => m[1]);
   const file = ['file-mode/FileView.tsx', 'file-mode/properties.ts', 'viewers.tsx'];
   const canvas = ['canvas-mode/CanvasMode.tsx', 'canvas-mode/canvas-history.ts', 'canvas-view.tsx'];
-  for (const f of file) assert.ok(!imports(f).some(i => /canvas-mode|canvas-view|jsoncanvas/.test(i)), `${f} imports nothing of Canvas mode`);
-  for (const f of canvas) assert.ok(!imports(f).some(i => /file-mode|viewers|json-tree|html-sandbox/.test(i)), `${f} imports nothing of File mode`);
+  for (const f of file) assert.ok(!imports(f).some(i => /canvas-mode|canvas-view|jsoncanvas/.test(i)), `${f} imports nothing of the canvas`);
+  for (const f of canvas) assert.ok(!imports(f).some(i => /file-mode|viewers|json-tree|html-sandbox/.test(i)), `${f} imports nothing of the file pane`);
   const shell = rd('VaultShell.tsx');
-  assert.match(shell, /mode === 'canvas' \? <CanvasMode tab=\{tab\} api=\{api\} \/> : <FileView tab=\{tab\} api=\{api\} decl=\{decl\} \/>/);
+  assert.match(shell, /handler\?\.handler === 'canvas' && mode !== 'raw' \? <CanvasMode tab=\{tab\} api=\{api\} locked=\{mode === 'view'\} \/>/);
   assert.match(shell, /data-testid="mode-switch"/);
-  assert.match(rd('file-mode/FileView.tsx'), /data-mode="file"/);
+  assert.match(rd('file-mode/FileView.tsx'), /data-mode=\{tab\.mode\}/);
   assert.match(rd('canvas-mode/CanvasMode.tsx'), /data-mode="canvas"/);
-  assert.match(rd('canvas-mode/CanvasMode.tsx'), /data-rail="undo"[\s\S]*data-rail="redo"/);
+  assert.match(rd('canvas-mode/CanvasMode.tsx'), /\{!locked && <div className="cnv-rail-pill">[\s\S]*data-rail="undo"[\s\S]*data-rail="redo"/);
+  const cv = rd('canvas-view.tsx');
+  assert.match(cv, /if \(!locked\) onChange\(serializeCanvas\(next\)\)/); // every write goes through commit
+  assert.match(cv, /if \(locked\) \{[\s\S]*kind: 'pan'/); // a press on a card only pans
+  assert.match(cv, /\{!locked && <div className="cnv-board-tools"/);
+  assert.match(cv, /\{!locked && editing && sel/);
+  assert.ok(!/onChange\(/.test(cv.replace(/if \(!locked\) onChange\(serializeCanvas\(next\)\)/, '')), 'the only onChange call is the guarded commit');
 });
 
 test('canvas history: undo and redo of the board, bounded', async () => {

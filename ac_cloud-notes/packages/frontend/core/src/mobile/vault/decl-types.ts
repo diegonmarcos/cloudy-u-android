@@ -72,11 +72,13 @@ export interface VaultDecl {
     wide_breakpoint_px: number;
     /** #1717 the floating bottom pill, in order */
     bottom_bar: string[];
-    /** #1717 the two view modes of the main pane */
-    modes: { id: 'file' | 'canvas'; label: string; icon: string }[];
+    /** #1717 the top-right switch, in order: Raw | Edit | View */
+    modes: { id: 'raw' | 'edit' | 'view'; label: string; icon: string }[];
   };
   /** #1717 the Configs screen: its page strip and the UI page's choices */
   configs: { default_page: string; pages: { id: string; label: string; icon: string }[]; ui: UiDecl };
+  /** #1717 per handler, the tab view each mode shows; a mode that is missing is not offered */
+  view_modes: Record<string, Partial<Record<'raw' | 'edit' | 'view', string>>>;
   commands: CommandRow[];
   file_types: FileTypeRow[];
   html: HtmlDecl;

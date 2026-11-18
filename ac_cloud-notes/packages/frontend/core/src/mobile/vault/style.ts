@@ -153,4 +153,5 @@ export const VAULT_CSS = `
 .cnv-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--background-modifier-border);font-family:var(--font-interface);font-size:var(--font-ui-medium)}
 .cnv-setting-text{min-width:0}.cnv-setting-control{flex:none;max-width:55%;text-align:right;color:var(--text-muted)}
 .cnv-setting-control input[type=range]{width:160px;accent-color:var(--interactive-accent)}
+.cnv-xml-tag{color:var(--color-purple)}.cnv-xml-attr{color:var(--color-orange)}.cnv-xml-val{color:var(--color-green)}
 `;

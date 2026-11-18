@@ -6,13 +6,16 @@ import type { VaultDecl } from '../decl-types';
 import { handlerFor } from '../file-types';
 import type { KeyValueStore } from '../recent-vaults';
 
-/** The two view modes. A tab's mode follows its file type; nothing else decides it. */
-export type ViewMode = 'file' | 'canvas';
+/** The three modes of the top-right switch (build.json::vault.view_modes says which a file type offers). */
+export type ViewMode = 'raw' | 'edit' | 'view';
+export const VIEW_MODES: readonly ViewMode[] = ['raw', 'edit', 'view'];
 
 export interface TabMeta {
   path: string;
-  /** one of the handler's views */
+  /** one of the handler's views (what the mode shows; see view_modes) */
   view: string;
+  /** Raw (the source), Edit (WYSIWYG, or the editable board) or View (rendered, read only; a canvas is locked) */
+  mode: ViewMode;
   /** HTML pages: the CDN toggle, per tab */
   cdn: boolean;
 }
@@ -28,40 +31,57 @@ export interface TabState {
 export const EMPTY_TABS: TabState = { tabs: [], active: null, back: [], forward: [] };
 const HISTORY_MAX = 50;
 
-type Decl = Pick<VaultDecl, 'file_types'>;
+type Decl = Pick<VaultDecl, 'file_types' | 'view_modes'>;
 
-/** The mode a file opens in: Canvas for a .canvas board, File for everything else. */
-export function modeOfPath(decl: Decl, path: string): ViewMode {
-  return handlerFor(decl, path).handler === 'canvas' ? 'canvas' : 'file';
-}
-
-/** The mode a tab is in now: a canvas shown as its JSON source is in File mode (the text editor). */
-export function modeOfTab(decl: Decl, tab: Pick<TabMeta, 'path' | 'view'> | null | undefined): ViewMode | null {
-  if (!tab) return null;
-  return handlerFor(decl, tab.path).handler === 'canvas' && tab.view !== 'source' ? 'canvas' : 'file';
-}
-
-/** The modes a tab can switch to (top-right mode switch): a canvas has both, any other file only File. */
+/** The modes a file type offers, in switch order (Raw, Edit, View). */
 export function modesFor(decl: Decl, path: string): ViewMode[] {
-  return handlerFor(decl, path).handler === 'canvas' ? ['canvas', 'file'] : ['file'];
+  const map = decl.view_modes[handlerFor(decl, path).handler] ?? {};
+  return VIEW_MODES.filter(m => map[m] !== undefined);
 }
 
 /** The tab view that shows [mode] for this file, or null when the file has no such mode. */
 export function viewForMode(decl: Decl, path: string, mode: ViewMode): string | null {
+  return decl.view_modes[handlerFor(decl, path).handler]?.[mode] ?? null;
+}
+
+/** The mode a file opens in: a canvas opens editable, a source-only file in Raw, everything else rendered (View). */
+export function modeOfPath(decl: Decl, path: string): ViewMode {
   const h = handlerFor(decl, path);
-  if (h.handler === 'canvas') return mode === 'canvas' ? 'canvas' : 'source';
-  return mode === 'file' ? h.default_view : null;
+  const offered = modesFor(decl, path);
+  const want: ViewMode = h.handler === 'canvas' ? 'edit' : h.default_view === 'source' ? 'raw' : 'view';
+  return offered.includes(want) ? want : (offered[0] ?? 'raw');
+}
+
+/** The mode a tab is in now; a mode the file type does not offer falls back to the file's own. */
+export function modeOfTab(decl: Decl, tab: Pick<TabMeta, 'path' | 'mode'> | null | undefined): ViewMode | null {
+  if (!tab) return null;
+  return modesFor(decl, tab.path).includes(tab.mode) ? tab.mode : modeOfPath(decl, tab.path);
+}
+
+/** A tab in [mode] (its view follows). */
+export function withMode(decl: Decl, tab: TabMeta, mode: ViewMode): TabMeta {
+  const view = viewForMode(decl, tab.path, mode);
+  return view === null ? tab : { ...tab, mode, view };
+}
+
+/** Edit and View swap, as Ctrl+E does: from View to Edit when the file has one, from Edit back to View, a Raw file goes to View. */
+export function toggledMode(decl: Decl, tab: Pick<TabMeta, 'path' | 'mode'>): ViewMode {
+  const offered = modesFor(decl, tab.path);
+  const now = modeOfTab(decl, tab)!;
+  const order: ViewMode[] = now === 'view' ? ['edit', 'raw'] : ['view', 'edit', 'raw'];
+  return order.find(m => m !== now && offered.includes(m)) ?? now;
 }
 
 const pushHistory = (list: string[], path: string | null): string[] =>
   path === null || list[list.length - 1] === path ? list : [...list, path].slice(-HISTORY_MAX);
 
 /** Open [path] (or activate its tab). New tabs go to the end; the oldest tab leaves when [max] is passed. */
-export function openTab(s: TabState, decl: Pick<VaultDecl, 'file_types' | 'html'>, path: string, max: number): TabState {
+export function openTab(s: TabState, decl: Pick<VaultDecl, 'file_types' | 'html' | 'view_modes'>, path: string, max: number): TabState {
   const existing = s.tabs.find(t => t.path === path);
   if (existing) return activateTab(s, path);
   const h = handlerFor(decl, path);
-  const tab: TabMeta = { path, view: h.default_view, cdn: decl.html.cdn.default };
+  const mode = modeOfPath(decl, path);
+  const tab: TabMeta = { path, view: viewForMode(decl, path, mode) ?? h.default_view, mode, cdn: decl.html.cdn.default };
   const tabs = [...s.tabs, tab].slice(-Math.max(1, max));
   return { tabs, active: path, back: pushHistory(s.back, s.active), forward: [] };
 }
@@ -130,11 +150,11 @@ export const tabsKey = (root: string) => `cloud-notes:vault:tabs:${root}`;
 export const LAST_VAULT_KEY = 'cloud-notes:vault:last';
 
 export function serializeTabs(s: TabState): string {
-  return JSON.stringify({ v: 1, tabs: s.tabs.map(t => ({ path: t.path, view: t.view, cdn: t.cdn })), active: s.active });
+  return JSON.stringify({ v: 1, tabs: s.tabs.map(t => ({ path: t.path, view: t.view, mode: t.mode, cdn: t.cdn })), active: s.active });
 }
 
 /** Stored tabs -> state. Anything malformed is dropped, never thrown; views are checked against the file type. */
-export function parseTabs(raw: string | null, decl: Pick<VaultDecl, 'file_types' | 'html'>, max: number): TabState {
+export function parseTabs(raw: string | null, decl: Pick<VaultDecl, 'file_types' | 'html' | 'view_modes'>, max: number): TabState {
   try {
     const o = JSON.parse(raw ?? 'null') as { tabs?: unknown; active?: unknown } | null;
     if (!o || !Array.isArray(o.tabs)) return EMPTY_TABS;
@@ -144,7 +164,14 @@ export function parseTabs(raw: string | null, decl: Pick<VaultDecl, 'file_types'
       if (!t || typeof t.path !== 'string' || t.path === '' || seen.has(t.path)) continue;
       seen.add(t.path);
       const h = handlerFor(decl, t.path);
-      tabs.push({ path: t.path, view: typeof t.view === 'string' && h.views.includes(t.view) ? t.view : h.default_view, cdn: t.cdn === true });
+      // a tab stored before the Raw | Edit | View switch has no mode: its view says which one it was in
+      const offered = modesFor(decl, t.path);
+      const legacy: ViewMode | null = t.view === 'source' ? 'raw' : t.view === 'canvas' ? 'edit' : null;
+      const stored = (t as { mode?: unknown }).mode;
+      const mode: ViewMode = VIEW_MODES.includes(stored as ViewMode) && offered.includes(stored as ViewMode)
+        ? (stored as ViewMode)
+        : legacy && offered.includes(legacy) ? legacy : modeOfPath(decl, t.path);
+      tabs.push({ path: t.path, view: viewForMode(decl, t.path, mode) ?? h.default_view, mode, cdn: t.cdn === true });
     }
     const kept = tabs.slice(-Math.max(1, max));
     const active = typeof o.active === 'string' && kept.some(t => t.path === o.active) ? o.active : (kept[kept.length - 1]?.path ?? null);
@@ -162,7 +189,7 @@ export function saveTabs(store: KeyValueStore, root: string, s: TabState): void 
   }
 }
 
-export function loadTabs(store: KeyValueStore, root: string, decl: Pick<VaultDecl, 'file_types' | 'html'>, max: number): TabState {
+export function loadTabs(store: KeyValueStore, root: string, decl: Pick<VaultDecl, 'file_types' | 'html' | 'view_modes'>, max: number): TabState {
   try {
     return parseTabs(store.getItem(tabsKey(root)), decl, max);
   } catch {

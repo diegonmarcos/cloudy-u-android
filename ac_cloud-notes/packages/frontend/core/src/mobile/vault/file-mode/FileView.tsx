@@ -1,4 +1,4 @@
-// FILE MODE (#1717): the text / markdown / data side of the main pane. A note gets its
+// FILE PANE (#1717): the text / markdown / data side of the main pane, in Raw (the source) or View (rendered, read only). A note gets its
 // Properties card and the rendered text; data and text files get their viewer or the editor.
 // Its own pane, its own toolbar (the view switch of the file: Reading / Source, Tree / Source ...).
 // This module never draws a canvas board: it shares only the TabStore, the LinkResolver and the
@@ -9,7 +9,7 @@ import type { VaultDecl } from '../decl-types';
 import { handlerFor } from '../file-types';
 import { Icon } from '../icons';
 import type { Tab, VaultApi } from '../use-vault';
-import { HtmlView, ImageView, JsonView, MarkdownView, MermaidView, SourceEditor } from '../viewers';
+import { HtmlView, ImageView, JsonView, MarkdownView, MermaidView, SourceEditor, XmlView } from '../viewers';
 import { addProperty, PROPERTY_ICON, propertyRows } from './properties';
 
 export const FILE_VIEW_LABEL: Record<string, string> = {
@@ -61,8 +61,8 @@ export const PropertiesCard = ({ tab, api }: { tab: Tab; api: VaultApi }) => {
 /** The file pane: what the tab's handler and view say, nothing else. */
 export const FileView = ({ tab, api, decl }: { tab: Tab; api: VaultApi; decl: VaultDecl }) => {
   const handler = handlerFor(decl, tab.path);
-  if (tab.error && tab.text === null) return <div className="cnv-pane" data-testid="tab-error" data-mode="file">{tab.error}</div>;
-  if (tab.text === null && handler.handler !== 'unsupported') return <div className="cnv-pane cnv-dim" data-testid="tab-loading" data-mode="file">Opening {tab.path}</div>;
+  if (tab.error && tab.text === null) return <div className="cnv-pane" data-testid="tab-error" data-mode={tab.mode}>{tab.error}</div>;
+  if (tab.text === null && handler.handler !== 'unsupported') return <div className="cnv-pane cnv-dim" data-testid="tab-loading" data-mode={tab.mode}>Opening {tab.path}</div>;
   const source = tab.view === 'source';
   const hiddenNote = tab.path.startsWith(decl.config_dir + '/');
   const pane = () => {
@@ -71,9 +71,10 @@ export const FileView = ({ tab, api, decl }: { tab: Tab; api: VaultApi; decl: Va
         return source
           ? <SourceEditor tab={tab} api={api} />
           : <MarkdownView tab={tab} api={api} decl={decl} header={hiddenNote ? null : <PropertiesCard tab={tab} api={api} />} />;
-      // a canvas in File mode is its JSON text (Canvas mode draws the board)
+      // a canvas in Raw mode is its JSON text (Edit and View draw the board)
       case 'canvas': return <SourceEditor tab={tab} api={api} />;
       case 'json': return source ? <SourceEditor tab={tab} api={api} /> : <JsonView tab={tab} />;
+      case 'xml': return source ? <SourceEditor tab={tab} api={api} /> : <XmlView tab={tab} />;
       case 'html': return source ? <SourceEditor tab={tab} api={api} /> : <HtmlView tab={tab} api={api} decl={decl} />;
       case 'mermaid': return source ? <SourceEditor tab={tab} api={api} /> : <MermaidView tab={tab} />;
       case 'image': return <ImageView tab={tab} api={api} />;
@@ -82,7 +83,7 @@ export const FileView = ({ tab, api, decl }: { tab: Tab; api: VaultApi; decl: Va
     }
   };
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }} data-testid="file-view" data-mode="file" data-handler={handler.handler}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }} data-testid="file-view" data-mode={tab.mode} data-handler={handler.handler}>
       {tab.error && <div className="cnv-banner" data-testid="tab-error">{tab.error}</div>}
       {pane()}
     </div>

@@ -27,7 +27,11 @@ test('declaration: every command, ribbon action, pane, status item, file type an
   assert.deepEqual(decl.layout.status, base.status);
   assert.equal(decl.layout.tab_max, base.tab_max);
   assert.equal(decl.layout.wide_breakpoint_px, base.wide_breakpoint_px);
-  assert.deepEqual(decl.file_types, base.file_types);
+  // #1717 the one owner-ordered change to the file types: XML leaves the plain-text handler for its own (it gets a View, the tree)
+  const expected = base.file_types.map(t => (t.handler === 'text' ? { ...t, ext: t.ext.filter(e => e !== 'xml') } : t));
+  const xml = decl.file_types.find(t => t.handler === 'xml');
+  assert.ok(xml && xml.ext.includes('xml') && xml.views.includes('tree') && xml.views.includes('source'), 'xml handler');
+  assert.deepEqual(decl.file_types.filter(t => t.handler !== 'xml'), expected);
   assert.deepEqual(decl.limits, base.limits);
   assert.deepEqual(decl.config_files, base.config_files);
   assert.deepEqual(decl.config_dirs, base.config_dirs);

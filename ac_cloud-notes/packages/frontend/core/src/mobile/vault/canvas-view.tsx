@@ -46,6 +46,8 @@ export interface CanvasViewProps {
   readText?: (path: string) => Promise<string | null>;
   /** #1717 the control rail of Canvas mode; when given, zoom and fit live there instead of the tool row */
   rail?: (ctl: CanvasControls) => ReactNode;
+  /** #1717 View mode: nothing can be moved, resized, connected, added, edited or deleted (Obsidian's lock); pan, zoom and following links still work */
+  locked?: boolean;
 }
 
 export interface CanvasControls {
@@ -91,7 +93,7 @@ const FileCard = ({ file, resolveFile, readDataUrl, readText }: Pick<CanvasViewP
 
 const PRESETS = [undefined, '1', '2', '3', '4', '5', '6'];
 
-export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile, readDataUrl, readText, rail }: CanvasViewProps) => {
+export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile, readDataUrl, readText, rail, locked = false }: CanvasViewProps) => {
   const parsed = useMemo(() => parseCanvas(text), [text]);
   const canvas = parsed.canvas;
   const [view, setView] = useState<View>({ x: 40, y: 40, k: 1 });
@@ -106,7 +108,9 @@ export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile
   // #1717 the board captures the pointer, so a link in a card is followed from down/up, not from a click
   const linkTap = useRef<{ a: HTMLElement; x: number; y: number } | null>(null);
 
-  const commit = (next: JsonCanvas) => onChange(serializeCanvas(next));
+  const commit = (next: JsonCanvas) => {
+    if (!locked) onChange(serializeCanvas(next));
+  };
 
   // while a node is dragged or resized the board shows the result without writing yet
   const shown: JsonCanvas = useMemo(() => {
@@ -136,6 +140,11 @@ export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile
     }
     const target = (e.target as HTMLElement).closest<HTMLElement>('[data-node]');
     const handle = (e.target as HTMLElement).closest<HTMLElement>('[data-resize]');
+    if (locked) {
+      // a locked board only pans: pressing a card or an edge selects and moves nothing
+      setGesture({ kind: 'pan', sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y });
+      return;
+    }
     if (target && handle) {
       const n = byId.get(target.dataset.node!)!;
       setSelected(n.id);
@@ -234,7 +243,7 @@ export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile
   const editValue = sel ? (sel.type === 'text' ? (sel.text ?? '') : sel.type === 'group' ? (sel.label ?? '') : (sel.url ?? '')) : '';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }} data-testid="canvas-view">
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }} data-testid="canvas-view" data-locked={locked}>
       {parsed.errors.length > 0 && (
         <div className="cnv-banner" data-testid="canvas-errors">
           {parsed.errors.length} problem(s) in this canvas; those entries are skipped: {parsed.errors[0]}
@@ -277,7 +286,7 @@ export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile
           </svg>
           {shown.nodes.filter(n => n.type !== 'group').map(n => renderNode(n, selected === n.id, connectFrom === n.id))}
         </div>
-        <div className="cnv-board-tools" onPointerDown={e => e.stopPropagation()}>
+        {!locked && <div className="cnv-board-tools" onPointerDown={e => e.stopPropagation()}>
           <button type="button" className="cnv-btn" onClick={() => { const r = addTextNode(canvas, center()); commit(r.canvas); setSelected(r.id); setEditing(r.id); }}>
             <Icon name="plus" /> Card
           </button>
@@ -318,7 +327,7 @@ export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile
           {!rail && <button type="button" className="cnv-btn" onClick={() => setView(v => ({ ...v, k: Math.min(4, v.k * 1.25) }))}>+</button>}
           {!rail && <button type="button" className="cnv-btn" onClick={() => setView(v => ({ ...v, k: Math.max(0.1, v.k / 1.25) }))}>-</button>}
           {!rail && <button type="button" className="cnv-btn" onClick={fit}>Fit</button>}
-        </div>
+        </div>}
         {rail && (
           <div className="cnv-rail" data-testid="canvas-rail" onPointerDown={e => e.stopPropagation()} onPointerUp={e => e.stopPropagation()}>
             {rail({
@@ -331,7 +340,7 @@ export const CanvasView = ({ text, onChange, onOpenFile, onOpenLink, resolveFile
           </div>
         )}
       </div>
-      {editing && sel && sel.id === editing && (
+      {!locked && editing && sel && sel.id === editing && (
         <div className="cnv-banner" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
           <textarea
             className="cnv-input" rows={4} autoFocus defaultValue={editValue} data-testid="canvas-edit"

@@ -473,11 +473,11 @@ export function useVault(decl: VaultDecl, storage: KeyValueStore) {
     [setBuffer]
   );
 
-  /** The mode switch: a tab moves to the view that shows [mode]; a file without that mode stays where it is. */
+  /** The Raw | Edit | View switch: a tab moves to [mode] and the view that shows it; a file without that mode stays where it is. */
   const setMode = useCallback(
     (path: string, mode: ViewMode) => {
       const view = viewForMode(decl, path, mode);
-      if (view !== null) setTabState(s => patchTabState(s, path, { view }));
+      if (view !== null) setTabState(s => patchTabState(s, path, { view, mode }));
     },
     [decl]
   );
