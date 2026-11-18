@@ -1,0 +1,93 @@
+{
+  "_doc": "#1809 Cloud Canvas > Play, the SoundFont engine's configuration for the bank bundled beside it (GeneralUser-GS.sf2): the engine it was tuned for, the bank's identity, the output stream, the channel layout, each instrument's General MIDI preset, the GM drum keys and the FluidSynth settings. Static reference data bound to that bank file and engine version, so it ships with them (runtime-data-baseline.json seed_allowlist). Read by audio/SoundFont.kt (SfDecl.load), the JVM suite (SoundFontTest: every instrument resolves to a preset of the bank) and the CI offline render (tools/sf-render/plan.py).",
+  "engine": "FluidSynth",
+  "engine_version": "2.5.1",
+  "engine_licence": "LGPL-2.1-or-later",
+  "bank": {
+    "asset": "soundfont/GeneralUser-GS.sf2",
+    "name": "GeneralUser GS",
+    "version": "2.0.3",
+    "author": "S. Christian Collins",
+    "licence": "GeneralUser GS License v2.0"
+  },
+  "output": {
+    "_doc": "The Oboe stream libcanvasaudio.so opens (app/src/main/cpp/canvas_audio_jni.cpp): LowLatency, Exclusive, float, stereo, at the device's native rate (AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE). A stream the device grants only in Shared mode or at another format is still used and reported as granted. The Kotlin render thread feeds it through a ring of ring_bursts bursts.",
+    "performance_mode": "LowLatency",
+    "sharing_mode": "Exclusive",
+    "format": "float",
+    "ring_bursts": 3
+  },
+  "audio_groups": 8,
+  "midi_channels": 64,
+  "_doc_channels": "MIDI channel = kind * 8 + (track - 1): one stereo output group per mixer track (channel % 8 = track - 1), so the mixer's volume, pan, mute and solo act on SoundFont tracks exactly as on Classic ones. Kinds in order: piano, drums, synth_sine, synth_saw, synth_square, synth_triangle (6 x 8 = 48 of 64 channels).",
+  "kinds": [
+    "piano",
+    "drums",
+    "synth_sine",
+    "synth_saw",
+    "synth_square",
+    "synth_triangle"
+  ],
+  "presets": {
+    "piano": {
+      "bank": 0,
+      "program": 0,
+      "name": "Grand Piano"
+    },
+    "drums": {
+      "bank": 128,
+      "program": 0,
+      "name": "Standard 1"
+    },
+    "synth_sine": {
+      "bank": 8,
+      "program": 80,
+      "name": "Sine Wave"
+    },
+    "synth_saw": {
+      "bank": 0,
+      "program": 81,
+      "name": "Saw Lead"
+    },
+    "synth_square": {
+      "bank": 0,
+      "program": 80,
+      "name": "Square Lead"
+    },
+    "synth_triangle": {
+      "bank": 0,
+      "program": 82,
+      "name": "Synth Calliope"
+    }
+  },
+  "_doc_drum_notes": "The General MIDI percussion map (channel type drum, bank 128): each pad of audio/Synth.kt::Drum to its GM key.",
+  "drum_notes": {
+    "Kick": 36,
+    "Snare": 38,
+    "Clap": 39,
+    "HatClosed": 42,
+    "HatOpen": 46,
+    "TomLow": 45,
+    "TomMid": 47,
+    "TomHigh": 50,
+    "Crash": 49,
+    "Ride": 51
+  },
+  "_doc_settings": "FluidSynth settings, set before the synth is created. Reverb and chorus are the bank author's recommended values for FluidSynth (documentation/README.html section 3.0.2). synth.gain is the engine's output gain, chosen with the CI offline render so a dense chord, a two-octave run and a drum groove peak below -1 dBFS before the master limiter (canvas-soundfont-render.yml prints each take's pre-limiter peak).",
+  "settings": {
+    "synth.gain": "0.6",
+    "synth.polyphony": "256",
+    "synth.reverb.active": "1",
+    "synth.reverb.room-size": "0.5",
+    "synth.reverb.damp": "0.3",
+    "synth.reverb.width": "0.8",
+    "synth.reverb.level": "0.7",
+    "synth.chorus.active": "1",
+    "synth.chorus.nr": "4",
+    "synth.chorus.level": "0.55",
+    "synth.chorus.speed": "0.36",
+    "synth.chorus.depth": "3.6",
+    "synth.dynamic-sample-loading": "0",
+    "synth.cpu-cores": "1"
+  }
+}

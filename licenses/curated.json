@@ -20,7 +20,8 @@
   ".woff",
   ".woff2",
   ".dict",
-  ".ogg"
+  ".ogg",
+  ".sf2"
  ],
  "maven_repos": [
   "https://dl.google.com/android/maven2",
@@ -591,6 +592,27 @@
    "what": "#1808 the Inter typeface (@fontsource/inter 5.3.0, latin subset, weights 400/500/600/700, woff2) bundled for Cloud Canvas > Painter, pinned in painter/vendor/PIN.json",
    "source_url": "https://registry.npmjs.org/@fontsource/inter/-/inter-5.3.0.tgz",
    "attribution": "Inter, Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter), SIL OFL 1.1; shown in Cloud Canvas Configs > About > Credits"
+  },
+  "ac_cloud-canvas/app/src/main/assets/soundfont": {
+   "licence": "LicenseRef-GeneralUser-GS-2.0",
+   "kind": "vendored-asset",
+   "what": "#1809 the GeneralUser GS v2.0.3 SoundFont bank (GeneralUser-GS.sf2, unchanged, sha256 pinned in build.json::audio.soundfont.bank) played by Cloud Canvas > Play's SoundFont engine; LICENSE.txt is the author's GeneralUser GS License v2.0 (use in software allowed; distribute a local copy); soundfont.json is the app's own engine configuration for it",
+   "source_url": "https://github.com/mrbumpy409/GeneralUser-GS",
+   "attribution": "GeneralUser GS by S. Christian Collins (https://www.schristiancollins.com), GeneralUser GS License v2.0; shown in Cloud Canvas Configs > About > Credits and on the Play page's engine line"
+  },
+  "ac_cloud-canvas/app/src/main/cpp/third_party/fluidsynth": {
+   "licence": "LGPL-2.1-or-later AND BSD-3-Clause AND Apache-2.0",
+   "kind": "fetched-binary",
+   "what": "#1809 FluidSynth 2.5.1's official Android build (fluidsynth-2.5.1-android24.zip, sha256 pinned in build.json::audio.soundfont.android_zip), fetched at build time by app/build.gradle and packaged unmodified as separate shared libraries, dynamically linked by libcanvasaudio.so: libfluidsynth (LGPL-2.1-or-later), GLib 2 and libsndfile (LGPL-2.1-or-later), PCRE 8, FLAC, Ogg, Vorbis, Opus (BSD-3-Clause), Oboe 1.9.0 (Apache-2.0); the table is NOTICE.md",
+   "source_url": "https://github.com/FluidSynth/fluidsynth/releases/tag/v2.5.1",
+   "attribution": "FluidSynth (https://www.fluidsynth.org), LGPL-2.1-or-later, with GLib, libsndfile, PCRE, FLAC, Ogg, Vorbis, Opus and Oboe; shown in Cloud Canvas Configs > About > Credits"
+  },
+  "ac_cloud-canvas/app/src/main/cpp/third_party/oboe": {
+   "licence": "Apache-2.0",
+   "kind": "fetched-headers",
+   "what": "#1809 the Oboe 1.9.0 headers libcanvasaudio.so is compiled against (from the pinned oboe-1.9.0.aar, sha256 in build.json::audio.soundfont.oboe_headers_aar), linked against the liboboe.so 1.9.0 of the FluidSynth build",
+   "source_url": "https://github.com/google/oboe/tree/1.9.0",
+   "attribution": "Oboe (The Android Open Source Project), Apache-2.0"
   },
   "ac_cloud-canvas/vendor/tldraw": {
    "licence": "LicenseRef-tldraw",
@@ -1818,6 +1840,12 @@
    "licence_source": "Inter is published under the SIL Open Font License 1.1 (painter/vendor/inter/LICENSE); from @fontsource/inter 5.3.0, pinned in painter/vendor/PIN.json",
    "source_url": "https://registry.npmjs.org/@fontsource/inter/-/inter-5.3.0.tgz#package/files/inter-latin-700-normal.woff2",
    "attribution": "Inter (The Inter Project Authors, https://github.com/rsms/inter), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/soundfont/GeneralUser-GS.sf2": {
+   "licence": "LicenseRef-GeneralUser-GS-2.0",
+   "licence_source": "GeneralUser GS License v2.0 (assets/soundfont/LICENSE.txt, the author's documentation/LICENSE.txt): use in software allowed, distribute a local copy",
+   "source_url": "https://github.com/mrbumpy409/GeneralUser-GS/blob/main/GeneralUser-GS.sf2",
+   "attribution": "GeneralUser GS v2.0.3 by S. Christian Collins"
   }
  },
  "cargo_lockfiles": [

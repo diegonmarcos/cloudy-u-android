@@ -1,0 +1,88 @@
+# ╔═════════════════════════════════════════════════════════════════
+# ║ Cloud Canvas SoundFont engine: offline render of every Play instrument (#1809)             ║
+# ║ Builds FluidSynth at the pinned tag (build.json::audio.soundfont: v2.5.1, the commit is     ║
+# ║ checked), compiles the app's own engine core (app/src/main/cpp/sf_core.cpp) into           ║
+# ║ tools/sf-render/render.cpp, and renders with the bundled GeneralUser GS bank and the app's ║
+# ║ configuration (assets/soundfont/soundfont.json): per instrument a chord and a two-octave   ║
+# ║ scale, a drum groove and the Play demo beat, mixed and limited as MixEngine does. Then     ║
+# ║ tools/sf-render/check.py: peak below -1 dBFS, no discontinuity, no clipped run, not silent ║
+# ║ (and its planted faults must fail). Evidence: the `canvas-soundfont-renders` artifact.      ║
+# ╚═════════════════════════════════════════════════════════════════
+name: "Test → Cloud Canvas SoundFont offline render"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "ac_cloud-canvas/tools/sf-render/**"
+      - "ac_cloud-canvas/app/src/main/cpp/sf_core.*"
+      - "ac_cloud-canvas/app/src/main/assets/soundfont/**"
+      - "ac_cloud-canvas/build.json"
+      - ".github/workflows/canvas-soundfont-render.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /ac_cloud-canvas/build.json
+            /ac_cloud-canvas/tools/sf-render/
+            /ac_cloud-canvas/app/src/main/cpp/
+            /ac_cloud-canvas/app/src/main/assets/soundfont/
+      - name: Build FluidSynth at the pinned tag
+        run: |
+          set -euo pipefail
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends cmake libglib2.0-dev
+          tag="v$(python3 -I -c 'import json;print(json.load(open("ac_cloud-canvas/build.json"))["audio"]["soundfont"]["engine_version"])')"
+          want=$(python3 -I -c 'import json;print(json.load(open("ac_cloud-canvas/build.json"))["audio"]["soundfont"]["engine_tag_commit"])')
+          git clone -q --depth 1 --branch "$tag" https://github.com/FluidSynth/fluidsynth "$RUNNER_TEMP/fluidsynth"
+          got=$(git -C "$RUNNER_TEMP/fluidsynth" rev-parse HEAD)
+          [ "$got" = "$want" ] || { echo "::error::FluidSynth $tag is $got, pinned $want"; exit 1; }
+          cmake -S "$RUNNER_TEMP/fluidsynth" -B "$RUNNER_TEMP/fs-build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/fs" \
+            -Denable-libsndfile=off -Denable-pulseaudio=off -Denable-alsa=off -Denable-jack=off -Denable-sdl2=off -Denable-sdl3=off \
+            -Denable-pipewire=off -Denable-dbus=off -Denable-readline=off -Denable-ladspa=off -Denable-libinstpatch=off -Denable-openmp=off \
+            -Denable-network=off -Denable-oss=off -Denable-portaudio=off -Denable-systemd=off -Denable-midishare=off >/dev/null
+          cmake --build "$RUNNER_TEMP/fs-build" -j "$(nproc)" >/dev/null
+          cmake --install "$RUNNER_TEMP/fs-build" >/dev/null
+          echo "FS=$RUNNER_TEMP/fs" >> "$GITHUB_ENV"
+      - name: Compile the app's engine core into the renderer
+        run: |
+          set -euo pipefail
+          lib=$(dirname "$(find "$FS" -name 'libfluidsynth.so' | head -1)")
+          g++ -O2 -std=c++17 -o "$RUNNER_TEMP/render" ac_cloud-canvas/tools/sf-render/render.cpp ac_cloud-canvas/app/src/main/cpp/sf_core.cpp \
+            -I "$FS/include" -L "$lib" -lfluidsynth -Wl,-rpath,"$lib"
+      - name: Render every instrument and check the takes
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          A=ac_cloud-canvas
+          bank="$A/app/src/main/assets/$(python3 -I -c 'import json;print(json.load(open("ac_cloud-canvas/build.json"))["audio"]["soundfont"]["bank"]["asset"])')"
+          python3 -I "$A/tools/sf-render/plan.py" "$A/build.json" "$bank" 48000 > out/plan.txt
+          "$RUNNER_TEMP/render" out/plan.txt out | tee out/render.log
+          python3 -I "$A/tools/sf-render/check.py" out | tee out/report.txt
+      - name: The check fails on planted faults (a click, a clip, an overshoot)
+        run: |
+          set -uo pipefail
+          A=ac_cloud-canvas
+          python3 -I "$A/tools/sf-render/check.py" --plant out/piano-chord.wav "$RUNNER_TEMP/planted"
+          for f in click clip overshoot; do
+            mkdir -p "$RUNNER_TEMP/p-$f" && cp "$RUNNER_TEMP/planted/planted-$f.wav" "$RUNNER_TEMP/p-$f/"
+            if python3 -I "$A/tools/sf-render/check.py" "$RUNNER_TEMP/p-$f" > /dev/null; then echo "::error::the planted $f went undetected"; exit 1; fi
+            echo "planted $f: caught"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: canvas-soundfont-renders
+          path: out
+          if-no-files-found: warn

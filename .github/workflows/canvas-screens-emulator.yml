@@ -2,7 +2,7 @@
 # ║ Cloud Canvas screenshots (emulator, dispatch only) (#1780)               ║
 # ║ Installs the published Cloud Canvas (x86_64) on a Pixel 7 emulator and   ║
 # ║ captures Draw with a drawing, Draw layers, Play instruments, the Play   ║
-# ║ mixer, the Draw Enhancer, Configs > AI and the Music placeholder; #1808 Painter: every shape in 2D and 3D Sphere painted, Rubber, View, reload and the nav order. #1808 nav: the 5-entry bar Draw | Painter | Board | Play | Enhancers, the Board entry opened, the Enhancers second row with Draw Enhancer and Music Enhancer. Script: ac_cloud-canvas/test/emulator-canvas-screens.sh. Evidence: ║
+# ║ mixer, the Draw Enhancer, Configs > AI and the Music placeholder; #1808 Painter: every shape in 2D and 3D Sphere painted, Rubber, View, reload and the nav order. #1808 nav: the 5-entry bar Draw | Painter | Board | Play | Enhancers, the Board entry opened, the Enhancers second row with Draw Enhancer and Music Enhancer. #1809 Play's sound engine line (FluidSynth, bank, Oboe output, latency), Classic selected, and the CanvasAudio latency log. Script: ac_cloud-canvas/test/emulator-canvas-screens.sh. Evidence: ║
 # ║ the `canvas-screens` artifact. Not a gate: a screenshot job, run on      ║
 # ║ request only (rules/ci.md cost budget).                                  ║
 # ╚═════════════════════════════════════════════════════════════════
@@ -43,6 +43,8 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      # #1809 attempt 1 boots WITH the emulator's audio device (no -noaudio), so the Play page opens a real output stream and logs
+      # its latency (audio-latency.txt, canvas-audio-log.txt); the retry keeps -noaudio, so a runner without audio still gets the shots.
       - name: Boot the emulator and capture (attempt 1)
         id: try1
         continue-on-error: true
@@ -54,7 +56,7 @@ jobs:
           target: google_apis
           profile: pixel_7
           ram-size: 4096M
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim
           disable-animations: true
           script: bash ac_cloud-canvas/test/emulator-canvas-screens.sh apk/Cloud-Canvas-x86_64.apk data/fleet/app/com.diegonmarcos.cloudcanvas/enhance-presets.json out
       # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.

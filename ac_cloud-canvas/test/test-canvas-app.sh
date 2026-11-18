@@ -17,6 +17,12 @@
 #   T7 #1787 the Board copies: tools/vendor-board.py check passes (Quickdraw in assets/board and the kept tldraw copy in vendor/tldraw:
 #      every pinned file present with its sha256, nothing unpinned), the shipped page loads no analytics and nothing from the network,
 #      no tldraw file is in the APK's assets (it does not render without a licence key), and hardware acceleration stays on
+#   T8 #1809 the SoundFont engine: the bank assets/soundfont/GeneralUser-GS.sf2 matches build.json's sha256 pin and has its LICENSE.txt,
+#      NOTICE.md, licences/curated.json directory and asset entries (.sf2 a licence-bearing extension); assets/soundfont/soundfont.json maps
+#      every kind (piano, drums, each synth wave) to a preset and every drum pad of Synth.kt to a GM key; app/build.gradle stores the bank
+#      uncompressed, verifies the pinned FluidSynth/Oboe downloads by sha256 and builds app/src/main/cpp; the Ship installs the NDK and
+#      CMake it pins; the About credits name FluidSynth (LGPL-2.1), Oboe (Apache-2.0) and GeneralUser GS (S. Christian Collins); the
+#      Classic engine stays selectable (EngineKind.Classic); the offline-render workflow exists with its planted-fault step
 #   #1808 nav: the bar is Draw | Painter | Board | Play | Enhancers (T1): Board has its own entry (its one page board) and Draw keeps
 #      Draw | Board (the entry declares no page: ids are unique app-wide, and the shell opens the Board page for it); Enhancers (section id enhance) holds the pages Draw Enhancer then Music Enhancer; Decl.kt names SECTION_BOARD, PAGE_ENHANCE,
 #      PAGE_MUSIC; NavShapeTest carries the field-parity tests (T5)
@@ -113,7 +119,9 @@ for name in ("undoAndRedoWalkTheHistory", "reorderMovesALayerAndClamps", "pngRou
              "modelSelectionIsPerTaskAndPersists", "noSourceLogsOrPrintsAndNoKeyIsEmbedded", "requestCarriesModelPromptAndImageAsAMultimodalMessage", "bottomNavIsDrawPlayEnhancerMusic",
              "everyNoteMapsToTheNearestRecordedRoot", "pitchRatioShiftsBySemitones", "sampleVoicePlaysTheSampleAtTheRatio", "polyphonyIsCappedByStealingTheOldest",
              "pianoAndDrumsUseSamplesWhenTheBankHoldsThem", "theAssetSetOnDiskIsComplete", "drawSectionHasDrawAndBoardPages",
-             "createRenameDeleteKeepsAtLeastOneBoard", "bottomNavIsDrawPainterBoardPlayEnhancers", "everyEarlierPageIsStillDeclaredWithItsFields", "everyEarlierDeepLinkStillReachesItsPage", "writeIsAtomicAndRefusesForeignJson", "theIndexSurvivesAReopen"):
+             "createRenameDeleteKeepsAtLeastOneBoard", "everyInstrumentResolvesToAPresetOfTheBank", "theBankAndTheDeclarationMatchTheirPins",
+             "eachTrackHasItsOwnOutputGroupAndEachKindItsOwnChannel", "liveNotesGoToTheirTracksChannelAndAScheduledNoteStartsAtItsExactFrame",
+             "aMutedOrUnsoloedSoundFontTrackIsSilentAndSendsNoReverb", "theMasterLimiterHoldsTheCeilingAndLeavesQuietSoundAlone", "aStolenVoiceFadesOutInsteadOfBeingCut", "bottomNavIsDrawPainterBoardPlayEnhancers", "everyEarlierPageIsStillDeclaredWithItsFields", "everyEarlierDeepLinkStillReachesItsPage", "writeIsAtomicAndRefusesForeignJson", "theIndexSurvivesAReopen"):
     if "fun " + name not in tests: print("T5 missing unit test " + name)
 cred = bj.get("configs_pages", {}).get("about", {}).get("credits", "")
 for w in ("Salamander Grand Piano", "Alexander Holm", "CC-BY 3.0", "MuldjordKit", "Lars Muldjord", "CC-BY 4.0", "Quickdraw", "MIT"):
@@ -125,6 +133,41 @@ page = open(idx).read() if os.path.isfile(idx) else ""
 if not page or re.search(r"matomo|umami|analytics|https?://", page, re.I): print("T7 the board page is missing, loads analytics or names a network address")
 if any("tldraw" in f.lower() for _, _, fs in os.walk(assets) for f in fs) or os.path.isdir(os.path.join(assets, "board/tldraw")): print("T7 a tldraw file is in the APK's assets")
 if "/board/quickdraw/index.html" not in board_src: print("T7 BoardScreen does not load the vendored Quickdraw page")
+# T8 #1809 the SoundFont engine
+import hashlib
+sfb = bj.get("audio", {}).get("soundfont", {})
+bank = os.path.join(assets, sfb.get("bank", {}).get("asset", "soundfont/GeneralUser-GS.sf2"))
+if not os.path.isfile(bank): print("T8 the SoundFont bank is missing")
+else:
+    h = hashlib.sha256()
+    with open(bank, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""): h.update(chunk)
+    if h.hexdigest() != sfb.get("bank", {}).get("sha256"): print("T8 the bank's sha256 is not build.json's pin")
+for f in ("LICENSE.txt", "NOTICE.md"):
+    if not os.path.isfile(os.path.join(assets, "soundfont", f)): print("T8 assets/soundfont has no " + f)
+if "ac_cloud-canvas/app/src/main/assets/soundfont" not in cur.get("directories", {}) or "ac_cloud-canvas/app/src/main/assets/soundfont/GeneralUser-GS.sf2" not in cur.get("assets", {}) or ".sf2" not in cur.get("asset_extensions", []):
+    print("T8 the bank has no licences/curated.json directory/asset entry or .sf2 is not licence-bearing")
+for d in ("fluidsynth", "oboe"):
+    if "ac_cloud-canvas/app/src/main/cpp/third_party/" + d not in cur.get("directories", {}): print("T8 cpp/third_party/%s is not a licences/curated.json directory" % d)
+cfgp = os.path.join(assets, sfb.get("config_asset", "soundfont/soundfont.json"))
+cfg = json.load(open(cfgp)) if os.path.isfile(cfgp) else {}
+kinds = ["piano", "drums", "synth_sine", "synth_saw", "synth_square", "synth_triangle"]
+if cfg.get("kinds") != kinds or any(k not in cfg.get("presets", {}) or not cfg["presets"][k].get("name") for k in kinds): print("T8 soundfont.json does not map every kind to a named preset")
+synth_kt = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudcanvas/audio/Synth.kt")).read()
+pads = re.findall(r"(\w+)\(\"[^\"]+\"\)", synth_kt[synth_kt.index("enum class Drum"):synth_kt.index("}", synth_kt.index("enum class Drum"))])
+if not pads or any(not (35 <= cfg.get("drum_notes", {}).get(pd, 0) <= 81) for pd in pads): print("T8 a drum pad has no General MIDI key in soundfont.json")
+gr = open(os.path.join(app, "app/build.gradle")).read()
+if not re.search(r"noCompress[^\n]*'sf2'", gr): print("T8 the bank is not stored uncompressed (noCompress 'sf2')")
+if "sha256Of(" not in gr or "sfDecl.android_zip.sha256" not in gr or "sfDecl.oboe_headers_aar.sha256" not in gr: print("T8 the FluidSynth / Oboe downloads are not verified against their sha256 pins")
+if "src/main/cpp/CMakeLists.txt" not in gr: print("T8 app/build.gradle does not build app/src/main/cpp")
+repo = sys.argv[2]   # (the T5 loop above reuses the name root)
+ship = os.path.join(repo, "1_cicd/src/cicd/ship-cloud-canvas.yml")
+if not os.path.isfile(ship) or ("ndk;29.0.14033849" not in open(ship).read() or "cmake;3.31.6" not in open(ship).read()): print("T8 the Ship does not install the pinned NDK and CMake")
+for w in ("FluidSynth", "LGPL-2.1", "Oboe", "Apache-2.0", "GeneralUser GS", "S. Christian Collins"):
+    if w not in cred: print("T8 configs_pages.about.credits does not name " + w)
+if "Classic(\"classic\"" not in src: print("T8 the Classic engine is not selectable (EngineKind.Classic)")
+rw = os.path.join(repo, "1_cicd/src/cicd/canvas-soundfont-render.yml")
+if not os.path.isfile(rw) or "--plant" not in open(rw).read(): print("T8 the SoundFont offline-render workflow or its planted-fault step is missing")
 if 'android:hardwareAccelerated="false"' in man_nc or man_nc.count('android:hardwareAccelerated="true"') < 2: print("T7 hardware acceleration is not declared on for the application and the activity")
 PY
 }
@@ -139,6 +182,7 @@ mut() {  # $1 = label, $2 = rule prefix expected, $3.. = python edit of the scra
   local label="$1" want="$2"; shift 2
   rm -rf "$S/app" "$S/root"; mkdir -p "$S/app" "$S/root/licenses" "$S/root/1_cicd/src/data"; cp -r "$APP/build.json" "$APP/app" "$APP/tools" "$APP/vendor" "$S/app/" 2>/dev/null; cp "$APP/build.json" "$S/app/build.json"
   cp "$ROOT/licenses/curated.json" "$S/root/licenses/"; cp "$ROOT/1_cicd/src/data/webview-guard.json" "$S/root/1_cicd/src/data/"
+  mkdir -p "$S/root/1_cicd/src/cicd"; cp "$ROOT/1_cicd/src/cicd/ship-cloud-canvas.yml" "$ROOT/1_cicd/src/cicd/canvas-soundfont-render.yml" "$S/root/1_cicd/src/cicd/"
   ( cd "$S/app" && "$@" )
   if check "$S/app" "$S/root" | grep -q "^$want"; then ok "mutation '$label' is caught ($want)"; else bad "mutation '$label' went undetected"; fi
 }
@@ -163,6 +207,16 @@ mut "board entry shows draw" T1 sed -i 's/Decl.SECTION_BOARD -> BoardScreen(boar
 mut "music enhancer page dropped" T1 python3 -I -c 'import json;d=json.load(open("build.json"));s=[x for x in d["ui"]["sections"] if x["id"]=="enhance"][0];s["pages"]=s["pages"][:1];json.dump(d,open("build.json","w"))'
 mut "enhancers relabelled" T1 python3 -I -c 'import json;d=json.load(open("build.json"));s=[x for x in d["ui"]["sections"] if x["id"]=="enhance"][0];s["label"]="Draw Enhancer";json.dump(d,open("build.json","w"))'
 mut "parity test removed" T5 sed -i 's/fun everyEarlierPageIsStillDeclaredWithItsFields/fun x/' app/src/test/java/com/diegonmarcos/cloudcanvas/NavShapeTest.kt
+# #1809
+mut "bank pin changed" T8 python3 -I -c 'import json;d=json.load(open("build.json"));d["audio"]["soundfont"]["bank"]["sha256"]="0"*64;json.dump(d,open("build.json","w"))'
+mut "a kind lost its preset" T8 python3 -I -c 'import json;p="app/src/main/assets/soundfont/soundfont.json";d=json.load(open(p));del d["presets"]["synth_saw"];json.dump(d,open(p,"w"))'
+mut "a pad lost its GM key" T8 python3 -I -c 'import json;p="app/src/main/assets/soundfont/soundfont.json";d=json.load(open(p));del d["drum_notes"]["Ride"];json.dump(d,open(p,"w"))'
+mut "bank compressed" T8 sed -i "s/noCompress 'ogg', 'sf2'/noCompress 'ogg'/" app/build.gradle
+mut "download unverified" T8 sed -i 's/sfDecl.android_zip.sha256/sfDecl.android_zip.url/g' app/build.gradle
+mut "engine credit dropped" T8 python3 -I -c 'import json;d=json.load(open("build.json"));c=d["configs_pages"]["about"];c["credits"]=c["credits"].replace("FluidSynth","Synth");json.dump(d,open("build.json","w"))'
+mut "classic engine removed" T8 sed -i 's/Classic("classic", "Classic")/Other("other", "Other")/' app/src/main/java/com/diegonmarcos/cloudcanvas/audio/SoundFont.kt
+mut "ship without the ndk" T8 sed -i 's/ ndk;29.0.14033849//' ../root/1_cicd/src/cicd/ship-cloud-canvas.yml
+mut "soundfont test removed" T5 sed -i 's/fun everyInstrumentResolvesToAPresetOfTheBank/fun x/' app/src/test/java/com/diegonmarcos/cloudcanvas/SoundFontTest.kt
 mut "board not registered" T2 sed -i 's#ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt#ac_cloud-canvas/x.kt#' ../root/1_cicd/src/data/webview-guard.json
 mut "unlicensed sound" T4 sh -c 'printf x > app/src/main/assets/samples/drums/clap_v1.ogg'
 mut "sample missing" T4 rm app/src/main/assets/samples/piano/060_v2.ogg

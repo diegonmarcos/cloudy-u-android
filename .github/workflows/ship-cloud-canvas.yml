@@ -168,7 +168,8 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+          # #1809 ndk + cmake: libcanvasaudio.so (the SoundFont engine JNI and Oboe output), pinned as in app/build.gradle
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools ndk;29.0.14033849 cmake;3.31.6"
 
       - name: Set up Gradle 8.10.2 (cached)
         # v6, not v3: v3 bundles the old @actions/cache client, which talks to the

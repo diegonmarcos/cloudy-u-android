@@ -22,7 +22,10 @@
           platformToolsVersion = "35.0.2";
           buildToolsVersions  = [ "35.0.0" "34.0.0" ];
           platformVersions    = [ "36" "35" "34" "26" ];
-          includeNDK          = false;
+          # #1809 libcanvasaudio.so (the SoundFont engine JNI + Oboe output): the NDK and CMake app/build.gradle pins
+          includeNDK          = true;
+          ndkVersions         = [ "29.0.14033849" ];
+          cmakeVersions       = [ "3.31.6" ];
         };
 
         androidEnv = pkgs.androidenv.composeAndroidPackages baseAndroidArgs;

@@ -9,7 +9,8 @@
    "NOASSERTION": 34,
    "CC-BY-4.0": 27,
    "GPL-3.0-only": 11,
-   "GPL-3.0": 3
+   "GPL-3.0": 3,
+   "LicenseRef-GeneralUser-GS-2.0": 1
   },
   "cargo": {
    "MIT OR Apache-2.0": 32,
@@ -86,6 +87,9 @@
    "OFL-1.1": 1,
    "CC-BY-4.0": 1,
    "CC-BY-3.0": 1,
+   "LicenseRef-GeneralUser-GS-2.0": 1,
+   "LGPL-2.1-or-later AND BSD-3-Clause AND Apache-2.0": 1,
+   "Apache-2.0": 1,
    "LicenseRef-tldraw": 1,
    "CC-BY-SA-2.1-JP AND CC0-1.0": 1
   }
@@ -3107,6 +3111,16 @@
    "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
    "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
    "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "asset:ac_cloud-canvas/app/src/main/assets/soundfont/GeneralUser-GS.sf2": {
+   "kind": "asset",
+   "declared_in": [
+    "ac_cloud-canvas/app/src/main/assets/soundfont/GeneralUser-GS.sf2"
+   ],
+   "licence": "LicenseRef-GeneralUser-GS-2.0",
+   "licence_source": "GeneralUser GS License v2.0 (assets/soundfont/LICENSE.txt, the author's documentation/LICENSE.txt): use in software allowed, distribute a local copy",
+   "source_url": "https://github.com/mrbumpy409/GeneralUser-GS/blob/main/GeneralUser-GS.sf2",
+   "attribution": "GeneralUser GS v2.0.3 by S. Christian Collins"
   },
   "asset:ac_cloud-canvas/vendor/tldraw/cdn/5.2.3/fonts/IBMPlexMono-Bold.woff2": {
    "kind": "asset",
@@ -19255,6 +19269,33 @@
     "ac_cloud-canvas/app/src/main/assets/samples/piano/NOTICE.md"
    ],
    "licence": "CC-BY-3.0",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ac_cloud-canvas/app/src/main/assets/soundfont": {
+   "kind": "vendored",
+   "declared_in": [
+    "ac_cloud-canvas/app/src/main/assets/soundfont/LICENSE.txt",
+    "ac_cloud-canvas/app/src/main/assets/soundfont/NOTICE.md"
+   ],
+   "licence": "LicenseRef-GeneralUser-GS-2.0",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ac_cloud-canvas/app/src/main/cpp/third_party/fluidsynth": {
+   "kind": "vendored",
+   "declared_in": [
+    "ac_cloud-canvas/app/src/main/cpp/third_party/fluidsynth/LICENSE",
+    "ac_cloud-canvas/app/src/main/cpp/third_party/fluidsynth/NOTICE.md"
+   ],
+   "licence": "LGPL-2.1-or-later AND BSD-3-Clause AND Apache-2.0",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ac_cloud-canvas/app/src/main/cpp/third_party/oboe": {
+   "kind": "vendored",
+   "declared_in": [
+    "ac_cloud-canvas/app/src/main/cpp/third_party/oboe/LICENSE",
+    "ac_cloud-canvas/app/src/main/cpp/third_party/oboe/NOTICE.md"
+   ],
+   "licence": "Apache-2.0",
    "licence_source": "licenses/curated.json"
   },
   "vendored:ac_cloud-canvas/vendor/tldraw": {

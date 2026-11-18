@@ -8,7 +8,7 @@
   },
   "name": "cloud-canvas",
   "display_name": "Cloud Canvas",
-  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), with a sibling page Board, an infinite whiteboard (Quickdraw, MIT, vendored offline in a WebView, boards saved to app storage, #1787; the fleet's tldraw build is kept pinned but not shipped: tldraw 5 does not render without a licence key), and Play, a music mixer with a sampled grand piano (Salamander Grand Piano, CC-BY 3.0), a sampled acoustic drum kit (MuldjordKit, CC-BY 4.0) and a synth (low-latency AudioTrack, polyphony, velocity layers; the synthesized piano and kit stay as the fallback), a 4 to 8 track mixer with loop recording and WAV export. Draw Enhancer sends a picture and a preset prompt to an image model through OpenRouter (key from Configs > AI or the fleet Account); Music Enhancer is a coming-soon placeholder. #1808 Painter: the Interactive Hexagon Grid, a cell painter on hex, square, triangle and octagon grids in 2D or on a 3D sphere (Three.js r128 and Inter vendored offline in a WebView, state saved to app storage). Bottom nav Draw | Painter | Board | Play | Enhancers: Board also has its own entry (the Draw > Board page stays), and Enhancers holds Draw Enhancer and Music Enhancer on one shared second row.",
+  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), with a sibling page Board, an infinite whiteboard (Quickdraw, MIT, vendored offline in a WebView, boards saved to app storage, #1787; the fleet's tldraw build is kept pinned but not shipped: tldraw 5 does not render without a licence key), and Play, a music mixer whose instruments play through a SoundFont engine by default (#1809: FluidSynth 2.5.1, LGPL-2.1, playing the General MIDI bank GeneralUser GS v2.0.3 on a low-latency Oboe stream; every instrument mapped to a GM preset and the kit to the GM drum map) or, as the selectable Classic engine, a sampled grand piano (Salamander Grand Piano, CC-BY 3.0), a sampled acoustic drum kit (MuldjordKit, CC-BY 4.0) and a synth (low-latency AudioTrack, polyphony, velocity layers; the synthesized piano and kit stay as the fallback), a 4 to 8 track mixer with loop recording and WAV export. Draw Enhancer sends a picture and a preset prompt to an image model through OpenRouter (key from Configs > AI or the fleet Account); Music Enhancer is a coming-soon placeholder. #1808 Painter: the Interactive Hexagon Grid, a cell painter on hex, square, triangle and octagon grids in 2D or on a 3D sphere (Three.js r128 and Inter vendored offline in a WebView, state saved to app storage). Bottom nav Draw | Painter | Board | Play | Enhancers: Board also has its own entry (the Draw > Board page stays), and Enhancers holds Draw Enhancer and Music Enhancer on one shared second row.",
   "category": "android",
   "android": {
     "application_id": "com.diegonmarcos.cloudcanvas",
@@ -387,7 +387,7 @@
           "why": "Installs and updates this app."
         }
       ],
-      "credits": "Sampled instruments: Salamander Grand Piano V3 by Alexander Holm, licensed CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/), from https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html (archive.org/details/SalamanderGrandPianoV3), a subset (every 3 semitones, velocity layers 4, 9 and 14 of 16) mixed to mono, shortened and encoded as Ogg Vorbis. MuldjordKit by Lars Muldjord (drumgizmo.org), FreePats stereo edition by Roberto (FreePats project), licensed CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/), from https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html, three velocity layers of nine kit pieces mixed to mono, shortened and encoded as Ogg Vorbis. Board: Quickdraw (https://github.com/quickdrawjs/quickdraw, @quickdrawjs/core 0.3.0), MIT licence, Copyright (c) 2026 Quickdraw contributors, with the Libre Baskerville font (SIL OFL 1.1). The fleet's tldraw build was the first choice but tldraw 5 does not render without a licence key, so it is not shipped. Painter: three.js r128 (https://threejs.org, three@0.128.0, with its OrbitControls), MIT licence, Copyright (c) 2010-2021 three.js authors; the Inter typeface, Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter, @fontsource/inter 5.3.0), SIL OFL 1.1."
+      "credits": "Sampled instruments: Salamander Grand Piano V3 by Alexander Holm, licensed CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/), from https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html (archive.org/details/SalamanderGrandPianoV3), a subset (every 3 semitones, velocity layers 4, 9 and 14 of 16) mixed to mono, shortened and encoded as Ogg Vorbis. MuldjordKit by Lars Muldjord (drumgizmo.org), FreePats stereo edition by Roberto (FreePats project), licensed CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/), from https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html, three velocity layers of nine kit pieces mixed to mono, shortened and encoded as Ogg Vorbis. Board: Quickdraw (https://github.com/quickdrawjs/quickdraw, @quickdrawjs/core 0.3.0), MIT licence, Copyright (c) 2026 Quickdraw contributors, with the Libre Baskerville font (SIL OFL 1.1). The fleet's tldraw build was the first choice but tldraw 5 does not render without a licence key, so it is not shipped. Painter: three.js r128 (https://threejs.org, three@0.128.0, with its OrbitControls), MIT licence, Copyright (c) 2010-2021 three.js authors; the Inter typeface, Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter, @fontsource/inter 5.3.0), SIL OFL 1.1. Play's SoundFont engine (#1809): FluidSynth 2.5.1 (https://www.fluidsynth.org), LGPL-2.1-or-later, dynamically linked from its official Android build with GLib and libsndfile (LGPL-2.1-or-later), PCRE, FLAC, Ogg, Vorbis and Opus (BSD-3-Clause); Oboe 1.9.0 (Apache-2.0, The Android Open Source Project); the SoundFont bank GeneralUser GS v2.0.3 by S. Christian Collins (https://www.schristiancollins.com), GeneralUser GS License v2.0. The Classic engine keeps the sampled instruments above."
     }
   },
   "perms": {
@@ -395,5 +395,59 @@
     "needs": [],
     "helpers": [],
     "first_run": "libs:perms"
+  },
+  "audio": {
+    "_doc": "#1809 THE Play sound declaration. Two engines, picked on the Play page and remembered: soundfont (the default: FluidSynth playing a General MIDI SoundFont bank on an Oboe output) and classic (the #1787 engines kept as the fallback: the Salamander Grand Piano and MuldjordKit samples and the synthesized voices of audio/Synth.kt). classic also plays whenever the SoundFont engine cannot start (no native library for the ABI, the bank cannot be loaded). app/build.gradle fetches and packages the pinned engine (soundfont.android_zip, libs) and bakes default_engine; the runtime configuration is assets/soundfont/soundfont.json (soundfont.config_asset), which audio/SoundFont.kt decodes and tools/sf-render/plan.py reads for the CI offline render (canvas-soundfont-render.yml); SoundFontTest proves every instrument resolves to a preset of the bank.",
+    "default_engine": "soundfont",
+    "engines": [
+      "soundfont",
+      "classic"
+    ],
+    "soundfont": {
+      "_doc_engine": "FluidSynth (LGPL-2.1-or-later), dynamically linked: its official Android build (fluidsynth-<version>-android24.zip, every .so 16 KB-aligned, Oboe 1.9.0 inside) is fetched at build time by app/build.gradle (fetchFluidSynth: pinned URL + sha256, only the libraries in libs are packaged). Chosen over TinySoundFont because GeneralUser GS needs SoundFont 2.01 modulators: its author's compatibility table rates TinySoundFont 'Poor: out of spec in crucial ways, no modulator support' and FluidSynth 'Excellent' (documentation/README.html of the bank).",
+      "engine": "FluidSynth",
+      "engine_version": "2.5.1",
+      "engine_licence": "LGPL-2.1-or-later",
+      "engine_source": "https://github.com/FluidSynth/fluidsynth/tree/v2.5.1",
+      "engine_tag_commit": "67f0efa924ee0ec37486aa974512af5133931633",
+      "android_zip": {
+        "url": "https://github.com/FluidSynth/fluidsynth/releases/download/v2.5.1/fluidsynth-2.5.1-android24.zip",
+        "sha256": "5c33eb0c6ab2de34ea255c4c39b727b87f48c490dbf4563ae24ecefbff116e69"
+      },
+      "libs": [
+        "libfluidsynth.so",
+        "libglib-2.0.so",
+        "libgthread-2.0.so",
+        "libsndfile.so",
+        "libFLAC.so",
+        "libogg.so",
+        "libopus.so",
+        "libvorbis.so",
+        "libvorbisenc.so",
+        "libpcre.so",
+        "liboboe.so"
+      ],
+      "_doc_libs": "The NEEDED closure of libfluidsynth.so (readelf -d), nothing else of the zip. liboboe.so is the zip's Oboe 1.9.0 (16 KB-aligned; the Maven prefab build of 1.9.0 is 4 KB-aligned and would fail the page-size guard); the app's own libcanvasaudio.so links it, compiled against the headers of oboe_headers_aar (the same 1.9.0).",
+      "oboe_headers_aar": {
+        "url": "https://dl.google.com/android/maven2/com/google/oboe/oboe/1.9.0/oboe-1.9.0.aar",
+        "sha256": "e6ffd93e964e3642e7282211cca124eeee03cff1107004f33e41ba4b2ebb6d3a",
+        "licence": "Apache-2.0"
+      },
+      "bank": {
+        "asset": "soundfont/GeneralUser-GS.sf2",
+        "name": "GeneralUser GS",
+        "version": "2.0.3",
+        "author": "S. Christian Collins",
+        "licence": "GeneralUser GS License v2.0",
+        "sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe",
+        "source_url": "https://github.com/mrbumpy409/GeneralUser-GS",
+        "_doc": "Bundled (32.3 MB, stored uncompressed and read in place from the APK through FluidSynth's sfloader callbacks over AAssetManager; about 31 MB of RAM once loaded). The licence allows use in software and asks for a local copy rather than a link to the author's download files."
+      },
+      "config_asset": "soundfont/soundfont.json",
+      "_doc_config_asset": "The runtime half (bank identity, output stream, channel layout, GM presets, drum keys, FluidSynth settings) lives in app/src/main/assets/soundfont/soundfont.json beside the bank it describes, so this block keeps only what the build needs: the engine's pinned binaries, the libraries to package and the bank's pin."
+    },
+    "classic": {
+      "_doc": "The #1787 engines, unchanged in sound: Salamander Grand Piano V3 and MuldjordKit samples (assets/samples) and the synthesized voices; decoded only when Classic plays (selected, or the SoundFont engine is unavailable)."
+    }
   }
 }

@@ -30,6 +30,12 @@
 #   enhancers-row-draw        Enhancers: the second row Draw Enhancer | Music Enhancer, Draw Enhancer open; enhancers-row.txt lists the row
 #   enhancers-row-music       Music Enhancer tapped in that row (the greyed coming-soon placeholder)
 #   enhancers-music-deeplink  `section enhance page music`
+# #1809 Play's sound engine:
+#   play-soundfont            Play > Piano on the SoundFont engine; play-engine.txt holds the engine line (FluidSynth version, bank,
+#                             output path, mode, rate, latency, under-runs) and the preset line, read from the UI dump after a few keys
+#   audio-latency.txt         files/audio-latency.txt, the output line the app writes once the stream reports its latency
+#   canvas-audio-log.txt      logcat tag CanvasAudio: FluidSynth ready, the Oboe stream and its measured latency
+#   play-classic              the Classic engine selected (Salamander / MuldjordKit / synth), then play-soundfont-again
 # usage: emulator-canvas-screens.sh <canvas.apk> <enhance-presets.json> <outdir>
 set -u
 APK="$1"; DATA="$2"; OUT="$3"
@@ -236,6 +242,33 @@ sleep 2   # the page saves 0.5 s after the last change
 pstart --es shape hex --es layout 2d --es mode paint
 shot painter-reloaded 3
 adb shell "run-as $PKG sh -c 'ls -l files/painter; cat files/painter/painter.json'" > "$OUT/painter.txt" 2>&1 || true
+# ── #1809 Play's sound engine: SoundFont (FluidSynth + GeneralUser GS) by default, Classic selectable; the output latency ──
+start --es section play --es view instruments
+sleep 6   # the bank (32 MB, read in place) loads in about a second; the output measures its latency after one second of audio
+shot play-soundfont 4
+dump > "$OUT/play-soundfont.xml"
+for i in 0 1 2 3 4; do adb shell input tap $((W/12 + i*W/10)) $((H*70/100)); sleep 0.3; done   # a few keys, so the engine plays
+sleep 2
+dump > "$OUT/play-soundfont-after-keys.xml"
+python3 -I - "$OUT/play-soundfont-after-keys.xml" > "$OUT/play-engine.txt" <<'PY4'
+import html, re, sys
+x = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+for m in re.finditer(r' text="([^"]*)"', x):
+    t = html.unescape(m.group(1))
+    if t.startswith("Engine:") or t.startswith("SoundFont preset:") or t.startswith("Sampled") or t.startswith("SoundFont engine"): print(t)
+PY4
+echo "engine line: $(cat "$OUT/play-engine.txt")"
+adb shell "run-as $PKG cat files/audio-latency.txt" > "$OUT/audio-latency.txt" 2>&1 || true
+echo "audio latency: $(cat "$OUT/audio-latency.txt")"
+tap_text Classic
+sleep 4
+shot play-classic 3
+dump > "$OUT/play-classic.xml"
+tap_text SoundFont
+sleep 4
+shot play-soundfont-again 2
+adb logcat -d -s CanvasAudio:V > "$OUT/canvas-audio-log.txt" 2>&1 || true
+echo "CanvasAudio log:"; cat "$OUT/canvas-audio-log.txt"
 timeout 60 adb logcat -d > "$OUT/logcat.txt" || true
 grep -E "MediaCodec|chromium|CloudWeb" "$OUT/logcat.txt" | tail -40 > "$OUT/samples-and-board-log.txt" || true
 ls -l "$OUT"

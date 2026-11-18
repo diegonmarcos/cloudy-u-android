@@ -57,6 +57,7 @@ import com.diegonmarcos.cloudcanvas.audio.Inst
 import com.diegonmarcos.cloudcanvas.audio.LoopClock
 import com.diegonmarcos.cloudcanvas.audio.MixerState
 import com.diegonmarcos.cloudcanvas.audio.Notes
+import com.diegonmarcos.cloudcanvas.audio.EngineKind
 import com.diegonmarcos.cloudcanvas.audio.TouchVelocity
 import com.diegonmarcos.cloudcanvas.audio.Wave
 import kotlinx.coroutines.Dispatchers
@@ -84,10 +85,12 @@ fun PlayScreen(ctl: PlayController, start: CanvasStart, modifier: Modifier = Mod
     }
     LaunchedEffect(start) { if (start.view == VIEW_MIXER || start.view == VIEW_INSTRUMENTS) ctl.view = start.view }
     LaunchedEffect(Unit) {
+        var ticks = 0
         while (true) {
             val cur = ctl.engine.session.value
             val len = LoopClock(cur.bpm, cur.bars, ctl.engine.sampleRate).loopFrames
             progress = if (cur.playing && len > 0) (ctl.engine.frame % len).toFloat() / len else 0f
+            if (++ticks % 10 == 0) ctl.outTick++   // #1809 the engine line's latency and under-runs, twice a second
             delay(50)
         }
     }
@@ -112,6 +115,12 @@ fun PlayScreen(ctl: PlayController, start: CanvasStart, modifier: Modifier = Mod
             }, label = { Text("Export WAV") })
             AssistChip(onClick = { pickFolder.launch(null) }, label = { Text("Folder") })
         }
+        // #1809 the sound engine: SoundFont (FluidSynth + GeneralUser GS) or Classic (#1787), and the engine, bank and output in use
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+            Text("Sound", color = ink, fontSize = 13.sp)
+            EngineKind.entries.forEach { k -> FilterChip(selected = ctl.engineKind == k, onClick = { ctl.selectEngine(k) }, label = { Text(k.label) }, modifier = Modifier.testTag("canvas_play_engine_" + k.id)) }
+        }
+        Text(ctl.engineLine(), color = colorResource(R.color.app_text_secondary), fontSize = 11.sp, modifier = Modifier.testTag("canvas_play_engine"))
         ctl.message?.let { Text(it, color = colorResource(R.color.app_accent), fontSize = 12.sp) }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             if (ctl.view == VIEW_MIXER) MixerView(ctl, s) else InstrumentsView(ctl, s)
@@ -134,7 +143,7 @@ private fun InstrumentsView(ctl: PlayController, s: com.diegonmarcos.cloudcanvas
         }
         Text("Plays on Track ${s.selected}" + if (s.recording) " (recording)" else "", color = colorResource(R.color.app_text_secondary), fontSize = 12.sp)
         // #1787 which sound plays: the sampled instrument once decoded, the synthesized one meanwhile
-        Text(ctl.soundLine(s.inst), color = colorResource(R.color.app_text_secondary), fontSize = 11.sp, modifier = Modifier.testTag("canvas_play_sound"))
+        Text(ctl.soundLine(s.inst, s.wave), color = colorResource(R.color.app_text_secondary), fontSize = 11.sp, modifier = Modifier.testTag("canvas_play_sound"))
         if (s.inst == Inst.Drums) DrumPads(ctl) else Keyboard(ctl, s, (ctl.octave + 1) * 12)
     }
 }

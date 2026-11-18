@@ -57,9 +57,99 @@ def uiSectionsB64    = b64(buildJson.ui.sections)
 def uiBottomNav      = buildJson.ui.bottom_nav.join(',')
 def uiDefaultSection = (buildJson.ui.default_section ?: buildJson.ui.bottom_nav[0]).toString()
 
+// ── #1809 the Play page's SoundFont engine (build.json::audio) ──────────────────────────────────────────────────────────────────
+// Only the build half is read here (the runtime half is assets/soundfont/soundfont.json, audio.soundfont.config_asset, decoded by
+// audio/SoundFont.kt; nothing of it is baked into BuildConfig). FluidSynth's official Android build and the Oboe 1.9.0 headers
+// are fetched by fetchFluidSynth from their pinned URLs, verified against their pinned sha256, and only the libraries audio.soundfont.libs
+// names are packaged (jniLibs) and linked (CMake). A sha256 mismatch fails the build; nothing unpinned is ever used.
+if (!buildJson.audio?.soundfont?.android_zip?.sha256 || !buildJson.audio?.soundfont?.bank?.asset)
+    throw new GradleException("build.json::audio.soundfont missing (#1809)")
+def sfDecl = buildJson.audio.soundfont
+def audioDefaultEngine = (buildJson.audio.default_engine ?: 'soundfont').toString()
+def fluidDir = new File(buildDir, 'fluidsynth')
+def fluidAbis = { ->
+    def o = System.getenv('CLOUDCANVAS_ABIS')
+    (o?.trim()) ? o.split(',').collect { it.trim() }.findAll { it } : (buildJson.android.abi_filters ?: ['arm64-v8a'])
+}()
+/** #1809 fetchFluidSynth: a typed task (the configuration cache is on) with every input declared; plain JDK calls only at execution time. */
+abstract class FetchFluidSynth extends DefaultTask {
+    @Input abstract Property<String> getZipUrl()
+    @Input abstract Property<String> getZipSha()
+    @Input abstract Property<String> getAarUrl()
+    @Input abstract Property<String> getAarSha()
+    @Input abstract ListProperty<String> getLibs()
+    @Input abstract ListProperty<String> getAbis()
+    @Internal abstract DirectoryProperty getCacheDir()
+    @OutputDirectory abstract DirectoryProperty getOutDir()
+
+    static String sha256Of(File f) {
+        def md = java.security.MessageDigest.getInstance('SHA-256')
+        f.withInputStream { s -> byte[] b = new byte[1 << 16]; int n; while ((n = s.read(b)) > 0) md.update(b, 0, n) }
+        md.digest().encodeHex().toString()
+    }
+
+    static File fetch(File cache, String url, String sha) {
+        def f = new File(cache, sha)
+        if (f.isFile() && sha256Of(f) == sha) return f
+        def tmp = new File(cache, sha + '.part')
+        new URL(url).withInputStream { i -> tmp.withOutputStream { o -> o << i } }
+        def got = sha256Of(tmp)
+        if (got != sha) { tmp.delete(); throw new GradleException("#1809 ${url}: sha256 ${got}, pinned ${sha}") }
+        if (!tmp.renameTo(f)) throw new GradleException("#1809 could not keep ${url} in ${cache}")
+        f
+    }
+
+    static void extract(java.util.zip.ZipFile z, java.util.zip.ZipEntry e, File dst) {
+        dst.parentFile.mkdirs()
+        z.getInputStream(e).withStream { i -> dst.withOutputStream { o -> o << i } }
+    }
+
+    @TaskAction
+    void run() {
+        File out = outDir.get().asFile
+        File cache = cacheDir.get().asFile
+        cache.mkdirs()
+        out.deleteDir()
+        out.mkdirs()
+        List<String> wantAbis = abis.get()
+        List<String> wantLibs = libs.get()
+        def zip = new java.util.zip.ZipFile(fetch(cache, zipUrl.get(), zipSha.get()))
+        try {
+            zip.entries().each { e ->
+                String n = e.name
+                if (e.directory) return
+                if (n.startsWith('include/')) extract(zip, e, new File(out, n))
+                for (abi in wantAbis) for (lib in wantLibs) if (n == "lib/${abi}/${lib}".toString()) extract(zip, e, new File(out, "jniLibs/${abi}/${lib}"))
+            }
+        } finally { zip.close() }
+        def aar = new java.util.zip.ZipFile(fetch(cache, aarUrl.get(), aarSha.get()))
+        try {
+            String pre = 'prefab/modules/oboe/include/'
+            aar.entries().each { e -> if (!e.directory && e.name.startsWith(pre)) extract(aar, e, new File(out, 'oboe-include/' + e.name.substring(pre.length()))) }
+        } finally { aar.close() }
+        for (abi in wantAbis) for (lib in wantLibs)
+            if (!new File(out, "jniLibs/${abi}/${lib}").isFile()) throw new GradleException("#1809 ${lib} is not in the FluidSynth build for ${abi}")
+        if (!new File(out, 'oboe-include/oboe/Oboe.h').isFile()) throw new GradleException('#1809 the Oboe headers are missing from the pinned AAR')
+    }
+}
+
+def tasksFetchFluidSynth = tasks.register('fetchFluidSynth', FetchFluidSynth) {
+    description = '#1809: fetch the pinned FluidSynth Android build and Oboe headers, verify their sha256 (sha256Of), unpack the declared libraries'
+    zipUrl.set(sfDecl.android_zip.url.toString())
+    zipSha.set(sfDecl.android_zip.sha256.toString())
+    aarUrl.set(sfDecl.oboe_headers_aar.url.toString())
+    aarSha.set(sfDecl.oboe_headers_aar.sha256.toString())
+    libs.set(sfDecl.libs.collect { it.toString() })
+    abis.set(fluidAbis.collect { it.toString() })
+    cacheDir.set(new File(gradle.gradleUserHomeDir, 'caches/cloud-canvas-pins'))
+    outDir.set(fluidDir)
+}
+
 android {
     namespace 'com.diegonmarcos.cloudcanvas'
     compileSdk 36
+    // #1809 libcanvasaudio.so (app/src/main/cpp): the fleet's pinned NDK and CMake (the same as Cloud Gallery's)
+    ndkVersion '29.0.14033849'
 
     defaultConfig {
         // Launcher label = build.json::name, the application's one name (#351).
@@ -85,6 +175,13 @@ android {
         buildConfigField "String", "UI_SECTIONS_B64",    "\"${uiSectionsB64}\""
         buildConfigField "String", "UI_BOTTOM_NAV",      "\"${uiBottomNav}\""
         buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
+        buildConfigField "String", "AUDIO_DEFAULT_ENGINE", "\"${audioDefaultEngine}\""
+        externalNativeBuild {
+            cmake {
+                // FluidSynth needs the shared C++ runtime (libc++_shared.so), so the app's own library uses it too
+                arguments "-DANDROID_STL=c++_shared", "-DFLUID_DIR=${fluidDir.absolutePath}"
+            }
+        }
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
@@ -92,6 +189,16 @@ android {
         buildConfig = true
         compose = true
     }
+
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.31.6'
+        }
+    }
+
+    // #1809 the FluidSynth libraries fetchFluidSynth unpacked (the NEEDED closure of libfluidsynth.so, Oboe 1.9.0 among them)
+    sourceSets { main { jniLibs.srcDirs += [new File(fluidDir, 'jniLibs')] } }
 
     // ONE shared Cloud-constellation key — same key as every other app in the fleet.
     signingConfigs {
@@ -115,11 +222,16 @@ android {
     }
 
     // #1787 the sampled instruments are streamed from the APK by file descriptor (MediaExtractor on assets.openFd): stored, never compressed
+    // #1809 the SoundFont bank is read in place through AAssetManager (FluidSynth's sfloader callbacks seek in it): stored as well
     androidResources {
-        noCompress 'ogg'
+        noCompress 'ogg', 'sf2'
     }
 
     packaging {
+        jniLibs {
+            // #1809 16 KB pages: native libraries stay stored and aligned in the APK (page-size-guard.json)
+            useLegacyPackaging = false
+        }
         resources {
             excludes += ['META-INF/NOTICE.md', 'META-INF/LICENSE.md',
                          'META-INF/NOTICE',    'META-INF/LICENSE']
@@ -173,3 +285,7 @@ dependencies {
     testImplementation 'org.json:json:20240303'
     testImplementation 'junit:junit:4.13.2'
 }
+
+// #1809 the FluidSynth libraries and headers exist before anything is configured, compiled or packaged
+preBuild.dependsOn tasksFetchFluidSynth
+tasks.matching { it.name.startsWith('configureCMake') || it.name.startsWith('buildCMake') || it.name.contains('JniLib') }.configureEach { dependsOn tasksFetchFluidSynth }
