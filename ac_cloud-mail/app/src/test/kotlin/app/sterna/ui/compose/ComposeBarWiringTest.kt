@@ -199,7 +199,13 @@ class ComposeBarWiringTest {
         )
         val call = code.lastIndexOf("DropdownMenu(", anchor)
         assertTrue("'$EXPANDED_MORE' is not an argument of a DropdownMenu(", call >= 0)
-        return blockAt(code, matching(code, code.indexOf('(', call)))
+        val whole = blockAt(code, matching(code, code.indexOf('(', call)))
+        // #1800 sectioned the overflow (Actions, Text, Signature, Templates, Compose). These checks
+        // are about the ACTIONS: everything up to the Text section's header, which must exist —
+        // the other sections are pinned by ComposeOptionsParityTest.
+        val textSection = whole.indexOfFirst { it.startsWith("ComposeMenuSection(R.string.compose_menu_section_text") }
+        assertTrue("the overflow's Text section header is missing (#1800)", textSection > 0)
+        return whole.subList(0, textSection)
     }
 
     /** The code lines strictly inside the first `{` at or after [at] in [code], trimmed, in order. */
