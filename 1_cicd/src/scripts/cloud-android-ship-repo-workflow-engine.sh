@@ -332,6 +332,35 @@ apps = {d for d in os.listdir(root)
 bad = []
 pending = []   # (wf, name, text, lines, start, end, final, app) -- written after pass 2 (#836)
 
+# ── #1783: a documentation-only edit in a shared lib STARTS no ship ──
+# The publish identity already drops a lib's *.md (1_cicd/src/data/identity-exclusions.json:
+# doc_globs under doc_glob_scope, except under doc_glob_keep_under, which can reach the APK),
+# so such an edit could never publish NEW bytes. It still STARTED every consumer's ship -- the
+# libs/core README edit caed6f1f started 45 -- and each started gate flushed whatever input
+# change was pending since that app's last stamp (a hashed-but-unwatched workflow edit, #870):
+# 16 apps published for a README. So the trigger says the same thing the identity says, from
+# the same data file: after the positives, `!<scope>**/<doc glob>`, then each watched lib's
+# assets/ and res/ re-included (GitHub applies paths in order, the last match wins), then the
+# other `!` exclusions LAST (fleet-config.json sits under assets/). These entries are
+# trigger-only: cloud-android-source-identity.sh skips any entry with a glob before its last
+# segment, so adding them moves no identity.
+_IDX = json.load(open(os.path.join(root, "1_cicd/src/data/identity-exclusions.json")))
+DOC_SCOPE = _IDX.get("doc_glob_scope", "")
+DOC_GLOBS = _IDX.get("doc_globs", [])
+DOC_KEEP = [k.strip("/") for k in _IDX.get("doc_glob_keep_under", [])]
+
+def trigger_only(e):
+    return "*" in e.lstrip("!").rstrip("*").rstrip("/")
+
+def doc_trigger(entries):
+    pos = [e for e in entries if not e.startswith("!") and not trigger_only(e)]
+    neg = [e for e in entries if e.startswith("!") and not trigger_only(e)]
+    libs = [e[:-3] for e in pos if DOC_SCOPE and e.startswith(DOC_SCOPE) and e.endswith("/**")]
+    if not libs or not DOC_GLOBS:
+        return pos + neg
+    return (pos + [f"!{DOC_SCOPE}**/{g}" for g in DOC_GLOBS]
+            + [f"{l}/**/{k}/**" for l in libs for k in DOC_KEEP] + neg)
+
 for wf in sorted(glob.glob(os.path.join(root, "1_cicd/src/cicd/*.yml"))):
     name = os.path.basename(wf)
     text = open(wf).read()
@@ -452,10 +481,11 @@ for wf in sorted(glob.glob(os.path.join(root, "1_cicd/src/cicd/*.yml"))):
     # in full above, never kept.
     kept = [e for e in entries
             if not e.startswith((".github/workflows/", "!"))
+            and not trigger_only(e)
             and os.path.exists(os.path.join(root, e.split("*")[0].rstrip("/") or "."))
             and not (real is not None and lib_entry.match(e) and lib_entry.match(e).group(1) not in real)]
     for e in entries:
-        if e not in kept and e not in excluded:
+        if e not in kept and e not in excluded and not trigger_only(e) and not e.startswith("!" + DOC_SCOPE):
             print(f"  dropped {name}: {e}")
 
     # Exclusions LAST: GitHub applies paths in order, and a `!` entry only
@@ -529,6 +559,8 @@ for (wf, name, text, lines, start, end, final, app, n_entries) in pending:
                 watched.append(e)   # `!` = the #876 web-dir exclusion: GitHub applies it only after the positives above
             else:
                 deferred.append(e)
+    if name.startswith("ship-"):
+        watched = doc_trigger(watched)
     block = rewrite_paths_block(lines[start + 1:end], watched, app, deferred)
     out = lines[:start] + block + lines[end:]
     # repository_dispatch, injected right under `on:`, so the refresh can start

@@ -71,6 +71,32 @@ d=json.load(open(sys.argv[1]))
 bad=[a["glob"] for a in d["allow"] if a["glob"]=="ab_cloud-libs-shared/libs/fleetconfig-model/**" or a["glob"].endswith("/assets/**") or a["glob"]==sys.argv[2]]
 sys.exit(1 if bad else 0)' "$DATA" "$MAN" && ok "the real allowlist does not cover the manifest" || fail "the real allowlist covers the manifest and would hide its fan-out"
 
+# #1783 doc-only: a README in a lib that is ON the allowlist (core: 44 consumers) starts NOTHING, judged against
+# the real triggers with no allowlist (caed6f1f started 45 ships while this guard said 'starts 0')
+green --files ab_cloud-libs-shared/libs/core/README.md && ok "a doc-only edit in an allowlisted lib starts no ship" || fail "a doc-only edit in an allowlisted lib starts ships"
+green --files ab_cloud-libs-shared/libs/core/docs/x.md ab_cloud-libs-shared/libs/ui-kit/README.md && ok "doc-only edits in several libs start no ship" || fail "doc-only edits in several libs start ships"
+n="$(python3 - "$ROOT" <<'PY'
+import sys; sys.path.insert(0, sys.argv[1] + "/1_cicd/src/scripts"); sys.dont_write_bytecode = True
+import importlib.util as u
+s = u.spec_from_file_location("g", sys.argv[1] + "/1_cicd/src/scripts/cloud-android-fanout-budget-guard.py"); g = u.module_from_spec(s); s.loader.exec_module(g)
+wf = sys.argv[1] + "/1_cicd/src/cicd"
+print(len(g.shipped(wf, ["ab_cloud-libs-shared/libs/core/README.md"])), len(g.shipped(wf, ["ab_cloud-libs-shared/libs/core/src/main/assets/x.md"])),
+      len(g.shipped(wf, ["ab_cloud-libs-shared/libs/core/src/main/res/raw/x.md"])), len(g.shipped(wf, ["ab_cloud-libs-shared/libs/core/src/main/x.kt"])))
+PY
+)"
+set -- $n
+[ "$1" = 0 ] && ok "the real triggers start 0 ships for libs/core/README.md" || fail "libs/core/README.md starts $1 ships"
+[ "$2" -gt 5 ] && [ "$2" = "$4" ] && ok "an .md under assets/ (ships in the APK) still starts every consumer ($2)" || fail "an assets/ .md starts $2 ships, a code edit $4: the doc exclusion swallowed APK content"
+[ "$3" = "$4" ] && ok "an .md under res/ still starts every consumer ($3)" || fail "a res/ .md starts $3 ships, a code edit $4"
+# M6: the doc exclusion removed from every ship workflow goes red
+mkdir "$T/wfdoc" && cp -r 1_cicd/src/cicd/. "$T/wfdoc/"
+python3 - "$T/wfdoc" <<'PY'
+import glob, sys
+for w in glob.glob(sys.argv[1] + "/ship-*.yml"):
+    t = open(w).read(); open(w, "w").write(t.replace('      - "!ab_cloud-libs-shared/libs/**/*.md"\n', ""))
+PY
+green --wf "$T/wfdoc" --files ab_cloud-libs-shared/libs/core/README.md && fail "M6 dropping the doc exclusion (a README starts every consumer) stayed green" || ok "M6 dropping the doc exclusion goes red"
+
 echo
 [ "$FAILURES" -eq 0 ] && { echo "== RESULT(#1783 fan-out budget): held =="; exit 0; }
 echo "== RESULT(#1783 fan-out budget): $FAILURES check(s) failed =="; exit 1

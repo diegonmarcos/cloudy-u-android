@@ -227,9 +227,13 @@ _paths() {
     # declaration rather than the marker is what keeps them from drifting now
     # that their answers legitimately differ.
     _excl_marked="$(printf '%s\n' "$entries" | sed -n 's/^!//p')"
+    # #1783: an entry with a glob BEFORE its last segment (`!<lib scope>**/*.md`, `<lib>/**/assets/**`)
+    # is trigger-only: the engine emits it so a doc-only edit starts no ship, and the doc rule it
+    # mirrors is applied below by _drop_docs from identity-exclusions.json. Hashing it would add a
+    # `missing` line to every identity and republish the fleet for nothing, so it is skipped here.
     excluded="$(printf '%s\n%s\n' "$_excl_marked" "$(_tests_dir)" \
-                | grep -v '^[[:space:]]*$' | _strip_glob)"
-    list="$(printf '%s\n%s\n' "$APP" "$wf"; printf '%s\n' "$entries" | grep -v '^!' | _strip_glob)"
+                | grep -v '^[[:space:]]*$' | _strip_glob | { grep -v '[*]' || true; })"
+    list="$(printf '%s\n%s\n' "$APP" "$wf"; printf '%s\n' "$entries" | grep -v '^!' | _strip_glob | { grep -v '[*]' || true; })"
     printf '%s\n' "$list" >"$RAW_TMP"   # #1783: before the exclusions, to know whether the fleet manifest is an input
     while IFS= read -r x; do
         [ -n "$x" ] || continue

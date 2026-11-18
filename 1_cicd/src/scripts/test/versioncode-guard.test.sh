@@ -7,9 +7,13 @@ FAILURES=0
 ok()   { printf 'ok     %s\n' "$1"; }
 fail() { printf 'FAIL   %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT
-OLD_SRC="ac_cloud-wallet/app/build.gradle"
-git -C "$ROOT" show "HEAD:$OLD_SRC" > "$W/old.gradle"
+# The old wall-clock block, pinned: Cloud Wallet's app/build.gradle as it was just before #1783 P5 migrated it
+# (2ff506cd3^). Every app is migrated now, so reading a live app's gradle file gave a fixture with no old block, and the
+# baseline and M3 went red for the fixture's reason, not the guard's.
+OLD_SRC="1_cicd/src/scripts/test/fixtures/versioncode-old-block.gradle.fixture"
+cp "$ROOT/$OLD_SRC" "$W/old.gradle"
 grep -q "def codeFinal" "$W/old.gradle" || { fail "fixture source $OLD_SRC has no codeFinal"; exit 1; }
+grep -q "FLEET_SOURCE_TIME" "$W/old.gradle" && { fail "fixture source $OLD_SRC is already migrated: it must carry the OLD block"; exit 1; }
 
 mk() {  # mk <dir>: a fixture repo with one old-block app (pending) and one migrated app
     local d="$1"; mkdir -p "$d/1_cicd/src/data" "$d/a/app" "$d/b/app"

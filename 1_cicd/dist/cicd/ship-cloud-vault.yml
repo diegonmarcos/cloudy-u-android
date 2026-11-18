@@ -70,6 +70,37 @@ on:
       - "ab_cloud-libs-shared/libs/ui-icons/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ac_cloud-vault/**"
+      - "!ab_cloud-libs-shared/libs/**/*.md"
+      - "ab_cloud-libs-shared/libs/bottomnav/**/assets/**"
+      - "ab_cloud-libs-shared/libs/bottomnav/**/res/**"
+      - "ab_cloud-libs-shared/libs/core/**/assets/**"
+      - "ab_cloud-libs-shared/libs/core/**/res/**"
+      - "ab_cloud-libs-shared/libs/crash/**/assets/**"
+      - "ab_cloud-libs-shared/libs/crash/**/res/**"
+      - "ab_cloud-libs-shared/libs/devtools/**/assets/**"
+      - "ab_cloud-libs-shared/libs/devtools/**/res/**"
+      - "ab_cloud-libs-shared/libs/fleet-data-client/**/assets/**"
+      - "ab_cloud-libs-shared/libs/fleet-data-client/**/res/**"
+      - "ab_cloud-libs-shared/libs/fleet-endpoints-android/**/assets/**"
+      - "ab_cloud-libs-shared/libs/fleet-endpoints-android/**/res/**"
+      - "ab_cloud-libs-shared/libs/fleet-endpoints/**/assets/**"
+      - "ab_cloud-libs-shared/libs/fleet-endpoints/**/res/**"
+      - "ab_cloud-libs-shared/libs/fleetconfig-model/**/assets/**"
+      - "ab_cloud-libs-shared/libs/fleetconfig-model/**/res/**"
+      - "ab_cloud-libs-shared/libs/fleetconfigs-agents/**/assets/**"
+      - "ab_cloud-libs-shared/libs/fleetconfigs-agents/**/res/**"
+      - "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**/assets/**"
+      - "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**/res/**"
+      - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**/assets/**"
+      - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**/res/**"
+      - "ab_cloud-libs-shared/libs/perms/**/assets/**"
+      - "ab_cloud-libs-shared/libs/perms/**/res/**"
+      - "ab_cloud-libs-shared/libs/theme-background/**/assets/**"
+      - "ab_cloud-libs-shared/libs/theme-background/**/res/**"
+      - "ab_cloud-libs-shared/libs/ui-icons/**/assets/**"
+      - "ab_cloud-libs-shared/libs/ui-icons/**/res/**"
+      - "ab_cloud-libs-shared/libs/ui-nav-bars/**/assets/**"
+      - "ab_cloud-libs-shared/libs/ui-nav-bars/**/res/**"
       - "!ac_cloud-vault/web/**"
       - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
@@ -328,6 +359,9 @@ jobs:
   build_fork_vault:
     name: "Build + publish Bitwarden fork (build-fork vault)"
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_fork }}
+    outputs:
+      # read by launch_smoke and vault_offline_emulator: false when the publish gate skipped the build
+      built: ${{ steps.gate.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
@@ -340,7 +374,28 @@ jobs:
         with:
           fetch-depth: 0
 
+      # #1783: this job publishes BOTH Vault assets (one universal fork APK, staged as Cloud-Vault.apk and
+      # Cloud-Vault-x86_64.apk) and was the one fleet publisher with no publish gate: every push its trigger
+      # matched rebuilt the fork and re-uploaded both assets plus six GHCR tags (run 44259926010, for the
+      # doc-only caed6f1f). Gated like every other ship job on the app's input identity: skip only when
+      # BOTH assets already carry it; the stamp step below writes it for both.
+      - name: Publish gate (skip when source unchanged, both assets)
+        id: gate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          real="$GITHUB_OUTPUT"; skip=true
+          for v in arm64 x86_64; do
+            o="$(mktemp)"; GITHUB_OUTPUT="$o" sh 1_cicd/dist/scripts/cloud-android-publish-gate.sh check "$WORK_DIR" "$v"
+            grep -qx 'skip=true' "$o" || skip=false
+            grep -E '^(identity|tag)=' "$o" >> "$real" || true
+          done
+          echo "skip=$skip" >> "$real"
+          echo "[publish-gate] fork job: skip=$skip"
+
       - name: Set up JDK 21
+        if: steps.gate.outputs.skip != 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -348,6 +403,7 @@ jobs:
           cache: gradle
 
       - name: Set up Android SDK
+        if: steps.gate.outputs.skip != 'true'
         uses: android-actions/setup-android@v3
         with:
           # Upstream pins compileSdk/targetSdk = 37 (gradle/libs.versions.toml
@@ -360,6 +416,7 @@ jobs:
           packages: "platforms;android-37.0 platforms;android-37.1 build-tools;37.0.0 platform-tools"
 
       - name: Checkout vault (shared Android signing key)
+        if: steps.gate.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
           repository: diegonmarcos/cloud-me-pvt-vault
@@ -371,15 +428,18 @@ jobs:
       # run died at "FATAL signing: sops not on PATH"). ORAS + jq because this
       # job now publishes to GHCR + the GH release.
       - name: Install jq
+        if: steps.gate.outputs.skip != 'true'
         run: |
           sudo apt-get update -y && sudo apt-get install -y jq
 
       - name: Install ORAS + sops (pinned, sha256-checked, fails at the download)
+        if: steps.gate.outputs.skip != 'true'
         uses: ./.github/actions/install-pinned-tools
         with:
           tools: oras sops
 
       - name: Materialize fork (clone @ pin + patch series)
+        if: steps.gate.outputs.skip != 'true'
         working-directory: ${{ env.WORK_DIR }}
         env:
           BYPASS_NIX: "1"
@@ -388,6 +448,7 @@ jobs:
           ./build.sh materialize-fork "$FORK"
 
       - name: Build fork APK (fork's own gradle wrapper + constellation signing)
+        if: steps.gate.outputs.skip != 'true'
         working-directory: ${{ env.WORK_DIR }}
         env:
           BYPASS_NIX: "1"
@@ -416,14 +477,14 @@ jobs:
       # 1_cicd/src/data/page-size-guard.json. The mutation test runs first.
       # Edit 1_cicd/src/scripts/cloud-android-page-size-inject.py, never this block.
       - name: "16 KB page size: native libs LOAD-aligned, stored, zipaligned"
-        if: always()
+        if: ${{ always() && steps.gate.outputs.skip != 'true' }}
         run: |
           bash 1_cicd/src/scripts/test/page-size-guard.test.sh
           python3 1_cicd/dist/scripts/cloud-android-page-size-guard.py "ac_cloud-vault" ${{ env.WORK_DIR }}/dist/cloud-vault-vault.apk
       # ── end MANAGED-PAGE-SIZE-GUARD ──
 
       - name: Upload fork APK as workflow artifact
-        if: always()
+        if: ${{ always() && steps.gate.outputs.skip != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: cloud-vault-bitwarden-fork-${{ github.sha }}
@@ -439,6 +500,7 @@ jobs:
       # data.autofill.cloud and is included by the first pattern. A failure here
       # stops the run before the APK is staged, pushed or released.
       - name: "Test → autofill tier (parser, matching, datasets, save, provider status)"
+        if: steps.gate.outputs.skip != 'true'
         working-directory: ${{ env.WORK_DIR }}
         env:
           GITHUB_TOKEN: ${{ secrets.BITWARDEN_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
@@ -458,17 +520,18 @@ jobs:
       # release.artifact.debug) and the x86_64 asset (Cloud-Vault-x86_64.apk,
       # CLOUDVAULT_VARIANT=x86_64 → suffixed GHCR tags + gh_asset).
       - name: Stage fork APK as constellation assets
+        if: steps.gate.outputs.skip != 'true'
         working-directory: ${{ env.WORK_DIR }}
         run: |
           cp dist/cloud-vault-vault.apk dist/Cloud-Vault.apk
           cp dist/cloud-vault-vault.apk dist/Cloud-Vault-x86_64.apk
 
       - name: Login to GHCR
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.push_oras }}
+        if: ${{ steps.gate.outputs.skip != 'true' && (github.event_name != 'workflow_dispatch' || inputs.push_oras) }}
         run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Push APK to GHCR via ORAS (arm64 + x86_64 tags)
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.push_oras }}
+        if: ${{ steps.gate.outputs.skip != 'true' && (github.event_name != 'workflow_dispatch' || inputs.push_oras) }}
         working-directory: ${{ env.WORK_DIR }}
         env:
           BYPASS_NIX: "1"
@@ -479,7 +542,7 @@ jobs:
 
       - name: Publish to GitHub Releases (both assets)
         id: publish
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.create_release }}
+        if: ${{ steps.gate.outputs.skip != 'true' && (github.event_name != 'workflow_dispatch' || inputs.create_release) }}
         working-directory: ${{ env.WORK_DIR }}
         env:
           BYPASS_NIX: "1"
@@ -501,9 +564,17 @@ jobs:
       # Edit 1_cicd/src/scripts/cloud-android-publish-guard.sh, never this block.
       - name: A run that published nothing must not be green
         if: ${{ !cancelled() }}
-        run: sh 1_cicd/dist/scripts/cloud-android-publish-guard.sh "ac_cloud-vault" "${{ steps.publish.outcome }}" "false" "${{ github.event_name != 'workflow_dispatch' || inputs.create_release }}" "${{ github.event_name }}"
+        run: sh 1_cicd/dist/scripts/cloud-android-publish-guard.sh "ac_cloud-vault" "${{ steps.publish.outcome }}" "${{ steps.gate.outputs.skip }}" "${{ steps.gate.outputs.skip != 'true' && (github.event_name != 'workflow_dispatch' || inputs.create_release) }}" "${{ github.event_name }}"
       # ── end MANAGED-PUBLISH-GUARD ──
 
+
+      - name: Stamp source identity on the published assets (both)
+        if: ${{ steps.gate.outputs.skip != 'true' && steps.publish.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sh 1_cicd/dist/scripts/cloud-android-publish-gate.sh stamp "$WORK_DIR" arm64
+          sh 1_cicd/dist/scripts/cloud-android-publish-gate.sh stamp "$WORK_DIR" x86_64
   # Install the APK this run just built on an emulator and launch it: a crash at startup fails
   # Ship (1_cicd/src/cicd/test-launch-smoke.yml). A job of this run, not a workflow_run listener,
   # so it cannot fail to trigger.
@@ -511,7 +582,7 @@ jobs:
     # The push build is the Bitwarden fork (build_and_publish is the manual legacy WebView APK);
     # it has no publish gate, so a run that uploaded no APK is skipped inside the smoke.
     needs: build_fork_vault
-    if: needs.build_fork_vault.result == 'success'
+    if: needs.build_fork_vault.result == 'success' && needs.build_fork_vault.outputs.built == 'true'
     permissions:
       contents: read
       actions: read
@@ -527,7 +598,7 @@ jobs:
   # REQUIRE_EMULATOR=1 inside, so it fails instead of skipping. Screenshots: artifact vault-offline-evidence.
   vault_offline_emulator:
     needs: build_fork_vault
-    if: needs.build_fork_vault.result == 'success'
+    if: needs.build_fork_vault.result == 'success' && needs.build_fork_vault.outputs.built == 'true'
     permissions:
       contents: read
       actions: read

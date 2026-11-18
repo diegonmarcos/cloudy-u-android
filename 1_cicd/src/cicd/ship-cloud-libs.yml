@@ -55,6 +55,11 @@ on:
       - "ab_cloud-libs-shared/libs/**"
       - "ab_cloud-libs-shared/libs/analytics/**"
       - "ab_cloud-libs/**"
+      - "!ab_cloud-libs-shared/libs/**/*.md"
+      - "ab_cloud-libs-shared/libs/**/assets/**"
+      - "ab_cloud-libs-shared/libs/**/res/**"
+      - "ab_cloud-libs-shared/libs/analytics/**/assets/**"
+      - "ab_cloud-libs-shared/libs/analytics/**/res/**"
 permissions:
   contents: write
   packages: write

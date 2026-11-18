@@ -49,6 +49,24 @@ def shipped(wf_dir, files):
     return out
 
 
+IDX = "1_cicd/src/data/identity-exclusions.json"
+
+
+def doc_only(root, files):
+    """The files the publish identity drops as documentation (identity-exclusions.json): a *.md under the shared
+    lib scope, not under assets/ or res/. Such an edit can never change an APK, so it must START nothing either
+    -- the allowlist is NOT applied to them: a lib on the allowlist (libs/core) must not hide its README starting
+    45 ships, which is what caed6f1f did while this guard printed 'starts 0'."""
+    try:
+        x = json.load(open(os.path.join(root, IDX)))
+    except OSError:
+        return []
+    scope, globs = x.get("doc_glob_scope", ""), x.get("doc_globs", [])
+    keep = x.get("doc_glob_keep_under", [])
+    return [f for f in files if scope and f.startswith(scope)
+            and any(f.endswith(g.lstrip("*")) for g in globs) and not any(k in "/" + f for k in keep)]
+
+
 def evaluate(wf_dir, files, cfg):
     rx = [fan.glob_re(a["glob"]) for a in cfg.get("allow", []) if a.get("glob")]
     counted = [f for f in files if not any(r.match(f) for r in rx)]
@@ -84,7 +102,15 @@ def main(argv):
     bad = check_config(cfg)
     limit = cfg["budget"] if budget is None else budget
     ships, allowed = evaluate(wf, files, cfg)
-    print(f"{len(files)} changed file(s), {len(allowed)} allowlisted; starts {len(ships)} app ship(s) (budget {limit})")
+    docs = doc_only(root, files)
+    doc_ships = shipped(wf, docs)
+    print(f"{len(files)} changed file(s), {len(allowed)} allowlisted; starts {len(ships)} app ship(s) (budget {limit}); "
+          f"{len(docs)} doc-only file(s) start {len(doc_ships)}")
+    if doc_ships:
+        bad.append(f"documentation-only file(s) {' '.join(docs[:3])} start {len(doc_ships)} app ship(s): "
+                   + " ".join(s[5:-4] for s in doc_ships[:12]) + (" ..." if len(doc_ships) > 12 else "")
+                   + " -- a doc edit changes no APK and must start nothing; the ship workflows' push paths need the"
+                   + f" doc exclusion cloud-android-ship-repo-workflow-engine.sh derives from {IDX}")
     if len(ships) > limit:
         bad.append(f"this change starts {len(ships)} app ships, budget is {limit}: " + " ".join(s[5:-4] for s in ships[:12])
                    + (" ..." if len(ships) > 12 else "")
