@@ -266,12 +266,15 @@ export function useVault(decl: VaultDecl, storage: KeyValueStore) {
   );
 
   // The root that was open last is mounted again on start, so its tabs are restored after a restart.
+  // [restoring] is true until that attempt ends: the shell does not open the Source picker while a vault is still coming back
   const autoOpened = useRef(false);
+  const [restoring, setRestoring] = useState(() => !!native && readLastVault(storage) !== null);
   useEffect(() => {
     if (autoOpened.current || !native) return;
     autoOpened.current = true;
     const last = readLastVault(storage);
-    if (last) void openRoot(last.root, last.name);
+    if (last) void openRoot(last.root, last.name).finally(() => setRestoring(false));
+    else setRestoring(false);
   }, [native, storage, openRoot]);
 
   // Open with: a file another app handed over is a tab of the mounted vault (text kept in memory, never written back).
@@ -680,7 +683,7 @@ export function useVault(decl: VaultDecl, storage: KeyValueStore) {
 
   return {
     hasNative: native !== null,
-    vault, busy, error, setError, recent, persisted, showHidden, dirs, files, allPaths, truncated,
+    vault, restoring, busy, error, setError, recent, persisted, showHidden, dirs, files, allPaths, truncated,
     index, indexing, tabs, active, setActive, config, noteTexts,
     pickFolder, openRoot, openTyped, closeVault, forget, toggleHidden, rebuildIndex,
     loadDir: (dir: string) => (vault ? loadDir(vault.fs, dir) : Promise.resolve([])),

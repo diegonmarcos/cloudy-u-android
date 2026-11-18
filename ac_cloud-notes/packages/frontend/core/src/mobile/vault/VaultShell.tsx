@@ -84,7 +84,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
   const uiVars = useMemo(() => uiCssVars(uiPrefs, uiDecl), [uiPrefs, uiDecl]);
 
   const mounted = useRef(false);
-  mounted.current = api.vault !== null;
+  mounted.current = api.vault !== null || api.restoring;
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
@@ -173,8 +173,8 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
 
   // nothing mounted yet (a first launch): the sidebar opens on its Source section so the way in is on screen, not behind a button
   useEffect(() => {
-    if (!api.vault) setLeftOpen(true);
-  }, [api.vault]);
+    if (!api.vault && !api.restoring) setLeftOpen(true);
+  }, [api.vault, api.restoring]);
 
   // the native top bar's Settings > Configs (and the command of the same name) open the Settings screen
   useEffect(() => {

@@ -56,3 +56,11 @@ test('the old app bars (page drawer, section bottom nav) are never brought back 
   assert.match(shell, /setVaultChrome\?\.\(true\)/);
   assert.ok(!shell.includes('setVaultChrome?.(!'), 'the chrome is not toggled by a user flag');
 });
+
+test('an empty first launch opens the Source picker, but never while the last vault is still being restored', () => {
+  const hook = readFileSync(join(SRC, 'use-vault.ts'), 'utf8');
+  assert.match(hook, /const \[restoring, setRestoring\] = useState\(\(\) => !!native && readLastVault\(storage\) !== null\)/);
+  assert.match(hook, /openRoot\(last\.root, last\.name\)\.finally\(\(\) => setRestoring\(false\)\)/);
+  assert.match(shell, /if \(!api\.vault && !api\.restoring\) setLeftOpen\(true\)/);
+  assert.match(shell, /mounted\.current = api\.vault !== null \|\| api\.restoring/);
+});
