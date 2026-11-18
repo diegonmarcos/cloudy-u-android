@@ -32,6 +32,8 @@ import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsEntries
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottom
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
+import com.diegonmarcos.superapp.navbartop2.SecondRowIcons
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
 import com.diegonmarcos.superapp.navbartop1.titleHierarchy
 import com.diegonmarcos.superapp.themebg.themeBackground
@@ -49,9 +51,10 @@ object Tags {
 
 /**
  * The shell: the shared first row (Profile opens Cloud Account, the gear opens the fleet's Configs General | Perms | About) over the page of the
- * selected section, and the shared bottom nav Draw | Play. Which sections exist is build.json::ui, read through [Decl.nav]. Both pages keep their
+ * selected section, and the shared bottom nav Draw | Painter | Board | Play | Enhancers (#1808). Which sections exist is build.json::ui, read through [Decl.nav]. Both pages keep their
  * state in the shell, so a drawing and a mix survive a switch. #1787 a section with two or more pages (Draw: Draw | Board) shows them as the
- * fleet's second row (NavBarTopSecondRow); the title hierarchy names the page.
+ * fleet's second row (NavBarTopSecondRow); the title hierarchy names the page. #1808 Enhancers uses the same mechanism for
+ * Draw Enhancer | Music Enhancer.
  */
 @Composable
 fun CanvasShell(start: CanvasStart = CanvasStart()) {
@@ -90,13 +93,17 @@ fun CanvasShell(start: CanvasStart = CanvasStart()) {
                             onSelect = { p -> pages = pages + (selected to p.id) },
                             underTopChrome = false,
                             dark = true,
+                            // #1808 Music Enhancer is still the coming-soon placeholder: its glyph is greyed in the Enhancers second row
+                            iconFor = { p -> if (selected == Decl.SECTION_ENHANCE && p.id == Decl.PAGE_MUSIC) DimPainter(rememberVectorPainter(SecondRowIcons.vector(p.icon)), PLACEHOLDER_ALPHA) else null },
                         )
                         Box(Modifier.weight(1f).fillMaxWidth()) {
                             when (selected) {
                                 Decl.SECTION_PAINTER -> PainterScreen(painter, Modifier.testTag(Tags.PAINTER))
+                                // #1808 nav: Board's own entry shows the same Board page (one controller) as Draw > Board
+                                Decl.SECTION_BOARD -> BoardScreen(board, Modifier.testTag(Tags.BOARD))
                                 Decl.SECTION_PLAY -> PlayScreen(play, start, Modifier.testTag(Tags.PLAY))
-                                Decl.SECTION_ENHANCE -> EnhanceScreen(enhance, start, Modifier.testTag(Tags.ENHANCE))
-                                Decl.SECTION_MUSIC -> MusicScreen(Modifier.testTag(Tags.MUSIC))
+                                // #1808 nav: Enhancers, second row Draw Enhancer | Music Enhancer
+                                Decl.SECTION_ENHANCE -> if (page == Decl.PAGE_MUSIC) MusicScreen(Modifier.testTag(Tags.MUSIC)) else EnhanceScreen(enhance, start, Modifier.testTag(Tags.ENHANCE))
                                 else -> if (page == Decl.PAGE_BOARD) BoardScreen(board, Modifier.testTag(Tags.BOARD)) else DrawScreen(draw, start, Modifier.testTag(Tags.DRAW))
                             }
                         }
@@ -106,8 +113,9 @@ fun CanvasShell(start: CanvasStart = CanvasStart()) {
             // #1787 the Music Enhancer placeholder is greyed by dimming its glyph INSIDE the island (DimPainter). The old veil was a
             // translucent app-background box over the last 22% of the whole bar slot, insets included, which drew a dark block in the
             // bottom-right corner of every page (outside the island, over the gesture bar).
+            // #1808 nav: Music Enhancer is a page of Enhancers now, greyed in that second row (iconFor above), so no bar entry is dimmed
             NavBarBottom(
-                entries = decl.islandEntries().map { e -> if (e.id == Decl.SECTION_MUSIC) e.copy(icon = DimPainter(e.icon, PLACEHOLDER_ALPHA)) else e },
+                entries = decl.islandEntries(),
                 selectedId = selected,
                 onSelect = { e -> selected = e.id },
                 dark = true,

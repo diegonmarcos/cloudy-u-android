@@ -8,7 +8,7 @@
   },
   "name": "cloud-canvas",
   "display_name": "Cloud Canvas",
-  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), with a sibling page Board, an infinite whiteboard (Quickdraw, MIT, vendored offline in a WebView, boards saved to app storage, #1787; the fleet's tldraw build is kept pinned but not shipped: tldraw 5 does not render without a licence key), and Play, a music mixer with a sampled grand piano (Salamander Grand Piano, CC-BY 3.0), a sampled acoustic drum kit (MuldjordKit, CC-BY 4.0) and a synth (low-latency AudioTrack, polyphony, velocity layers; the synthesized piano and kit stay as the fallback), a 4 to 8 track mixer with loop recording and WAV export. Draw Enhancer sends a picture and a preset prompt to an image model through OpenRouter (key from Configs > AI or the fleet Account); Music Enhancer is a coming-soon placeholder. #1808 Painter: the Interactive Hexagon Grid, a cell painter on hex, square, triangle and octagon grids in 2D or on a 3D sphere (Three.js r128 and Inter vendored offline in a WebView, state saved to app storage). Bottom nav Draw | Painter | Play | Draw Enhancer | Music Enhancer.",
+  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), with a sibling page Board, an infinite whiteboard (Quickdraw, MIT, vendored offline in a WebView, boards saved to app storage, #1787; the fleet's tldraw build is kept pinned but not shipped: tldraw 5 does not render without a licence key), and Play, a music mixer with a sampled grand piano (Salamander Grand Piano, CC-BY 3.0), a sampled acoustic drum kit (MuldjordKit, CC-BY 4.0) and a synth (low-latency AudioTrack, polyphony, velocity layers; the synthesized piano and kit stay as the fallback), a 4 to 8 track mixer with loop recording and WAV export. Draw Enhancer sends a picture and a preset prompt to an image model through OpenRouter (key from Configs > AI or the fleet Account); Music Enhancer is a coming-soon placeholder. #1808 Painter: the Interactive Hexagon Grid, a cell painter on hex, square, triangle and octagon grids in 2D or on a 3D sphere (Three.js r128 and Inter vendored offline in a WebView, state saved to app storage). Bottom nav Draw | Painter | Board | Play | Enhancers: Board also has its own entry (the Draw > Board page stays), and Enhancers holds Draw Enhancer and Music Enhancer on one shared second row.",
   "category": "android",
   "android": {
     "application_id": "com.diegonmarcos.cloudcanvas",
@@ -230,13 +230,13 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Canvas (#1780, #1782): bottom nav Draw | Play | Draw Enhancer | Music Enhancer, the app opens on Draw. Each section holds one page; the Draw tools, the Play views and the Enhancer's panels are drawn inside the page. Music Enhancer is a coming-soon placeholder whose entry is greyed out. #1787 the Draw section holds two sibling pages, Draw (the paint canvas) and Board (an infinite whiteboard: Quickdraw in a WebView, offline), shown as the shared second row. #1808 Painter (a hex/square/triangle/octagon cell painter, Three.js in a WebView, offline, 2D or 3D Sphere) is inserted right after Draw; nothing else moved: Draw | Painter | Play | Draw Enhancer | Music Enhancer.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Canvas (#1780, #1782): bottom nav Draw | Play | Draw Enhancer | Music Enhancer, the app opens on Draw. Each section holds one page; the Draw tools, the Play views and the Enhancer's panels are drawn inside the page. Music Enhancer is a coming-soon placeholder whose entry is greyed out. #1787 the Draw section holds two sibling pages, Draw (the paint canvas) and Board (an infinite whiteboard: Quickdraw in a WebView, offline), shown as the shared second row. #1808 Painter (a hex/square/triangle/octagon cell painter, Three.js in a WebView, offline, 2D or 3D Sphere) is inserted right after Draw; nothing else moved: Draw | Painter | Play | Draw Enhancer | Music Enhancer. #1808 nav: Board gets its own bottom-nav entry right after Painter (the Draw > Board second-row page stays as well; the entry declares no page of its own because page ids are unique app-wide, and the shell opens the same Board page for it), and the two Enhancer sections become ONE entry, Enhancers (section id enhance, kept so the `section enhance` deep link and saved selections still resolve), whose shared second row holds Draw Enhancer (the default) and Music Enhancer (still the greyed coming-soon placeholder); the old `section music` deep link opens Enhancers > Music Enhancer. Draw | Painter | Board | Play | Enhancers; no page was removed (NavShapeTest field parity).",
     "bottom_nav": [
       "draw",
       "painter",
+      "board",
       "play",
-      "enhance",
-      "music"
+      "enhance"
     ],
     "default_section": "draw",
     "configs_ui": [
@@ -273,6 +273,12 @@
         ]
       },
       {
+        "id": "board",
+        "label": "Board",
+        "icon": "account_tree",
+        "pages": []
+      },
+      {
         "id": "play",
         "label": "Play",
         "icon": "music_note",
@@ -286,21 +292,14 @@
       },
       {
         "id": "enhance",
-        "label": "Draw Enhancer",
+        "label": "Enhancers",
         "icon": "auto_awesome",
         "pages": [
           {
             "id": "enhance",
             "label": "Draw Enhancer",
             "icon": "auto_awesome"
-          }
-        ]
-      },
-      {
-        "id": "music",
-        "label": "Music Enhancer",
-        "icon": "graphic_eq",
-        "pages": [
+          },
           {
             "id": "music",
             "label": "Music Enhancer",

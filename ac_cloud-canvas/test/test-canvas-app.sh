@@ -17,6 +17,9 @@
 #   T7 #1787 the Board copies: tools/vendor-board.py check passes (Quickdraw in assets/board and the kept tldraw copy in vendor/tldraw:
 #      every pinned file present with its sha256, nothing unpinned), the shipped page loads no analytics and nothing from the network,
 #      no tldraw file is in the APK's assets (it does not render without a licence key), and hardware acceleration stays on
+#   #1808 nav: the bar is Draw | Painter | Board | Play | Enhancers (T1): Board has its own entry (its one page board) and Draw keeps
+#      Draw | Board (the entry declares no page: ids are unique app-wide, and the shell opens the Board page for it); Enhancers (section id enhance) holds the pages Draw Enhancer then Music Enhancer; Decl.kt names SECTION_BOARD, PAGE_ENHANCE,
+#      PAGE_MUSIC; NavShapeTest carries the field-parity tests (T5)
 #   #1808 Painter is inserted right after Draw (T1: Draw | Painter | Play | Draw Enhancer | Music Enhancer); its page (ui/PainterScreen.kt)
 #      is the second allowed WebView under the same rules as Board's (T2); the Painter page itself is tested by test-painter.sh
 # Each rule is then proven red by a planted mutation in a scratch copy.
@@ -35,11 +38,18 @@ app, root = sys.argv[1], sys.argv[2]
 bj = json.load(open(os.path.join(app, "build.json")))
 ui = bj["ui"]
 sec = [s["id"] for s in ui["sections"]]
-if ui["bottom_nav"] != ["draw", "painter", "play", "enhance", "music"]: print("T1 bottom_nav is %r, want draw, painter, play, enhance, music" % ui["bottom_nav"])
+if ui["bottom_nav"] != ["draw", "painter", "board", "play", "enhance"]: print("T1 bottom_nav is %r, want draw, painter, board, play, enhance" % ui["bottom_nav"])
+labels = {s["id"]: s.get("label") for s in ui["sections"]}
+if [labels.get(b) for b in ui["bottom_nav"]] != ["Draw", "Painter", "Board", "Play", "Enhancers"]: print("T1 the bar labels are not Draw | Painter | Board | Play | Enhancers")
+enhsec = [x for x in ui["sections"] if x["id"] == "enhance"]
+if not enhsec or [(p["id"], p.get("label")) for p in enhsec[0].get("pages", [])] != [("enhance", "Draw Enhancer"), ("music", "Music Enhancer")]: print("T1 the Enhancers section's pages are not Draw Enhancer, Music Enhancer")
+boardsec = [x for x in ui["sections"] if x["id"] == "board"]
+if not boardsec or boardsec[0].get("pages", []) != [] or not boardsec[0].get("icon"): print("T1 the Board entry is missing, has no icon, or declares a page of its own (the id board is Draw's page; ids are unique app-wide)")
+if "Decl.SECTION_BOARD -> BoardScreen(board" not in open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudcanvas/ui/CanvasShell.kt")).read(): print("T1 the Board entry does not open the Board page")
 if any(b not in sec for b in ui["bottom_nav"]): print("T1 a bottom_nav id is not a section")
 if ui["default_section"] != "draw": print("T1 default_section is not draw")
 decl = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudcanvas/Decl.kt")).read()
-for want in ("SECTION_DRAW = \"draw\"", "SECTION_PLAY = \"play\"", "SECTION_ENHANCE = \"enhance\"", "SECTION_MUSIC = \"music\"",
+for want in ("SECTION_DRAW = \"draw\"", "SECTION_PLAY = \"play\"", "SECTION_ENHANCE = \"enhance\"", "PAGE_MUSIC = \"music\"", "SECTION_BOARD = \"board\"", "PAGE_ENHANCE = \"enhance\"",
              "PAGE_DRAW = \"draw\"", "PAGE_BOARD = \"board\"", "SECTION_PAINTER = \"painter\"", "PAGE_PAINTER = \"painter\""):
     if want not in decl: print("T1 Decl.kt lacks " + want)
 drawsec = [x for x in ui["sections"] if x["id"] == "draw"]
@@ -103,7 +113,7 @@ for name in ("undoAndRedoWalkTheHistory", "reorderMovesALayerAndClamps", "pngRou
              "modelSelectionIsPerTaskAndPersists", "noSourceLogsOrPrintsAndNoKeyIsEmbedded", "requestCarriesModelPromptAndImageAsAMultimodalMessage", "bottomNavIsDrawPlayEnhancerMusic",
              "everyNoteMapsToTheNearestRecordedRoot", "pitchRatioShiftsBySemitones", "sampleVoicePlaysTheSampleAtTheRatio", "polyphonyIsCappedByStealingTheOldest",
              "pianoAndDrumsUseSamplesWhenTheBankHoldsThem", "theAssetSetOnDiskIsComplete", "drawSectionHasDrawAndBoardPages",
-             "createRenameDeleteKeepsAtLeastOneBoard", "writeIsAtomicAndRefusesForeignJson", "theIndexSurvivesAReopen"):
+             "createRenameDeleteKeepsAtLeastOneBoard", "bottomNavIsDrawPainterBoardPlayEnhancers", "everyEarlierPageIsStillDeclaredWithItsFields", "everyEarlierDeepLinkStillReachesItsPage", "writeIsAtomicAndRefusesForeignJson", "theIndexSurvivesAReopen"):
     if "fun " + name not in tests: print("T5 missing unit test " + name)
 cred = bj.get("configs_pages", {}).get("about", {}).get("credits", "")
 for w in ("Salamander Grand Piano", "Alexander Holm", "CC-BY 3.0", "MuldjordKit", "Lars Muldjord", "CC-BY 4.0", "Quickdraw", "MIT"):
@@ -147,6 +157,12 @@ mut "painter moved after play" T1 python3 -I -c 'import json;d=json.load(open("b
 mut "painter built as a bare WebView" T2 sed -i 's/CloudWeb.create(c, WebProfile.APP_PAGE)/WebView(c)/' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt
 mut "painter bridge open to every frame" T2 sed -i 's/if (isMainFrame) //' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt
 mut "painter not registered" T2 sed -i 's#ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt#ac_cloud-canvas/y.kt#' ../root/1_cicd/src/data/webview-guard.json
+# #1808 nav
+mut "board entry dropped" T1 python3 -I -c 'import json;d=json.load(open("build.json"));b=d["ui"]["bottom_nav"];b.remove("board");json.dump(d,open("build.json","w"))'
+mut "board entry shows draw" T1 sed -i 's/Decl.SECTION_BOARD -> BoardScreen(board/Decl.SECTION_BOARD -> DrawScreen(draw/' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/CanvasShell.kt
+mut "music enhancer page dropped" T1 python3 -I -c 'import json;d=json.load(open("build.json"));s=[x for x in d["ui"]["sections"] if x["id"]=="enhance"][0];s["pages"]=s["pages"][:1];json.dump(d,open("build.json","w"))'
+mut "enhancers relabelled" T1 python3 -I -c 'import json;d=json.load(open("build.json"));s=[x for x in d["ui"]["sections"] if x["id"]=="enhance"][0];s["label"]="Draw Enhancer";json.dump(d,open("build.json","w"))'
+mut "parity test removed" T5 sed -i 's/fun everyEarlierPageIsStillDeclaredWithItsFields/fun x/' app/src/test/java/com/diegonmarcos/cloudcanvas/NavShapeTest.kt
 mut "board not registered" T2 sed -i 's#ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt#ac_cloud-canvas/x.kt#' ../root/1_cicd/src/data/webview-guard.json
 mut "unlicensed sound" T4 sh -c 'printf x > app/src/main/assets/samples/drums/clap_v1.ogg'
 mut "sample missing" T4 rm app/src/main/assets/samples/piano/060_v2.ogg

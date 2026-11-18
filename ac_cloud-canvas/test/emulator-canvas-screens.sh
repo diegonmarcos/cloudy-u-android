@@ -7,7 +7,7 @@
 #   play-mixer     Play with the mixer filled by the demo beat
 #   enhancer-presets  Draw Enhancer with the preset picker and the expanded prompt panel open (#1782)
 #   ai-configs        Configs > AI: key state, model per task, quality, size, cost cap
-#   music-placeholder Music Enhancer coming-soon page, its nav entry greyed
+#   music-placeholder Music Enhancer coming-soon page (#1808 nav: reached by the old `section music` link, greyed in the Enhancers row)
 # #1787:
 #   play-piano        Play > Piano once the sampled grand piano is decoded (the sound line names Salamander Grand Piano)
 #   play-drums        Play > Drums, ten pads, the sampled kit (the sound line names MuldjordKit)
@@ -16,12 +16,20 @@
 #   board-drawn       Board after freehand strokes
 #   board-reloaded    Board after a force-stop and relaunch: the strokes come back from app storage (boards.txt holds the stored index)
 # #1808 Painter (the Interactive Hexagon Grid; launch extras shape/layout/mode/color are the page's overrides):
-#   painter-nav               Painter open; nav-order.txt lists the bottom-nav labels left to right (Draw, Painter, Play, ...)
+#   painter-nav               Painter open; nav-order.txt lists the bottom-nav labels left to right (Draw, Painter, Board, ...)
 #   painter-<shape>-2d        hex, square, triangle, octagon in 2D, each with strokes painted by real touch swipes
 #   painter-<shape>-3d        the same shape on the 3D Sphere, painted
 #   painter-rubber            hex 2D after a Rubber stroke across the painted cells
 #   painter-view              hex 2D in View mode
 #   painter-reloaded          hex 2D after a force-stop and relaunch: the painting comes back from app storage (painter.txt holds the stored state)
+# #1808 nav (Draw | Painter | Board | Play | Enhancers; music-placeholder above is now the old `section music` deep link landing on
+#   Enhancers > Music Enhancer):
+#   nav-five-entries          Draw open with the 5-entry bottom nav; nav5-order.txt lists the bar labels left to right
+#   board-entry               the Board entry tapped in the bottom nav (the Quickdraw page, no second row)
+#   board-entry-deeplink      `section board`
+#   enhancers-row-draw        Enhancers: the second row Draw Enhancer | Music Enhancer, Draw Enhancer open; enhancers-row.txt lists the row
+#   enhancers-row-music       Music Enhancer tapped in that row (the greyed coming-soon placeholder)
+#   enhancers-music-deeplink  `section enhance page music`
 # usage: emulator-canvas-screens.sh <canvas.apk> <enhance-presets.json> <outdir>
 set -u
 APK="$1"; DATA="$2"; OUT="$3"
@@ -98,6 +106,68 @@ dump > "$OUT/ai-configs.xml"
 start --es section music
 shot music-placeholder 5
 dump > "$OUT/music-placeholder.xml"
+# ── #1808 nav: Draw | Painter | Board | Play | Enhancers ──
+# labels() prints the labels of $2 (a comma list) found in dump $1, left to right (the lowest node of each label wins: the bottom nav)
+labels() {
+python3 -I - "$1" "$2" <<'PY2'
+import re, sys
+x = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+want = set(sys.argv[2].split(","))
+seen = {}
+for m in re.finditer(r'<node [^>]*>', x):
+    n = m.group(0)
+    for attr in ("text", "content-desc"):
+        t = re.search(' %s="([^"]*)"' % attr, n)
+        b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+        if t and b and t.group(1) in want:
+            a = list(map(int, b.groups()))
+            if a[1] > seen.get(t.group(1), (0, -1))[1]: seen[t.group(1)] = (a[0], a[1])
+print(" | ".join(k for k, _ in sorted(seen.items(), key=lambda kv: kv[1][0])))
+PY2
+}
+# tap_low: tap the LOWEST node whose text or content-desc is $1 (the bottom-nav item, not a second-row tab of the same name)
+tap_low() {
+  dump > "$OUT/ui.xml"
+  xy=$(python3 -I - "$1" "$OUT/ui.xml" <<'PY3'
+import re, sys
+want, path = sys.argv[1], sys.argv[2]
+x = open(path, encoding="utf-8", errors="replace").read()
+best = None
+for m in re.finditer(r'<node [^>]*>', x):
+    n = m.group(0)
+    t = re.search(r' text="([^"]*)"', n); c = re.search(r' content-desc="([^"]*)"', n)
+    if (t and t.group(1) == want) or (c and c.group(1) == want):
+        b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+        if b:
+            a = list(map(int, b.groups()))
+            if best is None or a[1] > best[1]: best = a
+if best: print((best[0] + best[2]) // 2, (best[1] + best[3]) // 2)
+PY3
+)
+  if [ -n "$xy" ]; then adb shell input tap $xy; echo "tapped (lowest) $1 at $xy"; else echo "no node '$1'"; fi
+}
+start --es section draw
+shot nav-five-entries 3
+dump > "$OUT/nav-five-entries.xml"
+labels "$OUT/nav-five-entries.xml" "Draw,Painter,Board,Play,Enhancers" > "$OUT/nav5-order.txt"
+echo "nav order: $(cat "$OUT/nav5-order.txt")"
+tap_low Board
+sleep 8
+shot board-entry 4
+dump > "$OUT/board-entry.xml"
+start --es section board
+sleep 8
+shot board-entry-deeplink 3
+start --es section enhance
+shot enhancers-row-draw 6
+dump > "$OUT/enhancers-row-draw.xml"
+labels "$OUT/enhancers-row-draw.xml" "Draw Enhancer,Music Enhancer" > "$OUT/enhancers-row.txt"
+echo "enhancers row: $(cat "$OUT/enhancers-row.txt")"
+tap_text "Music Enhancer"
+shot enhancers-row-music 4
+dump > "$OUT/enhancers-row-music.xml"
+start --es section enhance --es page music
+shot enhancers-music-deeplink 4
 # ── #1787 sampled instruments, the corner, Board ──
 start --es section play --es view instruments
 sleep 10   # the samples decode in the background (about 40 MB of PCM)
@@ -132,7 +202,7 @@ dump > "$OUT/painter-nav.xml"
 python3 -I - "$OUT/painter-nav.xml" > "$OUT/nav-order.txt" <<'PY'
 import re, sys
 x = open(sys.argv[1], encoding="utf-8", errors="replace").read()
-want = {"Draw", "Painter", "Play", "Draw Enhancer", "Music Enhancer"}
+want = {"Draw", "Painter", "Board", "Play", "Enhancers"}
 seen = {}
 for m in re.finditer(r'<node [^>]*>', x):
     n = m.group(0)

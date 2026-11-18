@@ -17,11 +17,12 @@ import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab
  * Draw section's sibling pages, #1787), `tool` the Board's starting tool (draw, geo, text, note...), `panel` layers (Draw),
  * `view` instruments | mixer (Play), `demo` true to fill the mixer with a sample beat, `configs` ai to open Configs > AI. #1808 `section painter`
  * opens Painter; `shape` hex | square | triangle | octagon, `layout` 2d | 3d, `mode` paint | rubber | view, `color` #rrggbb and `scale` 15..100
- * are handed to the Painter page as launch overrides (the screenshot job uses them). All optional.
+ * are handed to the Painter page as launch overrides (the screenshot job uses them). #1808 nav: `section board` opens the Board entry,
+ * `section enhance` opens Enhancers (page enhance | music), and the old `section music` opens Enhancers > Music Enhancer. All optional.
  */
 data class CanvasStart(val section: String? = null, val panel: String? = null, val view: String? = null, val demo: Boolean = false, val configs: String? = null, val page: String? = null, val tool: String? = null, val painter: Map<String, String> = emptyMap()) {
     companion object {
-        fun from(i: Intent?): CanvasStart = CanvasStart(
+        fun from(i: Intent?): CanvasStart = of(
             i?.getStringExtra("section")?.takeIf { it.isNotBlank() },
             i?.getStringExtra("panel")?.takeIf { it.isNotBlank() },
             i?.getStringExtra("view")?.takeIf { it.isNotBlank() },
@@ -31,6 +32,12 @@ data class CanvasStart(val section: String? = null, val panel: String? = null, v
             i?.getStringExtra("tool")?.takeIf { it.isNotBlank() },
             PAINTER_EXTRAS.mapNotNull { k -> i?.getStringExtra(k)?.takeIf { it.isNotBlank() }?.let { k to it } }.toMap(),
         )
+
+        /** #1808 nav: a legacy section id (`section music`, now Enhancers > Music Enhancer) is rewritten to its section and page. */
+        fun of(section: String?, panel: String?, view: String?, demo: Boolean, configs: String?, page: String?, tool: String?, painter: Map<String, String>): CanvasStart {
+            val (s, p) = Decl.resolve(section, page)
+            return CanvasStart(s, panel, view, demo, configs, p, tool, painter)
+        }
 
         /** The launch extras handed to the Painter page (its query string). */
         val PAINTER_EXTRAS = listOf("shape", "layout", "mode", "color", "scale")
