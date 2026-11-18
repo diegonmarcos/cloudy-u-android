@@ -1,0 +1,107 @@
+# ╔═════════════════════════════════════════════════════════════════
+# ║ AI-key owner engine relay through four apps (emulator, dispatch only) (#1801)                ║
+# ║ Installs the published Cloud-Lib-Decisions-Engine.apk (contract 3, the relay) with one app    ║
+# ║ per job on a Pixel 7 emulator: Cloud Browser (browser_search_ai), Cloud Calc Jev (calc_jev),  ║
+# ║ Cloud Keyboard Writer (writer_routes) and the image engine through Cloud Calc's Camera        ║
+# ║ (image_scan_recognize). Phase A: no key in the engine, the engine logs `relay <pkg> <use> ✗   ║
+# ║ no_key`. Phase B: a dummy key typed into the engine's AI keys screen, the engine logs         ║
+# ║ `relay <pkg> <use> ✓ code=<n>` (401 from OpenRouter: the engine added a key the app never    ║
+# ║ had). Scripts: ac_cloud-browser/test/emulator-relay-browser.sh, ac_cloud-calc/test/           ║
+# ║ emulator-relay-jev.sh and emulator-relay-image.sh, ac_cloud-keyboard/test/                    ║
+# ║ emulator-relay-writer.sh (helpers: ab_cloud-libs-shared/libs/decisions-engine/test/).         ║
+# ║ Evidence: the `relay-<proof>` artifacts. Not a gate: run on request only (rules/ci.md cost    ║
+# ║ budget).                                                                                      ║
+# ╚═════════════════════════════════════════════════════════════════
+name: "Test → #1801 AI-key owner engine relay (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release the APKs are downloaded from"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - proof: browser
+            assets: "Cloud-Browser-x86_64.apk"
+            script: bash ac_cloud-browser/test/emulator-relay-browser.sh apk/Cloud-Lib-Decisions-Engine.apk apk/Cloud-Browser-x86_64.apk
+          - proof: jev
+            assets: "Cloud-Calc-x86_64.apk"
+            script: bash ac_cloud-calc/test/emulator-relay-jev.sh apk/Cloud-Lib-Decisions-Engine.apk apk/Cloud-Calc-x86_64.apk
+          - proof: writer
+            # no x86_64 keyboard asset is published: the universal Cloud-Keyboard.apk is installed
+            assets: "Cloud-Keyboard.apk"
+            script: bash ac_cloud-keyboard/test/emulator-relay-writer.sh apk/Cloud-Lib-Decisions-Engine.apk apk/Cloud-Keyboard.apk
+          - proof: image
+            assets: "Cloud-Calc-x86_64.apk Cloud-Lib-Ml-L-Image-Mlkit.apk"
+            script: bash ac_cloud-calc/test/emulator-relay-image.sh apk/Cloud-Lib-Decisions-Engine.apk apk/Cloud-Lib-Ml-L-Image-Mlkit.apk apk/Cloud-Calc-x86_64.apk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ac_cloud-browser/test
+            ac_cloud-calc/test
+            ac_cloud-keyboard/test
+            ab_cloud-libs-shared/libs/decisions-engine/test
+      - name: Fetch the published APKs (engine + the proof's app)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.release_tag }}
+          ASSETS: ${{ matrix.assets }}
+        run: |
+          set -eu
+          args=(-p 'Cloud-Lib-Decisions-Engine.apk')
+          for a in $ASSETS; do args+=(-p "$a"); done
+          gh release download "${TAG:-latest}" -R "$GITHUB_REPOSITORY" "${args[@]}" -D apk
+          ls -l apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot the emulator and prove (attempt 1)
+        id: try1
+        continue-on-error: true
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ${{ matrix.script }} out
+      # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
+      - name: Boot the emulator and prove (attempt 2)
+        if: steps.try1.outcome != 'success'
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ${{ matrix.script }} out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relay-${{ matrix.proof }}
+          path: out
+          if-no-files-found: warn
