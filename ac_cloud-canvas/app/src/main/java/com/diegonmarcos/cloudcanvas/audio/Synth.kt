@@ -5,14 +5,22 @@ import kotlin.math.exp
 import kotlin.math.pow
 import kotlin.math.sin
 
-/** The instruments of the Play page. Every sound is synthesized here at run time: no sample file, no third-party audio. */
+/**
+ * The instruments of the Play page. Piano and Drums play real recorded samples (Samples.kt, #1787: Salamander Grand Piano and MuldjordKit)
+ * once [SampleBank.current] is decoded; the synthesized voices below stay as the Synth instrument, the Clap pad (the acoustic kit has no clap)
+ * and the fallback while the samples load or if an asset cannot be decoded.
+ */
 enum class Inst(val label: String) { Piano("Piano"), Drums("Drums"), Synth("Synth") }
 
 enum class Wave(val label: String) { Sine("Sine"), Saw("Saw"), Square("Square"), Triangle("Triangle") }
 
-/** The eight drum pads, in pad order. */
+/**
+ * The drum pads, in pad order. A recorded loop stores a pad by its ordinal, so new pads are only ever appended (#1787 added Tom mid and
+ * Ride for the sampled kit); the first eight keep their ordinals.
+ */
 enum class Drum(val label: String) {
-    Kick("Kick"), Snare("Snare"), Clap("Clap"), HatClosed("Hat closed"), HatOpen("Hat open"), TomLow("Tom low"), TomHigh("Tom high"), Crash("Crash")
+    Kick("Kick"), Snare("Snare"), Clap("Clap"), HatClosed("Hat closed"), HatOpen("Hat open"), TomLow("Tom low"), TomHigh("Tom high"), Crash("Crash"),
+    TomMid("Tom mid"), Ride("Ride")
 }
 
 /** One sounding voice: mixes its next [n] mono samples into [out] and says whether it is still alive. */
@@ -81,6 +89,7 @@ class DrumVoice(private val drum: Drum, private val vel: Float, private val sr: 
     private val life = when (drum) {
         Drum.Kick -> 0.45; Drum.Snare -> 0.3; Drum.Clap -> 0.25; Drum.HatClosed -> 0.08
         Drum.HatOpen -> 0.5; Drum.TomLow -> 0.5; Drum.TomHigh -> 0.4; Drum.Crash -> 1.2
+        Drum.TomMid -> 0.45; Drum.Ride -> 1.0
     }
 
     private fun noise(): Float {
@@ -96,6 +105,8 @@ class DrumVoice(private val drum: Drum, private val vel: Float, private val sr: 
                 Drum.Kick -> sweep(sec, 150.0, 45.0, 28.0) * exp(-sec / 0.16).toFloat()
                 Drum.TomLow -> sweep(sec, 160.0, 90.0, 18.0) * exp(-sec / 0.2).toFloat()
                 Drum.TomHigh -> sweep(sec, 260.0, 150.0, 18.0) * exp(-sec / 0.16).toFloat()
+                Drum.TomMid -> sweep(sec, 210.0, 120.0, 18.0) * exp(-sec / 0.18).toFloat()
+                Drum.Ride -> hat() * exp(-sec / 0.3).toFloat() * 0.5f + sin(2 * PI * 520.0 * sec).toFloat() * 0.15f * exp(-sec / 0.4).toFloat()
                 Drum.Snare -> noise() * 0.6f * exp(-sec / 0.07).toFloat() + sweep(sec, 220.0, 170.0, 20.0) * 0.5f * exp(-sec / 0.06).toFloat()
                 Drum.Clap -> {
                     val burst = if ((sec % 0.012) < 0.006 && sec < 0.04) 1f else 0f
@@ -142,8 +153,13 @@ class ClickVoice(accent: Boolean, private val sr: Int) : Voice {
 }
 
 object Voices {
-    fun create(inst: Inst, note: Int, wave: Wave, vel: Float, sr: Int): Voice = when (inst) {
-        Inst.Drums -> DrumVoice(Drum.entries[Math.floorMod(note, Drum.entries.size)], vel, sr)
+    /** The voice for one note: the sampled piano or kit from [bank] when it holds that sound, else the synthesized voice. */
+    fun create(inst: Inst, note: Int, wave: Wave, vel: Float, sr: Int, bank: SampleBank? = SampleBank.current): Voice = when (inst) {
+        Inst.Drums -> {
+            val d = Drum.entries[Math.floorMod(note, Drum.entries.size)]
+            bank?.let { SampleVoice.drum(it, d, vel, sr) } ?: DrumVoice(d, vel, sr)
+        }
+        Inst.Piano -> bank?.let { SampleVoice.piano(it, note, vel, sr) } ?: ToneVoice(note, inst, wave, vel, sr)
         else -> ToneVoice(note, inst, wave, vel, sr)
     }
 }

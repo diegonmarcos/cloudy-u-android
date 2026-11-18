@@ -8,6 +8,13 @@
 #   enhancer-presets  Draw Enhancer with the preset picker and the expanded prompt panel open (#1782)
 #   ai-configs        Configs > AI: key state, model per task, quality, size, cost cap
 #   music-placeholder Music Enhancer coming-soon page, its nav entry greyed
+# #1787:
+#   play-piano        Play > Piano once the sampled grand piano is decoded (the sound line names Salamander Grand Piano)
+#   play-drums        Play > Drums, ten pads, the sampled kit (the sound line names MuldjordKit)
+#   corner-*          the bottom-right corner of Draw and Play (the old Music Enhancer veil drew a dark block there), cropped when ImageMagick is present
+#   board-empty       Draw > Board: the offline tldraw whiteboard
+#   board-drawn       Board after freehand strokes
+#   board-reloaded    Board after a force-stop and relaunch: the strokes come back from app storage (boards.txt holds the stored index)
 # usage: emulator-canvas-screens.sh <canvas.apk> <enhance-presets.json> <outdir>
 set -u
 APK="$1"; DATA="$2"; OUT="$3"
@@ -84,5 +91,31 @@ dump > "$OUT/ai-configs.xml"
 start --es section music
 shot music-placeholder 5
 dump > "$OUT/music-placeholder.xml"
+# ── #1787 sampled instruments, the corner, Board ──
+start --es section play --es view instruments
+sleep 10   # the samples decode in the background (about 40 MB of PCM)
+shot play-piano 3
+dump > "$OUT/play-piano.xml"
+tap_text "Drums"; sleep 1
+shot play-drums 3
+dump > "$OUT/play-drums.xml"
+corner() { command -v convert >/dev/null && convert "$OUT/$1.png" -gravity SouthEast -crop "$((W*2/5))x$((H/5))+0+0" +repage "$OUT/corner-$1.png" && echo "cropped corner-$1"; }
+corner play-drums; corner draw-drawing
+start --es section draw --es page board
+sleep 8
+shot board-empty 4
+dump > "$OUT/board-empty.xml"
+# draw tool (tldraw's shortcut D after a tap focuses the page), then three strokes
+adb shell input tap $((W/2)) $((H/2)); adb shell input keyevent KEYCODE_D; sleep 1
+by=$((H*35/100))
+sw $((W/5)) $by $((W*4/5)) $((by+200)) 500; sw $((W/5)) $((by+400)) $((W*4/5)) $((by+300)) 500; sw $((W/2)) $((by-100)) $((W/2)) $((by+600)) 500
+sleep 3   # the bridge saves 0.8 s after the last change
+shot board-drawn 2
+start --es section draw --es page board
+sleep 8
+shot board-reloaded 4
+dump > "$OUT/board-reloaded.xml"
+adb shell "run-as $PKG sh -c 'ls -l files/boards; cat files/boards/boards.json'" > "$OUT/boards.txt" 2>&1 || true
 timeout 60 adb logcat -d > "$OUT/logcat.txt" || true
+grep -E "CanvasSamples|chromium|CloudWeb" "$OUT/logcat.txt" | tail -40 > "$OUT/samples-and-board-log.txt" || true
 ls -l "$OUT"

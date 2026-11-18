@@ -19,7 +19,8 @@
   ".otf",
   ".woff",
   ".woff2",
-  ".dict"
+  ".dict",
+  ".ogg"
  ],
  "maven_repos": [
   "https://dl.google.com/android/maven2",
@@ -274,7 +275,7 @@
   "ac_cloud-canvas": {
    "licence": "LicenseRef-NoLicenseGranted",
    "kind": "own",
-   "what": "Cloud Canvas app (Draw: a paint app on the Compose canvas; Play: a music mixer with a piano, drum pads and a synth, a multitrack mixer and WAV export; every sound is synthesized in code, no sample files, no third-party audio)",
+   "what": "Cloud Canvas app (Draw: a paint app on the Compose canvas, and Board, the fleet's tldraw whiteboard vendored offline in a WebView; Play: a music mixer with a sampled piano and drum kit and a synth, a multitrack mixer and WAV export). Own code; the bundled third-party assets are listed per directory below (#1787)",
    "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
   },
   "ac_cloud-chat": {
@@ -525,6 +526,27 @@
    "licence": "CC-BY-SA-2.1-JP AND CC0-1.0",
    "kind": "vendored-data",
    "what": "Hardtech-BioMed's served 3D models and texts (#1777), read at run time: body.glb and brain.glb are derived from BodyParts3D 4.0 (DBCLS, CC BY-SA 2.1 Japan, shared under the same licence), dna.glb and content.json are original CC0 works; every file is in assets.json and held by ad_Hardtech-BioMed/test/test-assets-licensed.sh; see LICENSE.md."
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano": {
+   "licence": "CC-BY-3.0",
+   "kind": "vendored-asset",
+   "what": "#1787 Salamander Grand Piano V3 by Alexander Holm: 90 Ogg Vorbis samples (30 roots every 3 semitones x 3 velocity layers), mono, shortened; mapping in NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0; shown in Cloud Canvas Configs > About > Credits"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums": {
+   "licence": "CC-BY-4.0",
+   "kind": "vendored-asset",
+   "what": "#1787 MuldjordKit by Lars Muldjord (FreePats stereo edition 2020-10-18): 27 Ogg Vorbis samples (9 kit pieces x 3 velocity layers), mono, shortened; mapping in NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto (FreePats project), CC-BY 4.0; shown in Cloud Canvas Configs > About > Credits"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board": {
+   "licence": "LicenseRef-tldraw",
+   "kind": "vendored",
+   "what": "#1787 the fleet's tldraw 5.2.3 build (diegonmarcos/cloudy-h-webapps-desk c_Suite/tldraw) and the tldraw CDN files it loads, pinned in PIN.json; tldraw licence (production watermark without a key, accepted for this personal app); fonts OFL-1.1 (per asset); the bridge tldraw/cloud-board-bridge.js is own code",
+   "source_url": "https://diegonmarcos.github.io/tldraw/ + https://cdn.tldraw.com/5.2.3/",
+   "attribution": "tldraw (https://tldraw.dev); shown in Cloud Canvas Configs > About > Credits and by the in-app 'Made with tldraw' watermark"
   }
  },
  "assets": {
@@ -911,6 +933,804 @@
   "ad_Capital-Stack-FinTerminal/app/src/main/res/font/roboto_medium.ttf": {
    "licence": "Apache-2.0",
    "licence_source": "Roboto (googlefonts/roboto-2) is published by Google under the Apache License 2.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/021_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/021_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/021_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/024_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/024_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/024_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/027_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/027_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/027_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/030_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/030_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/030_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/033_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/033_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/033_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/036_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/036_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/036_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/039_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/039_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/039_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/042_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/042_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/042_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/045_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/045_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/045_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/048_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/048_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/048_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/051_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/051_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/051_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/054_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/054_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/054_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/057_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/057_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/057_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/060_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/060_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/060_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/063_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/063_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/063_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/066_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/066_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/066_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/069_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/069_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/069_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/072_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/072_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/072_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/075_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/075_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/075_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/078_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/078_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/078_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/081_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/081_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/081_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/084_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/084_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/084_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/087_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/087_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/087_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/090_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/090_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/090_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/093_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/093_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/093_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/096_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/096_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/096_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/099_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/099_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/099_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/102_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/102_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/102_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/105_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/105_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/105_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/108_v1.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/108_v2.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/piano/108_v3.ogg": {
+   "licence": "CC-BY-3.0",
+   "licence_source": "Salamander Grand Piano V3 (Alexander Holm) is CC-BY 3.0 (archive README and https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html); source sample per file in samples/piano/NOTICE.md",
+   "source_url": "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz",
+   "attribution": "Salamander Grand Piano V3 by Alexander Holm, CC-BY 3.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/crash_v1.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/crash_v2.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/crash_v3.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/hat_closed_v1.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/hat_closed_v2.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/hat_closed_v3.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/hat_open_v1.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/hat_open_v2.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/hat_open_v3.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/kick_v1.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/kick_v2.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/kick_v3.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/ride_v1.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/ride_v2.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/ride_v3.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/snare_v1.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/snare_v2.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/snare_v3.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/tom_high_v1.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/tom_high_v2.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/tom_high_v3.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/tom_low_v1.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/tom_low_v2.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/tom_low_v3.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/tom_mid_v1.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/tom_mid_v2.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/samples/drums/tom_mid_v3.ogg": {
+   "licence": "CC-BY-4.0",
+   "licence_source": "MuldjordKit (Lars Muldjord, FreePats edition) is CC-BY 4.0 (https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html and the kit's drumkit.xml); source sample per file in samples/drums/NOTICE.md",
+   "source_url": "https://github.com/freepats/muldjordkit/releases/download/2020-10-18/MuldjordKit-20201018.h2drumkit",
+   "attribution": "MuldjordKit by Lars Muldjord, FreePats edition by Roberto, CC-BY 4.0"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-Bold.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-Bold.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-BoldItalic.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-BoldItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-Medium.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-Medium.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexMono-MediumItalic.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexMono-MediumItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-Bold.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-Bold.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-BoldItalic.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-BoldItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-Medium.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-Medium.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSans-MediumItalic.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSans-MediumItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-Bold.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-Bold.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-BoldItalic.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-BoldItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-Medium.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-Medium.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/IBMPlexSerif-MediumItalic.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "IBM Plex (IBM) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/IBMPlexSerif-MediumItalic.woff2",
+   "attribution": "IBM Plex (IBM), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Bold.woff2",
+   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Bold_Italic.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Bold_Italic.woff2",
+   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Regular.woff2",
+   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
+  },
+  "ac_cloud-canvas/app/src/main/assets/board/cdn/5.2.3/fonts/Shantell_Sans-Informal_Regular_Italic.woff2": {
+   "licence": "OFL-1.1",
+   "licence_source": "Shantell Sans (Arrow Type) is published under the SIL Open Font License 1.1; shipped by tldraw 5.2.3 on its CDN, pinned in board/PIN.json",
+   "source_url": "https://cdn.tldraw.com/5.2.3/fonts/Shantell_Sans-Informal_Regular_Italic.woff2",
+   "attribution": "Shantell Sans (Arrow Type), SIL OFL 1.1"
   }
  },
  "cargo_lockfiles": [

@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +57,7 @@ import com.diegonmarcos.cloudcanvas.audio.Inst
 import com.diegonmarcos.cloudcanvas.audio.LoopClock
 import com.diegonmarcos.cloudcanvas.audio.MixerState
 import com.diegonmarcos.cloudcanvas.audio.Notes
+import com.diegonmarcos.cloudcanvas.audio.TouchVelocity
 import com.diegonmarcos.cloudcanvas.audio.Wave
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -131,6 +133,8 @@ private fun InstrumentsView(ctl: PlayController, s: com.diegonmarcos.cloudcanvas
             }
         }
         Text("Plays on Track ${s.selected}" + if (s.recording) " (recording)" else "", color = colorResource(R.color.app_text_secondary), fontSize = 12.sp)
+        // #1787 which sound plays: the sampled instrument once decoded, the synthesized one meanwhile
+        Text(ctl.soundLine(s.inst), color = colorResource(R.color.app_text_secondary), fontSize = 11.sp, modifier = Modifier.testTag("canvas_play_sound"))
         if (s.inst == Inst.Drums) DrumPads(ctl) else Keyboard(ctl, s, (ctl.octave + 1) * 12)
     }
 }
@@ -164,7 +168,8 @@ private fun KeyBox(ctl: PlayController, s: com.diegonmarcos.cloudcanvas.audio.Se
                     val d = awaitFirstDown()
                     d.consume()
                     down = true
-                    ctl.engine.noteOn(s.inst, s.wave, note)
+                    // #1787 velocity from the strike point: near the front edge of the key is a firm hit
+                    ctl.engine.noteOn(s.inst, s.wave, note, TouchVelocity.of(if (size.height > 0) d.position.y / size.height else 0.7f))
                     waitForUpOrCancellation()
                     down = false
                     ctl.engine.noteOff(s.inst, note)
@@ -177,7 +182,8 @@ private fun KeyBox(ctl: PlayController, s: com.diegonmarcos.cloudcanvas.audio.Se
 @Composable
 private fun DrumPads(ctl: PlayController) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Drum.entries.chunked(4).forEach { row ->
+        // ten pads (#1787 added Tom mid and Ride), two rows of five; a hit low on a pad is louder
+        Drum.entries.chunked(5).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 row.forEach { drum ->
                     var down by remember { mutableStateOf(false) }
@@ -187,9 +193,10 @@ private fun DrumPads(ctl: PlayController) {
                             .border(1.dp, colorResource(R.color.app_outline), RoundedCornerShape(10.dp))
                             .pointerInput(drum) {
                                 awaitEachGesture {
-                                    awaitFirstDown().consume()
+                                    val d = awaitFirstDown()
+                                    d.consume()
                                     down = true
-                                    ctl.engine.noteOn(Inst.Drums, Wave.Sine, drum.ordinal)
+                                    ctl.engine.noteOn(Inst.Drums, Wave.Sine, drum.ordinal, TouchVelocity.of(if (size.height > 0) d.position.y / size.height else 0.7f))
                                     waitForUpOrCancellation()
                                     down = false
                                     ctl.engine.noteOff(Inst.Drums, drum.ordinal)

@@ -12,6 +12,7 @@
   ],
   "pending": [],
   "usages": [
+    {"app": "Cloud Canvas", "usage": "Draw > Board: the fleet's tldraw whiteboard vendored offline (assets/board, WebViewAssetLoader + tldraw CDN answered from the APK), boards saved through a main-frame-only web message listener (#1787)", "profile": "APP_PAGE", "file": "ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt"},
   {
    "app": "Cloud C3 Webserver",
    "usage": "Pages browser frame, File Explorer preview and Open embedded over the core's loopback /__app__/ (#1682)",

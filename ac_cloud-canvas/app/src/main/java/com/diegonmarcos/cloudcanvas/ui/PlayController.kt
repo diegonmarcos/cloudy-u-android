@@ -12,6 +12,8 @@ import com.diegonmarcos.cloudcanvas.audio.Inst
 import com.diegonmarcos.cloudcanvas.audio.MixEngine
 import com.diegonmarcos.cloudcanvas.audio.NoteEvent
 import com.diegonmarcos.cloudcanvas.audio.OfflineMix
+import com.diegonmarcos.cloudcanvas.audio.SampleBank
+import com.diegonmarcos.cloudcanvas.audio.SampleLoader
 import com.diegonmarcos.cloudcanvas.audio.Wave
 import com.diegonmarcos.cloudcanvas.audio.WavEncoder
 import com.diegonmarcos.cloudcanvas.draw.ExportNames
@@ -27,7 +29,25 @@ class PlayController(private val ctx: Context, demo: Boolean) {
 
     init { if (demo) loadDemo() }
 
-    fun start() = audio.start(engine)
+    /** Bumped when the sample bank finishes decoding, so the sound line redraws. */
+    var samplesReady by mutableIntStateOf(0)
+
+    fun start() {
+        // #1787 the sampled piano and kit decode once per process in the background; the synthesized voices play meanwhile
+        SampleLoader.loadAsync(ctx) { ok, failed -> samplesReady = ok; if (failed > 0) message = "$failed sample(s) could not be decoded: those notes stay synthesized" }
+        audio.start(engine)
+    }
+
+    /** What the instrument plays right now, for the line under the instrument chips. */
+    fun soundLine(inst: Inst): String {
+        @Suppress("UNUSED_VARIABLE") val tick = samplesReady
+        val bank = SampleBank.current
+        return when (inst) {
+            Inst.Piano -> if (bank?.piano?.isNotEmpty() == true) "Sampled grand piano: Salamander Grand Piano V3 (Alexander Holm, CC-BY 3.0)" else "Piano samples loading: synthesized piano meanwhile"
+            Inst.Drums -> if (bank?.drums?.isNotEmpty() == true) "Sampled acoustic kit: MuldjordKit (Lars Muldjord, CC-BY 4.0); Clap is synthesized" else "Drum samples loading: synthesized kit meanwhile"
+            Inst.Synth -> "Synthesizer: oscillators computed on the phone"
+        }
+    }
 
     fun stopAll() {
         engine.stop()

@@ -113,6 +113,10 @@ class MixEngine(val sampleRate: Int) {
             }
         }
 
+        // polyphony (#1787): at most MAX_VOICES sound at once; past that the oldest voice is stolen (a sampled piano note rings for
+        // seconds, so a fast run or a held chord would otherwise pile up without bound)
+        while (voices.size > MAX_VOICES) voices.removeAt(0)
+
         // mix every voice into its track's buffer (track 0 = the metronome, heard at unit gain)
         val iter = voices.iterator()
         while (iter.hasNext()) {
@@ -139,6 +143,14 @@ class MixEngine(val sampleRate: Int) {
                 recordFrom = -1
             }
         }
+    }
+
+    /** The voices sounding now (live, scheduled and the metronome's). */
+    val voiceCount: Int get() = voices.size
+
+    companion object {
+        /** The engine's polyphony: the most voices mixed at once. */
+        const val MAX_VOICES = 64
     }
 
     /** Starts [inner] after [delay] silent samples of the current block. */

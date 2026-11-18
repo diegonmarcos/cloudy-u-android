@@ -8,7 +8,7 @@
   },
   "name": "cloud-canvas",
   "display_name": "Cloud Canvas",
-  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), and Play, a music mixer with a piano, drum pads and a synth (all synthesized, low-latency AudioTrack), a 4 to 8 track mixer with loop recording and WAV export. Draw Enhancer sends a picture and a preset prompt to an image model through OpenRouter (key from Configs > AI or the fleet Account); Music Enhancer is a coming-soon placeholder. Bottom nav Draw | Play | Draw Enhancer | Music Enhancer.",
+  "description": "Cloud Canvas (#1780): Draw, a paint app on the shared Compose canvas (brush, pencil, marker, eraser, fill, shapes, line, text, eyedropper, layers, undo/redo, pinch zoom, PNG export through the Storage Access Framework), with a sibling page Board, an infinite whiteboard (the fleet's tldraw build vendored offline in a WebView, boards saved to app storage, #1787), and Play, a music mixer with a sampled grand piano (Salamander Grand Piano, CC-BY 3.0), a sampled acoustic drum kit (MuldjordKit, CC-BY 4.0) and a synth (low-latency AudioTrack, polyphony, velocity layers; the synthesized piano and kit stay as the fallback), a 4 to 8 track mixer with loop recording and WAV export. Draw Enhancer sends a picture and a preset prompt to an image model through OpenRouter (key from Configs > AI or the fleet Account); Music Enhancer is a coming-soon placeholder. Bottom nav Draw | Play | Draw Enhancer | Music Enhancer.",
   "category": "android",
   "android": {
     "application_id": "com.diegonmarcos.cloudcanvas",
@@ -124,7 +124,8 @@
         "libs:ai",
         "libs:model-catalogue",
         "libs:text-tools",
-        "libs:fleet-data-client"
+        "libs:fleet-data-client",
+        "libs:web-core"
       ]
     },
     "libs:core": {
@@ -206,6 +207,11 @@
       "_doc": "#1782 the ITextTools binder: the OpenRouter key the fleet Account manages is read on use through TextToolsClient.revealAiKey; this app keeps no copy of the fleet key.",
       "dir": "../ab_cloud-libs-shared/libs/text-tools",
       "type": "library"
+    },
+    "libs:web-core": {
+      "_doc": "#1787 THE embedded web view (CloudWeb.create(ctx, WebProfile.APP_PAGE), render-process recovery, WebViewAssetLoader) for Draw > Board, shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/web-core",
+      "type": "library"
     }
   },
   "tests": {
@@ -217,13 +223,13 @@
       ]
     },
     "unit": {
-      "_doc": "This app's JVM suite in app/src/test: the stroke/undo model, layer ops, the PNG export path, the mixer mute/solo logic, the loop recorder timing model and the WAV encoder.",
+      "_doc": "This app's JVM suite in app/src/test: the stroke/undo model, layer ops, the PNG export path, the mixer mute/solo logic, the loop recorder timing model and the WAV encoder. #1787: SampleTest (the piano root, layer and pitch-ratio map, the sample voice, polyphony, velocity from the touch point, the asset set on disk) and BoardTest (the board store: create, rename, delete, atomic save, index survival, refusals).",
       "task": ":app:testDebugUnitTest",
       "enabled": true
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Canvas (#1780, #1782): bottom nav Draw | Play | Draw Enhancer | Music Enhancer, the app opens on Draw. Each section holds one page; the Draw tools, the Play views and the Enhancer's panels are drawn inside the page. Music Enhancer is a coming-soon placeholder whose entry is greyed out.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Canvas (#1780, #1782): bottom nav Draw | Play | Draw Enhancer | Music Enhancer, the app opens on Draw. Each section holds one page; the Draw tools, the Play views and the Enhancer's panels are drawn inside the page. Music Enhancer is a coming-soon placeholder whose entry is greyed out. #1787 the Draw section holds two sibling pages, Draw (the paint canvas) and Board (an infinite whiteboard: the fleet's tldraw build in a WebView, offline), shown as the shared second row.",
     "bottom_nav": [
       "draw",
       "play",
@@ -244,6 +250,11 @@
             "id": "draw",
             "label": "Draw",
             "icon": "edit"
+          },
+          {
+            "id": "board",
+            "label": "Board",
+            "icon": "account_tree"
           }
         ]
       },
@@ -311,18 +322,23 @@
     },
     "about": {
       "tagline": "Paint and make music",
-      "description": "Cloud Canvas has two pages, picked in the bottom nav. Draw is a paint app with a brush, pencil, marker, eraser, fill, line, rectangle, ellipse, text and an eyedropper, a colour picker with recent colours, layers, undo and redo, pinch zoom and pan, canvas size presets and PNG export to a folder you choose. Play is a music mixer with a piano, drum pads and a synth, a multitrack mixer with loop recording and WAV export. Every sound is synthesized on the phone.",
+      "description": "Cloud Canvas has four sections, picked in the bottom nav. Draw holds two pages: Draw, a paint app with a brush, pencil, marker, eraser, fill, line, rectangle, ellipse, text and an eyedropper, a colour picker with recent colours, layers, undo and redo, pinch zoom and pan, canvas size presets and PNG export to a folder you choose; and Board, an infinite whiteboard (tldraw) that works offline and keeps every board on the phone. Play is a music mixer with a sampled grand piano, a sampled acoustic drum kit and a synth, a multitrack mixer with loop recording and WAV export. The piano and drum sounds are real recordings bundled in the app; the synth is computed on the phone.",
       "features": [
         "Draw: brush, pencil, marker, eraser, fill, line, rectangle, ellipse, text, eyedropper",
         "Layers with visibility, opacity and order; undo and redo; pinch zoom and pan",
         "Canvas size presets; open a picture to paint over; export PNG to a folder you choose; share",
-        "Play: piano, drum pads, synth on a low-latency audio path",
+        "Board: an infinite whiteboard (tldraw) with shapes, arrows, text, sticky notes and freehand ink; several named boards saved on the phone; works with no network",
+        "Play: a sampled grand piano (3 velocity layers, a sample every 3 semitones), a sampled acoustic drum kit (10 pads) and a synth, on a low-latency audio path with polyphony and touch velocity",
         "Mixer with 4 to 8 tracks: volume, pan, mute, solo, loop recording; tempo and metronome; WAV export"
       ],
       "screens": [
         {
           "name": "Draw",
           "what": "The canvas with tools, colour, size, opacity and layers."
+        },
+        {
+          "name": "Board",
+          "what": "The infinite whiteboard with the board picker (new, rename, delete)."
         },
         {
           "name": "Instruments",
@@ -336,9 +352,11 @@
       "guide": [
         "Pick a tool and draw; two fingers zoom and pan.",
         "Export PNG asks for a folder once.",
-        "In Play, press Record and play: one loop pass is recorded on the selected track."
+        "In Play, press Record and play: one loop pass is recorded on the selected track.",
+        "In Draw, the second row switches between Draw and Board; a board saves itself as you draw.",
+        "On the piano and the pads, a hit near the bottom edge is louder than one near the top."
       ],
-      "privacy": "No ads, no trackers, no network and no microphone: loops are recorded as notes. Files are written only to the folder you pick. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback.",
+      "privacy": "No ads, no trackers and no microphone: loops are recorded as notes. Board is served from the app itself and needs no network; boards are stored only in the app's private storage. Files are written only to the folder you pick. The only network call is the Draw Enhancer's, when you run it. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback.",
       "backends": [],
       "related": [
         {
@@ -349,7 +367,8 @@
           "app": "ac_cloud-store",
           "why": "Installs and updates this app."
         }
-      ]
+      ],
+      "credits": "Sampled instruments: Salamander Grand Piano V3 by Alexander Holm, licensed CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/), from https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html (archive.org/details/SalamanderGrandPianoV3), a subset (every 3 semitones, velocity layers 4, 9 and 14 of 16) mixed to mono, shortened and encoded as Ogg Vorbis. MuldjordKit by Lars Muldjord (drumgizmo.org), FreePats stereo edition by Roberto (FreePats project), licensed CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/), from https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html, three velocity layers of nine kit pieces mixed to mono, shortened and encoded as Ogg Vorbis. Board: tldraw 5.2.3 (tldraw licence, https://github.com/tldraw/tldraw/blob/main/LICENSE.md; shows the 'Made with tldraw' watermark), as built by the fleet's Suite (cloudy-h-webapps-desk c_Suite/tldraw), with IBM Plex (SIL OFL 1.1) and Shantell Sans (SIL OFL 1.1) fonts."
     }
   },
   "perms": {
