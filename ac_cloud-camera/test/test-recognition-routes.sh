@@ -84,7 +84,8 @@ def checks(s):
     need("W2 Camera's on-device half is YAMNet", "onDevice = { engine.classify(pcm, rate) }" in cs)
     fl = code(s["calc_flow"])
     need("W2 Calc's sounds are routed", "RecognitionRoutes.routed(RecognitionRoutes.SOUND, chosen, RecognitionRoutes.online(ctx), hasToken, SoundConfig.fallback()" in fl)
-    need("W2 Calc checks the token before the model", "JevStore.token(ctx).value != null" in fl)
+    # #1801 the key lives in the AI-key owner engine: Calc asks it whether one is held (presence only) before the model.
+    need("W2 Calc checks the token before the model", "val hasToken = if (chosen == SoundConfig.OPENROUTER) JevStore.token(ctx).present else null" in fl)
     need("W2 Calc's photos are routed", "RecognitionRoutes.image(ctx, request(ctx, route, context)) { engine(ctx).recognize(photo, it) }" in code(s["calc_vision"]))
     # W3
     st = code(s["cam_settings"])
@@ -123,7 +124,7 @@ MUTATIONS = [
     ("unrecorded", "routes", "return record(type, chosen, r, clock())", "return r"),
     ("cam-photo-direct", "cam_scanner", "RecognitionRoutes.image(ctx, request(ctx, route)) { engine.recognize(file, it) }", "engine.recognize(file, request(ctx, route))"),
     ("cam-sound-fixed", "cam_sound", "SoundRouting.identify(route ?: SoundPrefs.route(ctx)", "SoundRouting.identify(route ?: SoundConfig.ML"),
-    ("calc-no-token-check", "calc_flow", "JevStore.token(ctx).value != null", "true"),
+    ("calc-no-token-check", "calc_flow", "JevStore.token(ctx).present", "true"),
     ("calc-photo-direct", "calc_vision", "RecognitionRoutes.image(ctx, request(ctx, route, context)) { engine(ctx).recognize(photo, it) }", "engine(ctx).recognize(photo, request(ctx, route, context))"),
     ("cam-no-sound-switch", "cam_settings", "binding.soundRouteSetting.setOnClickListener { pickSoundRoute() }", "Unit"),
     ("cam-layout-gone", "cam_layout", 'android:id="@+id/sound_route_setting"', 'android:id="@+id/sound_route_gone"'),
