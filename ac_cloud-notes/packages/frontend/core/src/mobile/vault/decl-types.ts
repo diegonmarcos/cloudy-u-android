@@ -78,7 +78,7 @@ export interface VaultDecl {
     modes: { id: 'raw' | 'edit' | 'view'; label: string; icon: string }[];
   };
   /** #1717 the Configs screen: its page strip and the UI page's choices */
-  configs: { default_page: string; pages: { id: string; label: string; icon: string }[]; ui: UiDecl };
+  configs: { default_page: string; pages: { id: string; label: string; icon: string; /** the shared Configs strip tab (Android) this page opens */ native?: string }[]; ui: UiDecl };
   /** #1717 per handler, the tab view each mode shows; a mode that is missing is not offered */
   view_modes: Record<string, Partial<Record<'raw' | 'edit' | 'view', string>>>;
   commands: CommandRow[];

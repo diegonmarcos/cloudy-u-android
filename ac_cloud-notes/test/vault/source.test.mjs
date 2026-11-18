@@ -86,15 +86,16 @@ test('the native side answers every declared root and performs the grant actions
   assert.match(KT, /storageVolumes/);
 });
 
-test('the Source section lives in the left sidebar; the floating open-file button is gone and its import moved there', () => {
+test('the Source section lives in the left sidebar; the floating open-file button and the file explorer are gone', () => {
   const rd = f => readFileSync(join(SRC, f), 'utf8');
   assert.match(rd('sidebar/Sidebar.tsx'), /<SourcePanel api=\{api\} decl=\{decl\}/);
   const panel = rd('sidebar/SourcePanel.tsx');
   assert.match(panel, /data-testid="source-reason"/);
   assert.match(panel, /api\.grantSource\(r\)/);
-  assert.match(panel, /new Event\('cloud-notes:open-file'\)/);
+  assert.ok(!panel.includes('cloud-notes:open-file'));
   const act = readFileSync(join(APP, 'packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt'), 'utf8');
   assert.ok(!/FloatingActionButton/.test(act), 'MainActivity draws no floating button');
   const app = readFileSync(join(APP, 'packages/frontend/apps/android/src/app.tsx'), 'utf8');
-  assert.match(app, /addEventListener\('cloud-notes:open-file'/);
+  assert.ok(!app.includes('cloud-notes:open-file'), 'nothing listens for the removed explorer event');
+  assert.match(app, /addEventListener\('cloud-notes:view-intent'/);
 });

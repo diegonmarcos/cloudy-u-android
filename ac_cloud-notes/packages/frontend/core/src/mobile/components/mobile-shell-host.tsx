@@ -33,7 +33,7 @@ export const useMobileShellTabs = (metadata: TabsMetadata = {}) => {
 };
 
 export const MobileShellHost = ({ children }: PropsWithChildren) => {
-  const [metadata, setMetadata] = useState<TabsMetadata | null>(null);
+  const [, setMetadata] = useState<TabsMetadata | null>(null);
   const value = useMemo(() => setMetadata, []);
   const workbench = useService(WorkbenchService).workbench;
   const workspaceSelectorOpen = useLiveData(workbench.workspaceSelectorOpen$);

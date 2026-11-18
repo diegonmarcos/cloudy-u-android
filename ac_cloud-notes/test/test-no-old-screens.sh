@@ -23,6 +23,13 @@ gone = [
 for g in gone:
     check(not os.path.exists(os.path.join(root, g)), 'removed: ' + g)
 
+# 1b. the old file-import explorer is gone (its helper, its component, its event); open-with stays
+app = rd('packages/frontend/apps/android/src/app.tsx')
+for gone_name in ('ExternalFileOpener', 'importVaultFolder', 'importExternalFile', 'openExternalFile', 'cloud-notes:open-file'):
+    check(gone_name not in app, 'app.tsx has no ' + gone_name)
+check(not os.path.exists(os.path.join(root, 'packages/frontend/apps/android/src/vault-import.ts')), 'removed: apps/android/src/vault-import.ts')
+check('OpenWithListener' in app and 'cloud-notes:view-intent' in app, 'open-with is still wired (OpenWithListener, cloud-notes:view-intent)')
+
 # 2. the workbench declares only the vault and the 404 fallback
 router = rd(M, 'workbench-router.ts')
 paths = re.findall(r"path:\s*'([^']*)'", router)

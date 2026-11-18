@@ -23,8 +23,8 @@ cargo test -p cloud_notes_mobile_native --lib -- --nocapture 2>&1 | tee /tmp/pha
 grep -q "test tests::$RUST_TEST ... ok" /tmp/phase0-rust.log || {
   echo "::error::Rust test $RUST_TEST did not run and pass"; exit 1; }
 
-echo "== js: light web specs (nbstore adapter, nav routes, vault import, graph) =="
-SPECS=4
+echo "== js: light web specs (nbstore adapter, nav routes, graph) =="
+SPECS=3
 TOOLS="$(mktemp -d)"
 ( cd "$TOOLS" && npm init -y >/dev/null && npm i --no-audit --no-fund --no-package-lock --legacy-peer-deps "vitest@$VITEST" >/dev/null )
 ln -s "$TOOLS/node_modules" "$ROOT/node_modules"

@@ -25,7 +25,7 @@ Obsidian plugin to Cloud Notes feature. status: builtin = delivered in the app n
 | `slash-command` | planned | Slash menu in the editor |
 | `editor-status` | built-in | Status bar: words, characters, backlinks, path |
 | `bookmarks` | planned | Bookmarks pane |
-| `markdown-importer` | built-in | Existing vault import into the workspace (vault-import.ts) |
+| `markdown-importer` | not applicable | Not needed: a folder is opened in place as the vault, nothing is imported or converted |
 | `zk-prefixer` | not applicable | Unique-note prefixer: not wanted, notes keep their names |
 | `random-note` | planned | Open a random note command |
 | `outline` | built-in | Right sidebar: Outline from headings |
@@ -66,4 +66,4 @@ Obsidian plugin to Cloud Notes feature. status: builtin = delivered in the app n
 | `show-hidden-files` | built-in | Files pane toggle: show dotfiles and the .obsidian folder |
 | `new-3d-graph` | planned | 3D graph; the 2D graph ships now |
 
-Totals: built-in 20, planned 24, not applicable 9.
+Totals: built-in 19, planned 24, not applicable 10.

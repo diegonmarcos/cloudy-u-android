@@ -588,10 +588,6 @@
       {
         "id": "mode-view",
         "label": "Switch to View mode (rendered, read only)"
-      },
-      {
-        "id": "import-file",
-        "label": "Import a file or folder into the workspace"
       }
     ],
     "file_types": [
@@ -806,14 +802,19 @@
       }
     },
     "configs": {
-      "_doc": "#1717 the Configs screen of the vault: a strip of pages (the shared fleet Configs pages General, Perms and About, then UI, then Vault = what <vault>/.obsidian says). ui: the appearance settings the UI page offers, persisted under storage_key; font families are CSS stacks, size is the base text size in px, scale is the overall UI scale in percent.",
-      "default_page": "general",
+      "_doc": "#1717 the Configs screen of the vault: a strip of pages: the shared fleet Configs strip (General, Perms, Agents, Logcat, X-Ray App, About; each has a native start id and opens the Android shared Configs screen on that tab), then this app's own pages: Notes (vault settings), Sources (where it may read and write), UI (font family, size, scale) and Vault (what <vault>/.obsidian says). ui: the appearance settings the UI page offers, persisted under storage_key; font families are CSS stacks, size is the base text size in px, scale is the overall UI scale in percent.",
+      "default_page": "notes",
       "pages": [
-        {"id": "general", "label": "General", "icon": "gear"},
-        {"id": "perms", "label": "Perms", "icon": "smartphone"},
-        {"id": "about", "label": "About", "icon": "info"},
+        {"id": "general", "label": "General", "icon": "gear", "native": "general"},
+        {"id": "perms", "label": "Perms", "icon": "lock", "native": "perms"},
+        {"id": "agents", "label": "Agents", "icon": "terminal", "native": "agents"},
+        {"id": "logcat", "label": "Logcat", "icon": "file", "native": "logcat"},
+        {"id": "xray", "label": "X-Ray App", "icon": "search", "native": "xray"},
+        {"id": "about", "label": "About", "icon": "file", "native": "about"},
+        {"id": "notes", "label": "Notes", "icon": "vault"},
+        {"id": "sources", "label": "Sources", "icon": "smartphone"},
         {"id": "ui", "label": "UI", "icon": "edit"},
-        {"id": "vault", "label": "Vault", "icon": "vault"}
+        {"id": "vault", "label": "Vault", "icon": "folder"}
       ],
       "ui": {
         "storage_key": "cloud-notes:vault:ui-prefs",
@@ -940,8 +941,8 @@
       {
         "id": "markdown-importer",
         "kind": "core",
-        "status": "builtin",
-        "feature": "Existing vault import into the workspace (vault-import.ts)"
+        "status": "na",
+        "feature": "Not needed: a folder is opened in place as the vault, nothing is imported or converted"
       },
       {
         "id": "zk-prefixer",
@@ -1226,20 +1227,6 @@
       "web_root": "packages/frontend/apps/android/src",
       "activity": "packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt",
       "kotlin_root": "packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro"
-    },
-    "html_import": {
-      "_doc": "Read by test/test-html-import-route.sh (#547). entrypoint is where an opened file is dispatched to an importer; native_plugin is the ONE file declaring which extensions the device will read (its SUPPORTED set); converter is upstream's HtmlTransformer source, read to derive the options importHTMLToDoc accepts. Which extensions ARE html is derived from Python's built-in MIME table, never written in the tester.",
-      "entrypoint": "packages/frontend/apps/android/src/app.tsx",
-      "native_plugin": "packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/plugin/ExternalFilePlugin.kt",
-      "converter": "blocksuite/cloud-notes/widgets/linked-doc/src/transformers/html.ts"
-    },
-    "file_explorer": {
-      "_doc": "Read by test/test-file-explorer.sh (#547). entrypoint is where the explorer renders and picks a file; plugin_ts is the web-side plugin type; native_plugin is the Kotlin class that must implement every method that type declares; activity is where the view-intent event the explorer listens for is dispatched; source_menu (#1717) is the Vault sidebar's Source section, which dispatches the open event since the floating button was removed. Method and event names are DERIVED from these files, never written in the tester.",
-      "entrypoint": "packages/frontend/apps/android/src/app.tsx",
-      "plugin_ts": "packages/frontend/apps/android/src/plugins/external-file.ts",
-      "native_plugin": "packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/plugin/ExternalFilePlugin.kt",
-      "activity": "packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt",
-      "source_menu": "packages/frontend/core/src/mobile/vault/sidebar/SourcePanel.tsx"
     }
   },
   "configs_pages": {

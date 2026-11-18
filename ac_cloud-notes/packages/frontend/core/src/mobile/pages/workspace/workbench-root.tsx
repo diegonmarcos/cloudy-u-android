@@ -5,11 +5,7 @@ import {
 import { ViewRoot } from '@cloud-notes/core/modules/workbench/view/view-root';
 import { WorkspaceService } from '@cloud-notes/core/modules/workspace';
 import { useLiveData, useService } from '@toeverything/infra';
-import {
-  type PropsWithChildren,
-  useEffect,
-  useRef,
-} from 'react';
+import { useEffect, useRef } from 'react';
 import { type RouteObject, useLocation } from 'react-router-dom';
 
 import {

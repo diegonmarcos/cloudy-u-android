@@ -15,7 +15,7 @@ import { CanvasMode } from './canvas-mode/CanvasMode';
 import { collapseAll } from './core/file-index';
 import { modeOfTab, modesFor, toggledMode, type ViewMode } from './core/tab-store';
 import type { VaultDecl } from './decl-types';
-import { FILE_VIEW_LABEL, FileView } from './file-mode/FileView';
+import { FileView } from './file-mode/FileView';
 import { baseName, handlerFor, stem } from './file-types';
 import { Icon } from './icons';
 import { wordCount } from './markdown';
@@ -25,14 +25,12 @@ import { SettingsPane } from './settings/SettingsPane';
 import { Palette } from './palette';
 import { Menu, type MenuItem } from './sidebar/Menu';
 import { Sidebar } from './sidebar/Sidebar';
-import { requestImport } from './sidebar/SourcePanel';
 import type { VaultApi } from './use-vault';
 import { VaultGraph } from './vault-graph';
 
 const PANE_LABEL: Record<string, string> = { outline: 'Outline', backlinks: 'Backlinks', outgoing: 'Links', tags: 'Tags' };
 // Obsidian's sidebar tabs are icons (Lucide, see icons.tsx).
 const PANE_ICON: Record<string, string> = { outline: 'outline', backlinks: 'backlinks', outgoing: 'outgoing', tags: 'tags' };
-const VIEW_LABEL: Record<string, string> = { ...FILE_VIEW_LABEL, canvas: 'Canvas' };
 
 type Special = 'graph' | 'configs' | null;
 
@@ -112,7 +110,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
   const handler = tab ? handlerFor(decl, tab.path) : null;
   const mode: ViewMode | null = special === null ? api.mode : null;
   const modes = tab ? modesFor(decl, tab.path) : [];
-  const { prefs, setPrefs } = api;
+  const { setPrefs } = api;
 
   const showLeft = useCallback((view: 'files' | 'recent' | 'search' | 'source') => {
     setPrefs({ view });
@@ -161,7 +159,6 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
       case 'mode-raw': return tab ? api.setMode(tab.path, 'raw') : undefined;
       case 'mode-edit': return tab ? api.setMode(tab.path, 'edit') : undefined;
       case 'mode-view': return tab ? api.setMode(tab.path, 'view') : undefined;
-      case 'import-file': return requestImport();
       default: return undefined;
     }
   }, [api, tab, toggleMode, showLeft, setPrefs, decl.limits.skip_dirs]);

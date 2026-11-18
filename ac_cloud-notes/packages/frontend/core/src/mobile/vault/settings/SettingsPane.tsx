@@ -1,5 +1,7 @@
-// Configs (#1717): one screen, a strip of pages. The three the whole fleet offers (General, Perms, About), then UI (font
-// family, text size, overall scale) and Vault (what <vault>/.obsidian says). The pages come from build.json::vault.configs.
+// Configs (#1717): one screen, a strip of pages from build.json::vault.configs. The first six are the shared fleet Configs strip
+// (General, Perms, Agents, Logcat, X-Ray App, About): a tap opens the Android shared Configs screen on that tab (the native
+// host's openFleetConfigsPage); they are not redrawn here. Then this app's own pages: Notes (vault settings), Sources (where it may
+// read and write), UI (font family, text size, overall scale) and Vault (what <vault>/.obsidian says).
 import { useState } from 'react';
 
 import type { UiPrefs } from '../core/ui-prefs';
@@ -10,6 +12,10 @@ import { SourcePanel } from '../sidebar/SourcePanel';
 import type { VaultApi } from '../use-vault';
 
 declare const BUILD_CONFIG: { appVersion: string };
+
+/** The native shell's bridge (NotesShell.Host); absent in a browser. */
+const fleetHost = (): { openFleetConfigsPage?: (id: string) => void } | undefined =>
+  (window as unknown as { CloudNotesHost?: { openFleetConfigsPage?: (id: string) => void } }).CloudNotesHost;
 
 const bundleVersion = (): string => {
   try { return BUILD_CONFIG.appVersion; } catch { return 'unknown'; }
@@ -33,17 +39,34 @@ const Row = ({ label, children, hint }: { label: string; children: React.ReactNo
 
 export const SettingsPane = ({ api, decl, ui, onUi, followTheme, onToggleTheme }: SettingsProps) => {
   const [page, setPage] = useState(decl.configs.default_page);
+  const [nativeNote, setNativeNote] = useState<string | null>(null);
   const cfg = decl.configs;
   const fs = cfg.ui.font_size;
   const sc = cfg.ui.scale;
   const counts = api.fileIndex.counts({ showHidden: api.showHidden, skipDirs: decl.limits.skip_dirs });
   const byStatus = (s: string) => decl.plugins.filter(p => p.status === s).length;
 
+  const openPage = (p: { id: string; label: string; native?: string }) => {
+    if (p.native === undefined) {
+      setNativeNote(null);
+      setPage(p.id);
+      return;
+    }
+    // a shared Configs tab: the Android screen opens on it; the page the user was on stays
+    const h = fleetHost();
+    if (h?.openFleetConfigsPage) {
+      setNativeNote(null);
+      try { h.openFleetConfigsPage(p.native); } catch { setNativeNote(`${p.label} could not be opened.`); }
+    } else {
+      setNativeNote(`${p.label} is part of the shared Configs of the Android app; it opens there.`);
+    }
+  };
+
   const body = () => {
     switch (page) {
-      case 'general':
+      case 'notes':
         return (
-          <div data-testid="settings-general">
+          <div data-testid="settings-notes">
             <h3>Vault</h3>
             <Row label="Name">{api.vault?.name ?? 'No vault mounted'}</Row>
             <Row label="Contents">{counts.files} files, {counts.folders} folders{api.walked ? '' : ' (reading)'}</Row>
@@ -59,23 +82,17 @@ export const SettingsPane = ({ api, decl, ui, onUi, followTheme, onToggleTheme }
             <h3>Editing</h3>
             <Row label="Autosave">after {decl.limits.autosave_ms} ms of no typing</Row>
             <Row label="Open tabs">up to {decl.layout.tab_max}</Row>
-          </div>
-        );
-      case 'perms':
-        return (
-          <div data-testid="settings-perms">
-            <p className="cnv-dim">Where Cloud Notes may read and write. A root that is not granted shows why and how to grant it.</p>
-            <SourcePanel api={api} decl={decl} />
-          </div>
-        );
-      case 'about':
-        return (
-          <div data-testid="settings-about">
-            <Row label="App">Cloud Notes</Row>
+            <h3>App</h3>
             <Row label="Web bundle">{bundleVersion()}</Row>
-            <Row label="Vault route">{decl.route}</Row>
             <Row label="Obsidian plugins mapped">{byStatus('builtin')} built in, {byStatus('planned')} planned, {byStatus('na')} not applicable</Row>
             <Row label="Config folder read">{decl.config_dir}</Row>
+          </div>
+        );
+      case 'sources':
+        return (
+          <div data-testid="settings-sources">
+            <p className="cnv-dim">Where Cloud Notes may read and write. A root that is not granted shows why and how to grant it.</p>
+            <SourcePanel api={api} decl={decl} />
           </div>
         );
       case 'ui':
@@ -110,12 +127,16 @@ export const SettingsPane = ({ api, decl, ui, onUi, followTheme, onToggleTheme }
     <div className="cnv-pane" data-testid="configs-pane" data-page={page}>
       <div className="cnv-pagetabs" role="tablist" aria-label="Configs pages" data-testid="configs-tabs">
         {cfg.pages.map(p => (
-          <button key={p.id} type="button" role="tab" className="cnv-pagetab" aria-selected={p.id === page} data-page-tab={p.id} onClick={() => setPage(p.id)}>
+          <button key={p.id} type="button" role="tab" className="cnv-pagetab" aria-selected={p.id === page} data-page-tab={p.id} data-native={p.native ?? undefined} onClick={() => openPage(p)}>
             <Icon name={p.icon} size={14} />{p.label}
           </button>
         ))}
       </div>
-      <div className="cnv-note">{body()}<div style={{ height: 96 }} /></div>
+      <div className="cnv-note">
+        {nativeNote && <div className="cnv-banner" data-testid="settings-native-note">{nativeNote}</div>}
+        {body()}
+        <div style={{ height: 96 }} />
+      </div>
     </div>
   );
 };

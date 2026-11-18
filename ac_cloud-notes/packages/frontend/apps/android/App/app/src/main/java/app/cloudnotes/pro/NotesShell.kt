@@ -101,6 +101,9 @@ internal class NotesShell(
     /** #1697 the gear opens the fleet Configs strip (General | Agents, Perms, Logcat, X-Ray App, About); General > App opens Configs > UI above. */
     private var fleetConfigsOpen by mutableStateOf(false)
 
+    /** #1717 the tab of the fleet Configs strip to open first (agents, logcat, xray, perms, about, general), or null for General. */
+    private var fleetConfigsStart by mutableStateOf<String?>(null)
+
     /** The object registered on the WebView as `CloudNotesHost`; the bridge thread may write the state. */
     inner class Host {
         @JavascriptInterface
@@ -135,6 +138,14 @@ internal class NotesShell(
         /** #1717 the vault's App pages: the fleet Configs strip (General, Agents, Perms, Logcat, X-Ray App, About). */
         @JavascriptInterface
         fun openFleetConfigs() {
+            fleetConfigsStart = null
+            fleetConfigsOpen = true
+        }
+
+        /** #1717 the vault's Settings screen lists the shared strip's tabs; a tap opens the strip on that tab. */
+        @JavascriptInterface
+        fun openFleetConfigsPage(id: String) {
+            fleetConfigsStart = id.takeIf { it.isNotBlank() }
             fleetConfigsOpen = true
         }
 
@@ -166,7 +177,7 @@ internal class NotesShell(
         CompositionLocalProvider(LocalNavUiDefault provides NavUiDecl.fromBuildConfig(BuildConfig.UI_NAV_UI_B64)) {
         CloudNotesTheme(if (dark) ThemeMode.Dark else ThemeMode.Light) {
             if (configsOpen) ConfigsUi(dark)
-            if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = dark, onDismiss = { fleetConfigsOpen = false }, onAppConfigs = { configsOpen = true })
+            if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = dark, onDismiss = { fleetConfigsOpen = false; fleetConfigsStart = null }, onAppConfigs = { configsOpen = true }, startId = fleetConfigsStart)
             if (vaultChrome) {
                 // #1717 the vault is its own shell (sidebar toggle, breadcrumb, mode switch, bottom pill): the editor fills the screen
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {

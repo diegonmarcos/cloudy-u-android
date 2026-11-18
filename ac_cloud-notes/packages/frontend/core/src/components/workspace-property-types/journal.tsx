@@ -27,7 +27,6 @@ import { FilterValueMenu } from '../filter/filter-value-menu';
 import type { PropertyValueProps } from '../properties/types';
 import * as styles from './journal.css';
 
-const stopPropagation = (e: React.MouseEvent) => e.stopPropagation();
 export const JournalValue = ({ readonly }: PropertyValueProps) => {
   const t = useI18n();
 

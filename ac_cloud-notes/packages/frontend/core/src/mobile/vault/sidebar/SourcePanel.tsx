@@ -1,18 +1,14 @@
 // Sidebar section C, Source: choose the root ("Parent") to mount. The declared roots (Emulated,
 // Termux home, Nix home, External drive) come from VaultSource; a root that cannot be opened
 // shows its reason and the action that grants it. Below them: a folder picked in the system
-// picker, the recent vaults, a typed path, and the import of a file or folder into the workspace
-// (the former floating button).
+// picker, the recent vaults and a typed path. (The floating open-file button and the file explorer that imported into the old
+// workspace are gone: the roots above are browsed in the sidebar tree.)
 import { useState } from 'react';
 
 import type { VaultDecl } from '../decl-types';
 import { sourceOfRoot } from '../core/vault-source';
 import { Icon } from '../icons';
 import type { VaultApi } from '../use-vault';
-
-/** The event the workspace's file importer listens for (apps/android/src/app.tsx, ExternalFileOpener). */
-export const IMPORT_EVENT = 'cloud-notes:open-file';
-export const requestImport = () => window.dispatchEvent(new Event('cloud-notes:open-file'));
 
 export const SourcePanel = ({ api, decl, onMounted }: { api: VaultApi; decl: VaultDecl; onMounted?: () => void }) => {
   const [typed, setTyped] = useState(decl.open.direct_roots[0] ?? '');
@@ -53,8 +49,6 @@ export const SourcePanel = ({ api, decl, onMounted }: { api: VaultApi; decl: Vau
         </div>
       ))}
 
-      {!rootsOnly && (
-        <>
       <div className="cnv-menu-title">Picked folder</div>
       <button type="button" className="cnv-row" disabled={api.busy} onClick={() => after(api.pickFolder())} data-testid="source-pick">
         <Icon name="folder" size={16} /> Choose a folder in the system picker
@@ -83,13 +77,8 @@ export const SourcePanel = ({ api, decl, onMounted }: { api: VaultApi; decl: Vau
         <button type="button" className="cnv-chip cnv-primary" disabled={api.busy} onClick={() => after(api.openTyped(typed))}>Open</button>
       </div>
 
-        </>
-      )}
 
       <div className="cnv-menu-title">Workspace</div>
-      <button type="button" className="cnv-row" onClick={requestImport} data-testid="source-import">
-        <Icon name="import" size={16} /> Import a file or folder into the workspace
-      </button>
       {api.vault && (
         <button type="button" className="cnv-row" onClick={api.closeVault} data-testid="source-close">
           <Icon name="close" size={16} /> Close this vault

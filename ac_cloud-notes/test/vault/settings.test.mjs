@@ -3,17 +3,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { decl, SRC } from './helpers.mjs';
+import { APP, decl, SRC } from './helpers.mjs';
 
 const pane = readFileSync(join(SRC, 'settings/SettingsPane.tsx'), 'utf8');
 const shell = readFileSync(join(SRC, 'VaultShell.tsx'), 'utf8');
 
-test('every declared Configs page has a body (the last one, vault, is the default branch)', () => {
-  for (const p of decl.configs.pages.filter(x => x.id !== 'vault')) assert.ok(pane.includes(`case '${p.id}':`), `page ${p.id}`);
+test('the Configs strip: the shared fleet tabs open the Android screen, the app pages have a body (vault is the default branch)', () => {
+  const fleet = decl.configs.pages.filter(p => p.native !== undefined).map(p => [p.id, p.native]);
+  assert.deepEqual(fleet, [['general', 'general'], ['perms', 'perms'], ['agents', 'agents'], ['logcat', 'logcat'], ['xray', 'xray'], ['about', 'about']]);
+  assert.deepEqual(decl.configs.pages.filter(p => p.native === undefined).map(p => p.id), ['notes', 'sources', 'ui', 'vault']);
+  for (const p of decl.configs.pages.filter(x => x.native === undefined && x.id !== 'vault')) assert.ok(pane.includes(`case '${p.id}':`), `page ${p.id}`);
+  assert.match(pane, /h\.openFleetConfigsPage\(p\.native\)/);
+  assert.equal(decl.configs.default_page, 'notes');
+  const kt = readFileSync(join(APP, 'packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/NotesShell.kt'), 'utf8');
+  assert.match(kt, /fun openFleetConfigsPage\(id: String\)/);
+  assert.match(kt, /startId = fleetConfigsStart/);
   assert.match(pane, /default:\s*\n\s*return <ConfigsPane/);
 });
 
-test('the pages keep what each carried: Perms reuses the Source grant panel, Vault keeps the .obsidian reader', () => {
+test('the pages keep what each carried: Sources reuses the Source grant panel, Vault keeps the .obsidian reader', () => {
   assert.match(pane, /<SourcePanel api=\{api\} decl=\{decl\} \/>/);
   assert.match(pane, /<ConfigsPane config=\{api\.config\}/);
 });

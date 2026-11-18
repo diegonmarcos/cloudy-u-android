@@ -20,7 +20,6 @@ import {
 } from '@cloud-notes/core/modules/cloud';
 import { registerNativePreviewHandlers } from '@cloud-notes/core/modules/code-block-preview-renderer';
 import { DocsService } from '@cloud-notes/core/modules/doc';
-import { ImportService } from '@cloud-notes/core/modules/import';
 import { GlobalContextService } from '@cloud-notes/core/modules/global-context';
 import { I18nProvider } from '@cloud-notes/core/modules/i18n';
 import { LifecycleService } from '@cloud-notes/core/modules/lifecycle';
@@ -32,7 +31,6 @@ import { PopupWindowProvider } from '@cloud-notes/core/modules/url';
 import { ClientSchemeProvider } from '@cloud-notes/core/modules/url/providers/client-schema';
 import { configureBrowserWorkbenchModule } from '@cloud-notes/core/modules/workbench';
 import {
-  getCloudNotesWorkspaceSchema,
   WorkspacesService,
 } from '@cloud-notes/core/modules/workspace';
 import { configureBrowserWorkspaceFlavours } from '@cloud-notes/core/modules/workspace-engine';
@@ -47,7 +45,6 @@ import {
   MarkdownAdapter,
   titleMiddleware,
 } from '@blocksuite/cloud-notes/shared/adapters';
-import { HtmlTransformer } from '@blocksuite/cloud-notes/widgets/linked-doc';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Keyboard } from '@capacitor/keyboard';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -62,20 +59,13 @@ import {
 import { OpClient } from '@toeverything/infra/op';
 import { AsyncCall } from 'async-call-rpc';
 import { useTheme } from 'next-themes';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 
 import { CloudNotesTheme } from './plugins/cloud-notes-theme';
 import { AIButton } from './plugins/ai-button';
 import { Auth } from './plugins/auth';
-import {
-  EXTERNAL_FILE_ERRORS,
-  EXTERNAL_FILE_ROOT,
-  ExternalFile,
-  type ExternalDirListing,
-  type ExternalFileReadResult,
-} from './plugins/external-file';
-import { collectVault, toVaultFiles, vaultNameOf } from './vault-import';
+import { ExternalFile } from './plugins/external-file';
 import { HashCash } from './plugins/hashcash';
 import { MobileBack } from './plugins/mobile-back';
 import { NbStoreNativeDBApis } from './plugins/nbstore';
@@ -487,74 +477,10 @@ const AndroidBackAdapter = () => {
 };
 
 
-// #469 — the ONE feature over upstream: open a file from emulated storage.
-// The native FAB dispatches 'cloud-notes:open-file'; the explorer below picks
-// a file, and openExternalFile reads it through ExternalFilePlugin (every
-// failure carries its own visible message) and import the markdown into the local workspace via Cloud Notes's own
-// Obsidian importer, so the vault docs land in the app's document store.
-//
-// #513 — this used to be `useService(ImportService)` in the component body, and
-// that single line is what painted the white page. ImportService is registered
-// as `framework.scope(WorkspaceScope).service(ImportService, …)` (see
-// core/src/modules/import/index.ts), but everything rendered by App() below
-// lives on the ROOT provider — there is no workspace scope on the stack, so the
-// resolver fell through to `throw new ComponentNotFoundError(ImportService)` on
-// the FIRST render. Nothing above it is an error boundary, so React tore down
-// the whole tree, the WebView painted nothing, and the FAB's listener was never
-// registered — the inert button and the blank page were one fault.
-//
-// So the service is resolved WHERE IT LIVES and WHEN IT IS NEEDED: out of the
-// open workspace's own scope, at event time, exactly as
-// getCurrentDocContentInMarkdown above already does. Rendering this component
-// can no longer resolve anything, so it can no longer throw.
-//
-// #547 — HTML is CONVERTED, not previewed. ExternalFilePlugin has always
-// accepted .html, and this function then wrapped it as a text/markdown File for
-// the Obsidian importer, so the doc showed the literal markup. An HTML file now
-// goes through upstream's own HtmlAdapter (HtmlTransformer.importHTMLToDoc, the
-// exact path the desktop import dialog's `html` entry uses) and lands as a
-// real BlockSuite doc: editable, searchable, synced like every other doc. A
-// separate preview surface was rejected: it would be a second viewer beside the
-// editor, it would not persist anything, and it would run the file's own markup
-// inside the WebView that carries the Capacitor bridge — the converter keeps
-// only what maps to blocks, so no script in the file ever executes.
-// Which extensions take this route is asserted against the native SUPPORTED set
-// by test/test-html-import-route.sh.
-const HTML_EXTENSIONS = new Set(['html', 'htm']);
-
-const isHtmlFile = (name: string) =>
-  HTML_EXTENSIONS.has(name.split('.').pop()?.toLowerCase() ?? '');
-
-// Every native failure carries its own code + message (#469): show it, and for
-// a permission problem offer the jump to Settings once — never a silent retry.
-const reportExternalFileError = (err: unknown, title: string) => {
-  const code = (err as { code?: string })?.code ?? 'UNKNOWN';
-  const fallback = EXTERNAL_FILE_ERRORS[code] ?? 'Cannot open the file.';
-  notify.error({
-    title,
-    message: err instanceof Error && err.message ? err.message : fallback,
-  });
-  if (
-    code === 'PERMISSION_DENIED' &&
-    window.confirm('Open Settings to grant storage access?')
-  ) {
-    ExternalFile.openSettings().catch(console.error);
-  }
-};
-
-const openExternalFile = async (path: string) => {
-  let file: ExternalFileReadResult;
-  try {
-    file = await ExternalFile.readFile({ path });
-  } catch (err: unknown) {
-    reportExternalFileError(err, 'Cannot open file');
-    return;
-  }
-  await importExternalFile(file);
-};
-
-// #1642 a text file another app opened with this app (the manifest's VIEW/EDIT filters): the native side read it
-// (ExternalFilePlugin.takePendingOpen) and it lands as a note exactly like a file picked in the explorer.
+// #1642 "Open with": a text file another app opened with this app (the manifest's VIEW/EDIT filters). The native side read it
+// (ExternalFilePlugin.takePendingOpen) and it lands as a new tab in the vault shell. #1717 the old file explorer that used to share
+// this component (the floating button's browser over the device storage, and its import into the AFFiNE workspace) is gone: the
+// vault's Source section mounts the same roots and browses them in the sidebar.
 const openPendingFile = async () => {
   let pending: Awaited<ReturnType<typeof ExternalFile.takePendingOpen>>;
   try {
@@ -578,221 +504,19 @@ const openPendingFile = async () => {
   );
 };
 
-const importExternalFile = async (file: ExternalFileReadResult) => {
-  const workspaceId = frameworkProvider
-    .get(GlobalContextService)
-    .globalContext.workspaceId.get();
-  const workspaceRef = workspaceId
-    ? frameworkProvider.get(WorkspacesService).openByWorkspaceId(workspaceId)
-    : null;
-  if (!workspaceRef) {
-    notify.error({
-      title: 'Cannot open file',
-      message: `Open a workspace first — there is nowhere to import ${file.name} into.`,
-    });
-    return;
-  }
-
-  const { workspace, dispose: disposeWorkspace } = workspaceRef;
-  try {
-    if (isHtmlFile(file.name)) {
-      const docId = await HtmlTransformer.importHTMLToDoc({
-        collection: workspace.docCollection,
-        schema: getCloudNotesWorkspaceSchema(),
-        extensions: getStoreManager().config.init().value.get('store'),
-        html: file.content,
-        fileName: file.name.replace(/\.[^.]+$/, ''),
-      });
-      if (!docId) throw new Error(`${file.name} produced no document.`);
-    } else {
-      await workspace.scope
-        .get(ImportService)
-        .importObsidianVault([
-          new File([file.content], /\.(md|markdown)$/i.test(file.name) ? file.name : `${file.name}.md`, {
-            type: 'text/markdown',
-          }),
-        ]);
-    }
-    notify.success({
-      title: 'Opened',
-      message: `${file.name} imported into the workspace.`,
-    });
-  } catch (err: unknown) {
-    notify.error({
-      title: 'Import failed',
-      message: err instanceof Error ? err.message : String(err),
-    });
-  } finally {
-    disposeWorkspace();
-  }
-};
-
-// Phase 1 (cloud-notes-hybrid): "Import this folder as a vault". The folder is
-// walked through the same plugin (vault-import.ts) and every note goes to the
-// Obsidian importer in ONE call, so [[wikilinks]] between the notes resolve.
-// Attachments come along as bytes; whatever is skipped is counted, never
-// dropped silently. Resolved at event time, like openExternalFile (#513).
-const importVaultFolder = async (root: string) => {
-  let collected: Awaited<ReturnType<typeof collectVault>>;
-  try {
-    collected = await collectVault(ExternalFile, root);
-  } catch (err: unknown) {
-    reportExternalFileError(err, 'Cannot read folder');
-    return;
-  }
-  if (collected.notes.length === 0) {
-    notify.error({
-      title: 'Nothing to import',
-      message: 'No .md notes were found in this folder or below it.',
-    });
-    return;
-  }
-
-  const workspaceId = frameworkProvider
-    .get(GlobalContextService)
-    .globalContext.workspaceId.get();
-  const workspaceRef = workspaceId
-    ? frameworkProvider.get(WorkspacesService).openByWorkspaceId(workspaceId)
-    : null;
-  if (!workspaceRef) {
-    notify.error({
-      title: 'Cannot import',
-      message: 'Open a workspace first — there is nowhere to import the vault into.',
-    });
-    return;
-  }
-
-  const { workspace, dispose: disposeWorkspace } = workspaceRef;
-  try {
-    await workspace.scope
-      .get(ImportService)
-      .importObsidianVault(toVaultFiles(collected.notes, vaultNameOf(root), collected.attachments));
-    const skipped = collected.skipped.length;
-    notify.success({
-      title: 'Vault imported',
-      message:
-        `${collected.notes.length} notes and ${collected.attachments.length} attachments imported` +
-        (skipped ? `, ${skipped} entries skipped` : '') +
-        (collected.truncated ? '. A size limit stopped the walk early.' : '.'),
-    });
-  } catch (err: unknown) {
-    notify.error({
-      title: 'Vault import failed',
-      message: err instanceof Error ? err.message : String(err),
-    });
-  } finally {
-    disposeWorkspace();
-  }
-};
-
-// #547 — the file explorer: the FAB's event opens this browser over the
-// device's visible storage instead of asking for a typed path. It lists one
-// folder at a time through ExternalFilePlugin.listDir (the native side offers
-// only folders and the extensions readFile accepts) and hands the tapped file
-// to openExternalFile. Plain elements, no upstream component: it renders on the
-// ROOT provider, where a service lookup is exactly what #513 forbade.
-const ExternalFileOpener = () => {
-  const [listing, setListing] = useState<ExternalDirListing | null>(null);
-
-  const browse = (path: string) => {
-    ExternalFile.listDir({ path })
-      .then(setListing)
-      .catch((err: unknown) => {
-        reportExternalFileError(err, 'Cannot open folder');
-        setListing(null);
-      });
-  };
-
+// #1642 native dispatches cloud-notes:view-intent when a text file arrives; one that arrived before the page loaded is taken now.
+const OpenWithListener = () => {
   useEffect(() => {
-    const listener = () => browse(EXTERNAL_FILE_ROOT);
-    window.addEventListener('cloud-notes:open-file', listener);
-    // #1642 "Open with": native dispatches this when a text file arrives; one that arrived before the page loaded is taken now.
     const viewListener = () => {
       openPendingFile().catch(console.error);
     };
     window.addEventListener('cloud-notes:view-intent', viewListener);
     viewListener();
     return () => {
-      window.removeEventListener('cloud-notes:open-file', listener);
       window.removeEventListener('cloud-notes:view-intent', viewListener);
     };
   }, []);
-
-  if (!listing) return null;
-
-  const parent = listing.parent;
-  const row = {
-    display: 'block',
-    width: '100%',
-    padding: '14px 16px',
-    textAlign: 'left',
-    border: 0,
-    borderBottom: '1px solid rgba(128,128,128,0.25)',
-    background: 'transparent',
-    color: 'inherit',
-    font: 'inherit',
-  } as const;
-
-  return (
-    <div
-      role="dialog"
-      aria-label="Open file"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 10000,
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--cloud-notes-background-primary-color, #fff)',
-        color: 'var(--cloud-notes-text-primary-color, #000)',
-      }}
-    >
-      <div style={{ ...row, display: 'flex', gap: 12, fontWeight: 600 }}>
-        <span style={{ flex: 1, overflowWrap: 'anywhere' }}>{listing.path}</span>
-        <button
-          type="button"
-          onClick={() => {
-            const root = listing.path;
-            setListing(null);
-            importVaultFolder(root).catch(console.error);
-          }}
-        >
-          Import as vault
-        </button>
-        <button type="button" onClick={() => setListing(null)}>
-          Close
-        </button>
-      </div>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {parent ? (
-          <button type="button" style={row} onClick={() => browse(parent)}>
-            ..
-          </button>
-        ) : null}
-        {listing.entries.map(entry => (
-          <button
-            key={entry.name}
-            type="button"
-            style={row}
-            onClick={() => {
-              const path = listing.path + entry.name;
-              if (entry.isDir) {
-                browse(path);
-              } else {
-                setListing(null);
-                openExternalFile(path).catch(console.error);
-              }
-            }}
-          >
-            {entry.isDir ? `${entry.name}/` : entry.name}
-          </button>
-        ))}
-        {listing.entries.length === 0 ? (
-          <div style={row}>No folders or supported files here.</div>
-        ) : null}
-      </div>
-    </div>
-  );
+  return null;
 };
 
 export function App() {
@@ -804,7 +528,7 @@ export function App() {
             <CloudNotesContext store={getCurrentStore()}>
               <ThemeProvider />
               <AndroidBackAdapter />
-              <ExternalFileOpener />
+              <OpenWithListener />
               <RouterProvider
                 fallbackElement={<AppFallback />}
                 router={router}

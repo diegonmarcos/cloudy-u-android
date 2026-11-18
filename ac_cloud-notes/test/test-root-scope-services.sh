@@ -107,24 +107,20 @@ else
   ok "no scope-bound service resolved on the root provider ($(printf '%s\n' "$scope_report" | sed -n 's/^SCANNED //p'))"
 fi
 
-# ── 2. the FAB and the listener agree on the event name ───────────────────
-# The native FAB is the app's only entry to the file-explorer feature and it
-# reaches the web layer through exactly one string. A rename on either side is
-# silent: the button still draws, still animates, and does nothing — which is
-# indistinguishable from the boot failure above and was misread as one.
-# MainActivity dispatches more than one event now (view-intent, open-file, memory-pressure), so "the first one on each side"
-# no longer compares like with like. Every event the native side dispatches must have a listener in the web layer.
-# #1717 the floating button was removed: the open event is fired by the Vault sidebar's Source section
-# (core/src/mobile/vault/sidebar/SourcePanel.tsx); MainActivity still fires the view-intent event. Both are
-# native-or-menu ways into the same root-scope listener, so both are checked.
-native_events="$( { grep -oE "new Event\('[^']+'\)" \
-  "$ROOT/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt"; \
-  grep -oE "new Event\('[^']+'\)" "$ROOT/packages/frontend/core/src/mobile/vault/sidebar/SourcePanel.tsx"; } \
+# ── 2. the native side and the web listener agree on the event names ─────
+# MainActivity reaches the web layer through event names (view-intent: a file another app opened with this app;
+# memory-pressure: the app went to the background). A rename on either side is silent: nothing fails, the listener just never
+# fires. Every event the native side dispatches must have a listener in the web layer.
+# #1717 the floating open-file button, the Source section's import action and the file explorer are gone, so MainActivity is the
+# only native dispatcher; open-with is the one way a file arrives from outside.
+native_events="$(grep -oE "new Event\('[^']+'\)" \
+  "$ROOT/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/MainActivity.kt" \
   | sed "s/new Event('//;s/')//" | sort -u)"
 if [ -z "$native_events" ]; then
-  fail "neither MainActivity.kt nor the Source section dispatches an event: there is no way into the importer"
+  fail "MainActivity.kt dispatches no event: open-with and the memory-pressure hook have no way into the web layer"
 fi
-case "$native_events" in *cloud-notes:open-file*) ok "the import event cloud-notes:open-file is dispatched (Source section)" ;; *) fail "nothing dispatches cloud-notes:open-file any more (the importer cannot be opened)" ;; esac
+case "$native_events" in *cloud-notes:view-intent*) ok "the open-with event cloud-notes:view-intent is dispatched (MainActivity)" ;; *) fail "nothing dispatches cloud-notes:view-intent any more (Open with cannot reach the web layer)" ;; esac
+case "$native_events" in *cloud-notes:open-file*) fail "cloud-notes:open-file is dispatched again: the file explorer it opened was removed (#1717)" ;; esac
 for ev in $native_events; do
   if grep -rqF "addEventListener('$ev'" "$ROOT/packages/frontend/apps/android/src" "$ROOT/packages/frontend/core/src/mobile"; then
     ok "native event '$ev' has a listener in the web layer"

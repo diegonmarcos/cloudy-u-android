@@ -59,7 +59,7 @@ test('the start screen is gone; its open, path and error roles live in the Sourc
   for (const id of START_SCREEN) assert.ok(!ui.includes(`data-testid="${id}"`), `${id} is gone`);
   assert.ok(!existsSync(join(SRC, 'VaultView.tsx')) || !readFileSync(join(SRC, 'VaultView.tsx'), 'utf8').includes('cnv-start'));
   const panel = readFileSync(join(SRC, 'sidebar/SourcePanel.tsx'), 'utf8');
-  for (const id of ['source-pick', 'source-path-input', 'source-import']) assert.ok(panel.includes(`data-testid="${id}"`), id);
+  for (const id of ['source-pick', 'source-path-input']) assert.ok(panel.includes(`data-testid="${id}"`), id);
   assert.match(panel, /api\.error &&/);
 });
 
@@ -110,14 +110,16 @@ test('link kinds: every kind the previous version handled is handled, plus the o
   for (const k of ['heading', 'canvas-link']) assert.ok(lr.LINK_KINDS.includes(k), `new link kind ${k}`);
 });
 
-test('the one removal: the floating button is gone, the import it opened is in the Source section', () => {
+test('the owner-ordered removals: the floating button, the file explorer and its import are gone; picking and typing a root stay in Source', () => {
   const act = kt('MainActivity.kt');
   assert.ok(!act.includes('setupOpenFileFab'), 'no floating open-file button');
   const panel = readFileSync(join(SRC, 'sidebar/SourcePanel.tsx'), 'utf8');
-  assert.ok(panel.includes(`new Event('${base.native_open_file_event}')`), 'the Source section fires the same event');
-  assert.match(panel, /data-testid="source-import"/);
+  assert.ok(!panel.includes('cloud-notes:open-file') && !panel.includes('source-import'), 'no import action in Source');
+  for (const id of ['source-pick', 'source-path-input']) assert.ok(panel.includes(`data-testid="${id}"`), id);
   const app = readFileSync(join(APP, 'packages/frontend/apps/android/src/app.tsx'), 'utf8');
-  for (const s of ['ExternalFileOpener', 'importVaultFolder', 'openExternalFile', 'Import as vault']) assert.ok(app.includes(s), `app.tsx keeps ${s}`);
+  for (const s of ['ExternalFileOpener', 'importVaultFolder', 'openExternalFile', 'Import as vault', 'listDir']) assert.ok(!app.includes(s), `app.tsx no longer has ${s}`);
+  // open-with stays: the view-intent listener and the pending file landing as a vault tab
+  for (const s of ['OpenWithListener', 'cloud-notes:view-intent', 'takePendingOpen', 'pushExternalDoc']) assert.ok(app.includes(s), `app.tsx keeps ${s}`);
 });
 
 test('the sidebar has every action the redesign asks for', () => {
