@@ -165,6 +165,7 @@ class KeyboardIconsSet private constructor() {
                     ToolbarKey.ANDROID_SETTINGS -> R.drawable.ic_toolbar_android_settings // #1103
                     ToolbarKey.DEV_KEYBOARD -> R.drawable.ic_toolbar_dev_keyboard // #1413
                     ToolbarKey.HANDWRITE -> R.drawable.ic_toolbar_handwrite // #1781
+                    ToolbarKey.GRABBER -> R.drawable.ic_toolbar_grabber // #1793
                 })
             }
         } }
@@ -237,6 +238,7 @@ class KeyboardIconsSet private constructor() {
                     ToolbarKey.ANDROID_SETTINGS -> R.drawable.ic_toolbar_android_settings // #1103
                     ToolbarKey.DEV_KEYBOARD -> R.drawable.ic_toolbar_dev_keyboard // #1413
                     ToolbarKey.HANDWRITE -> R.drawable.ic_toolbar_handwrite // #1781
+                    ToolbarKey.GRABBER -> R.drawable.ic_toolbar_grabber // #1793
                 })
             }
         } }
@@ -309,6 +311,7 @@ class KeyboardIconsSet private constructor() {
                     ToolbarKey.ANDROID_SETTINGS -> R.drawable.ic_toolbar_android_settings // #1103
                     ToolbarKey.DEV_KEYBOARD -> R.drawable.ic_toolbar_dev_keyboard // #1413
                     ToolbarKey.HANDWRITE -> R.drawable.ic_toolbar_handwrite // #1781
+                    ToolbarKey.GRABBER -> R.drawable.ic_toolbar_grabber // #1793
                 })
             }
         } }

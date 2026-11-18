@@ -206,6 +206,7 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
         "CLIPBOARD" -> KeyCode.CLIPBOARD
         "NUMPAD" -> KeyCode.NUMPAD
         "DEV_KEYBOARD" -> KeyCode.DEV_KEYBOARD
+        "GRABBER" -> KeyCode.GRABBER // #1793
         else -> error("unknown key $name")
     }
 

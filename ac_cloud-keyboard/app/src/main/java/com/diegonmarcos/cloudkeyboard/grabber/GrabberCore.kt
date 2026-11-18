@@ -412,7 +412,12 @@ data class SearchHit(val title: String, val snippet: String, val url: String, va
 
 data class ImageHit(val thumbUrl: String, val fullUrl: String, val title: String, val pageUrl: String)
 
-data class GeoHit(val lat: Double, val lon: Double, val name: String)
+/** #1793: with the fields the Place card and [PlaceDecision] read (Nominatim jsonv2: category, type, addresstype, importance, place_rank, name). */
+data class GeoHit(
+    val lat: Double, val lon: Double, val name: String,
+    val category: String = "", val type: String = "", val addressType: String = "",
+    val importance: Double = 0.0, val placeRank: Int = 0, val shortName: String = "",
+)
 
 /** The parsers of the three DuckDuckGo answers and of the OSM geocoder. Pure text in, hit out: tested against fixtures. */
 object GrabberParsers {
@@ -505,6 +510,8 @@ object GrabberParsers {
     fun firstGeo(json: String): GeoHit? = runCatching {
         val a = org.json.JSONArray(json)
         val o = a.optJSONObject(0) ?: return@runCatching null
-        GeoHit(o.getString("lat").toDouble(), o.getString("lon").toDouble(), o.optString("display_name"))
+        GeoHit(o.getString("lat").toDouble(), o.getString("lon").toDouble(), o.optString("display_name"),
+            category = o.optString("category").ifBlank { o.optString("class") }, type = o.optString("type"), addressType = o.optString("addresstype"),
+            importance = o.optDouble("importance", 0.0).takeIf { it.isFinite() } ?: 0.0, placeRank = o.optInt("place_rank", 0), shortName = o.optString("name"))
     }.getOrNull()
 }

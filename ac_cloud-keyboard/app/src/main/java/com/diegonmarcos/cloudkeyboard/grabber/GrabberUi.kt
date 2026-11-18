@@ -244,6 +244,9 @@ fun GrabberPanel(model: GrabberModel, onReply: (ProcessTextReply) -> Unit, modif
         ActionsBox(model, onReply)
         SearchBox(model)
         MediaBox(model)
+        // #1793 a place card carries its distances, from the position Cloud Nav shares
+        val m = model.media
+        if (m is Load.Ready && m.value is MediaResult.MapView) TripBox(model)
     }
 }
 
@@ -345,11 +348,17 @@ private fun SearchBox(model: GrabberModel) {
 @Composable
 private fun MediaBox(model: GrabberModel) {
     val m = model.media
-    val title = if (model.kind.showsMap) "MEDIA · MAP · OPENSTREETMAP" else "MEDIA · FIRST IMAGE · DUCKDUCKGO"
+    // #1793 the title names what the card turned out to be: a place (geocoded) or an image for the term, and its source
+    val title = when (val v = (m as? Load.Ready<*>)?.value) {
+        is MediaResult.MapView -> "MEDIA · MAP · PLACE · OPENSTREETMAP"
+        is MediaResult.Photo -> "MEDIA · IMAGE · " + (v.source.uppercase().ifBlank { "WEB" }.let { if (it.contains('.')) "FIRST IMAGE · DUCKDUCKGO" else it })
+        is MediaResult.Placeholder -> "MEDIA · NOT A PLACE · NO IMAGE"
+        else -> if (model.kind.showsMap) "MEDIA · MAP · OPENSTREETMAP" else "MEDIA · PLACE OR IMAGE · NOMINATIM"
+    }
     ConsoleBox(title, stateDot(m), pulse = m is Load.Loading, reading = stateReading(m)) {
         AnimatedContent(targetState = m, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(120)) }, label = "media") { st ->
             when (st) {
-                is Load.Idle -> Hint("An address or a place shows a map; any other text shows its first image.")
+                is Load.Idle -> Hint("The text is looked up on OpenStreetMap: a place shows its map, address, type and distances; anything else shows an image for it (Wikipedia, Wikimedia Commons).")
                 is Load.Loading -> SkeletonImage()
                 is Load.Ready -> MediaCard(st.value)
                 is Load.Failed -> ErrorState(st, onRetry = { model.grab(remember = false) })
@@ -427,6 +436,7 @@ private fun MediaCard(m: MediaResult) {
             is MediaResult.MapView -> MapCanvas(m, Modifier.fillMaxWidth().aspectRatio(2f).clip(RoundedCornerShape(8.dp)))
             is MediaResult.Photo -> Image(m.image, contentDescription = m.caption, contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(2f).clip(RoundedCornerShape(8.dp)).background(GC.skel))
+            is MediaResult.Placeholder -> PlaceholderFrame(m)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.weight(1f)) {
@@ -434,6 +444,7 @@ private fun MediaCard(m: MediaResult) {
                 when (m) {
                     is MediaResult.MapView -> Text("Z${m.zoom} · ${"%.5f".format(java.util.Locale.ROOT, m.lat)}, ${"%.5f".format(java.util.Locale.ROOT, m.lon)}", color = GC.text3, fontFamily = Mono, fontSize = 10.sp)
                     is MediaResult.Photo -> if (m.source.isNotEmpty()) Text(m.source, color = GC.text3, fontFamily = Mono, fontSize = 10.sp)
+                    is MediaResult.Placeholder -> Text("NOT A PLACE", color = GC.text3, fontFamily = Mono, fontSize = 10.sp)
                 }
             }
             when (m) {
@@ -441,7 +452,114 @@ private fun MediaCard(m: MediaResult) {
                     open(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("geo:${m.lat},${m.lon}?q=${m.lat},${m.lon}(${Uri.encode(m.caption.take(60))})")))
                 }
                 is MediaResult.Photo -> if (m.pageUrl.isNotBlank()) KeyChip("Source") { open(ctx, Intent(Intent.ACTION_VIEW, Uri.parse(m.pageUrl))) }
+                is MediaResult.Placeholder -> {}
             }
+        }
+        // #1793 the place: its address line and its type (Nominatim's addresstype, then category/type)
+        if (m is MediaResult.MapView && m.place != null) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Caps("TYPE", GC.text3, Modifier.width(64.dp))
+                    Caps(m.place.type, GC.accent)
+                    if (m.place.detail.isNotBlank()) Text(m.place.detail, color = GC.text3, fontFamily = Mono, fontSize = 10.sp, maxLines = 1)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Caps("ADDRESS", GC.text3, Modifier.width(64.dp))
+                    Text(m.place.address, color = GC.text2, fontSize = 11.sp, maxLines = 4, overflow = TextOverflow.Ellipsis)
+                }
+                if (m.tiles.none { it.image != null }) Text("Map tiles unavailable: the place and its distances still hold.", color = GC.warn, fontSize = 10.sp)
+                Text("Map data © OpenStreetMap contributors (ODbL) · geocoding Nominatim", color = GC.text3, fontSize = 9.sp)
+            }
+        }
+        // #1793 an image for a term carries who made it and under which licence (Wikimedia's terms)
+        if (m is MediaResult.Photo && m.attribution.isNotBlank()) Text(m.attribution, color = GC.text3, fontSize = 9.5.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** #1793 not a place and no image: a neutral frame (an image glyph and the reason), never an empty box. */
+@Composable
+private fun PlaceholderFrame(m: MediaResult.Placeholder) {
+    Box(Modifier.fillMaxWidth().aspectRatio(2f).clip(RoundedCornerShape(8.dp)).background(GC.skel).border(1.dp, GC.hairline, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(16.dp)) {
+            Canvas(Modifier.size(width = 44.dp, height = 34.dp)) {
+                val st = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+                drawRoundRect(GC.text3, cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx()), style = st)
+                drawCircle(GC.text3, radius = 4.dp.toPx(), center = Offset(size.width * 0.70f, size.height * 0.32f))
+                val p = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(size.width * 0.10f, size.height * 0.85f); lineTo(size.width * 0.40f, size.height * 0.45f)
+                    lineTo(size.width * 0.62f, size.height * 0.72f); lineTo(size.width * 0.75f, size.height * 0.58f); lineTo(size.width * 0.90f, size.height * 0.85f)
+                }
+                drawPath(p, GC.text3, style = st)
+            }
+            Caps("NO IMAGE FOR THIS TEXT", GC.text2)
+            Text(m.reason, color = GC.text3, fontSize = 10.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+/**
+ * #1793 the distances of a place, from the position Cloud Nav shares (the keyboard never locates): by car, on foot and by
+ * bicycle on the free public OSRM servers, and by air as the great-circle distance with an ESTIMATED flight time
+ * (~800 km/h + 1 h). Without a position the card keeps the place and its map and says why there are no distances.
+ */
+@Composable
+private fun TripBox(model: GrabberModel) {
+    val ctx = LocalContext.current
+    val t = model.trip
+    ConsoleBox("DISTANCES · FROM YOUR LOCATION", stateDot(t), pulse = t is Load.Loading, reading = stateReading(t)) {
+        when (t) {
+            is Load.Idle, is Load.Loading -> SkeletonLines()
+            is Load.Failed -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Caps("NO POSITION · PLACE AND MAP ONLY", GC.warn)
+                Text(t.detail, color = GC.text2, fontSize = 12.sp)
+                Text("The position comes from Cloud Nav, the fleet's location app: it asks for approximate location first and precise location only if you allow it. The keyboard itself never locates.",
+                    color = GC.text3, fontSize = 10.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (!model.navMissing) KeyChip("Open Cloud Nav", accent = true) {
+                        if (!GrabberLocation.openNav(ctx)) Toast.makeText(ctx, "Cloud Nav is not installed", Toast.LENGTH_SHORT).show()
+                    }
+                    KeyChip("Retry") { model.retryTrip() }
+                }
+            }
+            is Load.Ready -> Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                val p = t.value
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Caps("FROM", GC.text3, Modifier.width(86.dp))
+                    Text("${"%.4f".format(java.util.Locale.ROOT, p.fromLat)}, ${"%.4f".format(java.util.Locale.ROOT, p.fromLon)}", color = GC.text2, fontFamily = Mono, fontSize = 10.sp)
+                    Caps(p.fromNote, GC.text3)
+                }
+                Box(Modifier.hairline(GC.hairline))
+                TravelMode.entries.filter { it.routed }.forEach { mode ->
+                    val leg = model.legs[mode] ?: Load.Idle
+                    TripRow(mode.label, leg)
+                }
+                Box(Modifier.hairline(GC.hairline))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(6.dp).clip(CircleShape).background(GC.accent))
+                    Caps(TravelMode.AIR.label, GC.text2, Modifier.width(118.dp))
+                    Text(GeoMath.km(p.airKm * 1000.0), color = GC.text, fontFamily = Mono, fontSize = 11.sp, modifier = Modifier.width(78.dp))
+                    Text("≈ " + GeoMath.duration(p.flightHours * 3600.0), color = GC.warn, fontFamily = Mono, fontSize = 11.sp)
+                }
+                Text("Air: great-circle distance; the flight time is an ESTIMATE (~800 km/h cruise + 1 h for take-off, landing and taxi), not a schedule.",
+                    color = GC.text3, fontSize = 9.5.sp)
+                Text("Routes: OSRM on routing.openstreetmap.de (FOSSGIS), OpenStreetMap data.", color = GC.text3, fontSize = 9.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun TripRow(label: String, leg: Load<Leg>) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(6.dp).clip(CircleShape).background(stateDot(leg)))
+        Caps(label, GC.text2, Modifier.width(118.dp))
+        when (leg) {
+            is Load.Ready -> {
+                Text(GeoMath.km(leg.value.meters), color = GC.text, fontFamily = Mono, fontSize = 11.sp, modifier = Modifier.width(78.dp))
+                Text(GeoMath.duration(leg.value.seconds), color = GC.ok, fontFamily = Mono, fontSize = 11.sp)
+            }
+            is Load.Failed -> Text(if (leg.reason == FailReason.EMPTY) "no route" else "${leg.reason.label} · ${leg.detail}", color = GC.text3, fontFamily = Mono, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            else -> Box(Modifier.width(120.dp).height(10.dp).clip(RoundedCornerShape(4.dp)).background(shimmer()))
         }
     }
 }

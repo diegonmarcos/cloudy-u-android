@@ -1407,6 +1407,11 @@ public class LatinIME extends InputMethodService implements
                     + ", nss=" + newSelStart + ", nse=" + newSelEnd
                     + ", cs=" + composingSpanStart + ", ce=" + composingSpanEnd);
         }
+        // #1793 Grabber on selection (keyboard): a non-empty selection is reported to the app, which opens the Grabber panel
+        // when its own switch is on (off by default), debounced. Never throws; nothing happens without the app's hook.
+        if (newSelStart >= 0 && newSelEnd >= 0 && newSelStart != newSelEnd) {
+            GrabberLink.selectionChanged(this, newSelStart, newSelEnd);
+        }
         // SuperApp: the Text Enhancements bar shows what the field holds, so it has to
         // follow the field. Two guards: only once the word being typed is committed (no
         // composing span), because reading mid-compose would finish the composition and
@@ -2274,6 +2279,29 @@ public class LatinIME extends InputMethodService implements
         }
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         startActivity(intent);
+    }
+
+    /**
+     * #1793: the GRABBER toolbar key. The Grabber is the app's (GrabberLink.opener), so the key hands over the field's selection
+     * (empty when nothing is selected: the panel then takes typed or pasted text) and hides the keyboard, like Vault.
+     */
+    public void launchGrabber() {
+        if (!GrabberLink.available()) {
+            android.widget.Toast.makeText(this, R.string.grabber_not_available, android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        CharSequence selected = null;
+        final android.view.inputmethod.InputConnection ic = getCurrentInputConnection();
+        if (ic != null) {
+            try { selected = ic.getSelectedText(0); } catch (RuntimeException ignored) { selected = null; }
+        }
+        mInputLogic.commitTyped(mSettings.getCurrent(), LastComposedWord.NOT_A_SEPARATOR);
+        requestHideSelf(0);
+        final MainKeyboardView mainKeyboardView = mKeyboardSwitcher.getMainKeyboardView();
+        if (mainKeyboardView != null) {
+            mainKeyboardView.closing();
+        }
+        GrabberLink.open(this, selected == null ? "" : selected.toString());
     }
 
     /** #1103: the ANDROID_SETTINGS toolbar key: hand over to Android's keyboard settings. */

@@ -30,23 +30,27 @@ class ToolbarOrderTest {
         // #1384: page one is the first 11 keys (11 / 11 / 3 at the shipped width)
         assertTrue("ANSWER" in row.take(11))
         assertFalse("EMOJI" in row.take(11))
-        assertEquals(listOf("EMOJI", "DEV_KEYBOARD", "HANDWRITE"), row.takeLast(3)) // #1413 Dev Keyboard right after Emoji; #1781 HandWrite last
+        // #1793: Emoji is the last key again, right after Cut (Dev Keyboard, Grabber and HandWrite moved in front of Vault)
+        assertEquals(listOf("CUT", "EMOJI"), row.takeLast(2))
         assertEquals(1, row.count { it == "ANSWER" })
         val source = java.io.File("src/main/java/helium314/keyboard/latin/utils/ToolbarUtils.kt").readText()
         assertTrue(source.contains("ANSWER -> KeyCode.ANSWER_BAR"))
     }
 
-    @Test fun vaultFollowsSwitchLanguageAndAndroidSettingsComesRightBeforeVault() {
+    @Test fun devKeyboardGrabberAndHandwriteSitInFrontOfVaultInThatOrder() {
+        // #1793: Switch language, Android settings, then Dev Keyboard, Grabber, HandWrite, then Vault
         val i = row.indexOf("LANGUAGE_SWITCH")
-        assertEquals(listOf("LANGUAGE_SWITCH", "ANDROID_SETTINGS", "VAULT"), row.subList(i, i + 3))
+        assertEquals(listOf("LANGUAGE_SWITCH", "ANDROID_SETTINGS", "DEV_KEYBOARD", "GRABBER", "HANDWRITE", "VAULT"), row.subList(i, i + 6))
+        assertEquals(row.indexOf("VAULT") - 3, row.indexOf("DEV_KEYBOARD"))
+        listOf("DEV_KEYBOARD", "GRABBER", "HANDWRITE").forEach { assertEquals(it, 1, row.count { k -> k == it }) }
         assertEquals(1, row.count { it == "ANDROID_SETTINGS" })
         assertEquals(1, row.count { it == "VAULT" })
     }
 
     @Test fun theWholeFirstRowIsExactlyThis() {
         assertEquals(listOf("FULL_LEFT", "GRAMMAR", "TRANSLATE", "ENHANCE", "AUTOCOMPLETE", "CLIPBOARD", "NUMPAD", "ANSWER", "VOICE",
-            "LANGUAGE_SWITCH", "ANDROID_SETTINGS", "VAULT", "FULL_RIGHT", "SELECT_ALL", "WORD_RIGHT", "WORD_LEFT", "REDO", "UNDO",
-            "SELECT_WORD", "COPY", "PASTE", "PAGE_START", "CUT", "EMOJI", "DEV_KEYBOARD", "HANDWRITE"), row)
+            "LANGUAGE_SWITCH", "ANDROID_SETTINGS", "DEV_KEYBOARD", "GRABBER", "HANDWRITE", "VAULT", "FULL_RIGHT", "SELECT_ALL",
+            "WORD_RIGHT", "WORD_LEFT", "REDO", "UNDO", "SELECT_WORD", "COPY", "PASTE", "PAGE_START", "CUT", "EMOJI"), row)
     }
 
     @Test fun noKeyIsForcedOntoAPageOfItsOwnAnyMore() {
@@ -63,15 +67,15 @@ class ToolbarOrderTest {
     }
 
     @Test fun theLayoutRevisionIsBumpedSoPhonesWithTheOldOrderMoveOnce() {
-        assertEquals(8, TOOLBAR_LAYOUT_REVISION) // 8: #1781 HandWrite last, after Dev Keyboard
-        val old = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 7, Settings.PREF_TOOLBAR_KEYS to "FULL_LEFT,GRAMMAR,AUTOCOMPLETE"))
+        assertEquals(9, TOOLBAR_LAYOUT_REVISION) // 9: #1793 Dev Keyboard, Grabber, HandWrite in front of Vault
+        val old = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 8, Settings.PREF_TOOLBAR_KEYS to "FULL_LEFT,GRAMMAR,AUTOCOMPLETE"))
         assertTrue(toolbarLayoutRevisionPending(old))
         adoptToolbarLayoutRevision(old)
         assertEquals(defaultToolbarPref, old.getString(Settings.PREF_TOOLBAR_KEYS, null))
-        assertEquals(8, old.getInt(Settings.PREF_TOOLBAR_LAYOUT_REVISION, 0))
+        assertEquals(9, old.getInt(Settings.PREF_TOOLBAR_LAYOUT_REVISION, 0))
         assertFalse(toolbarLayoutRevisionPending(old))
         // a phone already on revision 5 keeps what it has (the user may have re-arranged it since)
-        val mine = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 8, Settings.PREF_TOOLBAR_KEYS to "COPY,true"))
+        val mine = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 9, Settings.PREF_TOOLBAR_KEYS to "COPY,true"))
         adoptToolbarLayoutRevision(mine)
         assertEquals("COPY,true", mine.getString(Settings.PREF_TOOLBAR_KEYS, null))
     }

@@ -6,7 +6,9 @@
 #   usage: keyboard-screenshots.sh <Cloud-Keyboard.apk> <out-dir>
 #
 #   00-start               the test screen, keyboard up
-#   01..03 toolbar-page-N  the first row, page by page (the 24 keys: 11 / 11 / 2; Draft Answer on page 1, Emoji on page 2)
+#   01..03 toolbar-page-N  the first row, page by page (#1793: the 27 keys: 11 / 11 / 5; Draft Answer on page 1; page 2 opens with
+#                          Dev Keyboard (terminal glyph), Grabber, HandWrite, then Vault; Emoji last, on page 3)
+#   48..49 grabber-*       #1793 the Grabber toolbar key: page 2 of the row, and the Grabber panel it opens
 #   04..06 grammar-*       the Grammar mode icon after each tap: Highlight, Off, Auto Correct again
 #   07..10 autocomplete-*  the Autocomplete panel: IDs, Addresses, URLs, Secrets (masked)
 #   11 emoji-panel         the emoji page with its search field
@@ -148,11 +150,11 @@ last state | grep -q "numpad=true" && ok "the numpad is showing again after the 
 shot 43-lastpanel-numpad-restored
 kb code ALPHA; state | grep -q "lastPanel=LETTERS" && ok "ABC updates the memory back to letters" || bad "memory after ABC: $(last state)"
 
-# ── #1781 HandWrite: the toolbar's last page with the pen icon, the panel, a model download and a recognised word ──
-# the toolbar: back to page one, then forward to the last page (HandWrite is the very last key, after Dev Keyboard)
+# ── #1781 HandWrite: the toolbar page with the pen icon, the panel, a model download and a recognised word ──
+# the toolbar: back to page one, then forward to page two (#1793: HandWrite sits after Dev Keyboard and Grabber, in front of Vault)
 for _ in 1 2 3; do adb shell input swipe "$X2" "$Y" "$X1" "$Y" 250; done; sleep 1
-for _ in 1 2; do adb shell input swipe "$X1" "$Y" "$X2" "$Y" 250; done; sleep 1
-shot 44-handwrite-toolbar-last-page
+adb shell input swipe "$X1" "$Y" "$X2" "$Y" 250; sleep 1
+shot 44-handwrite-toolbar-page-2
 # the model download (the only network use): en-US, polled for up to 3 minutes
 kb hwdownload en-US; last hwdownload | grep -q "started" && ok "the en-US model download started" || bad "download: $(last hwdownload)"
 for _ in $(seq 1 36); do kb hwstate; last hwstate | grep -q "download=\(ok\|failed\)" && break; sleep 5; done
@@ -178,6 +180,26 @@ if [ -n "${PB:-}" ]; then
     shot 47-handwrite-committed
 else bad "no pad bounds: $(last hwpad)"; fi
 kb code ALPHA; state | grep -q "mode=TYPING" && ok "ABC leaves the HandWrite panel" || bad "still in the panel: $(last state)"
+
+# ── #1793 the Grabber toolbar key: page two of the row (Dev Keyboard, Grabber, HandWrite, Vault), then the panel it opens ──
+for _ in 1 2 3; do adb shell input swipe "$X2" "$Y" "$X1" "$Y" 250; done; sleep 1
+adb shell input swipe "$X1" "$Y" "$X2" "$Y" 250; sleep 1
+shot 48-toolbar-page-2-dev-grabber-handwrite-vault
+kb code GRABBER; sleep 6
+GRAB_OK=0
+for _ in 1 2 3 4 5; do
+    adb shell uiautomator dump /sdcard/kbgr.xml >/dev/null 2>&1 && adb pull /sdcard/kbgr.xml "$OUT/grabber-from-toolbar.xml" >/dev/null 2>&1 \
+        && grep -q "GRABBER · CLOUD KEYBOARD" "$OUT/grabber-from-toolbar.xml" && { GRAB_OK=1; break; }
+    sleep 2
+done
+[ "$GRAB_OK" = 1 ] && ok "the Grabber toolbar key opened the Grabber panel" || bad "the Grabber key did not open the panel"
+shot 49-grabber-from-toolbar
+adb shell input keyevent 4; sleep 2
+for attempt in 1 2 3; do
+    adb shell am start -f 0x10008000 -n "$PKG/.ShotActivity" >/dev/null
+    for _ in $(seq 1 25); do shown && break; sleep 1; done
+    shown && break
+done
 
 # ── Configs ───────────────────────────────────────────────────────────────
 adb shell am start -n "$PKG/helium314.keyboard.settings.SettingsActivity" >/dev/null; sleep 3

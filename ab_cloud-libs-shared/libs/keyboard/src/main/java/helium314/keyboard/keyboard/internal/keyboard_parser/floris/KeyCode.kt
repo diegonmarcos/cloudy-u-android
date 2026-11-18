@@ -110,6 +110,7 @@ object KeyCode {
     const val ANSWER_BAR =                  -311 // #1384 — open the Draft Answer panel (the Enhance panel in reply mode)
     const val DEV_KEYBOARD =                -312 // #1413 — toggle Dev Keyboard (corner swipes of the "unexpected" layout)
     const val HANDWRITE =                   -313 // #1781 — open the HandWrite panel (finger / stylus, ML Kit Digital Ink)
+    const val GRABBER =                     -314 // #1793 — open the Grabber panel (the app's GrabberActivity via GrabberLink)
 
     const val CURRENCY_SLOT_1 =             -801
     const val CURRENCY_SLOT_2 =             -802

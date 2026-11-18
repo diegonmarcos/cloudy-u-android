@@ -66,6 +66,7 @@ on:
       - "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**"
       - "ab_cloud-libs-shared/libs/keyboard/**"
+      - "ab_cloud-libs-shared/libs/location-client/**"
       - "ab_cloud-libs-shared/libs/media/**"
       - "ab_cloud-libs-shared/libs/ml-l-image-ocr/**"
       - "ab_cloud-libs-shared/libs/perms/**"

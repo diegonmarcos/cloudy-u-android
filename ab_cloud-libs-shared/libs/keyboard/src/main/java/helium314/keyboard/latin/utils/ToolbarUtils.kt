@@ -144,6 +144,7 @@ fun getCodeForToolbarKey(key: ToolbarKey) = Settings.getInstance().getCustomTool
     ANDROID_SETTINGS -> KeyCode.ANDROID_IME_SETTINGS // #1103: the system's input-method settings
     DEV_KEYBOARD -> KeyCode.DEV_KEYBOARD // #1413: tap flips Configs > Dev Keyboard
     HANDWRITE -> KeyCode.HANDWRITE // #1781: tap opens the HandWrite panel
+    GRABBER -> KeyCode.GRABBER // #1793: tap opens the Grabber panel on the field's selection (or empty)
 }
 
 fun getCodeForToolbarKeyLongClick(key: ToolbarKey) = Settings.getInstance().getCustomToolbarLongpressCode(key) ?: when (key) {
@@ -184,7 +185,8 @@ enum class ToolbarKey {
     ANDROID_SETTINGS, // #1103: shortcut to Android's keyboard (input method) settings; sits right before VAULT in the default row
     ANSWER, // #1384: Draft Answer, a reply to the newest clipboard item, drafted by the Text Enhancement model
     DEV_KEYBOARD, // #1413: Dev Keyboard on/off; after EMOJI
-    HANDWRITE // #1781: opens the HandWrite panel; the last key of the default row, after DEV_KEYBOARD
+    HANDWRITE, // #1781: opens the HandWrite panel
+    GRABBER // #1793: opens the Grabber panel (the app's grabber.GrabberActivity, through GrabberLink); between DEV_KEYBOARD and HANDWRITE
 }
 
 /**
@@ -215,11 +217,12 @@ val defaultToolbarPref by lazy {
         // and Cloud Vault follow "Switch language" (settings first, Vault right after it).
         // #1384: Draft Answer takes Emoji's place on page one. Owner 2026-11-01: Emoji is the last key, right after Cut.
         // #1413: Dev Keyboard toggle after Emoji, the very last key.
+        // #1781 HandWrite was the very last key, after Dev Keyboard.
+        // #1793: Dev Keyboard, Grabber and HandWrite move in front of Vault, in that order (page two opens with them); Emoji is
+        // the last key again, right after Cut. ToolbarParityTest proves no key of revision 8 was lost.
         FULL_LEFT, GRAMMAR, TRANSLATE, ENHANCE, AUTOCOMPLETE, CLIPBOARD, NUMPAD, ANSWER, VOICE, LANGUAGE_SWITCH,
-        ANDROID_SETTINGS, VAULT,
-        FULL_RIGHT, SELECT_ALL, WORD_RIGHT, WORD_LEFT, REDO, UNDO, SELECT_WORD, COPY, PASTE, PAGE_START, CUT, EMOJI, DEV_KEYBOARD,
-        // #1781 HandWrite: the very last key, after Dev Keyboard (page two)
-        HANDWRITE,
+        ANDROID_SETTINGS, DEV_KEYBOARD, GRABBER, HANDWRITE, VAULT,
+        FULL_RIGHT, SELECT_ALL, WORD_RIGHT, WORD_LEFT, REDO, UNDO, SELECT_WORD, COPY, PASTE, PAGE_START, CUT, EMOJI,
     )
     // CLEAR_CLIPBOARD is removed from the keyboard toolchain entirely (owner): clearing the
     // clipboard history lives only in Config ▸ Clipboard, never as a toolbar key. Excluding it
@@ -253,7 +256,7 @@ val defaultClipboardToolbarPref by lazy {
  * the stored value does not know yet, so without this a reordered default would be visible to
  * fresh installs only — the exact trap that made earlier default changes look like no-ops.
  */
-const val TOOLBAR_LAYOUT_REVISION = 8 // 8: #1781 HandWrite key last, after Dev Keyboard; 7: #1413 Dev Keyboard key last, after Emoji; 6: Emoji last, after Cut; 5: #1384 Draft Answer on page one, Emoji to page two; 3: #1077 Grammar mode + Autocomplete replace Grammar + Auto Correction; 4: #1103 reorder + Android settings key
+const val TOOLBAR_LAYOUT_REVISION = 9 // 9: #1793 Dev Keyboard, Grabber (new), HandWrite in front of Vault, Emoji last; 8: #1781 HandWrite key last, after Dev Keyboard; 7: #1413 Dev Keyboard key last, after Emoji; 6: Emoji last, after Cut; 5: #1384 Draft Answer on page one, Emoji to page two; 3: #1077 Grammar mode + Autocomplete replace Grammar + Auto Correction; 4: #1103 reorder + Android settings key
 
 /**
  * Adopt the current default first and second rows, once per [TOOLBAR_LAYOUT_REVISION]. This

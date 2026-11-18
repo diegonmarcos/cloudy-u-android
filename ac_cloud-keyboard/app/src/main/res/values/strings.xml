@@ -26,4 +26,8 @@
     <!-- #1754 Grabber: the entry in the text-selection menu of every app, and the Quick Settings tile. -->
     <string name="grabber_menu_label">Cloud Keyboard</string>
     <string name="grabber_tile_label">Grabber</string>
+    <!-- #1793 Grabber on selection (accessibility): the service's name, summary and plain disclosure in Android's Accessibility settings. -->
+    <string name="grabber_a11y_label">Cloud Keyboard Grabber on selection</string>
+    <string name="grabber_a11y_summary">Opens the Grabber panel when you select text in any app</string>
+    <string name="grabber_a11y_description">Grabber on selection reads Android\'s text-selection events only: the text of the view you select in, the selection range and the app\'s package name. It does not read the screen, your typing or password fields, and it never acts on another app. A steady selection opens the Grabber panel, which looks the text up (DuckDuckGo, OpenStreetMap, Wikipedia) like the selection-menu entry and keeps it in Recent grabs on this phone. It also needs the switch in Cloud Keyboard > Grabber > Text Selection, off by default.</string>
 </resources>

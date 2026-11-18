@@ -99,7 +99,8 @@
     "libs:ml-l-image-ocr": {"type": "library", "_doc": "#1652 Writer tab: cloud-writer's UI as a shared lib (WriterSurface.Page per top-nav sub-page). Shared BY REFERENCE.", "dir": "../ab_cloud-libs-shared/libs/ml-l-image-ocr"},
     "libs:bottomnav": {"dir": "../ab_cloud-libs-shared/libs/bottomnav", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency; listed so settings.gradle resolves the path."},
     "libs:ui-icons": {"dir": "../ab_cloud-libs-shared/libs/ui-icons", "type": "library", "_doc": "libs:bottomnav's dependency; listed so settings.gradle resolves the path."},
-    "libs:theme-background": {"dir": "../ab_cloud-libs-shared/libs/theme-background", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency (the page background); listed so settings.gradle resolves the path."}
+    "libs:theme-background": {"dir": "../ab_cloud-libs-shared/libs/theme-background", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency (the page background); listed so settings.gradle resolves the path."},
+    "libs:location-client": {"dir": "../ab_cloud-libs-shared/libs/location-client", "type": "library", "_doc": "#1793 the Grabber Place card's distances: reads Cloud Nav's last fix over the fleet IPC door (#1770, the one client of location), never triggers a fix and needs no location permission here."}
   },
   "keyboard_media": {
     "_doc": "Same block as aa_cloud-superapp — shared vault secret. build.sh sops-decrypts vault_secrets → TENOR_API_KEY/GIPHY_API_KEY env vars → Gradle BuildConfig → MediaRuntime.configure().",
@@ -258,7 +259,10 @@
         "Bundled sticker packs",
         "No typing data leaves the phone",
         "Enhance: rewrite a sentence through the fleet's AI",
-        "Grabber: select text in any app, or circle text on the screen, and get its first search result, a map or image and one-tap actions in a panel"
+        "Grabber: select text in any app, or circle text on the screen, and get its first search result, a map or image and one-tap actions in a panel",
+        "Grabber Place card: a selected place shows its OpenStreetMap map, address, type and the distance and time by car, on foot, by bicycle and by air (an estimate), from the position Cloud Nav shares",
+        "Grabber on selection: optionally open the panel by itself when you select text (accessibility, or this keyboard's own fields), off by default",
+        "Toolbar: Dev Keyboard, Grabber and HandWrite keys right before Vault"
       ],
       "screens": [
         {
@@ -283,7 +287,7 @@
         },
         {
           "name": "Grabber",
-          "what": "Text Selection: pick Cloud Keyboard in the selection menu of any app. Screen Selection: circle text on the screen."
+          "what": "Text Selection: pick Cloud Keyboard in the selection menu of any app, tap the Grabber toolbar key, or turn on Grabber on selection. Screen Selection: circle text on the screen. A place gets a map, its address and distances; anything else an image with its attribution."
         }
       ],
       "guide": [
@@ -291,9 +295,13 @@
         "Tap the globe to translate what you type.",
         "Hold the microphone key to dictate."
       ],
-      "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. Usage analytics are opt-in and off by default; when allowed, events go only to the owner's self-hosted Umami and Matomo. It calls no fleet service: its data stays on the phone.",
+      "privacy": "No ads and no third-party trackers. Grabber looks selected text up on DuckDuckGo, OpenStreetMap (Nominatim, map tiles, OSRM routing) and Wikipedia / Wikimedia Commons only when its panel opens; Grabber on selection is off by default and reads text-selection events only. The keyboard never locates: the Place card's distances use the last position Cloud Nav shares. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. Usage analytics are opt-in and off by default; when allowed, events go only to the owner's self-hosted Umami and Matomo. It calls no fleet service: its data stays on the phone.",
       "backends": [],
       "related": [
+        {
+          "app": "ac_cloud-nav",
+          "why": "Shares the position the Grabber Place card measures its distances from."
+        },
         {
           "app": "ac_cloud-account",
           "why": "Profiles and snippets for autofill."
@@ -312,8 +320,10 @@
       "notifications",
       "microphone",
       "contacts_read",
-      "all_files"
+      "all_files",
+      "accessibility"
     ],
+    "_doc_accessibility": "#1793 Grabber on selection (grabber.GrabberSelectionService): opt-in, off by default, text-selection events only; a special grant, never asked at first run (libs:perms asks runtime grants only).",
     "helpers": [],
     "first_run": "libs:perms"
   },

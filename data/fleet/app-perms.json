@@ -137,7 +137,8 @@
     "notifications",
     "microphone",
     "contacts_read",
-    "all_files"
+    "all_files",
+    "accessibility"
    ],
    "first_run": "libs:perms",
    "helpers": []

@@ -170,8 +170,11 @@
         <!-- #1754 Grabber: the text-selection menu entry. Every app's selection toolbar lists activities that filter ACTION_PROCESS_TEXT; this
              one opens the Grabber bottom sheet over that app and, for an editable field, returns the result as EXTRA_PROCESS_TEXT. The
              Writer entry above stays. -->
+        <!-- #1793 taskAffinity="": opened by the toolbar key or Grabber on selection (a NEW_TASK start) it sits over the app being
+             used instead of bringing this app's settings window forward; the selection menu's start (for a result) is unaffected. -->
         <activity android:name=".grabber.GrabberActivity"
             android:theme="@style/Theme.CloudGrabber"
+            android:taskAffinity=""
             android:exported="true"
             android:label="@string/grabber_menu_label"
             android:excludeFromRecents="true"
@@ -195,6 +198,17 @@
         <service android:name=".grabber.GrabberCaptureService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
+        <!-- #1793 Grabber on selection (accessibility): OFF until the user turns it on in Android's Accessibility settings AND the switch on
+             Grabber > Text Selection. Subscribes to text-selection events only, no window content (res/xml/grabber_accessibility.xml). -->
+        <service android:name=".grabber.GrabberSelectionService"
+            android:exported="true"
+            android:label="@string/grabber_a11y_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/grabber_accessibility" />
+        </service>
         <service android:name=".grabber.GrabberTileService"
             android:exported="true"
             android:icon="@android:drawable/ic_menu_crop"

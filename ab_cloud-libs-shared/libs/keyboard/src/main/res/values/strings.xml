@@ -1590,6 +1590,9 @@ New dictionary:
     <string name="handwrite_no_engine">Handwriting recognition is not available in this build</string>
     <string name="dev_keyboard">Dev Keyboard</string>
     <string name="dev_keyboard_summary">Swipe-corner keys (Esc, Tab, Ctrl, Alt, arrows, symbols) on the Unexpected layout</string>
+    <!-- #1793 the GRABBER toolbar key (name = lowercase of ToolbarKey.GRABBER) -->
+    <string name="grabber">Grabber</string>
+    <string name="grabber_not_available">Grabber is not available in this build</string>
     <!-- #1622 Home Page (icon grid) and Themes picker -->
     <string name="settings_screen_home">Home</string>
     <string name="home_group_keyboard">Keyboard</string>

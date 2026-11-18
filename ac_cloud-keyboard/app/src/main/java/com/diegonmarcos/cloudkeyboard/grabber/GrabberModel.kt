@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.SystemClock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextRange
@@ -15,6 +16,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import com.diegonmarcos.cloudwriter.WriterTool
 import com.diegonmarcos.cloudwriter.WriterToolRunner
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -39,9 +42,15 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
     var media by mutableStateOf<Load<MediaResult>>(Load.Idle)
     var busy by mutableStateOf<String?>(null)
     val log = mutableStateListOf<LogLine>()
+    /** #1793 the Place card's trip: where from (Cloud Nav's fix) and the air estimate; each routed mode loads into [legs]. */
+    var trip by mutableStateOf<Load<TripPlan>>(Load.Idle)
+    val legs = mutableStateMapOf<TravelMode, Load<Leg>>()
+    /** True when the position is missing because Cloud Nav is not installed (the card offers to open it otherwise). */
+    var navMissing by mutableStateOf(false)
 
     private var searchJob: Job? = null
     private var mediaJob: Job? = null
+    private var tripJob: Job? = null
     private var generation = 0
     private var runner: WriterToolRunner? = null
 
@@ -64,8 +73,9 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
         val text = draft.text
         val query = GrabberClassifier.query(text)
         val kind = GrabberClassifier.classify(text)
-        searchJob?.cancel(); mediaJob?.cancel()
+        searchJob?.cancel(); mediaJob?.cancel(); tripJob?.cancel()
         val gen = ++generation
+        trip = Load.Idle; legs.clear()
         if (kind == SelectionKind.EMPTY) { search = Load.Idle; media = Load.Idle; return }
         if (remember) GrabberStore.push(app, Recent(text.trim(), kind.label, source, System.currentTimeMillis()))
         if (!GrabberNet.online(app)) {
@@ -85,18 +95,62 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
             val r = runCatching { loadMedia(kind, query) }
             if (gen != generation) return@launch
             media = r.fold({ Load.Ready(it, it.ms) }, { failure(it) })
+            val m = r.getOrNull()
+            if (m is MediaResult.MapView) loadTrip(gen, m)
         }
     }
 
+    /**
+     * #1793 box C. The text is geocoded (OSM Nominatim, cached, 1 request a second); when the answer is a place
+     * ([PlaceDecision.isPlace]) the card is the map with the address, the type and the distances, otherwise it is not a place and
+     * the card is an image for the term (Wikipedia / Wikimedia Commons with attribution, the first web image, or a placeholder).
+     */
     private suspend fun loadMedia(kind: SelectionKind, query: String): MediaResult {
-        if (!kind.showsMap) return GrabberNet.firstImage(query)
-        return try {
-            GrabberNet.map(query, if (kind == SelectionKind.ADDRESS) 16 else 14)
+        val hit = try {
+            GrabberNet.geocode(app, query)
         } catch (e: GrabberNetException) {
-            // a place the geocoder does not know still deserves a picture: fall back to the first image
+            // the geocoder down or walled is not the end of the card: an image for the term still answers
             if (e.reason == FailReason.OFFLINE) throw e
-            GrabberNet.firstImage(query)
+            null
         }
+        return if (PlaceDecision.isPlace(kind, query, hit)) GrabberNet.placeMap(hit!!, kind, query) else GrabberNet.termImage(query)
+    }
+
+    /** The distances of a place card: the position is asked of Cloud Nav only now, when a place is on screen. */
+    private fun loadTrip(gen: Int, to: MediaResult.MapView) {
+        tripJob?.cancel()
+        trip = Load.Loading
+        tripJob = scope.launch {
+            val t0 = SystemClock.elapsedRealtime()
+            val where = withContext(Dispatchers.IO) { GrabberLocation.where(app) }
+            if (gen != generation) return@launch
+            when (where) {
+                is GrabberLocation.Where.Unknown -> {
+                    navMissing = where.navMissing
+                    trip = Load.Failed(FailReason.EMPTY, where.why)
+                    say("distances", "no position", false)
+                }
+                is GrabberLocation.Where.At -> {
+                    navMissing = false
+                    trip = Load.Ready(TripPlan.of(where.lat, where.lon, to.lat, to.lon, where.note), SystemClock.elapsedRealtime() - t0)
+                    TravelMode.entries.filter { it.routed }.forEach { mode ->
+                        legs[mode] = Load.Loading
+                        launch {
+                            val l0 = SystemClock.elapsedRealtime()
+                            val r = runCatching { GrabberNet.route(mode, where.lat, where.lon, to.lat, to.lon) }
+                            if (gen != generation) return@launch
+                            legs[mode] = r.fold({ Load.Ready(it, SystemClock.elapsedRealtime() - l0) }, { failure(it) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /** Ask Cloud Nav again (after it was opened, or a fix came in). */
+    fun retryTrip() {
+        val m = (media as? Load.Ready<*>)?.value as? MediaResult.MapView ?: return
+        loadTrip(generation, m)
     }
 
     private fun failure(t: Throwable): Load.Failed = when (t) {

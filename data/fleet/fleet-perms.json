@@ -271,7 +271,8 @@
     "notifications",
     "microphone",
     "contacts_read",
-    "all_files"
+    "all_files",
+    "accessibility"
    ],
    "helpers": []
   },

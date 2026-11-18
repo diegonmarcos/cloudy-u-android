@@ -33,7 +33,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-contacts | `com.diegonmarcos.cloudcontacts` | 8 | 2 | 80% |
 | cloud-dialer | `com.diegonmarcos.comms.dialer` | 9 | 2 | 81% |
 | cloud-drive | `com.diegonmarcos.clouddrive` | 17 | 6 | 73% |
-| cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 9 | 0 | 100% |
+| cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 10 | 0 | 100% |
 | cloud-mail | `com.diegonmarcos.comms.mail` | 13 | 2 | 86% |
 | cloud-matrix | `com.diegonmarcos.comms.matrix` | 4 | 9 | 30% |
 | cloud-me | `com.diegonmarcos.cloudme` | 19 | 1 | 95% |
@@ -58,7 +58,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-biomed | `com.diegonmarcos.hardtechbiomed` | 5 | 0 | 100% |
-| **fleet** | | **451** | **57** | **88%** |
+| **fleet** | | **452** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -818,7 +818,7 @@ Coverage: 17 covered, 6 gaps — ai_sessions, file:filesDir/ai-sessions.json, fi
 
 ## cloud-keyboard — `com.diegonmarcos.cloudkeyboard`
 
-Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-decisions, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-keyboard, lib-media, lib-ml-l-image-ocr, lib-perms, lib-text-tools, lib-theme-background, lib-translate, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-voice, lib-writer-core, lib-writer-ui.
+Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-decisions, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-keyboard, lib-location-client, lib-media, lib-ml-l-image-ocr, lib-perms, lib-text-tools, lib-theme-background, lib-translate, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-voice, lib-writer-core, lib-writer-ui.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -829,6 +829,7 @@ Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, li
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
+| `grabber` | prefs | config | yes | #1793 Cloud Keyboard Grabber on selection: on_selection_accessibility and on_selection_keyboard, the two Configs switches (Grabber > Text Selection) that let the Grabber panel open by itself on a text selection; both off by default. Choices only, no selected text is ever kept here. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
 | `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
 | `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
@@ -848,7 +849,7 @@ Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, li
 | `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 | `filesDir/vosk/<model-dir>` | device | Downloaded Vosk model files (re-downloadable); the selected model name is declared/held in the host app prefs, not in this lib |
 
-Coverage: 9 covered, 0 gaps.
+Coverage: 10 covered, 0 gaps.
 
 ## cloud-mail — `com.diegonmarcos.comms.mail`
 

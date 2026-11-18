@@ -9,6 +9,10 @@
 #   11-sheet-phrase              ... a phrase
 #   12-sheet-address-map         ... an address, with the map in box C
 #   13-sheet-editable-word       ... an editable field (the result would replace the selection)
+#   14-place-card-distances      #1793 a place ("Eiffel Tower") with a MOCK position (debug build only): map, address, type, and the
+#                                distance and time by car, on foot, by bicycle and by air (estimate)
+#   15-place-card-far            ... a word that geocodes to a city ("Barcelona") from the same mock position: a real flight estimate
+#   16-non-place-image-card      #1793 a word that is not a place ("photosynthesis"): the Wikipedia / Commons image with its attribution
 #   20-screen-selection-page     Grabber > Screen Selection
 #   21-screen-picker             the captured screen with the drag overlay
 #   22-screen-result             after dragging around a line: the text read on the device and the same panel
@@ -111,6 +115,37 @@ dumpui "$OUT/sheet-address.xml" && grep -q 'MEDIA · MAP' "$OUT/sheet-address.xm
 adb shell input keyevent 4; sleep 2
 menu "teh quick brwn fox" false; waitfor "Copy link" 60; shot 13-sheet-editable-word
 dumpui "$OUT/sheet-editable.xml" && grep -q 'FIELD · REPLACES SELECTION' "$OUT/sheet-editable.xml" && ok "an editable field says the result replaces the selection" || bad "no editable marker"
+adb shell input keyevent 4; sleep 2
+
+# ── #1793 the Place card: a mock position (debug builds read grabber.mock_lat / grabber.mock_lon), then a place and a far city ──
+MOCK_LAT=48.8809; MOCK_LON=2.3553   # Paris Gare du Nord: made up for the walk, labelled MOCK LOCATION on the card
+menu_at() {  # $1 text: the selection-menu start plus the mock position
+    adb shell "am start -f 0x10008000 -n $PKG/.grabber.GrabberActivity -a android.intent.action.PROCESS_TEXT -t text/plain --es android.intent.extra.PROCESS_TEXT '$1' --ez android.intent.extra.PROCESS_TEXT_READONLY true --es grabber.mock_lat $MOCK_LAT --es grabber.mock_lon $MOCK_LON" >/dev/null
+}
+menu_at "Eiffel Tower"; waitfor "Open in maps" 90
+scroll_sheet; scroll_sheet; waitfor "BY BICYCLE" 60
+for _ in 1 2 3 4 5 6 7 8 9 10; do dumpui "$OUT/place.xml" && grep -q 'text="[0-9.]* \(km\|m\)"' "$OUT/place.xml" && grep -c 'min"' "$OUT/place.xml" | grep -q '[3-9]' && break; sleep 3; done
+shot 14-place-card-distances
+dumpui "$OUT/place.xml"
+grep -q 'DISTANCES · FROM YOUR LOCATION' "$OUT/place.xml" && ok "a place card has the distances box" || bad "no distances box on the place card"
+grep -q 'MOCK LOCATION' "$OUT/place.xml" && ok "the distances say they come from the mock position" || bad "the mock position is not shown"
+for m in "BY CAR" "ON FOOT" "BY BICYCLE" "BY AIR · ESTIMATE"; do grep -q "$m" "$OUT/place.xml" && ok "mode $m" || bad "mode $m missing"; done
+grep -q 'ESTIMATE (~800 km/h' "$OUT/place.xml" && ok "the flight time is labelled an estimate" || bad "no estimate label"
+scroll_sheet; shot 14b-place-card-bottom
+adb shell input keyevent 4; sleep 2
+menu_at "Barcelona"; waitfor "Open in maps" 90
+scroll_sheet; scroll_sheet; waitfor "BY AIR" 60; sleep 12
+shot 15-place-card-far
+dumpui "$OUT/place-far.xml" && grep -q 'TYPE' "$OUT/place-far.xml" && grep -q 'ADDRESS' "$OUT/place-far.xml" && ok "a city word is a place: type and address" || bad "the city word did not get a place card"
+adb shell input keyevent 4; sleep 2
+
+# ── #1793 not a place: an image for the term, with its attribution ─────────
+menu "photosynthesis" true; waitfor "Copy link" 60
+scroll_sheet; waitfor "MEDIA · " 60; sleep 8
+shot 16-non-place-image-card
+dumpui "$OUT/non-place.xml"
+grep -q 'MEDIA · IMAGE · WIKIPEDIA\|MEDIA · IMAGE · WIKIMEDIA COMMONS\|MEDIA · NOT A PLACE · NO IMAGE\|MEDIA · IMAGE · FIRST IMAGE' "$OUT/non-place.xml" && ok "a word that is not a place gets an image card" || bad "no image card for the non-place word"
+grep -q 'DISTANCES · FROM YOUR LOCATION' "$OUT/non-place.xml" && bad "a non-place has a distances box" || ok "no distances for a non-place"
 adb shell input keyevent 4; sleep 2
 
 # ── screen selection ──────────────────────────────────────────────────────

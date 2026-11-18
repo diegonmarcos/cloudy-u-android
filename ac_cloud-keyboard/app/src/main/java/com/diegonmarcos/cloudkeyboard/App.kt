@@ -47,6 +47,9 @@ class App : Application(), WorkManagerConfiguration.Provider {
                 com.diegonmarcos.superapp.fleetconfigs.FleetConfigsEntries.open(ctx, page)
             }
         }
+        // #1793 the GRABBER toolbar key and Grabber on selection (keyboard): libs:keyboard holds only GrabberLink, the panel is the app's
+        helium314.keyboard.latin.GrabberLink.opener = { ctx, text -> com.diegonmarcos.cloudkeyboard.grabber.GrabberActivity.openFromKeyboard(ctx, text) }
+        helium314.keyboard.latin.GrabberLink.selectionHook = { ime, start, end -> com.diegonmarcos.cloudkeyboard.grabber.GrabberAuto.onImeSelection(ime, start, end) }
         // #1781 HandWrite: the ML Kit Digital Ink engine behind the keyboard's handwriting panel (libs:keyboard holds only the interface)
         helium314.keyboard.keyboard.handwrite.Handwriting.engine = com.diegonmarcos.cloudkeyboard.handwrite.MlKitHandwritingEngine()
         // #1651 the fleet default top + bottom nav bars around the settings pages, and the keyboard's own tab of the standard

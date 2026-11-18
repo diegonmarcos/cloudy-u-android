@@ -146,8 +146,75 @@ private fun TextSelectionPage(model: GrabberModel) {
                 Triple("RESULT", "editable field: replaces the selection", GC.accent),
             ),
         )
+        OnSelectionBox()
         GrabberPanel(model, onReply = {})
         RecentsBox(GrabberBus.recents.filter { it.source != "screen" }, onPick = { model.setText(it.text); model.grab() })
+    }
+}
+
+/** #1793 opens a libs:perms catalogue entry's own settings page (Perms > one place: the app never builds that intent itself). */
+private fun openPermEntry(ctx: Context, id: String): Boolean = runCatching {
+    val e = com.diegonmarcos.superapp.perms.Perms.catalogue(ctx).entries.firstOrNull { it.id == id } ?: return@runCatching false
+    com.diegonmarcos.superapp.perms.PermsSettings.open(ctx, e)
+}.getOrDefault(false)
+
+/**
+ * #1793 Configs of Grabber on selection: two switches, both OFF by default, each with what it reads said in plain words, and the
+ * real state of the accessibility service in Android next to its switch (a switch on with the service off opens nothing).
+ */
+@Composable
+private fun OnSelectionBox() {
+    val ctx = LocalContext.current
+    var a11y by remember { mutableStateOf(GrabberAuto.a11yOn(ctx)) }
+    var ime by remember { mutableStateOf(GrabberAuto.imeOn(ctx)) }
+    var service by remember { mutableStateOf(GrabberAuto.serviceEnabled(ctx)) }
+    // the service is switched in Android's settings, outside this page: its real state is read again every 1.5 s while the page is
+    // composed (one Settings.Secure read), so coming back from Accessibility settings shows the truth
+    LaunchedEffect(Unit) {
+        while (true) { service = GrabberAuto.serviceEnabled(ctx); kotlinx.coroutines.delay(1500) }
+    }
+    val live = a11y && service
+    ConsoleBox("CONFIGS · GRABBER ON SELECTION", if (live || ime) GC.ok else GC.text3, reading = when {
+        live && ime -> "ACCESSIBILITY + KEYBOARD"
+        live -> "ACCESSIBILITY"
+        a11y -> "SERVICE OFF IN ANDROID"
+        ime -> "KEYBOARD"
+        else -> "OFF"
+    }) {
+        Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Text("Open the Grabber panel by itself when you select text, without the selection menu. Both are off until you turn them on.",
+                color = GC.text2, fontSize = 12.sp)
+            SwitchRow("Grabber on selection: any app (accessibility)", a11y) { a11y = it; GrabberAuto.setA11y(ctx, it) }
+            Text("What it reads: Android's text-selection events and nothing else. Each event carries the text of the view you select in, the selection " +
+                "range and the app's package name. It does not read the screen, your typing or password fields (they are skipped), and it never acts on " +
+                "another app. The selected text, once steady for about a second, opens this panel, which looks it up like the selection menu does " +
+                "(DuckDuckGo, OpenStreetMap, Wikipedia) and keeps it in Recent grabs on this phone. Nothing is sent anywhere else.",
+                color = GC.text3, fontSize = 10.5.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(6.dp).clip(CircleShape).background(if (service) GC.ok else GC.bad))
+                Caps("SERVICE IN ANDROID", GC.text3, Modifier.width(118.dp))
+                Text(if (service) "on (Accessibility > Cloud Keyboard Grabber)" else "off: turn it on in Accessibility settings", color = GC.text, fontFamily = Mono, fontSize = 10.sp, maxLines = 2)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                KeyChip("Open Accessibility settings", accent = a11y && !service) {
+                    if (!openPermEntry(ctx, "accessibility")) Toast.makeText(ctx, "Accessibility settings could not be opened", Toast.LENGTH_SHORT).show()
+                }
+                if (Build.VERSION.SDK_INT >= 33) KeyChip("Allow restricted settings") { openPermEntry(ctx, "restricted_settings") }
+            }
+            if (Build.VERSION.SDK_INT >= 33) Text("A sideloaded app's accessibility service is greyed out until Allow restricted settings is on (App info > menu).", color = GC.text3, fontSize = 10.sp)
+            Box(Modifier.fillMaxWidth().height(1.dp).background(GC.hairline))
+            SwitchRow("Grabber on selection: while typing (this keyboard)", ime) { ime = it; GrabberAuto.setIme(ctx, it) }
+            Text("No permission: where Cloud Keyboard is the keyboard of a field, Android already tells it what you select there. A steady selection " +
+                "opens this panel over the app; password fields and this app's own fields are skipped.", color = GC.text3, fontSize = 10.5.sp)
+        }
+    }
+}
+
+@Composable
+private fun SwitchRow(label: String, on: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable { onChange(!on) }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(label, color = GC.text, fontSize = 13.sp, modifier = Modifier.weight(1f))
+        androidx.compose.material3.Switch(checked = on, onCheckedChange = onChange)
     }
 }
 

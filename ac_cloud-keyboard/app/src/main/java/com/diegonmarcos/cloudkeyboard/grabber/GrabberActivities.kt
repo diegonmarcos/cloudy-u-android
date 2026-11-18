@@ -75,7 +75,13 @@ class GrabberActivity : ComponentActivity() {
         enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(AColor.TRANSPARENT), navigationBarStyle = SystemBarStyle.dark(AColor.TRANSPARENT))
         val selected = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString().orEmpty()
         val readOnly = intent.getBooleanExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, false)
-        val model = GrabberModel(applicationContext, scope, "menu")
+        // #1793 debug builds only: the emulator walk's fixed position for the Place card's distances (labelled MOCK on the card)
+        if (com.diegonmarcos.cloudkeyboard.BuildConfig.DEBUG && intent.hasExtra(EXTRA_MOCK_LAT) && intent.hasExtra(EXTRA_MOCK_LON)) {
+            GrabberLocation.mock = intent.getStringExtra(EXTRA_MOCK_LAT)?.toDoubleOrNull()?.let { la -> intent.getStringExtra(EXTRA_MOCK_LON)?.toDoubleOrNull()?.let { lo -> la to lo } }
+        }
+        // #1793 who opened the panel: the selection menu (default), the toolbar key, or Grabber on selection (accessibility / keyboard)
+        val source = intent.getStringExtra(EXTRA_SOURCE)?.takeIf { it in SOURCES } ?: "menu"
+        val model = GrabberModel(applicationContext, scope, source)
         model.readOnly = readOnly
         model.setText(selected, selectAll = selected.isNotEmpty())
         model.grab()
@@ -96,6 +102,23 @@ class GrabberActivity : ComponentActivity() {
     override fun onDestroy() {
         scope.cancel()
         super.onDestroy()
+    }
+
+    companion object {
+        const val EXTRA_SOURCE = "grabber.source"
+        const val EXTRA_MOCK_LAT = "grabber.mock_lat"
+        const val EXTRA_MOCK_LON = "grabber.mock_lon"
+        val SOURCES = setOf("menu", "toolbar", "accessibility", "keyboard")
+
+        /** #1793 the GRABBER toolbar key (GrabberLink.opener): the panel over the app being typed in, on the field's selection. */
+        fun openFromKeyboard(ctx: Context, text: String) {
+            ctx.startActivity(Intent(ctx, GrabberActivity::class.java)
+                .setAction(Intent.ACTION_PROCESS_TEXT).setType("text/plain")
+                .putExtra(Intent.EXTRA_PROCESS_TEXT, text)
+                .putExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true)
+                .putExtra(EXTRA_SOURCE, "toolbar")
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
+        }
     }
 }
 

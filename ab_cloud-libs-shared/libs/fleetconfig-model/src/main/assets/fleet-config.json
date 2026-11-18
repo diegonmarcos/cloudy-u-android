@@ -93,6 +93,12 @@
         "next_id": "device"
       }
     },
+    "grabber": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "#1793 Cloud Keyboard Grabber on selection: on_selection_accessibility and on_selection_keyboard, the two Configs switches (Grabber > Text Selection) that let the Grabber panel open by itself on a text selection; both off by default. Choices only, no selected text is ever kept here.",
+      "used_by": ["ac_cloud-keyboard"]
+    },
     "autocomplete_store": {
       "kind": "prefs",
       "class": "device",
@@ -3921,6 +3927,7 @@
         "lib-fleetconfigs-logcat",
         "lib-fleetconfigs-xray",
         "lib-keyboard",
+        "lib-location-client",
         "lib-media",
         "lib-ml-l-image-ocr",
         "lib-perms",

@@ -12,12 +12,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.UnknownHostException
+import java.util.Locale
 
 /** Why a box has nothing to show; each one has its own state in the UI. */
 enum class FailReason(val label: String) { OFFLINE("OFFLINE"), ERROR("ERROR"), EMPTY("NO RESULT"), BLOCKED("BLOCKED") }
@@ -38,8 +40,12 @@ sealed interface MediaResult {
     val caption: String
     val ms: Long
 
-    class MapView(override val caption: String, val lat: Double, val lon: Double, val zoom: Int, val tiles: List<LoadedTile>, override val ms: Long) : MediaResult
-    class Photo(override val caption: String, val image: ImageBitmap, val source: String, val pageUrl: String, override val ms: Long) : MediaResult
+    class MapView(override val caption: String, val lat: Double, val lon: Double, val zoom: Int, val tiles: List<LoadedTile>, override val ms: Long,
+                  val place: PlaceInfo? = null) : MediaResult
+    class Photo(override val caption: String, val image: ImageBitmap, val source: String, val pageUrl: String, override val ms: Long,
+                val attribution: String = "") : MediaResult
+    /** #1793 not a place and no image anywhere: a neutral frame that says so (never an empty box). */
+    class Placeholder(override val caption: String, val reason: String, override val ms: Long) : MediaResult
 }
 
 class LoadedTile(val tile: TileMath.Tile, val image: ImageBitmap?)
@@ -60,12 +66,18 @@ object GrabberNet {
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
-    private fun open(url: String, referer: String?): HttpURLConnection {
+    /**
+     * #1793 the User-Agent the free OSM and Wikimedia services ask for: it names the app, and nothing about its user or owner
+     * (Nominatim, the OSM tile server, the FOSSGIS OSRM servers and the Wikimedia APIs refuse anonymous or browser-faked clients).
+     */
+    const val APP_UA = "CloudKeyboard-Grabber/1.1 (Android keyboard app; open source)"
+
+    private fun open(url: String, referer: String?, ua: String = UA): HttpURLConnection {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = 7000
         c.readTimeout = 9000
         c.instanceFollowRedirects = true
-        c.setRequestProperty("User-Agent", UA)
+        c.setRequestProperty("User-Agent", ua)
         c.setRequestProperty("Accept-Language", "en")
         if (referer != null) c.setRequestProperty("Referer", referer)
         return c
@@ -83,8 +95,8 @@ object GrabberNet {
         throw GrabberNetException(FailReason.ERROR, e.message ?: e.javaClass.simpleName)
     }
 
-    fun text(url: String, referer: String? = null): String = guarded {
-        val c = open(url, referer)
+    fun text(url: String, referer: String? = null, ua: String = UA): String = guarded {
+        val c = open(url, referer, ua)
         try {
             val code = c.responseCode
             if (code == 202 || code == 403 || code == 429) throw GrabberNetException(FailReason.BLOCKED, "HTTP $code")
@@ -93,8 +105,8 @@ object GrabberNet {
         } finally { c.disconnect() }
     }
 
-    fun bytes(url: String, referer: String? = null): ByteArray = guarded {
-        val c = open(url, referer)
+    fun bytes(url: String, referer: String? = null, ua: String = UA): ByteArray = guarded {
+        val c = open(url, referer, ua)
         try {
             val code = c.responseCode
             if (code !in 200..299) throw GrabberNetException(FailReason.ERROR, "HTTP $code")
@@ -102,8 +114,8 @@ object GrabberNet {
         } finally { c.disconnect() }
     }
 
-    private fun bitmap(url: String, referer: String? = null): Bitmap? {
-        val b = bytes(url, referer)
+    private fun bitmap(url: String, referer: String? = null, ua: String = UA): Bitmap? {
+        val b = bytes(url, referer, ua)
         return BitmapFactory.decodeByteArray(b, 0, b.size)
     }
 
@@ -152,9 +164,130 @@ object GrabberNet {
         val geo = GrabberParsers.firstGeo(json) ?: throw GrabberNetException(FailReason.EMPTY, "no place found for this text")
         val plan = TileMath.plan(geo.lat, geo.lon, zoom, MAP_W, MAP_H)
         val tiles = coroutineScope {
-            plan.map { t -> async { LoadedTile(t, runCatching { bitmap(TileMath.url(t)) }.getOrNull()?.asImageBitmap()) } }.map { it.await() }
+            plan.map { t -> async { LoadedTile(t, runCatching { bitmap(TileMath.url(t), ua = APP_UA) }.getOrNull()?.asImageBitmap()) } }.map { it.await() }
         }
         if (tiles.none { it.image != null }) throw GrabberNetException(FailReason.ERROR, "the map tiles could not be downloaded")
         MediaResult.MapView(geo.name.ifBlank { query }, geo.lat, geo.lon, zoom, tiles, SystemClock.elapsedRealtime() - t0)
+    }
+
+    // ── #1793 the Place card ─────────────────────────────────────────────────
+
+    /** Nominatim allows one request a second; OSRM's public servers ask the same courtesy; Wikimedia a light touch. */
+    private val nominatimGate = RateGate(1100)
+    private val osrmGates = TravelMode.entries.filter { it.routed }.associateWith { RateGate(1000) }
+    private val wikiGate = RateGate(250)
+    private val routeCache = Lru<String, Leg>(64)
+    private val noRoute = Lru<String, String>(64)
+    private val imageCache = Lru<String, TermImage>(48)
+    private val noImage = Lru<String, String>(48)
+
+    private suspend fun gated(g: RateGate) { val w = g.reserve(SystemClock.elapsedRealtime()); if (w > 0) delay(w) }
+
+    /** The geocoder's best hit for [query], or null: answers are cached in memory and on disk ([GeoCache]), so a re-grab asks nothing. */
+    suspend fun geocode(ctx: Context, query: String): GeoHit? = withContext(Dispatchers.IO) {
+        val key = query.trim().lowercase(Locale.ROOT)
+        val raw = GeoCache.get(ctx, key) ?: run {
+            gated(nominatimGate)
+            val lang = Locale.getDefault().language.ifBlank { "en" }
+            val r = text("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=$lang,en&q=${GrabberRouter.enc(query)}", ua = APP_UA)
+            GeoCache.put(ctx, key, r)
+            r
+        }
+        GrabberParsers.firstGeo(raw)
+    }
+
+    /** The place card's map: the tiles around [hit] with its address and type. Tiles that fail leave the grey frame and the marker. */
+    suspend fun placeMap(hit: GeoHit, kind: SelectionKind, query: String): MediaResult.MapView = withContext(Dispatchers.IO) {
+        val t0 = SystemClock.elapsedRealtime()
+        val zoom = PlaceDecision.zoom(kind, hit.placeRank)
+        val plan = TileMath.plan(hit.lat, hit.lon, zoom, MAP_W, MAP_H)
+        val tiles = coroutineScope {
+            plan.map { t -> async { LoadedTile(t, runCatching { bitmap(TileMath.url(t), ua = APP_UA) }.getOrNull()?.asImageBitmap()) } }.map { it.await() }
+        }
+        MediaResult.MapView(PlaceDecision.hitName(hit).ifBlank { query }, hit.lat, hit.lon, zoom, tiles, SystemClock.elapsedRealtime() - t0, PlaceDecision.info(hit))
+    }
+
+    /** One routed leg (car, foot or bicycle) on the free public OSRM servers; cached; EMPTY when there is no route. */
+    suspend fun route(mode: TravelMode, fromLat: Double, fromLon: Double, toLat: Double, toLon: Double): Leg = withContext(Dispatchers.IO) {
+        val url = mode.routeUrl(fromLat, fromLon, toLat, toLon)
+        routeCache.get(url)?.let { return@withContext it }
+        noRoute.get(url)?.let { throw GrabberNetException(FailReason.EMPTY, it) }
+        gated(osrmGates.getValue(mode))
+        val leg = PlaceParsers.osrmLeg(text(url, ua = APP_UA))
+        if (leg == null) { noRoute.put(url, "no ${mode.osrmProfile} route between these points"); throw GrabberNetException(FailReason.EMPTY, "no ${mode.osrmProfile} route between these points") }
+        routeCache.put(url, leg)
+        leg
+    }
+
+    private fun termImageLookup(query: String): TermImage? {
+        val q = query.trim().take(120)
+        val langs = listOf(Locale.getDefault().language, "en").filter { it.isNotBlank() }.distinct()
+        for (lang in langs) {
+            val title = GrabberRouter.enc(q.replace(' ', '_')).replace("+", "%20")
+            val hit = try {
+                PlaceParsers.wikipediaSummary(text("https://$lang.wikipedia.org/api/rest_v1/page/summary/$title?redirect=true", ua = APP_UA), lang)
+            } catch (e: GrabberNetException) { if (e.reason == FailReason.OFFLINE) throw e; null }
+            if (hit != null) return hit
+        }
+        val commons = "https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=1" +
+            "&gsrsearch=${GrabberRouter.enc("$q filetype:bitmap")}&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=640" +
+            "&iiextmetadatafilter=Artist%7CLicenseShortName"
+        return try { PlaceParsers.commonsFirst(text(commons, ua = APP_UA)) } catch (e: GrabberNetException) { if (e.reason == FailReason.OFFLINE) throw e; null }
+    }
+
+    /**
+     * Not a place: an image FOR the term. The Wikipedia article's thumbnail (the device language, then English), else the first
+     * Wikimedia Commons file, each with its attribution; else DuckDuckGo's first image (the #1754 source, kept); else a neutral
+     * placeholder that says there is none. Only OFFLINE is an error: everything else ends in a card.
+     */
+    suspend fun termImage(query: String): MediaResult = withContext(Dispatchers.IO) {
+        val t0 = SystemClock.elapsedRealtime()
+        val key = query.trim().lowercase(Locale.ROOT)
+        val hit = imageCache.get(key) ?: if (noImage.get(key) != null) null else {
+            gated(wikiGate)
+            termImageLookup(query).also { if (it != null) imageCache.put(key, it) else noImage.put(key, "none") }
+        }
+        if (hit != null) {
+            val bmp = runCatching { bitmap(hit.thumbUrl, ua = APP_UA) }.getOrNull()
+            if (bmp != null) return@withContext MediaResult.Photo(hit.title.ifBlank { query }, bmp.asImageBitmap(), hit.source, hit.pageUrl,
+                SystemClock.elapsedRealtime() - t0, hit.attribution)
+        }
+        try {
+            firstImage(query)
+        } catch (e: GrabberNetException) {
+            if (e.reason == FailReason.OFFLINE) throw e
+            MediaResult.Placeholder(query, "No Wikipedia or Wikimedia Commons image for this text, and no web image either (${e.reason.label.lowercase(Locale.ROOT)})",
+                SystemClock.elapsedRealtime() - t0)
+        }
+    }
+}
+
+/** #1793 the geocoder answers on disk (cacheDir/grabber-geocode.json, the newest [MAX]), behind an in-memory LRU: Nominatim asks for caching. */
+object GeoCache {
+    const val MAX = 200
+    private val mem = Lru<String, String>(MAX)
+    @Volatile private var loaded = false
+
+    private fun file(ctx: Context) = java.io.File(ctx.cacheDir, "grabber-geocode.json")
+
+    @Synchronized private fun load(ctx: Context) {
+        if (loaded) return
+        loaded = true
+        runCatching {
+            val o = org.json.JSONObject(file(ctx).readText())
+            o.keys().forEach { k -> mem.put(k, o.getString(k)) }
+        }
+    }
+
+    @Synchronized fun get(ctx: Context, key: String): String? { load(ctx); return mem.get(key) }
+
+    @Synchronized fun put(ctx: Context, key: String, raw: String) {
+        load(ctx)
+        mem.put(key, raw)
+        runCatching {
+            val o = org.json.JSONObject()
+            mem.snapshot().forEach { (k, v) -> o.put(k, v) }
+            file(ctx).writeText(o.toString())
+        }
     }
 }

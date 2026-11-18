@@ -167,6 +167,10 @@ dependencies {
     implementation project(':libs:voice')
     // #1754 Grabber > Screen Selection reads the region on the device (ML Kit, already in this app's module graph through libs:writer-ui)
     implementation project(':libs:ml-l-image-ocr')
+    // #1793 Grabber on selection: the Accessibility / restricted-settings deep links go through the libs:perms catalogue (P7 one place)
+    implementation project(':libs:perms')
+    // #1793 the Place card's distances: Cloud Nav's last fix over the fleet IPC door (#1770), never a location fix of our own
+    implementation project(':libs:location-client')
     // #1781 HandWrite: on-device handwriting recognition; a language's model is downloaded on demand (RemoteModelManager)
     implementation 'com.google.mlkit:digital-ink-recognition:19.0.0'
     // #1698 WriterSettingsActivity (the Tools shells in com.diegonmarcos.cloudwriter) extends AppCompatActivity
