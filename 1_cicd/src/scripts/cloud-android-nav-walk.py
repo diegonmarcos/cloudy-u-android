@@ -532,6 +532,8 @@ class Walk:
                 return "the title dropdown did not open (to reach section %s)" % sid
             if self.pick(sid):
                 return None
+            # #1760 the open dropdown as the pick left it (scrolled to its end): what it listed instead of the section
+            self.evidence("%s_dropdown_%d" % (sid, _attempt))
             self.back_if_dropdown()
             settle(1.5)
         return "P6 the title dropdown's section list has no entry for section %s (every declared section must be reachable from it)" % sid
@@ -1069,17 +1071,17 @@ class Walk:
             if nodes is None:
                 fails.append("P4 the title dropdown did not open")
             else:
-                for _ in range(6):
+                # #1760 to the dropdown's end (it stops when nothing moves): the Configs entries close the list, under Cloud C3's whole
+                # drawer tree, which six fixed swipes did not always pass
+                for _ in range(DROPDOWN_SWIPES):
                     entry = find(nodes, CFG_ENTRY[page])
                     if entry is not None:
                         break
-                    box = find(nodes, DROPDOWN)
-                    if box is None:
+                    if find(nodes, DROPDOWN) is None or not self.scroll_dropdown(nodes):
                         break
-                    swipe(box.cx, box.b - 30, box.t + 30, 300)
-                    settle(0.6)
                     nodes = dump() or nodes
                 if entry is None:
+                    self.evidence("configs_%s_dropdown" % page)
                     fails.append("C1 the dropdown has no %s entry (Configs \u25b8 %s)" % (CFG_ENTRY[page], page.capitalize()))
                     self.back_if_dropdown()
             if entry is not None:
@@ -1120,7 +1122,13 @@ class Walk:
                                 fails.append("C4 the %s anchor did not bring its section up" % i)
                             self.evidence("configs_general_%s" % i)
                             if i == "perms":
-                                pn = dump() or []
+                                # #1760 Cloud Store: the evidence dump just taken held perms:grant-all and the next read did not (its background
+                                # installs redraw the window); the same tags are required, read up to three times before the section is called empty
+                                for _ in range(3):
+                                    pn = dump() or []
+                                    if find(pn, "perms:grant-all") or find(pn, "perms:all-granted") or find(pn, "perms:section"):
+                                        break
+                                    settle(1.5)
                                 if find(pn, "perms:grant-all") is None and find(pn, "perms:all-granted") is None and find(pn, "perms:section") is None:
                                     fails.append("C7 General's Perms section shows neither Grant all nor all granted")
                             if i == "update":
