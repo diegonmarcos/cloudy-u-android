@@ -13,38 +13,34 @@ import java.util.Locale
  * the place and its map, no distances, and the reason with a button to Cloud Nav.
  */
 object GrabberLocation {
-    /** How old Cloud Nav's fix may be for a distance (a travel estimate tolerates a stale fix better than a map dot). */
-    const val MAX_AGE_MS = 24L * 3_600_000L
-
     /** Debug builds only (GrabberActivity reads it from the emulator walk's extras): a fixed position, labelled MOCK on the card. */
     @Volatile var mock: Pair<Double, Double>? = null
 
     sealed interface Where {
-        data class At(val lat: Double, val lon: Double, val note: String) : Where
+        /** A fix: [note] is the card's line ("from your position 12 min ago · CLOUD NAV · ±20 m"); [stale] over 30 min. */
+        data class At(val lat: Double, val lon: Double, val note: String, val ageMs: Long = 0L, val ts: Long = 0L, val stale: Boolean = false) : Where
         data class Unknown(val why: String, val navMissing: Boolean) : Where
     }
 
-    private fun age(ms: Long): String = when {
-        ms < 90_000 -> "just now"
-        ms < 90 * 60_000 -> "${ms / 60_000} min old"
-        else -> "${ms / 3_600_000} h old"
-    }
-
-    /** Blocking (one IPC call to Cloud Nav): call off the main thread. */
+    /** Blocking (one IPC call to Cloud Nav, which answers from its own store): call off the main thread. */
     fun where(ctx: Context): Where {
-        mock?.let { (lat, lon) -> return Where.At(lat, lon, "MOCK LOCATION · DEBUG BUILD") }
+        mock?.let { (lat, lon) -> return Where.At(lat, lon, FixAge.text(0) + " · MOCK LOCATION · DEBUG BUILD", 0L, System.currentTimeMillis(), false) }
         val now = System.currentTimeMillis()
         return when (val a = NavLocationClient.ask(ctx, now)) {
             is NavLocationClient.Answer.Ok -> {
                 val f = a.fix
-                if (!NavLocationClient.freshEnough(f, now, now, MAX_AGE_MS)) Where.Unknown("Cloud Nav's last location is ${age(f.ageMs)}: open Cloud Nav so it updates", false)
-                else Where.At(f.lat, f.lon, "CLOUD NAV · ${age(f.ageMs)}" + (f.accuracyM?.let { String.format(Locale.ROOT, " · ±%.0f m", it) } ?: ""))
+                val acc = f.accuracyM?.let { String.format(Locale.ROOT, " · ±%.0f m", it) } ?: ""
+                Where.At(f.lat, f.lon, FixAge.text(f.ageMs) + " · CLOUD NAV" + acc, f.ageMs, f.timeMs, FixAge.stale(f.ageMs))
             }
             is NavLocationClient.Answer.Unavailable -> Where.Unknown(a.detail, a.why == NavLocationClient.Why.NOT_INSTALLED)
         }
     }
 
-    /** Cloud Nav's own window, where its location permission and Tracker live; false when it is not installed. */
+    /**
+     * "Open Cloud Nav to refresh": Cloud Nav's own window, where its location permission and Tracker live and where it takes a
+     * fresh fix while it is on screen (it has no separate take-a-fix entry); false when it is not installed. The card watches
+     * for the newer fix and recomputes by itself.
+     */
     fun openNav(ctx: Context): Boolean {
         val i = ctx.packageManager.getLaunchIntentForPackage(NavLocationClient.PKG) ?: return false
         return runCatching { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess

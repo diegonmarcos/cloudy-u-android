@@ -515,18 +515,28 @@ private fun TripBox(model: GrabberModel) {
                 Text("The position comes from Cloud Nav, the fleet's location app: it asks for approximate location first and precise location only if you allow it. The keyboard itself never locates.",
                     color = GC.text3, fontSize = 10.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if (!model.navMissing) KeyChip("Open Cloud Nav", accent = true) {
+                    if (!model.navMissing) KeyChip("Open Cloud Nav to refresh", accent = true) {
                         if (!GrabberLocation.openNav(ctx)) Toast.makeText(ctx, "Cloud Nav is not installed", Toast.LENGTH_SHORT).show()
                     }
                     KeyChip("Retry") { model.retryTrip() }
                 }
+                if (!model.navMissing) Text("Watching for Cloud Nav's new position: the distances appear by themselves when it has one.", color = GC.text3, fontSize = 10.sp)
             }
             is Load.Ready -> Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 val p = t.value
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Caps("FROM", GC.text3, Modifier.width(86.dp))
                     Text("${"%.4f".format(java.util.Locale.ROOT, p.fromLat)}, ${"%.4f".format(java.util.Locale.ROOT, p.fromLon)}", color = GC.text2, fontFamily = Mono, fontSize = 10.sp)
-                    Caps(p.fromNote, GC.text3)
+                }
+                // #1793 the fix's age and source on its own line: "from your position 12 min ago · CLOUD NAV · ±20 m"
+                Text(p.fromNote, color = if (p.stale) GC.warn else GC.text2, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                // #1793 a fix over 30 min old still measures, but says so and offers the refresh (recomputed when Nav has a newer one)
+                if (p.stale) Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(6.dp).clip(CircleShape).background(GC.warn))
+                    Caps("STALE · OVER 30 MIN", GC.warn, Modifier.weight(1f))
+                    KeyChip("Open Cloud Nav to refresh", accent = true) {
+                        if (!GrabberLocation.openNav(ctx)) Toast.makeText(ctx, "Cloud Nav is not installed", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 Box(Modifier.hairline(GC.hairline))
                 TravelMode.entries.filter { it.routed }.forEach { mode ->

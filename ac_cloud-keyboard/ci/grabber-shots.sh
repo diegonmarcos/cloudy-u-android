@@ -129,6 +129,7 @@ shot 14-place-card-distances
 dumpui "$OUT/place.xml"
 grep -q 'DISTANCES · FROM YOUR LOCATION' "$OUT/place.xml" && ok "a place card has the distances box" || bad "no distances box on the place card"
 grep -q 'MOCK LOCATION' "$OUT/place.xml" && ok "the distances say they come from the mock position" || bad "the mock position is not shown"
+grep -q 'from your position just now' "$OUT/place.xml" && ok "the fix's age is shown" || bad "no age of the fix"
 for m in "BY CAR" "ON FOOT" "BY BICYCLE" "BY AIR · ESTIMATE"; do grep -q "$m" "$OUT/place.xml" && ok "mode $m" || bad "mode $m missing"; done
 grep -q 'ESTIMATE (~800 km/h' "$OUT/place.xml" && ok "the flight time is labelled an estimate" || bad "no estimate label"
 scroll_sheet; shot 14b-place-card-bottom

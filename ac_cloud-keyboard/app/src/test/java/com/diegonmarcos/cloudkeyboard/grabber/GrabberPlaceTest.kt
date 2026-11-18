@@ -86,6 +86,25 @@ class GrabberPlaceTest {
         assertEquals("MOCK", p.fromNote)
     }
 
+    @Test fun theFixAgeIsSaidAndOver30MinutesItIsStale() {
+        assertEquals("from your position just now", FixAge.text(20_000))
+        assertEquals("from your position 12 min ago", FixAge.text(12 * 60_000L))
+        assertEquals("from your position 3 h ago", FixAge.text(3 * 3_600_000L))
+        assertEquals("from your position 4 d ago", FixAge.text(4 * 86_400_000L))
+        assertFalse(FixAge.stale(30 * 60_000L))
+        assertTrue(FixAge.stale(30 * 60_000L + 1))
+        assertTrue("a newer fix recomputes", FixAge.newer(1_000, 2_000))
+        assertFalse(FixAge.newer(2_000, 2_000))
+        val p = TripPlan.of(0.0, 0.0, 1.0, 1.0, "x", stale = true, fixTs = 5)
+        assertTrue(p.stale); assertEquals(5L, p.fixTs)
+        // the model watches Cloud Nav for a newer fix when there is none or it is stale, and the card offers the refresh
+        val dir = File("src/main/java/com/diegonmarcos/cloudkeyboard/grabber")
+        val model = File(dir, "GrabberModel.kt").readText()
+        assertTrue(model.contains("if (where.stale) watchForFix(gen, to, where.ts)"))
+        assertTrue(model.contains("FixAge.newer(shownTs, w.ts)"))
+        assertTrue(File(dir, "GrabberUi.kt").readText().contains("KeyChip(\"Open Cloud Nav to refresh\""))
+    }
+
     @Test fun distancesAndDurationsReadable() {
         assertEquals("850 m", GeoMath.km(850.0))
         assertEquals("12.3 km", GeoMath.km(12345.0))

@@ -186,12 +186,36 @@ object PlaceParsers {
     }.getOrNull()
 }
 
+/**
+ * #1793 how old Cloud Nav's fix is, in the card's words ("from your position 12 min ago"), and when it is stale: over
+ * [STALE_MS] the card still measures from it but asks to open Cloud Nav to refresh, and recomputes when a newer fix arrives.
+ */
+object FixAge {
+    const val STALE_MS = 30L * 60_000L
+
+    fun stale(ageMs: Long): Boolean = ageMs > STALE_MS
+
+    fun text(ageMs: Long): String {
+        val a = ageMs.coerceAtLeast(0)
+        return "from your position " + when {
+            a < 90_000 -> "just now"
+            a < 90 * 60_000 -> "${(a + 30_000) / 60_000} min ago"
+            a < 48 * 3_600_000L -> "${(a + 1_800_000) / 3_600_000} h ago"
+            else -> "${a / 86_400_000} d ago"
+        }
+    }
+
+    /** A newer fix than the one the card measured from: recompute. */
+    fun newer(shownTs: Long, ts: Long): Boolean = ts > shownTs
+}
+
 /** The trip of the card: from where, the air estimate, and each routed mode's leg (or why it has none). */
-data class TripPlan(val fromLat: Double, val fromLon: Double, val fromNote: String, val airKm: Double, val flightHours: Double) {
+data class TripPlan(val fromLat: Double, val fromLon: Double, val fromNote: String, val airKm: Double, val flightHours: Double,
+                    val stale: Boolean = false, val fixTs: Long = 0L) {
     companion object {
-        fun of(fromLat: Double, fromLon: Double, toLat: Double, toLon: Double, note: String): TripPlan {
+        fun of(fromLat: Double, fromLon: Double, toLat: Double, toLon: Double, note: String, stale: Boolean = false, fixTs: Long = 0L): TripPlan {
             val km = GeoMath.haversineKm(fromLat, fromLon, toLat, toLon)
-            return TripPlan(fromLat, fromLon, note, km, GeoMath.flightHours(km))
+            return TripPlan(fromLat, fromLon, note, km, GeoMath.flightHours(km), stale, fixTs)
         }
     }
 }

@@ -34,6 +34,10 @@ class LogLine(val time: String, val what: String, val outcome: String, val ok: B
  * The state of one Grabber panel (the sheet over another app, the Text Selection page, the Screen Selection page).
  * [draft] is the working text; the search box (B) and the media box (C) load from it in PARALLEL, each into its own [Load].
  */
+/** #1793 how often, and for how long, a place card with no fix or a stale one asks Cloud Nav again. */
+private const val WATCH_MS = 15_000L
+private const val WATCH_FOR_MS = 10L * 60_000L
+
 class GrabberModel(private val app: Context, private val scope: CoroutineScope, val source: String) {
     var draft by mutableStateOf(TextFieldValue(""))
     /** True when the text was selected in a field that cannot be edited (EXTRA_PROCESS_TEXT_READONLY), or on a page with no field. */
@@ -51,6 +55,7 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
     private var searchJob: Job? = null
     private var mediaJob: Job? = null
     private var tripJob: Job? = null
+    private var watchJob: Job? = null
     private var generation = 0
     private var runner: WriterToolRunner? = null
 
@@ -73,7 +78,7 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
         val text = draft.text
         val query = GrabberClassifier.query(text)
         val kind = GrabberClassifier.classify(text)
-        searchJob?.cancel(); mediaJob?.cancel(); tripJob?.cancel()
+        searchJob?.cancel(); mediaJob?.cancel(); tripJob?.cancel(); watchJob?.cancel()
         val gen = ++generation
         trip = Load.Idle; legs.clear()
         if (kind == SelectionKind.EMPTY) { search = Load.Idle; media = Load.Idle; return }
@@ -129,10 +134,12 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
                     navMissing = where.navMissing
                     trip = Load.Failed(FailReason.EMPTY, where.why)
                     say("distances", "no position", false)
+                    if (!where.navMissing) watchForFix(gen, to, 0L)
                 }
                 is GrabberLocation.Where.At -> {
                     navMissing = false
-                    trip = Load.Ready(TripPlan.of(where.lat, where.lon, to.lat, to.lon, where.note), SystemClock.elapsedRealtime() - t0)
+                    trip = Load.Ready(TripPlan.of(where.lat, where.lon, to.lat, to.lon, where.note, where.stale, where.ts), SystemClock.elapsedRealtime() - t0)
+                    if (where.stale) watchForFix(gen, to, where.ts)
                     TravelMode.entries.filter { it.routed }.forEach { mode ->
                         legs[mode] = Load.Loading
                         launch {
@@ -142,6 +149,28 @@ class GrabberModel(private val app: Context, private val scope: CoroutineScope, 
                             legs[mode] = r.fold({ Load.Ready(it, SystemClock.elapsedRealtime() - l0) }, { failure(it) })
                         }
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * #1793 no fix, or a stale one: ask Cloud Nav again every [WATCH_MS] (an IPC read of its store, never a fix of ours) and
+     * recompute the distances as soon as it publishes a newer fix; gives up after [WATCH_FOR_MS] or when the text changes.
+     */
+    private fun watchForFix(gen: Int, to: MediaResult.MapView, shownTs: Long) {
+        watchJob?.cancel()
+        watchJob = scope.launch {
+            val until = SystemClock.elapsedRealtime() + WATCH_FOR_MS
+            while (SystemClock.elapsedRealtime() < until) {
+                kotlinx.coroutines.delay(WATCH_MS)
+                if (gen != generation) return@launch
+                val w = withContext(Dispatchers.IO) { GrabberLocation.where(app) }
+                if (gen != generation) return@launch
+                if (w is GrabberLocation.Where.At && FixAge.newer(shownTs, w.ts)) {
+                    say("distances", "new position from Cloud Nav")
+                    loadTrip(gen, to)
+                    return@launch
                 }
             }
         }
