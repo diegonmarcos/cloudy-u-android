@@ -72,12 +72,12 @@
         {
           "name": "Hardtech-CAD",
           "path": "ad_Hardtech-CAD",
-          "description": "HardTech area app (MCAD, BIM, SolidWorks) behind the SuperApp's Cloud > Lnktree row."
+          "description": "HardTech area app (Models: MCAD, BIM, SolidWorks; Home; Sim2Real: SAP2000, MATLAB, Ansys) behind the SuperApp's Cloud > Lnktree row."
         },
         {
           "name": "Hardtech-BioMed",
           "path": "ad_Hardtech-BioMed",
-          "description": "HardTech area app (SAP2000, MATLAB, Ansys) behind the SuperApp's Cloud > Lnktree row."
+          "description": "HardTech area app (Physiology, BioChem, BioMech, Anatomy, Genetic, Neuro, Immuno 3D scenes) behind the SuperApp's Cloud > Lnktree row."
         }
       ]
     },
@@ -599,6 +599,25 @@
       "description": "vault"
     },
     {
+      "family": "Tasks",
+      "name": "cloud-me-pvt-tasks",
+      "url": "https://github.com/diegonmarcos/cloud-me-pvt-tasks",
+      "role": "",
+      "visibility": "private",
+      "project": "Cloud-Me",
+      "field": "Unix",
+      "developer": "Leaf.y",
+      "subcategory": "Pvt",
+      "code": "1.2.2.7.1",
+      "area_code": "1",
+      "project_code": "1.2",
+      "family_code": "1.2.2.7",
+      "registry_name": "cloud-me-pvt-tasks",
+      "hub": "cloud-me-pvt-___",
+      "farm": "1.2.Cloud-me/Pvt",
+      "description": "Product backlog"
+    },
+    {
       "family": "Hub",
       "name": "CG-___",
       "url": "https://github.com/diegonmarcos/CG-___",
@@ -1118,8 +1137,8 @@
     },
     {
       "family": "Library-KG",
-      "name": "Projects-Library-KG",
-      "url": "https://github.com/diegonmarcos/Projects-Library-KG",
+      "name": "lib-chronos",
+      "url": "https://github.com/diegonmarcos/lib-chronos",
       "role": "",
       "visibility": "public",
       "project": "Library-KG",
@@ -1129,7 +1148,7 @@
       "area_code": "6",
       "project_code": "6.3",
       "family_code": "6.3.1",
-      "registry_name": "Projects-Library-KG",
+      "registry_name": "lib-chronos",
       "hub": "Projects-___",
       "farm": "6.Projects",
       "description": "Library knowledge graph: saved-collections board (served by Cloud KG Store Me) and the Chronos site"
@@ -1172,8 +1191,8 @@
     },
     {
       "family": "Deployer",
-      "name": "front-html",
-      "url": "https://github.com/diegonmarcos/front-html",
+      "name": "_front-html___",
+      "url": "https://github.com/diegonmarcos/_front-html___",
       "role": "hub",
       "visibility": "public",
       "project": "Pages",
@@ -1183,10 +1202,28 @@
       "area_code": "7",
       "project_code": "7.2",
       "family_code": "7.2.1",
-      "registry_name": "front-html",
+      "registry_name": "_front-html___",
       "hub": null,
       "farm": "7.Others",
       "description": "Hub of the owner's GitHub Pages sites: submodules plus the generated pages.json."
+    },
+    {
+      "family": "Deployer",
+      "name": "_git-lfs____",
+      "url": "https://github.com/diegonmarcos/_git-lfs____",
+      "role": "hub",
+      "visibility": "private",
+      "project": "Pages",
+      "field": "Others",
+      "developer": "Gh",
+      "code": "7.2.1.3",
+      "area_code": "7",
+      "project_code": "7.2",
+      "family_code": "7.2.1",
+      "registry_name": "_git-lfs____",
+      "hub": null,
+      "farm": "7.Others",
+      "description": "Hub of every owner repo that uses Git LFS: submodules plus the generated lfs-repos.json and index."
     },
     {
       "family": "Hub",
@@ -1513,7 +1550,7 @@
       "description": "The Unix estate: the cloudy fleet and the owner's personal cloud.",
       "hub": null,
       "farm": null,
-      "repos_count": 29,
+      "repos_count": 30,
       "children": [
         {
           "code": "1.1",
@@ -1661,7 +1698,7 @@
           "description": "The owner's personal cloud: public profiles and shared data, private configs, data and secrets.",
           "hub": "cloud-me-___",
           "farm": "1.2.Cloud-me",
-          "repos_count": 16,
+          "repos_count": 17,
           "children": [
             {
               "code": "1.2.1",
@@ -1717,7 +1754,7 @@
               "description": "Private half of Cloud-Me (the hub itself is public).",
               "hub": "cloud-me-pvt-___",
               "farm": "1.2.Cloud-me/Pvt",
-              "repos_count": 7,
+              "repos_count": 8,
               "children": [
                 {
                   "code": "1.2.2.1",
@@ -1801,6 +1838,20 @@
                   "repos_count": 1,
                   "repos": [
                     "cloud-me-pvt-vault"
+                  ]
+                },
+                {
+                  "code": "1.2.2.7",
+                  "kind": "family",
+                  "name": "Tasks",
+                  "label": "Tasks",
+                  "developer": "Leaf.y",
+                  "description": "",
+                  "hub": null,
+                  "farm": "1.2.Cloud-me/Pvt",
+                  "repos_count": 1,
+                  "repos": [
+                    "cloud-me-pvt-tasks"
                   ]
                 }
               ]
@@ -2571,7 +2622,7 @@
               "farm": "6.Projects",
               "repos_count": 1,
               "repos": [
-                "Projects-Library-KG"
+                "lib-chronos"
               ]
             }
           ]
@@ -2589,7 +2640,7 @@
       "description": "Loose GitHub repos with no project hub (profile README, GitHub Pages site).",
       "hub": null,
       "farm": "7.Others",
-      "repos_count": 3,
+      "repos_count": 4,
       "children": [
         {
           "code": "7.1",
@@ -2629,7 +2680,7 @@
           "description": "GitHub Pages deployer.",
           "hub": null,
           "farm": "7.Others",
-          "repos_count": 2,
+          "repos_count": 3,
           "children": [
             {
               "code": "7.2.1",
@@ -2640,10 +2691,11 @@
               "description": "",
               "hub": null,
               "farm": "7.Others",
-              "repos_count": 2,
+              "repos_count": 3,
               "repos": [
                 "diegonmarcos.github.io",
-                "front-html"
+                "_front-html___",
+                "_git-lfs____"
               ]
             }
           ]

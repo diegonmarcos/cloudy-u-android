@@ -11,8 +11,8 @@ import org.junit.Test
 class FavFeedTest {
     private val json = """{"owner":"diegonmarcos","pages":[
         {"repo":"diegonmarcos.github.io","url":"https://diegonmarcos.github.io/","source":{"branch":"main","path":"/"},"public":true},
-        {"repo":"HardTech-Chronos","url":"https://diegonmarcos.github.io/HardTech-Chronos/","public":true},
-        {"repo":"HardTech-Chronos","url":"https://diegonmarcos.github.io/HardTech-Chronos/","public":true},
+        {"repo":"lib-chronos","url":"https://diegonmarcos.github.io/lib-chronos/","public":true},
+        {"repo":"lib-chronos","url":"https://diegonmarcos.github.io/lib-chronos/","public":true},
         {"repo":"secret","url":"https://x.github.io/secret/","public":false},
         {"repo":"plain","url":"http://x.github.io/plain/","public":true},
         {"repo":"","url":"https://x.github.io/norepo/","public":true}]}"""
@@ -20,9 +20,9 @@ class FavFeedTest {
     @Test
     fun `only public https sites become items, one per url, filed under the chip and the repo`() {
         val items = FavFeed.parse(json, "GH Pages")
-        assertEquals(listOf("https://diegonmarcos.github.io/", "https://diegonmarcos.github.io/HardTech-Chronos/"), items.map { it.url })
-        assertEquals(listOf("GH Pages/diegonmarcos.github.io", "GH Pages/HardTech-Chronos"), items.map { it.group })
-        assertEquals("HardTech-Chronos", items[1].title)
+        assertEquals(listOf("https://diegonmarcos.github.io/", "https://diegonmarcos.github.io/lib-chronos/"), items.map { it.url })
+        assertEquals(listOf("GH Pages/diegonmarcos.github.io", "GH Pages/lib-chronos"), items.map { it.group })
+        assertEquals("lib-chronos", items[1].title)
     }
 
     @Test

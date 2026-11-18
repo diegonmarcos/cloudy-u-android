@@ -201,6 +201,12 @@
       "doc": "Personal notes (Obsidian vault)."
     },
     {
+      "name": "cloud-me-pvt-tasks",
+      "repo": "diegonmarcos/cloud-me-pvt-tasks",
+      "private": true,
+      "doc": "The Cloud fleet product backlog (1___BACKLOG___ ticket JSONs per session, build.js site, metadata test) moved here from cloudy-a-docs (#1699). Root index.html is the rendered backlog, built by the repo CI; Cloud Code > Backlog clones and renders it."
+    },
+    {
       "name": "cloudy-___",
       "repo": "diegonmarcos/cloudy-___",
       "private": false,
@@ -234,7 +240,7 @@
       "name": "cloudy-u-android",
       "repo": "diegonmarcos/cloudy-u-android",
       "private": false,
-      "doc": "Android client."
+      "doc": "Android client. #1335: the Lnktree app family (folders ad_*, not the Cloud family ac_cloud-*) is listed in `apps`."
     },
     {
       "name": "cloudy-u-containers",
@@ -283,6 +289,12 @@
       "repo": "diegonmarcos/diegonmarcos.github.io",
       "private": false,
       "doc": "Front-end: the published site and its derive job (1_front-configs). Cloned as 'front-diegonmarcos', not after its repo name (diegonmarcos.github.io) — every front member is front-<thing>, and the bare 'front' now belongs to the project master, exactly as 'cloud' does for a_cloud."
+    },
+    {
+      "name": "lib-chronos",
+      "repo": "diegonmarcos/lib-chronos",
+      "private": false,
+      "doc": "Renamed from HardTech-Chronos (#1609), then from Projects-Library-KG to lib-chronos (#1789, owner order); its Chronos pages render inside Cloud Wiki. Root index.html + topics.md are the Library board cloned at runtime by Cloud KG Store Me (#1656); Chronos/ is the published site (formerly dist/), including 4.Astronomy-Astrological-sphere. Linked in front-html."
     },
     {
       "name": "z-archived_Projects-labtools",
