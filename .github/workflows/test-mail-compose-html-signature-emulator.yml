@@ -52,6 +52,7 @@ jobs:
           #!/bin/bash
           set -u
           mkdir -p walk-out
+          trap 'timeout 60 adb logcat -d -v threadtime "*:W" > walk-out/logcat-on-exit.txt 2>/dev/null || true' EXIT
           adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
           sleep 45 # let the launcher settle after boot
           adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
@@ -105,8 +106,12 @@ jobs:
           sleep 15
           shot 00-inbox; dump 00-inbox
           # the FAB animates in after the list: retry, then its known place (bottom-right) as the fallback
-          ok=0; for i in 1 2 3 4; do tap "Compose" && { ok=1; break; }; sleep 4; done
-          [ "$ok" = 1 ] || { echo "Compose not in the dump; tapping the FAB position" >> walk-out/summary.txt; adb shell input tap 910 1921; }
+          # bring the app back to the front if something sent it away (seen once: the launcher in the dump)
+          front() { adb shell dumpsys activity activities | grep -q "topResumedActivity.*$PKG" || { echo "app not in front: relaunch" >> walk-out/summary.txt; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 8; }; }
+          front
+          # the FAB is not always in the accessibility dump: one try by name, then its place (bottom-right)
+          tap "Compose" || { echo "Compose not in the dump; tapping the FAB position" >> walk-out/summary.txt; adb shell input tap 910 1921; }
+          sleep 6; dump probe-new; grep -q 'New mail' walk-out/probe-new.xml || { front; adb shell input tap 910 1921; }
           sleep 8
           shot 01-new; dump 01-new; sigcheck 01-new
           grep -q 'New mail' walk-out/01-new.xml || { echo "::error::New mail did not open"; exit 1; }
@@ -132,6 +137,7 @@ jobs:
           adb shell input keyevent KEYCODE_BACK; sleep 2
           dump after-qr; grep -q 'New mail' walk-out/after-qr.xml || adb shell input keyevent KEYCODE_BACK
           leave
+          front
           ok=0; for i in 1 2 3; do tap "Seed message 3 of 3" && { ok=1; break; }; sleep 3; done
           [ "$ok" = 1 ] || { echo "::error::no seeded message in the list"; exit 1; }
           sleep 6
