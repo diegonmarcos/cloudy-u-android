@@ -12,11 +12,6 @@
     "ac_cloud-me/app/build.gradle",
     "ac_cloud-myterminal/hub/build.gradle",
     "ac_cloud-nav/app/build.gradle",
-    "ac_cloud-wallet/app/build.gradle",
-    "ac_cloud-wiki/app/build.gradle",
-    "ad_CG-Omniverse/app/build.gradle",
-    "ad_Capital-Stack-FinTerminal/app/build.gradle",
-    "ad_Hardtech-BioMed/app/build.gradle",
-    "ad_Hardtech-CAD/app/build.gradle"
+    "ad_CG-Omniverse/app/build.gradle"
   ]
 }
