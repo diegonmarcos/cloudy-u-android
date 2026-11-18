@@ -86,7 +86,18 @@ for m in re.finditer(r'<node ([^>]*)>', x):
         l, t, r, d = map(int, b.groups()); print((l + r) // 2, (t + d) // 2); break
 PY
 }
+# The SuperApp's screensaver overlay (clock + Unlock) comes back within seconds of being dismissed in launcher mode
+# (run 44246477193: the strip with "Network status: WiFi" was in cur.xml, then the overlay covered it at the shot).
+# Dismiss it right before each lookup and look again, up to three times.
 p="$(bounds "$OUT/speed-home.xml" content-desc 'Network status: WiFi')"
+for _ in 1 2 3; do
+    [ -n "$p" ] && break
+    dump home-retry
+    u="$(bounds "$OUT/home-retry.xml" text 'Unlock')"
+    [ -n "$u" ] && { $T adb shell input tap $u; sleep 2; dump home-retry; }
+    p="$(bounds "$OUT/home-retry.xml" content-desc 'Network status: WiFi')"
+done
+[ -n "$p" ] && $T adb exec-out screencap -p > "$OUT/speed-home-unlocked.png"
 if [ -z "$p" ]; then echo "FAIL: no network chip in the status strip"; rc=1; else
     $T adb shell input tap $p
     sleep 3; dump popup
