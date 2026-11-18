@@ -28,6 +28,8 @@ data class PerfDecl(
     val tops: List<Int>, val defaultTop: Int, val bubbleX: String, val bubbleY: String, val groups: List<PerfGroup>, val ui: Map<String, String>,
     /** #1727 the flow panel: how many buckets and how many constituents it draws before folding the rest. */
     val sankeyBuckets: Int = 6, val sankeyHoldings: Int = 10,
+    /** #1786 the columns of a Homepage box: the 1-month and the 12-month change (in place of YTD). */
+    val cardPeriods: List<String> = listOf("1M", Cagr.P12M),
 ) {
     fun group(key: String): PerfGroup? = groups.firstOrNull { it.key == key }
     fun word(k: String): String = ui[k].orEmpty()
@@ -135,6 +137,7 @@ object PerfPortfolios {
             bubbleX = bubble.optString("x").ifEmpty { "1M" }, bubbleY = bubble.optString("y").ifEmpty { "YTD" }, groups = groups,
             ui = ui.keys().asSequence().associateWith { ui.optString(it) },
             sankeyBuckets = o.optJSONObject("sankey")?.optInt("buckets", 6) ?: 6, sankeyHoldings = o.optJSONObject("sankey")?.optInt("holdings", 10) ?: 10,
+            cardPeriods = strings(o, "card_periods").ifEmpty { listOf("1M", Cagr.P12M) },
         )
     }.getOrNull()
 
@@ -312,14 +315,18 @@ object PerfPortfolios {
     fun s2(v: Double?): String = v?.let { String.format(Locale.ROOT, "%+.2f", it) } ?: FinFormat.DASH
     fun s1(v: Double?): String = v?.let { String.format(Locale.ROOT, "%+.1f", it) } ?: FinFormat.DASH
 
+    /** #1786 one period cell: a signed figure; a missing long window (12M, CAGR) reads "n/a" (not enough history), a missing short one the dash. */
+    fun cell(v: Double?, period: String, decimals: Int = 2): String =
+        if (v == null && Cagr.isLong(period)) Cagr.NA else if (decimals == 1) s1(v) else s2(v)
+
     /** The cells of the constituents table, one line per row: ticker, name, bucket, weight %, one performance per period, contribution pp. */
     fun cells(rows: List<PerfRow>, quotes: Map<String, Quote>, periods: List<String>, sov: Map<String, Map<String, Double>> = emptyMap()): List<List<String>> =
-        rows.map { r -> listOf(r.c.ticker, r.c.name, r.c.bucket, f2(r.weight)) + periods.map { s2(perf(r.c, quotes, it, sov)) } + s2(r.contribution) }
+        rows.map { r -> listOf(r.c.ticker, r.c.name, r.c.bucket, f2(r.weight)) + periods.map { cell(perf(r.c, quotes, it, sov), it) } + s2(r.contribution) }
 
     /** The totals line: the shown weight, the portfolio's return per period (the weighted mean of the quoted constituents) and the summed contribution. */
     fun totals(basket: PerfBasket, scheme: String, quotes: Map<String, Quote>, periods: List<String>, period: String, top: Int, label: String, sov: Map<String, Map<String, Double>> = emptyMap()): List<String> {
         val shown = rows(basket, scheme, quotes, period, top, sov)
-        return listOf(label, "", "", f2(weightSum(shown))) + periods.map { p -> s2(portfolioReturn(rows(basket, scheme, quotes, p, top, sov))) } + s2(total(shown)?.first)
+        return listOf(label, "", "", f2(weightSum(shown))) + periods.map { p -> cell(portfolioReturn(rows(basket, scheme, quotes, p, top, sov)), p) } + s2(total(shown)?.first)
     }
 
     /** The share of the largest absolute contribution a bar fills (0..1): the contribution bars of the table. */

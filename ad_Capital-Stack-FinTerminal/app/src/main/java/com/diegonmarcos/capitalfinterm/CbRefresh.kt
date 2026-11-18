@@ -43,6 +43,8 @@ class CbRefresh(private val http: Http, private val decl: CbDecl, private val to
         return listOf("S", "G", "W").map { java.lang.String.format(java.util.Locale.ROOT, "%s%02d", it, yy) } + java.lang.String.format(java.util.Locale.ROOT, "S%02d", yy - 1)
     }
     private fun ecbUrl(series: String, vintage: String) = src("ecb_mpd").url.replace("{series}", series).replace("{vintage}", vintage)
+    /** #1786 the ECB euro area yield curve (daily spot rates). */
+    private fun ecbYcUrl(series: String) = src("ecb_yc").url.replace("{series}", series).replace("{from}", from())
 
     /** The URLs the first rule pass needs, so they can be fetched in parallel before the (sequential) resolution reads them from the memo. */
     private fun urls(rule: CbRule, c: CbCountry): List<Pair<String, String>> = when (rule.src) {
@@ -52,6 +54,7 @@ class CbRefresh(private val http: Http, private val decl: CbDecl, private val to
         "bis" -> listOf(bisUrl(rule.series, rule.key.ifEmpty { "M.{bis}" }) to "")
         "fred" -> listOf(fredUrl(rule.series.replace("{iso2}", c.id)) to "")
         "ecb_mpd" -> ecbVintages().map { ecbUrl(rule.series, it) to "" }.take(1)
+        "ecb_yc" -> listOf(ecbYcUrl(rule.series) to "")
         else -> emptyList()
     }
 
@@ -90,6 +93,12 @@ class CbRefresh(private val http: Http, private val decl: CbDecl, private val to
                 val (a, ytd) = CbSources.annualise(data, rule.agg, rule.transform)
                 val last = data.keys.maxWithOrNull(compareBy({ it.first }, { it.second }))!!
                 return Got(scaled(a, rule.scale), ytd?.let { it.copy(value = it.value * rule.scale) }, "FRED $series, last observation ${java.lang.String.format(java.util.Locale.ROOT, "%04d-%02d", last.first, last.second)}, retrieved $today")
+            }
+            "ecb_yc" -> {
+                val data = text(ecbYcUrl(rule.series))?.let { CbSources.ecbDaily(it) }?.takeIf { it.isNotEmpty() } ?: return null
+                val (a, ytd) = CbSources.annualise(data, rule.agg, rule.transform)
+                val last = data.keys.maxWithOrNull(compareBy({ it.first }, { it.second }))!!
+                return Got(scaled(a, rule.scale), ytd?.let { it.copy(value = it.value * rule.scale) }, "ECB yield curve ${rule.series}, last observation ${java.lang.String.format(java.util.Locale.ROOT, "%04d-%02d", last.first, last.second)}, retrieved $today")
             }
             "ecb_mpd" -> {
                 for (v in ecbVintages()) {

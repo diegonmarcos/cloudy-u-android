@@ -90,11 +90,17 @@ object IndexHoldings {
         "1W" -> q?.w1
         "1M" -> q?.m1
         "YTD" -> q?.ytd
+        // #1786 the long windows: the 12-month change and the annualised CAGR over 1 / 12 / 24 / 36 months ([Cagr])
+        Cagr.P12M -> q?.y1
+        Cagr.PCAGR_1M -> q?.c1m
+        Cagr.PCAGR_12M -> q?.c12m
+        Cagr.PCAGR_24M -> q?.c24m
+        Cagr.PCAGR_36M -> q?.c36m
         else -> null
     }?.takeIf { it.isFinite() }
 
     /** The key of data/quotes.json `heat` (the % change that is a full tint) for [period]. */
-    fun heatKey(period: String): String = when (period) { "1W" -> "w1"; "1M" -> "m1"; "YTD" -> "ytd"; else -> "pct" }
+    fun heatKey(period: String): String = when (period) { "1W" -> "w1"; "1M" -> "m1"; "YTD" -> "ytd"; Cagr.P12M -> "y1"; Cagr.PCAGR_1M -> "c1m"; Cagr.PCAGR_12M, Cagr.PCAGR_24M, Cagr.PCAGR_36M -> "cagr"; else -> "pct" }
 
     /** A holding's contribution to the index over the period, in percentage points: weight % x performance % / 100. */
     fun contribution(weight: Double, perf: Double?): Double? = perf?.let { weight * it / 100.0 }

@@ -41,7 +41,8 @@ class IndexHoldingsTest {
         assertEquals(cards.map { it.pageId }.sorted(), groups.flatMap { it.second }.map { it.pageId }.sorted())
         assertEquals("eq-growth", groups.first { it.first == "Performance" }.second.first().pageId)
         assertEquals("world-equity-indices", groups.first { it.first == "Performance" }.second.last().pageId)
-        assertEquals("commodities", groups.first { it.first == "Data" }.second.first().pageId)
+        // #1786 Commodities, Commodity Prices and Exchange Rates moved to HG > Markets: Data now opens on Fundamentals
+        assertEquals("equity-fundamentals", groups.first { it.first == "Data" }.second.first().pageId)
     }
 
     @Test fun mergedPanelsLiveInWorldIndicesEquity() {

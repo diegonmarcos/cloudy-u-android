@@ -5,8 +5,19 @@
   "1D",
   "1W",
   "1M",
-  "YTD"
+  "YTD",
+  "12M",
+  "CAGR 1m",
+  "CAGR 12m",
+  "CAGR 24m",
+  "CAGR 36m"
  ],
+ "_doc_periods": "#1786 every EQ and FI page shows 1D, 1W, 1M, YTD and 12M, then the annualised averages over 1, 12, 24 and 36 months as CAGR ((end/start)^(1/years) - 1, years = months / 12; Cagr.kt). A constituent whose history does not reach a window shows n/a there, never a shorter-history value.",
+ "card_periods": [
+  "1M",
+  "12M"
+ ],
+ "_doc_card_periods": "#1786 the two columns of a Homepage box (EQ and FI): the 1-month and the 12-month change, in place of YTD.",
  "default_period": "YTD",
  "modes": [
   "table",

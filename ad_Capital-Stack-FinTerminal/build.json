@@ -239,27 +239,27 @@
       },
       {
         "from": "cm",
-        "tab": "eq",
+        "tab": "hg",
         "to": "commodity-prices",
-        "note": "The CM section was folded into Commodity Prices (EQ): its deep links open that page"
+        "note": "The CM section was folded into Commodity Prices (EQ, under HG > Markets since #1786): its deep links open that page"
       },
       {
         "from": "ex-commodities",
-        "tab": "eq",
+        "tab": "hg",
         "to": "commodity-prices",
-        "note": "The old EX Commodities page moved to EQ: Commodity Prices"
+        "note": "The old EX Commodities page moved to EQ: Commodity Prices (under HG > Markets since #1786)"
       },
       {
         "from": "pm-commodities",
-        "tab": "eq",
+        "tab": "hg",
         "to": "commodity-prices",
-        "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"
+        "note": "The PM Commodities page was removed: commodity prices live in Commodity Prices (HG > Markets since #1786)"
       },
       {
         "from": "pm_commodities",
-        "tab": "eq",
+        "tab": "hg",
         "to": "commodity-prices",
-        "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"
+        "note": "The PM Commodities page was removed: commodity prices live in Commodity Prices (HG > Markets since #1786)"
       },
       {
         "from": "pm-vol",
@@ -341,9 +341,6 @@
           {"id": "eq-momentum", "label": "Momentum", "icon": "rocket_launch"},
           {"id": "eq-small", "label": "Small", "icon": "apps"},
           {"id": "world-equity-indices", "label": "World Indices Equity", "icon": "public"},
-          {"id": "commodities", "label": "Commodities", "icon": "inventory_2"},
-          {"id": "commodity-prices", "label": "Commodity Prices", "icon": "inventory_2"},
-          {"id": "fx-rates", "label": "Exchange Rates", "icon": "swap_horiz"},
           {"id": "equity-fundamentals", "label": "Fundamentals", "icon": "description"},
           {"id": "earnings-calendar", "label": "Earnings Calendar", "icon": "calendar_month"},
           {"id": "equity-quote", "label": "Quotes", "icon": "chart"},
@@ -370,7 +367,8 @@
         "pages": [
           {"id": "pm-home", "label": "Home", "icon": "home"},
           {"id": "pm-portfolios", "label": "Portfolios", "icon": "table_chart"},
-          {"id": "pm-performance", "label": "Performance", "icon": "bar_chart"}
+          {"id": "pm-performance", "label": "Performance", "icon": "bar_chart"},
+          {"id": "pm-index", "label": "Index", "icon": "apps"}
         ]
       },
       {
@@ -391,7 +389,10 @@
           {"id": "hedge-calculator", "label": "Hedge Calculator", "icon": "compare_arrows"},
           {"id": "fx", "label": "FX", "icon": "swap_horiz"},
           {"id": "onshore-usd-rates", "label": "Onshore USD Rates", "icon": "account_balance"},
-          {"id": "crypto", "label": "Crypto", "icon": "token"}
+          {"id": "crypto", "label": "Crypto", "icon": "token"},
+          {"id": "commodities", "label": "Commodities", "icon": "inventory_2"},
+          {"id": "commodity-prices", "label": "Commodity Prices", "icon": "inventory_2"},
+          {"id": "fx-rates", "label": "Exchange Rates", "icon": "swap_horiz"}
         ]
       },
       {
@@ -668,29 +669,6 @@
         },
         {
           "kind": "dashboard",
-          "title": "Commodities",
-          "subtitle": "Energy, precious metals, industrial metals and minerals, agriculture, Bitcoin and Ether (WTD to 10Y)",
-          "dashboard": "commodities",
-          "fn": "CMDT"
-        },
-        {
-          "kind": "quote_board",
-          "page": "commodity-prices",
-          "view": "commodities",
-          "title": "Commodity Prices",
-          "subtitle": "Energy, metals and agriculture front-month prices: last, change, 1W, 1M, YTD, unit and currency",
-          "fn": "CPX"
-        },
-        {
-          "kind": "quote_board",
-          "page": "fx-rates",
-          "view": "fx_rates",
-          "title": "Exchange Rates",
-          "subtitle": "Cross-rate table of the major and EM currencies: spot, change, 1W, 1M and YTD, and the base x quote matrix",
-          "fn": "FXR"
-        },
-        {
-          "kind": "dashboard",
           "title": "Fundamentals",
           "subtitle": "SEC EDGAR company profile, reported financials and filings",
           "dashboard": "equity_fundamentals",
@@ -743,6 +721,13 @@
       ],
       "pm": [
         {
+          "kind": "home_page",
+          "home": "pm-performance",
+          "title": "Home",
+          "subtitle": "#1786 the PM Homepage is the Performance page; the former Homepage (every PM page as a card) is the sub-page Index",
+          "fn": "PMHM"
+        },
+        {
           "kind": "pm_table",
           "page": "pm-portfolios",
           "table": "portfolios",
@@ -757,6 +742,13 @@
           "title": "Performance",
           "subtitle": "Every portfolio: Today, Last 7d, Last 30d, MTD, YTD, Last 1y and the Last 3y CAGR, from real delayed prices of its legs",
           "fn": "PERF"
+        },
+        {
+          "kind": "home_grid",
+          "page": "pm-index",
+          "title": "Index",
+          "subtitle": "The former PM Homepage: every PM page as a card (Portfolios, Performance)",
+          "fn": "PMIX"
         },
         {
           "kind": "dashboard",
@@ -873,6 +865,10 @@
       ],
       "hg": [
         {
+          "kind": "section_title",
+          "title": "Futures"
+        },
+        {
           "kind": "futures_board",
           "page": "hg-rates",
           "view": "rates",
@@ -945,6 +941,10 @@
           "fn": "HDGE"
         },
         {
+          "kind": "section_title",
+          "title": "Markets"
+        },
+        {
           "kind": "dashboard",
           "title": "FX",
           "subtitle": "Comprehensive real-time currency pricing, matrix crosses, spot rates, and forwards",
@@ -964,6 +964,29 @@
           "subtitle": "Crypto spot, 24h change and daily candles",
           "dashboard": "crypto",
           "fn": "CRYP"
+        },
+        {
+          "kind": "dashboard",
+          "title": "Commodities",
+          "subtitle": "Energy, precious metals, industrial metals and minerals, agriculture, Bitcoin and Ether (WTD to 10Y)",
+          "dashboard": "commodities",
+          "fn": "CMDT"
+        },
+        {
+          "kind": "quote_board",
+          "page": "commodity-prices",
+          "view": "commodities",
+          "title": "Commodity Prices",
+          "subtitle": "Energy, metals and agriculture front-month prices: last, change, 1W, 1M, YTD, unit and currency",
+          "fn": "CPX"
+        },
+        {
+          "kind": "quote_board",
+          "page": "fx-rates",
+          "view": "fx_rates",
+          "title": "Exchange Rates",
+          "subtitle": "Cross-rate table of the major and EM currencies: spot, change, 1W, 1M and YTD, and the base x quote matrix",
+          "fn": "FXR"
         }
       ],
       "my-pm": [
@@ -992,7 +1015,7 @@
       ]
     },
     "moved": {
-      "_doc": "#1722 the reorganisation's old -> new map (rule 16: nothing removed, every page reachable at its new place). from: the section a page was under; to: the section and group it is under now. test: MovedPagesTest.",
+      "_doc": "#1722 the reorganisation's old -> new map (rule 16: nothing removed, every page reachable at its new place). from: the section a page was under; to: the section and group it is under now. test: MovedPagesTest. #1786 Commodities (CMDT), Commodity Prices (CPX) and Exchange Rates (FXR) moved from EQ > Data to HG > Markets (`ticket`: 1786); Reorg1786ParityTest holds every field to the #1786 baseline.",
       "pages": [
         {
           "page": "yield-curves",
@@ -1051,20 +1074,26 @@
         {
           "page": "commodities",
           "from": "eq",
-          "to": "eq",
-          "group": "Data"
+          "to": "hg",
+          "group": "Markets",
+          "ticket": "1786",
+          "note": "#1786 moved from EQ > Data to HG > Markets with all its data (the page, its panels, its function mnemonic)"
         },
         {
           "page": "commodity-prices",
           "from": "eq",
-          "to": "eq",
-          "group": "Data"
+          "to": "hg",
+          "group": "Markets",
+          "ticket": "1786",
+          "note": "#1786 moved from EQ > Data to HG > Markets with all its data (the page, its panels, its function mnemonic)"
         },
         {
           "page": "fx-rates",
           "from": "eq",
-          "to": "eq",
-          "group": "Data"
+          "to": "hg",
+          "group": "Markets",
+          "ticket": "1786",
+          "note": "#1786 moved from EQ > Data to HG > Markets with all its data (the page, its panels, its function mnemonic)"
         },
         {
           "page": "equity-fundamentals",

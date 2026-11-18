@@ -459,6 +459,32 @@
             "Industrials"
           ]
         ]
+      },
+      {
+        "id": "sp500",
+        "label": "S&P 500",
+        "leads": "Benchmark (every phase)",
+        "rows": [
+          [
+            "^GSPC",
+            "S&P 500 index",
+            "Index (US large caps)"
+          ]
+        ],
+        "note": "#1786 the US Cyclicals group's benchmark: the index itself (the quote source's ^GSPC)"
+      },
+      {
+        "id": "nasdaq",
+        "label": "Nasdaq",
+        "leads": "Benchmark (every phase)",
+        "rows": [
+          [
+            "^IXIC",
+            "Nasdaq Composite index",
+            "Index (US, tech-heavy)"
+          ]
+        ],
+        "note": "#1786 the US Cyclicals group's second benchmark: the Nasdaq Composite (the quote source's ^IXIC)"
       }
     ]
   },

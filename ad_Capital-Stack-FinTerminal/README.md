@@ -36,3 +36,17 @@ Lnktree family, declared in `1_cicd/src/data/app-families.json`; the Cloud famil
   VanEck's holdings download redirects in a loop, so neither can be read; the State Street fund of the same index or factor is read. The container's
   `/v1/bonds/sovereign-returns` (`store.rs`, `sovereign_windows` test) serves the yield and duration bond returns with the local, currency and USD legs.
 
+* Periods, boxes and overview (#1786): every EQ and FI page shows 1D, 1W, 1M, YTD and 12M, then the annualised averages over 1, 12, 24 and 36
+  months as CAGR, (end / start)^(1 / years) - 1 with years = months / 12 (`Cagr.kt`, `data/portfolios.json::periods`); a window the history does not
+  reach is n/a, never a shorter-history value. The quote source asks five years of daily closes (`data/quotes.json` `range=5y`;
+  `scripts/gen-quotes-snapshot.py` holds the same math). The EQ and FI Homepages carry a period summary (every portfolio over the whole period set) and
+  their boxes show the 1M and the 12M change in place of YTD (`card_periods`). `data/home-boxes.json` declares the Homepage boxes that list instruments
+  (`HomeBoxes.kt`, `ui/HomeBoxCard.kt`): EQ World Indices Equity (the major economies first, then all 32 indices) and every HG page (Last and 12M %),
+  each the top 5 with Show all; the instruments are read from where the page declares them. The CB Homepage opens with an overview of the major
+  economies (US, EA, UK, JP, CN first, Show all for every country): yield curves 2Y / 5Y / 10Y / 30Y, CPI inflation, real GDP growth and the policy rate,
+  from `data/cb-snapshot.json` (the euro area 2Y / 5Y / 30Y come from the ECB yield curve, source `ecb_yc`, refreshed with
+  `scripts/gen-cb-snapshot.py --only yield_2y,yield_5y,yield_10y,yield_30y`). Commodities (CMDT), Commodity Prices (CPX) and Exchange Rates (FXR) moved
+  from EQ > Data to HG > Markets with all their data (`ui.moved`, ticket 1786). PM opens on Performance (a `home_page` entry); the former card grid is
+  PM > Index (`home_grid`). The US Cyclicals group adds the S&P 500 and the Nasdaq. Rule 16: `Reorg1786ParityTest` holds every page, entry field,
+  redirect, dashboard panel, column and instrument to the frozen baseline `app/src/test/resources/nav-parity-baseline-1786.json`; `CagrTest`,
+  `HomeBoxesTest` cover the math and the boxes.

@@ -3,6 +3,7 @@
 
     python3 scripts/gen-cb-snapshot.py [--out data/cb-snapshot.json]     fetch every declared source and write the snapshot
     python3 scripts/gen-cb-snapshot.py --selftest                        parse the response fixtures of each API and assert the result
+    python3 scripts/gen-cb-snapshot.py --only yield_2y,yield_5y          #1786 refresh only these indicators inside the existing snapshot
 
 Reads data/cb-countries.json and data/cb-indicators.json (the declarations; this script names no country, indicator, series or address of its own
 besides the endpoint templates the indicator file declares under `sources`). A series is written only when its source answered for the country;
@@ -74,6 +75,15 @@ def parse_ecb(text):
         out[int(r["TIME_PERIOD"][:4])] = float(r["OBS_VALUE"]); title = r.get("TITLE") or title
     return out, title
 
+def parse_ecb_daily(text):
+    """#1786 ECB data-api csvdata of a daily series (the YC yield curve) -> {(year, month): [observations]}, the shape parse_fred gives"""
+    out = {}
+    if not text or not text.startswith("KEY"): return out
+    for r in csv.DictReader(io.StringIO(text)):
+        if r.get("OBS_VALUE") in (None, ""): continue
+        out.setdefault(_period(r["TIME_PERIOD"][:10]), []).append(float(r["OBS_VALUE"]))
+    return out
+
 # ------------------------------------------------------------------ transport
 def get(url, tries=3, ua=None):
     for i in range(tries):
@@ -134,6 +144,7 @@ def main(out_path):
     fc_to = cur + cty["years"]["forecast"] - 1
     today = NOW.isoformat()
     items = {i["id"]: (g["id"], i) for g in ind["full"]["groups"] for i in g["items"]}
+    if ONLY: items = {k: v for k, v in items.items() if k in ONLY}
     srcs = ind["sources"]
     cache = {}
     def cached(k, fn):
@@ -169,6 +180,8 @@ def main(out_path):
                     if vals: return vals, title or "ECB staff macroeconomic projections (MPD vintage %s)" % v
             return {}, ""
         return cached(("ecb", series), f)
+    def ecb_yc(series):
+        return cached(("ecb_yc", series), lambda: parse_ecb_daily(get(srcs["ecb_yc"]["url"].format(series=series, **{"from": hist_from - 1}))))
     bis_areas = "+".join(sorted({c["bis"] for c in cs}))
     by_id = {c["id"]: c for c in cs}
 
@@ -207,6 +220,12 @@ def main(out_path):
             sc = rule.get("scale", 1)
             last = "%04d-%02d" % max(data)
             return apply(a, rule), ({**ytd, "value": ytd["value"] * sc} if ytd else None), "FRED %s, last observation %s, retrieved %s" % (series, last, today)
+        if src == "ecb_yc":
+            data = ecb_yc(s)
+            if not data: return None
+            a, ytd = annualise(data, rule.get("agg", "avg"), tr, cur)
+            last = "%04d-%02d" % max(data)
+            return apply(a, rule), ytd, "ECB yield curve %s, last observation %s, retrieved %s" % (s, last, today)
         if src == "ecb_mpd":
             vals, title = ecb(s)
             if not vals: return None
@@ -248,6 +267,17 @@ def main(out_path):
                 if proj: main_i["cb_projection"] = proj
                 series[iid] = main_i
         snap_c[c["id"]] = {"series": series}
+    if ONLY:
+        # #1786 --only: refresh the named indicators inside the existing snapshot; every other series, the weights and the date stay as they are,
+        # and a series no source answered for keeps its previous value (nothing is dropped)
+        old = json.load(open(out_path, encoding="utf-8"))
+        n = 0
+        for cid, c in snap_c.items():
+            for iid, v in c["series"].items():
+                old["countries"].setdefault(cid, {"series": {}})["series"][iid] = v; n += 1
+        with open(out_path, "w", encoding="utf-8") as f: json.dump(old, f, separators=(",", ":"), ensure_ascii=False)
+        print("gen-cb-snapshot --only %s: %d series refreshed, %d bytes" % (",".join(sorted(ONLY)), n, os.path.getsize(out_path)))
+        return
     # --- weights (IMF GDP; the euro area is the sum of its members)
     w = {"ppp": {}, "fx": {}, "ppp_members": {}, "fx_members": {}}
     for opt in cty["weights"]["options"]:
@@ -287,6 +317,9 @@ def selftest():
     eq("fred months", sorted(f), [(2026, 1)]); eq("fred january", f[(2026, 1)], [4.19, 4.17, 4.18, 4.15, 4.19, 4.18])
     eq("fred missing day skipped", parse_fred("observation_date,X\n2026-01-02,.\n2026-01-05,1.5\n"), {(2026, 1): [1.5]})
     eq("fred non-csv refused", parse_fred("<html>not found</html>"), {})
+    yc = parse_ecb_daily(rd("ecb-yc.csv"))
+    eq("ecb yc months", sorted(yc), [(2026, 10), (2026, 11)]); eq("ecb yc november", yc[(2026, 11)], [2.05, 2.07])
+    eq("ecb yc non-csv refused", parse_ecb_daily("<html/>"), {})
     e, _ = parse_ecb(rd("ecb-mpd.csv"))
     eq("ecb 2027", e[2027], 1.4); eq("ecb years", sorted(e), [2026, 2027, 2028])
     a, ytd = annualise({(2024, 1): [2.0], (2024, 2): [4.0], (2025, 1): [3.0], (2025, 2): [3.0], (2026, 1): [6.0]}, "avg", None, 2026)
@@ -299,7 +332,10 @@ def selftest():
     print("selftest: %s" % ("FAILED" if bad else "ok"))
     return 1 if bad else 0
 
+ONLY = set()
+
 if __name__ == "__main__":
     if "--selftest" in sys.argv: sys.exit(selftest())
+    if "--only" in sys.argv: ONLY = set(sys.argv[sys.argv.index("--only") + 1].split(","))
     out = sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else os.path.join(APP, "data/cb-snapshot.json")
     main(out)

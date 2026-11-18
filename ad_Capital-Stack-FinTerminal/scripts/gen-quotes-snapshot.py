@@ -15,7 +15,7 @@ APP = os.path.dirname(HERE)
 FIX = os.path.join(APP, "app/src/test/resources/quotes")
 
 def parse_chart(text):
-    """Yahoo chart answer -> the quote record, or None. last = the source's market price; prev = the previous daily close; w1 / m1 / ytd = % change of the daily close over 5 / 21 trading days and since the last close of the year before."""
+    """Yahoo chart answer -> the quote record, or None. last = the source's market price; prev = the previous daily close; w1 / m1 / ytd = % change of the daily close over 5 / 21 trading days and since the last close of the year before; #1786 y1 and the CAGR windows from windows()."""
     d = json.loads(text)
     res = (d.get("chart") or {}).get("result")
     if not res: return None
@@ -43,7 +43,37 @@ def parse_chart(text):
     for k, v in (("w1", pct(5)), ("m1", pct(21)), ("ytd", (last / ytdbase[-1] - 1) * 100 if ytdbase and ytdbase[-1] else None)):
         if v is not None: o[k] = round(v, 4)
     if m.get("regularMarketVolume"): o["vol"] = int(m["regularMarketVolume"])
+    # #1786 the long windows (Cagr.kt holds the same math): base = the last close on or before as-of minus the window; a shorter history is absent (n/a)
+    bars = [(datetime.datetime.fromtimestamp(t, datetime.timezone.utc).date(), c) for t, c in (cl[:-1] if same else cl)]
+    for k, v in windows(bars, last, datetime.datetime.fromtimestamp(asof, datetime.timezone.utc).date()).items():
+        if v is not None: o[k] = round(v, 4)
     return o
+
+def _minus_months(d, n):
+    y, mo = divmod(d.year * 12 + d.month - 1 - n, 12)
+    mo += 1
+    import calendar
+    return datetime.date(y, mo, min(d.day, calendar.monthrange(y, mo)[1]))
+
+def _base(bars, asof, months):
+    if not bars: return None
+    d = _minus_months(asof, months)
+    s = sorted(bars)
+    if s[0][0] > d: return None
+    b = [c for day, c in s if day <= d]
+    return b[-1] if b else None
+
+def cagr(start, end, years):
+    """CAGR in %: ((end / start) ** (1 / years) - 1) * 100; None for a missing or non-positive price or years."""
+    if start is None or end is None or start <= 0 or end <= 0 or years <= 0: return None
+    return ((end / start) ** (1.0 / years) - 1) * 100
+
+def windows(bars, last, asof):
+    """#1786 y1 = the 12-month change; c1m / c12m / c24m / c36m = the CAGR over 1 / 12 / 24 / 36 months (years = months / 12)."""
+    b12 = _base(bars, asof, 12)
+    out = {"y1": (last / b12 - 1) * 100 if b12 and b12 > 0 and last > 0 else None}
+    for k, n in (("c1m", 1), ("c12m", 12), ("c24m", 24), ("c36m", 36)): out[k] = cagr(_base(bars, asof, n), last, n / 12.0)
+    return out
 
 def get(url, ua, tries=2):
     for i in range(tries):
@@ -103,6 +133,12 @@ def selftest():
     eq("last", o["last"], 91.09); eq("prev is the bar before the session in progress", round(o["prev"], 2), 90.52); eq("exchange", o["exchange"], "NY Mercantile"); eq("name", o["name"], "Crude Oil Dec 26"); eq("currency", o["currency"], "USD")
     eq("chg = last - prev", round(o["chg"], 6), round(o["last"] - o["prev"], 6)); eq("pct", round(o["pct"], 4), round((o["last"] / o["prev"] - 1) * 100, 4))
     eq("asof", o["asof"], 1793973020); eq("vol", o["vol"], 105147)
+    d0 = datetime.date(2026, 11, 18)
+    bars = [(datetime.date(2023, 11, 1), 100.0), (datetime.date(2024, 11, 18), 110.0), (datetime.date(2025, 11, 18), 121.0), (datetime.date(2026, 10, 16), 130.0)]
+    w = windows(bars, 133.1, d0)
+    eq("y1", round(w["y1"], 6), 10.0); eq("c12m = y1", round(w["c12m"], 6), 10.0); eq("c24m", round(w["c24m"], 6), 10.0)
+    eq("c36m", round(w["c36m"], 6), round(((133.1 / 100.0) ** (1 / 3.0) - 1) * 100, 6)); eq("c1m annualised", round(w["c1m"], 6), round(((133.1 / 130.0) ** 12 - 1) * 100, 6))
+    eq("short history is n/a", windows(bars[2:], 133.1, d0)["c24m"], None); eq("no history", windows([], 1.0, d0), {"y1": None, "c1m": None, "c12m": None, "c24m": None, "c36m": None})
     eq("none on an error answer", parse_chart('{"chart":{"result":null,"error":{"code":"Not Found"}}}'), None)
     for m in bad: print("FAIL " + m)
     print("selftest: %s" % ("FAILED" if bad else "ok"))

@@ -67,7 +67,8 @@ class PmTablesTest {
 
     @Test fun profilesAreTheEightCycleProfiles() {
         val (head, groups) = PmTables.profiles(DataFiles.pmJson, "profiles")!!
-        assertEquals(listOf("Growth", "Value", "Quality", "Cyclical", "Defensive", "Dividend", "Momentum", "Small-cap"), groups.map { it.label })
+        // #1786 the US Cyclicals group also carries its benchmarks, the S&P 500 and the Nasdaq
+        assertEquals(listOf("Growth", "Value", "Quality", "Cyclical", "Defensive", "Dividend", "Momentum", "Small-cap", "S&P 500", "Nasdaq"), groups.map { it.label })
         for (g in groups) { assertTrue(g.id, g.leads.isNotBlank() && g.rows.isNotEmpty()); g.rows.forEach { assertEquals(head.columns.size, it.size) } }
         assertNull(PmTables.profiles(DataFiles.pmJson, "vol"))
     }

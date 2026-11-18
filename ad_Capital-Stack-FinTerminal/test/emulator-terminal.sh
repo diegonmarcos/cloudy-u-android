@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# emulator-terminal.sh <apk> <out-dir> (#1722) — the CI emulator walk of the terminal-style FinTerm: the section Homepages (CB, FI, EQ), the FI bond
+# emulator-terminal.sh <apk> <out-dir> (#1722, #1786) — the CI emulator walk of the terminal-style FinTerm: the section Homepages (CB, FI, EQ, HG, PM), the FI bond
 # groups in Table and Graphic mode, the rates / macro pages at their new place under CB, a few EQ > Performance factor portfolios in both modes, the EQ
 # Data pages, the function list, and a mnemonic typed into the command line. Each step is a screenshot (plus one or two scrolled) and a uiautomator dump.
 # Runs inside reactivecircus/android-emulator-runner (CI only). The emulator has no Cloud Store and no mesh: the dataset and the quotes arrive on their own.
@@ -47,9 +47,10 @@ open() {
 }
 # the first open also fetches the dataset: give it one warm-up
 adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard fi >/dev/null; sleep "$WAIT"
-open home-fi fi "" 3
-open home-eq eq "" 4
-open home-cb cb "" 2
+# #1786 the Homepages: FI and EQ with the period summary (1D … CAGR 36m) and the 1M / 12M boxes, CB with the overview of the major economies
+open home-fi fi "" 4
+open home-eq eq "" 6
+open home-cb cb "" 5
 for g in fi-all fi-gov-dm fi-gov-em fi-aaa fi-aa-a fi-bbb fi-junk; do
   open "$g-table" "$g" table 2
   open "$g-graphic" "$g" graphic 3
@@ -60,9 +61,16 @@ for g in eq-top eq-momentum eq-growth eq-dividend eq-small; do
   open "$g-graphic" "$g" graphic 3
 done
 for g in eq-value eq-quality eq-vol eq-cyclical eq-defensive; do open "$g-table" "$g" table 1; done
-for d in world_equity_indices commodities commodity-prices fx-rates equity_fundamentals earnings_calendar equity_quote watchlist; do open "eq-data-$d" "$d" "" 1; done
-for s in nw pm hg my-pm; do open "home-$s" "$s" "" 1; done
-open pm-performance pm-performance "" 1
+for d in world_equity_indices equity_fundamentals earnings_calendar equity_quote watchlist; do open "eq-data-$d" "$d" "" 1; done
+# #1786 Commodities, Commodity Prices and Exchange Rates live under HG > Markets now; the HG Homepage boxes (top 5, Last, 12M %)
+for d in commodities commodity-prices fx-rates; do open "hg-markets-$d" "$d" "" 1; done
+open home-hg hg "" 6
+for s in nw my-pm; do open "home-$s" "$s" "" 1; done
+# #1786 PM opens on Performance (with the S&P 500 and Nasdaq rows); the former card grid is PM > Index
+open home-pm pm "" 3
+open pm-performance pm-performance "" 2
+open pm-index pm-index "" 1
+open pm-portfolios pm-portfolios "" 2
 open hg-rates hg-rates "" 1
 # the function list (96) and a mnemonic typed into the command line
 adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard eq >/dev/null; sleep 12

@@ -115,6 +115,19 @@ object CbSources {
         return out to title
     }
 
+    /** #1786 ECB data-api csvdata of a daily series (the YC yield curve) -> month to its observations (the shape [fred] gives); empty for any other body. */
+    fun ecbDaily(text: String): Map<YM, List<Double>> {
+        if (!text.startsWith("KEY")) return emptyMap()
+        val out = HashMap<YM, MutableList<Double>>()
+        for (r in records(text)) {
+            val v = r["OBS_VALUE"]?.toDoubleOrNull() ?: continue
+            val t = r["TIME_PERIOD"] ?: continue
+            if (t.length < 7) continue
+            out.getOrPut(period(t.take(10))) { ArrayList() }.add(v)
+        }
+        return out
+    }
+
     /** Percent change of an annual series over the year before (null where either year is missing or the base is 0). */
     fun yoy(a: Map<Int, Double>): Map<Int, Double> =
         a.keys.sorted().mapNotNull { y -> val p = a[y - 1]; if (p != null && p != 0.0) y to (a.getValue(y) / p - 1.0) * 100.0 else null }.toMap()

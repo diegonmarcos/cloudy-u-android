@@ -129,7 +129,10 @@ class MovedPagesTest {
         val now = ui.getJSONArray("redirects").toString()
         for (r in arr(baseline.getJSONArray("redirects"))) {
             val got = Pages.redirect(now, r.getString("from"))
-            assertEquals("redirect ${r.getString("from")}", r.getString("tab") to r.optString("to", Pages.PAGE_HOME), got)
+            // #1786 a redirect follows its page when ui.moved moves the page (Commodity Prices: EQ -> HG)
+            val to0 = r.optString("to", Pages.PAGE_HOME)
+            val tab = moved[to0]?.takeIf { it.optString("ticket") == "1786" }?.getString("to") ?: r.getString("tab")
+            assertEquals("redirect ${r.getString("from")}", tab to to0, got)
             val to = got!!.second
             if (to != Pages.PAGE_HOME) assertEquals("redirect ${r.getString("from")} points at a page that left ${got.first}", got.first, sectionOf(to))
         }

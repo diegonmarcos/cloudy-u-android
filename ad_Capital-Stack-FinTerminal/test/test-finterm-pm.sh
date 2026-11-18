@@ -5,7 +5,7 @@
 #       rows follow the four risk levels in order, level 3 by Vol (B1, D1, C1); the filter tabs are All | DM·Low | DM·Middle | DM+EM·Middle-High | DM+EM·High
 #   M3  Portfolios (two tables: DM vs EM, US Cyclicals; columns Portfolio | Vol | Top 3 | See all) and Performance (the windows Today, Last 7d, Last 30d, MTD, YTD, Last 1y, Last 3y CAGR; monthly rebalancing declared; the free history source declared;
 #       every portfolio of both tables baked with an as-of date or an n/a reason): all declared in data/pm.json
-#   M4  Profiles: the 8 cycle profiles, each with its phases and rows of the table's width
+#   M4  Profiles: the 8 cycle profiles and (#1786) the S&P 500 and Nasdaq benchmarks, each with its phases and rows of the table's width
 #   M5  Kotlin names none of it: PmPage.kt / PmTables.kt hold no declared name, no sp literal, no type-size override, and draw FinMatrix
 # then plants a mutation per rule in a scratch copy and requires RED for each.
 set -u
@@ -25,8 +25,11 @@ ui = bj["ui"]; dash = {d["id"]: d for d in dj["dashboards"]}
 kt = "app/src/main/java/com/diegonmarcos/capitalfinterm/"
 # M1
 sec = next(s for s in ui["sections"] if s["id"] == "pm")
-if [(p["id"], p["label"]) for p in sec["pages"]] != [("pm-home", "Home"), ("pm-portfolios", "Portfolios"), ("pm-performance", "Performance")]:
+if [(p["id"], p["label"]) for p in sec["pages"]] != [("pm-home", "Home"), ("pm-portfolios", "Portfolios"), ("pm-performance", "Performance"), ("pm-index", "Index")]:
     bad.append("M1 the PM sub-pages are %s" % [p["label"] for p in sec["pages"]])
+# #1786 the PM Homepage is the Performance page; the former card grid is the sub-page Index
+if [(e.get("kind"), e.get("home")) for e in ui["stacks"]["pm"] if e.get("kind") == "home_page"] != [("home_page", "pm-performance")]: bad.append("M1 the PM Homepage is not the Performance page")
+if not any(e.get("kind") == "home_grid" and e.get("page") == "pm-index" for e in ui["stacks"]["pm"]): bad.append("M1 the former PM Homepage (the card grid) is not reachable as PM > Index")
 tabs = [e for e in ui["stacks"]["pm"] if e.get("kind") == "pm_table"]
 if [(e.get("page"), e.get("table")) for e in tabs] != [("pm-portfolios", "portfolios"), ("pm-performance", "performance")]: bad.append("M1 the PM table entries are %s" % [(e.get("page"), e.get("table")) for e in tabs])
 for e in tabs:
@@ -34,7 +37,7 @@ for e in tabs:
 for e in ui["stacks"]["pm"]:
     if e.get("kind") == "dashboard" and not e.get("detail"): bad.append("M1 PM dashboard %s is not a detail page (a Vol row opens it)" % e.get("dashboard"))
 if "commodities" in pm or any(p.get("id") == "pm-commodities" for p in sec["pages"]): bad.append("M1 the PM Commodities table or page is still declared")
-for old, tab, to in (("pm-commodities", "eq", "commodity-prices"), ("pm_commodities", "eq", "commodity-prices"), ("pm-vol", "pm", "pm-portfolios"), ("pm-profiles", "pm", "pm-portfolios")):
+for old, tab, to in (("pm-commodities", "hg", "commodity-prices"), ("pm_commodities", "hg", "commodity-prices"), ("pm-vol", "pm", "pm-portfolios"), ("pm-profiles", "pm", "pm-portfolios")):
     if not any(r.get("from") == old and r.get("tab") == tab and r.get("to") == to for r in ui.get("redirects", [])): bad.append("M1 the legacy %s link does not redirect to %s/%s" % (old, tab, to))
 # M2
 vol = pm["vol"]
@@ -94,7 +97,7 @@ else:
     if re.search(r"(?i)\b(nan|placeholder|lorem|todo|tbd)\b", json.dumps(sn)): bad.append("M3 the performance snapshot holds a placeholder token")
 # M4
 pr = pm["profiles"]
-if [t["label"] for t in pr["tabs"]] != ["Growth", "Value", "Quality", "Cyclical", "Defensive", "Dividend", "Momentum", "Small-cap"]: bad.append("M4 profiles are %s" % [t["label"] for t in pr["tabs"]])
+if [t["label"] for t in pr["tabs"]] != ["Growth", "Value", "Quality", "Cyclical", "Defensive", "Dividend", "Momentum", "Small-cap", "S&P 500", "Nasdaq"]: bad.append("M4 profiles are %s" % [t["label"] for t in pr["tabs"]])
 for t in pr["tabs"]:
     if not t.get("leads") or not t["rows"] or any(len(r) != len(pr["columns"]) for r in t["rows"]): bad.append("M4 profile %s has no phases, no rows or a ragged row" % t["id"])
 # M5
@@ -128,6 +131,7 @@ mutant() {   # mutant <name> <python statements on the scratch copy, cwd = the c
 JE="import json;L=lambda p:json.load(open(p));D=lambda p,d:json.dump(d,open(p,'w'),indent=2,ensure_ascii=False)"
 APPEND="A=lambda f,t:open(f,'a').write(t)"
 KT="app/src/main/java/com/diegonmarcos/capitalfinterm"
+mutant "PM stops opening on Performance"  "$JE;d=L('build.json');d['ui']['stacks']['pm']=[e for e in d['ui']['stacks']['pm'] if e.get('kind')!='home_page'];D('build.json',d)" "M1 the PM Homepage is not the Performance page"
 mutant "a PM page is dropped"            "$JE;d=L('build.json');next(s for s in d['ui']['sections'] if s['id']=='pm')['pages'].pop();D('build.json',d)" "M1 the PM sub-pages"
 mutant "a Vol row is dropped"            "$JE;d=L('data/pm.json');d['vol']['rows'].pop(0);D('data/pm.json',d)" "M2 Vol rows"
 mutant "the duplicate A2 comes back"     "$JE;d=L('data/dashboards.json');d['dashboards'].append(dict(d['dashboards'][-1],id='pm_a2_low'));D('data/dashboards.json',d)" "M2 the duplicate A2"

@@ -4622,7 +4622,8 @@
     {
       "id": "commodities",
       "entry": "Commodities",
-      "tab": "eq",
+      "tab": "hg",
+      "_doc_tab": "#1786 moved from EQ > Data to HG > Markets with every panel",
       "panels": [
         {
           "id": "energy",

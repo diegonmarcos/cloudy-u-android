@@ -22,9 +22,12 @@ class EqParityTest {
         val eq = arr(ui.getJSONArray("sections")).first { it.getString("id") == "eq" }
         val pages = arr(eq.getJSONArray("pages")).map { it.getString("id") }.toSet()
         val redirected = arr(ui.optJSONArray("redirects")).filter { it.optString("tab") == "eq" }.map { it.getString("from") }.toSet()
+        // #1786 a block ui.moved sends out of EQ (Commodities, Commodity Prices, Exchange Rates -> HG > Markets) is still declared at its new place
+        val movedOut = arr(ui.getJSONObject("moved").optJSONArray("pages")).filter { it.optString("from") == "eq" && it.optString("to") != "eq" }.associate { it.getString("page") to it.getString("to") }
+        fun pagesOf(section: String) = arr(arr(ui.getJSONArray("sections")).first { it.getString("id") == section }.getJSONArray("pages")).map { it.getString("id") }.toSet()
         for (p in arr(baseline.getJSONArray("pages"))) {
             val id = p.getString("page")
-            assertTrue("EQ block $id dropped", id in pages || id.replace('-', '_') in redirected)
+            assertTrue("EQ block $id dropped", id in pages || id.replace('-', '_') in redirected || movedOut[id]?.let { id in pagesOf(it) } == true)
         }
     }
 

@@ -115,7 +115,7 @@
           ]
         },
         {
-          "tab": "eq",
+          "tab": "hg",
           "entries": [
             "Commodities"
           ]
@@ -967,7 +967,7 @@
           ]
         },
         {
-          "tab": "eq",
+          "tab": "hg",
           "entries": [
             "Commodities"
           ]
@@ -997,7 +997,7 @@
       "connector": "cftc_cot",
       "feeds": [
         {
-          "tab": "eq",
+          "tab": "hg",
           "entries": [
             "Commodities"
           ]
@@ -1041,7 +1041,7 @@
           ]
         },
         {
-          "tab": "eq",
+          "tab": "hg",
           "entries": [
             "Commodities"
           ]
@@ -1286,7 +1286,7 @@
       "connector": null,
       "feeds": [
         {
-          "tab": "eq",
+          "tab": "hg",
           "entries": [
             "Commodities"
           ]

@@ -62,6 +62,7 @@ import com.diegonmarcos.capitalfinterm.PerfBubble
 import com.diegonmarcos.capitalfinterm.PerfDecl
 import com.diegonmarcos.capitalfinterm.PerfGroup
 import com.diegonmarcos.capitalfinterm.PerfPortfolios
+import com.diegonmarcos.capitalfinterm.Cagr
 import com.diegonmarcos.capitalfinterm.PerfRow
 import com.diegonmarcos.capitalfinterm.PerfStep
 import com.diegonmarcos.capitalfinterm.Quote
@@ -237,17 +238,20 @@ fun PerfCardBody(view: String, state: PerfHomeState) {
                 val scheme = PerfPortfolios.schemeOf(group, null)
                 val rows = remember(basket, state.quotes, state.sov) { PerfPortfolios.rows(basket, scheme, state.quotes, decl.defaultPeriod, decl.cardTop, state.sov) }
                 val n = basket.constituents.count { (it.weights[scheme] ?: 0.0) > 0.0 }
+                // #1786 the box's columns are the declared card periods (the 1-month and the 12-month change), in place of YTD
                 Row(Modifier.fillMaxWidth().height(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(decl.word("ticker"), Modifier.weight(1f), color = p.text2, style = FinType.caption, maxLines = 1)
-                    Text(decl.defaultPeriod + " %", color = p.text2, style = FinType.caption, maxLines = 1)
+                    decl.cardPeriods.forEach { per -> Text("$per %", Modifier.width(CARD_COL).testTag(PERF_CARD_COL + per), color = p.text2, style = FinType.caption, maxLines = 1, textAlign = TextAlign.End) }
                 }
                 rows.forEach { r ->
                     Row(Modifier.fillMaxWidth().height(20.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(r.c.ticker, color = p.accent, style = FinType.symbol, maxLines = 1)
                         Spacer(Modifier.width(6.dp))
                         Text(r.c.name, Modifier.weight(1f), color = p.text2, style = FinType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Spacer(Modifier.width(6.dp))
-                        Text(PerfPortfolios.s1(r.perf), color = if (r.perf == null) p.text3 else p.dir(perfDir(r.perf)), style = FinType.numStrong, maxLines = 1)
+                        decl.cardPeriods.forEach { per ->
+                            val v = PerfPortfolios.perf(r.c, state.quotes, per, state.sov)
+                            Text(PerfPortfolios.cell(v, per, decimals = 1), Modifier.width(CARD_COL), color = if (v == null) p.text3 else p.dir(perfDir(v)), style = FinType.numStrong, maxLines = 1, textAlign = TextAlign.End)
+                        }
                     }
                 }
                 Spacer(Modifier.weight(1f))
@@ -256,6 +260,60 @@ fun PerfCardBody(view: String, state: PerfHomeState) {
         }
     }
 }
+
+/** #1786 the test tag of the Homepage's period summary and of one of its rows (+ the portfolio's view). */
+const val PERF_PERIODS = "perf_periods"
+const val PERF_PERIODS_ROW = "perf_periods:"
+
+/**
+ * #1786 the period summary of a Homepage (EQ, FI): one row per performance portfolio of the page, one column per declared period (1D, 1W, 1M, YTD,
+ * 12M, CAGR 1m / 12m / 24m / 36m). A portfolio that follows a listed fund (`etf`) reads the fund's quote; one without (the FI bond groups) is the
+ * weighted return of every constituent under its default scheme. A window the history does not reach reads n/a. A tap on a row opens its page.
+ */
+@Composable
+fun PerfPeriodSummary(views: List<String>, decl: PerfDecl, state: PerfHomeState, onOpen: (String) -> Unit) {
+    val p = LocalFinPalette.current
+    val groups = remember(views) { views.mapNotNull { decl.group(it) } }
+    val symbols = remember(groups, state.baskets) {
+        groups.flatMap { g ->
+            if (g.etf.isNotEmpty()) listOf(g.etf)
+            else state.baskets?.get(g.key)?.let { b -> PerfPortfolios.symbols(PerfPortfolios.rows(b, PerfPortfolios.schemeOf(g, null), emptyMap(), decl.defaultPeriod, 0)) }.orEmpty()
+        }.distinct()
+    }
+    val box = rememberBoxQuotes(symbols)
+    val quotes = state.quotes + box.quotes
+    fun value(g: PerfGroup, per: String): Double? =
+        if (g.etf.isNotEmpty()) IndexHoldings.perf(quotes[g.etf], per)
+        else state.baskets?.get(g.key)?.let { b -> PerfPortfolios.portfolioReturn(PerfPortfolios.rows(b, PerfPortfolios.schemeOf(g, null), quotes, per, 0, state.sov)) }
+    FinPanel("PERD", decl.word("period").ifEmpty { "Period" } + "s", Modifier.testTag(PERF_PERIODS), meta = decl.periods.size.toString() + " periods · CAGR = (end/start)^(1/years) - 1") {
+        val scroll = rememberScrollState()
+        Row(Modifier.fillMaxWidth()) {
+            Column(Modifier.width(COL_NAME)) {
+                HeadCell(decl.word("portfolio"), COL_NAME, left = true, on = false, desc = false) { }
+                groups.forEach { g ->
+                    Box(Modifier.width(COL_NAME).height(ROW_H).clickable { onOpen(g.key) }.padding(horizontal = 6.dp).testTag(PERF_PERIODS_ROW + g.key), contentAlignment = Alignment.CenterStart) {
+                        Text(g.label + (if (g.etf.isNotEmpty()) " · " + g.etf else ""), color = p.accent, style = FinType.symbol, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+            Column(Modifier.weight(1f).horizontalScroll(scroll)) {
+                Row { decl.periods.forEach { per -> HeadCell("$per %", colOf(per), left = false, on = false, desc = false, tag = "perf_periods_col:$per") { } } }
+                groups.forEachIndexed { i, g ->
+                    Row(Modifier.height(ROW_H).background(rowFill(i, false)), verticalAlignment = Alignment.CenterVertically) {
+                        decl.periods.forEach { per ->
+                            val v = value(g, per)
+                            NumCell(PerfPortfolios.cell(v, per), colOf(per), if (v == null) p.text3 else p.dir(perfDir(v)))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** #1786 a Homepage box's period column (1M %, 12M %) and its test tag prefix (+ the period). */
+private val CARD_COL = 44.dp
+const val PERF_CARD_COL = "perf_card_col:"
 
 private fun perfDir(v: Double?): FinFormat.Dir = if (v == null || v == 0.0) FinFormat.Dir.FLAT else if (v > 0.0) FinFormat.Dir.UP else FinFormat.Dir.DOWN
 private fun perfTopLabel(n: Int): String = if (n <= 0) "All" else "Top $n"
@@ -390,6 +448,9 @@ private val COL_TICKER = 58.dp
 private val COL_NAME = 100.dp
 private val COL_BUCKET = 110.dp
 private val COL_NUM = 52.dp
+/** #1786 a long-window column (12M, CAGR 1m / 12m / 24m / 36m): its header and an annualised figure need more room than a short period's. */
+private val COL_LONG = 74.dp
+private fun colOf(period: String): Dp = if (Cagr.isLong(period)) COL_LONG else COL_NUM
 private val COL_CONTRIB = 112.dp
 private val ROW_H = 26.dp
 
@@ -432,7 +493,7 @@ private fun TableMode(
                     HeadCell(decl.word("name"), COL_NAME, left = true, on = sortKey == PerfPortfolios.SORT_NAME, desc = desc) { sortBy(PerfPortfolios.SORT_NAME) }
                     HeadCell(decl.word("weight"), COL_NUM, left = false, on = sortKey == PerfPortfolios.SORT_WEIGHT, desc = desc) { sortBy(PerfPortfolios.SORT_WEIGHT) }
                     decl.periods.forEach { per ->
-                        HeadCell("$per %", COL_NUM, left = false, on = sortKey == PerfPortfolios.SORT_PERF && per == period, desc = desc, tag = "perf_col:$per") {
+                        HeadCell("$per %", colOf(per), left = false, on = sortKey == PerfPortfolios.SORT_PERF && per == period, desc = desc, tag = "perf_col:$per") {
                             if (per != period) { onPeriod(per); sortKey = PerfPortfolios.SORT_PERF; desc = true } else sortBy(PerfPortfolios.SORT_PERF)
                         }
                     }
@@ -450,7 +511,7 @@ private fun TableMode(
                         NumCell(PerfPortfolios.f2(r.weight), COL_NUM, p.text)
                         decl.periods.forEach { per ->
                             val v = if (per == period) r.perf else PerfPortfolios.perf(r.c, quotes, per, sov)
-                            NumCell(PerfPortfolios.s2(v), COL_NUM, if (v == null) p.text3 else p.dir(perfDir(v)))
+                            NumCell(PerfPortfolios.cell(v, per), colOf(per), if (v == null) p.text3 else p.dir(perfDir(v)))
                         }
                         if (sovereign) {
                             val parts = PerfPortfolios.parts(r.c, quotes, period, sov)
@@ -461,13 +522,13 @@ private fun TableMode(
                         TextCell(r.c.bucket, COL_BUCKET, p.text2)
                     }
                 }
-                Box(Modifier.width(COL_NAME + COL_BUCKET + COL_NUM * (decl.periods.size + 1 + (if (sovereign) 2 else 0)) + (if (sovereign) 8.dp else 0.dp) + COL_CONTRIB).height(1.dp).background(p.hairline))
+                Box(Modifier.width(COL_NAME + COL_BUCKET + COL_NUM * (1 + (if (sovereign) 2 else 0)) + decl.periods.fold(0.dp) { a, per -> a + colOf(per) } + (if (sovereign) 8.dp else 0.dp) + COL_CONTRIB).height(1.dp).background(p.hairline))
                 Row(Modifier.height(ROW_H).background(p.surfaceRaised), verticalAlignment = Alignment.CenterVertically) {
                     TextCell(PerfPortfolios.sourceOf(basket, scheme).asOf.let { if (it.isEmpty()) "" else "as of $it" }, COL_NAME, p.text2)
                     NumCell(totals[3], COL_NUM, p.text, bold = true)
-                    decl.periods.forEachIndexed { k, _ ->
+                    decl.periods.forEachIndexed { k, per ->
                         val s = totals.getOrElse(4 + k) { FinFormat.DASH }
-                        NumCell(s, COL_NUM, if (s == FinFormat.DASH) p.text3 else p.dir(FinFormat.dirOf(s)), bold = true)
+                        NumCell(s, colOf(per), if (s == FinFormat.DASH || s == Cagr.NA) p.text3 else p.dir(FinFormat.dirOf(s)), bold = true)
                     }
                     if (sovereign) { NumCell("", COL_NUM + 8.dp, p.text3); NumCell("", COL_NUM, p.text3) }
                     val c = totals.last()
@@ -523,7 +584,7 @@ private fun PickedLine(r: PerfRow, period: String) {
         r.c.ticker + "  " + r.c.name + (if (r.c.proxy.isNotEmpty()) "  ·  " + r.c.proxy + (if (r.c.symbol.isNotEmpty()) " (" + r.c.symbol + ")" else "") else "") +
             (if (r.c.basis == PerfPortfolios.BASIS_FX) "  ·  currency vs USD (" + r.c.symbol + ")" else "") +
             (if (r.c.basis == PerfPortfolios.BASIS_SOV) "  ·  " + (if (r.c.symbol.isEmpty()) "no listed bond fund: yield and duration approximation where published" else "dollar return of its government bonds") else "") + (if (r.c.note.isNotEmpty()) "  ·  " + r.c.note else "") +
-            "  ·  weight " + PerfPortfolios.f2(r.weight) + " %  ·  $period " + (r.perf?.let { PerfPortfolios.s2(it) + " %" } ?: "n/a") +
+            "  ·  weight " + PerfPortfolios.f2(r.weight) + " %  ·  $period " + (r.perf?.let { PerfPortfolios.s2(it) + " %" } ?: Cagr.NA) +
             "  ·  contribution " + (r.contribution?.let { PerfPortfolios.s2(it) + " pp" } ?: "n/a"),
         Modifier.padding(horizontal = 8.dp, vertical = 6.dp).testTag("perf_picked"), color = p.text, style = FinType.caption,
     )

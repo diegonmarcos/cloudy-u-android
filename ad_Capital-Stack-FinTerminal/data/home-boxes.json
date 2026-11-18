@@ -1,0 +1,31 @@
+{
+ "_doc": "#1786 THE HOMEPAGE BOXES of Capital-Stack-FinTerminal: a Homepage card that lists its page's instruments instead of a one-line description. `quote_boxes` (by sub-page id): the box shows the `top` first instruments with the declared `columns` (`last` = the delayed last price, a period id = its change in % from the quote source of data/quotes.json; the long periods are Cagr.kt's) and a Show all toggle that lists every instrument in place; a tap on the box's header opens the page. A box names its instruments ONCE, where the page already declares them: `from` = `futures:<class>` (data/quotes.json futures class fronts), `fx` (data/quotes.json fx currencies), `commodities` (data/quotes.json commodities fronts) or `dashboard:<id>[/<panel>]` (data/dashboards.json fetch.each and labels of the dashboard's performance / quote panels); `items` lists them only where no page declares them. `order` puts the named symbols first (the major economies of a world index box). `cb_boxes`: the CB Homepage overview, one box per indicator group, each row a country of data/cb-countries.json with the latest print of each column's indicator from data/cb-snapshot.json (the year in progress to date when the source is sub-annual, else the last annual actual; `mode` fc0 = the current-year forecast); the `top` countries first, Show all lists every country. Nothing here is a figure: a missing value is n/a.",
+ "top": 5,
+ "quote_boxes": {
+  "world-equity-indices": {"from": "dashboard:world_equity_indices/global", "order": ["^GSPC", "000300.SS", "^STOXX50E", "^N225", "^FTSE"], "columns": ["1M", "12M"], "note": "the major economies first: US, China, euro area, Japan, UK"},
+  "hg-rates": {"from": "futures:rates", "columns": ["last", "12M"]},
+  "hg-equity": {"from": "futures:equity", "columns": ["last", "12M"]},
+  "hg-fx": {"from": "futures:fx", "columns": ["last", "12M"]},
+  "hg-energy": {"from": "futures:energy", "columns": ["last", "12M"]},
+  "hg-metals": {"from": "futures:metals", "columns": ["last", "12M"]},
+  "hg-agriculture": {"from": "futures:agriculture", "columns": ["last", "12M"]},
+  "hg-crypto": {"from": "futures:crypto", "columns": ["last", "12M"]},
+  "hg-volatility": {"from": "futures:volatility", "columns": ["last", "12M"]},
+  "hedge-calculator": {"from": "futures:equity", "columns": ["last", "12M"], "note": "the equity index futures the calculator sizes a hedge with"},
+  "fx": {"from": "fx", "columns": ["last", "12M"]},
+  "onshore-usd-rates": {"items": [{"symbol": "^IRX", "label": "US T-bill 13W yield"}, {"symbol": "^FVX", "label": "US Treasury 5Y yield"}, {"symbol": "^TNX", "label": "US Treasury 10Y yield"}, {"symbol": "^TYX", "label": "US Treasury 30Y yield"}], "columns": ["last", "12M"], "note": "the Treasury yield indices of the quote source (the page's own panels are NY Fed and FRED rates)"},
+  "crypto": {"from": "dashboard:crypto/top20", "columns": ["last", "12M"]},
+  "commodities": {"from": "dashboard:commodities", "columns": ["last", "12M"]},
+  "commodity-prices": {"from": "commodities", "columns": ["last", "12M"]},
+  "fx-rates": {"from": "fx", "columns": ["last", "12M"]}
+ },
+ "cb_boxes": [
+  {"id": "cb-yields", "title": "Yield curves", "fn": "YCOV", "opens": "yield-curves", "columns": [{"indicator": "yield_2y", "label": "2Y"}, {"indicator": "yield_5y", "label": "5Y"}, {"indicator": "yield_10y", "label": "10Y"}, {"indicator": "yield_30y", "label": "30Y"}], "unit": "%"},
+  {"id": "cb-inflation", "title": "Inflation (CPI y/y)", "fn": "CPOV", "opens": "cb-countries", "columns": [{"indicator": "cpi_headline", "label": "CPI"}, {"indicator": "cpi_core", "label": "Core"}, {"indicator": "cpi_headline", "label": "Fcst", "mode": "fc0"}], "unit": "% y/y"},
+  {"id": "cb-gdp", "title": "Real GDP growth", "fn": "GDOV", "opens": "cb-countries", "columns": [{"indicator": "real_gdp", "label": "Last"}, {"indicator": "real_gdp", "label": "Fcst", "mode": "fc0"}, {"indicator": "potential_gdp", "label": "Pot."}], "unit": "% y/y"},
+  {"id": "cb-policy", "title": "Policy rate", "fn": "PROV", "opens": "cb-countries", "columns": [{"indicator": "policy_rate", "label": "Rate"}, {"indicator": "yield_3m", "label": "3M"}, {"indicator": "inflation_expectations_1y", "label": "Infl. exp."}], "unit": "%"}
+ ],
+ "cb_top": ["US", "EA", "GB", "JP", "CN", "DE"],
+ "_doc_cb_top": "the major economies first (US, euro area, UK, Japan, China, then Germany); the box shows the first `top` of them, Show all every country of the snapshot.",
+ "ui": {"instrument": "Instrument", "show_all": "Show all", "show_less": "Show top", "last": "Last", "na": "n/a", "overview": "Overview", "loading": "Asking the quote source…", "asof": "as of", "cb_note": "Latest print: the year to date where the source is monthly or daily, else the last annual actual; Fcst = the current-year forecast (IMF / OECD)."}
+}

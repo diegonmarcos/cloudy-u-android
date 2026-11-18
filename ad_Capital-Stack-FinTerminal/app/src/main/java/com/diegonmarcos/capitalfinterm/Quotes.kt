@@ -69,6 +69,8 @@ data class QuotesDecl(
 data class Quote(
     val last: Double, val asof: Long, val exchange: String, val currency: String, val name: String,
     val prev: Double?, val chg: Double?, val pct: Double?, val w1: Double?, val m1: Double?, val ytd: Double?, val vol: Long?,
+    /** #1786 the 12-month change and the 1 / 12 / 24 / 36-month CAGR in % ([Cagr]); null = the history does not reach the window. */
+    val y1: Double? = null, val c1m: Double? = null, val c12m: Double? = null, val c24m: Double? = null, val c36m: Double? = null,
 )
 
 data class QuotesSnapshot(val generated: String, val source: String, val delay: String, val quotes: Map<String, Quote>) {
@@ -77,7 +79,8 @@ data class QuotesSnapshot(val generated: String, val source: String, val delay: 
 
     companion object {
         private fun d(o: JSONObject, k: String): Double? = if (o.has(k) && !o.isNull(k)) o.getDouble(k) else null
-        fun quote(o: JSONObject): Quote = Quote(o.getDouble("last"), o.getLong("asof"), o.optString("exchange"), o.optString("currency"), o.optString("name"), d(o, "prev"), d(o, "chg"), d(o, "pct"), d(o, "w1"), d(o, "m1"), d(o, "ytd"), if (o.has("vol")) o.getLong("vol") else null)
+        fun quote(o: JSONObject): Quote = Quote(o.getDouble("last"), o.getLong("asof"), o.optString("exchange"), o.optString("currency"), o.optString("name"), d(o, "prev"), d(o, "chg"), d(o, "pct"), d(o, "w1"), d(o, "m1"), d(o, "ytd"), if (o.has("vol")) o.getLong("vol") else null,
+            d(o, "y1"), d(o, "c1m"), d(o, "c12m"), d(o, "c24m"), d(o, "c36m"))
         fun parse(json: String): QuotesSnapshot {
             val r = JSONObject(json); val q = r.getJSONObject("quotes")
             return QuotesSnapshot(r.getString("generated"), r.getString("source"), r.getString("delay"), q.keys().asSequence().associateWith { quote(q.getJSONObject(it)) })
@@ -151,7 +154,7 @@ object Quotes {
 
     private fun utc(t: Long): LocalDate = Instant.ofEpochSecond(t).atZone(ZoneOffset.UTC).toLocalDate()
 
-    /** Yahoo chart answer -> the quote: last = the source's market price, prev = the previous daily close, 1W / 1M / YTD = % change of the daily close over 5 / 21 trading days and since the year's last close. */
+    /** Yahoo chart answer -> the quote: last = the source's market price, prev = the previous daily close, 1W / 1M / YTD = % change of the daily close over 5 / 21 trading days and since the year's last close; #1786 12M and the CAGR windows from [Cagr.windows]. */
     fun parseChart(text: String): Quote? {
         val r = runCatching { JSONObject(text).optJSONObject("chart")?.optJSONArray("result")?.optJSONObject(0) }.getOrNull() ?: return null
         val m = r.optJSONObject("meta") ?: return null
@@ -167,10 +170,13 @@ object Quotes {
         val year = utc(asof).year
         val ytdBase = base.filter { utc(it.first).year < year }.lastOrNull()?.second?.takeIf { it != 0.0 }
         fun r6(v: Double) = (v * 1e6).roundToLong() / 1e6
+        // #1786 the long windows (12M change, CAGR 1m / 12m / 24m / 36m) on the daily closes before the quote's day; the source asks range=5y
+        val lw = Cagr.windows(base.map { utc(it.first) to it.second }, last, utc(asof))
         return Quote(
             r6(last), asof, m.optString("fullExchangeName").ifEmpty { m.optString("exchangeName") }, m.optString("currency"), m.optString("longName").ifEmpty { m.optString("shortName") },
             prev?.let { r6(it) }, prev?.let { r6(last - it) }, prev?.let { (last / it - 1.0) * 100.0 }, over(5), over(21), ytdBase?.let { (last / it - 1.0) * 100.0 },
             if (m.has("regularMarketVolume") && !m.isNull("regularMarketVolume")) m.getLong("regularMarketVolume").takeIf { it > 0 } else null,
+            lw.y1, lw.c1m, lw.c12m, lw.c24m, lw.c36m,
         )
     }
 

@@ -30,6 +30,8 @@ data class Entry(
     val view: String = "",
     /** #1722 the entry's function mnemonic (`fn`): the word the command line opens it by; "" = none. */
     val fn: String = "",
+    /** #1786 a `home_page` entry: the sub-page id the section's Homepage shows. */
+    val home: String = "",
 )
 
 /** #1722 one function of the command line: its mnemonic, the section it lives in, its title, and what it opens (a dashboard id, else a sub-page id; both empty = the section's Homepage). */
@@ -53,6 +55,10 @@ object Pages {
     const val KIND_HEDGE_CALC = "hedge_calc"
     /** #1722 a performance portfolio (data/portfolios.json group `view`): Table and Graphic modes over the runtime dataset perf-portfolios. */
     const val KIND_PERF_PORTFOLIO = "perf_portfolio"
+    /** #1786 a section whose Homepage is one of its sub-pages (`home`: PM opens on Performance); the entry is not a sub-page itself. */
+    const val KIND_HOME_PAGE = "home_page"
+    /** #1786 the former card grid of a section's Homepage as a sub-page of its own (PM > Index), so nothing the old Homepage showed is lost. */
+    const val KIND_HOME_GRID = "home_grid"
 
     /** The entries declared for [sectionId] in the stacks JSON (empty when the section declares none). */
     fun entries(stacks: String, sectionId: String): List<Entry> {
@@ -74,6 +80,7 @@ object Pages {
                 detail = o.optBoolean("detail", false),
                 view = o.optString("view"),
                 fn = o.optString("fn"),
+                home = o.optString("home"),
             )
         }
     }
@@ -116,6 +123,7 @@ object Pages {
     fun homeCards(pages: List<Triple<String, String, String>>, entries: List<Entry>): List<HomeCard> =
         pages.drop(1).filter { !it.first.endsWith("-home") }.mapNotNull { (id, label, icon) ->
             val e = entries.firstOrNull { pageIdOf(it) == id } ?: return@mapNotNull null
+            if (e.kind == KIND_HOME_GRID) return@mapNotNull null
             HomeCard(id, label.ifEmpty { e.title }, e.subtitle, icon, e)
         }
 
@@ -170,6 +178,9 @@ object Pages {
     /** The command line's word: upper case, blanks trimmed, a typed "<GO>" or " GO" at the end dropped. */
     fun commandWord(input: String): String =
         input.trim().uppercase(java.util.Locale.ROOT).removeSuffix("<GO>").trim().let { if (it.endsWith(" GO")) it.dropLast(3).trim() else it }
+
+    /** #1786 the sub-page a section's Homepage shows instead of its card grid (a `home_page` entry), or null (the card grid). */
+    fun homeOverride(entries: List<Entry>): Entry? = entries.firstOrNull { it.kind == KIND_HOME_PAGE }?.home?.takeIf { it.isNotEmpty() }?.let { entryOf(entries, it) }
 
     /** The entry a sub-page id opens, or null (Home, or an unknown id). */
     fun entryOf(entries: List<Entry>, pageId: String): Entry? = entries.firstOrNull { pageIdOf(it) == pageId }

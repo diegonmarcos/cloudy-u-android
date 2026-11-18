@@ -28,6 +28,11 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -71,6 +76,8 @@ fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectLis
     val entries = remember(sectionId) { Pages.entries(Decl.stacks, sectionId) }
     // #1399 a section that declares its sub-pages opens on its Homepage: every sub-page as a card (icon, name, one line).
     val cards = remember(sectionId) { Pages.homeCards(Decl.pages(sectionId), entries) }
+    // #1786 a section whose Homepage is one of its sub-pages (PM opens on Performance); its card grid stays reachable as the sub-page Index
+    val home = remember(sectionId) { Pages.homeOverride(entries) }
     val page = FinNavStack.pageOf(stack)?.let { Pages.entryOf(entries, it) }
     val top = stack.lastOrNull() ?: FinNavStack.LIST
     val hasDash = entries.any { it.kind == Pages.KIND_DASHBOARD }
@@ -90,7 +97,9 @@ fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectLis
                         idx != null -> IndexBreakdownPage(idx) { selected?.let(onSelectList) }
                         sym != null -> QuotePage(sym, nav)
                         selected != null -> DashboardPage(selected, nav)
+                        page?.kind == Pages.KIND_HOME_GRID -> HomeGrid(sectionId, cards, entries, nav, onOpenPage)
                         page != null -> EntryPage(page, nav)
+                        home != null -> EntryPage(home, nav)
                         cards.isNotEmpty() -> HomeGrid(sectionId, cards, entries, nav, onOpenPage)
                         else -> Box(Modifier.fillMaxSize().background(p.canvas))
                     }
@@ -104,7 +113,9 @@ fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectLis
                 idx != null -> IndexBreakdownPage(idx) { FinNavStack.dashboardOf(stack)?.let(onSelectList) }
                 sym != null -> QuotePage(sym, nav)
                 top.startsWith("dash:") -> DashboardPage(top.removePrefix("dash:"), nav)
+                page?.kind == Pages.KIND_HOME_GRID -> HomeGrid(sectionId, cards, entries, nav, onOpenPage)
                 page != null -> EntryPage(page, nav)
+                home != null -> EntryPage(home, nav)
                 cards.isNotEmpty() -> HomeGrid(sectionId, cards, entries, nav, onOpenPage)
                 else -> TabList(sectionId, entries, compact = false, selected = null, nav = nav, onOpen = onSelectList, onOpenConfig = onOpenConfig)
             }
@@ -119,7 +130,7 @@ private fun TabList(sectionId: String, entries: List<Entry>, compact: Boolean, s
     val sources = remember { AssetData.sources(ctx) }
     val dashboards = remember { AssetData.dashboards(ctx) }
     val dashEntries = entries.filter { it.kind == Pages.KIND_DASHBOARD }
-    val others = entries.filter { it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE && it.kind != Pages.KIND_CB_TABLE && it.kind != Pages.KIND_QUOTE_BOARD && it.kind != Pages.KIND_FUTURES_BOARD && it.kind != Pages.KIND_HEDGE_CALC && it.kind != Pages.KIND_PERF_PORTFOLIO }
+    val others = entries.filter { it.kind != Pages.KIND_HOME_PAGE && it.kind != Pages.KIND_HOME_GRID && it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE && it.kind != Pages.KIND_CB_TABLE && it.kind != Pages.KIND_QUOTE_BOARD && it.kind != Pages.KIND_FUTURES_BOARD && it.kind != Pages.KIND_HEDGE_CALC && it.kind != Pages.KIND_PERF_PORTFOLIO }
     fun status(e: Entry): DashStatus? = dashboards.firstOrNull { it.id == e.dashboard }?.let { Dashboards.status(it, sources) }
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -179,18 +190,46 @@ private fun HomeGrid(sectionId: String, cards: List<HomeCard>, entries: List<Ent
     val groups = remember(sectionId) { Pages.homeGroups(cards, entries) }
     // #1722 the performance portfolios of this Homepage (EQ > Performance, the FI bond groups): their cards list the top constituents with returns
     val perf = rememberPerfHome(remember(sectionId) { cards.filter { it.entry.kind == Pages.KIND_PERF_PORTFOLIO }.map { it.entry.view } })
+    // #1786 the quote boxes of this Homepage (EQ World Indices Equity, every HG page): their instruments, resolved from where the page declares them
+    val ctx = LocalContext.current
+    val boxDecl = remember { HomeBoxesStore.decl(ctx) }
+    val qDecl = remember { runCatching { com.diegonmarcos.capitalfinterm.QuotesStore.decl(ctx) }.getOrNull() }
+    val boxItems = remember(sectionId, boxDecl) {
+        val dashboards = AssetData.dashboards(ctx)
+        cards.mapNotNull { c -> boxDecl?.quoteBoxes?.get(c.pageId)?.let { b -> c.pageId to (b to com.diegonmarcos.capitalfinterm.HomeBoxes.items(b, qDecl, dashboards)) } }.toMap()
+    }
+    var expanded by rememberSaveable(sectionId) { mutableStateOf("") }
+    fun isOpen(page: String) = page in expanded.split(',')
+    val wanted = remember(boxItems, expanded) {
+        boxItems.flatMap { (page, bi) -> com.diegonmarcos.capitalfinterm.HomeBoxes.shown(bi.second, boxDecl?.top ?: 5, isOpen(page)).map { it.symbol } }.distinct()
+    }
+    val boxQuotes = rememberBoxQuotes(wanted)
     LazyColumn(
         Modifier.fillMaxSize().testTag(HOME_GRID + sectionId),
         contentPadding = PaddingValues(start = FinDim.screenPad, end = FinDim.screenPad, top = FinDim.gap, bottom = FinDim.bottomInset),
         verticalArrangement = Arrangement.spacedBy(FinDim.gap),
     ) {
         if (cards.any { it.entry.kind == Pages.KIND_DASHBOARD }) item(key = "search") { FinSearchField(onClick = { nav.search() }) }
+        // #1786 CB: the overview of the major economies (yield curves, inflation, real GDP growth, policy rate) above the sub-page cards
+        if (sectionId == SECTION_CB) {
+            item(key = "s:overview") { Box(Modifier.testTag(HOME_SECTION + "Overview")) { HomeSectionTitle(boxDecl?.word("overview")?.ifEmpty { null } ?: "Overview", boxDecl?.cbBoxes?.size ?: 0) } }
+            item(key = "cb_overview") { CbOverview(onOpen = onOpen) }
+        }
+        // #1786 EQ and FI: every portfolio of the Homepage over the full period set (1D … CAGR 36m), read from the fund each one follows
+        val perfDecl = perf.decl
+        if (perfDecl != null && cards.any { it.entry.kind == Pages.KIND_PERF_PORTFOLIO }) {
+            item(key = "perf_periods") { PerfPeriodSummary(cards.filter { it.entry.kind == Pages.KIND_PERF_PORTFOLIO }.map { it.entry.view }, perfDecl, perf) { v -> cards.firstOrNull { it.entry.view == v }?.let { onOpen(it.pageId) } } }
+        }
         groups.forEachIndexed { g, (title, group) ->
             if (title.isNotEmpty()) item(key = "s:$g") { Box(Modifier.testTag(HOME_SECTION + title)) { HomeSectionTitle(title, group.size) } }
             group.chunked(2).forEachIndexed { i, pair ->
                 item(key = "h:$g:$i") {
                     Row(horizontalArrangement = Arrangement.spacedBy(FinDim.gap)) {
-                        pair.forEach { c -> HomeCardTile(c, Modifier.weight(1f), perf) { onOpen(c.pageId) } }
+                        pair.forEach { c ->
+                            val bi = boxItems[c.pageId]
+                            val toggle = { expanded = if (isOpen(c.pageId)) expanded.split(',').filter { it != c.pageId && it.isNotEmpty() }.joinToString(",") else (expanded.split(',').filter { it.isNotEmpty() } + c.pageId).joinToString(",") }
+                            HomeCardTile(c, Modifier.weight(1f), perf, box = bi, boxQuotes = boxQuotes, boxAll = isOpen(c.pageId), onToggle = toggle) { onOpen(c.pageId) }
+                        }
                         if (pair.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
@@ -198,6 +237,9 @@ private fun HomeGrid(sectionId: String, cards: List<HomeCard>, entries: List<Ent
         }
     }
 }
+
+/** #1786 the section whose Homepage carries the overview of the major economies. */
+const val SECTION_CB = "cb"
 
 /** The test tag prefix of a Homepage grid (+ section id) and of one card (+ sub-page id). */
 const val HOME_GRID = "home_grid:"
@@ -220,12 +262,19 @@ private fun HomeSectionTitle(title: String, count: Int) {
  * description; a performance portfolio's card lists its top constituents with their returns and "See all" instead ([PerfCardBody]).
  */
 @Composable
-private fun HomeCardTile(c: HomeCard, modifier: Modifier, perf: PerfHomeState? = null, onOpen: () -> Unit) {
+private fun HomeCardTile(
+    c: HomeCard, modifier: Modifier, perf: PerfHomeState? = null,
+    box: Pair<com.diegonmarcos.capitalfinterm.QuoteBox, List<com.diegonmarcos.capitalfinterm.BoxItem>>? = null, boxQuotes: BoxQuotes? = null, boxAll: Boolean = false, onToggle: () -> Unit = {},
+    onOpen: () -> Unit,
+) {
     val p = LocalFinPalette.current
     val isPerf = c.entry.kind == Pages.KIND_PERF_PORTFOLIO && perf != null
-    Column(modifier.height(if (isPerf) 200.dp else 100.dp).background(p.canvas).border(1.dp, p.hairline).clickable(onClick = onOpen).padding(1.dp).testTag(HOME_CARD + c.pageId)) {
+    // #1786 a quote box grows with Show all; a performance card keeps its 200dp, a plain card its 100dp
+    val sized = if (box != null) modifier.heightIn(min = 200.dp) else modifier.height(if (isPerf) 200.dp else 100.dp)
+    Column(sized.background(p.canvas).border(1.dp, p.hairline).clickable(onClick = onOpen).padding(1.dp).testTag(HOME_CARD + c.pageId)) {
         FinPanelHead(c.entry.fn, c.title)
-        if (isPerf && perf != null) PerfCardBody(c.entry.view, perf)
+        if (box != null && boxQuotes != null) QuoteBoxBody(box.first, box.second, boxQuotes, boxAll, onToggle)
+        else if (isPerf && perf != null) PerfCardBody(c.entry.view, perf)
         else Row(Modifier.padding(8.dp), verticalAlignment = Alignment.Top) {
             Icon(SecondRowIcons.vector(c.icon), contentDescription = null, tint = p.accent, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))

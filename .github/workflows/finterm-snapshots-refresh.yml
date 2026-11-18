@@ -1,0 +1,51 @@
+# Refresh of the FinTerm baked price snapshots (#1786): reruns ad_Capital-Stack-FinTerminal/scripts/gen-quotes-snapshot.py (the delayed quotes with
+# the 12M change and the CAGR 1m / 12m / 24m / 36m windows) and scripts/gen-pm-performance.py (the PM Performance rows, the US Cyclicals S&P 500 and
+# Nasdaq benchmarks included), each after its selftest, and commits data/quotes-snapshot.json and data/pm-performance.json when they changed. The app
+# refreshes both on the phone when a page opens; this keeps the figures baked into the next APK current. Weekly and on dispatch, free tier (one short job).
+name: "Data -> FinTerm price snapshots refresh"
+
+on:
+  schedule:
+    - cron: '41 4 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finterm-snapshots-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ad_Capital-Stack-FinTerminal/data
+            ad_Capital-Stack-FinTerminal/scripts
+            ad_Capital-Stack-FinTerminal/app/src/test/resources
+
+      - name: Regenerate (each generator's selftest first)
+        run: |
+          set -eu
+          cd ad_Capital-Stack-FinTerminal
+          python3 -I scripts/gen-quotes-snapshot.py --selftest
+          python3 -I scripts/gen-quotes-snapshot.py
+          python3 -I scripts/gen-pm-performance.py --selftest
+          python3 -I scripts/gen-pm-performance.py
+
+      - name: Commit when changed
+        run: |
+          set -eu
+          f="ad_Capital-Stack-FinTerminal/data/quotes-snapshot.json ad_Capital-Stack-FinTerminal/data/pm-performance.json"
+          if git diff --quiet -- $f; then echo "snapshots unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $f
+          git commit -m "finterm: quotes and PM performance snapshots refreshed from the delayed closes (#1786)"
+          git pull --rebase origin main
+          git push origin HEAD:main

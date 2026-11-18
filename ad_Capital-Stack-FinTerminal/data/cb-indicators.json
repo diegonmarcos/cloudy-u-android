@@ -1,5 +1,5 @@
 {
- "_doc": "THE INDICATORS of the Central Bank (CB) page. `simple` (the default view) is 5 groups of columns, each item naming the full indicators (`refs`, the first is the column, the rest are in the country detail) it is read from; `full` is the full list in 7 groups (Real Output and Expenditure 25, Labor Market 16, Prices and Inflation 16, Financial Markets and Interest Rates 22, Income, Wealth, and Fiscal Policy 15, International and Open Economy 11, Latent Variables and Structural Shocks (DSGE) 9). Every full indicator has an id, a group, a unit, the native `frequency` of its release (the snapshot is annual) and `sources`: the ordered source mapping per country. A rule is {src, series, countries ('*' = every country the source answers for, or a list of country ids), transform (yoy = percent change of the annual value), agg (avg | last, how a sub-annual series becomes a year), scale, note, role}. The first rule that has data for a country supplies its history and forecast; role cb_projection rules add the bank's own published projection beside it. An indicator with no rule for a country is shown as 'n/a (no free source)'; the DSGE latent variables are model-derived and shown only where a source publishes them, else 'model-only'. Sources: imf = IMF WEO DataMapper API, oecd_eo = OECD Economic Outlook SDMX API, wb = World Bank API, bis = BIS statistics API, fred = FRED (fredgraph.csv, includes the Fed SEP series), ecb_mpd = ECB staff macroeconomic projections (data-api). scripts/gen-cb-snapshot.py reads this file and data/cb-countries.json and writes data/cb-snapshot.json; the app's refresh follows the same rules.",
+ "_doc": "THE INDICATORS of the Central Bank (CB) page. `simple` (the default view) is 5 groups of columns, each item naming the full indicators (`refs`, the first is the column, the rest are in the country detail) it is read from; `full` is the full list in 7 groups (Real Output and Expenditure 25, Labor Market 16, Prices and Inflation 16, Financial Markets and Interest Rates 22, Income, Wealth, and Fiscal Policy 15, International and Open Economy 11, Latent Variables and Structural Shocks (DSGE) 9). Every full indicator has an id, a group, a unit, the native `frequency` of its release (the snapshot is annual) and `sources`: the ordered source mapping per country. A rule is {src, series, countries ('*' = every country the source answers for, or a list of country ids), transform (yoy = percent change of the annual value), agg (avg | last, how a sub-annual series becomes a year), scale, note, role}. The first rule that has data for a country supplies its history and forecast; role cb_projection rules add the bank's own published projection beside it. An indicator with no rule for a country is shown as 'n/a (no free source)'; the DSGE latent variables are model-derived and shown only where a source publishes them, else 'model-only'. Sources: imf = IMF WEO DataMapper API, oecd_eo = OECD Economic Outlook SDMX API, wb = World Bank API, bis = BIS statistics API, fred = FRED (fredgraph.csv, includes the Fed SEP series), ecb_mpd = ECB staff macroeconomic projections (data-api), ecb_yc = the ECB euro area AAA yield curve (data-api, daily spot rates; #1786). scripts/gen-cb-snapshot.py reads this file and data/cb-countries.json and writes data/cb-snapshot.json; the app's refresh follows the same rules.",
  "sources": {
   "imf": {
    "label": "IMF World Economic Outlook (DataMapper)",
@@ -31,6 +31,11 @@
    "label": "ECB staff macroeconomic projections",
    "url": "https://data-api.ecb.europa.eu/service/data/MPD/A.U2.{series}.A.{vintage}.0000?format=csvdata",
    "note": "public, no key"
+  },
+  "ecb_yc": {
+   "label": "ECB euro area yield curve (AAA government bonds, spot rates)",
+   "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.{series}?format=csvdata&startPeriod={from}-01-01",
+   "note": "public, no key; the same ECB data API as ecb_mpd. #1786 the euro area's 2Y / 5Y / 10Y / 30Y points of the CB overview's yield curves"
   }
  },
  "simple": {
@@ -1447,6 +1452,15 @@
          "US"
         ],
         "agg": "avg"
+       },
+       {
+        "src": "ecb_yc",
+        "series": "SR_2Y",
+        "countries": [
+         "EA"
+        ],
+        "agg": "avg",
+        "note": "#1786 ECB AAA euro area curve, daily spot rate"
        }
       ]
      },
@@ -1463,6 +1477,15 @@
          "US"
         ],
         "agg": "avg"
+       },
+       {
+        "src": "ecb_yc",
+        "series": "SR_5Y",
+        "countries": [
+         "EA"
+        ],
+        "agg": "avg",
+        "note": "#1786 ECB AAA euro area curve, daily spot rate"
        }
       ]
      },
@@ -1484,6 +1507,15 @@
          "US"
         ],
         "agg": "avg"
+       },
+       {
+        "src": "ecb_yc",
+        "series": "SR_10Y",
+        "countries": [
+         "EA"
+        ],
+        "agg": "avg",
+        "note": "#1786 ECB AAA euro area curve, daily spot rate"
        }
       ]
      },
@@ -1500,6 +1532,15 @@
          "US"
         ],
         "agg": "avg"
+       },
+       {
+        "src": "ecb_yc",
+        "series": "SR_30Y",
+        "countries": [
+         "EA"
+        ],
+        "agg": "avg",
+        "note": "#1786 ECB AAA euro area curve, daily spot rate"
        }
       ]
      },

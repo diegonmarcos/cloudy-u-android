@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # test-finterm-quotes: #1539 the price boards (HG futures board, EQ Exchange rates, EQ Commodity prices), statically (no build, no network, no device).
-#   Q1  HG: the 8 asset classes with every instrument the owner named; FX futures declare the hedge currency; the nav pages exist (8 boards + Hedge Calculator + the old EX pages), no Commodities page in HG
-#   Q2  EQ: Exchange rates (the 19 currencies, one USD leg each) and Commodity prices (the 16 commodities, each reading a front symbol of an HG root); the old CM / EX-Commodities links redirect to Commodity Prices
+#   Q1  HG: the 8 asset classes with every instrument the owner named; FX futures declare the hedge currency; the nav pages exist (8 boards + Hedge Calculator + the old EX pages), then (#1786) the moved Commodities, Commodity Prices and Exchange Rates pages
+#   Q2  HG (EQ until #1786): Exchange rates (the 19 currencies, one USD leg each) and Commodity prices (the 16 commodities, each reading a front symbol of an HG root); the old CM / EX-Commodities links redirect to Commodity Prices
 #   Q3  every root declares multiplier, tick, months, listed expiries and an expiry rule that exists; a root with no free source has no symbol (n/a), never a guessed one
 #   Q4  data/quotes-snapshot.json: a number and the source's own timestamp on every quote, only declared symbols, no placeholder, no quote for a root declared with no source
 #   Q5  Kotlin names no instrument, has no sp literal and no address, the generator parses its fixture (--selftest)
@@ -42,7 +42,8 @@ want = ["hg-rates", "hg-equity", "hg-fx", "hg-energy", "hg-metals", "hg-agricult
 hg = next(s for s in bj["sections"] if s["id"] == "hg")
 ids = [p["id"] for p in hg["pages"]]
 if ids[1:1 + len(want)] != want: bad.append("Q1 the HG pages are %s" % ids)
-if "commodities" in ids: bad.append("Q1 HG still has the Commodities page")
+# #1786 the EQ > Data pages Commodities, Commodity Prices and Exchange Rates moved to HG > Markets, after the futures pages
+if ids[-3:] != ["commodities", "commodity-prices", "fx-rates"]: bad.append("Q1 HG does not end with the moved Commodities, Commodity Prices and Exchange Rates pages: %s" % ids)
 for e in bj["stacks"]["hg"]:
     if e.get("kind") == "futures_board" and e.get("view") not in cls: bad.append("Q1 board %s names the unknown class %s" % (e.get("page"), e.get("view")))
 if [e.get("view") for e in bj["stacks"]["hg"] if e.get("kind") == "futures_board"] != list(cls): bad.append("Q1 the HG boards do not follow the classes in order")
@@ -59,11 +60,10 @@ roots = {r["id"]: r for c in q["futures"]["classes"] for r in c["roots"]}
 for c in com:
     r = roots.get(c["root"])
     if not r or not r.get("front"): bad.append("Q2 %s reads no front symbol of an HG root" % c["id"])
-eq = next(s for s in bj["sections"] if s["id"] == "eq")
-ep = [p["id"] for p in eq["pages"]]
-if "fx-rates" not in ep or "commodity-prices" not in ep: bad.append("Q2 EQ lacks Exchange Rates or Commodity Prices")
+ep = [p["id"] for p in hg["pages"]]
+if "fx-rates" not in ep or "commodity-prices" not in ep: bad.append("Q2 HG lacks Exchange Rates or Commodity Prices")
 for old in ("cm", "ex-commodities"):
-    if not any(r.get("from") == old and r.get("tab") == "eq" and r.get("to") == "commodity-prices" for r in bj.get("redirects", [])): bad.append("Q2 the legacy %s link does not redirect to Commodity Prices" % old)
+    if not any(r.get("from") == old and r.get("tab") == "hg" and r.get("to") == "commodity-prices" for r in bj.get("redirects", [])): bad.append("Q2 the legacy %s link does not redirect to Commodity Prices" % old)
 # Q3
 codes = set(q["month_codes"])
 for cid, c in cls.items():
@@ -135,7 +135,7 @@ APPEND="a=lambda f,t:open(f,'a').write(t)"
 mutant "an asset class is dropped"        "$J;d=L('data/quotes.json');d['futures']['classes'].pop();D('data/quotes.json',d)" "Q1 the asset classes"
 mutant "an owner instrument is dropped"   "$J;d=L('data/quotes.json');d['futures']['classes'][0]['roots']=[r for r in d['futures']['classes'][0]['roots'] if r['id']!='FGBL'];D('data/quotes.json',d)" "Q1 rates lacks Bund"
 mutant "an FX future loses its hedge currency" "$J;d=L('data/quotes.json');[r.pop('hedge') for r in d['futures']['classes'][2]['roots'] if r['id']=='6E'];D('data/quotes.json',d)" "Q1 FX future 6E declares no hedge currency"
-mutant "Commodities comes back to HG"     "$J;d=L('build.json');h=[s for s in d['ui']['sections'] if s['id']=='hg'][0];h['pages'].append({'id':'commodities','label':'Commodities','icon':'inventory_2'});D('build.json',d)" "Q1 HG still has the Commodities page"
+mutant "a moved page leaves HG"           "$J;d=L('build.json');h=[s for s in d['ui']['sections'] if s['id']=='hg'][0];h['pages']=[p for p in h['pages'] if p['id']!='fx-rates'];D('build.json',d)" "Q1 HG does not end with the moved"
 mutant "a currency is dropped"            "$J;d=L('data/quotes.json');d['fx']['currencies'].pop();D('data/quotes.json',d)" "Q2 the currencies are"
 mutant "a currency loses its USD leg"     "$J;d=L('data/quotes.json');d['fx']['currencies'][1].pop('symbol');D('data/quotes.json',d)" "Q2 EUR has no USD leg"
 mutant "a commodity reads no front symbol" "$J;d=L('data/quotes.json');d['commodities'][0]['root']='NOPE';D('data/quotes.json',d)" "Q2 wti reads no front symbol"
