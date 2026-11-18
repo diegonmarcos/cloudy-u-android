@@ -45,6 +45,10 @@ PY
 )"
     [ -n "$b" ] && $T adb shell input tap $b; sleep 4
 done
+# the status strip is drawn ONLY when the SuperApp is the default launcher (activity_main.xml: visibility gone until
+# applyLauncherChrome sees isDefaultLauncher), so make it the HOME role holder and bring it up with HOME, as a phone does.
+$T adb shell cmd role add-role-holder --user 0 android.app.role.HOME "$PKG" 0 >/dev/null 2>&1 || echo "note: could not take the HOME role"
+$T adb shell input keyevent KEYCODE_HOME; sleep 8
 shot home 3
 # #1446 the speed test lives in the network popup: open it by the WiFi chip of the status strip (content-desc "Network status: WiFi")
 bounds() { # <xml> <attr> <value-regex>: print the centre of the first node whose attr matches
