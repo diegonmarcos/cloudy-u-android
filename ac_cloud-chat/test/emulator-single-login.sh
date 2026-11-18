@@ -86,7 +86,7 @@ has 'chat.nowhere.invalid' 02-filled; has 'KeptName' 02-filled
 run_and_wait 60
 top; scene 03-error-kept
 has 'chat.nowhere.invalid' 03-error-kept; has 'KeptName' 03-error-kept; has 'server_form.server_url.option.custom\|Enter your custom URL' 03-error-kept
-adb shell input swipe 540 1500 540 600 300; sleep 1; scene 03b-error-kept-below
+for _ in 1 2 3; do adb shell input swipe 540 1500 540 600 300; done; sleep 1; scene 03b-error-kept-below
 has 'kept.user' 03b-error-kept-below; has 'server_form.progress.dns.error' 03b-error-kept-below
 has 'server_form.progress.login.skipped' 03b-error-kept-below
 
@@ -101,7 +101,7 @@ has 'server_form.progress.[a-z]*.error' 03c-mesh-error-alternative
 top; tap server_form.server_url.dropdown; tap server_form.server_url.option.public
 clear_in server_form.preauth_secret.input
 run_and_wait 90
-adb shell input swipe 540 1500 540 600 300; sleep 1; scene 04-server-ok-login-error
+for _ in 1 2 3; do adb shell input swipe 540 1500 540 600 300; done; sleep 1; scene 04-server-ok-login-error
 for id in server_form.progress.dns.ok server_form.progress.tls.ok server_form.progress.reach.ok server_form.progress.ping.ok \
   server_form.progress.version.ok server_form.progress.login.error kept.user; do has "$id" 04-server-ok-login-error; done
 top; scene 04b-top; has 'KeptName' 04b-top

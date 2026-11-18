@@ -10,6 +10,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.security.cert.X509Certificate
+import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLParameters
 import javax.net.ssl.SSLSocket
@@ -67,19 +68,35 @@ class ServerProbeModule(ctx: ReactApplicationContext) : ReactContextBaseJavaModu
     }
 
     private fun handshake(host: String, port: Int, factory: SSLSocketFactory, verifyHost: Boolean): X509Certificate? {
-        Socket().use { raw ->
-            raw.connect(InetSocketAddress(host, port), TIMEOUT_MS)
+        connectAny(host, port).use { raw ->
             raw.soTimeout = TIMEOUT_MS
             (factory.createSocket(raw, host, port, true) as SSLSocket).use { s ->
-                if (verifyHost) {
-                    val p: SSLParameters = s.sslParameters
-                    p.endpointIdentificationAlgorithm = "HTTPS"
-                    s.sslParameters = p
-                }
+                // SNI named explicitly: a layered socket does not always send it, and a server that picks its
+                // certificate by name (Caddy) closes a handshake without one ("connection closed", no issuer).
+                val p: SSLParameters = s.sslParameters
+                if (!host.isIpLiteral()) p.serverNames = listOf(SNIHostName(host))
+                if (verifyHost) p.endpointIdentificationAlgorithm = "HTTPS"
+                s.sslParameters = p
                 s.startHandshake()
                 return s.session.peerCertificates.firstOrNull() as? X509Certificate
             }
         }
+    }
+
+    /** Every resolved address in turn (an emulator or a v4-only network cannot route the v6 one). */
+    private fun connectAny(host: String, port: Int): Socket {
+        var last: Exception? = null
+        for (addr in InetAddress.getAllByName(host)) {
+            val sock = Socket()
+            try {
+                sock.connect(InetSocketAddress(addr, port), TIMEOUT_MS)
+                return sock
+            } catch (e: Exception) {
+                last = e
+                try { sock.close() } catch (_: Exception) {}
+            }
+        }
+        throw last ?: java.net.UnknownHostException(host)
     }
 
     private fun putCert(r: com.facebook.react.bridge.WritableMap, cert: X509Certificate?) {
@@ -98,6 +115,8 @@ class ServerProbeModule(ctx: ReactApplicationContext) : ReactContextBaseJavaModu
         }
         return SSLContext.getInstance("TLS").apply { init(null, arrayOf(tm), null) }.socketFactory
     }
+
+    private fun String.isIpLiteral(): Boolean = contains(':') || all { it.isDigit() || it == '.' }
 
     companion object {
         const val NAME = "CloudServerProbe"
