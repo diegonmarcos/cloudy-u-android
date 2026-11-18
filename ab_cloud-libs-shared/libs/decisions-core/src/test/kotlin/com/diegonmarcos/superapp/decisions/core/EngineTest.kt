@@ -425,7 +425,7 @@ class EngineTest {
         rig.env.metered = true
         val s = rig.engine.status(Fixtures.APP)
         assertTrue(s.getBoolean("ok"))
-        assertEquals(2, s.getInt("contract"))
+        assertEquals(3, s.getInt("contract"))
         assertTrue(s.getBoolean("token"))
         assertFalse(s.getBoolean("breaker_open"))
         assertTrue(s.getBoolean("online"))

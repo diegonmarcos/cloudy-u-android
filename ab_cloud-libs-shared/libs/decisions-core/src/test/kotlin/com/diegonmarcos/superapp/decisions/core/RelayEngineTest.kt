@@ -130,18 +130,20 @@ class RelayEngineTest {
 
     @Test
     fun `a use that does not validate is rejected with why`() {
-        fun rejected(u: String): String? = Policy.parse(block { it.getJSONObject("relay").getJSONObject("uses").put("x", JSONObject(u)) }).relay!!.rejected["x"]
-        val base = """"max_calls_per_hour":1,"consent":"implicit","provider":"openrouter","endpoints":["chat"],"apps":["$app"]"""
-        assertNull(rejected("{$base}"))
+        // org.json refuses a repeated key, so each case edits one copy of the valid use instead of restating a key.
+        val base = """{"max_calls_per_hour":1,"consent":"implicit","provider":"openrouter","endpoints":["chat"],"apps":["$app"]}"""
+        fun rejected(tweak: (JSONObject) -> Unit = {}): String? =
+            Policy.parse(block { it.getJSONObject("relay").getJSONObject("uses").put("x", JSONObject(base).also(tweak)) }).relay!!.rejected["x"]
+        assertNull(rejected())
         assertEquals("is not an object", Policy.parse(block { it.getJSONObject("relay").getJSONObject("uses").put("x", 1) }).relay!!.rejected["x"])
-        assertTrue(rejected("""{$base,"max_calls_per_hour":0}""")!!.contains("max_calls_per_hour"))
-        assertTrue(rejected("""{$base,"apps":[]}""")!!.contains("apps"))
-        assertTrue(rejected("""{$base,"consent":"maybe"}""")!!.contains("consent"))
-        assertTrue(rejected("""{$base,"content":"mail"}""")!!.contains("mail"))
-        assertNull(rejected("""{$base,"content":"mail","consent":"required"}"""))
-        assertTrue(rejected("""{$base,"provider":"nobody"}""")!!.contains("provider"))
-        assertTrue(rejected("""{$base,"endpoints":[]}""")!!.contains("endpoints"))
-        assertTrue(rejected("""{$base,"endpoints":["chat","models"]}""")!!.contains("models"))
+        assertTrue(rejected { it.put("max_calls_per_hour", 0) }!!.contains("max_calls_per_hour"))
+        assertTrue(rejected { it.put("apps", org.json.JSONArray()) }!!.contains("apps"))
+        assertTrue(rejected { it.put("consent", "maybe") }!!.contains("consent"))
+        assertTrue(rejected { it.put("content", "mail") }!!.contains("mail"))
+        assertNull(rejected { it.put("content", "mail").put("consent", "required") })
+        assertTrue(rejected { it.put("provider", "nobody") }!!.contains("provider"))
+        assertTrue(rejected { it.put("endpoints", org.json.JSONArray()) }!!.contains("endpoints"))
+        assertTrue(rejected { it.put("endpoints", org.json.JSONArray().put("chat").put("models")) }!!.contains("models"))
         val d = Policy.parse(block { it.getJSONObject("relay").getJSONObject("uses").put("x", JSONObject("""{"max_calls_per_hour":1,"provider":"openrouter","endpoints":["chat"],"apps":["$app"]}""")) }).relay!!
         assertTrue("consent defaults to required", d.uses.getValue("x").consentRequired)
         assertFalse("enabled defaults to off", d.uses.getValue("x").enabled)
