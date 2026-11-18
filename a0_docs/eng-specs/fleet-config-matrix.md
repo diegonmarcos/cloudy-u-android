@@ -27,7 +27,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-c3 | `com.diegonmarcos.cloudc3` | 13 | 0 | 100% |
 | cloud-calc | `com.diegonmarcos.cloudcalc` | 18 | 0 | 100% |
 | cloud-camera | `cld.camera` | 11 | 0 | 100% |
-| cloud-canvas | `com.diegonmarcos.cloudcanvas` | 9 | 0 | 100% |
+| cloud-canvas | `com.diegonmarcos.cloudcanvas` | 10 | 0 | 100% |
 | cloud-chat | `com.diegonmarcos.comms.chat` | 8 | 0 | 100% |
 | cloud-code | `com.diegonmarcos.code` | 12 | 5 | 70% |
 | cloud-contacts | `com.diegonmarcos.cloudcontacts` | 8 | 2 | 80% |
@@ -58,7 +58,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-biomed | `com.diegonmarcos.hardtechbiomed` | 5 | 0 | 100% |
-| **fleet** | | **450** | **57** | **88%** |
+| **fleet** | | **451** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -593,7 +593,7 @@ Coverage: 11 covered, 0 gaps.
 
 ## cloud-canvas — `com.diegonmarcos.cloudcanvas`
 
-Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
+Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -612,13 +612,15 @@ Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 
 | file | class | doc |
 |---|---|---|
+| `filesDir/boards/{board-N.tldr,boards.json}` | content | #1787 Draw > Board: every whiteboard as a tldraw store snapshot (board-N.tldr) and the index of names, order and the open board (boards.json). The user's content, written whole or not at all. |
 | `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
-Coverage: 9 covered, 0 gaps.
+Coverage: 10 covered, 0 gaps.
 
 ## cloud-chat — `com.diegonmarcos.comms.chat`
 

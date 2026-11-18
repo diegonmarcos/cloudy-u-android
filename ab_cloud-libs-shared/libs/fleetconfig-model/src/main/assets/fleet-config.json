@@ -3588,9 +3588,17 @@
         "lib-theme-background",
         "lib-ui-icons",
         "lib-ui-kit",
-        "lib-ui-nav-bars"
+        "lib-ui-nav-bars",
+        "lib-web-core"
       ],
-      "items": []
+      "items": [
+        {
+          "id": "boards",
+          "path": "filesDir/boards/{board-N.tldr,boards.json}",
+          "class": "content",
+          "doc": "#1787 Draw > Board: every whiteboard as a tldraw store snapshot (board-N.tldr) and the index of names, order and the open board (boards.json). The user's content, written whole or not at all."
+        }
+      ]
     },
     "chat": {
       "package": "com.diegonmarcos.comms.chat",
