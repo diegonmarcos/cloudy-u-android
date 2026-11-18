@@ -103,6 +103,9 @@ jobs:
           shot 02-sent-list; dump 02-sent-list
           adb shell input swipe 540 1600 540 900 400; sleep 2
           shot 02b-sent-list-scrolled; dump 02b-sent-list-scrolled
+          adb shell input swipe 540 1600 540 700 400; sleep 2
+          shot 02c-sent-list-bottom; dump 02c-sent-list-bottom
+          cat walk-out/02c-sent-list-bottom.xml >> walk-out/02-sent-list.xml
           cat walk-out/02b-sent-list-scrolled.xml >> walk-out/02-sent-list.xml
           adb shell input swipe 540 900 540 1600 400; sleep 2
           for s in "Delivered to every recipient" "Accepted by the relay" "Deferred by the recipient" "Bounced: no such user" "Sender not authorised" "Refused at submission" "No server record yet"; do has "$s" 02-sent-list; done

@@ -26,7 +26,8 @@ object ScriptedDeliveryStatus : DeliveryStatusSource {
         "norecord" to "No server record yet",
     )
 
-    private const val T0 = 1_763_460_000_000L
+    // Relative to now, so the server stages read after the seeded sent times (a fixed epoch put them a year earlier).
+    private val T0: Long get() = System.currentTimeMillis() - 5 * 60_000L
 
     private val ok = Submission(accepted = true, atMillis = T0 + 2_000, smtpCode = 250, messageId = null, detail = "queue Q-navwalk")
     private val signed = SenderAuth(true, true, true, true, atMillis = T0 + 3_000, dkimSelector = "navwalk", spfGating = false)
