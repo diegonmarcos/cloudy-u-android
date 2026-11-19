@@ -42,6 +42,12 @@ class ChronosTest {
         assertEquals(onDisk, tree.pages.map { it.asset }.toSortedSet())
     }
 
+    @Test fun noBakedChronosPageIsAPlaceholder() {
+        val pages = File("src/main/assets/chronos/Chronos").walkTopDown().filter { it.extension == "html" }.toList()
+        assertTrue("the baked Chronos pages exist", pages.size >= 8)
+        pages.forEach { assertTrue(it.path + " is a placeholder", !it.readText().contains("Simulator pending upload")) }
+    }
+
     @Test fun aPageLoadsByItsDirectorySoRelativeLinksResolve() {
         assertEquals("/chronos/Chronos/", Chronos.path(tree.root!!))
         assertEquals("/chronos/Chronos/3.Quantum-Cycles/3.0.Quantum-Decoherence-Cycle/", Chronos.path(tree.page("chronos.lib.3.0")!!))

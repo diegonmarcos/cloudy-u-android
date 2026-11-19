@@ -285,7 +285,7 @@
                 "pages": [
                   {
                     "id": "chronos.lib.0",
-                    "label": "Humansphere - Circadian - Chronos",
+                    "label": "Advanced Circadian Dynamics & Endocrine Simulator",
                     "icon": "bedtime",
                     "asset": "Chronos/0.Humansphere-Circadian/index.html"
                   },
@@ -297,7 +297,7 @@
                   },
                   {
                     "id": "chronos.lib.2",
-                    "label": "Milkwaysphere - Orbits - Chronos",
+                    "label": "Milky Way Logarithmic Map - Toggleable Dust",
                     "icon": "language",
                     "asset": "Chronos/2.Milkwaysphere-Orbits/index.html"
                   },

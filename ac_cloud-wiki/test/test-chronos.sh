@@ -7,6 +7,7 @@
 # tools/regen-chronos.py and declared as nested pages under build.json::ui wiki > chronos. This proves:
 #   C1  THE TREE GUARD: the pages build.json declares are exactly the page tree of the committed assets (one per index.html, the repo's
 #       hierarchy, ids from the directory numbers, labels the pages' own <title>, icons from the pin), and every declared asset exists
+#       and no baked page is a "Simulator pending upload" placeholder
 #   C2  the vendored CDN files hash to their pins, nothing vendored is unpinned, no page or stylesheet loads from the network, and no
 #       path has a segment aapt's default ignoreAssetsPattern drops (`<dir>_*`, dot files): it would be committed but missing from the APK
 #   C3  the generated tree says what it is (GENERATED.md, DO NOT EDIT, the pinned commit)
@@ -41,6 +42,12 @@ r = subprocess.run([sys.executable, os.path.join(app, "tools/regen-chronos.py"),
 bad += [l[5:] for l in r.stdout.splitlines() if l.startswith("FAIL ")]
 if r.returncode != 0 and not any(l.startswith("FAIL ") for l in r.stdout.splitlines()):
     bad.append("C1 regen-chronos.py --guard failed: " + (r.stderr.strip() or r.stdout.strip())[:300])
+
+# C1b: no baked Chronos page is a placeholder
+for dp, _, fs in os.walk(os.path.join(app, "app/src/main/assets/chronos/Chronos")):
+    for f in fs:
+        if f.endswith(".html") and "Simulator pending upload" in read(os.path.join(dp, f)):
+            bad.append("C1 %s is a placeholder (Simulator pending upload)" % os.path.relpath(os.path.join(dp, f), app))
 
 pin = json.loads(read(os.path.join(app, "tools/chronos-pin.json")))
 kt = os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudwiki")
@@ -108,6 +115,7 @@ DROP="import json;p='build.json';d=json.load(open(p));c=[x for x in [s for s in 
 mutant "a page is not declared"     "python3 -c \"$DROP;c['pages'][0]['pages'].pop();json.dump(d,open(p,'w'),indent=2)\""                   "C1 build.json::ui chronos pages"
 mutant "a label is retyped"         "python3 -c \"$DROP;c['pages'][0]['label']='Chronos';json.dump(d,open(p,'w'),indent=2)\""                "C1 build.json::ui chronos pages carry other labels"
 mutant "the hierarchy is flattened" "python3 -c \"$DROP;r=c['pages'][0];q=r['pages'][3];r['pages']+=q.pop('pages');json.dump(d,open(p,'w'),indent=2)\"" "C1 build.json::ui chronos pages"
+mutant "a page is a placeholder"    "printf '<title>x</title><p>Simulator pending upload.</p>' > $A/Chronos/1.Earthsphere-Cycles/index.html"  "is a placeholder"
 mutant "a page appears by hand"     "mkdir -p $A/Chronos/5.Extra && printf '<title>Extra</title>' > $A/Chronos/5.Extra/index.html"           "C1 build.json::ui chronos pages"
 mutant "an asset goes missing"      "rm $A/Chronos/2.Milkwaysphere-Orbits/index.html"                                                       "C1"
 mutant "a vendored file is edited"  "echo '//x' >> $A/vendor/tailwindcss/3.4.17/tailwind.js"                                              "C2 vendored file vendor/tailwindcss/3.4.17/tailwind.js does not hash"
