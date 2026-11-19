@@ -5,7 +5,7 @@ import android.content.Context
 /**
  * #1822 "Apps from unverified developers": the Android Developer Verifier (com.google.android.verifier) and the owner's
  * allowance in Developer options. The app cannot read either itself (package visibility, a system setting it has no
- * permission for), so the shell channel measures them: [probe] runs four read-only commands through the caller's `exec`
+ * permission for), so the shell channel measures them: [measure] runs read-only commands through the caller's `exec`
  * (the privileged plane at every connect, and the Perms row's Shell action) and remembers the answer with a timestamp.
  * [status] only reads that memory; with nothing measured, or an answer it cannot interpret, it says UNKNOWN. Never green by default.
  *
@@ -116,9 +116,6 @@ object DevVerifier {
 
     /** The reboot prompt was raised: never raise it twice for one request. */
     fun markRestartPrompted(ctx: Context) { ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("restart_prompted", true).apply() }
-
-    /** Back-compat name: the reading of [measure]. */
-    fun probe(ctx: Context, exec: (String) -> String?, now: Long = System.currentTimeMillis()): Reading = measure(ctx, exec, now).reading
 
     /** The last measurement; UNKNOWN when none yet. An allowance whose expiry has passed since reads as NOT_ALLOWED. */
     fun recall(ctx: Context, now: Long = System.currentTimeMillis()): Reading {
