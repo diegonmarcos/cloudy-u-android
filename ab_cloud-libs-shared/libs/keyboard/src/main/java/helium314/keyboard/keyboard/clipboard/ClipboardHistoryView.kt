@@ -100,6 +100,7 @@ import helium314.keyboard.latin.utils.createToolbarKey
 import helium314.keyboard.latin.utils.getCodeForToolbarKey
 import helium314.keyboard.latin.utils.getCodeForToolbarKeyLongClick
 import helium314.keyboard.latin.utils.getEnabledClipboardToolbarKeys
+import helium314.keyboard.latin.ClipboardHtml
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.latin.utils.stateColor
 import helium314.keyboard.latin.utils.setToolbarButtonsActivatedStateOnPrefChange
@@ -202,7 +203,10 @@ class ClipboardHistoryView @JvmOverloads constructor(
 
         Box(Modifier.size(dp(look.keyboardWidth), dp(look.keyboardHeight))) {
             Column(Modifier.fillMaxSize()) {
-                Tabs(m, colors.get(ColorType.KEY_TEXT), fontFamily)
+                Row(Modifier.fillMaxWidth()) {
+                    Box(Modifier.weight(1f)) { Tabs(m, colors.get(ColorType.KEY_TEXT), fontFamily) }
+                    KeepHtmlToggle(colors.get(ColorType.KEY_TEXT), fontFamily)
+                }
                 SearchBox(keyBackground, textColor, fontFamily)
                 Box(Modifier.fillMaxWidth().height(dp(look.layout.listHeight))) {
                     val entries = remember(version, m, opening) {
@@ -235,6 +239,29 @@ class ClipboardHistoryView @JvmOverloads constructor(
                 )
             }
         }
+    }
+
+    /**
+     * #1813 "Keep HTML formatting" in the panel's top line, next to the tabs: same pref as the
+     * Clipboard settings screen (ClipboardHtml.PREF_KEEP_HTML), the check shows whether it is on.
+     */
+    @Composable
+    private fun KeepHtmlToggle(keyText: Int, fontFamily: FontFamily?) {
+        val prefs = LocalContext.current.prefs()
+        var on by remember(version) { mutableStateOf(ClipboardHtml.isKeepHtml(prefs::getBoolean)) }
+        Text(
+            text = (if (on) "\u2611 " else "\u2610 ") + stringResource(R.string.clipboard_keep_html_short),
+            color = Color(keyText),
+            fontFamily = fontFamily,
+            fontSize = 14.sp,
+            modifier = Modifier
+                .alpha(if (on) 1f else 0.5f)
+                .clickable {
+                    on = ClipboardHtml.toggled(on)
+                    prefs.edit().putBoolean(ClipboardHtml.PREF_KEEP_HTML, on).apply()
+                }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        )
     }
 
     @Composable

@@ -10,6 +10,12 @@ object ClipboardHtml {
     const val PREF_KEEP_HTML = "clipboard_keep_html"
     const val DEFAULT_KEEP_HTML = true
 
+    /** The toggle's value in [getBoolean] (a SharedPreferences, or any stand-in): the settings screen and the clipboard panel both read it here. */
+    fun isKeepHtml(getBoolean: (String, Boolean) -> Boolean): Boolean = getBoolean(PREF_KEEP_HTML, DEFAULT_KEEP_HTML)
+
+    /** The value a tap on the toggle writes under [PREF_KEEP_HTML]. */
+    fun toggled(current: Boolean): Boolean = !current
+
     /** heliboard.db version that added the nullable HTML column of the clipboard table. */
     const val DB_VERSION_WITH_HTML = 5
     const val ADD_HTML_COLUMN = "ALTER TABLE CLIPBOARD ADD COLUMN HTML TEXT"

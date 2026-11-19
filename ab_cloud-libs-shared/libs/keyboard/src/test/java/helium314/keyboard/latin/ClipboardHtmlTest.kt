@@ -43,6 +43,23 @@ class ClipboardHtmlTest {
         assertTrue(File(src, "Settings.java").readText().contains("PREF_CLIPBOARD_KEEP_HTML = \"${ClipboardHtml.PREF_KEEP_HTML}\""))
     }
 
+    @Test fun settingsScreenAndPanelDriveTheSamePref() {
+        val main = File("src/main/java/helium314/keyboard")
+        val store = mutableMapOf<String, Boolean>()
+        val read = { k: String, d: Boolean -> store[k] ?: d }
+        assertTrue(ClipboardHtml.isKeepHtml(read)) // default on in both places
+        val settings = File(main, "settings/screens/ClipboardSettingsScreen.kt").readText()
+        val panel = File(main, "keyboard/clipboard/ClipboardHistoryView.kt").readText()
+        assertTrue(settings.contains("Settings.PREF_CLIPBOARD_KEEP_HTML"))
+        assertTrue(File(main, "latin/settings/Settings.java").readText().contains("PREF_CLIPBOARD_KEEP_HTML = \"${ClipboardHtml.PREF_KEEP_HTML}\""))
+        assertTrue(panel.contains("putBoolean(ClipboardHtml.PREF_KEEP_HTML") && panel.contains("ClipboardHtml.isKeepHtml("))
+        // the panel writes, the settings switch (same key) reads it, and the other way round
+        store[ClipboardHtml.PREF_KEEP_HTML] = ClipboardHtml.toggled(ClipboardHtml.isKeepHtml(read))
+        assertEquals(false, ClipboardHtml.isKeepHtml(read))
+        store[ClipboardHtml.PREF_KEEP_HTML] = true // switched on in the settings screen
+        assertEquals(true, ClipboardHtml.isKeepHtml(read))
+    }
+
     @Test fun migrationKeepsOldRowsWithNullHtml() {
         DriverManager.getConnection("jdbc:sqlite::memory:").use { c ->
             c.createStatement().use { s ->

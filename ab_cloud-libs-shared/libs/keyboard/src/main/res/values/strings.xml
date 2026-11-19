@@ -236,6 +236,7 @@
     <string name="clipboard_keep_html">Keep HTML formatting</string>
     <string name="clipboard_keep_html_summary">Save the formatting of copied rich text and paste it as HTML where the target app accepts it</string>
     <string name="clipboard_html_marker">HTML</string>
+    <string name="clipboard_keep_html_short">Keep HTML</string>
     <!-- Preferences item for extending the clipboard history to files (images or others) -->
     <string name="clipboard_history_files">Add images and other files to clipboard history</string>
     <!-- Preferences item for selecting maximum combined size of clipboard history files -->
