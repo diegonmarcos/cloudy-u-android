@@ -71,9 +71,9 @@ internal const val TAG_PHONE_REFRESH = "phone:refresh"
 
 /** An app icon drawn from its Drawable (decoded once per drawable). */
 @Composable
-internal fun AppIcon(icon: Drawable?, size: Dp, modifier: Modifier = Modifier) {
+internal fun AppIcon(icon: Drawable?, size: Dp, modifier: Modifier = Modifier, colorFilter: androidx.compose.ui.graphics.ColorFilter? = null) {
     val bmp = remember(icon) { icon?.let { runCatching { it.toBitmap().asImageBitmap() }.getOrNull() } }
-    if (bmp != null) Image(bmp, contentDescription = null, modifier = modifier.size(size))
+    if (bmp != null) Image(bmp, contentDescription = null, modifier = modifier.size(size), colorFilter = colorFilter)
     else Spacer(modifier.size(size))
 }
 

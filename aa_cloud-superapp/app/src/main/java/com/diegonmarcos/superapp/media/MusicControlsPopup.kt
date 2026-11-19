@@ -112,7 +112,7 @@ class MusicControlsPopup(private val ctx: Context) {
 
     companion object {
         /** Fixed popup height in dp — the compact landscape box that ends just after the transport buttons. */
-        internal const val POPUP_HEIGHT_DP = 167
+        internal const val POPUP_HEIGHT_DP = 189
 
         /** #1635: extra height for the session switcher row, shown when more than one media session is active. */
         internal const val SWITCHER_DP = 30
@@ -186,6 +186,7 @@ internal fun MusicControlsCard(ctx: Context, initialController: MediaController?
     val playingPackage = controller?.packageName ?: initialPackage
     val switcher = hub.sessions.size > 1
     val snap = remember(controller) { MusicSnapshot(controller) }
+    val routeState = remember { mutableStateOf(Route(R.drawable.ic_route_speaker, "")) }
     // Nothing playing: the persisted last session (package, track, art, position) - art dimmed, Play resumes it.
     val last = remember(controller) { if (controller == null) LastMediaSession.load(ctx) else null }
     // Registered while the card is composed, unregistered with it - the old attach/detachController.
@@ -241,17 +242,17 @@ internal fun MusicControlsCard(ctx: Context, initialController: MediaController?
                     } else Text(if (controller == null) last?.artist.orEmpty() else snap.artist, color = Color(0xFFD4D4D4), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         style = SHADOW.copy(fontSize = 11.sp), modifier = Modifier.padding(top = 2.dp))
                 }
-                if (controller == null && last == null) IdleLaunchers(ctx, close)
+                MediaAppIcons(ctx, snap.playing, close)  // #1810 always visible, white while playing
             }
             val live = controller
-            if (live != null) LiveRows(ctx, live, snap) else IdleRows(last)
+            if (live != null) LiveRows(ctx, live, snap, routeState) else IdleRows(last)
             if (switcher) SessionSwitcher(ctx, hub, controller?.let(MediaHub::keyOf)) { key ->
                 MediaHub.select(key)
                 MediaHub.controller(key)?.let { controller = it }
             }
             // Row 3: Shazam | prev | play/pause | next | heart.
             Row(Modifier.fillMaxWidth().padding(top = 2.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Glyph(R.drawable.ic_music_recognise, 34, "music:shazam", Color.White) {
+                Glyph(R.drawable.ic_music_recognise, MusicBadgeLayout.SIDE_DP, "music:shazam", Color.White) {
                     val intent = ctx.packageManager.getLaunchIntentForPackage(MusicControlsPopup.SHAZAM_PKG)
                         ?: android.content.Intent(android.content.Intent.ACTION_VIEW,
                             android.net.Uri.parse("market://details?id=${MusicControlsPopup.SHAZAM_PKG}"))
@@ -260,27 +261,29 @@ internal fun MusicControlsCard(ctx: Context, initialController: MediaController?
                     close()
                 }
                 Spacer(Modifier.width(14.dp))
-                Glyph(android.R.drawable.ic_media_previous, 38, "music:prev", Color.White) {
+                Glyph(android.R.drawable.ic_media_previous, MusicBadgeLayout.TRANSPORT_DP, "music:prev", Color.White) {
                     MediaHub.send(ctx, MediaHub.Action.PREV, controller)
                 }
                 Spacer(Modifier.width(14.dp))
-                Glyph(if (snap.playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, 46, "music:play", Color.White) {
+                Glyph(if (snap.playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, MusicBadgeLayout.TRANSPORT_DP, "music:play", Color.White) {
                     // Live session: play / pause it; none: one tap restarts the last Tidal / Spotify session.
                     if (controller == null && last != null && MediaHub.current() == null) LastMediaSession.resume(ctx)
                     else MediaHub.send(ctx, MediaHub.Action.PLAY_PAUSE, controller)
                 }
                 Spacer(Modifier.width(14.dp))
-                Glyph(android.R.drawable.ic_media_next, 38, "music:next", Color.White) {
+                Glyph(android.R.drawable.ic_media_next, MusicBadgeLayout.TRANSPORT_DP, "music:next", Color.White) {
                     MediaHub.send(ctx, MediaHub.Action.NEXT, controller)
                 }
                 Spacer(Modifier.width(14.dp))
                 // Favourite (heart): reflects the session's heart rating when published, toggles on tap, and pushes the new
                 // rating back when a controller exists (apps that honour setRating sync; others track the local look).
-                Glyph(if (faved) R.drawable.ic_music_heart_filled else R.drawable.ic_music_heart, 34, "music:heart", null) {
+                Glyph(if (faved) R.drawable.ic_music_heart_filled else R.drawable.ic_music_heart, MusicBadgeLayout.SIDE_DP, "music:heart", null) {
                     faved = !faved
                     controller?.let { runCatching { it.transportControls.setRating(android.media.Rating.newHeartRating(faved)) } }
                 }
             }
+            // #1810 the connected earbuds (route icon + device name), bottom-left; on a bluetooth route a tap opens the buds app.
+            if (controller != null) RouteRow(ctx, routeState.value)
         }
     }
 }
@@ -292,9 +295,12 @@ private fun Glyph(res: Int, sizeDp: Int, tag: String, tint: Color?, onClick: () 
     else Image(painterResource(res), contentDescription = null, modifier = m)
 }
 
-/** Idle: the streaming apps' launcher icons beside "Nothing playing"; tap opens the app (or its Play listing) and closes. */
+/** #1810 the streaming apps' launcher icons, top right: ALWAYS shown. Playing: plain white monochrome; else the apps' own icons.
+ *  Tap opens the app (or its Play listing) and closes. */
 @Composable
-private fun IdleLaunchers(ctx: Context, close: () -> Unit) {
+private fun MediaAppIcons(ctx: Context, playing: Boolean, close: () -> Unit) {
+    if (!MusicBadgeLayout.mediaAppsVisible(playing)) return
+    val white = MusicBadgeLayout.mediaAppsWhite(playing)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.testTag("music:idle-apps")) {
         for ((i, pkg) in MusicControlsPopup.IDLE_LAUNCH_PKGS.withIndex()) {
             val icon by produceState<android.graphics.drawable.Drawable?>(AppIconCache.cached(pkg), pkg) {
@@ -307,10 +313,23 @@ private fun IdleLaunchers(ctx: Context, close: () -> Unit) {
                 runCatching { ctx.startActivity(intent) }
                 close()
             }.testTag("music:idle:$pkg")) {
-                if (icon != null) AppIcon(icon, 26.dp)
-                else Icon(painterResource(R.drawable.ic_music_recognise), null, tint = Color(0xCCFFFFFF))
+                if (icon != null) AppIcon(icon, 26.dp, colorFilter = if (white) androidx.compose.ui.graphics.ColorFilter.tint(Color.White) else null)
+                else Icon(painterResource(R.drawable.ic_music_recognise), null, tint = if (white) Color.White else Color(0xCCFFFFFF))
             }
         }
+    }
+}
+
+/** #1810 bottom-left: where the audio goes (icon + name). On bluetooth the row is a tap target for the buds companion app. */
+@Composable
+private fun RouteRow(ctx: Context, route: Route) {
+    val bt = route.icon == R.drawable.ic_route_bluetooth
+    Row(Modifier.padding(top = 2.dp).clip(RoundedCornerShape(8.dp))
+        .then(if (bt) Modifier.clickable { MusicBadgeLayout.openBudsApp(ctx, route.label) } else Modifier)
+        .testTag("music:route-row"), verticalAlignment = Alignment.CenterVertically) {
+        Icon(painterResource(route.icon), null, tint = Color.White, modifier = Modifier.size(12.dp))
+        Text(route.label, color = Color(0xFFE0E0E0), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            style = SHADOW.copy(fontSize = 11.sp), modifier = Modifier.padding(start = 5.dp).testTag("music:route"))
     }
 }
 
@@ -351,10 +370,10 @@ private fun IdleRows(last: LastMediaSession.Last? = null) {
 
 /** Rows 2: the audio route + session volume, the progress bar and the times; refreshed on a 500 ms tick. */
 @Composable
-private fun LiveRows(ctx: Context, c: MediaController, snap: MusicSnapshot) {
+private fun LiveRows(ctx: Context, c: MediaController, snap: MusicSnapshot, routeState: androidx.compose.runtime.MutableState<Route>) {
     var nowPos by remember { mutableStateOf(0L) }
     var duration by remember { mutableStateOf(0L) }
-    var route by remember { mutableStateOf(Route(R.drawable.ic_route_speaker, "")) }
+    var route by routeState
     var volume by remember { mutableStateOf("") }
     var dragging by remember { mutableStateOf<Float?>(null) }
     LaunchedEffect(c) {
@@ -372,22 +391,24 @@ private fun LiveRows(ctx: Context, c: MediaController, snap: MusicSnapshot) {
             delay(1000L)
         }
     }
-    // Audio-route + volume info row. Left: where the media is playing. Right: the session volume percent.
+    // Volume row (the audio route moved to the bottom-left, #1810): the session volume percent, right.
     Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(painterResource(route.icon), null, tint = Color.White, modifier = Modifier.size(12.dp))
-        Text(route.label, color = Color(0xFFE0E0E0), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            style = SHADOW.copy(fontSize = 11.sp), modifier = Modifier.weight(1f).padding(start = 5.dp).testTag("music:route"))
+        Spacer(Modifier.weight(1f))
         Text(volume, color = Color(0xFFE0E0E0), fontSize = 11.sp, modifier = Modifier.padding(start = 8.dp).testTag("music:volume"))
     }
     val fraction = if (duration > 0L) (nowPos.toFloat() / duration).coerceIn(0f, 1f) else 0f
     // Only commit on release so the controller is not spammed while the thumb moves; the tick refreshes it otherwise.
+    Box(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+    // #1810 live sound waves on the progress line (shared three-channel component; moving while playing, flat when paused).
+    com.diegonmarcos.superapp.ui.ChannelWavesView(snap.playing, Modifier.matchParentSize().testTag("music:waves"))
     Slider(value = dragging ?: fraction, onValueChange = { dragging = it },
         onValueChangeFinished = {
             val f = dragging
             dragging = null
             if (f != null && duration > 0L) MediaHub.send(ctx, MediaHub.Action.SEEK, c, (duration * f).toLong())
         },
-        modifier = Modifier.fillMaxWidth().padding(top = 6.dp).testTag("music:progress"))
+        modifier = Modifier.fillMaxWidth().testTag("music:progress"))
+    }
     Row(Modifier.fillMaxWidth()) {
         Text(MusicControlsPopup.formatTime(nowPos.coerceAtLeast(0L)), color = Color(0xFFE0E0E0), fontSize = 10.sp,
             modifier = Modifier.testTag("music:elapsed"))
@@ -396,7 +417,7 @@ private fun LiveRows(ctx: Context, c: MediaController, snap: MusicSnapshot) {
     }
 }
 
-private class Route(val icon: Int, val label: String)
+internal class Route(val icon: Int, val label: String)
 
 /** Where audio is going NOW: bluetooth (by the headset's name when known) / headphones / the phone speaker. Uses the
  *  deprecated-but-accurate "is audio going there NOW" booleans (they reflect the ACTIVE route, unlike getDevices). */
