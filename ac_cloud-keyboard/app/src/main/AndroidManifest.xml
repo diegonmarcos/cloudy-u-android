@@ -176,7 +176,73 @@
             android:theme="@style/Theme.CloudGrabber"
             android:taskAffinity=""
             android:exported="true"
-            android:label="@string/grabber_menu_label"
+            android:label="@string/grabber_ask_label"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- #1824 the writer entries of the text-selection menu (Translator, Grammar, Enhancer, Drafter): each opens the shared writer panel in its
+             mode as a floating translucent window over the app; Replace returns EXTRA_PROCESS_TEXT only for an editable source. -->
+        <activity android:name=".selection.SelectionTranslatorActivity"
+            android:theme="@style/Theme.CloudGrabber"
+            android:taskAffinity=""
+            android:exported="true"
+            android:label="@string/selection_translator_label"
+            android:icon="@mipmap/ic_launcher"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".selection.SelectionGrammarActivity"
+            android:theme="@style/Theme.CloudGrabber"
+            android:taskAffinity=""
+            android:exported="true"
+            android:label="@string/selection_grammar_label"
+            android:icon="@mipmap/ic_launcher"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".selection.SelectionEnhancerActivity"
+            android:theme="@style/Theme.CloudGrabber"
+            android:taskAffinity=""
+            android:exported="true"
+            android:label="@string/selection_enhancer_label"
+            android:icon="@mipmap/ic_launcher"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".selection.SelectionDrafterActivity"
+            android:theme="@style/Theme.CloudGrabber"
+            android:taskAffinity=""
+            android:exported="true"
+            android:label="@string/selection_drafter_label"
+            android:icon="@mipmap/ic_launcher"
             android:excludeFromRecents="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize">

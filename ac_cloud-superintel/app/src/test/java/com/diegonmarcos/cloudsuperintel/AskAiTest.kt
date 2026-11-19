@@ -95,12 +95,14 @@ class AskAiTest {
     private fun has(action: String, mime: String) = filters().any { it.contains("android.intent.action.$action\"") && it.contains("android:mimeType=\"$mime\"") && it.contains("android.intent.category.DEFAULT") }
 
     @Test fun manifestListsAskAiInTheChooserShareSheetAndSelectionToolbar() {
-        assertTrue(activityBody().contains("@string/ask_ai_label"))
+        assertTrue(activityBody().contains("@string/ask_cloud_si_label"))
+        assertTrue(File("src/main/res/values/strings.xml").readText().contains(">Ask Cloud SI<"))
+        assertTrue(File("src/main/res/values-es/strings.xml").readText().contains(">Ask Cloud SI<"))
         assertTrue(File("src/main/res/values/strings.xml").readText().contains(">Ask AI · Cloud SI<"))
         assertTrue(has("VIEW", "*/*"))
         val view = filters().first { it.contains("action.VIEW") }
         assertTrue(view.contains("android:scheme=\"content\"") && view.contains("android:scheme=\"file\""))
-        for (a in listOf("SEND", "SEND_MULTIPLE")) for (m in listOf("*/*", "text/plain")) assertTrue("$a $m", has(a, m))
+        for (a in listOf("SEND", "SEND_MULTIPLE")) for (m in listOf("*/*", "text/plain", "text/uri-list", "image/*")) assertTrue("$a $m", has(a, m))
         assertTrue(has("PROCESS_TEXT", "text/plain"))
     }
 
@@ -113,5 +115,24 @@ class AskAiTest {
         for (p in listOf("READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "MANAGE_EXTERNAL_STORAGE", "READ_MEDIA_VIDEO", "READ_MEDIA_AUDIO"))
             assertTrue(p, !manifest.contains("android.permission.$p"))
         assertEquals(1, Regex("android.permission.READ_MEDIA_IMAGES").findAll(manifest).count())
+    }
+
+    // #1824 the share target's MIME routes: text, link list, one image, several images, and the selection toolbar
+    @Test fun shareRoutesByMime() {
+        val t = AskAi.parse("android.intent.action.SEND", "text/plain", null, emptyList(), "hello", null)!!
+        assertEquals("hello", t.text); assertTrue(t.uris.isEmpty())
+        val l = AskAi.parse("android.intent.action.SEND", "text/uri-list", null, emptyList(), "https://example.org/a", null)!!
+        assertEquals("https://example.org/a", l.text); assertEquals(AskAi.Kind.TEXT, AskAi.route(l.mime))
+        val one = AskAi.parse("android.intent.action.SEND", "image/png", null, listOf("content://x/1"), null, null)!!
+        assertEquals(listOf("content://x/1"), one.uris); assertEquals(AskAi.Kind.IMAGE, AskAi.route(one.mime))
+        val many = AskAi.parse("android.intent.action.SEND_MULTIPLE", "image/*", null, listOf("content://x/1", "content://x/2"), null, null)!!
+        assertEquals(2, many.uris.size); assertEquals(AskAi.Kind.IMAGE, AskAi.route(many.mime))
+        val sel = AskAi.parse("android.intent.action.PROCESS_TEXT", null, null, emptyList(), null, "picked")!!
+        assertEquals("picked", sel.text); assertEquals("text/plain", sel.mime)
+    }
+
+    @Test fun aSharedUrlIsAttachedAsALink() {
+        assertTrue(AskAi.isUrl("https://example.org/a?b=1")); assertTrue(!AskAi.isUrl("see https://example.org")); assertTrue(!AskAi.isUrl(null))
+        assertEquals("Explain this\n\n---\n[link] https://example.org", AskAi.compose("", emptyList(), "https://example.org"))
     }
 }

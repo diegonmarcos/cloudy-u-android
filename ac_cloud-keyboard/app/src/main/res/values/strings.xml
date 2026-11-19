@@ -25,6 +25,20 @@
     <string name="writer_share_label">Writer</string>
     <!-- #1754 Grabber: the entry in the text-selection menu of every app, and the Quick Settings tile. -->
     <string name="grabber_menu_label">Cloud Keyboard</string>
+    <!-- #1824 the selection menu: the Grabber entry is "Ask Cloud Grabber" (grabber_menu_label above stays, rule 16) and four writer entries. -->
+    <string name="grabber_ask_label">Ask Cloud Grabber</string>
+    <string name="selection_translator_label">Translator</string>
+    <string name="selection_grammar_label">Grammar</string>
+    <string name="selection_enhancer_label">Enhancer</string>
+    <string name="selection_drafter_label">Drafter</string>
+    <string name="selection_working">Working…</string>
+    <string name="selection_failed">The request failed</string>
+    <string name="selection_empty_input">Nothing to process: type or paste a text first</string>
+    <string name="selection_empty_output">No result yet: tap Generate first</string>
+    <string name="selection_no_field">The text field did not take the result</string>
+    <string name="selection_read_only">This text is read-only, so it cannot be replaced: use Copy or Share. The selection menu carries text only (images go through Share); some phones show extra entries under the three dots.</string>
+    <string name="selection_undo">Undo</string>
+    <string name="selection_share">Share</string>
     <string name="grabber_tile_label">Grabber</string>
     <!-- #1793 Grabber on selection (accessibility): the service's name, summary and plain disclosure in Android's Accessibility settings. -->
     <string name="grabber_a11y_label">Cloud Keyboard Grabber on selection</string>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- #1824 -->
+    <string name="ask_cloud_si_label">Ask Cloud SI</string>
+</resources>

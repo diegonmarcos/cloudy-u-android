@@ -100,6 +100,9 @@ object AskAi {
     fun compose(prompt: String, notes: List<String>, text: String?): String = buildString {
         append(prompt.trim().ifEmpty { DEFAULT_PROMPT })
         if (notes.isNotEmpty()) append("\n\n").append(notes.joinToString("\n"))
-        if (!text.isNullOrBlank()) append("\n\n---\n").append(text)
+        if (!text.isNullOrBlank()) append("\n\n---\n").append(if (isUrl(text)) "[link] " + text.trim() else text)
     }
+
+    /** Pure (#1824): a text that is one http(s) address is a link; it rides the prompt as such. */
+    fun isUrl(text: String?): Boolean = text != null && Regex("""https?://\S+""").matches(text.trim())
 }

@@ -10,7 +10,9 @@ package com.diegonmarcos.superapp.translate
  *
  * No android.* import on purpose: this is the part whose correctness is executed on the JVM (WriterPanelTest).
  */
-enum class WriterMode(val id: String) { TRANSLATE("translate"), ENHANCE("enhance"), DRAFT("draft") }
+enum class WriterMode(val id: String) { TRANSLATE("translate"), ENHANCE("enhance"), DRAFT("draft"),
+    /** #1824 grammar + spelling correction through the same AI route; opened from the selection menu (Grammar), same panel and actions. */
+    GRAMMAR("grammar") }
 
 /** Where the text of the INPUT box comes from. */
 enum class InputSource(val id: String) { OWN("own"), CLIPBOARD("clipboard"), APP_BOX("app_box") }

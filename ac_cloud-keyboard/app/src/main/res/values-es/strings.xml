@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- #1825 Spanish strings of the Grabber without accessibility. -->
 <resources>
+    <!-- #1824 menú de selección de texto -->
+    <string name="grabber_ask_label">Ask Cloud Grabber</string>
+    <string name="selection_translator_label">Translator</string>
+    <string name="selection_grammar_label">Grammar</string>
+    <string name="selection_enhancer_label">Enhancer</string>
+    <string name="selection_drafter_label">Drafter</string>
+    <string name="selection_working">Procesando…</string>
+    <string name="selection_failed">La solicitud falló</string>
+    <string name="selection_empty_input">Nada que procesar: escribe o pega un texto primero</string>
+    <string name="selection_empty_output">Aún no hay resultado: toca Generate primero</string>
+    <string name="selection_no_field">El campo de texto no aceptó el resultado</string>
+    <string name="selection_read_only">Este texto es de solo lectura, no se puede reemplazar: usa Copy o Share. El menú de selección solo lleva texto (las imágenes van por Compartir); algunos teléfonos muestran entradas extra bajo los tres puntos.</string>
+    <string name="selection_undo">Deshacer</string>
+    <string name="selection_share">Compartir</string>
     <string name="grabber_assist_label">Cloud Keyboard Grabber (asistente)</string>
     <string name="grabber_a11y_label">Cloud Keyboard Grabber al seleccionar</string>
     <string name="grabber_a11y_summary">Abre el panel Grabber al seleccionar texto en cualquier app</string>
