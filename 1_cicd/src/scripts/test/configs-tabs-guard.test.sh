@@ -168,7 +168,8 @@ parity ad_Hardtech-BioMed/app/src/main/java/com/diegonmarcos/hardtechbiomed/ui/A
 parity ad_Capital-Stack-FinTerminal/app/src/main/java/com/diegonmarcos/capitalfinterm/ui/AppShell.kt 'onAppConfigs = { section = Decl.SECTION_CONFIG }'
 parity ac_cloud-search/app/src/main/java/com/diegonmarcos/cloudsearch/ui/SearchShell.kt 'onAppConfigs = { state.toggle(Menu.PROFILE) }'
 parity ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/shell/GalleryChrome.kt 'onAppConfigs = onConfigs'
-parity ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/MailBottomNav.kt 'onAppConfigs = { if (currentRoute != "settings") nav.currentBackStackEntry?.navigateOnce { nav.navigate("settings") } }'
+# #1814 Cloud Mail's Configs is one vertical tree (the "settings" route) holding the shared pages under App: the Configs button opens it directly
+parity ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/MailBottomNav.kt 'onConfigs = { if (currentRoute != "settings") nav.currentBackStackEntry?.navigateOnce { nav.navigate("settings") } }'
 parity ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/NotesShell.kt 'onAppConfigs = { configsOpen = true }'
 
 echo "configs-tabs-guard.test: $PROVEN mutation(s) proven red, $FAILURES failure(s)"
