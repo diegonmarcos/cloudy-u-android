@@ -209,6 +209,30 @@
             </intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/grabber_accessibility" />
         </service>
+        <!-- #1825 accessibility-free grabbing: the default digital assistant. When Cloud Keyboard is chosen in Settings > Apps > Default apps >
+             Digital assistant app, the side/home long-press binds this service and starts the session, which receives the screen's text
+             nodes (AssistStructure) and the screenshot and opens GrabberAssistActivity. No accessibility permission. -->
+        <service android:name=".grabber.GrabberVoiceService"
+            android:exported="true"
+            android:label="@string/grabber_assist_label"
+            android:permission="android.permission.BIND_VOICE_INTERACTION">
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService" />
+            </intent-filter>
+            <meta-data android:name="android.voice_interaction" android:resource="@xml/grabber_voice_interaction" />
+        </service>
+        <service android:name=".grabber.GrabberVoiceSessionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_VOICE_INTERACTION" />
+        <service android:name=".grabber.GrabberRecognitionService"
+            android:exported="true"
+            android:label="@string/grabber_assist_label" />
+        <activity android:name=".grabber.GrabberAssistActivity"
+            android:theme="@style/Theme.CloudGrabber"
+            android:taskAffinity=""
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" />
         <service android:name=".grabber.GrabberTileService"
             android:exported="true"
             android:icon="@android:drawable/ic_menu_crop"

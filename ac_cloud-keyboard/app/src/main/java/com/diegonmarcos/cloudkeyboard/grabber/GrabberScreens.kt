@@ -10,6 +10,8 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.text.format.DateUtils
 import android.widget.Toast
+import androidx.compose.ui.res.stringResource
+import com.diegonmarcos.cloudkeyboard.R
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -148,6 +150,7 @@ private fun TextSelectionPage(model: GrabberModel) {
         )
         GrabberPanel(model, onReply = {})
         // #1793 below the panel, so the text field stays the page's first control
+        FreeGrabBox()
         OnSelectionBox()
         RecentsBox(GrabberBus.recents.filter { it.source != "screen" }, onPick = { model.setText(it.text); model.grab() })
     }
@@ -204,9 +207,65 @@ private fun OnSelectionBox() {
             }
             if (Build.VERSION.SDK_INT >= 33) Text("A sideloaded app's accessibility service is greyed out until Allow restricted settings is on (App info > menu).", color = GC.text3, fontSize = 10.sp)
             Box(Modifier.fillMaxWidth().height(1.dp).background(GC.hairline))
+            AccessibilityDiagnostics(service, a11y)
             SwitchRow("Grabber on selection: while typing (this keyboard)", ime) { ime = it; GrabberAuto.setIme(ctx, it) }
             Text("No permission: where Cloud Keyboard is the keyboard of a field, Android already tells it what you select there. A steady selection " +
                 "opens this panel over the app; password fields and this app's own fields are skipped.", color = GC.text3, fontSize = 10.5.sp)
+        }
+    }
+}
+
+/** #1825 what the accessibility path really did, read again every 1.5 s: service state, switch, last event seen (time, package, verdict), last launch result. */
+@Composable
+private fun AccessibilityDiagnostics(service: Boolean, switch: Boolean) {
+    val ctx = LocalContext.current
+    var snap by remember { mutableStateOf(GrabberDiag.snapshot(ctx)) }
+    LaunchedEffect(Unit) { while (true) { snap = GrabberDiag.snapshot(ctx); kotlinx.coroutines.delay(1500) } }
+    val clock = { at: Long -> java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(at)) }
+    val never = stringResource(R.string.grabber_diag_never)
+    val on = stringResource(R.string.grabber_diag_service_on); val off = stringResource(R.string.grabber_diag_service_off)
+    Caps(stringResource(R.string.grabber_diag_title), GC.text3)
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        listOf(
+            stringResource(R.string.grabber_diag_service, if (service) on else off),
+            stringResource(R.string.grabber_diag_switch, if (switch) "ON" else "OFF"),
+            stringResource(R.string.grabber_diag_connected, if (snap.connectedAt == 0L) never else clock(snap.connectedAt)),
+            stringResource(R.string.grabber_diag_event, GrabberDiag.eventLine(snap, clock)),
+            stringResource(R.string.grabber_diag_launch, GrabberDiag.launchLine(snap, clock)),
+        ).forEach { Text(it, color = GC.text, fontFamily = Mono, fontSize = 10.sp) }
+    }
+}
+
+/**
+ * #1825 the accessibility-free ways, the primary ones: the selection menu entry and the default-assistant gesture, with the real state of
+ * the assistant role (RoleManager.isRoleHeld), plus the one-shot capture for a phone where Cloud Keyboard is not the assistant. Says the
+ * limit: without accessibility Android never reacts by itself to a selection.
+ */
+@Composable
+private fun FreeGrabBox() {
+    val ctx = LocalContext.current
+    var role by remember { mutableStateOf(GrabberAssistRole.current(ctx)) }
+    LaunchedEffect(Unit) { while (true) { role = GrabberAssistRole.current(ctx); kotlinx.coroutines.delay(1500) } }
+    val held = role == GrabberAssistRole.State.HELD
+    ConsoleBox(stringResource(R.string.grabber_free_title), if (held) GC.ok else GC.warn, reading = if (held) "ASSISTANT" else "MENU") {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.grabber_free_limit), color = GC.text2, fontSize = 12.sp)
+            Text(stringResource(R.string.grabber_free_menu), color = GC.text3, fontSize = 10.5.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(6.dp).clip(CircleShape).background(if (held) GC.ok else GC.bad))
+                Text(stringResource(when (role) {
+                    GrabberAssistRole.State.HELD -> R.string.grabber_role_held
+                    GrabberAssistRole.State.NOT_HELD -> R.string.grabber_role_not_held
+                    GrabberAssistRole.State.UNAVAILABLE -> R.string.grabber_role_unavailable
+                }), color = GC.text, fontFamily = Mono, fontSize = 10.sp, maxLines = 2)
+            }
+            Text(stringResource(R.string.grabber_role_hint), color = GC.text3, fontSize = 10.5.sp)
+            val failed = stringResource(R.string.grabber_role_open_failed)
+            KeyChip(stringResource(R.string.grabber_role_open), accent = !held) {
+                if (!GrabberAssistRole.openSettings(ctx)) Toast.makeText(ctx, failed, Toast.LENGTH_SHORT).show()
+            }
+            Text(stringResource(R.string.grabber_capture_fallback), color = GC.text3, fontSize = 10.5.sp)
+            KeyChip(stringResource(R.string.grabber_capture_btn)) { startCapture(ctx, null) }
         }
     }
 }

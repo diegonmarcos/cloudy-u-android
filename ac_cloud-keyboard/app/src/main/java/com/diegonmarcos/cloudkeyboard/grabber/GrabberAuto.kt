@@ -4,6 +4,11 @@ import android.accessibilityservice.AccessibilityService
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.PixelFormat
+import android.os.Build
+import android.view.View
+import android.view.WindowManager
+import android.view.accessibility.AccessibilityNodeInfo
 import android.inputmethodservice.InputMethodService
 import android.os.Handler
 import android.os.Looper
@@ -88,6 +93,86 @@ class SelectionTrigger(
     fun pendingText(): String? = pending?.text
 }
 
+/**
+ * #1825 the event filter, pure (GrabberAutoTest). Why the service never fired: with canRetrieveWindowContent=false Android hands the
+ * service events WITHOUT a source node, and a browser/WebView selection event carries no text of its own (the range is on the node),
+ * so [read] found nothing; and the service stayed silent while its second switch (KEY_A11Y) was off although the user had just enabled
+ * the service. [read] now takes the event's text first, then the source node's text and selection range.
+ */
+object SelectionEvent {
+    enum class Outcome(val label: String) {
+        ACCEPTED("selection accepted, waiting for it to be steady"),
+        SWITCH_OFF("ignored: the Grabber on selection switch is off"),
+        OWN_APP("ignored: selection in Cloud Keyboard itself"),
+        PASSWORD("ignored: password field"),
+        NO_SELECTION("ignored: collapsed or no readable text"),
+        FILTERED("ignored: too short, too long or no letters"),
+    }
+
+    class Decision(val outcome: Outcome, val text: String?)
+
+    /** The selected text: from the event's own text and range, else from the source node's text and selection range (ignores start == end). */
+    fun read(eventText: CharSequence?, from: Int, to: Int, nodeText: CharSequence?, nodeStart: Int, nodeEnd: Int): String? =
+        SelectionTrigger.selected(eventText, from, to) ?: SelectionTrigger.selected(nodeText, nodeStart, nodeEnd)
+
+    fun decide(switchOn: Boolean, pkg: String, ownPkg: String, password: Boolean, selected: String?, trigger: SelectionTrigger): Decision = when {
+        !switchOn -> Decision(Outcome.SWITCH_OFF, null)
+        pkg == ownPkg -> Decision(Outcome.OWN_APP, null)
+        password -> Decision(Outcome.PASSWORD, null)
+        selected == null -> Decision(Outcome.NO_SELECTION, null)
+        else -> trigger.accept(selected, pkg, ownPkg, false).let { if (it == null) Decision(Outcome.FILTERED, null) else Decision(Outcome.ACCEPTED, it) }
+    }
+}
+
+/** #1825 how the panel is opened from the background, pure: the ordered steps tried (GrabberAutoTest). */
+object GrabberLaunch {
+    enum class Step { OVERLAY_THEN_START, START, NOTIFICATION }
+
+    /**
+     * From the accessibility service on Android 10+ a start can be silently dropped by the background-activity-launch rules (14+ is
+     * stricter), so the start is made while a 1px TYPE_ACCESSIBILITY_OVERLAY window is up (the app then has a visible window), then a plain
+     * start, and when the panel never came up a notification that opens it. The keyboard path has a window of its own: a plain start.
+     */
+    fun plan(sdk: Int, fromAccessibility: Boolean): List<Step> =
+        if (fromAccessibility && sdk >= 29) listOf(Step.OVERLAY_THEN_START, Step.START, Step.NOTIFICATION) else listOf(Step.START)
+
+    /** The panel must have come up within this long after the start, else the start is counted as blocked. */
+    const val CONFIRM_MS = 1500L
+
+    fun result(step: Step, opened: Boolean, error: String?): String = when {
+        error != null -> "failed (${step.name.lowercase()}): $error"
+        step == Step.NOTIFICATION -> "blocked, notification posted"
+        opened -> "opened (${step.name.lowercase()})"
+        else -> "start sent (${step.name.lowercase()}), panel not confirmed"
+    }
+}
+
+/** #1825 what the Grabber page shows about the accessibility path: service, last event, last launch. Stored in prefs (service and UI share one process). */
+object GrabberDiag {
+    private const val P = "grabber_diag"
+    class Snapshot(val connectedAt: Long, val eventAt: Long, val eventPkg: String, val eventOutcome: String, val launchAt: Long, val launchResult: String)
+
+    private fun prefs(ctx: Context) = ctx.applicationContext.getSharedPreferences(P, Context.MODE_PRIVATE)
+
+    fun connected(ctx: Context) = prefs(ctx).edit().putLong("connected_at", System.currentTimeMillis()).apply()
+    fun event(ctx: Context, pkg: String, outcome: String) =
+        prefs(ctx).edit().putLong("event_at", System.currentTimeMillis()).putString("event_pkg", pkg).putString("event_outcome", outcome).apply()
+    fun launch(ctx: Context, result: String) = prefs(ctx).edit().putLong("launch_at", System.currentTimeMillis()).putString("launch_result", result).apply()
+    @Volatile var openedAt = 0L
+
+    fun snapshot(ctx: Context): Snapshot = prefs(ctx).let {
+        Snapshot(it.getLong("connected_at", 0), it.getLong("event_at", 0), it.getString("event_pkg", "").orEmpty(), it.getString("event_outcome", "").orEmpty(),
+            it.getLong("launch_at", 0), it.getString("launch_result", "").orEmpty())
+    }
+
+    /** "12:03:41 · com.android.chrome · selection accepted..." or the never-seen line. */
+    fun eventLine(s: Snapshot, clock: (Long) -> String): String =
+        if (s.eventAt == 0L) "none yet: select text in another app" else "${clock(s.eventAt)} · ${s.eventPkg.ifEmpty { "?" }} · ${s.eventOutcome}"
+
+    fun launchLine(s: Snapshot, clock: (Long) -> String): String =
+        if (s.launchAt == 0L) "none yet" else "${clock(s.launchAt)} · ${s.launchResult}"
+}
+
 /** The switches, the open call and the IME path. */
 object GrabberAuto {
     const val PREFS = "grabber"
@@ -108,15 +193,63 @@ object GrabberAuto {
         return list.split(':').any { ComponentName.unflattenFromString(it) == me }
     }
 
-    /** Open the Grabber panel over whatever is on screen, with [text] (read-only: an automatic open never writes into the field). */
-    fun open(ctx: Context, text: String, source: String) {
-        val i = Intent(ctx, GrabberActivity::class.java)
-            .setAction(Intent.ACTION_PROCESS_TEXT).setType("text/plain")
-            .putExtra(Intent.EXTRA_PROCESS_TEXT, text)
-            .putExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true)
-            .putExtra(GrabberActivity.EXTRA_SOURCE, source)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NO_ANIMATION)
-        runCatching { ctx.startActivity(i) }
+    private fun panelIntent(ctx: Context, text: String, source: String) = Intent(ctx, GrabberActivity::class.java)
+        .setAction(Intent.ACTION_PROCESS_TEXT).setType("text/plain")
+        .putExtra(Intent.EXTRA_PROCESS_TEXT, text)
+        .putExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true)
+        .putExtra(GrabberActivity.EXTRA_SOURCE, source)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+
+    /**
+     * Open the Grabber panel over whatever is on screen, with [text] (read-only: an automatic open never writes into the field). The steps
+     * are [GrabberLaunch.plan]; the result of the last launch is kept for the Grabber page ([GrabberDiag]).
+     */
+    fun open(ctx: Context, text: String, source: String, service: AccessibilityService? = null) {
+        val steps = GrabberLaunch.plan(Build.VERSION.SDK_INT, service != null)
+        val i = panelIntent(ctx, text, source)
+        val sentAt = SystemClock.uptimeMillis()
+        for (step in steps) {
+            when (step) {
+                GrabberLaunch.Step.OVERLAY_THEN_START -> {
+                    val err = withOverlay(service!!) { runCatching { ctx.startActivity(i) }.exceptionOrNull()?.message }
+                    if (err != null) { GrabberDiag.launch(ctx, GrabberLaunch.result(step, false, err)); continue }
+                }
+                GrabberLaunch.Step.START -> {
+                    val err = runCatching { ctx.startActivity(i) }.exceptionOrNull()?.message
+                    if (err != null) { GrabberDiag.launch(ctx, GrabberLaunch.result(step, false, err)); continue }
+                }
+                GrabberLaunch.Step.NOTIFICATION -> continue
+            }
+            GrabberDiag.launch(ctx, GrabberLaunch.result(step, false, null))
+            // a start Android dropped raises no error: look whether the panel came up, else post the notification
+            main.postDelayed({
+                if (GrabberDiag.openedAt >= sentAt) GrabberDiag.launch(ctx, GrabberLaunch.result(step, true, null))
+                else if (steps.contains(GrabberLaunch.Step.NOTIFICATION)) { notifyOpen(ctx, i); GrabberDiag.launch(ctx, GrabberLaunch.result(GrabberLaunch.Step.NOTIFICATION, false, null)) }
+            }, GrabberLaunch.CONFIRM_MS)
+            return
+        }
+        if (steps.contains(GrabberLaunch.Step.NOTIFICATION)) { notifyOpen(ctx, i); GrabberDiag.launch(ctx, GrabberLaunch.result(GrabberLaunch.Step.NOTIFICATION, false, null)) }
+    }
+
+    /** Runs [block] while a 1px accessibility overlay window is attached: the app then has a visible window, which Android's background-start rules allow. */
+    private fun withOverlay(svc: AccessibilityService, block: () -> String?): String? {
+        val wm = svc.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val v = View(svc)
+        val lp = WindowManager.LayoutParams(1, 1, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, PixelFormat.TRANSLUCENT)
+        val added = runCatching { wm.addView(v, lp) }.isSuccess
+        val err = block()
+        if (added) main.postDelayed({ runCatching { wm.removeView(v) } }, GrabberLaunch.CONFIRM_MS + 500)
+        return err
+    }
+
+    private fun notifyOpen(ctx: Context, i: Intent) {
+        val nm = ctx.getSystemService(android.app.NotificationManager::class.java) ?: return
+        nm.createNotificationChannel(android.app.NotificationChannel("grabber_open", "Grabber on selection", android.app.NotificationManager.IMPORTANCE_HIGH))
+        val pi = android.app.PendingIntent.getActivity(ctx, 18251, i, android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT)
+        val n = android.app.Notification.Builder(ctx, "grabber_open").setContentTitle("Grabber").setContentText("Tap to look up the selected text")
+            .setSmallIcon(android.R.drawable.ic_menu_search).setContentIntent(pi).setAutoCancel(true).setTimeoutAfter(60_000).build()
+        runCatching { nm.notify(18251, n) }
     }
 
     private val main = Handler(Looper.getMainLooper())
@@ -148,24 +281,60 @@ object GrabberAuto {
 
 /**
  * The opt-in accessibility service. Its configuration (res/xml/grabber_accessibility.xml) subscribes to text-selection events
- * only and does not retrieve window content: what it reads is the event itself (the text of the view, the selection range, the
- * package). Nothing is kept or sent by the service; the panel it opens works like the selection-menu entry.
+ * only; #1825 it must retrieve window content (else events carry no source node and a browser selection is unreadable). What it reads
+ * is the event (the text of the view, the selection range, the package) and the source node's text and selection range. Nothing is
+ * kept or sent by the service; the panel it opens works like the selection-menu entry.
  */
 class GrabberSelectionService : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
     private val trigger = SelectionTrigger()
-    private val look = Runnable { trigger.due(SystemClock.uptimeMillis())?.let { if (GrabberAuto.a11yOn(this)) GrabberAuto.open(this, it, "accessibility") } }
+    private val look = Runnable { trigger.due(SystemClock.uptimeMillis())?.let { if (GrabberAuto.a11yOn(this)) GrabberAuto.open(this, it, "accessibility", this) } }
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        GrabberDiag.connected(this)
+        // #1825 enabling the service in Android is the opt-in: the second switch starts on unless the user already set it
+        val p = getSharedPreferences(GrabberAuto.PREFS, Context.MODE_PRIVATE)
+        if (!p.contains(GrabberAuto.KEY_A11Y)) GrabberAuto.setA11y(this, true)
+    }
 
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {
         if (e == null || e.eventType != AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED) return
-        if (!GrabberAuto.a11yOn(this)) return
         val pkg = e.packageName?.toString().orEmpty()
-        val text = e.text?.firstOrNull()
-        val sel = SelectionTrigger.selected(text, e.fromIndex, e.toIndex)
-        val t = trigger.accept(sel, pkg, packageName, e.isPassword)
+        var src: AccessibilityNodeInfo? = null
+        var sel: String? = null
+        var password = false
+        try {
+            src = runCatching { e.source }.getOrNull()
+            val node = src?.let { selectedNode(it) } ?: src
+            sel = SelectionEvent.read(e.text?.firstOrNull { !it.isNullOrEmpty() }, e.fromIndex, e.toIndex, node?.text, node?.textSelectionStart ?: -1, node?.textSelectionEnd ?: -1)
+            password = e.isPassword || src?.isPassword == true
+        } finally {
+            @Suppress("DEPRECATION") runCatching { src?.recycle() }
+        }
+        val d = SelectionEvent.decide(GrabberAuto.a11yOn(this), pkg, packageName, password, sel, trigger)
+        GrabberDiag.event(this, pkg, d.outcome.label)
+        if (!GrabberAuto.a11yOn(this)) return
         handler.removeCallbacks(look)
-        val at = trigger.offer(t, pkg, SystemClock.uptimeMillis()) ?: return
+        val at = trigger.offer(d.text, pkg, SystemClock.uptimeMillis()) ?: return
         handler.postAtTime(look, at)
+    }
+
+    /** A browser reports a selection that spans nodes on the root: the first node under [root] (bounded) with a real text selection range. */
+    private fun selectedNode(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        if (root.textSelectionStart != root.textSelectionEnd && root.textSelectionStart >= 0) return root
+        var budget = 150
+        fun walk(n: AccessibilityNodeInfo, depth: Int): AccessibilityNodeInfo? {
+            if (depth > 6) return null
+            for (k in 0 until n.childCount) {
+                if (budget-- <= 0) return null
+                val c = n.getChild(k) ?: continue
+                if (c.textSelectionStart >= 0 && c.textSelectionStart != c.textSelectionEnd) return c
+                walk(c, depth + 1)?.let { return it }
+            }
+            return null
+        }
+        return walk(root, 0)
     }
 
     override fun onInterrupt() { handler.removeCallbacks(look) }

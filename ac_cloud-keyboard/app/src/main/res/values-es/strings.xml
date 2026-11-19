@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #1825 Spanish strings of the Grabber without accessibility. -->
+<resources>
+    <string name="grabber_assist_label">Cloud Keyboard Grabber (asistente)</string>
+    <string name="grabber_a11y_label">Cloud Keyboard Grabber al seleccionar</string>
+    <string name="grabber_a11y_summary">Abre el panel Grabber al seleccionar texto en cualquier app</string>
+    <string name="grabber_a11y_description">Grabber al seleccionar lee los eventos de selección de texto de Android: el texto de la vista donde seleccionas, el rango y el nombre del paquete de la app (pide acceso a la ventana solo para que una página del navegador informe qué texto está seleccionado). No registra la pantalla, lo que escribes ni los campos de contraseña, y nunca actúa sobre otra app. Una selección estable abre el panel Grabber. También necesita el interruptor en Cloud Keyboard > Grabber > Selección de texto.</string>
+    <string name="grabber_diag_title">DIAGNÓSTICO DE ACCESIBILIDAD</string>
+    <string name="grabber_diag_service">Servicio en Android: %1$s</string>
+    <string name="grabber_diag_service_on">activado</string>
+    <string name="grabber_diag_service_off">desactivado</string>
+    <string name="grabber_diag_switch">Interruptor: %1$s</string>
+    <string name="grabber_diag_connected">Servicio conectado: %1$s</string>
+    <string name="grabber_diag_never">nunca</string>
+    <string name="grabber_diag_event">Último evento visto: %1$s</string>
+    <string name="grabber_diag_launch">Último lanzamiento: %1$s</string>
+    <string name="grabber_free_title">GRABBER SIN ACCESIBILIDAD</string>
+    <string name="grabber_free_limit">Sin accesibilidad, Android nunca deja que una app reaccione sola a una selección. Las vías gratuitas requieren un toque: la entrada del menú de selección o el gesto del asistente (mantener pulsado el botón lateral o de inicio).</string>
+    <string name="grabber_free_menu">Menú de selección: selecciona texto en cualquier app y elige Cloud Keyboard en el menú (bajo los tres puntos o Más en Samsung y en Chrome).</string>
+    <string name="grabber_role_held">Asistente digital: Cloud Keyboard es el predeterminado</string>
+    <string name="grabber_role_not_held">Asistente digital: otra app (o ninguna) es la predeterminada</string>
+    <string name="grabber_role_unavailable">Asistente digital: este teléfono no ofrece el rol</string>
+    <string name="grabber_role_hint">Elige Cloud Keyboard en Ajustes > Apps > Apps predeterminadas > Asistente digital, y activa allí Usar texto de la pantalla y Usar captura de pantalla. Después, mantener pulsado el botón lateral o de inicio abre el texto de la pantalla para elegirlo, sin permiso de accesibilidad.</string>
+    <string name="grabber_role_open">Abrir ajustes del asistente digital</string>
+    <string name="grabber_role_open_failed">No se pudo abrir la página de ajustes</string>
+    <string name="grabber_capture_fallback">¿Sin rol de asistente? Capturar pantalla toma una imagen (Android pide permiso cada vez) y lee el texto en el teléfono.</string>
+    <string name="grabber_capture_btn">Capturar pantalla</string>
+    <string name="grabber_assist_title">GRABBER · TEXTO DE PANTALLA</string>
+    <string name="grabber_assist_status">%1$d bloques de texto, %2$d elegidos. Captura: %3$s. Toca un bloque o arrastra sobre varios.</string>
+    <string name="grabber_assist_shot_ready">lista</string>
+    <string name="grabber_assist_shot_none">no recibida</string>
+    <string name="grabber_assist_no_blocks">Esta pantalla no expuso texto al asistente. Usa Leer píxeles o Capturar.</string>
+    <string name="grabber_assist_no_shot">El gesto no trajo captura: activa Usar captura de pantalla en los ajustes del asistente digital, o usa Capturar.</string>
+    <string name="grabber_assist_grab">Grabber (%1$d)</string>
+    <string name="grabber_assist_all">Elegir todo</string>
+    <string name="grabber_assist_clear">Borrar</string>
+    <string name="grabber_assist_ocr">Leer píxeles</string>
+    <string name="grabber_assist_region">Región</string>
+    <string name="grabber_assist_capture">Capturar</string>
+    <string name="grabber_assist_close">Cerrar</string>
+    <string name="grabber_assist_ocr_empty">No se encontró texto en la captura.</string>
+</resources>

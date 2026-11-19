@@ -88,7 +88,11 @@ class GrabberAutoTest {
         assertTrue("an automatic open never writes into the field", auto.contains(".putExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true)"))
         val xml = File("src/main/res/xml/grabber_accessibility.xml").readText()
         assertTrue(xml.contains("android:accessibilityEventTypes=\"typeViewTextSelectionChanged\""))
-        assertTrue(xml.contains("android:canRetrieveWindowContent=\"false\""))
+        // #1825 was "false": without it Android gives the service no source node, so a browser selection could not be read
+        assertTrue(xml.contains("android:canRetrieveWindowContent=\"true\""))
+        assertTrue(xml.contains("flagRequestEnhancedWebAccessibility"))
+        assertTrue(xml.contains("flagReportViewIds"))
+        assertFalse("no package filter: every app", xml.contains("android:packageNames"))
         val mf = File("src/main/AndroidManifest.xml").readText()
         val svc = Regex("""<service android:name="\.grabber\.GrabberSelectionService".*?</service>""", RegexOption.DOT_MATCHES_ALL).find(mf)?.value.orEmpty()
         assertTrue(svc.contains("android.permission.BIND_ACCESSIBILITY_SERVICE"))
@@ -103,5 +107,69 @@ class GrabberAutoTest {
         val appKt = File("src/main/java/com/diegonmarcos/cloudkeyboard/App.kt").readText()
         assertTrue(appKt.contains("GrabberLink.opener ="))
         assertTrue(appKt.contains("GrabberLink.selectionHook ="))
+    }
+
+    // ---- #1825 the event filter and the launch decision ----
+
+    @Test fun aBrowserSelectionIsReadFromTheSourceNodeWhenTheEventCarriesNoText() {
+        // Chrome/WebView: the event text is empty and from/to are -1; the range is on the node
+        assertEquals("Paris", SelectionEvent.read(null, -1, -1, "Visit Paris today", 6, 11))
+        assertEquals("Paris", SelectionEvent.read("", 0, 0, "Visit Paris today", 11, 6))
+        // an editable field: the event's own text and range win
+        assertEquals("hello", SelectionEvent.read("hello world", 0, 5, "other", 0, 3))
+        // start == end on both: nothing selected
+        assertNull(SelectionEvent.read("hello", 2, 2, "hello", 3, 3))
+        assertNull(SelectionEvent.read(null, -1, -1, null, -1, -1))
+    }
+
+    @Test fun theDecisionNamesWhyAnEventWasIgnored() {
+        val t = SelectionTrigger()
+        fun d(on: Boolean = true, pkg: String = app, pw: Boolean = false, sel: String? = "Paris") = SelectionEvent.decide(on, pkg, own, pw, sel, t)
+        assertEquals(SelectionEvent.Outcome.ACCEPTED, d().outcome)
+        assertEquals("Paris", d().text)
+        assertEquals(SelectionEvent.Outcome.SWITCH_OFF, d(on = false).outcome)
+        assertEquals(SelectionEvent.Outcome.OWN_APP, d(pkg = own).outcome)
+        assertEquals(SelectionEvent.Outcome.PASSWORD, d(pw = true).outcome)
+        assertEquals(SelectionEvent.Outcome.NO_SELECTION, d(sel = null).outcome)
+        assertEquals(SelectionEvent.Outcome.FILTERED, d(sel = "a").outcome)
+        assertEquals(SelectionEvent.Outcome.FILTERED, d(sel = " -- ").outcome)
+        assertNull(d(sel = "a").text)
+    }
+
+    @Test fun theLaunchFromTheServiceUsesAnOverlayThenAStartThenANotification() {
+        assertEquals(listOf(GrabberLaunch.Step.OVERLAY_THEN_START, GrabberLaunch.Step.START, GrabberLaunch.Step.NOTIFICATION), GrabberLaunch.plan(34, true))
+        assertEquals(listOf(GrabberLaunch.Step.OVERLAY_THEN_START, GrabberLaunch.Step.START, GrabberLaunch.Step.NOTIFICATION), GrabberLaunch.plan(29, true))
+        assertEquals("before Android 10 a plain start is allowed", listOf(GrabberLaunch.Step.START), GrabberLaunch.plan(28, true))
+        assertEquals("the keyboard has a window of its own", listOf(GrabberLaunch.Step.START), GrabberLaunch.plan(35, false))
+    }
+
+    @Test fun theLaunchResultIsWorded() {
+        assertEquals("opened (overlay_then_start)", GrabberLaunch.result(GrabberLaunch.Step.OVERLAY_THEN_START, true, null))
+        assertEquals("start sent (start), panel not confirmed", GrabberLaunch.result(GrabberLaunch.Step.START, false, null))
+        assertEquals("blocked, notification posted", GrabberLaunch.result(GrabberLaunch.Step.NOTIFICATION, false, null))
+        assertTrue(GrabberLaunch.result(GrabberLaunch.Step.START, false, "boom").startsWith("failed (start): boom"))
+    }
+
+    @Test fun theDiagnosticsLinesSayNoneYetOrTheFacts() {
+        val none = GrabberDiag.Snapshot(0, 0, "", "", 0, "")
+        val clock = { _: Long -> "12:00:00" }
+        assertTrue(GrabberDiag.eventLine(none, clock).startsWith("none yet"))
+        assertEquals("none yet", GrabberDiag.launchLine(none, clock))
+        val s = GrabberDiag.Snapshot(1, 5, "com.android.chrome", "selection accepted", 6, "opened (start)")
+        assertEquals("12:00:00 · com.android.chrome · selection accepted", GrabberDiag.eventLine(s, clock))
+        assertEquals("12:00:00 · opened (start)", GrabberDiag.launchLine(s, clock))
+    }
+
+    @Test fun enablingTheServiceIsTheOptInAndTheServiceReportsItsEvents() {
+        val auto = File("src/main/java/com/diegonmarcos/cloudkeyboard/grabber/GrabberAuto.kt").readText()
+        assertTrue(auto.contains("if (!p.contains(GrabberAuto.KEY_A11Y)) GrabberAuto.setA11y(this, true)"))
+        assertTrue("every event is recorded before the switch gate", auto.indexOf("GrabberDiag.event(this, pkg") < auto.indexOf("if (!GrabberAuto.a11yOn(this)) return\n        handler"))
+        assertTrue(auto.contains("TYPE_ACCESSIBILITY_OVERLAY"))
+        assertTrue(File("src/main/java/com/diegonmarcos/cloudkeyboard/grabber/GrabberActivities.kt").readText().contains("GrabberDiag.openedAt ="))
+        // the Grabber page shows the diagnostics
+        val page = File("src/main/java/com/diegonmarcos/cloudkeyboard/grabber/GrabberScreens.kt").readText()
+        assertTrue(page.contains("AccessibilityDiagnostics(service, a11y)"))
+        assertTrue(page.contains("R.string.grabber_diag_event"))
+        assertTrue(page.contains("R.string.grabber_diag_launch"))
     }
 }

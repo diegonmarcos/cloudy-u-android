@@ -29,5 +29,41 @@
     <!-- #1793 Grabber on selection (accessibility): the service's name, summary and plain disclosure in Android's Accessibility settings. -->
     <string name="grabber_a11y_label">Cloud Keyboard Grabber on selection</string>
     <string name="grabber_a11y_summary">Opens the Grabber panel when you select text in any app</string>
-    <string name="grabber_a11y_description">Grabber on selection reads Android\'s text-selection events only: the text of the view you select in, the selection range and the app\'s package name. It does not read the screen, your typing or password fields, and it never acts on another app. A steady selection opens the Grabber panel, which looks the text up (DuckDuckGo, OpenStreetMap, Wikipedia) like the selection-menu entry and keeps it in Recent grabs on this phone. It also needs the switch in Cloud Keyboard > Grabber > Text Selection, off by default.</string>
+    <string name="grabber_a11y_description">Grabber on selection reads Android\'s text-selection events: the text of the view you select in, the selection range and the app\'s package name (it asks for window access only so a browser page can report which text is selected). It does not log the screen, your typing or password fields, and it never acts on another app. A steady selection opens the Grabber panel, which looks the text up (DuckDuckGo, OpenStreetMap, Wikipedia) like the selection-menu entry and keeps it in Recent grabs on this phone. It also needs the switch in Cloud Keyboard > Grabber > Text Selection, off by default.</string>
+    <!-- #1825 Grabber without accessibility: diagnostics, the default-assistant role row, the assistant screen and the capture fallback. -->
+    <string name="grabber_assist_label">Cloud Keyboard Grabber (assistant)</string>
+    <string name="grabber_diag_title">ACCESSIBILITY DIAGNOSTICS</string>
+    <string name="grabber_diag_service">Service in Android: %1$s</string>
+    <string name="grabber_diag_service_on">enabled</string>
+    <string name="grabber_diag_service_off">disabled</string>
+    <string name="grabber_diag_switch">Switch: %1$s</string>
+    <string name="grabber_diag_connected">Service connected: %1$s</string>
+    <string name="grabber_diag_never">never</string>
+    <string name="grabber_diag_event">Last event seen: %1$s</string>
+    <string name="grabber_diag_launch">Last launch: %1$s</string>
+    <string name="grabber_free_title">GRABBING WITHOUT ACCESSIBILITY</string>
+    <string name="grabber_free_limit">Without accessibility, Android never lets an app react by itself to a selection. The free paths take one tap: the selection menu entry, or the assistant gesture (long-press the side or home button).</string>
+    <string name="grabber_free_menu">Selection menu: select text in any app, then pick Cloud Keyboard in the menu (under the three dots or More on Samsung and in Chrome).</string>
+    <string name="grabber_role_held">Digital assistant: Cloud Keyboard is the default</string>
+    <string name="grabber_role_not_held">Digital assistant: another app (or none) is the default</string>
+    <string name="grabber_role_unavailable">Digital assistant: this phone does not offer the role</string>
+    <string name="grabber_role_hint">Choose Cloud Keyboard in Settings > Apps > Default apps > Digital assistant app, and turn on Use text from screen and Use screenshot there. Then a long-press of the side or home button opens the screen text for picking, with no accessibility permission.</string>
+    <string name="grabber_role_open">Open Digital assistant settings</string>
+    <string name="grabber_role_open_failed">The settings page could not be opened</string>
+    <string name="grabber_capture_fallback">No assistant role? Capture screen takes one frame (Android asks you to allow it every time) and reads the text on the phone.</string>
+    <string name="grabber_capture_btn">Capture screen</string>
+    <string name="grabber_assist_title">GRABBER · SCREEN TEXT</string>
+    <string name="grabber_assist_status">%1$d text blocks, %2$d picked. Screenshot: %3$s. Tap a block or drag across several.</string>
+    <string name="grabber_assist_shot_ready">ready</string>
+    <string name="grabber_assist_shot_none">not provided</string>
+    <string name="grabber_assist_no_blocks">This screen exposed no text to the assistant. Use Read pixels, or Capture.</string>
+    <string name="grabber_assist_no_shot">No screenshot came with the gesture: turn on Use screenshot in the Digital assistant settings, or use Capture.</string>
+    <string name="grabber_assist_grab">Grab (%1$d)</string>
+    <string name="grabber_assist_all">Select all</string>
+    <string name="grabber_assist_clear">Clear</string>
+    <string name="grabber_assist_ocr">Read pixels</string>
+    <string name="grabber_assist_region">Region</string>
+    <string name="grabber_assist_capture">Capture</string>
+    <string name="grabber_assist_close">Close</string>
+    <string name="grabber_assist_ocr_empty">No text found in the screenshot.</string>
 </resources>

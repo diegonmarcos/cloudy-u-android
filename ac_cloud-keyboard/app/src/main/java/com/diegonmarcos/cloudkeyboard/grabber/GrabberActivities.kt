@@ -73,6 +73,7 @@ class GrabberActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(AColor.TRANSPARENT), navigationBarStyle = SystemBarStyle.dark(AColor.TRANSPARENT))
+        GrabberDiag.openedAt = android.os.SystemClock.uptimeMillis() // #1825 the launch check of Grabber on selection
         val selected = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString().orEmpty()
         val readOnly = intent.getBooleanExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, false)
         // #1793 debug builds only: the emulator walk's fixed position for the Place card's distances (labelled MOCK on the card)

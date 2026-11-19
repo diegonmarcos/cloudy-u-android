@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #1825 the default-assistant entry: the session service receives AssistStructure + screenshot (supportsAssist). The recognition service is
+     named because the platform's service-info parser asks for it on some versions; it answers every request with an error. -->
+<voice-interaction-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:sessionService="com.diegonmarcos.cloudkeyboard.grabber.GrabberVoiceSessionService"
+    android:recognitionService="com.diegonmarcos.cloudkeyboard.grabber.GrabberRecognitionService"
+    android:supportsAssist="true"
+    android:supportsLaunchVoiceAssistFromKeyguard="false" />

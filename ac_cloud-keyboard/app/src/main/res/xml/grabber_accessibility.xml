@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- #1793 Grabber on selection: text-selection events only, no window content, no gestures, no key events. -->
+<!-- #1793 Grabber on selection: text-selection events only, no gestures, no key events.
+     #1825 canRetrieveWindowContent is required: without it Android gives the service no source node, and a browser/WebView selection
+     (the range lives on the node) could not be read. flagRequestEnhancedWebAccessibility + flagIncludeNotImportantViews let Chrome/WebView
+     content report; flagReportViewIds names the view. No packageNames filter: every app. -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeViewTextSelectionChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagDefault"
-    android:canRetrieveWindowContent="false"
+    android:accessibilityFlags="flagDefault|flagReportViewIds|flagRequestEnhancedWebAccessibility|flagIncludeNotImportantViews"
+    android:canRetrieveWindowContent="true"
     android:notificationTimeout="150"
     android:description="@string/grabber_a11y_description"
     android:summary="@string/grabber_a11y_summary" />
