@@ -2,6 +2,8 @@ package com.diegonmarcos.superapp.media
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import android.provider.Settings
 
 /**
@@ -18,8 +20,22 @@ internal object MusicBadgeLayout {
     /** The strip of the other media apps is always shown (idle or playing); only its look depends on the play state. */
     fun mediaAppsVisible(@Suppress("UNUSED_PARAMETER") playing: Boolean): Boolean = true
 
-    /** Playing: plain white monochrome icons (no colours); not playing: the apps' own icons. */
-    fun mediaAppsWhite(playing: Boolean): Boolean = playing
+    /** Playing: each app's OWN icon with the colour removed (greyscale, [GREYSCALE]); not playing: the apps' own colours. */
+    fun mediaAppsMonochrome(playing: Boolean): Boolean = playing
+
+    /** Saturation 0: keeps every icon's own shape and shading, only drops the colour. A tint would paint each opaque
+     *  pixel one colour and turn an icon into a solid square, which is what the first version showed. */
+    val GREYSCALE_MATRIX: ColorMatrix get() = ColorMatrix().apply { setToSaturation(0f) }
+    /** Lazy: building a ColorFilter touches the Android framework, which plain JVM unit tests do not have. */
+    val GREYSCALE: ColorFilter by lazy { ColorFilter.colorMatrix(GREYSCALE_MATRIX) }
+
+    /** The earbuds row sits bottom-left of the card, left of the centred transport buttons: capped so it never reaches them. */
+    const val ROUTE_MAX_DP = 120
+    /** Height kept free at the bottom of the card for that row (the card grew by this much in #1810). */
+    const val ROUTE_ROW_DP = 22
+
+    /** A route not resolved yet still shows a label, so the row is never an empty, invisible strip. */
+    fun routeLabel(label: String): String = label.ifBlank { "Audio output" }
 
     const val SOUNDCORE_PKG = "com.oceanwing.soundcore"
     private val SAMSUNG_PKGS = listOf(

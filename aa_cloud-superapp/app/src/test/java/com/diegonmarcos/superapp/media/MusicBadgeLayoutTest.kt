@@ -43,10 +43,10 @@ class MusicBadgeLayoutTest : KitPageHarness() {
     }
 
     @Test
-    fun `media app icons are persistent and white only while playing`() {
+    fun `media app icons are persistent and colourless only while playing`() {
         for (playing in listOf(true, false)) assertTrue(MusicBadgeLayout.mediaAppsVisible(playing))
-        assertTrue(MusicBadgeLayout.mediaAppsWhite(true))
-        assertTrue(!MusicBadgeLayout.mediaAppsWhite(false))
+        assertTrue(MusicBadgeLayout.mediaAppsMonochrome(true))
+        assertTrue(!MusicBadgeLayout.mediaAppsMonochrome(false))
         showKit { MusicControlsCard(ctx, null, null) {} }
         for (pkg in MusicControlsPopup.IDLE_LAUNCH_PKGS) compose.onNodeWithTag("music:idle:$pkg").assertExists()
     }
@@ -85,4 +85,35 @@ class MusicBadgeLayoutTest : KitPageHarness() {
             "ic_route_speaker", "music:sessions", "music:access", "music:dimmed", "music:scrim", "music:art", "--:--", "Slider(", "setRating"))
             assertTrue("missing $needle", src.contains(needle))
     }
+
+    @Test
+    fun `playing icons are greyscale (each app's own icon without colour), never a solid white tint`() {
+        val m = MusicBadgeLayout.GREYSCALE_MATRIX.values
+        // Pure red, green and blue each come out as a grey (r == g == b) of DIFFERENT brightness: the icon keeps its shading.
+        fun apply(r: Float, g: Float, b: Float) = FloatArray(3) { row -> m[row * 5] * r + m[row * 5 + 1] * g + m[row * 5 + 2] * b + m[row * 5 + 4] }
+        val greys = listOf(apply(1f, 0f, 0f), apply(0f, 1f, 0f), apply(0f, 0f, 1f))
+        for (px in greys) { assertEquals(px[0], px[1], 1e-4f); assertEquals(px[1], px[2], 1e-4f) }
+        assertEquals(3, greys.map { it[0] }.distinct().size)
+        assertTrue(greys.all { it[0] < 0.99f })                      // not white
+        val src = popupSource()
+        assertTrue("no white tint on the app icons", !src.contains("ColorFilter.tint(Color.White)"))
+    }
+
+    @Test
+    fun `earbuds row is a card overlay at the bottom left with a label even before the route resolves`() {
+        assertEquals("Audio output", MusicBadgeLayout.routeLabel(""))
+        assertEquals("soundcore Liberty 4 Pro", MusicBadgeLayout.routeLabel("soundcore Liberty 4 Pro"))
+        val src = popupSource()
+        assertTrue(src.contains("Modifier.align(Alignment.BottomStart)"))
+    }
+
+    @Test
+    fun `progress-line waves are the Dynamic Island's own IslandWave`() {
+        val src = popupSource()
+        assertTrue(src.contains("ui.IslandWave(") && src.contains("running = snap.playing"))
+        assertTrue(!src.contains("ChannelWavesView("))
+    }
+
+    private fun popupSource(): String = listOf("src/main/java", "app/src/main/java")
+        .map { File(it, "com/diegonmarcos/superapp/media/MusicControlsPopup.kt") }.first { it.exists() }.readText()
 }

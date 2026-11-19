@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -216,7 +217,9 @@ internal fun MusicControlsCard(ctx: Context, initialController: MediaController?
         }
         // Dark scrim over the art for text/button contrast; heavier when it is only the last session (dimmed art).
         Box(Modifier.fillMaxSize().background(Color(if (last != null) 0xCC000000 else 0xA6000000)).testTag(if (last != null) "music:dimmed" else "music:scrim"))
-        Column(Modifier.align(Alignment.Center).fillMaxWidth().padding(horizontal = 14.dp, vertical = 7.dp)) {
+        // TopCenter, not Center: the card's last ROUTE_ROW_DP stay free for the earbuds overlay below the buttons (#1810).
+        Column(Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(horizontal = 14.dp, vertical = 7.dp)
+            .padding(bottom = MusicBadgeLayout.ROUTE_ROW_DP.dp)) {
             // Row 1: app icon (tap → open the playing app) + title / artist (+ the idle quick-launch strip).
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val iconPkg = playingPackage ?: last?.pkg
@@ -242,7 +245,7 @@ internal fun MusicControlsCard(ctx: Context, initialController: MediaController?
                     } else Text(if (controller == null) last?.artist.orEmpty() else snap.artist, color = Color(0xFFD4D4D4), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         style = SHADOW.copy(fontSize = 11.sp), modifier = Modifier.padding(top = 2.dp))
                 }
-                MediaAppIcons(ctx, snap.playing, close)  // #1810 always visible, white while playing
+                MediaAppIcons(ctx, snap.playing, close)  // #1810 always visible, greyscale (own icon, no colour) while playing
             }
             val live = controller
             if (live != null) LiveRows(ctx, live, snap, routeState) else IdleRows(last)
@@ -282,9 +285,12 @@ internal fun MusicControlsCard(ctx: Context, initialController: MediaController?
                     controller?.let { runCatching { it.transportControls.setRating(android.media.Rating.newHeartRating(faved)) } }
                 }
             }
-            // #1810 the connected earbuds (route icon + device name), bottom-left; on a bluetooth route a tap opens the buds app.
-            if (controller != null) RouteRow(ctx, routeState.value)
         }
+        // #1810 the connected earbuds (route icon + device name), bottom-left of the CARD. An overlay, not a Column row: the
+        // card has a fixed height and centres its column, so a last column row was pushed past the bottom edge and clipped
+        // (invisible on the phone). Sits left of the centred transport row; on bluetooth a tap opens the buds app.
+        if (controller != null) RouteRow(ctx, routeState.value,
+            Modifier.align(Alignment.BottomStart).padding(start = 14.dp, bottom = 6.dp).widthIn(max = MusicBadgeLayout.ROUTE_MAX_DP.dp))
     }
 }
 
@@ -295,12 +301,12 @@ private fun Glyph(res: Int, sizeDp: Int, tag: String, tint: Color?, onClick: () 
     else Image(painterResource(res), contentDescription = null, modifier = m)
 }
 
-/** #1810 the streaming apps' launcher icons, top right: ALWAYS shown. Playing: plain white monochrome; else the apps' own icons.
+/** #1810 the streaming apps' launcher icons, top right: ALWAYS shown. Playing: each app icon in greyscale (its own icon without colour); else the apps' own icons.
  *  Tap opens the app (or its Play listing) and closes. */
 @Composable
 private fun MediaAppIcons(ctx: Context, playing: Boolean, close: () -> Unit) {
     if (!MusicBadgeLayout.mediaAppsVisible(playing)) return
-    val white = MusicBadgeLayout.mediaAppsWhite(playing)
+    val mono = MusicBadgeLayout.mediaAppsMonochrome(playing)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.testTag("music:idle-apps")) {
         for ((i, pkg) in MusicControlsPopup.IDLE_LAUNCH_PKGS.withIndex()) {
             val icon by produceState<android.graphics.drawable.Drawable?>(AppIconCache.cached(pkg), pkg) {
@@ -313,8 +319,10 @@ private fun MediaAppIcons(ctx: Context, playing: Boolean, close: () -> Unit) {
                 runCatching { ctx.startActivity(intent) }
                 close()
             }.testTag("music:idle:$pkg")) {
-                if (icon != null) AppIcon(icon, 26.dp, colorFilter = if (white) androidx.compose.ui.graphics.ColorFilter.tint(Color.White) else null)
-                else Icon(painterResource(R.drawable.ic_music_recognise), null, tint = if (white) Color.White else Color(0xCCFFFFFF))
+                // #1810 playing: the app's OWN icon with its colour removed (saturation 0), never a tint (a tint paints every
+                // opaque pixel one colour, which turned each icon into a plain white square).
+                if (icon != null) AppIcon(icon, 26.dp, colorFilter = if (mono) MusicBadgeLayout.GREYSCALE else null)
+                else Icon(painterResource(R.drawable.ic_music_recognise), null, tint = Color(0xCCFFFFFF))
             }
         }
     }
@@ -322,13 +330,13 @@ private fun MediaAppIcons(ctx: Context, playing: Boolean, close: () -> Unit) {
 
 /** #1810 bottom-left: where the audio goes (icon + name). On bluetooth the row is a tap target for the buds companion app. */
 @Composable
-private fun RouteRow(ctx: Context, route: Route) {
+private fun RouteRow(ctx: Context, route: Route, modifier: Modifier = Modifier) {
     val bt = route.icon == R.drawable.ic_route_bluetooth
-    Row(Modifier.padding(top = 2.dp).clip(RoundedCornerShape(8.dp))
+    Row(modifier.clip(RoundedCornerShape(8.dp)).background(Color(0x66000000)).padding(horizontal = 6.dp, vertical = 3.dp)
         .then(if (bt) Modifier.clickable { MusicBadgeLayout.openBudsApp(ctx, route.label) } else Modifier)
         .testTag("music:route-row"), verticalAlignment = Alignment.CenterVertically) {
-        Icon(painterResource(route.icon), null, tint = Color.White, modifier = Modifier.size(12.dp))
-        Text(route.label, color = Color(0xFFE0E0E0), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+        Icon(painterResource(route.icon), null, tint = Color.White, modifier = Modifier.size(14.dp))
+        Text(MusicBadgeLayout.routeLabel(route.label), color = Color(0xFFF0F0F0), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
             style = SHADOW.copy(fontSize = 11.sp), modifier = Modifier.padding(start = 5.dp).testTag("music:route"))
     }
 }
@@ -399,8 +407,10 @@ private fun LiveRows(ctx: Context, c: MediaController, snap: MusicSnapshot, rout
     val fraction = if (duration > 0L) (nowPos.toFloat() / duration).coerceIn(0f, 1f) else 0f
     // Only commit on release so the controller is not spammed while the thumb moves; the tick refreshes it otherwise.
     Box(Modifier.fillMaxWidth().padding(top = 6.dp)) {
-    // #1810 live sound waves on the progress line (shared three-channel component; moving while playing, flat when paused).
-    com.diegonmarcos.superapp.ui.ChannelWavesView(snap.playing, Modifier.matchParentSize().testTag("music:waves"))
+    // #1810 live sound waves on the progress line.
+    // The SAME design as the Dynamic Island: its own IslandWave composable (layered pastel-lilac channels, harmonics +
+    // amplitude modulation, pill-clipped), moving while playing, frozen when paused.
+    com.diegonmarcos.superapp.ui.IslandWave(Modifier.matchParentSize().testTag("music:waves"), running = snap.playing)
     Slider(value = dragging ?: fraction, onValueChange = { dragging = it },
         onValueChangeFinished = {
             val f = dragging

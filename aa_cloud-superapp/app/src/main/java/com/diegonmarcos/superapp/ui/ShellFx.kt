@@ -206,7 +206,7 @@ private class Wave(
  * off freezes the waves.
  */
 @Composable
-fun IslandWave(modifier: Modifier = Modifier.fillMaxSize()) {
+fun IslandWave(modifier: Modifier = Modifier.fillMaxSize(), running: Boolean = true) {
     val waves = remember {
         listOf(
             Wave(Color(0x99B69EF9), 1.6f, 2.7f, 3.5f, 1.1f, 0.85f, 0.45f, 0.0f, 0.88f),
@@ -216,7 +216,8 @@ fun IslandWave(modifier: Modifier = Modifier.fillMaxSize()) {
         )
     }
     // 358.8 s for 1000 time units: the harmonic and modulator rates all scale off the same `time`.
-    val phase = rememberPhase(358_800L, ShellFxState.island)
+    // `running` lets a host freeze it too (the media badge: paused track = still waves); the island passes nothing.
+    val phase = rememberPhase(358_800L, ShellFxState.island && running)
     val density = LocalDensity.current.density
     // One Path of each, reset per frame: the View version reused its own, and a fresh pair per frame is garbage at 60 Hz.
     val path = remember { Path() }
