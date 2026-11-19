@@ -654,4 +654,11 @@
     <string name="mesh_opt_error">Errors</string>
     <string name="mesh_ctl_log_level">Level</string>
     <string name="tasks_label">Tasks</string>
+    <string name="devver_channel">Unverified developers</string>
+    <string name="devver_restart_title">Restart to continue</string>
+    <string name="devver_restart_body">Apps from unverified developers: restart the phone so the 24 h wait can start.</string>
+    <string name="devver_window_title">24 h wait is over</string>
+    <string name="devver_window_body">Open Developer options and choose Indefinitely for Apps from unverified developers.</string>
+    <string name="devver_reset_title">Unverified-developers allowance was reset</string>
+    <string name="devver_reset_body">Android verifies installs again. Open the row to start the flow again.</string>
 </resources>

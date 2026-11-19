@@ -235,6 +235,14 @@
         </provider>
 
         <!-- Quick-action handler for the persistent "Cloud SA - KDE" notification. -->
+        <!-- #1822 Apps from unverified developers: the 24 h window alarm and the boot re-arm/re-check. -->
+        <receiver
+            android:name=".system.DevVerifierReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <!-- extapp: install progress notification actions (Cancel / Retry / Restart / Open). -->
         <receiver
             android:name=".extinstall.ExtInstallActionReceiver"

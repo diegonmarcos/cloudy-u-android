@@ -2198,6 +2198,12 @@ open class ShellActivity : AppCompatActivity(),
     }
 
     private fun handleShortcutIntent(intent: android.content.Intent?) {
+        // #1822 a notification of the unverified-developers flow: the Perms page, that row highlighted
+        intent?.getStringExtra("perms_row")?.let { row ->
+            intent.removeExtra("perms_row")
+            com.diegonmarcos.superapp.perms.PermsLink.open(this, "Apps from unverified developers", listOf(row))
+            return
+        }
         val target = intent?.getStringExtra("shortcut_action") ?: return
         if (target == "action:open_search") openSearchSheet()
         else onTileClicked(target)

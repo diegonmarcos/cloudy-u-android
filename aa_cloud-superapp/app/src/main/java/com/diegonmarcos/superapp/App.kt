@@ -81,6 +81,8 @@ class App : Application(), WorkManagerConfiguration.Provider {
             runCatching { com.diegonmarcos.superapp.ops.dagu.DaguPrefs(this).bearerToken }.getOrDefault("")
         }
         com.diegonmarcos.superapp.adbside.AdbSide.installBoot(this)
+        // #1822 background re-check of the unverified-developers allowance (every 6 h, and on boot)
+        com.diegonmarcos.superapp.system.DevVerifierNotifier.enqueuePeriodic(this)
 
         // #1120 The mesh is connected by default and reconnects until the owner taps Disconnect.
         runCatching { com.diegonmarcos.superapp.network.MeshSupervisorRunner.start(this) }

@@ -555,4 +555,11 @@
     <string name="mesh_opt_error">Errores</string>
     <string name="mesh_ctl_log_level">Nivel</string>
     <string name="tasks_label">Tareas</string>
+    <string name="devver_channel">Desarrolladores no verificados</string>
+    <string name="devver_restart_title">Reinicia para continuar</string>
+    <string name="devver_restart_body">Apps de desarrolladores no verificados: reinicia el teléfono para que empiece la espera de 24 h.</string>
+    <string name="devver_window_title">La espera de 24 h terminó</string>
+    <string name="devver_window_body">Abre Opciones de desarrollador y elige Indefinidamente en Apps de desarrolladores no verificados.</string>
+    <string name="devver_reset_title">Se restableció el permiso de desarrolladores no verificados</string>
+    <string name="devver_reset_body">Android vuelve a verificar las instalaciones. Abre la fila para reiniciar el flujo.</string>
 </resources>

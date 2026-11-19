@@ -132,15 +132,21 @@ class PermissionsFragment : KitComposeFragment() {
 
     private fun shellGrant(e: com.diegonmarcos.superapp.perms.PermEntry, then: () -> Unit = {}) {
         val ctx = requireContext().applicationContext
-        val cmds = com.diegonmarcos.superapp.perms.PermsShellGrant.commands(ctx.packageName, e)
+        val dv = e.id == com.diegonmarcos.superapp.perms.DevVerifier.ID
+        // #1822 the open command follows the flow step (About phone while Developer options are off); every read re-measures through the shell
+        val cmds = if (dv) listOf(com.diegonmarcos.superapp.perms.DevVerifierFlow.openCmd(com.diegonmarcos.superapp.perms.DevVerifier.flow(ctx).step))
+            else com.diegonmarcos.superapp.perms.PermsShellGrant.commands(ctx.packageName, e)
         if (cmds == null) { shellNote = "${e.label}: no shell line can grant it"; then(); return }
         shellNote = "${e.label}: granting by shell…"
         Thread {
             val vars = com.diegonmarcos.superapp.perms.Perms.vars(ctx)
-            val out = com.diegonmarcos.superapp.perms.PermsShellGrant.run(e.label, cmds, BrokerGrantChannel(ctx)) {
+            val ch = BrokerGrantChannel(ctx)
+            val out = com.diegonmarcos.superapp.perms.PermsShellGrant.run(e.label, cmds, ch) {
+                if (dv) com.diegonmarcos.superapp.system.DevVerifierNotifier.run(ctx) { c -> runCatching { ch.exec(c) }.getOrNull() }
                 com.diegonmarcos.superapp.perms.PermStatusReader.status(ctx, e, null, vars).state == com.diegonmarcos.superapp.perms.PermState.GRANTED
             }
-            view?.post { shellNote = out.message; centerEpoch++; then() }
+            val msg = if (dv) "${e.label}: " + com.diegonmarcos.superapp.perms.DevVerifierFlow.text(com.diegonmarcos.superapp.perms.DevVerifier.flow(ctx), System.currentTimeMillis()) else out.message
+            view?.post { shellNote = msg; centerEpoch++; then() }
         }.start()
     }
 
@@ -259,6 +265,13 @@ class PermissionsFragment : KitComposeFragment() {
         androidx.compose.runtime.LaunchedEffect(Unit) {
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { com.diegonmarcos.superapp.system.AdbReadiness.check(ctxAny()) } }
             centerEpoch++
+        }
+        // #1822 the 24 h countdown on the unverified-developers row: a redraw each minute while it is waiting
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            while (true) {
+                kotlinx.coroutines.delay(60_000)
+                if (com.diegonmarcos.superapp.perms.DevVerifier.flow(act).step == com.diegonmarcos.superapp.perms.DevVerifierFlow.Step.WAITING) centerEpoch++
+            }
         }
         androidx.compose.runtime.LaunchedEffect(Unit) {
             if (!autoStarted) { autoStarted = true; startAuto(force = false) }

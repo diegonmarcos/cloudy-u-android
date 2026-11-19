@@ -12,7 +12,11 @@ import android.util.Log
 object PrivilegedPlaneRun {
     private const val TAG = "PrivilegedPlane"
 
-    fun tune(ctx: Context, exec: (String) -> String?) { DeviceTuning.run(ctx, exec) }
+    fun tune(ctx: Context, exec: (String) -> String?) {
+        DeviceTuning.run(ctx, exec)
+        // #1822 read-only measurement of the Android Developer Verifier allowance; raises the flow's notifications
+        runCatching { DevVerifierNotifier.run(ctx, exec) }
+    }
 
     fun selfGrant(ctx: Context, exec: (String) -> String?) = grantAll(ctx, exec)
 

@@ -77,6 +77,7 @@ object PermsActions {
             entry in OPS -> sh(PermsShell.appop(target, OPS.getValue(entry)))
             entry == "battery_opt" -> sh("cmd deviceidle whitelist +$target")
             entry == "location_services" -> sh("cmd location set-location-enabled true")
+            entry == DevVerifier.ID -> sh(DevVerifier.OPEN_CMD)   // #1822 opens Developer options; PIN, reboot and the 24 h wait stay the owner's
             entry == "dnd" || entry == "dnd_access" -> sh("cmd notification allow_dnd $target")
             entry == "standby_active" -> sh("am set-standby-bucket $target active")
             entry == "keep_unused" -> sh(PermsShell.appop(target, "AUTO_REVOKE_PERMISSIONS_IF_UNUSED", "ignore"))

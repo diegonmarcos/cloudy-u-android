@@ -37,6 +37,12 @@ class ClientCallSitesAllowlistTest {
         allowed("cmd uimode night yes"); allowed("cmd uimode night no")
     }
     @Test fun playProtectCommandsAreAllowed() { for (scan in listOf(true, false)) PackageVerifier.commands(scan).forEach { allowed(it) } }
+    // #1822 the unverified-developers flow: four-plus-three read-only probes and the two page openers run through the shell
+    @Test fun developerVerifierProbesAndOpenersAreAllowed() {
+        com.diegonmarcos.superapp.perms.DevVerifier.PROBES.forEach { allowed(it) }
+        allowed(com.diegonmarcos.superapp.perms.DevVerifier.OPEN_CMD)
+        allowed(com.diegonmarcos.superapp.perms.DevVerifierFlow.openCmd(com.diegonmarcos.superapp.perms.DevVerifierFlow.Step.DEV_OPTIONS))
+    }
     @Test fun wirelessDebuggingSwitchCommandIsAllowed() { allowed("settings put global adb_wifi_enabled 1"); allowed("settings put global adb_wifi_enabled 0") }
     @Test fun outputDoorKeepsTheInProcessBudget() = assertEquals(8 * 1024 * 1024, list.outCap(self))
     @Test fun auditGrantIsTheOwnerHostsOnly() {
