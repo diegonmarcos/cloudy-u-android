@@ -12,7 +12,7 @@
   {
     "name": "c3-public-api",
     "service": "c3-public-api",
-    "vm": "oci-E2-f_1",
+    "vm": "oci-A1-f_0",
     "public_url": "api.diegonmarcos.com/pub",
     "auth": "two_factor",
     "private_dns": "c3-public-api.mesh.diegonmarcos.com:8087",
