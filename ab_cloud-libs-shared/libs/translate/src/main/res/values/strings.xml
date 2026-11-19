@@ -77,4 +77,5 @@
     <string name="writer_action_paste">Paste</string>
     <string name="writer_action_copy">Copy</string>
     <string name="writer_mode_translate">Translate</string>
+    <string name="translate_bar_write_refused">The app field did not take the text. Tap into it and try again.</string>
 </resources>

@@ -59,4 +59,5 @@
     <string name="writer_action_paste">Pegar</string>
     <string name="writer_action_copy">Copiar</string>
     <string name="writer_mode_translate">Traducir</string>
+    <string name="translate_bar_write_refused">El campo de la app no aceptó el texto. Toca el campo y vuelve a intentarlo.</string>
 </resources>

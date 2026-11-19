@@ -511,7 +511,7 @@ class TranslateBarView @JvmOverloads constructor(
         } else {
             // The shared panel's Replace / Paste: announces its own write to the key focus (see KeyFocus).
             val done = if (mode == TranslatePrefs.APPLY_REPLACE) controller.replace() else controller.paste()
-            if (done != Outcome.OK) { toast(context.getString(R.string.translate_bar_no_field)); return }
+            if (done != Outcome.OK) { toast(context.getString(R.string.translate_bar_write_refused)); return }
         }
         afterApplied()
     }
