@@ -118,7 +118,8 @@ has_code "$APP/app/src/main/kotlin/app/sterna/SternaApplication.kt" "Updater.sta
 has_code "$HUB" 'composable("update")' "W1 Configs has an update destination"
 has_code "$HUB" "UpdateScreen(" "W1 that destination renders the Update page"
 has_code "$HUB" "onBack = { entry.navigateOnce { nav.popBackStack() } }," "W1 the page can be left again"
-has_code "$HUB" "onOpenUpdate" "W1 a hub row navigates to it"
+# #1814 the hub is the Configs tree now (SettingsTree.kt): the Update row sits on its App page and opens the same "update" route.
+has_code "$UI/SettingsTree.kt" 'page("update", "update"' "W1 a hub row navigates to it"
 # THE PAGE MUST SHOW THE THREE FACTS. A page that only carries a button is the
 # hollow one the owner already had.
 for s in settings_update_installed_label settings_update_available_label settings_update_last_checked_label; do
