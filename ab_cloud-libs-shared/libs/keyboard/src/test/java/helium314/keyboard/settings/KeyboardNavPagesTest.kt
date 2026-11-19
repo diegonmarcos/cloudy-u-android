@@ -228,6 +228,7 @@ class KeyboardNavPagesTest {
         "Settings.PREF_CLIPBOARD_FILES_SIZE_LIMIT",
         "Settings.PREF_CLIPBOARD_FONT_SCALE",
         "Settings.PREF_CLIPBOARD_HISTORY_PINNED_FIRST",
+        "Settings.PREF_CLIPBOARD_KEEP_HTML",
         "Settings.PREF_CLIPBOARD_HISTORY_RETENTION_TIME",
         "Settings.PREF_CLIPBOARD_TOOLBAR_KEYS",
         "Settings.PREF_CLIPBOARD_USE_FILES",

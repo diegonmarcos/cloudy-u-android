@@ -358,6 +358,9 @@ class ClipboardHistoryView @JvmOverloads constructor(
                     if (!text.isNullOrEmpty())
                         Text(text, color = textColor, fontFamily = fontFamily, maxLines = 4, overflow = TextOverflow.Ellipsis,
                             fontSize = with(density) { look.textSizePx.toSp() })
+                    if (!entry.html.isNullOrBlank()) // #1813 marker: this clip carries HTML
+                        Text(stringResource(R.string.clipboard_html_marker), color = textColor.copy(alpha = 0.6f), fontFamily = fontFamily,
+                            fontSize = with(density) { (look.textSizePx * 0.7f).toSp() })
                 }
             }
         }
@@ -535,6 +538,7 @@ class ClipboardHistoryView @JvmOverloads constructor(
     override fun onKeyUp(clipId: Long) {
         val clipContent = manager?.getHistoryEntryContent(clipId)
         if (clipContent?.filename != null) keyboardActionListener.onContent(clipContent.getContentInfo(context))
+        else if (clipContent?.html != null && manager?.pasteEntryAsHtml(clipContent) == true) Unit // #1813 pasted as HTML
         else keyboardActionListener.onTextInput(clipContent?.text)
         keyboardActionListener.onReleaseKey(KeyCode.NOT_SPECIFIED, false)
         if (Settings.getValues().mAlphaAfterClipHistoryEntry)

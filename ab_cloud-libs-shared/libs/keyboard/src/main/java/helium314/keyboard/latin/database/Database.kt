@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.core.database.getStringOrNull
 import androidx.core.database.sqlite.transaction
+import helium314.keyboard.latin.ClipboardHtml
 import helium314.keyboard.latin.utils.GestureDataDao
 import helium314.keyboard.latin.utils.Log
 import java.io.File
@@ -30,11 +31,13 @@ class Database private constructor(context: Context, name: String = NAME) : SQLi
             db.execSQL(ClipboardDao.ADD_LIST_NAME_COLUMN)
             db.execSQL(ClipboardDao.MIGRATE_PINNED_TO_LIST_NAME)
         }
+        // #1813 nullable HTML column, existing rows keep html = null
+        ClipboardHtml.migrationStatements(oldVersion).forEach { db.execSQL(it) }
     }
 
     companion object {
         private val TAG = Database::class.java.simpleName
-        private const val VERSION = 4
+        private const val VERSION = ClipboardHtml.DB_VERSION_WITH_HTML
         const val NAME = "heliboard.db"
         private var instance: Database? = null
         fun getInstance(context: Context): Database {
@@ -56,7 +59,7 @@ class Database private constructor(context: Context, name: String = NAME) : SQLi
                     if (clipDao == null) {
                         Log.e(TAG, "can't transfer clipboard data because ClipboardDao is null")
                     } else {
-                        otherDb.readableDatabase.rawQuery("SELECT TIMESTAMP, LIST_NAME, TEXT, FILE, MIME_TYPE FROM CLIPBOARD", null)
+                        otherDb.readableDatabase.rawQuery("SELECT TIMESTAMP, LIST_NAME, TEXT, FILE, MIME_TYPE, HTML FROM CLIPBOARD", null)
                             .use {
                                 clipDao.clear()
                                 while (it.moveToNext()) {
@@ -66,7 +69,8 @@ class Database private constructor(context: Context, name: String = NAME) : SQLi
                                         it.getStringOrNull(2),
                                         it.getStringOrNull(3),
                                         it.getStringOrNull(4)?.split("§"),
-                                        null
+                                        null,
+                                        it.getStringOrNull(5)
                                     )
                                 }
                             }

@@ -90,7 +90,9 @@ class ClipboardHistoryManager(
         if (description.hasMimeType("text/*")) {
             val content = clipItem.coerceToText(latinIME)
             if (TextUtils.isEmpty(content)) return
-            clipboardDao?.addClip(timeStamp, false, content.toString())
+            val keepHtml = latinIME.prefs().getBoolean(ClipboardHtml.PREF_KEEP_HTML, ClipboardHtml.DEFAULT_KEEP_HTML)
+            val html = ClipboardHtml.htmlToStore(keepHtml, clipItem.htmlText)
+            clipboardDao?.addClip(timeStamp, false, content.toString(), html)
         } else if (maySaveFromUri(clipItem.uri, latinIME)) {
             clipboardDao?.addClipUri(timeStamp, false, clipItem.uri, description, latinIME)
         }
@@ -135,6 +137,39 @@ class ClipboardHistoryManager(
                     ))
             }
         }
+    }
+
+    /**
+     * #1813 Tap on an entry: HTML clip plus the target app's own paste when the entry has HTML and
+     * "Keep HTML formatting" is on, otherwise (and returned as false) the caller commits the text as before.
+     */
+    fun pasteEntryAsHtml(entry: ClipboardHistoryEntry): Boolean {
+        val keepHtml = latinIME.prefs().getBoolean(ClipboardHtml.PREF_KEEP_HTML, ClipboardHtml.DEFAULT_KEEP_HTML)
+        if (ClipboardHtml.pasteMode(keepHtml, entry.html, entry.filename != null) != ClipboardHtml.PasteMode.HTML_CLIP_THEN_PASTE) return false
+        val html = entry.html ?: return false
+        val primaryClip = clipboardManager.primaryClip
+        tempPrimaryClip = true // same as pasteWithoutChangingClips: the temporary clip must not re-enter history
+        try {
+            clipboardManager.setPrimaryClip(ClipData.newHtmlText("", entry.text ?: "", html))
+        } catch (e: Exception) {
+            Log.w(TAG, "could not set html clip, pasting plain text", e)
+            tempPrimaryClip = false
+            return false
+        }
+        val pasted = latinIME.currentInputConnection?.performContextMenuAction(android.R.id.paste) == true
+        if (!pasted)
+            latinIME.onEvent(Event.createSoftwareKeypressEvent(KeyCode.CLIPBOARD_PASTE, 0,
+                Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false))
+        GlobalScope.launch {
+            delay(500) // let the target app read the clip before the original one is put back
+            try {
+                if (primaryClip != null) clipboardManager.setPrimaryClip(primaryClip)
+            } catch (e: Exception) {
+                Log.i(TAG, "could not go back to old primary clip", e)
+            }
+            tempPrimaryClip = false
+        }
+        return true
     }
 
     // Live search query — empty string means "no filter". Updated by the search EditText in ClipboardHistoryView.

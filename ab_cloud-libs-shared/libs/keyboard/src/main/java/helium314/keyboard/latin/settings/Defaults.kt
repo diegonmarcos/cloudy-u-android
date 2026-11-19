@@ -161,6 +161,7 @@ object Defaults {
     // copied clips survive across sessions instead of being wiped after 10 min.
     const val PREF_CLIPBOARD_HISTORY_RETENTION_TIME = 121 // minutes (>120 = keep forever)
     const val PREF_CLIPBOARD_HISTORY_PINNED_FIRST = true
+    const val PREF_CLIPBOARD_KEEP_HTML = helium314.keyboard.latin.ClipboardHtml.DEFAULT_KEEP_HTML
     const val PREF_CLIPBOARD_USE_FILES = true
     const val PREF_CLIPBOARD_FILES_SIZE_LIMIT = 20 // megabytes
     const val PREF_ADD_TO_PERSONAL_DICTIONARY = false

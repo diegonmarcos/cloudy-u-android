@@ -23,7 +23,8 @@ class ClipboardHistoryEntry(
     var listName: String?,
     val text: String?,
     val filename: String?,
-    val mimeTypes: List<String>?
+    val mimeTypes: List<String>?,
+    var html: String? = null // #1813 the HTML half of a rich clip, null for plain text
 ) : Comparable<ClipboardHistoryEntry> {
     // null = default (unpinned) page; non-null = the pin list this clip belongs to
     val isPinned: Boolean get() = listName != null

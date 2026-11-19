@@ -38,7 +38,7 @@ class ClipboardDao private constructor(private val db: Database) {
     private val cache = mutableListOf<ClipboardHistoryEntry>().apply {
         db.readableDatabase.query(
             TABLE,
-            arrayOf(COLUMN_ID, COLUMN_TIMESTAMP, COLUMN_LIST_NAME, COLUMN_TEXT, COLUMN_FILE, COLUMN_MIME_TYPE),
+            arrayOf(COLUMN_ID, COLUMN_TIMESTAMP, COLUMN_LIST_NAME, COLUMN_TEXT, COLUMN_FILE, COLUMN_MIME_TYPE, COLUMN_HTML),
             null,
             null,
             null,
@@ -53,6 +53,7 @@ class ClipboardDao private constructor(private val db: Database) {
                     it.getStringOrNull(3),
                     it.getStringOrNull(4),
                     it.getStringOrNull(5)?.split('§')?.filter { it.isNotEmpty() },
+                    it.getStringOrNull(6),
                 ))
             }
         }
@@ -60,19 +61,20 @@ class ClipboardDao private constructor(private val db: Database) {
         Log.i(TAG, "cache loaded ${size} entries from db")
     }
 
-    fun addClip(timestamp: Long, pinned: Boolean, text: String) = synchronized(this) {
+    fun addClip(timestamp: Long, pinned: Boolean, text: String, html: String? = null) = synchronized(this) {
         clearOldClips()
         // Dedupe against the HISTORY only. A pinned clip is a copy that lives in its list
         // for good, so copying that text again is a new event for the history — matching a
         // pinned row here only bumped that row's timestamp and the copy showed up nowhere.
         val existingIndex = cache.indexOfFirst { it.text == text && !it.isPinned }
+        if (existingIndex >= 0 && html != null && cache[existingIndex].html != html) updateHtmlAt(existingIndex, html)
         if (existingIndex >= 0 && cache[existingIndex].timeStamp == timestamp)
             return@synchronized // nothing to do
         if (existingIndex >= 0) {
             updateTimestampAt(existingIndex, timestamp)
             return@synchronized
         }
-        insertNewEntry(timestamp, if (pinned) DEFAULT_PIN_LIST else null, text, null, null, null)
+        insertNewEntry(timestamp, if (pinned) DEFAULT_PIN_LIST else null, text, null, null, null, html)
     }
 
     fun addClipUri(timestamp: Long, pinned: Boolean, uri: Uri, description: ClipDescription, context: Context) = synchronized(this) {
@@ -122,8 +124,8 @@ class ClipboardDao private constructor(private val db: Database) {
     }
 
     /** only public for restoring backups */
-    fun insertNewEntry(timestamp: Long, listName: String?, text: String?, filename: String?, mimeTypes: List<String>?, context: Context?) {
-        val cv = ContentValues(5)
+    fun insertNewEntry(timestamp: Long, listName: String?, text: String?, filename: String?, mimeTypes: List<String>?, context: Context?, html: String? = null) {
+        val cv = ContentValues(6)
         cv.put(COLUMN_TIMESTAMP, timestamp)
         cv.put(COLUMN_PINNED, listName != null) // kept in sync for older-version backup compatibility, unused otherwise
         cv.put(COLUMN_LIST_NAME, listName)
@@ -131,14 +133,23 @@ class ClipboardDao private constructor(private val db: Database) {
         cv.put(COLUMN_FILE, filename)
         // § should be a safe separator, not allowed in mime types: https://datatracker.ietf.org/doc/html/rfc6838#section-4.2
         cv.put(COLUMN_MIME_TYPE, mimeTypes?.joinToString("§"))
+        cv.put(COLUMN_HTML, html)
         val rowId = db.writableDatabase.insert(TABLE, null, cv)
 
-        val entry = ClipboardHistoryEntry(rowId, timestamp, listName, text, filename, mimeTypes)
+        val entry = ClipboardHistoryEntry(rowId, timestamp, listName, text, filename, mimeTypes, html)
         if (filename != null && context != null)
             deleteIfSizeExceeded(context.prefs())
         cache.add(entry)
         cache.sort()
         listener?.onClipInserted(cache.indexOf(entry))
+    }
+
+    private fun updateHtmlAt(index: Int, html: String) {
+        val entry = cache[index]
+        entry.html = html
+        val cv = ContentValues(1)
+        cv.put(COLUMN_HTML, html)
+        db.writableDatabase.update(TABLE, cv, "$COLUMN_ID = ${entry.id}", null)
     }
 
     private fun updateTimestampAt(index: Int, timestamp: Long) {
@@ -261,7 +272,7 @@ class ClipboardDao private constructor(private val db: Database) {
     }
 
     /** One parsed-but-not-yet-inserted clip, held while [importFromDir] validates every file. */
-    private class PendingClip(val timeStamp: Long, val listName: String?, val text: String, val mimeTypes: List<String>?)
+    private class PendingClip(val timeStamp: Long, val listName: String?, val text: String, val mimeTypes: List<String>?, val html: String? = null)
 
     /**
      * Export every tab to [dir] as `manifest.json` plus one json file per tab
@@ -358,7 +369,8 @@ class ClipboardDao private constructor(private val db: Database) {
                 val mimeTypes = mimeArr?.let { arr ->
                     (0 until arr.length()).mapNotNull { arr.optString(it).takeIf { s -> s.isNotEmpty() } }
                 }
-                parsed.add(PendingClip(obj.optLong("timeStamp", System.currentTimeMillis()), listName, text, mimeTypes))
+                val html = obj.optString("html").takeIf { it.isNotEmpty() }
+                parsed.add(PendingClip(obj.optLong("timeStamp", System.currentTimeMillis()), listName, text, mimeTypes, html))
             }
         }
         // everything parsed — safe to swap now
@@ -367,7 +379,7 @@ class ClipboardDao private constructor(private val db: Database) {
             Log.i(TAG, "importJson: replacing ${cache.count { it.filename == null }} text clips with ${parsed.size}")
             delete(cache.filter { it.filename == null })
         } else Log.i(TAG, "importJson: appending ${parsed.size} text clips")
-        parsed.forEach { insertNewEntry(it.timeStamp, it.listName, it.text, null, it.mimeTypes, context) }
+        parsed.forEach { insertNewEntry(it.timeStamp, it.listName, it.text, null, it.mimeTypes, context, it.html) }
         return parsed.size
     }
 
@@ -380,6 +392,7 @@ class ClipboardDao private constructor(private val db: Database) {
                 val mimeArr = org.json.JSONArray()
                 entry.mimeTypes?.forEach { mimeArr.put(it) }
                 put("mimeTypes", mimeArr)
+                entry.html?.let { put("html", it) }
             })
         }
         return array.toString(2)
@@ -435,6 +448,7 @@ class ClipboardDao private constructor(private val db: Database) {
         private const val COLUMN_TEXT = "TEXT" // we could enforce unique text, but that's only necessary if we can drop the cache (later)
         private const val COLUMN_FILE = "FILE" // path relative to files dir
         private const val COLUMN_MIME_TYPE = "MIME_TYPE" // for files, actually a list of mime types according to clipboard description
+        private const val COLUMN_HTML = "HTML" // #1813 nullable HTML half of a rich clip
         private const val COLUMN_LIST_NAME = "LIST_NAME" // null = default (unpinned) page; otherwise the pin list this clip belongs to
         const val DEFAULT_PIN_LIST_PREFIX = "Pins-"
         const val DEFAULT_PIN_LIST = "Pins-1"
@@ -455,6 +469,7 @@ class ClipboardDao private constructor(private val db: Database) {
 
         const val ADD_FILE_COLUMN = "ALTER TABLE $TABLE ADD COLUMN $COLUMN_FILE TEXT"
         const val ADD_MIME_TYPE_COLUMN = "ALTER TABLE $TABLE ADD COLUMN $COLUMN_MIME_TYPE TEXT"
+        const val ADD_HTML_COLUMN = ClipboardHtml.ADD_HTML_COLUMN
         const val ADD_LIST_NAME_COLUMN = "ALTER TABLE $TABLE ADD COLUMN $COLUMN_LIST_NAME TEXT"
         // old boolean pin -> first pin list, so upgrading users don't lose their pins
         const val MIGRATE_PINNED_TO_LIST_NAME = "UPDATE $TABLE SET $COLUMN_LIST_NAME = '$DEFAULT_PIN_LIST' WHERE $COLUMN_PINNED = 1"

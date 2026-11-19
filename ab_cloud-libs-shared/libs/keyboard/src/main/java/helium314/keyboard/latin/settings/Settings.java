@@ -170,6 +170,7 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
     public static final String PREF_ENABLE_CLIPBOARD_HISTORY = "enable_clipboard_history";
     public static final String PREF_CLIPBOARD_HISTORY_RETENTION_TIME = "clipboard_history_retention_time";
     public static final String PREF_CLIPBOARD_HISTORY_PINNED_FIRST = "clipboard_history_pinned_first";
+    public static final String PREF_CLIPBOARD_KEEP_HTML = "clipboard_keep_html"; // #1813, same key as ClipboardHtml.PREF_KEEP_HTML
     public static final String PREF_CLIPBOARD_USE_FILES = "clipboard_histor_usey_files";
     public static final String PREF_CLIPBOARD_FILES_SIZE_LIMIT = "clipboard_history_files_size_limit";
 
