@@ -184,10 +184,12 @@ fun SettingsScreen(
     accountsViewModel: AccountsViewModel = viewModel(),
 ) {
     val nav = rememberNavController()
-    // unguarded: one consumption on entry, not a tap; the graph is set by the NavHost composed below, before effects run.
     var sectionOpened by rememberSaveable { mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(initialSection) {
-        if (!sectionOpened) { sectionOpened = true; initialSection?.let { nav.navigate(it) } }
+        if (sectionOpened) return@LaunchedEffect
+        sectionOpened = true
+        // unguarded: one consumption on entry, not a tap; the graph is set by the NavHost composed below, before effects run.
+        initialSection?.let { nav.navigate(it) }
     }
     // The system "Remove animations" setting switches these slides off (#100). Captured here
     // because rememberMotionEnabled() is @Composable and the transition lambdas are not.
