@@ -1,5 +1,7 @@
 package app.sterna.ui.settings
 
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -28,6 +30,7 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -118,6 +121,7 @@ internal fun SignatureCodeEditor(
             }
         }
     }
+    val context = LocalContext.current
     val codeStyle = codeStyle()
     val textStyle = codeStyle.copy(color = scheme.onSurface)
     Row(modifier.fillMaxSize().background(scheme.surfaceContainerLowest).verticalScroll(rememberScrollState())) {
@@ -133,7 +137,12 @@ internal fun SignatureCodeEditor(
         Box(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
             BasicTextField(
                 value = state.textField,
-                onValueChange = state::typed,
+                onValueChange = { v ->
+                    state.typed(v) {
+                        (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.let(::readSignatureClip)
+                            ?: SignatureClip(null, null)
+                    }
+                },
                 textStyle = textStyle,
                 cursorBrush = SolidColor(scheme.primary),
                 visualTransformation = transformation,

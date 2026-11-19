@@ -45,7 +45,8 @@ internal class SignatureEditorState(
     }
 
     /** The field as the keyboard changed it: typing assists apply, a burst of typing is one undo step. */
-    fun typed(v: TextFieldValue) {
+    fun typed(incoming: TextFieldValue, clip: (() -> SignatureClip)? = null) {
+        val v = if (clip != null) substitutePaste(textField, incoming, clip) else incoming
         if (v.text == textField.text) {
             textField = v
             return

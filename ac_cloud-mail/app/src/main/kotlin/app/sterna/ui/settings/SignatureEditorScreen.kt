@@ -276,7 +276,7 @@ internal fun SignatureEditorScreen(
                         MenuItem(R.string.sigedit_import_file) { menu = false; importLauncher.launch(arrayOf("text/html", "text/plain", "application/json", "*/*")) }
                         MenuItem(R.string.sigedit_import_paste) {
                             menu = false
-                            val pasted = clipboard.getText()?.text
+                            val pasted = (context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager)?.signatureSource()
                             if (pasted.isNullOrBlank()) notice = R.string.sigedit_import_failed else state.replaceAll(importedSource(pasted))
                         }
                         MenuItem(R.string.sigedit_export_file) { menu = false; exportLauncher.launch("signature.html") }
