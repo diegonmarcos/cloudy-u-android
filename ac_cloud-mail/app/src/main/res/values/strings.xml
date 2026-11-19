@@ -595,7 +595,7 @@
     <string name="settings_reading_summary">Swipe actions, signature</string>
     <string name="settings_notifications_title">Notifications</string>
     <string name="settings_notifications_summary">Push scope, new mail</string>
-    <string name="settings_vacation_title">Vacation responder</string>
+    <string name="settings_vacation_title">Vacation Answer</string>
     <string name="settings_vacation_summary">Auto-reply while you\'re away</string>
     <string name="settings_privacy_title">Privacy &amp; security</string>
     <string name="settings_privacy_summary">App lock, remote images</string>
@@ -745,7 +745,7 @@
     <string name="settings_quiet_hours_end">End</string>
     <string name="notif_group_count">%1$d new messages · %2$s</string>
     <string name="notif_group_line">%1$s — %2$s</string>
-    <string name="settings_vacation_screen_title">Vacation responder</string>
+    <string name="settings_vacation_screen_title">Vacation Answer</string>
     <string name="settings_vacation_section">Auto-reply</string>
     <string name="settings_vacation_account">Account: %1$s</string>
     <string name="settings_vacation_enabled_title">Enable auto-reply</string>
@@ -1654,4 +1654,15 @@
     <string name="compose_recipient_check_syntax_tld">The domain ending is not valid</string>
     <string name="compose_recipient_check_syntax_format">The address is not in a valid format</string>
     <string name="compose_recipient_check_server_cached">Answered from the server\'s recent checks</string>
+    <!-- #1814 Configs tree: Accounts, Text Enhancer, UI, App -->
+    <string name="settings_tree_text_enhancer">Text Enhancer</string>
+    <string name="settings_tree_ui">UI</string>
+    <string name="settings_tree_server">Server</string>
+    <string name="settings_tree_signatures">Signatures</string>
+    <string name="settings_tree_folders">Folders</string>
+    <string name="settings_tree_filter">Filter</string>
+    <string name="settings_tree_others">Others</string>
+    <string name="settings_tree_account_settings">Account settings</string>
+    <string name="settings_tree_pick_account">Pick an account</string>
+    <string name="settings_tree_configs">Configs</string>
 </resources>

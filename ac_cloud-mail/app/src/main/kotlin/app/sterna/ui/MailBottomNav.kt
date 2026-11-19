@@ -58,10 +58,8 @@ fun BottomNavBar(nav: NavController, currentRoute: String, content: @Composable 
     val ai = rememberSuperAppAiLauncher()
     val entries = mailEntries()
     // #1154 the first row: AI hands over to the SuperApp, Profile is Cloud Account, Configs is Mail's settings.
-    // #1697 Configs opens the fleet strip (General | Agents, Perms, Logcat, X-Ray App, About); Mail's own settings (the former target) is General > App.
-    var fleetConfigsOpen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
-    if (fleetConfigsOpen) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsScreen(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage.General, dark = app.sterna.ui.theme.LocalSternaDarkTheme.current, onDismiss = { fleetConfigsOpen = false },
-        onAppConfigs = { if (currentRoute != "settings") nav.currentBackStackEntry?.navigateOnce { nav.navigate("settings") } })
+    // #1814 Configs is ONE vertical tree (Accounts, Text Enhancer, UI, App), the "settings" route; the fleet pages (General, Agents, Perms,
+    // Logcat, X-Ray App, About) are inside it under App, so the horizontal strip is no longer drawn for Cloud Mail.
     NavBarTopFirstRowScaffold(
         title = stringResource(itemDescription(selected ?: "home")),
         hierarchy = openSection?.let { sec -> titleHierarchy(sec, sec.pages.firstOrNull { it.id == currentRoute }?.id) }.orEmpty(),
@@ -73,7 +71,7 @@ fun BottomNavBar(nav: NavController, currentRoute: String, content: @Composable 
             } else entries.firstOrNull { it.id == e.sectionId }?.let(tap)
         },
         onAccount = account,
-        onConfigs = { fleetConfigsOpen = true },
+        onConfigs = { if (currentRoute != "settings") nav.currentBackStackEntry?.navigateOnce { nav.navigate("settings") } },
         onAi = ai,
         dark = app.sterna.ui.theme.LocalSternaDarkTheme.current,
         modifier = Modifier.statusBarsPadding(),

@@ -211,7 +211,7 @@ The categories further down list the full feature set; this is the order of work
 
 ## "Complete app" extras
 
-- ✅ ⭐ Vacation responder / auto-reply, JMAP `VacationResponse` (RFC 8621); per-account, server-side, Settings → Vacation responder (enable + subject + message + optional date range), IMAP/no-capability gated
+- ✅ ⭐ Vacation responder / auto-reply, JMAP `VacationResponse` (RFC 8621); per-account, server-side, Settings → Accounts → Vacation Answer (enable + subject + message + optional date range), IMAP/no-capability gated
 - ✅ On-device storage usage + Clear cache (Settings → Storage); ✅ server mailbox quota via JMAP `Quota` (RFC 9425) shown in Settings → Storage when supported
 - ✅ Server-side filters/rules where the server supports `SieveScript` (RFC 9661), form-based rule builder (condition → move/mark-read/star), compiled to Sieve and round-tripped via a JSON metadata comment. A script Sterna cannot read is never silently overwritten: the screen names the script that is actually running, says plainly when the rules are not being applied and offers to put them back, warns before replacing an unreadable script, and states what saving the filters costs while a vacation auto-reply is running. A rule that files mail into a nested folder names that folder in full
 - ✅ Calendar invite (`.ics`) preview, a `text/calendar` part is detected (captured on

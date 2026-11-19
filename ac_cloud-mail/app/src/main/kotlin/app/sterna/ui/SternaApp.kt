@@ -153,6 +153,8 @@ fun SternaApp(
     onEmailOpenConsumed: () -> Unit = {},
     pendingUnifiedOpen: Boolean = false,
     onUnifiedOpenConsumed: () -> Unit = {},
+    pendingConfigsPage: String? = null,
+    onConfigsPageConsumed: () -> Unit = {},
     viewModel: RootViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -195,6 +197,8 @@ fun SternaApp(
                 onEmailOpenConsumed = onEmailOpenConsumed,
                 pendingUnifiedOpen = pendingUnifiedOpen,
                 onUnifiedOpenConsumed = onUnifiedOpenConsumed,
+                pendingConfigsPage = pendingConfigsPage,
+                onConfigsPageConsumed = onConfigsPageConsumed,
             )
         }
         if (locked) LockScreen(onUnlocked = appLock::unlock)
@@ -215,6 +219,8 @@ private fun MainNavHost(
     onEmailOpenConsumed: () -> Unit = {},
     pendingUnifiedOpen: Boolean = false,
     onUnifiedOpenConsumed: () -> Unit = {},
+    pendingConfigsPage: String? = null,
+    onConfigsPageConsumed: () -> Unit = {},
 ) {
     val nav = rememberNavController()
     // The window WIDTH decides whether a reading pane sits beside the list (#103), never the
@@ -246,6 +252,13 @@ private fun MainNavHost(
     var pendingPaneOpen by remember { mutableStateOf<MessageAnchor?>(null) }
     // A tapped new-mail notification opens that message standalone, and makes its account current
     // (#31) so Back returns to the mailbox just read.
+    // #1814 a Configs launcher shortcut opens that page of the settings tree.
+    LaunchedEffect(pendingConfigsPage) {
+        val page = pendingConfigsPage ?: return@LaunchedEffect
+        onConfigsPageConsumed()
+        // unguarded: a single consumption, and it can arrive mid-transition; a guard could lose the shortcut the user just tapped.
+        nav.navigate("settings?section=${Uri.encode("fleet/$page")}")
+    }
     LaunchedEffect(pendingEmailOpen) {
         val target = pendingEmailOpen ?: return@LaunchedEffect
         onEmailOpenConsumed()
@@ -636,9 +649,10 @@ private fun MainNavHost(
             )
         }
         composable(
-            route = "settings?accountId={accountId}",
+            route = "settings?accountId={accountId}&section={section}",
             arguments = listOf(
                 navArgument("accountId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                navArgument("section") { type = NavType.StringType; nullable = true; defaultValue = null },
             ),
             // An opaque slide rather than the default cross-fade, which flashes the bare window
             // background. Off when reduced motion is on (#100).
@@ -653,6 +667,7 @@ private fun MainNavHost(
                 onBack = { entry.navigateOnce { nav.popBackStack() } },
                 onAccountsChanged = onAccountsChanged,
                 initialAccountId = entry.arguments?.getString("accountId")?.ifBlank { null },
+                initialSection = entry.arguments?.getString("section")?.ifBlank { null },
             )
         }
         // The mail statistics of every configured account. A destination like "snoozed" and not a

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Watch the default network so the inbox resyncs when connectivity returns (#65).
@@ -121,6 +122,16 @@
             android:exported="false"
             android:label="@string/browser_title"
             android:windowSoftInputMode="adjustResize" />
+
+        <!-- #1814 Configs is ONE tree of this app (the "settings" route). The shared lib's own Configs activity (the horizontal General | Agents,
+             Perms, Logcat, X-Ray App, About strip) is replaced by an alias of MainActivity under the same name, so the launcher shortcuts
+             "Configs > General" / "Configs > About" that the lib publishes open this app's tree (MainActivity.onResume reads the page).
+             Not exported, as the lib's activity was. -->
+        <activity android:name="com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity" tools:node="remove" />
+        <activity-alias
+            android:name="com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity"
+            android:targetActivity=".MainActivity"
+            android:exported="false" />
 
         <!-- specialUse (not dataSync): Android 15+ budgets dataSync FGS and then blocks
              background restarts, which silently killed push on newer devices (#11). The

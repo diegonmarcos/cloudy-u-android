@@ -1548,4 +1548,15 @@
     <string name="compose_recipient_check_syntax_tld">De domeinextensie is ongeldig</string>
     <string name="compose_recipient_check_syntax_format">Het adres heeft geen geldig formaat</string>
     <string name="compose_recipient_check_server_cached">Beantwoord uit de recente controles van de server</string>
+    <!-- #1814 Configs tree: Accounts, Text Enhancer, UI, App -->
+    <string name="settings_tree_text_enhancer">Tekstverbetering</string>
+    <string name="settings_tree_ui">Interface</string>
+    <string name="settings_tree_server">Server</string>
+    <string name="settings_tree_signatures">Handtekeningen</string>
+    <string name="settings_tree_folders">Mappen</string>
+    <string name="settings_tree_filter">Filter</string>
+    <string name="settings_tree_others">Overig</string>
+    <string name="settings_tree_account_settings">Accountinstellingen</string>
+    <string name="settings_tree_pick_account">Kies een account</string>
+    <string name="settings_tree_configs">Configuratie</string>
 </resources>

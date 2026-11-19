@@ -38,6 +38,18 @@ class MainActivity : AppCompatActivity() {
      *  discipline as the two above: an order carried out once, not a state the activity is in. */
     private val pendingUnifiedOpen = androidx.compose.runtime.mutableStateOf(false)
 
+    /** #1814 A Configs launcher shortcut ("Configs > General" / "Configs > About": the lib's FleetConfigsActivity, aliased to this activity in the
+     *  manifest) waiting to open that page inside the settings tree. */
+    private val pendingConfigsPage = androidx.compose.runtime.mutableStateOf<String?>(null)
+
+    /** Read here, on its own, so both the cold start and the singleTask re-entry are covered; the extra is stripped once read. */
+    override fun onResume() {
+        super.onResume()
+        val page = intent?.getStringExtra(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity.EXTRA_PAGE) ?: return
+        intent.removeExtra(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity.EXTRA_PAGE)
+        pendingConfigsPage.value = page
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
@@ -87,6 +99,8 @@ class MainActivity : AppCompatActivity() {
                             pendingUnifiedOpen.value = false
                             stripUnifiedOpenPayload()
                         },
+                        pendingConfigsPage = pendingConfigsPage.value,
+                        onConfigsPageConsumed = { pendingConfigsPage.value = null },
                     )
                 }
             }

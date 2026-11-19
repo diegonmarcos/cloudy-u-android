@@ -1551,4 +1551,15 @@
     <string name="compose_recipient_check_syntax_tld">La terminazione del dominio non è valida</string>
     <string name="compose_recipient_check_syntax_format">L\'indirizzo non ha un formato valido</string>
     <string name="compose_recipient_check_server_cached">Risposta dalle verifiche recenti del server</string>
+    <!-- #1814 Configs tree: Accounts, Text Enhancer, UI, App -->
+    <string name="settings_tree_text_enhancer">Miglioramento del testo</string>
+    <string name="settings_tree_ui">Interfaccia</string>
+    <string name="settings_tree_server">Server</string>
+    <string name="settings_tree_signatures">Firme</string>
+    <string name="settings_tree_folders">Cartelle</string>
+    <string name="settings_tree_filter">Filtro</string>
+    <string name="settings_tree_others">Altro</string>
+    <string name="settings_tree_account_settings">Impostazioni dell\'account</string>
+    <string name="settings_tree_pick_account">Scegli un account</string>
+    <string name="settings_tree_configs">Configurazione</string>
 </resources>

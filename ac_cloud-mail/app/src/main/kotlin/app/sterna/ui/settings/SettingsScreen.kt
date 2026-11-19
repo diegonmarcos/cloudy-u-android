@@ -178,10 +178,17 @@ fun SettingsScreen(
     onAccountsChanged: () -> Unit = {},
     /** When set, deep-link straight to this account's detail screen (drawer → tap account). */
     initialAccountId: String? = null,
+    /** #1814 a page of the tree to open above the hub (a Configs launcher shortcut: "fleet/general", "fleet/about"). */
+    initialSection: String? = null,
     viewModel: SettingsViewModel = viewModel(),
     accountsViewModel: AccountsViewModel = viewModel(),
 ) {
     val nav = rememberNavController()
+    // unguarded: one consumption on entry, not a tap; the graph is set by the NavHost composed below, before effects run.
+    var sectionOpened by rememberSaveable { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(initialSection) {
+        if (!sectionOpened) { sectionOpened = true; initialSection?.let { nav.navigate(it) } }
+    }
     // The system "Remove animations" setting switches these slides off (#100). Captured here
     // because rememberMotionEnabled() is @Composable and the transition lambdas are not.
     val motionEnabled = rememberMotionEnabled()
@@ -220,36 +227,8 @@ fun SettingsScreen(
             if (!motionEnabled) ExitTransition.None else slideOutHorizontally(tween(SCREEN_SLIDE_MS)) { it }
         },
     ) {
-        composable("hub") { entry ->
-            val accounts by accountsViewModel.accounts.collectAsStateWithLifecycle()
-            val currentId by accountsViewModel.currentId.collectAsStateWithLifecycle()
-            val currentLabel = accounts.firstOrNull { it.id == currentId }?.label().orEmpty()
-            val context = LocalContext.current
-            // The About rows leave the app: one opener for all, so two rows tapped together open
-            // once (#106).
-            val leaveOnce = rememberLeaveOnce(entry)
-            SettingsHub(
-                onBack = onBack,
-                onOpenAccounts = { entry.navigateOnce { nav.navigate("accounts") } },
-                onOpenAppearance = { entry.navigateOnce { nav.navigate("appearance") } },
-                onOpenReading = { entry.navigateOnce { nav.navigate("reading") } },
-                onOpenNotifications = { entry.navigateOnce { nav.navigate("notifications") } },
-                onOpenVacation = { entry.navigateOnce { nav.navigate("vacation") } },
-                onOpenFilters = { entry.navigateOnce { nav.navigate("filters") } },
-                onOpenAlertAccounts = { entry.navigateOnce { nav.navigate("alertAccounts") } },
-                onOpenPrivacy = { entry.navigateOnce { nav.navigate("privacy") } },
-                onOpenStorage = { entry.navigateOnce { nav.navigate("storage") } },
-                onOpenBackup = { entry.navigateOnce { nav.navigate("backup") } },
-                onOpenUpdate = { entry.navigateOnce { nav.navigate("update") } },
-                onOpenUrl = { url -> leaveOnce { openUrl(context, url) } },
-                // The Text rows are pages of THIS app now, so they navigate like every other row
-                // in the hub rather than leaving for the keyboard. navigateOnce, not leaveOnce:
-                // the guard that matters is the one against a tap landing mid-slide and stacking
-                // two copies of the page, which is the guard the in-app rows all use.
-                onOpenTextTool = { textEntry -> entry.navigateOnce { nav.navigate(textEntry.route) } },
-                currentAccountLabel = currentLabel,
-            )
-        }
+        // #1814 the hub and the tree pages: Accounts, Text Enhancer, UI, App (SettingsTree.kt). Every route below stays.
+        settingsTreeDestinations(nav, accountsViewModel, onBack, onAccountsChanged)
         // Configs ▸ Text. Four pages of THIS app, over this app's own store — they used to be
         // intents into the Cloud Keyboard's settings, which is why nothing on them could be
         // edited from here. The routes are declared once, in TEXT_TOOLS_ENTRIES, and the test
@@ -388,122 +367,8 @@ fun SettingsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SettingsHub(
-    onBack: () -> Unit,
-    onOpenAccounts: () -> Unit,
-    onOpenAppearance: () -> Unit,
-    onOpenReading: () -> Unit,
-    onOpenNotifications: () -> Unit,
-    onOpenVacation: () -> Unit,
-    onOpenFilters: () -> Unit,
-    onOpenAlertAccounts: () -> Unit,
-    onOpenPrivacy: () -> Unit,
-    onOpenStorage: () -> Unit,
-    onOpenBackup: () -> Unit,
-    onOpenUpdate: () -> Unit,
-    onOpenUrl: (String) -> Unit,
-    onOpenTextTool: (TextToolsEntry) -> Unit,
-    currentAccountLabel: String,
-) {
-    DetailScaffold(title = stringResource(R.string.settings_hub_title), onBack = onBack) { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
-        ) {
-            SettingsCategoryRow(
-                Icons.Filled.Person,
-                stringResource(R.string.settings_accounts_title),
-                stringResource(R.string.settings_accounts_summary),
-                onOpenAccounts,
-            )
-            SettingsCategoryRow(
-                Icons.Filled.RssFeed,
-                stringResource(R.string.settings_alert_accounts_title),
-                stringResource(R.string.settings_alert_accounts_summary),
-                onOpenAlertAccounts,
-            )
-            // Data, not hand-written rows: every row here opens one of THIS app's own Text
-            // pages, over this app's own store. They used to open the Cloud Keyboard's pages,
-            // which is why nothing on them could be edited from here. See TextToolsSection.
-            SettingsSection(stringResource(R.string.settings_text_section)) {
-                TEXT_TOOLS_ENTRIES.forEach { entry ->
-                    SettingsCategoryRow(
-                        entry.icon,
-                        stringResource(entry.title),
-                        stringResource(entry.summary),
-                    ) { onOpenTextTool(entry) }
-                }
-            }
-            SettingsSection(stringResource(R.string.settings_group_app)) {
-                SettingsCategoryRow(Icons.Filled.Palette, stringResource(R.string.settings_appearance_title), stringResource(R.string.settings_appearance_summary), onOpenAppearance)
-                SettingsCategoryRow(Icons.AutoMirrored.Filled.List, stringResource(R.string.settings_reading_title), stringResource(R.string.settings_reading_summary), onOpenReading)
-                SettingsCategoryRow(Icons.Filled.Notifications, stringResource(R.string.settings_notifications_title), stringResource(R.string.settings_notifications_summary), onOpenNotifications)
-                SettingsCategoryRow(Icons.Filled.Lock, stringResource(R.string.settings_privacy_title), stringResource(R.string.settings_privacy_summary), onOpenPrivacy)
-                SettingsCategoryRow(Icons.Filled.Storage, stringResource(R.string.settings_storage_title), stringResource(R.string.settings_storage_summary), onOpenStorage)
-                SettingsCategoryRow(Icons.Filled.Backup, stringResource(R.string.settings_backup_title), stringResource(R.string.settings_backup_summary), onOpenBackup)
-                // The only row in this group that can replace the app it is part of.
-                // Its page is the app's self-update, driven by the constellation's
-                // shared updater against the same GHCR image the Constellation store
-                // publishes for Cloud Mail - one update path, reached from here or
-                // from the store, never two.
-                // Refresh, not SystemUpdate: this tree cannot be compiled here, and Refresh
-                // is in the CORE material-icons set that ships with material3, so it resolves
-                // whether or not material-icons-extended is on the classpath. An icon name
-                // that turns out not to exist is a build failure, and this app has already
-                // spent a day not compiling.
-                SettingsCategoryRow(Icons.Filled.Refresh, stringResource(R.string.settings_update_title), stringResource(R.string.settings_update_summary), onOpenUpdate)
-            }
-            // How the Mail section's folders and labels are navigated: the side menu (default), one row or two rows (#1189).
-            SettingsSection(stringResource(R.string.settings_navigation_title)) {
-                Box(Modifier.padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s8)) {
-                    com.diegonmarcos.superapp.navbartop2.NavModeConfigCard(
-                        sections = app.sterna.ui.mailNav.sections,
-                        dark = app.sterna.ui.theme.LocalSternaDarkTheme.current,
-                        dynamic = setOf("mail"),
-                    )
-                }
-            }
-            // Server-side settings that apply to the current account only; the header names it.
-            val accountGroupTitle = if (currentAccountLabel.isNotBlank()) {
-                stringResource(R.string.settings_group_current_account, currentAccountLabel)
-            } else {
-                stringResource(R.string.settings_group_current_account_generic)
-            }
-            SettingsSection(accountGroupTitle) {
-                SettingsCategoryRow(Icons.Filled.BeachAccess, stringResource(R.string.settings_vacation_title), stringResource(R.string.settings_vacation_summary), onOpenVacation)
-                SettingsCategoryRow(Icons.Filled.FilterAlt, stringResource(R.string.settings_filters_title), stringResource(R.string.settings_filters_summary), onOpenFilters)
-            }
-            // These four rows hand a URL to a browser; [onOpenUrl] carries the double-tap guard.
-            // No Context is taken here, so a row added later cannot fire an intent of its own.
-            SettingsSection(stringResource(R.string.settings_about_section)) {
-                SettingsCategoryRow(
-                    Icons.Filled.Info,
-                    stringResource(R.string.settings_about_version),
-                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) · ${BuildConfig.VERSION_DATE}",
-                ) { onOpenUrl("$REPO_URL/releases") }
-                SettingsCategoryRow(
-                    Icons.Filled.Code,
-                    stringResource(R.string.settings_about_source),
-                    REPO_URL.removePrefix("https://"),
-                ) { onOpenUrl(REPO_URL) }
-                SettingsCategoryRow(
-                    Icons.Filled.Description,
-                    stringResource(R.string.settings_about_license),
-                    "GPL-3.0-only",
-                ) { onOpenUrl("$REPO_URL/src/branch/main/LICENSE") }
-                SettingsCategoryRow(
-                    Icons.Filled.Person,
-                    stringResource(R.string.settings_about_author),
-                    "emon",
-                ) { onOpenUrl("https://codeberg.org/emon") }
-            }
-        }
-    }
-}
-
 /** Where Sterna Mail lives; the About section links here (repo, releases, license). */
-private const val REPO_URL = "https://codeberg.org/emon/sterna-mail"
+internal const val REPO_URL = "https://codeberg.org/emon/sterna-mail"
 
 /** Opens a URL in the app's own browser, and says whether anything took it. Call it through the
  *  opener from [rememberLeaveOnce]: it has no re-entrancy protection of its own (#106).
@@ -512,7 +377,7 @@ private const val REPO_URL = "https://codeberg.org/emon/sterna-mail"
  *  used to mean leaving the app (#307). The OAuth hand-offs below deliberately do NOT come through
  *  here: a sign-in belongs in the browser that already holds the session, and its redirect comes
  *  back on a scheme the built-in browser refuses to navigate. */
-private fun openUrl(context: android.content.Context, url: String): Boolean =
+internal fun openUrl(context: android.content.Context, url: String): Boolean =
     InAppBrowser.openLink(context, Uri.parse(url))
 
 @Composable
@@ -1322,8 +1187,9 @@ private fun formatBytes(bytes: Long): String {
 }
 
 @Composable
-private fun AccountsScreen(
+internal fun AccountsScreen(
     viewModel: AccountsViewModel,
+    title: String? = null,
     onBack: () -> Unit,
     onOpenAccount: (String) -> Unit,
     onAddAccount: () -> Unit,
@@ -1350,7 +1216,7 @@ private fun AccountsScreen(
             if (result == SnackbarResult.ActionPerformed) viewModel.restoreImport(account)
         }
     }
-    DetailScaffold(title = stringResource(R.string.settings_accounts_screen_title), onBack = onBack) { padding ->
+    DetailScaffold(title = title ?: stringResource(R.string.settings_accounts_screen_title), onBack = onBack) { padding ->
       Box(Modifier.fillMaxSize().padding(padding)) {
         LazyColumn(Modifier.fillMaxSize()) {
             if (pending.isNotEmpty()) {
@@ -1411,13 +1277,16 @@ private fun AccountsScreen(
 }
 
 @Composable
-private fun AccountDetailScreen(
+internal fun AccountDetailScreen(
     accountId: String,
     viewModel: AccountsViewModel,
     onBack: () -> Unit,
     onSignedOut: () -> Unit,
     onAccountsChanged: () -> Unit,
+    /** #1814 one of FOCUS_SERVER / FOCUS_SIGNATURES / FOCUS_FOLDERS / FOCUS_OTHERS: only that page's sections are drawn; null draws them all (the Accounts list). */
+    focus: String? = null,
 ) {
+    fun show(page: String) = focus == null || focus == page
     // From the live accounts flow, so signing in an inert account or switching it OAUTH→BASIC
     // re-renders with the new authType. The editor field states below stay keyed by accountId
     // only, so a re-fetch of the same account never resets the user's edits.
@@ -1626,6 +1495,7 @@ private fun AccountDetailScreen(
                 }
                 HorizontalDivider()
             }
+            if (show(FOCUS_OTHERS)) {
             SettingsSection(stringResource(R.string.settings_account_section)) {
                 SettingTextField(
                     label = stringResource(R.string.settings_display_name_label),
@@ -1720,6 +1590,8 @@ private fun AccountDetailScreen(
                     }
                 }
             }
+            }
+            if (show(FOCUS_SERVER)) {
             SettingsSection(stringResource(R.string.settings_server_settings_section)) {
                 if (isImap) {
                     SettingTextField(
@@ -1857,6 +1729,8 @@ private fun AccountDetailScreen(
                     modifier = Modifier.padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s8),
                 )
             }
+            }
+            if (show(FOCUS_SIGNATURES)) {
             SettingsSection(stringResource(R.string.settings_identities_section)) {
                 Text(
                     stringResource(R.string.settings_identities_help),
@@ -2093,6 +1967,8 @@ private fun AccountDetailScreen(
                     Text(stringResource(R.string.settings_add_identity))
                 }
             }
+            }
+            if (show(FOCUS_FOLDERS)) {
             SettingsSection(stringResource(R.string.settings_sync_section)) {
                 SettingChoiceRow(
                     title = stringResource(R.string.settings_messages_to_sync_title),
@@ -2124,6 +2000,8 @@ private fun AccountDetailScreen(
                     },
                 )
             }
+            }
+            if (show(FOCUS_OTHERS)) {
             SettingsSection(stringResource(R.string.settings_pgp_section)) {
                 PgpAccountSection(accountId = accountId, account = account, viewModel = viewModel)
             }
@@ -2144,6 +2022,7 @@ private fun AccountDetailScreen(
                 ) {
                     Text(stringResource(R.string.settings_clear_account_cache))
                 }
+            }
             }
             Column(Modifier.fillMaxWidth().padding(MailMetrics.s16), verticalArrangement = Arrangement.spacedBy(MailMetrics.s8)) {
                 OutlinedButton(

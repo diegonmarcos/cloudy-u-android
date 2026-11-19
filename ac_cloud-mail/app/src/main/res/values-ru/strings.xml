@@ -1570,4 +1570,15 @@
     <string name="compose_recipient_check_syntax_tld">Окончание домена недопустимо</string>
     <string name="compose_recipient_check_syntax_format">Адрес имеет недопустимый формат</string>
     <string name="compose_recipient_check_server_cached">Ответ из недавних проверок сервера</string>
+    <!-- #1814 Configs tree: Accounts, Text Enhancer, UI, App -->
+    <string name="settings_tree_text_enhancer">Улучшение текста</string>
+    <string name="settings_tree_ui">Интерфейс</string>
+    <string name="settings_tree_server">Сервер</string>
+    <string name="settings_tree_signatures">Подписи</string>
+    <string name="settings_tree_folders">Папки</string>
+    <string name="settings_tree_filter">Фильтр</string>
+    <string name="settings_tree_others">Другое</string>
+    <string name="settings_tree_account_settings">Настройки аккаунта</string>
+    <string name="settings_tree_pick_account">Выберите аккаунт</string>
+    <string name="settings_tree_configs">Конфигурация</string>
 </resources>

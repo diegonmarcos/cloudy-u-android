@@ -1567,4 +1567,15 @@
     <string name="compose_recipient_check_syntax_tld">Końcówka domeny jest nieprawidłowa</string>
     <string name="compose_recipient_check_syntax_format">Adres ma nieprawidłowy format</string>
     <string name="compose_recipient_check_server_cached">Odpowiedź z ostatnich sprawdzeń serwera</string>
+    <!-- #1814 Configs tree: Accounts, Text Enhancer, UI, App -->
+    <string name="settings_tree_text_enhancer">Ulepszanie tekstu</string>
+    <string name="settings_tree_ui">Interfejs</string>
+    <string name="settings_tree_server">Serwer</string>
+    <string name="settings_tree_signatures">Podpisy</string>
+    <string name="settings_tree_folders">Foldery</string>
+    <string name="settings_tree_filter">Filtr</string>
+    <string name="settings_tree_others">Inne</string>
+    <string name="settings_tree_account_settings">Ustawienia konta</string>
+    <string name="settings_tree_pick_account">Wybierz konto</string>
+    <string name="settings_tree_configs">Konfiguracja</string>
 </resources>

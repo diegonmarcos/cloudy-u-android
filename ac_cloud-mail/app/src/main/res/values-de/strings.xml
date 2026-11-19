@@ -1545,4 +1545,15 @@
     <string name="compose_recipient_check_syntax_tld">Die Domainendung ist ungültig</string>
     <string name="compose_recipient_check_syntax_format">Die Adresse hat kein gültiges Format</string>
     <string name="compose_recipient_check_server_cached">Aus den letzten Prüfungen des Servers beantwortet</string>
+    <!-- #1814 Configs tree: Accounts, Text Enhancer, UI, App -->
+    <string name="settings_tree_text_enhancer">Textverbesserung</string>
+    <string name="settings_tree_ui">Oberfläche</string>
+    <string name="settings_tree_server">Server</string>
+    <string name="settings_tree_signatures">Signaturen</string>
+    <string name="settings_tree_folders">Ordner</string>
+    <string name="settings_tree_filter">Filter</string>
+    <string name="settings_tree_others">Sonstiges</string>
+    <string name="settings_tree_account_settings">Kontoeinstellungen</string>
+    <string name="settings_tree_pick_account">Konto auswählen</string>
+    <string name="settings_tree_configs">Konfiguration</string>
 </resources>
