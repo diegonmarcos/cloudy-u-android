@@ -82,7 +82,9 @@ class MusicBadgeLayoutTest : KitPageHarness() {
         val src = listOf("src/main/java", "app/src/main/java").map { File(it, "com/diegonmarcos/superapp/media/MusicControlsPopup.kt") }
             .first { it.exists() }.readText()
         for (needle in listOf("music:route", "music:volume", "music:elapsed", "\"Vol \$pct%\"", "ic_route_bluetooth", "ic_route_headphones",
-            "ic_route_speaker", "music:sessions", "music:access", "music:dimmed", "music:scrim", "music:art", "--:--", "Slider(", "setRating"))
+            "ic_route_speaker", "music:sessions", "music:access", "music:dimmed", "music:scrim", "music:art", "--:--", "MediaHub.Action.SEEK", "setRating"))
+        // (#1810: the Slider widget was removed on the owner's order; the field it carried - position + seek - is the
+        //  island-wave progress line now, so parity checks the seek action, not the widget's name.)
             assertTrue("missing $needle", src.contains(needle))
     }
 
@@ -110,7 +112,7 @@ class MusicBadgeLayoutTest : KitPageHarness() {
     @Test
     fun `progress-line waves are the Dynamic Island's own IslandWave`() {
         val src = popupSource()
-        assertTrue(src.contains("ui.IslandWave(") && src.contains("running = snap.playing"))
+        assertTrue(src.contains("ui.IslandWave(") && src.contains("val wavesRunning = snap.playing") && src.contains("running = wavesRunning"))
         assertTrue(!src.contains("ChannelWavesView("))
     }
 
