@@ -65,7 +65,8 @@ class WriterPanelTest {
 
     private val modes = WriterMode.values().toList()
 
-    @Test fun threeModesExist() = assertEquals(listOf("translate", "enhance", "draft"), modes.map { it.id })
+    // #1824 Grammar was added after the three; the three keep their order (rule 16), every test below runs for all four
+    @Test fun threeModesExist() = assertEquals(listOf("translate", "enhance", "draft", "grammar"), modes.map { it.id })
 
     // ── a) focus hand-over, both directions, all three modes ─────────────────────────────────────────────────
     @Test fun tappingTheOwnInputBoxHandsTheKeysToItAndTappingTheAppHandsThemBack() {
