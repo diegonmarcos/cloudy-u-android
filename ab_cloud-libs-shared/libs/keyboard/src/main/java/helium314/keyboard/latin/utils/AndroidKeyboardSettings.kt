@@ -4,6 +4,7 @@ package helium314.keyboard.latin.utils
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import android.view.inputmethod.InputMethodManager
 import helium314.keyboard.settings.SettingsActivity
 import helium314.keyboard.settings.SettingsActivity2
 
@@ -15,6 +16,10 @@ import helium314.keyboard.settings.SettingsActivity2
  * [ACTION], the phone's system list of on-screen keyboards: the wrong menu for a key whose job is the keyboard's Android configs. It now
  * opens the keyboard's own settings screen ([CONFIGS_ACTIVITY] at [CONFIGS_OPEN_AT], the grouped All settings: Keyboard / Text / Configs).
  * The system page stays reachable: the Configs row of the same name still opens [ACTION] through [launch] (nothing was removed).
+ *
+ * #1818 follow-up (owner decision 2026-11-19): the toolbar icon opens Android's own "Choose input method" popup ([showSystemPicker],
+ * InputMethodManager.showInputMethodPicker), the same switcher as the navigation-bar keyboard button. The keyboard's own settings stay on
+ * the second-row Configs; [launchConfigs] is kept for that and for any caller. If the popup cannot open, the icon falls back to [launch].
  */
 object AndroidKeyboardSettings {
     const val ACTION = Settings.ACTION_INPUT_METHOD_SETTINGS
@@ -32,6 +37,11 @@ object AndroidKeyboardSettings {
 
     /** Opens the keyboard's own settings screen (the toolbar icon's destination); false when it cannot start. */
     fun launchConfigs(context: Context): Boolean = runCatching { context.startActivity(configsIntent(context)); true }.getOrDefault(false)
+
+    /** #1818 follow-up: Android's "Choose input method" popup; false when it cannot be shown. */
+    fun showSystemPicker(context: Context): Boolean = runCatching {
+        (context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker(); true
+    }.getOrDefault(false)
 
     /** Opens the system settings page; false when the phone has no activity for it. */
     fun launch(context: Context): Boolean = runCatching { context.startActivity(intent()); true }.getOrDefault(false)

@@ -2314,7 +2314,10 @@ public class LatinIME extends InputMethodService implements
         if (mainKeyboardView != null) {
             mainKeyboardView.closing();
         }
-        helium314.keyboard.latin.utils.AndroidKeyboardSettings.INSTANCE.launchConfigs(this); // #1818 the keyboard's own settings, not the system's keyboard list
+        // #1818 follow-up: Android's "Choose input method" popup (the second-row Configs opens the keyboard's own settings);
+        // the system keyboards page if the popup cannot be shown.
+        if (!helium314.keyboard.latin.utils.AndroidKeyboardSettings.INSTANCE.showSystemPicker(this))
+            helium314.keyboard.latin.utils.AndroidKeyboardSettings.INSTANCE.launch(this);
     }
 
     /** #1077: the Grammar mode icon. Cycles Auto Correct / Highlight / Off (#1103) and names the new mode in a toast. */
