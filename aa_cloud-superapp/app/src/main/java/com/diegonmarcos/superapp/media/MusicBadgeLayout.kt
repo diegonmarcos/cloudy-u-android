@@ -34,6 +34,13 @@ internal object MusicBadgeLayout {
     /** Height kept free at the bottom of the card for that row (the card grew by this much in #1810). */
     const val ROUTE_ROW_DP = 22
 
+    /** The progress line is the island waves (no slider track/thumb): its height, and the strength of the unplayed part. */
+    const val WAVE_LINE_DP = 28
+    const val UNPLAYED_ALPHA = 0.35f
+
+    /** Touch x on the wave line -> playback fraction, clamped to [0, 1]; a zero-width line seeks to 0. */
+    fun seekFraction(x: Float, width: Float): Float = if (width <= 0f) 0f else (x / width).coerceIn(0f, 1f)
+
     /** A route not resolved yet still shows a label, so the row is never an empty, invisible strip. */
     fun routeLabel(label: String): String = label.ifBlank { "Audio output" }
 

@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -47,6 +46,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.asImageBitmap
@@ -368,7 +373,13 @@ private fun SessionSwitcher(ctx: Context, hub: MediaHub.State, currentKey: Strin
 @Composable
 private fun IdleRows(last: LastMediaSession.Last? = null) {
     Spacer(Modifier.height(14.dp))
-    Slider(value = last?.fraction ?: 0f, onValueChange = {}, enabled = false, modifier = Modifier.fillMaxWidth().padding(top = 6.dp).testTag("music:progress"))
+    // #1810 idle: the same island-wave progress line, frozen, played part up to the last session's position (no rectangle).
+    val idleShown = last?.fraction ?: 0f
+    Box(Modifier.fillMaxWidth().padding(top = 6.dp).height(MusicBadgeLayout.WAVE_LINE_DP.dp).testTag("music:progress")) {
+        com.diegonmarcos.superapp.ui.IslandWave(Modifier.matchParentSize().alpha(MusicBadgeLayout.UNPLAYED_ALPHA), running = false)
+        com.diegonmarcos.superapp.ui.IslandWave(Modifier.matchParentSize()
+            .drawWithContent { clipRect(right = size.width * idleShown) { this@drawWithContent.drawContent() } }, running = false)
+    }
     Row(Modifier.fillMaxWidth()) {
         Text(MusicControlsPopup.formatTime(last?.positionMs ?: 0L), color = Color(0xFFE0E0E0), fontSize = 10.sp)
         Spacer(Modifier.weight(1f))
@@ -406,18 +417,39 @@ private fun LiveRows(ctx: Context, c: MediaController, snap: MusicSnapshot, rout
     }
     val fraction = if (duration > 0L) (nowPos.toFloat() / duration).coerceIn(0f, 1f) else 0f
     // Only commit on release so the controller is not spammed while the thumb moves; the tick refreshes it otherwise.
-    Box(Modifier.fillMaxWidth().padding(top = 6.dp)) {
-    // #1810 live sound waves on the progress line.
-    // The SAME design as the Dynamic Island: its own IslandWave composable (layered pastel-lilac channels, harmonics +
-    // amplitude modulation, pill-clipped), moving while playing, frozen when paused.
-    com.diegonmarcos.superapp.ui.IslandWave(Modifier.matchParentSize().testTag("music:waves"), running = snap.playing)
-    Slider(value = dragging ?: fraction, onValueChange = { dragging = it },
-        onValueChangeFinished = {
-            val f = dragging
-            dragging = null
-            if (f != null && duration > 0L) MediaHub.send(ctx, MediaHub.Action.SEEK, c, (duration * f).toLong())
-        },
-        modifier = Modifier.fillMaxWidth().testTag("music:progress"))
+    // #1810 the progress line IS the waves: the Dynamic Island's own IslandWave (layered pastel-lilac channels, harmonics +
+    // amplitude modulation, pill-clipped), moving while playing, frozen when paused. No slider track or thumb: the played
+    // part is the full-strength wave, the rest the same wave dimmed ([MusicBadgeLayout.UNPLAYED_ALPHA]). Tap or drag on it
+    // seeks (committed on release, so the controller is not spammed while the finger moves; the tick refreshes otherwise).
+    val shown = dragging ?: fraction
+    val wavesRunning = snap.playing
+    Box(Modifier.fillMaxWidth().padding(top = 6.dp).height(MusicBadgeLayout.WAVE_LINE_DP.dp)
+        .pointerInput(duration) {
+            detectTapGestures { o ->
+                val f = MusicBadgeLayout.seekFraction(o.x, size.width.toFloat())
+                if (duration > 0L) MediaHub.send(ctx, MediaHub.Action.SEEK, c, (duration * f).toLong())
+            }
+        }
+        .pointerInput(duration) {
+            detectHorizontalDragGestures(
+                onDragStart = { o -> dragging = MusicBadgeLayout.seekFraction(o.x, size.width.toFloat()) },
+                onHorizontalDrag = { ch, _ -> dragging = MusicBadgeLayout.seekFraction(ch.position.x, size.width.toFloat()) },
+                onDragEnd = {
+                    val f = dragging
+                    dragging = null
+                    if (f != null && duration > 0L) MediaHub.send(ctx, MediaHub.Action.SEEK, c, (duration * f).toLong())
+                },
+                onDragCancel = { dragging = null },
+            )
+        }
+        .testTag("music:progress")) {
+        // Unplayed: the whole wave, dimmed.
+        com.diegonmarcos.superapp.ui.IslandWave(Modifier.matchParentSize().alpha(MusicBadgeLayout.UNPLAYED_ALPHA).testTag("music:waves-rest"),
+            running = wavesRunning)
+        // Played: the same wave at full strength, clipped to the playhead.
+        com.diegonmarcos.superapp.ui.IslandWave(Modifier.matchParentSize()
+            .drawWithContent { clipRect(right = size.width * shown) { this@drawWithContent.drawContent() } }
+            .testTag("music:waves"), running = wavesRunning)
     }
     Row(Modifier.fillMaxWidth()) {
         Text(MusicControlsPopup.formatTime(nowPos.coerceAtLeast(0L)), color = Color(0xFFE0E0E0), fontSize = 10.sp,

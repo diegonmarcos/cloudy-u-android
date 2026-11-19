@@ -114,6 +114,19 @@ class MusicBadgeLayoutTest : KitPageHarness() {
         assertTrue(!src.contains("ChannelWavesView("))
     }
 
+    @Test
+    fun `the progress line is the waves - no slider rectangle - and tap or drag seeks`() {
+        val src = popupSource()
+        assertTrue("no Slider (track/thumb rectangle) anywhere in the badge", !src.contains("Slider("))
+        assertTrue(src.contains("detectTapGestures") && src.contains("detectHorizontalDragGestures"))
+        assertTrue(src.contains("MusicBadgeLayout.UNPLAYED_ALPHA") && src.contains("clipRect(right = size.width * shown)"))
+        assertEquals(0f, MusicBadgeLayout.seekFraction(-5f, 100f), 0f)
+        assertEquals(0.25f, MusicBadgeLayout.seekFraction(25f, 100f), 0f)
+        assertEquals(1f, MusicBadgeLayout.seekFraction(500f, 100f), 0f)
+        assertEquals(0f, MusicBadgeLayout.seekFraction(10f, 0f), 0f)
+        assertTrue(MusicBadgeLayout.UNPLAYED_ALPHA in 0.1f..0.6f)
+    }
+
     private fun popupSource(): String = listOf("src/main/java", "app/src/main/java")
         .map { File(it, "com/diegonmarcos/superapp/media/MusicControlsPopup.kt") }.first { it.exists() }.readText()
 }
