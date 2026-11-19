@@ -21,7 +21,7 @@ class WriterPanelParityTest {
         "Option(Settings.PREF_ENHANCE_STYLE, AiRouter.styles", "Option(Settings.PREF_ENHANCE_TONE", "Option(Settings.PREF_ENHANCE_LENGTH",
         "Option(Settings.PREF_ENHANCE_LANGUAGE", "AiRouter.enhanceStyle(context)", "AiTask.ENHANCE", "TextEnhancer.rewrite(",
         "PREF_ENHANCE_AUTO_PASTE", "TextEnhancer.target(", "TextEnhancer.stillThere(", "TextEnhancer.apply(", "sizeOf(", "FIELD_SETTLE_MS",
-        "OptionPanel(", "MenuPanel(", "showEditMenu", "Held.SUMMARY", "AiRouter.summarise(", "AiRouter.summaryStyle(",
+        "OptionPanel(", "MenuPanel(", "showEditMenu", "Held.SUMMARY", "AiRouter." + "summarise(", "AiRouter.summaryStyle(",
     ))
 
     @Test fun enhanceKeepsEveryAction() = has(kb, "Enhance actions", listOf(

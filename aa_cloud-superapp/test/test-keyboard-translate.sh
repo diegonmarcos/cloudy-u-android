@@ -245,9 +245,10 @@ grep -q 'selectWhitespaceRun' <<<"$(awk '/fun selectWordAt/,/^    }/' "$E")" \
   || bad "T11 selectWordAt still runs both scans outwards from the space"
 
 # Undo of a programmatic replacement: the owner gets their own text back.
+# (#1818: a Generate lands in the box through outputBox.set -> editor.replaceAll, in the shared panel, no longer in a private generate())
 has "$E" 'fun undo(): Boolean' "T11 the shared editor can undo a whole-buffer replacement"
 has "$E" 'fun replaceAll' "T11 and every programmatic replacement goes through it"
-grep -q 'editor.replaceAll' <<<"$(awk '/private fun generate/,/^    }$/' "$J/latin/EnhanceBarView.kt")" \
+grep -q 'editor.replaceAll' <<<"$(awk '/private val outputBox/,/^    }$/' "$J/latin/EnhanceBarView.kt")" \
   && ok "T11 a generated rewrite landing in the enhance box is undoable" \
   || bad "T11 the enhance bar still overwrites the box with no way back"
 has "$T/TranslateBarView.kt" 'if (editor.canUndo())' "T11 translate offers Undo only when there is text to restore"

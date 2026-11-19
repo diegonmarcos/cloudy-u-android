@@ -152,6 +152,7 @@ class WriterPanelController(
     fun paste(): Outcome {
         val out = output.get()
         if (out.isBlank()) return Outcome.EMPTY_OUTPUT
+        if (!outputApplicable) return Outcome.NOT_APPLICABLE
         focus.onSelfWrite()
         return if (app.insert(out)) Outcome.OK else { focus.cancelSelfWrite(); Outcome.NO_FIELD }
     }

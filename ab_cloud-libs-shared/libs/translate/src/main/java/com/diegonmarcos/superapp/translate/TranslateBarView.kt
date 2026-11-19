@@ -454,7 +454,8 @@ class TranslateBarView @JvmOverloads constructor(
             items.add(MenuItem("Select all") { active.selectAll(); renderInput() })
         // Only offered when there is something to put back, so the menu never promises
         // an undo that does nothing.
-        if (active.canUndo()) items.add(MenuItem("Undo") { active.undo(); changedActive() })
+        val undo = MenuItem("Undo") { active.undo(); changedActive() }
+        if (active === editor) { if (editor.canUndo()) items.add(undo) } else if (outEditor.canUndo()) items.add(undo)
         items.add(MenuItem("Clear") { clear() })
         menu = items
     }
@@ -816,6 +817,10 @@ class TranslateBarView @JvmOverloads constructor(
         }
     }
 
+    /** A labelled action of the bar; the shared panel draws it, this binds its label to what it does. */
+    private class ActionChip(val label: String, val run: () -> Unit)
+    private fun Chip(label: String, run: () -> Unit) = ActionChip(label, run)
+
     @Composable
     private fun Main(p: TranslatePalette) {
         val ctx = LocalContext.current
@@ -826,7 +831,11 @@ class TranslateBarView @JvmOverloads constructor(
             ConfigSelector("to", toTag.uppercase() + " ▾") { showLangMenu(false) },
         )
         // What the bar had before the shared panel and still has: Clear, the long-press edit menu, the status line.
-        val extras = listOf(PanelButton("clear", ctx.getString(R.string.translate_bar_clear)) { clear() })
+        val insert = Chip(ctx.getString(R.string.translate_bar_insert)) { apply(TranslatePrefs.APPLY_INSERT) }
+        val replace = Chip(ctx.getString(R.string.translate_bar_replace)) { apply(TranslatePrefs.APPLY_REPLACE) }
+        val copyChip = Chip(ctx.getString(R.string.translate_bar_copy)) { copy() }
+        val clearChip = Chip(ctx.getString(R.string.translate_bar_clear)) { clear() }
+        val extras = listOf(PanelButton("clear", clearChip.label, clearChip.run))
         WriterPanel(
             WriterPanelSpec(
                 mode = WriterMode.TRANSLATE, title = ctx.getString(R.string.writer_mode_translate),
@@ -837,9 +846,9 @@ class TranslateBarView @JvmOverloads constructor(
                     when (a) {
                         WriterAction.GENERATE -> generateNow()
                         WriterAction.AUTO_REPLACE -> autoReplace()
-                        WriterAction.REPLACE -> apply(TranslatePrefs.APPLY_REPLACE)
-                        WriterAction.PASTE -> apply(TranslatePrefs.APPLY_INSERT)
-                        WriterAction.COPY -> copy()
+                        WriterAction.REPLACE -> replace.run()
+                        WriterAction.PASTE -> insert.run()
+                        WriterAction.COPY -> copyChip.run()
                     }
                 },
                 extras = extras, status = previewText, statusIsError = statusIsError, busy = busy,

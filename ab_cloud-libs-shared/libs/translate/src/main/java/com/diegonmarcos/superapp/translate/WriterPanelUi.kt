@@ -78,7 +78,7 @@ fun WriterPanel(spec: WriterPanelSpec, input: @Composable () -> Unit, output: @C
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically) {
                 Text(spec.title, color = c.text, fontSize = 13.sp, maxLines = 1)
-                spec.selectors.forEach { s -> WriterChip(s.label, c.chip, c.onChip) { s.onTap() } }
+                spec.selectors.forEach { s -> WriterChip(s.label, c.chip, c.onChip, onClick = { s.onTap() }) }
             }
             Text("✕", color = c.text, fontSize = 18.sp, textAlign = TextAlign.Center,
                 modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 44.dp)
@@ -109,7 +109,7 @@ fun WriterPanel(spec: WriterPanelSpec, input: @Composable () -> Unit, output: @C
                 val primary = a == WriterAction.GENERATE
                 WriterChip(stringResource(actionLabel(a)), if (primary) c.accent else c.chip, if (primary) c.onAccent else c.onChip) { spec.onAction(a) }
             }
-            spec.extras.forEach { e -> WriterChip(e.label, c.chip, c.onChip) { e.onClick() } }
+            spec.extras.forEach { e -> WriterChip(e.label, c.chip, c.onChip, onClick = { e.onClick() }) }
         }
     }
 }

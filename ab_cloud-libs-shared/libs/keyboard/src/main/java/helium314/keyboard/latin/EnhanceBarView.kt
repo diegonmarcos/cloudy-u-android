@@ -147,6 +147,8 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
     // its undo without a line of it being written twice.
     private val editor = TextBoxEditor()
     private var busy = false
+    /** An Auto Replace is armed: the next finished Generate is written over the App box. A Resume disarms it (see [resume]). */
+    private var applyWhenReady = false
 
     /**
      * WHAT THE OUTPUT BOX HOLDS, AND THEREFORE WHETHER IT MAY BE WRITTEN BACK.
@@ -570,8 +572,10 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
         ui.removeCallbacks(reload)
         val ctl = activeCtl()
         busy = true
+        applyWhenReady = autoReplace
         val done: (Outcome) -> Unit = { o ->
             busy = false
+            applyWhenReady = false
             when (o) {
                 Outcome.OK -> {
                     if (autoReplace) { keys.appTapped(); showStatus(str(R.string.enhance_bar_replaced)) }
@@ -616,7 +620,7 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
         when (a) {
             WriterAction.GENERATE -> runGenerate(false)
             WriterAction.AUTO_REPLACE -> runGenerate(true)
-            WriterAction.REPLACE -> finish(ctl.replace())
+            WriterAction.REPLACE -> applyOutput()
             WriterAction.PASTE -> finish(ctl.paste(), R.string.answer_bar_inserted)
             WriterAction.COPY -> copyOutput()
         }
@@ -654,6 +658,7 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
         val text = inputEditor.text
         if (text.isBlank()) { showStatus(str(R.string.resume_bar_no_source)); return }
         busy = true
+        applyWhenReady = false   // a Replace armed before this Resume must not fire for the summary
         // A Resume in flight shares the sequence number with Generate, so a Generate / Auto Replace in flight is dropped
         // by it: a summary can never arrive into an armed apply, the overwrite this feature is not allowed to perform.
         val id = seq.incrementAndGet()
@@ -678,6 +683,15 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
                 }
             }
         }
+    }
+
+    /**
+     * Replace: the output box over the App box. The refusal comes FIRST, before anything can write: a summary is a
+     * different, shorter text about the source and is never written back (see [Held]).
+     */
+    private fun applyOutput() {
+        if (held == Held.SUMMARY) { showStatus(str(R.string.resume_bar_no_replace)); return }
+        finish(activeCtl().replace())
     }
 
     /**
