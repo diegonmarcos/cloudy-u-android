@@ -66,4 +66,15 @@
     <string name="translate_bar_type_first">Type something to translate first</string>
     <string name="translate_bar_no_detection">No language detected yet — type something, or choose one instead of Auto</string>
 
+    <string name="writer_panel_input">Input</string>
+    <string name="writer_panel_output">Output</string>
+    <string name="writer_source_own">Type</string>
+    <string name="writer_source_clipboard">Clipboard</string>
+    <string name="writer_source_app">App box</string>
+    <string name="writer_action_generate">Generate</string>
+    <string name="writer_action_auto_replace">Auto Replace</string>
+    <string name="writer_action_replace">Replace</string>
+    <string name="writer_action_paste">Paste</string>
+    <string name="writer_action_copy">Copy</string>
+    <string name="writer_mode_translate">Translate</string>
 </resources>

@@ -130,8 +130,11 @@ om = body(bar, r"override fun Body\(")
 check("maxBarHeight" in om and "heightIn(max" in om, "P5 the bar's onMeasure honours the cap")
 
 print("== P6 the bar closes back to the keyboard ==")
-cl = re.search(r"contentDescription = ctx\.getString\(R\.string\.translate_bar_close\)[^}]*\}\s*\.clickable \{ onClose\?\.run\(\) \}", bar)
-check(cl is not None,
+# #1818 the close control moved into the ONE shared Writer panel (WriterPanelUi.kt), which every mode draws; the bar hands it onClose.
+panel = code(open(os.path.join(R, os.path.dirname(os.environ["BAR"]), "WriterPanelUi.kt"), encoding="utf-8").read())
+cl = re.search(r"contentDescription = closeLabel\s*\}\s*\.clickable \{ spec\.onClose\(\) \}", panel)
+check(cl is not None and "closeLabel = stringResource(R.string.translate_bar_close)" in panel
+      and "onClose = { onClose?.run() }" in bar,
       "P6 a labelled close control runs onClose")
 check("this::hideTranslateBar);" in tt, "P6 onClose is hideTranslateBar (the keyboard stays up)")
 kd = body(ime, r"public boolean onKeyDown\(")

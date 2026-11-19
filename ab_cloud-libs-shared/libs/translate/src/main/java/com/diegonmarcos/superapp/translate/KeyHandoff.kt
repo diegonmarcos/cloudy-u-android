@@ -109,4 +109,14 @@ class KeyHandoff {
     fun reclaim() {
         heldByBox = true
     }
+
+    /** #1818: the panel's resting state is "the host app has the keys" (Enhance, Draft Answer); also the tap-the-app path. */
+    fun release() {
+        heldByBox = false
+    }
+
+    /** #1818: a write announced with [onSelfWrite] that never happened must not swallow the user's next real tap. */
+    fun cancelSelfWrite() {
+        selfWritePending = false
+    }
 }

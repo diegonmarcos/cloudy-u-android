@@ -44,7 +44,25 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.edit
 import com.diegonmarcos.superapp.translate.CappedScrollView
+import com.diegonmarcos.superapp.translate.AppField
+import com.diegonmarcos.superapp.translate.BoxText
+import com.diegonmarcos.superapp.translate.ClipPort
+import com.diegonmarcos.superapp.translate.ConfigSelector
+import com.diegonmarcos.superapp.translate.FieldOpsAppField
+import com.diegonmarcos.superapp.translate.Generator
 import com.diegonmarcos.superapp.translate.ImeTextBox
+import com.diegonmarcos.superapp.translate.InputSource
+import com.diegonmarcos.superapp.translate.KeyFocus
+import com.diegonmarcos.superapp.translate.KeyOwner
+import com.diegonmarcos.superapp.translate.Outcome
+import com.diegonmarcos.superapp.translate.PanelButton
+import com.diegonmarcos.superapp.translate.SystemClip
+import com.diegonmarcos.superapp.translate.WriterAction
+import com.diegonmarcos.superapp.translate.WriterMode
+import com.diegonmarcos.superapp.translate.WriterPanel
+import com.diegonmarcos.superapp.translate.WriterPanelColors
+import com.diegonmarcos.superapp.translate.WriterPanelController
+import com.diegonmarcos.superapp.translate.WriterPanelSpec
 import com.diegonmarcos.superapp.translate.TextBoxEditor
 import com.diegonmarcos.superapp.translate.TranslateEdit
 import com.diegonmarcos.superapp.translate.TranslateInputView
@@ -129,7 +147,6 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
     // its undo without a line of it being written twice.
     private val editor = TextBoxEditor()
     private var busy = false
-    private var applyWhenReady = false
 
     /**
      * WHAT THE OUTPUT BOX HOLDS, AND THEREFORE WHETHER IT MAY BE WRITTEN BACK.
@@ -143,6 +160,12 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
      */
     private enum class Held { REWRITE, SUMMARY, ANSWER }
     private var held = Held.REWRITE
+        set(v) {
+            field = v
+            // a summary is never written back into the field (see [Held]): the shared controller is told
+            enhanceCtl.outputApplicable = v != Held.SUMMARY
+            draftCtl.outputApplicable = v != Held.SUMMARY
+        }
 
     /**
      * Where the keys go. False — the default, and the state the bar opens in — means
@@ -151,7 +174,12 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
      * tapped the output box to touch up a rewrite, so the keys are routed here until
      * they tap the source line (or Generate) to hand them back.
      */
-    private var editingOutput = false
+    /**
+     * #1818 WHO OWNS THE KEYS, shared by Enhance and Draft Answer (and the same object type as Translate's): the
+     * app's own field (the resting state), this panel's INPUT box or its OUTPUT box. Tapping a box of the panel
+     * hands the keys to it; tapping into the host app's field hands them back ([onHostSelectionChange]).
+     */
+    private val keys = KeyFocus(KeyOwner.APP)
 
     // ── #1384 Draft Answer: the same panel in reply mode ─────────────────────
     /** Supplies clipboard items (the keyboard's history plus the system clip). */
@@ -163,10 +191,8 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
     private val answerInput = AnswerInput()
     /** The message box's editor: the SAME TextBoxEditor the output box uses, a second instance. */
     private val inputEditor = TextBoxEditor()
-    /** True while the message box owns the keys (the user tapped it, or Edit). */
-    private var editingInput = false
     /** The editor the keys act on right now. */
-    private val active: TextBoxEditor get() = if (editingInput) inputEditor else editor
+    private val active: TextBoxEditor get() = if (keys.owner == KeyOwner.INPUT) inputEditor else editor
 
     // What the bar shows besides the chips (Compose state; the output box is the TranslateInputView
     // the translate bar uses too, hosted through AndroidView).
@@ -235,10 +261,88 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
         fun label() = current()?.label ?: "—"
     }
 
+    // ── #1818 the shared panel logic, one controller per mode over the SAME boxes, field and clipboard ──────────
+    /** Why the last field write was refused (stale, no cursor), so the status can say it. */
+    private var fieldMessage: String? = null
+
+    /** The App box: what the ENHANCE key would rewrite right now (selection or field per Settings), and its write-back. */
+    private val appField = object : AppField {
+        override fun read(): String? {
+            if (provider?.get() == null) return null
+            reloadTarget()
+            return target?.text.orEmpty()
+        }
+        override fun replace(text: String): Boolean = applyToField(text)
+        override fun insert(text: String): Boolean {
+            val connection = provider?.get() ?: return false
+            connection.commitText(text, 1)
+            return true
+        }
+    }
+
+    /** The Clipboard source: the newest text in the keyboard's history, else the system clip. */
+    private val clipPort = object : ClipPort {
+        private val system = SystemClip(context, "enhance")
+        override fun read(): String? = DraftAnswer.defaultInput(clips()).ifBlank { system.read().orEmpty() }
+        override fun write(text: String) = system.write(text)
+    }
+
+    private val inputBox = object : BoxText {
+        override fun get() = inputEditor.text
+        override fun set(text: String) { setInputText(text) }
+    }
+    private val outputBox = object : BoxText {
+        override fun get() = editor.text
+        override fun set(text: String) {
+            held = if (answerMode) Held.ANSWER else Held.REWRITE   // a rewrite / a reply may be written back; see [Held]
+            // replaceAll, not a raw overwrite: whatever the user had typed or touched up in the box is what Undo gives back.
+            editor.replaceAll(text)
+            renderOutput()
+        }
+    }
+
+    /** Enhance's call: the rewrite of the text through the Text Enhancement route (Configs > AI Routing). */
+    private val enhanceGenerator = Generator { text, done ->
+        val id = seq.incrementAndGet()
+        val style = AiRouter.enhanceStyle(context)
+        val route = AiTaskRouting.route(context, AiTask.ENHANCE)
+        val providerLabel = route.provider.label
+        showStatus(context.getString(R.string.enhance_in_progress, providerLabel))
+        io.execute {
+            val result = runCatching {
+                // progress by name: rewrite() takes route after it, so a trailing lambda binds to route.
+                TextEnhancer.rewrite(context, style, text, route = route, progress = { d, total ->
+                    if (total > 1) ui.post {
+                        if (id == seq.get()) showStatus(context.getString(R.string.enhance_in_progress_part, providerLabel, d + 1, total))
+                    }
+                })
+            }
+            ui.post { if (id == seq.get()) done(result) }   // a newer run, or the bar was reopened, drops this one
+        }
+    }
+
+    /** Draft Answer's call: a reply to the message, through the Text Enhancement model. */
+    private val draftGenerator = Generator { message, done ->
+        val id = seq.incrementAndGet()
+        val style = AiRouter.answerStyle(context)
+        val route = AiTaskRouting.route(context, DraftAnswer.MODEL_TASK)
+        showStatus(context.getString(R.string.answer_in_progress, route.provider.label))
+        io.execute {
+            val result = runCatching { AiRouter.complete(context, style.prompt, message.take(AiRouter.maxChars), route).trim() }
+            ui.post { if (id == seq.get()) done(result) }
+        }
+    }
+
+    private val enhanceCtl = WriterPanelController(WriterMode.ENHANCE, appField, clipPort, inputBox, outputBox, keys,
+        enhanceGenerator, InputSource.APP_BOX)
+    private val draftCtl = WriterPanelController(WriterMode.DRAFT, appField, clipPort, inputBox, outputBox, keys,
+        draftGenerator, InputSource.CLIPBOARD)
+    private fun activeCtl() = if (answerMode) draftCtl else enhanceCtl
+
     init {
         attachOutputTouch()
-        inputView.attachEditing(inputEditor, onClaim = { editingInput = true; editingOutput = false; renderOutput() },
-            onChange = { answerInput.set(inputEditor.text); renderOutput() }, onMenu = ::showSourcePicker)
+        inputView.attachEditing(inputEditor, onClaim = { activeCtl().onInputBoxTapped(); renderOutput() },
+            onChange = { if (answerMode) answerInput.set(inputEditor.text); renderOutput() }, onMenu = ::showSourcePicker)
         renderOutput()
     }
 
@@ -249,88 +353,42 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
     @Composable
     override fun Body() {
         val p = LocalKitPalette.current
-        val hint = p.textSecondary.copy(alpha = 0.7f)
+        val ctl = activeCtl()
+        optTick // read: a chosen entry re-labels its chip
+        outputTick
+        val selectors = (if (answerMode) answerOptions else options).map { o -> ConfigSelector(o.key, o.label()) { optionPick = o } }
+        // What the panels had before the shared one and still have: Clipboard history picker, Resume, Undo, Clear, Regenerate, Edit.
+        val extras = ArrayList<PanelButton>()
+        extras.add(PanelButton("pick", str(R.string.answer_bar_pick)) { showSourcePicker() })
+        if (answerMode) {
+            extras.add(PanelButton("regenerate", str(R.string.answer_bar_regenerate)) { runGenerate(false) })
+            extras.add(PanelButton("edit", str(R.string.answer_bar_edit)) { editAnswerInput() })
+        } else {
+            // "Text Resume" — the owner's name for SUMMARISE, not a curriculum vitae and not resuming anything paused. It sits
+            // here because this panel already is the surface a Resume needs: it reads the same source Enhance does and shows a
+            // result the user can read, edit and Copy before anything is applied (never written into the field: see [Held]).
+            extras.add(PanelButton("resume", str(R.string.resume_bar_resume)) { resume() })
+            if (undoVisible) extras.add(PanelButton("undo", str(R.string.enhance_bar_undo)) { undo() })
+        }
+        extras.add(PanelButton("clear", str(R.string.enhance_bar_clear)) { clear() })
+        // the size of what is read ("312 words · ~420 tokens") rides on the status line when there is nothing else to say
+        val status = statusText.ifEmpty { if (ctl.source == InputSource.APP_BOX) sizeText else "" }
         Box(Modifier.fillMaxWidth().background(p.surface)) {
-            Column(Modifier.fillMaxWidth().padding(start = 10.dp, top = 6.dp, end = 10.dp, bottom = 8.dp)) {
-                // ── Row 1: the Text Enhancements options .................. ✕ ─────────
-                // Four chips do not fit on a phone in portrait, so they scroll rather than shrink.
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        optTick // read: a chosen entry re-labels its chip
-                        if (answerMode) Text(str(R.string.answer_bar_title), color = p.textPrimary, fontSize = 13.sp)
-                        (if (answerMode) answerOptions else options).forEach { option ->
-                            Chip(option.label(), p.surfaceSelected, p.textPrimary) { optionPick = option }
-                        }
-                    }
-                    Text("✕", color = p.textSecondary, fontSize = 16.sp,
-                        modifier = Modifier.clickable { onClose?.run() }.padding(start = 10.dp, top = 2.dp, end = 4.dp, bottom = 2.dp))
-                }
-
-                // ── Row 2: what will be rewritten, and how much of it there is ───────
-                // Tapping it is also how the keys go back to the app's field after a
-                // detour into the output box — "type over there" is what the row means.
-                // Two lines with a visible "…": the whole field is read whatever this
-                // shows, and the size beside it is what says so.
-                if (answerMode) AnswerInputRows(p, hint) else Row(verticalAlignment = Alignment.Top) {
-                    Text(sourceText, color = p.textSecondary, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                        fontStyle = if (sourceBlank) FontStyle.Italic else FontStyle.Normal,
-                        modifier = Modifier.weight(1f).clickable { focusField() }.padding(top = 6.dp))
-                    Text(sizeText, color = hint, fontSize = 12.sp, textAlign = TextAlign.End,
-                        modifier = Modifier.padding(start = 8.dp, top = 6.dp))
-                }
-
-                // ── Row 3: the rewrite, editable ─────────────────────────────────────
-                AndroidView(factory = { outputScroll }, update = { applyOutputView() }, modifier = Modifier.fillMaxWidth())
-
-                // ── Row 4: status ────────────────────────────────────────────────────
-                if (statusText.isNotEmpty())
-                    Text(statusText, color = hint, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 6.dp))
-
-                // ── Row 5: actions ───────────────────────────────────────────────────
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    if (answerMode) {
-                        // Draft Answer: Generate, then Insert at the cursor, Regenerate, Copy.
-                        Chip(str(R.string.enhance_bar_generate), p.accent, p.tileInk) { generateAnswer() }
-                        Chip(str(R.string.answer_bar_insert), p.surfaceSelected, p.textPrimary) { insertAnswer() }
-                        Chip(str(R.string.answer_bar_regenerate), p.surfaceSelected, p.textPrimary) { generateAnswer() }
-                        Chip(str(R.string.enhance_bar_copy), p.surfaceSelected, p.textPrimary) { copyOutput() }
-                        Chip(str(R.string.enhance_bar_clear), p.surfaceSelected, p.textPrimary) { clear() }
-                        return@Row
-                    }
-                    Chip(str(R.string.enhance_bar_generate), p.accent, p.tileInk) { generate(false) }
-                    // "Text Resume" — the owner's name for SUMMARISE, not a curriculum vitae and not resuming
-                    // anything paused. It sits here rather than on a toolbar key of its own because this bar
-                    // already is the surface a Resume needs: it reads the same source the ENHANCE key would,
-                    // and it shows a result the user can read, edit and Copy before anything is applied. A
-                    // second toolbar entry would have bought nothing and spent it in the one row of this
-                    // keyboard that has gone blank, scrolled wrong and crashed in three separate defects.
-                    Chip(str(R.string.resume_bar_resume), p.surfaceSelected, p.textPrimary) { resume() }
-                    Chip(str(R.string.enhance_bar_copy), p.surfaceSelected, p.textPrimary) { copyOutput() }
-                    Chip(str(R.string.enhance_bar_paste), p.surfaceSelected, p.textPrimary) { applyOutput() }
-                    Chip(str(R.string.enhance_bar_replace), p.surfaceSelected, p.textPrimary) { generate(true) }
-                    if (undoVisible) Chip(str(R.string.enhance_bar_undo), p.surfaceSelected, p.textPrimary) { undo() }
-                    Chip(str(R.string.enhance_bar_clear), p.surfaceSelected, p.textPrimary) { clear() }
-                }
-            }
+            WriterPanel(
+                WriterPanelSpec(
+                    mode = if (answerMode) WriterMode.DRAFT else WriterMode.ENHANCE,
+                    title = if (answerMode) str(R.string.answer_bar_title) else str(R.string.writer_mode_enhance),
+                    colors = WriterPanelColors(p.surface, p.surfaceSelected, p.textPrimary, p.accent, p.tileInk,
+                        p.textPrimary, p.textSecondary, p.hairline),
+                    selectors = selectors, source = ctl.source, onSource = ::takeSource, onAction = ::act,
+                    extras = extras, status = status, busy = busy, onClose = { onClose?.run() },
+                ),
+                input = { AndroidView(factory = { inputScroll }, update = { applyInputView() }, modifier = Modifier.fillMaxWidth()) },
+                output = { AndroidView(factory = { outputScroll }, update = { applyOutputView() }, modifier = Modifier.fillMaxWidth()) },
+            )
             optionPick?.let { OptionPanel(p, it) }
             menu?.let { MenuPanel(p, it) }
         }
-    }
-
-    /** Draft Answer's input: the message box (inline-editable) and its three sources. */
-    @Composable
-    private fun AnswerInputRows(p: KitPalette, hint: Color) {
-        Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(str(if (answerInput.isDefault) R.string.answer_bar_input_clipboard else R.string.answer_bar_input_custom),
-                color = hint, fontSize = 12.sp, modifier = Modifier.weight(1f))
-            Chip(str(R.string.answer_bar_pick), p.surfaceSelected, p.textPrimary) { showSourcePicker() }
-            Chip(str(R.string.enhance_bar_paste), p.surfaceSelected, p.textPrimary) { pasteAnswerInput() }
-            Chip(str(R.string.answer_bar_edit), p.surfaceSelected, p.textPrimary) { editAnswerInput() }
-        }
-        AndroidView(factory = { inputScroll }, update = { applyInputView() }, modifier = Modifier.fillMaxWidth())
     }
 
     @Composable
@@ -385,20 +443,22 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
 
     fun onShown(answer: Boolean) {
         answerMode = answer
-        editingInput = false
+        seq.incrementAndGet()
+        ui.removeCallbacks(reload)
+        busy = false
+        held = Held.REWRITE   // a fresh session holds nothing, and nothing is not a summary
+        editor.reset()
+        inputEditor.reset()
+        val ctl = activeCtl()
+        ctl.reset()           // keys back to the app, source back to this mode's default
         if (answer) {
             // Each opening starts from the newest clipboard item; an earlier override does not stick.
             answerInput.reset(clips())
-            inputEditor.reset(); inputEditor.replaceAll(answerInput.text)
+            inputEditor.replaceAll(answerInput.text)
+        } else {
+            reloadTarget()    // App box: the input box shows what the field holds
         }
-        seq.incrementAndGet()
-        ui.removeCallbacks(reload)
-        busy = false; applyWhenReady = false
-        editingOutput = false
-        held = Held.REWRITE   // a fresh session holds nothing, and nothing is not a summary
-        editor.reset()
         optTick++
-        reloadTarget()
         renderOutput()
         showStatus("")
     }
@@ -417,15 +477,25 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
      * True while the output box owns the keys. LatinIME asks before routing anything
      * here, so with the box unfocused every key lands in the app's field as usual.
      */
-    override fun consumesKeys() = visibility == VISIBLE && (editingOutput || editingInput)
+    override fun consumesKeys() = visibility == VISIBLE && keys.consumesKeys
 
     /** Hand the keys back to the app's field and re-read what it now holds. */
     private fun focusField() {
-        if (!editingOutput && !editingInput) return
-        editingOutput = false; editingInput = false
+        if (!keys.consumesKeys) return
+        keys.appTapped()
         editor.setCaret(editor.selLo())
         reloadTarget()
         renderOutput()
+    }
+
+    /**
+     * #1818 the way back: the host reported a selection change with no composing region. When the panel did not
+     * cause it (its own writes announce themselves, see [KeyFocus.onSelfWrite]) the user tapped into the app's
+     * own field, so the keys go back to it. Tapping a box of the panel takes them again.
+     */
+    fun onHostSelectionChange() {
+        if (visibility != VISIBLE) return
+        if (keys.onHostSelectionChange()) renderOutput()
     }
 
     // ── key routing entry points (called from LatinIME.onEvent) ──────────────
@@ -433,8 +503,8 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
         // Enter is the action key on a keyboard bar, not a newline: it does what the
         // user came for — apply what is in the box (generating it first if need be).
         if (cp == '\n'.code) {
-            if (answerMode) { if (editingInput || editor.isEmpty) generateAnswer() else insertAnswer(); return }
-            if (editor.isEmpty) generate(true) else applyOutput(); return
+            if (answerMode) { if (keys.owner == KeyOwner.INPUT || editor.isEmpty) runGenerate(false) else act(WriterAction.PASTE); return }
+            if (editor.isEmpty) runGenerate(true) else act(WriterAction.REPLACE); return
         }
         active.insert(String(Character.toChars(cp)))
         syncAnswerInput()
@@ -491,58 +561,73 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
     // ── the four actions ─────────────────────────────────────────────────────
 
     /**
-     * Ask the model for a rewrite of the source; [thenApply] = the Replace button. Tapping
-     * while a run is in flight starts over rather than being ignored: the old run's reply is
-     * dropped by the sequence check, so a provider that hangs never locks the button until
-     * its timeout.
+     * Generate (or Auto Replace when [autoReplace]) through the shared controller: the input box is read (the App box
+     * again first, when that is the source), the mode's generator runs, the output box fills; Auto Replace then writes it
+     * over the App box. Tapping while a run is in flight starts over rather than being ignored: the old run's reply is
+     * dropped by the sequence check, so a provider that hangs never locks the button until its timeout.
      */
-    private fun generate(thenApply: Boolean) {
-        // Read the field NOW. The snapshot taken when the bar opened is stale by
-        // definition — the user types after opening it, which is the normal way to
-        // use this, and enhancing what the field held before that is never right.
-        editingOutput = false
+    private fun runGenerate(autoReplace: Boolean) {
         ui.removeCallbacks(reload)
-        reloadTarget()
-        val t = target
-        if (t == null || t.text.isBlank()) { showStatus(str(R.string.enhance_bar_no_source)); return }
+        val ctl = activeCtl()
         busy = true
-        applyWhenReady = thenApply
-        val id = seq.incrementAndGet()
-        val style = AiRouter.enhanceStyle(context)
-        val route = AiTaskRouting.route(context, AiTask.ENHANCE) // Configs ▸ AI Routing ▸ Text Enhancement model
-        val providerLabel = route.provider.label
-        showStatus(context.getString(R.string.enhance_in_progress, providerLabel))
-        io.execute {
-            val result = runCatching {
-                // progress by name: rewrite() takes route after it, so a trailing lambda binds to route.
-                TextEnhancer.rewrite(context, style, t.text, route = route, progress = { done, total ->
-                    if (total > 1) ui.post {
-                        if (id == seq.get()) showStatus(context.getString(R.string.enhance_in_progress_part, providerLabel, done + 1, total))
+        val done: (Outcome) -> Unit = { o ->
+            busy = false
+            when (o) {
+                Outcome.OK -> {
+                    if (autoReplace) { keys.appTapped(); showStatus(str(R.string.enhance_bar_replaced)) }
+                    else {
+                        showStatus(if (answerMode) str(R.string.answer_bar_done) else "")
+                        // #355: auto-paste is the standing answer to "Replace after Generate", so a plain Generate reaches the field too.
+                        if (!answerMode && autoPaste()) finish(ctl.replace())
                     }
-                })
-            }
-            ui.post {
-                if (id != seq.get()) return@post   // a newer run, or the bar was reopened
-                busy = false
-                result.onSuccess { out ->
-                    held = Held.REWRITE   // a rewrite may be written back; see [Held]
-                    // replaceAll, not a raw overwrite: whatever the user had typed or
-                    // touched up in the box is what Undo in the box menu gives back.
-                    editor.replaceAll(out)
-                    renderOutput(); showStatus("")
-                    // The Replace chip arms this for one run; auto-paste (#355) is the standing
-                    // answer to the same question, so a plain Generate reaches the field too.
-                    if (applyWhenReady || autoPaste()) applyOutput()
-                }.onFailure { e ->
+                }
+                Outcome.FAILED -> {
+                    val e = ctl.lastError
                     Log.e(TAG, "generate failed", e)
                     showStatus(when (e) {
                         is AiRouter.NoTokenException -> context.getString(R.string.ai_no_token, e.provider.label)
-                        else -> context.getString(R.string.enhance_failed, e.message ?: e.javaClass.simpleName)
+                        else -> context.getString(R.string.enhance_failed, e?.message ?: e?.javaClass?.simpleName ?: "")
                     })
                 }
-                applyWhenReady = false
+                else -> say(o)
             }
         }
+        if (autoReplace) ctl.autoReplace(done) else ctl.generate(done)
+    }
+
+    /** The status for an outcome that did nothing. */
+    private fun say(o: Outcome) = showStatus(when (o) {
+        Outcome.EMPTY_INPUT -> str(if (answerMode) R.string.answer_bar_no_input else R.string.enhance_bar_no_source)
+        Outcome.EMPTY_OUTPUT -> str(R.string.enhance_bar_generate_first)
+        Outcome.NOT_APPLICABLE -> str(R.string.resume_bar_no_replace)
+        Outcome.NO_FIELD -> fieldMessage ?: str(R.string.enhance_no_cursor)
+        else -> ""
+    })
+
+    /** After Replace or Paste: what happened, and where the keys go (the text lives in the field now: type there). */
+    private fun finish(o: Outcome, ok: Int = R.string.enhance_bar_replaced) {
+        if (o == Outcome.OK) { keys.appTapped(); showStatus(str(ok)); renderOutput() } else say(o)
+    }
+
+    /** The five buttons of the shared panel. */
+    private fun act(a: WriterAction) {
+        val ctl = activeCtl()
+        fieldMessage = null
+        when (a) {
+            WriterAction.GENERATE -> runGenerate(false)
+            WriterAction.AUTO_REPLACE -> runGenerate(true)
+            WriterAction.REPLACE -> finish(ctl.replace())
+            WriterAction.PASTE -> finish(ctl.paste(), R.string.answer_bar_inserted)
+            WriterAction.COPY -> copyOutput()
+        }
+    }
+
+    /** The source buttons: Type / Clipboard / App box. */
+    private fun takeSource(s: InputSource) {
+        val o = activeCtl().selectSource(s)
+        if (s == InputSource.CLIPBOARD && o == Outcome.EMPTY_INPUT) showStatus(str(R.string.enhance_bar_clipboard_empty))
+        else if (o != Outcome.OK) say(o)
+        renderOutput()
     }
 
     /**
@@ -564,22 +649,19 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
      * is the prompt set, and AiRouter.summarise is the one place either application composes it.
      */
     private fun resume() {
-        editingOutput = false
         ui.removeCallbacks(reload)
-        reloadTarget()
-        val t = target
-        if (t == null || t.text.isBlank()) { showStatus(str(R.string.resume_bar_no_source)); return }
+        if (enhanceCtl.source == InputSource.APP_BOX) reloadTarget()   // the App box again, right now
+        val text = inputEditor.text
+        if (text.isBlank()) { showStatus(str(R.string.resume_bar_no_source)); return }
         busy = true
-        // A Resume in flight must not leave a Replace armed behind it: the two chips share the
-        // sequence number, and a summary arriving into an armed apply is the exact overwrite
-        // this feature is not allowed to perform.
-        applyWhenReady = false
+        // A Resume in flight shares the sequence number with Generate, so a Generate / Auto Replace in flight is dropped
+        // by it: a summary can never arrive into an armed apply, the overwrite this feature is not allowed to perform.
         val id = seq.incrementAndGet()
         val style = AiRouter.summaryStyle(context)
         val providerLabel = AiRouter.provider(context).label
         showStatus(context.getString(R.string.resume_in_progress, providerLabel))
         io.execute {
-            val result = runCatching { AiRouter.summarise(context, style, t.text) }
+            val result = runCatching { AiRouter.summarise(context, style, text) }
             ui.post {
                 if (id != seq.get()) return@post   // a newer run, or the bar was reopened
                 busy = false
@@ -606,33 +688,26 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
     private fun autoPaste() =
         context.prefs().getBoolean(Settings.PREF_ENHANCE_AUTO_PASTE, Defaults.PREF_ENHANCE_AUTO_PASTE)
 
-    /** Write the box into the field over the text it was made from. */
-    private fun applyOutput() {
-        // A SUMMARY IS NOT A REWRITE AND NEVER REPLACES ITS SOURCE. Refused here rather than by
-        // hiding the chip, so the bar can say why instead of appearing broken — and so the rule
-        // holds for every route into this method, including a Replace armed before a Resume.
-        if (held == Held.SUMMARY) { showStatus(str(R.string.resume_bar_no_replace)); return }
-        if (held == Held.ANSWER) { insertAnswer(); return } // a reply is inserted at the cursor, never over the field
-        val text = editor.text
-        if (text.isBlank()) { showStatus(str(R.string.enhance_bar_generate_first)); return }
-        val t = target ?: return
-        val connection = provider?.get() ?: return
+    /**
+     * Replace: write [text] into the field over what the App box holds (the selection or the field, per Settings).
+     * A SUMMARY never gets here (the controller refuses it, see [Held]). With a source other than the App box the field is
+     * read now, so Replace acts on what the field holds at this moment.
+     */
+    private fun applyToField(text: String): Boolean {
+        val connection = provider?.get() ?: return false
+        if (activeCtl().source != InputSource.APP_BOX || target == null) reloadTarget()
+        val t = target ?: return false
         // The field moved under us (the user typed, or the host app rewrote it) — the
         // stored range no longer describes what is on screen, so applying would corrupt it.
         if (!TextEnhancer.stillThere(context, connection, t)) {
-            showStatus(str(R.string.enhance_stale)); reloadTarget(); return
+            fieldMessage = str(R.string.enhance_stale); reloadTarget(); return false
         }
-        if (TextEnhancer.apply(context, connection, t, text)) {
-            // Undo needs to find the rewrite again later, which takes real coordinates.
-            lastApplied = if (t.addressable) t to text else null
-            undoVisible = lastApplied != null
-            showStatus(str(R.string.enhance_bar_replaced))
-            editingOutput = false   // the text lives in the field now — type there
-            reloadTarget()   // the field is now the rewrite: enhancing again starts from it
-            renderOutput()
-        } else {
-            showStatus(str(R.string.enhance_no_cursor))
-        }
+        if (!TextEnhancer.apply(context, connection, t, text)) { fieldMessage = str(R.string.enhance_no_cursor); return false }
+        // Undo needs to find the rewrite again later, which takes real coordinates.
+        lastApplied = if (t.addressable) t to text else null
+        undoVisible = lastApplied != null
+        reloadTarget()   // the field is now the rewrite: enhancing again starts from it
+        return true
     }
 
     /**
@@ -656,10 +731,8 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
     }
 
     private fun copyOutput() {
-        val text = editor.text
-        if (text.isBlank()) { showStatus(str(R.string.enhance_bar_generate_first)); return }
-        clipboard().setPrimaryClip(ClipData.newPlainText("enhance", text))
-        toast(str(R.string.enhance_bar_copied))
+        val o = activeCtl().copy()
+        if (o == Outcome.OK) toast(str(R.string.enhance_bar_copied)) else say(o)
     }
 
     private fun clear() {
@@ -667,15 +740,17 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
         editor.clear(); renderOutput(); showStatus("")
     }
 
-    /** Re-read what the ENHANCE key would rewrite right now and show it, with its size. */
+    /** Re-read what the ENHANCE key would rewrite right now; with the App box as source the input box follows it. */
     private fun reloadTarget() {
         val connection = provider?.get()
         target = if (connection == null) null else TextEnhancer.target(context, connection)
         val text = target?.text.orEmpty()
-        val shown = if (text.isBlank()) str(R.string.enhance_bar_no_source) else text
-        sourceText = shown
+        sourceText = if (text.isBlank()) str(R.string.enhance_bar_no_source) else text
         sourceBlank = text.isBlank()
         sizeText = if (text.isBlank()) "" else sizeOf(text)
+        if (!answerMode && enhanceCtl.source == InputSource.APP_BOX && keys.owner != KeyOwner.INPUT && inputEditor.text != text) {
+            inputEditor.replaceAll(text); renderOutput()
+        }
     }
 
     /**
@@ -736,7 +811,7 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
         // bar's behaviour exactly as it was: an empty output box has no text of ours to
         // edit, so tapping it must leave the keys with the app's field — which is the
         // whole point of this bar reading the field instead of stealing the keys.
-        outputView.attachEditing(editor, onClaim = { if (!editor.isEmpty) { editingOutput = true; editingInput = false } },
+        outputView.attachEditing(editor, onClaim = { if (!editor.isEmpty) { activeCtl().onOutputBoxTapped() } },
             onChange = ::renderOutput, onMenu = ::showEditMenu)
 
     private fun showEditMenu() {
@@ -785,7 +860,7 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
             outputView.text = editor.text
             // The caret is the only thing that says where the keys are going, so it
             // is drawn only while the box actually has them.
-            outputView.caret = if (editingOutput) editor.selStart else -1
+            outputView.caret = if (keys.owner == KeyOwner.OUTPUT) editor.selStart else -1
         }
         // Posted: the layout still describes the text set BEFORE this call.
         outputView.post { outputView.revealCaret() }
@@ -795,10 +870,17 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
     private fun clips(): List<DraftAnswer.Clip> = runCatching { clipSource?.clips() }.getOrNull().orEmpty()
 
     /** The message box changed under the keys: it is now the user's own input. */
-    private fun syncAnswerInput() { if (answerMode && editingInput) answerInput.set(inputEditor.text) }
+    private fun syncAnswerInput() {
+        if (keys.owner != KeyOwner.INPUT) return
+        activeCtl().onInputEdited()
+        if (answerMode) answerInput.set(inputEditor.text)
+    }
 
-    private fun setAnswerInput(text: String) {
-        answerInput.set(text)
+    private fun setAnswerInput(text: String) = setInputText(text)
+
+    /** Text into the input box (a clipboard pick, the Clipboard source, the App box); Draft Answer also keeps its message record. */
+    private fun setInputText(text: String) {
+        if (answerMode) answerInput.set(text)
         inputEditor.replaceAll(text)
         renderOutput()
     }
@@ -819,35 +901,9 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
 
     /** Edit: the keys go to the message box (type or correct it inline). */
     private fun editAnswerInput() {
-        editingInput = true; editingOutput = false
+        activeCtl().onInputBoxTapped()
         inputEditor.setCaret(inputEditor.length)
         renderOutput()
-    }
-
-    private fun generateAnswer() {
-        editingInput = false; editingOutput = false
-        val message = answerInput.text
-        if (message.isBlank()) { showStatus(str(R.string.answer_bar_no_input)); renderOutput(); return }
-        busy = true
-        val id = seq.incrementAndGet()
-        val style = AiRouter.answerStyle(context)
-        val route = AiTaskRouting.route(context, DraftAnswer.MODEL_TASK) // the Text Enhancement model
-        showStatus(context.getString(R.string.answer_in_progress, route.provider.label))
-        renderOutput()
-        io.execute {
-            val result = runCatching { AiRouter.complete(context, style.prompt, message.take(AiRouter.maxChars), route).trim() }
-            ui.post {
-                if (id != seq.get()) return@post
-                busy = false
-                result.onSuccess { out -> showAnswer(out) }.onFailure { e ->
-                    Log.e(TAG, "draft answer failed", e)
-                    showStatus(when (e) {
-                        is AiRouter.NoTokenException -> context.getString(R.string.ai_no_token, e.provider.label)
-                        else -> context.getString(R.string.enhance_failed, e.message ?: e.javaClass.simpleName)
-                    })
-                }
-            }
-        }
     }
 
     /** A drafted reply lands in the output box (also the debug receiver's seam for CI screenshots without a key). */
@@ -858,36 +914,25 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
         renderOutput(); showStatus(str(R.string.answer_bar_done))
     }
 
-    /** Insert: the draft is committed at the cursor through the InputConnection. */
-    private fun insertAnswer() {
-        val text = editor.text
-        if (text.isBlank()) { showStatus(str(R.string.enhance_bar_generate_first)); return }
-        val connection = provider?.get() ?: return
-        connection.commitText(text, 1)
-        editingOutput = false
-        showStatus(str(R.string.answer_bar_inserted))
-        renderOutput()
-    }
-
     /** The debug receiver's view of the panel (CI screenshots). */
     fun debugState(): String = "answer=$answerMode input=[${answerInput.text}] custom=${!answerInput.isDefault} " +
-        "picker=${menu?.size ?: 0} draft=[${editor.text}] keysToInput=$editingInput"
+        "picker=${menu?.size ?: 0} draft=[${editor.text}] keysTo=${keys.owner} source=${activeCtl().source}"
 
     private fun applyInputView() {
         outputTick // read: the same bump that re-renders the output box
         val p = palette()
         inputView.caretColor = p.textPrimary.toArgb()
         if (inputEditor.isEmpty) {
-            inputView.text = str(R.string.answer_bar_input_hint)
+            inputView.text = str(if (answerMode) R.string.answer_bar_input_hint else R.string.enhance_bar_no_source)
             inputView.setTextColor(p.textSecondary.copy(alpha = 0.7f).toArgb())
             inputView.setTypeface(null, android.graphics.Typeface.ITALIC)
-            inputView.caret = if (editingInput) 0 else -1
+            inputView.caret = if (keys.owner == KeyOwner.INPUT) 0 else -1
             return
         }
         inputView.setTextColor(p.textPrimary.toArgb())
         inputView.setTypeface(null, android.graphics.Typeface.NORMAL)
         inputView.text = inputEditor.text
-        inputView.caret = if (editingInput) inputEditor.selStart else -1
+        inputView.caret = if (keys.owner == KeyOwner.INPUT) inputEditor.selStart else -1
         inputView.post { inputView.revealCaret() }
     }
 

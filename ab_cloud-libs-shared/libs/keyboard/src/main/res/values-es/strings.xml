@@ -765,4 +765,5 @@
     <string name="answer_in_progress">Redactando una respuesta con %1$s…</string>
     <string name="answer_bar_done">Borrador listo: Insertar, Regenerar o Copiar</string>
     <string name="answer_bar_inserted">Insertado en el cursor</string>
+    <string name="writer_mode_enhance">Mejorar</string>
 </resources>

@@ -1419,6 +1419,8 @@ public class LatinIME extends InputMethodService implements
         // mInputLogic below has reconciled the connection with this new selection.
         if (isEnhanceBarActive() && composingSpanEnd < 0) {
             final EnhanceBarView bar = mEnhanceBar;
+            // #1818: a selection change the panel did not cause is the user tapping into the app's field: the keys go back to it.
+            bar.onHostSelectionChange();
             bar.post(bar::onFieldChanged);
         }
 
@@ -2304,7 +2306,7 @@ public class LatinIME extends InputMethodService implements
         GrabberLink.open(this, selected == null ? "" : selected.toString());
     }
 
-    /** #1103: the ANDROID_SETTINGS toolbar key: hand over to Android's keyboard settings. */
+    /** #1103: the ANDROID_SETTINGS toolbar key. #1818: it opens the keyboard's own Android configs / settings screen. */
     public void launchAndroidKeyboardSettings() {
         mInputLogic.commitTyped(mSettings.getCurrent(), LastComposedWord.NOT_A_SEPARATOR);
         requestHideSelf(0);
@@ -2312,7 +2314,7 @@ public class LatinIME extends InputMethodService implements
         if (mainKeyboardView != null) {
             mainKeyboardView.closing();
         }
-        helium314.keyboard.latin.utils.AndroidKeyboardSettings.INSTANCE.launch(this);
+        helium314.keyboard.latin.utils.AndroidKeyboardSettings.INSTANCE.launchConfigs(this); // #1818 the keyboard's own settings, not the system's keyboard list
     }
 
     /** #1077: the Grammar mode icon. Cycles Auto Correct / Highlight / Off (#1103) and names the new mode in a toast. */

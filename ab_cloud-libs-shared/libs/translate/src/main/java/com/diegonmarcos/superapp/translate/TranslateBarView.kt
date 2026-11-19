@@ -201,7 +201,7 @@ class TranslateBarView @JvmOverloads constructor(
     // Who owns the KEYS — a separate question from who owns the text, and it has to stay
     // separate: Output.LOST is terminal for the session, while the keys can come back to
     // the box the moment the user taps it again. See [KeyHandoff].
-    private val keys = KeyHandoff()
+    private val keys = KeyFocus(KeyOwner.INPUT)
     private var liveCommit = TranslatePrefs.DEFAULT_LIVE_COMMIT
     private var applyMode by mutableStateOf(TranslatePrefs.DEFAULT_APPLY_MODE)
 
@@ -232,6 +232,42 @@ class TranslateBarView @JvmOverloads constructor(
         isFillViewport = true
         addView(inputView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
     }
+    // #1818 the OUTPUT box: editable, framed by the shared panel, with its own editor (the same TextBoxEditor).
+    private val outEditor = TextBoxEditor()
+    private var outputTick by mutableIntStateOf(0)
+    private val outputView = TranslateInputView(context).apply {
+        textSize = 16f; setPadding(dp(10), dp(6), dp(10), dp(6))
+        isClickable = true
+    }
+    private val outputScroll = CappedScrollView(context, outputView.lineHeight * INPUT_LINES + dp(12)).apply {
+        isFillViewport = true
+        addView(outputView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+    }
+    /** The editor the keys act on: the output box while it owns them, else the input box. */
+    private val active: TextBoxEditor get() = if (keys.owner == KeyOwner.OUTPUT) outEditor else editor
+    private var source by mutableStateOf(InputSource.OWN)
+    private var statusIsError by mutableStateOf(false)
+    private var busy by mutableStateOf(false)
+
+    /** The shared panel logic (#1818): sources, Replace, Paste, Copy, Auto Replace and the key hand-over. */
+    private val controller = WriterPanelController(
+        WriterMode.TRANSLATE,
+        FieldOpsAppField { icp?.get()?.let { InputConnectionOps(it) } },
+        SystemClip(context, "translation"),
+        object : BoxText { override fun get() = editor.text; override fun set(text: String) { editor.replaceAll(text); onChanged() } },
+        object : BoxText { override fun get() = outEditor.text; override fun set(text: String) { outEditor.replaceAll(text); renderOutput() } },
+        keys,
+        { input, done ->
+            Translator.liveTranslate(context, input, fromTag, toTag, keyboardLang) { r ->
+                val det = r.detected
+                if (fromTag == AUTO && det != null && det != "und") detectedTag = det
+                val out = r.text
+                if (out == null) done(Result.failure(IllegalStateException(r.error ?: context.getString(R.string.translate_failed, context.getString(R.string.translate_reason_unknown)))))
+                else { translated = out; done(Result.success(out)) }
+            }
+        },
+    )
+
     private val ui = Handler(Looper.getMainLooper())
     private var pending: Runnable? = null
     private var slow: Runnable? = null
@@ -241,6 +277,8 @@ class TranslateBarView @JvmOverloads constructor(
         // draws nothing is the IME window showing through, which is black.
         setBackgroundColor(colours.background)
         attachInputTouch()
+        outputView.attachEditing(outEditor, onClaim = { controller.onOutputBoxTapped(); renderInput(); renderOutput() },
+            onChange = ::renderOutput, onMenu = ::showEditMenu)
     }
 
     /**
@@ -282,7 +320,7 @@ class TranslateBarView @JvmOverloads constructor(
 
     /** Called by LatinIME each time the bar is shown — fresh session, settings re-read. */
     fun onShown() {
-        editor.reset(); output = Output.NONE; keys.reset(); translated = null; detectedTag = null
+        editor.reset(); outEditor.reset(); controller.reset(); source = controller.source; busy = false; output = Output.NONE; translated = null; detectedTag = null
         liveCommit = TranslatePrefs.liveCommit(context)
         applyMode = TranslatePrefs.applyMode(context)
         val langs = toLangs()
@@ -321,17 +359,17 @@ class TranslateBarView @JvmOverloads constructor(
      * the keys while the user is working in the panel, and gives them up the moment they
      * touch the field underneath. [KeyHandoff] is the whole of that decision.
      */
-    override fun consumesKeys() = visibility == View.VISIBLE && keys.heldByBox
+    override fun consumesKeys() = visibility == View.VISIBLE && keys.consumesKeys
 
     override fun appendCodePoint(cp: Int) {
         if (cp == '\n'.code) { apply(applyMode); return }   // Enter = primary action
-        editor.insert(String(Character.toChars(cp)))        // at the caret, replacing any selection
-        onChanged()
+        active.insert(String(Character.toChars(cp)))        // at the caret, replacing any selection
+        changedActive()
     }
 
     override fun backspace() {
-        editor.deleteBackward()
-        onChanged()
+        active.deleteBackward()
+        changedActive()
     }
 
     /**
@@ -339,8 +377,8 @@ class TranslateBarView @JvmOverloads constructor(
      * of in the application behind it. Nothing is re-translated: this moves a caret.
      */
     override fun moveCaret(steps: Int, select: Boolean) {
-        editor.moveCaret(steps, select)
-        renderInput()
+        active.moveCaret(steps, select)
+        renderInput(); renderOutput()
     }
 
     /**
@@ -355,19 +393,19 @@ class TranslateBarView @JvmOverloads constructor(
      */
     override fun onEdit(action: TranslateEdit): Boolean {
         when (action) {
-            TranslateEdit.LEFT -> editor.stepCaret(-1)
-            TranslateEdit.RIGHT -> editor.stepCaret(1)
-            TranslateEdit.WORD_LEFT -> editor.setCaret(editor.wordStart(editor.selLo()))
-            TranslateEdit.WORD_RIGHT -> editor.setCaret(editor.wordEnd(editor.selHi()))
-            TranslateEdit.LINE_START -> editor.setCaret(0)
-            TranslateEdit.LINE_END -> editor.setCaret(editor.length)
-            TranslateEdit.SELECT_ALL -> editor.selectAll()
-            TranslateEdit.SELECT_WORD -> editor.selectWordAt(editor.selLo())
+            TranslateEdit.LEFT -> active.stepCaret(-1)
+            TranslateEdit.RIGHT -> active.stepCaret(1)
+            TranslateEdit.WORD_LEFT -> active.setCaret(active.wordStart(active.selLo()))
+            TranslateEdit.WORD_RIGHT -> active.setCaret(active.wordEnd(active.selHi()))
+            TranslateEdit.LINE_START -> active.setCaret(0)
+            TranslateEdit.LINE_END -> active.setCaret(active.length)
+            TranslateEdit.SELECT_ALL -> active.selectAll()
+            TranslateEdit.SELECT_WORD -> active.selectWordAt(active.selLo())
             TranslateEdit.COPY -> copySelection()
             TranslateEdit.CUT -> cutSelection()
             TranslateEdit.PASTE -> paste()
         }
-        renderInput()
+        renderInput(); renderOutput()
         return true
     }
 
@@ -378,48 +416,53 @@ class TranslateBarView @JvmOverloads constructor(
         val clip = clipboard().primaryClip
         val text = if (clip != null && clip.itemCount > 0) clip.getItemAt(0).coerceToText(context).toString() else ""
         if (text.isEmpty()) { toast(context.getString(R.string.translate_bar_clipboard_empty)); return }
-        editor.insert(text)
-        onChanged()
+        active.insert(text)
+        changedActive()
     }
 
     private fun copySelection() {
-        val text = editor.selectedText()
+        val text = active.selectedText()
         if (text.isEmpty()) return
         clipboard().setPrimaryClip(ClipData.newPlainText("translate", text))
-        toast(if (editor.hasSelection()) "Selection copied" else "Copied")
+        toast(if (active.hasSelection()) "Selection copied" else "Copied")
     }
 
     private fun cutSelection() {
-        val text = editor.selectedText()
+        val text = active.selectedText()
         if (text.isEmpty()) return
         clipboard().setPrimaryClip(ClipData.newPlainText("translate", text))
         // No selection means cut EVERYTHING, which is the destructive one — so it goes
         // through clear() and is undoable, rather than emptying the buffer in place.
-        if (!editor.deleteSelection()) editor.clear()
-        onChanged()
+        if (!active.deleteSelection()) active.clear()
+        changedActive()
     }
 
     private fun attachInputTouch() =
         // onClaim was empty for as long as the bar never gave the keys up. Now that a tap
         // in the host field releases them, the same touch that the enhance bar has always
         // used to TAKE the keys is the way back — symmetric, and no gesture to learn.
-        inputView.attachEditing(editor, onClaim = keys::reclaim, onChange = ::renderInput, onMenu = ::showEditMenu)
+        inputView.attachEditing(editor, onClaim = { controller.onInputBoxTapped(); source = controller.source; renderInput() }, onChange = ::renderInput, onMenu = ::showEditMenu)
 
     private fun showEditMenu() {
         val items = ArrayList<MenuItem>()
         items.add(MenuItem("Paste") { paste() })
-        if (editor.hasSelection()) {
+        if (active.hasSelection()) {
             items.add(MenuItem("Cut") { cutSelection() })
             items.add(MenuItem("Copy selection") { copySelection() })
         }
-        if (editor.selLo() != 0 || editor.selHi() != editor.length)
-            items.add(MenuItem("Select all") { editor.selectAll(); renderInput() })
+        if (active.selLo() != 0 || active.selHi() != active.length)
+            items.add(MenuItem("Select all") { active.selectAll(); renderInput() })
         // Only offered when there is something to put back, so the menu never promises
         // an undo that does nothing.
-        if (editor.canUndo()) items.add(MenuItem("Undo") { editor.undo(); onChanged() })
+        if (active.canUndo()) items.add(MenuItem("Undo") { active.undo(); changedActive() })
         items.add(MenuItem("Clear") { clear() })
         menu = items
     }
+
+    /** An edit by key: the input box re-translates, the output box (the user's touch-up) does not. */
+    private fun changedActive() { if (active === editor) { controller.onInputEdited(); source = controller.source; onChanged() } else renderOutput() }
+
+    private fun renderOutput() { outputTick++ }
 
     private fun onChanged() {
         renderInput()
@@ -427,7 +470,7 @@ class TranslateBarView @JvmOverloads constructor(
         slow?.let { ui.removeCallbacks(it) }
         translated = null
         val text = editor.text
-        if (text.isBlank()) { showStatus(""); if (liveCommit) pushOutput(""); return }
+        if (text.isBlank()) { showStatus(""); outEditor.clear(); renderOutput(); if (liveCommit) pushOutput(""); return }
         val job = Runnable {
             showStatus(context.getString(R.string.translate_bar_working))
             val slowJob = Runnable { showStatus(context.getString(R.string.translate_bar_slow)) }
@@ -446,16 +489,16 @@ class TranslateBarView @JvmOverloads constructor(
         val out = r.text
         if (out == null) { translated = null; showStatus(r.error ?: context.getString(R.string.translate_failed, context.getString(R.string.translate_reason_unknown))); return }
         translated = out
-        showingStatus = false
         val det = r.detected
         if (fromTag == AUTO && det != null && det != "und") detectedTag = det
-        previewText = out
+        outEditor.replaceAll(out); renderOutput()
+        showStatus("")
         if (liveCommit) pushOutput(out)
     }
 
     // ── actions ──────────────────────────────────────────────────────────────
     private fun apply(mode: String) {
-        val out = translated
+        val out = outEditor.text.ifBlank { null }
         if (out == null) { if (editor.isNotEmpty) toast(context.getString(R.string.translate_bar_wait)); return }
         // The field is gone (the host closed it, or focus moved) and the bar cannot
         // write anywhere. Saying so is the whole difference between a chip that is
@@ -465,30 +508,70 @@ class TranslateBarView @JvmOverloads constructor(
             // Already in the field as our composing region — finishing it is the
             // whole apply. Committing again is what produced the second copy.
             releaseOutput(ic, keep = true)
-        } else if (mode == TranslatePrefs.APPLY_REPLACE) {
-            val hadSelection = !ic.getSelectedText(0).isNullOrEmpty()
-            keys.onSelfWrite()      // commitText into the field reports -1, same as a host tap
-            Translator.replaceInField(ic, hadSelection, out)
         } else {
-            keys.onSelfWrite()
-            ic.commitText(out, 1)
+            // The shared panel's Replace / Paste: announces its own write to the key focus (see KeyFocus).
+            val done = if (mode == TranslatePrefs.APPLY_REPLACE) controller.replace() else controller.paste()
+            if (done != Outcome.OK) { toast(context.getString(R.string.translate_bar_no_field)); return }
         }
+        afterApplied()
+    }
+
+    /** What an apply leaves behind: the pair is remembered, the source and the output are spent (Undo in the menu brings the source back). */
+    private fun afterApplied() {
         TranslatePrefs.pushRecentPair(context, if (fromTag == AUTO) (detectedTag ?: AUTO) else fromTag, toTag)
         pending?.let { ui.removeCallbacks(it) }
         // Undoable: the source the user typed is gone from the box the moment they
         // apply, and Undo in the long-press menu is how they get it back.
-        editor.clear(); translated = null
-        renderInput(); showStatus("")
+        editor.clear(); outEditor.clear(); translated = null
+        renderInput(); renderOutput(); showStatus("")
+    }
+
+    /** The shared panel's Generate: translate the input box now (no debounce), into the output box. */
+    private fun generateNow() {
+        pending?.let { ui.removeCallbacks(it) }
+        busy = true
+        showStatus(context.getString(R.string.translate_bar_working))
+        controller.generate { o -> busy = false; report(o) }
+    }
+
+    /** Auto Replace: translate, then replace the app box with the result, in one tap. */
+    private fun autoReplace() {
+        pending?.let { ui.removeCallbacks(it) }
+        // a live-commit composing region would be selected over and replaced: take it out first
+        icp?.get()?.let { releaseOutput(it, keep = false) }
+        busy = true
+        showStatus(context.getString(R.string.translate_bar_working))
+        controller.autoReplace { o -> busy = false; if (o == Outcome.OK) afterApplied() else report(o) }
+    }
+
+    private fun report(o: Outcome) {
+        statusIsError = o != Outcome.OK
+        when (o) {
+            Outcome.OK -> showStatus("")
+            Outcome.EMPTY_INPUT -> showStatus(context.getString(R.string.translate_bar_type_first))
+            Outcome.EMPTY_OUTPUT -> showStatus(context.getString(R.string.translate_bar_wait))
+            Outcome.NO_FIELD -> showStatus(context.getString(R.string.translate_bar_no_field))
+            Outcome.NOT_APPLICABLE -> showStatus("")
+            Outcome.FAILED -> showStatus(controller.lastError?.message ?: context.getString(R.string.translate_failed, context.getString(R.string.translate_reason_unknown)))
+        }
     }
 
     private fun copy() {
-        val out = translated ?: run { toast(if (editor.isNotEmpty) context.getString(R.string.translate_bar_wait) else context.getString(R.string.translate_bar_type_first)); return }
-        (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
-            .setPrimaryClip(ClipData.newPlainText("translation", out))
-        toast(context.getString(R.string.translate_bar_copied))
+        val o = controller.copy()
+        if (o == Outcome.OK) toast(context.getString(R.string.translate_bar_copied))
+        else toast(if (editor.isNotEmpty) context.getString(R.string.translate_bar_wait) else context.getString(R.string.translate_bar_type_first))
     }
 
-    private fun clear() { editor.clear(); onChanged() }
+    /** The source buttons: Type / Clipboard / App box. */
+    private fun takeSource(s: InputSource) {
+        val o = controller.selectSource(s)
+        source = controller.source
+        renderInput()
+        if (o == Outcome.EMPTY_INPUT) toast(context.getString(if (s == InputSource.CLIPBOARD) R.string.translate_bar_clipboard_empty else R.string.translate_bar_type_first))
+        else if (o == Outcome.NO_FIELD) toast(context.getString(R.string.translate_bar_no_field))
+    }
+
+    private fun clear() { editor.clear(); outEditor.clear(); renderOutput(); onChanged() }
 
     private fun swap() {
         val f = if (fromTag == AUTO) (detectedTag
@@ -570,8 +653,8 @@ class TranslateBarView @JvmOverloads constructor(
         // and the tap still has to release — and tapping the bar's box takes them again
         // (onClaim, below). Everything past this point is the older, narrower concern of
         // who owns the TEXT, and is unchanged.
-        val wasHeld = keys.heldByBox
-        if (!keys.onSelectionChange()) return
+        val wasHeld = keys.consumesKeys
+        if (!keys.onHostSelectionChange()) return
         // Only on the TRANSITION. Once the keys are with the app, every word the user
         // commits there lands here again (a committed word is a composing span of -1), and
         // re-laying out the box on each of them would be a redraw per keystroke for a
@@ -627,16 +710,43 @@ class TranslateBarView @JvmOverloads constructor(
             // No caret while the host field holds the keys. A blinking caret in a box that
             // the next keystroke will not reach is the box lying about where typing goes —
             // the enhance bar's output box has drawn it conditionally for the same reason.
-            inputView.caret = if (keys.heldByBox) editor.selStart else -1
+            inputView.caret = if (keys.owner == KeyOwner.INPUT) editor.selStart else -1
         }
         // Posted: the layout still describes the text set BEFORE this call, and
         // scrolling against a stale layout lands on the wrong line.
         inputView.post { inputView.revealCaret() }
     }
 
+    /** Re-apply [outEditor] onto the hosted output view. */
+    private fun applyOutput() {
+        outputTick // read: a bump re-runs the AndroidView update that calls this
+        val p = colours
+        outputView.caretColor = p.caret
+        if (outEditor.isEmpty) {
+            outputView.text = context.getString(R.string.writer_panel_output)
+            outputView.setTextColor(p.hint)
+            outputView.setTypeface(null, Typeface.ITALIC)
+            outputView.caret = -1
+            return
+        }
+        outputView.setTextColor(p.text)
+        outputView.setTypeface(null, Typeface.NORMAL)
+        if (outEditor.hasSelection()) {
+            outputView.text = SpannableString(outEditor.text).apply {
+                setSpan(BackgroundColorSpan(p.selection), outEditor.selLo(), outEditor.selHi(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            outputView.caret = -1
+        } else {
+            outputView.text = outEditor.text
+            outputView.caret = if (keys.owner == KeyOwner.OUTPUT) outEditor.selStart else -1
+        }
+        outputView.post { outputView.revealCaret() }
+    }
+
     private fun showStatus(msg: String) {
         showingStatus = true
         previewText = msg
+        if (msg.isEmpty()) statusIsError = false
     }
 
     // ── language picker ──────────────────────────────────────────────────────
@@ -709,62 +819,35 @@ class TranslateBarView @JvmOverloads constructor(
     @Composable
     private fun Main(p: TranslatePalette) {
         val ctx = LocalContext.current
-        val surface = Color(p.surface)
-        val box = RoundedCornerShape(10.dp)
-        Column(Modifier.fillMaxWidth().padding(start = 10.dp, top = 4.dp, end = 10.dp, bottom = 8.dp)) {
-            // ── Row 1: From  ⇄  To ............................. ✕ ───────────────
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Chip(if (fromTag == AUTO) "AUTO" + (detectedTag?.let { " (${it.uppercase()})" } ?: "") + " ▾"
-                     else fromTag.uppercase() + " ▾", Color(p.chip), Color(p.onChip)) { showLangMenu(true) }
-                Text("⇄", color = Color(p.muted), fontSize = 18.sp, textAlign = TextAlign.Center,
-                    modifier = Modifier.sizeIn(minWidth = 44.dp, minHeight = 40.dp)
-                        .semantics { contentDescription = ctx.getString(R.string.translate_bar_swap) }
-                        .clickable { swap() }.padding(top = 8.dp))
-                Chip(toTag.uppercase() + " ▾", Color(p.chip), Color(p.onChip)) { showLangMenu(false) }
-                Spacer(Modifier.weight(1f))
-                // The way back to the keyboard. A real touch target (48dp), not a 16sp glyph
-                // with a few dp of padding that a thumb misses and lands on the app behind.
-                Text("✕", color = Color(p.text), fontSize = 18.sp, textAlign = TextAlign.Center,
-                    modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 44.dp)
-                        .semantics { contentDescription = ctx.getString(R.string.translate_bar_close) }
-                        .clickable { onClose?.run() }.padding(top = 10.dp))
-            }
-
-            // ── Row 2: input buffer ──────────────────────────────────────────
-            Box(Modifier.fillMaxWidth().padding(top = 2.dp).weight(1f, fill = false)
-                .clip(box).background(surface).border(1.dp, Color(p.outline), box)) {
-                AndroidView(factory = { inputScroll }, update = { applyInput() }, modifier = Modifier.fillMaxWidth())
-            }
-
-            // ── Row 3: the result / status ───────────────────────────────────
-            Text(previewText,
-                color = Color(if (showingStatus) p.muted else p.text), fontSize = 15.sp,
-                fontStyle = if (showingStatus) FontStyle.Italic else FontStyle.Normal,
-                maxLines = 3, overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 6.dp)
-                    .clip(box).background(surface).border(1.dp, Color(p.outline), box)
-                    .sizeIn(minHeight = 34.dp).padding(horizontal = 10.dp, vertical = 6.dp))
-
-            // ── Row 4: actions ───────────────────────────────────────────────
-            // Scrolls sideways rather than clipping the last chip on a narrow screen or at a
-            // large font scale.
-            Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                val insertPrimary = applyMode == TranslatePrefs.APPLY_INSERT
-                val replacePrimary = applyMode == TranslatePrefs.APPLY_REPLACE
-                if (insertVisible) {
-                    Chip(ctx.getString(R.string.translate_bar_insert),
-                        Color(if (insertPrimary) p.accent else p.chip), Color(if (insertPrimary) p.onAccent else p.onChip)
-                    ) { apply(TranslatePrefs.APPLY_INSERT) }
-                    Chip(ctx.getString(R.string.translate_bar_replace),
-                        Color(if (replacePrimary) p.accent else p.chip), Color(if (replacePrimary) p.onAccent else p.onChip)
-                    ) { apply(TranslatePrefs.APPLY_REPLACE) }
-                }
-                Chip(ctx.getString(R.string.translate_bar_paste), Color(p.chip), Color(p.onChip)) { paste() }
-                Chip(ctx.getString(R.string.translate_bar_copy), Color(p.chip), Color(p.onChip)) { copy() }
-                Chip(ctx.getString(R.string.translate_bar_clear), Color(p.chip), Color(p.onChip)) { clear() }
-            }
-        }
+        val selectors = listOf(
+            ConfigSelector("from", (if (fromTag == AUTO) "AUTO" + (detectedTag?.let { " (${it.uppercase()})" } ?: "") + " ▾"
+                else fromTag.uppercase() + " ▾")) { showLangMenu(true) },
+            ConfigSelector("swap", "⇄") { swap() },
+            ConfigSelector("to", toTag.uppercase() + " ▾") { showLangMenu(false) },
+        )
+        // What the bar had before the shared panel and still has: Clear, the long-press edit menu, the status line.
+        val extras = listOf(PanelButton("clear", ctx.getString(R.string.translate_bar_clear)) { clear() })
+        WriterPanel(
+            WriterPanelSpec(
+                mode = WriterMode.TRANSLATE, title = ctx.getString(R.string.writer_mode_translate),
+                colors = WriterPanelColors(Color(p.surface), Color(p.chip), Color(p.onChip), Color(p.accent), Color(p.onAccent),
+                    Color(p.text), Color(p.muted), Color(p.outline)),
+                selectors = selectors, source = source, onSource = ::takeSource,
+                onAction = { a ->
+                    when (a) {
+                        WriterAction.GENERATE -> generateNow()
+                        WriterAction.AUTO_REPLACE -> autoReplace()
+                        WriterAction.REPLACE -> apply(TranslatePrefs.APPLY_REPLACE)
+                        WriterAction.PASTE -> apply(TranslatePrefs.APPLY_INSERT)
+                        WriterAction.COPY -> copy()
+                    }
+                },
+                extras = extras, status = previewText, statusIsError = statusIsError, busy = busy,
+                onClose = { onClose?.run() },
+            ),
+            input = { AndroidView(factory = { inputScroll }, update = { applyInput() }, modifier = Modifier.fillMaxWidth()) },
+            output = { AndroidView(factory = { outputScroll }, update = { applyOutput() }, modifier = Modifier.fillMaxWidth()) },
+        )
     }
 
     /** The language picker, over the bar: a list with real section headers that cannot be picked. */

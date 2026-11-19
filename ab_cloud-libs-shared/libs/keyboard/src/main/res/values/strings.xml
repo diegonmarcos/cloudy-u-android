@@ -1670,4 +1670,5 @@ New dictionary:
     <string name="mediaboards_sticker_packs">Installed packs</string>
     <string name="mediaboards_sticker_none">No sticker packs installed.</string>
     <string name="mediaboards_sticker_count">%1$d stickers</string>
+    <string name="writer_mode_enhance">Enhance</string>
 </resources>

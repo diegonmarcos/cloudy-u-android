@@ -48,4 +48,15 @@
     <string name="translate_bar_type_first">Escribe algo para traducir primero</string>
     <string name="translate_bar_no_detection">Todavía no se ha detectado ningún idioma: escribe algo o elige uno en lugar de Auto</string>
 
+    <string name="writer_panel_input">Entrada</string>
+    <string name="writer_panel_output">Salida</string>
+    <string name="writer_source_own">Escribir</string>
+    <string name="writer_source_clipboard">Portapapeles</string>
+    <string name="writer_source_app">Campo de la app</string>
+    <string name="writer_action_generate">Generar</string>
+    <string name="writer_action_auto_replace">Reemplazo automático</string>
+    <string name="writer_action_replace">Reemplazar</string>
+    <string name="writer_action_paste">Pegar</string>
+    <string name="writer_action_copy">Copiar</string>
+    <string name="writer_mode_translate">Traducir</string>
 </resources>
