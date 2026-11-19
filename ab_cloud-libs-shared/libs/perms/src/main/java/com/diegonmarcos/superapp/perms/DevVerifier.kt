@@ -100,7 +100,7 @@ object DevVerifier {
      * probes, advances the flow and remembers everything. A silent shell (no answer to the package probe) changes nothing and the
      * last measurement is returned. The caller raises the notifications ([DevVerifierFlow.immediate], [DevVerifierFlow.alarms]).
      */
-    fun check(ctx: Context, exec: (String) -> String?, now: Long = System.currentTimeMillis()): DevVerifierFlow.Result {
+    fun measure(ctx: Context, exec: (String) -> String?, now: Long = System.currentTimeMillis()): DevVerifierFlow.Result {
         val present = exec(PROBE_PRESENT) ?: return flow(ctx, now)
         val reading = parse(present, exec(PROBE_DISABLED), exec(PROBE_GLOBAL), exec(PROBE_SECURE), now)
         val facts = DevVerifierFlow.Facts(reading, parseFlag(exec(PROBE_DEV_OPTIONS)), parseBootId(exec(PROBE_BOOT_ID)), parseUptimeMs(exec(PROBE_UPTIME)))
@@ -117,8 +117,8 @@ object DevVerifier {
     /** The reboot prompt was raised: never raise it twice for one request. */
     fun markRestartPrompted(ctx: Context) { ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("restart_prompted", true).apply() }
 
-    /** Back-compat name: the reading of [check]. */
-    fun probe(ctx: Context, exec: (String) -> String?, now: Long = System.currentTimeMillis()): Reading = check(ctx, exec, now).reading
+    /** Back-compat name: the reading of [measure]. */
+    fun probe(ctx: Context, exec: (String) -> String?, now: Long = System.currentTimeMillis()): Reading = measure(ctx, exec, now).reading
 
     /** The last measurement; UNKNOWN when none yet. An allowance whose expiry has passed since reads as NOT_ALLOWED. */
     fun recall(ctx: Context, now: Long = System.currentTimeMillis()): Reading {

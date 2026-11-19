@@ -46,7 +46,7 @@ object DevVerifierNotifier {
 
     /** One measurement round, then every notification it owes and the alarms it needs. */
     fun run(ctx: Context, exec: (String) -> String?) {
-        val r = DevVerifier.check(ctx, exec)
+        val r = DevVerifier.measure(ctx, exec)
         for (k in DevVerifierFlow.immediate(r)) {
             post(ctx, k)
             if (k == DevVerifierFlow.Kind.RESTART_PROMPT) DevVerifier.markRestartPrompted(ctx)

@@ -7,7 +7,7 @@ import androidx.compose.ui.platform.LocalContext
 
 /**
  * #1360 an operation that failed because a grant is missing says so: "Missing permission <label> — Grant", never a
- * generic error. Call [check] before (or [explain] after) the work; both read the live state of this app's own entries
+ * generic error. Call [measure] before (or [explain] after) the work; both read the live state of this app's own entries
  * and of the helper that does the work. [grant] opens the exact page (own: the Perms page with the rows highlighted;
  * helper: the helper's settings page for that grant). #1372 in a Compose screen the prompt is [PermsGateCard], the
  * fleet's one compact card (icon, one sentence, Grant, dismiss).

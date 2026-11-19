@@ -80,7 +80,7 @@ class DevVerifierRowTest {
         assertTrue(src("$j/App.kt").contains("DevVerifierNotifier.enqueuePeriodic(this)"))
         val n = src("$j/system/DevVerifierNotifier.kt")
         assertTrue(n.contains("PeriodicWorkRequestBuilder<DevVerifierCheckWorker>(6, TimeUnit.HOURS)"))
-        assertTrue(n.contains("setAndAllowWhileIdle") && n.contains("DevVerifier.check(ctx, exec)"))
+        assertTrue(n.contains("setAndAllowWhileIdle") && n.contains("DevVerifier.measure(ctx, exec)"))
         assertTrue(n.contains("DevVerifierFlow.immediate(r)"))
         val m = src("AndroidManifest.xml")
         assertTrue(m.contains(".system.DevVerifierReceiver") && m.contains("android.intent.action.BOOT_COMPLETED"))
