@@ -11,6 +11,7 @@ import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import androidx.core.database.getStringOrNull
 import helium314.keyboard.latin.ClipboardHistoryEntry
+import helium314.keyboard.latin.ClipboardHtml
 import helium314.keyboard.latin.common.FileUtils
 import helium314.keyboard.latin.settings.Defaults
 import helium314.keyboard.latin.settings.Settings
