@@ -212,3 +212,172 @@ test("launch overrides (the page query) apply over the loaded state, unknown val
   const t = G.applyOverrides(G.defaults(), { shape: "blob", scale: "" });
   assert.equal(t.shape, "hex"); assert.equal(t.scale, 40);
 });
+
+// ── #1823: five more tilings and the Hide-frames modes ──
+const OLD_FOUR = ["hex", "square", "triangle", "octagon"];
+const NEW_FIVE = ["rhombille", "trihexagonal", "snubsquare", "cairo", "elongated"];
+const TYPES = { rhombille: ["RA", "RB", "RC"], trihexagonal: ["XH", "XT", "XU"], snubsquare: ["NA", "NB", "NC", "ND", "NE", "NF"], cairo: ["CA", "CB", "CC", "CD"], elongated: ["EQ", "EU", "ED"] };
+const area = (poly) => { let a = 0; for (let i = 0; i < poly.length; i++) { const p = poly[i], q = poly[(i + 1) % poly.length]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; };
+
+test("tiling list parity: the four prototype shapes stay first, in order, then the five new tilings", () => {
+  assert.deepEqual(G.SHAPES.slice(0, 4), OLD_FOUR);
+  assert.deepEqual(G.SHAPES.slice(4), NEW_FIVE);
+  assert.equal(G.SHAPES.length, 9);
+  assert.deepEqual(G.PREFIXES.octagon, ["O", "OS"]);
+  // the old counts and key formats are untouched (the first tests of this file hold them); every new cell key maps back to its tiling
+  for (const s of NEW_FIVE) {
+    const cells = G.generate(s);
+    assert.ok(cells.length > 500, s); assert.ok(keysUnique(cells), s);
+    assert.deepEqual([...new Set(cells.map((c) => c.geom))].sort(), TYPES[s].slice().sort(), s);
+    for (const c of cells) { assert.equal(G.shapeOfKey(c.key), s); assert.match(c.key, /^[A-Z]{1,2},-?\d{1,3},-?\d{1,3}$/); assert.ok(G.TEMPLATES[c.geom]); }
+  }
+  const prefixes = G.SHAPES.flatMap((s) => G.PREFIXES[s]);
+  assert.equal(new Set(prefixes).size, prefixes.length, "no key prefix shared by two tilings");
+});
+
+test("the tiling cell shapes: rhombille 60/120 rhombi, trihexagonal hexagons + triangles, snub square squares + triangles, cairo pentagons, elongated squares + triangles", () => {
+  const sides = (s) => Object.fromEntries(TYPES[s].map((p) => [p, G.TEMPLATES[p].length]));
+  G.generate("rhombille"); assert.deepEqual(Object.values(sides("rhombille")), [4, 4, 4]);
+  G.generate("trihexagonal"); assert.deepEqual(sides("trihexagonal"), { XH: 6, XT: 3, XU: 3 });
+  G.generate("snubsquare"); assert.deepEqual(sides("snubsquare"), { NA: 4, NB: 4, NC: 3, ND: 3, NE: 3, NF: 3 });
+  G.generate("cairo"); assert.deepEqual(Object.values(sides("cairo")), [5, 5, 5, 5]);
+  G.generate("elongated"); assert.deepEqual(sides("elongated"), { EQ: 4, EU: 3, ED: 3 });
+  // rhombi: all edges equal, angles 60/120 (short diagonal = edge)
+  for (const p of TYPES.rhombille) {
+    const t = G.TEMPLATES[p], d = (a, b) => Math.hypot(t[a][0] - t[b][0], t[a][1] - t[b][1]);
+    near(d(0, 1), d(1, 2), "rhombus edges"); near(d(2, 3), d(0, 1), "rhombus edges");
+    const diags = [d(0, 2), d(1, 3)].sort();
+    near(diags[0], d(0, 1), "short diagonal = edge"); near(diags[1], d(0, 1) * SQRT3, "long diagonal = edge*sqrt3");
+  }
+  // cairo pentagons are convex and congruent in area
+  const ar = TYPES.cairo.map((p) => Math.abs(area(G.TEMPLATES[p])));
+  ar.forEach((a) => near(a, ar[0], "cairo areas"));
+  for (const p of TYPES.cairo) {
+    const t = G.TEMPLATES[p]; const sg = [];
+    for (let i = 0; i < 5; i++) { const a = t[i], b = t[(i + 1) % 5], c = t[(i + 2) % 5]; sg.push(Math.sign((b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]))); }
+    assert.ok(sg.every((x) => x === sg[0] && x !== 0), "convex " + p);
+  }
+});
+
+test("adjacency per new tiling: each edge is shared by at most two cells, and every unshared edge lies on the patch border", () => {
+  for (const s of NEW_FIVE) {
+    const cells = G.generate(s), adj = G.adjacency(cells);
+    let shared = 0, edges = 0;
+    for (const e of Object.keys(adj.edgeCells)) {
+      const n = adj.edgeCells[e].length;
+      assert.ok(n === 1 || n === 2, s + " edge in " + n + " cells");
+      edges++; if (n === 2) shared++;
+    }
+    assert.ok(shared > edges / 2, s);
+    cells.forEach((c, i) => {
+      assert.equal(adj.nbr[i].length, G.TEMPLATES[c.geom].length);
+      adj.nbr[i].forEach((l, k) => {
+        assert.ok(l.length <= 1, s);
+        if (l.length === 0) assert.ok(Math.max(Math.abs(c.cx), Math.abs(c.cy)) > G.WINDOW - 4.5, `${s} ${c.key}: an interior edge with no neighbour`);
+        else { assert.ok(adj.nbr[l[0]].some((m) => m.includes(i)), s + " symmetric"); }
+      });
+    });
+  }
+});
+
+test("adjacency counts on a small patch (r=4 window): interior cells have as many neighbours as edges, per tiling", () => {
+  const sums = {};
+  for (const s of NEW_FIVE) {
+    const cells = G.generate(s, 6), adj = G.adjacency(cells);   // window 6: only the central cells are interior
+    let full = 0;
+    cells.forEach((c, i) => { if (adj.nbr[i].every((l) => l.length === 1)) full++; });
+    sums[s] = [cells.length, full];
+    assert.ok(full > 0 && full < cells.length, s + " " + full + "/" + cells.length);
+  }
+  // trihexagonal: hexagon centres at a 2-spacing lattice; a vertex is shared by exactly two hexagons and two triangles
+  const th = G.generate("trihexagonal"), thAdj = G.adjacency(th);
+  th.forEach((c, i) => { if (c.geom === "XH" && Math.abs(c.cx) < 20 && Math.abs(c.cy) < 20) assert.deepEqual(thAdj.nbr[i].map((l) => th[l[0]].geom).sort(), ["XT", "XT", "XT", "XU", "XU", "XU"]); });
+  // elongated: a square touches 2 squares and 2 triangles
+  const el = G.generate("elongated"), elAdj = G.adjacency(el);
+  el.forEach((c, i) => { if (c.geom === "EQ" && Math.abs(c.cx) < 20 && Math.abs(c.cy) < 20) assert.deepEqual(elAdj.nbr[i].map((l) => el[l[0]].geom).sort(), ["EQ", "EQ", "ED", "EU"].sort()); });
+  // snub square: a triangle touches 3 cells, a square 4 triangles; cairo: every pentagon has 5 neighbours
+  const sn = G.generate("snubsquare"), snAdj = G.adjacency(sn);
+  sn.forEach((c, i) => { if (Math.abs(c.cx) < 20 && Math.abs(c.cy) < 20) assert.equal(snAdj.nbr[i].filter((l) => l.length).length, G.TEMPLATES[c.geom].length); });
+  const ca = G.generate("cairo"), caAdj = G.adjacency(ca);
+  ca.forEach((c, i) => { if (Math.abs(c.cx) < 20 && Math.abs(c.cy) < 20) assert.deepEqual(caAdj.nbr[i].map((l) => l.length), [1, 1, 1, 1, 1]); });
+});
+
+test("adjacency of the prototype grids: hex 6, square 4, octagon 8 + its gap squares 4, triangle 3 (rows are half-shifted)", () => {
+  const deg = (s, geom) => {
+    const cells = G.generate(s), adj = G.adjacency(cells);
+    const c = cells.findIndex((x) => x.geom === geom && Math.abs(x.cx) < 3 && Math.abs(x.cy) < 3);
+    return adj.nbr[c].filter((l) => l.length).length;
+  };
+  assert.equal(deg("hex", "hex"), 6); assert.equal(deg("square", "square"), 4);
+  assert.equal(deg("octagon", "octagon"), 8); assert.equal(deg("octagon", "small_square"), 4);
+  assert.equal(deg("triangle", "triangle"), 3);
+});
+
+test("Hide frames: the default is the current look (off), the modes are off | between | outside | all, and frames persist", () => {
+  const s = G.defaults();
+  assert.equal(s.frames, "off");
+  assert.deepEqual(G.FRAMES, ["off", "between", "outside", "all"]);
+  s.frames = "all";
+  assert.equal(G.decode(G.encode(s)).frames, "all");
+  assert.equal(G.decode(JSON.stringify({ v: 1, frames: "nope" })).frames, "off");
+  assert.equal(G.decode(JSON.stringify({ v: 1 })).frames, "off");            // a state saved before the option existed
+  assert.equal(G.applyOverrides(G.defaults(), { frames: "between" }).frames, "between");
+  assert.equal(G.applyOverrides(G.defaults(), { frames: "x" }).frames, "off");
+  // off = every cell outlined, nothing merged, for painted and unpainted cells alike
+  for (const painted of [false, true]) {
+    const f = G.frameInfo("off", painted, [true, false, true]);
+    assert.equal(f.outline, "line"); assert.deepEqual(f.edges, [false, false, false]);
+  }
+});
+
+test("frame state per mode for sample paint patterns, on every tiling", () => {
+  for (const shape of G.SHAPES) {
+    const cells = G.generate(shape), adj = G.adjacency(cells);
+    const st = G.defaults(); st.shape = shape;
+    // a pair of neighbours A-B far from the border, a lone cell C elsewhere, everything else unpainted
+    const inner = (i) => Math.max(Math.abs(cells[i].cx), Math.abs(cells[i].cy)) < 10 && adj.nbr[i].every((l) => l.length >= 1);
+    const A = cells.findIndex((c, i) => inner(i));
+    const eAB = adj.nbr[A].findIndex((l) => l.length === 1), B = adj.nbr[A][eAB][0];
+    const C = cells.findIndex((c, i) => i !== A && i !== B && inner(i) && !adj.nbr[A].some((l) => l.includes(i)) && !adj.nbr[B].some((l) => l.includes(i)));
+    G.paint(st, cells[A].key, "#ef4444"); G.paint(st, cells[B].key, "#22c55e"); G.paint(st, cells[C].key, "#3b82f6");
+    const U = adj.nbr[A].find((l, k) => k !== eAB && l.length === 1)[0];                                  // an unpainted neighbour of A
+    const mergedA = (f) => f.edges.map((e, k) => (e ? k : -1)).filter((k) => k >= 0);
+    for (const mode of G.FRAMES) {
+      st.frames = mode;
+      const fa = G.frameOfCell(st, cells, adj, A), fc = G.frameOfCell(st, cells, adj, C), fu = G.frameOfCell(st, cells, adj, U), fb = G.frameOfCell(st, cells, adj, B);
+      const between = mode === "between" || mode === "all", outside = mode === "outside" || mode === "all";
+      // painted cells always keep their frame line
+      assert.equal(fa.outline, "line", shape + " " + mode); assert.equal(fc.outline, "line"); assert.equal(fb.outline, "line");
+      // an unpainted cell loses its frame under Only outside / All only
+      assert.equal(fu.outline, outside ? "hidden" : "line", `${shape} ${mode} unpainted outline`);
+      // Only between / All: the A-B shared edge is merged on both sides, and only that edge (every other neighbour of A is unpainted)
+      assert.deepEqual(mergedA(fa), between ? [eAB] : [], `${shape} ${mode} A merged`);
+      assert.equal(fb.edges.filter(Boolean).length, between ? 1 : 0, `${shape} ${mode} B merged`);
+      assert.equal(fc.edges.some(Boolean), false, "a lone painted cell merges nothing");
+      assert.equal(fu.edges.some(Boolean), false, "an unpainted cell merges nothing");
+    }
+    // live update: painting a third cell next to A-B grows the merged set, erasing it shrinks it back
+    st.frames = "between";
+    const before = G.frameOfCell(st, cells, adj, A).edges.filter(Boolean).length;
+    const eAU = adj.nbr[A].findIndex((l) => l.includes(U));
+    G.paint(st, cells[U].key, "#a855f7");
+    assert.equal(G.frameOfCell(st, cells, adj, A).edges.filter(Boolean).length, before + 1, shape + " paint");
+    assert.equal(G.frameOfCell(st, cells, adj, A).edges[eAU], true);
+    G.erase(st, cells[U].key);
+    assert.equal(G.frameOfCell(st, cells, adj, A).edges.filter(Boolean).length, before, shape + " erase");
+    // Clear: nothing painted, so All merges nothing and hides every outline
+    G.clear(st); st.frames = "all";
+    assert.equal(G.frameOfCell(st, cells, adj, A).outline, "hidden");
+    assert.equal(G.frameOfCell(st, cells, adj, A).edges.some(Boolean), false);
+  }
+});
+
+test("frameInfo truth table: merged needs both cells painted, hidden needs an unpainted cell", () => {
+  const rows = { off: [["line", false], ["line", false]], between: [["line", false], ["line", true]], outside: [["hidden", false], ["line", false]], all: [["hidden", false], ["line", true]] };
+  for (const mode of G.FRAMES) {
+    const un = G.frameInfo(mode, false, [true]), pa = G.frameInfo(mode, true, [true]), pn = G.frameInfo(mode, true, [false]);
+    assert.deepEqual([un.outline, un.edges[0]], rows[mode][0], mode + " unpainted");
+    assert.deepEqual([pa.outline, pa.edges[0]], rows[mode][1], mode + " painted beside painted");
+    assert.deepEqual([pn.outline, pn.edges[0]], ["line", false], mode + " painted beside unpainted");
+  }
+});

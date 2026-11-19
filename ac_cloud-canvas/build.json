@@ -343,7 +343,7 @@
         "Board: an infinite whiteboard (Quickdraw) with pen and highlighter ink, shapes, arrows, text, sticky notes, images and an eraser; several named boards saved on the phone; works with no network",
         "Play: a sampled grand piano (3 velocity layers, a sample every 3 semitones), a sampled acoustic drum kit (10 pads) and a synth, on a low-latency audio path with polyphony and touch velocity",
         "Mixer with 4 to 8 tracks: volume, pan, mute, solo, loop recording; tempo and metronome; WAV export",
-        "Painter: paint or rub out the cells of a hex, square, triangle or octagon grid with six colours; grid scale; 2D or 3D Sphere view with pan, zoom and orbit; Active Cells count and Clear; each grid keeps its own painting on the phone; works with no network"
+        "Painter: paint or rub out the cells of a hex, square, triangle, octagon, rhombille, trihexagonal, snub square, cairo or elongated triangular grid with six colours; Hide frames (Off, Only between, Only outside, All); grid scale; 2D or 3D Sphere view with pan, zoom and orbit; Active Cells count and Clear; each grid keeps its own painting on the phone; works with no network"
       ],
       "screens": [
         {

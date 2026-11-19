@@ -4,6 +4,11 @@
 // Each cell is two InstancedMeshes sharing one geometry: the outline (white, opacity 0.25, full scale) and the fill just above it
 // (z+1 in 2D, radius+1 in 3D) at 0.94 scale, black when empty, the cell's colour when painted. Both DoubleSide.
 //
+// #1823 Hide frames (state.frames: off | between | outside | all; off is the look above): the outline of an unpainted cell turns black
+// under Only outside / All (its instance colour), and under Only between / All the ring between a painted cell's fill and its edge is
+// drawn, on each edge it shares with a painted cell, in that cell's colour (one extra mesh of ring segments: a quad per cell edge,
+// switched on and off through its index buffer). Which edge is which comes from PainterGrid.adjacency / frameOfCell.
+//
 // Persistence goes through the app's web message listener `CloudPainter` (PainterScreen.kt, asset origin and main frame only):
 //   page -> app  {op:"ready"}                 the page is up; the app answers with a load
 //                {op:"save", state}            the state changed (debounced) or a flush was asked; state = PainterGrid.encode(...)
@@ -58,37 +63,116 @@
     };
   }
   var GEOM = geometries();
+  // the #1823 tilings' polygons come from PainterGrid.TEMPLATES (unit size around the cell centre, like the geometries above)
+  function geometryOf(name) {
+    if (!GEOM[name]) GEOM[name] = new THREE.ShapeGeometry(new THREE.Shape(G.TEMPLATES[name].map(function (p) { return new THREE.Vector2(p[0], p[1]); })));
+    return GEOM[name];
+  }
 
   var groups = [];          // [{geom, cells, outline, fill}]
   var fills = [];           // the fill meshes, raycast targets
   var BLACK = new THREE.Color(0x000000);
+  var WHITE = new THREE.Color(0xffffff);
+  var cells = [], adj = null, where = [], ring = null;   // the current shape's cells, their adjacency, [group, local index] per cell, the ring mesh
+  var framesOn = false;                                  // whether the outline colours / ring currently differ from the "off" look
   var tmpColor = new THREE.Color();
 
   function disposeGrid() {
     groups.forEach(function (g) { scene.remove(g.outline); scene.remove(g.fill); g.outline.material.dispose(); g.fill.material.dispose(); g.outline.dispose && g.outline.dispose(); g.fill.dispose && g.fill.dispose(); });
     groups = []; fills = [];
+    if (ring) { scene.remove(ring.mesh); ring.mesh.geometry.dispose(); ring.mesh.material.dispose(); ring = null; }
   }
 
   // Builds the meshes of the current shape (one outline + one fill InstancedMesh per geometry it uses).
   function buildGrid() {
     disposeGrid();
-    var cells = G.generate(state.shape);
+    cells = G.generate(state.shape);
+    adj = G.adjacency(cells);
+    where = []; framesOn = false;
     var byGeom = {};
-    cells.forEach(function (c) { (byGeom[c.geom] = byGeom[c.geom] || []).push(c); });
+    cells.forEach(function (c, i) { c.i = i; (byGeom[c.geom] = byGeom[c.geom] || []).push(c); });
     Object.keys(byGeom).forEach(function (name) {
       var list = byGeom[name];
-      var outline = new THREE.InstancedMesh(GEOM[name], new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, side: THREE.DoubleSide }), list.length);
-      var fill = new THREE.InstancedMesh(GEOM[name], new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }), list.length);
+      var outline = new THREE.InstancedMesh(geometryOf(name), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, side: THREE.DoubleSide }), list.length);
+      var fill = new THREE.InstancedMesh(geometryOf(name), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }), list.length);
       fill.userData.cells = list;
       // the shared unit geometry sits at the origin, so a mesh-level frustum test would hide the whole grid once the view moves
       outline.frustumCulled = false; fill.frustumCulled = false;
-      for (var i = 0; i < list.length; i++) fill.setColorAt(i, BLACK);
+      for (var i = 0; i < list.length; i++) { fill.setColorAt(i, BLACK); outline.setColorAt(i, WHITE); where[list[i].i] = { g: groups.length, l: i }; }
       scene.add(outline); scene.add(fill);
       groups.push({ geom: name, cells: list, outline: outline, fill: fill });
       fills.push(fill);
     });
+    buildRing();
     layoutGrid();
     paintAll();
+  }
+
+  // The ring segments: for every cell edge k one quad between the full-size edge and the fill's edge (scale 0.94), at the fill's height.
+  function buildRing() {
+    var segs = 0, base = [];
+    cells.forEach(function (c) { base.push(segs); segs += G.TEMPLATES[c.geom].length; });
+    var geo = new THREE.BufferGeometry();
+    var pos = new THREE.BufferAttribute(new Float32Array(segs * 12), 3), col = new THREE.BufferAttribute(new Float32Array(segs * 12), 3);
+    var idx = new THREE.BufferAttribute(new Uint32Array(segs * 6), 1);
+    pos.setUsage(THREE.DynamicDrawUsage); col.setUsage(THREE.DynamicDrawUsage); idx.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute("position", pos); geo.setAttribute("color", col); geo.setIndex(idx);
+    var mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+    mesh.frustumCulled = false;
+    scene.add(mesh);
+    ring = { mesh: mesh, pos: pos, col: col, idx: idx, base: base };
+  }
+
+  var rv = new THREE.Vector3();
+  function layoutRing() {
+    if (!ring) return;
+    cells.forEach(function (c, i) {
+      var t = G.TEMPLATES[c.geom], n = t.length, b = ring.base[i];
+      [[1, 0], [0.94, 1]].forEach(function (ko) {   // ko = [scale factor, 0 outer / 1 inner]
+        var m = place(c, 1, ko[0]);
+        for (var k = 0; k < n; k++) {
+          rv.set(t[k][0], t[k][1], 0).applyMatrix4(m);
+          // quad of segment k = outer k, outer k+1, inner k+1, inner k: corner k is slot 0 / 3 of segment k and slot 1 / 2 of segment k-1
+          var seg = b + k, nextSeg = b + ((k + n - 1) % n);
+          if (ko[1] === 0) { ring.pos.setXYZ(4 * seg, rv.x, rv.y, rv.z); ring.pos.setXYZ(4 * nextSeg + 1, rv.x, rv.y, rv.z); }
+          else { ring.pos.setXYZ(4 * seg + 3, rv.x, rv.y, rv.z); ring.pos.setXYZ(4 * nextSeg + 2, rv.x, rv.y, rv.z); }
+        }
+      });
+    });
+    ring.pos.needsUpdate = true;
+  }
+
+  // Applies the frame mode to cell i (outline colour, ring segments in the cell's colour).
+  function frameCell(i) {
+    var c = cells[i], f = G.frameOfCell(state, cells, adj, i), w = where[i], g = groups[w.g];
+    g.outline.setColorAt(w.l, f.outline === "hidden" ? BLACK : WHITE);
+    var col = G.colorOf(state, c.key);
+    if (col) tmpColor.set(col);
+    for (var k = 0; k < f.edges.length; k++) {
+      var seg = ring.base[i] + k, on = f.edges[k] && col;
+      for (var v = 0; v < 4; v++) ring.col.setXYZ(4 * seg + v, on ? tmpColor.r : 0, on ? tmpColor.g : 0, on ? tmpColor.b : 0);
+      var q = on ? [0, 1, 2, 0, 2, 3] : [0, 0, 0, 0, 0, 0];
+      for (var j = 0; j < 6; j++) ring.idx.setX(6 * seg + j, on ? 4 * seg + q[j] : 0);
+    }
+  }
+  function framesDone() {
+    groups.forEach(function (g) { if (g.outline.instanceColor) g.outline.instanceColor.needsUpdate = true; });
+    ring.col.needsUpdate = true; ring.idx.needsUpdate = true;
+  }
+  // after a paint/erase of cell i: it and the cells across its edges change
+  function refreshFrames(i) {
+    if (!framesOn && state.frames === "off") return;
+    var todo = {}; todo[i] = 1;
+    adj.nbr[i].forEach(function (l) { l.forEach(function (j) { todo[j] = 1; }); });
+    Object.keys(todo).forEach(function (j) { frameCell(+j); });
+    framesDone();
+    framesOn = state.frames !== "off";
+  }
+  function refreshAllFrames() {
+    if (!framesOn && state.frames === "off") return;
+    for (var i = 0; i < cells.length; i++) frameCell(i);
+    framesDone();
+    framesOn = state.frames !== "off";
   }
 
   var dummy = new THREE.Object3D();
@@ -120,6 +204,7 @@
       g.outline.computeBoundingSphere && g.outline.computeBoundingSphere();
       g.fill.computeBoundingSphere && g.fill.computeBoundingSphere();
     });
+    layoutRing();
   }
 
   function paintAll() {
@@ -130,6 +215,7 @@
       }
       if (g.fill.instanceColor) g.fill.instanceColor.needsUpdate = true;
     });
+    refreshAllFrames();
     updateCount();
   }
 
@@ -137,6 +223,7 @@
     var c = G.colorOf(state, mesh.userData.cells[index].key);
     mesh.setColorAt(index, c ? tmpColor.set(c) : BLACK);
     mesh.instanceColor.needsUpdate = true;
+    refreshFrames(mesh.userData.cells[index].i);
   }
 
   // ── cameras and controls per layout and mode ──
@@ -232,6 +319,7 @@
     [].forEach.call(document.querySelectorAll("[data-shape]"), function (b) { b.classList.toggle("on", b.dataset.shape === state.shape); });
     [].forEach.call(document.querySelectorAll("[data-mode]"), function (b) { b.classList.toggle("on", b.dataset.mode === state.mode); });
     [].forEach.call(document.querySelectorAll("[data-layout]"), function (b) { b.classList.toggle("on", b.dataset.layout === state.layout); });
+    [].forEach.call(document.querySelectorAll("[data-frames]"), function (b) { b.classList.toggle("on", b.dataset.frames === state.frames); });
     [].forEach.call(document.querySelectorAll("[data-color]"), function (b) { b.classList.toggle("on", b.dataset.color === state.color); });
     $("scale").value = String(state.scale);
     $("scaleValue").textContent = state.scale + "px";
@@ -247,6 +335,9 @@
   });
   document.querySelectorAll("[data-layout]").forEach(function (b) {
     b.addEventListener("click", function () { if (state.layout === b.dataset.layout) return; state.layout = b.dataset.layout; useCamera(); layoutGrid(); center(); syncUi(); scheduleSave(); });
+  });
+  document.querySelectorAll("[data-frames]").forEach(function (b) {
+    b.addEventListener("click", function () { if (state.frames === b.dataset.frames) return; state.frames = b.dataset.frames; refreshAllFrames(); syncUi(); scheduleSave(); });
   });
   swatches.addEventListener("click", function (ev) {
     var c = ev.target && ev.target.dataset && ev.target.dataset.color;

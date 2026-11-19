@@ -13,11 +13,16 @@
   <div id="stage"></div>
 
   <div id="topbar" class="panel ui">
-    <div class="seg" id="shapes" role="group" aria-label="Shape">
+    <div class="seg wrap" id="shapes" role="group" aria-label="Shape">
       <button type="button" data-shape="hex">Hex</button>
       <button type="button" data-shape="square">Square</button>
       <button type="button" data-shape="triangle">Triangle</button>
       <button type="button" data-shape="octagon">Octagon</button>
+      <button type="button" data-shape="rhombille">Rhombille</button>
+      <button type="button" data-shape="trihexagonal">Trihexagonal</button>
+      <button type="button" data-shape="snubsquare">Snub square</button>
+      <button type="button" data-shape="cairo">Cairo</button>
+      <button type="button" data-shape="elongated">Elongated triangular</button>
     </div>
     <div class="stat"><span class="stat-label">Active Cells</span><span id="active" class="stat-value">0</span></div>
     <button type="button" id="clear" class="danger">Clear</button>
@@ -40,6 +45,15 @@
         <button type="button" data-layout="3d">3D Sphere</button>
       </div>
       <button type="button" id="center">Center</button>
+    </div>
+    <div class="row wrap">
+      <span class="row-label">Hide frames</span>
+      <div class="seg wrap" id="frames" role="group" aria-label="Hide frames">
+        <button type="button" data-frames="off">Off</button>
+        <button type="button" data-frames="between">Only between</button>
+        <button type="button" data-frames="outside">Only outside</button>
+        <button type="button" data-frames="all">All</button>
+      </div>
     </div>
     <div class="row swatches" id="swatches" role="group" aria-label="Colour"></div>
   </div>

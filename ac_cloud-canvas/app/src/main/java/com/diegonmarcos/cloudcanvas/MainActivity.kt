@@ -16,7 +16,7 @@ import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab
  * Where the app opens, from the launch intent's string extras (the fleet's deep-link shape): `section` draw | play, `page` draw | board (the
  * Draw section's sibling pages, #1787), `tool` the Board's starting tool (draw, geo, text, note...), `panel` layers (Draw),
  * `view` instruments | mixer (Play), `demo` true to fill the mixer with a sample beat, `configs` ai to open Configs > AI. #1808 `section painter`
- * opens Painter; `shape` hex | square | triangle | octagon, `layout` 2d | 3d, `mode` paint | rubber | view, `color` #rrggbb and `scale` 15..100
+ * opens Painter; `shape` hex | square | triangle | octagon | rhombille | trihexagonal | snubsquare | cairo | elongated, `layout` 2d | 3d, `mode` paint | rubber | view, `color` #rrggbb and `scale` 15..100
  * are handed to the Painter page as launch overrides (the screenshot job uses them). #1808 nav: `section board` opens the Board entry,
  * `section enhance` opens Enhancers (page enhance | music), and the old `section music` opens Enhancers > Music Enhancer. All optional.
  */

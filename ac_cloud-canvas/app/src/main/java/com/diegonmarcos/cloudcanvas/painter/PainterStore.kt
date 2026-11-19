@@ -5,8 +5,8 @@ import org.json.JSONObject
 
 /**
  * The Painter page's storage (#1808): one JSON file, `<dir>/painter.json`, holding what the page encodes (assets/painter/grid.js
- * `encode`): `{v:1, shape, mode, layout, scale, color, painted:{hex,square,triangle,octagon}}`, the painted cells per shape (cell key ->
- * #rrggbb) plus the colour, mode, grid scale and 2D/3D choice. Written whole or not at all (temp file + rename), so a kill mid-save
+ * `encode`): `{v:1, shape, mode, layout, scale, color, frames?, painted:{<shape>:{...}}}`, the painted cells per shape (cell key ->
+ * #rrggbb) plus the colour, mode, grid scale, 2D/3D choice and (#1823) the optional Hide-frames mode. Written whole or not at all (temp file + rename), so a kill mid-save
  * keeps the previous state. Only a well-formed state is accepted, so the page never loads garbage. Pure JVM: the page's bridge
  * (PainterScreen) calls it, the unit suite drives it directly.
  */
@@ -34,14 +34,20 @@ class PainterStore(private val dir: File) {
     companion object {
         const val FILE = "painter.json"
         const val MAX_CHARS = 4_000_000
-        val SHAPES = listOf("hex", "square", "triangle", "octagon")
+        /** The four prototype grids first (same order), then the #1823 tilings. */
+        val SHAPES = listOf("hex", "square", "triangle", "octagon", "rhombille", "trihexagonal", "snubsquare", "cairo", "elongated")
+        val FRAMES = listOf("off", "between", "outside", "all")
         val MODES = listOf("paint", "rubber", "view")
         val LAYOUTS = listOf("2d", "3d")
-        private val PREFIX = mapOf("hex" to setOf("H"), "square" to setOf("S"), "triangle" to setOf("T"), "octagon" to setOf("O", "OS"))
-        private val KEY = Regex("^(H|S|T|O|OS),-?\\d{1,3},-?\\d{1,3}$")
+        private val PREFIX = mapOf(
+            "hex" to setOf("H"), "square" to setOf("S"), "triangle" to setOf("T"), "octagon" to setOf("O", "OS"),
+            "rhombille" to setOf("RA", "RB", "RC"), "trihexagonal" to setOf("XH", "XT", "XU"),
+            "snubsquare" to setOf("NA", "NB", "NC", "ND", "NE", "NF"), "cairo" to setOf("CA", "CB", "CC", "CD"), "elongated" to setOf("EQ", "EU", "ED"),
+        )
+        private val KEY = Regex("^[A-Z]{1,2},-?\\d{1,3},-?\\d{1,3}$")
         private val COLOR = Regex("^#[0-9a-fA-F]{6}$")
 
-        /** Version 1, a known shape, mode and layout, a scale 15..100, a #rrggbb colour, and every painted key of its own shape with a colour. */
+        /** Version 1, a known shape, mode and layout, a scale 15..100, a #rrggbb colour, an optional Hide-frames mode, and every painted key of its own shape with a colour. */
         fun valid(state: String): Boolean = runCatching {
             val o = JSONObject(state)
             if (o.optInt("v") != 1) return false
@@ -49,6 +55,7 @@ class PainterStore(private val dir: File) {
             val scale = o.optDouble("scale", Double.NaN)
             if (scale.isNaN() || scale < 15 || scale > 100) return false
             if (!COLOR.matches(o.optString("color"))) return false
+            if (o.has("frames") && o.optString("frames") !in FRAMES) return false
             val painted = o.optJSONObject("painted") ?: return false
             for (s in painted.keys()) {
                 if (s !in SHAPES) return false

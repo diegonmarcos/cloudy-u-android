@@ -96,6 +96,29 @@ class PainterTest {
 
     @Test fun launchExtrasBecomeThePageQuery() {
         assertEquals(listOf("shape", "layout", "mode", "color", "scale"), CanvasStart.PAINTER_EXTRAS)
-        assertEquals(PainterStore.SHAPES, listOf("hex", "square", "triangle", "octagon"))
+        // rule 16: the four prototype grids stay first, in order; #1823 adds five after them
+        assertEquals(listOf("hex", "square", "triangle", "octagon"), PainterStore.SHAPES.take(4))
+        assertEquals(listOf("rhombille", "trihexagonal", "snubsquare", "cairo", "elongated"), PainterStore.SHAPES.drop(4))
+    }
+
+    @Test fun theNewTilingsAndTheFramesModeAreStoredAndValidated() {
+        val d = dir()
+        val s = PainterStore(d)
+        val st = state("cairo", painted = mapOf(
+            "rhombille" to mapOf("RA,0,0" to "#ef4444", "RC,-3,2" to "#22c55e"), "trihexagonal" to mapOf("XT,1,1" to "#ffffff", "XU,2,-2" to "#3b82f6"),
+            "snubsquare" to mapOf("NF,4,-4" to "#a855f7"), "cairo" to mapOf("CD,0,0" to "#eab308"), "elongated" to mapOf("ED,-9,9" to "#ffffff")))
+        s.write(st)
+        assertEquals(st, s.read())
+        assertEquals(2, PainterStore.activeCount(st, "rhombille")); assertEquals(1, PainterStore.activeCount(st, "cairo"))
+        for (m in PainterStore.FRAMES) {
+            val o = JSONObject(st).put("frames", m).toString()
+            s.write(o); assertEquals(m, JSONObject(s.read()!!).getString("frames"))
+        }
+        // a state saved before the option existed has no frames field and stays valid; an unknown mode is refused
+        assertTrue(PainterStore.valid(st))
+        try { s.write(JSONObject(st).put("frames", "some").toString()); fail("accepted a bad frames mode") } catch (e: IllegalArgumentException) { assertTrue(e.message != null) }
+        // a key of one tiling in another tiling's map is refused
+        assertFalse(PainterStore.valid(state(painted = mapOf("cairo" to mapOf("RA,0,0" to "#ffffff")))))
+        assertEquals(PainterStore.FRAMES, listOf("off", "between", "outside", "all"))
     }
 }

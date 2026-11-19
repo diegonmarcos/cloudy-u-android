@@ -5,7 +5,8 @@
 #      nothing unpinned), and three.min.js is r128
 #   P2 offline and plain CSS: the page's own files (index.html, painter.css, grid.js, painter.js) name no network address, use no Tailwind
 #      and no CDN; index.html loads the vendored three.js, OrbitControls, grid.js and painter.js; the CSS takes Inter from vendor/inter
-#   P3 the JS unit suite test/painter/grid.test.js passes: the four generators (hex 1951, square 2601, triangle 5151, octagon 2601+2601
+#   P3 the JS unit suite test/painter/grid.test.js passes (#1823: the tiling list parity, the five new tilings, their shared-edge adjacency
+#      and the Hide-frames modes included): the four generators (hex 1951, square 2601, triangle 5151, octagon 2601+2601
 #      cells and their key formats), the sphere layout, paint, erase, clear, the one-change-per-stroke rule and persistence
 #   P4 the prototype as specified: outline white at opacity 0.25, fill at 0.94 scale lifted by 1, DoubleSide, the five geometries,
 #      frustumSize 1500, camera z 1500, fov 45 near 1 far 20000, damping 0.05, pan/rotate off outside View; the UI holds every control
@@ -52,9 +53,15 @@ want_js = ["opacity: 0.25", "0.94", "THREE.DoubleSide", "var FRUSTUM = 1500", "p
 for w in want_js:
     if w not in js and w not in grid: print("P4 the page lacks the prototype's " + w)
 for w in ('data-shape="hex">Hex<', 'data-shape="square">Square<', 'data-shape="triangle">Triangle<', 'data-shape="octagon">Octagon<', ">Active Cells<",
+          'data-shape="rhombille">Rhombille<', 'data-shape="trihexagonal">Trihexagonal<', 'data-shape="snubsquare">Snub square<', 'data-shape="cairo">Cairo<',
+          'data-shape="elongated">Elongated triangular<', ">Hide frames<", 'data-frames="off">Off<', 'data-frames="between">Only between<',
+          'data-frames="outside">Only outside<', 'data-frames="all">All<',
           'id="clear"', ">Clear<", ">Grid Scale<", 'min="15" max="100" step="1" value="40"', ">40px<", 'data-mode="paint">Paint<',
           'data-mode="rubber">Rubber<', 'data-mode="view">View<', 'data-layout="2d">2D<', 'data-layout="3d">3D Sphere<', 'id="center">Center<', 'id="swatches"'):
     if w not in html: print("P4 the UI lacks " + w)
+order = [m.start() for m in (re.search('data-shape="%s"' % n, html) for n in ("hex", "square", "triangle", "octagon", "rhombille", "trihexagonal", "snubsquare", "cairo", "elongated")) if m]
+if len(order) != 9 or order != sorted(order): print("P4 the shape buttons are not Hex, Square, Triangle, Octagon first, then the five new tilings in order")
+if 'frames: "off"' not in grid: print("P4 Hide frames no longer defaults to off (the current look)")
 if '["#ffffff", "#ef4444", "#22c55e", "#3b82f6", "#eab308", "#a855f7"]' not in grid: print("P4 the colours are not the six of the prototype, white first")
 if "max-width: 512px" not in css: print("P4 the dock is not capped at 512px")
 if "safe-area-inset-top" not in css or "safe-area-inset-bottom" not in css or "viewport-fit=cover" not in html: print("P4 the page ignores the insets")
@@ -106,6 +113,12 @@ mut "unpinned file in vendor" P1 sh -c "echo x > $P/vendor/three/extra.js"
 mut "three.js from a CDN" P2 sed -i 's#src="vendor/three/three.min.js"#src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"#' $P/index.html
 mut "tailwind back" P2 sed -i 's#</head>#<script src="tailwind.js"></script></head>#' $P/index.html
 mut "inter from the network" P2 sed -i 's#url("vendor/inter/inter-latin-400-normal.woff2")#url("https://rsms.me/inter/x.woff2")#' $P/painter.css
+mut "new tilings first" P4 sed -i 's#<button type="button" data-shape="rhombille">Rhombille</button>##; s#<button type="button" data-shape="hex">Hex</button>#<button type="button" data-shape="rhombille">Rhombille</button><button type="button" data-shape="hex">Hex</button>#' $P/index.html
+mut "frames default changed" P4 sed -i 's/frames: "off", painted/frames: "between", painted/' $P/grid.js
+mut "Only outside control removed" P4 sed -i 's#<button type="button" data-frames="outside">Only outside</button>##' $P/index.html
+mut "cairo adjacency broken" P3 sed -i 's/Math.round(p\[0\] \* 1e4) + "," + Math.round(p\[1\] \* 1e4)/Math.round(p[0] * 1e4) + "," + Math.round(p[1] * 1e4) + Math.random()/' $P/grid.js
+mut "between merges unpainted" P3 sed -i 's/between \&\& !!painted \&\& !!np/between \&\& !!np/' $P/grid.js
+mut "outside hides painted too" P3 sed -i 's/outside \&\& !painted ? "hidden"/outside ? "hidden"/' $P/grid.js
 mut "hex count wrong" P3 sed -i 's/var r1 = Math.max(-r, -q - r), r2 = Math.min(r, -q + r);/var r1 = -r, r2 = r;/' $P/grid.js
 mut "triangle key format changed" P3 sed -i 's/key: "T," + q/key: "Tri," + q/' $P/grid.js
 mut "a cell changes twice per stroke" P3 sed -i 's/ || this.touched\[key\]//' $P/grid.js
