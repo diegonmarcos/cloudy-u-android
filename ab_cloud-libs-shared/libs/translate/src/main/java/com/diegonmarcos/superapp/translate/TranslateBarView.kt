@@ -255,7 +255,7 @@ class TranslateBarView @JvmOverloads constructor(
         FieldOpsAppField { icp?.get()?.let { InputConnectionOps(it) } },
         SystemClip(context, "translation"),
         object : BoxText { override fun get() = editor.text; override fun set(text: String) { editor.replaceAll(text); onChanged() } },
-        object : BoxText { override fun get() = outEditor.text; override fun set(text: String) { outEditor.replaceAll(text); renderOutput() } },
+        object : BoxText { override fun get() = outEditor.text; override fun set(text: String) { outEditor.replaceAll(text); translated = text.ifBlank { null }; renderOutput() } },
         keys,
         { input, done ->
             Translator.liveTranslate(context, input, fromTag, toTag, keyboardLang) { r ->
@@ -278,7 +278,7 @@ class TranslateBarView @JvmOverloads constructor(
         setBackgroundColor(colours.background)
         attachInputTouch()
         outputView.attachEditing(outEditor, onClaim = { controller.onOutputBoxTapped(); renderInput(); renderOutput() },
-            onChange = ::renderOutput, onMenu = ::showEditMenu)
+            onChange = { translated = outEditor.text.ifBlank { null }; renderOutput() }, onMenu = ::showEditMenu)
     }
 
     /**
@@ -460,7 +460,7 @@ class TranslateBarView @JvmOverloads constructor(
     }
 
     /** An edit by key: the input box re-translates, the output box (the user's touch-up) does not. */
-    private fun changedActive() { if (active === editor) { controller.onInputEdited(); source = controller.source; onChanged() } else renderOutput() }
+    private fun changedActive() { if (active === editor) { controller.onInputEdited(); source = controller.source; onChanged() } else { translated = outEditor.text.ifBlank { null }; renderOutput() } }
 
     private fun renderOutput() { outputTick++ }
 
@@ -557,9 +557,9 @@ class TranslateBarView @JvmOverloads constructor(
     }
 
     private fun copy() {
-        val o = controller.copy()
-        if (o == Outcome.OK) toast(context.getString(R.string.translate_bar_copied))
-        else toast(if (editor.isNotEmpty) context.getString(R.string.translate_bar_wait) else context.getString(R.string.translate_bar_type_first))
+        val out = translated ?: run { toast(if (editor.isNotEmpty) context.getString(R.string.translate_bar_wait) else context.getString(R.string.translate_bar_type_first)); return }
+        // the shared panel's Copy: the output box as it stands now (the user may have touched it up)
+        if (out.isNotBlank() && controller.copy() == Outcome.OK) toast(context.getString(R.string.translate_bar_copied))
     }
 
     /** The source buttons: Type / Clipboard / App box. */
