@@ -166,7 +166,7 @@ fun ApiTable(h: HomeData) {
         DActs {
             DAct(if (pw?.optBoolean("server") == true) "Stop" else "Start", "c3_api_toggle") { edit(ctx) { if (pw?.optBoolean("server") == true) h.askOff(false) else h.setPower("server", true) } }
             DAct("Probe health", "c3_api_probe") { h.bump() }
-            DAct((if (pw?.optBoolean("keep_alive") == true) "Keep alive: OFF" else "Keep alive: ON"), "c3_api_keep_alive") { edit(ctx) { h.setPower("keep_alive", pw?.optBoolean("keep_alive") != true) } }
+            DAct((if (pw?.optBoolean("keep_alive") == true) "Keep alive: turn OFF" else "Keep alive: turn ON"), "c3_api_keep_alive") { edit(ctx) { h.setPower("keep_alive", pw?.optBoolean("keep_alive") != true) } }
         }
         DRow("Depends on", "Server ON (the API stops with it) · the loopback port :8003")
         DRow("Health", if (health != null) (if (ok) "ok" else "not ok") else "not answering (Server OFF stops :8003)", up = ok)

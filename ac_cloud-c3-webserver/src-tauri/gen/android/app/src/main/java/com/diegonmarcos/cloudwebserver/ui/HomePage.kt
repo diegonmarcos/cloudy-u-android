@@ -44,8 +44,17 @@ fun HomePage(open: (String, String?) -> Unit) {
     val scope = rememberCoroutineScope()
     val (tick, bump) = rememberTick()
     val power = rememberObj(Api.POWER, tick)
-    val health = rememberObj(Api.HEALTH, tick)
     val serving = rememberObj(Api.SERVING, tick)
+    // #1834 health is asked of the diagnostics port (the `diag` row of serving), where the route lives, re-read on every refresh
+    var health by remember { mutableStateOf<Load<JSONObject>>(Load.Loading) }
+    val servingObj = (serving as? Load.Ok)?.value
+    LaunchedEffect(tick, servingObj) {
+        if (servingObj == null) return@LaunchedEffect
+        health = when (val r = Api.getDiag(Api.HEALTH, servingObj)) {
+            is Api.Reply.Ok -> (r.value as? JSONObject)?.let { Load.Ok(it) } ?: Load.Err("health: not an object")
+            is Api.Reply.Err -> Load.Err(r.reason)
+        }
+    }
     val served = rememberObj(Api.SERVED, tick)
     val sshd = rememberObj(Api.SSHD, tick)
     val about = rememberArr(Api.ABOUT, tick)

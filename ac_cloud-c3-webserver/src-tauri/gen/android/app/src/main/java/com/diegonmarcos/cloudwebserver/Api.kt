@@ -54,13 +54,32 @@ object Api {
 
     suspend fun get(path: String): Reply = withContext(Dispatchers.IO) { call("GET", path, null) }
 
+    /**
+     * #1834 the API health route lives on the DIAGNOSTICS listener (runtime.diag.port, the `diag` row of [SERVING]), not on the admin
+     * port [get] talks to: asking the admin port for it always failed, so Home read the API as down while :8003 answered.
+     */
+    suspend fun getDiag(path: String, serving: JSONObject?): Reply = withContext(Dispatchers.IO) {
+        val port = diagPort(serving) ?: return@withContext Reply.Err("no diag endpoint in $SERVING yet")
+        call("GET", path, null, "http://127.0.0.1:$port")
+    }
+
+    /** The diagnostics listener's port from the [SERVING] answer: its endpoint whose role is `diag`; null until it is known. */
+    fun diagPort(serving: JSONObject?): Int? {
+        val eps = serving?.optJSONArray("endpoints") ?: return null
+        for (i in 0 until eps.length()) {
+            val e = eps.optJSONObject(i) ?: continue
+            if (e.optString("role") == "diag" && e.optInt("port", 0) > 0) return e.optInt("port")
+        }
+        return null
+    }
+
     /** Blocking GET for the Performance benchmarks, which run on an IO thread and time THIS thread's CPU; never throws. */
     internal fun getBlocking(path: String): Reply = call("GET", path, null)
 
     suspend fun post(path: String, body: JSONObject): Reply = withContext(Dispatchers.IO) { call("POST", path, body) }
 
-    private fun call(method: String, path: String, body: JSONObject?): Reply = try {
-        val c = URL(url(path)).openConnection() as HttpURLConnection
+    private fun call(method: String, path: String, body: JSONObject?, origin: String = base()): Reply = try {
+        val c = URL(origin + path).openConnection() as HttpURLConnection
         try {
             c.requestMethod = method
             c.connectTimeout = 3000
