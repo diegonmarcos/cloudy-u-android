@@ -7,7 +7,7 @@
   },
   "name": "capital-stack-finterminal",
   "display_name": "Capital-Stack-FinTerminal",
-  "description": "Capital-Stack-FinTerminal: the Capital area's capital-markets terminal as an Android app behind the SuperApp's Cloud > Lnktree row. Six tabs on the shared bottom nav, FI | EQ | EX | NW | PM | MY-PM, each entry a dashboard drawn from a DECLARED source (data/sources.json): Cloud-Fincept / fin_api on the private mesh first (with a Start / Stop / Restart control for its container), the key-free public sources (FRED, DBnomics, IMF, World Bank, GDELT) as fallback, and dashed placeholders where a source needs a key you add in Config > Sources (stored encrypted on the phone). MY-PM is a simple local holdings list. Every figure shown is what its source returned, with its date and attribution.",
+  "description": "Capital-Stack-FinTerminal: the Capital area's capital-markets terminal as an Android app behind the SuperApp's Cloud > Lnktree row. Six tabs on the shared bottom nav, FI | EQ | EX | NW | PM | MARKZ (formerly MY-PM), each entry a dashboard drawn from a DECLARED source (data/sources.json): Cloud-Fincept / fin_api on the private mesh first (with a Start / Stop / Restart control for its container), the key-free public sources (FRED, DBnomics, IMF, World Bank, GDELT) as fallback, and dashed placeholders where a source needs a key you add in Config > Sources (stored encrypted on the phone). MARKZ (#1832, formerly MY-PM) is the owner's portfolio-returns page (the after-inflation and after-tax sensitivity matrix, the Markovitz analysis and its substeps, data/markz.json) with the simple local holdings list. Every figure shown is what its source returned, with its date and attribution.",
   "category": "android",
   "android": {
     "application_id": "com.diegonmarcos.capitalfinterm",
@@ -202,7 +202,7 @@
       "nw",
       "pm",
       "hg",
-      "my-pm"
+      "markz"
     ],
     "default_section": "cb",
     "nav_ui": {
@@ -284,6 +284,18 @@
         "tab": "eq",
         "to": "world-equity-indices",
         "note": "#1612 EM Equity merged into World Indices Equity: its deep links open that page"
+      },
+      {
+        "from": "my-pm",
+        "tab": "markz",
+        "to": "home",
+        "note": "#1832 MY-PM was renamed MARKZ: the old section deep link and the command word MY-PM open the MARKZ Homepage"
+      },
+      {
+        "from": "my-pm-home",
+        "tab": "markz",
+        "to": "home",
+        "note": "#1832 the MY-PM Homepage became the MARKZ Homepage"
       }
     ],
     "sections": [
@@ -396,13 +408,22 @@
         ]
       },
       {
-        "id": "my-pm",
-        "label": "MY-PM",
+        "id": "markz",
+        "label": "MARKZ",
         "icon": "wallet",
         "nav_mode": "horizontal_one_row",
         "pages": [
-          {"id": "my-pm-home", "label": "Home", "icon": "home"},
-          {"id": "holdings", "label": "Personal portfolio", "icon": "wallet"}
+          {"id": "markz-home", "label": "Home", "icon": "home"},
+          {"id": "markz-overview", "label": "Overview", "icon": "dataset"},
+          {"id": "markz-markovitz", "label": "Markovitz", "icon": "timeline"},
+          {"id": "markz-sensy", "label": "Sensy Matrix", "icon": "table_chart"},
+          {"id": "markz-volatility", "label": "Volatility", "icon": "speed"},
+          {"id": "markz-beta", "label": "Beta", "icon": "trending_up"},
+          {"id": "markz-capm", "label": "CAPM Calculator", "icon": "payments"},
+          {"id": "markz-correlation", "label": "Correlation", "icon": "apps"},
+          {"id": "markz-optimization", "label": "Optimization", "icon": "rocket_launch"},
+          {"id": "holdings", "label": "Personal portfolio", "icon": "wallet"},
+          {"id": "markz-index", "label": "Index", "icon": "bar_chart"}
         ]
       },
       {
@@ -989,13 +1010,91 @@
           "fn": "FXR"
         }
       ],
-      "my-pm": [
+      "markz": [
+        {
+          "kind": "home_page",
+          "home": "markz-sensy",
+          "title": "Home",
+          "subtitle": "#1832 the MARKZ Homepage is the Sensy Matrix (the owner's page opens on it); the former MY-PM Homepage (every page as a card) is the sub-page Index",
+          "fn": "MKHM"
+        },
+        {
+          "kind": "markz",
+          "page": "markz-overview",
+          "view": "home",
+          "title": "Overview",
+          "subtitle": "Portfolio overview: AuM in USD, EUR and BRL with the net monthly flow, the annual return waterfall and the active FX cross rates",
+          "fn": "MKOV"
+        },
+        {
+          "kind": "markz",
+          "page": "markz-markovitz",
+          "view": "markovitz",
+          "title": "Markovitz",
+          "subtitle": "How a Markovitz analysis is done: the five steps, the efficient frontier curve and the frontier portfolios that set the matrix's target",
+          "fn": "MKVZ"
+        },
+        {
+          "kind": "markz",
+          "page": "markz-sensy",
+          "view": "sensy",
+          "title": "Sensy Matrix",
+          "subtitle": "Portfolio returns after inflation and taxes in euro a month: the 7 x 7 matrix of return targets by BRL FX shocks, the KPIs, the inspector and every parameter",
+          "fn": "SENS"
+        },
+        {
+          "kind": "markz",
+          "page": "markz-volatility",
+          "view": "volatility",
+          "title": "Volatility",
+          "subtitle": "Markovitz substep 1: historical SD, EWMA, GARCH(1,1) and implied volatility of each asset from its daily closes",
+          "fn": "MKVL"
+        },
+        {
+          "kind": "markz",
+          "page": "markz-beta",
+          "view": "beta",
+          "title": "Beta",
+          "subtitle": "Markovitz substep 2: each asset's beta to the market with the selected volatility framework",
+          "fn": "BETA"
+        },
+        {
+          "kind": "markz",
+          "page": "markz-capm",
+          "view": "capm",
+          "title": "CAPM Calculator",
+          "subtitle": "Markovitz substep 3: the expected return of each asset from the risk-free rate, its beta and the market's return",
+          "fn": "CAPM"
+        },
+        {
+          "kind": "markz",
+          "page": "markz-correlation",
+          "view": "correlation",
+          "title": "Correlation",
+          "subtitle": "Markovitz substep 4: the correlation and the variance-covariance matrices of the assets and the market",
+          "fn": "CORR"
+        },
+        {
+          "kind": "markz",
+          "page": "markz-optimization",
+          "view": "optimization",
+          "title": "Optimization",
+          "subtitle": "Markovitz substep 5: the minimum-variance and maximum-Sharpe portfolios and the efficient frontier, each return sent to the Sensy Matrix",
+          "fn": "OPTM"
+        },
         {
           "kind": "holdings",
           "page": "holdings",
           "title": "Personal portfolio",
           "subtitle": "Your holdings: ticker, quantity, cost, kept on this phone",
           "fn": "MYPM"
+        },
+        {
+          "kind": "home_grid",
+          "page": "markz-index",
+          "title": "Index",
+          "subtitle": "The former MY-PM Homepage: every MARKZ page as a card (Personal portfolio and the portfolio-returns pages)",
+          "fn": "MKIX"
         }
       ],
       "about": [
@@ -1013,6 +1112,13 @@
           "kind": "about"
         }
       ]
+    },
+    "renamed": {
+      "_doc": "#1832 the renames of the navigation (rule 16: nothing removed): MY-PM is MARKZ, its Homepage page id follows (`<section>-home`). Every other id, label, icon and entry of the section is kept; the frozen baselines (nav-parity-baseline-1722.json, -1786.json, -1832.json) are read through this map by MovedPagesTest, Reorg1786ParityTest and Rename1832ParityTest. ui.redirects sends the old deep links and the command word MY-PM to the MARKZ Homepage.",
+      "ticket": "1832",
+      "sections": {"my-pm": "markz"},
+      "labels": {"MY-PM": "MARKZ"},
+      "pages": {"my-pm-home": "markz-home"}
     },
     "moved": {
       "_doc": "#1722 the reorganisation's old -> new map (rule 16: nothing removed, every page reachable at its new place). from: the section a page was under; to: the section and group it is under now. test: MovedPagesTest. #1786 Commodities (CMDT), Commodity Prices (CPX) and Exchange Rates (FXR) moved from EQ > Data to HG > Markets (`ticket`: 1786); Reorg1786ParityTest holds every field to the #1786 baseline.",
@@ -1145,7 +1251,7 @@
       "features": [
         "FI, EQ and EX market dashboards",
         "NW: market news",
-        "PM and MY-PM portfolio views",
+        "PM and MARKZ portfolio views (MARKZ was MY-PM)",
         "Each panel from a declared source",
         "Mesh first, public sources as fallback",
         "Start, stop or restart the data container"
@@ -1172,8 +1278,8 @@
           "what": "Portfolio management."
         },
         {
-          "name": "MY-PM",
-          "what": "The owner's portfolio."
+          "name": "MARKZ",
+          "what": "The owner's portfolio (formerly MY-PM): portfolio returns after inflation and taxes, the Markovitz analysis and the personal holdings."
         },
         {
           "name": "Config",

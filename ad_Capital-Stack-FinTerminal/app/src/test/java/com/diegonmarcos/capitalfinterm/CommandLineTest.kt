@@ -54,7 +54,13 @@ class CommandLineTest {
         assertEquals("Data", Pages.function(functions, "WL")!!.group)
         assertEquals("fi", Pages.function(functions, "fi")!!.section)
         assertTrue(Pages.function(functions, "FI")!!.let { it.page.isEmpty() && it.dashboard.isEmpty() })
-        assertEquals("my-pm", Pages.function(functions, "my-pm")!!.section)
+        assertEquals("markz", Pages.function(functions, "markz")!!.section)
+        // #1832 MY-PM was renamed MARKZ: the old word is no function, ui.redirects sends it to the MARKZ Homepage; MYPM still opens the holdings
+        assertNull(Pages.function(functions, "my-pm"))
+        val redirects = ui.getJSONArray("redirects").toString()
+        assertEquals(FinFunction("MY-PM", "markz", "", "", ""), Pages.redirected(redirects, " my-pm <GO>"))
+        assertEquals("holdings", Pages.function(functions, "MYPM")!!.page)
+        assertNull(Pages.redirected(redirects, "NOPE")); assertNull(Pages.redirected(redirects, ""))
         assertNull(Pages.function(functions, "NOPE")); assertNull(Pages.function(functions, "")); assertNull(Pages.function(functions, "   "))
         assertEquals("GDM", Pages.commandWord(" gdm<go> ")); assertEquals("GO", Pages.commandWord("go"))
     }

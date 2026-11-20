@@ -24,17 +24,21 @@ class Reorg1786ParityTest {
     private fun sectionOf(page: String): String? = sections.firstOrNull { s -> arr(s.optJSONArray("pages")).any { it.getString("id") == page } }?.getString("id")
     private fun pageOf(page: String): JSONObject? = sections.flatMap { arr(it.optJSONArray("pages")) }.firstOrNull { it.getString("id") == page }
     /** Where a baseline item of [section] lives now: the section ui.moved sends its page to, else the same. */
-    private fun now(section: String, page: String): String = moved[page]?.getString("to") ?: section
+    private fun now(section: String, page: String): String = moved[page]?.getString("to") ?: secNow(section)
+    /** #1832 the declared renames (build.json ui.renamed: MY-PM is MARKZ): a baseline section or page id read as its id today; nothing else may change. */
+    private val renamed = ui.optJSONObject("renamed")
+    private fun secNow(id: String): String = renamed?.optJSONObject("sections")?.optString(id)?.ifEmpty { null } ?: id
+    private fun pageNow(id: String): String = renamed?.optJSONObject("pages")?.optString(id)?.ifEmpty { null } ?: id
 
     @Test fun theBottomNavIsUnchanged() {
-        assertEquals(strs(base.getJSONArray("bottom_nav")), strs(ui.getJSONArray("bottom_nav")))
+        assertEquals(strs(base.getJSONArray("bottom_nav")).map(::secNow), strs(ui.getJSONArray("bottom_nav")))
     }
 
     @Test fun everyPageKeepsItsLabelAndIconAndOnlyMovesAsDeclared() {
         val pages = arr(base.getJSONArray("pages"))
         assertEquals(61, pages.size)
         for (b in pages) {
-            val id = b.getString("page")
+            val id = pageNow(b.getString("page"))
             val p = pageOf(id)
             assertNotNull("page $id is gone", p)
             assertEquals("page $id lost its label", b.getString("label"), p!!.getString("label"))

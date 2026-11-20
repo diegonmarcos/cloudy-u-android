@@ -65,7 +65,7 @@ for d in world_equity_indices equity_fundamentals earnings_calendar equity_quote
 # #1786 Commodities, Commodity Prices and Exchange Rates live under HG > Markets now; the HG Homepage boxes (top 5, Last, 12M %)
 for d in commodities commodity-prices fx-rates; do open "hg-markets-$d" "$d" "" 1; done
 open home-hg hg "" 6
-for s in nw my-pm; do open "home-$s" "$s" "" 1; done
+for s in nw markz; do open "home-$s" "$s" "" 1; done
 # #1786 PM opens on Performance (with the S&P 500 and Nasdaq rows); the former card grid is PM > Index
 open home-pm pm "" 3
 open pm-performance pm-performance "" 2

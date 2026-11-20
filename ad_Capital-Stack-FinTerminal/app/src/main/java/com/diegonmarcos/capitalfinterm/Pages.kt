@@ -20,7 +20,7 @@ data class Entry(
     val note: String,
     /** The id of the dashboard (data/dashboards.json) a `dashboard` entry opens. */
     val dashboard: String,
-    /** #1399 the sub-page id of a non-dashboard entry (`page`, e.g. MY-PM's holdings); a dashboard's page id is its slug. */
+    /** #1399 the sub-page id of a non-dashboard entry (`page`, e.g. MARKZ's holdings, formerly MY-PM's); a dashboard's page id is its slug. */
     val page: String = "",
     /** #1478 the table (data/pm.json key) a `pm_table` entry draws. */
     val table: String = "",
@@ -59,6 +59,8 @@ object Pages {
     const val KIND_HOME_PAGE = "home_page"
     /** #1786 the former card grid of a section's Homepage as a sub-page of its own (PM > Index), so nothing the old Homepage showed is lost. */
     const val KIND_HOME_GRID = "home_grid"
+    /** #1832 a page of MARKZ (formerly MY-PM), the owner's portfolio-returns page (data/markz.json): `view` names its tab (home, sensy, markovitz, ...). */
+    const val KIND_MARKZ = "markz"
 
     /** The entries declared for [sectionId] in the stacks JSON (empty when the section declares none). */
     fun entries(stacks: String, sectionId: String): List<Entry> {
@@ -173,6 +175,17 @@ object Pages {
         val word = commandWord(input)
         if (word.isEmpty()) return null
         return functions.firstOrNull { it.fn == word }
+    }
+
+    /**
+     * #1832 a word the command line no longer names but ui.redirects does (a renamed section such as MY-PM, now MARKZ, or a removed page): the function of
+     * the section and page its redirect opens, or null. A redirect to the Homepage opens the section.
+     */
+    fun redirected(redirects: String, input: String): FinFunction? {
+        val word = commandWord(input)
+        if (word.isEmpty()) return null
+        val (tab, to) = redirect(redirects, word.lowercase(java.util.Locale.ROOT)) ?: return null
+        return FinFunction(word, tab, "", "", if (to == PAGE_HOME) "" else to)
     }
 
     /** The command line's word: upper case, blanks trimmed, a typed "<GO>" or " GO" at the end dropped. */

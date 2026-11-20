@@ -1,0 +1,45 @@
+{
+ "_doc": "#1832 FROZEN baseline of the MY-PM section before it was renamed MARKZ (build.json at the commit before #1832's rename): its place on the bottom nav, its id, label, icon, nav mode and sub-pages, every stack entry with every field, its command word and the About screen that named it. Rename1832ParityTest holds MARKZ to it through build.json ui.renamed (rule 16: a rename removes nothing). Do not regenerate.",
+ "bottom_nav": [
+  "cb",
+  "fi",
+  "eq",
+  "nw",
+  "pm",
+  "hg",
+  "my-pm"
+ ],
+ "section": {
+  "id": "my-pm",
+  "label": "MY-PM",
+  "icon": "wallet",
+  "nav_mode": "horizontal_one_row",
+  "pages": [
+   {
+    "id": "my-pm-home",
+    "label": "Home",
+    "icon": "home"
+   },
+   {
+    "id": "holdings",
+    "label": "Personal portfolio",
+    "icon": "wallet"
+   }
+  ]
+ },
+ "entries": [
+  {
+   "kind": "holdings",
+   "page": "holdings",
+   "title": "Personal portfolio",
+   "subtitle": "Your holdings: ticker, quantity, cost, kept on this phone",
+   "fn": "MYPM"
+  }
+ ],
+ "command_word": "MY-PM",
+ "about_screen": {
+  "name": "MY-PM",
+  "what": "The owner's portfolio."
+ },
+ "about_feature": "PM and MY-PM portfolio views"
+}

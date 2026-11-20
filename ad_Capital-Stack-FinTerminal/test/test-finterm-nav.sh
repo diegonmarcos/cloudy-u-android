@@ -8,7 +8,7 @@
 #       or the entry's `page`), in order, labelled with the entry title, each with an icon of the libs:ui-icons catalogue and a
 #       one-line description; SectionPage draws them as a grid of cards that open the sub-page
 #   N4  FI Market Monitor is gone (no dashboard, stack entry, page, or feed names it) and its deep link redirects to the FI Homepage
-#   N5  #1538+ the bottom nav is CB | FI | EQ | NW | PM | HG | MY-PM, no EX/CM section, legacy EX deep links redirect to the HG Homepage, every dashboard and redirect names a live section
+#   N5  #1538+ the bottom nav is CB | FI | EQ | NW | PM | HG | MARKZ (#1832, formerly MY-PM), no EX/CM section, legacy EX deep links redirect to the HG Homepage, every dashboard and redirect names a live section
 #   N6  #1722 FI is the bond groups only (All | Gov Bonds DM | Gov Bonds EM | AAA Bonds | AA-A Bonds | BBB Bonds | Junk, each a perf_portfolio declared in
 #       data/portfolios.json with both modes), no dashboard sits under FI, every page ui.moved names lives in its `to` section, every sub-page and detail
 #       page carries a unique function mnemonic (`fn`), the shell draws the command line and SectionPage draws the performance page
@@ -67,8 +67,8 @@ if "Market Monitor" in json.dumps(srcs): bad.append("N4 a source still feeds Mar
 if not any(r.get("from") == "market_monitor" and r.get("tab") == "fi" and r.get("to") == "home" for r in ui.get("redirects", [])): bad.append("N4 the market_monitor deep link does not redirect to the FI Homepage")
 if "Pages.redirect(" not in shell: bad.append("N4 AppShell ignores ui.redirects")
 # N5
-if ui["bottom_nav"] != ["cb", "fi", "eq", "nw", "pm", "hg", "my-pm"]: bad.append("N5 the bottom nav is %s, not CB | FI | EQ | NW | PM | HG | MY-PM" % ui["bottom_nav"])
-if [secs[s]["label"] for s in ui["bottom_nav"] if s in secs] != ["CB", "FI", "EQ", "NW", "PM", "HG", "MY-PM"]: bad.append("N5 the bottom nav labels are %s" % [secs[s]["label"] for s in ui["bottom_nav"] if s in secs])
+if ui["bottom_nav"] != ["cb", "fi", "eq", "nw", "pm", "hg", "markz"]: bad.append("N5 the bottom nav is %s, not CB | FI | EQ | NW | PM | HG | MARKZ" % ui["bottom_nav"])
+if [secs[s]["label"] for s in ui["bottom_nav"] if s in secs] != ["CB", "FI", "EQ", "NW", "PM", "HG", "MARKZ"]: bad.append("N5 the bottom nav labels are %s" % [secs[s]["label"] for s in ui["bottom_nav"] if s in secs])
 if "ex" in secs or "cm" in secs or "ex" in ui["stacks"]: bad.append("N5 the old EX / CM sections are still declared")
 if ui.get("default_section") != ui["bottom_nav"][0]: bad.append("N5 the app does not open on the first section")
 for old in ("ex", "ex-home"):

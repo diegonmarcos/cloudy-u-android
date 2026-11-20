@@ -7,7 +7,7 @@ APK="$1"; OUT="$2"; mkdir -p "$OUT"
 PKG=com.diegonmarcos.capitalfinterm
 DASHES="${FT_DASHES:-world_bonds fx yields_matrix bonds_market eq_dm_us eq_em world_equity_indices commodities mp_60_40 mp_70_30_DM_EM pm_d1_em_bonds pm_d0_carry pm_a1_cash}"
 # #1399 each section's Homepage (a section id opens it), the one-row sub-page nav scrolled sideways, and the removed Market Monitor's deep link (redirects to the FI Homepage)
-HOMES="${FT_HOMES:-fi eq ex nw pm my-pm}"
+HOMES="${FT_HOMES:-fi eq ex nw pm markz}"
 adb install -r -g "$APK" || exit 1
 adb shell settings delete global cloud_nav_ui_mode || true
 echo "cloud_nav_ui_mode=$(adb shell settings get global cloud_nav_ui_mode)" | tee "$OUT/nav-mode.txt"
@@ -77,8 +77,8 @@ adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard eq >/dev/null
 sleep 15
 SF=$(node_xy "Symbol, index, pair, country, event"); echo "search field xy=${SF:-none}" | tee -a "$OUT/nav-strip.txt"
 if [ -n "$SF" ]; then set -- $SF; adb shell input tap "$1" "$2"; sleep 3; adb shell input text tesla; sleep 12; adb exec-out screencap -p > "$OUT/apk-remote-search.png"; TS=$(node_xy "Tesla, Inc."); echo "remote result xy=${TS:-none}" | tee -a "$OUT/nav-strip.txt"; fi
-# #1370 add-holding sheet: MY-PM > holdings page, tap Add
-adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard my-pm >/dev/null
+# #1370 add-holding sheet: MARKZ (formerly MY-PM) > holdings page, tap Add
+adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard holdings >/dev/null
 sleep 15
 PP=$(node_xy "Personal portfolio"); if [ -n "$PP" ]; then set -- $PP; adb shell input tap "$1" "$2"; sleep 4; fi
 AD=$(node_xy Add); echo "holdings Add xy=${AD:-none}" | tee -a "$OUT/nav-strip.txt"

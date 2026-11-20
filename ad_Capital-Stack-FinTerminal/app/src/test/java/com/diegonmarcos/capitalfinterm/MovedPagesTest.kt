@@ -21,6 +21,10 @@ class MovedPagesTest {
     private fun arr(a: JSONArray?): List<JSONObject> = if (a == null) emptyList() else (0 until a.length()).mapNotNull { a.optJSONObject(it) }
     private val sections = arr(ui.getJSONArray("sections"))
     private val moved = arr(ui.getJSONObject("moved").getJSONArray("pages")).associateBy { it.getString("page") }
+    /** #1832 the declared renames (build.json ui.renamed: MY-PM is MARKZ): a baseline section or page id read as its id today; nothing else may change. */
+    private val renamed = ui.optJSONObject("renamed")
+    private fun secNow(id: String): String = renamed?.optJSONObject("sections")?.optString(id)?.ifEmpty { null } ?: id
+    private fun pageNow(id: String): String = renamed?.optJSONObject("pages")?.optString(id)?.ifEmpty { null } ?: id
 
     /** Where a sub-page id lives today: its section, or null. */
     private fun sectionOf(page: String): String? = sections.firstOrNull { s -> arr(s.optJSONArray("pages")).any { it.getString("id") == page } }?.getString("id")
@@ -37,7 +41,7 @@ class MovedPagesTest {
     }
 
     @Test fun theBottomNavIsUnchanged() {
-        val was = baseline.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
+        val was = baseline.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { secNow(a.getString(it)) } }
         assertEquals(was, ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } })
     }
 
@@ -45,8 +49,8 @@ class MovedPagesTest {
         val pages = arr(baseline.getJSONArray("pages"))
         assertEquals(44, pages.size)
         for (b in pages) {
-            val id = b.getString("page")
-            val was = b.getString("section")
+            val id = pageNow(b.getString("page"))
+            val was = secNow(b.getString("section"))
             val now = sectionOf(id)
             assertNotNull("page $id (was under $was) is gone", now)
             val p = pageOf(id)!!

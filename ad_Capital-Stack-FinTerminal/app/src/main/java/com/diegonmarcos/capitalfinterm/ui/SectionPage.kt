@@ -98,8 +98,8 @@ fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectLis
                         sym != null -> QuotePage(sym, nav)
                         selected != null -> DashboardPage(selected, nav)
                         page?.kind == Pages.KIND_HOME_GRID -> HomeGrid(sectionId, cards, entries, nav, onOpenPage)
-                        page != null -> EntryPage(page, nav)
-                        home != null -> EntryPage(home, nav)
+                        page != null -> EntryPage(page, nav, onOpenPage)
+                        home != null -> EntryPage(home, nav, onOpenPage)
                         cards.isNotEmpty() -> HomeGrid(sectionId, cards, entries, nav, onOpenPage)
                         else -> Box(Modifier.fillMaxSize().background(p.canvas))
                     }
@@ -114,8 +114,8 @@ fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectLis
                 sym != null -> QuotePage(sym, nav)
                 top.startsWith("dash:") -> DashboardPage(top.removePrefix("dash:"), nav)
                 page?.kind == Pages.KIND_HOME_GRID -> HomeGrid(sectionId, cards, entries, nav, onOpenPage)
-                page != null -> EntryPage(page, nav)
-                home != null -> EntryPage(home, nav)
+                page != null -> EntryPage(page, nav, onOpenPage)
+                home != null -> EntryPage(home, nav, onOpenPage)
                 cards.isNotEmpty() -> HomeGrid(sectionId, cards, entries, nav, onOpenPage)
                 else -> TabList(sectionId, entries, compact = false, selected = null, nav = nav, onOpen = onSelectList, onOpenConfig = onOpenConfig)
             }
@@ -130,7 +130,7 @@ private fun TabList(sectionId: String, entries: List<Entry>, compact: Boolean, s
     val sources = remember { AssetData.sources(ctx) }
     val dashboards = remember { AssetData.dashboards(ctx) }
     val dashEntries = entries.filter { it.kind == Pages.KIND_DASHBOARD }
-    val others = entries.filter { it.kind != Pages.KIND_HOME_PAGE && it.kind != Pages.KIND_HOME_GRID && it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE && it.kind != Pages.KIND_CB_TABLE && it.kind != Pages.KIND_QUOTE_BOARD && it.kind != Pages.KIND_FUTURES_BOARD && it.kind != Pages.KIND_HEDGE_CALC && it.kind != Pages.KIND_PERF_PORTFOLIO }
+    val others = entries.filter { it.kind != Pages.KIND_HOME_PAGE && it.kind != Pages.KIND_HOME_GRID && it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE && it.kind != Pages.KIND_CB_TABLE && it.kind != Pages.KIND_QUOTE_BOARD && it.kind != Pages.KIND_FUTURES_BOARD && it.kind != Pages.KIND_HEDGE_CALC && it.kind != Pages.KIND_PERF_PORTFOLIO && it.kind != Pages.KIND_MARKZ }
     fun status(e: Entry): DashStatus? = dashboards.firstOrNull { it.id == e.dashboard }?.let { Dashboards.status(it, sources) }
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -165,9 +165,9 @@ private fun TabList(sectionId: String, entries: List<Entry>, compact: Boolean, s
     }
 }
 
-/** #1399 a non-dashboard sub-page (MY-PM's holdings, #1478 the PM tables): its declared panel, alone. */
+/** #1399 a non-dashboard sub-page (MARKZ's holdings and pages, #1478 the PM tables): its declared panel, alone; [onOpenPage] opens a sibling sub-page. */
 @Composable
-private fun EntryPage(e: Entry, nav: FinNav) {
+private fun EntryPage(e: Entry, nav: FinNav, onOpenPage: (String) -> Unit = {}) {
     Box(Modifier.fillMaxSize().padding(horizontal = FinDim.screenPad, vertical = FinDim.gap)) {
         when (e.kind) {
             Pages.KIND_HOLDINGS -> HoldingsPanel()
@@ -178,6 +178,8 @@ private fun EntryPage(e: Entry, nav: FinNav) {
             Pages.KIND_HEDGE_CALC -> HedgePage()
             // #1722 a performance portfolio (EQ > Performance, the FI bond groups): Table | Graphic over the runtime dataset
             Pages.KIND_PERF_PORTFOLIO -> PerfPortfolioPage(e.view, e.fn)
+            // #1832 MARKZ: the owner's portfolio-returns page, one tab per sub-page (data/markz.json)
+            Pages.KIND_MARKZ -> MarkzPage(e.view, onOpenPage)
             else -> Text(e.title, color = LocalFinPalette.current.text, style = FinType.title)
         }
     }

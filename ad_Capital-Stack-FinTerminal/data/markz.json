@@ -1,0 +1,662 @@
+{
+  "_doc": "#1832 MARKZ (formerly MY-PM): the owner's page 'Portfolio Returns After Inflation & Taxes (EUR MoM)' (Portfolio_Returns_Sensitivity_Matrix.html, PortfolioLab) drawn natively by ui/MarkzPage.kt from this declaration; Markz.kt holds the arithmetic (pure), MarkzStats.kt the statistics of the Markovitz substeps. Every tab, input, output, table, chart and word of the owner's page is here: `tabs` (the page's top row; each is a MARKZ sub-page, build.json ui.stacks.markz `view`), `defaults` (the page's DEFAULTS), `inputs` (the 14 parameters of the two-column table and the 3 Steps, by the page's element ids), `words`, `heat` (the diverging heatmap of the matrix), `frontier` (the Markovitz page's frontier portfolios and its efficient-frontier diagram, in the page's 420 x 220 SVG units), `methodology` (its five steps) and `substeps` (Volatility, Beta, CAPM Calculator, Correlation, Optimization: the page's texts and links). The owner's page left the five substeps as descriptions; MARKZ implements them (`stats`): the daily closes of the declared instruments from the app's quote source (data/quotes.json), the estimators and the optimiser named in `stats`, nothing typed as a market figure. Rule 16: MarkzParityTest holds every element; Rename1832ParityTest holds every MY-PM element under MARKZ.",
+  "title": "Portfolio Returns After Inflation & Taxes (€ MoM)",
+  "brand": [
+    "Portfolio",
+    "Lab"
+  ],
+  "tabs": [
+    {
+      "id": "home",
+      "label": "Home",
+      "page": "markz-overview"
+    },
+    {
+      "id": "markovitz",
+      "label": "Markovitz",
+      "page": "markz-markovitz"
+    },
+    {
+      "id": "sensy",
+      "label": "Sensy Matrix",
+      "page": "markz-sensy",
+      "default": true
+    },
+    {
+      "id": "volatility",
+      "label": "Volatility",
+      "page": "markz-volatility"
+    },
+    {
+      "id": "beta",
+      "label": "Beta",
+      "page": "markz-beta"
+    },
+    {
+      "id": "capm",
+      "label": "CAPM Calculator",
+      "page": "markz-capm"
+    },
+    {
+      "id": "correlation",
+      "label": "Correlation",
+      "page": "markz-correlation"
+    },
+    {
+      "id": "optimization",
+      "label": "Optimization",
+      "page": "markz-optimization"
+    }
+  ],
+  "defaults": {
+    "aumUsd": 100000.0,
+    "aumBrl": 593000.0,
+    "cgTaxPct": 17.0,
+    "spreadPct": 2.0,
+    "inflationPct": 3.63,
+    "centerYieldPct": 14.98,
+    "centerUsdBrl": 5.93,
+    "centerEurBrl": 6.5,
+    "yieldStepBps": 75.0,
+    "fxStepPct": 5.0,
+    "roundStepEur": 250.0,
+    "aumAnchor": "USD",
+    "_doc": "the owner's DEFAULTS: EUR/USD is centerEurBrl / centerUsdBrl (6.50 / 5.93 = 1.0961214); the AuM is anchored to USD"
+  },
+  "inputs": [
+    {
+      "id": "input-aum-usd",
+      "label": "AuM",
+      "unit": "(usd)",
+      "column": 1
+    },
+    {
+      "id": "input-aum-eur",
+      "label": "AuM",
+      "unit": "(eur)",
+      "column": 1
+    },
+    {
+      "id": "input-aum-brl",
+      "label": "AuM",
+      "unit": "(brl)",
+      "column": 1
+    },
+    {
+      "id": "input-return-net",
+      "label": "Return Net",
+      "unit": "(% yoy)",
+      "column": 1
+    },
+    {
+      "id": "input-return-usd-mom",
+      "label": "Return",
+      "unit": "(usd mom)",
+      "column": 1
+    },
+    {
+      "id": "input-return-eur-mom",
+      "label": "Return",
+      "unit": "(eur mom)",
+      "column": 1
+    },
+    {
+      "id": "input-return-brl-mom",
+      "label": "Return",
+      "unit": "(brl mom)",
+      "column": 1
+    },
+    {
+      "id": "input-center-yield",
+      "label": "Return Gross",
+      "unit": "(% yoy)",
+      "column": 2
+    },
+    {
+      "id": "input-inflation",
+      "label": "Infl",
+      "unit": "(%)",
+      "column": 2
+    },
+    {
+      "id": "input-cg-tax",
+      "label": "Tax",
+      "unit": "(%)",
+      "column": 2
+    },
+    {
+      "id": "input-center-eur-usd",
+      "label": "Exch",
+      "unit": "(EUR/USD)",
+      "column": 2
+    },
+    {
+      "id": "input-center-usd",
+      "label": "Exch",
+      "unit": "(USD/BRL)",
+      "column": 2
+    },
+    {
+      "id": "input-center-eur-brl",
+      "label": "Exch",
+      "unit": "(EUR/BRL)",
+      "column": 2
+    },
+    {
+      "id": "input-spread",
+      "label": "Exchg spread",
+      "unit": "(%)",
+      "column": 2
+    },
+    {
+      "id": "input-yield-step",
+      "label": "Return",
+      "unit": "(bps)",
+      "column": "steps"
+    },
+    {
+      "id": "input-fx-step",
+      "label": "FX",
+      "unit": "(%)",
+      "column": "steps"
+    },
+    {
+      "id": "input-round-step",
+      "label": "Sheet",
+      "unit": "(€)",
+      "column": "steps"
+    }
+  ],
+  "words": {
+    "nav_badge": "Net: €{v}/mo",
+    "home_kicker": "Portfolio Overview",
+    "home_title": "Real Purchasing Power & Cash Flow Summary",
+    "home_sub": "Live summary synced with your active parameters in Sensy Matrix.",
+    "home_open_sensy": "Open Sensy Matrix →",
+    "home_open_markovitz": "Markovitz Analysis",
+    "home_aum_usd": "Portfolio AuM (USD)",
+    "home_aum_eur": "Portfolio AuM (EUR)",
+    "home_aum_brl": "Portfolio AuM (BRL)",
+    "home_mom_usd": "Net MoM: ${v}",
+    "home_mom_eur": "Net MoM: €{v} (Sheet: €{s})",
+    "home_mom_brl": "Net MoM: R$ {v}",
+    "waterfall": "Annual Return Waterfall",
+    "wf_gross": "1. Gross Target Return (YoY)",
+    "wf_infl": "2. Less Inflation Drag (Fisher)",
+    "wf_tax": "3. Less Capital Gains Tax",
+    "wf_annual": "4. Net Annual Euro Cash Flow (after FX spread)",
+    "wf_infl_v": "−{i}% → {r}% Real",
+    "wf_tax_v": "−{t}% → {n}% Net",
+    "wf_annual_v": "€{v} / yr",
+    "fx_title": "Active FX & Cross Rates",
+    "fx_eurusd": "EUR / USD",
+    "fx_usdbrl": "USD / BRL",
+    "fx_eurbrl": "EUR / BRL",
+    "home_note": "Edit any variable directly in Sensy Matrix or explore optimal risk-return allocations in Markovitz to recalculate all figures instantaneously.",
+    "sensy_kicker": "Portfolio Returns • DE HICP",
+    "sensy_pill": "AuM: €{k}k (R${m}M)",
+    "sensy_title": "Portfolio Returns After Inflation & Taxes (€ MoM)",
+    "sensy_sub": "Monthly net euro cash flow sensitivity across portfolio return targets and BRL exchange rate shocks.",
+    "round_step": "€{s} Step (Sheet)",
+    "round_exact": "Exact (€)",
+    "copy_csv": "Copy CSV",
+    "reset": "Reset",
+    "kpi_aum": "Gross Portfolio AuM",
+    "kpi_aum_usd": "USD Equiv: ${v}",
+    "kpi_baseline": "Baseline Net MoM",
+    "kpi_exact": "Exact: €{v}",
+    "kpi_sheet": "Sheet MROUND: €{v}",
+    "kpi_real": "Real Return",
+    "kpi_net": "Net: {v}%",
+    "kpi_real_sub": "{g}% − {i}% Infl",
+    "kpi_range": "Grid Stress Range",
+    "kpi_range_sub": "±{fx}% FX • ±{bp} bps",
+    "matrix_title": "PORTFOLIO RETURNS MATRIX (€ MoM)",
+    "legend_down": "Downside",
+    "legend_base": "Base",
+    "legend_up": "Upside",
+    "th_target": "Target Return",
+    "th_target_short": "Target",
+    "th_infl": "Inflation",
+    "th_usd": "USD",
+    "th_eur_real": "EUR / Real Return",
+    "th_eurusd": "EUR/USD",
+    "inspector": "Inspector",
+    "inspector_center": "Baseline Center",
+    "inspector_scenario": "Scenario",
+    "inspector_head": "{label}: EUR/BRL {eb} (USD {ub}) • Target {g}%",
+    "inspector_math": "Real: {r}% → Post-Tax ({t}%): {pt}% → Net MoM ({s}% spread): €{e} (Sheet: €{sh})",
+    "params_title": "Parameters & Variables",
+    "steps": "Steps",
+    "steps_badge": "{bp}bps • {fx}% • €{s}",
+    "formula_label": "Formula:",
+    "formula_real": "Real Return = (1 + Return Gross) / (1 + Infl) − 1",
+    "formula_mom": "Monthly Net (€) = [BRL AuM × Real Return × (1 − Tax) / 12] ÷ EUR/BRL × (1 − Spread)",
+    "footer_cross": "Implied EUR/BRL: {eb} (USD/BRL {ub} × EUR/USD {eu})",
+    "csv_head": "{g} Target ({r} Real)",
+    "toast_copied": "Sensitivity matrix copied as CSV",
+    "toast_copy_failed": "Unable to copy matrix",
+    "toast_reset": "Baseline parameters restored",
+    "toast_loaded": "Loaded {name} ({v}%) into Sensy Matrix",
+    "mk_kicker": "Modern Portfolio Theory • Mean-Variance Optimization",
+    "mk_title": "How a Markovitz Analysis Is Done",
+    "mk_intro": "Developed by Harry Markowitz (1952), a Mean-Variance Optimization evaluates assets not in isolation, but by how their expected returns, volatilities, and correlations interact—identifying the Efficient Frontier of portfolios that maximize return for any given level of risk.",
+    "mk_badge": "Active Target: {v}%",
+    "mk_steps_title": "Step-by-Step Workflow of a Markovitz Portfolio Analysis",
+    "mk_curve_title": "Efficient Frontier Curve",
+    "mk_curve_sub": "Return E(Rp) vs. Volatility (σp)",
+    "mk_curve_note": "Any portfolio lying below the green curve is inefficient because a combination on the frontier delivers higher return for the exact same volatility.",
+    "mk_alloc_title": "Frontier Portfolio Allocations",
+    "mk_alloc_sub": "Sync target return to matrix",
+    "mk_rf": "Assumes risk-free benchmark Rf = {v}%",
+    "mk_reset": "Reset Baseline ({v}%) →",
+    "mk_er": "E(Rp): {v}%",
+    "mk_vol": "σp: {v}%",
+    "mk_sharpe": "Sharpe: {v}",
+    "mk_active": "Active in Matrix",
+    "mk_use": "Use Return →",
+    "st_loading": "Reading the daily closes from the quote source…",
+    "st_failed": "The quote source did not answer for: {v}",
+    "st_source": "Daily closes: {src}, {n} trading days to {d}",
+    "st_asset": "Asset",
+    "st_hist": "Historical SD",
+    "st_ewma": "EWMA",
+    "st_garch": "GARCH(1,1)",
+    "st_implied": "Implied",
+    "st_pick": "Volatility framework",
+    "st_na": "n/a",
+    "st_beta": "β",
+    "st_cov": "Cov(Rᵢ, Rₘ)",
+    "st_var_m": "σₘ²",
+    "st_vol": "σ (selected)",
+    "st_rf": "Rf (%)",
+    "st_erm": "E(Rₘ) (%)",
+    "st_erm_note": "E(Rₘ) defaults to the benchmark's annualised return over the closes read",
+    "st_eri": "E(Rᵢ) (%)",
+    "st_corr": "Correlation ρᵢⱼ",
+    "st_covm": "Variance-covariance Σ (annualised, %²)",
+    "st_mvp": "Minimum Variance (MVP)",
+    "st_ms": "Max Sharpe (Tangency)",
+    "st_match": "Frontier portfolio at the Sensy target",
+    "st_frontier": "Efficient frontier (long only)",
+    "st_weights": "Weights",
+    "st_er": "E(Rp) %",
+    "st_volp": "σp %",
+    "st_sharpe": "Sharpe",
+    "st_unreachable": "The Sensy target {v}% is outside the frontier ({lo}%–{hi}%)"
+  },
+  "heat": {
+    "_doc": "getHeatmapStyle: diff = (value - baseline) / (baseline / scale_base); the bucket edges, below: -3 .. +3; the centre cell is drawn bold with a ring",
+    "scale_base": 2500,
+    "edges": [
+      -650,
+      -400,
+      -150,
+      150,
+      400,
+      650
+    ]
+  },
+  "frontier": {
+    "rf": 4.25,
+    "portfolios": [
+      {
+        "name": "Minimum Variance (MVP)",
+        "tag": "Lowest Volatility",
+        "tone": "amber",
+        "expReturn": 10.6,
+        "vol": 4.8,
+        "weights": "55% Bills • 35% Bonds • 10% Equities"
+      },
+      {
+        "name": "Max Sharpe (Tangency)",
+        "tag": "Optimal Risk-Adjusted",
+        "tone": "sky",
+        "expReturn": 13.45,
+        "vol": 7.4,
+        "weights": "25% Bills • 50% Bonds • 25% Equities"
+      },
+      {
+        "name": "High-Carry Frontier Mix",
+        "tag": "Baseline Income Match",
+        "tone": "emerald",
+        "expReturn": 14.98,
+        "vol": 9.65,
+        "weights": "10% Bills • 55% Bonds • 35% Equities"
+      }
+    ],
+    "diagram": {
+      "width": 420,
+      "height": 220,
+      "lines": [
+        {
+          "x1": 48,
+          "y1": 20,
+          "x2": 48,
+          "y2": 185,
+          "color": "#334155"
+        },
+        {
+          "x1": 48,
+          "y1": 185,
+          "x2": 395,
+          "y2": 185,
+          "color": "#334155"
+        },
+        {
+          "x1": 48,
+          "y1": 60,
+          "x2": 395,
+          "y2": 60,
+          "color": "#1e293b",
+          "dash": true
+        },
+        {
+          "x1": 48,
+          "y1": 102,
+          "x2": 395,
+          "y2": 102,
+          "color": "#1e293b",
+          "dash": true
+        },
+        {
+          "x1": 48,
+          "y1": 144,
+          "x2": 395,
+          "y2": 144,
+          "color": "#1e293b",
+          "dash": true
+        },
+        {
+          "x1": 48,
+          "y1": 162,
+          "x2": 355,
+          "y2": 30,
+          "color": "#38bdf8",
+          "dash": true
+        }
+      ],
+      "curves": [
+        {
+          "from": [
+            118,
+            126
+          ],
+          "ctrl": [
+            116,
+            154
+          ],
+          "to": [
+            205,
+            170
+          ],
+          "color": "#475569",
+          "dash": true,
+          "width": 2
+        },
+        {
+          "from": [
+            118,
+            126
+          ],
+          "ctrl": [
+            124,
+            72
+          ],
+          "to": [
+            365,
+            36
+          ],
+          "color": "#10b981",
+          "width": 3
+        }
+      ],
+      "points": [
+        {
+          "x": 165,
+          "y": 146,
+          "r": 4,
+          "color": "#64748b",
+          "label": "Asset A (Local Bills)",
+          "lx": 173,
+          "ly": 149
+        },
+        {
+          "x": 255,
+          "y": 116,
+          "r": 4,
+          "color": "#64748b",
+          "label": "Asset B (Duration Bonds)",
+          "lx": 263,
+          "ly": 119
+        },
+        {
+          "x": 340,
+          "y": 76,
+          "r": 4,
+          "color": "#64748b",
+          "label": "Asset C (Equities)",
+          "lx": 285,
+          "ly": 90
+        },
+        {
+          "x": 118,
+          "y": 126,
+          "r": 5,
+          "color": "#f59e0b",
+          "label": "Min Variance",
+          "lx": 126,
+          "ly": 123,
+          "lcolor": "#fbbf24"
+        },
+        {
+          "x": 212,
+          "y": 76,
+          "r": 5.5,
+          "color": "#38bdf8",
+          "label": "Max Sharpe",
+          "lx": 150,
+          "ly": 66,
+          "lcolor": "#7dd3fc"
+        }
+      ],
+      "texts": [
+        {
+          "x": 220,
+          "y": 210,
+          "text": "Portfolio Volatility / Risk (σp %)",
+          "anchor": "middle"
+        },
+        {
+          "x": 14,
+          "y": 105,
+          "text": "Expected Return E(Rp)",
+          "anchor": "middle",
+          "rotate": -90
+        },
+        {
+          "x": 330,
+          "y": 26,
+          "text": "CML (Max Sharpe)",
+          "color": "#38bdf8"
+        }
+      ],
+      "target": {
+        "_doc": "the active target's dot: t = clamp((target - from) / span, 0, 1); cx = x0 + t * dx, cy = y0 - t * dy; the label sits left of the dot past label_flip_x",
+        "from": 9.5,
+        "span": 8.5,
+        "x0": 122,
+        "dx": 235,
+        "y0": 122,
+        "dy": 84,
+        "label_flip_x": 295,
+        "label": "Target {v}%"
+      }
+    }
+  },
+  "methodology": [
+    {
+      "step": "Step 1",
+      "symbol": "μᵢ , σᵢ",
+      "title": "Estimate Return & Risk",
+      "text": "Define the investable assets (e.g., sovereign bonds, equities, cash) and estimate each asset's expected annual return (μᵢ) and standard deviation / volatility (σᵢ)."
+    },
+    {
+      "step": "Step 2",
+      "symbol": "Σ / ρᵢⱼ",
+      "title": "Covariance Matrix",
+      "text": "Measure pairwise correlations (ρᵢⱼ) between every pair of assets. Combining assets with ρ < 1 cancels out idiosyncratic swings—the mathematical engine of diversification."
+    },
+    {
+      "step": "Step 3",
+      "symbol": "wᵀμ , wᵀΣw",
+      "title": "Portfolio Math",
+      "text": "For any weight mix w (∑wᵢ = 1): E(Rp) = ∑ wᵢμᵢ ; σp = √(∑∑ wᵢwⱼρᵢⱼσᵢσⱼ)"
+    },
+    {
+      "step": "Step 4",
+      "symbol": "min σp²",
+      "title": "Efficient Frontier",
+      "text": "Run quadratic optimization across return targets to find the minimum-variance weights for each return level. Plotting (σp, E(Rp)) forms the upper boundary known as the Efficient Frontier."
+    },
+    {
+      "step": "Step 5",
+      "symbol": "(Rp−Rf)/σp",
+      "title": "Optimal Selection",
+      "text": "Select either the Max Sharpe (Tangency) portfolio for highest risk-adjusted efficiency, or the frontier portfolio matching your required Sensy Matrix monthly income."
+    }
+  ],
+  "substeps": [
+    {
+      "id": "volatility",
+      "kicker": "Markovitz Substep 1 • Risk Dispersion",
+      "title": "Volatility",
+      "text": "Studies and compares candidate volatility estimators (Historical Standard Deviation, EWMA, GARCH, and Implied Volatility) to decide which measure best captures asset and market risk before calculating Beta and the covariance matrix.",
+      "prev": [
+        "markovitz",
+        "← Markovitz"
+      ],
+      "next": [
+        "beta",
+        "Next: Beta →"
+      ]
+    },
+    {
+      "id": "beta",
+      "kicker": "Markovitz Substep 2 • Systematic Sensitivity",
+      "title": "Beta",
+      "text": "Measures each asset's systematic sensitivity (βᵢ = Cov(Rᵢ, Rₘ) / σₘ²) using our selected volatility framework to quantify how strongly individual holdings amplify or dampen broader benchmark movements.",
+      "prev": [
+        "volatility",
+        "← Volatility"
+      ],
+      "next": [
+        "capm",
+        "Next: CAPM Calculator →"
+      ]
+    },
+    {
+      "id": "capm",
+      "kicker": "Markovitz Substep 3 • Benchmark Hurdle Return",
+      "title": "CAPM Calculator",
+      "text": "Serves as our benchmark expected-return calculator (E(Rᵢ) = Rᶠ + βᵢ (E(Rₘ) − Rᶠ)), combining the risk-free rate, asset Beta, and market risk premium to establish the baseline return input for portfolio optimization.",
+      "prev": [
+        "beta",
+        "← Beta"
+      ],
+      "next": [
+        "correlation",
+        "Next: Correlation →"
+      ]
+    },
+    {
+      "id": "correlation",
+      "kicker": "Markovitz Substep 4 • Diversification Matrix",
+      "title": "Correlation",
+      "text": "Evaluates pairwise return correlations (ρᵢⱼ) and builds the variance-covariance matrix (Σ) across asset classes and currencies to determine how effectively low-correlated holdings reduce overall portfolio variance.",
+      "prev": [
+        "capm",
+        "← CAPM Calculator"
+      ],
+      "next": [
+        "optimization",
+        "Next: Optimization →"
+      ]
+    },
+    {
+      "id": "optimization",
+      "kicker": "Markovitz Substep 5 • Efficient Frontier & Sharpe",
+      "title": "Optimization",
+      "text": "Solves for optimal asset weights (w) along the Efficient Frontier and maximizes the Sharpe Ratio ((Rₚ − Rᶠ) / σₚ) to output the target portfolio return for the Sensy Matrix.",
+      "prev": [
+        "correlation",
+        "← Correlation"
+      ],
+      "next": [
+        "sensy",
+        "Back to Sensy Matrix →"
+      ]
+    }
+  ],
+  "stats": {
+    "_doc": "The substeps' data: the daily closes of `assets` and `benchmark` (and `implied` for the implied volatility) from the quote source of data/quotes.json (range 5y, daily); simple daily returns on the days every series has, the last `window_days`; volatilities annualised by sqrt(annual_days). Historical SD = the sample standard deviation; EWMA = RiskMetrics with lambda `ewma_lambda`; GARCH(1,1) = variance targeting (omega = (1 - alpha - beta) x the sample variance) with the declared alpha and beta, run through the window, its last conditional variance; Implied = the declared volatility index's last close (an asset without one is n/a). Beta = rho(i, m) x sigma_i / sigma_m with the selected framework's sigmas; CAPM E(Ri) = Rf + beta_i (E(Rm) - Rf); Sigma_ij = rho_ij sigma_i sigma_j; the optimiser searches the long-only weights on a `grid_step` grid (sum 1) for the minimum variance, the maximum Sharpe ((E(Rp) - Rf) / sigma_p) and the minimum variance at each return of the frontier.",
+    "assets": [
+      {
+        "id": "bills",
+        "label": "Asset A (Local Bills)",
+        "short": "Bills",
+        "symbol": "LFTS11.SA",
+        "name": "Investo Tesouro Selic ETF (B3)"
+      },
+      {
+        "id": "bonds",
+        "label": "Asset B (Duration Bonds)",
+        "short": "Bonds",
+        "symbol": "IRFM11.SA",
+        "name": "It Now IRF-M P2 ETF, prefixed government bonds (B3)"
+      },
+      {
+        "id": "equities",
+        "label": "Asset C (Equities)",
+        "short": "Equities",
+        "symbol": "BOVA11.SA",
+        "name": "iShares Ibovespa ETF (B3)",
+        "implied": "^VXEWZ",
+        "implied_name": "Cboe Brazil ETF Volatility Index (EWZ options)"
+      }
+    ],
+    "benchmark": {
+      "id": "market",
+      "label": "Market (Ibovespa)",
+      "short": "Market",
+      "symbol": "^BVSP",
+      "name": "Ibovespa index (B3)"
+    },
+    "window_days": 252,
+    "annual_days": 252,
+    "ewma_lambda": 0.94,
+    "garch_alpha": 0.05,
+    "garch_beta": 0.9,
+    "grid_step": 0.01,
+    "frontier_points": 12,
+    "vol_models": [
+      [
+        "hist",
+        "Historical SD"
+      ],
+      [
+        "ewma",
+        "EWMA"
+      ],
+      [
+        "garch",
+        "GARCH(1,1)"
+      ],
+      [
+        "implied",
+        "Implied"
+      ]
+    ],
+    "vol_default": "hist"
+  }
+}

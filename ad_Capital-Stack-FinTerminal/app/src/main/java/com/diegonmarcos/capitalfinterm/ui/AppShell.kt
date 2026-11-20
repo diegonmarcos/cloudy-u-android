@@ -149,7 +149,8 @@ fun AppShell(startDashboard: String? = null) {
     fun runCommand() {
         val word = Pages.commandWord(command)
         if (word.isEmpty()) { functionsOpen = true; return }
-        val f = Pages.function(functions, word)
+        // #1832 a renamed section's old word (MY-PM, now MARKZ) still opens it, through ui.redirects
+        val f = Pages.function(functions, word) ?: Pages.redirected(Decl.redirects, word)
         if (f != null) { go(f); command = ""; commandMsg = ""; focus.clearFocus() }
         else commandMsg = Terminal.unknown(terminalDecl, word)
     }

@@ -1,0 +1,239 @@
+{
+ "_doc": "#1832 FROZEN: the owner's page Portfolio_Returns_Sensitivity_Matrix.html as delivered (2026-11-20): every element id, every input's label and unit, the top-row tabs and every heading. MarkzParityTest proves MARKZ covers each one. Do not regenerate.",
+ "title": "Portfolio Returns After Inflation & Taxes (€ MoM)",
+ "ids": [
+  "toast",
+  "toast-message",
+  "nav-tab-home",
+  "nav-tab-markovitz",
+  "nav-tab-sensy",
+  "nav-tab-volatility",
+  "nav-tab-beta",
+  "nav-tab-capm",
+  "nav-tab-correlation",
+  "nav-tab-optimization",
+  "nav-live-badge",
+  "view-home",
+  "home-aum-usd",
+  "home-mom-usd",
+  "home-aum-eur",
+  "home-mom-eur",
+  "home-aum-brl",
+  "home-mom-brl",
+  "home-wf-gross",
+  "home-wf-infl",
+  "home-wf-tax",
+  "home-wf-annual-eur",
+  "home-fx-eurusd",
+  "home-fx-usdbrl",
+  "home-fx-eurbrl",
+  "view-sensy",
+  "header-nav-pill",
+  "btn-round-250",
+  "round-step-label",
+  "btn-round-exact",
+  "kpi-nav-eur",
+  "kpi-nav-brl",
+  "kpi-nav-usd",
+  "kpi-baseline",
+  "kpi-baseline-sub",
+  "kpi-real-yield",
+  "kpi-net-real-yield",
+  "kpi-yield-sub",
+  "kpi-range",
+  "kpi-range-sub",
+  "th-gross-0",
+  "th-gross-1",
+  "th-gross-2",
+  "th-gross-3",
+  "th-gross-4",
+  "th-gross-5",
+  "th-gross-6",
+  "th-infl-0",
+  "th-infl-1",
+  "th-infl-2",
+  "th-infl-3",
+  "th-infl-4",
+  "th-infl-5",
+  "th-infl-6",
+  "th-real-0",
+  "th-real-1",
+  "th-real-2",
+  "th-real-3",
+  "th-real-4",
+  "th-real-5",
+  "th-real-6",
+  "matrix-body",
+  "inspector-scenario",
+  "inspector-math",
+  "btn-toggle-steps",
+  "steps-summary-badge",
+  "steps-chevron",
+  "steps-collapse-panel",
+  "input-yield-step",
+  "input-fx-step",
+  "input-round-step",
+  "input-aum-usd",
+  "input-aum-eur",
+  "input-aum-brl",
+  "input-return-net",
+  "input-return-usd-mom",
+  "input-return-eur-mom",
+  "input-return-brl-mom",
+  "input-center-yield",
+  "input-inflation",
+  "input-cg-tax",
+  "input-center-eur-usd",
+  "input-center-usd",
+  "input-center-eur-brl",
+  "input-spread",
+  "footer-cross-rate",
+  "view-markovitz",
+  "markovitz-active-badge",
+  "markovitz-frontier-target-dot",
+  "markovitz-frontier-target-label",
+  "markovitz-portfolios-grid",
+  "view-volatility",
+  "view-beta",
+  "view-capm",
+  "view-correlation",
+  "view-optimization"
+ ],
+ "inputs": {
+  "input-yield-step": [
+   "Return",
+   "(bps)"
+  ],
+  "input-fx-step": [
+   "FX",
+   "(%)"
+  ],
+  "input-round-step": [
+   "Sheet",
+   "(€)"
+  ],
+  "input-aum-usd": [
+   "AuM",
+   "(usd)"
+  ],
+  "input-aum-eur": [
+   "AuM",
+   "(eur)"
+  ],
+  "input-aum-brl": [
+   "AuM",
+   "(brl)"
+  ],
+  "input-return-net": [
+   "Return Net",
+   "(% yoy)"
+  ],
+  "input-return-usd-mom": [
+   "Return",
+   "(usd mom)"
+  ],
+  "input-return-eur-mom": [
+   "Return",
+   "(eur mom)"
+  ],
+  "input-return-brl-mom": [
+   "Return",
+   "(brl mom)"
+  ],
+  "input-center-yield": [
+   "Return Gross",
+   "(% yoy)"
+  ],
+  "input-inflation": [
+   "Infl",
+   "(%)"
+  ],
+  "input-cg-tax": [
+   "Tax",
+   "(%)"
+  ],
+  "input-center-eur-usd": [
+   "Exch",
+   "(EUR/USD)"
+  ],
+  "input-center-usd": [
+   "Exch",
+   "(USD/BRL)"
+  ],
+  "input-center-eur-brl": [
+   "Exch",
+   "(EUR/BRL)"
+  ],
+  "input-spread": [
+   "Exchg spread",
+   "(%)"
+  ]
+ },
+ "tabs": [
+  [
+   "home",
+   "Home"
+  ],
+  [
+   "markovitz",
+   "Markovitz"
+  ],
+  [
+   "sensy",
+   "Sensy Matrix"
+  ],
+  [
+   "volatility",
+   "Volatility"
+  ],
+  [
+   "beta",
+   "Beta"
+  ],
+  [
+   "capm",
+   "CAPM Calculator"
+  ],
+  [
+   "correlation",
+   "Correlation"
+  ],
+  [
+   "optimization",
+   "Optimization"
+  ]
+ ],
+ "headings": [
+  "Real Purchasing Power & Cash Flow Summary",
+  "Annual Return Waterfall",
+  "Active FX & Cross Rates",
+  "Portfolio Returns After Inflation & Taxes (€ MoM)",
+  "PORTFOLIO RETURNS MATRIX (€ MoM)",
+  "Parameters & Variables",
+  "How a Markovitz Analysis Is Done",
+  "Step-by-Step Workflow of a Markovitz Portfolio Analysis",
+  "Estimate Return & Risk",
+  "Covariance Matrix",
+  "Portfolio Math",
+  "Efficient Frontier",
+  "Optimal Selection",
+  "Efficient Frontier Curve",
+  "Frontier Portfolio Allocations",
+  "Volatility",
+  "Beta",
+  "CAPM Calculator",
+  "Correlation",
+  "Optimization"
+ ],
+ "defaults": {
+  "net_eur_mom": "677.29",
+  "sheet_eur_mom": "750",
+  "net_usd_mom": "742.39",
+  "net_brl_mom": "4,492.23",
+  "aum_eur": "91,230.77",
+  "real": "10.95%",
+  "net": "9.09%",
+  "annual_eur": "8,127.48",
+  "eurusd": "1.0961"
+ }
+}

@@ -36,6 +36,18 @@ Lnktree family, declared in `1_cicd/src/data/app-families.json`; the Cloud famil
   VanEck's holdings download redirects in a loop, so neither can be read; the State Street fund of the same index or factor is read. The container's
   `/v1/bonds/sovereign-returns` (`store.rs`, `sovereign_windows` test) serves the yield and duration bond returns with the local, currency and USD legs.
 
+* MARKZ (#1832, formerly MY-PM): the last tab is the owner's page "Portfolio Returns After Inflation & Taxes (€ MoM)" drawn natively from
+  `data/markz.json` (every tab, input, output, table, chart and word of the page) by `ui/MarkzPage.kt`, with the page's arithmetic in `Markz.kt`:
+  Overview (the page's Home: AuM in USD / EUR / BRL, the annual return waterfall, the FX crosses), Markovitz (the five steps, the efficient-frontier
+  diagram, the frontier portfolios that set the matrix's target), Sensy Matrix (the Homepage, as the page opens on it: the 7 x 7 matrix of return
+  targets by EUR/BRL shocks with its heatmap, the KPIs, the inspector, sheet-step or exact rounding, Copy CSV, Reset and the 14 parameters plus the
+  3 steps, each field solving back like the page's) and the five Markovitz substeps the page only described, implemented on the daily closes of the
+  quote source (`MarkzStats.kt`: historical SD, EWMA, GARCH(1,1) and implied volatility, Beta, CAPM, the correlation and covariance matrices, the
+  long-only minimum-variance / maximum-Sharpe optimiser and its frontier, each return sendable to the Sensy Matrix). Personal portfolio (the
+  holdings list, `MYPM`) is kept, and the former MY-PM Homepage is MARKZ > Index. Rule 16: `ui.renamed` maps the old ids, `ui.redirects` sends the
+  old deep links and the command word MY-PM to MARKZ; `Rename1832ParityTest` holds every MY-PM element to `nav-parity-baseline-1832.json`,
+  `MarkzParityTest` every element of the owner's page to `markz-owner-page-1832.json`; `MarkzTest` and `MarkzStatsTest` cover the math.
+
 * EM yield curves (#1832): CB > Yield Curves adds the curves of the major emerging markets, each read the way the US Treasury and ECB curves are
   (a declared `points` panel in `data/dashboards.json`, its publisher in `data/sources.json`, a parser in `Feeds.kt`): India from CCIL's tenor-wise
   indicative G-Sec yields (T-bills 91D-364D, G-Sec buckets 1Y-2Y to 28Y-30Y; state loans left out), Brazil from ANBIMA's ETTJ (the prefixed zero curve

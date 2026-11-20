@@ -13,7 +13,7 @@
 #       1_cicd/src/data/app-families.json
 #   P2  the pages are the owner's: the bottom nav ids and labels in order (CG-Omniverse: Avatar | Galaxy | Store | Voxelverse, each a page kind),
 #       the entries of each page (titles, kinds), the FX
-#       description verbatim, the PM model portfolios (bonds/equity 40/60 70/30 60/40 30/70 and DM/EM), MY-PM a holdings list
+#       description verbatim, the PM model portfolios (bonds/equity 40/60 70/30 60/40 30/70 and DM/EM), MARKZ (#1832, formerly MY-PM) the portfolio-returns pages and the holdings list
 #   P3  the shared design: bottom nav (libs:bottomnav, libs:ui-nav-bars), tokens and kit (libs:ui-kit), icons (libs:ui-icons)
 #       in build.json modules AND in the app's build script and shell; every nav icon is in the libs:ui-icons catalog
 #   P4  no hard-coded address: no http(s) literal in build.json::ui, in the Kotlin sources or in the build script; every
@@ -57,7 +57,7 @@ EXPECT = {
   },
   "ad_Capital-Stack-FinTerminal": {
     "name": "capital-stack-finterminal", "display": "Capital-Stack-FinTerminal", "pkg": "com.diegonmarcos.capitalfinterm",
-    "nav": [("cb", "CB"), ("fi", "FI"), ("eq", "EQ"), ("nw", "NW"), ("pm", "PM"), ("hg", "HG"), ("my-pm", "MY-PM")],
+    "nav": [("cb", "CB"), ("fi", "FI"), ("eq", "EQ"), ("nw", "NW"), ("pm", "PM"), ("hg", "HG"), ("markz", "MARKZ")],
     "pages": {
       "fi": [("perf_portfolio", "All"), ("perf_portfolio", "Gov Bonds DM"), ("perf_portfolio", "Gov Bonds EM"), ("perf_portfolio", "AAA Bonds"), ("perf_portfolio", "AA-A Bonds"), ("perf_portfolio", "BBB Bonds"), ("perf_portfolio", "Junk")],
       "eq": [("section_title", "Performance"), ("perf_portfolio", "Growth"), ("perf_portfolio", "Value"), ("perf_portfolio", "Quality"), ("perf_portfolio", "Vol"), ("perf_portfolio", "Top"), ("perf_portfolio", "Cyclical"),
@@ -75,7 +75,8 @@ EXPECT = {
              ("dashboard", "DM Cash B100"), ("dashboard", "DM E30B70"), ("dashboard", "DM E40B60"), ("dashboard", "DM E60B40"), ("dashboard", "DM E70B30"),
              ("dashboard", "DM E40B40 · EM E10B10"), ("dashboard", "EM B100"), ("dashboard", "DM E50B10 · EM E30B10"),
              ("dashboard", "DM E70 · EM E30"), ("dashboard", "DM E60 · EM E40"), ("dashboard", "DM E40 · EM E60"), ("dashboard", "DM E30 · EM E70"), ("dashboard", "EM Carry EUR→BRL")],
-      "my-pm": [("holdings", "Personal portfolio")],
+      "markz": [("home_page", "Home"), ("markz", "Overview"), ("markz", "Markovitz"), ("markz", "Sensy Matrix"), ("markz", "Volatility"), ("markz", "Beta"),
+                ("markz", "CAPM Calculator"), ("markz", "Correlation"), ("markz", "Optimization"), ("holdings", "Personal portfolio"), ("home_grid", "Index")],
       "config": [("sources", "Sources"), ("about", None)],
     },
     "hidden": ["config"],
@@ -244,7 +245,7 @@ for h in exp.get("hidden", []):
     if h not in by_id: bad.append("P6 ui.sections declares no hidden %s section" % h)
     elif h in ui.get("bottom_nav", []): bad.append("P6 the %s section is on the bottom bar" % h)
     if h == "config" and re.findall(r'SECTION_CONFIG\s*=\s*"([^"]+)"', decl_kt) != ["config"]: bad.append("P6 Decl.kt names no SECTION_CONFIG = \"config\"")
-if exp["name"] == "capital-stack-finterminal" and [e.get("kind") for e in stacks.get("my-pm", [])] != ["holdings"]: bad.append("P6 MY-PM is not the holdings list")
+if exp["name"] == "capital-stack-finterminal" and [e.get("kind") for e in stacks.get("markz", [])].count("holdings") != 1: bad.append("P6 MARKZ (formerly MY-PM) does not keep the holdings list")
 
 # P7
 joined = "\n".join(sources.values())

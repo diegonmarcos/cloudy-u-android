@@ -2,7 +2,7 @@ package com.diegonmarcos.capitalfinterm
 
 /**
  * A tab's back stack (UI spec 4.3 / 4.4), as saveable strings: `list` (the section's Homepage, #1399), `dash:<id>`, `page:<id>` (a
- * non-dashboard sub-page, e.g. MY-PM's holdings), `quote:<symbol>`. A tab opens on its Homepage ([initial]); a quote is pushed on
+ * non-dashboard sub-page, e.g. MARKZ's holdings, formerly MY-PM's), `quote:<symbol>`. A tab opens on its Homepage ([initial]); a quote is pushed on
  * top; back pops a quote, then returns any sub-page to the Homepage, then leaves a non-home tab for the home tab ([HOME]), and on
  * the home tab's Homepage lets the system exit (null). The island's own selection never adds to a stack (tabs are peers).
  */

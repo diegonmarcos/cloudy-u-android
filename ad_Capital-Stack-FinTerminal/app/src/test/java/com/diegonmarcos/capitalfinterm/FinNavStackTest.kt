@@ -13,7 +13,7 @@ class FinNavStackTest {
 
     @Test fun theSelectedSubPageIsTheShownOne() {
         assertEquals("yield-curves", FinNavStack.selectedPage(FinNavStack.open(FinNavStack.initial(), "yield_curves"), "fi"))
-        assertEquals("holdings", FinNavStack.selectedPage(FinNavStack.openPage("holdings"), "my-pm"))
+        assertEquals("holdings", FinNavStack.selectedPage(FinNavStack.openPage("holdings"), "markz"))
     }
 
     @Test fun backUnwindsInTheDeclaredOrder() {
