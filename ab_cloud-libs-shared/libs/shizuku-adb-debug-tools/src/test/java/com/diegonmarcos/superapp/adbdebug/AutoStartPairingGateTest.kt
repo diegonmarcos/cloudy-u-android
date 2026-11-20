@@ -11,15 +11,15 @@ import org.junit.Test
 class AutoStartPairingGateTest {
     private val implicit = listOf("app-start", "boot", "command", "wireless-debugging-on")
 
-    @Test fun `keep-alive off: no implicit trigger runs the chain`() {
+    @Test fun `with keep-alive off no implicit trigger runs the chain`() {
         implicit.forEach { assertFalse("$it must not run with keep-alive off", LocalServerAutoStart.mayRun(it, false)) }
     }
 
-    @Test fun `keep-alive off: an explicit tap still offers it`() {
+    @Test fun `with keep-alive off an explicit tap still offers it`() {
         assertTrue(LocalServerAutoStart.mayRun("button", false))
     }
 
-    @Test fun `keep-alive on: implicit triggers keep working`() {
+    @Test fun `with keep-alive on implicit triggers keep working`() {
         implicit.forEach { assertTrue(LocalServerAutoStart.mayRun(it, true)) }
         assertTrue(LocalServerAutoStart.mayRun("button", true))
     }
