@@ -143,7 +143,7 @@ class PhoneMailboxProbeTest {
         assertEquals("every other line is the server's, nothing dropped", 6, s.checks.size)
     }
 
-    @Test fun `a missing mailbox or an oversized message will fail; a phone that cannot tell keeps the server's verdict`() {
+    @Test fun `a missing mailbox or an oversized message will fail, and a phone that cannot tell keeps the server's verdict`() {
         assertEquals(RecipientVerdict.WILL_FAIL, applyPhoneProbe(blockedStatus(), PhoneProbeResult("mx", true, null, "does_not_exist", 550, "550 5.1.1"), null).verdict)
         assertEquals(RecipientVerdict.WILL_FAIL, applyPhoneProbe(blockedStatus(), PhoneProbeResult("mx", true, 1000L, "exists", 250, "ok"), 5_000).verdict)
         val blocked = applyPhoneProbe(blockedStatus(), PhoneProbeResult("mx", false, null, "unknown", null, "this phone's network cannot reach port 25 either", networkBlocked = true), null)
