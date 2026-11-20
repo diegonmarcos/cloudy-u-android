@@ -1,0 +1,122 @@
+# #1833 Quick actions > Panels > Security on an emulator, with the x86_64 APK a Ship Cloud SuperApp run built: the tab opens, draws
+# its four groups, and two tiles really switch the device. With WRITE_SECURE_SETTINGS granted (the self-grant the phone does over
+# its shell channel), a tap on Developer options flips Settings.Global development_settings_enabled and a tap on Cloud SuperApp
+# puts the SuperApp's accessibility service in Settings.Secure enabled_accessibility_services; both are read back with adb.
+# Evidence: security-tab-evidence (shots before/after each tap, ui dumps, the settings read back, verdict.txt, logcat).
+name: "Test -> SuperApp Security tab (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      superapp_run_id:
+        description: "Ship Cloud SuperApp run id whose x86_64 APK artifact to test"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Fetch the Cloud SuperApp APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          W_RUN: ${{ inputs.superapp_run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          gh api "repos/$REPO/actions/runs/$W_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-SuperApp")) | .name' |
+          while read -r name; do gh run download "$W_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          pick=""
+          for want in x86_64 universal ''; do
+            pick=$(find apk -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no Cloud SuperApp APK"; exit 1; }
+          cp "$pick" superapp.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the script
+        run: |
+          cat > find.py <<'EOF1'
+          import re, sys
+          # Center of the first node whose content-desc starts with argv[2], from a uiautomator dump.
+          xml, label = open(sys.argv[1], errors="replace").read(), sys.argv[2]
+          for m in re.finditer(r'<node [^>]*>', xml):
+              n = m.group(0)
+              d = re.search(r'content-desc="([^"]*)"', n)
+              b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+              if d and b and d.group(1).startswith(label):
+                  x1, y1, x2, y2 = map(int, b.groups()); print((x1 + x2) // 2, (y1 + y2) // 2); break
+          EOF1
+          cat > shoot.sh <<'EOF2'
+          set -u
+          mkdir -p out
+          PKG=com.diegonmarcos.superapp
+          adb install -r -g superapp.apk || exit 2
+          adb shell pm grant "$PKG" android.permission.WRITE_SECURE_SETTINGS || true
+          adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
+          adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+          adb shell settings put global hide_error_dialogs 1 || true
+          adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
+          adb shell locksettings set-disabled true || true
+          awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; }
+          ACT=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
+          adb shell am start -W -n "$PKG/.HomeActivity" >/dev/null; sleep 10; awake
+          adb shell am start -n "$ACT" --es shortcut_action "page:config/panels-security" >/dev/null; awake; sleep 12
+          adb exec-out screencap -p > out/01-security-tab.png
+          dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "out/$1.xml" >/dev/null 2>&1; }
+          # find_tile <label> <name>: scroll until a tile whose description starts with <label> is on screen; prints "x y"
+          find_tile() {
+            for i in 1 2 3 4 5 6; do
+              dump "ui-$2-$i"; pos=$(python3 find.py "out/ui-$2-$i.xml" "$1")
+              [ -n "$pos" ] && { echo "$pos"; return; }
+              adb shell input swipe 540 1700 540 900 500; sleep 2
+            done
+          }
+          grep -o 'Developer &amp; debugging\|Accessibility apps\|Features using accessibility\|VPN &amp; location' out/*.xml 2>/dev/null | sort -u > out/groups-seen.txt || true
+          v=""
+          # 1) Developer options: tap flips development_settings_enabled
+          dev0=$(adb shell settings get global development_settings_enabled | tr -d '\r')
+          pos=$(find_tile "Developer options" dev)
+          if [ -n "$pos" ]; then adb shell input tap $pos; sleep 6; awake; fi
+          adb exec-out screencap -p > out/02-after-developer-options.png
+          dev1=$(adb shell settings get global development_settings_enabled | tr -d '\r')
+          echo "development_settings_enabled before=$dev0 after=$dev1 tile_at=${pos:-none}" | tee -a out/settings.txt
+          [ -n "$pos" ] && [ "$dev0" != "$dev1" ] && v="$v developer_options:SWITCHED" || v="$v developer_options:NOT-SWITCHED"
+          # 2) Cloud SuperApp accessibility service: tap puts it in enabled_accessibility_services
+          a0=$(adb shell settings get secure enabled_accessibility_services | tr -d '\r')
+          pos=$(find_tile "Cloud SuperApp" a11y)
+          if [ -n "$pos" ]; then adb shell input tap $pos; sleep 6; awake; fi
+          adb exec-out screencap -p > out/03-after-superapp-accessibility.png
+          a1=$(adb shell settings get secure enabled_accessibility_services | tr -d '\r')
+          echo "enabled_accessibility_services before=$a0 after=$a1 tile_at=${pos:-none}" | tee -a out/settings.txt
+          [ -n "$pos" ] && [ "$a0" != "$a1" ] && v="$v superapp_accessibility:SWITCHED" || v="$v superapp_accessibility:NOT-SWITCHED"
+          dump ui-final
+          echo "VERDICT:$v" | tee out/verdict.txt
+          timeout 60 adb logcat -d > out/logcat.txt || true
+          EOF2
+          chmod +x shoot.sh
+      - name: Boot emulator and shoot
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_7
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash shoot.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-tab-evidence
+          path: out/
+          if-no-files-found: warn
