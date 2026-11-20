@@ -38,6 +38,14 @@ jobs:
           gh run download "$RUN" -R "$REPO" -n "$name" -D apk
           cp "$(find apk -name '*.apk' | head -1)" finterm.apk
 
+      - name: Probe the ECB Data Portal from the runner (#1832 the Euro curve panel's source)
+        continue-on-error: true
+        run: |
+          mkdir -p out
+          curl -s -o /dev/null --max-time 40 -A "CapitalFinTerminal" -H "Accept: application/json, text/csv, application/xml, */*" \
+            -w "ecb http=%{http_code} connect=%{time_connect}s total=%{time_total}s ip=%{remote_ip}\n" \
+            "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_1Y+SR_2Y?lastNObservations=2&format=jsondata" 2>&1 | tee out/ecb-probe.txt || echo "ecb curl exit $?" | tee -a out/ecb-probe.txt
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
