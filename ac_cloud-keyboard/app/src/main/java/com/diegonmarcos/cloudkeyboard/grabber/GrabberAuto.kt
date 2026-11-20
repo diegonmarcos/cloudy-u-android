@@ -298,46 +298,111 @@ class GrabberSelectionService : AccessibilityService() {
         if (!p.contains(GrabberAuto.KEY_A11Y)) GrabberAuto.setA11y(this, true)
     }
 
+    /** #1829 the deep node search runs here, never on the main thread (each child read is an IPC to the app). */
+    private val worker by lazy { android.os.HandlerThread("grabber-selection").apply { start() } }
+    private val workHandler by lazy { Handler(worker.looper) }
+
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {
         if (e == null || e.eventType != AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED) return
         val pkg = e.packageName?.toString().orEmpty()
-        var src: AccessibilityNodeInfo? = null
-        var sel: String? = null
-        var password = false
-        try {
-            src = runCatching { e.source }.getOrNull()
-            val node = src?.let { selectedNode(it) } ?: src
-            sel = SelectionEvent.read(e.text?.firstOrNull { !it.isNullOrEmpty() }, e.fromIndex, e.toIndex, node?.text, node?.textSelectionStart ?: -1, node?.textSelectionEnd ?: -1)
-            password = e.isPassword || src?.isPassword == true
-        } finally {
+        // Everything the event carries is read NOW: the event is recycled when this returns. The source node is our own copy.
+        val src: AccessibilityNodeInfo? = runCatching { e.source }.getOrNull()
+        val eventText = e.text?.firstOrNull { !it.isNullOrEmpty() }
+        val from = e.fromIndex
+        val to = e.toIndex
+        val password = e.isPassword || src?.isPassword == true
+        // Fast path: the event's own text and range, or the source node's (an editable field, a plain TextView).
+        val quick = SelectionEvent.read(eventText, from, to, src?.text, src?.textSelectionStart ?: -1, src?.textSelectionEnd ?: -1)
+        if (quick != null || src == null || password) {
             @Suppress("DEPRECATION") runCatching { src?.recycle() }
+            settle(pkg, password, quick, "")
+            return
         }
+        // #1829 a browser (Chrome, Samsung Internet, Firefox, any WebView) reports a page selection on the web root, while the range
+        // sits on a text node far down the page's tree: the old walk (6 levels, 150 nodes, main thread) almost never reached it.
+        workHandler.post {
+            val found = SelectionNodeSearch.find(src)
+            val sel = found.node?.let { n -> SelectionTrigger.selected(n.text, n.textSelectionStart, n.textSelectionEnd) }
+            @Suppress("DEPRECATION") runCatching { if (found.node !== src) found.node?.recycle(); src.recycle() }
+            handler.post { settle(pkg, false, sel, " (searched ${found.visited} nodes, depth ${found.depth})") }
+        }
+    }
+
+    /** The decision, the diagnostics line and the steady-selection timer, on the main thread. */
+    private fun settle(pkg: String, password: Boolean, sel: String?, searchNote: String) {
         val d = SelectionEvent.decide(GrabberAuto.a11yOn(this), pkg, packageName, password, sel, trigger)
-        GrabberDiag.event(this, pkg, d.outcome.label)
+        GrabberDiag.event(this, pkg, d.outcome.label + searchNote)
         if (!GrabberAuto.a11yOn(this)) return
         handler.removeCallbacks(look)
         val at = trigger.offer(d.text, pkg, SystemClock.uptimeMillis()) ?: return
         handler.postAtTime(look, at)
     }
 
-    /** A browser reports a selection that spans nodes on the root: the first node under [root] (bounded) with a real text selection range. */
-    private fun selectedNode(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
-        if (root.textSelectionStart != root.textSelectionEnd && root.textSelectionStart >= 0) return root
-        var budget = 150
-        fun walk(n: AccessibilityNodeInfo, depth: Int): AccessibilityNodeInfo? {
-            if (depth > 6) return null
-            for (k in 0 until n.childCount) {
-                if (budget-- <= 0) return null
-                val c = n.getChild(k) ?: continue
-                if (c.textSelectionStart >= 0 && c.textSelectionStart != c.textSelectionEnd) return c
-                walk(c, depth + 1)?.let { return it }
-            }
-            return null
-        }
-        return walk(root, 0)
-    }
-
     override fun onInterrupt() { handler.removeCallbacks(look) }
 
-    override fun onDestroy() { handler.removeCallbacks(look); super.onDestroy() }
+    override fun onDestroy() {
+        handler.removeCallbacks(look)
+        runCatching { worker.quitSafely() }
+        super.onDestroy()
+    }
+}
+
+/**
+ * #1829 where a page's text selection lives: breadth-first under the event's source, only nodes visible on screen (a selection is
+ * always on screen), up to [MAX_NODES] nodes, [MAX_DEPTH] levels and [MAX_MILLIS] ms. The first node with a real range
+ * (start >= 0, start != end) wins. [Tree] abstracts the node so the walk is tested on the JVM (SelectionNodeSearchTest).
+ */
+object SelectionNodeSearch {
+    const val MAX_NODES = 3000
+    const val MAX_DEPTH = 80
+    const val MAX_MILLIS = 400L
+
+    interface Tree<N> {
+        fun children(n: N): List<N>
+        fun hasSelection(n: N): Boolean
+        fun visible(n: N): Boolean
+        fun release(n: N) {}
+    }
+
+    class Found<N>(val node: N?, val visited: Int, val depth: Int)
+
+    fun <N> find(root: N, tree: Tree<N>, now: () -> Long = SystemClock::uptimeMillis): Found<N> {
+        if (tree.hasSelection(root)) return Found(root, 1, 0)
+        val deadline = now() + MAX_MILLIS
+        var visited = 1
+        var level = listOf(root)
+        var depth = 0
+        while (level.isNotEmpty() && depth < MAX_DEPTH) {
+            depth++
+            val next = ArrayList<N>()
+            for (n in level) {
+                for (c in tree.children(n)) {
+                    if (visited++ >= MAX_NODES || now() > deadline) {
+                        next.forEach { if (it !== root) tree.release(it) }
+                        return Found(null, visited, depth)
+                    }
+                    if (!tree.visible(c)) { tree.release(c); continue }
+                    if (tree.hasSelection(c)) {
+                        next.forEach { if (it !== c) tree.release(it) }
+                        return Found(c, visited, depth)
+                    }
+                    next += c
+                }
+                if (n !== root) tree.release(n)
+            }
+            level = next
+        }
+        level.forEach { if (it !== root) tree.release(it) }
+        return Found(null, visited, depth)
+    }
+
+    /** The accessibility tree as a [Tree]. */
+    private val NODES = object : Tree<AccessibilityNodeInfo> {
+        override fun children(n: AccessibilityNodeInfo): List<AccessibilityNodeInfo> = (0 until n.childCount).mapNotNull { runCatching { n.getChild(it) }.getOrNull() }
+        override fun hasSelection(n: AccessibilityNodeInfo): Boolean = n.textSelectionStart >= 0 && n.textSelectionStart != n.textSelectionEnd
+        override fun visible(n: AccessibilityNodeInfo): Boolean = n.isVisibleToUser
+        @Suppress("DEPRECATION") override fun release(n: AccessibilityNodeInfo) { runCatching { n.recycle() } }
+    }
+
+    fun find(root: AccessibilityNodeInfo): Found<AccessibilityNodeInfo> = find(root, NODES)
 }

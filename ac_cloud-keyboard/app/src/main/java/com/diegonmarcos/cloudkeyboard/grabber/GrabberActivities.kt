@@ -88,8 +88,30 @@ class GrabberActivity : ComponentActivity() {
         model.grab()
         setContent {
             GrabberTheme {
-                GrabberSheet(model, onReply = { deliver(it) }, onClose = { finish() })
+                GrabberSheet(model, onReply = { deliver(it) }, onClose = { finish() }, onModeChange = { applyViewMode(it) })
             }
+        }
+    }
+
+    /**
+     * #1829 docked (the keyboard-area strip): the window shrinks to the strip at the bottom and stops being touch-modal, so the app
+     * behind takes every touch outside it (it can be read, scrolled and used); full: the whole screen again, dimmed, tap-outside closes.
+     */
+    private fun applyViewMode(mode: GrabberViewMode) {
+        val w = window ?: return
+        val lp = w.attributes
+        if (mode == GrabberViewMode.DOCKED) {
+            val nav = androidx.core.view.ViewCompat.getRootWindowInsets(w.decorView)
+                ?.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0
+            lp.height = (GRABBER_DOCKED_HEIGHT.value * resources.displayMetrics.density).toInt() + nav
+            lp.gravity = android.view.Gravity.BOTTOM
+            w.attributes = lp
+            w.addFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+        } else {
+            lp.height = android.view.WindowManager.LayoutParams.MATCH_PARENT
+            lp.gravity = android.view.Gravity.NO_GRAVITY
+            w.attributes = lp
+            w.clearFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
         }
     }
 

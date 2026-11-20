@@ -22,15 +22,15 @@
     <string name="english_ime_name" translatable="false">Cloud Keyboard</string>
     <string name="translate">Translate</string>
     <!-- #1707 the Writer entry in the share sheet and the text-selection menu (was the standalone Cloud Writer's label). -->
-    <string name="writer_share_label">Writer</string>
+    <string name="writer_share_label">C Writer</string>
     <!-- #1754 Grabber: the entry in the text-selection menu of every app, and the Quick Settings tile. -->
     <string name="grabber_menu_label">Cloud Keyboard</string>
     <!-- #1824 the selection menu: the Grabber entry is "Ask Cloud Grabber" (grabber_menu_label above stays, rule 16) and four writer entries. -->
-    <string name="grabber_ask_label">Ask Cloud Grabber</string>
-    <string name="selection_translator_label">Translator</string>
-    <string name="selection_grammar_label">Grammar</string>
-    <string name="selection_enhancer_label">Enhancer</string>
-    <string name="selection_drafter_label">Drafter</string>
+    <string name="grabber_ask_label">C Grabber</string>
+    <string name="selection_translator_label">C Translator</string>
+    <string name="selection_grammar_label">C Grammar</string>
+    <string name="selection_enhancer_label">C Enhancer</string>
+    <string name="selection_drafter_label">C Drafter</string>
     <string name="selection_working">Working…</string>
     <string name="selection_failed">The request failed</string>
     <string name="selection_empty_input">Nothing to process: type or paste a text first</string>

@@ -21,10 +21,12 @@ class SelectionMenuTest {
     }
 
     @Test fun manifestDeclaresTheFourWriterEntriesWithExactLabels() {
-        val labels = mapOf("translator" to "Translator", "grammar" to "Grammar", "enhancer" to "Enhancer", "drafter" to "Drafter")
+        // #1829 the owner's names: "C <name>"
+        val labels = mapOf("translator" to "C Translator", "grammar" to "C Grammar", "enhancer" to "C Enhancer", "drafter" to "C Drafter")
         assertEquals(labels.values.toList(), SelectionMenu.ENTRIES.map { it.label })
+        assertEquals(labels.keys.toList(), SelectionMenu.ENTRIES.map { it.key })
         for (e in SelectionMenu.ENTRIES) {
-            val key = e.label.lowercase()
+            val key = e.key
             val body = activity(".selection.${e.activity}")
             assertTrue(body.contains("android:exported=\"true\""))
             assertTrue(body.contains("android:label=\"@string/selection_${key}_label\""))
@@ -38,9 +40,27 @@ class SelectionMenuTest {
     @Test fun askCloudGrabberLabelKeepsTheOldString() {
         val g = activity(".grabber.GrabberActivity")
         assertTrue(g.contains("@string/grabber_ask_label") && g.contains("android.intent.action.PROCESS_TEXT"))
-        assertTrue(strings.contains("<string name=\"grabber_ask_label\">Ask Cloud Grabber</string>"))
-        assertTrue(stringsEs.contains("<string name=\"grabber_ask_label\">Ask Cloud Grabber</string>"))
+        assertTrue(strings.contains("<string name=\"grabber_ask_label\">C Grabber</string>"))
+        assertTrue(stringsEs.contains("<string name=\"grabber_ask_label\">C Grabber</string>"))
         assertTrue(strings.contains("<string name=\"grabber_menu_label\">Cloud Keyboard</string>"))
+    }
+
+    /** #1829 the menu is C Grabber, C Translator, C Grammar, C Enhancer, C Writer, C Drafter: ordered by intent-filter priority. */
+    @Test fun theMenuEntriesAreNamedAndOrderedWithGrabberFirst() {
+        val priorities = SelectionMenu.MENU_ORDER.map { (name, want) ->
+            val body = activity(name)
+            val p = Regex("""<intent-filter android:priority="(-?\d+)">\s*<action android:name="android\.intent\.action\.PROCESS_TEXT" />""").find(body)
+            assertTrue("$name: its PROCESS_TEXT filter carries a priority", p != null)
+            assertEquals(name, want, p!!.groupValues[1].toInt())
+            want
+        }
+        assertEquals("strictly descending, Grabber on top", priorities.sortedDescending(), priorities)
+        assertEquals("never above 0 (a non-privileged app is clamped there)", 0, priorities.max())
+        assertEquals(".grabber.GrabberActivity", SelectionMenu.MENU_ORDER.first().first)
+        assertTrue(strings.contains("<string name=\"writer_share_label\">C Writer</string>"))
+        val labels = SelectionMenu.MENU_ORDER.map { (name, _) -> Regex("""android:label="@string/([a-z_]+)"""").find(activity(name))!!.groupValues[1] }
+            .map { key -> Regex("<string name=\"$key\">([^<]*)</string>").find(strings)!!.groupValues[1] }
+        assertEquals(listOf("C Grabber", "C Translator", "C Grammar", "C Enhancer", "C Writer", "C Drafter"), labels)
     }
 
     @Test fun sixProcessTextEntriesInTotalFromTheKeyboardAreFiveActivitiesPlusWriter() {

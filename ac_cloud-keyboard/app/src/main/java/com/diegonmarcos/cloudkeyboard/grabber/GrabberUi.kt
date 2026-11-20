@@ -17,6 +17,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -63,6 +64,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,6 +80,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -238,10 +241,10 @@ private fun <T> stateReading(s: Load<T>): String = when (s) {
 
 /** The panel shared by the sheet over another app and both pages: selection on top, then the three boxes. */
 @Composable
-fun GrabberPanel(model: GrabberModel, onReply: (ProcessTextReply) -> Unit, modifier: Modifier = Modifier) {
+fun GrabberPanel(model: GrabberModel, onReply: (ProcessTextReply) -> Unit, modifier: Modifier = Modifier, onAction: () -> Unit = {}) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SelectionBlock(model)
-        ActionsBox(model, onReply)
+        ActionsBox(model, onReply, onAction)
         SearchBox(model)
         MediaBox(model)
         // #1793 a place card carries its distances, from the position Cloud Nav shares
@@ -287,7 +290,7 @@ private fun SelectionBlock(model: GrabberModel) {
 }
 
 @Composable
-private fun ActionsBox(model: GrabberModel, onReply: (ProcessTextReply) -> Unit) {
+private fun ActionsBox(model: GrabberModel, onReply: (ProcessTextReply) -> Unit, onAction: () -> Unit = {}) {
     val busy = model.busy
     ConsoleBox("ACTIONS", if (busy != null) GC.warn else GC.accent, pulse = busy != null, reading = busy?.let { "RUNNING · ${it.uppercase()}" } ?: "${GrabberAction.entries.size} ACTIONS") {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -305,7 +308,7 @@ private fun ActionsBox(model: GrabberModel, onReply: (ProcessTextReply) -> Unit)
                                 else -> TextStyle.Default
                             }
                             KeyChip(a.label, dot = GC.dot(a) ?: if (g == GrabberGroup.DRIVE || g == GrabberGroup.WRITER) GC.group(g) else null,
-                                enabled = busy == null, style = style) { model.run(a, onReply) }
+                                enabled = busy == null, style = style) { model.run(a, onReply); onAction() }
                         }
                     }
                     // a fade on the right edge says the row scrolls
@@ -617,15 +620,34 @@ private fun MapCanvas(m: MediaResult.MapView, modifier: Modifier) {
  * or tap outside to close. [onReply] is called when an action returned a result for the field; [onClose] after the exit animation.
  */
 @Composable
-fun GrabberSheet(model: GrabberModel, onReply: (ProcessTextReply) -> Unit, onClose: () -> Unit, heading: String = "GRABBER · CLOUD KEYBOARD") {
+fun GrabberSheet(
+    model: GrabberModel,
+    onReply: (ProcessTextReply) -> Unit,
+    onClose: () -> Unit,
+    heading: String = "GRABBER · CLOUD KEYBOARD",
+    /** #1829 told of every mode change (the activity lets touches through to the app behind while docked). */
+    onModeChange: (GrabberViewMode) -> Unit = {},
+) {
+    val ctx = LocalContext.current
+    var mode by remember { mutableStateOf(GrabberViewPrefs.get(ctx)) }
+    fun setMode(m: GrabberViewMode) {
+        mode = m
+        GrabberViewPrefs.set(ctx, m)
+    }
+    LaunchedEffect(mode) { onModeChange(mode) }
     val state = remember { MutableTransitionState(false).apply { targetState = true } }
     fun dismiss() { state.targetState = false }
     BackHandler { dismiss() }
     LaunchedEffect(state.currentState, state.isIdle) { if (state.isIdle && !state.currentState) onClose() }
-    val scrim by animateFloatAsState(if (state.targetState) 0.62f else 0f, tween(280), label = "scrim")
+    val docked = mode == GrabberViewMode.DOCKED
+    // #1829 docked: no dimming and no tap-outside close; the app behind stays usable.
+    val scrim by animateFloatAsState(if (state.targetState && !docked) 0.62f else 0f, tween(280), label = "scrim")
     val maxH = (LocalConfiguration.current.screenHeightDp * 0.92f).dp
+    val sheetH by animateDpAsState(if (docked) GRABBER_DOCKED_HEIGHT else maxH, spring(dampingRatio = 0.86f, stiffness = 420f), label = "sheetH")
     Box(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = scrim)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { dismiss() })
+        if (!docked) {
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = scrim)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { dismiss() })
+        }
         AnimatedVisibility(
             visibleState = state,
             modifier = Modifier.align(Alignment.BottomCenter),
@@ -634,13 +656,22 @@ fun GrabberSheet(model: GrabberModel, onReply: (ProcessTextReply) -> Unit, onClo
         ) {
             val shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)
             Column(
-                Modifier.fillMaxWidth().heightIn(max = maxH).clip(shape).background(GC.sheet).border(1.dp, GC.hairline, shape)
+                Modifier.fillMaxWidth().then(if (docked) Modifier.height(sheetH) else Modifier.heightIn(max = sheetH))
+                    .clip(shape).background(GC.sheet).border(1.dp, GC.hairline, shape)
                     .navigationBarsPadding().imePadding(),
             ) {
                 var drag by remember { mutableFloatStateOf(0f) }
                 Box(
-                    Modifier.fillMaxWidth().pointerInput(Unit) {
-                        detectVerticalDragGestures(onDragEnd = { if (drag > 90f) dismiss(); drag = 0f }, onDragCancel = { drag = 0f }) { _, dy -> drag += dy }
+                    Modifier.fillMaxWidth().pointerInput(docked) {
+                        // full: a drag down docks, docked: a drag up goes full, a drag down closes
+                        detectVerticalDragGestures(onDragEnd = {
+                            when {
+                                drag > 90f && !docked -> setMode(GrabberViewMode.DOCKED)
+                                drag > 90f && docked -> dismiss()
+                                drag < -90f && docked -> setMode(GrabberViewMode.FULL)
+                            }
+                            drag = 0f
+                        }, onDragCancel = { drag = 0f }) { _, dy -> drag += dy }
                     }.padding(top = 8.dp, bottom = 4.dp),
                     contentAlignment = Alignment.Center,
                 ) { Box(Modifier.size(width = 38.dp, height = 4.dp).clip(RoundedCornerShape(2.dp)).background(GC.keyHi)) }
@@ -648,12 +679,37 @@ fun GrabberSheet(model: GrabberModel, onReply: (ProcessTextReply) -> Unit, onClo
                     StatusDot(GC.accent)
                     Caps(heading, GC.text2)
                     Spacer(Modifier.weight(1f))
+                    // #1829 the view-mode switcher: the full window <-> the keyboard-area strip (scrollable), remembered
+                    KeyChip(if (docked) "⤢ Full" else "▭ Keyboard area", Modifier.testTag(GrabberViewTags.SWITCH)) {
+                        setMode(if (docked) GrabberViewMode.FULL else GrabberViewMode.DOCKED)
+                    }
                     KeyChip("Close") { dismiss() }
                 }
-                Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(start = 10.dp, end = 10.dp, bottom = 12.dp, top = 4.dp)) {
-                    GrabberPanel(model, onReply)
+                Column(Modifier.weight(1f, fill = docked).verticalScroll(rememberScrollState()).padding(start = 10.dp, end = 10.dp, bottom = 12.dp, top = 4.dp)) {
+                    // #1829 any action minimises the window to the keyboard-area strip
+                    GrabberPanel(model, onReply, onAction = { if (!docked) setMode(GrabberViewMode.DOCKED) })
                 }
             }
         }
+    }
+}
+
+/** #1829 the two views of the Grabber window. */
+enum class GrabberViewMode { FULL, DOCKED }
+
+/** The docked strip's height: the keyboard area. */
+val GRABBER_DOCKED_HEIGHT = 300.dp
+
+object GrabberViewTags { const val SWITCH = "grabber_view_switch" }
+
+/** #1829 the last view the user was in, kept across openings. */
+object GrabberViewPrefs {
+    private const val PREFS = "grabber_view"
+    private const val KEY = "mode"
+    fun get(ctx: android.content.Context): GrabberViewMode =
+        runCatching { GrabberViewMode.valueOf(ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).getString(KEY, null) ?: "FULL") }
+            .getOrDefault(GrabberViewMode.FULL)
+    fun set(ctx: android.content.Context, mode: GrabberViewMode) {
+        ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit().putString(KEY, mode.name).apply()
     }
 }

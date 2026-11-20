@@ -2,11 +2,11 @@
 <!-- #1825 Spanish strings of the Grabber without accessibility. -->
 <resources>
     <!-- #1824 menú de selección de texto -->
-    <string name="grabber_ask_label">Ask Cloud Grabber</string>
-    <string name="selection_translator_label">Translator</string>
-    <string name="selection_grammar_label">Grammar</string>
-    <string name="selection_enhancer_label">Enhancer</string>
-    <string name="selection_drafter_label">Drafter</string>
+    <string name="grabber_ask_label">C Grabber</string>
+    <string name="selection_translator_label">C Translator</string>
+    <string name="selection_grammar_label">C Grammar</string>
+    <string name="selection_enhancer_label">C Enhancer</string>
+    <string name="selection_drafter_label">C Drafter</string>
     <string name="selection_working">Procesando…</string>
     <string name="selection_failed">La solicitud falló</string>
     <string name="selection_empty_input">Nada que procesar: escribe o pega un texto primero</string>

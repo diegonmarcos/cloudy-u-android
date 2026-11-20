@@ -160,13 +160,17 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="image/*" />
             </intent-filter>
-            <intent-filter>
+            <intent-filter android:priority="-4">
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
 
+        <!-- #1829 the text-selection menu entries are named and ORDERED: C Grabber, C Translator, C Grammar, C Enhancer, C Writer,
+             C Drafter (Cloud SuperIntel's C Ask SI last). Android lists them by intent-filter priority; an app that is not privileged
+             may not go above 0, so C Grabber holds 0 (the top, among the first five the toolbar shows before "more") and each next one
+             one step lower. -->
         <!-- #1754 Grabber: the text-selection menu entry. Every app's selection toolbar lists activities that filter ACTION_PROCESS_TEXT; this
              one opens the Grabber bottom sheet over that app and, for an editable field, returns the result as EXTRA_PROCESS_TEXT. The
              Writer entry above stays. -->
@@ -180,7 +184,7 @@
             android:excludeFromRecents="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
+            <intent-filter android:priority="0">
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
@@ -198,7 +202,7 @@
             android:excludeFromRecents="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
+            <intent-filter android:priority="-1">
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
@@ -214,7 +218,7 @@
             android:excludeFromRecents="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
+            <intent-filter android:priority="-2">
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
@@ -230,7 +234,7 @@
             android:excludeFromRecents="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
+            <intent-filter android:priority="-3">
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
@@ -246,7 +250,7 @@
             android:excludeFromRecents="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
+            <intent-filter android:priority="-5">
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />

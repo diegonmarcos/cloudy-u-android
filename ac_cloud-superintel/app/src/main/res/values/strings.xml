@@ -2,7 +2,7 @@
 <resources>
     <!-- English is the fleet's base language (#299). app_name comes from build.json::display_name. -->
     <!-- #1824 the label of the selection-menu and Share entry; ask_ai_label above stays (rule 16). -->
-    <string name="ask_cloud_si_label">Ask Cloud SI</string>
+    <string name="ask_cloud_si_label">C Ask SI</string>
     <string name="ask_ai_label">Ask AI · Cloud SI</string>
     <string name="chat_hello">Hi, I\'m SI</string>
     <string name="chat_hello_sub">Ask anything. Task, agent, model, mode and MCPs are under the input; your chats are in the menu on the left.</string>

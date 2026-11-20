@@ -84,7 +84,7 @@ class AskAiTest {
     }
 
     private fun filters(): List<String> =
-        Regex("<intent-filter>.*?</intent-filter>", RegexOption.DOT_MATCHES_ALL).findAll(activityBody()).map { it.value }.toList()
+        Regex("<intent-filter[^>]*>.*?</intent-filter>", RegexOption.DOT_MATCHES_ALL).findAll(activityBody()).map { it.value }.toList()
 
     private fun activityBody(): String {
         val a = manifest.indexOf("android:name=\".AskAiActivity\"")
@@ -96,8 +96,10 @@ class AskAiTest {
 
     @Test fun manifestListsAskAiInTheChooserShareSheetAndSelectionToolbar() {
         assertTrue(activityBody().contains("@string/ask_cloud_si_label"))
-        assertTrue(File("src/main/res/values/strings.xml").readText().contains(">Ask Cloud SI<"))
-        assertTrue(File("src/main/res/values-es/strings.xml").readText().contains(">Ask Cloud SI<"))
+        // #1829 renamed "C Ask SI", last in the selection menu (priority -6, after Cloud Keyboard's six entries)
+        assertTrue(File("src/main/res/values/strings.xml").readText().contains(">C Ask SI<"))
+        assertTrue(File("src/main/res/values-es/strings.xml").readText().contains(">C Ask SI<"))
+        assertTrue(Regex("""<intent-filter android:priority="-6">\s*<action android:name="android\.intent\.action\.PROCESS_TEXT" />""").containsMatchIn(activityBody()))
         assertTrue(File("src/main/res/values/strings.xml").readText().contains(">Ask AI · Cloud SI<"))
         assertTrue(has("VIEW", "*/*"))
         val view = filters().first { it.contains("action.VIEW") }
