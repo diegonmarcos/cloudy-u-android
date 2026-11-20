@@ -266,7 +266,10 @@
               "4Y-5Y": "4Y-5Y",
               "9Y-10Y": "9Y-10Y",
               "13Y-15Y": "13Y-15Y",
-              "28Y-30Y": "28Y-30Y"
+              "28Y-30Y": "28Y-30Y",
+              "IND.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+              "IND.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+              "IND.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
             },
             "years": {
               "91D": 0.25,
@@ -276,7 +279,10 @@
               "4Y-5Y": 5,
               "9Y-10Y": 10,
               "13Y-15Y": 15,
-              "28Y-30Y": 30
+              "28Y-30Y": 30,
+              "IND.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+              "IND.M.IR3TIB.PA._Z._Z._Z": 0.25,
+              "IND.M.IRLT.PA._Z._Z._Z": 10
             },
             "primary": {
               "source": "cloud_fincept",
@@ -296,19 +302,10 @@
                   "series_ids": "OECD/DSD_KEI@DF_KEI/IND.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IND.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IND.M.IRLT.PA._Z._Z._Z",
                   "observations": "1",
                   "metadata": "0"
-                },
-                "labels": {
-                  "IND.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
-                  "IND.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
-                  "IND.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
-                },
-                "years": {
-                  "IND.M.IRSTCI.PA._Z._Z._Z": 0.002778,
-                  "IND.M.IR3TIB.PA._Z._Z._Z": 0.25,
-                  "IND.M.IRLT.PA._Z._Z._Z": 10
                 }
               }
-            ]
+            ],
+            "_doc_fallback": "the OECD monthly rates on DBnomics (call money, 3M interbank, 10Y) are the fallback when the publisher does not answer; their series codes are labelled here because a fallback is drawn with the panel's labels and years"
           },
           "columns": [
             "Tenor",
@@ -340,7 +337,10 @@
               "756": "3Y",
               "1008": "4Y",
               "1260": "5Y",
-              "2520": "10Y"
+              "2520": "10Y",
+              "BRA.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+              "BRA.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+              "BRA.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
             },
             "years": {
               "21": 0.083333,
@@ -352,7 +352,10 @@
               "756": 3,
               "1008": 4,
               "1260": 5,
-              "2520": 10
+              "2520": 10,
+              "BRA.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+              "BRA.M.IR3TIB.PA._Z._Z._Z": 0.25,
+              "BRA.M.IRLT.PA._Z._Z._Z": 10
             },
             "primary": {
               "source": "cloud_fincept",
@@ -372,19 +375,10 @@
                   "series_ids": "OECD/DSD_KEI@DF_KEI/BRA.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/BRA.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/BRA.M.IRLT.PA._Z._Z._Z",
                   "observations": "1",
                   "metadata": "0"
-                },
-                "labels": {
-                  "BRA.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
-                  "BRA.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
-                  "BRA.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
-                },
-                "years": {
-                  "BRA.M.IRSTCI.PA._Z._Z._Z": 0.002778,
-                  "BRA.M.IR3TIB.PA._Z._Z._Z": 0.25,
-                  "BRA.M.IRLT.PA._Z._Z._Z": 10
                 }
               }
-            ]
+            ],
+            "_doc_fallback": "the OECD monthly rates on DBnomics (call money, 3M interbank, 10Y) are the fallback when the publisher does not answer; their series codes are labelled here because a fallback is drawn with the panel's labels and years"
           },
           "columns": [
             "Tenor",
@@ -421,7 +415,10 @@
               "15": "15Y",
               "20": "20Y",
               "25": "25Y",
-              "30": "30Y"
+              "30": "30Y",
+              "IDN.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+              "IDN.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+              "IDN.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
             },
             "years": {
               "0.1": 0.1,
@@ -438,7 +435,10 @@
               "15": 15,
               "20": 20,
               "25": 25,
-              "30": 30
+              "30": 30,
+              "IDN.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+              "IDN.M.IR3TIB.PA._Z._Z._Z": 0.25,
+              "IDN.M.IRLT.PA._Z._Z._Z": 10
             },
             "primary": {
               "source": "cloud_fincept",
@@ -458,19 +458,10 @@
                   "series_ids": "OECD/DSD_KEI@DF_KEI/IDN.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IDN.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IDN.M.IRLT.PA._Z._Z._Z",
                   "observations": "1",
                   "metadata": "0"
-                },
-                "labels": {
-                  "IDN.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
-                  "IDN.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
-                  "IDN.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
-                },
-                "years": {
-                  "IDN.M.IRSTCI.PA._Z._Z._Z": 0.002778,
-                  "IDN.M.IR3TIB.PA._Z._Z._Z": 0.25,
-                  "IDN.M.IRLT.PA._Z._Z._Z": 10
                 }
               }
-            ]
+            ],
+            "_doc_fallback": "the OECD monthly rates on DBnomics (call money, 3M interbank, 10Y) are the fallback when the publisher does not answer; their series codes are labelled here because a fallback is drawn with the panel's labels and years"
           },
           "columns": [
             "Tenor",
@@ -500,7 +491,10 @@
               "MMRD708A": "R2030",
               "CMJD003A": "5-10Y band",
               "MMRD709A": "R209 (2036)",
-              "CMJD004A": "10Y+ band"
+              "CMJD004A": "10Y+ band",
+              "ZAF.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+              "ZAF.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+              "ZAF.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
             },
             "years": {
               "MMRD203A": 0.25,
@@ -510,7 +504,10 @@
               "MMRD708A": 3.2,
               "CMJD003A": 7.5,
               "MMRD709A": 9.4,
-              "CMJD004A": 15
+              "CMJD004A": 15,
+              "ZAF.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+              "ZAF.M.IR3TIB.PA._Z._Z._Z": 0.25,
+              "ZAF.M.IRLT.PA._Z._Z._Z": 10
             },
             "_doc_years": "T-bills at their term; R2030 (31 Jan 2030) and R209 (31 Mar 2036) at their residual maturity in Nov 2026; the SARB daily average bond-yield bands at the middle of the band (5-10Y) and at 15Y (10Y and longer)",
             "primary": {
@@ -531,19 +528,10 @@
                   "series_ids": "OECD/DSD_KEI@DF_KEI/ZAF.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ZAF.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ZAF.M.IRLT.PA._Z._Z._Z",
                   "observations": "1",
                   "metadata": "0"
-                },
-                "labels": {
-                  "ZAF.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
-                  "ZAF.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
-                  "ZAF.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
-                },
-                "years": {
-                  "ZAF.M.IRSTCI.PA._Z._Z._Z": 0.002778,
-                  "ZAF.M.IR3TIB.PA._Z._Z._Z": 0.25,
-                  "ZAF.M.IRLT.PA._Z._Z._Z": 10
                 }
               }
-            ]
+            ],
+            "_doc_fallback": "the OECD monthly rates on DBnomics (call money, 3M interbank, 10Y) are the fallback when the publisher does not answer; their series codes are labelled here because a fallback is drawn with the panel's labels and years"
           },
           "columns": [
             "Tenor",
@@ -592,7 +580,10 @@
               "SF43886": "5Y",
               "SF44071": "10Y",
               "SF45384": "20Y",
-              "SF60696": "30Y"
+              "SF60696": "30Y",
+              "MEX.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+              "MEX.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+              "MEX.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
             },
             "years": {
               "SF43936": 0.076923,
@@ -604,7 +595,10 @@
               "SF43886": 5,
               "SF44071": 10,
               "SF45384": 20,
-              "SF60696": 30
+              "SF60696": 30,
+              "MEX.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+              "MEX.M.IR3TIB.PA._Z._Z._Z": 0.25,
+              "MEX.M.IRLT.PA._Z._Z._Z": 10
             },
             "_doc_each": "Banxico SIE table CF107 (Valores gubernamentales, resultados de la subasta): the yield (tasa de rendimiento) of Cetes 28/91/182/364/728 days and of fixed-rate Bonos M 3/5/10/20/30 years at their last auction; the 7-year Bono (SF44946) is left out, it has not been auctioned since 2006",
             "primary": {
@@ -625,19 +619,10 @@
                   "series_ids": "OECD/DSD_KEI@DF_KEI/MEX.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MEX.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MEX.M.IRLT.PA._Z._Z._Z",
                   "observations": "1",
                   "metadata": "0"
-                },
-                "labels": {
-                  "MEX.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
-                  "MEX.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
-                  "MEX.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
-                },
-                "years": {
-                  "MEX.M.IRSTCI.PA._Z._Z._Z": 0.002778,
-                  "MEX.M.IR3TIB.PA._Z._Z._Z": 0.25,
-                  "MEX.M.IRLT.PA._Z._Z._Z": 10
                 }
               }
-            ]
+            ],
+            "_doc_fallback": "the OECD monthly rates on DBnomics (call money, 3M interbank, 10Y) are the fallback when the publisher does not answer; their series codes are labelled here because a fallback is drawn with the panel's labels and years"
           },
           "columns": [
             "Tenor",
