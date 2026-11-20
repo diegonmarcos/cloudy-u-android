@@ -131,6 +131,14 @@ private fun page(id: String, route: String, @StringRes title: Int, icon: ImageVe
 private fun accountPage(focus: String, @StringRes title: Int, icon: ImageVector) =
     TreeNode(focus, TreeKind.ACCOUNT_PAGE, "accountPage/$focus", title, icon, R.string.settings_tree_pick_account)
 
+/** The app's own About rows, drawn on the merged About page (fleet/about). Declared BEFORE [SETTINGS_TREE], which uses it (top-level vals initialise in file order). */
+internal val ABOUT_ROWS: List<TreeNode> = listOf(
+    urlNode("version", R.string.settings_about_version, Icons.Filled.Info),
+    urlNode("source", R.string.settings_about_source, Icons.Filled.Code),
+    urlNode("license", R.string.settings_about_license, Icons.Filled.Description),
+    urlNode("author", R.string.settings_about_author, Icons.Filled.Person),
+)
+
 /** The tree, top to bottom. */
 internal val SETTINGS_TREE: List<TreeNode> = listOf(
     TreeNode(
@@ -186,14 +194,6 @@ internal val SETTINGS_TREE: List<TreeNode> = listOf(
             ),
         ),
     ),
-)
-
-/** The app's own About rows, drawn on the merged About page (fleet/about). */
-internal val ABOUT_ROWS: List<TreeNode> = listOf(
-    urlNode("version", R.string.settings_about_version, Icons.Filled.Info),
-    urlNode("source", R.string.settings_about_source, Icons.Filled.Code),
-    urlNode("license", R.string.settings_about_license, Icons.Filled.Description),
-    urlNode("author", R.string.settings_about_author, Icons.Filled.Person),
 )
 
 internal fun TreeNode.walk(): Sequence<TreeNode> = sequenceOf(this) + children.asSequence().flatMap { it.walk() }
