@@ -470,6 +470,11 @@
    "kind": "vendored-package",
    "what": "#1789 Tailwind CSS Play CDN 3.4.17 (Tailwind Labs), the runtime stylesheet generator two Chronos pages load, vendored unmodified with a sha256 pin (tools/chronos-pin.json)."
   },
+  "ac_cloud-wiki/app/src/main/assets/chronos/vendor/three/r128": {
+   "licence": "MIT",
+   "kind": "vendored-package",
+   "what": "#1830 three.js r128 (three.js authors), the minified build the owner's Earthsphere and Milky Way pages load from cdnjs, vendored unmodified so the cloned pages run offline (runtime.json rewrites the CDN URL to it); see its LICENSE."
+  },
   "ac_cloud-wiki/app/src/main/assets/chronos/vendor/chart.js/4.6.1": {
    "licence": "MIT",
    "kind": "vendored-package",

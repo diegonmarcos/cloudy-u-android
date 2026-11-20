@@ -295,6 +295,8 @@
       "kind": "foreground_service",
       "notify_calls": 1,
       "why": "The torrent download foreground service (type dataSync, active-download-scoped): after startForeground it updates its own ongoing silent line (N downloading, %, rate, peers; Pause all / Stop) on each tick and stops when nothing is downloading. The ongoing line a foreground service must hold, not an alert about the fleet."
-    }
+    },
+    {"path": "ac_cloud-keyboard/app/src/main/java/com/diegonmarcos/cloudkeyboard/grabber/GrabberAuto.kt", "kind": "user_action", "notify_calls": 1, "why": "#1825 Grabber on selection: when Android refuses a background activity start, the selection opens the Grabber through a one-tap notification (PendingIntent to the Grabber with the selected text; auto-cancel, 60 s timeout). A prompt the user acts on, not an alert about the fleet."},
+    {"path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/DevVerifierNotifier.kt", "kind": "user_action", "notify_calls": 1, "why": "#1822 the Apps from unverified developers flow: each step's notification opens the Perms page on that row (PendingIntent to ShellActivity with the row highlighted) so the user acts on it. A prompt wrapping an action, not an alert about the fleet."}
   ]
 }

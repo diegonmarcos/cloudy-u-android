@@ -80,7 +80,7 @@
    "0BSD": 1
   },
   "vendored": {
-   "MIT": 8,
+   "MIT": 9,
    "LicenseRef-NoLicenseGranted": 2,
    "MPL-2.0": 1,
    "LicenseRef-PublicDomain AND CC-BY-4.0": 1,
@@ -1144,6 +1144,7 @@
     "ab_cloud-libs-shared/libs/fleetconfigs-agents",
     "ab_cloud-libs-shared/libs/fleetconfigs-logcat",
     "ab_cloud-libs-shared/libs/fleetconfigs-xray",
+    "ab_cloud-libs-shared/libs/git-core",
     "ab_cloud-libs-shared/libs/graph-view",
     "ab_cloud-libs-shared/libs/perms",
     "ab_cloud-libs-shared/libs/theme-background",
@@ -8195,6 +8196,7 @@
    "scope": "build",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[com.android.tools]",
+   "note": "build tooling",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "gitsync"
   },
@@ -8215,6 +8217,7 @@
    "scope": "shipped",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[com.android.tools]",
+   "note": "build tooling",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.apollographql.adapters:apollo-adapters-core": {
@@ -8363,6 +8366,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-NoLicenseGranted",
    "licence_source": "curated.maven_group_licences[com.diegonmarcos.fleet]",
+   "note": "own code: the fleet-ui included build (ab_cloud-libs-shared/web), not a published dependency",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.drewnoakes:metadata-extractor": {
@@ -8443,7 +8447,7 @@
    ],
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "POM of latest release 0.89.0-rc.1 (declared version 'from BOM' needs Gradle to resolve)",
+   "licence_source": "POM of latest release 0.89.0-rc.2 (declared version 'from BOM' needs Gradle to resolve)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -8688,6 +8692,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-Play-Services-Terms",
    "licence_source": "curated.maven_group_licences[com.google.android.gms]",
+   "note": "proprietary Play Services client libraries",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.android.material:material": {
@@ -8762,6 +8767,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-ARCore-Terms",
    "licence_source": "curated.maven_group_licences[com.google.ar]",
+   "note": "proprietary; Google APIs ToS + ARCore Additional Terms (see ac_cloud-calc/NOTICE.md)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.auto.service:auto-service": {
@@ -8808,8 +8814,8 @@
    ],
    "version": "1.21.0",
    "scope": "catalog",
-   "licence": "NOASSERTION",
-   "licence_source": "no POM found for com.google.crypto.tink:tink-android:1.21.0 in curated.maven_repos",
+   "licence": "Apache-2.0",
+   "licence_source": "POM 1.21.0",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "matrix"
   },
@@ -9027,6 +9033,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:face-detection": {
@@ -9038,6 +9045,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:genai-summarization": {
@@ -9049,6 +9057,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:image-labeling": {
@@ -9060,6 +9069,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:language-id": {
@@ -9071,6 +9081,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:object-detection": {
@@ -9082,6 +9093,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:object-detection-custom": {
@@ -9093,6 +9105,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:segmentation-selfie": {
@@ -9104,6 +9117,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:text-recognition": {
@@ -9117,6 +9131,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:text-recognition-chinese": {
@@ -9128,6 +9143,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:text-recognition-devanagari": {
@@ -9139,6 +9155,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:text-recognition-japanese": {
@@ -9150,6 +9167,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:text-recognition-korean": {
@@ -9161,6 +9179,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:translate": {
@@ -9172,6 +9191,7 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.protobuf:protobuf-javalite": {
@@ -9236,8 +9256,8 @@
    ],
    "version": "3.5.3",
    "scope": "shipped",
-   "licence": "Apache-2.0",
-   "licence_source": "POM 3.5.3",
+   "licence": "NOASSERTION",
+   "licence_source": "no POM found for com.google.zxing:core:3.5.3 in curated.maven_repos",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.googlecode.libphonenumber:geocoder": {
@@ -9716,8 +9736,8 @@
    ],
    "version": "1.1.1",
    "scope": "catalog",
-   "licence": "NOASSERTION",
-   "licence_source": "no POM found for dev.zacsweers.metro:runtime:1.1.1 in curated.maven_repos",
+   "licence": "Apache-2.0",
+   "licence_source": "POM 1.1.1",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "matrix"
   },
@@ -10410,7 +10430,7 @@
    "version": "4.16.0",
    "scope": "catalog",
    "licence": "NOASSERTION",
-   "licence_source": "POM 4.16.0 declares no <licenses>",
+   "licence_source": "no POM found for net.zetetic:sqlcipher-android:4.16.0 in curated.maven_repos",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "gallery"
   },
@@ -10557,6 +10577,7 @@
    "scope": "catalog",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[org.jetbrains.compose]",
+   "note": "Compose Multiplatform (Kotlin/Wasm web build)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:org.jetbrains.compose.foundation:foundation": {
@@ -10568,6 +10589,7 @@
    "scope": "catalog",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[org.jetbrains.compose]",
+   "note": "Compose Multiplatform (Kotlin/Wasm web build)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:org.jetbrains.compose.runtime:runtime": {
@@ -10579,6 +10601,7 @@
    "scope": "catalog",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[org.jetbrains.compose]",
+   "note": "Compose Multiplatform (Kotlin/Wasm web build)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:org.jetbrains.compose.ui:ui": {
@@ -10590,6 +10613,7 @@
    "scope": "catalog",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[org.jetbrains.compose]",
+   "note": "Compose Multiplatform (Kotlin/Wasm web build)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:org.jetbrains.kotlin:compose-compiler-gradle-plugin": {
@@ -10942,7 +10966,7 @@
    ],
    "scope": "catalog",
    "licence": "EPL-2.0",
-   "licence_source": "POM of latest release 6.1.3 (declared version 'from BOM' needs Gradle to resolve)",
+   "licence_source": "POM of latest release 6.2.0-M1 (declared version 'from BOM' needs Gradle to resolve)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "vault"
   },
@@ -10953,7 +10977,7 @@
    ],
    "scope": "catalog",
    "licence": "EPL-2.0",
-   "licence_source": "POM of latest release 6.1.3 (declared version 'from BOM' needs Gradle to resolve)",
+   "licence_source": "POM of latest release 6.2.0-M1 (declared version 'from BOM' needs Gradle to resolve)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "vault"
   },
@@ -10964,7 +10988,7 @@
    ],
    "scope": "catalog",
    "licence": "EPL-2.0",
-   "licence_source": "POM of latest release 6.1.3 (declared version 'from BOM' needs Gradle to resolve)",
+   "licence_source": "POM of latest release 6.2.0-M1 (declared version 'from BOM' needs Gradle to resolve)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "vault"
   },
@@ -11175,8 +11199,8 @@
    ],
    "version": "7.12.0",
    "scope": "catalog",
-   "licence": "Apache-2.0",
-   "licence_source": "POM 7.12.0",
+   "licence": "NOASSERTION",
+   "licence_source": "no POM found for org.testng:testng:7.12.0 in curated.maven_repos",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "vault"
   },
@@ -11207,14 +11231,15 @@
   "maven:org.xerial:sqlite-jdbc": {
    "kind": "maven",
    "declared_in": [
+    "ab_cloud-libs-shared/libs/keyboard/build.gradle",
     "ac_cloud-mail/core/data/build.gradle.kts"
    ],
-   "version": "3.45.3.0",
+   "version": "3.46.1.3",
    "scope": "test",
    "licence": "Apache-2.0",
-   "licence_source": "POM 3.45.3.0",
+   "licence_source": "POM 3.46.1.3",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
-   "within_upstream_module": "mail"
+   "within_upstream_module": "keyboard"
   },
   "maven:sh.calvin.reorderable:reorderable": {
    "kind": "maven",
@@ -11236,7 +11261,7 @@
    "version": "^0.56.0",
    "scope": "shipped",
    "licence": "Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (1.8.0)",
+   "licence_source": "registry.npmjs.org latest (1.11.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -11287,7 +11312,7 @@
    "version": "3.937.0",
    "scope": "dev",
    "licence": "Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (3.1167.0)",
+   "licence_source": "registry.npmjs.org latest (3.1173.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -11299,7 +11324,7 @@
    "version": "3.937.0",
    "scope": "dev",
    "licence": "Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (3.1167.0)",
+   "licence_source": "registry.npmjs.org latest (3.1173.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -11511,7 +11536,7 @@
    "version": "2.4.11",
    "scope": "dev",
    "licence": "MIT OR Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (2.6.7)",
+   "licence_source": "registry.npmjs.org latest (2.6.8)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -11582,7 +11607,7 @@
    "version": "^8.4.2",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.6.0)",
+   "licence_source": "registry.npmjs.org latest (8.6.2)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -11621,7 +11646,7 @@
    "version": "^8.4.2",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.6.0)",
+   "licence_source": "registry.npmjs.org latest (8.6.2)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -11635,7 +11660,7 @@
    "version": "^8.4.2",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.6.0)",
+   "licence_source": "registry.npmjs.org latest (8.6.2)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -11659,7 +11684,7 @@
    "version": "^8.4.2",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.6.0)",
+   "licence_source": "registry.npmjs.org latest (8.6.2)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -11708,7 +11733,7 @@
    "version": "^0.0.14",
    "scope": "shipped",
    "licence": "Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (2.0.0)",
+   "licence_source": "registry.npmjs.org latest (2.0.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "npm:@cloudflare/workers-types": {
@@ -11719,7 +11744,7 @@
    "version": "^4.20240320.0",
    "scope": "dev",
    "licence": "MIT OR Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (5.20261112.1)",
+   "licence_source": "registry.npmjs.org latest (5.20261120.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "npm:@codemirror/autocomplete": {
@@ -12058,7 +12083,7 @@
    "version": "^6.8.5",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (6.9.7)",
+   "licence_source": "registry.npmjs.org latest (6.9.8)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code-lsp-client"
   },
@@ -12144,7 +12169,7 @@
    "version": "^4.1.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (4.3.0)",
+   "licence_source": "registry.npmjs.org latest (4.3.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -12408,7 +12433,7 @@
    "version": "6.18.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.0.3)",
+   "licence_source": "registry.npmjs.org latest (8.2.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -12432,7 +12457,7 @@
    "version": "2.5.5",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (3.3.1)",
+   "licence_source": "registry.npmjs.org latest (3.4.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -12444,7 +12469,7 @@
    "version": "7.7.11",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (9.0.3)",
+   "licence_source": "registry.npmjs.org latest (9.1.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -12456,7 +12481,7 @@
    "version": "4.2.11",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (5.4.3)",
+   "licence_source": "registry.npmjs.org latest (5.5.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -12468,7 +12493,7 @@
    "version": "8.15.4",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (10.0.4)",
+   "licence_source": "registry.npmjs.org latest (10.1.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -12480,7 +12505,7 @@
    "version": "5.4.4",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (7.0.4)",
+   "licence_source": "registry.npmjs.org latest (7.1.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -12504,7 +12529,7 @@
    "version": "^36.0.0",
    "scope": "shipped",
    "licence": "Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (42.3.0)",
+   "licence_source": "registry.npmjs.org latest (42.3.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -12576,7 +12601,7 @@
    "version": "4.7.1",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (4.8.0)",
+   "licence_source": "registry.npmjs.org latest (4.9.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -12588,7 +12613,7 @@
    "version": "4.7.1",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (4.8.0)",
+   "licence_source": "registry.npmjs.org latest (4.9.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -12600,7 +12625,7 @@
    "version": "4.7.1",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (4.8.0)",
+   "licence_source": "registry.npmjs.org latest (4.9.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -12648,7 +12673,7 @@
    "version": "^1.5.2",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (1.5.5)",
+   "licence_source": "registry.npmjs.org latest (1.5.6)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -12723,7 +12748,7 @@
    "version": "^0.9.4",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (0.12.0)",
+   "licence_source": "registry.npmjs.org latest (0.12.2)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -12972,7 +12997,7 @@
    "version": "=1.58.2",
    "scope": "dev",
    "licence": "Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (1.65.0)",
+   "licence_source": "registry.npmjs.org latest (1.65.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -13439,7 +13464,7 @@
    "version": "15.1.3",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (20.2.0)",
+   "licence_source": "registry.npmjs.org latest (21.0.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -13451,7 +13476,7 @@
    "version": "15.1.3",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (20.2.0)",
+   "licence_source": "registry.npmjs.org latest (21.0.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -13463,7 +13488,7 @@
    "version": "15.1.3",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (20.2.0)",
+   "licence_source": "registry.npmjs.org latest (21.0.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -13559,7 +13584,7 @@
    "version": "7.3.10",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (7.21.0)",
+   "licence_source": "registry.npmjs.org latest (7.22.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -13571,7 +13596,7 @@
    "version": "7.1.6",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (7.5.1)",
+   "licence_source": "registry.npmjs.org latest (7.5.2)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -13583,7 +13608,7 @@
    "version": "7.2.10",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (7.12.1)",
+   "licence_source": "registry.npmjs.org latest (7.12.2)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -13655,7 +13680,7 @@
    "version": "^2.2.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (2.3.2)",
+   "licence_source": "registry.npmjs.org latest (2.3.3)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -13668,7 +13693,7 @@
    "version": "^2.2.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (2.3.2)",
+   "licence_source": "registry.npmjs.org latest (2.3.3)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -13704,7 +13729,7 @@
    "version": "^5.3.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (11.12.0)",
+   "licence_source": "registry.npmjs.org latest (11.15.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -13718,7 +13743,7 @@
    "version": "^10.53.1",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (11.12.0)",
+   "licence_source": "registry.npmjs.org latest (11.15.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -13730,7 +13755,7 @@
    "version": "6.10.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.34.0)",
+   "licence_source": "registry.npmjs.org latest (8.36.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -13742,7 +13767,7 @@
    "version": "^5.3.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (11.12.0)",
+   "licence_source": "registry.npmjs.org latest (11.15.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -13779,7 +13804,7 @@
    "version": "^8.0.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.3.0)",
+   "licence_source": "registry.npmjs.org latest (8.5.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -13791,7 +13816,7 @@
    "version": "^10.2.14",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (10.6.7)",
+   "licence_source": "registry.npmjs.org latest (10.6.8)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -13803,7 +13828,7 @@
    "version": "^10.2.14",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (10.6.7)",
+   "licence_source": "registry.npmjs.org latest (10.6.8)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -14520,7 +14545,7 @@
    "version": "8.29.1",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.72.2)",
+   "licence_source": "registry.npmjs.org latest (8.73.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -14532,7 +14557,7 @@
    "version": "8.29.1",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.72.2)",
+   "licence_source": "registry.npmjs.org latest (8.73.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -14624,7 +14649,7 @@
    "version": "^4.1.10",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (5.1.0)",
+   "licence_source": "registry.npmjs.org latest (5.1.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -14639,7 +14664,7 @@
    "version": "^4.1.10",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (5.1.0)",
+   "licence_source": "registry.npmjs.org latest (5.1.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -14651,7 +14676,7 @@
    "version": "^4.1.10",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (5.1.0)",
+   "licence_source": "registry.npmjs.org latest (5.1.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -14663,7 +14688,7 @@
    "version": "^4.1.10",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (5.1.0)",
+   "licence_source": "registry.npmjs.org latest (5.1.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -14870,7 +14895,7 @@
    "version": "^10.5.4",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (10.6.2)",
+   "licence_source": "registry.npmjs.org latest (10.7.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -14993,7 +15018,7 @@
    "version": "12.11.1",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (13.1.1)",
+   "licence_source": "registry.npmjs.org latest (13.2.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -15434,7 +15459,7 @@
    "version": "^3.4.14",
    "scope": "shipped",
    "licence": "(MPL-2.0 OR Apache-2.0)",
-   "licence_source": "registry.npmjs.org latest (3.4.17)",
+   "licence_source": "registry.npmjs.org latest (3.4.18)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -15460,7 +15485,7 @@
    "version": "^39.0.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (45.3.1)",
+   "licence_source": "registry.npmjs.org latest (45.4.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -15593,7 +15618,7 @@
    "version": "9.24.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (10.14.0)",
+   "licence_source": "registry.npmjs.org latest (10.15.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -15641,7 +15666,7 @@
    "version": "28.11.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (29.17.0)",
+   "licence_source": "registry.npmjs.org latest (29.17.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -15742,7 +15767,7 @@
    "version": "52.0.47",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (58.0.24)",
+   "licence_source": "registry.npmjs.org latest (58.0.26)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -15838,7 +15863,7 @@
    "version": "14.0.2",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (58.0.8)",
+   "licence_source": "registry.npmjs.org latest (58.1.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -15876,7 +15901,7 @@
    "version": "^5.8.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (5.12.0)",
+   "licence_source": "registry.npmjs.org latest (5.12.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -15917,7 +15942,7 @@
    "version": "^11.0.22",
    "scope": "shipped",
    "licence": "BSD-3-Clause",
-   "licence_source": "registry.npmjs.org latest (11.0.30)",
+   "licence_source": "registry.npmjs.org latest (11.0.35)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -15998,7 +16023,7 @@
    "version": "^11.0.0",
    "scope": "dev",
    "licence": "BlueOak-1.0.0",
-   "licence_source": "registry.npmjs.org latest (14.0.5)",
+   "licence_source": "registry.npmjs.org latest (14.0.6)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -16112,7 +16137,7 @@
    "version": "^3.0.5",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (4.2.1)",
+   "licence_source": "registry.npmjs.org latest (4.2.2)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -16137,7 +16162,7 @@
    "version": "^25.0.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (27.1.1)",
+   "licence_source": "registry.npmjs.org latest (27.2.2)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -16275,7 +16300,7 @@
    "version": "52.0.6",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (58.0.14)",
+   "licence_source": "registry.npmjs.org latest (58.0.15)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -16373,7 +16398,7 @@
    "version": "0.11.1",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (1.0.0)",
+   "licence_source": "registry.npmjs.org latest (1.1.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -16397,7 +16422,7 @@
    "version": "^24.0.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (31.0.0)",
+   "licence_source": "registry.npmjs.org latest (31.0.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "npm:jshint": {
@@ -16525,7 +16550,7 @@
    "version": "^16.0.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (17.6.0)",
+   "licence_source": "registry.npmjs.org latest (17.6.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -16723,7 +16748,7 @@
    "version": "^0.508.0",
    "scope": "shipped",
    "licence": "ISC",
-   "licence_source": "registry.npmjs.org latest (1.72.0)",
+   "licence_source": "registry.npmjs.org latest (1.77.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -16870,7 +16895,7 @@
    "version": "^15.0.12",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (18.2.0)",
+   "licence_source": "registry.npmjs.org latest (18.2.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code-lsp-client"
   },
@@ -16882,7 +16907,7 @@
    "version": "^2.0.1",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (2.1.0)",
+   "licence_source": "registry.npmjs.org latest (2.1.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17064,7 +17089,7 @@
    "version": "^10.2.5",
    "scope": "shipped",
    "licence": "BlueOak-1.0.0",
-   "licence_source": "registry.npmjs.org latest (11.0.8)",
+   "licence_source": "registry.npmjs.org latest (11.0.9)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17113,7 +17138,7 @@
    "version": "^12.43.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (14.12.0)",
+   "licence_source": "registry.npmjs.org latest (14.14.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -17139,7 +17164,7 @@
    "version": "^2.13.2",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (3.0.5)",
+   "licence_source": "registry.npmjs.org latest (3.0.7)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17238,7 +17263,7 @@
    "version": "0.63.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (0.78.0)",
+   "licence_source": "registry.npmjs.org latest (0.79.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17250,7 +17275,7 @@
    "version": "1.78.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (1.93.0)",
+   "licence_source": "registry.npmjs.org latest (1.94.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17262,7 +17287,7 @@
    "version": "7.0.2001",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (7.0.2006)",
+   "licence_source": "registry.npmjs.org latest (7.0.2007)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17351,7 +17376,7 @@
    "version": "=1.58.2",
    "scope": "dev",
    "licence": "Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (1.65.0)",
+   "licence_source": "registry.npmjs.org latest (1.65.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17363,7 +17388,7 @@
    "version": "^8.5.18",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.5.32)",
+   "licence_source": "registry.npmjs.org latest (8.5.33)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17388,7 +17413,7 @@
    "version": "^7.1.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (7.2.0)",
+   "licence_source": "registry.npmjs.org latest (7.2.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17400,7 +17425,7 @@
    "version": "^3.8.3",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (3.10.0)",
+   "licence_source": "registry.npmjs.org latest (3.10.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -17412,7 +17437,7 @@
    "version": "^2.8.1",
    "scope": "dev",
    "licence": "Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (2.11.0)",
+   "licence_source": "registry.npmjs.org latest (2.12.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -17448,7 +17473,7 @@
    "version": "^7.3.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (7.3.0)",
+   "licence_source": "registry.npmjs.org latest (8.0.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17576,7 +17601,7 @@
    "version": "^15.2.0",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (18.0.1)",
+   "licence_source": "registry.npmjs.org latest (18.0.3)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -17588,7 +17613,7 @@
    "version": "7.1.10",
    "scope": "shipped",
    "licence": "BSD-3-Clause",
-   "licence_source": "registry.npmjs.org latest (12.1.7)",
+   "licence_source": "registry.npmjs.org latest (12.2.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -17732,7 +17757,7 @@
    "version": "1.19.3",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (1.23.0)",
+   "licence_source": "registry.npmjs.org latest (1.23.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -17828,7 +17853,7 @@
    "version": "3.17.3",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (4.7.1)",
+   "licence_source": "registry.npmjs.org latest (4.8.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -17876,7 +17901,7 @@
    "version": "7.1.1",
    "scope": "shipped",
    "licence": "ISC",
-   "licence_source": "registry.npmjs.org latest (7.1.2)",
+   "licence_source": "registry.npmjs.org latest (7.1.3)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "chat"
   },
@@ -17984,7 +18009,7 @@
    "version": "^3.0.6",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (4.21.0)",
+   "licence_source": "registry.npmjs.org latest (4.24.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -18004,7 +18029,7 @@
    "version": "^7.18.2",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (7.18.5)",
+   "licence_source": "registry.npmjs.org latest (7.18.6)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -18053,7 +18078,7 @@
    "version": "^4.12.3",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (4.18.21)",
+   "licence_source": "registry.npmjs.org latest (4.18.24)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -18066,7 +18091,7 @@
    "version": "^2.15.4",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (3.10.1)",
+   "licence_source": "registry.npmjs.org latest (3.11.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -18153,7 +18178,7 @@
    "version": "3.30.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (4.68.2)",
+   "licence_source": "registry.npmjs.org latest (4.68.7)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -18263,7 +18288,7 @@
    "version": "^14.2.6",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (14.2.7)",
+   "licence_source": "registry.npmjs.org latest (14.2.8)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -18275,7 +18300,7 @@
    "version": "^2.7.1",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (3.2.2)",
+   "licence_source": "registry.npmjs.org latest (4.0.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -18363,7 +18388,7 @@
    "version": "^10.2.14",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (10.6.7)",
+   "licence_source": "registry.npmjs.org latest (10.6.8)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -18414,7 +18439,7 @@
    "version": "^3.4.0",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (3.7.0)",
+   "licence_source": "registry.npmjs.org latest (3.7.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -18499,7 +18524,7 @@
    "version": "^7.0.19",
    "scope": "shipped",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (7.4.22)",
+   "licence_source": "registry.npmjs.org latest (7.5.5)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -18693,7 +18718,7 @@
    "version": "^4.3.4",
    "scope": "dev",
    "licence": "Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (6.0.3)",
+   "licence_source": "registry.npmjs.org latest (6.1.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code-lsp-client"
   },
@@ -18919,7 +18944,7 @@
    "version": "^4.1.11",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (5.1.0)",
+   "licence_source": "registry.npmjs.org latest (5.1.1)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -18991,7 +19016,7 @@
    "version": "^3.17.5",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (3.18.5)",
+   "licence_source": "registry.npmjs.org latest (3.18.6)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -19003,7 +19028,7 @@
    "version": "^3.4.38",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (3.5.45)",
+   "licence_source": "registry.npmjs.org latest (3.5.46)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
   },
@@ -19027,7 +19052,7 @@
    "version": "^3.50.0",
    "scope": "dev",
    "licence": "MIT OR Apache-2.0",
-   "licence_source": "registry.npmjs.org latest (4.160.1)",
+   "licence_source": "registry.npmjs.org latest (4.165.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "npm:ws": {
@@ -19038,7 +19063,7 @@
    "version": "^8.21.3",
    "scope": "dev",
    "licence": "MIT",
-   "licence_source": "registry.npmjs.org latest (8.22.2)",
+   "licence_source": "registry.npmjs.org latest (8.23.0)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "code"
   },
@@ -19319,6 +19344,14 @@
    "kind": "vendored",
    "declared_in": [
     "ac_cloud-wiki/app/src/main/assets/chronos/vendor/chart.js/4.6.1/LICENSE.md"
+   ],
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ac_cloud-wiki/app/src/main/assets/chronos/vendor/three/r128": {
+   "kind": "vendored",
+   "declared_in": [
+    "ac_cloud-wiki/app/src/main/assets/chronos/vendor/three/r128/LICENSE"
    ],
    "licence": "MIT",
    "licence_source": "licenses/curated.json"

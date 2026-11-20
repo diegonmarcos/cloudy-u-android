@@ -732,14 +732,14 @@ fun ComposeScreen(
             Toast.makeText(context, context.getString(R.string.compose_scan_qr_no_camera), Toast.LENGTH_LONG).show()
         }
     }
-    val qrPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) openQrCamera()
-        else Toast.makeText(context, context.getString(R.string.compose_scan_qr_camera_denied), Toast.LENGTH_LONG).show()
-    }
     fun scanQr() {
         val have = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA) ==
             android.content.pm.PackageManager.PERMISSION_GRANTED
-        if (have) openQrCamera() else qrPermission.launch(android.Manifest.permission.CAMERA)
+        // #1515 a missing grant is asked on the Perms page (camera row), never by a dialog of this screen.
+        if (have) openQrCamera() else {
+            Toast.makeText(context, context.getString(R.string.compose_scan_qr_camera_denied), Toast.LENGTH_LONG).show()
+            PermsLink.open(context, "mail", listOf("camera"))
+        }
     }
 
     // Land in the recipient field with the keyboard up, unless the recipients are already filled — a

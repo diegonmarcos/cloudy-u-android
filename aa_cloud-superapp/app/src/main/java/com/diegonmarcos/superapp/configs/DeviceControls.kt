@@ -568,7 +568,7 @@ object DeviceControls {
             read = { ctx -> SecurityControls.a11yOn(ctx, "access_keyboard") },
             set = { ctx, on -> a11ySet(ctx, "access_keyboard", on) },
             blocked = { ctx -> a11yBlocked(ctx, "access_keyboard") },
-            open = { ctx -> open(ctx, Settings.ACTION_ACCESSIBILITY_SETTINGS) },
+            open = { ctx -> perms(ctx, "Security: accessibility", "accessibility") },
         ),
         "access_superapp" to Control(
             // Settings.Secure.enabled_accessibility_services holds its component (SecurityControls.A11Y).
@@ -576,7 +576,7 @@ object DeviceControls {
             read = { ctx -> SecurityControls.a11yOn(ctx, "access_superapp") },
             set = { ctx, on -> a11ySet(ctx, "access_superapp", on) },
             blocked = { ctx -> a11yBlocked(ctx, "access_superapp") },
-            open = { ctx -> open(ctx, Settings.ACTION_ACCESSIBILITY_SETTINGS) },
+            open = { ctx -> perms(ctx, "Security: accessibility", "accessibility") },
         ),
         "access_vault" to Control(
             // Settings.Secure.enabled_accessibility_services holds its component (SecurityControls.A11Y).
@@ -584,7 +584,7 @@ object DeviceControls {
             read = { ctx -> SecurityControls.a11yOn(ctx, "access_vault") },
             set = { ctx, on -> a11ySet(ctx, "access_vault", on) },
             blocked = { ctx -> a11yBlocked(ctx, "access_vault") },
-            open = { ctx -> open(ctx, Settings.ACTION_ACCESSIBILITY_SETTINGS) },
+            open = { ctx -> perms(ctx, "Security: accessibility", "accessibility") },
         ),
 
         "access_others" to Control(
@@ -600,7 +600,7 @@ object DeviceControls {
                 }
             },
             blocked = { ctx -> if (SecurityControls.canWrite(ctx)) "" else SecurityControls.NO_CHANNEL },
-            open = { ctx -> open(ctx, Settings.ACTION_ACCESSIBILITY_SETTINGS) },
+            open = { ctx -> perms(ctx, "Security: accessibility", "accessibility") },
         ),
 
         "edge_menus" to Control(

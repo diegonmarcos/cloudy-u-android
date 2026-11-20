@@ -27,13 +27,13 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-c3 | `com.diegonmarcos.cloudc3` | 13 | 0 | 100% |
 | cloud-calc | `com.diegonmarcos.cloudcalc` | 18 | 0 | 100% |
 | cloud-camera | `cld.camera` | 11 | 0 | 100% |
-| cloud-canvas | `com.diegonmarcos.cloudcanvas` | 10 | 0 | 100% |
+| cloud-canvas | `com.diegonmarcos.cloudcanvas` | 11 | 0 | 100% |
 | cloud-chat | `com.diegonmarcos.comms.chat` | 8 | 0 | 100% |
 | cloud-code | `com.diegonmarcos.code` | 12 | 5 | 70% |
 | cloud-contacts | `com.diegonmarcos.cloudcontacts` | 8 | 2 | 80% |
 | cloud-dialer | `com.diegonmarcos.comms.dialer` | 9 | 2 | 81% |
 | cloud-drive | `com.diegonmarcos.clouddrive` | 17 | 6 | 73% |
-| cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 10 | 0 | 100% |
+| cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 11 | 0 | 100% |
 | cloud-mail | `com.diegonmarcos.comms.mail` | 13 | 2 | 86% |
 | cloud-matrix | `com.diegonmarcos.comms.matrix` | 4 | 9 | 30% |
 | cloud-me | `com.diegonmarcos.cloudme` | 19 | 1 | 95% |
@@ -58,7 +58,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-biomed | `com.diegonmarcos.hardtechbiomed` | 5 | 0 | 100% |
-| **fleet** | | **454** | **57** | **88%** |
+| **fleet** | | **456** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -86,6 +86,7 @@ Module `aa_cloud-superapp`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-she
 | `dagu_prefs_fallback` | prefs | config (keys: bearer_token→secret) | yes | Plain-prefs fallback of dagu_prefs (same keys). |
 | `data_usage_history` | prefs | device | no | Per-app/sub data usage history measured on this device. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `device_tuning` | prefs | device | no | DeviceTuning engine (aa_cloud-superapp/data/device-tuning.json): per-entry APPLIED/PENDING/FAILED state, detail and timestamp of the Android device tuning applied through the SuperApp's own ADB shell (phantom process killer off). Device-bound: a new phone re-applies from the declaration. |
 | `display_controls` | prefs | device | no | Cloud SuperApp QuickDisplay's smallest-width override (key sw_dp) used to compute the density/font ADB commands for THIS device's panel. It is calibrated to the current screen's pixels, so it must not migrate to a phone with a different display. |
 | `firewall` | prefs | config | yes | Firewall enabled toggle. |
@@ -197,6 +198,7 @@ Module `ac_c3-morpheus`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools,
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -222,6 +224,7 @@ Module `ac_c3-watchdog`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools,
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -247,6 +250,7 @@ Module `ac_c3-watchtower`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtool
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -278,6 +282,7 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `autofill_sot` | prefs | config (keys: next_id→device) | yes | The non-secret autofill Source of Truth Cloud Account owns (a0_docs/eng-specs/autofill-3-tier.md): profiles_json (names, emails, phones, postal addresses), rules_json (per-site form mapping rules), snippets_json (keyboard snippets), next_id. Served to Cloud Browser and Cloud Keyboard by AutofillSotProvider behind AUTOFILL_PROFILE_READ/WRITE. Never a password, code or card: there is no column for one. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `git-sync-credentials` | encrypted | secret | yes | Encrypted git credentials (tokens/passwords/keys). |
@@ -341,6 +346,7 @@ Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-clock-t
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `cloud_clock` | prefs | config (keys: scheduled→device) | yes | #1668 libs:clock-tools' store: the clock engine data blob (alarms, timers, world-clock zones and the #1667 default city, stopwatch) as one JSON; alarms/timers/zones are user config; 'scheduled' is device alarm-scheduling state. Each app that carries the lib (Cloud Calc, Cloud Tasks, the SuperApp) keeps its OWN copy in its own process, so an alarm lives and rings in exactly one app. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `install_sessions_prompted` | prefs | device | no | #1675 Install sessions the updater already raised a confirm prompt for, so one session asks once: per-device session state, never a setting. |
@@ -392,6 +398,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `cloudy_cache` | prefs | device | no | #1493 Cloud Browser Cloudy: the last front-html pages.json answer (pages_json), shown at once and refreshed when the network answers. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `headless_audit` | prefs | content | no | #1498 the audit ring of the headless browser (audit_json, capped): every agent command with its agent name, command, URL and result; Domains > History shows it tagged agent. |
@@ -433,6 +440,7 @@ Module `ac_cloud-c3-webserver`; libs: lib-adb-grants, lib-adb-readiness, lib-adb
 | `adb_terminal` | prefs | config | yes | Configs > ADB Terminal: the owner's favourite shell commands (string set under key 'favourites', command ids from the shipped shell allowlist) pinned to the top of the terminal. Absent until the first star. |
 | `c3_links` | prefs | device | no | #1682 Cloud C3 Webserver's remembered link choice per link type (build.json::links: Open in browser / Open embedded); a per-device convenience the web shell kept in its WebView localStorage, reset in Configs > Links. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -461,6 +469,7 @@ Module `ac_cloud-media-center`; libs: lib-bottomnav, lib-core, lib-crash, lib-de
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -493,6 +502,7 @@ Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-
 | `dagu_prefs` | encrypted | config (keys: bearer_token→secret) | yes | Dagu server URL and user label are account links; bearer_token is a credential. |
 | `dagu_prefs_fallback` | prefs | config (keys: bearer_token→secret) | yes | Plain-prefs fallback of dagu_prefs (same keys). |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `gh_feed_cache` | prefs | device | no | 15-minute TTL cache of GitHub commits/workflow-run feeds. |
@@ -520,7 +530,7 @@ Coverage: 13 covered, 0 gaps.
 
 ## cloud-calc — `com.diegonmarcos.cloudcalc`
 
-Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-decisions, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-light, lib-location-client, lib-ml-l-image, lib-ml-l-sound, lib-model-catalogue, lib-nfc, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-web-core, lib-wifi.
+Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-decisions, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-light, lib-location-client, lib-ml-l-image, lib-ml-l-sound, lib-model-catalogue, lib-nfc, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-web-core, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -536,6 +546,7 @@ Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-clock-to
 | `cloud_sound` | prefs | config (keys: calibration_db→device) | yes | cloud-calc sound meter calibration_db, a4_hz, temperature_c user-set parameters. |
 | `cloud_sound_identification` | prefs | config | yes | #798 the chosen sound identification route (on-device YAMNet vs a remote decision model), per app; the declaration's default_route until the user picks one. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `light_prefs` | prefs | config | yes | #1155 the Light tool's settings: default light (rear/front/both), mode (spotlight/flashing) and strobe rate (capped at 3 Hz), rear and front intensity, timer on/duration, keep-on. Preferences of the user, so they move with the phone. Kept by libs:light, so every app that compiles it (the SuperApp, Cloud Calc's Toolkit > Light) carries it. |
@@ -572,6 +583,7 @@ Module `ac_cloud-camera`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 | `cloud_sound_identification` | prefs | config | yes | #798 the chosen sound identification route (on-device YAMNet vs a remote decision model), per app; the declaration's default_route until the user picks one. |
 | `commons` | prefs | config (keys: last_captured_item_date_string→device, last_captured_item_type→device, last_captured_item_uri→device, previous_saf_trees→device, storage_location→device) | yes | cloud-camera shared settings (grid, flash, quality, timers, scan, geotag, sounds, aspect ratio); last captured item and storage URIs are device. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -594,7 +606,7 @@ Coverage: 11 covered, 0 gaps.
 
 ## cloud-canvas — `com.diegonmarcos.cloudcanvas`
 
-Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
+Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -604,7 +616,9 @@ Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-
 | `canvas_ai_secret` | encrypted | secret | yes | #1782 Cloud Canvas Configs > AI: the app's own OpenRouter key (the per-app override of the fleet Account's key), in EncryptedSharedPreferences through SafeEncryptedPrefs. Masked on screen, never logged, migrates only through the vault. |
 | `canvas_draw` | prefs | config | yes | #1780 Cloud Canvas Draw: the recent colours of the colour picker (a comma list of ARGB hex values, most recent first). Part of the app's settings, so it migrates. |
 | `canvas_folders` | prefs | device | no | #1780 Cloud Canvas: the export folders (PNG and WAV) the user chose through the Storage Access Framework, as tree Uris. The grant is per phone, so it does not migrate. |
+| `canvas_play` | prefs | config | yes | Cloud Canvas play mode: the audio engine the owner picked (build.json::audio.default_engine until a pick) and its play settings. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -621,7 +635,7 @@ Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-
 | `filesDir/boards/{board-N.tldr,boards.json}` | content | #1787 Draw > Board: every whiteboard as a tldraw store snapshot (board-N.tldr) and the index of names, order and the open board (boards.json). The user's content, written whole or not at all. |
 | `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
-Coverage: 10 covered, 0 gaps.
+Coverage: 11 covered, 0 gaps.
 
 ## cloud-chat — `com.diegonmarcos.comms.chat`
 
@@ -634,6 +648,7 @@ Module `ac_cloud-chat`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash,
 | `chat_setup` | prefs | config | yes | Cloud Chat's (Mattermost mobile fork) account link as Cloud Account sets it up: server_url and server_name. Written by Fleet Setup through the default prefs handler; read at launch by the fork's native CloudFleetSetup module and used by the server screen exactly as a managed (EMM) config's serverUrl / serverName would be, so an empty phone opens Cloud Chat on the fleet's server. The session token is not here: Mattermost mobile signs in interactively (SSO / password) and keeps its token in the Keychain (apps[chat].items mm-servers), so Test reads the link back and checks the server answers. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -669,6 +684,7 @@ Module `ac_cloud-code`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-de
 | `cloud_code_chat_secrets` | encrypted | secret | yes | Cloud Code Chat's OpenRouter token, pasted in Profile & Config: EncryptedSharedPreferences under a Keystore AES-256-GCM master key, shown masked, never handed to the WebView. A credential: migrates through the vault. |
 | `code_chat_sessions` | file | config | GAP | Cloud Code's chats, mirrored by the web layer from localStorage to files/chat-sessions.json (text and attachment names, never bytes or a token) and seeded back from it on a restored phone. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -702,6 +718,7 @@ Module `ac_cloud-contacts`; libs: lib-analytics, lib-bottomnav, lib-contacts, li
 | `contacts_groups` | prefs | device | no | #1671 (was #1626 in Cloud Account) Cloud Contacts' Groups section: which groups (Friends, Family, Job, Favorites or the owner's own) each merged person is in, keyed by the merged person id (ContactsBridge, ContactFacets.encode). The id is derived from the phone's and the imports' email / phone / name keys, so another phone's address book can merge differently: per-device, never migrates. |
 | `contacts_vcards` | provider | config | GAP | Cloud Contacts: every contact in the phone's system contacts (names, phones, emails, addresses, organisation, birthday, note; no photos) as vCard text, served by the handler the app registers. Carried in the device file so a new phone gets its contacts; restore adds the missing ones to a phone-local account and never deletes. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `install_sessions_prompted` | prefs | device | no | #1675 Install sessions the updater already raised a confirm prompt for, so one session asks once: per-device session state, never a setting. |
@@ -740,6 +757,7 @@ Module `ac_cloud-dialer`; libs: lib-analytics, lib-bottomnav, lib-core, lib-cras
 | `cloud_dialer_sim_manual` | encrypted | secret | yes | #1411 Cloud Dialer Configs > SIM manual fields per SIM (provider, plan, price, allowance, renewal, number, PIN, PUK, APN notes, support) in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs. |
 | `cloud_dialer_sms` | prefs | config | yes | Cloud Dialer SMS: which conversation threads the owner pinned or archived, the SIM the owner prefers, and the SIM each thread last sent on (SmsPrefs). The owner's own choices, so a new phone keeps them. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -779,6 +797,7 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `cloud_image_recognition` | prefs | config | yes | Chosen image recognition route (on-device vs openrouter) and decision model. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `drive_auto_commit` | prefs | config | yes | #1419 Cloud Drive Git > Auto Commit: which writer composes the commit message (rule or model) and, for the model writer, the model id picked from OpenRouter's public list. Owner choices that migrate; no key is held here (decisions-use guard D5). |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
@@ -828,9 +847,12 @@ Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, li
 | `autocomplete_userdata` | encrypted | secret | yes | Cloud Keyboard Writer > Configs Writer > Autocomplete: the user data tables the owner fills in (Personal Data, Keys, Urls, Notes, Others) as one JSON document under the key 'tables', in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs. Migrates to a new phone through the vault as a secret (personal data and keys), always masked on screen where it is a key. No row is baked into the APK: every row is typed by the user. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `grabber` | prefs | config | yes | #1793 Cloud Keyboard Grabber on selection: on_selection_accessibility and on_selection_keyboard, the two Configs switches (Grabber > Text Selection) that let the Grabber panel open by itself on a text selection; both off by default. Choices only, no selected text is ever kept here. |
+| `grabber_diag` | prefs | device | no | #1825 what the Grabber page shows about the accessibility path on THIS phone: when the selection service last connected, the last event and the last launch. Timestamps and short labels only, never selected text; meaningless on another device. |
+| `grabber_view` | prefs | config | yes | #1829 the Grabber window's view mode the owner last chose (full window or the docked keyboard-area strip), restored on the next open. A choice only, no selected text. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
 | `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
 | `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
@@ -850,7 +872,7 @@ Module `ac_cloud-keyboard`; libs: lib-analytics, lib-autofill, lib-bottomnav, li
 | `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 | `filesDir/vosk/<model-dir>` | device | Downloaded Vosk model files (re-downloadable); the selected model name is declared/held in the host app prefs, not in this lib |
 
-Coverage: 10 covered, 0 gaps.
+Coverage: 11 covered, 0 gaps.
 
 ## cloud-mail — `com.diegonmarcos.comms.mail`
 
@@ -861,8 +883,10 @@ Module `ac_cloud-mail`; libs: lib-bottomnav, lib-core, lib-crash, lib-databacken
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `body_cache_upgrade` | prefs | device | no | Sterna purge-once migration marker (purgedForVersion). |
 | `cloud_image_recognition` | prefs | config | yes | Chosen image recognition route (on-device vs openrouter) and decision model. |
+| `compose_templates` | prefs | content | no | Cloud Mail compose templates the owner saved (name, subject, body), encoded by ComposeTemplateCodec; carried to a new phone with the app's content. |
 | `datastore:settings` | datastore | config (keys: album_last_sort_obj→device, album_last_view_obj→device, album_media_sort_obj→device, forced_last_screen→device, has_primed_contacts→device, has_seen_welcome→device, header_banner_dismissed→device, last_screen→device, last_seen_version→device, search_history_v2→content, setup_completed_version→device) | GAP | Mail (sterna) settings: theme, app_style (CLOUD_DARK default, GMAIL_DARK, CLOUD_EINK - the whole-app look), density, swipe actions, signature, PGP provider, notification content, quiet hours, image allowlist, RSS feeds, and the offline settings (offline_window: how long mail is kept offline, default 90 days; offline_attachment_limit: largest attachment downloaded; offline_attachment_policy: Download attachments Always / Wi-Fi only / Off, default Wi-Fi only; all follow the user to a new phone as config, offline_last_sync is a device clock and is re-derived). Same file name used by gallery. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `gateway_auth` | prefs | secret | yes | Cloud Mail (ac_cloud-mail) per-account edge-gate sign-in: one Keystore AES-256-GCM sealed JSON blob per account id (key gw_<id>) holding the Authelia flag and the captured authelia_session cookie. A credential: sealed, never logged, replayed only to the account's own domain. (#1090) The same file also holds one sealed blob per fleet account under key ep_<id>: the mesh URL and public URL Cloud Account published for it, the owner's endpoint policy (mesh_first / mesh_only / public_only) and the synced fleet bearer. The bearer is a credential: sealed, shown masked, sent only to the exact public host, never to the mesh host. |
@@ -926,6 +950,7 @@ Module `ac_cloud-matrix`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 | `datastore:session_<hash>_seen-invites` | datastore | device | no | Invites already seen; notification dedupe state. |
 | `datastore:vector_analytics` | datastore | config (keys: analytics_id→device, did_ask_user_consent→device) | GAP | Analytics opt-in consent choice (user_consent); analytics_id and did_ask_user_consent are device-local. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -956,6 +981,7 @@ Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bot
 | `buro_user` | prefs | config | yes | Cloud Me > Buro user data, one JSON string under 'data' (collections of typed records): personal due-diligence items, assets, services, liabilities and taxes, budget lines, accounts and cashflow entries. Your own entries, so they move with the phone; the reports (budget vs cashflow, accounts vs cashflow) are derived from them and never stored. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `experiences_user` | prefs | config | yes | Cloud Me > Achieves > Experiences user data, one JSON string under 'data': your own done and to-do experiences (accepted suggestions, edits, additions). Moves with the phone and the backup. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
@@ -1003,6 +1029,7 @@ Module `ac_cloud-gallery`; libs: lib-analytics, lib-bottomnav, lib-core, lib-cra
 | `cloud_image_recognition` | prefs | config | yes | Chosen image recognition route (on-device vs openrouter) and decision model. |
 | `datastore:settings` | datastore | config (keys: album_last_sort_obj→device, album_last_view_obj→device, album_media_sort_obj→device, forced_last_screen→device, has_primed_contacts→device, has_seen_welcome→device, header_banner_dismissed→device, last_screen→device, last_seen_version→device, search_history_v2→content, setup_completed_version→device) | GAP | Mail (sterna) settings: theme, app_style (CLOUD_DARK default, GMAIL_DARK, CLOUD_EINK - the whole-app look), density, swipe actions, signature, PGP provider, notification content, quiet hours, image allowlist, RSS feeds, and the offline settings (offline_window: how long mail is kept offline, default 90 days; offline_attachment_limit: largest attachment downloaded; offline_attachment_policy: Download attachments Always / Wi-Fi only / Off, default Wi-Fi only; all follow the user to a new phone as config, offline_last_sync is a device clock and is re-derived). Same file name used by gallery. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `encrypted_datastore_flags` | prefs | device | no | Migration-done flag for the encrypted DataStore. |
 | `encrypted_db_prefs` | prefs | device | no | Keystore-wrapped DB passphrase and encryption/migration flags; bound to this device's Keystore, cannot be moved. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
@@ -1037,6 +1064,7 @@ Module `ac_cloud-myterminal`; libs: lib-analytics, lib-bottomnav, lib-core, lib-
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `ide_prefs` | prefs | config (keys: battery_exemption_asked→device) | yes | cloud-myterminal IdePrefs: terminal_backend choice, per-backend ssh host/user (terminal_<backend>_host/_user), dev_api_enabled, the #787 wake_lock_wanted toggle and the pinch-zoom terminal_font_size (px, 6..32; the frontend reads it through the AndroidTerm bridge and migrates its old localStorage myk-term-font-size into it, so "apply all" carries the size to a new phone); all user choices, except battery_exemption_asked, which records that the one-time battery-optimization prompt was shown. |
@@ -1070,6 +1098,7 @@ Module `ac_cloud-nav`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, 
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `cloud_nav_cockpit` | prefs | config | yes | cloud-nav cockpit selected mode id ('mode'); a user layout choice. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `install_sessions_prompted` | prefs | device | no | #1675 Install sessions the updater already raised a confirm prompt for, so one session asks once: per-device session state, never a setting. |
@@ -1118,6 +1147,7 @@ Module `ac_cloud-news`; libs: lib-analytics, lib-apify, lib-bottomnav, lib-core,
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `event_keys` | encrypted | secret | yes | #1470 Cloud News event-ticketer API keys (one per ticketer id) in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; a credential, so it migrates through the vault and is masked on screen. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
@@ -1156,6 +1186,7 @@ Module `ac_cloud-nix-on-droid`; libs: lib-bottomnav, lib-core, lib-crash, lib-de
 | `agent-auth` | prefs | secret | yes | #790 the agent CLIs' credentials in each terminal, keyed by the environment variable each CLI reads (CLAUDE_CODE_OAUTH_TOKEN for claude, OPENROUTER_API_KEY for goose and hermes). Configs ▸ Account imports it from the declared profile (settings › termux\|nix-on-droid › agent-auth, derived from ai › tokens by the cockpit's agent_auth map); AgentAuth.java writes it on every start to $HOME/<ab_cloud-terminal-store/store.json::agent_auth.env_file> (0600), which login-init.sh sources into every session. |
 | `cloud_wake_lock` | prefs | config (keys: battery_exemption_asked→device) | yes | #787 the terminal session wake lock: 'wanted' is the notification toggle (ON until the user turns it off; default build.json::wake_lock.default_on); battery_exemption_asked records that the one-time battery-optimization prompt was shown, so a new phone asks again. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1195,6 +1226,7 @@ Module `ac_cloud-notes`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-d
 | `datastore:auth-sessions` | datastore | secret | GAP | Cloud Notes per-server auth session cookies/tokens. |
 | `datastore:cloud-notes` | datastore | device | no | Cloud Notes generic key/value DataStore written by the web layer via a plugin (caches/state, no Kotlin-defined settings); not a curated config. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1222,6 +1254,7 @@ Module `ac_cloud-office`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 |---|---|---|---|---|
 | `cloud_image_recognition` | prefs | config | yes | Chosen image recognition route (on-device vs openrouter) and decision model. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1241,7 +1274,7 @@ Coverage: 5 covered, 0 gaps.
 
 ## cloud-search — `com.diegonmarcos.cloudsearch`
 
-Module `ac_cloud-search`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-search`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1249,6 +1282,7 @@ Module `ac_cloud-search`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-
 | `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `cloud_search` | prefs | config (keys: agents_seen_*→device, agents_spent_*→device, q:*→device, things_location_asked→device) | yes | Cloud Search settings: dark theme, home city, chosen AI model, web-search toggle, and the saved listings (`saved`, a small JSON list kept only on this phone). #903 Things: the search radius (things_radius_km), the typed fallback city (things_city) and whether to use the coarse location (things_use_location) are configuration; whether the location permission was already asked (things_location_asked) is device state, as the permission itself is per phone. The last query per vertical (q:<vertical>) is device state. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1283,6 +1317,7 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 | `apps_mesh` | prefs | config | yes | #793 the Apps Mesh page's chosen chip filter (`filter`): which members the page shows first. A view preference, so it moves with the phone; the probe cache itself is a cacheDir file and never migrates. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `install_sessions_prompted` | prefs | device | no | #1675 Install sessions the updater already raised a confirm prompt for, so one session asks once: per-device session state, never a setting. |
@@ -1332,6 +1367,7 @@ Module `ac_cloud-termux`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 | `agent-auth` | prefs | secret | yes | #790 the agent CLIs' credentials in each terminal, keyed by the environment variable each CLI reads (CLAUDE_CODE_OAUTH_TOKEN for claude, OPENROUTER_API_KEY for goose and hermes). Configs ▸ Account imports it from the declared profile (settings › termux\|nix-on-droid › agent-auth, derived from ai › tokens by the cockpit's agent_auth map); AgentAuth.java writes it on every start to $HOME/<ab_cloud-terminal-store/store.json::agent_auth.env_file> (0600), which login-init.sh sources into every session. |
 | `cloud_wake_lock` | prefs | config (keys: battery_exemption_asked→device) | yes | #787 the terminal session wake lock: 'wanted' is the notification toggle (ON until the user turns it off; default build.json::wake_lock.default_on); battery_exemption_asked records that the one-time battery-optimization prompt was shown, so a new phone asks again. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1370,6 +1406,7 @@ Module `ac_cloud-vault`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools,
 | `<default>` | prefs | config (keys: accountBiometricIntegrityValid→device, addActionCount→device, addSitePromptShown→device, app_shell_number_since_boot→device, bg_startup_tracing→device, biometricIntegritySource→device, browserAutofillDialogReshowTime→device, copyActionCount→device, crashLoggingEnabled→device, createActionCount→device, current_session→device, handwrite_active_language→device, handwrite_autocommit_ms→device, handwrite_languages→device, handwrite_stroke_width_dp→device, hasShownAccessibilityDisclaimer→device, hasUserLoggedInOrCreatedAccount→device, isVaultRegisteredForExport→device, last_keyboard_panel→device, last_notification_id→device, resumeScreen→device, shouldShowAddLoginCoachMark→device, shouldShowGeneratorCoachMark→device, showAutofillSettingBadge→device, showBrowserAutofillSettingBadge→device, showImportLoginsSettingBadge→device, showUnlockSettingBadge→device, terminal_session_number_since_boot→device, translate_recent_pairs→device, vaultLastSyncTime→device) | yes | The app's default SharedPreferences (<package>_preferences): HeliBoard keyboard settings (libs:keyboard; last_keyboard_panel is the panel Cloud Keyboard reopens: letters, numpad, clipboard, autocomplete or handwrite; handwrite_* are the HandWrite languages, auto-commit delay and stroke width; all device), translate settings (libs:translate), the vault's bwPreferencesStorage keys, and the terminals' settings (Termux TermuxAppSharedPreferences: fontsize, log_level, extra keys, soft keyboard, screen-on; the session cursor, notification id and per-boot counters are device). Element X keeps only DI scaffolding here (device). bg_startup_tracing is the WebView's own startup-tracing flag, written into any app that hosts a WebView (device). Device for apps whose current code reads none of it: mail (the FairEmail-era settings the Sterna clone, 8b7ca107d, never reads — migrating them would only plant dead keys), notes (an intro-shown marker only) and office (the asset-extraction commit marker only). |
 | `AppCenter` | prefs | device | no | Legacy Xamarin AppCenter prefs read once by LegacyAppCenterMigrator to carry old Bitwarden settings forward; migration source only. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1404,6 +1441,7 @@ Module `ac_cloud-wallet`; libs: lib-analytics, lib-bottomnav, lib-core, lib-cras
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `install_sessions_prompted` | prefs | device | no | #1675 Install sessions the updater already raised a confirm prompt for, so one session asks once: per-device session state, never a setting. |
@@ -1436,6 +1474,7 @@ Module `ac_cloud-shopping`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtoo
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1458,7 +1497,9 @@ Module `ac_cloud-wiki`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, 
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
+| `chronos_repo` | prefs | device | no | #1830 Cloud Wiki's runtime clone of lib-chronos: the refresh mode the owner chose (manual, on open, every 6 h, daily), when the clone was last refreshed and the commit it holds. The clone itself lives in the app's files dir and is re-cloned on a new phone. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1486,6 +1527,7 @@ Module `ac_cloud-superintel`; libs: lib-ai, lib-ai-usage, lib-bottomnav, lib-cor
 | `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `ai_sessions` | file | config | GAP | libs:ai's chat history file (text and attachment names, never a token), carried whole so a new phone keeps the conversations. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1513,6 +1555,7 @@ Module `ac_cloud-kg-store`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, li
 | `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `ai_sessions` | file | config | GAP | libs:ai's chat history file (text and attachment names, never a token), carried whole so a new phone keeps the conversations. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `git-sync-credentials` | encrypted | secret | yes | Encrypted git credentials (tokens/passwords/keys). |
@@ -1547,6 +1590,7 @@ Module `ac_cloud-tools-small-llms`; libs: lib-ai, lib-bottomnav, lib-core, lib-c
 | `cloud_tools_small_llms` | prefs | content (keys: backend→config, jev_checked_at→device, jev_listed→device, jev_price_in→device, pinned_model→config, router→config, workers→config) | no | Cloud Tools Small LLMs: the cost ledger (ledger: every priced call, for the day and month totals), the router choice (router), the AI chat's backend (backend: auto, openrouter or local) and pinned model (pinned_model), the local runtime usage (local_usage: calls as tokens and time, no cost; the user's content), the per-task worker overrides (workers) and the last read of Jev's availability on OpenRouter (jev_listed, jev_price_in, jev_checked_at). The ledger is the user's content (the AI tab's chat lives in filesDir/ai-sessions.json, an item of this app); router and workers are configuration; the Jev read is a cache of this phone's last network check. |
 | `cloud_tools_small_llms_secrets` | encrypted | secret | yes | Cloud Tools Small LLMs' OpenRouter token (openrouter_token), pasted in Settings: EncryptedSharedPreferences under a Keystore AES-256-GCM master key, shown masked, never logged. The fleet Account's key is never read (decisions-use guard D5). A credential: migrates through the vault. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1580,6 +1624,7 @@ Module `ad_CG-Omniverse`; libs: lib-bottomnav, lib-cgc-3d, lib-core, lib-crash, 
 | `avatar` | prefs | config | yes | CG-Omniverse's Avatar editor (#1373): the chosen option of each category of data/avatar.json (outfit colour, skin tone, face features, glasses, animation, ...), one JSON object under `config`; an id the declaration no longer has falls back to the default. The user's own avatar configuration, so it migrates; also the one file the app's backup rules take. |
 | `cg_omniverse_ai_keys` | encrypted | secret | yes | CG-Omniverse's AI key for the Avatar editor's "describe your avatar" (#1373): the user's own OpenRouter API key under the slot data/avatar.json::ai.key_slot, pasted in the editor's AI panel (FinTerm's Config > Sources pattern). EncryptedSharedPreferences (key names AES-256-SIV, values AES-256-GCM) under an Android Keystore AES-256-GCM master key, opened through libs:crash SafeEncryptedPrefs; never shown again, never logged, never in git; sent only in the Authorization header of the request to the declared endpoint. A credential: migrates through the vault. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
@@ -1606,6 +1651,7 @@ Module `ad_Capital-Stack-FinTerminal`; libs: lib-bottomnav, lib-core, lib-crash,
 |---|---|---|---|---|
 | `capital_finterm_source_keys` | encrypted | secret | yes | Capital-Stack-FinTerminal's own data-source API keys (Config > Sources, #1335): one entry per source id of data/sources.json (Polygon, Alpha Vantage, Databento, Fincept Data API, ...), pasted by the user. EncryptedSharedPreferences (key names AES-256-SIV, values AES-256-GCM) under an Android Keystore AES-256-GCM master key, opened through libs:crash SafeEncryptedPrefs; never shown again, never logged, never in git. A credential: migrates through the vault. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `holdings` | prefs | content | no | The personal holdings list of the Lnktree apps (#1335, the `holdings` kind of Capital-Stack-FinTerminal's MY-PM page; the same renderer ships in all four): ticker, quantity and unit cost typed by the user, one JSON array under `rows`. Nothing is fetched or priced; it is the user's own data, so it is content. |
@@ -1631,6 +1677,7 @@ Module `ad_Hardtech-CAD`; libs: lib-bottomnav, lib-cad-3dm, lib-cad-brep, lib-ca
 |---|---|---|---|---|
 | `cad_viewer` | prefs | device | no | #1664 Hardtech-CAD's MCAD viewer: the presentation the viewer had to fall back to on this phone (webgl \| 2d \| host) and the build it was measured on, so the next model opens straight in it; a new build retries the GPU path. A measurement of this device's WebView: never migrates. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `holdings` | prefs | content | no | The personal holdings list of the Lnktree apps (#1335, the `holdings` kind of Capital-Stack-FinTerminal's MY-PM page; the same renderer ships in all four): ticker, quantity and unit cost typed by the user, one JSON array under `rows`. Nothing is fetched or priced; it is the user's own data, so it is content. |
@@ -1657,6 +1704,7 @@ Module `ad_Hardtech-BioMed`; libs: lib-bottomnav, lib-cad-core, lib-cad-mesh, li
 |---|---|---|---|---|
 | `biomed_viewer` | prefs | device | no | #1777 Hardtech-BioMed's 3D scenes: the presentation the viewer had to fall back to on this phone (webgl \| 2d \| host) and the build it was measured on, so the next model opens straight in it; a new build retries the GPU path. A measurement of this device's WebView: never migrates. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `dev_verifier` | prefs | device | no | libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `holdings` | prefs | content | no | The personal holdings list of the Lnktree apps (#1335, the `holdings` kind of Capital-Stack-FinTerminal's MY-PM page; the same renderer ships in all four): ticker, quantity and unit cost typed by the user, one JSON array under `rows`. Nothing is fetched or priced; it is the user's own data, so it is content. |

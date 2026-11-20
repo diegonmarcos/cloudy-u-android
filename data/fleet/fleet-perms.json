@@ -283,6 +283,7 @@
    "needs": [
     "notifications",
     "contacts_read",
+    "camera",
     "install_unknown"
    ],
    "helpers": []

@@ -370,6 +370,7 @@
    "needs": [
     "notifications",
     "contacts_read",
+    "camera",
     "install_unknown"
    ],
    "first_run": "libs:perms",

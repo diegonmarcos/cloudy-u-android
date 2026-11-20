@@ -13,11 +13,11 @@
     },
     "aa_cloud-superapp": {
       "first_test": "Has 91 shell testers. tests.unit.enabled=false, so its step named 'JVM unit tests (fatal on failure)' executes nothing and goes green \u2014 its own task, not this one.",
-      "shell_testers": 198,
+      "shell_testers": 199,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 296,
+      "unit_test_sources": 299,
       "workflow": "ship-cloud-superapp.yml"
     },
     "ab_cloud-libs-shared/keyboard-engines": {
@@ -242,7 +242,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
-      "unit_test_sources": 4,
+      "unit_test_sources": 7,
       "workflow": "ship-cloud-keyboard.yml"
     },
     "ac_cloud-kg-store": {
@@ -260,7 +260,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 872,
+      "unit_test_sources": 877,
       "workflow": "ship-cloud-mail.yml"
     },
     "ac_cloud-matrix": {
@@ -458,7 +458,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 19,
+      "unit_test_sources": 20,
       "workflow": "ship-cloud-tasks.yml"
     },
     "ac_cloud-termux": {
@@ -530,7 +530,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 4,
+      "unit_test_sources": 5,
       "workflow": "ship-cloud-wiki.yml"
     },
     "ad_CG-Omniverse": {
@@ -548,7 +548,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 43,
+      "unit_test_sources": 48,
       "workflow": "ship-capital-stack-finterminal.yml"
     },
     "ad_Hardtech-BioMed": {
