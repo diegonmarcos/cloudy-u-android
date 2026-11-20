@@ -1141,8 +1141,9 @@ class MailRepository(
     ): MailboxSync? {
         val core = mailCore ?: return null
         if (core.unavailableReason() != null) return null
+        // Outside the try: a signed-out account's refusal must reach the caller, never become "fall back to Kotlin".
+        checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
         return try {
-            checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
             core.sync(client, session, accountId, auth, localAccountId, budgetMs)
             val p = core.projectMailbox(
                 localAccountId, mailboxId, emailDao,

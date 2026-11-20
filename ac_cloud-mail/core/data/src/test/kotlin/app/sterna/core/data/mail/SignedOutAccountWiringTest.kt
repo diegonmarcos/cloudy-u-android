@@ -390,15 +390,18 @@ class SignedOutAccountWiringTest {
         val body = DaoQuerySource.mailSource("MailRepository").lines()
         val sites = body.indices.filter { body[it].trim().startsWith("$guard(") }
         assertEquals(
-            "MailRepository no longer carries seventeen guard call sites — four entries and thirteen " +
+            "MailRepository no longer carries nineteen guard call sites — six entries and thirteen " +
                 "writes (the tenth is the IMAP backlog fetch, syncImapBacklog; the eleventh the JMAP " +
                 "Inbox backlog fetch in syncMailbox, #1527; the twelfth the cache-first catch-up " +
                 "chunk write in catchUpFolder, #1752, guarded directly above its upsert; the thirteenth the background " +
-                "full sync's older-header page write in the fullSyncPort backfill, #1768, guarded directly above its upsert). " +
+                "full sync's older-header page write in the fullSyncPort backfill, #1768, guarded directly above its upsert; " +
+                "the fifth and sixth entries are the Rust mail core's, #1837: coreInbox before its pass and syncMailCore " +
+                "before the background pass, each OUTSIDE the try that falls back to the Kotlin sync; the core's projection " +
+                "writes are guarded through its beforeWrite hook). " +
                 "If a path was added or " +
                 "removed, say so here:\n" +
                 sites.joinToString("\n") { body[it].trim() },
-            17, sites.size,
+            19, sites.size,
         )
         sites.forEach { site ->
             val open = openBlocksAt(body, site).filter { "try" in it || "runCatching" in it }

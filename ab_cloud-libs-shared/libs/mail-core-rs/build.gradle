@@ -28,6 +28,13 @@ def hasCargo = {
     dirs.any { it && new File(it, 'cargo').canExecute() }
 }.call()
 
+// The rust standard library of an Android target is installed (rustup target add). A runner that has cargo but not the target
+// (every workflow other than the ship, which installs them) builds the app without the core instead of failing.
+def hasRustTarget = { String triple ->
+    def home = System.getenv('RUSTUP_HOME') ?: (System.getProperty('user.home') + '/.rustup')
+    new File(home, 'toolchains').listFiles()?.any { new File(it, "lib/rustlib/${triple}").isDirectory() } ?: false
+}
+
 def ndkHome = {
     def env = System.getenv('ANDROID_NDK_HOME') ?: System.getenv('ANDROID_NDK_ROOT')
     if (env && new File(env).isDirectory()) return env
@@ -67,6 +74,7 @@ abis.findAll { abi, spec -> abi in wantedAbis }.each { abi, spec ->
     def triple = spec[0]
     def clang = spec[1]
     def taskName = 'cargoBuild' + abi.replace('-', '_')
+    def targetOk = hasRustTarget(triple)
     def t = tasks.register(taskName, Exec) {
         group = 'rust'
         description = "cargo build --release --target ${triple} -> jniLibs/${abi}/libmail_core.so"
@@ -74,8 +82,8 @@ abis.findAll { abi, spec -> abi in wantedAbis }.each { abi, spec ->
         inputs.files(fileTree(projectDir) { include 'Cargo.toml', 'Cargo.lock', 'src/**/*.rs' })
         outputs.dir(new File(jniOut, abi))
         onlyIf {
-            if (!hasCargo || ndkHome == null) {
-                def why = !hasCargo ? 'cargo is not installed' : 'no Android NDK (ANDROID_NDK_HOME)'
+            if (!hasCargo || ndkHome == null || !targetOk) {
+                def why = !hasCargo ? 'cargo is not installed' : (ndkHome == null ? 'no Android NDK (ANDROID_NDK_HOME)' : "the rust target ${triple} is not installed")
                 if (required) throw new GradleException("MAIL_CORE_RS_REQUIRED=1 but ${why}: libmail_core.so cannot be built")
                 logger.warn("mail-core-rs: ${why}; ${abi} ships no native core (Cloud Mail keeps its Kotlin JMAP sync)")
                 return false
