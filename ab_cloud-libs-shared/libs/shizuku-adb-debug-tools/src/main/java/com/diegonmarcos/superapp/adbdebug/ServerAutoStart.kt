@@ -90,9 +90,18 @@ object LocalServerAutoStart {
 
     fun inFlight(): Boolean = core.inFlight()
 
+    /**
+     * #1834 Pure: may this trigger run the chain? Only a tap ("button") is explicit. Every implicit trigger (app-start, boot, command,
+     * wireless-debugging-on) needs the keep-alive switch ([ChannelAutoArm]) ON: with it OFF the chain would end in the pairing
+     * notification, so nothing implicit may start it (the user asked for neither the shell nor its keep-alive).
+     */
+    fun mayRun(reason: String, keepAliveOn: Boolean): Boolean = reason == "button" || keepAliveOn
+
+    private fun gated(ctx: Context, reason: String) = !mayRun(reason, runCatching { ChannelAutoArm.enabled(ctx) }.getOrDefault(false))
+
     /** Fire and forget; never blocks the caller (safe on the main thread). [reason] "command" honours the cooldown. */
     fun request(ctx: Context, reason: String) {
-        if (!applies(ctx) || core.inFlight()) return
+        if (!applies(ctx) || core.inFlight() || gated(ctx, reason)) return
         if (reason == "command" && System.currentTimeMillis() < coolUntil) return
         val app = ctx.applicationContext
         runCatching { pool.execute { runCatching { runBlocking(app, reason) } } }
@@ -102,6 +111,7 @@ object LocalServerAutoStart {
     fun runBlocking(ctx: Context, reason: String): ConnectOutcome? {
         val app = ctx.applicationContext
         if (!applies(app)) return null
+        if (gated(app, reason)) { ChannelLog.shared.add("server", "auto-start ($reason) not run: keep-alive is off (no pairing prompt unless tapped)"); return null }
         if (Looper.getMainLooper() != null && Looper.myLooper() == Looper.getMainLooper()) {
             ChannelLog.shared.add("server", "auto-start ($reason) refused on the main thread"); return null
         }
