@@ -950,6 +950,12 @@ class MailRepository(
     private val syncStateStore: SyncStateStore? = null,
     /** Where the offline-window sync keeps downloaded attachments (null in tests: none kept). */
     private val offlineAttachmentsDir: java.io.File? = null,
+    /**
+     * #1837 phase 1: the Rust mail core (libs:mail-core-rs), the sync engine and store of record of the JMAP accounts, whose
+     * store the Inbox list rows are projected from ([coreInbox]). Null in tests, and when it is not loaded the JMAP accounts
+     * keep the Kotlin sync below. IMAP accounts keep the old path in phase 1.
+     */
+    private val mailCore: RustMailEngine? = null,
 ) {
     /**
      * Schedules the WorkManager job that delivers an outbox item. Set by the app layer at startup: the data
@@ -1088,6 +1094,8 @@ class MailRepository(
     ): MailboxSync {
         val isInbox = client.inboxGuardOf(accountId)?.inboxId == mailboxId
         if (!isInbox) return syncMailboxWindow(session, accountId, auth, mailboxId, sizing, localAccountId, inboxServerIds = emptySet())
+        // #1837: the Inbox comes from the Rust core's store when the core runs; the Kotlin backlog below is its fallback.
+        coreInbox(session, accountId, auth, mailboxId, localAccountId, RustMailEngine.INTERACTIVE_BUDGET_MS)?.let { return it }
         // Null = the server's list could not be read: the window sync then deletes nothing this pass.
         val serverIds: List<String>? = if (!inboxSnapshots.claim(localAccountId, mailboxId)) null else try {
             walkAllIds(pageSize = session.getBatchSize().coerceAtLeast(JMAP_BACKLOG_CHUNK)) { position, limit ->
@@ -1115,6 +1123,67 @@ class MailRepository(
             "inbox backlog $localAccountId/$mailboxId: server ${serverIds.size}, cached ${cached.size}, +${fetched.size}",
         )
         return window.copy(fetchedIds = window.fetchedIds + fetched.map { it.id })
+    }
+
+    /**
+     * #1837 phase 1: one pass of the Rust mail core for a JMAP account (its whole mirror: every mailbox, Email/changes,
+     * gap detection, body prefetch, bounded by [budgetMs]), then the Inbox's list rows brought to the core's store
+     * ([RustMailEngine.projectMailbox]). Answers what landed and what left, like the Kotlin paths. Null = the core is not
+     * loaded or this pass failed (logged): the caller runs the Kotlin sync for this pass, so a failure loses nothing.
+     */
+    private suspend fun coreInbox(
+        session: JmapSession,
+        accountId: String,
+        auth: JmapAuth,
+        mailboxId: String,
+        localAccountId: String,
+        budgetMs: Long?,
+    ): MailboxSync? {
+        val core = mailCore ?: return null
+        if (core.unavailableReason() != null) return null
+        return try {
+            checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
+            core.sync(client, session, accountId, auth, localAccountId, budgetMs)
+            val p = core.projectMailbox(
+                localAccountId, mailboxId, emailDao,
+                isProtected = { isRecentlyMutated(localAccountId, it) },
+                beforeWrite = { checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id }) },
+            )
+            if (p.upserted.isNotEmpty()) onSyncChunkLanded(localAccountId, mailboxId)
+            MailboxSync(fetchedIds = p.upserted, departedIds = p.removed)
+        } catch (c: CancellationException) {
+            throw c
+        } catch (t: Throwable) {
+            android.util.Log.w("MailCore", "inbox $localAccountId/$mailboxId: core pass failed, Kotlin sync this pass: ${t.message}")
+            null
+        }
+    }
+
+    /**
+     * #1837 the background pass of the Rust mail core (MailCoreSyncWorker: periodic and on app open) for one account: the
+     * core syncs the whole account within [budgetMs] and the Inbox's list rows are brought to its store. Accounts that left
+     * the app leave the store first. Answers the pass summary, or null when nothing ran: an IMAP account (phase 1 keeps the
+     * old path for IMAP), no core in this process, or no Inbox.
+     */
+    suspend fun syncMailCore(credentials: AccountCredentials, budgetMs: Long = RustMailEngine.WORKER_BUDGET_MS): String? {
+        if (credentials.protocol == MailProtocol.IMAP) return null
+        val core = mailCore ?: return null
+        if (core.unavailableReason() != null) return null
+        val known = accountStore.accounts().map { it.id }.toSet()
+        core.storedAccounts().filter { it !in known }.forEach { core.dropAccount(it) }
+        checkAccountStillConfigured(credentials.id, known)
+        val auth = jmapAuth(credentials)
+        val session = client.fetchSession(Jmap.sessionUrlFor(credentials.server), auth)
+        val accountId = jmapAccountIdFor(credentials, session)
+        val inbox = client.getMailboxes(session, accountId, auth).firstOrNull { it.role == "inbox" } ?: return null
+        val report = core.sync(client, session, accountId, auth, credentials.id, budgetMs)
+        val p = core.projectMailbox(
+            credentials.id, inbox.id, emailDao,
+            isProtected = { isRecentlyMutated(credentials.id, it) },
+            beforeWrite = { checkAccountStillConfigured(credentials.id, accountStore.accounts().map { it.id }) },
+        )
+        if (p.upserted.isNotEmpty()) onSyncChunkLanded(credentials.id, inbox.id)
+        return "${report.summary} inbox +${p.upserted.size} -${p.removed.size}"
     }
 
     /** Both paths report what they fetched: an id fetched and not reported is deleted by the

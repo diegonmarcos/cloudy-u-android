@@ -2011,6 +2011,14 @@
         "ac_cloud-mail"
       ]
     },
+    "mail_core_projection": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1837 the Rust mail core's projection cursors: per (account, mailbox) the core store's seq and last id the app's Inbox list rows were brought to. Device state: a new phone re-syncs the core store (filesDir/mail-core/mail.db) from the server and re-feeds the list from the start.",
+      "used_by": [
+        "ac_cloud-mail"
+      ]
+    },
     "mail_notifications": {
       "kind": "prefs",
       "class": "config",
@@ -4008,6 +4016,7 @@
         "lib-fleetconfigs-agents",
         "lib-fleetconfigs-logcat",
         "lib-fleetconfigs-xray",
+        "lib-mail-core-rs",
         "lib-ml-l-image",
         "lib-perms",
         "lib-text-tools",

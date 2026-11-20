@@ -2510,6 +2510,38 @@ class JmapClient internal constructor(
         }
     }
 
+    /**
+     * #1837 the Rust mail core's transport: ONE request body, as the core built it, POSTed to [apiUrl] through THIS client
+     * (the fleet route, the bearer, the gateway cookie, the phone's trust store) with [postWithRetry]'s 429 / limit retry, and
+     * the response body answered. Blocking: the core calls it synchronously from its own sync thread (never the main thread).
+     */
+    fun postRawBlocking(apiUrl: String, auth: JmapAuth, body: String): String {
+        var attempt = 0
+        while (true) {
+            val request = Request.Builder()
+                .url(apiUrl)
+                .header("Authorization", auth.authorizationHeader())
+                .header("Accept", "application/json")
+                .post(body.toRequestBody(JSON_MEDIA_TYPE))
+                .build()
+            val (code, message, answer) = httpClient.newCall(request).execute().use { r ->
+                Triple(r.code, r.message, r.body?.string().orEmpty())
+            }
+            if (code in 200..299) return answer
+            val transient = code == 429 || (code == 400 && answer.contains(JMAP_ERROR_LIMIT))
+            if (transient && attempt < LIMIT_RETRY_MAX) {
+                attempt++
+                Thread.sleep(LIMIT_RETRY_BASE_MS * attempt)
+                continue
+            }
+            // Status only, never a slice of the response (see [postWithRetry]).
+            throw JmapException("JMAP request failed: HTTP $code $message", httpCode = code)
+        }
+    }
+
+    /** #1837 the property set every cached list row is fetched with ([EMAIL_LIST_PROPERTIES]), for the Rust core's sync. */
+    fun emailListProperties(): List<String> = EMAIL_LIST_PROPERTIES
+
     /** Like [methodResponseArgs] but returns null for an error/missing response instead of throwing. */
     private fun methodResponseArgsOrNull(body: String, expectedMethod: String): JsonObject? {
         val root = runCatching { json.parseToJsonElement(body).jsonObject }.getOrNull() ?: return null

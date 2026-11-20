@@ -73,6 +73,8 @@ object DataFactory {
                 settings = settings,
                 syncStateStore = SyncStateStore(appContext),
                 offlineAttachmentsDir = java.io.File(appContext.filesDir, "offline-attachments"),
+                // #1837 the Rust mail core (JMAP accounts; IMAP keeps the old path in phase 1).
+                mailCore = app.sterna.core.data.mail.RustMailEngine.create(appContext),
             ),
             storageRepository = StorageRepository(
                 appContext, database.emailDao(), database.emailFtsDao(), database.emailBodyDao(),

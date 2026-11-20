@@ -1,0 +1,104 @@
+// libs:mail-core-rs (#1837, phase 1) — Cloud Mail's native core: the local mail store (bundled SQLite + FTS5), the JMAP sync
+// engine (every mailbox and every message, Mailbox/changes + Email/changes, gap detection, body prefetch) and the list queries,
+// in Rust (this directory's Cargo crate) behind a thin JNI layer. Kotlin (MailCore) stays the API surface; the Rust panics are
+// caught at the JNI boundary and the app keeps its previous engine for that pass.
+//
+// BUILD, the pattern of libs:drive-core-rs (#1729): one `cargo build --release --target <triple>` per ABI, the NDK clang as the
+// linker AND as the C compiler (rusqlite's bundled SQLite is C), the .so copied to build/rustJniLibs/<abi>/, a jniLibs source dir
+// of this module. MAIL_CORE_ABIS (comma list, default all three) picks which ABIs are built: the ship builds the APK's ABI and
+// the emulator's. The Rust tests (cargo test, against a fake JMAP server) run in the ship workflow before the APK build.
+//
+// Toolchain: cargo + the Android rust targets + an NDK (ANDROID_NDK_HOME, or the newest under ANDROID_HOME/ndk). With no cargo
+// the build WARNS and ships no .so (Cloud Mail then keeps its Kotlin JMAP sync and logs why); MAIL_CORE_RS_REQUIRED=1 (CI) turns
+// that into a build failure, so a shipped APK without the core cannot go green.
+apply plugin: 'com.android.library'
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+def required = System.getenv('MAIL_CORE_RS_REQUIRED') == '1'
+def jniOut = layout.buildDirectory.dir('rustJniLibs').get().asFile
+def targetDir = layout.buildDirectory.dir('cargo-target').get().asFile
+def minApi = 26
+
+// Found by looking at PATH (and rustup's default bin dir), not by running `cargo --version`: an external process at configuration time is
+// refused by Gradle's configuration cache.
+def hasCargo = {
+    def dirs = (System.getenv('PATH') ?: '').split(File.pathSeparator).toList() + [System.getProperty('user.home') + '/.cargo/bin']
+    dirs.any { it && new File(it, 'cargo').canExecute() }
+}.call()
+
+def ndkHome = {
+    def env = System.getenv('ANDROID_NDK_HOME') ?: System.getenv('ANDROID_NDK_ROOT')
+    if (env && new File(env).isDirectory()) return env
+    def sdk = System.getenv('ANDROID_HOME') ?: System.getenv('ANDROID_SDK_ROOT')
+    def ndks = sdk ? new File(sdk, 'ndk').listFiles()?.findAll { it.isDirectory() }?.sort { it.name } : null
+    return ndks ? ndks.last().absolutePath : null
+}.call()
+
+android {
+    namespace 'com.diegonmarcos.cloudlib.mailcore'
+    compileSdk 36
+    defaultConfig {
+        minSdk 26
+        // R8 must keep the JNI surface and the transport method the Rust side calls by name.
+        consumerProguardFiles 'consumer-rules.pro'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    // Cloud Mail's toolchain is Kotlin 2.1 (kotlinOptions), the consumer of this module.
+    kotlinOptions { jvmTarget = '17' }
+    sourceSets.main.jniLibs.srcDir(jniOut)
+}
+
+
+// abi -> [rust triple, NDK clang prefix]
+def abis = [
+    'arm64-v8a'  : ['aarch64-linux-android', 'aarch64-linux-android'],
+    'armeabi-v7a': ['armv7-linux-androideabi', 'armv7a-linux-androideabi'],
+    'x86_64'     : ['x86_64-linux-android', 'x86_64-linux-android'],
+]
+
+def wantedAbis = (System.getenv('MAIL_CORE_ABIS') ?: abis.keySet().join(',')).split(',').collect { it.trim() }.findAll { it }
+def rustTasks = []
+abis.findAll { abi, spec -> abi in wantedAbis }.each { abi, spec ->
+    def triple = spec[0]
+    def clang = spec[1]
+    def taskName = 'cargoBuild' + abi.replace('-', '_')
+    def t = tasks.register(taskName, Exec) {
+        group = 'rust'
+        description = "cargo build --release --target ${triple} -> jniLibs/${abi}/libmail_core.so"
+        workingDir projectDir
+        inputs.files(fileTree(projectDir) { include 'Cargo.toml', 'Cargo.lock', 'src/**/*.rs' })
+        outputs.dir(new File(jniOut, abi))
+        onlyIf {
+            if (!hasCargo || ndkHome == null) {
+                def why = !hasCargo ? 'cargo is not installed' : 'no Android NDK (ANDROID_NDK_HOME)'
+                if (required) throw new GradleException("MAIL_CORE_RS_REQUIRED=1 but ${why}: libmail_core.so cannot be built")
+                logger.warn("mail-core-rs: ${why}; ${abi} ships no native core (Cloud Mail keeps its Kotlin JMAP sync)")
+                return false
+            }
+            return true
+        }
+        def bin = "${ndkHome}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+        def envTriple = triple.toUpperCase().replace('-', '_')
+        environment "CARGO_TARGET_DIR", targetDir.absolutePath
+        environment "CARGO_TARGET_${envTriple}_LINKER", "${bin}/${clang}${minApi}-clang"
+        environment "CC_${triple.replace('-', '_')}", "${bin}/${clang}${minApi}-clang"
+        environment "AR_${triple.replace('-', '_')}", "${bin}/llvm-ar"
+        // 16 KB page size (Android 15+): LOAD segments aligned to 16 KB whatever the NDK default is (page-size guard).
+        environment "CARGO_TARGET_${envTriple}_RUSTFLAGS", '-C link-arg=-Wl,-z,max-page-size=16384'
+        commandLine 'cargo', 'build', '--release', '--target', triple
+        def builtSo = new File(targetDir, "${triple}/release/libmail_core.so")
+        def abiDir = new File(jniOut, abi)
+        doLast {
+            abiDir.mkdirs()
+            java.nio.file.Files.copy(builtSo.toPath(), new File(abiDir, 'libmail_core.so').toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
+    rustTasks << t
+}
+
+tasks.matching { it.name ==~ /merge.*JniLibFolders/ }.configureEach { dependsOn(rustTasks) }

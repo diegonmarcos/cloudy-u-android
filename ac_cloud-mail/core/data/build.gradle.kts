@@ -26,6 +26,8 @@ android {
 dependencies {
     api(project(":core:jmap"))
     api(project(":core:imap"))
+    // #1837 the Rust mail core (libmail_core.so + its Kotlin facade): the JMAP sync engine and store of record.
+    implementation(project(":libs:mail-core-rs"))
     implementation(libs.kotlinx.coroutines.core)
 
     implementation(libs.androidx.room.runtime)

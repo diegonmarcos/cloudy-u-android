@@ -283,6 +283,21 @@
       "type": "library",
       "_doc": "#825 the engine wire (DataBackendClient). Assigned binds the cal engine (the fleet's task store) through it.",
       "dir": "../ab_cloud-libs-shared/libs/databackend"
+    },
+    "libs:mail-core-rs": {
+      "type": "library",
+      "_doc": "#1837 Cloud Mail's native core, phase 1: the local mail store (bundled SQLite + FTS5), the JMAP sync engine (every mailbox and every message, Mailbox/changes + Email/changes, gap detection, deletes and moves, body prefetch) and the list queries, in Rust (cargo + the NDK clang, JNI, jniLibs per ABI) behind the Kotlin MailCore facade. core:data links it (RustMailEngine): the JMAP Inbox's list rows are projected from its store; IMAP accounts keep the old path in phase 1. Shared BY REFERENCE, like libs:drive-core-rs.",
+      "dir": "../ab_cloud-libs-shared/libs/mail-core-rs"
+    }
+  },
+  "native_core": {
+    "_doc": "#1837 the Rust mail core (libs:mail-core-rs, libmail_core.so). The JMAP accounts sync through it and their Inbox list rows are projected from its store; when it is not loaded (no .so for the ABI) or a pass fails, that pass runs the previous Kotlin JMAP sync and logs why (tag MailCore). IMAP accounts keep the old path in phase 1. Phase 2 moves the reader (MIME / charset via mail-parser, Gmail-equal HTML, images on by default) into the core.",
+    "crates": ["rusqlite (bundled, FTS5)", "serde", "serde_json", "jni"],
+    "toolchain": {
+      "_doc": "Read by the ship workflow (never restated there), the shape of ac_cloud-drive/build.json::native_core.toolchain: cargo builds the crate for each Android ABI with the NDK clang as linker and C compiler; MAIL_CORE_ABIS picks the ABIs built.",
+      "ndk": "27.2.12479018",
+      "rust": "stable",
+      "rust_targets": ["aarch64-linux-android", "x86_64-linux-android"]
     }
   },
   "android": {

@@ -311,6 +311,8 @@ class SternaApplication : Application() {
         Updater.start(this)
         // Offline window sync (unmetered + charging); idempotent.
         app.sterna.mail.OfflineSyncWorker.ensureScheduled(this, hasPush = app.sterna.push.PushService.isRunning)
+        // #1837 the Rust mail core's background sync of every JMAP account (periodic; MainActivity.onStart runs it on open).
+        app.sterna.mail.MailCoreSyncWorker.ensureScheduled(this)
         // Start the WebView provider once, when the main thread is idle, so the first mail opens without it.
         app.sterna.mail.WebViewWarmUp.once(this)
     }

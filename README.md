@@ -315,6 +315,7 @@ cloudy-u-android/
 │   │   ├── launcher-zoomies/
 │   │   ├── light/
 │   │   ├── mail/
+│   │   ├── mail-core-rs/
 │   │   ├── maps/
 │   │   ├── media/
 │   │   ├── ml-l-image/

@@ -256,7 +256,7 @@
     },
     "ac_cloud-mail": {
       "first_test": "Has 13 shell testers and 774 JVM unit test classes, both executed. The only application in the fleet whose ship run proves anything beyond compilation.",
-      "shell_testers": 28,
+      "shell_testers": 29,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -458,7 +458,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 19,
+      "unit_test_sources": 20,
       "workflow": "ship-cloud-tasks.yml"
     },
     "ac_cloud-termux": {

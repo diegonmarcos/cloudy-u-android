@@ -1,0 +1,34 @@
+[package]
+name = "mail-core-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Cloud Mail's native core (#1837, phase 1): the local mail store (SQLite + FTS5), the JMAP sync engine (whole mailboxes, Email/changes + Mailbox/changes, gap detection, body prefetch) and the list queries, behind a thin JNI layer."
+publish = false
+
+[lib]
+# libmail_core.so: System.loadLibrary("mail_core") from libs:mail-core-rs' NativeBridge.
+name = "mail_core"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# The store: SQLite compiled in (`bundled`, so every ABI gets the same SQLite with FTS5 and no system library is assumed).
+rusqlite = { version = "0.31", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# The JNI layer (src/jni_api.rs).
+jni = "0.21"
+
+# The bundled SQLite is C: optimise it in test builds too, so the CI performance budgets measure real SQLite, not -O0.
+[profile.dev.package.libsqlite3-sys]
+opt-level = 3
+
+[profile.test]
+opt-level = 1
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+# NEVER "abort": a panic must unwind to the catch_unwind at the JNI boundary so Kotlin can fall back (#1837, as #1729).
+panic = "unwind"

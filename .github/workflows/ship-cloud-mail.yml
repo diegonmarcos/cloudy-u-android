@@ -44,6 +44,7 @@ on:
       - "ab_cloud-libs-shared/libs/fleetconfigs-agents/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**"
+      - "ab_cloud-libs-shared/libs/mail-core-rs/**"
       - "ab_cloud-libs-shared/libs/ml-l-image/**"
       - "ab_cloud-libs-shared/libs/perms/**"
       - "ab_cloud-libs-shared/libs/text-tools/**"
@@ -82,6 +83,8 @@ on:
       - "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**/res/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**/assets/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**/res/**"
+      - "ab_cloud-libs-shared/libs/mail-core-rs/**/assets/**"
+      - "ab_cloud-libs-shared/libs/mail-core-rs/**/res/**"
       - "ab_cloud-libs-shared/libs/ml-l-image/**/assets/**"
       - "ab_cloud-libs-shared/libs/ml-l-image/**/res/**"
       - "ab_cloud-libs-shared/libs/perms/**/assets/**"
@@ -110,6 +113,10 @@ concurrency:
 env:
   WORK_DIR: ac_cloud-mail
   FORK: mail
+  # #1837 the Rust mail core (libs:mail-core-rs) is REQUIRED on CI: a build without cargo or the NDK fails instead of shipping
+  # an APK on the Kotlin fallback. The APK's ABI and the emulator's are built (build.gradle reads MAIL_CORE_ABIS).
+  MAIL_CORE_RS_REQUIRED: "1"
+  MAIL_CORE_ABIS: "arm64-v8a,x86_64"
 
 jobs:
   build_and_publish:
@@ -131,6 +138,29 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # ── #1837 THE RUST MAIL CORE (libs:mail-core-rs): toolchain read from build.json::native_core.toolchain, then its own suite ──
+      # Same pattern as Cloud Drive's core (#1729): cargo + the NDK clang (linker and C compiler: the bundled SQLite), one .so per
+      # ABI, loaded by JNI. The suite runs on EVERY run, gate or not: the store == the fake JMAP server after the initial sync,
+      # new mail, deletes / moves, an injected gap and a lost history, plus the performance budgets (list < 150 ms over 10k
+      # messages, 1,000 headers synced < 5 s).
+      - name: Resolve the native core toolchain (build.json::native_core.toolchain)
+        id: native
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          set -eu
+          targets="$(jq -r '.native_core.toolchain.rust_targets | join(",")' build.json)"
+          ndk="$(jq -r '.native_core.toolchain.ndk' build.json)"
+          [ -n "$targets" ] && [ "$ndk" != "null" ] || { echo "::error::build.json::native_core.toolchain is incomplete"; exit 1; }
+          { echo "targets=$targets"; echo "ndk=$ndk"; } >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ steps.native.outputs.targets }}
+
+      - name: "Test → the Rust mail core (cargo test, fake JMAP server, performance budgets)"
+        working-directory: ab_cloud-libs-shared/libs/mail-core-rs
+        run: cargo test -- --nocapture
 
       # Publish-if-changed gate. Android builds are not byte-reproducible, so a
       # rebuild of unchanged source published different bytes, a different
@@ -189,6 +219,19 @@ jobs:
         with:
           tools: oras sops
 
+      # #1837 the NDK libs:mail-core-rs links the Rust core with (its build.gradle reads ANDROID_NDK_HOME); the pinned version
+      # from build.json::native_core.toolchain.ndk, installed unless the runner image already carries it.
+      - name: Point the build at the NDK (build.json::native_core.toolchain.ndk)
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          set -eu
+          ndk="${{ steps.native.outputs.ndk }}"
+          if [ ! -d "$ANDROID_HOME/ndk/$ndk" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk" >/dev/null
+          fi
+          [ -x "$ANDROID_HOME/ndk/$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ] || { echo "::error::NDK $ndk is not installed"; exit 1; }
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk" >> "$GITHUB_ENV"
+
       - name: Materialize fork (clone @ pin + patch series)
         if: steps.gate.outputs.skip != 'true'
         working-directory: ${{ env.WORK_DIR }}
@@ -231,6 +274,14 @@ jobs:
         run: |
           ./build.sh build-fork "$FORK"
           ls -la dist/
+
+      - name: "Rust mail core: libmail_core.so is in the APK, with its size (#1837)"
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          set -eu
+          apk="${{ env.WORK_DIR }}/dist/cloud-comms-mail.apk"
+          ls -l "$apk"
+          unzip -lv "$apk" | grep -E 'lib/(arm64-v8a|x86_64)/libmail_core\.so' || { echo "::error::$apk carries no libmail_core.so: the Rust mail core did not ship"; exit 1; }
 
       # ── MANAGED-PAGE-SIZE-GUARD: injected by cloud-android-page-size-inject.py ──
       # 16 KB page size (Android 15+): every lib/{arm64-v8a,x86_64}/*.so in the APK about

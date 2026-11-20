@@ -225,6 +225,8 @@ class MainActivity : AppCompatActivity() {
         app.sterna.push.ForegroundPush.onForeground(this)
         // Fill the offline cache on open; WorkManager waits for a network, so offline is a no-op.
         app.sterna.mail.OfflineSyncWorker.runNow(this)
+        // #1837 and a Rust mail core pass for every JMAP account.
+        app.sterna.mail.MailCoreSyncWorker.runNow(this)
         applySecureFlag()
     }
 
