@@ -1532,6 +1532,8 @@
     <string name="compose_recipient_check_not_connected">Il servizio di verifica del recapito non è ancora collegato: viene verificato solo il formato dell\'indirizzo, su questo telefono.</string>
     <string name="compose_recipient_check_unreachable">Il servizio di verifica del recapito non è raggiungibile: %1$s</string>
     <string name="compose_recipient_check_again">Verifica di nuovo</string>
+    <string name="compose_recipient_check_copy_all">Copia tutto</string>
+    <string name="compose_recipient_check_copied">Verifica di consegna copiata</string>
     <string name="compose_recipient_check_close">Chiudi</string>
     <string name="compose_recipient_check_undeliverable_title">Alcuni destinatari non riceveranno questo messaggio</string>
     <string name="compose_recipient_check_undeliverable_message">Secondo la verifica, la posta verso questi indirizzi non arriverà:</string>

@@ -1536,6 +1536,8 @@
     <string name="compose_recipient_check_not_connected">O serviço de verificação de entrega ainda não está ligado: só o formato do endereço é verificado, neste telefone.</string>
     <string name="compose_recipient_check_unreachable">Não foi possível contactar o serviço de verificação de entrega: %1$s</string>
     <string name="compose_recipient_check_again">Verificar de novo</string>
+    <string name="compose_recipient_check_copy_all">Copiar tudo</string>
+    <string name="compose_recipient_check_copied">Verificação de entrega copiada</string>
     <string name="compose_recipient_check_close">Fechar</string>
     <string name="compose_recipient_check_undeliverable_title">Alguns destinatários não vão receber isto</string>
     <string name="compose_recipient_check_undeliverable_message">Segundo a verificação, o correio para estes endereços vai falhar:</string>

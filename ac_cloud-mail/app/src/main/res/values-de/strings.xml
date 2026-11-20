@@ -1526,6 +1526,8 @@
     <string name="compose_recipient_check_not_connected">Der Zustellprüfdienst ist noch nicht verbunden: Nur das Adressformat wird geprüft, auf diesem Telefon.</string>
     <string name="compose_recipient_check_unreachable">Der Zustellprüfdienst war nicht erreichbar: %1$s</string>
     <string name="compose_recipient_check_again">Erneut prüfen</string>
+    <string name="compose_recipient_check_copy_all">Alles kopieren</string>
+    <string name="compose_recipient_check_copied">Zustellprüfung kopiert</string>
     <string name="compose_recipient_check_close">Schließen</string>
     <string name="compose_recipient_check_undeliverable_title">Einige Empfänger werden dies nicht erhalten</string>
     <string name="compose_recipient_check_undeliverable_message">Laut Zustellprüfung wird E-Mail an diese Adressen fehlschlagen:</string>

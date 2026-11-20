@@ -1551,6 +1551,8 @@
     <string name="compose_recipient_check_not_connected">Служба проверки доставки ещё не подключена: проверяется только формат адреса, на этом телефоне.</string>
     <string name="compose_recipient_check_unreachable">Не удалось связаться со службой проверки доставки: %1$s</string>
     <string name="compose_recipient_check_again">Проверить снова</string>
+    <string name="compose_recipient_check_copy_all">Копировать всё</string>
+    <string name="compose_recipient_check_copied">Проверка доставки скопирована</string>
     <string name="compose_recipient_check_close">Закрыть</string>
     <string name="compose_recipient_check_undeliverable_title">Некоторые получатели не получат это письмо</string>
     <string name="compose_recipient_check_undeliverable_message">По данным проверки, почта на эти адреса не дойдёт:</string>

@@ -16,6 +16,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.async
 
 /**
  * #1803 The fleet client behind [app.sterna.ui.compose.RecipientChecks.checker]: POST /v1/recipients/check on the communication
@@ -82,10 +83,38 @@ object FleetRecipientChecker : RecipientChecker {
                 .toString()
             val (code, text) = post(ends, body)
             if (code !in 200..299) throw IOException(recipientCheckError(code, text))
-            out += parseRecipientCheckResponse(text, request.messageSizeBytes)
+            out += withPhoneProbes(parseRecipientCheckResponse(text, request.messageSizeBytes), clientProbeSpecs(text), request.messageSizeBytes)
         }
         return out
     }
+
+    /**
+     * #1827 the fallback for a probe the server could not run (its outbound :25 is blocked): the same read-only probe
+     * from this phone's own network, all addresses at once, each bounded so the round still ends.
+     */
+    private suspend fun withPhoneProbes(
+        parsed: Map<String, RecipientStatus>,
+        specs: Map<String, ClientProbeSpec>,
+        messageSizeBytes: Long?,
+    ): Map<String, RecipientStatus> {
+        if (specs.isEmpty()) return parsed
+        return kotlinx.coroutines.coroutineScope {
+            val probed = specs.filterKeys { it in parsed }.map { (address, spec) ->
+                address to async(kotlinx.coroutines.Dispatchers.IO) {
+                    kotlinx.coroutines.withTimeoutOrNull(PHONE_PROBE_TIMEOUT_MILLIS) {
+                        kotlinx.coroutines.runInterruptible { PhoneMailboxProbe.probe(spec, address) }
+                    }
+                }
+            }.toMap()
+            parsed.mapValues { (address, status) ->
+                val probe = probed[address]?.await() ?: return@mapValues status
+                applyPhoneProbe(status, probe, messageSizeBytes)
+            }
+        }
+    }
+
+    /** Whole budget of one phone probe: connect + dialogue on the first host, and a second host if the first is down. */
+    const val PHONE_PROBE_TIMEOUT_MILLIS = 15_000L
 
     /** The mesh first; on a transport failure there (off the mesh), the public path unless the service is mesh-only. */
     private fun post(ends: Endpoints, body: String): Pair<Int, String> {
@@ -278,6 +307,27 @@ private fun listItems(a: JSONArray): List<RecipientCheckItem> = (0 until a.lengt
  * address as the server returned it. A check the server left out is absent here (the merge marks it unknown). A size limit
  * the message exceeds makes the verdict a will-fail even when the server (which cannot know the size) said otherwise.
  */
+/**
+ * #1827 For each address whose mailbox probe the server could not run (`probe_blocked`), what it handed over to run it
+ * here: `client_probe` {hosts, helo, mail_from, port}, read from check_details.mailbox (current shape) or checks.mailbox
+ * (first object shape). Addresses without it are left out.
+ */
+internal fun clientProbeSpecs(body: String): Map<String, ClientProbeSpec> {
+    val results = runCatching { JSONObject(body).optJSONArray("results") }.getOrNull() ?: return emptyMap()
+    val out = LinkedHashMap<String, ClientProbeSpec>()
+    for (i in 0 until results.length()) {
+        val r = results.optJSONObject(i) ?: continue
+        val address = r.str("address") ?: continue
+        val mailbox = r.optJSONObject("check_details")?.optJSONObject("mailbox") ?: r.optJSONObject("checks")?.optJSONObject("mailbox") ?: continue
+        if (!mailbox.optBoolean("probe_blocked", false)) continue
+        val cp = mailbox.optJSONObject("client_probe") ?: continue
+        val hosts = cp.optJSONArray("hosts")?.let { a -> (0 until a.length()).map { a.optString(it) }.filter(String::isNotBlank) }.orEmpty()
+        if (hosts.isEmpty()) continue
+        out[address] = ClientProbeSpec(hosts, cp.optString("helo").ifBlank { "localhost" }, cp.optString("mail_from"), cp.optInt("port", 25))
+    }
+    return out
+}
+
 internal fun parseRecipientCheckResponse(body: String, messageSizeBytes: Long?): Map<String, RecipientStatus> {
     val results = JSONObject(body).optJSONArray("results") ?: return emptyMap()
     val out = LinkedHashMap<String, RecipientStatus>()

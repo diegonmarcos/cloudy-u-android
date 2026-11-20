@@ -1635,6 +1635,8 @@
     <string name="compose_recipient_check_not_connected">The delivery check service is not connected yet: only the address format is checked, on this phone.</string>
     <string name="compose_recipient_check_unreachable">The delivery check service could not be reached: %1$s</string>
     <string name="compose_recipient_check_again">Check again</string>
+    <string name="compose_recipient_check_copy_all">Copy all</string>
+    <string name="compose_recipient_check_copied">Delivery check copied</string>
     <string name="compose_recipient_check_close">Close</string>
     <string name="compose_recipient_check_undeliverable_title">Some recipients will not receive this</string>
     <string name="compose_recipient_check_undeliverable_message">The delivery check says mail to these addresses will fail:</string>

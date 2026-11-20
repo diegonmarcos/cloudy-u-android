@@ -1538,6 +1538,8 @@
     <string name="compose_recipient_check_not_connected">Le service de vérification de distribution n\'est pas encore connecté : seul le format de l\'adresse est vérifié, sur ce téléphone.</string>
     <string name="compose_recipient_check_unreachable">Le service de vérification de distribution est injoignable : %1$s</string>
     <string name="compose_recipient_check_again">Vérifier à nouveau</string>
+    <string name="compose_recipient_check_copy_all">Tout copier</string>
+    <string name="compose_recipient_check_copied">Vérification de distribution copiée</string>
     <string name="compose_recipient_check_close">Fermer</string>
     <string name="compose_recipient_check_undeliverable_title">Certains destinataires ne recevront pas ce message</string>
     <string name="compose_recipient_check_undeliverable_message">Selon la vérification, le courrier vers ces adresses échouera :</string>

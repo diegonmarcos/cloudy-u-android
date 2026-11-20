@@ -1529,6 +1529,8 @@
     <string name="compose_recipient_check_not_connected">De bezorgcontroledienst is nog niet verbonden: alleen het adresformaat wordt gecontroleerd, op deze telefoon.</string>
     <string name="compose_recipient_check_unreachable">De bezorgcontroledienst was niet bereikbaar: %1$s</string>
     <string name="compose_recipient_check_again">Opnieuw controleren</string>
+    <string name="compose_recipient_check_copy_all">Alles kopiëren</string>
+    <string name="compose_recipient_check_copied">Bezorgcontrole gekopieerd</string>
     <string name="compose_recipient_check_close">Sluiten</string>
     <string name="compose_recipient_check_undeliverable_title">Sommige ontvangers krijgen dit niet</string>
     <string name="compose_recipient_check_undeliverable_message">Volgens de bezorgcontrole mislukt mail naar deze adressen:</string>

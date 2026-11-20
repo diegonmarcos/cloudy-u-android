@@ -1548,6 +1548,8 @@
     <string name="compose_recipient_check_not_connected">Usługa sprawdzania doręczenia nie jest jeszcze połączona: sprawdzany jest tylko format adresu, na tym telefonie.</string>
     <string name="compose_recipient_check_unreachable">Nie udało się połączyć z usługą sprawdzania doręczenia: %1$s</string>
     <string name="compose_recipient_check_again">Sprawdź ponownie</string>
+    <string name="compose_recipient_check_copy_all">Kopiuj wszystko</string>
+    <string name="compose_recipient_check_copied">Sprawdzenie doręczenia skopiowane</string>
     <string name="compose_recipient_check_close">Zamknij</string>
     <string name="compose_recipient_check_undeliverable_title">Niektórzy odbiorcy tego nie otrzymają</string>
     <string name="compose_recipient_check_undeliverable_message">Według sprawdzenia poczta na te adresy nie dotrze:</string>

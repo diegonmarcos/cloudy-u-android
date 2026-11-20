@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
@@ -29,12 +30,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import app.sterna.R
 import app.sterna.ui.theme.MailMetrics
+import android.widget.Toast
 import java.text.DateFormat
 import java.util.Date
 
@@ -170,6 +175,33 @@ internal fun RecipientStatusSheet(
     onDismiss: () -> Unit,
 ) {
     val shown = status ?: localRecipientStatus(address, pending = true, nowMillis = 0L)
+    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
+    val copiedText = stringResource(R.string.compose_recipient_check_copied)
+    // #1827 the whole report as plain text, in the order the sheet shows it, for "Copy all".
+    val report = recipientReportText(
+        title = stringResource(R.string.compose_recipient_check_title),
+        address = address,
+        verdict = stringResource(verdictLabel(shown.verdict)),
+        serverReason = shown.serverReason,
+        cachedNote = if (shown.serverCached) stringResource(R.string.compose_recipient_check_server_cached) else null,
+        checks = shown.checks.map { item ->
+            ReportCheckLine(
+                kind = stringResource(checkKindLabel(item.kind)),
+                outcome = stringResource(outcomeLabel(item.outcome)),
+                detail = checkDetailText(item),
+                source = stringResource(sourceLabel(item.source)),
+            )
+        },
+        checkedAt = if (shown.checkedAtMillis > 0L) {
+            stringResource(
+                R.string.compose_recipient_check_checked_at,
+                DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(Date(shown.checkedAtMillis)),
+            )
+        } else null,
+        notConnected = if (!checkerBound) stringResource(R.string.compose_recipient_check_not_connected) else null,
+        unreachable = shown.serverNote?.let { stringResource(R.string.compose_recipient_check_unreachable, it) },
+    )
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -179,87 +211,132 @@ internal fun RecipientStatusSheet(
                 .padding(bottom = MailMetrics.s32),
             verticalArrangement = Arrangement.spacedBy(MailMetrics.s8),
         ) {
-            Text(stringResource(R.string.compose_recipient_check_title), style = MaterialTheme.typography.titleLarge)
-            Text(address, style = MaterialTheme.typography.bodyLarge)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MailMetrics.s8)) {
-                VerdictGlyph(shown.verdict)
-                Text(
-                    stringResource(verdictLabel(shown.verdict)),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = verdictColor(shown.verdict),
-                )
-            }
-            shown.serverReason?.let {
-                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (shown.serverCached) {
-                Text(
-                    stringResource(R.string.compose_recipient_check_server_cached),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            HorizontalDivider()
-            shown.checks.forEach { item ->
-                Row(horizontalArrangement = Arrangement.spacedBy(MailMetrics.s8)) {
-                    VerdictGlyph(outcomeVerdict(item.outcome), modifier = Modifier.padding(top = MailMetrics.s2))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(MailMetrics.s8)) {
-                            Text(
-                                stringResource(checkKindLabel(item.kind)),
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f),
-                            )
-                            Text(
-                                stringResource(outcomeLabel(item.outcome)),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = verdictColor(outcomeVerdict(item.outcome)),
-                            )
-                        }
-                        checkDetailText(item)?.let {
-                            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+            // #1827 every word of the report can be long-pressed and selected (tap and select).
+            SelectionContainer {
+                Column(verticalArrangement = Arrangement.spacedBy(MailMetrics.s8)) {
+                    Text(stringResource(R.string.compose_recipient_check_title), style = MaterialTheme.typography.titleLarge)
+                    Text(address, style = MaterialTheme.typography.bodyLarge)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MailMetrics.s8)) {
+                        VerdictGlyph(shown.verdict)
                         Text(
-                            stringResource(sourceLabel(item.source)),
+                            stringResource(verdictLabel(shown.verdict)),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = verdictColor(shown.verdict),
+                        )
+                    }
+                    shown.serverReason?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (shown.serverCached) {
+                        Text(
+                            stringResource(R.string.compose_recipient_check_server_cached),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                    HorizontalDivider()
+                    shown.checks.forEach { item ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(MailMetrics.s8)) {
+                            VerdictGlyph(outcomeVerdict(item.outcome), modifier = Modifier.padding(top = MailMetrics.s2))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(MailMetrics.s8)) {
+                                    Text(
+                                        stringResource(checkKindLabel(item.kind)),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    Text(
+                                        stringResource(outcomeLabel(item.outcome)),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = verdictColor(outcomeVerdict(item.outcome)),
+                                    )
+                                }
+                                checkDetailText(item)?.let {
+                                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Text(
+                                    stringResource(sourceLabel(item.source)),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                    HorizontalDivider()
+                    if (shown.checkedAtMillis > 0L) {
+                        val at = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(Date(shown.checkedAtMillis))
+                        Text(
+                            stringResource(R.string.compose_recipient_check_checked_at, at),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (!checkerBound) {
+                        Text(
+                            stringResource(R.string.compose_recipient_check_not_connected),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    shown.serverNote?.let {
+                        Text(
+                            stringResource(R.string.compose_recipient_check_unreachable, it),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
-            }
-            HorizontalDivider()
-            if (shown.checkedAtMillis > 0L) {
-                val at = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(Date(shown.checkedAtMillis))
-                Text(
-                    stringResource(R.string.compose_recipient_check_checked_at, at),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (!checkerBound) {
-                Text(
-                    stringResource(R.string.compose_recipient_check_not_connected),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            shown.serverNote?.let {
-                Text(
-                    stringResource(R.string.compose_recipient_check_unreachable, it),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(MailMetrics.s8, Alignment.End),
             ) {
+                TextButton(onClick = {
+                    clipboard.setText(AnnotatedString(report))
+                    Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
+                }) { Text(stringResource(R.string.compose_recipient_check_copy_all)) }
                 TextButton(onClick = onCheckAgain) { Text(stringResource(R.string.compose_recipient_check_again)) }
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.compose_recipient_check_close)) }
             }
         }
     }
 }
+
+/** One check of the copied report. */
+internal data class ReportCheckLine(val kind: String, val outcome: String, val detail: String?, val source: String)
+
+/**
+ * #1827 "Copy all": the sheet as plain text, every line it shows and nothing else, in the same order:
+ * title, address, verdict, the server's reason and cached note, each check (kind: outcome, its detail, who
+ * answered it), when it was checked, and the connection notes.
+ */
+internal fun recipientReportText(
+    title: String,
+    address: String,
+    verdict: String,
+    serverReason: String?,
+    cachedNote: String?,
+    checks: List<ReportCheckLine>,
+    checkedAt: String?,
+    notConnected: String?,
+    unreachable: String?,
+): String = buildString {
+    appendLine(title)
+    appendLine(address)
+    appendLine(verdict)
+    serverReason?.let { appendLine(it) }
+    cachedNote?.let { appendLine(it) }
+    checks.forEach { c ->
+        appendLine()
+        appendLine("${c.kind}: ${c.outcome}")
+        c.detail?.takeIf { it.isNotBlank() }?.let { appendLine(it) }
+        appendLine(c.source)
+    }
+    if (checkedAt != null || notConnected != null || unreachable != null) appendLine()
+    checkedAt?.let { appendLine(it) }
+    notConnected?.let { appendLine(it) }
+    unreachable?.let { appendLine(it) }
+}.trimEnd()
 
 /**
  * Send's question when a recipient will fail. It names each one with the reason its failing check gave
