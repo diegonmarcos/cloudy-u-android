@@ -36,6 +36,15 @@ Lnktree family, declared in `1_cicd/src/data/app-families.json`; the Cloud famil
   VanEck's holdings download redirects in a loop, so neither can be read; the State Street fund of the same index or factor is read. The container's
   `/v1/bonds/sovereign-returns` (`store.rs`, `sovereign_windows` test) serves the yield and duration bond returns with the local, currency and USD legs.
 
+* EM yield curves (#1832): CB > Yield Curves adds the curves of the major emerging markets, each read the way the US Treasury and ECB curves are
+  (a declared `points` panel in `data/dashboards.json`, its publisher in `data/sources.json`, a parser in `Feeds.kt`): India from CCIL's tenor-wise
+  indicative G-Sec yields (T-bills 91D-364D, G-Sec buckets 1Y-2Y to 28Y-30Y; state loans left out), Brazil from ANBIMA's ETTJ (the prefixed zero curve
+  at the Circular 3.361 vertices, 1M-10Y), Indonesia from PHEI's IGSYC (the Indonesia Bond Pricing Agency, 0.1Y-30Y with yesterday's curve), South Africa
+  from the SARB Web API (T-bill tenders, R2030, R209 and the daily average bond-yield bands) and Mexico from Banxico's SIE chart service (the auction
+  yields of Cetes 28D-2Y and Bonos M 3Y-30Y; the SIE REST API needs a token and is not used). None of them needs a key; the container's sovereign-curves
+  route is asked first and the OECD monthly rates on DBnomics (call money, 3M, 10Y) are the fallback. Tests: `EmCurvesTest` on the publishers' own
+  answers (`app/src/test/resources/cb/em`).
+
 * Periods, boxes and overview (#1786): every EQ and FI page shows 1D, 1W, 1M, YTD and 12M, then the annualised averages over 1, 12, 24 and 36
   months as CAGR, (end / start)^(1 / years) - 1 with years = months / 12 (`Cagr.kt`, `data/portfolios.json::periods`); a window the history does not
   reach is n/a, never a shorter-history value. The quote source asks five years of daily closes (`data/quotes.json` `range=5y`;

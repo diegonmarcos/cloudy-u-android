@@ -68,11 +68,115 @@ object Feeds {
             "sec_concept" -> secConcept(body, o.spec.optDouble("scale", 1.0), o.spec.optInt("last", 6))
             "nasdaq_earnings" -> nasdaq(body, o.each)
             "finterm_v1" -> v1(body, Catalog.str(o.spec, "concept"))
+            // #1832 the EM yield curves of CB > Yield Curves, each read from its publisher (data/sources.json), and the OECD fallback via DBnomics
+            "ccil_yields" -> ccil(body)
+            "anbima_ettj" -> anbima(body)
+            "phei_igsyc" -> phei(body)
+            "sarb_rates" -> sarb(body)
+            "banxico_sie" -> banxico(body, o.each)
+            "dbnomics_series" -> dbnomicsLatest(body)
             else -> Got()
         }
     }.getOrDefault(Got())
 
     // ------------------------------------------------------------------ rates and curves
+
+    /** #1832 an HTML page as its visible words: scripts and styles dropped, tags as blanks, entities a page's tables use decoded, blanks collapsed. */
+    fun htmlText(html: String): String = html
+        .replace(Regex("(?is)<(script|style)[^>]*>.*?</\\1>"), " ")
+        .replace(Regex("<[^>]+>"), " ")
+        .replace("&nbsp;", " ").replace("&#160;", " ").replace("&amp;", "&")
+        .replace(Regex("\\s+"), " ").trim()
+
+    /** "1.008" / "13,6239" (the Brazilian and Indonesian pages' thousands dot and decimal comma) -> 1008.0 / 13.6239; null when it is not a number. */
+    fun commaNum(s: String): Double? = s.trim().replace(".", "").replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
+
+    /**
+     * #1832 CCIL tenor-wise indicative yields (India): a table of Date | Tenor Bucket | Security | YTM (%). One point per bucket (91D, 182D, 364D, 1Y-2Y,
+     * 4Y-5Y ...), keyed by the bucket; a state development loan (SGS / SDL) is keyed "SDL <bucket>" so a curve's labels select the central government's.
+     */
+    fun ccil(body: String): Got {
+        val out = ArrayList<Pt>()
+        Regex("(?is)<tr[^>]*>(.*?)</tr>").findAll(body).forEach { tr ->
+            val cells = Regex("(?is)<td[^>]*>(.*?)</td>").findAll(tr.groupValues[1]).map { htmlText(it.groupValues[1]) }.toList()
+            if (cells.size < 4) return@forEach
+            val date = Regex("\\d{4}-\\d{2}-\\d{2}").find(cells[0])?.value ?: return@forEach
+            val v = cells[3].toDoubleOrNull()?.takeIf { it.isFinite() } ?: return@forEach
+            val state = Regex("\\b(SGS|SDL)\\b").containsMatchIn(cells[2].uppercase(Locale.ROOT))
+            val key = (if (state) "SDL " else "") + cells[1]
+            out += Pt(key, key, out.size.toDouble(), v, null, date)
+        }
+        return Got(points = out)
+    }
+
+    /**
+     * #1832 ANBIMA ETTJ (Brazil): the "PREFIXADOS (CIRCULAR 3.361)" table, pairs of vertex (business days, "1.008") and rate (% a year, "15,7016"),
+     * one point per vertex keyed by its business days ("1008"); the date is the page's (dd/mm/yyyy, the first on the page).
+     */
+    fun anbima(body: String): Got {
+        val t = htmlText(body)
+        val date = Regex("(\\d{2})/(\\d{2})/(\\d{4})").find(t)?.destructured?.let { (d, m, y) -> "$y-$m-$d" }.orEmpty()
+        val from = t.indexOf("CIRCULAR 3.361").takeIf { it >= 0 } ?: return Got()
+        val seg = t.substring(from).let { s -> s.indexOf("Erro").takeIf { it > 0 }?.let { s.substring(0, it) } ?: s }
+        val out = ArrayList<Pt>()
+        Regex("(\\d{1,3}(?:\\.\\d{3})*)\\s+(\\d+,\\d+)").findAll(seg).forEach { m ->
+            val du = m.groupValues[1].replace(".", "")
+            val v = commaNum(m.groupValues[2]) ?: return@forEach
+            out += Pt(du, du, out.size.toDouble(), v, null, date)
+        }
+        return Got(points = out)
+    }
+
+    /**
+     * #1832 PHEI IGSYC (Indonesia): after "Yield Curve per <d-Month-yyyy>", rows of Tenor Year | Today | Yesterday ("0,1 6,1428 6,1576"), up to the
+     * benchmark series table. One point per tenor keyed "0.1", "1" ... "40", yesterday as the previous value.
+     */
+    fun phei(body: String): Got {
+        val t = htmlText(body)
+        val head = Regex("Yield Curve per (\\d{1,2})-([A-Za-z]+)-(\\d{4})").find(t) ?: return Got()
+        val date = runCatching {
+            LocalDate.parse("${head.groupValues[1]}-${head.groupValues[2]}-${head.groupValues[3]}", DateTimeFormatter.ofPattern("d-MMMM-yyyy", Locale.ENGLISH)).toString()
+        }.getOrDefault("")
+        val seg = t.substring(head.range.last).let { s -> s.indexOf("Benchmark").takeIf { it > 0 }?.let { s.substring(0, it) } ?: s }
+        val out = ArrayList<Pt>()
+        Regex("(\\d+,\\d+)\\s+(\\d+,\\d+)\\s+(\\d+,\\d+)").findAll(seg).forEach { m ->
+            val y = commaNum(m.groupValues[1]) ?: return@forEach
+            val key = if (y == Math.floor(y)) y.toInt().toString() else y.toString()
+            val v = commaNum(m.groupValues[2]) ?: return@forEach
+            out += Pt(key, key, y, v, commaNum(m.groupValues[3]), date)
+        }
+        return Got(points = out.distinctBy { it.key })
+    }
+
+    /** #1832 SARB Web API CurrentMarketRates (South Africa): [{Name, SectionName, TimeseriesCode, Date, Value, UpDown}], one point per series code. */
+    fun sarb(body: String): Got = Got(points = objects(JSONArray(body)).mapNotNull { r ->
+        val v = num(r, "Value") ?: return@mapNotNull null
+        val code = Catalog.str(r, "TimeseriesCode").ifEmpty { return@mapNotNull null }
+        Pt(code, Catalog.str(r, "Name").ifEmpty { code }, 0.0, v, null, Catalog.str(r, "Date").take(10))
+    }.mapIndexed { i, p -> p.copy(x = i.toDouble()) })
+
+    /**
+     * #1832 Banxico SIE chart service (Mexico): {serie, valores:[[yyyy-mm-dd, value]]}, -989898 = no observation (N/E). The last observation and the
+     * one before it, keyed by the series id asked for ([each]).
+     */
+    fun banxico(body: String, each: String): Got {
+        val o = JSONObject(body)
+        val arr = o.optJSONArray("valores") ?: return Got()
+        val obs = (0 until arr.length()).mapNotNull { i ->
+            val r = arr.optJSONArray(i) ?: return@mapNotNull null
+            val v = (r.opt(1) as? Number)?.toDouble()?.takeIf { it.isFinite() && it > -989897.0 } ?: return@mapNotNull null
+            r.optString(0) to v
+        }.sortedBy { it.first }
+        val last = obs.lastOrNull() ?: return Got()
+        val key = each.ifEmpty { Catalog.str(o, "serie") }
+        return Got(points = listOf(Pt(key, key, 0.0, last.second, obs.getOrNull(obs.size - 2)?.second, last.first)))
+    }
+
+    /** #1832 a DBnomics series answer (the OECD fallback of a curve): one point per series code, its last value and the one before. */
+    fun dbnomicsLatest(body: String): Got = Got(points = Providers.dbnomics(body).mapIndexedNotNull { i, s ->
+        val (period, v, prev) = s.latest() ?: return@mapIndexedNotNull null
+        Pt(s.code, s.name.ifEmpty { s.code }, i.toDouble(), v, prev, period)
+    })
 
     /** NY Fed `rates/all/latest.json`: refRates[] of type + percentRate; SOFRAI carries the 30/90/180-day averages and the index. */
     fun nyfed(body: String): Got {

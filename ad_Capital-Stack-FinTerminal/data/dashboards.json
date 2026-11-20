@@ -250,6 +250,407 @@
           "change_unit": "bp"
         },
         {
+          "id": "india",
+          "title": "India government securities curve (CCIL tenor-wise indicative yields)",
+          "source": "ccil",
+          "view": "curve",
+          "derive": "points",
+          "fetch": {
+            "provider": "ccil_yields",
+            "path": "/tenorwise-indicative-yields",
+            "labels": {
+              "91D": "91D",
+              "182D": "182D",
+              "364D": "364D",
+              "1Y-2Y": "1Y-2Y",
+              "4Y-5Y": "4Y-5Y",
+              "9Y-10Y": "9Y-10Y",
+              "13Y-15Y": "13Y-15Y",
+              "28Y-30Y": "28Y-30Y"
+            },
+            "years": {
+              "91D": 0.25,
+              "182D": 0.5,
+              "364D": 1,
+              "1Y-2Y": 2,
+              "4Y-5Y": 5,
+              "9Y-10Y": 10,
+              "13Y-15Y": 15,
+              "28Y-30Y": 30
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/rates/sovereign-curves",
+              "params": {
+                "countries": "IN",
+                "tenors": "2,5,10,30"
+              },
+              "parse": "finterm_v1"
+            },
+            "fallbacks": [
+              {
+                "source": "dbnomics",
+                "provider": "dbnomics_series",
+                "path": "/series",
+                "params": {
+                  "series_ids": "OECD/DSD_KEI@DF_KEI/IND.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IND.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IND.M.IRLT.PA._Z._Z._Z",
+                  "observations": "1",
+                  "metadata": "0"
+                },
+                "labels": {
+                  "IND.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+                  "IND.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+                  "IND.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
+                },
+                "years": {
+                  "IND.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+                  "IND.M.IR3TIB.PA._Z._Z._Z": 0.25,
+                  "IND.M.IRLT.PA._Z._Z._Z": 10
+                }
+              }
+            ]
+          },
+          "columns": [
+            "Tenor",
+            "Yield %",
+            "Chg bp",
+            "Date"
+          ],
+          "x_title": "maturity (years)",
+          "unit": "%",
+          "change_unit": "bp",
+          "segment_label": "CCIL"
+        },
+        {
+          "id": "brazil",
+          "title": "Brazil prefixed (nominal) zero curve (ANBIMA ETTJ, spot)",
+          "source": "anbima",
+          "view": "curve",
+          "derive": "points",
+          "fetch": {
+            "provider": "anbima_ettj",
+            "path": "/CZ.asp",
+            "labels": {
+              "21": "1M",
+              "42": "2M",
+              "63": "3M",
+              "126": "6M",
+              "252": "1Y",
+              "504": "2Y",
+              "756": "3Y",
+              "1008": "4Y",
+              "1260": "5Y",
+              "2520": "10Y"
+            },
+            "years": {
+              "21": 0.083333,
+              "42": 0.166667,
+              "63": 0.25,
+              "126": 0.5,
+              "252": 1,
+              "504": 2,
+              "756": 3,
+              "1008": 4,
+              "1260": 5,
+              "2520": 10
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/rates/sovereign-curves",
+              "params": {
+                "countries": "BR",
+                "tenors": "2,5,10,30"
+              },
+              "parse": "finterm_v1"
+            },
+            "fallbacks": [
+              {
+                "source": "dbnomics",
+                "provider": "dbnomics_series",
+                "path": "/series",
+                "params": {
+                  "series_ids": "OECD/DSD_KEI@DF_KEI/BRA.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/BRA.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/BRA.M.IRLT.PA._Z._Z._Z",
+                  "observations": "1",
+                  "metadata": "0"
+                },
+                "labels": {
+                  "BRA.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+                  "BRA.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+                  "BRA.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
+                },
+                "years": {
+                  "BRA.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+                  "BRA.M.IR3TIB.PA._Z._Z._Z": 0.25,
+                  "BRA.M.IRLT.PA._Z._Z._Z": 10
+                }
+              }
+            ]
+          },
+          "columns": [
+            "Tenor",
+            "Yield %",
+            "Chg bp",
+            "Date"
+          ],
+          "x_title": "maturity (years)",
+          "unit": "%",
+          "change_unit": "bp",
+          "segment_label": "ANBIMA"
+        },
+        {
+          "id": "indonesia",
+          "title": "Indonesia government securities curve (PHEI / IBPA IGSYC)",
+          "source": "phei",
+          "view": "curve",
+          "derive": "points",
+          "fetch": {
+            "provider": "phei_igsyc",
+            "path": "/Data/HPW-dan-Imbal-Hasil",
+            "labels": {
+              "0.1": "0.1Y",
+              "1": "1Y",
+              "2": "2Y",
+              "3": "3Y",
+              "4": "4Y",
+              "5": "5Y",
+              "6": "6Y",
+              "7": "7Y",
+              "8": "8Y",
+              "9": "9Y",
+              "10": "10Y",
+              "15": "15Y",
+              "20": "20Y",
+              "25": "25Y",
+              "30": "30Y"
+            },
+            "years": {
+              "0.1": 0.1,
+              "1": 1,
+              "2": 2,
+              "3": 3,
+              "4": 4,
+              "5": 5,
+              "6": 6,
+              "7": 7,
+              "8": 8,
+              "9": 9,
+              "10": 10,
+              "15": 15,
+              "20": 20,
+              "25": 25,
+              "30": 30
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/rates/sovereign-curves",
+              "params": {
+                "countries": "ID",
+                "tenors": "2,5,10,30"
+              },
+              "parse": "finterm_v1"
+            },
+            "fallbacks": [
+              {
+                "source": "dbnomics",
+                "provider": "dbnomics_series",
+                "path": "/series",
+                "params": {
+                  "series_ids": "OECD/DSD_KEI@DF_KEI/IDN.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IDN.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IDN.M.IRLT.PA._Z._Z._Z",
+                  "observations": "1",
+                  "metadata": "0"
+                },
+                "labels": {
+                  "IDN.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+                  "IDN.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+                  "IDN.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
+                },
+                "years": {
+                  "IDN.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+                  "IDN.M.IR3TIB.PA._Z._Z._Z": 0.25,
+                  "IDN.M.IRLT.PA._Z._Z._Z": 10
+                }
+              }
+            ]
+          },
+          "columns": [
+            "Tenor",
+            "Yield %",
+            "Chg bp",
+            "Date"
+          ],
+          "x_title": "maturity (years)",
+          "unit": "%",
+          "change_unit": "bp",
+          "segment_label": "PHEI"
+        },
+        {
+          "id": "south_africa",
+          "title": "South Africa government curve (SARB: T-bills, R2030, R209, bond-yield bands)",
+          "source": "sarb",
+          "view": "curve",
+          "derive": "points",
+          "fetch": {
+            "provider": "sarb_rates",
+            "path": "/WebIndicators/CurrentMarketRates",
+            "labels": {
+              "MMRD203A": "91D T-bill",
+              "MMRD206A": "182D T-bill",
+              "MMRD209A": "273D T-bill",
+              "MMRD212A": "364D T-bill",
+              "MMRD708A": "R2030",
+              "CMJD003A": "5-10Y band",
+              "MMRD709A": "R209 (2036)",
+              "CMJD004A": "10Y+ band"
+            },
+            "years": {
+              "MMRD203A": 0.25,
+              "MMRD206A": 0.5,
+              "MMRD209A": 0.75,
+              "MMRD212A": 1,
+              "MMRD708A": 3.2,
+              "CMJD003A": 7.5,
+              "MMRD709A": 9.4,
+              "CMJD004A": 15
+            },
+            "_doc_years": "T-bills at their term; R2030 (31 Jan 2030) and R209 (31 Mar 2036) at their residual maturity in Nov 2026; the SARB daily average bond-yield bands at the middle of the band (5-10Y) and at 15Y (10Y and longer)",
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/rates/sovereign-curves",
+              "params": {
+                "countries": "ZA",
+                "tenors": "2,5,10,30"
+              },
+              "parse": "finterm_v1"
+            },
+            "fallbacks": [
+              {
+                "source": "dbnomics",
+                "provider": "dbnomics_series",
+                "path": "/series",
+                "params": {
+                  "series_ids": "OECD/DSD_KEI@DF_KEI/ZAF.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ZAF.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ZAF.M.IRLT.PA._Z._Z._Z",
+                  "observations": "1",
+                  "metadata": "0"
+                },
+                "labels": {
+                  "ZAF.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+                  "ZAF.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+                  "ZAF.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
+                },
+                "years": {
+                  "ZAF.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+                  "ZAF.M.IR3TIB.PA._Z._Z._Z": 0.25,
+                  "ZAF.M.IRLT.PA._Z._Z._Z": 10
+                }
+              }
+            ]
+          },
+          "columns": [
+            "Tenor",
+            "Yield %",
+            "Chg bp",
+            "Date"
+          ],
+          "x_title": "maturity (years)",
+          "unit": "%",
+          "change_unit": "bp",
+          "segment_label": "SARB"
+        },
+        {
+          "id": "mexico",
+          "title": "Mexico government curve (Banxico weekly auctions: Cetes, Bonos M)",
+          "source": "banxico",
+          "view": "curve",
+          "derive": "points",
+          "fetch": {
+            "provider": "banxico_sie",
+            "path": "/consultaSerieGrafica.do",
+            "params": {
+              "s": "{each},CF107,0",
+              "versionSerie": "LA-MAS-RECIENTE",
+              "l": "es"
+            },
+            "each": [
+              "SF43936",
+              "SF43939",
+              "SF43942",
+              "SF43945",
+              "SF349785",
+              "SF43883",
+              "SF43886",
+              "SF44071",
+              "SF45384",
+              "SF60696"
+            ],
+            "labels": {
+              "SF43936": "28D",
+              "SF43939": "91D",
+              "SF43942": "182D",
+              "SF43945": "364D",
+              "SF349785": "2Y",
+              "SF43883": "3Y",
+              "SF43886": "5Y",
+              "SF44071": "10Y",
+              "SF45384": "20Y",
+              "SF60696": "30Y"
+            },
+            "years": {
+              "SF43936": 0.076923,
+              "SF43939": 0.25,
+              "SF43942": 0.5,
+              "SF43945": 1,
+              "SF349785": 2,
+              "SF43883": 3,
+              "SF43886": 5,
+              "SF44071": 10,
+              "SF45384": 20,
+              "SF60696": 30
+            },
+            "_doc_each": "Banxico SIE table CF107 (Valores gubernamentales, resultados de la subasta): the yield (tasa de rendimiento) of Cetes 28/91/182/364/728 days and of fixed-rate Bonos M 3/5/10/20/30 years at their last auction; the 7-year Bono (SF44946) is left out, it has not been auctioned since 2006",
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/rates/sovereign-curves",
+              "params": {
+                "countries": "MX",
+                "tenors": "2,5,10,30"
+              },
+              "parse": "finterm_v1"
+            },
+            "fallbacks": [
+              {
+                "source": "dbnomics",
+                "provider": "dbnomics_series",
+                "path": "/series",
+                "params": {
+                  "series_ids": "OECD/DSD_KEI@DF_KEI/MEX.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MEX.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MEX.M.IRLT.PA._Z._Z._Z",
+                  "observations": "1",
+                  "metadata": "0"
+                },
+                "labels": {
+                  "MEX.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+                  "MEX.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+                  "MEX.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
+                },
+                "years": {
+                  "MEX.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+                  "MEX.M.IR3TIB.PA._Z._Z._Z": 0.25,
+                  "MEX.M.IRLT.PA._Z._Z._Z": 10
+                }
+              }
+            ]
+          },
+          "columns": [
+            "Tenor",
+            "Yield %",
+            "Chg bp",
+            "Date"
+          ],
+          "x_title": "maturity (years)",
+          "unit": "%",
+          "change_unit": "bp",
+          "segment_label": "Banxico"
+        },
+        {
           "id": "sovereigns",
           "title": "Other sovereign curves (spot, zero)",
           "source": "premium_fi",

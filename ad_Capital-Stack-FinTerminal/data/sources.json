@@ -659,6 +659,161 @@
       }
     },
     {
+      "id": "ccil",
+      "name": "CCIL tenor-wise indicative G-Sec yields (India)",
+      "category": "FI-Macro",
+      "coverage": "India's government securities curve: the Clearing Corporation of India's daily tenor-wise indicative yields (YTM) of the benchmark T-bills (91 / 182 / 364 days) and G-Secs (2Y to 30Y buckets); state development loans are published beside them and left out",
+      "endpoint": "https://www.ccilindia.com/web/ccil",
+      "docs": "https://www.ccilindia.com/web/ccil/tenorwise-indicative-yields",
+      "auth": {
+        "type": "none",
+        "note": "Public web page, no key; read as the page's table."
+      },
+      "connector": "ccil_yields",
+      "feeds": [
+        {
+          "tab": "cb",
+          "entries": [
+            "Yield Curves"
+          ]
+        }
+      ],
+      "priority": 10,
+      "cors": false,
+      "licence": "CCIL website terms: shown with attribution for personal, non-commercial use",
+      "attribution": "Yields: The Clearing Corporation of India Ltd (CCIL)",
+      "schedule": {
+        "ttl_s": 3600
+      },
+      "rate_limit": {
+        "per_min": 6
+      }
+    },
+    {
+      "id": "anbima",
+      "name": "ANBIMA ETTJ (Brazil term structure of interest rates)",
+      "category": "FI-Macro",
+      "coverage": "Brazil's prefixed (nominal) government zero curve: ANBIMA's daily Estrutura a Termo das Taxas de Juros estimated from LTN and NTN-F, the Circular 3.361 vertices 21 to 2,520 business days (1M to 10Y)",
+      "endpoint": "https://www.anbima.com.br/informacoes/est-termo",
+      "docs": "https://www.anbima.com.br/pt_br/informar/curvas-de-juros-fechamento.htm",
+      "auth": {
+        "type": "none",
+        "note": "Public web page, no key; read as the page's table."
+      },
+      "connector": "anbima_ettj",
+      "feeds": [
+        {
+          "tab": "cb",
+          "entries": [
+            "Yield Curves"
+          ]
+        }
+      ],
+      "priority": 10,
+      "cors": false,
+      "licence": "ANBIMA public data, attribution",
+      "attribution": "ETTJ: ANBIMA",
+      "schedule": {
+        "ttl_s": 3600
+      },
+      "rate_limit": {
+        "per_min": 6
+      }
+    },
+    {
+      "id": "phei",
+      "name": "PHEI / IBPA Indonesia Government Securities Yield Curve (IGSYC)",
+      "category": "FI-Macro",
+      "coverage": "Indonesia's government securities yield curve: the daily IGSYC of PT Penilai Harga Efek Indonesia (the Indonesia Bond Pricing Agency), tenor 0.1 to 40 years, today and the day before",
+      "endpoint": "https://www.phei.co.id",
+      "docs": "https://www.phei.co.id/Data/HPW-dan-Imbal-Hasil",
+      "auth": {
+        "type": "none",
+        "note": "Public web page, no key; read as the page's table."
+      },
+      "connector": "phei_igsyc",
+      "feeds": [
+        {
+          "tab": "cb",
+          "entries": [
+            "Yield Curves"
+          ]
+        }
+      ],
+      "priority": 10,
+      "cors": false,
+      "licence": "PHEI website terms, attribution",
+      "attribution": "IGSYC: PT Penilai Harga Efek Indonesia (PHEI)",
+      "schedule": {
+        "ttl_s": 3600
+      },
+      "rate_limit": {
+        "per_min": 6
+      }
+    },
+    {
+      "id": "sarb",
+      "name": "South African Reserve Bank current market rates",
+      "category": "FI-Macro",
+      "coverage": "South Africa's money and capital market rates as the SARB publishes them daily: Treasury bill tender rates (91 to 364 days), the R2030 and R209 closing yields and the daily average government bond yields (5-10 years, 10 years and longer)",
+      "endpoint": "https://custom.resbank.co.za/SarbWebApi",
+      "docs": "https://custom.resbank.co.za/SarbWebApi/Help",
+      "auth": {
+        "type": "none",
+        "note": "Public SARB Web API, no key."
+      },
+      "connector": "sarb_rates",
+      "feeds": [
+        {
+          "tab": "cb",
+          "entries": [
+            "Yield Curves"
+          ]
+        }
+      ],
+      "priority": 10,
+      "cors": false,
+      "licence": "South African Reserve Bank, attribution",
+      "attribution": "Rates: South African Reserve Bank",
+      "schedule": {
+        "ttl_s": 3600
+      },
+      "rate_limit": {
+        "per_min": 10
+      }
+    },
+    {
+      "id": "banxico",
+      "name": "Banco de México SIE (government securities auctions)",
+      "category": "FI-Macro",
+      "coverage": "Mexico's government curve from Banxico's SIE: the yield of the weekly primary auctions of Cetes (28 to 728 days) and of fixed-rate Bonos M (3 to 30 years), each series as Banxico's chart service publishes it",
+      "endpoint": "https://www.banxico.org.mx/SieInternet",
+      "docs": "https://www.banxico.org.mx/SieInternet/consultarDirectorioInternetAction.do?sector=22&accion=consultarCuadro&idCuadro=CF107&locale=es",
+      "auth": {
+        "type": "none",
+        "note": "Public SIE chart service, no key (the SIE REST API needs a token and is not used)."
+      },
+      "connector": "banxico_sie",
+      "feeds": [
+        {
+          "tab": "cb",
+          "entries": [
+            "Yield Curves"
+          ]
+        }
+      ],
+      "priority": 10,
+      "cors": false,
+      "licence": "Banco de México SIE, attribution",
+      "attribution": "Auctions: Banco de México (SIE)",
+      "schedule": {
+        "ttl_s": 3600
+      },
+      "rate_limit": {
+        "per_min": 20
+      }
+    },
+    {
       "id": "oecd",
       "name": "OECD Data Explorer (SDMX)",
       "category": "FI-Macro",
