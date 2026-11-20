@@ -11068,7 +11068,7 @@
             {
               "id": "access_keyboard",
               "icon": "ic_keyboard",
-              "label": "Grabber (Cloud Keyboard)",
+              "label": "Keyboard Grabber",
               "access_app": true,
               "access_feature": true,
               "subtitle": "Cloud Keyboard's accessibility service: the Grabber reads the selected text of any app through it."
