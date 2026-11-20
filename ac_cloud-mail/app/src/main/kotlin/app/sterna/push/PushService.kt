@@ -41,23 +41,34 @@ class PushService : Service() {
         super.onCreate()
         instance = this
         isRunning = true
+        // #1828: foreground FIRST. The channel is the only thing the notification needs; the WorkManager
+        // re-schedule waits until the start deadline is met.
+        Notifications.ensureChannels(this)
+        if (goForeground()) refreshBadge()
         // #1768: a held push connection triggers the full sync on each state change; the periodic run relaxes to a safety net.
         runCatching { app.sterna.mail.OfflineSyncWorker.ensureScheduled(this, hasPush = true) }
-        Notifications.ensureChannels(this)
-        // specialUse, not dataSync: Android 15+ budgets dataSync foreground services and then
-        // forcibly stops them, which silently killed push on newer devices (#11).
-        val type = FleetNotify.specialUseType()
-        // Android 15+ can refuse a foreground-service start outright, and the refusal lands HERE
-        // rather than at the caller's startForegroundService. Left to propagate it takes the process
-        // down, and the start being retried that is a crash loop (#98); swallowed,
-        // [MailFetchWorker] keeps mail flowing and the account screen reports "Periodic".
-        try {
-            FleetNotify.startKeepAlive(this, Notifications.SERVICE_ID, Notifications.serviceNotification(this), type)
-            refreshBadge()
-        } catch (e: RuntimeException) {
-            Log.w(TAG, "startForeground refused; fallback poll carries delivery", e)
-            stopSelf()
-        }
+    }
+
+    /**
+     * startForeground, answered for EVERY startForegroundService (#1828). The platform counts each such start: a start that
+     * reaches an already-running service only gets onStartCommand, and when that instance then stops (no account to watch,
+     * a refused start, a timeout) before calling startForeground again, Android kills the app with
+     * ForegroundServiceDidNotStartInTimeException (2026-11-20, build 6a800dacf5fd, a tap in Configs). Calling it again on a
+     * service that is already foreground is a cheap notification update.
+     *
+     * specialUse, not dataSync: Android 15+ budgets dataSync foreground services and then forcibly stops them, which
+     * silently killed push on newer devices (#11). Android 15+ can refuse a foreground-service start outright, and the
+     * refusal lands HERE rather than at the caller's startForegroundService. Left to propagate it takes the process down,
+     * and the start being retried that is a crash loop (#98); swallowed, [MailFetchWorker] keeps mail flowing and the
+     * account screen reports "Periodic".
+     */
+    private fun goForeground(): Boolean = try {
+        FleetNotify.startKeepAlive(this, Notifications.SERVICE_ID, Notifications.serviceNotification(this), FleetNotify.specialUseType())
+        true
+    } catch (e: RuntimeException) {
+        Log.w(TAG, "startForeground refused; fallback poll carries delivery", e)
+        stopSelf()
+        false
     }
 
     /** Android 15+ FGS timeout (belt: specialUse should never receive one). Stop gracefully
@@ -73,6 +84,8 @@ class PushService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        // #1828 every startForegroundService owes its own startForeground (see [goForeground]).
+        if (!goForeground()) return START_NOT_STICKY
         val gen = ++generation
         // A silent baseline reseed is allowed only on user-initiated arms, and even then only for
         // the inbox the user is looking at. Background re-arms must DIFF, or gap mail goes

@@ -278,6 +278,11 @@ class SternaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // #1828 the crash screen's own process (:crash, libs:crash) runs this Application too, but androidx.startup's
+        // InitializationProvider only runs in the main process, so WorkManager is not initialised there and AppContainer
+        // threw "WorkManager is not initialized properly" (2026-11-20): the crash screen crashed and the report was lost.
+        // That process shows the report and nothing else, so it builds nothing.
+        if (com.diegonmarcos.superapp.crash.CrashReports.isCrashProcess()) return
         container = AppContainer(this)
         // #1803 the compose recipient check answers from the fleet delivery API; its endpoints come from Cloud Account.
         app.sterna.fleet.FleetRecipientChecker.bind(this)
