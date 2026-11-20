@@ -64,14 +64,18 @@ jobs:
           adb shell pm grant "$PKG" android.permission.WRITE_SECURE_SETTINGS || true
           adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
           adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+          adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+          adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1 || true
           adb shell settings put global hide_error_dialogs 1 || true
           adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
           adb shell locksettings set-disabled true || true
-          awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; }
+          awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1 || true; }
+          awake; sleep 3; awake
           ACT=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
           adb shell am start -W -n "$PKG/.HomeActivity" >/dev/null; sleep 10; awake
           adb shell am start -n "$ACT" --es shortcut_action "page:config/panels-security" >/dev/null; awake; sleep 12
           adb exec-out screencap -p > out/01-security-tab.png
+          adb shell dumpsys activity activities | grep -E "topResumedActivity|mResumedActivity" > out/resumed.txt || true
           dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "out/$1.xml" >/dev/null 2>&1; }
           # find_tile <label> <name>: scroll until a tile whose description starts with <label> is on screen; prints "x y"
           find_tile() {
