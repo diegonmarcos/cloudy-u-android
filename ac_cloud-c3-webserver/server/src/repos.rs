@@ -321,7 +321,7 @@ impl Host {
             "mesh" => {
                 let m = cfg.mesh.clone().ok_or("this entry is exposed on the mesh but no mesh address is declared")?;
                 m.check_bind()?;
-                let bind = m.bind;
+                let bind = m.live_bind();
                 (bind, Arc::new(move |ip: IpAddr| m.is_mesh(ip)) as Arc<http::PeerCheck>)
             }
             other => return Err(format!("exposure {:?} is not loopback|mesh: a repo site is never public", other)),
@@ -478,7 +478,7 @@ pub fn terminal_ls(port: u16, full: &str, timeout: Duration) -> Result<(u16, Vec
 
 /// The URL a running entry is reachable at.
 pub fn url(cfg: &Cfg, e: &Entry) -> String {
-    let host = if e.exposure == "mesh" { cfg.mesh.as_ref().map(|m| m.bind.to_string()).unwrap_or_else(|| "127.0.0.1".to_string()) } else { "127.0.0.1".to_string() };
+    let host = if e.exposure == "mesh" { cfg.mesh.as_ref().map(|m| m.live_bind().to_string()).unwrap_or_else(|| "127.0.0.1".to_string()) } else { "127.0.0.1".to_string() };
     format!("http://{}:{}/", host, e.port)
 }
 

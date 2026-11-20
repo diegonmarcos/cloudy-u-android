@@ -6,7 +6,8 @@
 //! run against stubs.
 //!
 //! Exposure, fail closed (never public):
-//!   * it binds the phone's MESH address only (build.json::mesh.bind, resolved at build time from the WireGuard profile) and refuses to
+//!   * it binds the phone's MESH address only (#1834 the phone's own local address inside `mesh.cidrs`, read at bind time; build.json's
+//!     build-time mesh.bind is only the fallback) and refuses to
 //!     start unless that address lies inside `mesh.cidrs`; 0.0.0.0, loopback and any public address are refused;
 //!   * it answers only peers inside `mesh.cidrs`;
 //!   * EVERY path needs `Authorization: Bearer <fleet token>` (the token the SuperApp mints), compared in constant time; with no
@@ -110,6 +111,14 @@ impl Mesh {
         !ip.is_unspecified() && !ip.is_loopback() && !ip.is_multicast() && self.cidrs.iter().any(|c| cidr_contains(*c, ip))
     }
 
+    /// #1834 the address to bind NOW: the phone's OWN mesh address. `bind` is resolved at build time from ONE declared WireGuard
+    /// profile, so every phone's build carried that one phone's address (10.0.0.9) and a phone holding another mesh address
+    /// (10.0.0.10) retried a bind that could never succeed: its mesh API never came up. The first local IPv4 inside the mesh
+    /// subnets wins; the declared address is only the fallback. Never anything outside `cidrs`.
+    pub fn live_bind(&self) -> Ipv4Addr {
+        pick_bind(self.bind, &local_ipv4(), |ip| self.is_mesh(IpAddr::V4(ip)))
+    }
+
     /// The bind guard: refuse to start on anything that is not a mesh address.
     pub fn check_bind(&self) -> Result<(), String> {
         if self.is_mesh(IpAddr::V4(self.bind)) {
@@ -118,6 +127,33 @@ impl Mesh {
             Err(format!("mesh bind {} is not inside the mesh subnets {}: the mesh listener never binds anything else", self.bind, self.cidr_text()))
         }
     }
+}
+
+/// Pure: the bind address from the phone's local IPv4 addresses: the first one inside the mesh, else the declared one.
+pub fn pick_bind(declared: Ipv4Addr, local: &[Ipv4Addr], is_mesh: impl Fn(Ipv4Addr) -> bool) -> Ipv4Addr {
+    local.iter().copied().find(|ip| is_mesh(*ip)).unwrap_or(declared)
+}
+
+/// Every local IPv4 address of this device (getifaddrs); empty when the call fails.
+pub fn local_ipv4() -> Vec<Ipv4Addr> {
+    let mut out = Vec::new();
+    unsafe {
+        let mut ifap: *mut libc::ifaddrs = std::ptr::null_mut();
+        if libc::getifaddrs(&mut ifap) != 0 {
+            return out;
+        }
+        let mut p = ifap;
+        while !p.is_null() {
+            let a = (*p).ifa_addr;
+            if !a.is_null() && (*a).sa_family as i32 == libc::AF_INET {
+                let sin = &*(a as *const libc::sockaddr_in);
+                out.push(Ipv4Addr::from(u32::from_be(sin.sin_addr.s_addr)));
+            }
+            p = (*p).ifa_next;
+        }
+        libc::freeifaddrs(ifap);
+    }
+    out
 }
 
 fn ct_eq(a: &[u8], b: &[u8]) -> bool {
@@ -226,16 +262,18 @@ pub fn start(m: Mesh, stop: Arc<std::sync::atomic::AtomicBool>) -> Result<(), St
         if stop.load(std::sync::atomic::Ordering::SeqCst) {
             return;
         }
-        match TcpListener::bind((m.bind, m.port)) {
+        let addr = m.live_bind();
+        match TcpListener::bind((addr, m.port)) {
             Ok(l) => {
-                println!("c3-webserver mesh logs on http://{}:{}{}", m.bind, m.port, m.route);
+                println!("c3-webserver mesh logs on http://{}:{}{}", addr, m.port, m.route);
                 let mm = m.clone();
                 http::listen_with(l, handler, Arc::new(move |ip| mm.is_mesh(ip)), Some(stop.clone()));
                 return;
             }
-            // #1487 no tight loop while the tunnel is down: the wait doubles up to 30 minutes.
+            // #1487 no tight loop while the tunnel is down: the wait doubles, capped at 2 minutes (#1834: 30 minutes kept the mesh API
+            // dark for half an hour after the tunnel came back).
             Err(_) => {
-                std::thread::sleep(Duration::from_secs(m.retry_s.saturating_mul(1 << wait.min(6)).min(1800)));
+                std::thread::sleep(Duration::from_secs(m.retry_s.saturating_mul(1 << wait.min(6)).min(120)));
                 wait += 1;
             }
         }
@@ -394,5 +432,16 @@ mod tests {
         assert!(!ct_eq(b"abc", b"abd"));
         assert!(!ct_eq(b"abc", b"ab"));
         assert!(!ct_eq(b"", b"a"));
+    }
+
+    #[test]
+    fn the_bind_is_the_phones_own_mesh_address_not_the_declared_one() {
+        let mesh = |ip: Ipv4Addr| ip.octets()[0] == 10 && (ip.octets()[1] == 0 || ip.octets()[1] == 1);
+        let declared: Ipv4Addr = "10.0.0.9".parse().unwrap();
+        let a37 = ["127.0.0.1".parse().unwrap(), "192.168.1.20".parse().unwrap(), "10.0.0.10".parse().unwrap()];
+        assert_eq!(pick_bind(declared, &a37, mesh), "10.0.0.10".parse::<Ipv4Addr>().unwrap());
+        let down = ["127.0.0.1".parse().unwrap(), "192.168.1.20".parse().unwrap()];
+        assert_eq!(pick_bind(declared, &down, mesh), declared, "tunnel down: the declared address, whose bind then fails and retries");
+        assert!(!local_ipv4().is_empty(), "getifaddrs answers on the test host");
     }
 }

@@ -190,7 +190,7 @@ pub fn device_mesh_page(m: &Mesh, apps: &[App]) -> Value {
 }
 
 pub fn mesh_page(d: &Value, m: &Mesh, apps: &[App]) -> Value {
-    let base = format!("http://{}:{}", m.bind, m.port);
+    let base = format!("http://{}:{}", m.live_bind(), m.port);
     let mut head = vec![row(
         &format!("{}{}", base, m.route),
         vec!["GET".into(), "Bearer".into(), "mesh only".into()],
