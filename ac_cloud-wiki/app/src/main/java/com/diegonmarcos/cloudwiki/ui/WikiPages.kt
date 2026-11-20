@@ -50,6 +50,9 @@ import com.diegonmarcos.superapp.graphview.GEdge
 import com.diegonmarcos.superapp.graphview.GraphView
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
 import com.diegonmarcos.cloudwiki.Decl
+import com.diegonmarcos.cloudwiki.chronosTabOf
+import com.diegonmarcos.cloudwiki.chronosTabs
+import com.diegonmarcos.cloudwiki.Chronos
 import com.diegonmarcos.superapp.uikit.KitStoreCaption
 import com.diegonmarcos.superapp.uikit.KitStoreDot
 import com.diegonmarcos.superapp.uikit.KitStoreName
@@ -72,8 +75,10 @@ class WikiNav {
 @Composable
 fun WikiPage(data: WikiData?, wiki: NavSection, pageId: String, nav: WikiNav, onTopic: (String) -> Unit) {
     val p = LocalKitPalette.current
-    // #1789 a Chronos page is baked into the APK: it shows whether or not Cloud Store has served the dataset yet
-    Decl.chronos.page(pageId)?.let { ChronosSimPage(Decl.chronos, it, onOpen = onTopic); return }
+    // #1789 a Chronos page is the repo's (#1830 runtime clone, else baked): it shows whether or not Cloud Store has served the dataset yet.
+    // #1831 the Chronos topic and its simulators are one page: the era pages and the simulators are its tabs.
+    val sim = Decl.chronos.page(pageId)
+    if (sim != null || (pageId == Chronos.PARENT && Decl.chronos.root != null)) { ChronosTopic(data, sim, nav, onTopic); return }
     if (data == null || data.topics.isEmpty()) {
         KitStoreCaption(stringResource(R.string.loading), Modifier.fillMaxWidth().padding(KitStoreRow.padH).testTag(Tags.LOADING), color = p.textSecondary, align = TextAlign.Center)
         return
@@ -95,6 +100,41 @@ fun WikiPage(data: WikiData?, wiki: NavSection, pageId: String, nav: WikiNav, on
         val page = data.page(tab)
         if (page == null) Overview(data, topic.intro, topic.pages, nav, open)
         else Article(data, page, nav, open, goOverview = { nav.tabs[topic.id] = WikiNav.OVERVIEW })
+    }
+}
+
+/**
+ * #1831 the Chronos topic: ONE tab row, Overview and its era pages (the dataset), then | the simulators of lib-chronos ([chronosTabs]);
+ * a simulator tab shows the simulator (its own sub-pages as a second row), any other tab the dataset page as every topic does.
+ */
+@Composable
+private fun ChronosTopic(data: WikiData?, sim: com.diegonmarcos.cloudwiki.ChronosPage?, nav: WikiNav, onTopic: (String) -> Unit) {
+    val p = LocalKitPalette.current
+    val tree = Decl.chronos
+    val topic = data?.topic(Chronos.PARENT)
+    val tab = chronosTabOf(tree, sim?.id)
+        ?: nav.tabs[Chronos.PARENT]?.takeIf { t -> t == WikiNav.OVERVIEW || topic?.pages?.any { it.id == t } == true }
+        ?: WikiNav.OVERVIEW
+    val overview = stringResource(R.string.overview)
+    Column(Modifier.fillMaxSize().testTag(Tags.PAGE)) {
+        NavBarTopSecondRow(
+            pages = listOf(NavPage(WikiNav.OVERVIEW, overview, "menu_book")) + topic?.pages.orEmpty().map { NavPage(it.id, it.title, "description") } + chronosTabs(tree),
+            selectedId = tab,
+            onSelect = { t -> if (tree.page(t.id) != null) onTopic(t.id) else { nav.tabs[Chronos.PARENT] = t.id; onTopic(Chronos.PARENT) } },
+            modifier = Modifier.testTag(Tags.TABS),
+            underTopChrome = false,
+        )
+        when {
+            sim != null -> ChronosSimPage(tree, sim, onOpen = onTopic)
+            data == null || topic == null ->
+                KitStoreCaption(stringResource(R.string.loading), Modifier.fillMaxWidth().padding(KitStoreRow.padH).testTag(Tags.LOADING), color = p.textSecondary, align = TextAlign.Center)
+            else -> {
+                val open: (String) -> Unit = { id -> data.page(id)?.let { pg -> nav.tabs[pg.topic] = pg.id; onTopic(pg.topic) } }
+                val page = data.page(tab)
+                if (page == null) Overview(data, topic.intro, topic.pages, nav, open)
+                else Article(data, page, nav, open, goOverview = { nav.tabs[topic.id] = WikiNav.OVERVIEW })
+            }
+        }
     }
 }
 

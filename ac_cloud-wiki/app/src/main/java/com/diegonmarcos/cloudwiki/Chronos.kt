@@ -81,14 +81,21 @@ object Chronos {
 }
 
 /**
- * #1830 the side menu's wiki section with the Chronos pages of [tree] (the runtime clone, or the baked copy) under [Chronos.PARENT]:
- * the declaration's other pages and groups are untouched; only the Chronos page's nested pages follow the repo.
+ * #1831 the side menu's wiki section: Chronos is ONE entry, like every other topic. Its simulators (the runtime clone's tree, or the baked
+ * copy's) are not side-menu children any more (the collapsed rail drew them as siblings of the topics, "Hum" twice): they are the
+ * Chronos topic's own top tabs ([chronosTabs]), after its era pages. The declaration's other pages and groups are untouched.
  */
-fun withChronos(section: com.diegonmarcos.superapp.bottomnav.NavSection, tree: ChronosTree): com.diegonmarcos.superapp.bottomnav.NavSection {
-    if (tree.root == null) return section
-    fun nav(p: ChronosPage): com.diegonmarcos.superapp.bottomnav.NavPage =
-        com.diegonmarcos.superapp.bottomnav.NavPage(p.id, p.label, p.icon, pages = p.children.mapNotNull { tree.page(it) }.map(::nav))
-    // #1831 flat under the Chronos topic: every top-level page of the tree (the root first), deeper pages nested under their section
-    val top = tree.pages.filter { it.parent == null }.map(::nav)
-    return section.copy(pages = section.pages.map { if (it.id == Chronos.PARENT) it.copy(pages = top) else it })
-}
+fun withChronos(section: com.diegonmarcos.superapp.bottomnav.NavSection, @Suppress("UNUSED_PARAMETER") tree: ChronosTree): com.diegonmarcos.superapp.bottomnav.NavSection =
+    section.copy(pages = section.pages.map { if (it.id == Chronos.PARENT) it.copy(pages = emptyList()) else it })
+
+/**
+ * #1831 the Chronos topic's top tabs after its dataset pages: the simulators of [tree] (the repo's root page "All cycles" and its
+ * sections, in repo order), the first one after a group separator. A section's own sub-pages (Quantum Cycles) are its second row.
+ */
+fun chronosTabs(tree: ChronosTree): List<com.diegonmarcos.superapp.bottomnav.NavPage> =
+    tree.pages.filter { it.parent == null }.mapIndexed { i, p ->
+        com.diegonmarcos.superapp.bottomnav.NavPage(p.id, p.label, p.icon, separatorBefore = i == 0)
+    }
+
+/** #1831 the simulator tab a page sits under: the top of its path (Quantum Gravity Cycle -> Quantum Cycles). */
+fun chronosTabOf(tree: ChronosTree, id: String?): String? = tree.path(id).firstOrNull()?.id

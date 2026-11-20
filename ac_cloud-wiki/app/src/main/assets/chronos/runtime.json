@@ -57,22 +57,22 @@
     "modes": [
       {
         "id": "manual",
-        "label": "Manual (Refresh button only)",
+        "label": "Manual",
         "max_age_minutes": -1
       },
       {
         "id": "on_open",
-        "label": "Every time Chronos opens",
+        "label": "Every open",
         "max_age_minutes": 0
       },
       {
         "id": "every_6h",
-        "label": "Every 6 hours",
+        "label": "Every 6 h",
         "max_age_minutes": 360
       },
       {
         "id": "daily",
-        "label": "Once a day",
+        "label": "Daily",
         "max_age_minutes": 1440
       }
     ]

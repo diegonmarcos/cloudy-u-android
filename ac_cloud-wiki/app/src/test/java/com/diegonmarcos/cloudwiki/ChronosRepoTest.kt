@@ -67,21 +67,27 @@ class ChronosRepoTest {
         assertEquals("A & B", ChronosRepo.titleOf("<title>A &amp;\n  B</title>"))
     }
 
-    @Test fun theSideMenuFollowsTheClone() {
+    /** #1831 Chronos is ONE side-menu entry; its simulators (from the clone) are its tabs, after a separator; Quantum's pages are its second row. */
+    @Test fun chronosIsOneMenuEntryAndItsSimulatorsAreItsTabs() {
         val section = NavSection("wiki", "Wiki", "menu", pages = listOf(
             NavPage("math", "Math", "functions"),
             NavPage(Chronos.PARENT, "Chronos", "timeline", pages = listOf(NavPage("old", "Old", "x"))),
         ))
         val tree = ChronosTree(listOf(
-            ChronosPage("chronos.lib", "Root", "timeline", "Chronos/index.html", null, listOf("chronos.lib.9")),
-            ChronosPage("chronos.lib.9", "New page", "description", "Chronos/9.New/index.html", "chronos.lib", emptyList()),
+            ChronosPage("chronos.lib", "All cycles", "timeline", "Chronos/index.html", null, emptyList()),
+            ChronosPage("chronos.lib.3", "Quantum Cycles", "hub", "Chronos/3.Q/index.html", null, listOf("chronos.lib.3.1")),
+            ChronosPage("chronos.lib.3.1", "Quantum Gravity Cycle", "x", "Chronos/3.Q/3.1.G/index.html", "chronos.lib.3", emptyList()),
+            ChronosPage("chronos.lib.9", "New page", "description", "Chronos/9.New/index.html", null, emptyList()),
         ))
         val out = withChronos(section, tree)
-        assertEquals("math", out.pages[0].id)
-        val chronos = out.pages.first { it.id == Chronos.PARENT }
-        assertEquals(listOf("chronos.lib"), chronos.pages.map { it.id })
-        assertEquals(listOf("chronos.lib.9"), chronos.pages[0].pages.map { it.id })
-        assertEquals("New page", chronos.pages[0].pages[0].label)
+        assertEquals(listOf("math", Chronos.PARENT), out.pages.map { it.id })
+        assertTrue("no simulator in the side menu", out.pages.first { it.id == Chronos.PARENT }.pages.isEmpty())
+        val tabs = chronosTabs(tree)
+        assertEquals(listOf("chronos.lib", "chronos.lib.3", "chronos.lib.9"), tabs.map { it.id })
+        assertEquals(listOf(true, false, false), tabs.map { it.separatorBefore })
+        assertEquals("New page", tabs.last().label)
+        assertEquals("a deep page sits under its section's tab", "chronos.lib.3", chronosTabOf(tree, "chronos.lib.3.1"))
+        assertEquals(null, chronosTabOf(tree, "math"))
     }
 
     @Test fun theCloneIsReadOnlyAndServedSafely() {

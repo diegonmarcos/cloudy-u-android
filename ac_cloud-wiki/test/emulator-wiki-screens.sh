@@ -47,8 +47,8 @@ wiki --es page math --es tags history,society;        shot wiki-tag-filter 9
 wiki --es page math;                                  shot wiki-overview 9
 wiki --es page graph;                                 shot wiki-graph 20
 dump > "$OUT/wiki-graph.xml"
-# #1789 the Chronos pages: the section root, the side menu expanded over it, and a deep simulator (the app has no network permission, so
-# what renders is the APK's own copy)
+# #1789 the Chronos pages: the section root, the side menu expanded over it, and a deep simulator (#1830 served from the app's own clone
+# of lib-chronos once it has cloned, else the APK's own copy)
 wiki --es page chronos.lib;                           shot wiki-chronos 15
 dump > "$OUT/wiki-chronos.xml"
 # tap the side menu's toggle as a dump shows it (the expanded state is a saved preference, so it is tapped again to put the rail back)
@@ -56,6 +56,9 @@ toggle() { local tb; tb=$(grep -o 'resource-id="navside_toggle"[^>]*bounds="\[[0
   [ -n "$tb" ] || { echo "no navside_toggle in $1"; return 1; }; set -- $tb; adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 )); }
 if toggle "$OUT/wiki-chronos.xml"; then shot wiki-chronos-menu 4; dump > "$OUT/wiki-chronos-menu.xml"; toggle "$OUT/wiki-chronos-menu.xml"; sleep 2
 else echo "wiki-chronos-menu not captured"; fi
+# #1831 the Chronos topic: ONE side-menu entry, its era pages and then | the simulators as its tab row
+wiki --es page chronos;                               shot wiki-chronos-topic 15
+dump > "$OUT/wiki-chronos-topic.xml"
 wiki --es page chronos.lib.3.1;                       shot wiki-chronos-deep 20
 dump > "$OUT/wiki-chronos-deep.xml"
 adb logcat -d | grep -E "chromium|CloudWeb|Console" | tail -200 > "$OUT/wiki-chronos-webview.txt" || true

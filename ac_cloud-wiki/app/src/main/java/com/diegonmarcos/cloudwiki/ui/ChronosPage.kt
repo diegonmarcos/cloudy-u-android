@@ -220,11 +220,13 @@ private fun ChronosSourceBar(
     var menu by remember { mutableStateOf(false) }
     val source = if (repo.sha != null) {
         val at = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(repo.at))
-        stringResource(R.string.chronos_source_clone, runtime.repo, runtime.ref, repo.sha.take(8), at)
-    } else stringResource(R.string.chronos_source_baked, runtime.repo)
-    Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp).testTag(Tags.CHRONOS_SOURCE)) {
+        stringResource(R.string.chronos_source_clone, runtime.repo.substringAfter('/'), runtime.ref, repo.sha.take(7), at)
+    } else stringResource(R.string.chronos_source_baked, runtime.repo.substringAfter('/'))
+    Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp).testTag(Tags.CHRONOS_SOURCE)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(source, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            // #1831 one line: the bar must not push the page down (it wrapped to four lines)
+            Text(source, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
+                maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             Box {
                 SourceChip(mode.label, Tags.CHRONOS_MODE) { menu = true }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {

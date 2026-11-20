@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import com.diegonmarcos.cloudwiki.Chronos
 import com.diegonmarcos.cloudwiki.ChronosRepo
 import com.diegonmarcos.cloudwiki.Decl
 import com.diegonmarcos.cloudwiki.withChronos
@@ -76,7 +77,9 @@ fun WikiShell(start: WikiStart = WikiStart()) {
     val wiki = remember(repo.tree) { withChronos(declared, Decl.chronos) }
     var page by rememberSaveable { mutableStateOf(start.page ?: start.tab?.substringBefore('.')) }
     val nav = remember { WikiNav().also { n -> start.tab?.let { t -> n.tabs[t.substringBefore('.')] = t }; n.tags.addAll(start.tags) } }
-    val pageId = page?.takeIf { p -> wiki.allPages().any { it.id == p } } ?: wiki.pages.first().id
+    // #1831 a simulator page is a tab of the Chronos topic: the side menu marks Chronos, the title names the simulator
+    val pageId = page?.takeIf { p -> wiki.allPages().any { it.id == p } || Decl.chronos.page(p) != null } ?: wiki.pages.first().id
+    val menuId = if (Decl.chronos.page(pageId) != null) Chronos.PARENT else pageId
 
     Box(
         Modifier.fillMaxSize().themeBackground(dark = true)
@@ -84,8 +87,8 @@ fun WikiShell(start: WikiStart = WikiStart()) {
     ) {
         NavBarTopFirstRowScaffold(
             // a nested page (a Chronos page) titles itself like a topic: its declared label
-            title = wiki.allPages().firstOrNull { it.id == pageId }?.label ?: stringResource(R.string.app_name),
-            hierarchy = titleHierarchy(wiki, pageId),
+            title = Decl.chronos.page(pageId)?.label ?: wiki.allPages().firstOrNull { it.id == pageId }?.label ?: stringResource(R.string.app_name),
+            hierarchy = titleHierarchy(wiki, menuId),
             // #1483 every declared section is a peer in the title dropdown: a user reaches every page from it
             sections = Decl.nav.sections,
             onNavigate = { e -> if (e.depth > 0) page = e.id },
@@ -94,7 +97,7 @@ fun WikiShell(start: WikiStart = WikiStart()) {
             dark = true,
         ) {
             NavSectionLayout(
-                wiki, pageId,
+                wiki, menuId,
                 onSelect = { page = it.id },
                 modifier = Modifier.fillMaxSize().testTag(Tags.MENU),
             ) {
