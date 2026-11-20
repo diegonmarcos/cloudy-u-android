@@ -439,6 +439,9 @@ class ControlFragment : KitComposeFragment() {
     /** A read came back. This is the ONLY writer of a control's reading, and it writes the one entry EVERY tile bearing the id reads. */
     private fun landed(id: String, state: Boolean?, blocked: String, detail: String = "") {
         readings[id] = Reading(state, SystemClock.elapsedRealtime(), blocked, detail)
+        // #1833 the Security tab's readings, one line each, exactly as the tile is painted: the emulator proof compares them with
+        // adb's ground truth without a uiautomator dump (a UiAutomation connection suppresses the accessibility services it checks).
+        if (tab == DeviceControls.TAB_SECURITY) android.util.Log.i(LOG_TAG, "tile $id state=$state blocked=${blocked.isNotEmpty()} detail=$detail")
     }
 
     /**
@@ -552,6 +555,9 @@ class ControlFragment : KitComposeFragment() {
         /** The floor for a whole tile, badge and label together. Android's accessibility minimum is 48dp in both
          *  directions and a grid of tiles below it is a grid that gets mis-tapped. */
         private const val TOUCH_TARGET_DP = 48
+
+        /** #1833 logcat tag of the Security tab's landed readings (the emulator proof reads it). */
+        const val LOG_TAG = "C3SecurityTile"
 
         private const val ARG_EMBEDDED = "embedded"
         private const val ARG_TAB = "tab"

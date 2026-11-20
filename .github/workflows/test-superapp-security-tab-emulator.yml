@@ -1,5 +1,8 @@
 # #1833 Quick actions > Panels > Security on an emulator, with the x86_64 APK a Ship Cloud SuperApp run built. For EVERY Security tile
-# the job records the tile's state from the UI (found by its id, control:tile:<id>, with test tags exposed as resource ids) and the
+# the job records the tile's state from the UI (the reading the tile is painted from, logged by ControlFragment.landed under
+# C3SecurityTile, read after a quiet period with no uiautomator connected: a UiAutomation connection suppresses every
+# accessibility service, so a dump-time read of an accessibility tile would be Off by construction; the drawn tiles are also dumped,
+# found by id, control:tile:<id>, with test tags exposed as resource ids) and the
 # ground truth read with adb (settings get global / secure, dumpsys accessibility enabled / binding / crashed services, dumpsys
 # window overlay titles, cmd location, the VPN networks of dumpsys connectivity, pm for the verifier and the ADB owner), and writes
 # a per-tile table with MATCH / MISMATCH. Three passes:
@@ -28,7 +31,7 @@ permissions:
 jobs:
   page:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 75
     steps:
       - name: Fetch the Cloud SuperApp APK
         env:
@@ -76,17 +79,30 @@ jobs:
           for f in sys.argv[2:]:
               try: xml = open(f, errors="replace").read()
               except OSError: continue
-              for m in re.finditer(r'<node [^>]*>', xml):
-                  n = m.group(0)
+              nodes = [m.group(0) for m in re.finditer(r'<node [^>]*>', xml)]
+              for k, n in enumerate(nodes):
                   rid = re.search(r'resource-id="control:tile:([^"]+)"', n)
                   if not rid: continue
-                  d = html.unescape((re.search(r'content-desc="([^"]*)"', n) or [None, ""])[1] or "")
+                  # the description sits on the tile node or its first described descendant (the merged semantics node)
+                  d = ""
+                  for c in nodes[k:k + 4]:
+                      dm = re.search(r'content-desc="([^"]+)"', c)
+                      if dm: d = html.unescape(dm.group(1)); break
                   b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
                   st = next((s for s in STATES if re.search(r': %s(?: · |$)' % re.escape(s), d)), "?")
                   x1, y1, x2, y2 = map(int, b.groups()) if b else (0, 0, 0, 0)
                   out[html.unescape(rid.group(1))] = {"state": st, "desc": d, "x": (x1 + x2) // 2, "y": (y1 + y2) // 2, "file": f}
           json.dump(out, open(sys.argv[1], "w"), indent=1, ensure_ascii=False)
           EOF2
+          cat > readings.py <<'EOF5'
+          import json, re, sys
+          # The last landed reading per tile from `logcat -s C3SecurityTile` (argv[2]) into argv[1]: id -> {state, desc}.
+          out = {}
+          for line in open(sys.argv[2], errors="replace"):
+              m = re.search(r'tile (\S+) state=(true|false|null) blocked=(\S+) detail=(.*)$', line.rstrip('\n'))
+              if m: out[m.group(1)] = {"state": {"true": "On", "false": "Off", "null": "Unknown"}[m.group(2)], "desc": "x · " + m.group(4)}
+          json.dump(out, open(sys.argv[1], "w"), indent=1, ensure_ascii=False)
+          EOF5
           cat > a11y.py <<'EOF3'
           import re, sys
           # Accessibility ground truth from `dumpsys accessibility` (argv[1]) and the installed services (argv[2], query-services):
@@ -145,6 +161,12 @@ jobs:
             done
             python3 tiles.py "out/$1-tiles.json" $files
             top
+          }
+          # readings <name>: no uiautomator for a quiet minute, then the tiles' landed readings from logcat into out/<name>-tiles.json
+          readings() {
+            sleep 20; adb logcat -c; sleep 24
+            adb logcat -d -s C3SecurityTile:I > "out/$1-readings.txt" 2>&1
+            python3 readings.py "out/$1-tiles.json" "out/$1-readings.txt"
           }
           # tap_tile <id>: scroll until the tile is on screen, tap its centre
           tap_tile() {
@@ -210,7 +232,7 @@ jobs:
             if [ "${f:-0}" -gt 0 ]; then printf 'floating_nav\tOn\tdumpsys window over Settings: %s lines name c3-floating-nav\n' "$f" >> "$g"
             else printf 'floating_nav\tOff\tdumpsys window over Settings: no c3-floating-nav window\n' >> "$g"; fi
             adb shell dumpsys connectivity > "out/$1-dumpsys-connectivity.txt" 2>&1
-            if grep -qE 'Transports: [A-Z|]*VPN|VPN CONNECTED' "out/$1-dumpsys-connectivity.txt"; then printf 'vpn\t?\tdumpsys connectivity: a VPN network exists (its owner is not checked here)\n' >> "$g"
+            if grep -E 'NetworkAgentInfo' "out/$1-dumpsys-connectivity.txt" | grep -qE 'Transports: ([A-Z_]+\|)*VPN'; then printf 'vpn\t?\tdumpsys connectivity: a VPN network exists (its owner is not checked here)\n' >> "$g"
             else printf 'vpn\tOff\tdumpsys connectivity: no VPN network, the mesh tunnel is down\n' >> "$g"; fi
             loc=$(adb shell cmd location is-location-enabled 2>&1 | tr -d '\r')
             if [ "$loc" = true ]; then printf 'location\tOn\tcmd location is-location-enabled=true\n' >> "$g"
@@ -242,7 +264,8 @@ jobs:
           sys.exit(1 if bad else 0)
           PY
           }
-          pass_() { openpage; sleep 12; collect "$1"; ground "$1"; sleep 4; collect "$1"; table "$1" || FAIL=1; }
+          # a pass: the drawn page is dumped (evidence, every tile on it), then the truth, then the readings with no uiautomator connected
+          pass_() { openpage; sleep 12; collect "$1-drawn"; ground "$1"; readings "$1"; table "$1" || FAIL=1; }
 
           adb exec-out screencap -p > out/00-home.png
           openpage; sleep 12; adb exec-out screencap -p > out/01-security-tab.png
@@ -260,7 +283,7 @@ jobs:
             ground "b-$1"; before_t=$(grep -P "^$1\t" "out/b-$1-truth.tsv" | cut -f2)
             tap_tile "$1"; sleep 9; awake; unsaver
             adb exec-out screencap -p > "out/toggle-$1.png"
-            ground "t-$1"; sleep 4; collect "t-$1"
+            ground "t-$1"; readings "t-$1"
             after_t=$(grep -P "^$1\t" "out/t-$1-truth.tsv" | cut -f2)
             after_u=$(python3 -c "import json;print(json.load(open('out/t-$1-tiles.json')).get('$1',{}).get('state','MISSING'))")
             moved=no; [ "$before_t" != "$after_t" ] && moved=yes
@@ -269,10 +292,10 @@ jobs:
             if [ "$moved" != yes ] || [ "$ok" != MATCH ]; then FAIL=1; fi
           }
           toggle developer_options
-          toggle access_superapp
           toggle access_others
           toggle edge_menus
           toggle floating_nav
+          toggle access_superapp   # last: with the SuperApp's own service bound the Compose tree no longer reaches a dump
 
           # 3) final: every tile after the toggles
           pass_ final
