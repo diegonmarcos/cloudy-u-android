@@ -89,7 +89,7 @@ class SettingsTreeParityTest {
         val registered = Regex("""composable\("([^"]+)"\)""").findAll(sources).map { it.groupValues[1] }.toList()
         val matchers = registered.map { r -> Regex("^" + r.split(Regex("""\{[^}]+\}""")).joinToString("[^/]+") { Regex.escape(it) } + "$") }
         val dangling = SETTINGS_TREE.asSequence().flatMap { it.walk() }
-            .filter { it.kind != TreeKind.URL && it.kind != TreeKind.INLINE }
+            .filter { it.kind != TreeKind.URL && it.kind != TreeKind.INLINE && it.kind != TreeKind.SELECTOR }
             .map { it.route }.filter { r -> matchers.none { it.matches(r) } }.toList()
         assertEquals("tree routes with no composable()", emptyList<String>(), dangling)
         for (r in oldRoutes) assertTrue("the old route '$r' is no longer registered", r in registered)
@@ -123,13 +123,14 @@ class SettingsTreeParityTest {
     @Test
     fun `accounts sub-pages are Server, Signatures, Folders, Filter, Vacation Answer, Others`() {
         val accounts = SETTINGS_TREE.first { it.id == "accounts" }
-        assertEquals(listOf("server", "signatures", "folders", "filter", "vacation", "accountsOthers"), accounts.children.map { it.id })
+        // #1828 the account selector is the first row; the six sub-pages follow it, unchanged.
+        assertEquals(listOf("accountSelector", "server", "signatures", "folders", "filter", "vacation", "accountsOthers"), accounts.children.map { it.id })
         val strings = File(RES, "values/strings.xml").readText()
         assertEquals(
             listOf("Server", "Signatures", "Folders", "Filter", "Vacation Answer", "Others"),
             listOf("settings_tree_server", "settings_tree_signatures", "settings_tree_folders", "settings_tree_filter", "settings_vacation_title", "settings_tree_others").map { stringOf(strings, it) },
         )
-        assertEquals(accounts.children.map { it.title }, listOf(R.string.settings_tree_server, R.string.settings_tree_signatures, R.string.settings_tree_folders, R.string.settings_tree_filter, R.string.settings_vacation_title, R.string.settings_tree_others))
+        assertEquals(accounts.children.drop(1).map { it.title }, listOf(R.string.settings_tree_server, R.string.settings_tree_signatures, R.string.settings_tree_folders, R.string.settings_tree_filter, R.string.settings_vacation_title, R.string.settings_tree_others))
         // Others holds what fits none of the first five: the accounts list (shared accounts, per-account notifications), add account, Alert accounts, per-account settings
         assertEquals(setOf("accounts", "addAccount", "alertAccounts", "accountPage/others"), accounts.children.last().children.map { it.route }.toSet())
     }
@@ -141,7 +142,61 @@ class SettingsTreeParityTest {
         val app = SETTINGS_TREE.first { it.id == "app" }.children.map { it.route }
         assertEquals(listOf("notifications", "privacy", "storage", "backup", "update"), app.take(5))
         assertEquals(oldFleetPages.map { "fleet/$it" }, app.filter { it.startsWith("fleet/") })
-        assertEquals(listOf("url:version", "url:source", "url:license", "url:author"), app.filter { it.startsWith("url:") })
+        // #1828 the app's own About rows now live on the ONE About page (fleet/about), drawn above the fleet's About body.
+        val about = SETTINGS_TREE.first { it.id == "app" }.children.first { it.route == "fleet/about" }
+        assertEquals(listOf("url:version", "url:source", "url:license", "url:author"), about.children.map { it.route })
+        assertEquals(about.children, ABOUT_ROWS)
+        assertTrue("App lists no About row of its own any more", app.none { it.startsWith("url:") })
+        val tree = TREE.readText()
+        assertTrue("the About page draws the app rows", tree.contains("if (id == \"about\") {") && tree.contains("ABOUT_ROWS.forEach { AboutRow(it)"))
+    }
+
+    // --- #1828 the unfolded hub, the account selector, Navigation in the page's style ------------------------------------------
+
+    @Test
+    fun `the hub is unfolded - every section is a heading named after it with its pages as rows`() {
+        val tree = TREE.readText()
+        val hub = tree.substring(tree.indexOf("internal fun SettingsTreePage("), tree.indexOf("internal fun accountRouteFor("))
+        assertTrue(hub.contains("SETTINGS_TREE.forEach { section ->"))
+        assertTrue(hub.contains("SettingsSection(stringResource(section.title)) {"))
+        assertTrue("a nested section is a sub-heading with its rows", hub.contains("SettingsSection(stringResource(child.title)) { child.children.forEach { row(it) } }"))
+        assertTrue("section pages still draw their groups", hub.contains("\"configs\" -> stringResource(R.string.settings_tree_configs)"))
+        assertTrue("tree/<id> pages stay registered", tree.contains("composable(\"tree/{section}\")"))
+    }
+
+    @Test
+    fun `account pages open the selected account, the picker only when none is selected`() {
+        val a = app.sterna.core.data.account.StoredAccount(id = "a1", server = "s", username = "me@x.example")
+        val server = SETTINGS_TREE.first { it.id == "accounts" }.children.first { it.id == FOCUS_SERVER }
+        assertEquals("accountFocus/$FOCUS_SERVER/a1", accountRouteFor(server, "a1", listOf(a)))
+        assertEquals("no account selected: the picker", "accountPage/$FOCUS_SERVER", accountRouteFor(server, null, listOf(a)))
+        assertEquals("a stale selection: the picker", "accountPage/$FOCUS_SERVER", accountRouteFor(server, "gone", listOf(a)))
+        val filter = SETTINGS_TREE.first { it.id == "accounts" }.children.first { it.id == "filter" }
+        assertEquals("a non-account page keeps its route", "filters", accountRouteFor(filter, "a1", listOf(a)))
+        assertTrue("the picker route is still registered", TREE.readText().contains("composable(\"accountPage/{focus}\")"))
+    }
+
+    @Test
+    fun `the selector picks the current account and offers Add account and Manage accounts`() {
+        val tree = TREE.readText()
+        val sel = tree.substring(tree.indexOf("private fun AccountSelectorRow("), tree.indexOf("private fun NavigationModeRows("))
+        assertTrue(sel.contains("onSelect(a.id)"))
+        assertTrue(sel.contains("onOpen(\"addAccount\")"))
+        assertTrue(sel.contains("onOpen(\"accounts\")"))
+        assertTrue(tree.contains("onSelectAccount = { id -> accountsViewModel.switchTo(id); onAccountsChanged() }"))
+    }
+
+    @Test
+    fun `Navigation is drawn with the page's own rows, every option and the default kept`() {
+        val tree = TREE.readText()
+        val nav = tree.substring(tree.indexOf("private fun NavigationModeRows("))
+        assertTrue("the fleet card (its own palette) is no longer drawn here", "NavModeConfigCard(" !in tree.lines().filterNot { it.trim().startsWith("*") || it.trim().startsWith("//") }.joinToString("\n"))
+        assertTrue(nav.contains("SettingChoiceRow("))
+        assertTrue("all three modes", nav.contains("options = SecondRowMode.entries"))
+        assertTrue("the declared one is marked", nav.contains("if (m == declared) \" ($default)\""))
+        assertTrue("choosing the default clears the override", nav.contains("store.setMode(section.id, if (m == declared) null else m)"))
+        assertTrue("the same sections the card offered", nav.contains("it.allPages().size > 1 || it.id in NAV_DYNAMIC_SECTIONS"))
+        assertEquals(setOf("mail"), NAV_DYNAMIC_SECTIONS)
     }
 
     /** The fleet pages are the lib's own: General plus FleetConfigsExtensions.TAIL_IDS, drawn through the lib's page body (no copy). */

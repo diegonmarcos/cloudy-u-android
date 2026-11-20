@@ -1582,5 +1582,11 @@
     <string name="settings_tree_others">Другое</string>
     <string name="settings_tree_account_settings">Настройки аккаунта</string>
     <string name="settings_tree_pick_account">Выберите аккаунт</string>
+    <string name="settings_tree_account_selector">Аккаунт</string>
+    <string name="settings_tree_account_selector_none">Аккаунтов пока нет: добавьте</string>
+    <string name="settings_tree_manage_accounts">Управление аккаунтами</string>
+    <string name="settings_tree_close">Закрыть</string>
+    <string name="settings_navigation_child_pages">Навигация по подстраницам</string>
+    <string name="settings_navigation_default">по умолчанию</string>
     <string name="settings_tree_configs">Конфигурация</string>
 </resources>

@@ -16,6 +16,8 @@ public object FleetLogExport {
         val health: String,
         val errorsOnly: Boolean,
         val lines: List<String>,
+        /** #1828 the page's filter when the snapshot was taken ([LogcatFilter.describe]); "" = no filter. */
+        val filter: String = "",
     )
 
     /** A `MM-DD HH:MM:SS.mmm UID PID TID L TAG: msg` record split into the parts the exporters group by. */
@@ -62,7 +64,7 @@ public object FleetLogExport {
  .l-error .v,.l-fatal .v{color:#f85149}.l-warn .v{color:#d29922}.l-info .v{color:#3fb950}
 </style></head><body>
 <header><h1>Logcat — ${esc(s.app)}</h1>
-<div class="meta">${esc(s.pkg)} · build ${esc(s.sha.ifBlank { "local" })} · ${esc(s.capturedAt)} · ${s.lines.size} line(s)${if (s.errorsOnly) " · errors only" else ""}</div>
+<div class="meta">${esc(s.pkg)} · build ${esc(s.sha.ifBlank { "local" })} · ${esc(s.capturedAt)} · ${s.lines.size} line(s)${if (s.errorsOnly) " · errors only" else ""}${if (s.filter.isNotBlank()) " · filter: " + esc(s.filter) else ""}</div>
 <div class="meta">${esc(s.health)}</div></header>
 <table>
 $rows
@@ -85,6 +87,7 @@ $rows
             append("- lines: ").append(s.lines.size)
             if (s.errorsOnly) append(" (errors only)")
             append('\n')
+            if (s.filter.isNotBlank()) append("- filter: ").append(s.filter).append('\n')
         }
         val body = s.lines.joinToString("\n") {
             val r = parse(it)

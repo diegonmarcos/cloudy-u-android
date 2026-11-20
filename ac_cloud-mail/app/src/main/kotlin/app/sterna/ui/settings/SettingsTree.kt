@@ -2,6 +2,21 @@ package app.sterna.ui.settings
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -49,7 +64,11 @@ import app.sterna.ui.navigateOnce
 import app.sterna.ui.rememberLeaveOnce
 import app.sterna.ui.theme.LocalSternaDarkTheme
 import app.sterna.ui.theme.MailMetrics
+import com.diegonmarcos.superapp.bottomnav.LocalNavModeStore
 import com.diegonmarcos.superapp.bottomnav.NavPage
+import com.diegonmarcos.superapp.bottomnav.SecondRowMode
+import com.diegonmarcos.superapp.bottomnav.rememberNavModePrefs
+import com.diegonmarcos.superapp.navbartop2.navModeLabel
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody
 import com.diegonmarcos.superapp.fleetconfigs.isFleetConfigsPage
@@ -75,6 +94,8 @@ internal enum class TreeKind {
     URL,
     /** Content drawn in place on the page (the Navigation card). */
     INLINE,
+    /** #1828 the account selector row: which account every account page of the tree opens; it also adds and manages accounts. */
+    SELECTOR,
 }
 
 internal class TreeNode(
@@ -115,6 +136,8 @@ internal val SETTINGS_TREE: List<TreeNode> = listOf(
     TreeNode(
         "accounts", TreeKind.SECTION, "tree/accounts", R.string.settings_accounts_title, Icons.Filled.Person, R.string.settings_accounts_summary,
         children = listOf(
+            // #1828 first row of Configs: the account every account page below opens (no picker per page any more).
+            TreeNode("accountSelector", TreeKind.SELECTOR, "selector:account", R.string.settings_tree_account_selector, Icons.Filled.Person),
             accountPage(FOCUS_SERVER, R.string.settings_tree_server, Icons.Filled.Storage),
             accountPage(FOCUS_SIGNATURES, R.string.settings_tree_signatures, Icons.Filled.Edit),
             accountPage(FOCUS_FOLDERS, R.string.settings_tree_folders, Icons.Filled.Folder),
@@ -156,13 +179,21 @@ internal val SETTINGS_TREE: List<TreeNode> = listOf(
             fleetNode("perms", Icons.Filled.Lock),
             fleetNode("logcat", Icons.Filled.Code),
             fleetNode("xray", Icons.Filled.Search),
-            fleetNode("about", Icons.Filled.Info),
-            urlNode("version", R.string.settings_about_version, Icons.Filled.Info),
-            urlNode("source", R.string.settings_about_source, Icons.Filled.Code),
-            urlNode("license", R.string.settings_about_license, Icons.Filled.Description),
-            urlNode("author", R.string.settings_about_author, Icons.Filled.Person),
+            // #1828 ONE About: the fleet's About page also shows the app's own About rows (version, source, licence, author).
+            TreeNode(
+                "fleet_about", TreeKind.FLEET, "fleet/about", 0, Icons.Filled.Info, group = "configs",
+                children = ABOUT_ROWS,
+            ),
         ),
     ),
+)
+
+/** The app's own About rows, drawn on the merged About page (fleet/about). */
+internal val ABOUT_ROWS: List<TreeNode> = listOf(
+    urlNode("version", R.string.settings_about_version, Icons.Filled.Info),
+    urlNode("source", R.string.settings_about_source, Icons.Filled.Code),
+    urlNode("license", R.string.settings_about_license, Icons.Filled.Description),
+    urlNode("author", R.string.settings_about_author, Icons.Filled.Person),
 )
 
 internal fun TreeNode.walk(): Sequence<TreeNode> = sequenceOf(this) + children.asSequence().flatMap { it.walk() }
@@ -192,6 +223,9 @@ internal fun NavGraphBuilder.settingsTreeDestinations(
             onOpen = { route -> entry.navigateOnce { nav.navigate(route) } },
             onOpenUrl = { url -> leaveOnce { openUrl(context, url) } },
             currentAccountLabel = accounts.firstOrNull { it.id == currentId }?.label().orEmpty(),
+            accounts = accounts,
+            currentId = currentId,
+            onSelectAccount = { id -> accountsViewModel.switchTo(id); onAccountsChanged() },
         )
     }
     composable("tree/{section}") { entry ->
@@ -207,6 +241,9 @@ internal fun NavGraphBuilder.settingsTreeDestinations(
             onOpen = { route -> entry.navigateOnce { nav.navigate(route) } },
             onOpenUrl = { url -> leaveOnce { openUrl(context, url) } },
             currentAccountLabel = accounts.firstOrNull { it.id == currentId }?.label().orEmpty(),
+            accounts = accounts,
+            currentId = currentId,
+            onSelectAccount = { aid -> accountsViewModel.switchTo(aid); onAccountsChanged() },
         )
     }
     composable("accountPage/{focus}") { entry ->
@@ -250,15 +287,25 @@ internal fun NavGraphBuilder.settingsTreeDestinations(
     composable("fleet/{id}") { entry ->
         val id = entry.arguments?.getString("id").orEmpty()
         val strip = remember { fleetStrip() }
+        val context = LocalContext.current
+        val leaveOnce = rememberLeaveOnce(entry)
         DetailScaffold(title = strip.firstOrNull { it.id == id }?.label ?: id, onBack = { entry.navigateOnce { nav.popBackStack() } }) { padding ->
             if (isFleetConfigsPage(id)) {
-                FleetConfigsPageBody(
-                    id = id,
-                    dark = LocalSternaDarkTheme.current,
-                    // General's "Open Cloud Mail configs": this tree is Mail's configs, so it returns to the App page.
-                    onAppConfigs = { entry.navigateOnce { nav.popBackStack("tree/{section}", false) } },
-                    modifier = Modifier.padding(padding),
-                )
+                Column(Modifier.fillMaxSize().padding(padding)) {
+                    // #1828 the merged About: the app's own rows first, then the fleet's About body.
+                    if (id == "about") {
+                        SettingsSection(stringResource(R.string.settings_about_section)) {
+                            ABOUT_ROWS.forEach { AboutRow(it) { url -> leaveOnce { openUrl(context, url) } } }
+                        }
+                    }
+                    FleetConfigsPageBody(
+                        id = id,
+                        dark = LocalSternaDarkTheme.current,
+                        // General's "Open Cloud Mail configs": this tree is Mail's configs, so it returns to the App page.
+                        onAppConfigs = { entry.navigateOnce { nav.popBackStack("tree/{section}", false) } },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             } else {
                 Box(Modifier.fillMaxSize().padding(padding))
             }
@@ -270,7 +317,14 @@ internal fun NavGraphBuilder.settingsTreeDestinations(
 private fun fleetStrip(): List<NavPage> =
     FleetConfigsExtensions.withTail(listOf(NavPage("general", "General", "settings")))
 
-/** One page of the tree: the hub ([node] null) or a section. */
+/**
+ * One page of the tree: the hub ([node] null) or a section.
+ *
+ * #1828 the hub is UNFOLDED one level: each top-level section is a heading named after it (Accounts, Text Enhancer, UI, App) with
+ * its pages as rows under it, a nested section a sub-heading with its own rows; the section pages (`tree/<id>`) still exist and
+ * draw as before. The account selector is the first row, and every account page opens the selected account directly
+ * ([accountRoute]); with no account yet it falls back to the picker.
+ */
 @Composable
 internal fun SettingsTreePage(
     node: TreeNode?,
@@ -278,53 +332,169 @@ internal fun SettingsTreePage(
     onOpen: (String) -> Unit,
     onOpenUrl: (String) -> Unit,
     currentAccountLabel: String,
+    accounts: List<StoredAccount> = emptyList(),
+    currentId: String? = null,
+    onSelectAccount: (String) -> Unit = {},
 ) {
     val strip = remember { fleetStrip() }
-    val rows = node?.children ?: SETTINGS_TREE
+    val accountRoute: (TreeNode) -> String = { n -> accountRouteFor(n, currentId, accounts) }
+    val row: @Composable (TreeNode) -> Unit = { n ->
+        TreeRow(n, strip, currentAccountLabel, accounts, currentId, onOpen, onOpenUrl, onSelectAccount, accountRoute)
+    }
     DetailScaffold(title = if (node == null) stringResource(R.string.settings_hub_title) else stringResource(node.title), onBack = onBack) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
-            // Consecutive rows of one group sit under one heading, as the old hub's groups did.
-            val groups = rows.fold(mutableListOf<MutableList<TreeNode>>()) { acc, n ->
-                if (acc.isNotEmpty() && acc.last().first().group == n.group) acc.last().add(n) else acc.add(mutableListOf(n))
-                acc
-            }
-            groups.forEach { g ->
-                val heading = when (g.first().group) {
-                    "account" -> if (currentAccountLabel.isNotBlank()) stringResource(R.string.settings_group_current_account, currentAccountLabel)
-                    else stringResource(R.string.settings_group_current_account_generic)
-                    "text" -> stringResource(R.string.settings_text_section)
-                    "app" -> stringResource(R.string.settings_group_app)
-                    "configs" -> stringResource(R.string.settings_tree_configs)
-                    "about" -> stringResource(R.string.settings_about_section)
-                    else -> null
-                }
-                val body: @Composable () -> Unit = {
-                    g.forEach { n ->
-                        when (n.kind) {
-                            TreeKind.FLEET -> strip.firstOrNull { it.id == n.route.removePrefix("fleet/") }?.let { SettingsCategoryRow(n.icon, it.label, "") { onOpen(n.route) } }
-                            TreeKind.URL -> AboutRow(n, onOpenUrl)
-                            TreeKind.INLINE -> SettingsSection(stringResource(n.title)) {
-                                Box(Modifier.padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s8)) {
-                                    com.diegonmarcos.superapp.navbartop2.NavModeConfigCard(
-                                        sections = mailNav.sections,
-                                        dark = LocalSternaDarkTheme.current,
-                                        dynamic = setOf("mail"),
-                                    )
-                                }
+            if (node == null) {
+                SETTINGS_TREE.forEach { section ->
+                    SettingsSection(stringResource(section.title)) {
+                        section.children.forEach { child ->
+                            if (child.kind == TreeKind.SECTION) {
+                                SettingsSection(stringResource(child.title)) { child.children.forEach { row(it) } }
+                            } else {
+                                row(child)
                             }
-                            else -> SettingsCategoryRow(n.icon, stringResource(n.title), if (n.summary != 0) stringResource(n.summary) else "") { onOpen(n.route) }
                         }
                     }
                 }
-                if (heading != null) SettingsSection(heading, body) else body()
+            } else {
+                // Consecutive rows of one group sit under one heading, as the old hub's groups did.
+                val groups = node.children.fold(mutableListOf<MutableList<TreeNode>>()) { acc, n ->
+                    if (acc.isNotEmpty() && acc.last().first().group == n.group) acc.last().add(n) else acc.add(mutableListOf(n))
+                    acc
+                }
+                groups.forEach { g ->
+                    val heading = when (g.first().group) {
+                        "account" -> if (currentAccountLabel.isNotBlank()) stringResource(R.string.settings_group_current_account, currentAccountLabel)
+                        else stringResource(R.string.settings_group_current_account_generic)
+                        "text" -> stringResource(R.string.settings_text_section)
+                        "app" -> stringResource(R.string.settings_group_app)
+                        "configs" -> stringResource(R.string.settings_tree_configs)
+                        "about" -> stringResource(R.string.settings_about_section)
+                        else -> null
+                    }
+                    val body: @Composable () -> Unit = { g.forEach { row(it) } }
+                    if (heading != null) SettingsSection(heading, body) else body()
+                }
             }
         }
     }
 }
 
+/** #1828 where an account page opens: the selected account's focus screen, or the picker when there is no account selected. */
+internal fun accountRouteFor(n: TreeNode, currentId: String?, accounts: List<StoredAccount>): String =
+    if (n.kind == TreeKind.ACCOUNT_PAGE && currentId != null && accounts.any { it.id == currentId }) focusRouteFor(n.id, currentId, accounts) else n.route
+
+/** One row of the tree, whatever its kind. */
+@Composable
+private fun TreeRow(
+    n: TreeNode,
+    strip: List<NavPage>,
+    currentAccountLabel: String,
+    accounts: List<StoredAccount>,
+    currentId: String?,
+    onOpen: (String) -> Unit,
+    onOpenUrl: (String) -> Unit,
+    onSelectAccount: (String) -> Unit,
+    accountRoute: (TreeNode) -> String,
+) {
+    when (n.kind) {
+        TreeKind.FLEET -> strip.firstOrNull { it.id == n.route.removePrefix("fleet/") }?.let { SettingsCategoryRow(n.icon, it.label, "") { onOpen(n.route) } }
+        TreeKind.URL -> AboutRow(n, onOpenUrl)
+        TreeKind.INLINE -> NavigationModeRows()
+        TreeKind.SELECTOR -> AccountSelectorRow(accounts, currentId, onSelectAccount, onOpen)
+        TreeKind.ACCOUNT_PAGE -> SettingsCategoryRow(
+            n.icon, stringResource(n.title),
+            currentAccountLabel.ifBlank { stringResource(R.string.settings_tree_pick_account) },
+        ) { onOpen(accountRoute(n)) }
+        else -> SettingsCategoryRow(n.icon, stringResource(n.title), if (n.summary != 0) stringResource(n.summary) else "") { onOpen(n.route) }
+    }
+}
+
+/**
+ * #1828 the account selector: the selected account (name and address); a tap lists every account to pick from, and offers
+ * Add account and Manage accounts. Picking one makes it the app's current account, the one every account page opens.
+ */
+@Composable
+private fun AccountSelectorRow(
+    accounts: List<StoredAccount>,
+    currentId: String?,
+    onSelect: (String) -> Unit,
+    onOpen: (String) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    val current = accounts.firstOrNull { it.id == currentId }
+    SettingsCategoryRow(
+        Icons.Filled.Person,
+        stringResource(R.string.settings_tree_account_selector),
+        current?.let { listOf(it.label(), it.username).distinct().joinToString(" · ") } ?: stringResource(R.string.settings_tree_account_selector_none),
+    ) { open = true }
+    if (open) {
+        AlertDialog(
+            onDismissRequest = { open = false },
+            title = { Text(stringResource(R.string.settings_tree_account_selector)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    accounts.forEach { a ->
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .selectable(selected = a.id == currentId, role = Role.RadioButton) { onSelect(a.id); open = false }
+                                .padding(vertical = MailMetrics.s8),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = a.id == currentId, onClick = null)
+                            Spacer(Modifier.width(MailMetrics.s12))
+                            Column(Modifier.weight(1f)) {
+                                Text(a.label(), style = MaterialTheme.typography.bodyLarge)
+                                if (a.username != a.label()) {
+                                    Text(a.username, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                    HorizontalDivider(Modifier.padding(vertical = MailMetrics.s8))
+                    SettingsCategoryRow(Icons.Filled.Add, stringResource(R.string.settings_add_account), "") { open = false; onOpen("addAccount") }
+                    SettingsCategoryRow(Icons.Filled.Person, stringResource(R.string.settings_tree_manage_accounts), stringResource(R.string.settings_accounts_summary)) {
+                        open = false; onOpen("accounts")
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.settings_tree_close)) } },
+        )
+    }
+}
+
+/**
+ * #1828 UI ▸ Navigation in the page's own style: one choice row per section with child pages (the same data and store the
+ * fleet's NavModeConfigCard uses: every section with more than one page, plus Mail's run-time folder section), each offering
+ * One row, Two rows and Side menu with the declared one marked "(default)"; choosing the default clears the override.
+ */
+@Composable
+private fun NavigationModeRows() {
+    val store = LocalNavModeStore.current ?: rememberNavModePrefs()
+    Text(
+        stringResource(R.string.settings_navigation_child_pages),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s4),
+    )
+    mailNav.sections.filter { it.allPages().size > 1 || it.id in NAV_DYNAMIC_SECTIONS }.forEach { section ->
+        val declared = section.rows
+        val default = stringResource(R.string.settings_navigation_default)
+        SettingChoiceRow(
+            title = section.label,
+            options = SecondRowMode.entries,
+            selected = store.mode(section.id) ?: declared,
+            optionLabel = { m -> navModeLabel(m) + if (m == declared) " ($default)" else "" },
+            onSelect = { m -> store.setMode(section.id, if (m == declared) null else m) },
+        )
+    }
+}
+
+/** Sections whose child pages come from the app's data at run time (Mail's folders and labels), offered whatever the declaration lists. */
+internal val NAV_DYNAMIC_SECTIONS = setOf("mail")
+
 /** The About rows hand a URL to the app's browser through [onOpenUrl] (the double-tap guard); no Context here. */
 @Composable
-private fun AboutRow(n: TreeNode, onOpenUrl: (String) -> Unit) {
+internal fun AboutRow(n: TreeNode, onOpenUrl: (String) -> Unit) {
     val (summary, url) = when (n.route.removePrefix("url:")) {
         "version" -> "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) · ${BuildConfig.VERSION_DATE}" to "$REPO_URL/releases"
         "source" -> REPO_URL.removePrefix("https://") to REPO_URL

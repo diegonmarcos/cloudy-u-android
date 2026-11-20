@@ -1569,5 +1569,11 @@
     <string name="settings_tree_others">Autres</string>
     <string name="settings_tree_account_settings">Paramètres du compte</string>
     <string name="settings_tree_pick_account">Choisissez un compte</string>
+    <string name="settings_tree_account_selector">Compte</string>
+    <string name="settings_tree_account_selector_none">Aucun compte : ajoutez-en un</string>
+    <string name="settings_tree_manage_accounts">Gérer les comptes</string>
+    <string name="settings_tree_close">Fermer</string>
+    <string name="settings_navigation_child_pages">Navigation des sous-pages</string>
+    <string name="settings_navigation_default">par défaut</string>
     <string name="settings_tree_configs">Configuration</string>
 </resources>

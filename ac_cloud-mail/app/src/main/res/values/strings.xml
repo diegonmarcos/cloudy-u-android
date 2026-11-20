@@ -1666,5 +1666,11 @@
     <string name="settings_tree_others">Others</string>
     <string name="settings_tree_account_settings">Account settings</string>
     <string name="settings_tree_pick_account">Pick an account</string>
+    <string name="settings_tree_account_selector">Account</string>
+    <string name="settings_tree_account_selector_none">No account yet: add one</string>
+    <string name="settings_tree_manage_accounts">Manage accounts</string>
+    <string name="settings_tree_close">Close</string>
+    <string name="settings_navigation_child_pages">Navigation of child pages</string>
+    <string name="settings_navigation_default">default</string>
     <string name="settings_tree_configs">Configs</string>
 </resources>

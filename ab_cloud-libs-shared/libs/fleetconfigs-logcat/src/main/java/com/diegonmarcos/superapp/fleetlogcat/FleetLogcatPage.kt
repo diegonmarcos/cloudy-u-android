@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,13 +54,29 @@ public object FleetLogcatTags {
     public const val SAVE_HTML: String = "fleetlogcat_save_html"
     public const val SHARE: String = "fleetlogcat_share"
     public const val BODY: String = "fleetlogcat_body"
+    /** #1828 the filters. */
+    public fun level(l: LogLevelFilter): String = "fleetlogcat_level_${l.name.lowercase()}"
+    public fun kind(k: LogKind): String = "fleetlogcat_kind_${k.name.lowercase()}"
+    public const val SEARCH: String = "fleetlogcat_search"
+    public const val KIND_ALL: String = "fleetlogcat_kind_all"
 }
 
 private const val TAIL_LINES = 600
 
+/** #1828 how far back a filter looks: the filtered view still shows up to [TAIL_LINES] lines that pass. */
+private const val FILTER_SCAN_LINES = 5000
+
+/** The lines the page shows and exports: the stream's tail, then [filter]. */
+internal fun filteredTail(uid: Int, errorsOnly: Boolean, filter: LogcatFilter): String {
+    if (filter.isOpen) return LogPipe.tail(TAIL_LINES, uid, errorsOnly)
+    val raw = LogPipe.tail(FILTER_SCAN_LINES, uid, errorsOnly)
+    val kept = filter.apply(raw.split("\n"), TAIL_LINES)
+    return if (kept.isEmpty()) "(no line matches the filter: ${filter.describe()})\n" else kept.joinToString("\n") + "\n"
+}
+
 /**
  * Configs ▸ Logcat: THIS app's own log stream (libs:devtools LogPipe, one reader per process, uid-filtered to this app) with an
- * errors-only toggle and the same two-way export the X-Ray tab offers — Copy (token-optimized Markdown), Save (an HTML page) and
+ * errors-only toggle, #1828 filters (level, kind of log, search; [LogcatFilter]) that the exports apply too, and the same two-way export the X-Ray tab offers — Copy (token-optimized Markdown), Save (an HTML page) and
  * Share. The view refreshes every second while it is open.
  */
 @Composable
@@ -67,20 +84,42 @@ public fun FleetLogcatPage(dark: Boolean) {
     val c = ThemeBackground.colors(dark)
     val ctx = LocalContext.current
     var errorsOnly by remember { mutableStateOf(false) }
+    var filter by remember { mutableStateOf(LogcatFilter()) }
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { while (true) { delay(1000); tick++ } }
     val uid = remember { ctx.applicationInfo.uid }
-    val text = remember(tick, errorsOnly) { LogPipe.tail(TAIL_LINES, uid, errorsOnly) }
+    val text = remember(tick, errorsOnly, filter) { filteredTail(uid, errorsOnly, filter) }
 
     Column(Modifier.fillMaxSize().testTag(FleetLogcatTags.PAGE).padding(horizontal = 12.dp)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Errors only", Modifier.weight(1f), color = c.ink, fontSize = 13.sp)
             Switch(checked = errorsOnly, onCheckedChange = { errorsOnly = it }, modifier = Modifier.testTag(FleetLogcatTags.ERRORS_ONLY))
         }
+        // #1828 filters: level (one), kind of log (any number; none = all), search over tag and message.
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            LogLevelFilter.entries.forEach { l ->
+                FilterChip(l.label, filter.level == l, c, FleetLogcatTags.level(l)) { filter = filter.copy(level = l) }
+            }
+        }
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FilterChip("All kinds", filter.kinds.isEmpty(), c, FleetLogcatTags.KIND_ALL) { filter = filter.copy(kinds = emptySet()) }
+            LogKind.entries.forEach { k ->
+                val on = k in filter.kinds
+                FilterChip(k.label, on, c, FleetLogcatTags.kind(k)) { filter = filter.copy(kinds = if (on) filter.kinds - k else filter.kinds + k) }
+            }
+        }
+        OutlinedTextField(
+            value = filter.query,
+            onValueChange = { filter = filter.copy(query = it) },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).testTag(FleetLogcatTags.SEARCH),
+            singleLine = true,
+            placeholder = { Text("Search tag or message", fontSize = 13.sp) },
+            textStyle = androidx.compose.ui.text.TextStyle(color = c.ink, fontSize = 13.sp),
+        )
         Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            LogcatButton("Copy", c, FleetLogcatTags.COPY_MD) { copyMarkdown(ctx, errorsOnly, uid) }
-            LogcatButton("Save", c, FleetLogcatTags.SAVE_HTML) { saveHtml(ctx, errorsOnly, uid) }
-            LogcatButton("Share", c, FleetLogcatTags.SHARE) { shareMarkdown(ctx, errorsOnly, uid) }
+            LogcatButton("Copy", c, FleetLogcatTags.COPY_MD) { copyMarkdown(ctx, errorsOnly, uid, filter) }
+            LogcatButton("Save", c, FleetLogcatTags.SAVE_HTML) { saveHtml(ctx, errorsOnly, uid, filter) }
+            LogcatButton("Share", c, FleetLogcatTags.SHARE) { shareMarkdown(ctx, errorsOnly, uid, filter) }
         }
         Text(
             text,
@@ -101,10 +140,22 @@ private fun LogcatButton(label: String, c: ThemeColors, tag: String, onClick: ()
     )
 }
 
-private fun snapshot(ctx: Context, errorsOnly: Boolean, uid: Int): FleetLogExport.Snapshot {
+/** One filter chip in the page's own colours (selected = the tab-selected pair, as the buttons). */
+@Composable
+private fun FilterChip(label: String, on: Boolean, c: ThemeColors, tag: String, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(10.dp)
+    Text(
+        label,
+        Modifier.clip(shape).background(if (on) c.tabSelected else c.island, shape).clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 6.dp).testTag(tag),
+        color = if (on) c.onTabSelected else c.onIsland, fontSize = 12.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Medium,
+    )
+}
+
+private fun snapshot(ctx: Context, errorsOnly: Boolean, uid: Int, filter: LogcatFilter = LogcatFilter()): FleetLogExport.Snapshot {
     val decl = FleetConfigs.current
     val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT).format(Date())
-    val body = LogPipe.tail(TAIL_LINES, uid, errorsOnly)
+    val body = filteredTail(uid, errorsOnly, filter)
     return FleetLogExport.Snapshot(
         app = decl.name.ifBlank { ctx.packageName },
         pkg = ctx.packageName,
@@ -113,28 +164,29 @@ private fun snapshot(ctx: Context, errorsOnly: Boolean, uid: Int): FleetLogExpor
         health = LogPipe.health,
         errorsOnly = errorsOnly,
         lines = body.split("\n").filter { it.isNotBlank() },
+        filter = filter.describe(),
     )
 }
 
-private fun copyMarkdown(ctx: Context, errorsOnly: Boolean, uid: Int) {
+private fun copyMarkdown(ctx: Context, errorsOnly: Boolean, uid: Int, filter: LogcatFilter = LogcatFilter()) {
     runCatching {
-        val md = FleetLogExport.markdown(snapshot(ctx, errorsOnly, uid))
+        val md = FleetLogExport.markdown(snapshot(ctx, errorsOnly, uid, filter))
         (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("logcat", md))
         Toast.makeText(ctx, "Logcat copied as Markdown", Toast.LENGTH_SHORT).show()
     }
 }
 
-private fun shareMarkdown(ctx: Context, errorsOnly: Boolean, uid: Int) {
+private fun shareMarkdown(ctx: Context, errorsOnly: Boolean, uid: Int, filter: LogcatFilter = LogcatFilter()) {
     runCatching {
-        val md = FleetLogExport.markdown(snapshot(ctx, errorsOnly, uid))
+        val md = FleetLogExport.markdown(snapshot(ctx, errorsOnly, uid, filter))
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, md).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         ctx.startActivity(Intent.createChooser(send, "Share logcat").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 }
 
-private fun saveHtml(ctx: Context, errorsOnly: Boolean, uid: Int) {
+private fun saveHtml(ctx: Context, errorsOnly: Boolean, uid: Int, filter: LogcatFilter = LogcatFilter()) {
     runCatching {
-        val html = FleetLogExport.html(snapshot(ctx, errorsOnly, uid))
+        val html = FleetLogExport.html(snapshot(ctx, errorsOnly, uid, filter))
         val dir = ctx.getExternalFilesDir(null) ?: ctx.filesDir
         val out = File(dir, "logcat-" + System.currentTimeMillis() + ".html")
         out.writeText(html)

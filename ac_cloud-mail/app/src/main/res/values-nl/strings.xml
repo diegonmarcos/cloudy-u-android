@@ -1560,5 +1560,11 @@
     <string name="settings_tree_others">Overig</string>
     <string name="settings_tree_account_settings">Accountinstellingen</string>
     <string name="settings_tree_pick_account">Kies een account</string>
+    <string name="settings_tree_account_selector">Account</string>
+    <string name="settings_tree_account_selector_none">Nog geen account: voeg er een toe</string>
+    <string name="settings_tree_manage_accounts">Accounts beheren</string>
+    <string name="settings_tree_close">Sluiten</string>
+    <string name="settings_navigation_child_pages">Navigatie van subpagina\'s</string>
+    <string name="settings_navigation_default">standaard</string>
     <string name="settings_tree_configs">Configuratie</string>
 </resources>
