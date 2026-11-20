@@ -156,6 +156,8 @@ class MarkzTest {
         assertEquals(750.0, Markz.mround(677.29, 250.0), 0.0)
         assertEquals(500.0, Markz.mround(624.99, 250.0), 0.0)
         assertEquals(677.29, Markz.mround(677.29, 0.0), 0.0)
+        // toFixed rounds the exact binary value: 5.525 is 5.52499... (the matrix's first EUR/BRL row), 1.005 is 1.00499...
+        assertEquals("5.52", Markz.fixed(6.50 * 0.85, 2)); assertEquals("1.00", Markz.fixed(1.005, 2)); assertEquals("0.13", Markz.fixed(0.125, 2)); assertEquals("-2.50", Markz.fixed(-2.5, 2))
     }
 
     @Test fun theMarkovitzPageFollowsTheTarget() {

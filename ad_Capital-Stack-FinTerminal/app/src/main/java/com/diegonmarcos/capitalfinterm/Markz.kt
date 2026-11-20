@@ -177,8 +177,8 @@ object Markz {
     /** toLocaleString with at most [digits] decimals and no trailing zeros (593,000 / 593,000.5). */
     fun upTo(v: Double, digits: Int): String = DecimalFormat("#,##0" + (if (digits > 0) "." + "#".repeat(digits) else ""), US).apply { roundingMode = java.math.RoundingMode.HALF_UP }.format(v)
 
-    /** toFixed(n). */
-    fun fixed(v: Double, n: Int): String = String.format(Locale.US, "%.${n}f", v)
+    /** toFixed(n): rounded on the double's exact value, half up (5.525 is 5.52499... in binary: "5.52", as the page shows it; Java's %.2f says 5.53). */
+    fun fixed(v: Double, n: Int): String = if (!v.isFinite()) v.toString() else java.math.BigDecimal(v).setScale(n, java.math.RoundingMode.HALF_UP).toPlainString()
 
     /** String(n): an integral value without a decimal point. */
     fun plain(v: Double): String = if (v.isFinite() && v == Math.floor(v) && Math.abs(v) < 1e15) v.toLong().toString() else v.toString()
