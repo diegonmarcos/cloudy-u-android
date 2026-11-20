@@ -366,7 +366,7 @@ object SelectionNodeSearch {
 
     class Found<N>(val node: N?, val visited: Int, val depth: Int)
 
-    fun <N> find(root: N, tree: Tree<N>, now: () -> Long = SystemClock::uptimeMillis): Found<N> {
+    fun <N> find(root: N, tree: Tree<N>, now: () -> Long = { System.nanoTime() / 1_000_000 }): Found<N> { // a JVM clock: unit-testable
         if (tree.hasSelection(root)) return Found(root, 1, 0)
         val deadline = now() + MAX_MILLIS
         var visited = 1
