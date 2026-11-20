@@ -40,5 +40,15 @@ class ChannelAutoArmTest {
         assertFalse(def("aa_cloud-superapp"))
         assertTrue(def("ac_cloud-store"))
         assertEquals(true, def("ac_cloud-account"))
+        // #1833 the ADB owner declares OFF: without the block its implicit triggers ran the chain to the pairing prompt.
+        assertFalse(def("ac_cloud-c3-webserver"))
+    }
+
+    /** #1833 an installed host switch (the owner's WirelessDebugKeeper.Prefs) is THE answer; the stored lib choice no longer counts. */
+    @Test fun theHostSwitchWinsOverTheStoredChoiceAndTheDefault() {
+        assertFalse(ChannelAutoArm.resolveWithHost(false, true, """{"default_on":true}"""))
+        assertTrue(ChannelAutoArm.resolveWithHost(true, false, """{"default_on":false}"""))
+        assertFalse(ChannelAutoArm.resolveWithHost(null, null, """{"default_on":false}"""))
+        assertTrue(ChannelAutoArm.resolveWithHost(null, null, "{}"))
     }
 }

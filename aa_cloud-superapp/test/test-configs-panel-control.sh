@@ -535,9 +535,11 @@ s = open(sys.argv[1]).read()
 m = re.search(r'fun colourRes\(state: State\).*?\n    \}', s, re.S)
 sys.exit(0 if m and re.search(r'State\.UNKNOWN\s*->\s*R\.color\.status_light_unknown', m.group(0)) else 1)
 PY
-# A read that throws must become null, not a default.
-grep -q 'runCatching { control.read(ctx) }.getOrNull()' "$FRAGMENT" \
+# A read that throws must become null, not a default. (#1833 the read is Control.sample: the probe, or read, with its detail line.)
+grep -q 'runCatching { control.sample(ctx) }.getOrNull()' "$FRAGMENT" \
   || unknown_fail="$unknown_fail throwing-read-not-nulled"
+grep -q 'fun sample(ctx: Context): Probe = probe?.invoke(ctx) ?: Probe(read(ctx), "")' "$CONTROLS" \
+  || unknown_fail="$unknown_fail sample-not-the-read"
 # A row never read, or read too long ago, has no answer to show.
 grep -q 'row.readAt != 0L' "$FRAGMENT" || unknown_fail="$unknown_fail never-read-not-unknown"
 grep -q 'SystemClock.elapsedRealtime() - row.readAt <= STALE_MS' "$FRAGMENT" \

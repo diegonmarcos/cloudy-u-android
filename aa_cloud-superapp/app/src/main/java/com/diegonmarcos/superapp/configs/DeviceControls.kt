@@ -111,7 +111,20 @@ object DeviceControls {
         val set: ((Context, Boolean) -> Verdict)? = null,
         val blocked: (Context) -> String = { "" },
         val open: ((Context) -> Unit)? = null,
-    )
+        /** #1833 the read WITH what was read: one line naming the source and the value ("Settings.Global adb_wifi_enabled=1"),
+         *  drawn under the light so a wrong light explains itself. When present it is THE read (state and detail in one call). */
+        val probe: ((Context) -> Probe)? = null,
+        /** #1833 a tap that is an action, not a switch (Unverified developers: open the step's Settings page); returns what it did. */
+        val tap: ((Context) -> String)? = null,
+        /** #1833 a read that may take seconds (a broker round trip): run on its own thread so the fast reads never queue behind it. */
+        val slow: Boolean = false,
+    ) {
+        /** The reading the page draws: [probe] when the control has one, else [read] with no detail. Blocking. */
+        fun sample(ctx: Context): Probe = probe?.invoke(ctx) ?: Probe(read(ctx), "")
+    }
+
+    /** #1833 a live reading and the one line saying what was read: the source and the value it returned. */
+    data class Probe(val state: Boolean?, val detail: String)
 
     // ── The catalog ──────────────────────────────────────────────────────
     // Keyed by the same ids build.json::ui.control_panel declares. An id
@@ -237,6 +250,7 @@ object DeviceControls {
             // Settings.Global.adb_wifi_enabled — the daemon's own flag.
             observed = true,
             read = { ctx -> WirelessDebuggingSwitch.isOn(ctx) },
+            probe = { ctx -> SecurityControls.wirelessDebugging(ctx) },
             set = { ctx, on ->
                 // The keep-alive follows the owner's hand: switching debugging
                 // off here must not be undone by the watchdog a minute later,
@@ -446,6 +460,7 @@ object DeviceControls {
             // #775: `armed`, not isRunning — the service also runs headless
             // as the badge host with the button off.
             read = { FloatingNavService.isRunning && FloatingNavService.armed },
+            probe = { ctx -> SecurityControls.floating(ctx) },
             set = { ctx, on ->
                 FloatingNavService.setEnabled(ctx, on)
                 // Starting or stopping a service is a REQUEST: isRunning flips
@@ -525,12 +540,14 @@ object DeviceControls {
         ),
 
         // ─────────────── #1833 Security (Quick actions ▸ Panels ▸ Security) ───────────────
-        // Capability in SecurityControls; every read is the device's own setting or a live round trip, every Verdict a re-read.
+        // Capability in SecurityControls. Every read is the device's own state as a normal app reads it (never the broker, except the
+        // ADB shell whose subject is the broker), returned as a Probe whose detail names the source and the value; every Verdict a re-read.
 
         "developer_options" to Control(
             // Settings.Global.development_settings_enabled.
             observed = true,
-            read = { ctx -> SecurityControls.devOptionsOn(ctx) },
+            read = { ctx -> SecurityControls.devOptions(ctx).state },
+            probe = { ctx -> SecurityControls.devOptions(ctx) },
             set = { ctx, on ->
                 val w = SecurityControls.setGlobal(ctx, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, on) { SecurityControls.devOptionsOn(it) }
                 Verdict(w.ok && SecurityControls.devOptionsOn(ctx) == on, w.detail)
@@ -542,7 +559,8 @@ object DeviceControls {
         "usb_debugging" to Control(
             // Settings.Global.adb_enabled. Off also ends Wireless debugging and the shell channel riding it.
             observed = true,
-            read = { ctx -> SecurityControls.usbDebuggingOn(ctx) },
+            read = { ctx -> SecurityControls.usbDebugging(ctx).state },
+            probe = { ctx -> SecurityControls.usbDebugging(ctx) },
             set = { ctx, on ->
                 val w = SecurityControls.setGlobal(ctx, Settings.Global.ADB_ENABLED, on) { SecurityControls.usbDebuggingOn(it) }
                 Verdict(w.ok && SecurityControls.usbDebuggingOn(ctx) == on, w.detail)
@@ -552,51 +570,80 @@ object DeviceControls {
         ),
 
         "adb_shell" to Control(
-            // A real shell round trip through the broker (`id -u` == 2000), never a flag.
+            // The shell broker's live status (`id -u` == 2000 round trip): on only when ARMED; the detail also carries the adb
+            // transport verdict, the fact the home status strip's ADB dot draws, so the two lights can no longer disagree unseen.
             observed = true,
-            read = { ctx -> SecurityControls.shellUp(ctx) },
+            slow = true,
+            read = { ctx -> SecurityControls.shell(ctx).state },
+            probe = { ctx -> SecurityControls.shell(ctx) },
             set = { ctx, on ->
                 val w = SecurityControls.setShell(ctx, on)
-                Verdict(w.ok && SecurityControls.shellUp(ctx) == on, w.detail)
+                Verdict(w.ok && SecurityControls.shell(ctx).state == on, w.detail)
             },
             open = { ctx -> runCatching { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctx) } },
         ),
 
-        "access_keyboard" to Control(
-            // Settings.Secure.enabled_accessibility_services holds its component (SecurityControls.A11Y).
+        "unverified_developers" to Control(
+            // #1822 Apps from unverified developers: the verifier package (PackageManager), the readable Settings keys, else the
+            // Perms row's last measurement. Not a switch: the tap is the Perms row's action (open the step's Settings page).
             observed = true,
-            read = { ctx -> SecurityControls.a11yOn(ctx, "access_keyboard") },
-            set = { ctx, on -> a11ySet(ctx, "access_keyboard", on) },
-            blocked = { ctx -> a11yBlocked(ctx, "access_keyboard") },
+            read = { ctx -> SecurityControls.devVerifier(ctx).state },
+            probe = { ctx -> SecurityControls.devVerifier(ctx) },
+            tap = { ctx -> devVerifierStep(ctx) },
+            open = { ctx -> perms(ctx, "Security: unverified developers", com.diegonmarcos.superapp.perms.DevVerifier.ID) },
+        ),
+
+        "access_keyboard" to Control(
+            // The Keyboard's accessibility service (the Grabber), found by package (build.json a11y_package) in AccessibilityManager's
+            // installed list; lit while the system has it BOUND (getEnabledAccessibilityServiceList), Settings.Secure as a second fact.
+            observed = true,
+            read = { ctx -> SecurityControls.appProbe(ctx, a11yPackage("access_keyboard")).state },
+            probe = { ctx -> SecurityControls.appProbe(ctx, a11yPackage("access_keyboard")) },
+            set = { ctx, on ->
+                val w = SecurityControls.setApp(ctx, a11yPackage("access_keyboard"), on)
+                Verdict(w.ok && SecurityControls.appProbe(ctx, a11yPackage("access_keyboard")).state == on, w.detail)
+            },
+            blocked = { ctx -> a11yBlocked(ctx, a11yPackage("access_keyboard")) },
             open = { ctx -> perms(ctx, "Security: accessibility", "accessibility") },
         ),
         "access_superapp" to Control(
-            // Settings.Secure.enabled_accessibility_services holds its component (SecurityControls.A11Y).
+            // The SuperApp's own accessibility service(s) by package, bound or not. The edge menu is an overlay and needs none.
             observed = true,
-            read = { ctx -> SecurityControls.a11yOn(ctx, "access_superapp") },
-            set = { ctx, on -> a11ySet(ctx, "access_superapp", on) },
-            blocked = { ctx -> a11yBlocked(ctx, "access_superapp") },
+            read = { ctx -> SecurityControls.appProbe(ctx, a11yPackage("access_superapp")).state },
+            probe = { ctx -> SecurityControls.appProbe(ctx, a11yPackage("access_superapp")) },
+            set = { ctx, on ->
+                val w = SecurityControls.setApp(ctx, a11yPackage("access_superapp"), on)
+                Verdict(w.ok && SecurityControls.appProbe(ctx, a11yPackage("access_superapp")).state == on, w.detail)
+            },
+            blocked = { ctx -> a11yBlocked(ctx, a11yPackage("access_superapp")) },
             open = { ctx -> perms(ctx, "Security: accessibility", "accessibility") },
         ),
         "access_vault" to Control(
-            // Settings.Secure.enabled_accessibility_services holds its component (SecurityControls.A11Y).
+            // Vault autofill, by either mechanism: Vault's accessibility service bound, OR Android's autofill service
+            // (Settings.Secure autofill_service) is Vault; the detail says which.
             observed = true,
-            read = { ctx -> SecurityControls.a11yOn(ctx, "access_vault") },
-            set = { ctx, on -> a11ySet(ctx, "access_vault", on) },
-            blocked = { ctx -> a11yBlocked(ctx, "access_vault") },
+            read = { ctx -> SecurityControls.vaultProbe(ctx, a11yPackage("access_vault")).state },
+            probe = { ctx -> SecurityControls.vaultProbe(ctx, a11yPackage("access_vault")) },
+            set = { ctx, on ->
+                val w = SecurityControls.setVault(ctx, a11yPackage("access_vault"), on)
+                Verdict(w.ok && SecurityControls.vaultProbe(ctx, a11yPackage("access_vault")).state == on, w.detail)
+            },
+            blocked = { ctx -> if (SecurityControls.canWrite(ctx)) "" else SecurityControls.NO_CHANNEL },
             open = { ctx -> perms(ctx, "Security: accessibility", "accessibility") },
         ),
 
         "access_others" to Control(
-            // On = an accessibility service of a fleet package that is not Keyboard, SuperApp or Vault is enabled
-            // (a library's, for one). Off takes every such service out of the enabled list; there is nothing to turn on.
+            // On = Settings.Secure enabled_accessibility_services names a fleet component no installed service answers to (a stale
+            // entry of an uninstalled app or old library build). Off removes them; there is nothing to turn on. Every INSTALLED fleet
+            // service has its own tile in the group (serviceTile).
             observed = true,
-            read = { ctx -> SecurityControls.extrasOn(ctx) },
+            read = { ctx -> SecurityControls.staleProbe(ctx).state },
+            probe = { ctx -> SecurityControls.staleProbe(ctx) },
             set = { ctx, on ->
-                if (on) Verdict(SecurityControls.extrasOn(ctx), "Nothing to turn on: this row only removes extra fleet services.")
+                if (on) Verdict(SecurityControls.staleProbe(ctx).state == true, "Nothing to turn on: this tile only removes stale fleet entries.")
                 else {
-                    val w = SecurityControls.clearExtras(ctx)
-                    Verdict(w.ok && !SecurityControls.extrasOn(ctx), w.detail)
+                    val w = SecurityControls.clearStale(ctx)
+                    Verdict(w.ok && SecurityControls.staleProbe(ctx).state == false, w.detail)
                 }
             },
             blocked = { ctx -> if (SecurityControls.canWrite(ctx)) "" else SecurityControls.NO_CHANNEL },
@@ -604,15 +651,16 @@ object DeviceControls {
         ),
 
         "edge_menus" to Control(
-            // The overlay service's own strips on screen, not OneHandPrefs: the service can be killed under the pref.
+            // The overlay service's own strips ATTACHED on screen, not OneHandPrefs: the service can be killed under the pref. The
+            // detail says when the switch is on but no strip is drawn, and why.
             observed = true,
-            read = { com.diegonmarcos.superapp.onehand.OneHandOverlayService.instance?.let { it.handleCount > 0 } ?: false },
+            read = { ctx -> SecurityControls.edge(ctx).state },
+            probe = { ctx -> SecurityControls.edge(ctx) },
             set = { ctx, on ->
                 if (on) com.diegonmarcos.superapp.onehand.OneHandController.enable(ctx)
                 else com.diegonmarcos.superapp.onehand.OneHandController.disable(ctx)
-                val live = { (com.diegonmarcos.superapp.onehand.OneHandOverlayService.instance?.handleCount ?: 0) > 0 }
-                val settled = awaitTrue(SERVICE_SETTLE_MS) { live() == on }
-                Verdict(settled, "Edge menus are " + fmt(live()))
+                val settled = awaitTrue(SERVICE_SETTLE_MS) { SecurityControls.edge(ctx).state == on }
+                Verdict(settled, SecurityControls.edge(ctx).detail)
             },
             blocked = { ctx ->
                 if (Settings.canDrawOverlays(ctx)) "" else "\"Display over other apps\" is not granted to this app yet."
@@ -625,7 +673,20 @@ object DeviceControls {
             // transport": with Always-on VPN Android keeps the engine's VPN network registered while the tunnel is down, which lit
             // this tile green on a phone whose mesh was down. Another app's VPN is not this tile's business.
             observed = true,
+            slow = true,   // a binder call into the WireGuard engine
             read = { ctx -> DeviceControls.byId.getValue("mesh").read(ctx) },
+            probe = { ctx ->
+                val st = runCatching { WgState.backend(ctx).getState(WgState.tunnel) }
+                val tunnel = st.getOrNull()
+                if (tunnel != null) Probe(tunnel == Tunnel.State.UP, "WireGuard backend: tunnel ${tunnel.name}")
+                else {
+                    // The engine did not answer. With no VPN network on the device at all the mesh is certainly down (Off);
+                    // with one up, whose it is cannot be told from here (Unknown).
+                    val vpn = SecurityControls.anyVpnNetwork(ctx)
+                    Probe(if (vpn == false) false else null, "WireGuard backend unreachable (${st.exceptionOrNull()?.javaClass?.simpleName}); " +
+                        "ConnectivityManager VPN network: " + (vpn?.let { if (it) "present" else "none" } ?: "unreadable"))
+                }
+            },
             set = { ctx, on -> DeviceControls.byId.getValue("mesh").set!!(ctx, on) },
             blocked = { ctx -> DeviceControls.byId.getValue("mesh").blocked(ctx) },
             // tap-and-hold opens OUR VPN page (Cloud Mesh), not Android's VPN settings
@@ -633,9 +694,10 @@ object DeviceControls {
         ),
 
         "location" to Control(
-            // LocationManager.isLocationEnabled.
+            // LocationManager.isLocationEnabled, Settings.Secure location_mode beside it.
             observed = true,
-            read = { ctx -> SecurityControls.locationOn(ctx) },
+            read = { ctx -> SecurityControls.location(ctx).state },
+            probe = { ctx -> SecurityControls.location(ctx) },
             set = { ctx, on ->
                 val w = SecurityControls.setLocation(ctx, on)
                 Verdict(w.ok && SecurityControls.locationOn(ctx) == on, w.detail)
@@ -646,17 +708,64 @@ object DeviceControls {
         ),
     )
 
-    /** #1833 a fleet accessibility service written in or out of the enabled list; the verdict is the re-read. */
-    private fun a11ySet(ctx: Context, id: String, on: Boolean): Verdict {
-        val w = SecurityControls.setA11y(ctx, id, on)
-        return Verdict(w.ok && SecurityControls.a11yOn(ctx, id) == on, w.detail)
+    /** #1833 the Perms row's existing action for Unverified developers: open the step's Settings page (About phone while
+     *  Developer options are off, else Developer options, where "Apps from unverified developers" lives). Says what it opened. */
+    private fun devVerifierStep(ctx: Context): String {
+        val step = runCatching { com.diegonmarcos.superapp.perms.DevVerifier.flow(ctx).step }.getOrNull()
+        val action = if (step == com.diegonmarcos.superapp.perms.DevVerifierFlow.Step.DEV_OPTIONS || SecurityControls.devOptionsOn(ctx) == false)
+            Settings.ACTION_DEVICE_INFO_SETTINGS else Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS
+        val ok = runCatching { ctx.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
+        return (if (ok) "opened " else "could not open ") + action.substringAfterLast('.')
     }
 
-    private fun a11yBlocked(ctx: Context, id: String): String = when {
-        !SecurityControls.a11yInstalled(ctx, id) -> "Not installed on this device."
+    /** #1833 the package a declared accessibility tile presents (build.json `a11y_package`), "" when it declares none. */
+    fun a11yPackage(id: String): String = declared(id)?.optString("a11y_package").orEmpty()
+
+    private fun a11yBlocked(ctx: Context, pkg: String): String = when {
+        SecurityControls.servicesOf(ctx, pkg).isEmpty() -> "Not installed on this device."
         !SecurityControls.canWrite(ctx) -> SecurityControls.NO_CHANNEL
         else -> ""
     }
+
+    // ── #1833 the dynamic group: one tile per installed fleet accessibility service ──
+
+    /** The group source a declaration names in `dynamic`; the only one there is. */
+    const val DYNAMIC_FLEET_A11Y = "fleet_accessibility_services"
+
+    /** Dynamic tile ids: this prefix and the service's flattened component. */
+    const val A11Y_TILE_PREFIX = "a11y:"
+
+    /**
+     * The tiles of a `dynamic` group: every installed accessibility service of a fleet package (lib-apks packages included) that
+     * no declared tile of [group] presents (their `a11y_package`), labelled with its app's real name. A lib whose build is old
+     * ([SecurityControls.libVerdict]) taps to Uninstall through the Store's uninstall path (the system confirm dialog).
+     */
+    fun dynamicTiles(ctx: Context, group: Group): List<Pair<Row, Control>> {
+        if (group.dynamic != DYNAMIC_FLEET_A11Y) return emptyList()
+        val all = SecurityControls.installedFleet(ctx)
+        val adopted = group.rows.map { a11yPackage(it.id) }.filter { it.isNotBlank() }.toSet()
+        return SecurityControls.fleetOnly(all, adopted).map { s ->
+            Row(A11Y_TILE_PREFIX + s.component, SecurityControls.tileLabel(s, all), s.pkg, "ic_lock") to serviceTile(s)
+        }
+    }
+
+    fun serviceTile(s: SecurityControls.Svc): Control = Control(
+        observed = true,
+        read = { ctx -> SecurityControls.serviceProbe(ctx, s.component, s.old).state },
+        probe = { ctx -> SecurityControls.serviceProbe(ctx, s.component, s.old) },
+        set = { ctx, on ->
+            if (s.old.isNotBlank()) {
+                val r = runCatching { com.diegonmarcos.superapp.updater.Fleet.uninstall(ctx, s.pkg) }
+                Verdict(r.isSuccess, if (r.isSuccess) "Uninstall of ${s.pkg} asked: confirm in the system dialog."
+                    else "Uninstall of ${s.pkg} could not start: ${r.exceptionOrNull()?.javaClass?.simpleName}")
+            } else {
+                val w = SecurityControls.setService(ctx, s.component, on)
+                Verdict(w.ok && SecurityControls.serviceProbe(ctx, s.component).state == on, w.detail)
+            }
+        },
+        blocked = { ctx -> if (s.old.isNotBlank() || SecurityControls.canWrite(ctx)) "" else SecurityControls.NO_CHANNEL },
+        open = { ctx -> perms(ctx, "Security: accessibility", "accessibility") },
+    )
 
     /** One of the launcher_settings toggles, by its declared id. */
     private fun launcherToggle(id: String) = Control(
@@ -864,6 +973,11 @@ object DeviceControls {
         val detailsRes: String = "",
         /** #1833 the Panels tab this group is drawn on: "tools" (the default, every group before #1833) or "security". */
         val tab: String = TAB_TOOLS,
+        /** #1833 a runtime source of MORE tiles for this group ([DYNAMIC_FLEET_A11Y]: one per installed fleet accessibility
+         *  service), "" for none. The declared rows stay; [dynamicTiles] adds what the device has. */
+        val dynamic: String = "",
+        /** #1833 the declared row the dynamic tiles are drawn before ("" = after every declared row). */
+        val dynamicBefore: String = "",
     )
 
     const val TAB_TOOLS = "tools"
@@ -940,6 +1054,8 @@ object DeviceControls {
         details = g.optString("details"),
         detailsRes = g.optString("details_res"),
         tab = g.optString("tab", TAB_TOOLS),
+        dynamic = g.optString("dynamic"),
+        dynamicBefore = g.optString("dynamic_before"),
     )
 
     /** A boolean the declaration carries on control [id] — e.g. a switch's

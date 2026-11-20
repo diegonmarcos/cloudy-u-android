@@ -42,6 +42,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -217,7 +218,7 @@ class ControlFragment : KitComposeFragment() {
      *  other. Written only by a read that landed ([landed]) — the only thing a tile is ever painted from. A control drawn
      *  in two groups has ONE of these and both tiles read it, which is what makes the Battery Hungers copy a second view of
      *  one control rather than a second control. */
-    internal class Reading(val state: Boolean?, val readAt: Long, val blocked: String)
+    internal class Reading(val state: Boolean?, val readAt: Long, val blocked: String, val detail: String = "")
 
     private val readings = mutableStateMapOf<String, Reading>()
 
@@ -230,6 +231,26 @@ class ControlFragment : KitComposeFragment() {
     private val io = Executors.newSingleThreadExecutor { r -> Thread(r, "control-panel") }
     private val ioDispatcher = io.asCoroutineDispatcher()
 
+    /** #1833 the reads that may take seconds ([DeviceControls.Control.slow]: a broker round trip) get their own thread, so the
+     *  device's own settings never queue behind them and age into Unknown (the Security tab's Off-while-on lights). */
+    private val slowIo = Executors.newSingleThreadExecutor { r -> Thread(r, "control-panel-slow") }
+    private val slowDispatcher = slowIo.asCoroutineDispatcher()
+
+    /** #1833 ids whose read is still out: a tick does not queue a second one behind it (no backlog that outlives STALE_MS). */
+    private val inFlight = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    /** #1833 the runtime tiles of each `dynamic` group (one per installed fleet accessibility service), by group id. */
+    private val dynamicTiles = mutableStateMapOf<String, List<Pair<DeviceControls.Row, DeviceControls.Control>>>()
+
+    /** A group's tiles in draw order: the declared rows, with its dynamic tiles before [DeviceControls.Group.dynamicBefore]. */
+    private fun tilesOf(group: DeviceControls.Group): List<Pair<DeviceControls.Row, DeviceControls.Control?>> {
+        val declared = group.rows.map { it to DeviceControls.byId[it.id] }
+        val dyn = dynamicTiles[group.id].orEmpty().map { it.first to (it.second as DeviceControls.Control?) }
+        if (dyn.isEmpty()) return declared
+        val at = declared.indexOfFirst { it.first.id == group.dynamicBefore }.takeIf { it >= 0 } ?: declared.size
+        return declared.take(at) + dyn + declared.drop(at)
+    }
+
     /** #1833 the Panels tab this grid draws: Tools (every group before #1833) or Security. */
     private val tab: String get() = arguments?.getString(ARG_TAB) ?: DeviceControls.TAB_TOOLS
 
@@ -238,6 +259,7 @@ class ControlFragment : KitComposeFragment() {
     override fun onDestroy() {
         super.onDestroy()
         io.shutdownNow()
+        slowIo.shutdownNow()
     }
 
     @Composable
@@ -263,7 +285,8 @@ class ControlFragment : KitComposeFragment() {
         // Embedded, the host page is the scroller: a scroll container inside a scroll container would fight it for every
         // vertical drag.
         val scroll = if (embedded) Modifier else Modifier.verticalScroll(rememberScrollState())
-        Column(Modifier.fillMaxWidth().then(scroll).padding(16.dp)) {
+        // #1833 test tags as resource ids: the emulator proof finds each tile by its id (control:tile:<id>), not by its words.
+        Column(Modifier.fillMaxWidth().then(scroll).semantics { testTagsAsResourceId = true }.padding(16.dp)) {
             Text(if (tab == DeviceControls.TAB_SECURITY) stringResource(R.string.control_title_security) else stringResource(R.string.control_title), color = p.textPrimary, fontSize = 15.sp,
                 modifier = Modifier.padding(bottom = 4.dp).testTag(TAG_TITLE))
             // The paragraph is a resource, but the four words it quotes are asked of StatusLight at render time — so a
@@ -278,10 +301,9 @@ class ControlFragment : KitComposeFragment() {
                 DetailsLink(group)
                 // Chunked into rows of `columns`; the last row is padded with weightless spacers so four tiles and two
                 // tiles start at the same left edge instead of the short row spreading itself out.
-                for (line in group.rows.chunked(columns)) {
+                for (line in tilesOf(group).chunked(columns)) {
                     Row(Modifier.fillMaxWidth()) {
-                        for (decl in line) {
-                            val control = DeviceControls.byId[decl.id]
+                        for ((decl, control) in line) {
                             // Dropped, never drawn — but the column still has to be held open or the tiles after it
                             // slide left out of their grid positions.
                             if (control == null) Spacer(Modifier.weight(1f)) else {
@@ -322,7 +344,9 @@ class ControlFragment : KitComposeFragment() {
         // BLACK WHEN OFF, WHITE WHEN ON — the same two theme roles swapped, never two literals.
         val fill = if (on) p.textPrimary else p.surface
         val ink = if (on) p.tileInk else p.textPrimary
-        val description = StatusLight.description(ctx, decl.label, state)
+        val detail = row?.detail.orEmpty()
+        // #1833 the light's words AND what was read: TalkBack and the emulator proof get the same one line the tile draws.
+        val description = StatusLight.description(ctx, decl.label, state) + (if (detail.isNotBlank()) " · $detail" else "")
         Column(
             modifier.widthIn(min = TOUCH_TARGET_DP.dp).heightIn(min = TOUCH_TARGET_DP.dp)
                 .semantics(mergeDescendants = true) { contentDescription = description }
@@ -331,7 +355,13 @@ class ControlFragment : KitComposeFragment() {
                     onLongClickLabel = stringResource(R.string.control_tile_open_action),
                     onClick = {
                         Haptics.tap(view)
+                        val tap = control.tap
                         if (control.set != null) write(decl, control, !(currentlyOn(decl.id)), scope)
+                        else if (tap != null) {
+                            val said = runCatching { tap(ctx) }.getOrElse { it.javaClass.simpleName }
+                            view.snack(said)
+                            refresh(scope)
+                        }
                         else openOrSayThereIsNowhere(decl, control)
                     },
                     onLongClick = {
@@ -350,6 +380,9 @@ class ControlFragment : KitComposeFragment() {
                 overflow = TextOverflow.Ellipsis)
             Text(StatusLight.text(ctx, state), color = Color(StatusLight.colour(ctx, state)), fontSize = 10.sp,
                 textAlign = TextAlign.Center, modifier = Modifier.testTag("control:light:${decl.id}"))
+            // #1833 what was read and the value it gave, so a light that looks wrong on the phone explains itself.
+            if (detail.isNotBlank()) Text(detail, color = p.textSecondary, fontSize = 8.sp, lineHeight = 9.sp, maxLines = 3,
+                textAlign = TextAlign.Center, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("control:detail:${decl.id}"))
             // Only ever visible when the control names a reason it cannot move. A tile that just looked inert would say
             // nothing about the grant it is waiting for.
             if (blocked.isNotEmpty()) Text(blocked, color = colorResource(R.color.control_blocked), fontSize = 9.sp,
@@ -379,19 +412,33 @@ class ControlFragment : KitComposeFragment() {
      */
     private fun refresh(scope: CoroutineScope) {
         val ctx = context ?: return
-        for (id in DeviceControls.groupsOn(tab).flatMap { g -> g.rows.map { it.id } }.distinct()) {
-            val control = DeviceControls.byId[id] ?: continue
-            scope.launch(ioDispatcher) {
-                val state = runCatching { control.read(ctx) }.getOrNull()
-                val blocked = runCatching { control.blocked(ctx) }.getOrDefault("")
-                withContext(kotlinx.coroutines.Dispatchers.Main) { if (isAdded) landed(id, state, blocked) }
+        val groups = DeviceControls.groupsOn(tab)
+        // #1833 the dynamic groups' tiles are found again every tick (an app installed or removed shows up without a restart).
+        for (g in groups.filter { it.dynamic.isNotBlank() }) scope.launch(ioDispatcher) {
+            val tiles = runCatching { DeviceControls.dynamicTiles(ctx, g) }.getOrDefault(emptyList())
+            withContext(kotlinx.coroutines.Dispatchers.Main) { if (isAdded) { dynamicTiles[g.id] = tiles; readAll(scope, ctx, tiles) } }
+        }
+        readAll(scope, ctx, groups.flatMap { g -> g.rows.mapNotNull { r -> DeviceControls.byId[r.id]?.let { r to it } } })
+    }
+
+    /** One read per control id (distinct-ed), each skipped while its previous read is still out; slow ones on their own thread. */
+    private fun readAll(scope: CoroutineScope, ctx: Context, tiles: List<Pair<DeviceControls.Row, DeviceControls.Control>>) {
+        for ((row, control) in tiles.distinctBy { it.first.id }) {
+            val id = row.id
+            if (!inFlight.add(id)) continue
+            scope.launch(if (control.slow) slowDispatcher else ioDispatcher) {
+                try {
+                    val probe = runCatching { control.sample(ctx) }.getOrNull()
+                    val blocked = runCatching { control.blocked(ctx) }.getOrDefault("")
+                    withContext(kotlinx.coroutines.Dispatchers.Main) { if (isAdded) landed(id, probe?.state, blocked, probe?.detail.orEmpty()) }
+                } finally { inFlight.remove(id) }
             }
         }
     }
 
     /** A read came back. This is the ONLY writer of a control's reading, and it writes the one entry EVERY tile bearing the id reads. */
-    private fun landed(id: String, state: Boolean?, blocked: String) {
-        readings[id] = Reading(state, SystemClock.elapsedRealtime(), blocked)
+    private fun landed(id: String, state: Boolean?, blocked: String, detail: String = "") {
+        readings[id] = Reading(state, SystemClock.elapsedRealtime(), blocked, detail)
     }
 
     /**
@@ -415,16 +462,16 @@ class ControlFragment : KitComposeFragment() {
         val set = control.set ?: return
         val ctx = context ?: return
         writing[decl.id] = true
-        scope.launch(ioDispatcher) {
+        scope.launch(if (control.slow) slowDispatcher else ioDispatcher) {
             val verdict = runCatching { set(ctx, want) }.getOrElse {
                 DeviceControls.Verdict(false, it.message ?: it::class.java.simpleName)
             }
-            val state = runCatching { control.read(ctx) }.getOrNull()
+            val probe = runCatching { control.sample(ctx) }.getOrNull()
             val blocked = runCatching { control.blocked(ctx) }.getOrDefault("")
             withContext(kotlinx.coroutines.Dispatchers.Main) {
                 writing.remove(decl.id)
                 if (!isAdded) return@withContext
-                landed(decl.id, state, blocked)
+                landed(decl.id, probe?.state, blocked, probe?.detail.orEmpty())
                 if (!verdict.ok) {
                     view?.snack(getString(R.string.control_write_refused, decl.label, verdict.detail),
                         com.google.android.material.snackbar.Snackbar.LENGTH_LONG)

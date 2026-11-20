@@ -1,0 +1,125 @@
+{
+  "_doc": "#1833 FROZEN: the Security tab's declaration (every group, every control and field) as it shipped before the redo of the tab (main@462d21dd2). test-panels-security-1833.sh P2b holds the redo to it under rule 16: every group stays, every control stays with its id, label and icon, and a control that left the Accessibility apps group is still drawn there through the dynamic group (its a11y_package). Never edit to make a test pass.",
+  "groups": [
+    {
+      "_doc": "#1833 THE HOME of the Security tab's own controls, drawn nowhere (draw false): the declaration guard gives every control exactly one functional home, and the Security tab draws these rows through the derived groups below, in this order, next to the tiles it shares with Tools (Wireless debugging, Floating menu) by flag. Capability: configs/SecurityControls.kt via DeviceControls.byId.",
+      "id": "security_home",
+      "label": "Security controls",
+      "label_res": "control_group_security_home",
+      "subtitle": "Home of the Security tab's controls; drawn through the groups below.",
+      "subtitle_res": "control_group_security_home_sub",
+      "tab": "security",
+      "draw": false,
+      "controls": [
+        {
+          "id": "developer_options",
+          "icon": "ic_code",
+          "label": "Developer options",
+          "security_debug": true,
+          "subtitle": "Settings.Global development_settings_enabled. Off hides Developer options and with them Wireless debugging."
+        },
+        {
+          "id": "adb_shell",
+          "icon": "ic_terminal",
+          "label": "ADB shell",
+          "security_debug": true,
+          "subtitle": "The privileged shell channel, asked with a real round trip. A tap connects it; it closes when Wireless or USB debugging goes off."
+        },
+        {
+          "id": "usb_debugging",
+          "icon": "ic_terminal",
+          "label": "USB debugging",
+          "security_debug": true,
+          "subtitle": "Settings.Global adb_enabled. Off also ends Wireless debugging and the shell channel riding it."
+        },
+        {
+          "id": "access_keyboard",
+          "icon": "ic_keyboard",
+          "label": "Keyboard Grabber",
+          "access_app": true,
+          "access_feature": true,
+          "subtitle": "Cloud Keyboard's accessibility service: the Grabber reads the selected text of any app through it."
+        },
+        {
+          "id": "access_superapp",
+          "icon": "ic_nav_lock",
+          "label": "Cloud SuperApp",
+          "access_app": true,
+          "subtitle": "SuperApp's accessibility service: the lock-screen action (lock the phone from the launcher)."
+        },
+        {
+          "id": "access_vault",
+          "icon": "ic_vault",
+          "label": "Autofill (Cloud Vault)",
+          "access_app": true,
+          "access_feature": true,
+          "subtitle": "Cloud Vault's accessibility service: autofill in apps that do not support the Android autofill framework."
+        },
+        {
+          "id": "access_others",
+          "icon": "ic_lock",
+          "label": "Other fleet services",
+          "access_app": true,
+          "subtitle": "Any other fleet package's accessibility service (a library's) that is enabled. Lit = one is on; a tap removes them all."
+        },
+        {
+          "id": "edge_menus",
+          "icon": "ic_onehand",
+          "label": "Edge menu",
+          "access_feature": true,
+          "subtitle": "The One-Hand edge pads, read from the overlay's own strips on screen, not the stored switch."
+        },
+        {
+          "id": "vpn",
+          "icon": "ic_ctl_firewall",
+          "label": "VPN",
+          "security_net": true,
+          "subtitle": "The Cloud Mesh tunnel, read from the WireGuard engine (lit only while it is UP). Tap switches it; hold opens the Cloud Mesh page."
+        },
+        {
+          "id": "location",
+          "icon": "ic_map_pin",
+          "label": "Location",
+          "security_net": true,
+          "subtitle": "LocationManager location on/off; switched with cmd location over the shell channel."
+        }
+      ]
+    },
+    {
+      "id": "security_debug",
+      "label": "Developer & debugging",
+      "label_res": "control_group_security_debug",
+      "subtitle": "Developer options, Wireless and USB debugging, and the ADB shell channel this app's privileged plane uses.",
+      "subtitle_res": "control_group_security_debug_sub",
+      "tab": "security",
+      "derive": "security_debug"
+    },
+    {
+      "id": "security_access_apps",
+      "label": "Accessibility apps",
+      "label_res": "control_group_security_access_apps",
+      "subtitle": "The fleet apps that run an accessibility service. A fleet service not listed here (a library's) shows under Other and is removed from there.",
+      "subtitle_res": "control_group_security_access_apps_sub",
+      "tab": "security",
+      "derive": "access_app"
+    },
+    {
+      "id": "security_access_features",
+      "label": "Features using accessibility",
+      "label_res": "control_group_security_access_features",
+      "subtitle": "Each feature that needs an accessibility service or an overlay, switched on its own.",
+      "subtitle_res": "control_group_security_access_features_sub",
+      "tab": "security",
+      "derive": "access_feature"
+    },
+    {
+      "id": "security_net",
+      "label": "VPN & location",
+      "label_res": "control_group_security_net",
+      "subtitle": "Whether the Cloud Mesh tunnel is up and whether location is on.",
+      "subtitle_res": "control_group_security_net_sub",
+      "tab": "security",
+      "derive": "security_net"
+    }
+  ]
+}

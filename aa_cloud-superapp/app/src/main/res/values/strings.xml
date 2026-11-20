@@ -256,7 +256,7 @@
     <string name="control_group_security_debug">Developer &amp; debugging</string>
     <string name="control_group_security_debug_sub">Developer options, Wireless and USB debugging, and the ADB shell channel this app\'s privileged plane uses.</string>
     <string name="control_group_security_access_apps">Accessibility apps</string>
-    <string name="control_group_security_access_apps_sub">The fleet apps that run an accessibility service. A fleet service not listed here (a library\'s) shows under Other and is removed from there.</string>
+    <string name="control_group_security_access_apps_sub">Every installed accessibility service of a fleet app or library, from AccessibilityManager, lit while the system has it bound. An old library build is named and taps to Uninstall; Other removes stale entries.</string>
     <string name="control_group_security_access_features">Features using accessibility</string>
     <string name="control_group_security_access_features_sub">Each feature that needs an accessibility service or an overlay, switched on its own.</string>
     <string name="control_group_security_net">VPN &amp; location</string>

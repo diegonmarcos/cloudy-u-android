@@ -97,6 +97,12 @@ object LocalServerAutoStart {
      */
     fun mayRun(reason: String, keepAliveOn: Boolean): Boolean = reason == "button" || keepAliveOn
 
+    /** #1833 Pure: may a run started for [reason] post the pairing notification? Only a tap. An implicit run with the keep-alive ON
+     *  still reconnects a paired device (mDNS connect, server launch), but stops at the pairing step with [PAIR_NOT_IMPLICIT]. */
+    fun mayPair(reason: String): Boolean = reason == "button"
+
+    const val PAIR_NOT_IMPLICIT = "not paired: pairing is only started by a tap (Pair / Connect), never by an automatic run"
+
     private fun gated(ctx: Context, reason: String) = !mayRun(reason, runCatching { ChannelAutoArm.enabled(ctx) }.getOrDefault(false))
 
     /** Fire and forget; never blocks the caller (safe on the main thread). [reason] "command" honours the cooldown. */
@@ -117,7 +123,7 @@ object LocalServerAutoStart {
         }
         if (LocalShellChannel.isReady(app) && LocalShellChannel.probe(app)) return null
         ChannelLog.shared.add("server", "auto-start ($reason): local server does not answer, running the chain")
-        val out = core.run(ChannelMode.LOCAL_SERVER, DeviceConnectExecutor(app),
+        val out = core.run(ChannelMode.LOCAL_SERVER, DeviceConnectExecutor(app, explicit = mayPair(reason)),
             { AdbShellBootstrap.record(app, "auto ($reason) $it") }, ChannelLog.shared, true) { lastSteps = it; listeners.forEach { l -> runCatching { l() } } }
             ?: return null
         lastOutcome = out

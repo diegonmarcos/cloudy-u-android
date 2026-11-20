@@ -255,7 +255,9 @@ object ChannelOps {
 }
 
 /** The Connect sequence on a real device: each step does the one thing it names and says what happened. */
-class DeviceConnectExecutor(private val ctx: Context) : ConnectExecutor {
+/** [explicit] false = an implicit run (app start, boot, a command, Wireless debugging coming on): it never posts the pairing
+ *  notification, whatever the keep-alive says (#1833: only a tap may start pairing). */
+class DeviceConnectExecutor(private val ctx: Context, private val explicit: Boolean = true) : ConnectExecutor {
     private val app = ctx.applicationContext
     override fun facts(): ChannelFacts = ChannelReader.read(app, connecting = false)
 
@@ -270,7 +272,7 @@ class DeviceConnectExecutor(private val ctx: Context) : ConnectExecutor {
                 StepResult(false, "could not be turned on from here (${r.channel}); opened the Wireless debugging toggle")
             }
         }
-        StepId.PAIR -> {
+        StepId.PAIR -> if (!explicit) StepResult(false, LocalServerAutoStart.PAIR_NOT_IMPLICIT, needsUser = true) else {
             val said = ChannelOps.pair(app)
             if (said.startsWith("Pairing")) StepResult(false, "notification posted", needsUser = true)
             else StepResult(false, said)

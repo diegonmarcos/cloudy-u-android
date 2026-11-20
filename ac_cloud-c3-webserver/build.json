@@ -1,4 +1,9 @@
 {
+  "privileged_channel": {
+    "_doc": "#1833 the ADB owner's implicit-arm default (libs/shizuku-adb-debug-tools ChannelAutoArm, baked as CHANNEL_NEEDS_B64): OFF. Without this block the lib's no-block default (ON) applied, so app start, boot, every broker status poll that found the channel down and Wireless debugging coming on ran the connect chain to the pairing notification while every client showed the keep-alive OFF. At runtime AdbReadinessOwner.wireKeepAlive makes the one stored switch WirelessDebugKeeper.Prefs (keeper_get / keeper_set); this is its default before that runs.",
+    "default_on": false,
+    "needs": []
+  },
   "launcher_icon": {
     "_doc": "The launcher icon, generated from this declaration by 1_cicd/src/scripts/cloud-android-launcher-icons.py (pattern + category colours + glyphs in 1_cicd/src/data/launcher-icons.json). Never edit the generated res files.",
     "glyph": "dns",

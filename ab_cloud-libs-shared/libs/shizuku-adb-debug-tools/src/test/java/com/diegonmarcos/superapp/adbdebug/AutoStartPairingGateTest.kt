@@ -23,4 +23,10 @@ class AutoStartPairingGateTest {
         implicit.forEach { assertTrue(LocalServerAutoStart.mayRun(it, true)) }
         assertTrue(LocalServerAutoStart.mayRun("button", true))
     }
+
+    /** #1833 even with the keep-alive ON an automatic run never posts the pairing notification: only a tap starts pairing. */
+    @Test fun `only a tap may post the pairing notification`() {
+        implicit.forEach { assertFalse("$it must not post pairing", LocalServerAutoStart.mayPair(it)) }
+        assertTrue(LocalServerAutoStart.mayPair("button"))
+    }
 }

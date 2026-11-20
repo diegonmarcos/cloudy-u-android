@@ -319,6 +319,7 @@ class FloatingNavService : Service() {
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             android.graphics.PixelFormat.TRANSLUCENT,
         ).apply {
+            title = WINDOW_TITLE   // #1833 visible in `dumpsys window` (the Security tab's emulator proof)
             gravity = Gravity.TOP or Gravity.START
             x = if (bubbleX >= 0) bubbleX else defX
             y = if (bubbleY >= 0) bubbleY else dp(6)
@@ -513,6 +514,7 @@ class FloatingNavService : Service() {
         val w = resources.displayMetrics.widthPixels * cfg.widthPct / 100
         return WindowManager.LayoutParams(w, WindowManager.LayoutParams.WRAP_CONTENT, type, flags,
             android.graphics.PixelFormat.TRANSLUCENT).apply {
+            title = WINDOW_TITLE
             gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
             // Just below the dynamic island (data-driven dp from the top edge).
             y = dp(cfg.topOffsetDp)
@@ -684,6 +686,9 @@ class FloatingNavService : Service() {
 
         /** True while the overlay service is alive — drives the single
          *  Start/Stop toggle in Configs → Permissions. */
+        /** #1833 the title of the bubble and bar windows (WindowManager.LayoutParams.title), visible in `dumpsys window`. */
+        const val WINDOW_TITLE = "c3-floating-nav"
+
         @Volatile
         var isRunning: Boolean = false
             private set

@@ -195,7 +195,7 @@
     <string name="control_group_security_debug">Desarrollo y depuración</string>
     <string name="control_group_security_debug_sub">Opciones de desarrollador, depuración inalámbrica y USB, y el canal de shell ADB que usa el plano privilegiado de esta aplicación.</string>
     <string name="control_group_security_access_apps">Apps de accesibilidad</string>
-    <string name="control_group_security_access_apps_sub">Las apps de la flota que ejecutan un servicio de accesibilidad. Un servicio de la flota que no está aquí (el de una librería) aparece en Otros y se quita desde ahí.</string>
+    <string name="control_group_security_access_apps_sub">Cada servicio de accesibilidad instalado de una app o librería de la flota, según AccessibilityManager, encendido mientras el sistema lo tiene vinculado. Una versión antigua de librería se nombra y un toque la desinstala; Otros quita las entradas obsoletas.</string>
     <string name="control_group_security_access_features">Funciones que usan accesibilidad</string>
     <string name="control_group_security_access_features_sub">Cada función que necesita un servicio de accesibilidad o una superposición, activada por separado.</string>
     <string name="control_group_security_net">VPN y ubicación</string>

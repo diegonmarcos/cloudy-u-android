@@ -25,6 +25,17 @@ object ChannelAutoArm {
      */
     @Volatile var hostSwitch: ((Context) -> Boolean)? = null
 
+    /**
+     * #1833 the write side of [hostSwitch]: with a host switch installed, [set] writes THAT switch, so the owner's own page (the
+     * webserver's ADB keep-alive) and the fleet clients' keeper_set (SuperApp: Keep Wireless debugging on) flip one stored choice.
+     * Before, the webserver as ADB owner had no host switch: its ChannelAutoArm defaulted ON (no privileged_channel block) while the
+     * keep-alive clients saw and flipped was WirelessDebugKeeper's (OFF), so every implicit trigger ran the chain to the pairing prompt.
+     */
+    @Volatile var hostSet: ((Context, Boolean) -> Unit)? = null
+
+    /** Pure: the host switch when it answers, else the stored choice, else the declared default. */
+    fun resolveWithHost(host: Boolean?, stored: Boolean?, json: String?): Boolean = host ?: resolve(stored, json)
+
     /** Pure: the declared default of a `privileged_channel` block. A block without it keeps the old behaviour (on). */
     fun declaredDefault(json: String?): Boolean =
         if (json.isNullOrBlank()) true
@@ -37,13 +48,14 @@ object ChannelAutoArm {
     fun defaultOn(): Boolean = declaredDefault(DeclaredNeeds.decode(BuildConfig.CHANNEL_NEEDS_B64))
 
     fun enabled(ctx: Context): Boolean {
-        hostSwitch?.let { h -> runCatching { h(ctx) }.getOrNull()?.let { return it } }
+        val host = hostSwitch?.let { h -> runCatching { h(ctx) }.getOrNull() }
         val p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return runCatching { resolve(if (p.contains(KEY)) p.getBoolean(KEY, false) else null,
-            DeclaredNeeds.decode(BuildConfig.CHANNEL_NEEDS_B64)) }.getOrDefault(defaultOn())
+        return runCatching { resolveWithHost(host, if (p.contains(KEY)) p.getBoolean(KEY, false) else null,
+            DeclaredNeeds.decode(BuildConfig.CHANNEL_NEEDS_B64)) }.getOrDefault(host ?: defaultOn())
     }
 
     fun set(ctx: Context, on: Boolean) {
+        hostSet?.let { h -> runCatching { h(ctx, on) }; return }
         runCatching { ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY, on).commit() }
     }
 }

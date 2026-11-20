@@ -199,6 +199,8 @@ class OneHandOverlayService : Service() {
         if (android.os.Build.VERSION.SDK_INT >= 30) {
             lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
         }
+        // #1833 a window title `dumpsys window` prints: the Security tab's emulator proof counts the strips from outside the app.
+        lp.title = STRIP_TITLE_PREFIX + h.id
         // GUARANTEE no back-gesture conflict: in gesture-nav mode Samsung's back
         // swipe fires only from the very edge strip, so we sit our handle just
         // PAST that strip (the safe zone). In 3-button mode there's no edge
@@ -439,6 +441,8 @@ class OneHandOverlayService : Service() {
         private const val OVERLAY_ALPHA = 0.6f
         const val ACTION_TEST = "com.diegonmarcos.superapp.onehand.TEST"
         const val EXTRA_MS = "ms"
+        /** #1833 every idle strip window's title prefix (WindowManager.LayoutParams.title), visible in `dumpsys window`. */
+        const val STRIP_TITLE_PREFIX = "c3-edge-strip-"
         @Volatile var instance: OneHandOverlayService? = null
             private set
         val isRunning: Boolean get() = instance != null

@@ -11,6 +11,7 @@ import com.diegonmarcos.superapp.shellbroker.ShellBroker
  */
 object AdbReadinessOwner {
     @Synchronized fun install() {
+        wireKeepAlive()
         AdbReadiness.ownerInstall = { ShellBroker.onStatusChange = { st -> AdbReadiness.publish(st) } }
         AdbReadiness.ownerUsableNow = { ctx -> ShellChannels.active(ctx) != null }
         // the owner's keep-alive switch for fleet clients (the broker provider's keeper_get / keeper_set; allowlist entry flag `keeper`)
@@ -19,5 +20,17 @@ object AdbReadinessOwner {
             WirelessDebugKeeper.Prefs.enabled(ctx)
         }
         AdbReadiness.install()
+    }
+
+    /**
+     * #1833 ONE ADB keep-alive switch in the owner process, whichever app is the owner: the lib's implicit-trigger gate
+     * (ChannelAutoArm: app start, boot, a command finding the channel down, Wireless debugging coming on, the broker's re-arm) reads
+     * and writes [WirelessDebugKeeper.Prefs], the switch the broker's keeper_get / keeper_set serve to the fleet clients (SuperApp
+     * Configs > Keep Wireless debugging on). The SuperApp did this in its own owner facade; the webserver owner did not, so its gate
+     * followed an undeclared default (ON) while every client showed the keeper OFF, and the pairing notification kept coming.
+     */
+    fun wireKeepAlive() {
+        com.diegonmarcos.superapp.adbdebug.ChannelAutoArm.hostSwitch = { c -> WirelessDebugKeeper.Prefs.enabled(c) }
+        com.diegonmarcos.superapp.adbdebug.ChannelAutoArm.hostSet = { c, on -> WirelessDebugKeeper.Prefs.setEnabled(c, on) }
     }
 }

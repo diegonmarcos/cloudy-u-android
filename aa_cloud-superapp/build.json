@@ -11056,7 +11056,8 @@
               "icon": "ic_terminal",
               "label": "ADB shell",
               "security_debug": true,
-              "subtitle": "The privileged shell channel, asked with a real round trip. A tap connects it; it closes when Wireless or USB debugging goes off."
+              "subtitle": "The privileged shell channel, asked with a real round trip. A tap connects it; it closes when Wireless or USB debugging goes off.",
+              "_doc_read": "#1833 lit only while the shell broker is ARMED (ShellClient.status, an id -u round trip); the tile's detail line also names the adb transport verdict the home status strip's ADB dot draws (ShellStatus.adb), so the two can no longer disagree unseen."
             },
             {
               "id": "usb_debugging",
@@ -11066,34 +11067,44 @@
               "subtitle": "Settings.Global adb_enabled. Off also ends Wireless debugging and the shell channel riding it."
             },
             {
+              "id": "unverified_developers",
+              "icon": "ic_lock",
+              "label": "Unverified developers",
+              "security_debug": true,
+              "subtitle": "Android's Apps from unverified developers (#1822): the verifier package and its setting, read in-process. Lit = such installs are allowed. Tap opens the step's Settings page; hold opens the Perms row."
+            },
+            {
               "id": "access_keyboard",
               "icon": "ic_keyboard",
               "label": "Keyboard Grabber",
               "access_app": true,
               "access_feature": true,
-              "subtitle": "Cloud Keyboard's accessibility service: the Grabber reads the selected text of any app through it."
+              "a11y_package": "com.diegonmarcos.cloudkeyboard",
+              "subtitle": "Cloud Keyboard's accessibility service: the Grabber reads the selected text of any app through it. Lit while the system has it bound (AccessibilityManager)."
             },
             {
               "id": "access_superapp",
               "icon": "ic_nav_lock",
               "label": "Cloud SuperApp",
               "access_app": true,
-              "subtitle": "SuperApp's accessibility service: the lock-screen action (lock the phone from the launcher)."
+              "a11y_package": "com.diegonmarcos.superapp",
+              "subtitle": "SuperApp's accessibility service: the lock-screen action (lock the phone from the launcher). Lit while the system has it bound; the edge menu is an overlay and needs none."
             },
             {
               "id": "access_vault",
               "icon": "ic_vault",
               "label": "Autofill (Cloud Vault)",
-              "access_app": true,
               "access_feature": true,
-              "subtitle": "Cloud Vault's accessibility service: autofill in apps that do not support the Android autofill framework."
+              "a11y_package": "com.diegonmarcos.cloudvault",
+              "_doc_moved": "#1833 the FEATURE (autofill by either mechanism) stays here; Cloud Vault the APP is drawn under Accessibility apps by the dynamic group (its installed accessibility service, bound or not), so the app tile and the feature tile no longer share one read.",
+              "subtitle": "Vault autofill: Cloud Vault's accessibility service bound, or Android's autofill service (Settings.Secure autofill_service) is Vault. The detail says which."
             },
             {
               "id": "access_others",
               "icon": "ic_lock",
               "label": "Other fleet services",
               "access_app": true,
-              "subtitle": "Any other fleet package's accessibility service (a library's) that is enabled. Lit = one is on; a tap removes them all."
+              "subtitle": "Fleet entries in Settings.Secure enabled_accessibility_services whose service is no longer installed (an uninstalled app or old library build). Lit = one is listed; a tap removes them. Every installed fleet service has its own tile beside this one."
             },
             {
               "id": "edge_menus",
@@ -11338,10 +11349,13 @@
           "id": "security_access_apps",
           "label": "Accessibility apps",
           "label_res": "control_group_security_access_apps",
-          "subtitle": "The fleet apps that run an accessibility service. A fleet service not listed here (a library's) shows under Other and is removed from there.",
+          "subtitle": "Every installed accessibility service of a fleet app or library, from AccessibilityManager, lit while the system has it bound. An old library build is named and taps to Uninstall; Other removes stale entries.",
           "subtitle_res": "control_group_security_access_apps_sub",
           "tab": "security",
-          "derive": "access_app"
+          "derive": "access_app",
+          "_doc_dynamic": "#1833 no hardcoded component list: DeviceControls.dynamicTiles adds one tile per installed fleet / lib-apks accessibility service (AccessibilityManager.getInstalledAccessibilityServiceList) that no declared row of this group presents (their a11y_package), before access_others.",
+          "dynamic": "fleet_accessibility_services",
+          "dynamic_before": "access_others"
         },
         {
           "id": "security_access_features",

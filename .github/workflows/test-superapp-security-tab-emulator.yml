@@ -1,8 +1,17 @@
-# #1833 Quick actions > Panels > Security on an emulator, with the x86_64 APK a Ship Cloud SuperApp run built: the tab opens, draws
-# its four groups, and two tiles really switch the device. With WRITE_SECURE_SETTINGS granted (the self-grant the phone does over
-# its shell channel), a tap on Developer options flips Settings.Global development_settings_enabled and a tap on Cloud SuperApp
-# puts the SuperApp's accessibility service in Settings.Secure enabled_accessibility_services; both are read back with adb.
-# Evidence: security-tab-evidence (shots before/after each tap, ui dumps, the settings read back, verdict.txt, logcat).
+# #1833 Quick actions > Panels > Security on an emulator, with the x86_64 APK a Ship Cloud SuperApp run built. For EVERY Security tile
+# the job records the tile's state from the UI (found by its id, control:tile:<id>, with test tags exposed as resource ids) and the
+# ground truth read with adb (settings get global / secure, dumpsys accessibility enabled / binding / crashed services, dumpsys
+# window overlay titles, cmd location, the VPN networks of dumpsys connectivity, pm for the verifier and the ADB owner), and writes
+# a per-tile table with MATCH / MISMATCH. Three passes:
+#   no-wss   WITHOUT WRITE_SECURE_SETTINGS and with no shell broker (the ADB owner is not installed): every light must still match,
+#            because no read on the page goes through the broker or a privileged grant.
+#   toggles  with WRITE_SECURE_SETTINGS granted: Developer options, Cloud SuperApp's accessibility service, Other fleet services
+#            (a planted stale entry), Edge menu and Floating menu are tapped; each must MOVE the device and its tile must match.
+#   final    every tile again after the toggles.
+# Any MISMATCH, or a toggle that did not move the device, fails the job. Evidence: security-tab-evidence (tables, ui dumps, shots,
+# dumpsys extracts, logcat). Tiles covered (test-panels-security-1833.sh P9): "developer_options" "adb_shell" "usb_debugging"
+# "unverified_developers" "wireless_debugging" "access_keyboard" "access_superapp" "access_others" "access_vault" "edge_menus"
+# "floating_nav" "vpn" "location", and every dynamic a11y:<component> tile.
 name: "Test -> SuperApp Security tab (emulator)"
 
 on:
@@ -19,7 +28,7 @@ permissions:
 jobs:
   page:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 55
     steps:
       - name: Fetch the Cloud SuperApp APK
         env:
@@ -43,7 +52,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Write the script
+      - name: Write the scripts
         run: |
           cat > find.py <<'EOF1'
           import re, sys
@@ -55,68 +64,227 @@ jobs:
               b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
               d = re.search(r'content-desc="([^"]*)"', n); t = re.search(r' text="([^"]*)"', n)
               if b: nodes.append((d.group(1) if d else "", t.group(1) if t else "", tuple(map(int, b.groups()))))
-          # a tile's own description first (it carries the label and the state), a bare text only when no description matches
           hit = next((n for n in nodes if n[0].startswith(label)), None) or next((n for n in nodes if n[1] == label), None)
           if hit:
               x1, y1, x2, y2 = hit[2]; print((x1 + x2) // 2, (y1 + y2) // 2)
           EOF1
-          cat > shoot.sh <<'EOF2'
+          cat > tiles.py <<'EOF2'
+          import html, json, re, sys
+          # Every Security tile in the given dumps: id -> {state, desc, x, y}. Later dumps win (they are fresher).
+          STATES = ("On", "Off", "Unknown", "Not verifiable")
+          out = {}
+          for f in sys.argv[2:]:
+              try: xml = open(f, errors="replace").read()
+              except OSError: continue
+              for m in re.finditer(r'<node [^>]*>', xml):
+                  n = m.group(0)
+                  rid = re.search(r'resource-id="control:tile:([^"]+)"', n)
+                  if not rid: continue
+                  d = html.unescape((re.search(r'content-desc="([^"]*)"', n) or [None, ""])[1] or "")
+                  b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+                  st = next((s for s in STATES if re.search(r': %s(?: · |$)' % re.escape(s), d)), "?")
+                  x1, y1, x2, y2 = map(int, b.groups()) if b else (0, 0, 0, 0)
+                  out[html.unescape(rid.group(1))] = {"state": st, "desc": d, "x": (x1 + x2) // 2, "y": (y1 + y2) // 2, "file": f}
+          json.dump(out, open(sys.argv[1], "w"), indent=1, ensure_ascii=False)
+          EOF2
+          cat > a11y.py <<'EOF3'
+          import re, sys
+          # Accessibility ground truth from `dumpsys accessibility` (argv[1]) and the installed services (argv[2], query-services):
+          # "<component> <On|Off> <installed|not-installed>"; On = in the system's Enabled services and neither Binding nor Crashed.
+          dump = open(sys.argv[1], errors="replace").read()
+          def comps(key):
+              m = re.search(key + r':\{(.*?)\}\s*\n', dump, re.S)
+              return set(re.findall(r'([\w.]+/[\w.$]+)', m.group(1))) if m else set()
+          def norm(c):
+              p, k = c.split('/', 1); return p + '/' + (p + k if k.startswith('.') else k)
+          enabled = {norm(c) for c in comps('Enabled services')}
+          busy = {norm(c) for c in comps('Binding services') | comps('Crashed services')}
+          inst = {norm(c) for c in re.findall(r'([\w.]+/[\w.$]+)', open(sys.argv[2], errors="replace").read())}
+          for c in sorted(inst | enabled):
+              print(c, "On" if c in enabled and c not in busy else "Off", "installed" if c in inst else "not-installed")
+          EOF3
+          cat > shoot.sh <<'EOF4'
           set -u
           mkdir -p out
           PKG=com.diegonmarcos.superapp
+          OWNER=com.diegonmarcos.cloudwebserver
+          FAIL=0
           adb install -r -g superapp.apk || exit 2
-          adb shell pm grant "$PKG" android.permission.WRITE_SECURE_SETTINGS || true
+          # the no-wss pass comes first: WRITE_SECURE_SETTINGS is revoked (install -g does not grant it; revoke to be sure)
+          adb shell pm revoke "$PKG" android.permission.WRITE_SECURE_SETTINGS >/dev/null 2>&1 || true
           adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
+          adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW allow || true
+          adb shell appops set "$PKG" GET_USAGE_STATS allow || true
           adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
           adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
-          adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1 || true
           adb shell settings put global hide_error_dialogs 1 || true
           adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
           adb shell locksettings set-disabled true || true
+          # a stale fleet entry (an uninstalled old library build): "Other fleet services" then has a true On and a real removal
+          STALE=com.diegonmarcos.cloudlib.oldlibrary/com.diegonmarcos.cloudlib.oldlibrary.GoneAccessibilityService
+          cur=$(adb shell settings get secure enabled_accessibility_services | tr -d '\r')
+          if [ "$cur" = null ] || [ -z "$cur" ]; then new="$STALE"; else new="$cur:$STALE"; fi
+          adb shell settings put secure enabled_accessibility_services "$new"
+          echo "planted stale entry: $STALE" > out/setup.txt
+          if adb shell pm path "$OWNER" >/dev/null 2>&1; then echo "ADB owner $OWNER IS installed" >> out/setup.txt; else echo "ADB owner $OWNER not installed: no shell broker" >> out/setup.txt; fi
           awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1 || true; }
           awake; sleep 3; awake
           ACT=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
           adb shell am start -W -n "$PKG/.HomeActivity" >/dev/null; sleep 10; awake
           # the SuperApp's own screensaver (ScreensaverService, "Unlock") comes back on idle: tap Unlock whenever it is up
           unsaver() { adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml out/u.xml >/dev/null 2>&1; u=$(python3 find.py out/u.xml "Unlock"); [ -n "$u" ] && { adb shell input tap $u; sleep 3; echo "unlocked at $u" >> out/screensaver.txt; }; true; }
-          adb shell am start -n "$ACT" --es shortcut_action "page:config/panels-security" >/dev/null; awake; sleep 12
-          unsaver; adb shell am start -n "$ACT" --es shortcut_action "page:config/panels-security" >/dev/null; sleep 8; unsaver
-          adb exec-out screencap -p > out/01-security-tab.png
-          adb shell dumpsys activity activities | grep -E "topResumedActivity|mResumedActivity" > out/resumed.txt || true
+          openpage() { adb shell am start -n "$ACT" --es shortcut_action "page:config/panels-security" >/dev/null; awake; sleep 8; unsaver; adb shell am start -n "$ACT" --es shortcut_action "page:config/panels-security" >/dev/null; sleep 6; unsaver; }
           dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "out/$1.xml" >/dev/null 2>&1; }
-          # find_tile <label> <name>: scroll until a tile whose description starts with <label> is on screen; prints "x y"
-          find_tile() {
-            for i in 1 2 3 4 5 6; do
-              unsaver
-              dump "ui-$2-$i"; pos=$(python3 find.py "out/ui-$2-$i.xml" "$1")
-              [ -n "$pos" ] && { echo "$pos"; return; }
-              adb shell input swipe 540 1700 540 900 500; sleep 2
+          top() { for i in 1 2 3 4 5 6 7 8 9 10; do adb shell input swipe 540 700 540 1900 200; done; sleep 1; }
+          # collect <name>: every tile on the page, top to bottom, into out/<name>-tiles.json
+          collect() {
+            top; files=""
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              unsaver; dump "$1-$i"; files="$files out/$1-$i.xml"
+              adb shell input swipe 540 1800 540 1000 600; sleep 1
             done
+            python3 tiles.py "out/$1-tiles.json" $files
+            top
           }
-          grep -o 'Developer &amp; debugging\|Accessibility apps\|Features using accessibility\|VPN &amp; location' out/*.xml 2>/dev/null | sort -u > out/groups-seen.txt || true
-          v=""
-          # 1) Developer options: tap flips development_settings_enabled
-          dev0=$(adb shell settings get global development_settings_enabled | tr -d '\r')
-          pos=$(find_tile "Developer options" dev)
-          if [ -n "$pos" ]; then adb shell input tap $pos; sleep 6; awake; fi
-          adb exec-out screencap -p > out/02-after-developer-options.png
-          dev1=$(adb shell settings get global development_settings_enabled | tr -d '\r')
-          echo "development_settings_enabled before=$dev0 after=$dev1 tile_at=${pos:-none}" | tee -a out/settings.txt
-          [ -n "$pos" ] && [ "$dev0" != "$dev1" ] && v="$v developer_options:SWITCHED" || v="$v developer_options:NOT-SWITCHED"
-          # 2) Cloud SuperApp accessibility service: tap puts it in enabled_accessibility_services
-          a0=$(adb shell settings get secure enabled_accessibility_services | tr -d '\r')
-          pos=$(find_tile "Cloud SuperApp" a11y)
-          if [ -n "$pos" ]; then adb shell input tap $pos; sleep 6; awake; fi
-          adb exec-out screencap -p > out/03-after-superapp-accessibility.png
-          a1=$(adb shell settings get secure enabled_accessibility_services | tr -d '\r')
-          echo "enabled_accessibility_services before=$a0 after=$a1 tile_at=${pos:-none}" | tee -a out/settings.txt
-          [ -n "$pos" ] && [ "$a0" != "$a1" ] && v="$v superapp_accessibility:SWITCHED" || v="$v superapp_accessibility:NOT-SWITCHED"
-          dump ui-final
-          echo "VERDICT:$v" | tee out/verdict.txt
+          # tap_tile <id>: scroll until the tile is on screen, tap its centre
+          tap_tile() {
+            top
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              unsaver; dump "tap-$1-$i"; python3 tiles.py "out/tap-$1.json" "out/tap-$1-$i.xml"
+              xy=$(python3 -c "import json;t=json.load(open('out/tap-$1.json')).get('$1');print('%d %d'%(t['x'],t['y']) if t and 250<t['y']<2150 else '')")
+              if [ -n "$xy" ]; then adb shell input tap $xy; echo "tapped $1 at $xy" >> out/taps.txt; return 0; fi
+              adb shell input swipe 540 1800 540 1000 600; sleep 1
+            done
+            echo "tile $1 not found to tap" >> out/taps.txt; return 1
+          }
+          flag() { v=$(adb shell settings get global "$1" | tr -d '\r'); if [ "$v" = 1 ]; then printf 'On\tsettings get global %s=%s' "$1" "$v"; else printf 'Off\tsettings get global %s=%s' "$1" "$v"; fi; }
+          app() {   # app <package> <pass>: On when any installed service of the package is enabled and not binding / crashed
+            r=$(grep "^$1/" "out/$2-a11y.txt" | grep ' installed$' || true)
+            if [ -z "$r" ]; then printf 'Off\tdumpsys accessibility: no service of %s installed' "$1"
+            elif echo "$r" | grep -q ' On '; then printf 'On\tdumpsys accessibility: %s enabled, not binding or crashed' "$(echo "$r" | grep ' On ' | head -1 | cut -d' ' -f1)"
+            else printf 'Off\tdumpsys accessibility: %s not enabled' "$(echo "$r" | head -1 | cut -d' ' -f1)"; fi
+          }
+          # ground <pass>: the adb ground truth of every Security tile into out/<pass>-truth.tsv (id, state, what adb read)
+          ground() {
+            g="out/$1-truth.tsv"; : > "$g"
+            printf 'developer_options\t%s\n' "$(flag development_settings_enabled)" >> "$g"
+            printf 'usb_debugging\t%s\n' "$(flag adb_enabled)" >> "$g"
+            printf 'wireless_debugging\t%s\n' "$(flag adb_wifi_enabled)" >> "$g"
+            if adb shell pm path "$OWNER" >/dev/null 2>&1; then printf 'adb_shell\t?\t%s installed: the broker state is not readable from adb\n' "$OWNER" >> "$g"
+            else printf 'adb_shell\tOff\tpm path %s: not installed, no broker\n' "$OWNER" >> "$g"; fi
+            vp=$(adb shell pm list packages com.google.android.verifier | tr -d '\r'); vd=$(adb shell pm list packages -d com.google.android.verifier | tr -d '\r')
+            if ! echo "$vp" | grep -qx 'package:com.google.android.verifier'; then printf 'unverified_developers\tOn\tpm list packages: verifier not installed\n' >> "$g"
+            elif echo "$vd" | grep -qx 'package:com.google.android.verifier'; then printf 'unverified_developers\tOn\tpm list packages -d: verifier disabled\n' >> "$g"
+            else printf 'unverified_developers\tUnknown\tverifier installed and enabled; nothing measured on a fresh install\n' >> "$g"; fi
+            adb shell dumpsys accessibility > "out/$1-dumpsys-accessibility.txt" 2>&1
+            adb shell cmd package query-services --brief -a android.accessibilityservice.AccessibilityService > "out/$1-a11y-installed.txt" 2>&1
+            python3 a11y.py "out/$1-dumpsys-accessibility.txt" "out/$1-a11y-installed.txt" > "out/$1-a11y.txt"
+            printf 'access_keyboard\t%s\n' "$(app com.diegonmarcos.cloudkeyboard "$1")" >> "$g"
+            printf 'access_superapp\t%s\n' "$(app com.diegonmarcos.superapp "$1")" >> "$g"
+            af=$(adb shell settings get secure autofill_service | tr -d '\r')
+            case "$af" in
+              com.diegonmarcos.cloudvault/*) printf 'access_vault\tOn\tsettings get secure autofill_service=%s\n' "$af" >> "$g";;
+              *) printf 'access_vault\t%s; settings get secure autofill_service=%s\n' "$(app com.diegonmarcos.cloudvault "$1")" "$af" >> "$g";;
+            esac
+            # every dynamic tile a11y:<component> (a fleet service no declared tile presents): the same system state per component
+            grep ' installed$' "out/$1-a11y.txt" | while read -r c st _; do
+              case "$c" in
+                com.diegonmarcos.cloudkeyboard/*|com.diegonmarcos.superapp/*) ;;
+                com.diegonmarcos.*|com.viscouspot.gitsync/*) printf 'a11y:%s\t%s\tdumpsys accessibility\n' "$c" "$st" >> "$g";;
+              esac
+            done
+            list=$(adb shell settings get secure enabled_accessibility_services | tr -d '\r')
+            stale=$(echo "$list" | tr ':' '\n' | grep -E '^(com\.diegonmarcos\.|com\.viscouspot\.gitsync/)' | while read -r c; do
+              p=${c%%/*}; k=${c#*/}; case "$k" in .*) k="$p$k";; esac
+              grep -q "^$p/$k .* installed$" "out/$1-a11y.txt" || echo "$p/$k"; done | tr '\n' ' ')
+            if [ -n "$stale" ]; then printf 'access_others\tOn\tsettings get secure enabled_accessibility_services lists not installed: %s\n' "$stale" >> "$g"
+            else printf 'access_others\tOff\tsettings get secure enabled_accessibility_services: no stale fleet entry\n' >> "$g"; fi
+            adb shell dumpsys window windows > "out/$1-dumpsys-window.txt" 2>&1
+            n=$(grep -c 'c3-edge-strip-' "out/$1-dumpsys-window.txt" || true)
+            if [ "${n:-0}" -gt 0 ]; then printf 'edge_menus\tOn\tdumpsys window: %s lines name c3-edge-strip-*\n' "$n" >> "$g"
+            else printf 'edge_menus\tOff\tdumpsys window: no c3-edge-strip-* window\n' >> "$g"; fi
+            # the floating menu hides over the SuperApp by design: put another app in front, read the windows, come back
+            adb shell am start -W -a android.settings.SETTINGS >/dev/null 2>&1; sleep 7
+            adb shell dumpsys window windows > "out/$1-dumpsys-window-over-settings.txt" 2>&1
+            f=$(grep -c 'c3-floating-nav' "out/$1-dumpsys-window-over-settings.txt" || true)
+            if [ "${f:-0}" -gt 0 ]; then printf 'floating_nav\tOn\tdumpsys window over Settings: %s lines name c3-floating-nav\n' "$f" >> "$g"
+            else printf 'floating_nav\tOff\tdumpsys window over Settings: no c3-floating-nav window\n' >> "$g"; fi
+            adb shell dumpsys connectivity > "out/$1-dumpsys-connectivity.txt" 2>&1
+            if grep -qE 'Transports: [A-Z|]*VPN|VPN CONNECTED' "out/$1-dumpsys-connectivity.txt"; then printf 'vpn\t?\tdumpsys connectivity: a VPN network exists (its owner is not checked here)\n' >> "$g"
+            else printf 'vpn\tOff\tdumpsys connectivity: no VPN network, the mesh tunnel is down\n' >> "$g"; fi
+            loc=$(adb shell cmd location is-location-enabled 2>&1 | tr -d '\r')
+            if [ "$loc" = true ]; then printf 'location\tOn\tcmd location is-location-enabled=true\n' >> "$g"
+            else printf 'location\tOff\tcmd location is-location-enabled=%s\n' "$loc" >> "$g"; fi
+            openpage
+          }
+          # table <pass>: tiles vs truth, MATCH / MISMATCH; a truth of "?" is reported and never counted as a match
+          table() {
+            python3 - "$1" <<'PY' | tee "out/$1-table.txt"
+          import json, sys
+          name = sys.argv[1]
+          ui = json.load(open('out/%s-tiles.json' % name))
+          truth = {}
+          for line in open('out/%s-truth.tsv' % name):
+              p = line.rstrip('\n').split('\t')
+              if len(p) >= 2: truth[p[0]] = (p[1], p[2] if len(p) > 2 else '')
+          want = ["developer_options", "adb_shell", "usb_debugging", "unverified_developers", "wireless_debugging", "access_keyboard",
+                  "access_superapp", "access_others", "access_vault", "edge_menus", "floating_nav", "vpn", "location"]
+          ids = want + sorted(i for i in set(ui) | set(truth) if i.startswith('a11y:'))
+          bad = 0
+          print('pass\ttile\tUI\tadb truth\tverdict\ttile detail (what the app read)\tadb read')
+          for i in ids:
+              u = ui.get(i, {}).get('state', 'MISSING'); t, why = truth.get(i, ('NO-TRUTH', ''))
+              v = 'MATCH' if u == t and t not in ('?', 'NO-TRUTH') else 'MISMATCH'
+              bad += v != 'MATCH'
+              d = ui.get(i, {}).get('desc', '').split(' · ', 1)
+              print('%s\t%s\t%s\t%s\t%s\t%s\t%s' % (name, i, u, t, v, d[1] if len(d) > 1 else '', why))
+          print('%s: %d tiles, %d MISMATCH' % (name, len(ids), bad))
+          sys.exit(1 if bad else 0)
+          PY
+          }
+          pass_() { openpage; sleep 12; collect "$1"; ground "$1"; sleep 4; collect "$1"; table "$1" || FAIL=1; }
+
+          adb exec-out screencap -p > out/00-home.png
+          openpage; sleep 12; adb exec-out screencap -p > out/01-security-tab.png
+
+          # 1) no-wss: no WRITE_SECURE_SETTINGS and no broker; every light must still be the truth
+          adb shell dumpsys package "$PKG" | grep -E 'WRITE_SECURE_SETTINGS' > out/no-wss-grant.txt || true
+          pass_ no-wss
+          grep -ho 'Developer &amp; debugging\|Accessibility apps\|Features using accessibility\|VPN &amp; location' out/no-wss-*.xml 2>/dev/null | sort -u > out/groups-seen.txt || true
+
+          # 2) toggles, with WRITE_SECURE_SETTINGS (the self-grant the phone does over its channel)
+          adb shell pm grant "$PKG" android.permission.WRITE_SECURE_SETTINGS || true
+          openpage; sleep 14
+          : > out/toggles.txt
+          toggle() {   # toggle <id>: tap, wait, then the truth and the tile again; the device must move and the tile must match
+            ground "b-$1"; before_t=$(grep -P "^$1\t" "out/b-$1-truth.tsv" | cut -f2)
+            tap_tile "$1"; sleep 9; awake; unsaver
+            adb exec-out screencap -p > "out/toggle-$1.png"
+            ground "t-$1"; sleep 4; collect "t-$1"
+            after_t=$(grep -P "^$1\t" "out/t-$1-truth.tsv" | cut -f2)
+            after_u=$(python3 -c "import json;print(json.load(open('out/t-$1-tiles.json')).get('$1',{}).get('state','MISSING'))")
+            moved=no; [ "$before_t" != "$after_t" ] && moved=yes
+            ok=MATCH; [ "$after_u" = "$after_t" ] || ok=MISMATCH
+            printf '%s\ttruth %s -> %s\tmoved=%s\ttile=%s\t%s\n' "$1" "$before_t" "$after_t" "$moved" "$after_u" "$ok" | tee -a out/toggles.txt
+            if [ "$moved" != yes ] || [ "$ok" != MATCH ]; then FAIL=1; fi
+          }
+          toggle developer_options
+          toggle access_superapp
+          toggle access_others
+          toggle edge_menus
+          toggle floating_nav
+
+          # 3) final: every tile after the toggles
+          pass_ final
+
+          { echo "# Security tab: per-tile UI vs adb ground truth"; for t in no-wss final; do cat "out/$t-table.txt"; echo; done; echo "## toggles"; cat out/toggles.txt; } > out/summary.txt
+          cat out/summary.txt
+          if [ "$FAIL" = 0 ]; then echo "VERDICT: every tile matches" | tee out/verdict.txt; else echo "VERDICT: MISMATCH (see summary)" | tee out/verdict.txt; fi
           timeout 60 adb logcat -d > out/logcat.txt || true
-          EOF2
+          [ "$FAIL" = 0 ]
+          EOF4
           chmod +x shoot.sh
-      - name: Boot emulator and shoot
+      - name: Boot emulator and prove every tile
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -126,6 +294,10 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: bash shoot.sh
+      - name: Per-tile table
+        if: always()
+        run: |
+          if [ -f out/summary.txt ]; then { echo '```'; cat out/summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
