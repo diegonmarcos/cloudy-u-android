@@ -622,7 +622,7 @@
   {
     "name": "stalwart-sorter",
     "service": "stalwart",
-    "vm": "oci-E2-f_0",
+    "vm": "oci-A1-f_0",
     "private_dns": "stalwart-sorter",
     "port": null,
     "protocol": "tcp",

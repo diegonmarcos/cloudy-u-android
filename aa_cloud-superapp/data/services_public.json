@@ -332,7 +332,7 @@
   {
     "name": "stalwart",
     "service": "stalwart",
-    "vm": "oci-E2-f_0",
+    "vm": "oci-A1-f_0",
     "public_url": "jmap.diegonmarcos.com",
     "auth": "none",
     "private_dns": "stalwart.mesh.diegonmarcos.com:2443",
