@@ -49,13 +49,16 @@ jobs:
           import re, sys
           # Center of the first node whose content-desc starts with argv[2], from a uiautomator dump.
           xml, label = open(sys.argv[1], errors="replace").read(), sys.argv[2]
+          nodes = []
           for m in re.finditer(r'<node [^>]*>', xml):
               n = m.group(0)
-              d = re.search(r'content-desc="([^"]*)"', n)
-              if not (d and d.group(1)): d = re.search(r' text="([^"]*)"', n)
               b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
-              if d and b and d.group(1).startswith(label):
-                  x1, y1, x2, y2 = map(int, b.groups()); print((x1 + x2) // 2, (y1 + y2) // 2); break
+              d = re.search(r'content-desc="([^"]*)"', n); t = re.search(r' text="([^"]*)"', n)
+              if b: nodes.append((d.group(1) if d else "", t.group(1) if t else "", tuple(map(int, b.groups()))))
+          # a tile's own description first (it carries the label and the state), a bare text only when no description matches
+          hit = next((n for n in nodes if n[0].startswith(label)), None) or next((n for n in nodes if n[1] == label), None)
+          if hit:
+              x1, y1, x2, y2 = hit[2]; print((x1 + x2) // 2, (y1 + y2) // 2)
           EOF1
           cat > shoot.sh <<'EOF2'
           set -u
